@@ -7,6 +7,7 @@ import BrowsePage from '../pages/BrowsePage.vue';
 import PlayerPage from '../pages/PlayerPage.vue';
 import LoginPage from '../pages/LoginPage.vue';
 import SignupPage from '../pages/SignupPage.vue';
+import SettingsPage from '../pages/SettingsPage.vue';
 import type { PhlixAppConfig } from './types';
 
 declare global {
@@ -56,6 +57,11 @@ function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             path: `${base}/signup`,
             name: 'signup',
             component: SignupPage,
+        },
+        {
+            path: `${base}/settings`,
+            name: 'settings',
+            component: SettingsPage,
         },
     ];
 
