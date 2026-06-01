@@ -11,7 +11,7 @@ export interface LibraryQuery {
     offset?: number;
 }
 
-export interface LibraryQueryParams extends LibraryQuery {
+export interface LibraryQueryParams extends Omit<LibraryQuery, 'ratings' | 'sort' | 'order'> {
     search?: string;
     genres?: string[];
     yearFrom?: number;
