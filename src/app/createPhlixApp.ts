@@ -4,6 +4,7 @@ import { createRouter, createWebHistory, type Router, type RouteRecordRaw } from
 import PhlixApp from './PhlixApp.vue';
 import Placeholder from './placeholder/Placeholder.vue';
 import BrowsePage from '../pages/BrowsePage.vue';
+import PlayerPage from '../pages/PlayerPage.vue';
 import type { PhlixAppConfig } from './types';
 
 declare global {
@@ -38,6 +39,11 @@ function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             path: base,
             name: 'browse',
             component: BrowsePage,
+        },
+        {
+            path: `${base}/player/:id`,
+            name: 'player',
+            component: PlayerPage,
         },
     ];
 
