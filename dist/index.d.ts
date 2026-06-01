@@ -21,6 +21,7 @@ export { default as LoginPage } from './pages/LoginPage.vue';
 export { default as SignupPage } from './pages/SignupPage.vue';
 export { default as SettingsForm } from './components/SettingsForm.vue';
 export { default as SettingsPage } from './pages/SettingsPage.vue';
+export { default as LibraryScanPage } from './pages/LibraryScanPage.vue';
 export { useAuthStore } from './stores/useAuthStore';
 export { useMediaStore } from './stores/useMediaStore';
 export * from './tokens';
