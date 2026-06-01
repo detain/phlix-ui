@@ -1,16 +1,16 @@
 var ye = Object.defineProperty;
 var be = (l, t, s) => t in l ? ye(l, t, { enumerable: !0, configurable: !0, writable: !0, value: s }) : l[t] = s;
 var Q = (l, t, s) => be(l, typeof t != "symbol" ? t + "" : t, s);
-import { openBlock as a, createElementBlock as n, createElementVNode as e, renderSlot as K, defineComponent as E, createBlock as re, withCtx as z, createVNode as N, unref as $, createTextVNode as Y, toDisplayString as d, ref as p, computed as D, createCommentVNode as w, Fragment as L, renderList as I, withDirectives as V, vModelText as Z, normalizeClass as X, inject as de, onMounted as j, watch as $e, onUnmounted as ke, withModifiers as W, normalizeStyle as ee, createStaticVNode as we, resolveComponent as ve, vModelDynamic as le, vShow as Se, createApp as Ce } from "vue";
+import { openBlock as a, createElementBlock as n, createElementVNode as e, renderSlot as K, defineComponent as E, createBlock as re, withCtx as z, createVNode as N, unref as $, createTextVNode as Y, toDisplayString as d, ref as f, computed as B, createCommentVNode as w, Fragment as L, renderList as I, withDirectives as V, vModelText as Z, normalizeClass as X, inject as ie, onMounted as j, watch as $e, onUnmounted as ke, withModifiers as W, normalizeStyle as ee, createStaticVNode as we, resolveComponent as ve, vModelDynamic as le, vShow as Se, createApp as Ce } from "vue";
 import { defineStore as pe, createPinia as Te } from "pinia";
-import { RouterView as Pe, RouterLink as ue, useRoute as xe, useRouter as _e, createRouter as Re, createWebHistory as Ee } from "vue-router";
+import { RouterView as Pe, RouterLink as de, useRoute as xe, useRouter as _e, createRouter as Re, createWebHistory as Ee } from "vue-router";
 const x = (l, t) => {
   const s = l.__vccOpts || l;
-  for (const [i, v] of t)
-    s[i] = v;
+  for (const [r, p] of t)
+    s[r] = p;
   return s;
-}, Fe = {}, Le = { class: "app-layout" }, Ie = { class: "app-header" }, Ae = { class: "header-inner" }, Me = { class: "logo" }, Ue = { class: "nav" }, Ne = { class: "app-main" }, De = { class: "app-footer" };
-function Be(l, t) {
+}, Fe = {}, Le = { class: "app-layout" }, Ie = { class: "app-header" }, Ae = { class: "header-inner" }, Me = { class: "logo" }, Ue = { class: "nav" }, Ne = { class: "app-main" }, Be = { class: "app-footer" };
+function De(l, t) {
   return a(), n("div", Le, [
     e("header", Ie, [
       e("div", Ae, [
@@ -27,18 +27,18 @@ function Be(l, t) {
     e("main", Ne, [
       K(l.$slots, "default", {}, void 0, !0)
     ]),
-    e("footer", De, [
+    e("footer", Be, [
       K(l.$slots, "footer", {}, void 0, !0)
     ])
   ]);
 }
-const qe = /* @__PURE__ */ x(Fe, [["render", Be], ["__scopeId", "data-v-9f6c6d16"]]), Ge = { class: "main-nav" }, Ve = /* @__PURE__ */ E({
+const qe = /* @__PURE__ */ x(Fe, [["render", De], ["__scopeId", "data-v-9f6c6d16"]]), Ge = { class: "main-nav" }, Ve = /* @__PURE__ */ E({
   __name: "PhlixApp",
   setup(l) {
     return (t, s) => (a(), re(qe, null, {
       nav: z(() => [
         e("nav", Ge, [
-          N($(ue), {
+          N($(de), {
             to: "/app",
             class: "nav-link"
           }, {
@@ -47,7 +47,7 @@ const qe = /* @__PURE__ */ x(Fe, [["render", Be], ["__scopeId", "data-v-9f6c6d16
             ])]),
             _: 1
           }),
-          N($(ue), {
+          N($(de), {
             to: "/app/settings",
             class: "nav-link"
           }, {
@@ -79,8 +79,8 @@ const qe = /* @__PURE__ */ x(Fe, [["render", Be], ["__scopeId", "data-v-9f6c6d16
   }
 }), ze = /* @__PURE__ */ x(He, [["__scopeId", "data-v-bf79ac4c"]]);
 class Je extends Error {
-  constructor(t, s, i = null) {
-    super(t), this.status = s, this.body = i, this.name = "ApiError";
+  constructor(t, s, r = null) {
+    super(t), this.status = s, this.body = r, this.name = "ApiError";
   }
 }
 function Ke(l) {
@@ -105,25 +105,25 @@ class te {
       }
     }, this.doFetch = t.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
-  async request(t, s, i = null) {
-    const v = () => {
+  async request(t, s, r = null) {
+    const p = () => {
       const h = {
         "Content-Type": "application/json"
-      }, f = this.tokens.getAccessToken();
-      f && (h.Authorization = `Bearer ${f}`);
+      }, m = this.tokens.getAccessToken();
+      m && (h.Authorization = `Bearer ${m}`);
       const u = { method: t, headers: h, credentials: "same-origin" };
-      return i !== null && (t === "POST" || t === "PUT" || t === "PATCH") && (u.body = JSON.stringify(i)), u;
-    }, m = `${this.baseUrl}${s}`;
-    let y = await this.doFetch(m, v());
-    return y.status === 401 && await this.refreshToken() && (y = await this.doFetch(m, v())), this.handleResponse(y);
+      return r !== null && (t === "POST" || t === "PUT" || t === "PATCH") && (u.body = JSON.stringify(r)), u;
+    }, g = `${this.baseUrl}${s}`;
+    let y = await this.doFetch(g, p());
+    return y.status === 401 && await this.refreshToken() && (y = await this.doFetch(g, p())), this.handleResponse(y);
   }
   async handleResponse(t) {
-    const v = (t.headers.get("content-type") ?? "").includes("application/json") ? await t.json() : await t.text();
+    const p = (t.headers.get("content-type") ?? "").includes("application/json") ? await t.json() : await t.text();
     if (!t.ok) {
-      const m = this.extractError(v);
-      throw new Je(m, t.status, v);
+      const g = this.extractError(p);
+      throw new Je(g, t.status, p);
     }
-    return v;
+    return p;
   }
   extractError(t) {
     if (t && typeof t == "object") {
@@ -148,15 +148,15 @@ class te {
       });
       if (!s.ok)
         return !1;
-      const i = await s.json();
-      return typeof i.access_token != "string" ? !1 : (this.tokens.setAccessToken(i.access_token), typeof i.refresh_token == "string" && this.tokens.setRefreshToken(i.refresh_token), !0);
+      const r = await s.json();
+      return typeof r.access_token != "string" ? !1 : (this.tokens.setAccessToken(r.access_token), typeof r.refresh_token == "string" && this.tokens.setRefreshToken(r.refresh_token), !0);
     } catch {
       return !1;
     }
   }
   async get(t, s) {
-    const i = s ? "?" + new URLSearchParams(s).toString() : "";
-    return this.request("GET", t + i);
+    const r = s ? "?" + new URLSearchParams(s).toString() : "";
+    return this.request("GET", t + r);
   }
   async post(t, s) {
     return this.request("POST", t, s ?? null);
@@ -182,28 +182,28 @@ class te {
   }
 }
 const U = new te(), fe = pe("media", () => {
-  const l = p([]), t = p(0), s = p(!1), i = p(null), v = p(""), m = p([]), y = p(void 0), h = p(void 0), f = p([]), u = p([]), o = p("name"), c = p("asc"), b = p(24), r = p(0), _ = D(() => r.value + l.value.length < t.value), g = D(() => {
+  const l = f([]), t = f(0), s = f(!1), r = f(null), p = f(""), g = f([]), y = f(void 0), h = f(void 0), m = f([]), u = f([]), o = f("name"), c = f("asc"), b = f(24), i = f(0), _ = B(() => i.value + l.value.length < t.value), v = B(() => {
     const k = {};
-    return v.value && (k.search = v.value), m.value.length && (k.genres = m.value), y.value !== void 0 && (k.yearFrom = y.value), h.value !== void 0 && (k.yearTo = h.value), f.value.length && (k.ratings = f.value), u.value.length && (k.types = u.value), k.sort = o.value, k.order = c.value, k.limit = b.value, k.offset = r.value, k;
-  }), A = D(() => {
+    return p.value && (k.search = p.value), g.value.length && (k.genres = g.value), y.value !== void 0 && (k.yearFrom = y.value), h.value !== void 0 && (k.yearTo = h.value), m.value.length && (k.ratings = m.value), u.value.length && (k.types = u.value), k.sort = o.value, k.order = c.value, k.limit = b.value, k.offset = i.value, k;
+  }), A = B(() => {
     const k = /* @__PURE__ */ new Set();
     return l.value.forEach((P) => {
       var T;
       return (T = P.genres) == null ? void 0 : T.forEach((H) => k.add(H));
     }), Array.from(k).sort();
-  }), R = ["G", "PG", "PG-13", "R", "NC-17", "X", "UNRATED"], B = ["movie", "series", "episode", "audio", "image"];
+  }), R = ["G", "PG", "PG-13", "R", "NC-17", "X", "UNRATED"], D = ["movie", "series", "episode", "audio", "image"];
   function O(k) {
-    var H, G, ce;
-    const P = new URLSearchParams(), T = g.value;
-    return T.search && P.set("search", T.search), (H = T.genres) == null || H.forEach((J) => P.append("genres", J)), T.yearFrom !== void 0 && P.set("yearFrom", String(T.yearFrom)), T.yearTo !== void 0 && P.set("yearTo", String(T.yearTo)), (G = T.ratings) == null || G.forEach((J) => P.append("ratings", J)), (ce = T.types) == null || ce.forEach((J) => P.append("types", J)), T.sort && P.set("sort", T.sort), T.order && P.set("order", T.order), P.set("limit", String(T.limit)), P.set("offset", String(T.offset)), `${k}/api/v1/media?${P.toString()}`;
+    var H, G, ue;
+    const P = new URLSearchParams(), T = v.value;
+    return T.search && P.set("search", T.search), (H = T.genres) == null || H.forEach((J) => P.append("genres", J)), T.yearFrom !== void 0 && P.set("yearFrom", String(T.yearFrom)), T.yearTo !== void 0 && P.set("yearTo", String(T.yearTo)), (G = T.ratings) == null || G.forEach((J) => P.append("ratings", J)), (ue = T.types) == null || ue.forEach((J) => P.append("types", J)), T.sort && P.set("sort", T.sort), T.order && P.set("order", T.order), P.set("limit", String(T.limit)), P.set("offset", String(T.offset)), `${k}/api/v1/media?${P.toString()}`;
   }
   async function q(k, P = !1) {
-    s.value = !0, i.value = null;
+    s.value = !0, r.value = null;
     try {
       const T = new te({ baseUrl: k }), H = O(k), G = await T.get(H);
-      P ? l.value = [...l.value, ...G.items] : l.value = G.items, t.value = G.total, r.value = (G.offset ?? 0) + G.items.length;
+      P ? l.value = [...l.value, ...G.items] : l.value = G.items, t.value = G.total, i.value = (G.offset ?? 0) + G.items.length;
     } catch (T) {
-      i.value = T instanceof Error ? T.message : "Failed to load media";
+      r.value = T instanceof Error ? T.message : "Failed to load media";
     } finally {
       s.value = !1;
     }
@@ -212,46 +212,46 @@ const U = new te(), fe = pe("media", () => {
     await q(k, !0);
   }
   function C() {
-    l.value = [], t.value = 0, r.value = 0, i.value = null;
+    l.value = [], t.value = 0, i.value = 0, r.value = null;
   }
   function S(k) {
-    v.value = k, r.value = 0;
+    p.value = k, i.value = 0;
   }
   function M(k) {
-    m.value = k, r.value = 0;
+    g.value = k, i.value = 0;
   }
   function se(k, P) {
-    y.value = k, h.value = P, r.value = 0;
+    y.value = k, h.value = P, i.value = 0;
   }
   function ge(k) {
-    f.value = k, r.value = 0;
+    m.value = k, i.value = 0;
   }
   function me(k) {
-    u.value = k, r.value = 0;
+    u.value = k, i.value = 0;
   }
   function he(k, P) {
-    o.value = k, P && (c.value = P), r.value = 0;
+    o.value = k, P && (c.value = P), i.value = 0;
   }
   return {
     items: l,
     total: t,
     loading: s,
-    error: i,
-    search: v,
-    selectedGenres: m,
+    error: r,
+    search: p,
+    selectedGenres: g,
     yearFrom: y,
     yearTo: h,
-    selectedRatings: f,
+    selectedRatings: m,
     selectedTypes: u,
     sort: o,
     order: c,
     limit: b,
-    offset: r,
+    offset: i,
     hasMore: _,
-    queryParams: g,
+    queryParams: v,
     availableGenres: A,
     availableRatings: R,
-    availableTypes: B,
+    availableTypes: D,
     fetchMedia: q,
     loadMore: F,
     reset: C,
@@ -282,7 +282,7 @@ const U = new te(), fe = pe("media", () => {
   },
   setup(l) {
     return (t, s) => {
-      var i;
+      var r;
       return a(), n("article", Xe, [
         e("a", {
           href: l.to ?? `/app/player/${l.item.id}`,
@@ -308,7 +308,7 @@ const U = new te(), fe = pe("media", () => {
               class: "card-title",
               title: l.item.name
             }, d(l.item.name), 9, lt),
-            (i = l.item.genres) != null && i.length ? (a(), n("p", rt, d(l.item.genres.slice(0, 2).join(", ")), 1)) : w("", !0)
+            (r = l.item.genres) != null && r.length ? (a(), n("p", rt, d(l.item.genres.slice(0, 2).join(", ")), 1)) : w("", !0)
           ])
         ], 8, We)
       ]);
@@ -332,8 +332,8 @@ const U = new te(), fe = pe("media", () => {
   setup(l) {
     return (t, s) => (a(), n("div", ut, [
       l.loading ? (a(), n("div", dt, [
-        (a(), n(L, null, I(12, (i) => e("div", {
-          key: i,
+        (a(), n(L, null, I(12, (r) => e("div", {
+          key: r,
           class: "skeleton-card"
         }, [...s[0] || (s[0] = [
           e("div", { class: "skeleton-poster" }, null, -1),
@@ -343,63 +343,63 @@ const U = new te(), fe = pe("media", () => {
         e("p", null, "No media found.", -1),
         e("p", { class: "empty-hint" }, "Try adjusting your filters.", -1)
       ])])) : (a(), n("div", pt, [
-        (a(!0), n(L, null, I(l.items, (i) => (a(), re(ct, {
-          key: i.id,
-          item: i
+        (a(!0), n(L, null, I(l.items, (r) => (a(), re(ct, {
+          key: r.id,
+          item: r
         }, null, 8, ["item"]))), 128))
       ]))
     ]));
   }
-}), ft = /* @__PURE__ */ x(_t, [["__scopeId", "data-v-b7e87216"]]), gt = { class: "filter-bar" }, mt = { class: "filter-search" }, ht = { class: "filter-row" }, yt = { class: "filter-group" }, bt = ["value"], $t = ["value"], kt = ["value"], wt = { class: "filter-group" }, St = ["value"], Ct = ["value"], Tt = ["value"], Pt = ["value"], xt = { class: "filter-section" }, Rt = { class: "filter-chips" }, Et = ["onClick"], Ft = { class: "filter-section" }, Lt = { class: "filter-chips" }, It = ["onClick"], At = { class: "filter-section" }, Mt = { class: "filter-chips" }, Ut = ["onClick"], Nt = { class: "filter-actions" }, Dt = { class: "result-count" }, Bt = /* @__PURE__ */ E({
+}), ft = /* @__PURE__ */ x(_t, [["__scopeId", "data-v-b7e87216"]]), gt = { class: "filter-bar" }, mt = { class: "filter-search" }, ht = { class: "filter-row" }, yt = { class: "filter-group" }, bt = ["value"], $t = ["value"], kt = ["value"], wt = { class: "filter-group" }, St = ["value"], Ct = ["value"], Tt = ["value"], Pt = ["value"], xt = { class: "filter-section" }, Rt = { class: "filter-chips" }, Et = ["onClick"], Ft = { class: "filter-section" }, Lt = { class: "filter-chips" }, It = ["onClick"], At = { class: "filter-section" }, Mt = { class: "filter-chips" }, Ut = ["onClick"], Nt = { class: "filter-actions" }, Bt = { class: "result-count" }, Dt = /* @__PURE__ */ E({
   __name: "FilterBar",
   setup(l) {
-    const t = fe(), s = p(t.search), i = [
+    const t = fe(), s = f(t.search), r = [
       { value: "name", label: "Name" },
       { value: "year", label: "Year" },
       { value: "rating", label: "Rating" },
       { value: "date_added", label: "Date Added" },
       { value: "runtime", label: "Runtime" }
     ];
-    function v() {
+    function p() {
       t.setSearch(s.value);
     }
-    function m(r) {
+    function g(i) {
       const _ = t.selectedGenres;
-      _.includes(r) ? t.setGenres(_.filter((g) => g !== r)) : t.setGenres([..._, r]);
+      _.includes(i) ? t.setGenres(_.filter((v) => v !== i)) : t.setGenres([..._, i]);
     }
-    function y(r) {
+    function y(i) {
       const _ = t.selectedRatings;
-      _.includes(r) ? t.setRatings(_.filter((g) => g !== r)) : t.setRatings([..._, r]);
+      _.includes(i) ? t.setRatings(_.filter((v) => v !== i)) : t.setRatings([..._, i]);
     }
-    function h(r) {
+    function h(i) {
       const _ = t.selectedTypes;
-      _.includes(r) ? t.setTypes(_.filter((g) => g !== r)) : t.setTypes([..._, r]);
+      _.includes(i) ? t.setTypes(_.filter((v) => v !== i)) : t.setTypes([..._, i]);
     }
-    function f(r) {
-      const _ = r.target;
+    function m(i) {
+      const _ = i.target;
       t.setSort(_.value);
     }
-    function u(r) {
-      const _ = r.target;
+    function u(i) {
+      const _ = i.target;
       t.order = _.value;
     }
-    const o = (/* @__PURE__ */ new Date()).getFullYear(), c = D(() => {
-      const r = [];
+    const o = (/* @__PURE__ */ new Date()).getFullYear(), c = B(() => {
+      const i = [];
       for (let _ = o; _ >= 1900; _--)
-        r.push(_);
-      return r;
+        i.push(_);
+      return i;
     });
     function b() {
       s.value = "", t.search = "", t.setGenres([]), t.setYearRange(void 0, void 0), t.setRatings([]), t.setTypes([]), t.setSort("name");
     }
-    return (r, _) => (a(), n("div", gt, [
+    return (i, _) => (a(), n("div", gt, [
       e("div", mt, [
         V(e("input", {
-          "onUpdate:modelValue": _[0] || (_[0] = (g) => s.value = g),
+          "onUpdate:modelValue": _[0] || (_[0] = (v) => s.value = v),
           type: "search",
           placeholder: "Search media...",
           class: "search-input",
-          onInput: v
+          onInput: p
         }, null, 544), [
           [Z, s.value]
         ])
@@ -410,12 +410,12 @@ const U = new te(), fe = pe("media", () => {
           e("select", {
             class: "filter-select",
             value: $(t).sort,
-            onChange: f
+            onChange: m
           }, [
-            (a(), n(L, null, I(i, (g) => e("option", {
-              key: g.value,
-              value: g.value
-            }, d(g.label), 9, $t)), 64))
+            (a(), n(L, null, I(r, (v) => e("option", {
+              key: v.value,
+              value: v.value
+            }, d(v.label), 9, $t)), 64))
           ], 40, bt),
           e("select", {
             class: "filter-select order-select",
@@ -431,61 +431,61 @@ const U = new te(), fe = pe("media", () => {
           e("select", {
             class: "filter-select",
             value: $(t).yearFrom ?? "",
-            onChange: _[1] || (_[1] = (g) => $(t).setYearRange(
-              g.target.value ? Number(g.target.value) : void 0,
+            onChange: _[1] || (_[1] = (v) => $(t).setYearRange(
+              v.target.value ? Number(v.target.value) : void 0,
               $(t).yearTo
             ))
           }, [
             _[5] || (_[5] = e("option", { value: "" }, "From", -1)),
-            (a(!0), n(L, null, I(c.value.slice(0, 50), (g) => (a(), n("option", {
-              key: g,
-              value: g
-            }, d(g), 9, Ct))), 128))
+            (a(!0), n(L, null, I(c.value.slice(0, 50), (v) => (a(), n("option", {
+              key: v,
+              value: v
+            }, d(v), 9, Ct))), 128))
           ], 40, St),
           e("select", {
             class: "filter-select",
             value: $(t).yearTo ?? "",
-            onChange: _[2] || (_[2] = (g) => $(t).setYearRange(
+            onChange: _[2] || (_[2] = (v) => $(t).setYearRange(
               $(t).yearFrom,
-              g.target.value ? Number(g.target.value) : void 0
+              v.target.value ? Number(v.target.value) : void 0
             ))
           }, [
             _[6] || (_[6] = e("option", { value: "" }, "To", -1)),
-            (a(!0), n(L, null, I(c.value.slice(0, 50), (g) => (a(), n("option", {
-              key: g,
-              value: g
-            }, d(g), 9, Pt))), 128))
+            (a(!0), n(L, null, I(c.value.slice(0, 50), (v) => (a(), n("option", {
+              key: v,
+              value: v
+            }, d(v), 9, Pt))), 128))
           ], 40, Tt)
         ])
       ]),
       e("div", xt, [
         _[8] || (_[8] = e("span", { class: "filter-label" }, "Genres", -1)),
         e("div", Rt, [
-          (a(!0), n(L, null, I($(t).availableGenres, (g) => (a(), n("button", {
-            key: g,
-            class: X(["chip", { active: $(t).selectedGenres.includes(g) }]),
-            onClick: (A) => m(g)
-          }, d(g), 11, Et))), 128))
+          (a(!0), n(L, null, I($(t).availableGenres, (v) => (a(), n("button", {
+            key: v,
+            class: X(["chip", { active: $(t).selectedGenres.includes(v) }]),
+            onClick: (A) => g(v)
+          }, d(v), 11, Et))), 128))
         ])
       ]),
       e("div", Ft, [
         _[9] || (_[9] = e("span", { class: "filter-label" }, "Rating", -1)),
         e("div", Lt, [
-          (a(!0), n(L, null, I($(t).availableRatings, (g) => (a(), n("button", {
-            key: g,
-            class: X(["chip", { active: $(t).selectedRatings.includes(g) }]),
-            onClick: (A) => y(g)
-          }, d(g), 11, It))), 128))
+          (a(!0), n(L, null, I($(t).availableRatings, (v) => (a(), n("button", {
+            key: v,
+            class: X(["chip", { active: $(t).selectedRatings.includes(v) }]),
+            onClick: (A) => y(v)
+          }, d(v), 11, It))), 128))
         ])
       ]),
       e("div", At, [
         _[10] || (_[10] = e("span", { class: "filter-label" }, "Type", -1)),
         e("div", Mt, [
-          (a(!0), n(L, null, I($(t).availableTypes, (g) => (a(), n("button", {
-            key: g,
-            class: X(["chip", { active: $(t).selectedTypes.includes(g) }]),
-            onClick: (A) => h(g)
-          }, d(g), 11, Ut))), 128))
+          (a(!0), n(L, null, I($(t).availableTypes, (v) => (a(), n("button", {
+            key: v,
+            class: X(["chip", { active: $(t).selectedTypes.includes(v) }]),
+            onClick: (A) => h(v)
+          }, d(v), 11, Ut))), 128))
         ])
       ]),
       e("div", Nt, [
@@ -493,11 +493,11 @@ const U = new te(), fe = pe("media", () => {
           class: "clear-btn",
           onClick: b
         }, "Clear filters"),
-        e("span", Dt, d($(t).total) + " result" + d($(t).total !== 1 ? "s" : ""), 1)
+        e("span", Bt, d($(t).total) + " result" + d($(t).total !== 1 ? "s" : ""), 1)
       ])
     ]));
   }
-}), qt = /* @__PURE__ */ x(Bt, [["__scopeId", "data-v-7089ec0b"]]), Gt = { class: "browse-page" }, Vt = { class: "browse-header" }, jt = { class: "browse-toolbar-extra" }, Ot = {
+}), qt = /* @__PURE__ */ x(Dt, [["__scopeId", "data-v-7089ec0b"]]), Gt = { class: "browse-page" }, Vt = { class: "browse-header" }, jt = { class: "browse-toolbar-extra" }, Ot = {
   key: 0,
   class: "browse-error"
 }, Yt = {
@@ -509,15 +509,15 @@ const U = new te(), fe = pe("media", () => {
 }, zt = /* @__PURE__ */ E({
   __name: "BrowsePage",
   setup(l) {
-    const t = de("apiBase") ?? D(() => ""), s = fe();
-    function i() {
+    const t = ie("apiBase") ?? B(() => ""), s = fe();
+    function r() {
       s.reset(), s.fetchMedia(t.value);
     }
-    j(i), $e(t, i);
-    function v() {
+    j(r), $e(t, r);
+    function p() {
       s.reset(), s.fetchMedia(t.value);
     }
-    function m() {
+    function g() {
       s.loadMore(t.value);
     }
     return (y, h) => (a(), n("div", Gt, [
@@ -527,12 +527,12 @@ const U = new te(), fe = pe("media", () => {
           K(y.$slots, "toolbar-extra", {}, void 0, !0)
         ])
       ]),
-      N(qt, { onChange: v }),
+      N(qt, { onChange: p }),
       $(s).error ? (a(), n("div", Ot, [
         e("p", null, d($(s).error), 1),
         e("button", {
           class: "retry-btn",
-          onClick: i
+          onClick: r
         }, "Retry")
       ])) : w("", !0),
       N(ft, {
@@ -542,7 +542,7 @@ const U = new te(), fe = pe("media", () => {
       $(s).hasMore && !$(s).loading ? (a(), n("div", Yt, [
         e("button", {
           class: "load-more-btn",
-          onClick: m
+          onClick: g
         }, "Load more")
       ])) : w("", !0),
       $(s).loading && $(s).items.length > 0 ? (a(), n("div", Ht, " Loading... ")) : w("", !0)
@@ -558,34 +558,34 @@ const U = new te(), fe = pe("media", () => {
     streamUrl: {}
   },
   setup(l) {
-    const t = p(null), s = p(!1), i = p(0), v = p(0), m = p(1), y = p(!1), h = p(1), f = p(!1), u = p(!0);
+    const t = f(null), s = f(!1), r = f(0), p = f(0), g = f(1), y = f(!1), h = f(1), m = f(!1), u = f(!0);
     let o = null;
-    const c = D(
-      () => v.value > 0 ? i.value / v.value * 100 : 0
+    const c = B(
+      () => p.value > 0 ? r.value / p.value * 100 : 0
     );
     function b(C) {
       if (!isFinite(C) || isNaN(C)) return "0:00";
       const S = Math.floor(C / 60), M = Math.floor(C % 60);
       return `${S}:${M.toString().padStart(2, "0")}`;
     }
-    function r() {
+    function i() {
       t.value && (s.value ? t.value.pause() : t.value.play());
     }
     function _() {
-      t.value && (i.value = t.value.currentTime);
+      t.value && (r.value = t.value.currentTime);
     }
-    function g() {
-      t.value && (v.value = t.value.duration);
+    function v() {
+      t.value && (p.value = t.value.duration);
     }
     function A(C) {
       const M = C.currentTarget.getBoundingClientRect(), se = (C.clientX - M.left) / M.width;
-      t.value && (t.value.currentTime = se * v.value);
+      t.value && (t.value.currentTime = se * p.value);
     }
     function R(C) {
       const S = parseFloat(C.target.value);
-      m.value = S, t.value && (t.value.volume = S), y.value = S === 0;
+      g.value = S, t.value && (t.value.volume = S), y.value = S === 0;
     }
-    function B() {
+    function D() {
       y.value = !y.value, t.value && (t.value.muted = y.value);
     }
     function O(C) {
@@ -594,7 +594,7 @@ const U = new te(), fe = pe("media", () => {
     function q() {
       var S;
       const C = (S = t.value) == null ? void 0 : S.closest(".player-container");
-      C && (document.fullscreenElement ? (document.exitFullscreen(), f.value = !1) : (C.requestFullscreen(), f.value = !0));
+      C && (document.fullscreenElement ? (document.exitFullscreen(), m.value = !1) : (C.requestFullscreen(), m.value = !0));
     }
     function F() {
       u.value = !0, o && clearTimeout(o), o = setTimeout(() => {
@@ -606,7 +606,7 @@ const U = new te(), fe = pe("media", () => {
     }), (C, S) => (a(), n("div", {
       class: X(["player-container", { "controls-hidden": !u.value && s.value }]),
       onMousemove: F,
-      onClick: r
+      onClick: i
     }, [
       S[6] || (S[6] = e("div", { class: "player-overlay" }, null, -1)),
       e("video", {
@@ -619,8 +619,8 @@ const U = new te(), fe = pe("media", () => {
         onPlay: S[0] || (S[0] = (M) => s.value = !0),
         onPause: S[1] || (S[1] = (M) => s.value = !1),
         onTimeupdate: _,
-        onLoadedmetadata: g,
-        onClick: W(r, ["stop"])
+        onLoadedmetadata: v,
+        onClick: W(i, ["stop"])
       }, null, 40, Kt),
       e("div", {
         class: "player-controls",
@@ -638,7 +638,7 @@ const U = new te(), fe = pe("media", () => {
         e("div", Zt, [
           e("button", {
             class: "play-btn",
-            onClick: r
+            onClick: i
           }, d(s.value ? "❚❚" : "▶"), 1)
         ]),
         e("div", es, [
@@ -654,18 +654,18 @@ const U = new te(), fe = pe("media", () => {
             ])
           ]),
           e("div", ss, [
-            e("span", as, d(b(i.value)), 1),
+            e("span", as, d(b(r.value)), 1),
             e("div", ns, [
               e("button", {
                 class: "ctrl-btn",
-                onClick: B
-              }, d(y.value || m.value === 0 ? "🔇" : "🔊"), 1),
+                onClick: D
+              }, d(y.value || g.value === 0 ? "🔇" : "🔊"), 1),
               e("input", {
                 type: "range",
                 min: "0",
                 max: "1",
                 step: "0.05",
-                value: y.value ? 0 : m.value,
+                value: y.value ? 0 : g.value,
                 class: "volume-slider",
                 onInput: R
               }, null, 40, os)
@@ -679,11 +679,11 @@ const U = new te(), fe = pe("media", () => {
                 we('<option value="0.5" data-v-7a51063f>0.5×</option><option value="0.75" data-v-7a51063f>0.75×</option><option value="1" data-v-7a51063f>1×</option><option value="1.25" data-v-7a51063f>1.25×</option><option value="1.5" data-v-7a51063f>1.5×</option><option value="2" data-v-7a51063f>2×</option>', 6)
               ])], 40, rs)
             ]),
-            e("span", is, d(b(v.value)), 1),
+            e("span", is, d(b(p.value)), 1),
             e("button", {
               class: "ctrl-btn",
               onClick: q
-            }, d(f.value ? "⤓" : "⤢"), 1)
+            }, d(m.value ? "⤓" : "⤢"), 1)
           ])
         ])
       ])
@@ -698,36 +698,36 @@ const U = new te(), fe = pe("media", () => {
 }, _s = /* @__PURE__ */ E({
   __name: "PlayerPage",
   setup(l) {
-    const t = de("apiBase", D(() => "")), s = xe(), i = p(null), v = p(""), m = p(!0), y = p(null);
+    const t = ie("apiBase", B(() => "")), s = xe(), r = f(null), p = f(""), g = f(!0), y = f(null);
     async function h() {
-      const f = s.params.id;
-      if (!f) {
-        y.value = "No media ID provided", m.value = !1;
+      const m = s.params.id;
+      if (!m) {
+        y.value = "No media ID provided", g.value = !1;
         return;
       }
       try {
         const u = new te({ baseUrl: t.value }), [o, c] = await Promise.all([
-          u.get(`/api/v1/media/${f}`),
-          u.get(`/api/v1/media/${f}/playback-info`).catch(() => null)
+          u.get(`/api/v1/media/${m}`),
+          u.get(`/api/v1/media/${m}/playback-info`).catch(() => null)
         ]);
-        i.value = o, c != null && c.url ? v.value = c.url : v.value = `${t.value}/media/${f}/stream`;
+        r.value = o, c != null && c.url ? p.value = c.url : p.value = `${t.value}/media/${m}/stream`;
       } catch (u) {
         y.value = u instanceof Error ? u.message : "Failed to load media";
       } finally {
-        m.value = !1;
+        g.value = !1;
       }
     }
-    return j(h), (f, u) => (a(), n("div", ds, [
-      m.value ? (a(), n("div", vs, "Loading...")) : y.value ? (a(), n("div", ps, [
+    return j(h), (m, u) => (a(), n("div", ds, [
+      g.value ? (a(), n("div", vs, "Loading...")) : y.value ? (a(), n("div", ps, [
         e("p", null, d(y.value), 1),
         e("button", {
           class: "retry-btn",
           onClick: h
         }, "Retry")
-      ])) : i.value ? (a(), re(us, {
+      ])) : r.value ? (a(), re(us, {
         key: 2,
-        media: i.value,
-        "stream-url": v.value
+        media: r.value,
+        "stream-url": p.value
       }, null, 8, ["media", "stream-url"])) : w("", !0)
     ]));
   }
@@ -764,55 +764,55 @@ class gs {
     this.storage.removeItem(ae), this.storage.removeItem(ne), this.storage.removeItem(oe);
   }
 }
-const ie = pe("auth", () => {
-  const l = new gs(), t = new te({ tokenStore: l }), s = p(null), i = p(!1), v = p(null), m = D(() => l.getAccessToken() !== null), y = D(() => {
-    var c;
-    return ((c = s.value) == null ? void 0 : c.is_admin) === !0;
+const ce = pe("auth", () => {
+  const l = new gs(), t = ie("apiBase", ""), s = new te({ tokenStore: l, baseUrl: t }), r = f(null), p = f(!1), g = f(null), y = B(() => l.getAccessToken() !== null), h = B(() => {
+    var b;
+    return ((b = r.value) == null ? void 0 : b.is_admin) === !0;
   });
-  async function h(c, b) {
-    i.value = !0, v.value = null;
+  async function m(b, i) {
+    p.value = !0, g.value = null;
     try {
-      const r = await t.post("/api/v1/auth/login", { email: c, password: b });
-      return l.setAccessToken(r.access_token), l.setRefreshToken(r.refresh_token), await u(), !0;
-    } catch (r) {
-      return v.value = r instanceof Error ? r.message : "Login failed", !1;
-    } finally {
-      i.value = !1;
-    }
-  }
-  async function f(c, b, r) {
-    i.value = !0, v.value = null;
-    try {
-      const _ = await t.post("/api/v1/auth/register", { email: c, username: b, password: r });
-      return l.setAccessToken(_.access_token), l.setRefreshToken(_.refresh_token), await u(), !0;
+      const _ = await s.post("/api/v1/auth/login", { email: b, password: i });
+      return l.setAccessToken(_.access_token), l.setRefreshToken(_.refresh_token), await o(), !0;
     } catch (_) {
-      return v.value = _ instanceof Error ? _.message : "Registration failed", !1;
+      return g.value = _ instanceof Error ? _.message : "Login failed", !1;
     } finally {
-      i.value = !1;
+      p.value = !1;
     }
   }
-  async function u() {
-    if (m.value)
+  async function u(b, i, _) {
+    p.value = !0, g.value = null;
+    try {
+      const v = await s.post("/api/v1/auth/register", { email: b, username: i, password: _ });
+      return l.setAccessToken(v.access_token), l.setRefreshToken(v.refresh_token), await o(), !0;
+    } catch (v) {
+      return g.value = v instanceof Error ? v.message : "Registration failed", !1;
+    } finally {
+      p.value = !1;
+    }
+  }
+  async function o() {
+    if (y.value)
       try {
-        s.value = await t.getCurrentUser();
+        r.value = await s.getCurrentUser();
       } catch {
-        s.value = null, l.clear();
+        r.value = null, l.clear();
       }
   }
-  function o() {
-    l.clear(), s.value = null;
+  function c() {
+    l.clear(), r.value = null;
   }
   return {
-    user: s,
-    loading: i,
-    error: v,
-    isLoggedIn: m,
-    isAdmin: y,
-    client: t,
-    login: h,
-    signup: f,
-    fetchUser: u,
-    logout: o
+    user: r,
+    loading: p,
+    error: g,
+    isLoggedIn: y,
+    isAdmin: h,
+    client: s,
+    login: m,
+    signup: u,
+    fetchUser: o,
+    logout: c
   };
 }), ms = {
   key: 0,
@@ -821,18 +821,18 @@ const ie = pe("auth", () => {
   __name: "LoginForm",
   emits: ["success"],
   setup(l, { emit: t }) {
-    const s = t, i = ie(), v = _e(), m = p(""), y = p(""), h = p(!1);
-    async function f() {
-      await i.login(m.value, y.value) && (s("success"), v.push("/app"));
+    const s = t, r = ce(), p = _e(), g = f(""), y = f(""), h = f(!1);
+    async function m() {
+      await r.login(g.value, y.value) && (s("success"), p.push("/app"));
     }
     return (u, o) => {
       const c = ve("router-link");
       return a(), n("form", {
         class: "login-form",
-        onSubmit: W(f, ["prevent"])
+        onSubmit: W(m, ["prevent"])
       }, [
         o[7] || (o[7] = e("h2", { class: "form-title" }, "Sign in to Phlix", -1)),
-        $(i).error ? (a(), n("div", ms, d($(i).error), 1)) : w("", !0),
+        $(r).error ? (a(), n("div", ms, d($(r).error), 1)) : w("", !0),
         e("div", hs, [
           o[3] || (o[3] = e("label", {
             for: "email",
@@ -840,14 +840,14 @@ const ie = pe("auth", () => {
           }, "Email", -1)),
           V(e("input", {
             id: "email",
-            "onUpdate:modelValue": o[0] || (o[0] = (b) => m.value = b),
+            "onUpdate:modelValue": o[0] || (o[0] = (b) => g.value = b),
             type: "email",
             class: "input",
             placeholder: "you@example.com",
             required: "",
             autocomplete: "email"
           }, null, 512), [
-            [Z, m.value]
+            [Z, g.value]
           ])
         ]),
         e("div", ys, [
@@ -877,8 +877,8 @@ const ie = pe("auth", () => {
         e("button", {
           type: "submit",
           class: "submit-btn",
-          disabled: $(i).loading
-        }, d($(i).loading ? "Signing in..." : "Sign in"), 9, ks),
+          disabled: $(r).loading
+        }, d($(r).loading ? "Signing in..." : "Sign in"), 9, ks),
         e("p", ws, [
           o[6] || (o[6] = Y(" Don't have an account? ", -1)),
           N(c, {
@@ -907,55 +907,55 @@ const ie = pe("auth", () => {
 }), Rs = /* @__PURE__ */ x(xs, [["__scopeId", "data-v-9c53ce6a"]]), Es = {
   key: 0,
   class: "form-error"
-}, Fs = { class: "field" }, Ls = { class: "field" }, Is = { class: "field" }, As = { class: "password-wrapper" }, Ms = ["type"], Us = { class: "field" }, Ns = ["type"], Ds = ["disabled"], Bs = { class: "form-footer" }, qs = /* @__PURE__ */ E({
+}, Fs = { class: "field" }, Ls = { class: "field" }, Is = { class: "field" }, As = { class: "password-wrapper" }, Ms = ["type"], Us = { class: "field" }, Ns = ["type"], Bs = ["disabled"], Ds = { class: "form-footer" }, qs = /* @__PURE__ */ E({
   __name: "SignupForm",
   emits: ["success"],
   setup(l, { emit: t }) {
-    const s = t, i = ie(), v = _e(), m = p(""), y = p(""), h = p(""), f = p(""), u = p(!1), o = p(null);
+    const s = t, r = ce(), p = _e(), g = f(""), y = f(""), h = f(""), m = f(""), u = f(!1), o = f(null);
     async function c() {
       if (o.value = null, h.value.length < 8) {
         o.value = "Password must be at least 8 characters.";
         return;
       }
-      if (h.value !== f.value) {
+      if (h.value !== m.value) {
         o.value = "Passwords do not match.";
         return;
       }
-      await i.signup(m.value, y.value, h.value) && (s("success"), v.push("/app"));
+      await r.signup(g.value, y.value, h.value) && (s("success"), p.push("/app"));
     }
-    return (b, r) => {
+    return (b, i) => {
       const _ = ve("router-link");
       return a(), n("form", {
         class: "signup-form",
         onSubmit: W(c, ["prevent"])
       }, [
-        r[11] || (r[11] = e("h2", { class: "form-title" }, "Create your Phlix account", -1)),
-        $(i).error || o.value ? (a(), n("div", Es, d($(i).error || o.value), 1)) : w("", !0),
+        i[11] || (i[11] = e("h2", { class: "form-title" }, "Create your Phlix account", -1)),
+        $(r).error || o.value ? (a(), n("div", Es, d($(r).error || o.value), 1)) : w("", !0),
         e("div", Fs, [
-          r[5] || (r[5] = e("label", {
+          i[5] || (i[5] = e("label", {
             for: "email",
             class: "label"
           }, "Email", -1)),
           V(e("input", {
             id: "email",
-            "onUpdate:modelValue": r[0] || (r[0] = (g) => m.value = g),
+            "onUpdate:modelValue": i[0] || (i[0] = (v) => g.value = v),
             type: "email",
             class: "input",
             placeholder: "you@example.com",
             required: "",
             autocomplete: "email"
           }, null, 512), [
-            [Z, m.value]
+            [Z, g.value]
           ])
         ]),
         e("div", Ls, [
-          r[6] || (r[6] = e("label", {
+          i[6] || (i[6] = e("label", {
             for: "username",
             class: "label"
           }, "Username", -1)),
           V(e("input", {
             id: "username",
-            "onUpdate:modelValue": r[1] || (r[1] = (g) => y.value = g),
+            "onUpdate:modelValue": i[1] || (i[1] = (v) => y.value = v),
             type: "text",
             class: "input",
             placeholder: "Your username",
@@ -967,14 +967,14 @@ const ie = pe("auth", () => {
           ])
         ]),
         e("div", Is, [
-          r[7] || (r[7] = e("label", {
+          i[7] || (i[7] = e("label", {
             for: "password",
             class: "label"
           }, "Password", -1)),
           e("div", As, [
             V(e("input", {
               id: "password",
-              "onUpdate:modelValue": r[2] || (r[2] = (g) => h.value = g),
+              "onUpdate:modelValue": i[2] || (i[2] = (v) => h.value = v),
               type: u.value ? "text" : "password",
               class: "input",
               placeholder: "At least 8 characters",
@@ -987,39 +987,39 @@ const ie = pe("auth", () => {
             e("button", {
               type: "button",
               class: "toggle-password",
-              onClick: r[3] || (r[3] = (g) => u.value = !u.value)
+              onClick: i[3] || (i[3] = (v) => u.value = !u.value)
             }, d(u.value ? "🙈" : "👁"), 1)
           ])
         ]),
         e("div", Us, [
-          r[8] || (r[8] = e("label", {
+          i[8] || (i[8] = e("label", {
             for: "confirm",
             class: "label"
           }, "Confirm password", -1)),
           V(e("input", {
             id: "confirm",
-            "onUpdate:modelValue": r[4] || (r[4] = (g) => f.value = g),
+            "onUpdate:modelValue": i[4] || (i[4] = (v) => m.value = v),
             type: u.value ? "text" : "password",
             class: "input",
             placeholder: "Repeat your password",
             required: "",
             autocomplete: "new-password"
           }, null, 8, Ns), [
-            [le, f.value]
+            [le, m.value]
           ])
         ]),
         e("button", {
           type: "submit",
           class: "submit-btn",
-          disabled: $(i).loading
-        }, d($(i).loading ? "Creating account..." : "Create account"), 9, Ds),
-        e("p", Bs, [
-          r[10] || (r[10] = Y(" Already have an account? ", -1)),
+          disabled: $(r).loading
+        }, d($(r).loading ? "Creating account..." : "Create account"), 9, Bs),
+        e("p", Ds, [
+          i[10] || (i[10] = Y(" Already have an account? ", -1)),
           N(_, {
             to: "/app/login",
             class: "link"
           }, {
-            default: z(() => [...r[9] || (r[9] = [
+            default: z(() => [...i[9] || (i[9] = [
               Y("Sign in", -1)
             ])]),
             _: 1
@@ -1054,7 +1054,7 @@ const ie = pe("auth", () => {
   },
   emits: ["saved"],
   setup(l, { emit: t }) {
-    const s = l, i = t, v = ie(), m = p({}), y = p(!0), h = p(!1), f = p(null), u = p(null), o = [
+    const s = l, r = t, p = ce(), g = f({}), y = f(!0), h = f(!1), m = f(null), u = f(null), o = [
       "transcoding",
       "metadata",
       "markers",
@@ -1064,37 +1064,37 @@ const ie = pe("auth", () => {
       "newsletter",
       "port-forward",
       "scrobblers"
-    ], c = D(
+    ], c = B(
       () => s.groups ? o.filter((R) => s.groups.includes(R)) : o
     );
     async function b() {
-      y.value = !0, f.value = null;
+      y.value = !0, m.value = null;
       try {
-        const R = await v.client.get("/api/v1/users/me/settings");
-        m.value = R;
+        const R = await p.client.get("/api/v1/users/me/settings");
+        g.value = R;
       } catch (R) {
-        f.value = R instanceof Error ? R.message : "Failed to load settings";
+        m.value = R instanceof Error ? R.message : "Failed to load settings";
       } finally {
         y.value = !1;
       }
     }
-    async function r() {
-      h.value = !0, f.value = null, u.value = null;
+    async function i() {
+      h.value = !0, m.value = null, u.value = null;
       try {
-        await v.client.put("/api/v1/users/me/settings", m.value), u.value = "Settings saved.", i("saved", m.value), setTimeout(() => {
+        await p.client.put("/api/v1/users/me/settings", g.value), u.value = "Settings saved.", r("saved", g.value), setTimeout(() => {
           u.value = null;
         }, 3e3);
       } catch (R) {
-        f.value = R instanceof Error ? R.message : "Failed to save settings";
+        m.value = R instanceof Error ? R.message : "Failed to save settings";
       } finally {
         h.value = !1;
       }
     }
-    function _(R, B) {
-      m.value[R] = B;
+    function _(R, D) {
+      g.value[R] = D;
     }
     j(b);
-    const g = {
+    const v = {
       transcoding: "Transcoding",
       metadata: "Metadata",
       markers: "Marker Detection",
@@ -1124,13 +1124,13 @@ const ie = pe("auth", () => {
       "trakt.client_secret": { label: "Trakt client secret", type: "string" },
       "trakt.redirect_uri": { label: "Trakt redirect URI", type: "string" }
     };
-    return (R, B) => (a(), n("div", Hs, [
-      y.value ? (a(), n("div", zs, "Loading settings...")) : f.value ? (a(), n("div", Js, d(f.value), 1)) : (a(), n(L, { key: 2 }, [
+    return (R, D) => (a(), n("div", Hs, [
+      y.value ? (a(), n("div", zs, "Loading settings...")) : m.value ? (a(), n("div", Js, d(m.value), 1)) : (a(), n(L, { key: 2 }, [
         (a(!0), n(L, null, I(c.value, (O) => (a(), n("div", {
           key: O,
           class: "settings-group"
         }, [
-          e("h3", Ks, d(g[O]), 1),
+          e("h3", Ks, d(v[O]), 1),
           (a(), n(L, null, I(A, (q, F) => V(e("div", {
             key: F,
             class: "setting-row"
@@ -1145,21 +1145,21 @@ const ie = pe("auth", () => {
                 id: F,
                 type: "checkbox",
                 class: "toggle",
-                checked: !!m.value[F],
+                checked: !!g.value[F],
                 onChange: (C) => _(F, C.target.checked)
               }, null, 40, Qs)) : q.type === "number" ? (a(), n("input", {
                 key: 1,
                 id: F,
                 type: "number",
                 class: "input number-input",
-                value: m.value[F],
+                value: g.value[F],
                 onChange: (C) => _(F, Number(C.target.value))
               }, null, 40, Zs)) : (a(), n("input", {
                 key: 2,
                 id: F,
                 type: "text",
                 class: "input",
-                value: m.value[F] ?? "",
+                value: g.value[F] ?? "",
                 onChange: (C) => _(F, C.target.value)
               }, null, 40, ea))
             ])
@@ -1172,7 +1172,7 @@ const ie = pe("auth", () => {
           e("button", {
             class: "save-btn",
             disabled: h.value,
-            onClick: r
+            onClick: i
           }, d(h.value ? "Saving..." : "Save settings"), 9, aa)
         ])
       ], 64))
@@ -1238,15 +1238,15 @@ function ua(l) {
     props: { appName: l.app }
   }), s;
 }
-function Bn(l) {
+function Dn(l) {
   const t = {
     ...ca(),
     ...l
-  }, s = Te(), i = t.routerBase || "/app", v = Re({
-    history: Ee(i),
+  }, s = Te(), r = t.routerBase || "/app", p = Re({
+    history: Ee(r),
     routes: ua(t)
-  }), m = Ce(je);
-  return m.provide("apiBase", t.apiBase), m.use(s), m.use(v), m;
+  }), g = Ce(je);
+  return g.provide("apiBase", t.apiBase), g.use(s), g.use(p), g;
 }
 const da = { class: "library-scan-page" }, va = {
   key: 0,
@@ -1266,17 +1266,17 @@ const da = { class: "library-scan-page" }, va = {
 }, Ta = /* @__PURE__ */ E({
   __name: "LibraryScanPage",
   setup(l) {
-    const t = p([]), s = p({}), i = p(!0), v = p(null);
-    async function m() {
+    const t = f([]), s = f({}), r = f(!0), p = f(null);
+    async function g() {
       try {
         const c = await U.get("/api/v1/libraries");
         t.value = c.libraries || [];
         for (const b of t.value)
           y(b.id);
       } catch (c) {
-        v.value = c instanceof Error ? c.message : "Failed to load libraries";
+        p.value = c instanceof Error ? c.message : "Failed to load libraries";
       } finally {
-        i.value = !1;
+        r.value = !1;
       }
     }
     async function y(c) {
@@ -1290,14 +1290,14 @@ const da = { class: "library-scan-page" }, va = {
       try {
         await U.post(`/api/v1/libraries/${c}/scan`), await y(c);
       } catch (b) {
-        v.value = b instanceof Error ? b.message : "Failed to trigger scan";
+        p.value = b instanceof Error ? b.message : "Failed to trigger scan";
       }
     }
-    async function f(c) {
+    async function m(c) {
       try {
         await U.post(`/api/v1/libraries/${c}/rescan`), await y(c);
       } catch (b) {
-        v.value = b instanceof Error ? b.message : "Failed to trigger rescan";
+        p.value = b instanceof Error ? b.message : "Failed to trigger rescan";
       }
     }
     function u(c) {
@@ -1319,39 +1319,39 @@ const da = { class: "library-scan-page" }, va = {
       }
     }
     return j(() => {
-      m();
+      g();
     }), (c, b) => (a(), n("div", da, [
       b[0] || (b[0] = e("div", { class: "scan-header" }, [
         e("h1", { class: "scan-title" }, "Library Scanner"),
         e("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")
       ], -1)),
-      i.value ? (a(), n("div", va, "Loading libraries...")) : v.value ? (a(), n("div", pa, d(v.value), 1)) : (a(), n("div", _a, [
-        (a(!0), n(L, null, I(t.value, (r) => {
-          var _, g, A, R;
+      r.value ? (a(), n("div", va, "Loading libraries...")) : p.value ? (a(), n("div", pa, d(p.value), 1)) : (a(), n("div", _a, [
+        (a(!0), n(L, null, I(t.value, (i) => {
+          var _, v, A, R;
           return a(), n("div", {
-            key: r.id,
+            key: i.id,
             class: "library-card"
           }, [
             e("div", fa, [
-              e("h3", ga, d(r.name), 1),
-              e("span", ma, d(r.type), 1),
-              e("p", ha, d(r.paths.join(", ")), 1),
+              e("h3", ga, d(i.name), 1),
+              e("span", ma, d(i.type), 1),
+              e("p", ha, d(i.paths.join(", ")), 1),
               e("div", ya, [
-                r.item_count !== void 0 ? (a(), n("span", ba, d(r.item_count) + " items", 1)) : w("", !0),
-                e("span", null, "Last scan: " + d(u(r.last_scan_at)), 1)
+                i.item_count !== void 0 ? (a(), n("span", ba, d(i.item_count) + " items", 1)) : w("", !0),
+                e("span", null, "Last scan: " + d(u(i.last_scan_at)), 1)
               ]),
-              s.value[r.id] ? (a(), n("div", $a, d(o(s.value[r.id])), 1)) : w("", !0)
+              s.value[i.id] ? (a(), n("div", $a, d(o(s.value[i.id])), 1)) : w("", !0)
             ]),
             e("div", ka, [
               e("button", {
                 class: "btn btn-scan",
-                onClick: (B) => h(r.id),
-                disabled: ((_ = s.value[r.id]) == null ? void 0 : _.status) === "running" || ((g = s.value[r.id]) == null ? void 0 : g.status) === "queued"
+                onClick: (D) => h(i.id),
+                disabled: ((_ = s.value[i.id]) == null ? void 0 : _.status) === "running" || ((v = s.value[i.id]) == null ? void 0 : v.status) === "queued"
               }, " Scan ", 8, wa),
               e("button", {
                 class: "btn btn-rescan",
-                onClick: (B) => f(r.id),
-                disabled: ((A = s.value[r.id]) == null ? void 0 : A.status) === "running" || ((R = s.value[r.id]) == null ? void 0 : R.status) === "queued"
+                onClick: (D) => m(i.id),
+                disabled: ((A = s.value[i.id]) == null ? void 0 : A.status) === "running" || ((R = s.value[i.id]) == null ? void 0 : R.status) === "queued"
               }, " Rescan ", 8, Sa)
             ])
           ]);
@@ -1375,18 +1375,18 @@ const da = { class: "library-scan-page" }, va = {
 }, Na = /* @__PURE__ */ E({
   __name: "MyServersPage",
   setup(l) {
-    const t = p([]), s = p(!0), i = p(null);
-    async function v() {
+    const t = f([]), s = f(!0), r = f(null);
+    async function p() {
       try {
         const h = await U.get("/api/v1/servers");
         t.value = h.servers || [];
       } catch (h) {
-        i.value = h instanceof Error ? h.message : "Failed to load servers";
+        r.value = h instanceof Error ? h.message : "Failed to load servers";
       } finally {
         s.value = !1;
       }
     }
-    function m(h) {
+    function g(h) {
       switch (h) {
         case "online":
           return "#22c55e";
@@ -1402,20 +1402,20 @@ const da = { class: "library-scan-page" }, va = {
       return h ? new Date(h).toLocaleString() : "Never";
     }
     return j(() => {
-      v();
-    }), (h, f) => (a(), n("div", Pa, [
-      f[2] || (f[2] = e("div", { class: "page-header" }, [
+      p();
+    }), (h, m) => (a(), n("div", Pa, [
+      m[2] || (m[2] = e("div", { class: "page-header" }, [
         e("h1", { class: "page-title" }, "My Servers"),
         e("p", { class: "page-subtitle" }, "Manage your connected media servers")
       ], -1)),
-      s.value ? (a(), n("div", xa, "Loading servers...")) : i.value ? (a(), n("div", Ra, d(i.value), 1)) : (a(), n("div", Ea, [
+      s.value ? (a(), n("div", xa, "Loading servers...")) : r.value ? (a(), n("div", Ra, d(r.value), 1)) : (a(), n("div", Ea, [
         (a(!0), n(L, null, I(t.value, (u) => (a(), n("div", {
           key: u.id,
           class: "server-card"
         }, [
           e("div", {
             class: "server-status",
-            style: ee({ backgroundColor: m(u.status) })
+            style: ee({ backgroundColor: g(u.status) })
           }, null, 4),
           e("div", Fa, [
             e("h3", La, d(u.name), 1),
@@ -1426,18 +1426,18 @@ const da = { class: "library-scan-page" }, va = {
               e("span", null, "Last seen: " + d(y(u.last_seen)), 1)
             ])
           ]),
-          f[0] || (f[0] = e("div", { class: "server-actions" }, [
+          m[0] || (m[0] = e("div", { class: "server-actions" }, [
             e("button", { class: "btn btn-primary" }, "Manage")
           ], -1))
         ]))), 128)),
-        t.value.length === 0 ? (a(), n("div", Ua, [...f[1] || (f[1] = [
+        t.value.length === 0 ? (a(), n("div", Ua, [...m[1] || (m[1] = [
           e("p", null, "No servers connected yet.", -1),
           e("button", { class: "btn btn-primary" }, "Add Server", -1)
         ])])) : w("", !0)
       ]))
     ]));
   }
-}), Gn = /* @__PURE__ */ x(Na, [["__scopeId", "data-v-b9237da4"]]), Da = { class: "federation-page" }, Ba = {
+}), Gn = /* @__PURE__ */ x(Na, [["__scopeId", "data-v-b9237da4"]]), Ba = { class: "federation-page" }, Da = {
   key: 0,
   class: "loading"
 }, qa = {
@@ -1455,29 +1455,29 @@ const da = { class: "library-scan-page" }, va = {
 }, Za = { class: "add-peer-section" }, en = /* @__PURE__ */ E({
   __name: "FederationPage",
   setup(l) {
-    const t = p([]), s = p(!0), i = p(null);
-    async function v() {
+    const t = f([]), s = f(!0), r = f(null);
+    async function p() {
       try {
         const u = await U.get("/api/v1/federation/peers");
         t.value = u.peers || [];
       } catch (u) {
-        i.value = u instanceof Error ? u.message : "Failed to load federation peers";
+        r.value = u instanceof Error ? u.message : "Failed to load federation peers";
       } finally {
         s.value = !1;
       }
     }
-    async function m(u) {
+    async function g(u) {
       try {
-        await U.post("/api/v1/federation/connect", { url: u }), await v();
+        await U.post("/api/v1/federation/connect", { url: u }), await p();
       } catch (o) {
-        i.value = o instanceof Error ? o.message : "Failed to connect to peer";
+        r.value = o instanceof Error ? o.message : "Failed to connect to peer";
       }
     }
     async function y(u) {
       try {
-        await U.post(`/api/v1/federation/peers/${u}/disconnect`), await v();
+        await U.post(`/api/v1/federation/peers/${u}/disconnect`), await p();
       } catch (o) {
-        i.value = o instanceof Error ? o.message : "Failed to disconnect peer";
+        r.value = o instanceof Error ? o.message : "Failed to disconnect peer";
       }
     }
     function h(u) {
@@ -1492,17 +1492,17 @@ const da = { class: "library-scan-page" }, va = {
           return "#6b7280";
       }
     }
-    function f(u) {
+    function m(u) {
       return u ? new Date(u).toLocaleString() : "Never";
     }
     return j(() => {
-      v();
-    }), (u, o) => (a(), n("div", Da, [
+      p();
+    }), (u, o) => (a(), n("div", Ba, [
       o[5] || (o[5] = e("div", { class: "page-header" }, [
         e("h1", { class: "page-title" }, "Federation"),
         e("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")
       ], -1)),
-      s.value ? (a(), n("div", Ba, "Loading federation peers...")) : i.value ? (a(), n("div", qa, d(i.value), 1)) : (a(), n("div", Ga, [
+      s.value ? (a(), n("div", Da, "Loading federation peers...")) : r.value ? (a(), n("div", qa, d(r.value), 1)) : (a(), n("div", Ga, [
         e("div", Va, [
           o[2] || (o[2] = e("h2", { class: "section-title" }, "Connected Peers", -1)),
           e("div", ja, [
@@ -1519,7 +1519,7 @@ const da = { class: "library-scan-page" }, va = {
                 e("p", Ha, d(c.url), 1),
                 e("div", za, [
                   c.shared_libraries_count !== void 0 ? (a(), n("span", Ja, d(c.shared_libraries_count) + " shared libraries", 1)) : w("", !0),
-                  e("span", null, "Last sync: " + d(f(c.last_sync)), 1)
+                  e("span", null, "Last sync: " + d(m(c.last_sync)), 1)
                 ])
               ]),
               e("div", Ka, [
@@ -1539,7 +1539,7 @@ const da = { class: "library-scan-page" }, va = {
           o[4] || (o[4] = e("h2", { class: "section-title" }, "Add Peer", -1)),
           e("form", {
             class: "add-peer-form",
-            onSubmit: o[0] || (o[0] = W((c) => m(""), ["prevent"]))
+            onSubmit: o[0] || (o[0] = W((c) => g(""), ["prevent"]))
           }, [...o[3] || (o[3] = [
             e("input", {
               type: "url",
@@ -1573,38 +1573,38 @@ const da = { class: "library-scan-page" }, va = {
 }, fn = /* @__PURE__ */ E({
   __name: "ManageSharesPage",
   setup(l) {
-    const t = p([]), s = p(!0), i = p(null);
-    async function v() {
+    const t = f([]), s = f(!0), r = f(null);
+    async function p() {
       try {
-        const f = await U.get("/api/v1/shares");
-        t.value = f.shares || [];
-      } catch (f) {
-        i.value = f instanceof Error ? f.message : "Failed to load shares";
+        const m = await U.get("/api/v1/shares");
+        t.value = m.shares || [];
+      } catch (m) {
+        r.value = m instanceof Error ? m.message : "Failed to load shares";
       } finally {
         s.value = !1;
       }
     }
-    async function m(f) {
+    async function g(m) {
       try {
-        await U.delete(`/api/v1/shares/${f}`), await v();
+        await U.delete(`/api/v1/shares/${m}`), await p();
       } catch (u) {
-        i.value = u instanceof Error ? u.message : "Failed to revoke share";
+        r.value = u instanceof Error ? u.message : "Failed to revoke share";
       }
     }
-    function y(f) {
-      return new Date(f).toLocaleString();
+    function y(m) {
+      return new Date(m).toLocaleString();
     }
-    function h(f) {
-      return f ? new Date(f) < /* @__PURE__ */ new Date() : !1;
+    function h(m) {
+      return m ? new Date(m) < /* @__PURE__ */ new Date() : !1;
     }
     return j(() => {
-      v();
-    }), (f, u) => (a(), n("div", tn, [
+      p();
+    }), (m, u) => (a(), n("div", tn, [
       u[1] || (u[1] = e("div", { class: "page-header" }, [
         e("h1", { class: "page-title" }, "Manage Shares"),
         e("p", { class: "page-subtitle" }, "View and manage your shared libraries")
       ], -1)),
-      s.value ? (a(), n("div", sn, "Loading shares...")) : i.value ? (a(), n("div", an, d(i.value), 1)) : (a(), n("div", nn, [
+      s.value ? (a(), n("div", sn, "Loading shares...")) : r.value ? (a(), n("div", an, d(r.value), 1)) : (a(), n("div", nn, [
         (a(!0), n(L, null, I(t.value, (o) => (a(), n("div", {
           key: o.id,
           class: "share-card"
@@ -1626,7 +1626,7 @@ const da = { class: "library-scan-page" }, va = {
           e("div", vn, [
             e("button", {
               class: "btn btn-danger",
-              onClick: (c) => m(o.id)
+              onClick: (c) => g(o.id)
             }, "Revoke", 8, pn)
           ])
         ]))), 128)),
@@ -1663,7 +1663,7 @@ const da = { class: "library-scan-page" }, va = {
 }, Fn = ["disabled"], Ln = { class: "page-info" }, In = ["disabled"], An = /* @__PURE__ */ E({
   __name: "AuditLogsPage",
   setup(l) {
-    const t = p([]), s = p(!0), i = p(null), v = p(1), m = p(1);
+    const t = f([]), s = f(!0), r = f(null), p = f(1), g = f(1);
     async function y(o = 1) {
       try {
         s.value = !0;
@@ -1671,9 +1671,9 @@ const da = { class: "library-scan-page" }, va = {
           "/api/v1/audit-logs",
           { page: String(o) }
         );
-        t.value = c.logs || [], v.value = c.page || 1, m.value = c.total_pages || 1;
+        t.value = c.logs || [], p.value = c.page || 1, g.value = c.total_pages || 1;
       } catch (c) {
-        i.value = c instanceof Error ? c.message : "Failed to load audit logs";
+        r.value = c instanceof Error ? c.message : "Failed to load audit logs";
       } finally {
         s.value = !1;
       }
@@ -1681,7 +1681,7 @@ const da = { class: "library-scan-page" }, va = {
     function h(o) {
       return new Date(o).toLocaleString();
     }
-    function f(o) {
+    function m(o) {
       return o.includes("create") || o.includes("add") ? "#22c55e" : o.includes("delete") || o.includes("remove") ? "#ef4444" : o.includes("update") || o.includes("edit") ? "#3b82f6" : o.includes("login") || o.includes("auth") ? "#8b5cf6" : "#6b7280";
     }
     function u(o) {
@@ -1694,7 +1694,7 @@ const da = { class: "library-scan-page" }, va = {
         e("h1", { class: "page-title" }, "Audit Logs"),
         e("p", { class: "page-subtitle" }, "View system activity and user actions")
       ], -1)),
-      s.value ? (a(), n("div", mn, "Loading audit logs...")) : i.value ? (a(), n("div", hn, d(i.value), 1)) : (a(), n("div", yn, [
+      s.value ? (a(), n("div", mn, "Loading audit logs...")) : r.value ? (a(), n("div", hn, d(r.value), 1)) : (a(), n("div", yn, [
         e("div", bn, [
           (a(!0), n(L, null, I(t.value, (b) => (a(), n("div", {
             key: b.id,
@@ -1702,7 +1702,7 @@ const da = { class: "library-scan-page" }, va = {
           }, [
             e("div", {
               class: "log-icon",
-              style: ee({ backgroundColor: f(b.action) })
+              style: ee({ backgroundColor: m(b.action) })
             }, d(u(b.action)), 5),
             e("div", $n, [
               e("div", kn, [
@@ -1719,17 +1719,17 @@ const da = { class: "library-scan-page" }, va = {
             e("p", null, "No audit logs found.", -1)
           ])])) : w("", !0)
         ]),
-        m.value > 1 ? (a(), n("div", En, [
+        g.value > 1 ? (a(), n("div", En, [
           e("button", {
             class: "btn btn-secondary",
-            disabled: v.value <= 1,
-            onClick: c[0] || (c[0] = (b) => y(v.value - 1))
+            disabled: p.value <= 1,
+            onClick: c[0] || (c[0] = (b) => y(p.value - 1))
           }, " Previous ", 8, Fn),
-          e("span", Ln, "Page " + d(v.value) + " of " + d(m.value), 1),
+          e("span", Ln, "Page " + d(p.value) + " of " + d(g.value), 1),
           e("button", {
             class: "btn btn-secondary",
-            disabled: v.value >= m.value,
-            onClick: c[1] || (c[1] = (b) => y(v.value + 1))
+            disabled: p.value >= g.value,
+            onClick: c[1] || (c[1] = (b) => y(p.value + 1))
           }, " Next ", 8, In)
         ])) : w("", !0)
       ]))
@@ -1759,8 +1759,8 @@ export {
   ia as SettingsPage,
   Gs as SignupForm,
   Ys as SignupPage,
-  Bn as createPhlixApp,
-  ie as useAuthStore,
+  Dn as createPhlixApp,
+  ce as useAuthStore,
   fe as useMediaStore
 };
 //# sourceMappingURL=phlix-ui.js.map

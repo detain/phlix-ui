@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import { ApiClient, type AuthUser } from '../api/client';
 import { LocalStorageTokenStore } from '../api/tokenStore';
 
 export const useAuthStore = defineStore('auth', () => {
     const tokenStore = new LocalStorageTokenStore();
-    const client = new ApiClient({ tokenStore });
+    const apiBase = inject<string>('apiBase', '');
+    const client = new ApiClient({ tokenStore, baseUrl: apiBase });
 
     const user = ref<AuthUser | null>(null);
     const loading = ref(false);
