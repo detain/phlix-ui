@@ -13,4 +13,11 @@ export type { MediaItem } from './types/media-item';
 export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
 export type { ServerSettings } from './types/server-settings';
 
+export { default as MediaCard } from './components/MediaCard.vue';
+export { default as MediaGrid } from './components/MediaGrid.vue';
+export { default as FilterBar } from './components/FilterBar.vue';
+export { default as BrowsePage } from './pages/BrowsePage.vue';
+
+export { useMediaStore } from './stores/useMediaStore';
+
 export * from './tokens';
