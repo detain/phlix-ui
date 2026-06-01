@@ -30,6 +30,10 @@ export interface ApiClientOptions {
     fetchImpl?: typeof fetch;
 }
 
+export function normalizeBool(value: unknown): boolean {
+    return value === true || value === 1 || value === '1' || value === 'true';
+}
+
 export class ApiClient {
     private readonly baseUrl: string;
     private readonly tokens: TokenStore;
@@ -50,22 +54,92 @@ export class ApiClient {
     }
 
     async request<T = unknown>(method: string, endpoint: string, data: unknown = null): Promise<T> {
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
+        const build = (): RequestInit => {
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            const token = this.tokens.getAccessToken();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            const init: RequestInit = { method, headers, credentials: 'same-origin' };
+            if (data !== null && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+                init.body = JSON.stringify(data);
+            }
+            return init;
         };
-        const token = this.tokens.getAccessToken();
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+
+        const url = `${this.baseUrl}${endpoint}`;
+        let response = await this.doFetch(url, build());
+
+        if (response.status === 401) {
+            const refreshed = await this.refreshToken();
+            if (refreshed) {
+                response = await this.doFetch(url, build());
+            }
         }
-        const init: RequestInit = { method, headers, credentials: 'same-origin' };
-        if (data !== null && ['POST', 'PUT', 'PATCH'].includes(method)) {
-            init.body = JSON.stringify(data);
-        }
-        const response = await this.doFetch(`${this.baseUrl}${endpoint}`, init);
+
+        return this.handleResponse<T>(response);
+    }
+
+    private async handleResponse<T>(response: Response): Promise<T> {
+        const contentType = response.headers.get('content-type') ?? '';
+        const isJson = contentType.includes('application/json');
+        const payload: unknown = isJson
+            ? await response.json()
+            : await response.text();
+
         if (!response.ok) {
-            throw new ApiError('Request failed', response.status);
+            const message = this.extractError(payload);
+            throw new ApiError(message, response.status, payload);
         }
-        return response.json() as Promise<T>;
+
+        return payload as T;
+    }
+
+    private extractError(payload: unknown): string {
+        if (payload && typeof payload === 'object') {
+            const obj = payload as Record<string, unknown>;
+            if (typeof obj['error'] === 'string') {
+                return obj['error'];
+            }
+            if (typeof obj['message'] === 'string') {
+                return obj['message'];
+            }
+        }
+        return 'Request failed';
+    }
+
+    async refreshToken(): Promise<boolean> {
+        const refreshToken = this.tokens.getRefreshToken();
+        if (!refreshToken) {
+            return false;
+        }
+        try {
+            const response = await this.doFetch(`${this.baseUrl}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+            if (!response.ok) {
+                return false;
+            }
+            const data = (await response.json()) as {
+                access_token?: string;
+                refresh_token?: string;
+            };
+            if (typeof data.access_token !== 'string') {
+                return false;
+            }
+            this.tokens.setAccessToken(data.access_token);
+            if (typeof data.refresh_token === 'string') {
+                this.tokens.setRefreshToken(data.refresh_token);
+            }
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     async get<T = unknown>(endpoint: string, params?: Record<string, string>): Promise<T> {
@@ -93,8 +167,16 @@ export class ApiClient {
         return this.tokens.getAccessToken() !== null;
     }
 
-    async logout(): Promise<void> {
+    async getCurrentUser(): Promise<AuthUser> {
+        const { user } = await this.get<{ user: Record<string, unknown> }>('/api/v1/auth/me');
+        return { ...(user as AuthUser), is_admin: normalizeBool(user['is_admin']) };
+    }
+
+    logout(redirect = true): void {
         this.tokens.clear();
+        if (redirect && typeof window !== 'undefined') {
+            window.location.href = '/login';
+        }
     }
 }
 
