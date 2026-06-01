@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-01
+
+### Added
+- `SettingsForm.vue` - schema-driven settings form from `server-settings.schema.json`
+- `SettingsPage.vue` - settings page component
+
+### Changed
+- Flip Admin link to `/app/settings` behind `PHLIX_VUE_AUTH` flag
+
+## [0.5.0] - 2026-06-01
+
+### Added
+- Auth surface: `LoginForm.vue`, `LoginPage.vue`, `SignupForm`, `SignupPage`
+- `useAuthStore` for authentication state management
+
+## [0.4.0] - 2026-06-01
+
+### Added
+- Player surface: `Player.vue` and `PlayerPage.vue` (`/app/player/:id`)
+
+## [0.3.0] - 2026-06-01
+
+### Added
+- Browse surface: `MediaCard.vue`, `MediaGrid.vue`, `FilterBar.vue`, `BrowsePage.vue`
+- `useMediaStore` for filter/sort/search/pagination
+
 ## [0.1.0] - 2026-06-01
 
 ### Added
