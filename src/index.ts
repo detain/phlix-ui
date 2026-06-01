@@ -19,6 +19,12 @@ export { default as FilterBar } from './components/FilterBar.vue';
 export { default as BrowsePage } from './pages/BrowsePage.vue';
 export { default as Player } from './components/Player.vue';
 export { default as PlayerPage } from './pages/PlayerPage.vue';
+export { default as LoginForm } from './components/LoginForm.vue';
+export { default as SignupForm } from './components/SignupForm.vue';
+export { default as LoginPage } from './pages/LoginPage.vue';
+export { default as SignupPage } from './pages/SignupPage.vue';
+
+export { useAuthStore } from './stores/useAuthStore';
 
 export { useMediaStore } from './stores/useMediaStore';
 
