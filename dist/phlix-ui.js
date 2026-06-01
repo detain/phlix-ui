@@ -1,65 +1,65 @@
-var he = Object.defineProperty;
-var ye = (n, e, s) => e in n ? he(n, e, { enumerable: !0, configurable: !0, writable: !0, value: s }) : n[e] = s;
-var J = (n, e, s) => ye(n, typeof e != "symbol" ? e + "" : e, s);
-import { openBlock as l, createElementBlock as r, createElementVNode as t, renderSlot as z, defineComponent as E, createBlock as le, withCtx as O, createVNode as M, unref as b, createTextVNode as Y, toDisplayString as g, ref as d, computed as N, createCommentVNode as F, Fragment as U, renderList as L, withDirectives as D, vModelText as W, normalizeClass as X, inject as ue, onMounted as Z, watch as be, onUnmounted as ke, withModifiers as Q, normalizeStyle as $e, createStaticVNode as we, resolveComponent as de, vModelDynamic as oe, vShow as Se, createApp as Te } from "vue";
-import { defineStore as ve, createPinia as Ce } from "pinia";
-import { RouterView as Re, RouterLink as ce, useRoute as Pe, useRouter as pe, createRouter as xe, createWebHistory as Ee } from "vue-router";
-const x = (n, e) => {
-  const s = n.__vccOpts || n;
-  for (const [o, v] of e)
-    s[o] = v;
+var ye = Object.defineProperty;
+var be = (l, t, s) => t in l ? ye(l, t, { enumerable: !0, configurable: !0, writable: !0, value: s }) : l[t] = s;
+var Q = (l, t, s) => be(l, typeof t != "symbol" ? t + "" : t, s);
+import { openBlock as a, createElementBlock as n, createElementVNode as e, renderSlot as K, defineComponent as E, createBlock as re, withCtx as z, createVNode as N, unref as $, createTextVNode as Y, toDisplayString as d, ref as p, computed as D, createCommentVNode as w, Fragment as L, renderList as I, withDirectives as V, vModelText as Z, normalizeClass as X, inject as de, onMounted as j, watch as $e, onUnmounted as ke, withModifiers as W, normalizeStyle as ee, createStaticVNode as we, resolveComponent as ve, vModelDynamic as le, vShow as Se, createApp as Ce } from "vue";
+import { defineStore as pe, createPinia as Te } from "pinia";
+import { RouterView as Pe, RouterLink as ue, useRoute as xe, useRouter as _e, createRouter as Re, createWebHistory as Ee } from "vue-router";
+const x = (l, t) => {
+  const s = l.__vccOpts || l;
+  for (const [i, v] of t)
+    s[i] = v;
   return s;
-}, Fe = {}, Ue = { class: "app-layout" }, Ie = { class: "app-header" }, Ae = { class: "header-inner" }, Le = { class: "logo" }, Me = { class: "nav" }, Ne = { class: "app-main" }, Be = { class: "app-footer" };
-function qe(n, e) {
-  return l(), r("div", Ue, [
-    t("header", Ie, [
-      t("div", Ae, [
-        t("div", Le, [
-          z(n.$slots, "logo", {}, () => [
-            e[0] || (e[0] = t("span", { class: "logo-text" }, "Phlix", -1))
+}, Fe = {}, Le = { class: "app-layout" }, Ie = { class: "app-header" }, Ae = { class: "header-inner" }, Me = { class: "logo" }, Ue = { class: "nav" }, Ne = { class: "app-main" }, De = { class: "app-footer" };
+function Be(l, t) {
+  return a(), n("div", Le, [
+    e("header", Ie, [
+      e("div", Ae, [
+        e("div", Me, [
+          K(l.$slots, "logo", {}, () => [
+            t[0] || (t[0] = e("span", { class: "logo-text" }, "Phlix", -1))
           ], !0)
         ]),
-        t("nav", Me, [
-          z(n.$slots, "nav", {}, void 0, !0)
+        e("nav", Ue, [
+          K(l.$slots, "nav", {}, void 0, !0)
         ])
       ])
     ]),
-    t("main", Ne, [
-      z(n.$slots, "default", {}, void 0, !0)
+    e("main", Ne, [
+      K(l.$slots, "default", {}, void 0, !0)
     ]),
-    t("footer", Be, [
-      z(n.$slots, "footer", {}, void 0, !0)
+    e("footer", De, [
+      K(l.$slots, "footer", {}, void 0, !0)
     ])
   ]);
 }
-const Ge = /* @__PURE__ */ x(Fe, [["render", qe], ["__scopeId", "data-v-9f6c6d16"]]), De = { class: "main-nav" }, Ve = /* @__PURE__ */ E({
+const qe = /* @__PURE__ */ x(Fe, [["render", Be], ["__scopeId", "data-v-9f6c6d16"]]), Ge = { class: "main-nav" }, Ve = /* @__PURE__ */ E({
   __name: "PhlixApp",
-  setup(n) {
-    return (e, s) => (l(), le(Ge, null, {
-      nav: O(() => [
-        t("nav", De, [
-          M(b(ce), {
+  setup(l) {
+    return (t, s) => (a(), re(qe, null, {
+      nav: z(() => [
+        e("nav", Ge, [
+          N($(ue), {
             to: "/app",
             class: "nav-link"
           }, {
-            default: O(() => [...s[0] || (s[0] = [
+            default: z(() => [...s[0] || (s[0] = [
               Y("Browse", -1)
             ])]),
             _: 1
           }),
-          M(b(ce), {
+          N($(ue), {
             to: "/app/settings",
             class: "nav-link"
           }, {
-            default: O(() => [...s[1] || (s[1] = [
+            default: z(() => [...s[1] || (s[1] = [
               Y("Settings", -1)
             ])]),
             _: 1
           })
         ])
       ]),
-      default: O(() => [
-        M(b(Re))
+      default: z(() => [
+        N($(Pe))
       ]),
       _: 1
     }));
@@ -69,29 +69,29 @@ const Ge = /* @__PURE__ */ x(Fe, [["render", qe], ["__scopeId", "data-v-9f6c6d16
   props: {
     appName: {}
   },
-  setup(n) {
-    return (e, s) => (l(), r("div", Oe, [
-      t("div", Ye, [
-        s[0] || (s[0] = t("h1", null, "Shared UI loading...", -1)),
-        t("p", null, "Phlix " + g(n.appName) + " is initializing", 1)
+  setup(l) {
+    return (t, s) => (a(), n("div", Oe, [
+      e("div", Ye, [
+        s[0] || (s[0] = e("h1", null, "Shared UI loading...", -1)),
+        e("p", null, "Phlix " + d(l.appName) + " is initializing", 1)
       ])
     ]));
   }
 }), ze = /* @__PURE__ */ x(He, [["__scopeId", "data-v-bf79ac4c"]]);
 class Je extends Error {
-  constructor(e, s, o = null) {
-    super(e), this.status = s, this.body = o, this.name = "ApiError";
+  constructor(t, s, i = null) {
+    super(t), this.status = s, this.body = i, this.name = "ApiError";
   }
 }
-function Ke(n) {
-  return n === !0 || n === 1 || n === "1" || n === "true";
+function Ke(l) {
+  return l === !0 || l === 1 || l === "1" || l === "true";
 }
-class ee {
-  constructor(e = {}) {
-    J(this, "baseUrl");
-    J(this, "tokens");
-    J(this, "doFetch");
-    this.baseUrl = e.baseUrl ?? (typeof window < "u" ? window.location.origin : ""), this.tokens = e.tokenStore ?? {
+class te {
+  constructor(t = {}) {
+    Q(this, "baseUrl");
+    Q(this, "tokens");
+    Q(this, "doFetch");
+    this.baseUrl = t.baseUrl ?? (typeof window < "u" ? window.location.origin : ""), this.tokens = t.tokenStore ?? {
       getAccessToken: () => null,
       setAccessToken: () => {
       },
@@ -103,31 +103,31 @@ class ee {
       },
       clear: () => {
       }
-    }, this.doFetch = e.fetchImpl ?? globalThis.fetch.bind(globalThis);
+    }, this.doFetch = t.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
-  async request(e, s, o = null) {
+  async request(t, s, i = null) {
     const v = () => {
       const h = {
         "Content-Type": "application/json"
-      }, y = this.tokens.getAccessToken();
-      y && (h.Authorization = `Bearer ${y}`);
-      const _ = { method: e, headers: h, credentials: "same-origin" };
-      return o !== null && (e === "POST" || e === "PUT" || e === "PATCH") && (_.body = JSON.stringify(o)), _;
-    }, p = `${this.baseUrl}${s}`;
-    let m = await this.doFetch(p, v());
-    return m.status === 401 && await this.refreshToken() && (m = await this.doFetch(p, v())), this.handleResponse(m);
+      }, f = this.tokens.getAccessToken();
+      f && (h.Authorization = `Bearer ${f}`);
+      const u = { method: t, headers: h, credentials: "same-origin" };
+      return i !== null && (t === "POST" || t === "PUT" || t === "PATCH") && (u.body = JSON.stringify(i)), u;
+    }, m = `${this.baseUrl}${s}`;
+    let y = await this.doFetch(m, v());
+    return y.status === 401 && await this.refreshToken() && (y = await this.doFetch(m, v())), this.handleResponse(y);
   }
-  async handleResponse(e) {
-    const v = (e.headers.get("content-type") ?? "").includes("application/json") ? await e.json() : await e.text();
-    if (!e.ok) {
-      const p = this.extractError(v);
-      throw new Je(p, e.status, v);
+  async handleResponse(t) {
+    const v = (t.headers.get("content-type") ?? "").includes("application/json") ? await t.json() : await t.text();
+    if (!t.ok) {
+      const m = this.extractError(v);
+      throw new Je(m, t.status, v);
     }
     return v;
   }
-  extractError(e) {
-    if (e && typeof e == "object") {
-      const s = e;
+  extractError(t) {
+    if (t && typeof t == "object") {
+      const s = t;
       if (typeof s.error == "string")
         return s.error;
       if (typeof s.message == "string")
@@ -136,131 +136,131 @@ class ee {
     return "Request failed";
   }
   async refreshToken() {
-    const e = this.tokens.getRefreshToken();
-    if (!e)
+    const t = this.tokens.getRefreshToken();
+    if (!t)
       return !1;
     try {
       const s = await this.doFetch(`${this.baseUrl}/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ refresh_token: e })
+        body: JSON.stringify({ refresh_token: t })
       });
       if (!s.ok)
         return !1;
-      const o = await s.json();
-      return typeof o.access_token != "string" ? !1 : (this.tokens.setAccessToken(o.access_token), typeof o.refresh_token == "string" && this.tokens.setRefreshToken(o.refresh_token), !0);
+      const i = await s.json();
+      return typeof i.access_token != "string" ? !1 : (this.tokens.setAccessToken(i.access_token), typeof i.refresh_token == "string" && this.tokens.setRefreshToken(i.refresh_token), !0);
     } catch {
       return !1;
     }
   }
-  async get(e, s) {
-    const o = s ? "?" + new URLSearchParams(s).toString() : "";
-    return this.request("GET", e + o);
+  async get(t, s) {
+    const i = s ? "?" + new URLSearchParams(s).toString() : "";
+    return this.request("GET", t + i);
   }
-  async post(e, s) {
-    return this.request("POST", e, s ?? null);
+  async post(t, s) {
+    return this.request("POST", t, s ?? null);
   }
-  async put(e, s) {
-    return this.request("PUT", e, s ?? null);
+  async put(t, s) {
+    return this.request("PUT", t, s ?? null);
   }
-  async patch(e, s) {
-    return this.request("PATCH", e, s ?? null);
+  async patch(t, s) {
+    return this.request("PATCH", t, s ?? null);
   }
-  async delete(e) {
-    return this.request("DELETE", e);
+  async delete(t) {
+    return this.request("DELETE", t);
   }
   isLoggedIn() {
     return this.tokens.getAccessToken() !== null;
   }
   async getCurrentUser() {
-    const { user: e } = await this.get("/api/v1/auth/me");
-    return { ...e, is_admin: Ke(e.is_admin) };
+    const { user: t } = await this.get("/api/v1/auth/me");
+    return { ...t, is_admin: Ke(t.is_admin) };
   }
-  logout(e = !0) {
-    this.tokens.clear(), e && typeof window < "u" && (window.location.href = "/login");
+  logout(t = !0) {
+    this.tokens.clear(), t && typeof window < "u" && (window.location.href = "/login");
   }
 }
-const K = new ee(), fe = ve("media", () => {
-  const n = d([]), e = d(0), s = d(!1), o = d(null), v = d(""), p = d([]), m = d(void 0), h = d(void 0), y = d([]), _ = d([]), f = d("name"), u = d("asc"), k = d(24), a = d(0), i = N(() => a.value + n.value.length < e.value), c = N(() => {
-    const $ = {};
-    return v.value && ($.search = v.value), p.value.length && ($.genres = p.value), m.value !== void 0 && ($.yearFrom = m.value), h.value !== void 0 && ($.yearTo = h.value), y.value.length && ($.ratings = y.value), _.value.length && ($.types = _.value), $.sort = f.value, $.order = u.value, $.limit = k.value, $.offset = a.value, $;
-  }), I = N(() => {
-    const $ = /* @__PURE__ */ new Set();
-    return n.value.forEach((C) => {
+const U = new te(), fe = pe("media", () => {
+  const l = p([]), t = p(0), s = p(!1), i = p(null), v = p(""), m = p([]), y = p(void 0), h = p(void 0), f = p([]), u = p([]), o = p("name"), c = p("asc"), b = p(24), r = p(0), _ = D(() => r.value + l.value.length < t.value), g = D(() => {
+    const k = {};
+    return v.value && (k.search = v.value), m.value.length && (k.genres = m.value), y.value !== void 0 && (k.yearFrom = y.value), h.value !== void 0 && (k.yearTo = h.value), f.value.length && (k.ratings = f.value), u.value.length && (k.types = u.value), k.sort = o.value, k.order = c.value, k.limit = b.value, k.offset = r.value, k;
+  }), A = D(() => {
+    const k = /* @__PURE__ */ new Set();
+    return l.value.forEach((P) => {
       var T;
-      return (T = C.genres) == null ? void 0 : T.forEach((j) => $.add(j));
-    }), Array.from($).sort();
+      return (T = P.genres) == null ? void 0 : T.forEach((H) => k.add(H));
+    }), Array.from(k).sort();
   }), R = ["G", "PG", "PG-13", "R", "NC-17", "X", "UNRATED"], B = ["movie", "series", "episode", "audio", "image"];
-  function V($) {
-    var j, G, ie;
-    const C = new URLSearchParams(), T = c.value;
-    return T.search && C.set("search", T.search), (j = T.genres) == null || j.forEach((H) => C.append("genres", H)), T.yearFrom !== void 0 && C.set("yearFrom", String(T.yearFrom)), T.yearTo !== void 0 && C.set("yearTo", String(T.yearTo)), (G = T.ratings) == null || G.forEach((H) => C.append("ratings", H)), (ie = T.types) == null || ie.forEach((H) => C.append("types", H)), T.sort && C.set("sort", T.sort), T.order && C.set("order", T.order), C.set("limit", String(T.limit)), C.set("offset", String(T.offset)), `${$}/api/v1/media?${C.toString()}`;
+  function O(k) {
+    var H, G, ce;
+    const P = new URLSearchParams(), T = g.value;
+    return T.search && P.set("search", T.search), (H = T.genres) == null || H.forEach((J) => P.append("genres", J)), T.yearFrom !== void 0 && P.set("yearFrom", String(T.yearFrom)), T.yearTo !== void 0 && P.set("yearTo", String(T.yearTo)), (G = T.ratings) == null || G.forEach((J) => P.append("ratings", J)), (ce = T.types) == null || ce.forEach((J) => P.append("types", J)), T.sort && P.set("sort", T.sort), T.order && P.set("order", T.order), P.set("limit", String(T.limit)), P.set("offset", String(T.offset)), `${k}/api/v1/media?${P.toString()}`;
   }
-  async function q($, C = !1) {
-    s.value = !0, o.value = null;
+  async function q(k, P = !1) {
+    s.value = !0, i.value = null;
     try {
-      const T = new ee({ baseUrl: $ }), j = V($), G = await T.get(j);
-      C ? n.value = [...n.value, ...G.items] : n.value = G.items, e.value = G.total, a.value = (G.offset ?? 0) + G.items.length;
+      const T = new te({ baseUrl: k }), H = O(k), G = await T.get(H);
+      P ? l.value = [...l.value, ...G.items] : l.value = G.items, t.value = G.total, r.value = (G.offset ?? 0) + G.items.length;
     } catch (T) {
-      o.value = T instanceof Error ? T.message : "Failed to load media";
+      i.value = T instanceof Error ? T.message : "Failed to load media";
     } finally {
       s.value = !1;
     }
   }
-  async function P($) {
-    await q($, !0);
+  async function F(k) {
+    await q(k, !0);
   }
-  function S() {
-    n.value = [], e.value = 0, a.value = 0, o.value = null;
+  function C() {
+    l.value = [], t.value = 0, r.value = 0, i.value = null;
   }
-  function w($) {
-    v.value = $, a.value = 0;
+  function S(k) {
+    v.value = k, r.value = 0;
   }
-  function A($) {
-    p.value = $, a.value = 0;
+  function M(k) {
+    m.value = k, r.value = 0;
   }
-  function te($, C) {
-    m.value = $, h.value = C, a.value = 0;
+  function se(k, P) {
+    y.value = k, h.value = P, r.value = 0;
   }
-  function me($) {
-    y.value = $, a.value = 0;
+  function ge(k) {
+    f.value = k, r.value = 0;
   }
-  function ge($) {
-    _.value = $, a.value = 0;
+  function me(k) {
+    u.value = k, r.value = 0;
   }
-  function _e($, C) {
-    f.value = $, C && (u.value = C), a.value = 0;
+  function he(k, P) {
+    o.value = k, P && (c.value = P), r.value = 0;
   }
   return {
-    items: n,
-    total: e,
+    items: l,
+    total: t,
     loading: s,
-    error: o,
+    error: i,
     search: v,
-    selectedGenres: p,
-    yearFrom: m,
+    selectedGenres: m,
+    yearFrom: y,
     yearTo: h,
-    selectedRatings: y,
-    selectedTypes: _,
-    sort: f,
-    order: u,
-    limit: k,
-    offset: a,
-    hasMore: i,
-    queryParams: c,
-    availableGenres: I,
+    selectedRatings: f,
+    selectedTypes: u,
+    sort: o,
+    order: c,
+    limit: b,
+    offset: r,
+    hasMore: _,
+    queryParams: g,
+    availableGenres: A,
     availableRatings: R,
     availableTypes: B,
     fetchMedia: q,
-    loadMore: P,
-    reset: S,
-    setSearch: w,
-    setGenres: A,
-    setYearRange: te,
-    setRatings: me,
-    setTypes: ge,
-    setSort: _e
+    loadMore: F,
+    reset: C,
+    setSearch: S,
+    setGenres: M,
+    setYearRange: se,
+    setRatings: ge,
+    setTypes: me,
+    setSort: he
   };
 }), Xe = { class: "media-card" }, We = ["href"], Qe = { class: "card-poster" }, Ze = ["src", "alt"], et = {
   key: 1,
@@ -280,35 +280,35 @@ const K = new ee(), fe = ve("media", () => {
     item: {},
     to: {}
   },
-  setup(n) {
-    return (e, s) => {
-      var o;
-      return l(), r("article", Xe, [
-        t("a", {
-          href: n.to ?? `/app/player/${n.item.id}`,
+  setup(l) {
+    return (t, s) => {
+      var i;
+      return a(), n("article", Xe, [
+        e("a", {
+          href: l.to ?? `/app/player/${l.item.id}`,
           class: "card-link"
         }, [
-          t("div", Qe, [
-            n.item.poster_url ? (l(), r("img", {
+          e("div", Qe, [
+            l.item.poster_url ? (a(), n("img", {
               key: 0,
-              src: n.item.poster_url,
-              alt: n.item.name,
+              src: l.item.poster_url,
+              alt: l.item.name,
               loading: "lazy"
-            }, null, 8, Ze)) : (l(), r("div", et, [
-              s[0] || (s[0] = t("span", { class: "placeholder-icon" }, "🎬", -1)),
-              t("span", tt, g(n.item.type), 1)
+            }, null, 8, Ze)) : (a(), n("div", et, [
+              s[0] || (s[0] = e("span", { class: "placeholder-icon" }, "🎬", -1)),
+              e("span", tt, d(l.item.type), 1)
             ]))
           ]),
-          t("div", st, [
-            n.item.year ? (l(), r("span", at, g(n.item.year), 1)) : F("", !0),
-            n.item.rating ? (l(), r("span", nt, g(n.item.rating), 1)) : F("", !0)
+          e("div", st, [
+            l.item.year ? (a(), n("span", at, d(l.item.year), 1)) : w("", !0),
+            l.item.rating ? (a(), n("span", nt, d(l.item.rating), 1)) : w("", !0)
           ]),
-          t("div", ot, [
-            t("h3", {
+          e("div", ot, [
+            e("h3", {
               class: "card-title",
-              title: n.item.name
-            }, g(n.item.name), 9, lt),
-            (o = n.item.genres) != null && o.length ? (l(), r("p", rt, g(n.item.genres.slice(0, 2).join(", ")), 1)) : F("", !0)
+              title: l.item.name
+            }, d(l.item.name), 9, lt),
+            (i = l.item.genres) != null && i.length ? (a(), n("p", rt, d(l.item.genres.slice(0, 2).join(", ")), 1)) : w("", !0)
           ])
         ], 8, We)
       ]);
@@ -323,37 +323,37 @@ const K = new ee(), fe = ve("media", () => {
 }, pt = {
   key: 2,
   class: "media-grid"
-}, ft = /* @__PURE__ */ E({
+}, _t = /* @__PURE__ */ E({
   __name: "MediaGrid",
   props: {
     items: {},
     loading: { type: Boolean }
   },
-  setup(n) {
-    return (e, s) => (l(), r("div", ut, [
-      n.loading ? (l(), r("div", dt, [
-        (l(), r(U, null, L(12, (o) => t("div", {
-          key: o,
+  setup(l) {
+    return (t, s) => (a(), n("div", ut, [
+      l.loading ? (a(), n("div", dt, [
+        (a(), n(L, null, I(12, (i) => e("div", {
+          key: i,
           class: "skeleton-card"
         }, [...s[0] || (s[0] = [
-          t("div", { class: "skeleton-poster" }, null, -1),
-          t("div", { class: "skeleton-title" }, null, -1)
+          e("div", { class: "skeleton-poster" }, null, -1),
+          e("div", { class: "skeleton-title" }, null, -1)
         ])])), 64))
-      ])) : n.items.length === 0 ? (l(), r("div", vt, [...s[1] || (s[1] = [
-        t("p", null, "No media found.", -1),
-        t("p", { class: "empty-hint" }, "Try adjusting your filters.", -1)
-      ])])) : (l(), r("div", pt, [
-        (l(!0), r(U, null, L(n.items, (o) => (l(), le(ct, {
-          key: o.id,
-          item: o
+      ])) : l.items.length === 0 ? (a(), n("div", vt, [...s[1] || (s[1] = [
+        e("p", null, "No media found.", -1),
+        e("p", { class: "empty-hint" }, "Try adjusting your filters.", -1)
+      ])])) : (a(), n("div", pt, [
+        (a(!0), n(L, null, I(l.items, (i) => (a(), re(ct, {
+          key: i.id,
+          item: i
         }, null, 8, ["item"]))), 128))
       ]))
     ]));
   }
-}), mt = /* @__PURE__ */ x(ft, [["__scopeId", "data-v-b7e87216"]]), gt = { class: "filter-bar" }, _t = { class: "filter-search" }, ht = { class: "filter-row" }, yt = { class: "filter-group" }, bt = ["value"], kt = ["value"], $t = ["value"], wt = { class: "filter-group" }, St = ["value"], Tt = ["value"], Ct = ["value"], Rt = ["value"], Pt = { class: "filter-section" }, xt = { class: "filter-chips" }, Et = ["onClick"], Ft = { class: "filter-section" }, Ut = { class: "filter-chips" }, It = ["onClick"], At = { class: "filter-section" }, Lt = { class: "filter-chips" }, Mt = ["onClick"], Nt = { class: "filter-actions" }, Bt = { class: "result-count" }, qt = /* @__PURE__ */ E({
+}), ft = /* @__PURE__ */ x(_t, [["__scopeId", "data-v-b7e87216"]]), gt = { class: "filter-bar" }, mt = { class: "filter-search" }, ht = { class: "filter-row" }, yt = { class: "filter-group" }, bt = ["value"], $t = ["value"], kt = ["value"], wt = { class: "filter-group" }, St = ["value"], Ct = ["value"], Tt = ["value"], Pt = ["value"], xt = { class: "filter-section" }, Rt = { class: "filter-chips" }, Et = ["onClick"], Ft = { class: "filter-section" }, Lt = { class: "filter-chips" }, It = ["onClick"], At = { class: "filter-section" }, Mt = { class: "filter-chips" }, Ut = ["onClick"], Nt = { class: "filter-actions" }, Dt = { class: "result-count" }, Bt = /* @__PURE__ */ E({
   __name: "FilterBar",
-  setup(n) {
-    const e = fe(), s = d(e.search), o = [
+  setup(l) {
+    const t = fe(), s = p(t.search), i = [
       { value: "name", label: "Name" },
       { value: "year", label: "Year" },
       { value: "rating", label: "Rating" },
@@ -361,143 +361,143 @@ const K = new ee(), fe = ve("media", () => {
       { value: "runtime", label: "Runtime" }
     ];
     function v() {
-      e.setSearch(s.value);
+      t.setSearch(s.value);
     }
-    function p(a) {
-      const i = e.selectedGenres;
-      i.includes(a) ? e.setGenres(i.filter((c) => c !== a)) : e.setGenres([...i, a]);
+    function m(r) {
+      const _ = t.selectedGenres;
+      _.includes(r) ? t.setGenres(_.filter((g) => g !== r)) : t.setGenres([..._, r]);
     }
-    function m(a) {
-      const i = e.selectedRatings;
-      i.includes(a) ? e.setRatings(i.filter((c) => c !== a)) : e.setRatings([...i, a]);
+    function y(r) {
+      const _ = t.selectedRatings;
+      _.includes(r) ? t.setRatings(_.filter((g) => g !== r)) : t.setRatings([..._, r]);
     }
-    function h(a) {
-      const i = e.selectedTypes;
-      i.includes(a) ? e.setTypes(i.filter((c) => c !== a)) : e.setTypes([...i, a]);
+    function h(r) {
+      const _ = t.selectedTypes;
+      _.includes(r) ? t.setTypes(_.filter((g) => g !== r)) : t.setTypes([..._, r]);
     }
-    function y(a) {
-      const i = a.target;
-      e.setSort(i.value);
+    function f(r) {
+      const _ = r.target;
+      t.setSort(_.value);
     }
-    function _(a) {
-      const i = a.target;
-      e.order = i.value;
+    function u(r) {
+      const _ = r.target;
+      t.order = _.value;
     }
-    const f = (/* @__PURE__ */ new Date()).getFullYear(), u = N(() => {
-      const a = [];
-      for (let i = f; i >= 1900; i--)
-        a.push(i);
-      return a;
+    const o = (/* @__PURE__ */ new Date()).getFullYear(), c = D(() => {
+      const r = [];
+      for (let _ = o; _ >= 1900; _--)
+        r.push(_);
+      return r;
     });
-    function k() {
-      s.value = "", e.search = "", e.setGenres([]), e.setYearRange(void 0, void 0), e.setRatings([]), e.setTypes([]), e.setSort("name");
+    function b() {
+      s.value = "", t.search = "", t.setGenres([]), t.setYearRange(void 0, void 0), t.setRatings([]), t.setTypes([]), t.setSort("name");
     }
-    return (a, i) => (l(), r("div", gt, [
-      t("div", _t, [
-        D(t("input", {
-          "onUpdate:modelValue": i[0] || (i[0] = (c) => s.value = c),
+    return (r, _) => (a(), n("div", gt, [
+      e("div", mt, [
+        V(e("input", {
+          "onUpdate:modelValue": _[0] || (_[0] = (g) => s.value = g),
           type: "search",
           placeholder: "Search media...",
           class: "search-input",
           onInput: v
         }, null, 544), [
-          [W, s.value]
+          [Z, s.value]
         ])
       ]),
-      t("div", ht, [
-        t("div", yt, [
-          i[4] || (i[4] = t("label", { class: "filter-label" }, "Sort", -1)),
-          t("select", {
+      e("div", ht, [
+        e("div", yt, [
+          _[4] || (_[4] = e("label", { class: "filter-label" }, "Sort", -1)),
+          e("select", {
             class: "filter-select",
-            value: b(e).sort,
-            onChange: y
+            value: $(t).sort,
+            onChange: f
           }, [
-            (l(), r(U, null, L(o, (c) => t("option", {
-              key: c.value,
-              value: c.value
-            }, g(c.label), 9, kt)), 64))
+            (a(), n(L, null, I(i, (g) => e("option", {
+              key: g.value,
+              value: g.value
+            }, d(g.label), 9, $t)), 64))
           ], 40, bt),
-          t("select", {
+          e("select", {
             class: "filter-select order-select",
-            value: b(e).order,
-            onChange: _
-          }, [...i[3] || (i[3] = [
-            t("option", { value: "asc" }, "↑", -1),
-            t("option", { value: "desc" }, "↓", -1)
-          ])], 40, $t)
+            value: $(t).order,
+            onChange: u
+          }, [..._[3] || (_[3] = [
+            e("option", { value: "asc" }, "↑", -1),
+            e("option", { value: "desc" }, "↓", -1)
+          ])], 40, kt)
         ]),
-        t("div", wt, [
-          i[7] || (i[7] = t("label", { class: "filter-label" }, "Year", -1)),
-          t("select", {
+        e("div", wt, [
+          _[7] || (_[7] = e("label", { class: "filter-label" }, "Year", -1)),
+          e("select", {
             class: "filter-select",
-            value: b(e).yearFrom ?? "",
-            onChange: i[1] || (i[1] = (c) => b(e).setYearRange(
-              c.target.value ? Number(c.target.value) : void 0,
-              b(e).yearTo
+            value: $(t).yearFrom ?? "",
+            onChange: _[1] || (_[1] = (g) => $(t).setYearRange(
+              g.target.value ? Number(g.target.value) : void 0,
+              $(t).yearTo
             ))
           }, [
-            i[5] || (i[5] = t("option", { value: "" }, "From", -1)),
-            (l(!0), r(U, null, L(u.value.slice(0, 50), (c) => (l(), r("option", {
-              key: c,
-              value: c
-            }, g(c), 9, Tt))), 128))
+            _[5] || (_[5] = e("option", { value: "" }, "From", -1)),
+            (a(!0), n(L, null, I(c.value.slice(0, 50), (g) => (a(), n("option", {
+              key: g,
+              value: g
+            }, d(g), 9, Ct))), 128))
           ], 40, St),
-          t("select", {
+          e("select", {
             class: "filter-select",
-            value: b(e).yearTo ?? "",
-            onChange: i[2] || (i[2] = (c) => b(e).setYearRange(
-              b(e).yearFrom,
-              c.target.value ? Number(c.target.value) : void 0
+            value: $(t).yearTo ?? "",
+            onChange: _[2] || (_[2] = (g) => $(t).setYearRange(
+              $(t).yearFrom,
+              g.target.value ? Number(g.target.value) : void 0
             ))
           }, [
-            i[6] || (i[6] = t("option", { value: "" }, "To", -1)),
-            (l(!0), r(U, null, L(u.value.slice(0, 50), (c) => (l(), r("option", {
-              key: c,
-              value: c
-            }, g(c), 9, Rt))), 128))
-          ], 40, Ct)
+            _[6] || (_[6] = e("option", { value: "" }, "To", -1)),
+            (a(!0), n(L, null, I(c.value.slice(0, 50), (g) => (a(), n("option", {
+              key: g,
+              value: g
+            }, d(g), 9, Pt))), 128))
+          ], 40, Tt)
         ])
       ]),
-      t("div", Pt, [
-        i[8] || (i[8] = t("span", { class: "filter-label" }, "Genres", -1)),
-        t("div", xt, [
-          (l(!0), r(U, null, L(b(e).availableGenres, (c) => (l(), r("button", {
-            key: c,
-            class: X(["chip", { active: b(e).selectedGenres.includes(c) }]),
-            onClick: (I) => p(c)
-          }, g(c), 11, Et))), 128))
+      e("div", xt, [
+        _[8] || (_[8] = e("span", { class: "filter-label" }, "Genres", -1)),
+        e("div", Rt, [
+          (a(!0), n(L, null, I($(t).availableGenres, (g) => (a(), n("button", {
+            key: g,
+            class: X(["chip", { active: $(t).selectedGenres.includes(g) }]),
+            onClick: (A) => m(g)
+          }, d(g), 11, Et))), 128))
         ])
       ]),
-      t("div", Ft, [
-        i[9] || (i[9] = t("span", { class: "filter-label" }, "Rating", -1)),
-        t("div", Ut, [
-          (l(!0), r(U, null, L(b(e).availableRatings, (c) => (l(), r("button", {
-            key: c,
-            class: X(["chip", { active: b(e).selectedRatings.includes(c) }]),
-            onClick: (I) => m(c)
-          }, g(c), 11, It))), 128))
+      e("div", Ft, [
+        _[9] || (_[9] = e("span", { class: "filter-label" }, "Rating", -1)),
+        e("div", Lt, [
+          (a(!0), n(L, null, I($(t).availableRatings, (g) => (a(), n("button", {
+            key: g,
+            class: X(["chip", { active: $(t).selectedRatings.includes(g) }]),
+            onClick: (A) => y(g)
+          }, d(g), 11, It))), 128))
         ])
       ]),
-      t("div", At, [
-        i[10] || (i[10] = t("span", { class: "filter-label" }, "Type", -1)),
-        t("div", Lt, [
-          (l(!0), r(U, null, L(b(e).availableTypes, (c) => (l(), r("button", {
-            key: c,
-            class: X(["chip", { active: b(e).selectedTypes.includes(c) }]),
-            onClick: (I) => h(c)
-          }, g(c), 11, Mt))), 128))
+      e("div", At, [
+        _[10] || (_[10] = e("span", { class: "filter-label" }, "Type", -1)),
+        e("div", Mt, [
+          (a(!0), n(L, null, I($(t).availableTypes, (g) => (a(), n("button", {
+            key: g,
+            class: X(["chip", { active: $(t).selectedTypes.includes(g) }]),
+            onClick: (A) => h(g)
+          }, d(g), 11, Ut))), 128))
         ])
       ]),
-      t("div", Nt, [
-        t("button", {
+      e("div", Nt, [
+        e("button", {
           class: "clear-btn",
-          onClick: k
+          onClick: b
         }, "Clear filters"),
-        t("span", Bt, g(b(e).total) + " result" + g(b(e).total !== 1 ? "s" : ""), 1)
+        e("span", Dt, d($(t).total) + " result" + d($(t).total !== 1 ? "s" : ""), 1)
       ])
     ]));
   }
-}), Gt = /* @__PURE__ */ x(qt, [["__scopeId", "data-v-7089ec0b"]]), Dt = { class: "browse-page" }, Vt = { class: "browse-header" }, jt = { class: "browse-toolbar-extra" }, Ot = {
+}), qt = /* @__PURE__ */ x(Bt, [["__scopeId", "data-v-7089ec0b"]]), Gt = { class: "browse-page" }, Vt = { class: "browse-header" }, jt = { class: "browse-toolbar-extra" }, Ot = {
   key: 0,
   class: "browse-error"
 }, Yt = {
@@ -508,44 +508,44 @@ const K = new ee(), fe = ve("media", () => {
   class: "loading-more"
 }, zt = /* @__PURE__ */ E({
   __name: "BrowsePage",
-  setup(n) {
-    const e = ue("apiBase") ?? N(() => ""), s = fe();
-    function o() {
-      s.reset(), s.fetchMedia(e.value);
+  setup(l) {
+    const t = de("apiBase") ?? D(() => ""), s = fe();
+    function i() {
+      s.reset(), s.fetchMedia(t.value);
     }
-    Z(o), be(e, o);
+    j(i), $e(t, i);
     function v() {
-      s.reset(), s.fetchMedia(e.value);
+      s.reset(), s.fetchMedia(t.value);
     }
-    function p() {
-      s.loadMore(e.value);
+    function m() {
+      s.loadMore(t.value);
     }
-    return (m, h) => (l(), r("div", Dt, [
-      t("div", Vt, [
-        h[0] || (h[0] = t("h1", { class: "browse-title" }, "Browse Media", -1)),
-        t("div", jt, [
-          z(m.$slots, "toolbar-extra", {}, void 0, !0)
+    return (y, h) => (a(), n("div", Gt, [
+      e("div", Vt, [
+        h[0] || (h[0] = e("h1", { class: "browse-title" }, "Browse Media", -1)),
+        e("div", jt, [
+          K(y.$slots, "toolbar-extra", {}, void 0, !0)
         ])
       ]),
-      M(Gt, { onChange: v }),
-      b(s).error ? (l(), r("div", Ot, [
-        t("p", null, g(b(s).error), 1),
-        t("button", {
+      N(qt, { onChange: v }),
+      $(s).error ? (a(), n("div", Ot, [
+        e("p", null, d($(s).error), 1),
+        e("button", {
           class: "retry-btn",
-          onClick: o
+          onClick: i
         }, "Retry")
-      ])) : F("", !0),
-      M(mt, {
-        items: b(s).items,
-        loading: b(s).loading && b(s).items.length === 0
+      ])) : w("", !0),
+      N(ft, {
+        items: $(s).items,
+        loading: $(s).loading && $(s).items.length === 0
       }, null, 8, ["items", "loading"]),
-      b(s).hasMore && !b(s).loading ? (l(), r("div", Yt, [
-        t("button", {
+      $(s).hasMore && !$(s).loading ? (a(), n("div", Yt, [
+        e("button", {
           class: "load-more-btn",
-          onClick: p
+          onClick: m
         }, "Load more")
-      ])) : F("", !0),
-      b(s).loading && b(s).items.length > 0 ? (l(), r("div", Ht, " Loading... ")) : F("", !0)
+      ])) : w("", !0),
+      $(s).loading && $(s).items.length > 0 ? (a(), n("div", Ht, " Loading... ")) : w("", !0)
     ]));
   }
 }), Jt = /* @__PURE__ */ x(zt, [["__scopeId", "data-v-c192afa6"]]), Kt = ["src", "poster"], Xt = { class: "controls-top" }, Wt = { class: "media-title" }, Qt = {
@@ -557,133 +557,133 @@ const K = new ee(), fe = ve("media", () => {
     media: {},
     streamUrl: {}
   },
-  setup(n) {
-    const e = d(null), s = d(!1), o = d(0), v = d(0), p = d(1), m = d(!1), h = d(1), y = d(!1), _ = d(!0);
-    let f = null;
-    const u = N(
-      () => v.value > 0 ? o.value / v.value * 100 : 0
+  setup(l) {
+    const t = p(null), s = p(!1), i = p(0), v = p(0), m = p(1), y = p(!1), h = p(1), f = p(!1), u = p(!0);
+    let o = null;
+    const c = D(
+      () => v.value > 0 ? i.value / v.value * 100 : 0
     );
-    function k(S) {
-      if (!isFinite(S) || isNaN(S)) return "0:00";
-      const w = Math.floor(S / 60), A = Math.floor(S % 60);
-      return `${w}:${A.toString().padStart(2, "0")}`;
+    function b(C) {
+      if (!isFinite(C) || isNaN(C)) return "0:00";
+      const S = Math.floor(C / 60), M = Math.floor(C % 60);
+      return `${S}:${M.toString().padStart(2, "0")}`;
     }
-    function a() {
-      e.value && (s.value ? e.value.pause() : e.value.play());
+    function r() {
+      t.value && (s.value ? t.value.pause() : t.value.play());
     }
-    function i() {
-      e.value && (o.value = e.value.currentTime);
+    function _() {
+      t.value && (i.value = t.value.currentTime);
     }
-    function c() {
-      e.value && (v.value = e.value.duration);
+    function g() {
+      t.value && (v.value = t.value.duration);
     }
-    function I(S) {
-      const A = S.currentTarget.getBoundingClientRect(), te = (S.clientX - A.left) / A.width;
-      e.value && (e.value.currentTime = te * v.value);
+    function A(C) {
+      const M = C.currentTarget.getBoundingClientRect(), se = (C.clientX - M.left) / M.width;
+      t.value && (t.value.currentTime = se * v.value);
     }
-    function R(S) {
-      const w = parseFloat(S.target.value);
-      p.value = w, e.value && (e.value.volume = w), m.value = w === 0;
+    function R(C) {
+      const S = parseFloat(C.target.value);
+      m.value = S, t.value && (t.value.volume = S), y.value = S === 0;
     }
     function B() {
-      m.value = !m.value, e.value && (e.value.muted = m.value);
+      y.value = !y.value, t.value && (t.value.muted = y.value);
     }
-    function V(S) {
-      h.value = S, e.value && (e.value.playbackRate = S);
+    function O(C) {
+      h.value = C, t.value && (t.value.playbackRate = C);
     }
     function q() {
-      var w;
-      const S = (w = e.value) == null ? void 0 : w.closest(".player-container");
-      S && (document.fullscreenElement ? (document.exitFullscreen(), y.value = !1) : (S.requestFullscreen(), y.value = !0));
+      var S;
+      const C = (S = t.value) == null ? void 0 : S.closest(".player-container");
+      C && (document.fullscreenElement ? (document.exitFullscreen(), f.value = !1) : (C.requestFullscreen(), f.value = !0));
     }
-    function P() {
-      _.value = !0, f && clearTimeout(f), f = setTimeout(() => {
-        s.value && (_.value = !1);
+    function F() {
+      u.value = !0, o && clearTimeout(o), o = setTimeout(() => {
+        s.value && (u.value = !1);
       }, 3e3);
     }
     return ke(() => {
-      f && clearTimeout(f);
-    }), (S, w) => (l(), r("div", {
-      class: X(["player-container", { "controls-hidden": !_.value && s.value }]),
-      onMousemove: P,
-      onClick: a
+      o && clearTimeout(o);
+    }), (C, S) => (a(), n("div", {
+      class: X(["player-container", { "controls-hidden": !u.value && s.value }]),
+      onMousemove: F,
+      onClick: r
     }, [
-      w[6] || (w[6] = t("div", { class: "player-overlay" }, null, -1)),
-      t("video", {
+      S[6] || (S[6] = e("div", { class: "player-overlay" }, null, -1)),
+      e("video", {
         ref_key: "videoRef",
-        ref: e,
+        ref: t,
         class: "player-video",
-        src: n.streamUrl,
-        poster: n.media.poster_url ?? void 0,
+        src: l.streamUrl,
+        poster: l.media.poster_url ?? void 0,
         preload: "metadata",
-        onPlay: w[0] || (w[0] = (A) => s.value = !0),
-        onPause: w[1] || (w[1] = (A) => s.value = !1),
-        onTimeupdate: i,
-        onLoadedmetadata: c,
-        onClick: Q(a, ["stop"])
+        onPlay: S[0] || (S[0] = (M) => s.value = !0),
+        onPause: S[1] || (S[1] = (M) => s.value = !1),
+        onTimeupdate: _,
+        onLoadedmetadata: g,
+        onClick: W(r, ["stop"])
       }, null, 40, Kt),
-      t("div", {
+      e("div", {
         class: "player-controls",
-        onClick: w[4] || (w[4] = Q(() => {
+        onClick: S[4] || (S[4] = W(() => {
         }, ["stop"]))
       }, [
-        t("div", Xt, [
-          t("button", {
+        e("div", Xt, [
+          e("button", {
             class: "ctrl-btn back-btn",
-            onClick: w[2] || (w[2] = (A) => S.$router.back())
+            onClick: S[2] || (S[2] = (M) => C.$router.back())
           }, " ← Back "),
-          t("span", Wt, g(n.media.name), 1),
-          n.media.year ? (l(), r("span", Qt, g(n.media.year), 1)) : F("", !0)
+          e("span", Wt, d(l.media.name), 1),
+          l.media.year ? (a(), n("span", Qt, d(l.media.year), 1)) : w("", !0)
         ]),
-        t("div", Zt, [
-          t("button", {
+        e("div", Zt, [
+          e("button", {
             class: "play-btn",
-            onClick: a
-          }, g(s.value ? "❚❚" : "▶"), 1)
+            onClick: r
+          }, d(s.value ? "❚❚" : "▶"), 1)
         ]),
-        t("div", es, [
-          t("div", {
+        e("div", es, [
+          e("div", {
             class: "progress-bar",
-            onClick: I
+            onClick: A
           }, [
-            t("div", ts, [
-              t("div", {
+            e("div", ts, [
+              e("div", {
                 class: "progress-fill",
-                style: $e({ width: u.value + "%" })
+                style: ee({ width: c.value + "%" })
               }, null, 4)
             ])
           ]),
-          t("div", ss, [
-            t("span", as, g(k(o.value)), 1),
-            t("div", ns, [
-              t("button", {
+          e("div", ss, [
+            e("span", as, d(b(i.value)), 1),
+            e("div", ns, [
+              e("button", {
                 class: "ctrl-btn",
                 onClick: B
-              }, g(m.value || p.value === 0 ? "🔇" : "🔊"), 1),
-              t("input", {
+              }, d(y.value || m.value === 0 ? "🔇" : "🔊"), 1),
+              e("input", {
                 type: "range",
                 min: "0",
                 max: "1",
                 step: "0.05",
-                value: m.value ? 0 : p.value,
+                value: y.value ? 0 : m.value,
                 class: "volume-slider",
                 onInput: R
               }, null, 40, os)
             ]),
-            t("div", ls, [
-              t("select", {
+            e("div", ls, [
+              e("select", {
                 class: "speed-select",
                 value: h.value,
-                onChange: w[3] || (w[3] = (A) => V(Number(A.target.value)))
-              }, [...w[5] || (w[5] = [
+                onChange: S[3] || (S[3] = (M) => O(Number(M.target.value)))
+              }, [...S[5] || (S[5] = [
                 we('<option value="0.5" data-v-7a51063f>0.5×</option><option value="0.75" data-v-7a51063f>0.75×</option><option value="1" data-v-7a51063f>1×</option><option value="1.25" data-v-7a51063f>1.25×</option><option value="1.5" data-v-7a51063f>1.5×</option><option value="2" data-v-7a51063f>2×</option>', 6)
               ])], 40, rs)
             ]),
-            t("span", is, g(k(v.value)), 1),
-            t("button", {
+            e("span", is, d(b(v.value)), 1),
+            e("button", {
               class: "ctrl-btn",
               onClick: q
-            }, g(y.value ? "⤓" : "⤢"), 1)
+            }, d(f.value ? "⤓" : "⤢"), 1)
           ])
         ])
       ])
@@ -695,197 +695,197 @@ const K = new ee(), fe = ve("media", () => {
 }, ps = {
   key: 1,
   class: "player-error"
-}, fs = /* @__PURE__ */ E({
+}, _s = /* @__PURE__ */ E({
   __name: "PlayerPage",
-  setup(n) {
-    const e = ue("apiBase", N(() => "")), s = Pe(), o = d(null), v = d(""), p = d(!0), m = d(null);
+  setup(l) {
+    const t = de("apiBase", D(() => "")), s = xe(), i = p(null), v = p(""), m = p(!0), y = p(null);
     async function h() {
-      const y = s.params.id;
-      if (!y) {
-        m.value = "No media ID provided", p.value = !1;
+      const f = s.params.id;
+      if (!f) {
+        y.value = "No media ID provided", m.value = !1;
         return;
       }
       try {
-        const _ = new ee({ baseUrl: e.value }), [f, u] = await Promise.all([
-          _.get(`/api/v1/media/${y}`),
-          _.get(`/api/v1/media/${y}/playback-info`).catch(() => null)
+        const u = new te({ baseUrl: t.value }), [o, c] = await Promise.all([
+          u.get(`/api/v1/media/${f}`),
+          u.get(`/api/v1/media/${f}/playback-info`).catch(() => null)
         ]);
-        o.value = f, u != null && u.url ? v.value = u.url : v.value = `${e.value}/media/${y}/stream`;
-      } catch (_) {
-        m.value = _ instanceof Error ? _.message : "Failed to load media";
+        i.value = o, c != null && c.url ? v.value = c.url : v.value = `${t.value}/media/${f}/stream`;
+      } catch (u) {
+        y.value = u instanceof Error ? u.message : "Failed to load media";
       } finally {
-        p.value = !1;
+        m.value = !1;
       }
     }
-    return Z(h), (y, _) => (l(), r("div", ds, [
-      p.value ? (l(), r("div", vs, "Loading...")) : m.value ? (l(), r("div", ps, [
-        t("p", null, g(m.value), 1),
-        t("button", {
+    return j(h), (f, u) => (a(), n("div", ds, [
+      m.value ? (a(), n("div", vs, "Loading...")) : y.value ? (a(), n("div", ps, [
+        e("p", null, d(y.value), 1),
+        e("button", {
           class: "retry-btn",
           onClick: h
         }, "Retry")
-      ])) : o.value ? (l(), le(us, {
+      ])) : i.value ? (a(), re(us, {
         key: 2,
-        media: o.value,
+        media: i.value,
         "stream-url": v.value
-      }, null, 8, ["media", "stream-url"])) : F("", !0)
+      }, null, 8, ["media", "stream-url"])) : w("", !0)
     ]));
   }
-}), ms = /* @__PURE__ */ x(fs, [["__scopeId", "data-v-d9061b47"]]), se = "access_token", ae = "refresh_token", ne = "user";
+}), fs = /* @__PURE__ */ x(_s, [["__scopeId", "data-v-d9061b47"]]), ae = "access_token", ne = "refresh_token", oe = "user";
 class gs {
-  constructor(e = window.localStorage) {
-    this.storage = e;
+  constructor(t = window.localStorage) {
+    this.storage = t;
   }
   getAccessToken() {
-    return this.storage.getItem(se);
-  }
-  setAccessToken(e) {
-    this.storage.setItem(se, e);
-  }
-  getRefreshToken() {
     return this.storage.getItem(ae);
   }
-  setRefreshToken(e) {
-    this.storage.setItem(ae, e);
+  setAccessToken(t) {
+    this.storage.setItem(ae, t);
+  }
+  getRefreshToken() {
+    return this.storage.getItem(ne);
+  }
+  setRefreshToken(t) {
+    this.storage.setItem(ne, t);
   }
   getUser() {
-    const e = this.storage.getItem(ne);
-    if (e === null) return null;
+    const t = this.storage.getItem(oe);
+    if (t === null) return null;
     try {
-      return JSON.parse(e);
+      return JSON.parse(t);
     } catch {
       return null;
     }
   }
-  setUser(e) {
-    this.storage.setItem(ne, JSON.stringify(e));
+  setUser(t) {
+    this.storage.setItem(oe, JSON.stringify(t));
   }
   clear() {
-    this.storage.removeItem(se), this.storage.removeItem(ae), this.storage.removeItem(ne);
+    this.storage.removeItem(ae), this.storage.removeItem(ne), this.storage.removeItem(oe);
   }
 }
-const re = ve("auth", () => {
-  const n = new gs(), e = new ee({ tokenStore: n }), s = d(null), o = d(!1), v = d(null), p = N(() => n.getAccessToken() !== null), m = N(() => {
-    var u;
-    return ((u = s.value) == null ? void 0 : u.is_admin) === !0;
+const ie = pe("auth", () => {
+  const l = new gs(), t = new te({ tokenStore: l }), s = p(null), i = p(!1), v = p(null), m = D(() => l.getAccessToken() !== null), y = D(() => {
+    var c;
+    return ((c = s.value) == null ? void 0 : c.is_admin) === !0;
   });
-  async function h(u, k) {
-    o.value = !0, v.value = null;
+  async function h(c, b) {
+    i.value = !0, v.value = null;
     try {
-      const a = await e.post("/api/v1/auth/login", { email: u, password: k });
-      return n.setAccessToken(a.access_token), n.setRefreshToken(a.refresh_token), await _(), !0;
-    } catch (a) {
-      return v.value = a instanceof Error ? a.message : "Login failed", !1;
+      const r = await t.post("/api/v1/auth/login", { email: c, password: b });
+      return l.setAccessToken(r.access_token), l.setRefreshToken(r.refresh_token), await u(), !0;
+    } catch (r) {
+      return v.value = r instanceof Error ? r.message : "Login failed", !1;
     } finally {
-      o.value = !1;
+      i.value = !1;
     }
   }
-  async function y(u, k, a) {
-    o.value = !0, v.value = null;
+  async function f(c, b, r) {
+    i.value = !0, v.value = null;
     try {
-      const i = await e.post("/api/v1/auth/register", { email: u, username: k, password: a });
-      return n.setAccessToken(i.access_token), n.setRefreshToken(i.refresh_token), await _(), !0;
-    } catch (i) {
-      return v.value = i instanceof Error ? i.message : "Registration failed", !1;
+      const _ = await t.post("/api/v1/auth/register", { email: c, username: b, password: r });
+      return l.setAccessToken(_.access_token), l.setRefreshToken(_.refresh_token), await u(), !0;
+    } catch (_) {
+      return v.value = _ instanceof Error ? _.message : "Registration failed", !1;
     } finally {
-      o.value = !1;
+      i.value = !1;
     }
   }
-  async function _() {
-    if (p.value)
+  async function u() {
+    if (m.value)
       try {
-        s.value = await e.getCurrentUser();
+        s.value = await t.getCurrentUser();
       } catch {
-        s.value = null, n.clear();
+        s.value = null, l.clear();
       }
   }
-  function f() {
-    n.clear(), s.value = null;
+  function o() {
+    l.clear(), s.value = null;
   }
   return {
     user: s,
-    loading: o,
+    loading: i,
     error: v,
-    isLoggedIn: p,
-    isAdmin: m,
-    client: e,
+    isLoggedIn: m,
+    isAdmin: y,
+    client: t,
     login: h,
-    signup: y,
-    fetchUser: _,
-    logout: f
+    signup: f,
+    fetchUser: u,
+    logout: o
   };
-}), _s = {
+}), ms = {
   key: 0,
   class: "form-error"
-}, hs = { class: "field" }, ys = { class: "field" }, bs = { class: "password-wrapper" }, ks = ["type"], $s = ["disabled"], ws = { class: "form-footer" }, Ss = /* @__PURE__ */ E({
+}, hs = { class: "field" }, ys = { class: "field" }, bs = { class: "password-wrapper" }, $s = ["type"], ks = ["disabled"], ws = { class: "form-footer" }, Ss = /* @__PURE__ */ E({
   __name: "LoginForm",
   emits: ["success"],
-  setup(n, { emit: e }) {
-    const s = e, o = re(), v = pe(), p = d(""), m = d(""), h = d(!1);
-    async function y() {
-      await o.login(p.value, m.value) && (s("success"), v.push("/app"));
+  setup(l, { emit: t }) {
+    const s = t, i = ie(), v = _e(), m = p(""), y = p(""), h = p(!1);
+    async function f() {
+      await i.login(m.value, y.value) && (s("success"), v.push("/app"));
     }
-    return (_, f) => {
-      const u = de("router-link");
-      return l(), r("form", {
+    return (u, o) => {
+      const c = ve("router-link");
+      return a(), n("form", {
         class: "login-form",
-        onSubmit: Q(y, ["prevent"])
+        onSubmit: W(f, ["prevent"])
       }, [
-        f[7] || (f[7] = t("h2", { class: "form-title" }, "Sign in to Phlix", -1)),
-        b(o).error ? (l(), r("div", _s, g(b(o).error), 1)) : F("", !0),
-        t("div", hs, [
-          f[3] || (f[3] = t("label", {
+        o[7] || (o[7] = e("h2", { class: "form-title" }, "Sign in to Phlix", -1)),
+        $(i).error ? (a(), n("div", ms, d($(i).error), 1)) : w("", !0),
+        e("div", hs, [
+          o[3] || (o[3] = e("label", {
             for: "email",
             class: "label"
           }, "Email", -1)),
-          D(t("input", {
+          V(e("input", {
             id: "email",
-            "onUpdate:modelValue": f[0] || (f[0] = (k) => p.value = k),
+            "onUpdate:modelValue": o[0] || (o[0] = (b) => m.value = b),
             type: "email",
             class: "input",
             placeholder: "you@example.com",
             required: "",
             autocomplete: "email"
           }, null, 512), [
-            [W, p.value]
+            [Z, m.value]
           ])
         ]),
-        t("div", ys, [
-          f[4] || (f[4] = t("label", {
+        e("div", ys, [
+          o[4] || (o[4] = e("label", {
             for: "password",
             class: "label"
           }, "Password", -1)),
-          t("div", bs, [
-            D(t("input", {
+          e("div", bs, [
+            V(e("input", {
               id: "password",
-              "onUpdate:modelValue": f[1] || (f[1] = (k) => m.value = k),
+              "onUpdate:modelValue": o[1] || (o[1] = (b) => y.value = b),
               type: h.value ? "text" : "password",
               class: "input",
               placeholder: "Your password",
               required: "",
               autocomplete: "current-password"
-            }, null, 8, ks), [
-              [oe, m.value]
+            }, null, 8, $s), [
+              [le, y.value]
             ]),
-            t("button", {
+            e("button", {
               type: "button",
               class: "toggle-password",
-              onClick: f[2] || (f[2] = (k) => h.value = !h.value)
-            }, g(h.value ? "🙈" : "👁"), 1)
+              onClick: o[2] || (o[2] = (b) => h.value = !h.value)
+            }, d(h.value ? "🙈" : "👁"), 1)
           ])
         ]),
-        t("button", {
+        e("button", {
           type: "submit",
           class: "submit-btn",
-          disabled: b(o).loading
-        }, g(b(o).loading ? "Signing in..." : "Sign in"), 9, $s),
-        t("p", ws, [
-          f[6] || (f[6] = Y(" Don't have an account? ", -1)),
-          M(u, {
+          disabled: $(i).loading
+        }, d($(i).loading ? "Signing in..." : "Sign in"), 9, ks),
+        e("p", ws, [
+          o[6] || (o[6] = Y(" Don't have an account? ", -1)),
+          N(c, {
             to: "/app/signup",
             class: "link"
           }, {
-            default: O(() => [...f[5] || (f[5] = [
+            default: z(() => [...o[5] || (o[5] = [
               Y("Sign up", -1)
             ])]),
             _: 1
@@ -894,68 +894,68 @@ const re = ve("auth", () => {
       ], 32);
     };
   }
-}), Ts = /* @__PURE__ */ x(Ss, [["__scopeId", "data-v-22bc5576"]]), Cs = { class: "auth-page" }, Rs = { class: "auth-card" }, Ps = /* @__PURE__ */ E({
+}), Cs = /* @__PURE__ */ x(Ss, [["__scopeId", "data-v-22bc5576"]]), Ts = { class: "auth-page" }, Ps = { class: "auth-card" }, xs = /* @__PURE__ */ E({
   __name: "LoginPage",
-  setup(n) {
-    return (e, s) => (l(), r("div", Cs, [
-      t("div", Rs, [
-        M(Ts, { onSuccess: () => {
+  setup(l) {
+    return (t, s) => (a(), n("div", Ts, [
+      e("div", Ps, [
+        N(Cs, { onSuccess: () => {
         } })
       ])
     ]));
   }
-}), xs = /* @__PURE__ */ x(Ps, [["__scopeId", "data-v-9c53ce6a"]]), Es = {
+}), Rs = /* @__PURE__ */ x(xs, [["__scopeId", "data-v-9c53ce6a"]]), Es = {
   key: 0,
   class: "form-error"
-}, Fs = { class: "field" }, Us = { class: "field" }, Is = { class: "field" }, As = { class: "password-wrapper" }, Ls = ["type"], Ms = { class: "field" }, Ns = ["type"], Bs = ["disabled"], qs = { class: "form-footer" }, Gs = /* @__PURE__ */ E({
+}, Fs = { class: "field" }, Ls = { class: "field" }, Is = { class: "field" }, As = { class: "password-wrapper" }, Ms = ["type"], Us = { class: "field" }, Ns = ["type"], Ds = ["disabled"], Bs = { class: "form-footer" }, qs = /* @__PURE__ */ E({
   __name: "SignupForm",
   emits: ["success"],
-  setup(n, { emit: e }) {
-    const s = e, o = re(), v = pe(), p = d(""), m = d(""), h = d(""), y = d(""), _ = d(!1), f = d(null);
-    async function u() {
-      if (f.value = null, h.value.length < 8) {
-        f.value = "Password must be at least 8 characters.";
+  setup(l, { emit: t }) {
+    const s = t, i = ie(), v = _e(), m = p(""), y = p(""), h = p(""), f = p(""), u = p(!1), o = p(null);
+    async function c() {
+      if (o.value = null, h.value.length < 8) {
+        o.value = "Password must be at least 8 characters.";
         return;
       }
-      if (h.value !== y.value) {
-        f.value = "Passwords do not match.";
+      if (h.value !== f.value) {
+        o.value = "Passwords do not match.";
         return;
       }
-      await o.signup(p.value, m.value, h.value) && (s("success"), v.push("/app"));
+      await i.signup(m.value, y.value, h.value) && (s("success"), v.push("/app"));
     }
-    return (k, a) => {
-      const i = de("router-link");
-      return l(), r("form", {
+    return (b, r) => {
+      const _ = ve("router-link");
+      return a(), n("form", {
         class: "signup-form",
-        onSubmit: Q(u, ["prevent"])
+        onSubmit: W(c, ["prevent"])
       }, [
-        a[11] || (a[11] = t("h2", { class: "form-title" }, "Create your Phlix account", -1)),
-        b(o).error || f.value ? (l(), r("div", Es, g(b(o).error || f.value), 1)) : F("", !0),
-        t("div", Fs, [
-          a[5] || (a[5] = t("label", {
+        r[11] || (r[11] = e("h2", { class: "form-title" }, "Create your Phlix account", -1)),
+        $(i).error || o.value ? (a(), n("div", Es, d($(i).error || o.value), 1)) : w("", !0),
+        e("div", Fs, [
+          r[5] || (r[5] = e("label", {
             for: "email",
             class: "label"
           }, "Email", -1)),
-          D(t("input", {
+          V(e("input", {
             id: "email",
-            "onUpdate:modelValue": a[0] || (a[0] = (c) => p.value = c),
+            "onUpdate:modelValue": r[0] || (r[0] = (g) => m.value = g),
             type: "email",
             class: "input",
             placeholder: "you@example.com",
             required: "",
             autocomplete: "email"
           }, null, 512), [
-            [W, p.value]
+            [Z, m.value]
           ])
         ]),
-        t("div", Us, [
-          a[6] || (a[6] = t("label", {
+        e("div", Ls, [
+          r[6] || (r[6] = e("label", {
             for: "username",
             class: "label"
           }, "Username", -1)),
-          D(t("input", {
+          V(e("input", {
             id: "username",
-            "onUpdate:modelValue": a[1] || (a[1] = (c) => m.value = c),
+            "onUpdate:modelValue": r[1] || (r[1] = (g) => y.value = g),
             type: "text",
             class: "input",
             placeholder: "Your username",
@@ -963,63 +963,63 @@ const re = ve("auth", () => {
             autocomplete: "username",
             minlength: "3"
           }, null, 512), [
-            [W, m.value]
+            [Z, y.value]
           ])
         ]),
-        t("div", Is, [
-          a[7] || (a[7] = t("label", {
+        e("div", Is, [
+          r[7] || (r[7] = e("label", {
             for: "password",
             class: "label"
           }, "Password", -1)),
-          t("div", As, [
-            D(t("input", {
+          e("div", As, [
+            V(e("input", {
               id: "password",
-              "onUpdate:modelValue": a[2] || (a[2] = (c) => h.value = c),
-              type: _.value ? "text" : "password",
+              "onUpdate:modelValue": r[2] || (r[2] = (g) => h.value = g),
+              type: u.value ? "text" : "password",
               class: "input",
               placeholder: "At least 8 characters",
               required: "",
               autocomplete: "new-password",
               minlength: "8"
-            }, null, 8, Ls), [
-              [oe, h.value]
+            }, null, 8, Ms), [
+              [le, h.value]
             ]),
-            t("button", {
+            e("button", {
               type: "button",
               class: "toggle-password",
-              onClick: a[3] || (a[3] = (c) => _.value = !_.value)
-            }, g(_.value ? "🙈" : "👁"), 1)
+              onClick: r[3] || (r[3] = (g) => u.value = !u.value)
+            }, d(u.value ? "🙈" : "👁"), 1)
           ])
         ]),
-        t("div", Ms, [
-          a[8] || (a[8] = t("label", {
+        e("div", Us, [
+          r[8] || (r[8] = e("label", {
             for: "confirm",
             class: "label"
           }, "Confirm password", -1)),
-          D(t("input", {
+          V(e("input", {
             id: "confirm",
-            "onUpdate:modelValue": a[4] || (a[4] = (c) => y.value = c),
-            type: _.value ? "text" : "password",
+            "onUpdate:modelValue": r[4] || (r[4] = (g) => f.value = g),
+            type: u.value ? "text" : "password",
             class: "input",
             placeholder: "Repeat your password",
             required: "",
             autocomplete: "new-password"
           }, null, 8, Ns), [
-            [oe, y.value]
+            [le, f.value]
           ])
         ]),
-        t("button", {
+        e("button", {
           type: "submit",
           class: "submit-btn",
-          disabled: b(o).loading
-        }, g(b(o).loading ? "Creating account..." : "Create account"), 9, Bs),
-        t("p", qs, [
-          a[10] || (a[10] = Y(" Already have an account? ", -1)),
-          M(i, {
+          disabled: $(i).loading
+        }, d($(i).loading ? "Creating account..." : "Create account"), 9, Ds),
+        e("p", Bs, [
+          r[10] || (r[10] = Y(" Already have an account? ", -1)),
+          N(_, {
             to: "/app/login",
             class: "link"
           }, {
-            default: O(() => [...a[9] || (a[9] = [
+            default: z(() => [...r[9] || (r[9] = [
               Y("Sign in", -1)
             ])]),
             _: 1
@@ -1028,12 +1028,12 @@ const re = ve("auth", () => {
       ], 32);
     };
   }
-}), Ds = /* @__PURE__ */ x(Gs, [["__scopeId", "data-v-d5e42c72"]]), Vs = { class: "auth-page" }, js = { class: "auth-card" }, Os = /* @__PURE__ */ E({
+}), Gs = /* @__PURE__ */ x(qs, [["__scopeId", "data-v-d5e42c72"]]), Vs = { class: "auth-page" }, js = { class: "auth-card" }, Os = /* @__PURE__ */ E({
   __name: "SignupPage",
-  setup(n) {
-    return (e, s) => (l(), r("div", Vs, [
-      t("div", js, [
-        M(Ds, { onSuccess: () => {
+  setup(l) {
+    return (t, s) => (a(), n("div", Vs, [
+      e("div", js, [
+        N(Gs, { onSuccess: () => {
         } })
       ])
     ]));
@@ -1053,8 +1053,8 @@ const re = ve("auth", () => {
     groups: {}
   },
   emits: ["saved"],
-  setup(n, { emit: e }) {
-    const s = n, o = e, v = re(), p = d({}), m = d(!0), h = d(!1), y = d(null), _ = d(null), f = [
+  setup(l, { emit: t }) {
+    const s = l, i = t, v = ie(), m = p({}), y = p(!0), h = p(!1), f = p(null), u = p(null), o = [
       "transcoding",
       "metadata",
       "markers",
@@ -1064,37 +1064,37 @@ const re = ve("auth", () => {
       "newsletter",
       "port-forward",
       "scrobblers"
-    ], u = N(
-      () => s.groups ? f.filter((R) => s.groups.includes(R)) : f
+    ], c = D(
+      () => s.groups ? o.filter((R) => s.groups.includes(R)) : o
     );
-    async function k() {
-      m.value = !0, y.value = null;
+    async function b() {
+      y.value = !0, f.value = null;
       try {
         const R = await v.client.get("/api/v1/users/me/settings");
-        p.value = R;
+        m.value = R;
       } catch (R) {
-        y.value = R instanceof Error ? R.message : "Failed to load settings";
+        f.value = R instanceof Error ? R.message : "Failed to load settings";
       } finally {
-        m.value = !1;
+        y.value = !1;
       }
     }
-    async function a() {
-      h.value = !0, y.value = null, _.value = null;
+    async function r() {
+      h.value = !0, f.value = null, u.value = null;
       try {
-        await v.client.put("/api/v1/users/me/settings", p.value), _.value = "Settings saved.", o("saved", p.value), setTimeout(() => {
-          _.value = null;
+        await v.client.put("/api/v1/users/me/settings", m.value), u.value = "Settings saved.", i("saved", m.value), setTimeout(() => {
+          u.value = null;
         }, 3e3);
       } catch (R) {
-        y.value = R instanceof Error ? R.message : "Failed to save settings";
+        f.value = R instanceof Error ? R.message : "Failed to save settings";
       } finally {
         h.value = !1;
       }
     }
-    function i(R, B) {
-      p.value[R] = B;
+    function _(R, B) {
+      m.value[R] = B;
     }
-    Z(k);
-    const c = {
+    j(b);
+    const g = {
       transcoding: "Transcoding",
       metadata: "Metadata",
       markers: "Marker Detection",
@@ -1104,7 +1104,7 @@ const re = ve("auth", () => {
       newsletter: "Newsletter",
       "port-forward": "Port Forwarding",
       scrobblers: "Scrobblers"
-    }, I = {
+    }, A = {
       "hwaccel.enabled": { label: "Hardware acceleration", type: "bool" },
       "hwaccel.prefer_hardware": { label: "Prefer hardware encoding", type: "bool" },
       "hwaccel.probe_timeout": { label: "HW probe timeout (s)", type: "number" },
@@ -1124,68 +1124,68 @@ const re = ve("auth", () => {
       "trakt.client_secret": { label: "Trakt client secret", type: "string" },
       "trakt.redirect_uri": { label: "Trakt redirect URI", type: "string" }
     };
-    return (R, B) => (l(), r("div", Hs, [
-      m.value ? (l(), r("div", zs, "Loading settings...")) : y.value ? (l(), r("div", Js, g(y.value), 1)) : (l(), r(U, { key: 2 }, [
-        (l(!0), r(U, null, L(u.value, (V) => (l(), r("div", {
-          key: V,
+    return (R, B) => (a(), n("div", Hs, [
+      y.value ? (a(), n("div", zs, "Loading settings...")) : f.value ? (a(), n("div", Js, d(f.value), 1)) : (a(), n(L, { key: 2 }, [
+        (a(!0), n(L, null, I(c.value, (O) => (a(), n("div", {
+          key: O,
           class: "settings-group"
         }, [
-          t("h3", Ks, g(c[V]), 1),
-          (l(), r(U, null, L(I, (q, P) => D(t("div", {
-            key: P,
+          e("h3", Ks, d(g[O]), 1),
+          (a(), n(L, null, I(A, (q, F) => V(e("div", {
+            key: F,
             class: "setting-row"
           }, [
-            t("label", {
-              for: P,
+            e("label", {
+              for: F,
               class: "setting-label"
-            }, g(q.label), 9, Xs),
-            t("div", Ws, [
-              q.type === "bool" ? (l(), r("input", {
+            }, d(q.label), 9, Xs),
+            e("div", Ws, [
+              q.type === "bool" ? (a(), n("input", {
                 key: 0,
-                id: P,
+                id: F,
                 type: "checkbox",
                 class: "toggle",
-                checked: !!p.value[P],
-                onChange: (S) => i(P, S.target.checked)
-              }, null, 40, Qs)) : q.type === "number" ? (l(), r("input", {
+                checked: !!m.value[F],
+                onChange: (C) => _(F, C.target.checked)
+              }, null, 40, Qs)) : q.type === "number" ? (a(), n("input", {
                 key: 1,
-                id: P,
+                id: F,
                 type: "number",
                 class: "input number-input",
-                value: p.value[P],
-                onChange: (S) => i(P, Number(S.target.value))
-              }, null, 40, Zs)) : (l(), r("input", {
+                value: m.value[F],
+                onChange: (C) => _(F, Number(C.target.value))
+              }, null, 40, Zs)) : (a(), n("input", {
                 key: 2,
-                id: P,
+                id: F,
                 type: "text",
                 class: "input",
-                value: p.value[P] ?? "",
-                onChange: (S) => i(P, S.target.value)
+                value: m.value[F] ?? "",
+                onChange: (C) => _(F, C.target.value)
               }, null, 40, ea))
             ])
           ]), [
-            [Se, P.startsWith(V)]
+            [Se, F.startsWith(O)]
           ])), 64))
         ]))), 128)),
-        t("div", ta, [
-          _.value ? (l(), r("div", sa, g(_.value), 1)) : F("", !0),
-          t("button", {
+        e("div", ta, [
+          u.value ? (a(), n("div", sa, d(u.value), 1)) : w("", !0),
+          e("button", {
             class: "save-btn",
             disabled: h.value,
-            onClick: a
-          }, g(h.value ? "Saving..." : "Save settings"), 9, aa)
+            onClick: r
+          }, d(h.value ? "Saving..." : "Save settings"), 9, aa)
         ])
       ], 64))
     ]));
   }
 }), oa = /* @__PURE__ */ x(na, [["__scopeId", "data-v-51b588b6"]]), la = { class: "settings-page" }, ra = /* @__PURE__ */ E({
   __name: "SettingsPage",
-  setup(n) {
-    return (e, s) => (l(), r("div", la, [
-      s[0] || (s[0] = t("div", { class: "settings-header" }, [
-        t("h1", { class: "settings-title" }, "Settings")
+  setup(l) {
+    return (t, s) => (a(), n("div", la, [
+      s[0] || (s[0] = e("div", { class: "settings-header" }, [
+        e("h1", { class: "settings-title" }, "Settings")
       ], -1)),
-      M(oa)
+      N(oa)
     ]));
   }
 }), ia = /* @__PURE__ */ x(ra, [["__scopeId", "data-v-f9ca8a28"]]);
@@ -1199,54 +1199,54 @@ function ca() {
     features: {}
   };
 }
-function ua(n) {
-  const e = n.routerBase || "/app", s = [
+function ua(l) {
+  const t = l.routerBase || "/app", s = [
     {
-      path: `${e}/`,
-      redirect: e
+      path: `${t}/`,
+      redirect: t
     },
     {
-      path: e,
+      path: t,
       name: "browse",
       component: Jt
     },
     {
-      path: `${e}/player/:id`,
+      path: `${t}/player/:id`,
       name: "player",
-      component: ms
+      component: fs
     },
     {
-      path: `${e}/login`,
+      path: `${t}/login`,
       name: "login",
-      component: xs
+      component: Rs
     },
     {
-      path: `${e}/signup`,
+      path: `${t}/signup`,
       name: "signup",
       component: Ys
     },
     {
-      path: `${e}/settings`,
+      path: `${t}/settings`,
       name: "settings",
       component: ia
     }
   ];
-  return n.extraRoutes && s.push(...n.extraRoutes), s.push({
-    path: `${e}/:pathMatch(.*)*`,
+  return l.extraRoutes && s.push(...l.extraRoutes), s.push({
+    path: `${t}/:pathMatch(.*)*`,
     name: "catchall",
     component: ze,
-    props: { appName: n.app }
+    props: { appName: l.app }
   }), s;
 }
-function Fa(n) {
-  const e = {
+function Bn(l) {
+  const t = {
     ...ca(),
-    ...n
-  }, s = Ce(), o = e.routerBase || "/app", v = xe({
-    history: Ee(o),
-    routes: ua(e)
-  }), p = Te(je);
-  return p.provide("apiBase", e.apiBase), p.use(s), p.use(v), p;
+    ...l
+  }, s = Te(), i = t.routerBase || "/app", v = Re({
+    history: Ee(i),
+    routes: ua(t)
+  }), m = Ce(je);
+  return m.provide("apiBase", t.apiBase), m.use(s), m.use(v), m;
 }
 const da = { class: "library-scan-page" }, va = {
   key: 0,
@@ -1254,58 +1254,58 @@ const da = { class: "library-scan-page" }, va = {
 }, pa = {
   key: 1,
   class: "error"
-}, fa = {
+}, _a = {
   key: 2,
   class: "libraries-list"
-}, ma = { class: "library-info" }, ga = { class: "library-name" }, _a = { class: "library-type" }, ha = { class: "library-paths" }, ya = { class: "library-meta" }, ba = { key: 0 }, ka = {
+}, fa = { class: "library-info" }, ga = { class: "library-name" }, ma = { class: "library-type" }, ha = { class: "library-paths" }, ya = { class: "library-meta" }, ba = { key: 0 }, $a = {
   key: 0,
   class: "scan-status"
-}, $a = { class: "library-actions" }, wa = ["onClick", "disabled"], Sa = ["onClick", "disabled"], Ta = {
+}, ka = { class: "library-actions" }, wa = ["onClick", "disabled"], Sa = ["onClick", "disabled"], Ca = {
   key: 0,
   class: "empty-state"
-}, Ca = /* @__PURE__ */ E({
+}, Ta = /* @__PURE__ */ E({
   __name: "LibraryScanPage",
-  setup(n) {
-    const e = d([]), s = d({}), o = d(!0), v = d(null);
-    async function p() {
+  setup(l) {
+    const t = p([]), s = p({}), i = p(!0), v = p(null);
+    async function m() {
       try {
-        const u = await K.get("/api/v1/libraries");
-        e.value = u.libraries || [];
-        for (const k of e.value)
-          m(k.id);
-      } catch (u) {
-        v.value = u instanceof Error ? u.message : "Failed to load libraries";
+        const c = await U.get("/api/v1/libraries");
+        t.value = c.libraries || [];
+        for (const b of t.value)
+          y(b.id);
+      } catch (c) {
+        v.value = c instanceof Error ? c.message : "Failed to load libraries";
       } finally {
-        o.value = !1;
+        i.value = !1;
       }
     }
-    async function m(u) {
+    async function y(c) {
       try {
-        const k = await K.get(`/api/v1/libraries/${u}/scan-status`);
-        k.job && (s.value[u] = k.job);
+        const b = await U.get(`/api/v1/libraries/${c}/scan-status`);
+        b.job && (s.value[c] = b.job);
       } catch {
       }
     }
-    async function h(u) {
+    async function h(c) {
       try {
-        await K.post(`/api/v1/libraries/${u}/scan`), await m(u);
-      } catch (k) {
-        v.value = k instanceof Error ? k.message : "Failed to trigger scan";
+        await U.post(`/api/v1/libraries/${c}/scan`), await y(c);
+      } catch (b) {
+        v.value = b instanceof Error ? b.message : "Failed to trigger scan";
       }
     }
-    async function y(u) {
+    async function f(c) {
       try {
-        await K.post(`/api/v1/libraries/${u}/rescan`), await m(u);
-      } catch (k) {
-        v.value = k instanceof Error ? k.message : "Failed to trigger rescan";
+        await U.post(`/api/v1/libraries/${c}/rescan`), await y(c);
+      } catch (b) {
+        v.value = b instanceof Error ? b.message : "Failed to trigger rescan";
       }
     }
-    function _(u) {
-      return u ? new Date(u).toLocaleString() : "Never";
+    function u(c) {
+      return c ? new Date(c).toLocaleString() : "Never";
     }
-    function f(u) {
-      if (!u) return "";
-      switch (u.status) {
+    function o(c) {
+      if (!c) return "";
+      switch (c.status) {
         case "queued":
           return "⏳ Queued";
         case "running":
@@ -1313,75 +1313,454 @@ const da = { class: "library-scan-page" }, va = {
         case "completed":
           return "✅ Completed";
         case "failed":
-          return `❌ Failed: ${u.error || "Unknown error"}`;
+          return `❌ Failed: ${c.error || "Unknown error"}`;
         default:
-          return u.status;
+          return c.status;
       }
     }
-    return Z(() => {
-      p();
-    }), (u, k) => (l(), r("div", da, [
-      k[0] || (k[0] = t("div", { class: "scan-header" }, [
-        t("h1", { class: "scan-title" }, "Library Scanner"),
-        t("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")
+    return j(() => {
+      m();
+    }), (c, b) => (a(), n("div", da, [
+      b[0] || (b[0] = e("div", { class: "scan-header" }, [
+        e("h1", { class: "scan-title" }, "Library Scanner"),
+        e("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")
       ], -1)),
-      o.value ? (l(), r("div", va, "Loading libraries...")) : v.value ? (l(), r("div", pa, g(v.value), 1)) : (l(), r("div", fa, [
-        (l(!0), r(U, null, L(e.value, (a) => {
-          var i, c, I, R;
-          return l(), r("div", {
-            key: a.id,
+      i.value ? (a(), n("div", va, "Loading libraries...")) : v.value ? (a(), n("div", pa, d(v.value), 1)) : (a(), n("div", _a, [
+        (a(!0), n(L, null, I(t.value, (r) => {
+          var _, g, A, R;
+          return a(), n("div", {
+            key: r.id,
             class: "library-card"
           }, [
-            t("div", ma, [
-              t("h3", ga, g(a.name), 1),
-              t("span", _a, g(a.type), 1),
-              t("p", ha, g(a.paths.join(", ")), 1),
-              t("div", ya, [
-                a.item_count !== void 0 ? (l(), r("span", ba, g(a.item_count) + " items", 1)) : F("", !0),
-                t("span", null, "Last scan: " + g(_(a.last_scan_at)), 1)
+            e("div", fa, [
+              e("h3", ga, d(r.name), 1),
+              e("span", ma, d(r.type), 1),
+              e("p", ha, d(r.paths.join(", ")), 1),
+              e("div", ya, [
+                r.item_count !== void 0 ? (a(), n("span", ba, d(r.item_count) + " items", 1)) : w("", !0),
+                e("span", null, "Last scan: " + d(u(r.last_scan_at)), 1)
               ]),
-              s.value[a.id] ? (l(), r("div", ka, g(f(s.value[a.id])), 1)) : F("", !0)
+              s.value[r.id] ? (a(), n("div", $a, d(o(s.value[r.id])), 1)) : w("", !0)
             ]),
-            t("div", $a, [
-              t("button", {
+            e("div", ka, [
+              e("button", {
                 class: "btn btn-scan",
-                onClick: (B) => h(a.id),
-                disabled: ((i = s.value[a.id]) == null ? void 0 : i.status) === "running" || ((c = s.value[a.id]) == null ? void 0 : c.status) === "queued"
+                onClick: (B) => h(r.id),
+                disabled: ((_ = s.value[r.id]) == null ? void 0 : _.status) === "running" || ((g = s.value[r.id]) == null ? void 0 : g.status) === "queued"
               }, " Scan ", 8, wa),
-              t("button", {
+              e("button", {
                 class: "btn btn-rescan",
-                onClick: (B) => y(a.id),
-                disabled: ((I = s.value[a.id]) == null ? void 0 : I.status) === "running" || ((R = s.value[a.id]) == null ? void 0 : R.status) === "queued"
+                onClick: (B) => f(r.id),
+                disabled: ((A = s.value[r.id]) == null ? void 0 : A.status) === "running" || ((R = s.value[r.id]) == null ? void 0 : R.status) === "queued"
               }, " Rescan ", 8, Sa)
             ])
           ]);
         }), 128)),
-        e.value.length === 0 ? (l(), r("div", Ta, " No libraries configured. Add a library to get started. ")) : F("", !0)
+        t.value.length === 0 ? (a(), n("div", Ca, " No libraries configured. Add a library to get started. ")) : w("", !0)
       ]))
     ]));
   }
-}), Ua = /* @__PURE__ */ x(Ca, [["__scopeId", "data-v-62b3805e"]]);
+}), qn = /* @__PURE__ */ x(Ta, [["__scopeId", "data-v-62b3805e"]]), Pa = { class: "my-servers-page" }, xa = {
+  key: 0,
+  class: "loading"
+}, Ra = {
+  key: 1,
+  class: "error"
+}, Ea = {
+  key: 2,
+  class: "servers-list"
+}, Fa = { class: "server-info" }, La = { class: "server-name" }, Ia = { class: "server-url" }, Aa = { class: "server-meta" }, Ma = { key: 0 }, Ua = {
+  key: 0,
+  class: "empty-state"
+}, Na = /* @__PURE__ */ E({
+  __name: "MyServersPage",
+  setup(l) {
+    const t = p([]), s = p(!0), i = p(null);
+    async function v() {
+      try {
+        const h = await U.get("/api/v1/servers");
+        t.value = h.servers || [];
+      } catch (h) {
+        i.value = h instanceof Error ? h.message : "Failed to load servers";
+      } finally {
+        s.value = !1;
+      }
+    }
+    function m(h) {
+      switch (h) {
+        case "online":
+          return "#22c55e";
+        case "offline":
+          return "#ef4444";
+        case "connecting":
+          return "#eab308";
+        default:
+          return "#6b7280";
+      }
+    }
+    function y(h) {
+      return h ? new Date(h).toLocaleString() : "Never";
+    }
+    return j(() => {
+      v();
+    }), (h, f) => (a(), n("div", Pa, [
+      f[2] || (f[2] = e("div", { class: "page-header" }, [
+        e("h1", { class: "page-title" }, "My Servers"),
+        e("p", { class: "page-subtitle" }, "Manage your connected media servers")
+      ], -1)),
+      s.value ? (a(), n("div", xa, "Loading servers...")) : i.value ? (a(), n("div", Ra, d(i.value), 1)) : (a(), n("div", Ea, [
+        (a(!0), n(L, null, I(t.value, (u) => (a(), n("div", {
+          key: u.id,
+          class: "server-card"
+        }, [
+          e("div", {
+            class: "server-status",
+            style: ee({ backgroundColor: m(u.status) })
+          }, null, 4),
+          e("div", Fa, [
+            e("h3", La, d(u.name), 1),
+            e("p", Ia, d(u.url), 1),
+            e("div", Aa, [
+              e("span", null, d(u.owner), 1),
+              u.library_count !== void 0 ? (a(), n("span", Ma, d(u.library_count) + " libraries", 1)) : w("", !0),
+              e("span", null, "Last seen: " + d(y(u.last_seen)), 1)
+            ])
+          ]),
+          f[0] || (f[0] = e("div", { class: "server-actions" }, [
+            e("button", { class: "btn btn-primary" }, "Manage")
+          ], -1))
+        ]))), 128)),
+        t.value.length === 0 ? (a(), n("div", Ua, [...f[1] || (f[1] = [
+          e("p", null, "No servers connected yet.", -1),
+          e("button", { class: "btn btn-primary" }, "Add Server", -1)
+        ])])) : w("", !0)
+      ]))
+    ]));
+  }
+}), Gn = /* @__PURE__ */ x(Na, [["__scopeId", "data-v-b9237da4"]]), Da = { class: "federation-page" }, Ba = {
+  key: 0,
+  class: "loading"
+}, qa = {
+  key: 1,
+  class: "error"
+}, Ga = {
+  key: 2,
+  class: "federation-content"
+}, Va = { class: "peers-section" }, ja = { class: "peers-list" }, Oa = { class: "peer-info" }, Ya = { class: "peer-name" }, Ha = { class: "peer-url" }, za = { class: "peer-meta" }, Ja = { key: 0 }, Ka = { class: "peer-actions" }, Xa = ["onClick"], Wa = {
+  key: 1,
+  class: "status-badge"
+}, Qa = {
+  key: 0,
+  class: "empty-state"
+}, Za = { class: "add-peer-section" }, en = /* @__PURE__ */ E({
+  __name: "FederationPage",
+  setup(l) {
+    const t = p([]), s = p(!0), i = p(null);
+    async function v() {
+      try {
+        const u = await U.get("/api/v1/federation/peers");
+        t.value = u.peers || [];
+      } catch (u) {
+        i.value = u instanceof Error ? u.message : "Failed to load federation peers";
+      } finally {
+        s.value = !1;
+      }
+    }
+    async function m(u) {
+      try {
+        await U.post("/api/v1/federation/connect", { url: u }), await v();
+      } catch (o) {
+        i.value = o instanceof Error ? o.message : "Failed to connect to peer";
+      }
+    }
+    async function y(u) {
+      try {
+        await U.post(`/api/v1/federation/peers/${u}/disconnect`), await v();
+      } catch (o) {
+        i.value = o instanceof Error ? o.message : "Failed to disconnect peer";
+      }
+    }
+    function h(u) {
+      switch (u) {
+        case "connected":
+          return "#22c55e";
+        case "disconnected":
+          return "#ef4444";
+        case "pending":
+          return "#eab308";
+        default:
+          return "#6b7280";
+      }
+    }
+    function f(u) {
+      return u ? new Date(u).toLocaleString() : "Never";
+    }
+    return j(() => {
+      v();
+    }), (u, o) => (a(), n("div", Da, [
+      o[5] || (o[5] = e("div", { class: "page-header" }, [
+        e("h1", { class: "page-title" }, "Federation"),
+        e("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")
+      ], -1)),
+      s.value ? (a(), n("div", Ba, "Loading federation peers...")) : i.value ? (a(), n("div", qa, d(i.value), 1)) : (a(), n("div", Ga, [
+        e("div", Va, [
+          o[2] || (o[2] = e("h2", { class: "section-title" }, "Connected Peers", -1)),
+          e("div", ja, [
+            (a(!0), n(L, null, I(t.value, (c) => (a(), n("div", {
+              key: c.id,
+              class: "peer-card"
+            }, [
+              e("div", {
+                class: "peer-status",
+                style: ee({ backgroundColor: h(c.status) })
+              }, null, 4),
+              e("div", Oa, [
+                e("h3", Ya, d(c.name), 1),
+                e("p", Ha, d(c.url), 1),
+                e("div", za, [
+                  c.shared_libraries_count !== void 0 ? (a(), n("span", Ja, d(c.shared_libraries_count) + " shared libraries", 1)) : w("", !0),
+                  e("span", null, "Last sync: " + d(f(c.last_sync)), 1)
+                ])
+              ]),
+              e("div", Ka, [
+                c.status === "connected" ? (a(), n("button", {
+                  key: 0,
+                  class: "btn btn-secondary",
+                  onClick: (b) => y(c.id)
+                }, " Disconnect ", 8, Xa)) : c.status === "pending" ? (a(), n("span", Wa, "Pending")) : w("", !0)
+              ])
+            ]))), 128)),
+            t.value.length === 0 ? (a(), n("div", Qa, [...o[1] || (o[1] = [
+              e("p", null, "No federation peers connected.", -1)
+            ])])) : w("", !0)
+          ])
+        ]),
+        e("div", Za, [
+          o[4] || (o[4] = e("h2", { class: "section-title" }, "Add Peer", -1)),
+          e("form", {
+            class: "add-peer-form",
+            onSubmit: o[0] || (o[0] = W((c) => m(""), ["prevent"]))
+          }, [...o[3] || (o[3] = [
+            e("input", {
+              type: "url",
+              placeholder: "https://other-server.example.com",
+              class: "peer-input"
+            }, null, -1),
+            e("button", {
+              type: "submit",
+              class: "btn btn-primary"
+            }, "Connect", -1)
+          ])], 32)
+        ])
+      ]))
+    ]));
+  }
+}), Vn = /* @__PURE__ */ x(en, [["__scopeId", "data-v-91ba2781"]]), tn = { class: "manage-shares-page" }, sn = {
+  key: 0,
+  class: "loading"
+}, an = {
+  key: 1,
+  class: "error"
+}, nn = {
+  key: 2,
+  class: "shares-list"
+}, on = { class: "share-info" }, ln = { class: "share-library" }, rn = { class: "share-meta" }, cn = {
+  key: 0,
+  class: "expired-badge"
+}, un = { class: "share-dates" }, dn = { key: 0 }, vn = { class: "share-actions" }, pn = ["onClick"], _n = {
+  key: 0,
+  class: "empty-state"
+}, fn = /* @__PURE__ */ E({
+  __name: "ManageSharesPage",
+  setup(l) {
+    const t = p([]), s = p(!0), i = p(null);
+    async function v() {
+      try {
+        const f = await U.get("/api/v1/shares");
+        t.value = f.shares || [];
+      } catch (f) {
+        i.value = f instanceof Error ? f.message : "Failed to load shares";
+      } finally {
+        s.value = !1;
+      }
+    }
+    async function m(f) {
+      try {
+        await U.delete(`/api/v1/shares/${f}`), await v();
+      } catch (u) {
+        i.value = u instanceof Error ? u.message : "Failed to revoke share";
+      }
+    }
+    function y(f) {
+      return new Date(f).toLocaleString();
+    }
+    function h(f) {
+      return f ? new Date(f) < /* @__PURE__ */ new Date() : !1;
+    }
+    return j(() => {
+      v();
+    }), (f, u) => (a(), n("div", tn, [
+      u[1] || (u[1] = e("div", { class: "page-header" }, [
+        e("h1", { class: "page-title" }, "Manage Shares"),
+        e("p", { class: "page-subtitle" }, "View and manage your shared libraries")
+      ], -1)),
+      s.value ? (a(), n("div", sn, "Loading shares...")) : i.value ? (a(), n("div", an, d(i.value), 1)) : (a(), n("div", nn, [
+        (a(!0), n(L, null, I(t.value, (o) => (a(), n("div", {
+          key: o.id,
+          class: "share-card"
+        }, [
+          e("div", on, [
+            e("h3", ln, d(o.library_name), 1),
+            e("div", rn, [
+              e("span", null, "Shared with: " + d(o.shared_with), 1),
+              e("span", {
+                class: X(["permission-badge", o.permissions])
+              }, d(o.permissions), 3),
+              o.expires_at && h(o.expires_at) ? (a(), n("span", cn, "Expired")) : w("", !0)
+            ]),
+            e("p", un, [
+              Y(" Created: " + d(y(o.created_at)) + " ", 1),
+              o.expires_at ? (a(), n("span", dn, " | Expires: " + d(y(o.expires_at)), 1)) : w("", !0)
+            ])
+          ]),
+          e("div", vn, [
+            e("button", {
+              class: "btn btn-danger",
+              onClick: (c) => m(o.id)
+            }, "Revoke", 8, pn)
+          ])
+        ]))), 128)),
+        t.value.length === 0 ? (a(), n("div", _n, [...u[0] || (u[0] = [
+          e("p", null, "No library shares found.", -1)
+        ])])) : w("", !0)
+      ]))
+    ]));
+  }
+}), jn = /* @__PURE__ */ x(fn, [["__scopeId", "data-v-bd8771ac"]]), gn = { class: "audit-logs-page" }, mn = {
+  key: 0,
+  class: "loading"
+}, hn = {
+  key: 1,
+  class: "error"
+}, yn = {
+  key: 2,
+  class: "logs-container"
+}, bn = { class: "logs-list" }, $n = { class: "log-content" }, kn = { class: "log-header" }, wn = { class: "log-action" }, Sn = { class: "log-actor" }, Cn = { class: "log-time" }, Tn = {
+  key: 0,
+  class: "log-target"
+}, Pn = {
+  key: 1,
+  class: "log-details"
+}, xn = {
+  key: 2,
+  class: "log-ip"
+}, Rn = {
+  key: 0,
+  class: "empty-state"
+}, En = {
+  key: 0,
+  class: "pagination"
+}, Fn = ["disabled"], Ln = { class: "page-info" }, In = ["disabled"], An = /* @__PURE__ */ E({
+  __name: "AuditLogsPage",
+  setup(l) {
+    const t = p([]), s = p(!0), i = p(null), v = p(1), m = p(1);
+    async function y(o = 1) {
+      try {
+        s.value = !0;
+        const c = await U.get(
+          "/api/v1/audit-logs",
+          { page: String(o) }
+        );
+        t.value = c.logs || [], v.value = c.page || 1, m.value = c.total_pages || 1;
+      } catch (c) {
+        i.value = c instanceof Error ? c.message : "Failed to load audit logs";
+      } finally {
+        s.value = !1;
+      }
+    }
+    function h(o) {
+      return new Date(o).toLocaleString();
+    }
+    function f(o) {
+      return o.includes("create") || o.includes("add") ? "#22c55e" : o.includes("delete") || o.includes("remove") ? "#ef4444" : o.includes("update") || o.includes("edit") ? "#3b82f6" : o.includes("login") || o.includes("auth") ? "#8b5cf6" : "#6b7280";
+    }
+    function u(o) {
+      return o.includes("create") || o.includes("add") ? "+" : o.includes("delete") || o.includes("remove") ? "-" : o.includes("update") || o.includes("edit") ? "~" : o.includes("login") || o.includes("auth") ? "@" : "#";
+    }
+    return j(() => {
+      y();
+    }), (o, c) => (a(), n("div", gn, [
+      c[3] || (c[3] = e("div", { class: "page-header" }, [
+        e("h1", { class: "page-title" }, "Audit Logs"),
+        e("p", { class: "page-subtitle" }, "View system activity and user actions")
+      ], -1)),
+      s.value ? (a(), n("div", mn, "Loading audit logs...")) : i.value ? (a(), n("div", hn, d(i.value), 1)) : (a(), n("div", yn, [
+        e("div", bn, [
+          (a(!0), n(L, null, I(t.value, (b) => (a(), n("div", {
+            key: b.id,
+            class: "log-entry"
+          }, [
+            e("div", {
+              class: "log-icon",
+              style: ee({ backgroundColor: f(b.action) })
+            }, d(u(b.action)), 5),
+            e("div", $n, [
+              e("div", kn, [
+                e("span", wn, d(b.action), 1),
+                e("span", Sn, d(b.actor), 1),
+                e("span", Cn, d(h(b.created_at)), 1)
+              ]),
+              b.target ? (a(), n("p", Tn, "Target: " + d(b.target), 1)) : w("", !0),
+              b.details ? (a(), n("p", Pn, d(b.details), 1)) : w("", !0),
+              b.ip_address ? (a(), n("span", xn, "IP: " + d(b.ip_address), 1)) : w("", !0)
+            ])
+          ]))), 128)),
+          t.value.length === 0 ? (a(), n("div", Rn, [...c[2] || (c[2] = [
+            e("p", null, "No audit logs found.", -1)
+          ])])) : w("", !0)
+        ]),
+        m.value > 1 ? (a(), n("div", En, [
+          e("button", {
+            class: "btn btn-secondary",
+            disabled: v.value <= 1,
+            onClick: c[0] || (c[0] = (b) => y(v.value - 1))
+          }, " Previous ", 8, Fn),
+          e("span", Ln, "Page " + d(v.value) + " of " + d(m.value), 1),
+          e("button", {
+            class: "btn btn-secondary",
+            disabled: v.value >= m.value,
+            onClick: c[1] || (c[1] = (b) => y(v.value + 1))
+          }, " Next ", 8, In)
+        ])) : w("", !0)
+      ]))
+    ]));
+  }
+}), On = /* @__PURE__ */ x(An, [["__scopeId", "data-v-05910fd9"]]);
 export {
-  ee as ApiClient,
+  te as ApiClient,
   Je as ApiError,
-  Ge as AppLayout,
+  qe as AppLayout,
+  On as AuditLogsPage,
   Jt as BrowsePage,
-  Gt as FilterBar,
-  Ua as LibraryScanPage,
+  Vn as FederationPage,
+  qt as FilterBar,
+  qn as LibraryScanPage,
   gs as LocalStorageTokenStore,
-  Ts as LoginForm,
-  xs as LoginPage,
+  Cs as LoginForm,
+  Rs as LoginPage,
+  jn as ManageSharesPage,
   ct as MediaCard,
-  mt as MediaGrid,
+  ft as MediaGrid,
+  Gn as MyServersPage,
   je as PhlixApp,
   us as Player,
-  ms as PlayerPage,
+  fs as PlayerPage,
   oa as SettingsForm,
   ia as SettingsPage,
-  Ds as SignupForm,
+  Gs as SignupForm,
   Ys as SignupPage,
-  Fa as createPhlixApp,
-  re as useAuthStore,
+  Bn as createPhlixApp,
+  ie as useAuthStore,
   fe as useMediaStore
 };
 //# sourceMappingURL=phlix-ui.js.map
