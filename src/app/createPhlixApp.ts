@@ -2,7 +2,7 @@ import { createApp, type App as VueApp } from 'vue';
 import { createPinia } from 'pinia';
 import { createRouter, createWebHistory, type Router, type RouteRecordRaw } from 'vue-router';
 import PhlixApp from './PhlixApp.vue';
-import Placeholder from './placeholder/index';
+import Placeholder from './placeholder/Placeholder.vue';
 import type { PhlixAppConfig } from './types';
 
 declare global {

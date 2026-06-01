@@ -1,8 +1,8 @@
 export { createPhlixApp } from './app/createPhlixApp';
 export type { PhlixAppConfig } from './app/types';
 
-export { PhlixApp } from './app/PhlixApp';
-export { AppLayout } from './app/AppLayout';
+export { default as PhlixApp } from './app/PhlixApp.vue';
+export { default as AppLayout } from './app/AppLayout.vue';
 
 export { ApiClient } from './api/client';
 export { LocalStorageTokenStore } from './api/tokenStore';
