@@ -1,5 +1,4 @@
 node_modules/
-dist/
 *.local
 coverage/
 .DS_Store
