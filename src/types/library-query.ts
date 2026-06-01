@@ -18,6 +18,7 @@ export interface LibraryQueryParams extends Omit<LibraryQuery, 'ratings' | 'sort
     yearTo?: number;
     ratings?: string[];
     actors?: string[];
+    types?: string[];
     sort?: string;
     order?: string;
     limit?: number;
