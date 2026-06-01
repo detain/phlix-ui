@@ -13,5 +13,7 @@ export { default as MediaCard } from './components/MediaCard.vue';
 export { default as MediaGrid } from './components/MediaGrid.vue';
 export { default as FilterBar } from './components/FilterBar.vue';
 export { default as BrowsePage } from './pages/BrowsePage.vue';
+export { default as Player } from './components/Player.vue';
+export { default as PlayerPage } from './pages/PlayerPage.vue';
 export { useMediaStore } from './stores/useMediaStore';
 export * from './tokens';
