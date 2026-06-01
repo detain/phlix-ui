@@ -23,6 +23,8 @@ export { default as LoginForm } from './components/LoginForm.vue';
 export { default as SignupForm } from './components/SignupForm.vue';
 export { default as LoginPage } from './pages/LoginPage.vue';
 export { default as SignupPage } from './pages/SignupPage.vue';
+export { default as SettingsForm } from './components/SettingsForm.vue';
+export { default as SettingsPage } from './pages/SettingsPage.vue';
 
 export { useAuthStore } from './stores/useAuthStore';
 
