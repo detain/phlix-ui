@@ -18,7 +18,7 @@
     ],
     "scripts": {
         "dev": "vite",
-        "build": "vue-tsc --noEmit && vite build",
+        "build": "vue-tsc --noEmit && vite build && vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json",
         "preview": "vite preview",
         "test": "vitest",
         "test:run": "vitest run",
