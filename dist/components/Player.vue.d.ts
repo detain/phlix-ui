@@ -16,12 +16,12 @@ type __VLS_Props = {
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     captions: () => any;
     pip: () => any;
-    theater: () => any;
+    theater: (active: boolean) => any;
     back: () => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onCaptions?: (() => any) | undefined;
     onPip?: (() => any) | undefined;
-    onTheater?: (() => any) | undefined;
+    onTheater?: ((active: boolean) => any) | undefined;
     onBack?: (() => any) | undefined;
 }>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
