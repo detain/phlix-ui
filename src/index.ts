@@ -23,8 +23,11 @@ export * from './components/ui';
 
 export { default as MediaCard } from './components/MediaCard.vue';
 export { default as MediaGrid } from './components/MediaGrid.vue';
+export { default as MediaRow } from './components/MediaRow.vue';
+export { default as MediaHomeRow } from './components/HomeRow.vue';
 export { default as FilterBar } from './components/FilterBar.vue';
 export { default as BrowsePage } from './pages/BrowsePage.vue';
+export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
 export { default as PlayerPage } from './pages/PlayerPage.vue';
 export { default as LoginForm } from './components/LoginForm.vue';

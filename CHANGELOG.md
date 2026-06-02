@@ -11,6 +11,23 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **BrowsePage + Home rows (R2.4):** `BrowsePage.vue` rebuilt into the full Browse surface — a
+  **Continue Watching** rail derived from `usePlayerStore.resumeMap` (resolved against an in-page
+  registry fed by the grid + home-row fetches, **no extra API**, ordered by resume seconds desc, capped),
+  the app's configured **home rows** (one per `config.homeRows` entry) that **lazy-load on scroll**, and
+  the filtered, virtualized library grid below. Card actions route to the player (and the detail view
+  once R2.5 ships; an interim "coming soon" toast otherwise); home-row "See all" applies the row's query
+  to `useMediaStore` and scrolls to the grid. Empty/loading/error states use `EmptyState`/`Skeleton`/toast;
+  the `#toolbar-extra` slot is kept; reduced-motion safe; fully tokenized.
+  - New presentational **`MediaRow.vue`** (exported) — a scroll-snapping rail of `MediaCard`s with a
+    title/count + `#action` slot, skeleton loading, inline error+retry, `EmptyState` empty, a
+    `hideWhenEmpty` collapse, a `cardTo` link override, and forwarded `play`/`watchlist`/`info`.
+  - New container **`HomeRow.vue`** (exported as **`MediaHomeRow`** — the `HomeRow` name is the public
+    config type) — lazy-loads via `IntersectionObserver` (eager under SSR/jsdom), fetches its query
+    through `ApiClient` with a per-load `AbortController` (torn down on unmount), owns its loading/error/
+    empty state, toasts on failure, and emits `items-loaded`/`see-all`.
+  - New pure, unit-tested **`buildMediaQuery(params)` / `buildMediaUrl(apiBase, params)`** helpers
+    (exported) for query-scoped media fetches independent of the singleton store.
 - **FilterBar redesign (R2.3):** `FilterBar.vue` rebuilt on the a11y primitive layer (no native
   `<select>`s) — a glassy **sticky** bar (condenses on scroll) with a **debounced** search, an
   **expand/collapse advanced panel** (genres via the searchable `Combobox`, rating/type `Chip` toggles,
