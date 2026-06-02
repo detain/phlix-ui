@@ -29,6 +29,12 @@ export { default as MediaDetail } from './components/MediaDetail.vue';
 export { default as FilterBar } from './components/FilterBar.vue';
 export { default as BrowsePage } from './pages/BrowsePage.vue';
 export { default as MediaDetailPage } from './pages/MediaDetailPage.vue';
+
+// Admin port (RA) — server admin surfaces + their mount seam
+export { default as AdminLogsPage } from './pages/admin/LogsPage.vue';
+export { AdminLogsApi, ALL_LOGS } from './api/admin/logs';
+export type { LogFile, LogTail, LogTailAll } from './api/admin/logs';
+export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
 export { default as Scrubber } from './components/player/Scrubber.vue';
