@@ -11,6 +11,18 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **Player shell + chrome (R3.1):** `Player.vue` rebuilt from the legacy emoji-laden player into the redo
+  shell, driven by **`usePlayerStore`** and the icon primitives (ports the locked R0
+  `player-chrome.html`). Two-way `<video>` ↔ store sync (play/pause/timeupdate/loadedmetadata/progress/
+  volumechange/ratechange → store; volume/muted/rate mirrored back onto the element), gradient scrims, a
+  "Now playing" metadata overlay (title + year · cert · runtime · genre, back affordance), a big animated
+  center play/pause, and a basic bottom control bar — a click-to-seek progress track (buffered + played +
+  head, with arrow/Home/End keyboard seeking), mono timecode, mute toggle, and fullscreen toggle.
+  **Auto-hiding chrome** (shown while paused / on pointer-move / focus / tap; hides after an idle timeout
+  while playing; `cursor:none` when hidden). Control clicks never trigger play/pause (no click-eats-seek).
+  Reduced-motion safe; **all emoji removed** — the player was the last emoji-bearing file, so the whole
+  package is now icon-only. (The rich scrubber, keyboard map, volume/speed/track menus, captions,
+  ambient/theater, PiP/mini-player, resume/up-next and PlayerPage wiring follow in R3.2–R3.9.)
 - **Detail view (R2.5):** new **`MediaDetail.vue`** + **`MediaDetailPage.vue`** and the
   **`/app/media/:id`** route (`name: 'media'`, added to `buildRoutes`). The detail surface renders a
   poster-derived **ambient glow** behind a hero (blur-up poster, title, meta [year · cert · runtime ·
