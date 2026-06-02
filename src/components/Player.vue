@@ -1,358 +1,612 @@
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue';
+/**
+ * Player (R3.1 — shell + chrome) — the redo player surface.
+ *
+ * Rebuilt on `usePlayerStore` (R1.3) and the icon primitives, porting the locked
+ * R0 art direction (`src/dev/mockups/player-chrome.html`): gradient scrims, a
+ * "Now playing" metadata overlay, a big animated center play/pause, and a basic
+ * bottom control bar (click-to-seek progress + time + mute + fullscreen). The
+ * `<video>` and the store stay in sync both ways. Chrome auto-hides while playing
+ * and reappears on pointer move / focus / tap (always shown while paused).
+ *
+ * The rich scrubber (R3.2), keyboard map (R3.3), volume/speed/track menus (R3.4),
+ * captions (R3.5), ambient/theater (R3.6), PiP/mini-player (R3.7) and
+ * resume/up-next/transcode notice (R3.8) build on this shell in later steps.
+ */
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import type { MediaItem } from '../types/media-item';
+import { usePlayerStore } from '../stores/usePlayerStore';
+import Icon from './Icon.vue';
 
-defineProps<{
-    media: MediaItem;
-    streamUrl: string;
+const props = defineProps<{
+  media: MediaItem;
+  streamUrl: string;
+  /** Idle ms before the chrome hides while playing. */
+  idleTimeout?: number;
 }>();
 
+const emit = defineEmits<{
+  (e: 'back'): void;
+}>();
+
+const player = usePlayerStore();
+
 const videoRef = ref<HTMLVideoElement | null>(null);
-const playing = ref(false);
-const currentTime = ref(0);
-const duration = ref(0);
-const volume = ref(1);
-const muted = ref(false);
-const playbackRate = ref(1);
+const containerRef = ref<HTMLElement | null>(null);
+const showChrome = ref(true);
 const fullscreen = ref(false);
-const showControls = ref(true);
 
-let controlsTimer: ReturnType<typeof setTimeout> | null = null;
+let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
-const progress = computed(() =>
-    duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0
+// ---- formatting -------------------------------------------------------------
+function formatTime(secs: number): string {
+  if (!isFinite(secs) || secs < 0) return '0:00';
+  const total = Math.floor(secs);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
+  return `${h > 0 ? `${h}:` : ''}${mm}:${String(s).padStart(2, '0')}`;
+}
+
+const playedRatio = computed(() =>
+  player.duration > 0 ? Math.min(1, Math.max(0, player.position / player.duration)) : 0,
+);
+const bufferedRatio = computed(() =>
+  player.duration > 0 ? Math.min(1, Math.max(0, player.buffered / player.duration)) : 0,
 );
 
-function formatTime(secs: number): string {
-    if (!isFinite(secs) || isNaN(secs)) return '0:00';
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
+// Ordered meta segments — year, cert, runtime, first genre (matches the locked
+// mockup: a dot precedes every segment except the cert, which hugs the year).
+const metaSegments = computed(() => {
+  const segs: { text: string; cert?: boolean }[] = [];
+  if (props.media.year) segs.push({ text: String(props.media.year) });
+  if (props.media.rating) segs.push({ text: props.media.rating, cert: true });
+  if (props.media.runtime) segs.push({ text: `${props.media.runtime}m` });
+  const g = props.media.genres?.[0];
+  if (g) segs.push({ text: g });
+  return segs;
+});
+
+// ---- transport (video → store and store → video) ----------------------------
+function togglePlay(): void {
+  const v = videoRef.value;
+  if (!v) return;
+  if (v.paused) void v.play()?.catch(() => {});
+  else v.pause();
 }
 
-function togglePlay() {
-    if (!videoRef.value) return;
-    if (playing.value) {
-        videoRef.value.pause();
+function bufferedEnd(v: HTMLVideoElement): number {
+  try {
+    return v.buffered.length ? v.buffered.end(v.buffered.length - 1) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function onPlay(): void {
+  player.play();
+}
+function onPause(): void {
+  player.pause();
+}
+function onTimeUpdate(): void {
+  const v = videoRef.value;
+  if (v) player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
+}
+function onLoadedMetadata(): void {
+  const v = videoRef.value;
+  if (!v) return;
+  // push the store's selections onto the freshly-loaded element
+  v.volume = player.volume;
+  v.muted = player.muted;
+  v.playbackRate = player.rate;
+  player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
+}
+function onProgress(): void {
+  const v = videoRef.value;
+  if (v) player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
+}
+function onVolumeChange(): void {
+  const v = videoRef.value;
+  if (!v) return;
+  // volume first (the store unmutes when volume > 0), then mute — so an explicit
+  // mute reported in the same event still wins.
+  if (Math.abs(v.volume - player.volume) > 0.001) player.setVolume(v.volume);
+  if (v.muted !== player.muted) player.toggleMute();
+}
+function onRateChange(): void {
+  const v = videoRef.value;
+  if (v && v.playbackRate !== player.rate) player.setRate(v.playbackRate);
+}
+
+function seekTo(ratio: number): void {
+  const v = videoRef.value;
+  if (v && player.duration > 0) v.currentTime = Math.min(1, Math.max(0, ratio)) * player.duration;
+}
+function onSeekClick(e: MouseEvent): void {
+  const el = e.currentTarget as HTMLElement;
+  const rect = el.getBoundingClientRect();
+  if (rect.width > 0) seekTo((e.clientX - rect.left) / rect.width);
+}
+/** The scrub slider's own keyboard contract (the global player shortcut map is
+ *  R3.3): arrows nudge ±5s, Home/End jump to the ends. */
+function onScrubKey(e: KeyboardEvent): void {
+  const dur = player.duration;
+  if (dur <= 0) return;
+  const v = videoRef.value;
+  if (!v) return;
+  switch (e.key) {
+    case 'ArrowLeft':
+      v.currentTime = Math.max(0, v.currentTime - 5);
+      break;
+    case 'ArrowRight':
+      v.currentTime = Math.min(dur, v.currentTime + 5);
+      break;
+    case 'Home':
+      v.currentTime = 0;
+      break;
+    case 'End':
+      v.currentTime = dur;
+      break;
+    default:
+      return;
+  }
+  e.preventDefault();
+}
+
+function toggleMute(): void {
+  // Drive the store; the `player.muted` watch mirrors it onto the element (which,
+  // in a real browser, then fires volumechange — a no-op since they now agree).
+  player.toggleMute();
+}
+
+// reflect store selections (e.g. set elsewhere) back onto the element
+watch(
+  () => player.muted,
+  (m) => {
+    const v = videoRef.value;
+    if (v && v.muted !== m) v.muted = m;
+  },
+);
+watch(
+  () => player.volume,
+  (vol) => {
+    const v = videoRef.value;
+    if (v && Math.abs(v.volume - vol) > 0.001) v.volume = vol;
+  },
+);
+watch(
+  () => player.rate,
+  (r) => {
+    const v = videoRef.value;
+    if (v && v.playbackRate !== r) v.playbackRate = r;
+  },
+);
+
+// ---- fullscreen -------------------------------------------------------------
+function toggleFullscreen(): void {
+  if (typeof document === 'undefined') return;
+  const el = containerRef.value;
+  if (!el) return;
+  if (!document.fullscreenElement) void el.requestFullscreen?.().catch(() => {});
+  else void document.exitFullscreen?.().catch(() => {});
+}
+function onFullscreenChange(): void {
+  fullscreen.value = typeof document !== 'undefined' && !!document.fullscreenElement;
+}
+
+// ---- chrome auto-hide -------------------------------------------------------
+function clearIdle(): void {
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = undefined;
+  }
+}
+function scheduleHide(): void {
+  clearIdle();
+  if (!player.playing) return; // never hide while paused
+  idleTimer = setTimeout(() => {
+    if (player.playing) showChrome.value = false;
+  }, props.idleTimeout ?? 3000);
+}
+function revealChrome(): void {
+  showChrome.value = true;
+  scheduleHide();
+}
+
+watch(
+  () => player.playing,
+  (playing) => {
+    if (!playing) {
+      clearIdle();
+      showChrome.value = true; // always visible when paused
     } else {
-        videoRef.value.play();
+      scheduleHide();
     }
-}
+  },
+);
 
-function onTimeUpdate() {
-    if (videoRef.value) currentTime.value = videoRef.value.currentTime;
-}
-
-function onLoadedMetadata() {
-    if (videoRef.value) duration.value = videoRef.value.duration;
-}
-
-function seek(e: MouseEvent) {
-    const bar = e.currentTarget as HTMLElement;
-    const rect = bar.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    if (videoRef.value) videoRef.value.currentTime = ratio * duration.value;
-}
-
-function onVolumeChange(e: Event) {
-    const val = parseFloat((e.target as HTMLInputElement).value);
-    volume.value = val;
-    if (videoRef.value) videoRef.value.volume = val;
-    muted.value = val === 0;
-}
-
-function toggleMute() {
-    muted.value = !muted.value;
-    if (videoRef.value) videoRef.value.muted = muted.value;
-}
-
-function setRate(rate: number) {
-    playbackRate.value = rate;
-    if (videoRef.value) videoRef.value.playbackRate = rate;
-}
-
-function toggleFullscreen() {
-    const el = videoRef.value?.closest('.player-container') as HTMLElement | null;
-    if (!el) return;
-    if (!document.fullscreenElement) {
-        el.requestFullscreen();
-        fullscreen.value = true;
-    } else {
-        document.exitFullscreen();
-        fullscreen.value = false;
-    }
-}
-
-function showControlsTemporarily() {
-    showControls.value = true;
-    if (controlsTimer) clearTimeout(controlsTimer);
-    controlsTimer = setTimeout(() => {
-        if (playing.value) showControls.value = false;
-    }, 3000);
-}
-
-onUnmounted(() => {
-    if (controlsTimer) clearTimeout(controlsTimer);
+// ---- lifecycle --------------------------------------------------------------
+onMounted(() => {
+  player.setCurrent(props.media, { resetPosition: false });
+  if (typeof document !== 'undefined') document.addEventListener('fullscreenchange', onFullscreenChange);
+});
+watch(
+  () => props.media,
+  (m) => player.setCurrent(m, { resetPosition: false }),
+);
+onBeforeUnmount(() => {
+  clearIdle();
+  if (typeof document !== 'undefined') document.removeEventListener('fullscreenchange', onFullscreenChange);
 });
 </script>
 
 <template>
-    <div
-        class="player-container"
-        :class="{ 'controls-hidden': !showControls && playing }"
-        @mousemove="showControlsTemporarily"
-        @click="togglePlay"
-    >
-        <div class="player-overlay" />
+  <div
+    ref="containerRef"
+    class="player"
+    :class="{ 'is-chrome-hidden': !showChrome }"
+    @pointermove="revealChrome"
+    @pointerdown="revealChrome"
+    @focusin="revealChrome"
+  >
+    <video
+      ref="videoRef"
+      class="player__video"
+      :src="streamUrl"
+      :poster="media.poster_url ?? undefined"
+      preload="metadata"
+      playsinline
+      @play="onPlay"
+      @pause="onPause"
+      @timeupdate="onTimeUpdate"
+      @loadedmetadata="onLoadedMetadata"
+      @progress="onProgress"
+      @volumechange="onVolumeChange"
+      @ratechange="onRateChange"
+      @click="togglePlay"
+    />
 
-        <video
-            ref="videoRef"
-            class="player-video"
-            :src="streamUrl"
-            :poster="media.poster_url ?? undefined"
-            preload="metadata"
-            @play="playing = true"
-            @pause="playing = false"
-            @timeupdate="onTimeUpdate"
-            @loadedmetadata="onLoadedMetadata"
-            @click.stop="togglePlay"
-        />
+    <div class="player__scrim player__scrim--top" aria-hidden="true" />
+    <div class="player__scrim player__scrim--bottom" aria-hidden="true" />
 
-        <div class="player-controls" @click.stop>
-            <div class="controls-top">
-                <button class="ctrl-btn back-btn" @click="$router.back()">
-                    ← Back
-                </button>
-                <span class="media-title">{{ media.name }}</span>
-                <span v-if="media.year" class="media-year">{{ media.year }}</span>
-            </div>
-
-            <div class="controls-center">
-                <button class="play-btn" @click="togglePlay">
-                    {{ playing ? '❚❚' : '▶' }}
-                </button>
-            </div>
-
-            <div class="controls-bottom">
-                <div class="progress-bar" @click="seek">
-                    <div class="progress-track">
-                        <div class="progress-fill" :style="{ width: progress + '%' }" />
-                    </div>
-                </div>
-
-                <div class="controls-row">
-                    <span class="time-display">{{ formatTime(currentTime) }}</span>
-
-                    <div class="volume-control">
-                        <button class="ctrl-btn" @click="toggleMute">
-                            {{ muted || volume === 0 ? '🔇' : '🔊' }}
-                        </button>
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            :value="muted ? 0 : volume"
-                            class="volume-slider"
-                            @input="onVolumeChange"
-                        />
-                    </div>
-
-                    <div class="speed-control">
-                        <select class="speed-select" :value="playbackRate" @change="(e) => setRate(Number((e.target as HTMLSelectElement).value))">
-                            <option value="0.5">0.5×</option>
-                            <option value="0.75">0.75×</option>
-                            <option value="1">1×</option>
-                            <option value="1.25">1.25×</option>
-                            <option value="1.5">1.5×</option>
-                            <option value="2">2×</option>
-                        </select>
-                    </div>
-
-                    <span class="time-display">{{ formatTime(duration) }}</span>
-
-                    <button class="ctrl-btn" @click="toggleFullscreen">
-                        {{ fullscreen ? '⤓' : '⤢' }}
-                    </button>
-                </div>
-            </div>
+    <!-- metadata -->
+    <div class="player__meta">
+      <button type="button" class="player__iconbtn player__back" aria-label="Back" @click.stop="emit('back')">
+        <Icon name="arrow-left" />
+      </button>
+      <div class="player__meta-text">
+        <p class="player__eyebrow">Now playing</p>
+        <h2 class="player__title">{{ media.name }}</h2>
+        <div class="player__sub numeric">
+          <template v-for="(seg, i) in metaSegments" :key="i">
+            <span v-if="i > 0 && !seg.cert" class="player__dot" aria-hidden="true">·</span>
+            <span :class="{ 'player__cert': seg.cert }">{{ seg.text }}</span>
+          </template>
         </div>
+      </div>
     </div>
+
+    <!-- center play/pause -->
+    <div class="player__center">
+      <button
+        type="button"
+        class="player__bigplay"
+        :class="{ 'is-playing': player.playing }"
+        :aria-label="player.playing ? 'Pause' : 'Play'"
+        @click.stop="togglePlay"
+      >
+        <Icon :name="player.playing ? 'pause' : 'play'" />
+      </button>
+    </div>
+
+    <!-- controls -->
+    <div class="player__controls" @click.stop>
+      <div
+        class="player__scrub"
+        role="slider"
+        tabindex="0"
+        :aria-valuemin="0"
+        :aria-valuemax="Math.round(player.duration)"
+        :aria-valuenow="Math.round(player.position)"
+        aria-label="Seek"
+        @click="onSeekClick"
+        @keydown="onScrubKey"
+      >
+        <div class="player__track">
+          <div class="player__buffered" :style="{ width: `${bufferedRatio * 100}%` }" />
+          <div class="player__played" :style="{ width: `${playedRatio * 100}%` }" />
+          <div class="player__head" :style="{ left: `${playedRatio * 100}%` }" />
+        </div>
+      </div>
+
+      <div class="player__btnrow">
+        <button
+          type="button"
+          class="player__iconbtn player__iconbtn--lg"
+          :aria-label="player.playing ? 'Pause' : 'Play'"
+          @click="togglePlay"
+        >
+          <Icon :name="player.playing ? 'pause' : 'play'" />
+        </button>
+
+        <span class="player__time numeric">
+          {{ formatTime(player.position) }}<span class="player__sep"> / </span>{{ formatTime(player.duration) }}
+        </span>
+
+        <span class="player__grow" />
+
+        <button
+          type="button"
+          class="player__iconbtn"
+          :aria-label="player.muted ? 'Unmute' : 'Mute'"
+          @click="toggleMute"
+        >
+          <Icon :name="player.muted ? 'mute' : 'volume'" />
+        </button>
+
+        <button
+          type="button"
+          class="player__iconbtn"
+          :aria-label="fullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+          @click="toggleFullscreen"
+        >
+          <Icon :name="fullscreen ? 'fullscreen-exit' : 'fullscreen'" />
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.player-container {
-    position: relative;
-    width: 100%;
-    background: #000;
-    aspect-ratio: 16/9;
-    max-height: 90vh;
-    overflow: hidden;
-    cursor: pointer;
+.player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 90vh;
+  margin: 0 auto;
+  background: #000;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-4);
+  border: 1px solid var(--border-subtle);
+  isolation: isolate;
+}
+.player.is-chrome-hidden {
+  cursor: none;
 }
 
-.player-container.controls-hidden {
-    cursor: none;
+.player__video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
 }
 
-.player-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
+/* scrims */
+.player__scrim {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.player__scrim--top {
+  top: 0;
+  height: 35%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), transparent);
+}
+.player__scrim--bottom {
+  bottom: 0;
+  height: 55%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88), transparent);
 }
 
-.player-video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+/* metadata */
+.player__meta {
+  position: absolute;
+  z-index: 4;
+  top: var(--space-5);
+  inset-inline: var(--space-6);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+.player__eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--amber-300, var(--accent));
+}
+.player__title {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight, 1.1);
+  color: #fff;
+  margin-top: 2px;
+}
+.player__sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.72);
+}
+.player__cert {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  padding: 0 4px;
+  margin-right: var(--space-1);
+}
+.player__dot {
+  margin-inline: var(--space-1);
 }
 
-.player-controls {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.7) 0%,
-        transparent 30%,
-        transparent 70%,
-        rgba(0, 0, 0, 0.7) 100%
-    );
-    padding: 16px;
-    opacity: 1;
-    transition: opacity 0.3s ease;
+/* center play */
+.player__center {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.player__bigplay {
+  pointer-events: auto;
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--surface-glass-strong, rgba(20, 20, 20, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-3);
+  color: #fff;
+  transition: transform var(--dur-base) var(--ease-spring), opacity var(--dur-base) var(--ease-out);
+}
+.player__bigplay :deep(svg) {
+  width: 36px;
+  height: 36px;
+}
+.player__bigplay:hover {
+  transform: scale(1.06);
+}
+/* while playing the center button fades unless the chrome is up */
+.player__bigplay.is-playing {
+  opacity: 0.85;
 }
 
-.controls-hidden .player-controls {
-    opacity: 0;
+/* controls */
+.player__controls {
+  position: absolute;
+  z-index: 5;
+  inset-inline: var(--space-6);
+  bottom: var(--space-5);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 
-.player-controls:hover {
-    opacity: 1;
+.player__scrub {
+  position: relative;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.player__scrub:focus-visible {
+  outline: none;
+}
+.player__scrub:focus-visible .player__track {
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.player__track {
+  position: relative;
+  width: 100%;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.22);
+}
+.player__buffered {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.34);
+}
+.player__played {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.player__head {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 4px rgba(245, 165, 36, 0.3), var(--shadow-2);
 }
 
-.controls-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.player__btnrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+.player__iconbtn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.92);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.player__iconbtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.player__iconbtn :deep(svg) {
+  width: 21px;
+  height: 21px;
+}
+.player__iconbtn--lg :deep(svg) {
+  width: 25px;
+  height: 25px;
+}
+.player__back {
+  margin-top: 2px;
+}
+.player__time {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.85);
+  margin-inline: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+.player__sep {
+  color: rgba(255, 255, 255, 0.5);
+}
+.player__grow {
+  flex: 1;
 }
 
-.media-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
+/* chrome hide */
+.player.is-chrome-hidden .player__scrim,
+.player.is-chrome-hidden .player__meta,
+.player.is-chrome-hidden .player__controls {
+  opacity: 0;
+  pointer-events: none;
+}
+.player.is-chrome-hidden .player__meta {
+  transform: translateY(-8px);
+}
+.player.is-chrome-hidden .player__controls {
+  transform: translateY(8px);
+}
+.player.is-chrome-hidden .player__bigplay {
+  opacity: 0;
+  pointer-events: none;
 }
 
-.media-year {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.controls-center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.play-btn {
-    font-size: 2.5rem;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.4);
-    border: none;
-    border-radius: 50%;
-    width: 72px;
-    height: 72px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease;
-}
-
-.play-btn:hover {
-    background: rgba(99, 102, 241, 0.7);
-}
-
-.controls-bottom {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.progress-bar {
-    width: 100%;
-    padding: 4px 0;
-    cursor: pointer;
-}
-
-.progress-track {
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--color-primary, #6366f1);
-    border-radius: 2px;
-    transition: width 0.1s linear;
-}
-
-.controls-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.time-display {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.8);
-    font-variant-numeric: tabular-nums;
-    min-width: 40px;
-}
-
-.volume-control {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.volume-slider {
-    width: 60px;
-    accent-color: var(--color-primary, #6366f1);
-}
-
-.speed-select {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.75rem;
-    padding: 2px 4px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.ctrl-btn {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.9rem;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: background 0.15s ease;
-}
-
-.ctrl-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.back-btn {
-    font-size: 0.8rem;
+@media (prefers-reduced-motion: reduce) {
+  .player__scrim,
+  .player__meta,
+  .player__controls,
+  .player__bigplay {
+    transition: none;
+  }
 }
 </style>
