@@ -52,6 +52,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-cast',
       component: () => import('../pages/admin/CastDevicesPage.vue'),
     },
+    {
+      path: `${root}/dlna`,
+      name: 'admin-dlna',
+      component: () => import('../pages/admin/DlnaServerPage.vue'),
+    },
   ];
 }
 
@@ -72,6 +77,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-integrations', label: 'Integrations', icon: 'settings', to: `${root}/integrations` },
         { id: 'admin-backup', label: 'Backup', icon: 'bookmark', to: `${root}/backup` },
         { id: 'admin-cast', label: 'Cast Devices', icon: 'cast', to: `${root}/cast-devices` },
+        { id: 'admin-dlna', label: 'DLNA Server', icon: 'monitor', to: `${root}/dlna` },
       ],
     },
   ];
