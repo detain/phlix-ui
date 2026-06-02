@@ -9,9 +9,11 @@
  * `<video>` and the store stay in sync both ways. Chrome auto-hides while playing
  * and reappears on pointer move / focus / tap (always shown while paused).
  *
- * The rich scrubber (R3.2), keyboard map (R3.3), volume/speed/track menus (R3.4),
- * captions (R3.5), ambient/theater (R3.6), PiP/mini-player (R3.7) and
- * resume/up-next/transcode notice (R3.8) build on this shell in later steps.
+ * Later steps layered on the rich scrubber (R3.2), keyboard map (R3.3),
+ * volume/speed/track menus (R3.4), captions (R3.5), ambient/theater (R3.6),
+ * PiP/mini-player (R3.7), and resume/up-next/autoplay + the "needs transcode"
+ * guard (R3.8). PlayerPage integration (real stream-URL resolution + the
+ * route-leave mini-player toggle) is R3.9.
  */
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import type { MediaItem } from '../types/media-item';
@@ -27,6 +29,10 @@ import QualityMenu from './player/QualityMenu.vue';
 import CaptionOverlay from './player/CaptionOverlay.vue';
 import CaptionsMenu from './player/CaptionsMenu.vue';
 import AmbientCanvas from './player/AmbientCanvas.vue';
+import ResumePrompt from './player/ResumePrompt.vue';
+import UpNext from './player/UpNext.vue';
+import TranscodeNotice from './player/TranscodeNotice.vue';
+import { needsTranscode, isFatalMediaError, UPNEXT_COUNTDOWN_SECONDS } from './player/playback';
 import {
   listSubtitleTracks,
   listAudioTracks,
@@ -48,6 +54,10 @@ const props = defineProps<{
   thumbnailAt?: (seconds: number) => string | null | undefined;
   /** Server-supplied stream-quality variants (optional; the menu hides when empty). */
   qualities?: SelectOptionInput[];
+  /** Resolve the stream URL for a queued item when auto-advancing to "up next".
+   *  R3.9's PlayerPage supplies the real `/media/:id/stream` resolver; without it,
+   *  advancing clears the store's stream URL rather than leaving a stale one. */
+  streamUrlFor?: (media: MediaItem) => string | undefined;
 }>();
 
 const emit = defineEmits<{
@@ -59,6 +69,9 @@ const emit = defineEmits<{
   (e: 'theater', active: boolean): void;
   /** Picture-in-picture toggle (wired in R3.7). */
   (e: 'pip'): void;
+  /** Advanced to the next queued item (up-next countdown elapsed or "Play now").
+   *  Payload is the new current item so the host can navigate / swap the source. */
+  (e: 'play-next', media: MediaItem): void;
 }>();
 
 const player = usePlayerStore();
@@ -80,6 +93,98 @@ const pipSupported = ref(false);
 
 /** Ambient glow brightens in theater mode (the "dim surroundings" cinema feel). */
 const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
+
+// ---- resume / up-next / transcode (R3.8) ------------------------------------
+/** True when the current file can't be direct-played (mkv/hevc/… by extension, or
+ *  a fatal media error) — show the notice instead of a silent black frame. The
+ *  extension check is synchronous so the notice paints on the first frame (no
+ *  black flash); a fatal <video> error flips it at runtime. */
+const transcodeNeeded = ref(needsTranscode(props.streamUrl, props.media.path));
+
+const resumeSeconds = ref(player.resumePositionFor(props.media.id) ?? 0);
+/** Resume prompt — shown on open when an in-band position is stored (the store
+ *  only ever persists in-band positions, so a stored value is in-band already). */
+const showResume = ref(!transcodeNeeded.value && resumeSeconds.value > 0);
+/** A resume seek requested before metadata loaded — applied on loadedmetadata. */
+let pendingSeek: number | null = null;
+
+const upNextActive = ref(false);
+const upNextRemaining = ref(UPNEXT_COUNTDOWN_SECONDS);
+let upNextTimer: ReturnType<typeof setInterval> | undefined;
+
+/** The next queued item, if any (drives the up-next card). */
+const nextItem = computed(() => player.upNext);
+
+/** Recompute the per-media surfaces (transcode guard + resume prompt) and reset
+ *  any in-flight up-next — used when the media prop changes. */
+function evaluateForCurrentMedia(): void {
+  transcodeNeeded.value = needsTranscode(props.streamUrl, props.media.path);
+  resumeSeconds.value = player.resumePositionFor(props.media.id) ?? 0;
+  showResume.value = !transcodeNeeded.value && resumeSeconds.value > 0;
+  pendingSeek = null;
+  stopUpNextCountdown();
+  upNextActive.value = false;
+}
+
+// resume ----------------------------------------------------------------------
+function seekTo(seconds: number): void {
+  const v = videoRef.value;
+  if (!v) return;
+  if (v.duration && v.duration > 0) v.currentTime = Math.min(v.duration, Math.max(0, seconds));
+  else pendingSeek = Math.max(0, seconds); // duration unknown — defer to loadedmetadata
+}
+function resumePlayback(): void {
+  seekTo(resumeSeconds.value);
+  showResume.value = false;
+  void videoRef.value?.play()?.catch(() => {});
+}
+function startOver(): void {
+  pendingSeek = null;
+  seekTo(0);
+  player.clearResume(props.media.id);
+  showResume.value = false;
+  void videoRef.value?.play()?.catch(() => {});
+}
+
+// up-next ---------------------------------------------------------------------
+function stopUpNextCountdown(): void {
+  if (upNextTimer) {
+    clearInterval(upNextTimer);
+    upNextTimer = undefined;
+  }
+}
+function startUpNextCountdown(): void {
+  upNextRemaining.value = UPNEXT_COUNTDOWN_SECONDS;
+  stopUpNextCountdown();
+  upNextTimer = setInterval(() => {
+    upNextRemaining.value -= 1;
+    if (upNextRemaining.value <= 0) {
+      stopUpNextCountdown();
+      playNext();
+    }
+  }, 1000);
+}
+/** End of playback — surface the up-next card (and count down when autoplay is on). */
+function onEnded(): void {
+  if (!player.upNext) return; // nothing queued — just let it end
+  upNextActive.value = true;
+  if (prefs.autoplay) startUpNextCountdown();
+}
+function playNext(): void {
+  stopUpNextCountdown();
+  upNextActive.value = false;
+  const n = player.next(props.streamUrlFor); // threads a fresh stream URL (R3.9)
+  if (n) emit('play-next', n);
+}
+function cancelUpNext(): void {
+  stopUpNextCountdown();
+  upNextActive.value = false;
+}
+
+// transcode guard -------------------------------------------------------------
+function onVideoError(): void {
+  if (isFatalMediaError(videoRef.value)) transcodeNeeded.value = true;
+}
 
 // ---- captions / tracks (R3.5) -----------------------------------------------
 const textTracks = ref<TextTrackInfo[]>([]);
@@ -172,6 +277,11 @@ function onLoadedMetadata(): void {
   v.volume = player.volume;
   v.muted = player.muted;
   v.playbackRate = player.rate;
+  // apply a resume seek requested before the duration was known
+  if (pendingSeek !== null) {
+    v.currentTime = v.duration ? Math.min(v.duration, pendingSeek) : pendingSeek;
+    pendingSeek = null;
+  }
   player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
   player.setMediaPositionState();
   refreshTracks(); // text/audio tracks are known once metadata is in
@@ -333,6 +443,11 @@ watch(
       clearIdle();
       showChrome.value = true; // always visible when paused
     } else {
+      // playback (re)started: a resume choice + a lingering up-next are both moot
+      // (e.g. the user replays the just-ended video instead of picking Play now /
+      // Cancel — don't let the countdown advance the queue mid-replay).
+      showResume.value = false;
+      cancelUpNext();
       scheduleHide();
     }
   },
@@ -362,10 +477,14 @@ onMounted(() => {
 });
 watch(
   () => props.media,
-  (m) => player.setCurrent(m, { resetPosition: false, streamUrl: props.streamUrl }),
+  (m) => {
+    player.setCurrent(m, { resetPosition: false, streamUrl: props.streamUrl });
+    evaluateForCurrentMedia();
+  },
 );
 onBeforeUnmount(() => {
   clearIdle();
+  stopUpNextCountdown();
   if (typeof document !== 'undefined') document.removeEventListener('fullscreenchange', onFullscreenChange);
   mediaSessionTeardown?.();
   trackList?.removeEventListener?.('addtrack', refreshTracks);
@@ -407,6 +526,8 @@ onBeforeUnmount(() => {
         @progress="onProgress"
         @volumechange="onVolumeChange"
         @ratechange="onRateChange"
+        @ended="onEnded"
+        @error="onVideoError"
         @enterpictureinpicture="onEnterPip"
         @leavepictureinpicture="onLeavePip"
         @click="togglePlay"
@@ -432,8 +553,8 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- center play/pause -->
-      <div class="player__center">
+      <!-- center play/pause (hidden behind the transcode notice) -->
+      <div v-if="!transcodeNeeded" class="player__center">
         <button
           type="button"
           class="player__bigplay"
@@ -453,8 +574,8 @@ onBeforeUnmount(() => {
         :lifted="showChrome"
       />
 
-      <!-- controls -->
-      <div class="player__controls" @click.stop>
+      <!-- controls (hidden when the file can't be direct-played) -->
+      <div v-if="!transcodeNeeded" class="player__controls" @click.stop>
         <Scrubber
           :position="player.position"
           :duration="player.duration"
@@ -536,6 +657,28 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </div>
+
+      <!-- resume prompt on open (R3.8) -->
+      <ResumePrompt
+        v-if="showResume && !transcodeNeeded"
+        :seconds="resumeSeconds"
+        @resume="resumePlayback"
+        @restart="startOver"
+      />
+
+      <!-- end-of-video up-next card (R3.8) -->
+      <UpNext
+        v-if="upNextActive && nextItem && !transcodeNeeded"
+        :media="nextItem"
+        :remaining="upNextRemaining"
+        :total="UPNEXT_COUNTDOWN_SECONDS"
+        :counting="prefs.autoplay"
+        @play-now="playNext"
+        @cancel="cancelUpNext"
+      />
+
+      <!-- direct-play guard: opaque notice instead of a black screen (R3.8) -->
+      <TranscodeNotice v-if="transcodeNeeded" :title="media.name" @back="emit('back')" />
 
       <ShortcutsHelp :open="showHelp" @close="showHelp = false" />
     </div>
