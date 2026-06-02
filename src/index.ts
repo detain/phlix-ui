@@ -30,11 +30,13 @@ export { default as FilterBar } from './components/FilterBar.vue';
 export { default as BrowsePage } from './pages/BrowsePage.vue';
 export { default as MediaDetailPage } from './pages/MediaDetailPage.vue';
 
-// Admin port (RA) — server admin surfaces + their mount seam
-export { default as AdminLogsPage } from './pages/admin/LogsPage.vue';
+// Admin port (RA) — server admin surfaces + their mount seam. NOTE: the admin
+// PAGE components are intentionally NOT re-exported here — they are lazy-loaded
+// chunks via `buildAdminRoutes()` (below), so re-exporting them statically would
+// pull all 16 into the main bundle and defeat the code-splitting (Rollup's
+// INEFFECTIVE_DYNAMIC_IMPORT warning). Consumers mount admin via buildAdminRoutes.
 export { AdminLogsApi, ALL_LOGS } from './api/admin/logs';
 export type { LogFile, LogTail, LogTailAll } from './api/admin/logs';
-export { default as AdminDashboardPage } from './pages/admin/DashboardPage.vue';
 export { AdminDashboardApi } from './api/admin/dashboard';
 export type {
   NowPlayingItem,
@@ -43,7 +45,6 @@ export type {
   StorageSummary,
   ActivityEvent,
 } from './api/admin/dashboard';
-export { default as AdminUsersPage } from './pages/admin/UsersPage.vue';
 export { AdminUsersApi, RATING_LABELS, RATING_OPTIONS } from './api/admin/users';
 export type {
   User,
@@ -53,10 +54,8 @@ export type {
   CreateProfileInput,
   UpdateProfileInput,
 } from './api/admin/users';
-export { default as AdminWebhooksPage } from './pages/admin/WebhooksPage.vue';
 export { AdminWebhooksApi, WEBHOOK_EVENT_CATEGORIES, SUBSCRIBABLE_EVENTS } from './api/admin/webhooks';
 export type { Webhook, CreateWebhookInput, UpdateWebhookInput, TestResult } from './api/admin/webhooks';
-export { default as AdminServicesPage } from './pages/admin/ServicesPage.vue';
 export { AdminServicesApi } from './api/admin/services';
 export type {
   TraktStatus,
@@ -64,7 +63,6 @@ export type {
   LastfmStatus,
   LastfmDisconnectResult,
 } from './api/admin/services';
-export { default as AdminIntegrationsPage } from './pages/admin/IntegrationsPage.vue';
 export { AdminIntegrationsApi } from './api/admin/integrations';
 export type {
   ArrSyncStatus,
@@ -79,7 +77,6 @@ export type {
   SaveLdapInput,
   LdapTestResult,
 } from './api/admin/integrations';
-export { default as AdminBackupPage } from './pages/admin/BackupPage.vue';
 export { AdminBackupApi } from './api/admin/backup';
 export type {
   Backup,
@@ -89,7 +86,6 @@ export type {
   ScheduleData,
   UpdateScheduleResult,
 } from './api/admin/backup';
-export { default as AdminCastDevicesPage } from './pages/admin/CastDevicesPage.vue';
 export { AdminCastApi } from './api/admin/cast';
 export type {
   CastDevice,
@@ -98,10 +94,8 @@ export type {
   AirPlayPlaybackState,
   CastActionResult,
 } from './api/admin/cast';
-export { default as AdminDlnaServerPage } from './pages/admin/DlnaServerPage.vue';
 export { AdminDlnaServerApi } from './api/admin/dlnaServer';
 export type { DlnaServerStatus, DlnaServerActionResult } from './api/admin/dlnaServer';
-export { default as AdminRemoteAccessPage } from './pages/admin/RemoteAccessPage.vue';
 export { AdminRemoteAccessApi } from './api/admin/remoteAccess';
 export type {
   HubStatus,
@@ -117,7 +111,6 @@ export type {
   PortForwardCandidatesResponse,
   RemoteAccessAck,
 } from './api/admin/remoteAccess';
-export { default as AdminLiveTvPage } from './pages/admin/LiveTvPage.vue';
 export { AdminLiveTvApi } from './api/admin/liveTv';
 export type {
   Tuner,
@@ -130,7 +123,6 @@ export type {
   CreateRecordingInput,
   CreateSeriesRuleInput,
 } from './api/admin/liveTv';
-export { default as AdminCollectionsPage } from './pages/admin/CollectionsPage.vue';
 export { AdminCollectionsApi } from './api/admin/collections';
 export type {
   Collection,
@@ -138,10 +130,8 @@ export type {
   CreateCollectionInput,
   UpdateCollectionInput,
 } from './api/admin/collections';
-export { default as AdminHistoryPage } from './pages/admin/HistoryPage.vue';
 export { AdminHistoryApi } from './api/admin/history';
 export type { RecentlyWatchedItem, RecentlyWatchedResponse } from './api/admin/history';
-export { default as AdminSyncPlayPage } from './pages/admin/SyncPlayPage.vue';
 export { AdminSyncPlayApi } from './api/admin/syncPlay';
 export type {
   SyncPlayGroup,
@@ -152,7 +142,6 @@ export type {
   CreateGroupInput,
   JoinGroupInput,
 } from './api/admin/syncPlay';
-export { default as AdminLibrariesPage } from './pages/admin/LibrariesPage.vue';
 export { AdminLibrariesApi, LIBRARY_TYPES } from './api/admin/libraries';
 export type {
   Library,
@@ -163,7 +152,6 @@ export type {
   CreateLibraryResult,
   ScanQueuedResult,
 } from './api/admin/libraries';
-export { default as AdminSettingsPage } from './pages/admin/SettingsPage.vue';
 export { AdminSettingsApi } from './api/admin/settings';
 export type { SettingsResponse, SettingsSaveResponse } from './api/admin/settings';
 export { buildAdminRoutes, adminMenu } from './app/admin';
