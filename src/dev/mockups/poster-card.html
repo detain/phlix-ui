@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="nocturne">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nocturne — Poster Card</title>
+<link rel="stylesheet" href="./nocturne.css" />
+<style>
+  body { min-height: 100vh; padding: var(--space-12) var(--space-8); }
+  .page-head { max-width: 1100px; margin: 0 auto var(--space-10); }
+  .page-head h1 {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: var(--text-3xl); letter-spacing: var(--tracking-tight);
+    line-height: var(--leading-tight);
+  }
+  .page-head p { color: var(--text-muted); margin-top: var(--space-2); max-width: 56ch; }
+  .theme-switch { display: flex; gap: var(--space-2); margin-top: var(--space-5); }
+  .theme-switch button {
+    font-size: var(--text-sm); font-weight: 600; padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full); border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-muted);
+    transition: all var(--dur-base) var(--ease-out);
+  }
+  .theme-switch button[aria-pressed='true'] {
+    background: var(--accent-soft); color: var(--accent); border-color: var(--accent-ring);
+  }
+  .stage {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-10) var(--space-8);
+  }
+  .stage > figure { display: flex; flex-direction: column; gap: var(--space-3); }
+  .stage figcaption { font-size: var(--text-xs); color: var(--text-subtle);
+    text-transform: uppercase; letter-spacing: var(--tracking-caps); }
+
+  /* ============================ MEDIA CARD ============================ */
+  .card {
+    position: relative; width: 100%; border-radius: var(--radius-lg);
+    background: var(--surface-2);
+    cursor: pointer; isolation: isolate;
+    transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out);
+  }
+  .card__poster {
+    position: relative; aspect-ratio: 2 / 3; border-radius: var(--radius-lg);
+    overflow: hidden; background:
+      linear-gradient(145deg, var(--surface-3), var(--surface));
+    box-shadow: var(--shadow-2);
+  }
+  .card__poster img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform var(--dur-slower) var(--ease-out), filter var(--dur-slow) var(--ease-out);
+  }
+  /* blur-up: LQIP tint sits under the image */
+  .card__poster::before {
+    content: ''; position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(120% 80% at 30% 20%, var(--amber-900), var(--surface) 70%);
+  }
+  .card__poster img { position: relative; z-index: 1; }
+
+  /* top badges */
+  .card__badges {
+    position: absolute; z-index: 3; top: var(--space-3); left: var(--space-3); right: var(--space-3);
+    display: flex; gap: var(--space-2); align-items: flex-start;
+  }
+  .badge {
+    font-size: var(--text-2xs); font-weight: 700; letter-spacing: var(--tracking-wide);
+    text-transform: uppercase; padding: 3px var(--space-2); border-radius: var(--radius-sm);
+    line-height: 1.4; backdrop-filter: blur(8px);
+  }
+  .badge--new { background: var(--accent); color: var(--accent-contrast); box-shadow: var(--shadow-1); }
+  .badge--quality {
+    margin-left: auto; background: var(--surface-glass-strong); color: var(--text);
+    border: 1px solid var(--border-strong); font-family: var(--font-mono);
+  }
+
+  /* hover info overlay */
+  .card__overlay {
+    position: absolute; z-index: 2; inset: 0; border-radius: var(--radius-lg);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: var(--space-4);
+    background: linear-gradient(to top,
+      rgba(8,6,3,0.96) 0%, rgba(8,6,3,0.78) 32%, rgba(8,6,3,0.15) 64%, transparent 100%);
+    opacity: 0; transform: translateY(8px);
+    transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+  }
+  [data-theme='daylight'] .card__overlay {
+    background: linear-gradient(to top,
+      rgba(20,14,4,0.94) 0%, rgba(20,14,4,0.72) 34%, rgba(20,14,4,0.1) 66%, transparent 100%);
+  }
+  .card__title {
+    font-family: var(--font-display); font-weight: 600; font-size: var(--text-md);
+    line-height: var(--leading-snug); letter-spacing: var(--tracking-snug); color: #fff;
+  }
+  .card__meta {
+    display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-1);
+    font-size: var(--text-xs); color: rgba(255,255,255,0.72);
+  }
+  .card__meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+  .card__meta .cert {
+    font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.4); border-radius: 3px; padding: 0 4px; line-height: 1.5;
+  }
+  .card__genres {
+    margin-top: var(--space-2); display: flex; flex-wrap: wrap; gap: var(--space-1);
+  }
+  .card__genres span {
+    font-size: var(--text-2xs); color: rgba(255,255,255,0.62);
+    background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 2px var(--space-2);
+  }
+  .card__actions {
+    margin-top: var(--space-4); display: flex; align-items: center; gap: var(--space-2);
+  }
+  .iconbtn {
+    width: 40px; height: 40px; display: grid; place-items: center;
+    border-radius: var(--radius-full); color: var(--text);
+    background: var(--surface-glass-strong); border: 1px solid var(--border-strong);
+    transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-base) var(--ease-out);
+  }
+  .iconbtn svg { width: 19px; height: 19px; }
+  .iconbtn:hover { transform: scale(1.08); }
+  .iconbtn--play { background: var(--accent); color: var(--accent-contrast); border-color: transparent;
+    box-shadow: var(--glow-amber); width: 46px; height: 46px; }
+  .iconbtn--play svg { width: 22px; height: 22px; }
+
+  /* resume progress */
+  .card__progress {
+    position: absolute; z-index: 3; left: var(--space-3); right: var(--space-3); bottom: var(--space-3);
+    height: 4px; border-radius: var(--radius-full); background: rgba(255,255,255,0.22); overflow: hidden;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+  .card__progress > i { display: block; height: 100%; width: 62%;
+    background: var(--accent); border-radius: inherit; box-shadow: 0 0 8px var(--accent); }
+
+  /* caption under poster (idle state) */
+  .card__caption { padding: var(--space-3) var(--space-1) 0; }
+  .card__caption .t {
+    font-family: var(--font-display); font-weight: 500; font-size: var(--text-base);
+    letter-spacing: var(--tracking-snug); line-height: var(--leading-snug);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card__caption .s { font-size: var(--text-xs); color: var(--text-subtle); margin-top: 2px; }
+
+  /* hover + focus states */
+  .card:hover, .card:focus-visible {
+    transform: translateY(-8px) scale(1.025); outline: none;
+    box-shadow: var(--shadow-4);
+  }
+  .card:hover .card__poster img, .card:focus-visible .card__poster img { transform: scale(1.06); }
+  .card:hover .card__overlay, .card:focus-visible .card__overlay { opacity: 1; transform: translateY(0); }
+  .card:hover .card__progress, .card:focus-visible .card__progress { opacity: 0; }
+  .card:focus-visible { box-shadow: var(--shadow-4), 0 0 0 3px var(--accent-ring); }
+
+  /* a card pinned open to show the hover comp without hovering */
+  .card.is-open .card__overlay { opacity: 1; transform: translateY(0); }
+  .card.is-open .card__progress { opacity: 0; }
+  .card.is-open .card__poster img { transform: scale(1.06); }
+</style>
+</head>
+<body>
+  <div class="nocturne-grain"></div>
+  <div class="nocturne-vignette"></div>
+
+  <header class="page-head">
+    <p class="eyebrow">@phlix/ui · R0.0 art direction</p>
+    <h1>The Poster Card</h1>
+    <p>Blur-up poster, badge stack (NEW · 4K·HDR), resume progress, and a cinematic hover
+       overlay with title / cert / meta / genres and amber quick-actions. Real SVG icons only.</p>
+    <div class="theme-switch" role="group" aria-label="Theme">
+      <button aria-pressed="true"  onclick="setT('nocturne',this)">Nocturne</button>
+      <button aria-pressed="false" onclick="setT('daylight',this)">Daylight</button>
+      <button aria-pressed="false" onclick="setT('midnight',this)">Midnight</button>
+    </div>
+  </header>
+
+  <section class="stage">
+    <!-- IDLE -->
+    <figure>
+      <article class="card" tabindex="0">
+        <div class="card__poster">
+          <div class="card__badges"><span class="badge badge--quality">4K · HDR</span></div>
+          <img src="https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" alt="Mad Max: Fury Road" loading="lazy" />
+          <div class="card__progress"><i></i></div>
+        </div>
+        <div class="card__caption">
+          <div class="t">Mad Max: Fury Road</div>
+          <div class="s numeric">2015 · 120m</div>
+        </div>
+      </article>
+      <figcaption>Idle — resume bar visible</figcaption>
+    </figure>
+
+    <!-- HOVER (pinned open) -->
+    <figure>
+      <article class="card is-open" tabindex="0">
+        <div class="card__poster">
+          <div class="card__badges">
+            <span class="badge badge--new">New</span>
+            <span class="badge badge--quality">4K · HDR</span>
+          </div>
+          <img src="https://image.tmdb.org/t/p/w500/9O7gLzmreU0nGkIB6K3BsJbzvNv.jpg" alt="Dune" loading="lazy" />
+          <div class="card__overlay">
+            <div class="card__title">Dune: Part Two</div>
+            <div class="card__meta numeric">
+              <span>2024</span><span class="dot"></span><span class="cert">PG-13</span>
+              <span class="dot"></span><span>166m</span><span class="dot"></span><span>★ 8.4</span>
+            </div>
+            <div class="card__genres">
+              <span>Sci-Fi</span><span>Adventure</span><span>Drama</span>
+            </div>
+            <div class="card__actions">
+              <button class="iconbtn iconbtn--play" aria-label="Play">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>
+              </button>
+              <button class="iconbtn" aria-label="Add to watchlist">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+              <button class="iconbtn" aria-label="More info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card__caption">
+          <div class="t">Dune: Part Two</div>
+          <div class="s numeric">2024 · 166m</div>
+        </div>
+      </article>
+      <figcaption>Hover / focus — overlay + quick actions</figcaption>
+    </figure>
+
+    <!-- a couple more idle to show rhythm -->
+    <figure>
+      <article class="card" tabindex="0">
+        <div class="card__poster">
+          <div class="card__badges"><span class="badge badge--new">New</span></div>
+          <img src="https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg" alt="Blade Runner 2049" loading="lazy" />
+        </div>
+        <div class="card__caption">
+          <div class="t">Blade Runner 2049</div>
+          <div class="s numeric">2017 · 164m</div>
+        </div>
+      </article>
+      <figcaption>Idle — NEW badge, no resume</figcaption>
+    </figure>
+
+    <figure>
+      <article class="card" tabindex="0">
+        <div class="card__poster">
+          <div class="card__badges"><span class="badge badge--quality">4K</span></div>
+          <img src="https://image.tmdb.org/t/p/w500/kqjL17yufvn9OVLyXYpvtyrFfak.jpg" alt="Mad Max" loading="lazy" />
+          <div class="card__progress"><i style="width:18%"></i></div>
+        </div>
+        <div class="card__caption">
+          <div class="t">Arrival</div>
+          <div class="s numeric">2016 · 116m</div>
+        </div>
+      </article>
+      <figcaption>Idle — early resume</figcaption>
+    </figure>
+  </section>
+
+<script>
+  function setT(t, btn){
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('.theme-switch button').forEach(b=>b.setAttribute('aria-pressed', b===btn));
+  }
+</script>
+</body>
+</html>

@@ -3,6 +3,8 @@
 @import './typography.css';
 @import './radius.css';
 @import './shadow.css';
+@import './motion.css';
+@import './density.css';
 
 *, *::before, *::after {
     box-sizing: border-box;
