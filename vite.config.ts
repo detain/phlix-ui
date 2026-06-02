@@ -18,6 +18,9 @@ export default defineConfig({
             name: 'PhlixUi',
             formats: ['es', 'cjs'],
             fileName: (format) => `phlix-ui.${format === 'es' ? 'js' : 'umd.cjs'}`,
+            // Vite 8 names lib CSS after the package ("ui.css") by default; pin it
+            // to style.css to keep the published `@phlix/ui/style.css` export stable.
+            cssFileName: 'style',
         },
         rollupOptions: {
             external: ['vue', 'vue-router', 'pinia'],
@@ -38,5 +41,29 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['./src/test/setup.ts'],
+        coverage: {
+            provider: 'v8',
+            reporter: ['text-summary', 'text', 'html'],
+            // Cover the redo surface (tokens/primitives/stores/composables/app shell).
+            // The pre-redo surface components/pages are rebuilt in R2–R5 and tested then.
+            include: [
+                'src/components/**/*.{ts,vue}',
+                'src/stores/**/*.ts',
+                'src/composables/**/*.ts',
+                'src/api/**/*.ts',
+                'src/app/**/*.ts',
+            ],
+            exclude: [
+                '**/*.test.ts',
+                'src/test/**',
+                'src/dev/**',
+                'src/components/{MediaCard,MediaGrid,FilterBar,Player}.vue',
+                'src/components/{LoginForm,SignupForm,SettingsForm}.vue',
+                'src/pages/**',
+                'src/app/AppLayout.vue',
+                'src/app/PhlixApp.vue',
+                'src/app/placeholder/**',
+            ],
+        },
     },
 });

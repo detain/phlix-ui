@@ -49,6 +49,31 @@ describe('Slider', () => {
     w.unmount();
   });
 
+  it('pointer drag (down → move → up) updates while dragging and commits on release', async () => {
+    const w = mount(Slider, { props: { modelValue: 0, min: 0, max: 100, step: 1 }, attachTo: document.body });
+    const track = w.find('.phlix-slider__track').element as HTMLElement;
+    track.getBoundingClientRect = () =>
+      ({ left: 0, width: 200, top: 0, right: 200, bottom: 5, height: 5, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    const fire = (type: string, clientX: number) => {
+      const ev = new Event(type, { bubbles: true });
+      Object.defineProperty(ev, 'clientX', { value: clientX });
+      Object.defineProperty(ev, 'pointerId', { value: 1 });
+      track.dispatchEvent(ev);
+    };
+    fire('pointerdown', 20); // 10%
+    expect(w.emitted('update:modelValue')!.at(-1)).toEqual([10]);
+    fire('pointermove', 160); // 80% while dragging
+    expect(w.emitted('update:modelValue')!.at(-1)).toEqual([80]);
+    await w.setProps({ modelValue: 80 });
+    fire('pointerup', 160);
+    expect(w.emitted('change')!.at(-1)).toEqual([80]); // commit on release
+    // move after release does nothing
+    const n = w.emitted('update:modelValue')!.length;
+    fire('pointermove', 40);
+    expect(w.emitted('update:modelValue')!.length).toBe(n);
+    w.unmount();
+  });
+
   it('Home/End jump to min/max and emit change', async () => {
     const w = mount(Slider, { props: { modelValue: 50, min: 0, max: 200 } });
     await w.find('[role="slider"]').trigger('keydown', { key: 'Home' });

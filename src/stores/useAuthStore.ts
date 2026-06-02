@@ -11,9 +11,18 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref<AuthUser | null>(null);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    // Reactive mirror of the persisted token — localStorage reads aren't reactive,
+    // so a plain computed over getAccessToken() would go stale after login/logout.
+    const accessToken = ref<string | null>(tokenStore.getAccessToken());
 
-    const isLoggedIn = computed(() => tokenStore.getAccessToken() !== null);
+    const isLoggedIn = computed(() => accessToken.value !== null);
     const isAdmin = computed(() => user.value?.is_admin === true);
+
+    function setTokens(access: string, refresh: string): void {
+        tokenStore.setAccessToken(access);
+        tokenStore.setRefreshToken(refresh);
+        accessToken.value = access;
+    }
 
     async function login(email: string, password: string): Promise<boolean> {
         loading.value = true;
@@ -24,8 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
                 refresh_token: string;
             }>('/api/v1/auth/login', { email, password });
 
-            tokenStore.setAccessToken(data.access_token);
-            tokenStore.setRefreshToken(data.refresh_token);
+            setTokens(data.access_token, data.refresh_token);
             await fetchUser();
             return true;
         } catch (e) {
@@ -45,8 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
                 refresh_token: string;
             }>('/api/v1/auth/register', { email, username, password });
 
-            tokenStore.setAccessToken(data.access_token);
-            tokenStore.setRefreshToken(data.refresh_token);
+            setTokens(data.access_token, data.refresh_token);
             await fetchUser();
             return true;
         } catch (e) {
@@ -64,11 +71,13 @@ export const useAuthStore = defineStore('auth', () => {
         } catch {
             user.value = null;
             tokenStore.clear();
+            accessToken.value = null;
         }
     }
 
     function logout(): void {
         tokenStore.clear();
+        accessToken.value = null;
         user.value = null;
     }
 
