@@ -59,6 +59,13 @@ describe('buildAdminRoutes', () => {
     expect(services?.path).toBe('/app/admin/services');
     expect(typeof services?.component).toBe('function');
   });
+
+  it('exposes the integrations route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const integrations = routes.find((r) => r.name === 'admin-integrations');
+    expect(integrations?.path).toBe('/app/admin/integrations');
+    expect(typeof integrations?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -106,5 +113,12 @@ describe('adminMenu', () => {
     const services = group.children?.find((c) => c.id === 'admin-services');
     expect(services?.label).toBe('Services');
     expect(services?.to).toBe('/app/admin/services');
+  });
+
+  it('exposes an integrations child pointing at the integrations route', () => {
+    const [group] = adminMenu();
+    const integrations = group.children?.find((c) => c.id === 'admin-integrations');
+    expect(integrations?.label).toBe('Integrations');
+    expect(integrations?.to).toBe('/app/admin/integrations');
   });
 });
