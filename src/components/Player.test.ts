@@ -52,6 +52,7 @@ function stubVideo(el: HTMLVideoElement, props: Partial<Record<'currentTime' | '
   return state;
 }
 
+const mounted: ReturnType<typeof mount>[] = [];
 function mountPlayer(
   props: Partial<{ media: MediaItem; streamUrl: string; idleTimeout: number; chapters: { start: number; title?: string }[] }> = {},
 ) {
@@ -59,6 +60,7 @@ function mountPlayer(
     props: { media: media(), streamUrl: 'http://x/stream', ...props },
     attachTo: document.body,
   });
+  mounted.push(w);
   const video = w.find('video').element as HTMLVideoElement;
   const state = stubVideo(video);
   return { w, video, state };
@@ -69,6 +71,8 @@ beforeEach(() => {
   setActivePinia(createPinia());
 });
 afterEach(() => {
+  // unmount so the document-level keyboard listener is removed (no cross-test bleed)
+  while (mounted.length) mounted.pop()?.unmount();
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
@@ -285,6 +289,117 @@ describe('Player — chrome auto-hide', () => {
     vi.advanceTimersByTime(2000);
     await nextTick();
     expect(w.classes()).not.toContain('is-chrome-hidden');
+  });
+});
+
+describe('Player — keyboard shortcuts', () => {
+  function key(k: string, target: EventTarget = document) {
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+  }
+
+  it('toggles play with the k key (global, while mounted)', async () => {
+    const { video, state } = mountPlayer();
+    state.paused = true;
+    key('k');
+    await nextTick();
+    expect(video.play).toHaveBeenCalled();
+  });
+
+  it('opens the help overlay with ?', async () => {
+    const { w } = mountPlayer();
+    expect(w.find('[role="dialog"]').exists()).toBe(false);
+    key('?');
+    await nextTick();
+    expect(w.find('[role="dialog"]').exists()).toBe(true);
+  });
+
+  it('emits captions/theater/pip for c/t/i', async () => {
+    const { w } = mountPlayer();
+    key('c');
+    key('t');
+    key('i');
+    await nextTick();
+    expect(w.emitted('captions')).toHaveLength(1);
+    expect(w.emitted('theater')).toHaveLength(1);
+    expect(w.emitted('pip')).toHaveLength(1);
+  });
+
+  it('steps playback speed up the ladder with >', async () => {
+    const { video } = mountPlayer();
+    const store = usePlayerStore();
+    expect(store.rate).toBe(1);
+    key('>');
+    await nextTick();
+    expect(store.rate).toBe(1.25);
+    expect(video.playbackRate).toBe(1.25); // mirrored onto the element
+  });
+
+  it('does not fire shortcuts while typing in an input', async () => {
+    const { video } = mountPlayer();
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    key('k', input);
+    await nextTick();
+    expect(video.play).not.toHaveBeenCalled();
+    input.remove();
+  });
+
+  it('seeks ±5s with the arrow keys and to % with a digit', async () => {
+    const { video, state } = mountPlayer();
+    state.duration = 200;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate')); // store.position = 100
+    await nextTick();
+    key('ArrowLeft');
+    expect(state.currentTime).toBe(95);
+    key('5'); // 50% of 200
+    expect(state.currentTime).toBe(100);
+  });
+
+  it('frame-steps only while paused', async () => {
+    const { video, state } = mountPlayer();
+    state.duration = 200;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    key(','); // paused by default → steps back ~1/30s
+    expect(state.currentTime).toBeCloseTo(100 - 1 / 30, 4);
+
+    video.dispatchEvent(new Event('play')); // now playing
+    await nextTick();
+    const before = state.currentTime;
+    key('.');
+    expect(state.currentTime).toBe(before); // no frame-step while playing
+  });
+
+  it('nudges volume with the up arrow', async () => {
+    const { video } = mountPlayer();
+    const store = usePlayerStore();
+    store.setVolume(0.5);
+    await nextTick();
+    key('ArrowUp');
+    await nextTick();
+    expect(store.volume).toBeCloseTo(0.55);
+    expect(video.volume).toBeCloseTo(0.55);
+  });
+
+  it('suppresses player shortcuts while the help overlay is open', async () => {
+    const { w, video, state } = mountPlayer();
+    state.paused = true;
+    key('?'); // open help
+    await nextTick();
+    expect(w.find('[role="dialog"]').exists()).toBe(true);
+    key('k'); // should be ignored while the modal is open
+    await nextTick();
+    expect(video.play).not.toHaveBeenCalled();
+  });
+
+  it('opens the help overlay from the control-bar button too', async () => {
+    const { w } = mountPlayer();
+    const helpBtn = w.findAll('.player__btnrow .player__iconbtn').find((b) => b.attributes('aria-label') === 'Keyboard shortcuts');
+    expect(helpBtn).toBeTruthy();
+    await helpBtn!.trigger('click');
+    expect(w.find('[role="dialog"]').exists()).toBe(true);
   });
 });
 
