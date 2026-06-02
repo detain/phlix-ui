@@ -32,6 +32,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-webhooks',
       component: () => import('../pages/admin/WebhooksPage.vue'),
     },
+    {
+      path: `${root}/services`,
+      name: 'admin-services',
+      component: () => import('../pages/admin/ServicesPage.vue'),
+    },
   ];
 }
 
@@ -48,6 +53,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-users', label: 'Users', icon: 'user', to: `${root}/users` },
         { id: 'admin-logs', label: 'Logs', icon: 'list', to: `${root}/logs` },
         { id: 'admin-webhooks', label: 'Webhooks', icon: 'settings', to: `${root}/webhooks` },
+        { id: 'admin-services', label: 'Services', icon: 'star', to: `${root}/services` },
       ],
     },
   ];

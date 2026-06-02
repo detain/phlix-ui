@@ -33,6 +33,9 @@ export type { User, CreateUserInput, UpdateUserInput, Profile, CreateProfileInpu
 export { default as AdminWebhooksPage } from './pages/admin/WebhooksPage.vue';
 export { AdminWebhooksApi, WEBHOOK_EVENT_CATEGORIES, SUBSCRIBABLE_EVENTS } from './api/admin/webhooks';
 export type { Webhook, CreateWebhookInput, UpdateWebhookInput, TestResult } from './api/admin/webhooks';
+export { default as AdminServicesPage } from './pages/admin/ServicesPage.vue';
+export { AdminServicesApi } from './api/admin/services';
+export type { TraktStatus, TraktDisconnectResult, LastfmStatus, LastfmDisconnectResult, } from './api/admin/services';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
