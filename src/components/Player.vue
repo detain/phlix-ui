@@ -16,6 +16,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import type { MediaItem } from '../types/media-item';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
 import Icon from './Icon.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
@@ -23,6 +24,15 @@ import ShortcutsHelp from './player/ShortcutsHelp.vue';
 import VolumeControl from './player/VolumeControl.vue';
 import SpeedMenu from './player/SpeedMenu.vue';
 import QualityMenu from './player/QualityMenu.vue';
+import CaptionOverlay from './player/CaptionOverlay.vue';
+import CaptionsMenu from './player/CaptionsMenu.vue';
+import {
+  listSubtitleTracks,
+  listAudioTracks,
+  activeAudioIndex,
+  applyAudioTrack,
+  type TextTrackInfo,
+} from './player/captions';
 import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
 import type { SelectOptionInput } from './ui/listbox';
 
@@ -50,6 +60,7 @@ const emit = defineEmits<{
 }>();
 
 const player = usePlayerStore();
+const prefs = usePreferencesStore();
 
 /** Playback-speed ladder for the `<`/`>` shortcuts. */
 const SPEED_LADDER = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -60,6 +71,47 @@ const showChrome = ref(true);
 const fullscreen = ref(false);
 const scrubbing = ref(false);
 const showHelp = ref(false);
+
+// ---- captions / tracks (R3.5) -----------------------------------------------
+const textTracks = ref<TextTrackInfo[]>([]);
+const audioTracks = ref<TextTrackInfo[]>([]);
+const activeAudio = ref(-1);
+const captionsMenuOpen = ref(false);
+/** Last on-language, so the `c` key can restore it after toggling off. */
+let lastSubtitleLang: string | null = player.subtitleLang;
+
+/** Captions are "on" only when the selected language resolves to a real track. */
+const captionsOn = computed(() => textTracks.value.some((t) => t.language === player.subtitleLang));
+
+function refreshTracks(): void {
+  const v = videoRef.value;
+  textTracks.value = listSubtitleTracks(v);
+  audioTracks.value = listAudioTracks(v);
+  activeAudio.value = activeAudioIndex(v);
+}
+
+/** `c` shortcut — quick session toggle of captions on/off (the menu persists the
+ *  cross-session default). Restores the last language, else the first track. */
+function toggleCaptions(): void {
+  if (captionsOn.value) {
+    lastSubtitleLang = player.subtitleLang;
+    player.setSubtitle(null);
+  } else {
+    const restore =
+      lastSubtitleLang && textTracks.value.some((t) => t.language === lastSubtitleLang)
+        ? lastSubtitleLang
+        : (textTracks.value[0]?.language ?? null);
+    player.setSubtitle(restore);
+  }
+  emit('captions'); // host hook (e.g. PlayerPage, R3.9)
+}
+
+function onSelectAudio(index: number): void {
+  applyAudioTrack(videoRef.value, index);
+  activeAudio.value = index;
+}
+
+let trackList: TextTrackList | null = null;
 
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -109,6 +161,7 @@ function onLoadedMetadata(): void {
   v.muted = player.muted;
   v.playbackRate = player.rate;
   player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
+  refreshTracks(); // text/audio tracks are known once metadata is in
 }
 function onProgress(): void {
   const v = videoRef.value;
@@ -160,7 +213,7 @@ const shortcutActions: ShortcutActions = {
   volumeBy: (delta) => player.setVolume(player.volume + delta),
   toggleMute,
   toggleFullscreen,
-  toggleCaptions: () => emit('captions'),
+  toggleCaptions,
   toggleTheater: () => emit('theater'),
   togglePip: () => emit('pip'),
   seekToPercent: (frac) => onSeek(frac * player.duration),
@@ -169,8 +222,9 @@ const shortcutActions: ShortcutActions = {
     showHelp.value = !showHelp.value;
   },
 };
-// Suppress player shortcuts while the help modal is open (its own Esc/close win).
-useKeyboardShortcuts(shortcutActions, { enabled: () => !showHelp.value });
+// Suppress player shortcuts while the help modal or captions menu is open (their
+// own Esc/close + the inner Select's arrow keys win, no double-fire).
+useKeyboardShortcuts(shortcutActions, { enabled: () => !showHelp.value && !captionsMenuOpen.value });
 
 function toggleMute(): void {
   // Drive the store; the `player.muted` watch mirrors it onto the element (which,
@@ -248,6 +302,11 @@ watch(
 onMounted(() => {
   player.setCurrent(props.media, { resetPosition: false });
   if (typeof document !== 'undefined') document.addEventListener('fullscreenchange', onFullscreenChange);
+  // Re-enumerate when the host adds/removes <track>s (sidecar VTT, R3.9).
+  trackList = videoRef.value?.textTracks ?? null;
+  trackList?.addEventListener?.('addtrack', refreshTracks);
+  trackList?.addEventListener?.('removetrack', refreshTracks);
+  refreshTracks();
 });
 watch(
   () => props.media,
@@ -256,6 +315,8 @@ watch(
 onBeforeUnmount(() => {
   clearIdle();
   if (typeof document !== 'undefined') document.removeEventListener('fullscreenchange', onFullscreenChange);
+  trackList?.removeEventListener?.('addtrack', refreshTracks);
+  trackList?.removeEventListener?.('removetrack', refreshTracks);
 });
 </script>
 
@@ -318,6 +379,14 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
+    <!-- captions (custom overlay, lifts above the controls while chrome shows) -->
+    <CaptionOverlay
+      :video="videoRef"
+      :language="player.subtitleLang"
+      :style-config="prefs.captionStyle"
+      :lifted="showChrome"
+    />
+
     <!-- controls -->
     <div class="player__controls" @click.stop>
       <Scrubber
@@ -350,6 +419,13 @@ onBeforeUnmount(() => {
         <VolumeControl />
         <SpeedMenu />
         <QualityMenu :qualities="qualities" />
+        <CaptionsMenu
+          v-model:open="captionsMenuOpen"
+          :tracks="textTracks"
+          :audio-tracks="audioTracks"
+          :active-audio="activeAudio"
+          @select-audio="onSelectAudio"
+        />
 
         <button
           type="button"

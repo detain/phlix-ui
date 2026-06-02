@@ -23,6 +23,17 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    captionStyle: import("vue").Ref<{
+        size: import("..").CaptionSize;
+        textColor: string;
+        background: import("..").CaptionBackground;
+        edge: import("..").CaptionEdge;
+    }, import("..").CaptionStyle | {
+        size: import("..").CaptionSize;
+        textColor: string;
+        background: import("..").CaptionBackground;
+        edge: import("..").CaptionEdge;
+    }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
@@ -39,7 +50,7 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => import("..").FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
+}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<import("..").Density, import("..").Density>;
@@ -50,6 +61,17 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    captionStyle: import("vue").Ref<{
+        size: import("..").CaptionSize;
+        textColor: string;
+        background: import("..").CaptionBackground;
+        edge: import("..").CaptionEdge;
+    }, import("..").CaptionStyle | {
+        size: import("..").CaptionSize;
+        textColor: string;
+        background: import("..").CaptionBackground;
+        edge: import("..").CaptionEdge;
+    }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
@@ -77,6 +99,17 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    captionStyle: import("vue").Ref<{
+        size: import("..").CaptionSize;
+        textColor: string;
+        background: import("..").CaptionBackground;
+        edge: import("..").CaptionEdge;
+    }, import("..").CaptionStyle | {
+        size: import("..").CaptionSize;
+        textColor: string;
+        background: import("..").CaptionBackground;
+        edge: import("..").CaptionEdge;
+    }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;

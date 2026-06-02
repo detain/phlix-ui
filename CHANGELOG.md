@@ -18,6 +18,24 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Player — Captions / subtitles UX (R3.5):** captions are now a first-class, customizable surface.
+  New **`CaptionOverlay`** (`src/components/player/CaptionOverlay.vue`) renders the active track's WebVTT
+  cues in a CUSTOM overlay (the selected track is set to `mode='hidden'` — parsed, not natively painted —
+  and we draw the cues) so the full caption style applies; cue text is markup-stripped + entity-decoded and
+  rendered as TEXT (never `v-html`), and it lifts above the control bar while the chrome shows. New
+  **`CaptionsMenu`** (`src/components/player/CaptionsMenu.vue`) is the control-bar **CC button** (icon
+  reflects on/off) opening a focus-trapped popover (`role=dialog`, Esc / outside-click close, returns focus):
+  a subtitle-track radio list (Off + each track, roving tabindex + arrow-key nav) that drives
+  `usePlayerStore.subtitleLang` and persists `usePreferencesStore.defaultSubtitleLang`, a best-effort
+  audio-track radio list (shown only when the browser exposes >1 `audioTracks`), and four caption-style
+  `Select`s. New pure helpers **`src/components/player/captions.ts`** (track enumeration, `resolveTextTrack`/
+  `hasActiveCaptions`, `applyTrackModes`, `applyAudioTrack`/`activeAudioIndex`, `cleanCueText`/
+  `readActiveCueLines`, `captionStyleVars`/`edgeShadow` + the menu option lists). `Player.vue` wires the
+  overlay + menu, enumerates text/audio tracks on `loadedmetadata` + `addtrack`/`removetrack`, makes the
+  **`c` shortcut** a real on/off session toggle (restoring the last language), and suppresses the global key
+  map while the menu is open. Caption appearance (size / color / background / edge) persists via a new
+  **`CaptionStyle`** preference (`usePreferencesStore.captionStyle` + `DEFAULT_CAPTION_STYLE`); captions are
+  **off by default unless `defaultSubtitleLang` matches an available track**. All new symbols exported.
 - **Admin port — Settings (RA.16):** new **`AdminSettingsPage`** (`src/pages/admin/SettingsPage.vue`) — the
   ADMIN server-settings page: 9 group tabs (~19 keys) with per-key type-driven editors (bool→Switch,
   int/float→number, password→masked with show/hide, string→text/select), dirty tracking + save-only-changed,

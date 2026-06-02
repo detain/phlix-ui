@@ -7,6 +7,23 @@ export interface FilterPreset {
     name: string;
     query: Record<string, string | string[]>;
 }
+/** Relative caption text size. */
+export type CaptionSize = 'sm' | 'md' | 'lg' | 'xl';
+/** Caption background box treatment. */
+export type CaptionBackground = 'none' | 'semi' | 'solid';
+/** Caption text-edge legibility treatment. */
+export type CaptionEdge = 'none' | 'drop-shadow' | 'outline' | 'raised';
+/** Persisted caption/subtitle appearance (R3.5). The active track itself lives in
+ *  `defaultSubtitleLang` (default) / `usePlayerStore.subtitleLang` (session). */
+export interface CaptionStyle {
+    size: CaptionSize;
+    /** Text fill — a hex color. */
+    textColor: string;
+    background: CaptionBackground;
+    edge: CaptionEdge;
+}
+/** Cinematic default: white text, no box, soft drop-shadow (legible + clean). */
+export declare const DEFAULT_CAPTION_STYLE: CaptionStyle;
 export interface Preferences {
     theme: ThemeName;
     /** null = use the theme's default amber accent; otherwise a hex override. */
@@ -21,6 +38,8 @@ export interface Preferences {
     defaultVolume: number;
     defaultQuality: string;
     defaultSubtitleLang: string | null;
+    /** Persisted caption appearance (R3.5). */
+    captionStyle: CaptionStyle;
     atmosphere: boolean;
     /** Saved Browse filter presets. */
     filterPresets: FilterPreset[];
@@ -48,6 +67,17 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    captionStyle: import("vue").Ref<{
+        size: CaptionSize;
+        textColor: string;
+        background: CaptionBackground;
+        edge: CaptionEdge;
+    }, CaptionStyle | {
+        size: CaptionSize;
+        textColor: string;
+        background: CaptionBackground;
+        edge: CaptionEdge;
+    }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
@@ -64,7 +94,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
+}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
@@ -75,6 +105,17 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    captionStyle: import("vue").Ref<{
+        size: CaptionSize;
+        textColor: string;
+        background: CaptionBackground;
+        edge: CaptionEdge;
+    }, CaptionStyle | {
+        size: CaptionSize;
+        textColor: string;
+        background: CaptionBackground;
+        edge: CaptionEdge;
+    }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
@@ -102,6 +143,17 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    captionStyle: import("vue").Ref<{
+        size: CaptionSize;
+        textColor: string;
+        background: CaptionBackground;
+        edge: CaptionEdge;
+    }, CaptionStyle | {
+        size: CaptionSize;
+        textColor: string;
+        background: CaptionBackground;
+        edge: CaptionEdge;
+    }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
