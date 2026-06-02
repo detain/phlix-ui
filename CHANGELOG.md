@@ -18,6 +18,13 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Dashboard (RA.2):** new **`AdminDashboardPage`** (`src/pages/admin/DashboardPage.vue`) —
+  Now Playing (live sessions + progress), Top Users (30d), Top Media, Storage breakdown, and an Activity
+  feed with load-more; a 7/30/90-day range selector and 30s now-playing auto-refresh. Backed by
+  **`AdminDashboardApi`** (`src/api/admin/dashboard.ts`, `/api/v1/admin/dashboard/*`) which carries the
+  React admin's server→SPA field-drift normalisers (accepts both `username`/`user_name`,
+  `title`/`media_title`, `stream_id`/`session_id`, … so it survives the known dashboard contract drift).
+  Wired into the admin route/menu seam; exported.
 - **Admin port — Logs + scaffolding (RA.1):** begins restoring the admin surfaces orphaned when the React
   `admin-ui/` was deleted. New **`AdminLogsPage`** (`src/pages/admin/LogsPage.vue`) — list + tail server
   logs (incl. an "All logs" merged view), line-count + 5s auto-refresh, on the a11y primitives; backed by
