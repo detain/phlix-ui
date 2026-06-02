@@ -152,6 +152,17 @@ export type {
   CreateGroupInput,
   JoinGroupInput,
 } from './api/admin/syncPlay';
+export { default as AdminLibrariesPage } from './pages/admin/LibrariesPage.vue';
+export { AdminLibrariesApi, LIBRARY_TYPES } from './api/admin/libraries';
+export type {
+  Library,
+  LibraryType,
+  ScanJob,
+  CreateLibraryInput,
+  UpdateLibraryInput,
+  CreateLibraryResult,
+  ScanQueuedResult,
+} from './api/admin/libraries';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';

@@ -82,6 +82,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-syncplay',
       component: () => import('../pages/admin/SyncPlayPage.vue'),
     },
+    {
+      path: `${root}/libraries`,
+      name: 'admin-libraries',
+      component: () => import('../pages/admin/LibrariesPage.vue'),
+    },
   ];
 }
 
@@ -108,6 +113,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-collections', label: 'Collections', icon: 'list', to: `${root}/collections` },
         { id: 'admin-history', label: 'Watch History', icon: 'film', to: `${root}/history` },
         { id: 'admin-syncplay', label: 'SyncPlay', icon: 'play', to: `${root}/syncplay` },
+        { id: 'admin-libraries', label: 'Libraries', icon: 'image', to: `${root}/libraries` },
       ],
     },
   ];
