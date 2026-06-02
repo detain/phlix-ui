@@ -175,6 +175,27 @@ export { default as ShortcutsHelp } from './components/player/ShortcutsHelp.vue'
 export { default as VolumeControl } from './components/player/VolumeControl.vue';
 export { default as SpeedMenu } from './components/player/SpeedMenu.vue';
 export { default as QualityMenu } from './components/player/QualityMenu.vue';
+export { default as CaptionOverlay } from './components/player/CaptionOverlay.vue';
+export { default as CaptionsMenu } from './components/player/CaptionsMenu.vue';
+export {
+  listSubtitleTracks,
+  listAudioTracks,
+  resolveTextTrack,
+  hasActiveCaptions,
+  applyTrackModes,
+  applyAudioTrack,
+  activeAudioIndex,
+  readActiveCueLines,
+  cleanCueText,
+  edgeShadow,
+  captionStyleVars,
+  CAPTION_SIZE_SCALE,
+  CAPTION_SIZE_OPTIONS,
+  CAPTION_COLOR_OPTIONS,
+  CAPTION_BACKGROUND_OPTIONS,
+  CAPTION_EDGE_OPTIONS,
+} from './components/player/captions';
+export type { TextTrackInfo } from './components/player/captions';
 export { formatTime } from './components/player/format-time';
 export { PLAYER_SHORTCUTS, ARROW_ICONS, ARROW_LABELS, useKeyboardShortcuts, handleShortcut, isTypingTarget } from './components/player/shortcuts';
 export type { ShortcutRow, ShortcutActions } from './components/player/shortcuts';
@@ -200,8 +221,8 @@ export { bindMediaStoreToRouter } from './composables/useMediaUrlSync';
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 
-export { usePreferencesStore, readStoredPreferences, hasStoredPreferences, DEFAULT_PREFERENCES } from './stores/usePreferencesStore';
-export type { Preferences, ThemeName, Density, MotionPref, FilterPreset } from './stores/usePreferencesStore';
+export { usePreferencesStore, readStoredPreferences, hasStoredPreferences, DEFAULT_PREFERENCES, DEFAULT_CAPTION_STYLE } from './stores/usePreferencesStore';
+export type { Preferences, ThemeName, Density, MotionPref, FilterPreset, CaptionStyle, CaptionSize, CaptionBackground, CaptionEdge } from './stores/usePreferencesStore';
 export { usePlayerStore, RESUME_MIN_SECONDS, RESUME_MAX_RATIO } from './stores/usePlayerStore';
 export type { MediaSessionHandlers } from './stores/usePlayerStore';
 export { useCommandStore, fuzzyScore, matchCommand } from './stores/useCommandStore';

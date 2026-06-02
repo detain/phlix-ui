@@ -5,6 +5,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import Player from './Player.vue';
 import Scrubber from './player/Scrubber.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -400,6 +401,128 @@ describe('Player — keyboard shortcuts', () => {
     expect(helpBtn).toBeTruthy();
     await helpBtn!.trigger('click');
     expect(w.find('[role="dialog"]').exists()).toBe(true);
+  });
+});
+
+describe('Player — captions (R3.5)', () => {
+  function key(k: string, target: EventTarget = document) {
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+  }
+
+  /** Shadow the real (empty) jsdom textTracks with a fake subtitle list. */
+  function injectSubtitleTracks(video: HTMLVideoElement, defs: { lang: string; label: string }[]) {
+    const tracks = defs.map((d) => ({
+      kind: 'subtitles',
+      language: d.lang,
+      label: d.label,
+      mode: 'disabled',
+      activeCues: null as { text: string }[] | null,
+      addEventListener() {},
+      removeEventListener() {},
+    }));
+    const list: Record<number, unknown> & { length: number } = { length: tracks.length };
+    tracks.forEach((t, i) => (list[i] = t));
+    Object.defineProperty(video, 'textTracks', { configurable: true, get: () => list });
+    return tracks;
+  }
+
+  /** Shadow the real jsdom audioTracks with a fake list of enable-able tracks. */
+  function injectAudioTracks(video: HTMLVideoElement, count: number) {
+    const tracks = Array.from({ length: count }, (_, i) => ({ language: `a${i}`, label: `Audio ${i + 1}`, id: `a${i}`, enabled: i === 0 }));
+    const list: Record<number, unknown> & { length: number } = { length: count };
+    tracks.forEach((t, i) => (list[i] = t));
+    Object.defineProperty(video, 'audioTracks', { configurable: true, get: () => list });
+    return tracks;
+  }
+
+  it('renders the captions menu button in the control row', () => {
+    const { w } = mountPlayer();
+    expect(w.find('.capmenu__btn').exists()).toBe(true);
+  });
+
+  it('captions are ON at load when defaultSubtitleLang matches an available track', async () => {
+    usePreferencesStore().defaultSubtitleLang = 'en'; // before the player store seeds from it
+    const { w, video } = mountPlayer();
+    const tracks = injectSubtitleTracks(video, [{ lang: 'en', label: 'English' }]);
+    tracks[0].activeCues = [{ text: 'Fear is the mind-killer' }];
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBe('en'); // seeded from the default
+    expect(w.find('.capmenu__btn').attributes('aria-label')).toBe('Captions (on)');
+    expect(w.find('.player__caption-line').text()).toBe('Fear is the mind-killer');
+  });
+
+  it('captions stay OFF at load when the default matches no track', async () => {
+    // default is null (storage cleared in beforeEach) → off even though a track exists
+    const { w, video } = mountPlayer();
+    injectSubtitleTracks(video, [{ lang: 'en', label: 'English' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBeNull();
+    expect(w.find('.capmenu__btn').attributes('aria-label')).toBe('Captions (off)');
+    expect(w.find('.player__captions').exists()).toBe(false);
+  });
+
+  it('the c key toggles captions on/off when a track is available', async () => {
+    const { video } = mountPlayer();
+    const store = usePlayerStore();
+    injectSubtitleTracks(video, [{ lang: 'en', label: 'English' }]);
+    video.dispatchEvent(new Event('loadedmetadata')); // refreshes the track list
+    await nextTick();
+    expect(store.subtitleLang).toBeNull(); // off by default (no defaultSubtitleLang)
+    key('c');
+    await nextTick();
+    expect(store.subtitleLang).toBe('en'); // turned on (first/only track)
+    key('c');
+    await nextTick();
+    expect(store.subtitleLang).toBeNull(); // toggled back off
+  });
+
+  it('the c key is a no-op (still emits) when there are no tracks', async () => {
+    const { w } = mountPlayer();
+    const store = usePlayerStore();
+    key('c');
+    await nextTick();
+    expect(store.subtitleLang).toBeNull();
+    expect(w.emitted('captions')).toHaveLength(1); // host hook still fires
+  });
+
+  it('suppresses transport shortcuts while the captions menu is open', async () => {
+    const { w, video, state } = mountPlayer();
+    state.paused = true;
+    await w.find('.capmenu__btn').trigger('click'); // v-model:open → captionsMenuOpen = true
+    await nextTick();
+    expect(w.find('.capmenu__panel').exists()).toBe(true);
+    key('k'); // would normally toggle play
+    await nextTick();
+    expect(video.play).not.toHaveBeenCalled();
+  });
+
+  it('renders caption cues in the overlay for the active track', async () => {
+    const { w, video } = mountPlayer();
+    const store = usePlayerStore();
+    const tracks = injectSubtitleTracks(video, [{ lang: 'en', label: 'English' }]);
+    tracks[0].activeCues = [{ text: 'Spice flows' }];
+    video.dispatchEvent(new Event('loadedmetadata'));
+    store.setSubtitle('en');
+    await nextTick();
+    expect(w.find('.player__captions').exists()).toBe(true);
+    expect(w.find('.player__caption-line').text()).toBe('Spice flows');
+  });
+
+  it('switches the audio track via the menu (applyAudioTrack + activeAudio)', async () => {
+    const { w, video } = mountPlayer();
+    const audio = injectAudioTracks(video, 2);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    await w.find('.capmenu__btn').trigger('click'); // open the menu
+    await nextTick();
+    const group = w.find('[aria-label="Audio track"]');
+    expect(group.exists()).toBe(true); // shown only because there are 2 audio tracks
+    await group.findAll('[role="radio"]')[1].trigger('click');
+    await nextTick();
+    expect(audio[1].enabled).toBe(true);
+    expect(audio[0].enabled).toBe(false);
   });
 });
 

@@ -12,6 +12,31 @@ export interface FilterPreset {
   query: Record<string, string | string[]>;
 }
 
+/** Relative caption text size. */
+export type CaptionSize = 'sm' | 'md' | 'lg' | 'xl';
+/** Caption background box treatment. */
+export type CaptionBackground = 'none' | 'semi' | 'solid';
+/** Caption text-edge legibility treatment. */
+export type CaptionEdge = 'none' | 'drop-shadow' | 'outline' | 'raised';
+
+/** Persisted caption/subtitle appearance (R3.5). The active track itself lives in
+ *  `defaultSubtitleLang` (default) / `usePlayerStore.subtitleLang` (session). */
+export interface CaptionStyle {
+  size: CaptionSize;
+  /** Text fill — a hex color. */
+  textColor: string;
+  background: CaptionBackground;
+  edge: CaptionEdge;
+}
+
+/** Cinematic default: white text, no box, soft drop-shadow (legible + clean). */
+export const DEFAULT_CAPTION_STYLE: CaptionStyle = {
+  size: 'md',
+  textColor: '#ffffff',
+  background: 'none',
+  edge: 'drop-shadow',
+};
+
 export interface Preferences {
   theme: ThemeName;
   /** null = use the theme's default amber accent; otherwise a hex override. */
@@ -26,6 +51,8 @@ export interface Preferences {
   defaultVolume: number; // 0–1
   defaultQuality: string; // 'auto' | '4k' | '1080p' | …
   defaultSubtitleLang: string | null;
+  /** Persisted caption appearance (R3.5). */
+  captionStyle: CaptionStyle;
   atmosphere: boolean;
   /** Saved Browse filter presets. */
   filterPresets: FilterPreset[];
@@ -42,6 +69,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   defaultVolume: 1,
   defaultQuality: 'auto',
   defaultSubtitleLang: null,
+  captionStyle: { ...DEFAULT_CAPTION_STYLE },
   atmosphere: true,
   filterPresets: [],
 };
@@ -110,6 +138,10 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   const defaultVolume = ref<number>(initial.defaultVolume);
   const defaultQuality = ref<string>(initial.defaultQuality);
   const defaultSubtitleLang = ref<string | null>(initial.defaultSubtitleLang);
+  // Merge over the defaults (readStoredPreferences shallow-spreads, so a stored
+  // partial style would otherwise drop keys) AND copy so the shared
+  // DEFAULT_CAPTION_STYLE object is never mutated through the ref.
+  const captionStyle = ref<CaptionStyle>({ ...DEFAULT_CAPTION_STYLE, ...initial.captionStyle });
   const atmosphere = ref<boolean>(initial.atmosphere);
   // Copy so the shared DEFAULT_PREFERENCES.filterPresets array is never mutated.
   const filterPresets = ref<FilterPreset[]>(initial.filterPresets ? [...initial.filterPresets] : []);
@@ -137,6 +169,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       defaultVolume: defaultVolume.value,
       defaultQuality: defaultQuality.value,
       defaultSubtitleLang: defaultSubtitleLang.value,
+      captionStyle: captionStyle.value,
       atmosphere: atmosphere.value,
       filterPresets: filterPresets.value,
     };
@@ -180,6 +213,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     defaultVolume.value = d.defaultVolume;
     defaultQuality.value = d.defaultQuality;
     defaultSubtitleLang.value = d.defaultSubtitleLang;
+    captionStyle.value = { ...DEFAULT_CAPTION_STYLE };
     atmosphere.value = d.atmosphere;
     filterPresets.value = [...d.filterPresets];
   }
@@ -195,6 +229,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     defaultVolume,
     defaultQuality,
     defaultSubtitleLang,
+    captionStyle,
     atmosphere,
     filterPresets,
     systemReduced,

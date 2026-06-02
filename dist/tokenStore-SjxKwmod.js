@@ -206,7 +206,25 @@ var z = c({
 	height: "1em"
 };
 function V(e, t) {
-	return d(), i("svg", B, [...t[0] ||= [a("g", {
+	return d(), i("svg", B, [...t[0] ||= [a("path", {
+		fill: "none",
+		stroke: "currentColor",
+		"stroke-linecap": "round",
+		"stroke-linejoin": "round",
+		"stroke-width": "2",
+		d: "M10.5 5H19a2 2 0 0 1 2 2v8.5M17 11h-.5m2.5 8H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2M2 2l20 20M7 11h4m-4 4h2.5"
+	}, null, -1)]]);
+}
+var H = c({
+	name: "lucide-captions-off",
+	render: V
+}), U = {
+	viewBox: "0 0 24 24",
+	width: "1em",
+	height: "1em"
+};
+function W(e, t) {
+	return d(), i("svg", U, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -220,16 +238,16 @@ function V(e, t) {
 		rx: "2"
 	})], -1)]]);
 }
-var H = c({
+var G = c({
 	name: "lucide-picture-in-picture-2",
-	render: V
-}), U = {
+	render: W
+}), K = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function W(e, t) {
-	return d(), i("svg", U, [...t[0] ||= [a("rect", {
+function ce(e, t) {
+	return d(), i("svg", K, [...t[0] ||= [a("rect", {
 		width: "20",
 		height: "12",
 		x: "2",
@@ -242,26 +260,8 @@ function W(e, t) {
 		rx: "2"
 	}, null, -1)]]);
 }
-var G = c({
-	name: "lucide-rectangle-horizontal",
-	render: W
-}), K = {
-	viewBox: "0 0 24 24",
-	width: "1em",
-	height: "1em"
-};
-function ce(e, t) {
-	return d(), i("svg", K, [...t[0] ||= [a("path", {
-		fill: "none",
-		stroke: "currentColor",
-		"stroke-linecap": "round",
-		"stroke-linejoin": "round",
-		"stroke-width": "2",
-		d: "M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"
-	}, null, -1)]]);
-}
 var le = c({
-	name: "lucide-maximize",
+	name: "lucide-rectangle-horizontal",
 	render: ce
 }), ue = {
 	viewBox: "0 0 24 24",
@@ -275,11 +275,11 @@ function de(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3m8 0v-3a2 2 0 0 1 2-2h3"
+		d: "M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"
 	}, null, -1)]]);
 }
 var fe = c({
-	name: "lucide-minimize",
+	name: "lucide-maximize",
 	render: de
 }), pe = {
 	viewBox: "0 0 24 24",
@@ -293,11 +293,11 @@ function me(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M15 3h6v6m0-6l-7 7M3 21l7-7m-1 7H3v-6"
+		d: "M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3m8 0v-3a2 2 0 0 1 2-2h3"
 	}, null, -1)]]);
 }
 var he = c({
-	name: "lucide-maximize-2",
+	name: "lucide-minimize",
 	render: me
 }), ge = {
 	viewBox: "0 0 24 24",
@@ -311,11 +311,11 @@ function _e(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6M2 12a9 9 0 0 1 8 8m-8-4a5 5 0 0 1 4 4m-4 0h.01"
+		d: "M15 3h6v6m0-6l-7 7M3 21l7-7m-1 7H3v-6"
 	}, null, -1)]]);
 }
 var ve = c({
-	name: "lucide-cast",
+	name: "lucide-maximize-2",
 	render: _e
 }), ye = {
 	viewBox: "0 0 24 24",
@@ -323,7 +323,25 @@ var ve = c({
 	height: "1em"
 };
 function be(e, t) {
-	return d(), i("svg", ye, [...t[0] ||= [a("g", {
+	return d(), i("svg", ye, [...t[0] ||= [a("path", {
+		fill: "none",
+		stroke: "currentColor",
+		"stroke-linecap": "round",
+		"stroke-linejoin": "round",
+		"stroke-width": "2",
+		d: "M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6M2 12a9 9 0 0 1 8 8m-8-4a5 5 0 0 1 4 4m-4 0h.01"
+	}, null, -1)]]);
+}
+var xe = c({
+	name: "lucide-cast",
+	render: be
+}), Se = {
+	viewBox: "0 0 24 24",
+	width: "1em",
+	height: "1em"
+};
+function Ce(e, t) {
+	return d(), i("svg", Se, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -335,16 +353,16 @@ function be(e, t) {
 		r: "3"
 	})], -1)]]);
 }
-var xe = c({
+var we = c({
 	name: "lucide-settings",
-	render: be
-}), Se = {
+	render: Ce
+}), Te = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ce(e, t) {
-	return d(), i("svg", Se, [...t[0] ||= [a("path", {
+function Ee(e, t) {
+	return d(), i("svg", Te, [...t[0] ||= [a("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -353,16 +371,16 @@ function Ce(e, t) {
 		d: "m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"
 	}, null, -1)]]);
 }
-var we = c({
+var De = c({
 	name: "lucide-gauge",
-	render: Ce
-}), Te = {
+	render: Ee
+}), Oe = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ee(e, t) {
-	return d(), i("svg", Te, [...t[0] ||= [a("g", {
+function ke(e, t) {
+	return d(), i("svg", Oe, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -376,16 +394,16 @@ function Ee(e, t) {
 		rx: "2"
 	}), a("path", { d: "M7 3v18M3 7.5h4M3 12h18M3 16.5h4M17 3v18m0-13.5h4m-4 9h4" })], -1)]]);
 }
-var De = c({
+var Ae = c({
 	name: "lucide-film",
-	render: Ee
-}), Oe = {
+	render: ke
+}), je = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ke(e, t) {
-	return d(), i("svg", Oe, [...t[0] ||= [a("g", {
+function Me(e, t) {
+	return d(), i("svg", je, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -408,16 +426,16 @@ function ke(e, t) {
 		a("path", { d: "m21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" })
 	], -1)]]);
 }
-var Ae = c({
+var Ne = c({
 	name: "lucide-image",
-	render: ke
-}), je = {
+	render: Me
+}), Pe = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Me(e, t) {
-	return d(), i("svg", je, [...t[0] ||= [a("g", {
+function Fe(e, t) {
+	return d(), i("svg", Pe, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -437,31 +455,8 @@ function Me(e, t) {
 		})
 	], -1)]]);
 }
-var Ne = c({
-	name: "lucide-music",
-	render: Me
-}), Pe = {
-	viewBox: "0 0 24 24",
-	width: "1em",
-	height: "1em"
-};
-function Fe(e, t) {
-	return d(), i("svg", Pe, [...t[0] ||= [a("g", {
-		fill: "none",
-		stroke: "currentColor",
-		"stroke-linecap": "round",
-		"stroke-linejoin": "round",
-		"stroke-width": "2"
-	}, [a("path", { d: "m17 2l-5 5l-5-5" }), a("rect", {
-		width: "20",
-		height: "15",
-		x: "2",
-		y: "7",
-		rx: "2"
-	})], -1)]]);
-}
 var Ie = c({
-	name: "lucide-tv",
+	name: "lucide-music",
 	render: Fe
 }), Le = {
 	viewBox: "0 0 24 24",
@@ -475,14 +470,16 @@ function Re(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2"
-	}, [a("path", { d: "m21 21l-4.34-4.34" }), a("circle", {
-		cx: "11",
-		cy: "11",
-		r: "8"
+	}, [a("path", { d: "m17 2l-5 5l-5-5" }), a("rect", {
+		width: "20",
+		height: "15",
+		x: "2",
+		y: "7",
+		rx: "2"
 	})], -1)]]);
 }
 var ze = c({
-	name: "lucide-search",
+	name: "lucide-tv",
 	render: Re
 }), Be = {
 	viewBox: "0 0 24 24",
@@ -490,7 +487,28 @@ var ze = c({
 	height: "1em"
 };
 function Ve(e, t) {
-	return d(), i("svg", Be, [...t[0] ||= [a("path", {
+	return d(), i("svg", Be, [...t[0] ||= [a("g", {
+		fill: "none",
+		stroke: "currentColor",
+		"stroke-linecap": "round",
+		"stroke-linejoin": "round",
+		"stroke-width": "2"
+	}, [a("path", { d: "m21 21l-4.34-4.34" }), a("circle", {
+		cx: "11",
+		cy: "11",
+		r: "8"
+	})], -1)]]);
+}
+var He = c({
+	name: "lucide-search",
+	render: Ve
+}), Ue = {
+	viewBox: "0 0 24 24",
+	width: "1em",
+	height: "1em"
+};
+function We(e, t) {
+	return d(), i("svg", Ue, [...t[0] ||= [a("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -499,16 +517,16 @@ function Ve(e, t) {
 		d: "M10 5H3m9 14H3M14 3v4m2 10v4m5-9h-9m9 7h-5m5-14h-7m-6 5v4m0-2H3"
 	}, null, -1)]]);
 }
-var He = c({
+var Ge = c({
 	name: "lucide-sliders-horizontal",
-	render: Ve
-}), Ue = {
+	render: We
+}), Ke = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function We(e, t) {
-	return d(), i("svg", Ue, [...t[0] ||= [a("g", {
+function qe(e, t) {
+	return d(), i("svg", Ke, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -526,26 +544,8 @@ function We(e, t) {
 		a("path", { d: "M3 10h18" })
 	], -1)]]);
 }
-var Ge = c({
-	name: "lucide-calendar",
-	render: We
-}), Ke = {
-	viewBox: "0 0 24 24",
-	width: "1em",
-	height: "1em"
-};
-function qe(e, t) {
-	return d(), i("svg", Ke, [...t[0] ||= [a("path", {
-		fill: "none",
-		stroke: "currentColor",
-		"stroke-linecap": "round",
-		"stroke-linejoin": "round",
-		"stroke-width": "2",
-		d: "m21 16l-4 4l-4-4m4 4V4M3 8l4-4l4 4M7 4v16"
-	}, null, -1)]]);
-}
 var Je = c({
-	name: "lucide-arrow-up-down",
+	name: "lucide-calendar",
 	render: qe
 }), Ye = {
 	viewBox: "0 0 24 24",
@@ -559,11 +559,11 @@ function Xe(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"
+		d: "m21 16l-4 4l-4-4m4 4V4M3 8l4-4l4 4M7 4v16"
 	}, null, -1)]]);
 }
 var Ze = c({
-	name: "lucide-star",
+	name: "lucide-arrow-up-down",
 	render: Xe
 }), Qe = {
 	viewBox: "0 0 24 24",
@@ -577,11 +577,11 @@ function $e(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"
+		d: "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"
 	}, null, -1)]]);
 }
 var et = c({
-	name: "lucide-list",
+	name: "lucide-star",
 	render: $e
 }), tt = {
 	viewBox: "0 0 24 24",
@@ -595,11 +595,11 @@ function nt(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M5 12h14m-7-7v14"
+		d: "M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"
 	}, null, -1)]]);
 }
 var rt = c({
-	name: "lucide-plus",
+	name: "lucide-list",
 	render: nt
 }), it = {
 	viewBox: "0 0 24 24",
@@ -607,7 +607,25 @@ var rt = c({
 	height: "1em"
 };
 function at(e, t) {
-	return d(), i("svg", it, [...t[0] ||= [a("g", {
+	return d(), i("svg", it, [...t[0] ||= [a("path", {
+		fill: "none",
+		stroke: "currentColor",
+		"stroke-linecap": "round",
+		"stroke-linejoin": "round",
+		"stroke-width": "2",
+		d: "M5 12h14m-7-7v14"
+	}, null, -1)]]);
+}
+var ot = c({
+	name: "lucide-plus",
+	render: at
+}), st = {
+	viewBox: "0 0 24 24",
+	width: "1em",
+	height: "1em"
+};
+function ct(e, t) {
+	return d(), i("svg", st, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -619,26 +637,8 @@ function at(e, t) {
 		r: "10"
 	}), a("path", { d: "M12 16v-4m0-4h.01" })], -1)]]);
 }
-var ot = c({
-	name: "lucide-info",
-	render: at
-}), st = {
-	viewBox: "0 0 24 24",
-	width: "1em",
-	height: "1em"
-};
-function ct(e, t) {
-	return d(), i("svg", st, [...t[0] ||= [a("path", {
-		fill: "none",
-		stroke: "currentColor",
-		"stroke-linecap": "round",
-		"stroke-linejoin": "round",
-		"stroke-width": "2",
-		d: "M18 6L6 18M6 6l12 12"
-	}, null, -1)]]);
-}
 var lt = c({
-	name: "lucide-x",
+	name: "lucide-info",
 	render: ct
 }), ut = {
 	viewBox: "0 0 24 24",
@@ -652,11 +652,11 @@ function q(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M20 6L9 17l-5-5"
+		d: "M18 6L6 18M6 6l12 12"
 	}, null, -1)]]);
 }
 var dt = c({
-	name: "lucide-check",
+	name: "lucide-x",
 	render: q
 }), ft = {
 	viewBox: "0 0 24 24",
@@ -670,11 +670,11 @@ function pt(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
+		d: "M20 6L9 17l-5-5"
 	}, null, -1)]]);
 }
 var mt = c({
-	name: "lucide-bookmark",
+	name: "lucide-check",
 	render: pt
 }), ht = {
 	viewBox: "0 0 24 24",
@@ -688,11 +688,11 @@ function gt(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M12 7v6m3-3H9m8-7a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
+		d: "M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
 	}, null, -1)]]);
 }
 var _t = c({
-	name: "lucide-bookmark-plus",
+	name: "lucide-bookmark",
 	render: gt
 }), vt = {
 	viewBox: "0 0 24 24",
@@ -706,11 +706,11 @@ function yt(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M2 9.5a5.5 5.5 0 0 1 9.591-3.676a.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"
+		d: "M12 7v6m3-3H9m8-7a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
 	}, null, -1)]]);
 }
 var bt = c({
-	name: "lucide-heart",
+	name: "lucide-bookmark-plus",
 	render: yt
 }), xt = {
 	viewBox: "0 0 24 24",
@@ -718,7 +718,25 @@ var bt = c({
 	height: "1em"
 };
 function St(e, t) {
-	return d(), i("svg", xt, [...t[0] ||= [a("g", {
+	return d(), i("svg", xt, [...t[0] ||= [a("path", {
+		fill: "none",
+		stroke: "currentColor",
+		"stroke-linecap": "round",
+		"stroke-linejoin": "round",
+		"stroke-width": "2",
+		d: "M2 9.5a5.5 5.5 0 0 1 9.591-3.676a.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"
+	}, null, -1)]]);
+}
+var Ct = c({
+	name: "lucide-heart",
+	render: St
+}), wt = {
+	viewBox: "0 0 24 24",
+	width: "1em",
+	height: "1em"
+};
+function Tt(e, t) {
+	return d(), i("svg", wt, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -730,26 +748,8 @@ function St(e, t) {
 		r: "4"
 	})], -1)]]);
 }
-var Ct = c({
-	name: "lucide-user",
-	render: St
-}), wt = {
-	viewBox: "0 0 24 24",
-	width: "1em",
-	height: "1em"
-};
-function Tt(e, t) {
-	return d(), i("svg", wt, [...t[0] ||= [a("path", {
-		fill: "none",
-		stroke: "currentColor",
-		"stroke-linecap": "round",
-		"stroke-linejoin": "round",
-		"stroke-width": "2",
-		d: "m16 17l5-5l-5-5m5 5H9m0 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
-	}, null, -1)]]);
-}
 var Et = c({
-	name: "lucide-log-out",
+	name: "lucide-user",
 	render: Tt
 }), Dt = {
 	viewBox: "0 0 24 24",
@@ -763,11 +763,11 @@ function Ot(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M4 5h16M4 12h16M4 19h16"
+		d: "m16 17l5-5l-5-5m5 5H9m0 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
 	}, null, -1)]]);
 }
 var kt = c({
-	name: "lucide-menu",
+	name: "lucide-log-out",
 	render: Ot
 }), At = {
 	viewBox: "0 0 24 24",
@@ -775,7 +775,25 @@ var kt = c({
 	height: "1em"
 };
 function jt(e, t) {
-	return d(), i("svg", At, [...t[0] ||= [a("g", {
+	return d(), i("svg", At, [...t[0] ||= [a("path", {
+		fill: "none",
+		stroke: "currentColor",
+		"stroke-linecap": "round",
+		"stroke-linejoin": "round",
+		"stroke-width": "2",
+		d: "M4 5h16M4 12h16M4 19h16"
+	}, null, -1)]]);
+}
+var Mt = c({
+	name: "lucide-menu",
+	render: jt
+}), Nt = {
+	viewBox: "0 0 24 24",
+	width: "1em",
+	height: "1em"
+};
+function Pt(e, t) {
+	return d(), i("svg", Nt, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -799,29 +817,8 @@ function jt(e, t) {
 		})
 	], -1)]]);
 }
-var Mt = c({
-	name: "lucide-more-horizontal",
-	render: jt
-}), Nt = {
-	viewBox: "0 0 24 24",
-	width: "1em",
-	height: "1em"
-};
-function Pt(e, t) {
-	return d(), i("svg", Nt, [...t[0] ||= [a("g", {
-		fill: "none",
-		stroke: "currentColor",
-		"stroke-linecap": "round",
-		"stroke-linejoin": "round",
-		"stroke-width": "2"
-	}, [a("path", { d: "M2.062 12.348a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 19.876 0a1 1 0 0 1 0 .696a10.75 10.75 0 0 1-19.876 0" }), a("circle", {
-		cx: "12",
-		cy: "12",
-		r: "3"
-	})], -1)]]);
-}
 var Ft = c({
-	name: "lucide-eye",
+	name: "lucide-more-horizontal",
 	render: Pt
 }), It = {
 	viewBox: "0 0 24 24",
@@ -835,10 +832,14 @@ function Lt(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2"
-	}, [a("path", { d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575a1 1 0 0 1 0 .696a10.8 10.8 0 0 1-1.444 2.49m-6.41-.679a3 3 0 0 1-4.242-4.242" }), a("path", { d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 4.446-5.143M2 2l20 20" })], -1)]]);
+	}, [a("path", { d: "M2.062 12.348a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 19.876 0a1 1 0 0 1 0 .696a10.75 10.75 0 0 1-19.876 0" }), a("circle", {
+		cx: "12",
+		cy: "12",
+		r: "3"
+	})], -1)]]);
 }
 var Rt = c({
-	name: "lucide-eye-off",
+	name: "lucide-eye",
 	render: Lt
 }), zt = {
 	viewBox: "0 0 24 24",
@@ -846,17 +847,16 @@ var Rt = c({
 	height: "1em"
 };
 function Bt(e, t) {
-	return d(), i("svg", zt, [...t[0] ||= [a("path", {
+	return d(), i("svg", zt, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
-		"stroke-width": "2",
-		d: "m12 19l-7-7l7-7m7 7H5"
-	}, null, -1)]]);
+		"stroke-width": "2"
+	}, [a("path", { d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575a1 1 0 0 1 0 .696a10.8 10.8 0 0 1-1.444 2.49m-6.41-.679a3 3 0 0 1-4.242-4.242" }), a("path", { d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 4.446-5.143M2 2l20 20" })], -1)]]);
 }
 var Vt = c({
-	name: "lucide-arrow-left",
+	name: "lucide-eye-off",
 	render: Bt
 }), Ht = {
 	viewBox: "0 0 24 24",
@@ -870,11 +870,11 @@ function Ut(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M5 12h14m-7-7l7 7l-7 7"
+		d: "m12 19l-7-7l7-7m7 7H5"
 	}, null, -1)]]);
 }
 var Wt = c({
-	name: "lucide-arrow-right",
+	name: "lucide-arrow-left",
 	render: Ut
 }), Gt = {
 	viewBox: "0 0 24 24",
@@ -888,11 +888,11 @@ function Kt(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "m5 12l7-7l7 7m-7 7V5"
+		d: "M5 12h14m-7-7l7 7l-7 7"
 	}, null, -1)]]);
 }
 var qt = c({
-	name: "lucide-arrow-up",
+	name: "lucide-arrow-right",
 	render: Kt
 }), Jt = {
 	viewBox: "0 0 24 24",
@@ -906,11 +906,11 @@ function Yt(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M12 5v14m7-7l-7 7l-7-7"
+		d: "m5 12l7-7l7 7m-7 7V5"
 	}, null, -1)]]);
 }
 var Xt = c({
-	name: "lucide-arrow-down",
+	name: "lucide-arrow-up",
 	render: Yt
 }), Zt = {
 	viewBox: "0 0 24 24",
@@ -924,11 +924,11 @@ function Qt(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "m6 9l6 6l6-6"
+		d: "M12 5v14m7-7l-7 7l-7-7"
 	}, null, -1)]]);
 }
 var $t = c({
-	name: "lucide-chevron-down",
+	name: "lucide-arrow-down",
 	render: Qt
 }), en = {
 	viewBox: "0 0 24 24",
@@ -942,11 +942,11 @@ function tn(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "m18 15l-6-6l-6 6"
+		d: "m6 9l6 6l6-6"
 	}, null, -1)]]);
 }
 var nn = c({
-	name: "lucide-chevron-up",
+	name: "lucide-chevron-down",
 	render: tn
 }), rn = {
 	viewBox: "0 0 24 24",
@@ -960,11 +960,11 @@ function an(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "m15 18l-6-6l6-6"
+		d: "m18 15l-6-6l-6 6"
 	}, null, -1)]]);
 }
 var on = c({
-	name: "lucide-chevron-left",
+	name: "lucide-chevron-up",
 	render: an
 }), sn = {
 	viewBox: "0 0 24 24",
@@ -978,11 +978,11 @@ function cn(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "m9 18l6-6l-6-6"
+		d: "m15 18l-6-6l6-6"
 	}, null, -1)]]);
 }
 var ln = c({
-	name: "lucide-chevron-right",
+	name: "lucide-chevron-left",
 	render: cn
 }), un = {
 	viewBox: "0 0 24 24",
@@ -996,11 +996,11 @@ function dn(e, t) {
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
 		"stroke-width": "2",
-		d: "M21 12a9 9 0 1 1-6.219-8.56"
+		d: "m9 18l6-6l-6-6"
 	}, null, -1)]]);
 }
 var fn = c({
-	name: "lucide-loader-circle",
+	name: "lucide-chevron-right",
 	render: dn
 }), pn = {
 	viewBox: "0 0 24 24",
@@ -1008,20 +1008,17 @@ var fn = c({
 	height: "1em"
 };
 function mn(e, t) {
-	return d(), i("svg", pn, [...t[0] ||= [a("g", {
+	return d(), i("svg", pn, [...t[0] ||= [a("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
 		"stroke-linejoin": "round",
-		"stroke-width": "2"
-	}, [a("circle", {
-		cx: "12",
-		cy: "12",
-		r: "10"
-	}), a("path", { d: "M12 8v4m0 4h.01" })], -1)]]);
+		"stroke-width": "2",
+		d: "M21 12a9 9 0 1 1-6.219-8.56"
+	}, null, -1)]]);
 }
 var hn = c({
-	name: "lucide-circle-alert",
+	name: "lucide-loader-circle",
 	render: mn
 }), gn = {
 	viewBox: "0 0 24 24",
@@ -1039,10 +1036,10 @@ function _n(e, t) {
 		cx: "12",
 		cy: "12",
 		r: "10"
-	}), a("path", { d: "m9 12l2 2l4-4" })], -1)]]);
+	}), a("path", { d: "M12 8v4m0 4h.01" })], -1)]]);
 }
 var vn = c({
-	name: "lucide-circle-check",
+	name: "lucide-circle-alert",
 	render: _n
 }), yn = {
 	viewBox: "0 0 24 24",
@@ -1060,10 +1057,10 @@ function bn(e, t) {
 		cx: "12",
 		cy: "12",
 		r: "10"
-	}), a("path", { d: "m15 9l-6 6m0-6l6 6" })], -1)]]);
+	}), a("path", { d: "m9 12l2 2l4-4" })], -1)]]);
 }
 var xn = c({
-	name: "lucide-circle-x",
+	name: "lucide-circle-check",
 	render: bn
 }), Sn = {
 	viewBox: "0 0 24 24",
@@ -1080,11 +1077,11 @@ function Cn(e, t) {
 	}, [a("circle", {
 		cx: "12",
 		cy: "12",
-		r: "4"
-	}), a("path", { d: "M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" })], -1)]]);
+		r: "10"
+	}), a("path", { d: "m15 9l-6 6m0-6l6 6" })], -1)]]);
 }
 var wn = c({
-	name: "lucide-sun",
+	name: "lucide-circle-x",
 	render: Cn
 }), Tn = {
 	viewBox: "0 0 24 24",
@@ -1092,7 +1089,28 @@ var wn = c({
 	height: "1em"
 };
 function En(e, t) {
-	return d(), i("svg", Tn, [...t[0] ||= [a("path", {
+	return d(), i("svg", Tn, [...t[0] ||= [a("g", {
+		fill: "none",
+		stroke: "currentColor",
+		"stroke-linecap": "round",
+		"stroke-linejoin": "round",
+		"stroke-width": "2"
+	}, [a("circle", {
+		cx: "12",
+		cy: "12",
+		r: "4"
+	}), a("path", { d: "M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" })], -1)]]);
+}
+var Dn = c({
+	name: "lucide-sun",
+	render: En
+}), On = {
+	viewBox: "0 0 24 24",
+	width: "1em",
+	height: "1em"
+};
+function kn(e, t) {
+	return d(), i("svg", On, [...t[0] ||= [a("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1101,16 +1119,16 @@ function En(e, t) {
 		d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
 	}, null, -1)]]);
 }
-var Dn = c({
+var An = c({
 	name: "lucide-moon",
-	render: En
-}), On = {
+	render: kn
+}), jn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function kn(e, t) {
-	return d(), i("svg", On, [...t[0] ||= [a("g", {
+function Mn(e, t) {
+	return d(), i("svg", jn, [...t[0] ||= [a("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1124,9 +1142,9 @@ function kn(e, t) {
 		rx: "2"
 	}), a("path", { d: "M8 21h8m-4-4v4" })], -1)]]);
 }
-var An = c({
+var Nn = c({
 	name: "lucide-monitor",
-	render: kn
+	render: Mn
 }), J = /* @__PURE__ */ s({
 	__name: "Icon",
 	props: {
@@ -1147,52 +1165,53 @@ var An = c({
 			"volume-low": N,
 			mute: I,
 			captions: z,
-			pip: H,
-			theater: G,
-			fullscreen: le,
-			"fullscreen-exit": fe,
-			expand: he,
-			cast: ve,
-			settings: xe,
-			speed: we,
-			film: De,
-			image: Ae,
-			music: Ne,
-			tv: Ie,
-			search: ze,
-			filter: He,
-			calendar: Ge,
-			sort: Je,
-			star: Ze,
-			list: et,
-			plus: rt,
-			info: ot,
-			x: lt,
-			check: dt,
-			bookmark: mt,
-			"bookmark-plus": _t,
-			heart: bt,
-			user: Ct,
-			"log-out": Et,
-			menu: kt,
-			more: Mt,
-			eye: Ft,
-			"eye-off": Rt,
-			"arrow-left": Vt,
-			"arrow-right": Wt,
-			"arrow-up": qt,
-			"arrow-down": Xt,
-			"chevron-down": $t,
-			"chevron-up": nn,
-			"chevron-left": on,
-			"chevron-right": ln,
-			spinner: fn,
-			alert: hn,
-			success: vn,
-			error: xn,
-			sun: wn,
-			moon: Dn,
-			monitor: An
+			"captions-off": H,
+			pip: G,
+			theater: le,
+			fullscreen: fe,
+			"fullscreen-exit": he,
+			expand: ve,
+			cast: xe,
+			settings: we,
+			speed: De,
+			film: Ae,
+			image: Ne,
+			music: Ie,
+			tv: ze,
+			search: He,
+			filter: Ge,
+			calendar: Je,
+			sort: Ze,
+			star: et,
+			list: rt,
+			plus: ot,
+			info: lt,
+			x: dt,
+			check: mt,
+			bookmark: _t,
+			"bookmark-plus": bt,
+			heart: Ct,
+			user: Et,
+			"log-out": kt,
+			menu: Mt,
+			more: Ft,
+			eye: Rt,
+			"eye-off": Vt,
+			"arrow-left": Wt,
+			"arrow-right": qt,
+			"arrow-up": Xt,
+			"arrow-down": $t,
+			"chevron-down": nn,
+			"chevron-up": on,
+			"chevron-left": ln,
+			"chevron-right": fn,
+			spinner: hn,
+			alert: vn,
+			success: xn,
+			error: wn,
+			sun: Dn,
+			moon: An,
+			monitor: Nn
 		}, i = e, a = t(() => r[i.name]), o = t(() => i.size === void 0 ? void 0 : typeof i.size == "number" ? `${i.size}px` : i.size);
 		return (t, r) => (d(), n(re(a.value), {
 			class: "phlix-icon",
@@ -1217,7 +1236,7 @@ var An = c({
 		super(e), this.status = t, this.body = n, this.name = "ApiError";
 	}
 };
-function jn(e) {
+function Pn(e) {
 	return e === !0 || e === 1 || e === "1" || e === "true";
 }
 var X = class {
@@ -1301,13 +1320,13 @@ var X = class {
 		let { user: e } = await this.get("/api/v1/auth/me");
 		return {
 			...e,
-			is_admin: jn(e.is_admin)
+			is_admin: Pn(e.is_admin)
 		};
 	}
 	logout(e = !0) {
 		this.tokens.clear(), e && typeof window < "u" && (window.location.href = "/login");
 	}
-}, Mn = new X(), Nn = ie("phlix-toast", () => {
+}, Fn = new X(), In = ie("phlix-toast", () => {
 	let e = ee([]), t = /* @__PURE__ */ new Map(), n = 0;
 	function r(n) {
 		let r = t.get(n);
@@ -1352,11 +1371,11 @@ var X = class {
 			...t
 		})
 	};
-}), Pn = {
+}), Ln = {
 	key: 0,
 	class: "phlix-skel-text",
 	"aria-hidden": "true"
-}, Fn = /*#__PURE__*/ f(/* @__PURE__ */ s({
+}, Rn = /*#__PURE__*/ f(/* @__PURE__ */ s({
 	__name: "Skeleton",
 	props: {
 		variant: { default: "rect" },
@@ -1366,7 +1385,7 @@ var X = class {
 		lines: { default: 1 }
 	},
 	setup(t) {
-		return (n, r) => t.variant === "text" ? (d(), i("div", Pn, [(d(!0), i(e, null, te(t.lines, (e) => (d(), i("span", {
+		return (n, r) => t.variant === "text" ? (d(), i("div", Ln, [(d(!0), i(e, null, te(t.lines, (e) => (d(), i("span", {
 			key: e,
 			class: "phlix-skel phlix-skel--text",
 			style: u({ width: e === t.lines && t.lines > 1 ? "60%" : t.width })
@@ -1381,14 +1400,14 @@ var X = class {
 			})
 		}, null, 6));
 	}
-}), [["__scopeId", "data-v-c34e4066"]]), In = [
+}), [["__scopeId", "data-v-c34e4066"]]), zn = [
 	"type",
 	"disabled",
 	"aria-busy"
-], Ln = {
+], Bn = {
 	key: 0,
 	class: "phlix-btn__spinner"
-}, Rn = { class: "phlix-btn__label" }, zn = /*#__PURE__*/ f(/* @__PURE__ */ s({
+}, Vn = { class: "phlix-btn__label" }, Hn = /*#__PURE__*/ f(/* @__PURE__ */ s({
 	__name: "Button",
 	props: {
 		variant: { default: "solid" },
@@ -1424,21 +1443,21 @@ var X = class {
 			disabled: c.value,
 			"aria-busy": e.loading || void 0
 		}, [
-			e.loading ? (d(), i("span", Ln, [o(J, { name: "spinner" })])) : r("", !0),
+			e.loading ? (d(), i("span", Bn, [o(J, { name: "spinner" })])) : r("", !0),
 			e.leftIcon && !e.loading ? (d(), n(J, {
 				key: 1,
 				name: e.leftIcon,
 				class: "phlix-btn__icon"
 			}, null, 8, ["name"])) : r("", !0),
-			a("span", Rn, [ne(t.$slots, "default", {}, void 0, !0)]),
+			a("span", Vn, [ne(t.$slots, "default", {}, void 0, !0)]),
 			e.rightIcon ? (d(), n(J, {
 				key: 2,
 				name: e.rightIcon,
 				class: "phlix-btn__icon"
 			}, null, 8, ["name"])) : r("", !0)
-		], 10, In));
+		], 10, zn));
 	}
-}), [["__scopeId", "data-v-8cdee95a"]]), Z = "access_token", Q = "refresh_token", $ = "user", Bn = class {
+}), [["__scopeId", "data-v-8cdee95a"]]), Z = "access_token", Q = "refresh_token", $ = "user", Un = class {
 	storage;
 	constructor(e = window.localStorage) {
 		this.storage = e;
@@ -1472,6 +1491,6 @@ var X = class {
 	}
 };
 //#endregion
-export { X as a, J as c, Nn as i, f as l, zn as n, Y as o, Fn as r, Mn as s, Bn as t };
+export { X as a, J as c, In as i, f as l, Hn as n, Y as o, Rn as r, Fn as s, Un as t };
 
-//# sourceMappingURL=tokenStore-DCSgJhfA.js.map
+//# sourceMappingURL=tokenStore-SjxKwmod.js.map

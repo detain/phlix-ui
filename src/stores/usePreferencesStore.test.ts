@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { usePreferencesStore, readStoredPreferences, DEFAULT_PREFERENCES } from './usePreferencesStore';
+import { usePreferencesStore, readStoredPreferences, DEFAULT_PREFERENCES, DEFAULT_CAPTION_STYLE } from './usePreferencesStore';
 
 function mockMatchMedia(reduce: boolean) {
   window.matchMedia = vi.fn().mockImplementation((q: string) => ({
@@ -127,6 +127,46 @@ describe('usePreferencesStore', () => {
       setActivePinia(createPinia());
       const s = usePreferencesStore();
       expect(s.filterPresets[0].name).toBe('X');
+    });
+  });
+
+  describe('caption style (R3.5)', () => {
+    it('defaults to DEFAULT_CAPTION_STYLE', () => {
+      const s = usePreferencesStore();
+      expect(s.captionStyle).toEqual(DEFAULT_CAPTION_STYLE);
+    });
+
+    it('persists caption-style changes to localStorage', async () => {
+      const s = usePreferencesStore();
+      s.captionStyle = { ...s.captionStyle, size: 'xl', textColor: '#ffd400' };
+      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 0));
+      const raw = JSON.parse(localStorage.getItem('phlix.prefs') as string);
+      expect(raw.captionStyle.size).toBe('xl');
+      expect(raw.captionStyle.textColor).toBe('#ffd400');
+    });
+
+    it('merges a stored PARTIAL caption style over the defaults (no dropped keys)', () => {
+      localStorage.setItem('phlix.prefs', JSON.stringify({ captionStyle: { size: 'lg' } }));
+      setActivePinia(createPinia());
+      const s = usePreferencesStore();
+      expect(s.captionStyle.size).toBe('lg'); // stored wins
+      expect(s.captionStyle.textColor).toBe(DEFAULT_CAPTION_STYLE.textColor); // default kept
+      expect(s.captionStyle.background).toBe(DEFAULT_CAPTION_STYLE.background);
+      expect(s.captionStyle.edge).toBe(DEFAULT_CAPTION_STYLE.edge);
+    });
+
+    it('reset() restores the default caption style', () => {
+      const s = usePreferencesStore();
+      s.captionStyle = { ...s.captionStyle, size: 'sm', edge: 'outline' };
+      s.reset();
+      expect(s.captionStyle).toEqual(DEFAULT_CAPTION_STYLE);
+    });
+
+    it('never mutates the shared DEFAULT_CAPTION_STYLE through the store', () => {
+      const s = usePreferencesStore();
+      s.captionStyle.size = 'xl'; // direct mutation of the ref object
+      expect(DEFAULT_CAPTION_STYLE.size).toBe('md'); // shared default untouched
     });
   });
 });
