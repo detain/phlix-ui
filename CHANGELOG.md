@@ -18,6 +18,11 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Remote access (RA.10):** new **`AdminRemoteAccessPage`** (`src/pages/admin/RemoteAccessPage.vue`)
+  — four remote-access sections: Hub enrollment (status + pairing modal: claim-code → poll → complete →
+  unenroll), subdomain claim/release, relay enable/disable/ping, and port-forward status/candidates/toggle.
+  Backed by **`AdminRemoteAccessApi`** (`src/api/admin/remoteAccess.ts`) covering all 16 `/api/v1/admin/*`
+  remote-access endpoints. Exported; wired into the admin route/menu seam.
 - **Admin port — DLNA server (RA.9):** new **`AdminDlnaServerPage`** (`src/pages/admin/DlnaServerPage.vue`)
   — DLNA media-server status (running/stopped/not-configured) with a start/stop toggle. Backed by
   **`AdminDlnaServerApi`** (`src/api/admin/dlnaServer.ts`, `/api/v1/admin/dlna/*`). Exported; wired into the
