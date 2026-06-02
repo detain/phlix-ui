@@ -52,6 +52,13 @@ describe('buildAdminRoutes', () => {
     const routes = buildAdminRoutes('/portal');
     expect(routes.find((r) => r.name === 'admin-webhooks')?.path).toBe('/portal/admin/webhooks');
   });
+
+  it('exposes the services route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const services = routes.find((r) => r.name === 'admin-services');
+    expect(services?.path).toBe('/app/admin/services');
+    expect(typeof services?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -92,5 +99,12 @@ describe('adminMenu', () => {
     const webhooks = group.children?.find((c) => c.id === 'admin-webhooks');
     expect(webhooks?.label).toBe('Webhooks');
     expect(webhooks?.to).toBe('/app/admin/webhooks');
+  });
+
+  it('exposes a services child pointing at the services route', () => {
+    const [group] = adminMenu();
+    const services = group.children?.find((c) => c.id === 'admin-services');
+    expect(services?.label).toBe('Services');
+    expect(services?.to).toBe('/app/admin/services');
   });
 });

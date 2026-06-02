@@ -18,6 +18,11 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Services (RA.5):** new **`AdminServicesPage`** (`src/pages/admin/ServicesPage.vue`) —
+  Trakt.tv + Last.fm connect/disconnect cards (connected state + username, disconnect with confirm/refetch,
+  connect via full-page redirect to the server OAuth/connect URLs). Backed by **`AdminServicesApi`**
+  (`src/api/admin/services.ts`) consolidating the deleted React `TraktApi` + `LastfmApi`
+  (`/api/v1/admin/{trakt,lastfm}/*`). Exported; wired into the admin route/menu seam.
 - **Admin port — Webhooks (RA.4):** new **`AdminWebhooksPage`** (`src/pages/admin/WebhooksPage.vue`) —
   webhook subscription admin: list, create/edit/delete (`Modal`), per-category event selection with
   client-side validation, masked secret with show/hide (omitted from the update body when left blank so
