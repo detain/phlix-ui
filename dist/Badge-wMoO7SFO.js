@@ -1,4 +1,4 @@
-import { c as e, l as t } from "./tokenStore-DCSgJhfA.js";
+import { c as e, l as t } from "./tokenStore-SjxKwmod.js";
 import { createBlock as n, createCommentVNode as r, createElementBlock as i, defineComponent as a, normalizeClass as o, openBlock as s, renderSlot as c } from "vue";
 //#region src/components/ui/Badge.vue?vue&type=script&setup=true&lang.ts
 var l = ["role", "aria-label"], u = /*#__PURE__*/ t(/* @__PURE__ */ a({
@@ -32,4 +32,4 @@ var l = ["role", "aria-label"], u = /*#__PURE__*/ t(/* @__PURE__ */ a({
 //#endregion
 export { u as t };
 
-//# sourceMappingURL=Badge-Aa85GIyq.js.map
+//# sourceMappingURL=Badge-wMoO7SFO.js.map

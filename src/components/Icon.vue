@@ -24,6 +24,7 @@ import IconVolume from '~icons/lucide/volume-2';
 import IconVolumeLow from '~icons/lucide/volume-1';
 import IconVolumeMute from '~icons/lucide/volume-x';
 import IconCaptions from '~icons/lucide/captions';
+import IconCaptionsOff from '~icons/lucide/captions-off';
 import IconPip from '~icons/lucide/picture-in-picture-2';
 import IconTheater from '~icons/lucide/rectangle-horizontal';
 import IconMaximize from '~icons/lucide/maximize';
@@ -91,6 +92,7 @@ const icons = {
   'volume-low': IconVolumeLow,
   mute: IconVolumeMute,
   captions: IconCaptions,
+  'captions-off': IconCaptionsOff,
   pip: IconPip,
   theater: IconTheater,
   fullscreen: IconMaximize,

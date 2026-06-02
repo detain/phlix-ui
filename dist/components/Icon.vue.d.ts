@@ -9,6 +9,7 @@ declare const icons: {
     readonly 'volume-low': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly mute: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly captions: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly 'captions-off': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly pip: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly theater: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly fullscreen: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
