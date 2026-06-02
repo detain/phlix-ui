@@ -11,6 +11,15 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **Rich scrubber (R3.2):** new **`Scrubber.vue`** (`src/components/player/`) — a buffered range behind the
+  played fill, a draggable head, **chapter ticks**, and a hover/drag **scrub preview** (a thumbnail when
+  the host supplies a `thumbnailAt(seconds)` source, else a formatted timestamp bubble). Pointer-events
+  based so mouse + touch drag identically (`touch-action:none`); emits `seek` (absolute seconds) live
+  during a drag plus `scrub-start`/`scrub-end` (the Player suspends chrome auto-hide while scrubbing). The
+  slider owns its keyboard contract (arrows ±step, Home/End) with full `role=slider` ARIA. Thumbnail URLs
+  are quoted+escaped against CSS `url()` injection; the preview bubble is edge-clamped. Exports a
+  `Chapter` interface. Shared **`formatTime`** util extracted (used by both Player and Scrubber). `Player.vue`
+  now renders `<Scrubber>` and passes optional `chapters`/`thumbnailAt` props.
 - **Player shell + chrome (R3.1):** `Player.vue` rebuilt from the legacy emoji-laden player into the redo
   shell, driven by **`usePlayerStore`** and the icon primitives (ports the locked R0
   `player-chrome.html`). Two-way `<video>` ↔ store sync (play/pause/timeupdate/loadedmetadata/progress/
