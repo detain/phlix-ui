@@ -66,6 +66,13 @@ describe('buildAdminRoutes', () => {
     expect(integrations?.path).toBe('/app/admin/integrations');
     expect(typeof integrations?.component).toBe('function');
   });
+
+  it('exposes the backup route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const backup = routes.find((r) => r.name === 'admin-backup');
+    expect(backup?.path).toBe('/app/admin/backup');
+    expect(typeof backup?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -120,5 +127,12 @@ describe('adminMenu', () => {
     const integrations = group.children?.find((c) => c.id === 'admin-integrations');
     expect(integrations?.label).toBe('Integrations');
     expect(integrations?.to).toBe('/app/admin/integrations');
+  });
+
+  it('exposes a backup child pointing at the backup route', () => {
+    const [group] = adminMenu();
+    const backup = group.children?.find((c) => c.id === 'admin-backup');
+    expect(backup?.label).toBe('Backup');
+    expect(backup?.to).toBe('/app/admin/backup');
   });
 });

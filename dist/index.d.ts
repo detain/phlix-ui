@@ -39,6 +39,9 @@ export type { TraktStatus, TraktDisconnectResult, LastfmStatus, LastfmDisconnect
 export { default as AdminIntegrationsPage } from './pages/admin/IntegrationsPage.vue';
 export { AdminIntegrationsApi } from './api/admin/integrations';
 export type { ArrSyncStatus, ArrSyncTriggerResult, ArrSyncEnableResult, AuthProvider, EnableProviderResult, DisableProviderResult, OidcSettings, SaveOidcInput, LdapSettings, SaveLdapInput, LdapTestResult, } from './api/admin/integrations';
+export { default as AdminBackupPage } from './pages/admin/BackupPage.vue';
+export { AdminBackupApi } from './api/admin/backup';
+export type { Backup, CreateBackupInput, CreateBackupResult, UpdateScheduleInput, ScheduleData, UpdateScheduleResult, } from './api/admin/backup';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
