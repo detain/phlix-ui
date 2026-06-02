@@ -1,97 +1,97 @@
-var ye = Object.defineProperty;
-var be = (l, t, s) => t in l ? ye(l, t, { enumerable: !0, configurable: !0, writable: !0, value: s }) : l[t] = s;
-var Q = (l, t, s) => be(l, typeof t != "symbol" ? t + "" : t, s);
-import { openBlock as a, createElementBlock as n, createElementVNode as e, renderSlot as K, defineComponent as E, createBlock as re, withCtx as z, createVNode as N, unref as $, createTextVNode as Y, toDisplayString as d, ref as f, computed as B, createCommentVNode as w, Fragment as L, renderList as I, withDirectives as V, vModelText as Z, normalizeClass as X, inject as ie, onMounted as j, watch as $e, onUnmounted as ke, withModifiers as W, normalizeStyle as ee, createStaticVNode as we, resolveComponent as ve, vModelDynamic as le, vShow as Se, createApp as Ce } from "vue";
-import { defineStore as pe, createPinia as Te } from "pinia";
-import { RouterView as Pe, RouterLink as de, useRoute as xe, useRouter as _e, createRouter as Re, createWebHistory as Ee } from "vue-router";
-const x = (l, t) => {
-  const s = l.__vccOpts || l;
-  for (const [r, p] of t)
-    s[r] = p;
-  return s;
-}, Fe = {}, Le = { class: "app-layout" }, Ie = { class: "app-header" }, Ae = { class: "header-inner" }, Me = { class: "logo" }, Ue = { class: "nav" }, Ne = { class: "app-main" }, Be = { class: "app-footer" };
-function De(l, t) {
-  return a(), n("div", Le, [
-    e("header", Ie, [
-      e("div", Ae, [
-        e("div", Me, [
-          K(l.$slots, "logo", {}, () => [
-            t[0] || (t[0] = e("span", { class: "logo-text" }, "Phlix", -1))
+var we = Object.defineProperty;
+var ye = (o, e, r) => e in o ? we(o, e, { enumerable: !0, configurable: !0, writable: !0, value: r }) : o[e] = r;
+var ee = (o, e, r) => ye(o, typeof e != "symbol" ? e + "" : e, r);
+import { openBlock as n, createElementBlock as s, createElementVNode as t, renderSlot as W, defineComponent as B, createBlock as ne, withCtx as J, createVNode as N, unref as $, createTextVNode as O, toDisplayString as d, ref as m, computed as E, createCommentVNode as x, Fragment as R, renderList as L, withDirectives as H, vModelText as te, normalizeClass as X, inject as ce, onMounted as q, watch as $e, onUnmounted as be, withModifiers as Q, normalizeStyle as Z, createStaticVNode as xe, resolveComponent as he, vModelDynamic as le, vShow as Ce, createApp as Me, markRaw as w, resolveDynamicComponent as Se } from "vue";
+import { defineStore as pe, createPinia as Ie } from "pinia";
+import { RouterView as Be, RouterLink as ve, useRoute as Te, useRouter as me, createRouter as Pe, createWebHistory as je } from "vue-router";
+const T = (o, e) => {
+  const r = o.__vccOpts || o;
+  for (const [i, v] of e)
+    r[i] = v;
+  return r;
+}, Re = {}, Le = { class: "app-layout" }, Ee = { class: "app-header" }, Ae = { class: "header-inner" }, Fe = { class: "logo" }, Ue = { class: "nav" }, Ne = { class: "app-main" }, De = { class: "app-footer" };
+function ze(o, e) {
+  return n(), s("div", Le, [
+    t("header", Ee, [
+      t("div", Ae, [
+        t("div", Fe, [
+          W(o.$slots, "logo", {}, () => [
+            e[0] || (e[0] = t("span", { class: "logo-text" }, "Phlix", -1))
           ], !0)
         ]),
-        e("nav", Ue, [
-          K(l.$slots, "nav", {}, void 0, !0)
+        t("nav", Ue, [
+          W(o.$slots, "nav", {}, void 0, !0)
         ])
       ])
     ]),
-    e("main", Ne, [
-      K(l.$slots, "default", {}, void 0, !0)
+    t("main", Ne, [
+      W(o.$slots, "default", {}, void 0, !0)
     ]),
-    e("footer", Be, [
-      K(l.$slots, "footer", {}, void 0, !0)
+    t("footer", De, [
+      W(o.$slots, "footer", {}, void 0, !0)
     ])
   ]);
 }
-const qe = /* @__PURE__ */ x(Fe, [["render", De], ["__scopeId", "data-v-9f6c6d16"]]), Ge = { class: "main-nav" }, Ve = /* @__PURE__ */ E({
+const Ve = /* @__PURE__ */ T(Re, [["render", ze], ["__scopeId", "data-v-9f6c6d16"]]), He = { class: "main-nav" }, qe = /* @__PURE__ */ B({
   __name: "PhlixApp",
-  setup(l) {
-    return (t, s) => (a(), re(qe, null, {
-      nav: z(() => [
-        e("nav", Ge, [
-          N($(de), {
+  setup(o) {
+    return (e, r) => (n(), ne(Ve, null, {
+      nav: J(() => [
+        t("nav", He, [
+          N($(ve), {
             to: "/app",
             class: "nav-link"
           }, {
-            default: z(() => [...s[0] || (s[0] = [
-              Y("Browse", -1)
+            default: J(() => [...r[0] || (r[0] = [
+              O("Browse", -1)
             ])]),
             _: 1
           }),
-          N($(de), {
+          N($(ve), {
             to: "/app/settings",
             class: "nav-link"
           }, {
-            default: z(() => [...s[1] || (s[1] = [
-              Y("Settings", -1)
+            default: J(() => [...r[1] || (r[1] = [
+              O("Settings", -1)
             ])]),
             _: 1
           })
         ])
       ]),
-      default: z(() => [
-        N($(Pe))
+      default: J(() => [
+        N($(Be))
       ]),
       _: 1
     }));
   }
-}), je = /* @__PURE__ */ x(Ve, [["__scopeId", "data-v-35b5e7c6"]]), Oe = { class: "phlix-placeholder" }, Ye = { class: "placeholder-content" }, He = /* @__PURE__ */ E({
+}), Ge = /* @__PURE__ */ T(qe, [["__scopeId", "data-v-35b5e7c6"]]), Oe = { class: "phlix-placeholder" }, Ye = { class: "placeholder-content" }, Je = /* @__PURE__ */ B({
   __name: "Placeholder",
   props: {
     appName: {}
   },
-  setup(l) {
-    return (t, s) => (a(), n("div", Oe, [
-      e("div", Ye, [
-        s[0] || (s[0] = e("h1", null, "Shared UI loading...", -1)),
-        e("p", null, "Phlix " + d(l.appName) + " is initializing", 1)
+  setup(o) {
+    return (e, r) => (n(), s("div", Oe, [
+      t("div", Ye, [
+        r[0] || (r[0] = t("h1", null, "Shared UI loading...", -1)),
+        t("p", null, "Phlix " + d(o.appName) + " is initializing", 1)
       ])
     ]));
   }
-}), ze = /* @__PURE__ */ x(He, [["__scopeId", "data-v-bf79ac4c"]]);
-class Je extends Error {
-  constructor(t, s, r = null) {
-    super(t), this.status = s, this.body = r, this.name = "ApiError";
+}), Ke = /* @__PURE__ */ T(Je, [["__scopeId", "data-v-bf79ac4c"]]);
+class We extends Error {
+  constructor(e, r, i = null) {
+    super(e), this.status = r, this.body = i, this.name = "ApiError";
   }
 }
-function Ke(l) {
-  return l === !0 || l === 1 || l === "1" || l === "true";
+function Xe(o) {
+  return o === !0 || o === 1 || o === "1" || o === "true";
 }
-class te {
-  constructor(t = {}) {
-    Q(this, "baseUrl");
-    Q(this, "tokens");
-    Q(this, "doFetch");
-    this.baseUrl = t.baseUrl ?? (typeof window < "u" ? window.location.origin : ""), this.tokens = t.tokenStore ?? {
+class se {
+  constructor(e = {}) {
+    ee(this, "baseUrl");
+    ee(this, "tokens");
+    ee(this, "doFetch");
+    this.baseUrl = e.baseUrl ?? (typeof window < "u" ? window.location.origin : ""), this.tokens = e.tokenStore ?? {
       getAccessToken: () => null,
       setAccessToken: () => {
       },
@@ -103,790 +103,790 @@ class te {
       },
       clear: () => {
       }
-    }, this.doFetch = t.fetchImpl ?? globalThis.fetch.bind(globalThis);
+    }, this.doFetch = e.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
-  async request(t, s, r = null) {
-    const p = () => {
-      const h = {
+  async request(e, r, i = null) {
+    const v = () => {
+      const _ = {
         "Content-Type": "application/json"
-      }, m = this.tokens.getAccessToken();
-      m && (h.Authorization = `Bearer ${m}`);
-      const u = { method: t, headers: h, credentials: "same-origin" };
-      return r !== null && (t === "POST" || t === "PUT" || t === "PATCH") && (u.body = JSON.stringify(r)), u;
-    }, g = `${this.baseUrl}${s}`;
-    let y = await this.doFetch(g, p());
-    return y.status === 401 && await this.refreshToken() && (y = await this.doFetch(g, p())), this.handleResponse(y);
+      }, f = this.tokens.getAccessToken();
+      f && (_.Authorization = `Bearer ${f}`);
+      const u = { method: e, headers: _, credentials: "same-origin" };
+      return i !== null && (e === "POST" || e === "PUT" || e === "PATCH") && (u.body = JSON.stringify(i)), u;
+    }, g = `${this.baseUrl}${r}`;
+    let k = await this.doFetch(g, v());
+    return k.status === 401 && await this.refreshToken() && (k = await this.doFetch(g, v())), this.handleResponse(k);
   }
-  async handleResponse(t) {
-    const p = (t.headers.get("content-type") ?? "").includes("application/json") ? await t.json() : await t.text();
-    if (!t.ok) {
-      const g = this.extractError(p);
-      throw new Je(g, t.status, p);
+  async handleResponse(e) {
+    const v = (e.headers.get("content-type") ?? "").includes("application/json") ? await e.json() : await e.text();
+    if (!e.ok) {
+      const g = this.extractError(v);
+      throw new We(g, e.status, v);
     }
-    return p;
+    return v;
   }
-  extractError(t) {
-    if (t && typeof t == "object") {
-      const s = t;
-      if (typeof s.error == "string")
-        return s.error;
-      if (typeof s.message == "string")
-        return s.message;
+  extractError(e) {
+    if (e && typeof e == "object") {
+      const r = e;
+      if (typeof r.error == "string")
+        return r.error;
+      if (typeof r.message == "string")
+        return r.message;
     }
     return "Request failed";
   }
   async refreshToken() {
-    const t = this.tokens.getRefreshToken();
-    if (!t)
+    const e = this.tokens.getRefreshToken();
+    if (!e)
       return !1;
     try {
-      const s = await this.doFetch(`${this.baseUrl}/auth/refresh`, {
+      const r = await this.doFetch(`${this.baseUrl}/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ refresh_token: t })
+        body: JSON.stringify({ refresh_token: e })
       });
-      if (!s.ok)
+      if (!r.ok)
         return !1;
-      const r = await s.json();
-      return typeof r.access_token != "string" ? !1 : (this.tokens.setAccessToken(r.access_token), typeof r.refresh_token == "string" && this.tokens.setRefreshToken(r.refresh_token), !0);
+      const i = await r.json();
+      return typeof i.access_token != "string" ? !1 : (this.tokens.setAccessToken(i.access_token), typeof i.refresh_token == "string" && this.tokens.setRefreshToken(i.refresh_token), !0);
     } catch {
       return !1;
     }
   }
-  async get(t, s) {
-    const r = s ? "?" + new URLSearchParams(s).toString() : "";
-    return this.request("GET", t + r);
+  async get(e, r) {
+    const i = r ? "?" + new URLSearchParams(r).toString() : "";
+    return this.request("GET", e + i);
   }
-  async post(t, s) {
-    return this.request("POST", t, s ?? null);
+  async post(e, r) {
+    return this.request("POST", e, r ?? null);
   }
-  async put(t, s) {
-    return this.request("PUT", t, s ?? null);
+  async put(e, r) {
+    return this.request("PUT", e, r ?? null);
   }
-  async patch(t, s) {
-    return this.request("PATCH", t, s ?? null);
+  async patch(e, r) {
+    return this.request("PATCH", e, r ?? null);
   }
-  async delete(t) {
-    return this.request("DELETE", t);
+  async delete(e) {
+    return this.request("DELETE", e);
   }
   isLoggedIn() {
     return this.tokens.getAccessToken() !== null;
   }
   async getCurrentUser() {
-    const { user: t } = await this.get("/api/v1/auth/me");
-    return { ...t, is_admin: Ke(t.is_admin) };
+    const { user: e } = await this.get("/api/v1/auth/me");
+    return { ...e, is_admin: Xe(e.is_admin) };
   }
-  logout(t = !0) {
-    this.tokens.clear(), t && typeof window < "u" && (window.location.href = "/login");
+  logout(e = !0) {
+    this.tokens.clear(), e && typeof window < "u" && (window.location.href = "/login");
   }
 }
-const U = new te(), fe = pe("media", () => {
-  const l = f([]), t = f(0), s = f(!1), r = f(null), p = f(""), g = f([]), y = f(void 0), h = f(void 0), m = f([]), u = f([]), o = f("name"), c = f("asc"), b = f(24), i = f(0), _ = B(() => i.value + l.value.length < t.value), v = B(() => {
-    const k = {};
-    return p.value && (k.search = p.value), g.value.length && (k.genres = g.value), y.value !== void 0 && (k.yearFrom = y.value), h.value !== void 0 && (k.yearTo = h.value), m.value.length && (k.ratings = m.value), u.value.length && (k.types = u.value), k.sort = o.value, k.order = c.value, k.limit = b.value, k.offset = i.value, k;
-  }), A = B(() => {
-    const k = /* @__PURE__ */ new Set();
-    return l.value.forEach((P) => {
-      var T;
-      return (T = P.genres) == null ? void 0 : T.forEach((H) => k.add(H));
-    }), Array.from(k).sort();
-  }), R = ["G", "PG", "PG-13", "R", "NC-17", "X", "UNRATED"], D = ["movie", "series", "episode", "audio", "image"];
-  function O(k) {
-    var H, G, ue;
-    const P = new URLSearchParams(), T = v.value;
-    return T.search && P.set("search", T.search), (H = T.genres) == null || H.forEach((J) => P.append("genres", J)), T.yearFrom !== void 0 && P.set("yearFrom", String(T.yearFrom)), T.yearTo !== void 0 && P.set("yearTo", String(T.yearTo)), (G = T.ratings) == null || G.forEach((J) => P.append("ratings", J)), (ue = T.types) == null || ue.forEach((J) => P.append("types", J)), T.sort && P.set("sort", T.sort), T.order && P.set("order", T.order), P.set("limit", String(T.limit)), P.set("offset", String(T.offset)), `${k}/api/v1/media?${P.toString()}`;
+const U = new se(), ge = pe("media", () => {
+  const o = m([]), e = m(0), r = m(!1), i = m(null), v = m(""), g = m([]), k = m(void 0), _ = m(void 0), f = m([]), u = m([]), a = m("name"), c = m("asc"), y = m(24), l = m(0), p = E(() => l.value + o.value.length < e.value), h = E(() => {
+    const b = {};
+    return v.value && (b.search = v.value), g.value.length && (b.genres = g.value), k.value !== void 0 && (b.yearFrom = k.value), _.value !== void 0 && (b.yearTo = _.value), f.value.length && (b.ratings = f.value), u.value.length && (b.types = u.value), b.sort = a.value, b.order = c.value, b.limit = y.value, b.offset = l.value, b;
+  }), A = E(() => {
+    const b = /* @__PURE__ */ new Set();
+    return o.value.forEach((I) => {
+      var S;
+      return (S = I.genres) == null ? void 0 : S.forEach((Y) => b.add(Y));
+    }), Array.from(b).sort();
+  }), P = ["G", "PG", "PG-13", "R", "NC-17", "X", "UNRATED"], D = ["movie", "series", "episode", "audio", "image"];
+  function G(b) {
+    var Y, V, de;
+    const I = new URLSearchParams(), S = h.value;
+    return S.search && I.set("search", S.search), (Y = S.genres) == null || Y.forEach((K) => I.append("genres", K)), S.yearFrom !== void 0 && I.set("yearFrom", String(S.yearFrom)), S.yearTo !== void 0 && I.set("yearTo", String(S.yearTo)), (V = S.ratings) == null || V.forEach((K) => I.append("ratings", K)), (de = S.types) == null || de.forEach((K) => I.append("types", K)), S.sort && I.set("sort", S.sort), S.order && I.set("order", S.order), I.set("limit", String(S.limit)), I.set("offset", String(S.offset)), `${b}/api/v1/media?${I.toString()}`;
   }
-  async function q(k, P = !1) {
-    s.value = !0, r.value = null;
+  async function z(b, I = !1) {
+    r.value = !0, i.value = null;
     try {
-      const T = new te({ baseUrl: k }), H = O(k), G = await T.get(H);
-      P ? l.value = [...l.value, ...G.items] : l.value = G.items, t.value = G.total, i.value = (G.offset ?? 0) + G.items.length;
-    } catch (T) {
-      r.value = T instanceof Error ? T.message : "Failed to load media";
+      const S = new se({ baseUrl: b }), Y = G(b), V = await S.get(Y);
+      I ? o.value = [...o.value, ...V.items] : o.value = V.items, e.value = V.total, l.value = (V.offset ?? 0) + V.items.length;
+    } catch (S) {
+      i.value = S instanceof Error ? S.message : "Failed to load media";
     } finally {
-      s.value = !1;
+      r.value = !1;
     }
   }
-  async function F(k) {
-    await q(k, !0);
+  async function j(b) {
+    await z(b, !0);
   }
-  function C() {
-    l.value = [], t.value = 0, i.value = 0, r.value = null;
+  function M() {
+    o.value = [], e.value = 0, l.value = 0, i.value = null;
   }
-  function S(k) {
-    p.value = k, i.value = 0;
+  function C(b) {
+    v.value = b, l.value = 0;
   }
-  function M(k) {
-    g.value = k, i.value = 0;
+  function F(b) {
+    g.value = b, l.value = 0;
   }
-  function se(k, P) {
-    y.value = k, h.value = P, i.value = 0;
+  function oe(b, I) {
+    k.value = b, _.value = I, l.value = 0;
   }
-  function ge(k) {
-    m.value = k, i.value = 0;
+  function fe(b) {
+    f.value = b, l.value = 0;
   }
-  function me(k) {
-    u.value = k, i.value = 0;
+  function _e(b) {
+    u.value = b, l.value = 0;
   }
-  function he(k, P) {
-    o.value = k, P && (c.value = P), i.value = 0;
+  function ke(b, I) {
+    a.value = b, I && (c.value = I), l.value = 0;
   }
   return {
-    items: l,
-    total: t,
-    loading: s,
-    error: r,
-    search: p,
+    items: o,
+    total: e,
+    loading: r,
+    error: i,
+    search: v,
     selectedGenres: g,
-    yearFrom: y,
-    yearTo: h,
-    selectedRatings: m,
+    yearFrom: k,
+    yearTo: _,
+    selectedRatings: f,
     selectedTypes: u,
-    sort: o,
+    sort: a,
     order: c,
-    limit: b,
-    offset: i,
-    hasMore: _,
-    queryParams: v,
+    limit: y,
+    offset: l,
+    hasMore: p,
+    queryParams: h,
     availableGenres: A,
-    availableRatings: R,
+    availableRatings: P,
     availableTypes: D,
-    fetchMedia: q,
-    loadMore: F,
-    reset: C,
-    setSearch: S,
-    setGenres: M,
-    setYearRange: se,
-    setRatings: ge,
-    setTypes: me,
-    setSort: he
+    fetchMedia: z,
+    loadMore: j,
+    reset: M,
+    setSearch: C,
+    setGenres: F,
+    setYearRange: oe,
+    setRatings: fe,
+    setTypes: _e,
+    setSort: ke
   };
-}), Xe = { class: "media-card" }, We = ["href"], Qe = { class: "card-poster" }, Ze = ["src", "alt"], et = {
+}), Qe = { class: "media-card" }, Ze = ["href"], et = { class: "card-poster" }, tt = ["src", "alt"], nt = {
   key: 1,
   class: "poster-placeholder"
-}, tt = { class: "placeholder-type" }, st = { class: "card-overlay" }, at = {
+}, st = { class: "placeholder-type" }, ot = { class: "card-overlay" }, rt = {
   key: 0,
   class: "card-year"
-}, nt = {
+}, at = {
   key: 1,
   class: "card-rating"
-}, ot = { class: "card-info" }, lt = ["title"], rt = {
+}, it = { class: "card-info" }, lt = ["title"], ct = {
   key: 0,
   class: "card-genres"
-}, it = /* @__PURE__ */ E({
+}, ut = /* @__PURE__ */ B({
   __name: "MediaCard",
   props: {
     item: {},
     to: {}
   },
-  setup(l) {
-    return (t, s) => {
-      var r;
-      return a(), n("article", Xe, [
-        e("a", {
-          href: l.to ?? `/app/player/${l.item.id}`,
+  setup(o) {
+    return (e, r) => {
+      var i;
+      return n(), s("article", Qe, [
+        t("a", {
+          href: o.to ?? `/app/player/${o.item.id}`,
           class: "card-link"
         }, [
-          e("div", Qe, [
-            l.item.poster_url ? (a(), n("img", {
+          t("div", et, [
+            o.item.poster_url ? (n(), s("img", {
               key: 0,
-              src: l.item.poster_url,
-              alt: l.item.name,
+              src: o.item.poster_url,
+              alt: o.item.name,
               loading: "lazy"
-            }, null, 8, Ze)) : (a(), n("div", et, [
-              s[0] || (s[0] = e("span", { class: "placeholder-icon" }, "🎬", -1)),
-              e("span", tt, d(l.item.type), 1)
+            }, null, 8, tt)) : (n(), s("div", nt, [
+              r[0] || (r[0] = t("span", { class: "placeholder-icon" }, "🎬", -1)),
+              t("span", st, d(o.item.type), 1)
             ]))
           ]),
-          e("div", st, [
-            l.item.year ? (a(), n("span", at, d(l.item.year), 1)) : w("", !0),
-            l.item.rating ? (a(), n("span", nt, d(l.item.rating), 1)) : w("", !0)
+          t("div", ot, [
+            o.item.year ? (n(), s("span", rt, d(o.item.year), 1)) : x("", !0),
+            o.item.rating ? (n(), s("span", at, d(o.item.rating), 1)) : x("", !0)
           ]),
-          e("div", ot, [
-            e("h3", {
+          t("div", it, [
+            t("h3", {
               class: "card-title",
-              title: l.item.name
-            }, d(l.item.name), 9, lt),
-            (r = l.item.genres) != null && r.length ? (a(), n("p", rt, d(l.item.genres.slice(0, 2).join(", ")), 1)) : w("", !0)
+              title: o.item.name
+            }, d(o.item.name), 9, lt),
+            (i = o.item.genres) != null && i.length ? (n(), s("p", ct, d(o.item.genres.slice(0, 2).join(", ")), 1)) : x("", !0)
           ])
-        ], 8, We)
+        ], 8, Ze)
       ]);
     };
   }
-}), ct = /* @__PURE__ */ x(it, [["__scopeId", "data-v-e60c8481"]]), ut = { class: "media-grid-container" }, dt = {
+}), dt = /* @__PURE__ */ T(ut, [["__scopeId", "data-v-e60c8481"]]), vt = { class: "media-grid-container" }, ht = {
   key: 0,
   class: "media-grid-skeleton"
-}, vt = {
+}, pt = {
   key: 1,
   class: "media-grid-empty"
-}, pt = {
+}, mt = {
   key: 2,
   class: "media-grid"
-}, _t = /* @__PURE__ */ E({
+}, gt = /* @__PURE__ */ B({
   __name: "MediaGrid",
   props: {
     items: {},
     loading: { type: Boolean }
   },
-  setup(l) {
-    return (t, s) => (a(), n("div", ut, [
-      l.loading ? (a(), n("div", dt, [
-        (a(), n(L, null, I(12, (r) => e("div", {
-          key: r,
+  setup(o) {
+    return (e, r) => (n(), s("div", vt, [
+      o.loading ? (n(), s("div", ht, [
+        (n(), s(R, null, L(12, (i) => t("div", {
+          key: i,
           class: "skeleton-card"
-        }, [...s[0] || (s[0] = [
-          e("div", { class: "skeleton-poster" }, null, -1),
-          e("div", { class: "skeleton-title" }, null, -1)
+        }, [...r[0] || (r[0] = [
+          t("div", { class: "skeleton-poster" }, null, -1),
+          t("div", { class: "skeleton-title" }, null, -1)
         ])])), 64))
-      ])) : l.items.length === 0 ? (a(), n("div", vt, [...s[1] || (s[1] = [
-        e("p", null, "No media found.", -1),
-        e("p", { class: "empty-hint" }, "Try adjusting your filters.", -1)
-      ])])) : (a(), n("div", pt, [
-        (a(!0), n(L, null, I(l.items, (r) => (a(), re(ct, {
-          key: r.id,
-          item: r
+      ])) : o.items.length === 0 ? (n(), s("div", pt, [...r[1] || (r[1] = [
+        t("p", null, "No media found.", -1),
+        t("p", { class: "empty-hint" }, "Try adjusting your filters.", -1)
+      ])])) : (n(), s("div", mt, [
+        (n(!0), s(R, null, L(o.items, (i) => (n(), ne(dt, {
+          key: i.id,
+          item: i
         }, null, 8, ["item"]))), 128))
       ]))
     ]));
   }
-}), ft = /* @__PURE__ */ x(_t, [["__scopeId", "data-v-b7e87216"]]), gt = { class: "filter-bar" }, mt = { class: "filter-search" }, ht = { class: "filter-row" }, yt = { class: "filter-group" }, bt = ["value"], $t = ["value"], kt = ["value"], wt = { class: "filter-group" }, St = ["value"], Ct = ["value"], Tt = ["value"], Pt = ["value"], xt = { class: "filter-section" }, Rt = { class: "filter-chips" }, Et = ["onClick"], Ft = { class: "filter-section" }, Lt = { class: "filter-chips" }, It = ["onClick"], At = { class: "filter-section" }, Mt = { class: "filter-chips" }, Ut = ["onClick"], Nt = { class: "filter-actions" }, Bt = { class: "result-count" }, Dt = /* @__PURE__ */ E({
+}), ft = /* @__PURE__ */ T(gt, [["__scopeId", "data-v-b7e87216"]]), _t = { class: "filter-bar" }, kt = { class: "filter-search" }, wt = { class: "filter-row" }, yt = { class: "filter-group" }, $t = ["value"], bt = ["value"], xt = ["value"], Ct = { class: "filter-group" }, Mt = ["value"], St = ["value"], It = ["value"], Bt = ["value"], Tt = { class: "filter-section" }, Pt = { class: "filter-chips" }, jt = ["onClick"], Rt = { class: "filter-section" }, Lt = { class: "filter-chips" }, Et = ["onClick"], At = { class: "filter-section" }, Ft = { class: "filter-chips" }, Ut = ["onClick"], Nt = { class: "filter-actions" }, Dt = { class: "result-count" }, zt = /* @__PURE__ */ B({
   __name: "FilterBar",
-  setup(l) {
-    const t = fe(), s = f(t.search), r = [
+  setup(o) {
+    const e = ge(), r = m(e.search), i = [
       { value: "name", label: "Name" },
       { value: "year", label: "Year" },
       { value: "rating", label: "Rating" },
       { value: "date_added", label: "Date Added" },
       { value: "runtime", label: "Runtime" }
     ];
-    function p() {
-      t.setSearch(s.value);
+    function v() {
+      e.setSearch(r.value);
     }
-    function g(i) {
-      const _ = t.selectedGenres;
-      _.includes(i) ? t.setGenres(_.filter((v) => v !== i)) : t.setGenres([..._, i]);
+    function g(l) {
+      const p = e.selectedGenres;
+      p.includes(l) ? e.setGenres(p.filter((h) => h !== l)) : e.setGenres([...p, l]);
     }
-    function y(i) {
-      const _ = t.selectedRatings;
-      _.includes(i) ? t.setRatings(_.filter((v) => v !== i)) : t.setRatings([..._, i]);
+    function k(l) {
+      const p = e.selectedRatings;
+      p.includes(l) ? e.setRatings(p.filter((h) => h !== l)) : e.setRatings([...p, l]);
     }
-    function h(i) {
-      const _ = t.selectedTypes;
-      _.includes(i) ? t.setTypes(_.filter((v) => v !== i)) : t.setTypes([..._, i]);
+    function _(l) {
+      const p = e.selectedTypes;
+      p.includes(l) ? e.setTypes(p.filter((h) => h !== l)) : e.setTypes([...p, l]);
     }
-    function m(i) {
-      const _ = i.target;
-      t.setSort(_.value);
+    function f(l) {
+      const p = l.target;
+      e.setSort(p.value);
     }
-    function u(i) {
-      const _ = i.target;
-      t.order = _.value;
+    function u(l) {
+      const p = l.target;
+      e.order = p.value;
     }
-    const o = (/* @__PURE__ */ new Date()).getFullYear(), c = B(() => {
-      const i = [];
-      for (let _ = o; _ >= 1900; _--)
-        i.push(_);
-      return i;
+    const a = (/* @__PURE__ */ new Date()).getFullYear(), c = E(() => {
+      const l = [];
+      for (let p = a; p >= 1900; p--)
+        l.push(p);
+      return l;
     });
-    function b() {
-      s.value = "", t.search = "", t.setGenres([]), t.setYearRange(void 0, void 0), t.setRatings([]), t.setTypes([]), t.setSort("name");
+    function y() {
+      r.value = "", e.search = "", e.setGenres([]), e.setYearRange(void 0, void 0), e.setRatings([]), e.setTypes([]), e.setSort("name");
     }
-    return (i, _) => (a(), n("div", gt, [
-      e("div", mt, [
-        V(e("input", {
-          "onUpdate:modelValue": _[0] || (_[0] = (v) => s.value = v),
+    return (l, p) => (n(), s("div", _t, [
+      t("div", kt, [
+        H(t("input", {
+          "onUpdate:modelValue": p[0] || (p[0] = (h) => r.value = h),
           type: "search",
           placeholder: "Search media...",
           class: "search-input",
-          onInput: p
+          onInput: v
         }, null, 544), [
-          [Z, s.value]
+          [te, r.value]
         ])
       ]),
-      e("div", ht, [
-        e("div", yt, [
-          _[4] || (_[4] = e("label", { class: "filter-label" }, "Sort", -1)),
-          e("select", {
+      t("div", wt, [
+        t("div", yt, [
+          p[4] || (p[4] = t("label", { class: "filter-label" }, "Sort", -1)),
+          t("select", {
             class: "filter-select",
-            value: $(t).sort,
-            onChange: m
+            value: $(e).sort,
+            onChange: f
           }, [
-            (a(), n(L, null, I(r, (v) => e("option", {
-              key: v.value,
-              value: v.value
-            }, d(v.label), 9, $t)), 64))
-          ], 40, bt),
-          e("select", {
+            (n(), s(R, null, L(i, (h) => t("option", {
+              key: h.value,
+              value: h.value
+            }, d(h.label), 9, bt)), 64))
+          ], 40, $t),
+          t("select", {
             class: "filter-select order-select",
-            value: $(t).order,
+            value: $(e).order,
             onChange: u
-          }, [..._[3] || (_[3] = [
-            e("option", { value: "asc" }, "↑", -1),
-            e("option", { value: "desc" }, "↓", -1)
-          ])], 40, kt)
+          }, [...p[3] || (p[3] = [
+            t("option", { value: "asc" }, "↑", -1),
+            t("option", { value: "desc" }, "↓", -1)
+          ])], 40, xt)
         ]),
-        e("div", wt, [
-          _[7] || (_[7] = e("label", { class: "filter-label" }, "Year", -1)),
-          e("select", {
+        t("div", Ct, [
+          p[7] || (p[7] = t("label", { class: "filter-label" }, "Year", -1)),
+          t("select", {
             class: "filter-select",
-            value: $(t).yearFrom ?? "",
-            onChange: _[1] || (_[1] = (v) => $(t).setYearRange(
-              v.target.value ? Number(v.target.value) : void 0,
-              $(t).yearTo
+            value: $(e).yearFrom ?? "",
+            onChange: p[1] || (p[1] = (h) => $(e).setYearRange(
+              h.target.value ? Number(h.target.value) : void 0,
+              $(e).yearTo
             ))
           }, [
-            _[5] || (_[5] = e("option", { value: "" }, "From", -1)),
-            (a(!0), n(L, null, I(c.value.slice(0, 50), (v) => (a(), n("option", {
-              key: v,
-              value: v
-            }, d(v), 9, Ct))), 128))
-          ], 40, St),
-          e("select", {
+            p[5] || (p[5] = t("option", { value: "" }, "From", -1)),
+            (n(!0), s(R, null, L(c.value.slice(0, 50), (h) => (n(), s("option", {
+              key: h,
+              value: h
+            }, d(h), 9, St))), 128))
+          ], 40, Mt),
+          t("select", {
             class: "filter-select",
-            value: $(t).yearTo ?? "",
-            onChange: _[2] || (_[2] = (v) => $(t).setYearRange(
-              $(t).yearFrom,
-              v.target.value ? Number(v.target.value) : void 0
+            value: $(e).yearTo ?? "",
+            onChange: p[2] || (p[2] = (h) => $(e).setYearRange(
+              $(e).yearFrom,
+              h.target.value ? Number(h.target.value) : void 0
             ))
           }, [
-            _[6] || (_[6] = e("option", { value: "" }, "To", -1)),
-            (a(!0), n(L, null, I(c.value.slice(0, 50), (v) => (a(), n("option", {
-              key: v,
-              value: v
-            }, d(v), 9, Pt))), 128))
-          ], 40, Tt)
+            p[6] || (p[6] = t("option", { value: "" }, "To", -1)),
+            (n(!0), s(R, null, L(c.value.slice(0, 50), (h) => (n(), s("option", {
+              key: h,
+              value: h
+            }, d(h), 9, Bt))), 128))
+          ], 40, It)
         ])
       ]),
-      e("div", xt, [
-        _[8] || (_[8] = e("span", { class: "filter-label" }, "Genres", -1)),
-        e("div", Rt, [
-          (a(!0), n(L, null, I($(t).availableGenres, (v) => (a(), n("button", {
-            key: v,
-            class: X(["chip", { active: $(t).selectedGenres.includes(v) }]),
-            onClick: (A) => g(v)
-          }, d(v), 11, Et))), 128))
+      t("div", Tt, [
+        p[8] || (p[8] = t("span", { class: "filter-label" }, "Genres", -1)),
+        t("div", Pt, [
+          (n(!0), s(R, null, L($(e).availableGenres, (h) => (n(), s("button", {
+            key: h,
+            class: X(["chip", { active: $(e).selectedGenres.includes(h) }]),
+            onClick: (A) => g(h)
+          }, d(h), 11, jt))), 128))
         ])
       ]),
-      e("div", Ft, [
-        _[9] || (_[9] = e("span", { class: "filter-label" }, "Rating", -1)),
-        e("div", Lt, [
-          (a(!0), n(L, null, I($(t).availableRatings, (v) => (a(), n("button", {
-            key: v,
-            class: X(["chip", { active: $(t).selectedRatings.includes(v) }]),
-            onClick: (A) => y(v)
-          }, d(v), 11, It))), 128))
+      t("div", Rt, [
+        p[9] || (p[9] = t("span", { class: "filter-label" }, "Rating", -1)),
+        t("div", Lt, [
+          (n(!0), s(R, null, L($(e).availableRatings, (h) => (n(), s("button", {
+            key: h,
+            class: X(["chip", { active: $(e).selectedRatings.includes(h) }]),
+            onClick: (A) => k(h)
+          }, d(h), 11, Et))), 128))
         ])
       ]),
-      e("div", At, [
-        _[10] || (_[10] = e("span", { class: "filter-label" }, "Type", -1)),
-        e("div", Mt, [
-          (a(!0), n(L, null, I($(t).availableTypes, (v) => (a(), n("button", {
-            key: v,
-            class: X(["chip", { active: $(t).selectedTypes.includes(v) }]),
-            onClick: (A) => h(v)
-          }, d(v), 11, Ut))), 128))
+      t("div", At, [
+        p[10] || (p[10] = t("span", { class: "filter-label" }, "Type", -1)),
+        t("div", Ft, [
+          (n(!0), s(R, null, L($(e).availableTypes, (h) => (n(), s("button", {
+            key: h,
+            class: X(["chip", { active: $(e).selectedTypes.includes(h) }]),
+            onClick: (A) => _(h)
+          }, d(h), 11, Ut))), 128))
         ])
       ]),
-      e("div", Nt, [
-        e("button", {
+      t("div", Nt, [
+        t("button", {
           class: "clear-btn",
-          onClick: b
+          onClick: y
         }, "Clear filters"),
-        e("span", Bt, d($(t).total) + " result" + d($(t).total !== 1 ? "s" : ""), 1)
+        t("span", Dt, d($(e).total) + " result" + d($(e).total !== 1 ? "s" : ""), 1)
       ])
     ]));
   }
-}), qt = /* @__PURE__ */ x(Dt, [["__scopeId", "data-v-7089ec0b"]]), Gt = { class: "browse-page" }, Vt = { class: "browse-header" }, jt = { class: "browse-toolbar-extra" }, Ot = {
+}), Vt = /* @__PURE__ */ T(zt, [["__scopeId", "data-v-7089ec0b"]]), Ht = { class: "browse-page" }, qt = { class: "browse-header" }, Gt = { class: "browse-toolbar-extra" }, Ot = {
   key: 0,
   class: "browse-error"
 }, Yt = {
   key: 1,
   class: "load-more"
-}, Ht = {
+}, Jt = {
   key: 2,
   class: "loading-more"
-}, zt = /* @__PURE__ */ E({
+}, Kt = /* @__PURE__ */ B({
   __name: "BrowsePage",
-  setup(l) {
-    const t = ie("apiBase") ?? B(() => ""), s = fe();
-    function r() {
-      s.reset(), s.fetchMedia(t.value);
+  setup(o) {
+    const e = ce("apiBase") ?? E(() => ""), r = ge();
+    function i() {
+      r.reset(), r.fetchMedia(e.value);
     }
-    j(r), $e(t, r);
-    function p() {
-      s.reset(), s.fetchMedia(t.value);
+    q(i), $e(e, i);
+    function v() {
+      r.reset(), r.fetchMedia(e.value);
     }
     function g() {
-      s.loadMore(t.value);
+      r.loadMore(e.value);
     }
-    return (y, h) => (a(), n("div", Gt, [
-      e("div", Vt, [
-        h[0] || (h[0] = e("h1", { class: "browse-title" }, "Browse Media", -1)),
-        e("div", jt, [
-          K(y.$slots, "toolbar-extra", {}, void 0, !0)
+    return (k, _) => (n(), s("div", Ht, [
+      t("div", qt, [
+        _[0] || (_[0] = t("h1", { class: "browse-title" }, "Browse Media", -1)),
+        t("div", Gt, [
+          W(k.$slots, "toolbar-extra", {}, void 0, !0)
         ])
       ]),
-      N(qt, { onChange: p }),
-      $(s).error ? (a(), n("div", Ot, [
-        e("p", null, d($(s).error), 1),
-        e("button", {
+      N(Vt, { onChange: v }),
+      $(r).error ? (n(), s("div", Ot, [
+        t("p", null, d($(r).error), 1),
+        t("button", {
           class: "retry-btn",
-          onClick: r
+          onClick: i
         }, "Retry")
-      ])) : w("", !0),
+      ])) : x("", !0),
       N(ft, {
-        items: $(s).items,
-        loading: $(s).loading && $(s).items.length === 0
+        items: $(r).items,
+        loading: $(r).loading && $(r).items.length === 0
       }, null, 8, ["items", "loading"]),
-      $(s).hasMore && !$(s).loading ? (a(), n("div", Yt, [
-        e("button", {
+      $(r).hasMore && !$(r).loading ? (n(), s("div", Yt, [
+        t("button", {
           class: "load-more-btn",
           onClick: g
         }, "Load more")
-      ])) : w("", !0),
-      $(s).loading && $(s).items.length > 0 ? (a(), n("div", Ht, " Loading... ")) : w("", !0)
+      ])) : x("", !0),
+      $(r).loading && $(r).items.length > 0 ? (n(), s("div", Jt, " Loading... ")) : x("", !0)
     ]));
   }
-}), Jt = /* @__PURE__ */ x(zt, [["__scopeId", "data-v-c192afa6"]]), Kt = ["src", "poster"], Xt = { class: "controls-top" }, Wt = { class: "media-title" }, Qt = {
+}), Wt = /* @__PURE__ */ T(Kt, [["__scopeId", "data-v-c192afa6"]]), Xt = ["src", "poster"], Qt = { class: "controls-top" }, Zt = { class: "media-title" }, en = {
   key: 0,
   class: "media-year"
-}, Zt = { class: "controls-center" }, es = { class: "controls-bottom" }, ts = { class: "progress-track" }, ss = { class: "controls-row" }, as = { class: "time-display" }, ns = { class: "volume-control" }, os = ["value"], ls = { class: "speed-control" }, rs = ["value"], is = { class: "time-display" }, cs = /* @__PURE__ */ E({
+}, tn = { class: "controls-center" }, nn = { class: "controls-bottom" }, sn = { class: "progress-track" }, on = { class: "controls-row" }, rn = { class: "time-display" }, an = { class: "volume-control" }, ln = ["value"], cn = { class: "speed-control" }, un = ["value"], dn = { class: "time-display" }, vn = /* @__PURE__ */ B({
   __name: "Player",
   props: {
     media: {},
     streamUrl: {}
   },
-  setup(l) {
-    const t = f(null), s = f(!1), r = f(0), p = f(0), g = f(1), y = f(!1), h = f(1), m = f(!1), u = f(!0);
-    let o = null;
-    const c = B(
-      () => p.value > 0 ? r.value / p.value * 100 : 0
+  setup(o) {
+    const e = m(null), r = m(!1), i = m(0), v = m(0), g = m(1), k = m(!1), _ = m(1), f = m(!1), u = m(!0);
+    let a = null;
+    const c = E(
+      () => v.value > 0 ? i.value / v.value * 100 : 0
     );
-    function b(C) {
-      if (!isFinite(C) || isNaN(C)) return "0:00";
-      const S = Math.floor(C / 60), M = Math.floor(C % 60);
-      return `${S}:${M.toString().padStart(2, "0")}`;
+    function y(M) {
+      if (!isFinite(M) || isNaN(M)) return "0:00";
+      const C = Math.floor(M / 60), F = Math.floor(M % 60);
+      return `${C}:${F.toString().padStart(2, "0")}`;
     }
-    function i() {
-      t.value && (s.value ? t.value.pause() : t.value.play());
+    function l() {
+      e.value && (r.value ? e.value.pause() : e.value.play());
     }
-    function _() {
-      t.value && (r.value = t.value.currentTime);
+    function p() {
+      e.value && (i.value = e.value.currentTime);
     }
-    function v() {
-      t.value && (p.value = t.value.duration);
+    function h() {
+      e.value && (v.value = e.value.duration);
     }
-    function A(C) {
-      const M = C.currentTarget.getBoundingClientRect(), se = (C.clientX - M.left) / M.width;
-      t.value && (t.value.currentTime = se * p.value);
+    function A(M) {
+      const F = M.currentTarget.getBoundingClientRect(), oe = (M.clientX - F.left) / F.width;
+      e.value && (e.value.currentTime = oe * v.value);
     }
-    function R(C) {
-      const S = parseFloat(C.target.value);
-      g.value = S, t.value && (t.value.volume = S), y.value = S === 0;
+    function P(M) {
+      const C = parseFloat(M.target.value);
+      g.value = C, e.value && (e.value.volume = C), k.value = C === 0;
     }
     function D() {
-      y.value = !y.value, t.value && (t.value.muted = y.value);
+      k.value = !k.value, e.value && (e.value.muted = k.value);
     }
-    function O(C) {
-      h.value = C, t.value && (t.value.playbackRate = C);
+    function G(M) {
+      _.value = M, e.value && (e.value.playbackRate = M);
     }
-    function q() {
-      var S;
-      const C = (S = t.value) == null ? void 0 : S.closest(".player-container");
-      C && (document.fullscreenElement ? (document.exitFullscreen(), m.value = !1) : (C.requestFullscreen(), m.value = !0));
+    function z() {
+      var C;
+      const M = (C = e.value) == null ? void 0 : C.closest(".player-container");
+      M && (document.fullscreenElement ? (document.exitFullscreen(), f.value = !1) : (M.requestFullscreen(), f.value = !0));
     }
-    function F() {
-      u.value = !0, o && clearTimeout(o), o = setTimeout(() => {
-        s.value && (u.value = !1);
+    function j() {
+      u.value = !0, a && clearTimeout(a), a = setTimeout(() => {
+        r.value && (u.value = !1);
       }, 3e3);
     }
-    return ke(() => {
-      o && clearTimeout(o);
-    }), (C, S) => (a(), n("div", {
-      class: X(["player-container", { "controls-hidden": !u.value && s.value }]),
-      onMousemove: F,
-      onClick: i
+    return be(() => {
+      a && clearTimeout(a);
+    }), (M, C) => (n(), s("div", {
+      class: X(["player-container", { "controls-hidden": !u.value && r.value }]),
+      onMousemove: j,
+      onClick: l
     }, [
-      S[6] || (S[6] = e("div", { class: "player-overlay" }, null, -1)),
-      e("video", {
+      C[6] || (C[6] = t("div", { class: "player-overlay" }, null, -1)),
+      t("video", {
         ref_key: "videoRef",
-        ref: t,
+        ref: e,
         class: "player-video",
-        src: l.streamUrl,
-        poster: l.media.poster_url ?? void 0,
+        src: o.streamUrl,
+        poster: o.media.poster_url ?? void 0,
         preload: "metadata",
-        onPlay: S[0] || (S[0] = (M) => s.value = !0),
-        onPause: S[1] || (S[1] = (M) => s.value = !1),
-        onTimeupdate: _,
-        onLoadedmetadata: v,
-        onClick: W(i, ["stop"])
-      }, null, 40, Kt),
-      e("div", {
+        onPlay: C[0] || (C[0] = (F) => r.value = !0),
+        onPause: C[1] || (C[1] = (F) => r.value = !1),
+        onTimeupdate: p,
+        onLoadedmetadata: h,
+        onClick: Q(l, ["stop"])
+      }, null, 40, Xt),
+      t("div", {
         class: "player-controls",
-        onClick: S[4] || (S[4] = W(() => {
+        onClick: C[4] || (C[4] = Q(() => {
         }, ["stop"]))
       }, [
-        e("div", Xt, [
-          e("button", {
+        t("div", Qt, [
+          t("button", {
             class: "ctrl-btn back-btn",
-            onClick: S[2] || (S[2] = (M) => C.$router.back())
+            onClick: C[2] || (C[2] = (F) => M.$router.back())
           }, " ← Back "),
-          e("span", Wt, d(l.media.name), 1),
-          l.media.year ? (a(), n("span", Qt, d(l.media.year), 1)) : w("", !0)
+          t("span", Zt, d(o.media.name), 1),
+          o.media.year ? (n(), s("span", en, d(o.media.year), 1)) : x("", !0)
         ]),
-        e("div", Zt, [
-          e("button", {
+        t("div", tn, [
+          t("button", {
             class: "play-btn",
-            onClick: i
-          }, d(s.value ? "❚❚" : "▶"), 1)
+            onClick: l
+          }, d(r.value ? "❚❚" : "▶"), 1)
         ]),
-        e("div", es, [
-          e("div", {
+        t("div", nn, [
+          t("div", {
             class: "progress-bar",
             onClick: A
           }, [
-            e("div", ts, [
-              e("div", {
+            t("div", sn, [
+              t("div", {
                 class: "progress-fill",
-                style: ee({ width: c.value + "%" })
+                style: Z({ width: c.value + "%" })
               }, null, 4)
             ])
           ]),
-          e("div", ss, [
-            e("span", as, d(b(r.value)), 1),
-            e("div", ns, [
-              e("button", {
+          t("div", on, [
+            t("span", rn, d(y(i.value)), 1),
+            t("div", an, [
+              t("button", {
                 class: "ctrl-btn",
                 onClick: D
-              }, d(y.value || g.value === 0 ? "🔇" : "🔊"), 1),
-              e("input", {
+              }, d(k.value || g.value === 0 ? "🔇" : "🔊"), 1),
+              t("input", {
                 type: "range",
                 min: "0",
                 max: "1",
                 step: "0.05",
-                value: y.value ? 0 : g.value,
+                value: k.value ? 0 : g.value,
                 class: "volume-slider",
-                onInput: R
-              }, null, 40, os)
+                onInput: P
+              }, null, 40, ln)
             ]),
-            e("div", ls, [
-              e("select", {
+            t("div", cn, [
+              t("select", {
                 class: "speed-select",
-                value: h.value,
-                onChange: S[3] || (S[3] = (M) => O(Number(M.target.value)))
-              }, [...S[5] || (S[5] = [
-                we('<option value="0.5" data-v-7a51063f>0.5×</option><option value="0.75" data-v-7a51063f>0.75×</option><option value="1" data-v-7a51063f>1×</option><option value="1.25" data-v-7a51063f>1.25×</option><option value="1.5" data-v-7a51063f>1.5×</option><option value="2" data-v-7a51063f>2×</option>', 6)
-              ])], 40, rs)
+                value: _.value,
+                onChange: C[3] || (C[3] = (F) => G(Number(F.target.value)))
+              }, [...C[5] || (C[5] = [
+                xe('<option value="0.5" data-v-7a51063f>0.5×</option><option value="0.75" data-v-7a51063f>0.75×</option><option value="1" data-v-7a51063f>1×</option><option value="1.25" data-v-7a51063f>1.25×</option><option value="1.5" data-v-7a51063f>1.5×</option><option value="2" data-v-7a51063f>2×</option>', 6)
+              ])], 40, un)
             ]),
-            e("span", is, d(b(p.value)), 1),
-            e("button", {
+            t("span", dn, d(y(v.value)), 1),
+            t("button", {
               class: "ctrl-btn",
-              onClick: q
-            }, d(m.value ? "⤓" : "⤢"), 1)
+              onClick: z
+            }, d(f.value ? "⤓" : "⤢"), 1)
           ])
         ])
       ])
     ], 34));
   }
-}), us = /* @__PURE__ */ x(cs, [["__scopeId", "data-v-7a51063f"]]), ds = { class: "player-page" }, vs = {
+}), hn = /* @__PURE__ */ T(vn, [["__scopeId", "data-v-7a51063f"]]), pn = { class: "player-page" }, mn = {
   key: 0,
   class: "player-loading"
-}, ps = {
+}, gn = {
   key: 1,
   class: "player-error"
-}, _s = /* @__PURE__ */ E({
+}, fn = /* @__PURE__ */ B({
   __name: "PlayerPage",
-  setup(l) {
-    const t = ie("apiBase", B(() => "")), s = xe(), r = f(null), p = f(""), g = f(!0), y = f(null);
-    async function h() {
-      const m = s.params.id;
-      if (!m) {
-        y.value = "No media ID provided", g.value = !1;
+  setup(o) {
+    const e = ce("apiBase", E(() => "")), r = Te(), i = m(null), v = m(""), g = m(!0), k = m(null);
+    async function _() {
+      const f = r.params.id;
+      if (!f) {
+        k.value = "No media ID provided", g.value = !1;
         return;
       }
       try {
-        const u = new te({ baseUrl: t.value }), [o, c] = await Promise.all([
-          u.get(`/api/v1/media/${m}`),
-          u.get(`/api/v1/media/${m}/playback-info`).catch(() => null)
+        const u = new se({ baseUrl: e.value }), [a, c] = await Promise.all([
+          u.get(`/api/v1/media/${f}`),
+          u.get(`/api/v1/media/${f}/playback-info`).catch(() => null)
         ]);
-        r.value = o, c != null && c.url ? p.value = c.url : p.value = `${t.value}/media/${m}/stream`;
+        i.value = a, c != null && c.url ? v.value = c.url : v.value = `${e.value}/media/${f}/stream`;
       } catch (u) {
-        y.value = u instanceof Error ? u.message : "Failed to load media";
+        k.value = u instanceof Error ? u.message : "Failed to load media";
       } finally {
         g.value = !1;
       }
     }
-    return j(h), (m, u) => (a(), n("div", ds, [
-      g.value ? (a(), n("div", vs, "Loading...")) : y.value ? (a(), n("div", ps, [
-        e("p", null, d(y.value), 1),
-        e("button", {
+    return q(_), (f, u) => (n(), s("div", pn, [
+      g.value ? (n(), s("div", mn, "Loading...")) : k.value ? (n(), s("div", gn, [
+        t("p", null, d(k.value), 1),
+        t("button", {
           class: "retry-btn",
-          onClick: h
+          onClick: _
         }, "Retry")
-      ])) : r.value ? (a(), re(us, {
+      ])) : i.value ? (n(), ne(hn, {
         key: 2,
-        media: r.value,
-        "stream-url": p.value
-      }, null, 8, ["media", "stream-url"])) : w("", !0)
+        media: i.value,
+        "stream-url": v.value
+      }, null, 8, ["media", "stream-url"])) : x("", !0)
     ]));
   }
-}), fs = /* @__PURE__ */ x(_s, [["__scopeId", "data-v-d9061b47"]]), ae = "access_token", ne = "refresh_token", oe = "user";
-class gs {
-  constructor(t = window.localStorage) {
-    this.storage = t;
+}), _n = /* @__PURE__ */ T(fn, [["__scopeId", "data-v-d9061b47"]]), re = "access_token", ae = "refresh_token", ie = "user";
+class kn {
+  constructor(e = window.localStorage) {
+    this.storage = e;
   }
   getAccessToken() {
-    return this.storage.getItem(ae);
+    return this.storage.getItem(re);
   }
-  setAccessToken(t) {
-    this.storage.setItem(ae, t);
+  setAccessToken(e) {
+    this.storage.setItem(re, e);
   }
   getRefreshToken() {
-    return this.storage.getItem(ne);
+    return this.storage.getItem(ae);
   }
-  setRefreshToken(t) {
-    this.storage.setItem(ne, t);
+  setRefreshToken(e) {
+    this.storage.setItem(ae, e);
   }
   getUser() {
-    const t = this.storage.getItem(oe);
-    if (t === null) return null;
+    const e = this.storage.getItem(ie);
+    if (e === null) return null;
     try {
-      return JSON.parse(t);
+      return JSON.parse(e);
     } catch {
       return null;
     }
   }
-  setUser(t) {
-    this.storage.setItem(oe, JSON.stringify(t));
+  setUser(e) {
+    this.storage.setItem(ie, JSON.stringify(e));
   }
   clear() {
-    this.storage.removeItem(ae), this.storage.removeItem(ne), this.storage.removeItem(oe);
+    this.storage.removeItem(re), this.storage.removeItem(ae), this.storage.removeItem(ie);
   }
 }
-const ce = pe("auth", () => {
-  const l = new gs(), t = ie("apiBase", ""), s = new te({ tokenStore: l, baseUrl: t }), r = f(null), p = f(!1), g = f(null), y = B(() => l.getAccessToken() !== null), h = B(() => {
-    var b;
-    return ((b = r.value) == null ? void 0 : b.is_admin) === !0;
+const ue = pe("auth", () => {
+  const o = new kn(), e = ce("apiBase", ""), r = new se({ tokenStore: o, baseUrl: e }), i = m(null), v = m(!1), g = m(null), k = E(() => o.getAccessToken() !== null), _ = E(() => {
+    var y;
+    return ((y = i.value) == null ? void 0 : y.is_admin) === !0;
   });
-  async function m(b, i) {
-    p.value = !0, g.value = null;
+  async function f(y, l) {
+    v.value = !0, g.value = null;
     try {
-      const _ = await s.post("/api/v1/auth/login", { email: b, password: i });
-      return l.setAccessToken(_.access_token), l.setRefreshToken(_.refresh_token), await o(), !0;
-    } catch (_) {
-      return g.value = _ instanceof Error ? _.message : "Login failed", !1;
+      const p = await r.post("/api/v1/auth/login", { email: y, password: l });
+      return o.setAccessToken(p.access_token), o.setRefreshToken(p.refresh_token), await a(), !0;
+    } catch (p) {
+      return g.value = p instanceof Error ? p.message : "Login failed", !1;
     } finally {
-      p.value = !1;
+      v.value = !1;
     }
   }
-  async function u(b, i, _) {
-    p.value = !0, g.value = null;
+  async function u(y, l, p) {
+    v.value = !0, g.value = null;
     try {
-      const v = await s.post("/api/v1/auth/register", { email: b, username: i, password: _ });
-      return l.setAccessToken(v.access_token), l.setRefreshToken(v.refresh_token), await o(), !0;
-    } catch (v) {
-      return g.value = v instanceof Error ? v.message : "Registration failed", !1;
+      const h = await r.post("/api/v1/auth/register", { email: y, username: l, password: p });
+      return o.setAccessToken(h.access_token), o.setRefreshToken(h.refresh_token), await a(), !0;
+    } catch (h) {
+      return g.value = h instanceof Error ? h.message : "Registration failed", !1;
     } finally {
-      p.value = !1;
+      v.value = !1;
     }
   }
-  async function o() {
-    if (y.value)
+  async function a() {
+    if (k.value)
       try {
-        r.value = await s.getCurrentUser();
+        i.value = await r.getCurrentUser();
       } catch {
-        r.value = null, l.clear();
+        i.value = null, o.clear();
       }
   }
   function c() {
-    l.clear(), r.value = null;
+    o.clear(), i.value = null;
   }
   return {
-    user: r,
-    loading: p,
+    user: i,
+    loading: v,
     error: g,
-    isLoggedIn: y,
-    isAdmin: h,
-    client: s,
-    login: m,
+    isLoggedIn: k,
+    isAdmin: _,
+    client: r,
+    login: f,
     signup: u,
-    fetchUser: o,
+    fetchUser: a,
     logout: c
   };
-}), ms = {
+}), wn = {
   key: 0,
   class: "form-error"
-}, hs = { class: "field" }, ys = { class: "field" }, bs = { class: "password-wrapper" }, $s = ["type"], ks = ["disabled"], ws = { class: "form-footer" }, Ss = /* @__PURE__ */ E({
+}, yn = { class: "field" }, $n = { class: "field" }, bn = { class: "password-wrapper" }, xn = ["type"], Cn = ["disabled"], Mn = { class: "form-footer" }, Sn = /* @__PURE__ */ B({
   __name: "LoginForm",
   emits: ["success"],
-  setup(l, { emit: t }) {
-    const s = t, r = ce(), p = _e(), g = f(""), y = f(""), h = f(!1);
-    async function m() {
-      await r.login(g.value, y.value) && (s("success"), p.push("/app"));
+  setup(o, { emit: e }) {
+    const r = e, i = ue(), v = me(), g = m(""), k = m(""), _ = m(!1);
+    async function f() {
+      await i.login(g.value, k.value) && (r("success"), v.push("/app"));
     }
-    return (u, o) => {
-      const c = ve("router-link");
-      return a(), n("form", {
+    return (u, a) => {
+      const c = he("router-link");
+      return n(), s("form", {
         class: "login-form",
-        onSubmit: W(m, ["prevent"])
+        onSubmit: Q(f, ["prevent"])
       }, [
-        o[7] || (o[7] = e("h2", { class: "form-title" }, "Sign in to Phlix", -1)),
-        $(r).error ? (a(), n("div", ms, d($(r).error), 1)) : w("", !0),
-        e("div", hs, [
-          o[3] || (o[3] = e("label", {
+        a[7] || (a[7] = t("h2", { class: "form-title" }, "Sign in to Phlix", -1)),
+        $(i).error ? (n(), s("div", wn, d($(i).error), 1)) : x("", !0),
+        t("div", yn, [
+          a[3] || (a[3] = t("label", {
             for: "email",
             class: "label"
           }, "Email", -1)),
-          V(e("input", {
+          H(t("input", {
             id: "email",
-            "onUpdate:modelValue": o[0] || (o[0] = (b) => g.value = b),
+            "onUpdate:modelValue": a[0] || (a[0] = (y) => g.value = y),
             type: "email",
             class: "input",
             placeholder: "you@example.com",
             required: "",
             autocomplete: "email"
           }, null, 512), [
-            [Z, g.value]
+            [te, g.value]
           ])
         ]),
-        e("div", ys, [
-          o[4] || (o[4] = e("label", {
+        t("div", $n, [
+          a[4] || (a[4] = t("label", {
             for: "password",
             class: "label"
           }, "Password", -1)),
-          e("div", bs, [
-            V(e("input", {
+          t("div", bn, [
+            H(t("input", {
               id: "password",
-              "onUpdate:modelValue": o[1] || (o[1] = (b) => y.value = b),
-              type: h.value ? "text" : "password",
+              "onUpdate:modelValue": a[1] || (a[1] = (y) => k.value = y),
+              type: _.value ? "text" : "password",
               class: "input",
               placeholder: "Your password",
               required: "",
               autocomplete: "current-password"
-            }, null, 8, $s), [
-              [le, y.value]
+            }, null, 8, xn), [
+              [le, k.value]
             ]),
-            e("button", {
+            t("button", {
               type: "button",
               class: "toggle-password",
-              onClick: o[2] || (o[2] = (b) => h.value = !h.value)
-            }, d(h.value ? "🙈" : "👁"), 1)
+              onClick: a[2] || (a[2] = (y) => _.value = !_.value)
+            }, d(_.value ? "🙈" : "👁"), 1)
           ])
         ]),
-        e("button", {
+        t("button", {
           type: "submit",
           class: "submit-btn",
-          disabled: $(r).loading
-        }, d($(r).loading ? "Signing in..." : "Sign in"), 9, ks),
-        e("p", ws, [
-          o[6] || (o[6] = Y(" Don't have an account? ", -1)),
+          disabled: $(i).loading
+        }, d($(i).loading ? "Signing in..." : "Sign in"), 9, Cn),
+        t("p", Mn, [
+          a[6] || (a[6] = O(" Don't have an account? ", -1)),
           N(c, {
             to: "/app/signup",
             class: "link"
           }, {
-            default: z(() => [...o[5] || (o[5] = [
-              Y("Sign up", -1)
+            default: J(() => [...a[5] || (a[5] = [
+              O("Sign up", -1)
             ])]),
             _: 1
           })
@@ -894,68 +894,68 @@ const ce = pe("auth", () => {
       ], 32);
     };
   }
-}), Cs = /* @__PURE__ */ x(Ss, [["__scopeId", "data-v-22bc5576"]]), Ts = { class: "auth-page" }, Ps = { class: "auth-card" }, xs = /* @__PURE__ */ E({
+}), In = /* @__PURE__ */ T(Sn, [["__scopeId", "data-v-22bc5576"]]), Bn = { class: "auth-page" }, Tn = { class: "auth-card" }, Pn = /* @__PURE__ */ B({
   __name: "LoginPage",
-  setup(l) {
-    return (t, s) => (a(), n("div", Ts, [
-      e("div", Ps, [
-        N(Cs, { onSuccess: () => {
+  setup(o) {
+    return (e, r) => (n(), s("div", Bn, [
+      t("div", Tn, [
+        N(In, { onSuccess: () => {
         } })
       ])
     ]));
   }
-}), Rs = /* @__PURE__ */ x(xs, [["__scopeId", "data-v-9c53ce6a"]]), Es = {
+}), jn = /* @__PURE__ */ T(Pn, [["__scopeId", "data-v-9c53ce6a"]]), Rn = {
   key: 0,
   class: "form-error"
-}, Fs = { class: "field" }, Ls = { class: "field" }, Is = { class: "field" }, As = { class: "password-wrapper" }, Ms = ["type"], Us = { class: "field" }, Ns = ["type"], Bs = ["disabled"], Ds = { class: "form-footer" }, qs = /* @__PURE__ */ E({
+}, Ln = { class: "field" }, En = { class: "field" }, An = { class: "field" }, Fn = { class: "password-wrapper" }, Un = ["type"], Nn = { class: "field" }, Dn = ["type"], zn = ["disabled"], Vn = { class: "form-footer" }, Hn = /* @__PURE__ */ B({
   __name: "SignupForm",
   emits: ["success"],
-  setup(l, { emit: t }) {
-    const s = t, r = ce(), p = _e(), g = f(""), y = f(""), h = f(""), m = f(""), u = f(!1), o = f(null);
+  setup(o, { emit: e }) {
+    const r = e, i = ue(), v = me(), g = m(""), k = m(""), _ = m(""), f = m(""), u = m(!1), a = m(null);
     async function c() {
-      if (o.value = null, h.value.length < 8) {
-        o.value = "Password must be at least 8 characters.";
+      if (a.value = null, _.value.length < 8) {
+        a.value = "Password must be at least 8 characters.";
         return;
       }
-      if (h.value !== m.value) {
-        o.value = "Passwords do not match.";
+      if (_.value !== f.value) {
+        a.value = "Passwords do not match.";
         return;
       }
-      await r.signup(g.value, y.value, h.value) && (s("success"), p.push("/app"));
+      await i.signup(g.value, k.value, _.value) && (r("success"), v.push("/app"));
     }
-    return (b, i) => {
-      const _ = ve("router-link");
-      return a(), n("form", {
+    return (y, l) => {
+      const p = he("router-link");
+      return n(), s("form", {
         class: "signup-form",
-        onSubmit: W(c, ["prevent"])
+        onSubmit: Q(c, ["prevent"])
       }, [
-        i[11] || (i[11] = e("h2", { class: "form-title" }, "Create your Phlix account", -1)),
-        $(r).error || o.value ? (a(), n("div", Es, d($(r).error || o.value), 1)) : w("", !0),
-        e("div", Fs, [
-          i[5] || (i[5] = e("label", {
+        l[11] || (l[11] = t("h2", { class: "form-title" }, "Create your Phlix account", -1)),
+        $(i).error || a.value ? (n(), s("div", Rn, d($(i).error || a.value), 1)) : x("", !0),
+        t("div", Ln, [
+          l[5] || (l[5] = t("label", {
             for: "email",
             class: "label"
           }, "Email", -1)),
-          V(e("input", {
+          H(t("input", {
             id: "email",
-            "onUpdate:modelValue": i[0] || (i[0] = (v) => g.value = v),
+            "onUpdate:modelValue": l[0] || (l[0] = (h) => g.value = h),
             type: "email",
             class: "input",
             placeholder: "you@example.com",
             required: "",
             autocomplete: "email"
           }, null, 512), [
-            [Z, g.value]
+            [te, g.value]
           ])
         ]),
-        e("div", Ls, [
-          i[6] || (i[6] = e("label", {
+        t("div", En, [
+          l[6] || (l[6] = t("label", {
             for: "username",
             class: "label"
           }, "Username", -1)),
-          V(e("input", {
+          H(t("input", {
             id: "username",
-            "onUpdate:modelValue": i[1] || (i[1] = (v) => y.value = v),
+            "onUpdate:modelValue": l[1] || (l[1] = (h) => k.value = h),
             type: "text",
             class: "input",
             placeholder: "Your username",
@@ -963,64 +963,64 @@ const ce = pe("auth", () => {
             autocomplete: "username",
             minlength: "3"
           }, null, 512), [
-            [Z, y.value]
+            [te, k.value]
           ])
         ]),
-        e("div", Is, [
-          i[7] || (i[7] = e("label", {
+        t("div", An, [
+          l[7] || (l[7] = t("label", {
             for: "password",
             class: "label"
           }, "Password", -1)),
-          e("div", As, [
-            V(e("input", {
+          t("div", Fn, [
+            H(t("input", {
               id: "password",
-              "onUpdate:modelValue": i[2] || (i[2] = (v) => h.value = v),
+              "onUpdate:modelValue": l[2] || (l[2] = (h) => _.value = h),
               type: u.value ? "text" : "password",
               class: "input",
               placeholder: "At least 8 characters",
               required: "",
               autocomplete: "new-password",
               minlength: "8"
-            }, null, 8, Ms), [
-              [le, h.value]
+            }, null, 8, Un), [
+              [le, _.value]
             ]),
-            e("button", {
+            t("button", {
               type: "button",
               class: "toggle-password",
-              onClick: i[3] || (i[3] = (v) => u.value = !u.value)
+              onClick: l[3] || (l[3] = (h) => u.value = !u.value)
             }, d(u.value ? "🙈" : "👁"), 1)
           ])
         ]),
-        e("div", Us, [
-          i[8] || (i[8] = e("label", {
+        t("div", Nn, [
+          l[8] || (l[8] = t("label", {
             for: "confirm",
             class: "label"
           }, "Confirm password", -1)),
-          V(e("input", {
+          H(t("input", {
             id: "confirm",
-            "onUpdate:modelValue": i[4] || (i[4] = (v) => m.value = v),
+            "onUpdate:modelValue": l[4] || (l[4] = (h) => f.value = h),
             type: u.value ? "text" : "password",
             class: "input",
             placeholder: "Repeat your password",
             required: "",
             autocomplete: "new-password"
-          }, null, 8, Ns), [
-            [le, m.value]
+          }, null, 8, Dn), [
+            [le, f.value]
           ])
         ]),
-        e("button", {
+        t("button", {
           type: "submit",
           class: "submit-btn",
-          disabled: $(r).loading
-        }, d($(r).loading ? "Creating account..." : "Create account"), 9, Bs),
-        e("p", Ds, [
-          i[10] || (i[10] = Y(" Already have an account? ", -1)),
-          N(_, {
+          disabled: $(i).loading
+        }, d($(i).loading ? "Creating account..." : "Create account"), 9, zn),
+        t("p", Vn, [
+          l[10] || (l[10] = O(" Already have an account? ", -1)),
+          N(p, {
             to: "/app/login",
             class: "link"
           }, {
-            default: z(() => [...i[9] || (i[9] = [
-              Y("Sign in", -1)
+            default: J(() => [...l[9] || (l[9] = [
+              O("Sign in", -1)
             ])]),
             _: 1
           })
@@ -1028,33 +1028,33 @@ const ce = pe("auth", () => {
       ], 32);
     };
   }
-}), Gs = /* @__PURE__ */ x(qs, [["__scopeId", "data-v-d5e42c72"]]), Vs = { class: "auth-page" }, js = { class: "auth-card" }, Os = /* @__PURE__ */ E({
+}), qn = /* @__PURE__ */ T(Hn, [["__scopeId", "data-v-d5e42c72"]]), Gn = { class: "auth-page" }, On = { class: "auth-card" }, Yn = /* @__PURE__ */ B({
   __name: "SignupPage",
-  setup(l) {
-    return (t, s) => (a(), n("div", Vs, [
-      e("div", js, [
-        N(Gs, { onSuccess: () => {
+  setup(o) {
+    return (e, r) => (n(), s("div", Gn, [
+      t("div", On, [
+        N(qn, { onSuccess: () => {
         } })
       ])
     ]));
   }
-}), Ys = /* @__PURE__ */ x(Os, [["__scopeId", "data-v-609331e4"]]), Hs = { class: "settings-form" }, zs = {
+}), Jn = /* @__PURE__ */ T(Yn, [["__scopeId", "data-v-609331e4"]]), Kn = { class: "settings-form" }, Wn = {
   key: 0,
   class: "settings-loading"
-}, Js = {
+}, Xn = {
   key: 1,
   class: "settings-error"
-}, Ks = { class: "group-title" }, Xs = ["for"], Ws = { class: "setting-control" }, Qs = ["id", "checked", "onChange"], Zs = ["id", "value", "onChange"], ea = ["id", "value", "onChange"], ta = { class: "settings-actions" }, sa = {
+}, Qn = { class: "group-title" }, Zn = ["for"], es = { class: "setting-control" }, ts = ["id", "checked", "onChange"], ns = ["id", "value", "onChange"], ss = ["id", "value", "onChange"], os = { class: "settings-actions" }, rs = {
   key: 0,
   class: "success-msg"
-}, aa = ["disabled"], na = /* @__PURE__ */ E({
+}, as = ["disabled"], is = /* @__PURE__ */ B({
   __name: "SettingsForm",
   props: {
     groups: {}
   },
   emits: ["saved"],
-  setup(l, { emit: t }) {
-    const s = l, r = t, p = ce(), g = f({}), y = f(!0), h = f(!1), m = f(null), u = f(null), o = [
+  setup(o, { emit: e }) {
+    const r = o, i = e, v = ue(), g = m({}), k = m(!0), _ = m(!1), f = m(null), u = m(null), a = [
       "transcoding",
       "metadata",
       "markers",
@@ -1064,37 +1064,37 @@ const ce = pe("auth", () => {
       "newsletter",
       "port-forward",
       "scrobblers"
-    ], c = B(
-      () => s.groups ? o.filter((R) => s.groups.includes(R)) : o
+    ], c = E(
+      () => r.groups ? a.filter((P) => r.groups.includes(P)) : a
     );
-    async function b() {
-      y.value = !0, m.value = null;
+    async function y() {
+      k.value = !0, f.value = null;
       try {
-        const R = await p.client.get("/api/v1/users/me/settings");
-        g.value = R;
-      } catch (R) {
-        m.value = R instanceof Error ? R.message : "Failed to load settings";
+        const P = await v.client.get("/api/v1/users/me/settings");
+        g.value = P;
+      } catch (P) {
+        f.value = P instanceof Error ? P.message : "Failed to load settings";
       } finally {
-        y.value = !1;
+        k.value = !1;
       }
     }
-    async function i() {
-      h.value = !0, m.value = null, u.value = null;
+    async function l() {
+      _.value = !0, f.value = null, u.value = null;
       try {
-        await p.client.put("/api/v1/users/me/settings", g.value), u.value = "Settings saved.", r("saved", g.value), setTimeout(() => {
+        await v.client.put("/api/v1/users/me/settings", g.value), u.value = "Settings saved.", i("saved", g.value), setTimeout(() => {
           u.value = null;
         }, 3e3);
-      } catch (R) {
-        m.value = R instanceof Error ? R.message : "Failed to save settings";
+      } catch (P) {
+        f.value = P instanceof Error ? P.message : "Failed to save settings";
       } finally {
-        h.value = !1;
+        _.value = !1;
       }
     }
-    function _(R, D) {
-      g.value[R] = D;
+    function p(P, D) {
+      g.value[P] = D;
     }
-    j(b);
-    const v = {
+    q(y);
+    const h = {
       transcoding: "Transcoding",
       metadata: "Metadata",
       markers: "Marker Detection",
@@ -1124,72 +1124,72 @@ const ce = pe("auth", () => {
       "trakt.client_secret": { label: "Trakt client secret", type: "string" },
       "trakt.redirect_uri": { label: "Trakt redirect URI", type: "string" }
     };
-    return (R, D) => (a(), n("div", Hs, [
-      y.value ? (a(), n("div", zs, "Loading settings...")) : m.value ? (a(), n("div", Js, d(m.value), 1)) : (a(), n(L, { key: 2 }, [
-        (a(!0), n(L, null, I(c.value, (O) => (a(), n("div", {
-          key: O,
+    return (P, D) => (n(), s("div", Kn, [
+      k.value ? (n(), s("div", Wn, "Loading settings...")) : f.value ? (n(), s("div", Xn, d(f.value), 1)) : (n(), s(R, { key: 2 }, [
+        (n(!0), s(R, null, L(c.value, (G) => (n(), s("div", {
+          key: G,
           class: "settings-group"
         }, [
-          e("h3", Ks, d(v[O]), 1),
-          (a(), n(L, null, I(A, (q, F) => V(e("div", {
-            key: F,
+          t("h3", Qn, d(h[G]), 1),
+          (n(), s(R, null, L(A, (z, j) => H(t("div", {
+            key: j,
             class: "setting-row"
           }, [
-            e("label", {
-              for: F,
+            t("label", {
+              for: j,
               class: "setting-label"
-            }, d(q.label), 9, Xs),
-            e("div", Ws, [
-              q.type === "bool" ? (a(), n("input", {
+            }, d(z.label), 9, Zn),
+            t("div", es, [
+              z.type === "bool" ? (n(), s("input", {
                 key: 0,
-                id: F,
+                id: j,
                 type: "checkbox",
                 class: "toggle",
-                checked: !!g.value[F],
-                onChange: (C) => _(F, C.target.checked)
-              }, null, 40, Qs)) : q.type === "number" ? (a(), n("input", {
+                checked: !!g.value[j],
+                onChange: (M) => p(j, M.target.checked)
+              }, null, 40, ts)) : z.type === "number" ? (n(), s("input", {
                 key: 1,
-                id: F,
+                id: j,
                 type: "number",
                 class: "input number-input",
-                value: g.value[F],
-                onChange: (C) => _(F, Number(C.target.value))
-              }, null, 40, Zs)) : (a(), n("input", {
+                value: g.value[j],
+                onChange: (M) => p(j, Number(M.target.value))
+              }, null, 40, ns)) : (n(), s("input", {
                 key: 2,
-                id: F,
+                id: j,
                 type: "text",
                 class: "input",
-                value: g.value[F] ?? "",
-                onChange: (C) => _(F, C.target.value)
-              }, null, 40, ea))
+                value: g.value[j] ?? "",
+                onChange: (M) => p(j, M.target.value)
+              }, null, 40, ss))
             ])
           ]), [
-            [Se, F.startsWith(O)]
+            [Ce, j.startsWith(G)]
           ])), 64))
         ]))), 128)),
-        e("div", ta, [
-          u.value ? (a(), n("div", sa, d(u.value), 1)) : w("", !0),
-          e("button", {
+        t("div", os, [
+          u.value ? (n(), s("div", rs, d(u.value), 1)) : x("", !0),
+          t("button", {
             class: "save-btn",
-            disabled: h.value,
-            onClick: i
-          }, d(h.value ? "Saving..." : "Save settings"), 9, aa)
+            disabled: _.value,
+            onClick: l
+          }, d(_.value ? "Saving..." : "Save settings"), 9, as)
         ])
       ], 64))
     ]));
   }
-}), oa = /* @__PURE__ */ x(na, [["__scopeId", "data-v-51b588b6"]]), la = { class: "settings-page" }, ra = /* @__PURE__ */ E({
+}), ls = /* @__PURE__ */ T(is, [["__scopeId", "data-v-51b588b6"]]), cs = { class: "settings-page" }, us = /* @__PURE__ */ B({
   __name: "SettingsPage",
-  setup(l) {
-    return (t, s) => (a(), n("div", la, [
-      s[0] || (s[0] = e("div", { class: "settings-header" }, [
-        e("h1", { class: "settings-title" }, "Settings")
+  setup(o) {
+    return (e, r) => (n(), s("div", cs, [
+      r[0] || (r[0] = t("div", { class: "settings-header" }, [
+        t("h1", { class: "settings-title" }, "Settings")
       ], -1)),
-      N(oa)
+      N(ls)
     ]));
   }
-}), ia = /* @__PURE__ */ x(ra, [["__scopeId", "data-v-f9ca8a28"]]);
-function ca() {
+}), ds = /* @__PURE__ */ T(us, [["__scopeId", "data-v-f9ca8a28"]]);
+function vs() {
   return typeof window < "u" && window.__PHLIX__ ? window.__PHLIX__ : {
     app: "server",
     apiBase: "",
@@ -1199,111 +1199,1297 @@ function ca() {
     features: {}
   };
 }
-function ua(l) {
-  const t = l.routerBase || "/app", s = [
+function hs(o) {
+  const e = o.routerBase || "/app", r = [
     {
-      path: `${t}/`,
-      redirect: t
+      path: `${e}/`,
+      redirect: e
     },
     {
-      path: t,
+      path: e,
       name: "browse",
-      component: Jt
+      component: Wt
     },
     {
-      path: `${t}/player/:id`,
+      path: `${e}/player/:id`,
       name: "player",
-      component: fs
+      component: _n
     },
     {
-      path: `${t}/login`,
+      path: `${e}/login`,
       name: "login",
-      component: Rs
+      component: jn
     },
     {
-      path: `${t}/signup`,
+      path: `${e}/signup`,
       name: "signup",
-      component: Ys
+      component: Jn
     },
     {
-      path: `${t}/settings`,
+      path: `${e}/settings`,
       name: "settings",
-      component: ia
+      component: ds
     }
   ];
-  return l.extraRoutes && s.push(...l.extraRoutes), s.push({
-    path: `${t}/:pathMatch(.*)*`,
+  return o.extraRoutes && r.push(...o.extraRoutes), r.push({
+    path: `${e}/:pathMatch(.*)*`,
     name: "catchall",
-    component: ze,
-    props: { appName: l.app }
-  }), s;
+    component: Ke,
+    props: { appName: o.app }
+  }), r;
 }
-function Dn(l) {
-  const t = {
-    ...ca(),
-    ...l
-  }, s = Te(), r = t.routerBase || "/app", p = Re({
-    history: Ee(r),
-    routes: ua(t)
-  }), g = Ce(je);
-  return g.provide("apiBase", t.apiBase), g.use(s), g.use(p), g;
+function Gi(o) {
+  const e = {
+    ...vs(),
+    ...o
+  }, r = Ie(), i = e.routerBase || "/app", v = Pe({
+    history: je(i),
+    routes: hs(e)
+  }), g = Me(Ge);
+  return g.provide("apiBase", e.apiBase), g.use(r), g.use(v), g;
 }
-const da = { class: "library-scan-page" }, va = {
+const ps = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ms(o, e) {
+  return n(), s("svg", ps, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"
+    }, null, -1)
+  ])]);
+}
+const gs = w({ name: "lucide-play", render: ms }), fs = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function _s(o, e) {
+  return n(), s("svg", fs, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("rect", {
+        width: "5",
+        height: "18",
+        x: "14",
+        y: "3",
+        rx: "1"
+      }),
+      t("rect", {
+        width: "5",
+        height: "18",
+        x: "5",
+        y: "3",
+        rx: "1"
+      })
+    ], -1)
+  ])]);
+}
+const ks = w({ name: "lucide-pause", render: _s }), ws = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ys(o, e) {
+  return n(), s("svg", ws, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M17.971 4.285A2 2 0 0 1 21 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432zM3 20V4"
+    }, null, -1)
+  ])]);
+}
+const $s = w({ name: "lucide-skip-back", render: ys }), bs = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function xs(o, e) {
+  return n(), s("svg", bs, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M21 4v16M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z"
+    }, null, -1)
+  ])]);
+}
+const Cs = w({ name: "lucide-skip-forward", render: xs }), Ms = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Ss(o, e) {
+  return n(), s("svg", Ms, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M3 12a9 9 0 1 0 9-9a9.75 9.75 0 0 0-6.74 2.74L3 8" }),
+      t("path", { d: "M3 3v5h5" })
+    ], -1)
+  ])]);
+}
+const Is = w({ name: "lucide-rotate-ccw", render: Ss }), Bs = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Ts(o, e) {
+  return n(), s("svg", Bs, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" }),
+      t("path", { d: "M21 3v5h-5" })
+    ], -1)
+  ])]);
+}
+const Ps = w({ name: "lucide-rotate-cw", render: Ts }), js = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Rs(o, e) {
+  return n(), s("svg", js, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6m3.364 3.364a9 9 0 0 0 0-12.728"
+    }, null, -1)
+  ])]);
+}
+const Ls = w({ name: "lucide-volume-2", render: Rs }), Es = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function As(o, e) {
+  return n(), s("svg", Es, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6"
+    }, null, -1)
+  ])]);
+}
+const Fs = w({ name: "lucide-volume-1", render: As }), Us = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Ns(o, e) {
+  return n(), s("svg", Us, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM22 9l-6 6m0-6l6 6"
+    }, null, -1)
+  ])]);
+}
+const Ds = w({ name: "lucide-volume-x", render: Ns }), zs = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Vs(o, e) {
+  return n(), s("svg", zs, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("rect", {
+        width: "18",
+        height: "14",
+        x: "3",
+        y: "5",
+        rx: "2",
+        ry: "2"
+      }),
+      t("path", { d: "M7 15h4m4 0h2M7 11h2m4 0h4" })
+    ], -1)
+  ])]);
+}
+const Hs = w({ name: "lucide-captions", render: Vs }), qs = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Gs(o, e) {
+  return n(), s("svg", qs, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4" }),
+      t("rect", {
+        width: "10",
+        height: "7",
+        x: "12",
+        y: "13",
+        rx: "2"
+      })
+    ], -1)
+  ])]);
+}
+const Os = w({ name: "lucide-picture-in-picture-2", render: Gs }), Ys = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Js(o, e) {
+  return n(), s("svg", Ys, [...e[0] || (e[0] = [
+    t("rect", {
+      width: "20",
+      height: "12",
+      x: "2",
+      y: "6",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      rx: "2"
+    }, null, -1)
+  ])]);
+}
+const Ks = w({ name: "lucide-rectangle-horizontal", render: Js }), Ws = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Xs(o, e) {
+  return n(), s("svg", Ws, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"
+    }, null, -1)
+  ])]);
+}
+const Qs = w({ name: "lucide-maximize", render: Xs }), Zs = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function eo(o, e) {
+  return n(), s("svg", Zs, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3m8 0v-3a2 2 0 0 1 2-2h3"
+    }, null, -1)
+  ])]);
+}
+const to = w({ name: "lucide-minimize", render: eo }), no = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function so(o, e) {
+  return n(), s("svg", no, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M15 3h6v6m0-6l-7 7M3 21l7-7m-1 7H3v-6"
+    }, null, -1)
+  ])]);
+}
+const oo = w({ name: "lucide-maximize-2", render: so }), ro = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ao(o, e) {
+  return n(), s("svg", ro, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6M2 12a9 9 0 0 1 8 8m-8-4a5 5 0 0 1 4 4m-4 0h.01"
+    }, null, -1)
+  ])]);
+}
+const io = w({ name: "lucide-cast", render: ao }), lo = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function co(o, e) {
+  return n(), s("svg", lo, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M9.671 4.136a2.34 2.34 0 0 1 4.659 0a2.34 2.34 0 0 0 3.319 1.915a2.34 2.34 0 0 1 2.33 4.033a2.34 2.34 0 0 0 0 3.831a2.34 2.34 0 0 1-2.33 4.033a2.34 2.34 0 0 0-3.319 1.915a2.34 2.34 0 0 1-4.659 0a2.34 2.34 0 0 0-3.32-1.915a2.34 2.34 0 0 1-2.33-4.033a2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" }),
+      t("circle", {
+        cx: "12",
+        cy: "12",
+        r: "3"
+      })
+    ], -1)
+  ])]);
+}
+const uo = w({ name: "lucide-settings", render: co }), vo = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ho(o, e) {
+  return n(), s("svg", vo, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"
+    }, null, -1)
+  ])]);
+}
+const po = w({ name: "lucide-gauge", render: ho }), mo = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function go(o, e) {
+  return n(), s("svg", mo, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("rect", {
+        width: "18",
+        height: "18",
+        x: "3",
+        y: "3",
+        rx: "2"
+      }),
+      t("path", { d: "M7 3v18M3 7.5h4M3 12h18M3 16.5h4M17 3v18m0-13.5h4m-4 9h4" })
+    ], -1)
+  ])]);
+}
+const fo = w({ name: "lucide-film", render: go }), _o = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ko(o, e) {
+  return n(), s("svg", _o, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("rect", {
+        width: "18",
+        height: "18",
+        x: "3",
+        y: "3",
+        rx: "2",
+        ry: "2"
+      }),
+      t("circle", {
+        cx: "9",
+        cy: "9",
+        r: "2"
+      }),
+      t("path", { d: "m21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" })
+    ], -1)
+  ])]);
+}
+const wo = w({ name: "lucide-image", render: ko }), yo = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function $o(o, e) {
+  return n(), s("svg", yo, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M9 18V5l12-2v13" }),
+      t("circle", {
+        cx: "6",
+        cy: "18",
+        r: "3"
+      }),
+      t("circle", {
+        cx: "18",
+        cy: "16",
+        r: "3"
+      })
+    ], -1)
+  ])]);
+}
+const bo = w({ name: "lucide-music", render: $o }), xo = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Co(o, e) {
+  return n(), s("svg", xo, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "m17 2l-5 5l-5-5" }),
+      t("rect", {
+        width: "20",
+        height: "15",
+        x: "2",
+        y: "7",
+        rx: "2"
+      })
+    ], -1)
+  ])]);
+}
+const Mo = w({ name: "lucide-tv", render: Co }), So = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Io(o, e) {
+  return n(), s("svg", So, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "m21 21l-4.34-4.34" }),
+      t("circle", {
+        cx: "11",
+        cy: "11",
+        r: "8"
+      })
+    ], -1)
+  ])]);
+}
+const Bo = w({ name: "lucide-search", render: Io }), To = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Po(o, e) {
+  return n(), s("svg", To, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M10 5H3m9 14H3M14 3v4m2 10v4m5-9h-9m9 7h-5m5-14h-7m-6 5v4m0-2H3"
+    }, null, -1)
+  ])]);
+}
+const jo = w({ name: "lucide-sliders-horizontal", render: Po }), Ro = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Lo(o, e) {
+  return n(), s("svg", Ro, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M8 2v4m8-4v4" }),
+      t("rect", {
+        width: "18",
+        height: "18",
+        x: "3",
+        y: "4",
+        rx: "2"
+      }),
+      t("path", { d: "M3 10h18" })
+    ], -1)
+  ])]);
+}
+const Eo = w({ name: "lucide-calendar", render: Lo }), Ao = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Fo(o, e) {
+  return n(), s("svg", Ao, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m21 16l-4 4l-4-4m4 4V4M3 8l4-4l4 4M7 4v16"
+    }, null, -1)
+  ])]);
+}
+const Uo = w({ name: "lucide-arrow-up-down", render: Fo }), No = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Do(o, e) {
+  return n(), s("svg", No, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"
+    }, null, -1)
+  ])]);
+}
+const zo = w({ name: "lucide-star", render: Do }), Vo = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Ho(o, e) {
+  return n(), s("svg", Vo, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"
+    }, null, -1)
+  ])]);
+}
+const qo = w({ name: "lucide-list", render: Ho }), Go = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Oo(o, e) {
+  return n(), s("svg", Go, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M5 12h14m-7-7v14"
+    }, null, -1)
+  ])]);
+}
+const Yo = w({ name: "lucide-plus", render: Oo }), Jo = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Ko(o, e) {
+  return n(), s("svg", Jo, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("circle", {
+        cx: "12",
+        cy: "12",
+        r: "10"
+      }),
+      t("path", { d: "M12 16v-4m0-4h.01" })
+    ], -1)
+  ])]);
+}
+const Wo = w({ name: "lucide-info", render: Ko }), Xo = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Qo(o, e) {
+  return n(), s("svg", Xo, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M18 6L6 18M6 6l12 12"
+    }, null, -1)
+  ])]);
+}
+const Zo = w({ name: "lucide-x", render: Qo }), er = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function tr(o, e) {
+  return n(), s("svg", er, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M20 6L9 17l-5-5"
+    }, null, -1)
+  ])]);
+}
+const nr = w({ name: "lucide-check", render: tr }), sr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function or(o, e) {
+  return n(), s("svg", sr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
+    }, null, -1)
+  ])]);
+}
+const rr = w({ name: "lucide-bookmark", render: or }), ar = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ir(o, e) {
+  return n(), s("svg", ar, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M12 7v6m3-3H9m8-7a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
+    }, null, -1)
+  ])]);
+}
+const lr = w({ name: "lucide-bookmark-plus", render: ir }), cr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ur(o, e) {
+  return n(), s("svg", cr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M2 9.5a5.5 5.5 0 0 1 9.591-3.676a.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"
+    }, null, -1)
+  ])]);
+}
+const dr = w({ name: "lucide-heart", render: ur }), vr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function hr(o, e) {
+  return n(), s("svg", vr, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" }),
+      t("circle", {
+        cx: "12",
+        cy: "7",
+        r: "4"
+      })
+    ], -1)
+  ])]);
+}
+const pr = w({ name: "lucide-user", render: hr }), mr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function gr(o, e) {
+  return n(), s("svg", mr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m16 17l5-5l-5-5m5 5H9m0 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+    }, null, -1)
+  ])]);
+}
+const fr = w({ name: "lucide-log-out", render: gr }), _r = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function kr(o, e) {
+  return n(), s("svg", _r, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M4 5h16M4 12h16M4 19h16"
+    }, null, -1)
+  ])]);
+}
+const wr = w({ name: "lucide-menu", render: kr }), yr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function $r(o, e) {
+  return n(), s("svg", yr, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("circle", {
+        cx: "12",
+        cy: "12",
+        r: "1"
+      }),
+      t("circle", {
+        cx: "19",
+        cy: "12",
+        r: "1"
+      }),
+      t("circle", {
+        cx: "5",
+        cy: "12",
+        r: "1"
+      })
+    ], -1)
+  ])]);
+}
+const br = w({ name: "lucide-more-horizontal", render: $r }), xr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Cr(o, e) {
+  return n(), s("svg", xr, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M2.062 12.348a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 19.876 0a1 1 0 0 1 0 .696a10.75 10.75 0 0 1-19.876 0" }),
+      t("circle", {
+        cx: "12",
+        cy: "12",
+        r: "3"
+      })
+    ], -1)
+  ])]);
+}
+const Mr = w({ name: "lucide-eye", render: Cr }), Sr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Ir(o, e) {
+  return n(), s("svg", Sr, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("path", { d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575a1 1 0 0 1 0 .696a10.8 10.8 0 0 1-1.444 2.49m-6.41-.679a3 3 0 0 1-4.242-4.242" }),
+      t("path", { d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 4.446-5.143M2 2l20 20" })
+    ], -1)
+  ])]);
+}
+const Br = w({ name: "lucide-eye-off", render: Ir }), Tr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Pr(o, e) {
+  return n(), s("svg", Tr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m12 19l-7-7l7-7m7 7H5"
+    }, null, -1)
+  ])]);
+}
+const jr = w({ name: "lucide-arrow-left", render: Pr }), Rr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Lr(o, e) {
+  return n(), s("svg", Rr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m5 12l7-7l7 7m-7 7V5"
+    }, null, -1)
+  ])]);
+}
+const Er = w({ name: "lucide-arrow-up", render: Lr }), Ar = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Fr(o, e) {
+  return n(), s("svg", Ar, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M12 5v14m7-7l-7 7l-7-7"
+    }, null, -1)
+  ])]);
+}
+const Ur = w({ name: "lucide-arrow-down", render: Fr }), Nr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Dr(o, e) {
+  return n(), s("svg", Nr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m6 9l6 6l6-6"
+    }, null, -1)
+  ])]);
+}
+const zr = w({ name: "lucide-chevron-down", render: Dr }), Vr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Hr(o, e) {
+  return n(), s("svg", Vr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m18 15l-6-6l-6 6"
+    }, null, -1)
+  ])]);
+}
+const qr = w({ name: "lucide-chevron-up", render: Hr }), Gr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Or(o, e) {
+  return n(), s("svg", Gr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m15 18l-6-6l6-6"
+    }, null, -1)
+  ])]);
+}
+const Yr = w({ name: "lucide-chevron-left", render: Or }), Jr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Kr(o, e) {
+  return n(), s("svg", Jr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "m9 18l6-6l-6-6"
+    }, null, -1)
+  ])]);
+}
+const Wr = w({ name: "lucide-chevron-right", render: Kr }), Xr = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function Qr(o, e) {
+  return n(), s("svg", Xr, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M21 12a9 9 0 1 1-6.219-8.56"
+    }, null, -1)
+  ])]);
+}
+const Zr = w({ name: "lucide-loader-circle", render: Qr }), ea = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ta(o, e) {
+  return n(), s("svg", ea, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("circle", {
+        cx: "12",
+        cy: "12",
+        r: "10"
+      }),
+      t("path", { d: "M12 8v4m0 4h.01" })
+    ], -1)
+  ])]);
+}
+const na = w({ name: "lucide-circle-alert", render: ta }), sa = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function oa(o, e) {
+  return n(), s("svg", sa, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("circle", {
+        cx: "12",
+        cy: "12",
+        r: "10"
+      }),
+      t("path", { d: "m9 12l2 2l4-4" })
+    ], -1)
+  ])]);
+}
+const ra = w({ name: "lucide-circle-check", render: oa }), aa = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ia(o, e) {
+  return n(), s("svg", aa, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("circle", {
+        cx: "12",
+        cy: "12",
+        r: "10"
+      }),
+      t("path", { d: "m15 9l-6 6m0-6l6 6" })
+    ], -1)
+  ])]);
+}
+const la = w({ name: "lucide-circle-x", render: ia }), ca = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ua(o, e) {
+  return n(), s("svg", ca, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("circle", {
+        cx: "12",
+        cy: "12",
+        r: "4"
+      }),
+      t("path", { d: "M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" })
+    ], -1)
+  ])]);
+}
+const da = w({ name: "lucide-sun", render: ua }), va = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ha(o, e) {
+  return n(), s("svg", va, [...e[0] || (e[0] = [
+    t("path", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2",
+      d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
+    }, null, -1)
+  ])]);
+}
+const pa = w({ name: "lucide-moon", render: ha }), ma = {
+  viewBox: "0 0 24 24",
+  width: "1em",
+  height: "1em"
+};
+function ga(o, e) {
+  return n(), s("svg", ma, [...e[0] || (e[0] = [
+    t("g", {
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "stroke-width": "2"
+    }, [
+      t("rect", {
+        width: "20",
+        height: "14",
+        x: "2",
+        y: "3",
+        rx: "2"
+      }),
+      t("path", { d: "M8 21h8m-4-4v4" })
+    ], -1)
+  ])]);
+}
+const fa = w({ name: "lucide-monitor", render: ga }), Oi = /* @__PURE__ */ B({
+  __name: "Icon",
+  props: {
+    name: {},
+    size: { default: void 0 },
+    label: { default: void 0 },
+    strokeWidth: { default: void 0 }
+  },
+  setup(o) {
+    const e = {
+      // playback (maps the legacy play/pause/volume/mute/back emoji)
+      play: gs,
+      pause: ks,
+      "skip-back": $s,
+      "skip-forward": Cs,
+      rewind: Is,
+      forward: Ps,
+      volume: Ls,
+      "volume-low": Fs,
+      mute: Ds,
+      captions: Hs,
+      pip: Os,
+      theater: Ks,
+      fullscreen: Qs,
+      "fullscreen-exit": to,
+      expand: oo,
+      cast: io,
+      settings: uo,
+      speed: po,
+      // media (replaces the legacy film-clapper emoji placeholder)
+      film: fo,
+      image: wo,
+      music: bo,
+      tv: Mo,
+      search: Bo,
+      filter: jo,
+      calendar: Eo,
+      sort: Uo,
+      star: zo,
+      list: qo,
+      // actions
+      plus: Yo,
+      info: Wo,
+      x: Zo,
+      check: nr,
+      bookmark: rr,
+      "bookmark-plus": lr,
+      heart: dr,
+      user: pr,
+      "log-out": fr,
+      menu: wr,
+      more: br,
+      eye: Mr,
+      "eye-off": Br,
+      // arrows / chevrons (replaces the legacy arrow emoji)
+      "arrow-left": jr,
+      "arrow-up": Er,
+      "arrow-down": Ur,
+      "chevron-down": zr,
+      "chevron-up": qr,
+      "chevron-left": Yr,
+      "chevron-right": Wr,
+      // status / theme
+      spinner: Zr,
+      alert: na,
+      success: ra,
+      error: la,
+      sun: da,
+      moon: pa,
+      monitor: fa
+    }, r = o, i = E(() => e[r.name]), v = E(
+      () => r.size === void 0 ? void 0 : typeof r.size == "number" ? `${r.size}px` : r.size
+    );
+    return (g, k) => (n(), ne(Se(i.value), {
+      class: "phlix-icon",
+      style: Z(v.value ? { fontSize: v.value } : void 0),
+      "stroke-width": o.strokeWidth,
+      role: o.label ? "img" : void 0,
+      "aria-label": o.label,
+      "aria-hidden": o.label ? void 0 : "true",
+      focusable: "false"
+    }, null, 8, ["style", "stroke-width", "role", "aria-label", "aria-hidden"]));
+  }
+}), _a = { class: "library-scan-page" }, ka = {
   key: 0,
   class: "loading"
-}, pa = {
+}, wa = {
   key: 1,
   class: "error"
-}, _a = {
+}, ya = {
   key: 2,
   class: "libraries-list"
-}, fa = { class: "library-info" }, ga = { class: "library-name" }, ma = { class: "library-type" }, ha = { class: "library-paths" }, ya = { class: "library-meta" }, ba = { key: 0 }, $a = {
+}, $a = { class: "library-info" }, ba = { class: "library-name" }, xa = { class: "library-type" }, Ca = { class: "library-paths" }, Ma = { class: "library-meta" }, Sa = { key: 0 }, Ia = {
   key: 0,
   class: "scan-status"
-}, ka = { class: "library-actions" }, wa = ["onClick", "disabled"], Sa = ["onClick", "disabled"], Ca = {
+}, Ba = { class: "library-actions" }, Ta = ["onClick", "disabled"], Pa = ["onClick", "disabled"], ja = {
   key: 0,
   class: "empty-state"
-}, Ta = /* @__PURE__ */ E({
+}, Ra = /* @__PURE__ */ B({
   __name: "LibraryScanPage",
-  setup(l) {
-    const t = f([]), s = f({}), r = f(!0), p = f(null);
+  setup(o) {
+    const e = m([]), r = m({}), i = m(!0), v = m(null);
     async function g() {
       try {
         const c = await U.get("/api/v1/libraries");
-        t.value = c.libraries || [];
-        for (const b of t.value)
-          y(b.id);
+        e.value = c.libraries || [];
+        for (const y of e.value)
+          k(y.id);
       } catch (c) {
-        p.value = c instanceof Error ? c.message : "Failed to load libraries";
+        v.value = c instanceof Error ? c.message : "Failed to load libraries";
       } finally {
-        r.value = !1;
+        i.value = !1;
       }
     }
-    async function y(c) {
+    async function k(c) {
       try {
-        const b = await U.get(`/api/v1/libraries/${c}/scan-status`);
-        b.job && (s.value[c] = b.job);
+        const y = await U.get(`/api/v1/libraries/${c}/scan-status`);
+        y.job && (r.value[c] = y.job);
       } catch {
       }
     }
-    async function h(c) {
+    async function _(c) {
       try {
-        await U.post(`/api/v1/libraries/${c}/scan`), await y(c);
-      } catch (b) {
-        p.value = b instanceof Error ? b.message : "Failed to trigger scan";
+        await U.post(`/api/v1/libraries/${c}/scan`), await k(c);
+      } catch (y) {
+        v.value = y instanceof Error ? y.message : "Failed to trigger scan";
       }
     }
-    async function m(c) {
+    async function f(c) {
       try {
-        await U.post(`/api/v1/libraries/${c}/rescan`), await y(c);
-      } catch (b) {
-        p.value = b instanceof Error ? b.message : "Failed to trigger rescan";
+        await U.post(`/api/v1/libraries/${c}/rescan`), await k(c);
+      } catch (y) {
+        v.value = y instanceof Error ? y.message : "Failed to trigger rescan";
       }
     }
     function u(c) {
       return c ? new Date(c).toLocaleString() : "Never";
     }
-    function o(c) {
+    function a(c) {
       if (!c) return "";
       switch (c.status) {
         case "queued":
@@ -1318,76 +2504,76 @@ const da = { class: "library-scan-page" }, va = {
           return c.status;
       }
     }
-    return j(() => {
+    return q(() => {
       g();
-    }), (c, b) => (a(), n("div", da, [
-      b[0] || (b[0] = e("div", { class: "scan-header" }, [
-        e("h1", { class: "scan-title" }, "Library Scanner"),
-        e("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")
+    }), (c, y) => (n(), s("div", _a, [
+      y[0] || (y[0] = t("div", { class: "scan-header" }, [
+        t("h1", { class: "scan-title" }, "Library Scanner"),
+        t("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")
       ], -1)),
-      r.value ? (a(), n("div", va, "Loading libraries...")) : p.value ? (a(), n("div", pa, d(p.value), 1)) : (a(), n("div", _a, [
-        (a(!0), n(L, null, I(t.value, (i) => {
-          var _, v, A, R;
-          return a(), n("div", {
-            key: i.id,
+      i.value ? (n(), s("div", ka, "Loading libraries...")) : v.value ? (n(), s("div", wa, d(v.value), 1)) : (n(), s("div", ya, [
+        (n(!0), s(R, null, L(e.value, (l) => {
+          var p, h, A, P;
+          return n(), s("div", {
+            key: l.id,
             class: "library-card"
           }, [
-            e("div", fa, [
-              e("h3", ga, d(i.name), 1),
-              e("span", ma, d(i.type), 1),
-              e("p", ha, d(i.paths.join(", ")), 1),
-              e("div", ya, [
-                i.item_count !== void 0 ? (a(), n("span", ba, d(i.item_count) + " items", 1)) : w("", !0),
-                e("span", null, "Last scan: " + d(u(i.last_scan_at)), 1)
+            t("div", $a, [
+              t("h3", ba, d(l.name), 1),
+              t("span", xa, d(l.type), 1),
+              t("p", Ca, d(l.paths.join(", ")), 1),
+              t("div", Ma, [
+                l.item_count !== void 0 ? (n(), s("span", Sa, d(l.item_count) + " items", 1)) : x("", !0),
+                t("span", null, "Last scan: " + d(u(l.last_scan_at)), 1)
               ]),
-              s.value[i.id] ? (a(), n("div", $a, d(o(s.value[i.id])), 1)) : w("", !0)
+              r.value[l.id] ? (n(), s("div", Ia, d(a(r.value[l.id])), 1)) : x("", !0)
             ]),
-            e("div", ka, [
-              e("button", {
+            t("div", Ba, [
+              t("button", {
                 class: "btn btn-scan",
-                onClick: (D) => h(i.id),
-                disabled: ((_ = s.value[i.id]) == null ? void 0 : _.status) === "running" || ((v = s.value[i.id]) == null ? void 0 : v.status) === "queued"
-              }, " Scan ", 8, wa),
-              e("button", {
+                onClick: (D) => _(l.id),
+                disabled: ((p = r.value[l.id]) == null ? void 0 : p.status) === "running" || ((h = r.value[l.id]) == null ? void 0 : h.status) === "queued"
+              }, " Scan ", 8, Ta),
+              t("button", {
                 class: "btn btn-rescan",
-                onClick: (D) => m(i.id),
-                disabled: ((A = s.value[i.id]) == null ? void 0 : A.status) === "running" || ((R = s.value[i.id]) == null ? void 0 : R.status) === "queued"
-              }, " Rescan ", 8, Sa)
+                onClick: (D) => f(l.id),
+                disabled: ((A = r.value[l.id]) == null ? void 0 : A.status) === "running" || ((P = r.value[l.id]) == null ? void 0 : P.status) === "queued"
+              }, " Rescan ", 8, Pa)
             ])
           ]);
         }), 128)),
-        t.value.length === 0 ? (a(), n("div", Ca, " No libraries configured. Add a library to get started. ")) : w("", !0)
+        e.value.length === 0 ? (n(), s("div", ja, " No libraries configured. Add a library to get started. ")) : x("", !0)
       ]))
     ]));
   }
-}), qn = /* @__PURE__ */ x(Ta, [["__scopeId", "data-v-62b3805e"]]), Pa = { class: "my-servers-page" }, xa = {
+}), Yi = /* @__PURE__ */ T(Ra, [["__scopeId", "data-v-62b3805e"]]), La = { class: "my-servers-page" }, Ea = {
   key: 0,
   class: "loading"
-}, Ra = {
+}, Aa = {
   key: 1,
   class: "error"
-}, Ea = {
+}, Fa = {
   key: 2,
   class: "servers-list"
-}, Fa = { class: "server-info" }, La = { class: "server-name" }, Ia = { class: "server-url" }, Aa = { class: "server-meta" }, Ma = { key: 0 }, Ua = {
+}, Ua = { class: "server-info" }, Na = { class: "server-name" }, Da = { class: "server-url" }, za = { class: "server-meta" }, Va = { key: 0 }, Ha = {
   key: 0,
   class: "empty-state"
-}, Na = /* @__PURE__ */ E({
+}, qa = /* @__PURE__ */ B({
   __name: "MyServersPage",
-  setup(l) {
-    const t = f([]), s = f(!0), r = f(null);
-    async function p() {
+  setup(o) {
+    const e = m([]), r = m(!0), i = m(null);
+    async function v() {
       try {
-        const h = await U.get("/api/v1/servers");
-        t.value = h.servers || [];
-      } catch (h) {
-        r.value = h instanceof Error ? h.message : "Failed to load servers";
+        const _ = await U.get("/api/v1/servers");
+        e.value = _.servers || [];
+      } catch (_) {
+        i.value = _ instanceof Error ? _.message : "Failed to load servers";
       } finally {
-        s.value = !1;
+        r.value = !1;
       }
     }
-    function g(h) {
-      switch (h) {
+    function g(_) {
+      switch (_) {
         case "online":
           return "#22c55e";
         case "offline":
@@ -1398,89 +2584,89 @@ const da = { class: "library-scan-page" }, va = {
           return "#6b7280";
       }
     }
-    function y(h) {
-      return h ? new Date(h).toLocaleString() : "Never";
+    function k(_) {
+      return _ ? new Date(_).toLocaleString() : "Never";
     }
-    return j(() => {
-      p();
-    }), (h, m) => (a(), n("div", Pa, [
-      m[2] || (m[2] = e("div", { class: "page-header" }, [
-        e("h1", { class: "page-title" }, "My Servers"),
-        e("p", { class: "page-subtitle" }, "Manage your connected media servers")
+    return q(() => {
+      v();
+    }), (_, f) => (n(), s("div", La, [
+      f[2] || (f[2] = t("div", { class: "page-header" }, [
+        t("h1", { class: "page-title" }, "My Servers"),
+        t("p", { class: "page-subtitle" }, "Manage your connected media servers")
       ], -1)),
-      s.value ? (a(), n("div", xa, "Loading servers...")) : r.value ? (a(), n("div", Ra, d(r.value), 1)) : (a(), n("div", Ea, [
-        (a(!0), n(L, null, I(t.value, (u) => (a(), n("div", {
+      r.value ? (n(), s("div", Ea, "Loading servers...")) : i.value ? (n(), s("div", Aa, d(i.value), 1)) : (n(), s("div", Fa, [
+        (n(!0), s(R, null, L(e.value, (u) => (n(), s("div", {
           key: u.id,
           class: "server-card"
         }, [
-          e("div", {
+          t("div", {
             class: "server-status",
-            style: ee({ backgroundColor: g(u.status) })
+            style: Z({ backgroundColor: g(u.status) })
           }, null, 4),
-          e("div", Fa, [
-            e("h3", La, d(u.name), 1),
-            e("p", Ia, d(u.url), 1),
-            e("div", Aa, [
-              e("span", null, d(u.owner), 1),
-              u.library_count !== void 0 ? (a(), n("span", Ma, d(u.library_count) + " libraries", 1)) : w("", !0),
-              e("span", null, "Last seen: " + d(y(u.last_seen)), 1)
+          t("div", Ua, [
+            t("h3", Na, d(u.name), 1),
+            t("p", Da, d(u.url), 1),
+            t("div", za, [
+              t("span", null, d(u.owner), 1),
+              u.library_count !== void 0 ? (n(), s("span", Va, d(u.library_count) + " libraries", 1)) : x("", !0),
+              t("span", null, "Last seen: " + d(k(u.last_seen)), 1)
             ])
           ]),
-          m[0] || (m[0] = e("div", { class: "server-actions" }, [
-            e("button", { class: "btn btn-primary" }, "Manage")
+          f[0] || (f[0] = t("div", { class: "server-actions" }, [
+            t("button", { class: "btn btn-primary" }, "Manage")
           ], -1))
         ]))), 128)),
-        t.value.length === 0 ? (a(), n("div", Ua, [...m[1] || (m[1] = [
-          e("p", null, "No servers connected yet.", -1),
-          e("button", { class: "btn btn-primary" }, "Add Server", -1)
-        ])])) : w("", !0)
+        e.value.length === 0 ? (n(), s("div", Ha, [...f[1] || (f[1] = [
+          t("p", null, "No servers connected yet.", -1),
+          t("button", { class: "btn btn-primary" }, "Add Server", -1)
+        ])])) : x("", !0)
       ]))
     ]));
   }
-}), Gn = /* @__PURE__ */ x(Na, [["__scopeId", "data-v-b9237da4"]]), Ba = { class: "federation-page" }, Da = {
+}), Ji = /* @__PURE__ */ T(qa, [["__scopeId", "data-v-b9237da4"]]), Ga = { class: "federation-page" }, Oa = {
   key: 0,
   class: "loading"
-}, qa = {
+}, Ya = {
   key: 1,
   class: "error"
-}, Ga = {
+}, Ja = {
   key: 2,
   class: "federation-content"
-}, Va = { class: "peers-section" }, ja = { class: "peers-list" }, Oa = { class: "peer-info" }, Ya = { class: "peer-name" }, Ha = { class: "peer-url" }, za = { class: "peer-meta" }, Ja = { key: 0 }, Ka = { class: "peer-actions" }, Xa = ["onClick"], Wa = {
+}, Ka = { class: "peers-section" }, Wa = { class: "peers-list" }, Xa = { class: "peer-info" }, Qa = { class: "peer-name" }, Za = { class: "peer-url" }, ei = { class: "peer-meta" }, ti = { key: 0 }, ni = { class: "peer-actions" }, si = ["onClick"], oi = {
   key: 1,
   class: "status-badge"
-}, Qa = {
+}, ri = {
   key: 0,
   class: "empty-state"
-}, Za = { class: "add-peer-section" }, en = /* @__PURE__ */ E({
+}, ai = { class: "add-peer-section" }, ii = /* @__PURE__ */ B({
   __name: "FederationPage",
-  setup(l) {
-    const t = f([]), s = f(!0), r = f(null);
-    async function p() {
+  setup(o) {
+    const e = m([]), r = m(!0), i = m(null);
+    async function v() {
       try {
         const u = await U.get("/api/v1/federation/peers");
-        t.value = u.peers || [];
+        e.value = u.peers || [];
       } catch (u) {
-        r.value = u instanceof Error ? u.message : "Failed to load federation peers";
+        i.value = u instanceof Error ? u.message : "Failed to load federation peers";
       } finally {
-        s.value = !1;
+        r.value = !1;
       }
     }
     async function g(u) {
       try {
-        await U.post("/api/v1/federation/connect", { url: u }), await p();
-      } catch (o) {
-        r.value = o instanceof Error ? o.message : "Failed to connect to peer";
+        await U.post("/api/v1/federation/connect", { url: u }), await v();
+      } catch (a) {
+        i.value = a instanceof Error ? a.message : "Failed to connect to peer";
       }
     }
-    async function y(u) {
+    async function k(u) {
       try {
-        await U.post(`/api/v1/federation/peers/${u}/disconnect`), await p();
-      } catch (o) {
-        r.value = o instanceof Error ? o.message : "Failed to disconnect peer";
+        await U.post(`/api/v1/federation/peers/${u}/disconnect`), await v();
+      } catch (a) {
+        i.value = a instanceof Error ? a.message : "Failed to disconnect peer";
       }
     }
-    function h(u) {
+    function _(u) {
       switch (u) {
         case "connected":
           return "#22c55e";
@@ -1492,61 +2678,61 @@ const da = { class: "library-scan-page" }, va = {
           return "#6b7280";
       }
     }
-    function m(u) {
+    function f(u) {
       return u ? new Date(u).toLocaleString() : "Never";
     }
-    return j(() => {
-      p();
-    }), (u, o) => (a(), n("div", Ba, [
-      o[5] || (o[5] = e("div", { class: "page-header" }, [
-        e("h1", { class: "page-title" }, "Federation"),
-        e("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")
+    return q(() => {
+      v();
+    }), (u, a) => (n(), s("div", Ga, [
+      a[5] || (a[5] = t("div", { class: "page-header" }, [
+        t("h1", { class: "page-title" }, "Federation"),
+        t("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")
       ], -1)),
-      s.value ? (a(), n("div", Da, "Loading federation peers...")) : r.value ? (a(), n("div", qa, d(r.value), 1)) : (a(), n("div", Ga, [
-        e("div", Va, [
-          o[2] || (o[2] = e("h2", { class: "section-title" }, "Connected Peers", -1)),
-          e("div", ja, [
-            (a(!0), n(L, null, I(t.value, (c) => (a(), n("div", {
+      r.value ? (n(), s("div", Oa, "Loading federation peers...")) : i.value ? (n(), s("div", Ya, d(i.value), 1)) : (n(), s("div", Ja, [
+        t("div", Ka, [
+          a[2] || (a[2] = t("h2", { class: "section-title" }, "Connected Peers", -1)),
+          t("div", Wa, [
+            (n(!0), s(R, null, L(e.value, (c) => (n(), s("div", {
               key: c.id,
               class: "peer-card"
             }, [
-              e("div", {
+              t("div", {
                 class: "peer-status",
-                style: ee({ backgroundColor: h(c.status) })
+                style: Z({ backgroundColor: _(c.status) })
               }, null, 4),
-              e("div", Oa, [
-                e("h3", Ya, d(c.name), 1),
-                e("p", Ha, d(c.url), 1),
-                e("div", za, [
-                  c.shared_libraries_count !== void 0 ? (a(), n("span", Ja, d(c.shared_libraries_count) + " shared libraries", 1)) : w("", !0),
-                  e("span", null, "Last sync: " + d(m(c.last_sync)), 1)
+              t("div", Xa, [
+                t("h3", Qa, d(c.name), 1),
+                t("p", Za, d(c.url), 1),
+                t("div", ei, [
+                  c.shared_libraries_count !== void 0 ? (n(), s("span", ti, d(c.shared_libraries_count) + " shared libraries", 1)) : x("", !0),
+                  t("span", null, "Last sync: " + d(f(c.last_sync)), 1)
                 ])
               ]),
-              e("div", Ka, [
-                c.status === "connected" ? (a(), n("button", {
+              t("div", ni, [
+                c.status === "connected" ? (n(), s("button", {
                   key: 0,
                   class: "btn btn-secondary",
-                  onClick: (b) => y(c.id)
-                }, " Disconnect ", 8, Xa)) : c.status === "pending" ? (a(), n("span", Wa, "Pending")) : w("", !0)
+                  onClick: (y) => k(c.id)
+                }, " Disconnect ", 8, si)) : c.status === "pending" ? (n(), s("span", oi, "Pending")) : x("", !0)
               ])
             ]))), 128)),
-            t.value.length === 0 ? (a(), n("div", Qa, [...o[1] || (o[1] = [
-              e("p", null, "No federation peers connected.", -1)
-            ])])) : w("", !0)
+            e.value.length === 0 ? (n(), s("div", ri, [...a[1] || (a[1] = [
+              t("p", null, "No federation peers connected.", -1)
+            ])])) : x("", !0)
           ])
         ]),
-        e("div", Za, [
-          o[4] || (o[4] = e("h2", { class: "section-title" }, "Add Peer", -1)),
-          e("form", {
+        t("div", ai, [
+          a[4] || (a[4] = t("h2", { class: "section-title" }, "Add Peer", -1)),
+          t("form", {
             class: "add-peer-form",
-            onSubmit: o[0] || (o[0] = W((c) => g(""), ["prevent"]))
-          }, [...o[3] || (o[3] = [
-            e("input", {
+            onSubmit: a[0] || (a[0] = Q((c) => g(""), ["prevent"]))
+          }, [...a[3] || (a[3] = [
+            t("input", {
               type: "url",
               placeholder: "https://other-server.example.com",
               class: "peer-input"
             }, null, -1),
-            e("button", {
+            t("button", {
               type: "submit",
               class: "btn btn-primary"
             }, "Connect", -1)
@@ -1555,212 +2741,213 @@ const da = { class: "library-scan-page" }, va = {
       ]))
     ]));
   }
-}), Vn = /* @__PURE__ */ x(en, [["__scopeId", "data-v-91ba2781"]]), tn = { class: "manage-shares-page" }, sn = {
+}), Ki = /* @__PURE__ */ T(ii, [["__scopeId", "data-v-91ba2781"]]), li = { class: "manage-shares-page" }, ci = {
   key: 0,
   class: "loading"
-}, an = {
+}, ui = {
   key: 1,
   class: "error"
-}, nn = {
+}, di = {
   key: 2,
   class: "shares-list"
-}, on = { class: "share-info" }, ln = { class: "share-library" }, rn = { class: "share-meta" }, cn = {
+}, vi = { class: "share-info" }, hi = { class: "share-library" }, pi = { class: "share-meta" }, mi = {
   key: 0,
   class: "expired-badge"
-}, un = { class: "share-dates" }, dn = { key: 0 }, vn = { class: "share-actions" }, pn = ["onClick"], _n = {
+}, gi = { class: "share-dates" }, fi = { key: 0 }, _i = { class: "share-actions" }, ki = ["onClick"], wi = {
   key: 0,
   class: "empty-state"
-}, fn = /* @__PURE__ */ E({
+}, yi = /* @__PURE__ */ B({
   __name: "ManageSharesPage",
-  setup(l) {
-    const t = f([]), s = f(!0), r = f(null);
-    async function p() {
+  setup(o) {
+    const e = m([]), r = m(!0), i = m(null);
+    async function v() {
       try {
-        const m = await U.get("/api/v1/shares");
-        t.value = m.shares || [];
-      } catch (m) {
-        r.value = m instanceof Error ? m.message : "Failed to load shares";
+        const f = await U.get("/api/v1/shares");
+        e.value = f.shares || [];
+      } catch (f) {
+        i.value = f instanceof Error ? f.message : "Failed to load shares";
       } finally {
-        s.value = !1;
+        r.value = !1;
       }
     }
-    async function g(m) {
+    async function g(f) {
       try {
-        await U.delete(`/api/v1/shares/${m}`), await p();
+        await U.delete(`/api/v1/shares/${f}`), await v();
       } catch (u) {
-        r.value = u instanceof Error ? u.message : "Failed to revoke share";
+        i.value = u instanceof Error ? u.message : "Failed to revoke share";
       }
     }
-    function y(m) {
-      return new Date(m).toLocaleString();
+    function k(f) {
+      return new Date(f).toLocaleString();
     }
-    function h(m) {
-      return m ? new Date(m) < /* @__PURE__ */ new Date() : !1;
+    function _(f) {
+      return f ? new Date(f) < /* @__PURE__ */ new Date() : !1;
     }
-    return j(() => {
-      p();
-    }), (m, u) => (a(), n("div", tn, [
-      u[1] || (u[1] = e("div", { class: "page-header" }, [
-        e("h1", { class: "page-title" }, "Manage Shares"),
-        e("p", { class: "page-subtitle" }, "View and manage your shared libraries")
+    return q(() => {
+      v();
+    }), (f, u) => (n(), s("div", li, [
+      u[1] || (u[1] = t("div", { class: "page-header" }, [
+        t("h1", { class: "page-title" }, "Manage Shares"),
+        t("p", { class: "page-subtitle" }, "View and manage your shared libraries")
       ], -1)),
-      s.value ? (a(), n("div", sn, "Loading shares...")) : r.value ? (a(), n("div", an, d(r.value), 1)) : (a(), n("div", nn, [
-        (a(!0), n(L, null, I(t.value, (o) => (a(), n("div", {
-          key: o.id,
+      r.value ? (n(), s("div", ci, "Loading shares...")) : i.value ? (n(), s("div", ui, d(i.value), 1)) : (n(), s("div", di, [
+        (n(!0), s(R, null, L(e.value, (a) => (n(), s("div", {
+          key: a.id,
           class: "share-card"
         }, [
-          e("div", on, [
-            e("h3", ln, d(o.library_name), 1),
-            e("div", rn, [
-              e("span", null, "Shared with: " + d(o.shared_with), 1),
-              e("span", {
-                class: X(["permission-badge", o.permissions])
-              }, d(o.permissions), 3),
-              o.expires_at && h(o.expires_at) ? (a(), n("span", cn, "Expired")) : w("", !0)
+          t("div", vi, [
+            t("h3", hi, d(a.library_name), 1),
+            t("div", pi, [
+              t("span", null, "Shared with: " + d(a.shared_with), 1),
+              t("span", {
+                class: X(["permission-badge", a.permissions])
+              }, d(a.permissions), 3),
+              a.expires_at && _(a.expires_at) ? (n(), s("span", mi, "Expired")) : x("", !0)
             ]),
-            e("p", un, [
-              Y(" Created: " + d(y(o.created_at)) + " ", 1),
-              o.expires_at ? (a(), n("span", dn, " | Expires: " + d(y(o.expires_at)), 1)) : w("", !0)
+            t("p", gi, [
+              O(" Created: " + d(k(a.created_at)) + " ", 1),
+              a.expires_at ? (n(), s("span", fi, " | Expires: " + d(k(a.expires_at)), 1)) : x("", !0)
             ])
           ]),
-          e("div", vn, [
-            e("button", {
+          t("div", _i, [
+            t("button", {
               class: "btn btn-danger",
-              onClick: (c) => g(o.id)
-            }, "Revoke", 8, pn)
+              onClick: (c) => g(a.id)
+            }, "Revoke", 8, ki)
           ])
         ]))), 128)),
-        t.value.length === 0 ? (a(), n("div", _n, [...u[0] || (u[0] = [
-          e("p", null, "No library shares found.", -1)
-        ])])) : w("", !0)
+        e.value.length === 0 ? (n(), s("div", wi, [...u[0] || (u[0] = [
+          t("p", null, "No library shares found.", -1)
+        ])])) : x("", !0)
       ]))
     ]));
   }
-}), jn = /* @__PURE__ */ x(fn, [["__scopeId", "data-v-bd8771ac"]]), gn = { class: "audit-logs-page" }, mn = {
+}), Wi = /* @__PURE__ */ T(yi, [["__scopeId", "data-v-bd8771ac"]]), $i = { class: "audit-logs-page" }, bi = {
   key: 0,
   class: "loading"
-}, hn = {
+}, xi = {
   key: 1,
   class: "error"
-}, yn = {
+}, Ci = {
   key: 2,
   class: "logs-container"
-}, bn = { class: "logs-list" }, $n = { class: "log-content" }, kn = { class: "log-header" }, wn = { class: "log-action" }, Sn = { class: "log-actor" }, Cn = { class: "log-time" }, Tn = {
+}, Mi = { class: "logs-list" }, Si = { class: "log-content" }, Ii = { class: "log-header" }, Bi = { class: "log-action" }, Ti = { class: "log-actor" }, Pi = { class: "log-time" }, ji = {
   key: 0,
   class: "log-target"
-}, Pn = {
+}, Ri = {
   key: 1,
   class: "log-details"
-}, xn = {
+}, Li = {
   key: 2,
   class: "log-ip"
-}, Rn = {
+}, Ei = {
   key: 0,
   class: "empty-state"
-}, En = {
+}, Ai = {
   key: 0,
   class: "pagination"
-}, Fn = ["disabled"], Ln = { class: "page-info" }, In = ["disabled"], An = /* @__PURE__ */ E({
+}, Fi = ["disabled"], Ui = { class: "page-info" }, Ni = ["disabled"], Di = /* @__PURE__ */ B({
   __name: "AuditLogsPage",
-  setup(l) {
-    const t = f([]), s = f(!0), r = f(null), p = f(1), g = f(1);
-    async function y(o = 1) {
+  setup(o) {
+    const e = m([]), r = m(!0), i = m(null), v = m(1), g = m(1);
+    async function k(a = 1) {
       try {
-        s.value = !0;
+        r.value = !0;
         const c = await U.get(
           "/api/v1/audit-logs",
-          { page: String(o) }
+          { page: String(a) }
         );
-        t.value = c.logs || [], p.value = c.page || 1, g.value = c.total_pages || 1;
+        e.value = c.logs || [], v.value = c.page || 1, g.value = c.total_pages || 1;
       } catch (c) {
-        r.value = c instanceof Error ? c.message : "Failed to load audit logs";
+        i.value = c instanceof Error ? c.message : "Failed to load audit logs";
       } finally {
-        s.value = !1;
+        r.value = !1;
       }
     }
-    function h(o) {
-      return new Date(o).toLocaleString();
+    function _(a) {
+      return new Date(a).toLocaleString();
     }
-    function m(o) {
-      return o.includes("create") || o.includes("add") ? "#22c55e" : o.includes("delete") || o.includes("remove") ? "#ef4444" : o.includes("update") || o.includes("edit") ? "#3b82f6" : o.includes("login") || o.includes("auth") ? "#8b5cf6" : "#6b7280";
+    function f(a) {
+      return a.includes("create") || a.includes("add") ? "#22c55e" : a.includes("delete") || a.includes("remove") ? "#ef4444" : a.includes("update") || a.includes("edit") ? "#3b82f6" : a.includes("login") || a.includes("auth") ? "#8b5cf6" : "#6b7280";
     }
-    function u(o) {
-      return o.includes("create") || o.includes("add") ? "+" : o.includes("delete") || o.includes("remove") ? "-" : o.includes("update") || o.includes("edit") ? "~" : o.includes("login") || o.includes("auth") ? "@" : "#";
+    function u(a) {
+      return a.includes("create") || a.includes("add") ? "+" : a.includes("delete") || a.includes("remove") ? "-" : a.includes("update") || a.includes("edit") ? "~" : a.includes("login") || a.includes("auth") ? "@" : "#";
     }
-    return j(() => {
-      y();
-    }), (o, c) => (a(), n("div", gn, [
-      c[3] || (c[3] = e("div", { class: "page-header" }, [
-        e("h1", { class: "page-title" }, "Audit Logs"),
-        e("p", { class: "page-subtitle" }, "View system activity and user actions")
+    return q(() => {
+      k();
+    }), (a, c) => (n(), s("div", $i, [
+      c[3] || (c[3] = t("div", { class: "page-header" }, [
+        t("h1", { class: "page-title" }, "Audit Logs"),
+        t("p", { class: "page-subtitle" }, "View system activity and user actions")
       ], -1)),
-      s.value ? (a(), n("div", mn, "Loading audit logs...")) : r.value ? (a(), n("div", hn, d(r.value), 1)) : (a(), n("div", yn, [
-        e("div", bn, [
-          (a(!0), n(L, null, I(t.value, (b) => (a(), n("div", {
-            key: b.id,
+      r.value ? (n(), s("div", bi, "Loading audit logs...")) : i.value ? (n(), s("div", xi, d(i.value), 1)) : (n(), s("div", Ci, [
+        t("div", Mi, [
+          (n(!0), s(R, null, L(e.value, (y) => (n(), s("div", {
+            key: y.id,
             class: "log-entry"
           }, [
-            e("div", {
+            t("div", {
               class: "log-icon",
-              style: ee({ backgroundColor: m(b.action) })
-            }, d(u(b.action)), 5),
-            e("div", $n, [
-              e("div", kn, [
-                e("span", wn, d(b.action), 1),
-                e("span", Sn, d(b.actor), 1),
-                e("span", Cn, d(h(b.created_at)), 1)
+              style: Z({ backgroundColor: f(y.action) })
+            }, d(u(y.action)), 5),
+            t("div", Si, [
+              t("div", Ii, [
+                t("span", Bi, d(y.action), 1),
+                t("span", Ti, d(y.actor), 1),
+                t("span", Pi, d(_(y.created_at)), 1)
               ]),
-              b.target ? (a(), n("p", Tn, "Target: " + d(b.target), 1)) : w("", !0),
-              b.details ? (a(), n("p", Pn, d(b.details), 1)) : w("", !0),
-              b.ip_address ? (a(), n("span", xn, "IP: " + d(b.ip_address), 1)) : w("", !0)
+              y.target ? (n(), s("p", ji, "Target: " + d(y.target), 1)) : x("", !0),
+              y.details ? (n(), s("p", Ri, d(y.details), 1)) : x("", !0),
+              y.ip_address ? (n(), s("span", Li, "IP: " + d(y.ip_address), 1)) : x("", !0)
             ])
           ]))), 128)),
-          t.value.length === 0 ? (a(), n("div", Rn, [...c[2] || (c[2] = [
-            e("p", null, "No audit logs found.", -1)
-          ])])) : w("", !0)
+          e.value.length === 0 ? (n(), s("div", Ei, [...c[2] || (c[2] = [
+            t("p", null, "No audit logs found.", -1)
+          ])])) : x("", !0)
         ]),
-        g.value > 1 ? (a(), n("div", En, [
-          e("button", {
+        g.value > 1 ? (n(), s("div", Ai, [
+          t("button", {
             class: "btn btn-secondary",
-            disabled: p.value <= 1,
-            onClick: c[0] || (c[0] = (b) => y(p.value - 1))
-          }, " Previous ", 8, Fn),
-          e("span", Ln, "Page " + d(p.value) + " of " + d(g.value), 1),
-          e("button", {
+            disabled: v.value <= 1,
+            onClick: c[0] || (c[0] = (y) => k(v.value - 1))
+          }, " Previous ", 8, Fi),
+          t("span", Ui, "Page " + d(v.value) + " of " + d(g.value), 1),
+          t("button", {
             class: "btn btn-secondary",
-            disabled: p.value >= g.value,
-            onClick: c[1] || (c[1] = (b) => y(p.value + 1))
-          }, " Next ", 8, In)
-        ])) : w("", !0)
+            disabled: v.value >= g.value,
+            onClick: c[1] || (c[1] = (y) => k(v.value + 1))
+          }, " Next ", 8, Ni)
+        ])) : x("", !0)
       ]))
     ]));
   }
-}), On = /* @__PURE__ */ x(An, [["__scopeId", "data-v-05910fd9"]]);
+}), Xi = /* @__PURE__ */ T(Di, [["__scopeId", "data-v-05910fd9"]]);
 export {
-  te as ApiClient,
-  Je as ApiError,
-  qe as AppLayout,
-  On as AuditLogsPage,
-  Jt as BrowsePage,
-  Vn as FederationPage,
-  qt as FilterBar,
-  qn as LibraryScanPage,
-  gs as LocalStorageTokenStore,
-  Cs as LoginForm,
-  Rs as LoginPage,
-  jn as ManageSharesPage,
-  ct as MediaCard,
+  se as ApiClient,
+  We as ApiError,
+  Ve as AppLayout,
+  Xi as AuditLogsPage,
+  Wt as BrowsePage,
+  Ki as FederationPage,
+  Vt as FilterBar,
+  Oi as Icon,
+  Yi as LibraryScanPage,
+  kn as LocalStorageTokenStore,
+  In as LoginForm,
+  jn as LoginPage,
+  Wi as ManageSharesPage,
+  dt as MediaCard,
   ft as MediaGrid,
-  Gn as MyServersPage,
-  je as PhlixApp,
-  us as Player,
-  fs as PlayerPage,
-  oa as SettingsForm,
-  ia as SettingsPage,
-  Gs as SignupForm,
-  Ys as SignupPage,
-  Dn as createPhlixApp,
-  ce as useAuthStore,
-  fe as useMediaStore
+  Ji as MyServersPage,
+  Ge as PhlixApp,
+  hn as Player,
+  _n as PlayerPage,
+  ls as SettingsForm,
+  ds as SettingsPage,
+  qn as SignupForm,
+  Jn as SignupPage,
+  Gi as createPhlixApp,
+  ue as useAuthStore,
+  ge as useMediaStore
 };
 //# sourceMappingURL=phlix-ui.js.map

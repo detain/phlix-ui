@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import Icons from 'unplugin-icons/vite';
 import { resolve } from 'node:path';
 
 export default defineConfig({
-    plugins: [vue()],
+    // unplugin-icons resolves the `~icons/lucide/*` virtual modules that Icon.vue
+    // imports, compiling each to an inline Vue SFC. Only the icons actually
+    // imported get bundled (tree-shaken); no runtime icon font/sprite.
+    plugins: [vue(), Icons({ compiler: 'vue3', scale: 1 })],
     build: {
         // Emit fonts (and other binary assets) as separate hashed files in
         // dist/assets/ rather than base64-inlining them into style.css — keeps
