@@ -13,6 +13,10 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router';
 import AppLayout from './AppLayout.vue';
+import { useTheme } from '../composables/useTheme';
+
+// Reflect the preferences store onto <html> (theme / accent / density / motion).
+useTheme();
 </script>
 
 <style scoped>

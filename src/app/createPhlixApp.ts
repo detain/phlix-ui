@@ -8,6 +8,7 @@ import PlayerPage from '../pages/PlayerPage.vue';
 import LoginPage from '../pages/LoginPage.vue';
 import SignupPage from '../pages/SignupPage.vue';
 import SettingsPage from '../pages/SettingsPage.vue';
+import { applyStoredThemeEarly } from '../composables/useTheme';
 import type { PhlixAppConfig } from './types';
 
 declare global {
@@ -84,6 +85,9 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
         ...readConfig(),
         ...config,
     };
+
+    // Set <html> theme/density/accent from persisted prefs before mount → no flash.
+    applyStoredThemeEarly();
 
     const pinia = createPinia();
     const routerBase = fullConfig.routerBase || '/app';
