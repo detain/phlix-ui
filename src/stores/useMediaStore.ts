@@ -14,6 +14,29 @@ interface MediaResponse {
     offset: number;
 }
 
+interface CacheEntry {
+    items: MediaItem[];
+    total: number;
+    ts: number;
+}
+
+/** Cache TTL (ms). A query re-issued within this window is served from memory. */
+const CACHE_TTL = 60_000;
+/** Debounce for search-driven refetch (ms). */
+const SEARCH_DEBOUNCE = 250;
+
+function isAbort(e: unknown): boolean {
+    return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
+}
+
+/**
+ * useMediaStore (rewritten R1.2) — same public API as 0.7.0 plus:
+ *   · query-keyed in-memory cache (TTL) — instant back/forward + revisited pages
+ *   · in-flight dedupe + AbortController (superseded filter queries are cancelled)
+ *   · debounced search refetch (scheduleFetch)
+ *   · prefetch(params) to warm the cache (hover / next page)
+ *   · URL-sync helpers (toQuery / applyQuery) — wire with bindMediaStoreToRouter
+ */
 export const useMediaStore = defineStore('media', () => {
     const items = ref<MediaItem[]>([]);
     const total = ref(0);
@@ -31,7 +54,7 @@ export const useMediaStore = defineStore('media', () => {
     const limit = ref(24);
     const offset = ref(0);
 
-    const hasMore = computed(() => offset.value + items.value.length < total.value);
+    const hasMore = computed(() => items.value.length < total.value);
 
     const queryParams = computed<LibraryQueryParams>(() => {
         const p: LibraryQueryParams = {};
@@ -50,55 +73,175 @@ export const useMediaStore = defineStore('media', () => {
 
     const availableGenres = computed(() => {
         const genres = new Set<string>();
-        items.value.forEach(item => item.genres?.forEach(g => genres.add(g)));
+        items.value.forEach((item) => item.genres?.forEach((g) => genres.add(g)));
         return Array.from(genres).sort();
     });
-
     const availableRatings = ['G', 'PG', 'PG-13', 'R', 'NC-17', 'X', 'UNRATED'];
-
     const availableTypes: MediaType[] = ['movie', 'series', 'episode', 'audio', 'image'];
 
-    function buildApiQuery(apiBase: string): string {
-        const params = new URLSearchParams();
-        const q = queryParams.value;
-        if (q.search) params.set('search', q.search);
-        q.genres?.forEach(g => params.append('genres', g));
-        if (q.yearFrom !== undefined) params.set('yearFrom', String(q.yearFrom));
-        if (q.yearTo !== undefined) params.set('yearTo', String(q.yearTo));
-        q.ratings?.forEach(r => params.append('ratings', r));
-        q.types?.forEach(t => params.append('types', t));
-        if (q.sort) params.set('sort', q.sort);
-        if (q.order) params.set('order', q.order);
-        params.set('limit', String(q.limit));
-        params.set('offset', String(q.offset));
-        return `${apiBase}/api/v1/media?${params.toString()}`;
+    // ---- query (de)serialization --------------------------------------------
+    function buildParams(params: LibraryQueryParams): URLSearchParams {
+        const sp = new URLSearchParams();
+        if (params.search) sp.set('search', params.search);
+        params.genres?.forEach((g) => sp.append('genres', g));
+        if (params.yearFrom !== undefined) sp.set('yearFrom', String(params.yearFrom));
+        if (params.yearTo !== undefined) sp.set('yearTo', String(params.yearTo));
+        params.ratings?.forEach((r) => sp.append('ratings', r));
+        params.types?.forEach((t) => sp.append('types', t));
+        if (params.sort) sp.set('sort', params.sort);
+        if (params.order) sp.set('order', params.order);
+        sp.set('limit', String(params.limit));
+        sp.set('offset', String(params.offset));
+        return sp;
+    }
+    function buildApiQuery(apiBase: string, params: LibraryQueryParams): string {
+        return `${apiBase}/api/v1/media?${buildParams(params).toString()}`;
+    }
+    function cacheKey(params: LibraryQueryParams): string {
+        return buildParams(params).toString();
+    }
+
+    // ---- cache + in-flight --------------------------------------------------
+    const cache = new Map<string, CacheEntry>();
+    const inflight = new Map<string, { promise: Promise<MediaResponse>; controller: AbortController }>();
+    let activeKey: string | null = null;
+    let activeController: AbortController | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+    function fresh(entry: CacheEntry | undefined): entry is CacheEntry {
+        return !!entry && Date.now() - entry.ts < CACHE_TTL;
+    }
+
+    function networkFetch(apiBase: string, params: LibraryQueryParams, key: string, track: boolean): Promise<MediaResponse> {
+        // A tracked fetch always becomes the active query — even when it dedupes
+        // onto an in-flight prefetch — so its result is applied + loading clears.
+        if (track) {
+            if (activeController && key !== activeKey) activeController.abort(); // cancel superseded
+            activeKey = key;
+        }
+
+        const existing = inflight.get(key);
+        if (existing) {
+            if (track) activeController = existing.controller;
+            return existing.promise;
+        }
+
+        const controller = new AbortController();
+        if (track) activeController = controller;
+        const client = new ApiClient({ baseUrl: apiBase });
+        const promise = client
+            .get<MediaResponse>(buildApiQuery(apiBase, params), undefined, controller.signal)
+            .then((res) => {
+                cache.set(key, { items: res.items, total: res.total, ts: Date.now() });
+                return res;
+            })
+            .finally(() => {
+                inflight.delete(key);
+            });
+        inflight.set(key, { promise, controller });
+        return promise;
+    }
+
+    function applyResult(res: { items: MediaItem[]; total: number }, append: boolean): void {
+        items.value = append ? [...items.value, ...res.items] : res.items;
+        total.value = res.total;
     }
 
     async function fetchMedia(apiBase: string, append = false): Promise<void> {
+        const params = { ...queryParams.value };
+        const key = cacheKey(params);
+
+        // Serve from cache on both the first page and appended pages (e.g. a
+        // page warmed by prefetch) without hitting the network.
+        const cached = cache.get(key);
+        if (fresh(cached)) {
+            applyResult(cached, append);
+            error.value = null;
+            return;
+        }
+
         loading.value = true;
         error.value = null;
-
         try {
-            const client = new ApiClient({ baseUrl: apiBase });
-            const url = buildApiQuery(apiBase);
-            const response = await client.get<MediaResponse>(url);
-
-            if (append) {
-                items.value = [...items.value, ...response.items];
-            } else {
-                items.value = response.items;
-            }
-            total.value = response.total;
-            offset.value = (response.offset ?? 0) + response.items.length;
+            const res = await networkFetch(apiBase, params, key, !append);
+            // drop a superseded result even if its request resolved late un-aborted
+            if (!append && key !== activeKey) return;
+            applyResult(res, append);
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'Failed to load media';
+            if (isAbort(e)) return; // superseded — newer request owns the state
+            if (append || key === activeKey) error.value = e instanceof Error ? e.message : 'Failed to load media';
         } finally {
-            loading.value = false;
+            if (append || key === activeKey) loading.value = false;
         }
     }
 
+    /** Debounced refetch (page 0) — for search/filter typing (≤1 call per pause). */
+    function scheduleFetch(apiBase: string, delay = SEARCH_DEBOUNCE): void {
+        offset.value = 0;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => fetchMedia(apiBase, false), delay);
+    }
+
     async function loadMore(apiBase: string): Promise<void> {
+        if (loading.value || !hasMore.value) return;
+        offset.value = items.value.length;
         await fetchMedia(apiBase, true);
+    }
+
+    /** Warm the cache for a param override (next page / hovered filter) without touching visible state. */
+    async function prefetch(apiBase: string, overrides: Partial<LibraryQueryParams> = {}): Promise<void> {
+        const params = { ...queryParams.value, ...overrides };
+        const key = cacheKey(params);
+        if (fresh(cache.get(key))) return;
+        try {
+            await networkFetch(apiBase, params, key, false);
+        } catch {
+            /* prefetch failures are silent */
+        }
+    }
+
+    function clearCache(): void {
+        cache.clear();
+    }
+
+    /** Cancel a pending debounced fetch (call on teardown — see bindMediaStoreToRouter). */
+    function cancelScheduled(): void {
+        clearTimeout(debounceTimer);
+    }
+
+    // ---- URL sync -----------------------------------------------------------
+    /** Current filters as a flat query object (paging omitted — it's transient). */
+    function toQuery(): Record<string, string | string[]> {
+        const q: Record<string, string | string[]> = {};
+        if (search.value) q.search = search.value;
+        if (selectedGenres.value.length) q.genres = [...selectedGenres.value];
+        if (yearFrom.value !== undefined) q.yearFrom = String(yearFrom.value);
+        if (yearTo.value !== undefined) q.yearTo = String(yearTo.value);
+        if (selectedRatings.value.length) q.ratings = [...selectedRatings.value];
+        if (selectedTypes.value.length) q.types = [...selectedTypes.value];
+        if (sort.value !== 'name') q.sort = sort.value;
+        if (order.value !== 'asc') q.order = order.value;
+        return q;
+    }
+    function asArray(v: string | string[] | undefined | null): string[] {
+        if (v == null) return [];
+        return Array.isArray(v) ? v.filter((x): x is string => x != null) : [v];
+    }
+    /** Restore filters from a route query object (back/forward, deep links). */
+    function applyQuery(q: Record<string, string | string[] | null | undefined>): void {
+        search.value = (Array.isArray(q.search) ? q.search[0] : q.search) ?? '';
+        selectedGenres.value = asArray(q.genres);
+        selectedRatings.value = asArray(q.ratings);
+        selectedTypes.value = asArray(q.types) as MediaType[];
+        const yf = Array.isArray(q.yearFrom) ? q.yearFrom[0] : q.yearFrom;
+        const yt = Array.isArray(q.yearTo) ? q.yearTo[0] : q.yearTo;
+        yearFrom.value = yf ? Number(yf) : undefined;
+        yearTo.value = yt ? Number(yt) : undefined;
+        const s = (Array.isArray(q.sort) ? q.sort[0] : q.sort) as SortField | undefined;
+        const o = (Array.isArray(q.order) ? q.order[0] : q.order) as SortOrder | undefined;
+        sort.value = s ?? 'name';
+        order.value = o ?? 'asc';
+        offset.value = 0;
     }
 
     function reset(): void {
@@ -107,33 +250,27 @@ export const useMediaStore = defineStore('media', () => {
         offset.value = 0;
         error.value = null;
     }
-
     function setSearch(v: string): void {
         search.value = v;
         offset.value = 0;
     }
-
     function setGenres(v: string[]): void {
         selectedGenres.value = v;
         offset.value = 0;
     }
-
     function setYearRange(from: number | undefined, to: number | undefined): void {
         yearFrom.value = from;
         yearTo.value = to;
         offset.value = 0;
     }
-
     function setRatings(v: string[]): void {
         selectedRatings.value = v;
         offset.value = 0;
     }
-
     function setTypes(v: MediaType[]): void {
         selectedTypes.value = v;
         offset.value = 0;
     }
-
     function setSort(field: SortField, ord?: SortOrder): void {
         sort.value = field;
         if (ord) order.value = ord;
@@ -161,7 +298,13 @@ export const useMediaStore = defineStore('media', () => {
         availableRatings,
         availableTypes,
         fetchMedia,
+        scheduleFetch,
         loadMore,
+        prefetch,
+        clearCache,
+        cancelScheduled,
+        toQuery,
+        applyQuery,
         reset,
         setSearch,
         setGenres,
