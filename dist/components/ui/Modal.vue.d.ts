@@ -14,11 +14,11 @@ type __VLS_Slots = {} & {
     footer?: (props: typeof __VLS_22) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
-    "update:modelValue": (v: boolean) => any;
     close: () => any;
+    "update:modelValue": (v: boolean) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
-    "onUpdate:modelValue"?: ((v: boolean) => any) | undefined;
     onClose?: (() => any) | undefined;
+    "onUpdate:modelValue"?: ((v: boolean) => any) | undefined;
 }>, {
     size: "sm" | "md" | "lg";
     dismissible: boolean;

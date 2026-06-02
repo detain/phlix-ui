@@ -57,4 +57,4 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
     reset: () => void;
-}, "snapshot" | "reset">>;
+}, "reset" | "snapshot">>;

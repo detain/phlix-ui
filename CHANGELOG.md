@@ -11,6 +11,18 @@ The UI Redo (R0→R6) re-skins every surface on a tokenized, multi-theme, custom
 system. Additive + back-compatible during R0–R5; first tag at the end of R1.
 
 ### Added
+- **Command palette (R1.4):** `useCommandStore` (Pinia) — a fuzzy-ranked command **registry**
+  (`register`/`unregister` with a disposer, dedupe by id), palette state (`open`/`query`,
+  `open/close/togglePalette`), and a persisted **recent-actions** list (`localStorage('phlix.cmd.recents')`,
+  capped at 8, surfaced first when the query is empty). `runId` records-recent → closes → runs. Exported
+  pure helpers `fuzzyScore`/`matchCommand`. New `CommandPalette.vue` — a Teleported **⌘K / Ctrl-K** overlay
+  (built on `useFocusTrap` for scroll-lock + Esc + focus-restore) implementing the WAI-ARIA combobox/listbox
+  pattern (input owns `aria-activedescendant`, full keyboard nav: Up/Down/Home/End/Enter, Esc + backdrop to
+  close) with grouped sections (Recent + per-group) and a synthetic "Search library" fallback that routes to
+  Browse with `?search=`. Ships built-in commands (navigation, theme switch, density/motion/atmosphere
+  toggles, reset) and registers **app-injected commands** via the new `PhlixAppConfig.commands` (provided
+  under the `phlixCommands` key by `createPhlixApp`; the palette is mounted once in the app shell). Exported:
+  `useCommandStore`, `CommandPalette`, `Command`, `fuzzyScore`, `matchCommand`.
 - **Player store (R1.3):** `usePlayerStore` (Pinia singleton) — current media + queue/up-next, transport
   state (position/duration/buffered), user selections (volume/muted/rate/quality/subtitle, seeded from
   prefs), a persisted + throttled **resume map** (records positions in the 30s–95% band; resume offered on
