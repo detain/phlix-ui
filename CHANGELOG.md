@@ -11,7 +11,15 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
-- **Rich scrubber (R3.2):** new **`Scrubber.vue`** (`src/components/player/`) — a buffered range behind the
+- **Keyboard control + help overlay (R3.3):** a full player key map — Space/`k` play-pause, `←/→` ±5s,
+  `j/l` ±10s, `,`/`.` frame-step (paused), `↑/↓` volume, `m` mute, `f` fullscreen, `c` captions, `t`
+  theater, `i` PiP, `0–9` seek-to-%, `<`/`>` speed, `?` help. Lives in `src/components/player/shortcuts.ts`
+  (`PLAYER_SHORTCUTS` single source of truth, pure `handleShortcut`, `useKeyboardShortcuts` composable)
+  and **suppresses shortcuts while typing in inputs** and ignores Ctrl/Meta/Alt chords; Space defers to a
+  focused button. New **`ShortcutsHelp.vue`** dialog (toggled by `?` or a control-bar button) lists every
+  binding, focus-trapped (`useFocusTrap`), Esc/backdrop/close dismiss, and renders arrow keys as **SVG
+  arrow icons** (never glyphs). `Icon` gains `arrow-right`. Player shortcuts are suppressed while the help
+  modal is open. Captions/theater/PiP keys emit events for the later steps that implement them. new **`Scrubber.vue`** (`src/components/player/`) — a buffered range behind the
   played fill, a draggable head, **chapter ticks**, and a hover/drag **scrub preview** (a thumbnail when
   the host supplies a `thumbnailAt(seconds)` source, else a formatted timestamp bubble). Pointer-events
   based so mouse + touch drag identically (`touch-action:none`); emits `seek` (absolute seconds) live

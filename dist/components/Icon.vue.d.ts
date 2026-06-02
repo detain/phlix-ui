@@ -41,6 +41,7 @@ declare const icons: {
     readonly eye: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'eye-off': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'arrow-left': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly 'arrow-right': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'arrow-up': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'arrow-down': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'chevron-down': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
