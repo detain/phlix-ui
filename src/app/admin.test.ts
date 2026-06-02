@@ -87,6 +87,13 @@ describe('buildAdminRoutes', () => {
     expect(dlna?.path).toBe('/app/admin/dlna');
     expect(typeof dlna?.component).toBe('function');
   });
+
+  it('exposes the remote-access route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const ra = routes.find((r) => r.name === 'admin-remote-access');
+    expect(ra?.path).toBe('/app/admin/remote-access');
+    expect(typeof ra?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -162,5 +169,12 @@ describe('adminMenu', () => {
     const dlna = group.children?.find((c) => c.id === 'admin-dlna');
     expect(dlna?.label).toBe('DLNA Server');
     expect(dlna?.to).toBe('/app/admin/dlna');
+  });
+
+  it('exposes a remote-access child pointing at the remote-access route', () => {
+    const [group] = adminMenu();
+    const ra = group.children?.find((c) => c.id === 'admin-remote-access');
+    expect(ra?.label).toBe('Remote Access');
+    expect(ra?.to).toBe('/app/admin/remote-access');
   });
 });

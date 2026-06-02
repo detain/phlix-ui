@@ -101,6 +101,22 @@ export type {
 export { default as AdminDlnaServerPage } from './pages/admin/DlnaServerPage.vue';
 export { AdminDlnaServerApi } from './api/admin/dlnaServer';
 export type { DlnaServerStatus, DlnaServerActionResult } from './api/admin/dlnaServer';
+export { default as AdminRemoteAccessPage } from './pages/admin/RemoteAccessPage.vue';
+export { AdminRemoteAccessApi } from './api/admin/remoteAccess';
+export type {
+  HubStatus,
+  HubPairResponse,
+  HubPollResponse,
+  HubHeartbeatResponse,
+  SubdomainStatus,
+  SubdomainClaimResponse,
+  RelayStatus,
+  RelayPingResponse,
+  PortForwardStatus,
+  HostnameCandidate,
+  PortForwardCandidatesResponse,
+  RemoteAccessAck,
+} from './api/admin/remoteAccess';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
