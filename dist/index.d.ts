@@ -1,5 +1,5 @@
 export { createPhlixApp } from './app/createPhlixApp';
-export type { PhlixAppConfig } from './app/types';
+export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow } from './app/types';
 export { default as PhlixApp } from './app/PhlixApp.vue';
 export { default as AppLayout } from './app/AppLayout.vue';
 export { ApiClient } from './api/client';
@@ -36,7 +36,7 @@ export type { SortField, SortOrder } from './stores/useMediaStore';
 export { bindMediaStoreToRouter } from './composables/useMediaUrlSync';
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
-export { usePreferencesStore, readStoredPreferences, DEFAULT_PREFERENCES } from './stores/usePreferencesStore';
+export { usePreferencesStore, readStoredPreferences, hasStoredPreferences, DEFAULT_PREFERENCES } from './stores/usePreferencesStore';
 export type { Preferences, ThemeName, Density, MotionPref } from './stores/usePreferencesStore';
 export { usePlayerStore, RESUME_MIN_SECONDS, RESUME_MAX_RATIO } from './stores/usePlayerStore';
 export type { MediaSessionHandlers } from './stores/usePlayerStore';

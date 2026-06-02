@@ -52,6 +52,17 @@ export function readStoredPreferences(): Preferences {
   }
 }
 
+/** True when the user has an explicit persisted preferences blob (so an app's
+ *  `defaultTheme` should NOT override their choice). SSR-safe. */
+export function hasStoredPreferences(): boolean {
+  if (typeof localStorage === 'undefined') return false;
+  try {
+    return localStorage.getItem(STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 function systemPrefersReduced(): boolean {
   return (
     typeof window !== 'undefined' &&

@@ -9,6 +9,7 @@ import LoginPage from '../pages/LoginPage.vue';
 import SignupPage from '../pages/SignupPage.vue';
 import SettingsPage from '../pages/SettingsPage.vue';
 import { applyStoredThemeEarly } from '../composables/useTheme';
+import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
 import type { PhlixAppConfig } from './types';
 
 declare global {
@@ -87,9 +88,16 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     };
 
     // Set <html> theme/density/accent from persisted prefs before mount → no flash.
-    applyStoredThemeEarly();
+    // First-time visitors get the app's defaultTheme; a stored choice always wins.
+    applyStoredThemeEarly(fullConfig.defaultTheme);
 
     const pinia = createPinia();
+
+    // Seed the per-app default theme into the store for first-time visitors only.
+    if (fullConfig.defaultTheme && !hasStoredPreferences()) {
+        usePreferencesStore(pinia).theme = fullConfig.defaultTheme;
+    }
+
     const routerBase = fullConfig.routerBase || '/app';
     const router: Router = createRouter({
         history: createWebHistory(routerBase),
@@ -99,6 +107,7 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     const app: VueApp = createApp(PhlixApp);
     app.provide('apiBase', fullConfig.apiBase);
     app.provide('phlixCommands', fullConfig.commands ?? []);
+    app.provide('phlixConfig', fullConfig);
     app.use(pinia);
     app.use(router);
 
