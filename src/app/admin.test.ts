@@ -13,6 +13,18 @@ describe('buildAdminRoutes', () => {
     const routes = buildAdminRoutes('/portal');
     expect(routes.find((r) => r.name === 'admin-logs')?.path).toBe('/portal/admin/logs');
   });
+
+  it('returns the dashboard route FIRST, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    expect(routes[0].name).toBe('admin-dashboard');
+    expect(routes[0].path).toBe('/app/admin/dashboard');
+    expect(typeof routes[0].component).toBe('function');
+  });
+
+  it('honors a custom base for the dashboard route', () => {
+    const routes = buildAdminRoutes('/portal');
+    expect(routes.find((r) => r.name === 'admin-dashboard')?.path).toBe('/portal/admin/dashboard');
+  });
 });
 
 describe('adminMenu', () => {
@@ -25,6 +37,13 @@ describe('adminMenu', () => {
 
   it('honors a custom base in the child links', () => {
     const [group] = adminMenu('/portal');
-    expect(group.children?.[0].to).toBe('/portal/admin/logs');
+    expect(group.children?.find((c) => c.id === 'admin-logs')?.to).toBe('/portal/admin/logs');
+  });
+
+  it('exposes a dashboard child pointing at the dashboard route', () => {
+    const [group] = adminMenu();
+    const dash = group.children?.find((c) => c.id === 'admin-dashboard');
+    expect(dash?.label).toBe('Dashboard');
+    expect(dash?.to).toBe('/app/admin/dashboard');
   });
 });
