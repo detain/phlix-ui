@@ -129,6 +129,13 @@ describe('buildAdminRoutes', () => {
     expect(libraries?.path).toBe('/app/admin/libraries');
     expect(typeof libraries?.component).toBe('function');
   });
+
+  it('exposes the settings route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const settings = routes.find((r) => r.name === 'admin-settings');
+    expect(settings?.path).toBe('/app/admin/settings');
+    expect(typeof settings?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -246,5 +253,12 @@ describe('adminMenu', () => {
     const libraries = group.children?.find((c) => c.id === 'admin-libraries');
     expect(libraries?.label).toBe('Libraries');
     expect(libraries?.to).toBe('/app/admin/libraries');
+  });
+
+  it('exposes a settings child pointing at the settings route', () => {
+    const [group] = adminMenu();
+    const settings = group.children?.find((c) => c.id === 'admin-settings');
+    expect(settings?.label).toBe('Settings');
+    expect(settings?.to).toBe('/app/admin/settings');
   });
 });
