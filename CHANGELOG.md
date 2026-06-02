@@ -48,6 +48,10 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
   - _R0.4b:_ `Slider` (accessible `role=slider`, full keyboard + pointer drag, v-model, `change` on commit —
     base for volume/card-size/scrubber), `Switch` (native-button `role=switch` toggle, `aria-labelledby`),
     `Chip` (toggle via `:selected`→aria-pressed and/or `removable`→✕ with its own label; optional icon).
+  - _R0.4c:_ `Select` (accessible single-select dropdown replacing native `<select>` — `aria-haspopup`/
+    `aria-expanded`/`aria-activedescendant`, keyboard nav + type-to-jump + click-outside) and `Combobox`
+    (filterable single-select, `role=combobox` + `aria-autocomplete`, query reverts on Esc/blur). Shared
+    `listbox.ts` helpers + `SelectOption`/`SelectOptionInput` types.
 
 ### Changed
 - **Bumped `vue` floor to `^3.5.0`** (dependency + peerDependency) to use `useId()`. Every install
