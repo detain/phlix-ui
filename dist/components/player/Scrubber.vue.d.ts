@@ -26,8 +26,8 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
     "onScrub-start"?: (() => any) | undefined;
     "onScrub-end"?: (() => any) | undefined;
 }>, {
-    step: number;
     buffered: number;
+    step: number;
     chapters: Chapter[];
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;

@@ -18,6 +18,23 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Player — Picture-in-Picture + Media Session + persistent mini-player (R3.7):** wires the (previously
+  present-but-unused) `usePlayerStore` Media-Session / mini-player seam. `Player.vue` gains a real
+  **Picture-in-Picture** toggle on its `<video>` (`requestPictureInPicture`/`exitPictureInPicture`,
+  rejection-swallowed) with a control-bar PiP button that is **hidden where PiP is unsupported**
+  (`document.pictureInPictureEnabled`), `enterpictureinpicture`/`leavepictureinpicture` tracked into the
+  button state, and the `i` shortcut routed to it (still `emit('pip')` for host hooks). **Media Session** is
+  bound on mount (`usePlayerStore.bindMediaSession` → OS/lock-screen play/pause/seek drive the element, torn
+  down on unmount) and **position state** is pushed to the OS scrubber on `loadedmetadata`/`timeupdate` via a
+  new **`usePlayerStore.setMediaPositionState()`**. New **`MiniPlayer`** (`src/components/MiniPlayer.vue`) is a
+  persistent docked mini-player driven entirely by the store: mounted once in the app shell
+  (`PhlixApp.vue`, sibling of `<RouterView>`) so it **survives route changes**, it plays its own `<video>`
+  from the stored position (resuming exactly where the full player left off), mirrors play/pause with the
+  store both ways, shows a thin progress bar + title, and offers play/pause · expand (navigates to the full
+  player) · close (`closePlayer`). The store gains a **`streamUrl`** ref (set via `setCurrent(media, {
+  streamUrl })`, cleared by `closePlayer`) so the mini-player continues the exact stream. `MiniPlayer` is
+  exported. (The route-leave → `showMiniPlayer()` trigger + real stream-URL resolution land with the
+  PlayerPage integration, R3.9.)
 - **Player — Ambient ("Ambilight") + theater/fullscreen modes (R3.6):** the player now renders a live,
   poster/frame-derived ambient glow behind the video. New **`AmbientCanvas`**
   (`src/components/player/AmbientCanvas.vue`) samples a heavily-downscaled copy of the current frame

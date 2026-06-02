@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia, type Pinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PhlixApp from './PhlixApp.vue';
+import MiniPlayer from '../components/MiniPlayer.vue';
 import { useCommandStore } from '../stores/useCommandStore';
 import type { PhlixAppConfig } from './types';
 
@@ -13,6 +14,7 @@ function makeRouter(): Router {
       { path: '/app', name: 'browse', component: { template: '<div class="browse" />' } },
       { path: '/app/settings', name: 'settings', component: { template: '<div />' } },
       { path: '/app/movies', name: 'movies', component: { template: '<div />' } },
+      { path: '/app/player/:id', name: 'player', component: { template: '<div class="player-route" />' } },
     ],
   });
 }
@@ -148,5 +150,16 @@ describe('PhlixApp — command palette trigger', () => {
     expect(store.open).toBe(false);
     await wrapper.find('.nav-cmdk').trigger('click');
     expect(store.open).toBe(true);
+  });
+});
+
+describe('PhlixApp — persistent mini-player', () => {
+  it('mounts the mini-player in the shell and expand navigates to the player route', async () => {
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const mini = wrapper.findComponent(MiniPlayer);
+    expect(mini.exists()).toBe(true); // lives at the shell level, surviving route changes
+    mini.vm.$emit('expand', 'm1');
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe('/app/player/m1');
   });
 });
