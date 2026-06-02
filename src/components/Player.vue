@@ -20,7 +20,11 @@ import Icon from './Icon.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
 import ShortcutsHelp from './player/ShortcutsHelp.vue';
+import VolumeControl from './player/VolumeControl.vue';
+import SpeedMenu from './player/SpeedMenu.vue';
+import QualityMenu from './player/QualityMenu.vue';
 import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
+import type { SelectOptionInput } from './ui/listbox';
 
 const props = defineProps<{
   media: MediaItem;
@@ -31,6 +35,8 @@ const props = defineProps<{
   chapters?: Chapter[];
   /** Preview-thumbnail source for a given time (VTT sprite / server hint — optional). */
   thumbnailAt?: (seconds: number) => string | null | undefined;
+  /** Server-supplied stream-quality variants (optional; the menu hides when empty). */
+  qualities?: SelectOptionInput[];
 }>();
 
 const emit = defineEmits<{
@@ -341,14 +347,9 @@ onBeforeUnmount(() => {
 
         <span class="player__grow" />
 
-        <button
-          type="button"
-          class="player__iconbtn"
-          :aria-label="player.muted ? 'Unmute' : 'Mute'"
-          @click="toggleMute"
-        >
-          <Icon :name="player.muted ? 'mute' : 'volume'" />
-        </button>
+        <VolumeControl />
+        <SpeedMenu />
+        <QualityMenu :qualities="qualities" />
 
         <button
           type="button"

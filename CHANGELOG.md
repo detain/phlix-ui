@@ -11,7 +11,14 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
-- **Keyboard control + help overlay (R3.3):** a full player key map — Space/`k` play-pause, `←/→` ±5s,
+- **Volume + speed + quality controls (R3.4):** three control-bar pieces on the a11y primitives —
+  **`VolumeControl.vue`** (mute toggle + `Slider` with **mute memory**: muting keeps the stored volume and
+  the slider shows 0, unmute restores; dragging to 0 mutes; volume persists to
+  `usePreferencesStore.defaultVolume`), **`SpeedMenu.vue`** (`Select` 0.25–2× → `usePlayerStore.rate`,
+  in sync with the `<`/`>` shortcuts), and **`QualityMenu.vue`** (`Select` of server-supplied quality
+  variants — **renders nothing when none are provided**; selection persists to `defaultQuality`). All
+  keyboard-navigable; selections survive reload. `Player.vue` gains a `qualities` prop and wires the three
+  into the control row. (Audio/subtitle track pickers land with captions in R3.5.) a full player key map — Space/`k` play-pause, `←/→` ±5s,
   `j/l` ±10s, `,`/`.` frame-step (paused), `↑/↓` volume, `m` mute, `f` fullscreen, `c` captions, `t`
   theater, `i` PiP, `0–9` seek-to-%, `<`/`>` speed, `?` help. Lives in `src/components/player/shortcuts.ts`
   (`PLAYER_SHORTCUTS` single source of truth, pure `handleShortcut`, `useKeyboardShortcuts` composable)
