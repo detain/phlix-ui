@@ -11,6 +11,16 @@ The UI Redo (R0→R6) re-skins every surface on a tokenized, multi-theme, custom
 system. Additive + back-compatible during R0–R5; first tag at the end of R1.
 
 ### Added
+- **Config/slot extensibility (R1.5):** `PhlixAppConfig` extended so server vs hub diverge purely by
+  config + named slots — never `if (app === 'hub')` in shared code. New `branding` (`wordmark`/`logoSrc`/
+  `logoAlt`/`tagline`) drives the shell's `#logo` slot; `menu` (`MenuItem[]`, icons typed `IconName`, with
+  `target`/`rel`-safe external `href`s via a `javascript:`/`data:`/`vbscript:`-scheme guard) drives the
+  `#nav` slot (with a built-in ⌘K trigger; falls back to Browse/Settings + the "Phlix" wordmark when
+  unset); `defaultTheme` seeds a per-app initial theme for first-time visitors (a stored user choice always
+  wins, applied pre-mount so there's no flash or snap-back); `homeRows` (`HomeRow[]`) is established as the
+  config seam the R2 Browse surface will render. `createPhlixApp` provides the resolved config under
+  `phlixConfig`. New exported `hasStoredPreferences()`; `applyStoredThemeEarly(defaultTheme?)` gained the
+  seed param. Exported types: `MenuItem`, `BrandingConfig`, `HomeRow`.
 - **Command palette (R1.4):** `useCommandStore` (Pinia) — a fuzzy-ranked command **registry**
   (`register`/`unregister` with a disposer, dedupe by id), palette state (`open`/`query`,
   `open/close/togglePalette`), and a persisted **recent-actions** list (`localStorage('phlix.cmd.recents')`,

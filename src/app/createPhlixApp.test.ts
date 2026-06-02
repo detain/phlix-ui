@@ -59,4 +59,23 @@ describe('createPhlixApp', () => {
     expect(typeof app.mount).toBe('function');
     app.unmount?.();
   });
+
+  it('seeds the per-app defaultTheme onto <html> for first-time visitors, and keeps it after mount (R1.5)', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const app = createPhlixApp({ apiBase: '', routerBase: '/app', defaultTheme: 'midnight' });
+    // applied pre-mount (no flash)…
+    expect(document.documentElement.getAttribute('data-theme')).toBe('midnight');
+    app.mount(host);
+    await new Promise((r) => setTimeout(r, 0));
+    // …and the store was seeded too, so the reactive theme does not snap back to the nocturne default.
+    expect(document.documentElement.getAttribute('data-theme')).toBe('midnight');
+    app.unmount();
+  });
+
+  it('does not let defaultTheme override a stored user preference (R1.5)', () => {
+    localStorage.setItem('phlix.prefs', JSON.stringify({ theme: 'daylight' }));
+    createPhlixApp({ apiBase: '', defaultTheme: 'midnight' });
+    expect(document.documentElement.getAttribute('data-theme')).toBe('daylight');
+  });
 });
