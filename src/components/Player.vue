@@ -19,6 +19,8 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 import Icon from './Icon.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
+import ShortcutsHelp from './player/ShortcutsHelp.vue';
+import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
 
 const props = defineProps<{
   media: MediaItem;
@@ -33,15 +35,25 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'back'): void;
+  /** Captions toggle (wired in R3.5). */
+  (e: 'captions'): void;
+  /** Theater-mode toggle (wired in R3.6). */
+  (e: 'theater'): void;
+  /** Picture-in-picture toggle (wired in R3.7). */
+  (e: 'pip'): void;
 }>();
 
 const player = usePlayerStore();
+
+/** Playback-speed ladder for the `<`/`>` shortcuts. */
+const SPEED_LADDER = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
 const showChrome = ref(true);
 const fullscreen = ref(false);
 const scrubbing = ref(false);
+const showHelp = ref(false);
 
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -122,6 +134,37 @@ function onScrubEnd(): void {
   scrubbing.value = false;
   revealChrome();
 }
+
+// ---- keyboard shortcuts (R3.3) ----------------------------------------------
+function speedStep(direction: 1 | -1): void {
+  const i = SPEED_LADDER.reduce(
+    (best, r, idx) => (Math.abs(r - player.rate) < Math.abs(SPEED_LADDER[best] - player.rate) ? idx : best),
+    0,
+  );
+  const next = SPEED_LADDER[Math.min(SPEED_LADDER.length - 1, Math.max(0, i + direction))];
+  player.setRate(next); // the rate watch mirrors it onto the element
+}
+
+const shortcutActions: ShortcutActions = {
+  playPause: togglePlay,
+  seekBy: (delta) => onSeek(player.position + delta),
+  frameStep: (dir) => {
+    if (!player.playing) onSeek(player.position + dir / 30);
+  },
+  volumeBy: (delta) => player.setVolume(player.volume + delta),
+  toggleMute,
+  toggleFullscreen,
+  toggleCaptions: () => emit('captions'),
+  toggleTheater: () => emit('theater'),
+  togglePip: () => emit('pip'),
+  seekToPercent: (frac) => onSeek(frac * player.duration),
+  speedStep,
+  toggleHelp: () => {
+    showHelp.value = !showHelp.value;
+  },
+};
+// Suppress player shortcuts while the help modal is open (its own Esc/close win).
+useKeyboardShortcuts(shortcutActions, { enabled: () => !showHelp.value });
 
 function toggleMute(): void {
   // Drive the store; the `player.muted` watch mirrors it onto the element (which,
@@ -310,6 +353,16 @@ onBeforeUnmount(() => {
         <button
           type="button"
           class="player__iconbtn"
+          aria-label="Keyboard shortcuts"
+          aria-haspopup="dialog"
+          @click="showHelp = true"
+        >
+          <Icon name="info" />
+        </button>
+
+        <button
+          type="button"
+          class="player__iconbtn"
           :aria-label="fullscreen ? 'Exit fullscreen' : 'Fullscreen'"
           @click="toggleFullscreen"
         >
@@ -317,6 +370,8 @@ onBeforeUnmount(() => {
         </button>
       </div>
     </div>
+
+    <ShortcutsHelp :open="showHelp" @close="showHelp = false" />
   </div>
 </template>
 

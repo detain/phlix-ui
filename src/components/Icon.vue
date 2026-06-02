@@ -62,6 +62,7 @@ import IconEyeOff from '~icons/lucide/eye-off';
 
 // Arrows / chevrons
 import IconArrowLeft from '~icons/lucide/arrow-left';
+import IconArrowRight from '~icons/lucide/arrow-right';
 import IconArrowUp from '~icons/lucide/arrow-up';
 import IconArrowDown from '~icons/lucide/arrow-down';
 import IconChevronDown from '~icons/lucide/chevron-down';
@@ -125,6 +126,7 @@ const icons = {
   'eye-off': IconEyeOff,
   // arrows / chevrons (replaces the legacy arrow emoji)
   'arrow-left': IconArrowLeft,
+  'arrow-right': IconArrowRight,
   'arrow-up': IconArrowUp,
   'arrow-down': IconArrowDown,
   'chevron-down': IconChevronDown,
