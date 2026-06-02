@@ -79,6 +79,16 @@ export type {
   SaveLdapInput,
   LdapTestResult,
 } from './api/admin/integrations';
+export { default as AdminBackupPage } from './pages/admin/BackupPage.vue';
+export { AdminBackupApi } from './api/admin/backup';
+export type {
+  Backup,
+  CreateBackupInput,
+  CreateBackupResult,
+  UpdateScheduleInput,
+  ScheduleData,
+  UpdateScheduleResult,
+} from './api/admin/backup';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
