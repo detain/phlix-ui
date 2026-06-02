@@ -1,0 +1,32 @@
+import type { MediaItem } from '../types/media-item';
+type __VLS_Props = {
+    item: MediaItem;
+    /** Persisted resume position (seconds) — shows the Resume action when set. */
+    resumeSeconds?: number | null;
+    /** "More like this" items. */
+    similar?: MediaItem[];
+    /** Similar rail is still loading. */
+    similarLoading?: boolean;
+    /** Show a back affordance (emits `back`). */
+    showBack?: boolean;
+};
+declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+    play: (item: MediaItem) => any;
+    info: (item: MediaItem) => any;
+    watchlist: (item: MediaItem) => any;
+    resume: (item: MediaItem) => any;
+    back: () => any;
+}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
+    onPlay?: ((item: MediaItem) => any) | undefined;
+    onInfo?: ((item: MediaItem) => any) | undefined;
+    onWatchlist?: ((item: MediaItem) => any) | undefined;
+    onResume?: ((item: MediaItem) => any) | undefined;
+    onBack?: (() => any) | undefined;
+}>, {
+    resumeSeconds: number | null;
+    similar: MediaItem[];
+    similarLoading: boolean;
+    showBack: boolean;
+}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
+export default _default;
