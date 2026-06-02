@@ -11,6 +11,11 @@ The UI Redo (R0→R6) re-skins every surface on a tokenized, multi-theme, custom
 system. Additive + back-compatible during R0–R5; first tag at the end of R1.
 
 ### Added
+- **Player store (R1.3):** `usePlayerStore` (Pinia singleton) — current media + queue/up-next, transport
+  state (position/duration/buffered), user selections (volume/muted/rate/quality/subtitle, seeded from
+  prefs), a persisted + throttled **resume map** (records positions in the 30s–95% band; resume offered on
+  reopen), **mini-player** visibility for cross-route playback, and **Media Session** metadata + transport
+  handlers (`bindMediaSession`). Exported with `RESUME_MIN_SECONDS`/`RESUME_MAX_RATIO`/`MediaSessionHandlers`.
 - **Preferences + theming (R1.1):** `usePreferencesStore` (Pinia) — theme, accent, density, card size,
   grid density, reduced-motion (auto/on/off), autoplay, default volume/quality/subtitle, atmosphere —
   persisted to `localStorage('phlix.prefs')`. `useTheme()` composable reflects it live onto `<html>`
