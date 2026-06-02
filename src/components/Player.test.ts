@@ -4,6 +4,7 @@ import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import Player from './Player.vue';
 import Scrubber from './player/Scrubber.vue';
+import AmbientCanvas from './player/AmbientCanvas.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import type { MediaItem } from '../types/media-item';
@@ -552,5 +553,69 @@ describe('Player — fullscreen & back', () => {
     document.dispatchEvent(new Event('fullscreenchange'));
     await nextTick();
     expect(fsBtn().attributes('aria-label')).toBe('Exit fullscreen');
+  });
+});
+
+describe('Player — ambient & theater (R3.6)', () => {
+  function key(k: string, target: EventTarget = document) {
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+  }
+  const theaterBtn = (w: ReturnType<typeof mountPlayer>['w']) =>
+    w.findAll('.player__btnrow .player__iconbtn').find((b) => (b.attributes('aria-label') ?? '').toLowerCase().includes('theater'));
+
+  it('renders the ambient layer behind a framed stage', () => {
+    const { w } = mountPlayer();
+    expect(w.find('.player__stage').exists()).toBe(true);
+    expect(w.findComponent(AmbientCanvas).exists()).toBe(true);
+    // the stage holds the video; the ambient layer is its sibling (behind it)
+    expect(w.find('.player__stage video').exists()).toBe(true);
+  });
+
+  it('drives the ambient from prefs.atmosphere, reduced-motion and playing', async () => {
+    const { w, video } = mountPlayer();
+    const amb = w.findComponent(AmbientCanvas);
+    expect(amb.props('enabled')).toBe(true); // atmosphere defaults on
+    expect(amb.props('playing')).toBe(false);
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+    expect(amb.props('playing')).toBe(true);
+    usePreferencesStore().atmosphere = false;
+    await nextTick();
+    expect(amb.props('enabled')).toBe(false); // fully disable-able via the pref
+  });
+
+  it('toggles theater via the control-bar button (class + aria-pressed + emit payload)', async () => {
+    const { w } = mountPlayer();
+    const btn = theaterBtn(w)!;
+    expect(btn).toBeTruthy();
+    expect(btn.attributes('aria-pressed')).toBe('false');
+    expect(w.classes()).not.toContain('is-theater');
+
+    await btn.trigger('click');
+    expect(w.classes()).toContain('is-theater');
+    expect(btn.attributes('aria-pressed')).toBe('true');
+    expect(btn.attributes('aria-label')).toBe('Exit theater mode');
+    expect(w.emitted('theater')).toEqual([[true]]);
+
+    await btn.trigger('click');
+    expect(w.classes()).not.toContain('is-theater');
+    expect(w.emitted('theater')).toEqual([[true], [false]]);
+  });
+
+  it('the t key toggles theater and boosts the ambient intensity', async () => {
+    const { w } = mountPlayer();
+    const amb = w.findComponent(AmbientCanvas);
+    expect(amb.props('intensity')).toBe(1);
+    key('t');
+    await nextTick();
+    expect(w.classes()).toContain('is-theater');
+    expect(w.emitted('theater')!.at(-1)).toEqual([true]);
+    expect(amb.props('intensity')).toBeCloseTo(1.35);
+  });
+
+  it('keeps the fullscreen button last in the control row (after theater)', () => {
+    const { w } = mountPlayer();
+    const last = w.findAll('.player__btnrow .player__iconbtn').at(-1)!;
+    expect(last.attributes('aria-label')).toBe('Fullscreen');
   });
 });

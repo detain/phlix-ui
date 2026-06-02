@@ -177,6 +177,19 @@ export { default as SpeedMenu } from './components/player/SpeedMenu.vue';
 export { default as QualityMenu } from './components/player/QualityMenu.vue';
 export { default as CaptionOverlay } from './components/player/CaptionOverlay.vue';
 export { default as CaptionsMenu } from './components/player/CaptionsMenu.vue';
+export { default as AmbientCanvas } from './components/player/AmbientCanvas.vue';
+export {
+  averageRegion,
+  sampleAmbient,
+  ambientGradient,
+  rgbString,
+  rgbaString,
+  isBatterySaving,
+  AMBIENT_SAMPLE_W,
+  AMBIENT_SAMPLE_H,
+  AMBIENT_SAMPLE_INTERVAL_MS,
+} from './components/player/ambient';
+export type { Rgb, AmbientSample, BatteryLike } from './components/player/ambient';
 export {
   listSubtitleTracks,
   listAudioTracks,
