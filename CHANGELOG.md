@@ -18,6 +18,12 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Collections (RA.12):** new **`AdminCollectionsPage`** (`src/pages/admin/CollectionsPage.vue`)
+  — collections table, create/edit/delete (`Modal`), an items modal (membership list, remove item, bulk-add
+  by query), and per-row refresh. Backed by **`AdminCollectionsApi`** (`src/api/admin/collections.ts`,
+  `/api/v1/collections*`). Exported (its `MediaItem` re-exported as `CollectionMediaItem` to avoid clashing
+  with the core media type); wired into the admin route/menu seam. (The smart-playlist CRUD that the React
+  page also embedded is deferred — it needs its own `smartPlaylists` API + a `RuleBuilder` primitive.)
 - **Admin port — Live TV / DVR (RA.11):** new **`AdminLiveTvPage`** (`src/pages/admin/LiveTvPage.vue`) —
   four sections: Tuners (list/scan/enable-disable/delete), Guide/EPG (day switch + programme expand),
   Recordings (list/schedule/delete with tabs), and Series Rules (list/create/delete). Backed by
