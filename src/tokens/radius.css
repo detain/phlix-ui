@@ -1,8 +1,10 @@
+/* @phlix/ui — Radius scale (Nocturne, R0.1). Theme-invariant.
+   Softer, more cinematic radii than the 0.7.0 baseline. */
 :root {
-    --radius-sm: 0.25rem;
-    --radius-md: 0.375rem;
-    --radius-lg: 0.5rem;
-    --radius-xl: 0.75rem;
-    --radius-2xl: 1rem;
-    --radius-full: 9999px;
+  --radius-sm: 6px;     /* badges, ticks, kbd */
+  --radius-md: 10px;    /* buttons, inputs, chips */
+  --radius-lg: 14px;    /* posters, cards, thumbs */
+  --radius-xl: 20px;    /* filter bar, player, panels */
+  --radius-2xl: 28px;   /* large sheets, hero */
+  --radius-full: 9999px;
 }

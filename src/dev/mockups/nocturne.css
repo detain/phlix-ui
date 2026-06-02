@@ -1,0 +1,263 @@
+/* ============================================================================
+   NOCTURNE — Phlix @phlix/ui design system (art-direction mockup tokens)
+   Cinema-after-dark. Projector-amber accent. Fraunces / Hanken / JetBrains Mono.
+
+   This file is the SOURCE OF TRUTH the R0.1/R0.2/R0.5 token steps port into
+   src/tokens/*.css. Mockups are dev-only reference artifacts; shipped code
+   self-hosts the fonts (no CDN) and scopes these under [data-theme].
+   ============================================================================ */
+
+/* ---- Type faces (mockups pull from CDN; shipped code self-hosts woff2) ---- */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ============================  THEME: Nocturne (dark, flagship)  ========== */
+:root,
+[data-theme='nocturne'] {
+  color-scheme: dark;
+
+  /* Accent — projector amber 50→950 */
+  --amber-50:  #fff8ec;
+  --amber-100: #ffedcc;
+  --amber-200: #ffd894;
+  --amber-300: #ffbf5c;
+  --amber-400: #fbab36;
+  --amber-500: #f5a524;   /* primary accent */
+  --amber-600: #d98209;
+  --amber-700: #b4610a;
+  --amber-800: #924d10;
+  --amber-900: #783f11;
+  --amber-950: #441f06;
+
+  --accent:        var(--amber-500);
+  --accent-hover:  var(--amber-400);
+  --accent-active: var(--amber-600);
+  --accent-contrast: #2a1804;          /* ink on amber fills */
+  --accent-soft:   rgba(245, 165, 36, 0.14);
+  --accent-ring:   rgba(245, 165, 36, 0.55);
+
+  /* Surfaces — warm ink ladder (never pure black) */
+  --bg:            #0b0a08;
+  --surface:       #16130f;
+  --surface-2:     #211c16;
+  --surface-3:     #2c251c;
+  --surface-glass: rgba(28, 23, 17, 0.62);
+  --surface-glass-strong: rgba(20, 16, 11, 0.82);
+
+  /* Text ramp — warm whites */
+  --text:        #f3ece1;
+  --text-muted:  #b8ab98;
+  --text-subtle: #7d7060;
+  --text-faint:  #544a3f;
+  --text-on-accent: var(--accent-contrast);
+
+  /* Borders */
+  --border:        #2b2419;
+  --border-subtle: #1d1810;
+  --border-strong: #3a3122;
+
+  /* Semantic state */
+  --error:   #ef5e57;  --error-bg:   rgba(239, 94, 87, 0.14);
+  --success: #61c073;  --success-bg: rgba(97, 192, 115, 0.14);
+  --warning: #e8a33d;  --warning-bg: rgba(232, 163, 61, 0.14);
+  --info:    #5aa9d6;  --info-bg:    rgba(90, 169, 214, 0.14);
+
+  /* Elevation — warm-black shadows + amber glow */
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.45);
+  --shadow-2: 0 4px 14px rgba(0,0,0,0.48);
+  --shadow-3: 0 14px 36px rgba(0,0,0,0.55);
+  --shadow-4: 0 28px 64px -16px rgba(0,0,0,0.72);
+  --glow-amber: 0 0 0 1px rgba(245,165,36,0.35), 0 10px 36px -8px rgba(245,165,36,0.40);
+
+  /* Atmosphere hooks */
+  --grain-opacity: 0.05;
+  --vignette: rgba(0,0,0,0.55);
+  --ambient: rgba(245,165,36,0.22);
+}
+
+/* ============================  THEME: Daylight (warm light)  ============== */
+[data-theme='daylight'] {
+  color-scheme: light;
+
+  --amber-50:  #fff8ec; --amber-100: #ffedcc; --amber-200: #ffd894;
+  --amber-300: #ffbf5c; --amber-400: #fbab36; --amber-500: #f5a524;
+  --amber-600: #d98209; --amber-700: #b4610a; --amber-800: #924d10;
+  --amber-900: #783f11; --amber-950: #441f06;
+
+  --accent:        var(--amber-500);
+  --accent-hover:  var(--amber-600);
+  --accent-active: var(--amber-700);
+  --accent-contrast: #2a1804;
+  --accent-soft:   rgba(217, 130, 9, 0.12);
+  --accent-ring:   rgba(180, 97, 10, 0.50);
+
+  --bg:            #f7f1e6;
+  --surface:       #fffdf8;
+  --surface-2:     #f1e8d8;
+  --surface-3:     #e8dcc6;
+  --surface-glass: rgba(255, 253, 248, 0.70);
+  --surface-glass-strong: rgba(255, 253, 248, 0.90);
+
+  --text:        #2a2017;
+  --text-muted:  #6b5d49;
+  --text-subtle: #94836a;
+  --text-faint:  #b7a98f;
+  --text-on-accent: #2a1804;
+
+  --border:        #e3d6c0;
+  --border-subtle: #efe6d6;
+  --border-strong: #d3c2a4;
+
+  --error:   #c33c36;  --error-bg:   rgba(195, 60, 54, 0.10);
+  --success: #2f8f49;  --success-bg: rgba(47, 143, 73, 0.10);
+  --warning: #b4610a;  --warning-bg: rgba(180, 97, 10, 0.10);
+  --info:    #2f6f97;  --info-bg:    rgba(47, 111, 151, 0.10);
+
+  --shadow-1: 0 1px 2px rgba(74,55,20,0.10);
+  --shadow-2: 0 4px 14px rgba(74,55,20,0.12);
+  --shadow-3: 0 14px 36px rgba(74,55,20,0.16);
+  --shadow-4: 0 28px 64px -16px rgba(74,55,20,0.24);
+  --glow-amber: 0 0 0 1px rgba(217,130,9,0.30), 0 10px 36px -8px rgba(245,165,36,0.35);
+
+  --grain-opacity: 0.025;
+  --vignette: rgba(74,55,20,0.10);
+  --ambient: rgba(245,165,36,0.18);
+}
+
+/* ============================  THEME: Midnight (OLED true-black)  ========= */
+[data-theme='midnight'] {
+  color-scheme: dark;
+
+  --amber-50:  #fff8ec; --amber-100: #ffedcc; --amber-200: #ffd894;
+  --amber-300: #ffbf5c; --amber-400: #fbab36; --amber-500: #f5a524;
+  --amber-600: #d98209; --amber-700: #b4610a; --amber-800: #924d10;
+  --amber-900: #783f11; --amber-950: #441f06;
+
+  --accent:        var(--amber-500);
+  --accent-hover:  var(--amber-400);
+  --accent-active: var(--amber-600);
+  --accent-contrast: #2a1804;
+  --accent-soft:   rgba(245, 165, 36, 0.16);
+  --accent-ring:   rgba(245, 165, 36, 0.60);
+
+  --bg:            #000000;
+  --surface:       #0a0807;
+  --surface-2:     #141009;
+  --surface-3:     #1d1710;
+  --surface-glass: rgba(10, 8, 6, 0.70);
+  --surface-glass-strong: rgba(0, 0, 0, 0.85);
+
+  --text:        #ede6da;
+  --text-muted:  #a99d8c;
+  --text-subtle: #6e6253;
+  --text-faint:  #463d33;
+  --text-on-accent: var(--accent-contrast);
+
+  --border:        #211b12;
+  --border-subtle: #120e09;
+  --border-strong: #322a1c;
+
+  --error:   #ef5e57;  --error-bg:   rgba(239, 94, 87, 0.16);
+  --success: #61c073;  --success-bg: rgba(97, 192, 115, 0.16);
+  --warning: #e8a33d;  --warning-bg: rgba(232, 163, 61, 0.16);
+  --info:    #5aa9d6;  --info-bg:    rgba(90, 169, 214, 0.16);
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.7);
+  --shadow-2: 0 4px 14px rgba(0,0,0,0.7);
+  --shadow-3: 0 14px 36px rgba(0,0,0,0.8);
+  --shadow-4: 0 28px 64px -16px rgba(0,0,0,0.9);
+  --glow-amber: 0 0 0 1px rgba(245,165,36,0.40), 0 10px 36px -8px rgba(245,165,36,0.45);
+
+  --grain-opacity: 0.06;
+  --vignette: rgba(0,0,0,0.7);
+  --ambient: rgba(245,165,36,0.24);
+}
+
+/* ============================  Scale tokens (theme-independent)  ========== */
+:root {
+  /* Fonts */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Fluid type scale */
+  --text-2xs:  0.6875rem;                          /* 11px — badges/micro */
+  --text-xs:   0.75rem;                            /* 12px */
+  --text-sm:   0.8125rem;                          /* 13px */
+  --text-base: 0.9375rem;                          /* 15px — UI body */
+  --text-md:   1.0625rem;                          /* 17px */
+  --text-lg:   1.25rem;                            /* 20px */
+  --text-xl:   clamp(1.4rem, 1.1rem + 1.2vw, 1.75rem);
+  --text-2xl:  clamp(1.8rem, 1.3rem + 2.0vw, 2.5rem);
+  --text-3xl:  clamp(2.4rem, 1.6rem + 3.2vw, 3.75rem);
+  --text-hero: clamp(3rem, 1.8rem + 5vw, 5.5rem);
+
+  /* Weights */
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700;
+
+  /* Tracking + leading */
+  --tracking-tight:  -0.02em;
+  --tracking-snug:   -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.04em;
+  --tracking-caps:   0.12em;     /* uppercase eyebrows/labels */
+  --leading-tight:   1.1;
+  --leading-snug:    1.3;
+  --leading-normal:  1.55;
+  --leading-relaxed: 1.7;
+
+  /* Spacing rhythm (4px base) */
+  --space-1: 0.25rem; --space-2: 0.5rem;  --space-3: 0.75rem; --space-4: 1rem;
+  --space-5: 1.25rem; --space-6: 1.5rem;  --space-8: 2rem;    --space-10: 2.5rem;
+  --space-12: 3rem;   --space-16: 4rem;   --space-20: 5rem;   --space-24: 6rem;
+
+  /* Radius */
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
+  --radius-xl: 20px; --radius-2xl: 28px; --radius-full: 9999px;
+
+  /* Motion */
+  --ease-out:      cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast:   120ms;
+  --dur-base:   200ms;
+  --dur-slow:   320ms;
+  --dur-slower: 480ms;
+}
+
+/* ============================  Atmosphere primitives  ===================== */
+/* Film grain: fixed SVG turbulence, overlay blend, GPU-cheap. */
+.nocturne-grain {
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Vignette: radial darkening at edges. */
+.nocturne-vignette {
+  position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+  background: radial-gradient(ellipse 120% 90% at 50% 42%, transparent 52%, var(--vignette) 100%);
+}
+
+/* ============================  Base reset  =============================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  background: var(--bg);
+  color: var(--text);
+  letter-spacing: var(--tracking-snug);
+}
+img, picture, video, canvas, svg { display: block; max-width: 100%; }
+button { cursor: pointer; border: none; background: none; color: inherit; font: inherit; }
+.numeric { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow {
+  font-size: var(--text-2xs); font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps); text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
