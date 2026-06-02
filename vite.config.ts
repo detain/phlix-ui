@@ -56,6 +56,7 @@ export default defineConfig({
                 'src/app/**/*.ts',
                 'src/pages/BrowsePage.vue',
                 'src/pages/MediaDetailPage.vue',
+                'src/pages/PlayerPage.vue',
                 'src/pages/admin/**/*.vue',
             ],
             exclude: [
@@ -63,7 +64,7 @@ export default defineConfig({
                 'src/test/**',
                 'src/dev/**',
                 'src/components/{LoginForm,SignupForm,SettingsForm}.vue',
-                'src/pages/{PlayerPage,LoginPage,SignupPage,SettingsPage,LibraryScanPage,MyServersPage,FederationPage,ManageSharesPage,AuditLogsPage}.vue',
+                'src/pages/{LoginPage,SignupPage,SettingsPage,LibraryScanPage,MyServersPage,FederationPage,ManageSharesPage,AuditLogsPage}.vue',
                 'src/app/AppLayout.vue',
                 'src/app/PhlixApp.vue',
                 'src/app/placeholder/**',
