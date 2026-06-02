@@ -14,12 +14,12 @@ type __VLS_Slots = {} & {
     default?: (props: typeof __VLS_11) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
-    type: "button" | "submit" | "reset";
-    loading: boolean;
-    disabled: boolean;
     size: "sm" | "md" | "lg";
-    variant: "solid" | "ghost" | "outline" | "subtle";
+    type: "button" | "submit" | "reset";
     block: boolean;
+    disabled: boolean;
+    loading: boolean;
+    variant: "solid" | "ghost" | "outline" | "subtle";
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
 declare const _default: typeof __VLS_export;

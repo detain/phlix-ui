@@ -15,10 +15,10 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     onChange?: ((v: number) => any) | undefined;
     "onUpdate:modelValue"?: ((v: number) => any) | undefined;
 }>, {
+    disabled: boolean;
     step: number;
     min: number;
     max: number;
-    disabled: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;

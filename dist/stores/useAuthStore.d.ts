@@ -24,7 +24,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     signup: (email: string, username: string, password: string) => Promise<boolean>;
     fetchUser: () => Promise<void>;
     logout: () => void;
-}, "error" | "user" | "loading" | "client">, Pick<{
+}, "user" | "error" | "loading" | "client">, Pick<{
     user: import("vue").Ref<{
         [x: string]: unknown;
         id: string;

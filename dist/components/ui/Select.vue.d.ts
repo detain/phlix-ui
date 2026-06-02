@@ -13,8 +13,8 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     onChange?: ((v: string | number) => any) | undefined;
     "onUpdate:modelValue"?: ((v: string | number) => any) | undefined;
 }>, {
-    placeholder: string;
     disabled: boolean;
+    placeholder: string;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;
