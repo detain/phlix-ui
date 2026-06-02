@@ -1,6 +1,12 @@
 export type ThemeName = 'nocturne' | 'daylight' | 'midnight';
 export type Density = 'comfortable' | 'compact';
 export type MotionPref = 'auto' | 'on' | 'off';
+/** A saved Browse filter set — `query` is the `useMediaStore.toQuery()` shape. */
+export interface FilterPreset {
+    id: string;
+    name: string;
+    query: Record<string, string | string[]>;
+}
 export interface Preferences {
     theme: ThemeName;
     /** null = use the theme's default amber accent; otherwise a hex override. */
@@ -16,6 +22,8 @@ export interface Preferences {
     defaultQuality: string;
     defaultSubtitleLang: string | null;
     atmosphere: boolean;
+    /** Saved Browse filter presets. */
+    filterPresets: FilterPreset[];
 }
 export declare const DEFAULT_PREFERENCES: Preferences;
 /** Read persisted prefs synchronously (used both by the store and the early
@@ -41,11 +49,22 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    filterPresets: import("vue").Ref<{
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[], FilterPreset[] | {
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[]>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
+    saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
+    removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "atmosphere" | "systemReduced">, Pick<{
+}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
@@ -57,9 +76,20 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    filterPresets: import("vue").Ref<{
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[], FilterPreset[] | {
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[]>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
+    saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
+    removeFilterPreset: (id: string) => void;
     reset: () => void;
 }, "effectiveReducedMotion">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
@@ -73,8 +103,19 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    filterPresets: import("vue").Ref<{
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[], FilterPreset[] | {
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[]>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
+    saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
+    removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "reset" | "snapshot">>;
+}, "reset" | "snapshot" | "saveFilterPreset" | "removeFilterPreset">>;

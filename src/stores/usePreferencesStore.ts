@@ -5,6 +5,13 @@ export type ThemeName = 'nocturne' | 'daylight' | 'midnight';
 export type Density = 'comfortable' | 'compact';
 export type MotionPref = 'auto' | 'on' | 'off';
 
+/** A saved Browse filter set — `query` is the `useMediaStore.toQuery()` shape. */
+export interface FilterPreset {
+  id: string;
+  name: string;
+  query: Record<string, string | string[]>;
+}
+
 export interface Preferences {
   theme: ThemeName;
   /** null = use the theme's default amber accent; otherwise a hex override. */
@@ -20,6 +27,8 @@ export interface Preferences {
   defaultQuality: string; // 'auto' | '4k' | '1080p' | …
   defaultSubtitleLang: string | null;
   atmosphere: boolean;
+  /** Saved Browse filter presets. */
+  filterPresets: FilterPreset[];
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -34,7 +43,19 @@ export const DEFAULT_PREFERENCES: Preferences = {
   defaultQuality: 'auto',
   defaultSubtitleLang: null,
   atmosphere: true,
+  filterPresets: [],
 };
+
+/** Stable id from a preset name (so re-saving the same name overwrites it). */
+function presetId(name: string): string {
+  return (
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'preset'
+  );
+}
 
 const STORAGE_KEY = 'phlix.prefs';
 
@@ -90,6 +111,8 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   const defaultQuality = ref<string>(initial.defaultQuality);
   const defaultSubtitleLang = ref<string | null>(initial.defaultSubtitleLang);
   const atmosphere = ref<boolean>(initial.atmosphere);
+  // Copy so the shared DEFAULT_PREFERENCES.filterPresets array is never mutated.
+  const filterPresets = ref<FilterPreset[]>(initial.filterPresets ? [...initial.filterPresets] : []);
 
   const systemReduced = ref(systemPrefersReduced());
   let mq: MediaQueryList | null = null;
@@ -115,7 +138,20 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       defaultQuality: defaultQuality.value,
       defaultSubtitleLang: defaultSubtitleLang.value,
       atmosphere: atmosphere.value,
+      filterPresets: filterPresets.value,
     };
+  }
+
+  /** Save the current filters as a named preset (re-saving a name overwrites it). */
+  function saveFilterPreset(name: string, query: Record<string, string | string[]>): FilterPreset {
+    const preset: FilterPreset = { id: presetId(name), name: name.trim(), query };
+    const i = filterPresets.value.findIndex((p) => p.id === preset.id);
+    if (i >= 0) filterPresets.value.splice(i, 1, preset);
+    else filterPresets.value.push(preset);
+    return preset;
+  }
+  function removeFilterPreset(id: string): void {
+    filterPresets.value = filterPresets.value.filter((p) => p.id !== id);
   }
 
   // persist on any change
@@ -145,6 +181,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     defaultQuality.value = d.defaultQuality;
     defaultSubtitleLang.value = d.defaultSubtitleLang;
     atmosphere.value = d.atmosphere;
+    filterPresets.value = [...d.filterPresets];
   }
 
   return {
@@ -159,9 +196,12 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     defaultQuality,
     defaultSubtitleLang,
     atmosphere,
+    filterPresets,
     systemReduced,
     effectiveReducedMotion,
     snapshot,
+    saveFilterPreset,
+    removeFilterPreset,
     reset,
   };
 });

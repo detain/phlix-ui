@@ -11,6 +11,17 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **FilterBar redesign (R2.3):** `FilterBar.vue` rebuilt on the a11y primitive layer (no native
+  `<select>`s) — a glassy **sticky** bar (condenses on scroll) with a **debounced** search, an
+  **expand/collapse advanced panel** (genres via the searchable `Combobox`, rating/type `Chip` toggles,
+  a year range, sort + order), a row of removable **active-filter pills** with a live **result count**
+  (persistent `aria-live` region) and "clear all", and **saved filter presets** (save current / apply /
+  remove) persisted through `usePreferencesStore`. Filters mutate `useMediaStore`, so the existing
+  `bindMediaStoreToRouter` URL-sync picks them up. Keyboard-operable, reduced-motion safe, fully tokenized
+  (legacy `--color-*` fallbacks replaced with Nocturne `--surface`/`--text`/`--accent`).
+  - `usePreferencesStore` gains a persisted **`filterPresets`** list with `saveFilterPreset(name, query)`
+    (stable name-slug id; re-saving a name overwrites) and `removeFilterPreset(id)`; new `FilterPreset`
+    type exported from the package root.
 - **MediaGrid virtualization (R2.2):** `MediaGrid.vue` rebuilt as a **windowed virtual scroller** — only
   the rows intersecting the viewport (plus an overscan band) are ever in the DOM, so a library of
   thousands of items stays at 60fps. Responsive **auto-fit columns** are driven by the user's `cardSize`
