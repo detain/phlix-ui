@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import Player from './Player.vue';
+import Scrubber from './player/Scrubber.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import type { MediaItem } from '../types/media-item';
 
@@ -51,7 +52,9 @@ function stubVideo(el: HTMLVideoElement, props: Partial<Record<'currentTime' | '
   return state;
 }
 
-function mountPlayer(props: Partial<{ media: MediaItem; streamUrl: string; idleTimeout: number }> = {}) {
+function mountPlayer(
+  props: Partial<{ media: MediaItem; streamUrl: string; idleTimeout: number; chapters: { start: number; title?: string }[] }> = {},
+) {
   const w = mount(Player, {
     props: { media: media(), streamUrl: 'http://x/stream', ...props },
     attachTo: document.body,
@@ -216,38 +219,46 @@ describe('Player — store → video sync', () => {
   });
 });
 
-describe('Player — scrubber keyboard', () => {
-  it('nudges ±5s with the arrow keys and jumps with Home/End', async () => {
+describe('Player — Scrubber integration', () => {
+  it('applies a Scrubber seek to video.currentTime (and never toggles play)', async () => {
     const { w, video, state } = mountPlayer();
-    state.duration = 200;
-    state.currentTime = 100;
-    video.dispatchEvent(new Event('timeupdate'));
-    await nextTick();
-    const scrub = w.find('.player__scrub');
-    await scrub.trigger('keydown', { key: 'ArrowRight' });
-    expect(state.currentTime).toBe(105);
-    await scrub.trigger('keydown', { key: 'ArrowLeft' });
-    expect(state.currentTime).toBe(100);
-    await scrub.trigger('keydown', { key: 'Home' });
-    expect(state.currentTime).toBe(0);
-    await scrub.trigger('keydown', { key: 'End' });
-    expect(state.currentTime).toBe(200);
-  });
-});
-
-describe('Player — seek', () => {
-  it('seeks the video to the clicked ratio (no play toggle)', async () => {
-    const { w, video, state } = mountPlayer();
-    const store = usePlayerStore();
     state.duration = 200;
     video.dispatchEvent(new Event('timeupdate')); // propagate duration to store
     await nextTick();
-    const scrub = w.find('.player__scrub');
-    vi.spyOn(scrub.element, 'getBoundingClientRect').mockReturnValue({ left: 0, width: 100 } as DOMRect);
-    await scrub.trigger('click', { clientX: 25 });
-    expect(state.currentTime).toBe(50); // 25% of 200
-    expect(video.play).not.toHaveBeenCalled(); // control click never toggles play
-    expect(store).toBeTruthy();
+    w.findComponent(Scrubber).vm.$emit('seek', 50);
+    expect(state.currentTime).toBe(50);
+    expect(video.play).not.toHaveBeenCalled();
+  });
+
+  it('passes store transport + props through to the Scrubber', async () => {
+    const chapters = [{ start: 30 }, { start: 90 }];
+    const { w, video, state } = mountPlayer({ chapters });
+    state.currentTime = 40;
+    state.duration = 200;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    const scrub = w.findComponent(Scrubber);
+    expect(scrub.props('position')).toBe(40);
+    expect(scrub.props('duration')).toBe(200);
+    expect(scrub.props('chapters')).toEqual(chapters);
+  });
+
+  it('suspends chrome auto-hide while scrubbing', async () => {
+    vi.useFakeTimers();
+    const { w, video } = mountPlayer({ idleTimeout: 500 });
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+    const scrub = w.findComponent(Scrubber);
+    scrub.vm.$emit('scrub-start');
+    await nextTick();
+    vi.advanceTimersByTime(1000); // would normally hide
+    await nextTick();
+    expect(w.classes()).not.toContain('is-chrome-hidden'); // held open while scrubbing
+    scrub.vm.$emit('scrub-end');
+    await nextTick();
+    vi.advanceTimersByTime(600);
+    await nextTick();
+    expect(w.classes()).toContain('is-chrome-hidden'); // hides again after scrub ends
   });
 });
 
