@@ -47,6 +47,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-backup',
       component: () => import('../pages/admin/BackupPage.vue'),
     },
+    {
+      path: `${root}/cast-devices`,
+      name: 'admin-cast',
+      component: () => import('../pages/admin/CastDevicesPage.vue'),
+    },
   ];
 }
 
@@ -66,6 +71,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-services', label: 'Services', icon: 'star', to: `${root}/services` },
         { id: 'admin-integrations', label: 'Integrations', icon: 'settings', to: `${root}/integrations` },
         { id: 'admin-backup', label: 'Backup', icon: 'bookmark', to: `${root}/backup` },
+        { id: 'admin-cast', label: 'Cast Devices', icon: 'cast', to: `${root}/cast-devices` },
       ],
     },
   ];

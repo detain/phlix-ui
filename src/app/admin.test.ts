@@ -73,6 +73,13 @@ describe('buildAdminRoutes', () => {
     expect(backup?.path).toBe('/app/admin/backup');
     expect(typeof backup?.component).toBe('function');
   });
+
+  it('exposes the cast-devices route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const cast = routes.find((r) => r.name === 'admin-cast');
+    expect(cast?.path).toBe('/app/admin/cast-devices');
+    expect(typeof cast?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -134,5 +141,12 @@ describe('adminMenu', () => {
     const backup = group.children?.find((c) => c.id === 'admin-backup');
     expect(backup?.label).toBe('Backup');
     expect(backup?.to).toBe('/app/admin/backup');
+  });
+
+  it('exposes a cast-devices child pointing at the cast route', () => {
+    const [group] = adminMenu();
+    const cast = group.children?.find((c) => c.id === 'admin-cast');
+    expect(cast?.label).toBe('Cast Devices');
+    expect(cast?.to).toBe('/app/admin/cast-devices');
   });
 });
