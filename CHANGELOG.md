@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + rollout) lands here.
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
+### Added
+- **MediaCard redesign (R2.1):** `MediaCard.vue` rebuilt from the locked R0 art direction — a 2:3
+  **blur-up** poster (LQIP gradient under a fade-in image that also handles already-cached/`complete`
+  images; `aspect-ratio` reserved so there's **no CLS**; `loading="lazy"`), a **real `<Icon>`** placeholder
+  for missing posters (never emoji), a top **badge stack** (NEW from `created_at` recency · optional
+  `quality` prop), a **resume-progress bar** sourced from `usePlayerStore.resumePositionFor(id) ÷ runtime`
+  (hidden while the overlay is open; `role="progressbar"`), and a cinematic **hover/focus overlay**
+  (title · year/cert/runtime · genre chips · amber **Play / +Watchlist / Info** quick-actions emitting
+  `play`/`watchlist`/`info`). Keyboard-activatable via a stretched link (Enter navigates; quick-actions
+  layered above it and only pointer-active while the overlay is shown), `:focus-within` reveals the overlay,
+  reduced-motion safe (media query + `[data-reduced-motion]`), `#badges`/`#actions` slots for app adornment.
+
 ## [0.8.0] — 2026-06-02 — UI Redo ("Nocturne"): foundations + theming
 
 First tag of the UI Redo (R0→R6), which re-skins every surface on a tokenized, multi-theme,
