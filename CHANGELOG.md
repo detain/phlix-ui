@@ -25,6 +25,14 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
   - Elevation (`--shadow-1…4`, `--glow-amber`), motion scale (`--ease-*`, `--dur-*`),
     density scale (`[data-density=comfortable|compact]` → `--control-h`, `--control-pad-x`, …).
   - `src/dev/swatches.html` validates every token across all three themes.
+- **Typography (R0.2):** self-hosted, no CDN. Three OFL latin-subset **variable** woff2 (~133 kB):
+  Fraunces (display, opsz 9–144 / wght 100–900), Hanken Grotesk (UI/body, wght 100–900), JetBrains Mono
+  (timecode/numerals, wght 400–800). Family tokens `--font-display`/`--font-sans`/`--font-mono`, a fluid
+  `clamp()` type scale (`--text-2xs…hero`), tracking/leading tokens, `.numeric` (tabular-nums) + `.eyebrow`.
+  Each face has a metric-matched fallback `@font-face` (size-adjust + ascent/descent overrides from real
+  font metrics) for CLS≈0 swap. Shipped as a **separate** `@phlix/ui/fonts.css` + `dist/fonts/*.woff2`
+  (kept out of the bundled `style.css` so the woff2 stay cacheable; copied by `scripts/copy-fonts.mjs`).
+  New package exports: `./fonts.css`, `./style.css`, `./dist/*`. Consumers wire the imports in R6.6.
 
 ### Changed
 - Accent is now **projector-amber `#f5a524`** (was indigo `#6366f1`). Radius scale softened
