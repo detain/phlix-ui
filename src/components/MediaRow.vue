@@ -1,0 +1,187 @@
+<script setup lang="ts">
+/**
+ * MediaRow (R2.4) — a horizontal, scroll-snapping rail of poster cards for the
+ * Browse surface's hero/home-row strips (ports the `browse-grid.html` rail).
+ *
+ * Presentational only: it renders a section-head (title + count + `#action`
+ * slot, e.g. a "See all" link) above a rail of `MediaCard`s. It shows skeleton
+ * cards during the initial load, an inline error with a retry affordance, and an
+ * `EmptyState` (or `#empty` slot) when there is nothing to show. Card events are
+ * forwarded as `play` / `watchlist` / `info`. The whole rail is keyboard
+ * scrollable and reduced-motion safe (snap/animation only enhance).
+ *
+ * Fetching/lazy-loading is the container's job (see `HomeRow.vue`); this
+ * component is driven purely by props so it is trivial to test and reuse (e.g.
+ * the resume-map "Continue Watching" rail).
+ */
+import { computed } from 'vue';
+import type { MediaItem } from '../types/media-item';
+import MediaCard from './MediaCard.vue';
+import EmptyState from './ui/EmptyState.vue';
+import Skeleton from './ui/Skeleton.vue';
+
+const props = withDefaults(
+  defineProps<{
+    /** Rail heading. */
+    title: string;
+    /** Items to render. */
+    items: MediaItem[];
+    /** Initial load — show skeleton cards instead of items. */
+    loading?: boolean;
+    /** Error message; renders an inline retry affordance. */
+    error?: string | null;
+    /** Optional count shown next to the title (e.g. total available). */
+    count?: number | null;
+    /** Skeleton cards shown during the initial load. */
+    skeletonCount?: number;
+    /** Empty-state copy when there is nothing to show. */
+    emptyText?: string;
+    /** Collapse the whole rail (render nothing) when settled + empty. */
+    hideWhenEmpty?: boolean;
+    /** Override the per-card link target prefix (default the player route). */
+    cardTo?: (item: MediaItem) => string;
+  }>(),
+  { loading: false, error: null, count: null, skeletonCount: 6, hideWhenEmpty: false },
+);
+
+const emit = defineEmits<{
+  (e: 'play', item: MediaItem): void;
+  (e: 'watchlist', item: MediaItem): void;
+  (e: 'info', item: MediaItem): void;
+  (e: 'retry'): void;
+}>();
+
+const isEmpty = computed(() => !props.loading && !props.error && props.items.length === 0);
+const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
+</script>
+
+<template>
+  <section v-if="!collapsed" class="media-row" :aria-label="title">
+    <div class="media-row__head">
+      <h2 class="media-row__title">{{ title }}</h2>
+      <span v-if="count != null" class="media-row__count numeric">{{ count.toLocaleString() }}</span>
+      <div class="media-row__action"><slot name="action" /></div>
+    </div>
+
+    <div v-if="error" class="media-row__error" role="alert">
+      <span>{{ error }}</span>
+      <button type="button" class="media-row__retry" @click="emit('retry')">Retry</button>
+    </div>
+
+    <div
+      v-else-if="loading && items.length === 0"
+      class="media-row__rail"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <div v-for="n in skeletonCount" :key="n" class="media-row__cell" aria-hidden="true">
+        <div class="media-row__skel-poster"><Skeleton variant="rect" radius="var(--radius-lg)" height="100%" /></div>
+        <Skeleton variant="text" width="80%" />
+      </div>
+    </div>
+
+    <EmptyState v-else-if="isEmpty" :title="title" :description="emptyText ?? 'Nothing here yet.'">
+      <slot name="empty" />
+    </EmptyState>
+
+    <ul v-else class="media-row__rail" :aria-label="title">
+      <li v-for="item in items" :key="item.id" class="media-row__cell">
+        <MediaCard
+          :item="item"
+          :to="cardTo ? cardTo(item) : undefined"
+          @play="emit('play', $event)"
+          @watchlist="emit('watchlist', $event)"
+          @info="emit('info', $event)"
+        />
+      </li>
+    </ul>
+  </section>
+</template>
+
+<style scoped>
+.media-row {
+  margin-block: var(--space-8);
+}
+.media-row__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.media-row__title {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+}
+.media-row__count {
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
+}
+.media-row__action {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.media-row__rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(160px, 180px);
+  gap: var(--space-5);
+  overflow-x: auto;
+  padding-bottom: var(--space-3);
+  scroll-snap-type: x mandatory;
+  list-style: none;
+  margin: 0;
+}
+.media-row__cell {
+  scroll-snap-align: start;
+}
+.media-row__skel-poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  margin-bottom: var(--space-2);
+}
+
+.media-row__rail::-webkit-scrollbar {
+  height: 6px;
+}
+.media-row__rail::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+
+.media-row__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.media-row__retry {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+}
+.media-row__retry:hover {
+  border-color: var(--accent-ring);
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-row__rail {
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+  }
+}
+</style>
