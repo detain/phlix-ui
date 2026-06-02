@@ -5787,10 +5787,227 @@ var no = class {
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), ic = /* @__PURE__ */ me({ default: () => ac }), ac = /*#__PURE__*/ r(rc, [["__scopeId", "data-v-77c00620"]]);
+}), ic = /* @__PURE__ */ me({ default: () => ac }), ac = /*#__PURE__*/ r(rc, [["__scopeId", "data-v-77c00620"]]), oc = class {
+	client;
+	constructor(e) {
+		this.client = e;
+	}
+	async getTraktStatus() {
+		let e = await this.client.get("/api/v1/admin/services/trakt/status"), t = {
+			connected: e.connected === !0,
+			username: typeof e.username == "string" ? e.username : null
+		};
+		return typeof e.configured == "boolean" && (t.configured = e.configured), t;
+	}
+	async disconnectTrakt() {
+		let e = await this.client.post("/api/v1/admin/services/trakt/disconnect");
+		return { message: typeof e.message == "string" ? e.message : "" };
+	}
+	navigateToTraktAuthorize() {
+		typeof window < "u" && (window.location.href = "/api/v1/oauth/trakt");
+	}
+	async getLastfmStatus() {
+		let e = await this.client.get("/api/v1/admin/services/lastfm/status");
+		return {
+			connected: e.connected === !0,
+			username: typeof e.username == "string" ? e.username : null,
+			api_key_set: e.api_key_set === !0
+		};
+	}
+	async disconnectLastfm() {
+		let e = await this.client.post("/api/v1/admin/services/lastfm/disconnect");
+		return { message: typeof e.message == "string" ? e.message : "" };
+	}
+	navigateToLastfmConnect() {
+		typeof window < "u" && (window.location.href = "/admin/lastfm");
+	}
+}, sc = {
+	class: "admin-services",
+	"aria-labelledby": "services-heading"
+}, cc = {
+	class: "admin-services__section",
+	"aria-labelledby": "trakt-heading"
+}, lc = { class: "admin-services__section-head" }, uc = { class: "admin-services__card" }, dc = {
+	key: 0,
+	class: "admin-services__loading",
+	"aria-hidden": "true"
+}, fc = {
+	key: 0,
+	class: "admin-services__dl"
+}, pc = {
+	key: 1,
+	class: "admin-services__hint"
+}, mc = { class: "admin-services__actions" }, hc = {
+	class: "admin-services__section",
+	"aria-labelledby": "lastfm-heading"
+}, gc = { class: "admin-services__section-head" }, _c = { class: "admin-services__card" }, vc = {
+	key: 0,
+	class: "admin-services__loading",
+	"aria-hidden": "true"
+}, yc = {
+	key: 0,
+	class: "admin-services__dl"
+}, bc = { class: "admin-services__actions" }, xc = /*@__PURE__*/ j({
+	__name: "ServicesPage",
+	props: { client: {} },
+	setup(t) {
+		let r = t, a = M("apiBase", ""), s = C(() => typeof a == "string" ? a : a?.value ?? ""), l = new oc(r.client ?? new e({
+			baseUrl: s.value,
+			tokenStore: new c()
+		})), u = n(), d = B(null), m = B(!0), h = B(!1), g = C(() => d.value?.configured === !1);
+		async function _() {
+			try {
+				d.value = await l.getTraktStatus();
+			} catch (e) {
+				u.error(e instanceof Error ? e.message : "Failed to load Trakt status.");
+			} finally {
+				m.value = !1;
+			}
+		}
+		function v() {
+			l.navigateToTraktAuthorize();
+		}
+		async function b() {
+			if (!h.value) {
+				h.value = !0;
+				try {
+					await l.disconnectTrakt(), u.success("Trakt disconnected."), await _();
+				} catch (e) {
+					u.error(e instanceof Error ? e.message : "Failed to disconnect Trakt.");
+				} finally {
+					h.value = !1;
+				}
+			}
+		}
+		let x = B(null), S = B(!0), w = B(!1);
+		async function j() {
+			try {
+				x.value = await l.getLastfmStatus();
+			} catch (e) {
+				u.error(e instanceof Error ? e.message : "Failed to load Last.fm status.");
+			} finally {
+				S.value = !1;
+			}
+		}
+		function N() {
+			l.navigateToLastfmConnect();
+		}
+		async function P() {
+			if (!w.value) {
+				w.value = !0;
+				try {
+					await l.disconnectLastfm(), u.success("Last.fm disconnected."), await j();
+				} catch (e) {
+					u.error(e instanceof Error ? e.message : "Failed to disconnect Last.fm.");
+				} finally {
+					w.value = !1;
+				}
+			}
+		}
+		return L(() => {
+			_(), j();
+		}), (e, t) => (R(), D("section", sc, [
+			t[8] ||= O("header", { class: "admin-services__head" }, [O("h1", {
+				id: "services-heading",
+				class: "admin-services__title"
+			}, "Services")], -1),
+			O("section", cc, [O("div", lc, [t[0] ||= O("h2", {
+				id: "trakt-heading",
+				class: "admin-services__section-title"
+			}, "Trakt.tv", -1), d.value === null ? E("", !0) : (R(), T(p, {
+				key: 0,
+				tone: d.value.connected ? "success" : "neutral",
+				label: d.value.connected ? "Connected" : "Not connected"
+			}, {
+				default: X(() => [k(W(d.value.connected ? "Connected" : "Not connected"), 1)]),
+				_: 1
+			}, 8, ["tone", "label"]))]), O("div", uc, [m.value ? (R(), D("div", dc, [A(o, {
+				variant: "text",
+				lines: 2
+			})])) : d.value === null ? (R(), T(f, {
+				key: 1,
+				icon: "alert",
+				title: "Unable to load Trakt status."
+			})) : (R(), D(y, { key: 2 }, [
+				d.value.connected && d.value.username !== null ? (R(), D("dl", fc, [t[1] ||= O("dt", null, "Username", -1), O("dd", null, W(d.value.username), 1)])) : E("", !0),
+				!d.value.connected && g.value ? (R(), D("p", pc, [...t[2] ||= [
+					k(" Trakt isn't configured yet. Register an application at ", -1),
+					O("a", {
+						href: "https://trakt.tv/oauth/applications",
+						target: "_blank",
+						rel: "noopener noreferrer"
+					}, "trakt.tv/oauth/applications", -1),
+					k(" (set its redirect URI to this server's ", -1),
+					O("code", null, "/api/v1/oauth/trakt/callback", -1),
+					k("), then add the client ID and secret in Settings or via the ", -1),
+					O("code", null, "TRAKT_CLIENT_ID", -1),
+					k(" / ", -1),
+					O("code", null, "TRAKT_CLIENT_SECRET", -1),
+					k(" environment variables. ", -1)
+				]])) : E("", !0),
+				O("div", mc, [d.value.connected ? (R(), T(i, {
+					key: 1,
+					variant: "outline",
+					loading: h.value,
+					onClick: b
+				}, {
+					default: X(() => [k(W(h.value ? "Disconnecting" : "Disconnect"), 1)]),
+					_: 1
+				}, 8, ["loading"])) : (R(), T(i, {
+					key: 0,
+					variant: "solid",
+					disabled: g.value,
+					title: g.value ? "Add Trakt client ID and secret first" : void 0,
+					onClick: v
+				}, {
+					default: X(() => [...t[3] ||= [k(" Connect to Trakt ", -1)]]),
+					_: 1
+				}, 8, ["disabled", "title"]))])
+			], 64))])]),
+			O("section", hc, [O("div", gc, [t[4] ||= O("h2", {
+				id: "lastfm-heading",
+				class: "admin-services__section-title"
+			}, "Last.fm", -1), x.value === null ? E("", !0) : (R(), T(p, {
+				key: 0,
+				tone: x.value.connected ? "success" : "neutral",
+				label: x.value.connected ? "Connected" : "Not connected"
+			}, {
+				default: X(() => [k(W(x.value.connected ? "Connected" : "Not connected"), 1)]),
+				_: 1
+			}, 8, ["tone", "label"]))]), O("div", _c, [S.value ? (R(), D("div", vc, [A(o, {
+				variant: "text",
+				lines: 2
+			})])) : x.value === null ? (R(), T(f, {
+				key: 1,
+				icon: "alert",
+				title: "Unable to load Last.fm status."
+			})) : (R(), D(y, { key: 2 }, [x.value.connected && x.value.username !== null ? (R(), D("dl", yc, [
+				t[5] ||= O("dt", null, "Username", -1),
+				O("dd", null, W(x.value.username), 1),
+				t[6] ||= O("dt", null, "API key", -1),
+				O("dd", null, W(x.value.api_key_set ? "Set" : "Not set"), 1)
+			])) : E("", !0), O("div", bc, [x.value.connected ? (R(), T(i, {
+				key: 1,
+				variant: "outline",
+				loading: w.value,
+				onClick: P
+			}, {
+				default: X(() => [k(W(w.value ? "Disconnecting" : "Disconnect"), 1)]),
+				_: 1
+			}, 8, ["loading"])) : (R(), T(i, {
+				key: 0,
+				variant: "solid",
+				onClick: N
+			}, {
+				default: X(() => [...t[7] ||= [k(" Connect Last.fm ", -1)]]),
+				_: 1
+			}))])], 64))])])
+		]));
+	}
+}), Sc = /* @__PURE__ */ me({ default: () => Cc }), Cc = /*#__PURE__*/ r(xc, [["__scopeId", "data-v-06f3b61d"]]);
 //#endregion
 //#region src/app/admin.ts
-function oc(e = "/app") {
+function wc(e = "/app") {
 	let t = `${e}/admin`;
 	return [
 		{
@@ -5812,10 +6029,15 @@ function oc(e = "/app") {
 			path: `${t}/webhooks`,
 			name: "admin-webhooks",
 			component: () => Promise.resolve().then(() => ic)
+		},
+		{
+			path: `${t}/services`,
+			name: "admin-services",
+			component: () => Promise.resolve().then(() => Sc)
 		}
 	];
 }
-function sc(e = "/app") {
+function Tc(e = "/app") {
 	let t = `${e}/admin`;
 	return [{
 		id: "admin",
@@ -5845,28 +6067,34 @@ function sc(e = "/app") {
 				label: "Webhooks",
 				icon: "settings",
 				to: `${t}/webhooks`
+			},
+			{
+				id: "admin-services",
+				label: "Services",
+				icon: "star",
+				to: `${t}/services`
 			}
 		]
 	}];
 }
 //#endregion
 //#region src/pages/LibraryScanPage.vue?vue&type=script&setup=true&lang.ts
-var cc = { class: "library-scan-page" }, lc = {
+var Ec = { class: "library-scan-page" }, Dc = {
 	key: 0,
 	class: "loading"
-}, uc = {
+}, Oc = {
 	key: 1,
 	class: "error"
-}, dc = {
+}, kc = {
 	key: 2,
 	class: "libraries-list"
-}, fc = { class: "library-info" }, pc = { class: "library-name" }, mc = { class: "library-type" }, hc = { class: "library-paths" }, gc = { class: "library-meta" }, _c = { key: 0 }, vc = {
+}, Ac = { class: "library-info" }, jc = { class: "library-name" }, Mc = { class: "library-type" }, Nc = { class: "library-paths" }, Pc = { class: "library-meta" }, Fc = { key: 0 }, Ic = {
 	key: 0,
 	class: "scan-status"
-}, yc = { class: "library-actions" }, bc = ["onClick", "disabled"], xc = ["onClick", "disabled"], Sc = {
+}, Lc = { class: "library-actions" }, Rc = ["onClick", "disabled"], zc = ["onClick", "disabled"], Bc = {
 	key: 0,
 	class: "empty-state"
-}, Cc = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, Vc = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "LibraryScanPage",
 	setup(e) {
 		let t = B([]), n = B({}), r = B(!0), i = B(null);
@@ -5915,38 +6143,38 @@ var cc = { class: "library-scan-page" }, lc = {
 		}
 		return L(() => {
 			a();
-		}), (e, a) => (R(), D("div", cc, [a[0] ||= O("div", { class: "scan-header" }, [O("h1", { class: "scan-title" }, "Library Scanner"), O("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")], -1), r.value ? (R(), D("div", lc, "Loading libraries...")) : i.value ? (R(), D("div", uc, W(i.value), 1)) : (R(), D("div", dc, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, a) => (R(), D("div", Ec, [a[0] ||= O("div", { class: "scan-header" }, [O("h1", { class: "scan-title" }, "Library Scanner"), O("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")], -1), r.value ? (R(), D("div", Dc, "Loading libraries...")) : i.value ? (R(), D("div", Oc, W(i.value), 1)) : (R(), D("div", kc, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "library-card"
-		}, [O("div", fc, [
-			O("h3", pc, W(e.name), 1),
-			O("span", mc, W(e.type), 1),
-			O("p", hc, W(e.paths.join(", ")), 1),
-			O("div", gc, [e.item_count === void 0 ? E("", !0) : (R(), D("span", _c, W(e.item_count) + " items", 1)), O("span", null, "Last scan: " + W(u(e.last_scan_at)), 1)]),
-			n.value[e.id] ? (R(), D("div", vc, W(d(n.value[e.id])), 1)) : E("", !0)
-		]), O("div", yc, [O("button", {
+		}, [O("div", Ac, [
+			O("h3", jc, W(e.name), 1),
+			O("span", Mc, W(e.type), 1),
+			O("p", Nc, W(e.paths.join(", ")), 1),
+			O("div", Pc, [e.item_count === void 0 ? E("", !0) : (R(), D("span", Fc, W(e.item_count) + " items", 1)), O("span", null, "Last scan: " + W(u(e.last_scan_at)), 1)]),
+			n.value[e.id] ? (R(), D("div", Ic, W(d(n.value[e.id])), 1)) : E("", !0)
+		]), O("div", Lc, [O("button", {
 			class: "btn btn-scan",
 			onClick: (t) => c(e.id),
 			disabled: n.value[e.id]?.status === "running" || n.value[e.id]?.status === "queued"
-		}, " Scan ", 8, bc), O("button", {
+		}, " Scan ", 8, Rc), O("button", {
 			class: "btn btn-rescan",
 			onClick: (t) => l(e.id),
 			disabled: n.value[e.id]?.status === "running" || n.value[e.id]?.status === "queued"
-		}, " Rescan ", 8, xc)])]))), 128)), t.value.length === 0 ? (R(), D("div", Sc, " No libraries configured. Add a library to get started. ")) : E("", !0)]))]));
+		}, " Rescan ", 8, zc)])]))), 128)), t.value.length === 0 ? (R(), D("div", Bc, " No libraries configured. Add a library to get started. ")) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-62b3805e"]]), wc = { class: "my-servers-page" }, Tc = {
+}), [["__scopeId", "data-v-62b3805e"]]), Hc = { class: "my-servers-page" }, Uc = {
 	key: 0,
 	class: "loading"
-}, Ec = {
+}, Wc = {
 	key: 1,
 	class: "error"
-}, Dc = {
+}, Gc = {
 	key: 2,
 	class: "servers-list"
-}, Oc = { class: "server-info" }, kc = { class: "server-name" }, Ac = { class: "server-url" }, jc = { class: "server-meta" }, Mc = { key: 0 }, Nc = {
+}, Kc = { class: "server-info" }, qc = { class: "server-name" }, Jc = { class: "server-url" }, Yc = { class: "server-meta" }, Xc = { key: 0 }, Zc = {
 	key: 0,
 	class: "empty-state"
-}, Pc = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, Qc = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "MyServersPage",
 	setup(e) {
 		let t = B([]), n = B(!0), r = B(null);
@@ -5972,7 +6200,7 @@ var cc = { class: "library-scan-page" }, lc = {
 		}
 		return L(() => {
 			i();
-		}), (e, i) => (R(), D("div", wc, [i[2] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "My Servers"), O("p", { class: "page-subtitle" }, "Manage your connected media servers")], -1), n.value ? (R(), D("div", Tc, "Loading servers...")) : r.value ? (R(), D("div", Ec, W(r.value), 1)) : (R(), D("div", Dc, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, i) => (R(), D("div", Hc, [i[2] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "My Servers"), O("p", { class: "page-subtitle" }, "Manage your connected media servers")], -1), n.value ? (R(), D("div", Uc, "Loading servers...")) : r.value ? (R(), D("div", Wc, W(r.value), 1)) : (R(), D("div", Gc, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "server-card"
 		}, [
@@ -5980,34 +6208,34 @@ var cc = { class: "library-scan-page" }, lc = {
 				class: "server-status",
 				style: F({ backgroundColor: a(e.status) })
 			}, null, 4),
-			O("div", Oc, [
-				O("h3", kc, W(e.name), 1),
-				O("p", Ac, W(e.url), 1),
-				O("div", jc, [
+			O("div", Kc, [
+				O("h3", qc, W(e.name), 1),
+				O("p", Jc, W(e.url), 1),
+				O("div", Yc, [
 					O("span", null, W(e.owner), 1),
-					e.library_count === void 0 ? E("", !0) : (R(), D("span", Mc, W(e.library_count) + " libraries", 1)),
+					e.library_count === void 0 ? E("", !0) : (R(), D("span", Xc, W(e.library_count) + " libraries", 1)),
 					O("span", null, "Last seen: " + W(o(e.last_seen)), 1)
 				])
 			]),
 			i[0] ||= O("div", { class: "server-actions" }, [O("button", { class: "btn btn-primary" }, "Manage")], -1)
-		]))), 128)), t.value.length === 0 ? (R(), D("div", Nc, [...i[1] ||= [O("p", null, "No servers connected yet.", -1), O("button", { class: "btn btn-primary" }, "Add Server", -1)]])) : E("", !0)]))]));
+		]))), 128)), t.value.length === 0 ? (R(), D("div", Zc, [...i[1] ||= [O("p", null, "No servers connected yet.", -1), O("button", { class: "btn btn-primary" }, "Add Server", -1)]])) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-b9237da4"]]), Fc = { class: "federation-page" }, Ic = {
+}), [["__scopeId", "data-v-b9237da4"]]), $c = { class: "federation-page" }, el = {
 	key: 0,
 	class: "loading"
-}, Lc = {
+}, tl = {
 	key: 1,
 	class: "error"
-}, Rc = {
+}, nl = {
 	key: 2,
 	class: "federation-content"
-}, zc = { class: "peers-section" }, Bc = { class: "peers-list" }, Vc = { class: "peer-info" }, Hc = { class: "peer-name" }, Uc = { class: "peer-url" }, Wc = { class: "peer-meta" }, Gc = { key: 0 }, Kc = { class: "peer-actions" }, qc = ["onClick"], Jc = {
+}, rl = { class: "peers-section" }, il = { class: "peers-list" }, al = { class: "peer-info" }, ol = { class: "peer-name" }, sl = { class: "peer-url" }, cl = { class: "peer-meta" }, ll = { key: 0 }, ul = { class: "peer-actions" }, dl = ["onClick"], fl = {
 	key: 1,
 	class: "status-badge"
-}, Yc = {
+}, pl = {
 	key: 0,
 	class: "empty-state"
-}, Xc = { class: "add-peer-section" }, Zc = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, ml = { class: "add-peer-section" }, hl = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "FederationPage",
 	setup(e) {
 		let t = B([]), n = B(!0), r = B(null);
@@ -6047,7 +6275,7 @@ var cc = { class: "library-scan-page" }, lc = {
 		}
 		return L(() => {
 			i();
-		}), (e, i) => (R(), D("div", Fc, [i[5] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Federation"), O("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")], -1), n.value ? (R(), D("div", Ic, "Loading federation peers...")) : r.value ? (R(), D("div", Lc, W(r.value), 1)) : (R(), D("div", Rc, [O("div", zc, [i[2] ||= O("h2", { class: "section-title" }, "Connected Peers", -1), O("div", Bc, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, i) => (R(), D("div", $c, [i[5] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Federation"), O("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")], -1), n.value ? (R(), D("div", el, "Loading federation peers...")) : r.value ? (R(), D("div", tl, W(r.value), 1)) : (R(), D("div", nl, [O("div", rl, [i[2] ||= O("h2", { class: "section-title" }, "Connected Peers", -1), O("div", il, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "peer-card"
 		}, [
@@ -6055,17 +6283,17 @@ var cc = { class: "library-scan-page" }, lc = {
 				class: "peer-status",
 				style: F({ backgroundColor: c(e.status) })
 			}, null, 4),
-			O("div", Vc, [
-				O("h3", Hc, W(e.name), 1),
-				O("p", Uc, W(e.url), 1),
-				O("div", Wc, [e.shared_libraries_count === void 0 ? E("", !0) : (R(), D("span", Gc, W(e.shared_libraries_count) + " shared libraries", 1)), O("span", null, "Last sync: " + W(l(e.last_sync)), 1)])
+			O("div", al, [
+				O("h3", ol, W(e.name), 1),
+				O("p", sl, W(e.url), 1),
+				O("div", cl, [e.shared_libraries_count === void 0 ? E("", !0) : (R(), D("span", ll, W(e.shared_libraries_count) + " shared libraries", 1)), O("span", null, "Last sync: " + W(l(e.last_sync)), 1)])
 			]),
-			O("div", Kc, [e.status === "connected" ? (R(), D("button", {
+			O("div", ul, [e.status === "connected" ? (R(), D("button", {
 				key: 0,
 				class: "btn btn-secondary",
 				onClick: (t) => o(e.id)
-			}, " Disconnect ", 8, qc)) : e.status === "pending" ? (R(), D("span", Jc, "Pending")) : E("", !0)])
-		]))), 128)), t.value.length === 0 ? (R(), D("div", Yc, [...i[1] ||= [O("p", null, "No federation peers connected.", -1)]])) : E("", !0)])]), O("div", Xc, [i[4] ||= O("h2", { class: "section-title" }, "Add Peer", -1), O("form", {
+			}, " Disconnect ", 8, dl)) : e.status === "pending" ? (R(), D("span", fl, "Pending")) : E("", !0)])
+		]))), 128)), t.value.length === 0 ? (R(), D("div", pl, [...i[1] ||= [O("p", null, "No federation peers connected.", -1)]])) : E("", !0)])]), O("div", ml, [i[4] ||= O("h2", { class: "section-title" }, "Add Peer", -1), O("form", {
 			class: "add-peer-form",
 			onSubmit: i[0] ||= ae((e) => a(""), ["prevent"])
 		}, [...i[3] ||= [O("input", {
@@ -6077,22 +6305,22 @@ var cc = { class: "library-scan-page" }, lc = {
 			class: "btn btn-primary"
 		}, "Connect", -1)]], 32)])]))]));
 	}
-}), [["__scopeId", "data-v-91ba2781"]]), Qc = { class: "manage-shares-page" }, $c = {
+}), [["__scopeId", "data-v-91ba2781"]]), gl = { class: "manage-shares-page" }, _l = {
 	key: 0,
 	class: "loading"
-}, el = {
+}, vl = {
 	key: 1,
 	class: "error"
-}, tl = {
+}, yl = {
 	key: 2,
 	class: "shares-list"
-}, nl = { class: "share-info" }, rl = { class: "share-library" }, il = { class: "share-meta" }, al = {
+}, bl = { class: "share-info" }, xl = { class: "share-library" }, Sl = { class: "share-meta" }, Cl = {
 	key: 0,
 	class: "expired-badge"
-}, ol = { class: "share-dates" }, sl = { key: 0 }, cl = { class: "share-actions" }, ll = ["onClick"], ul = {
+}, wl = { class: "share-dates" }, Tl = { key: 0 }, El = { class: "share-actions" }, Dl = ["onClick"], Ol = {
 	key: 0,
 	class: "empty-state"
-}, dl = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, kl = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "ManageSharesPage",
 	setup(e) {
 		let t = B([]), n = B(!0), r = B(null);
@@ -6120,47 +6348,47 @@ var cc = { class: "library-scan-page" }, lc = {
 		}
 		return L(() => {
 			i();
-		}), (e, i) => (R(), D("div", Qc, [i[1] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Manage Shares"), O("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (R(), D("div", $c, "Loading shares...")) : r.value ? (R(), D("div", el, W(r.value), 1)) : (R(), D("div", tl, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, i) => (R(), D("div", gl, [i[1] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Manage Shares"), O("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (R(), D("div", _l, "Loading shares...")) : r.value ? (R(), D("div", vl, W(r.value), 1)) : (R(), D("div", yl, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "share-card"
-		}, [O("div", nl, [
-			O("h3", rl, W(e.library_name), 1),
-			O("div", il, [
+		}, [O("div", bl, [
+			O("h3", xl, W(e.library_name), 1),
+			O("div", Sl, [
 				O("span", null, "Shared with: " + W(e.shared_with), 1),
 				O("span", { class: P(["permission-badge", e.permissions]) }, W(e.permissions), 3),
-				e.expires_at && c(e.expires_at) ? (R(), D("span", al, "Expired")) : E("", !0)
+				e.expires_at && c(e.expires_at) ? (R(), D("span", Cl, "Expired")) : E("", !0)
 			]),
-			O("p", ol, [k(" Created: " + W(o(e.created_at)) + " ", 1), e.expires_at ? (R(), D("span", sl, " | Expires: " + W(o(e.expires_at)), 1)) : E("", !0)])
-		]), O("div", cl, [O("button", {
+			O("p", wl, [k(" Created: " + W(o(e.created_at)) + " ", 1), e.expires_at ? (R(), D("span", Tl, " | Expires: " + W(o(e.expires_at)), 1)) : E("", !0)])
+		]), O("div", El, [O("button", {
 			class: "btn btn-danger",
 			onClick: (t) => a(e.id)
-		}, "Revoke", 8, ll)])]))), 128)), t.value.length === 0 ? (R(), D("div", ul, [...i[0] ||= [O("p", null, "No library shares found.", -1)]])) : E("", !0)]))]));
+		}, "Revoke", 8, Dl)])]))), 128)), t.value.length === 0 ? (R(), D("div", Ol, [...i[0] ||= [O("p", null, "No library shares found.", -1)]])) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-bd8771ac"]]), fl = { class: "audit-logs-page" }, pl = {
+}), [["__scopeId", "data-v-bd8771ac"]]), Al = { class: "audit-logs-page" }, jl = {
 	key: 0,
 	class: "loading"
-}, ml = {
+}, Ml = {
 	key: 1,
 	class: "error"
-}, hl = {
+}, Nl = {
 	key: 2,
 	class: "logs-container"
-}, gl = { class: "logs-list" }, _l = { class: "log-content" }, vl = { class: "log-header" }, yl = { class: "log-action" }, bl = { class: "log-actor" }, xl = { class: "log-time" }, Sl = {
+}, Pl = { class: "logs-list" }, Fl = { class: "log-content" }, Il = { class: "log-header" }, Ll = { class: "log-action" }, Rl = { class: "log-actor" }, zl = { class: "log-time" }, Bl = {
 	key: 0,
 	class: "log-target"
-}, Cl = {
+}, Vl = {
 	key: 1,
 	class: "log-details"
-}, wl = {
+}, Hl = {
 	key: 2,
 	class: "log-ip"
-}, Tl = {
+}, Ul = {
 	key: 0,
 	class: "empty-state"
-}, El = {
+}, Wl = {
 	key: 0,
 	class: "pagination"
-}, Dl = ["disabled"], Ol = { class: "page-info" }, kl = ["disabled"], Al = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, Gl = ["disabled"], Kl = { class: "page-info" }, ql = ["disabled"], Jl = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "AuditLogsPage",
 	setup(e) {
 		let t = B([]), n = B(!0), r = B(null), i = B(1), a = B(1);
@@ -6186,39 +6414,39 @@ var cc = { class: "library-scan-page" }, lc = {
 		}
 		return L(() => {
 			o();
-		}), (e, s) => (R(), D("div", fl, [s[3] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Audit Logs"), O("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (R(), D("div", pl, "Loading audit logs...")) : r.value ? (R(), D("div", ml, W(r.value), 1)) : (R(), D("div", hl, [O("div", gl, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, s) => (R(), D("div", Al, [s[3] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Audit Logs"), O("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (R(), D("div", jl, "Loading audit logs...")) : r.value ? (R(), D("div", Ml, W(r.value), 1)) : (R(), D("div", Nl, [O("div", Pl, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "log-entry"
 		}, [O("div", {
 			class: "log-icon",
 			style: F({ backgroundColor: l(e.action) })
-		}, W(u(e.action)), 5), O("div", _l, [
-			O("div", vl, [
-				O("span", yl, W(e.action), 1),
-				O("span", bl, W(e.actor), 1),
-				O("span", xl, W(c(e.created_at)), 1)
+		}, W(u(e.action)), 5), O("div", Fl, [
+			O("div", Il, [
+				O("span", Ll, W(e.action), 1),
+				O("span", Rl, W(e.actor), 1),
+				O("span", zl, W(c(e.created_at)), 1)
 			]),
-			e.target ? (R(), D("p", Sl, "Target: " + W(e.target), 1)) : E("", !0),
-			e.details ? (R(), D("p", Cl, W(e.details), 1)) : E("", !0),
-			e.ip_address ? (R(), D("span", wl, "IP: " + W(e.ip_address), 1)) : E("", !0)
-		])]))), 128)), t.value.length === 0 ? (R(), D("div", Tl, [...s[2] ||= [O("p", null, "No audit logs found.", -1)]])) : E("", !0)]), a.value > 1 ? (R(), D("div", El, [
+			e.target ? (R(), D("p", Bl, "Target: " + W(e.target), 1)) : E("", !0),
+			e.details ? (R(), D("p", Vl, W(e.details), 1)) : E("", !0),
+			e.ip_address ? (R(), D("span", Hl, "IP: " + W(e.ip_address), 1)) : E("", !0)
+		])]))), 128)), t.value.length === 0 ? (R(), D("div", Ul, [...s[2] ||= [O("p", null, "No audit logs found.", -1)]])) : E("", !0)]), a.value > 1 ? (R(), D("div", Wl, [
 			O("button", {
 				class: "btn btn-secondary",
 				disabled: i.value <= 1,
 				onClick: s[0] ||= (e) => o(i.value - 1)
-			}, " Previous ", 8, Dl),
-			O("span", Ol, "Page " + W(i.value) + " of " + W(a.value), 1),
+			}, " Previous ", 8, Gl),
+			O("span", Kl, "Page " + W(i.value) + " of " + W(a.value), 1),
 			O("button", {
 				class: "btn btn-secondary",
 				disabled: i.value >= a.value,
 				onClick: s[1] ||= (e) => o(i.value + 1)
-			}, " Next ", 8, kl)
+			}, " Next ", 8, ql)
 		])) : E("", !0)]))]));
 	}
 }), [["__scopeId", "data-v-05910fd9"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
-function jl(e, t) {
+function Yl(e, t) {
 	let n = bt(), r = !1;
 	n.applyQuery(e.currentRoute.value.query), n.fetchMedia(t);
 	let i = J(() => JSON.stringify(n.toQuery()), () => {
@@ -6233,6 +6461,6 @@ function jl(e, t) {
 	};
 }
 //#endregion
-export { Ra as ALL_LOGS, Br as ARROW_ICONS, Vr as ARROW_LABELS, no as AdminDashboardApi, Go as AdminDashboardPage, za as AdminLogsApi, Ya as AdminLogsPage, Jo as AdminUsersApi, ks as AdminUsersPage, Ms as AdminWebhooksApi, ac as AdminWebhooksPage, e as ApiClient, a as ApiError, pa as AppBackdrop, we as AppLayout, Al as AuditLogsPage, p as Badge, ar as BrowsePage, i as Button, Cn as Chip, An as Combobox, Xe as CommandPalette, Pe as DEFAULT_PREFERENCES, f as EmptyState, Zc as FederationPage, $n as FilterBar, t as Icon, u as IconButton, De as Kbd, Cc as LibraryScanPage, c as LocalStorageTokenStore, Ai as LoginForm, Ni as LoginPage, dl as ManageSharesPage, Xt as MediaCard, Dr as MediaDetail, Mr as MediaDetailPage, on as MediaGrid, yn as MediaHomeRow, gn as MediaRow, d as Modal, Pc as MyServersPage, zr as PLAYER_SHORTCUTS, La as PageTransition, pt as PhlixApp, _i as Player, xi as PlayerPage, ii as QualityMenu, Ko as RATING_LABELS, qo as RATING_OPTIONS, St as RESUME_MAX_RATIO, xt as RESUME_MIN_SECONDS, Ia as Reveal, js as SUBSCRIBABLE_EVENTS, Rr as Scrubber, _ as Select, oa as SettingsForm, ca as SettingsPage, ya as Sheet, Qr as ShortcutsHelp, Wi as SignupForm, qi as SignupPage, o as Skeleton, ei as Slider, ri as SpeedMenu, Aa as Spinner, v as Switch, Fa as Tabs, Oa as ToastHost, xa as Tooltip, ni as VolumeControl, As as WEBHOOK_EVENT_CATEGORIES, sc as adminMenu, st as applyStoredThemeEarly, jl as bindMediaStoreToRouter, oc as buildAdminRoutes, _n as buildMediaQuery, vn as buildMediaUrl, da as createPhlixApp, it as deriveAccentVars, Nr as formatTime, Ae as fuzzyScore, Wr as handleShortcut, Re as hasStoredPreferences, Ur as isTypingTarget, je as matchCommand, Le as readStoredPreferences, Si as useAuthStore, Ne as useCommandStore, l as useFocusTrap, Gr as useKeyboardShortcuts, bt as useMediaStore, Et as usePlayerStore, Be as usePreferencesStore, ct as useTheme, n as useToastStore };
+export { Ra as ALL_LOGS, Br as ARROW_ICONS, Vr as ARROW_LABELS, no as AdminDashboardApi, Go as AdminDashboardPage, za as AdminLogsApi, Ya as AdminLogsPage, oc as AdminServicesApi, Cc as AdminServicesPage, Jo as AdminUsersApi, ks as AdminUsersPage, Ms as AdminWebhooksApi, ac as AdminWebhooksPage, e as ApiClient, a as ApiError, pa as AppBackdrop, we as AppLayout, Jl as AuditLogsPage, p as Badge, ar as BrowsePage, i as Button, Cn as Chip, An as Combobox, Xe as CommandPalette, Pe as DEFAULT_PREFERENCES, f as EmptyState, hl as FederationPage, $n as FilterBar, t as Icon, u as IconButton, De as Kbd, Vc as LibraryScanPage, c as LocalStorageTokenStore, Ai as LoginForm, Ni as LoginPage, kl as ManageSharesPage, Xt as MediaCard, Dr as MediaDetail, Mr as MediaDetailPage, on as MediaGrid, yn as MediaHomeRow, gn as MediaRow, d as Modal, Qc as MyServersPage, zr as PLAYER_SHORTCUTS, La as PageTransition, pt as PhlixApp, _i as Player, xi as PlayerPage, ii as QualityMenu, Ko as RATING_LABELS, qo as RATING_OPTIONS, St as RESUME_MAX_RATIO, xt as RESUME_MIN_SECONDS, Ia as Reveal, js as SUBSCRIBABLE_EVENTS, Rr as Scrubber, _ as Select, oa as SettingsForm, ca as SettingsPage, ya as Sheet, Qr as ShortcutsHelp, Wi as SignupForm, qi as SignupPage, o as Skeleton, ei as Slider, ri as SpeedMenu, Aa as Spinner, v as Switch, Fa as Tabs, Oa as ToastHost, xa as Tooltip, ni as VolumeControl, As as WEBHOOK_EVENT_CATEGORIES, Tc as adminMenu, st as applyStoredThemeEarly, Yl as bindMediaStoreToRouter, wc as buildAdminRoutes, _n as buildMediaQuery, vn as buildMediaUrl, da as createPhlixApp, it as deriveAccentVars, Nr as formatTime, Ae as fuzzyScore, Wr as handleShortcut, Re as hasStoredPreferences, Ur as isTypingTarget, je as matchCommand, Le as readStoredPreferences, Si as useAuthStore, Ne as useCommandStore, l as useFocusTrap, Gr as useKeyboardShortcuts, bt as useMediaStore, Et as usePlayerStore, Be as usePreferencesStore, ct as useTheme, n as useToastStore };
 
 //# sourceMappingURL=phlix-ui.js.map
