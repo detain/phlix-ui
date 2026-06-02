@@ -226,6 +226,30 @@ describe('BrowsePage — see-all', () => {
   });
 });
 
+describe('BrowsePage — grid wiring', () => {
+  it('reloads on a FilterBar change', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 1 })));
+    const w = mountPage();
+    const store = useMediaStore();
+    await flushPromises();
+    const reset = vi.spyOn(store, 'reset');
+    const fetchMedia = vi.spyOn(store, 'fetchMedia');
+    w.findComponent({ name: 'FilterBar' }).vm.$emit('change');
+    expect(reset).toHaveBeenCalled();
+    expect(fetchMedia).toHaveBeenCalled();
+  });
+
+  it('forwards load-more to the store', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 50 })));
+    const w = mountPage();
+    const store = useMediaStore();
+    await flushPromises();
+    const loadMore = vi.spyOn(store, 'loadMore');
+    w.findComponent({ name: 'MediaGrid' }).vm.$emit('load-more');
+    expect(loadMore).toHaveBeenCalled();
+  });
+});
+
 describe('BrowsePage — error', () => {
   it('shows the inline error + retry when the grid fetch fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('library offline')));

@@ -11,6 +11,20 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **Detail view (R2.5):** new **`MediaDetail.vue`** + **`MediaDetailPage.vue`** and the
+  **`/app/media/:id`** route (`name: 'media'`, added to `buildRoutes`). The detail surface renders a
+  poster-derived **ambient glow** behind a hero (blur-up poster, title, meta [year · cert · runtime ·
+  type], genre chips, overview, director + cast chips) with **Play / Resume / +Watchlist** actions and a
+  **"More like this"** rail (reuses `MediaRow`). The page container fetches the title by id
+  (`GET /api/v1/media/:id`) plus a genre-scoped similar list (excludes self, capped, non-fatal on
+  failure), resolves the resume position from `usePlayerStore`, re-fetches when the route id changes, and
+  guards every fetch with a per-load `AbortController` torn down on unmount. Loading → `Skeleton`, error →
+  `EmptyState` + retry; **degrades gracefully** when metadata is sparse (missing poster/overview/cast…).
+  `MediaDetail`/`MediaDetailPage` exported from the package root. `MediaCard`'s default `to` already
+  targets this route, and `BrowsePage`'s Info action now navigates here when present.
+  - **Coverage now counts the rebuilt redo surfaces** — `MediaCard`/`MediaGrid`/`FilterBar` and the
+    `BrowsePage`/`MediaDetailPage` pages are no longer excluded (only `Player.vue` + the R4/R5
+    auth/settings/app pages remain out until they're rebuilt).
 - **BrowsePage + Home rows (R2.4):** `BrowsePage.vue` rebuilt into the full Browse surface — a
   **Continue Watching** rail derived from `usePlayerStore.resumeMap` (resolved against an in-page
   registry fed by the grid + home-row fetches, **no extra API**, ordered by resume seconds desc, capped),
