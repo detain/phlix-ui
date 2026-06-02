@@ -45,6 +45,14 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
     `:focus-visible` ring), `IconButton` (square, required `label`, `aria-pressed` toggle support),
     `Badge` (tones neutral/accent/success/warning/error/info · `mono` for `4K · HDR`/counts · optional icon).
     Exported from `@phlix/ui`.
+  - _R0.4b:_ `Slider` (accessible `role=slider`, full keyboard + pointer drag, v-model, `change` on commit —
+    base for volume/card-size/scrubber), `Switch` (native-button `role=switch` toggle, `aria-labelledby`),
+    `Chip` (toggle via `:selected`→aria-pressed and/or `removable`→✕ with its own label; optional icon).
+
+### Changed
+- **Bumped `vue` floor to `^3.5.0`** (dependency + peerDependency) to use `useId()`. Every install
+  (package + both consumers) already resolves to vue 3.5.x, so this is non-breaking in practice;
+  consumers' own `vue` devDep is aligned to `^3.5.0` at R6.6.
 
 ### Changed
 - Accent is now **projector-amber `#f5a524`** (was indigo `#6366f1`). Radius scale softened
