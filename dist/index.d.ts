@@ -42,6 +42,9 @@ export type { ArrSyncStatus, ArrSyncTriggerResult, ArrSyncEnableResult, AuthProv
 export { default as AdminBackupPage } from './pages/admin/BackupPage.vue';
 export { AdminBackupApi } from './api/admin/backup';
 export type { Backup, CreateBackupInput, CreateBackupResult, UpdateScheduleInput, ScheduleData, UpdateScheduleResult, } from './api/admin/backup';
+export { default as AdminCastDevicesPage } from './pages/admin/CastDevicesPage.vue';
+export { AdminCastApi } from './api/admin/cast';
+export type { CastDevice, CastPlaybackState, AirPlayDevice, AirPlayPlaybackState, CastActionResult, } from './api/admin/cast';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';

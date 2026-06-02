@@ -18,6 +18,13 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Cast devices (RA.8):** new **`AdminCastDevicesPage`** (`src/pages/admin/CastDevicesPage.vue`)
+  — Chromecast + AirPlay device tabs: device list + selection, playback-state display, and transport
+  controls (play/pause/stop; seek on Chromecast only). Backed by **`AdminCastApi`**
+  (`src/api/admin/cast.ts`) consolidating the deleted React `cast` + `airplay` modules (`/api/v1/cast/*`,
+  `/api/v1/airplay/*`; `airPlayPlay`→`/resume`, `castSeek` posts `{position_ms}`). Exported; wired into the
+  admin route/menu seam. (Roku/DLNA tabs from the React page are out of scope here — DLNA is RA.9; Roku has
+  no admin surface in the RA inventory.)
 - **Admin port — Backup (RA.7):** new **`AdminBackupPage`** (`src/pages/admin/BackupPage.vue`) — backup
   list (size/date/storage location), create with optional label, delete + restore (both behind confirm
   modals), optional upload-to-S3, and a schedule config form (interval/retention with next-run display).
