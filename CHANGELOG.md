@@ -18,6 +18,22 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Player — Ambient ("Ambilight") + theater/fullscreen modes (R3.6):** the player now renders a live,
+  poster/frame-derived ambient glow behind the video. New **`AmbientCanvas`**
+  (`src/components/player/AmbientCanvas.vue`) samples a heavily-downscaled copy of the current frame
+  (32×18) on a throttled `requestVideoFrameCallback` loop (~4 Hz; a `setInterval` fallback while playing
+  when rVFC is absent) and paints a layered radial-gradient glow that spills beyond the framed video box.
+  It is **fully disable-able** — off when `usePreferencesStore.atmosphere` is false, under reduced-motion,
+  or under a best-effort battery-saver heuristic (`navigator.getBattery()`, discharging ≤ 20%) — and
+  degrades to a static fallback glow (with NO loop) under jsdom / SSR / no-canvas / tainted cross-origin
+  frames. New pure helpers **`src/components/player/ambient.ts`** (`averageRegion`, `sampleAmbient`,
+  `ambientGradient`, `rgbString`/`rgbaString`, `isBatterySaving` + the sample-size / cadence constants).
+  **Theater mode** is now wired: the **`t` shortcut** and a new control-bar theater button (`aria-pressed`)
+  toggle a widened, edge-to-edge layout with a brighter ambient surround and emit `theater(active: boolean)`
+  so the host page can widen its column + dim the surroundings (PlayerPage, R3.9). True fullscreen is
+  unchanged. `Player.vue`'s root was restructured into a non-clipping positioning wrapper with the framed
+  video in a `.player__stage` so the glow can extend past the frame. `AmbientCanvas` + the ambient helpers
+  are exported.
 - **Player — Captions / subtitles UX (R3.5):** captions are now a first-class, customizable surface.
   New **`CaptionOverlay`** (`src/components/player/CaptionOverlay.vue`) renders the active track's WebVTT
   cues in a CUSTOM overlay (the selected track is set to `mode='hidden'` — parsed, not natively painted —

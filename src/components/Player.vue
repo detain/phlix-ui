@@ -26,6 +26,7 @@ import SpeedMenu from './player/SpeedMenu.vue';
 import QualityMenu from './player/QualityMenu.vue';
 import CaptionOverlay from './player/CaptionOverlay.vue';
 import CaptionsMenu from './player/CaptionsMenu.vue';
+import AmbientCanvas from './player/AmbientCanvas.vue';
 import {
   listSubtitleTracks,
   listAudioTracks,
@@ -53,8 +54,9 @@ const emit = defineEmits<{
   (e: 'back'): void;
   /** Captions toggle (wired in R3.5). */
   (e: 'captions'): void;
-  /** Theater-mode toggle (wired in R3.6). */
-  (e: 'theater'): void;
+  /** Theater-mode toggle (R3.6) — payload is the new on/off state so the host
+   *  page (PlayerPage, R3.9) can widen its column + dim the surroundings. */
+  (e: 'theater', active: boolean): void;
   /** Picture-in-picture toggle (wired in R3.7). */
   (e: 'pip'): void;
 }>();
@@ -71,6 +73,10 @@ const showChrome = ref(true);
 const fullscreen = ref(false);
 const scrubbing = ref(false);
 const showHelp = ref(false);
+const theater = ref(false);
+
+/** Ambient glow brightens in theater mode (the "dim surroundings" cinema feel). */
+const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
 
 // ---- captions / tracks (R3.5) -----------------------------------------------
 const textTracks = ref<TextTrackInfo[]>([]);
@@ -214,7 +220,7 @@ const shortcutActions: ShortcutActions = {
   toggleMute,
   toggleFullscreen,
   toggleCaptions,
-  toggleTheater: () => emit('theater'),
+  toggleTheater,
   togglePip: () => emit('pip'),
   seekToPercent: (frac) => onSeek(frac * player.duration),
   speedStep,
@@ -230,6 +236,13 @@ function toggleMute(): void {
   // Drive the store; the `player.muted` watch mirrors it onto the element (which,
   // in a real browser, then fires volumechange — a no-op since they now agree).
   player.toggleMute();
+}
+
+/** Theater mode (R3.6) — widen + brighten the ambient surround in-component, and
+ *  emit the new state so the host page can widen its column + dim the page. */
+function toggleTheater(): void {
+  theater.value = !theater.value;
+  emit('theater', theater.value);
 }
 
 // reflect store selections (e.g. set elsewhere) back onto the element
@@ -324,131 +337,154 @@ onBeforeUnmount(() => {
   <div
     ref="containerRef"
     class="player"
-    :class="{ 'is-chrome-hidden': !showChrome }"
+    :class="{ 'is-chrome-hidden': !showChrome, 'is-theater': theater }"
     @pointermove="revealChrome"
     @pointerdown="revealChrome"
     @focusin="revealChrome"
   >
-    <video
-      ref="videoRef"
-      class="player__video"
-      :src="streamUrl"
-      :poster="media.poster_url ?? undefined"
-      preload="metadata"
-      playsinline
-      @play="onPlay"
-      @pause="onPause"
-      @timeupdate="onTimeUpdate"
-      @loadedmetadata="onLoadedMetadata"
-      @progress="onProgress"
-      @volumechange="onVolumeChange"
-      @ratechange="onRateChange"
-      @click="togglePlay"
-    />
-
-    <div class="player__scrim player__scrim--top" aria-hidden="true" />
-    <div class="player__scrim player__scrim--bottom" aria-hidden="true" />
-
-    <!-- metadata -->
-    <div class="player__meta">
-      <button type="button" class="player__iconbtn player__back" aria-label="Back" @click.stop="emit('back')">
-        <Icon name="arrow-left" />
-      </button>
-      <div class="player__meta-text">
-        <p class="player__eyebrow">Now playing</p>
-        <h2 class="player__title">{{ media.name }}</h2>
-        <div class="player__sub numeric">
-          <template v-for="(seg, i) in metaSegments" :key="i">
-            <span v-if="i > 0 && !seg.cert" class="player__dot" aria-hidden="true">·</span>
-            <span :class="{ 'player__cert': seg.cert }">{{ seg.text }}</span>
-          </template>
-        </div>
-      </div>
-    </div>
-
-    <!-- center play/pause -->
-    <div class="player__center">
-      <button
-        type="button"
-        class="player__bigplay"
-        :class="{ 'is-playing': player.playing }"
-        :aria-label="player.playing ? 'Pause' : 'Play'"
-        @click.stop="togglePlay"
-      >
-        <Icon :name="player.playing ? 'pause' : 'play'" />
-      </button>
-    </div>
-
-    <!-- captions (custom overlay, lifts above the controls while chrome shows) -->
-    <CaptionOverlay
+    <!-- ambient ("Ambilight") glow — behind the stage, spills beyond the frame -->
+    <AmbientCanvas
       :video="videoRef"
-      :language="player.subtitleLang"
-      :style-config="prefs.captionStyle"
-      :lifted="showChrome"
+      :enabled="prefs.atmosphere"
+      :playing="player.playing"
+      :reduced-motion="prefs.effectiveReducedMotion"
+      :intensity="ambientIntensity"
     />
 
-    <!-- controls -->
-    <div class="player__controls" @click.stop>
-      <Scrubber
-        :position="player.position"
-        :duration="player.duration"
-        :buffered="player.buffered"
-        :chapters="chapters"
-        :thumbnail-at="thumbnailAt"
-        @seek="onSeek"
-        @scrub-start="onScrubStart"
-        @scrub-end="onScrubEnd"
+    <!-- the framed video box (clips its own chrome; the ambient halo is outside it) -->
+    <div class="player__stage">
+      <video
+        ref="videoRef"
+        class="player__video"
+        :src="streamUrl"
+        :poster="media.poster_url ?? undefined"
+        preload="metadata"
+        playsinline
+        @play="onPlay"
+        @pause="onPause"
+        @timeupdate="onTimeUpdate"
+        @loadedmetadata="onLoadedMetadata"
+        @progress="onProgress"
+        @volumechange="onVolumeChange"
+        @ratechange="onRateChange"
+        @click="togglePlay"
       />
 
-      <div class="player__btnrow">
+      <div class="player__scrim player__scrim--top" aria-hidden="true" />
+      <div class="player__scrim player__scrim--bottom" aria-hidden="true" />
+
+      <!-- metadata -->
+      <div class="player__meta">
+        <button type="button" class="player__iconbtn player__back" aria-label="Back" @click.stop="emit('back')">
+          <Icon name="arrow-left" />
+        </button>
+        <div class="player__meta-text">
+          <p class="player__eyebrow">Now playing</p>
+          <h2 class="player__title">{{ media.name }}</h2>
+          <div class="player__sub numeric">
+            <template v-for="(seg, i) in metaSegments" :key="i">
+              <span v-if="i > 0 && !seg.cert" class="player__dot" aria-hidden="true">·</span>
+              <span :class="{ 'player__cert': seg.cert }">{{ seg.text }}</span>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- center play/pause -->
+      <div class="player__center">
         <button
           type="button"
-          class="player__iconbtn player__iconbtn--lg"
+          class="player__bigplay"
+          :class="{ 'is-playing': player.playing }"
           :aria-label="player.playing ? 'Pause' : 'Play'"
-          @click="togglePlay"
+          @click.stop="togglePlay"
         >
           <Icon :name="player.playing ? 'pause' : 'play'" />
         </button>
+      </div>
 
-        <span class="player__time numeric">
-          {{ formatTime(player.position) }}<span class="player__sep"> / </span>{{ formatTime(player.duration) }}
-        </span>
+      <!-- captions (custom overlay, lifts above the controls while chrome shows) -->
+      <CaptionOverlay
+        :video="videoRef"
+        :language="player.subtitleLang"
+        :style-config="prefs.captionStyle"
+        :lifted="showChrome"
+      />
 
-        <span class="player__grow" />
-
-        <VolumeControl />
-        <SpeedMenu />
-        <QualityMenu :qualities="qualities" />
-        <CaptionsMenu
-          v-model:open="captionsMenuOpen"
-          :tracks="textTracks"
-          :audio-tracks="audioTracks"
-          :active-audio="activeAudio"
-          @select-audio="onSelectAudio"
+      <!-- controls -->
+      <div class="player__controls" @click.stop>
+        <Scrubber
+          :position="player.position"
+          :duration="player.duration"
+          :buffered="player.buffered"
+          :chapters="chapters"
+          :thumbnail-at="thumbnailAt"
+          @seek="onSeek"
+          @scrub-start="onScrubStart"
+          @scrub-end="onScrubEnd"
         />
 
-        <button
-          type="button"
-          class="player__iconbtn"
-          aria-label="Keyboard shortcuts"
-          aria-haspopup="dialog"
-          @click="showHelp = true"
-        >
-          <Icon name="info" />
-        </button>
+        <div class="player__btnrow">
+          <button
+            type="button"
+            class="player__iconbtn player__iconbtn--lg"
+            :aria-label="player.playing ? 'Pause' : 'Play'"
+            @click="togglePlay"
+          >
+            <Icon :name="player.playing ? 'pause' : 'play'" />
+          </button>
 
-        <button
-          type="button"
-          class="player__iconbtn"
-          :aria-label="fullscreen ? 'Exit fullscreen' : 'Fullscreen'"
-          @click="toggleFullscreen"
-        >
-          <Icon :name="fullscreen ? 'fullscreen-exit' : 'fullscreen'" />
-        </button>
+          <span class="player__time numeric">
+            {{ formatTime(player.position) }}<span class="player__sep"> / </span>{{ formatTime(player.duration) }}
+          </span>
+
+          <span class="player__grow" />
+
+          <VolumeControl />
+          <SpeedMenu />
+          <QualityMenu :qualities="qualities" />
+          <CaptionsMenu
+            v-model:open="captionsMenuOpen"
+            :tracks="textTracks"
+            :audio-tracks="audioTracks"
+            :active-audio="activeAudio"
+            @select-audio="onSelectAudio"
+          />
+
+          <button
+            type="button"
+            class="player__iconbtn"
+            aria-label="Keyboard shortcuts"
+            aria-haspopup="dialog"
+            @click="showHelp = true"
+          >
+            <Icon name="info" />
+          </button>
+
+          <button
+            type="button"
+            class="player__iconbtn"
+            :class="{ 'is-on': theater }"
+            :aria-label="theater ? 'Exit theater mode' : 'Theater mode'"
+            :aria-pressed="theater"
+            @click="toggleTheater"
+          >
+            <Icon name="theater" />
+          </button>
+
+          <button
+            type="button"
+            class="player__iconbtn"
+            :aria-label="fullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+            @click="toggleFullscreen"
+          >
+            <Icon :name="fullscreen ? 'fullscreen-exit' : 'fullscreen'" />
+          </button>
+        </div>
       </div>
-    </div>
 
-    <ShortcutsHelp :open="showHelp" @close="showHelp = false" />
+      <ShortcutsHelp :open="showHelp" @close="showHelp = false" />
+    </div>
   </div>
 </template>
 
@@ -459,15 +495,37 @@ onBeforeUnmount(() => {
   aspect-ratio: 16 / 9;
   max-height: 90vh;
   margin: 0 auto;
+  isolation: isolate;
+  transition: max-height var(--dur-base) var(--ease-out);
+}
+.player.is-chrome-hidden {
+  cursor: none;
+}
+
+/* The framed video box. Clips its own chrome (overflow hidden); the ambient
+   halo (z 0) sits BEHIND it and is allowed to spill beyond the frame, so the
+   root is NOT overflow-hidden. */
+.player__stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
   background: #000;
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow-4);
   border: 1px solid var(--border-subtle);
-  isolation: isolate;
+  transition: border-radius var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
-.player.is-chrome-hidden {
-  cursor: none;
+
+/* Theater mode — widen + go edge-to-edge in-component; the host page dims and
+   widens around it (R3.9). The ambient glow also brightens (ambientIntensity). */
+.player.is-theater {
+  max-height: 100vh;
+}
+.player.is-theater .player__stage {
+  border-radius: 0;
+  border-color: transparent;
 }
 
 .player__video {
@@ -607,6 +665,10 @@ onBeforeUnmount(() => {
 .player__iconbtn:hover {
   background: rgba(255, 255, 255, 0.12);
 }
+/* active toggle (theater on) — amber tint */
+.player__iconbtn.is-on {
+  color: var(--accent);
+}
 .player__iconbtn :deep(svg) {
   width: 21px;
   height: 21px;
@@ -651,6 +713,8 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .player,
+  .player__stage,
   .player__scrim,
   .player__meta,
   .player__controls,
