@@ -19,11 +19,11 @@ type __VLS_Props = {
     /** aria-label for the remove button; defaults to "Remove". */
     removeLabel?: string;
 };
-declare var __VLS_4: {};
+declare var __VLS_6: {};
 type __VLS_Slots = {} & {
-    default?: (props: typeof __VLS_4) => any;
+    default?: (props: typeof __VLS_6) => any;
 };
-declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     "update:selected": (v: boolean) => any;
     click: () => any;
     remove: () => any;
@@ -38,7 +38,8 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}
     removable: boolean;
     removeLabel: string;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
-declare const _default: __VLS_WithSlots<typeof __VLS_component, __VLS_Slots>;
+declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
+declare const _default: typeof __VLS_export;
 export default _default;
 type __VLS_WithSlots<T, S> = T & {
     new (): {

@@ -50,11 +50,19 @@ describe('Reveal', () => {
     let cb: (e: Array<{ isIntersecting: boolean }>) => void = () => {};
     const observe = vi.fn();
     const disconnect = vi.fn();
-    const stub = vi.fn((c: (e: Array<{ isIntersecting: boolean }>) => void) => {
-      cb = c;
-      return { observe, disconnect, unobserve: vi.fn(), takeRecords: vi.fn(), root: null, rootMargin: '', thresholds: [] };
-    });
-    (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = stub;
+    class IOStub {
+      observe = observe;
+      disconnect = disconnect;
+      unobserve = vi.fn();
+      takeRecords = vi.fn();
+      root = null;
+      rootMargin = '';
+      thresholds = [];
+      constructor(c: (e: Array<{ isIntersecting: boolean }>) => void) {
+        cb = c;
+      }
+    }
+    (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = IOStub;
     const w = mount(Reveal, { props: { whenVisible: true }, slots: { default: 'X' }, attachTo: document.body });
     expect(w.find('.phlix-reveal').classes()).not.toContain('is-revealed');
     expect(observe).toHaveBeenCalled();

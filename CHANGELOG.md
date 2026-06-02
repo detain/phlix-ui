@@ -28,6 +28,20 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
 ### Changed (R1.2)
 - `useMediaStore.hasMore` now derives from `items.length < total` (paging tracked via the accumulated list).
 
+### Tooling / dependencies
+- **Upgraded the whole toolchain to latest:** Vite 5→**8** (lib CSS pinned to `style.css` via
+  `lib.cssFileName`), Vitest 1→**4** (+ `@vitest/coverage-v8`), TypeScript 5→**6** & vue-tsc 2→**3**
+  (`tsconfig` `lib` bumped to ES2022; declaration build given an explicit `rootDir`),
+  `@vitejs/plugin-vue` 5→**6**, `@vue/tsconfig` 0.5→**0.9**, `@types/node` 20→**25**. Runtime deps
+  **pinia 2→3** and **vue-router 4→5** (peerDependencies updated to `pinia ^3 / vue-router ^5 / vue ^3.5`;
+  consumers align at R6.6). All gates green on the new stack.
+- **Test coverage** configured (v8) and raised to **~92% statements / 96% lines** with 166 tests; added
+  suites for `useAuthStore`, `bindMediaStoreToRouter`, `createPhlixApp`, and many primitive branch cases.
+
+### Fixed
+- `useAuthStore.isLoggedIn` was a `computed` over non-reactive `localStorage`, so it went stale after
+  login/logout — now backed by a reactive token ref that updates on login/signup/logout/expiry.
+
 - **Design system "Nocturne" (R0.0):** art-direction mockups + a distilled design spec under
   `src/dev/mockups/` (poster card, browse grid + filter bar, player chrome; nocturne/daylight/midnight).
   Cinema-after-dark aesthetic — projector-amber accent, Fraunces/Hanken Grotesk/JetBrains Mono,

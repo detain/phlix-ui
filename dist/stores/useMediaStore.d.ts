@@ -75,7 +75,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
-}, "sort" | "search" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "error" | "items" | "total" | "loading" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "availableRatings" | "availableTypes">, Pick<{
+}, "search" | "sort" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "error" | "items" | "total" | "loading" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "availableRatings" | "availableTypes">, Pick<{
     items: import("vue").Ref<{
         id: string;
         name: string;

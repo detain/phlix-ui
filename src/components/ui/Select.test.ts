@@ -104,6 +104,71 @@ describe('Select', () => {
     await w.find('.phlix-select__trigger').trigger('click');
     expect(w.find('.phlix-select__trigger').attributes('aria-expanded')).toBe('false');
   });
+
+  it('Space opens; Home/End move to first/last enabled; pointermove sets active', async () => {
+    const w = mount(Select, { props: { modelValue: null, options: opts } });
+    const trigger = w.find('.phlix-select__trigger');
+    await trigger.trigger('keydown', { key: ' ' }); // open
+    expect(trigger.attributes('aria-expanded')).toBe('true');
+    await trigger.trigger('keydown', { key: 'End' });
+    expect(w.find(`#${trigger.attributes('aria-activedescendant')}`).text()).toContain('Runtime');
+    await trigger.trigger('keydown', { key: 'Home' });
+    expect(w.find(`#${trigger.attributes('aria-activedescendant')}`).text()).toContain('Name');
+    await w.findAll('[role="option"]')[3].trigger('pointermove');
+    expect(w.findAll('[role="option"]')[3].classes()).toContain('is-active');
+  });
+
+  it('clicking a disabled option does not select', async () => {
+    const w = mount(Select, { props: { modelValue: null, options: opts } });
+    await w.find('.phlix-select__trigger').trigger('click');
+    await w.findAll('[role="option"]')[2].trigger('click'); // rating (disabled)
+    expect(w.emitted('update:modelValue')).toBeFalsy();
+  });
+
+  it('click outside closes the listbox', async () => {
+    const w = mount(Select, { props: { modelValue: null, options: opts }, attachTo: document.body });
+    await w.find('.phlix-select__trigger').trigger('click');
+    expect(w.find('.phlix-select__trigger').attributes('aria-expanded')).toBe('true');
+    document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await w.vm.$nextTick();
+    expect(w.find('.phlix-select__trigger').attributes('aria-expanded')).toBe('false');
+    w.unmount();
+  });
+});
+
+describe('Combobox — keyboard + dismissal', () => {
+  it('ArrowDown opens when closed; ArrowDown/Up move skipping disabled; Enter selects', async () => {
+    const w = mount(Combobox, { props: { modelValue: null, options: opts } });
+    const input = w.find('input[role="combobox"]');
+    await input.trigger('keydown', { key: 'ArrowDown' }); // opens
+    expect(input.attributes('aria-expanded')).toBe('true');
+    await input.trigger('keydown', { key: 'ArrowDown' }); // move down (skips disabled)
+    await input.trigger('keydown', { key: 'ArrowUp' }); // move up
+    await input.trigger('keydown', { key: 'Enter' }); // select active
+    expect(w.emitted('update:modelValue')).toBeTruthy();
+  });
+
+  it('Tab reverts the query and closes', async () => {
+    const w = mount(Combobox, { props: { modelValue: 'name', options: opts } });
+    const input = w.find('input[role="combobox"]');
+    await input.trigger('focus');
+    await input.setValue('zz');
+    await input.trigger('keydown', { key: 'Tab' });
+    expect((input.element as HTMLInputElement).value).toBe('Name');
+    expect(input.attributes('aria-expanded')).toBe('false');
+  });
+
+  it('click outside reverts + closes', async () => {
+    const w = mount(Combobox, { props: { modelValue: 'name', options: opts }, attachTo: document.body });
+    const input = w.find('input[role="combobox"]');
+    await input.trigger('focus');
+    await input.setValue('zz');
+    document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await w.vm.$nextTick();
+    expect((input.element as HTMLInputElement).value).toBe('Name');
+    expect(input.attributes('aria-expanded')).toBe('false');
+    w.unmount();
+  });
 });
 
 describe('Combobox', () => {
