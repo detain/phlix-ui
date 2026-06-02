@@ -101,6 +101,13 @@ describe('buildAdminRoutes', () => {
     expect(livetv?.path).toBe('/app/admin/livetv');
     expect(typeof livetv?.component).toBe('function');
   });
+
+  it('exposes the collections route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const collections = routes.find((r) => r.name === 'admin-collections');
+    expect(collections?.path).toBe('/app/admin/collections');
+    expect(typeof collections?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -190,5 +197,12 @@ describe('adminMenu', () => {
     const livetv = group.children?.find((c) => c.id === 'admin-livetv');
     expect(livetv?.label).toBe('Live TV / DVR');
     expect(livetv?.to).toBe('/app/admin/livetv');
+  });
+
+  it('exposes a collections child pointing at the collections route', () => {
+    const [group] = adminMenu();
+    const collections = group.children?.find((c) => c.id === 'admin-collections');
+    expect(collections?.label).toBe('Collections');
+    expect(collections?.to).toBe('/app/admin/collections');
   });
 });
