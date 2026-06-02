@@ -56,6 +56,10 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
     (focus-trap, refcounted scroll-lock for stacking, Esc, return-focus, Teleport, `role=dialog`/`aria-modal`/
     `aria-labelledby`, backdrop-click + `dismissible`), and `Tooltip` (hover/focus, delay, `role=tooltip`,
     wires `aria-describedby` onto the trigger). `useFocusTrap` exported.
+  - _R0.4e:_ `useToastStore` (Pinia) + `ToastHost` (aria-live region, tone icons, action + dismiss,
+    mount-once guard), `Skeleton` (text/rect/circle, shimmer), `Spinner` (`role=status`), `EmptyState`
+    (icon/title/description/actions), `Tabs` (`role=tablist` roving-tabindex + arrow/Home/End), `Kbd`.
+    Completes the R0.4 primitive layer (17 components).
 
 ### Changed
 - **Bumped `vue` floor to `^3.5.0`** (dependency + peerDependency) to use `useId()`. Every install
