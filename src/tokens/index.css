@@ -17,13 +17,16 @@
 html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-optical-sizing: auto;
 }
 
 body {
     font-family: var(--font-sans);
+    font-size: var(--text-base);
     background-color: var(--color-bg);
     color: var(--color-text);
     line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-snug);
 }
 
 img, picture, video, canvas, svg {

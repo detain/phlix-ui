@@ -4,7 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>@phlix/ui — Token swatches (R0.1)</title>
-<!-- Pull the REAL shipped token files so this page validates them directly. -->
+<!-- Pull the REAL shipped token + font files so this page validates them directly. -->
+<link rel="stylesheet" href="../assets/fonts/fonts.css" />
 <link rel="stylesheet" href="../tokens/index.css" />
 <style>
   body { font-family: var(--font-sans, sans-serif); padding: 24px; }
@@ -41,8 +42,18 @@
 </style>
 </head>
 <body>
-  <h1>@phlix/ui — Token swatches</h1>
-  <div class="sub">R0.1 token overhaul · every token resolved in all three themes (nocturne / daylight / midnight)</div>
+  <h1 style="font-family:var(--font-display);font-weight:600;letter-spacing:var(--tracking-tight)">@phlix/ui — Token swatches</h1>
+  <div class="sub">R0.1 tokens · R0.2 typography · validated across nocturne / daylight / midnight</div>
+
+  <!-- R0.2 type specimen -->
+  <section style="margin-bottom:28px;padding:18px;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface)">
+    <div class="lbl" style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-subtle);margin-bottom:10px">Typography — self-hosted, no CDN</div>
+    <p style="font-family:var(--font-display);font-weight:600;font-size:var(--text-3xl);letter-spacing:var(--tracking-tight);line-height:var(--leading-tight)">Fraunces — cinema after dark</p>
+    <p style="font-family:var(--font-sans);font-size:var(--text-md);color:var(--text-muted);margin-top:8px">Hanken Grotesk drives all UI &amp; body copy — warm, legible, characterful. The quick brown fox jumps over the lazy dog.</p>
+    <p class="numeric" style="font-size:var(--text-lg);margin-top:8px">JetBrains Mono · 1:09:42 / 2:46:00 · 1,284 titles · 0123456789</p>
+    <p style="font-family:var(--font-sans);font-weight:700;font-size:var(--text-xl);margin-top:8px">Weights: <span style="font-weight:400">400</span> <span style="font-weight:500">500</span> <span style="font-weight:600">600</span> <span style="font-weight:700">700</span></p>
+  </section>
+
   <div class="themes" id="themes"></div>
 
 <script>
