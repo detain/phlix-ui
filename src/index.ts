@@ -130,6 +130,14 @@ export type {
   CreateRecordingInput,
   CreateSeriesRuleInput,
 } from './api/admin/liveTv';
+export { default as AdminCollectionsPage } from './pages/admin/CollectionsPage.vue';
+export { AdminCollectionsApi } from './api/admin/collections';
+export type {
+  Collection,
+  MediaItem as CollectionMediaItem,
+  CreateCollectionInput,
+  UpdateCollectionInput,
+} from './api/admin/collections';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';

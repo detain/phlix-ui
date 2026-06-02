@@ -67,6 +67,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-livetv',
       component: () => import('../pages/admin/LiveTvPage.vue'),
     },
+    {
+      path: `${root}/collections`,
+      name: 'admin-collections',
+      component: () => import('../pages/admin/CollectionsPage.vue'),
+    },
   ];
 }
 
@@ -90,6 +95,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-dlna', label: 'DLNA Server', icon: 'monitor', to: `${root}/dlna` },
         { id: 'admin-remote-access', label: 'Remote Access', icon: 'expand', to: `${root}/remote-access` },
         { id: 'admin-livetv', label: 'Live TV / DVR', icon: 'tv', to: `${root}/livetv` },
+        { id: 'admin-collections', label: 'Collections', icon: 'list', to: `${root}/collections` },
       ],
     },
   ];
