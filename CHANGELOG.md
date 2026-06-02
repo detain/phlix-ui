@@ -60,6 +60,10 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
     mount-once guard), `Skeleton` (text/rect/circle, shimmer), `Spinner` (`role=status`), `EmptyState`
     (icon/title/description/actions), `Tabs` (`role=tablist` roving-tabindex + arrow/Home/End), `Kbd`.
     Completes the R0.4 primitive layer (17 components).
+  - _R0.5:_ transition primitives `Reveal` (fade-rise entrance on mount or scroll-into-view via
+    IntersectionObserver; stagger via `delay`; drops `will-change` after settle) and `PageTransition`
+    (route-level fade/slide `Transition`, `out-in`). Both fully disabled under `prefers-reduced-motion`.
+    (Motion *tokens* `--ease-*`/`--dur-*` shipped earlier in R0.1.)
 
 ### Changed
 - **Bumped `vue` floor to `^3.5.0`** (dependency + peerDependency) to use `useId()`. Every install
