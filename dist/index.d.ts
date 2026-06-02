@@ -66,6 +66,9 @@ export type { SyncPlayGroup, SyncPlayMember, SyncPlayPlaybackState, SyncPlayQueu
 export { default as AdminLibrariesPage } from './pages/admin/LibrariesPage.vue';
 export { AdminLibrariesApi, LIBRARY_TYPES } from './api/admin/libraries';
 export type { Library, LibraryType, ScanJob, CreateLibraryInput, UpdateLibraryInput, CreateLibraryResult, ScanQueuedResult, } from './api/admin/libraries';
+export { default as AdminSettingsPage } from './pages/admin/SettingsPage.vue';
+export { AdminSettingsApi } from './api/admin/settings';
+export type { SettingsResponse, SettingsSaveResponse } from './api/admin/settings';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
