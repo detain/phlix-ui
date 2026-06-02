@@ -161,10 +161,17 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   function enqueue(item: MediaItem): void {
     queue.value.push(item);
   }
-  /** Advance to the next queued item; returns it (or null when the queue is empty). */
-  function next(): MediaItem | null {
+  /**
+   * Advance to the next queued item; returns it (or null when the queue is empty).
+   * Threads a fresh stream URL via `resolveStreamUrl` so advancing never leaves a
+   * STALE `streamUrl` (the previous item's): with no resolver — or one that returns
+   * nothing — `streamUrl` is CLEARED to '' rather than left pointing at the prior
+   * stream (the mini-player gates on `streamUrl`, so it hides instead of playing the
+   * wrong media). R3.9's PlayerPage supplies the real `/media/:id/stream` resolver.
+   */
+  function next(resolveStreamUrl?: (m: MediaItem) => string | undefined): MediaItem | null {
     const n = queue.value.shift() ?? null;
-    if (n) setCurrent(n);
+    if (n) setCurrent(n, { streamUrl: resolveStreamUrl?.(n) ?? '' });
     return n;
   }
 

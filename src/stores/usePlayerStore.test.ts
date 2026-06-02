@@ -164,6 +164,34 @@ describe('usePlayerStore — queue + mini-player', () => {
     p.closePlayer();
     expect(p.streamUrl).toBe('');
   });
+
+  it('next(resolver) threads a fresh stream URL for the advanced item and resets position', () => {
+    const p = usePlayerStore();
+    p.setCurrent(media('q1'), { streamUrl: 'http://x/q1/stream' });
+    p.updateProgress(40, 120);
+    p.setQueue([media('q2')]);
+    const n = p.next((m) => `http://x/${m.id}/stream`);
+    expect(n?.id).toBe('q2');
+    expect(p.streamUrl).toBe('http://x/q2/stream');
+    expect(p.position).toBe(0); // setCurrent resets for the new item
+  });
+
+  it('next() without a resolver CLEARS the stream URL (never leaves a stale one)', () => {
+    const p = usePlayerStore();
+    p.setCurrent(media('q1'), { streamUrl: 'http://x/q1/stream' });
+    p.setQueue([media('q2')]);
+    p.next(); // no resolver
+    expect(p.current?.id).toBe('q2');
+    expect(p.streamUrl).toBe(''); // not the stale q1 URL
+  });
+
+  it('next() on an empty queue returns null and leaves current + streamUrl intact', () => {
+    const p = usePlayerStore();
+    p.setCurrent(media('q1'), { streamUrl: 'http://x/q1/stream' });
+    expect(p.next()).toBeNull();
+    expect(p.current?.id).toBe('q1');
+    expect(p.streamUrl).toBe('http://x/q1/stream');
+  });
 });
 
 describe('usePlayerStore — Media Session', () => {

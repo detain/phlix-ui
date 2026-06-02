@@ -114,7 +114,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setSubtitle: (lang: string | null) => void;
     setQueue: (items: MediaItem[]) => void;
     enqueue: (item: MediaItem) => void;
-    next: () => MediaItem | null;
+    next: (resolveStreamUrl?: (m: MediaItem) => string | undefined) => MediaItem | null;
     showMiniPlayer: () => void;
     hideMiniPlayer: () => void;
     closePlayer: () => void;
@@ -217,7 +217,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setSubtitle: (lang: string | null) => void;
     setQueue: (items: MediaItem[]) => void;
     enqueue: (item: MediaItem) => void;
-    next: () => MediaItem | null;
+    next: (resolveStreamUrl?: (m: MediaItem) => string | undefined) => MediaItem | null;
     showMiniPlayer: () => void;
     hideMiniPlayer: () => void;
     closePlayer: () => void;
@@ -320,7 +320,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setSubtitle: (lang: string | null) => void;
     setQueue: (items: MediaItem[]) => void;
     enqueue: (item: MediaItem) => void;
-    next: () => MediaItem | null;
+    next: (resolveStreamUrl?: (m: MediaItem) => string | undefined) => MediaItem | null;
     showMiniPlayer: () => void;
     hideMiniPlayer: () => void;
     closePlayer: () => void;
