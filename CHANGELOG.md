@@ -18,6 +18,16 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
   `applyStoredThemeEarly()` runs pre-mount to avoid a theme flash. A `[data-reduced-motion]` global lets
   a user force the reduced-motion path over the OS setting. Exported: `usePreferencesStore`,
   `readStoredPreferences`, `DEFAULT_PREFERENCES`, `useTheme`, `applyStoredThemeEarly`, `deriveAccentVars`.
+- **Faster media store (R1.2):** `useMediaStore` rewritten (public API preserved) with a query-keyed
+  in-memory **cache** (TTL — instant back/forward + revisited/prefetched pages), in-flight **dedupe** +
+  **AbortController** (superseded filter queries cancelled; stale results never clobber newer ones),
+  **debounced** refetch (`scheduleFetch`), **`prefetch`**, and URL-sync (`toQuery`/`applyQuery` +
+  `bindMediaStoreToRouter` for shareable/bookmarkable filtered views). `ApiClient.request`/`get` gained an
+  optional `AbortSignal` (additive).
+
+### Changed (R1.2)
+- `useMediaStore.hasMore` now derives from `items.length < total` (paging tracked via the accumulated list).
+
 - **Design system "Nocturne" (R0.0):** art-direction mockups + a distilled design spec under
   `src/dev/mockups/` (poster card, browse grid + filter bar, player chrome; nocturne/daylight/midnight).
   Cinema-after-dark aesthetic — projector-amber accent, Fraunces/Hanken Grotesk/JetBrains Mono,

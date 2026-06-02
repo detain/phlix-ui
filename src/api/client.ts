@@ -53,7 +53,12 @@ export class ApiClient {
         this.doFetch = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
     }
 
-    async request<T = unknown>(method: string, endpoint: string, data: unknown = null): Promise<T> {
+    async request<T = unknown>(
+        method: string,
+        endpoint: string,
+        data: unknown = null,
+        signal?: AbortSignal,
+    ): Promise<T> {
         const build = (): RequestInit => {
             const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
@@ -63,6 +68,9 @@ export class ApiClient {
                 headers['Authorization'] = `Bearer ${token}`;
             }
             const init: RequestInit = { method, headers, credentials: 'same-origin' };
+            if (signal) {
+                init.signal = signal;
+            }
             if (data !== null && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
                 init.body = JSON.stringify(data);
             }
@@ -142,9 +150,9 @@ export class ApiClient {
         }
     }
 
-    async get<T = unknown>(endpoint: string, params?: Record<string, string>): Promise<T> {
+    async get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T> {
         const query = params ? '?' + new URLSearchParams(params).toString() : '';
-        return this.request<T>('GET', endpoint + query);
+        return this.request<T>('GET', endpoint + query, null, signal);
     }
 
     async post<T = unknown>(endpoint: string, data?: unknown): Promise<T> {

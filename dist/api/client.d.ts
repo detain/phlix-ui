@@ -31,11 +31,11 @@ export declare class ApiClient {
     private readonly tokens;
     private readonly doFetch;
     constructor(options?: ApiClientOptions);
-    request<T = unknown>(method: string, endpoint: string, data?: unknown): Promise<T>;
+    request<T = unknown>(method: string, endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
     private handleResponse;
     private extractError;
     refreshToken(): Promise<boolean>;
-    get<T = unknown>(endpoint: string, params?: Record<string, string>): Promise<T>;
+    get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T>;
     post<T = unknown>(endpoint: string, data?: unknown): Promise<T>;
     put<T = unknown>(endpoint: string, data?: unknown): Promise<T>;
     patch<T = unknown>(endpoint: string, data?: unknown): Promise<T>;
