@@ -13,6 +13,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
   const root = `${base}/admin`;
   return [
     {
+      path: `${root}/dashboard`,
+      name: 'admin-dashboard',
+      component: () => import('../pages/admin/DashboardPage.vue'),
+    },
+    {
       path: `${root}/logs`,
       name: 'admin-logs',
       component: () => import('../pages/admin/LogsPage.vue'),
@@ -28,7 +33,10 @@ export function adminMenu(base = '/app'): MenuItem[] {
       id: 'admin',
       label: 'Admin',
       icon: 'settings',
-      children: [{ id: 'admin-logs', label: 'Logs', icon: 'list', to: `${root}/logs` }],
+      children: [
+        { id: 'admin-dashboard', label: 'Dashboard', icon: 'speed', to: `${root}/dashboard` },
+        { id: 'admin-logs', label: 'Logs', icon: 'list', to: `${root}/logs` },
+      ],
     },
   ];
 }
