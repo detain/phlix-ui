@@ -72,6 +72,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-collections',
       component: () => import('../pages/admin/CollectionsPage.vue'),
     },
+    {
+      path: `${root}/history`,
+      name: 'admin-history',
+      component: () => import('../pages/admin/HistoryPage.vue'),
+    },
   ];
 }
 
@@ -96,6 +101,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-remote-access', label: 'Remote Access', icon: 'expand', to: `${root}/remote-access` },
         { id: 'admin-livetv', label: 'Live TV / DVR', icon: 'tv', to: `${root}/livetv` },
         { id: 'admin-collections', label: 'Collections', icon: 'list', to: `${root}/collections` },
+        { id: 'admin-history', label: 'Watch History', icon: 'film', to: `${root}/history` },
       ],
     },
   ];
