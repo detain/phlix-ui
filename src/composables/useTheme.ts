@@ -1,5 +1,11 @@
 import { watchEffect } from 'vue';
-import { usePreferencesStore, readStoredPreferences, type Preferences } from '../stores/usePreferencesStore';
+import {
+  usePreferencesStore,
+  readStoredPreferences,
+  hasStoredPreferences,
+  type Preferences,
+  type ThemeName,
+} from '../stores/usePreferencesStore';
 import { deriveAccentVars } from './color';
 
 const ACCENT_KEYS = ['--accent', '--accent-hover', '--accent-active', '--accent-soft', '--accent-ring', '--accent-contrast'];
@@ -25,9 +31,13 @@ function applyToRoot(p: Pick<Preferences, 'theme' | 'density' | 'accent'>, reduc
 /**
  * applyStoredThemeEarly (R1.1) — call ONCE before mount (in createPhlixApp) to set
  * <html> from persisted prefs synchronously, avoiding a theme flash on load.
+ *
+ * `defaultTheme` (R1.5) seeds the theme for first-time visitors with no stored
+ * preference (an app's per-app default); a stored user choice always wins.
  */
-export function applyStoredThemeEarly(): void {
+export function applyStoredThemeEarly(defaultTheme?: ThemeName): void {
   const p = readStoredPreferences();
+  if (defaultTheme && !hasStoredPreferences()) p.theme = defaultTheme;
   const reduced =
     p.reducedMotion === 'on'
       ? true

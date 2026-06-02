@@ -21,6 +21,9 @@ export declare const DEFAULT_PREFERENCES: Preferences;
 /** Read persisted prefs synchronously (used both by the store and the early
  *  pre-mount theme bootstrap to avoid a flash). Safe on SSR / bad JSON. */
 export declare function readStoredPreferences(): Preferences;
+/** True when the user has an explicit persisted preferences blob (so an app's
+ *  `defaultTheme` should NOT override their choice). SSR-safe. */
+export declare function hasStoredPreferences(): boolean;
 /**
  * usePreferencesStore (R1.1) — user-facing appearance + playback prefs, persisted
  * to localStorage ('phlix.prefs'). The useTheme() composable reflects these onto
