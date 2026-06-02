@@ -46,8 +46,8 @@ export default defineConfig({
             reporter: ['text-summary', 'text', 'html'],
             // Cover the redo surface (tokens/primitives/stores/composables/app shell)
             // plus each pre-redo surface AS it is rebuilt + tested in R2–R5 (the
-            // Browse surface — MediaCard/Grid/Row/HomeRow/FilterBar + Browse/Detail
-            // pages — is done; Player.vue and the auth/settings/app pages land later).
+            // Browse surface is done; the Player shell — Player.vue — lands in R3;
+            // the auth/settings/app pages land in R4/R5).
             include: [
                 'src/components/**/*.{ts,vue}',
                 'src/stores/**/*.ts',
@@ -61,7 +61,6 @@ export default defineConfig({
                 '**/*.test.ts',
                 'src/test/**',
                 'src/dev/**',
-                'src/components/Player.vue',
                 'src/components/{LoginForm,SignupForm,SettingsForm}.vue',
                 'src/pages/{PlayerPage,LoginPage,SignupPage,SettingsPage,LibraryScanPage,MyServersPage,FederationPage,ManageSharesPage,AuditLogsPage}.vue',
                 'src/app/AppLayout.vue',
