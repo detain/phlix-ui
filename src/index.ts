@@ -98,6 +98,9 @@ export type {
   AirPlayPlaybackState,
   CastActionResult,
 } from './api/admin/cast';
+export { default as AdminDlnaServerPage } from './pages/admin/DlnaServerPage.vue';
+export { AdminDlnaServerApi } from './api/admin/dlnaServer';
+export type { DlnaServerStatus, DlnaServerActionResult } from './api/admin/dlnaServer';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';

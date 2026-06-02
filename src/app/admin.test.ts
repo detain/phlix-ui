@@ -80,6 +80,13 @@ describe('buildAdminRoutes', () => {
     expect(cast?.path).toBe('/app/admin/cast-devices');
     expect(typeof cast?.component).toBe('function');
   });
+
+  it('exposes the dlna route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const dlna = routes.find((r) => r.name === 'admin-dlna');
+    expect(dlna?.path).toBe('/app/admin/dlna');
+    expect(typeof dlna?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -148,5 +155,12 @@ describe('adminMenu', () => {
     const cast = group.children?.find((c) => c.id === 'admin-cast');
     expect(cast?.label).toBe('Cast Devices');
     expect(cast?.to).toBe('/app/admin/cast-devices');
+  });
+
+  it('exposes a dlna child pointing at the dlna route', () => {
+    const [group] = adminMenu();
+    const dlna = group.children?.find((c) => c.id === 'admin-dlna');
+    expect(dlna?.label).toBe('DLNA Server');
+    expect(dlna?.to).toBe('/app/admin/dlna');
   });
 });
