@@ -1,8 +1,51 @@
 import type { MediaItem } from '../types/media-item';
 type __VLS_Props = {
+    /** Items to render (the already-loaded page set). */
     items: MediaItem[];
+    /** Initial load — show skeleton rows instead of cards. */
     loading?: boolean;
+    /** Appending a further page (controls the bottom loading row). */
+    loadingMore?: boolean;
+    /** More items remain — enables the infinite-scroll sentinel. */
+    hasMore?: boolean;
+    /** Min card width (px). Overrides the `cardSize` preference when set. */
+    cardSize?: number;
+    /** Skeleton cards shown during the initial load. */
+    skeletonCount?: number;
+    /** Extra rows rendered above/below the visible band. */
+    overscan?: number;
 };
-declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+type __VLS_Slots = {
+    /** Override the per-item card. Receives the item + its absolute index. */
+    card?: (props: {
+        item: MediaItem;
+        index: number;
+    }) => unknown;
+    /** Replace the empty state. */
+    empty?: () => unknown;
+};
+declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+    play: (item: MediaItem) => any;
+    info: (item: MediaItem) => any;
+    watchlist: (item: MediaItem) => any;
+    "load-more": () => any;
+}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
+    onPlay?: ((item: MediaItem) => any) | undefined;
+    onInfo?: ((item: MediaItem) => any) | undefined;
+    onWatchlist?: ((item: MediaItem) => any) | undefined;
+    "onLoad-more"?: (() => any) | undefined;
+}>, {
+    loading: boolean;
+    hasMore: boolean;
+    overscan: number;
+    loadingMore: boolean;
+    skeletonCount: number;
+}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
 declare const _default: typeof __VLS_export;
 export default _default;
+type __VLS_WithSlots<T, S> = T & {
+    new (): {
+        $slots: S;
+    };
+};

@@ -46,15 +46,13 @@ function onLoadMore() {
             <button class="retry-btn" @click="load">Retry</button>
         </div>
 
-        <MediaGrid :items="store.items" :loading="store.loading && store.items.length === 0" />
-
-        <div v-if="store.hasMore && !store.loading" class="load-more">
-            <button class="load-more-btn" @click="onLoadMore">Load more</button>
-        </div>
-
-        <div v-if="store.loading && store.items.length > 0" class="loading-more">
-            Loading...
-        </div>
+        <MediaGrid
+            :items="store.items"
+            :loading="store.loading && store.items.length === 0"
+            :loading-more="store.loading && store.items.length > 0"
+            :has-more="store.hasMore"
+            @load-more="onLoadMore"
+        />
     </div>
 </template>
 
@@ -103,31 +101,4 @@ function onLoadMore() {
     cursor: pointer;
 }
 
-.load-more {
-    display: flex;
-    justify-content: center;
-    padding: 24px;
-}
-
-.load-more-btn {
-    padding: 10px 24px;
-    background: var(--color-surface-elevated, #1e1e2e);
-    color: var(--color-text, #e4e4e7);
-    border: 1px solid var(--color-border, #27272a);
-    border-radius: var(--radius-md, 8px);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-.load-more-btn:hover {
-    background: var(--color-border, #27272a);
-}
-
-.loading-more {
-    text-align: center;
-    padding: 16px;
-    color: var(--color-text-muted, #a1a1aa);
-    font-size: 0.875rem;
-}
 </style>
