@@ -44,22 +44,26 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             reporter: ['text-summary', 'text', 'html'],
-            // Cover the redo surface (tokens/primitives/stores/composables/app shell).
-            // The pre-redo surface components/pages are rebuilt in R2–R5 and tested then.
+            // Cover the redo surface (tokens/primitives/stores/composables/app shell)
+            // plus each pre-redo surface AS it is rebuilt + tested in R2–R5 (the
+            // Browse surface — MediaCard/Grid/Row/HomeRow/FilterBar + Browse/Detail
+            // pages — is done; Player.vue and the auth/settings/app pages land later).
             include: [
                 'src/components/**/*.{ts,vue}',
                 'src/stores/**/*.ts',
                 'src/composables/**/*.ts',
                 'src/api/**/*.ts',
                 'src/app/**/*.ts',
+                'src/pages/BrowsePage.vue',
+                'src/pages/MediaDetailPage.vue',
             ],
             exclude: [
                 '**/*.test.ts',
                 'src/test/**',
                 'src/dev/**',
-                'src/components/{MediaCard,MediaGrid,FilterBar,Player}.vue',
+                'src/components/Player.vue',
                 'src/components/{LoginForm,SignupForm,SettingsForm}.vue',
-                'src/pages/**',
+                'src/pages/{PlayerPage,LoginPage,SignupPage,SettingsPage,LibraryScanPage,MyServersPage,FederationPage,ManageSharesPage,AuditLogsPage}.vue',
                 'src/app/AppLayout.vue',
                 'src/app/PhlixApp.vue',
                 'src/app/placeholder/**',
