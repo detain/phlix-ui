@@ -122,6 +122,13 @@ describe('buildAdminRoutes', () => {
     expect(syncplay?.path).toBe('/app/admin/syncplay');
     expect(typeof syncplay?.component).toBe('function');
   });
+
+  it('exposes the libraries route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const libraries = routes.find((r) => r.name === 'admin-libraries');
+    expect(libraries?.path).toBe('/app/admin/libraries');
+    expect(typeof libraries?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -232,5 +239,12 @@ describe('adminMenu', () => {
     const syncplay = group.children?.find((c) => c.id === 'admin-syncplay');
     expect(syncplay?.label).toBe('SyncPlay');
     expect(syncplay?.to).toBe('/app/admin/syncplay');
+  });
+
+  it('exposes a libraries child pointing at the libraries route', () => {
+    const [group] = adminMenu();
+    const libraries = group.children?.find((c) => c.id === 'admin-libraries');
+    expect(libraries?.label).toBe('Libraries');
+    expect(libraries?.to).toBe('/app/admin/libraries');
   });
 });
