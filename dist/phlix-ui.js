@@ -1,11 +1,12 @@
 import { a as e, c as t, i as n, l as r, n as i, o as a, r as o, s, t as c } from "./tokenStore-DCSgJhfA.js";
 import { n as l, r as u, t as d } from "./Modal-B6rWnsPN.js";
-import { n as f, t as p } from "./Badge-sCbOtqfo.js";
-import { i as m, n as h, r as g, t as _ } from "./Select-Ckrr6QTP.js";
+import { t as f } from "./EmptyState-CWgJPad-.js";
+import { i as p, n as m, r as h, t as g } from "./Select-Ckrr6QTP.js";
+import { t as _ } from "./Badge-Aa85GIyq.js";
 import { t as v } from "./Switch-Zu0bRVD0.js";
-import { Fragment as y, Teleport as b, Transition as x, TransitionGroup as S, computed as C, createApp as w, createBlock as T, createCommentVNode as E, createElementBlock as D, createElementVNode as O, createTextVNode as k, createVNode as A, defineComponent as j, inject as M, nextTick as N, normalizeClass as P, normalizeStyle as F, onBeforeUnmount as I, onMounted as L, openBlock as R, reactive as z, ref as B, renderList as V, renderSlot as H, resolveComponent as ee, resolveDynamicComponent as U, toDisplayString as W, toRef as G, unref as K, useId as q, vModelDynamic as te, vModelText as ne, vShow as re, watch as J, watchEffect as Y, withCtx as X, withDirectives as Z, withKeys as ie, withModifiers as ae } from "vue";
-import { createPinia as oe, defineStore as Q } from "pinia";
-import { RouterLink as se, RouterView as ce, createRouter as le, createWebHistory as ue, useRoute as de, useRouter as fe } from "vue-router";
+import { Fragment as y, Teleport as b, Transition as x, TransitionGroup as S, computed as C, createApp as w, createBlock as T, createCommentVNode as E, createElementBlock as D, createElementVNode as O, createTextVNode as k, createVNode as A, defineComponent as j, inject as M, nextTick as N, normalizeClass as P, normalizeStyle as F, onBeforeUnmount as I, onMounted as L, openBlock as R, reactive as z, ref as B, renderList as V, renderSlot as H, resolveComponent as ee, resolveDynamicComponent as te, toDisplayString as U, toRef as ne, unref as W, useId as G, vModelDynamic as re, vModelText as K, vShow as ie, watch as q, watchEffect as J, withCtx as Y, withDirectives as X, withKeys as ae, withModifiers as oe } from "vue";
+import { createPinia as se, defineStore as Z } from "pinia";
+import { RouterLink as ce, RouterView as Q, createRouter as le, createWebHistory as ue, useRoute as de, useRouter as fe } from "vue-router";
 //#region \0rolldown/runtime.js
 var pe = Object.defineProperty, me = (e, t) => {
 	let n = {};
@@ -33,7 +34,7 @@ var we = /*#__PURE__*/ r(he, [["render", Ce], ["__scopeId", "data-v-9f6c6d16"]])
 		return (e, t) => (R(), D("span", Te, [n.value.length ? (R(!0), D(y, { key: 0 }, V(n.value, (e, t) => (R(), D("kbd", {
 			key: t,
 			class: "phlix-kbd__key"
-		}, W(e), 1))), 128)) : (R(), D("kbd", Ee, [H(e.$slots, "default", {}, void 0, !0)]))]));
+		}, U(e), 1))), 128)) : (R(), D("kbd", Ee, [H(e.$slots, "default", {}, void 0, !0)]))]));
 	}
 }), [["__scopeId", "data-v-5e5c4a8a"]]), Oe = "phlix.cmd.recents", ke = 8;
 function Ae(e, t) {
@@ -75,7 +76,7 @@ function Me() {
 		return [];
 	}
 }
-var Ne = Q("phlix-commands", () => {
+var Ne = Z("phlix-commands", () => {
 	let e = B(/* @__PURE__ */ new Map()), t = B(!1), n = B(""), r = B(Me()), i = C(() => Array.from(e.value.values())), a = C(() => {
 		let t = n.value.trim(), a = i.value;
 		if (t) return a.map((e) => ({
@@ -120,7 +121,7 @@ var Ne = Q("phlix-commands", () => {
 		let n = e.value.get(t);
 		n && (l(t), p(), await n.run());
 	}
-	return J(r, (e) => {
+	return q(r, (e) => {
 		if (!(typeof localStorage > "u")) try {
 			localStorage.setItem(Oe, JSON.stringify(e));
 		} catch {}
@@ -185,7 +186,7 @@ function Re() {
 function ze() {
 	return typeof window < "u" && typeof window.matchMedia == "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
-var Be = Q("phlix-prefs", () => {
+var Be = Z("phlix-prefs", () => {
 	let e = Le(), t = B(e.theme), n = B(e.accent), r = B(e.density), i = B(e.cardSize), a = B(e.gridDensity), o = B(e.reducedMotion), s = B(e.autoplay), c = B(e.defaultVolume), l = B(e.defaultQuality), u = B(e.defaultSubtitleLang), d = B(e.atmosphere), f = B(e.filterPresets ? [...e.filterPresets] : []), p = B(ze()), m = null;
 	typeof window < "u" && typeof window.matchMedia == "function" && (m = window.matchMedia("(prefers-reduced-motion: reduce)"), m.addEventListener?.("change", (e) => p.value = e.matches));
 	let h = C(() => o.value === "on" ? !0 : o.value === "off" ? !1 : p.value);
@@ -216,7 +217,7 @@ var Be = Q("phlix-prefs", () => {
 	function v(e) {
 		f.value = f.value.filter((t) => t.id !== e);
 	}
-	J(g, (e) => {
+	q(g, (e) => {
 		if (!(typeof localStorage > "u")) try {
 			localStorage.setItem(Ie, JSON.stringify(e));
 		} catch {}
@@ -269,7 +270,7 @@ var Be = Q("phlix-prefs", () => {
 }, Xe = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "CommandPalette",
 	setup(e) {
-		let n = Ne(), r = fe(), i = Be(), a = B(null), o = q(), s = B(0);
+		let n = Ne(), r = fe(), i = Be(), a = B(null), o = G(), s = B(0);
 		function c(e) {
 			return {
 				id: e.id,
@@ -328,11 +329,11 @@ var Be = Q("phlix-prefs", () => {
 				options: t
 			};
 		}), f = C(() => d.value.options.length), p = C(() => f.value ? `${o}-opt-${s.value}` : void 0);
-		J(() => n.query, () => {
+		q(() => n.query, () => {
 			s.value = 0;
-		}), J(f, (e) => {
+		}), q(f, (e) => {
 			s.value > e - 1 && (s.value = Math.max(0, e - 1));
-		}), J(() => n.open, (e) => {
+		}), q(() => n.open, (e) => {
 			e && (s.value = 0);
 		});
 		function m() {
@@ -505,10 +506,10 @@ var Be = Q("phlix-prefs", () => {
 		}), I(() => {
 			N?.(), document.removeEventListener("keydown", w);
 		}), (e, r) => (R(), T(b, { to: "body" }, [A(x, { name: "phlix-cmdk" }, {
-			default: X(() => [K(n).open ? (R(), D("div", {
+			default: Y(() => [W(n).open ? (R(), D("div", {
 				key: 0,
 				class: "phlix-cmdk",
-				onPointerdown: ae(S, ["self"])
+				onPointerdown: oe(S, ["self"])
 			}, [O("div", {
 				ref_key: "panelEl",
 				ref: a,
@@ -522,18 +523,18 @@ var Be = Q("phlix-prefs", () => {
 					class: "phlix-cmdk__search-icon"
 				}),
 				O("input", {
-					value: K(n).query,
+					value: W(n).query,
 					class: "phlix-cmdk__input",
 					type: "text",
 					role: "combobox",
 					"aria-expanded": "true",
-					"aria-controls": K(o),
+					"aria-controls": W(o),
 					"aria-activedescendant": p.value,
 					"aria-autocomplete": "list",
 					placeholder: "Type a command or search…",
 					autocomplete: "off",
 					spellcheck: "false",
-					onInput: r[0] ||= (e) => K(n).setQuery(e.target.value),
+					onInput: r[0] ||= (e) => W(n).setQuery(e.target.value),
 					onKeydown: v
 				}, null, 40, He),
 				A(De, {
@@ -541,13 +542,13 @@ var Be = Q("phlix-prefs", () => {
 					class: "phlix-cmdk__hint"
 				})
 			]), O("ul", {
-				id: K(o),
+				id: W(o),
 				class: "phlix-cmdk__list",
 				role: "listbox",
 				"aria-label": "Commands"
-			}, [(R(!0), D(y, null, V(d.value.rows, (e, n) => (R(), D(y, { key: e.kind === "header" ? `h-${e.label}-${n}` : e.item.id }, [e.kind === "header" ? (R(), D("li", We, W(e.label), 1)) : (R(), D("li", {
+			}, [(R(!0), D(y, null, V(d.value.rows, (e, n) => (R(), D(y, { key: e.kind === "header" ? `h-${e.label}-${n}` : e.item.id }, [e.kind === "header" ? (R(), D("li", We, U(e.label), 1)) : (R(), D("li", {
 				key: 1,
-				id: `${K(o)}-opt-${e.index}`,
+				id: `${W(o)}-opt-${e.index}`,
 				class: P(["phlix-cmdk__option", { "is-active": e.index === s.value }]),
 				role: "option",
 				"aria-selected": e.index === s.value,
@@ -558,7 +559,7 @@ var Be = Q("phlix-prefs", () => {
 					name: e.item.icon ?? "list",
 					class: "phlix-cmdk__option-icon"
 				}, null, 8, ["name"]),
-				O("span", Ke, [O("span", qe, W(e.item.title), 1), e.item.subtitle ? (R(), D("span", Je, W(e.item.subtitle), 1)) : E("", !0)]),
+				O("span", Ke, [O("span", qe, U(e.item.title), 1), e.item.subtitle ? (R(), D("span", Je, U(e.item.subtitle), 1)) : E("", !0)]),
 				e.item.shortcut ? (R(), T(De, {
 					key: 0,
 					keys: e.item.shortcut,
@@ -647,7 +648,7 @@ function st(e) {
 }
 function ct() {
 	let e = Be();
-	return Y(() => {
+	return J(() => {
 		ot({
 			theme: e.theme,
 			density: e.density,
@@ -669,23 +670,23 @@ var lt = ["src", "alt"], ut = { class: "brand-wordmark" }, dt = {
 			return /^\s*(javascript|data|vbscript):/i.test(e) ? void 0 : e;
 		}
 		return (e, r) => (R(), T(we, null, {
-			logo: X(() => [A(K(se), {
+			logo: Y(() => [A(W(ce), {
 				to: s.value,
 				class: "brand"
 			}, {
-				default: X(() => [
+				default: Y(() => [
 					i.value.logoSrc ? (R(), D("img", {
 						key: 0,
 						src: i.value.logoSrc,
 						alt: i.value.logoAlt ?? a.value,
 						class: "brand-logo"
 					}, null, 8, lt)) : E("", !0),
-					O("span", ut, W(a.value), 1),
-					i.value.tagline ? (R(), D("span", dt, W(i.value.tagline), 1)) : E("", !0)
+					O("span", ut, U(a.value), 1),
+					i.value.tagline ? (R(), D("span", dt, U(i.value.tagline), 1)) : E("", !0)
 				]),
 				_: 1
 			}, 8, ["to"])]),
-			nav: X(() => [O("nav", ft, [o.value.length ? (R(!0), D(y, { key: 0 }, V(o.value, (e) => (R(), T(U(e.href ? "a" : K(se)), {
+			nav: Y(() => [O("nav", ft, [o.value.length ? (R(!0), D(y, { key: 0 }, V(o.value, (e) => (R(), T(te(e.href ? "a" : W(ce)), {
 				key: e.id,
 				to: e.href ? void 0 : e.to,
 				href: e.href ? c(e.href) : void 0,
@@ -693,37 +694,37 @@ var lt = ["src", "alt"], ut = { class: "brand-wordmark" }, dt = {
 				rel: e.href && e.target === "_blank" ? "noopener noreferrer" : void 0,
 				class: "nav-link"
 			}, {
-				default: X(() => [e.icon ? (R(), T(t, {
+				default: Y(() => [e.icon ? (R(), T(t, {
 					key: 0,
 					name: e.icon,
 					class: "nav-link-icon"
-				}, null, 8, ["name"])) : E("", !0), k(" " + W(e.label), 1)]),
+				}, null, 8, ["name"])) : E("", !0), k(" " + U(e.label), 1)]),
 				_: 2
 			}, 1032, [
 				"to",
 				"href",
 				"target",
 				"rel"
-			]))), 128)) : (R(), D(y, { key: 1 }, [A(K(se), {
+			]))), 128)) : (R(), D(y, { key: 1 }, [A(W(ce), {
 				to: s.value,
 				class: "nav-link"
 			}, {
-				default: X(() => [...r[1] ||= [k("Browse", -1)]]),
+				default: Y(() => [...r[1] ||= [k("Browse", -1)]]),
 				_: 1
-			}, 8, ["to"]), A(K(se), {
+			}, 8, ["to"]), A(W(ce), {
 				to: `${s.value}/settings`,
 				class: "nav-link"
 			}, {
-				default: X(() => [...r[2] ||= [k("Settings", -1)]]),
+				default: Y(() => [...r[2] ||= [k("Settings", -1)]]),
 				_: 1
 			}, 8, ["to"])], 64)), A(u, {
 				name: "search",
 				label: "Open command palette (⌘K)",
 				size: "sm",
 				class: "nav-cmdk",
-				onClick: r[0] ||= (e) => K(n).openPalette()
+				onClick: r[0] ||= (e) => W(n).openPalette()
 			})])]),
-			default: X(() => [A(K(ce)), A(Xe)]),
+			default: Y(() => [A(W(Q)), A(Xe)]),
 			_: 1
 		}));
 	}
@@ -731,13 +732,13 @@ var lt = ["src", "alt"], ut = { class: "brand-wordmark" }, dt = {
 	__name: "Placeholder",
 	props: { appName: {} },
 	setup(e) {
-		return (t, n) => (R(), D("div", mt, [O("div", ht, [n[0] ||= O("h1", null, "Shared UI loading...", -1), O("p", null, "Phlix " + W(e.appName) + " is initializing", 1)])]));
+		return (t, n) => (R(), D("div", mt, [O("div", ht, [n[0] ||= O("h1", null, "Shared UI loading...", -1), O("p", null, "Phlix " + U(e.appName) + " is initializing", 1)])]));
 	}
 }), [["__scopeId", "data-v-bf79ac4c"]]), _t = 6e4, vt = 250;
 function yt(e) {
 	return typeof e == "object" && !!e && e.name === "AbortError";
 }
-var bt = Q("media", () => {
+var bt = Z("media", () => {
 	let t = B([]), n = B(0), r = B(!1), i = B(null), a = B(""), o = B([]), s = B(void 0), c = B(void 0), l = B([]), u = B([]), d = B("name"), f = B("asc"), p = B(24), m = B(0), h = C(() => t.value.length < n.value), g = C(() => {
 		let e = {};
 		return a.value && (e.search = a.value), o.value.length && (e.genres = o.value), s.value !== void 0 && (e.yearFrom = s.value), c.value !== void 0 && (e.yearTo = c.value), l.value.length && (e.ratings = l.value), u.value.length && (e.types = u.value), e.sort = d.value, e.order = f.value, e.limit = p.value, e.offset = m.value, e;
@@ -853,19 +854,19 @@ var bt = Q("media", () => {
 	function ee(e) {
 		a.value = e, m.value = 0;
 	}
-	function U(e) {
+	function te(e) {
 		o.value = e, m.value = 0;
 	}
-	function W(e, t) {
+	function U(e, t) {
 		s.value = e, c.value = t, m.value = 0;
 	}
-	function G(e) {
+	function ne(e) {
 		l.value = e, m.value = 0;
 	}
-	function K(e) {
+	function W(e) {
 		u.value = e, m.value = 0;
 	}
-	function q(e, t) {
+	function G(e, t) {
 		d.value = e, t && (f.value = t), m.value = 0;
 	}
 	return {
@@ -898,11 +899,11 @@ var bt = Q("media", () => {
 		applyQuery: V,
 		reset: H,
 		setSearch: ee,
-		setGenres: U,
-		setYearRange: W,
-		setRatings: G,
-		setTypes: K,
-		setSort: q
+		setGenres: te,
+		setYearRange: U,
+		setRatings: ne,
+		setTypes: W,
+		setSort: G
 	};
 }), xt = 30, St = .95, Ct = 5e3, wt = "phlix.resume";
 function Tt() {
@@ -914,7 +915,7 @@ function Tt() {
 		return {};
 	}
 }
-var Et = Q("phlix-player", () => {
+var Et = Z("phlix-player", () => {
 	let e = Be(), t = B(null), n = B([]), r = B(!1), i = B(0), a = B(0), o = B(0), s = B(e.defaultVolume), c = B(!1), l = B(1), u = B(e.defaultQuality), d = B(e.defaultSubtitleLang), f = B(!1), p = B(Tt()), m = C(() => a.value > 0 ? i.value / a.value : 0), h = C(() => n.value[0] ?? null), g, _ = 0;
 	function v(e = !1) {
 		if (typeof localStorage > "u") return;
@@ -1116,7 +1117,7 @@ var Et = Q("phlix-player", () => {
 				href: o.value,
 				class: "media-card__link",
 				"aria-label": e.item.name
-			}, [O("span", At, W(e.item.name), 1)], 8, kt),
+			}, [O("span", At, U(e.item.name), 1)], 8, kt),
 			e.item.poster_url ? (R(), D("img", {
 				key: 0,
 				ref_key: "imgEl",
@@ -1131,7 +1132,7 @@ var Et = Q("phlix-player", () => {
 			O("div", Nt, [
 				u.value ? (R(), D("span", Pt, "New")) : E("", !0),
 				H(n.$slots, "badges", { item: e.item }, void 0, !0),
-				e.quality ? (R(), D("span", Ft, W(e.quality), 1)) : E("", !0)
+				e.quality ? (R(), D("span", Ft, U(e.quality), 1)) : E("", !0)
 			]),
 			d.value > 0 ? (R(), D("div", {
 				key: 2,
@@ -1143,15 +1144,15 @@ var Et = Q("phlix-player", () => {
 				"aria-label": `Resume ${e.item.name}`
 			}, [O("i", { style: F({ width: `${d.value * 100}%` }) }, null, 4)], 8, It)) : E("", !0),
 			O("div", Lt, [
-				O("h3", Rt, W(e.item.name), 1),
+				O("h3", Rt, U(e.item.name), 1),
 				O("div", zt, [
-					e.item.year ? (R(), D("span", Bt, W(e.item.year), 1)) : E("", !0),
+					e.item.year ? (R(), D("span", Bt, U(e.item.year), 1)) : E("", !0),
 					e.item.year && (e.item.rating || e.item.runtime) ? (R(), D("span", Vt)) : E("", !0),
-					e.item.rating ? (R(), D("span", Ht, W(e.item.rating), 1)) : E("", !0),
+					e.item.rating ? (R(), D("span", Ht, U(e.item.rating), 1)) : E("", !0),
 					e.item.rating && e.item.runtime ? (R(), D("span", Ut)) : E("", !0),
-					e.item.runtime ? (R(), D("span", Wt, W(e.item.runtime) + "m", 1)) : E("", !0)
+					e.item.runtime ? (R(), D("span", Wt, U(e.item.runtime) + "m", 1)) : E("", !0)
 				]),
-				f.value.length ? (R(), D("div", Gt, [(R(!0), D(y, null, V(f.value, (e) => (R(), D("span", { key: e }, W(e), 1))), 128))])) : E("", !0),
+				f.value.length ? (R(), D("div", Gt, [(R(!0), D(y, null, V(f.value, (e) => (R(), D("span", { key: e }, U(e), 1))), 128))])) : E("", !0),
 				O("div", Kt, [
 					O("button", {
 						type: "button",
@@ -1177,10 +1178,10 @@ var Et = Q("phlix-player", () => {
 		]), O("div", qt, [O("div", {
 			class: "media-card__caption-title",
 			title: e.item.name
-		}, W(e.item.name), 9, Jt), O("div", Yt, [
-			e.item.year ? (R(), D(y, { key: 0 }, [k(W(e.item.year), 1)], 64)) : E("", !0),
+		}, U(e.item.name), 9, Jt), O("div", Yt, [
+			e.item.year ? (R(), D(y, { key: 0 }, [k(U(e.item.year), 1)], 64)) : E("", !0),
 			e.item.year && e.item.runtime ? (R(), D(y, { key: 1 }, [k(" · ")], 64)) : E("", !0),
-			e.item.runtime ? (R(), D(y, { key: 2 }, [k(W(e.item.runtime) + "m", 1)], 64)) : E("", !0)
+			e.item.runtime ? (R(), D(y, { key: 2 }, [k(U(e.item.runtime) + "m", 1)], 64)) : E("", !0)
 		])])]));
 	}
 }), [["__scopeId", "data-v-a291d5b1"]]), Zt = 3 / 2;
@@ -1307,26 +1308,26 @@ var nn = { class: "media-grid-root" }, rn = {
 				e.some((e) => e.isIntersecting) && r.hasMore && !r.loading && !r.loadingMore && i("load-more");
 			}, { rootMargin: "400px 0px" }), c.value && z.observe(c.value));
 		}
-		function U() {
+		function te() {
 			z?.disconnect(), z = null;
 		}
-		J(() => c.value, (e) => {
-			U(), e && (ee(), m());
+		q(() => c.value, (e) => {
+			te(), e && (ee(), m());
 		});
-		let W = null;
-		function G() {
-			W || typeof ResizeObserver > "u" || !s.value || (W = new ResizeObserver(m), W.observe(s.value));
+		let U = null;
+		function ne() {
+			U || typeof ResizeObserver > "u" || !s.value || (U = new ResizeObserver(m), U.observe(s.value));
 		}
-		function K() {
-			W?.disconnect(), W = null;
+		function W() {
+			U?.disconnect(), U = null;
 		}
-		return J(() => s.value, (e) => {
-			K(), e && (G(), m());
+		return q(() => s.value, (e) => {
+			W(), e && (ne(), m());
 		}), L(() => {
-			f(), typeof window < "u" && (window.addEventListener("scroll", m, { passive: !0 }), window.addEventListener("resize", m, { passive: !0 })), G(), ee();
+			f(), typeof window < "u" && (window.addEventListener("scroll", m, { passive: !0 }), window.addEventListener("resize", m, { passive: !0 })), ne(), ee();
 		}), I(() => {
-			typeof window < "u" && (window.removeEventListener("scroll", m), window.removeEventListener("resize", m)), p &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(p) : clearTimeout(p), 0), K(), U();
-		}), J(() => r.items.length, () => N(m)), (n, r) => (R(), D("div", nn, [e.loading && e.items.length === 0 ? (R(), D("div", {
+			typeof window < "u" && (window.removeEventListener("scroll", m), window.removeEventListener("resize", m)), p &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(p) : clearTimeout(p), 0), W(), te();
+		}), q(() => r.items.length, () => N(m)), (n, r) => (R(), D("div", nn, [e.loading && e.items.length === 0 ? (R(), D("div", {
 			key: 0,
 			class: "media-grid media-grid--skeleton",
 			style: F(j.value),
@@ -1384,7 +1385,7 @@ var nn = { class: "media-grid-root" }, rn = {
 				"aria-hidden": "true"
 			}, null, 512)) : E("", !0)
 		], 64)), A(x, { name: "media-grid-fade" }, {
-			default: X(() => [M.value ? (R(), D("button", {
+			default: Y(() => [M.value ? (R(), D("button", {
 				key: 0,
 				type: "button",
 				class: "media-grid-top",
@@ -1439,10 +1440,10 @@ var nn = { class: "media-grid-root" }, rn = {
 			class: "media-row",
 			"aria-label": e.title
 		}, [O("div", cn, [
-			O("h2", ln, W(e.title), 1),
-			e.count == null ? E("", !0) : (R(), D("span", un, W(e.count.toLocaleString()), 1)),
+			O("h2", ln, U(e.title), 1),
+			e.count == null ? E("", !0) : (R(), D("span", un, U(e.count.toLocaleString()), 1)),
 			O("div", dn, [H(t.$slots, "action", {}, void 0, !0)])
-		]), e.error ? (R(), D("div", fn, [O("span", null, W(e.error), 1), O("button", {
+		]), e.error ? (R(), D("div", fn, [O("span", null, U(e.error), 1), O("button", {
 			type: "button",
 			class: "media-row__retry",
 			onClick: n[0] ||= (e) => r("retry")
@@ -1462,7 +1463,7 @@ var nn = { class: "media-grid-root" }, rn = {
 			title: e.title,
 			description: e.emptyText ?? "Nothing here yet."
 		}, {
-			default: X(() => [H(t.$slots, "empty", {}, void 0, !0)]),
+			default: Y(() => [H(t.$slots, "empty", {}, void 0, !0)]),
 			_: 3
 		}, 8, ["title", "description"])) : (R(), D("ul", {
 			key: 3,
@@ -1555,7 +1556,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 			onWatchlist: n[2] ||= (e) => a("watchlist", e),
 			onInfo: n[3] ||= (e) => a("info", e)
 		}, {
-			action: X(() => [O("button", {
+			action: Y(() => [O("button", {
 				type: "button",
 				class: "home-row__seeall",
 				onClick: n[0] ||= (e) => a("see-all", t.row)
@@ -1652,12 +1653,12 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	},
 	emits: ["update:modelValue", "change"],
 	setup(e, { emit: n }) {
-		let r = e, i = n, a = C(() => m(r.options)), o = q(), s = B(!1), c = B(-1), l = B(""), u = B(!1), d = B(null), f = B(null), p = B(null), _ = C(() => a.value.find((e) => e.value === r.modelValue)?.label ?? ""), v = C(() => {
+		let r = e, i = n, a = C(() => p(r.options)), o = G(), s = B(!1), c = B(-1), l = B(""), u = B(!1), d = B(null), f = B(null), g = B(null), _ = C(() => a.value.find((e) => e.value === r.modelValue)?.label ?? ""), v = C(() => {
 			if (!u.value || l.value.trim() === "") return a.value;
 			let e = l.value.toLowerCase();
 			return a.value.filter((t) => t.label.toLowerCase().includes(e));
 		}), b = C(() => c.value >= 0 ? `${o}-opt-${c.value}` : void 0);
-		J(() => r.modelValue, () => {
+		q(() => r.modelValue, () => {
 			s.value || (l.value = _.value);
 		}, { immediate: !0 });
 		function x() {
@@ -1671,13 +1672,13 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 			!t || t.disabled || (t.value !== r.modelValue && (i("update:modelValue", t.value), i("change", t.value)), l.value = t.label, u.value = !1, s.value = !1, f.value?.focus());
 		}
 		function j(e) {
-			v.value.length !== 0 && (c.value = g(v.value, c.value, e), N(M));
+			v.value.length !== 0 && (c.value = h(v.value, c.value, e), N(M));
 		}
 		function M() {
-			p.value?.querySelector(".is-active")?.scrollIntoView?.({ block: "nearest" });
+			g.value?.querySelector(".is-active")?.scrollIntoView?.({ block: "nearest" });
 		}
 		function F(e) {
-			l.value = e.target.value, u.value = !0, s.value = !0, c.value = h(v.value, "first");
+			l.value = e.target.value, u.value = !0, s.value = !0, c.value = m(v.value, "first");
 		}
 		function L(e) {
 			if (!r.disabled) switch (e.key) {
@@ -1701,7 +1702,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 		function z(e) {
 			s.value && d.value && !d.value.contains(e.target) && S();
 		}
-		return J(s, (e) => {
+		return q(s, (e) => {
 			e ? document.addEventListener("pointerdown", z, !0) : document.removeEventListener("pointerdown", z, !0);
 		}), I(() => document.removeEventListener("pointerdown", z, !0)), (n, r) => (R(), D("div", {
 			ref_key: "rootEl",
@@ -1724,7 +1725,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 				autocomplete: "off",
 				"aria-autocomplete": "list",
 				"aria-expanded": s.value,
-				"aria-controls": s.value ? `${K(o)}-list` : void 0,
+				"aria-controls": s.value ? `${W(o)}-list` : void 0,
 				"aria-activedescendant": s.value ? b.value : void 0,
 				"aria-label": e.label,
 				placeholder: e.placeholder,
@@ -1738,15 +1739,15 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 				name: "chevron-down",
 				class: "phlix-combobox__caret"
 			})
-		]), Z(O("ul", {
-			id: `${K(o)}-list`,
+		]), X(O("ul", {
+			id: `${W(o)}-list`,
 			ref_key: "listEl",
-			ref: p,
+			ref: g,
 			class: "phlix-combobox__list",
 			role: "listbox",
 			"aria-label": e.label
 		}, [(R(!0), D(y, null, V(v.value, (n, r) => (R(), D("li", {
-			id: `${K(o)}-opt-${r}`,
+			id: `${W(o)}-opt-${r}`,
 			key: n.value,
 			class: P(["phlix-combobox__option", {
 				"is-active": r === c.value,
@@ -1760,7 +1761,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 		}, [O("span", On, [n.value === e.modelValue ? (R(), T(t, {
 			key: 0,
 			name: "check"
-		})) : E("", !0)]), k(" " + W(n.label), 1)], 42, Dn))), 128)), v.value.length === 0 ? (R(), D("li", kn, "No matches")) : E("", !0)], 8, En), [[re, s.value]])], 2));
+		})) : E("", !0)]), k(" " + U(n.label), 1)], 42, Dn))), 128)), v.value.length === 0 ? (R(), D("li", kn, "No matches")) : E("", !0)], 8, En), [[ie, s.value]])], 2));
 	}
 }), [["__scopeId", "data-v-337aab6e"]]), jn = { class: "filterbar__main" }, Mn = { class: "filterbar__search" }, Nn = { class: "filterbar__sort" }, Pn = ["aria-label"], Fn = ["aria-expanded"], In = { class: "filterbar__advanced" }, Ln = { class: "filterbar__field" }, Rn = { class: "filterbar__field" }, zn = {
 	class: "filterbar__chips",
@@ -1812,7 +1813,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 				label: "Runtime"
 			}
 		], c = B(a.search), l;
-		J(() => a.search, (e) => {
+		q(() => a.search, (e) => {
 			e !== c.value.trim() && (c.value = e);
 		});
 		function u() {
@@ -1823,11 +1824,11 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 		function d() {
 			c.value = "", a.setSearch(""), i("change");
 		}
-		let f = B(null), m = B(0), h = C(() => a.availableGenres.filter((e) => !a.selectedGenres.includes(e)));
-		function g(e) {
+		let f = B(null), p = B(0), m = C(() => a.availableGenres.filter((e) => !a.selectedGenres.includes(e)));
+		function h(e) {
 			if (e == null || e === "") return;
 			let t = String(e);
-			a.selectedGenres.includes(t) || (a.setGenres([...a.selectedGenres, t]), i("change")), f.value = null, m.value++;
+			a.selectedGenres.includes(t) || (a.setGenres([...a.selectedGenres, t]), i("change")), f.value = null, p.value++;
 		}
 		function v(e) {
 			let t = a.selectedRatings;
@@ -1893,21 +1894,21 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 				remove: () => M(null)
 			}), e;
 		}), H = C(() => z.value.length > 0), ee = C(() => a.selectedGenres.length + a.selectedRatings.length + a.selectedTypes.length + (a.yearFrom === void 0 ? 0 : 1) + (a.yearTo === void 0 ? 0 : 1));
-		function U() {
+		function te() {
 			c.value = "", a.setSearch(""), a.setGenres([]), a.setRatings([]), a.setTypes([]), a.setYearRange(void 0, void 0), i("change");
 		}
-		let G = B(!1), q = C(() => o.filterPresets), te = B(!1), Y = B("");
-		function oe() {
-			te.value = !0, Y.value = "";
+		let ne = B(!1), G = C(() => o.filterPresets), re = B(!1), J = B("");
+		function se() {
+			re.value = !0, J.value = "";
 		}
-		function Q() {
-			let e = Y.value.trim();
-			e && (o.saveFilterPreset(e, a.toQuery()), te.value = !1, Y.value = "");
-		}
-		function se(e) {
-			a.applyQuery(e.query), c.value = a.search, i("change");
+		function Z() {
+			let e = J.value.trim();
+			e && (o.saveFilterPreset(e, a.toQuery()), re.value = !1, J.value = "");
 		}
 		function ce(e) {
+			a.applyQuery(e.query), c.value = a.search, i("change");
+		}
+		function Q(e) {
 			o.removeFilterPreset(e.id);
 		}
 		let le = B(!1);
@@ -1928,14 +1929,14 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 						name: "search",
 						class: "filterbar__search-icon"
 					}),
-					Z(O("input", {
+					X(O("input", {
 						"onUpdate:modelValue": r[0] ||= (e) => c.value = e,
 						type: "search",
 						class: "filterbar__search-input",
 						placeholder: "Search titles, people, genres…",
 						"aria-label": "Search media",
 						onInput: u
-					}, null, 544), [[ne, c.value]]),
+					}, null, 544), [[K, c.value]]),
 					c.value ? (R(), D("button", {
 						key: 0,
 						type: "button",
@@ -1944,66 +1945,66 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 						onClick: d
 					}, [A(t, { name: "x" })])) : E("", !0)
 				]),
-				O("div", Nn, [A(_, {
-					"model-value": K(a).sort,
+				O("div", Nn, [A(g, {
+					"model-value": W(a).sort,
 					options: s,
 					label: "Sort by",
 					"onUpdate:modelValue": N
 				}, null, 8, ["model-value"]), O("button", {
 					type: "button",
 					class: "filterbar__order",
-					"aria-label": `Sort ${K(a).order === "asc" ? "ascending" : "descending"}`,
+					"aria-label": `Sort ${W(a).order === "asc" ? "ascending" : "descending"}`,
 					onClick: F
-				}, [A(t, { name: K(a).order === "asc" ? "arrow-up" : "arrow-down" }, null, 8, ["name"])], 8, Pn)]),
+				}, [A(t, { name: W(a).order === "asc" ? "arrow-up" : "arrow-down" }, null, 8, ["name"])], 8, Pn)]),
 				O("button", {
 					type: "button",
 					class: "filterbar__toggle",
-					"aria-expanded": G.value,
-					onClick: r[1] ||= (e) => G.value = !G.value
+					"aria-expanded": ne.value,
+					onClick: r[1] ||= (e) => ne.value = !ne.value
 				}, [
 					A(t, { name: "filter" }),
 					r[4] ||= O("span", null, "Filters", -1),
-					ee.value ? (R(), T(p, {
+					ee.value ? (R(), T(_, {
 						key: 0,
 						class: "filterbar__toggle-badge"
 					}, {
-						default: X(() => [k(W(ee.value), 1)]),
+						default: Y(() => [k(U(ee.value), 1)]),
 						_: 1
 					})) : E("", !0),
 					A(t, {
-						name: G.value ? "chevron-up" : "chevron-down",
+						name: ne.value ? "chevron-up" : "chevron-down",
 						class: "filterbar__toggle-caret"
 					}, null, 8, ["name"])
 				], 8, Fn)
 			]),
 			A(x, { name: "filterbar-panel" }, {
-				default: X(() => [Z(O("div", In, [
+				default: Y(() => [X(O("div", In, [
 					O("div", Ln, [r[5] ||= O("span", { class: "filterbar__field-label" }, "Genres", -1), (R(), T(An, {
-						key: m.value,
+						key: p.value,
 						"model-value": f.value,
-						options: h.value,
+						options: m.value,
 						placeholder: "Add a genre…",
-						"onUpdate:modelValue": g
+						"onUpdate:modelValue": h
 					}, null, 8, ["model-value", "options"]))]),
-					O("div", Rn, [r[6] ||= O("span", { class: "filterbar__field-label" }, "Rating", -1), O("div", zn, [(R(!0), D(y, null, V(K(a).availableRatings, (e) => (R(), T(Cn, {
+					O("div", Rn, [r[6] ||= O("span", { class: "filterbar__field-label" }, "Rating", -1), O("div", zn, [(R(!0), D(y, null, V(W(a).availableRatings, (e) => (R(), T(Cn, {
 						key: e,
-						selected: K(a).selectedRatings.includes(e),
+						selected: W(a).selectedRatings.includes(e),
 						"onUpdate:selected": (t) => v(e)
 					}, {
-						default: X(() => [k(W(e), 1)]),
+						default: Y(() => [k(U(e), 1)]),
 						_: 2
 					}, 1032, ["selected", "onUpdate:selected"]))), 128))])]),
-					O("div", Bn, [r[7] ||= O("span", { class: "filterbar__field-label" }, "Type", -1), O("div", Vn, [(R(!0), D(y, null, V(K(a).availableTypes, (e) => (R(), T(Cn, {
+					O("div", Bn, [r[7] ||= O("span", { class: "filterbar__field-label" }, "Type", -1), O("div", Vn, [(R(!0), D(y, null, V(W(a).availableTypes, (e) => (R(), T(Cn, {
 						key: e,
-						selected: K(a).selectedTypes.includes(e),
+						selected: W(a).selectedTypes.includes(e),
 						"onUpdate:selected": (t) => b(e)
 					}, {
-						default: X(() => [k(W(e), 1)]),
+						default: Y(() => [k(U(e), 1)]),
 						_: 2
 					}, 1032, ["selected", "onUpdate:selected"]))), 128))])]),
 					O("div", Hn, [r[9] ||= O("span", { class: "filterbar__field-label" }, "Year", -1), O("div", Un, [
 						A(An, {
-							"model-value": K(a).yearFrom ?? null,
+							"model-value": W(a).yearFrom ?? null,
 							options: w.value,
 							placeholder: "From",
 							label: "Year from",
@@ -2014,7 +2015,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 							"aria-hidden": "true"
 						}, "–", -1),
 						A(An, {
-							"model-value": K(a).yearTo ?? null,
+							"model-value": W(a).yearTo ?? null,
 							options: w.value,
 							placeholder: "To",
 							label: "Year to",
@@ -2023,54 +2024,54 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 					])]),
 					O("div", Wn, [
 						r[12] ||= O("span", { class: "filterbar__field-label" }, "Presets", -1),
-						O("div", Gn, [(R(!0), D(y, null, V(q.value, (e) => (R(), T(Cn, {
+						O("div", Gn, [(R(!0), D(y, null, V(G.value, (e) => (R(), T(Cn, {
 							key: e.id,
 							removable: "",
 							"remove-label": `Delete preset ${e.name}`,
-							onClick: (t) => se(e),
-							onRemove: (t) => ce(e)
+							onClick: (t) => ce(e),
+							onRemove: (t) => Q(e)
 						}, {
-							default: X(() => [k(W(e.name), 1)]),
+							default: Y(() => [k(U(e.name), 1)]),
 							_: 2
 						}, 1032, [
 							"remove-label",
 							"onClick",
 							"onRemove"
-						]))), 128)), q.value.length ? E("", !0) : (R(), D("span", Kn, "No saved presets"))]),
-						te.value ? (R(), D("div", qn, [Z(O("input", {
-							"onUpdate:modelValue": r[2] ||= (e) => Y.value = e,
+						]))), 128)), G.value.length ? E("", !0) : (R(), D("span", Kn, "No saved presets"))]),
+						re.value ? (R(), D("div", qn, [X(O("input", {
+							"onUpdate:modelValue": r[2] ||= (e) => J.value = e,
 							type: "text",
 							class: "filterbar__preset-input",
 							placeholder: "Preset name",
 							"aria-label": "Preset name",
-							onKeydown: [ie(ae(Q, ["prevent"]), ["enter"]), r[3] ||= ie((e) => te.value = !1, ["esc"])]
-						}, null, 40, Jn), [[ne, Y.value]]), O("button", {
+							onKeydown: [ae(oe(Z, ["prevent"]), ["enter"]), r[3] ||= ae((e) => re.value = !1, ["esc"])]
+						}, null, 40, Jn), [[K, J.value]]), O("button", {
 							type: "button",
 							class: "filterbar__preset-confirm",
-							onClick: Q
+							onClick: Z
 						}, [A(t, { name: "check" }), r[10] ||= k(" Save ", -1)])])) : (R(), D("button", {
 							key: 1,
 							type: "button",
 							class: "filterbar__preset-add",
 							disabled: !H.value,
-							onClick: oe
+							onClick: se
 						}, [A(t, { name: "plus" }), r[11] ||= k(" Save current ", -1)], 8, Yn))
 					])
-				], 512), [[re, G.value]])]),
+				], 512), [[ie, ne.value]])]),
 				_: 1
 			}),
-			O("div", Xn, [O("span", Zn, [O("b", null, W(K(a).total.toLocaleString()), 1), k(" " + W(K(a).total === 1 ? "title" : "titles"), 1)]), H.value ? (R(), D(y, { key: 0 }, [O("div", Qn, [(R(!0), D(y, null, V(z.value, (e) => (R(), T(Cn, {
+			O("div", Xn, [O("span", Zn, [O("b", null, U(W(a).total.toLocaleString()), 1), k(" " + U(W(a).total === 1 ? "title" : "titles"), 1)]), H.value ? (R(), D(y, { key: 0 }, [O("div", Qn, [(R(!0), D(y, null, V(z.value, (e) => (R(), T(Cn, {
 				key: e.key,
 				removable: "",
 				"remove-label": `Remove ${e.label}`,
 				onRemove: e.remove
 			}, {
-				default: X(() => [k(W(e.label), 1)]),
+				default: Y(() => [k(U(e.label), 1)]),
 				_: 2
 			}, 1032, ["remove-label", "onRemove"]))), 128))]), O("button", {
 				type: "button",
 				class: "filterbar__clear",
-				onClick: U
+				onClick: te
 			}, "Clear all")], 64)) : E("", !0)])
 		], 2));
 	}
@@ -2085,7 +2086,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 		function f(e) {
 			e.forEach((e) => d.set(e.id, e));
 		}
-		J(() => o.items, (e) => f(e), { immediate: !0 });
+		q(() => o.items, (e) => f(e), { immediate: !0 });
 		let p = C(() => {
 			let e = s.resumeMap;
 			return Object.keys(e).map((e) => d.get(e)).filter((e) => !!e).sort((t, n) => (e[n.id] ?? 0) - (e[t.id] ?? 0)).slice(0, 12);
@@ -2093,7 +2094,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 		function m() {
 			o.reset(), o.fetchMedia(r.value);
 		}
-		L(m), J(r, m);
+		L(m), q(r, m);
 		function h() {
 			o.reset(), o.fetchMedia(r.value);
 		}
@@ -2150,18 +2151,18 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 				ref: u,
 				class: "browse-library"
 			}, [
-				O("div", nr, [t[0] ||= O("h1", { class: "browse-title" }, "Browse", -1), O("span", rr, W(K(o).total.toLocaleString()) + " titles", 1)]),
+				O("div", nr, [t[0] ||= O("h1", { class: "browse-title" }, "Browse", -1), O("span", rr, U(W(o).total.toLocaleString()) + " titles", 1)]),
 				A($n, { onChange: h }),
-				K(o).error ? (R(), D("div", ir, [O("p", null, W(K(o).error), 1), O("button", {
+				W(o).error ? (R(), D("div", ir, [O("p", null, U(W(o).error), 1), O("button", {
 					type: "button",
 					class: "browse-retry",
 					onClick: m
 				}, "Retry")])) : E("", !0),
 				A(on, {
-					items: K(o).items,
-					loading: K(o).loading && K(o).items.length === 0,
-					"loading-more": K(o).loading && K(o).items.length > 0,
-					"has-more": K(o).hasMore,
+					items: W(o).items,
+					loading: W(o).loading && W(o).items.length === 0,
+					"loading-more": W(o).loading && W(o).items.length > 0,
+					"has-more": W(o).hasMore,
 					onLoadMore: g,
 					onPlay: v,
 					onWatchlist: b,
@@ -2248,7 +2249,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 				"left-icon": "arrow-left",
 				onClick: r[0] ||= (e) => a("back")
 			}, {
-				default: X(() => [...r[7] ||= [k("Back", -1)]]),
+				default: Y(() => [...r[7] ||= [k("Back", -1)]]),
 				_: 1
 			})) : E("", !0)]),
 			O("div", cr, [O("div", lr, [e.item.poster_url ? (R(), D("img", {
@@ -2261,31 +2262,31 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 				decoding: "async",
 				onLoad: d
 			}, null, 42, ur)) : (R(), D("div", dr, [A(t, { name: o.value }, null, 8, ["name"])]))]), O("div", fr, [
-				O("h1", pr, W(e.item.name), 1),
+				O("h1", pr, U(e.item.name), 1),
 				O("div", mr, [
 					e.item.year ? (R(), D("span", hr, [A(t, {
 						name: "calendar",
 						class: "media-detail__meta-icon"
-					}), k(W(e.item.year), 1)])) : E("", !0),
-					e.item.rating ? (R(), D("span", gr, W(e.item.rating), 1)) : E("", !0),
-					e.item.runtime ? (R(), D("span", _r, W(e.item.runtime) + "m", 1)) : E("", !0),
-					O("span", vr, W(e.item.type), 1)
+					}), k(U(e.item.year), 1)])) : E("", !0),
+					e.item.rating ? (R(), D("span", gr, U(e.item.rating), 1)) : E("", !0),
+					e.item.runtime ? (R(), D("span", _r, U(e.item.runtime) + "m", 1)) : E("", !0),
+					O("span", vr, U(e.item.type), 1)
 				]),
 				e.item.genres?.length ? (R(), D("div", yr, [(R(!0), D(y, null, V(e.item.genres, (e) => (R(), T(Cn, {
 					key: e,
 					size: "sm"
 				}, {
-					default: X(() => [k(W(e), 1)]),
+					default: Y(() => [k(U(e), 1)]),
 					_: 2
 				}, 1024))), 128))])) : E("", !0),
-				O("p", br, W(e.item.overview || "No overview available."), 1),
+				O("p", br, U(e.item.overview || "No overview available."), 1),
 				O("div", xr, [
 					A(i, {
 						variant: "solid",
 						"left-icon": "play",
 						onClick: r[1] ||= (t) => a("play", e.item)
 					}, {
-						default: X(() => [...r[8] ||= [k("Play", -1)]]),
+						default: Y(() => [...r[8] ||= [k("Play", -1)]]),
 						_: 1
 					}),
 					c.value ? (R(), T(i, {
@@ -2294,7 +2295,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 						"left-icon": "rewind",
 						onClick: r[2] ||= (t) => a("resume", e.item)
 					}, {
-						default: X(() => [r[9] ||= k(" Resume ", -1), O("span", Sr, W(c.value), 1)]),
+						default: Y(() => [r[9] ||= k(" Resume ", -1), O("span", Sr, U(c.value), 1)]),
 						_: 1
 					})) : E("", !0),
 					A(i, {
@@ -2302,16 +2303,16 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 						"left-icon": "bookmark-plus",
 						onClick: r[3] ||= (t) => a("watchlist", e.item)
 					}, {
-						default: X(() => [...r[10] ||= [k("Watchlist", -1)]]),
+						default: Y(() => [...r[10] ||= [k("Watchlist", -1)]]),
 						_: 1
 					})
 				]),
-				e.item.director || s.value.length ? (R(), D("dl", Cr, [e.item.director ? (R(), D("div", wr, [r[11] ||= O("dt", null, "Director", -1), O("dd", null, W(e.item.director), 1)])) : E("", !0), s.value.length ? (R(), D("div", Tr, [r[12] ||= O("dt", null, "Cast", -1), O("dd", Er, [(R(!0), D(y, null, V(s.value, (e) => (R(), T(Cn, {
+				e.item.director || s.value.length ? (R(), D("dl", Cr, [e.item.director ? (R(), D("div", wr, [r[11] ||= O("dt", null, "Director", -1), O("dd", null, U(e.item.director), 1)])) : E("", !0), s.value.length ? (R(), D("div", Tr, [r[12] ||= O("dt", null, "Cast", -1), O("dd", Er, [(R(!0), D(y, null, V(s.value, (e) => (R(), T(Cn, {
 					key: e,
 					size: "sm",
 					icon: "user"
 				}, {
-					default: X(() => [k(W(e), 1)]),
+					default: Y(() => [k(U(e), 1)]),
 					_: 2
 				}, 1024))), 128))])])) : E("", !0)])) : E("", !0)
 			])]),
@@ -2380,7 +2381,7 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 				g.value = e instanceof Error ? e.message : "Failed to load title", m.value = !1;
 			}
 		}
-		L(w), J(_, w), I(() => {
+		L(w), q(_, w), I(() => {
 			b = !0, y?.abort(), y = null;
 		});
 		function j(e, t) {
@@ -2427,17 +2428,17 @@ var yn = /*#__PURE__*/ r(/* @__PURE__ */ j({
 			title: "Couldn't load this title",
 			description: g.value
 		}, {
-			actions: X(() => [A(i, {
+			actions: Y(() => [A(i, {
 				variant: "solid",
 				onClick: w
 			}, {
-				default: X(() => [...t[0] ||= [k("Retry", -1)]]),
+				default: Y(() => [...t[0] ||= [k("Retry", -1)]]),
 				_: 1
 			}), A(i, {
 				variant: "ghost",
 				onClick: z
 			}, {
-				default: X(() => [...t[1] ||= [k("Back", -1)]]),
+				default: Y(() => [...t[1] ||= [k("Back", -1)]]),
 				_: 1
 			})]),
 			_: 1
@@ -2560,7 +2561,7 @@ var Pr = [
 			"aria-valuemin": 0,
 			"aria-valuemax": Math.round(e.duration),
 			"aria-valuenow": Math.round(e.position),
-			"aria-valuetext": K(Nr)(e.position),
+			"aria-valuetext": W(Nr)(e.position),
 			"aria-label": "Seek",
 			onPointerdown: S,
 			onPointermove: w,
@@ -2597,7 +2598,7 @@ var Pr = [
 			key: 0,
 			class: "scrubber__thumb",
 			style: F({ backgroundImage: _.value })
-		}, null, 4)) : E("", !0), O("span", Lr, W(K(Nr)(h.value)), 1)], 4)) : E("", !0)], 40, Pr));
+		}, null, 4)) : E("", !0), O("span", Lr, U(W(Nr)(h.value)), 1)], 4)) : E("", !0)], 40, Pr));
 	}
 }), [["__scopeId", "data-v-b2711211"]]), zr = [
 	{
@@ -2753,13 +2754,13 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 	emits: ["close"],
 	setup(e, { emit: n }) {
 		let r = e, i = n, a = B(null);
-		return l(a, G(r, "open"), {
+		return l(a, ne(r, "open"), {
 			lockScroll: !1,
 			onEscape: () => (i("close"), !0)
 		}), (n, r) => e.open ? (R(), D("div", {
 			key: 0,
 			class: "shortcuts",
-			onClick: r[1] ||= ae((e) => i("close"), ["self"])
+			onClick: r[1] ||= oe((e) => i("close"), ["self"])
 		}, [O("div", {
 			ref_key: "panelEl",
 			ref: a,
@@ -2776,11 +2777,11 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 		})]), O("ul", qr, [(R(!0), D(y, null, V(e.shortcuts, (e) => (R(), D("li", {
 			key: e.id,
 			class: "shortcuts__row"
-		}, [O("span", Jr, [(R(!0), D(y, null, V(e.keys, (e, n) => (R(), D(y, { key: n }, [e === "–" ? (R(), D("span", Yr, "–")) : (R(), D("kbd", Xr, [K(Br)[e] ? (R(), T(t, {
+		}, [O("span", Jr, [(R(!0), D(y, null, V(e.keys, (e, n) => (R(), D(y, { key: n }, [e === "–" ? (R(), D("span", Yr, "–")) : (R(), D("kbd", Xr, [W(Br)[e] ? (R(), T(t, {
 			key: 0,
-			name: K(Br)[e],
-			label: K(Vr)[e] ?? e
-		}, null, 8, ["name", "label"])) : (R(), D(y, { key: 1 }, [k(W(e), 1)], 64))]))], 64))), 128))]), O("span", Zr, W(e.label), 1)]))), 128))])], 512)])) : E("", !0);
+			name: W(Br)[e],
+			label: W(Vr)[e] ?? e
+		}, null, 8, ["name", "label"])) : (R(), D(y, { key: 1 }, [k(U(e), 1)], 64))]))], 64))), 128))]), O("span", Zr, U(e.label), 1)]))), 128))])], 512)])) : E("", !0);
 	}
 }), [["__scopeId", "data-v-5e972c87"]]), $r = [
 	"tabindex",
@@ -2895,14 +2896,14 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 		function a(e) {
 			t.setVolume(e), e <= 0 && !t.muted && t.toggleMute();
 		}
-		return J(() => t.volume, (e) => {
+		return q(() => t.volume, (e) => {
 			n.defaultVolume = e;
 		}), (e, n) => (R(), D("div", ti, [A(u, {
 			name: i.value,
-			label: K(t).muted ? "Unmute" : "Mute",
+			label: W(t).muted ? "Unmute" : "Mute",
 			size: "sm",
 			class: "volume__btn",
-			onClick: n[0] ||= (e) => K(t).toggleMute()
+			onClick: n[0] ||= (e) => W(t).toggleMute()
 		}, null, 8, ["name", "label"]), A(ei, {
 			class: "volume__slider",
 			"model-value": r.value,
@@ -2933,9 +2934,9 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 		function i(e) {
 			n.setRate(Number(e));
 		}
-		return (e, t) => (R(), T(_, {
+		return (e, t) => (R(), T(g, {
 			class: "speed-menu",
-			"model-value": K(n).rate,
+			"model-value": W(n).rate,
 			options: r.value,
 			label: "Playback speed",
 			"onUpdate:modelValue": i
@@ -2950,10 +2951,10 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 			let t = String(e);
 			n.setQuality(t), r.defaultQuality = t;
 		}
-		return (t, r) => i.value ? (R(), T(_, {
+		return (t, r) => i.value ? (R(), T(g, {
 			key: 0,
 			class: "quality-menu",
-			"model-value": K(n).quality,
+			"model-value": W(n).quality,
 			options: e.qualities,
 			label: "Quality",
 			"onUpdate:modelValue": a
@@ -3040,10 +3041,10 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 			t && a.duration > 0 && (t.currentTime = Math.min(a.duration, Math.max(0, e)));
 		}
 		function M() {
-			d.value = !0, q();
+			d.value = !0, G();
 		}
 		function N() {
-			d.value = !1, q();
+			d.value = !1, G();
 		}
 		function F(e) {
 			let t = o.reduce((e, t, n) => Math.abs(t - a.rate) < Math.abs(o[e] - a.rate) ? n : e, 0), n = o[Math.min(o.length - 1, Math.max(0, t + e))];
@@ -3070,13 +3071,13 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 		function z() {
 			a.toggleMute();
 		}
-		J(() => a.muted, (e) => {
+		q(() => a.muted, (e) => {
 			let t = s.value;
 			t && t.muted !== e && (t.muted = e);
-		}), J(() => a.volume, (e) => {
+		}), q(() => a.volume, (e) => {
 			let t = s.value;
 			t && Math.abs(t.volume - e) > .001 && (t.volume = e);
-		}), J(() => a.rate, (e) => {
+		}), q(() => a.rate, (e) => {
 			let t = s.value;
 			t && t.playbackRate !== e && (t.playbackRate = e);
 		});
@@ -3088,30 +3089,30 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 		function ee() {
 			u.value = typeof document < "u" && !!document.fullscreenElement;
 		}
-		function U() {
+		function te() {
 			p &&= (clearTimeout(p), void 0);
 		}
-		function G() {
-			U(), !(!a.playing || d.value) && (p = setTimeout(() => {
+		function ne() {
+			te(), !(!a.playing || d.value) && (p = setTimeout(() => {
 				a.playing && !d.value && (l.value = !1);
 			}, r.idleTimeout ?? 3e3));
 		}
-		function q() {
-			l.value = !0, G();
+		function G() {
+			l.value = !0, ne();
 		}
-		return J(() => a.playing, (e) => {
-			e ? G() : (U(), l.value = !0);
+		return q(() => a.playing, (e) => {
+			e ? ne() : (te(), l.value = !0);
 		}), L(() => {
 			a.setCurrent(r.media, { resetPosition: !1 }), typeof document < "u" && document.addEventListener("fullscreenchange", ee);
-		}), J(() => r.media, (e) => a.setCurrent(e, { resetPosition: !1 })), I(() => {
-			U(), typeof document < "u" && document.removeEventListener("fullscreenchange", ee);
+		}), q(() => r.media, (e) => a.setCurrent(e, { resetPosition: !1 })), I(() => {
+			te(), typeof document < "u" && document.removeEventListener("fullscreenchange", ee);
 		}), (n, r) => (R(), D("div", {
 			ref_key: "containerRef",
 			ref: c,
 			class: P(["player", { "is-chrome-hidden": !l.value }]),
-			onPointermove: q,
-			onPointerdown: q,
-			onFocusin: q
+			onPointermove: G,
+			onPointerdown: G,
+			onFocusin: G
 		}, [
 			O("video", {
 				ref_key: "videoRef",
@@ -3142,25 +3143,25 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 				type: "button",
 				class: "player__iconbtn player__back",
 				"aria-label": "Back",
-				onClick: r[0] ||= ae((e) => i("back"), ["stop"])
+				onClick: r[0] ||= oe((e) => i("back"), ["stop"])
 			}, [A(t, { name: "arrow-left" })]), O("div", si, [
 				r[4] ||= O("p", { class: "player__eyebrow" }, "Now playing", -1),
-				O("h2", ci, W(e.media.name), 1),
-				O("div", li, [(R(!0), D(y, null, V(m.value, (e, t) => (R(), D(y, { key: t }, [t > 0 && !e.cert ? (R(), D("span", ui, "·")) : E("", !0), O("span", { class: P({ player__cert: e.cert }) }, W(e.text), 3)], 64))), 128))])
+				O("h2", ci, U(e.media.name), 1),
+				O("div", li, [(R(!0), D(y, null, V(m.value, (e, t) => (R(), D(y, { key: t }, [t > 0 && !e.cert ? (R(), D("span", ui, "·")) : E("", !0), O("span", { class: P({ player__cert: e.cert }) }, U(e.text), 3)], 64))), 128))])
 			])]),
 			O("div", di, [O("button", {
 				type: "button",
-				class: P(["player__bigplay", { "is-playing": K(a).playing }]),
-				"aria-label": K(a).playing ? "Pause" : "Play",
-				onClick: ae(h, ["stop"])
-			}, [A(t, { name: K(a).playing ? "pause" : "play" }, null, 8, ["name"])], 10, fi)]),
+				class: P(["player__bigplay", { "is-playing": W(a).playing }]),
+				"aria-label": W(a).playing ? "Pause" : "Play",
+				onClick: oe(h, ["stop"])
+			}, [A(t, { name: W(a).playing ? "pause" : "play" }, null, 8, ["name"])], 10, fi)]),
 			O("div", {
 				class: "player__controls",
-				onClick: r[2] ||= ae(() => {}, ["stop"])
+				onClick: r[2] ||= oe(() => {}, ["stop"])
 			}, [A(Rr, {
-				position: K(a).position,
-				duration: K(a).duration,
-				buffered: K(a).buffered,
+				position: W(a).position,
+				duration: W(a).duration,
+				buffered: W(a).buffered,
 				chapters: e.chapters,
 				"thumbnail-at": e.thumbnailAt,
 				onSeek: j,
@@ -3176,13 +3177,13 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 				O("button", {
 					type: "button",
 					class: "player__iconbtn player__iconbtn--lg",
-					"aria-label": K(a).playing ? "Pause" : "Play",
+					"aria-label": W(a).playing ? "Pause" : "Play",
 					onClick: h
-				}, [A(t, { name: K(a).playing ? "pause" : "play" }, null, 8, ["name"])], 8, mi),
+				}, [A(t, { name: W(a).playing ? "pause" : "play" }, null, 8, ["name"])], 8, mi),
 				O("span", hi, [
-					k(W(K(Nr)(K(a).position)), 1),
+					k(U(W(Nr)(W(a).position)), 1),
 					r[5] ||= O("span", { class: "player__sep" }, " / ", -1),
-					k(W(K(Nr)(K(a).duration)), 1)
+					k(U(W(Nr)(W(a).duration)), 1)
 				]),
 				r[6] ||= O("span", { class: "player__grow" }, null, -1),
 				A(ni),
@@ -3233,7 +3234,7 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 				o.value = !1;
 			}
 		}
-		return L(c), (e, t) => (R(), D("div", vi, [o.value ? (R(), D("div", yi, "Loading...")) : s.value ? (R(), D("div", bi, [O("p", null, W(s.value), 1), O("button", {
+		return L(c), (e, t) => (R(), D("div", vi, [o.value ? (R(), D("div", yi, "Loading...")) : s.value ? (R(), D("div", bi, [O("p", null, U(s.value), 1), O("button", {
 			class: "retry-btn",
 			onClick: c
 		}, "Retry")])) : i.value ? (R(), T(_i, {
@@ -3242,7 +3243,7 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 			"stream-url": a.value
 		}, null, 8, ["media", "stream-url"])) : E("", !0)]));
 	}
-}), [["__scopeId", "data-v-d9061b47"]]), Si = Q("auth", () => {
+}), [["__scopeId", "data-v-d9061b47"]]), Si = Z("auth", () => {
 	let t = new c(), n = new e({
 		tokenStore: t,
 		baseUrl: M("apiBase", "")
@@ -3316,14 +3317,14 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 			let n = ee("router-link");
 			return R(), D("form", {
 				class: "login-form",
-				onSubmit: ae(c, ["prevent"])
+				onSubmit: oe(c, ["prevent"])
 			}, [
 				t[7] ||= O("h2", { class: "form-title" }, "Sign in to Phlix", -1),
-				K(r).error ? (R(), D("div", Ci, W(K(r).error), 1)) : E("", !0),
+				W(r).error ? (R(), D("div", Ci, U(W(r).error), 1)) : E("", !0),
 				O("div", wi, [t[3] ||= O("label", {
 					for: "email",
 					class: "label"
-				}, "Email", -1), Z(O("input", {
+				}, "Email", -1), X(O("input", {
 					id: "email",
 					"onUpdate:modelValue": t[0] ||= (e) => a.value = e,
 					type: "email",
@@ -3331,11 +3332,11 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 					placeholder: "you@example.com",
 					required: "",
 					autocomplete: "email"
-				}, null, 512), [[ne, a.value]])]),
+				}, null, 512), [[K, a.value]])]),
 				O("div", Ti, [t[4] ||= O("label", {
 					for: "password",
 					class: "label"
-				}, "Password", -1), O("div", Ei, [Z(O("input", {
+				}, "Password", -1), O("div", Ei, [X(O("input", {
 					id: "password",
 					"onUpdate:modelValue": t[1] ||= (e) => o.value = e,
 					type: s.value ? "text" : "password",
@@ -3343,21 +3344,21 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 					placeholder: "Your password",
 					required: "",
 					autocomplete: "current-password"
-				}, null, 8, Di), [[te, o.value]]), O("button", {
+				}, null, 8, Di), [[re, o.value]]), O("button", {
 					type: "button",
 					class: "toggle-password",
 					onClick: t[2] ||= (e) => s.value = !s.value
-				}, W(s.value ? "🙈" : "👁"), 1)])]),
+				}, U(s.value ? "🙈" : "👁"), 1)])]),
 				O("button", {
 					type: "submit",
 					class: "submit-btn",
-					disabled: K(r).loading
-				}, W(K(r).loading ? "Signing in..." : "Sign in"), 9, Oi),
+					disabled: W(r).loading
+				}, U(W(r).loading ? "Signing in..." : "Sign in"), 9, Oi),
 				O("p", ki, [t[6] ||= k(" Don't have an account? ", -1), A(n, {
 					to: "/app/signup",
 					class: "link"
 				}, {
-					default: X(() => [...t[5] ||= [k("Sign up", -1)]]),
+					default: Y(() => [...t[5] ||= [k("Sign up", -1)]]),
 					_: 1
 				})])
 			], 32);
@@ -3391,14 +3392,14 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 			let n = ee("router-link");
 			return R(), D("form", {
 				class: "signup-form",
-				onSubmit: ae(d, ["prevent"])
+				onSubmit: oe(d, ["prevent"])
 			}, [
 				t[11] ||= O("h2", { class: "form-title" }, "Create your Phlix account", -1),
-				K(r).error || u.value ? (R(), D("div", Pi, W(K(r).error || u.value), 1)) : E("", !0),
+				W(r).error || u.value ? (R(), D("div", Pi, U(W(r).error || u.value), 1)) : E("", !0),
 				O("div", Fi, [t[5] ||= O("label", {
 					for: "email",
 					class: "label"
-				}, "Email", -1), Z(O("input", {
+				}, "Email", -1), X(O("input", {
 					id: "email",
 					"onUpdate:modelValue": t[0] ||= (e) => a.value = e,
 					type: "email",
@@ -3406,11 +3407,11 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 					placeholder: "you@example.com",
 					required: "",
 					autocomplete: "email"
-				}, null, 512), [[ne, a.value]])]),
+				}, null, 512), [[K, a.value]])]),
 				O("div", Ii, [t[6] ||= O("label", {
 					for: "username",
 					class: "label"
-				}, "Username", -1), Z(O("input", {
+				}, "Username", -1), X(O("input", {
 					id: "username",
 					"onUpdate:modelValue": t[1] ||= (e) => o.value = e,
 					type: "text",
@@ -3419,11 +3420,11 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 					required: "",
 					autocomplete: "username",
 					minlength: "3"
-				}, null, 512), [[ne, o.value]])]),
+				}, null, 512), [[K, o.value]])]),
 				O("div", Li, [t[7] ||= O("label", {
 					for: "password",
 					class: "label"
-				}, "Password", -1), O("div", Ri, [Z(O("input", {
+				}, "Password", -1), O("div", Ri, [X(O("input", {
 					id: "password",
 					"onUpdate:modelValue": t[2] ||= (e) => s.value = e,
 					type: l.value ? "text" : "password",
@@ -3432,15 +3433,15 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 					required: "",
 					autocomplete: "new-password",
 					minlength: "8"
-				}, null, 8, zi), [[te, s.value]]), O("button", {
+				}, null, 8, zi), [[re, s.value]]), O("button", {
 					type: "button",
 					class: "toggle-password",
 					onClick: t[3] ||= (e) => l.value = !l.value
-				}, W(l.value ? "🙈" : "👁"), 1)])]),
+				}, U(l.value ? "🙈" : "👁"), 1)])]),
 				O("div", Bi, [t[8] ||= O("label", {
 					for: "confirm",
 					class: "label"
-				}, "Confirm password", -1), Z(O("input", {
+				}, "Confirm password", -1), X(O("input", {
 					id: "confirm",
 					"onUpdate:modelValue": t[4] ||= (e) => c.value = e,
 					type: l.value ? "text" : "password",
@@ -3448,17 +3449,17 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 					placeholder: "Repeat your password",
 					required: "",
 					autocomplete: "new-password"
-				}, null, 8, Vi), [[te, c.value]])]),
+				}, null, 8, Vi), [[re, c.value]])]),
 				O("button", {
 					type: "submit",
 					class: "submit-btn",
-					disabled: K(r).loading
-				}, W(K(r).loading ? "Creating account..." : "Create account"), 9, Hi),
+					disabled: W(r).loading
+				}, U(W(r).loading ? "Creating account..." : "Create account"), 9, Hi),
 				O("p", Ui, [t[10] ||= k(" Already have an account? ", -1), A(n, {
 					to: "/app/login",
 					class: "link"
 				}, {
-					default: X(() => [...t[9] ||= [k("Sign in", -1)]]),
+					default: Y(() => [...t[9] ||= [k("Sign in", -1)]]),
 					_: 1
 				})])
 			], 32);
@@ -3616,16 +3617,16 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 				type: "string"
 			}
 		};
-		return (e, t) => (R(), D("div", Ji, [o.value ? (R(), D("div", Yi, "Loading settings...")) : c.value ? (R(), D("div", Xi, W(c.value), 1)) : (R(), D(y, { key: 2 }, [(R(!0), D(y, null, V(d.value, (e) => (R(), D("div", {
+		return (e, t) => (R(), D("div", Ji, [o.value ? (R(), D("div", Yi, "Loading settings...")) : c.value ? (R(), D("div", Xi, U(c.value), 1)) : (R(), D(y, { key: 2 }, [(R(!0), D(y, null, V(d.value, (e) => (R(), D("div", {
 			key: e,
 			class: "settings-group"
-		}, [O("h3", Zi, W(h[e]), 1), (R(), D(y, null, V(g, (t, n) => Z(O("div", {
+		}, [O("h3", Zi, U(h[e]), 1), (R(), D(y, null, V(g, (t, n) => X(O("div", {
 			key: n,
 			class: "setting-row"
 		}, [O("label", {
 			for: n,
 			class: "setting-label"
-		}, W(t.label), 9, Qi), O("div", $i, [t.type === "bool" ? (R(), D("input", {
+		}, U(t.label), 9, Qi), O("div", $i, [t.type === "bool" ? (R(), D("input", {
 			key: 0,
 			id: n,
 			type: "checkbox",
@@ -3646,11 +3647,11 @@ var Kr = { class: "shortcuts__head" }, qr = { class: "shortcuts__grid" }, Jr = {
 			class: "input",
 			value: a.value[n] ?? "",
 			onChange: (e) => m(n, e.target.value)
-		}, null, 40, na))])]), [[re, n.startsWith(e)]])), 64))]))), 128)), O("div", ra, [l.value ? (R(), D("div", ia, W(l.value), 1)) : E("", !0), O("button", {
+		}, null, 40, na))])]), [[ie, n.startsWith(e)]])), 64))]))), 128)), O("div", ra, [l.value ? (R(), D("div", ia, U(l.value), 1)) : E("", !0), O("button", {
 			class: "save-btn",
 			disabled: s.value,
 			onClick: p
-		}, W(s.value ? "Saving..." : "Save settings"), 9, aa)])], 64))]));
+		}, U(s.value ? "Saving..." : "Save settings"), 9, aa)])], 64))]));
 	}
 }), [["__scopeId", "data-v-51b588b6"]]), sa = { class: "settings-page" }, ca = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "SettingsPage",
@@ -3720,7 +3721,7 @@ function da(e) {
 		...e
 	};
 	st(t.defaultTheme);
-	let n = oe();
+	let n = se();
 	t.defaultTheme && !Re() && (Be(n).theme = t.defaultTheme);
 	let r = le({
 		history: ue(t.routerBase || "/app"),
@@ -3816,8 +3817,8 @@ var fa = {
 	emits: ["update:modelValue", "close"],
 	setup(e, { emit: t }) {
 		let n = e, r = t, i = B(n.modelValue);
-		J(() => n.modelValue, (e) => i.value = e);
-		let a = B(null), o = q();
+		q(() => n.modelValue, (e) => i.value = e);
+		let a = B(null), o = G();
 		function s() {
 			r("update:modelValue", !1), r("close");
 		}
@@ -3825,24 +3826,24 @@ var fa = {
 			n.dismissible && s();
 		}
 		return l(a, i, { onEscape: () => n.dismissible ? (s(), !0) : !1 }), (t, n) => (R(), T(b, { to: "body" }, [A(x, { name: `phlix-sheet-${e.side}` }, {
-			default: X(() => [e.modelValue ? (R(), D("div", {
+			default: Y(() => [e.modelValue ? (R(), D("div", {
 				key: 0,
 				class: P(["phlix-sheet", `phlix-sheet--${e.side}`]),
-				onPointerdown: ae(c, ["self"])
+				onPointerdown: oe(c, ["self"])
 			}, [O("aside", {
 				ref_key: "panelEl",
 				ref: a,
 				class: "phlix-sheet__panel",
 				role: "dialog",
 				"aria-modal": "true",
-				"aria-labelledby": e.title ? K(o) : void 0,
+				"aria-labelledby": e.title ? W(o) : void 0,
 				tabindex: "-1"
 			}, [
 				e.title || !e.hideClose ? (R(), D("header", ha, [e.title ? (R(), D("h2", {
 					key: 0,
-					id: K(o),
+					id: W(o),
 					class: "phlix-sheet__title"
-				}, W(e.title), 9, ga)) : E("", !0), e.hideClose ? E("", !0) : (R(), T(u, {
+				}, U(e.title), 9, ga)) : E("", !0), e.hideClose ? E("", !0) : (R(), T(u, {
 					key: 1,
 					name: "x",
 					label: "Close",
@@ -3867,7 +3868,7 @@ var fa = {
 		}
 	},
 	setup(e) {
-		let t = e, n = q(), r = B(!1), i = B(null), a;
+		let t = e, n = G(), r = B(!1), i = B(null), a;
 		function o() {
 			return i.value?.firstElementChild ?? null;
 		}
@@ -3887,14 +3888,14 @@ var fa = {
 			onMouseleave: c,
 			onFocusin: s,
 			onFocusout: c,
-			onKeydown: ie(c, ["esc"])
+			onKeydown: ae(c, ["esc"])
 		}, [H(t.$slots, "default", {}, void 0, !0), A(x, { name: "phlix-tooltip" }, {
-			default: X(() => [r.value && (e.text || t.$slots.content) ? (R(), D("span", {
+			default: Y(() => [r.value && (e.text || t.$slots.content) ? (R(), D("span", {
 				key: 0,
-				id: K(n),
+				id: W(n),
 				role: "tooltip",
 				class: P(["phlix-tooltip", `phlix-tooltip--${e.placement}`])
-			}, [H(t.$slots, "content", {}, () => [k(W(e.text), 1)], !0)], 10, ba)) : E("", !0)]),
+			}, [H(t.$slots, "content", {}, () => [k(U(e.text), 1)], !0)], 10, ba)) : E("", !0)]),
 			_: 3
 		})], 544));
 	}
@@ -3921,7 +3922,7 @@ var fa = {
 			role: "region",
 			"aria-label": "Notifications"
 		}, [A(S, { name: "phlix-toast" }, {
-			default: X(() => [(R(!0), D(y, null, V(K(r).toasts, (e) => (R(), D("div", {
+			default: Y(() => [(R(!0), D(y, null, V(W(r).toasts, (e) => (R(), D("div", {
 				key: e.id,
 				class: P(["phlix-toast", `phlix-toast--${e.tone}`]),
 				role: e.tone === "error" ? "alert" : "status"
@@ -3930,21 +3931,21 @@ var fa = {
 					name: a(e),
 					class: "phlix-toast__icon"
 				}, null, 8, ["name"]),
-				O("div", Ca, [e.title ? (R(), D("p", wa, W(e.title), 1)) : E("", !0), O("p", Ta, W(e.message), 1)]),
+				O("div", Ca, [e.title ? (R(), D("p", wa, U(e.title), 1)) : E("", !0), O("p", Ta, U(e.message), 1)]),
 				e.action ? (R(), D("button", {
 					key: 0,
 					type: "button",
 					class: "phlix-toast__action",
 					onClick: (t) => {
-						e.action.onClick(), K(r).dismiss(e.id);
+						e.action.onClick(), W(r).dismiss(e.id);
 					}
-				}, W(e.action.label), 9, Ea)) : E("", !0),
+				}, U(e.action.label), 9, Ea)) : E("", !0),
 				A(u, {
 					name: "x",
 					label: "Dismiss",
 					size: "sm",
 					class: "phlix-toast__close",
-					onClick: (t) => K(r).dismiss(e.id)
+					onClick: (t) => W(r).dismiss(e.id)
 				}, null, 8, ["onClick"])
 			], 10, Sa))), 128))]),
 			_: 1
@@ -3984,7 +3985,7 @@ var fa = {
 	},
 	emits: ["update:modelValue"],
 	setup(e, { emit: n }) {
-		let r = e, i = n, a = q(), o = B(null), s = C(() => r.tabs.findIndex((e) => e.value === r.modelValue)), c = (e) => `${a}-tab-${e}`, l = (e) => `${a}-panel-${e}`, u = C(() => r.tabs.map((e) => ({
+		let r = e, i = n, a = G(), o = B(null), s = C(() => r.tabs.findIndex((e) => e.value === r.modelValue)), c = (e) => `${a}-tab-${e}`, l = (e) => `${a}-panel-${e}`, u = C(() => r.tabs.map((e) => ({
 			value: e.value,
 			label: e.label,
 			disabled: e.disabled
@@ -4001,17 +4002,17 @@ var fa = {
 			switch (e.key) {
 				case "ArrowRight":
 				case "ArrowDown":
-					t = g(u.value, s.value, 1);
+					t = h(u.value, s.value, 1);
 					break;
 				case "ArrowLeft":
 				case "ArrowUp":
-					t = g(u.value, s.value, -1);
+					t = h(u.value, s.value, -1);
 					break;
 				case "Home":
-					t = g(u.value, -1, 1);
+					t = h(u.value, -1, 1);
 					break;
 				case "End":
-					t = g(u.value, 0, -1);
+					t = h(u.value, 0, -1);
 					break;
 				default: return;
 			}
@@ -4039,7 +4040,7 @@ var fa = {
 			key: 0,
 			name: n.icon,
 			class: "phlix-tabs__icon"
-		}, null, 8, ["name"])) : E("", !0), k(" " + W(n.label), 1)], 10, Na))), 128))], 40, Ma), e.modelValue ? (R(), D("div", {
+		}, null, 8, ["name"])) : E("", !0), k(" " + U(n.label), 1)], 10, Na))), 128))], 40, Ma), e.modelValue ? (R(), D("div", {
 			key: 0,
 			id: l(e.modelValue),
 			class: "phlix-tabs__panel",
@@ -4071,7 +4072,7 @@ var fa = {
 			}, { threshold: .1 }), n.value && a.observe(n.value)) : requestAnimationFrame(() => requestAnimationFrame(() => r.value = !0));
 		}), I(() => {
 			a?.disconnect(), a = null;
-		}), (t, a) => (R(), T(U(e.tag), {
+		}), (t, a) => (R(), T(te(e.tag), {
 			ref_key: "el",
 			ref: n,
 			class: P(["phlix-reveal", {
@@ -4084,7 +4085,7 @@ var fa = {
 			}),
 			onTransitionend: a[0] ||= (e) => i.value = !0
 		}, {
-			default: X(() => [H(t.$slots, "default", {}, void 0, !0)]),
+			default: Y(() => [H(t.$slots, "default", {}, void 0, !0)]),
 			_: 3
 		}, 40, ["class", "style"]));
 	}
@@ -4096,7 +4097,7 @@ var fa = {
 			name: `phlix-page-${e.mode}`,
 			mode: "out-in"
 		}, {
-			default: X(() => [H(t.$slots, "default", {}, void 0, !0)]),
+			default: Y(() => [H(t.$slots, "default", {}, void 0, !0)]),
 			_: 3
 		}, 8, ["name"]));
 	}
@@ -4151,7 +4152,7 @@ var fa = {
 		], a = t, s = M("apiBase", ""), l = C(() => typeof s == "string" ? s : s?.value ?? ""), u = new za(a.client ?? new e({
 			baseUrl: l.value,
 			tokenStore: new c()
-		})), d = n(), f = B([]), p = B(""), m = B(200), h = B([]), g = B(!1), y = B(!1), b = B(null), x = null, S = C(() => f.value.length === 0 ? [{
+		})), d = n(), f = B([]), p = B(""), m = B(200), h = B([]), _ = B(!1), y = B(!1), b = B(null), x = null, S = C(() => f.value.length === 0 ? [{
 			value: "",
 			label: "(no log files)"
 		}] : [{
@@ -4178,7 +4179,7 @@ var fa = {
 				y.value = !0;
 				try {
 					let t = e === "__all__" ? await u.tailAll(m.value) : await u.tail(e, m.value);
-					h.value = t.lines, g.value = t.truncated, N(() => {
+					h.value = t.lines, _.value = t.truncated, N(() => {
 						b.value && (b.value.scrollTop = b.value.scrollHeight);
 					});
 				} catch (e) {
@@ -4195,7 +4196,7 @@ var fa = {
 			P(), z.value && p.value !== "" && (x = setInterval(() => void j(), Ka));
 		}
 		let z = B(!1);
-		return J([p, m], () => void j()), J([
+		return q([p, m], () => void j()), q([
 			z,
 			p,
 			m
@@ -4205,13 +4206,13 @@ var fa = {
 				class: "admin-logs__title"
 			}, "Logs")], -1),
 			O("div", Va, [
-				O("label", Ha, [t[3] ||= O("span", { class: "admin-logs__label" }, "File", -1), A(_, {
+				O("label", Ha, [t[3] ||= O("span", { class: "admin-logs__label" }, "File", -1), A(g, {
 					modelValue: p.value,
 					"onUpdate:modelValue": t[0] ||= (e) => p.value = e,
 					options: S.value,
 					label: "Log file"
 				}, null, 8, ["modelValue", "options"])]),
-				O("label", Ua, [t[4] ||= O("span", { class: "admin-logs__label" }, "Lines", -1), A(_, {
+				O("label", Ua, [t[4] ||= O("span", { class: "admin-logs__label" }, "Lines", -1), A(g, {
 					"model-value": m.value,
 					options: w.value,
 					label: "Line count",
@@ -4224,7 +4225,7 @@ var fa = {
 					disabled: p.value === "",
 					onClick: j
 				}, {
-					default: X(() => [...t[5] ||= [k(" Refresh ", -1)]]),
+					default: Y(() => [...t[5] ||= [k(" Refresh ", -1)]]),
 					_: 1
 				}, 8, ["loading", "disabled"]),
 				A(v, {
@@ -4234,7 +4235,7 @@ var fa = {
 					class: "admin-logs__toggle"
 				}, null, 8, ["modelValue"])
 			]),
-			g.value ? (R(), D("p", Wa, " Showing the most recent " + W(m.value) + " lines (" + W(p.value === K("__all__") ? "more lines available across files" : "file is larger") + "). ", 1)) : E("", !0),
+			_.value ? (R(), D("p", Wa, " Showing the most recent " + U(m.value) + " lines (" + U(p.value === W("__all__") ? "more lines available across files" : "file is larger") + "). ", 1)) : E("", !0),
 			y.value && h.value.length === 0 ? (R(), D("div", Ga, [A(o, {
 				variant: "text",
 				lines: 8
@@ -4245,7 +4246,7 @@ var fa = {
 				class: "admin-logs__output",
 				"data-testid": "logs-output",
 				"aria-live": "polite"
-			}, W(h.value.length === 0 ? "(no output)" : h.value.join("\n")), 513))
+			}, U(h.value.length === 0 ? "(no output)" : h.value.join("\n")), 513))
 		]));
 	}
 }), Ja = /* @__PURE__ */ me({ default: () => Ya }), Ya = /*#__PURE__*/ r(qa, [["__scopeId", "data-v-a9b0d206"]]);
@@ -4400,7 +4401,7 @@ var no = class {
 			let t = Math.floor(e / 3600), n = Math.floor(e % 3600 / 60);
 			return t > 0 ? `${t}h ${n}m` : `${n}m`;
 		}
-		function m(e) {
+		function p(e) {
 			if (e === 0) return "0 B";
 			let t = [
 				"B",
@@ -4411,7 +4412,7 @@ var no = class {
 			], n = Math.min(Math.floor(Math.log(e) / Math.log(1024)), t.length - 1);
 			return `${(e / 1024 ** n).toFixed(1)} ${t[n]}`;
 		}
-		function h(e) {
+		function m(e) {
 			let t = new Date(e).getTime();
 			if (!Number.isFinite(t)) return "";
 			let n = Math.floor((Date.now() - t) / 1e3);
@@ -4421,7 +4422,7 @@ var no = class {
 			let i = Math.floor(r / 60);
 			return i < 24 ? `${i}h ago` : `${Math.floor(i / 24)}d ago`;
 		}
-		function g(e) {
+		function h(e) {
 			switch ((e ?? "").toLowerCase()) {
 				case "movie": return "accent";
 				case "series": return "success";
@@ -4450,8 +4451,8 @@ var no = class {
 				value: 90,
 				label: "Last 90 days"
 			}
-		], x = B(30), S = B([]), w = B([]), j = B([]), N = B([]), P = B([]), z = B(!0), H = B(!0), ee = B(!0), U = B(!0), G = B(!0), K = B(!1), q = B(!0), te = C(() => N.value.reduce((e, t) => e + t.transcode_cache_bytes, 0));
-		async function ne() {
+		], x = B(30), S = B([]), w = B([]), j = B([]), N = B([]), P = B([]), z = B(!0), H = B(!0), ee = B(!0), te = B(!0), ne = B(!0), W = B(!1), G = B(!0), re = C(() => N.value.reduce((e, t) => e + t.transcode_cache_bytes, 0));
+		async function K() {
 			try {
 				S.value = await l.getNowPlaying();
 			} catch {
@@ -4460,7 +4461,7 @@ var no = class {
 				z.value = !1;
 			}
 		}
-		async function re(e) {
+		async function ie(e) {
 			H.value = !0;
 			try {
 				w.value = await l.getTopUsers(10, e);
@@ -4470,7 +4471,7 @@ var no = class {
 				H.value = !1;
 			}
 		}
-		async function Y(e) {
+		async function J(e) {
 			ee.value = !0;
 			try {
 				j.value = await l.getTopMedia(10, e);
@@ -4480,44 +4481,44 @@ var no = class {
 				ee.value = !1;
 			}
 		}
-		async function Z() {
+		async function X() {
 			try {
 				N.value = await l.getStorage();
 			} catch {
 				u.error("Failed to load storage.");
 			} finally {
-				U.value = !1;
+				te.value = !1;
 			}
 		}
-		async function ie(e, t = !1) {
-			t ? K.value = !0 : G.value = !0;
+		async function ae(e, t = !1) {
+			t ? W.value = !0 : ne.value = !0;
 			try {
 				let n = await l.getActivity(e);
-				t ? P.value = [...P.value, ...n] : P.value = n, q.value = n.length === Vo;
+				t ? P.value = [...P.value, ...n] : P.value = n, G.value = n.length === Vo;
 			} catch {
 				u.error("Failed to load activity.");
 			} finally {
-				G.value = !1, K.value = !1;
+				ne.value = !1, W.value = !1;
 			}
 		}
-		function ae() {
-			ie(P.value.length + Vo, !0);
+		function oe() {
+			ae(P.value.length + Vo, !0);
 		}
-		let oe = null;
-		return J(x, (e) => {
-			re(e), Y(e);
+		let se = null;
+		return q(x, (e) => {
+			ie(e), J(e);
 		}), L(() => {
-			ne(), Z(), ie(Vo), re(x.value), Y(x.value), oe = setInterval(() => {
+			K(), X(), ae(Vo), ie(x.value), J(x.value), se = setInterval(() => {
 				l.getNowPlaying().then((e) => {
 					S.value = e;
 				}).catch(() => {});
 			}, Ho);
 		}), I(() => {
-			oe !== null && (clearInterval(oe), oe = null);
+			se !== null && (clearInterval(se), se = null);
 		}), (e, t) => (R(), D("section", ro, [O("header", io, [t[1] ||= O("h1", {
 			id: "dash-heading",
 			class: "admin-dash__title"
-		}, "Dashboard", -1), A(_, {
+		}, "Dashboard", -1), A(g, {
 			"model-value": x.value,
 			options: b,
 			label: "Date range",
@@ -4527,12 +4528,12 @@ var no = class {
 			O("section", oo, [O("header", so, [t[2] ||= O("h2", {
 				id: "np-heading",
 				class: "admin-dash__card-title"
-			}, "Now Playing", -1), S.value.length > 0 ? (R(), T(p, {
+			}, "Now Playing", -1), S.value.length > 0 ? (R(), T(_, {
 				key: 0,
 				tone: "accent",
 				label: `${S.value.length} active sessions`
 			}, {
-				default: X(() => [k(W(S.value.length), 1)]),
+				default: Y(() => [k(U(S.value.length), 1)]),
 				_: 1
 			}, 8, ["label"])) : E("", !0)]), z.value ? (R(), D("div", co, [A(o, {
 				variant: "text",
@@ -4545,13 +4546,13 @@ var no = class {
 				key: e.session_id,
 				class: "admin-dash__np-item"
 			}, [O("div", uo, [
-				O("span", fo, W(e.user_name), 1),
+				O("span", fo, U(e.user_name), 1),
 				O("span", {
 					class: "admin-dash__np-mtitle",
 					title: e.media_title
-				}, W(e.media_title), 9, po),
-				A(p, { tone: g(e.media_type) }, {
-					default: X(() => [k(W(e.media_type), 1)]),
+				}, U(e.media_title), 9, po),
+				A(_, { tone: h(e.media_type) }, {
+					default: Y(() => [k(U(e.media_type), 1)]),
 					_: 2
 				}, 1032, ["tone"])
 			]), O("div", mo, [O("div", {
@@ -4563,7 +4564,7 @@ var no = class {
 			}, [O("div", {
 				class: "admin-dash__bar-fill",
 				style: F({ width: `${e.progress_percent}%` })
-			}, null, 4)], 8, ho), O("span", go, W(e.progress_percent) + "%", 1)])]))), 128))]))]),
+			}, null, 4)], 8, ho), O("span", go, U(e.progress_percent) + "%", 1)])]))), 128))]))]),
 			O("section", _o, [t[4] ||= O("header", { class: "admin-dash__card-head" }, [O("h2", {
 				id: "tu-heading",
 				class: "admin-dash__card-title"
@@ -4583,10 +4584,10 @@ var no = class {
 				O("th", { scope: "col" }, "Watch Time"),
 				O("th", { scope: "col" }, "Plays")
 			])], -1), O("tbody", null, [(R(!0), D(y, null, V(w.value, (e, t) => (R(), D("tr", { key: e.user_id }, [
-				O("td", bo, W(t + 1), 1),
-				O("td", null, W(e.user_name), 1),
-				O("td", null, W(d(e.total_watch_time_seconds)), 1),
-				O("td", null, W(e.play_count), 1)
+				O("td", bo, U(t + 1), 1),
+				O("td", null, U(e.user_name), 1),
+				O("td", null, U(d(e.total_watch_time_seconds)), 1),
+				O("td", null, U(e.play_count), 1)
 			]))), 128))])]))]),
 			O("section", xo, [t[5] ||= O("header", { class: "admin-dash__card-head" }, [O("h2", {
 				id: "tm-heading",
@@ -4602,20 +4603,20 @@ var no = class {
 				key: e.media_item_id,
 				class: "admin-dash__media-item"
 			}, [
-				O("span", wo, W(t + 1), 1),
+				O("span", wo, U(t + 1), 1),
 				O("div", To, [O("span", {
 					class: "admin-dash__media-title",
 					title: e.media_title
-				}, W(e.media_title), 9, Eo), A(p, { tone: g(e.media_type) }, {
-					default: X(() => [k(W(e.media_type), 1)]),
+				}, U(e.media_title), 9, Eo), A(_, { tone: h(e.media_type) }, {
+					default: Y(() => [k(U(e.media_type), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
-				O("div", Do, [O("span", null, W(e.play_count) + " plays", 1), O("span", null, W(d(e.total_duration_seconds)), 1)])
+				O("div", Do, [O("span", null, U(e.play_count) + " plays", 1), O("span", null, U(d(e.total_duration_seconds)), 1)])
 			]))), 128))]))]),
 			O("section", Oo, [t[6] ||= O("header", { class: "admin-dash__card-head" }, [O("h2", {
 				id: "st-heading",
 				class: "admin-dash__card-title"
-			}, "Storage")], -1), U.value ? (R(), D("div", ko, [A(o, {
+			}, "Storage")], -1), te.value ? (R(), D("div", ko, [A(o, {
 				variant: "text",
 				lines: 3
 			})])) : N.value.length === 0 ? (R(), T(f, {
@@ -4626,17 +4627,17 @@ var no = class {
 				key: e.media_type,
 				class: "admin-dash__storage-card"
 			}, [
-				A(p, { tone: g(e.media_type) }, {
-					default: X(() => [k(W(e.media_type), 1)]),
+				A(_, { tone: h(e.media_type) }, {
+					default: Y(() => [k(U(e.media_type), 1)]),
 					_: 2
 				}, 1032, ["tone"]),
-				O("div", jo, W(e.item_count.toLocaleString()) + " items", 1),
-				O("div", Mo, W(m(e.total_bytes)), 1)
-			]))), 128))]), te.value > 0 ? (R(), D("p", No, " Transcode cache: " + W(m(te.value)), 1)) : E("", !0)], 64))]),
+				O("div", jo, U(e.item_count.toLocaleString()) + " items", 1),
+				O("div", Mo, U(p(e.total_bytes)), 1)
+			]))), 128))]), re.value > 0 ? (R(), D("p", No, " Transcode cache: " + U(p(re.value)), 1)) : E("", !0)], 64))]),
 			O("section", Po, [t[8] ||= O("header", { class: "admin-dash__card-head" }, [O("h2", {
 				id: "act-heading",
 				class: "admin-dash__card-title"
-			}, "Recent Activity")], -1), G.value ? (R(), D("div", Fo, [A(o, {
+			}, "Recent Activity")], -1), ne.value ? (R(), D("div", Fo, [A(o, {
 				variant: "text",
 				lines: 5
 			})])) : P.value.length === 0 ? (R(), T(f, {
@@ -4647,28 +4648,28 @@ var no = class {
 				key: e.id,
 				class: "admin-dash__activity-item"
 			}, [
-				A(p, { tone: v(e.event_type) }, {
-					default: X(() => [k(W(e.event_type), 1)]),
+				A(_, { tone: v(e.event_type) }, {
+					default: Y(() => [k(U(e.event_type), 1)]),
 					_: 2
 				}, 1032, ["tone"]),
-				O("span", Ro, W(e.user_name), 1),
+				O("span", Ro, U(e.user_name), 1),
 				O("span", {
 					class: "admin-dash__activity-title",
 					title: e.media_title
-				}, W(e.media_title), 9, zo),
+				}, U(e.media_title), 9, zo),
 				O("time", {
 					class: "admin-dash__activity-time",
 					datetime: e.created_at,
 					title: e.created_at
-				}, W(h(e.created_at)), 9, Bo)
-			]))), 128))]), q.value ? (R(), T(i, {
+				}, U(m(e.created_at)), 9, Bo)
+			]))), 128))]), G.value ? (R(), T(i, {
 				key: 0,
 				variant: "outline",
 				size: "sm",
-				loading: K.value,
-				onClick: ae
+				loading: W.value,
+				onClick: oe
 			}, {
-				default: X(() => [...t[7] ||= [k(" Load more ", -1)]]),
+				default: Y(() => [...t[7] ||= [k(" Load more ", -1)]]),
 				_: 1
 			}, 8, ["loading"])) : E("", !0)]))])
 		])]));
@@ -4769,19 +4770,19 @@ var no = class {
 			baseUrl: s.value,
 			tokenStore: new c()
 		})), u = n();
-		function m(e, t) {
+		function p(e, t) {
 			return e instanceof Error && e.message ? e.message : t;
 		}
-		let h = C(() => qo.map((e) => ({
+		let m = C(() => qo.map((e) => ({
 			value: e.value,
 			label: e.label
-		}))), g = B([]), b = B(!0);
+		}))), h = B([]), b = B(!0);
 		async function x() {
 			b.value = !0;
 			try {
-				g.value = await l.list();
+				h.value = await l.list();
 			} catch (e) {
-				u.error(m(e, "Failed to load users."));
+				u.error(p(e, "Failed to load users."));
 			} finally {
 				b.value = !1;
 			}
@@ -4793,10 +4794,10 @@ var no = class {
 		function ee(e) {
 			w.value = e, j.value = e.username, N.value = e.email, P.value = "", F.value = e.is_admin === 1, S.value = !0;
 		}
-		function U() {
+		function te() {
 			S.value = !1, w.value = null;
 		}
-		async function G() {
+		async function ne() {
 			if (!j.value.trim() || !N.value.trim()) {
 				u.error("Username and email are required.");
 				return;
@@ -4829,70 +4830,70 @@ var no = class {
 					};
 					await l.create(e), u.success("User created.");
 				}
-				U(), await x();
+				te(), await x();
 			} catch (e) {
-				u.error(m(e, "Failed to save user."));
+				u.error(p(e, "Failed to save user."));
 			} finally {
 				I.value = !1;
 			}
 		}
-		let K = B(null);
-		async function q() {
-			let e = K.value;
+		let W = B(null);
+		async function G() {
+			let e = W.value;
 			if (e) try {
-				await l.remove(e.id), u.success("User deleted."), K.value = null, await x();
+				await l.remove(e.id), u.success("User deleted."), W.value = null, await x();
 			} catch (e) {
-				u.error(m(e, "Failed to delete user.")), K.value = null;
+				u.error(p(e, "Failed to delete user.")), W.value = null;
 			}
 		}
-		async function te(e, t) {
+		async function re(e, t) {
 			try {
 				await l.setAdmin(e.id, t), u.success(t ? "User promoted to admin." : "Admin status removed."), await x();
 			} catch (e) {
-				u.error(m(e, "Failed to update admin status."));
+				u.error(p(e, "Failed to update admin status."));
 			}
 		}
-		let re = B(null), J = B(null);
-		async function Y(e) {
-			re.value = e, J.value = null;
+		let ie = B(null), q = B(null);
+		async function J(e) {
+			ie.value = e, q.value = null;
 			try {
-				J.value = await l.resetPassword(e.id);
+				q.value = await l.resetPassword(e.id);
 			} catch (e) {
-				u.error(m(e, "Failed to reset password.")), re.value = null;
+				u.error(p(e, "Failed to reset password.")), ie.value = null;
 			}
 		}
-		function ie() {
-			re.value = null, J.value = null;
+		function ae() {
+			ie.value = null, q.value = null;
 		}
-		async function oe() {
-			let e = J.value;
+		async function se() {
+			let e = q.value;
 			if (e) try {
 				await navigator.clipboard.writeText(e.new_password), u.success("Password copied to clipboard.");
 			} catch {
 				u.error("Could not copy to clipboard.");
 			}
 		}
-		let Q = B(null), se = B([]), ce = B(!1), le = C(() => Q.value ? `Profiles — ${Q.value.username}` : "Profiles"), ue = C({
-			get: () => Q.value !== null,
+		let Z = B(null), ce = B([]), Q = B(!1), le = C(() => Z.value ? `Profiles — ${Z.value.username}` : "Profiles"), ue = C({
+			get: () => Z.value !== null,
 			set: (e) => {
 				e || me();
 			}
-		}), de = C(() => se.value.length >= Es);
+		}), de = C(() => ce.value.length >= Es);
 		async function fe(e) {
-			ce.value = !0;
+			Q.value = !0;
 			try {
-				se.value = await l.listProfiles(e);
+				ce.value = await l.listProfiles(e);
 			} catch (e) {
-				u.error(m(e, "Failed to load profiles."));
+				u.error(p(e, "Failed to load profiles."));
 			} finally {
-				ce.value = !1;
+				Q.value = !1;
 			}
 		}
 		async function pe(e) {
-			Q.value = e, await fe(e.id);
+			Z.value = e, await fe(e.id);
 		}
 		function me() {
-			Q.value = null, se.value = [], Se(), we.value = null, Ae();
+			Z.value = null, ce.value = [], Se(), we.value = null, Ae();
 		}
 		let he = B(!1), ge = B(null), _e = B(""), ve = B(0), ye = B(!1);
 		function be() {
@@ -4905,7 +4906,7 @@ var no = class {
 			he.value = !1, ge.value = null, _e.value = "", ve.value = 0;
 		}
 		async function Ce() {
-			let e = Q.value;
+			let e = Z.value;
 			if (e) {
 				if (!_e.value.trim()) {
 					u.error("Profile name is required.");
@@ -4932,7 +4933,7 @@ var no = class {
 					}
 					Se(), await fe(e.id);
 				} catch (e) {
-					u.error(m(e, "Failed to save profile."));
+					u.error(p(e, "Failed to save profile."));
 				} finally {
 					ye.value = !1;
 				}
@@ -4940,11 +4941,11 @@ var no = class {
 		}
 		let we = B(null);
 		async function Te() {
-			let e = Q.value, t = we.value;
+			let e = Z.value, t = we.value;
 			if (!(!e || !t)) try {
 				await l.removeProfile(t.id), u.success("Profile deleted."), we.value = null, await fe(e.id);
 			} catch (e) {
-				u.error(m(e, "Failed to delete profile.")), we.value = null;
+				u.error(p(e, "Failed to delete profile.")), we.value = null;
 			}
 		}
 		let Ee = B(null), De = B(""), Oe = B(!1);
@@ -4955,7 +4956,7 @@ var no = class {
 			Ee.value = null, De.value = "";
 		}
 		async function je() {
-			let e = Q.value, t = Ee.value;
+			let e = Z.value, t = Ee.value;
 			if (!(!e || !t)) {
 				if (!/^\d{4}$/.test(De.value) && !/^\d{6}$/.test(De.value)) {
 					u.error("PIN must be 4 or 6 digits.");
@@ -4965,18 +4966,18 @@ var no = class {
 				try {
 					await l.setPin(t.id, De.value), u.success("PIN set."), Ae(), await fe(e.id);
 				} catch (e) {
-					u.error(m(e, "Failed to set PIN."));
+					u.error(p(e, "Failed to set PIN."));
 				} finally {
 					Oe.value = !1;
 				}
 			}
 		}
 		async function Me(e) {
-			let t = Q.value;
+			let t = Z.value;
 			if (t) try {
 				await l.clearPin(e.id), u.success("PIN cleared."), await fe(t.id);
 			} catch (e) {
-				u.error(m(e, "Failed to clear PIN."));
+				u.error(p(e, "Failed to clear PIN."));
 			}
 		}
 		function Ne(e) {
@@ -4992,24 +4993,24 @@ var no = class {
 				"left-icon": "plus",
 				onClick: H
 			}, {
-				default: X(() => [...t[12] ||= [k("Add user", -1)]]),
+				default: Y(() => [...t[12] ||= [k("Add user", -1)]]),
 				_: 1
 			})]),
 			b.value ? (R(), D("div", Zo, [A(o, {
 				variant: "text",
 				lines: 6
-			})])) : g.value.length === 0 ? (R(), T(f, {
+			})])) : h.value.length === 0 ? (R(), T(f, {
 				key: 1,
 				icon: "user",
 				title: "No users yet"
 			}, {
-				actions: X(() => [A(i, {
+				actions: Y(() => [A(i, {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "plus",
 					onClick: H
 				}, {
-					default: X(() => [...t[14] ||= [k("Add user", -1)]]),
+					default: Y(() => [...t[14] ||= [k("Add user", -1)]]),
 					_: 1
 				})]),
 				_: 1
@@ -5022,14 +5023,14 @@ var no = class {
 					scope: "col",
 					class: "admin-users__actions-col"
 				}, "Actions")
-			])], -1), O("tbody", null, [(R(!0), D(y, null, V(g.value, (e) => (R(), D("tr", { key: e.id }, [
-				O("td", null, W(e.username), 1),
-				O("td", null, W(e.email), 1),
-				O("td", null, [A(p, { tone: e.is_admin ? "accent" : "neutral" }, {
-					default: X(() => [k(W(e.is_admin ? "Admin" : "User"), 1)]),
+			])], -1), O("tbody", null, [(R(!0), D(y, null, V(h.value, (e) => (R(), D("tr", { key: e.id }, [
+				O("td", null, U(e.username), 1),
+				O("td", null, U(e.email), 1),
+				O("td", null, [A(_, { tone: e.is_admin ? "accent" : "neutral" }, {
+					default: Y(() => [k(U(e.is_admin ? "Admin" : "User"), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
-				O("td", $o, W(e.created_at.slice(0, 10)), 1),
+				O("td", $o, U(e.created_at.slice(0, 10)), 1),
 				O("td", null, [O("div", es, [
 					A(i, {
 						variant: "ghost",
@@ -5037,25 +5038,25 @@ var no = class {
 						"aria-label": `Edit ${e.username}`,
 						onClick: (t) => ee(e)
 					}, {
-						default: X(() => [...t[15] ||= [k(" Edit ", -1)]]),
+						default: Y(() => [...t[15] ||= [k(" Edit ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					A(i, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `${e.is_admin ? "Demote" : "Promote"} ${e.username}`,
-						onClick: (t) => te(e, e.is_admin !== 1)
+						onClick: (t) => re(e, e.is_admin !== 1)
 					}, {
-						default: X(() => [k(W(e.is_admin ? "Demote" : "Set Admin"), 1)]),
+						default: Y(() => [k(U(e.is_admin ? "Demote" : "Set Admin"), 1)]),
 						_: 2
 					}, 1032, ["aria-label", "onClick"]),
 					A(i, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Reset password for ${e.username}`,
-						onClick: (t) => Y(e)
+						onClick: (t) => J(e)
 					}, {
-						default: X(() => [...t[16] ||= [k(" Reset Password ", -1)]]),
+						default: Y(() => [...t[16] ||= [k(" Reset Password ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					A(i, {
@@ -5064,16 +5065,16 @@ var no = class {
 						"aria-label": `Manage profiles for ${e.username}`,
 						onClick: (t) => pe(e)
 					}, {
-						default: X(() => [...t[17] ||= [k(" Profiles ", -1)]]),
+						default: Y(() => [...t[17] ||= [k(" Profiles ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					A(i, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Delete ${e.username}`,
-						onClick: (t) => K.value = e
+						onClick: (t) => W.value = e
 					}, {
-						default: X(() => [...t[18] ||= [k(" Delete ", -1)]]),
+						default: Y(() => [...t[18] ||= [k(" Delete ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"])
 				])])
@@ -5082,50 +5083,50 @@ var no = class {
 				modelValue: S.value,
 				"onUpdate:modelValue": t[4] ||= (e) => S.value = e,
 				title: z.value,
-				onClose: U
+				onClose: te
 			}, {
-				footer: X(() => [A(i, {
+				footer: Y(() => [A(i, {
 					variant: "ghost",
 					size: "sm",
-					onClick: U
+					onClick: te
 				}, {
-					default: X(() => [...t[22] ||= [k("Cancel", -1)]]),
+					default: Y(() => [...t[22] ||= [k("Cancel", -1)]]),
 					_: 1
 				}), A(i, {
 					variant: "solid",
 					size: "sm",
 					loading: I.value,
-					onClick: G
+					onClick: ne
 				}, {
-					default: X(() => [k(W(w.value ? "Save" : "Create"), 1)]),
+					default: Y(() => [k(U(w.value ? "Save" : "Create"), 1)]),
 					_: 1
 				}, 8, ["loading"])]),
-				default: X(() => [O("form", {
+				default: Y(() => [O("form", {
 					class: "admin-users__form",
-					onSubmit: ae(G, ["prevent"])
+					onSubmit: oe(ne, ["prevent"])
 				}, [
-					O("label", ts, [t[20] ||= O("span", { class: "admin-users__label" }, "Username", -1), Z(O("input", {
+					O("label", ts, [t[20] ||= O("span", { class: "admin-users__label" }, "Username", -1), X(O("input", {
 						"onUpdate:modelValue": t[0] ||= (e) => j.value = e,
 						type: "text",
 						class: "admin-users__input",
 						autocomplete: "off",
 						required: ""
-					}, null, 512), [[ne, j.value]])]),
-					O("label", ns, [t[21] ||= O("span", { class: "admin-users__label" }, "Email", -1), Z(O("input", {
+					}, null, 512), [[K, j.value]])]),
+					O("label", ns, [t[21] ||= O("span", { class: "admin-users__label" }, "Email", -1), X(O("input", {
 						"onUpdate:modelValue": t[1] ||= (e) => N.value = e,
 						type: "email",
 						class: "admin-users__input",
 						autocomplete: "off",
 						required: ""
-					}, null, 512), [[ne, N.value]])]),
-					O("label", rs, [O("span", is, W(w.value ? "Password (leave blank to keep current)" : "Password"), 1), Z(O("input", {
+					}, null, 512), [[K, N.value]])]),
+					O("label", rs, [O("span", is, U(w.value ? "Password (leave blank to keep current)" : "Password"), 1), X(O("input", {
 						"onUpdate:modelValue": t[2] ||= (e) => P.value = e,
 						type: "password",
 						class: "admin-users__input",
 						autocomplete: "new-password",
 						placeholder: w.value ? "(unchanged)" : void 0,
 						required: !w.value
-					}, null, 8, as), [[ne, P.value]])]),
+					}, null, 8, as), [[K, P.value]])]),
 					A(v, {
 						modelValue: F.value,
 						"onUpdate:modelValue": t[3] ||= (e) => F.value = e,
@@ -5135,48 +5136,48 @@ var no = class {
 				_: 1
 			}, 8, ["modelValue", "title"]),
 			A(d, {
-				"model-value": K.value !== null,
+				"model-value": W.value !== null,
 				title: "Delete user",
 				size: "sm",
-				"onUpdate:modelValue": t[6] ||= (e) => K.value = null
+				"onUpdate:modelValue": t[6] ||= (e) => W.value = null
 			}, {
-				footer: X(() => [A(i, {
+				footer: Y(() => [A(i, {
 					variant: "ghost",
 					size: "sm",
-					onClick: t[5] ||= (e) => K.value = null
+					onClick: t[5] ||= (e) => W.value = null
 				}, {
-					default: X(() => [...t[25] ||= [k("Cancel", -1)]]),
+					default: Y(() => [...t[25] ||= [k("Cancel", -1)]]),
 					_: 1
 				}), A(i, {
 					variant: "solid",
 					size: "sm",
-					onClick: q
+					onClick: G
 				}, {
-					default: X(() => [...t[26] ||= [k("Delete", -1)]]),
+					default: Y(() => [...t[26] ||= [k("Delete", -1)]]),
 					_: 1
 				})]),
-				default: X(() => [O("p", null, [
+				default: Y(() => [O("p", null, [
 					t[23] ||= k(" Delete user ", -1),
-					O("strong", null, W(K.value?.username), 1),
+					O("strong", null, U(W.value?.username), 1),
 					t[24] ||= k("? This cannot be undone. ", -1)
 				])]),
 				_: 1
 			}, 8, ["model-value"]),
 			A(d, {
-				"model-value": re.value !== null,
-				title: re.value ? `Reset password — ${re.value.username}` : "Reset password",
-				"onUpdate:modelValue": ie
+				"model-value": ie.value !== null,
+				title: ie.value ? `Reset password — ${ie.value.username}` : "Reset password",
+				"onUpdate:modelValue": ae
 			}, {
-				footer: X(() => [A(i, {
+				footer: Y(() => [A(i, {
 					variant: "solid",
 					size: "sm",
-					onClick: ie
+					onClick: ae
 				}, {
-					default: X(() => [...t[31] ||= [k("Close", -1)]]),
+					default: Y(() => [...t[31] ||= [k("Close", -1)]]),
 					_: 1
 				})]),
-				default: X(() => [J.value ? (R(), D("div", os, [O("p", null, W(J.value.message), 1), O("label", ss, [t[28] ||= O("span", { class: "admin-users__label" }, "New password", -1), O("div", cs, [O("input", {
-					value: J.value.new_password,
+				default: Y(() => [q.value ? (R(), D("div", os, [O("p", null, U(q.value.message), 1), O("label", ss, [t[28] ||= O("span", { class: "admin-users__label" }, "New password", -1), O("div", cs, [O("input", {
+					value: q.value.new_password,
 					type: "text",
 					class: "admin-users__input",
 					readonly: "",
@@ -5184,13 +5185,13 @@ var no = class {
 				}, null, 8, ls), A(i, {
 					variant: "outline",
 					size: "sm",
-					onClick: oe
+					onClick: se
 				}, {
-					default: X(() => [...t[27] ||= [k("Copy", -1)]]),
+					default: Y(() => [...t[27] ||= [k("Copy", -1)]]),
 					_: 1
 				})])])])) : (R(), D("p", us, [
 					t[29] ||= k(" Resetting password for ", -1),
-					O("strong", null, W(re.value?.username), 1),
+					O("strong", null, U(ie.value?.username), 1),
 					t[30] ||= k("… ", -1)
 				]))]),
 				_: 1
@@ -5201,7 +5202,7 @@ var no = class {
 				title: le.value,
 				size: "lg"
 			}, {
-				default: X(() => [ce.value ? (R(), D("div", ds, [A(o, {
+				default: Y(() => [Q.value ? (R(), D("div", ds, [A(o, {
 					variant: "text",
 					lines: 4
 				})])) : (R(), D(y, { key: 1 }, [
@@ -5213,10 +5214,10 @@ var no = class {
 						"aria-label": "Add profile",
 						onClick: be
 					}, {
-						default: X(() => [k(" Add profile" + W(de.value ? " (max 5)" : ""), 1)]),
+						default: Y(() => [k(" Add profile" + U(de.value ? " (max 5)" : ""), 1)]),
 						_: 1
 					}, 8, ["disabled"])]),
-					se.value.length === 0 ? (R(), T(f, {
+					ce.value.length === 0 ? (R(), T(f, {
 						key: 0,
 						icon: "user",
 						title: "No profiles yet"
@@ -5228,14 +5229,14 @@ var no = class {
 							scope: "col",
 							class: "admin-users__actions-col"
 						}, "Actions")
-					])], -1), O("tbody", null, [(R(!0), D(y, null, V(se.value, (e) => (R(), D("tr", { key: e.id }, [
-						O("td", null, W(e.name), 1),
-						O("td", null, [A(p, { tone: "info" }, {
-							default: X(() => [k(W(Ne(e.rating)), 1)]),
+					])], -1), O("tbody", null, [(R(!0), D(y, null, V(ce.value, (e) => (R(), D("tr", { key: e.id }, [
+						O("td", null, U(e.name), 1),
+						O("td", null, [A(_, { tone: "info" }, {
+							default: Y(() => [k(U(Ne(e.rating)), 1)]),
 							_: 2
 						}, 1024)]),
-						O("td", null, [A(p, { tone: e.pin_hash === null ? "neutral" : "success" }, {
-							default: X(() => [k(W(e.pin_hash === null ? "No PIN" : "Has PIN"), 1)]),
+						O("td", null, [A(_, { tone: e.pin_hash === null ? "neutral" : "success" }, {
+							default: Y(() => [k(U(e.pin_hash === null ? "No PIN" : "Has PIN"), 1)]),
 							_: 2
 						}, 1032, ["tone"])]),
 						O("td", null, [O("div", ms, [
@@ -5245,7 +5246,7 @@ var no = class {
 								"aria-label": `Edit profile ${e.name}`,
 								onClick: (t) => xe(e)
 							}, {
-								default: X(() => [...t[32] ||= [k(" Edit ", -1)]]),
+								default: Y(() => [...t[32] ||= [k(" Edit ", -1)]]),
 								_: 1
 							}, 8, ["aria-label", "onClick"]),
 							A(i, {
@@ -5254,7 +5255,7 @@ var no = class {
 								"aria-label": `Set PIN for ${e.name}`,
 								onClick: (t) => ke(e)
 							}, {
-								default: X(() => [...t[33] ||= [k(" Set PIN ", -1)]]),
+								default: Y(() => [...t[33] ||= [k(" Set PIN ", -1)]]),
 								_: 1
 							}, 8, ["aria-label", "onClick"]),
 							e.pin_hash === null ? E("", !0) : (R(), T(i, {
@@ -5264,7 +5265,7 @@ var no = class {
 								"aria-label": `Clear PIN for ${e.name}`,
 								onClick: (t) => Me(e)
 							}, {
-								default: X(() => [...t[34] ||= [k(" Clear PIN ", -1)]]),
+								default: Y(() => [...t[34] ||= [k(" Clear PIN ", -1)]]),
 								_: 1
 							}, 8, ["aria-label", "onClick"])),
 							A(i, {
@@ -5273,25 +5274,25 @@ var no = class {
 								"aria-label": `Delete profile ${e.name}`,
 								onClick: (t) => we.value = e
 							}, {
-								default: X(() => [...t[35] ||= [k(" Delete ", -1)]]),
+								default: Y(() => [...t[35] ||= [k(" Delete ", -1)]]),
 								_: 1
 							}, 8, ["aria-label", "onClick"])
 						])])
 					]))), 128))])])),
-					he.value ? (R(), D("div", hs, [O("h3", gs, W(ge.value ? "Edit profile" : "Add profile"), 1), O("form", {
+					he.value ? (R(), D("div", hs, [O("h3", gs, U(ge.value ? "Edit profile" : "Add profile"), 1), O("form", {
 						class: "admin-users__form",
-						onSubmit: ae(Ce, ["prevent"])
+						onSubmit: oe(Ce, ["prevent"])
 					}, [
-						O("label", _s, [t[37] ||= O("span", { class: "admin-users__label" }, "Name", -1), Z(O("input", {
+						O("label", _s, [t[37] ||= O("span", { class: "admin-users__label" }, "Name", -1), X(O("input", {
 							"onUpdate:modelValue": t[7] ||= (e) => _e.value = e,
 							type: "text",
 							class: "admin-users__input",
 							autocomplete: "off",
 							required: ""
-						}, null, 512), [[ne, _e.value]])]),
-						O("label", vs, [t[38] ||= O("span", { class: "admin-users__label" }, "Rating", -1), A(_, {
+						}, null, 512), [[K, _e.value]])]),
+						O("label", vs, [t[38] ||= O("span", { class: "admin-users__label" }, "Rating", -1), A(g, {
 							"model-value": ve.value,
-							options: h.value,
+							options: m.value,
 							label: "Rating",
 							"onUpdate:modelValue": t[8] ||= (e) => ve.value = Number(e)
 						}, null, 8, ["model-value", "options"])]),
@@ -5300,7 +5301,7 @@ var no = class {
 							size: "sm",
 							onClick: Se
 						}, {
-							default: X(() => [...t[39] ||= [k("Cancel", -1)]]),
+							default: Y(() => [...t[39] ||= [k("Cancel", -1)]]),
 							_: 1
 						}), A(i, {
 							variant: "solid",
@@ -5308,33 +5309,33 @@ var no = class {
 							loading: ye.value,
 							onClick: Ce
 						}, {
-							default: X(() => [k(W(ge.value ? "Save" : "Create"), 1)]),
+							default: Y(() => [k(U(ge.value ? "Save" : "Create"), 1)]),
 							_: 1
 						}, 8, ["loading"])])
 					], 32)])) : E("", !0),
 					we.value ? (R(), D("div", bs, [O("p", null, [
 						t[40] ||= k(" Delete profile ", -1),
-						O("strong", null, W(we.value.name), 1),
+						O("strong", null, U(we.value.name), 1),
 						t[41] ||= k("? This cannot be undone. ", -1)
 					]), O("div", xs, [A(i, {
 						variant: "ghost",
 						size: "sm",
 						onClick: t[9] ||= (e) => we.value = null
 					}, {
-						default: X(() => [...t[42] ||= [k("Cancel", -1)]]),
+						default: Y(() => [...t[42] ||= [k("Cancel", -1)]]),
 						_: 1
 					}), A(i, {
 						variant: "solid",
 						size: "sm",
 						onClick: Te
 					}, {
-						default: X(() => [...t[43] ||= [k("Delete", -1)]]),
+						default: Y(() => [...t[43] ||= [k("Delete", -1)]]),
 						_: 1
 					})])])) : E("", !0),
-					Ee.value ? (R(), D("div", Ss, [O("h3", Cs, "Set PIN — " + W(Ee.value.name), 1), O("form", {
+					Ee.value ? (R(), D("div", Ss, [O("h3", Cs, "Set PIN — " + U(Ee.value.name), 1), O("form", {
 						class: "admin-users__form",
-						onSubmit: ae(je, ["prevent"])
-					}, [O("label", ws, [t[44] ||= O("span", { class: "admin-users__label" }, "PIN (4 or 6 digits)", -1), Z(O("input", {
+						onSubmit: oe(je, ["prevent"])
+					}, [O("label", ws, [t[44] ||= O("span", { class: "admin-users__label" }, "PIN (4 or 6 digits)", -1), X(O("input", {
 						"onUpdate:modelValue": t[10] ||= (e) => De.value = e,
 						type: "password",
 						class: "admin-users__input",
@@ -5342,12 +5343,12 @@ var no = class {
 						autocomplete: "off",
 						placeholder: "1234 or 123456",
 						required: ""
-					}, null, 512), [[ne, De.value]])]), O("div", Ts, [A(i, {
+					}, null, 512), [[K, De.value]])]), O("div", Ts, [A(i, {
 						variant: "ghost",
 						size: "sm",
 						onClick: Ae
 					}, {
-						default: X(() => [...t[45] ||= [k("Cancel", -1)]]),
+						default: Y(() => [...t[45] ||= [k("Cancel", -1)]]),
 						_: 1
 					}), A(i, {
 						variant: "solid",
@@ -5355,7 +5356,7 @@ var no = class {
 						loading: Oe.value,
 						onClick: je
 					}, {
-						default: X(() => [...t[46] ||= [k("Set PIN", -1)]]),
+						default: Y(() => [...t[46] ||= [k("Set PIN", -1)]]),
 						_: 1
 					}, 8, ["loading"])])], 32)])) : E("", !0)
 				], 64))]),
@@ -5460,11 +5461,11 @@ var no = class {
 		let a = r, s = M("apiBase", ""), l = C(() => typeof s == "string" ? s : s?.value ?? ""), u = new Ms(a.client ?? new e({
 			baseUrl: l.value,
 			tokenStore: new c()
-		})), m = n();
-		function h(e, t) {
+		})), p = n();
+		function m(e, t) {
 			return e instanceof Error && e.message ? e.message : t;
 		}
-		function g(e) {
+		function h(e) {
 			try {
 				let t = new URL(e);
 				return t.protocol === "http:" || t.protocol === "https:";
@@ -5472,32 +5473,32 @@ var no = class {
 				return !1;
 			}
 		}
-		let _ = B([]), v = B(!0);
+		let g = B([]), v = B(!0);
 		async function b() {
 			v.value = !0;
 			try {
-				_.value = await u.list();
+				g.value = await u.list();
 			} catch (e) {
-				m.error(h(e, "Failed to load webhooks."));
+				p.error(m(e, "Failed to load webhooks."));
 			} finally {
 				v.value = !1;
 			}
 		}
 		let x = B(!1), S = B(null), w = B(""), j = B(""), N = B(""), F = B(/* @__PURE__ */ new Set()), I = B(!1), z = B(!1), H = B(""), ee = C(() => S.value ? "Edit webhook" : "Add webhook");
-		function U() {
+		function te() {
 			S.value = null, w.value = "", j.value = "", N.value = "", F.value = /* @__PURE__ */ new Set(), I.value = !1, H.value = "", x.value = !0;
 		}
-		function G(e) {
+		function ne(e) {
 			S.value = e, w.value = e.name, j.value = e.url, N.value = "", F.value = new Set(e.events), I.value = !1, H.value = "", x.value = !0;
 		}
-		function q() {
+		function G() {
 			x.value = !1, S.value = null;
 		}
-		function re(e) {
+		function ie(e) {
 			let t = new Set(F.value);
 			t.has(e) ? t.delete(e) : t.add(e), F.value = t;
 		}
-		async function J() {
+		async function q() {
 			if (H.value = "", !w.value.trim()) {
 				H.value = "Name is required.";
 				return;
@@ -5506,7 +5507,7 @@ var no = class {
 				H.value = "URL is required.";
 				return;
 			}
-			if (!g(j.value)) {
+			if (!h(j.value)) {
 				H.value = "URL must be a valid http:// or https:// URL.";
 				return;
 			}
@@ -5527,54 +5528,54 @@ var no = class {
 						url: j.value.trim(),
 						events: Array.from(F.value)
 					};
-					N.value.trim() && (t.secret = N.value), await u.update(e.id, t), m.success("Webhook updated.");
+					N.value.trim() && (t.secret = N.value), await u.update(e.id, t), p.success("Webhook updated.");
 				} else await u.create({
 					name: w.value.trim(),
 					url: j.value.trim(),
 					secret: N.value,
 					events: Array.from(F.value)
-				}), m.success("Webhook created.");
-				q(), await b();
+				}), p.success("Webhook created.");
+				G(), await b();
 			} catch (e) {
-				H.value = h(e, "Failed to save webhook.");
+				H.value = m(e, "Failed to save webhook.");
 			} finally {
 				z.value = !1;
 			}
 		}
-		let Y = B(null);
-		async function ie() {
-			let e = Y.value;
+		let J = B(null);
+		async function ae() {
+			let e = J.value;
 			if (e) try {
-				await u.remove(e.id), m.success("Webhook deleted."), Y.value = null, await b();
+				await u.remove(e.id), p.success("Webhook deleted."), J.value = null, await b();
 			} catch (e) {
-				m.error(h(e, "Failed to delete webhook.")), Y.value = null;
+				p.error(m(e, "Failed to delete webhook.")), J.value = null;
 			}
 		}
-		let oe = B(null), Q = B(null), se = B(!1), ce = C(() => oe.value ? `Test — ${oe.value.name}` : "Test webhook"), le = C({
-			get: () => oe.value !== null,
+		let se = B(null), Z = B(null), ce = B(!1), Q = C(() => se.value ? `Test — ${se.value.name}` : "Test webhook"), le = C({
+			get: () => se.value !== null,
 			set: (e) => {
 				e || de();
 			}
 		});
 		async function ue(e) {
-			oe.value = e, Q.value = null, se.value = !0;
+			se.value = e, Z.value = null, ce.value = !0;
 			try {
 				let t = await u.test(e.id), n = t.success_count + t.failure_count, r = t.failure_count === 0 ? `Delivered successfully (${t.success_count}/${t.success_count} webhooks)` : `Delivery failed — ${t.failure_count} of ${n} webhook(s) failed`;
-				Q.value = {
+				Z.value = {
 					success: t.success,
 					message: r
 				};
 			} catch (e) {
-				Q.value = {
+				Z.value = {
 					success: !1,
-					message: h(e, "Failed to test webhook.")
+					message: m(e, "Failed to test webhook.")
 				};
 			} finally {
-				se.value = !1;
+				ce.value = !1;
 			}
 		}
 		function de() {
-			oe.value = null, Q.value = null;
+			se.value = null, Z.value = null;
 		}
 		return L(b), (e, n) => (R(), D("section", Ns, [
 			O("header", Ps, [n[9] ||= O("h1", {
@@ -5584,27 +5585,27 @@ var no = class {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "plus",
-				onClick: U
+				onClick: te
 			}, {
-				default: X(() => [...n[8] ||= [k("Add webhook", -1)]]),
+				default: Y(() => [...n[8] ||= [k("Add webhook", -1)]]),
 				_: 1
 			})]),
 			v.value ? (R(), D("div", Fs, [A(o, {
 				variant: "text",
 				lines: 6
-			})])) : _.value.length === 0 ? (R(), T(f, {
+			})])) : g.value.length === 0 ? (R(), T(f, {
 				key: 1,
 				icon: "settings",
 				title: "No webhooks configured",
 				description: "Add one to get started."
 			}, {
-				actions: X(() => [A(i, {
+				actions: Y(() => [A(i, {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "plus",
-					onClick: U
+					onClick: te
 				}, {
-					default: X(() => [...n[10] ||= [k("Add webhook", -1)]]),
+					default: Y(() => [...n[10] ||= [k("Add webhook", -1)]]),
 					_: 1
 				})]),
 				_: 1
@@ -5616,14 +5617,14 @@ var no = class {
 					scope: "col",
 					class: "admin-webhooks__actions-col"
 				}, "Actions")
-			])], -1), O("tbody", null, [(R(!0), D(y, null, V(_.value, (e) => (R(), D("tr", { key: e.id }, [
-				O("td", null, W(e.name), 1),
-				O("td", Ls, W(e.url), 1),
-				O("td", null, [A(p, {
+			])], -1), O("tbody", null, [(R(!0), D(y, null, V(g.value, (e) => (R(), D("tr", { key: e.id }, [
+				O("td", null, U(e.name), 1),
+				O("td", Ls, U(e.url), 1),
+				O("td", null, [A(_, {
 					tone: "info",
 					mono: ""
 				}, {
-					default: X(() => [k(W(e.events.length), 1)]),
+					default: Y(() => [k(U(e.events.length), 1)]),
 					_: 2
 				}, 1024)]),
 				O("td", null, [O("div", Rs, [
@@ -5631,9 +5632,9 @@ var no = class {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Edit ${e.name}`,
-						onClick: (t) => G(e)
+						onClick: (t) => ne(e)
 					}, {
-						default: X(() => [...n[11] ||= [k(" Edit ", -1)]]),
+						default: Y(() => [...n[11] ||= [k(" Edit ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					A(i, {
@@ -5642,16 +5643,16 @@ var no = class {
 						"aria-label": `Test ${e.name}`,
 						onClick: (t) => ue(e)
 					}, {
-						default: X(() => [...n[12] ||= [k(" Test ", -1)]]),
+						default: Y(() => [...n[12] ||= [k(" Test ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					A(i, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Delete ${e.name}`,
-						onClick: (t) => Y.value = e
+						onClick: (t) => J.value = e
 					}, {
-						default: X(() => [...n[13] ||= [k(" Delete ", -1)]]),
+						default: Y(() => [...n[13] ||= [k(" Delete ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"])
 				])])
@@ -5661,106 +5662,106 @@ var no = class {
 				"onUpdate:modelValue": n[4] ||= (e) => x.value = e,
 				title: ee.value,
 				size: "lg",
-				onClose: q
+				onClose: G
 			}, {
-				footer: X(() => [A(i, {
+				footer: Y(() => [A(i, {
 					variant: "ghost",
 					size: "sm",
-					onClick: q
+					onClick: G
 				}, {
-					default: X(() => [...n[19] ||= [k("Cancel", -1)]]),
+					default: Y(() => [...n[19] ||= [k("Cancel", -1)]]),
 					_: 1
 				}), A(i, {
 					variant: "solid",
 					size: "sm",
 					loading: z.value,
-					onClick: J
+					onClick: q
 				}, {
-					default: X(() => [k(W(S.value ? "Save" : "Create"), 1)]),
+					default: Y(() => [k(U(S.value ? "Save" : "Create"), 1)]),
 					_: 1
 				}, 8, ["loading"])]),
-				default: X(() => [O("form", {
+				default: Y(() => [O("form", {
 					class: "admin-webhooks__form",
-					onSubmit: ae(J, ["prevent"])
+					onSubmit: oe(q, ["prevent"])
 				}, [
-					O("label", zs, [n[15] ||= O("span", { class: "admin-webhooks__label" }, "Name", -1), Z(O("input", {
+					O("label", zs, [n[15] ||= O("span", { class: "admin-webhooks__label" }, "Name", -1), X(O("input", {
 						"onUpdate:modelValue": n[0] ||= (e) => w.value = e,
 						type: "text",
 						class: "admin-webhooks__input",
 						autocomplete: "off",
 						required: ""
-					}, null, 512), [[ne, w.value]])]),
-					O("label", Bs, [n[16] ||= O("span", { class: "admin-webhooks__label" }, "URL", -1), Z(O("input", {
+					}, null, 512), [[K, w.value]])]),
+					O("label", Bs, [n[16] ||= O("span", { class: "admin-webhooks__label" }, "URL", -1), X(O("input", {
 						"onUpdate:modelValue": n[1] ||= (e) => j.value = e,
 						type: "url",
 						class: "admin-webhooks__input",
 						autocomplete: "off",
 						placeholder: "https://example.com/webhook",
 						required: ""
-					}, null, 512), [[ne, j.value]])]),
+					}, null, 512), [[K, j.value]])]),
 					O("div", Vs, [
 						O("span", Hs, [n[17] ||= k(" Secret", -1), S.value ? E("", !0) : (R(), D("span", Us, " *"))]),
 						S.value ? (R(), D("p", Ws, "Leave blank to keep the current secret.")) : E("", !0),
-						O("div", Gs, [Z(O("input", {
+						O("div", Gs, [X(O("input", {
 							"onUpdate:modelValue": n[2] ||= (e) => N.value = e,
 							type: I.value ? "text" : "password",
 							class: "admin-webhooks__input",
 							autocomplete: "new-password",
 							placeholder: S.value ? "(unchanged)" : "Shared secret for HMAC signing"
-						}, null, 8, Ks), [[te, N.value]]), A(i, {
+						}, null, 8, Ks), [[re, N.value]]), A(i, {
 							variant: "outline",
 							size: "sm",
 							"left-icon": I.value ? "eye-off" : "eye",
 							"aria-label": I.value ? "Hide secret" : "Show secret",
 							onClick: n[3] ||= (e) => I.value = !I.value
 						}, {
-							default: X(() => [k(W(I.value ? "Hide" : "Show"), 1)]),
+							default: Y(() => [k(U(I.value ? "Hide" : "Show"), 1)]),
 							_: 1
 						}, 8, ["left-icon", "aria-label"])])
 					]),
-					O("fieldset", qs, [n[18] ||= O("legend", { class: "admin-webhooks__label" }, [k("Events"), O("span", { "aria-hidden": "true" }, " *")], -1), (R(!0), D(y, null, V(K(As), (e) => (R(), D("div", {
+					O("fieldset", qs, [n[18] ||= O("legend", { class: "admin-webhooks__label" }, [k("Events"), O("span", { "aria-hidden": "true" }, " *")], -1), (R(!0), D(y, null, V(W(As), (e) => (R(), D("div", {
 						key: e.label,
 						class: "admin-webhooks__events-category"
-					}, [O("span", Js, W(e.label), 1), (R(!0), D(y, null, V(e.events, (e) => (R(), D("label", {
+					}, [O("span", Js, U(e.label), 1), (R(!0), D(y, null, V(e.events, (e) => (R(), D("label", {
 						key: e.id,
 						class: "admin-webhooks__checkbox"
 					}, [
 						O("input", {
 							type: "checkbox",
 							checked: F.value.has(e.id),
-							onChange: (t) => re(e.id)
+							onChange: (t) => ie(e.id)
 						}, null, 40, Ys),
-						O("span", Xs, W(e.label), 1),
-						O("span", Zs, W(e.id), 1)
+						O("span", Xs, U(e.label), 1),
+						O("span", Zs, U(e.id), 1)
 					]))), 128))]))), 128))]),
-					H.value ? (R(), D("p", Qs, W(H.value), 1)) : E("", !0)
+					H.value ? (R(), D("p", Qs, U(H.value), 1)) : E("", !0)
 				], 32)]),
 				_: 1
 			}, 8, ["modelValue", "title"]),
 			A(d, {
-				"model-value": Y.value !== null,
+				"model-value": J.value !== null,
 				title: "Delete webhook",
 				size: "sm",
-				"onUpdate:modelValue": n[6] ||= (e) => Y.value = null
+				"onUpdate:modelValue": n[6] ||= (e) => J.value = null
 			}, {
-				footer: X(() => [A(i, {
+				footer: Y(() => [A(i, {
 					variant: "ghost",
 					size: "sm",
-					onClick: n[5] ||= (e) => Y.value = null
+					onClick: n[5] ||= (e) => J.value = null
 				}, {
-					default: X(() => [...n[22] ||= [k("Cancel", -1)]]),
+					default: Y(() => [...n[22] ||= [k("Cancel", -1)]]),
 					_: 1
 				}), A(i, {
 					variant: "solid",
 					size: "sm",
-					onClick: ie
+					onClick: ae
 				}, {
-					default: X(() => [...n[23] ||= [k("Delete", -1)]]),
+					default: Y(() => [...n[23] ||= [k("Delete", -1)]]),
 					_: 1
 				})]),
-				default: X(() => [O("p", null, [
+				default: Y(() => [O("p", null, [
 					n[20] ||= k(" Delete webhook ", -1),
-					O("strong", null, W(Y.value?.name), 1),
+					O("strong", null, U(J.value?.name), 1),
 					n[21] ||= k("? This cannot be undone. ", -1)
 				])]),
 				_: 1
@@ -5768,21 +5769,21 @@ var no = class {
 			A(d, {
 				modelValue: le.value,
 				"onUpdate:modelValue": n[7] ||= (e) => le.value = e,
-				title: ce.value
+				title: Q.value
 			}, {
-				footer: X(() => [A(i, {
+				footer: Y(() => [A(i, {
 					variant: "solid",
 					size: "sm",
-					disabled: se.value,
+					disabled: ce.value,
 					onClick: de
 				}, {
-					default: X(() => [...n[24] ||= [k("Close", -1)]]),
+					default: Y(() => [...n[24] ||= [k("Close", -1)]]),
 					_: 1
 				}, 8, ["disabled"])]),
-				default: X(() => [se.value ? (R(), D("p", $s, "Sending test payload…")) : Q.value ? (R(), D("div", {
+				default: Y(() => [ce.value ? (R(), D("p", $s, "Sending test payload…")) : Z.value ? (R(), D("div", {
 					key: 1,
-					class: P(["admin-webhooks__test-result", Q.value.success ? "admin-webhooks__test-result--ok" : "admin-webhooks__test-result--fail"])
-				}, [O("span", ec, [A(t, { name: Q.value.success ? "success" : "error" }, null, 8, ["name"])]), O("div", null, [O("p", tc, W(Q.value.success ? "Delivery succeeded" : "Delivery failed"), 1), O("p", nc, W(Q.value.message), 1)])], 2)) : E("", !0)]),
+					class: P(["admin-webhooks__test-result", Z.value.success ? "admin-webhooks__test-result--ok" : "admin-webhooks__test-result--fail"])
+				}, [O("span", ec, [A(t, { name: Z.value.success ? "success" : "error" }, null, 8, ["name"])]), O("div", null, [O("p", tc, U(Z.value.success ? "Delivery succeeded" : "Delivery failed"), 1), O("p", nc, U(Z.value.message), 1)])], 2)) : E("", !0)]),
 				_: 1
 			}, 8, ["modelValue", "title"])
 		]));
@@ -5854,28 +5855,28 @@ var no = class {
 		let r = t, a = M("apiBase", ""), s = C(() => typeof a == "string" ? a : a?.value ?? ""), l = new oc(r.client ?? new e({
 			baseUrl: s.value,
 			tokenStore: new c()
-		})), u = n(), d = B(null), m = B(!0), h = B(!1), g = C(() => d.value?.configured === !1);
-		async function _() {
+		})), u = n(), d = B(null), p = B(!0), m = B(!1), h = C(() => d.value?.configured === !1);
+		async function g() {
 			try {
 				d.value = await l.getTraktStatus();
 			} catch (e) {
 				u.error(e instanceof Error ? e.message : "Failed to load Trakt status.");
 			} finally {
-				m.value = !1;
+				p.value = !1;
 			}
 		}
 		function v() {
 			l.navigateToTraktAuthorize();
 		}
 		async function b() {
-			if (!h.value) {
-				h.value = !0;
+			if (!m.value) {
+				m.value = !0;
 				try {
-					await l.disconnectTrakt(), u.success("Trakt disconnected."), await _();
+					await l.disconnectTrakt(), u.success("Trakt disconnected."), await g();
 				} catch (e) {
 					u.error(e instanceof Error ? e.message : "Failed to disconnect Trakt.");
 				} finally {
-					h.value = !1;
+					m.value = !1;
 				}
 			}
 		}
@@ -5905,7 +5906,7 @@ var no = class {
 			}
 		}
 		return L(() => {
-			_(), j();
+			g(), j();
 		}), (e, t) => (R(), D("section", sc, [
 			t[8] ||= O("header", { class: "admin-services__head" }, [O("h1", {
 				id: "services-heading",
@@ -5914,14 +5915,14 @@ var no = class {
 			O("section", cc, [O("div", lc, [t[0] ||= O("h2", {
 				id: "trakt-heading",
 				class: "admin-services__section-title"
-			}, "Trakt.tv", -1), d.value === null ? E("", !0) : (R(), T(p, {
+			}, "Trakt.tv", -1), d.value === null ? E("", !0) : (R(), T(_, {
 				key: 0,
 				tone: d.value.connected ? "success" : "neutral",
 				label: d.value.connected ? "Connected" : "Not connected"
 			}, {
-				default: X(() => [k(W(d.value.connected ? "Connected" : "Not connected"), 1)]),
+				default: Y(() => [k(U(d.value.connected ? "Connected" : "Not connected"), 1)]),
 				_: 1
-			}, 8, ["tone", "label"]))]), O("div", uc, [m.value ? (R(), D("div", dc, [A(o, {
+			}, 8, ["tone", "label"]))]), O("div", uc, [p.value ? (R(), D("div", dc, [A(o, {
 				variant: "text",
 				lines: 2
 			})])) : d.value === null ? (R(), T(f, {
@@ -5929,8 +5930,8 @@ var no = class {
 				icon: "alert",
 				title: "Unable to load Trakt status."
 			})) : (R(), D(y, { key: 2 }, [
-				d.value.connected && d.value.username !== null ? (R(), D("dl", fc, [t[1] ||= O("dt", null, "Username", -1), O("dd", null, W(d.value.username), 1)])) : E("", !0),
-				!d.value.connected && g.value ? (R(), D("p", pc, [...t[2] ||= [
+				d.value.connected && d.value.username !== null ? (R(), D("dl", fc, [t[1] ||= O("dt", null, "Username", -1), O("dd", null, U(d.value.username), 1)])) : E("", !0),
+				!d.value.connected && h.value ? (R(), D("p", pc, [...t[2] ||= [
 					k(" Trakt isn't configured yet. Register an application at ", -1),
 					O("a", {
 						href: "https://trakt.tv/oauth/applications",
@@ -5948,31 +5949,31 @@ var no = class {
 				O("div", mc, [d.value.connected ? (R(), T(i, {
 					key: 1,
 					variant: "outline",
-					loading: h.value,
+					loading: m.value,
 					onClick: b
 				}, {
-					default: X(() => [k(W(h.value ? "Disconnecting" : "Disconnect"), 1)]),
+					default: Y(() => [k(U(m.value ? "Disconnecting" : "Disconnect"), 1)]),
 					_: 1
 				}, 8, ["loading"])) : (R(), T(i, {
 					key: 0,
 					variant: "solid",
-					disabled: g.value,
-					title: g.value ? "Add Trakt client ID and secret first" : void 0,
+					disabled: h.value,
+					title: h.value ? "Add Trakt client ID and secret first" : void 0,
 					onClick: v
 				}, {
-					default: X(() => [...t[3] ||= [k(" Connect to Trakt ", -1)]]),
+					default: Y(() => [...t[3] ||= [k(" Connect to Trakt ", -1)]]),
 					_: 1
 				}, 8, ["disabled", "title"]))])
 			], 64))])]),
 			O("section", hc, [O("div", gc, [t[4] ||= O("h2", {
 				id: "lastfm-heading",
 				class: "admin-services__section-title"
-			}, "Last.fm", -1), x.value === null ? E("", !0) : (R(), T(p, {
+			}, "Last.fm", -1), x.value === null ? E("", !0) : (R(), T(_, {
 				key: 0,
 				tone: x.value.connected ? "success" : "neutral",
 				label: x.value.connected ? "Connected" : "Not connected"
 			}, {
-				default: X(() => [k(W(x.value.connected ? "Connected" : "Not connected"), 1)]),
+				default: Y(() => [k(U(x.value.connected ? "Connected" : "Not connected"), 1)]),
 				_: 1
 			}, 8, ["tone", "label"]))]), O("div", _c, [S.value ? (R(), D("div", vc, [A(o, {
 				variant: "text",
@@ -5983,31 +5984,566 @@ var no = class {
 				title: "Unable to load Last.fm status."
 			})) : (R(), D(y, { key: 2 }, [x.value.connected && x.value.username !== null ? (R(), D("dl", yc, [
 				t[5] ||= O("dt", null, "Username", -1),
-				O("dd", null, W(x.value.username), 1),
+				O("dd", null, U(x.value.username), 1),
 				t[6] ||= O("dt", null, "API key", -1),
-				O("dd", null, W(x.value.api_key_set ? "Set" : "Not set"), 1)
+				O("dd", null, U(x.value.api_key_set ? "Set" : "Not set"), 1)
 			])) : E("", !0), O("div", bc, [x.value.connected ? (R(), T(i, {
 				key: 1,
 				variant: "outline",
 				loading: w.value,
 				onClick: P
 			}, {
-				default: X(() => [k(W(w.value ? "Disconnecting" : "Disconnect"), 1)]),
+				default: Y(() => [k(U(w.value ? "Disconnecting" : "Disconnect"), 1)]),
 				_: 1
 			}, 8, ["loading"])) : (R(), T(i, {
 				key: 0,
 				variant: "solid",
 				onClick: N
 			}, {
-				default: X(() => [...t[7] ||= [k(" Connect Last.fm ", -1)]]),
+				default: Y(() => [...t[7] ||= [k(" Connect Last.fm ", -1)]]),
 				_: 1
 			}))])], 64))])])
 		]));
 	}
-}), Sc = /* @__PURE__ */ me({ default: () => Cc }), Cc = /*#__PURE__*/ r(xc, [["__scopeId", "data-v-06f3b61d"]]);
+}), Sc = /* @__PURE__ */ me({ default: () => Cc }), Cc = /*#__PURE__*/ r(xc, [["__scopeId", "data-v-06f3b61d"]]), wc = class {
+	client;
+	constructor(e) {
+		this.client = e;
+	}
+	async getSyncStatus() {
+		return this.client.get("/api/v1/admin/sync/status");
+	}
+	async triggerSync() {
+		return this.client.post("/api/v1/admin/sync/trash-guides");
+	}
+	async setSyncEnabled(e) {
+		return this.client.put("/api/v1/admin/sync/enable", { enabled: e });
+	}
+	async listProviders() {
+		let { providers: e } = await this.client.get("/api/v1/admin/auth-providers");
+		return Array.isArray(e) ? e : [];
+	}
+	async enableProvider(e) {
+		return this.client.post(`/api/v1/admin/auth-providers/${encodeURIComponent(e)}/enable`);
+	}
+	async disableProvider(e) {
+		return this.client.post(`/api/v1/admin/auth-providers/${encodeURIComponent(e)}/disable`);
+	}
+	async getOidcSettings() {
+		return this.client.get("/api/v1/admin/auth-providers/oidc/config");
+	}
+	async saveOidcSettings(e) {
+		return this.client.post("/api/v1/admin/auth-providers/oidc/config", e);
+	}
+	async getOidcSchema() {
+		return this.client.get("/api/v1/admin/auth-providers/oidc/schema");
+	}
+	async getLdapSettings() {
+		return this.client.get("/api/v1/admin/auth-providers/ldap/config");
+	}
+	async saveLdapSettings(e) {
+		return this.client.post("/api/v1/admin/auth-providers/ldap/config", e);
+	}
+	async testLdapConnection(e) {
+		return this.client.post("/api/v1/admin/auth-providers/ldap/test", e);
+	}
+	async getLdapSchema() {
+		return this.client.get("/api/v1/admin/auth-providers/ldap/schema");
+	}
+}, Tc = {
+	class: "admin-integrations",
+	"aria-labelledby": "integrations-heading"
+}, Ec = {
+	class: "admin-integrations__section",
+	"aria-labelledby": "arr-sync-heading"
+}, Dc = { class: "admin-integrations__section-head" }, Oc = { class: "admin-integrations__card" }, kc = {
+	key: 0,
+	class: "admin-integrations__skel"
+}, Ac = {
+	key: 1,
+	class: "admin-integrations__empty",
+	role: "status"
+}, jc = { class: "admin-integrations__dl" }, Mc = { class: "admin-integrations__dd" }, Nc = { class: "admin-integrations__dd" }, Pc = { class: "admin-integrations__card-actions" }, Fc = {
+	class: "admin-integrations__section",
+	"aria-labelledby": "auth-providers-heading"
+}, Ic = {
+	key: 0,
+	class: "admin-integrations__skel"
+}, Lc = {
+	key: 1,
+	class: "admin-integrations__providers"
+}, Rc = { class: "admin-integrations__provider-info" }, zc = { class: "admin-integrations__provider-name" }, Bc = { class: "admin-integrations__provider-actions" }, Vc = { class: "admin-integrations__field" }, Hc = { class: "admin-integrations__field" }, Uc = { class: "admin-integrations__field" }, Wc = { class: "admin-integrations__hint" }, Gc = { class: "admin-integrations__password-row" }, Kc = ["type", "placeholder"], qc = { class: "admin-integrations__field" }, Jc = {
+	key: 0,
+	class: "admin-integrations__error",
+	role: "alert"
+}, Yc = { class: "admin-integrations__field" }, Xc = { class: "admin-integrations__field" }, Zc = ["value"], Qc = { class: "admin-integrations__field" }, $c = { class: "admin-integrations__field" }, el = { class: "admin-integrations__field" }, tl = { class: "admin-integrations__hint" }, nl = { class: "admin-integrations__password-row" }, rl = ["type", "placeholder"], il = { class: "admin-integrations__field" }, al = { class: "admin-integrations__field" }, ol = {
+	key: 0,
+	class: "admin-integrations__error",
+	role: "alert"
+}, sl = 3e4, cl = "openid profile email", ll = /*@__PURE__*/ j({
+	__name: "IntegrationsPage",
+	props: { client: {} },
+	setup(t) {
+		let r = {
+			oidc: "OIDC",
+			ldap: "LDAP"
+		}, a = ["oidc", "ldap"], s = t, l = M("apiBase", ""), u = C(() => typeof l == "string" ? l : l?.value ?? ""), f = new wc(s.client ?? new e({
+			baseUrl: u.value,
+			tokenStore: new c()
+		})), p = n();
+		function m(e, t) {
+			return e instanceof Error && e.message ? e.message : t;
+		}
+		let h = B(null), g = B(!0), b = B(!1), x = null;
+		function S() {
+			x !== null && (clearTimeout(x), x = null);
+		}
+		async function w() {
+			g.value = !0;
+			try {
+				h.value = await f.getSyncStatus();
+			} catch (e) {
+				p.error(m(e, "Failed to load sync status."));
+			} finally {
+				g.value = !1;
+			}
+		}
+		async function j() {
+			if (b.value) return;
+			b.value = !0;
+			let e = !1;
+			S(), x = setTimeout(() => {
+				e = !0, b.value = !1, p.error("Sync timed out after 30 seconds. Check the server logs.");
+			}, sl);
+			try {
+				let t = await f.triggerSync();
+				if (S(), e) return;
+				t.success ? (p.success(t.message || "Sync complete."), await w()) : p.error(t.message || "Sync failed.");
+			} catch (t) {
+				if (S(), e) return;
+				p.error(m(t, "Sync request failed."));
+			} finally {
+				e || (b.value = !1);
+			}
+		}
+		async function N(e) {
+			try {
+				await f.setSyncEnabled(e), p.success(e ? "Auto-sync enabled." : "Auto-sync disabled."), await w();
+			} catch (e) {
+				p.error(m(e, "Failed to update sync setting."));
+			}
+		}
+		let P = B([]), F = B(!0), z = B(null), H = B(null);
+		async function ee() {
+			F.value = !0;
+			try {
+				P.value = await f.listProviders();
+			} catch (e) {
+				p.error(m(e, "Failed to load auth providers."));
+			} finally {
+				F.value = !1;
+			}
+		}
+		function te(e) {
+			return e === "oidc" ? z.value?.configured ?? !1 : e === "ldap" ? H.value?.configured ?? !1 : P.value.find((t) => t.name === e)?.supports_authentication ?? !1;
+		}
+		async function ne(e, t) {
+			try {
+				t ? (await f.disableProvider(e), p.success(`${r[e]} disabled.`)) : (await f.enableProvider(e), p.success(`${r[e]} enabled.`)), await ee();
+			} catch (t) {
+				p.error(m(t, `Failed to update ${r[e]}.`));
+			}
+		}
+		let W = B(!1), G = B({
+			provider_url: "",
+			client_id: "",
+			client_secret: "",
+			scopes: cl
+		}), ie = B(!1), q = B(""), J = B(!1);
+		async function ae() {
+			q.value = "", J.value = !1;
+			try {
+				let e = await f.getOidcSettings();
+				z.value = e, G.value = {
+					provider_url: e.provider_url ?? "",
+					client_id: e.client_id ?? "",
+					client_secret: "",
+					scopes: e.scopes ?? cl
+				};
+			} catch (e) {
+				p.error(m(e, "Failed to load OIDC settings."));
+			}
+			W.value = !0;
+		}
+		function se() {
+			W.value = !1, q.value = "";
+		}
+		async function Z() {
+			if (q.value = "", !G.value.provider_url.trim()) {
+				q.value = "Provider URL is required.";
+				return;
+			}
+			if (!G.value.client_id.trim()) {
+				q.value = "Client ID is required.";
+				return;
+			}
+			ie.value = !0;
+			try {
+				let e = {
+					provider_url: G.value.provider_url.trim(),
+					client_id: G.value.client_id.trim(),
+					scopes: G.value.scopes.trim() || cl
+				};
+				G.value.client_secret.trim() && (e.client_secret = G.value.client_secret), await f.saveOidcSettings(e), p.success("OIDC settings saved."), W.value = !1, z.value = await f.getOidcSettings(), await ee();
+			} catch (e) {
+				q.value = m(e, "Failed to save OIDC settings.");
+			} finally {
+				ie.value = !1;
+			}
+		}
+		let ce = B(!1), Q = B({
+			host: "",
+			port: 389,
+			ssl: !1,
+			base_dn: "",
+			bind_dn: "",
+			bind_pw: "",
+			user_filter: "",
+			admin_group: ""
+		}), le = B(!1), ue = B(!1), de = B(""), fe = B(!1);
+		async function pe() {
+			de.value = "", fe.value = !1;
+			try {
+				let e = await f.getLdapSettings();
+				H.value = e, Q.value = {
+					host: e.host ?? "",
+					port: e.port ?? 389,
+					ssl: e.ssl ?? !1,
+					base_dn: e.base_dn ?? "",
+					bind_dn: e.bind_dn ?? "",
+					bind_pw: "",
+					user_filter: e.user_filter ?? "",
+					admin_group: e.admin_group ?? ""
+				};
+			} catch (e) {
+				p.error(m(e, "Failed to load LDAP settings."));
+			}
+			ce.value = !0;
+		}
+		function me() {
+			ce.value = !1, de.value = "";
+		}
+		function he() {
+			let e = {
+				host: Q.value.host.trim(),
+				port: Q.value.port,
+				ssl: Q.value.ssl,
+				base_dn: Q.value.base_dn.trim(),
+				bind_dn: Q.value.bind_dn.trim(),
+				user_filter: Q.value.user_filter.trim(),
+				admin_group: Q.value.admin_group.trim()
+			};
+			return Q.value.bind_pw.trim() && (e.bind_pw = Q.value.bind_pw), e;
+		}
+		async function ge() {
+			if (de.value = "", !Q.value.host.trim()) {
+				de.value = "Host is required.";
+				return;
+			}
+			if (!Q.value.base_dn.trim()) {
+				de.value = "Base DN is required.";
+				return;
+			}
+			le.value = !0;
+			try {
+				await f.saveLdapSettings(he()), p.success("LDAP settings saved."), ce.value = !1, H.value = await f.getLdapSettings(), await ee();
+			} catch (e) {
+				de.value = m(e, "Failed to save LDAP settings.");
+			} finally {
+				le.value = !1;
+			}
+		}
+		async function _e() {
+			ue.value = !0;
+			try {
+				let e = await f.testLdapConnection(he());
+				e.success ? p.success(e.message || "Connection OK.") : p.error(e.message || "Connection failed.");
+			} catch (e) {
+				p.error(m(e, "LDAP connection test failed."));
+			} finally {
+				ue.value = !1;
+			}
+		}
+		function ve(e) {
+			let t = parseInt(e, 10);
+			Q.value.port = Number.isNaN(t) ? 0 : t;
+		}
+		function ye(e) {
+			e === "oidc" ? ae() : pe();
+		}
+		return L(() => {
+			w(), ee();
+		}), I(S), (e, t) => (R(), D("section", Tc, [
+			t[37] ||= O("header", { class: "admin-integrations__head" }, [O("h1", {
+				id: "integrations-heading",
+				class: "admin-integrations__title"
+			}, "Integrations")], -1),
+			O("section", Ec, [O("div", Dc, [t[16] ||= O("h2", {
+				id: "arr-sync-heading",
+				class: "admin-integrations__section-title"
+			}, "Arr sync (TRaSH-Guides)", -1), h.value ? (R(), T(_, {
+				key: 0,
+				tone: h.value.enabled ? "success" : "neutral"
+			}, {
+				default: Y(() => [k(U(h.value.enabled ? "Enabled" : "Disabled"), 1)]),
+				_: 1
+			}, 8, ["tone"])) : E("", !0)]), O("div", Oc, [g.value ? (R(), D("div", kc, [A(o, {
+				variant: "text",
+				lines: 3
+			})])) : h.value === null ? (R(), D("p", Ac, " Unable to load sync status. ")) : (R(), D(y, { key: 2 }, [O("dl", jc, [
+				t[17] ||= O("dt", { class: "admin-integrations__dt" }, "Last sync", -1),
+				O("dd", Mc, U(h.value.last_sync_at ?? "Never synced"), 1),
+				t[18] ||= O("dt", { class: "admin-integrations__dt" }, "Auto-sync", -1),
+				O("dd", Nc, [A(v, {
+					"model-value": h.value.enabled,
+					label: h.value.enabled ? "Enabled" : "Disabled",
+					"onUpdate:modelValue": N
+				}, null, 8, ["model-value", "label"])])
+			]), O("div", Pc, [A(i, {
+				variant: "solid",
+				size: "sm",
+				"left-icon": "rewind",
+				loading: b.value,
+				onClick: j
+			}, {
+				default: Y(() => [k(U(b.value ? "Syncing" : "Sync now"), 1)]),
+				_: 1
+			}, 8, ["loading"])])], 64))])]),
+			O("section", Fc, [t[20] ||= O("div", { class: "admin-integrations__section-head" }, [O("h2", {
+				id: "auth-providers-heading",
+				class: "admin-integrations__section-title"
+			}, " Authentication providers ")], -1), F.value ? (R(), D("div", Ic, [A(o, {
+				variant: "text",
+				lines: 4
+			})])) : (R(), D("div", Lc, [(R(), D(y, null, V(a, (e) => O("div", {
+				key: e,
+				class: "admin-integrations__provider"
+			}, [O("div", Rc, [O("span", zc, U(r[e]), 1), A(_, { tone: te(e) ? "success" : "neutral" }, {
+				default: Y(() => [k(U(te(e) ? "Enabled" : "Disabled"), 1)]),
+				_: 2
+			}, 1032, ["tone"])]), O("div", Bc, [A(v, {
+				"model-value": te(e),
+				label: `Enable ${r[e]}`,
+				"onUpdate:modelValue": () => ne(e, te(e))
+			}, null, 8, [
+				"model-value",
+				"label",
+				"onUpdate:modelValue"
+			]), A(i, {
+				variant: "outline",
+				size: "sm",
+				"left-icon": "settings",
+				"aria-label": `Configure ${r[e]}`,
+				onClick: (t) => ye(e)
+			}, {
+				default: Y(() => [...t[19] ||= [k(" Configure ", -1)]]),
+				_: 1
+			}, 8, ["aria-label", "onClick"])])])), 64))]))]),
+			A(d, {
+				modelValue: W.value,
+				"onUpdate:modelValue": t[5] ||= (e) => W.value = e,
+				title: "Configure OIDC",
+				onClose: se
+			}, {
+				footer: Y(() => [A(i, {
+					variant: "ghost",
+					size: "sm",
+					onClick: se
+				}, {
+					default: Y(() => [...t[25] ||= [k("Cancel", -1)]]),
+					_: 1
+				}), A(i, {
+					variant: "solid",
+					size: "sm",
+					loading: ie.value,
+					onClick: Z
+				}, {
+					default: Y(() => [...t[26] ||= [k("Save OIDC", -1)]]),
+					_: 1
+				}, 8, ["loading"])]),
+				default: Y(() => [O("form", {
+					class: "admin-integrations__form",
+					onSubmit: oe(Z, ["prevent"])
+				}, [
+					O("label", Vc, [t[21] ||= O("span", { class: "admin-integrations__label" }, "Provider URL", -1), X(O("input", {
+						"onUpdate:modelValue": t[0] ||= (e) => G.value.provider_url = e,
+						type: "text",
+						class: "admin-integrations__input",
+						placeholder: "https://idp.example.com",
+						autocomplete: "off",
+						required: ""
+					}, null, 512), [[K, G.value.provider_url]])]),
+					O("label", Hc, [t[22] ||= O("span", { class: "admin-integrations__label" }, "Client ID", -1), X(O("input", {
+						"onUpdate:modelValue": t[1] ||= (e) => G.value.client_id = e,
+						type: "text",
+						class: "admin-integrations__input",
+						autocomplete: "off",
+						required: ""
+					}, null, 512), [[K, G.value.client_id]])]),
+					O("label", Uc, [
+						t[23] ||= O("span", { class: "admin-integrations__label" }, "Client secret", -1),
+						O("span", Wc, U(z.value?.configured ? "Leave blank to keep the current secret." : "Required when configuring for the first time."), 1),
+						O("div", Gc, [X(O("input", {
+							"onUpdate:modelValue": t[2] ||= (e) => G.value.client_secret = e,
+							type: J.value ? "text" : "password",
+							class: "admin-integrations__input",
+							placeholder: z.value?.configured ? "(unchanged)" : "Client secret",
+							autocomplete: "new-password"
+						}, null, 8, Kc), [[re, G.value.client_secret]]), A(i, {
+							variant: "ghost",
+							size: "sm",
+							"left-icon": J.value ? "eye-off" : "eye",
+							"aria-label": J.value ? "Hide secret" : "Show secret",
+							onClick: t[3] ||= (e) => J.value = !J.value
+						}, {
+							default: Y(() => [k(U(J.value ? "Hide" : "Show"), 1)]),
+							_: 1
+						}, 8, ["left-icon", "aria-label"])])
+					]),
+					O("label", qc, [t[24] ||= O("span", { class: "admin-integrations__label" }, "Scopes", -1), X(O("input", {
+						"onUpdate:modelValue": t[4] ||= (e) => G.value.scopes = e,
+						type: "text",
+						class: "admin-integrations__input",
+						placeholder: "openid profile email",
+						autocomplete: "off"
+					}, null, 512), [[K, G.value.scopes]])]),
+					q.value ? (R(), D("p", Jc, U(q.value), 1)) : E("", !0)
+				], 32)]),
+				_: 1
+			}, 8, ["modelValue"]),
+			A(d, {
+				modelValue: ce.value,
+				"onUpdate:modelValue": t[15] ||= (e) => ce.value = e,
+				title: "Configure LDAP",
+				size: "lg",
+				onClose: me
+			}, {
+				footer: Y(() => [
+					A(i, {
+						variant: "ghost",
+						size: "sm",
+						onClick: me
+					}, {
+						default: Y(() => [...t[34] ||= [k("Cancel", -1)]]),
+						_: 1
+					}),
+					A(i, {
+						variant: "outline",
+						size: "sm",
+						"left-icon": "settings",
+						loading: ue.value,
+						disabled: le.value,
+						onClick: _e
+					}, {
+						default: Y(() => [...t[35] ||= [k(" Test connection ", -1)]]),
+						_: 1
+					}, 8, ["loading", "disabled"]),
+					A(i, {
+						variant: "solid",
+						size: "sm",
+						loading: le.value,
+						disabled: ue.value,
+						onClick: ge
+					}, {
+						default: Y(() => [...t[36] ||= [k(" Save LDAP ", -1)]]),
+						_: 1
+					}, 8, ["loading", "disabled"])
+				]),
+				default: Y(() => [O("form", {
+					class: "admin-integrations__form",
+					onSubmit: oe(ge, ["prevent"])
+				}, [
+					O("label", Yc, [t[27] ||= O("span", { class: "admin-integrations__label" }, "Host", -1), X(O("input", {
+						"onUpdate:modelValue": t[6] ||= (e) => Q.value.host = e,
+						type: "text",
+						class: "admin-integrations__input",
+						placeholder: "ldap.example.com",
+						autocomplete: "off",
+						required: ""
+					}, null, 512), [[K, Q.value.host]])]),
+					O("label", Xc, [t[28] ||= O("span", { class: "admin-integrations__label" }, "Port", -1), O("input", {
+						value: Q.value.port,
+						type: "number",
+						min: "1",
+						max: "65535",
+						class: "admin-integrations__input",
+						autocomplete: "off",
+						onInput: t[7] ||= (e) => ve(e.target.value)
+					}, null, 40, Zc)]),
+					A(v, {
+						modelValue: Q.value.ssl,
+						"onUpdate:modelValue": t[8] ||= (e) => Q.value.ssl = e,
+						label: "Use SSL"
+					}, null, 8, ["modelValue"]),
+					O("label", Qc, [t[29] ||= O("span", { class: "admin-integrations__label" }, "Base DN", -1), X(O("input", {
+						"onUpdate:modelValue": t[9] ||= (e) => Q.value.base_dn = e,
+						type: "text",
+						class: "admin-integrations__input",
+						placeholder: "dc=example,dc=com",
+						autocomplete: "off",
+						required: ""
+					}, null, 512), [[K, Q.value.base_dn]])]),
+					O("label", $c, [t[30] ||= O("span", { class: "admin-integrations__label" }, "Bind DN", -1), X(O("input", {
+						"onUpdate:modelValue": t[10] ||= (e) => Q.value.bind_dn = e,
+						type: "text",
+						class: "admin-integrations__input",
+						placeholder: "cn=admin,dc=example,dc=com",
+						autocomplete: "off"
+					}, null, 512), [[K, Q.value.bind_dn]])]),
+					O("label", el, [
+						t[31] ||= O("span", { class: "admin-integrations__label" }, "Bind password", -1),
+						O("span", tl, U(H.value?.configured ? "Leave blank to keep the current password." : "Required when configuring for the first time."), 1),
+						O("div", nl, [X(O("input", {
+							"onUpdate:modelValue": t[11] ||= (e) => Q.value.bind_pw = e,
+							type: fe.value ? "text" : "password",
+							class: "admin-integrations__input",
+							placeholder: H.value?.configured ? "(unchanged)" : "Bind password",
+							autocomplete: "new-password"
+						}, null, 8, rl), [[re, Q.value.bind_pw]]), A(i, {
+							variant: "ghost",
+							size: "sm",
+							"left-icon": fe.value ? "eye-off" : "eye",
+							"aria-label": fe.value ? "Hide password" : "Show password",
+							onClick: t[12] ||= (e) => fe.value = !fe.value
+						}, {
+							default: Y(() => [k(U(fe.value ? "Hide" : "Show"), 1)]),
+							_: 1
+						}, 8, ["left-icon", "aria-label"])])
+					]),
+					O("label", il, [t[32] ||= O("span", { class: "admin-integrations__label" }, "User filter", -1), X(O("input", {
+						"onUpdate:modelValue": t[13] ||= (e) => Q.value.user_filter = e,
+						type: "text",
+						class: "admin-integrations__input",
+						placeholder: "(uid=%s)",
+						autocomplete: "off"
+					}, null, 512), [[K, Q.value.user_filter]])]),
+					O("label", al, [t[33] ||= O("span", { class: "admin-integrations__label" }, "Admin group DN", -1), X(O("input", {
+						"onUpdate:modelValue": t[14] ||= (e) => Q.value.admin_group = e,
+						type: "text",
+						class: "admin-integrations__input",
+						placeholder: "cn=admins,dc=example,dc=com",
+						autocomplete: "off"
+					}, null, 512), [[K, Q.value.admin_group]])]),
+					de.value ? (R(), D("p", ol, U(de.value), 1)) : E("", !0)
+				], 32)]),
+				_: 1
+			}, 8, ["modelValue"])
+		]));
+	}
+}), ul = /* @__PURE__ */ me({ default: () => dl }), dl = /*#__PURE__*/ r(ll, [["__scopeId", "data-v-056074d4"]]);
 //#endregion
 //#region src/app/admin.ts
-function wc(e = "/app") {
+function fl(e = "/app") {
 	let t = `${e}/admin`;
 	return [
 		{
@@ -6034,10 +6570,15 @@ function wc(e = "/app") {
 			path: `${t}/services`,
 			name: "admin-services",
 			component: () => Promise.resolve().then(() => Sc)
+		},
+		{
+			path: `${t}/integrations`,
+			name: "admin-integrations",
+			component: () => Promise.resolve().then(() => ul)
 		}
 	];
 }
-function Tc(e = "/app") {
+function pl(e = "/app") {
 	let t = `${e}/admin`;
 	return [{
 		id: "admin",
@@ -6073,28 +6614,34 @@ function Tc(e = "/app") {
 				label: "Services",
 				icon: "star",
 				to: `${t}/services`
+			},
+			{
+				id: "admin-integrations",
+				label: "Integrations",
+				icon: "settings",
+				to: `${t}/integrations`
 			}
 		]
 	}];
 }
 //#endregion
 //#region src/pages/LibraryScanPage.vue?vue&type=script&setup=true&lang.ts
-var Ec = { class: "library-scan-page" }, Dc = {
+var ml = { class: "library-scan-page" }, hl = {
 	key: 0,
 	class: "loading"
-}, Oc = {
+}, gl = {
 	key: 1,
 	class: "error"
-}, kc = {
+}, _l = {
 	key: 2,
 	class: "libraries-list"
-}, Ac = { class: "library-info" }, jc = { class: "library-name" }, Mc = { class: "library-type" }, Nc = { class: "library-paths" }, Pc = { class: "library-meta" }, Fc = { key: 0 }, Ic = {
+}, vl = { class: "library-info" }, yl = { class: "library-name" }, bl = { class: "library-type" }, xl = { class: "library-paths" }, Sl = { class: "library-meta" }, Cl = { key: 0 }, wl = {
 	key: 0,
 	class: "scan-status"
-}, Lc = { class: "library-actions" }, Rc = ["onClick", "disabled"], zc = ["onClick", "disabled"], Bc = {
+}, Tl = { class: "library-actions" }, El = ["onClick", "disabled"], Dl = ["onClick", "disabled"], Ol = {
 	key: 0,
 	class: "empty-state"
-}, Vc = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, kl = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "LibraryScanPage",
 	setup(e) {
 		let t = B([]), n = B({}), r = B(!0), i = B(null);
@@ -6143,38 +6690,38 @@ var Ec = { class: "library-scan-page" }, Dc = {
 		}
 		return L(() => {
 			a();
-		}), (e, a) => (R(), D("div", Ec, [a[0] ||= O("div", { class: "scan-header" }, [O("h1", { class: "scan-title" }, "Library Scanner"), O("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")], -1), r.value ? (R(), D("div", Dc, "Loading libraries...")) : i.value ? (R(), D("div", Oc, W(i.value), 1)) : (R(), D("div", kc, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, a) => (R(), D("div", ml, [a[0] ||= O("div", { class: "scan-header" }, [O("h1", { class: "scan-title" }, "Library Scanner"), O("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")], -1), r.value ? (R(), D("div", hl, "Loading libraries...")) : i.value ? (R(), D("div", gl, U(i.value), 1)) : (R(), D("div", _l, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "library-card"
-		}, [O("div", Ac, [
-			O("h3", jc, W(e.name), 1),
-			O("span", Mc, W(e.type), 1),
-			O("p", Nc, W(e.paths.join(", ")), 1),
-			O("div", Pc, [e.item_count === void 0 ? E("", !0) : (R(), D("span", Fc, W(e.item_count) + " items", 1)), O("span", null, "Last scan: " + W(u(e.last_scan_at)), 1)]),
-			n.value[e.id] ? (R(), D("div", Ic, W(d(n.value[e.id])), 1)) : E("", !0)
-		]), O("div", Lc, [O("button", {
+		}, [O("div", vl, [
+			O("h3", yl, U(e.name), 1),
+			O("span", bl, U(e.type), 1),
+			O("p", xl, U(e.paths.join(", ")), 1),
+			O("div", Sl, [e.item_count === void 0 ? E("", !0) : (R(), D("span", Cl, U(e.item_count) + " items", 1)), O("span", null, "Last scan: " + U(u(e.last_scan_at)), 1)]),
+			n.value[e.id] ? (R(), D("div", wl, U(d(n.value[e.id])), 1)) : E("", !0)
+		]), O("div", Tl, [O("button", {
 			class: "btn btn-scan",
 			onClick: (t) => c(e.id),
 			disabled: n.value[e.id]?.status === "running" || n.value[e.id]?.status === "queued"
-		}, " Scan ", 8, Rc), O("button", {
+		}, " Scan ", 8, El), O("button", {
 			class: "btn btn-rescan",
 			onClick: (t) => l(e.id),
 			disabled: n.value[e.id]?.status === "running" || n.value[e.id]?.status === "queued"
-		}, " Rescan ", 8, zc)])]))), 128)), t.value.length === 0 ? (R(), D("div", Bc, " No libraries configured. Add a library to get started. ")) : E("", !0)]))]));
+		}, " Rescan ", 8, Dl)])]))), 128)), t.value.length === 0 ? (R(), D("div", Ol, " No libraries configured. Add a library to get started. ")) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-62b3805e"]]), Hc = { class: "my-servers-page" }, Uc = {
+}), [["__scopeId", "data-v-62b3805e"]]), Al = { class: "my-servers-page" }, jl = {
 	key: 0,
 	class: "loading"
-}, Wc = {
+}, Ml = {
 	key: 1,
 	class: "error"
-}, Gc = {
+}, Nl = {
 	key: 2,
 	class: "servers-list"
-}, Kc = { class: "server-info" }, qc = { class: "server-name" }, Jc = { class: "server-url" }, Yc = { class: "server-meta" }, Xc = { key: 0 }, Zc = {
+}, Pl = { class: "server-info" }, Fl = { class: "server-name" }, Il = { class: "server-url" }, Ll = { class: "server-meta" }, Rl = { key: 0 }, zl = {
 	key: 0,
 	class: "empty-state"
-}, Qc = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, Bl = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "MyServersPage",
 	setup(e) {
 		let t = B([]), n = B(!0), r = B(null);
@@ -6200,7 +6747,7 @@ var Ec = { class: "library-scan-page" }, Dc = {
 		}
 		return L(() => {
 			i();
-		}), (e, i) => (R(), D("div", Hc, [i[2] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "My Servers"), O("p", { class: "page-subtitle" }, "Manage your connected media servers")], -1), n.value ? (R(), D("div", Uc, "Loading servers...")) : r.value ? (R(), D("div", Wc, W(r.value), 1)) : (R(), D("div", Gc, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, i) => (R(), D("div", Al, [i[2] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "My Servers"), O("p", { class: "page-subtitle" }, "Manage your connected media servers")], -1), n.value ? (R(), D("div", jl, "Loading servers...")) : r.value ? (R(), D("div", Ml, U(r.value), 1)) : (R(), D("div", Nl, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "server-card"
 		}, [
@@ -6208,34 +6755,34 @@ var Ec = { class: "library-scan-page" }, Dc = {
 				class: "server-status",
 				style: F({ backgroundColor: a(e.status) })
 			}, null, 4),
-			O("div", Kc, [
-				O("h3", qc, W(e.name), 1),
-				O("p", Jc, W(e.url), 1),
-				O("div", Yc, [
-					O("span", null, W(e.owner), 1),
-					e.library_count === void 0 ? E("", !0) : (R(), D("span", Xc, W(e.library_count) + " libraries", 1)),
-					O("span", null, "Last seen: " + W(o(e.last_seen)), 1)
+			O("div", Pl, [
+				O("h3", Fl, U(e.name), 1),
+				O("p", Il, U(e.url), 1),
+				O("div", Ll, [
+					O("span", null, U(e.owner), 1),
+					e.library_count === void 0 ? E("", !0) : (R(), D("span", Rl, U(e.library_count) + " libraries", 1)),
+					O("span", null, "Last seen: " + U(o(e.last_seen)), 1)
 				])
 			]),
 			i[0] ||= O("div", { class: "server-actions" }, [O("button", { class: "btn btn-primary" }, "Manage")], -1)
-		]))), 128)), t.value.length === 0 ? (R(), D("div", Zc, [...i[1] ||= [O("p", null, "No servers connected yet.", -1), O("button", { class: "btn btn-primary" }, "Add Server", -1)]])) : E("", !0)]))]));
+		]))), 128)), t.value.length === 0 ? (R(), D("div", zl, [...i[1] ||= [O("p", null, "No servers connected yet.", -1), O("button", { class: "btn btn-primary" }, "Add Server", -1)]])) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-b9237da4"]]), $c = { class: "federation-page" }, el = {
+}), [["__scopeId", "data-v-b9237da4"]]), Vl = { class: "federation-page" }, Hl = {
 	key: 0,
 	class: "loading"
-}, tl = {
+}, Ul = {
 	key: 1,
 	class: "error"
-}, nl = {
+}, Wl = {
 	key: 2,
 	class: "federation-content"
-}, rl = { class: "peers-section" }, il = { class: "peers-list" }, al = { class: "peer-info" }, ol = { class: "peer-name" }, sl = { class: "peer-url" }, cl = { class: "peer-meta" }, ll = { key: 0 }, ul = { class: "peer-actions" }, dl = ["onClick"], fl = {
+}, Gl = { class: "peers-section" }, Kl = { class: "peers-list" }, ql = { class: "peer-info" }, Jl = { class: "peer-name" }, Yl = { class: "peer-url" }, Xl = { class: "peer-meta" }, Zl = { key: 0 }, Ql = { class: "peer-actions" }, $l = ["onClick"], eu = {
 	key: 1,
 	class: "status-badge"
-}, pl = {
+}, tu = {
 	key: 0,
 	class: "empty-state"
-}, ml = { class: "add-peer-section" }, hl = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, nu = { class: "add-peer-section" }, ru = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "FederationPage",
 	setup(e) {
 		let t = B([]), n = B(!0), r = B(null);
@@ -6275,7 +6822,7 @@ var Ec = { class: "library-scan-page" }, Dc = {
 		}
 		return L(() => {
 			i();
-		}), (e, i) => (R(), D("div", $c, [i[5] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Federation"), O("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")], -1), n.value ? (R(), D("div", el, "Loading federation peers...")) : r.value ? (R(), D("div", tl, W(r.value), 1)) : (R(), D("div", nl, [O("div", rl, [i[2] ||= O("h2", { class: "section-title" }, "Connected Peers", -1), O("div", il, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, i) => (R(), D("div", Vl, [i[5] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Federation"), O("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")], -1), n.value ? (R(), D("div", Hl, "Loading federation peers...")) : r.value ? (R(), D("div", Ul, U(r.value), 1)) : (R(), D("div", Wl, [O("div", Gl, [i[2] ||= O("h2", { class: "section-title" }, "Connected Peers", -1), O("div", Kl, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "peer-card"
 		}, [
@@ -6283,19 +6830,19 @@ var Ec = { class: "library-scan-page" }, Dc = {
 				class: "peer-status",
 				style: F({ backgroundColor: c(e.status) })
 			}, null, 4),
-			O("div", al, [
-				O("h3", ol, W(e.name), 1),
-				O("p", sl, W(e.url), 1),
-				O("div", cl, [e.shared_libraries_count === void 0 ? E("", !0) : (R(), D("span", ll, W(e.shared_libraries_count) + " shared libraries", 1)), O("span", null, "Last sync: " + W(l(e.last_sync)), 1)])
+			O("div", ql, [
+				O("h3", Jl, U(e.name), 1),
+				O("p", Yl, U(e.url), 1),
+				O("div", Xl, [e.shared_libraries_count === void 0 ? E("", !0) : (R(), D("span", Zl, U(e.shared_libraries_count) + " shared libraries", 1)), O("span", null, "Last sync: " + U(l(e.last_sync)), 1)])
 			]),
-			O("div", ul, [e.status === "connected" ? (R(), D("button", {
+			O("div", Ql, [e.status === "connected" ? (R(), D("button", {
 				key: 0,
 				class: "btn btn-secondary",
 				onClick: (t) => o(e.id)
-			}, " Disconnect ", 8, dl)) : e.status === "pending" ? (R(), D("span", fl, "Pending")) : E("", !0)])
-		]))), 128)), t.value.length === 0 ? (R(), D("div", pl, [...i[1] ||= [O("p", null, "No federation peers connected.", -1)]])) : E("", !0)])]), O("div", ml, [i[4] ||= O("h2", { class: "section-title" }, "Add Peer", -1), O("form", {
+			}, " Disconnect ", 8, $l)) : e.status === "pending" ? (R(), D("span", eu, "Pending")) : E("", !0)])
+		]))), 128)), t.value.length === 0 ? (R(), D("div", tu, [...i[1] ||= [O("p", null, "No federation peers connected.", -1)]])) : E("", !0)])]), O("div", nu, [i[4] ||= O("h2", { class: "section-title" }, "Add Peer", -1), O("form", {
 			class: "add-peer-form",
-			onSubmit: i[0] ||= ae((e) => a(""), ["prevent"])
+			onSubmit: i[0] ||= oe((e) => a(""), ["prevent"])
 		}, [...i[3] ||= [O("input", {
 			type: "url",
 			placeholder: "https://other-server.example.com",
@@ -6305,22 +6852,22 @@ var Ec = { class: "library-scan-page" }, Dc = {
 			class: "btn btn-primary"
 		}, "Connect", -1)]], 32)])]))]));
 	}
-}), [["__scopeId", "data-v-91ba2781"]]), gl = { class: "manage-shares-page" }, _l = {
+}), [["__scopeId", "data-v-91ba2781"]]), iu = { class: "manage-shares-page" }, au = {
 	key: 0,
 	class: "loading"
-}, vl = {
+}, ou = {
 	key: 1,
 	class: "error"
-}, yl = {
+}, su = {
 	key: 2,
 	class: "shares-list"
-}, bl = { class: "share-info" }, xl = { class: "share-library" }, Sl = { class: "share-meta" }, Cl = {
+}, cu = { class: "share-info" }, lu = { class: "share-library" }, uu = { class: "share-meta" }, du = {
 	key: 0,
 	class: "expired-badge"
-}, wl = { class: "share-dates" }, Tl = { key: 0 }, El = { class: "share-actions" }, Dl = ["onClick"], Ol = {
+}, fu = { class: "share-dates" }, pu = { key: 0 }, mu = { class: "share-actions" }, hu = ["onClick"], gu = {
 	key: 0,
 	class: "empty-state"
-}, kl = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, _u = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "ManageSharesPage",
 	setup(e) {
 		let t = B([]), n = B(!0), r = B(null);
@@ -6348,47 +6895,47 @@ var Ec = { class: "library-scan-page" }, Dc = {
 		}
 		return L(() => {
 			i();
-		}), (e, i) => (R(), D("div", gl, [i[1] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Manage Shares"), O("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (R(), D("div", _l, "Loading shares...")) : r.value ? (R(), D("div", vl, W(r.value), 1)) : (R(), D("div", yl, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, i) => (R(), D("div", iu, [i[1] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Manage Shares"), O("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (R(), D("div", au, "Loading shares...")) : r.value ? (R(), D("div", ou, U(r.value), 1)) : (R(), D("div", su, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "share-card"
-		}, [O("div", bl, [
-			O("h3", xl, W(e.library_name), 1),
-			O("div", Sl, [
-				O("span", null, "Shared with: " + W(e.shared_with), 1),
-				O("span", { class: P(["permission-badge", e.permissions]) }, W(e.permissions), 3),
-				e.expires_at && c(e.expires_at) ? (R(), D("span", Cl, "Expired")) : E("", !0)
+		}, [O("div", cu, [
+			O("h3", lu, U(e.library_name), 1),
+			O("div", uu, [
+				O("span", null, "Shared with: " + U(e.shared_with), 1),
+				O("span", { class: P(["permission-badge", e.permissions]) }, U(e.permissions), 3),
+				e.expires_at && c(e.expires_at) ? (R(), D("span", du, "Expired")) : E("", !0)
 			]),
-			O("p", wl, [k(" Created: " + W(o(e.created_at)) + " ", 1), e.expires_at ? (R(), D("span", Tl, " | Expires: " + W(o(e.expires_at)), 1)) : E("", !0)])
-		]), O("div", El, [O("button", {
+			O("p", fu, [k(" Created: " + U(o(e.created_at)) + " ", 1), e.expires_at ? (R(), D("span", pu, " | Expires: " + U(o(e.expires_at)), 1)) : E("", !0)])
+		]), O("div", mu, [O("button", {
 			class: "btn btn-danger",
 			onClick: (t) => a(e.id)
-		}, "Revoke", 8, Dl)])]))), 128)), t.value.length === 0 ? (R(), D("div", Ol, [...i[0] ||= [O("p", null, "No library shares found.", -1)]])) : E("", !0)]))]));
+		}, "Revoke", 8, hu)])]))), 128)), t.value.length === 0 ? (R(), D("div", gu, [...i[0] ||= [O("p", null, "No library shares found.", -1)]])) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-bd8771ac"]]), Al = { class: "audit-logs-page" }, jl = {
+}), [["__scopeId", "data-v-bd8771ac"]]), vu = { class: "audit-logs-page" }, yu = {
 	key: 0,
 	class: "loading"
-}, Ml = {
+}, bu = {
 	key: 1,
 	class: "error"
-}, Nl = {
+}, xu = {
 	key: 2,
 	class: "logs-container"
-}, Pl = { class: "logs-list" }, Fl = { class: "log-content" }, Il = { class: "log-header" }, Ll = { class: "log-action" }, Rl = { class: "log-actor" }, zl = { class: "log-time" }, Bl = {
+}, Su = { class: "logs-list" }, Cu = { class: "log-content" }, wu = { class: "log-header" }, Tu = { class: "log-action" }, Eu = { class: "log-actor" }, Du = { class: "log-time" }, Ou = {
 	key: 0,
 	class: "log-target"
-}, Vl = {
+}, ku = {
 	key: 1,
 	class: "log-details"
-}, Hl = {
+}, Au = {
 	key: 2,
 	class: "log-ip"
-}, Ul = {
+}, ju = {
 	key: 0,
 	class: "empty-state"
-}, Wl = {
+}, Mu = {
 	key: 0,
 	class: "pagination"
-}, Gl = ["disabled"], Kl = { class: "page-info" }, ql = ["disabled"], Jl = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, Nu = ["disabled"], Pu = { class: "page-info" }, Fu = ["disabled"], Iu = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "AuditLogsPage",
 	setup(e) {
 		let t = B([]), n = B(!0), r = B(null), i = B(1), a = B(1);
@@ -6414,46 +6961,46 @@ var Ec = { class: "library-scan-page" }, Dc = {
 		}
 		return L(() => {
 			o();
-		}), (e, s) => (R(), D("div", Al, [s[3] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Audit Logs"), O("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (R(), D("div", jl, "Loading audit logs...")) : r.value ? (R(), D("div", Ml, W(r.value), 1)) : (R(), D("div", Nl, [O("div", Pl, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
+		}), (e, s) => (R(), D("div", vu, [s[3] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Audit Logs"), O("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (R(), D("div", yu, "Loading audit logs...")) : r.value ? (R(), D("div", bu, U(r.value), 1)) : (R(), D("div", xu, [O("div", Su, [(R(!0), D(y, null, V(t.value, (e) => (R(), D("div", {
 			key: e.id,
 			class: "log-entry"
 		}, [O("div", {
 			class: "log-icon",
 			style: F({ backgroundColor: l(e.action) })
-		}, W(u(e.action)), 5), O("div", Fl, [
-			O("div", Il, [
-				O("span", Ll, W(e.action), 1),
-				O("span", Rl, W(e.actor), 1),
-				O("span", zl, W(c(e.created_at)), 1)
+		}, U(u(e.action)), 5), O("div", Cu, [
+			O("div", wu, [
+				O("span", Tu, U(e.action), 1),
+				O("span", Eu, U(e.actor), 1),
+				O("span", Du, U(c(e.created_at)), 1)
 			]),
-			e.target ? (R(), D("p", Bl, "Target: " + W(e.target), 1)) : E("", !0),
-			e.details ? (R(), D("p", Vl, W(e.details), 1)) : E("", !0),
-			e.ip_address ? (R(), D("span", Hl, "IP: " + W(e.ip_address), 1)) : E("", !0)
-		])]))), 128)), t.value.length === 0 ? (R(), D("div", Ul, [...s[2] ||= [O("p", null, "No audit logs found.", -1)]])) : E("", !0)]), a.value > 1 ? (R(), D("div", Wl, [
+			e.target ? (R(), D("p", Ou, "Target: " + U(e.target), 1)) : E("", !0),
+			e.details ? (R(), D("p", ku, U(e.details), 1)) : E("", !0),
+			e.ip_address ? (R(), D("span", Au, "IP: " + U(e.ip_address), 1)) : E("", !0)
+		])]))), 128)), t.value.length === 0 ? (R(), D("div", ju, [...s[2] ||= [O("p", null, "No audit logs found.", -1)]])) : E("", !0)]), a.value > 1 ? (R(), D("div", Mu, [
 			O("button", {
 				class: "btn btn-secondary",
 				disabled: i.value <= 1,
 				onClick: s[0] ||= (e) => o(i.value - 1)
-			}, " Previous ", 8, Gl),
-			O("span", Kl, "Page " + W(i.value) + " of " + W(a.value), 1),
+			}, " Previous ", 8, Nu),
+			O("span", Pu, "Page " + U(i.value) + " of " + U(a.value), 1),
 			O("button", {
 				class: "btn btn-secondary",
 				disabled: i.value >= a.value,
 				onClick: s[1] ||= (e) => o(i.value + 1)
-			}, " Next ", 8, ql)
+			}, " Next ", 8, Fu)
 		])) : E("", !0)]))]));
 	}
 }), [["__scopeId", "data-v-05910fd9"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
-function Yl(e, t) {
+function Lu(e, t) {
 	let n = bt(), r = !1;
 	n.applyQuery(e.currentRoute.value.query), n.fetchMedia(t);
-	let i = J(() => JSON.stringify(n.toQuery()), () => {
+	let i = q(() => JSON.stringify(n.toQuery()), () => {
 		r || (r = !0, e.replace({ query: n.toQuery() }).finally(() => {
 			r = !1;
 		}), n.scheduleFetch(t));
-	}), a = J(() => e.currentRoute.value.query, (e) => {
+	}), a = q(() => e.currentRoute.value.query, (e) => {
 		r || JSON.stringify(e) !== JSON.stringify(n.toQuery()) && (r = !0, n.applyQuery(e), r = !1, n.fetchMedia(t));
 	});
 	return () => {
@@ -6461,6 +7008,6 @@ function Yl(e, t) {
 	};
 }
 //#endregion
-export { Ra as ALL_LOGS, Br as ARROW_ICONS, Vr as ARROW_LABELS, no as AdminDashboardApi, Go as AdminDashboardPage, za as AdminLogsApi, Ya as AdminLogsPage, oc as AdminServicesApi, Cc as AdminServicesPage, Jo as AdminUsersApi, ks as AdminUsersPage, Ms as AdminWebhooksApi, ac as AdminWebhooksPage, e as ApiClient, a as ApiError, pa as AppBackdrop, we as AppLayout, Jl as AuditLogsPage, p as Badge, ar as BrowsePage, i as Button, Cn as Chip, An as Combobox, Xe as CommandPalette, Pe as DEFAULT_PREFERENCES, f as EmptyState, hl as FederationPage, $n as FilterBar, t as Icon, u as IconButton, De as Kbd, Vc as LibraryScanPage, c as LocalStorageTokenStore, Ai as LoginForm, Ni as LoginPage, kl as ManageSharesPage, Xt as MediaCard, Dr as MediaDetail, Mr as MediaDetailPage, on as MediaGrid, yn as MediaHomeRow, gn as MediaRow, d as Modal, Qc as MyServersPage, zr as PLAYER_SHORTCUTS, La as PageTransition, pt as PhlixApp, _i as Player, xi as PlayerPage, ii as QualityMenu, Ko as RATING_LABELS, qo as RATING_OPTIONS, St as RESUME_MAX_RATIO, xt as RESUME_MIN_SECONDS, Ia as Reveal, js as SUBSCRIBABLE_EVENTS, Rr as Scrubber, _ as Select, oa as SettingsForm, ca as SettingsPage, ya as Sheet, Qr as ShortcutsHelp, Wi as SignupForm, qi as SignupPage, o as Skeleton, ei as Slider, ri as SpeedMenu, Aa as Spinner, v as Switch, Fa as Tabs, Oa as ToastHost, xa as Tooltip, ni as VolumeControl, As as WEBHOOK_EVENT_CATEGORIES, Tc as adminMenu, st as applyStoredThemeEarly, Yl as bindMediaStoreToRouter, wc as buildAdminRoutes, _n as buildMediaQuery, vn as buildMediaUrl, da as createPhlixApp, it as deriveAccentVars, Nr as formatTime, Ae as fuzzyScore, Wr as handleShortcut, Re as hasStoredPreferences, Ur as isTypingTarget, je as matchCommand, Le as readStoredPreferences, Si as useAuthStore, Ne as useCommandStore, l as useFocusTrap, Gr as useKeyboardShortcuts, bt as useMediaStore, Et as usePlayerStore, Be as usePreferencesStore, ct as useTheme, n as useToastStore };
+export { Ra as ALL_LOGS, Br as ARROW_ICONS, Vr as ARROW_LABELS, no as AdminDashboardApi, Go as AdminDashboardPage, wc as AdminIntegrationsApi, dl as AdminIntegrationsPage, za as AdminLogsApi, Ya as AdminLogsPage, oc as AdminServicesApi, Cc as AdminServicesPage, Jo as AdminUsersApi, ks as AdminUsersPage, Ms as AdminWebhooksApi, ac as AdminWebhooksPage, e as ApiClient, a as ApiError, pa as AppBackdrop, we as AppLayout, Iu as AuditLogsPage, _ as Badge, ar as BrowsePage, i as Button, Cn as Chip, An as Combobox, Xe as CommandPalette, Pe as DEFAULT_PREFERENCES, f as EmptyState, ru as FederationPage, $n as FilterBar, t as Icon, u as IconButton, De as Kbd, kl as LibraryScanPage, c as LocalStorageTokenStore, Ai as LoginForm, Ni as LoginPage, _u as ManageSharesPage, Xt as MediaCard, Dr as MediaDetail, Mr as MediaDetailPage, on as MediaGrid, yn as MediaHomeRow, gn as MediaRow, d as Modal, Bl as MyServersPage, zr as PLAYER_SHORTCUTS, La as PageTransition, pt as PhlixApp, _i as Player, xi as PlayerPage, ii as QualityMenu, Ko as RATING_LABELS, qo as RATING_OPTIONS, St as RESUME_MAX_RATIO, xt as RESUME_MIN_SECONDS, Ia as Reveal, js as SUBSCRIBABLE_EVENTS, Rr as Scrubber, g as Select, oa as SettingsForm, ca as SettingsPage, ya as Sheet, Qr as ShortcutsHelp, Wi as SignupForm, qi as SignupPage, o as Skeleton, ei as Slider, ri as SpeedMenu, Aa as Spinner, v as Switch, Fa as Tabs, Oa as ToastHost, xa as Tooltip, ni as VolumeControl, As as WEBHOOK_EVENT_CATEGORIES, pl as adminMenu, st as applyStoredThemeEarly, Lu as bindMediaStoreToRouter, fl as buildAdminRoutes, _n as buildMediaQuery, vn as buildMediaUrl, da as createPhlixApp, it as deriveAccentVars, Nr as formatTime, Ae as fuzzyScore, Wr as handleShortcut, Re as hasStoredPreferences, Ur as isTypingTarget, je as matchCommand, Le as readStoredPreferences, Si as useAuthStore, Ne as useCommandStore, l as useFocusTrap, Gr as useKeyboardShortcuts, bt as useMediaStore, Et as usePlayerStore, Be as usePreferencesStore, ct as useTheme, n as useToastStore };
 
 //# sourceMappingURL=phlix-ui.js.map
