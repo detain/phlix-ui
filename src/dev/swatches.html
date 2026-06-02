@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>@phlix/ui — Token swatches (R0.1)</title>
+<!-- Pull the REAL shipped token files so this page validates them directly. -->
+<link rel="stylesheet" href="../tokens/index.css" />
+<style>
+  body { font-family: var(--font-sans, sans-serif); padding: 24px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .sub { color: var(--text-subtle); margin-bottom: 24px; font-size: 14px; }
+  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .theme {
+    border: 1px solid var(--border); border-radius: var(--radius-xl);
+    background: var(--bg); color: var(--text); padding: 18px; box-shadow: var(--shadow-2);
+  }
+  .theme h2 { font-size: 16px; margin-bottom: 14px; color: var(--text);
+    display: flex; align-items: center; gap: 8px; }
+  .theme h2::before { content:''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .grp { margin-bottom: 16px; }
+  .grp .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-subtle); margin-bottom: 8px; }
+  .ramp { display: flex; gap: 0; border-radius: var(--radius-md); overflow: hidden; }
+  .ramp span { flex: 1; height: 34px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sw { width: 64px; }
+  .sw .chip { height: 38px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); }
+  .sw .nm { font-size: 9px; color: var(--text-muted); margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .texts p { margin: 2px 0; font-size: 14px; }
+  .elev { display: flex; gap: 12px; }
+  .elev .e { width: 56px; height: 40px; border-radius: var(--radius-md); background: var(--surface-2);
+    display: grid; place-items: center; font-size: 10px; color: var(--text-muted); }
+  .glow { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: var(--text-on-accent); font-weight: 600; font-size: 13px;
+    padding: 8px 14px; border-radius: var(--radius-md); box-shadow: var(--glow-amber); }
+  .state { display: flex; gap: 8px; }
+  .state .s { flex: 1; font-size: 11px; font-weight: 600; padding: 6px; border-radius: var(--radius-sm);
+    text-align: center; }
+</style>
+</head>
+<body>
+  <h1>@phlix/ui — Token swatches</h1>
+  <div class="sub">R0.1 token overhaul · every token resolved in all three themes (nocturne / daylight / midnight)</div>
+  <div class="themes" id="themes"></div>
+
+<script>
+  const themes = ['nocturne','daylight','midnight'];
+  const surfaces = ['bg','surface','surface-2','surface-3','border','border-strong'];
+  const accents = ['accent','accent-hover','accent-active'];
+  const amber = [50,100,200,300,400,500,600,700,800,900,950];
+  const states = ['error','success','warning','info'];
+
+  document.getElementById('themes').innerHTML = themes.map(t => `
+    <section class="theme" data-theme="${t}">
+      <h2>${t}</h2>
+
+      <div class="grp">
+        <div class="lbl">Amber ramp</div>
+        <div class="ramp">${amber.map(n=>`<span style="background:var(--amber-${n})" title="--amber-${n}"></span>`).join('')}</div>
+      </div>
+
+      <div class="grp">
+        <div class="lbl">Accent roles</div>
+        <div class="row">${accents.map(a=>`<div class="sw"><div class="chip" style="background:var(--${a})"></div><div class="nm">${a}</div></div>`).join('')}
+          <div class="sw"><div class="chip" style="background:var(--accent-soft)"></div><div class="nm">soft</div></div>
+          <div class="sw"><div class="chip" style="background:var(--accent-ring)"></div><div class="nm">ring</div></div>
+        </div>
+      </div>
+
+      <div class="grp">
+        <div class="lbl">Surfaces &amp; borders</div>
+        <div class="row">${surfaces.map(s=>`<div class="sw"><div class="chip" style="background:var(--${s})"></div><div class="nm">${s}</div></div>`).join('')}</div>
+      </div>
+
+      <div class="grp">
+        <div class="lbl">Text ramp</div>
+        <div class="texts">
+          <p style="color:var(--text)">text — primary</p>
+          <p style="color:var(--text-muted)">text-muted — secondary</p>
+          <p style="color:var(--text-subtle)">text-subtle — tertiary</p>
+          <p style="color:var(--text-faint)">text-faint — quaternary</p>
+        </div>
+      </div>
+
+      <div class="grp">
+        <div class="lbl">State</div>
+        <div class="state">${states.map(s=>`<div class="s" style="background:var(--${s}-bg);color:var(--${s})">${s}</div>`).join('')}</div>
+      </div>
+
+      <div class="grp">
+        <div class="lbl">Elevation</div>
+        <div class="elev">
+          <div class="e" style="box-shadow:var(--shadow-1)">1</div>
+          <div class="e" style="box-shadow:var(--shadow-2)">2</div>
+          <div class="e" style="box-shadow:var(--shadow-3)">3</div>
+          <div class="e" style="box-shadow:var(--shadow-4)">4</div>
+        </div>
+        <div class="glow">glow-amber</div>
+      </div>
+
+      <div class="grp">
+        <div class="lbl">Legacy aliases (must resolve)</div>
+        <div class="row">
+          <div class="sw"><div class="chip" style="background:var(--color-bg)"></div><div class="nm">color-bg</div></div>
+          <div class="sw"><div class="chip" style="background:var(--color-surface)"></div><div class="nm">surface</div></div>
+          <div class="sw"><div class="chip" style="background:var(--color-primary)"></div><div class="nm">primary</div></div>
+          <div class="sw"><div class="chip" style="background:var(--color-border)"></div><div class="nm">border</div></div>
+          <div class="sw"><div class="chip" style="background:var(--color-error)"></div><div class="nm">error</div></div>
+        </div>
+      </div>
+    </section>
+  `).join('');
+</script>
+</body>
+</html>

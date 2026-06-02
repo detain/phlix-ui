@@ -1,8 +1,60 @@
-:root {
-    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+/* ============================================================================
+   @phlix/ui — Elevation tokens (Nocturne, R0.1)
+
+   Warm-black shadow ladder + an amber glow for accent emphasis (play buttons,
+   focus). Theme-scoped because daylight needs brown-tinted, softer shadows.
+   :root defaults to Nocturne. Legacy --shadow-xs..2xl kept as aliases, mapped
+   into each theme block so per-subtree theming resolves.
+
+      --shadow-1  hairline / chips            (legacy xs, sm)
+      --shadow-2  cards, glass bars           (legacy md)
+      --shadow-3  menus, popovers, up-next    (legacy lg, xl)
+      --shadow-4  hover-lifted cards, player  (legacy 2xl)
+      --glow-amber  accent emphasis ring + bloom
+   ============================================================================ */
+
+:root,
+[data-theme='nocturne'] {
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.48);
+  --shadow-3: 0 14px 36px rgba(0, 0, 0, 0.55);
+  --shadow-4: 0 28px 64px -16px rgba(0, 0, 0, 0.72);
+  --glow-amber: 0 0 0 1px rgba(245, 165, 36, 0.35), 0 10px 36px -8px rgba(245, 165, 36, 0.40);
+
+  --shadow-xs: var(--shadow-1);
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-3);
+  --shadow-xl: var(--shadow-3);
+  --shadow-2xl: var(--shadow-4);
+}
+
+[data-theme='daylight'] {
+  --shadow-1: 0 1px 2px rgba(74, 55, 20, 0.10);
+  --shadow-2: 0 4px 14px rgba(74, 55, 20, 0.12);
+  --shadow-3: 0 14px 36px rgba(74, 55, 20, 0.16);
+  --shadow-4: 0 28px 64px -16px rgba(74, 55, 20, 0.24);
+  --glow-amber: 0 0 0 1px rgba(217, 130, 9, 0.30), 0 10px 36px -8px rgba(245, 165, 36, 0.35);
+
+  --shadow-xs: var(--shadow-1);
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-3);
+  --shadow-xl: var(--shadow-3);
+  --shadow-2xl: var(--shadow-4);
+}
+
+[data-theme='midnight'] {
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.70);
+  --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.70);
+  --shadow-3: 0 14px 36px rgba(0, 0, 0, 0.80);
+  --shadow-4: 0 28px 64px -16px rgba(0, 0, 0, 0.90);
+  --glow-amber: 0 0 0 1px rgba(245, 165, 36, 0.40), 0 10px 36px -8px rgba(245, 165, 36, 0.45);
+
+  --shadow-xs: var(--shadow-1);
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-3);
+  --shadow-xl: var(--shadow-3);
+  --shadow-2xl: var(--shadow-4);
 }
