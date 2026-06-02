@@ -1,0 +1,322 @@
+import type { MediaItem } from '../types/media-item';
+/** Resume is offered only when progress is past this many seconds… */
+export declare const RESUME_MIN_SECONDS = 30;
+/** …and before this fraction of the runtime (else it's effectively finished). */
+export declare const RESUME_MAX_RATIO = 0.95;
+export interface MediaSessionHandlers {
+    onPlay?: () => void;
+    onPause?: () => void;
+    onSeek?: (to: number) => void;
+    onNext?: () => void;
+    onPrevious?: () => void;
+}
+/**
+ * usePlayerStore (R1.3) — singleton playback state shared across routes so a
+ * mini-player can keep playing during navigation and "resume" / "up-next" work.
+ *
+ * Holds the current media + queue, transport state (position/duration/buffered),
+ * and user selections (volume/muted/rate/quality/subtitle) seeded from prefs. A
+ * persisted, throttled resume map records per-media positions in the 30s–95% band.
+ * Media Session metadata + handlers are wired via bindMediaSession().
+ */
+export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-player", Pick<{
+    current: import("vue").Ref<{
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    } | null, MediaItem | {
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    } | null>;
+    queue: import("vue").Ref<{
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    }[], MediaItem[] | {
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    }[]>;
+    playing: import("vue").Ref<boolean, boolean>;
+    position: import("vue").Ref<number, number>;
+    duration: import("vue").Ref<number, number>;
+    buffered: import("vue").Ref<number, number>;
+    volume: import("vue").Ref<number, number>;
+    muted: import("vue").Ref<boolean, boolean>;
+    rate: import("vue").Ref<number, number>;
+    quality: import("vue").Ref<string, string>;
+    subtitleLang: import("vue").Ref<string | null, string | null>;
+    miniPlayer: import("vue").Ref<boolean, boolean>;
+    resumeMap: import("vue").Ref<Record<string, number>, Record<string, number>>;
+    progress: import("vue").ComputedRef<number>;
+    upNext: import("vue").ComputedRef<MediaItem | null>;
+    inResumeBand: (pos: number, dur: number) => boolean;
+    saveResume: (id: string, pos: number, dur: number) => void;
+    resumePositionFor: (id: string | null | undefined) => number | null;
+    clearResume: (id: string) => void;
+    setCurrent: (media: MediaItem, opts?: {
+        resetPosition?: boolean;
+    }) => void;
+    updateProgress: (pos: number, dur?: number, buf?: number) => void;
+    play: () => void;
+    pause: () => void;
+    setVolume: (v: number) => void;
+    toggleMute: () => void;
+    setRate: (r: number) => void;
+    setQuality: (q: string) => void;
+    setSubtitle: (lang: string | null) => void;
+    setQueue: (items: MediaItem[]) => void;
+    enqueue: (item: MediaItem) => void;
+    next: () => MediaItem | null;
+    showMiniPlayer: () => void;
+    hideMiniPlayer: () => void;
+    closePlayer: () => void;
+    setMediaSessionMetadata: (media: MediaItem) => void;
+    bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
+    seedFromPreferences: () => void;
+}, "playing" | "muted" | "volume" | "duration" | "position" | "current" | "queue" | "buffered" | "rate" | "quality" | "subtitleLang" | "miniPlayer" | "resumeMap">, Pick<{
+    current: import("vue").Ref<{
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    } | null, MediaItem | {
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    } | null>;
+    queue: import("vue").Ref<{
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    }[], MediaItem[] | {
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    }[]>;
+    playing: import("vue").Ref<boolean, boolean>;
+    position: import("vue").Ref<number, number>;
+    duration: import("vue").Ref<number, number>;
+    buffered: import("vue").Ref<number, number>;
+    volume: import("vue").Ref<number, number>;
+    muted: import("vue").Ref<boolean, boolean>;
+    rate: import("vue").Ref<number, number>;
+    quality: import("vue").Ref<string, string>;
+    subtitleLang: import("vue").Ref<string | null, string | null>;
+    miniPlayer: import("vue").Ref<boolean, boolean>;
+    resumeMap: import("vue").Ref<Record<string, number>, Record<string, number>>;
+    progress: import("vue").ComputedRef<number>;
+    upNext: import("vue").ComputedRef<MediaItem | null>;
+    inResumeBand: (pos: number, dur: number) => boolean;
+    saveResume: (id: string, pos: number, dur: number) => void;
+    resumePositionFor: (id: string | null | undefined) => number | null;
+    clearResume: (id: string) => void;
+    setCurrent: (media: MediaItem, opts?: {
+        resetPosition?: boolean;
+    }) => void;
+    updateProgress: (pos: number, dur?: number, buf?: number) => void;
+    play: () => void;
+    pause: () => void;
+    setVolume: (v: number) => void;
+    toggleMute: () => void;
+    setRate: (r: number) => void;
+    setQuality: (q: string) => void;
+    setSubtitle: (lang: string | null) => void;
+    setQueue: (items: MediaItem[]) => void;
+    enqueue: (item: MediaItem) => void;
+    next: () => MediaItem | null;
+    showMiniPlayer: () => void;
+    hideMiniPlayer: () => void;
+    closePlayer: () => void;
+    setMediaSessionMetadata: (media: MediaItem) => void;
+    bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
+    seedFromPreferences: () => void;
+}, "progress" | "upNext">, Pick<{
+    current: import("vue").Ref<{
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    } | null, MediaItem | {
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    } | null>;
+    queue: import("vue").Ref<{
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    }[], MediaItem[] | {
+        id: string;
+        name: string;
+        type: import("../types/media-item").MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+    }[]>;
+    playing: import("vue").Ref<boolean, boolean>;
+    position: import("vue").Ref<number, number>;
+    duration: import("vue").Ref<number, number>;
+    buffered: import("vue").Ref<number, number>;
+    volume: import("vue").Ref<number, number>;
+    muted: import("vue").Ref<boolean, boolean>;
+    rate: import("vue").Ref<number, number>;
+    quality: import("vue").Ref<string, string>;
+    subtitleLang: import("vue").Ref<string | null, string | null>;
+    miniPlayer: import("vue").Ref<boolean, boolean>;
+    resumeMap: import("vue").Ref<Record<string, number>, Record<string, number>>;
+    progress: import("vue").ComputedRef<number>;
+    upNext: import("vue").ComputedRef<MediaItem | null>;
+    inResumeBand: (pos: number, dur: number) => boolean;
+    saveResume: (id: string, pos: number, dur: number) => void;
+    resumePositionFor: (id: string | null | undefined) => number | null;
+    clearResume: (id: string) => void;
+    setCurrent: (media: MediaItem, opts?: {
+        resetPosition?: boolean;
+    }) => void;
+    updateProgress: (pos: number, dur?: number, buf?: number) => void;
+    play: () => void;
+    pause: () => void;
+    setVolume: (v: number) => void;
+    toggleMute: () => void;
+    setRate: (r: number) => void;
+    setQuality: (q: string) => void;
+    setSubtitle: (lang: string | null) => void;
+    setQueue: (items: MediaItem[]) => void;
+    enqueue: (item: MediaItem) => void;
+    next: () => MediaItem | null;
+    showMiniPlayer: () => void;
+    hideMiniPlayer: () => void;
+    closePlayer: () => void;
+    setMediaSessionMetadata: (media: MediaItem) => void;
+    bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
+    seedFromPreferences: () => void;
+}, "next" | "toggleMute" | "setRate" | "play" | "pause" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "setCurrent" | "updateProgress" | "setVolume" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "closePlayer" | "setMediaSessionMetadata" | "bindMediaSession" | "seedFromPreferences">>;
