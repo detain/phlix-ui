@@ -18,6 +18,13 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Integrations (RA.6):** new **`AdminIntegrationsPage`** (`src/pages/admin/IntegrationsPage.vue`)
+  — Arr-sync (TRaSH-Guides) status + manual trigger (30s timeout toast) + auto-sync toggle, plus OIDC and
+  LDAP auth-provider enable/disable and config modals (OIDC provider URL/client; LDAP host/port/SSL/base-DN/
+  bind-DN/bind-password with masking + omit-blank-to-keep, and a test-connection action). Backed by
+  **`AdminIntegrationsApi`** (`src/api/admin/integrations.ts`) consolidating the deleted React `arrSync` +
+  `authProviders` (OIDC/LDAP) modules (`/api/v1/admin/arr-sync*`, `/api/v1/admin/auth-providers*`). Exported;
+  wired into the admin route/menu seam.
 - **Admin port — Services (RA.5):** new **`AdminServicesPage`** (`src/pages/admin/ServicesPage.vue`) —
   Trakt.tv + Last.fm connect/disconnect cards (connected state + username, disconnect with confirm/refetch,
   connect via full-page redirect to the server OAuth/connect URLs). Backed by **`AdminServicesApi`**

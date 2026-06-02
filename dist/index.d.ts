@@ -36,6 +36,9 @@ export type { Webhook, CreateWebhookInput, UpdateWebhookInput, TestResult } from
 export { default as AdminServicesPage } from './pages/admin/ServicesPage.vue';
 export { AdminServicesApi } from './api/admin/services';
 export type { TraktStatus, TraktDisconnectResult, LastfmStatus, LastfmDisconnectResult, } from './api/admin/services';
+export { default as AdminIntegrationsPage } from './pages/admin/IntegrationsPage.vue';
+export { AdminIntegrationsApi } from './api/admin/integrations';
+export type { ArrSyncStatus, ArrSyncTriggerResult, ArrSyncEnableResult, AuthProvider, EnableProviderResult, DisableProviderResult, OidcSettings, SaveOidcInput, LdapSettings, SaveLdapInput, LdapTestResult, } from './api/admin/integrations';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
