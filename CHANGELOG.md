@@ -18,6 +18,10 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — DLNA server (RA.9):** new **`AdminDlnaServerPage`** (`src/pages/admin/DlnaServerPage.vue`)
+  — DLNA media-server status (running/stopped/not-configured) with a start/stop toggle. Backed by
+  **`AdminDlnaServerApi`** (`src/api/admin/dlnaServer.ts`, `/api/v1/admin/dlna/*`). Exported; wired into the
+  admin route/menu seam.
 - **Admin port — Cast devices (RA.8):** new **`AdminCastDevicesPage`** (`src/pages/admin/CastDevicesPage.vue`)
   — Chromecast + AirPlay device tabs: device list + selection, playback-state display, and transport
   controls (play/pause/stop; seek on Chromecast only). Backed by **`AdminCastApi`**
