@@ -18,6 +18,12 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Users/Profiles (RA.3):** new **`AdminUsersPage`** (`src/pages/admin/UsersPage.vue`) —
+  user table with create/edit/delete (`Modal`), admin promote/demote, reset-password (reveals the
+  generated value + copy), and per-user **profiles** management (add/edit/delete, ≤5-profile limit, PIN
+  set/clear with 4-or-6-digit validation, parental rating). Backed by **`AdminUsersApi`**
+  (`src/api/admin/users.ts`, `/api/v1/admin/users*` + `/profiles*`). Exported; wired into the admin
+  route/menu seam.
 - **Admin port — Dashboard (RA.2):** new **`AdminDashboardPage`** (`src/pages/admin/DashboardPage.vue`) —
   Now Playing (live sessions + progress), Top Users (30d), Top Media, Storage breakdown, and an Activity
   feed with load-more; a 7/30/90-day range selector and 30s now-playing auto-refresh. Backed by

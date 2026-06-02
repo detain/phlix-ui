@@ -25,6 +25,21 @@ describe('buildAdminRoutes', () => {
     const routes = buildAdminRoutes('/portal');
     expect(routes.find((r) => r.name === 'admin-dashboard')?.path).toBe('/portal/admin/dashboard');
   });
+
+  it('exposes the users route after the dashboard, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const users = routes.find((r) => r.name === 'admin-users');
+    expect(users?.path).toBe('/app/admin/users');
+    expect(typeof users?.component).toBe('function');
+    // Dashboard stays first; users comes after it.
+    expect(routes[0].name).toBe('admin-dashboard');
+    expect(routes.findIndex((r) => r.name === 'admin-users')).toBeGreaterThan(0);
+  });
+
+  it('honors a custom base for the users route', () => {
+    const routes = buildAdminRoutes('/portal');
+    expect(routes.find((r) => r.name === 'admin-users')?.path).toBe('/portal/admin/users');
+  });
 });
 
 describe('adminMenu', () => {
@@ -45,5 +60,18 @@ describe('adminMenu', () => {
     const dash = group.children?.find((c) => c.id === 'admin-dashboard');
     expect(dash?.label).toBe('Dashboard');
     expect(dash?.to).toBe('/app/admin/dashboard');
+  });
+
+  it('exposes a users child pointing at the users route', () => {
+    const [group] = adminMenu();
+    const users = group.children?.find((c) => c.id === 'admin-users');
+    expect(users?.label).toBe('Users');
+    expect(users?.to).toBe('/app/admin/users');
+    expect(users?.icon).toBe('user');
+  });
+
+  it('honors a custom base in the users child link', () => {
+    const [group] = adminMenu('/portal');
+    expect(group.children?.find((c) => c.id === 'admin-users')?.to).toBe('/portal/admin/users');
   });
 });

@@ -43,6 +43,16 @@ export type {
   StorageSummary,
   ActivityEvent,
 } from './api/admin/dashboard';
+export { default as AdminUsersPage } from './pages/admin/UsersPage.vue';
+export { AdminUsersApi, RATING_LABELS, RATING_OPTIONS } from './api/admin/users';
+export type {
+  User,
+  CreateUserInput,
+  UpdateUserInput,
+  Profile,
+  CreateProfileInput,
+  UpdateProfileInput,
+} from './api/admin/users';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
