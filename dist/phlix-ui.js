@@ -9659,10 +9659,259 @@ var Ul = class {
 			}, 8, ["modelValue"])
 		]));
 	}
-}), xp = /* @__PURE__ */ pe({ default: () => Sp }), Sp = /*#__PURE__*/ r(bp, [["__scopeId", "data-v-1a2decc5"]]);
+}), xp = /* @__PURE__ */ pe({ default: () => Sp }), Sp = /*#__PURE__*/ r(bp, [["__scopeId", "data-v-1a2decc5"]]), Cp = class {
+	client;
+	constructor(e) {
+		this.client = e;
+	}
+	async listGroups() {
+		let { groups: e } = await this.client.get("/api/v1/syncplay/groups");
+		return Array.isArray(e) ? e : [];
+	}
+	createGroup(e) {
+		return this.client.post("/api/v1/syncplay/groups", e);
+	}
+	getGroup(e) {
+		return this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`);
+	}
+	joinGroup(e, t) {
+		return this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/join`, t ?? {});
+	}
+	leaveGroup(e) {
+		return this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/leave`, {});
+	}
+}, wp = {
+	class: "admin-syncplay",
+	"aria-labelledby": "syncplay-heading"
+}, Tp = { class: "admin-syncplay__head" }, Ep = {
+	key: 0,
+	class: "admin-syncplay__skel"
+}, Dp = {
+	key: 2,
+	class: "admin-syncplay__table",
+	"aria-label": "SyncPlay groups"
+}, Op = { class: "admin-syncplay__name" }, kp = { class: "admin-syncplay__media" }, Ap = { class: "admin-syncplay__field" }, jp = { class: "admin-syncplay__field" }, Mp = { class: "admin-syncplay__field" }, Np = { class: "admin-syncplay__field" }, Pp = /*@__PURE__*/ j({
+	__name: "SyncPlayPage",
+	props: { client: {} },
+	setup(t) {
+		let r = t, a = ee("apiBase", ""), s = C(() => typeof a == "string" ? a : a?.value ?? ""), l = new Cp(r.client ?? new e({
+			baseUrl: s.value,
+			tokenStore: new c()
+		})), u = n();
+		function p(e, t) {
+			return e instanceof Error && e.message ? e.message : t;
+		}
+		let m = z([]), h = z(!0);
+		async function g() {
+			h.value = !0;
+			try {
+				m.value = await l.listGroups();
+			} catch (e) {
+				u.error(p(e, "Failed to load groups."));
+			} finally {
+				h.value = !1;
+			}
+		}
+		let v = z(!1), b = z(""), x = z(""), S = z(!1);
+		function w() {
+			b.value = "", x.value = "", v.value = !0;
+		}
+		function j() {
+			v.value = !1;
+		}
+		async function M() {
+			if (!b.value.trim()) {
+				u.error("Group name is required.");
+				return;
+			}
+			S.value = !0;
+			try {
+				let e = { name: b.value.trim() };
+				x.value.trim() && (e.password = x.value.trim()), await l.createGroup(e), u.success("Group created."), j(), await g();
+			} catch (e) {
+				u.error(p(e, "Failed to create group."));
+			} finally {
+				S.value = !1;
+			}
+		}
+		let N = z(!1), P = z(""), F = z(""), R = z(!1);
+		function V(e) {
+			P.value = e ?? "", F.value = "", N.value = !0;
+		}
+		function H() {
+			N.value = !1;
+		}
+		async function U() {
+			if (!P.value.trim()) {
+				u.error("Group ID is required.");
+				return;
+			}
+			R.value = !0;
+			try {
+				let e = {};
+				F.value.trim() && (e.password = F.value.trim()), await l.joinGroup(P.value.trim(), e), u.success("Joined group."), H();
+			} catch (e) {
+				u.error(p(e, "Failed to join group."));
+			} finally {
+				R.value = !1;
+			}
+		}
+		function G(e) {
+			return `${e} member${e === 1 ? "" : "s"}`;
+		}
+		return I(g), (e, t) => (L(), D("section", wp, [
+			O("header", Tp, [t[7] ||= O("div", { class: "admin-syncplay__heading-group" }, [O("h1", {
+				id: "syncplay-heading",
+				class: "admin-syncplay__title"
+			}, "SyncPlay"), O("p", { class: "admin-syncplay__subtitle" }, " Watch together with synchronized playback for multiple viewers. ")], -1), A(i, {
+				variant: "solid",
+				size: "sm",
+				"left-icon": "plus",
+				onClick: w
+			}, {
+				default: X(() => [...t[6] ||= [k(" Create group ", -1)]]),
+				_: 1
+			})]),
+			h.value ? (L(), D("div", Ep, [A(o, {
+				variant: "text",
+				lines: 5
+			})])) : m.value.length === 0 ? (L(), T(f, {
+				key: 1,
+				icon: "tv",
+				title: "No groups yet",
+				description: "Create one to start watching together."
+			}, {
+				actions: X(() => [A(i, {
+					variant: "solid",
+					size: "sm",
+					"left-icon": "plus",
+					onClick: w
+				}, {
+					default: X(() => [...t[8] ||= [k(" Create group ", -1)]]),
+					_: 1
+				})]),
+				_: 1
+			})) : (L(), D("table", Dp, [t[11] ||= O("thead", null, [O("tr", null, [
+				O("th", { scope: "col" }, "Name"),
+				O("th", { scope: "col" }, "Members"),
+				O("th", { scope: "col" }, "Status"),
+				O("th", { scope: "col" }, "Media"),
+				O("th", {
+					scope: "col",
+					class: "admin-syncplay__actions-col"
+				}, "Actions")
+			])], -1), O("tbody", null, [(L(!0), D(y, null, B(m.value, (e) => (L(), D("tr", { key: e.id }, [
+				O("td", null, [O("span", Op, W(e.name), 1), e.has_password ? (L(), T(_, {
+					key: 0,
+					tone: "warning"
+				}, {
+					default: X(() => [...t[9] ||= [k("Password", -1)]]),
+					_: 1
+				})) : E("", !0)]),
+				O("td", null, W(G(e.member_count)), 1),
+				O("td", null, [A(_, { tone: e.is_playing ? "accent" : "neutral" }, {
+					default: X(() => [k(W(e.is_playing ? "Playing" : "Idle"), 1)]),
+					_: 2
+				}, 1032, ["tone"])]),
+				O("td", kp, W(e.current_media ?? "—"), 1),
+				O("td", null, [A(i, {
+					variant: "ghost",
+					size: "sm",
+					"aria-label": `Join ${e.name}`,
+					onClick: (t) => V(e.id)
+				}, {
+					default: X(() => [...t[10] ||= [k(" Join ", -1)]]),
+					_: 1
+				}, 8, ["aria-label", "onClick"])])
+			]))), 128))])])),
+			A(d, {
+				modelValue: v.value,
+				"onUpdate:modelValue": t[2] ||= (e) => v.value = e,
+				title: "Create SyncPlay group",
+				onClose: j
+			}, {
+				footer: X(() => [A(i, {
+					variant: "ghost",
+					size: "sm",
+					onClick: j
+				}, {
+					default: X(() => [...t[14] ||= [k("Cancel", -1)]]),
+					_: 1
+				}), A(i, {
+					variant: "solid",
+					size: "sm",
+					loading: S.value,
+					onClick: M
+				}, {
+					default: X(() => [...t[15] ||= [k(" Create group ", -1)]]),
+					_: 1
+				}, 8, ["loading"])]),
+				default: X(() => [O("form", {
+					class: "admin-syncplay__form",
+					onSubmit: ae(M, ["prevent"])
+				}, [O("label", Ap, [t[12] ||= O("span", { class: "admin-syncplay__label" }, "Group name", -1), Z(O("input", {
+					"onUpdate:modelValue": t[0] ||= (e) => b.value = e,
+					type: "text",
+					class: "admin-syncplay__input",
+					autocomplete: "off",
+					placeholder: "Movie Night",
+					required: ""
+				}, null, 512), [[J, b.value]])]), O("label", jp, [t[13] ||= O("span", { class: "admin-syncplay__label" }, "Password (optional)", -1), Z(O("input", {
+					"onUpdate:modelValue": t[1] ||= (e) => x.value = e,
+					type: "password",
+					class: "admin-syncplay__input",
+					autocomplete: "new-password",
+					placeholder: "Leave empty for an open group"
+				}, null, 512), [[J, x.value]])])], 32)]),
+				_: 1
+			}, 8, ["modelValue"]),
+			A(d, {
+				modelValue: N.value,
+				"onUpdate:modelValue": t[5] ||= (e) => N.value = e,
+				title: "Join SyncPlay group",
+				onClose: H
+			}, {
+				footer: X(() => [A(i, {
+					variant: "ghost",
+					size: "sm",
+					onClick: H
+				}, {
+					default: X(() => [...t[18] ||= [k("Cancel", -1)]]),
+					_: 1
+				}), A(i, {
+					variant: "solid",
+					size: "sm",
+					loading: R.value,
+					onClick: U
+				}, {
+					default: X(() => [...t[19] ||= [k(" Join group ", -1)]]),
+					_: 1
+				}, 8, ["loading"])]),
+				default: X(() => [O("form", {
+					class: "admin-syncplay__form",
+					onSubmit: ae(U, ["prevent"])
+				}, [O("label", Mp, [t[16] ||= O("span", { class: "admin-syncplay__label" }, "Group ID", -1), Z(O("input", {
+					"onUpdate:modelValue": t[3] ||= (e) => P.value = e,
+					type: "text",
+					class: "admin-syncplay__input",
+					autocomplete: "off",
+					placeholder: "sp_abc123def456",
+					required: ""
+				}, null, 512), [[J, P.value]])]), O("label", Np, [t[17] ||= O("span", { class: "admin-syncplay__label" }, "Password (if required)", -1), Z(O("input", {
+					"onUpdate:modelValue": t[4] ||= (e) => F.value = e,
+					type: "password",
+					class: "admin-syncplay__input",
+					autocomplete: "new-password",
+					placeholder: "Leave empty if no password"
+				}, null, 512), [[J, F.value]])])], 32)]),
+				_: 1
+			}, 8, ["modelValue"])
+		]));
+	}
+}), Fp = /* @__PURE__ */ pe({ default: () => Ip }), Ip = /*#__PURE__*/ r(Pp, [["__scopeId", "data-v-0357add5"]]);
 //#endregion
 //#region src/app/admin.ts
-function Cp(e = "/app") {
+function Lp(e = "/app") {
 	let t = `${e}/admin`;
 	return [
 		{
@@ -9729,10 +9978,15 @@ function Cp(e = "/app") {
 			path: `${t}/history`,
 			name: "admin-history",
 			component: () => Promise.resolve().then(() => xp)
+		},
+		{
+			path: `${t}/syncplay`,
+			name: "admin-syncplay",
+			component: () => Promise.resolve().then(() => Fp)
 		}
 	];
 }
-function wp(e = "/app") {
+function Rp(e = "/app") {
 	let t = `${e}/admin`;
 	return [{
 		id: "admin",
@@ -9816,28 +10070,34 @@ function wp(e = "/app") {
 				label: "Watch History",
 				icon: "film",
 				to: `${t}/history`
+			},
+			{
+				id: "admin-syncplay",
+				label: "SyncPlay",
+				icon: "play",
+				to: `${t}/syncplay`
 			}
 		]
 	}];
 }
 //#endregion
 //#region src/pages/LibraryScanPage.vue?vue&type=script&setup=true&lang.ts
-var Tp = { class: "library-scan-page" }, Ep = {
+var zp = { class: "library-scan-page" }, Bp = {
 	key: 0,
 	class: "loading"
-}, Dp = {
+}, Vp = {
 	key: 1,
 	class: "error"
-}, Op = {
+}, Hp = {
 	key: 2,
 	class: "libraries-list"
-}, kp = { class: "library-info" }, Ap = { class: "library-name" }, jp = { class: "library-type" }, Mp = { class: "library-paths" }, Np = { class: "library-meta" }, Pp = { key: 0 }, Fp = {
+}, Up = { class: "library-info" }, Wp = { class: "library-name" }, Gp = { class: "library-type" }, Kp = { class: "library-paths" }, qp = { class: "library-meta" }, Jp = { key: 0 }, Yp = {
 	key: 0,
 	class: "scan-status"
-}, Ip = { class: "library-actions" }, Lp = ["onClick", "disabled"], Rp = ["onClick", "disabled"], zp = {
+}, Xp = { class: "library-actions" }, Zp = ["onClick", "disabled"], Qp = ["onClick", "disabled"], $p = {
 	key: 0,
 	class: "empty-state"
-}, Bp = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, em = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "LibraryScanPage",
 	setup(e) {
 		let t = z([]), n = z({}), r = z(!0), i = z(null);
@@ -9886,38 +10146,38 @@ var Tp = { class: "library-scan-page" }, Ep = {
 		}
 		return I(() => {
 			a();
-		}), (e, a) => (L(), D("div", Tp, [a[0] ||= O("div", { class: "scan-header" }, [O("h1", { class: "scan-title" }, "Library Scanner"), O("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")], -1), r.value ? (L(), D("div", Ep, "Loading libraries...")) : i.value ? (L(), D("div", Dp, W(i.value), 1)) : (L(), D("div", Op, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
+		}), (e, a) => (L(), D("div", zp, [a[0] ||= O("div", { class: "scan-header" }, [O("h1", { class: "scan-title" }, "Library Scanner"), O("p", { class: "scan-subtitle" }, "Scan your media libraries to discover new content")], -1), r.value ? (L(), D("div", Bp, "Loading libraries...")) : i.value ? (L(), D("div", Vp, W(i.value), 1)) : (L(), D("div", Hp, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
 			key: e.id,
 			class: "library-card"
-		}, [O("div", kp, [
-			O("h3", Ap, W(e.name), 1),
-			O("span", jp, W(e.type), 1),
-			O("p", Mp, W(e.paths.join(", ")), 1),
-			O("div", Np, [e.item_count === void 0 ? E("", !0) : (L(), D("span", Pp, W(e.item_count) + " items", 1)), O("span", null, "Last scan: " + W(u(e.last_scan_at)), 1)]),
-			n.value[e.id] ? (L(), D("div", Fp, W(d(n.value[e.id])), 1)) : E("", !0)
-		]), O("div", Ip, [O("button", {
+		}, [O("div", Up, [
+			O("h3", Wp, W(e.name), 1),
+			O("span", Gp, W(e.type), 1),
+			O("p", Kp, W(e.paths.join(", ")), 1),
+			O("div", qp, [e.item_count === void 0 ? E("", !0) : (L(), D("span", Jp, W(e.item_count) + " items", 1)), O("span", null, "Last scan: " + W(u(e.last_scan_at)), 1)]),
+			n.value[e.id] ? (L(), D("div", Yp, W(d(n.value[e.id])), 1)) : E("", !0)
+		]), O("div", Xp, [O("button", {
 			class: "btn btn-scan",
 			onClick: (t) => c(e.id),
 			disabled: n.value[e.id]?.status === "running" || n.value[e.id]?.status === "queued"
-		}, " Scan ", 8, Lp), O("button", {
+		}, " Scan ", 8, Zp), O("button", {
 			class: "btn btn-rescan",
 			onClick: (t) => l(e.id),
 			disabled: n.value[e.id]?.status === "running" || n.value[e.id]?.status === "queued"
-		}, " Rescan ", 8, Rp)])]))), 128)), t.value.length === 0 ? (L(), D("div", zp, " No libraries configured. Add a library to get started. ")) : E("", !0)]))]));
+		}, " Rescan ", 8, Qp)])]))), 128)), t.value.length === 0 ? (L(), D("div", $p, " No libraries configured. Add a library to get started. ")) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-62b3805e"]]), Vp = { class: "my-servers-page" }, Hp = {
+}), [["__scopeId", "data-v-62b3805e"]]), tm = { class: "my-servers-page" }, nm = {
 	key: 0,
 	class: "loading"
-}, Up = {
+}, rm = {
 	key: 1,
 	class: "error"
-}, Wp = {
+}, im = {
 	key: 2,
 	class: "servers-list"
-}, Gp = { class: "server-info" }, Kp = { class: "server-name" }, qp = { class: "server-url" }, Jp = { class: "server-meta" }, Yp = { key: 0 }, Xp = {
+}, am = { class: "server-info" }, om = { class: "server-name" }, sm = { class: "server-url" }, cm = { class: "server-meta" }, lm = { key: 0 }, um = {
 	key: 0,
 	class: "empty-state"
-}, Zp = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, dm = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "MyServersPage",
 	setup(e) {
 		let t = z([]), n = z(!0), r = z(null);
@@ -9943,7 +10203,7 @@ var Tp = { class: "library-scan-page" }, Ep = {
 		}
 		return I(() => {
 			i();
-		}), (e, i) => (L(), D("div", Vp, [i[2] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "My Servers"), O("p", { class: "page-subtitle" }, "Manage your connected media servers")], -1), n.value ? (L(), D("div", Hp, "Loading servers...")) : r.value ? (L(), D("div", Up, W(r.value), 1)) : (L(), D("div", Wp, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
+		}), (e, i) => (L(), D("div", tm, [i[2] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "My Servers"), O("p", { class: "page-subtitle" }, "Manage your connected media servers")], -1), n.value ? (L(), D("div", nm, "Loading servers...")) : r.value ? (L(), D("div", rm, W(r.value), 1)) : (L(), D("div", im, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
 			key: e.id,
 			class: "server-card"
 		}, [
@@ -9951,34 +10211,34 @@ var Tp = { class: "library-scan-page" }, Ep = {
 				class: "server-status",
 				style: P({ backgroundColor: a(e.status) })
 			}, null, 4),
-			O("div", Gp, [
-				O("h3", Kp, W(e.name), 1),
-				O("p", qp, W(e.url), 1),
-				O("div", Jp, [
+			O("div", am, [
+				O("h3", om, W(e.name), 1),
+				O("p", sm, W(e.url), 1),
+				O("div", cm, [
 					O("span", null, W(e.owner), 1),
-					e.library_count === void 0 ? E("", !0) : (L(), D("span", Yp, W(e.library_count) + " libraries", 1)),
+					e.library_count === void 0 ? E("", !0) : (L(), D("span", lm, W(e.library_count) + " libraries", 1)),
 					O("span", null, "Last seen: " + W(o(e.last_seen)), 1)
 				])
 			]),
 			i[0] ||= O("div", { class: "server-actions" }, [O("button", { class: "btn btn-primary" }, "Manage")], -1)
-		]))), 128)), t.value.length === 0 ? (L(), D("div", Xp, [...i[1] ||= [O("p", null, "No servers connected yet.", -1), O("button", { class: "btn btn-primary" }, "Add Server", -1)]])) : E("", !0)]))]));
+		]))), 128)), t.value.length === 0 ? (L(), D("div", um, [...i[1] ||= [O("p", null, "No servers connected yet.", -1), O("button", { class: "btn btn-primary" }, "Add Server", -1)]])) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-b9237da4"]]), Qp = { class: "federation-page" }, $p = {
+}), [["__scopeId", "data-v-b9237da4"]]), fm = { class: "federation-page" }, pm = {
 	key: 0,
 	class: "loading"
-}, em = {
+}, mm = {
 	key: 1,
 	class: "error"
-}, tm = {
+}, hm = {
 	key: 2,
 	class: "federation-content"
-}, nm = { class: "peers-section" }, rm = { class: "peers-list" }, im = { class: "peer-info" }, am = { class: "peer-name" }, om = { class: "peer-url" }, sm = { class: "peer-meta" }, cm = { key: 0 }, lm = { class: "peer-actions" }, um = ["onClick"], dm = {
+}, gm = { class: "peers-section" }, _m = { class: "peers-list" }, vm = { class: "peer-info" }, ym = { class: "peer-name" }, bm = { class: "peer-url" }, xm = { class: "peer-meta" }, Sm = { key: 0 }, Cm = { class: "peer-actions" }, wm = ["onClick"], Tm = {
 	key: 1,
 	class: "status-badge"
-}, fm = {
+}, Em = {
 	key: 0,
 	class: "empty-state"
-}, pm = { class: "add-peer-section" }, mm = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, Dm = { class: "add-peer-section" }, Om = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "FederationPage",
 	setup(e) {
 		let t = z([]), n = z(!0), r = z(null);
@@ -10018,7 +10278,7 @@ var Tp = { class: "library-scan-page" }, Ep = {
 		}
 		return I(() => {
 			i();
-		}), (e, i) => (L(), D("div", Qp, [i[5] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Federation"), O("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")], -1), n.value ? (L(), D("div", $p, "Loading federation peers...")) : r.value ? (L(), D("div", em, W(r.value), 1)) : (L(), D("div", tm, [O("div", nm, [i[2] ||= O("h2", { class: "section-title" }, "Connected Peers", -1), O("div", rm, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
+		}), (e, i) => (L(), D("div", fm, [i[5] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Federation"), O("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")], -1), n.value ? (L(), D("div", pm, "Loading federation peers...")) : r.value ? (L(), D("div", mm, W(r.value), 1)) : (L(), D("div", hm, [O("div", gm, [i[2] ||= O("h2", { class: "section-title" }, "Connected Peers", -1), O("div", _m, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
 			key: e.id,
 			class: "peer-card"
 		}, [
@@ -10026,17 +10286,17 @@ var Tp = { class: "library-scan-page" }, Ep = {
 				class: "peer-status",
 				style: P({ backgroundColor: c(e.status) })
 			}, null, 4),
-			O("div", im, [
-				O("h3", am, W(e.name), 1),
-				O("p", om, W(e.url), 1),
-				O("div", sm, [e.shared_libraries_count === void 0 ? E("", !0) : (L(), D("span", cm, W(e.shared_libraries_count) + " shared libraries", 1)), O("span", null, "Last sync: " + W(l(e.last_sync)), 1)])
+			O("div", vm, [
+				O("h3", ym, W(e.name), 1),
+				O("p", bm, W(e.url), 1),
+				O("div", xm, [e.shared_libraries_count === void 0 ? E("", !0) : (L(), D("span", Sm, W(e.shared_libraries_count) + " shared libraries", 1)), O("span", null, "Last sync: " + W(l(e.last_sync)), 1)])
 			]),
-			O("div", lm, [e.status === "connected" ? (L(), D("button", {
+			O("div", Cm, [e.status === "connected" ? (L(), D("button", {
 				key: 0,
 				class: "btn btn-secondary",
 				onClick: (t) => o(e.id)
-			}, " Disconnect ", 8, um)) : e.status === "pending" ? (L(), D("span", dm, "Pending")) : E("", !0)])
-		]))), 128)), t.value.length === 0 ? (L(), D("div", fm, [...i[1] ||= [O("p", null, "No federation peers connected.", -1)]])) : E("", !0)])]), O("div", pm, [i[4] ||= O("h2", { class: "section-title" }, "Add Peer", -1), O("form", {
+			}, " Disconnect ", 8, wm)) : e.status === "pending" ? (L(), D("span", Tm, "Pending")) : E("", !0)])
+		]))), 128)), t.value.length === 0 ? (L(), D("div", Em, [...i[1] ||= [O("p", null, "No federation peers connected.", -1)]])) : E("", !0)])]), O("div", Dm, [i[4] ||= O("h2", { class: "section-title" }, "Add Peer", -1), O("form", {
 			class: "add-peer-form",
 			onSubmit: i[0] ||= ae((e) => a(""), ["prevent"])
 		}, [...i[3] ||= [O("input", {
@@ -10048,22 +10308,22 @@ var Tp = { class: "library-scan-page" }, Ep = {
 			class: "btn btn-primary"
 		}, "Connect", -1)]], 32)])]))]));
 	}
-}), [["__scopeId", "data-v-91ba2781"]]), hm = { class: "manage-shares-page" }, gm = {
+}), [["__scopeId", "data-v-91ba2781"]]), km = { class: "manage-shares-page" }, Am = {
 	key: 0,
 	class: "loading"
-}, _m = {
+}, jm = {
 	key: 1,
 	class: "error"
-}, vm = {
+}, Mm = {
 	key: 2,
 	class: "shares-list"
-}, ym = { class: "share-info" }, bm = { class: "share-library" }, xm = { class: "share-meta" }, Sm = {
+}, Nm = { class: "share-info" }, Pm = { class: "share-library" }, Fm = { class: "share-meta" }, Im = {
 	key: 0,
 	class: "expired-badge"
-}, Cm = { class: "share-dates" }, wm = { key: 0 }, Tm = { class: "share-actions" }, Em = ["onClick"], Dm = {
+}, Lm = { class: "share-dates" }, Rm = { key: 0 }, zm = { class: "share-actions" }, Bm = ["onClick"], Vm = {
 	key: 0,
 	class: "empty-state"
-}, Om = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, Hm = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "ManageSharesPage",
 	setup(e) {
 		let t = z([]), n = z(!0), r = z(null);
@@ -10091,47 +10351,47 @@ var Tp = { class: "library-scan-page" }, Ep = {
 		}
 		return I(() => {
 			i();
-		}), (e, i) => (L(), D("div", hm, [i[1] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Manage Shares"), O("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (L(), D("div", gm, "Loading shares...")) : r.value ? (L(), D("div", _m, W(r.value), 1)) : (L(), D("div", vm, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
+		}), (e, i) => (L(), D("div", km, [i[1] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Manage Shares"), O("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (L(), D("div", Am, "Loading shares...")) : r.value ? (L(), D("div", jm, W(r.value), 1)) : (L(), D("div", Mm, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
 			key: e.id,
 			class: "share-card"
-		}, [O("div", ym, [
-			O("h3", bm, W(e.library_name), 1),
-			O("div", xm, [
+		}, [O("div", Nm, [
+			O("h3", Pm, W(e.library_name), 1),
+			O("div", Fm, [
 				O("span", null, "Shared with: " + W(e.shared_with), 1),
 				O("span", { class: N(["permission-badge", e.permissions]) }, W(e.permissions), 3),
-				e.expires_at && c(e.expires_at) ? (L(), D("span", Sm, "Expired")) : E("", !0)
+				e.expires_at && c(e.expires_at) ? (L(), D("span", Im, "Expired")) : E("", !0)
 			]),
-			O("p", Cm, [k(" Created: " + W(o(e.created_at)) + " ", 1), e.expires_at ? (L(), D("span", wm, " | Expires: " + W(o(e.expires_at)), 1)) : E("", !0)])
-		]), O("div", Tm, [O("button", {
+			O("p", Lm, [k(" Created: " + W(o(e.created_at)) + " ", 1), e.expires_at ? (L(), D("span", Rm, " | Expires: " + W(o(e.expires_at)), 1)) : E("", !0)])
+		]), O("div", zm, [O("button", {
 			class: "btn btn-danger",
 			onClick: (t) => a(e.id)
-		}, "Revoke", 8, Em)])]))), 128)), t.value.length === 0 ? (L(), D("div", Dm, [...i[0] ||= [O("p", null, "No library shares found.", -1)]])) : E("", !0)]))]));
+		}, "Revoke", 8, Bm)])]))), 128)), t.value.length === 0 ? (L(), D("div", Vm, [...i[0] ||= [O("p", null, "No library shares found.", -1)]])) : E("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-bd8771ac"]]), km = { class: "audit-logs-page" }, Am = {
+}), [["__scopeId", "data-v-bd8771ac"]]), Um = { class: "audit-logs-page" }, Wm = {
 	key: 0,
 	class: "loading"
-}, jm = {
+}, Gm = {
 	key: 1,
 	class: "error"
-}, Mm = {
+}, Km = {
 	key: 2,
 	class: "logs-container"
-}, Nm = { class: "logs-list" }, Pm = { class: "log-content" }, Fm = { class: "log-header" }, Im = { class: "log-action" }, Lm = { class: "log-actor" }, Rm = { class: "log-time" }, zm = {
+}, qm = { class: "logs-list" }, Jm = { class: "log-content" }, Ym = { class: "log-header" }, Xm = { class: "log-action" }, Zm = { class: "log-actor" }, Qm = { class: "log-time" }, $m = {
 	key: 0,
 	class: "log-target"
-}, Bm = {
+}, eh = {
 	key: 1,
 	class: "log-details"
-}, Vm = {
+}, th = {
 	key: 2,
 	class: "log-ip"
-}, Hm = {
+}, nh = {
 	key: 0,
 	class: "empty-state"
-}, Um = {
+}, rh = {
 	key: 0,
 	class: "pagination"
-}, Wm = ["disabled"], Gm = { class: "page-info" }, Km = ["disabled"], qm = /*#__PURE__*/ r(/* @__PURE__ */ j({
+}, ih = ["disabled"], ah = { class: "page-info" }, oh = ["disabled"], sh = /*#__PURE__*/ r(/* @__PURE__ */ j({
 	__name: "AuditLogsPage",
 	setup(e) {
 		let t = z([]), n = z(!0), r = z(null), i = z(1), a = z(1);
@@ -10157,39 +10417,39 @@ var Tp = { class: "library-scan-page" }, Ep = {
 		}
 		return I(() => {
 			o();
-		}), (e, s) => (L(), D("div", km, [s[3] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Audit Logs"), O("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (L(), D("div", Am, "Loading audit logs...")) : r.value ? (L(), D("div", jm, W(r.value), 1)) : (L(), D("div", Mm, [O("div", Nm, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
+		}), (e, s) => (L(), D("div", Um, [s[3] ||= O("div", { class: "page-header" }, [O("h1", { class: "page-title" }, "Audit Logs"), O("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (L(), D("div", Wm, "Loading audit logs...")) : r.value ? (L(), D("div", Gm, W(r.value), 1)) : (L(), D("div", Km, [O("div", qm, [(L(!0), D(y, null, B(t.value, (e) => (L(), D("div", {
 			key: e.id,
 			class: "log-entry"
 		}, [O("div", {
 			class: "log-icon",
 			style: P({ backgroundColor: l(e.action) })
-		}, W(u(e.action)), 5), O("div", Pm, [
-			O("div", Fm, [
-				O("span", Im, W(e.action), 1),
-				O("span", Lm, W(e.actor), 1),
-				O("span", Rm, W(c(e.created_at)), 1)
+		}, W(u(e.action)), 5), O("div", Jm, [
+			O("div", Ym, [
+				O("span", Xm, W(e.action), 1),
+				O("span", Zm, W(e.actor), 1),
+				O("span", Qm, W(c(e.created_at)), 1)
 			]),
-			e.target ? (L(), D("p", zm, "Target: " + W(e.target), 1)) : E("", !0),
-			e.details ? (L(), D("p", Bm, W(e.details), 1)) : E("", !0),
-			e.ip_address ? (L(), D("span", Vm, "IP: " + W(e.ip_address), 1)) : E("", !0)
-		])]))), 128)), t.value.length === 0 ? (L(), D("div", Hm, [...s[2] ||= [O("p", null, "No audit logs found.", -1)]])) : E("", !0)]), a.value > 1 ? (L(), D("div", Um, [
+			e.target ? (L(), D("p", $m, "Target: " + W(e.target), 1)) : E("", !0),
+			e.details ? (L(), D("p", eh, W(e.details), 1)) : E("", !0),
+			e.ip_address ? (L(), D("span", th, "IP: " + W(e.ip_address), 1)) : E("", !0)
+		])]))), 128)), t.value.length === 0 ? (L(), D("div", nh, [...s[2] ||= [O("p", null, "No audit logs found.", -1)]])) : E("", !0)]), a.value > 1 ? (L(), D("div", rh, [
 			O("button", {
 				class: "btn btn-secondary",
 				disabled: i.value <= 1,
 				onClick: s[0] ||= (e) => o(i.value - 1)
-			}, " Previous ", 8, Wm),
-			O("span", Gm, "Page " + W(i.value) + " of " + W(a.value), 1),
+			}, " Previous ", 8, ih),
+			O("span", ah, "Page " + W(i.value) + " of " + W(a.value), 1),
 			O("button", {
 				class: "btn btn-secondary",
 				disabled: i.value >= a.value,
 				onClick: s[1] ||= (e) => o(i.value + 1)
-			}, " Next ", 8, Km)
+			}, " Next ", 8, oh)
 		])) : E("", !0)]))]));
 	}
 }), [["__scopeId", "data-v-05910fd9"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
-function Jm(e, t) {
+function ch(e, t) {
 	let n = yt(), r = !1;
 	n.applyQuery(e.currentRoute.value.query), n.fetchMedia(t);
 	let i = Y(() => JSON.stringify(n.toQuery()), () => {
@@ -10204,6 +10464,6 @@ function Jm(e, t) {
 	};
 }
 //#endregion
-export { La as ALL_LOGS, zr as ARROW_ICONS, Br as ARROW_LABELS, fl as AdminBackupApi, Rl as AdminBackupPage, Ul as AdminCastApi, gu as AdminCastDevicesPage, Uf as AdminCollectionsApi, np as AdminCollectionsPage, no as AdminDashboardApi, Go as AdminDashboardPage, _u as AdminDlnaServerApi, Eu as AdminDlnaServerPage, rp as AdminHistoryApi, Sp as AdminHistoryPage, wc as AdminIntegrationsApi, dl as AdminIntegrationsPage, Sd as AdminLiveTvApi, Hf as AdminLiveTvPage, Ra as AdminLogsApi, Ja as AdminLogsPage, Du as AdminRemoteAccessApi, xd as AdminRemoteAccessPage, oc as AdminServicesApi, Cc as AdminServicesPage, Jo as AdminUsersApi, ks as AdminUsersPage, Ms as AdminWebhooksApi, ac as AdminWebhooksPage, e as ApiClient, a as ApiError, fa as AppBackdrop, Ce as AppLayout, qm as AuditLogsPage, _ as Badge, ir as BrowsePage, i as Button, Sn as Chip, kn as Combobox, Ye as CommandPalette, Ne as DEFAULT_PREFERENCES, f as EmptyState, mm as FederationPage, Qn as FilterBar, t as Icon, u as IconButton, Ee as Kbd, Bp as LibraryScanPage, c as LocalStorageTokenStore, ki as LoginForm, Mi as LoginPage, Om as ManageSharesPage, Yt as MediaCard, Er as MediaDetail, jr as MediaDetailPage, an as MediaGrid, vn as MediaHomeRow, hn as MediaRow, d as Modal, Zp as MyServersPage, Rr as PLAYER_SHORTCUTS, Ia as PageTransition, ft as PhlixApp, gi as Player, bi as PlayerPage, ri as QualityMenu, Ko as RATING_LABELS, qo as RATING_OPTIONS, xt as RESUME_MAX_RATIO, bt as RESUME_MIN_SECONDS, Fa as Reveal, js as SUBSCRIBABLE_EVENTS, Lr as Scrubber, g as Select, aa as SettingsForm, sa as SettingsPage, va as Sheet, Zr as ShortcutsHelp, Ui as SignupForm, Ki as SignupPage, o as Skeleton, $r as Slider, ni as SpeedMenu, ka as Spinner, v as Switch, Pa as Tabs, Da as ToastHost, ba as Tooltip, ti as VolumeControl, As as WEBHOOK_EVENT_CATEGORIES, wp as adminMenu, ot as applyStoredThemeEarly, Jm as bindMediaStoreToRouter, Cp as buildAdminRoutes, gn as buildMediaQuery, _n as buildMediaUrl, ua as createPhlixApp, rt as deriveAccentVars, Mr as formatTime, ke as fuzzyScore, Ur as handleShortcut, Le as hasStoredPreferences, Hr as isTypingTarget, Ae as matchCommand, Ie as readStoredPreferences, xi as useAuthStore, Me as useCommandStore, l as useFocusTrap, Wr as useKeyboardShortcuts, yt as useMediaStore, Tt as usePlayerStore, ze as usePreferencesStore, st as useTheme, n as useToastStore };
+export { La as ALL_LOGS, zr as ARROW_ICONS, Br as ARROW_LABELS, fl as AdminBackupApi, Rl as AdminBackupPage, Ul as AdminCastApi, gu as AdminCastDevicesPage, Uf as AdminCollectionsApi, np as AdminCollectionsPage, no as AdminDashboardApi, Go as AdminDashboardPage, _u as AdminDlnaServerApi, Eu as AdminDlnaServerPage, rp as AdminHistoryApi, Sp as AdminHistoryPage, wc as AdminIntegrationsApi, dl as AdminIntegrationsPage, Sd as AdminLiveTvApi, Hf as AdminLiveTvPage, Ra as AdminLogsApi, Ja as AdminLogsPage, Du as AdminRemoteAccessApi, xd as AdminRemoteAccessPage, oc as AdminServicesApi, Cc as AdminServicesPage, Cp as AdminSyncPlayApi, Ip as AdminSyncPlayPage, Jo as AdminUsersApi, ks as AdminUsersPage, Ms as AdminWebhooksApi, ac as AdminWebhooksPage, e as ApiClient, a as ApiError, fa as AppBackdrop, Ce as AppLayout, sh as AuditLogsPage, _ as Badge, ir as BrowsePage, i as Button, Sn as Chip, kn as Combobox, Ye as CommandPalette, Ne as DEFAULT_PREFERENCES, f as EmptyState, Om as FederationPage, Qn as FilterBar, t as Icon, u as IconButton, Ee as Kbd, em as LibraryScanPage, c as LocalStorageTokenStore, ki as LoginForm, Mi as LoginPage, Hm as ManageSharesPage, Yt as MediaCard, Er as MediaDetail, jr as MediaDetailPage, an as MediaGrid, vn as MediaHomeRow, hn as MediaRow, d as Modal, dm as MyServersPage, Rr as PLAYER_SHORTCUTS, Ia as PageTransition, ft as PhlixApp, gi as Player, bi as PlayerPage, ri as QualityMenu, Ko as RATING_LABELS, qo as RATING_OPTIONS, xt as RESUME_MAX_RATIO, bt as RESUME_MIN_SECONDS, Fa as Reveal, js as SUBSCRIBABLE_EVENTS, Lr as Scrubber, g as Select, aa as SettingsForm, sa as SettingsPage, va as Sheet, Zr as ShortcutsHelp, Ui as SignupForm, Ki as SignupPage, o as Skeleton, $r as Slider, ni as SpeedMenu, ka as Spinner, v as Switch, Pa as Tabs, Da as ToastHost, ba as Tooltip, ti as VolumeControl, As as WEBHOOK_EVENT_CATEGORIES, Rp as adminMenu, ot as applyStoredThemeEarly, ch as bindMediaStoreToRouter, Lp as buildAdminRoutes, gn as buildMediaQuery, _n as buildMediaUrl, ua as createPhlixApp, rt as deriveAccentVars, Mr as formatTime, ke as fuzzyScore, Ur as handleShortcut, Le as hasStoredPreferences, Hr as isTypingTarget, Ae as matchCommand, Ie as readStoredPreferences, xi as useAuthStore, Me as useCommandStore, l as useFocusTrap, Wr as useKeyboardShortcuts, yt as useMediaStore, Tt as usePlayerStore, ze as usePreferencesStore, st as useTheme, n as useToastStore };
 
 //# sourceMappingURL=phlix-ui.js.map

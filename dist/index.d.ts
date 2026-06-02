@@ -60,6 +60,9 @@ export type { Collection, MediaItem as CollectionMediaItem, CreateCollectionInpu
 export { default as AdminHistoryPage } from './pages/admin/HistoryPage.vue';
 export { AdminHistoryApi } from './api/admin/history';
 export type { RecentlyWatchedItem, RecentlyWatchedResponse } from './api/admin/history';
+export { default as AdminSyncPlayPage } from './pages/admin/SyncPlayPage.vue';
+export { AdminSyncPlayApi } from './api/admin/syncPlay';
+export type { SyncPlayGroup, SyncPlayMember, SyncPlayPlaybackState, SyncPlayQueueItem, SyncPlayGroupState, CreateGroupInput, JoinGroupInput, } from './api/admin/syncPlay';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
