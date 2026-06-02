@@ -40,6 +40,11 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
   when `label` is set). Registry covers every legacy emoji (🎬→film, ▶→play, ❚❚→pause, 🔊/🔇→volume/mute,
   ←/↑/↓→arrows, ⤢/⤓→fullscreen) plus the full player/browse control vocabulary. Exported as `Icon` +
   `IconName` type. Emoji removal from existing components happens in their later phases (R2/R3).
+- **Primitive layer (R0.4) — `src/components/ui/`:** token-driven, a11y, theme- & reduced-motion-aware.
+  - _R0.4a:_ `Button` (variants solid/ghost/outline/subtle · sizes · loading spinner · left/right icon ·
+    `:focus-visible` ring), `IconButton` (square, required `label`, `aria-pressed` toggle support),
+    `Badge` (tones neutral/accent/success/warning/error/info · `mono` for `4K · HDR`/counts · optional icon).
+    Exported from `@phlix/ui`.
 
 ### Changed
 - Accent is now **projector-amber `#f5a524`** (was indigo `#6366f1`). Radius scale softened
