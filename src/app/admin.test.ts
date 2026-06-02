@@ -108,6 +108,13 @@ describe('buildAdminRoutes', () => {
     expect(collections?.path).toBe('/app/admin/collections');
     expect(typeof collections?.component).toBe('function');
   });
+
+  it('exposes the history route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const history = routes.find((r) => r.name === 'admin-history');
+    expect(history?.path).toBe('/app/admin/history');
+    expect(typeof history?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -204,5 +211,12 @@ describe('adminMenu', () => {
     const collections = group.children?.find((c) => c.id === 'admin-collections');
     expect(collections?.label).toBe('Collections');
     expect(collections?.to).toBe('/app/admin/collections');
+  });
+
+  it('exposes a history child pointing at the history route', () => {
+    const [group] = adminMenu();
+    const history = group.children?.find((c) => c.id === 'admin-history');
+    expect(history?.label).toBe('Watch History');
+    expect(history?.to).toBe('/app/admin/history');
   });
 });

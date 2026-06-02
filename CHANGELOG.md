@@ -18,6 +18,11 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Watch history (RA.13):** new **`AdminHistoryPage`** (`src/pages/admin/HistoryPage.vue`) —
+  recently-watched list (thumbnail/title/type/progress + relative time), a Continue action (emits `continue`
+  with the media id for the host to route), per-item remove, and clear-all (confirm). Backed by
+  **`AdminHistoryApi`** (`src/api/admin/history.ts`, `/api/v1/users/me/recently-watched` + `/history*`).
+  Exported; wired into the admin route/menu seam.
 - **Admin port — Collections (RA.12):** new **`AdminCollectionsPage`** (`src/pages/admin/CollectionsPage.vue`)
   — collections table, create/edit/delete (`Modal`), an items modal (membership list, remove item, bulk-add
   by query), and per-row refresh. Backed by **`AdminCollectionsApi`** (`src/api/admin/collections.ts`,
