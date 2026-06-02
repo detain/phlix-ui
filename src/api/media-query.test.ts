@@ -25,10 +25,13 @@ describe('buildMediaQuery', () => {
       actors: ['Zendaya'],
     });
     const sp = new URLSearchParams(q);
-    expect(sp.getAll('genres')).toEqual(['Sci-Fi', 'Drama']);
-    expect(sp.getAll('ratings')).toEqual(['PG-13', 'R']);
-    expect(sp.getAll('types')).toEqual(['movie']);
-    expect(sp.getAll('actors')).toEqual(['Zendaya']);
+    // `key[]=` form so PHP parses them into arrays (server requires is_array)
+    expect(sp.getAll('genres[]')).toEqual(['Sci-Fi', 'Drama']);
+    expect(sp.getAll('ratings[]')).toEqual(['PG-13', 'R']);
+    expect(sp.getAll('types[]')).toEqual(['movie']);
+    expect(sp.getAll('actors[]')).toEqual(['Zendaya']);
+    // and NOT the bare repeated form that the server drops
+    expect(sp.getAll('genres')).toEqual([]);
   });
 
   it('omits limit/offset when not supplied (partial-query tolerant)', () => {
