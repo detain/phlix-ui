@@ -115,6 +115,13 @@ describe('buildAdminRoutes', () => {
     expect(history?.path).toBe('/app/admin/history');
     expect(typeof history?.component).toBe('function');
   });
+
+  it('exposes the syncplay route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const syncplay = routes.find((r) => r.name === 'admin-syncplay');
+    expect(syncplay?.path).toBe('/app/admin/syncplay');
+    expect(typeof syncplay?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -218,5 +225,12 @@ describe('adminMenu', () => {
     const history = group.children?.find((c) => c.id === 'admin-history');
     expect(history?.label).toBe('Watch History');
     expect(history?.to).toBe('/app/admin/history');
+  });
+
+  it('exposes a syncplay child pointing at the syncplay route', () => {
+    const [group] = adminMenu();
+    const syncplay = group.children?.find((c) => c.id === 'admin-syncplay');
+    expect(syncplay?.label).toBe('SyncPlay');
+    expect(syncplay?.to).toBe('/app/admin/syncplay');
   });
 });

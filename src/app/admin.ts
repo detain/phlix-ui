@@ -77,6 +77,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-history',
       component: () => import('../pages/admin/HistoryPage.vue'),
     },
+    {
+      path: `${root}/syncplay`,
+      name: 'admin-syncplay',
+      component: () => import('../pages/admin/SyncPlayPage.vue'),
+    },
   ];
 }
 
@@ -102,6 +107,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-livetv', label: 'Live TV / DVR', icon: 'tv', to: `${root}/livetv` },
         { id: 'admin-collections', label: 'Collections', icon: 'list', to: `${root}/collections` },
         { id: 'admin-history', label: 'Watch History', icon: 'film', to: `${root}/history` },
+        { id: 'admin-syncplay', label: 'SyncPlay', icon: 'play', to: `${root}/syncplay` },
       ],
     },
   ];

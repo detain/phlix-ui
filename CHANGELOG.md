@@ -18,6 +18,10 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — SyncPlay (RA.14):** new **`AdminSyncPlayPage`** (`src/pages/admin/SyncPlayPage.vue`) —
+  SyncPlay groups list (members, playing/idle status, password badge), create group + join/leave actions.
+  Backed by **`AdminSyncPlayApi`** (`src/api/admin/syncPlay.ts`, `/api/v1/syncplay/groups*`). Exported;
+  wired into the admin route/menu seam.
 - **Admin port — Watch history (RA.13):** new **`AdminHistoryPage`** (`src/pages/admin/HistoryPage.vue`) —
   recently-watched list (thumbnail/title/type/progress + relative time), a Continue action (emits `continue`
   with the media id for the host to route), per-item remove, and clear-all (confirm). Backed by
