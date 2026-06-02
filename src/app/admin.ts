@@ -42,6 +42,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-integrations',
       component: () => import('../pages/admin/IntegrationsPage.vue'),
     },
+    {
+      path: `${root}/backup`,
+      name: 'admin-backup',
+      component: () => import('../pages/admin/BackupPage.vue'),
+    },
   ];
 }
 
@@ -60,6 +65,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-webhooks', label: 'Webhooks', icon: 'settings', to: `${root}/webhooks` },
         { id: 'admin-services', label: 'Services', icon: 'star', to: `${root}/services` },
         { id: 'admin-integrations', label: 'Integrations', icon: 'settings', to: `${root}/integrations` },
+        { id: 'admin-backup', label: 'Backup', icon: 'bookmark', to: `${root}/backup` },
       ],
     },
   ];
