@@ -11,6 +11,17 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **MediaGrid virtualization (R2.2):** `MediaGrid.vue` rebuilt as a **windowed virtual scroller** — only
+  the rows intersecting the viewport (plus an overscan band) are ever in the DOM, so a library of
+  thousands of items stays at 60fps. Responsive **auto-fit columns** are driven by the user's `cardSize`
+  preference (with a `cardSize` prop override), reusing the locked R0 grid rhythm (24/20px gaps, 2:3
+  posters). **Skeleton rows** on the initial load match the final layout (no shift) and are announced
+  (`role="status"`/`aria-busy`); the empty state is also announced. **Infinite scroll** via an
+  `IntersectionObserver` sentinel emits `load-more` (wired in `BrowsePage` to `store.loadMore`), and a
+  **"back to top"** affordance appears once scrolled past the fold. Windowing arithmetic lives in a pure,
+  unit-tested `virtual-grid.ts` (`computeColumns`/`computeCardWidth`/`computeRowHeight`/`computeWindow`);
+  all DOM measurement is guarded, so it **degrades to rendering every item** under SSR/jsdom/zero-width.
+  New `#card` (item + index) and `#empty` slots; `play`/`watchlist`/`info` are forwarded from the cards.
 - **MediaCard redesign (R2.1):** `MediaCard.vue` rebuilt from the locked R0 art direction — a 2:3
   **blur-up** poster (LQIP gradient under a fade-in image that also handles already-cached/`complete`
   images; `aspect-ratio` reserved so there's **no CLS**; `loading="lazy"`), a **real `<Icon>`** placeholder
