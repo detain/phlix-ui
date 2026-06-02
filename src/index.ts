@@ -13,6 +13,9 @@ export type { MediaItem } from './types/media-item';
 export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
 export type { ServerSettings } from './types/server-settings';
 
+export { default as Icon } from './components/Icon.vue';
+export type { IconName } from './components/Icon.vue';
+
 export { default as MediaCard } from './components/MediaCard.vue';
 export { default as MediaGrid } from './components/MediaGrid.vue';
 export { default as FilterBar } from './components/FilterBar.vue';

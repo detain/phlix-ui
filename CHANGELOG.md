@@ -33,6 +33,13 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
   font metrics) for CLS≈0 swap. Shipped as a **separate** `@phlix/ui/fonts.css` + `dist/fonts/*.woff2`
   (kept out of the bundled `style.css` so the woff2 stay cacheable; copied by `scripts/copy-fonts.mjs`).
   New package exports: `./fonts.css`, `./style.css`, `./dist/*`. Consumers wire the imports in R6.6.
+- **Icon system (R0.3):** one `<Icon name="…" />` SVG component (`src/components/Icon.vue`) backed by
+  **Lucide** via `unplugin-icons` (tree-shaken `~icons/lucide/*` — only the ~55 registered icons bundle,
+  not the full pack). Icons inherit `currentColor` + `em` sizing; `size` prop (number→px / string),
+  optional `strokeWidth`; a11y-correct (decorative `aria-hidden` by default, `role="img"` + `aria-label`
+  when `label` is set). Registry covers every legacy emoji (🎬→film, ▶→play, ❚❚→pause, 🔊/🔇→volume/mute,
+  ←/↑/↓→arrows, ⤢/⤓→fullscreen) plus the full player/browse control vocabulary. Exported as `Icon` +
+  `IconName` type. Emoji removal from existing components happens in their later phases (R2/R3).
 
 ### Changed
 - Accent is now **projector-amber `#f5a524`** (was indigo `#6366f1`). Radius scale softened
