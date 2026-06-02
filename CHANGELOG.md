@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — UI Redo ("Nocturne")
+## [Unreleased]
 
-The UI Redo (R0→R6) re-skins every surface on a tokenized, multi-theme, customizable design
-system. Additive + back-compatible during R0–R5; first tag at the end of R1.
+_R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + rollout) lands here.
+Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
+
+## [0.8.0] — 2026-06-02 — UI Redo ("Nocturne"): foundations + theming
+
+First tag of the UI Redo (R0→R6), which re-skins every surface on a tokenized, multi-theme,
+customizable design system. This release ships **R0** (the Nocturne design system: tokens, fonts,
+icons, 19 a11y primitives, atmosphere) and **R1** (theming + store architecture: preferences,
+media, player and command stores, plus the config/slot extensibility seam). Additive +
+back-compatible — consumers are not bumped yet (that happens at R6.6).
 
 ### Added
 - **Config/slot extensibility (R1.5):** `PhlixAppConfig` extended so server vs hub diverge purely by
