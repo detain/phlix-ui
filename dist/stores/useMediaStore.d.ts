@@ -2,6 +2,14 @@ import type { MediaItem, MediaType } from '../types/media-item';
 import type { LibraryQueryParams } from '../types/library-query';
 export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime';
 export type SortOrder = 'asc' | 'desc';
+/**
+ * useMediaStore (rewritten R1.2) — same public API as 0.7.0 plus:
+ *   · query-keyed in-memory cache (TTL) — instant back/forward + revisited pages
+ *   · in-flight dedupe + AbortController (superseded filter queries are cancelled)
+ *   · debounced search refetch (scheduleFetch)
+ *   · prefetch(params) to warm the cache (hover / next page)
+ *   · URL-sync helpers (toQuery / applyQuery) — wire with bindMediaStoreToRouter
+ */
 export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pick<{
     items: import("vue").Ref<{
         id: string;
@@ -53,7 +61,13 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     availableRatings: string[];
     availableTypes: MediaType[];
     fetchMedia: (apiBase: string, append?: boolean) => Promise<void>;
+    scheduleFetch: (apiBase: string, delay?: number) => void;
     loadMore: (apiBase: string) => Promise<void>;
+    prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
+    clearCache: () => void;
+    cancelScheduled: () => void;
+    toQuery: () => Record<string, string | string[]>;
+    applyQuery: (q: Record<string, string | string[] | null | undefined>) => void;
     reset: () => void;
     setSearch: (v: string) => void;
     setGenres: (v: string[]) => void;
@@ -112,7 +126,13 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     availableRatings: string[];
     availableTypes: MediaType[];
     fetchMedia: (apiBase: string, append?: boolean) => Promise<void>;
+    scheduleFetch: (apiBase: string, delay?: number) => void;
     loadMore: (apiBase: string) => Promise<void>;
+    prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
+    clearCache: () => void;
+    cancelScheduled: () => void;
+    toQuery: () => Record<string, string | string[]>;
+    applyQuery: (q: Record<string, string | string[] | null | undefined>) => void;
     reset: () => void;
     setSearch: (v: string) => void;
     setGenres: (v: string[]) => void;
@@ -171,7 +191,13 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     availableRatings: string[];
     availableTypes: MediaType[];
     fetchMedia: (apiBase: string, append?: boolean) => Promise<void>;
+    scheduleFetch: (apiBase: string, delay?: number) => void;
     loadMore: (apiBase: string) => Promise<void>;
+    prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
+    clearCache: () => void;
+    cancelScheduled: () => void;
+    toQuery: () => Record<string, string | string[]>;
+    applyQuery: (q: Record<string, string | string[] | null | undefined>) => void;
     reset: () => void;
     setSearch: (v: string) => void;
     setGenres: (v: string[]) => void;
@@ -179,4 +205,4 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
-}, "reset" | "fetchMedia" | "loadMore" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort">>;
+}, "reset" | "fetchMedia" | "scheduleFetch" | "loadMore" | "prefetch" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort">>;
