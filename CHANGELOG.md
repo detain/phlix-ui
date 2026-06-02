@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + rollout) lands here.
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
+### Fixed
+- **Media filter wire format:** `useMediaStore` and `buildMediaQuery` now serialize array filters as
+  `genres[]=`/`ratings[]=`/`types[]=`/`actors[]=` instead of bare repeated keys. PHP collapses
+  `genres=A&genres=B` to the last value (a string) and the server's `is_array()` check drops it, so genre/
+  rating/actor filtering silently matched nothing end-to-end (gap report #3b; the server-side `$.genres`
+  JSON path + Smarty client were fixed in phlix-server).
+
 ### Added
 - **Volume + speed + quality controls (R3.4):** three control-bar pieces on the a11y primitives —
   **`VolumeControl.vue`** (mute toggle + `Slider` with **mute memory**: muting keeps the stored volume and

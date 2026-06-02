@@ -120,7 +120,8 @@ describe('MediaDetailPage — similar', () => {
     expect(list.find((m) => m.id === 'm1')).toBeUndefined(); // self excluded
     expect(list).toHaveLength(12); // capped
     // similar request scoped by genre
-    expect(fetchMock.mock.calls[1][0]).toContain('genres=Sci-Fi');
+    // genres are sent as `genres[]=` (URL-encoded) so PHP parses them into an array
+    expect(fetchMock.mock.calls[1][0]).toContain('genres%5B%5D=Sci-Fi');
   });
 
   it('skips the similar fetch when the title has no genres', async () => {
