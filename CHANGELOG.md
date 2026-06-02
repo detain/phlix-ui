@@ -18,6 +18,12 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Settings (RA.16):** new **`AdminSettingsPage`** (`src/pages/admin/SettingsPage.vue`) — the
+  ADMIN server-settings page: 9 group tabs (~19 keys) with per-key type-driven editors (bool→Switch,
+  int/float→number, password→masked with show/hide, string→text/select), dirty tracking + save-only-changed,
+  per-field 400 validation errors, and a "custom" override badge. Backed by **`AdminSettingsApi`**
+  (`src/api/admin/settings.ts`, `/api/v1/admin/settings`). This restores the admin server settings surface
+  (gap #2's admin half). Exported; wired into the admin route/menu seam.
 - **Admin port — Libraries (RA.15):** new **`AdminLibrariesPage`** (`src/pages/admin/LibrariesPage.vue`) —
   full libraries CRUD (create with name + type + paths, edit [type read-only], delete confirm) plus scan /
   rescan / match-metadata with live scan-status polling and a scan-history modal. Supersedes the scan-only
