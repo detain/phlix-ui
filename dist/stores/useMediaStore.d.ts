@@ -179,4 +179,4 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
-}, "fetchMedia" | "loadMore" | "reset" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort">>;
+}, "reset" | "fetchMedia" | "loadMore" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort">>;

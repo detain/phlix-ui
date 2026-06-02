@@ -11,6 +11,13 @@ The UI Redo (R0→R6) re-skins every surface on a tokenized, multi-theme, custom
 system. Additive + back-compatible during R0–R5; first tag at the end of R1.
 
 ### Added
+- **Preferences + theming (R1.1):** `usePreferencesStore` (Pinia) — theme, accent, density, card size,
+  grid density, reduced-motion (auto/on/off), autoplay, default volume/quality/subtitle, atmosphere —
+  persisted to `localStorage('phlix.prefs')`. `useTheme()` composable reflects it live onto `<html>`
+  (`data-theme`/`data-density`/`data-reduced-motion` + accent CSS-var override via `deriveAccentVars`);
+  `applyStoredThemeEarly()` runs pre-mount to avoid a theme flash. A `[data-reduced-motion]` global lets
+  a user force the reduced-motion path over the OS setting. Exported: `usePreferencesStore`,
+  `readStoredPreferences`, `DEFAULT_PREFERENCES`, `useTheme`, `applyStoredThemeEarly`, `deriveAccentVars`.
 - **Design system "Nocturne" (R0.0):** art-direction mockups + a distilled design spec under
   `src/dev/mockups/` (poster card, browse grid + filter bar, player chrome; nocturne/daylight/midnight).
   Cinema-after-dark aesthetic — projector-amber accent, Fraunces/Hanken Grotesk/JetBrains Mono,
