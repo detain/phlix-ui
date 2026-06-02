@@ -4,6 +4,7 @@
         "noEmit": false,
         "declaration": true,
         "declarationDir": "./dist",
+        "rootDir": "src",
         "emitDeclarationOnly": true,
         "noUnusedLocals": false,
         "noUnusedParameters": false

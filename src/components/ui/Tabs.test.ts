@@ -50,6 +50,27 @@ describe('Tabs', () => {
     await list.trigger('keydown', { key: 'Home' });
     expect(w.emitted('update:modelValue')!.at(-1)).toEqual(['a']);
   });
+
+  it('ArrowUp/ArrowDown also move, End jumps to last, unrelated keys are no-ops', async () => {
+    const w = mount(Tabs, { props: { modelValue: 'a', tabs } });
+    const list = w.find('[role="tablist"]');
+    await list.trigger('keydown', { key: 'ArrowDown' }); // a -> c (skip disabled b)
+    expect(w.emitted('update:modelValue')!.at(-1)).toEqual(['c']);
+    await w.setProps({ modelValue: 'c' });
+    await list.trigger('keydown', { key: 'ArrowUp' }); // c -> a
+    expect(w.emitted('update:modelValue')!.at(-1)).toEqual(['a']);
+    await w.setProps({ modelValue: 'a' });
+    await list.trigger('keydown', { key: 'End' }); // -> last enabled (c)
+    expect(w.emitted('update:modelValue')!.at(-1)).toEqual(['c']);
+    const before = w.emitted('update:modelValue')!.length;
+    await list.trigger('keydown', { key: 'x' }); // no-op
+    expect(w.emitted('update:modelValue')!.length).toBe(before);
+  });
+
+  it('renders the default slot when no per-value panel slot exists', () => {
+    const w = mount(Tabs, { props: { modelValue: 'a', tabs }, slots: { default: 'fallback panel' } });
+    expect(w.find('[role="tabpanel"]').text()).toContain('fallback panel');
+  });
 });
 
 describe('Skeleton / Spinner / EmptyState / Kbd', () => {
@@ -70,6 +91,21 @@ describe('Skeleton / Spinner / EmptyState / Kbd', () => {
     const w = mount(Spinner, { props: { label: 'Fetching' } });
     expect(w.find('[role="status"]').attributes('aria-label')).toBe('Fetching');
     expect(w.find('svg').exists()).toBe(true);
+  });
+
+  it('Spinner sizes: number→px, string verbatim, none→no inline size', () => {
+    expect(mount(Spinner, { props: { size: 24 } }).find('[role="status"]').attributes('style')).toContain('font-size: 24px');
+    expect(mount(Spinner, { props: { size: '2rem' } }).find('[role="status"]').attributes('style')).toContain('font-size: 2rem');
+    const none = mount(Spinner).find('[role="status"]').attributes('style');
+    expect(none === undefined || !none.includes('font-size')).toBe(true);
+  });
+
+  it('EmptyState renders the default slot as description and omits desc/actions when absent', () => {
+    const slotted = mount(EmptyState, { props: { title: 'Empty' }, slots: { default: 'slot copy' } });
+    expect(slotted.find('.phlix-empty__desc').text()).toBe('slot copy');
+    const bare = mount(EmptyState, { props: { title: 'Empty' } });
+    expect(bare.find('.phlix-empty__desc').exists()).toBe(false);
+    expect(bare.find('.phlix-empty__actions').exists()).toBe(false);
   });
 
   it('EmptyState renders icon + title + description + actions slot', () => {

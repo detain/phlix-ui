@@ -8,7 +8,7 @@ type __VLS_Props = {
     /** Maps the value to a spoken/aria string (e.g. percent, timecode). */
     formatValue?: (v: number) => string;
 };
-declare const _default: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     change: (v: number) => any;
     "update:modelValue": (v: number) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
@@ -20,4 +20,5 @@ declare const _default: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {
     max: number;
     disabled: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
 export default _default;

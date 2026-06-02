@@ -6,7 +6,7 @@ type __VLS_Props = {
     label?: string;
     disabled?: boolean;
 };
-declare const _default: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     change: (v: string | number | null) => any;
     "update:modelValue": (v: string | number | null) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
@@ -16,4 +16,5 @@ declare const _default: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {
     placeholder: string;
     disabled: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
 export default _default;
