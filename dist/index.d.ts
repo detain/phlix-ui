@@ -11,6 +11,7 @@ export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
 export type { ServerSettings } from './types/server-settings';
 export { default as Icon } from './components/Icon.vue';
 export type { IconName } from './components/Icon.vue';
+export { default as AppBackdrop } from './components/AppBackdrop.vue';
 export * from './components/ui';
 export { default as MediaCard } from './components/MediaCard.vue';
 export { default as MediaGrid } from './components/MediaGrid.vue';

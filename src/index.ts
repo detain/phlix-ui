@@ -16,6 +16,8 @@ export type { ServerSettings } from './types/server-settings';
 export { default as Icon } from './components/Icon.vue';
 export type { IconName } from './components/Icon.vue';
 
+export { default as AppBackdrop } from './components/AppBackdrop.vue';
+
 // Primitive component layer (R0.4)
 export * from './components/ui';
 
