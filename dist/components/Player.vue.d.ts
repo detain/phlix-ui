@@ -12,17 +12,23 @@ type __VLS_Props = {
     thumbnailAt?: (seconds: number) => string | null | undefined;
     /** Server-supplied stream-quality variants (optional; the menu hides when empty). */
     qualities?: SelectOptionInput[];
+    /** Resolve the stream URL for a queued item when auto-advancing to "up next".
+     *  R3.9's PlayerPage supplies the real `/media/:id/stream` resolver; without it,
+     *  advancing clears the store's stream URL rather than leaving a stale one. */
+    streamUrlFor?: (media: MediaItem) => string | undefined;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     captions: () => any;
     pip: () => any;
     theater: (active: boolean) => any;
     back: () => any;
+    "play-next": (media: MediaItem) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onCaptions?: (() => any) | undefined;
     onPip?: (() => any) | undefined;
     onTheater?: ((active: boolean) => any) | undefined;
     onBack?: (() => any) | undefined;
+    "onPlay-next"?: ((media: MediaItem) => any) | undefined;
 }>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;

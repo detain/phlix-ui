@@ -727,3 +727,204 @@ describe('Player — PiP & Media Session (R3.7)', () => {
     delete (navigator as { mediaSession?: unknown }).mediaSession;
   });
 });
+
+describe('Player — resume / up-next / transcode (R3.8)', () => {
+  // ---- resume prompt --------------------------------------------------------
+  it('shows the resume prompt on open when an in-band position is stored', () => {
+    setActivePinia(createPinia());
+    const store = usePlayerStore();
+    store.saveResume('m1', 60, 200); // in the 30s–95% band
+    const { w } = mountPlayer();
+    expect(w.find('.resume').exists()).toBe(true);
+    expect(w.find('.resume__time').text()).toBe('1:00');
+  });
+
+  it('does NOT show the resume prompt with no stored position', () => {
+    const { w } = mountPlayer();
+    expect(w.find('.resume').exists()).toBe(false);
+  });
+
+  it('Resume seeks to the stored position and plays, then hides the prompt', async () => {
+    setActivePinia(createPinia());
+    usePlayerStore().saveResume('m1', 60, 200);
+    const { w, video, state } = mountPlayer();
+    state.duration = 200; // duration known → seek applies immediately
+    await w.find('.resume__btn--amber').trigger('click');
+    expect(state.currentTime).toBe(60);
+    expect(video.play).toHaveBeenCalled();
+    expect(w.find('.resume').exists()).toBe(false);
+  });
+
+  it('defers the resume seek until loadedmetadata when the duration is unknown', async () => {
+    setActivePinia(createPinia());
+    usePlayerStore().saveResume('m1', 90, 300);
+    const { w, video, state } = mountPlayer();
+    state.duration = 0; // not loaded yet
+    await w.find('.resume__btn--amber').trigger('click');
+    expect(state.currentTime).toBe(0); // deferred
+    state.duration = 300;
+    video.dispatchEvent(new Event('loadedmetadata'));
+    expect(state.currentTime).toBe(90); // applied on metadata
+  });
+
+  it('Start over seeks to 0, clears the stored resume, and plays', async () => {
+    setActivePinia(createPinia());
+    const store = usePlayerStore();
+    store.saveResume('m1', 60, 200);
+    const { w, video, state } = mountPlayer();
+    state.duration = 200;
+    state.currentTime = 60;
+    await w.find('.resume__btn--ghost').trigger('click');
+    expect(state.currentTime).toBe(0);
+    expect(store.resumePositionFor('m1')).toBeNull();
+    expect(video.play).toHaveBeenCalled();
+    expect(w.find('.resume').exists()).toBe(false);
+  });
+
+  it('dismisses the resume prompt once playback starts by other means', async () => {
+    setActivePinia(createPinia());
+    usePlayerStore().saveResume('m1', 60, 200);
+    const { w, video } = mountPlayer();
+    expect(w.find('.resume').exists()).toBe(true);
+    video.dispatchEvent(new Event('play')); // e.g. the center button / OS key
+    await nextTick();
+    expect(w.find('.resume').exists()).toBe(false);
+  });
+
+  // ---- up-next + autoplay ---------------------------------------------------
+  it('autoplay ON: shows the up-next card on end, counts down, and auto-advances via next()', async () => {
+    vi.useFakeTimers();
+    setActivePinia(createPinia());
+    const store = usePlayerStore();
+    store.setQueue([media({ id: 'm2', name: 'Arrival' })]);
+    const { w, video } = mountPlayer();
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(w.find('.upnext').exists()).toBe(true);
+    expect(w.find('.upnext__title').text()).toBe('Arrival');
+    expect(w.find('.upnext__cd').text()).toBe('Starts in 8s');
+
+    vi.advanceTimersByTime(1000);
+    await nextTick();
+    expect(w.find('.upnext__cd').text()).toBe('Starts in 7s');
+
+    vi.advanceTimersByTime(7000); // reaches 0 → playNext()
+    await nextTick();
+    expect(store.current?.id).toBe('m2');
+    expect(w.emitted('play-next')?.[0]?.[0]).toMatchObject({ id: 'm2' });
+    expect(w.find('.upnext').exists()).toBe(false);
+  });
+
+  it('autoplay OFF: shows a static up-next card (no countdown/ring) that only advances on Play now', async () => {
+    vi.useFakeTimers();
+    setActivePinia(createPinia());
+    const store = usePlayerStore();
+    usePreferencesStore().autoplay = false;
+    store.setQueue([media({ id: 'm2', name: 'Arrival' })]);
+    const { w, video } = mountPlayer();
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(w.find('.upnext').exists()).toBe(true);
+    expect(w.find('.upnext__cd').exists()).toBe(false);
+    expect(w.find('svg.upnext__ring').exists()).toBe(false);
+
+    vi.advanceTimersByTime(20000); // no countdown → no auto-advance
+    await nextTick();
+    expect(store.current?.id).toBe('m1');
+
+    await w.find('.upnext__btn--amber').trigger('click'); // Play now
+    expect(store.current?.id).toBe('m2');
+    expect(w.find('.upnext').exists()).toBe(false);
+  });
+
+  it('Cancel stops the countdown and hides the card without advancing', async () => {
+    vi.useFakeTimers();
+    setActivePinia(createPinia());
+    const store = usePlayerStore();
+    store.setQueue([media({ id: 'm2' })]);
+    const { w, video } = mountPlayer();
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    await w.find('.upnext__btn--ghost').trigger('click'); // Cancel
+    expect(w.find('.upnext').exists()).toBe(false);
+    vi.advanceTimersByTime(20000);
+    await nextTick();
+    expect(store.current?.id).toBe('m1'); // never advanced
+  });
+
+  it('dismisses the up-next card + stops the countdown when the video is replayed', async () => {
+    vi.useFakeTimers();
+    setActivePinia(createPinia());
+    const store = usePlayerStore();
+    store.setQueue([media({ id: 'm2' })]);
+    const { w, video } = mountPlayer();
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(w.find('.upnext').exists()).toBe(true);
+    // the user replays the just-ended video (center button / k / OS key) → store.play()
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+    expect(w.find('.upnext').exists()).toBe(false);
+    vi.advanceTimersByTime(20000); // the (stopped) countdown must not advance the queue
+    await nextTick();
+    expect(store.current?.id).toBe('m1');
+    expect(w.emitted('play-next')).toBeUndefined();
+  });
+
+  it('does not show the up-next card on end when the queue is empty', async () => {
+    const { w, video } = mountPlayer();
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(w.find('.upnext').exists()).toBe(false);
+  });
+
+  // ---- transcode guard ------------------------------------------------------
+  it('shows the transcode notice (and hides center/controls) for a .mkv stream URL', () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    expect(w.find('.transcode').exists()).toBe(true);
+    expect(w.find('.player__center').exists()).toBe(false);
+    expect(w.find('.player__controls').exists()).toBe(false);
+  });
+
+  it('detects a transcode container from the library path when the stream URL is extensionless', () => {
+    const { w } = mountPlayer({ media: media({ path: '/lib/Dune.mkv' }), streamUrl: 'http://x/media/m1/stream' });
+    expect(w.find('.transcode').exists()).toBe(true);
+  });
+
+  it('does not show the notice for a direct-playable mp4', () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    expect(w.find('.transcode').exists()).toBe(false);
+    expect(w.find('.player__controls').exists()).toBe(true);
+  });
+
+  it('shows the notice reactively on a fatal media error (e.g. HEVC the browser cannot decode)', async () => {
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    expect(w.find('.transcode').exists()).toBe(false);
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 4 }) });
+    video.dispatchEvent(new Event('error'));
+    await nextTick();
+    expect(w.find('.transcode').exists()).toBe(true);
+  });
+
+  it('ignores a non-fatal media error (network/abort)', async () => {
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 2 }) });
+    video.dispatchEvent(new Event('error'));
+    await nextTick();
+    expect(w.find('.transcode').exists()).toBe(false);
+  });
+
+  it('suppresses the resume prompt while the transcode notice is shown', () => {
+    setActivePinia(createPinia());
+    usePlayerStore().saveResume('m1', 60, 200);
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    expect(w.find('.transcode').exists()).toBe(true);
+    expect(w.find('.resume').exists()).toBe(false);
+  });
+
+  it('the transcode notice Back button emits back', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    await w.find('.transcode__back').trigger('click');
+    expect(w.emitted('back')).toHaveLength(1);
+  });
+});

@@ -11,6 +11,10 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Fixed
+- **Player queue — stale stream URL on advance (R3.8):** `usePlayerStore.next()` now accepts an optional
+  stream-URL resolver and threads it into `setCurrent`, so advancing to the next queued item no longer
+  leaves the previous item's `streamUrl` behind (it resolves a fresh one, or clears it to `''` when
+  unresolved — the mini-player gates on `streamUrl`, so it hides rather than playing the wrong media).
 - **Media filter wire format:** `useMediaStore` and `buildMediaQuery` now serialize array filters as
   `genres[]=`/`ratings[]=`/`types[]=`/`actors[]=` instead of bare repeated keys. PHP collapses
   `genres=A&genres=B` to the last value (a string) and the server's `is_array()` check drops it, so genre/
@@ -18,6 +22,23 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Player — Resume + Up-Next + autoplay + "needs transcode" notice (R3.8):** the player's three closing
+  moments. **Resume on open** — when the persisted resume map holds an in-band position (30s–95%) for the
+  current media, a `ResumePrompt` (`src/components/player/ResumePrompt.vue`) offers **Resume** (seeks to the
+  stored second + plays; deferred to `loadedmetadata` when the duration isn't known yet) or **Start over**
+  (seeks 0, clears the resume, plays); it auto-dismisses once playback begins. **End-of-video Up-Next** —
+  on the `<video>` `ended` event with a queued item, an `UpNext` card (`src/components/player/UpNext.vue`,
+  a port of the locked mockup: glass card, poster thumb, amber depleting countdown ring) appears; when
+  `usePreferencesStore.autoplay` is on it counts down from 8s and auto-advances via
+  `usePlayerStore.next(...)`, when off it's a static card with a manual **Play now** (plus **Cancel**). A
+  new `Player.vue` emit **`play-next(media)`** + optional prop **`streamUrlFor`** let the host resolve the
+  next item's stream (R3.9). **Direct-play guard** — a `TranscodeNotice`
+  (`src/components/player/TranscodeNotice.vue`) replaces the silent black frame when a file can't be played
+  in the browser, detected proactively by container extension (mkv/avi/wmv/ts/… on the stream URL **or** the
+  library path) and reactively on a fatal `<video>` error (decode / src-not-supported); the center play +
+  controls are suppressed under it. New pure, DOM-free helpers **`src/components/player/playback.ts`**
+  (`extensionOf`, `needsTranscode`, `isFatalMediaError`, `ringDashoffset` + the up-next / ring constants).
+  `ResumePrompt`, `UpNext`, `TranscodeNotice`, and the `playback` helpers are exported.
 - **Player — Picture-in-Picture + Media Session + persistent mini-player (R3.7):** wires the (previously
   present-but-unused) `usePlayerStore` Media-Session / mini-player seam. `Player.vue` gains a real
   **Picture-in-Picture** toggle on its `<video>` (`requestPictureInPicture`/`exitPictureInPicture`,
