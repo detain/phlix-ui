@@ -64,6 +64,10 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
     IntersectionObserver; stagger via `delay`; drops `will-change` after settle) and `PageTransition`
     (route-level fade/slide `Transition`, `out-in`). Both fully disabled under `prefers-reduced-motion`.
     (Motion *tokens* `--ease-*`/`--dur-*` shipped earlier in R0.1.)
+- **Atmosphere layer (R0.6):** `AppBackdrop` — GPU-cheap film-grain (SVG turbulence, overlay blend) +
+  vignette + optional poster-derived radial **ambient glow** (color or blurred image; `ambientImage`
+  URL is sanitized against CSS injection). `enabled` prop; auto-off under `prefers-reduced-motion` /
+  `prefers-reduced-data`; decorative (`aria-hidden`); `contain: layout paint`. Exported as `AppBackdrop`.
 
 ### Changed
 - **Bumped `vue` floor to `^3.5.0`** (dependency + peerDependency) to use `useId()`. Every install
