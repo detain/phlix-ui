@@ -22,6 +22,21 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Player page — full integration (R3.9):** the `/app/player/:id` route now drives the redesigned player
+  end-to-end. `src/pages/PlayerPage.vue` (rebuilt from the legacy skeleton onto the redo surfaces + design
+  tokens) fetches the title and resolves the playable URL — preferring a `GET /api/v1/media/:id/playback-info`
+  `{url}` hint, falling back to the direct `/media/:id/stream` endpoint (the hint is best-effort; a slow or
+  absent one never blocks playback). It supplies `<Player>` a synchronous **`streamUrlFor`** resolver so the
+  R3.8 up-next auto-advance threads a fresh stream URL, and builds a genre-scoped **up-next queue**
+  (`usePlayerStore.setQueue`) so the up-next card + autoplay have something to advance to. **Play-next**
+  navigates the route to the next id (the URL stays correct; the page re-loads the title + a fresh queue).
+  **Mini-player handoff** — leaving the player route hands playback to the persistent `MiniPlayer`
+  (`onBeforeRouteLeave` → `usePlayerStore.showMiniPlayer()`); entering/expanding reclaims it
+  (`hideMiniPlayer()`), so audio/video continues across navigation (param changes between player items keep
+  the full player). Adds a poster-derived **ambient backdrop** (the `url()` value escaped against
+  CSS-injection, like the scrubber's thumbnail), plus loading-skeleton, error (Retry/Back) and theater
+  states, and an AbortController + `disposed` fetch lifecycle (re-fetches on route-id change). Resume restores
+  on open via the R3.8 prompt. **→ R3 (Player) phase COMPLETE.**
 - **Player — Resume + Up-Next + autoplay + "needs transcode" notice (R3.8):** the player's three closing
   moments. **Resume on open** — when the persisted resume map holds an in-band position (30s–95%) for the
   current media, a `ResumePrompt` (`src/components/player/ResumePrompt.vue`) offers **Resume** (seeks to the
