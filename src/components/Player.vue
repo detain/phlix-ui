@@ -17,12 +17,18 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import type { MediaItem } from '../types/media-item';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import Icon from './Icon.vue';
+import Scrubber, { type Chapter } from './player/Scrubber.vue';
+import { formatTime } from './player/format-time';
 
 const props = defineProps<{
   media: MediaItem;
   streamUrl: string;
   /** Idle ms before the chrome hides while playing. */
   idleTimeout?: number;
+  /** Chapter markers for the scrubber (server hint / VTT — optional). */
+  chapters?: Chapter[];
+  /** Preview-thumbnail source for a given time (VTT sprite / server hint — optional). */
+  thumbnailAt?: (seconds: number) => string | null | undefined;
 }>();
 
 const emit = defineEmits<{
@@ -35,26 +41,9 @@ const videoRef = ref<HTMLVideoElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
 const showChrome = ref(true);
 const fullscreen = ref(false);
+const scrubbing = ref(false);
 
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
-
-// ---- formatting -------------------------------------------------------------
-function formatTime(secs: number): string {
-  if (!isFinite(secs) || secs < 0) return '0:00';
-  const total = Math.floor(secs);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
-  return `${h > 0 ? `${h}:` : ''}${mm}:${String(s).padStart(2, '0')}`;
-}
-
-const playedRatio = computed(() =>
-  player.duration > 0 ? Math.min(1, Math.max(0, player.position / player.duration)) : 0,
-);
-const bufferedRatio = computed(() =>
-  player.duration > 0 ? Math.min(1, Math.max(0, player.buffered / player.duration)) : 0,
-);
 
 // Ordered meta segments — year, cert, runtime, first genre (matches the locked
 // mockup: a dot precedes every segment except the cert, which hugs the year).
@@ -120,39 +109,18 @@ function onRateChange(): void {
   if (v && v.playbackRate !== player.rate) player.setRate(v.playbackRate);
 }
 
-function seekTo(ratio: number): void {
+/** Seek to an absolute time (seconds) — driven by the Scrubber. */
+function onSeek(seconds: number): void {
   const v = videoRef.value;
-  if (v && player.duration > 0) v.currentTime = Math.min(1, Math.max(0, ratio)) * player.duration;
+  if (v && player.duration > 0) v.currentTime = Math.min(player.duration, Math.max(0, seconds));
 }
-function onSeekClick(e: MouseEvent): void {
-  const el = e.currentTarget as HTMLElement;
-  const rect = el.getBoundingClientRect();
-  if (rect.width > 0) seekTo((e.clientX - rect.left) / rect.width);
+function onScrubStart(): void {
+  scrubbing.value = true;
+  revealChrome();
 }
-/** The scrub slider's own keyboard contract (the global player shortcut map is
- *  R3.3): arrows nudge ±5s, Home/End jump to the ends. */
-function onScrubKey(e: KeyboardEvent): void {
-  const dur = player.duration;
-  if (dur <= 0) return;
-  const v = videoRef.value;
-  if (!v) return;
-  switch (e.key) {
-    case 'ArrowLeft':
-      v.currentTime = Math.max(0, v.currentTime - 5);
-      break;
-    case 'ArrowRight':
-      v.currentTime = Math.min(dur, v.currentTime + 5);
-      break;
-    case 'Home':
-      v.currentTime = 0;
-      break;
-    case 'End':
-      v.currentTime = dur;
-      break;
-    default:
-      return;
-  }
-  e.preventDefault();
+function onScrubEnd(): void {
+  scrubbing.value = false;
+  revealChrome();
 }
 
 function toggleMute(): void {
@@ -205,9 +173,9 @@ function clearIdle(): void {
 }
 function scheduleHide(): void {
   clearIdle();
-  if (!player.playing) return; // never hide while paused
+  if (!player.playing || scrubbing.value) return; // never hide while paused or scrubbing
   idleTimer = setTimeout(() => {
-    if (player.playing) showChrome.value = false;
+    if (player.playing && !scrubbing.value) showChrome.value = false;
   }, props.idleTimeout ?? 3000);
 }
 function revealChrome(): void {
@@ -303,23 +271,16 @@ onBeforeUnmount(() => {
 
     <!-- controls -->
     <div class="player__controls" @click.stop>
-      <div
-        class="player__scrub"
-        role="slider"
-        tabindex="0"
-        :aria-valuemin="0"
-        :aria-valuemax="Math.round(player.duration)"
-        :aria-valuenow="Math.round(player.position)"
-        aria-label="Seek"
-        @click="onSeekClick"
-        @keydown="onScrubKey"
-      >
-        <div class="player__track">
-          <div class="player__buffered" :style="{ width: `${bufferedRatio * 100}%` }" />
-          <div class="player__played" :style="{ width: `${playedRatio * 100}%` }" />
-          <div class="player__head" :style="{ left: `${playedRatio * 100}%` }" />
-        </div>
-      </div>
+      <Scrubber
+        :position="player.position"
+        :duration="player.duration"
+        :buffered="player.buffered"
+        :chapters="chapters"
+        :thumbnail-at="thumbnailAt"
+        @seek="onSeek"
+        @scrub-start="onScrubStart"
+        @scrub-end="onScrubEnd"
+      />
 
       <div class="player__btnrow">
         <button
@@ -494,50 +455,6 @@ onBeforeUnmount(() => {
   inset-inline: var(--space-6);
   bottom: var(--space-5);
   transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
-}
-
-.player__scrub {
-  position: relative;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-.player__scrub:focus-visible {
-  outline: none;
-}
-.player__scrub:focus-visible .player__track {
-  box-shadow: 0 0 0 3px var(--accent-ring);
-}
-.player__track {
-  position: relative;
-  width: 100%;
-  height: 5px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.22);
-}
-.player__buffered {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: rgba(255, 255, 255, 0.34);
-}
-.player__played {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
-}
-.player__head {
-  position: absolute;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--accent);
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 4px rgba(245, 165, 36, 0.3), var(--shadow-2);
 }
 
 .player__btnrow {
