@@ -83,11 +83,12 @@ export const useMediaStore = defineStore('media', () => {
     function buildParams(params: LibraryQueryParams): URLSearchParams {
         const sp = new URLSearchParams();
         if (params.search) sp.set('search', params.search);
-        params.genres?.forEach((g) => sp.append('genres', g));
+        // `key[]=` so PHP parses arrays; bare repeated keys collapse to a string server-side.
+        params.genres?.forEach((g) => sp.append('genres[]', g));
         if (params.yearFrom !== undefined) sp.set('yearFrom', String(params.yearFrom));
         if (params.yearTo !== undefined) sp.set('yearTo', String(params.yearTo));
-        params.ratings?.forEach((r) => sp.append('ratings', r));
-        params.types?.forEach((t) => sp.append('types', t));
+        params.ratings?.forEach((r) => sp.append('ratings[]', r));
+        params.types?.forEach((t) => sp.append('types[]', t));
         if (params.sort) sp.set('sort', params.sort);
         if (params.order) sp.set('order', params.order);
         sp.set('limit', String(params.limit));
