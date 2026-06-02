@@ -52,6 +52,10 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
     `aria-expanded`/`aria-activedescendant`, keyboard nav + type-to-jump + click-outside) and `Combobox`
     (filterable single-select, `role=combobox` + `aria-autocomplete`, query reverts on Esc/blur). Shared
     `listbox.ts` helpers + `SelectOption`/`SelectOptionInput` types.
+  - _R0.4d:_ `Modal` (centered dialog) + `Sheet` (edge drawer: right/left/bottom) sharing `useFocusTrap`
+    (focus-trap, refcounted scroll-lock for stacking, Esc, return-focus, Teleport, `role=dialog`/`aria-modal`/
+    `aria-labelledby`, backdrop-click + `dismissible`), and `Tooltip` (hover/focus, delay, `role=tooltip`,
+    wires `aria-describedby` onto the trigger). `useFocusTrap` exported.
 
 ### Changed
 - **Bumped `vue` floor to `^3.5.0`** (dependency + peerDependency) to use `useId()`. Every install
