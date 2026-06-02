@@ -80,4 +80,53 @@ describe('usePreferencesStore', () => {
     expect(s.theme).toBe('nocturne');
     expect(s.cardSize).toBe(DEFAULT_PREFERENCES.cardSize);
   });
+
+  describe('filter presets', () => {
+    it('saves a preset, persists it, and overwrites by name (stable id)', async () => {
+      const s = usePreferencesStore();
+      const p = s.saveFilterPreset('Sci-Fi Nights', { genres: ['Sci-Fi'], ratings: ['R'] });
+      expect(p.id).toBe('sci-fi-nights');
+      expect(s.filterPresets).toHaveLength(1);
+      expect(s.filterPresets[0].query).toEqual({ genres: ['Sci-Fi'], ratings: ['R'] });
+
+      // persisted into the prefs blob
+      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 0));
+      const stored = JSON.parse(localStorage.getItem('phlix.prefs') as string);
+      expect(stored.filterPresets[0].name).toBe('Sci-Fi Nights');
+
+      // re-saving the same name overwrites rather than duplicating
+      s.saveFilterPreset('Sci-Fi Nights', { genres: ['Sci-Fi'] });
+      expect(s.filterPresets).toHaveLength(1);
+      expect(s.filterPresets[0].query).toEqual({ genres: ['Sci-Fi'] });
+    });
+
+    it('removes a preset by id', () => {
+      const s = usePreferencesStore();
+      s.saveFilterPreset('A', { genres: ['Action'] });
+      s.saveFilterPreset('B', { genres: ['Drama'] });
+      expect(s.filterPresets).toHaveLength(2);
+      s.removeFilterPreset('a');
+      expect(s.filterPresets.map((p) => p.name)).toEqual(['B']);
+    });
+
+    it('reset() clears saved presets', () => {
+      const s = usePreferencesStore();
+      s.saveFilterPreset('Keep?', { genres: ['Action'] });
+      s.reset();
+      expect(s.filterPresets).toEqual([]);
+    });
+
+    it('hydrates presets from storage', () => {
+      localStorage.setItem(
+        'phlix.prefs',
+        JSON.stringify({ filterPresets: [{ id: 'x', name: 'X', query: { genres: ['Sci-Fi'] } }] }),
+      );
+      const fresh = readStoredPreferences();
+      expect(fresh.filterPresets).toHaveLength(1);
+      setActivePinia(createPinia());
+      const s = usePreferencesStore();
+      expect(s.filterPresets[0].name).toBe('X');
+    });
+  });
 });

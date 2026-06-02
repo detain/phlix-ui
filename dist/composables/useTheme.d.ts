@@ -24,11 +24,22 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    filterPresets: import("vue").Ref<{
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[], import("..").FilterPreset[] | {
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[]>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
+    saveFilterPreset: (name: string, query: Record<string, string | string[]>) => import("..").FilterPreset;
+    removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "atmosphere" | "systemReduced">, Pick<{
+}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<import("..").Density, import("..").Density>;
@@ -40,9 +51,20 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    filterPresets: import("vue").Ref<{
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[], import("..").FilterPreset[] | {
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[]>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
+    saveFilterPreset: (name: string, query: Record<string, string | string[]>) => import("..").FilterPreset;
+    removeFilterPreset: (id: string) => void;
     reset: () => void;
 }, "effectiveReducedMotion">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
@@ -56,8 +78,19 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    filterPresets: import("vue").Ref<{
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[], import("..").FilterPreset[] | {
+        id: string;
+        name: string;
+        query: Record<string, string | string[]>;
+    }[]>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
+    saveFilterPreset: (name: string, query: Record<string, string | string[]>) => import("..").FilterPreset;
+    removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "reset" | "snapshot">>;
+}, "reset" | "snapshot" | "saveFilterPreset" | "removeFilterPreset">>;
