@@ -72,6 +72,7 @@ export type { SettingsResponse, SettingsSaveResponse } from './api/admin/setting
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
+export { default as MiniPlayer } from './components/MiniPlayer.vue';
 export { default as Scrubber } from './components/player/Scrubber.vue';
 export type { Chapter } from './components/player/Scrubber.vue';
 export { default as ShortcutsHelp } from './components/player/ShortcutsHelp.vue';

@@ -51,6 +51,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         created_at: string | null;
         updated_at: string | null;
     } | null>;
+    streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
         id: string;
         name: string;
@@ -101,6 +102,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     clearResume: (id: string) => void;
     setCurrent: (media: MediaItem, opts?: {
         resetPosition?: boolean;
+        streamUrl?: string;
     }) => void;
     updateProgress: (pos: number, dur?: number, buf?: number) => void;
     play: () => void;
@@ -117,9 +119,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     hideMiniPlayer: () => void;
     closePlayer: () => void;
     setMediaSessionMetadata: (media: MediaItem) => void;
+    setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "volume" | "playing" | "duration" | "current" | "queue" | "position" | "buffered" | "muted" | "rate" | "quality" | "subtitleLang" | "miniPlayer" | "resumeMap">, Pick<{
+}, "volume" | "playing" | "duration" | "current" | "streamUrl" | "queue" | "position" | "buffered" | "muted" | "rate" | "quality" | "subtitleLang" | "miniPlayer" | "resumeMap">, Pick<{
     current: import("vue").Ref<{
         id: string;
         name: string;
@@ -151,6 +154,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         created_at: string | null;
         updated_at: string | null;
     } | null>;
+    streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
         id: string;
         name: string;
@@ -201,6 +205,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     clearResume: (id: string) => void;
     setCurrent: (media: MediaItem, opts?: {
         resetPosition?: boolean;
+        streamUrl?: string;
     }) => void;
     updateProgress: (pos: number, dur?: number, buf?: number) => void;
     play: () => void;
@@ -217,6 +222,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     hideMiniPlayer: () => void;
     closePlayer: () => void;
     setMediaSessionMetadata: (media: MediaItem) => void;
+    setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
 }, "progress" | "upNext">, Pick<{
@@ -251,6 +257,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         created_at: string | null;
         updated_at: string | null;
     } | null>;
+    streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
         id: string;
         name: string;
@@ -301,6 +308,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     clearResume: (id: string) => void;
     setCurrent: (media: MediaItem, opts?: {
         resetPosition?: boolean;
+        streamUrl?: string;
     }) => void;
     updateProgress: (pos: number, dur?: number, buf?: number) => void;
     play: () => void;
@@ -317,6 +325,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     hideMiniPlayer: () => void;
     closePlayer: () => void;
     setMediaSessionMetadata: (media: MediaItem) => void;
+    setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "play" | "pause" | "next" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "setCurrent" | "updateProgress" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "closePlayer" | "setMediaSessionMetadata" | "bindMediaSession" | "seedFromPreferences">>;
+}, "play" | "pause" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "setCurrent" | "updateProgress" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "next" | "showMiniPlayer" | "hideMiniPlayer" | "closePlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;

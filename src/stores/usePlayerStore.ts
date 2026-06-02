@@ -42,6 +42,9 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   const prefs = usePreferencesStore();
 
   const current = ref<MediaItem | null>(null);
+  /** Stream URL of the current media — so a mini-player can continue the EXACT
+   *  stream across routes without re-deriving a URL. Set via setCurrent. */
+  const streamUrl = ref('');
   const queue = ref<MediaItem[]>([]);
   const playing = ref(false);
   const position = ref(0);
@@ -106,8 +109,9 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   }
 
   // ---- transport ----------------------------------------------------------
-  function setCurrent(media: MediaItem, opts: { resetPosition?: boolean } = {}): void {
+  function setCurrent(media: MediaItem, opts: { resetPosition?: boolean; streamUrl?: string } = {}): void {
     current.value = media;
+    if (opts.streamUrl !== undefined) streamUrl.value = opts.streamUrl;
     if (opts.resetPosition !== false) {
       position.value = 0;
       duration.value = 0;
@@ -177,6 +181,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     playing.value = false;
     miniPlayer.value = false;
     current.value = null;
+    streamUrl.value = '';
   }
 
   // ---- Media Session ------------------------------------------------------
@@ -190,6 +195,24 @@ export const usePlayerStore = defineStore('phlix-player', () => {
       album: media.year ? String(media.year) : '',
       artwork: media.poster_url ? [{ src: media.poster_url }] : [],
     });
+  }
+
+  /** Push the current position/duration/rate to the OS Media Session so the
+   *  lock-screen/notification scrubber reflects progress. Guarded + best-effort. */
+  function setMediaPositionState(): void {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+    const ms = navigator.mediaSession;
+    if (typeof ms.setPositionState !== 'function') return;
+    if (!(duration.value > 0) || !Number.isFinite(duration.value)) return;
+    try {
+      ms.setPositionState({
+        duration: duration.value,
+        position: Math.min(Math.max(0, position.value), duration.value),
+        playbackRate: rate.value || 1,
+      });
+    } catch {
+      /* invalid state (e.g. position > duration mid-seek) — ignore */
+    }
   }
 
   /** Wire OS/lock-screen transport controls. Returns a teardown that clears them. */
@@ -224,6 +247,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
 
   return {
     current,
+    streamUrl,
     queue,
     playing,
     position,
@@ -258,6 +282,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     hideMiniPlayer,
     closePlayer,
     setMediaSessionMetadata,
+    setMediaPositionState,
     bindMediaSession,
     seedFromPreferences,
   };
