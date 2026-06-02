@@ -40,6 +40,18 @@ describe('buildAdminRoutes', () => {
     const routes = buildAdminRoutes('/portal');
     expect(routes.find((r) => r.name === 'admin-users')?.path).toBe('/portal/admin/users');
   });
+
+  it('exposes the webhooks route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const webhooks = routes.find((r) => r.name === 'admin-webhooks');
+    expect(webhooks?.path).toBe('/app/admin/webhooks');
+    expect(typeof webhooks?.component).toBe('function');
+  });
+
+  it('honors a custom base for the webhooks route', () => {
+    const routes = buildAdminRoutes('/portal');
+    expect(routes.find((r) => r.name === 'admin-webhooks')?.path).toBe('/portal/admin/webhooks');
+  });
 });
 
 describe('adminMenu', () => {
@@ -73,5 +85,12 @@ describe('adminMenu', () => {
   it('honors a custom base in the users child link', () => {
     const [group] = adminMenu('/portal');
     expect(group.children?.find((c) => c.id === 'admin-users')?.to).toBe('/portal/admin/users');
+  });
+
+  it('exposes a webhooks child pointing at the webhooks route', () => {
+    const [group] = adminMenu();
+    const webhooks = group.children?.find((c) => c.id === 'admin-webhooks');
+    expect(webhooks?.label).toBe('Webhooks');
+    expect(webhooks?.to).toBe('/app/admin/webhooks');
   });
 });

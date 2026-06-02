@@ -18,6 +18,12 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Webhooks (RA.4):** new **`AdminWebhooksPage`** (`src/pages/admin/WebhooksPage.vue`) —
+  webhook subscription admin: list, create/edit/delete (`Modal`), per-category event selection with
+  client-side validation, masked secret with show/hide (omitted from the update body when left blank so
+  the server keeps the existing one), and a per-webhook test-fire showing success/failure counts. Backed
+  by **`AdminWebhooksApi`** (`src/api/admin/webhooks.ts`, `/api/v1/admin/webhooks*` CRUD + `/test`) with
+  the `WEBHOOK_EVENT_CATEGORIES`/`SUBSCRIBABLE_EVENTS` catalog. Exported; wired into the admin route/menu seam.
 - **Admin port — Users/Profiles (RA.3):** new **`AdminUsersPage`** (`src/pages/admin/UsersPage.vue`) —
   user table with create/edit/delete (`Modal`), admin promote/demote, reset-password (reveals the
   generated value + copy), and per-user **profiles** management (add/edit/delete, ≤5-profile limit, PIN

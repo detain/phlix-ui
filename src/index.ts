@@ -53,6 +53,9 @@ export type {
   CreateProfileInput,
   UpdateProfileInput,
 } from './api/admin/users';
+export { default as AdminWebhooksPage } from './pages/admin/WebhooksPage.vue';
+export { AdminWebhooksApi, WEBHOOK_EVENT_CATEGORIES, SUBSCRIBABLE_EVENTS } from './api/admin/webhooks';
+export type { Webhook, CreateWebhookInput, UpdateWebhookInput, TestResult } from './api/admin/webhooks';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
