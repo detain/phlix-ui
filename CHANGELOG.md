@@ -18,6 +18,11 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Live TV / DVR (RA.11):** new **`AdminLiveTvPage`** (`src/pages/admin/LiveTvPage.vue`) —
+  four sections: Tuners (list/scan/enable-disable/delete), Guide/EPG (day switch + programme expand),
+  Recordings (list/schedule/delete with tabs), and Series Rules (list/create/delete). Backed by
+  **`AdminLiveTvApi`** (`src/api/admin/liveTv.ts`) porting all 19 React LiveTvApi methods
+  (`/api/v1/admin/livetv/*`). Exported; wired into the admin route/menu seam.
 - **Admin port — Remote access (RA.10):** new **`AdminRemoteAccessPage`** (`src/pages/admin/RemoteAccessPage.vue`)
   — four remote-access sections: Hub enrollment (status + pairing modal: claim-code → poll → complete →
   unenroll), subdomain claim/release, relay enable/disable/ping, and port-forward status/candidates/toggle.

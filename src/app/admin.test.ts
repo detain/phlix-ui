@@ -94,6 +94,13 @@ describe('buildAdminRoutes', () => {
     expect(ra?.path).toBe('/app/admin/remote-access');
     expect(typeof ra?.component).toBe('function');
   });
+
+  it('exposes the livetv route, lazily imported', () => {
+    const routes = buildAdminRoutes();
+    const livetv = routes.find((r) => r.name === 'admin-livetv');
+    expect(livetv?.path).toBe('/app/admin/livetv');
+    expect(typeof livetv?.component).toBe('function');
+  });
 });
 
 describe('adminMenu', () => {
@@ -176,5 +183,12 @@ describe('adminMenu', () => {
     const ra = group.children?.find((c) => c.id === 'admin-remote-access');
     expect(ra?.label).toBe('Remote Access');
     expect(ra?.to).toBe('/app/admin/remote-access');
+  });
+
+  it('exposes a livetv child pointing at the livetv route', () => {
+    const [group] = adminMenu();
+    const livetv = group.children?.find((c) => c.id === 'admin-livetv');
+    expect(livetv?.label).toBe('Live TV / DVR');
+    expect(livetv?.to).toBe('/app/admin/livetv');
   });
 });

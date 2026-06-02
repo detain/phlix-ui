@@ -117,6 +117,19 @@ export type {
   PortForwardCandidatesResponse,
   RemoteAccessAck,
 } from './api/admin/remoteAccess';
+export { default as AdminLiveTvPage } from './pages/admin/LiveTvPage.vue';
+export { AdminLiveTvApi } from './api/admin/liveTv';
+export type {
+  Tuner,
+  Channel,
+  Program,
+  Recording,
+  SeriesRule,
+  TunerUpdate,
+  GuideParams,
+  CreateRecordingInput,
+  CreateSeriesRuleInput,
+} from './api/admin/liveTv';
 export { buildAdminRoutes, adminMenu } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
