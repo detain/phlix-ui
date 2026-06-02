@@ -160,7 +160,7 @@ describe('Player — transport ↔ store', () => {
   it('toggles mute through the store, mirrored onto the element', async () => {
     const { w, video } = mountPlayer();
     const store = usePlayerStore();
-    await w.findAll('.player__btnrow .player__iconbtn')[1].trigger('click'); // mute button
+    await w.find('.volume__btn').trigger('click'); // VolumeControl mute button
     expect(store.muted).toBe(true);
     await nextTick();
     expect(video.muted).toBe(true);
