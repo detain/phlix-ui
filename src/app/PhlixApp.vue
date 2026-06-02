@@ -7,12 +7,14 @@
             </nav>
         </template>
         <RouterView />
+        <CommandPalette />
     </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router';
 import AppLayout from './AppLayout.vue';
+import CommandPalette from '../components/CommandPalette.vue';
 import { useTheme } from '../composables/useTheme';
 
 // Reflect the preferences store onto <html> (theme / accent / density / motion).

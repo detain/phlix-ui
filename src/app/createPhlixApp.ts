@@ -98,6 +98,7 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
 
     const app: VueApp = createApp(PhlixApp);
     app.provide('apiBase', fullConfig.apiBase);
+    app.provide('phlixCommands', fullConfig.commands ?? []);
     app.use(pinia);
     app.use(router);
 

@@ -52,6 +52,9 @@ export { usePreferencesStore, readStoredPreferences, DEFAULT_PREFERENCES } from 
 export type { Preferences, ThemeName, Density, MotionPref } from './stores/usePreferencesStore';
 export { usePlayerStore, RESUME_MIN_SECONDS, RESUME_MAX_RATIO } from './stores/usePlayerStore';
 export type { MediaSessionHandlers } from './stores/usePlayerStore';
+export { useCommandStore, fuzzyScore, matchCommand } from './stores/useCommandStore';
+export type { Command } from './stores/useCommandStore';
+export { default as CommandPalette } from './components/CommandPalette.vue';
 export { useTheme, applyStoredThemeEarly } from './composables/useTheme';
 export { deriveAccentVars } from './composables/color';
 

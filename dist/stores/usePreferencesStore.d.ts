@@ -74,4 +74,4 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
     reset: () => void;
-}, "snapshot" | "reset">>;
+}, "reset" | "snapshot">>;

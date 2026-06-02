@@ -24,16 +24,16 @@ type __VLS_Slots = {} & {
     default?: (props: typeof __VLS_6) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
-    "update:selected": (v: boolean) => any;
     click: () => any;
+    "update:selected": (v: boolean) => any;
     remove: () => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
-    "onUpdate:selected"?: ((v: boolean) => any) | undefined;
     onClick?: (() => any) | undefined;
+    "onUpdate:selected"?: ((v: boolean) => any) | undefined;
     onRemove?: (() => any) | undefined;
 }>, {
-    disabled: boolean;
     size: "sm" | "md";
+    disabled: boolean;
     selected: boolean;
     removable: boolean;
     removeLabel: string;

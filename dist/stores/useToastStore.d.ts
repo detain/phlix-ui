@@ -118,4 +118,4 @@ export declare const useToastStore: import("pinia").StoreDefinition<"phlix-toast
     error: (message: string, opts?: Partial<ToastInput>) => number;
     warning: (message: string, opts?: Partial<ToastInput>) => number;
     info: (message: string, opts?: Partial<ToastInput>) => number;
-}, "error" | "success" | "clear" | "info" | "warning" | "show" | "dismiss">>;
+}, "info" | "success" | "error" | "clear" | "warning" | "show" | "dismiss">>;
