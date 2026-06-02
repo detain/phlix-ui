@@ -68,6 +68,9 @@ system. Additive + back-compatible during R0–R5; first tag at the end of R1.
   vignette + optional poster-derived radial **ambient glow** (color or blurred image; `ambientImage`
   URL is sanitized against CSS injection). `enabled` prop; auto-off under `prefers-reduced-motion` /
   `prefers-reduced-data`; decorative (`aria-hidden`); `contain: layout paint`. Exported as `AppBackdrop`.
+- **Barrel + Gallery (R0.7):** all primitives/composables/stores exported from `@phlix/ui`. Dev-only
+  `src/dev/Gallery.vue` (+ `gallery.html`/`gallery.ts`, served by `vite`) showcases every primitive ×
+  every theme for visual QA + Playwright snapshots — not part of the published bundle. **Completes R0.**
 
 ### Changed
 - **Bumped `vue` floor to `^3.5.0`** (dependency + peerDependency) to use `useId()`. Every install
