@@ -7,3 +7,7 @@ export { default as Chip } from './Chip.vue';
 export { default as Select } from './Select.vue';
 export { default as Combobox } from './Combobox.vue';
 export type { SelectOption, SelectOptionInput } from './listbox';
+export { default as Modal } from './Modal.vue';
+export { default as Sheet } from './Sheet.vue';
+export { default as Tooltip } from './Tooltip.vue';
+export { useFocusTrap } from './useFocusTrap';
