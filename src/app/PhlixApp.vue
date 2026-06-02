@@ -41,16 +41,18 @@
 
         <RouterView />
         <CommandPalette />
+        <MiniPlayer @expand="onExpandMini" />
     </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, inject } from 'vue';
-import { RouterLink, RouterView } from 'vue-router';
+import { RouterLink, RouterView, useRouter } from 'vue-router';
 import AppLayout from './AppLayout.vue';
 import Icon from '../components/Icon.vue';
 import IconButton from '../components/ui/IconButton.vue';
 import CommandPalette from '../components/CommandPalette.vue';
+import MiniPlayer from '../components/MiniPlayer.vue';
 import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
 import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
@@ -58,6 +60,12 @@ import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 // Reflect the preferences store onto <html> (theme / accent / density / motion).
 useTheme();
 const commands = useCommandStore();
+const router = useRouter();
+
+/** Expanding the persistent mini-player navigates to the full player route. */
+function onExpandMini(id: string): void {
+  void router.push(`${homePath.value}/player/${id}`);
+}
 
 // Branding, menu and home path all come from config — never `if (app === 'hub')`.
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);

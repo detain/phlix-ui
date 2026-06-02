@@ -153,6 +153,17 @@ describe('usePlayerStore — queue + mini-player', () => {
     expect(p.playing).toBe(false);
     expect(JSON.parse(localStorage.getItem('phlix.resume')!).e).toBe(50);
   });
+
+  it('setCurrent stores the streamUrl (so a mini-player can continue it) and closePlayer clears it', () => {
+    const p = usePlayerStore();
+    p.setCurrent(media('e'), { streamUrl: 'http://x/e/stream' });
+    expect(p.streamUrl).toBe('http://x/e/stream');
+    // a setCurrent without a streamUrl leaves the existing one untouched
+    p.setCurrent(media('e'), { resetPosition: false });
+    expect(p.streamUrl).toBe('http://x/e/stream');
+    p.closePlayer();
+    expect(p.streamUrl).toBe('');
+  });
 });
 
 describe('usePlayerStore — Media Session', () => {
@@ -190,5 +201,28 @@ describe('usePlayerStore — Media Session', () => {
     expect(ms.playbackState).toBe('playing');
     p.pause();
     expect(ms.playbackState).toBe('paused');
+  });
+
+  it('setMediaPositionState pushes duration/position/rate to the OS scrubber', () => {
+    const setPositionState = vi.fn();
+    vi.stubGlobal('navigator', {
+      mediaSession: { metadata: null, playbackState: 'none', setActionHandler: vi.fn(), setPositionState },
+    });
+    const p = usePlayerStore();
+    p.updateProgress(40, 200);
+    p.setRate(1.5);
+    p.setMediaPositionState();
+    expect(setPositionState).toHaveBeenCalledWith({ duration: 200, position: 40, playbackRate: 1.5 });
+  });
+
+  it('setMediaPositionState no-ops when the duration is unknown', () => {
+    const setPositionState = vi.fn();
+    vi.stubGlobal('navigator', {
+      mediaSession: { metadata: null, playbackState: 'none', setActionHandler: vi.fn(), setPositionState },
+    });
+    const p = usePlayerStore();
+    p.updateProgress(10, 0); // duration 0 → nothing to report
+    p.setMediaPositionState();
+    expect(setPositionState).not.toHaveBeenCalled();
   });
 });

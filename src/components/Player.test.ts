@@ -619,3 +619,111 @@ describe('Player — ambient & theater (R3.6)', () => {
     expect(last.attributes('aria-label')).toBe('Fullscreen');
   });
 });
+
+describe('Player — PiP & Media Session (R3.7)', () => {
+  function key(k: string, target: EventTarget = document) {
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+  }
+  const pipBtn = (w: ReturnType<typeof mountPlayer>['w']) =>
+    w.findAll('.player__btnrow .player__iconbtn').find((b) => (b.attributes('aria-label') ?? '').toLowerCase().includes('picture'));
+
+  it('hides the PiP button where PiP is unsupported', () => {
+    const { w } = mountPlayer(); // jsdom: document.pictureInPictureEnabled is undefined
+    expect(pipBtn(w)).toBeFalsy();
+  });
+
+  it('shows the PiP button where supported and requests/exits PiP (button stays before fullscreen)', async () => {
+    Object.defineProperty(document, 'pictureInPictureEnabled', { configurable: true, get: () => true });
+    let pipEl: Element | null = null;
+    Object.defineProperty(document, 'pictureInPictureElement', { configurable: true, get: () => pipEl });
+    const exit = vi.fn(() => {
+      pipEl = null;
+      return Promise.resolve();
+    });
+    Object.defineProperty(document, 'exitPictureInPicture', { configurable: true, value: exit });
+    const { w, video } = mountPlayer();
+    const req = vi.fn(() => {
+      pipEl = video;
+      return Promise.resolve();
+    });
+    (video as unknown as { requestPictureInPicture: unknown }).requestPictureInPicture = req;
+
+    await nextTick(); // pipSupported is set in onMounted → button renders next tick
+    expect(pipBtn(w)).toBeTruthy();
+    expect(w.findAll('.player__btnrow .player__iconbtn').at(-1)!.attributes('aria-label')).toBe('Fullscreen'); // still last
+    await pipBtn(w)!.trigger('click');
+    expect(req).toHaveBeenCalled();
+
+    // a leave event flips the label back; an enter event sets it
+    video.dispatchEvent(new Event('enterpictureinpicture'));
+    await nextTick();
+    expect(pipBtn(w)!.attributes('aria-label')).toBe('Exit picture-in-picture');
+    video.dispatchEvent(new Event('leavepictureinpicture'));
+    await nextTick();
+    expect(pipBtn(w)!.attributes('aria-label')).toBe('Picture-in-picture');
+    delete (document as { pictureInPictureEnabled?: unknown }).pictureInPictureEnabled;
+  });
+
+  it('the i key still emits pip for host hooks', async () => {
+    const { w } = mountPlayer();
+    key('i');
+    await nextTick();
+    expect(w.emitted('pip')).toHaveLength(1);
+  });
+
+  it('binds OS media-session handlers on mount and reports position state on timeupdate', async () => {
+    const setActionHandler = vi.fn();
+    const setPositionState = vi.fn();
+    Object.defineProperty(navigator, 'mediaSession', {
+      configurable: true,
+      value: { metadata: null, playbackState: 'none', setActionHandler, setPositionState },
+    });
+    const { video, state } = mountPlayer();
+    const actions = setActionHandler.mock.calls.map((c) => c[0]);
+    expect(actions).toContain('play');
+    expect(actions).toContain('pause');
+    expect(actions).toContain('seekto');
+    state.currentTime = 40;
+    state.duration = 200;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    expect(setPositionState).toHaveBeenCalledWith(expect.objectContaining({ duration: 200, position: 40 }));
+
+    // the registered handlers drive the element (OS media keys)
+    const reg = Object.fromEntries(setActionHandler.mock.calls.filter((c) => typeof c[1] === 'function')) as Record<
+      string,
+      (d?: { seekTime?: number }) => void
+    >;
+    reg.play();
+    expect(video.play).toHaveBeenCalled();
+    reg.pause();
+    expect(video.pause).toHaveBeenCalled();
+    reg.seekto({ seekTime: 30 }); // store.duration is 200 from the timeupdate above
+    expect(state.currentTime).toBe(30);
+    delete (navigator as { mediaSession?: unknown }).mediaSession;
+  });
+
+  it('re-registers the current media (with its stream url) when the media prop changes', async () => {
+    const { w } = mountPlayer();
+    const store = usePlayerStore();
+    expect(store.current?.id).toBe('m1');
+    await w.setProps({ media: media({ id: 'm2', name: 'Arrival' }), streamUrl: 'http://x/m2' });
+    expect(store.current?.id).toBe('m2');
+    expect(store.streamUrl).toBe('http://x/m2');
+  });
+
+  it('tears down the media-session handlers on unmount', () => {
+    const setActionHandler = vi.fn();
+    Object.defineProperty(navigator, 'mediaSession', {
+      configurable: true,
+      value: { metadata: null, playbackState: 'none', setActionHandler },
+    });
+    const { w } = mountPlayer();
+    setActionHandler.mockClear();
+    w.unmount();
+    const clearedToNull = setActionHandler.mock.calls.filter((c) => c[1] === null).map((c) => c[0]);
+    expect(clearedToNull).toContain('play');
+    expect(clearedToNull).toContain('pause');
+    delete (navigator as { mediaSession?: unknown }).mediaSession;
+  });
+});

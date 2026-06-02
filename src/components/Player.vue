@@ -74,6 +74,9 @@ const fullscreen = ref(false);
 const scrubbing = ref(false);
 const showHelp = ref(false);
 const theater = ref(false);
+const inPip = ref(false);
+/** Whether the browser supports Picture-in-Picture (the button hides if not). */
+const pipSupported = ref(false);
 
 /** Ambient glow brightens in theater mode (the "dim surroundings" cinema feel). */
 const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
@@ -157,7 +160,10 @@ function onPause(): void {
 }
 function onTimeUpdate(): void {
   const v = videoRef.value;
-  if (v) player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
+  if (v) {
+    player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
+    player.setMediaPositionState(); // keep the OS scrubber in sync
+  }
 }
 function onLoadedMetadata(): void {
   const v = videoRef.value;
@@ -167,6 +173,7 @@ function onLoadedMetadata(): void {
   v.muted = player.muted;
   v.playbackRate = player.rate;
   player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
+  player.setMediaPositionState();
   refreshTracks(); // text/audio tracks are known once metadata is in
 }
 function onProgress(): void {
@@ -221,7 +228,7 @@ const shortcutActions: ShortcutActions = {
   toggleFullscreen,
   toggleCaptions,
   toggleTheater,
-  togglePip: () => emit('pip'),
+  togglePip,
   seekToPercent: (frac) => onSeek(frac * player.duration),
   speedStep,
   toggleHelp: () => {
@@ -280,6 +287,26 @@ function onFullscreenChange(): void {
   fullscreen.value = typeof document !== 'undefined' && !!document.fullscreenElement;
 }
 
+// ---- picture-in-picture (R3.7) ----------------------------------------------
+async function togglePip(): Promise<void> {
+  const v = videoRef.value;
+  if (typeof document !== 'undefined' && v) {
+    try {
+      if (document.pictureInPictureElement) await document.exitPictureInPicture();
+      else if (typeof v.requestPictureInPicture === 'function') await v.requestPictureInPicture();
+    } catch {
+      /* no user gesture / disabled / unsupported — ignore */
+    }
+  }
+  emit('pip'); // host hook (e.g. PlayerPage, R3.9)
+}
+function onEnterPip(): void {
+  inPip.value = true;
+}
+function onLeavePip(): void {
+  inPip.value = false;
+}
+
 // ---- chrome auto-hide -------------------------------------------------------
 function clearIdle(): void {
   if (idleTimer) {
@@ -311,10 +338,22 @@ watch(
   },
 );
 
+// ---- Media Session (R3.7) — OS / lock-screen transport ----------------------
+let mediaSessionTeardown: (() => void) | null = null;
+
 // ---- lifecycle --------------------------------------------------------------
 onMounted(() => {
-  player.setCurrent(props.media, { resetPosition: false });
-  if (typeof document !== 'undefined') document.addEventListener('fullscreenchange', onFullscreenChange);
+  player.setCurrent(props.media, { resetPosition: false, streamUrl: props.streamUrl });
+  if (typeof document !== 'undefined') {
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    pipSupported.value = document.pictureInPictureEnabled === true;
+  }
+  // OS media keys drive the element; the store's metadata is set by setCurrent.
+  mediaSessionTeardown = player.bindMediaSession({
+    onPlay: () => void videoRef.value?.play()?.catch(() => {}),
+    onPause: () => videoRef.value?.pause(),
+    onSeek: (to) => onSeek(to),
+  });
   // Re-enumerate when the host adds/removes <track>s (sidecar VTT, R3.9).
   trackList = videoRef.value?.textTracks ?? null;
   trackList?.addEventListener?.('addtrack', refreshTracks);
@@ -323,11 +362,12 @@ onMounted(() => {
 });
 watch(
   () => props.media,
-  (m) => player.setCurrent(m, { resetPosition: false }),
+  (m) => player.setCurrent(m, { resetPosition: false, streamUrl: props.streamUrl }),
 );
 onBeforeUnmount(() => {
   clearIdle();
   if (typeof document !== 'undefined') document.removeEventListener('fullscreenchange', onFullscreenChange);
+  mediaSessionTeardown?.();
   trackList?.removeEventListener?.('addtrack', refreshTracks);
   trackList?.removeEventListener?.('removetrack', refreshTracks);
 });
@@ -367,6 +407,8 @@ onBeforeUnmount(() => {
         @progress="onProgress"
         @volumechange="onVolumeChange"
         @ratechange="onRateChange"
+        @enterpictureinpicture="onEnterPip"
+        @leavepictureinpicture="onLeavePip"
         @click="togglePlay"
       />
 
@@ -459,6 +501,18 @@ onBeforeUnmount(() => {
             @click="showHelp = true"
           >
             <Icon name="info" />
+          </button>
+
+          <button
+            v-if="pipSupported"
+            type="button"
+            class="player__iconbtn"
+            :class="{ 'is-on': inPip }"
+            :aria-label="inPip ? 'Exit picture-in-picture' : 'Picture-in-picture'"
+            :aria-pressed="inPip"
+            @click="togglePip"
+          >
+            <Icon name="pip" />
           </button>
 
           <button
