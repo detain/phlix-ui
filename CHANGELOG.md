@@ -18,6 +18,12 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Admin port — Logs + scaffolding (RA.1):** begins restoring the admin surfaces orphaned when the React
+  `admin-ui/` was deleted. New **`AdminLogsPage`** (`src/pages/admin/LogsPage.vue`) — list + tail server
+  logs (incl. an "All logs" merged view), line-count + 5s auto-refresh, on the a11y primitives; backed by
+  **`AdminLogsApi`** (`src/api/admin/logs.ts`, `GET /api/v1/admin/logs*`). New **`buildAdminRoutes(base?)`**
+  + **`adminMenu(base?)`** mount seam (`src/app/admin.ts`) so a consumer spreads admin routes/menu via
+  `extraRoutes`/`menu` (no `if (app === …)`); lazily-imported chunks. Exported from the package root.
 - **Volume + speed + quality controls (R3.4):** three control-bar pieces on the a11y primitives —
   **`VolumeControl.vue`** (mute toggle + `Slider` with **mute memory**: muting keeps the stored volume and
   the slider shows 0, unmute restores; dragging to 0 mutes; volume persists to

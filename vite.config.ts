@@ -56,6 +56,7 @@ export default defineConfig({
                 'src/app/**/*.ts',
                 'src/pages/BrowsePage.vue',
                 'src/pages/MediaDetailPage.vue',
+                'src/pages/admin/**/*.vue',
             ],
             exclude: [
                 '**/*.test.ts',
