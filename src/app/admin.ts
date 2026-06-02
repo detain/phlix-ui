@@ -27,6 +27,11 @@ export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
       name: 'admin-logs',
       component: () => import('../pages/admin/LogsPage.vue'),
     },
+    {
+      path: `${root}/webhooks`,
+      name: 'admin-webhooks',
+      component: () => import('../pages/admin/WebhooksPage.vue'),
+    },
   ];
 }
 
@@ -42,6 +47,7 @@ export function adminMenu(base = '/app'): MenuItem[] {
         { id: 'admin-dashboard', label: 'Dashboard', icon: 'speed', to: `${root}/dashboard` },
         { id: 'admin-users', label: 'Users', icon: 'user', to: `${root}/users` },
         { id: 'admin-logs', label: 'Logs', icon: 'list', to: `${root}/logs` },
+        { id: 'admin-webhooks', label: 'Webhooks', icon: 'settings', to: `${root}/webhooks` },
       ],
     },
   ];
