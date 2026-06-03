@@ -14,14 +14,16 @@ import AppBackdrop from '../components/AppBackdrop.vue';
 import Sheet from '../components/ui/Sheet.vue';
 import IconButton from '../components/ui/IconButton.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { useMessages } from '../composables/useMessages';
 
 const prefs = usePreferencesStore();
 const drawer = ref(false);
+const { t } = useMessages();
 </script>
 
 <template>
   <div class="shell">
-    <a class="shell__skip" href="#main">Skip to content</a>
+    <a class="shell__skip" href="#main">{{ t('shell.skipToContent') }}</a>
     <AppBackdrop :enabled="prefs.atmosphere" />
 
     <header class="shell__bar">
@@ -30,7 +32,7 @@ const drawer = ref(false);
           <slot name="logo"><span class="shell__wordmark">Phlix<span class="shell__dot">.</span></span></slot>
         </div>
 
-        <nav class="shell__nav" aria-label="Primary"><slot name="nav" /></nav>
+        <nav class="shell__nav" :aria-label="t('shell.primaryNav')"><slot name="nav" /></nav>
 
         <span class="shell__spacer" />
 
@@ -40,7 +42,7 @@ const drawer = ref(false);
           v-if="$slots.nav"
           class="shell__hamburger"
           name="menu"
-          label="Open navigation menu"
+          :label="t('shell.openMenu')"
           variant="ghost"
           @click="drawer = true"
         />
@@ -51,7 +53,7 @@ const drawer = ref(false);
 
     <footer v-if="$slots.footer" class="shell__footer"><slot name="footer" /></footer>
 
-    <Sheet v-model="drawer" side="left" title="Menu">
+    <Sheet v-model="drawer" side="left" :title="t('shell.menu')">
       <!-- No aria-label here: the Sheet is a labelled role=dialog ("Menu"), so a
            second "Primary" nav landmark would be redundant. -->
       <nav class="shell__drawer" @click="drawer = false"><slot name="nav" /></nav>

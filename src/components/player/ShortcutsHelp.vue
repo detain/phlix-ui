@@ -11,6 +11,7 @@ import Icon, { type IconName } from '../Icon.vue';
 import IconButton from '../ui/IconButton.vue';
 import { useFocusTrap } from '../ui/useFocusTrap';
 import { PLAYER_SHORTCUTS, ARROW_ICONS, ARROW_LABELS, type ShortcutRow } from './shortcuts';
+import { useMessages } from '../../composables/useMessages';
 
 const props = withDefaults(
   defineProps<{ open: boolean; shortcuts?: ShortcutRow[] }>(),
@@ -18,6 +19,8 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{ (e: 'close'): void }>();
+
+const { t } = useMessages();
 
 const panelEl = ref<HTMLElement | null>(null);
 
@@ -39,12 +42,12 @@ useFocusTrap(panelEl, toRef(props, 'open'), {
       class="shortcuts__panel"
       role="dialog"
       aria-modal="true"
-      aria-label="Keyboard shortcuts"
+      :aria-label="t('player.keyboardShortcuts')"
       tabindex="-1"
     >
       <div class="shortcuts__head">
-        <h3 class="shortcuts__title">Keyboard</h3>
-        <IconButton name="x" label="Close" size="sm" @click="emit('close')" />
+        <h3 class="shortcuts__title">{{ t('player.keyboard') }}</h3>
+        <IconButton name="x" :label="t('common.close')" size="sm" @click="emit('close')" />
       </div>
       <ul class="shortcuts__grid">
         <li v-for="row in shortcuts" :key="row.id" class="shortcuts__row">

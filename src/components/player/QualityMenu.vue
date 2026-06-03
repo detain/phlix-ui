@@ -11,6 +11,7 @@ import { computed } from 'vue';
 import Select from '../ui/Select.vue';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { useMessages } from '../../composables/useMessages';
 import type { SelectOptionInput } from '../ui/listbox';
 
 const props = withDefaults(
@@ -23,6 +24,7 @@ const props = withDefaults(
 
 const player = usePlayerStore();
 const prefs = usePreferencesStore();
+const { t } = useMessages();
 
 const hasQualities = computed(() => props.qualities.length > 0);
 
@@ -39,7 +41,7 @@ function onChange(v: string | number): void {
     class="quality-menu"
     :model-value="player.quality"
     :options="qualities"
-    label="Quality"
+    :label="t('player.quality')"
     @update:model-value="onChange"
   />
 </template>

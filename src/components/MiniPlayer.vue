@@ -16,10 +16,12 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import Icon from './Icon.vue';
+import { useMessages } from '../composables/useMessages';
 
 const emit = defineEmits<{ (e: 'expand', id: string): void }>();
 
 const player = usePlayerStore();
+const { t } = useMessages();
 const videoRef = ref<HTMLVideoElement | null>(null);
 
 const visible = computed(() => player.miniPlayer && !!player.current && !!player.streamUrl);
@@ -78,7 +80,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Transition name="mini">
-    <div v-if="visible" class="mini" role="region" aria-label="Mini player">
+    <div v-if="visible" class="mini" role="region" :aria-label="t('player.miniPlayer')">
       <video
         ref="videoRef"
         class="mini__video"
@@ -96,13 +98,13 @@ onBeforeUnmount(() => {
       <div class="mini__body">
         <p class="mini__title">{{ title }}</p>
         <div class="mini__controls">
-          <button type="button" class="mini__btn" :aria-label="player.playing ? 'Pause' : 'Play'" @click="togglePlay">
+          <button type="button" class="mini__btn" :aria-label="player.playing ? t('player.pause') : t('player.play')" @click="togglePlay">
             <Icon :name="player.playing ? 'pause' : 'play'" />
           </button>
-          <button type="button" class="mini__btn" aria-label="Expand to full player" @click="expand">
+          <button type="button" class="mini__btn" :aria-label="t('player.expand')" @click="expand">
             <Icon name="expand" />
           </button>
-          <button type="button" class="mini__btn mini__btn--close" aria-label="Close player" @click="close">
+          <button type="button" class="mini__btn mini__btn--close" :aria-label="t('player.closePlayer')" @click="close">
             <Icon name="x" />
           </button>
         </div>

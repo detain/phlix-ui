@@ -25,15 +25,15 @@
                 </component>
             </template>
             <template v-else>
-                <RouterLink :to="homePath" class="nav-link">Browse</RouterLink>
-                <RouterLink :to="`${homePath}/settings`" class="nav-link">Settings</RouterLink>
+                <RouterLink :to="homePath" class="nav-link">{{ t('shell.browse') }}</RouterLink>
+                <RouterLink :to="`${homePath}/settings`" class="nav-link">{{ t('shell.settings') }}</RouterLink>
             </template>
         </template>
 
         <template #actions>
             <IconButton
                 name="search"
-                label="Open command palette (⌘K)"
+                :label="t('shell.openCommandPalette')"
                 variant="ghost"
                 @click="commands.openPalette()"
             />
@@ -60,12 +60,14 @@ import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
+import { useMessages } from '../composables/useMessages';
 import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 
 // Reflect the preferences store onto <html> (theme / accent / density / motion).
 useTheme();
 const commands = useCommandStore();
 const router = useRouter();
+const { t } = useMessages();
 
 // Always-on ⌘K hotkey (stays in the main bundle); the palette UI is lazy below.
 useCommandPaletteHotkey();

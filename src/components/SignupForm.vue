@@ -15,6 +15,7 @@ import Button from './ui/Button.vue';
 import Icon from './Icon.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
 import type { PhlixAppConfig } from '../app/types';
 
 const emit = defineEmits<{ success: [] }>();
@@ -22,6 +23,7 @@ const emit = defineEmits<{ success: [] }>();
 const auth = useAuthStore();
 const toasts = useToastStore();
 const router = useRouter();
+const { t } = useMessages();
 
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.routerBase ?? '/app');
@@ -41,22 +43,22 @@ const confirmError = ref<string | null>(null);
 
 function validate(): boolean {
   emailError.value = !email.value.trim()
-    ? 'Enter your email.'
+    ? t('auth.emailRequired')
     : !EMAIL_RE.test(email.value.trim())
-      ? 'Enter a valid email address.'
+      ? t('auth.emailInvalid')
       : null;
   usernameError.value = !username.value.trim()
-    ? 'Choose a username.'
+    ? t('auth.usernameRequired')
     : username.value.trim().length < 3
-      ? 'Username must be at least 3 characters.'
+      ? t('auth.usernameMinLength')
       : null;
   passwordError.value = !password.value
-    ? 'Choose a password.'
+    ? t('auth.passwordChoose')
     : password.value.length < 8
-      ? 'Password must be at least 8 characters.'
+      ? t('auth.passwordMinLength')
       : null;
   confirmError.value =
-    confirmPassword.value !== password.value ? 'Passwords do not match.' : null;
+    confirmPassword.value !== password.value ? t('auth.passwordMismatch') : null;
   return !emailError.value && !usernameError.value && !passwordError.value && !confirmError.value;
 }
 
@@ -67,13 +69,13 @@ async function handleSubmit(): Promise<void> {
     emit('success');
     void router.push(homePath.value);
   } else {
-    toasts.error(auth.error ?? 'Registration failed.');
+    toasts.error(auth.error ?? t('auth.signupFailed'));
   }
 }
 </script>
 
 <template>
-  <AuthCard eyebrow="Now showing" title="Create your account" subtitle="Your private cinema, anywhere.">
+  <AuthCard :eyebrow="t('auth.signupEyebrow')" :title="t('auth.signupTitle')" :subtitle="t('auth.signupSubtitle')">
     <p v-if="auth.error" class="signup__banner" role="alert">
       <Icon name="alert" class="signup__banner-icon" />
       <span>{{ auth.error }}</span>
@@ -82,57 +84,57 @@ async function handleSubmit(): Promise<void> {
     <form class="signup__form" novalidate @submit.prevent="handleSubmit">
       <AuthField
         v-model="email"
-        label="Email"
+        :label="t('auth.email')"
         type="email"
         autocomplete="email"
         inputmode="email"
-        placeholder="you@example.com"
+        :placeholder="t('auth.emailPlaceholder')"
         :error="emailError"
         required
       />
       <AuthField
         v-model="username"
-        label="Username"
+        :label="t('auth.username')"
         type="text"
         autocomplete="username"
-        placeholder="Your username"
+        :placeholder="t('auth.usernamePlaceholder')"
         :error="usernameError"
         :minlength="3"
         required
       />
       <AuthField
         v-model="password"
-        label="Password"
+        :label="t('auth.password')"
         type="password"
         autocomplete="new-password"
-        placeholder="At least 8 characters"
+        :placeholder="t('auth.passwordSignupPlaceholder')"
         :error="passwordError"
         :minlength="8"
         required
       />
       <AuthField
         v-model="confirmPassword"
-        label="Confirm password"
+        :label="t('auth.confirmPassword')"
         type="password"
         autocomplete="new-password"
-        placeholder="Repeat your password"
+        :placeholder="t('auth.confirmPasswordPlaceholder')"
         :error="confirmError"
         required
       />
 
       <Button type="submit" variant="solid" size="lg" block :loading="auth.loading">
-        {{ auth.loading ? 'Creating account…' : 'Create account' }}
+        {{ auth.loading ? t('auth.creatingAccount') : t('auth.createAccount') }}
       </Button>
 
       <template v-if="$slots.oauth">
-        <div class="signup__divider">or continue with</div>
+        <div class="signup__divider">{{ t('auth.orContinueWith') }}</div>
         <div class="signup__oauth"><slot name="oauth" /></div>
       </template>
     </form>
 
     <template #footer>
-      Already have an account?
-      <RouterLink :to="loginPath" class="signup__link">Sign in</RouterLink>
+      {{ t('auth.signupFooterPrompt') }}
+      <RouterLink :to="loginPath" class="signup__link">{{ t('auth.signInLink') }}</RouterLink>
     </template>
   </AuthCard>
 </template>

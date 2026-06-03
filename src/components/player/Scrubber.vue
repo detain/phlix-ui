@@ -14,6 +14,10 @@
  */
 import { ref, computed } from 'vue';
 import { formatTime } from './format-time';
+import { useMessages } from '../../composables/useMessages';
+
+// Aliased to avoid colliding with the `t` chapter-tick loop variable in the template.
+const { t: translate } = useMessages();
 
 export interface Chapter {
   /** Chapter start, in seconds. */
@@ -162,7 +166,7 @@ defineExpose({ playedRatio, previewActive });
     :aria-valuemax="Math.round(duration)"
     :aria-valuenow="Math.round(position)"
     :aria-valuetext="formatTime(position)"
-    aria-label="Seek"
+    :aria-label="translate('player.seek')"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="endDrag"

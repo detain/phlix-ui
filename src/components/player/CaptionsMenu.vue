@@ -20,6 +20,7 @@ import Select from '../ui/Select.vue';
 import { useFocusTrap } from '../ui/useFocusTrap';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { useMessages } from '../../composables/useMessages';
 import type { CaptionSize, CaptionBackground, CaptionEdge } from '../../stores/usePreferencesStore';
 import {
   type TextTrackInfo,
@@ -50,6 +51,8 @@ const emit = defineEmits<{
 
 const player = usePlayerStore();
 const prefs = usePreferencesStore();
+// Aliased to avoid colliding with the `t` track loop variables in the template.
+const { t: translate } = useMessages();
 
 const rootEl = ref<HTMLElement | null>(null);
 const panelEl = ref<HTMLElement | null>(null);
@@ -167,7 +170,7 @@ onBeforeUnmount(() => {
       type="button"
       class="capmenu__btn"
       :class="{ 'is-active': captionsOn }"
-      :aria-label="captionsOn ? 'Captions (on)' : 'Captions (off)'"
+      :aria-label="captionsOn ? translate('player.captionsOn') : translate('player.captionsOff')"
       aria-haspopup="dialog"
       :aria-expanded="open"
       @click="setOpen(!open)"
@@ -181,15 +184,15 @@ onBeforeUnmount(() => {
       class="capmenu__panel"
       role="dialog"
       aria-modal="true"
-      aria-label="Captions and subtitles"
+      :aria-label="translate('player.captionsAndSubtitles')"
       tabindex="-1"
     >
       <div class="capmenu__head">
-        <h3 class="capmenu__title">Subtitles</h3>
-        <IconButton name="x" label="Close" size="sm" @click="close" />
+        <h3 class="capmenu__title">{{ translate('player.subtitles') }}</h3>
+        <IconButton name="x" :label="translate('common.close')" size="sm" @click="close" />
       </div>
 
-      <div class="capmenu__group" role="radiogroup" aria-label="Subtitle track" @keydown="onSubtitleKeydown">
+      <div class="capmenu__group" role="radiogroup" :aria-label="translate('player.subtitleTrack')" @keydown="onSubtitleKeydown">
         <button
           type="button"
           class="capmenu__opt"
@@ -199,7 +202,7 @@ onBeforeUnmount(() => {
           @click="selectSubtitle(null)"
         >
           <span class="capmenu__check"><Icon v-if="!captionsOn" name="check" /></span>
-          <span class="capmenu__optlabel">Off</span>
+          <span class="capmenu__optlabel">{{ translate('player.off') }}</span>
         </button>
         <button
           v-for="(t, i) in tracks"
@@ -217,8 +220,8 @@ onBeforeUnmount(() => {
       </div>
 
       <template v-if="audioTracks.length > 1">
-        <h3 class="capmenu__title capmenu__title--sub">Audio</h3>
-        <div class="capmenu__group" role="radiogroup" aria-label="Audio track" @keydown="onAudioKeydown">
+        <h3 class="capmenu__title capmenu__title--sub">{{ translate('player.audio') }}</h3>
+        <div class="capmenu__group" role="radiogroup" :aria-label="translate('player.audioTrack')" @keydown="onAudioKeydown">
           <button
             v-for="t in audioTracks"
             :key="t.index"
@@ -235,41 +238,41 @@ onBeforeUnmount(() => {
         </div>
       </template>
 
-      <h3 class="capmenu__title capmenu__title--sub">Caption style</h3>
+      <h3 class="capmenu__title capmenu__title--sub">{{ translate('player.captionStyle') }}</h3>
       <div class="capmenu__style">
         <div class="capmenu__field">
-          <span class="capmenu__fieldlabel">Size</span>
+          <span class="capmenu__fieldlabel">{{ translate('player.size') }}</span>
           <Select
             :model-value="prefs.captionStyle.size"
             :options="CAPTION_SIZE_OPTIONS"
-            label="Caption size"
+            :label="translate('player.captionSize')"
             @update:model-value="setSize"
           />
         </div>
         <div class="capmenu__field">
-          <span class="capmenu__fieldlabel">Color</span>
+          <span class="capmenu__fieldlabel">{{ translate('player.color') }}</span>
           <Select
             :model-value="prefs.captionStyle.textColor"
             :options="CAPTION_COLOR_OPTIONS"
-            label="Caption color"
+            :label="translate('player.captionColor')"
             @update:model-value="setColor"
           />
         </div>
         <div class="capmenu__field">
-          <span class="capmenu__fieldlabel">Background</span>
+          <span class="capmenu__fieldlabel">{{ translate('player.background') }}</span>
           <Select
             :model-value="prefs.captionStyle.background"
             :options="CAPTION_BACKGROUND_OPTIONS"
-            label="Caption background"
+            :label="translate('player.captionBackground')"
             @update:model-value="setBackground"
           />
         </div>
         <div class="capmenu__field">
-          <span class="capmenu__fieldlabel">Edge</span>
+          <span class="capmenu__fieldlabel">{{ translate('player.edge') }}</span>
           <Select
             :model-value="prefs.captionStyle.edge"
             :options="CAPTION_EDGE_OPTIONS"
-            label="Caption edge"
+            :label="translate('player.captionEdge')"
             @update:model-value="setEdge"
           />
         </div>
