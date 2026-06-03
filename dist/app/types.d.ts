@@ -3,6 +3,7 @@ import type { Command } from '../stores/useCommandStore';
 import type { ThemeName } from '../stores/usePreferencesStore';
 import type { IconName } from '../components/Icon.vue';
 import type { LibraryQueryParams } from '../types/library-query';
+import type { PhlixMessagesConfig } from '../i18n/messages';
 export interface MenuItem {
     id: string;
     label: string;
@@ -59,4 +60,9 @@ export interface PhlixAppConfig {
     branding?: BrandingConfig;
     /** Configured Browse home rows (consumed by the R2 Browse surface). */
     homeRows?: HomeRow[];
+    /** Optional overrides for the adopted end-user-chrome strings (R6.5c i18n seam).
+     *  A deep-partial map — override only the `group.key` strings you want; the rest
+     *  fall back to the English defaults. Omit entirely for the default English UI.
+     *  Resolve strings in components via `useMessages().t('group.key')`. */
+    messages?: PhlixMessagesConfig;
 }

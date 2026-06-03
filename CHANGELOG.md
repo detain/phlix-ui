@@ -11,6 +11,24 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **R6.5c — i18n-readiness seam (`useMessages()` + `PhlixAppConfig.messages`):** an additive, dependency-free,
+  SSR-safe way to override the package's user-facing English copy. A new `useMessages()` composable returns
+  `t(key, params?)` which resolves a dotted `group.key` (e.g. `t('player.play')`, `t('player.resumeFrom', { time })`)
+  against the English `DEFAULT_MESSAGES` catalog overlaid with the consumer's optional **`PhlixAppConfig.messages`**
+  (a deep-partial map — override only the strings you want). `{param}` placeholders interpolate; an unknown key
+  echoes itself; **omitting `messages` renders the current English UI byte-for-byte.** Adopted across the
+  highest-value end-user chrome: the shared primitives' built-in copy (`Spinner` loading label, `Modal`/`ToastHost`
+  close + dismiss, `Combobox`/`Select` placeholders + "No matches", toast region label), the app shell
+  (skip-link, nav, hamburger, theme toggle, user menu), the command palette + its built-in commands, the auth
+  forms incl. validation messages and the password reveal toggle, and the whole Player surface (transport/chrome
+  aria-labels, scrubber, volume/speed/quality/captions menus, resume prompt, up-next, transcode notice,
+  mini-player, shortcuts overlay). Exports `useMessages`, `UseMessages`, `DEFAULT_MESSAGES`, `createTranslator`,
+  `mergeMessages`, and the `PhlixMessages`/`PhlixMessagesConfig`/`MessageGroup`/`MessageKey`/`TranslateParams`/
+  `Translate` types. **Scope:** a partial-adoption seam, not a full localization — the lower-traffic
+  settings/Browse copy, the operator-facing admin pages, and the shared `shortcuts.ts`/`captions.ts` enum labels
+  keep their English defaults and can adopt the same resolver incrementally later. **Additive** (a new optional
+  config field + new exports; zero behavior change when `messages` is omitted) → v0.9.0-compatible. The catalog +
+  resolver are shell-resident, so the entry bundle is `dist/phlix-ui.js` 56.15 → 56.89 kB (gzip 15.45 → 15.63).
 - **R6.2c — `usePreconnect()` + `imageOrigin` config:** a new SSR-safe composable that injects
   `<link rel="preconnect">` + `<link rel="dns-prefetch">` into `document.head` for cross-origin asset hosts
   (`usePreconnect(input, { crossOrigin? })`), so the connection to a poster CDN / image proxy is warmed before

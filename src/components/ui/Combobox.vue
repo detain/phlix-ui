@@ -12,6 +12,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 import Icon from '../Icon.vue';
 import { normalizeOptions, nextEnabledIndex, edgeEnabledIndex, type SelectOptionInput } from './listbox';
+import { useMessages } from '../../composables/useMessages';
 
 const props = withDefaults(
   defineProps<{
@@ -21,8 +22,10 @@ const props = withDefaults(
     label?: string;
     disabled?: boolean;
   }>(),
-  { placeholder: 'Search…', disabled: false },
+  { disabled: false },
 );
+
+const { t } = useMessages();
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: string | number | null): void;
@@ -129,7 +132,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointer, 
         :aria-controls="open ? `${baseId}-list` : undefined"
         :aria-activedescendant="open ? activeId : undefined"
         :aria-label="label"
-        :placeholder="placeholder"
+        :placeholder="placeholder ?? t('common.searchPlaceholder')"
         :disabled="disabled"
         :value="query"
         @input="onInput"
@@ -162,7 +165,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointer, 
         <span class="phlix-combobox__check"><Icon v-if="o.value === modelValue" name="check" /></span>
         {{ o.label }}
       </li>
-      <li v-if="filtered.length === 0" class="phlix-combobox__empty" role="presentation">No matches</li>
+      <li v-if="filtered.length === 0" class="phlix-combobox__empty" role="presentation">{{ t('common.noMatches') }}</li>
     </ul>
   </div>
 </template>

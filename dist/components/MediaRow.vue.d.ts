@@ -28,13 +28,13 @@ type __VLS_Slots = {} & {
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     play: (item: MediaItem) => any;
     info: (item: MediaItem) => any;
-    watchlist: (item: MediaItem) => any;
     retry: () => any;
+    watchlist: (item: MediaItem) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onPlay?: ((item: MediaItem) => any) | undefined;
     onInfo?: ((item: MediaItem) => any) | undefined;
-    onWatchlist?: ((item: MediaItem) => any) | undefined;
     onRetry?: (() => any) | undefined;
+    onWatchlist?: ((item: MediaItem) => any) | undefined;
 }>, {
     error: string | null;
     loading: boolean;

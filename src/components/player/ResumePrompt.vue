@@ -7,8 +7,10 @@
  * the parent owns the seek/clear (Resume → seek + play, Start over → seek 0 +
  * clearResume + play) and dismisses the prompt once playback begins.
  */
+import { computed } from 'vue';
 import Icon from '../Icon.vue';
 import { formatTime } from './format-time';
+import { useMessages } from '../../composables/useMessages';
 
 defineProps<{
   /** Stored resume position, in seconds. */
@@ -16,22 +18,27 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{ (e: 'resume'): void; (e: 'restart'): void }>();
+
+const { t } = useMessages();
+// Split the "Resume from {time}?" template on its `{time}` placeholder so the
+// timecode keeps its own styled <span>. Order-flexible: a translation may place
+// `{time}` anywhere and the parts render around the span accordingly.
+const resumeLabelParts = computed(() => t('player.resumeFrom').split('{time}'));
 </script>
 
 <template>
-  <div class="resume" role="region" aria-label="Resume playback">
+  <div class="resume" role="region" :aria-label="t('player.resumePlayback')">
     <p class="resume__label">
-      Resume from <span class="resume__time numeric">{{ formatTime(seconds) }}</span
-      >?
+      {{ resumeLabelParts[0] }}<span class="resume__time numeric">{{ formatTime(seconds) }}</span>{{ resumeLabelParts[1] }}
     </p>
     <div class="resume__actions">
       <button type="button" class="resume__btn resume__btn--amber" @click="emit('resume')">
         <Icon name="play" />
-        <span>Resume</span>
+        <span>{{ t('player.resume') }}</span>
       </button>
       <button type="button" class="resume__btn resume__btn--ghost" @click="emit('restart')">
         <Icon name="rewind" />
-        <span>Start over</span>
+        <span>{{ t('player.startOver') }}</span>
       </button>
     </div>
   </div>

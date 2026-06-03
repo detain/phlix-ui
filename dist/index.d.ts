@@ -102,4 +102,8 @@ export { usePrefetch } from './composables/usePrefetch';
 export { usePreconnect } from './composables/usePreconnect';
 export type { UsePreconnectOptions } from './composables/usePreconnect';
 export { deriveAccentVars } from './composables/color';
+export { useMessages } from './composables/useMessages';
+export type { UseMessages } from './composables/useMessages';
+export { DEFAULT_MESSAGES, createTranslator, mergeMessages } from './i18n/messages';
+export type { PhlixMessages, PhlixMessagesConfig, MessageGroup, MessageKey, TranslateParams, Translate, } from './i18n/messages';
 export * from './tokens';

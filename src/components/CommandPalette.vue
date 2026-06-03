@@ -25,10 +25,12 @@ import Kbd from './ui/Kbd.vue';
 import { useFocusTrap } from './ui/useFocusTrap';
 import { useCommandStore, type Command } from '../stores/useCommandStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { useMessages } from '../composables/useMessages';
 
 const store = useCommandStore();
 const router = useRouter();
 const prefs = usePreferencesStore();
+const { t } = useMessages();
 
 const panelEl = ref<HTMLElement | null>(null);
 const listId = useId();
@@ -58,7 +60,7 @@ function toDisplay(c: Command): DisplayItem {
 function searchItem(q: string): DisplayItem {
   return {
     id: '__search',
-    title: `Search library for “${q}”`,
+    title: t('palette.searchLibrary', { query: q }),
     icon: 'search',
     run: () => {
       store.closePalette();
@@ -87,13 +89,13 @@ const display = computed<{ rows: Row[]; options: DisplayItem[] }>(() => {
 
   const recent = store.results.filter((c) => store.isRecent(c.id));
   if (recent.length) {
-    rows.push({ kind: 'header', label: 'Recent' });
+    rows.push({ kind: 'header', label: t('palette.recent') });
     recent.forEach((c) => pushOption(toDisplay(c)));
   }
   const groups = new Map<string, Command[]>();
   for (const c of store.results) {
     if (store.isRecent(c.id)) continue;
-    const g = c.group ?? 'Commands';
+    const g = c.group ?? t('palette.commands');
     const bucket = groups.get(g);
     if (bucket) bucket.push(c);
     else groups.set(g, [c]);
@@ -188,16 +190,20 @@ useFocusTrap(panelEl, computed(() => store.open), {
 // --- Built-in + injected commands ---------------------------------------------
 const injected = inject<Command[]>('phlixCommands', []);
 
+// Built-in command titles/groups are resolved once here from the static
+// `PhlixAppConfig.messages` override (the i18n seam is config-time, not a runtime
+// locale switch), then registered with the command store on mount — same as the
+// app-injected `commands`. Omitting `messages` yields the English labels verbatim.
 const builtins: Command[] = [
-  { id: 'nav.browse', title: 'Go to Browse', icon: 'film', group: 'Navigation', keywords: ['home', 'library', 'media'], priority: 0, run: () => { void router.push({ name: 'browse' }); } },
-  { id: 'nav.settings', title: 'Go to Settings', icon: 'settings', group: 'Navigation', keywords: ['preferences', 'config', 'options'], priority: 1, run: () => { void router.push({ name: 'settings' }); } },
-  { id: 'theme.nocturne', title: 'Theme: Nocturne', icon: 'moon', group: 'Theme', keywords: ['dark', 'amber', 'cinema'], run: () => { prefs.theme = 'nocturne'; } },
-  { id: 'theme.daylight', title: 'Theme: Daylight', icon: 'sun', group: 'Theme', keywords: ['light', 'bright'], run: () => { prefs.theme = 'daylight'; } },
-  { id: 'theme.midnight', title: 'Theme: Midnight', icon: 'monitor', group: 'Theme', keywords: ['oled', 'black', 'contrast'], run: () => { prefs.theme = 'midnight'; } },
-  { id: 'pref.density', title: 'Toggle density', icon: 'list', group: 'Preferences', keywords: ['compact', 'comfortable', 'spacing'], run: () => { prefs.density = prefs.density === 'compact' ? 'comfortable' : 'compact'; } },
-  { id: 'pref.motion', title: 'Toggle reduced motion', icon: 'speed', group: 'Preferences', keywords: ['animation', 'accessibility', 'a11y'], run: () => { prefs.reducedMotion = prefs.reducedMotion === 'off' ? 'auto' : 'off'; } },
-  { id: 'pref.atmosphere', title: 'Toggle atmosphere', icon: 'star', group: 'Preferences', keywords: ['grain', 'vignette', 'glow', 'ambient'], run: () => { prefs.atmosphere = !prefs.atmosphere; } },
-  { id: 'pref.reset', title: 'Reset preferences', icon: 'rewind', group: 'Preferences', keywords: ['default', 'clear', 'restore'], run: () => prefs.reset() },
+  { id: 'nav.browse', title: t('palette.goToBrowse'), icon: 'film', group: t('palette.groupNavigation'), keywords: ['home', 'library', 'media'], priority: 0, run: () => { void router.push({ name: 'browse' }); } },
+  { id: 'nav.settings', title: t('palette.goToSettings'), icon: 'settings', group: t('palette.groupNavigation'), keywords: ['preferences', 'config', 'options'], priority: 1, run: () => { void router.push({ name: 'settings' }); } },
+  { id: 'theme.nocturne', title: t('palette.themeNocturne'), icon: 'moon', group: t('palette.groupTheme'), keywords: ['dark', 'amber', 'cinema'], run: () => { prefs.theme = 'nocturne'; } },
+  { id: 'theme.daylight', title: t('palette.themeDaylight'), icon: 'sun', group: t('palette.groupTheme'), keywords: ['light', 'bright'], run: () => { prefs.theme = 'daylight'; } },
+  { id: 'theme.midnight', title: t('palette.themeMidnight'), icon: 'monitor', group: t('palette.groupTheme'), keywords: ['oled', 'black', 'contrast'], run: () => { prefs.theme = 'midnight'; } },
+  { id: 'pref.density', title: t('palette.toggleDensity'), icon: 'list', group: t('palette.groupPreferences'), keywords: ['compact', 'comfortable', 'spacing'], run: () => { prefs.density = prefs.density === 'compact' ? 'comfortable' : 'compact'; } },
+  { id: 'pref.motion', title: t('palette.toggleReducedMotion'), icon: 'speed', group: t('palette.groupPreferences'), keywords: ['animation', 'accessibility', 'a11y'], run: () => { prefs.reducedMotion = prefs.reducedMotion === 'off' ? 'auto' : 'off'; } },
+  { id: 'pref.atmosphere', title: t('palette.toggleAtmosphere'), icon: 'star', group: t('palette.groupPreferences'), keywords: ['grain', 'vignette', 'glow', 'ambient'], run: () => { prefs.atmosphere = !prefs.atmosphere; } },
+  { id: 'pref.reset', title: t('palette.resetPreferences'), icon: 'rewind', group: t('palette.groupPreferences'), keywords: ['default', 'clear', 'restore'], run: () => prefs.reset() },
 ];
 
 let dispose: (() => void) | null = null;
@@ -220,7 +226,7 @@ onBeforeUnmount(() => {
           class="phlix-cmdk__panel"
           role="dialog"
           aria-modal="true"
-          aria-label="Command palette"
+          :aria-label="t('palette.title')"
         >
           <div class="phlix-cmdk__search">
             <Icon name="search" class="phlix-cmdk__search-icon" />
@@ -233,7 +239,7 @@ onBeforeUnmount(() => {
               :aria-controls="listId"
               :aria-activedescendant="activeId"
               aria-autocomplete="list"
-              placeholder="Type a command or search…"
+              :placeholder="t('palette.placeholder')"
               autocomplete="off"
               spellcheck="false"
               @input="store.setQuery(($event.target as HTMLInputElement).value)"
@@ -242,7 +248,7 @@ onBeforeUnmount(() => {
             <Kbd keys="Esc" class="phlix-cmdk__hint" />
           </div>
 
-          <ul :id="listId" class="phlix-cmdk__list" role="listbox" aria-label="Commands">
+          <ul :id="listId" class="phlix-cmdk__list" role="listbox" :aria-label="t('palette.commands')">
             <template v-for="(row, i) in display.rows" :key="row.kind === 'header' ? `h-${row.label}-${i}` : row.item.id">
               <li v-if="row.kind === 'header'" class="phlix-cmdk__group" role="presentation">
                 {{ row.label }}
@@ -266,7 +272,7 @@ onBeforeUnmount(() => {
               </li>
             </template>
             <li v-if="!optionCount" class="phlix-cmdk__empty" role="status" aria-live="polite">
-              No matching commands
+              {{ t('palette.noResults') }}
             </li>
           </ul>
         </div>

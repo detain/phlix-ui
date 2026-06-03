@@ -11,6 +11,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 import Icon from '../Icon.vue';
 import { normalizeOptions, nextEnabledIndex, edgeEnabledIndex, type SelectOptionInput } from './listbox';
+import { useMessages } from '../../composables/useMessages';
 
 const props = withDefaults(
   defineProps<{
@@ -20,8 +21,10 @@ const props = withDefaults(
     label?: string;
     disabled?: boolean;
   }>(),
-  { placeholder: 'Select…', disabled: false },
+  { disabled: false },
 );
+
+const { t } = useMessages();
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: string | number): void;
@@ -126,7 +129,7 @@ onBeforeUnmount(() => {
       @keydown="onTriggerKeydown"
     >
       <span class="phlix-select__value" :class="{ 'is-placeholder': selectedIndex < 0 }">
-        {{ selectedIndex >= 0 ? selectedLabel : placeholder }}
+        {{ selectedIndex >= 0 ? selectedLabel : (placeholder ?? t('common.selectPlaceholder')) }}
       </span>
       <Icon name="chevron-down" class="phlix-select__caret" />
     </button>

@@ -14,8 +14,12 @@ import { onMounted, onBeforeUnmount } from 'vue';
 import Icon, { type IconName } from '../Icon.vue';
 import IconButton from './IconButton.vue';
 import { useToastStore, type ToastTone } from '../../stores/useToastStore';
+import { useMessages } from '../../composables/useMessages';
 
 withDefaults(defineProps<{ position?: 'top' | 'bottom' }>(), { position: 'bottom' });
+
+// Aliased to avoid colliding with the `t` toast loop variable in the template below.
+const { t: translate } = useMessages();
 
 const toasts = useToastStore();
 
@@ -42,7 +46,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <div class="phlix-toasts" :class="`phlix-toasts--${position}`" role="region" aria-label="Notifications">
+    <div class="phlix-toasts" :class="`phlix-toasts--${position}`" role="region" :aria-label="translate('common.notifications')">
       <TransitionGroup name="phlix-toast">
         <div
           v-for="t in toasts.toasts"
@@ -59,7 +63,7 @@ onBeforeUnmount(() => {
           <button v-if="t.action" type="button" class="phlix-toast__action" @click="t.action.onClick(); toasts.dismiss(t.id)">
             {{ t.action.label }}
           </button>
-          <IconButton name="x" label="Dismiss" size="sm" class="phlix-toast__close" @click="toasts.dismiss(t.id)" />
+          <IconButton name="x" :label="translate('common.dismiss')" size="sm" class="phlix-toast__close" @click="toasts.dismiss(t.id)" />
         </div>
       </TransitionGroup>
     </div>

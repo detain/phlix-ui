@@ -15,6 +15,7 @@ import Button from './ui/Button.vue';
 import Icon from './Icon.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
 import type { PhlixAppConfig } from '../app/types';
 
 const emit = defineEmits<{ success: [] }>();
@@ -22,6 +23,7 @@ const emit = defineEmits<{ success: [] }>();
 const auth = useAuthStore();
 const toasts = useToastStore();
 const router = useRouter();
+const { t } = useMessages();
 
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.routerBase ?? '/app');
@@ -36,11 +38,11 @@ const passwordError = ref<string | null>(null);
 
 function validate(): boolean {
   emailError.value = !email.value.trim()
-    ? 'Enter your email.'
+    ? t('auth.emailRequired')
     : !EMAIL_RE.test(email.value.trim())
-      ? 'Enter a valid email address.'
+      ? t('auth.emailInvalid')
       : null;
-  passwordError.value = !password.value ? 'Enter your password.' : null;
+  passwordError.value = !password.value ? t('auth.passwordRequired') : null;
   return !emailError.value && !passwordError.value;
 }
 
@@ -51,13 +53,13 @@ async function handleSubmit(): Promise<void> {
     emit('success');
     void router.push(homePath.value);
   } else {
-    toasts.error(auth.error ?? 'Sign in failed.');
+    toasts.error(auth.error ?? t('auth.signInFailed'));
   }
 }
 </script>
 
 <template>
-  <AuthCard eyebrow="Member access" title="Welcome back" subtitle="Sign in to continue to your cinema.">
+  <AuthCard :eyebrow="t('auth.loginEyebrow')" :title="t('auth.loginTitle')" :subtitle="t('auth.loginSubtitle')">
     <p v-if="auth.error" class="login__banner" role="alert">
       <Icon name="alert" class="login__banner-icon" />
       <span>{{ auth.error }}</span>
@@ -66,37 +68,37 @@ async function handleSubmit(): Promise<void> {
     <form class="login__form" novalidate @submit.prevent="handleSubmit">
       <AuthField
         v-model="email"
-        label="Email"
+        :label="t('auth.email')"
         type="email"
         autocomplete="email"
         inputmode="email"
-        placeholder="you@example.com"
+        :placeholder="t('auth.emailPlaceholder')"
         :error="emailError"
         required
       />
       <AuthField
         v-model="password"
-        label="Password"
+        :label="t('auth.password')"
         type="password"
         autocomplete="current-password"
-        placeholder="Your password"
+        :placeholder="t('auth.passwordPlaceholder')"
         :error="passwordError"
         required
       />
 
       <Button type="submit" variant="solid" size="lg" block :loading="auth.loading">
-        {{ auth.loading ? 'Signing in…' : 'Sign in' }}
+        {{ auth.loading ? t('auth.signingIn') : t('auth.signIn') }}
       </Button>
 
       <template v-if="$slots.oauth">
-        <div class="login__divider">or continue with</div>
+        <div class="login__divider">{{ t('auth.orContinueWith') }}</div>
         <div class="login__oauth"><slot name="oauth" /></div>
       </template>
     </form>
 
     <template #footer>
-      New to Phlix?
-      <RouterLink :to="signupPath" class="login__link">Create an account</RouterLink>
+      {{ t('auth.loginFooterPrompt') }}
+      <RouterLink :to="signupPath" class="login__link">{{ t('auth.signupLink') }}</RouterLink>
     </template>
   </AuthCard>
 </template>
