@@ -55,6 +55,17 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
 ### Accessibility
+- **R6.5 — accessibility acceptance verified (axe-clean + keyboard walkthrough) → R6.5 COMPLETE:** with the
+  R6.5a focus/structure, R6.5b contrast, and R6.5c strings all landed, the phase's acceptance criteria were
+  confirmed end-to-end. **Axe-clean:** a new on-demand `npm run test:a11y` suite reports **0 WCAG 2.0/2.1 A+AA
+  violations** across every end-user surface × all three themes × desktop+mobile (see Tooling). **Keyboard-only
+  walkthrough** (verified live in real Chromium): skip-link reveals and jumps focus to `<main>`; focus order is
+  logical on every surface; every interactive control shows a visible focus ring (the daylight `--accent-ring`
+  amber-800@.85 on light surfaces, amber-500 on the player's `#000` stage, slider rings on the track/thumb);
+  overlays trap focus and restore it on Escape (the user menu, the ShortcutsHelp dialog opened via the `?`
+  keymap); the scrubber `role=slider` arrow-seeks (with `aria-valuetext`) and the Appearance radiogroups
+  arrow-navigate via roving tabindex; no keyboard traps. (Operator-facing admin a11y semantics remain the
+  tracked R6.5a.2 follow-up, landing before R6.6.)
 - **R6.5b — WCAG AA color contrast across the three themes:** the label/caption tier (`--text-subtle`) is
   retuned in all three themes so it clears 4.5:1 against `--bg`, `--surface`, and the elevated `--surface-2`
   (where MediaCard meta captions rest); a new **`--accent-text`** token (amber-500 in the dark themes,
@@ -162,6 +173,20 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   locking that the write-path and read-path agree. Also strengthened the `useMediaUrlSync` teardown test to
   assert both watchers detach. Tests-only — no shipped-source/public-API change; the bundle is byte-identical
   (`dist/phlix-ui.js` 56.03 kB); vitest **1653 → 1656**.
+- **R6.5 — axe accessibility suite + keyboard-walkthrough closeout (→ R6.5 COMPLETE):** a new on-demand
+  `npm run test:a11y` Playwright suite (`e2e/a11y.spec.ts`, `@axe-core/playwright`) runs axe-core against the
+  real shipped SFCs — the R6.4b per-surface harnesses (Browse / MediaDetail / Player / Auth / Settings / shell)
+  plus the primitive Gallery — across all three themes × desktop+mobile, asserting **zero WCAG 2.0/2.1 A+AA
+  violations** (48 checks). Sequenced last in R6.5 so axe runs against the final R6.5a focus structure, R6.5b
+  colors, and R6.5c strings. Like the visual suite it is on-demand (not in the blocking gate) and reuses the
+  Vite dev-harness server via Playwright's `webServer`; `settle()` waits for `Reveal` entrances to reach
+  `opacity:1` so axe never samples a mid-fade color (a verified animation artifact, not a defect — the badge is
+  ~7.6:1 at rest). The one full-page surface (the shell) is additionally asserted clean under axe's
+  page-structure landmark best-practice rules (`region` / `landmark-one-main` / `page-has-heading-one` /
+  `heading-order`). `test:visual` / `test:visual:update` were narrowed to `playwright test visual` so the two
+  on-demand suites stay separate. Dev/tooling-only — no shipped-source change; `dist/phlix-ui.js` byte-identical
+  (56.89 kB); vitest unchanged (1711). (Also a dev-only fidelity fix: the `ShellHarness` harness now mirrors
+  PhlixApp's canonical `.nav-link:focus-visible` ring it had previously omitted.)
 
 ### Removed
 - **R6.1b (API surface change — feeds the R6.6 MAJOR decision):** the `CommandPalette` component is **no longer
