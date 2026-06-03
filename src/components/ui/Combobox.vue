@@ -207,7 +207,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointer, 
   font-size: var(--text-sm); color: var(--text-muted); cursor: pointer;
 }
 .phlix-combobox__option.is-active { background: var(--surface-3); color: var(--text); }
-.phlix-combobox__option[aria-selected='true'] { color: var(--accent); font-weight: var(--font-semibold); }
+.phlix-combobox__option[aria-selected='true'] { color: var(--accent-text); font-weight: var(--font-semibold); }
 .phlix-combobox__option.is-disabled { opacity: 0.45; cursor: not-allowed; }
 .phlix-combobox__check { display: inline-grid; place-items: center; width: 1em; font-size: 1.05em; }
 .phlix-combobox__empty { padding: var(--space-3); font-size: var(--text-sm); color: var(--text-subtle); text-align: center; }

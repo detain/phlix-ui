@@ -138,7 +138,7 @@ function safeHref(href: string): string | undefined {
     color: var(--text);
 }
 .brand-dot {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 .brand-tagline {
     font-size: var(--text-xs);

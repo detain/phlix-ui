@@ -211,7 +211,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 .phlix-select__option.is-active { background: var(--surface-3); color: var(--text); }
-.phlix-select__option[aria-selected='true'] { color: var(--accent); font-weight: var(--font-semibold); }
+.phlix-select__option[aria-selected='true'] { color: var(--accent-text); font-weight: var(--font-semibold); }
 .phlix-select__option.is-disabled { opacity: 0.45; cursor: not-allowed; }
 .phlix-select__check { display: inline-grid; place-items: center; width: 1em; font-size: 1.05em; }
 @media (prefers-reduced-motion: reduce) {

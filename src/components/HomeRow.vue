@@ -135,7 +135,7 @@ onBeforeUnmount(() => {
 .home-row__seeall {
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
-  color: var(--accent);
+  color: var(--accent-text);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-md);
 }

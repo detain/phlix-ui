@@ -61,7 +61,7 @@ const isDisabled = computed(() => props.disabled || props.loading);
 .phlix-iconbtn:active:not(:disabled) { transform: scale(0.94); }
 .phlix-iconbtn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-ring); }
 .phlix-iconbtn:disabled { opacity: 0.5; cursor: not-allowed; }
-.phlix-iconbtn.is-pressed { color: var(--accent); background: var(--accent-soft); }
+.phlix-iconbtn.is-pressed { color: var(--accent-text); background: var(--accent-soft); }
 
 .phlix-iconbtn--sm { width: calc(var(--control-h) - 6px); height: calc(var(--control-h) - 6px); font-size: 1.05em; }
 .phlix-iconbtn--lg { width: calc(var(--control-h) + 8px); height: calc(var(--control-h) + 8px); font-size: 1.35em; }
@@ -69,7 +69,7 @@ const isDisabled = computed(() => props.disabled || props.loading);
 .phlix-iconbtn--solid { background: var(--accent); color: var(--text-on-accent); box-shadow: var(--shadow-1); }
 .phlix-iconbtn--solid:hover:not(:disabled) { background: var(--accent-hover); color: var(--text-on-accent); box-shadow: var(--glow-amber); }
 .phlix-iconbtn--outline { border-color: var(--border-strong); color: var(--text); }
-.phlix-iconbtn--outline:hover:not(:disabled) { border-color: var(--accent-ring); color: var(--accent); }
+.phlix-iconbtn--outline:hover:not(:disabled) { border-color: var(--accent-ring); color: var(--accent-text); }
 .phlix-iconbtn--subtle { background: var(--surface-2); color: var(--text); }
 .phlix-iconbtn--subtle:hover:not(:disabled) { background: var(--surface-3); }
 

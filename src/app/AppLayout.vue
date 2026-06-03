@@ -138,7 +138,7 @@ const drawer = ref(false);
   color: var(--text);
 }
 .shell__dot {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .shell__nav {
   display: flex;
