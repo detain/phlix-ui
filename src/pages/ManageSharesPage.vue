@@ -1,6 +1,21 @@
 <script setup lang="ts">
+/**
+ * ManageSharesPage (R5.2d) — the hub's library-shares page, re-skinned onto the
+ * Nocturne tokens + `@phlix/ui` primitives.
+ *
+ * Data flows are UNCHANGED from the pre-redo page (presentation-only re-skin):
+ *   - GET    /api/v1/shares       → { shares }
+ *   - DELETE /api/v1/shares/:id   (revoke, then reload)
+ *
+ * `client` is an injectable test seam; it defaults to the shared `api` singleton.
+ */
 import { ref, onMounted } from 'vue';
-import { api } from '../api/client';
+import { api, ApiClient } from '../api/client';
+import { useToastStore } from '../stores/useToastStore';
+import Badge from '../components/ui/Badge.vue';
+import Button from '../components/ui/Button.vue';
+import Skeleton from '../components/ui/Skeleton.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 interface Share {
   id: string;
@@ -12,31 +27,52 @@ interface Share {
   expires_at?: string;
 }
 
+const props = defineProps<{
+  /** Inject an API client for tests; defaults to the shared `api` singleton. */
+  client?: ApiClient;
+}>();
+
+const http: Pick<ApiClient, 'get' | 'delete'> = props.client ?? api;
+const toasts = useToastStore();
+
 const shares = ref<Share[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-async function loadShares() {
+function errMessage(e: unknown, fallback: string): string {
+  return e instanceof Error && e.message ? e.message : fallback;
+}
+
+/**
+ * Load shares. `initial` shows the full-page skeleton (mount / retry); the
+ * after-revoke reload updates the table in place so it doesn't flash out.
+ */
+async function loadShares(initial = false): Promise<void> {
+  if (initial) loading.value = true;
+  error.value = null;
   try {
-    const data = await api.get<{ shares: Share[] }>('/api/v1/shares');
+    const data = await http.get<{ shares: Share[] }>('/api/v1/shares');
     shares.value = data.shares || [];
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load shares';
+    error.value = errMessage(e, 'Failed to load shares.');
+    toasts.error(error.value);
   } finally {
-    loading.value = false;
+    if (initial) loading.value = false;
   }
 }
 
-async function revokeShare(shareId: string) {
+async function revokeShare(shareId: string): Promise<void> {
   try {
-    await api.delete(`/api/v1/shares/${shareId}`);
+    await http.delete(`/api/v1/shares/${shareId}`);
+    toasts.success('Share revoked.');
     await loadShares();
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to revoke share';
+    toasts.error(errMessage(e, 'Failed to revoke share.'));
   }
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string | undefined): string {
+  if (!dateStr) return '—';
   return new Date(dateStr).toLocaleString();
 }
 
@@ -45,168 +81,163 @@ function isExpired(dateStr: string | undefined): boolean {
   return new Date(dateStr) < new Date();
 }
 
-onMounted(() => {
-  loadShares();
-});
+/** Badge tone for a share permission level. */
+function permissionTone(permission: string): 'info' | 'success' | 'neutral' {
+  switch (permission) {
+    case 'read':
+      return 'info';
+    case 'write':
+      return 'success';
+    default:
+      return 'neutral';
+  }
+}
+
+onMounted(() => loadShares(true));
 </script>
 
 <template>
-  <div class="manage-shares-page">
-    <div class="page-header">
-      <h1 class="page-title">Manage Shares</h1>
-      <p class="page-subtitle">View and manage your shared libraries</p>
+  <section class="shares" aria-labelledby="shares-heading">
+    <header class="shares__head">
+      <h1 id="shares-heading" class="shares__title">Manage Shares</h1>
+      <p class="shares__subtitle">View and manage your shared libraries.</p>
+    </header>
+
+    <div v-if="loading" class="shares__skel"><Skeleton variant="text" :lines="6" /></div>
+
+    <EmptyState
+      v-else-if="error"
+      icon="alert"
+      title="Couldn't load shares"
+      :description="error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadShares(true)">Retry</Button>
+      </template>
+    </EmptyState>
+
+    <EmptyState
+      v-else-if="shares.length === 0"
+      icon="bookmark"
+      title="No library shares"
+      description="Libraries you share with others will appear here."
+    />
+
+    <div v-else class="shares__table-wrap">
+      <table class="shares__table" aria-label="Library shares">
+        <thead>
+          <tr>
+            <th scope="col">Library</th>
+            <th scope="col">Shared with</th>
+            <th scope="col">Permissions</th>
+            <th scope="col">Created</th>
+            <th scope="col">Expires</th>
+            <th scope="col" class="shares__actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="share in shares" :key="share.id">
+            <td><span class="shares__library">{{ share.library_name }}</span></td>
+            <td>{{ share.shared_with }}</td>
+            <td>
+              <Badge :tone="permissionTone(share.permissions)">{{ share.permissions }}</Badge>
+            </td>
+            <td class="shares__date">{{ formatDate(share.created_at) }}</td>
+            <td class="shares__date">
+              <span class="shares__expires" :data-testid="`expires-${share.id}`">
+                {{ formatDate(share.expires_at) }}
+                <Badge v-if="isExpired(share.expires_at)" tone="error">Expired</Badge>
+              </span>
+            </td>
+            <td>
+              <div class="shares__actions">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="`Revoke share of ${share.library_name} with ${share.shared_with}`"
+                  @click="revokeShare(share.id)"
+                >
+                  Revoke
+                </Button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-
-    <div v-if="loading" class="loading">Loading shares...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-
-    <div v-else class="shares-list">
-      <div v-for="share in shares" :key="share.id" class="share-card">
-        <div class="share-info">
-          <h3 class="share-library">{{ share.library_name }}</h3>
-          <div class="share-meta">
-            <span>Shared with: {{ share.shared_with }}</span>
-            <span class="permission-badge" :class="share.permissions">{{ share.permissions }}</span>
-            <span v-if="share.expires_at && isExpired(share.expires_at)" class="expired-badge">Expired</span>
-          </div>
-          <p class="share-dates">
-            Created: {{ formatDate(share.created_at) }}
-            <span v-if="share.expires_at"> | Expires: {{ formatDate(share.expires_at) }}</span>
-          </p>
-        </div>
-        <div class="share-actions">
-          <button class="btn btn-danger" @click="revokeShare(share.id)">Revoke</button>
-        </div>
-      </div>
-
-      <div v-if="shares.length === 0" class="empty-state">
-        <p>No library shares found.</p>
-      </div>
-    </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
-.manage-shares-page {
-  max-width: 900px;
+.shares {
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 24px;
+  padding: var(--space-6);
 }
-
-.page-header {
-  margin-bottom: 32px;
+.shares__head {
+  margin-bottom: var(--space-6);
 }
-
-.page-title {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--color-text, #e4e4e7);
-  margin: 0 0 8px;
+.shares__title {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+  margin: 0 0 var(--space-1);
 }
-
-.page-subtitle {
-  color: var(--color-text-secondary, #a1a1aa);
+.shares__subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
   margin: 0;
 }
-
-.loading, .error {
-  text-align: center;
-  padding: 48px;
-  color: var(--color-text-secondary, #a1a1aa);
+.shares__skel {
+  padding-block: var(--space-2);
 }
-
-.error {
-  color: #ef4444;
+.shares__table-wrap {
+  overflow-x: auto;
 }
-
-.shares-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.shares__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
 }
-
-.share-card {
-  background: var(--color-surface, #27272a);
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.share-info {
-  flex: 1;
-}
-
-.share-library {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text, #e4e4e7);
-  margin: 0 0 4px;
-}
-
-.share-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.875rem;
-  color: var(--color-text-secondary, #a1a1aa);
-  margin-bottom: 4px;
-}
-
-.permission-badge {
-  font-size: 0.75rem;
-  padding: 2px 6px;
-  border-radius: 4px;
+.shares__table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
+  color: var(--text-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
 }
-
-.permission-badge.read {
-  background: var(--color-primary, #3b82f6);
-  color: white;
+.shares__table td {
+  padding: var(--space-3);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
 }
-
-.permission-badge.write {
-  background: #22c55e;
-  color: white;
+.shares__library {
+  font-weight: var(--font-semibold);
+  color: var(--text);
 }
-
-.expired-badge {
-  font-size: 0.75rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #ef4444;
-  color: white;
+.shares__date {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-subtle);
+  white-space: nowrap;
 }
-
-.share-dates {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary, #a1a1aa);
-  margin: 0;
+.shares__expires {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
-
-.btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
+.shares__actions-col {
+  width: 1%;
 }
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 48px;
-  color: var(--color-text-secondary, #a1a1aa);
+.shares__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 </style>
