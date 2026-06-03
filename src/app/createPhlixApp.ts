@@ -43,10 +43,6 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
 
     const routes: RouteRecordRaw[] = [
         {
-            path: `${base}/`,
-            redirect: base,
-        },
-        {
             path: base,
             name: 'browse',
             component: () => import('../pages/BrowsePage.vue'),
@@ -109,9 +105,15 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
         usePreferencesStore(pinia).theme = fullConfig.defaultTheme;
     }
 
-    const routerBase = fullConfig.routerBase || '/app';
+    // History base stays at '/'. Every route path AND every nav link already
+    // carries the full `routerBase` prefix (see buildRoutes() and the `homePath`
+    // computed in the shell/forms), so passing routerBase to createWebHistory too
+    // would prepend it a SECOND time — turning /app/login into /app/app/login and
+    // making a push('/app') ping-pong forever. Each host app serves the SPA under
+    // `${routerBase}/*`, so booting at /app/… resolves cleanly against the prefixed
+    // records with no base stripping.
     const router: Router = createRouter({
-        history: createWebHistory(routerBase),
+        history: createWebHistory(),
         routes: buildRoutes(fullConfig),
     });
 

@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.11.0] - 2026-06-03
+
+Fixes the SPA auth/navigation flow that was broken in every host app: route URLs doubled to `/app/app/*`,
+the landing at `/app` rendered empty, a successful sign-up crashed with a vue-router "too much recursion"
+error, and login failed with "missing required fields: username, password".
+
+### Fixed
+- **Router base applied twice → `/app/app/login`, empty `/app`, and a redirect-loop crash.** Every route
+  path and nav link already carries the full `routerBase` prefix, yet the router *also* passed
+  `routerBase` to `createWebHistory()`, so vue-router prepended `/app` a second time. The history base is
+  now `/` (the prefix lives only in the records/links), so URLs resolve once: `login` → `/app/login`,
+  browse → `/app`. The self-referential `{ path: '/app/', redirect: '/app' }` record — which ping-ponged
+  with the `/app` browse record under non-strict matching and blew the stack on `router.push('/app')`
+  (e.g. the post-sign-up redirect) — has been removed; `/app/` still lands on browse via non-strict
+  matching. This also un-breaks the never-loaded `/app/admin/*` (server) and `/app/...` (hub) routes.
+- **Login now accepts a username OR an email.** `useAuthStore.login(identifier, password)` sends the
+  identifier under **both** `username` and `email` keys, so it satisfies `phlix-server` (reads `username`)
+  and `phlix-hub` (reads `username` then `email`) regardless of what the user typed. `LoginForm` relabels
+  its first field "Username or email" and drops the email-format gate (a bare username is valid).
+
+### Changed
+- New i18n keys `auth.usernameOrEmail`, `auth.usernameOrEmailPlaceholder`, `auth.identifierRequired`
+  (additive; English defaults, overridable via `PhlixAppConfig.messages`).
+
 ## [0.10.0] - 2026-06-03
 
 Mounts the redesigned Vue admin as a navigable **Admin sidebar section** — a new `AdminLayout` plus a

@@ -6,6 +6,27 @@ function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
 
+/** Run a login and return the parsed JSON body the store POSTed to /auth/login. */
+async function captureLoginBody(identifier: string, password: string): Promise<unknown> {
+  let captured: unknown;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string, init?: RequestInit) => {
+      const path = String(url);
+      if (path.includes('/api/v1/auth/login')) {
+        captured = init?.body != null ? JSON.parse(String(init.body)) : null;
+        return Promise.resolve(jsonResponse({ access_token: 'AT', refresh_token: 'RT' }));
+      }
+      if (path.includes('/api/v1/auth/me')) {
+        return Promise.resolve(jsonResponse({ user: { id: 1, email: 'a@b.c', is_admin: false } }));
+      }
+      return Promise.resolve(jsonResponse({ message: 'not found' }, 404));
+    }),
+  );
+  await useAuthStore().login(identifier, password);
+  return captured;
+}
+
 let routes: Record<string, () => Response>;
 
 beforeEach(() => {
@@ -45,6 +66,16 @@ describe('useAuthStore', () => {
     expect(s.isAdmin).toBe(true);
     expect(s.loading).toBe(false);
     expect(s.error).toBeNull();
+  });
+
+  it('login sends a plain username as `username` only (no email key)', async () => {
+    const captured = await captureLoginBody('joe_user', 'pw');
+    expect(captured).toEqual({ username: 'joe_user', password: 'pw' });
+  });
+
+  it('login sends an email identifier under BOTH username and email keys', async () => {
+    const captured = await captureLoginBody('a@b.c', 'pw');
+    expect(captured).toEqual({ username: 'a@b.c', email: 'a@b.c', password: 'pw' });
   });
 
   it('login failure sets error and returns false', async () => {
