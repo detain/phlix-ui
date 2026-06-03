@@ -4,98 +4,117 @@ import type { MenuItem } from './types';
 /**
  * Admin routes + menu seam (RA — admin port).
  *
- * The server consumer mounts the ported admin pages by spreading these into its
- * `PhlixAppConfig.extraRoutes` / `menu` (the R1.5 config seam — no `if (app === …)`
- * in shared code). Each page is a lazily-imported chunk so a consumer that never
- * shows admin doesn't pay for it. New ports append their route + menu entry here.
+ * The server consumer mounts the ported admin pages by spreading `buildAdminRoutes()`
+ * into its `PhlixAppConfig.extraRoutes` (the R1.5 config seam — no `if (app === …)`
+ * in shared code). The pages nest under a single parent route that renders
+ * {@link AdminLayout} (a sidebar of the admin links + a `<RouterView>`), so the
+ * admin section gets its own navigation chrome without the host shell needing to
+ * render a nested menu. Every page — and the layout itself — is a lazily-imported
+ * chunk, so a consumer that never shows admin doesn't pay for it.
+ *
+ * Each child keeps its original `admin-*` route name and its full resolved URL
+ * (`<base>/admin/<segment>`); only the record nesting changed. New ports append a
+ * child here plus its `adminMenu` entry below.
  */
 export function buildAdminRoutes(base = '/app'): RouteRecordRaw[] {
   const root = `${base}/admin`;
   return [
     {
-      path: `${root}/dashboard`,
-      name: 'admin-dashboard',
-      component: () => import('../pages/admin/DashboardPage.vue'),
-    },
-    {
-      path: `${root}/users`,
-      name: 'admin-users',
-      component: () => import('../pages/admin/UsersPage.vue'),
-    },
-    {
-      path: `${root}/logs`,
-      name: 'admin-logs',
-      component: () => import('../pages/admin/LogsPage.vue'),
-    },
-    {
-      path: `${root}/webhooks`,
-      name: 'admin-webhooks',
-      component: () => import('../pages/admin/WebhooksPage.vue'),
-    },
-    {
-      path: `${root}/services`,
-      name: 'admin-services',
-      component: () => import('../pages/admin/ServicesPage.vue'),
-    },
-    {
-      path: `${root}/integrations`,
-      name: 'admin-integrations',
-      component: () => import('../pages/admin/IntegrationsPage.vue'),
-    },
-    {
-      path: `${root}/backup`,
-      name: 'admin-backup',
-      component: () => import('../pages/admin/BackupPage.vue'),
-    },
-    {
-      path: `${root}/cast-devices`,
-      name: 'admin-cast',
-      component: () => import('../pages/admin/CastDevicesPage.vue'),
-    },
-    {
-      path: `${root}/dlna`,
-      name: 'admin-dlna',
-      component: () => import('../pages/admin/DlnaServerPage.vue'),
-    },
-    {
-      path: `${root}/remote-access`,
-      name: 'admin-remote-access',
-      component: () => import('../pages/admin/RemoteAccessPage.vue'),
-    },
-    {
-      path: `${root}/livetv`,
-      name: 'admin-livetv',
-      component: () => import('../pages/admin/LiveTvPage.vue'),
-    },
-    {
-      path: `${root}/collections`,
-      name: 'admin-collections',
-      component: () => import('../pages/admin/CollectionsPage.vue'),
-    },
-    {
-      path: `${root}/history`,
-      name: 'admin-history',
-      component: () => import('../pages/admin/HistoryPage.vue'),
-    },
-    {
-      path: `${root}/syncplay`,
-      name: 'admin-syncplay',
-      component: () => import('../pages/admin/SyncPlayPage.vue'),
-    },
-    {
-      path: `${root}/libraries`,
-      name: 'admin-libraries',
-      component: () => import('../pages/admin/LibrariesPage.vue'),
-    },
-    {
-      path: `${root}/settings`,
-      name: 'admin-settings',
-      component: () => import('../pages/admin/SettingsPage.vue'),
+      path: root,
+      // Lazy section shell: sidebar + <RouterView>. The `base` prop lets the sidebar
+      // build its links for whatever router base the host app uses.
+      component: () => import('./AdminLayout.vue'),
+      props: { base },
+      children: [
+        // Bare `<base>/admin` → the dashboard.
+        { path: '', redirect: { name: 'admin-dashboard' } },
+        {
+          path: 'dashboard',
+          name: 'admin-dashboard',
+          component: () => import('../pages/admin/DashboardPage.vue'),
+        },
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: () => import('../pages/admin/UsersPage.vue'),
+        },
+        {
+          path: 'logs',
+          name: 'admin-logs',
+          component: () => import('../pages/admin/LogsPage.vue'),
+        },
+        {
+          path: 'webhooks',
+          name: 'admin-webhooks',
+          component: () => import('../pages/admin/WebhooksPage.vue'),
+        },
+        {
+          path: 'services',
+          name: 'admin-services',
+          component: () => import('../pages/admin/ServicesPage.vue'),
+        },
+        {
+          path: 'integrations',
+          name: 'admin-integrations',
+          component: () => import('../pages/admin/IntegrationsPage.vue'),
+        },
+        {
+          path: 'backup',
+          name: 'admin-backup',
+          component: () => import('../pages/admin/BackupPage.vue'),
+        },
+        {
+          path: 'cast-devices',
+          name: 'admin-cast',
+          component: () => import('../pages/admin/CastDevicesPage.vue'),
+        },
+        {
+          path: 'dlna',
+          name: 'admin-dlna',
+          component: () => import('../pages/admin/DlnaServerPage.vue'),
+        },
+        {
+          path: 'remote-access',
+          name: 'admin-remote-access',
+          component: () => import('../pages/admin/RemoteAccessPage.vue'),
+        },
+        {
+          path: 'livetv',
+          name: 'admin-livetv',
+          component: () => import('../pages/admin/LiveTvPage.vue'),
+        },
+        {
+          path: 'collections',
+          name: 'admin-collections',
+          component: () => import('../pages/admin/CollectionsPage.vue'),
+        },
+        {
+          path: 'history',
+          name: 'admin-history',
+          component: () => import('../pages/admin/HistoryPage.vue'),
+        },
+        {
+          path: 'syncplay',
+          name: 'admin-syncplay',
+          component: () => import('../pages/admin/SyncPlayPage.vue'),
+        },
+        {
+          path: 'libraries',
+          name: 'admin-libraries',
+          component: () => import('../pages/admin/LibrariesPage.vue'),
+        },
+        {
+          path: 'settings',
+          name: 'admin-settings',
+          component: () => import('../pages/admin/SettingsPage.vue'),
+        },
+      ],
     },
   ];
 }
 
-/** Admin navigation entries, parented under an "Admin" group. */
+/** Admin navigation entries, parented under an "Admin" group. Feeds the
+ *  {@link AdminLayout} sidebar (and any consumer that renders a grouped menu). */
 export function adminMenu(base = '/app'): MenuItem[] {
   const root = `${base}/admin`;
   return [

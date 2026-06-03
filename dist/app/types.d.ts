@@ -15,6 +15,11 @@ export interface MenuItem {
     /** Open target for `href` links; `_blank` gets `rel="noopener noreferrer"`. */
     target?: '_self' | '_blank';
     children?: MenuItem[];
+    /** When true, the shell renders this item only for an authenticated admin
+     *  (`useAuthStore().isAdmin`). Best-effort progressive disclosure for chrome
+     *  like the "Admin" entry — the server API stays the real authorization
+     *  boundary (admin endpoints are gated server-side regardless). */
+    requiresAdmin?: boolean;
 }
 /** Per-app brand identity rendered into the shell's `#logo` slot. All optional —
  *  omit for the default "Phlix" wordmark. Lets server vs hub diverge by config,

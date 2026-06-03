@@ -58,6 +58,7 @@ import IconButton from '../components/ui/IconButton.vue';
 import MiniPlayer from '../components/MiniPlayer.vue';
 import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
 import { useMessages } from '../composables/useMessages';
@@ -108,9 +109,14 @@ usePreconnect(
   }),
 );
 
+const auth = useAuthStore();
 const branding = computed<BrandingConfig>(() => config?.branding ?? {});
 const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');
-const menu = computed<MenuItem[]>(() => config?.menu ?? []);
+// `requiresAdmin` items (e.g. the "Admin" entry) show only for an authenticated
+// admin. Best-effort progressive disclosure — the server API still authorizes.
+const menu = computed<MenuItem[]>(() =>
+    (config?.menu ?? []).filter((item) => !item.requiresAdmin || auth.isAdmin),
+);
 const homePath = computed(() => config?.routerBase ?? '/app');
 
 /** Drop script-y URL schemes from config-supplied external menu links. Allows
