@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Post-rollout changes land here._
+### Added
+- **Admin section shell (`AdminLayout`) — mountable Vue admin.** A new `AdminLayout` renders a glass
+  sidebar of the admin pages (derived from `adminMenu()`) beside a `<RouterView>`, giving the ported
+  admin pages their own navigation chrome. It is the parent route produced by `buildAdminRoutes()`, so a
+  consumer that spreads `buildAdminRoutes()` into `extraRoutes` now gets a fully navigable
+  `/app/admin/*` section. Lazy-loaded (own chunk); a11y: labelled `nav` landmark, `aria-current` active
+  link, `--accent-ring` focus rings, reduced-motion-safe, responsive (the rail becomes a horizontal
+  scroller on narrow screens).
+- **`MenuItem.requiresAdmin`.** A menu item flagged `requiresAdmin: true` is rendered by the shell only
+  for an authenticated admin (`useAuthStore().isAdmin`) — best-effort progressive disclosure for an
+  "Admin" entry. The server API stays the real authorization boundary (admin endpoints are gated
+  server-side regardless).
+
+### Changed
+- **`buildAdminRoutes()` now returns one nested parent route** (rendering `AdminLayout`) with the 16
+  admin pages as its children, instead of 16 flat routes. **Every route name and every resolved
+  `<base>/admin/<segment>` URL is unchanged**; a bare `<base>/admin` now redirects to the dashboard. No
+  consumer mounted the previous flat shape, so this is non-breaking in practice.
 
 ## [0.9.0] - 2026-06-03
 

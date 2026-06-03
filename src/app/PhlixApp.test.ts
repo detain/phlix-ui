@@ -6,6 +6,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PhlixApp from './PhlixApp.vue';
 import MiniPlayer from '../components/MiniPlayer.vue';
 import { useCommandStore } from '../stores/useCommandStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import type { PhlixAppConfig } from './types';
 
 function makeRouter(): Router {
@@ -154,6 +155,37 @@ describe('PhlixApp — menu from config', () => {
     wrapper = await mountApp(null);
     expect(wrapper.find('.brand-wordmark').text()).toContain('Phlix');
     expect(wrapper.findAll('.nav-link').map((l) => l.text())).toEqual(['Browse', 'Settings']);
+  });
+});
+
+describe('PhlixApp — admin menu gating (F1)', () => {
+  it('hides a requiresAdmin item from a non-admin while keeping normal items', async () => {
+    wrapper = await mountApp({
+      app: 'server',
+      apiBase: '',
+      routerBase: '/app',
+      menu: [
+        { id: 'movies', label: 'Movies', to: '/app/movies' },
+        { id: 'admin', label: 'Admin', to: '/app/admin/dashboard', requiresAdmin: true },
+      ],
+    });
+    const labels = wrapper.findAll('.nav-link').map((l) => l.text());
+    expect(labels).toContain('Movies');
+    expect(labels).not.toContain('Admin'); // user is null → not admin
+  });
+
+  it('reveals the requiresAdmin item once the user is an admin', async () => {
+    wrapper = await mountApp({
+      app: 'server',
+      apiBase: '',
+      routerBase: '/app',
+      menu: [{ id: 'admin', label: 'Admin', to: '/app/admin/dashboard', requiresAdmin: true }],
+    });
+    expect(wrapper.findAll('.nav-link').map((l) => l.text())).not.toContain('Admin');
+    // The shell already instantiated the auth store during mount; flip the user to an admin.
+    useAuthStore().user = { id: 'u1', is_admin: true };
+    await nextTick();
+    expect(wrapper.findAll('.nav-link').map((l) => l.text())).toContain('Admin');
   });
 });
 
