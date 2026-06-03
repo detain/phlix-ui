@@ -11,6 +11,10 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Fixed
+- **Federation "Add peer" form never sent the URL (R5.2c):** the original add-peer `<input>` had no `v-model`
+  and the form hardcoded `connectPeer('')`, so connecting a peer always POSTed an empty `url`. The input is now
+  bound, so `POST /api/v1/federation/connect` carries the typed URL (same endpoint + `{ url }` payload), with a
+  non-empty guard + disabled-until-typed Connect button.
 - **Library scan status never rendered (R5.2a):** the live server returns the scan job under `scan_status`
   (not `job`), so the scan-only `LibraryScanPage` always showed an "Idle" badge in production. `loadScanStatus`
   now reads `scan_status ?? job`, accepting both wire shapes per the SPA-layer contract-drift convention, so the
@@ -26,6 +30,15 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **`FederationPage` re-skin (R5.2c):** the hub's peer-federation page `src/pages/FederationPage.vue` is
+  rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/federation/peers`,
+  `POST …/connect` and `POST …/peers/:id/disconnect` flows are unchanged). Peers render in a tokenized table
+  (Peer + url / Shared libraries / Last sync / Status / Actions) with a `Skeleton` loading state, `EmptyState`
+  for the empty list (the add-peer form still shows) and a load error (with Retry), a `Badge` connection-status
+  tone (connected → success / disconnected → error / pending → warning) replacing the old raw-hex status dot,
+  and `useToastStore` feedback on connect / disconnect / load. Disconnect is offered only for connected peers
+  (faithful to the original); action-triggered reloads update in place instead of flashing the skeleton. A
+  `client?: ApiClient` test seam is added.
 - **`MyServersPage` re-skin (R5.2b):** the hub's connected-media-servers page `src/pages/MyServersPage.vue`
   is rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/servers`
   flow is unchanged). Servers now render in a tokenized table (Server + url / Owner / Libraries / Last seen /
