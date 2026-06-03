@@ -33,7 +33,7 @@ function mountForm(opts: { config?: Partial<PhlixAppConfig> | null; slots?: Reco
   return { w, auth, toasts, router, push };
 }
 
-const setEmail = (w: VueWrapper, v: string) => w.get('input[type="email"]').setValue(v);
+const setIdentifier = (w: VueWrapper, v: string) => w.get('input[name="identifier"]').setValue(v);
 const setPassword = (w: VueWrapper, v: string) => w.get('input[type="password"]').setValue(v);
 const submit = (w: VueWrapper) => w.get('form').trigger('submit');
 
@@ -59,25 +59,24 @@ describe('LoginForm', () => {
     await submit(w);
     await flushPromises();
     expect(login).not.toHaveBeenCalled();
-    expect(w.text()).toContain('Enter your email.');
+    expect(w.text()).toContain('Enter your username or email.');
     expect(w.text()).toContain('Enter your password.');
   });
 
-  it('blocks submit when the email format is invalid', async () => {
+  it('accepts a plain username (no email-format gate) and submits it as the identifier', async () => {
     const { w, auth } = mountForm();
-    const login = vi.spyOn(auth, 'login');
-    await setEmail(w, 'not-an-email');
+    const login = vi.spyOn(auth, 'login').mockResolvedValue(true);
+    await setIdentifier(w, '  joe_user  ');
     await setPassword(w, 'secret');
     await submit(w);
     await flushPromises();
-    expect(login).not.toHaveBeenCalled();
-    expect(w.text()).toContain('Enter a valid email address.');
+    expect(login).toHaveBeenCalledWith('joe_user', 'secret');
   });
 
   it('logs in with trimmed credentials, emits success, and routes home on success', async () => {
     const { w, auth, push } = mountForm();
     const login = vi.spyOn(auth, 'login').mockResolvedValue(true);
-    await setEmail(w, '  a@b.c  ');
+    await setIdentifier(w, '  a@b.c  ');
     await setPassword(w, 'pw');
     await submit(w);
     await flushPromises();
@@ -93,7 +92,7 @@ describe('LoginForm', () => {
       auth.error = 'Invalid email or password.';
       return false;
     });
-    await setEmail(w, 'a@b.c');
+    await setIdentifier(w, 'a@b.c');
     await setPassword(w, 'wrong');
     await submit(w);
     await flushPromises();
@@ -106,7 +105,7 @@ describe('LoginForm', () => {
     const { w, auth, toasts } = mountForm();
     const toastErr = vi.spyOn(toasts, 'error');
     vi.spyOn(auth, 'login').mockResolvedValue(false); // resolves false, leaves auth.error null
-    await setEmail(w, 'a@b.c');
+    await setIdentifier(w, 'a@b.c');
     await setPassword(w, 'pw');
     await submit(w);
     await flushPromises();
@@ -134,7 +133,7 @@ describe('LoginForm', () => {
   it('routes to the configured routerBase on success', async () => {
     const { w, auth, push } = mountForm({ config: { routerBase: '/hub' } });
     vi.spyOn(auth, 'login').mockResolvedValue(true);
-    await setEmail(w, 'a@b.c');
+    await setIdentifier(w, 'a@b.c');
     await setPassword(w, 'pw');
     await submit(w);
     await flushPromises();

@@ -29,26 +29,22 @@ const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.routerBase ?? '/app');
 const signupPath = computed(() => `${homePath.value}/signup`);
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const email = ref('');
+// The identifier may be a username OR an email — the store sends it under both
+// keys and the back ends resolve either, so there's no email-format gate here.
+const identifier = ref('');
 const password = ref('');
-const emailError = ref<string | null>(null);
+const identifierError = ref<string | null>(null);
 const passwordError = ref<string | null>(null);
 
 function validate(): boolean {
-  emailError.value = !email.value.trim()
-    ? t('auth.emailRequired')
-    : !EMAIL_RE.test(email.value.trim())
-      ? t('auth.emailInvalid')
-      : null;
+  identifierError.value = !identifier.value.trim() ? t('auth.identifierRequired') : null;
   passwordError.value = !password.value ? t('auth.passwordRequired') : null;
-  return !emailError.value && !passwordError.value;
+  return !identifierError.value && !passwordError.value;
 }
 
 async function handleSubmit(): Promise<void> {
   if (!validate()) return;
-  const ok = await auth.login(email.value.trim(), password.value);
+  const ok = await auth.login(identifier.value.trim(), password.value);
   if (ok) {
     emit('success');
     void router.push(homePath.value);
@@ -67,13 +63,13 @@ async function handleSubmit(): Promise<void> {
 
     <form class="login__form" novalidate @submit.prevent="handleSubmit">
       <AuthField
-        v-model="email"
-        :label="t('auth.email')"
-        type="email"
-        autocomplete="email"
-        inputmode="email"
-        :placeholder="t('auth.emailPlaceholder')"
-        :error="emailError"
+        v-model="identifier"
+        name="identifier"
+        :label="t('auth.usernameOrEmail')"
+        type="text"
+        autocomplete="username"
+        :placeholder="t('auth.usernameOrEmailPlaceholder')"
+        :error="identifierError"
         required
       />
       <AuthField
