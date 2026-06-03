@@ -5,6 +5,7 @@ import SettingsPage from './SettingsPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Select from '../../components/ui/Select.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import { ApiError } from '../../api/client';
 import type { ApiClient } from '../../api/client';
@@ -134,12 +135,34 @@ describe('Admin SettingsPage — load + layout', () => {
     w.unmount();
   });
 
-  it('toasts when loading fails', async () => {
+  it('shows an in-body EmptyState error (+ toast) when loading fails', async () => {
     const get = vi.fn().mockRejectedValue(new Error('boom'));
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
+    // R5.3c: the load failure now renders a canonical EmptyState (error + Retry)
+    // instead of the broken empty tabs/form, and still fires a toast.
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain('boom');
+    expect(w.findAll('[role="tab"]').length).toBe(0);
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the load from the error state', async () => {
+    const get = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce({ data: { settings: { ...SETTINGS }, overridden: [], types: TYPES } });
+    const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(w.findAll('[role="tab"]').length).toBe(9);
     w.unmount();
   });
 

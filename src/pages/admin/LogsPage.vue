@@ -10,10 +10,12 @@ import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import { AdminLogsApi, ALL_LOGS, type LogFile } from '../../api/admin/logs';
 import { useToastStore } from '../../stores/useToastStore';
+import { errMessage } from '../../api/errors';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 
 const LINE_OPTIONS = [200, 500, 1000, 2000];
@@ -39,6 +41,9 @@ const lineCount = ref<number>(200);
 const lines = ref<string[]>([]);
 const truncated = ref(false);
 const loading = ref(false);
+const listLoading = ref(true);
+const listError = ref<string | null>(null);
+const contentError = ref<string | null>(null);
 
 const preEl = ref<HTMLElement | null>(null);
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -53,12 +58,17 @@ const fileOptions = computed<SelectOptionInput[]>(() => {
 const lineOptions = computed<SelectOptionInput[]>(() => LINE_OPTIONS.map((n) => ({ value: n, label: String(n) })));
 
 async function loadList(): Promise<void> {
+  listLoading.value = true;
+  listError.value = null;
   try {
     const list = await api.list();
     files.value = list;
     if (list.length > 0 && selected.value === '') selected.value = list[0].name;
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to list logs.');
+    listError.value = errMessage(e, 'Failed to list logs.');
+    toasts.error(listError.value);
+  } finally {
+    listLoading.value = false;
   }
 }
 
@@ -66,6 +76,7 @@ async function refresh(): Promise<void> {
   const file = selected.value;
   if (file === '') return;
   loading.value = true;
+  contentError.value = null;
   try {
     const res = file === ALL_LOGS ? await api.tailAll(lineCount.value) : await api.tail(file, lineCount.value);
     lines.value = res.lines;
@@ -74,7 +85,8 @@ async function refresh(): Promise<void> {
       if (preEl.value) preEl.value.scrollTop = preEl.value.scrollHeight;
     });
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to read log.');
+    contentError.value = errMessage(e, 'Failed to read log.');
+    toasts.error(contentError.value);
   } finally {
     loading.value = false;
   }
@@ -133,9 +145,29 @@ onBeforeUnmount(stopTimer);
       ({{ selected === ALL_LOGS ? 'more lines available across files' : 'file is larger' }}).
     </p>
 
-    <div v-if="loading && lines.length === 0" class="admin-logs__loading" aria-hidden="true">
+    <div v-if="(listLoading || loading) && lines.length === 0" class="admin-logs__loading" aria-hidden="true">
       <Skeleton variant="text" :lines="8" />
     </div>
+    <EmptyState
+      v-else-if="listError"
+      icon="alert"
+      title="Couldn't load log files"
+      :description="listError"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadList">Retry</Button>
+      </template>
+    </EmptyState>
+    <EmptyState
+      v-else-if="contentError"
+      icon="alert"
+      title="Couldn't read log"
+      :description="contentError"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="refresh">Retry</Button>
+      </template>
+    </EmptyState>
     <pre v-else ref="preEl" class="admin-logs__output" data-testid="logs-output" aria-live="polite">{{ lines.length === 0 ? '(no output)' : lines.join('\n') }}</pre>
   </section>
 </template>

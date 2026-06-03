@@ -30,6 +30,15 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Changed
+- **In-body section error states across the multi-section admin pages (R5.3c):** the admin `SettingsPage`,
+  `IntegrationsPage`, `LogsPage`, and `RemoteAccessPage` previously surfaced a *section* load failure
+  toast-only — leaving the body blank (Settings rendered an empty/broken tab form), silently rendering as if
+  loaded (Integrations auth-providers showed every provider "Disabled"; Logs showed a misleading "(no log
+  files)" / "(no output)"), or showing a static "Unable to load" line with no recovery. Each async surface now
+  has a skeleton + empty + an in-body `EmptyState` (alert icon + "Couldn't load X" + the error message + a
+  Retry that re-runs that section's loader), consistent with the R5.2 pages; `LogsPage` also adopts the shared
+  `errMessage` (replacing its inline ternaries + raw strings) and gains a file-list loading skeleton. Completes
+  the R5.3 empty/loading/error system pass for the admin surface.
 - **Shared `errMessage` adopted package-wide (R5.3b):** the 16 page-local `errMessage` copies (the 5 top-level
   hub/server pages + the 11 admin pages) and `useMediaStore` now import the single `errMessage` from
   `src/api/errors.ts` (added in R5.3a) instead of each carrying a byte-identical private copy — one
