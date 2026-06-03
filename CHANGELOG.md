@@ -22,6 +22,21 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Settings + Appearance redesign (R4.2):** the settings surface is rebuilt on the Nocturne tokens +
+  a11y primitives and now exposes the full customization. New `src/components/AppearanceSettings.vue`
+  surfaces `usePreferencesStore` as **live, persisted** controls across two panels — *Appearance* (a theme
+  gallery whose swatches re-scope `[data-theme]` to preview each theme live, an accent picker driving
+  `deriveAccentVars`, density / grid-density / card-size / atmosphere / reduced-motion) and *Playback*
+  (autoplay, default volume / quality / subtitle language, and the R3.5 caption style). Every control writes
+  straight to the store, which persists to localStorage and reflects theme/accent/density onto `<html>`
+  instantly (no Save button). The theme + accent radiogroups use roving-tabindex + arrow-key navigation, and
+  "Reset all preferences" is a deliberate two-step confirm. `SettingsForm` (the schema-driven server
+  settings, `GET/PUT /api/v1/users/me/settings`) is rebuilt on `Switch` / token inputs / `Skeleton` /
+  `EmptyState` with **per-section dirty + save** — each group saves just its own keys and toasts
+  success/failure (fixing a latent bug where four groups whose key prefix differs from the group name —
+  transcoding/metadata/markers/scrobblers — would have rendered empty + unsaveable). `SettingsPage` hosts
+  the three panels under the `Tabs` primitive (Appearance / Playback / Server). Not mounted in the live
+  consumers until R6.6.
 - **Auth surface redesign (R4.1):** `LoginForm`/`SignupForm` + `LoginPage`/`SignupPage` rebuilt on the
   Nocturne design tokens + a11y primitives, replacing the legacy `--color-*` aliases and the last 🙈/👁
   password-toggle emoji. A cinematic glass "ticket-stub" card (`src/components/auth/AuthCard.vue`) — projector-
