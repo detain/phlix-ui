@@ -25,12 +25,14 @@
         "preview": "vite preview",
         "test": "vitest",
         "test:run": "vitest run",
-        "test:visual": "playwright test",
-        "test:visual:update": "playwright test --update-snapshots",
+        "test:visual": "playwright test visual",
+        "test:visual:update": "playwright test visual --update-snapshots",
+        "test:a11y": "playwright test a11y",
         "lint": "eslint . --ext .ts,.vue --fix",
         "typecheck": "vue-tsc --noEmit"
     },
     "devDependencies": {
+        "@axe-core/playwright": "^4.11.3",
         "@iconify-json/lucide": "^1.2.111",
         "@playwright/test": "^1.60.0",
         "@types/node": "^25.9.1",

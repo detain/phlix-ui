@@ -105,4 +105,10 @@ import { CONTINUE } from './mock-data';
   border-radius: var(--radius-full);
   background: var(--accent);
 }
+/* Mirror PhlixApp.vue's canonical nav-link focus ring (PhlixApp.vue:184) so this
+   harness faithfully represents the shipped shell for the a11y/keyboard walkthrough. */
+.nav-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
 </style>
