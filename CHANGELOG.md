@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Post-release changes land here._
+
+## [0.10.0] - 2026-06-03
+
+Mounts the redesigned Vue admin as a navigable **Admin sidebar section** — a new `AdminLayout` plus a
+nested `buildAdminRoutes()` — with an admin-gated menu seam (`MenuItem.requiresAdmin`). Additive `0.x`
+minor: the only behavior change is `buildAdminRoutes()`'s record shape (16 flat routes → one nested
+parent), which no consumer had mounted and which preserves every route name and resolved
+`/app/admin/<segment>` URL. `phlix-server` and `phlix-hub` stay on the same MAJOR.
+
 ### Added
 - **Admin section shell (`AdminLayout`) — mountable Vue admin.** A new `AdminLayout` renders a glass
   sidebar of the admin pages (derived from `adminMenu()`) beside a `<RouterView>`, giving the ported
