@@ -159,7 +159,7 @@ function toggleReveal(): void {
 }
 .authfield__toggle:focus-visible {
   outline: none;
-  color: var(--accent);
+  color: var(--accent-text);
   box-shadow: 0 0 0 2px var(--accent-ring);
 }
 .authfield__toggle:disabled {

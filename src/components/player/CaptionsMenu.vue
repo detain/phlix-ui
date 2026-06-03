@@ -371,7 +371,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 2px var(--accent-ring);
 }
 .capmenu__opt[aria-checked='true'] {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: var(--font-semibold);
 }
 .capmenu__check {

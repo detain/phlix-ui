@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
   height: 18px;
 }
 .mini__btn--close:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* progress bar pinned to the bottom edge */

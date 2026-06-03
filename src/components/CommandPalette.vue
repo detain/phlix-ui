@@ -356,7 +356,7 @@ onBeforeUnmount(() => {
   background: var(--surface-3, var(--accent-soft, rgba(255, 255, 255, 0.06)));
 }
 .phlix-cmdk__option.is-active .phlix-cmdk__option-icon {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .phlix-cmdk__option-icon {
   font-size: var(--text-lg);

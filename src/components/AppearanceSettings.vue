@@ -363,7 +363,7 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
 .aps__theme.is-active {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: var(--glow-amber);
 }
 .aps__preview {
@@ -402,7 +402,7 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
   color: var(--text);
 }
 .aps__theme-check {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Accent picker */

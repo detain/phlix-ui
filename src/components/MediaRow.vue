@@ -186,7 +186,7 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
 }
 .media-row__retry:hover {
   border-color: var(--accent-ring);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .media-row__retry:focus-visible {
   outline: none;

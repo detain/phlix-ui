@@ -22,7 +22,7 @@ const sizeValue = computed(() =>
 </template>
 
 <style scoped>
-.phlix-spinner { display: inline-flex; color: var(--accent); }
+.phlix-spinner { display: inline-flex; color: var(--accent-text); }
 .phlix-spinner__icon { animation: phlix-spin 0.7s linear infinite; }
 @keyframes phlix-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
