@@ -524,3 +524,77 @@ describe('Admin CastDevicesPage', () => {
     w.unmount();
   });
 });
+
+describe('Admin CastDevicesPage — tab a11y (R6.5a.2)', () => {
+  it('uses roving tabindex on the device-type tabs', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const tabs = w.findAll('[role="tab"]');
+    expect(tabs[0]!.attributes('tabindex')).toBe('0');
+    expect(tabs[0]!.attributes('aria-selected')).toBe('true');
+    expect(tabs[1]!.attributes('tabindex')).toBe('-1');
+    w.unmount();
+  });
+
+  it('links the active tab to the panel (aria-controls ↔ aria-labelledby)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const active = w.findAll('[role="tab"]').find((t) => t.attributes('aria-selected') === 'true')!;
+    const panel = w.find('[role="tabpanel"]');
+    expect(active.attributes('aria-controls')).toBe(panel.attributes('id'));
+    expect(panel.attributes('aria-labelledby')).toBe(active.attributes('id'));
+    w.unmount();
+  });
+
+  it('ArrowRight activates + focuses the next tab', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const list = w.find('[role="tablist"]');
+    await list.trigger('keydown', { key: 'ArrowRight' });
+    await flushPromises();
+    const tabs = w.findAll('[role="tab"]');
+    expect(tabs[1]!.attributes('aria-selected')).toBe('true');
+    expect(tabs[1]!.attributes('tabindex')).toBe('0');
+    expect(document.activeElement).toBe(tabs[1]!.element);
+    w.unmount();
+  });
+
+  it('Home/End jump to the first/last tab', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const list = w.find('[role="tablist"]');
+    await list.trigger('keydown', { key: 'End' });
+    await flushPromises();
+    expect(w.findAll('[role="tab"]')[1]!.attributes('aria-selected')).toBe('true');
+    await list.trigger('keydown', { key: 'Home' });
+    await flushPromises();
+    expect(w.findAll('[role="tab"]')[0]!.attributes('aria-selected')).toBe('true');
+    w.unmount();
+  });
+
+  it('ArrowLeft wraps from the first tab to the last', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const list = w.find('[role="tablist"]');
+    await list.trigger('keydown', { key: 'ArrowLeft' });
+    await flushPromises();
+    expect(w.findAll('[role="tab"]')[1]!.attributes('aria-selected')).toBe('true');
+    w.unmount();
+  });
+
+  it('ignores non-navigation keys (no tab change)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const list = w.find('[role="tablist"]');
+    await list.trigger('keydown', { key: 'a' });
+    await flushPromises();
+    expect(w.findAll('[role="tab"]')[0]!.attributes('aria-selected')).toBe('true');
+    w.unmount();
+  });
+});

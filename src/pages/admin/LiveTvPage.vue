@@ -34,7 +34,7 @@ import Switch from '../../components/ui/Switch.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Icon from '../../components/Icon.vue';
-import type { SelectOptionInput } from '../../components/ui/listbox';
+import { nextEnabledIndex, type SelectOptionInput } from '../../components/ui/listbox';
 
 type RecordingTab = 'all' | 'upcoming' | 'by-series';
 
@@ -246,6 +246,42 @@ const RECORDING_TABS: ReadonlyArray<{ value: RecordingTab; label: string }> = [
   { value: 'upcoming', label: 'Upcoming' },
   { value: 'by-series', label: 'By Series' },
 ];
+
+const recTablistEl = ref<HTMLElement | null>(null);
+
+/** Roving-tabindex keyboard nav for the Recordings filter tablist (matches `ui/Tabs`). */
+function focusRecTabAt(index: number): void {
+  recTablistEl.value?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[index]?.focus();
+}
+
+function onRecTabKeydown(e: KeyboardEvent): void {
+  const opts = RECORDING_TABS.map((t) => ({ value: t.value, label: t.label }));
+  const current = RECORDING_TABS.findIndex((t) => t.value === recordingTab.value);
+  let to = -1;
+  switch (e.key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+      to = nextEnabledIndex(opts, current, 1);
+      break;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      to = nextEnabledIndex(opts, current, -1);
+      break;
+    case 'Home':
+      to = nextEnabledIndex(opts, -1, 1);
+      break;
+    case 'End':
+      to = nextEnabledIndex(opts, 0, -1);
+      break;
+    default:
+      return;
+  }
+  if (to >= 0) {
+    e.preventDefault();
+    recordingTab.value = RECORDING_TABS[to].value;
+    focusRecTabAt(to);
+  }
+}
 
 const recordingsError = ref<string | null>(null);
 
@@ -650,14 +686,16 @@ onMounted(() => {
           title="No programmes"
           description="No programmes listed for this date. Try a different day or refresh the guide."
         />
-        <div v-else class="admin-livetv__guide-grid" role="list">
+        <div v-else class="admin-livetv__guide-grid">
           <div
             v-for="prog in programs"
             :key="prog.id"
             class="admin-livetv__program"
             :class="{ 'is-selected': selectedProgramId === prog.id }"
-            role="listitem"
+            role="button"
             tabindex="0"
+            :aria-pressed="selectedProgramId === prog.id"
+            :aria-label="`${prog.title}, ${formatTime(prog.start_time)} to ${formatTime(prog.end_time)}`"
             @click="toggleProgram(prog)"
             @keydown.enter.prevent="toggleProgram(prog)"
             @keydown.space.prevent="toggleProgram(prog)"
@@ -706,15 +744,24 @@ onMounted(() => {
 
       <div v-if="expanded.recordings" id="livetv-recordings-body" class="admin-livetv__section-body">
         <div class="admin-livetv__toolbar">
-          <div class="admin-livetv__segmented" role="tablist" aria-label="Recording filter">
+          <div
+            ref="recTablistEl"
+            class="admin-livetv__segmented"
+            role="tablist"
+            aria-label="Recording filter"
+            @keydown="onRecTabKeydown"
+          >
             <button
               v-for="tab in RECORDING_TABS"
+              :id="`rec-tab-${tab.value}`"
               :key="tab.value"
               type="button"
               role="tab"
               class="admin-livetv__seg-btn"
               :class="{ 'is-active': recordingTab === tab.value }"
               :aria-selected="recordingTab === tab.value"
+              :aria-controls="`rec-panel-${tab.value}`"
+              :tabindex="recordingTab === tab.value ? 0 : -1"
               @click="recordingTab = tab.value"
             >
               {{ tab.label }}
@@ -725,6 +772,12 @@ onMounted(() => {
           </Button>
         </div>
 
+        <!-- Filtered recordings — the tabpanel controlled by the RECORDING_TABS tablist -->
+        <div
+          :id="`rec-panel-${recordingTab}`"
+          role="tabpanel"
+          :aria-labelledby="`rec-tab-${recordingTab}`"
+        >
         <div v-if="recordingsLoading" class="admin-livetv__skel"><Skeleton variant="text" :lines="3" /></div>
         <EmptyState
           v-else-if="recordingsError"
@@ -768,6 +821,7 @@ onMounted(() => {
               </Button>
             </div>
           </article>
+        </div>
         </div>
       </div>
     </section>
@@ -1006,7 +1060,7 @@ onMounted(() => {
 }
 .admin-livetv__section-header:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 3px var(--accent-soft);
+  box-shadow: inset 0 0 0 3px var(--accent-ring);
 }
 .admin-livetv__section-title-row {
   display: flex;
@@ -1014,7 +1068,7 @@ onMounted(() => {
   gap: var(--space-3);
 }
 .admin-livetv__section-icon {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .admin-livetv__section-title {
   font-family: var(--font-display);
@@ -1077,7 +1131,7 @@ onMounted(() => {
 }
 .admin-livetv__seg-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 /* Cards */
@@ -1154,7 +1208,7 @@ onMounted(() => {
 }
 .admin-livetv__program:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 .admin-livetv__program-time {
   font-size: var(--text-xs);

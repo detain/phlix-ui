@@ -55,6 +55,19 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
 ### Accessibility
+- **R6.5a.2 — admin-surface a11y semantics (the deferred R6.5a follow-up):** the operator-facing admin pages
+  now carry the same keyboard/contrast treatment as the end-user chrome. The 9-group admin **Settings** tabs
+  adopt the shared `ui/Tabs` primitive (roving tabindex + `aria-selected`/`aria-controls`/`aria-labelledby` +
+  the canonical `--accent-ring` focus ring + the `--accent-text` active underline). **Cast Devices** and
+  **Live TV** keep their bespoke tablists but gain roving tabindex + arrow/Home/End keyboard navigation +
+  `aria-controls`↔`aria-labelledby` tab/panel wiring, with new `--accent-ring` focus rings on the device-type
+  tabs, the device cards, the recording-filter tabs, and the EPG program cards. The Live TV EPG program cards
+  change from `role="listitem"` to `role="button"` + `aria-pressed` (a selection toggle), and the recording
+  filter's results region becomes a labelled `role="tabpanel"`. Admin amber-as-foreground / active-indicator
+  sites (the Services hint link, the Live TV section icons, the Settings/Cast tab underlines, the selected
+  device-card outline) move from `--accent` to `--accent-text` so projector-amber clears WCAG AA on the light
+  Daylight surface; amber **fills** stay `--accent`. Presentation/semantic only — no admin API or behavior
+  change — and not user-visible until the admin app mounts the redesigned package at R6.6.
 - **R6.5 — accessibility acceptance verified (axe-clean + keyboard walkthrough) → R6.5 COMPLETE:** with the
   R6.5a focus/structure, R6.5b contrast, and R6.5c strings all landed, the phase's acceptance criteria were
   confirmed end-to-end. **Axe-clean:** a new on-demand `npm run test:a11y` suite reports **0 WCAG 2.0/2.1 A+AA
