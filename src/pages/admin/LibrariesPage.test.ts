@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import LibrariesPage from './LibrariesPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -124,12 +125,42 @@ describe('Admin LibrariesPage — list', () => {
     w.unmount();
   });
 
-  it('toasts when the list fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the list fails to load', async () => {
     const get = vi.fn().mockRejectedValue(new Error('DB down'));
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
+    // R5.3d.1: the load failure renders an in-body EmptyState (error + Retry)
+    // instead of falling through to the misleading "No libraries yet", and still
+    // fires a toast.
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain('load libraries');
+    expect(w.text()).toContain('DB down');
+    expect(w.text()).not.toContain('No libraries yet');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'DB down')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the list load from the error state', async () => {
+    const get = vi
+      .fn()
+      .mockImplementationOnce(async () => { throw new Error('DB down'); })
+      .mockImplementation(async (endpoint: string) => {
+        if (endpoint === '/api/v1/libraries') return { libraries: [lib] };
+        if (endpoint.endsWith('/scan-status')) return { scan_status: null };
+        throw new Error(`unexpected GET ${endpoint}`);
+      });
+    const w = mountPage(
+      { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient,
+      100000,
+    );
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(w.text()).toContain('Movies');
     w.unmount();
   });
 

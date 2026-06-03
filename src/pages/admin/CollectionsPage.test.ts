@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import CollectionsPage from './CollectionsPage.vue';
 import Button from '../../components/ui/Button.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -106,12 +107,36 @@ describe('Admin CollectionsPage — list', () => {
     w.unmount();
   });
 
-  it('toasts when the list fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the list fails to load', async () => {
     const get = vi.fn().mockRejectedValue(new Error('boom'));
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
+    // R5.3d.1: the load failure renders an in-body EmptyState (error + Retry)
+    // instead of the misleading "No collections yet", and still fires a toast.
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain('load collections');
+    expect(w.text()).toContain('boom');
+    expect(w.text()).not.toContain('No collections yet');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the list load from the error state', async () => {
+    const get = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce({ collections: [colA] });
+    const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(w.find('table').exists()).toBe(true);
+    expect(w.text()).toContain('Action Movies');
     w.unmount();
   });
 });

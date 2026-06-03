@@ -30,6 +30,11 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Changed
+- **In-body error states for the single-list admin pages (R5.3d.1):** `LibrariesPage`, `UsersPage`,
+  `CollectionsPage`, and `WebhooksPage` previously fell through to their empty-list `EmptyState` (a misleading
+  "nothing here") + a toast when the main list load FAILED. Each now renders an in-body `EmptyState` (alert
+  icon + "Couldn't load X" + the error message + a Retry) before the empty-list state, matching R5.3c. First
+  batch of the R5.3d admin-port error-state retrofit.
 - **In-body section error states across the multi-section admin pages (R5.3c):** the admin `SettingsPage`,
   `IntegrationsPage`, `LogsPage`, and `RemoteAccessPage` previously surfaced a *section* load failure
   toast-only — leaving the body blank (Settings rendered an empty/broken tab form), silently rendering as if

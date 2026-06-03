@@ -54,13 +54,16 @@ function isValidUrl(value: string): boolean {
 // ── List state ────────────────────────────────────────────────────────────────
 const webhooks = ref<Webhook[]>([]);
 const loading = ref(true);
+const error = ref<string | null>(null);
 
 async function loadWebhooks(): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     webhooks.value = await api.list();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load webhooks.'));
+    error.value = errMessage(e, 'Failed to load webhooks.');
+    toasts.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -239,6 +242,16 @@ onMounted(loadWebhooks);
     </header>
 
     <div v-if="loading" class="admin-webhooks__skel"><Skeleton variant="text" :lines="6" /></div>
+    <EmptyState
+      v-else-if="error"
+      icon="alert"
+      title="Couldn't load webhooks"
+      :description="error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadWebhooks">Retry</Button>
+      </template>
+    </EmptyState>
     <EmptyState
       v-else-if="webhooks.length === 0"
       icon="settings"
