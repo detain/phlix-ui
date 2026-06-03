@@ -26,6 +26,14 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **`MyServersPage` re-skin (R5.2b):** the hub's connected-media-servers page `src/pages/MyServersPage.vue`
+  is rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/servers`
+  flow is unchanged). Servers now render in a tokenized table (Server + url / Owner / Libraries / Last seen /
+  Status / Actions) with a `Skeleton` loading state, an `EmptyState` for both the empty list (with an Add-server
+  action) and a load error (with Retry), a `Badge` connection-status tone (online → success / offline → error /
+  connecting → warning) replacing the old raw-hex status dot, and `useToastStore` feedback on load failure. The
+  per-row "Manage" and "Add server" buttons remain pre-existing placeholders (no endpoint/route yet). A
+  `client?: ApiClient` test seam is added (defaults to the shared `api` singleton).
 - **`LibraryScanPage` re-skin (R5.2a):** the server app's standalone scan page `src/pages/LibraryScanPage.vue`
   is rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/libraries`,
   `…/scan-status`, `POST …/scan`, `POST …/rescan` flows are unchanged). Libraries now render in a tokenized
