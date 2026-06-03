@@ -93,7 +93,7 @@ describe('bindMediaStoreToRouter', () => {
     stop();
   });
 
-  it('the returned teardown stops syncing', async () => {
+  it('the returned teardown stops syncing in both directions', async () => {
     const router = makeRouter();
     await router.push('/app');
     await router.isReady();
@@ -109,8 +109,16 @@ describe('bindMediaStoreToRouter', () => {
     const store = useMediaStore();
     stop();
 
+    // store → URL watcher is detached: a filter change no longer pushes to the URL
     store.setSearch('after-stop');
     await flushPromises();
     expect(router.currentRoute.value.query.search).toBeUndefined();
+
+    // R6.4c (matrix B4): URL → store watcher is detached too — an external route change (back/forward,
+    // deep link) after stop() must no longer mutate the store, else a watcher leaks onto a navigated-away
+    // page. `stopRoute()` in the returned teardown is what prevents it.
+    await router.push({ path: '/app', query: { ratings: 'R' } });
+    await flushPromises();
+    expect(store.selectedRatings).toEqual([]); // unchanged — the route watcher was detached
   });
 });
