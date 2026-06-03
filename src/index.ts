@@ -27,8 +27,13 @@ export { default as MediaRow } from './components/MediaRow.vue';
 export { default as MediaHomeRow } from './components/HomeRow.vue';
 export { default as MediaDetail } from './components/MediaDetail.vue';
 export { default as FilterBar } from './components/FilterBar.vue';
-export { default as BrowsePage } from './pages/BrowsePage.vue';
-export { default as MediaDetailPage } from './pages/MediaDetailPage.vue';
+// NOTE (R6.1a): the built-in route PAGES — BrowsePage, MediaDetailPage, PlayerPage,
+// LoginPage, SignupPage, SettingsPage — are intentionally NOT re-exported. `createPhlixApp`
+// mounts them as lazy `() => import()` route chunks; a static re-export here would re-merge
+// them into the main bundle (Rollup INEFFECTIVE_DYNAMIC_IMPORT) and defeat the code-split.
+// The reusable *building blocks* (MediaCard/MediaGrid/MediaRow/MediaHomeRow/MediaDetail/
+// FilterBar above; Player + player/* parts and LoginForm/SignupForm/SettingsForm below) ARE
+// exported — consumers compose pages from those, not from the page shells.
 
 // Admin port (RA) — server admin surfaces + their mount seam. NOTE: the admin
 // PAGE components are intentionally NOT re-exported here — they are lazy-loaded
@@ -215,13 +220,14 @@ export type { TextTrackInfo } from './components/player/captions';
 export { formatTime } from './components/player/format-time';
 export { PLAYER_SHORTCUTS, ARROW_ICONS, ARROW_LABELS, useKeyboardShortcuts, handleShortcut, isTypingTarget } from './components/player/shortcuts';
 export type { ShortcutRow, ShortcutActions } from './components/player/shortcuts';
-export { default as PlayerPage } from './pages/PlayerPage.vue';
 export { default as LoginForm } from './components/LoginForm.vue';
 export { default as SignupForm } from './components/SignupForm.vue';
-export { default as LoginPage } from './pages/LoginPage.vue';
-export { default as SignupPage } from './pages/SignupPage.vue';
 export { default as SettingsForm } from './components/SettingsForm.vue';
-export { default as SettingsPage } from './pages/SettingsPage.vue';
+// NOTE (R6.1a): PlayerPage / LoginPage / SignupPage / SettingsPage are lazy route chunks
+// mounted by `createPhlixApp` (see the built-in-pages note near MediaDetail) — not
+// re-exported. The 5 long-tail consumer pages below ARE still exported because the
+// server/hub consumers import them directly for `extraRoutes`; those move behind a
+// dynamic-import builder seam at R6.6.
 export { default as LibraryScanPage } from './pages/LibraryScanPage.vue';
 export { default as MyServersPage } from './pages/MyServersPage.vue';
 export { default as FederationPage } from './pages/FederationPage.vue';
