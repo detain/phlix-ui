@@ -142,4 +142,8 @@ onBeforeUnmount(() => {
 .home-row__seeall:hover {
   background: var(--accent-soft);
 }
+.home-row__seeall:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
 </style>

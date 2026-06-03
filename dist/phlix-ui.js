@@ -11,14 +11,14 @@ import { i as y, n as oe, r as se, t as ce } from "./Kbd-CSMm1T0l.js";
 import { t as b } from "./Badge-ArWL5-WE.js";
 import { t as le } from "./Slider-BMn_Lp_q.js";
 import { t as ue } from "./Switch-CFZhdkXR.js";
-import { i as de, n as fe, r as pe, t as me } from "./MediaRow-D4X62E_J.js";
+import { i as de, n as fe, r as pe, t as me } from "./MediaRow-DCnd5s5o.js";
 import { t as he } from "./Select-CKC9vNUQ.js";
-import { a as ge, i as _e, n as ve, r as ye, t as be } from "./FilterBar-D74tm-mg.js";
+import { a as ge, i as _e, n as ve, r as ye, t as be } from "./FilterBar-BDhuCGQT.js";
 import { t as xe } from "./Modal-BB_vB1RK.js";
 import { t as x } from "./useToastStore-BDoKlU6N.js";
 import { n as S, t as C } from "./EmptyState-Ds4WcVdG.js";
 import { n as Se, t as Ce } from "./SettingsForm-DPNOGeW5.js";
-import { t as we } from "./MediaDetail-VmTlt6o3.js";
+import { t as we } from "./MediaDetail-DzzC5jFf.js";
 import { n as Te, t as Ee } from "./logs-DadTfaTq.js";
 import { t as De } from "./dashboard-BTCOCTHQ.js";
 import { n as Oe, r as ke, t as Ae } from "./users-C40iLgkq.js";
@@ -35,7 +35,7 @@ import { t as He } from "./history-ByCY8OYj.js";
 import { t as Ue } from "./syncPlay-DPzJkgkK.js";
 import { n as We, t as Ge } from "./libraries-CXAz_kXs.js";
 import { t as Ke } from "./settings-m4upFcmH.js";
-import { A as qe, C as Je, D as Ye, E as Xe, F as Ze, I as Qe, L as $e, M as et, N as tt, O as nt, P as rt, S as it, T as at, _ as ot, a as st, b as ct, c as lt, d as ut, f as dt, g as ft, h as pt, i as mt, j as ht, k as gt, l as _t, m as vt, n as yt, o as bt, p as xt, r as St, s as Ct, t as wt, u as Tt, v as Et, w as Dt, x as Ot, y as kt } from "./Player-dZWn44lw.js";
+import { A as qe, C as Je, D as Ye, E as Xe, F as Ze, I as Qe, L as $e, M as et, N as tt, O as nt, P as rt, S as it, T as at, _ as ot, a as st, b as ct, c as lt, d as ut, f as dt, g as ft, h as pt, i as mt, j as ht, k as gt, l as _t, m as vt, n as yt, o as bt, p as xt, r as St, s as Ct, t as wt, u as Tt, v as Et, w as Dt, x as Ot, y as kt } from "./Player-CXWgoLVL.js";
 import { a as At, c as jt, d as Mt, f as Nt, g as Pt, h as Ft, i as It, l as Lt, m as Rt, n as zt, o as Bt, p as Vt, r as Ht, s as Ut, t as Wt, u as Gt } from "./captions-COgPp5bH.js";
 import { t as Kt } from "./LoginForm-391wMbHl.js";
 import { t as qt } from "./SignupForm-Djo0Oqq9.js";
@@ -109,7 +109,11 @@ var dn = ["aria-labelledby"], fn = {
 }), [["__scopeId", "data-v-6960f9fb"]]), _n = { class: "shell" }, vn = { class: "shell__bar" }, yn = { class: "shell__inner" }, bn = { class: "shell__brand" }, xn = {
 	class: "shell__nav",
 	"aria-label": "Primary"
-}, Sn = { class: "shell__actions" }, Cn = { class: "shell__main" }, wn = {
+}, Sn = { class: "shell__actions" }, Cn = {
+	id: "main",
+	tabindex: "-1",
+	class: "shell__main"
+}, wn = {
 	key: 0,
 	class: "shell__footer"
 }, Tn = /*#__PURE__*/ t(/* @__PURE__ */ N({
@@ -117,6 +121,10 @@ var dn = ["aria-labelledby"], fn = {
 	setup(t) {
 		let n = a(), i = V(!1);
 		return (t, a) => (B(), k("div", _n, [
+			a[5] ||= A("a", {
+				class: "shell__skip",
+				href: "#main"
+			}, "Skip to content", -1),
 			M(e, { enabled: G(n).atmosphere }, null, 8, ["enabled"]),
 			A("header", vn, [A("div", yn, [
 				A("div", bn, [U(t.$slots, "logo", {}, () => [a[3] ||= A("span", { class: "shell__wordmark" }, [j("Phlix"), A("span", { class: "shell__dot" }, ".")], -1)], !0)]),
@@ -148,7 +156,7 @@ var dn = ["aria-labelledby"], fn = {
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-007c323a"]]), En = /* @__PURE__ */ N({
+}), [["__scopeId", "data-v-7e06bd4a"]]), En = /* @__PURE__ */ N({
 	__name: "ThemeToggle",
 	setup(e) {
 		let t = a(), n = [
@@ -331,7 +339,7 @@ var dn = ["aria-labelledby"], fn = {
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-c013af7d"]]);
+}), [["__scopeId", "data-v-c11fbc3d"]]);
 //#endregion
 //#region src/composables/color.ts
 function Vn(e) {
@@ -590,17 +598,17 @@ function lr(e) {
 		{
 			path: t,
 			name: "browse",
-			component: () => import("./BrowsePage-BLkjWXxT.js")
+			component: () => import("./BrowsePage-BbkPuyyV.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-BlJxo54d.js")
+			component: () => import("./MediaDetailPage-uLclmcbF.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-GivqysiP.js")
+			component: () => import("./PlayerPage-CoPZqj7S.js")
 		},
 		{
 			path: `${t}/login`,
@@ -615,7 +623,7 @@ function lr(e) {
 		{
 			path: `${t}/settings`,
 			name: "settings",
-			component: () => import("./SettingsPage-DH4tLLhC.js")
+			component: () => import("./SettingsPage-2llZFe9b.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({

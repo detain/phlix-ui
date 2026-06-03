@@ -249,6 +249,25 @@ describe('MediaGrid — virtualization', () => {
     await top.trigger('click');
     expect(window.scrollTo).toHaveBeenCalled();
   });
+
+  it('back-to-top honors reduced-motion: smooth normally, instant ("auto") when reduced (R6.5a)', async () => {
+    mockLayout(1000, -2000); // already scrolled past the fold so the button is shown
+    const w = mount(MediaGrid, { props: { items: makeItems(200) } });
+    await nextTick();
+    await nextTick();
+    const top = w.get('.media-grid-top');
+    const scrollTo = window.scrollTo as unknown as ReturnType<typeof vi.fn>;
+
+    // reduced-motion ON → instant jump (no smooth animation)
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+    await top.trigger('click');
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: 'auto' });
+
+    // reduced-motion OFF → smooth scroll
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+    await top.trigger('click');
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: 'smooth' });
+  });
 });
 
 describe('MediaGrid — infinite scroll', () => {

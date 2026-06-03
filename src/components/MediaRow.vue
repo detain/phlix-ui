@@ -188,6 +188,10 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
   border-color: var(--accent-ring);
   color: var(--accent);
 }
+.media-row__retry:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .media-row__rail {

@@ -225,6 +225,28 @@ describe('BrowsePage — see-all', () => {
     await flushPromises();
     expect(store.selectedGenres).toEqual(['Sci-Fi']);
   });
+
+  it('honors reduced-motion when scrolling the grid into view (R6.5a)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 1 })));
+    // jsdom has no scrollIntoView — install one to observe the `behavior` arg
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView as unknown as typeof Element.prototype.scrollIntoView;
+    const row = { id: 'r2', title: 'Sci-Fi', query: { genres: ['Sci-Fi'] } };
+    const w = mountPage({ config: { homeRows: [row] } });
+    await flushPromises();
+
+    // reduced-motion ON → instant ("auto")
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+    w.findComponent(HomeRow).vm.$emit('see-all', row);
+    await flushPromises();
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'auto', block: 'start' });
+
+    // reduced-motion OFF → smooth
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+    w.findComponent(HomeRow).vm.$emit('see-all', row);
+    await flushPromises();
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'smooth', block: 'start' });
+  });
 });
 
 describe('BrowsePage — grid wiring', () => {

@@ -91,6 +91,10 @@ const emit = defineEmits<{ (e: 'back'): void }>();
 .transcode__back:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+.transcode__back:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .transcode__back {

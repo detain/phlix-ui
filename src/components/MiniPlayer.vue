@@ -178,6 +178,10 @@ onBeforeUnmount(() => {
 .mini__btn:hover {
   background: rgba(255, 255, 255, 0.12);
 }
+.mini__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
 .mini__btn :deep(svg) {
   width: 18px;
   height: 18px;

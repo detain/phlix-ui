@@ -145,10 +145,20 @@ const dashOffset = computed(() => ringDashoffset(props.remaining, props.total));
   width: 14px;
   height: 14px;
 }
+.upnext__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
 .upnext__btn--amber {
   background: var(--accent);
   color: var(--accent-contrast, #1a1206);
   box-shadow: var(--glow-amber, none);
+}
+/* keep the amber glow AND show the focus ring (compose both; the bare
+   .upnext__btn:focus-visible would otherwise replace the glow on focus) */
+.upnext__btn--amber:focus-visible {
+  outline: none;
+  box-shadow: var(--glow-amber, none), 0 0 0 3px var(--accent-ring);
 }
 .upnext__btn--amber:hover {
   filter: brightness(1.08);
