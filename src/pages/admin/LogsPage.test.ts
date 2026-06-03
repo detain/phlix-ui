@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import LogsPage from './LogsPage.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { ALL_LOGS } from '../../api/admin/logs';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
@@ -95,12 +96,56 @@ describe('Admin LogsPage', () => {
     expect(tailCalls()).toBe(afterOne); // no polling after unmount
   });
 
-  it('toasts when listing fails', async () => {
+  it('shows an in-body EmptyState error (+ toast) when listing fails', async () => {
     const get = vi.fn().mockRejectedValue(new Error('disk gone'));
     const w = mountPage({ get } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+    // R5.3c: the file-list failure now renders an in-body EmptyState instead of a
+    // misleading "(no log files)" dropdown option.
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    expect(w.text()).toContain('disk gone');
+    expect(w.text()).toContain('load log files');
+    w.unmount();
+  });
+
+  it('retries the file-list load from the error state', async () => {
+    let listCalls = 0;
+    const get = vi.fn(async (endpoint: string, params?: Record<string, string>) => {
+      if (endpoint === '/api/v1/admin/logs') {
+        listCalls++;
+        if (listCalls === 1) throw new Error('disk gone');
+        return { files: [{ name: 'app.log', size: 1, modified_at: 't' }] };
+      }
+      if (endpoint === '/api/v1/admin/logs/tail') {
+        return { file: params?.file, lines: ['recovered line'], truncated: false };
+      }
+      throw new Error(`unexpected ${endpoint}`);
+    });
+    const w = mountPage({ get } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(w.find('[data-testid="logs-output"]').text()).toContain('recovered line');
+    w.unmount();
+  });
+
+  it('shows an EmptyState error when reading the log content fails', async () => {
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/logs') return { files: [{ name: 'app.log', size: 1, modified_at: 't' }] };
+      if (endpoint === '/api/v1/admin/logs/tail') throw new Error('read fail');
+      throw new Error(`unexpected ${endpoint}`);
+    });
+    const w = mountPage({ get } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    expect(toasts.toasts.some((t) => t.message === 'read fail')).toBe(true);
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    expect(w.text()).toContain('read fail');
+    expect(w.text()).toContain('read log');
     w.unmount();
   });
 });

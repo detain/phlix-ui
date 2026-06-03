@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import IntegrationsPage from './IntegrationsPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Switch from '../../components/ui/Switch.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -121,7 +122,7 @@ describe('IntegrationsPage — Arr sync', () => {
     w.unmount();
   });
 
-  it('toasts and shows the fallback when sync status fails to load', async () => {
+  it('shows an in-body EmptyState error (+ toast) when sync status fails to load', async () => {
     const get = vi.fn(async (endpoint: string) => {
       if (endpoint === '/api/v1/admin/sync/status') throw new Error('status boom');
       return { providers: [] };
@@ -131,7 +132,49 @@ describe('IntegrationsPage — Arr sync', () => {
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'status boom')).toBe(true);
-    expect(w.text()).toContain('Unable to load sync status.');
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    expect(w.text()).toContain('status boom');
+    expect(w.text()).toContain('load sync status');
+    w.unmount();
+  });
+
+  it('retries the sync-status load from the error state', async () => {
+    let syncCalls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/sync/status') {
+        syncCalls++;
+        if (syncCalls === 1) throw new Error('status boom');
+        return syncEnabled;
+      }
+      if (endpoint === '/api/v1/admin/auth-providers') return { providers: [] };
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(w.text()).toContain('Auto-sync');
+    w.unmount();
+  });
+
+  it('shows an EmptyState error (and no provider rows) when auth providers fail to load', async () => {
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/sync/status') return syncEnabled;
+      if (endpoint === '/api/v1/admin/auth-providers') throw new Error('providers boom');
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountPage(client);
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'providers boom')).toBe(true);
+    expect(w.text()).toContain('providers boom');
+    expect(w.text()).toContain('load auth providers');
+    // the provider list (and its Configure buttons) must NOT render on error
+    expect(findBtn(w, 'Configure')).toBeUndefined();
     w.unmount();
   });
 

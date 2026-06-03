@@ -27,6 +27,7 @@ import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import Icon from '../../components/Icon.vue';
 
 const props = defineProps<{
@@ -62,6 +63,7 @@ function toggleSection(section: string): void {
 // ── Hub pairing state ────────────────────────────────────────────────────────
 const hubStatus = ref<HubStatus | null>(null);
 const hubLoading = ref(true);
+const hubError = ref<string | null>(null);
 const hubUnenrolling = ref(false);
 const hubHeartbeating = ref(false);
 
@@ -83,10 +85,13 @@ const hubSummary = computed(() => {
 });
 
 async function loadHubStatus(): Promise<void> {
+  hubLoading.value = true;
+  hubError.value = null;
   try {
     hubStatus.value = await api.hubStatus();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load hub status.'));
+    hubError.value = errMessage(e, 'Failed to load hub status.');
+    toasts.error(hubError.value);
   } finally {
     hubLoading.value = false;
   }
@@ -173,6 +178,7 @@ async function sendHeartbeat(): Promise<void> {
 // ── Subdomain state ────────────────────────────────────────────────────────────
 const subdomainStatus = ref<SubdomainStatus | null>(null);
 const subdomainLoading = ref(true);
+const subdomainError = ref<string | null>(null);
 const subdomainClaiming = ref(false);
 const subdomainReleasing = ref(false);
 
@@ -186,10 +192,13 @@ const subdomainSummary = computed(() => {
 });
 
 async function loadSubdomainStatus(): Promise<void> {
+  subdomainLoading.value = true;
+  subdomainError.value = null;
   try {
     subdomainStatus.value = await api.subdomainStatus();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load subdomain status.'));
+    subdomainError.value = errMessage(e, 'Failed to load subdomain status.');
+    toasts.error(subdomainError.value);
   } finally {
     subdomainLoading.value = false;
   }
@@ -226,6 +235,7 @@ async function releaseSubdomain(): Promise<void> {
 // ── Relay state ────────────────────────────────────────────────────────────────
 const relayStatus = ref<RelayStatus | null>(null);
 const relayLoading = ref(true);
+const relayError = ref<string | null>(null);
 const relayEnabling = ref(false);
 const relayDisabling = ref(false);
 const relayPinging = ref(false);
@@ -242,11 +252,14 @@ const relaySummary = computed(() => {
 const relayActionInProgress = computed(() => relayEnabling.value || relayDisabling.value);
 
 async function loadRelayStatus(): Promise<void> {
+  relayLoading.value = true;
+  relayError.value = null;
   try {
     relayStatus.value = await api.relayStatus();
     relayLatency.value = null;
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load relay status.'));
+    relayError.value = errMessage(e, 'Failed to load relay status.');
+    toasts.error(relayError.value);
   } finally {
     relayLoading.value = false;
   }
@@ -297,6 +310,7 @@ async function pingRelay(): Promise<void> {
 // ── Port forward state ──────────────────────────────────────────────────────────
 const portForwardStatus = ref<PortForwardStatus | null>(null);
 const portForwardLoading = ref(true);
+const portForwardError = ref<string | null>(null);
 const portForwardEnabling = ref(false);
 const portForwardDisabling = ref(false);
 const candidates = ref<HostnameCandidate[]>([]);
@@ -316,6 +330,8 @@ const portForwardActionInProgress = computed(
 );
 
 async function loadPortForwardStatus(): Promise<void> {
+  portForwardLoading.value = true;
+  portForwardError.value = null;
   try {
     const [status, candidatesResult] = await Promise.all([
       api.portForwardStatus(),
@@ -324,7 +340,8 @@ async function loadPortForwardStatus(): Promise<void> {
     portForwardStatus.value = status;
     candidates.value = candidatesResult.candidates;
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load port-forward status.'));
+    portForwardError.value = errMessage(e, 'Failed to load port-forward status.');
+    toasts.error(portForwardError.value);
   } finally {
     portForwardLoading.value = false;
   }
@@ -392,8 +409,18 @@ onMounted(() => {
       </button>
       <div v-if="expanded.hub" id="remote-hub-body" class="admin-remote__section-body">
         <div v-if="hubLoading" class="admin-remote__skel"><Skeleton variant="text" :lines="3" /></div>
+        <EmptyState
+          v-else-if="hubError"
+          icon="alert"
+          title="Couldn't load hub status"
+          :description="hubError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadHubStatus">Retry</Button>
+          </template>
+        </EmptyState>
         <p v-else-if="hubStatus === null" class="admin-remote__empty" role="status">
-          Unable to load hub status.
+          No hub status available.
         </p>
         <template v-else>
           <dl v-if="hubStatus.paired" class="admin-remote__dl">
@@ -442,8 +469,18 @@ onMounted(() => {
       </button>
       <div v-if="expanded.subdomain" id="remote-subdomain-body" class="admin-remote__section-body">
         <div v-if="subdomainLoading" class="admin-remote__skel"><Skeleton variant="text" :lines="2" /></div>
+        <EmptyState
+          v-else-if="subdomainError"
+          icon="alert"
+          title="Couldn't load subdomain status"
+          :description="subdomainError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadSubdomainStatus">Retry</Button>
+          </template>
+        </EmptyState>
         <p v-else-if="subdomainStatus === null" class="admin-remote__empty" role="status">
-          Unable to load subdomain status.
+          No subdomain status available.
         </p>
         <template v-else>
           <dl v-if="subdomainStatus.claimed" class="admin-remote__dl">
@@ -487,8 +524,18 @@ onMounted(() => {
       </button>
       <div v-if="expanded.relay" id="remote-relay-body" class="admin-remote__section-body">
         <div v-if="relayLoading" class="admin-remote__skel"><Skeleton variant="text" :lines="2" /></div>
+        <EmptyState
+          v-else-if="relayError"
+          icon="alert"
+          title="Couldn't load relay status"
+          :description="relayError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadRelayStatus">Retry</Button>
+          </template>
+        </EmptyState>
         <p v-else-if="relayStatus === null" class="admin-remote__empty" role="status">
-          Unable to load relay status.
+          No relay status available.
         </p>
         <template v-else>
           <dl class="admin-remote__dl">
@@ -556,8 +603,18 @@ onMounted(() => {
       </button>
       <div v-if="expanded.portforward" id="remote-portforward-body" class="admin-remote__section-body">
         <div v-if="portForwardLoading" class="admin-remote__skel"><Skeleton variant="text" :lines="3" /></div>
+        <EmptyState
+          v-else-if="portForwardError"
+          icon="alert"
+          title="Couldn't load port-forward status"
+          :description="portForwardError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadPortForwardStatus">Retry</Button>
+          </template>
+        </EmptyState>
         <p v-else-if="portForwardStatus === null" class="admin-remote__empty" role="status">
-          Unable to load port-forward status.
+          No port-forward status available.
         </p>
         <template v-else>
           <dl class="admin-remote__dl">
