@@ -325,7 +325,7 @@ onMounted(() => {
   margin: 0 0 var(--space-4);
 }
 .admin-services__hint a {
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: underline;
 }
 .admin-services__hint code {
