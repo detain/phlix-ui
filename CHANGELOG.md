@@ -11,11 +11,19 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **R6.1c — `usePrefetch()`:** a composable returning `prefetch(to)` that warms a route's lazy `() => import()`
+  chunk(s) without navigating — call it on a link's `pointerenter`/`focus` so the destination code is already
+  in the module cache by click time. Best-effort + idempotent (each loader warmed once; resolve/import failures
+  swallowed) and a no-op when no router is installed. `MediaCard` now calls it on hover/focus, warming its
+  target route (the Player chunk by default). Exported from the package.
 - **R6.1b — `useCommandPaletteHotkey()`:** a tiny always-on composable that owns the global ⌘K / Ctrl-K
   command-palette hotkey (Cmd/Ctrl + K, no Alt → toggle). Exported from the package; mounted once by the shell.
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
 ### Performance
+- **R6.1c — prefetch-on-hover:** hovering or focusing a `MediaCard` now warms its destination route's lazy
+  chunk (e.g. the ~41 kB Player chunk) via `usePrefetch`, so the navigation that follows a poster hover is
+  instant — recovering the latency that route-level splitting (R6.1a) would otherwise add on first visit.
 - **R6.1b — lazy command palette:** `CommandPalette` is now mounted by the shell (`PhlixApp`) via
   `defineAsyncComponent` and only fetched/mounted on first open (the ⌘K hotkey lives in the always-on
   `useCommandPaletteHotkey`). It split into its own ~8 kB on-demand chunk; the main `dist/phlix-ui.js` shrank a

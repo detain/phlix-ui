@@ -256,6 +256,7 @@ export type { Command } from './stores/useCommandStore';
 export { useCommandPaletteHotkey } from './composables/useCommandPaletteHotkey';
 export { useTheme, applyStoredThemeEarly } from './composables/useTheme';
 export { useOnline } from './composables/useOnline';
+export { usePrefetch } from './composables/usePrefetch';
 export { deriveAccentVars } from './composables/color';
 
 export * from './tokens';

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
+import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
 import MediaCard from './MediaCard.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -159,5 +160,46 @@ describe('MediaCard — quick actions + slots', () => {
     });
     expect(w.find('.app-badge').text()).toBe('HUB');
     expect(w.find('.app-action').exists()).toBe(true);
+  });
+});
+
+describe('MediaCard — prefetch on hover/focus (R6.1c)', () => {
+  function lazyRouter(loader: () => Promise<unknown>): Router {
+    return createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', name: 'home', component: { template: '<div/>' } },
+        { path: '/app/player/:id', name: 'player', component: loader },
+        { path: '/app/media/:id', name: 'media', component: loader },
+      ],
+    });
+  }
+
+  it('warms the destination route chunk on pointerenter', async () => {
+    const loader = vi.fn(() => Promise.resolve({ default: { template: '<div/>' } }));
+    const router = lazyRouter(loader);
+    const w = mount(MediaCard, { props: { item: media() }, global: { plugins: [router] } });
+    await router.isReady();
+    expect(loader).not.toHaveBeenCalled(); // nothing warmed until hovered
+    await w.find('.media-card').trigger('pointerenter');
+    expect(loader).toHaveBeenCalledTimes(1); // default href is the player route
+  });
+
+  it('warms the configured `to` route on focusin (keyboard)', async () => {
+    const loader = vi.fn(() => Promise.resolve({ default: { template: '<div/>' } }));
+    const router = lazyRouter(loader);
+    const w = mount(MediaCard, {
+      props: { item: media(), to: '/app/media/m1' },
+      global: { plugins: [router] },
+    });
+    await router.isReady();
+    await w.find('.media-card').trigger('focusin');
+    expect(loader).toHaveBeenCalledTimes(1);
+  });
+
+  it('hovers safely with no router installed (prefetch no-ops)', async () => {
+    const w = mount(MediaCard, { props: { item: media() } }); // no router plugin
+    await w.find('.media-card').trigger('pointerenter'); // useRouter() undefined → no-op, no throw
+    expect(w.find('.media-card').exists()).toBe(true);
   });
 });
