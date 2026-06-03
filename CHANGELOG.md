@@ -29,6 +29,21 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   rating/actor filtering silently matched nothing end-to-end (gap report #3b; the server-side `$.genres`
   JSON path + Smarty client were fixed in phlix-server).
 
+### Changed
+- **Shared `errMessage` adopted package-wide (R5.3b):** the 16 page-local `errMessage` copies (the 5 top-level
+  hub/server pages + the 11 admin pages) and `useMediaStore` now import the single `errMessage` from
+  `src/api/errors.ts` (added in R5.3a) instead of each carrying a byte-identical private copy — one
+  error-formatting vocabulary across the app, and the network-aware `NetworkError`/`TimeoutError` messages now
+  reach every page for free. `useMediaStore`'s old inline (`e instanceof Error ? e.message : 'Failed to load
+  media'`) lacked the empty-message guard, so an `Error` with a blank message used to set a silent empty error
+  string; it now falls back to the friendly "Failed to load media". (Out-of-scope inline ternaries that were
+  never a named `errMessage` copy — e.g. `useAuthStore`, `SettingsForm`, a few admin/detail pages — are left
+  for a later sweep.)
+- **Browse error surface → canonical `EmptyState` (R5.3b):** `BrowsePage`'s bespoke `.browse-error` div +
+  `.browse-retry` button are replaced by the shared `EmptyState` (alert icon, "Couldn't load titles", the error
+  message as the description, and a Retry `Button` that re-runs the grid load), matching the
+  loading/empty/error pattern the R5.2 pages already use. Part of the R5.3 empty/loading/error consistency pass.
+
 ### Added
 - **Network resilience + a shared error vocabulary (R5.3a):** `ApiClient` now enforces a per-request
   **timeout** (`ApiClientOptions.timeoutMs`, default 15 s) and maps low-level failures to friendly, typed

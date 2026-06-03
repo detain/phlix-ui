@@ -23,6 +23,7 @@ import {
   type CastDevice,
 } from '../../api/admin/cast';
 import { useToastStore } from '../../stores/useToastStore';
+import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Slider from '../../components/ui/Slider.vue';
@@ -64,10 +65,6 @@ const api = new AdminCastApi(
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
 );
 const toasts = useToastStore();
-
-function errMessage(e: unknown, fallback: string): string {
-  return e instanceof Error && e.message ? e.message : fallback;
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

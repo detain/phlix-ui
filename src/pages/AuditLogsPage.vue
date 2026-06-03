@@ -13,6 +13,7 @@
 import { ref, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
+import { errMessage } from '../api/errors';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -41,10 +42,6 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const page = ref(1);
 const totalPages = ref(1);
-
-function errMessage(e: unknown, fallback: string): string {
-  return e instanceof Error && e.message ? e.message : fallback;
-}
 
 async function loadLogs(pageNum = 1): Promise<void> {
   loading.value = true;

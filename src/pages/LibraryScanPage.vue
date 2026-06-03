@@ -20,6 +20,7 @@
 import { ref, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
+import { errMessage } from '../api/errors';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -57,10 +58,6 @@ const libraries = ref<Library[]>([]);
 const scanStatuses = ref<Record<string, ScanStatus>>({});
 const loading = ref(true);
 const error = ref<string | null>(null);
-
-function errMessage(e: unknown, fallback: string): string {
-  return e instanceof Error && e.message ? e.message : fallback;
-}
 
 async function loadLibraries(): Promise<void> {
   loading.value = true;
