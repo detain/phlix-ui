@@ -96,6 +96,16 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   `reducedMotion: 'reduce'` + `animations: 'disabled'` + a version-pinned Chromium (the v1223 build bundled by
   `@playwright/test@1.60`). Dev-only — no change to the shipped bundle. (Per-surface harnesses + the
   mockup-acceptance sweep are R6.4b; the interaction-regression matrix is R6.4c.)
+- **R6.4b — per-surface visual harnesses + baselines:** new dev-only `src/dev/visual/*` harness pages that
+  mount the REAL shipped SFCs — Browse (`MediaRow` rail + virtualized `MediaGrid`), `MediaDetail`, `Player`
+  chrome, Auth (`LoginForm`/`AuthCard`), Settings (`AppearanceSettings`), and the app shell (`AppLayout` +
+  `ThemeToggle`/`UserMenu`) — with deterministic OFFLINE mock data (inline SVG data-URI posters; a tiny
+  ffmpeg-built `sample.mp4` so the player `<video>` loads without tripping the transcode guard) and a
+  `?theme=` switch, with atmosphere (film-grain/ambient) + motion forced off for stable captures. Wired into
+  `e2e/visual.spec.ts` (each surface × 3 themes × desktop/mobile) → **36 committed baselines**; verified
+  reproducible (`npm run test:visual` 42/42) and eyeball-accepted in real Chromium against the locked
+  `src/dev/mockups/*.html` art direction. Dev-only — the shipped bundle is byte-identical (`dist/phlix-ui.js`
+  56.03 kB) and the vitest suite is unchanged (1653). (The interaction-regression matrix is R6.4c.)
 
 ### Removed
 - **R6.1b (API surface change — feeds the R6.6 MAJOR decision):** the `CommandPalette` component is **no longer
