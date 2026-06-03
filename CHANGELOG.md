@@ -11,6 +11,12 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **R6.2b — responsive poster `srcset`/`sizes` (opt-in):** `MediaCard` gained `posterSrcset` and `posterSizes`
+  props and now tolerates an optional `poster_srcset` field on `MediaItem` (new `PosterSource` /
+  `PosterSrcsetInput` types). Supply a ready-made `srcset` string or an array of sized candidates
+  (`{ url, width }` or `{ url, density }`) and the poster `<img>` renders them responsively; with none supplied
+  the card is byte-identical to before (the single `poster_url`). It degrades gracefully until an image proxy
+  emits sized URLs (the optional server hook §Optional#6, not built).
 - **R6.1c — `usePrefetch()`:** a composable returning `prefetch(to)` that warms a route's lazy `() => import()`
   chunk(s) without navigating — call it on a link's `pointerenter`/`focus` so the destination code is already
   in the module cache by click time. Best-effort + idempotent (each loader warmed once; resolve/import failures
@@ -21,6 +27,15 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
 ### Performance
+- **R6.2b — responsive posters fetch the right-sized image:** when sized poster URLs are supplied (via the new
+  `posterSrcset` prop or a `poster_srcset` item field), `MediaCard` emits a `srcset` so the browser downloads
+  the resolution that fits the device/DPR instead of one fixed poster. For width-descriptor srcsets it also
+  emits a safe-by-default `sizes` (the poster's real rendered width, `(max-width: 600px) 45vw, 200px`,
+  overridable via `posterSizes`) — so a width-described `srcset` never falls back to the browser's `100vw`
+  assumption and over-fetches the largest candidate. `sizes` is never manufactured for density (`x`) srcsets or
+  when no responsive sources exist, so the no-sources markup is unchanged (no new attributes, no CLS — the
+  `aspect-ratio` box + `loading="lazy"` + `decoding="async"` are retained). The poster `src` stays `poster_url`
+  as the non-`srcset` fallback. Pure helper `media-poster.ts`; the entry bundle is unchanged (54.55 kB).
 - **R6.2a — off-screen render-skipping for home rails:** the `MediaRow` rail now sets `content-visibility:
   auto` + `contain-intrinsic-size: auto 380px`, so the browser skips rendering and layout for rails scrolled
   off-screen. The Browse home page stacks many rails (`HomeRow`→`MediaRow`); paint/layout work now scales with
