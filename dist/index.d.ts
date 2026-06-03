@@ -99,5 +99,7 @@ export { useCommandPaletteHotkey } from './composables/useCommandPaletteHotkey';
 export { useTheme, applyStoredThemeEarly } from './composables/useTheme';
 export { useOnline } from './composables/useOnline';
 export { usePrefetch } from './composables/usePrefetch';
+export { usePreconnect } from './composables/usePreconnect';
+export type { UsePreconnectOptions } from './composables/usePreconnect';
 export { deriveAccentVars } from './composables/color';
 export * from './tokens';

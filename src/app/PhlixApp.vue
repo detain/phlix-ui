@@ -59,6 +59,7 @@ import MiniPlayer from '../components/MiniPlayer.vue';
 import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
+import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
 import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 
 // Reflect the preferences store onto <html> (theme / accent / density / motion).
@@ -91,6 +92,20 @@ function onExpandMini(id: string): void {
 
 // Branding, menu and home path all come from config — never `if (app === 'hub')`.
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
+
+// Warm the poster image origin's connection early (R6.2c) when posters are served
+// cross-origin (a CDN/image-proxy via `config.imageOrigin`, or an absolute `apiBase`
+// host). A same-origin host resolves to `null` → no-op. Posters are plain `<img src>`
+// (no-cors), so no `crossOrigin` — a CORS preconnect wouldn't be reused. Cleaned up
+// with the shell's scope.
+usePreconnect(
+  resolveImageOrigin({
+    imageOrigin: config?.imageOrigin ?? null,
+    apiBase: config?.apiBase ?? null,
+    documentOrigin: typeof window !== 'undefined' ? window.location.origin : null,
+  }),
+);
+
 const branding = computed<BrandingConfig>(() => config?.branding ?? {});
 const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');
 const menu = computed<MenuItem[]>(() => config?.menu ?? []);

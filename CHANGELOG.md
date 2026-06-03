@@ -11,6 +11,16 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Added
+- **R6.2c — `usePreconnect()` + `imageOrigin` config:** a new SSR-safe composable that injects
+  `<link rel="preconnect">` + `<link rel="dns-prefetch">` into `document.head` for cross-origin asset hosts
+  (`usePreconnect(input, { crossOrigin? })`), so the connection to a poster CDN / image proxy is warmed before
+  the first poster is requested. Deduped (within a call and against any host already linked, including a
+  consumer's static `<link>`), same-origin / invalid / non-http(s) hosts skipped, and self-cleaning on scope
+  dispose. `PhlixAppConfig` gained an optional `imageOrigin` (the poster image origin when it differs from the
+  app origin — a CDN/proxy); the shell preconnects it, falling back to the `apiBase` host when `imageOrigin`
+  is omitted. Exported from the package (with `UsePreconnectOptions`). The preconnect carries **no**
+  `crossorigin` by default — posters are plain no-cors `<img>`, so a CORS preconnect would warm an unusable
+  second connection; `crossOrigin: true` is an opt-in for genuine CORS origins (fonts/`fetch`).
 - **R6.2b — responsive poster `srcset`/`sizes` (opt-in):** `MediaCard` gained `posterSrcset` and `posterSizes`
   props and now tolerates an optional `poster_srcset` field on `MediaItem` (new `PosterSource` /
   `PosterSrcsetInput` types). Supply a ready-made `srcset` string or an array of sized candidates
@@ -27,6 +37,12 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
 ### Performance
+- **R6.2c — preconnect to the poster image origin:** when posters are served cross-origin (a CDN/image proxy
+  via `imageOrigin`, or an absolute `apiBase` host), the shell now preconnects + dns-prefetches that origin at
+  startup so the first poster skips the DNS + TCP + TLS handshake latency. A same-origin host is a no-op
+  (nothing to warm). This adds a small, justified amount to the entry bundle (the composable is shell-resident
+  and a connection hint must run early, so it can't be lazy-loaded): `dist/phlix-ui.js` **54.55 → 56.03 kB**
+  (gzip 14.92 → 15.45). Still **0** `INEFFECTIVE_DYNAMIC_IMPORT`.
 - **R6.2b — responsive posters fetch the right-sized image:** when sized poster URLs are supplied (via the new
   `posterSrcset` prop or a `poster_srcset` item field), `MediaCard` emits a `srcset` so the browser downloads
   the resolution that fits the device/DPR instead of one fixed poster. For width-descriptor srcsets it also
