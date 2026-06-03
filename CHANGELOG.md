@@ -30,6 +30,16 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Network resilience + a shared error vocabulary (R5.3a):** `ApiClient` now enforces a per-request
+  **timeout** (`ApiClientOptions.timeoutMs`, default 15 s) and maps low-level failures to friendly, typed
+  errors — a dropped/refused connection (or `navigator.onLine === false`) becomes a `NetworkError`
+  ("You appear to be offline…") and an exceeded timeout becomes a `TimeoutError` ("The request timed out…"),
+  instead of leaking an opaque `TypeError: Failed to fetch`. A caller-initiated `AbortSignal` cancellation is
+  still surfaced as an `AbortError` (so `useMediaStore`'s supersede logic is unchanged), and `ApiError` (non-2xx)
+  passes through with its status untouched. New `src/api/errors.ts` exports `NetworkError`, `TimeoutError`, a
+  shared `errMessage(e, fallback?)` (the helper previously copy-pasted into ~16 pages — adopted package-wide in
+  R5.3b) and `isOffline()`; a new `useOnline()` composable exposes a reactive, SSR-safe `navigator.onLine`.
+  `ApiError` moved into `errors.ts` but is still re-exported from `./api/client`, so deep imports are unchanged.
 - **`AuditLogsPage` re-skin (R5.2e):** the hub's paginated audit-log viewer `src/pages/AuditLogsPage.vue` is
   rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/audit-logs?page=N`
   → `{ logs, total, page, total_pages }` flow + pagination are unchanged). Logs render in a tokenized table
