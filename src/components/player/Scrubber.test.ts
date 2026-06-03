@@ -60,6 +60,7 @@ describe('Scrubber — rendering', () => {
     const w = mount(Scrubber, { props: { position: 50, duration: 200 } });
     const el = w.get('.scrubber');
     expect(el.attributes('role')).toBe('slider');
+    expect(el.attributes('aria-orientation')).toBe('horizontal'); // R6.5a — match ui/Slider
     expect(el.attributes('aria-valuemin')).toBe('0');
     expect(el.attributes('aria-valuemax')).toBe('200');
     expect(el.attributes('aria-valuenow')).toBe('50');

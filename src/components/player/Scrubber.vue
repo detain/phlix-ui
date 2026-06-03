@@ -157,6 +157,7 @@ defineExpose({ playedRatio, previewActive });
     class="scrubber"
     role="slider"
     tabindex="0"
+    aria-orientation="horizontal"
     :aria-valuemin="0"
     :aria-valuemax="Math.round(duration)"
     :aria-valuenow="Math.round(position)"

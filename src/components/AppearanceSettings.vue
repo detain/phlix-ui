@@ -250,6 +250,9 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
       <Button variant="ghost" :left-icon="resetArmed ? 'alert' : 'rewind'" @click="onReset">
         {{ resetArmed ? 'Click again to confirm reset' : 'Reset all preferences' }}
       </Button>
+      <!-- Announce the armed state: a button's own accessible-name change isn't
+           reliably re-read by screen readers, so mirror it into a polite live region. -->
+      <span class="visually-hidden" role="status" aria-live="polite">{{ resetArmed ? 'Click again to confirm reset' : '' }}</span>
     </div>
   </div>
 
@@ -477,5 +480,17 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
   .aps__accent:hover {
     transform: none;
   }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 </style>

@@ -36,7 +36,18 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   command-palette hotkey (Cmd/Ctrl + K, no Alt → toggle). Exported from the package; mounted once by the shell.
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
-### Performance
+### Accessibility
+- **R6.5a — focus rings + landmarks across the end-user chrome:** every hand-rolled control that previously
+  showed only a hover state now paints the canonical keyboard focus ring (`box-shadow: 0 0 0 3px
+  var(--accent-ring)`) on `:focus-visible` — the player control bar / center play / back button, the persistent
+  mini-player, the Up-Next and Resume prompts (composing the amber glow with the ring), the "can't play this
+  file" notice, the Browse `FilterBar` chrome (clear-search / sort-order / filters toggle / preset save / clear),
+  the row "Retry"/"See all" actions, and the grid "Back to top" button. The app shell gained a **skip-to-content
+  link** (revealed on focus, jumps to a focusable `<main id="main">`) and the player scrubber now exposes
+  `aria-orientation="horizontal"`. The destructive "Reset preferences" two-click confirm is mirrored into a
+  polite `aria-live` region so screen readers announce the armed state. Active navigation links already carry
+  `aria-current="page"` (via Vue Router) — now covered by a regression test. No public API change. (Admin-page
+  tablist/roving semantics are tracked as a follow-up.)
 - **R6.3 — composited scrubber fills + flat-memory scroll proof:** the player's progress + buffered bars now
   animate via a compositor `transform: scaleX()` (origin left) instead of `width`, so the per-frame
   `timeupdate` / drag updates skip layout + paint. The other R6.3 targets were already in place from earlier
