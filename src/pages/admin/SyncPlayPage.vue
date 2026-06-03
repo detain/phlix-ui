@@ -41,13 +41,16 @@ const toasts = useToastStore();
 // ── Groups list state ─────────────────────────────────────────────────────────
 const groups = ref<SyncPlayGroup[]>([]);
 const loading = ref(true);
+const error = ref<string | null>(null);
 
 async function loadGroups(): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     groups.value = await api.listGroups();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load groups.'));
+    error.value = errMessage(e, 'Failed to load groups.');
+    toasts.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -151,6 +154,16 @@ onMounted(loadGroups);
     </header>
 
     <div v-if="loading" class="admin-syncplay__skel"><Skeleton variant="text" :lines="5" /></div>
+    <EmptyState
+      v-else-if="error"
+      icon="alert"
+      title="Couldn't load groups"
+      :description="error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadGroups">Retry</Button>
+      </template>
+    </EmptyState>
     <EmptyState
       v-else-if="groups.length === 0"
       icon="tv"

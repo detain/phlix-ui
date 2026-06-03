@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import HistoryPage from './HistoryPage.vue';
 import Button from '../../components/ui/Button.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -100,12 +101,43 @@ describe('Admin HistoryPage — list', () => {
     w.unmount();
   });
 
-  it('toasts when the history fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the history fails to load', async () => {
     const get = vi.fn().mockRejectedValue(new Error('load boom'));
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
+    // R5.3d.2: a load failure renders an in-body EmptyState (error + Retry)
+    // instead of falling through to the misleading "No watch history yet".
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain("Couldn't load watch history");
+    expect(w.text()).toContain('load boom');
+    expect(w.text()).not.toContain('No watch history yet');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'load boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the history load from the error state', async () => {
+    const get = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('load boom'))
+      .mockResolvedValue({ items: [sampleItem] });
+    const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(w.text()).toContain('Test Movie');
+    w.unmount();
+  });
+
+  it('falls back to a generic message for a non-Error rejection', async () => {
+    const get = vi.fn().mockRejectedValue('weird');
+    const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    expect(toasts.toasts.some((t) => t.message === 'Failed to load watch history.')).toBe(true);
     w.unmount();
   });
 

@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import SyncPlayPage from './SyncPlayPage.vue';
 import Button from '../../components/ui/Button.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -135,12 +136,32 @@ describe('Admin SyncPlayPage — list', () => {
     w.unmount();
   });
 
-  it('toasts when the group list fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the group list fails to load', async () => {
     const get = vi.fn().mockRejectedValue(new Error('list boom'));
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
     const toasts = useToastStore();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain("Couldn't load groups");
+    expect(w.text()).toContain('list boom');
+    expect(w.text()).not.toContain('No groups yet');
     expect(toasts.toasts.some((t) => t.message === 'list boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the group list load from the error state', async () => {
+    const get = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('list boom'))
+      .mockResolvedValue({ groups: [groupOpen] });
+    const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(w.text()).toContain('Movie Night');
     w.unmount();
   });
 

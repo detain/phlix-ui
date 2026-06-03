@@ -5876,17 +5876,17 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/backup`,
 			name: "admin-backup",
-			component: () => import("./BackupPage-DO-uCnym.js")
+			component: () => import("./BackupPage-APJ58DCs.js")
 		},
 		{
 			path: `${t}/cast-devices`,
 			name: "admin-cast",
-			component: () => import("./CastDevicesPage-TWaBKBZF.js")
+			component: () => import("./CastDevicesPage-BxnjXfQd.js")
 		},
 		{
 			path: `${t}/dlna`,
 			name: "admin-dlna",
-			component: () => import("./DlnaServerPage-C7d09gHk.js")
+			component: () => import("./DlnaServerPage--IQQJtTV.js")
 		},
 		{
 			path: `${t}/remote-access`,
@@ -5906,12 +5906,12 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/history`,
 			name: "admin-history",
-			component: () => import("./HistoryPage-B7A2Z3JA.js")
+			component: () => import("./HistoryPage-C1INlwZX.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "admin-syncplay",
-			component: () => import("./SyncPlayPage-BJxbWLbM.js")
+			component: () => import("./SyncPlayPage-aI25dFp_.js")
 		},
 		{
 			path: `${t}/libraries`,

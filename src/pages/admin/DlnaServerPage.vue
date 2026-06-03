@@ -12,6 +12,7 @@ import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import { AdminDlnaServerApi, type DlnaServerStatus } from '../../api/admin/dlnaServer';
 import { useToastStore } from '../../stores/useToastStore';
+import { errMessage } from '../../api/errors';
 import Button from '../../components/ui/Button.vue';
 import Badge from '../../components/ui/Badge.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -33,6 +34,7 @@ const toasts = useToastStore();
 
 const status = ref<DlnaServerStatus | null>(null);
 const loading = ref(true);
+const error = ref<string | null>(null);
 const acting = ref(false);
 
 const isRunning = computed(() => status.value?.running ?? false);
@@ -40,10 +42,12 @@ const isEnabled = computed(() => status.value?.enabled ?? false);
 
 async function loadStatus(): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     status.value = await api.getStatus();
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to load DLNA server status.');
+    error.value = errMessage(e, 'Failed to load DLNA server status.');
+    toasts.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -61,7 +65,7 @@ async function handleStart(): Promise<void> {
     toasts.success('DLNA server started.');
     await loadStatus();
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to start DLNA server.');
+    toasts.error(errMessage(e, 'Failed to start DLNA server.'));
   } finally {
     acting.value = false;
   }
@@ -79,7 +83,7 @@ async function handleStop(): Promise<void> {
     toasts.success('DLNA server stopped.');
     await loadStatus();
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to stop DLNA server.');
+    toasts.error(errMessage(e, 'Failed to stop DLNA server.'));
   } finally {
     acting.value = false;
   }
@@ -98,6 +102,17 @@ onMounted(loadStatus);
       <div v-if="loading" class="admin-dlna__loading" aria-hidden="true">
         <Skeleton variant="text" :lines="4" />
       </div>
+
+      <EmptyState
+        v-else-if="error"
+        icon="alert"
+        title="Couldn't load DLNA server status"
+        :description="error"
+      >
+        <template #actions>
+          <Button variant="solid" size="sm" left-icon="rewind" @click="loadStatus">Retry</Button>
+        </template>
+      </EmptyState>
 
       <EmptyState
         v-else-if="!isEnabled"

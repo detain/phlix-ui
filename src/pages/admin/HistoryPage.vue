@@ -43,15 +43,18 @@ const toasts = useToastStore();
 
 const items = ref<RecentlyWatchedItem[]>([]);
 const loading = ref(true);
+const error = ref<string | null>(null);
 const showClearConfirm = ref(false);
 const clearing = ref(false);
 
 async function loadHistory(): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     items.value = await api.getRecentlyWatched();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load watch history.'));
+    error.value = errMessage(e, 'Failed to load watch history.');
+    toasts.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -147,6 +150,16 @@ onMounted(loadHistory);
     </header>
 
     <div v-if="loading" class="admin-history__skel"><Skeleton variant="text" :lines="6" /></div>
+    <EmptyState
+      v-else-if="error"
+      icon="alert"
+      title="Couldn't load watch history"
+      :description="error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadHistory">Retry</Button>
+      </template>
+    </EmptyState>
     <EmptyState
       v-else-if="!hasItems"
       icon="film"
