@@ -183,3 +183,47 @@ describe('PhlixApp — persistent mini-player', () => {
     expect(router.currentRoute.value.path).toBe('/app/player/m1');
   });
 });
+
+describe('PhlixApp — image-origin preconnect (R6.2c)', () => {
+  function originsFor(rel: string): string[] {
+    return Array.from(document.head.querySelectorAll<HTMLLinkElement>(`link[rel~="${rel}"]`)).map(
+      (l) => new URL(l.href).origin,
+    );
+  }
+
+  it('preconnects a cross-origin image host from config.imageOrigin', async () => {
+    wrapper = await mountApp({
+      app: 'server',
+      apiBase: '',
+      routerBase: '/app',
+      imageOrigin: 'https://cdn.example.com',
+    });
+    expect(originsFor('preconnect')).toContain('https://cdn.example.com');
+    expect(originsFor('dns-prefetch')).toContain('https://cdn.example.com');
+    // posters are plain no-cors <img> → the preconnect carries no crossorigin
+    const pc = Array.from(
+      document.head.querySelectorAll<HTMLLinkElement>('link[rel~="preconnect"]'),
+    ).find((l) => new URL(l.href).origin === 'https://cdn.example.com')!;
+    expect(pc.getAttribute('crossorigin')).toBeNull();
+  });
+
+  it('removes the injected hints when the shell unmounts', async () => {
+    wrapper = await mountApp({
+      app: 'server',
+      apiBase: '',
+      routerBase: '/app',
+      imageOrigin: 'https://cdn.example.com',
+    });
+    expect(originsFor('preconnect')).toContain('https://cdn.example.com');
+    wrapper.unmount();
+    wrapper = null;
+    expect(originsFor('preconnect')).not.toContain('https://cdn.example.com');
+    expect(originsFor('dns-prefetch')).not.toContain('https://cdn.example.com');
+  });
+
+  it('adds no preconnect for a same-origin (relative apiBase) config', async () => {
+    const before = originsFor('preconnect').length;
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    expect(originsFor('preconnect').length).toBe(before); // nothing cross-origin to warm
+  });
+});
