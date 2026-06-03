@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import type { MediaItem, MediaType } from '../types/media-item';
 import type { LibraryQueryParams } from '../types/library-query';
 import { ApiClient } from '../api/client';
+import { errMessage } from '../api/errors';
 
 export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime';
 export type SortOrder = 'asc' | 'desc';
@@ -170,7 +171,7 @@ export const useMediaStore = defineStore('media', () => {
             applyResult(res, append);
         } catch (e) {
             if (isAbort(e)) return; // superseded — newer request owns the state
-            if (append || key === activeKey) error.value = e instanceof Error ? e.message : 'Failed to load media';
+            if (append || key === activeKey) error.value = errMessage(e, 'Failed to load media');
         } finally {
             if (append || key === activeKey) loading.value = false;
         }

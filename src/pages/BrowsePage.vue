@@ -7,8 +7,9 @@
  * Home rows come from `config.homeRows` and lazy-load on scroll (`HomeRow`).
  * Continue Watching is derived from `usePlayerStore.resumeMap` resolved against a
  * small in-page registry fed by the grid + home-row fetches — no extra API. Card
- * actions route to the player (and the detail view once R2.5 adds it); fetch
- * failures surface as toasts while the grid keeps its inline retry.
+ * actions route to the player (and the detail view once R2.5 adds it); a grid
+ * fetch failure surfaces as a canonical EmptyState (error + Retry) while card
+ * actions give toast feedback.
  */
 import { onMounted, watch, inject, computed, reactive, ref, type ComputedRef } from 'vue';
 import { useRouter } from 'vue-router';
@@ -19,6 +20,8 @@ import MediaGrid from '../components/MediaGrid.vue';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
 import FilterBar from '../components/FilterBar.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
+import Button from '../components/ui/Button.vue';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig, HomeRow as HomeRowConfig } from '../app/types';
 
@@ -143,10 +146,16 @@ function onSeeAll(row: HomeRowConfig): void {
 
       <FilterBar @change="onFilterChange" />
 
-      <div v-if="store.error" class="browse-error" role="alert">
-        <p>{{ store.error }}</p>
-        <button type="button" class="browse-retry" @click="load">Retry</button>
-      </div>
+      <EmptyState
+        v-if="store.error"
+        icon="alert"
+        title="Couldn't load titles"
+        :description="store.error"
+      >
+        <template #actions>
+          <Button variant="solid" size="sm" left-icon="rewind" @click="load">Retry</Button>
+        </template>
+      </EmptyState>
 
       <MediaGrid
         :items="store.items"
@@ -200,23 +209,5 @@ function onSeeAll(row: HomeRowConfig): void {
 .browse-count {
   font-size: var(--text-sm);
   color: var(--text-subtle);
-}
-
-.browse-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-10);
-  color: var(--danger, var(--text-muted));
-  text-align: center;
-}
-.browse-retry {
-  padding: var(--space-2) var(--space-4);
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
 }
 </style>

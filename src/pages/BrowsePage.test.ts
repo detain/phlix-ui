@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import BrowsePage from './BrowsePage.vue';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 import { useMediaStore } from '../stores/useMediaStore';
 import { useToastStore } from '../stores/useToastStore';
 import type { MediaItem } from '../types/media-item';
@@ -251,11 +252,21 @@ describe('BrowsePage — grid wiring', () => {
 });
 
 describe('BrowsePage — error', () => {
-  it('shows the inline error + retry when the grid fetch fails', async () => {
+  it('shows the canonical EmptyState error + working retry when the grid fetch fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('library offline')));
     const w = mountPage();
     await flushPromises();
-    expect(w.find('.browse-error').text()).toContain('library offline');
-    expect(w.find('.browse-retry').exists()).toBe(true);
+    // The bespoke `.browse-error` div is gone; the canonical EmptyState now carries
+    // the (shared-`errMessage`) text + a Retry action (R5.3b).
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain('library offline');
+    // Retry re-runs the grid load (reset + fetchMedia).
+    const store = useMediaStore();
+    const reset = vi.spyOn(store, 'reset');
+    const fetchMedia = vi.spyOn(store, 'fetchMedia');
+    await empty.find('button').trigger('click');
+    expect(reset).toHaveBeenCalled();
+    expect(fetchMedia).toHaveBeenCalled();
   });
 });
