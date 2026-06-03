@@ -11,6 +11,10 @@ _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + 
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
 ### Fixed
+- **Library scan status never rendered (R5.2a):** the live server returns the scan job under `scan_status`
+  (not `job`), so the scan-only `LibraryScanPage` always showed an "Idle" badge in production. `loadScanStatus`
+  now reads `scan_status ?? job`, accepting both wire shapes per the SPA-layer contract-drift convention, so the
+  status badge (and the running/queued Scan-disable) work against the real backend.
 - **Player queue — stale stream URL on advance (R3.8):** `usePlayerStore.next()` now accepts an optional
   stream-URL resolver and threads it into `setCurrent`, so advancing to the next queued item no longer
   leaves the previous item's `streamUrl` behind (it resolves a fresh one, or clears it to `''` when
@@ -22,6 +26,14 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **`LibraryScanPage` re-skin (R5.2a):** the server app's standalone scan page `src/pages/LibraryScanPage.vue`
+  is rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/libraries`,
+  `…/scan-status`, `POST …/scan`, `POST …/rescan` flows are unchanged). Libraries now render in a tokenized
+  table (Library + paths / Type / Items / Last scan / Status / Actions) with a `Skeleton` loading state, an
+  `EmptyState` for both the empty list and a load error (with Retry), `Badge` status tones (replacing the old
+  ⏳🔄✅❌ emoji), `Button` Scan/Rescan actions disabled while a scan is running/queued, and `useToastStore`
+  feedback on scan/rescan success + failure. A `client?: ApiClient` prop is added purely as a test seam
+  (defaults to the shared `api` singleton — production behavior is identical).
 - **Cross-app shell redesign (R5.1):** `AppLayout.vue` — the last `--color-*`-bearing shell file — is rebuilt
   into the redesigned **glass marquee top bar** over the Nocturne atmosphere. It now mounts `AppBackdrop` once
   for every in-shell page (gated on `prefs.atmosphere`), exposes `#logo` / `#nav` / `#actions` / `#footer`
