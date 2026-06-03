@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import { setActivePinia, createPinia, type Pinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PhlixApp from './PhlixApp.vue';
@@ -151,6 +152,22 @@ describe('PhlixApp — command palette trigger', () => {
     expect(store.open).toBe(false);
     await wrapper.find('[aria-label="Open command palette (⌘K)"]').trigger('click');
     expect(store.open).toBe(true);
+  });
+
+  it('lazy-loads the palette UI only after it is first opened (R6.1b)', async () => {
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    // The CommandPalette chunk is not mounted on initial shell render…
+    expect(document.body.querySelector('.phlix-cmdk')).toBeNull();
+    const store = useCommandStore();
+    store.openPalette();
+    // …opening activates the lazy `defineAsyncComponent`: drain the watcher →
+    // render → dynamic-import resolve → re-render chain until it has mounted.
+    for (let i = 0; i < 10 && !document.body.querySelector('.phlix-cmdk'); i++) {
+      await flushPromises();
+      await nextTick();
+    }
+    // …then it is mounted (and rendered, since the store is open).
+    expect(document.body.querySelector('.phlix-cmdk')).not.toBeNull();
   });
 });
 

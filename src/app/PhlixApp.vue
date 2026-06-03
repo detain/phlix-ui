@@ -42,29 +42,47 @@
         </template>
 
         <RouterView />
-        <CommandPalette />
+        <CommandPalette v-if="paletteActivated" />
         <MiniPlayer @expand="onExpandMini" />
     </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed, defineAsyncComponent, inject, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRouter } from 'vue-router';
 import AppLayout from './AppLayout.vue';
 import ThemeToggle from './ThemeToggle.vue';
 import UserMenu from './UserMenu.vue';
 import Icon from '../components/Icon.vue';
 import IconButton from '../components/ui/IconButton.vue';
-import CommandPalette from '../components/CommandPalette.vue';
 import MiniPlayer from '../components/MiniPlayer.vue';
 import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
+import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 
 // Reflect the preferences store onto <html> (theme / accent / density / motion).
 useTheme();
 const commands = useCommandStore();
 const router = useRouter();
+
+// Always-on ⌘K hotkey (stays in the main bundle); the palette UI is lazy below.
+useCommandPaletteHotkey();
+
+// The command palette is a lazy chunk (R6.1b): fetch + mount it only once it has
+// been opened at least once — via the ⌘K hotkey, the actions-cluster button, or any
+// programmatic open. `commands.open` is the single source of truth for "is the
+// palette open", so watching it covers every open path. Once activated it stays
+// mounted, so command registration + recents persist across subsequent opens
+// (matching the pre-lazy always-mounted behavior).
+const CommandPalette = defineAsyncComponent(() => import('../components/CommandPalette.vue'));
+const paletteActivated = ref(false);
+watch(
+  () => commands.open,
+  (open) => {
+    if (open) paletteActivated.value = true;
+  },
+);
 
 /** Expanding the persistent mini-player navigates to the full player route. */
 function onExpandMini(id: string): void {
