@@ -2,7 +2,7 @@ import { n as e } from "./Icon-ax5k7_G2.js";
 import { n as t, t as n } from "./Button-GJ9vHE0J.js";
 import { a as r, n as i } from "./media-query-DowsWq-z.js";
 import { n as a, t as o } from "./EmptyState-Ds4WcVdG.js";
-import { t as s } from "./Player-BN_TEDvB.js";
+import { t as s } from "./Player-dZWn44lw.js";
 import { computed as c, createBlock as l, createCommentVNode as u, createElementBlock as d, createElementVNode as f, createTextVNode as p, createVNode as m, defineComponent as h, inject as g, normalizeClass as _, normalizeStyle as v, onBeforeUnmount as y, onMounted as b, openBlock as x, ref as S, watch as C, withCtx as w } from "vue";
 import { onBeforeRouteLeave as T, useRoute as E, useRouter as D } from "vue-router";
 //#region src/pages/PlayerPage.vue?vue&type=script&setup=true&lang.ts
@@ -125,4 +125,4 @@ var O = { class: "player-page__stage" }, k = {
 //#endregion
 export { A as default };
 
-//# sourceMappingURL=PlayerPage-DTaiPz1O.js.map
+//# sourceMappingURL=PlayerPage-GivqysiP.js.map

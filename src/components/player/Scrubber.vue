@@ -171,8 +171,12 @@ defineExpose({ playedRatio, previewActive });
     @keydown="onKeydown"
   >
     <div class="scrubber__track">
-      <div class="scrubber__buffered" :style="{ width: `${bufferedRatio * 100}%` }" />
-      <div class="scrubber__played" :style="{ width: `${playedRatio * 100}%` }" />
+      <!-- Fills are driven by a compositor-only `transform: scaleX()` (origin left)
+           rather than `width`, so the per-frame playback/drag updates don't trigger
+           layout/paint (R6.3). The 14px head keeps a position binding (a single
+           out-of-flow element — isolated, negligible layout). -->
+      <div class="scrubber__buffered" :style="{ transform: `scaleX(${bufferedRatio})` }" />
+      <div class="scrubber__played" :style="{ transform: `scaleX(${playedRatio})` }" />
       <span
         v-for="(t, i) in ticks"
         :key="i"
@@ -217,11 +221,15 @@ defineExpose({ playedRatio, previewActive });
   border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.22);
 }
+/* Fills span the full track (inset:0) and are scaled horizontally from the left
+   edge — `transform: scaleX(ratio)` composites, so per-frame timeupdate/drag
+   updates skip layout + paint (R6.3). */
 .scrubber__buffered {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: rgba(255, 255, 255, 0.34);
+  transform-origin: left center;
 }
 .scrubber__played {
   position: absolute;
@@ -229,6 +237,7 @@ defineExpose({ playedRatio, previewActive });
   border-radius: inherit;
   background: var(--accent);
   box-shadow: 0 0 10px var(--accent);
+  transform-origin: left center;
 }
 .scrubber__tick {
   position: absolute;

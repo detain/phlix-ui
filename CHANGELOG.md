@@ -37,6 +37,16 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
 ### Performance
+- **R6.3 — composited scrubber fills + flat-memory scroll proof:** the player's progress + buffered bars now
+  animate via a compositor `transform: scaleX()` (origin left) instead of `width`, so the per-frame
+  `timeupdate` / drag updates skip layout + paint. The other R6.3 targets were already in place from earlier
+  phases (verified, not re-done): the virtual `MediaGrid` windows to a fixed slice + rAF-coalesces scroll
+  (R2.2), R3.6's ambient samples on a ~4 Hz-throttled `requestVideoFrameCallback`, player chrome transitions
+  are opacity/transform, and `will-change` is dropped to `auto` after the only entrance animation (`Reveal`).
+  Verified in real Chromium on a 5000-item harness: the scrubber fill computes `transform: matrix(0.25, …)`
+  with no `width`; the grid keeps only ~54–66 cards in the DOM at any scroll position (≈300 k px virtual
+  height); the scroll path costs ~0.017 ms/scroll (≈1000× under the 60fps frame budget); CLS 0.00. No public
+  API change; the entry bundle is byte-identical (`dist/phlix-ui.js` 56.03 kB).
 - **R6.2c — preconnect to the poster image origin:** when posters are served cross-origin (a CDN/image proxy
   via `imageOrigin`, or an absolute `apiBase` host), the shell now preconnects + dns-prefetches that origin at
   startup so the first poster skips the DNS + TCP + TLS handshake latency. A same-origin host is a no-op
