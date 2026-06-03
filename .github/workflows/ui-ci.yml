@@ -1,0 +1,58 @@
+# @phlix/ui — CI (READY-TO-ENABLE ARTIFACT, currently dormant)
+#
+# R6.4 ships this workflow as an artifact rather than a live gate because there is no
+# CI runner wired to this repo today. It runs only on manual dispatch. To make it a
+# live PR gate:
+#   1. Uncomment the `pull_request` / `push` triggers below.
+#   2. In branch protection, mark the `test` job a required check (it is deterministic).
+#   3. For the `visual` job, first run it once on the runner and commit the regenerated
+#      `-linux` baselines (`npm run test:visual:update`) — GitHub's hosted Ubuntu image
+#      may rasterize fonts slightly differently from a dev box — THEN mark it required.
+#      Until then it is informational (uploads a diff report artifact, never blocks).
+name: ui-ci
+
+on:
+  workflow_dispatch:
+  # pull_request:
+  #   branches: [master]
+  # push:
+  #   branches: [master]
+
+jobs:
+  # Deterministic gate: build + typecheck + the full vitest suite. Safe to mark required.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run test:run
+
+  # Visual regression. Reuses the version-pinned Chromium (v1223) that @playwright/test
+  # bundles, so it matches the committed baselines when they are regenerated on-runner.
+  visual:
+    runs-on: ubuntu-latest
+    # Informational until on-runner baselines are regenerated + committed (see header):
+    # a font-rasterization drift on the hosted Ubuntu image must not fail the workflow.
+    # Flip this off once the visual job is a stable required check.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:visual
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
