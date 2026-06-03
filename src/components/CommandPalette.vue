@@ -13,7 +13,10 @@
  * `phlixCommands` injection key (wired by `createPhlixApp`). When the query is
  * non-empty a synthetic "Search library" item routes to Browse with `?search=`.
  *
- * Mount it once in the app shell; the global ⌘K listener lives here.
+ * Mount it once in the app shell. The global ⌘K listener now lives in the
+ * `useCommandPaletteHotkey` composable (R6.1b) — kept out of this component so the
+ * shell can lazy-load this (heavier) UI on first open while the hotkey that
+ * triggers that first open stays in the main bundle.
  */
 import { ref, computed, watch, onMounted, onBeforeUnmount, useId, inject } from 'vue';
 import { useRouter } from 'vue-router';
@@ -182,14 +185,6 @@ useFocusTrap(panelEl, computed(() => store.open), {
   },
 });
 
-// --- Global ⌘K / Ctrl-K toggle -------------------------------------------------
-function onGlobalKey(e: KeyboardEvent) {
-  if ((e.metaKey || e.ctrlKey) && !e.altKey && (e.key === 'k' || e.key === 'K')) {
-    e.preventDefault();
-    store.togglePalette();
-  }
-}
-
 // --- Built-in + injected commands ---------------------------------------------
 const injected = inject<Command[]>('phlixCommands', []);
 
@@ -209,12 +204,10 @@ let dispose: (() => void) | null = null;
 
 onMounted(() => {
   dispose = store.register([...builtins, ...injected]);
-  document.addEventListener('keydown', onGlobalKey);
 });
 
 onBeforeUnmount(() => {
   dispose?.();
-  document.removeEventListener('keydown', onGlobalKey);
 });
 </script>
 

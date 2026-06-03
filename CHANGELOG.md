@@ -10,7 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + rollout) lands here.
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
+### Added
+- **R6.1b — `useCommandPaletteHotkey()`:** a tiny always-on composable that owns the global ⌘K / Ctrl-K
+  command-palette hotkey (Cmd/Ctrl + K, no Alt → toggle). Exported from the package; mounted once by the shell.
+  It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
+
 ### Performance
+- **R6.1b — lazy command palette:** `CommandPalette` is now mounted by the shell (`PhlixApp`) via
+  `defineAsyncComponent` and only fetched/mounted on first open (the ⌘K hotkey lives in the always-on
+  `useCommandPaletteHotkey`). It split into its own ~8 kB on-demand chunk; the main `dist/phlix-ui.js` shrank a
+  further **64.85 kB → 54.52 kB** (gzip 17.81 → **14.92 kB**). Combined with R6.1a the initial entry is down
+  **202.60 kB → 54.52 kB** (gzip 52.45 → 14.92, **~73% smaller**). Still **0** `INEFFECTIVE_DYNAMIC_IMPORT`.
 - **R6.1a — route-level code-splitting:** the 6 built-in route pages (Browse, Media detail, Player, Login,
   Signup, Settings) are now mounted by `createPhlixApp` as lazy `() => import()` route chunks instead of being
   statically bundled into the entry. The main `dist/phlix-ui.js` shrank from **202.60 kB → 64.85 kB** (gzip
@@ -18,6 +28,11 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   player route mounts, and each page is its own chunk. Build emits **0** `INEFFECTIVE_DYNAMIC_IMPORT` warnings.
 
 ### Removed
+- **R6.1b (API surface change — feeds the R6.6 MAJOR decision):** the `CommandPalette` component is **no longer
+  re-exported** from the package entry — the shell lazy-loads it via `defineAsyncComponent` (a static re-export
+  would re-merge it into the main chunk). The store-level API (`useCommandStore`, `fuzzyScore`, `matchCommand`,
+  the `Command` type) and the new `useCommandPaletteHotkey` stay exported; consumers mount the palette via
+  `createPhlixApp`, so they are unaffected.
 - **R6.1a (API surface change — feeds the R6.6 MAJOR decision):** the built-in route-page components
   `BrowsePage`, `MediaDetailPage`, `PlayerPage`, `LoginPage`, `SignupPage`, and `SettingsPage` are **no longer
   re-exported** from the package entry — they are internal lazy route targets mounted by `createPhlixApp`

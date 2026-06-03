@@ -95,7 +95,7 @@ export { usePlayerStore, RESUME_MIN_SECONDS, RESUME_MAX_RATIO } from './stores/u
 export type { MediaSessionHandlers } from './stores/usePlayerStore';
 export { useCommandStore, fuzzyScore, matchCommand } from './stores/useCommandStore';
 export type { Command } from './stores/useCommandStore';
-export { default as CommandPalette } from './components/CommandPalette.vue';
+export { useCommandPaletteHotkey } from './composables/useCommandPaletteHotkey';
 export { useTheme, applyStoredThemeEarly } from './composables/useTheme';
 export { useOnline } from './composables/useOnline';
 export { deriveAccentVars } from './composables/color';
