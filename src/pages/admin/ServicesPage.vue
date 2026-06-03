@@ -17,6 +17,7 @@ import {
   type LastfmStatus,
 } from '../../api/admin/services';
 import { useToastStore } from '../../stores/useToastStore';
+import { errMessage } from '../../api/errors';
 import Button from '../../components/ui/Button.vue';
 import Badge from '../../components/ui/Badge.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -39,15 +40,19 @@ const toasts = useToastStore();
 // ─── Trakt state ─────────────────────────────────────────────────────────────
 const traktStatus = ref<TraktStatus | null>(null);
 const traktLoading = ref(true);
+const traktError = ref<string | null>(null);
 const traktDisconnecting = ref(false);
 
 const traktConfiguredMissing = computed(() => traktStatus.value?.configured === false);
 
 async function loadTraktStatus(): Promise<void> {
+  traktLoading.value = true;
+  traktError.value = null;
   try {
     traktStatus.value = await api.getTraktStatus();
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to load Trakt status.');
+    traktError.value = errMessage(e, 'Failed to load Trakt status.');
+    toasts.error(traktError.value);
   } finally {
     traktLoading.value = false;
   }
@@ -65,7 +70,7 @@ async function disconnectTrakt(): Promise<void> {
     toasts.success('Trakt disconnected.');
     await loadTraktStatus();
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to disconnect Trakt.');
+    toasts.error(errMessage(e, 'Failed to disconnect Trakt.'));
   } finally {
     traktDisconnecting.value = false;
   }
@@ -74,13 +79,17 @@ async function disconnectTrakt(): Promise<void> {
 // ─── Last.fm state ───────────────────────────────────────────────────────────
 const lastfmStatus = ref<LastfmStatus | null>(null);
 const lastfmLoading = ref(true);
+const lastfmError = ref<string | null>(null);
 const lastfmDisconnecting = ref(false);
 
 async function loadLastfmStatus(): Promise<void> {
+  lastfmLoading.value = true;
+  lastfmError.value = null;
   try {
     lastfmStatus.value = await api.getLastfmStatus();
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to load Last.fm status.');
+    lastfmError.value = errMessage(e, 'Failed to load Last.fm status.');
+    toasts.error(lastfmError.value);
   } finally {
     lastfmLoading.value = false;
   }
@@ -98,7 +107,7 @@ async function disconnectLastfm(): Promise<void> {
     toasts.success('Last.fm disconnected.');
     await loadLastfmStatus();
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Failed to disconnect Last.fm.');
+    toasts.error(errMessage(e, 'Failed to disconnect Last.fm.'));
   } finally {
     lastfmDisconnecting.value = false;
   }
@@ -136,8 +145,13 @@ onMounted(() => {
         <EmptyState
           v-else-if="traktStatus === null"
           icon="alert"
-          title="Unable to load Trakt status."
-        />
+          title="Couldn't load Trakt"
+          :description="traktError ?? undefined"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadTraktStatus">Retry</Button>
+          </template>
+        </EmptyState>
         <template v-else>
           <dl
             v-if="traktStatus.connected && traktStatus.username !== null"
@@ -204,8 +218,13 @@ onMounted(() => {
         <EmptyState
           v-else-if="lastfmStatus === null"
           icon="alert"
-          title="Unable to load Last.fm status."
-        />
+          title="Couldn't load Last.fm"
+          :description="lastfmError ?? undefined"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadLastfmStatus">Retry</Button>
+          </template>
+        </EmptyState>
         <template v-else>
           <dl
             v-if="lastfmStatus.connected && lastfmStatus.username !== null"

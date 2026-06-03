@@ -112,13 +112,17 @@ const tunersLoaded = ref(false);
 const scanning = ref(false);
 const tunerBusy = reactive<Record<string, boolean>>({});
 
+const tunersError = ref<string | null>(null);
+
 async function loadTuners(): Promise<void> {
   tunersLoading.value = true;
+  tunersError.value = null;
   try {
     tuners.value = await api.listTuners();
     tunersLoaded.value = true;
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load tuners.'));
+    tunersError.value = errMessage(e, 'Failed to load tuners.');
+    toasts.error(tunersError.value);
   } finally {
     tunersLoading.value = false;
   }
@@ -184,8 +188,11 @@ const refreshing = ref(false);
 
 const GUIDE_DAYS = ['Today', '+1 Day', '+2 Days'];
 
+const programsError = ref<string | null>(null);
+
 async function loadGuide(offset: number): Promise<void> {
   programsLoading.value = true;
+  programsError.value = null;
   try {
     const now = Math.floor(Date.now() / 1000);
     const from = now + offset * 86400;
@@ -193,7 +200,8 @@ async function loadGuide(offset: number): Promise<void> {
     programs.value = await api.listGuide({ from, to });
     programsLoaded.value = true;
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load guide.'));
+    programsError.value = errMessage(e, 'Failed to load guide.');
+    toasts.error(programsError.value);
   } finally {
     programsLoading.value = false;
   }
@@ -239,13 +247,17 @@ const RECORDING_TABS: ReadonlyArray<{ value: RecordingTab; label: string }> = [
   { value: 'by-series', label: 'By Series' },
 ];
 
+const recordingsError = ref<string | null>(null);
+
 async function loadRecordings(): Promise<void> {
   recordingsLoading.value = true;
+  recordingsError.value = null;
   try {
     recordings.value = await api.listRecordings();
     recordingsLoaded.value = true;
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load recordings.'));
+    recordingsError.value = errMessage(e, 'Failed to load recordings.');
+    toasts.error(recordingsError.value);
   } finally {
     recordingsLoading.value = false;
   }
@@ -351,13 +363,17 @@ const rules = ref<SeriesRule[]>([]);
 const rulesLoading = ref(false);
 const rulesLoaded = ref(false);
 
+const rulesError = ref<string | null>(null);
+
 async function loadRules(): Promise<void> {
   rulesLoading.value = true;
+  rulesError.value = null;
   try {
     rules.value = await api.listSeriesRules();
     rulesLoaded.value = true;
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load series rules.'));
+    rulesError.value = errMessage(e, 'Failed to load series rules.');
+    toasts.error(rulesError.value);
   } finally {
     rulesLoading.value = false;
   }
@@ -514,6 +530,16 @@ onMounted(() => {
 
         <div v-if="tunersLoading" class="admin-livetv__skel"><Skeleton variant="text" :lines="3" /></div>
         <EmptyState
+          v-else-if="tunersError"
+          icon="alert"
+          title="Couldn't load tuners"
+          :description="tunersError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadTuners">Retry</Button>
+          </template>
+        </EmptyState>
+        <EmptyState
           v-else-if="tuners.length === 0"
           icon="tv"
           title="No tuners found"
@@ -609,6 +635,16 @@ onMounted(() => {
 
         <div v-if="programsLoading" class="admin-livetv__skel"><Skeleton variant="text" :lines="4" /></div>
         <EmptyState
+          v-else-if="programsError"
+          icon="alert"
+          title="Couldn't load guide"
+          :description="programsError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadGuide(guideOffset)">Retry</Button>
+          </template>
+        </EmptyState>
+        <EmptyState
           v-else-if="programs.length === 0"
           icon="calendar"
           title="No programmes"
@@ -691,6 +727,16 @@ onMounted(() => {
 
         <div v-if="recordingsLoading" class="admin-livetv__skel"><Skeleton variant="text" :lines="3" /></div>
         <EmptyState
+          v-else-if="recordingsError"
+          icon="alert"
+          title="Couldn't load recordings"
+          :description="recordingsError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadRecordings">Retry</Button>
+          </template>
+        </EmptyState>
+        <EmptyState
           v-else-if="recordings.length === 0"
           icon="film"
           title="No recordings"
@@ -752,6 +798,16 @@ onMounted(() => {
         </div>
 
         <div v-if="rulesLoading" class="admin-livetv__skel"><Skeleton variant="text" :lines="3" /></div>
+        <EmptyState
+          v-else-if="rulesError"
+          icon="alert"
+          title="Couldn't load series rules"
+          :description="rulesError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadRules">Retry</Button>
+          </template>
+        </EmptyState>
         <EmptyState
           v-else-if="rules.length === 0"
           icon="list"

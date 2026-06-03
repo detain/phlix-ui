@@ -162,14 +162,37 @@ describe('Admin ServicesPage — Trakt section', () => {
     w.unmount();
   });
 
-  it('shows an EmptyState and toasts when the Trakt status fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the Trakt status fails to load', async () => {
     const { client } = makeClient({ traktReject: true });
     const w = mountPage(client);
     await flushPromises();
     expect(w.findAllComponents(EmptyState).length).toBeGreaterThan(0);
-    expect(w.text()).toContain('Unable to load Trakt status.');
+    expect(w.text()).toContain("Couldn't load Trakt");
+    expect(w.text()).toContain('trakt status boom');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'trakt status boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the Trakt status load from the error state', async () => {
+    let calls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === TRAKT_STATUS) {
+        calls += 1;
+        if (calls === 1) throw new Error('trakt status boom');
+        return { connected: true, username: 'traktuser' };
+      }
+      if (endpoint === LASTFM_STATUS) return { connected: false, username: null, api_key_set: false };
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.text()).toContain("Couldn't load Trakt");
+    // Only the Trakt section errored → exactly one Retry button.
+    await findBtn(w, 'Retry')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load Trakt");
+    expect(w.text()).toContain('traktuser');
     w.unmount();
   });
 });
@@ -241,13 +264,36 @@ describe('Admin ServicesPage — Last.fm section', () => {
     w.unmount();
   });
 
-  it('shows an EmptyState and toasts when the Last.fm status fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the Last.fm status fails to load', async () => {
     const { client } = makeClient({ lastfmReject: true });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).toContain('Unable to load Last.fm status.');
+    expect(w.text()).toContain("Couldn't load Last.fm");
+    expect(w.text()).toContain('lastfm status boom');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'lastfm status boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the Last.fm status load from the error state', async () => {
+    let calls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === LASTFM_STATUS) {
+        calls += 1;
+        if (calls === 1) throw new Error('lastfm status boom');
+        return { connected: true, username: 'lastfmuser', api_key_set: true };
+      }
+      if (endpoint === TRAKT_STATUS) return { connected: false, username: null };
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.text()).toContain("Couldn't load Last.fm");
+    // Trakt loaded fine → the only Retry button is Last.fm's.
+    await findBtn(w, 'Retry')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load Last.fm");
+    expect(w.text()).toContain('lastfmuser');
     w.unmount();
   });
 });
