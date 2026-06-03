@@ -403,6 +403,60 @@ describe('Player — keyboard shortcuts', () => {
     await helpBtn!.trigger('click');
     expect(w.find('[role="dialog"]').exists()).toBe(true);
   });
+
+  // R6.4c GAP-1 (cross-cutting): the player must NOT act on modifier-chord keys, so the global
+  // ⌘K/Ctrl-K command-palette hotkey and OS/browser chords pass through without hijacking playback.
+  // The guard (`shortcuts.ts`: `if (e.ctrlKey || e.metaKey || e.altKey) return`) was otherwise untested —
+  // removing it would still pass every other test yet make ⌘K both open the palette AND toggle play.
+  function keyWith(k: string, init: KeyboardEventInit, target: EventTarget = document) {
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...init }));
+  }
+
+  it('ignores modifier-chord keys (⌘K / Ctrl / Alt) so the command palette + OS shortcuts pass through', async () => {
+    const { w, video, state } = mountPlayer();
+    state.paused = true;
+    state.duration = 200;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate')); // store.position = 100
+    await nextTick();
+
+    keyWith('k', { metaKey: true }); // ⌘K belongs to the palette, not the player
+    keyWith('k', { ctrlKey: true }); // Ctrl-K likewise
+    keyWith('ArrowRight', { ctrlKey: true }); // OS word-skip chord must not seek
+    keyWith('?', { altKey: true }); // must not open the help overlay
+    await nextTick();
+
+    expect(video.play).not.toHaveBeenCalled(); // play never toggled
+    expect(state.currentTime).toBe(100); // never seeked
+    expect(w.find('[role="dialog"]').exists()).toBe(false); // help never opened
+
+    // sanity: the SAME keys WITHOUT a modifier still work (the guard is modifier-specific, not a blanket off)
+    key('k');
+    await nextTick();
+    expect(video.play).toHaveBeenCalled();
+  });
+
+  // R6.4c GAP-2: the global keydown listener is bound on the document; it must be UNBOUND on unmount so a
+  // route-leave leaves no leaked listener (a stray key would otherwise drive a torn-down player). The suite's
+  // afterEach unmounts for hygiene but never asserts the teardown. NB a post-unmount `key()` dispatch can't
+  // lock this — the player's internal video ref is null after unmount, so a leaked handler no-ops anyway —
+  // so we assert the lifecycle contract directly: every document `keydown` handler bound on mount is removed
+  // on unmount (skipping the `onBeforeUnmount` removeEventListener makes this fail).
+  it('unbinds its global keydown listener on unmount (no leaked document listener)', () => {
+    const add = vi.spyOn(document, 'addEventListener');
+    const remove = vi.spyOn(document, 'removeEventListener');
+    // Mount inline (NOT via mountPlayer) so this test owns its single unmount — mountPlayer pushes to the
+    // shared `mounted[]` registry that afterEach also unmounts, and the double-unmount would emit a [Vue warn].
+    const w = mount(Player, { props: { media: media(), streamUrl: 'http://x/stream' }, attachTo: document.body });
+    const bound = add.mock.calls.filter(([type]) => type === 'keydown').map(([, fn]) => fn);
+    expect(bound.length).toBeGreaterThanOrEqual(1); // the player binds the global keymap on mount
+    w.unmount();
+    // Each keydown handler bound on mount must be removed on unmount. (`unbound` may be a SUPERSET: a
+    // focus-trap's onBeforeUnmount fires a capture-phase keydown removal even though its trap was never
+    // activated here — harmless, and `toContain` only requires that each mount-bound handler is removed.)
+    const unbound = remove.mock.calls.filter(([type]) => type === 'keydown').map(([, fn]) => fn);
+    for (const fn of bound) expect(unbound).toContain(fn);
+  });
 });
 
 describe('Player — captions (R3.5)', () => {
