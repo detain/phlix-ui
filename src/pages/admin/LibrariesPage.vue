@@ -106,6 +106,7 @@ function statusTone(job: ScanJob | null | undefined): 'neutral' | 'info' | 'succ
 // ── List + status state ───────────────────────────────────────────────────────
 const libraries = ref<Library[]>([]);
 const loading = ref(true);
+const error = ref<string | null>(null);
 const statuses = ref<Record<string, ScanJob | null>>({});
 
 // Live-polling timers, keyed by library id.
@@ -143,6 +144,7 @@ function startPolling(libraryId: string): void {
 
 async function loadLibraries(): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     const rows = await api.list();
     libraries.value = rows;
@@ -161,7 +163,8 @@ async function loadLibraries(): Promise<void> {
       }),
     );
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load libraries.'));
+    error.value = errMessage(e, 'Failed to load libraries.');
+    toasts.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -340,6 +343,16 @@ onBeforeUnmount(() => {
     </p>
 
     <div v-if="loading" class="admin-libraries__skel"><Skeleton variant="text" :lines="6" /></div>
+    <EmptyState
+      v-else-if="error"
+      icon="alert"
+      title="Couldn't load libraries"
+      :description="error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadLibraries">Retry</Button>
+      </template>
+    </EmptyState>
     <EmptyState
       v-else-if="libraries.length === 0"
       icon="film"

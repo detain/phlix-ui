@@ -56,13 +56,16 @@ const ratingOptions = computed<SelectOptionInput[]>(() =>
 // ── User list state ─────────────────────────────────────────────────────────
 const users = ref<User[]>([]);
 const loading = ref(true);
+const error = ref<string | null>(null);
 
 async function loadUsers(): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     users.value = await api.list();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load users.'));
+    error.value = errMessage(e, 'Failed to load users.');
+    toasts.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -388,6 +391,16 @@ onMounted(loadUsers);
     </header>
 
     <div v-if="loading" class="admin-users__skel"><Skeleton variant="text" :lines="6" /></div>
+    <EmptyState
+      v-else-if="error"
+      icon="alert"
+      title="Couldn't load users"
+      :description="error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadUsers">Retry</Button>
+      </template>
+    </EmptyState>
     <EmptyState v-else-if="users.length === 0" icon="user" title="No users yet">
       <template #actions>
         <Button variant="solid" size="sm" left-icon="plus" @click="openAddUser">Add user</Button>

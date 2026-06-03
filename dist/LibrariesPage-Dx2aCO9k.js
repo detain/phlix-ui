@@ -1,4 +1,4 @@
-import { a as e, f as t, h as n, i as r, n as i, o as ee, r as te, t as a } from "./Button-C86XulWV.js";
+import { a as e, f as t, h as n, i as ee, n as r, o as te, r as i, t as a } from "./Button-C86XulWV.js";
 import { t as o } from "./Modal-DaapuyD8.js";
 import { t as ne } from "./Select-CjbYOZGH.js";
 import { t as s } from "./Badge-BiYXL5Nz.js";
@@ -12,7 +12,7 @@ var ce = {
 	key: 0,
 	class: "admin-libraries__skel"
 }, de = {
-	key: 2,
+	key: 3,
 	class: "admin-libraries__table",
 	"aria-label": "Libraries"
 }, fe = ["data-testid"], pe = {
@@ -35,10 +35,10 @@ var ce = {
 		pollIntervalMs: {}
 	},
 	setup(n) {
-		let _ = n, T = ie("apiBase", ""), Te = u(() => typeof T == "string" ? T : T?.value ?? ""), E = new re(_.client ?? new ee({
+		let _ = n, T = ie("apiBase", ""), Te = u(() => typeof T == "string" ? T : T?.value ?? ""), E = new re(_.client ?? new te({
 			baseUrl: Te.value,
 			tokenStore: new e()
-		})), D = r(), Ee = u(() => _.pollIntervalMs ?? we), De = u(() => c.map((e) => ({
+		})), D = ee(), Ee = u(() => _.pollIntervalMs ?? we), De = u(() => c.map((e) => ({
 			value: e,
 			label: e
 		})));
@@ -65,61 +65,61 @@ var ce = {
 				default: return "neutral";
 			}
 		}
-		let j = y([]), M = y(!0), N = y({}), P = {};
-		function F(e) {
-			let t = P[e];
-			t !== void 0 && (clearInterval(t), delete P[e]);
+		let j = y([]), M = y(!0), N = y(null), P = y({}), F = {};
+		function I(e) {
+			let t = F[e];
+			t !== void 0 && (clearInterval(t), delete F[e]);
 		}
-		async function I(e) {
+		async function L(e) {
 			try {
 				let t = await E.scanStatus(e);
-				N.value = {
-					...N.value,
+				P.value = {
+					...P.value,
 					[e]: t
-				}, (t === null || O(t.status)) && F(e);
+				}, (t === null || O(t.status)) && I(e);
 			} catch {
-				F(e);
+				I(e);
 			}
 		}
-		function L(e) {
-			P[e] === void 0 && (P[e] = setInterval(() => {
-				I(e);
+		function R(e) {
+			F[e] === void 0 && (F[e] = setInterval(() => {
+				L(e);
 			}, Ee.value));
 		}
-		async function R() {
-			M.value = !0;
+		async function z() {
+			M.value = !0, N.value = null;
 			try {
 				let e = await E.list();
 				j.value = e, await Promise.all(e.map(async (e) => {
 					try {
 						let t = await E.scanStatus(e.id);
-						N.value = {
-							...N.value,
+						P.value = {
+							...P.value,
 							[e.id]: t
-						}, t !== null && !O(t.status) && L(e.id);
+						}, t !== null && !O(t.status) && R(e.id);
 					} catch {}
 				}));
 			} catch (e) {
-				D.error(t(e, "Failed to load libraries."));
+				N.value = t(e, "Failed to load libraries."), D.error(N.value);
 			} finally {
 				M.value = !1;
 			}
 		}
-		let z = y(!1), B = y(null), V = y(""), H = y(c[0]), U = y(""), W = y(!1), Oe = u(() => B.value ? "Edit library" : "Add library");
+		let B = y(!1), V = y(null), H = y(""), U = y(c[0]), W = y(""), G = y(!1), Oe = u(() => V.value ? "Edit library" : "Add library");
 		function ke() {
-			return U.value.split("\n").map((e) => e.trim()).filter((e) => e.length > 0);
-		}
-		function G() {
-			B.value = null, V.value = "", H.value = c[0], U.value = "", z.value = !0;
-		}
-		function Ae(e) {
-			B.value = e, V.value = e.name, H.value = c.find((t) => t === e.type) ?? c[0], U.value = e.paths.join("\n"), z.value = !0;
+			return W.value.split("\n").map((e) => e.trim()).filter((e) => e.length > 0);
 		}
 		function K() {
-			z.value = !1, B.value = null;
+			V.value = null, H.value = "", U.value = c[0], W.value = "", B.value = !0;
 		}
-		async function q() {
-			if (!V.value.trim()) {
+		function Ae(e) {
+			V.value = e, H.value = e.name, U.value = c.find((t) => t === e.type) ?? c[0], W.value = e.paths.join("\n"), B.value = !0;
+		}
+		function q() {
+			B.value = !1, V.value = null;
+		}
+		async function J() {
+			if (!H.value.trim()) {
 				D.error("Name is required.");
 				return;
 			}
@@ -128,74 +128,74 @@ var ce = {
 				D.error("Select at least one path.");
 				return;
 			}
-			W.value = !0;
+			G.value = !0;
 			try {
-				let t = B.value;
+				let t = V.value;
 				if (t) await E.update(t.id, {
-					name: V.value,
+					name: H.value,
 					paths: e
 				}), D.success("Library updated.");
 				else {
 					let t = await E.create({
-						name: V.value,
-						type: H.value,
+						name: H.value,
+						type: U.value,
 						paths: e
 					});
 					D.success(t.message || "Library created.");
 				}
-				K(), await R();
+				q(), await z();
 			} catch (e) {
 				D.error(t(e, "Failed to save library."));
 			} finally {
-				W.value = !1;
+				G.value = !1;
 			}
 		}
-		let J = y(null);
+		let Y = y(null);
 		async function je() {
-			let e = J.value;
+			let e = Y.value;
 			if (e) try {
-				await E.remove(e.id), D.success("Library deleted."), J.value = null, await R();
+				await E.remove(e.id), D.success("Library deleted."), Y.value = null, await z();
 			} catch (e) {
-				D.error(t(e, "Failed to delete library.")), J.value = null;
+				D.error(t(e, "Failed to delete library.")), Y.value = null;
 			}
 		}
-		async function Y(e, n) {
+		async function X(e, n) {
 			try {
-				let t = n === "metadata" ? await E.matchMetadata(e.id) : n === "rescan" ? await E.rescan(e.id) : await E.scan(e.id), r = n === "metadata" ? `Metadata match queued (job ${t.job_id}).` : `Scan queued (job ${t.job_id}).`;
-				D.success(t.message || r);
-				let i = N.value[e.id];
-				N.value = {
-					...N.value,
-					[e.id]: i ? {
-						...i,
+				let t = n === "metadata" ? await E.matchMetadata(e.id) : n === "rescan" ? await E.rescan(e.id) : await E.scan(e.id), ee = n === "metadata" ? `Metadata match queued (job ${t.job_id}).` : `Scan queued (job ${t.job_id}).`;
+				D.success(t.message || ee);
+				let r = P.value[e.id];
+				P.value = {
+					...P.value,
+					[e.id]: r ? {
+						...r,
 						status: "queued"
 					} : null
-				}, L(e.id), I(e.id);
+				}, R(e.id), L(e.id);
 			} catch (e) {
 				D.error(t(e, "Failed to queue scan."));
 			}
 		}
-		let X = y(null), Z = y([]), Q = y(!1), Me = u(() => X.value ? `Scan history — ${X.value.name}` : "Scan history"), Ne = u({
-			get: () => X.value !== null,
+		let Z = y(null), Q = y([]), $ = y(!1), Me = u(() => Z.value ? `Scan history — ${Z.value.name}` : "Scan history"), Ne = u({
+			get: () => Z.value !== null,
 			set: (e) => {
-				e || $();
+				e || Fe();
 			}
 		});
 		async function Pe(e) {
-			X.value = e, Z.value = [], Q.value = !0;
+			Z.value = e, Q.value = [], $.value = !0;
 			try {
-				Z.value = await E.scanHistory(e.id);
+				Q.value = await E.scanHistory(e.id);
 			} catch (e) {
 				D.error(t(e, "Failed to load history."));
 			} finally {
-				Q.value = !1;
+				$.value = !1;
 			}
 		}
-		function $() {
-			X.value = null, Z.value = [];
+		function Fe() {
+			Z.value = null, Q.value = [];
 		}
-		return oe(R), ae(() => {
-			for (let e of Object.keys(P)) clearInterval(P[e]), delete P[e];
+		return oe(z), ae(() => {
+			for (let e of Object.keys(F)) clearInterval(F[e]), delete F[e];
 		}), (e, t) => (v(), p("section", ce, [
 			m("header", le, [t[8] ||= m("h1", {
 				id: "libraries-heading",
@@ -204,17 +204,33 @@ var ce = {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "plus",
-				onClick: G
+				onClick: K
 			}, {
 				default: C(() => [...t[7] ||= [h("Add library", -1)]]),
 				_: 1
 			})]),
-			t[27] ||= m("p", { class: "admin-libraries__hint" }, " Scan progress is coarse in this release — only the lifecycle (queued / running / completed / failed) is reported, not per-file detail. ", -1),
-			M.value ? (v(), p("div", ue, [g(i, {
+			t[28] ||= m("p", { class: "admin-libraries__hint" }, " Scan progress is coarse in this release — only the lifecycle (queued / running / completed / failed) is reported, not per-file detail. ", -1),
+			M.value ? (v(), p("div", ue, [g(r, {
 				variant: "text",
 				lines: 6
-			})])) : j.value.length === 0 ? (v(), d(te, {
+			})])) : N.value ? (v(), d(i, {
 				key: 1,
+				icon: "alert",
+				title: "Couldn't load libraries",
+				description: N.value
+			}, {
+				actions: C(() => [g(a, {
+					variant: "solid",
+					size: "sm",
+					"left-icon": "rewind",
+					onClick: z
+				}, {
+					default: C(() => [...t[9] ||= [h("Retry", -1)]]),
+					_: 1
+				})]),
+				_: 1
+			}, 8, ["description"])) : j.value.length === 0 ? (v(), d(i, {
+				key: 2,
 				icon: "film",
 				title: "No libraries yet",
 				description: "Add one to get started."
@@ -223,13 +239,13 @@ var ce = {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "plus",
-					onClick: G
+					onClick: K
 				}, {
-					default: C(() => [...t[9] ||= [h("Add library", -1)]]),
+					default: C(() => [...t[10] ||= [h("Add library", -1)]]),
 					_: 1
 				})]),
 				_: 1
-			})) : (v(), p("table", de, [t[16] ||= m("thead", null, [m("tr", null, [
+			})) : (v(), p("table", de, [t[17] ||= m("thead", null, [m("tr", null, [
 				m("th", { scope: "col" }, "Name"),
 				m("th", { scope: "col" }, "Type"),
 				m("th", { scope: "col" }, "Paths"),
@@ -245,10 +261,10 @@ var ce = {
 				m("td", null, [m("span", {
 					class: "admin-libraries__status",
 					"data-testid": `status-${e.id}`
-				}, [g(s, { tone: A(N.value[e.id]) }, {
-					default: C(() => [h(x(k(N.value[e.id])), 1)]),
+				}, [g(s, { tone: A(P.value[e.id]) }, {
+					default: C(() => [h(x(k(P.value[e.id])), 1)]),
 					_: 2
-				}, 1032, ["tone"]), N.value[e.id]?.status === "failed" && N.value[e.id]?.error ? (v(), p("span", pe, x(N.value[e.id]?.error), 1)) : f("", !0)], 8, fe)]),
+				}, 1032, ["tone"]), P.value[e.id]?.status === "failed" && P.value[e.id]?.error ? (v(), p("span", pe, x(P.value[e.id]?.error), 1)) : f("", !0)], 8, fe)]),
 				m("td", null, [m("div", me, [
 					g(a, {
 						variant: "ghost",
@@ -256,34 +272,34 @@ var ce = {
 						"aria-label": `Edit ${e.name}`,
 						onClick: (t) => Ae(e)
 					}, {
-						default: C(() => [...t[10] ||= [h(" Edit ", -1)]]),
+						default: C(() => [...t[11] ||= [h(" Edit ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					g(a, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Scan ${e.name}`,
-						onClick: (t) => Y(e, "scan")
+						onClick: (t) => X(e, "scan")
 					}, {
-						default: C(() => [...t[11] ||= [h(" Scan ", -1)]]),
+						default: C(() => [...t[12] ||= [h(" Scan ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					g(a, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Rescan ${e.name}`,
-						onClick: (t) => Y(e, "rescan")
+						onClick: (t) => X(e, "rescan")
 					}, {
-						default: C(() => [...t[12] ||= [h(" Rescan ", -1)]]),
+						default: C(() => [...t[13] ||= [h(" Rescan ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					g(a, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Match metadata for ${e.name}`,
-						onClick: (t) => Y(e, "metadata")
+						onClick: (t) => X(e, "metadata")
 					}, {
-						default: C(() => [...t[13] ||= [h(" Match metadata ", -1)]]),
+						default: C(() => [...t[14] ||= [h(" Match metadata ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					g(a, {
@@ -292,106 +308,106 @@ var ce = {
 						"aria-label": `History for ${e.name}`,
 						onClick: (t) => Pe(e)
 					}, {
-						default: C(() => [...t[14] ||= [h(" History ", -1)]]),
+						default: C(() => [...t[15] ||= [h(" History ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					g(a, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Delete ${e.name}`,
-						onClick: (t) => J.value = e
+						onClick: (t) => Y.value = e
 					}, {
-						default: C(() => [...t[15] ||= [h(" Delete ", -1)]]),
+						default: C(() => [...t[16] ||= [h(" Delete ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"])
 				])])
 			]))), 128))])])),
 			g(o, {
-				modelValue: z.value,
-				"onUpdate:modelValue": t[3] ||= (e) => z.value = e,
+				modelValue: B.value,
+				"onUpdate:modelValue": t[3] ||= (e) => B.value = e,
 				title: Oe.value,
-				onClose: K
+				onClose: q
 			}, {
 				footer: C(() => [g(a, {
 					variant: "ghost",
 					size: "sm",
-					onClick: K
+					onClick: q
 				}, {
-					default: C(() => [...t[20] ||= [h("Cancel", -1)]]),
+					default: C(() => [...t[21] ||= [h("Cancel", -1)]]),
 					_: 1
 				}), g(a, {
 					variant: "solid",
 					size: "sm",
-					loading: W.value,
-					onClick: q
+					loading: G.value,
+					onClick: J
 				}, {
-					default: C(() => [h(x(B.value ? "Save" : "Create"), 1)]),
+					default: C(() => [h(x(V.value ? "Save" : "Create"), 1)]),
 					_: 1
 				}, 8, ["loading"])]),
 				default: C(() => [m("form", {
 					class: "admin-libraries__form",
-					onSubmit: se(q, ["prevent"])
+					onSubmit: se(J, ["prevent"])
 				}, [
-					m("label", he, [t[17] ||= m("span", { class: "admin-libraries__label" }, "Name", -1), w(m("input", {
-						"onUpdate:modelValue": t[0] ||= (e) => V.value = e,
+					m("label", he, [t[18] ||= m("span", { class: "admin-libraries__label" }, "Name", -1), w(m("input", {
+						"onUpdate:modelValue": t[0] ||= (e) => H.value = e,
 						type: "text",
 						class: "admin-libraries__input",
 						autocomplete: "off",
 						required: ""
-					}, null, 512), [[S, V.value]])]),
+					}, null, 512), [[S, H.value]])]),
 					m("div", ge, [
-						t[18] ||= m("span", { class: "admin-libraries__label" }, "Type", -1),
-						B.value ? (v(), p("input", {
+						t[19] ||= m("span", { class: "admin-libraries__label" }, "Type", -1),
+						V.value ? (v(), p("input", {
 							key: 0,
 							class: "admin-libraries__input",
-							value: H.value,
+							value: U.value,
 							readonly: "",
 							"aria-readonly": "true",
 							"aria-label": "Type"
 						}, null, 8, _e)) : (v(), d(ne, {
 							key: 1,
-							"model-value": H.value,
+							"model-value": U.value,
 							options: De.value,
 							label: "Type",
-							"onUpdate:modelValue": t[1] ||= (e) => H.value = String(e)
+							"onUpdate:modelValue": t[1] ||= (e) => U.value = String(e)
 						}, null, 8, ["model-value", "options"])),
-						B.value ? (v(), p("span", ve, "Type cannot be changed.")) : f("", !0)
+						V.value ? (v(), p("span", ve, "Type cannot be changed.")) : f("", !0)
 					]),
-					m("label", ye, [t[19] ||= m("span", { class: "admin-libraries__label" }, "Paths (one per line)", -1), w(m("textarea", {
-						"onUpdate:modelValue": t[2] ||= (e) => U.value = e,
+					m("label", ye, [t[20] ||= m("span", { class: "admin-libraries__label" }, "Paths (one per line)", -1), w(m("textarea", {
+						"onUpdate:modelValue": t[2] ||= (e) => W.value = e,
 						class: "admin-libraries__textarea",
 						rows: "4",
 						autocomplete: "off",
 						placeholder: "/media/movies"
-					}, null, 512), [[S, U.value]])])
+					}, null, 512), [[S, W.value]])])
 				], 32)]),
 				_: 1
 			}, 8, ["modelValue", "title"]),
 			g(o, {
-				"model-value": J.value !== null,
+				"model-value": Y.value !== null,
 				title: "Delete library",
 				size: "sm",
-				"onUpdate:modelValue": t[5] ||= (e) => J.value = null
+				"onUpdate:modelValue": t[5] ||= (e) => Y.value = null
 			}, {
 				footer: C(() => [g(a, {
 					variant: "ghost",
 					size: "sm",
-					onClick: t[4] ||= (e) => J.value = null
+					onClick: t[4] ||= (e) => Y.value = null
 				}, {
-					default: C(() => [...t[23] ||= [h("Cancel", -1)]]),
+					default: C(() => [...t[24] ||= [h("Cancel", -1)]]),
 					_: 1
 				}), g(a, {
 					variant: "solid",
 					size: "sm",
 					onClick: je
 				}, {
-					default: C(() => [...t[24] ||= [h("Delete", -1)]]),
+					default: C(() => [...t[25] ||= [h("Delete", -1)]]),
 					_: 1
 				})]),
 				default: C(() => [m("p", null, [
-					t[21] ||= h(" Delete library ", -1),
-					m("strong", null, x(J.value?.name), 1),
-					t[22] ||= h("? This cannot be undone. ", -1)
+					t[22] ||= h(" Delete library ", -1),
+					m("strong", null, x(Y.value?.name), 1),
+					t[23] ||= h("? This cannot be undone. ", -1)
 				])]),
 				_: 1
 			}, 8, ["model-value"]),
@@ -404,25 +420,25 @@ var ce = {
 				footer: C(() => [g(a, {
 					variant: "solid",
 					size: "sm",
-					onClick: $
+					onClick: Fe
 				}, {
-					default: C(() => [...t[26] ||= [h("Close", -1)]]),
+					default: C(() => [...t[27] ||= [h("Close", -1)]]),
 					_: 1
 				})]),
-				default: C(() => [Q.value ? (v(), p("div", be, [g(i, {
+				default: C(() => [$.value ? (v(), p("div", be, [g(r, {
 					variant: "text",
 					lines: 4
-				})])) : Z.value.length === 0 ? (v(), d(te, {
+				})])) : Q.value.length === 0 ? (v(), d(i, {
 					key: 1,
 					icon: "list",
 					title: "No scans yet"
-				})) : (v(), p("table", xe, [t[25] ||= m("thead", null, [m("tr", null, [
+				})) : (v(), p("table", xe, [t[26] ||= m("thead", null, [m("tr", null, [
 					m("th", { scope: "col" }, "Type"),
 					m("th", { scope: "col" }, "Status"),
 					m("th", { scope: "col" }, "Queued"),
 					m("th", { scope: "col" }, "Completed"),
 					m("th", { scope: "col" }, "Error")
-				])], -1), m("tbody", null, [(v(!0), p(l, null, b(Z.value, (e) => (v(), p("tr", { key: e.id }, [
+				])], -1), m("tbody", null, [(v(!0), p(l, null, b(Q.value, (e) => (v(), p("tr", { key: e.id }, [
 					m("td", null, x(e.type), 1),
 					m("td", null, [g(s, { tone: A(e) }, {
 						default: C(() => [h(x(k(e)), 1)]),
@@ -436,8 +452,8 @@ var ce = {
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-42b164f5"]]);
+}), [["__scopeId", "data-v-59e9c359"]]);
 //#endregion
 export { T as default };
 
-//# sourceMappingURL=LibrariesPage-BlhK9Ah_.js.map
+//# sourceMappingURL=LibrariesPage-Dx2aCO9k.js.map

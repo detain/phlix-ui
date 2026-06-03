@@ -5851,7 +5851,7 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/users`,
 			name: "admin-users",
-			component: () => import("./UsersPage-Do0Yl_r_.js")
+			component: () => import("./UsersPage-BMpmpF1p.js")
 		},
 		{
 			path: `${t}/logs`,
@@ -5861,7 +5861,7 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/webhooks`,
 			name: "admin-webhooks",
-			component: () => import("./WebhooksPage-BaeW2Gnf.js")
+			component: () => import("./WebhooksPage-vcG_n1Lw.js")
 		},
 		{
 			path: `${t}/services`,
@@ -5901,7 +5901,7 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/collections`,
 			name: "admin-collections",
-			component: () => import("./CollectionsPage-DMH_Rp4Z.js")
+			component: () => import("./CollectionsPage-B6jOG-_C.js")
 		},
 		{
 			path: `${t}/history`,
@@ -5916,7 +5916,7 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/libraries`,
 			name: "admin-libraries",
-			component: () => import("./LibrariesPage-BlhK9Ah_.js")
+			component: () => import("./LibrariesPage-Dx2aCO9k.js")
 		},
 		{
 			path: `${t}/settings`,
