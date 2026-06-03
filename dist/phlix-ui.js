@@ -6475,90 +6475,147 @@ var Ac = {
 			}, 8, ["loading", "disabled"])], 32)])
 		]))]));
 	}
-}), [["__scopeId", "data-v-03149ec5"]]), pl = { class: "manage-shares-page" }, ml = {
+}), [["__scopeId", "data-v-03149ec5"]]), pl = {
+	class: "shares",
+	"aria-labelledby": "shares-heading"
+}, ml = {
 	key: 0,
-	class: "loading"
+	class: "shares__skel"
 }, hl = {
-	key: 1,
-	class: "error"
+	key: 3,
+	class: "shares__table-wrap"
 }, gl = {
-	key: 2,
-	class: "shares-list"
-}, _l = { class: "share-info" }, vl = { class: "share-library" }, yl = { class: "share-meta" }, bl = {
-	key: 0,
-	class: "expired-badge"
-}, xl = { class: "share-dates" }, Sl = { key: 0 }, Cl = { class: "share-actions" }, wl = ["onClick"], Tl = {
-	key: 0,
-	class: "empty-state"
-}, El = /*#__PURE__*/ l(/* @__PURE__ */ z({
+	class: "shares__table",
+	"aria-label": "Library shares"
+}, _l = { class: "shares__library" }, vl = { class: "shares__date" }, yl = { class: "shares__date" }, bl = ["data-testid"], xl = { class: "shares__actions" }, Sl = /*#__PURE__*/ l(/* @__PURE__ */ z({
 	__name: "ManageSharesPage",
+	props: { client: {} },
 	setup(e) {
-		let t = K([]), n = K(!0), r = K(null);
-		async function i() {
+		let t = e.client ?? s, n = o(), r = K([]), a = K(!0), l = K(null);
+		function u(e, t) {
+			return e instanceof Error && e.message ? e.message : t;
+		}
+		async function d(e = !1) {
+			e && (a.value = !0), l.value = null;
 			try {
-				t.value = (await s.get("/api/v1/shares")).shares || [];
+				r.value = (await t.get("/api/v1/shares")).shares || [];
 			} catch (e) {
-				r.value = e instanceof Error ? e.message : "Failed to load shares";
+				l.value = u(e, "Failed to load shares."), n.error(l.value);
 			} finally {
-				n.value = !1;
+				e && (a.value = !1);
 			}
 		}
-		async function a(e) {
+		async function f(e) {
 			try {
-				await s.delete(`/api/v1/shares/${e}`), await i();
+				await t.delete(`/api/v1/shares/${e}`), n.success("Share revoked."), await d();
 			} catch (e) {
-				r.value = e instanceof Error ? e.message : "Failed to revoke share";
+				n.error(u(e, "Failed to revoke share."));
 			}
 		}
-		function o(e) {
-			return new Date(e).toLocaleString();
+		function m(e) {
+			return e ? new Date(e).toLocaleString() : "—";
 		}
-		function c(e) {
+		function h(e) {
 			return e ? new Date(e) < /* @__PURE__ */ new Date() : !1;
 		}
-		return W(() => {
-			i();
-		}), (e, i) => (G(), F("div", pl, [i[1] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Manage Shares"), I("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (G(), F("div", ml, "Loading shares...")) : r.value ? (G(), F("div", hl, Y(r.value), 1)) : (G(), F("div", gl, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
-			key: e.id,
-			class: "share-card"
-		}, [I("div", _l, [
-			I("h3", vl, Y(e.library_name), 1),
-			I("div", yl, [
-				I("span", null, "Shared with: " + Y(e.shared_with), 1),
-				I("span", { class: V(["permission-badge", e.permissions]) }, Y(e.permissions), 3),
-				e.expires_at && c(e.expires_at) ? (G(), F("span", bl, "Expired")) : P("", !0)
-			]),
-			I("p", xl, [L(" Created: " + Y(o(e.created_at)) + " ", 1), e.expires_at ? (G(), F("span", Sl, " | Expires: " + Y(o(e.expires_at)), 1)) : P("", !0)])
-		]), I("div", Cl, [I("button", {
-			class: "btn btn-danger",
-			onClick: (t) => a(e.id)
-		}, "Revoke", 8, wl)])]))), 128)), t.value.length === 0 ? (G(), F("div", Tl, [...i[0] ||= [I("p", null, "No library shares found.", -1)]])) : P("", !0)]))]));
+		function g(e) {
+			switch (e) {
+				case "read": return "info";
+				case "write": return "success";
+				default: return "neutral";
+			}
+		}
+		return W(() => d(!0)), (e, t) => (G(), F("section", pl, [t[5] ||= I("header", { class: "shares__head" }, [I("h1", {
+			id: "shares-heading",
+			class: "shares__title"
+		}, "Manage Shares"), I("p", { class: "shares__subtitle" }, "View and manage your shared libraries.")], -1), a.value ? (G(), F("div", ml, [R(i, {
+			variant: "text",
+			lines: 6
+		})])) : l.value ? (G(), N(p, {
+			key: 1,
+			icon: "alert",
+			title: "Couldn't load shares",
+			description: l.value
+		}, {
+			actions: Q(() => [R(c, {
+				variant: "solid",
+				size: "sm",
+				"left-icon": "rewind",
+				onClick: t[0] ||= (e) => d(!0)
+			}, {
+				default: Q(() => [...t[1] ||= [L("Retry", -1)]]),
+				_: 1
+			})]),
+			_: 1
+		}, 8, ["description"])) : r.value.length === 0 ? (G(), N(p, {
+			key: 2,
+			icon: "bookmark",
+			title: "No library shares",
+			description: "Libraries you share with others will appear here."
+		})) : (G(), F("div", hl, [I("table", gl, [t[4] ||= I("thead", null, [I("tr", null, [
+			I("th", { scope: "col" }, "Library"),
+			I("th", { scope: "col" }, "Shared with"),
+			I("th", { scope: "col" }, "Permissions"),
+			I("th", { scope: "col" }, "Created"),
+			I("th", { scope: "col" }, "Expires"),
+			I("th", {
+				scope: "col",
+				class: "shares__actions-col"
+			}, "Actions")
+		])], -1), I("tbody", null, [(G(!0), F(j, null, q(r.value, (e) => (G(), F("tr", { key: e.id }, [
+			I("td", null, [I("span", _l, Y(e.library_name), 1)]),
+			I("td", null, Y(e.shared_with), 1),
+			I("td", null, [R(v, { tone: g(e.permissions) }, {
+				default: Q(() => [L(Y(e.permissions), 1)]),
+				_: 2
+			}, 1032, ["tone"])]),
+			I("td", vl, Y(m(e.created_at)), 1),
+			I("td", yl, [I("span", {
+				class: "shares__expires",
+				"data-testid": `expires-${e.id}`
+			}, [L(Y(m(e.expires_at)) + " ", 1), h(e.expires_at) ? (G(), N(v, {
+				key: 0,
+				tone: "error"
+			}, {
+				default: Q(() => [...t[2] ||= [L("Expired", -1)]]),
+				_: 1
+			})) : P("", !0)], 8, bl)]),
+			I("td", null, [I("div", xl, [R(c, {
+				variant: "ghost",
+				size: "sm",
+				"aria-label": `Revoke share of ${e.library_name} with ${e.shared_with}`,
+				onClick: (t) => f(e.id)
+			}, {
+				default: Q(() => [...t[3] ||= [L(" Revoke ", -1)]]),
+				_: 1
+			}, 8, ["aria-label", "onClick"])])])
+		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-bd8771ac"]]), Dl = { class: "audit-logs-page" }, Ol = {
+}), [["__scopeId", "data-v-db9f420b"]]), Cl = { class: "audit-logs-page" }, wl = {
 	key: 0,
 	class: "loading"
-}, kl = {
+}, Tl = {
 	key: 1,
 	class: "error"
-}, Al = {
+}, El = {
 	key: 2,
 	class: "logs-container"
-}, jl = { class: "logs-list" }, Ml = { class: "log-content" }, Nl = { class: "log-header" }, Pl = { class: "log-action" }, Fl = { class: "log-actor" }, Il = { class: "log-time" }, Ll = {
+}, Dl = { class: "logs-list" }, Ol = { class: "log-content" }, kl = { class: "log-header" }, Al = { class: "log-action" }, jl = { class: "log-actor" }, Ml = { class: "log-time" }, Nl = {
 	key: 0,
 	class: "log-target"
-}, Rl = {
+}, Pl = {
 	key: 1,
 	class: "log-details"
-}, zl = {
+}, Fl = {
 	key: 2,
 	class: "log-ip"
-}, Bl = {
+}, Il = {
 	key: 0,
 	class: "empty-state"
-}, Vl = {
+}, Ll = {
 	key: 0,
 	class: "pagination"
-}, Hl = ["disabled"], Ul = { class: "page-info" }, Wl = ["disabled"], Gl = /*#__PURE__*/ l(/* @__PURE__ */ z({
+}, Rl = ["disabled"], zl = { class: "page-info" }, Bl = ["disabled"], Vl = /*#__PURE__*/ l(/* @__PURE__ */ z({
 	__name: "AuditLogsPage",
 	setup(e) {
 		let t = K([]), n = K(!0), r = K(null), i = K(1), a = K(1);
@@ -6584,39 +6641,39 @@ var Ac = {
 		}
 		return W(() => {
 			o();
-		}), (e, s) => (G(), F("div", Dl, [s[3] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Audit Logs"), I("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (G(), F("div", Ol, "Loading audit logs...")) : r.value ? (G(), F("div", kl, Y(r.value), 1)) : (G(), F("div", Al, [I("div", jl, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
+		}), (e, s) => (G(), F("div", Cl, [s[3] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Audit Logs"), I("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (G(), F("div", wl, "Loading audit logs...")) : r.value ? (G(), F("div", Tl, Y(r.value), 1)) : (G(), F("div", El, [I("div", Dl, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
 			key: e.id,
 			class: "log-entry"
 		}, [I("div", {
 			class: "log-icon",
 			style: H({ backgroundColor: l(e.action) })
-		}, Y(u(e.action)), 5), I("div", Ml, [
-			I("div", Nl, [
-				I("span", Pl, Y(e.action), 1),
-				I("span", Fl, Y(e.actor), 1),
-				I("span", Il, Y(c(e.created_at)), 1)
+		}, Y(u(e.action)), 5), I("div", Ol, [
+			I("div", kl, [
+				I("span", Al, Y(e.action), 1),
+				I("span", jl, Y(e.actor), 1),
+				I("span", Ml, Y(c(e.created_at)), 1)
 			]),
-			e.target ? (G(), F("p", Ll, "Target: " + Y(e.target), 1)) : P("", !0),
-			e.details ? (G(), F("p", Rl, Y(e.details), 1)) : P("", !0),
-			e.ip_address ? (G(), F("span", zl, "IP: " + Y(e.ip_address), 1)) : P("", !0)
-		])]))), 128)), t.value.length === 0 ? (G(), F("div", Bl, [...s[2] ||= [I("p", null, "No audit logs found.", -1)]])) : P("", !0)]), a.value > 1 ? (G(), F("div", Vl, [
+			e.target ? (G(), F("p", Nl, "Target: " + Y(e.target), 1)) : P("", !0),
+			e.details ? (G(), F("p", Pl, Y(e.details), 1)) : P("", !0),
+			e.ip_address ? (G(), F("span", Fl, "IP: " + Y(e.ip_address), 1)) : P("", !0)
+		])]))), 128)), t.value.length === 0 ? (G(), F("div", Il, [...s[2] ||= [I("p", null, "No audit logs found.", -1)]])) : P("", !0)]), a.value > 1 ? (G(), F("div", Ll, [
 			I("button", {
 				class: "btn btn-secondary",
 				disabled: i.value <= 1,
 				onClick: s[0] ||= (e) => o(i.value - 1)
-			}, " Previous ", 8, Hl),
-			I("span", Ul, "Page " + Y(i.value) + " of " + Y(a.value), 1),
+			}, " Previous ", 8, Rl),
+			I("span", zl, "Page " + Y(i.value) + " of " + Y(a.value), 1),
 			I("button", {
 				class: "btn btn-secondary",
 				disabled: i.value >= a.value,
 				onClick: s[1] ||= (e) => o(i.value + 1)
-			}, " Next ", 8, Wl)
+			}, " Next ", 8, Bl)
 		])) : P("", !0)]))]));
 	}
 }), [["__scopeId", "data-v-05910fd9"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
-function Kl(e, t) {
+function Hl(e, t) {
 	let n = vn(), r = !1;
 	n.applyQuery(e.currentRoute.value.query), n.fetchMedia(t);
 	let i = Z(() => JSON.stringify(n.toQuery()), () => {
@@ -6631,6 +6688,6 @@ function Kl(e, t) {
 	};
 }
 //#endregion
-export { C as ALL_LOGS, Ia as AMBIENT_SAMPLE_H, La as AMBIENT_SAMPLE_INTERVAL_MS, Fa as AMBIENT_SAMPLE_W, ji as ARROW_ICONS, Mi as ARROW_LABELS, ne as AdminBackupApi, b as AdminCastApi, oe as AdminCollectionsApi, w as AdminDashboardApi, re as AdminDlnaServerApi, se as AdminHistoryApi, te as AdminIntegrationsApi, ue as AdminLibrariesApi, ae as AdminLiveTvApi, S as AdminLogsApi, ie as AdminRemoteAccessApi, ee as AdminServicesApi, de as AdminSettingsApi, ce as AdminSyncPlayApi, D as AdminUsersApi, A as AdminWebhooksApi, Ga as AmbientCanvas, e as ApiClient, a as ApiError, ze as AppBackdrop, st as AppLayout, Gl as AuditLogsPage, v as Badge, Xr as BrowsePage, c as Button, pa as CAPTION_BACKGROUND_OPTIONS, fa as CAPTION_COLOR_OPTIONS, ma as CAPTION_EDGE_OPTIONS, da as CAPTION_SIZE_OPTIONS, ua as CAPTION_SIZE_SCALE, va as CaptionOverlay, Pa as CaptionsMenu, mr as Chip, xr as Combobox, Pt as CommandPalette, Ke as DEFAULT_CAPTION_STYLE, qe as DEFAULT_PREFERENCES, Za as DIRECT_PLAY_EXTENSIONS, p as EmptyState, fl as FederationPage, Wr as FilterBar, r as Icon, d as IconButton, vt as Kbd, le as LIBRARY_TYPES, Vc as LibraryScanPage, n as LocalStorageTokenStore, os as LoginForm, us as LoginPage, El as ManageSharesPage, Hn as MediaCard, vi as MediaDetail, Ci as MediaDetailPage, Zn as MediaGrid, ur as MediaHomeRow, sr as MediaRow, Jt as MiniPlayer, f as Modal, $c as MyServersPage, Ai as PLAYER_SHORTCUTS, Dc as PageTransition, dn as PhlixApp, Lo as Player, Bo as PlayerPage, qi as QualityMenu, T as RATING_LABELS, E as RATING_OPTIONS, It as RESUME_MAX_RATIO, Ft as RESUME_MIN_SECONDS, Xa as ResumePrompt, Ec as Reveal, O as SUBSCRIBABLE_EVENTS, ki as Scrubber, _ as Select, lc as SettingsForm, dc as SettingsPage, Ge as Sheet, Ui as ShortcutsHelp, ps as SignupForm, _s as SignupPage, i as Skeleton, y as Slider, Ki as SpeedMenu, Tc as Spinner, x as Switch, Qa as TRANSCODE_EXTENSIONS, Ss as Tabs, Cc as ToastHost, gc as Tooltip, xo as TranscodeNotice, ro as UPNEXT_COUNTDOWN_SECONDS, ao as UPNEXT_RING_CIRCUMFERENCE, io as UPNEXT_RING_RADIUS, _o as UpNext, Gi as VolumeControl, k as WEBHOOK_EVENT_CATEGORIES, ia as activeAudioIndex, kc as adminMenu, Ua as ambientGradient, ra as applyAudioTrack, on as applyStoredThemeEarly, na as applyTrackModes, za as averageRegion, Kl as bindMediaStoreToRouter, Oc as buildAdminRoutes, cr as buildMediaQuery, lr as buildMediaUrl, _a as captionStyleVars, ca as cleanCueText, mc as createPhlixApp, nn as deriveAccentVars, ga as edgeShadow, eo as extensionOf, wi as formatTime, xt as fuzzyScore, Fi as handleShortcut, ta as hasActiveCaptions, Ze as hasStoredPreferences, Wa as isBatterySaving, no as isFatalMediaError, Pi as isTypingTarget, $i as listAudioTracks, Qi as listSubtitleTracks, St as matchCommand, to as needsTranscode, la as readActiveCueLines, Xe as readStoredPreferences, ea as resolveTextTrack, Va as rgbString, Ha as rgbaString, oo as ringDashoffset, Ba as sampleAmbient, lt as useAuthStore, wt as useCommandStore, u as useFocusTrap, Ii as useKeyboardShortcuts, vn as useMediaStore, Bt as usePlayerStore, $ as usePreferencesStore, sn as useTheme, o as useToastStore };
+export { C as ALL_LOGS, Ia as AMBIENT_SAMPLE_H, La as AMBIENT_SAMPLE_INTERVAL_MS, Fa as AMBIENT_SAMPLE_W, ji as ARROW_ICONS, Mi as ARROW_LABELS, ne as AdminBackupApi, b as AdminCastApi, oe as AdminCollectionsApi, w as AdminDashboardApi, re as AdminDlnaServerApi, se as AdminHistoryApi, te as AdminIntegrationsApi, ue as AdminLibrariesApi, ae as AdminLiveTvApi, S as AdminLogsApi, ie as AdminRemoteAccessApi, ee as AdminServicesApi, de as AdminSettingsApi, ce as AdminSyncPlayApi, D as AdminUsersApi, A as AdminWebhooksApi, Ga as AmbientCanvas, e as ApiClient, a as ApiError, ze as AppBackdrop, st as AppLayout, Vl as AuditLogsPage, v as Badge, Xr as BrowsePage, c as Button, pa as CAPTION_BACKGROUND_OPTIONS, fa as CAPTION_COLOR_OPTIONS, ma as CAPTION_EDGE_OPTIONS, da as CAPTION_SIZE_OPTIONS, ua as CAPTION_SIZE_SCALE, va as CaptionOverlay, Pa as CaptionsMenu, mr as Chip, xr as Combobox, Pt as CommandPalette, Ke as DEFAULT_CAPTION_STYLE, qe as DEFAULT_PREFERENCES, Za as DIRECT_PLAY_EXTENSIONS, p as EmptyState, fl as FederationPage, Wr as FilterBar, r as Icon, d as IconButton, vt as Kbd, le as LIBRARY_TYPES, Vc as LibraryScanPage, n as LocalStorageTokenStore, os as LoginForm, us as LoginPage, Sl as ManageSharesPage, Hn as MediaCard, vi as MediaDetail, Ci as MediaDetailPage, Zn as MediaGrid, ur as MediaHomeRow, sr as MediaRow, Jt as MiniPlayer, f as Modal, $c as MyServersPage, Ai as PLAYER_SHORTCUTS, Dc as PageTransition, dn as PhlixApp, Lo as Player, Bo as PlayerPage, qi as QualityMenu, T as RATING_LABELS, E as RATING_OPTIONS, It as RESUME_MAX_RATIO, Ft as RESUME_MIN_SECONDS, Xa as ResumePrompt, Ec as Reveal, O as SUBSCRIBABLE_EVENTS, ki as Scrubber, _ as Select, lc as SettingsForm, dc as SettingsPage, Ge as Sheet, Ui as ShortcutsHelp, ps as SignupForm, _s as SignupPage, i as Skeleton, y as Slider, Ki as SpeedMenu, Tc as Spinner, x as Switch, Qa as TRANSCODE_EXTENSIONS, Ss as Tabs, Cc as ToastHost, gc as Tooltip, xo as TranscodeNotice, ro as UPNEXT_COUNTDOWN_SECONDS, ao as UPNEXT_RING_CIRCUMFERENCE, io as UPNEXT_RING_RADIUS, _o as UpNext, Gi as VolumeControl, k as WEBHOOK_EVENT_CATEGORIES, ia as activeAudioIndex, kc as adminMenu, Ua as ambientGradient, ra as applyAudioTrack, on as applyStoredThemeEarly, na as applyTrackModes, za as averageRegion, Hl as bindMediaStoreToRouter, Oc as buildAdminRoutes, cr as buildMediaQuery, lr as buildMediaUrl, _a as captionStyleVars, ca as cleanCueText, mc as createPhlixApp, nn as deriveAccentVars, ga as edgeShadow, eo as extensionOf, wi as formatTime, xt as fuzzyScore, Fi as handleShortcut, ta as hasActiveCaptions, Ze as hasStoredPreferences, Wa as isBatterySaving, no as isFatalMediaError, Pi as isTypingTarget, $i as listAudioTracks, Qi as listSubtitleTracks, St as matchCommand, to as needsTranscode, la as readActiveCueLines, Xe as readStoredPreferences, ea as resolveTextTrack, Va as rgbString, Ha as rgbaString, oo as ringDashoffset, Ba as sampleAmbient, lt as useAuthStore, wt as useCommandStore, u as useFocusTrap, Ii as useKeyboardShortcuts, vn as useMediaStore, Bt as usePlayerStore, $ as usePreferencesStore, sn as useTheme, o as useToastStore };
 
 //# sourceMappingURL=phlix-ui.js.map

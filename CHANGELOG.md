@@ -30,6 +30,13 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **`ManageSharesPage` re-skin (R5.2d):** the hub's library-shares page `src/pages/ManageSharesPage.vue` is
+  rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/shares` and
+  `DELETE /api/v1/shares/:id` flows are unchanged). Shares render in a tokenized table (Library / Shared with /
+  Permissions / Created / Expires / Actions) with a `Skeleton` loading state, `EmptyState` for the empty list +
+  a load error (with Retry), a `Badge` permission tone (read → info / write → success) and an error `Badge` for
+  expired shares — replacing the old raw-hex permission/expired/danger colors — plus `useToastStore` feedback on
+  revoke + load. Revoke updates the table in place (no skeleton flash). A `client?: ApiClient` test seam is added.
 - **`FederationPage` re-skin (R5.2c):** the hub's peer-federation page `src/pages/FederationPage.vue` is
   rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/federation/peers`,
   `POST …/connect` and `POST …/peers/:id/disconnect` flows are unchanged). Peers render in a tokenized table
