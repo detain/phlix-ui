@@ -1,6 +1,13 @@
 import { createApp, type App as VueApp } from 'vue';
 import { createPinia } from 'pinia';
-import { createRouter, createWebHistory, type Router, type RouteRecordRaw } from 'vue-router';
+import {
+    createRouter,
+    createWebHistory,
+    type Router,
+    type RouteRecordRaw,
+    type RouteLocationNormalized,
+    type RouteLocationRaw,
+} from 'vue-router';
 import PhlixApp from './PhlixApp.vue';
 import Placeholder from './placeholder/Placeholder.vue';
 // The 6 built-in route pages are lazy `() => import()` chunks (R6.1a), NOT static
@@ -11,7 +18,30 @@ import Placeholder from './placeholder/Placeholder.vue';
 // split (Rollup's INEFFECTIVE_DYNAMIC_IMPORT warning).
 import { applyStoredThemeEarly } from '../composables/useTheme';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import type { PhlixAppConfig } from './types';
+
+/**
+ * Route names reachable WITHOUT authentication. Everything else is gated by
+ * {@link authGuard} — an unauthenticated visit redirects to `login`. A consumer
+ * route can also opt out by setting `meta: { public: true }`.
+ */
+export const PUBLIC_ROUTE_NAMES: readonly string[] = ['login', 'signup'];
+
+/**
+ * Navigation guard: send unauthenticated users to the login page for any
+ * non-public route. Pure (the auth state is passed in) so it unit-tests without
+ * a live router/store. Returns `true` to allow, or a redirect location.
+ */
+export function authGuard(to: RouteLocationNormalized, isLoggedIn: boolean): true | RouteLocationRaw {
+    const name = typeof to.name === 'string' ? to.name : '';
+    const isPublic = PUBLIC_ROUTE_NAMES.includes(name) || to.meta?.public === true;
+    if (isPublic || isLoggedIn) {
+        return true;
+    }
+    // Preserve where they were headed so the login flow can return there.
+    return { name: 'login', query: to.fullPath ? { redirect: to.fullPath } : {} };
+}
 
 declare global {
     interface Window {
@@ -116,6 +146,12 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
         history: createWebHistory(),
         routes: buildRoutes(fullConfig),
     });
+
+    // Gate every non-public route on auth: an unauthenticated visit redirects to
+    // login (so a failed/absent login can't "fall through" to the app shell —
+    // e.g. the hub's `/` → `/app/servers` landing). Pinia 3 resolves the store's
+    // `inject('apiBase')` against this app's provides even from inside the guard.
+    router.beforeEach((to) => authGuard(to, useAuthStore(pinia).isLoggedIn));
 
     const app: VueApp = createApp(PhlixApp);
     app.provide('apiBase', fullConfig.apiBase);

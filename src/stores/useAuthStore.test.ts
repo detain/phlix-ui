@@ -87,6 +87,19 @@ describe('useAuthStore', () => {
     expect(s.isLoggedIn).toBe(false);
   });
 
+  it('login returns false (and stays logged out) when the password is accepted but /auth/me fails', async () => {
+    // The back end accepts the credentials (tokens issued) but the follow-up
+    // user fetch 404s → fetchUser clears the tokens → login must report failure,
+    // not a phantom success that the form would navigate on.
+    routes['/api/v1/auth/login'] = () => jsonResponse({ access_token: 'AT', refresh_token: 'RT' });
+    routes['/api/v1/auth/me'] = () => jsonResponse({ error: 'Not Found' }, 404);
+    const s = useAuthStore();
+    const ok = await s.login('a@b.c', 'pw');
+    expect(ok).toBe(false);
+    expect(s.isLoggedIn).toBe(false);
+    expect(localStorage.getItem('access_token')).toBeNull();
+  });
+
   it('signup stores tokens + fetches the user', async () => {
     routes['/api/v1/auth/register'] = () => jsonResponse({ access_token: 'AT2', refresh_token: 'RT2' });
     routes['/api/v1/auth/me'] = () => jsonResponse({ user: { id: 2, email: 'n@b.c', is_admin: false } });

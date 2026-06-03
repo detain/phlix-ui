@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createRouter, createWebHistory } from 'vue-router';
-import { createPhlixApp, buildRoutes } from './createPhlixApp';
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router';
+import { createPhlixApp, buildRoutes, authGuard, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
 
 beforeEach(() => {
   localStorage.clear();
@@ -178,5 +178,43 @@ describe('router base handling (regression: /app/app doubling + redirect loop)',
     const r = makeRouter('/hub');
     expect(r.resolve('/hub').name).toBe('browse');
     expect(r.resolve({ name: 'login' }).href).toBe('/hub/login');
+  });
+});
+
+describe('authGuard', () => {
+  function route(
+    name: string,
+    opts: { meta?: Record<string, unknown>; fullPath?: string } = {},
+  ): RouteLocationNormalized {
+    return {
+      name,
+      meta: opts.meta ?? {},
+      fullPath: opts.fullPath ?? `/app/${name}`,
+    } as unknown as RouteLocationNormalized;
+  }
+
+  it('redirects an unauthenticated visit to a protected route to login (with redirect query)', () => {
+    expect(authGuard(route('settings'), false)).toMatchObject({
+      name: 'login',
+      query: { redirect: '/app/settings' },
+    });
+  });
+
+  it('lets an authenticated user through to a protected route', () => {
+    expect(authGuard(route('settings'), true)).toBe(true);
+  });
+
+  it.each([...PUBLIC_ROUTE_NAMES])('lets an unauthenticated user reach the public route "%s"', (name) => {
+    expect(authGuard(route(name), false)).toBe(true);
+  });
+
+  it('honours meta.public to allow an unauthenticated visit', () => {
+    expect(authGuard(route('browse', { meta: { public: true } }), false)).toBe(true);
+  });
+
+  it('still gates a protected route even when logged out and meta.public is false', () => {
+    expect(authGuard(route('my-servers', { meta: { public: false } }), false)).toMatchObject({
+      name: 'login',
+    });
   });
 });

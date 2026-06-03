@@ -176,7 +176,7 @@ export class ApiClient {
             return false;
         }
         try {
-            const response = await this.doFetch(`${this.baseUrl}/auth/refresh`, {
+            const response = await this.doFetch(`${this.baseUrl}/api/v1/auth/refresh`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'same-origin',
