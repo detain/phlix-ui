@@ -23,6 +23,7 @@ import {
   type User,
 } from '../../api/admin/users';
 import { useToastStore } from '../../stores/useToastStore';
+import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
@@ -47,10 +48,6 @@ const api = new AdminUsersApi(
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
 );
 const toasts = useToastStore();
-
-function errMessage(e: unknown, fallback: string): string {
-  return e instanceof Error && e.message ? e.message : fallback;
-}
 
 const ratingOptions = computed<SelectOptionInput[]>(() =>
   RATING_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
