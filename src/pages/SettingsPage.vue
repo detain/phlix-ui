@@ -1,29 +1,66 @@
 <script setup lang="ts">
+/**
+ * SettingsPage (R4.2) — hosts the user/appearance + server settings under the
+ * shared Tabs primitive: Appearance + Playback (live `usePreferencesStore`
+ * controls via AppearanceSettings) and Server (the schema-driven SettingsForm).
+ */
+import { ref } from 'vue';
+import Tabs, { type TabItem } from '../components/ui/Tabs.vue';
+import AppearanceSettings from '../components/AppearanceSettings.vue';
 import SettingsForm from '../components/SettingsForm.vue';
+
+const TABS: TabItem[] = [
+  { value: 'appearance', label: 'Appearance', icon: 'sun' },
+  { value: 'playback', label: 'Playback', icon: 'play' },
+  { value: 'server', label: 'Server', icon: 'settings' },
+];
+
+const tab = ref('appearance');
 </script>
 
 <template>
-    <div class="settings-page">
-        <div class="settings-header">
-            <h1 class="settings-title">Settings</h1>
-        </div>
+  <div class="settings-page">
+    <header class="settings-page__head">
+      <p class="settings-page__eyebrow">Preferences</p>
+      <h1 class="settings-page__title">Settings</h1>
+    </header>
+
+    <Tabs v-model="tab" :tabs="TABS" label="Settings sections">
+      <template #appearance>
+        <AppearanceSettings panel="appearance" />
+      </template>
+      <template #playback>
+        <AppearanceSettings panel="playback" />
+      </template>
+      <template #server>
         <SettingsForm />
-    </div>
+      </template>
+    </Tabs>
+  </div>
 </template>
 
 <style scoped>
 .settings-page {
-    max-width: 900px;
-    margin: 0 auto;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4) var(--space-16);
 }
-
-.settings-header {
-    padding: 24px 24px 0;
+.settings-page__head {
+  margin-bottom: var(--space-6);
 }
-
-.settings-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--color-text, #e4e4e7);
+.settings-page__eyebrow {
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold, 600);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.settings-page__title {
+  margin-top: var(--space-1);
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold, 600);
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
 }
 </style>
