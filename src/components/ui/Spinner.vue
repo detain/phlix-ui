@@ -5,18 +5,17 @@
  */
 import { computed } from 'vue';
 import Icon from '../Icon.vue';
+import { useMessages } from '../../composables/useMessages';
 
-const props = withDefaults(
-  defineProps<{ size?: number | string; label?: string }>(),
-  { label: 'Loading' },
-);
+const props = defineProps<{ size?: number | string; label?: string }>();
+const { t } = useMessages();
 const sizeValue = computed(() =>
   props.size === undefined ? undefined : typeof props.size === 'number' ? `${props.size}px` : props.size,
 );
 </script>
 
 <template>
-  <span class="phlix-spinner" role="status" :aria-label="label" :style="sizeValue ? { fontSize: sizeValue } : undefined">
+  <span class="phlix-spinner" role="status" :aria-label="label ?? t('common.loading')" :style="sizeValue ? { fontSize: sizeValue } : undefined">
     <Icon name="spinner" class="phlix-spinner__icon" />
   </span>
 </template>

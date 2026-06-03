@@ -11,6 +11,9 @@
 import { ref, useId, watch } from 'vue';
 import IconButton from './IconButton.vue';
 import { useFocusTrap } from './useFocusTrap';
+import { useMessages } from '../../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -68,7 +71,7 @@ useFocusTrap(panelEl, open, {
             <IconButton
               v-if="!hideClose"
               name="x"
-              label="Close"
+              :label="t('common.close')"
               size="sm"
               class="phlix-modal__close"
               @click="close"

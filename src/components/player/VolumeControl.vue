@@ -12,9 +12,11 @@ import IconButton from '../ui/IconButton.vue';
 import Slider from '../ui/Slider.vue';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { useMessages } from '../../composables/useMessages';
 
 const player = usePlayerStore();
 const prefs = usePreferencesStore();
+const { t } = useMessages();
 
 /** Effective level shown on the slider — zero while muted. */
 const level = computed(() => (player.muted ? 0 : player.volume));
@@ -42,7 +44,7 @@ watch(
   <div class="volume">
     <IconButton
       :name="iconName"
-      :label="player.muted ? 'Unmute' : 'Mute'"
+      :label="player.muted ? t('player.unmute') : t('player.mute')"
       size="sm"
       class="volume__btn"
       @click="player.toggleMute()"
@@ -53,7 +55,7 @@ watch(
       :min="0"
       :max="1"
       :step="0.05"
-      label="Volume"
+      :label="t('player.volume')"
       :format-value="(v: number) => `${Math.round(v * 100)}%`"
       @update:model-value="onInput"
     />

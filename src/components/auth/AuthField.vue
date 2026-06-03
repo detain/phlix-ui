@@ -9,6 +9,9 @@
  */
 import { computed, ref, useId } from 'vue';
 import Icon from '../Icon.vue';
+import { useMessages } from '../../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -73,7 +76,7 @@ function toggleReveal(): void {
         v-if="isPassword"
         type="button"
         class="authfield__toggle"
-        :aria-label="revealed ? 'Hide password' : 'Show password'"
+        :aria-label="revealed ? t('auth.hidePassword') : t('auth.showPassword')"
         :aria-pressed="revealed"
         :disabled="disabled"
         @click="toggleReveal"

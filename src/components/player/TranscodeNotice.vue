@@ -9,6 +9,7 @@
  * wired yet (per project memory), so the only action offered is to go back.
  */
 import Icon from '../Icon.vue';
+import { useMessages } from '../../composables/useMessages';
 
 defineProps<{
   /** Title of the media that can't be played (for a more specific message). */
@@ -16,21 +17,21 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{ (e: 'back'): void }>();
+
+const { t } = useMessages();
 </script>
 
 <template>
   <div class="transcode" role="alert">
     <div class="transcode__card">
       <Icon name="alert" class="transcode__icon" />
-      <h3 class="transcode__heading">Can&rsquo;t play this file here</h3>
+      <h3 class="transcode__heading">{{ t('player.transcodeHeading') }}</h3>
       <p class="transcode__body">
-        <template v-if="title">&ldquo;{{ title }}&rdquo; is</template><template v-else>This title is</template>
-        in a format your browser can&rsquo;t play directly (for example MKV or HEVC). Transcoding isn&rsquo;t
-        available yet.
+        {{ title ? t('player.transcodeBodyTitled', { title }) : t('player.transcodeBodyUntitled') }}
       </p>
       <button type="button" class="transcode__back" @click="emit('back')">
         <Icon name="arrow-left" />
-        <span>Go back</span>
+        <span>{{ t('player.goBack') }}</span>
       </button>
     </div>
   </div>

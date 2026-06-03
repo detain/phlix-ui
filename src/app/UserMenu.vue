@@ -10,19 +10,21 @@ import { useRouter } from 'vue-router';
 import Icon from '../components/Icon.vue';
 import { useFocusTrap } from '../components/ui/useFocusTrap';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useMessages } from '../composables/useMessages';
 import type { PhlixAppConfig } from './types';
 
 const auth = useAuthStore();
 const router = useRouter();
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.routerBase ?? '/app');
+const { t } = useMessages();
 
 const open = ref(false);
 const rootEl = ref<HTMLElement | null>(null);
 const panelEl = ref<HTMLElement | null>(null);
 
 const displayName = computed(
-  () => auth.user?.username || auth.user?.name || auth.user?.email || 'Account',
+  () => auth.user?.username || auth.user?.name || auth.user?.email || t('shell.account'),
 );
 const initial = computed(() => displayName.value.charAt(0).toUpperCase() || 'A');
 
@@ -65,7 +67,7 @@ onBeforeUnmount(() => {
     <button
       type="button"
       class="usermenu__trigger"
-      :aria-label="auth.isLoggedIn ? `Account: ${displayName}` : 'Account'"
+      :aria-label="auth.isLoggedIn ? t('shell.accountNamed', { name: displayName }) : t('shell.account')"
       aria-haspopup="menu"
       :aria-expanded="open"
       @click="open = !open"
@@ -79,7 +81,7 @@ onBeforeUnmount(() => {
       ref="panelEl"
       class="usermenu__panel"
       role="menu"
-      aria-label="Account"
+      :aria-label="t('shell.account')"
       tabindex="-1"
     >
       <template v-if="auth.isLoggedIn">
@@ -88,15 +90,15 @@ onBeforeUnmount(() => {
           <span class="usermenu__name">{{ displayName }}</span>
         </div>
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/settings`)">
-          <Icon name="settings" /> Settings
+          <Icon name="settings" /> {{ t('shell.settings') }}
         </button>
         <button type="button" class="usermenu__item" role="menuitem" @click="signOut">
-          <Icon name="log-out" /> Sign out
+          <Icon name="log-out" /> {{ t('shell.signOut') }}
         </button>
       </template>
       <template v-else>
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/login`)">
-          <Icon name="user" /> Sign in
+          <Icon name="user" /> {{ t('shell.signIn') }}
         </button>
       </template>
     </div>

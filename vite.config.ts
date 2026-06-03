@@ -57,6 +57,7 @@ export default defineConfig({
                 'src/components/**/*.{ts,vue}',
                 'src/stores/**/*.ts',
                 'src/composables/**/*.ts',
+                'src/i18n/**/*.ts',
                 'src/api/**/*.ts',
                 'src/app/**/*.{ts,vue}',
                 'src/pages/BrowsePage.vue',

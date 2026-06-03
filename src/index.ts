@@ -261,4 +261,20 @@ export { usePreconnect } from './composables/usePreconnect';
 export type { UsePreconnectOptions } from './composables/usePreconnect';
 export { deriveAccentVars } from './composables/color';
 
+// i18n-readiness seam (R6.5c) — English defaults + a deep-partial override map.
+// Consumers translate via `useMessages().t('group.key')`; override strings through
+// `PhlixAppConfig.messages`. `createTranslator`/`mergeMessages`/`DEFAULT_MESSAGES`
+// are exposed for non-component contexts and inspection.
+export { useMessages } from './composables/useMessages';
+export type { UseMessages } from './composables/useMessages';
+export { DEFAULT_MESSAGES, createTranslator, mergeMessages } from './i18n/messages';
+export type {
+  PhlixMessages,
+  PhlixMessagesConfig,
+  MessageGroup,
+  MessageKey,
+  TranslateParams,
+  Translate,
+} from './i18n/messages';
+
 export * from './tokens';

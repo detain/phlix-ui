@@ -13,15 +13,15 @@ type __VLS_Props = {
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     play: (item: MediaItem) => any;
     info: (item: MediaItem) => any;
-    watchlist: (item: MediaItem) => any;
-    resume: (item: MediaItem) => any;
     back: () => any;
+    resume: (item: MediaItem) => any;
+    watchlist: (item: MediaItem) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onPlay?: ((item: MediaItem) => any) | undefined;
     onInfo?: ((item: MediaItem) => any) | undefined;
-    onWatchlist?: ((item: MediaItem) => any) | undefined;
-    onResume?: ((item: MediaItem) => any) | undefined;
     onBack?: (() => any) | undefined;
+    onResume?: ((item: MediaItem) => any) | undefined;
+    onWatchlist?: ((item: MediaItem) => any) | undefined;
 }>, {
     resumeSeconds: number | null;
     similar: MediaItem[];

@@ -22,6 +22,7 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
 import Icon from './Icon.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
+import { useMessages } from '../composables/useMessages';
 import ShortcutsHelp from './player/ShortcutsHelp.vue';
 import VolumeControl from './player/VolumeControl.vue';
 import SpeedMenu from './player/SpeedMenu.vue';
@@ -76,6 +77,7 @@ const emit = defineEmits<{
 
 const player = usePlayerStore();
 const prefs = usePreferencesStore();
+const { t } = useMessages();
 
 /** Playback-speed ladder for the `<`/`>` shortcuts. */
 const SPEED_LADDER = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -538,11 +540,11 @@ onBeforeUnmount(() => {
 
       <!-- metadata -->
       <div class="player__meta">
-        <button type="button" class="player__iconbtn player__back" aria-label="Back" @click.stop="emit('back')">
+        <button type="button" class="player__iconbtn player__back" :aria-label="t('player.back')" @click.stop="emit('back')">
           <Icon name="arrow-left" />
         </button>
         <div class="player__meta-text">
-          <p class="player__eyebrow">Now playing</p>
+          <p class="player__eyebrow">{{ t('player.nowPlaying') }}</p>
           <h2 class="player__title">{{ media.name }}</h2>
           <div class="player__sub numeric">
             <template v-for="(seg, i) in metaSegments" :key="i">
@@ -559,7 +561,7 @@ onBeforeUnmount(() => {
           type="button"
           class="player__bigplay"
           :class="{ 'is-playing': player.playing }"
-          :aria-label="player.playing ? 'Pause' : 'Play'"
+          :aria-label="player.playing ? t('player.pause') : t('player.play')"
           @click.stop="togglePlay"
         >
           <Icon :name="player.playing ? 'pause' : 'play'" />
@@ -591,7 +593,7 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="player__iconbtn player__iconbtn--lg"
-            :aria-label="player.playing ? 'Pause' : 'Play'"
+            :aria-label="player.playing ? t('player.pause') : t('player.play')"
             @click="togglePlay"
           >
             <Icon :name="player.playing ? 'pause' : 'play'" />
@@ -617,7 +619,7 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="player__iconbtn"
-            aria-label="Keyboard shortcuts"
+            :aria-label="t('player.keyboardShortcuts')"
             aria-haspopup="dialog"
             @click="showHelp = true"
           >
@@ -629,7 +631,7 @@ onBeforeUnmount(() => {
             type="button"
             class="player__iconbtn"
             :class="{ 'is-on': inPip }"
-            :aria-label="inPip ? 'Exit picture-in-picture' : 'Picture-in-picture'"
+            :aria-label="inPip ? t('player.exitPip') : t('player.pip')"
             :aria-pressed="inPip"
             @click="togglePip"
           >
@@ -640,7 +642,7 @@ onBeforeUnmount(() => {
             type="button"
             class="player__iconbtn"
             :class="{ 'is-on': theater }"
-            :aria-label="theater ? 'Exit theater mode' : 'Theater mode'"
+            :aria-label="theater ? t('player.exitTheater') : t('player.theater')"
             :aria-pressed="theater"
             @click="toggleTheater"
           >
@@ -650,7 +652,7 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="player__iconbtn"
-            :aria-label="fullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+            :aria-label="fullscreen ? t('player.exitFullscreen') : t('player.fullscreen')"
             @click="toggleFullscreen"
           >
             <Icon :name="fullscreen ? 'fullscreen-exit' : 'fullscreen'" />

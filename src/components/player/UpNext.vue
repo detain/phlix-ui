@@ -13,6 +13,9 @@ import { computed } from 'vue';
 import type { MediaItem } from '../../types/media-item';
 import Icon from '../Icon.vue';
 import { ringDashoffset, UPNEXT_RING_CIRCUMFERENCE, UPNEXT_RING_RADIUS } from './playback';
+import { useMessages } from '../../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -38,18 +41,18 @@ const dashOffset = computed(() => ringDashoffset(props.remaining, props.total));
 </script>
 
 <template>
-  <aside class="upnext" role="region" aria-label="Up next">
+  <aside class="upnext" role="region" :aria-label="t('player.upNext')">
     <img v-if="thumb" class="upnext__thumb" :src="thumb" alt="" loading="lazy" />
     <div class="upnext__body">
-      <p class="upnext__eyebrow">Up next</p>
+      <p class="upnext__eyebrow">{{ t('player.upNext') }}</p>
       <h4 class="upnext__title">{{ media.name }}</h4>
-      <p v-if="counting" class="upnext__cd numeric">Starts in {{ Math.max(0, remaining) }}s</p>
+      <p v-if="counting" class="upnext__cd numeric">{{ t('player.startsIn', { seconds: Math.max(0, remaining) }) }}</p>
       <div class="upnext__actions">
         <button type="button" class="upnext__btn upnext__btn--amber" @click="emit('play-now')">
           <Icon name="play" />
-          <span>Play now</span>
+          <span>{{ t('player.playNow') }}</span>
         </button>
-        <button type="button" class="upnext__btn upnext__btn--ghost" @click="emit('cancel')">Cancel</button>
+        <button type="button" class="upnext__btn upnext__btn--ghost" @click="emit('cancel')">{{ t('player.cancel') }}</button>
       </div>
     </div>
 

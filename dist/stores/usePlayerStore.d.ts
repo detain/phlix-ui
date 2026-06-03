@@ -142,7 +142,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "volume" | "playing" | "duration" | "current" | "streamUrl" | "queue" | "position" | "buffered" | "muted" | "rate" | "quality" | "subtitleLang" | "miniPlayer" | "resumeMap">, Pick<{
+}, "volume" | "playing" | "duration" | "miniPlayer" | "quality" | "current" | "streamUrl" | "queue" | "position" | "buffered" | "muted" | "rate" | "subtitleLang" | "resumeMap">, Pick<{
     current: import("vue").Ref<{
         id: string;
         name: string;
@@ -388,4 +388,4 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "play" | "pause" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "setCurrent" | "updateProgress" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "next" | "showMiniPlayer" | "hideMiniPlayer" | "closePlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;
+}, "play" | "pause" | "closePlayer" | "next" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "setCurrent" | "updateProgress" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;
