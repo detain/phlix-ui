@@ -25,11 +25,14 @@
         "preview": "vite preview",
         "test": "vitest",
         "test:run": "vitest run",
+        "test:visual": "playwright test",
+        "test:visual:update": "playwright test --update-snapshots",
         "lint": "eslint . --ext .ts,.vue --fix",
         "typecheck": "vue-tsc --noEmit"
     },
     "devDependencies": {
         "@iconify-json/lucide": "^1.2.111",
+        "@playwright/test": "^1.60.0",
         "@types/node": "^25.9.1",
         "@vitejs/plugin-vue": "^6.0.7",
         "@vitest/coverage-v8": "^4.1.8",
