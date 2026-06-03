@@ -30,6 +30,15 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **`AuditLogsPage` re-skin (R5.2e):** the hub's paginated audit-log viewer `src/pages/AuditLogsPage.vue` is
+  rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/audit-logs?page=N`
+  → `{ logs, total, page, total_pages }` flow + pagination are unchanged). Logs render in a tokenized table
+  (Action / Actor / Target / Details / IP / Time) with a `Skeleton` loading state, `EmptyState` for the empty
+  list + a load error (with Retry), `Button` pagination (Previous / Next with chevron icons, disabled at the
+  ends), and `useToastStore` feedback on load failure. The action is now a category-toned `Badge` (create →
+  success / delete → error / update → info / login → accent / else → neutral), **replacing the old raw-hex
+  coloured square with an ASCII-glyph (`+`/`-`/`~`/`@`/`#`) icon**. A `client?: ApiClient` test seam is added.
+  **This completes R5.2 — all five long-tail app pages are now on the redo surfaces and counted in coverage.**
 - **`ManageSharesPage` re-skin (R5.2d):** the hub's library-shares page `src/pages/ManageSharesPage.vue` is
   rebuilt on the Nocturne tokens + `@phlix/ui` primitives (presentation-only — its `GET /api/v1/shares` and
   `DELETE /api/v1/shares/:id` flows are unchanged). Shares render in a tokenized table (Library / Shared with /

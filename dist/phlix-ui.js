@@ -6591,89 +6591,122 @@ var Ac = {
 			}, 8, ["aria-label", "onClick"])])])
 		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-db9f420b"]]), Cl = { class: "audit-logs-page" }, wl = {
+}), [["__scopeId", "data-v-db9f420b"]]), Cl = {
+	class: "audit",
+	"aria-labelledby": "audit-heading"
+}, wl = {
 	key: 0,
-	class: "loading"
+	class: "audit__skel"
 }, Tl = {
-	key: 1,
-	class: "error"
-}, El = {
-	key: 2,
-	class: "logs-container"
-}, Dl = { class: "logs-list" }, Ol = { class: "log-content" }, kl = { class: "log-header" }, Al = { class: "log-action" }, jl = { class: "log-actor" }, Ml = { class: "log-time" }, Nl = {
+	key: 3,
+	class: "audit__content"
+}, El = { class: "audit__table-wrap" }, Dl = {
+	class: "audit__table",
+	"aria-label": "Audit logs"
+}, Ol = ["data-testid"], kl = { class: "audit__details" }, Al = { class: "audit__ip" }, jl = { class: "audit__date" }, Ml = {
 	key: 0,
-	class: "log-target"
-}, Pl = {
-	key: 1,
-	class: "log-details"
-}, Fl = {
-	key: 2,
-	class: "log-ip"
-}, Il = {
-	key: 0,
-	class: "empty-state"
-}, Ll = {
-	key: 0,
-	class: "pagination"
-}, Rl = ["disabled"], zl = { class: "page-info" }, Bl = ["disabled"], Vl = /*#__PURE__*/ l(/* @__PURE__ */ z({
+	class: "audit__pagination",
+	"aria-label": "Audit log pages"
+}, Nl = {
+	class: "audit__page-info",
+	"aria-live": "polite"
+}, Pl = /*#__PURE__*/ l(/* @__PURE__ */ z({
 	__name: "AuditLogsPage",
+	props: { client: {} },
 	setup(e) {
-		let t = K([]), n = K(!0), r = K(null), i = K(1), a = K(1);
-		async function o(e = 1) {
+		let t = e.client ?? s, n = o(), r = K([]), a = K(!0), l = K(null), u = K(1), d = K(1);
+		function f(e, t) {
+			return e instanceof Error && e.message ? e.message : t;
+		}
+		async function m(e = 1) {
+			a.value = !0, l.value = null;
 			try {
-				n.value = !0;
-				let r = await s.get("/api/v1/audit-logs", { page: String(e) });
-				t.value = r.logs || [], i.value = r.page || 1, a.value = r.total_pages || 1;
+				let n = await t.get("/api/v1/audit-logs", { page: String(e) });
+				r.value = n.logs || [], u.value = n.page || 1, d.value = n.total_pages || 1;
 			} catch (e) {
-				r.value = e instanceof Error ? e.message : "Failed to load audit logs";
+				l.value = f(e, "Failed to load audit logs."), n.error(l.value);
 			} finally {
-				n.value = !1;
+				a.value = !1;
 			}
 		}
-		function c(e) {
+		function h(e) {
 			return new Date(e).toLocaleString();
 		}
-		function l(e) {
-			return e.includes("create") || e.includes("add") ? "#22c55e" : e.includes("delete") || e.includes("remove") ? "#ef4444" : e.includes("update") || e.includes("edit") ? "#3b82f6" : e.includes("login") || e.includes("auth") ? "#8b5cf6" : "#6b7280";
+		function g(e) {
+			return e.includes("create") || e.includes("add") ? "success" : e.includes("delete") || e.includes("remove") ? "error" : e.includes("update") || e.includes("edit") ? "info" : e.includes("login") || e.includes("auth") ? "accent" : "neutral";
 		}
-		function u(e) {
-			return e.includes("create") || e.includes("add") ? "+" : e.includes("delete") || e.includes("remove") ? "-" : e.includes("update") || e.includes("edit") ? "~" : e.includes("login") || e.includes("auth") ? "@" : "#";
-		}
-		return W(() => {
-			o();
-		}), (e, s) => (G(), F("div", Cl, [s[3] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Audit Logs"), I("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (G(), F("div", wl, "Loading audit logs...")) : r.value ? (G(), F("div", Tl, Y(r.value), 1)) : (G(), F("div", El, [I("div", Dl, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
-			key: e.id,
-			class: "log-entry"
-		}, [I("div", {
-			class: "log-icon",
-			style: H({ backgroundColor: l(e.action) })
-		}, Y(u(e.action)), 5), I("div", Ol, [
-			I("div", kl, [
-				I("span", Al, Y(e.action), 1),
-				I("span", jl, Y(e.actor), 1),
-				I("span", Ml, Y(c(e.created_at)), 1)
-			]),
-			e.target ? (G(), F("p", Nl, "Target: " + Y(e.target), 1)) : P("", !0),
-			e.details ? (G(), F("p", Pl, Y(e.details), 1)) : P("", !0),
-			e.ip_address ? (G(), F("span", Fl, "IP: " + Y(e.ip_address), 1)) : P("", !0)
-		])]))), 128)), t.value.length === 0 ? (G(), F("div", Il, [...s[2] ||= [I("p", null, "No audit logs found.", -1)]])) : P("", !0)]), a.value > 1 ? (G(), F("div", Ll, [
-			I("button", {
-				class: "btn btn-secondary",
-				disabled: i.value <= 1,
-				onClick: s[0] ||= (e) => o(i.value - 1)
-			}, " Previous ", 8, Rl),
-			I("span", zl, "Page " + Y(i.value) + " of " + Y(a.value), 1),
-			I("button", {
-				class: "btn btn-secondary",
-				disabled: i.value >= a.value,
-				onClick: s[1] ||= (e) => o(i.value + 1)
-			}, " Next ", 8, Bl)
+		return W(() => m()), (e, t) => (G(), F("section", Cl, [t[7] ||= I("header", { class: "audit__head" }, [I("h1", {
+			id: "audit-heading",
+			class: "audit__title"
+		}, "Audit Logs"), I("p", { class: "audit__subtitle" }, "View system activity and user actions.")], -1), a.value ? (G(), F("div", wl, [R(i, {
+			variant: "text",
+			lines: 8
+		})])) : l.value ? (G(), N(p, {
+			key: 1,
+			icon: "alert",
+			title: "Couldn't load audit logs",
+			description: l.value
+		}, {
+			actions: Q(() => [R(c, {
+				variant: "solid",
+				size: "sm",
+				"left-icon": "rewind",
+				onClick: t[0] ||= (e) => m(u.value)
+			}, {
+				default: Q(() => [...t[3] ||= [L("Retry", -1)]]),
+				_: 1
+			})]),
+			_: 1
+		}, 8, ["description"])) : r.value.length === 0 ? (G(), N(p, {
+			key: 2,
+			icon: "list",
+			title: "No audit logs",
+			description: "System activity and user actions will appear here."
+		})) : (G(), F("div", Tl, [I("div", El, [I("table", Dl, [t[4] ||= I("thead", null, [I("tr", null, [
+			I("th", { scope: "col" }, "Action"),
+			I("th", { scope: "col" }, "Actor"),
+			I("th", { scope: "col" }, "Target"),
+			I("th", { scope: "col" }, "Details"),
+			I("th", { scope: "col" }, "IP"),
+			I("th", { scope: "col" }, "Time")
+		])], -1), I("tbody", null, [(G(!0), F(j, null, q(r.value, (e) => (G(), F("tr", { key: e.id }, [
+			I("td", null, [I("span", { "data-testid": `action-${e.id}` }, [R(v, { tone: g(e.action) }, {
+				default: Q(() => [L(Y(e.action), 1)]),
+				_: 2
+			}, 1032, ["tone"])], 8, Ol)]),
+			I("td", null, Y(e.actor), 1),
+			I("td", null, Y(e.target || "—"), 1),
+			I("td", kl, Y(e.details || "—"), 1),
+			I("td", Al, Y(e.ip_address || "—"), 1),
+			I("td", jl, Y(h(e.created_at)), 1)
+		]))), 128))])])]), d.value > 1 ? (G(), F("nav", Ml, [
+			R(c, {
+				variant: "ghost",
+				size: "sm",
+				"left-icon": "chevron-left",
+				disabled: u.value <= 1,
+				onClick: t[1] ||= (e) => m(u.value - 1)
+			}, {
+				default: Q(() => [...t[5] ||= [L(" Previous ", -1)]]),
+				_: 1
+			}, 8, ["disabled"]),
+			I("span", Nl, "Page " + Y(u.value) + " of " + Y(d.value), 1),
+			R(c, {
+				variant: "ghost",
+				size: "sm",
+				"right-icon": "chevron-right",
+				disabled: u.value >= d.value,
+				onClick: t[2] ||= (e) => m(u.value + 1)
+			}, {
+				default: Q(() => [...t[6] ||= [L(" Next ", -1)]]),
+				_: 1
+			}, 8, ["disabled"])
 		])) : P("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-05910fd9"]]);
+}), [["__scopeId", "data-v-8b74018b"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
-function Hl(e, t) {
+function Fl(e, t) {
 	let n = vn(), r = !1;
 	n.applyQuery(e.currentRoute.value.query), n.fetchMedia(t);
 	let i = Z(() => JSON.stringify(n.toQuery()), () => {
@@ -6688,6 +6721,6 @@ function Hl(e, t) {
 	};
 }
 //#endregion
-export { C as ALL_LOGS, Ia as AMBIENT_SAMPLE_H, La as AMBIENT_SAMPLE_INTERVAL_MS, Fa as AMBIENT_SAMPLE_W, ji as ARROW_ICONS, Mi as ARROW_LABELS, ne as AdminBackupApi, b as AdminCastApi, oe as AdminCollectionsApi, w as AdminDashboardApi, re as AdminDlnaServerApi, se as AdminHistoryApi, te as AdminIntegrationsApi, ue as AdminLibrariesApi, ae as AdminLiveTvApi, S as AdminLogsApi, ie as AdminRemoteAccessApi, ee as AdminServicesApi, de as AdminSettingsApi, ce as AdminSyncPlayApi, D as AdminUsersApi, A as AdminWebhooksApi, Ga as AmbientCanvas, e as ApiClient, a as ApiError, ze as AppBackdrop, st as AppLayout, Vl as AuditLogsPage, v as Badge, Xr as BrowsePage, c as Button, pa as CAPTION_BACKGROUND_OPTIONS, fa as CAPTION_COLOR_OPTIONS, ma as CAPTION_EDGE_OPTIONS, da as CAPTION_SIZE_OPTIONS, ua as CAPTION_SIZE_SCALE, va as CaptionOverlay, Pa as CaptionsMenu, mr as Chip, xr as Combobox, Pt as CommandPalette, Ke as DEFAULT_CAPTION_STYLE, qe as DEFAULT_PREFERENCES, Za as DIRECT_PLAY_EXTENSIONS, p as EmptyState, fl as FederationPage, Wr as FilterBar, r as Icon, d as IconButton, vt as Kbd, le as LIBRARY_TYPES, Vc as LibraryScanPage, n as LocalStorageTokenStore, os as LoginForm, us as LoginPage, Sl as ManageSharesPage, Hn as MediaCard, vi as MediaDetail, Ci as MediaDetailPage, Zn as MediaGrid, ur as MediaHomeRow, sr as MediaRow, Jt as MiniPlayer, f as Modal, $c as MyServersPage, Ai as PLAYER_SHORTCUTS, Dc as PageTransition, dn as PhlixApp, Lo as Player, Bo as PlayerPage, qi as QualityMenu, T as RATING_LABELS, E as RATING_OPTIONS, It as RESUME_MAX_RATIO, Ft as RESUME_MIN_SECONDS, Xa as ResumePrompt, Ec as Reveal, O as SUBSCRIBABLE_EVENTS, ki as Scrubber, _ as Select, lc as SettingsForm, dc as SettingsPage, Ge as Sheet, Ui as ShortcutsHelp, ps as SignupForm, _s as SignupPage, i as Skeleton, y as Slider, Ki as SpeedMenu, Tc as Spinner, x as Switch, Qa as TRANSCODE_EXTENSIONS, Ss as Tabs, Cc as ToastHost, gc as Tooltip, xo as TranscodeNotice, ro as UPNEXT_COUNTDOWN_SECONDS, ao as UPNEXT_RING_CIRCUMFERENCE, io as UPNEXT_RING_RADIUS, _o as UpNext, Gi as VolumeControl, k as WEBHOOK_EVENT_CATEGORIES, ia as activeAudioIndex, kc as adminMenu, Ua as ambientGradient, ra as applyAudioTrack, on as applyStoredThemeEarly, na as applyTrackModes, za as averageRegion, Hl as bindMediaStoreToRouter, Oc as buildAdminRoutes, cr as buildMediaQuery, lr as buildMediaUrl, _a as captionStyleVars, ca as cleanCueText, mc as createPhlixApp, nn as deriveAccentVars, ga as edgeShadow, eo as extensionOf, wi as formatTime, xt as fuzzyScore, Fi as handleShortcut, ta as hasActiveCaptions, Ze as hasStoredPreferences, Wa as isBatterySaving, no as isFatalMediaError, Pi as isTypingTarget, $i as listAudioTracks, Qi as listSubtitleTracks, St as matchCommand, to as needsTranscode, la as readActiveCueLines, Xe as readStoredPreferences, ea as resolveTextTrack, Va as rgbString, Ha as rgbaString, oo as ringDashoffset, Ba as sampleAmbient, lt as useAuthStore, wt as useCommandStore, u as useFocusTrap, Ii as useKeyboardShortcuts, vn as useMediaStore, Bt as usePlayerStore, $ as usePreferencesStore, sn as useTheme, o as useToastStore };
+export { C as ALL_LOGS, Ia as AMBIENT_SAMPLE_H, La as AMBIENT_SAMPLE_INTERVAL_MS, Fa as AMBIENT_SAMPLE_W, ji as ARROW_ICONS, Mi as ARROW_LABELS, ne as AdminBackupApi, b as AdminCastApi, oe as AdminCollectionsApi, w as AdminDashboardApi, re as AdminDlnaServerApi, se as AdminHistoryApi, te as AdminIntegrationsApi, ue as AdminLibrariesApi, ae as AdminLiveTvApi, S as AdminLogsApi, ie as AdminRemoteAccessApi, ee as AdminServicesApi, de as AdminSettingsApi, ce as AdminSyncPlayApi, D as AdminUsersApi, A as AdminWebhooksApi, Ga as AmbientCanvas, e as ApiClient, a as ApiError, ze as AppBackdrop, st as AppLayout, Pl as AuditLogsPage, v as Badge, Xr as BrowsePage, c as Button, pa as CAPTION_BACKGROUND_OPTIONS, fa as CAPTION_COLOR_OPTIONS, ma as CAPTION_EDGE_OPTIONS, da as CAPTION_SIZE_OPTIONS, ua as CAPTION_SIZE_SCALE, va as CaptionOverlay, Pa as CaptionsMenu, mr as Chip, xr as Combobox, Pt as CommandPalette, Ke as DEFAULT_CAPTION_STYLE, qe as DEFAULT_PREFERENCES, Za as DIRECT_PLAY_EXTENSIONS, p as EmptyState, fl as FederationPage, Wr as FilterBar, r as Icon, d as IconButton, vt as Kbd, le as LIBRARY_TYPES, Vc as LibraryScanPage, n as LocalStorageTokenStore, os as LoginForm, us as LoginPage, Sl as ManageSharesPage, Hn as MediaCard, vi as MediaDetail, Ci as MediaDetailPage, Zn as MediaGrid, ur as MediaHomeRow, sr as MediaRow, Jt as MiniPlayer, f as Modal, $c as MyServersPage, Ai as PLAYER_SHORTCUTS, Dc as PageTransition, dn as PhlixApp, Lo as Player, Bo as PlayerPage, qi as QualityMenu, T as RATING_LABELS, E as RATING_OPTIONS, It as RESUME_MAX_RATIO, Ft as RESUME_MIN_SECONDS, Xa as ResumePrompt, Ec as Reveal, O as SUBSCRIBABLE_EVENTS, ki as Scrubber, _ as Select, lc as SettingsForm, dc as SettingsPage, Ge as Sheet, Ui as ShortcutsHelp, ps as SignupForm, _s as SignupPage, i as Skeleton, y as Slider, Ki as SpeedMenu, Tc as Spinner, x as Switch, Qa as TRANSCODE_EXTENSIONS, Ss as Tabs, Cc as ToastHost, gc as Tooltip, xo as TranscodeNotice, ro as UPNEXT_COUNTDOWN_SECONDS, ao as UPNEXT_RING_CIRCUMFERENCE, io as UPNEXT_RING_RADIUS, _o as UpNext, Gi as VolumeControl, k as WEBHOOK_EVENT_CATEGORIES, ia as activeAudioIndex, kc as adminMenu, Ua as ambientGradient, ra as applyAudioTrack, on as applyStoredThemeEarly, na as applyTrackModes, za as averageRegion, Fl as bindMediaStoreToRouter, Oc as buildAdminRoutes, cr as buildMediaQuery, lr as buildMediaUrl, _a as captionStyleVars, ca as cleanCueText, mc as createPhlixApp, nn as deriveAccentVars, ga as edgeShadow, eo as extensionOf, wi as formatTime, xt as fuzzyScore, Fi as handleShortcut, ta as hasActiveCaptions, Ze as hasStoredPreferences, Wa as isBatterySaving, no as isFatalMediaError, Pi as isTypingTarget, $i as listAudioTracks, Qi as listSubtitleTracks, St as matchCommand, to as needsTranscode, la as readActiveCueLines, Xe as readStoredPreferences, ea as resolveTextTrack, Va as rgbString, Ha as rgbaString, oo as ringDashoffset, Ba as sampleAmbient, lt as useAuthStore, wt as useCommandStore, u as useFocusTrap, Ii as useKeyboardShortcuts, vn as useMediaStore, Bt as usePlayerStore, $ as usePreferencesStore, sn as useTheme, o as useToastStore };
 
 //# sourceMappingURL=phlix-ui.js.map
