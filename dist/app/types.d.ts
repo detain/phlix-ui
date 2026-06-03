@@ -39,6 +39,12 @@ export interface HomeRow {
 export interface PhlixAppConfig {
     app: 'server' | 'hub';
     apiBase: string;
+    /** Origin (or absolute URL) of the host serving poster/artwork images when it
+     *  differs from the app origin — e.g. a CDN or image proxy. The shell
+     *  preconnects to it (R6.2c) so the first poster paints sooner. Optional: when
+     *  omitted the image host is inferred from `apiBase` (posters are usually served
+     *  from the API host), and a same-origin host is skipped (nothing to warm). */
+    imageOrigin?: string;
     routerBase?: string;
     menu?: MenuItem[];
     extraRoutes?: RouteRecordRaw[];
