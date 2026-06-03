@@ -21,6 +21,7 @@ import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
+import Tabs, { type TabItem } from '../../components/ui/Tabs.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
@@ -53,6 +54,9 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
+
+/** Tabs in the shared `ui/Tabs` primitive's `{ value, label }` shape. */
+const TAB_ITEMS: TabItem[] = TABS.map((t) => ({ value: t.id, label: t.label }));
 
 /** Keys that belong to each tab group. */
 const TAB_KEYS: Record<TabId, string[]> = {
@@ -131,7 +135,7 @@ const overridden = ref<string[]>([]);
 const types = ref<Record<string, string>>({});
 
 // ── UI state ──────────────────────────────────────────────────────────────────
-const activeTab = ref<TabId>('transcoding');
+const activeTab = ref<string>('transcoding');
 const loading = ref(true);
 const error = ref<string | null>(null);
 const submitting = ref(false);
@@ -143,7 +147,7 @@ const formValues = reactive<Record<string, string>>({});
 const dirty = reactive<Record<string, boolean>>({});
 
 const hasAnyChanges = computed(() => Object.values(dirty).some(Boolean));
-const activeKeys = computed<string[]>(() => TAB_KEYS[activeTab.value] ?? []);
+const activeKeys = computed<string[]>(() => TAB_KEYS[activeTab.value as TabId] ?? []);
 
 function syncFormValues(source: Record<string, unknown>): void {
   for (const key of Object.keys(formValues)) delete formValues[key];
@@ -266,23 +270,9 @@ onMounted(loadSettings);
     </EmptyState>
 
     <template v-else>
-      <!-- Tab bar -->
-      <div class="admin-settings__tabs" role="tablist" aria-label="Settings groups">
-        <button
-          v-for="tab in TABS"
-          :key="tab.id"
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === tab.id"
-          :class="['admin-settings__tab', { 'is-active': activeTab === tab.id }]"
-          @click="activeTab = tab.id"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
-
-      <!-- Tab panel -->
-      <div class="admin-settings__panel" role="tabpanel" :aria-label="`${activeTab} settings`">
+      <!-- Tabs (shared a11y primitive: roving tabindex + aria-controls/labelledby) -->
+      <Tabs v-model="activeTab" :tabs="TAB_ITEMS" label="Settings groups">
+        <div class="admin-settings__panel">
         <p v-if="activeKeys.length === 0" class="admin-settings__empty" role="status">
           No settings in this group.
         </p>
@@ -395,7 +385,8 @@ onMounted(loadSettings);
             </Button>
           </div>
         </form>
-      </div>
+        </div>
+      </Tabs>
     </template>
   </section>
 </template>
@@ -418,40 +409,6 @@ onMounted(loadSettings);
 }
 .admin-settings__skel {
   padding-block: var(--space-2);
-}
-
-.admin-settings__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin-bottom: var(--space-6);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.admin-settings__tab {
-  appearance: none;
-  border: none;
-  background: transparent;
-  padding: var(--space-2) var(--space-3);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--text-subtle);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
-}
-.admin-settings__tab:hover {
-  color: var(--text);
-}
-.admin-settings__tab.is-active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-.admin-settings__tab:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--accent-soft);
-  border-radius: var(--radius-sm);
 }
 
 .admin-settings__panel {
@@ -524,8 +481,7 @@ onMounted(loadSettings);
   border-top: 1px solid var(--border-subtle);
 }
 @media (prefers-reduced-motion: reduce) {
-  .admin-settings__input,
-  .admin-settings__tab {
+  .admin-settings__input {
     transition: none;
   }
 }

@@ -1067,3 +1067,75 @@ describe('LiveTvPage — confirm modal dismissal via backdrop/close', () => {
     expect(w.text()).toContain('News%');
   });
 });
+
+describe('Admin LiveTvPage — a11y semantics (R6.5a.2)', () => {
+  it('renders guide programmes as toggle buttons (role=button + aria-pressed)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Guide / EPG');
+    const card = w.find('.admin-livetv__program');
+    expect(card.attributes('role')).toBe('button');
+    expect(card.attributes('aria-pressed')).toBe('false');
+    // The grid container is no longer role=list — its children are buttons now.
+    expect(w.find('.admin-livetv__guide-grid').attributes('role')).toBeUndefined();
+    await card.trigger('click');
+    expect(w.find('.admin-livetv__program').attributes('aria-pressed')).toBe('true');
+    w.unmount();
+  });
+
+  it('exposes the Recordings filter as a roving tablist controlling a labelled tabpanel', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Recordings');
+    const tabs = w.findAll('[role="tab"]');
+    expect(tabs[0]!.attributes('tabindex')).toBe('0');
+    expect(tabs[1]!.attributes('tabindex')).toBe('-1');
+    const active = tabs.find((t) => t.attributes('aria-selected') === 'true')!;
+    const panel = w.find('[role="tabpanel"]');
+    expect(panel.exists()).toBe(true);
+    expect(active.attributes('aria-controls')).toBe(panel.attributes('id'));
+    expect(panel.attributes('aria-labelledby')).toBe(active.attributes('id'));
+    w.unmount();
+  });
+
+  it('ArrowRight moves + focuses the next recording tab', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Recordings');
+    const list = w.find('.admin-livetv__segmented[role="tablist"]');
+    await list.trigger('keydown', { key: 'ArrowRight' });
+    await flushPromises();
+    const tabs = w.findAll('[role="tab"]');
+    expect(tabs[1]!.attributes('aria-selected')).toBe('true');
+    expect(tabs[1]!.attributes('tabindex')).toBe('0');
+    expect(document.activeElement).toBe(tabs[1]!.element);
+    w.unmount();
+  });
+
+  it('ArrowLeft wraps, Home/End jump, and other keys are ignored (recording tabs)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Recordings');
+    const list = w.find('.admin-livetv__segmented[role="tablist"]');
+    // ArrowLeft from the first tab wraps to the last of the 3 filters.
+    await list.trigger('keydown', { key: 'ArrowLeft' });
+    await flushPromises();
+    expect(w.findAll('[role="tab"]')[2]!.attributes('aria-selected')).toBe('true');
+    // Home → first, End → last.
+    await list.trigger('keydown', { key: 'Home' });
+    await flushPromises();
+    expect(w.findAll('[role="tab"]')[0]!.attributes('aria-selected')).toBe('true');
+    await list.trigger('keydown', { key: 'End' });
+    await flushPromises();
+    expect(w.findAll('[role="tab"]')[2]!.attributes('aria-selected')).toBe('true');
+    // A non-navigation key changes nothing.
+    await list.trigger('keydown', { key: 'x' });
+    await flushPromises();
+    expect(w.findAll('[role="tab"]')[2]!.attributes('aria-selected')).toBe('true');
+    w.unmount();
+  });
+});

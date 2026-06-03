@@ -395,3 +395,41 @@ describe('Admin SettingsPage — save success refresh', () => {
     w.unmount();
   });
 });
+
+describe('Admin SettingsPage — tab a11y (ui/Tabs adoption, R6.5a.2)', () => {
+  it('uses roving tabindex: the active tab is 0, inactive tabs are -1', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const tabs = w.findAll('[role="tab"]');
+    expect(tabs[0]!.attributes('tabindex')).toBe('0');
+    expect(tabs[0]!.attributes('aria-selected')).toBe('true');
+    expect(tabs[1]!.attributes('tabindex')).toBe('-1');
+    expect(tabs[1]!.attributes('aria-selected')).toBe('false');
+    w.unmount();
+  });
+
+  it('wires each tab to its panel via aria-controls ↔ tabpanel aria-labelledby', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const active = w.findAll('[role="tab"]').find((t) => t.attributes('aria-selected') === 'true')!;
+    const panel = w.find('[role="tabpanel"]');
+    expect(panel.exists()).toBe(true);
+    expect(active.attributes('aria-controls')).toBe(panel.attributes('id'));
+    expect(panel.attributes('aria-labelledby')).toBe(active.attributes('id'));
+    w.unmount();
+  });
+
+  it('moves the active tab with ArrowRight (roving keyboard nav)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const list = w.find('[role="tablist"]');
+    expect(w.find('[role="tab"][aria-selected="true"]').text().trim()).toBe('Transcoding');
+    await list.trigger('keydown', { key: 'ArrowRight' });
+    await flushPromises();
+    expect(w.find('[role="tab"][aria-selected="true"]').text().trim()).toBe('Metadata');
+    w.unmount();
+  });
+});

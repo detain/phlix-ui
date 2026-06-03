@@ -24,6 +24,7 @@ import {
 } from '../../api/admin/cast';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
+import { nextEnabledIndex } from '../../components/ui/listbox';
 import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Slider from '../../components/ui/Slider.vue';
@@ -83,6 +84,7 @@ function formatTime(seconds: number | null): string {
 
 // ── Tab + list state ───────────────────────────────────────────────────────────
 const activeTab = ref<TabId>('chromecast');
+const tablistEl = ref<HTMLElement | null>(null);
 
 const castDevices = ref<CastDevice[]>([]);
 const airplayDevices = ref<AirPlayDevice[]>([]);
@@ -195,6 +197,40 @@ function handleTabChange(tabId: TabId): void {
   transportState.value = null;
 }
 
+/** Roving-tabindex keyboard nav for the device-type tablist (matches `ui/Tabs`). */
+function focusTabAt(index: number): void {
+  tablistEl.value?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[index]?.focus();
+}
+
+function onTabKeydown(e: KeyboardEvent): void {
+  const opts = TABS.map((t) => ({ value: t.id, label: t.label }));
+  const current = TABS.findIndex((t) => t.id === activeTab.value);
+  let to = -1;
+  switch (e.key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+      to = nextEnabledIndex(opts, current, 1);
+      break;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      to = nextEnabledIndex(opts, current, -1);
+      break;
+    case 'Home':
+      to = nextEnabledIndex(opts, -1, 1);
+      break;
+    case 'End':
+      to = nextEnabledIndex(opts, 0, -1);
+      break;
+    default:
+      return;
+  }
+  if (to >= 0) {
+    e.preventDefault();
+    handleTabChange(TABS[to].id);
+    focusTabAt(to);
+  }
+}
+
 // ── Transport actions ─────────────────────────────────────────────────────────
 
 async function handlePlay(): Promise<void> {
@@ -286,14 +322,22 @@ onMounted(() => {
       <h1 id="cast-heading" class="admin-cast__title">Cast Devices</h1>
     </header>
 
-    <div class="admin-cast__tabs" role="tablist" aria-label="Device type">
+    <div
+      ref="tablistEl"
+      class="admin-cast__tabs"
+      role="tablist"
+      aria-label="Device type"
+      @keydown="onTabKeydown"
+    >
       <button
         v-for="tab in TABS"
+        :id="`cast-tab-${tab.id}`"
         :key="tab.id"
         type="button"
         role="tab"
         :aria-selected="activeTab === tab.id"
         :aria-controls="`panel-${tab.id}`"
+        :tabindex="activeTab === tab.id ? 0 : -1"
         :class="['admin-cast__tab', { 'admin-cast__tab--active': activeTab === tab.id }]"
         @click="handleTabChange(tab.id)"
       >
@@ -305,7 +349,7 @@ onMounted(() => {
     <div
       :id="`panel-${activeTab}`"
       role="tabpanel"
-      :aria-label="`${activeLabel} devices`"
+      :aria-labelledby="`cast-tab-${activeTab}`"
       class="admin-cast__panel"
     >
       <h2 class="admin-cast__subtitle">{{ activeLabel }} Devices</h2>
@@ -460,7 +504,12 @@ onMounted(() => {
 }
 .admin-cast__tab--active {
   color: var(--text);
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--accent-text);
+}
+.admin-cast__tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  border-radius: var(--radius-sm);
 }
 .admin-cast__tab-icon {
   font-size: 1.05em;
@@ -494,8 +543,16 @@ onMounted(() => {
   color: var(--text);
 }
 .device-card--selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  border-color: var(--accent-text);
+  box-shadow: 0 0 0 1px var(--accent-text);
+}
+.device-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+/* Selected + focused: keep the selection outline AND show the focus ring. */
+.device-card--selected:focus-visible {
+  box-shadow: 0 0 0 1px var(--accent-text), 0 0 0 3px var(--accent-ring);
 }
 .device-card__icon {
   display: grid;
