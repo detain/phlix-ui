@@ -20,6 +20,7 @@ import {
   type TopUser,
 } from '../../api/admin/dashboard';
 import { useToastStore } from '../../stores/useToastStore';
+import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
@@ -138,6 +139,14 @@ const loadingActivity = ref(true);
 const loadingMoreActivity = ref(false);
 const activityHasMore = ref(true);
 
+// Per-section in-body error state (null = no error). On a load failure each
+// section shows a recoverable EmptyState instead of going blank/silent.
+const nowPlayingError = ref<string | null>(null);
+const topUsersError = ref<string | null>(null);
+const topMediaError = ref<string | null>(null);
+const storageError = ref<string | null>(null);
+const activityError = ref<string | null>(null);
+
 const totalTranscodeCache = computed(() =>
   storage.value.reduce((sum, s) => sum + s.transcode_cache_bytes, 0),
 );
@@ -147,10 +156,12 @@ const totalTranscodeCache = computed(() =>
 // ---------------------------------------------------------------------------
 
 async function fetchNowPlaying(): Promise<void> {
+  nowPlayingError.value = null;
   try {
     nowPlaying.value = await api.getNowPlaying();
-  } catch {
-    toasts.error('Failed to load now playing.');
+  } catch (e) {
+    nowPlayingError.value = errMessage(e, 'Failed to load now playing.');
+    toasts.error(nowPlayingError.value);
   } finally {
     loadingNowPlaying.value = false;
   }
@@ -158,10 +169,12 @@ async function fetchNowPlaying(): Promise<void> {
 
 async function fetchTopUsers(days: number): Promise<void> {
   loadingTopUsers.value = true;
+  topUsersError.value = null;
   try {
     topUsers.value = await api.getTopUsers(10, days);
-  } catch {
-    toasts.error('Failed to load top users.');
+  } catch (e) {
+    topUsersError.value = errMessage(e, 'Failed to load top users.');
+    toasts.error(topUsersError.value);
   } finally {
     loadingTopUsers.value = false;
   }
@@ -169,35 +182,47 @@ async function fetchTopUsers(days: number): Promise<void> {
 
 async function fetchTopMedia(days: number): Promise<void> {
   loadingTopMedia.value = true;
+  topMediaError.value = null;
   try {
     topMedia.value = await api.getTopMedia(10, days);
-  } catch {
-    toasts.error('Failed to load top media.');
+  } catch (e) {
+    topMediaError.value = errMessage(e, 'Failed to load top media.');
+    toasts.error(topMediaError.value);
   } finally {
     loadingTopMedia.value = false;
   }
 }
 
 async function fetchStorage(): Promise<void> {
+  storageError.value = null;
   try {
     storage.value = await api.getStorage();
-  } catch {
-    toasts.error('Failed to load storage.');
+  } catch (e) {
+    storageError.value = errMessage(e, 'Failed to load storage.');
+    toasts.error(storageError.value);
   } finally {
     loadingStorage.value = false;
   }
 }
 
 async function fetchActivity(limit: number, append = false): Promise<void> {
-  if (append) loadingMoreActivity.value = true;
-  else loadingActivity.value = true;
+  if (append) {
+    loadingMoreActivity.value = true;
+  } else {
+    loadingActivity.value = true;
+    activityError.value = null;
+  }
   try {
     const data = await api.getActivity(limit);
     if (append) activity.value = [...activity.value, ...data];
     else activity.value = data;
     activityHasMore.value = data.length === ACTIVITY_PAGE_SIZE;
-  } catch {
-    toasts.error('Failed to load activity.');
+  } catch (e) {
+    const msg = errMessage(e, 'Failed to load activity.');
+    // A failed "load more" keeps the already-loaded list (toast only); only an
+    // initial-load failure replaces the body with the in-body error state.
+    if (!append) activityError.value = msg;
+    toasts.error(msg);
   } finally {
     loadingActivity.value = false;
     loadingMoreActivity.value = false;
@@ -230,6 +255,8 @@ onMounted(() => {
       .getNowPlaying()
       .then((data) => {
         nowPlaying.value = data;
+        // A successful background refresh clears any prior initial-load error.
+        nowPlayingError.value = null;
       })
       .catch(() => {
         // Swallow refresh errors so the timer doesn't spam toasts.
@@ -272,6 +299,11 @@ onBeforeUnmount(() => {
           </Badge>
         </header>
         <div v-if="loadingNowPlaying" class="admin-dash__skel"><Skeleton variant="text" :lines="4" /></div>
+        <EmptyState v-else-if="nowPlayingError" icon="alert" title="Couldn't load now playing" :description="nowPlayingError">
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="fetchNowPlaying">Retry</Button>
+          </template>
+        </EmptyState>
         <EmptyState v-else-if="nowPlaying.length === 0" icon="play" title="No active sessions" />
         <ul v-else class="admin-dash__np-list" role="list">
           <li v-for="item in nowPlaying" :key="item.session_id" class="admin-dash__np-item">
@@ -302,6 +334,11 @@ onBeforeUnmount(() => {
           <h2 id="tu-heading" class="admin-dash__card-title">Top Users</h2>
         </header>
         <div v-if="loadingTopUsers" class="admin-dash__skel"><Skeleton variant="text" :lines="4" /></div>
+        <EmptyState v-else-if="topUsersError" icon="alert" title="Couldn't load top users" :description="topUsersError">
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="fetchTopUsers(dateRange)">Retry</Button>
+          </template>
+        </EmptyState>
         <EmptyState v-else-if="topUsers.length === 0" icon="user" title="No user data yet" />
         <table v-else class="admin-dash__table" aria-label="Top users leaderboard">
           <thead>
@@ -329,6 +366,11 @@ onBeforeUnmount(() => {
           <h2 id="tm-heading" class="admin-dash__card-title">Top Media</h2>
         </header>
         <div v-if="loadingTopMedia" class="admin-dash__skel"><Skeleton variant="text" :lines="4" /></div>
+        <EmptyState v-else-if="topMediaError" icon="alert" title="Couldn't load top media" :description="topMediaError">
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="fetchTopMedia(dateRange)">Retry</Button>
+          </template>
+        </EmptyState>
         <EmptyState v-else-if="topMedia.length === 0" icon="film" title="No media data yet" />
         <ol v-else class="admin-dash__media-list" role="list">
           <li v-for="(m, i) in topMedia" :key="m.media_item_id" class="admin-dash__media-item">
@@ -351,6 +393,11 @@ onBeforeUnmount(() => {
           <h2 id="st-heading" class="admin-dash__card-title">Storage</h2>
         </header>
         <div v-if="loadingStorage" class="admin-dash__skel"><Skeleton variant="text" :lines="3" /></div>
+        <EmptyState v-else-if="storageError" icon="alert" title="Couldn't load storage" :description="storageError">
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="fetchStorage">Retry</Button>
+          </template>
+        </EmptyState>
         <EmptyState v-else-if="storage.length === 0" icon="image" title="No storage data" />
         <template v-else>
           <div class="admin-dash__storage-grid">
@@ -372,6 +419,11 @@ onBeforeUnmount(() => {
           <h2 id="act-heading" class="admin-dash__card-title">Recent Activity</h2>
         </header>
         <div v-if="loadingActivity" class="admin-dash__skel"><Skeleton variant="text" :lines="5" /></div>
+        <EmptyState v-else-if="activityError" icon="alert" title="Couldn't load activity" :description="activityError">
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="fetchActivity(ACTIVITY_PAGE_SIZE)">Retry</Button>
+          </template>
+        </EmptyState>
         <EmptyState v-else-if="activity.length === 0" icon="list" title="No recent activity" />
         <div v-else class="admin-dash__activity">
           <ul class="admin-dash__activity-list" role="list">

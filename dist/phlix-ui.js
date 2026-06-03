@@ -5846,7 +5846,7 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/dashboard`,
 			name: "admin-dashboard",
-			component: () => import("./DashboardPage-BdoEPd8t.js")
+			component: () => import("./DashboardPage-D8XIypT4.js")
 		},
 		{
 			path: `${t}/users`,
@@ -5866,7 +5866,7 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/services`,
 			name: "admin-services",
-			component: () => import("./ServicesPage-DWnNI7ii.js")
+			component: () => import("./ServicesPage-BArj8EHP.js")
 		},
 		{
 			path: `${t}/integrations`,
@@ -5896,7 +5896,7 @@ function Nc(e = "/app") {
 		{
 			path: `${t}/livetv`,
 			name: "admin-livetv",
-			component: () => import("./LiveTvPage-DOhliLUd.js")
+			component: () => import("./LiveTvPage-DMh6fOAm.js")
 		},
 		{
 			path: `${t}/collections`,
