@@ -1,140 +1,90 @@
 import { describe, it, expect } from 'vitest';
+import { createRouter, createMemoryHistory, type RouteRecordRaw } from 'vue-router';
 import { buildAdminRoutes, adminMenu } from './admin';
 
-describe('buildAdminRoutes', () => {
-  it('returns admin routes under the default /app base', () => {
+/** name → URL segment under `<base>/admin/`. Locks every page's name + URL. */
+const PAGES: ReadonlyArray<readonly [string, string]> = [
+  ['admin-dashboard', 'dashboard'],
+  ['admin-users', 'users'],
+  ['admin-logs', 'logs'],
+  ['admin-webhooks', 'webhooks'],
+  ['admin-services', 'services'],
+  ['admin-integrations', 'integrations'],
+  ['admin-backup', 'backup'],
+  ['admin-cast', 'cast-devices'],
+  ['admin-dlna', 'dlna'],
+  ['admin-remote-access', 'remote-access'],
+  ['admin-livetv', 'livetv'],
+  ['admin-collections', 'collections'],
+  ['admin-history', 'history'],
+  ['admin-syncplay', 'syncplay'],
+  ['admin-libraries', 'libraries'],
+  ['admin-settings', 'settings'],
+];
+
+function childrenOf(routes: RouteRecordRaw[]): RouteRecordRaw[] {
+  return (routes[0].children ?? []) as RouteRecordRaw[];
+}
+
+describe('buildAdminRoutes — nested AdminLayout shape', () => {
+  it('returns a single admin parent route rendering a lazily-loaded layout', () => {
     const routes = buildAdminRoutes();
-    const logs = routes.find((r) => r.name === 'admin-logs');
-    expect(logs?.path).toBe('/app/admin/logs');
-    expect(typeof logs?.component).toBe('function'); // lazily imported chunk
+    expect(routes).toHaveLength(1);
+    expect(routes[0].path).toBe('/app/admin');
+    expect(typeof routes[0].component).toBe('function'); // lazy AdminLayout chunk
   });
 
-  it('honors a custom router base', () => {
-    const routes = buildAdminRoutes('/portal');
-    expect(routes.find((r) => r.name === 'admin-logs')?.path).toBe('/portal/admin/logs');
+  it('passes the router base to the layout as a prop', () => {
+    const def = buildAdminRoutes()[0] as RouteRecordRaw & { props?: unknown };
+    expect(def.props).toEqual({ base: '/app' });
+    const portal = buildAdminRoutes('/portal')[0] as RouteRecordRaw & { props?: unknown };
+    expect(portal.path).toBe('/portal/admin');
+    expect(portal.props).toEqual({ base: '/portal' });
   });
 
-  it('returns the dashboard route FIRST, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    expect(routes[0].name).toBe('admin-dashboard');
-    expect(routes[0].path).toBe('/app/admin/dashboard');
-    expect(typeof routes[0].component).toBe('function');
+  it('nests every admin page as a relatively-pathed, named, lazily-imported child', () => {
+    const children = childrenOf(buildAdminRoutes());
+    for (const [name, segment] of PAGES) {
+      const child = children.find((c) => c.name === name);
+      expect(child, `child "${name}" exists`).toBeTruthy();
+      // Relative path (no leading slash) so it resolves under the parent.
+      expect(child?.path).toBe(segment);
+      expect(typeof child?.component, `child "${name}" is a lazy loader`).toBe('function');
+    }
   });
 
-  it('honors a custom base for the dashboard route', () => {
-    const routes = buildAdminRoutes('/portal');
-    expect(routes.find((r) => r.name === 'admin-dashboard')?.path).toBe('/portal/admin/dashboard');
+  it('keeps the dashboard first and redirects the bare /admin index to it', () => {
+    const children = childrenOf(buildAdminRoutes());
+    const index = children.find((c) => c.path === '');
+    expect(index?.redirect).toEqual({ name: 'admin-dashboard' });
+    // first *page* child (after the index redirect) is the dashboard
+    expect(children.find((c) => c.name)?.name).toBe('admin-dashboard');
+  });
+});
+
+describe('buildAdminRoutes — resolved URLs + redirect (real router)', () => {
+  function routerFor(base?: string) {
+    return createRouter({ history: createMemoryHistory(), routes: buildAdminRoutes(base) });
+  }
+
+  it('resolves every page name to its unchanged /app/admin/<segment> URL', () => {
+    const router = routerFor();
+    for (const [name, segment] of PAGES) {
+      expect(router.resolve({ name }).href).toBe(`/app/admin/${segment}`);
+    }
   });
 
-  it('exposes the users route after the dashboard, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const users = routes.find((r) => r.name === 'admin-users');
-    expect(users?.path).toBe('/app/admin/users');
-    expect(typeof users?.component).toBe('function');
-    // Dashboard stays first; users comes after it.
-    expect(routes[0].name).toBe('admin-dashboard');
-    expect(routes.findIndex((r) => r.name === 'admin-users')).toBeGreaterThan(0);
+  it('redirects the bare /app/admin to the dashboard (navigation follows the redirect)', async () => {
+    const router = routerFor();
+    await router.push('/app/admin');
+    expect(router.currentRoute.value.name).toBe('admin-dashboard');
   });
 
-  it('honors a custom base for the users route', () => {
-    const routes = buildAdminRoutes('/portal');
-    expect(routes.find((r) => r.name === 'admin-users')?.path).toBe('/portal/admin/users');
-  });
-
-  it('exposes the webhooks route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const webhooks = routes.find((r) => r.name === 'admin-webhooks');
-    expect(webhooks?.path).toBe('/app/admin/webhooks');
-    expect(typeof webhooks?.component).toBe('function');
-  });
-
-  it('honors a custom base for the webhooks route', () => {
-    const routes = buildAdminRoutes('/portal');
-    expect(routes.find((r) => r.name === 'admin-webhooks')?.path).toBe('/portal/admin/webhooks');
-  });
-
-  it('exposes the services route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const services = routes.find((r) => r.name === 'admin-services');
-    expect(services?.path).toBe('/app/admin/services');
-    expect(typeof services?.component).toBe('function');
-  });
-
-  it('exposes the integrations route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const integrations = routes.find((r) => r.name === 'admin-integrations');
-    expect(integrations?.path).toBe('/app/admin/integrations');
-    expect(typeof integrations?.component).toBe('function');
-  });
-
-  it('exposes the backup route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const backup = routes.find((r) => r.name === 'admin-backup');
-    expect(backup?.path).toBe('/app/admin/backup');
-    expect(typeof backup?.component).toBe('function');
-  });
-
-  it('exposes the cast-devices route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const cast = routes.find((r) => r.name === 'admin-cast');
-    expect(cast?.path).toBe('/app/admin/cast-devices');
-    expect(typeof cast?.component).toBe('function');
-  });
-
-  it('exposes the dlna route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const dlna = routes.find((r) => r.name === 'admin-dlna');
-    expect(dlna?.path).toBe('/app/admin/dlna');
-    expect(typeof dlna?.component).toBe('function');
-  });
-
-  it('exposes the remote-access route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const ra = routes.find((r) => r.name === 'admin-remote-access');
-    expect(ra?.path).toBe('/app/admin/remote-access');
-    expect(typeof ra?.component).toBe('function');
-  });
-
-  it('exposes the livetv route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const livetv = routes.find((r) => r.name === 'admin-livetv');
-    expect(livetv?.path).toBe('/app/admin/livetv');
-    expect(typeof livetv?.component).toBe('function');
-  });
-
-  it('exposes the collections route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const collections = routes.find((r) => r.name === 'admin-collections');
-    expect(collections?.path).toBe('/app/admin/collections');
-    expect(typeof collections?.component).toBe('function');
-  });
-
-  it('exposes the history route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const history = routes.find((r) => r.name === 'admin-history');
-    expect(history?.path).toBe('/app/admin/history');
-    expect(typeof history?.component).toBe('function');
-  });
-
-  it('exposes the syncplay route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const syncplay = routes.find((r) => r.name === 'admin-syncplay');
-    expect(syncplay?.path).toBe('/app/admin/syncplay');
-    expect(typeof syncplay?.component).toBe('function');
-  });
-
-  it('exposes the libraries route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const libraries = routes.find((r) => r.name === 'admin-libraries');
-    expect(libraries?.path).toBe('/app/admin/libraries');
-    expect(typeof libraries?.component).toBe('function');
-  });
-
-  it('exposes the settings route, lazily imported', () => {
-    const routes = buildAdminRoutes();
-    const settings = routes.find((r) => r.name === 'admin-settings');
-    expect(settings?.path).toBe('/app/admin/settings');
-    expect(typeof settings?.component).toBe('function');
+  it('honors a custom base in resolved URLs', async () => {
+    const router = routerFor('/portal');
+    expect(router.resolve({ name: 'admin-cast' }).href).toBe('/portal/admin/cast-devices');
+    await router.push('/portal/admin');
+    expect(router.currentRoute.value.name).toBe('admin-dashboard');
   });
 });
 
@@ -151,114 +101,36 @@ describe('adminMenu', () => {
     expect(group.children?.find((c) => c.id === 'admin-logs')?.to).toBe('/portal/admin/logs');
   });
 
-  it('exposes a dashboard child pointing at the dashboard route', () => {
+  it('exposes a child for every admin page with its label, link and icon', () => {
     const [group] = adminMenu();
-    const dash = group.children?.find((c) => c.id === 'admin-dashboard');
-    expect(dash?.label).toBe('Dashboard');
-    expect(dash?.to).toBe('/app/admin/dashboard');
+    const expected: Record<string, { label: string; to: string }> = {
+      'admin-dashboard': { label: 'Dashboard', to: '/app/admin/dashboard' },
+      'admin-users': { label: 'Users', to: '/app/admin/users' },
+      'admin-logs': { label: 'Logs', to: '/app/admin/logs' },
+      'admin-webhooks': { label: 'Webhooks', to: '/app/admin/webhooks' },
+      'admin-services': { label: 'Services', to: '/app/admin/services' },
+      'admin-integrations': { label: 'Integrations', to: '/app/admin/integrations' },
+      'admin-backup': { label: 'Backup', to: '/app/admin/backup' },
+      'admin-cast': { label: 'Cast Devices', to: '/app/admin/cast-devices' },
+      'admin-dlna': { label: 'DLNA Server', to: '/app/admin/dlna' },
+      'admin-remote-access': { label: 'Remote Access', to: '/app/admin/remote-access' },
+      'admin-livetv': { label: 'Live TV / DVR', to: '/app/admin/livetv' },
+      'admin-collections': { label: 'Collections', to: '/app/admin/collections' },
+      'admin-history': { label: 'Watch History', to: '/app/admin/history' },
+      'admin-syncplay': { label: 'SyncPlay', to: '/app/admin/syncplay' },
+      'admin-libraries': { label: 'Libraries', to: '/app/admin/libraries' },
+      'admin-settings': { label: 'Settings', to: '/app/admin/settings' },
+    };
+    for (const [id, { label, to }] of Object.entries(expected)) {
+      const child = group.children?.find((c) => c.id === id);
+      expect(child?.label, `${id} label`).toBe(label);
+      expect(child?.to, `${id} link`).toBe(to);
+      expect(child?.icon, `${id} has an icon`).toBeTruthy();
+    }
   });
 
-  it('exposes a users child pointing at the users route', () => {
+  it('exposes exactly the 16 ported admin pages as children', () => {
     const [group] = adminMenu();
-    const users = group.children?.find((c) => c.id === 'admin-users');
-    expect(users?.label).toBe('Users');
-    expect(users?.to).toBe('/app/admin/users');
-    expect(users?.icon).toBe('user');
-  });
-
-  it('honors a custom base in the users child link', () => {
-    const [group] = adminMenu('/portal');
-    expect(group.children?.find((c) => c.id === 'admin-users')?.to).toBe('/portal/admin/users');
-  });
-
-  it('exposes a webhooks child pointing at the webhooks route', () => {
-    const [group] = adminMenu();
-    const webhooks = group.children?.find((c) => c.id === 'admin-webhooks');
-    expect(webhooks?.label).toBe('Webhooks');
-    expect(webhooks?.to).toBe('/app/admin/webhooks');
-  });
-
-  it('exposes a services child pointing at the services route', () => {
-    const [group] = adminMenu();
-    const services = group.children?.find((c) => c.id === 'admin-services');
-    expect(services?.label).toBe('Services');
-    expect(services?.to).toBe('/app/admin/services');
-  });
-
-  it('exposes an integrations child pointing at the integrations route', () => {
-    const [group] = adminMenu();
-    const integrations = group.children?.find((c) => c.id === 'admin-integrations');
-    expect(integrations?.label).toBe('Integrations');
-    expect(integrations?.to).toBe('/app/admin/integrations');
-  });
-
-  it('exposes a backup child pointing at the backup route', () => {
-    const [group] = adminMenu();
-    const backup = group.children?.find((c) => c.id === 'admin-backup');
-    expect(backup?.label).toBe('Backup');
-    expect(backup?.to).toBe('/app/admin/backup');
-  });
-
-  it('exposes a cast-devices child pointing at the cast route', () => {
-    const [group] = adminMenu();
-    const cast = group.children?.find((c) => c.id === 'admin-cast');
-    expect(cast?.label).toBe('Cast Devices');
-    expect(cast?.to).toBe('/app/admin/cast-devices');
-  });
-
-  it('exposes a dlna child pointing at the dlna route', () => {
-    const [group] = adminMenu();
-    const dlna = group.children?.find((c) => c.id === 'admin-dlna');
-    expect(dlna?.label).toBe('DLNA Server');
-    expect(dlna?.to).toBe('/app/admin/dlna');
-  });
-
-  it('exposes a remote-access child pointing at the remote-access route', () => {
-    const [group] = adminMenu();
-    const ra = group.children?.find((c) => c.id === 'admin-remote-access');
-    expect(ra?.label).toBe('Remote Access');
-    expect(ra?.to).toBe('/app/admin/remote-access');
-  });
-
-  it('exposes a livetv child pointing at the livetv route', () => {
-    const [group] = adminMenu();
-    const livetv = group.children?.find((c) => c.id === 'admin-livetv');
-    expect(livetv?.label).toBe('Live TV / DVR');
-    expect(livetv?.to).toBe('/app/admin/livetv');
-  });
-
-  it('exposes a collections child pointing at the collections route', () => {
-    const [group] = adminMenu();
-    const collections = group.children?.find((c) => c.id === 'admin-collections');
-    expect(collections?.label).toBe('Collections');
-    expect(collections?.to).toBe('/app/admin/collections');
-  });
-
-  it('exposes a history child pointing at the history route', () => {
-    const [group] = adminMenu();
-    const history = group.children?.find((c) => c.id === 'admin-history');
-    expect(history?.label).toBe('Watch History');
-    expect(history?.to).toBe('/app/admin/history');
-  });
-
-  it('exposes a syncplay child pointing at the syncplay route', () => {
-    const [group] = adminMenu();
-    const syncplay = group.children?.find((c) => c.id === 'admin-syncplay');
-    expect(syncplay?.label).toBe('SyncPlay');
-    expect(syncplay?.to).toBe('/app/admin/syncplay');
-  });
-
-  it('exposes a libraries child pointing at the libraries route', () => {
-    const [group] = adminMenu();
-    const libraries = group.children?.find((c) => c.id === 'admin-libraries');
-    expect(libraries?.label).toBe('Libraries');
-    expect(libraries?.to).toBe('/app/admin/libraries');
-  });
-
-  it('exposes a settings child pointing at the settings route', () => {
-    const [group] = adminMenu();
-    const settings = group.children?.find((c) => c.id === 'admin-settings');
-    expect(settings?.label).toBe('Settings');
-    expect(settings?.to).toBe('/app/admin/settings');
+    expect(group.children).toHaveLength(16);
   });
 });
