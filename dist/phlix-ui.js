@@ -11,14 +11,14 @@ import { i as y, n as oe, r as se, t as ce } from "./Kbd-CSMm1T0l.js";
 import { t as b } from "./Badge-ArWL5-WE.js";
 import { t as le } from "./Slider-BMn_Lp_q.js";
 import { t as ue } from "./Switch-CFZhdkXR.js";
-import { i as de, n as fe, r as pe, t as me } from "./MediaRow-BacyesRq.js";
+import { i as de, n as fe, r as pe, t as me } from "./MediaRow-CdNxUeY-.js";
 import { t as he } from "./Select-CKC9vNUQ.js";
-import { a as ge, i as _e, n as x, r as ve, t as ye } from "./FilterBar-DnAbrt5S.js";
+import { a as ge, i as _e, n as x, r as ve, t as ye } from "./FilterBar-BfTfTdYy.js";
 import { t as be } from "./Modal-BB_vB1RK.js";
 import { t as S } from "./useToastStore-BDoKlU6N.js";
 import { n as C, t as w } from "./EmptyState-Ds4WcVdG.js";
 import { n as xe, t as Se } from "./SettingsForm-DPNOGeW5.js";
-import { t as Ce } from "./MediaDetail-BfxuRfMj.js";
+import { t as Ce } from "./MediaDetail-C4dWqV15.js";
 import { n as we, t as Te } from "./logs-DadTfaTq.js";
 import { t as Ee } from "./dashboard-BTCOCTHQ.js";
 import { n as De, r as Oe, t as ke } from "./users-C40iLgkq.js";
@@ -543,12 +543,12 @@ function ir(e) {
 		{
 			path: t,
 			name: "browse",
-			component: () => import("./BrowsePage-KTLNDUhn.js")
+			component: () => import("./BrowsePage-9MrQPq10.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-D5AnEVrP.js")
+			component: () => import("./MediaDetailPage-DTADCKR1.js")
 		},
 		{
 			path: `${t}/player/:id`,
