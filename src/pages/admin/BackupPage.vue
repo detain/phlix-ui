@@ -77,14 +77,17 @@ function nextBackupRelative(timestamp: number | null): string {
 // ── Section 1: Backup list state ──────────────────────────────────────────────
 const backups = ref<Backup[]>([]);
 const loading = ref(true);
+const backupsError = ref<string | null>(null);
 const s3Uploading = ref<string | null>(null);
 
 async function loadBackups(): Promise<void> {
   loading.value = true;
+  backupsError.value = null;
   try {
     backups.value = await api.list();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load backups.'));
+    backupsError.value = errMessage(e, 'Failed to load backups.');
+    toasts.error(backupsError.value);
   } finally {
     loading.value = false;
   }
@@ -184,19 +187,22 @@ async function uploadToS3(backup: Backup): Promise<void> {
 // ── Section 2: Schedule state ─────────────────────────────────────────────────
 const schedule = ref<ScheduleData | null>(null);
 const scheduleLoading = ref(true);
+const scheduleError = ref<string | null>(null);
 const intervalDays = ref('');
 const retentionCount = ref('');
 const savingSchedule = ref(false);
 
 async function loadSchedule(): Promise<void> {
   scheduleLoading.value = true;
+  scheduleError.value = null;
   try {
     const data = await api.getSchedule();
     schedule.value = data;
     intervalDays.value = String(data.auto_backup_interval_days);
     retentionCount.value = String(data.retention_count);
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load schedule.'));
+    scheduleError.value = errMessage(e, 'Failed to load schedule.');
+    toasts.error(scheduleError.value);
   } finally {
     scheduleLoading.value = false;
   }
@@ -252,6 +258,16 @@ onMounted(() => {
       </header>
 
       <div v-if="loading" class="admin-backup__skel"><Skeleton variant="text" :lines="5" /></div>
+      <EmptyState
+        v-else-if="backupsError"
+        icon="alert"
+        title="Couldn't load backups"
+        :description="backupsError"
+      >
+        <template #actions>
+          <Button variant="solid" size="sm" left-icon="rewind" @click="loadBackups">Retry</Button>
+        </template>
+      </EmptyState>
       <EmptyState
         v-else-if="backups.length === 0"
         icon="film"
@@ -329,6 +345,16 @@ onMounted(() => {
       </header>
 
       <div v-if="scheduleLoading" class="admin-backup__skel"><Skeleton variant="text" :lines="3" /></div>
+      <EmptyState
+        v-else-if="scheduleError"
+        icon="alert"
+        title="Couldn't load schedule"
+        :description="scheduleError"
+      >
+        <template #actions>
+          <Button variant="solid" size="sm" left-icon="rewind" @click="loadSchedule">Retry</Button>
+        </template>
+      </EmptyState>
       <div v-else-if="schedule" class="admin-backup__card">
         <p class="admin-backup__next">
           <span class="admin-backup__next-label">Next scheduled backup:</span>

@@ -88,6 +88,8 @@ const castDevices = ref<CastDevice[]>([]);
 const airplayDevices = ref<AirPlayDevice[]>([]);
 const loadingCast = ref(true);
 const loadingAirPlay = ref(true);
+const castError = ref<string | null>(null);
+const airplayError = ref<string | null>(null);
 
 const selectedDeviceId = ref<string | null>(null);
 const transportState = ref<TransportState | null>(null);
@@ -99,6 +101,9 @@ const currentDevices = computed<Array<CastDevice | AirPlayDevice>>(() =>
 );
 const currentLoading = computed(() =>
   activeTab.value === 'chromecast' ? loadingCast.value : loadingAirPlay.value,
+);
+const currentError = computed(() =>
+  activeTab.value === 'chromecast' ? castError.value : airplayError.value,
 );
 const activeLabel = computed(() => TABS.find((t) => t.id === activeTab.value)?.label ?? '');
 const activeIcon = computed<IconName>(() => TABS.find((t) => t.id === activeTab.value)?.icon ?? 'cast');
@@ -113,10 +118,12 @@ const selectedDeviceName = computed(() => {
 
 async function fetchCastDevices(): Promise<void> {
   loadingCast.value = true;
+  castError.value = null;
   try {
     castDevices.value = await api.listCastDevices();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load Chromecast devices.'));
+    castError.value = errMessage(e, 'Failed to load Chromecast devices.');
+    toasts.error(castError.value);
   } finally {
     loadingCast.value = false;
   }
@@ -124,12 +131,23 @@ async function fetchCastDevices(): Promise<void> {
 
 async function fetchAirPlayDevices(): Promise<void> {
   loadingAirPlay.value = true;
+  airplayError.value = null;
   try {
     airplayDevices.value = await api.listAirPlayDevices();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load AirPlay devices.'));
+    airplayError.value = errMessage(e, 'Failed to load AirPlay devices.');
+    toasts.error(airplayError.value);
   } finally {
     loadingAirPlay.value = false;
+  }
+}
+
+/** Re-fetch the active tab's device list (Retry from the in-body error state). */
+function retryDevices(): void {
+  if (activeTab.value === 'chromecast') {
+    void fetchCastDevices();
+  } else {
+    void fetchAirPlayDevices();
   }
 }
 
@@ -296,6 +314,17 @@ onMounted(() => {
         <Skeleton variant="rect" height="64px" />
         <Skeleton variant="rect" height="64px" />
       </div>
+
+      <EmptyState
+        v-else-if="currentError"
+        icon="alert"
+        :title="`Couldn't load ${activeLabel} devices`"
+        :description="currentError"
+      >
+        <template #actions>
+          <Button variant="solid" size="sm" left-icon="rewind" @click="retryDevices">Retry</Button>
+        </template>
+      </EmptyState>
 
       <EmptyState
         v-else-if="currentDevices.length === 0"

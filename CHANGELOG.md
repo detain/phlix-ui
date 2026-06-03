@@ -30,6 +30,15 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Changed
+- **In-body error states for the single-list/status admin pages (R5.3d.2):** `HistoryPage`, `SyncPlayPage`,
+  `BackupPage`, `CastDevicesPage`, and `DlnaServerPage` previously fell through to their empty/empty-list
+  `EmptyState` (a misleading "nothing here") + a toast when a load FAILED. Each load now renders an in-body
+  `EmptyState` (alert icon + "Couldn't load X" + the error message + a Retry that re-runs that loader) before
+  the empty state, matching R5.3c/R5.3d.1. `BackupPage` gets independent error states for both its backups list
+  and its schedule section (a schedule load failure used to render nothing at all); `CastDevicesPage` gets a
+  per-tab error state (Chromecast / AirPlay independently) via a `currentError` computed; and `DlnaServerPage`
+  also adopts the shared `errMessage` (replacing its three inline `e instanceof Error ? … : …` ternaries).
+  Second batch of the R5.3d admin-port error-state retrofit.
 - **In-body error states for the single-list admin pages (R5.3d.1):** `LibrariesPage`, `UsersPage`,
   `CollectionsPage`, and `WebhooksPage` previously fell through to their empty-list `EmptyState` (a misleading
   "nothing here") + a toast when the main list load FAILED. Each now renders an in-body `EmptyState` (alert

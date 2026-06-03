@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import BackupPage from './BackupPage.vue';
 import Button from '../../components/ui/Button.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -153,7 +154,7 @@ describe('Admin BackupPage — list', () => {
     w.unmount();
   });
 
-  it('toasts when the backup list fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the backup list fails to load', async () => {
     const get = vi.fn(async (endpoint: string) => {
       if (endpoint === '/api/v1/admin/backup/schedule') return { success: true, data: sampleSchedule };
       throw new Error('list boom');
@@ -162,7 +163,34 @@ describe('Admin BackupPage — list', () => {
     const w = mountPage(client);
     await flushPromises();
     const toasts = useToastStore();
+    // The backups section shows an in-body error EmptyState (not the empty-list one).
+    expect(w.text()).toContain("Couldn't load backups");
+    expect(w.text()).toContain('list boom');
+    expect(w.text()).not.toContain('No backups yet');
     expect(toasts.toasts.some((t) => t.message === 'list boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the backup list load from the error state', async () => {
+    let listCalls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/backup/schedule') return { success: true, data: sampleSchedule };
+      if (endpoint === '/api/v1/admin/backup/list') {
+        listCalls += 1;
+        if (listCalls === 1) throw new Error('list boom');
+        return { success: true, data: [sampleBackup], count: 1 };
+      }
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountPage(client);
+    await flushPromises();
+    const errorEmpty = w.findAllComponents(EmptyState).find((e) => e.text().includes("Couldn't load backups"))!;
+    expect(errorEmpty).toBeTruthy();
+    await errorEmpty.find('button').trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load backups");
+    expect(w.text()).toContain('Weekly Backup');
     w.unmount();
   });
 });
@@ -424,7 +452,7 @@ describe('Admin BackupPage — schedule', () => {
     w.unmount();
   });
 
-  it('toasts and renders nothing when the schedule fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the schedule fails to load', async () => {
     const get = vi.fn(async (endpoint: string) => {
       if (endpoint === '/api/v1/admin/backup/list') return { success: true, data: [], count: 0 };
       throw new Error('schedule load boom');
@@ -434,7 +462,33 @@ describe('Admin BackupPage — schedule', () => {
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'schedule load boom')).toBe(true);
+    // The schedule card is NOT rendered; an in-body error EmptyState replaces it.
     expect(w.find('.admin-backup__card').exists()).toBe(false);
+    expect(w.text()).toContain("Couldn't load schedule");
+    expect(w.text()).toContain('schedule load boom');
+    w.unmount();
+  });
+
+  it('retries the schedule load from the error state', async () => {
+    let schedCalls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/backup/list') return { success: true, data: [sampleBackup], count: 1 };
+      if (endpoint === '/api/v1/admin/backup/schedule') {
+        schedCalls += 1;
+        if (schedCalls === 1) throw new Error('schedule load boom');
+        return { success: true, data: sampleSchedule };
+      }
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountPage(client);
+    await flushPromises();
+    const errorEmpty = w.findAllComponents(EmptyState).find((e) => e.text().includes("Couldn't load schedule"))!;
+    expect(errorEmpty).toBeTruthy();
+    await errorEmpty.find('button').trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load schedule");
+    expect(w.find('.admin-backup__card').exists()).toBe(true);
     w.unmount();
   });
 });

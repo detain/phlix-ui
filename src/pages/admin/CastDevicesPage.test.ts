@@ -211,12 +211,60 @@ describe('Admin CastDevicesPage', () => {
     expect(w.text()).not.toContain('Playback Controls');
   });
 
-  it('toasts when the device list fails to load', async () => {
+  it('shows an in-body error state (+ toast) when the device list fails to load', async () => {
     const get = vi.fn().mockRejectedValue(new Error('disk gone'));
-    mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.props('title')).toContain("Couldn't load Chromecast devices");
+    expect(w.text()).toContain('disk gone');
+    expect(w.text()).not.toContain('No Chromecast devices');
+    expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'disk gone')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the Chromecast device list from the error state', async () => {
+    let castCalls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/cast/devices') {
+        castCalls += 1;
+        if (castCalls === 1) throw new Error('disk gone');
+        return { devices: [castDevice] };
+      }
+      if (endpoint === '/api/v1/airplay/devices') return { devices: [] };
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.props('title')).toContain("Couldn't load Chromecast devices");
+    await empty.find('button').trigger('click');
+    await flushPromises();
+    expect(w.text()).toContain('Living Room TV');
+    expect(w.text()).not.toContain("Couldn't load Chromecast devices");
+    w.unmount();
+  });
+
+  it('shows a per-tab error state for the AirPlay tab independently of Chromecast', async () => {
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/cast/devices') return { devices: [castDevice] };
+      if (endpoint === '/api/v1/airplay/devices') throw new Error('airplay gone');
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    // Chromecast loaded fine → no error on the active tab.
+    expect(w.text()).toContain('Living Room TV');
+    expect(w.text()).not.toContain("Couldn't load");
+    // Switch to AirPlay → its own error state shows.
+    await w.findAll('[role="tab"]')[1].trigger('click');
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.props('title')).toContain("Couldn't load AirPlay devices");
+    expect(w.text()).toContain('airplay gone');
+    w.unmount();
   });
 
   it('toasts when the transport status fails to load', async () => {
