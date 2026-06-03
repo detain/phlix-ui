@@ -4,16 +4,17 @@ import { setActivePinia, createPinia } from 'pinia';
 import MyServersPage from './MyServersPage.vue';
 import Button from '../components/ui/Button.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import { api, type ApiClient } from '../api/client';
 
-const server = {
-  id: 'srv-1',
-  name: 'Home Theater',
-  url: 'https://home.example.com',
+// Raw hub shape from GET /api/v1/me/servers (camelCase ServerInfoDto). lastSeenAt
+// is UNIX seconds; the hub has no owner name / url / library count.
+const hubServer = {
+  serverId: 'srv-1',
+  serverName: 'Home Theater',
   status: 'online',
-  owner: 'alice',
-  library_count: 3,
-  last_seen: '2026-05-27T00:00:00Z',
+  hostnameCandidates: ['https://home.example.com'],
+  lastSeenAt: 1748304000,
 };
 
 interface Overrides {
@@ -22,7 +23,7 @@ interface Overrides {
 
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
-    if (endpoint === '/api/v1/servers') return { servers: over.servers ?? [server] };
+    if (endpoint === '/api/v1/me/servers') return { servers: over.servers ?? [hubServer] };
     throw new Error(`unexpected GET ${endpoint}`);
   });
   const client = { get } as unknown as ApiClient;
@@ -40,25 +41,30 @@ function findBtnByText(w: VueWrapper, text: string) {
   return w.findAllComponents(Button).find((b) => b.text().trim() === text);
 }
 
+/** Seed the signed-in user so the page's "owner" column resolves to a name. */
+function signIn(username = 'alice'): void {
+  useAuthStore().user = { id: 'u1', username } as never;
+}
+
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
+  signIn();
 });
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
 describe('MyServersPage — list + states', () => {
-  it('renders a row with name, url, owner, libraries, last seen, and status', async () => {
+  it('renders a row with name, url, owner (current user), last seen, and status', async () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    expect(get).toHaveBeenCalledWith('/api/v1/servers');
+    expect(get).toHaveBeenCalledWith('/api/v1/me/servers');
     const text = w.text();
     expect(text).toContain('Home Theater');
     expect(text).toContain('https://home.example.com');
-    expect(text).toContain('alice');
-    expect(text).toContain('3');
+    expect(text).toContain('alice'); // owner = signed-in user (servers are scoped to them)
     expect(w.find('[data-testid="status-srv-1"]').text()).toContain('Online');
     expect(findBtn(w, 'Manage Home Theater')).toBeTruthy();
     w.unmount();
@@ -70,7 +76,7 @@ describe('MyServersPage — list + states', () => {
     const client = { get } as unknown as ApiClient;
     const w = mountPage(client);
     expect(w.find('.my-servers__skel').exists()).toBe(true);
-    resolve({ servers: [server] });
+    resolve({ servers: [hubServer] });
     await flushPromises();
     expect(w.find('.my-servers__skel').exists()).toBe(false);
     expect(w.find('.my-servers__table').exists()).toBe(true);
@@ -95,9 +101,9 @@ describe('MyServersPage — list + states', () => {
     w.unmount();
   });
 
-  it('renders "Never" and "—" for a server with no last_seen / library_count', async () => {
+  it('renders "Never" for a server with no lastSeenAt and "—" for the (hub-absent) library count', async () => {
     const { client } = makeClient({
-      servers: [{ id: 'srv-2', name: 'NAS', url: 'http://nas', status: 'offline', owner: 'bob' }],
+      servers: [{ serverId: 'srv-2', serverName: 'NAS', status: 'offline', hostnameCandidates: ['http://nas'] }],
     });
     const w = mountPage(client);
     await flushPromises();
@@ -110,7 +116,7 @@ describe('MyServersPage — list + states', () => {
     const spy = vi.spyOn(api, 'get').mockResolvedValue({ servers: [] } as never);
     const w = mount(MyServersPage, { attachTo: document.body });
     await flushPromises();
-    expect(spy).toHaveBeenCalledWith('/api/v1/servers');
+    expect(spy).toHaveBeenCalledWith('/api/v1/me/servers');
     expect(w.text()).toContain('No servers connected yet');
     w.unmount();
   });
@@ -142,7 +148,7 @@ describe('MyServersPage — load errors', () => {
     const get = vi
       .fn()
       .mockRejectedValueOnce(new Error('hub unreachable'))
-      .mockResolvedValueOnce({ servers: [server] });
+      .mockResolvedValueOnce({ servers: [hubServer] });
     const w = mountPage({ get } as unknown as ApiClient);
     await flushPromises();
     expect(w.text()).toContain("Couldn't load servers");
@@ -161,7 +167,7 @@ describe('MyServersPage — status badges', () => {
     ['connecting', 'Connecting'],
     ['degraded', 'degraded'],
   ])('renders the %s status as "%s"', async (status, label) => {
-    const { client } = makeClient({ servers: [{ ...server, status }] });
+    const { client } = makeClient({ servers: [{ ...hubServer, status }] });
     const w = mountPage(client);
     await flushPromises();
     expect(w.find('[data-testid="status-srv-1"]').text()).toContain(label);

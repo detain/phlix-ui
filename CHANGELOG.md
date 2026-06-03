@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.13.0] - 2026-06-03
+
+Reconciles the four hub admin pages with the hub's REAL API. They were built against a guessed
+contract (mock-tested) and 404'd against the live hub on every call. Each now hits the correct
+`/api/v1/me/*` endpoint and normalizes the hub's real response shape. Pairs with phlix-hub adding
+friendly-name fields (`actor`, `collaborator_name`, `shared_library_count`).
+
+### Fixed
+- **MyServersPage** → `GET /api/v1/me/servers` (was `/api/v1/servers`). Maps the camelCase
+  `ServerInfoDto` (`serverId`/`serverName`/`hostnameCandidates[0]`/`lastSeenAt`); "owner" is the
+  signed-in user (servers are user-scoped); library count shows `—` (the hub doesn't track it — it
+  lives on the media server).
+- **AuditLogsPage** → `GET /api/v1/me/audit-logs` (was `/api/v1/audit-logs`). Switches pagination
+  from `page` to the hub's `limit`/`offset` and derives page/total-pages from `total`. Maps fields
+  (`event`/`action`, `resource`→target, `reason`→details); `actor` is the hub-enriched name, falling
+  back to the user id.
+- **ManageSharesPage** → `GET /api/v1/me/shares/` + `DELETE /api/v1/me/shares/{id}` (was
+  `/api/v1/shares`). Reads the `{ outgoing }` envelope, maps `permission_level` read|readwrite →
+  read|write, converts UNIX-second dates, and shows the enriched `collaborator_name` (falling back to
+  the collaborator id).
+- **FederationPage** → `GET /api/v1/me/federation/peers`; add-peer now POSTs the hub's `createPeer`
+  body (`url` + `name` + `public_key`, all required — the form gained Name + Public key fields); the
+  per-row action is **Remove** = `DELETE /api/v1/me/federation/peers/{id}` (works for any status, was
+  a connected-only POST `.../disconnect`). Shows the enriched `shared_library_count`; `last_sync` maps
+  from `last_connected_at`.
+
+### Added
+- `src/api/normalize.ts` — `unixToIso()` helper for the hub's UNIX-second timestamps.
+
 ## [0.12.0] - 2026-06-03
 
 Closes the auth holes that surfaced once the SPA became the front door: an unauthenticated visitor

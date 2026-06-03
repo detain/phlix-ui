@@ -28,9 +28,20 @@ interface FederationPeer {
   id: string;
   name: string;
   url: string;
-  status: 'connected' | 'disconnected' | 'pending';
+  status: string;
   shared_libraries_count?: number;
   last_sync?: string;
+}
+
+/** Raw peer shape from the hub's `GET /api/v1/me/federation/peers` (snake_case). */
+interface HubPeer {
+  id?: string;
+  name?: string;
+  url?: string;
+  status?: string;
+  shared_library_count?: number;
+  last_connected_at?: string | null;
+  last_seen_at?: string | null;
 }
 
 const props = defineProps<{
@@ -38,13 +49,16 @@ const props = defineProps<{
   client?: ApiClient;
 }>();
 
-const http: Pick<ApiClient, 'get' | 'post'> = props.client ?? api;
+const http: Pick<ApiClient, 'get' | 'post' | 'delete'> = props.client ?? api;
 const toasts = useToastStore();
 
 const peers = ref<FederationPeer[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+// The hub's createPeer requires url + name + public_key (all mandatory).
 const peerUrl = ref('');
+const peerName = ref('');
+const peerPublicKey = ref('');
 const connecting = ref(false);
 
 /**
@@ -56,8 +70,15 @@ async function loadPeers(initial = false): Promise<void> {
   if (initial) loading.value = true;
   error.value = null;
   try {
-    const data = await http.get<{ peers: FederationPeer[] }>('/api/v1/federation/peers');
-    peers.value = data.peers || [];
+    const data = await http.get<{ peers: HubPeer[] }>('/api/v1/me/federation/peers');
+    peers.value = (data.peers || []).map((p) => ({
+      id: p.id ?? '',
+      name: p.name ?? '',
+      url: p.url ?? '',
+      status: p.status ?? 'pending',
+      shared_libraries_count: p.shared_library_count,
+      last_sync: p.last_connected_at ?? p.last_seen_at ?? undefined,
+    }));
   } catch (e) {
     error.value = errMessage(e, 'Failed to load federation peers.');
     toasts.error(error.value);
@@ -68,27 +89,34 @@ async function loadPeers(initial = false): Promise<void> {
 
 async function connectPeer(): Promise<void> {
   const url = peerUrl.value.trim();
-  if (!url) return;
+  const name = peerName.value.trim();
+  const publicKey = peerPublicKey.value.trim();
+  // The hub's createPeer requires all three fields.
+  if (!url || !name || !publicKey) return;
   connecting.value = true;
   try {
-    await http.post('/api/v1/federation/connect', { url });
-    toasts.success('Peer connection requested.');
+    await http.post('/api/v1/me/federation/peers', { url, name, public_key: publicKey });
+    toasts.success('Peer added.');
     peerUrl.value = '';
+    peerName.value = '';
+    peerPublicKey.value = '';
     await loadPeers();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to connect to peer.'));
+    toasts.error(errMessage(e, 'Failed to add peer.'));
   } finally {
     connecting.value = false;
   }
 }
 
-async function disconnectPeer(peerId: string): Promise<void> {
+/** Remove (delete) a peer. The hub's DELETE removes the peer entirely; works for
+ *  any status, not just connected. */
+async function removePeer(peerId: string): Promise<void> {
   try {
-    await http.post(`/api/v1/federation/peers/${peerId}/disconnect`);
-    toasts.success('Peer disconnected.');
+    await http.delete(`/api/v1/me/federation/peers/${peerId}`);
+    toasts.success('Peer removed.');
     await loadPeers();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to disconnect peer.'));
+    toasts.error(errMessage(e, 'Failed to remove peer.'));
   }
 }
 
@@ -186,13 +214,12 @@ onMounted(() => loadPeers(true));
               <td>
                 <div class="federation__actions">
                   <Button
-                    v-if="peer.status === 'connected'"
                     variant="ghost"
                     size="sm"
-                    :aria-label="`Disconnect ${peer.name}`"
-                    @click="disconnectPeer(peer.id)"
+                    :aria-label="`Remove ${peer.name}`"
+                    @click="removePeer(peer.id)"
                   >
-                    Disconnect
+                    Remove
                   </Button>
                 </div>
               </td>
@@ -205,6 +232,14 @@ onMounted(() => loadPeers(true));
         <h2 id="federation-add-heading" class="federation__section-title">Add peer</h2>
         <form class="federation__form" @submit.prevent="connectPeer">
           <input
+            v-model="peerName"
+            type="text"
+            class="federation__input"
+            placeholder="Peer name"
+            aria-label="Peer name"
+            autocomplete="off"
+          />
+          <input
             v-model="peerUrl"
             type="url"
             class="federation__input"
@@ -212,8 +247,22 @@ onMounted(() => loadPeers(true));
             aria-label="Peer server URL"
             autocomplete="off"
           />
-          <Button type="submit" variant="solid" left-icon="plus" :loading="connecting" :disabled="!peerUrl.trim()">
-            Connect
+          <input
+            v-model="peerPublicKey"
+            type="text"
+            class="federation__input"
+            placeholder="Peer public key"
+            aria-label="Peer public key"
+            autocomplete="off"
+          />
+          <Button
+            type="submit"
+            variant="solid"
+            left-icon="plus"
+            :loading="connecting"
+            :disabled="!peerUrl.trim() || !peerName.trim() || !peerPublicKey.trim()"
+          >
+            Add peer
           </Button>
         </form>
       </section>

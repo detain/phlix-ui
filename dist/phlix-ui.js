@@ -7,42 +7,42 @@ import { i as u, n as d, r as f, t as p } from "./useMessages-C_NXwkrd.js";
 import { a as m, c as h, l as g, n as _, o as ee, r as v, s as te, t as y } from "./Button-BwQkyEkr.js";
 import { t as ne } from "./tokenStore-CGMYSpg6.js";
 import { t as b } from "./useAuthStore-CB5g_qzR.js";
-import { a as x, i as re, n as ie, r as ae, t as oe } from "./media-query-DowsWq-z.js";
-import { i as S, n as se, r as ce, t as le } from "./Kbd-CSMm1T0l.js";
-import { t as C } from "./Badge-ArWL5-WE.js";
-import { t as ue } from "./Slider-BMn_Lp_q.js";
-import { t as de } from "./Switch-CFZhdkXR.js";
-import { i as fe, n as pe, r as me, t as he } from "./MediaRow-yOkKwyWU.js";
-import { t as ge } from "./Select-CkOiSrAn.js";
-import { a as _e, i as ve, n as ye, r as be, t as xe } from "./FilterBar-B4zzOQ0y.js";
-import { t as Se } from "./Modal-OUVd5FcK.js";
-import { t as w } from "./useToastStore-BDoKlU6N.js";
-import { n as T, t as E } from "./EmptyState-Ds4WcVdG.js";
-import { t as Ce } from "./Tabs-x8dUKZN5.js";
-import { t as we } from "./MediaDetail-D6M3EGxy.js";
-import { n as Te, t as Ee } from "./logs-DadTfaTq.js";
-import { t as De } from "./dashboard-BTCOCTHQ.js";
-import { n as Oe, r as ke, t as Ae } from "./users-C40iLgkq.js";
-import { n as je, r as Me, t as Ne } from "./webhooks-BBTLnFKm.js";
-import { t as Pe } from "./services-Czm8hsvH.js";
-import { t as Fe } from "./integrations-DLAG9ISY.js";
-import { t as Ie } from "./backup-IdY_vzc2.js";
-import { t as Le } from "./cast-BvFcBEB6.js";
-import { t as Re } from "./dlnaServer-B5Sg4MkS.js";
-import { t as ze } from "./remoteAccess-DVKRpKQ8.js";
-import { t as Be } from "./liveTv-Dbjt901v.js";
-import { t as Ve } from "./collections-CH3HLdcd.js";
-import { t as He } from "./history-ByCY8OYj.js";
-import { t as Ue } from "./syncPlay-DPzJkgkK.js";
-import { n as We, t as Ge } from "./libraries-CXAz_kXs.js";
-import { t as Ke } from "./settings-m4upFcmH.js";
-import { n as qe, t as Je } from "./admin-DMRCbE3w.js";
-import { A as Ye, C as Xe, D as Ze, E as Qe, F as $e, I as et, L as tt, M as nt, N as rt, O as it, P as at, S as ot, T as st, _ as ct, a as lt, b as ut, c as dt, d as ft, f as pt, g as mt, h as ht, i as gt, j as _t, k as vt, l as yt, m as bt, n as xt, o as St, p as Ct, r as wt, s as Tt, t as Et, u as Dt, v as Ot, w as kt, x as At, y as jt } from "./Player-BTlTUup0.js";
-import { a as Mt, c as Nt, d as Pt, f as Ft, g as It, h as Lt, i as Rt, l as zt, m as Bt, n as Vt, o as Ht, p as Ut, r as Wt, s as Gt, t as Kt, u as qt } from "./captions-COgPp5bH.js";
-import { t as Jt } from "./LoginForm-HwX8oVLV.js";
-import { t as Yt } from "./SignupForm-DBYWqV-o.js";
-import { t as Xt } from "./SettingsForm-DuSotEMX.js";
-import { Fragment as D, Teleport as Zt, Transition as O, TransitionGroup as Qt, computed as k, createApp as $t, createBlock as A, createCommentVNode as j, createElementBlock as M, createElementVNode as N, createTextVNode as P, createVNode as F, defineAsyncComponent as en, defineComponent as I, inject as tn, normalizeClass as L, normalizeStyle as R, onBeforeUnmount as z, onMounted as B, onScopeDispose as V, openBlock as H, readonly as nn, ref as U, renderList as W, renderSlot as G, resolveDynamicComponent as rn, toDisplayString as K, unref as q, useId as an, vModelText as on, watch as J, watchEffect as sn, withCtx as Y, withDirectives as cn, withKeys as ln, withModifiers as un } from "vue";
+import { a as re, i as ie, n as ae, r as oe, t as se } from "./media-query-DowsWq-z.js";
+import { i as ce, n as le, r as ue, t as de } from "./Kbd-CSMm1T0l.js";
+import { t as x } from "./Badge-ArWL5-WE.js";
+import { t as fe } from "./Slider-BMn_Lp_q.js";
+import { t as pe } from "./Switch-CFZhdkXR.js";
+import { i as me, n as he, r as ge, t as _e } from "./MediaRow-yOkKwyWU.js";
+import { t as ve } from "./Select-CkOiSrAn.js";
+import { a as ye, i as be, n as xe, r as Se, t as Ce } from "./FilterBar-B4zzOQ0y.js";
+import { t as we } from "./Modal-OUVd5FcK.js";
+import { t as S } from "./useToastStore-BDoKlU6N.js";
+import { n as C, t as w } from "./EmptyState-Ds4WcVdG.js";
+import { t as Te } from "./Tabs-x8dUKZN5.js";
+import { t as Ee } from "./MediaDetail-D6M3EGxy.js";
+import { n as De, t as Oe } from "./logs-DadTfaTq.js";
+import { t as ke } from "./dashboard-BTCOCTHQ.js";
+import { n as Ae, r as je, t as Me } from "./users-C40iLgkq.js";
+import { n as Ne, r as Pe, t as Fe } from "./webhooks-BBTLnFKm.js";
+import { t as Ie } from "./services-Czm8hsvH.js";
+import { t as Le } from "./integrations-DLAG9ISY.js";
+import { t as Re } from "./backup-IdY_vzc2.js";
+import { t as ze } from "./cast-BvFcBEB6.js";
+import { t as Be } from "./dlnaServer-B5Sg4MkS.js";
+import { t as Ve } from "./remoteAccess-DVKRpKQ8.js";
+import { t as He } from "./liveTv-Dbjt901v.js";
+import { t as Ue } from "./collections-CH3HLdcd.js";
+import { t as We } from "./history-ByCY8OYj.js";
+import { t as Ge } from "./syncPlay-DPzJkgkK.js";
+import { n as Ke, t as qe } from "./libraries-CXAz_kXs.js";
+import { t as Je } from "./settings-m4upFcmH.js";
+import { n as Ye, t as Xe } from "./admin-DMRCbE3w.js";
+import { A as Ze, C as Qe, D as $e, E as et, F as tt, I as nt, L as rt, M as it, N as at, O as ot, P as st, S as ct, T as lt, _ as ut, a as dt, b as ft, c as pt, d as mt, f as ht, g as gt, h as _t, i as vt, j as yt, k as bt, l as xt, m as St, n as Ct, o as wt, p as Tt, r as Et, s as Dt, t as Ot, u as kt, v as At, w as jt, x as Mt, y as Nt } from "./Player-BTlTUup0.js";
+import { a as Pt, c as Ft, d as It, f as Lt, g as Rt, h as zt, i as Bt, l as Vt, m as Ht, n as Ut, o as Wt, p as Gt, r as Kt, s as qt, t as Jt, u as Yt } from "./captions-COgPp5bH.js";
+import { t as Xt } from "./LoginForm-HwX8oVLV.js";
+import { t as Zt } from "./SignupForm-DBYWqV-o.js";
+import { t as Qt } from "./SettingsForm-DuSotEMX.js";
+import { Fragment as T, Teleport as $t, Transition as E, TransitionGroup as en, computed as D, createApp as tn, createBlock as O, createCommentVNode as k, createElementBlock as A, createElementVNode as j, createTextVNode as M, createVNode as N, defineAsyncComponent as nn, defineComponent as P, inject as rn, normalizeClass as F, normalizeStyle as I, onBeforeUnmount as L, onMounted as R, onScopeDispose as z, openBlock as B, readonly as an, ref as V, renderList as H, renderSlot as U, resolveDynamicComponent as on, toDisplayString as W, unref as G, useId as sn, vModelText as K, watch as q, watchEffect as cn, withCtx as J, withDirectives as Y, withKeys as ln, withModifiers as un } from "vue";
 import { createPinia as dn } from "pinia";
 import { RouterLink as X, RouterView as fn, createRouter as pn, createWebHistory as mn, useRouter as hn } from "vue-router";
 //#region src/components/ui/Sheet.vue?vue&type=script&setup=true&lang.ts
@@ -52,7 +52,7 @@ var gn = ["aria-labelledby"], _n = {
 }, vn = ["id"], yn = { class: "phlix-sheet__body" }, bn = {
 	key: 1,
 	class: "phlix-sheet__footer"
-}, xn = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, xn = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "Sheet",
 	props: {
 		modelValue: { type: Boolean },
@@ -69,43 +69,43 @@ var gn = ["aria-labelledby"], _n = {
 	},
 	emits: ["update:modelValue", "close"],
 	setup(e, { emit: t }) {
-		let n = e, a = t, o = U(n.modelValue);
-		J(() => n.modelValue, (e) => o.value = e);
-		let s = U(null), c = an();
+		let n = e, a = t, o = V(n.modelValue);
+		q(() => n.modelValue, (e) => o.value = e);
+		let s = V(null), c = sn();
 		function l() {
 			a("update:modelValue", !1), a("close");
 		}
 		function u() {
 			n.dismissible && l();
 		}
-		return i(s, o, { onEscape: () => n.dismissible ? (l(), !0) : !1 }), (t, n) => (H(), A(Zt, { to: "body" }, [F(O, { name: `phlix-sheet-${e.side}` }, {
-			default: Y(() => [e.modelValue ? (H(), M("div", {
+		return i(s, o, { onEscape: () => n.dismissible ? (l(), !0) : !1 }), (t, n) => (B(), O($t, { to: "body" }, [N(E, { name: `phlix-sheet-${e.side}` }, {
+			default: J(() => [e.modelValue ? (B(), A("div", {
 				key: 0,
-				class: L(["phlix-sheet", `phlix-sheet--${e.side}`]),
+				class: F(["phlix-sheet", `phlix-sheet--${e.side}`]),
 				onPointerdown: un(u, ["self"])
-			}, [N("aside", {
+			}, [j("aside", {
 				ref_key: "panelEl",
 				ref: s,
 				class: "phlix-sheet__panel",
 				role: "dialog",
 				"aria-modal": "true",
-				"aria-labelledby": e.title ? q(c) : void 0,
+				"aria-labelledby": e.title ? G(c) : void 0,
 				tabindex: "-1"
 			}, [
-				e.title || !e.hideClose ? (H(), M("header", _n, [e.title ? (H(), M("h2", {
+				e.title || !e.hideClose ? (B(), A("header", _n, [e.title ? (B(), A("h2", {
 					key: 0,
-					id: q(c),
+					id: G(c),
 					class: "phlix-sheet__title"
-				}, K(e.title), 9, vn)) : j("", !0), e.hideClose ? j("", !0) : (H(), A(r, {
+				}, W(e.title), 9, vn)) : k("", !0), e.hideClose ? k("", !0) : (B(), O(r, {
 					key: 1,
 					name: "x",
 					label: "Close",
 					size: "sm",
 					onClick: l
-				}))])) : j("", !0),
-				N("div", yn, [G(t.$slots, "default", {}, void 0, !0)]),
-				t.$slots.footer ? (H(), M("footer", bn, [G(t.$slots, "footer", {}, void 0, !0)])) : j("", !0)
-			], 8, gn)], 34)) : j("", !0)]),
+				}))])) : k("", !0),
+				j("div", yn, [U(t.$slots, "default", {}, void 0, !0)]),
+				t.$slots.footer ? (B(), A("footer", bn, [U(t.$slots, "footer", {}, void 0, !0)])) : k("", !0)
+			], 8, gn)], 34)) : k("", !0)]),
 			_: 3
 		}, 8, ["name"])]));
 	}
@@ -119,47 +119,47 @@ var gn = ["aria-labelledby"], _n = {
 }, An = {
 	key: 0,
 	class: "shell__footer"
-}, jn = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, jn = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "AppLayout",
 	setup(t) {
-		let n = a(), i = U(!1), { t: o } = p();
-		return (t, a) => (H(), M("div", Sn, [
-			N("a", Cn, K(q(o)("shell.skipToContent")), 1),
-			F(e, { enabled: q(n).atmosphere }, null, 8, ["enabled"]),
-			N("header", wn, [N("div", Tn, [
-				N("div", En, [G(t.$slots, "logo", {}, () => [a[3] ||= N("span", { class: "shell__wordmark" }, [P("Phlix"), N("span", { class: "shell__dot" }, ".")], -1)], !0)]),
-				N("nav", {
+		let n = a(), i = V(!1), { t: o } = p();
+		return (t, a) => (B(), A("div", Sn, [
+			j("a", Cn, W(G(o)("shell.skipToContent")), 1),
+			N(e, { enabled: G(n).atmosphere }, null, 8, ["enabled"]),
+			j("header", wn, [j("div", Tn, [
+				j("div", En, [U(t.$slots, "logo", {}, () => [a[3] ||= j("span", { class: "shell__wordmark" }, [M("Phlix"), j("span", { class: "shell__dot" }, ".")], -1)], !0)]),
+				j("nav", {
 					class: "shell__nav",
-					"aria-label": q(o)("shell.primaryNav")
-				}, [G(t.$slots, "nav", {}, void 0, !0)], 8, Dn),
-				a[4] ||= N("span", { class: "shell__spacer" }, null, -1),
-				N("div", On, [G(t.$slots, "actions", {}, void 0, !0)]),
-				t.$slots.nav ? (H(), A(r, {
+					"aria-label": G(o)("shell.primaryNav")
+				}, [U(t.$slots, "nav", {}, void 0, !0)], 8, Dn),
+				a[4] ||= j("span", { class: "shell__spacer" }, null, -1),
+				j("div", On, [U(t.$slots, "actions", {}, void 0, !0)]),
+				t.$slots.nav ? (B(), O(r, {
 					key: 0,
 					class: "shell__hamburger",
 					name: "menu",
-					label: q(o)("shell.openMenu"),
+					label: G(o)("shell.openMenu"),
 					variant: "ghost",
 					onClick: a[0] ||= (e) => i.value = !0
-				}, null, 8, ["label"])) : j("", !0)
+				}, null, 8, ["label"])) : k("", !0)
 			])]),
-			N("main", kn, [G(t.$slots, "default", {}, void 0, !0)]),
-			t.$slots.footer ? (H(), M("footer", An, [G(t.$slots, "footer", {}, void 0, !0)])) : j("", !0),
-			F(xn, {
+			j("main", kn, [U(t.$slots, "default", {}, void 0, !0)]),
+			t.$slots.footer ? (B(), A("footer", An, [U(t.$slots, "footer", {}, void 0, !0)])) : k("", !0),
+			N(xn, {
 				modelValue: i.value,
 				"onUpdate:modelValue": a[2] ||= (e) => i.value = e,
 				side: "left",
-				title: q(o)("shell.menu")
+				title: G(o)("shell.menu")
 			}, {
-				default: Y(() => [N("nav", {
+				default: J(() => [j("nav", {
 					class: "shell__drawer",
 					onClick: a[1] ||= (e) => i.value = !1
-				}, [G(t.$slots, "nav", {}, void 0, !0)])]),
+				}, [U(t.$slots, "nav", {}, void 0, !0)])]),
 				_: 3
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-db48fc6e"]]), Mn = /* @__PURE__ */ I({
+}), [["__scopeId", "data-v-db48fc6e"]]), Mn = /* @__PURE__ */ P({
 	__name: "ThemeToggle",
 	setup(e) {
 		let t = a(), { t: n } = p(), i = [
@@ -174,14 +174,14 @@ var gn = ["aria-labelledby"], _n = {
 			nocturne: "Nocturne",
 			daylight: "Daylight",
 			midnight: "Midnight"
-		}, c = k(() => i[(i.indexOf(t.theme) + 1) % i.length]), l = k(() => o[t.theme] ?? "moon"), u = k(() => n("shell.themeToggleLabel", {
+		}, c = D(() => i[(i.indexOf(t.theme) + 1) % i.length]), l = D(() => o[t.theme] ?? "moon"), u = D(() => n("shell.themeToggleLabel", {
 			current: s[t.theme] ?? t.theme,
 			next: s[c.value]
 		}));
 		function d() {
 			t.theme = c.value;
 		}
-		return (e, t) => (H(), A(r, {
+		return (e, t) => (B(), O(r, {
 			name: l.value,
 			label: u.value,
 			variant: "ghost",
@@ -191,10 +191,10 @@ var gn = ["aria-labelledby"], _n = {
 }), Nn = ["aria-label", "aria-expanded"], Pn = {
 	key: 0,
 	class: "usermenu__avatar"
-}, Fn = ["aria-label"], In = { class: "usermenu__head" }, Ln = { class: "usermenu__avatar usermenu__avatar--lg" }, Rn = { class: "usermenu__name" }, zn = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, Fn = ["aria-label"], In = { class: "usermenu__head" }, Ln = { class: "usermenu__avatar usermenu__avatar--lg" }, Rn = { class: "usermenu__name" }, zn = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "UserMenu",
 	setup(e) {
-		let t = b(), r = hn(), a = tn("phlixConfig", null), o = k(() => a?.routerBase ?? "/app"), { t: s } = p(), c = U(!1), l = U(null), u = U(null), d = k(() => t.user?.username || t.user?.name || t.user?.email || s("shell.account")), f = k(() => d.value.charAt(0).toUpperCase() || "A");
+		let t = b(), r = hn(), a = rn("phlixConfig", null), o = D(() => a?.routerBase ?? "/app"), { t: s } = p(), c = V(!1), l = V(null), u = V(null), d = D(() => t.user?.username || t.user?.name || t.user?.email || s("shell.account")), f = D(() => d.value.charAt(0).toUpperCase() || "A");
 		function m() {
 			c.value = !1;
 		}
@@ -211,62 +211,62 @@ var gn = ["aria-labelledby"], _n = {
 		function _(e) {
 			l.value && !l.value.contains(e.target) && m();
 		}
-		return J(c, (e) => {
+		return q(c, (e) => {
 			typeof document > "u" || (e ? document.addEventListener("pointerdown", _, !0) : document.removeEventListener("pointerdown", _, !0));
-		}), z(() => {
+		}), L(() => {
 			typeof document < "u" && document.removeEventListener("pointerdown", _, !0);
-		}), (e, r) => (H(), M("div", {
+		}), (e, r) => (B(), A("div", {
 			ref_key: "rootEl",
 			ref: l,
 			class: "usermenu"
-		}, [N("button", {
+		}, [j("button", {
 			type: "button",
 			class: "usermenu__trigger",
-			"aria-label": q(t).isLoggedIn ? q(s)("shell.accountNamed", { name: d.value }) : q(s)("shell.account"),
+			"aria-label": G(t).isLoggedIn ? G(s)("shell.accountNamed", { name: d.value }) : G(s)("shell.account"),
 			"aria-haspopup": "menu",
 			"aria-expanded": c.value,
 			onClick: r[0] ||= (e) => c.value = !c.value
-		}, [q(t).isLoggedIn ? (H(), M("span", Pn, K(f.value), 1)) : (H(), A(n, {
+		}, [G(t).isLoggedIn ? (B(), A("span", Pn, W(f.value), 1)) : (B(), O(n, {
 			key: 1,
 			name: "user"
-		}))], 8, Nn), c.value ? (H(), M("div", {
+		}))], 8, Nn), c.value ? (B(), A("div", {
 			key: 0,
 			ref_key: "panelEl",
 			ref: u,
 			class: "usermenu__panel",
 			role: "menu",
-			"aria-label": q(s)("shell.account"),
+			"aria-label": G(s)("shell.account"),
 			tabindex: "-1"
-		}, [q(t).isLoggedIn ? (H(), M(D, { key: 0 }, [
-			N("div", In, [N("span", Ln, K(f.value), 1), N("span", Rn, K(d.value), 1)]),
-			N("button", {
+		}, [G(t).isLoggedIn ? (B(), A(T, { key: 0 }, [
+			j("div", In, [j("span", Ln, W(f.value), 1), j("span", Rn, W(d.value), 1)]),
+			j("button", {
 				type: "button",
 				class: "usermenu__item",
 				role: "menuitem",
 				onClick: r[1] ||= (e) => h(`${o.value}/settings`)
-			}, [F(n, { name: "settings" }), P(" " + K(q(s)("shell.settings")), 1)]),
-			N("button", {
+			}, [N(n, { name: "settings" }), M(" " + W(G(s)("shell.settings")), 1)]),
+			j("button", {
 				type: "button",
 				class: "usermenu__item",
 				role: "menuitem",
 				onClick: g
-			}, [F(n, { name: "log-out" }), P(" " + K(q(s)("shell.signOut")), 1)])
-		], 64)) : (H(), M("button", {
+			}, [N(n, { name: "log-out" }), M(" " + W(G(s)("shell.signOut")), 1)])
+		], 64)) : (B(), A("button", {
 			key: 1,
 			type: "button",
 			class: "usermenu__item",
 			role: "menuitem",
 			onClick: r[2] ||= (e) => h(`${o.value}/login`)
-		}, [F(n, { name: "user" }), P(" " + K(q(s)("shell.signIn")), 1)]))], 8, Fn)) : j("", !0)], 512));
+		}, [N(n, { name: "user" }), M(" " + W(G(s)("shell.signIn")), 1)]))], 8, Fn)) : k("", !0)], 512));
 	}
 }), [["__scopeId", "data-v-165c2e83"]]), Bn = ["aria-label"], Vn = ["src", "poster"], Hn = { class: "mini__body" }, Un = { class: "mini__title" }, Wn = { class: "mini__controls" }, Gn = ["aria-label"], Kn = ["aria-label"], qn = ["aria-label"], Jn = {
 	class: "mini__progress",
 	"aria-hidden": "true"
-}, Yn = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, Yn = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "MiniPlayer",
 	emits: ["expand"],
 	setup(e, { emit: t }) {
-		let r = t, i = x(), { t: a } = p(), o = U(null), s = k(() => i.miniPlayer && !!i.current && !!i.streamUrl), c = k(() => i.current?.name ?? ""), l = k(() => Math.max(0, Math.min(1, i.progress)));
+		let r = t, i = re(), { t: a } = p(), o = V(null), s = D(() => i.miniPlayer && !!i.current && !!i.streamUrl), c = D(() => i.current?.name ?? ""), l = D(() => Math.max(0, Math.min(1, i.progress)));
 		function u() {
 			let e = o.value;
 			e && (e.volume = i.volume, e.muted = i.muted, e.playbackRate = i.rate, i.position > 0 && (!e.duration || i.position < e.duration) && (e.currentTime = i.position), i.playing && e.play()?.catch(() => {}));
@@ -291,24 +291,24 @@ var gn = ["aria-labelledby"], _n = {
 		function _() {
 			i.closePlayer();
 		}
-		return J(() => i.playing, (e) => {
+		return q(() => i.playing, (e) => {
 			let t = o.value;
 			t && (e && t.paused ? t.play()?.catch(() => {}) : !e && !t.paused && t.pause());
-		}), z(() => {
+		}), L(() => {
 			o.value?.pause?.();
-		}), (e, t) => (H(), A(O, { name: "mini" }, {
-			default: Y(() => [s.value ? (H(), M("div", {
+		}), (e, t) => (B(), O(E, { name: "mini" }, {
+			default: J(() => [s.value ? (B(), A("div", {
 				key: 0,
 				class: "mini",
 				role: "region",
-				"aria-label": q(a)("player.miniPlayer")
+				"aria-label": G(a)("player.miniPlayer")
 			}, [
-				N("video", {
+				j("video", {
 					ref_key: "videoRef",
 					ref: o,
 					class: "mini__video",
-					src: q(i).streamUrl,
-					poster: q(i).current?.poster_url ?? void 0,
+					src: G(i).streamUrl,
+					poster: G(i).current?.poster_url ?? void 0,
 					preload: "metadata",
 					playsinline: "",
 					onLoadedmetadata: u,
@@ -317,31 +317,31 @@ var gn = ["aria-labelledby"], _n = {
 					onTimeupdate: m,
 					onClick: g
 				}, null, 40, Vn),
-				N("div", Hn, [N("p", Un, K(c.value), 1), N("div", Wn, [
-					N("button", {
+				j("div", Hn, [j("p", Un, W(c.value), 1), j("div", Wn, [
+					j("button", {
 						type: "button",
 						class: "mini__btn",
-						"aria-label": q(i).playing ? q(a)("player.pause") : q(a)("player.play"),
+						"aria-label": G(i).playing ? G(a)("player.pause") : G(a)("player.play"),
 						onClick: h
-					}, [F(n, { name: q(i).playing ? "pause" : "play" }, null, 8, ["name"])], 8, Gn),
-					N("button", {
+					}, [N(n, { name: G(i).playing ? "pause" : "play" }, null, 8, ["name"])], 8, Gn),
+					j("button", {
 						type: "button",
 						class: "mini__btn",
-						"aria-label": q(a)("player.expand"),
+						"aria-label": G(a)("player.expand"),
 						onClick: g
-					}, [F(n, { name: "expand" })], 8, Kn),
-					N("button", {
+					}, [N(n, { name: "expand" })], 8, Kn),
+					j("button", {
 						type: "button",
 						class: "mini__btn mini__btn--close",
-						"aria-label": q(a)("player.closePlayer"),
+						"aria-label": G(a)("player.closePlayer"),
 						onClick: _
-					}, [F(n, { name: "x" })], 8, qn)
+					}, [N(n, { name: "x" })], 8, qn)
 				])]),
-				N("div", Jn, [N("div", {
+				j("div", Jn, [j("div", {
 					class: "mini__progress-fill",
-					style: R({ transform: `scaleX(${l.value})` })
+					style: I({ transform: `scaleX(${l.value})` })
 				}, null, 4)])
-			], 8, Bn)) : j("", !0)]),
+			], 8, Bn)) : k("", !0)]),
 			_: 1
 		}));
 	}
@@ -424,7 +424,7 @@ function ir(e) {
 }
 function ar() {
 	let e = a();
-	return sn(() => {
+	return cn(() => {
 		rr({
 			theme: e.theme,
 			density: e.density,
@@ -435,10 +435,10 @@ function ar() {
 //#endregion
 //#region src/composables/useCommandPaletteHotkey.ts
 function or() {
-	let e = S(), t = (t) => {
+	let e = ce(), t = (t) => {
 		(t.metaKey || t.ctrlKey) && !t.altKey && (t.key === "k" || t.key === "K") && (t.preventDefault(), e.togglePalette());
 	};
-	typeof document < "u" && typeof document.addEventListener == "function" && (document.addEventListener("keydown", t), V(() => document.removeEventListener("keydown", t)));
+	typeof document < "u" && typeof document.addEventListener == "function" && (document.addEventListener("keydown", t), z(() => document.removeEventListener("keydown", t)));
 }
 //#endregion
 //#region src/composables/usePreconnect.ts
@@ -476,7 +476,7 @@ function ur(e, t = {}) {
 		let r = $(e);
 		r && (n && r === n || a.has(r) || (a.add(r), lr("preconnect", r, t.crossOrigin === !0, i), lr("dns-prefetch", r, !1, i)));
 	}
-	i.length && V(() => {
+	i.length && z(() => {
 		for (let e of i) e.remove();
 		i.length = 0;
 	});
@@ -486,47 +486,47 @@ function ur(e, t = {}) {
 var dr = ["src", "alt"], fr = { class: "brand-wordmark" }, pr = {
 	key: 1,
 	class: "brand-tagline"
-}, mr = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, mr = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "PhlixApp",
 	setup(e) {
 		ar();
-		let t = S(), i = hn(), { t: a } = p();
+		let t = ce(), i = hn(), { t: a } = p();
 		or();
-		let o = en(() => import("./CommandPalette-BbhfqxX5.js")), s = U(!1);
-		J(() => t.open, (e) => {
+		let o = nn(() => import("./CommandPalette-BbhfqxX5.js")), s = V(!1);
+		q(() => t.open, (e) => {
 			e && (s.value = !0);
 		});
 		function c(e) {
 			i.push(`${h.value}/player/${e}`);
 		}
-		let l = tn("phlixConfig", null);
+		let l = rn("phlixConfig", null);
 		ur(sr({
 			imageOrigin: l?.imageOrigin ?? null,
 			apiBase: l?.apiBase ?? null,
 			documentOrigin: typeof window < "u" ? window.location.origin : null
 		}));
-		let u = b(), d = k(() => l?.branding ?? {}), f = k(() => d.value.wordmark ?? "Phlix"), m = k(() => (l?.menu ?? []).filter((e) => !e.requiresAdmin || u.isAdmin)), h = k(() => l?.routerBase ?? "/app");
+		let u = b(), d = D(() => l?.branding ?? {}), f = D(() => d.value.wordmark ?? "Phlix"), m = D(() => (l?.menu ?? []).filter((e) => !e.requiresAdmin || u.isAdmin)), h = D(() => l?.routerBase ?? "/app");
 		function g(e) {
 			return /^\s*(javascript|data|vbscript):/i.test(e) ? void 0 : e;
 		}
-		return (e, i) => (H(), A(jn, null, {
-			logo: Y(() => [F(q(X), {
+		return (e, i) => (B(), O(jn, null, {
+			logo: J(() => [N(G(X), {
 				to: h.value,
 				class: "brand"
 			}, {
-				default: Y(() => [
-					d.value.logoSrc ? (H(), M("img", {
+				default: J(() => [
+					d.value.logoSrc ? (B(), A("img", {
 						key: 0,
 						src: d.value.logoSrc,
 						alt: d.value.logoAlt ?? f.value,
 						class: "brand-logo"
-					}, null, 8, dr)) : j("", !0),
-					N("span", fr, [P(K(f.value), 1), i[1] ||= N("span", { class: "brand-dot" }, ".", -1)]),
-					d.value.tagline ? (H(), M("span", pr, K(d.value.tagline), 1)) : j("", !0)
+					}, null, 8, dr)) : k("", !0),
+					j("span", fr, [M(W(f.value), 1), i[1] ||= j("span", { class: "brand-dot" }, ".", -1)]),
+					d.value.tagline ? (B(), A("span", pr, W(d.value.tagline), 1)) : k("", !0)
 				]),
 				_: 1
 			}, 8, ["to"])]),
-			nav: Y(() => [m.value.length ? (H(!0), M(D, { key: 0 }, W(m.value, (e) => (H(), A(rn(e.href ? "a" : q(X)), {
+			nav: J(() => [m.value.length ? (B(!0), A(T, { key: 0 }, H(m.value, (e) => (B(), O(on(e.href ? "a" : G(X)), {
 				key: e.id,
 				to: e.href ? void 0 : e.to,
 				href: e.href ? g(e.href) : void 0,
@@ -534,53 +534,53 @@ var dr = ["src", "alt"], fr = { class: "brand-wordmark" }, pr = {
 				rel: e.href && e.target === "_blank" ? "noopener noreferrer" : void 0,
 				class: "nav-link"
 			}, {
-				default: Y(() => [e.icon ? (H(), A(n, {
+				default: J(() => [e.icon ? (B(), O(n, {
 					key: 0,
 					name: e.icon,
 					class: "nav-link-icon"
-				}, null, 8, ["name"])) : j("", !0), P(" " + K(e.label), 1)]),
+				}, null, 8, ["name"])) : k("", !0), M(" " + W(e.label), 1)]),
 				_: 2
 			}, 1032, [
 				"to",
 				"href",
 				"target",
 				"rel"
-			]))), 128)) : (H(), M(D, { key: 1 }, [F(q(X), {
+			]))), 128)) : (B(), A(T, { key: 1 }, [N(G(X), {
 				to: h.value,
 				class: "nav-link"
 			}, {
-				default: Y(() => [P(K(q(a)("shell.browse")), 1)]),
+				default: J(() => [M(W(G(a)("shell.browse")), 1)]),
 				_: 1
-			}, 8, ["to"]), F(q(X), {
+			}, 8, ["to"]), N(G(X), {
 				to: `${h.value}/settings`,
 				class: "nav-link"
 			}, {
-				default: Y(() => [P(K(q(a)("shell.settings")), 1)]),
+				default: J(() => [M(W(G(a)("shell.settings")), 1)]),
 				_: 1
 			}, 8, ["to"])], 64))]),
-			actions: Y(() => [
-				F(r, {
+			actions: J(() => [
+				N(r, {
 					name: "search",
-					label: q(a)("shell.openCommandPalette"),
+					label: G(a)("shell.openCommandPalette"),
 					variant: "ghost",
-					onClick: i[0] ||= (e) => q(t).openPalette()
+					onClick: i[0] ||= (e) => G(t).openPalette()
 				}, null, 8, ["label"]),
-				F(Mn),
-				F(zn)
+				N(Mn),
+				N(zn)
 			]),
-			default: Y(() => [
-				F(q(fn)),
-				s.value ? (H(), A(q(o), { key: 0 })) : j("", !0),
-				F(Yn, { onExpand: c })
+			default: J(() => [
+				N(G(fn)),
+				s.value ? (B(), O(G(o), { key: 0 })) : k("", !0),
+				N(Yn, { onExpand: c })
 			]),
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-1986daec"]]), hr = { class: "phlix-placeholder" }, gr = { class: "placeholder-content" }, _r = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}), [["__scopeId", "data-v-1986daec"]]), hr = { class: "phlix-placeholder" }, gr = { class: "placeholder-content" }, _r = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "Placeholder",
 	props: { appName: {} },
 	setup(e) {
-		return (t, n) => (H(), M("div", hr, [N("div", gr, [n[0] ||= N("h1", null, "Shared UI loading...", -1), N("p", null, "Phlix " + K(e.appName) + " is initializing", 1)])]));
+		return (t, n) => (B(), A("div", hr, [j("div", gr, [n[0] ||= j("h1", null, "Shared UI loading...", -1), j("p", null, "Phlix " + W(e.appName) + " is initializing", 1)])]));
 	}
 }), [["__scopeId", "data-v-bf79ac4c"]]), vr = ["login", "signup"];
 function yr(e, t) {
@@ -653,12 +653,12 @@ function Sr(e) {
 		routes: xr(t)
 	});
 	r.beforeEach((e) => yr(e, b(n).isLoggedIn));
-	let i = $t(mr);
+	let i = tn(mr);
 	return i.provide("apiBase", t.apiBase), i.provide("phlixCommands", t.commands ?? []), i.provide("phlixConfig", t), i.use(n), i.use(r), i;
 }
 //#endregion
 //#region src/components/ui/Tooltip.vue?vue&type=script&setup=true&lang.ts
-var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
+var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "Tooltip",
 	props: {
 		text: {},
@@ -670,7 +670,7 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 		}
 	},
 	setup(e) {
-		let t = e, n = an(), r = U(!1), i = U(null), a;
+		let t = e, n = sn(), r = V(!1), i = V(null), a;
 		function o() {
 			return i.value?.firstElementChild ?? null;
 		}
@@ -682,7 +682,7 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 		function c() {
 			clearTimeout(a), r.value = !1, o()?.removeAttribute("aria-describedby");
 		}
-		return z(() => clearTimeout(a)), (t, a) => (H(), M("span", {
+		return L(() => clearTimeout(a)), (t, a) => (B(), A("span", {
 			ref_key: "wrapEl",
 			ref: i,
 			class: "phlix-tooltip-wrap",
@@ -691,87 +691,87 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 			onFocusin: s,
 			onFocusout: c,
 			onKeydown: ln(c, ["esc"])
-		}, [G(t.$slots, "default", {}, void 0, !0), F(O, { name: "phlix-tooltip" }, {
-			default: Y(() => [r.value && (e.text || t.$slots.content) ? (H(), M("span", {
+		}, [U(t.$slots, "default", {}, void 0, !0), N(E, { name: "phlix-tooltip" }, {
+			default: J(() => [r.value && (e.text || t.$slots.content) ? (B(), A("span", {
 				key: 0,
-				id: q(n),
+				id: G(n),
 				role: "tooltip",
-				class: L(["phlix-tooltip", `phlix-tooltip--${e.placement}`])
-			}, [G(t.$slots, "content", {}, () => [P(K(e.text), 1)], !0)], 10, Cr)) : j("", !0)]),
+				class: F(["phlix-tooltip", `phlix-tooltip--${e.placement}`])
+			}, [U(t.$slots, "content", {}, () => [M(W(e.text), 1)], !0)], 10, Cr)) : k("", !0)]),
 			_: 3
 		})], 544));
 	}
 }), [["__scopeId", "data-v-bdb87991"]]), Tr = ["aria-label"], Er = ["role"], Dr = { class: "phlix-toast__content" }, Or = {
 	key: 0,
 	class: "phlix-toast__title"
-}, kr = { class: "phlix-toast__message" }, Ar = ["onClick"], jr = 0, Mr = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, kr = { class: "phlix-toast__message" }, Ar = ["onClick"], jr = 0, Mr = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "ToastHost",
 	props: { position: { default: "bottom" } },
 	setup(e) {
-		let { t } = p(), i = w(), a = {
+		let { t } = p(), i = S(), a = {
 			neutral: "info",
 			success: "success",
 			warning: "alert",
 			error: "error",
 			info: "info"
 		}, o = (e) => e.icon ?? a[e.tone];
-		return B(() => {
+		return R(() => {
 			jr++;
-		}), z(() => {
+		}), L(() => {
 			jr--;
-		}), (a, s) => (H(), A(Zt, { to: "body" }, [N("div", {
-			class: L(["phlix-toasts", `phlix-toasts--${e.position}`]),
+		}), (a, s) => (B(), O($t, { to: "body" }, [j("div", {
+			class: F(["phlix-toasts", `phlix-toasts--${e.position}`]),
 			role: "region",
-			"aria-label": q(t)("common.notifications")
-		}, [F(Qt, { name: "phlix-toast" }, {
-			default: Y(() => [(H(!0), M(D, null, W(q(i).toasts, (e) => (H(), M("div", {
+			"aria-label": G(t)("common.notifications")
+		}, [N(en, { name: "phlix-toast" }, {
+			default: J(() => [(B(!0), A(T, null, H(G(i).toasts, (e) => (B(), A("div", {
 				key: e.id,
-				class: L(["phlix-toast", `phlix-toast--${e.tone}`]),
+				class: F(["phlix-toast", `phlix-toast--${e.tone}`]),
 				role: e.tone === "error" ? "alert" : "status"
 			}, [
-				F(n, {
+				N(n, {
 					name: o(e),
 					class: "phlix-toast__icon"
 				}, null, 8, ["name"]),
-				N("div", Dr, [e.title ? (H(), M("p", Or, K(e.title), 1)) : j("", !0), N("p", kr, K(e.message), 1)]),
-				e.action ? (H(), M("button", {
+				j("div", Dr, [e.title ? (B(), A("p", Or, W(e.title), 1)) : k("", !0), j("p", kr, W(e.message), 1)]),
+				e.action ? (B(), A("button", {
 					key: 0,
 					type: "button",
 					class: "phlix-toast__action",
 					onClick: (t) => {
-						e.action.onClick(), q(i).dismiss(e.id);
+						e.action.onClick(), G(i).dismiss(e.id);
 					}
-				}, K(e.action.label), 9, Ar)) : j("", !0),
-				F(r, {
+				}, W(e.action.label), 9, Ar)) : k("", !0),
+				N(r, {
 					name: "x",
-					label: q(t)("common.dismiss"),
+					label: G(t)("common.dismiss"),
 					size: "sm",
 					class: "phlix-toast__close",
-					onClick: (t) => q(i).dismiss(e.id)
+					onClick: (t) => G(i).dismiss(e.id)
 				}, null, 8, ["label", "onClick"])
 			], 10, Er))), 128))]),
 			_: 1
 		})], 10, Tr)]));
 	}
-}), [["__scopeId", "data-v-72598ec1"]]), Nr = ["aria-label"], Pr = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}), [["__scopeId", "data-v-72598ec1"]]), Nr = ["aria-label"], Pr = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "Spinner",
 	props: {
 		size: {},
 		label: {}
 	},
 	setup(e) {
-		let t = e, { t: r } = p(), i = k(() => t.size === void 0 ? void 0 : typeof t.size == "number" ? `${t.size}px` : t.size);
-		return (t, a) => (H(), M("span", {
+		let t = e, { t: r } = p(), i = D(() => t.size === void 0 ? void 0 : typeof t.size == "number" ? `${t.size}px` : t.size);
+		return (t, a) => (B(), A("span", {
 			class: "phlix-spinner",
 			role: "status",
-			"aria-label": e.label ?? q(r)("common.loading"),
-			style: R(i.value ? { fontSize: i.value } : void 0)
-		}, [F(n, {
+			"aria-label": e.label ?? G(r)("common.loading"),
+			style: I(i.value ? { fontSize: i.value } : void 0)
+		}, [N(n, {
 			name: "spinner",
 			class: "phlix-spinner__icon"
 		})], 12, Nr));
 	}
-}), [["__scopeId", "data-v-ebc9ef9d"]]), Fr = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}), [["__scopeId", "data-v-ebc9ef9d"]]), Fr = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "Reveal",
 	props: {
 		tag: { default: "div" },
@@ -783,8 +783,8 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 		}
 	},
 	setup(e) {
-		let t = e, n = U(null), r = U(!1), i = U(!1), a = null, o = typeof window < "u" && typeof window.matchMedia == "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-		return B(() => {
+		let t = e, n = V(null), r = V(!1), i = V(!1), a = null, o = typeof window < "u" && typeof window.matchMedia == "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		return R(() => {
 			if (o) {
 				r.value = !0;
 				return;
@@ -792,34 +792,34 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 			t.whenVisible && typeof IntersectionObserver < "u" ? (a = new IntersectionObserver((e) => {
 				e.some((e) => e.isIntersecting) && (r.value = !0, a?.disconnect(), a = null);
 			}, { threshold: .1 }), n.value && a.observe(n.value)) : requestAnimationFrame(() => requestAnimationFrame(() => r.value = !0));
-		}), z(() => {
+		}), L(() => {
 			a?.disconnect(), a = null;
-		}), (t, a) => (H(), A(rn(e.tag), {
+		}), (t, a) => (B(), O(on(e.tag), {
 			ref_key: "el",
 			ref: n,
-			class: L(["phlix-reveal", {
+			class: F(["phlix-reveal", {
 				"is-revealed": r.value,
 				"is-settled": i.value
 			}]),
-			style: R({
+			style: I({
 				"--reveal-delay": `${e.delay}ms`,
 				"--reveal-y": `${e.y}px`
 			}),
 			onTransitionend: a[0] ||= (e) => i.value = !0
 		}, {
-			default: Y(() => [G(t.$slots, "default", {}, void 0, !0)]),
+			default: J(() => [U(t.$slots, "default", {}, void 0, !0)]),
 			_: 3
 		}, 40, ["class", "style"]));
 	}
-}), [["__scopeId", "data-v-162397f9"]]), Ir = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}), [["__scopeId", "data-v-162397f9"]]), Ir = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "PageTransition",
 	props: { mode: { default: "fade" } },
 	setup(e) {
-		return (t, n) => (H(), A(O, {
+		return (t, n) => (B(), O(E, {
 			name: `phlix-page-${e.mode}`,
 			mode: "out-in"
 		}, {
-			default: Y(() => [G(t.$slots, "default", {}, void 0, !0)]),
+			default: J(() => [U(t.$slots, "default", {}, void 0, !0)]),
 			_: 3
 		}, 8, ["name"]));
 	}
@@ -841,11 +841,11 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 }, Ur = { class: "library-scan__num" }, Wr = { class: "library-scan__date" }, Gr = ["data-testid"], Kr = {
 	key: 0,
 	class: "library-scan__error"
-}, qr = { class: "library-scan__actions" }, Jr = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, qr = { class: "library-scan__actions" }, Jr = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "LibraryScanPage",
 	props: { client: {} },
 	setup(e) {
-		let t = e.client ?? v, n = w(), r = U([]), i = U({}), a = U(!0), o = U(null);
+		let t = e.client ?? v, n = S(), r = V([]), i = V({}), a = V(!0), o = V(null);
 		async function s() {
 			a.value = !0, o.value = null;
 			try {
@@ -906,76 +906,76 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 				default: return "neutral";
 			}
 		}
-		return B(s), (e, t) => (H(), M("section", Lr, [t[4] ||= N("header", { class: "library-scan__head" }, [N("h1", {
+		return R(s), (e, t) => (B(), A("section", Lr, [t[4] ||= j("header", { class: "library-scan__head" }, [j("h1", {
 			id: "library-scan-heading",
 			class: "library-scan__title"
-		}, "Library Scanner"), N("p", { class: "library-scan__subtitle" }, "Scan your media libraries to discover new content.")], -1), a.value ? (H(), M("div", Rr, [F(T, {
+		}, "Library Scanner"), j("p", { class: "library-scan__subtitle" }, "Scan your media libraries to discover new content.")], -1), a.value ? (B(), A("div", Rr, [N(C, {
 			variant: "text",
 			lines: 6
-		})])) : o.value ? (H(), A(E, {
+		})])) : o.value ? (B(), O(w, {
 			key: 1,
 			icon: "alert",
 			title: "Couldn't load libraries",
 			description: o.value
 		}, {
-			actions: Y(() => [F(y, {
+			actions: J(() => [N(y, {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "rewind",
 				onClick: s
 			}, {
-				default: Y(() => [...t[0] ||= [P("Retry", -1)]]),
+				default: J(() => [...t[0] ||= [M("Retry", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["description"])) : r.value.length === 0 ? (H(), A(E, {
+		}, 8, ["description"])) : r.value.length === 0 ? (B(), O(w, {
 			key: 2,
 			icon: "film",
 			title: "No libraries configured",
 			description: "Add a library to get started."
-		})) : (H(), M("div", zr, [N("table", Br, [t[3] ||= N("thead", null, [N("tr", null, [
-			N("th", { scope: "col" }, "Library"),
-			N("th", { scope: "col" }, "Type"),
-			N("th", { scope: "col" }, "Items"),
-			N("th", { scope: "col" }, "Last scan"),
-			N("th", { scope: "col" }, "Status"),
-			N("th", {
+		})) : (B(), A("div", zr, [j("table", Br, [t[3] ||= j("thead", null, [j("tr", null, [
+			j("th", { scope: "col" }, "Library"),
+			j("th", { scope: "col" }, "Type"),
+			j("th", { scope: "col" }, "Items"),
+			j("th", { scope: "col" }, "Last scan"),
+			j("th", { scope: "col" }, "Status"),
+			j("th", {
 				scope: "col",
 				class: "library-scan__actions-col"
 			}, "Actions")
-		])], -1), N("tbody", null, [(H(!0), M(D, null, W(r.value, (e) => (H(), M("tr", { key: e.id }, [
-			N("td", null, [N("div", Vr, K(e.name), 1), e.paths.length ? (H(), M("div", Hr, K(e.paths.join(", ")), 1)) : j("", !0)]),
-			N("td", null, K(e.type), 1),
-			N("td", Ur, K(e.item_count === void 0 ? "—" : e.item_count), 1),
-			N("td", Wr, K(d(e.last_scan_at)), 1),
-			N("td", null, [N("span", {
+		])], -1), j("tbody", null, [(B(!0), A(T, null, H(r.value, (e) => (B(), A("tr", { key: e.id }, [
+			j("td", null, [j("div", Vr, W(e.name), 1), e.paths.length ? (B(), A("div", Hr, W(e.paths.join(", ")), 1)) : k("", !0)]),
+			j("td", null, W(e.type), 1),
+			j("td", Ur, W(e.item_count === void 0 ? "—" : e.item_count), 1),
+			j("td", Wr, W(d(e.last_scan_at)), 1),
+			j("td", null, [j("span", {
 				class: "library-scan__status",
 				"data-testid": `status-${e.id}`
-			}, [F(C, { tone: m(i.value[e.id]) }, {
-				default: Y(() => [P(K(p(i.value[e.id])), 1)]),
+			}, [N(x, { tone: m(i.value[e.id]) }, {
+				default: J(() => [M(W(p(i.value[e.id])), 1)]),
 				_: 2
-			}, 1032, ["tone"]), i.value[e.id]?.status === "failed" && i.value[e.id]?.error ? (H(), M("span", Kr, K(i.value[e.id]?.error), 1)) : j("", !0)], 8, Gr)]),
-			N("td", null, [N("div", qr, [F(y, {
+			}, 1032, ["tone"]), i.value[e.id]?.status === "failed" && i.value[e.id]?.error ? (B(), A("span", Kr, W(i.value[e.id]?.error), 1)) : k("", !0)], 8, Gr)]),
+			j("td", null, [j("div", qr, [N(y, {
 				variant: "solid",
 				size: "sm",
 				"aria-label": `Scan ${e.name}`,
 				disabled: f(i.value[e.id]),
 				onClick: (t) => l(e.id)
 			}, {
-				default: Y(() => [...t[1] ||= [P(" Scan ", -1)]]),
+				default: J(() => [...t[1] ||= [M(" Scan ", -1)]]),
 				_: 1
 			}, 8, [
 				"aria-label",
 				"disabled",
 				"onClick"
-			]), F(y, {
+			]), N(y, {
 				variant: "ghost",
 				size: "sm",
 				"aria-label": `Rescan ${e.name}`,
 				disabled: f(i.value[e.id]),
 				onClick: (t) => u(e.id)
 			}, {
-				default: Y(() => [...t[2] ||= [P(" Rescan ", -1)]]),
+				default: J(() => [...t[2] ||= [M(" Rescan ", -1)]]),
 				_: 1
 			}, 8, [
 				"aria-label",
@@ -984,37 +984,56 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 			])])])
 		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-3235ff5e"]]), Yr = {
+}), [["__scopeId", "data-v-3235ff5e"]]);
+//#endregion
+//#region src/api/normalize.ts
+function Yr(e) {
+	if (!(e == null || e === "")) {
+		if (typeof e == "string") return /^\d+$/.test(e) ? (/* @__PURE__ */ new Date(Number(e) * 1e3)).toISOString() : e;
+		if (typeof e == "number" && Number.isFinite(e)) return (/* @__PURE__ */ new Date(e * 1e3)).toISOString();
+	}
+}
+//#endregion
+//#region src/pages/MyServersPage.vue?vue&type=script&setup=true&lang.ts
+var Xr = {
 	class: "my-servers",
 	"aria-labelledby": "my-servers-heading"
-}, Xr = { class: "my-servers__head" }, Zr = {
+}, Zr = { class: "my-servers__head" }, Qr = {
 	key: 0,
 	class: "my-servers__skel"
-}, Qr = {
+}, $r = {
 	key: 3,
 	class: "my-servers__table-wrap"
-}, $r = {
+}, ei = {
 	class: "my-servers__table",
 	"aria-label": "Connected servers"
-}, ei = { class: "my-servers__name" }, ti = { class: "my-servers__url" }, ni = { class: "my-servers__num" }, ri = { class: "my-servers__date" }, ii = ["data-testid"], ai = { class: "my-servers__actions" }, oi = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, ti = { class: "my-servers__name" }, ni = { class: "my-servers__url" }, ri = { class: "my-servers__num" }, ii = { class: "my-servers__date" }, ai = ["data-testid"], oi = { class: "my-servers__actions" }, si = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "MyServersPage",
 	props: { client: {} },
 	setup(e) {
-		let t = e.client ?? v, n = w(), r = U([]), i = U(!0), a = U(null);
-		async function o() {
-			i.value = !0, a.value = null;
+		let t = e.client ?? v, n = S(), r = b(), i = V([]), a = V(!0), o = V(null);
+		async function s() {
+			a.value = !0, o.value = null;
 			try {
-				r.value = (await t.get("/api/v1/servers")).servers || [];
+				let e = await t.get("/api/v1/me/servers"), n = r.user?.username || r.user?.name || r.user?.email || "—";
+				i.value = (e.servers || []).map((e) => ({
+					id: e.serverId ?? "",
+					name: e.serverName ?? "",
+					url: e.hostnameCandidates?.[0] ?? "",
+					status: e.status ?? "offline",
+					owner: n,
+					last_seen: Yr(e.lastSeenAt)
+				}));
 			} catch (e) {
-				a.value = h(e, "Failed to load servers."), n.error(a.value);
+				o.value = h(e, "Failed to load servers."), n.error(o.value);
 			} finally {
-				i.value = !1;
+				a.value = !1;
 			}
 		}
-		function s(e) {
+		function c(e) {
 			return e ? new Date(e).toLocaleString() : "Never";
 		}
-		function c(e) {
+		function l(e) {
 			switch (e) {
 				case "online": return "Online";
 				case "offline": return "Offline";
@@ -1022,7 +1041,7 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 				default: return e;
 			}
 		}
-		function l(e) {
+		function u(e) {
 			switch (e) {
 				case "online": return "success";
 				case "offline": return "error";
@@ -1030,139 +1049,150 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 				default: return "neutral";
 			}
 		}
-		return B(o), (e, t) => (H(), M("section", Yr, [N("header", Xr, [t[1] ||= N("div", null, [N("h1", {
+		return R(s), (e, t) => (B(), A("section", Xr, [j("header", Zr, [t[1] ||= j("div", null, [j("h1", {
 			id: "my-servers-heading",
 			class: "my-servers__title"
-		}, "My Servers"), N("p", { class: "my-servers__subtitle" }, "Manage your connected media servers.")], -1), F(y, {
+		}, "My Servers"), j("p", { class: "my-servers__subtitle" }, "Manage your connected media servers.")], -1), N(y, {
 			variant: "solid",
 			size: "sm",
 			"left-icon": "plus"
 		}, {
-			default: Y(() => [...t[0] ||= [P("Add server", -1)]]),
+			default: J(() => [...t[0] ||= [M("Add server", -1)]]),
 			_: 1
-		})]), i.value ? (H(), M("div", Zr, [F(T, {
+		})]), a.value ? (B(), A("div", Qr, [N(C, {
 			variant: "text",
 			lines: 6
-		})])) : a.value ? (H(), A(E, {
+		})])) : o.value ? (B(), O(w, {
 			key: 1,
 			icon: "alert",
 			title: "Couldn't load servers",
-			description: a.value
+			description: o.value
 		}, {
-			actions: Y(() => [F(y, {
+			actions: J(() => [N(y, {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "rewind",
-				onClick: o
+				onClick: s
 			}, {
-				default: Y(() => [...t[2] ||= [P("Retry", -1)]]),
+				default: J(() => [...t[2] ||= [M("Retry", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["description"])) : r.value.length === 0 ? (H(), A(E, {
+		}, 8, ["description"])) : i.value.length === 0 ? (B(), O(w, {
 			key: 2,
 			icon: "tv",
 			title: "No servers connected yet",
 			description: "Connect a media server to start streaming."
 		}, {
-			actions: Y(() => [F(y, {
+			actions: J(() => [N(y, {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "plus"
 			}, {
-				default: Y(() => [...t[3] ||= [P("Add server", -1)]]),
+				default: J(() => [...t[3] ||= [M("Add server", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		})) : (H(), M("div", Qr, [N("table", $r, [t[5] ||= N("thead", null, [N("tr", null, [
-			N("th", { scope: "col" }, "Server"),
-			N("th", { scope: "col" }, "Owner"),
-			N("th", { scope: "col" }, "Libraries"),
-			N("th", { scope: "col" }, "Last seen"),
-			N("th", { scope: "col" }, "Status"),
-			N("th", {
+		})) : (B(), A("div", $r, [j("table", ei, [t[5] ||= j("thead", null, [j("tr", null, [
+			j("th", { scope: "col" }, "Server"),
+			j("th", { scope: "col" }, "Owner"),
+			j("th", { scope: "col" }, "Libraries"),
+			j("th", { scope: "col" }, "Last seen"),
+			j("th", { scope: "col" }, "Status"),
+			j("th", {
 				scope: "col",
 				class: "my-servers__actions-col"
 			}, "Actions")
-		])], -1), N("tbody", null, [(H(!0), M(D, null, W(r.value, (e) => (H(), M("tr", { key: e.id }, [
-			N("td", null, [N("div", ei, K(e.name), 1), N("div", ti, K(e.url), 1)]),
-			N("td", null, K(e.owner), 1),
-			N("td", ni, K(e.library_count === void 0 ? "—" : e.library_count), 1),
-			N("td", ri, K(s(e.last_seen)), 1),
-			N("td", null, [N("span", {
+		])], -1), j("tbody", null, [(B(!0), A(T, null, H(i.value, (e) => (B(), A("tr", { key: e.id }, [
+			j("td", null, [j("div", ti, W(e.name), 1), j("div", ni, W(e.url), 1)]),
+			j("td", null, W(e.owner), 1),
+			j("td", ri, W(e.library_count === void 0 ? "—" : e.library_count), 1),
+			j("td", ii, W(c(e.last_seen)), 1),
+			j("td", null, [j("span", {
 				class: "my-servers__status",
 				"data-testid": `status-${e.id}`
-			}, [F(C, { tone: l(e.status) }, {
-				default: Y(() => [P(K(c(e.status)), 1)]),
+			}, [N(x, { tone: u(e.status) }, {
+				default: J(() => [M(W(l(e.status)), 1)]),
 				_: 2
-			}, 1032, ["tone"])], 8, ii)]),
-			N("td", null, [N("div", ai, [F(y, {
+			}, 1032, ["tone"])], 8, ai)]),
+			j("td", null, [j("div", oi, [N(y, {
 				variant: "ghost",
 				size: "sm",
 				"aria-label": `Manage ${e.name}`
 			}, {
-				default: Y(() => [...t[4] ||= [P("Manage", -1)]]),
+				default: J(() => [...t[4] ||= [M("Manage", -1)]]),
 				_: 1
 			}, 8, ["aria-label"])])])
 		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-8bce09a9"]]), si = {
+}), [["__scopeId", "data-v-52f86230"]]), ci = {
 	class: "federation",
 	"aria-labelledby": "federation-heading"
-}, ci = {
+}, li = {
 	key: 0,
 	class: "federation__skel"
-}, li = {
+}, ui = {
 	key: 2,
 	class: "federation__content"
-}, ui = {
+}, di = {
 	key: 1,
 	class: "federation__table-wrap"
-}, di = {
+}, fi = {
 	class: "federation__table",
 	"aria-label": "Federation peers"
-}, fi = { class: "federation__name" }, pi = { class: "federation__url" }, mi = { class: "federation__num" }, hi = { class: "federation__date" }, gi = ["data-testid"], _i = { class: "federation__actions" }, vi = {
+}, pi = { class: "federation__name" }, mi = { class: "federation__url" }, hi = { class: "federation__num" }, gi = { class: "federation__date" }, _i = ["data-testid"], vi = { class: "federation__actions" }, yi = {
 	class: "federation__add",
 	"aria-labelledby": "federation-add-heading"
-}, yi = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, bi = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "FederationPage",
 	props: { client: {} },
 	setup(e) {
-		let t = e.client ?? v, n = w(), r = U([]), i = U(!0), a = U(null), o = U(""), s = U(!1);
-		async function c(e = !1) {
+		let t = e.client ?? v, n = S(), r = V([]), i = V(!0), a = V(null), o = V(""), s = V(""), c = V(""), l = V(!1);
+		async function u(e = !1) {
 			e && (i.value = !0), a.value = null;
 			try {
-				r.value = (await t.get("/api/v1/federation/peers")).peers || [];
+				r.value = ((await t.get("/api/v1/me/federation/peers")).peers || []).map((e) => ({
+					id: e.id ?? "",
+					name: e.name ?? "",
+					url: e.url ?? "",
+					status: e.status ?? "pending",
+					shared_libraries_count: e.shared_library_count,
+					last_sync: e.last_connected_at ?? e.last_seen_at ?? void 0
+				}));
 			} catch (e) {
 				a.value = h(e, "Failed to load federation peers."), n.error(a.value);
 			} finally {
 				e && (i.value = !1);
 			}
 		}
-		async function l() {
-			let e = o.value.trim();
-			if (e) {
-				s.value = !0;
+		async function d() {
+			let e = o.value.trim(), r = s.value.trim(), i = c.value.trim();
+			if (!(!e || !r || !i)) {
+				l.value = !0;
 				try {
-					await t.post("/api/v1/federation/connect", { url: e }), n.success("Peer connection requested."), o.value = "", await c();
+					await t.post("/api/v1/me/federation/peers", {
+						url: e,
+						name: r,
+						public_key: i
+					}), n.success("Peer added."), o.value = "", s.value = "", c.value = "", await u();
 				} catch (e) {
-					n.error(h(e, "Failed to connect to peer."));
+					n.error(h(e, "Failed to add peer."));
 				} finally {
-					s.value = !1;
+					l.value = !1;
 				}
 			}
 		}
-		async function u(e) {
+		async function f(e) {
 			try {
-				await t.post(`/api/v1/federation/peers/${e}/disconnect`), n.success("Peer disconnected."), await c();
+				await t.delete(`/api/v1/me/federation/peers/${e}`), n.success("Peer removed."), await u();
 			} catch (e) {
-				n.error(h(e, "Failed to disconnect peer."));
+				n.error(h(e, "Failed to remove peer."));
 			}
 		}
-		function d(e) {
+		function p(e) {
 			return e ? new Date(e).toLocaleString() : "Never";
 		}
-		function f(e) {
+		function m(e) {
 			switch (e) {
 				case "connected": return "Connected";
 				case "disconnected": return "Disconnected";
@@ -1170,7 +1200,7 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 				default: return e;
 			}
 		}
-		function p(e) {
+		function g(e) {
 			switch (e) {
 				case "connected": return "success";
 				case "disconnected": return "error";
@@ -1178,112 +1208,138 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 				default: return "neutral";
 			}
 		}
-		return B(() => c(!0)), (e, t) => (H(), M("section", si, [t[8] ||= N("header", { class: "federation__head" }, [N("h1", {
+		return R(() => u(!0)), (e, t) => (B(), A("section", ci, [t[10] ||= j("header", { class: "federation__head" }, [j("h1", {
 			id: "federation-heading",
 			class: "federation__title"
-		}, "Federation"), N("p", { class: "federation__subtitle" }, "Connect with other Phlix servers to share libraries.")], -1), i.value ? (H(), M("div", ci, [F(T, {
+		}, "Federation"), j("p", { class: "federation__subtitle" }, "Connect with other Phlix servers to share libraries.")], -1), i.value ? (B(), A("div", li, [N(C, {
 			variant: "text",
 			lines: 6
-		})])) : a.value ? (H(), A(E, {
+		})])) : a.value ? (B(), O(w, {
 			key: 1,
 			icon: "alert",
 			title: "Couldn't load federation peers",
 			description: a.value
 		}, {
-			actions: Y(() => [F(y, {
+			actions: J(() => [N(y, {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "rewind",
-				onClick: t[0] ||= (e) => c(!0)
+				onClick: t[0] ||= (e) => u(!0)
 			}, {
-				default: Y(() => [...t[2] ||= [P("Retry", -1)]]),
+				default: J(() => [...t[4] ||= [M("Retry", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["description"])) : (H(), M("div", li, [
-			t[7] ||= N("h2", { class: "federation__section-title" }, "Connected peers", -1),
-			r.value.length === 0 ? (H(), A(E, {
+		}, 8, ["description"])) : (B(), A("div", ui, [
+			t[9] ||= j("h2", { class: "federation__section-title" }, "Connected peers", -1),
+			r.value.length === 0 ? (B(), O(w, {
 				key: 0,
 				icon: "cast",
 				title: "No federation peers connected",
 				description: "Add a peer below to start sharing libraries."
-			})) : (H(), M("div", ui, [N("table", di, [t[4] ||= N("thead", null, [N("tr", null, [
-				N("th", { scope: "col" }, "Peer"),
-				N("th", { scope: "col" }, "Shared libraries"),
-				N("th", { scope: "col" }, "Last sync"),
-				N("th", { scope: "col" }, "Status"),
-				N("th", {
+			})) : (B(), A("div", di, [j("table", fi, [t[6] ||= j("thead", null, [j("tr", null, [
+				j("th", { scope: "col" }, "Peer"),
+				j("th", { scope: "col" }, "Shared libraries"),
+				j("th", { scope: "col" }, "Last sync"),
+				j("th", { scope: "col" }, "Status"),
+				j("th", {
 					scope: "col",
 					class: "federation__actions-col"
 				}, "Actions")
-			])], -1), N("tbody", null, [(H(!0), M(D, null, W(r.value, (e) => (H(), M("tr", { key: e.id }, [
-				N("td", null, [N("div", fi, K(e.name), 1), N("div", pi, K(e.url), 1)]),
-				N("td", mi, K(e.shared_libraries_count === void 0 ? "—" : e.shared_libraries_count), 1),
-				N("td", hi, K(d(e.last_sync)), 1),
-				N("td", null, [N("span", {
+			])], -1), j("tbody", null, [(B(!0), A(T, null, H(r.value, (e) => (B(), A("tr", { key: e.id }, [
+				j("td", null, [j("div", pi, W(e.name), 1), j("div", mi, W(e.url), 1)]),
+				j("td", hi, W(e.shared_libraries_count === void 0 ? "—" : e.shared_libraries_count), 1),
+				j("td", gi, W(p(e.last_sync)), 1),
+				j("td", null, [j("span", {
 					class: "federation__status",
 					"data-testid": `status-${e.id}`
-				}, [F(C, { tone: p(e.status) }, {
-					default: Y(() => [P(K(f(e.status)), 1)]),
+				}, [N(x, { tone: g(e.status) }, {
+					default: J(() => [M(W(m(e.status)), 1)]),
 					_: 2
-				}, 1032, ["tone"])], 8, gi)]),
-				N("td", null, [N("div", _i, [e.status === "connected" ? (H(), A(y, {
-					key: 0,
+				}, 1032, ["tone"])], 8, _i)]),
+				j("td", null, [j("div", vi, [N(y, {
 					variant: "ghost",
 					size: "sm",
-					"aria-label": `Disconnect ${e.name}`,
-					onClick: (t) => u(e.id)
+					"aria-label": `Remove ${e.name}`,
+					onClick: (t) => f(e.id)
 				}, {
-					default: Y(() => [...t[3] ||= [P(" Disconnect ", -1)]]),
+					default: J(() => [...t[5] ||= [M(" Remove ", -1)]]),
 					_: 1
-				}, 8, ["aria-label", "onClick"])) : j("", !0)])])
+				}, 8, ["aria-label", "onClick"])])])
 			]))), 128))])])])),
-			N("section", vi, [t[6] ||= N("h2", {
+			j("section", yi, [t[8] ||= j("h2", {
 				id: "federation-add-heading",
 				class: "federation__section-title"
-			}, "Add peer", -1), N("form", {
+			}, "Add peer", -1), j("form", {
 				class: "federation__form",
-				onSubmit: un(l, ["prevent"])
-			}, [cn(N("input", {
-				"onUpdate:modelValue": t[1] ||= (e) => o.value = e,
-				type: "url",
-				class: "federation__input",
-				placeholder: "https://other-server.example.com",
-				"aria-label": "Peer server URL",
-				autocomplete: "off"
-			}, null, 512), [[on, o.value]]), F(y, {
-				type: "submit",
-				variant: "solid",
-				"left-icon": "plus",
-				loading: s.value,
-				disabled: !o.value.trim()
-			}, {
-				default: Y(() => [...t[5] ||= [P(" Connect ", -1)]]),
-				_: 1
-			}, 8, ["loading", "disabled"])], 32)])
+				onSubmit: un(d, ["prevent"])
+			}, [
+				Y(j("input", {
+					"onUpdate:modelValue": t[1] ||= (e) => s.value = e,
+					type: "text",
+					class: "federation__input",
+					placeholder: "Peer name",
+					"aria-label": "Peer name",
+					autocomplete: "off"
+				}, null, 512), [[K, s.value]]),
+				Y(j("input", {
+					"onUpdate:modelValue": t[2] ||= (e) => o.value = e,
+					type: "url",
+					class: "federation__input",
+					placeholder: "https://other-server.example.com",
+					"aria-label": "Peer server URL",
+					autocomplete: "off"
+				}, null, 512), [[K, o.value]]),
+				Y(j("input", {
+					"onUpdate:modelValue": t[3] ||= (e) => c.value = e,
+					type: "text",
+					class: "federation__input",
+					placeholder: "Peer public key",
+					"aria-label": "Peer public key",
+					autocomplete: "off"
+				}, null, 512), [[K, c.value]]),
+				N(y, {
+					type: "submit",
+					variant: "solid",
+					"left-icon": "plus",
+					loading: l.value,
+					disabled: !o.value.trim() || !s.value.trim() || !c.value.trim()
+				}, {
+					default: J(() => [...t[7] ||= [M(" Add peer ", -1)]]),
+					_: 1
+				}, 8, ["loading", "disabled"])
+			], 32)])
 		]))]));
 	}
-}), [["__scopeId", "data-v-0640a657"]]), bi = {
+}), [["__scopeId", "data-v-1e05d4ae"]]), xi = {
 	class: "shares",
 	"aria-labelledby": "shares-heading"
-}, xi = {
+}, Si = {
 	key: 0,
 	class: "shares__skel"
-}, Si = {
+}, Ci = {
 	key: 3,
 	class: "shares__table-wrap"
-}, Ci = {
+}, wi = {
 	class: "shares__table",
 	"aria-label": "Library shares"
-}, wi = { class: "shares__library" }, Ti = { class: "shares__date" }, Ei = { class: "shares__date" }, Di = ["data-testid"], Oi = { class: "shares__actions" }, ki = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, Ti = { class: "shares__library" }, Ei = { class: "shares__date" }, Di = { class: "shares__date" }, Oi = ["data-testid"], ki = { class: "shares__actions" }, Ai = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "ManageSharesPage",
 	props: { client: {} },
 	setup(e) {
-		let t = e.client ?? v, n = w(), r = U([]), i = U(!0), a = U(null);
+		let t = e.client ?? v, n = S(), r = V([]), i = V(!0), a = V(null);
 		async function o(e = !1) {
 			e && (i.value = !0), a.value = null;
 			try {
-				r.value = (await t.get("/api/v1/shares")).shares || [];
+				r.value = ((await t.get("/api/v1/me/shares/")).outgoing || []).map((e) => ({
+					id: e.id ?? "",
+					library_id: e.library_id ?? "",
+					library_name: e.library_name ?? "",
+					shared_with: e.collaborator_name ?? e.collaborator_user_id ?? "",
+					permissions: e.permission_level === "readwrite" ? "write" : "read",
+					created_at: Yr(e.created_at) ?? "",
+					expires_at: Yr(e.expires_at)
+				}));
 			} catch (e) {
 				a.value = h(e, "Failed to load shares."), n.error(a.value);
 			} finally {
@@ -1292,7 +1348,7 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 		}
 		async function s(e) {
 			try {
-				await t.delete(`/api/v1/shares/${e}`), n.success("Share revoked."), await o();
+				await t.delete(`/api/v1/me/shares/${e}`), n.success("Share revoked."), await o();
 			} catch (e) {
 				n.error(h(e, "Failed to revoke share."));
 			}
@@ -1310,101 +1366,112 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 				default: return "neutral";
 			}
 		}
-		return B(() => o(!0)), (e, t) => (H(), M("section", bi, [t[5] ||= N("header", { class: "shares__head" }, [N("h1", {
+		return R(() => o(!0)), (e, t) => (B(), A("section", xi, [t[5] ||= j("header", { class: "shares__head" }, [j("h1", {
 			id: "shares-heading",
 			class: "shares__title"
-		}, "Manage Shares"), N("p", { class: "shares__subtitle" }, "View and manage your shared libraries.")], -1), i.value ? (H(), M("div", xi, [F(T, {
+		}, "Manage Shares"), j("p", { class: "shares__subtitle" }, "View and manage your shared libraries.")], -1), i.value ? (B(), A("div", Si, [N(C, {
 			variant: "text",
 			lines: 6
-		})])) : a.value ? (H(), A(E, {
+		})])) : a.value ? (B(), O(w, {
 			key: 1,
 			icon: "alert",
 			title: "Couldn't load shares",
 			description: a.value
 		}, {
-			actions: Y(() => [F(y, {
+			actions: J(() => [N(y, {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "rewind",
 				onClick: t[0] ||= (e) => o(!0)
 			}, {
-				default: Y(() => [...t[1] ||= [P("Retry", -1)]]),
+				default: J(() => [...t[1] ||= [M("Retry", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["description"])) : r.value.length === 0 ? (H(), A(E, {
+		}, 8, ["description"])) : r.value.length === 0 ? (B(), O(w, {
 			key: 2,
 			icon: "bookmark",
 			title: "No library shares",
 			description: "Libraries you share with others will appear here."
-		})) : (H(), M("div", Si, [N("table", Ci, [t[4] ||= N("thead", null, [N("tr", null, [
-			N("th", { scope: "col" }, "Library"),
-			N("th", { scope: "col" }, "Shared with"),
-			N("th", { scope: "col" }, "Permissions"),
-			N("th", { scope: "col" }, "Created"),
-			N("th", { scope: "col" }, "Expires"),
-			N("th", {
+		})) : (B(), A("div", Ci, [j("table", wi, [t[4] ||= j("thead", null, [j("tr", null, [
+			j("th", { scope: "col" }, "Library"),
+			j("th", { scope: "col" }, "Shared with"),
+			j("th", { scope: "col" }, "Permissions"),
+			j("th", { scope: "col" }, "Created"),
+			j("th", { scope: "col" }, "Expires"),
+			j("th", {
 				scope: "col",
 				class: "shares__actions-col"
 			}, "Actions")
-		])], -1), N("tbody", null, [(H(!0), M(D, null, W(r.value, (e) => (H(), M("tr", { key: e.id }, [
-			N("td", null, [N("span", wi, K(e.library_name), 1)]),
-			N("td", null, K(e.shared_with), 1),
-			N("td", null, [F(C, { tone: u(e.permissions) }, {
-				default: Y(() => [P(K(e.permissions), 1)]),
+		])], -1), j("tbody", null, [(B(!0), A(T, null, H(r.value, (e) => (B(), A("tr", { key: e.id }, [
+			j("td", null, [j("span", Ti, W(e.library_name), 1)]),
+			j("td", null, W(e.shared_with), 1),
+			j("td", null, [N(x, { tone: u(e.permissions) }, {
+				default: J(() => [M(W(e.permissions), 1)]),
 				_: 2
 			}, 1032, ["tone"])]),
-			N("td", Ti, K(c(e.created_at)), 1),
-			N("td", Ei, [N("span", {
+			j("td", Ei, W(c(e.created_at)), 1),
+			j("td", Di, [j("span", {
 				class: "shares__expires",
 				"data-testid": `expires-${e.id}`
-			}, [P(K(c(e.expires_at)) + " ", 1), l(e.expires_at) ? (H(), A(C, {
+			}, [M(W(c(e.expires_at)) + " ", 1), l(e.expires_at) ? (B(), O(x, {
 				key: 0,
 				tone: "error"
 			}, {
-				default: Y(() => [...t[2] ||= [P("Expired", -1)]]),
+				default: J(() => [...t[2] ||= [M("Expired", -1)]]),
 				_: 1
-			})) : j("", !0)], 8, Di)]),
-			N("td", null, [N("div", Oi, [F(y, {
+			})) : k("", !0)], 8, Oi)]),
+			j("td", null, [j("div", ki, [N(y, {
 				variant: "ghost",
 				size: "sm",
 				"aria-label": `Revoke share of ${e.library_name} with ${e.shared_with}`,
 				onClick: (t) => s(e.id)
 			}, {
-				default: Y(() => [...t[3] ||= [P(" Revoke ", -1)]]),
+				default: J(() => [...t[3] ||= [M(" Revoke ", -1)]]),
 				_: 1
 			}, 8, ["aria-label", "onClick"])])])
 		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-8731f31d"]]), Ai = {
+}), [["__scopeId", "data-v-32224e10"]]), ji = {
 	class: "audit",
 	"aria-labelledby": "audit-heading"
-}, ji = {
+}, Mi = {
 	key: 0,
 	class: "audit__skel"
-}, Mi = {
+}, Ni = {
 	key: 3,
 	class: "audit__content"
-}, Ni = { class: "audit__table-wrap" }, Pi = {
+}, Pi = { class: "audit__table-wrap" }, Fi = {
 	class: "audit__table",
 	"aria-label": "Audit logs"
-}, Fi = ["data-testid"], Ii = { class: "audit__details" }, Li = { class: "audit__ip" }, Ri = { class: "audit__date" }, zi = {
+}, Ii = ["data-testid"], Li = { class: "audit__details" }, Ri = { class: "audit__ip" }, zi = { class: "audit__date" }, Bi = {
 	key: 0,
 	class: "audit__pagination",
 	"aria-label": "Audit log pages"
-}, Bi = {
+}, Vi = {
 	class: "audit__page-info",
 	"aria-live": "polite"
-}, Vi = /*#__PURE__*/ t(/* @__PURE__ */ I({
+}, Hi = 50, Ui = /*#__PURE__*/ t(/* @__PURE__ */ P({
 	__name: "AuditLogsPage",
 	props: { client: {} },
 	setup(e) {
-		let t = e.client ?? v, n = w(), r = U([]), i = U(!0), a = U(null), o = U(1), s = U(1);
+		let t = e.client ?? v, n = S(), r = V([]), i = V(!0), a = V(null), o = V(1), s = V(1);
 		async function c(e = 1) {
 			i.value = !0, a.value = null;
 			try {
-				let n = await t.get("/api/v1/audit-logs", { page: String(e) });
-				r.value = n.logs || [], o.value = n.page || 1, s.value = n.total_pages || 1;
+				let n = Math.max(0, (e - 1) * Hi), i = await t.get("/api/v1/me/audit-logs", {
+					limit: String(Hi),
+					offset: String(n)
+				}), a = i.limit && i.limit > 0 ? i.limit : Hi;
+				r.value = (i.logs || []).map((e) => ({
+					id: e.id ?? "",
+					action: e.action && e.action !== "" ? e.action : e.event ?? "",
+					actor: e.actor ?? e.user_id ?? "",
+					target: e.resource ?? void 0,
+					details: e.reason ?? void 0,
+					ip_address: e.ip_address ?? void 0,
+					created_at: e.created_at ?? ""
+				})), o.value = e, s.value = Math.max(1, Math.ceil((i.total || 0) / a));
 			} catch (e) {
 				a.value = h(e, "Failed to load audit logs."), n.error(a.value);
 			} finally {
@@ -1412,90 +1479,90 @@ var Cr = ["id"], wr = /*#__PURE__*/ t(/* @__PURE__ */ I({
 			}
 		}
 		function l(e) {
-			return new Date(e).toLocaleString();
+			return e ? new Date(e).toLocaleString() : "—";
 		}
 		function u(e) {
 			return e.includes("create") || e.includes("add") ? "success" : e.includes("delete") || e.includes("remove") ? "error" : e.includes("update") || e.includes("edit") ? "info" : e.includes("login") || e.includes("auth") ? "accent" : "neutral";
 		}
-		return B(() => c()), (e, t) => (H(), M("section", Ai, [t[7] ||= N("header", { class: "audit__head" }, [N("h1", {
+		return R(() => c()), (e, t) => (B(), A("section", ji, [t[7] ||= j("header", { class: "audit__head" }, [j("h1", {
 			id: "audit-heading",
 			class: "audit__title"
-		}, "Audit Logs"), N("p", { class: "audit__subtitle" }, "View system activity and user actions.")], -1), i.value ? (H(), M("div", ji, [F(T, {
+		}, "Audit Logs"), j("p", { class: "audit__subtitle" }, "View system activity and user actions.")], -1), i.value ? (B(), A("div", Mi, [N(C, {
 			variant: "text",
 			lines: 8
-		})])) : a.value ? (H(), A(E, {
+		})])) : a.value ? (B(), O(w, {
 			key: 1,
 			icon: "alert",
 			title: "Couldn't load audit logs",
 			description: a.value
 		}, {
-			actions: Y(() => [F(y, {
+			actions: J(() => [N(y, {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "rewind",
 				onClick: t[0] ||= (e) => c(o.value)
 			}, {
-				default: Y(() => [...t[3] ||= [P("Retry", -1)]]),
+				default: J(() => [...t[3] ||= [M("Retry", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["description"])) : r.value.length === 0 ? (H(), A(E, {
+		}, 8, ["description"])) : r.value.length === 0 ? (B(), O(w, {
 			key: 2,
 			icon: "list",
 			title: "No audit logs",
 			description: "System activity and user actions will appear here."
-		})) : (H(), M("div", Mi, [N("div", Ni, [N("table", Pi, [t[4] ||= N("thead", null, [N("tr", null, [
-			N("th", { scope: "col" }, "Action"),
-			N("th", { scope: "col" }, "Actor"),
-			N("th", { scope: "col" }, "Target"),
-			N("th", { scope: "col" }, "Details"),
-			N("th", { scope: "col" }, "IP"),
-			N("th", { scope: "col" }, "Time")
-		])], -1), N("tbody", null, [(H(!0), M(D, null, W(r.value, (e) => (H(), M("tr", { key: e.id }, [
-			N("td", null, [N("span", { "data-testid": `action-${e.id}` }, [F(C, { tone: u(e.action) }, {
-				default: Y(() => [P(K(e.action), 1)]),
+		})) : (B(), A("div", Ni, [j("div", Pi, [j("table", Fi, [t[4] ||= j("thead", null, [j("tr", null, [
+			j("th", { scope: "col" }, "Action"),
+			j("th", { scope: "col" }, "Actor"),
+			j("th", { scope: "col" }, "Target"),
+			j("th", { scope: "col" }, "Details"),
+			j("th", { scope: "col" }, "IP"),
+			j("th", { scope: "col" }, "Time")
+		])], -1), j("tbody", null, [(B(!0), A(T, null, H(r.value, (e) => (B(), A("tr", { key: e.id }, [
+			j("td", null, [j("span", { "data-testid": `action-${e.id}` }, [N(x, { tone: u(e.action) }, {
+				default: J(() => [M(W(e.action), 1)]),
 				_: 2
-			}, 1032, ["tone"])], 8, Fi)]),
-			N("td", null, K(e.actor), 1),
-			N("td", null, K(e.target || "—"), 1),
-			N("td", Ii, K(e.details || "—"), 1),
-			N("td", Li, K(e.ip_address || "—"), 1),
-			N("td", Ri, K(l(e.created_at)), 1)
-		]))), 128))])])]), s.value > 1 ? (H(), M("nav", zi, [
-			F(y, {
+			}, 1032, ["tone"])], 8, Ii)]),
+			j("td", null, W(e.actor), 1),
+			j("td", null, W(e.target || "—"), 1),
+			j("td", Li, W(e.details || "—"), 1),
+			j("td", Ri, W(e.ip_address || "—"), 1),
+			j("td", zi, W(l(e.created_at)), 1)
+		]))), 128))])])]), s.value > 1 ? (B(), A("nav", Bi, [
+			N(y, {
 				variant: "ghost",
 				size: "sm",
 				"left-icon": "chevron-left",
 				disabled: o.value <= 1,
 				onClick: t[1] ||= (e) => c(o.value - 1)
 			}, {
-				default: Y(() => [...t[5] ||= [P(" Previous ", -1)]]),
+				default: J(() => [...t[5] ||= [M(" Previous ", -1)]]),
 				_: 1
 			}, 8, ["disabled"]),
-			N("span", Bi, "Page " + K(o.value) + " of " + K(s.value), 1),
-			F(y, {
+			j("span", Vi, "Page " + W(o.value) + " of " + W(s.value), 1),
+			N(y, {
 				variant: "ghost",
 				size: "sm",
 				"right-icon": "chevron-right",
 				disabled: o.value >= s.value,
 				onClick: t[2] ||= (e) => c(o.value + 1)
 			}, {
-				default: Y(() => [...t[6] ||= [P(" Next ", -1)]]),
+				default: J(() => [...t[6] ||= [M(" Next ", -1)]]),
 				_: 1
 			}, 8, ["disabled"])
-		])) : j("", !0)]))]));
+		])) : k("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-26a60fa5"]]);
+}), [["__scopeId", "data-v-3fcef29f"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
-function Hi(e, t) {
-	let n = ye(), r = !1;
+function Wi(e, t) {
+	let n = xe(), r = !1;
 	n.applyQuery(e.currentRoute.value.query), n.fetchMedia(t);
-	let i = J(() => JSON.stringify(n.toQuery()), () => {
+	let i = q(() => JSON.stringify(n.toQuery()), () => {
 		r || (r = !0, e.replace({ query: n.toQuery() }).finally(() => {
 			r = !1;
 		}), n.scheduleFetch(t));
-	}), a = J(() => e.currentRoute.value.query, (e) => {
+	}), a = q(() => e.currentRoute.value.query, (e) => {
 		r || JSON.stringify(e) !== JSON.stringify(n.toQuery()) && (r = !0, n.applyQuery(e), r = !1, n.fetchMedia(t));
 	});
 	return () => {
@@ -1504,15 +1571,15 @@ function Hi(e, t) {
 }
 //#endregion
 //#region src/composables/useOnline.ts
-function Ui() {
-	let e = () => typeof navigator > "u" ? !0 : navigator.onLine, t = U(e()), n = () => {
+function Gi() {
+	let e = () => typeof navigator > "u" ? !0 : navigator.onLine, t = V(e()), n = () => {
 		t.value = e();
 	};
-	return typeof window < "u" && typeof window.addEventListener == "function" && (window.addEventListener("online", n), window.addEventListener("offline", n), V(() => {
+	return typeof window < "u" && typeof window.addEventListener == "function" && (window.addEventListener("online", n), window.addEventListener("offline", n), z(() => {
 		window.removeEventListener("online", n), window.removeEventListener("offline", n);
-	})), nn(t);
+	})), an(t);
 }
 //#endregion
-export { Ee as ALL_LOGS, ht as AMBIENT_SAMPLE_H, mt as AMBIENT_SAMPLE_INTERVAL_MS, ct as AMBIENT_SAMPLE_W, Ye as ARROW_ICONS, _t as ARROW_LABELS, Ie as AdminBackupApi, Le as AdminCastApi, Ve as AdminCollectionsApi, De as AdminDashboardApi, Re as AdminDlnaServerApi, He as AdminHistoryApi, Fe as AdminIntegrationsApi, Ge as AdminLibrariesApi, Be as AdminLiveTvApi, Te as AdminLogsApi, ze as AdminRemoteAccessApi, Pe as AdminServicesApi, Ke as AdminSettingsApi, Ue as AdminSyncPlayApi, Ae as AdminUsersApi, Ne as AdminWebhooksApi, bt as AmbientCanvas, _ as ApiClient, m as ApiError, e as AppBackdrop, jn as AppLayout, Vi as AuditLogsPage, C as Badge, y as Button, Kt as CAPTION_BACKGROUND_OPTIONS, Vt as CAPTION_COLOR_OPTIONS, Wt as CAPTION_EDGE_OPTIONS, Rt as CAPTION_SIZE_OPTIONS, Mt as CAPTION_SIZE_SCALE, st as CaptionOverlay, kt as CaptionsMenu, fe as Chip, _e as Combobox, l as DEFAULT_CAPTION_STYLE, d as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, gt as DIRECT_PLAY_EXTENSIONS, E as EmptyState, yi as FederationPage, xe as FilterBar, n as Icon, r as IconButton, le as Kbd, We as LIBRARY_TYPES, Jr as LibraryScanPage, ne as LocalStorageTokenStore, Jt as LoginForm, ki as ManageSharesPage, pe as MediaCard, we as MediaDetail, ve as MediaGrid, be as MediaHomeRow, he as MediaRow, Yn as MiniPlayer, Se as Modal, oi as MyServersPage, ee as NetworkError, nt as PLAYER_SHORTCUTS, Ir as PageTransition, mr as PhlixApp, Et as Player, Qe as QualityMenu, Oe as RATING_LABELS, ke as RATING_OPTIONS, ae as RESUME_MAX_RATIO, re as RESUME_MIN_SECONDS, Ct as ResumePrompt, Fr as Reveal, je as SUBSCRIBABLE_EVENTS, et as Scrubber, ge as Select, Xt as SettingsForm, xn as Sheet, vt as ShortcutsHelp, Yt as SignupForm, T as Skeleton, ue as Slider, Ze as SpeedMenu, Pr as Spinner, de as Switch, lt as TRANSCODE_EXTENSIONS, Ce as Tabs, te as TimeoutError, Mr as ToastHost, wr as Tooltip, xt as TranscodeNotice, St as UPNEXT_COUNTDOWN_SECONDS, Tt as UPNEXT_RING_CIRCUMFERENCE, dt as UPNEXT_RING_RADIUS, wt as UpNext, it as VolumeControl, Me as WEBHOOK_EVENT_CATEGORIES, Ht as activeAudioIndex, Je as adminMenu, Ot as ambientGradient, Gt as applyAudioTrack, ir as applyStoredThemeEarly, Nt as applyTrackModes, jt as averageRegion, Hi as bindMediaStoreToRouter, qe as buildAdminRoutes, oe as buildMediaQuery, ie as buildMediaUrl, zt as captionStyleVars, qt as cleanCueText, Sr as createPhlixApp, f as createTranslator, tr as deriveAccentVars, Pt as edgeShadow, h as errMessage, yt as extensionOf, tt as formatTime, se as fuzzyScore, rt as handleShortcut, Ft as hasActiveCaptions, c as hasStoredPreferences, ut as isBatterySaving, Dt as isFatalMediaError, g as isOffline, at as isTypingTarget, Ut as listAudioTracks, Bt as listSubtitleTracks, ce as matchCommand, u as mergeMessages, ft as needsTranscode, Lt as readActiveCueLines, o as readStoredPreferences, It as resolveTextTrack, At as rgbString, ot as rgbaString, pt as ringDashoffset, Xe as sampleAmbient, b as useAuthStore, or as useCommandPaletteHotkey, S as useCommandStore, i as useFocusTrap, $e as useKeyboardShortcuts, ye as useMediaStore, p as useMessages, Ui as useOnline, x as usePlayerStore, ur as usePreconnect, a as usePreferencesStore, me as usePrefetch, ar as useTheme, w as useToastStore };
+export { Oe as ALL_LOGS, _t as AMBIENT_SAMPLE_H, gt as AMBIENT_SAMPLE_INTERVAL_MS, ut as AMBIENT_SAMPLE_W, Ze as ARROW_ICONS, yt as ARROW_LABELS, Re as AdminBackupApi, ze as AdminCastApi, Ue as AdminCollectionsApi, ke as AdminDashboardApi, Be as AdminDlnaServerApi, We as AdminHistoryApi, Le as AdminIntegrationsApi, qe as AdminLibrariesApi, He as AdminLiveTvApi, De as AdminLogsApi, Ve as AdminRemoteAccessApi, Ie as AdminServicesApi, Je as AdminSettingsApi, Ge as AdminSyncPlayApi, Me as AdminUsersApi, Fe as AdminWebhooksApi, St as AmbientCanvas, _ as ApiClient, m as ApiError, e as AppBackdrop, jn as AppLayout, Ui as AuditLogsPage, x as Badge, y as Button, Jt as CAPTION_BACKGROUND_OPTIONS, Ut as CAPTION_COLOR_OPTIONS, Kt as CAPTION_EDGE_OPTIONS, Bt as CAPTION_SIZE_OPTIONS, Pt as CAPTION_SIZE_SCALE, lt as CaptionOverlay, jt as CaptionsMenu, me as Chip, ye as Combobox, l as DEFAULT_CAPTION_STYLE, d as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, vt as DIRECT_PLAY_EXTENSIONS, w as EmptyState, bi as FederationPage, Ce as FilterBar, n as Icon, r as IconButton, de as Kbd, Ke as LIBRARY_TYPES, Jr as LibraryScanPage, ne as LocalStorageTokenStore, Xt as LoginForm, Ai as ManageSharesPage, he as MediaCard, Ee as MediaDetail, be as MediaGrid, Se as MediaHomeRow, _e as MediaRow, Yn as MiniPlayer, we as Modal, si as MyServersPage, ee as NetworkError, it as PLAYER_SHORTCUTS, Ir as PageTransition, mr as PhlixApp, Ot as Player, et as QualityMenu, Ae as RATING_LABELS, je as RATING_OPTIONS, oe as RESUME_MAX_RATIO, ie as RESUME_MIN_SECONDS, Tt as ResumePrompt, Fr as Reveal, Ne as SUBSCRIBABLE_EVENTS, nt as Scrubber, ve as Select, Qt as SettingsForm, xn as Sheet, bt as ShortcutsHelp, Zt as SignupForm, C as Skeleton, fe as Slider, $e as SpeedMenu, Pr as Spinner, pe as Switch, dt as TRANSCODE_EXTENSIONS, Te as Tabs, te as TimeoutError, Mr as ToastHost, wr as Tooltip, Ct as TranscodeNotice, wt as UPNEXT_COUNTDOWN_SECONDS, Dt as UPNEXT_RING_CIRCUMFERENCE, pt as UPNEXT_RING_RADIUS, Et as UpNext, ot as VolumeControl, Pe as WEBHOOK_EVENT_CATEGORIES, Wt as activeAudioIndex, Xe as adminMenu, At as ambientGradient, qt as applyAudioTrack, ir as applyStoredThemeEarly, Ft as applyTrackModes, Nt as averageRegion, Wi as bindMediaStoreToRouter, Ye as buildAdminRoutes, se as buildMediaQuery, ae as buildMediaUrl, Vt as captionStyleVars, Yt as cleanCueText, Sr as createPhlixApp, f as createTranslator, tr as deriveAccentVars, It as edgeShadow, h as errMessage, xt as extensionOf, rt as formatTime, le as fuzzyScore, at as handleShortcut, Lt as hasActiveCaptions, c as hasStoredPreferences, ft as isBatterySaving, kt as isFatalMediaError, g as isOffline, st as isTypingTarget, Gt as listAudioTracks, Ht as listSubtitleTracks, ue as matchCommand, u as mergeMessages, mt as needsTranscode, zt as readActiveCueLines, o as readStoredPreferences, Rt as resolveTextTrack, Mt as rgbString, ct as rgbaString, ht as ringDashoffset, Qe as sampleAmbient, b as useAuthStore, or as useCommandPaletteHotkey, ce as useCommandStore, i as useFocusTrap, tt as useKeyboardShortcuts, xe as useMediaStore, p as useMessages, Gi as useOnline, re as usePlayerStore, ur as usePreconnect, a as usePreferencesStore, ge as usePrefetch, ar as useTheme, S as useToastStore };
 
 //# sourceMappingURL=phlix-ui.js.map

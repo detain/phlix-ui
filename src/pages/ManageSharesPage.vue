@@ -13,6 +13,7 @@ import { ref, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
 import { errMessage } from '../api/errors';
+import { unixToIso } from '../api/normalize';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -26,6 +27,19 @@ interface Share {
   permissions: 'read' | 'write';
   created_at: string;
   expires_at?: string;
+}
+
+/** Raw OUTGOING-share shape from the hub's `GET /api/v1/me/shares/` (snake_case;
+ *  dates are UNIX seconds). The response envelope is `{ outgoing, incoming }`. */
+interface HubShare {
+  id?: string;
+  library_id?: string;
+  library_name?: string;
+  collaborator_user_id?: string;
+  collaborator_name?: string | null;
+  permission_level?: string;
+  created_at?: number | null;
+  expires_at?: number | null;
 }
 
 const props = defineProps<{
@@ -48,8 +62,19 @@ async function loadShares(initial = false): Promise<void> {
   if (initial) loading.value = true;
   error.value = null;
   try {
-    const data = await http.get<{ shares: Share[] }>('/api/v1/shares');
-    shares.value = data.shares || [];
+    // The hub returns `{ outgoing, incoming }`; "Manage Shares" lists the
+    // libraries the current user shares OUT. permission_level is read|readwrite;
+    // dates are UNIX seconds; shared_with falls back to the collaborator id.
+    const data = await http.get<{ outgoing?: HubShare[] }>('/api/v1/me/shares/');
+    shares.value = (data.outgoing || []).map((s) => ({
+      id: s.id ?? '',
+      library_id: s.library_id ?? '',
+      library_name: s.library_name ?? '',
+      shared_with: s.collaborator_name ?? s.collaborator_user_id ?? '',
+      permissions: s.permission_level === 'readwrite' ? 'write' : 'read',
+      created_at: unixToIso(s.created_at) ?? '',
+      expires_at: unixToIso(s.expires_at),
+    }));
   } catch (e) {
     error.value = errMessage(e, 'Failed to load shares.');
     toasts.error(error.value);
@@ -60,7 +85,7 @@ async function loadShares(initial = false): Promise<void> {
 
 async function revokeShare(shareId: string): Promise<void> {
   try {
-    await http.delete(`/api/v1/shares/${shareId}`);
+    await http.delete(`/api/v1/me/shares/${shareId}`);
     toasts.success('Share revoked.');
     await loadShares();
   } catch (e) {

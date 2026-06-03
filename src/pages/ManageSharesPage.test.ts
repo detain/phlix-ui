@@ -7,14 +7,18 @@ import Badge from '../components/ui/Badge.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { api, type ApiClient } from '../api/client';
 
-const share = {
+// Raw OUTGOING-share shape from GET /api/v1/me/shares/ (snake_case; the hub
+// returns { outgoing, incoming }). Dates are UNIX seconds; permission_level is
+// read|readwrite; collaborator_name is the hub-enriched display name.
+const hubShare = {
   id: 's1',
   library_id: 'lib-1',
   library_name: 'Movies',
-  shared_with: 'bob@example.com',
-  permissions: 'read',
-  created_at: '2026-05-01T00:00:00Z',
-  expires_at: '2099-01-01T00:00:00Z',
+  collaborator_user_id: 'u-bob',
+  collaborator_name: 'bob@example.com',
+  permission_level: 'read',
+  created_at: 1746057600, // 2025-05-01
+  expires_at: 4070908800, // 2099 (future)
 };
 
 interface Overrides {
@@ -23,7 +27,7 @@ interface Overrides {
 
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
-    if (endpoint === '/api/v1/shares') return { shares: over.shares ?? [share] };
+    if (endpoint === '/api/v1/me/shares/') return { outgoing: over.shares ?? [hubShare] };
     throw new Error(`unexpected GET ${endpoint}`);
   });
   const del = vi.fn(async (): Promise<Record<string, unknown>> => ({}));
@@ -51,15 +55,23 @@ afterEach(() => {
 });
 
 describe('ManageSharesPage — list + states', () => {
-  it('renders a share row with library, recipient, permission, and dates', async () => {
+  it('renders a share row with library, recipient (name), permission, and dates', async () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    expect(get).toHaveBeenCalledWith('/api/v1/shares');
+    expect(get).toHaveBeenCalledWith('/api/v1/me/shares/');
     const text = w.text();
     expect(text).toContain('Movies');
-    expect(text).toContain('bob@example.com');
+    expect(text).toContain('bob@example.com'); // collaborator_name
     expect(text).toContain('read');
+    w.unmount();
+  });
+
+  it('falls back to the collaborator id when no name is enriched', async () => {
+    const { client } = makeClient({ shares: [{ ...hubShare, collaborator_name: null }] });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain('u-bob');
     w.unmount();
   });
 
@@ -69,7 +81,7 @@ describe('ManageSharesPage — list + states', () => {
     const client = { get, delete: vi.fn() } as unknown as ApiClient;
     const w = mountPage(client);
     expect(w.find('.shares__skel').exists()).toBe(true);
-    resolve({ shares: [share] });
+    resolve({ outgoing: [hubShare] });
     await flushPromises();
     expect(w.find('.shares__skel').exists()).toBe(false);
     expect(w.find('.shares__table').exists()).toBe(true);
@@ -85,7 +97,7 @@ describe('ManageSharesPage — list + states', () => {
     w.unmount();
   });
 
-  it('treats a response with no `shares` key as empty', async () => {
+  it('treats a response with no `outgoing` key as empty', async () => {
     const get = vi.fn(async () => ({}));
     const w = mountPage({ get, delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
@@ -94,10 +106,10 @@ describe('ManageSharesPage — list + states', () => {
   });
 
   it('falls back to the shared api singleton when no client prop is given', async () => {
-    const spy = vi.spyOn(api, 'get').mockResolvedValue({ shares: [] } as never);
+    const spy = vi.spyOn(api, 'get').mockResolvedValue({ outgoing: [] } as never);
     const w = mount(ManageSharesPage, { attachTo: document.body });
     await flushPromises();
-    expect(spy).toHaveBeenCalledWith('/api/v1/shares');
+    expect(spy).toHaveBeenCalledWith('/api/v1/me/shares/');
     expect(w.text()).toContain('No library shares');
     w.unmount();
   });
@@ -127,7 +139,7 @@ describe('ManageSharesPage — load errors', () => {
     const get = vi
       .fn()
       .mockRejectedValueOnce(new Error('down'))
-      .mockResolvedValueOnce({ shares: [share] });
+      .mockResolvedValueOnce({ outgoing: [hubShare] });
     const w = mountPage({ get, delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
     expect(w.text()).toContain("Couldn't load shares");
@@ -141,11 +153,12 @@ describe('ManageSharesPage — load errors', () => {
 describe('ManageSharesPage — permissions + expiry', () => {
   it.each([
     ['read', 'read', 'info'],
-    ['write', 'write', 'success'],
-    ['admin', 'admin', 'neutral'],
-  ])('renders the %s permission as a "%s" badge with tone %s', async (permissions, label, tone) => {
-    // Use a future expiry so the only Badge in the row is the permission badge.
-    const { client } = makeClient({ shares: [{ ...share, permissions, expires_at: '2099-01-01T00:00:00Z' }] });
+    ['readwrite', 'write', 'success'],
+  ])('maps permission_level "%s" to a "%s" badge with tone %s', async (level, label, tone) => {
+    // Future expiry so the only Badge in the row is the permission badge.
+    const { client } = makeClient({
+      shares: [{ ...hubShare, permission_level: level, expires_at: 4070908800 }],
+    });
     const w = mountPage(client);
     await flushPromises();
     const badge = w.findAllComponents(Badge).find((b) => b.text().trim() === label);
@@ -155,7 +168,7 @@ describe('ManageSharesPage — permissions + expiry', () => {
   });
 
   it('shows an Expired badge when expires_at is in the past', async () => {
-    const { client } = makeClient({ shares: [{ ...share, expires_at: '2020-01-01T00:00:00Z' }] });
+    const { client } = makeClient({ shares: [{ ...hubShare, expires_at: 1577836800 }] }); // 2020
     const w = mountPage(client);
     await flushPromises();
     expect(w.find('[data-testid="expires-s1"]').text()).toContain('Expired');
@@ -171,7 +184,7 @@ describe('ManageSharesPage — permissions + expiry', () => {
   });
 
   it('shows "—" and no Expired badge when there is no expiry', async () => {
-    const { client } = makeClient({ shares: [{ ...share, expires_at: undefined }] });
+    const { client } = makeClient({ shares: [{ ...hubShare, expires_at: null }] });
     const w = mountPage(client);
     await flushPromises();
     const cell = w.find('[data-testid="expires-s1"]');
@@ -189,7 +202,7 @@ describe('ManageSharesPage — revoke', () => {
     const before = get.mock.calls.length;
     await findBtn(w, 'Revoke share of Movies with bob@example.com')!.trigger('click');
     await flushPromises();
-    expect(del).toHaveBeenCalledWith('/api/v1/shares/s1');
+    expect(del).toHaveBeenCalledWith('/api/v1/me/shares/s1');
     expect(get.mock.calls.length).toBeGreaterThan(before);
     expect(useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Share revoked.')).toBe(true);
     w.unmount();
