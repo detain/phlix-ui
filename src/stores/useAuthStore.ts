@@ -47,7 +47,10 @@ export const useAuthStore = defineStore('auth', () => {
 
             setTokens(data.access_token, data.refresh_token);
             await fetchUser();
-            return true;
+            // fetchUser() clears the tokens if it can't establish the user, so
+            // report success only when the session actually stuck — a back end that
+            // accepts the password but 404s/401s on /auth/me is treated as a failure.
+            return isLoggedIn.value;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Login failed';
             return false;
@@ -67,7 +70,8 @@ export const useAuthStore = defineStore('auth', () => {
 
             setTokens(data.access_token, data.refresh_token);
             await fetchUser();
-            return true;
+            // Same as login(): only report success if the session survived fetchUser().
+            return isLoggedIn.value;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Registration failed';
             return false;

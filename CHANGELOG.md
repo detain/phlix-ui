@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.12.0] - 2026-06-03
+
+Closes the auth holes that surfaced once the SPA became the front door: an unauthenticated visitor
+could land on app pages anyway (no route guard), and token refresh hit the wrong URL.
+
+### Added
+- **Auth route guard.** `createPhlixApp` installs a `router.beforeEach` that redirects an
+  unauthenticated visitor to `login` for every non-public route (public = `login`, `signup`, or any
+  route with `meta: { public: true }`), preserving the intended path as `?redirect=`. This stops a
+  failed/absent login from "falling through" to the app shell — most visible on the hub, whose
+  `/` -> `/app/servers` landing now bounces logged-out users to login. Exported `authGuard` (pure) and
+  `PUBLIC_ROUTE_NAMES` for testing/consumers.
+
+### Fixed
+- **Token refresh 404'd on both apps.** `ApiClient.refreshToken` POSTed to `/auth/refresh`, but both
+  back ends serve `/api/v1/auth/refresh`, so a 401-triggered refresh always failed (silent logout on
+  access-token expiry). Now posts to `/api/v1/auth/refresh`.
+- **`login`/`signup` no longer report a phantom success.** They now return `isLoggedIn` after
+  `fetchUser()` — a back end that accepts the password but fails `/api/v1/auth/me` (which clears the
+  tokens) is treated as a failed login, so the form surfaces the error instead of navigating.
+
 ## [0.11.0] - 2026-06-03
 
 Fixes the SPA auth/navigation flow that was broken in every host app: route URLs doubled to `/app/app/*`,

@@ -66,7 +66,7 @@ describe('ApiClient', () => {
             const result = await client.get<{ id: string }>('/api/v1/auth/me');
 
             expect(result).toEqual({ id: 'u1' });
-            expect(calls[1]!.url).toBe('https://h/auth/refresh');
+            expect(calls[1]!.url).toBe('https://h/api/v1/auth/refresh');
             expect(calls[1]!.init!.body).toBe(JSON.stringify({ refresh_token: 'r-1' }));
             expect(tokens.getAccessToken()).toBe('new');
             expect(tokens.getRefreshToken()).toBe('r-2');
