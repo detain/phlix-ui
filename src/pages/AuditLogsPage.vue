@@ -29,6 +29,22 @@ interface AuditLog {
   created_at: string;
 }
 
+/** Raw entry shape from the hub's `GET /api/v1/me/audit-logs` (snake_case). */
+interface HubAuditLog {
+  id?: string;
+  event?: string;
+  action?: string | null;
+  actor?: string | null;
+  user_id?: string | null;
+  resource?: string | null;
+  reason?: string | null;
+  ip_address?: string | null;
+  created_at?: string | null;
+}
+
+/** The hub paginates by limit/offset, not page number. */
+const PAGE_SIZE = 50;
+
 const props = defineProps<{
   /** Inject an API client for tests; defaults to the shared `api` singleton. */
   client?: ApiClient;
@@ -47,13 +63,25 @@ async function loadLogs(pageNum = 1): Promise<void> {
   loading.value = true;
   error.value = null;
   try {
-    const data = await http.get<{ logs: AuditLog[]; total: number; page: number; total_pages: number }>(
-      '/api/v1/audit-logs',
-      { page: String(pageNum) },
+    const offset = Math.max(0, (pageNum - 1) * PAGE_SIZE);
+    const data = await http.get<{ logs: HubAuditLog[]; total: number; limit?: number }>(
+      '/api/v1/me/audit-logs',
+      { limit: String(PAGE_SIZE), offset: String(offset) },
     );
-    logs.value = data.logs || [];
-    page.value = data.page || 1;
-    totalPages.value = data.total_pages || 1;
+    const limit = data.limit && data.limit > 0 ? data.limit : PAGE_SIZE;
+    logs.value = (data.logs || []).map((l) => ({
+      id: l.id ?? '',
+      // `event` (e.g. "user.login") is always present; `action` is an optional finer tag.
+      action: l.action && l.action !== '' ? l.action : (l.event ?? ''),
+      // `actor` is the hub-enriched display name; fall back to the raw user id.
+      actor: l.actor ?? l.user_id ?? '',
+      target: l.resource ?? undefined,
+      details: l.reason ?? undefined,
+      ip_address: l.ip_address ?? undefined,
+      created_at: l.created_at ?? '',
+    }));
+    page.value = pageNum;
+    totalPages.value = Math.max(1, Math.ceil((data.total || 0) / limit));
   } catch (e) {
     error.value = errMessage(e, 'Failed to load audit logs.');
     toasts.error(error.value);
@@ -63,6 +91,7 @@ async function loadLogs(pageNum = 1): Promise<void> {
 }
 
 function formatDate(dateStr: string): string {
+  if (!dateStr) return '—';
   return new Date(dateStr).toLocaleString();
 }
 

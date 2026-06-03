@@ -6,13 +6,16 @@ import Button from '../components/ui/Button.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { api, type ApiClient } from '../api/client';
 
-const peer = {
+// Raw peer shape from GET /api/v1/me/federation/peers (snake_case). The hub
+// enriches each peer with shared_library_count; last_sync maps from
+// last_connected_at (falling back to last_seen_at).
+const hubPeer = {
   id: 'p1',
   name: 'Friend Server',
   url: 'https://friend.example.com',
   status: 'connected',
-  shared_libraries_count: 5,
-  last_sync: '2026-05-27T00:00:00Z',
+  shared_library_count: 5,
+  last_connected_at: '2026-05-27T00:00:00Z',
 };
 
 interface Overrides {
@@ -21,12 +24,13 @@ interface Overrides {
 
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
-    if (endpoint === '/api/v1/federation/peers') return { peers: over.peers ?? [peer] };
+    if (endpoint === '/api/v1/me/federation/peers') return { peers: over.peers ?? [hubPeer] };
     throw new Error(`unexpected GET ${endpoint}`);
   });
   const post = vi.fn(async (): Promise<Record<string, unknown>> => ({}));
-  const client = { get, post } as unknown as ApiClient;
-  return { client, get, post };
+  const del = vi.fn(async (): Promise<Record<string, unknown>> => ({}));
+  const client = { get, post, delete: del } as unknown as ApiClient;
+  return { client, get, post, del };
 }
 
 function mountPage(client: ApiClient): VueWrapper {
@@ -38,6 +42,16 @@ function findBtn(w: VueWrapper, label: string) {
 }
 function findBtnByText(w: VueWrapper, text: string) {
   return w.findAllComponents(Button).find((b) => b.text().trim() === text);
+}
+
+/** Fill the (now three-field) add-peer form. */
+async function fillAddPeer(
+  w: VueWrapper,
+  vals: { name?: string; url?: string; key?: string } = {},
+): Promise<void> {
+  await w.find('input[aria-label="Peer name"]').setValue(vals.name ?? 'New Peer');
+  await w.find('input[aria-label="Peer server URL"]').setValue(vals.url ?? 'https://new-peer.example.com');
+  await w.find('input[aria-label="Peer public key"]').setValue(vals.key ?? 'PUBKEY123');
 }
 
 beforeEach(() => {
@@ -53,11 +67,11 @@ describe('FederationPage — list + states', () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    expect(get).toHaveBeenCalledWith('/api/v1/federation/peers');
+    expect(get).toHaveBeenCalledWith('/api/v1/me/federation/peers');
     const text = w.text();
     expect(text).toContain('Friend Server');
     expect(text).toContain('https://friend.example.com');
-    expect(text).toContain('5');
+    expect(text).toContain('5'); // shared_library_count
     expect(w.find('[data-testid="status-p1"]').text()).toContain('Connected');
     w.unmount();
   });
@@ -65,10 +79,10 @@ describe('FederationPage — list + states', () => {
   it('shows a skeleton while loading, then the content', async () => {
     let resolve: (v: unknown) => void = () => {};
     const get = vi.fn(() => new Promise((r) => (resolve = r)));
-    const client = { get, post: vi.fn() } as unknown as ApiClient;
+    const client = { get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = mountPage(client);
     expect(w.find('.federation__skel').exists()).toBe(true);
-    resolve({ peers: [peer] });
+    resolve({ peers: [hubPeer] });
     await flushPromises();
     expect(w.find('.federation__skel').exists()).toBe(false);
     expect(w.find('.federation__table').exists()).toBe(true);
@@ -87,7 +101,7 @@ describe('FederationPage — list + states', () => {
 
   it('treats a response with no `peers` key as empty', async () => {
     const get = vi.fn(async () => ({}));
-    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
     expect(w.text()).toContain('No federation peers connected');
     w.unmount();
@@ -108,7 +122,7 @@ describe('FederationPage — list + states', () => {
     const spy = vi.spyOn(api, 'get').mockResolvedValue({ peers: [] } as never);
     const w = mount(FederationPage, { attachTo: document.body });
     await flushPromises();
-    expect(spy).toHaveBeenCalledWith('/api/v1/federation/peers');
+    expect(spy).toHaveBeenCalledWith('/api/v1/me/federation/peers');
     expect(w.text()).toContain('No federation peers connected');
     w.unmount();
   });
@@ -117,7 +131,7 @@ describe('FederationPage — list + states', () => {
 describe('FederationPage — load errors', () => {
   it('shows an error EmptyState + toasts when peers fail to load', async () => {
     const get = vi.fn().mockRejectedValue(new Error('federation down'));
-    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
     expect(w.text()).toContain("Couldn't load federation peers");
@@ -128,7 +142,7 @@ describe('FederationPage — load errors', () => {
 
   it('uses a generic message for a non-Error rejection', async () => {
     const get = vi.fn().mockRejectedValue('weird');
-    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
     expect(w.text()).toContain('Failed to load federation peers.');
     w.unmount();
@@ -138,8 +152,8 @@ describe('FederationPage — load errors', () => {
     const get = vi
       .fn()
       .mockRejectedValueOnce(new Error('down'))
-      .mockResolvedValueOnce({ peers: [peer] });
-    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+      .mockResolvedValueOnce({ peers: [hubPeer] });
+    const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
     expect(w.text()).toContain("Couldn't load federation peers");
     await findBtnByText(w, 'Retry')!.trigger('click');
@@ -149,120 +163,124 @@ describe('FederationPage — load errors', () => {
   });
 });
 
-describe('FederationPage — status + disconnect', () => {
+describe('FederationPage — status + remove', () => {
   it.each([
     ['connected', 'Connected'],
     ['disconnected', 'Disconnected'],
     ['pending', 'Pending'],
     ['blocked', 'blocked'],
   ])('renders the %s status as "%s"', async (status, label) => {
-    const { client } = makeClient({ peers: [{ ...peer, status }] });
+    const { client } = makeClient({ peers: [{ ...hubPeer, status }] });
     const w = mountPage(client);
     await flushPromises();
     expect(w.find('[data-testid="status-p1"]').text()).toContain(label);
     w.unmount();
   });
 
-  it('shows Disconnect only for connected peers', async () => {
+  it('shows a Remove button for peers of ANY status (delete works regardless)', async () => {
     const { client } = makeClient({
       peers: [
-        { ...peer, id: 'c', name: 'Conn', status: 'connected' },
-        { ...peer, id: 'd', name: 'Disc', status: 'disconnected' },
-        { ...peer, id: 'p', name: 'Pend', status: 'pending' },
+        { ...hubPeer, id: 'c', name: 'Conn', status: 'connected' },
+        { ...hubPeer, id: 'd', name: 'Disc', status: 'disconnected' },
+        { ...hubPeer, id: 'p', name: 'Pend', status: 'pending' },
       ],
     });
     const w = mountPage(client);
     await flushPromises();
-    expect(findBtn(w, 'Disconnect Conn')).toBeTruthy();
-    expect(findBtn(w, 'Disconnect Disc')).toBeUndefined();
-    expect(findBtn(w, 'Disconnect Pend')).toBeUndefined();
+    expect(findBtn(w, 'Remove Conn')).toBeTruthy();
+    expect(findBtn(w, 'Remove Disc')).toBeTruthy();
+    expect(findBtn(w, 'Remove Pend')).toBeTruthy();
     w.unmount();
   });
 
-  it('disconnect → POSTs the disconnect endpoint, toasts, and reloads', async () => {
-    const { client, post, get } = makeClient();
+  it('remove → DELETEs the peer, toasts, and reloads', async () => {
+    const { client, del, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     const before = get.mock.calls.length;
-    await findBtn(w, 'Disconnect Friend Server')!.trigger('click');
+    await findBtn(w, 'Remove Friend Server')!.trigger('click');
     await flushPromises();
-    expect(post).toHaveBeenCalledWith('/api/v1/federation/peers/p1/disconnect');
+    expect(del).toHaveBeenCalledWith('/api/v1/me/federation/peers/p1');
     expect(get.mock.calls.length).toBeGreaterThan(before);
-    expect(useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Peer disconnected.')).toBe(true);
+    expect(useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Peer removed.')).toBe(true);
     w.unmount();
   });
 
-  it('toasts when disconnect fails (non-Error fallback)', async () => {
-    const { client, post } = makeClient();
-    post.mockRejectedValueOnce('nope');
+  it('toasts when remove fails (non-Error fallback)', async () => {
+    const { client, del } = makeClient();
+    del.mockRejectedValueOnce('nope');
     const w = mountPage(client);
     await flushPromises();
-    await findBtn(w, 'Disconnect Friend Server')!.trigger('click');
+    await findBtn(w, 'Remove Friend Server')!.trigger('click');
     await flushPromises();
-    expect(useToastStore().toasts.some((t) => t.message === 'Failed to disconnect peer.')).toBe(true);
+    expect(useToastStore().toasts.some((t) => t.message === 'Failed to remove peer.')).toBe(true);
     w.unmount();
   });
 });
 
-describe('FederationPage — add peer (connect)', () => {
-  it('connect → POSTs the typed url, toasts, clears the input, and reloads', async () => {
+describe('FederationPage — add peer (createPeer)', () => {
+  it('add peer → POSTs url+name+public_key, toasts, clears the form, and reloads', async () => {
     const { client, post, get } = makeClient({ peers: [] });
     const w = mountPage(client);
     await flushPromises();
     const before = get.mock.calls.length;
-    const input = w.find('.federation__input');
-    await input.setValue('https://new-peer.example.com');
+    await fillAddPeer(w, { name: 'New Peer', url: 'https://new-peer.example.com', key: 'PUBKEY123' });
     await w.find('.federation__form').trigger('submit');
     await flushPromises();
-    expect(post).toHaveBeenCalledWith('/api/v1/federation/connect', { url: 'https://new-peer.example.com' });
-    expect((input.element as HTMLInputElement).value).toBe('');
+    expect(post).toHaveBeenCalledWith('/api/v1/me/federation/peers', {
+      url: 'https://new-peer.example.com',
+      name: 'New Peer',
+      public_key: 'PUBKEY123',
+    });
+    expect((w.find('input[aria-label="Peer server URL"]').element as HTMLInputElement).value).toBe('');
     expect(get.mock.calls.length).toBeGreaterThan(before);
     expect(useToastStore().toasts.some((t) => t.tone === 'success')).toBe(true);
     w.unmount();
   });
 
-  it('does not POST when the url is empty (guard)', async () => {
+  it('does not POST when required fields are missing (guard)', async () => {
     const { client, post } = makeClient({ peers: [] });
     const w = mountPage(client);
     await flushPromises();
+    await w.find('input[aria-label="Peer server URL"]').setValue('https://only-url.example.com');
     await w.find('.federation__form').trigger('submit');
     await flushPromises();
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
 
-  it('disables Connect until a url is entered', async () => {
+  it('disables "Add peer" until name, url, and public key are all entered', async () => {
     const { client } = makeClient({ peers: [] });
     const w = mountPage(client);
     await flushPromises();
-    const connect = findBtnByText(w, 'Connect')!;
-    expect((connect.element as HTMLButtonElement).disabled).toBe(true);
-    await w.find('.federation__input').setValue('https://x.example');
-    expect((connect.element as HTMLButtonElement).disabled).toBe(false);
+    const add = findBtnByText(w, 'Add peer')!;
+    expect((add.element as HTMLButtonElement).disabled).toBe(true);
+    await fillAddPeer(w);
+    expect((add.element as HTMLButtonElement).disabled).toBe(false);
     w.unmount();
   });
 
-  it('toasts when connect fails (Error)', async () => {
+  it('toasts when add fails (Error)', async () => {
     const { client, post } = makeClient({ peers: [] });
     post.mockRejectedValueOnce(new Error('handshake failed'));
     const w = mountPage(client);
     await flushPromises();
-    await w.find('.federation__input').setValue('https://bad.example');
+    await fillAddPeer(w);
     await w.find('.federation__form').trigger('submit');
     await flushPromises();
     expect(useToastStore().toasts.some((t) => t.tone === 'error' && t.message === 'handshake failed')).toBe(true);
     w.unmount();
   });
 
-  it('toasts a generic message when connect fails (non-Error)', async () => {
+  it('toasts a generic message when add fails (non-Error)', async () => {
     const { client, post } = makeClient({ peers: [] });
     post.mockRejectedValueOnce('nope');
     const w = mountPage(client);
     await flushPromises();
-    await w.find('.federation__input').setValue('https://bad.example');
+    await fillAddPeer(w);
     await w.find('.federation__form').trigger('submit');
     await flushPromises();
-    expect(useToastStore().toasts.some((t) => t.message === 'Failed to connect to peer.')).toBe(true);
+    expect(useToastStore().toasts.some((t) => t.message === 'Failed to add peer.')).toBe(true);
     w.unmount();
   });
 });

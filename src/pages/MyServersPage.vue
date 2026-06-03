@@ -14,7 +14,9 @@
 import { ref, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import { errMessage } from '../api/errors';
+import { unixToIso } from '../api/normalize';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -24,10 +26,19 @@ interface Server {
   id: string;
   name: string;
   url: string;
-  status: 'online' | 'offline' | 'connecting';
+  status: string;
   owner: string;
   library_count?: number;
   last_seen?: string;
+}
+
+/** Raw item shape from the hub's `GET /api/v1/me/servers` (camelCase ServerInfoDto). */
+interface HubServer {
+  serverId?: string;
+  serverName?: string;
+  status?: string;
+  hostnameCandidates?: string[];
+  lastSeenAt?: number | null;
 }
 
 const props = defineProps<{
@@ -37,6 +48,7 @@ const props = defineProps<{
 
 const http: Pick<ApiClient, 'get'> = props.client ?? api;
 const toasts = useToastStore();
+const auth = useAuthStore();
 
 const servers = ref<Server[]>([]);
 const loading = ref(true);
@@ -46,8 +58,20 @@ async function loadServers(): Promise<void> {
   loading.value = true;
   error.value = null;
   try {
-    const data = await http.get<{ servers: Server[] }>('/api/v1/servers');
-    servers.value = data.servers || [];
+    const data = await http.get<{ servers: HubServer[] }>('/api/v1/me/servers');
+    // These are the current user's OWN servers (the hub scopes by user_id), so
+    // "owner" is always them — the hub returns no owner name, so use the session.
+    const ownerName = auth.user?.username || auth.user?.name || auth.user?.email || '—';
+    servers.value = (data.servers || []).map((s) => ({
+      id: s.serverId ?? '',
+      name: s.serverName ?? '',
+      // The hub has no single canonical URL — use the first hostname candidate.
+      url: s.hostnameCandidates?.[0] ?? '',
+      status: s.status ?? 'offline',
+      owner: ownerName,
+      last_seen: unixToIso(s.lastSeenAt),
+      // library_count: not tracked by the hub (it lives on the media server) → "—".
+    }));
   } catch (e) {
     error.value = errMessage(e, 'Failed to load servers.');
     toasts.error(error.value);
