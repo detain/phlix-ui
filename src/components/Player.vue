@@ -830,6 +830,10 @@ onBeforeUnmount(() => {
 .player__bigplay:hover {
   transform: scale(1.06);
 }
+.player__bigplay:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-3), 0 0 0 3px var(--accent-ring);
+}
 /* while playing the center button fades unless the chrome is up */
 .player__bigplay.is-playing {
   opacity: 0.85;
@@ -861,6 +865,10 @@ onBeforeUnmount(() => {
 }
 .player__iconbtn:hover {
   background: rgba(255, 255, 255, 0.12);
+}
+.player__iconbtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 /* active toggle (theater on) — amber tint */
 .player__iconbtn.is-on {

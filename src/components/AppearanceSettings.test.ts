@@ -128,12 +128,20 @@ describe('AppearanceSettings — appearance panel', () => {
     const toasts = useToastStore();
     const info = vi.spyOn(toasts, 'info');
     prefs.density = 'compact'; // make it non-default
+    const status = () => w.find('.aps__foot [role="status"]');
+    expect(status().exists()).toBe(true);
+    expect(status().attributes('aria-live')).toBe('polite');
+    expect(status().text()).toBe(''); // silent until armed
     const btn = w.find('.aps__foot button');
     await btn.trigger('click'); // arm
     expect(btn.text()).toContain('Click again');
+    // R6.5a — the armed state is mirrored into the polite live region so a screen
+    // reader announces it (a button's own accessible-name change isn't reliably re-read).
+    expect(status().text()).toBe('Click again to confirm reset');
     expect(prefs.density).toBe('compact'); // not reset yet
     await btn.trigger('click'); // confirm
     expect(prefs.density).toBe('comfortable'); // back to default
+    expect(status().text()).toBe(''); // disarmed again
     expect(info).toHaveBeenCalled();
   });
 });

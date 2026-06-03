@@ -21,6 +21,7 @@ const drawer = ref(false);
 
 <template>
   <div class="shell">
+    <a class="shell__skip" href="#main">Skip to content</a>
     <AppBackdrop :enabled="prefs.atmosphere" />
 
     <header class="shell__bar">
@@ -46,7 +47,7 @@ const drawer = ref(false);
       </div>
     </header>
 
-    <main class="shell__main"><slot /></main>
+    <main id="main" tabindex="-1" class="shell__main"><slot /></main>
 
     <footer v-if="$slots.footer" class="shell__footer"><slot name="footer" /></footer>
 
@@ -63,6 +64,37 @@ const drawer = ref(false);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+/* Skip-to-content link — off-screen until focused, then slides in above the
+   sticky bar. Stays in the DOM (focusable + AT-reachable) at all times. */
+.shell__skip {
+  position: fixed;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: var(--font-bold);
+  font-size: var(--text-sm);
+  box-shadow: var(--shadow-3);
+  transform: translateY(-150%);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+/* `:focus` (not `:focus-visible`) is the skip-link convention: it must reveal
+   whenever focused — including programmatic focus, which some browsers don't flag
+   as `:focus-visible`. A mouse click elsewhere never focuses it, so there's no flash. */
+.shell__skip:focus {
+  transform: translateY(0);
+  outline: none;
+  box-shadow: var(--shadow-3), 0 0 0 3px var(--accent-ring);
+}
+/* `#main` is a tabindex=-1 scroll/focus target, not an interactive control —
+   suppress the focus ring it would otherwise paint when the skip link jumps to it. */
+.shell__main:focus {
+  outline: none;
 }
 
 /* Glass marquee bar — sticky, blurred, faint amber top edge. */

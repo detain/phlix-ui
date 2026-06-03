@@ -40,6 +40,17 @@ describe('AppLayout', () => {
     expect(w.find('.shell__footer .F').exists()).toBe(true);
   });
 
+  it('exposes a skip-to-content link that targets the labelled <main> (R6.5a)', () => {
+    const w = mountLayout();
+    const skip = w.find('a.shell__skip');
+    expect(skip.exists()).toBe(true);
+    expect(skip.attributes('href')).toBe('#main');
+    expect(skip.text()).toBe('Skip to content');
+    const main = w.find('main.shell__main');
+    expect(main.attributes('id')).toBe('main'); // the skip target resolves
+    expect(main.attributes('tabindex')).toBe('-1'); // programmatically focusable, not a tab stop
+  });
+
   it('mounts the AppBackdrop atmosphere gated on prefs.atmosphere', async () => {
     const w = mountLayout();
     const prefs = usePreferencesStore();

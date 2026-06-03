@@ -679,6 +679,17 @@ onBeforeUnmount(() => {
 .filterbar__clear:hover {
   color: var(--text, #e4e4e7);
 }
+/* keyboard focus ring on the hand-rolled chrome buttons (the search input + the
+   genre/year Comboboxes/Selects/Chips already carry their own :focus-visible) */
+.filterbar__search-clear:focus-visible,
+.filterbar__order:focus-visible,
+.filterbar__toggle:focus-visible,
+.filterbar__preset-add:focus-visible,
+.filterbar__preset-confirm:focus-visible,
+.filterbar__clear:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
 
 /* panel transition */
 .filterbar-panel-enter-active,

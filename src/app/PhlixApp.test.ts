@@ -138,6 +138,18 @@ describe('PhlixApp — menu from config', () => {
     expect(labels).toEqual(['Browse', 'Settings']);
   });
 
+  it('marks the active nav link with aria-current="page" (R6.5a — exact-active only)', async () => {
+    // RouterLink applies aria-current="page" on the exact-active link. Locks that AT
+    // users get a current-page cue and that a future nav refactor doesn't strip it.
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await router.push('/app'); // beforeEach's un-awaited push settles at '/'; navigate explicitly
+    await flushPromises();
+    const [browse, settings] = wrapper.findAll('.nav-link');
+    expect(browse.text()).toBe('Browse');
+    expect(browse.attributes('aria-current')).toBe('page'); // '/app' is exact-active
+    expect(settings.attributes('aria-current')).toBeUndefined(); // '/app/settings' is not
+  });
+
   it('tolerates a missing config injection', async () => {
     wrapper = await mountApp(null);
     expect(wrapper.find('.brand-wordmark').text()).toContain('Phlix');

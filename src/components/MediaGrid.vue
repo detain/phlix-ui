@@ -446,6 +446,10 @@ watch(
   color: var(--accent-contrast, #1a1205);
   transform: translateY(-2px);
 }
+.media-grid-top:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-3, 0 8px 24px rgba(0, 0, 0, 0.4)), 0 0 0 3px var(--accent-ring);
+}
 .media-grid-top :deep(svg) {
   width: 20px;
   height: 20px;

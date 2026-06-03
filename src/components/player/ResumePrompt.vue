@@ -83,10 +83,20 @@ const emit = defineEmits<{ (e: 'resume'): void; (e: 'restart'): void }>();
   width: 14px;
   height: 14px;
 }
+.resume__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
 .resume__btn--amber {
   background: var(--accent);
   color: var(--accent-contrast, #1a1206);
   box-shadow: var(--glow-amber, none);
+}
+/* keep the amber glow AND show the focus ring (compose both; the bare
+   .resume__btn:focus-visible would otherwise replace the glow on focus) */
+.resume__btn--amber:focus-visible {
+  outline: none;
+  box-shadow: var(--glow-amber, none), 0 0 0 3px var(--accent-ring);
 }
 .resume__btn--amber:hover {
   filter: brightness(1.08);
