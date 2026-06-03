@@ -106,6 +106,18 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   reproducible (`npm run test:visual` 42/42) and eyeball-accepted in real Chromium against the locked
   `src/dev/mockups/*.html` art direction. Dev-only — the shipped bundle is byte-identical (`dist/phlix-ui.js`
   56.03 kB) and the vitest suite is unchanged (1653). (The interaction-regression matrix is R6.4c.)
+- **R6.4c — interaction-regression matrix + gap-fill (→ R6.4 COMPLETE):** audited the four named interaction
+  surfaces — player keyboard, filter↔URL sync, theme switch + persistence, command palette — and documented a
+  full coverage matrix (in the worklog). The audit confirmed they were already strongly covered; it surfaced
+  three genuine, otherwise-untested cross-cutting regressions, each now locked by a **gating** vitest test
+  (verified mutation-sensitive): (1) a mounted `Player` ignores **modifier-chord** keys (`⌘K`/Ctrl/Alt) so the
+  global command-palette hotkey + OS shortcuts pass through without hijacking playback — the
+  `useKeyboardShortcuts` guard was previously tested nowhere; (2) the `Player` **unbinds** its global `keydown`
+  listener on unmount (no leaked document listener after a route-leave); (3) a **theme persists across a
+  reload** end-to-end — a live `useTheme` change is persisted and re-applied by a fresh `applyStoredThemeEarly`,
+  locking that the write-path and read-path agree. Also strengthened the `useMediaUrlSync` teardown test to
+  assert both watchers detach. Tests-only — no shipped-source/public-API change; the bundle is byte-identical
+  (`dist/phlix-ui.js` 56.03 kB); vitest **1653 → 1656**.
 
 ### Removed
 - **R6.1b (API surface change — feeds the R6.6 MAJOR decision):** the `CommandPalette` component is **no longer
