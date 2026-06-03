@@ -127,3 +127,40 @@ describe('virtual-grid — computeWindow', () => {
     expect(r.rowCount).toBe(10); // 10 items, 1 col
   });
 });
+
+describe('virtual-grid — flat memory (R6.3)', () => {
+  // R6.3 AC: the virtual scroller's memory stays flat — only a windowful of rows
+  // is ever rendered, regardless of how far you scroll or how large the library is.
+  const cfg = { viewportHeight: 768, rowHeight: 356, columns: 5, overscan: 2 };
+  // Rows ever rendered = the rows intersecting the viewport (+1 partial) plus the
+  // overscan band above AND below — a constant, independent of the item count.
+  const visibleRows = Math.ceil(cfg.viewportHeight / cfg.rowHeight) + 1; // 4
+  const maxWindowItems = (visibleRows + 2 * cfg.overscan) * cfg.columns; // 8 rows × 5 = 40
+
+  it('never renders more than (visibleRows + 2·overscan)·columns items anywhere in a 5000-item list', () => {
+    const itemCount = 5000;
+    const totalHeight = Math.ceil(itemCount / cfg.columns) * cfg.rowHeight;
+    let maxSeen = 0;
+    // sweep the entire scrollable range (fine-grained — catches any row boundary)
+    for (let step = 0; step <= 400; step++) {
+      const scrollTop = (totalHeight * step) / 400;
+      const { startIndex, endIndex } = computeWindow({ ...cfg, scrollTop, itemCount });
+      const windowSize = endIndex - startIndex;
+      expect(windowSize).toBeGreaterThan(0); // always renders the visible band
+      expect(windowSize).toBeLessThanOrEqual(maxWindowItems); // never grows unbounded
+      maxSeen = Math.max(maxSeen, windowSize);
+    }
+    // the window genuinely reaches the cap mid-list (the bound isn't trivially loose)
+    expect(maxSeen).toBe(maxWindowItems);
+  });
+
+  it('renders the same-size window for a 5k and a 500k library at the same scroll position', () => {
+    const scrollTop = cfg.rowHeight * 100; // 100 rows down — well inside both
+    const small = computeWindow({ ...cfg, scrollTop, itemCount: 5_000 });
+    const huge = computeWindow({ ...cfg, scrollTop, itemCount: 500_000 });
+    // identical DOM footprint — memory does not grow with the library size
+    expect(huge.endIndex - huge.startIndex).toBe(small.endIndex - small.startIndex);
+    // only the spacer height (totalHeight) scales with the library, not the slice
+    expect(huge.totalHeight).toBeGreaterThan(small.totalHeight);
+  });
+});

@@ -118,11 +118,11 @@ var te = [
 		}, [T("div", V, [
 			T("div", {
 				class: "scrubber__buffered",
-				style: A({ width: `${f.value * 100}%` })
+				style: A({ transform: `scaleX(${f.value})` })
 			}, null, 4),
 			T("div", {
 				class: "scrubber__played",
-				style: A({ width: `${d.value * 100}%` })
+				style: A({ transform: `scaleX(${d.value})` })
 			}, null, 4),
 			(N(!0), w(b, null, F(y.value, (e, t) => (N(), w("span", {
 				key: t,
@@ -145,7 +145,7 @@ var te = [
 			style: A({ backgroundImage: _.value })
 		}, null, 4)) : C("", !0), T("span", U, I(L(B)(h.value)), 1)], 4)) : C("", !0)], 40, te));
 	}
-}), [["__scopeId", "data-v-b2711211"]]), W = [
+}), [["__scopeId", "data-v-1504dfd0"]]), W = [
 	{
 		id: "playpause",
 		keys: ["Space", "K"],
@@ -1356,4 +1356,4 @@ var et = {
 //#endregion
 export { G as A, Fe as C, me as D, he as E, ae as F, ne as I, B as L, W as M, ie as N, pe as O, re as P, Le as S, ge as T, Ae as _, Ke as a, Re as b, Qe as c, Ye as d, $ as f, Me as g, je as h, Ge as i, K as j, de as k, Je as l, ze as m, pt as n, Ze as o, We as p, lt as r, $e as s, kt as t, Xe as u, Q as v, ke as w, Ie as x, Pe as y };
 
-//# sourceMappingURL=Player-BN_TEDvB.js.map
+//# sourceMappingURL=Player-dZWn44lw.js.map
