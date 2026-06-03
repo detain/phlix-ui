@@ -11,8 +11,8 @@ type __VLS_Props = {
     pressed?: boolean;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
-    size: "sm" | "md" | "lg";
     type: "button" | "submit" | "reset";
+    size: "sm" | "md" | "lg";
     variant: "solid" | "ghost" | "outline" | "subtle";
     loading: boolean;
     disabled: boolean;

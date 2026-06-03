@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="nocturne">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nocturne — App Shell</title>
+<link rel="stylesheet" href="./nocturne.css" />
+<style>
+  /* ============================================================================
+     R5.1 ART DIRECTION — "The Marquee bar."
+     A glass projection-booth top bar over the Nocturne atmosphere. Fraunces
+     wordmark + amber dot (continuity with the R4.1 auth lockup); nav links carry
+     an amber "now-showing" active underline; a compact actions cluster (⌘K
+     launcher w/ Kbd hint · theme toggle · user avatar). Faint amber top edge
+     echoes the auth projector beam. Consumes locked nocturne.css tokens ONLY.
+     ============================================================================ */
+  body { min-height: 100vh; }
+  .ambient {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(50% 38% at 50% -6%, rgba(245,165,36,0.14), transparent 60%);
+  }
+
+  .bar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--surface-glass-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    backdrop-filter: blur(18px) saturate(1.2);
+    border-bottom: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-2);
+  }
+  .bar::before { /* projector-beam top edge */
+    content: ''; position: absolute; inset: 0 0 auto 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-soft) 30%, var(--accent-soft) 70%, transparent);
+  }
+  .bar__inner {
+    max-width: 1400px; margin: 0 auto;
+    display: flex; align-items: center; gap: var(--space-6);
+    padding: var(--space-3) var(--space-5);
+  }
+  .brand { display: inline-flex; align-items: baseline; gap: 1px; text-decoration: none; }
+  .brand__mark {
+    font-family: var(--font-display); font-weight: 600; font-size: var(--text-xl);
+    letter-spacing: var(--tracking-tight); color: var(--text);
+  }
+  .brand__dot { color: var(--accent); }
+
+  .nav { display: flex; align-items: center; gap: var(--space-1); margin-left: var(--space-2); }
+  .nav a {
+    position: relative; display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+    font-size: var(--text-sm); font-weight: 500; color: var(--text-muted);
+    text-decoration: none; transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  }
+  .nav a:hover { color: var(--text); background: var(--surface-2); }
+  .nav a.active { color: var(--text); }
+  .nav a.active::after { /* amber now-showing underline */
+    content: ''; position: absolute; left: var(--space-3); right: var(--space-3); bottom: 2px;
+    height: 2px; border-radius: var(--radius-full); background: var(--accent);
+  }
+  .nav svg { width: 16px; height: 16px; }
+
+  .spacer { flex: 1; }
+  .actions { display: flex; align-items: center; gap: var(--space-2); }
+  .iconbtn {
+    width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--radius-md);
+    color: var(--text-muted); border: 1px solid transparent;
+    transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  }
+  .iconbtn:hover { color: var(--text); background: var(--surface-2); }
+  .iconbtn svg { width: 19px; height: 19px; }
+  .cmdk {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    height: 38px; padding: 0 var(--space-3); border-radius: var(--radius-md);
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-subtle);
+    font-size: var(--text-sm); transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .cmdk:hover { border-color: var(--border-strong); color: var(--text-muted); }
+  .kbd {
+    font-family: var(--font-mono); font-size: var(--text-2xs); line-height: 1;
+    padding: 3px 5px; border-radius: var(--radius-sm);
+    background: var(--surface-3); border: 1px solid var(--border); color: var(--text-muted);
+  }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-ring);
+    font-weight: 600; font-size: var(--text-sm);
+  }
+
+  .stage { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: var(--space-10) var(--space-5); }
+  .stage h1 { font-family: var(--font-display); font-weight: 600; font-size: var(--text-3xl); letter-spacing: var(--tracking-tight); }
+  .stage p { color: var(--text-muted); margin-top: var(--space-2); }
+
+  .theme-switch { position: fixed; bottom: var(--space-5); right: var(--space-6); z-index: 5; display: flex; gap: var(--space-2); }
+  .theme-switch button { font-size: var(--text-xs); font-weight: 600; padding: var(--space-2) var(--space-3); border-radius: var(--radius-full); border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); }
+  .theme-switch button[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-ring); }
+</style>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <div class="nocturne-vignette" aria-hidden="true"></div>
+  <div class="nocturne-grain" aria-hidden="true"></div>
+
+  <header class="bar">
+    <div class="bar__inner">
+      <a class="brand" href="#">
+        <span class="brand__mark">Phlix</span><span class="brand__dot">.</span>
+      </a>
+      <nav class="nav">
+        <a class="active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>Browse</a>
+        <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Library</a>
+        <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+      </nav>
+      <span class="spacer"></span>
+      <div class="actions">
+        <button class="cmdk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search<span class="kbd">⌘K</span></button>
+        <button class="iconbtn" title="Theme: Nocturne"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
+        <button class="iconbtn" title="User menu"><span class="avatar">A</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="stage">
+    <h1>Tonight's library</h1>
+    <p>The glass marquee bar floats over the Nocturne atmosphere; nav from config, ⌘K + theme + user in the actions cluster, nav collapses to a focus-trapped drawer below the breakpoint.</p>
+  </main>
+
+  <div class="theme-switch" role="group" aria-label="Theme">
+    <button aria-pressed="true" onclick="t('nocturne',this)">Nocturne</button>
+    <button aria-pressed="false" onclick="t('daylight',this)">Daylight</button>
+    <button aria-pressed="false" onclick="t('midnight',this)">Midnight</button>
+  </div>
+<script>
+  function t(x, b){ document.documentElement.setAttribute('data-theme', x); document.querySelectorAll('.theme-switch button').forEach(n=>n.setAttribute('aria-pressed', String(n===b))); }
+</script>
+</body>
+</html>
