@@ -7,8 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + rollout) lands here.
-Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
+_Post-rollout changes land here._
+
+## [0.9.0] - 2026-06-03
+
+The **UI Redo** ships as a single aligned release: `@phlix/ui` is rebuilt as a 3-theme "Nocturne"
+design system + application shell that both `phlix-server` and `phlix-hub` mount. This is the first tag
+the consumers adopt since `v0.7.0` (the interim `v0.8.0` was tagged but never consumed), so it folds in
+everything from R0 (design system) through R6 (code-splitting, image/runtime perf, visual + interaction
+regression suites, and the a11y/contrast/i18n sweep). A new `README.md` ships with this release.
+
+**Why `0.9.0`, not `1.0.0`:** the package is still pre-1.0. The only API removals (below) are the
+internal lazy route-page / `CommandPalette` exports from R6.1 — consumers mount via `createPhlixApp` +
+the exported building blocks, so they are unaffected. Under SemVer a `0.x` minor may carry such changes,
+and declaring `1.0.0` would be a premature public-API stability commitment immediately after a sweeping
+redo (the i18n seam is an explicitly partial, still-expanding adoption). `0.9.0` signals "near-final";
+`phlix-server` and `phlix-hub` stay on the same MAJOR.
 
 ### Added
 - **R6.5c — i18n-readiness seam (`useMessages()` + `PhlixAppConfig.messages`):** an additive, dependency-free,
