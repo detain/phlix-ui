@@ -3,12 +3,12 @@ import { createPinia } from 'pinia';
 import { createRouter, createWebHistory, type Router, type RouteRecordRaw } from 'vue-router';
 import PhlixApp from './PhlixApp.vue';
 import Placeholder from './placeholder/Placeholder.vue';
-import BrowsePage from '../pages/BrowsePage.vue';
-import MediaDetailPage from '../pages/MediaDetailPage.vue';
-import PlayerPage from '../pages/PlayerPage.vue';
-import LoginPage from '../pages/LoginPage.vue';
-import SignupPage from '../pages/SignupPage.vue';
-import SettingsPage from '../pages/SettingsPage.vue';
+// The 6 built-in route pages are lazy `() => import()` chunks (R6.1a), NOT static
+// imports — so each splits out of the main bundle and loads on demand. PlayerPage in
+// particular pulls the entire Player surface, so deferring it is the biggest win. They
+// are also intentionally NOT re-exported from `index.ts` (same reason as the admin
+// pages); a static re-export would re-merge them into the main chunk and defeat the
+// split (Rollup's INEFFECTIVE_DYNAMIC_IMPORT warning).
 import { applyStoredThemeEarly } from '../composables/useTheme';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
 import type { PhlixAppConfig } from './types';
@@ -33,7 +33,12 @@ function readConfig(): PhlixAppConfig {
     };
 }
 
-function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
+/**
+ * Build the router route table from config. Exported from this module (but NOT
+ * re-exported by `index.ts`, so it stays out of the public package API) so R6.1a
+ * tests can assert the built-in pages are lazy `() => import()` route chunks.
+ */
+export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
     const base = config.routerBase || '/app';
 
     const routes: RouteRecordRaw[] = [
@@ -44,32 +49,32 @@ function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
         {
             path: base,
             name: 'browse',
-            component: BrowsePage,
+            component: () => import('../pages/BrowsePage.vue'),
         },
         {
             path: `${base}/media/:id`,
             name: 'media',
-            component: MediaDetailPage,
+            component: () => import('../pages/MediaDetailPage.vue'),
         },
         {
             path: `${base}/player/:id`,
             name: 'player',
-            component: PlayerPage,
+            component: () => import('../pages/PlayerPage.vue'),
         },
         {
             path: `${base}/login`,
             name: 'login',
-            component: LoginPage,
+            component: () => import('../pages/LoginPage.vue'),
         },
         {
             path: `${base}/signup`,
             name: 'signup',
-            component: SignupPage,
+            component: () => import('../pages/SignupPage.vue'),
         },
         {
             path: `${base}/settings`,
             name: 'settings',
-            component: SettingsPage,
+            component: () => import('../pages/SettingsPage.vue'),
         },
     ];
 
