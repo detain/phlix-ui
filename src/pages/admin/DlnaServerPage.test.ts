@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import DlnaServerPage from './DlnaServerPage.vue';
 import Button from '../../components/ui/Button.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -179,12 +180,43 @@ describe('Admin DlnaServerPage', () => {
     w.unmount();
   });
 
-  it('toasts an error when the initial status load rejects', async () => {
+  it('shows an in-body error state (+ toast) when the initial status load rejects', async () => {
     const get = vi.fn().mockRejectedValue(new Error('boom'));
     const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
+    // R5.3d.2: a load failure renders an in-body error EmptyState instead of the
+    // misleading "DLNA server is not configured." empty state (status stays null).
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain("Couldn't load DLNA server status");
+    expect(w.text()).toContain('boom');
+    expect(w.text()).not.toContain('DLNA server is not configured.');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('retries the status load from the error state', async () => {
+    const get = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValue(runningStatus);
+    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(w.text()).toContain('Running');
+    w.unmount();
+  });
+
+  it('falls back to a generic message for a non-Error status rejection', async () => {
+    const get = vi.fn().mockRejectedValue('weird');
+    const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    expect(toasts.toasts.some((t) => t.message === 'Failed to load DLNA server status.')).toBe(true);
     w.unmount();
   });
 
