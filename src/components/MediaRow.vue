@@ -102,6 +102,17 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
 <style scoped>
 .media-row {
   margin-block: var(--space-8);
+  /* R6.2a — skip rendering + layout for off-screen home rails. The Browse home
+     page stacks many rails; content-visibility lets the browser bypass the
+     off-screen ones (paint/layout work scales with what's near the viewport, not
+     the rail count). contain-intrinsic-size reserves an approximate box (≈ head +
+     a 2:3 poster rail) so the scrollbar/scroll position stay stable — no CLS, no
+     scroll jank — and the `auto` keyword lets the browser remember each rail's
+     real height after it first renders. `auto` (not `hidden`) keeps the content
+     in the a11y tree + find-in-page; containment only applies while off-screen,
+     so the cards' on-screen hover lift/shadow spill is unaffected. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--media-row-intrinsic-h, 380px);
 }
 .media-row__head {
   display: flex;

@@ -21,6 +21,15 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
 ### Performance
+- **R6.2a — off-screen render-skipping for home rails:** the `MediaRow` rail now sets `content-visibility:
+  auto` + `contain-intrinsic-size: auto 380px`, so the browser skips rendering and layout for rails scrolled
+  off-screen. The Browse home page stacks many rails (`HomeRow`→`MediaRow`); paint/layout work now scales with
+  what's near the viewport instead of the rail count. The intrinsic-size reservation keeps the scrollbar and
+  scroll position stable (no CLS / scroll-anchor jump), and the `auto` keyword lets the browser substitute each
+  rail's real measured height after first render. `auto` (not `hidden`) keeps the content in the accessibility
+  tree and find-in-page; containment applies only while a rail is off-screen, so the cards' on-screen hover
+  lift/shadow are unaffected. (The library `MediaGrid` is already virtualized — off-screen rows aren't in the
+  DOM — so the stacked rails are the right target.) Overridable per consumer via `--media-row-intrinsic-h`.
 - **R6.1c — prefetch-on-hover:** hovering or focusing a `MediaCard` now warms its destination route's lazy
   chunk (e.g. the ~41 kB Player chunk) via `usePrefetch`, so the navigation that follows a poster hover is
   instant — recovering the latency that route-level splitting (R6.1a) would otherwise add on first visit.
