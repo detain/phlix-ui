@@ -81,6 +81,8 @@ export declare const DEFAULT_MESSAGES: {
         passwordSignupPlaceholder: string;
         username: string;
         usernamePlaceholder: string;
+        usernameOrEmail: string;
+        usernameOrEmailPlaceholder: string;
         confirmPassword: string;
         confirmPasswordPlaceholder: string;
         showPassword: string;
@@ -97,6 +99,7 @@ export declare const DEFAULT_MESSAGES: {
         emailRequired: string;
         emailInvalid: string;
         passwordRequired: string;
+        identifierRequired: string;
         usernameRequired: string;
         usernameMinLength: string;
         passwordChoose: string;

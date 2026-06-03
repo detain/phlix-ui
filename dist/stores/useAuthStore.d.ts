@@ -20,7 +20,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     isLoggedIn: import("vue").ComputedRef<boolean>;
     isAdmin: import("vue").ComputedRef<boolean>;
     client: ApiClient;
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;
     fetchUser: () => Promise<void>;
     logout: () => void;
@@ -45,7 +45,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     isLoggedIn: import("vue").ComputedRef<boolean>;
     isAdmin: import("vue").ComputedRef<boolean>;
     client: ApiClient;
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;
     fetchUser: () => Promise<void>;
     logout: () => void;
@@ -70,7 +70,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     isLoggedIn: import("vue").ComputedRef<boolean>;
     isAdmin: import("vue").ComputedRef<boolean>;
     client: ApiClient;
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;
     fetchUser: () => Promise<void>;
     logout: () => void;

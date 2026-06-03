@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { createRouter, createWebHistory } from 'vue-router';
 import { createPhlixApp, buildRoutes } from './createPhlixApp';
 
 beforeEach(() => {
@@ -128,5 +129,54 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     const routes = buildRoutes({ app: 'server', apiBase: '' });
     expect(routes.find((r) => r.name === 'browse')?.path).toBe('/app');
     expect(routes.find((r) => r.name === 'settings')?.path).toBe('/app/settings');
+  });
+
+  it('no longer emits the self-referential trailing-slash redirect (recursion source)', () => {
+    const routes = buildRoutes({ app: 'server', apiBase: '', routerBase: '/app' });
+    // The old `{ path: '/app/', redirect: '/app' }` record ping-ponged with the
+    // '/app' browse record under non-strict matching → "too much recursion".
+    expect(routes.some((r) => 'redirect' in r && r.path === '/app/')).toBe(false);
+  });
+});
+
+/**
+ * Regression suite for the base-doubling + redirect-recursion bug. The route
+ * records carry the full `/app` prefix AND the history base is '/', so a link to
+ * `login` must resolve to `/app/login` — never `/app/app/login` — and resolving
+ * the base must not loop. We build the router exactly as createPhlixApp does.
+ */
+describe('router base handling (regression: /app/app doubling + redirect loop)', () => {
+  function makeRouter(routerBase = '/app') {
+    return createRouter({
+      history: createWebHistory(),
+      routes: buildRoutes({ app: 'server', apiBase: '', routerBase }),
+    });
+  }
+
+  it('resolves the base path to browse — no empty landing at /app', () => {
+    const r = makeRouter();
+    expect(r.resolve('/app').name).toBe('browse');
+    // Trailing slash still lands on browse without the old redirect record.
+    expect(r.resolve('/app/').name).toBe('browse');
+  });
+
+  it('generates single-prefix hrefs — never /app/app/* (the doubling bug)', () => {
+    const r = makeRouter();
+    expect(r.resolve({ name: 'browse' }).href).toBe('/app');
+    expect(r.resolve({ name: 'login' }).href).toBe('/app/login');
+    expect(r.resolve({ name: 'settings' }).href).toBe('/app/settings');
+    expect(r.resolve({ name: 'login' }).href).not.toContain('/app/app');
+  });
+
+  it('resolving the base does not blow the stack (redirect-loop regression)', () => {
+    const r = makeRouter();
+    expect(() => r.resolve('/app')).not.toThrow();
+    expect(r.resolve('/app').redirectedFrom).toBeUndefined();
+  });
+
+  it('honours a non-/app routerBase consistently (hub)', () => {
+    const r = makeRouter('/hub');
+    expect(r.resolve('/hub').name).toBe('browse');
+    expect(r.resolve({ name: 'login' }).href).toBe('/hub/login');
   });
 });

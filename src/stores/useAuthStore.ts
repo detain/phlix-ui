@@ -24,14 +24,26 @@ export const useAuthStore = defineStore('auth', () => {
         accessToken.value = access;
     }
 
-    async function login(email: string, password: string): Promise<boolean> {
+    /**
+     * Authenticate with a single identifier that may be EITHER a username or an
+     * email. The value is always sent as `username`; it's ALSO sent as `email`
+     * only when it looks like one (contains `@`). phlix-server reads `username`
+     * (and falls back to an email lookup) and phlix-hub reads `username` then
+     * `email`, so this satisfies both — while keeping a plain username out of any
+     * `email` field a back end might format-validate up front.
+     */
+    async function login(identifier: string, password: string): Promise<boolean> {
         loading.value = true;
         error.value = null;
         try {
+            const body: Record<string, string> = { username: identifier, password };
+            if (identifier.includes('@')) {
+                body['email'] = identifier;
+            }
             const data = await client.post<{
                 access_token: string;
                 refresh_token: string;
-            }>('/api/v1/auth/login', { email, password });
+            }>('/api/v1/auth/login', body);
 
             setTokens(data.access_token, data.refresh_token);
             await fetchUser();
