@@ -1,8 +1,5 @@
-export declare class ApiError extends Error {
-    readonly status: number;
-    readonly body: unknown;
-    constructor(message: string, status: number, body?: unknown);
-}
+/** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
+export { ApiError } from './errors';
 export interface AuthUser {
     id: string;
     email?: string;
@@ -24,12 +21,15 @@ export interface ApiClientOptions {
     baseUrl?: string;
     tokenStore?: TokenStore;
     fetchImpl?: typeof fetch;
+    /** Per-request timeout in ms before aborting with a `TimeoutError` (default 15000). */
+    timeoutMs?: number;
 }
 export declare function normalizeBool(value: unknown): boolean;
 export declare class ApiClient {
     private readonly baseUrl;
     private readonly tokens;
     private readonly doFetch;
+    private readonly timeoutMs;
     constructor(options?: ApiClientOptions);
     request<T = unknown>(method: string, endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
     private handleResponse;

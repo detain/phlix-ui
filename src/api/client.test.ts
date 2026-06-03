@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ApiClient, ApiError } from './client';
+import { NetworkError, TimeoutError } from './errors';
 import { MemoryTokenStore, makeFetch } from './test/memoryTokenStore';
 
 describe('ApiClient', () => {
@@ -198,6 +199,100 @@ describe('ApiClient', () => {
             expect(tokens.getAccessToken()).toBeNull();
             expect(tokens.getRefreshToken()).toBeNull();
             expect(tokens.getUser()).toBeNull();
+        });
+    });
+
+    describe('network resilience (R5.3a)', () => {
+        // A fetch that only settles when its abort signal fires — lets us drive
+        // both the timeout path and a caller-initiated cancellation deterministically.
+        const abortableFetch = ((_url: string, init?: RequestInit): Promise<Response> =>
+            new Promise<Response>((_resolve, reject) => {
+                init?.signal?.addEventListener('abort', () =>
+                    reject(new DOMException('Aborted', 'AbortError')),
+                );
+            })) as unknown as typeof fetch;
+
+        function stubOnLine(value: boolean): () => void {
+            const orig = Object.getOwnPropertyDescriptor(navigator, 'onLine');
+            Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => value });
+            return () => {
+                if (orig) Object.defineProperty(navigator, 'onLine', orig);
+                else Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+            };
+        }
+
+        it('rejects with TimeoutError once a request exceeds timeoutMs', async () => {
+            vi.useFakeTimers();
+            try {
+                const client = new ApiClient({ baseUrl: '', fetchImpl: abortableFetch, timeoutMs: 50 });
+                const p = client.get('/slow');
+                const expectation = expect(p).rejects.toBeInstanceOf(TimeoutError);
+                await vi.advanceTimersByTimeAsync(50);
+                await expectation;
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('maps a fetch network TypeError to a friendly NetworkError', async () => {
+            const failing = (() => Promise.reject(new TypeError('Failed to fetch'))) as unknown as typeof fetch;
+            const client = new ApiClient({ baseUrl: '', fetchImpl: failing });
+            await expect(client.get('/x')).rejects.toBeInstanceOf(NetworkError);
+            await expect(client.get('/x')).rejects.toMatchObject({
+                message: expect.stringMatching(/offline/i),
+            });
+        });
+
+        it('maps any failure to NetworkError while the browser is offline', async () => {
+            const restore = stubOnLine(false);
+            try {
+                const failing = (() => Promise.reject(new Error('weird'))) as unknown as typeof fetch;
+                const client = new ApiClient({ baseUrl: '', fetchImpl: failing });
+                await expect(client.get('/x')).rejects.toBeInstanceOf(NetworkError);
+            } finally {
+                restore();
+            }
+        });
+
+        it('rethrows an unrecognized error unchanged while online (no wrapping)', async () => {
+            const boom = new Error('mystery failure');
+            const failing = (() => Promise.reject(boom)) as unknown as typeof fetch;
+            const client = new ApiClient({ baseUrl: '', fetchImpl: failing });
+            await expect(client.get('/x')).rejects.toBe(boom);
+        });
+
+        it('preserves a caller-initiated AbortError (so supersede logic still works)', async () => {
+            const client = new ApiClient({ baseUrl: '', fetchImpl: abortableFetch });
+            const ac = new AbortController();
+            const p = client.get('/x', undefined, ac.signal);
+            ac.abort();
+            await expect(p).rejects.toMatchObject({ name: 'AbortError' });
+            await expect(p).rejects.not.toBeInstanceOf(NetworkError);
+        });
+
+        it('surfaces ApiError (non-2xx) unchanged through the timeout wrapper', async () => {
+            const client = new ApiClient({
+                baseUrl: '',
+                fetchImpl: makeFetch([{ status: 404, body: { error: 'nope' } }]).fetch,
+            });
+            await expect(client.get('/x')).rejects.toBeInstanceOf(ApiError);
+        });
+
+        it('does not time out a request that resolves promptly (timer is cleared)', async () => {
+            vi.useFakeTimers();
+            try {
+                const client = new ApiClient({
+                    baseUrl: '',
+                    fetchImpl: makeFetch([{ status: 200, body: { ok: true } }]).fetch,
+                    timeoutMs: 50,
+                });
+                const result = await client.get<{ ok: boolean }>('/fast');
+                expect(result).toEqual({ ok: true });
+                // Advancing past the timeout must not reject an already-settled request.
+                await vi.advanceTimersByTimeAsync(100);
+            } finally {
+                vi.useRealTimers();
+            }
         });
     });
 });
