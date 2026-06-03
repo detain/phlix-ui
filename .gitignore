@@ -3,3 +3,10 @@ node_modules/
 coverage/
 .DS_Store
 *.log
+
+# Playwright run outputs (the committed visual baselines under e2e/__screenshots__/
+# are intentionally NOT ignored).
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

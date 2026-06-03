@@ -85,6 +85,18 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   52.45 → **17.81 kB**, ~68% smaller); the entire Player surface (~41 kB) now loads on demand only when the
   player route mounts, and each page is its own chunk. Build emits **0** `INEFFECTIVE_DYNAMIC_IMPORT` warnings.
 
+### Tooling
+- **R6.4a — Playwright visual-regression suite (primitive Gallery):** added `@playwright/test` plus a
+  `playwright.config.ts` + `e2e/visual.spec.ts` that screenshots the design-system primitive Gallery across all
+  three built-in themes (Nocturne / Daylight / Midnight) at desktop (1280) + mobile (390) widths, with committed,
+  platform-tagged baselines under `e2e/__screenshots__/`. New `npm run test:visual` / `test:visual:update`
+  scripts. It is an **on-demand** suite (deliberately not part of the blocking `build`/`vitest` gate, since PNG
+  baselines are environment-fragile and no CI runner is wired yet); a ready-to-enable `.github/workflows/ui-ci.yml`
+  artifact (dormant `workflow_dispatch`-only) ships the future gate. Determinism is enforced via
+  `reducedMotion: 'reduce'` + `animations: 'disabled'` + a version-pinned Chromium (the v1223 build bundled by
+  `@playwright/test@1.60`). Dev-only — no change to the shipped bundle. (Per-surface harnesses + the
+  mockup-acceptance sweep are R6.4b; the interaction-regression matrix is R6.4c.)
+
 ### Removed
 - **R6.1b (API surface change — feeds the R6.6 MAJOR decision):** the `CommandPalette` component is **no longer
   re-exported** from the package entry — the shell lazy-loads it via `defineAsyncComponent` (a static re-export

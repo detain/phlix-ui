@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { configDefaults } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
 import Icons from 'unplugin-icons/vite';
 import { resolve } from 'node:path';
@@ -41,6 +42,10 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['./src/test/setup.ts'],
+        // Keep the Playwright visual specs out of the Vitest run — `e2e/visual.spec.ts`
+        // matches Vitest's default `**/*.spec.ts` glob and would throw if executed
+        // outside the Playwright runner. (Run them with `npm run test:visual`.)
+        exclude: [...configDefaults.exclude, 'e2e/**'],
         coverage: {
             provider: 'v8',
             reporter: ['text-summary', 'text', 'html'],
