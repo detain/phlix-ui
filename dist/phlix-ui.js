@@ -6315,107 +6315,182 @@ var Ac = {
 			}, 8, ["aria-label"])])])
 		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-9d8dc866"]]), el = { class: "federation-page" }, tl = {
+}), [["__scopeId", "data-v-9d8dc866"]]), el = {
+	class: "federation",
+	"aria-labelledby": "federation-heading"
+}, tl = {
 	key: 0,
-	class: "loading"
+	class: "federation__skel"
 }, nl = {
-	key: 1,
-	class: "error"
-}, rl = {
 	key: 2,
-	class: "federation-content"
-}, il = { class: "peers-section" }, al = { class: "peers-list" }, ol = { class: "peer-info" }, sl = { class: "peer-name" }, cl = { class: "peer-url" }, ll = { class: "peer-meta" }, ul = { key: 0 }, dl = { class: "peer-actions" }, fl = ["onClick"], pl = {
+	class: "federation__content"
+}, rl = {
 	key: 1,
-	class: "status-badge"
-}, ml = {
-	key: 0,
-	class: "empty-state"
-}, hl = { class: "add-peer-section" }, gl = /*#__PURE__*/ l(/* @__PURE__ */ z({
+	class: "federation__table-wrap"
+}, il = {
+	class: "federation__table",
+	"aria-label": "Federation peers"
+}, al = { class: "federation__name" }, ol = { class: "federation__url" }, sl = { class: "federation__num" }, cl = { class: "federation__date" }, ll = ["data-testid"], ul = { class: "federation__actions" }, dl = {
+	class: "federation__add",
+	"aria-labelledby": "federation-add-heading"
+}, fl = /*#__PURE__*/ l(/* @__PURE__ */ z({
 	__name: "FederationPage",
+	props: { client: {} },
 	setup(e) {
-		let t = K([]), n = K(!0), r = K(null);
-		async function i() {
+		let t = e.client ?? s, n = o(), r = K([]), a = K(!0), l = K(null), u = K(""), d = K(!1);
+		function f(e, t) {
+			return e instanceof Error && e.message ? e.message : t;
+		}
+		async function m(e = !1) {
+			e && (a.value = !0), l.value = null;
 			try {
-				t.value = (await s.get("/api/v1/federation/peers")).peers || [];
+				r.value = (await t.get("/api/v1/federation/peers")).peers || [];
 			} catch (e) {
-				r.value = e instanceof Error ? e.message : "Failed to load federation peers";
+				l.value = f(e, "Failed to load federation peers."), n.error(l.value);
 			} finally {
-				n.value = !1;
+				e && (a.value = !1);
 			}
 		}
-		async function a(e) {
+		async function h() {
+			let e = u.value.trim();
+			if (e) {
+				d.value = !0;
+				try {
+					await t.post("/api/v1/federation/connect", { url: e }), n.success("Peer connection requested."), u.value = "", await m();
+				} catch (e) {
+					n.error(f(e, "Failed to connect to peer."));
+				} finally {
+					d.value = !1;
+				}
+			}
+		}
+		async function g(e) {
 			try {
-				await s.post("/api/v1/federation/connect", { url: e }), await i();
+				await t.post(`/api/v1/federation/peers/${e}/disconnect`), n.success("Peer disconnected."), await m();
 			} catch (e) {
-				r.value = e instanceof Error ? e.message : "Failed to connect to peer";
+				n.error(f(e, "Failed to disconnect peer."));
 			}
 		}
-		async function o(e) {
-			try {
-				await s.post(`/api/v1/federation/peers/${e}/disconnect`), await i();
-			} catch (e) {
-				r.value = e instanceof Error ? e.message : "Failed to disconnect peer";
-			}
-		}
-		function c(e) {
-			switch (e) {
-				case "connected": return "#22c55e";
-				case "disconnected": return "#ef4444";
-				case "pending": return "#eab308";
-				default: return "#6b7280";
-			}
-		}
-		function l(e) {
+		function _(e) {
 			return e ? new Date(e).toLocaleString() : "Never";
 		}
-		return W(() => {
-			i();
-		}), (e, i) => (G(), F("div", el, [i[5] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Federation"), I("p", { class: "page-subtitle" }, "Connect with other Phlix servers to share libraries")], -1), n.value ? (G(), F("div", tl, "Loading federation peers...")) : r.value ? (G(), F("div", nl, Y(r.value), 1)) : (G(), F("div", rl, [I("div", il, [i[2] ||= I("h2", { class: "section-title" }, "Connected Peers", -1), I("div", al, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
-			key: e.id,
-			class: "peer-card"
-		}, [
-			I("div", {
-				class: "peer-status",
-				style: H({ backgroundColor: c(e.status) })
-			}, null, 4),
-			I("div", ol, [
-				I("h3", sl, Y(e.name), 1),
-				I("p", cl, Y(e.url), 1),
-				I("div", ll, [e.shared_libraries_count === void 0 ? P("", !0) : (G(), F("span", ul, Y(e.shared_libraries_count) + " shared libraries", 1)), I("span", null, "Last sync: " + Y(l(e.last_sync)), 1)])
-			]),
-			I("div", dl, [e.status === "connected" ? (G(), F("button", {
+		function y(e) {
+			switch (e) {
+				case "connected": return "Connected";
+				case "disconnected": return "Disconnected";
+				case "pending": return "Pending";
+				default: return e;
+			}
+		}
+		function b(e) {
+			switch (e) {
+				case "connected": return "success";
+				case "disconnected": return "error";
+				case "pending": return "warning";
+				default: return "neutral";
+			}
+		}
+		return W(() => m(!0)), (e, t) => (G(), F("section", el, [t[8] ||= I("header", { class: "federation__head" }, [I("h1", {
+			id: "federation-heading",
+			class: "federation__title"
+		}, "Federation"), I("p", { class: "federation__subtitle" }, "Connect with other Phlix servers to share libraries.")], -1), a.value ? (G(), F("div", tl, [R(i, {
+			variant: "text",
+			lines: 6
+		})])) : l.value ? (G(), N(p, {
+			key: 1,
+			icon: "alert",
+			title: "Couldn't load federation peers",
+			description: l.value
+		}, {
+			actions: Q(() => [R(c, {
+				variant: "solid",
+				size: "sm",
+				"left-icon": "rewind",
+				onClick: t[0] ||= (e) => m(!0)
+			}, {
+				default: Q(() => [...t[2] ||= [L("Retry", -1)]]),
+				_: 1
+			})]),
+			_: 1
+		}, 8, ["description"])) : (G(), F("div", nl, [
+			t[7] ||= I("h2", { class: "federation__section-title" }, "Connected peers", -1),
+			r.value.length === 0 ? (G(), N(p, {
 				key: 0,
-				class: "btn btn-secondary",
-				onClick: (t) => o(e.id)
-			}, " Disconnect ", 8, fl)) : e.status === "pending" ? (G(), F("span", pl, "Pending")) : P("", !0)])
-		]))), 128)), t.value.length === 0 ? (G(), F("div", ml, [...i[1] ||= [I("p", null, "No federation peers connected.", -1)]])) : P("", !0)])]), I("div", hl, [i[4] ||= I("h2", { class: "section-title" }, "Add Peer", -1), I("form", {
-			class: "add-peer-form",
-			onSubmit: i[0] ||= Oe((e) => a(""), ["prevent"])
-		}, [...i[3] ||= [I("input", {
-			type: "url",
-			placeholder: "https://other-server.example.com",
-			class: "peer-input"
-		}, null, -1), I("button", {
-			type: "submit",
-			class: "btn btn-primary"
-		}, "Connect", -1)]], 32)])]))]));
+				icon: "cast",
+				title: "No federation peers connected",
+				description: "Add a peer below to start sharing libraries."
+			})) : (G(), F("div", rl, [I("table", il, [t[4] ||= I("thead", null, [I("tr", null, [
+				I("th", { scope: "col" }, "Peer"),
+				I("th", { scope: "col" }, "Shared libraries"),
+				I("th", { scope: "col" }, "Last sync"),
+				I("th", { scope: "col" }, "Status"),
+				I("th", {
+					scope: "col",
+					class: "federation__actions-col"
+				}, "Actions")
+			])], -1), I("tbody", null, [(G(!0), F(j, null, q(r.value, (e) => (G(), F("tr", { key: e.id }, [
+				I("td", null, [I("div", al, Y(e.name), 1), I("div", ol, Y(e.url), 1)]),
+				I("td", sl, Y(e.shared_libraries_count === void 0 ? "—" : e.shared_libraries_count), 1),
+				I("td", cl, Y(_(e.last_sync)), 1),
+				I("td", null, [I("span", {
+					class: "federation__status",
+					"data-testid": `status-${e.id}`
+				}, [R(v, { tone: b(e.status) }, {
+					default: Q(() => [L(Y(y(e.status)), 1)]),
+					_: 2
+				}, 1032, ["tone"])], 8, ll)]),
+				I("td", null, [I("div", ul, [e.status === "connected" ? (G(), N(c, {
+					key: 0,
+					variant: "ghost",
+					size: "sm",
+					"aria-label": `Disconnect ${e.name}`,
+					onClick: (t) => g(e.id)
+				}, {
+					default: Q(() => [...t[3] ||= [L(" Disconnect ", -1)]]),
+					_: 1
+				}, 8, ["aria-label", "onClick"])) : P("", !0)])])
+			]))), 128))])])])),
+			I("section", dl, [t[6] ||= I("h2", {
+				id: "federation-add-heading",
+				class: "federation__section-title"
+			}, "Add peer", -1), I("form", {
+				class: "federation__form",
+				onSubmit: Oe(h, ["prevent"])
+			}, [Ee(I("input", {
+				"onUpdate:modelValue": t[1] ||= (e) => u.value = e,
+				type: "url",
+				class: "federation__input",
+				placeholder: "https://other-server.example.com",
+				"aria-label": "Peer server URL",
+				autocomplete: "off"
+			}, null, 512), [[Ce, u.value]]), R(c, {
+				type: "submit",
+				variant: "solid",
+				"left-icon": "plus",
+				loading: d.value,
+				disabled: !u.value.trim()
+			}, {
+				default: Q(() => [...t[5] ||= [L(" Connect ", -1)]]),
+				_: 1
+			}, 8, ["loading", "disabled"])], 32)])
+		]))]));
 	}
-}), [["__scopeId", "data-v-91ba2781"]]), _l = { class: "manage-shares-page" }, vl = {
+}), [["__scopeId", "data-v-03149ec5"]]), pl = { class: "manage-shares-page" }, ml = {
 	key: 0,
 	class: "loading"
-}, yl = {
+}, hl = {
 	key: 1,
 	class: "error"
-}, bl = {
+}, gl = {
 	key: 2,
 	class: "shares-list"
-}, xl = { class: "share-info" }, Sl = { class: "share-library" }, Cl = { class: "share-meta" }, wl = {
+}, _l = { class: "share-info" }, vl = { class: "share-library" }, yl = { class: "share-meta" }, bl = {
 	key: 0,
 	class: "expired-badge"
-}, Tl = { class: "share-dates" }, El = { key: 0 }, Dl = { class: "share-actions" }, Ol = ["onClick"], kl = {
+}, xl = { class: "share-dates" }, Sl = { key: 0 }, Cl = { class: "share-actions" }, wl = ["onClick"], Tl = {
 	key: 0,
 	class: "empty-state"
-}, Al = /*#__PURE__*/ l(/* @__PURE__ */ z({
+}, El = /*#__PURE__*/ l(/* @__PURE__ */ z({
 	__name: "ManageSharesPage",
 	setup(e) {
 		let t = K([]), n = K(!0), r = K(null);
@@ -6443,47 +6518,47 @@ var Ac = {
 		}
 		return W(() => {
 			i();
-		}), (e, i) => (G(), F("div", _l, [i[1] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Manage Shares"), I("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (G(), F("div", vl, "Loading shares...")) : r.value ? (G(), F("div", yl, Y(r.value), 1)) : (G(), F("div", bl, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
+		}), (e, i) => (G(), F("div", pl, [i[1] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Manage Shares"), I("p", { class: "page-subtitle" }, "View and manage your shared libraries")], -1), n.value ? (G(), F("div", ml, "Loading shares...")) : r.value ? (G(), F("div", hl, Y(r.value), 1)) : (G(), F("div", gl, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
 			key: e.id,
 			class: "share-card"
-		}, [I("div", xl, [
-			I("h3", Sl, Y(e.library_name), 1),
-			I("div", Cl, [
+		}, [I("div", _l, [
+			I("h3", vl, Y(e.library_name), 1),
+			I("div", yl, [
 				I("span", null, "Shared with: " + Y(e.shared_with), 1),
 				I("span", { class: V(["permission-badge", e.permissions]) }, Y(e.permissions), 3),
-				e.expires_at && c(e.expires_at) ? (G(), F("span", wl, "Expired")) : P("", !0)
+				e.expires_at && c(e.expires_at) ? (G(), F("span", bl, "Expired")) : P("", !0)
 			]),
-			I("p", Tl, [L(" Created: " + Y(o(e.created_at)) + " ", 1), e.expires_at ? (G(), F("span", El, " | Expires: " + Y(o(e.expires_at)), 1)) : P("", !0)])
-		]), I("div", Dl, [I("button", {
+			I("p", xl, [L(" Created: " + Y(o(e.created_at)) + " ", 1), e.expires_at ? (G(), F("span", Sl, " | Expires: " + Y(o(e.expires_at)), 1)) : P("", !0)])
+		]), I("div", Cl, [I("button", {
 			class: "btn btn-danger",
 			onClick: (t) => a(e.id)
-		}, "Revoke", 8, Ol)])]))), 128)), t.value.length === 0 ? (G(), F("div", kl, [...i[0] ||= [I("p", null, "No library shares found.", -1)]])) : P("", !0)]))]));
+		}, "Revoke", 8, wl)])]))), 128)), t.value.length === 0 ? (G(), F("div", Tl, [...i[0] ||= [I("p", null, "No library shares found.", -1)]])) : P("", !0)]))]));
 	}
-}), [["__scopeId", "data-v-bd8771ac"]]), jl = { class: "audit-logs-page" }, Ml = {
+}), [["__scopeId", "data-v-bd8771ac"]]), Dl = { class: "audit-logs-page" }, Ol = {
 	key: 0,
 	class: "loading"
-}, Nl = {
+}, kl = {
 	key: 1,
 	class: "error"
-}, Pl = {
+}, Al = {
 	key: 2,
 	class: "logs-container"
-}, Fl = { class: "logs-list" }, Il = { class: "log-content" }, Ll = { class: "log-header" }, Rl = { class: "log-action" }, zl = { class: "log-actor" }, Bl = { class: "log-time" }, Vl = {
+}, jl = { class: "logs-list" }, Ml = { class: "log-content" }, Nl = { class: "log-header" }, Pl = { class: "log-action" }, Fl = { class: "log-actor" }, Il = { class: "log-time" }, Ll = {
 	key: 0,
 	class: "log-target"
-}, Hl = {
+}, Rl = {
 	key: 1,
 	class: "log-details"
-}, Ul = {
+}, zl = {
 	key: 2,
 	class: "log-ip"
-}, Wl = {
+}, Bl = {
 	key: 0,
 	class: "empty-state"
-}, Gl = {
+}, Vl = {
 	key: 0,
 	class: "pagination"
-}, Kl = ["disabled"], ql = { class: "page-info" }, Jl = ["disabled"], Yl = /*#__PURE__*/ l(/* @__PURE__ */ z({
+}, Hl = ["disabled"], Ul = { class: "page-info" }, Wl = ["disabled"], Gl = /*#__PURE__*/ l(/* @__PURE__ */ z({
 	__name: "AuditLogsPage",
 	setup(e) {
 		let t = K([]), n = K(!0), r = K(null), i = K(1), a = K(1);
@@ -6509,39 +6584,39 @@ var Ac = {
 		}
 		return W(() => {
 			o();
-		}), (e, s) => (G(), F("div", jl, [s[3] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Audit Logs"), I("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (G(), F("div", Ml, "Loading audit logs...")) : r.value ? (G(), F("div", Nl, Y(r.value), 1)) : (G(), F("div", Pl, [I("div", Fl, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
+		}), (e, s) => (G(), F("div", Dl, [s[3] ||= I("div", { class: "page-header" }, [I("h1", { class: "page-title" }, "Audit Logs"), I("p", { class: "page-subtitle" }, "View system activity and user actions")], -1), n.value ? (G(), F("div", Ol, "Loading audit logs...")) : r.value ? (G(), F("div", kl, Y(r.value), 1)) : (G(), F("div", Al, [I("div", jl, [(G(!0), F(j, null, q(t.value, (e) => (G(), F("div", {
 			key: e.id,
 			class: "log-entry"
 		}, [I("div", {
 			class: "log-icon",
 			style: H({ backgroundColor: l(e.action) })
-		}, Y(u(e.action)), 5), I("div", Il, [
-			I("div", Ll, [
-				I("span", Rl, Y(e.action), 1),
-				I("span", zl, Y(e.actor), 1),
-				I("span", Bl, Y(c(e.created_at)), 1)
+		}, Y(u(e.action)), 5), I("div", Ml, [
+			I("div", Nl, [
+				I("span", Pl, Y(e.action), 1),
+				I("span", Fl, Y(e.actor), 1),
+				I("span", Il, Y(c(e.created_at)), 1)
 			]),
-			e.target ? (G(), F("p", Vl, "Target: " + Y(e.target), 1)) : P("", !0),
-			e.details ? (G(), F("p", Hl, Y(e.details), 1)) : P("", !0),
-			e.ip_address ? (G(), F("span", Ul, "IP: " + Y(e.ip_address), 1)) : P("", !0)
-		])]))), 128)), t.value.length === 0 ? (G(), F("div", Wl, [...s[2] ||= [I("p", null, "No audit logs found.", -1)]])) : P("", !0)]), a.value > 1 ? (G(), F("div", Gl, [
+			e.target ? (G(), F("p", Ll, "Target: " + Y(e.target), 1)) : P("", !0),
+			e.details ? (G(), F("p", Rl, Y(e.details), 1)) : P("", !0),
+			e.ip_address ? (G(), F("span", zl, "IP: " + Y(e.ip_address), 1)) : P("", !0)
+		])]))), 128)), t.value.length === 0 ? (G(), F("div", Bl, [...s[2] ||= [I("p", null, "No audit logs found.", -1)]])) : P("", !0)]), a.value > 1 ? (G(), F("div", Vl, [
 			I("button", {
 				class: "btn btn-secondary",
 				disabled: i.value <= 1,
 				onClick: s[0] ||= (e) => o(i.value - 1)
-			}, " Previous ", 8, Kl),
-			I("span", ql, "Page " + Y(i.value) + " of " + Y(a.value), 1),
+			}, " Previous ", 8, Hl),
+			I("span", Ul, "Page " + Y(i.value) + " of " + Y(a.value), 1),
 			I("button", {
 				class: "btn btn-secondary",
 				disabled: i.value >= a.value,
 				onClick: s[1] ||= (e) => o(i.value + 1)
-			}, " Next ", 8, Jl)
+			}, " Next ", 8, Wl)
 		])) : P("", !0)]))]));
 	}
 }), [["__scopeId", "data-v-05910fd9"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
-function Xl(e, t) {
+function Kl(e, t) {
 	let n = vn(), r = !1;
 	n.applyQuery(e.currentRoute.value.query), n.fetchMedia(t);
 	let i = Z(() => JSON.stringify(n.toQuery()), () => {
@@ -6556,6 +6631,6 @@ function Xl(e, t) {
 	};
 }
 //#endregion
-export { C as ALL_LOGS, Ia as AMBIENT_SAMPLE_H, La as AMBIENT_SAMPLE_INTERVAL_MS, Fa as AMBIENT_SAMPLE_W, ji as ARROW_ICONS, Mi as ARROW_LABELS, ne as AdminBackupApi, b as AdminCastApi, oe as AdminCollectionsApi, w as AdminDashboardApi, re as AdminDlnaServerApi, se as AdminHistoryApi, te as AdminIntegrationsApi, ue as AdminLibrariesApi, ae as AdminLiveTvApi, S as AdminLogsApi, ie as AdminRemoteAccessApi, ee as AdminServicesApi, de as AdminSettingsApi, ce as AdminSyncPlayApi, D as AdminUsersApi, A as AdminWebhooksApi, Ga as AmbientCanvas, e as ApiClient, a as ApiError, ze as AppBackdrop, st as AppLayout, Yl as AuditLogsPage, v as Badge, Xr as BrowsePage, c as Button, pa as CAPTION_BACKGROUND_OPTIONS, fa as CAPTION_COLOR_OPTIONS, ma as CAPTION_EDGE_OPTIONS, da as CAPTION_SIZE_OPTIONS, ua as CAPTION_SIZE_SCALE, va as CaptionOverlay, Pa as CaptionsMenu, mr as Chip, xr as Combobox, Pt as CommandPalette, Ke as DEFAULT_CAPTION_STYLE, qe as DEFAULT_PREFERENCES, Za as DIRECT_PLAY_EXTENSIONS, p as EmptyState, gl as FederationPage, Wr as FilterBar, r as Icon, d as IconButton, vt as Kbd, le as LIBRARY_TYPES, Vc as LibraryScanPage, n as LocalStorageTokenStore, os as LoginForm, us as LoginPage, Al as ManageSharesPage, Hn as MediaCard, vi as MediaDetail, Ci as MediaDetailPage, Zn as MediaGrid, ur as MediaHomeRow, sr as MediaRow, Jt as MiniPlayer, f as Modal, $c as MyServersPage, Ai as PLAYER_SHORTCUTS, Dc as PageTransition, dn as PhlixApp, Lo as Player, Bo as PlayerPage, qi as QualityMenu, T as RATING_LABELS, E as RATING_OPTIONS, It as RESUME_MAX_RATIO, Ft as RESUME_MIN_SECONDS, Xa as ResumePrompt, Ec as Reveal, O as SUBSCRIBABLE_EVENTS, ki as Scrubber, _ as Select, lc as SettingsForm, dc as SettingsPage, Ge as Sheet, Ui as ShortcutsHelp, ps as SignupForm, _s as SignupPage, i as Skeleton, y as Slider, Ki as SpeedMenu, Tc as Spinner, x as Switch, Qa as TRANSCODE_EXTENSIONS, Ss as Tabs, Cc as ToastHost, gc as Tooltip, xo as TranscodeNotice, ro as UPNEXT_COUNTDOWN_SECONDS, ao as UPNEXT_RING_CIRCUMFERENCE, io as UPNEXT_RING_RADIUS, _o as UpNext, Gi as VolumeControl, k as WEBHOOK_EVENT_CATEGORIES, ia as activeAudioIndex, kc as adminMenu, Ua as ambientGradient, ra as applyAudioTrack, on as applyStoredThemeEarly, na as applyTrackModes, za as averageRegion, Xl as bindMediaStoreToRouter, Oc as buildAdminRoutes, cr as buildMediaQuery, lr as buildMediaUrl, _a as captionStyleVars, ca as cleanCueText, mc as createPhlixApp, nn as deriveAccentVars, ga as edgeShadow, eo as extensionOf, wi as formatTime, xt as fuzzyScore, Fi as handleShortcut, ta as hasActiveCaptions, Ze as hasStoredPreferences, Wa as isBatterySaving, no as isFatalMediaError, Pi as isTypingTarget, $i as listAudioTracks, Qi as listSubtitleTracks, St as matchCommand, to as needsTranscode, la as readActiveCueLines, Xe as readStoredPreferences, ea as resolveTextTrack, Va as rgbString, Ha as rgbaString, oo as ringDashoffset, Ba as sampleAmbient, lt as useAuthStore, wt as useCommandStore, u as useFocusTrap, Ii as useKeyboardShortcuts, vn as useMediaStore, Bt as usePlayerStore, $ as usePreferencesStore, sn as useTheme, o as useToastStore };
+export { C as ALL_LOGS, Ia as AMBIENT_SAMPLE_H, La as AMBIENT_SAMPLE_INTERVAL_MS, Fa as AMBIENT_SAMPLE_W, ji as ARROW_ICONS, Mi as ARROW_LABELS, ne as AdminBackupApi, b as AdminCastApi, oe as AdminCollectionsApi, w as AdminDashboardApi, re as AdminDlnaServerApi, se as AdminHistoryApi, te as AdminIntegrationsApi, ue as AdminLibrariesApi, ae as AdminLiveTvApi, S as AdminLogsApi, ie as AdminRemoteAccessApi, ee as AdminServicesApi, de as AdminSettingsApi, ce as AdminSyncPlayApi, D as AdminUsersApi, A as AdminWebhooksApi, Ga as AmbientCanvas, e as ApiClient, a as ApiError, ze as AppBackdrop, st as AppLayout, Gl as AuditLogsPage, v as Badge, Xr as BrowsePage, c as Button, pa as CAPTION_BACKGROUND_OPTIONS, fa as CAPTION_COLOR_OPTIONS, ma as CAPTION_EDGE_OPTIONS, da as CAPTION_SIZE_OPTIONS, ua as CAPTION_SIZE_SCALE, va as CaptionOverlay, Pa as CaptionsMenu, mr as Chip, xr as Combobox, Pt as CommandPalette, Ke as DEFAULT_CAPTION_STYLE, qe as DEFAULT_PREFERENCES, Za as DIRECT_PLAY_EXTENSIONS, p as EmptyState, fl as FederationPage, Wr as FilterBar, r as Icon, d as IconButton, vt as Kbd, le as LIBRARY_TYPES, Vc as LibraryScanPage, n as LocalStorageTokenStore, os as LoginForm, us as LoginPage, El as ManageSharesPage, Hn as MediaCard, vi as MediaDetail, Ci as MediaDetailPage, Zn as MediaGrid, ur as MediaHomeRow, sr as MediaRow, Jt as MiniPlayer, f as Modal, $c as MyServersPage, Ai as PLAYER_SHORTCUTS, Dc as PageTransition, dn as PhlixApp, Lo as Player, Bo as PlayerPage, qi as QualityMenu, T as RATING_LABELS, E as RATING_OPTIONS, It as RESUME_MAX_RATIO, Ft as RESUME_MIN_SECONDS, Xa as ResumePrompt, Ec as Reveal, O as SUBSCRIBABLE_EVENTS, ki as Scrubber, _ as Select, lc as SettingsForm, dc as SettingsPage, Ge as Sheet, Ui as ShortcutsHelp, ps as SignupForm, _s as SignupPage, i as Skeleton, y as Slider, Ki as SpeedMenu, Tc as Spinner, x as Switch, Qa as TRANSCODE_EXTENSIONS, Ss as Tabs, Cc as ToastHost, gc as Tooltip, xo as TranscodeNotice, ro as UPNEXT_COUNTDOWN_SECONDS, ao as UPNEXT_RING_CIRCUMFERENCE, io as UPNEXT_RING_RADIUS, _o as UpNext, Gi as VolumeControl, k as WEBHOOK_EVENT_CATEGORIES, ia as activeAudioIndex, kc as adminMenu, Ua as ambientGradient, ra as applyAudioTrack, on as applyStoredThemeEarly, na as applyTrackModes, za as averageRegion, Kl as bindMediaStoreToRouter, Oc as buildAdminRoutes, cr as buildMediaQuery, lr as buildMediaUrl, _a as captionStyleVars, ca as cleanCueText, mc as createPhlixApp, nn as deriveAccentVars, ga as edgeShadow, eo as extensionOf, wi as formatTime, xt as fuzzyScore, Fi as handleShortcut, ta as hasActiveCaptions, Ze as hasStoredPreferences, Wa as isBatterySaving, no as isFatalMediaError, Pi as isTypingTarget, $i as listAudioTracks, Qi as listSubtitleTracks, St as matchCommand, to as needsTranscode, la as readActiveCueLines, Xe as readStoredPreferences, ea as resolveTextTrack, Va as rgbString, Ha as rgbaString, oo as ringDashoffset, Ba as sampleAmbient, lt as useAuthStore, wt as useCommandStore, u as useFocusTrap, Ii as useKeyboardShortcuts, vn as useMediaStore, Bt as usePlayerStore, $ as usePreferencesStore, sn as useTheme, o as useToastStore };
 
 //# sourceMappingURL=phlix-ui.js.map
