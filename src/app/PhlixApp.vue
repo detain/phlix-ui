@@ -3,40 +3,42 @@
         <template #logo>
             <RouterLink :to="homePath" class="brand">
                 <img v-if="branding.logoSrc" :src="branding.logoSrc" :alt="branding.logoAlt ?? wordmark" class="brand-logo" />
-                <span class="brand-wordmark">{{ wordmark }}</span>
+                <span class="brand-wordmark">{{ wordmark }}<span class="brand-dot">.</span></span>
                 <span v-if="branding.tagline" class="brand-tagline">{{ branding.tagline }}</span>
             </RouterLink>
         </template>
 
         <template #nav>
-            <nav class="main-nav">
-                <template v-if="menu.length">
-                    <component
-                        :is="item.href ? 'a' : RouterLink"
-                        v-for="item in menu"
-                        :key="item.id"
-                        :to="item.href ? undefined : item.to"
-                        :href="item.href ? safeHref(item.href) : undefined"
-                        :target="item.href ? item.target : undefined"
-                        :rel="item.href && item.target === '_blank' ? 'noopener noreferrer' : undefined"
-                        class="nav-link"
-                    >
-                        <Icon v-if="item.icon" :name="item.icon" class="nav-link-icon" />
-                        {{ item.label }}
-                    </component>
-                </template>
-                <template v-else>
-                    <RouterLink :to="homePath" class="nav-link">Browse</RouterLink>
-                    <RouterLink :to="`${homePath}/settings`" class="nav-link">Settings</RouterLink>
-                </template>
-                <IconButton
-                    name="search"
-                    label="Open command palette (⌘K)"
-                    size="sm"
-                    class="nav-cmdk"
-                    @click="commands.openPalette()"
-                />
-            </nav>
+            <template v-if="menu.length">
+                <component
+                    :is="item.href ? 'a' : RouterLink"
+                    v-for="item in menu"
+                    :key="item.id"
+                    :to="item.href ? undefined : item.to"
+                    :href="item.href ? safeHref(item.href) : undefined"
+                    :target="item.href ? item.target : undefined"
+                    :rel="item.href && item.target === '_blank' ? 'noopener noreferrer' : undefined"
+                    class="nav-link"
+                >
+                    <Icon v-if="item.icon" :name="item.icon" class="nav-link-icon" />
+                    {{ item.label }}
+                </component>
+            </template>
+            <template v-else>
+                <RouterLink :to="homePath" class="nav-link">Browse</RouterLink>
+                <RouterLink :to="`${homePath}/settings`" class="nav-link">Settings</RouterLink>
+            </template>
+        </template>
+
+        <template #actions>
+            <IconButton
+                name="search"
+                label="Open command palette (⌘K)"
+                variant="ghost"
+                @click="commands.openPalette()"
+            />
+            <ThemeToggle />
+            <UserMenu />
         </template>
 
         <RouterView />
@@ -49,6 +51,8 @@
 import { computed, inject } from 'vue';
 import { RouterLink, RouterView, useRouter } from 'vue-router';
 import AppLayout from './AppLayout.vue';
+import ThemeToggle from './ThemeToggle.vue';
+import UserMenu from './UserMenu.vue';
 import Icon from '../components/Icon.vue';
 import IconButton from '../components/ui/IconButton.vue';
 import CommandPalette from '../components/CommandPalette.vue';
@@ -85,7 +89,7 @@ function safeHref(href: string): string | undefined {
 .brand {
     display: inline-flex;
     align-items: baseline;
-    gap: var(--space-2, 0.5rem);
+    gap: var(--space-2);
     text-decoration: none;
 }
 .brand-logo {
@@ -95,42 +99,60 @@ function safeHref(href: string): string | undefined {
 }
 .brand-wordmark {
     font-family: var(--font-display);
-    font-size: var(--text-xl, 1.25rem);
-    font-weight: var(--font-bold, 700);
+    font-size: var(--text-xl);
+    font-weight: var(--fw-bold, 700);
     letter-spacing: var(--tracking-tight);
-    color: var(--accent, var(--color-primary, #6366f1));
+    color: var(--text);
+}
+.brand-dot {
+    color: var(--accent);
 }
 .brand-tagline {
-    font-size: var(--text-xs, 0.75rem);
-    color: var(--text-muted, #a1a1aa);
-}
-
-.main-nav {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4, 1rem);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
 }
 
 .nav-link {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2, 0.5rem);
-    color: var(--text-muted, #a1a1aa);
-    font-size: var(--text-sm, 0.875rem);
-    font-weight: var(--font-medium, 500);
-    transition: color 0.15s ease;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-medium, 500);
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
-
 .nav-link-icon {
-    font-size: var(--text-md, 1rem);
+    font-size: var(--text-md);
 }
-
-.nav-link:hover,
+.nav-link:hover {
+    color: var(--text);
+    background: var(--surface-2);
+}
 .nav-link.router-link-active {
-    color: var(--text, #e4e4e7);
+    color: var(--text);
 }
-
-.nav-cmdk {
-    margin-left: var(--space-1, 0.25rem);
+/* amber "now-showing" active underline */
+.nav-link.router-link-active::after {
+    content: '';
+    position: absolute;
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: 2px;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+}
+.nav-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-ring);
+}
+@media (prefers-reduced-motion: reduce) {
+    .nav-link {
+        transition: none;
+    }
 }
 </style>

@@ -15,11 +15,11 @@ declare function sampleNow(): void;
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
     sampleNow: typeof sampleNow;
 }, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
+    enabled: boolean;
+    intensity: number;
     video: HTMLVideoElement | null;
     playing: boolean;
     reducedMotion: boolean;
-    enabled: boolean;
-    intensity: number;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;

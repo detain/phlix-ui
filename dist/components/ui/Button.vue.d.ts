@@ -14,8 +14,8 @@ type __VLS_Slots = {} & {
     default?: (props: typeof __VLS_11) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
-    size: "sm" | "md" | "lg";
     type: "button" | "submit" | "reset";
+    size: "sm" | "md" | "lg";
     variant: "solid" | "ghost" | "outline" | "subtle";
     loading: boolean;
     disabled: boolean;

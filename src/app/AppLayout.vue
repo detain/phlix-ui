@@ -1,78 +1,164 @@
-<template>
-    <div class="app-layout">
-        <header class="app-header">
-            <div class="header-inner">
-                <div class="logo">
-                    <slot name="logo">
-                        <span class="logo-text">Phlix</span>
-                    </slot>
-                </div>
-                <nav class="nav">
-                    <slot name="nav" />
-                </nav>
-            </div>
-        </header>
-        <main class="app-main">
-            <slot />
-        </main>
-        <footer class="app-footer">
-            <slot name="footer" />
-        </footer>
-    </div>
-</template>
-
 <script setup lang="ts">
+/**
+ * AppLayout (R5.1) — the redesigned cross-app shell ("The Marquee bar").
+ *
+ * A glass sticky top bar over the Nocturne atmosphere (`AppBackdrop`, mounted once
+ * here for every in-shell page and gated on `prefs.atmosphere`): a brand `#logo`
+ * slot, a primary `#nav` slot, and an `#actions` cluster (the consumer wires ⌘K /
+ * theme toggle / user menu). Below the breakpoint the nav collapses behind a
+ * hamburger into the focus-trapped `Sheet` drawer (the SAME `#nav` slot). Purely
+ * presentational + config-agnostic — all brand/nav/actions content is injected.
+ */
+import { ref } from 'vue';
+import AppBackdrop from '../components/AppBackdrop.vue';
+import Sheet from '../components/ui/Sheet.vue';
+import IconButton from '../components/ui/IconButton.vue';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
+
+const prefs = usePreferencesStore();
+const drawer = ref(false);
 </script>
 
+<template>
+  <div class="shell">
+    <AppBackdrop :enabled="prefs.atmosphere" />
+
+    <header class="shell__bar">
+      <div class="shell__inner">
+        <div class="shell__brand">
+          <slot name="logo"><span class="shell__wordmark">Phlix<span class="shell__dot">.</span></span></slot>
+        </div>
+
+        <nav class="shell__nav" aria-label="Primary"><slot name="nav" /></nav>
+
+        <span class="shell__spacer" />
+
+        <div class="shell__actions"><slot name="actions" /></div>
+
+        <IconButton
+          v-if="$slots.nav"
+          class="shell__hamburger"
+          name="menu"
+          label="Open navigation menu"
+          variant="ghost"
+          @click="drawer = true"
+        />
+      </div>
+    </header>
+
+    <main class="shell__main"><slot /></main>
+
+    <footer v-if="$slots.footer" class="shell__footer"><slot name="footer" /></footer>
+
+    <Sheet v-model="drawer" side="left" title="Menu">
+      <!-- No aria-label here: the Sheet is a labelled role=dialog ("Menu"), so a
+           second "Primary" nav landmark would be redundant. -->
+      <nav class="shell__drawer" @click="drawer = false"><slot name="nav" /></nav>
+    </Sheet>
+  </div>
+</template>
+
 <style scoped>
-.app-layout {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.app-header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background-color: var(--color-surface, #141420);
-    border-bottom: 1px solid var(--color-border, #27272a);
+/* Glass marquee bar — sticky, blurred, faint amber top edge. */
+.shell__bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--surface-glass-strong);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-2);
+}
+.shell__bar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-soft) 30%, var(--accent-soft) 70%, transparent);
+  pointer-events: none;
+}
+.shell__inner {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-5);
+}
+.shell__brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.shell__wordmark {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold, 700);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+}
+.shell__dot {
+  color: var(--accent);
+}
+.shell__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.shell__spacer {
+  flex: 1;
+}
+.shell__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.shell__hamburger {
+  display: none;
 }
 
-.header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+.shell__main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+}
+.shell__footer {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--text-subtle);
+  font-size: var(--text-sm);
+  border-top: 1px solid var(--border-subtle);
+}
+.shell__drawer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
-.logo-text {
-    font-size: var(--text-xl, 1.25rem);
-    font-weight: var(--font-bold, 700);
-    color: var(--color-primary, #6366f1);
-}
-
-.nav {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4, 1rem);
-}
-
-.app-main {
-    flex: 1;
-    max-width: 1400px;
-    width: 100%;
-    margin: 0 auto;
-    padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
-}
-
-.app-footer {
-    padding: var(--space-4, 1rem);
-    text-align: center;
-    color: var(--color-text-muted, #a1a1aa);
-    font-size: var(--text-sm, 0.875rem);
-    border-top: 1px solid var(--color-border, #27272a);
+/* Responsive — nav collapses into the drawer below the bar breakpoint. */
+@media (max-width: 720px) {
+  .shell__nav {
+    display: none;
+  }
+  .shell__hamburger {
+    display: inline-grid;
+  }
+  .shell__inner {
+    gap: var(--space-3);
+  }
 }
 </style>

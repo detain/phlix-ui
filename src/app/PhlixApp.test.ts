@@ -69,7 +69,8 @@ afterEach(() => {
 describe('PhlixApp — branding from config', () => {
   it('renders the default "Phlix" wordmark when no branding is configured', async () => {
     wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
-    expect(wrapper.find('.brand-wordmark').text()).toBe('Phlix');
+    expect(wrapper.find('.brand-wordmark').text()).toContain('Phlix'); // + amber dot
+    expect(wrapper.find('.brand-dot').exists()).toBe(true);
     expect(wrapper.find('.brand-logo').exists()).toBe(false);
     expect(wrapper.find('.brand-tagline').exists()).toBe(false);
   });
@@ -81,7 +82,7 @@ describe('PhlixApp — branding from config', () => {
       routerBase: '/app',
       branding: { wordmark: 'Phlix Hub', tagline: 'your servers', logoSrc: '/logo.svg', logoAlt: 'Hub logo' },
     });
-    expect(wrapper.find('.brand-wordmark').text()).toBe('Phlix Hub');
+    expect(wrapper.find('.brand-wordmark').text()).toContain('Phlix Hub');
     expect(wrapper.find('.brand-tagline').text()).toBe('your servers');
     const logo = wrapper.find('.brand-logo');
     expect(logo.attributes('src')).toBe('/logo.svg');
@@ -138,7 +139,7 @@ describe('PhlixApp — menu from config', () => {
 
   it('tolerates a missing config injection', async () => {
     wrapper = await mountApp(null);
-    expect(wrapper.find('.brand-wordmark').text()).toBe('Phlix');
+    expect(wrapper.find('.brand-wordmark').text()).toContain('Phlix');
     expect(wrapper.findAll('.nav-link').map((l) => l.text())).toEqual(['Browse', 'Settings']);
   });
 });
@@ -148,7 +149,7 @@ describe('PhlixApp — command palette trigger', () => {
     wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
     const store = useCommandStore();
     expect(store.open).toBe(false);
-    await wrapper.find('.nav-cmdk').trigger('click');
+    await wrapper.find('[aria-label="Open command palette (⌘K)"]').trigger('click');
     expect(store.open).toBe(true);
   });
 });

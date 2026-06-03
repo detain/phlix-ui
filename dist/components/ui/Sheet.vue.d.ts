@@ -18,9 +18,9 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     onClose?: (() => any) | undefined;
     "onUpdate:modelValue"?: ((v: boolean) => any) | undefined;
 }>, {
+    side: "right" | "left" | "bottom";
     dismissible: boolean;
     hideClose: boolean;
-    side: "right" | "left" | "bottom";
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
 declare const _default: typeof __VLS_export;
