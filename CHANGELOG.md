@@ -22,6 +22,16 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Cross-app shell redesign (R5.1):** `AppLayout.vue` — the last `--color-*`-bearing shell file — is rebuilt
+  into the redesigned **glass marquee top bar** over the Nocturne atmosphere. It now mounts `AppBackdrop` once
+  for every in-shell page (gated on `prefs.atmosphere`), exposes `#logo` / `#nav` / `#actions` / `#footer`
+  slots, and below a 720px breakpoint collapses the nav behind a hamburger into the focus-trapped `Sheet`
+  drawer (the same `#nav` slot rendered in both the bar and the drawer). New `src/app/ThemeToggle.vue` cycles
+  the theme (nocturne → daylight → midnight) live, and new `src/app/UserMenu.vue` is a focus-trapped account
+  popover (signed in: name + Settings + Sign out via `useAuthStore.logout`; signed out: Sign in) with
+  `routerBase`-aware links. `PhlixApp.vue` composes the brand (wordmark + amber dot) + nav (from `config.menu`
+  only, `safeHref`-sanitized) + the actions cluster (⌘K launcher + theme toggle + user menu) into the shell.
+  All from config — never `if (app === …)`. Not mounted in the live consumers until R6.6.
 - **Settings + Appearance redesign (R4.2):** the settings surface is rebuilt on the Nocturne tokens +
   a11y primitives and now exposes the full customization. New `src/components/AppearanceSettings.vue`
   surfaces `usePreferencesStore` as **live, persisted** controls across two panels — *Appearance* (a theme

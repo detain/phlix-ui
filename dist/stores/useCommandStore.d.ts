@@ -79,7 +79,7 @@ export declare const useCommandStore: import("pinia").StoreDefinition<"phlix-com
     closePalette: () => void;
     togglePalette: () => void;
     runId: (id: string) => Promise<void>;
-}, "registry" | "open" | "query" | "recentIds">, Pick<{
+}, "query" | "registry" | "open" | "recentIds">, Pick<{
     registry: import("vue").Ref<Map<string, {
         id: string;
         title: string;
