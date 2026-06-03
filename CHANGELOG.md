@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _R2+ of the UI Redo (Browse, Player, Auth + Settings, app pages + shell, perf + rollout) lands here.
 Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6.6._
 
+### Performance
+- **R6.1a — route-level code-splitting:** the 6 built-in route pages (Browse, Media detail, Player, Login,
+  Signup, Settings) are now mounted by `createPhlixApp` as lazy `() => import()` route chunks instead of being
+  statically bundled into the entry. The main `dist/phlix-ui.js` shrank from **202.60 kB → 64.85 kB** (gzip
+  52.45 → **17.81 kB**, ~68% smaller); the entire Player surface (~41 kB) now loads on demand only when the
+  player route mounts, and each page is its own chunk. Build emits **0** `INEFFECTIVE_DYNAMIC_IMPORT` warnings.
+
+### Removed
+- **R6.1a (API surface change — feeds the R6.6 MAJOR decision):** the built-in route-page components
+  `BrowsePage`, `MediaDetailPage`, `PlayerPage`, `LoginPage`, `SignupPage`, and `SettingsPage` are **no longer
+  re-exported** from the package entry — they are internal lazy route targets mounted by `createPhlixApp`
+  (a static re-export would re-merge them into the main chunk and defeat the split). The reusable building
+  blocks they compose (`MediaCard`/`MediaGrid`/`MediaRow`/`MediaHomeRow`/`MediaDetail`/`FilterBar`, `Player`
+  + all `player/*` parts, and `LoginForm`/`SignupForm`/`SettingsForm`) plus the 5 long-tail consumer pages
+  (`LibraryScanPage`/`MyServersPage`/`FederationPage`/`ManageSharesPage`/`AuditLogsPage`) all remain exported.
+  Consumers import only `createPhlixApp` + the long-tail pages, so they are unaffected.
+
 ### Fixed
 - **Federation "Add peer" form never sent the URL (R5.2c):** the original add-peer `<input>` had no `v-model`
   and the form hardcoded `connectPeer('')`, so connecting a peer always POSTed an empty `url`. The input is now
