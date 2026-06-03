@@ -116,7 +116,7 @@ function onKeydown(e: KeyboardEvent) {
   transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 .phlix-tabs__tab:hover:not(:disabled) { color: var(--text); }
-.phlix-tabs__tab.is-active { color: var(--accent); border-bottom-color: var(--accent); }
+.phlix-tabs__tab.is-active { color: var(--accent-text); border-bottom-color: var(--accent-text); }
 .phlix-tabs__tab:disabled { opacity: 0.45; cursor: not-allowed; }
 .phlix-tabs__tab:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-ring); border-radius: var(--radius-sm); }
 .phlix-tabs__icon { font-size: 1.1em; }

@@ -151,7 +151,7 @@ const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');
   color: var(--text);
 }
 .authcard__dot {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .authcard__title {
   margin-top: var(--space-4);

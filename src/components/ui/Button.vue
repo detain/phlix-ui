@@ -89,7 +89,7 @@ const isDisabled = computed(() => props.disabled || props.loading);
 .phlix-btn--ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
 
 .phlix-btn--outline { background: transparent; color: var(--text); border-color: var(--border-strong); }
-.phlix-btn--outline:hover:not(:disabled) { border-color: var(--accent-ring); color: var(--accent); }
+.phlix-btn--outline:hover:not(:disabled) { border-color: var(--accent-ring); color: var(--accent-text); }
 
 .phlix-btn--subtle { background: var(--surface-2); color: var(--text); }
 .phlix-btn--subtle:hover:not(:disabled) { background: var(--surface-3); }

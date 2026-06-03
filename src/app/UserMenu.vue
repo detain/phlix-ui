@@ -133,7 +133,7 @@ onBeforeUnmount(() => {
   height: 30px;
   border-radius: 50%;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   border: 1px solid var(--accent-ring);
   font-family: var(--font-sans);
   font-weight: var(--fw-semibold, 600);

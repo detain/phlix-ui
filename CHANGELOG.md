@@ -37,6 +37,21 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   It keeps the keystroke that opens the palette instant while the palette UI itself becomes a lazy chunk.
 
 ### Accessibility
+- **R6.5b — WCAG AA color contrast across the three themes:** the label/caption tier (`--text-subtle`) is
+  retuned in all three themes so it clears 4.5:1 against `--bg`, `--surface`, and the elevated `--surface-2`
+  (where MediaCard meta captions rest); a new **`--accent-text`** token (amber-500 in the dark themes,
+  amber-800 in Daylight) carries amber-as-foreground-text — adopted at ~21 end-user / shared-primitive sites
+  (shell nav, auth links, command palette, see-all/retry, chips, tabs, selects, toasts, the mini-player close,
+  the captions menu) so projector-amber text meets 4.5:1 on the light Daylight surface without changing the
+  amber **fill** identity; the Daylight status tones (`--success`/`--warning`/`--error`/`--info`) are darkened
+  so badge text clears 4.5:1 on its own translucent `*-bg` tile; and the Daylight focus ring (`--accent-ring`)
+  becomes amber-800 @ .85 so the rings added in R6.5a meet the 3:1 non-text-UI bar. Locked by a new static
+  WCAG-ratio unit test over the parsed token table (text 4.5 / status incl. tiles 4.5 / ring 3.0 / on-accent
+  ink) and verified in real Chromium across the surfaces × themes (computed-contrast pass, 0 failures). The
+  dark themes were already compliant for body/secondary text and status tones (unchanged). **Additive** (a new
+  CSS token; the dark themes are visually unchanged) → v0.9.0-compatible; the entry bundle is byte-identical
+  (`dist/phlix-ui.js` 56.15 kB) and the R6.4 visual baselines stay 42/42. (Admin-page accent-as-text is tracked
+  with the R6.5a.2 admin a11y follow-up.)
 - **R6.5a — focus rings + landmarks across the end-user chrome:** every hand-rolled control that previously
   showed only a hover state now paints the canonical keyboard focus ring (`box-shadow: 0 0 0 3px
   var(--accent-ring)`) on `:focus-visible` — the player control bar / center play / back button, the persistent

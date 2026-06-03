@@ -77,7 +77,7 @@ function onMain() {
     border-color var(--dur-fast) var(--ease-out);
 }
 .phlix-chip--md { font-size: var(--text-base); }
-.phlix-chip.is-selected { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-ring); }
+.phlix-chip.is-selected { background: var(--accent-soft); color: var(--accent-text); border-color: var(--accent-ring); }
 .phlix-chip.is-disabled { opacity: 0.5; }
 .phlix-chip:not(.is-selected):not(.is-disabled):hover { color: var(--text); border-color: var(--border-strong); }
 

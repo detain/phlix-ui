@@ -180,7 +180,7 @@ async function handleSubmit(): Promise<void> {
   gap: var(--space-3);
 }
 .signup__link {
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   font-weight: var(--fw-semibold, 600);
 }

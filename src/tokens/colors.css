@@ -40,6 +40,7 @@
   --accent-active: var(--amber-600);
   --accent-soft:   rgba(245, 165, 36, 0.14);
   --accent-ring:   rgba(245, 165, 36, 0.55);
+  --accent-text:   var(--amber-500);   /* amber AS foreground text/icon — AA (≥4.5:1) on bg/surface */
 
   --bg:            #0b0a08;
   --surface:       #16130f;
@@ -50,7 +51,7 @@
 
   --text:        #f3ece1;
   --text-muted:  #b8ab98;
-  --text-subtle: #7d7060;
+  --text-subtle: #918370;
   --text-faint:  #544a3f;
   --text-on-accent: var(--accent-contrast);
 
@@ -96,7 +97,8 @@
   --accent-hover:  var(--amber-600);
   --accent-active: var(--amber-700);
   --accent-soft:   rgba(217, 130, 9, 0.12);
-  --accent-ring:   rgba(180, 97, 10, 0.50);
+  --accent-ring:   rgba(146, 77, 16, 0.85);   /* amber-800 @ .85 — ≥3:1 focus ring on light bg/surface/surface-2 */
+  --accent-text:   var(--amber-800);          /* amber-800 — AA (≥4.5:1) as foreground text on the light surface */
 
   --bg:            #f7f1e6;
   --surface:       #fffdf8;
@@ -107,7 +109,7 @@
 
   --text:        #2a2017;
   --text-muted:  #6b5d49;
-  --text-subtle: #94836a;
+  --text-subtle: #746753;
   --text-faint:  #b7a98f;
   --text-on-accent: var(--accent-contrast);
 
@@ -115,10 +117,10 @@
   --border-subtle: #efe6d6;
   --border-strong: #d3c2a4;
 
-  --error:   #c33c36;  --error-bg:   rgba(195, 60, 54, 0.10);
-  --success: #2f8f49;  --success-bg: rgba(47, 143, 73, 0.10);
-  --warning: #b4610a;  --warning-bg: rgba(180, 97, 10, 0.10);
-  --info:    #2f6f97;  --info-bg:    rgba(47, 111, 151, 0.10);
+  --error:   #b53832;  --error-bg:   rgba(195, 60, 54, 0.10);
+  --success: #26743b;  --success-bg: rgba(47, 143, 73, 0.10);
+  --warning: #9b5309;  --warning-bg: rgba(180, 97, 10, 0.10);
+  --info:    #2d6a91;  --info-bg:    rgba(47, 111, 151, 0.10);
 
   --grain-opacity: 0.025;
   --vignette: rgba(74, 55, 20, 0.10);
@@ -153,6 +155,7 @@
   --accent-active: var(--amber-600);
   --accent-soft:   rgba(245, 165, 36, 0.16);
   --accent-ring:   rgba(245, 165, 36, 0.60);
+  --accent-text:   var(--amber-500);   /* amber AS foreground text/icon — AA (≥4.5:1) on bg/surface */
 
   --bg:            #000000;
   --surface:       #0a0807;
@@ -163,7 +166,7 @@
 
   --text:        #ede6da;
   --text-muted:  #a99d8c;
-  --text-subtle: #6e6253;
+  --text-subtle: #897a68;
   --text-faint:  #463d33;
   --text-on-accent: var(--accent-contrast);
 
