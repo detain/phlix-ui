@@ -22,6 +22,19 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Added
+- **Auth surface redesign (R4.1):** `LoginForm`/`SignupForm` + `LoginPage`/`SignupPage` rebuilt on the
+  Nocturne design tokens + a11y primitives, replacing the legacy `--color-*` aliases and the last 🙈/👁
+  password-toggle emoji. A cinematic glass "ticket-stub" card (`src/components/auth/AuthCard.vue`) — projector-
+  beam top hairline + film-sprocket rail signatures, a branded wordmark lockup sourced from
+  `phlixConfig.branding`, reduced-motion-aware load — hosts accessible fields (`src/components/auth/AuthField.vue`:
+  labelled inputs, `aria-invalid`/`aria-describedby`/`aria-live` validation, and an in-field `eye`/`eye-off`
+  reveal toggle as a real `aria-pressed` button). Client-side validation (email format, username ≥ 3,
+  password ≥ 8, password match) blocks submit; failures raise both an inline `role="alert"` banner and an error
+  **toast**. A config-driven `#oauth` slot renders an "or continue with" SSO region only when a consumer
+  provides it (forwarded `LoginPage`/`SignupPage` → form). The pages mount the `AppBackdrop` atmosphere +
+  a static amber "booth" glow (gated on `prefs.atmosphere`) and center the card. The `useAuthStore.login`/
+  `signup` flow is unchanged; the success redirect + cross-links are `routerBase`-aware. Not mounted in the
+  live consumers until R6.6.
 - **Player page — full integration (R3.9):** the `/app/player/:id` route now drives the redesigned player
   end-to-end. `src/pages/PlayerPage.vue` (rebuilt from the legacy skeleton onto the redo surfaces + design
   tokens) fetches the title and resolves the playable URL — preferring a `GET /api/v1/media/:id/playback-info`
