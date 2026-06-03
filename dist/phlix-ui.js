@@ -35,7 +35,7 @@ import { t as He } from "./history-ByCY8OYj.js";
 import { t as Ue } from "./syncPlay-DPzJkgkK.js";
 import { n as We, t as Ge } from "./libraries-CXAz_kXs.js";
 import { t as Ke } from "./settings-m4upFcmH.js";
-import { A as qe, C as Je, D as Ye, E as Xe, F as Ze, I as Qe, L as $e, M as et, N as tt, O as nt, P as rt, S as it, T as at, _ as ot, a as st, b as ct, c as lt, d as ut, f as dt, g as ft, h as pt, i as mt, j as ht, k as gt, l as _t, m as vt, n as yt, o as bt, p as xt, r as St, s as Ct, t as wt, u as Tt, v as Et, w as Dt, x as Ot, y as kt } from "./Player-BN_TEDvB.js";
+import { A as qe, C as Je, D as Ye, E as Xe, F as Ze, I as Qe, L as $e, M as et, N as tt, O as nt, P as rt, S as it, T as at, _ as ot, a as st, b as ct, c as lt, d as ut, f as dt, g as ft, h as pt, i as mt, j as ht, k as gt, l as _t, m as vt, n as yt, o as bt, p as xt, r as St, s as Ct, t as wt, u as Tt, v as Et, w as Dt, x as Ot, y as kt } from "./Player-dZWn44lw.js";
 import { a as At, c as jt, d as Mt, f as Nt, g as Pt, h as Ft, i as It, l as Lt, m as Rt, n as zt, o as Bt, p as Vt, r as Ht, s as Ut, t as Wt, u as Gt } from "./captions-COgPp5bH.js";
 import { t as Kt } from "./LoginForm-391wMbHl.js";
 import { t as qt } from "./SignupForm-Djo0Oqq9.js";
@@ -600,7 +600,7 @@ function lr(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-DTaiPz1O.js")
+			component: () => import("./PlayerPage-GivqysiP.js")
 		},
 		{
 			path: `${t}/login`,

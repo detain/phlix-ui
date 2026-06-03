@@ -41,10 +41,18 @@ describe('formatTime', () => {
 });
 
 describe('Scrubber — rendering', () => {
-  it('sizes the played + buffered fills from position/duration', () => {
+  it('sizes the played + buffered fills via a compositor transform (scaleX, not width) — R6.3', () => {
     const w = mount(Scrubber, { props: { position: 50, duration: 200, buffered: 100 } });
-    expect(w.find('.scrubber__played').attributes('style')).toContain('width: 25%');
-    expect(w.find('.scrubber__buffered').attributes('style')).toContain('width: 50%');
+    const played = w.find('.scrubber__played').attributes('style') ?? '';
+    const buffered = w.find('.scrubber__buffered').attributes('style') ?? '';
+    // Fills scale horizontally from the left (composited) instead of animating
+    // `width` (layout/paint) on every timeupdate/drag frame.
+    expect(played).toContain('scaleX(0.25)'); // 50/200
+    expect(buffered).toContain('scaleX(0.5)'); // 100/200
+    // guard against a regression back to the layout-triggering width property
+    expect(played).not.toContain('width');
+    expect(buffered).not.toContain('width');
+    // the playhead still tracks position (a single out-of-flow element)
     expect(w.find('.scrubber__head').attributes('style')).toContain('left: 25%');
   });
 
