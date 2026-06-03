@@ -1,0 +1,53 @@
+import { nextTick as e, onBeforeUnmount as t, watch as n } from "vue";
+//#region src/components/ui/useFocusTrap.ts
+var r = [
+	"a[href]",
+	"button:not([disabled])",
+	"input:not([disabled])",
+	"select:not([disabled])",
+	"textarea:not([disabled])",
+	"[tabindex]:not([tabindex=\"-1\"])"
+].join(","), i = 0, a = "";
+function o() {
+	i === 0 && (a = document.body.style.overflow, document.body.style.overflow = "hidden"), i++;
+}
+function s() {
+	i !== 0 && (i--, i === 0 && (document.body.style.overflow = a));
+}
+function c(i, a, c = {}) {
+	let l = c.lockScroll ?? !0, u = null, d = !1;
+	function f() {
+		let e = i.value;
+		return e ? Array.from(e.querySelectorAll(r)).filter((e) => !e.hasAttribute("hidden") && e.getAttribute("aria-hidden") !== "true") : [];
+	}
+	function p(e) {
+		if (!a.value || !i.value) return;
+		if (e.key === "Escape") {
+			c.onEscape?.() && e.preventDefault();
+			return;
+		}
+		if (e.key !== "Tab") return;
+		let t = f();
+		if (t.length === 0) {
+			e.preventDefault(), i.value.focus();
+			return;
+		}
+		let n = t[0], r = t[t.length - 1], o = document.activeElement;
+		i.value.contains(o) ? e.shiftKey && o === n ? (e.preventDefault(), r.focus()) : !e.shiftKey && o === r && (e.preventDefault(), n.focus()) : (e.preventDefault(), n.focus());
+	}
+	function m() {
+		u = document.activeElement, l && (o(), d = !0), document.addEventListener("keydown", p, !0), e(() => {
+			(f()[0] ?? i.value)?.focus();
+		});
+	}
+	function h() {
+		document.removeEventListener("keydown", p, !0), d &&= (s(), !1), u && document.contains(u) && u.focus?.(), u = null;
+	}
+	n(a, (e) => e ? m() : h(), { immediate: !0 }), t(() => {
+		document.removeEventListener("keydown", p, !0), d &&= (s(), !1);
+	});
+}
+//#endregion
+export { c as t };
+
+//# sourceMappingURL=useFocusTrap-0JaLH3tF.js.map

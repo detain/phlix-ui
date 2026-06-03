@@ -249,7 +249,11 @@ export { usePlayerStore, RESUME_MIN_SECONDS, RESUME_MAX_RATIO } from './stores/u
 export type { MediaSessionHandlers } from './stores/usePlayerStore';
 export { useCommandStore, fuzzyScore, matchCommand } from './stores/useCommandStore';
 export type { Command } from './stores/useCommandStore';
-export { default as CommandPalette } from './components/CommandPalette.vue';
+// NOTE (R6.1b): CommandPalette is NOT re-exported — the shell (`PhlixApp`) lazy-loads it
+// via `defineAsyncComponent` on first open so its chunk stays out of the initial bundle;
+// a static re-export would re-merge it into the main chunk (INEFFECTIVE_DYNAMIC_IMPORT).
+// The always-on ⌘K hotkey that opens it is the exported `useCommandPaletteHotkey`.
+export { useCommandPaletteHotkey } from './composables/useCommandPaletteHotkey';
 export { useTheme, applyStoredThemeEarly } from './composables/useTheme';
 export { useOnline } from './composables/useOnline';
 export { deriveAccentVars } from './composables/color';

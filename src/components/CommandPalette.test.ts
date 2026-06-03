@@ -75,28 +75,17 @@ describe('CommandPalette — open/close', () => {
     expect(panel()).toBeNull();
   });
 
-  it('opens on Cmd/Ctrl+K', async () => {
+  // The global ⌘K / Ctrl-K hotkey moved to the `useCommandPaletteHotkey` composable
+  // (R6.1b) so the shell can lazy-load this UI on first open; that hotkey + its
+  // modifier guard are covered by useCommandPaletteHotkey.test.ts. Here we just verify
+  // the panel renders whenever the store is opened (by any means).
+  it('renders the panel when the store opens it', async () => {
     wrapper = await mountPalette();
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+    const store = useCommandStore();
+    expect(panel()).toBeNull();
+    store.openPalette();
     await nextTick();
     expect(panel()).not.toBeNull();
-  });
-
-  it('toggles closed on a second Ctrl+K', async () => {
-    wrapper = await mountPalette();
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
-    await nextTick();
-    expect(panel()).not.toBeNull();
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
-    await nextTick();
-    expect(panel()).toBeNull();
-  });
-
-  it('ignores Alt+Cmd+K (modifier guard)', async () => {
-    wrapper = await mountPalette();
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, altKey: true }));
-    await nextTick();
-    expect(panel()).toBeNull();
   });
 
   it('closes on Escape', async () => {
