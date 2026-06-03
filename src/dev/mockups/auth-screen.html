@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="nocturne">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nocturne — Auth (Box Office)</title>
+<link rel="stylesheet" href="./nocturne.css" />
+<style>
+  /* ============================================================================
+     R4.1 ART DIRECTION — "The Box Office, after dark."
+     A floating glass ticket-stub auth card over the Nocturne atmosphere.
+     Signatures: (1) projector-beam amber hairline raking the card's top edge,
+     (2) film-sprocket perforation rail down the left edge (ticket-stub motif),
+     (3) Fraunces wordmark w/ amber projector dot, (4) staggered load reveal.
+     Consumes locked nocturne.css tokens ONLY — no new palette/fonts.
+     ============================================================================ */
+  body { min-height: 100vh; display: grid; place-items: center; padding: var(--space-8); }
+
+  /* ---- Atmosphere: amber projector glow behind everything ---- */
+  .booth {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(60% 50% at 50% -8%, rgba(245,165,36,0.20), transparent 62%),
+      radial-gradient(40% 36% at 84% 110%, rgba(245,165,36,0.10), transparent 70%);
+  }
+
+  .theme-switch {
+    position: fixed; top: var(--space-5); right: var(--space-6); z-index: 5;
+    display: flex; gap: var(--space-2);
+  }
+  .theme-switch button {
+    font-size: var(--text-xs); font-weight: 600; padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-full); border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-muted);
+    transition: all var(--dur-base) var(--ease-out);
+  }
+  .theme-switch button[aria-pressed='true'] {
+    background: var(--accent-soft); color: var(--accent); border-color: var(--accent-ring);
+  }
+
+  .stage {
+    position: relative; z-index: 1;
+    display: flex; gap: var(--space-10); flex-wrap: wrap; justify-content: center;
+    align-items: flex-start;
+  }
+
+  /* ============================ AUTH CARD (ticket stub) ============================ */
+  .auth {
+    position: relative; isolation: isolate;
+    width: 400px; max-width: calc(100vw - var(--space-8) * 2);
+    padding: var(--space-10) var(--space-8) var(--space-8) calc(var(--space-8) + 14px);
+    border-radius: var(--radius-xl);
+    background: var(--surface-glass-strong);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    backdrop-filter: blur(20px) saturate(1.2);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-4), inset 0 1px 0 rgba(255,255,255,0.04);
+    overflow: hidden;
+  }
+  /* (1) Projector-beam amber hairline raking the top edge */
+  .auth::before {
+    content: ''; position: absolute; inset: 0 0 auto 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent) 18%, var(--amber-200) 50%, var(--accent) 82%, transparent);
+    opacity: 0.9;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    animation: beam 6s var(--ease-standard) infinite;
+  }
+  @keyframes beam { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+  /* (2) Film-sprocket perforation rail down the left edge */
+  .auth::after {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 14px;
+    background:
+      linear-gradient(180deg, var(--accent-soft), transparent 30%),
+      repeating-linear-gradient(180deg,
+        transparent 0 12px,
+        color-mix(in srgb, var(--bg) 80%, #000) 12px 20px,
+        transparent 20px 32px);
+    border-right: 1px solid var(--border-subtle);
+    -webkit-mask-image: radial-gradient(circle at 7px 16px, transparent 3px, #000 3.5px);
+    -webkit-mask-size: 14px 32px; -webkit-mask-repeat: repeat-y;
+    mask-image: radial-gradient(circle at 7px 16px, transparent 3px, #000 3.5px);
+    mask-size: 14px 32px; mask-repeat: repeat-y;
+    opacity: 0.7;
+  }
+
+  /* staggered reveal */
+  .reveal > * { animation: rise var(--dur-slower) var(--ease-out) backwards; }
+  .reveal > *:nth-child(1) { animation-delay: 40ms; }
+  .reveal > *:nth-child(2) { animation-delay: 90ms; }
+  .reveal > *:nth-child(3) { animation-delay: 140ms; }
+  .reveal > *:nth-child(4) { animation-delay: 190ms; }
+  .reveal > *:nth-child(5) { animation-delay: 240ms; }
+  .reveal > *:nth-child(6) { animation-delay: 290ms; }
+  .reveal > *:nth-child(7) { animation-delay: 340ms; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ---- header / wordmark lockup ---- */
+  .auth__eyebrow { /* .eyebrow base from nocturne.css */ margin-bottom: var(--space-3); }
+  .auth__brand {
+    display: flex; align-items: baseline; gap: 2px;
+    font-family: var(--font-display); font-weight: 600;
+    font-size: var(--text-2xl); letter-spacing: var(--tracking-tight);
+    line-height: var(--leading-tight); color: var(--text);
+  }
+  .auth__brand .dot { color: var(--accent); }
+  .auth__title {
+    margin-top: var(--space-4); font-family: var(--font-display); font-weight: 500;
+    font-size: var(--text-lg); letter-spacing: var(--tracking-tight); color: var(--text);
+  }
+  .auth__sub { margin-top: var(--space-1); font-size: var(--text-sm); color: var(--text-muted); }
+
+  /* ---- top error banner ---- */
+  .auth__error {
+    display: flex; align-items: center; gap: var(--space-2);
+    margin-top: var(--space-5); padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--error-bg); border: 1px solid color-mix(in srgb, var(--error) 50%, transparent);
+    color: var(--error); font-size: var(--text-sm);
+  }
+
+  /* ---- form ---- */
+  form.auth__form { margin-top: var(--space-6); display: grid; gap: var(--space-5); }
+  .field { display: grid; gap: var(--space-2); }
+  .field__label {
+    font-size: var(--text-2xs); font-weight: 600; letter-spacing: var(--tracking-caps);
+    text-transform: uppercase; color: var(--text-subtle);
+  }
+  .field__wrap { position: relative; }
+  .field__input {
+    width: 100%; height: 46px; padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    border: 1px solid var(--border); color: var(--text);
+    font: inherit; font-size: var(--text-base);
+    transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+  }
+  .field__input::placeholder { color: var(--text-faint); }
+  .field__input:hover { border-color: var(--border-strong); }
+  .field__input:focus {
+    outline: none; border-color: var(--accent-ring);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    background: color-mix(in srgb, var(--surface) 95%, transparent);
+  }
+  .field--has-toggle .field__input { padding-right: 46px; }
+  .field--invalid .field__input { border-color: color-mix(in srgb, var(--error) 60%, var(--border)); }
+  .field--invalid .field__input:focus { box-shadow: 0 0 0 3px var(--error-bg); }
+
+  .toggle {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    width: 34px; height: 34px; display: grid; place-items: center;
+    border-radius: var(--radius-sm); color: var(--text-subtle);
+    transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  }
+  .toggle:hover { color: var(--text); background: var(--surface-2); }
+  .toggle:focus-visible { outline: none; color: var(--accent); box-shadow: 0 0 0 2px var(--accent-ring); }
+  .toggle svg { width: 19px; height: 19px; }
+
+  .field__msg { min-height: 1em; font-size: var(--text-xs); color: var(--error); }
+
+  /* ---- submit ---- */
+  .submit {
+    height: 48px; width: 100%; margin-top: var(--space-1);
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+    border-radius: var(--radius-md);
+    background: var(--accent); color: var(--text-on-accent);
+    font-family: var(--font-sans); font-weight: 700; font-size: var(--text-base);
+    letter-spacing: var(--tracking-snug);
+    box-shadow: var(--shadow-1);
+    transition: background var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-spring);
+  }
+  .submit:hover { background: var(--accent-hover); box-shadow: var(--glow-amber); }
+  .submit:active { transform: scale(0.985); }
+  .submit:disabled { opacity: 0.6; }
+  .submit svg { width: 18px; height: 18px; }
+  .spin { animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- oauth slot ---- */
+  .divider {
+    display: flex; align-items: center; gap: var(--space-3);
+    margin: var(--space-2) 0; color: var(--text-faint);
+    font-size: var(--text-2xs); letter-spacing: var(--tracking-caps); text-transform: uppercase;
+  }
+  .divider::before, .divider::after { content: ''; height: 1px; flex: 1; background: var(--border); }
+  .oauth { display: grid; gap: var(--space-3); }
+  .oauth button {
+    height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+    border-radius: var(--radius-md); border: 1px solid var(--border-strong);
+    background: transparent; color: var(--text); font-weight: 600; font-size: var(--text-sm);
+    transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  }
+  .oauth button:hover { border-color: var(--accent-ring); color: var(--accent); background: var(--accent-soft); }
+
+  /* ---- footer ---- */
+  .auth__foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); color: var(--text-muted); }
+  .auth__foot a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .auth__foot a:hover { text-decoration: underline; }
+
+  .caption { width: 100%; text-align: center; font-size: var(--text-xs); color: var(--text-subtle);
+    text-transform: uppercase; letter-spacing: var(--tracking-caps); margin-top: var(--space-6); }
+</style>
+</head>
+<body>
+  <div class="booth" aria-hidden="true"></div>
+  <div class="nocturne-vignette" aria-hidden="true"></div>
+  <div class="nocturne-grain" aria-hidden="true"></div>
+
+  <div class="theme-switch" role="group" aria-label="Theme">
+    <button aria-pressed="true" onclick="setTheme('nocturne', this)">Nocturne</button>
+    <button aria-pressed="false" onclick="setTheme('daylight', this)">Daylight</button>
+    <button aria-pressed="false" onclick="setTheme('midnight', this)">Midnight</button>
+  </div>
+
+  <div class="stage">
+    <!-- ============ LOGIN ============ -->
+    <section class="auth reveal" aria-label="Sign in">
+      <p class="eyebrow auth__eyebrow">Member access</p>
+      <div class="auth__brand">Phlix<span class="dot">.</span></div>
+      <h1 class="auth__title">Welcome back</h1>
+      <p class="auth__sub">Sign in to continue to your cinema.</p>
+
+      <div class="auth__error" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Invalid email or password.
+      </div>
+
+      <form class="auth__form" onsubmit="return false">
+        <div class="field">
+          <label class="field__label" for="l-email">Email</label>
+          <div class="field__wrap">
+            <input class="field__input" id="l-email" type="email" placeholder="you@example.com" autocomplete="email" />
+          </div>
+          <p class="field__msg" aria-live="polite"></p>
+        </div>
+
+        <div class="field field--has-toggle">
+          <label class="field__label" for="l-pass">Password</label>
+          <div class="field__wrap">
+            <input class="field__input" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+            <button type="button" class="toggle" aria-label="Show password" aria-pressed="false" onclick="togglePass(this,'l-pass')">
+              <svg class="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <p class="field__msg" aria-live="polite"></p>
+        </div>
+
+        <button class="submit" type="submit">Sign in</button>
+
+        <div class="divider">or continue with</div>
+        <div class="oauth">
+          <button type="button">Continue with SSO</button>
+        </div>
+      </form>
+
+      <p class="auth__foot">New to Phlix? <a href="#">Create an account</a></p>
+    </section>
+
+    <!-- ============ SIGNUP (loading + validation states) ============ -->
+    <section class="auth reveal" aria-label="Create account">
+      <p class="eyebrow auth__eyebrow">Now showing</p>
+      <div class="auth__brand">Phlix<span class="dot">.</span></div>
+      <h1 class="auth__title">Create your account</h1>
+      <p class="auth__sub">Your private cinema, anywhere.</p>
+
+      <form class="auth__form" onsubmit="return false">
+        <div class="field">
+          <label class="field__label" for="s-email">Email</label>
+          <div class="field__wrap"><input class="field__input" id="s-email" type="email" value="you@example.com" /></div>
+          <p class="field__msg"></p>
+        </div>
+        <div class="field field--invalid">
+          <label class="field__label" for="s-user">Username</label>
+          <div class="field__wrap"><input class="field__input" id="s-user" type="text" value="ab" /></div>
+          <p class="field__msg">Username must be at least 3 characters.</p>
+        </div>
+        <div class="field field--has-toggle">
+          <label class="field__label" for="s-pass">Password</label>
+          <div class="field__wrap">
+            <input class="field__input" id="s-pass" type="text" value="hunter2!" />
+            <button type="button" class="toggle" aria-label="Hide password" aria-pressed="true" onclick="togglePass(this,'s-pass')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </button>
+          </div>
+          <p class="field__msg"></p>
+        </div>
+
+        <button class="submit" type="submit" disabled aria-busy="true">
+          <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          Creating account…
+        </button>
+      </form>
+
+      <p class="auth__foot">Already have an account? <a href="#">Sign in</a></p>
+    </section>
+  </div>
+
+  <p class="caption">R4.1 — auth glass ticket-stub · projector beam + sprocket rail · Fraunces wordmark · amber focus</p>
+
+<script>
+  function setTheme(t, btn) {
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('.theme-switch button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+  }
+  function togglePass(btn, id) {
+    const input = document.getElementById(id);
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', String(show));
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    btn.innerHTML = show
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  }
+</script>
+</body>
+</html>
