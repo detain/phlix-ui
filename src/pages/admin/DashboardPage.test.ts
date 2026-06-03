@@ -193,18 +193,30 @@ describe('Admin DashboardPage', () => {
     expect(npCalls()).toBe(afterOne);
   });
 
-  it('toasts when a section fails to load', async () => {
+  it('shows an in-body error state per section (+ toasts) when sections fail to load', async () => {
     const get = vi.fn().mockRejectedValue(new Error('boom'));
     const w = mountPage({ get } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
+    const text = w.text();
+    // Each section renders its own in-body error (with the error message) instead
+    // of falling through to the misleading empty state.
+    expect(text).toContain("Couldn't load now playing");
+    expect(text).toContain("Couldn't load top users");
+    expect(text).toContain("Couldn't load top media");
+    expect(text).toContain("Couldn't load storage");
+    expect(text).toContain("Couldn't load activity");
+    expect(text).toContain('boom');
+    expect(text).not.toContain('No active sessions');
+    expect(text).not.toContain('No recent activity');
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
     w.unmount();
   });
 
-  it('raises a separate toast for every failing section', async () => {
-    // Reject every endpoint so all five fetchers hit their catch arm.
-    const get = vi.fn().mockRejectedValue(new Error('boom'));
+  it('raises a separate toast (and in-body error) for every failing section', async () => {
+    // Reject with a non-Error so errMessage falls back to each section's copy
+    // (an Error would surface its own message instead).
+    const get = vi.fn().mockRejectedValue('boom');
     const w = mountPage({ get } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
@@ -214,6 +226,62 @@ describe('Admin DashboardPage', () => {
     expect(messages).toContain('Failed to load top media.');
     expect(messages).toContain('Failed to load storage.');
     expect(messages).toContain('Failed to load activity.');
+    w.unmount();
+  });
+
+  it('retries a failed section from its in-body error state', async () => {
+    let npCalls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/dashboard/now-playing') {
+        npCalls += 1;
+        if (npCalls === 1) throw new Error('np boom');
+        return { success: true, data: [nowPlaying] };
+      }
+      if (endpoint === '/api/v1/admin/dashboard/storage') return { success: true, data: { items: [storageSummary] } };
+      if (endpoint === '/api/v1/admin/dashboard/top-users') return { success: true, data: [topUser] };
+      if (endpoint === '/api/v1/admin/dashboard/top-media') return { success: true, data: [topMedia] };
+      if (endpoint === '/api/v1/admin/dashboard/activity') return { success: true, data: [activityEvent] };
+      throw new Error(`unexpected ${endpoint}`);
+    });
+    const w = mountPage({ get } as unknown as ApiClient);
+    await flushPromises();
+    // Only Now Playing failed → one Retry button on the page.
+    expect(w.text()).toContain("Couldn't load now playing");
+    const retry = w.findAllComponents(Button).find((b) => b.text().trim() === 'Retry');
+    expect(retry).toBeTruthy();
+    await retry!.trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load now playing");
+    expect(w.find('[role="progressbar"]').exists()).toBe(true);
+    w.unmount();
+  });
+
+  it('keeps the loaded activity list (toast only, no in-body error) when load-more fails', async () => {
+    let actCalls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/dashboard/activity') {
+        actCalls += 1;
+        if (actCalls === 1) {
+          return { success: true, data: Array.from({ length: 20 }, (_, i) => ({ ...activityEvent, id: `a-${i}` })) };
+        }
+        throw new Error('more boom'); // the append (load-more) fails
+      }
+      if (endpoint === '/api/v1/admin/dashboard/now-playing') return { success: true, data: [nowPlaying] };
+      if (endpoint === '/api/v1/admin/dashboard/storage') return { success: true, data: { items: [storageSummary] } };
+      if (endpoint === '/api/v1/admin/dashboard/top-users') return { success: true, data: [topUser] };
+      if (endpoint === '/api/v1/admin/dashboard/top-media') return { success: true, data: [topMedia] };
+      throw new Error(`unexpected ${endpoint}`);
+    });
+    const w = mountPage({ get } as unknown as ApiClient);
+    await flushPromises();
+    const loadMore = w.findAllComponents(Button).find((b) => b.text().includes('Load more'));
+    await loadMore!.trigger('click');
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'more boom')).toBe(true);
+    // The already-loaded list is preserved; no in-body error wipes the activity card.
+    expect(w.find('[aria-labelledby="act-heading"]').text()).not.toContain("Couldn't load activity");
+    expect(w.find('.admin-dash__activity-list').exists()).toBe(true);
     w.unmount();
   });
 

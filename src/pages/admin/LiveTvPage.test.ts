@@ -193,12 +193,34 @@ describe('LiveTvPage — Tuners', () => {
     expect(w.text()).toContain('No tuners found');
   });
 
-  it('toasts on a tuner load failure', async () => {
+  it('shows an in-body error state (+ toast) on a tuner load failure', async () => {
     const { client } = makeClient({ failTuners: true });
-    mountPage(client);
+    const w = mountPage(client);
     await flushPromises();
+    expect(w.text()).toContain("Couldn't load tuners");
+    expect(w.text()).toContain('tuner boom');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+  });
+
+  it('retries the tuner load from the error state', async () => {
+    let calls = 0;
+    const { client, get } = makeClient();
+    get.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/livetv/tuners') {
+        calls += 1;
+        if (calls === 1) throw new Error('tuner boom');
+        return { tuners: [tunerA] };
+      }
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain("Couldn't load tuners");
+    await findBtn(w, 'Retry')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load tuners");
+    expect(w.text()).toContain('Front Room');
   });
 
   it('scans for tuners and replaces the list with a success toast', async () => {
@@ -306,13 +328,37 @@ describe('LiveTvPage — Guide', () => {
     expect(toasts.toasts.some((t) => t.tone === 'success')).toBe(true);
   });
 
-  it('toasts on a guide load failure', async () => {
+  it('shows an in-body error state (+ toast) on a guide load failure', async () => {
     const { client } = makeClient({ failGuide: true });
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Guide / EPG');
+    expect(w.text()).toContain("Couldn't load guide");
+    expect(w.text()).toContain('guide boom');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+  });
+
+  it('retries the guide load from the error state', async () => {
+    let calls = 0;
+    const { client, get } = makeClient();
+    get.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/livetv/tuners') return { tuners: [tunerA] };
+      if (endpoint === '/api/v1/admin/livetv/guide') {
+        calls += 1;
+        if (calls === 1) throw new Error('guide boom');
+        return { programs: [programA] };
+      }
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Guide / EPG');
+    expect(w.text()).toContain("Couldn't load guide");
+    await findBtn(w, 'Retry')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load guide");
+    expect(w.text()).toContain('Evening News');
   });
 });
 
@@ -423,13 +469,38 @@ describe('LiveTvPage — Recordings', () => {
     expect(post).not.toHaveBeenCalledWith('/api/v1/admin/livetv/recordings', expect.anything());
   });
 
-  it('toasts on a recordings load failure', async () => {
+  it('shows an in-body error state (+ toast) on a recordings load failure', async () => {
     const { client } = makeClient({ failRecordings: true });
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
+    expect(w.text()).toContain("Couldn't load recordings");
+    expect(w.text()).toContain('rec boom');
+    expect(w.text()).not.toContain('No recordings yet.');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+  });
+
+  it('retries the recordings load from the error state', async () => {
+    let calls = 0;
+    const { client, get } = makeClient();
+    get.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/livetv/tuners') return { tuners: [tunerA] };
+      if (endpoint === '/api/v1/admin/livetv/recordings') {
+        calls += 1;
+        if (calls === 1) throw new Error('rec boom');
+        return { recordings: [recordingA] };
+      }
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Recordings');
+    expect(w.text()).toContain("Couldn't load recordings");
+    await findBtn(w, 'Retry')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load recordings");
+    expect(w.text()).toContain('The Movie');
   });
 });
 
@@ -503,13 +574,39 @@ describe('LiveTvPage — Series Rules', () => {
     expect(w.text()).not.toContain('News%');
   });
 
-  it('toasts on a rules load failure', async () => {
+  it('shows an in-body error state (+ toast) on a rules load failure', async () => {
     const { client } = makeClient({ failRules: true });
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Series Rules');
+    expect(w.text()).toContain("Couldn't load series rules");
+    expect(w.text()).toContain('rule boom');
+    expect(w.text()).not.toContain('No series rules');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+  });
+
+  it('retries the rules load from the error state', async () => {
+    let calls = 0;
+    const { client, get } = makeClient();
+    get.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/livetv/tuners') return { tuners: [tunerA] };
+      if (endpoint === '/api/v1/admin/livetv/channels') return { channels: [channelA, channelB] };
+      if (endpoint === '/api/v1/admin/livetv/series-rules') {
+        calls += 1;
+        if (calls === 1) throw new Error('rule boom');
+        return { rules: [ruleA] };
+      }
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Series Rules');
+    expect(w.text()).toContain("Couldn't load series rules");
+    await findBtn(w, 'Retry')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).not.toContain("Couldn't load series rules");
+    expect(w.text()).toContain('News%');
   });
 
   it('falls back to the raw channel id when no channel matches', async () => {

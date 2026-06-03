@@ -30,6 +30,16 @@ Consumers (`phlix-server`/`phlix-hub`) bump to the aligned `@phlix/ui` tag at R6
   JSON path + Smarty client were fixed in phlix-server).
 
 ### Changed
+- **In-body error states for the multi-section admin pages — R5.3 COMPLETE (R5.3d.3):** `DashboardPage`
+  (5 sections), `LiveTvPage` (4 lazy sections), and the `ServicesPage` wording/`errMessage` nit. Each section
+  now renders an in-body `EmptyState` (alert icon + "Couldn't load X" + the error message + a Retry that re-runs
+  that section's loader) on a load failure, before the empty state. `DashboardPage` adopts the shared
+  `errMessage` (replacing its raw-string toasts) — its activity load-more failure keeps the already-loaded list
+  (toast only) and its 30s now-playing refresh clears the section error on a successful poll; `ServicesPage`
+  adopts `errMessage` (replacing 4 inline `e instanceof Error ? …` ternaries) and its Trakt/Last.fm error cards
+  gain the "Couldn't load X" title + the error detail + a Retry. This is the final R5.3d batch: **all 16 admin
+  pages now have skeleton + empty + an in-body error on every async surface, with no bare "Failed/Unable to
+  load" string used as the error UX — R5.3 (empty/loading/error system pass) is COMPLETE.**
 - **In-body error states for the single-list/status admin pages (R5.3d.2):** `HistoryPage`, `SyncPlayPage`,
   `BackupPage`, `CastDevicesPage`, and `DlnaServerPage` previously fell through to their empty/empty-list
   `EmptyState` (a misleading "nothing here") + a toast when a load FAILED. Each load now renders an in-body
