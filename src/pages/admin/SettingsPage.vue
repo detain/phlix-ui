@@ -13,6 +13,7 @@
  */
 import { ref, computed, reactive, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient, ApiError } from '../../api/client';
+import { errMessage } from '../../api/errors';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import { AdminSettingsApi } from '../../api/admin/settings';
 import { useToastStore } from '../../stores/useToastStore';
@@ -21,6 +22,7 @@ import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 
 const props = defineProps<{
@@ -131,6 +133,7 @@ const types = ref<Record<string, string>>({});
 // ── UI state ──────────────────────────────────────────────────────────────────
 const activeTab = ref<TabId>('transcoding');
 const loading = ref(true);
+const error = ref<string | null>(null);
 const submitting = ref(false);
 const fieldErrors = ref<Record<string, string>>({});
 const showPassword = reactive<Record<string, boolean>>({});
@@ -155,6 +158,7 @@ function clearDirty(): void {
 
 async function loadSettings(): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     const data = await api.get();
     settings.value = data.settings;
@@ -164,7 +168,8 @@ async function loadSettings(): Promise<void> {
     clearDirty();
     fieldErrors.value = {};
   } catch (e) {
-    toasts.error(e instanceof ApiError ? e.message : 'Failed to load settings.');
+    error.value = errMessage(e, 'Failed to load settings.');
+    toasts.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -248,6 +253,17 @@ onMounted(loadSettings);
     </header>
 
     <div v-if="loading" class="admin-settings__skel"><Skeleton variant="text" :lines="6" /></div>
+
+    <EmptyState
+      v-else-if="error"
+      icon="alert"
+      title="Couldn't load settings"
+      :description="error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadSettings">Retry</Button>
+      </template>
+    </EmptyState>
 
     <template v-else>
       <!-- Tab bar -->

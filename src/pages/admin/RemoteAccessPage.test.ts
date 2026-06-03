@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import RemoteAccessPage from './RemoteAccessPage.vue';
 import Button from '../../components/ui/Button.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -117,7 +118,7 @@ describe('Admin RemoteAccessPage — hub pairing', () => {
     w.unmount();
   });
 
-  it('toasts when hub status fails to load', async () => {
+  it('shows an in-body EmptyState error when hub status fails to load', async () => {
     const get = vi.fn(async (endpoint: string) => {
       if (endpoint === '/api/v1/admin/remote/hub/status') throw new Error('hub boom');
       if (endpoint === '/api/v1/admin/remote/portforward/candidates') return { candidates: [] };
@@ -128,7 +129,32 @@ describe('Admin RemoteAccessPage — hub pairing', () => {
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'hub boom')).toBe(true);
-    expect(w.text()).toContain('Unable to load hub status.');
+    // hub section is expanded by default → its EmptyState (error + Retry) renders in-body
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    expect(w.text()).toContain('hub boom');
+    expect(w.text()).toContain('load hub status');
+    w.unmount();
+  });
+
+  it('retries the hub-status load from the error state', async () => {
+    let hubCalls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/remote/hub/status') {
+        hubCalls++;
+        if (hubCalls === 1) throw new Error('hub boom');
+        return { paired: false };
+      }
+      if (endpoint === '/api/v1/admin/remote/portforward/candidates') return { candidates: [] };
+      return {};
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(true);
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(w.findComponent(EmptyState).exists()).toBe(false);
+    expect(findBtn(w, 'Initiate Pairing')).toBeTruthy();
     w.unmount();
   });
 
@@ -568,7 +594,8 @@ describe('Admin RemoteAccessPage — port forward', () => {
     await expandSection(w, 'Port Forward');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'pf boom')).toBe(true);
-    expect(document.body.textContent).toContain('Unable to load port-forward status.');
+    expect(document.body.textContent).toContain('pf boom');
+    expect(document.body.textContent).toContain('load port-forward status');
     w.unmount();
   });
 });

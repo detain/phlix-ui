@@ -35,6 +35,7 @@ import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
 
 type ProviderName = 'oidc' | 'ldap';
 
@@ -65,6 +66,7 @@ const toasts = useToastStore();
 // ── Arr sync state ────────────────────────────────────────────────────────────
 const syncStatus = ref<ArrSyncStatus | null>(null);
 const syncLoading = ref(true);
+const syncError = ref<string | null>(null);
 const syncing = ref(false);
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -77,10 +79,12 @@ function clearSyncTimer(): void {
 
 async function loadSyncStatus(): Promise<void> {
   syncLoading.value = true;
+  syncError.value = null;
   try {
     syncStatus.value = await api.getSyncStatus();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load sync status.'));
+    syncError.value = errMessage(e, 'Failed to load sync status.');
+    toasts.error(syncError.value);
   } finally {
     syncLoading.value = false;
   }
@@ -129,16 +133,19 @@ async function toggleSyncEnabled(enabled: boolean): Promise<void> {
 // ── Auth providers state ────────────────────────────────────────────────────
 const providers = ref<AuthProvider[]>([]);
 const providersLoading = ref(true);
+const providersError = ref<string | null>(null);
 
 const oidcSettings = ref<OidcSettings | null>(null);
 const ldapSettings = ref<LdapSettings | null>(null);
 
 async function loadProviders(): Promise<void> {
   providersLoading.value = true;
+  providersError.value = null;
   try {
     providers.value = await api.listProviders();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load auth providers.'));
+    providersError.value = errMessage(e, 'Failed to load auth providers.');
+    toasts.error(providersError.value);
   } finally {
     providersLoading.value = false;
   }
@@ -371,8 +378,18 @@ onBeforeUnmount(clearSyncTimer);
 
       <div class="admin-integrations__card">
         <div v-if="syncLoading" class="admin-integrations__skel"><Skeleton variant="text" :lines="3" /></div>
+        <EmptyState
+          v-else-if="syncError"
+          icon="alert"
+          title="Couldn't load sync status"
+          :description="syncError"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadSyncStatus">Retry</Button>
+          </template>
+        </EmptyState>
         <p v-else-if="syncStatus === null" class="admin-integrations__empty" role="status">
-          Unable to load sync status.
+          No sync status available.
         </p>
         <template v-else>
           <dl class="admin-integrations__dl">
@@ -405,6 +422,16 @@ onBeforeUnmount(clearSyncTimer);
       </div>
 
       <div v-if="providersLoading" class="admin-integrations__skel"><Skeleton variant="text" :lines="4" /></div>
+      <EmptyState
+        v-else-if="providersError"
+        icon="alert"
+        title="Couldn't load auth providers"
+        :description="providersError"
+      >
+        <template #actions>
+          <Button variant="solid" size="sm" left-icon="rewind" @click="loadProviders">Retry</Button>
+        </template>
+      </EmptyState>
       <div v-else class="admin-integrations__providers">
         <div v-for="name in PROVIDER_NAMES" :key="name" class="admin-integrations__provider">
           <div class="admin-integrations__provider-info">
