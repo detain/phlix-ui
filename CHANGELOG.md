@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.14.0] - 2026-06-03
+
+### Added
+- **i18n: the Settings appearance/playback surface adopts the `useMessages()` seam.**
+  `AppearanceSettings` now resolves its section titles, control labels, switch + Select aria-labels,
+  and the reset control + its toast through `t('settings.…')`, backed by a new `settings` group in the
+  message catalog. A consumer can override any of these via `PhlixAppConfig.messages.settings`; omitting
+  it renders the byte-for-byte English default. The option *enum* labels
+  (theme/accent/density/grid/motion/quality/subtitle-language names) deliberately stay inline-English,
+  matching the R6.5c decision for the shortcuts/captions enum labels. Incremental — SettingsForm,
+  SettingsPage, Browse, and the admin pages can adopt the same seam next.
+
 ## [0.13.0] - 2026-06-03
 
 Reconciles the four hub admin pages with the hub's REAL API. They were built against a guessed

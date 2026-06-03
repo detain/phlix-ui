@@ -179,6 +179,40 @@ export const DEFAULT_MESSAGES = {
       'This title is in a format your browser can’t play directly (for example MKV or HEVC). Transcoding isn’t available yet.',
     goBack: 'Go back',
   },
+  settings: {
+    // Appearance section titles + radiogroup labels
+    theme: 'Theme',
+    accent: 'Accent',
+    accentColor: 'Accent color',
+    display: 'Display',
+    atmosphere: 'Atmosphere',
+    playback: 'Playback',
+    subtitles: 'Subtitles',
+    // Display rows
+    density: 'Density',
+    gridDensity: 'Grid density',
+    cardSize: 'Card size',
+    motion: 'Motion',
+    // Atmosphere / playback switches + rows
+    filmGrainGlow: 'Film-grain + ambient glow',
+    autoplayNext: 'Autoplay next episode',
+    defaultVolume: 'Default volume',
+    defaultQuality: 'Default quality',
+    // Subtitles rows
+    defaultLanguage: 'Default language',
+    defaultSubtitleLanguage: 'Default subtitle language',
+    captionSize: 'Caption size',
+    captionColor: 'Caption color',
+    captionBackground: 'Caption background',
+    captionEdge: 'Caption edge',
+    // Reset control
+    resetAll: 'Reset all preferences',
+    resetConfirm: 'Click again to confirm reset',
+    resetDone: 'Preferences reset to defaults.',
+    // NOTE: the option *enum* labels (theme/accent/density/grid/motion/quality/
+    // subtitle-language names) deliberately stay inline-English, matching the
+    // R6.5c decision to keep shortcuts.ts/captions.ts enum labels English.
+  },
 } satisfies Record<string, Record<string, string>>;
 
 /** The full English catalog type (derived from the defaults — single source of truth). */

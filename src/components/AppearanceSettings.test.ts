@@ -39,6 +39,18 @@ describe('AppearanceSettings — appearance panel', () => {
     expect(themes[0].attributes('aria-checked')).toBe('false');
   });
 
+  it('renders a consumer settings i18n override, falling back to English elsewhere', () => {
+    const w = mount(AppearanceSettings, {
+      props: { panel: 'appearance' },
+      global: { provide: { phlixConfig: { messages: { settings: { theme: 'Tema', resetAll: 'Restablecer todo' } } } } },
+    });
+    wrappers.push(w);
+    const titles = w.findAll('.aps__title').map((h) => h.text());
+    expect(titles).toContain('Tema'); // overridden section title
+    expect(w.text()).toContain('Restablecer todo'); // overridden reset button
+    expect(titles).toContain('Display'); // un-overridden key still English
+  });
+
   it('theme radiogroup has roving tabindex + arrow-key navigation', async () => {
     const w = mountPanel('appearance');
     const prefs = usePreferencesStore();

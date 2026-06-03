@@ -20,6 +20,7 @@ import Button from './ui/Button.vue';
 import Icon from './Icon.vue';
 import { usePreferencesStore, type ThemeName } from '../stores/usePreferencesStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
 import {
   CAPTION_SIZE_OPTIONS,
   CAPTION_COLOR_OPTIONS,
@@ -32,6 +33,7 @@ withDefaults(defineProps<{ panel?: 'appearance' | 'playback' }>(), { panel: 'app
 
 const prefs = usePreferencesStore();
 const toasts = useToastStore();
+const { t } = useMessages();
 
 const THEMES: { value: ThemeName; label: string }[] = [
   { value: 'nocturne', label: 'Nocturne' },
@@ -136,7 +138,7 @@ function onReset(): void {
   clearTimeout(resetTimer);
   resetArmed.value = false;
   prefs.reset();
-  toasts.info('Preferences reset to defaults.');
+  toasts.info(t('settings.resetDone'));
 }
 onBeforeUnmount(() => clearTimeout(resetTimer));
 </script>
@@ -145,8 +147,8 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
   <!-- ===================== APPEARANCE ===================== -->
   <div v-if="panel === 'appearance'" class="aps">
     <section class="aps__group">
-      <h3 class="aps__title">Theme</h3>
-      <div class="aps__themes" role="radiogroup" aria-label="Theme" @keydown="onThemeKeydown">
+      <h3 class="aps__title">{{ t('settings.theme') }}</h3>
+      <div class="aps__themes" role="radiogroup" :aria-label="t('settings.theme')" @keydown="onThemeKeydown">
         <button
           v-for="(t, i) in THEMES"
           :key="t.value"
@@ -172,8 +174,8 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
     </section>
 
     <section class="aps__group">
-      <h3 class="aps__title">Accent</h3>
-      <div class="aps__accents" role="radiogroup" aria-label="Accent color" @keydown="onAccentKeydown">
+      <h3 class="aps__title">{{ t('settings.accent') }}</h3>
+      <div class="aps__accents" role="radiogroup" :aria-label="t('settings.accentColor')" @keydown="onAccentKeydown">
         <button
           v-for="(a, i) in ACCENTS"
           :key="a.label"
@@ -195,34 +197,34 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
     </section>
 
     <section class="aps__group">
-      <h3 class="aps__title">Display</h3>
+      <h3 class="aps__title">{{ t('settings.display') }}</h3>
       <div class="aps__row">
-        <span class="aps__label" id="aps-density">Density</span>
+        <span class="aps__label" id="aps-density">{{ t('settings.density') }}</span>
         <Select
           :model-value="prefs.density"
           :options="DENSITY_OPTIONS"
-          label="Density"
+          :label="t('settings.density')"
           @update:model-value="(v) => (prefs.density = v as 'comfortable' | 'compact')"
         />
       </div>
       <div class="aps__row">
-        <span class="aps__label">Grid density</span>
+        <span class="aps__label">{{ t('settings.gridDensity') }}</span>
         <Select
           :model-value="prefs.gridDensity"
           :options="GRID_DENSITY_OPTIONS"
-          label="Grid density"
+          :label="t('settings.gridDensity')"
           @update:model-value="(v) => (prefs.gridDensity = v as 'cozy' | 'comfy' | 'dense')"
         />
       </div>
       <div class="aps__row">
-        <span class="aps__label">Card size <span class="aps__value">{{ formatPx(prefs.cardSize) }}</span></span>
+        <span class="aps__label">{{ t('settings.cardSize') }} <span class="aps__value">{{ formatPx(prefs.cardSize) }}</span></span>
         <div class="aps__slider">
           <Slider
             :model-value="prefs.cardSize"
             :min="120"
             :max="280"
             :step="10"
-            label="Card size"
+            :label="t('settings.cardSize')"
             :format-value="formatPx"
             @update:model-value="(v) => (prefs.cardSize = v)"
           />
@@ -231,16 +233,16 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
     </section>
 
     <section class="aps__group">
-      <h3 class="aps__title">Atmosphere</h3>
+      <h3 class="aps__title">{{ t('settings.atmosphere') }}</h3>
       <div class="aps__row aps__row--switch">
-        <Switch :model-value="prefs.atmosphere" label="Film-grain + ambient glow" @update:model-value="(v) => (prefs.atmosphere = v)" />
+        <Switch :model-value="prefs.atmosphere" :label="t('settings.filmGrainGlow')" @update:model-value="(v) => (prefs.atmosphere = v)" />
       </div>
       <div class="aps__row">
-        <span class="aps__label">Motion</span>
+        <span class="aps__label">{{ t('settings.motion') }}</span>
         <Select
           :model-value="prefs.reducedMotion"
           :options="MOTION_OPTIONS"
-          label="Motion"
+          :label="t('settings.motion')"
           @update:model-value="(v) => (prefs.reducedMotion = v as 'auto' | 'on' | 'off')"
         />
       </div>
@@ -248,72 +250,72 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
 
     <div class="aps__foot">
       <Button variant="ghost" :left-icon="resetArmed ? 'alert' : 'rewind'" @click="onReset">
-        {{ resetArmed ? 'Click again to confirm reset' : 'Reset all preferences' }}
+        {{ resetArmed ? t('settings.resetConfirm') : t('settings.resetAll') }}
       </Button>
       <!-- Announce the armed state: a button's own accessible-name change isn't
            reliably re-read by screen readers, so mirror it into a polite live region. -->
-      <span class="visually-hidden" role="status" aria-live="polite">{{ resetArmed ? 'Click again to confirm reset' : '' }}</span>
+      <span class="visually-hidden" role="status" aria-live="polite">{{ resetArmed ? t('settings.resetConfirm') : '' }}</span>
     </div>
   </div>
 
   <!-- ===================== PLAYBACK ===================== -->
   <div v-else class="aps">
     <section class="aps__group">
-      <h3 class="aps__title">Playback</h3>
+      <h3 class="aps__title">{{ t('settings.playback') }}</h3>
       <div class="aps__row aps__row--switch">
-        <Switch :model-value="prefs.autoplay" label="Autoplay next episode" @update:model-value="(v) => (prefs.autoplay = v)" />
+        <Switch :model-value="prefs.autoplay" :label="t('settings.autoplayNext')" @update:model-value="(v) => (prefs.autoplay = v)" />
       </div>
       <div class="aps__row">
-        <span class="aps__label">Default volume <span class="aps__value">{{ formatPercent(prefs.defaultVolume) }}</span></span>
+        <span class="aps__label">{{ t('settings.defaultVolume') }} <span class="aps__value">{{ formatPercent(prefs.defaultVolume) }}</span></span>
         <div class="aps__slider">
           <Slider
             :model-value="prefs.defaultVolume"
             :min="0"
             :max="1"
             :step="0.05"
-            label="Default volume"
+            :label="t('settings.defaultVolume')"
             :format-value="formatPercent"
             @update:model-value="(v) => (prefs.defaultVolume = v)"
           />
         </div>
       </div>
       <div class="aps__row">
-        <span class="aps__label">Default quality</span>
+        <span class="aps__label">{{ t('settings.defaultQuality') }}</span>
         <Select
           :model-value="prefs.defaultQuality"
           :options="QUALITY_OPTIONS"
-          label="Default quality"
+          :label="t('settings.defaultQuality')"
           @update:model-value="(v) => (prefs.defaultQuality = String(v))"
         />
       </div>
     </section>
 
     <section class="aps__group">
-      <h3 class="aps__title">Subtitles</h3>
+      <h3 class="aps__title">{{ t('settings.subtitles') }}</h3>
       <div class="aps__row">
-        <span class="aps__label">Default language</span>
+        <span class="aps__label">{{ t('settings.defaultLanguage') }}</span>
         <Select
           :model-value="prefs.defaultSubtitleLang ?? ''"
           :options="SUBTITLE_OPTIONS"
-          label="Default subtitle language"
+          :label="t('settings.defaultSubtitleLanguage')"
           @update:model-value="setSubtitle"
         />
       </div>
       <div class="aps__row">
-        <span class="aps__label">Caption size</span>
-        <Select :model-value="prefs.captionStyle.size" :options="CAPTION_SIZE_OPTIONS" label="Caption size" @update:model-value="(v) => setCaption('size', v as CaptionSize)" />
+        <span class="aps__label">{{ t('settings.captionSize') }}</span>
+        <Select :model-value="prefs.captionStyle.size" :options="CAPTION_SIZE_OPTIONS" :label="t('settings.captionSize')" @update:model-value="(v) => setCaption('size', v as CaptionSize)" />
       </div>
       <div class="aps__row">
-        <span class="aps__label">Caption color</span>
-        <Select :model-value="prefs.captionStyle.textColor" :options="CAPTION_COLOR_OPTIONS" label="Caption color" @update:model-value="(v) => setCaption('textColor', String(v))" />
+        <span class="aps__label">{{ t('settings.captionColor') }}</span>
+        <Select :model-value="prefs.captionStyle.textColor" :options="CAPTION_COLOR_OPTIONS" :label="t('settings.captionColor')" @update:model-value="(v) => setCaption('textColor', String(v))" />
       </div>
       <div class="aps__row">
-        <span class="aps__label">Caption background</span>
-        <Select :model-value="prefs.captionStyle.background" :options="CAPTION_BACKGROUND_OPTIONS" label="Caption background" @update:model-value="(v) => setCaption('background', v as CaptionBackground)" />
+        <span class="aps__label">{{ t('settings.captionBackground') }}</span>
+        <Select :model-value="prefs.captionStyle.background" :options="CAPTION_BACKGROUND_OPTIONS" :label="t('settings.captionBackground')" @update:model-value="(v) => setCaption('background', v as CaptionBackground)" />
       </div>
       <div class="aps__row">
-        <span class="aps__label">Caption edge</span>
-        <Select :model-value="prefs.captionStyle.edge" :options="CAPTION_EDGE_OPTIONS" label="Caption edge" @update:model-value="(v) => setCaption('edge', v as CaptionEdge)" />
+        <span class="aps__label">{{ t('settings.captionEdge') }}</span>
+        <Select :model-value="prefs.captionStyle.edge" :options="CAPTION_EDGE_OPTIONS" :label="t('settings.captionEdge')" @update:model-value="(v) => setCaption('edge', v as CaptionEdge)" />
       </div>
     </section>
   </div>

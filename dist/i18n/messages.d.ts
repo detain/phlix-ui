@@ -160,6 +160,32 @@ export declare const DEFAULT_MESSAGES: {
         transcodeBodyUntitled: string;
         goBack: string;
     };
+    settings: {
+        theme: string;
+        accent: string;
+        accentColor: string;
+        display: string;
+        atmosphere: string;
+        playback: string;
+        subtitles: string;
+        density: string;
+        gridDensity: string;
+        cardSize: string;
+        motion: string;
+        filmGrainGlow: string;
+        autoplayNext: string;
+        defaultVolume: string;
+        defaultQuality: string;
+        defaultLanguage: string;
+        defaultSubtitleLanguage: string;
+        captionSize: string;
+        captionColor: string;
+        captionBackground: string;
+        captionEdge: string;
+        resetAll: string;
+        resetConfirm: string;
+        resetDone: string;
+    };
 };
 /** The full English catalog type (derived from the defaults — single source of truth). */
 export type PhlixMessages = typeof DEFAULT_MESSAGES;
