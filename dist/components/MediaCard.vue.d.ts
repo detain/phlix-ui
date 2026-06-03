@@ -1,4 +1,4 @@
-import type { MediaItem } from '../types/media-item';
+import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
 type __VLS_Props = {
     item: MediaItem;
     /** Primary link target for the poster (default: the player route). */
@@ -7,6 +7,17 @@ type __VLS_Props = {
     quality?: string;
     /** Days within which a freshly-added item shows the NEW badge. */
     newWithinDays?: number;
+    /**
+     * Opt-in responsive poster sources for `srcset` (R6.2b) — a ready-made
+     * `srcset` string or an array of sized candidates. Overrides the item's own
+     * `poster_srcset`; absent → the card uses the single `poster_url`.
+     */
+    posterSrcset?: PosterSrcsetInput;
+    /**
+     * `sizes` hint paired with a width-descriptor `srcset`. Defaults to the
+     * poster's rendered width when omitted; ignored without responsive sources.
+     */
+    posterSizes?: string;
 };
 declare var __VLS_6: {
     item: MediaItem;
