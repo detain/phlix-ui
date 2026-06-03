@@ -185,6 +185,18 @@ export declare const DEFAULT_MESSAGES: {
         resetAll: string;
         resetConfirm: string;
         resetDone: string;
+        preferences: string;
+        title: string;
+        sectionsLabel: string;
+        tabAppearance: string;
+        tabPlayback: string;
+        tabServer: string;
+        unsaved: string;
+        saveGroup: string;
+        groupSaved: string;
+        groupSaveError: string;
+        loadFailed: string;
+        loadErrorTitle: string;
     };
 };
 /** The full English catalog type (derived from the defaults — single source of truth). */

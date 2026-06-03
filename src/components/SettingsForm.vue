@@ -11,6 +11,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
 import { normalizeBool } from '../api/client';
 import Switch from './ui/Switch.vue';
 import Button from './ui/Button.vue';
@@ -23,6 +24,7 @@ const emit = defineEmits<{ saved: [settings: ServerSettings] }>();
 
 const auth = useAuthStore();
 const toasts = useToastStore();
+const { t } = useMessages();
 
 const settings = ref<Record<string, unknown>>({});
 const baseline = ref<Record<string, unknown>>({});
@@ -107,7 +109,7 @@ async function load(): Promise<void> {
     settings.value = next;
     baseline.value = structuredClone(next);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load settings';
+    error.value = e instanceof Error ? e.message : t('settings.loadFailed');
   } finally {
     loading.value = false;
   }
@@ -124,10 +126,10 @@ async function saveGroup(group: SettingGroup): Promise<void> {
     for (const k of keysOf(group)) patch[k] = settings.value[k];
     await auth.client.put('/api/v1/users/me/settings', patch);
     for (const k of keysOf(group)) baseline.value[k] = settings.value[k];
-    toasts.success(`${groupLabels[group]} settings saved.`);
+    toasts.success(t('settings.groupSaved', { name: groupLabels[group] }));
     emit('saved', settings.value as unknown as ServerSettings);
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : `Failed to save ${groupLabels[group]} settings`);
+    toasts.error(e instanceof Error ? e.message : t('settings.groupSaveError', { name: groupLabels[group] }));
   } finally {
     savingGroup.value = null;
   }
@@ -146,9 +148,9 @@ onMounted(load);
       <Skeleton v-for="n in 3" :key="n" height="6.5rem" radius="var(--radius-lg)" />
     </div>
 
-    <EmptyState v-else-if="error" icon="alert" title="Couldn't load settings" :description="error">
+    <EmptyState v-else-if="error" icon="alert" :title="t('settings.loadErrorTitle')" :description="error">
       <template #actions>
-        <Button left-icon="rewind" @click="load">Retry</Button>
+        <Button left-icon="rewind" @click="load">{{ t('common.retry') }}</Button>
       </template>
     </EmptyState>
 
@@ -156,7 +158,7 @@ onMounted(load);
       <section v-for="group in displayGroups" :key="group" class="setform__group">
         <header class="setform__head">
           <h3 class="setform__title">{{ groupLabels[group] }}</h3>
-          <span v-if="isDirty(group)" class="setform__dirty">Unsaved</span>
+          <span v-if="isDirty(group)" class="setform__dirty">{{ t('settings.unsaved') }}</span>
         </header>
 
         <div
@@ -192,7 +194,7 @@ onMounted(load);
             :loading="savingGroup === group"
             @click="saveGroup(group)"
           >
-            Save {{ groupLabels[group] }}
+            {{ t('settings.saveGroup', { name: groupLabels[group] }) }}
           </Button>
         </div>
       </section>

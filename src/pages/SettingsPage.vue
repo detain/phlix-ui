@@ -8,11 +8,14 @@ import { ref } from 'vue';
 import Tabs, { type TabItem } from '../components/ui/Tabs.vue';
 import AppearanceSettings from '../components/AppearanceSettings.vue';
 import SettingsForm from '../components/SettingsForm.vue';
+import { useMessages } from '../composables/useMessages';
+
+const { t } = useMessages();
 
 const TABS: TabItem[] = [
-  { value: 'appearance', label: 'Appearance', icon: 'sun' },
-  { value: 'playback', label: 'Playback', icon: 'play' },
-  { value: 'server', label: 'Server', icon: 'settings' },
+  { value: 'appearance', label: t('settings.tabAppearance'), icon: 'sun' },
+  { value: 'playback', label: t('settings.tabPlayback'), icon: 'play' },
+  { value: 'server', label: t('settings.tabServer'), icon: 'settings' },
 ];
 
 const tab = ref('appearance');
@@ -21,11 +24,11 @@ const tab = ref('appearance');
 <template>
   <div class="settings-page">
     <header class="settings-page__head">
-      <p class="settings-page__eyebrow">Preferences</p>
-      <h1 class="settings-page__title">Settings</h1>
+      <p class="settings-page__eyebrow">{{ t('settings.preferences') }}</p>
+      <h1 class="settings-page__title">{{ t('settings.title') }}</h1>
     </header>
 
-    <Tabs v-model="tab" :tabs="TABS" label="Settings sections">
+    <Tabs v-model="tab" :tabs="TABS" :label="t('settings.sectionsLabel')">
       <template #appearance>
         <AppearanceSettings panel="appearance" />
       </template>

@@ -209,9 +209,25 @@ export const DEFAULT_MESSAGES = {
     resetAll: 'Reset all preferences',
     resetConfirm: 'Click again to confirm reset',
     resetDone: 'Preferences reset to defaults.',
-    // NOTE: the option *enum* labels (theme/accent/density/grid/motion/quality/
-    // subtitle-language names) deliberately stay inline-English, matching the
-    // R6.5c decision to keep shortcuts.ts/captions.ts enum labels English.
+    // SettingsPage chrome (page heading + tab strip)
+    preferences: 'Preferences',
+    title: 'Settings',
+    sectionsLabel: 'Settings sections',
+    tabAppearance: 'Appearance',
+    tabPlayback: 'Playback',
+    tabServer: 'Server',
+    // SettingsForm (Server tab) chrome
+    unsaved: 'Unsaved',
+    saveGroup: 'Save {name}',
+    groupSaved: '{name} settings saved.',
+    groupSaveError: 'Failed to save {name} settings',
+    loadFailed: 'Failed to load settings',
+    loadErrorTitle: "Couldn't load settings",
+    // NOTE: the appearance option *enum* labels (theme/accent/density/grid/motion/
+    // quality/subtitle-language names) AND the SettingsForm Server-config labels
+    // (the 9 group names + per-key labels like "TMDB API Key"/"Trakt client ID"/
+    // "Enable UPnP") deliberately stay inline-English — operator/technical copy,
+    // matching the R6.5c decision to keep enum + admin labels English.
   },
 } satisfies Record<string, Record<string, string>>;
 

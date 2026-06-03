@@ -57,4 +57,17 @@ describe('SettingsPage', () => {
     expect(w.findComponent(SettingsForm).exists()).toBe(true);
     expect(w.findComponent(AppearanceSettings).exists()).toBe(false);
   });
+
+  it('renders consumer settings i18n overrides for the page chrome + tabs', () => {
+    const auth = useAuthStore();
+    vi.spyOn(auth.client, 'get').mockResolvedValue({} as never);
+    const w = mount(SettingsPage, {
+      global: { provide: { phlixConfig: { messages: { settings: { title: 'Ajustes', tabServer: 'Servidor' } } } } },
+    });
+    wrappers.push(w);
+    expect(w.find('.settings-page__title').text()).toBe('Ajustes'); // overridden heading
+    const tabs = w.findAll('[role="tab"]').map((t) => t.text());
+    expect(tabs.some((l) => l.includes('Servidor'))).toBe(true); // overridden tab
+    expect(tabs.some((l) => l.includes('Appearance'))).toBe(true); // un-overridden tab still English
+  });
 });

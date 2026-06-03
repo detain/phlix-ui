@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.15.0] - 2026-06-03
+
+### Added
+- **i18n: the rest of the Settings surface adopts the `useMessages()` seam.** `SettingsPage` (page
+  heading + eyebrow + the Appearance/Playback/Server tab strip and its aria-label) and `SettingsForm`'s
+  chrome (the `Unsaved` badge, the `Save {group}` button, the load-error EmptyState + Retry, and the
+  save/load toasts) now resolve through `t('settings.…')`, extending the `settings` catalog group from
+  v0.14.0. Consumer-overridable via `PhlixAppConfig.messages.settings`; omitting it is byte-for-byte
+  English. The **technical server-config labels stay inline-English** by design — the 9 SettingsForm
+  group names and the per-key labels (e.g. `TMDB API Key`, `Trakt client ID`, `Enable UPnP`) are
+  operator-facing config terms (many proper nouns), matching the R6.5c decision to keep enum + admin
+  copy English. With this the user-facing Settings chrome is fully i18n-ready; Browse + the admin pages
+  remain as the next increments.
+
 ## [0.14.0] - 2026-06-03
 
 ### Added

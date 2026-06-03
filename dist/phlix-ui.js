@@ -1,9 +1,9 @@
-import { r as e } from "./AuthField-BdVOWlym.js";
+import { r as e } from "./AuthField-BC7YjKhv.js";
 import { n as t, t as n } from "./Icon-ax5k7_G2.js";
 import { t as r } from "./IconButton-C5x9ZDfp.js";
 import { t as i } from "./useFocusTrap-0JaLH3tF.js";
 import { a, i as o, n as s, r as c, t as l } from "./usePreferencesStore-BFFMWKZp.js";
-import { i as u, n as d, r as f, t as p } from "./useMessages-B-UDJLSQ.js";
+import { i as u, n as d, r as f, t as p } from "./useMessages-Cvd20ZUW.js";
 import { a as m, c as h, l as g, n as _, o as ee, r as v, s as te, t as y } from "./Button-BwQkyEkr.js";
 import { t as ne } from "./tokenStore-CGMYSpg6.js";
 import { t as b } from "./useAuthStore-CB5g_qzR.js";
@@ -13,9 +13,9 @@ import { t as x } from "./Badge-ArWL5-WE.js";
 import { t as fe } from "./Slider-BMn_Lp_q.js";
 import { t as pe } from "./Switch-CFZhdkXR.js";
 import { i as me, n as he, r as ge, t as _e } from "./MediaRow-yOkKwyWU.js";
-import { t as ve } from "./Select-j5ozuwYf.js";
-import { a as ye, i as be, n as xe, r as Se, t as Ce } from "./FilterBar-hHu20hkD.js";
-import { t as we } from "./Modal-JL6GsrT_.js";
+import { t as ve } from "./Select-Ba3KZxNb.js";
+import { a as ye, i as be, n as xe, r as Se, t as Ce } from "./FilterBar-Dwo5zRem.js";
+import { t as we } from "./Modal-BkvvzvD7.js";
 import { t as S } from "./useToastStore-BDoKlU6N.js";
 import { n as C, t as w } from "./EmptyState-Ds4WcVdG.js";
 import { t as Te } from "./Tabs-x8dUKZN5.js";
@@ -36,12 +36,12 @@ import { t as We } from "./history-ByCY8OYj.js";
 import { t as Ge } from "./syncPlay-DPzJkgkK.js";
 import { n as Ke, t as qe } from "./libraries-CXAz_kXs.js";
 import { t as Je } from "./settings-m4upFcmH.js";
-import { n as Ye, t as Xe } from "./admin-IrVpeNql.js";
-import { A as Ze, C as Qe, D as $e, E as et, F as tt, I as nt, L as rt, M as it, N as at, O as ot, P as st, S as ct, T as lt, _ as ut, a as dt, b as ft, c as pt, d as mt, f as ht, g as gt, h as _t, i as vt, j as yt, k as bt, l as xt, m as St, n as Ct, o as wt, p as Tt, r as Et, s as Dt, t as Ot, u as kt, v as At, w as jt, x as Mt, y as Nt } from "./Player-BQ_9gGT8.js";
+import { n as Ye, t as Xe } from "./admin-CsRmlYzz.js";
+import { A as Ze, C as Qe, D as $e, E as et, F as tt, I as nt, L as rt, M as it, N as at, O as ot, P as st, S as ct, T as lt, _ as ut, a as dt, b as ft, c as pt, d as mt, f as ht, g as gt, h as _t, i as vt, j as yt, k as bt, l as xt, m as St, n as Ct, o as wt, p as Tt, r as Et, s as Dt, t as Ot, u as kt, v as At, w as jt, x as Mt, y as Nt } from "./Player-CuxoeuoB.js";
 import { a as Pt, c as Ft, d as It, f as Lt, g as Rt, h as zt, i as Bt, l as Vt, m as Ht, n as Ut, o as Wt, p as Gt, r as Kt, s as qt, t as Jt, u as Yt } from "./captions-COgPp5bH.js";
-import { t as Xt } from "./LoginForm-CLwZ0ptC.js";
-import { t as Zt } from "./SignupForm-nppJBKla.js";
-import { t as Qt } from "./SettingsForm-DuSotEMX.js";
+import { t as Xt } from "./LoginForm-D8YONCTg.js";
+import { t as Zt } from "./SignupForm-euZPfAri.js";
+import { t as Qt } from "./SettingsForm-Dz4g0Hwh.js";
 import { Fragment as T, Teleport as $t, Transition as E, TransitionGroup as en, computed as D, createApp as tn, createBlock as O, createCommentVNode as k, createElementBlock as A, createElementVNode as j, createTextVNode as M, createVNode as N, defineAsyncComponent as nn, defineComponent as P, inject as rn, normalizeClass as F, normalizeStyle as I, onBeforeUnmount as L, onMounted as R, onScopeDispose as z, openBlock as B, readonly as an, ref as V, renderList as H, renderSlot as U, resolveDynamicComponent as on, toDisplayString as W, unref as G, useId as sn, vModelText as K, watch as q, watchEffect as cn, withCtx as J, withDirectives as Y, withKeys as ln, withModifiers as un } from "vue";
 import { createPinia as dn } from "pinia";
 import { RouterLink as X, RouterView as fn, createRouter as pn, createWebHistory as mn, useRouter as hn } from "vue-router";
@@ -492,7 +492,7 @@ var dr = ["src", "alt"], fr = { class: "brand-wordmark" }, pr = {
 		ar();
 		let t = ce(), i = hn(), { t: a } = p();
 		or();
-		let o = nn(() => import("./CommandPalette-D63LCI8y.js")), s = V(!1);
+		let o = nn(() => import("./CommandPalette-BRIAAiSF.js")), s = V(!1);
 		q(() => t.open, (e) => {
 			e && (s.value = !0);
 		});
@@ -605,7 +605,7 @@ function xr(e) {
 		{
 			path: t,
 			name: "browse",
-			component: () => import("./BrowsePage-D8Dn-ink.js")
+			component: () => import("./BrowsePage-C93VF1-W.js")
 		},
 		{
 			path: `${t}/media/:id`,
@@ -615,22 +615,22 @@ function xr(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-CY9RQZuq.js")
+			component: () => import("./PlayerPage-D958-YpD.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
-			component: () => import("./LoginPage-DKEr2SWV.js")
+			component: () => import("./LoginPage-D-HZupX6.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
-			component: () => import("./SignupPage-BSkKn6Tt.js")
+			component: () => import("./SignupPage-NR_4KnZ2.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
-			component: () => import("./SettingsPage-DK6XX8z2.js")
+			component: () => import("./SettingsPage-9rku4j9E.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({
