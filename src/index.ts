@@ -7,7 +7,7 @@ export { default as AppLayout } from './app/AppLayout.vue';
 export { ApiClient } from './api/client';
 export { LocalStorageTokenStore } from './api/tokenStore';
 export type { TokenStore, AuthUser } from './api/client';
-export { ApiError } from './api/client';
+export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './api/errors';
 
 export type { MediaItem } from './types/media-item';
 export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
@@ -245,6 +245,7 @@ export { useCommandStore, fuzzyScore, matchCommand } from './stores/useCommandSt
 export type { Command } from './stores/useCommandStore';
 export { default as CommandPalette } from './components/CommandPalette.vue';
 export { useTheme, applyStoredThemeEarly } from './composables/useTheme';
+export { useOnline } from './composables/useOnline';
 export { deriveAccentVars } from './composables/color';
 
 export * from './tokens';

@@ -1,9 +1,10 @@
-export class ApiError extends Error {
-    constructor(message: string, public readonly status: number, public readonly body: unknown = null) {
-        super(message);
-        this.name = 'ApiError';
-    }
-}
+import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
+
+/** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
+export { ApiError } from './errors';
+
+/** Default per-request timeout (ms) before the client aborts with a `TimeoutError`. */
+const DEFAULT_TIMEOUT_MS = 15000;
 
 export interface AuthUser {
     id: string;
@@ -28,6 +29,8 @@ export interface ApiClientOptions {
     baseUrl?: string;
     tokenStore?: TokenStore;
     fetchImpl?: typeof fetch;
+    /** Per-request timeout in ms before aborting with a `TimeoutError` (default 15000). */
+    timeoutMs?: number;
 }
 
 export function normalizeBool(value: unknown): boolean {
@@ -38,6 +41,7 @@ export class ApiClient {
     private readonly baseUrl: string;
     private readonly tokens: TokenStore;
     private readonly doFetch: typeof fetch;
+    private readonly timeoutMs: number;
 
     constructor(options: ApiClientOptions = {}) {
         this.baseUrl = options.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
@@ -51,6 +55,7 @@ export class ApiClient {
             clear: () => {},
         };
         this.doFetch = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
+        this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     }
 
     async request<T = unknown>(
@@ -59,7 +64,7 @@ export class ApiClient {
         data: unknown = null,
         signal?: AbortSignal,
     ): Promise<T> {
-        const build = (): RequestInit => {
+        const build = (effectiveSignal: AbortSignal): RequestInit => {
             const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
             };
@@ -67,10 +72,12 @@ export class ApiClient {
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
-            const init: RequestInit = { method, headers, credentials: 'same-origin' };
-            if (signal) {
-                init.signal = signal;
-            }
+            const init: RequestInit = {
+                method,
+                headers,
+                credentials: 'same-origin',
+                signal: effectiveSignal,
+            };
             if (data !== null && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
                 init.body = JSON.stringify(data);
             }
@@ -78,16 +85,61 @@ export class ApiClient {
         };
 
         const url = `${this.baseUrl}${endpoint}`;
-        let response = await this.doFetch(url, build());
 
-        if (response.status === 401) {
-            const refreshed = await this.refreshToken();
-            if (refreshed) {
-                response = await this.doFetch(url, build());
+        // Drive every request through our own controller so we can enforce a
+        // timeout AND honour a caller's abort signal (e.g. a superseded media
+        // request). The timeout sets `timedOut` before aborting so we can tell
+        // it apart from a caller-initiated cancellation.
+        const controller = new AbortController();
+        let timedOut = false;
+        const timer = setTimeout(() => {
+            timedOut = true;
+            controller.abort();
+        }, this.timeoutMs);
+        const onCallerAbort = (): void => controller.abort();
+        if (signal) {
+            if (signal.aborted) {
+                controller.abort();
+            } else {
+                signal.addEventListener('abort', onCallerAbort, { once: true });
             }
         }
 
-        return this.handleResponse<T>(response);
+        try {
+            let response = await this.doFetch(url, build(controller.signal));
+
+            if (response.status === 401) {
+                const refreshed = await this.refreshToken();
+                if (refreshed) {
+                    response = await this.doFetch(url, build(controller.signal));
+                }
+            }
+
+            return await this.handleResponse<T>(response);
+        } catch (e) {
+            if (timedOut) {
+                throw new TimeoutError();
+            }
+            // A caller-initiated cancellation must stay an AbortError so the
+            // store's supersede logic still recognises it.
+            if (signal?.aborted) {
+                throw e;
+            }
+            if (e instanceof ApiError) {
+                throw e;
+            }
+            // fetch() rejects with a TypeError on a network failure (DNS,
+            // connection refused, offline) — surface it as a friendly NetworkError.
+            if (e instanceof TypeError || isOffline()) {
+                throw new NetworkError();
+            }
+            throw e;
+        } finally {
+            clearTimeout(timer);
+            if (signal) {
+                signal.removeEventListener('abort', onCallerAbort);
+            }
+        }
     }
 
     private async handleResponse<T>(response: Response): Promise<T> {
