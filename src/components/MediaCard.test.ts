@@ -87,6 +87,65 @@ describe('MediaCard — rendering', () => {
   });
 });
 
+describe('MediaCard — responsive poster (R6.2b)', () => {
+  it('emits no srcset/sizes by default (byte-identical single-src markup)', () => {
+    const img = mount(MediaCard, { props: { item: media() } }).find('.media-card__img');
+    expect(img.attributes('src')).toBe('https://img/dune.jpg');
+    expect(img.attributes('srcset')).toBeUndefined();
+    expect(img.attributes('sizes')).toBeUndefined();
+  });
+
+  it('renders a width-descriptor srcset from the posterSrcset prop with a default sizes', () => {
+    const w = mount(MediaCard, {
+      props: {
+        item: media(),
+        posterSrcset: [
+          { url: 'https://img/dune-200.jpg', width: 200 },
+          { url: 'https://img/dune-400.jpg', width: 400 },
+        ],
+      },
+    });
+    const img = w.find('.media-card__img');
+    expect(img.attributes('srcset')).toBe(
+      'https://img/dune-200.jpg 200w, https://img/dune-400.jpg 400w',
+    );
+    expect(img.attributes('sizes')).toBe('(max-width: 600px) 45vw, 200px');
+    // the single src stays as the fallback for non-srcset browsers
+    expect(img.attributes('src')).toBe('https://img/dune.jpg');
+  });
+
+  it('honors an explicit posterSizes over the default', () => {
+    const img = mount(MediaCard, {
+      props: { item: media(), posterSrcset: 'a.jpg 200w', posterSizes: '300px' },
+    }).find('.media-card__img');
+    expect(img.attributes('srcset')).toBe('a.jpg 200w');
+    expect(img.attributes('sizes')).toBe('300px');
+  });
+
+  it('reads poster_srcset off the item when no prop is given', () => {
+    const img = mount(MediaCard, {
+      props: { item: media({ poster_srcset: 'a.jpg 320w' }) },
+    }).find('.media-card__img');
+    expect(img.attributes('srcset')).toBe('a.jpg 320w');
+    expect(img.attributes('sizes')).toBe('(max-width: 600px) 45vw, 200px');
+  });
+
+  it('prefers the posterSrcset prop over the item field', () => {
+    const img = mount(MediaCard, {
+      props: { item: media({ poster_srcset: 'item.jpg 100w' }), posterSrcset: 'prop.jpg 500w' },
+    }).find('.media-card__img');
+    expect(img.attributes('srcset')).toBe('prop.jpg 500w');
+  });
+
+  it('omits sizes for a density-only srcset', () => {
+    const img = mount(MediaCard, {
+      props: { item: media(), posterSrcset: 'a.jpg 1x, a@2x.jpg 2x' },
+    }).find('.media-card__img');
+    expect(img.attributes('srcset')).toBe('a.jpg 1x, a@2x.jpg 2x');
+    expect(img.attributes('sizes')).toBeUndefined();
+  });
+});
+
 describe('MediaCard — badges', () => {
   it('shows the NEW badge for a recently-added item', () => {
     const recent = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();

@@ -17,6 +17,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
         genres: string[];
         year: number | null;
         rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
@@ -32,6 +37,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
         genres: string[];
         year: number | null;
         rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
@@ -82,6 +92,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
         genres: string[];
         year: number | null;
         rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
@@ -97,6 +112,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
         genres: string[];
         year: number | null;
         rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
@@ -147,6 +167,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
         genres: string[];
         year: number | null;
         rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
@@ -162,6 +187,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
         genres: string[];
         year: number | null;
         rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;

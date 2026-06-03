@@ -4,7 +4,8 @@
  *
  * Ports the locked R0 art direction (`src/dev/mockups/poster-card.html`): a 2:3
  * blur-up poster (LQIP gradient under a fade-in image — aspect-ratio reserved so
- * there is no CLS), a top badge stack (NEW · quality), a resume-progress bar
+ * there is no CLS; optionally served responsively via `srcset`/`sizes` when sized
+ * URLs are supplied, R6.2b), a top badge stack (NEW · quality), a resume-progress bar
  * sourced from `usePlayerStore`, and a cinematic hover/focus overlay with title,
  * cert/meta, genre chips and amber quick-actions (Play / +Watchlist / Info).
  *
@@ -16,9 +17,10 @@
  */
 import { computed, ref, onMounted } from 'vue';
 import Icon from './Icon.vue';
-import type { MediaItem } from '../types/media-item';
+import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePrefetch } from '../composables/usePrefetch';
+import { resolvePosterSources } from './media-poster';
 
 const props = withDefaults(
   defineProps<{
@@ -29,6 +31,17 @@ const props = withDefaults(
     quality?: string;
     /** Days within which a freshly-added item shows the NEW badge. */
     newWithinDays?: number;
+    /**
+     * Opt-in responsive poster sources for `srcset` (R6.2b) — a ready-made
+     * `srcset` string or an array of sized candidates. Overrides the item's own
+     * `poster_srcset`; absent → the card uses the single `poster_url`.
+     */
+    posterSrcset?: PosterSrcsetInput;
+    /**
+     * `sizes` hint paired with a width-descriptor `srcset`. Defaults to the
+     * poster's rendered width when omitted; ignored without responsive sources.
+     */
+    posterSizes?: string;
   }>(),
   { newWithinDays: 30 },
 );
@@ -59,6 +72,12 @@ onMounted(() => {
   // Cached images may already be complete before the load listener attaches.
   if (imgEl.value?.complete) loaded.value = true;
 });
+
+// Responsive poster sources (R6.2b). Prop wins over the item field; with neither
+// supplied this resolves to {} so the <img> renders single-src exactly as before.
+const posterSources = computed(() =>
+  resolvePosterSources(props.posterSrcset ?? props.item.poster_srcset, props.posterSizes),
+);
 
 const isNew = computed(() => {
   const created = props.item.created_at;
@@ -92,6 +111,8 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         class="media-card__img"
         :class="{ 'is-loaded': loaded }"
         :src="item.poster_url"
+        :srcset="posterSources.srcset"
+        :sizes="posterSources.sizes"
         :alt="item.name"
         loading="lazy"
         decoding="async"
