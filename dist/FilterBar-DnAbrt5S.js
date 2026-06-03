@@ -3,7 +3,7 @@ import { a as n } from "./usePreferencesStore-BFFMWKZp.js";
 import { c as r, n as i } from "./Button-GJ9vHE0J.js";
 import { n as a } from "./media-query-DowsWq-z.js";
 import { t as o } from "./Badge-ArWL5-WE.js";
-import { n as s, r as c, t as l } from "./MediaRow-CQOxRkOG.js";
+import { i as s, n as c, t as l } from "./MediaRow-BacyesRq.js";
 import { i as u, n as d, r as f, t as p } from "./Select-CKC9vNUQ.js";
 import { t as m } from "./useToastStore-BDoKlU6N.js";
 import { Fragment as h, Transition as g, computed as _, createBlock as v, createCommentVNode as y, createElementBlock as b, createElementVNode as x, createTextVNode as S, createVNode as C, defineComponent as w, nextTick as T, normalizeClass as E, normalizeStyle as D, onBeforeUnmount as O, onMounted as k, openBlock as A, ref as j, renderList as M, renderSlot as N, toDisplayString as P, unref as F, useId as I, vModelText as L, vShow as ee, watch as R, withCtx as z, withDirectives as B, withKeys as V, withModifiers as H } from "vue";
@@ -221,7 +221,7 @@ var Z = { class: "media-grid-root" }, oe = {
 		"info"
 	],
 	setup(e, { emit: r }) {
-		let i = e, a = r, o = n(), c = _(() => i.cardSize ?? o.cardSize ?? 180), l = j(null), u = j(null), d = j(0), f = j(0), p = j(0);
+		let i = e, a = r, o = n(), s = _(() => i.cardSize ?? o.cardSize ?? 180), l = j(null), u = j(null), d = j(0), f = j(0), p = j(0);
 		function m() {
 			let e = l.value;
 			if (!e || typeof e.getBoundingClientRect != "function") return;
@@ -236,7 +236,7 @@ var Z = { class: "media-grid-root" }, oe = {
 				v = 0, m();
 			});
 		}
-		let E = _(() => X(d.value, c.value, 20)), P = _(() => ie(re(d.value, E.value, 20))), F = _(() => d.value > 0 && P.value > 0), I = _(() => ae({
+		let E = _(() => X(d.value, s.value, 20)), P = _(() => ie(re(d.value, E.value, 20))), F = _(() => d.value > 0 && P.value > 0), I = _(() => ae({
 			scrollTop: p.value,
 			viewportHeight: f.value,
 			rowHeight: P.value,
@@ -254,13 +254,13 @@ var Z = { class: "media-grid-root" }, oe = {
 				index: r
 			});
 			return n;
-		}), ee = _(() => ({ gridTemplateColumns: F.value ? `repeat(${E.value}, minmax(0, 1fr))` : `repeat(auto-fill, minmax(${c.value}px, 1fr))` })), B = _(() => F.value ? { height: `${I.value.totalHeight}px` } : {}), V = _(() => F.value ? {
+		}), ee = _(() => ({ gridTemplateColumns: F.value ? `repeat(${E.value}, minmax(0, 1fr))` : `repeat(auto-fill, minmax(${s.value}px, 1fr))` })), B = _(() => F.value ? { height: `${I.value.totalHeight}px` } : {}), V = _(() => F.value ? {
 			position: "absolute",
 			top: "0",
 			left: "0",
 			right: "0",
 			transform: `translateY(${I.value.padTop}px)`
-		} : {}), H = _(() => ({ gridTemplateColumns: `repeat(auto-fill, minmax(${c.value}px, 1fr))` })), U = _(() => F.value && p.value > f.value * 1.5);
+		} : {}), H = _(() => ({ gridTemplateColumns: `repeat(auto-fill, minmax(${s.value}px, 1fr))` })), U = _(() => F.value && p.value > f.value * 1.5);
 		function W() {
 			if (typeof window > "u") return;
 			let e = typeof window.matchMedia == "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -329,7 +329,7 @@ var Z = { class: "media-grid-root" }, oe = {
 				key: e.item.id,
 				item: e.item,
 				index: e.index
-			}, () => [C(s, {
+			}, () => [C(c, {
 				item: e.item,
 				onPlay: (t) => a("play", e.item),
 				onWatchlist: (t) => a("watchlist", e.item),
@@ -639,7 +639,7 @@ var de = U("media", () => {
 	},
 	emits: ["change"],
 	setup(e, { emit: r }) {
-		let i = e, a = r, s = de(), l = n(), u = [
+		let i = e, a = r, c = de(), l = n(), u = [
 			{
 				value: "name",
 				label: "Name"
@@ -660,31 +660,31 @@ var de = U("media", () => {
 				value: "runtime",
 				label: "Runtime"
 			}
-		], d = j(s.search), f;
-		R(() => s.search, (e) => {
+		], d = j(c.search), f;
+		R(() => c.search, (e) => {
 			e !== d.value.trim() && (d.value = e);
 		});
 		function m() {
 			clearTimeout(f), f = setTimeout(() => {
-				s.setSearch(d.value.trim()), a("change");
+				c.setSearch(d.value.trim()), a("change");
 			}, i.searchDebounce);
 		}
 		function w() {
-			d.value = "", s.setSearch(""), a("change");
+			d.value = "", c.setSearch(""), a("change");
 		}
-		let T = j(null), D = j(0), N = _(() => s.availableGenres.filter((e) => !s.selectedGenres.includes(e)));
+		let T = j(null), D = j(0), N = _(() => c.availableGenres.filter((e) => !c.selectedGenres.includes(e)));
 		function I(e) {
 			if (e == null || e === "") return;
 			let t = String(e);
-			s.selectedGenres.includes(t) || (s.setGenres([...s.selectedGenres, t]), a("change")), T.value = null, D.value++;
+			c.selectedGenres.includes(t) || (c.setGenres([...c.selectedGenres, t]), a("change")), T.value = null, D.value++;
 		}
 		function U(e) {
-			let t = s.selectedRatings;
-			s.setRatings(t.includes(e) ? t.filter((t) => t !== e) : [...t, e]), a("change");
+			let t = c.selectedRatings;
+			c.setRatings(t.includes(e) ? t.filter((t) => t !== e) : [...t, e]), a("change");
 		}
 		function W(e) {
-			let t = s.selectedTypes;
-			s.setTypes(t.includes(e) ? t.filter((t) => t !== e) : [...t, e]), a("change");
+			let t = c.selectedTypes;
+			c.setTypes(t.includes(e) ? t.filter((t) => t !== e) : [...t, e]), a("change");
 		}
 		let G = _(() => {
 			try {
@@ -701,49 +701,49 @@ var de = U("media", () => {
 			return e;
 		});
 		function q(e) {
-			s.setYearRange(e == null || e === "" ? void 0 : Number(e), s.yearTo), a("change");
+			c.setYearRange(e == null || e === "" ? void 0 : Number(e), c.yearTo), a("change");
 		}
 		function J(e) {
-			s.setYearRange(s.yearFrom, e == null || e === "" ? void 0 : Number(e)), a("change");
+			c.setYearRange(c.yearFrom, e == null || e === "" ? void 0 : Number(e)), a("change");
 		}
 		function te(e) {
-			s.setSort(e), a("change");
+			c.setSort(e), a("change");
 		}
 		function ne() {
-			s.order = s.order === "asc" ? "desc" : "asc", s.offset = 0, a("change");
+			c.order = c.order === "asc" ? "desc" : "asc", c.offset = 0, a("change");
 		}
 		let X = _(() => {
 			let e = [];
-			return s.search && e.push({
+			return c.search && e.push({
 				key: "search",
-				label: `“${s.search}”`,
+				label: `“${c.search}”`,
 				remove: w
-			}), s.selectedGenres.forEach((t) => e.push({
+			}), c.selectedGenres.forEach((t) => e.push({
 				key: `g:${t}`,
 				label: t,
 				remove: () => {
-					s.setGenres(s.selectedGenres.filter((e) => e !== t)), a("change");
+					c.setGenres(c.selectedGenres.filter((e) => e !== t)), a("change");
 				}
-			})), s.selectedRatings.forEach((t) => e.push({
+			})), c.selectedRatings.forEach((t) => e.push({
 				key: `r:${t}`,
 				label: t,
 				remove: () => U(t)
-			})), s.selectedTypes.forEach((t) => e.push({
+			})), c.selectedTypes.forEach((t) => e.push({
 				key: `t:${t}`,
 				label: t,
 				remove: () => W(t)
-			})), s.yearFrom !== void 0 && e.push({
+			})), c.yearFrom !== void 0 && e.push({
 				key: "yf",
-				label: `From ${s.yearFrom}`,
+				label: `From ${c.yearFrom}`,
 				remove: () => q(null)
-			}), s.yearTo !== void 0 && e.push({
+			}), c.yearTo !== void 0 && e.push({
 				key: "yt",
-				label: `To ${s.yearTo}`,
+				label: `To ${c.yearTo}`,
 				remove: () => J(null)
 			}), e;
-		}), re = _(() => X.value.length > 0), ie = _(() => s.selectedGenres.length + s.selectedRatings.length + s.selectedTypes.length + (s.yearFrom === void 0 ? 0 : 1) + (s.yearTo === void 0 ? 0 : 1));
+		}), re = _(() => X.value.length > 0), ie = _(() => c.selectedGenres.length + c.selectedRatings.length + c.selectedTypes.length + (c.yearFrom === void 0 ? 0 : 1) + (c.yearTo === void 0 ? 0 : 1));
 		function ae() {
-			d.value = "", s.setSearch(""), s.setGenres([]), s.setRatings([]), s.setTypes([]), s.setYearRange(void 0, void 0), a("change");
+			d.value = "", c.setSearch(""), c.setGenres([]), c.setRatings([]), c.setTypes([]), c.setYearRange(void 0, void 0), a("change");
 		}
 		let Z = j(!1), oe = _(() => l.filterPresets), Q = j(!1), $ = j("");
 		function se() {
@@ -751,10 +751,10 @@ var de = U("media", () => {
 		}
 		function ce() {
 			let e = $.value.trim();
-			e && (l.saveFilterPreset(e, s.toQuery()), Q.value = !1, $.value = "");
+			e && (l.saveFilterPreset(e, c.toQuery()), Q.value = !1, $.value = "");
 		}
 		function le(e) {
-			s.applyQuery(e.query), d.value = s.search, a("change");
+			c.applyQuery(e.query), d.value = c.search, a("change");
 		}
 		function ue(e) {
 			l.removeFilterPreset(e.id);
@@ -794,16 +794,16 @@ var de = U("media", () => {
 					}, [C(t, { name: "x" })])) : y("", !0)
 				]),
 				x("div", me, [C(p, {
-					"model-value": F(s).sort,
+					"model-value": F(c).sort,
 					options: u,
 					label: "Sort by",
 					"onUpdate:modelValue": te
 				}, null, 8, ["model-value"]), x("button", {
 					type: "button",
 					class: "filterbar__order",
-					"aria-label": `Sort ${F(s).order === "asc" ? "ascending" : "descending"}`,
+					"aria-label": `Sort ${F(c).order === "asc" ? "ascending" : "descending"}`,
 					onClick: ne
-				}, [C(t, { name: F(s).order === "asc" ? "arrow-up" : "arrow-down" }, null, 8, ["name"])], 8, he)]),
+				}, [C(t, { name: F(c).order === "asc" ? "arrow-up" : "arrow-down" }, null, 8, ["name"])], 8, he)]),
 				x("button", {
 					type: "button",
 					class: "filterbar__toggle",
@@ -834,17 +834,17 @@ var de = U("media", () => {
 						placeholder: "Add a genre…",
 						"onUpdate:modelValue": I
 					}, null, 8, ["model-value", "options"]))]),
-					x("div", ye, [r[6] ||= x("span", { class: "filterbar__field-label" }, "Rating", -1), x("div", be, [(A(!0), b(h, null, M(F(s).availableRatings, (e) => (A(), v(c, {
+					x("div", ye, [r[6] ||= x("span", { class: "filterbar__field-label" }, "Rating", -1), x("div", be, [(A(!0), b(h, null, M(F(c).availableRatings, (e) => (A(), v(s, {
 						key: e,
-						selected: F(s).selectedRatings.includes(e),
+						selected: F(c).selectedRatings.includes(e),
 						"onUpdate:selected": (t) => U(e)
 					}, {
 						default: z(() => [S(P(e), 1)]),
 						_: 2
 					}, 1032, ["selected", "onUpdate:selected"]))), 128))])]),
-					x("div", xe, [r[7] ||= x("span", { class: "filterbar__field-label" }, "Type", -1), x("div", Se, [(A(!0), b(h, null, M(F(s).availableTypes, (e) => (A(), v(c, {
+					x("div", xe, [r[7] ||= x("span", { class: "filterbar__field-label" }, "Type", -1), x("div", Se, [(A(!0), b(h, null, M(F(c).availableTypes, (e) => (A(), v(s, {
 						key: e,
-						selected: F(s).selectedTypes.includes(e),
+						selected: F(c).selectedTypes.includes(e),
 						"onUpdate:selected": (t) => W(e)
 					}, {
 						default: z(() => [S(P(e), 1)]),
@@ -852,7 +852,7 @@ var de = U("media", () => {
 					}, 1032, ["selected", "onUpdate:selected"]))), 128))])]),
 					x("div", Ce, [r[9] ||= x("span", { class: "filterbar__field-label" }, "Year", -1), x("div", we, [
 						C(Y, {
-							"model-value": F(s).yearFrom ?? null,
+							"model-value": F(c).yearFrom ?? null,
 							options: K.value,
 							placeholder: "From",
 							label: "Year from",
@@ -863,7 +863,7 @@ var de = U("media", () => {
 							"aria-hidden": "true"
 						}, "–", -1),
 						C(Y, {
-							"model-value": F(s).yearTo ?? null,
+							"model-value": F(c).yearTo ?? null,
 							options: K.value,
 							placeholder: "To",
 							label: "Year to",
@@ -872,7 +872,7 @@ var de = U("media", () => {
 					])]),
 					x("div", Te, [
 						r[12] ||= x("span", { class: "filterbar__field-label" }, "Presets", -1),
-						x("div", Ee, [(A(!0), b(h, null, M(oe.value, (e) => (A(), v(c, {
+						x("div", Ee, [(A(!0), b(h, null, M(oe.value, (e) => (A(), v(s, {
 							key: e.id,
 							removable: "",
 							"remove-label": `Delete preset ${e.name}`,
@@ -908,7 +908,7 @@ var de = U("media", () => {
 				], 512), [[ee, Z.value]])]),
 				_: 1
 			}),
-			x("div", je, [x("span", Me, [x("b", null, P(F(s).total.toLocaleString()), 1), S(" " + P(F(s).total === 1 ? "title" : "titles"), 1)]), re.value ? (A(), b(h, { key: 0 }, [x("div", Ne, [(A(!0), b(h, null, M(X.value, (e) => (A(), v(c, {
+			x("div", je, [x("span", Me, [x("b", null, P(F(c).total.toLocaleString()), 1), S(" " + P(F(c).total === 1 ? "title" : "titles"), 1)]), re.value ? (A(), b(h, { key: 0 }, [x("div", Ne, [(A(!0), b(h, null, M(X.value, (e) => (A(), v(s, {
 				key: e.key,
 				removable: "",
 				"remove-label": `Remove ${e.label}`,
@@ -927,4 +927,4 @@ var de = U("media", () => {
 //#endregion
 export { Y as a, $ as i, de as n, se as r, Pe as t };
 
-//# sourceMappingURL=FilterBar-jhghAUXU.js.map
+//# sourceMappingURL=FilterBar-DnAbrt5S.js.map

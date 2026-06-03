@@ -160,12 +160,14 @@ describe('PhlixApp — command palette trigger', () => {
     expect(document.body.querySelector('.phlix-cmdk')).toBeNull();
     const store = useCommandStore();
     store.openPalette();
-    // …opening activates the lazy `defineAsyncComponent`: drain the watcher →
-    // render → dynamic-import resolve → re-render chain until it has mounted.
-    for (let i = 0; i < 10 && !document.body.querySelector('.phlix-cmdk'); i++) {
-      await flushPromises();
-      await nextTick();
-    }
+    // …opening activates the lazy `defineAsyncComponent`: run the watcher → render
+    // (which invokes the dynamic import) → wait for that import to settle
+    // (deterministic — avoids racing a fixed flush count) → re-render to mount.
+    await nextTick();
+    await flushPromises();
+    await vi.dynamicImportSettled();
+    await flushPromises();
+    await nextTick();
     // …then it is mounted (and rendered, since the store is open).
     expect(document.body.querySelector('.phlix-cmdk')).not.toBeNull();
   });

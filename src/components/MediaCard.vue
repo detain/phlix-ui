@@ -18,6 +18,7 @@ import { computed, ref, onMounted } from 'vue';
 import Icon from './Icon.vue';
 import type { MediaItem } from '../types/media-item';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { usePrefetch } from '../composables/usePrefetch';
 
 const props = withDefaults(
   defineProps<{
@@ -41,6 +42,13 @@ const emit = defineEmits<{
 const player = usePlayerStore();
 
 const href = computed(() => props.to ?? `/app/player/${props.item.id}`);
+
+// Warm the destination route's lazy chunk on hover/focus (R6.1c) so navigating
+// from the card is instant. Idempotent + best-effort; no-ops without a router.
+const { prefetch } = usePrefetch();
+function prefetchTarget(): void {
+  prefetch(href.value);
+}
 
 const loaded = ref(false);
 const imgEl = ref<HTMLImageElement | null>(null);
@@ -72,7 +80,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 </script>
 
 <template>
-  <article class="media-card">
+  <article class="media-card" @pointerenter="prefetchTarget" @focusin="prefetchTarget">
     <div class="media-card__poster">
       <a :href="href" class="media-card__link" :aria-label="item.name">
         <span class="visually-hidden">{{ item.name }}</span>
