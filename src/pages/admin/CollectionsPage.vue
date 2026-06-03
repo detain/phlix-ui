@@ -49,13 +49,16 @@ const toasts = useToastStore();
 // ── Collection list state ────────────────────────────────────────────────────
 const collections = ref<Collection[]>([]);
 const loading = ref(true);
+const error = ref<string | null>(null);
 
 async function loadCollections(): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     collections.value = await api.list();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to load collections.'));
+    error.value = errMessage(e, 'Failed to load collections.');
+    toasts.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -244,6 +247,16 @@ onMounted(loadCollections);
     </header>
 
     <div v-if="loading" class="admin-collections__skel"><Skeleton variant="text" :lines="6" /></div>
+    <EmptyState
+      v-else-if="error"
+      icon="alert"
+      title="Couldn't load collections"
+      :description="error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadCollections">Retry</Button>
+      </template>
+    </EmptyState>
     <EmptyState v-else-if="collections.length === 0" icon="list" title="No collections yet">
       <template #actions>
         <Button variant="solid" size="sm" left-icon="plus" @click="openAddCollection">
