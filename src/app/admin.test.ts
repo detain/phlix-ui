@@ -1,9 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { createRouter, createMemoryHistory, type RouteRecordRaw } from 'vue-router';
-import { buildAdminRoutes, adminMenu } from './admin';
+import {
+  buildAdminRoutes,
+  buildServerAdminRoutes,
+  buildHubAdminRoutes,
+  adminMenu,
+  commonAdminPages,
+  serverAdminPages,
+  hubAdminPages,
+  type AdminPage,
+} from './admin';
 
-/** name → URL segment under `<base>/admin/`. Locks every page's name + URL. */
-const PAGES: ReadonlyArray<readonly [string, string]> = [
+/** name → URL segment under `<base>/admin/`. Locks every server page's name + URL
+ *  in its historical sidebar order (the byte-identical server default). */
+const SERVER_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-dashboard', 'dashboard'],
   ['admin-users', 'users'],
   ['admin-logs', 'logs'],
@@ -22,11 +32,25 @@ const PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-settings', 'settings'],
 ];
 
+/** name → URL segment for the hub admin set (Hub Dashboard, common, Audit Logs). */
+const HUB_PAGES: ReadonlyArray<readonly [string, string]> = [
+  ['admin-hub-dashboard', 'dashboard'],
+  ['admin-users', 'users'],
+  ['admin-logs', 'logs'],
+  ['admin-settings', 'settings'],
+  ['admin-audit-logs', 'audit-logs'],
+];
+
 function childrenOf(routes: RouteRecordRaw[]): RouteRecordRaw[] {
   return (routes[0].children ?? []) as RouteRecordRaw[];
 }
 
-describe('buildAdminRoutes — nested AdminLayout shape', () => {
+/** The named (non-redirect) children of an admin route set, in order. */
+function namedChildren(routes: RouteRecordRaw[]): RouteRecordRaw[] {
+  return childrenOf(routes).filter((c) => c.name);
+}
+
+describe('buildAdminRoutes — nested AdminLayout shape (default = legacy server set)', () => {
   it('returns a single admin parent route rendering a lazily-loaded layout', () => {
     const routes = buildAdminRoutes();
     expect(routes).toHaveLength(1);
@@ -34,22 +58,20 @@ describe('buildAdminRoutes — nested AdminLayout shape', () => {
     expect(typeof routes[0].component).toBe('function'); // lazy AdminLayout chunk
   });
 
-  it('passes the router base to the layout as a prop', () => {
-    const def = buildAdminRoutes()[0] as RouteRecordRaw & { props?: unknown };
-    expect(def.props).toEqual({ base: '/app' });
-    const portal = buildAdminRoutes('/portal')[0] as RouteRecordRaw & { props?: unknown };
+  it('passes the router base AND the page list to the layout as props', () => {
+    const def = buildAdminRoutes()[0] as RouteRecordRaw & { props?: { base?: string; pages?: AdminPage[] } };
+    expect(def.props?.base).toBe('/app');
+    expect(def.props?.pages?.map((p) => p.name)).toEqual(SERVER_PAGES.map(([n]) => n));
+    const portal = buildAdminRoutes('/portal')[0] as RouteRecordRaw & { props?: { base?: string } };
     expect(portal.path).toBe('/portal/admin');
-    expect(portal.props).toEqual({ base: '/portal' });
+    expect(portal.props?.base).toBe('/portal');
   });
 
-  it('nests every admin page as a relatively-pathed, named, lazily-imported child', () => {
-    const children = childrenOf(buildAdminRoutes());
-    for (const [name, segment] of PAGES) {
-      const child = children.find((c) => c.name === name);
-      expect(child, `child "${name}" exists`).toBeTruthy();
-      // Relative path (no leading slash) so it resolves under the parent.
-      expect(child?.path).toBe(segment);
-      expect(typeof child?.component, `child "${name}" is a lazy loader`).toBe('function');
+  it('nests every server page as a relatively-pathed, named, lazily-imported child in legacy order', () => {
+    const named = namedChildren(buildAdminRoutes());
+    expect(named.map((c) => [c.name, c.path])).toEqual(SERVER_PAGES.map(([n, s]) => [n, s]));
+    for (const c of named) {
+      expect(typeof c.component, `child "${String(c.name)}" is a lazy loader`).toBe('function');
     }
   });
 
@@ -57,8 +79,18 @@ describe('buildAdminRoutes — nested AdminLayout shape', () => {
     const children = childrenOf(buildAdminRoutes());
     const index = children.find((c) => c.path === '');
     expect(index?.redirect).toEqual({ name: 'admin-dashboard' });
-    // first *page* child (after the index redirect) is the dashboard
-    expect(children.find((c) => c.name)?.name).toBe('admin-dashboard');
+    expect(namedChildren(buildAdminRoutes())[0].name).toBe('admin-dashboard');
+  });
+
+  it('exposes exactly the historical 16 server pages', () => {
+    expect(namedChildren(buildAdminRoutes())).toHaveLength(16);
+  });
+
+  it('buildServerAdminRoutes is the explicit synonym for the default', () => {
+    const a = namedChildren(buildAdminRoutes()).map((c) => [c.name, c.path]);
+    const b = namedChildren(buildServerAdminRoutes()).map((c) => [c.name, c.path]);
+    expect(b).toEqual(a);
+    expect(buildServerAdminRoutes('/portal')[0].path).toBe('/portal/admin');
   });
 });
 
@@ -67,9 +99,9 @@ describe('buildAdminRoutes — resolved URLs + redirect (real router)', () => {
     return createRouter({ history: createMemoryHistory(), routes: buildAdminRoutes(base) });
   }
 
-  it('resolves every page name to its unchanged /app/admin/<segment> URL', () => {
+  it('resolves every server page name to its unchanged /app/admin/<segment> URL', () => {
     const router = routerFor();
-    for (const [name, segment] of PAGES) {
+    for (const [name, segment] of SERVER_PAGES) {
       expect(router.resolve({ name }).href).toBe(`/app/admin/${segment}`);
     }
   });
@@ -88,8 +120,73 @@ describe('buildAdminRoutes — resolved URLs + redirect (real router)', () => {
   });
 });
 
+describe('buildHubAdminRoutes — the hub admin set', () => {
+  it('mounts exactly Hub Dashboard, Users, Logs, Settings, Audit Logs', () => {
+    const named = namedChildren(buildHubAdminRoutes());
+    expect(named.map((c) => [c.name, c.path])).toEqual(HUB_PAGES.map(([n, s]) => [n, s]));
+  });
+
+  it('passes the hub page list to the layout props', () => {
+    const def = buildHubAdminRoutes()[0] as RouteRecordRaw & { props?: { pages?: AdminPage[] } };
+    expect(def.props?.pages?.map((p) => p.name)).toEqual(HUB_PAGES.map(([n]) => n));
+  });
+
+  it('redirects the bare /app/admin to the hub dashboard (its first page)', async () => {
+    const router = createRouter({ history: createMemoryHistory(), routes: buildHubAdminRoutes() });
+    await router.push('/app/admin');
+    expect(router.currentRoute.value.name).toBe('admin-hub-dashboard');
+  });
+
+  it('resolves every hub page name to its /app/admin/<segment> URL', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes: buildHubAdminRoutes() });
+    for (const [name, segment] of HUB_PAGES) {
+      expect(router.resolve({ name }).href).toBe(`/app/admin/${segment}`);
+    }
+  });
+
+  it('honors a custom base', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes: buildHubAdminRoutes('/portal') });
+    expect(router.resolve({ name: 'admin-audit-logs' }).href).toBe('/portal/admin/audit-logs');
+  });
+});
+
+describe('page-group registries', () => {
+  it('commonAdminPages = Users, Logs, Settings', () => {
+    expect(commonAdminPages.map((p) => p.name)).toEqual(['admin-users', 'admin-logs', 'admin-settings']);
+  });
+
+  it('serverAdminPages = the 13 media-server pages (Dashboard first, no common pages)', () => {
+    expect(serverAdminPages).toHaveLength(13);
+    expect(serverAdminPages[0].name).toBe('admin-dashboard');
+    const names = serverAdminPages.map((p) => p.name);
+    expect(names).not.toContain('admin-users');
+    expect(names).not.toContain('admin-logs');
+    expect(names).not.toContain('admin-settings');
+  });
+
+  it('hubAdminPages = Hub Dashboard + Audit Logs', () => {
+    expect(hubAdminPages.map((p) => p.name)).toEqual(['admin-hub-dashboard', 'admin-audit-logs']);
+  });
+
+  it('every page descriptor carries a name, segment, label, icon and a lazy loader', () => {
+    for (const p of [...commonAdminPages, ...serverAdminPages, ...hubAdminPages]) {
+      expect(p.name).toMatch(/^admin-/);
+      expect(p.path.length).toBeGreaterThan(0);
+      expect(p.label.length).toBeGreaterThan(0);
+      expect(p.icon.length).toBeGreaterThan(0);
+      expect(typeof p.component).toBe('function');
+    }
+  });
+
+  it('default server set is the same 16 pages as common ∪ server', () => {
+    const defaultNames = new Set(namedChildren(buildAdminRoutes()).map((c) => c.name));
+    const unionNames = new Set([...commonAdminPages, ...serverAdminPages].map((p) => p.name));
+    expect(defaultNames).toEqual(unionNames);
+  });
+});
+
 describe('adminMenu', () => {
-  it('returns an Admin group whose children point at the admin routes', () => {
+  it('returns an Admin group whose children point at the (default) admin routes', () => {
     const [group] = adminMenu();
     expect(group.id).toBe('admin');
     expect(group.label).toBe('Admin');
@@ -101,7 +198,7 @@ describe('adminMenu', () => {
     expect(group.children?.find((c) => c.id === 'admin-logs')?.to).toBe('/portal/admin/logs');
   });
 
-  it('exposes a child for every admin page with its label, link and icon', () => {
+  it('exposes a labelled, linked, icon-bearing child for every default admin page', () => {
     const [group] = adminMenu();
     const expected: Record<string, { label: string; to: string }> = {
       'admin-dashboard': { label: 'Dashboard', to: '/app/admin/dashboard' },
@@ -129,8 +226,14 @@ describe('adminMenu', () => {
     }
   });
 
-  it('exposes exactly the 16 ported admin pages as children', () => {
+  it('exposes exactly the 16 default admin pages as children', () => {
     const [group] = adminMenu();
     expect(group.children).toHaveLength(16);
+  });
+
+  it('builds a menu from an arbitrary page set (the hub set)', () => {
+    const [group] = adminMenu('/app', hubAdminPages);
+    expect(group.children?.map((c) => c.id)).toEqual(['admin-hub-dashboard', 'admin-audit-logs']);
+    expect(group.children?.find((c) => c.id === 'admin-hub-dashboard')?.to).toBe('/app/admin/dashboard');
   });
 });

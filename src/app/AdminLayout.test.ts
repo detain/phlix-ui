@@ -1,42 +1,47 @@
 import { describe, it, expect } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import { createRouter, createMemoryHistory, type Router } from 'vue-router';
+import { createRouter, createMemoryHistory, type Router, type RouteRecordRaw } from 'vue-router';
 import AdminLayout from './AdminLayout.vue';
-import { adminMenu } from './admin';
+import { buildAdminRoutes, buildHubAdminRoutes, type AdminPage } from './admin';
 
 /**
  * Mount the REAL AdminLayout as the parent route of a stub-children router (the
- * children stand in for the heavy lazy admin pages), navigated to the dashboard.
+ * children stand in for the heavy lazy admin pages). The layout + its `pages`
+ * prop come straight from the production builder so the test exercises the same
+ * page list the consumer mounts.
  */
-async function mountAdmin(base = '/app'): Promise<{ wrapper: ReturnType<typeof mount>; router: Router }> {
-  const prefix = `${base}/admin/`;
-  const items = adminMenu(base)[0].children ?? [];
+async function mountAdmin(
+  build: (base?: string) => RouteRecordRaw[] = buildAdminRoutes,
+  base = '/app',
+): Promise<{ wrapper: ReturnType<typeof mount>; router: Router; pages: AdminPage[] }> {
+  const parent = build(base)[0] as RouteRecordRaw & { props?: { pages?: AdminPage[] } };
+  const pages = parent.props?.pages ?? [];
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       {
         path: `${base}/admin`,
         component: AdminLayout,
-        props: { base },
+        props: { base, pages },
         children: [
-          { path: '', redirect: { name: 'admin-dashboard' } },
-          ...items.map((it) => ({
-            path: (it.to ?? '').slice(prefix.length),
-            name: it.id,
-            component: { template: `<div class="stub-page">${it.id}</div>` },
+          { path: '', redirect: { name: pages[0].name } },
+          ...pages.map((p) => ({
+            path: p.path,
+            name: p.name,
+            component: { template: `<div class="stub-page">${p.name}</div>` },
           })),
         ],
       },
     ],
   });
   const wrapper = mount({ template: '<RouterView />' }, { global: { plugins: [router] } });
-  await router.push(`${base}/admin/dashboard`);
+  await router.push(`${base}/admin/${pages[0].path}`);
   await router.isReady();
   await flushPromises();
-  return { wrapper, router };
+  return { wrapper, router, pages };
 }
 
-describe('AdminLayout', () => {
+describe('AdminLayout — server set', () => {
   it('renders a labelled Admin nav landmark with all 16 page links', async () => {
     const { wrapper } = await mountAdmin();
     const nav = wrapper.find('nav.admin__nav');
@@ -55,8 +60,6 @@ describe('AdminLayout', () => {
 
   it('renders a real Icon component for every link (icon-only, never emoji)', async () => {
     const { wrapper } = await mountAdmin();
-    // One rendered Icon per admin page — the icon-only contract, locked structurally
-    // (the package-wide emoji gate guards against glyphs).
     expect(wrapper.findAll('.admin__icon')).toHaveLength(16);
   });
 
@@ -82,7 +85,7 @@ describe('AdminLayout', () => {
 
   it('redirects the bare base/admin to the dashboard child rendered inside the layout', async () => {
     const { wrapper, router } = await mountAdmin();
-    await router.push('/app/admin'); // hit the index redirect explicitly
+    await router.push('/app/admin');
     await flushPromises();
     expect(router.currentRoute.value.name).toBe('admin-dashboard');
     expect(wrapper.find('.admin__content .stub-page').text()).toBe('admin-dashboard');
@@ -98,8 +101,29 @@ describe('AdminLayout', () => {
   });
 
   it('honors a custom router base in the link targets', async () => {
-    const { wrapper } = await mountAdmin('/portal');
+    const { wrapper } = await mountAdmin(buildAdminRoutes, '/portal');
     const users = wrapper.findAll('.admin__link').find((l) => l.text() === 'Users')!;
     expect(users.attributes('href')).toBe('/portal/admin/users');
+  });
+});
+
+describe('AdminLayout — hub set', () => {
+  it('renders only the 5 hub admin links, in order', async () => {
+    const { wrapper } = await mountAdmin(buildHubAdminRoutes);
+    const labels = wrapper.findAll('.admin__link').map((l) => l.text());
+    expect(labels).toEqual(['Dashboard', 'Users', 'Logs', 'Settings', 'Audit Logs']);
+  });
+
+  it('links the hub dashboard + audit logs to their /app/admin/* URLs', async () => {
+    const { wrapper } = await mountAdmin(buildHubAdminRoutes);
+    const audit = wrapper.findAll('.admin__link').find((l) => l.text() === 'Audit Logs')!;
+    expect(audit.attributes('href')).toBe('/app/admin/audit-logs');
+    const dash = wrapper.findAll('.admin__link').find((l) => l.text() === 'Dashboard')!;
+    expect(dash.attributes('href')).toBe('/app/admin/dashboard');
+  });
+
+  it('renders the hub dashboard as the bare-/admin landing page', async () => {
+    const { wrapper } = await mountAdmin(buildHubAdminRoutes);
+    expect(wrapper.find('.admin__content .stub-page').text()).toBe('admin-hub-dashboard');
   });
 });

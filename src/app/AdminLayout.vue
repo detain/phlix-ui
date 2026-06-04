@@ -1,25 +1,44 @@
 <script setup lang="ts">
 /**
- * AdminLayout (F1) — the admin section shell.
+ * AdminLayout (F1; H0 — composable page groups) — the admin section shell.
  *
- * A glass left sidebar listing the admin pages (derived from {@link adminMenu})
- * beside a `<RouterView>` content area. Rendered as the parent route of
- * `buildAdminRoutes()`, so every `/app/admin/*` page gets consistent navigation
- * chrome without the host shell having to render a nested menu. Presentational +
- * config-agnostic — the link list comes from `adminMenu(base)`, and the host shell
- * (top bar + atmosphere) still wraps it. Admin strings stay English, matching the
+ * A glass left sidebar listing the admin pages beside a `<RouterView>` content
+ * area. Rendered as the parent route of `buildAdminRoutes()`/`buildHubAdminRoutes()`,
+ * so every `/app/admin/*` page gets consistent navigation chrome without the host
+ * shell having to render a nested menu. Presentational + config-agnostic — the
+ * link list is built directly from the {@link AdminPage} list it is handed (the
+ * exact set the consumer mounted), so the server and hub render their own page
+ * groups with no shared-code branching. Admin strings stay English, matching the
  * admin pages and the R6.5c i18n cut-line.
  */
 import { computed } from 'vue';
 import { RouterView, RouterLink } from 'vue-router';
 import Icon from '../components/Icon.vue';
-import { adminMenu } from './admin';
-import type { MenuItem } from './types';
+import type { AdminPage } from './admin';
 
-const props = withDefaults(defineProps<{ base?: string }>(), { base: '/app' });
+// `buildAdminRoutes`/`buildHubAdminRoutes` always pass `pages` via the parent
+// route's `props`; the empty default only guards a bare mount with no page set.
+const props = withDefaults(defineProps<{ base?: string; pages?: AdminPage[] }>(), {
+  base: '/app',
+  pages: () => [],
+});
 
-/** The admin links, flattened out of the single `adminMenu` group. */
-const items = computed<MenuItem[]>(() => adminMenu(props.base)[0]?.children ?? []);
+interface SidebarLink {
+  id: string;
+  label: string;
+  icon: AdminPage['icon'];
+  to: string;
+}
+
+/** Sidebar links, built straight from the mounted page list. */
+const items = computed<SidebarLink[]>(() =>
+  props.pages.map((page) => ({
+    id: page.name,
+    label: page.label,
+    icon: page.icon,
+    to: `${props.base}/admin/${page.path}`,
+  })),
+);
 </script>
 
 <template>
