@@ -121,6 +121,9 @@ export const DEFAULT_MESSAGES = {
     pause: 'Pause',
     back: 'Back',
     nowPlaying: 'Now playing',
+    // Skip intro / outro markers (server playback-info)
+    skipIntro: 'Skip intro',
+    skipOutro: 'Skip outro',
     keyboardShortcuts: 'Keyboard shortcuts',
     pip: 'Picture-in-picture',
     exitPip: 'Exit picture-in-picture',

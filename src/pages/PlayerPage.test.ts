@@ -7,6 +7,13 @@ import Player from '../components/Player.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import type { MediaItem } from '../types/media-item';
 
+/** Server playback-info shape (markers + chapters; NO stream url). */
+interface PlaybackInfo {
+  intro_marker: { start_seconds: number; end_seconds: number } | null;
+  outro_marker: { start_seconds: number; end_seconds: number } | null;
+  chapters: { start_seconds: number; end_seconds?: number; title?: string }[];
+}
+
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
     id: 'm1',
@@ -45,12 +52,16 @@ function errorResponse(status = 500, body: unknown = { error: 'boom' }): Respons
   } as unknown as Response;
 }
 
-/** A full happy-path fetch sequence: by-id → playback-info → up-next list. */
-function okFetch(item: MediaItem, playbackUrl: string | null = 'https://cdn/play.mp4', items: MediaItem[] = []) {
+/** A full happy-path fetch sequence: by-id → playback-info → up-next list.
+ *  The real server wraps the item as `{ item }` and returns playback-info as
+ *  `{ intro_marker, outro_marker, chapters }` (NO stream url — playback is always the
+ *  deterministic /media/:id/stream endpoint). Pass `playback` to seed markers/chapters,
+ *  or `null` to make playback-info 404 (absent). */
+function okFetch(item: MediaItem, playback: Partial<PlaybackInfo> | null = {}, items: MediaItem[] = []) {
   const fn = vi.fn();
-  fn.mockResolvedValueOnce(jsonResponse(item)); // GET /api/v1/media/:id
-  if (playbackUrl === null) fn.mockResolvedValueOnce(errorResponse(404)); // playback-info absent
-  else fn.mockResolvedValueOnce(jsonResponse({ url: playbackUrl })); // playback-info hint
+  fn.mockResolvedValueOnce(jsonResponse({ item })); // GET /api/v1/media/:id
+  if (playback === null) fn.mockResolvedValueOnce(errorResponse(404)); // playback-info absent
+  else fn.mockResolvedValueOnce(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [], ...playback }));
   fn.mockResolvedValue(jsonResponse({ items, total: items.length })); // up-next queue (+ any tail)
   return fn;
 }
@@ -100,19 +111,19 @@ describe('PlayerPage — load + stream resolution', () => {
     expect(w.findComponent(Player).exists()).toBe(false);
   });
 
-  it('fetches the title by id and renders <Player> with the playback-info stream url', async () => {
-    const fetchMock = okFetch(media({ id: 'm1', name: 'Dune: Part Two' }), 'https://cdn/dune.mp4');
+  it('fetches the title by id (unwrapping { item }) and renders <Player> with the direct-stream url', async () => {
+    const fetchMock = okFetch(media({ id: 'm1', name: 'Dune: Part Two' }));
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     const player = w.findComponent(Player);
     expect(player.exists()).toBe(true);
     expect((player.props('media') as MediaItem).name).toBe('Dune: Part Two');
-    expect(player.props('streamUrl')).toBe('https://cdn/dune.mp4');
+    expect(player.props('streamUrl')).toBe('/media/m1/stream');
     // first call hit the by-id endpoint
     expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/media/m1');
   });
 
-  it('falls back to the direct /media/:id/stream url when playback-info is absent', async () => {
+  it('still streams from /media/:id/stream when playback-info is absent (404)', async () => {
     const fetchMock = okFetch(media({ id: 'm1' }), null); // playback-info → 404
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -132,8 +143,8 @@ describe('PlayerPage — load + stream resolution', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(errorResponse(500)) // initial by-id fails
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1' }))) // retry by-id
-      .mockResolvedValueOnce(jsonResponse({ url: 'https://cdn/m1.mp4' })) // retry playback-info
+      .mockResolvedValueOnce(jsonResponse({ item: media({ id: 'm1' }) })) // retry by-id
+      .mockResolvedValueOnce(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] })) // retry playback-info
       .mockResolvedValue(jsonResponse({ items: [], total: 0 })); // retry queue
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -148,11 +159,50 @@ describe('PlayerPage — load + stream resolution', () => {
   });
 });
 
+describe('PlayerPage — playback-info (chapters + skip markers)', () => {
+  it('maps server chapters (start_seconds → start) onto the Player', async () => {
+    const fetchMock = okFetch(media({ id: 'm1' }), {
+      chapters: [
+        { start_seconds: 0, end_seconds: 60, title: 'Cold open' },
+        { start_seconds: 90, end_seconds: 200 },
+      ],
+    });
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    expect(w.findComponent(Player).props('chapters')).toEqual([
+      { start: 0, title: 'Cold open' },
+      { start: 90, title: undefined },
+    ]);
+  });
+
+  it('maps intro/outro markers (start_seconds/end_seconds → start/end) onto the Player', async () => {
+    const fetchMock = okFetch(media({ id: 'm1' }), {
+      intro_marker: { start_seconds: 5, end_seconds: 35 },
+      outro_marker: { start_seconds: 600, end_seconds: 660 },
+    });
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect(player.props('introMarker')).toEqual({ start: 5, end: 35 });
+    expect(player.props('outroMarker')).toEqual({ start: 600, end: 660 });
+  });
+
+  it('passes empty chapters + null markers when playback-info is absent', async () => {
+    const fetchMock = okFetch(media({ id: 'm1' }), null); // playback-info 404
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect(player.props('chapters')).toEqual([]);
+    expect(player.props('introMarker')).toBeNull();
+    expect(player.props('outroMarker')).toBeNull();
+  });
+});
+
 describe('PlayerPage — up-next queue', () => {
   it('builds a genre-scoped queue (excludes self, caps at 12) for the up-next card', async () => {
     const base = media({ id: 'm1', genres: ['Sci-Fi'] });
     const items: MediaItem[] = [base, ...Array.from({ length: 13 }, (_, i) => media({ id: `s${i}` }))];
-    const fetchMock = okFetch(base, 'https://cdn/m1.mp4', items);
+    const fetchMock = okFetch(base, {}, items);
     await mountAt('m1', fetchMock);
     await flushPromises();
     const player = usePlayerStore();
@@ -164,7 +214,7 @@ describe('PlayerPage — up-next queue', () => {
   });
 
   it('skips the queue fetch when the title has no genres', async () => {
-    const fetchMock = okFetch(media({ id: 'm1', genres: [] }), 'https://cdn/m1.mp4');
+    const fetchMock = okFetch(media({ id: 'm1', genres: [] }));
     await mountAt('m1', fetchMock);
     await flushPromises();
     const player = usePlayerStore();
@@ -194,13 +244,13 @@ describe('PlayerPage — navigation + handoff', () => {
   });
 
   it('hands off to the mini-player on route-leave when a session is live', async () => {
-    const fetchMock = okFetch(media({ id: 'm1' }), 'https://cdn/m1.mp4');
+    const fetchMock = okFetch(media({ id: 'm1' }));
     const { router } = await mountAt('m1', fetchMock);
     await flushPromises();
     const player = usePlayerStore();
     expect(player.miniPlayer).toBe(false);
     expect(player.current?.id).toBe('m1'); // <Player> seeded the store
-    expect(player.streamUrl).toBe('https://cdn/m1.mp4');
+    expect(player.streamUrl).toBe('/media/m1/stream');
 
     await router.push('/app'); // leave the player route
     await flushPromises();
@@ -223,7 +273,7 @@ describe('PlayerPage — navigation + handoff', () => {
 describe('PlayerPage — resume + theater + ambient', () => {
   it('restores the resume prompt on open from the persisted resume map', async () => {
     localStorage.setItem('phlix.resume', JSON.stringify({ m1: 500 }));
-    const fetchMock = okFetch(media({ id: 'm1' }), 'https://cdn/m1.mp4');
+    const fetchMock = okFetch(media({ id: 'm1' }));
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     // the resume prompt is owned by <Player> (R3.8) — this proves the page feeds the
@@ -242,7 +292,7 @@ describe('PlayerPage — resume + theater + ambient', () => {
   });
 
   it('escapes the poster url in the ambient backdrop so it cannot break out of CSS url()', async () => {
-    const fetchMock = okFetch(media({ id: 'm1', poster_url: 'evil.jpg") ; background: url("x' }), 'https://cdn/m1.mp4');
+    const fetchMock = okFetch(media({ id: 'm1', poster_url: 'evil.jpg") ; background: url("x' }));
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     const style = w.find('.player-page__ambient').attributes('style') ?? '';
@@ -271,8 +321,8 @@ describe('PlayerPage — edge cases', () => {
   it('treats a failed up-next queue fetch as non-fatal (player still renders, empty queue)', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1', genres: ['Sci-Fi'] }))) // by-id
-      .mockResolvedValueOnce(jsonResponse({ url: 'https://cdn/m1.mp4' })) // playback-info
+      .mockResolvedValueOnce(jsonResponse({ item: media({ id: 'm1', genres: ['Sci-Fi'] }) })) // by-id
+      .mockResolvedValueOnce(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] })) // playback-info
       .mockRejectedValueOnce(new Error('queue down')); // up-next list rejects
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -317,7 +367,7 @@ describe('PlayerPage — teardown', () => {
     expect(w.find('[role="status"][aria-busy="true"]').exists()).toBe(true);
 
     w.unmount(); // tear down while the by-id request is outstanding
-    resolveFetch(jsonResponse(media({ id: 'm1' })));
+    resolveFetch(jsonResponse({ item: media({ id: 'm1' }) }));
     await flushPromises();
 
     expect(w.findComponent(Player).exists()).toBe(false);

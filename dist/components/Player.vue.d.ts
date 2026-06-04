@@ -1,5 +1,6 @@
 import type { MediaItem } from '../types/media-item';
 import { type Chapter } from './player/Scrubber.vue';
+import { type TimeMarker } from './player/playback';
 import type { SelectOptionInput } from './ui/listbox';
 type __VLS_Props = {
     media: MediaItem;
@@ -8,6 +9,10 @@ type __VLS_Props = {
     idleTimeout?: number;
     /** Chapter markers for the scrubber (server hint / VTT — optional). */
     chapters?: Chapter[];
+    /** Intro range (server playback-info) — shows a "Skip intro" button while in-range. */
+    introMarker?: TimeMarker | null;
+    /** Outro range (server playback-info) — shows a "Skip outro" button while in-range. */
+    outroMarker?: TimeMarker | null;
     /** Preview-thumbnail source for a given time (VTT sprite / server hint — optional). */
     thumbnailAt?: (seconds: number) => string | null | undefined;
     /** Server-supplied stream-quality variants (optional; the menu hides when empty). */

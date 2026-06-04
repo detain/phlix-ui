@@ -33,7 +33,8 @@ import AmbientCanvas from './player/AmbientCanvas.vue';
 import ResumePrompt from './player/ResumePrompt.vue';
 import UpNext from './player/UpNext.vue';
 import TranscodeNotice from './player/TranscodeNotice.vue';
-import { needsTranscode, isFatalMediaError, UPNEXT_COUNTDOWN_SECONDS } from './player/playback';
+import SkipButton from './player/SkipButton.vue';
+import { needsTranscode, isFatalMediaError, UPNEXT_COUNTDOWN_SECONDS, type TimeMarker } from './player/playback';
 import {
   listSubtitleTracks,
   listAudioTracks,
@@ -51,6 +52,10 @@ const props = defineProps<{
   idleTimeout?: number;
   /** Chapter markers for the scrubber (server hint / VTT — optional). */
   chapters?: Chapter[];
+  /** Intro range (server playback-info) — shows a "Skip intro" button while in-range. */
+  introMarker?: TimeMarker | null;
+  /** Outro range (server playback-info) — shows a "Skip outro" button while in-range. */
+  outroMarker?: TimeMarker | null;
   /** Preview-thumbnail source for a given time (VTT sprite / server hint — optional). */
   thumbnailAt?: (seconds: number) => string | null | undefined;
   /** Server-supplied stream-quality variants (optional; the menu hides when empty). */
@@ -659,6 +664,15 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </div>
+
+      <!-- skip intro/outro (R3.10) — above the controls, stays visible while chrome hides -->
+      <SkipButton
+        v-if="!transcodeNeeded"
+        :position="player.position"
+        :intro-marker="introMarker"
+        :outro-marker="outroMarker"
+        @skip="onSeek"
+      />
 
       <!-- resume prompt on open (R3.8) -->
       <ResumePrompt
