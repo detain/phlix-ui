@@ -103,6 +103,8 @@ export { usePreconnect } from './composables/usePreconnect';
 export type { UsePreconnectOptions } from './composables/usePreconnect';
 export { useResumeSync } from './composables/useResumeSync';
 export type { UseResumeSync } from './composables/useResumeSync';
+export { useResumeReporter } from './composables/useResumeReporter';
+export type { UseResumeReporter } from './composables/useResumeReporter';
 export { deriveAccentVars } from './composables/color';
 export { useMessages } from './composables/useMessages';
 export type { UseMessages } from './composables/useMessages';

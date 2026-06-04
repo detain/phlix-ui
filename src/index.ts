@@ -261,6 +261,8 @@ export { usePreconnect } from './composables/usePreconnect';
 export type { UsePreconnectOptions } from './composables/usePreconnect';
 export { useResumeSync } from './composables/useResumeSync';
 export type { UseResumeSync } from './composables/useResumeSync';
+export { useResumeReporter } from './composables/useResumeReporter';
+export type { UseResumeReporter } from './composables/useResumeReporter';
 export { deriveAccentVars } from './composables/color';
 
 // i18n-readiness seam (R6.5c) — English defaults + a deep-partial override map.

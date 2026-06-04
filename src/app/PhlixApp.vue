@@ -62,6 +62,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
 import { useResumeSync } from '../composables/useResumeSync';
+import { useResumeReporter } from '../composables/useResumeReporter';
 import { useMessages } from '../composables/useMessages';
 import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 
@@ -118,6 +119,11 @@ const auth = useAuthStore();
 // load; the watch re-runs it on a later login.
 const { syncResume } = useResumeSync();
 watch(() => auth.isLoggedIn, (loggedIn) => { if (loggedIn) void syncResume(); }, { immediate: true });
+
+// Write path: report THIS device's playback position back to the server (throttled,
+// best-effort) so resume syncs cross-device. Mounted once here — it watches the
+// shared player store, covering both the full player and the mini-player.
+useResumeReporter();
 
 const branding = computed<BrandingConfig>(() => config?.branding ?? {});
 const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');

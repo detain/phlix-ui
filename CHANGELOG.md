@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.17.0] - 2026-06-03
+
+### Added
+- **Cross-device resume (write path) — `useResumeReporter`.** Completes the resume sync started in v0.16.0
+  (which only read server positions): the web player now REPORTS its own playback position to the server,
+  so a title paused on the web resumes on the TV. `useResumeReporter()` lazily creates a per-browser
+  session (`POST /api/v1/sessions`, idempotent per a stable `phlix.deviceId` it generates + persists) and
+  reports progress to it (`POST /api/v1/sessions/{id}/progress`, position in 100-ns ticks) — the same
+  channel Roku/mobile use, so playback aggregates into the user's `continue-watching`. Throttled (15 s
+  checkpoints, plus an immediate one on each play/pause transition) and gated to meaningful, signed-in,
+  past-the-30s-floor progress; every step is best-effort (logged-out / sub-threshold / failed reports are
+  silent no-ops, with the local resume map as the fallback). Mounted once in the shell, watching the
+  shared player store (so it covers both the full player and the mini-player). Exports `useResumeReporter`
+  + `UseResumeReporter`. **Requires the server's `POST /api/v1/sessions` create endpoint (phlix-server).**
+
 ## [0.16.0] - 2026-06-03
 
 ### Added
