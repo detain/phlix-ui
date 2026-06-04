@@ -44,6 +44,10 @@ function errorResponse(status = 500, body: unknown = { error: 'boom' }): Respons
     text: async () => JSON.stringify(body),
   } as unknown as Response;
 }
+/** The by-id endpoint wraps the item as { item } (matches the real server). */
+function byId(item: MediaItem): Response {
+  return jsonResponse({ item });
+}
 
 const stub = { template: '<div />' };
 function makeRouter(): Router {
@@ -85,7 +89,7 @@ describe('MediaDetailPage — load', () => {
   it('fetches the title by id and renders MediaDetail', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1', name: 'Dune' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune' })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -111,7 +115,7 @@ describe('MediaDetailPage — similar', () => {
     const similar: MediaItem[] = [base, ...Array.from({ length: 13 }, (_, i) => media({ id: `s${i}` }))];
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(base))
+      .mockResolvedValueOnce(byId(base))
       .mockResolvedValueOnce(jsonResponse({ items: similar, total: similar.length }));
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -125,7 +129,7 @@ describe('MediaDetailPage — similar', () => {
   });
 
   it('skips the similar fetch when the title has no genres', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(media({ id: 'm1', genres: [] })));
+    const fetchMock = vi.fn().mockResolvedValueOnce(byId(media({ id: 'm1', genres: [] })));
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     expect(fetchMock).toHaveBeenCalledTimes(1); // only the by-id fetch
@@ -137,7 +141,7 @@ describe('MediaDetailPage — actions & navigation', () => {
   it('routes Play to the player', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1' })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
     const { w, router } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -149,7 +153,7 @@ describe('MediaDetailPage — actions & navigation', () => {
   it('toasts on watchlist', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1', name: 'Dune' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune' })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
     const { w } = await mountAt('m1', fetchMock);
     const toasts = useToastStore();
@@ -161,7 +165,7 @@ describe('MediaDetailPage — actions & navigation', () => {
   it('goes back via router.back from the detail back affordance', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1' })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
     const { w, router } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -173,7 +177,7 @@ describe('MediaDetailPage — actions & navigation', () => {
   it('treats a failed similar fetch as non-fatal (empty rail, title still shows)', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1', genres: ['Sci-Fi'] })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1', genres: ['Sci-Fi'] })))
       .mockRejectedValueOnce(new Error('similar down'));
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -185,9 +189,9 @@ describe('MediaDetailPage — actions & navigation', () => {
   it('re-fetches when navigating to another title (info on a similar card)', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1', name: 'First' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'First' })))
       .mockResolvedValueOnce(jsonResponse({ items: [], total: 0 }))
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm2', name: 'Second' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm2', name: 'Second' })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
     const { w, router } = await mountAt('m1', fetchMock);
     await flushPromises();
@@ -213,7 +217,7 @@ describe('MediaDetailPage — teardown', () => {
     expect(w.find('[role="status"][aria-busy="true"]').exists()).toBe(true);
 
     w.unmount(); // tear down while the by-id request is outstanding
-    resolveFetch(jsonResponse(media({ id: 'm1' })));
+    resolveFetch(byId(media({ id: 'm1' })));
     await flushPromises();
 
     expect(w.findComponent(MediaDetail).exists()).toBe(false);
@@ -226,7 +230,7 @@ describe('MediaDetailPage — resume', () => {
     localStorage.setItem('phlix.resume', JSON.stringify({ m1: 500 }));
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse(media({ id: 'm1' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1' })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();

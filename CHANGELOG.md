@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.18.0] - 2026-06-04
+
+### Added
+- **Skip intro / outro buttons — `SkipButton.vue` + Player markers.** The player now consumes the
+  server's intro/outro markers (`GET /api/v1/media/:id/playback-info`): while the playhead is inside a
+  marker's `[start, end)` range, a "Skip intro" / "Skip outro" button appears (outside the auto-hiding
+  chrome, the convention users expect) and seeks to the marker's end on click — skipping the intro jumps
+  into the show; skipping the outro/credits jumps to the end so the up-next card can advance. New
+  `SkipButton` component (position-driven, stateless, emits the seek target); new `introMarker` /
+  `outroMarker` props on `<Player>`; new `TimeMarker` type + `player.skipIntro` / `player.skipOutro` i18n keys.
+- **Chapter ticks from the server.** `PlayerPage` now maps the playback-info `chapters`
+  (`start_seconds` → `start`) onto the Scrubber, so chapter ticks render for real titles.
+
+### Fixed
+- **Player/Detail `{ item }` contract drift.** `MediaDetailPage` (and the `PlayerPage` by-id read) were
+  treating `GET /api/v1/media/:id` as if it returned a bare `MediaItem`, but the server wraps it as
+  `{ item }` — detail pages would have rendered blank against the real backend. Both now unwrap
+  `response.item`.
+- **Dead playback-info `url` read.** `PlayerPage` read a non-existent `info.url` field from playback-info
+  to resolve the stream; playback-info never carried a url. The stream is now always the deterministic
+  `/media/:id/stream` direct endpoint (`streamUrlFor`), and playback-info is used only for its real payload
+  (markers + chapters). Markers/chapters are best-effort — an absent / 404 playback-info just disables the
+  skip buttons + chapter ticks without blocking playback.
+
+### Changed
+- **Repo hygiene:** untracked a broken `node_modules` symlink that had been committed into the tree (it
+  pointed at its own absolute path — a self-referential loop that broke `node_modules` resolution for
+  anyone checking the package out). It is `.gitignore`d as intended now.
+
 ## [0.17.0] - 2026-06-03
 
 ### Added
