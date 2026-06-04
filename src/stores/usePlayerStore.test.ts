@@ -254,3 +254,30 @@ describe('usePlayerStore — Media Session', () => {
     expect(setPositionState).not.toHaveBeenCalled();
   });
 });
+
+describe('usePlayerStore — mergeServerResume (cross-device read sync)', () => {
+  it('fills gaps from the server map but never overwrites a local position', () => {
+    const p = usePlayerStore();
+    p.saveResume('local-1', 120, 600); // a local position from this device
+    expect(p.resumePositionFor('local-1')).toBe(120);
+
+    p.mergeServerResume({ 'local-1': 999, 'server-1': 300 });
+
+    expect(p.resumePositionFor('local-1')).toBe(120); // local wins
+    expect(p.resumePositionFor('server-1')).toBe(300); // server fills the gap
+  });
+
+  it('ignores non-positive server positions', () => {
+    const p = usePlayerStore();
+    p.mergeServerResume({ a: 0, b: -5, c: 42 });
+    expect(p.resumePositionFor('a')).toBeNull();
+    expect(p.resumePositionFor('b')).toBeNull();
+    expect(p.resumePositionFor('c')).toBe(42);
+  });
+
+  it('persists the merged positions to localStorage', () => {
+    const p = usePlayerStore();
+    p.mergeServerResume({ x: 77 });
+    expect(JSON.parse(localStorage.getItem('phlix.resume') ?? '{}')).toEqual({ x: 77 });
+  });
+});

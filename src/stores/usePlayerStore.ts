@@ -10,6 +10,9 @@ export const RESUME_MAX_RATIO = 0.95;
 /** Throttle window for persisting the resume map to localStorage. */
 const RESUME_PERSIST_THROTTLE = 5000;
 const RESUME_KEY = 'phlix.resume';
+/** 100-nanosecond ticks per second — the server reports playback position in these
+ *  (Jellyfin-style) ticks; the local resume map is in whole seconds. */
+export const TICKS_PER_SECOND = 10_000_000;
 
 export interface MediaSessionHandlers {
   onPlay?: () => void;
@@ -106,6 +109,30 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   function clearResume(id: string): void {
     delete resumeMap.value[id];
     persistResume(true);
+  }
+
+  /**
+   * Merge server-side resume positions (seconds, keyed by media id) into the local
+   * map — the cross-device resume READ path. Positions recorded on OTHER devices
+   * (Roku/mobile, via their playback sessions) reach the web player here from
+   * `GET /api/v1/users/me/continue-watching`, so a title you paused on the TV
+   * offers to resume on the web.
+   *
+   * Fill-gaps policy: a position already in the local map (set by THIS device's
+   * recent watching) always wins; server positions only seed ids the local map
+   * doesn't already track. The local map carries no per-id timestamps, so this
+   * conservative choice never overwrites a fresh local position with a possibly
+   * staler server one. Persists once if anything changed.
+   */
+  function mergeServerResume(positions: Record<string, number>): void {
+    let changed = false;
+    for (const [id, seconds] of Object.entries(positions)) {
+      if (id && !(id in resumeMap.value) && seconds > 0) {
+        resumeMap.value[id] = Math.floor(seconds);
+        changed = true;
+      }
+    }
+    if (changed) persistResume(true);
   }
 
   // ---- transport ----------------------------------------------------------
@@ -273,6 +300,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     saveResume,
     resumePositionFor,
     clearResume,
+    mergeServerResume,
     setCurrent,
     updateProgress,
     play,

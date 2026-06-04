@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.16.0] - 2026-06-03
+
+### Added
+- **Cross-device resume (read path) — `useResumeSync` + `usePlayerStore.mergeServerResume`.** The web
+  player's resume map was localStorage-only, so a title paused on another device (Roku/mobile, which
+  report progress through their playback sessions) never surfaced on the web. The new `useResumeSync()`
+  composable pulls the user's server-side resume positions from the existing
+  `GET /api/v1/users/me/continue-watching` (already aggregated per-user across sessions), converts the
+  100-ns `position_ticks` to seconds, and merges them via `usePlayerStore.mergeServerResume()` — which
+  uses a **fill-gaps** policy (a local position from this device always wins; server positions only seed
+  ids the local map doesn't track, since the local map has no per-id timestamps to reconcile against).
+  The shell runs it on sign-in (best-effort; failures leave the local map untouched). The merged map
+  feeds both the player's resume prompt and the Browse "Continue Watching" rail. Exports `useResumeSync`,
+  `UseResumeSync`, and the `TICKS_PER_SECOND` constant.
+  - **Out of scope (follow-up):** the web player reporting its OWN progress back to the server (the write
+    path) needs the web player to participate in the session model — deferred so resume isn't fragmented
+    across two stores.
+
 ## [0.15.0] - 2026-06-03
 
 ### Added

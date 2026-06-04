@@ -3,6 +3,9 @@ import type { MediaItem } from '../types/media-item';
 export declare const RESUME_MIN_SECONDS = 30;
 /** …and before this fraction of the runtime (else it's effectively finished). */
 export declare const RESUME_MAX_RATIO = 0.95;
+/** 100-nanosecond ticks per second — the server reports playback position in these
+ *  (Jellyfin-style) ticks; the local resume map is in whole seconds. */
+export declare const TICKS_PER_SECOND = 10000000;
 export interface MediaSessionHandlers {
     onPlay?: () => void;
     onPause?: () => void;
@@ -120,6 +123,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     saveResume: (id: string, pos: number, dur: number) => void;
     resumePositionFor: (id: string | null | undefined) => number | null;
     clearResume: (id: string) => void;
+    mergeServerResume: (positions: Record<string, number>) => void;
     setCurrent: (media: MediaItem, opts?: {
         resetPosition?: boolean;
         streamUrl?: string;
@@ -243,6 +247,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     saveResume: (id: string, pos: number, dur: number) => void;
     resumePositionFor: (id: string | null | undefined) => number | null;
     clearResume: (id: string) => void;
+    mergeServerResume: (positions: Record<string, number>) => void;
     setCurrent: (media: MediaItem, opts?: {
         resetPosition?: boolean;
         streamUrl?: string;
@@ -366,6 +371,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     saveResume: (id: string, pos: number, dur: number) => void;
     resumePositionFor: (id: string | null | undefined) => number | null;
     clearResume: (id: string) => void;
+    mergeServerResume: (positions: Record<string, number>) => void;
     setCurrent: (media: MediaItem, opts?: {
         resetPosition?: boolean;
         streamUrl?: string;
@@ -388,4 +394,4 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "play" | "pause" | "closePlayer" | "next" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "setCurrent" | "updateProgress" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;
+}, "play" | "pause" | "closePlayer" | "next" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "mergeServerResume" | "setCurrent" | "updateProgress" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;

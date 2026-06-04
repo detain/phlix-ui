@@ -61,6 +61,7 @@ import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
+import { useResumeSync } from '../composables/useResumeSync';
 import { useMessages } from '../composables/useMessages';
 import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 
@@ -110,6 +111,14 @@ usePreconnect(
 );
 
 const auth = useAuthStore();
+
+// Cross-device resume: once authenticated, pull the user's server-side resume
+// positions and merge them into the local map (best-effort), so a title paused on
+// another device offers to resume here. `immediate` covers an already-signed-in
+// load; the watch re-runs it on a later login.
+const { syncResume } = useResumeSync();
+watch(() => auth.isLoggedIn, (loggedIn) => { if (loggedIn) void syncResume(); }, { immediate: true });
+
 const branding = computed<BrandingConfig>(() => config?.branding ?? {});
 const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');
 // `requiresAdmin` items (e.g. the "Admin" entry) show only for an authenticated

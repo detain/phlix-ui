@@ -101,6 +101,8 @@ export { useOnline } from './composables/useOnline';
 export { usePrefetch } from './composables/usePrefetch';
 export { usePreconnect } from './composables/usePreconnect';
 export type { UsePreconnectOptions } from './composables/usePreconnect';
+export { useResumeSync } from './composables/useResumeSync';
+export type { UseResumeSync } from './composables/useResumeSync';
 export { deriveAccentVars } from './composables/color';
 export { useMessages } from './composables/useMessages';
 export type { UseMessages } from './composables/useMessages';
