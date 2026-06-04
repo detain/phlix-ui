@@ -32,6 +32,15 @@ export declare function needsTranscode(...sources: (string | null | undefined)[]
  * black frame. Network/abort errors (1, 2) are NOT treated as transcode-needed.
  */
 export declare function isFatalMediaError(video: HTMLVideoElement | null | undefined): boolean;
+/**
+ * An intro / outro time range (seconds), from `GET /api/v1/media/:id/playback-info`.
+ * `start`/`end` are absolute positions in the title; the player shows a "Skip"
+ * affordance while the playhead sits inside `[start, end)` and seeks to `end` on use.
+ */
+export interface TimeMarker {
+    start: number;
+    end: number;
+}
 /** Default end-of-video countdown in seconds (matches the mockup's "Starts in 8s"). */
 export declare const UPNEXT_COUNTDOWN_SECONDS = 8;
 /** Up-next ring radius (the locked mockup's `circle r="15"` on a 36×36 viewBox). */

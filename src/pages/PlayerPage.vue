@@ -4,10 +4,11 @@
  *
  * Wires the redesigned <Player> (R3.1–R3.8) to the real backend + the singleton
  * usePlayerStore:
- *  - resolves the playable URL (GET /api/v1/media/:id/playback-info → {url} when the
- *    server offers a hint, else the deterministic direct-stream /media/:id/stream
+ *  - resolves the playable URL (the deterministic direct-stream /media/:id/stream
  *    endpoint) and supplies a SYNCHRONOUS `streamUrlFor` resolver so the player's
  *    up-next auto-advance threads a fresh URL into usePlayerStore.next();
+ *  - reads GET /api/v1/media/:id/playback-info for intro/outro skip markers + chapter
+ *    ticks (best-effort enrichment — absent markers just disable those affordances);
  *  - builds a genre-scoped "up next" queue (usePlayerStore.setQueue) so the R3.8
  *    up-next card + autoplay actually have something to advance to;
  *  - handles `play-next` by navigating the route to the new id (URL stays correct;
@@ -27,6 +28,8 @@ import { ApiClient } from '../api/client';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import Player from '../components/Player.vue';
+import type { Chapter } from '../components/player/Scrubber.vue';
+import type { TimeMarker } from '../components/player/playback';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -34,6 +37,19 @@ import Skeleton from '../components/ui/Skeleton.vue';
 interface MediaListResponse {
   items: MediaItem[];
   total: number;
+}
+
+/** Server playback-info contract (GET /api/v1/media/:id/playback-info): intro/outro
+ *  skip markers + chapter ticks. Times are in seconds. There is NO stream url —
+ *  playback uses the deterministic /media/:id/stream endpoint (streamUrlFor). */
+interface ServerMarker {
+  start_seconds: number;
+  end_seconds: number;
+}
+interface PlaybackInfo {
+  intro_marker: ServerMarker | null;
+  outro_marker: ServerMarker | null;
+  chapters: { start_seconds: number; end_seconds?: number; title?: string | null }[];
 }
 
 // createPhlixApp provides `apiBase` as a plain string; accept a ComputedRef too so a
@@ -48,6 +64,9 @@ const player = usePlayerStore();
 
 const item = ref<MediaItem | null>(null);
 const streamUrl = ref('');
+const chapters = ref<Chapter[]>([]);
+const introMarker = ref<TimeMarker | null>(null);
+const outroMarker = ref<TimeMarker | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const theater = ref(false);
@@ -75,6 +94,11 @@ function isAbort(e: unknown): boolean {
  *  (which can't await playback-info) always threads a fresh URL via player.next(). */
 function streamUrlFor(m: MediaItem): string {
   return `${apiBase.value}/media/${encodeURIComponent(m.id)}/stream`;
+}
+
+/** Map a server marker ({start_seconds,end_seconds}) to a client TimeMarker, or null. */
+function toMarker(m: ServerMarker | null | undefined): TimeMarker | null {
+  return m ? { start: m.start_seconds, end: m.end_seconds } : null;
 }
 
 /** Genre-scoped "up next" queue so the end-of-video up-next card + autoplay have
@@ -107,6 +131,9 @@ async function load(): Promise<void> {
   controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
   loading.value = true;
   error.value = null;
+  chapters.value = [];
+  introMarker.value = null;
+  outroMarker.value = null;
   player.hideMiniPlayer(); // the full player owns playback while we're on this route
   if (!id) {
     error.value = 'No media id provided';
@@ -115,22 +142,29 @@ async function load(): Promise<void> {
   }
   try {
     const client = new ApiClient({ baseUrl: apiBase.value });
-    const data = await client.get<MediaItem>(
+    const response = await client.get<{ item: MediaItem }>(
       `/api/v1/media/${encodeURIComponent(id)}`,
       undefined,
       controller?.signal,
     );
     if (disposed) return;
-    item.value = data;
-    // Prefer the server's playback hint; fall back to the direct-stream endpoint. The
-    // hint is best-effort — a 404 / non-JSON / slow response never blocks playback.
+    const mediaItem = response.item;
+    item.value = mediaItem;
+    // Playback is the deterministic direct-stream endpoint (synchronous, so up-next
+    // auto-advance threads the same resolver). Resolve it up front.
+    streamUrl.value = streamUrlFor(mediaItem);
+    // Enrich with intro/outro skip markers + chapter ticks from playback-info. Best-
+    // effort: a 404 / non-JSON / slow response just leaves them empty (no skip buttons,
+    // no chapter ticks) and never blocks playback.
     const info = await client
-      .get<{ url?: string }>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, controller?.signal)
+      .get<PlaybackInfo>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, controller?.signal)
       .catch(() => null);
     if (disposed) return;
-    streamUrl.value = info?.url || streamUrlFor(data);
+    chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, title: c.title ?? undefined }));
+    introMarker.value = toMarker(info?.intro_marker);
+    outroMarker.value = toMarker(info?.outro_marker);
     loading.value = false;
-    void loadQueue(client, data);
+    void loadQueue(client, mediaItem);
   } catch (e) {
     if (disposed || isAbort(e)) return;
     error.value = e instanceof Error ? e.message : 'Failed to load media';
@@ -205,6 +239,9 @@ function onTheater(active: boolean): void {
         :media="item"
         :stream-url="streamUrl"
         :stream-url-for="streamUrlFor"
+        :chapters="chapters"
+        :intro-marker="introMarker"
+        :outro-marker="outroMarker"
         @back="onBack"
         @play-next="onPlayNext"
         @theater="onTheater"

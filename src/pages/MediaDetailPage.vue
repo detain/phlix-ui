@@ -88,8 +88,14 @@ async function load(): Promise<void> {
   }
   try {
     const client = new ApiClient({ baseUrl: apiBase.value });
-    const data = await client.get<MediaItem>(`/api/v1/media/${encodeURIComponent(id)}`, undefined, controller?.signal);
+    // The server wraps the item as { item } (matches getMediaItem / WebPortalRouter).
+    const response = await client.get<{ item: MediaItem }>(
+      `/api/v1/media/${encodeURIComponent(id)}`,
+      undefined,
+      controller?.signal,
+    );
     if (disposed) return;
+    const data = response.item;
     item.value = data;
     loading.value = false;
     void loadSimilar(client, data);

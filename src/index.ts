@@ -175,6 +175,7 @@ export { default as AmbientCanvas } from './components/player/AmbientCanvas.vue'
 export { default as ResumePrompt } from './components/player/ResumePrompt.vue';
 export { default as UpNext } from './components/player/UpNext.vue';
 export { default as TranscodeNotice } from './components/player/TranscodeNotice.vue';
+export { default as SkipButton } from './components/player/SkipButton.vue';
 export {
   needsTranscode,
   extensionOf,
@@ -186,6 +187,7 @@ export {
   UPNEXT_RING_RADIUS,
   UPNEXT_RING_CIRCUMFERENCE,
 } from './components/player/playback';
+export type { TimeMarker } from './components/player/playback';
 export {
   averageRegion,
   sampleAmbient,

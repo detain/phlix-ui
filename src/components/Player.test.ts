@@ -5,6 +5,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import Player from './Player.vue';
 import Scrubber from './player/Scrubber.vue';
 import AmbientCanvas from './player/AmbientCanvas.vue';
+import SkipButton from './player/SkipButton.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import type { MediaItem } from '../types/media-item';
@@ -56,7 +57,14 @@ function stubVideo(el: HTMLVideoElement, props: Partial<Record<'currentTime' | '
 
 const mounted: ReturnType<typeof mount>[] = [];
 function mountPlayer(
-  props: Partial<{ media: MediaItem; streamUrl: string; idleTimeout: number; chapters: { start: number; title?: string }[] }> = {},
+  props: Partial<{
+    media: MediaItem;
+    streamUrl: string;
+    idleTimeout: number;
+    chapters: { start: number; title?: string }[];
+    introMarker: { start: number; end: number } | null;
+    outroMarker: { start: number; end: number } | null;
+  }> = {},
 ) {
   const w = mount(Player, {
     props: { media: media(), streamUrl: 'http://x/stream', ...props },
@@ -247,6 +255,44 @@ describe('Player — Scrubber integration', () => {
     expect(scrub.props('position')).toBe(40);
     expect(scrub.props('duration')).toBe(200);
     expect(scrub.props('chapters')).toEqual(chapters);
+  });
+
+  it('shows "Skip intro" only inside the intro marker and seeks to its end on click', async () => {
+    const { w, video, state } = mountPlayer({ introMarker: { start: 5, end: 35 } });
+    state.duration = 600;
+    state.currentTime = 2; // before the window
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    expect(w.findComponent(SkipButton).find('button').exists()).toBe(false);
+    state.currentTime = 10; // inside the window
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    const btn = w.findComponent(SkipButton).find('button');
+    expect(btn.exists()).toBe(true);
+    expect(btn.text()).toContain('Skip intro');
+    await btn.trigger('click');
+    expect(state.currentTime).toBe(35); // seeked to the marker end
+  });
+
+  it('shows "Skip outro" inside the outro marker and seeks to its end on click', async () => {
+    const { w, video, state } = mountPlayer({ outroMarker: { start: 540, end: 600 } });
+    state.duration = 600;
+    state.currentTime = 560;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    const btn = w.findComponent(SkipButton).find('button');
+    expect(btn.text()).toContain('Skip outro');
+    await btn.trigger('click');
+    expect(state.currentTime).toBe(600);
+  });
+
+  it('renders no skip button when the title has no markers', async () => {
+    const { w, video, state } = mountPlayer();
+    state.duration = 600;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    expect(w.findComponent(SkipButton).find('button').exists()).toBe(false);
   });
 
   it('suspends chrome auto-hide while scrubbing', async () => {

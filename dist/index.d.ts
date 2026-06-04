@@ -67,7 +67,9 @@ export { default as AmbientCanvas } from './components/player/AmbientCanvas.vue'
 export { default as ResumePrompt } from './components/player/ResumePrompt.vue';
 export { default as UpNext } from './components/player/UpNext.vue';
 export { default as TranscodeNotice } from './components/player/TranscodeNotice.vue';
+export { default as SkipButton } from './components/player/SkipButton.vue';
 export { needsTranscode, extensionOf, isFatalMediaError, ringDashoffset, DIRECT_PLAY_EXTENSIONS, TRANSCODE_EXTENSIONS, UPNEXT_COUNTDOWN_SECONDS, UPNEXT_RING_RADIUS, UPNEXT_RING_CIRCUMFERENCE, } from './components/player/playback';
+export type { TimeMarker } from './components/player/playback';
 export { averageRegion, sampleAmbient, ambientGradient, rgbString, rgbaString, isBatterySaving, AMBIENT_SAMPLE_W, AMBIENT_SAMPLE_H, AMBIENT_SAMPLE_INTERVAL_MS, } from './components/player/ambient';
 export type { Rgb, AmbientSample, BatteryLike } from './components/player/ambient';
 export { listSubtitleTracks, listAudioTracks, resolveTextTrack, hasActiveCaptions, applyTrackModes, applyAudioTrack, activeAudioIndex, readActiveCueLines, cleanCueText, edgeShadow, captionStyleVars, CAPTION_SIZE_SCALE, CAPTION_SIZE_OPTIONS, CAPTION_COLOR_OPTIONS, CAPTION_BACKGROUND_OPTIONS, CAPTION_EDGE_OPTIONS, } from './components/player/captions';
