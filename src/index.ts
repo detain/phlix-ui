@@ -159,7 +159,22 @@ export type {
 } from './api/admin/libraries';
 export { AdminSettingsApi } from './api/admin/settings';
 export type { SettingsResponse, SettingsSaveResponse } from './api/admin/settings';
-export { buildAdminRoutes, adminMenu } from './app/admin';
+export { AdminHubDashboardApi } from './api/admin/hubDashboard';
+export type { HubSummary, HubServersSummary, HubAuditEvent } from './api/admin/hubDashboard';
+// Admin page-group composability (H0): the page registries + per-app builders.
+// `buildAdminRoutes()` with no args is the byte-identical server set; the hub
+// mounts `buildHubAdminRoutes()`. HubDashboardPage stays an unexported lazy chunk
+// inside the registry (re-exporting it statically would defeat code-splitting).
+export {
+  buildAdminRoutes,
+  adminMenu,
+  buildServerAdminRoutes,
+  buildHubAdminRoutes,
+  commonAdminPages,
+  serverAdminPages,
+  hubAdminPages,
+} from './app/admin';
+export type { AdminPage } from './app/admin';
 export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 export { default as Player } from './components/Player.vue';
 export { default as MiniPlayer } from './components/MiniPlayer.vue';
@@ -227,14 +242,17 @@ export { default as SignupForm } from './components/SignupForm.vue';
 export { default as SettingsForm } from './components/SettingsForm.vue';
 // NOTE (R6.1a): PlayerPage / LoginPage / SignupPage / SettingsPage are lazy route chunks
 // mounted by `createPhlixApp` (see the built-in-pages note near MediaDetail) — not
-// re-exported. The 5 long-tail consumer pages below ARE still exported because the
+// re-exported. The long-tail consumer pages below ARE still exported because the
 // server/hub consumers import them directly for `extraRoutes`; those move behind a
 // dynamic-import builder seam at R6.6.
+// NOTE (H0): AuditLogsPage is intentionally NOT re-exported here — it is now a lazy
+// chunk owned by the hub admin registry (`hubAdminPages` in app/admin.ts, mounted
+// via `buildHubAdminRoutes`). A static re-export here would re-merge it into the
+// main bundle (Rollup INEFFECTIVE_DYNAMIC_IMPORT) and defeat the code-split.
 export { default as LibraryScanPage } from './pages/LibraryScanPage.vue';
 export { default as MyServersPage } from './pages/MyServersPage.vue';
 export { default as FederationPage } from './pages/FederationPage.vue';
 export { default as ManageSharesPage } from './pages/ManageSharesPage.vue';
-export { default as AuditLogsPage } from './pages/AuditLogsPage.vue';
 
 export { useAuthStore } from './stores/useAuthStore';
 

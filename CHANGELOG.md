@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.19.0] - 2026-06-04
+
+### Added
+- **Composable admin page groups.** The shared admin shell is now mountable per-app as page-group
+  registries rather than a single fixed 16-page set. New `AdminPage` interface + exported registries
+  `commonAdminPages` (Users, Logs, Settings), `serverAdminPages` (the 13 media-server pages), and
+  `hubAdminPages` (Hub Dashboard, Audit Logs). `buildAdminRoutes(base, pages?)` and `adminMenu(base, pages?)`
+  are parameterized; `buildServerAdminRoutes(base)` is the explicit synonym for the default and
+  `buildHubAdminRoutes(base)` mounts the hub set. The bare `<base>/admin` index now redirects to the first
+  page in the mounted set (the dashboard for both shipped apps).
+- **`HubDashboardPage` + `AdminHubDashboardApi`.** A hub-scoped admin landing page rendering server-fleet
+  health (total / online / offline), active relay sessions, pending requests, the user count, and a recent
+  audit-event feed. Backed by a new defensive API client over `/api/v1/admin/dashboard/{summary,activity}`
+  (unwraps `{ success, data }`, normalises camelCase/snake_case, degrades to zeros / `[]`).
+- **`AdminLayout` `pages` prop.** The admin sidebar is now built from the exact page list the consumer
+  mounted (dropping the fixed `adminMenu(base)[0]` assumption), so the server and hub render their own
+  page groups with no shared-code branching.
+
+### Changed
+- **Server admin console is byte-identical.** `buildAdminRoutes()` with no arguments still yields the
+  historical 16 server routes — same names, same `/app/admin/<segment>` URLs, same sidebar order, same
+  Dashboard landing — so the server is unaffected by the refactor.
+- **`AuditLogsPage` is no longer a static export.** It is now a lazy chunk owned by the hub admin registry
+  (`hubAdminPages`, mounted via `buildHubAdminRoutes`), restoring its code-split (it had become a
+  Rollup `INEFFECTIVE_DYNAMIC_IMPORT`). The hub mounts it through the admin section instead of importing
+  the page directly.
+
 ## [0.18.0] - 2026-06-04
 
 ### Added
