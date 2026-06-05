@@ -8,7 +8,7 @@ import { t as s } from "./Select-DfIQHE9A.js";
 import { t as ee } from "./useToastStore-BDoKlU6N.js";
 import { t as c } from "./Tabs-x8dUKZN5.js";
 import { i as te, n as ne, r as re, t as ie } from "./captions-COgPp5bH.js";
-import { t as l } from "./SettingsForm-CoGuMCq1.js";
+import { t as l } from "./SettingsForm-Ctcj-hfA.js";
 import { Fragment as u, computed as d, createBlock as f, createCommentVNode as p, createElementBlock as m, createElementVNode as h, createTextVNode as g, createVNode as _, defineComponent as v, normalizeClass as y, normalizeStyle as ae, onBeforeUnmount as oe, openBlock as b, ref as x, renderList as S, toDisplayString as C, unref as w, withCtx as T } from "vue";
 //#region src/components/AppearanceSettings.vue?vue&type=script&setup=true&lang.ts
 var se = {
@@ -411,4 +411,4 @@ var se = {
 //#endregion
 export { W as default };
 
-//# sourceMappingURL=SettingsPage-Bg7eWVjf.js.map
+//# sourceMappingURL=SettingsPage-BG3qhq79.js.map

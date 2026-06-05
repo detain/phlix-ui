@@ -92,6 +92,13 @@ describe('buildAdminRoutes — nested AdminLayout shape (default = legacy server
     expect(b).toEqual(a);
     expect(buildServerAdminRoutes('/portal')[0].path).toBe('/portal/admin');
   });
+
+  it('marks the admin section parent route as admin-only (meta.requiresAdmin) so the router guard gates every child', () => {
+    const meta = buildAdminRoutes()[0].meta as { requiresAdmin?: unknown } | undefined;
+    expect(meta?.requiresAdmin).toBe(true);
+    const hubMeta = buildHubAdminRoutes()[0].meta as { requiresAdmin?: unknown } | undefined;
+    expect(hubMeta?.requiresAdmin).toBe(true);
+  });
 });
 
 describe('buildAdminRoutes — resolved URLs + redirect (real router)', () => {

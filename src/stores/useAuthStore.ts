@@ -14,6 +14,12 @@ export const useAuthStore = defineStore('auth', () => {
     // Reactive mirror of the persisted token — localStorage reads aren't reactive,
     // so a plain computed over getAccessToken() would go stale after login/logout.
     const accessToken = ref<string | null>(tokenStore.getAccessToken());
+    // Has the one-shot boot session check (init()) run yet? `isLoggedIn` is only a
+    // token-PRESENCE flag; on a reload we must validate that token against the back
+    // end before any guard trusts it. Memoised so concurrent navigations share one
+    // /auth/me round-trip.
+    const initialized = ref(false);
+    let initPromise: Promise<void> | null = null;
 
     const isLoggedIn = computed(() => accessToken.value !== null);
     const isAdmin = computed(() => user.value?.is_admin === true);
@@ -91,6 +97,30 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    /**
+     * One-shot session bootstrap, run once from the router guard before the first
+     * protected route resolves. A token restored from localStorage only makes
+     * `isLoggedIn` true by its mere presence — it is NOT proof the session is still
+     * valid. So if a token was restored, validate it against the back end exactly
+     * once via {@link fetchUser}: a valid token populates `user` (so `isAdmin` and
+     * the account badge are correct after a reload), and an invalid/expired token
+     * is cleared by fetchUser() — which flips `isLoggedIn` to false so the guard
+     * redirects to login instead of rendering protected/admin pages off a stale
+     * token. Memoised: the work runs at most once per app instance, and concurrent
+     * callers await the same in-flight promise.
+     */
+    async function init(): Promise<void> {
+        if (initialized.value) return;
+        if (initPromise === null) {
+            // fetchUser() is a no-op when there is no token, and otherwise either
+            // populates `user` or clears the tokens on any failure.
+            initPromise = fetchUser().finally(() => {
+                initialized.value = true;
+            });
+        }
+        return initPromise;
+    }
+
     function logout(): void {
         tokenStore.clear();
         accessToken.value = null;
@@ -107,6 +137,7 @@ export const useAuthStore = defineStore('auth', () => {
         login,
         signup,
         fetchUser,
+        init,
         logout,
     };
 });

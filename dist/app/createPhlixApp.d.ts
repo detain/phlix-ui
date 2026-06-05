@@ -8,11 +8,20 @@ import type { PhlixAppConfig } from './types';
  */
 export declare const PUBLIC_ROUTE_NAMES: readonly string[];
 /**
- * Navigation guard: send unauthenticated users to the login page for any
- * non-public route. Pure (the auth state is passed in) so it unit-tests without
- * a live router/store. Returns `true` to allow, or a redirect location.
+ * Navigation guard. Pure (the auth state is passed in) so it unit-tests without a
+ * live router/store. Returns `true` to allow, or a redirect location.
+ *
+ * - Public routes (`login`/`signup` or `meta.public`) always pass.
+ * - An unauthenticated visit to any other route redirects to `login` (preserving
+ *   the intended destination so the login flow can return there).
+ * - An admin-only route (`meta.requiresAdmin`, set on the whole `/app/admin/*`
+ *   section and inherited by every child) requires `isAdmin`. A logged-in
+ *   non-admin is sent to `browse` — NOT to `login`: they are already
+ *   authenticated, so bouncing them to login would just loop back here after a
+ *   successful re-auth. (The server API authorizes regardless; this stops the
+ *   admin UI from rendering for a non-admin or an unvalidated session.)
  */
-export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boolean): true | RouteLocationRaw;
+export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boolean, isAdmin?: boolean): true | RouteLocationRaw;
 declare global {
     interface Window {
         __PHLIX__?: PhlixAppConfig;
