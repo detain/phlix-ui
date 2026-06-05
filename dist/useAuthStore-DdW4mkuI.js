@@ -7,11 +7,11 @@ var o = a("auth", () => {
 	let a = new t(), o = new e({
 		tokenStore: a,
 		baseUrl: r("apiBase", "")
-	}), s = i(null), c = i(!1), l = i(null), u = i(a.getAccessToken()), d = n(() => u.value !== null), f = n(() => s.value?.is_admin === !0);
-	function p(e, t) {
+	}), s = i(null), c = i(!1), l = i(null), u = i(a.getAccessToken()), d = i(!1), f = null, p = n(() => u.value !== null), m = n(() => s.value?.is_admin === !0);
+	function h(e, t) {
 		a.setAccessToken(e), a.setRefreshToken(t), u.value = e;
 	}
-	async function m(e, t) {
+	async function g(e, t) {
 		c.value = !0, l.value = null;
 		try {
 			let n = {
@@ -20,14 +20,14 @@ var o = a("auth", () => {
 			};
 			e.includes("@") && (n.email = e);
 			let r = await o.post("/api/v1/auth/login", n);
-			return p(r.access_token, r.refresh_token), await g(), d.value;
+			return h(r.access_token, r.refresh_token), await v(), p.value;
 		} catch (e) {
 			return l.value = e instanceof Error ? e.message : "Login failed", !1;
 		} finally {
 			c.value = !1;
 		}
 	}
-	async function h(e, t, n) {
+	async function _(e, t, n) {
 		c.value = !0, l.value = null;
 		try {
 			let r = await o.post("/api/v1/auth/register", {
@@ -35,37 +35,43 @@ var o = a("auth", () => {
 				username: t,
 				password: n
 			});
-			return p(r.access_token, r.refresh_token), await g(), d.value;
+			return h(r.access_token, r.refresh_token), await v(), p.value;
 		} catch (e) {
 			return l.value = e instanceof Error ? e.message : "Registration failed", !1;
 		} finally {
 			c.value = !1;
 		}
 	}
-	async function g() {
-		if (d.value) try {
+	async function v() {
+		if (p.value) try {
 			s.value = await o.getCurrentUser();
 		} catch {
 			s.value = null, a.clear(), u.value = null;
 		}
 	}
-	function _() {
+	async function y() {
+		if (!d.value) return f === null && (f = v().finally(() => {
+			d.value = !0;
+		})), f;
+	}
+	function b() {
 		a.clear(), u.value = null, s.value = null;
 	}
 	return {
 		user: s,
 		loading: c,
 		error: l,
-		isLoggedIn: d,
-		isAdmin: f,
+		isLoggedIn: p,
+		isAdmin: m,
 		client: o,
-		login: m,
-		signup: h,
-		fetchUser: g,
-		logout: _
+		login: g,
+		signup: _,
+		fetchUser: v,
+		init: y,
+		logout: b
 	};
 });
 //#endregion
 export { o as t };
 
-//# sourceMappingURL=useAuthStore-CB5g_qzR.js.map
+//# sourceMappingURL=useAuthStore-DdW4mkuI.js.map

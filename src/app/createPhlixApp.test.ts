@@ -217,4 +217,28 @@ describe('authGuard', () => {
       name: 'login',
     });
   });
+
+  // --- admin-only routes (meta.requiresAdmin) ---
+
+  it('redirects a logged-in NON-admin away from a requiresAdmin route to browse (NOT login → no re-auth loop)', () => {
+    expect(authGuard(route('admin-users', { meta: { requiresAdmin: true } }), true, false)).toEqual({
+      name: 'browse',
+    });
+  });
+
+  it('lets a logged-in admin through to a requiresAdmin route', () => {
+    expect(authGuard(route('admin-users', { meta: { requiresAdmin: true } }), true, true)).toBe(true);
+  });
+
+  it('sends an unauthenticated visitor on a requiresAdmin route to login (auth check precedes the admin check)', () => {
+    expect(authGuard(route('admin-users', { meta: { requiresAdmin: true } }), false, false)).toMatchObject({
+      name: 'login',
+      query: { redirect: '/app/admin-users' },
+    });
+  });
+
+  it('does not block a logged-in non-admin from a normal (non-admin) protected route', () => {
+    // Regression: the new isAdmin arg must only gate requiresAdmin routes.
+    expect(authGuard(route('settings'), true, false)).toBe(true);
+  });
 });

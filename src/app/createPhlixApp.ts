@@ -29,18 +29,37 @@ import type { PhlixAppConfig } from './types';
 export const PUBLIC_ROUTE_NAMES: readonly string[] = ['login', 'signup'];
 
 /**
- * Navigation guard: send unauthenticated users to the login page for any
- * non-public route. Pure (the auth state is passed in) so it unit-tests without
- * a live router/store. Returns `true` to allow, or a redirect location.
+ * Navigation guard. Pure (the auth state is passed in) so it unit-tests without a
+ * live router/store. Returns `true` to allow, or a redirect location.
+ *
+ * - Public routes (`login`/`signup` or `meta.public`) always pass.
+ * - An unauthenticated visit to any other route redirects to `login` (preserving
+ *   the intended destination so the login flow can return there).
+ * - An admin-only route (`meta.requiresAdmin`, set on the whole `/app/admin/*`
+ *   section and inherited by every child) requires `isAdmin`. A logged-in
+ *   non-admin is sent to `browse` — NOT to `login`: they are already
+ *   authenticated, so bouncing them to login would just loop back here after a
+ *   successful re-auth. (The server API authorizes regardless; this stops the
+ *   admin UI from rendering for a non-admin or an unvalidated session.)
  */
-export function authGuard(to: RouteLocationNormalized, isLoggedIn: boolean): true | RouteLocationRaw {
+export function authGuard(
+    to: RouteLocationNormalized,
+    isLoggedIn: boolean,
+    isAdmin = false,
+): true | RouteLocationRaw {
     const name = typeof to.name === 'string' ? to.name : '';
     const isPublic = PUBLIC_ROUTE_NAMES.includes(name) || to.meta?.public === true;
-    if (isPublic || isLoggedIn) {
+    if (isPublic) {
         return true;
     }
-    // Preserve where they were headed so the login flow can return there.
-    return { name: 'login', query: to.fullPath ? { redirect: to.fullPath } : {} };
+    if (!isLoggedIn) {
+        // Preserve where they were headed so the login flow can return there.
+        return { name: 'login', query: to.fullPath ? { redirect: to.fullPath } : {} };
+    }
+    if (to.meta?.requiresAdmin === true && !isAdmin) {
+        return { name: 'browse' };
+    }
+    return true;
 }
 
 declare global {
@@ -149,9 +168,21 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
 
     // Gate every non-public route on auth: an unauthenticated visit redirects to
     // login (so a failed/absent login can't "fall through" to the app shell —
-    // e.g. the hub's `/` → `/app/servers` landing). Pinia 3 resolves the store's
+    // e.g. the hub's `/` → `/app/servers` landing), and an admin-only route a
+    // non-admin reaches is sent home. Pinia 3 resolves the store's
     // `inject('apiBase')` against this app's provides even from inside the guard.
-    router.beforeEach((to) => authGuard(to, useAuthStore(pinia).isLoggedIn));
+    //
+    // `auth.init()` validates a token restored from localStorage exactly once
+    // before the first protected route resolves — without it a stale/expired token
+    // would satisfy `isLoggedIn` (mere token presence) and render protected/admin
+    // pages off an invalid session, and `user` would never be rehydrated (so the
+    // account badge fell back to a generic "A"). It is memoised, so after the first
+    // navigation this awaits an already-resolved promise.
+    router.beforeEach(async (to) => {
+        const auth = useAuthStore(pinia);
+        await auth.init();
+        return authGuard(to, auth.isLoggedIn, auth.isAdmin);
+    });
 
     const app: VueApp = createApp(PhlixApp);
     app.provide('apiBase', fullConfig.apiBase);
