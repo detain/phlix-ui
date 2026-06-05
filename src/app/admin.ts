@@ -250,6 +250,12 @@ export function buildAdminRoutes(base = '/app', pages: AdminPage[] = defaultAdmi
   return [
     {
       path: root,
+      // The whole admin section is admin-only. vue-router merges parent `meta`
+      // onto every child, so this gates each `/app/admin/*` page via the router
+      // guard (`authGuard` redirects a non-admin away). The nav-link filter in the
+      // shell is only progressive disclosure; this is the actual client-side gate
+      // (the back end authorizes regardless).
+      meta: { requiresAdmin: true },
       // Lazy section shell: sidebar + <RouterView>. `base`/`pages` props let the
       // sidebar build its links for whatever router base + page set the host uses.
       component: () => import('./AdminLayout.vue'),

@@ -6,7 +6,7 @@ import { a, i as o, n as s, r as c, t as l } from "./usePreferencesStore-BFFMWKZ
 import { i as u, n as d, r as f, t as p } from "./useMessages-D7StdIzu.js";
 import { a as m, c as h, l as g, n as _, o as ee, r as v, s as te, t as y } from "./Button-BwQkyEkr.js";
 import { t as ne } from "./tokenStore-CGMYSpg6.js";
-import { t as b } from "./useAuthStore-CB5g_qzR.js";
+import { t as b } from "./useAuthStore-DdW4mkuI.js";
 import { a as x, i as re, n as ie, o as S, r as ae, t as oe } from "./media-query-D1H7YKGl.js";
 import { i as se, n as ce, r as le, t as ue } from "./Kbd-CSMm1T0l.js";
 import { t as C } from "./Badge-ArWL5-WE.js";
@@ -39,9 +39,9 @@ import { t as qe } from "./settings-m4upFcmH.js";
 import { t as Je } from "./hubDashboard-BhOaaDD-.js";
 import { A as Ye, C as Xe, D as Ze, E as Qe, F as $e, I as et, L as tt, M as nt, N as rt, O as it, P as at, R as ot, S as st, T as ct, _ as lt, a as ut, b as dt, c as ft, d as pt, f as mt, g as ht, h as gt, i as _t, j as vt, k as yt, l as bt, m as xt, n as St, o as Ct, p as wt, r as Tt, s as Et, t as Dt, u as Ot, v as kt, w as At, x as jt, y as Mt } from "./Player-C_rJOD0T.js";
 import { a as Nt, c as Pt, d as Ft, f as It, g as Lt, h as Rt, i as zt, l as Bt, m as Vt, n as Ht, o as Ut, p as Wt, r as Gt, s as Kt, t as qt, u as Jt } from "./captions-COgPp5bH.js";
-import { t as Yt } from "./LoginForm-D4EvuzHt.js";
-import { t as Xt } from "./SignupForm-DeTTJGOT.js";
-import { t as Zt } from "./SettingsForm-CoGuMCq1.js";
+import { t as Yt } from "./LoginForm-Cvva-IsM.js";
+import { t as Xt } from "./SignupForm-hLfofPCG.js";
+import { t as Zt } from "./SettingsForm-Ctcj-hfA.js";
 import { Fragment as D, Teleport as Qt, Transition as O, TransitionGroup as $t, computed as k, createApp as en, createBlock as A, createCommentVNode as j, createElementBlock as M, createElementVNode as N, createTextVNode as P, createVNode as F, defineAsyncComponent as tn, defineComponent as I, inject as nn, normalizeClass as L, normalizeStyle as R, onBeforeUnmount as z, onMounted as B, onScopeDispose as V, openBlock as H, readonly as rn, ref as U, renderList as W, renderSlot as G, resolveDynamicComponent as an, toDisplayString as K, unref as q, useId as on, vModelText as sn, watch as J, watchEffect as cn, withCtx as Y, withDirectives as ln, withKeys as un, withModifiers as dn } from "vue";
 import { createPinia as fn } from "pinia";
 import { RouterLink as X, RouterView as pn, createRouter as mn, createWebHistory as hn, useRouter as gn } from "vue-router";
@@ -649,9 +649,9 @@ var vr = ["src", "alt"], yr = { class: "brand-wordmark" }, br = {
 		return (t, n) => (H(), M("div", Sr, [N("div", Cr, [n[0] ||= N("h1", null, "Shared UI loading...", -1), N("p", null, "Phlix " + K(e.appName) + " is initializing", 1)])]));
 	}
 }), [["__scopeId", "data-v-bf79ac4c"]]), Tr = ["login", "signup"];
-function Er(e, t) {
-	let n = typeof e.name == "string" ? e.name : "";
-	return Tr.includes(n) || e.meta?.public === !0 || t ? !0 : {
+function Er(e, t, n = !1) {
+	let r = typeof e.name == "string" ? e.name : "";
+	return Tr.includes(r) || e.meta?.public === !0 ? !0 : t ? e.meta?.requiresAdmin === !0 && !n ? { name: "browse" } : !0 : {
 		name: "login",
 		query: e.fullPath ? { redirect: e.fullPath } : {}
 	};
@@ -686,17 +686,17 @@ function Or(e) {
 		{
 			path: `${t}/login`,
 			name: "login",
-			component: () => import("./LoginPage-muA-5A2C.js")
+			component: () => import("./LoginPage-Cgwxyj8J.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
-			component: () => import("./SignupPage-DRtfH29d.js")
+			component: () => import("./SignupPage-K58bf6Ha.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
-			component: () => import("./SettingsPage-Bg7eWVjf.js")
+			component: () => import("./SettingsPage-BG3qhq79.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({
@@ -718,7 +718,10 @@ function kr(e) {
 		history: hn(),
 		routes: Or(t)
 	});
-	r.beforeEach((e) => Er(e, b(n).isLoggedIn));
+	r.beforeEach(async (e) => {
+		let t = b(n);
+		return await t.init(), Er(e, t.isLoggedIn, t.isAdmin);
+	});
 	let i = en(xr);
 	return i.provide("apiBase", t.apiBase), i.provide("phlixCommands", t.commands ?? []), i.provide("phlixConfig", t), i.use(n), i.use(r), i;
 }
@@ -1048,6 +1051,7 @@ function pi(e = "/app", t = di) {
 		redirect: { name: t[0].name }
 	}), [{
 		path: n,
+		meta: { requiresAdmin: !0 },
 		component: () => import("./AdminLayout-C5X74ehJ.js"),
 		props: {
 			base: e,

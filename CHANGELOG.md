@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.20.0] - 2026-06-05
+
+### Security
+- **Validate the session on boot and gate admin routes client-side (broken access control).** The router
+  guard treated a token's mere *presence* in `localStorage` as "logged in" (`isLoggedIn = accessToken !== null`)
+  and never validated it, and it applied **no admin-role check** — so after a reload (e.g. following a deploy,
+  or once the access token expired) a stale/invalid token still satisfied the guard and the SPA rendered every
+  protected route, **including the entire `/app/admin/*` console** (sidebar, forms, actions), for an
+  unvalidated session or a non-admin user. `user` was also never rehydrated on boot, so the account badge fell
+  back to a generic "A". (The back end still authorized every data call, so this was a client-side
+  broken-access-control / improper-session-validation defect, not data exfiltration — but the admin UI must not
+  render for an invalid session or a non-admin.) Fixed by:
+  - `useAuthStore.init()` — a memoised, one-shot boot check the router guard awaits before the first protected
+    route resolves: a restored token is validated once via `/auth/me`, which rehydrates `user` (so `isAdmin`
+    and the account badge are correct after a reload) or, on failure, clears the token so the guard treats the
+    visit as logged-out and redirects to login.
+  - The admin section's parent route now carries `meta: { requiresAdmin: true }` (inherited by every
+    `/app/admin/*` child), and `authGuard(to, isLoggedIn, isAdmin)` redirects a logged-in **non-admin** away
+    from admin routes (to `browse`, not `login`, to avoid a re-auth loop). The nav-link filter remains
+    progressive disclosure only; this is the real client-side gate.
+
+  No consumer code change is required — bump `@phlix/ui` and rebuild the SPA bundle. `authGuard` gains an
+  optional third argument (`isAdmin`, default `false`), so existing two-argument calls remain valid.
+
 ## [0.19.0] - 2026-06-04
 
 ### Added

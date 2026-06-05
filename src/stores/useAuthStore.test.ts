@@ -145,3 +145,56 @@ describe('useAuthStore', () => {
     expect(s.isLoggedIn).toBe(false); // tokens cleared
   });
 });
+
+describe('useAuthStore.init — boot session validation', () => {
+  it('validates a token restored from localStorage and rehydrates the user (fixes the "A" badge + isAdmin after a reload)', async () => {
+    // A returning user: token present in storage, but `user` starts null and
+    // nothing has validated the token yet.
+    localStorage.setItem('access_token', 'RESTORED');
+    routes['/api/v1/auth/me'] = () => jsonResponse({ user: { id: 7, username: 'detain', is_admin: true } });
+    const s = useAuthStore();
+    expect(s.user).toBeNull();
+    await s.init();
+    expect(s.user?.username).toBe('detain');
+    expect(s.isAdmin).toBe(true);
+    expect(s.isLoggedIn).toBe(true);
+  });
+
+  it('clears an invalid/expired restored token so the guard treats the visit as logged-out (no rendering off a stale token)', async () => {
+    localStorage.setItem('access_token', 'STALE');
+    routes['/api/v1/auth/me'] = () => jsonResponse({ message: 'unauthorized' }, 401);
+    routes['/api/v1/auth/refresh'] = () => jsonResponse({ message: 'nope' }, 401);
+    const s = useAuthStore();
+    expect(s.isLoggedIn).toBe(true); // token present...
+    await s.init();
+    expect(s.isLoggedIn).toBe(false); // ...but invalid → cleared
+    expect(s.user).toBeNull();
+    expect(localStorage.getItem('access_token')).toBeNull();
+  });
+
+  it('is a no-op when there is no token (does not call /auth/me)', async () => {
+    let meCalls = 0;
+    routes['/api/v1/auth/me'] = () => {
+      meCalls++;
+      return jsonResponse({ user: { id: 1 } });
+    };
+    const s = useAuthStore();
+    await s.init();
+    expect(meCalls).toBe(0);
+    expect(s.isLoggedIn).toBe(false);
+    expect(s.user).toBeNull();
+  });
+
+  it('is memoised — concurrent and repeat calls validate the token at most once', async () => {
+    localStorage.setItem('access_token', 'RESTORED');
+    let meCalls = 0;
+    routes['/api/v1/auth/me'] = () => {
+      meCalls++;
+      return jsonResponse({ user: { id: 7, username: 'detain', is_admin: false } });
+    };
+    const s = useAuthStore();
+    await Promise.all([s.init(), s.init(), s.init()]);
+    await s.init();
+    expect(meCalls).toBe(1);
+  });
+});
