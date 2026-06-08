@@ -10,19 +10,29 @@
 
         <template #nav>
             <template v-if="menu.length">
-                <component
-                    :is="item.href ? 'a' : RouterLink"
-                    v-for="item in menu"
-                    :key="item.id"
-                    :to="item.href ? undefined : item.to"
-                    :href="item.href ? safeHref(item.href) : undefined"
-                    :target="item.href ? item.target : undefined"
-                    :rel="item.href && item.target === '_blank' ? 'noopener noreferrer' : undefined"
-                    class="nav-link"
-                >
-                    <Icon v-if="item.icon" :name="item.icon" class="nav-link-icon" />
-                    {{ item.label }}
-                </component>
+                <template v-for="item in menu" :key="item.id">
+                    <component
+                        :is="item.href ? 'a' : RouterLink"
+                        :to="item.href ? undefined : item.to"
+                        :href="item.href ? safeHref(item.href) : undefined"
+                        :target="item.href ? item.target : undefined"
+                        :rel="item.href && item.target === '_blank' ? 'noopener noreferrer' : undefined"
+                        class="nav-link"
+                    >
+                        <Icon v-if="item.icon" :name="item.icon" class="nav-link-icon" />
+                        {{ item.label }}
+                    </component>
+                    <!-- Expand a `libraryLinks` item into one link per library
+                         (the media server's "Browse"); the hub never sets it. -->
+                    <RouterLink
+                        v-for="lib in (item.libraryLinks ? libraries.items : [])"
+                        :key="`${item.id}-${lib.id}`"
+                        :to="{ name: 'library', params: { id: lib.id } }"
+                        class="nav-link nav-link--sub"
+                    >
+                        {{ lib.name }}
+                    </RouterLink>
+                </template>
             </template>
             <template v-else>
                 <RouterLink :to="homePath" class="nav-link">{{ t('shell.browse') }}</RouterLink>
@@ -59,6 +69,7 @@ import MiniPlayer from '../components/MiniPlayer.vue';
 import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
 import { useResumeSync } from '../composables/useResumeSync';
@@ -134,6 +145,19 @@ const menu = computed<MenuItem[]>(() =>
 );
 const homePath = computed(() => config?.routerBase ?? '/app');
 
+// When a menu item opts into `libraryLinks` (the media server's "Browse"), load
+// the library list once authenticated so the nav can render a link per library.
+// The store dedupes/caches, so this shares the same fetch the Browse page uses.
+const libraries = useLibrariesStore();
+const hasLibraryNav = computed(() => menu.value.some((item) => item.libraryLinks));
+watch(
+    () => auth.isLoggedIn && hasLibraryNav.value,
+    (ready) => {
+        if (ready) void libraries.load(config?.apiBase ?? '');
+    },
+    { immediate: true },
+);
+
 /** Drop script-y URL schemes from config-supplied external menu links. Allows
  *  http(s)/mailto/tel/relative/hash; blocks javascript:/data:/vbscript:. */
 function safeHref(href: string): string | undefined {
@@ -183,6 +207,16 @@ function safeHref(href: string): string | undefined {
 }
 .nav-link-icon {
     font-size: var(--text-md);
+}
+/* Library links expanded under a `libraryLinks` nav item. In the vertical drawer
+   they read as an indented sub-list; on the horizontal bar they sit as smaller,
+   muted peers after their parent. */
+.nav-link--sub {
+    font-size: var(--text-xs);
+    color: var(--text-subtle);
+}
+.shell__drawer .nav-link--sub {
+    padding-left: var(--space-6);
 }
 .nav-link:hover {
     color: var(--text);

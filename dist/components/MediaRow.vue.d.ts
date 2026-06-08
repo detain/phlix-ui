@@ -38,8 +38,8 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
 }>, {
     error: string | null;
     loading: boolean;
-    skeletonCount: number;
     count: number | null;
+    skeletonCount: number;
     hideWhenEmpty: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;

@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.21.0] - 2026-06-08
+
+### Added
+- **Each library is its own section on the Browse surface.** Browse no longer renders one flat
+  all-libraries grid. It now shows a "Continue Watching" rail, the app's configured home rows, then
+  **one rail per library** ("Movies", "TV", "Anime", …) sourced from `GET /api/v1/libraries` (sorted by
+  `display_order`, then name). Each rail's **See all** opens that library's dedicated page.
+- **Dedicated per-library page** at the new built-in route `/app/library/:id` (`name: 'library'`) — the
+  full, filterable, paginated grid scoped to a single library. The shared `useMediaStore` gains a
+  `libraryId` scope (`setLibraryId`) that serializes to `?libraryId=` on `GET /api/v1/media`; a consumer's
+  literal `/app/library/scan` route still wins over the `:id` param (static segments rank higher).
+- **Optional per-library nav links.** A `MenuItem` may set `libraryLinks: true`; the shell then expands it
+  into one nav link per library (to `/app/library/:id`). Opt-in and config-driven, so the media server's
+  "Browse" entry can enable it while the hub (no libraries) never does.
+- New public API: `useLibrariesStore`, `fetchLibraries`, `sortLibraries`, and the `LibrarySummary` type;
+  `LibraryQuery`/`LibraryQueryParams` gain an optional `libraryId`.
+
+### Changed
+- The flat global "Browse all" grid + `FilterBar` moved off the Browse home and into the per-library page.
+  Cross-library discovery remains available via search / the command palette.
+
 ## [0.20.0] - 2026-06-05
 
 ### Security

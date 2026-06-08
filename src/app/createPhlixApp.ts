@@ -102,6 +102,14 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             component: () => import('../pages/MediaDetailPage.vue'),
         },
         {
+            // The dedicated per-library grid. A consumer's literal `/app/library/scan`
+            // (registered via extraRoutes) still wins over this `:id` param — vue-router
+            // ranks a static segment above a dynamic one regardless of registration order.
+            path: `${base}/library/:id`,
+            name: 'library',
+            component: () => import('../pages/LibraryPage.vue'),
+        },
+        {
             path: `${base}/player/:id`,
             name: 'player',
             component: () => import('../pages/PlayerPage.vue'),
