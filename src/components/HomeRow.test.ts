@@ -138,6 +138,13 @@ describe('HomeRow — eager (no IntersectionObserver)', () => {
     expect(w.emitted('see-all')?.[0]).toEqual([row]);
   });
 
+  it('hides the "See all" affordance when showSeeAll is false', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 1 })));
+    const w = mount(HomeRow, { props: { row, apiBase: '', showSeeAll: false } });
+    await flushPromises();
+    expect(w.find('.home-row__seeall').exists()).toBe(false);
+  });
+
   it('forwards play/watchlist/info from the inner rail', async () => {
     const item = media({ id: 'fwd' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [item], total: 1 })));

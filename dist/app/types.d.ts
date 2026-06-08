@@ -20,6 +20,11 @@ export interface MenuItem {
      *  like the "Admin" entry — the server API stays the real authorization
      *  boundary (admin endpoints are gated server-side regardless). */
     requiresAdmin?: boolean;
+    /** When true, the shell expands this item with one nav link per library
+     *  (fetched from `/api/v1/libraries`, linking to `/app/library/:id`), shown
+     *  indented beneath it. Opt-in so it stays config-driven — only the media
+     *  server's "Browse" entry sets it; the hub (no libraries) never does. */
+    libraryLinks?: boolean;
 }
 /** Per-app brand identity rendered into the shell's `#logo` slot. All optional —
  *  omit for the default "Phlix" wordmark. Lets server vs hub diverge by config,

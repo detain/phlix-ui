@@ -1,26 +1,28 @@
 <script setup lang="ts">
 /**
- * BrowsePage (R2.4) — the Browse surface shell: a resume-map "Continue Watching"
- * rail, the app's configured query-scoped home rows, then the filtered,
- * virtualized library grid (ports `src/dev/mockups/browse-grid.html`).
+ * BrowsePage — the Browse home surface. A resume-map "Continue Watching" rail,
+ * the app's configured query-scoped home rows, then ONE rail per library
+ * ("Movies", "TV", "Anime", …) so each library is its own section rather than a
+ * single flat all-libraries grid. Each library rail's "See all" opens that
+ * library's dedicated page (`/app/library/:id`) where the full filterable grid
+ * lives.
  *
- * Home rows come from `config.homeRows` and lazy-load on scroll (`HomeRow`).
- * Continue Watching is derived from `usePlayerStore.resumeMap` resolved against a
- * small in-page registry fed by the grid + home-row fetches — no extra API. Card
- * actions route to the player (and the detail view once R2.5 adds it); a grid
- * fetch failure surfaces as a canonical EmptyState (error + Retry) while card
- * actions give toast feedback.
+ * Libraries come from `useLibrariesStore` (`GET /api/v1/libraries`, sorted by
+ * display order then name). Continue Watching is derived from
+ * `usePlayerStore.resumeMap` resolved against a small in-page registry fed by the
+ * rails' fetches — no extra API. Card actions route to the player / detail view;
+ * a rail fetch failure surfaces inside that rail (HomeRow), and a failure to load
+ * the library list surfaces as a canonical EmptyState with Retry.
  */
-import { onMounted, watch, inject, computed, reactive, ref, type ComputedRef } from 'vue';
+import { onMounted, watch, inject, computed, reactive, type ComputedRef } from 'vue';
 import { useRouter } from 'vue-router';
-import { useMediaStore } from '../stores/useMediaStore';
+import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
-import MediaGrid from '../components/MediaGrid.vue';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
-import FilterBar from '../components/FilterBar.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig, HomeRow as HomeRowConfig } from '../app/types';
@@ -36,19 +38,26 @@ const apiBase = computed(() =>
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homeRows = computed<HomeRowConfig[]>(() => config?.homeRows ?? []);
 
-const store = useMediaStore();
+const libraries = useLibrariesStore();
 const player = usePlayerStore();
 const toasts = useToastStore();
 const router = useRouter();
 
-const gridSection = ref<HTMLElement | null>(null);
+// One HomeRow config per library: a library-scoped rail titled by the library
+// name, whose "See all" carries the library id (consumed by onSeeAll → page).
+const libraryRows = computed<HomeRowConfig[]>(() =>
+  libraries.items.map((lib) => ({
+    id: `library-${lib.id}`,
+    title: lib.name,
+    query: { libraryId: lib.id },
+  })),
+);
 
-// --- continue-watching registry (resume ids resolved against loaded items) ---
+// --- continue-watching registry (resume ids resolved against rail items) -----
 const registry = reactive(new Map<string, MediaItem>());
 function remember(list: MediaItem[]): void {
   list.forEach((i) => registry.set(i.id, i));
 }
-watch(() => store.items, (items) => remember(items), { immediate: true });
 
 const continueItems = computed<MediaItem[]>(() => {
   const map = player.resumeMap;
@@ -59,21 +68,21 @@ const continueItems = computed<MediaItem[]>(() => {
     .slice(0, 12);
 });
 
-// --- grid load ---------------------------------------------------------------
+// --- library list load -------------------------------------------------------
 function load(): void {
-  store.reset();
-  store.fetchMedia(apiBase.value);
+  void libraries.load(apiBase.value, true);
 }
-onMounted(load);
+onMounted(() => {
+  void libraries.load(apiBase.value);
+});
 watch(apiBase, load);
 
-function onFilterChange(): void {
-  store.reset();
-  store.fetchMedia(apiBase.value);
-}
-function onLoadMore(): void {
-  store.loadMore(apiBase.value);
-}
+const showEmpty = computed(
+  () => libraries.loaded && libraries.items.length === 0 && !libraries.error,
+);
+const showSpinner = computed(
+  () => libraries.loading && libraries.items.length === 0 && !libraries.error,
+);
 
 // --- card actions ------------------------------------------------------------
 function go(name: string, id: string): void {
@@ -86,27 +95,19 @@ function onWatchlist(item: MediaItem): void {
   toasts.success(`Added "${item.name}" to your list`);
 }
 function onInfo(item: MediaItem): void {
-  // Detail route arrives in R2.5; until then surface a notice rather than
-  // silently starting playback (the poster click already opens the player).
   if (router?.hasRoute('media')) go('media', item.id);
   else toasts.info(`Details for "${item.name}" are coming soon`);
 }
 
-// --- see-all (apply a home row's query to the grid) --------------------------
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
+// --- see-all -----------------------------------------------------------------
+// A library rail carries its library id in `query.libraryId` → open that
+// library's dedicated page. A configured (non-library) home row has no library
+// id; route it to the catch-all browse home (its query lives on the rail).
 function onSeeAll(row: HomeRowConfig): void {
-  store.applyQuery((row.query ?? {}) as Record<string, string | string[]>);
-  load();
-  gridSection.value?.scrollIntoView?.({
-    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-    block: 'start',
-  });
+  const libraryId = row.query?.libraryId;
+  if (libraryId) {
+    router?.push({ name: 'library', params: { id: libraryId } }).catch(() => {});
+  }
 }
 </script>
 
@@ -126,8 +127,24 @@ function onSeeAll(row: HomeRowConfig): void {
       @info="onInfo"
     />
 
+    <!-- App-configured, query-scoped shelves (genre/type rails); optional. "See
+         all" only shows when the shelf is library-scoped (has a navigable target). -->
     <HomeRow
       v-for="row in homeRows"
+      :key="row.id"
+      :row="row"
+      :api-base="apiBase"
+      :show-see-all="!!row.query?.libraryId"
+      @items-loaded="remember"
+      @see-all="onSeeAll"
+      @play="onPlay"
+      @watchlist="onWatchlist"
+      @info="onInfo"
+    />
+
+    <!-- One section per library — the headline of the Browse surface. -->
+    <HomeRow
+      v-for="row in libraryRows"
       :key="row.id"
       :row="row"
       :api-base="apiBase"
@@ -138,36 +155,27 @@ function onSeeAll(row: HomeRowConfig): void {
       @info="onInfo"
     />
 
-    <section ref="gridSection" class="browse-library">
-      <div class="browse-header">
-        <h1 class="browse-title">Browse</h1>
-        <span class="browse-count numeric">{{ store.total.toLocaleString() }} titles</span>
-      </div>
+    <div v-if="showSpinner" class="browse-loading">
+      <Spinner label="Loading libraries" />
+    </div>
 
-      <FilterBar @change="onFilterChange" />
+    <EmptyState
+      v-if="libraries.error"
+      icon="alert"
+      title="Couldn't load your libraries"
+      :description="libraries.error"
+    >
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="load">Retry</Button>
+      </template>
+    </EmptyState>
 
-      <EmptyState
-        v-if="store.error"
-        icon="alert"
-        title="Couldn't load titles"
-        :description="store.error"
-      >
-        <template #actions>
-          <Button variant="solid" size="sm" left-icon="rewind" @click="load">Retry</Button>
-        </template>
-      </EmptyState>
-
-      <MediaGrid
-        :items="store.items"
-        :loading="store.loading && store.items.length === 0"
-        :loading-more="store.loading && store.items.length > 0"
-        :has-more="store.hasMore"
-        @load-more="onLoadMore"
-        @play="onPlay"
-        @watchlist="onWatchlist"
-        @info="onInfo"
-      />
-    </section>
+    <EmptyState
+      v-else-if="showEmpty"
+      icon="film"
+      title="No libraries yet"
+      description="Once a library is added it shows up here as its own section."
+    />
   </div>
 </template>
 
@@ -189,25 +197,9 @@ function onSeeAll(row: HomeRowConfig): void {
   display: none;
 }
 
-.browse-library {
-  margin-top: var(--space-8);
-}
-
-.browse-header {
+.browse-loading {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-.browse-title {
-  font-family: var(--font-display);
-  font-weight: var(--font-semibold);
-  font-size: var(--text-xl);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text);
-}
-.browse-count {
-  font-size: var(--text-sm);
-  color: var(--text-subtle);
+  justify-content: center;
+  padding: var(--space-8) 0;
 }
 </style>

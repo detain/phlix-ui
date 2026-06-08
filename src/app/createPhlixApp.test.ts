@@ -82,7 +82,7 @@ describe('createPhlixApp', () => {
 });
 
 describe('buildRoutes — R6.1a lazy route chunks', () => {
-  const BUILTIN_PAGES = ['browse', 'media', 'player', 'login', 'signup', 'settings'] as const;
+  const BUILTIN_PAGES = ['browse', 'media', 'library', 'player', 'login', 'signup', 'settings'] as const;
 
   /** Pull a route's `component` field across the RouteRecordRaw union (redirect
    *  records have no `component`). A lazy `() => import()` loader is a function;
@@ -123,6 +123,7 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     expect(routes[routes.length - 1].name).toBe('catchall');
     expect(routes.find((r) => r.name === 'browse')?.path).toBe('/app');
     expect(routes.find((r) => r.name === 'player')?.path).toBe('/app/player/:id');
+    expect(routes.find((r) => r.name === 'library')?.path).toBe('/app/library/:id');
   });
 
   it('defaults routerBase to /app when omitted', () => {

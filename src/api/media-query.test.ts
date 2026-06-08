@@ -40,6 +40,12 @@ describe('buildMediaQuery', () => {
     expect(sp.has('offset')).toBe(false);
   });
 
+  it('serializes libraryId when set, and omits it when blank/absent', () => {
+    expect(new URLSearchParams(buildMediaQuery({ libraryId: 'lib-7' })).get('libraryId')).toBe('lib-7');
+    expect(new URLSearchParams(buildMediaQuery({ genres: ['Sci-Fi'] })).has('libraryId')).toBe(false);
+    expect(new URLSearchParams(buildMediaQuery({ libraryId: '' })).has('libraryId')).toBe(false);
+  });
+
   it('emits yearFrom/yearTo and offset=0 (a falsy but meaningful value)', () => {
     const sp = new URLSearchParams(buildMediaQuery({ yearFrom: 1980, yearTo: 2024, offset: 0 }));
     expect(sp.get('yearFrom')).toBe('1980');

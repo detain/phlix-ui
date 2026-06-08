@@ -92,9 +92,15 @@ createPhlixApp({
 ```
 
 That single call mounts the whole experience under `/app` (Vue Router history base, configurable):
-Browse (`/app`), media detail (`/app/media/:id`), player (`/app/player/:id`), login/signup
-(`/app/login`, `/app/signup`), and settings (`/app/settings`). The built-in route pages,
-the player surface, and the command palette are lazy chunks — they load only when first reached.
+Browse (`/app`), a per-library page (`/app/library/:id`), media detail (`/app/media/:id`), player
+(`/app/player/:id`), login/signup (`/app/login`, `/app/signup`), and settings (`/app/settings`). The
+built-in route pages, the player surface, and the command palette are lazy chunks — they load only
+when first reached.
+
+**Browse is organized per library.** The Browse home renders a "Continue Watching" rail, any configured
+`homeRows`, then **one rail per library** ("Movies", "TV", "Anime", …) read from `GET /api/v1/libraries`.
+Each rail's "See all" opens that library's dedicated `/app/library/:id` page (the full filterable grid).
+Set `libraryLinks: true` on a `MenuItem` to also surface one nav link per library.
 
 > **CSS is not auto-injected.** The two `import '...css'` lines above are required — without
 > `style.css` nothing is styled; without `fonts.css` the type falls back to metric-matched system
@@ -120,7 +126,7 @@ always want (`app`, `apiBase`):
 | `commands?` | `Command[]` | App-injected ⌘K command-palette entries (registered alongside the built-ins). |
 | `defaultTheme?` | `'nocturne' \| 'daylight' \| 'midnight'` | Initial theme for a first-time visitor. A stored user choice always wins. |
 | `branding?` | `BrandingConfig` | Per-app brand: `wordmark?`, `logoSrc?`, `logoAlt?`, `tagline?`. |
-| `homeRows?` | `HomeRow[]` | Browse home-row shelves: `{ id, title, query? }` (query is a partial `LibraryQueryParams`). |
+| `homeRows?` | `HomeRow[]` | Browse home-row shelves: `{ id, title, query? }` (query is a partial `LibraryQueryParams`, incl. `libraryId`). Rendered _in addition to_ the automatic per-library rails. |
 | `messages?` | `PhlixMessagesConfig` | Deep-partial override of user-facing English strings (the i18n-readiness seam). |
 
 ```ts
