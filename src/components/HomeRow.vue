@@ -29,8 +29,11 @@ const props = withDefaults(
     apiBase: string;
     /** Items fetched for the rail. */
     limit?: number;
+    /** Show the "See all" affordance. Off for query-only shelves that have no
+     *  navigable target (e.g. a configured genre row) so the button isn't dead. */
+    showSeeAll?: boolean;
   }>(),
-  { limit: 18 },
+  { limit: 18, showSeeAll: true },
 );
 
 const emit = defineEmits<{
@@ -124,7 +127,7 @@ onBeforeUnmount(() => {
       @watchlist="emit('watchlist', $event)"
       @info="emit('info', $event)"
     >
-      <template #action>
+      <template v-if="showSeeAll" #action>
         <button type="button" class="home-row__seeall" @click="emit('see-all', row)">See all</button>
       </template>
     </MediaRow>

@@ -16,9 +16,20 @@ function makeRouter(): Router {
       { path: '/app', name: 'browse', component: { template: '<div class="browse" />' } },
       { path: '/app/settings', name: 'settings', component: { template: '<div />' } },
       { path: '/app/movies', name: 'movies', component: { template: '<div />' } },
+      { path: '/app/library/:id', name: 'library', component: { template: '<div />' } },
       { path: '/app/player/:id', name: 'player', component: { template: '<div class="player-route" />' } },
     ],
   });
+}
+
+function jsonResponse(body: unknown): Response {
+  return {
+    ok: true,
+    status: 200,
+    headers: { get: () => 'application/json' },
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  } as unknown as Response;
 }
 
 let pinia: Pinia;
@@ -186,6 +197,61 @@ describe('PhlixApp — admin menu gating (F1)', () => {
     useAuthStore().user = { id: 'u1', is_admin: true };
     await nextTick();
     expect(wrapper.findAll('.nav-link').map((l) => l.text())).toContain('Admin');
+  });
+});
+
+describe('PhlixApp — dynamic library nav (libraryLinks)', () => {
+  it('expands a libraryLinks item into one link per library when signed in', async () => {
+    localStorage.setItem('access_token', 'tok'); // isLoggedIn = token presence
+    const fetchMock = vi.fn((url: unknown) => {
+      const u = typeof url === 'string' ? url : '';
+      if (u.includes('/api/v1/libraries')) {
+        return Promise.resolve(
+          jsonResponse({
+            libraries: [
+              { id: 'mv', name: 'Movies', type: 'movie', display_order: 0 },
+              { id: 'tv', name: 'TV', type: 'series', display_order: 1 },
+            ],
+          }),
+        );
+      }
+      return Promise.resolve(jsonResponse({}));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    wrapper = await mountApp({
+      app: 'server',
+      apiBase: '',
+      routerBase: '/app',
+      menu: [
+        { id: 'browse', label: 'Browse', to: '/app', libraryLinks: true },
+        { id: 'settings', label: 'Settings', to: '/app/settings' },
+      ],
+    });
+    await flushPromises();
+
+    const labels = wrapper.findAll('.nav-link').map((l) => l.text());
+    expect(labels).toEqual(['Browse', 'Movies', 'TV', 'Settings']);
+    // the library links carry the per-library route path
+    const movies = wrapper.findAll('a.nav-link').find((a) => a.text() === 'Movies');
+    expect(movies?.attributes('href')).toBe('/app/library/mv');
+  });
+
+  it('does not fetch libraries or add links when no item opts in (hub)', async () => {
+    localStorage.setItem('access_token', 'tok');
+    const fetchMock = vi.fn((_url: unknown) => Promise.resolve(jsonResponse({})));
+    vi.stubGlobal('fetch', fetchMock);
+
+    wrapper = await mountApp({
+      app: 'hub',
+      apiBase: '',
+      routerBase: '/app',
+      menu: [{ id: 'servers', label: 'My Servers', to: '/app/servers' }],
+    });
+    await flushPromises();
+
+    expect(wrapper.findAll('.nav-link').map((l) => l.text())).toEqual(['My Servers']);
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/v1/libraries'))).toBe(false);
   });
 });
 

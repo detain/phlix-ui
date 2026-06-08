@@ -65,6 +65,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
     offset: import("vue").Ref<number, number>;
+    libraryId: import("vue").Ref<string | undefined, string | undefined>;
     hasMore: import("vue").ComputedRef<boolean>;
     queryParams: import("vue").ComputedRef<LibraryQueryParams>;
     availableGenres: import("vue").ComputedRef<string[]>;
@@ -85,7 +86,9 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
-}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "availableRatings" | "availableTypes">, Pick<{
+    setLibraryId: (id: string | undefined) => void;
+    clearFilters: () => void;
+}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "availableRatings" | "availableTypes">, Pick<{
     items: import("vue").Ref<{
         id: string;
         name: string;
@@ -140,6 +143,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
     offset: import("vue").Ref<number, number>;
+    libraryId: import("vue").Ref<string | undefined, string | undefined>;
     hasMore: import("vue").ComputedRef<boolean>;
     queryParams: import("vue").ComputedRef<LibraryQueryParams>;
     availableGenres: import("vue").ComputedRef<string[]>;
@@ -160,6 +164,8 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
+    setLibraryId: (id: string | undefined) => void;
+    clearFilters: () => void;
 }, "hasMore" | "queryParams" | "availableGenres">, Pick<{
     items: import("vue").Ref<{
         id: string;
@@ -215,6 +221,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
     offset: import("vue").Ref<number, number>;
+    libraryId: import("vue").Ref<string | undefined, string | undefined>;
     hasMore: import("vue").ComputedRef<boolean>;
     queryParams: import("vue").ComputedRef<LibraryQueryParams>;
     availableGenres: import("vue").ComputedRef<string[]>;
@@ -235,4 +242,6 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
-}, "reset" | "fetchMedia" | "scheduleFetch" | "loadMore" | "prefetch" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort">>;
+    setLibraryId: (id: string | undefined) => void;
+    clearFilters: () => void;
+}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort" | "setLibraryId" | "clearFilters">>;

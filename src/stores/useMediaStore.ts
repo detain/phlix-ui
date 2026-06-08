@@ -54,11 +54,16 @@ export const useMediaStore = defineStore('media', () => {
     const order = ref<SortOrder>('asc');
     const limit = ref(24);
     const offset = ref(0);
+    // When set, every fetch is scoped to this one library (the dedicated library
+    // page). It is identified by the route, NOT the FilterBar, so it is kept out
+    // of toQuery()/applyQuery() (the filter URL-sync) and set via setLibraryId().
+    const libraryId = ref<string | undefined>(undefined);
 
     const hasMore = computed(() => items.value.length < total.value);
 
     const queryParams = computed<LibraryQueryParams>(() => {
         const p: LibraryQueryParams = {};
+        if (libraryId.value) p.libraryId = libraryId.value;
         if (search.value) p.search = search.value;
         if (selectedGenres.value.length) p.genres = selectedGenres.value;
         if (yearFrom.value !== undefined) p.yearFrom = yearFrom.value;
@@ -83,6 +88,7 @@ export const useMediaStore = defineStore('media', () => {
     // ---- query (de)serialization --------------------------------------------
     function buildParams(params: LibraryQueryParams): URLSearchParams {
         const sp = new URLSearchParams();
+        if (params.libraryId) sp.set('libraryId', params.libraryId);
         if (params.search) sp.set('search', params.search);
         // `key[]=` so PHP parses arrays; bare repeated keys collapse to a string server-side.
         params.genres?.forEach((g) => sp.append('genres[]', g));
@@ -278,6 +284,31 @@ export const useMediaStore = defineStore('media', () => {
         if (ord) order.value = ord;
         offset.value = 0;
     }
+    /** Scope every subsequent fetch to one library (or clear with `undefined`).
+     *  The library page sets this from its route param before loading; passing a
+     *  different id resets paging so the grid restarts from page 0. */
+    function setLibraryId(id: string | undefined): void {
+        if (libraryId.value !== id) {
+            libraryId.value = id;
+            offset.value = 0;
+        }
+    }
+    /** Clear every FilterBar field back to its default (paging too). The library
+     *  page calls this when entering/switching a library and on teardown so the
+     *  shared singleton's filter state never bleeds across libraries or into a
+     *  later unscoped consumer. Does NOT touch `libraryId` (the caller owns the
+     *  scope) or `limit`. */
+    function clearFilters(): void {
+        search.value = '';
+        selectedGenres.value = [];
+        yearFrom.value = undefined;
+        yearTo.value = undefined;
+        selectedRatings.value = [];
+        selectedTypes.value = [];
+        sort.value = 'name';
+        order.value = 'asc';
+        offset.value = 0;
+    }
 
     return {
         items,
@@ -294,6 +325,7 @@ export const useMediaStore = defineStore('media', () => {
         order,
         limit,
         offset,
+        libraryId,
         hasMore,
         queryParams,
         availableGenres,
@@ -314,5 +346,7 @@ export const useMediaStore = defineStore('media', () => {
         setRatings,
         setTypes,
         setSort,
+        setLibraryId,
+        clearFilters,
     };
 });

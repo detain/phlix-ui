@@ -10,6 +10,9 @@ import type { LibraryQueryParams } from '../types/library-query';
  */
 export function buildMediaQuery(params: Partial<LibraryQueryParams> = {}): string {
   const sp = new URLSearchParams();
+  // Scope to a single library when set — the server confines both the items and
+  // the `total` to that library (an absent/blank value is an all-libraries query).
+  if (params.libraryId) sp.set('libraryId', params.libraryId);
   if (params.search) sp.set('search', params.search);
   // Array params use the `key[]=` form so PHP parses them into arrays; a bare
   // repeated `genres=` collapses to the last value (a string) and the server drops it.

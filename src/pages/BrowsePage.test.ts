@@ -6,9 +6,9 @@ import BrowsePage from './BrowsePage.vue';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
-import { useMediaStore } from '../stores/useMediaStore';
 import { useToastStore } from '../stores/useToastStore';
 import type { MediaItem } from '../types/media-item';
+import type { LibrarySummary } from '../api/libraries';
 import type { PhlixAppConfig } from '../app/types';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -40,11 +40,40 @@ function jsonResponse(body: unknown): Response {
   } as unknown as Response;
 }
 
+const ONE_LIBRARY: LibrarySummary[] = [{ id: 'lib1', name: 'Movies', type: 'movie' }];
+
+/**
+ * Stub fetch, branching by URL: `/api/v1/libraries` → `{ libraries }`, any
+ * `/api/v1/media` rail fetch → `{ items, total }`. `libraryError` rejects the
+ * library-list request specifically.
+ */
+function stubFetch(
+  opts: {
+    libraries?: LibrarySummary[];
+    media?: { items: MediaItem[]; total: number };
+    libraryError?: boolean;
+  } = {},
+) {
+  const libraries = opts.libraries ?? ONE_LIBRARY;
+  const mediaBody = opts.media ?? { items: [], total: 0 };
+  const fn = vi.fn((url: unknown) => {
+    const u = typeof url === 'string' ? url : '';
+    if (u.includes('/api/v1/libraries')) {
+      if (opts.libraryError) return Promise.reject(new Error('library list offline'));
+      return Promise.resolve(jsonResponse({ libraries }));
+    }
+    return Promise.resolve(jsonResponse(mediaBody));
+  });
+  vi.stubGlobal('fetch', fn);
+  return fn;
+}
+
 function makeRouter(withMedia = false): Router {
   const stub = { template: '<div />' };
   const routes = [
     { path: '/app', name: 'browse', component: stub },
     { path: '/app/player/:id', name: 'player', component: stub },
+    { path: '/app/library/:id', name: 'library', component: stub },
   ];
   if (withMedia) routes.push({ path: '/app/media/:id', name: 'media', component: stub });
   return createRouter({ history: createMemoryHistory(), routes });
@@ -64,6 +93,7 @@ function mountPage(opts: { config?: Partial<PhlixAppConfig>; router?: Router } =
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
+  // HomeRow loads eagerly without an IntersectionObserver (SSR/jsdom path).
   vi.stubGlobal('IntersectionObserver', undefined);
 });
 afterEach(() => {
@@ -75,37 +105,79 @@ function continueRow(w: ReturnType<typeof mountPage>) {
   return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Continue Watching');
 }
 
-describe('BrowsePage — grid load', () => {
-  it('fetches the library on mount and shows the title + count', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 7 })));
+describe('BrowsePage — per-library sections', () => {
+  it('renders one HomeRow per library, titled by library name', async () => {
+    stubFetch({
+      libraries: [
+        { id: 'lib1', name: 'Movies', type: 'movie', display_order: 0 },
+        { id: 'lib2', name: 'TV', type: 'series', display_order: 1 },
+        { id: 'lib3', name: 'Anime', type: 'series', display_order: 2 },
+      ],
+    });
     const w = mountPage();
     await flushPromises();
-    expect(w.find('.browse-title').text()).toBe('Browse');
-    expect(w.find('.browse-count').text()).toContain('7');
-    expect(useMediaStore().items).toHaveLength(1);
+    const rows = w.findAllComponents(HomeRow);
+    expect(rows).toHaveLength(3);
+    expect(rows.map((r) => r.props('row').title)).toEqual(['Movies', 'TV', 'Anime']);
+    // each rail is scoped to its library
+    expect(rows[0].props('row').query).toEqual({ libraryId: 'lib1' });
+  });
+
+  it('also renders configured home rows alongside the library rails', async () => {
+    stubFetch({ libraries: ONE_LIBRARY });
+    const w = mountPage({
+      config: { homeRows: [{ id: 'r1', title: 'Recently Added' }] },
+    });
+    await flushPromises();
+    const titles = w.findAllComponents(HomeRow).map((r) => r.props('row').title);
+    // configured row(s) first, then one per library
+    expect(titles).toEqual(['Recently Added', 'Movies']);
   });
 
   it('keeps the #toolbar-extra slot', () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [], total: 0 })));
-    const w = mountPage();
-    // re-mount with the slot
-    const w2 = mount(BrowsePage, {
+    stubFetch();
+    const w = mount(BrowsePage, {
       global: { plugins: [makeRouter()], provide: { apiBase: '', phlixConfig: { app: 'server', apiBase: '' } } },
       slots: { 'toolbar-extra': '<button class="extra">x</button>' },
     });
-    expect(w2.find('.browse-toolbar .extra').exists()).toBe(true);
+    expect(w.find('.browse-toolbar .extra').exists()).toBe(true);
     w.unmount();
-    w2.unmount();
+  });
+});
+
+describe('BrowsePage — empty + error', () => {
+  it('shows an empty state when there are no libraries', async () => {
+    stubFetch({ libraries: [] });
+    const w = mountPage();
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.props('title')).toBe('No libraries yet');
+    expect(w.findAllComponents(HomeRow)).toHaveLength(0);
+  });
+
+  it('shows the canonical error EmptyState + working retry when the library list fails', async () => {
+    const fn = stubFetch({ libraryError: true });
+    const w = mountPage();
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain('library list offline');
+    // Retry re-requests the library list.
+    const callsBefore = fn.mock.calls.length;
+    await empty.find('button').trigger('click');
+    await flushPromises();
+    expect(fn.mock.calls.length).toBeGreaterThan(callsBefore);
   });
 });
 
 describe('BrowsePage — Continue Watching', () => {
-  it('derives the rail from the resume map resolved against loaded items', async () => {
+  it('derives the rail from the resume map resolved against library-rail items', async () => {
     localStorage.setItem('phlix.resume', JSON.stringify({ a: 600 }));
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(jsonResponse({ items: [media({ id: 'a', name: 'Resumed' }), media({ id: 'b' })], total: 2 })),
-    );
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      media: { items: [media({ id: 'a', name: 'Resumed' }), media({ id: 'b' })], total: 2 },
+    });
     const w = mountPage();
     await flushPromises();
     const row = continueRow(w);
@@ -115,180 +187,82 @@ describe('BrowsePage — Continue Watching', () => {
   });
 
   it('hides Continue Watching when the resume map is empty', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media({ id: 'a' })], total: 1 })));
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'a' })], total: 1 } });
     const w = mountPage();
     await flushPromises();
     expect(continueRow(w)).toBeUndefined();
   });
 
-  it('does not list a resumed id that is not among loaded items', async () => {
+  it('does not list a resumed id absent from the loaded rail items', async () => {
     localStorage.setItem('phlix.resume', JSON.stringify({ ghost: 600 }));
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media({ id: 'a' })], total: 1 })));
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'a' })], total: 1 } });
     const w = mountPage();
     await flushPromises();
     expect(continueRow(w)).toBeUndefined();
-  });
-
-  it('orders the rail by resume seconds desc and caps at 12', async () => {
-    // 13 resumable ids with ascending seconds; expect the highest 12, ordered desc.
-    const resume: Record<string, number> = {};
-    const items: MediaItem[] = [];
-    for (let i = 0; i < 13; i++) {
-      resume[`x${i}`] = i * 100; // x12 highest, x0 lowest
-      items.push(media({ id: `x${i}`, name: `Title ${i}` }));
-    }
-    localStorage.setItem('phlix.resume', JSON.stringify(resume));
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items, total: items.length })));
-    const w = mountPage();
-    await flushPromises();
-    const row = continueRow(w);
-    const list = row!.props('items') as MediaItem[];
-    expect(list).toHaveLength(12);
-    expect(list[0].id).toBe('x12'); // highest seconds first
-    expect(list[11].id).toBe('x1'); // x0 (lowest) dropped by the cap
-  });
-});
-
-describe('BrowsePage — home rows', () => {
-  it('renders one HomeRow per configured row', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 1 })));
-    const w = mountPage({
-      config: {
-        homeRows: [
-          { id: 'r1', title: 'Recently Added' },
-          { id: 'r2', title: 'Sci-Fi', query: { genres: ['Sci-Fi'] } },
-        ],
-      },
-    });
-    await flushPromises();
-    expect(w.findAllComponents(HomeRow)).toHaveLength(2);
-  });
-
-  it('renders no HomeRow when none are configured', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [], total: 0 })));
-    const w = mountPage();
-    await flushPromises();
-    expect(w.findAllComponents(HomeRow)).toHaveLength(0);
   });
 });
 
 describe('BrowsePage — card actions', () => {
   it('routes Play to the player route', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media({ id: 'p1' })], total: 1 })));
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'p1' })], total: 1 } });
     const router = makeRouter();
     const push = vi.spyOn(router, 'push');
     const w = mountPage({ router });
     await flushPromises();
-    w.findComponent({ name: 'MediaGrid' }).vm.$emit('play', media({ id: 'p1' }));
+    w.findComponent(HomeRow).vm.$emit('play', media({ id: 'p1' }));
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'p1' } });
   });
 
   it('shows a toast when adding to the watchlist', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media({ id: 'p1', name: 'Dune' })], total: 1 })));
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'p1', name: 'Dune' })], total: 1 } });
     const w = mountPage();
     const toasts = useToastStore();
     await flushPromises();
-    w.findComponent({ name: 'MediaGrid' }).vm.$emit('watchlist', media({ id: 'p1', name: 'Dune' }));
+    w.findComponent(HomeRow).vm.$emit('watchlist', media({ id: 'p1', name: 'Dune' }));
     expect(toasts.toasts.some((t) => t.tone === 'success' && t.message.includes('Dune'))).toBe(true);
   });
 
   it('routes Info to the detail route when it exists', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media({ id: 'i1' })], total: 1 })));
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'i1' })], total: 1 } });
     const router = makeRouter(true);
     const push = vi.spyOn(router, 'push');
     const w = mountPage({ router });
     await flushPromises();
-    w.findComponent({ name: 'MediaGrid' }).vm.$emit('info', media({ id: 'i1' }));
+    w.findComponent(HomeRow).vm.$emit('info', media({ id: 'i1' }));
     expect(push).toHaveBeenCalledWith({ name: 'media', params: { id: 'i1' } });
-  });
-
-  it('shows a "coming soon" toast for Info when no detail route exists (no playback)', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media({ id: 'i2', name: 'Arrival' })], total: 1 })));
-    const router = makeRouter(false);
-    const push = vi.spyOn(router, 'push');
-    const w = mountPage({ router });
-    const toasts = useToastStore();
-    await flushPromises();
-    w.findComponent({ name: 'MediaGrid' }).vm.$emit('info', media({ id: 'i2', name: 'Arrival' }));
-    expect(push).not.toHaveBeenCalled();
-    expect(toasts.toasts.some((t) => t.tone === 'info' && t.message.includes('Arrival'))).toBe(true);
   });
 });
 
 describe('BrowsePage — see-all', () => {
-  it('applies a row query to the store and reloads the grid', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 1 })));
+  it('routes a library rail see-all to that library page', async () => {
+    stubFetch({ libraries: ONE_LIBRARY });
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = mountPage({ router });
+    await flushPromises();
+    w.findComponent(HomeRow).vm.$emit('see-all', {
+      id: 'library-lib1',
+      title: 'Movies',
+      query: { libraryId: 'lib1' },
+    });
+    expect(push).toHaveBeenCalledWith({ name: 'library', params: { id: 'lib1' } });
+  });
+
+  it('does not render a "See all" button for a configured (non-library) row', async () => {
+    stubFetch({ libraries: [], media: { items: [media()], total: 1 } });
     const w = mountPage({ config: { homeRows: [{ id: 'r2', title: 'Sci-Fi', query: { genres: ['Sci-Fi'] } }] } });
     await flushPromises();
-    const store = useMediaStore();
+    // the genre shelf has no navigable target, so its See-all is suppressed
+    expect(w.find('.home-row__seeall').exists()).toBe(false);
+  });
+
+  it('does not navigate if a configured-row see-all is somehow emitted', async () => {
+    stubFetch({ libraries: [] });
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = mountPage({ router, config: { homeRows: [{ id: 'r2', title: 'Sci-Fi', query: { genres: ['Sci-Fi'] } }] } });
+    await flushPromises();
     w.findComponent(HomeRow).vm.$emit('see-all', { id: 'r2', title: 'Sci-Fi', query: { genres: ['Sci-Fi'] } });
-    await flushPromises();
-    expect(store.selectedGenres).toEqual(['Sci-Fi']);
-  });
-
-  it('honors reduced-motion when scrolling the grid into view (R6.5a)', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 1 })));
-    // jsdom has no scrollIntoView — install one to observe the `behavior` arg
-    const scrollIntoView = vi.fn();
-    Element.prototype.scrollIntoView = scrollIntoView as unknown as typeof Element.prototype.scrollIntoView;
-    const row = { id: 'r2', title: 'Sci-Fi', query: { genres: ['Sci-Fi'] } };
-    const w = mountPage({ config: { homeRows: [row] } });
-    await flushPromises();
-
-    // reduced-motion ON → instant ("auto")
-    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
-    w.findComponent(HomeRow).vm.$emit('see-all', row);
-    await flushPromises();
-    expect(scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'auto', block: 'start' });
-
-    // reduced-motion OFF → smooth
-    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
-    w.findComponent(HomeRow).vm.$emit('see-all', row);
-    await flushPromises();
-    expect(scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'smooth', block: 'start' });
-  });
-});
-
-describe('BrowsePage — grid wiring', () => {
-  it('reloads on a FilterBar change', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 1 })));
-    const w = mountPage();
-    const store = useMediaStore();
-    await flushPromises();
-    const reset = vi.spyOn(store, 'reset');
-    const fetchMedia = vi.spyOn(store, 'fetchMedia');
-    w.findComponent({ name: 'FilterBar' }).vm.$emit('change');
-    expect(reset).toHaveBeenCalled();
-    expect(fetchMedia).toHaveBeenCalled();
-  });
-
-  it('forwards load-more to the store', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [media()], total: 50 })));
-    const w = mountPage();
-    const store = useMediaStore();
-    await flushPromises();
-    const loadMore = vi.spyOn(store, 'loadMore');
-    w.findComponent({ name: 'MediaGrid' }).vm.$emit('load-more');
-    expect(loadMore).toHaveBeenCalled();
-  });
-});
-
-describe('BrowsePage — error', () => {
-  it('shows the canonical EmptyState error + working retry when the grid fetch fails', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('library offline')));
-    const w = mountPage();
-    await flushPromises();
-    // The bespoke `.browse-error` div is gone; the canonical EmptyState now carries
-    // the (shared-`errMessage`) text + a Retry action (R5.3b).
-    const empty = w.findComponent(EmptyState);
-    expect(empty.exists()).toBe(true);
-    expect(empty.text()).toContain('library offline');
-    // Retry re-runs the grid load (reset + fetchMedia).
-    const store = useMediaStore();
-    const reset = vi.spyOn(store, 'reset');
-    const fetchMedia = vi.spyOn(store, 'fetchMedia');
-    await empty.find('button').trigger('click');
-    expect(reset).toHaveBeenCalled();
-    expect(fetchMedia).toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
   });
 });

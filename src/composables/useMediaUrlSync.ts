@@ -16,6 +16,11 @@ export function bindMediaStoreToRouter(router: Router, apiBase: string): () => v
     const store = useMediaStore();
     let syncing = false;
 
+    // A URL-synced flat grid is never library-scoped — clear any lingering scope
+    // from a prior LibraryPage so this consumer of the shared singleton starts
+    // unscoped (defense-in-depth; LibraryPage also clears on unmount).
+    store.setLibraryId(undefined);
+
     // initial: hydrate from the URL, then load
     store.applyQuery(router.currentRoute.value.query as Record<string, string | string[]>);
     store.fetchMedia(apiBase);

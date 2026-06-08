@@ -9,6 +9,9 @@ export interface LibraryQuery {
     order?: 'asc' | 'desc';
     limit?: number;
     offset?: number;
+    /** Scope the query to a single library (its `id`). Drives the per-library
+     *  Browse rails and the dedicated library page. */
+    libraryId?: string;
 }
 
 export interface LibraryQueryParams extends Omit<LibraryQuery, 'ratings' | 'sort' | 'order'> {
@@ -23,4 +26,6 @@ export interface LibraryQueryParams extends Omit<LibraryQuery, 'ratings' | 'sort
     order?: string;
     limit?: number;
     offset?: number;
+    /** Scope the query to a single library (its `id`). */
+    libraryId?: string;
 }
