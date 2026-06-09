@@ -7,8 +7,9 @@ describe('TranscodeNotice', () => {
     const w = mount(TranscodeNotice);
     expect(w.find('[role="alert"]').exists()).toBe(true);
     expect(w.find('.transcode__heading').exists()).toBe(true);
-    expect(w.text()).toContain('MKV');
-    expect(w.text()).toContain('HEVC');
+    // Reworded for the on-demand-transcode era: it now signals a FAILURE to
+    // prepare a playable stream, not "transcoding isn't available".
+    expect(w.text().toLowerCase()).toContain('play');
   });
 
   it('mentions the media title when given one', () => {
@@ -18,7 +19,7 @@ describe('TranscodeNotice', () => {
 
   it('falls back to a generic phrasing without a title', () => {
     const w = mount(TranscodeNotice);
-    expect(w.text()).toContain('This title is');
+    expect(w.text().toLowerCase()).toContain('this title');
   });
 
   it('emits back from the Go back button', async () => {
