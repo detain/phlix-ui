@@ -40,6 +40,10 @@ var T = { class: "library-page" }, E = {
 			}).catch(() => {});
 		}
 		function H(e) {
+			if (e.type === "series" && M?.hasRoute("media")) {
+				V("media", e.id);
+				return;
+			}
 			V("player", e.id);
 		}
 		function U() {}
@@ -88,8 +92,8 @@ var T = { class: "library-page" }, E = {
 			description: "No library was specified."
 		}))]));
 	}
-}), [["__scopeId", "data-v-6d595a6f"]]);
+}), [["__scopeId", "data-v-cdc1ee50"]]);
 //#endregion
 export { A as default };
 
-//# sourceMappingURL=LibraryPage-DMiJ6TBc.js.map
+//# sourceMappingURL=LibraryPage-CeQrVmFb.js.map
