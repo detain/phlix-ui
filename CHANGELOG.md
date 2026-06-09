@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.23.0] - 2026-06-09
+
+### Added
+- **On-demand HLS playback for non-direct-playable files.** When a title is in a
+  container/codec the browser can't play directly (MKV, HEVC, …), the player now
+  asks the server to transcode it to HLS and plays the result via **hls.js**
+  (with native HLS on Safari/iOS) instead of dead-ending at a "can't play"
+  notice. A "Preparing your stream…" overlay (with progress) shows while the
+  server warms up the job, then the normal player chrome takes over.
+  - New `useHlsTranscode` composable orchestrates start → poll readiness → attach.
+  - New `transcode.ts` helpers (`transcodeStartPath`/`transcodeStatusPath`,
+    payload parsers, `resolveStreamUrl`) and `hls-playback.ts` (`attachHls`,
+    `isNativeHlsSupported`) — hls.js is dynamically imported so it only loads
+    (separate ~157 kB gzip chunk) when a transcode is actually played.
+  - New `TranscodePreparing` overlay; `TranscodeNotice` reworded to a genuine
+    failure message (it now only appears if the transcode itself fails).
+  - `Player` gains an `apiBase` prop (defaults to the page origin) and triggers a
+    transcode both proactively (by extension) and reactively (on a fatal decode
+    error), including on up-next item changes.
+
+### Dependencies
+- Added `hls.js` ^1.6.16.
+
 ## [0.22.1] - 2026-06-09
 
 ### Fixed

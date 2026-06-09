@@ -174,12 +174,18 @@ export const DEFAULT_MESSAGES = {
     startsIn: 'Starts in {seconds}s',
     playNow: 'Play now',
     cancel: 'Cancel',
-    // Transcode notice
+    // Transcode "preparing" overlay (server is transcoding to HLS on demand)
+    transcodePreparingHeading: 'Preparing your stream…',
+    transcodePreparingTitled:
+      '“{title}” is being converted to a format your browser can play. This starts in a moment.',
+    transcodePreparingUntitled:
+      'This title is being converted to a format your browser can play. This starts in a moment.',
+    // Transcode failure notice (shown only when the on-demand transcode failed)
     transcodeHeading: 'Can’t play this file here',
     transcodeBodyTitled:
-      '“{title}” is in a format your browser can’t play directly (for example MKV or HEVC). Transcoding isn’t available yet.',
+      'We couldn’t prepare a playable version of “{title}” right now. Please try again later.',
     transcodeBodyUntitled:
-      'This title is in a format your browser can’t play directly (for example MKV or HEVC). Transcoding isn’t available yet.',
+      'We couldn’t prepare a playable version of this title right now. Please try again later.',
     goBack: 'Go back',
   },
   settings: {

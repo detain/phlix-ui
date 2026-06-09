@@ -239,6 +239,7 @@ function onTheater(active: boolean): void {
         :media="item"
         :stream-url="streamUrl"
         :stream-url-for="streamUrlFor"
+        :api-base="apiBase"
         :chapters="chapters"
         :intro-marker="introMarker"
         :outro-marker="outroMarker"

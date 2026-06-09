@@ -190,7 +190,27 @@ export { default as AmbientCanvas } from './components/player/AmbientCanvas.vue'
 export { default as ResumePrompt } from './components/player/ResumePrompt.vue';
 export { default as UpNext } from './components/player/UpNext.vue';
 export { default as TranscodeNotice } from './components/player/TranscodeNotice.vue';
+export { default as TranscodePreparing } from './components/player/TranscodePreparing.vue';
 export { default as SkipButton } from './components/player/SkipButton.vue';
+export {
+  transcodeStartPath,
+  transcodeStatusPath,
+  parseTranscodeStart,
+  parseTranscodeStatus,
+  isPlayable,
+  isFailedStatus,
+  resolveStreamUrl,
+} from './components/player/transcode';
+export type { TranscodeStart, TranscodeStatus } from './components/player/transcode';
+export { attachHls, isNativeHlsSupported } from './components/player/hls-playback';
+export type { HlsHandle, AttachHlsOptions } from './components/player/hls-playback';
+export { useHlsTranscode } from './composables/useHlsTranscode';
+export type {
+  TranscodeState,
+  TranscodeHttpClient,
+  HlsTranscodeController,
+  UseHlsTranscodeOptions,
+} from './composables/useHlsTranscode';
 export {
   needsTranscode,
   extensionOf,

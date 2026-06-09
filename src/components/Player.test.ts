@@ -9,6 +9,37 @@ import SkipButton from './player/SkipButton.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import type { MediaItem } from '../types/media-item';
+import * as hlsTranscodeMod from '../composables/useHlsTranscode';
+
+// The real useHlsTranscode hits the network + hls.js; mock it so tests can flip
+// its reactive state by hand and assert the player's preparing/ready/error chrome.
+vi.mock('../composables/useHlsTranscode', async () => {
+  const { ref } = await import('vue');
+  const state = ref('idle');
+  const progress = ref(0);
+  const ctrl = {
+    state,
+    progress,
+    start: vi.fn(),
+    cleanup: vi.fn(),
+    reset: vi.fn(() => {
+      state.value = 'idle';
+      progress.value = 0;
+    }),
+  };
+  return { useHlsTranscode: () => ctrl, __ctrl: ctrl };
+});
+
+/** The singleton mocked transcode controller (state/progress refs + spies). */
+function tc(): {
+  state: { value: string };
+  progress: { value: number };
+  start: ReturnType<typeof vi.fn>;
+  cleanup: ReturnType<typeof vi.fn>;
+  reset: ReturnType<typeof vi.fn>;
+} {
+  return (hlsTranscodeMod as unknown as { __ctrl: ReturnType<typeof tc> }).__ctrl;
+}
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -79,6 +110,13 @@ function mountPlayer(
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
+  // Reset the shared mocked transcode controller between tests.
+  const ctrl = tc();
+  ctrl.state.value = 'idle';
+  ctrl.progress.value = 0;
+  ctrl.start.mockClear();
+  ctrl.cleanup.mockClear();
+  ctrl.reset.mockClear();
 });
 afterEach(() => {
   // unmount so the document-level keyboard listener is removed (no cross-test bleed)
@@ -978,32 +1016,60 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     expect(w.find('.upnext').exists()).toBe(false);
   });
 
-  // ---- transcode guard ------------------------------------------------------
-  it('shows the transcode notice (and hides center/controls) for a .mkv stream URL', () => {
+  // ---- transcode -> on-demand HLS -------------------------------------------
+  it('starts a transcode and shows the preparing overlay (hiding center/controls) for a .mkv stream URL', () => {
     const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
-    expect(w.find('.transcode').exists()).toBe(true);
+    expect(tc().start).toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(true);
     expect(w.find('.player__center').exists()).toBe(false);
     expect(w.find('.player__controls').exists()).toBe(false);
   });
 
   it('detects a transcode container from the library path when the stream URL is extensionless', () => {
     const { w } = mountPlayer({ media: media({ path: '/lib/Dune.mkv' }), streamUrl: 'http://x/media/m1/stream' });
-    expect(w.find('.transcode').exists()).toBe(true);
+    expect(w.find('.prep').exists()).toBe(true);
+    expect(tc().start).toHaveBeenCalled();
   });
 
-  it('does not show the notice for a direct-playable mp4', () => {
+  it('clears the direct <video> src while transcoding so hls.js owns the element', () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    expect(w.find('video').attributes('src')).toBeUndefined();
+  });
+
+  it('does not transcode a direct-playable mp4', () => {
     const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    expect(w.find('.prep').exists()).toBe(false);
+    expect(w.find('.transcode').exists()).toBe(false);
+    expect(w.find('.player__controls').exists()).toBe(true);
+    expect(tc().start).not.toHaveBeenCalled();
+  });
+
+  it('reveals the player chrome once the transcode is ready (HLS playing)', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().state.value = 'ready';
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(false);
     expect(w.find('.transcode').exists()).toBe(false);
     expect(w.find('.player__controls').exists()).toBe(true);
   });
 
-  it('shows the notice reactively on a fatal media error (e.g. HEVC the browser cannot decode)', async () => {
+  it('shows the failure notice only when the transcode errors', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    expect(w.find('.transcode').exists()).toBe(false); // preparing, not failed
+    tc().state.value = 'error';
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(false);
+    expect(w.find('.transcode').exists()).toBe(true);
+  });
+
+  it('starts a transcode reactively on a fatal media error (e.g. HEVC the browser cannot decode)', async () => {
     const { w, video } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
-    expect(w.find('.transcode').exists()).toBe(false);
+    expect(w.find('.prep').exists()).toBe(false);
     Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 4 }) });
     video.dispatchEvent(new Event('error'));
     await nextTick();
-    expect(w.find('.transcode').exists()).toBe(true);
+    expect(tc().start).toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(true);
   });
 
   it('ignores a non-fatal media error (network/abort)', async () => {
@@ -1011,19 +1077,27 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 2 }) });
     video.dispatchEvent(new Event('error'));
     await nextTick();
-    expect(w.find('.transcode').exists()).toBe(false);
+    expect(tc().start).not.toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(false);
   });
 
-  it('suppresses the resume prompt while the transcode notice is shown', () => {
-    setActivePinia(createPinia());
+  it('suppresses the resume prompt while preparing a transcode', () => {
     usePlayerStore().saveResume('m1', 60, 200);
     const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
-    expect(w.find('.transcode').exists()).toBe(true);
+    expect(w.find('.prep').exists()).toBe(true);
     expect(w.find('.resume').exists()).toBe(false);
   });
 
-  it('the transcode notice Back button emits back', async () => {
+  it('the preparing overlay Back button emits back', async () => {
     const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    await w.find('.prep__back').trigger('click');
+    expect(w.emitted('back')).toHaveLength(1);
+  });
+
+  it('the failure notice Back button emits back', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().state.value = 'error';
+    await nextTick();
     await w.find('.transcode__back').trigger('click');
     expect(w.emitted('back')).toHaveLength(1);
   });
