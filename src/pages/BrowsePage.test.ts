@@ -214,6 +214,17 @@ describe('BrowsePage — card actions', () => {
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'p1' } });
   });
 
+  it('routes Play on a SERIES to its detail page, not the (unplayable) player', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 's1', type: 'series' })], total: 1 } });
+    const router = makeRouter(true); // media route present
+    const push = vi.spyOn(router, 'push');
+    const w = mountPage({ router });
+    await flushPromises();
+    w.findComponent(HomeRow).vm.$emit('play', media({ id: 's1', type: 'series' }));
+    expect(push).toHaveBeenCalledWith({ name: 'media', params: { id: 's1' } });
+    expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 's1' } });
+  });
+
   it('shows a toast when adding to the watchlist', async () => {
     stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'p1', name: 'Dune' })], total: 1 } });
     const w = mountPage();

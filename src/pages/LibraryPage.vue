@@ -91,6 +91,12 @@ function go(name: string, id: string): void {
   router?.push({ name, params: { id } }).catch(() => {});
 }
 function onPlay(item: MediaItem): void {
+  // A series isn't directly playable — its "Play" opens the detail page (the
+  // season/episode tree) where an episode is chosen. Everything else plays.
+  if (item.type === 'series' && router?.hasRoute('media')) {
+    go('media', item.id);
+    return;
+  }
   go('player', item.id);
 }
 function onWatchlist(): void {

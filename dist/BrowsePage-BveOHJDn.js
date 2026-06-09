@@ -44,6 +44,10 @@ var O = { class: "browse-page" }, k = { class: "browse-toolbar" }, A = {
 			}).catch(() => {});
 		}
 		function K(e) {
+			if (e.type === "series" && L?.hasRoute("media")) {
+				G("media", e.id);
+				return;
+			}
 			G("player", e.id);
 		}
 		function q(e) {
@@ -120,8 +124,8 @@ var O = { class: "browse-page" }, k = { class: "browse-toolbar" }, A = {
 			})) : f("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-ad36d672"]]);
+}), [["__scopeId", "data-v-261be144"]]);
 //#endregion
 export { j as default };
 
-//# sourceMappingURL=BrowsePage-B9ZreS4W.js.map
+//# sourceMappingURL=BrowsePage-BveOHJDn.js.map
