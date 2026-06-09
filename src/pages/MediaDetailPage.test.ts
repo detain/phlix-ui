@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import MediaDetailPage from './MediaDetailPage.vue';
 import MediaDetail from '../components/MediaDetail.vue';
+import SeriesSeasons from '../components/SeriesSeasons.vue';
 import { useToastStore } from '../stores/useToastStore';
 import type { MediaItem } from '../types/media-item';
 
@@ -202,6 +203,128 @@ describe('MediaDetailPage — actions & navigation', () => {
     await router.isReady();
     await flushPromises();
     expect((w.findComponent(MediaDetail).props('item') as MediaItem).name).toBe('Second');
+  });
+});
+
+describe('MediaDetailPage — series drill-down', () => {
+  function episode(over: Partial<MediaItem> = {}): MediaItem {
+    return media({ type: 'episode', genres: [], ...over });
+  }
+
+  it('fetches a series\' children by parentId and renders the season tree (not similar)', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', name: 'Breaking Bad', type: 'series' })))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            episode({ id: 's1e1', season_number: 1, episode_number: 1, episode_title: 'Pilot' }),
+            episode({ id: 's1e2', season_number: 1, episode_number: 2 }),
+            episode({ id: 's2e1', season_number: 2, episode_number: 1 }),
+          ],
+          total: 3,
+        }),
+      );
+    const { w } = await mountAt('sh1', fetchMock);
+    await flushPromises();
+
+    // the children fetch was scoped by parentId, NOT a genre similar query
+    expect(fetchMock.mock.calls[1][0]).toContain('parentId=sh1');
+    expect(fetchMock.mock.calls[1][0]).not.toContain('genres');
+
+    const tree = w.findComponent(SeriesSeasons);
+    expect(tree.exists()).toBe(true);
+    const labels = w.findAll('.series-seasons__season-label').map((n) => n.text());
+    expect(labels).toEqual(['Season 1', 'Season 2']);
+  });
+
+  it('starts the first episode when Play is pressed on the series hero', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            episode({ id: 's2e1', season_number: 2, episode_number: 1 }),
+            episode({ id: 's1e1', season_number: 1, episode_number: 1 }),
+          ],
+          total: 2,
+        }),
+      );
+    const { w, router } = await mountAt('sh1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaDetail).vm.$emit('play', media({ id: 'sh1', type: 'series' }));
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e1' } });
+  });
+
+  it('routes an episode play from the tree to the player', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
+      .mockResolvedValueOnce(
+        jsonResponse({ items: [episode({ id: 's1e1', season_number: 1, episode_number: 1 })], total: 1 }),
+      );
+    const { w, router } = await mountAt('sh1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(SeriesSeasons).vm.$emit('play', episode({ id: 's1e1' }));
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e1' } });
+  });
+
+  it('flattens server-modeled season rows by fetching each season\'s episodes', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
+      // direct children: two season container rows
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            media({ id: 'se1', type: 'season', season_number: 1 }),
+            media({ id: 'se2', type: 'season', season_number: 2 }),
+          ],
+          total: 2,
+        }),
+      )
+      // each season's episodes (order of the Promise.all calls follows the rows)
+      .mockResolvedValueOnce(
+        jsonResponse({ items: [episode({ id: 's1e1', season_number: 1, episode_number: 1 })], total: 1 }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ items: [episode({ id: 's2e1', season_number: 2, episode_number: 1 })], total: 1 }),
+      );
+    const { w } = await mountAt('sh1', fetchMock);
+    await flushPromises();
+    await flushPromises();
+    const labels = w.findAll('.series-seasons__season-label').map((n) => n.text());
+    expect(labels).toEqual(['Season 1', 'Season 2']);
+    // season-row children were fetched by their own ids
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
+    expect(urls.some((u) => u.includes('parentId=se1'))).toBe(true);
+    expect(urls.some((u) => u.includes('parentId=se2'))).toBe(true);
+  });
+
+  it('shows an empty state when a series has no episodes', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
+      .mockResolvedValueOnce(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAt('sh1', fetchMock);
+    await flushPromises();
+    expect(w.findComponent(SeriesSeasons).exists()).toBe(false);
+    expect(w.text()).toContain('No episodes yet');
+  });
+
+  it('a movie still gets the similar rail and no season tree', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', type: 'movie', genres: ['Sci-Fi'] })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    expect(w.findComponent(SeriesSeasons).exists()).toBe(false);
+    // the second fetch was the genre-scoped similar query, not a parentId one
+    expect(fetchMock.mock.calls[1][0]).toContain('genres');
   });
 });
 

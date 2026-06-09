@@ -31,6 +31,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         director: string | null;
         created_at: string | null;
         updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
     }[], MediaItem[] | {
         id: string;
         name: string;
@@ -51,6 +55,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         director: string | null;
         created_at: string | null;
         updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -66,6 +74,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     limit: import("vue").Ref<number, number>;
     offset: import("vue").Ref<number, number>;
     libraryId: import("vue").Ref<string | undefined, string | undefined>;
+    topLevel: import("vue").Ref<boolean, boolean>;
     hasMore: import("vue").ComputedRef<boolean>;
     queryParams: import("vue").ComputedRef<LibraryQueryParams>;
     availableGenres: import("vue").ComputedRef<string[]>;
@@ -87,8 +96,9 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
+    setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "availableRatings" | "availableTypes">, Pick<{
+}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "topLevel" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "availableRatings" | "availableTypes">, Pick<{
     items: import("vue").Ref<{
         id: string;
         name: string;
@@ -109,6 +119,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         director: string | null;
         created_at: string | null;
         updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
     }[], MediaItem[] | {
         id: string;
         name: string;
@@ -129,6 +143,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         director: string | null;
         created_at: string | null;
         updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -144,6 +162,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     limit: import("vue").Ref<number, number>;
     offset: import("vue").Ref<number, number>;
     libraryId: import("vue").Ref<string | undefined, string | undefined>;
+    topLevel: import("vue").Ref<boolean, boolean>;
     hasMore: import("vue").ComputedRef<boolean>;
     queryParams: import("vue").ComputedRef<LibraryQueryParams>;
     availableGenres: import("vue").ComputedRef<string[]>;
@@ -165,6 +184,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
+    setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
 }, "hasMore" | "queryParams" | "availableGenres">, Pick<{
     items: import("vue").Ref<{
@@ -187,6 +207,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         director: string | null;
         created_at: string | null;
         updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
     }[], MediaItem[] | {
         id: string;
         name: string;
@@ -207,6 +231,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         director: string | null;
         created_at: string | null;
         updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -222,6 +250,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     limit: import("vue").Ref<number, number>;
     offset: import("vue").Ref<number, number>;
     libraryId: import("vue").Ref<string | undefined, string | undefined>;
+    topLevel: import("vue").Ref<boolean, boolean>;
     hasMore: import("vue").ComputedRef<boolean>;
     queryParams: import("vue").ComputedRef<LibraryQueryParams>;
     availableGenres: import("vue").ComputedRef<string[]>;
@@ -243,5 +272,6 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setTypes: (v: MediaType[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
+    setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort" | "setLibraryId" | "clearFilters">>;
+}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;

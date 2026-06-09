@@ -59,6 +59,16 @@ describe('MediaCard — rendering', () => {
     expect(custom.find('.media-card__link').attributes('href')).toBe('/app/media/m1');
   });
 
+  it('links a SERIES card to its detail page (the season tree), not the player', () => {
+    const w = mount(MediaCard, { props: { item: media({ id: 's1', type: 'series' }) } });
+    expect(w.find('.media-card__link').attributes('href')).toBe('/app/media/s1');
+  });
+
+  it('still links an episode straight to the player', () => {
+    const w = mount(MediaCard, { props: { item: media({ id: 'e1', type: 'episode' }) } });
+    expect(w.find('.media-card__link').attributes('href')).toBe('/app/player/e1');
+  });
+
   it('falls back to a real SVG icon (never emoji) when no poster', () => {
     const w = mount(MediaCard, { props: { item: media({ poster_url: null, type: 'series' }) } });
     expect(w.find('.media-card__img').exists()).toBe(false);
