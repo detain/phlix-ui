@@ -157,6 +157,9 @@ export declare const DEFAULT_MESSAGES: {
         startsIn: string;
         playNow: string;
         cancel: string;
+        transcodePreparingHeading: string;
+        transcodePreparingTitled: string;
+        transcodePreparingUntitled: string;
         transcodeHeading: string;
         transcodeBodyTitled: string;
         transcodeBodyUntitled: string;

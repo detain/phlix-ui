@@ -70,7 +70,14 @@ export { default as AmbientCanvas } from './components/player/AmbientCanvas.vue'
 export { default as ResumePrompt } from './components/player/ResumePrompt.vue';
 export { default as UpNext } from './components/player/UpNext.vue';
 export { default as TranscodeNotice } from './components/player/TranscodeNotice.vue';
+export { default as TranscodePreparing } from './components/player/TranscodePreparing.vue';
 export { default as SkipButton } from './components/player/SkipButton.vue';
+export { transcodeStartPath, transcodeStatusPath, parseTranscodeStart, parseTranscodeStatus, isPlayable, isFailedStatus, resolveStreamUrl, } from './components/player/transcode';
+export type { TranscodeStart, TranscodeStatus } from './components/player/transcode';
+export { attachHls, isNativeHlsSupported } from './components/player/hls-playback';
+export type { HlsHandle, AttachHlsOptions } from './components/player/hls-playback';
+export { useHlsTranscode } from './composables/useHlsTranscode';
+export type { TranscodeState, TranscodeHttpClient, HlsTranscodeController, UseHlsTranscodeOptions, } from './composables/useHlsTranscode';
 export { needsTranscode, extensionOf, isFatalMediaError, ringDashoffset, DIRECT_PLAY_EXTENSIONS, TRANSCODE_EXTENSIONS, UPNEXT_COUNTDOWN_SECONDS, UPNEXT_RING_RADIUS, UPNEXT_RING_CIRCUMFERENCE, } from './components/player/playback';
 export type { TimeMarker } from './components/player/playback';
 export { averageRegion, sampleAmbient, ambientGradient, rgbString, rgbaString, isBatterySaving, AMBIENT_SAMPLE_W, AMBIENT_SAMPLE_H, AMBIENT_SAMPLE_INTERVAL_MS, } from './components/player/ambient';

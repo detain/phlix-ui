@@ -23,6 +23,7 @@ import Icon from './Icon.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
 import { useMessages } from '../composables/useMessages';
+import { useHlsTranscode } from '../composables/useHlsTranscode';
 import ShortcutsHelp from './player/ShortcutsHelp.vue';
 import VolumeControl from './player/VolumeControl.vue';
 import SpeedMenu from './player/SpeedMenu.vue';
@@ -33,6 +34,7 @@ import AmbientCanvas from './player/AmbientCanvas.vue';
 import ResumePrompt from './player/ResumePrompt.vue';
 import UpNext from './player/UpNext.vue';
 import TranscodeNotice from './player/TranscodeNotice.vue';
+import TranscodePreparing from './player/TranscodePreparing.vue';
 import SkipButton from './player/SkipButton.vue';
 import { needsTranscode, isFatalMediaError, UPNEXT_COUNTDOWN_SECONDS, type TimeMarker } from './player/playback';
 import {
@@ -64,6 +66,10 @@ const props = defineProps<{
    *  R3.9's PlayerPage supplies the real `/media/:id/stream` resolver; without it,
    *  advancing clears the store's stream URL rather than leaving a stale one. */
   streamUrlFor?: (media: MediaItem) => string | undefined;
+  /** API base for the on-demand transcode endpoints. When a file can't be
+   *  direct-played the player POSTs `${apiBase}/api/v1/media/:id/transcode` and
+   *  plays the resulting HLS stream via hls.js. Defaults to the page origin. */
+  apiBase?: string;
 }>();
 
 const emit = defineEmits<{
@@ -103,10 +109,38 @@ const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
 
 // ---- resume / up-next / transcode (R3.8) ------------------------------------
 /** True when the current file can't be direct-played (mkv/hevc/… by extension, or
- *  a fatal media error) — show the notice instead of a silent black frame. The
- *  extension check is synchronous so the notice paints on the first frame (no
- *  black flash); a fatal <video> error flips it at runtime. */
+ *  a fatal media error). Instead of dead-ending at a notice, this kicks off an
+ *  on-demand server transcode and plays the resulting HLS stream (see `tc`); the
+ *  notice now only appears if that transcode itself fails. The extension check is
+ *  synchronous so the preparing overlay paints on the first frame (no black
+ *  flash); a fatal <video> error flips it at runtime. */
 const transcodeNeeded = ref(needsTranscode(props.streamUrl, props.media.path));
+
+/** HLS transcode-to-play controller: starts the server job, polls readiness, and
+ *  attaches the resulting playlist to <video> via hls.js. `apiBase` falls back to
+ *  the page origin (the SPA is served by phlix-server) when the host omits it. */
+const tc = useHlsTranscode({ apiBase: () => props.apiBase ?? '' });
+
+/** Direct-play source for the <video>. Cleared while transcoding so hls.js owns
+ *  the element's source instead of a (now-incompatible) direct URL binding. */
+const videoSrc = computed(() => (transcodeNeeded.value ? undefined : props.streamUrl));
+
+/** While a transcode is needed and not yet playing, the normal chrome is hidden
+ *  behind the preparing/notice overlay. Once HLS is attached (`ready`) the full
+ *  player chrome returns and plays the transcoded stream. */
+const transcodeBlocking = computed(() => transcodeNeeded.value && tc.state.value !== 'ready');
+/** Show the "preparing your stream" overlay while the job spins up. */
+const showPreparing = computed(
+  () => transcodeNeeded.value && (tc.state.value === 'preparing' || tc.state.value === 'idle'),
+);
+/** Show the "can't play" notice only when the transcode genuinely failed. */
+const showTranscodeNotice = computed(() => transcodeNeeded.value && tc.state.value === 'error');
+
+/** Kick off (or restart) the transcode-to-play flow for the current media. */
+function beginTranscode(): void {
+  const v = videoRef.value;
+  if (v) void tc.start(v, props.media.id);
+}
 
 const resumeSeconds = ref(player.resumePositionFor(props.media.id) ?? 0);
 /** Resume prompt — shown on open when an in-band position is stored (the store
@@ -131,6 +165,9 @@ function evaluateForCurrentMedia(): void {
   pendingSeek = null;
   stopUpNextCountdown();
   upNextActive.value = false;
+  // Tear down any previous HLS session; start a fresh one if the new item needs it.
+  tc.reset();
+  if (transcodeNeeded.value) beginTranscode();
 }
 
 // resume ----------------------------------------------------------------------
@@ -190,7 +227,13 @@ function cancelUpNext(): void {
 
 // transcode guard -------------------------------------------------------------
 function onVideoError(): void {
-  if (isFatalMediaError(videoRef.value)) transcodeNeeded.value = true;
+  // A fatal decode/format error on the DIRECT source (e.g. HEVC in an mp4 the
+  // extension check passed) flips us to the transcode path. Ignore errors once
+  // we're already on HLS — hls.js reports its own fatal errors via tc.onError.
+  if (!transcodeNeeded.value && isFatalMediaError(videoRef.value)) {
+    transcodeNeeded.value = true;
+    beginTranscode();
+  }
 }
 
 // ---- captions / tracks (R3.5) -----------------------------------------------
@@ -481,6 +524,8 @@ onMounted(() => {
   trackList?.addEventListener?.('addtrack', refreshTracks);
   trackList?.addEventListener?.('removetrack', refreshTracks);
   refreshTracks();
+  // A file flagged as non-direct-playable by extension transcodes from the start.
+  if (transcodeNeeded.value) beginTranscode();
 });
 watch(
   () => props.media,
@@ -492,6 +537,7 @@ watch(
 onBeforeUnmount(() => {
   clearIdle();
   stopUpNextCountdown();
+  tc.cleanup();
   if (typeof document !== 'undefined') document.removeEventListener('fullscreenchange', onFullscreenChange);
   mediaSessionTeardown?.();
   trackList?.removeEventListener?.('addtrack', refreshTracks);
@@ -522,7 +568,7 @@ onBeforeUnmount(() => {
       <video
         ref="videoRef"
         class="player__video"
-        :src="streamUrl"
+        :src="videoSrc"
         :poster="media.poster_url ?? undefined"
         preload="metadata"
         playsinline
@@ -561,7 +607,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- center play/pause (hidden behind the transcode notice) -->
-      <div v-if="!transcodeNeeded" class="player__center">
+      <div v-if="!transcodeBlocking" class="player__center">
         <button
           type="button"
           class="player__bigplay"
@@ -582,7 +628,7 @@ onBeforeUnmount(() => {
       />
 
       <!-- controls (hidden when the file can't be direct-played) -->
-      <div v-if="!transcodeNeeded" class="player__controls" @click.stop>
+      <div v-if="!transcodeBlocking" class="player__controls" @click.stop>
         <Scrubber
           :position="player.position"
           :duration="player.duration"
@@ -667,7 +713,7 @@ onBeforeUnmount(() => {
 
       <!-- skip intro/outro (R3.10) — above the controls, stays visible while chrome hides -->
       <SkipButton
-        v-if="!transcodeNeeded"
+        v-if="!transcodeBlocking"
         :position="player.position"
         :intro-marker="introMarker"
         :outro-marker="outroMarker"
@@ -676,7 +722,7 @@ onBeforeUnmount(() => {
 
       <!-- resume prompt on open (R3.8) -->
       <ResumePrompt
-        v-if="showResume && !transcodeNeeded"
+        v-if="showResume && !transcodeBlocking"
         :seconds="resumeSeconds"
         @resume="resumePlayback"
         @restart="startOver"
@@ -684,7 +730,7 @@ onBeforeUnmount(() => {
 
       <!-- end-of-video up-next card (R3.8) -->
       <UpNext
-        v-if="upNextActive && nextItem && !transcodeNeeded"
+        v-if="upNextActive && nextItem && !transcodeBlocking"
         :media="nextItem"
         :remaining="upNextRemaining"
         :total="UPNEXT_COUNTDOWN_SECONDS"
@@ -693,8 +739,11 @@ onBeforeUnmount(() => {
         @cancel="cancelUpNext"
       />
 
-      <!-- direct-play guard: opaque notice instead of a black screen (R3.8) -->
-      <TranscodeNotice v-if="transcodeNeeded" :title="media.name" @back="emit('back')" />
+      <!-- transcode preparing: spinner+progress while the server warms up the HLS job -->
+      <TranscodePreparing v-if="showPreparing" :title="media.name" :progress="tc.progress.value" @back="emit('back')" />
+
+      <!-- direct-play guard: opaque notice shown only when the transcode itself failed -->
+      <TranscodeNotice v-if="showTranscodeNotice" :title="media.name" @back="emit('back')" />
 
       <ShortcutsHelp :open="showHelp" @close="showHelp = false" />
     </div>

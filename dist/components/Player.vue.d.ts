@@ -21,6 +21,10 @@ type __VLS_Props = {
      *  R3.9's PlayerPage supplies the real `/media/:id/stream` resolver; without it,
      *  advancing clears the store's stream URL rather than leaving a stale one. */
     streamUrlFor?: (media: MediaItem) => string | undefined;
+    /** API base for the on-demand transcode endpoints. When a file can't be
+     *  direct-played the player POSTs `${apiBase}/api/v1/media/:id/transcode` and
+     *  plays the resulting HLS stream via hls.js. Defaults to the page origin. */
+    apiBase?: string;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     captions: () => any;
