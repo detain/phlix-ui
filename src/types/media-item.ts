@@ -1,4 +1,4 @@
-export type MediaType = 'movie' | 'series' | 'episode' | 'audio' | 'image';
+export type MediaType = 'movie' | 'series' | 'season' | 'episode' | 'audio' | 'image';
 
 /**
  * One responsive poster candidate (R6.2b): a URL, optionally tagged with a width
@@ -35,4 +35,17 @@ export interface MediaItem {
     director: string | null;
     created_at: string | null;
     updated_at: string | null;
+    /**
+     * Series→season→episode hierarchy (R-series). `parent_id` links an item to
+     * its parent (episode→season→series); null/absent for top-level items
+     * (movies, series). `season_number`/`episode_number` come from metadata and
+     * drive grouping/ordering on the series detail page; `season_number` 0 (or a
+     * null number on a series episode) denotes Specials. `episode_title` is the
+     * per-episode title, distinct from `name`. All optional so existing flat
+     * (movie) data and older servers keep working.
+     */
+    parent_id?: string | null;
+    season_number?: number | null;
+    episode_number?: number | null;
+    episode_title?: string | null;
 }

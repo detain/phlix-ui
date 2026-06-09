@@ -44,6 +44,11 @@ function scope(): void {
   if (!libraryId.value) return; // guarded in the template (no id → EmptyState)
   store.clearFilters();
   store.setLibraryId(libraryId.value);
+  // Show top-level items only — a series library lists shows (not a flat dump of
+  // every season/episode); movie/music/etc. libraries are unaffected since their
+  // items are already top-level. The server lifts this while a search is active,
+  // so searching still finds episodes. Series cards drill into their detail tree.
+  store.setTopLevel(true);
   store.reset();
   store.fetchMedia(apiBase.value);
 }
@@ -67,9 +72,10 @@ watch(libraryId, scope);
 watch(apiBase, reload);
 
 onBeforeUnmount(() => {
-  // Drop BOTH the scope and the filter state so the next (possibly unscoped)
-  // consumer of the shared singleton store starts clean.
+  // Drop the scope, the top-level restriction, and the filter state so the next
+  // (possibly unscoped) consumer of the shared singleton store starts clean.
   store.setLibraryId(undefined);
+  store.setTopLevel(false);
   store.clearFilters();
   store.reset();
 });

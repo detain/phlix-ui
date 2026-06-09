@@ -46,6 +46,17 @@ describe('buildMediaQuery', () => {
     expect(new URLSearchParams(buildMediaQuery({ libraryId: '' })).has('libraryId')).toBe(false);
   });
 
+  it('serializes parentId (series detail drill-down) when set', () => {
+    expect(new URLSearchParams(buildMediaQuery({ parentId: 'series-7' })).get('parentId')).toBe('series-7');
+    expect(new URLSearchParams(buildMediaQuery({ genres: ['Drama'] })).has('parentId')).toBe(false);
+  });
+
+  it('serializes topLevel as `1` only when true', () => {
+    expect(new URLSearchParams(buildMediaQuery({ topLevel: true })).get('topLevel')).toBe('1');
+    expect(new URLSearchParams(buildMediaQuery({ topLevel: false })).has('topLevel')).toBe(false);
+    expect(new URLSearchParams(buildMediaQuery({})).has('topLevel')).toBe(false);
+  });
+
   it('emits yearFrom/yearTo and offset=0 (a falsy but meaningful value)', () => {
     const sp = new URLSearchParams(buildMediaQuery({ yearFrom: 1980, yearTo: 2024, offset: 0 }));
     expect(sp.get('yearFrom')).toBe('1980');

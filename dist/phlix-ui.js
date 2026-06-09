@@ -15,17 +15,17 @@ import { t as de } from "./Slider-BMn_Lp_q.js";
 import { t as fe } from "./Switch-CFZhdkXR.js";
 import { t as pe } from "./Chip-2HcSZF4a.js";
 import { t as me } from "./Select-DfIQHE9A.js";
-import { i as he, n as ge, r as _e, t as ve } from "./FilterBar-DbkALxC0.js";
+import { i as he, n as ge, r as _e, t as ve } from "./FilterBar-CMWY6usV.js";
 import { t as ye } from "./Modal-twmWG3l1.js";
 import { t as T } from "./useToastStore-BDoKlU6N.js";
 import { t as E } from "./Skeleton-DkSoWF3C.js";
-import { n as be, t as xe } from "./HomeRow-Bue2bkb9.js";
+import { n as be, t as xe } from "./MediaRow-C9mRFOtk.js";
 import { t as D } from "./EmptyState-B2QnGIQT.js";
 import { t as Se } from "./Tabs-x8dUKZN5.js";
-import { n as Ce, t as we } from "./MediaCard-D2yRVykc.js";
-import { t as Te } from "./MediaRow-keidUvqT.js";
-import { n as Ee, t as De } from "./media-query-DtVaZzBp.js";
-import { t as Oe } from "./MediaDetail-CScmfNhc.js";
+import { n as Ce, t as we } from "./MediaCard-BUq_DyAQ.js";
+import { n as Te, t as Ee } from "./media-query-BcVLE7J6.js";
+import { t as De } from "./HomeRow-6agXoji6.js";
+import { t as Oe } from "./MediaDetail-Bshst3uf.js";
 import { n as ke, t as Ae } from "./logs-DadTfaTq.js";
 import { t as je } from "./dashboard-BTCOCTHQ.js";
 import { n as Me, r as Ne, t as Pe } from "./users-C40iLgkq.js";
@@ -689,22 +689,22 @@ function jr(e) {
 		{
 			path: t,
 			name: "browse",
-			component: () => import("./BrowsePage-BOQRaXXT.js")
+			component: () => import("./BrowsePage-B9ZreS4W.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-3i1Hh5MR.js")
+			component: () => import("./MediaDetailPage-CKB2gP14.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-BJ8oSaSc.js")
+			component: () => import("./LibraryPage-DMiJ6TBc.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-B86lacGd.js")
+			component: () => import("./PlayerPage-ChXO0FnF.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1724,6 +1724,6 @@ function pa() {
 	})), cn(t);
 }
 //#endregion
-export { Ae as ALL_LOGS, vt as AMBIENT_SAMPLE_H, ft as AMBIENT_SAMPLE_INTERVAL_MS, Mt as AMBIENT_SAMPLE_W, xt as ARROW_ICONS, at as ARROW_LABELS, Be as AdminBackupApi, Ve as AdminCastApi, Ge as AdminCollectionsApi, je as AdminDashboardApi, He as AdminDlnaServerApi, Ke as AdminHistoryApi, Ze as AdminHubDashboardApi, ze as AdminIntegrationsApi, Ye as AdminLibrariesApi, We as AdminLiveTvApi, ke as AdminLogsApi, Ue as AdminRemoteAccessApi, Re as AdminServicesApi, Xe as AdminSettingsApi, qe as AdminSyncPlayApi, Pe as AdminUsersApi, Le as AdminWebhooksApi, yt as AmbientCanvas, _ as ApiClient, m as ApiError, e as AppBackdrop, Fn as AppLayout, w as Badge, y as Button, Xt as CAPTION_BACKGROUND_OPTIONS, Gt as CAPTION_COLOR_OPTIONS, Jt as CAPTION_EDGE_OPTIONS, Ht as CAPTION_SIZE_OPTIONS, It as CAPTION_SIZE_SCALE, tt as CaptionOverlay, dt as CaptionsMenu, pe as Chip, he as Combobox, l as DEFAULT_CAPTION_STYLE, d as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, pt as DIRECT_PLAY_EXTENSIONS, D as EmptyState, ta as FederationPage, ve as FilterBar, n as Icon, r as IconButton, se as Kbd, Je as LIBRARY_TYPES, ki as LibraryScanPage, ne as LocalStorageTokenStore, Qt as LoginForm, da as ManageSharesPage, we as MediaCard, Oe as MediaDetail, _e as MediaGrid, xe as MediaHomeRow, Te as MediaRow, $n as MiniPlayer, ye as Modal, Hi as MyServersPage, ee as NetworkError, ot as PLAYER_SHORTCUTS, Wr as PageTransition, wr as PhlixApp, At as Player, et as QualityMenu, Me as RATING_LABELS, Ne as RATING_OPTIONS, ie as RESUME_MAX_RATIO, re as RESUME_MIN_SECONDS, wt as ResumePrompt, Ur as Reveal, Fe as SUBSCRIBABLE_EVENTS, it as Scrubber, me as Select, en as SettingsForm, Tn as Sheet, Qe as ShortcutsHelp, $t as SignupForm, E as Skeleton, Tt as SkipButton, de as Slider, st as SpeedMenu, be as Spinner, fe as Switch, Et as TRANSCODE_EXTENSIONS, Se as Tabs, te as TimeoutError, Hr as ToastHost, Pr as Tooltip, Ot as TranscodeNotice, kt as UPNEXT_COUNTDOWN_SECONDS, ht as UPNEXT_RING_CIRCUMFERENCE, Ct as UPNEXT_RING_RADIUS, bt as UpNext, St as VolumeControl, Ie as WEBHOOK_EVENT_CATEGORIES, Kt as activeAudioIndex, _i as adminMenu, Ft as ambientGradient, Yt as applyAudioTrack, lr as applyStoredThemeEarly, Lt as applyTrackModes, mt as averageRegion, fa as bindMediaStoreToRouter, mi as buildAdminRoutes, gi as buildHubAdminRoutes, De as buildMediaQuery, Ee as buildMediaUrl, hi as buildServerAdminRoutes, Ut as captionStyleVars, Zt as cleanCueText, li as commonAdminPages, Mr as createPhlixApp, f as createTranslator, or as deriveAccentVars, Rt as edgeShadow, h as errMessage, jt as extensionOf, ce as fetchLibraries, lt as formatTime, ae as fuzzyScore, ct as handleShortcut, zt as hasActiveCaptions, c as hasStoredPreferences, di as hubAdminPages, Pt as isBatterySaving, gt as isFatalMediaError, g as isOffline, nt as isTypingTarget, qt as listAudioTracks, Wt as listSubtitleTracks, oe as matchCommand, u as mergeMessages, _t as needsTranscode, Vt as readActiveCueLines, o as readStoredPreferences, Bt as resolveTextTrack, ut as rgbString, $e as rgbaString, Dt as ringDashoffset, Nt as sampleAmbient, ui as serverAdminPages, le as sortLibraries, b as useAuthStore, dr as useCommandPaletteHotkey, C as useCommandStore, i as useFocusTrap, rt as useKeyboardShortcuts, ue as useLibrariesStore, ge as useMediaStore, p as useMessages, pa as useOnline, x as usePlayerStore, hr as usePreconnect, a as usePreferencesStore, Ce as usePrefetch, br as useResumeReporter, gr as useResumeSync, ur as useTheme, T as useToastStore };
+export { Ae as ALL_LOGS, vt as AMBIENT_SAMPLE_H, ft as AMBIENT_SAMPLE_INTERVAL_MS, Mt as AMBIENT_SAMPLE_W, xt as ARROW_ICONS, at as ARROW_LABELS, Be as AdminBackupApi, Ve as AdminCastApi, Ge as AdminCollectionsApi, je as AdminDashboardApi, He as AdminDlnaServerApi, Ke as AdminHistoryApi, Ze as AdminHubDashboardApi, ze as AdminIntegrationsApi, Ye as AdminLibrariesApi, We as AdminLiveTvApi, ke as AdminLogsApi, Ue as AdminRemoteAccessApi, Re as AdminServicesApi, Xe as AdminSettingsApi, qe as AdminSyncPlayApi, Pe as AdminUsersApi, Le as AdminWebhooksApi, yt as AmbientCanvas, _ as ApiClient, m as ApiError, e as AppBackdrop, Fn as AppLayout, w as Badge, y as Button, Xt as CAPTION_BACKGROUND_OPTIONS, Gt as CAPTION_COLOR_OPTIONS, Jt as CAPTION_EDGE_OPTIONS, Ht as CAPTION_SIZE_OPTIONS, It as CAPTION_SIZE_SCALE, tt as CaptionOverlay, dt as CaptionsMenu, pe as Chip, he as Combobox, l as DEFAULT_CAPTION_STYLE, d as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, pt as DIRECT_PLAY_EXTENSIONS, D as EmptyState, ta as FederationPage, ve as FilterBar, n as Icon, r as IconButton, se as Kbd, Je as LIBRARY_TYPES, ki as LibraryScanPage, ne as LocalStorageTokenStore, Qt as LoginForm, da as ManageSharesPage, we as MediaCard, Oe as MediaDetail, _e as MediaGrid, De as MediaHomeRow, xe as MediaRow, $n as MiniPlayer, ye as Modal, Hi as MyServersPage, ee as NetworkError, ot as PLAYER_SHORTCUTS, Wr as PageTransition, wr as PhlixApp, At as Player, et as QualityMenu, Me as RATING_LABELS, Ne as RATING_OPTIONS, ie as RESUME_MAX_RATIO, re as RESUME_MIN_SECONDS, wt as ResumePrompt, Ur as Reveal, Fe as SUBSCRIBABLE_EVENTS, it as Scrubber, me as Select, en as SettingsForm, Tn as Sheet, Qe as ShortcutsHelp, $t as SignupForm, E as Skeleton, Tt as SkipButton, de as Slider, st as SpeedMenu, be as Spinner, fe as Switch, Et as TRANSCODE_EXTENSIONS, Se as Tabs, te as TimeoutError, Hr as ToastHost, Pr as Tooltip, Ot as TranscodeNotice, kt as UPNEXT_COUNTDOWN_SECONDS, ht as UPNEXT_RING_CIRCUMFERENCE, Ct as UPNEXT_RING_RADIUS, bt as UpNext, St as VolumeControl, Ie as WEBHOOK_EVENT_CATEGORIES, Kt as activeAudioIndex, _i as adminMenu, Ft as ambientGradient, Yt as applyAudioTrack, lr as applyStoredThemeEarly, Lt as applyTrackModes, mt as averageRegion, fa as bindMediaStoreToRouter, mi as buildAdminRoutes, gi as buildHubAdminRoutes, Ee as buildMediaQuery, Te as buildMediaUrl, hi as buildServerAdminRoutes, Ut as captionStyleVars, Zt as cleanCueText, li as commonAdminPages, Mr as createPhlixApp, f as createTranslator, or as deriveAccentVars, Rt as edgeShadow, h as errMessage, jt as extensionOf, ce as fetchLibraries, lt as formatTime, ae as fuzzyScore, ct as handleShortcut, zt as hasActiveCaptions, c as hasStoredPreferences, di as hubAdminPages, Pt as isBatterySaving, gt as isFatalMediaError, g as isOffline, nt as isTypingTarget, qt as listAudioTracks, Wt as listSubtitleTracks, oe as matchCommand, u as mergeMessages, _t as needsTranscode, Vt as readActiveCueLines, o as readStoredPreferences, Bt as resolveTextTrack, ut as rgbString, $e as rgbaString, Dt as ringDashoffset, Nt as sampleAmbient, ui as serverAdminPages, le as sortLibraries, b as useAuthStore, dr as useCommandPaletteHotkey, C as useCommandStore, i as useFocusTrap, rt as useKeyboardShortcuts, ue as useLibrariesStore, ge as useMediaStore, p as useMessages, pa as useOnline, x as usePlayerStore, hr as usePreconnect, a as usePreferencesStore, Ce as usePrefetch, br as useResumeReporter, gr as useResumeSync, ur as useTheme, T as useToastStore };
 
 //# sourceMappingURL=phlix-ui.js.map

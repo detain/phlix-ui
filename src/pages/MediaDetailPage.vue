@@ -16,9 +16,17 @@ import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
 import MediaDetail from '../components/MediaDetail.vue';
+import SeriesSeasons from '../components/SeriesSeasons.vue';
+import {
+  groupEpisodesBySeason,
+  hasSeasonRows,
+  firstEpisode,
+  type SeasonGroup,
+} from '../components/series-grouping';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
+import Spinner from '../components/ui/Spinner.vue';
 
 interface MediaListResponse {
   items: MediaItem[];
@@ -36,12 +44,15 @@ const toasts = useToastStore();
 
 const item = ref<MediaItem | null>(null);
 const similar = ref<MediaItem[]>([]);
+const seasons = ref<SeasonGroup[]>([]);
 const loading = ref(true);
 const similarLoading = ref(false);
+const seasonsLoading = ref(false);
 const error = ref<string | null>(null);
 
 const currentId = computed(() => String(route.params.id ?? ''));
 const resumeSeconds = computed(() => player.resumePositionFor(currentId.value));
+const isSeries = computed(() => item.value?.type === 'series');
 
 let controller: AbortController | null = null;
 let disposed = false;
@@ -74,6 +85,45 @@ async function loadSimilar(client: ApiClient, base: MediaItem): Promise<void> {
   }
 }
 
+async function fetchChildren(client: ApiClient, parentId: string, signal?: AbortSignal): Promise<MediaItem[]> {
+  // A high limit so a full series' episodes arrive in one page (the season tree
+  // renders the whole show at once); the browse API caps at 100 per request.
+  const url = buildMediaUrl(apiBase.value, { parentId, limit: 100, sort: 'name', order: 'asc' });
+  const res = await client.get<MediaListResponse>(url, undefined, signal);
+  return res.items ?? [];
+}
+
+async function loadSeasons(client: ApiClient, series: MediaItem): Promise<void> {
+  const myController = controller;
+  const stale = () => disposed || myController !== controller;
+  seasonsLoading.value = true;
+  seasons.value = [];
+  try {
+    let children = await fetchChildren(client, series.id, myController?.signal);
+    if (stale()) return;
+    // If the server models seasons as their own `type: 'season'` rows, fetch each
+    // season's episodes and flatten so grouping is uniformly by season_number
+    // (keeping any episodes parented directly onto the series too).
+    if (hasSeasonRows(children)) {
+      const seasonRows = children.filter((c) => c.type === 'season');
+      const lists = await Promise.all(
+        seasonRows.map((s) =>
+          fetchChildren(client, s.id, myController?.signal).catch(() => [] as MediaItem[]),
+        ),
+      );
+      if (stale()) return;
+      const directEpisodes = children.filter((c) => c.type !== 'season');
+      children = [...directEpisodes, ...lists.flat()];
+    }
+    seasons.value = groupEpisodesBySeason(children);
+  } catch (e) {
+    if (stale() || isAbort(e)) return;
+    seasons.value = []; // a missing season tree is non-fatal — the hero still renders
+  } finally {
+    if (!stale()) seasonsLoading.value = false;
+  }
+}
+
 async function load(): Promise<void> {
   const id = currentId.value;
   controller?.abort();
@@ -81,6 +131,7 @@ async function load(): Promise<void> {
   loading.value = true;
   error.value = null;
   similar.value = [];
+  seasons.value = [];
   if (!id) {
     error.value = 'No media id provided';
     loading.value = false;
@@ -98,7 +149,14 @@ async function load(): Promise<void> {
     const data = response.item;
     item.value = data;
     loading.value = false;
-    void loadSimilar(client, data);
+    // A series drills into its season/episode tree; everything else shows the
+    // genre-based "More like this" rail. (Mutually exclusive so the tree isn't
+    // buried under a similar rail.)
+    if (data.type === 'series') {
+      void loadSeasons(client, data);
+    } else {
+      void loadSimilar(client, data);
+    }
   } catch (e) {
     if (disposed || isAbort(e)) return;
     error.value = e instanceof Error ? e.message : 'Failed to load title';
@@ -118,7 +176,19 @@ function go(name: string, id: string): void {
   router?.push({ name, params: { id } }).catch(() => {});
 }
 function onPlay(m: MediaItem): void {
+  // A series itself isn't directly playable — "Play" starts its first episode
+  // (first season, first episode). With no episodes loaded yet there's nothing
+  // to start, so it no-ops rather than navigating to an unplayable series id.
+  if (m.type === 'series') {
+    const first = firstEpisode(seasons.value);
+    if (first) go('player', first.id);
+    else toasts.info('No episodes to play yet');
+    return;
+  }
   go('player', m.id);
+}
+function onPlayEpisode(ep: MediaItem): void {
+  go('player', ep.id);
 }
 function onWatchlist(m: MediaItem): void {
   toasts.success(`Added "${m.name}" to your list`);
@@ -156,18 +226,46 @@ function onBack(): void {
       </template>
     </EmptyState>
 
-    <MediaDetail
-      v-else-if="item"
-      :item="item"
-      :resume-seconds="resumeSeconds"
-      :similar="similar"
-      :similar-loading="similarLoading"
-      @play="onPlay"
-      @resume="onPlay"
-      @watchlist="onWatchlist"
-      @info="onInfo"
-      @back="onBack"
-    />
+    <template v-else-if="item">
+      <MediaDetail
+        :item="item"
+        :resume-seconds="resumeSeconds"
+        :similar="similar"
+        :similar-loading="similarLoading"
+        @play="onPlay"
+        @resume="onPlay"
+        @watchlist="onWatchlist"
+        @info="onInfo"
+        @back="onBack"
+      />
+
+      <!-- Series drill-down: season/specials → episodes (below the hero). -->
+      <section v-if="isSeries" class="media-detail-page__seasons" aria-label="Episodes">
+        <h2 class="media-detail-page__seasons-title">Episodes</h2>
+
+        <div
+          v-if="seasonsLoading"
+          class="media-detail-page__seasons-loading"
+          role="status"
+          aria-busy="true"
+        >
+          <Spinner label="Loading episodes" />
+        </div>
+
+        <SeriesSeasons
+          v-else-if="seasons.length"
+          :seasons="seasons"
+          @play="onPlayEpisode"
+        />
+
+        <EmptyState
+          v-else
+          icon="tv"
+          title="No episodes yet"
+          description="This series has no episodes available to watch."
+        />
+      </section>
+    </template>
   </div>
 </template>
 
@@ -195,5 +293,24 @@ function onBack(): void {
   .media-detail-page__loading-hero {
     grid-template-columns: 1fr;
   }
+}
+
+.media-detail-page__seasons {
+  max-width: 1100px;
+  margin: var(--space-8) auto 0;
+  padding: 0 var(--space-6) var(--space-6);
+}
+.media-detail-page__seasons-title {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+  margin-bottom: var(--space-4);
+}
+.media-detail-page__seasons-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8) 0;
 }
 </style>

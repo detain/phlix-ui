@@ -49,7 +49,9 @@ const libraryRows = computed<HomeRowConfig[]>(() =>
   libraries.items.map((lib) => ({
     id: `library-${lib.id}`,
     title: lib.name,
-    query: { libraryId: lib.id },
+    // `topLevel` keeps a series library's rail to shows (not a flat dump of every
+    // episode); movie/etc. libraries are unaffected (their items are top-level).
+    query: { libraryId: lib.id, topLevel: true },
   })),
 );
 

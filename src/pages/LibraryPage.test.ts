@@ -102,6 +102,26 @@ describe('LibraryPage', () => {
     expect(mediaCall![0]).toContain('libraryId=lib1');
   });
 
+  it('requests top-level items only (so a series library shows shows, not episodes)', async () => {
+    const fn = stubFetch();
+    await mountAt('lib1');
+    await flushPromises();
+    const store = useMediaStore();
+    expect(store.topLevel).toBe(true);
+    const mediaCall = fn.mock.calls.find(([u]) => typeof u === 'string' && (u as string).includes('/api/v1/media'));
+    expect(mediaCall![0]).toContain('topLevel=1');
+  });
+
+  it('clears the top-level restriction on unmount', async () => {
+    stubFetch();
+    const { w } = await mountAt('lib1');
+    await flushPromises();
+    const store = useMediaStore();
+    expect(store.topLevel).toBe(true);
+    w.unmount();
+    expect(store.topLevel).toBe(false);
+  });
+
   it('titles the page with the library name and shows the total', async () => {
     stubFetch({ media: { items: [media()], total: 42 } });
     const { w } = await mountAt('lib1');
