@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.22.1] - 2026-06-09
+
+### Fixed
+- **Series card "Play" no longer routes to the unplayable player.** On the Browse
+  rails and the library grid, the hover **Play** action on a *series* card now
+  opens that series' detail page (the season/episode tree) instead of navigating
+  to `/app/player/<seriesId>` — a series itself has no stream. Movies and episodes
+  are unchanged (they still play directly). Matches the series card's main click,
+  which already opened the detail page.
+
 ## [0.22.0] - 2026-06-09
 
 ### Added

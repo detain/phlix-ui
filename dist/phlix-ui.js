@@ -689,7 +689,7 @@ function jr(e) {
 		{
 			path: t,
 			name: "browse",
-			component: () => import("./BrowsePage-B9ZreS4W.js")
+			component: () => import("./BrowsePage-BveOHJDn.js")
 		},
 		{
 			path: `${t}/media/:id`,
@@ -699,7 +699,7 @@ function jr(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-DMiJ6TBc.js")
+			component: () => import("./LibraryPage-CeQrVmFb.js")
 		},
 		{
 			path: `${t}/player/:id`,

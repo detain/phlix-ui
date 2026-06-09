@@ -215,4 +215,14 @@ describe('LibraryPage', () => {
     w.findComponent({ name: 'MediaGrid' }).vm.$emit('play', media({ id: 'p1' }));
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'p1' } });
   });
+
+  it('routes Play on a SERIES to its detail page, not the (unplayable) player', async () => {
+    stubFetch({ media: { items: [media({ id: 's1', type: 'series' })], total: 1 } });
+    const { w, router } = await mountAt('lib1');
+    const push = vi.spyOn(router, 'push');
+    await flushPromises();
+    w.findComponent({ name: 'MediaGrid' }).vm.$emit('play', media({ id: 's1', type: 'series' }));
+    expect(push).toHaveBeenCalledWith({ name: 'media', params: { id: 's1' } });
+    expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 's1' } });
+  });
 });
