@@ -119,8 +119,9 @@ describe('BrowsePage — per-library sections', () => {
     const rows = w.findAllComponents(HomeRow);
     expect(rows).toHaveLength(3);
     expect(rows.map((r) => r.props('row').title)).toEqual(['Movies', 'TV', 'Anime']);
-    // each rail is scoped to its library
-    expect(rows[0].props('row').query).toEqual({ libraryId: 'lib1' });
+    // each rail is scoped to its library and asks for top-level items only
+    // (so a series library's rail shows shows, not a flat dump of episodes)
+    expect(rows[0].props('row').query).toEqual({ libraryId: 'lib1', topLevel: true });
   });
 
   it('also renders configured home rows alongside the library rails', async () => {

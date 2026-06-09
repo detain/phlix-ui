@@ -218,3 +218,43 @@ describe('useMediaStore — URL sync', () => {
     expect(s.selectedGenres).toEqual(['Action']);
   });
 });
+
+describe('useMediaStore — topLevel scope', () => {
+  it('adds topLevel=1 to the request URL when set', async () => {
+    const s = useMediaStore();
+    s.setTopLevel(true);
+    await s.fetchMedia('');
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toContain('topLevel=1');
+  });
+
+  it('omits topLevel from the URL by default', async () => {
+    const s = useMediaStore();
+    await s.fetchMedia('');
+    expect(String(fetchMock.mock.calls[0][0])).not.toContain('topLevel');
+  });
+
+  it('exposes topLevel in queryParams only when true', () => {
+    const s = useMediaStore();
+    expect(s.queryParams.topLevel).toBeUndefined();
+    s.setTopLevel(true);
+    expect(s.queryParams.topLevel).toBe(true);
+  });
+
+  it('setTopLevel resets paging and changes the cache key (forces a refetch)', async () => {
+    const s = useMediaStore();
+    s.offset = 24;
+    await s.fetchMedia('');
+    s.setTopLevel(true);
+    expect(s.offset).toBe(0);
+    await s.fetchMedia('');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('setTopLevel is a no-op when the value is unchanged', () => {
+    const s = useMediaStore();
+    s.offset = 12;
+    s.setTopLevel(false); // already false
+    expect(s.offset).toBe(12); // paging untouched
+  });
+});

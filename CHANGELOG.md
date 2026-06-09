@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.22.0] - 2026-06-09
+
+### Added
+- **Series drill-down.** A series no longer appears as a flat dump of every season and episode.
+  Series libraries (and their Browse rails) now list **shows**; opening a series goes to its detail
+  page, which renders a **Season / Specials → episodes** tree (collapsible sections, episodes ordered
+  by number, Specials last). Episodes play; "Play" on the series hero starts the first episode.
+- `MediaItem` gains the optional hierarchy fields `parent_id`, `season_number`, `episode_number`, and
+  `episode_title` (all from the browse API), and the `MediaType` union gains `season`.
+- `LibraryQuery`/`LibraryQueryParams` gain `parentId` (fetch a series' direct children — its
+  seasons/episodes) and `topLevel` (return only parent-less items: movies + series). `buildMediaQuery`
+  serializes them (`parentId=…`, `topLevel=1`).
+- `useMediaStore` gains a `topLevel` scope (`setTopLevel`) alongside `libraryId`, kept out of the
+  FilterBar URL-sync (it is a page/route concern). The dedicated library page and the Browse library
+  rails set it so series libraries show shows.
+- New components/util: `SeriesSeasons.vue` (the season→episode tree) and `series-grouping`
+  (`groupEpisodesBySeason`, `hasSeasonRows`, `firstEpisode`) — pure helpers that build the ordered
+  season tree from a series' flat child list (grouping by `season_number`, Specials = season 0 / null).
+
+### Changed
+- `MediaCard` links a **series** card to its detail page (`/app/media/:id`) instead of the player — a
+  series itself isn't directly playable. Movies and episodes still link straight to the player.
+- The series detail page fetches children via `?parentId=` and, when the server models seasons as their
+  own `type: 'season'` rows, flattens them to episodes so grouping is uniformly by `season_number`.
+  A series shows its episode tree instead of the genre "More like this" rail.
+
+### Compatibility
+- Requires a server exposing the hierarchy fields + `parentId`/`topLevel` params (phlix-server with the
+  series-hierarchy media-api change; detain/phlix-shared ≥ 0.9.0). All fields are optional, so flat
+  (movie) libraries and older servers keep working unchanged.
+
 ## [0.21.0] - 2026-06-08
 
 ### Added

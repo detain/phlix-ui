@@ -58,12 +58,19 @@ export const useMediaStore = defineStore('media', () => {
     // page). It is identified by the route, NOT the FilterBar, so it is kept out
     // of toQuery()/applyQuery() (the filter URL-sync) and set via setLibraryId().
     const libraryId = ref<string | undefined>(undefined);
+    // When true, the grid requests top-level items only (movies + series),
+    // hiding seasons/episodes so a series library shows shows rather than a flat
+    // dump of every episode. Like libraryId it is a route/page concern (set via
+    // setTopLevel), so it's kept out of the FilterBar URL-sync. The server
+    // ignores it while a search is active, so search still spans the library.
+    const topLevel = ref(false);
 
     const hasMore = computed(() => items.value.length < total.value);
 
     const queryParams = computed<LibraryQueryParams>(() => {
         const p: LibraryQueryParams = {};
         if (libraryId.value) p.libraryId = libraryId.value;
+        if (topLevel.value) p.topLevel = true;
         if (search.value) p.search = search.value;
         if (selectedGenres.value.length) p.genres = selectedGenres.value;
         if (yearFrom.value !== undefined) p.yearFrom = yearFrom.value;
@@ -89,6 +96,7 @@ export const useMediaStore = defineStore('media', () => {
     function buildParams(params: LibraryQueryParams): URLSearchParams {
         const sp = new URLSearchParams();
         if (params.libraryId) sp.set('libraryId', params.libraryId);
+        if (params.topLevel) sp.set('topLevel', '1');
         if (params.search) sp.set('search', params.search);
         // `key[]=` so PHP parses arrays; bare repeated keys collapse to a string server-side.
         params.genres?.forEach((g) => sp.append('genres[]', g));
@@ -293,6 +301,15 @@ export const useMediaStore = defineStore('media', () => {
             offset.value = 0;
         }
     }
+    /** Restrict (or stop restricting) the grid to top-level items only (movies +
+     *  series), hiding seasons/episodes. The library page sets this so a series
+     *  library shows shows; toggling it resets paging. */
+    function setTopLevel(v: boolean): void {
+        if (topLevel.value !== v) {
+            topLevel.value = v;
+            offset.value = 0;
+        }
+    }
     /** Clear every FilterBar field back to its default (paging too). The library
      *  page calls this when entering/switching a library and on teardown so the
      *  shared singleton's filter state never bleeds across libraries or into a
@@ -326,6 +343,7 @@ export const useMediaStore = defineStore('media', () => {
         limit,
         offset,
         libraryId,
+        topLevel,
         hasMore,
         queryParams,
         availableGenres,
@@ -347,6 +365,7 @@ export const useMediaStore = defineStore('media', () => {
         setTypes,
         setSort,
         setLibraryId,
+        setTopLevel,
         clearFilters,
     };
 });

@@ -13,6 +13,12 @@ export function buildMediaQuery(params: Partial<LibraryQueryParams> = {}): strin
   // Scope to a single library when set — the server confines both the items and
   // the `total` to that library (an absent/blank value is an all-libraries query).
   if (params.libraryId) sp.set('libraryId', params.libraryId);
+  // Hierarchy scope: `parentId` fetches a series' direct children (seasons/
+  // episodes) for the detail drill-down; `topLevel` restricts a rail/grid to
+  // parent-less items (movies + series). The server treats `topLevel=1` as the
+  // flag and ignores it when a search is present.
+  if (params.parentId) sp.set('parentId', params.parentId);
+  if (params.topLevel) sp.set('topLevel', '1');
   if (params.search) sp.set('search', params.search);
   // Array params use the `key[]=` form so PHP parses them into arrays; a bare
   // repeated `genres=` collapses to the last value (a string) and the server drops it.
