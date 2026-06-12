@@ -168,6 +168,19 @@ export type {
 } from './api/admin/libraries';
 export { AdminSettingsApi } from './api/admin/settings';
 export type { SettingsResponse, SettingsSaveResponse } from './api/admin/settings';
+export {
+  AdminPluginsApi,
+  PLUGIN_SECRET_MASK,
+  pluginErrorCode,
+  pluginValidationErrors,
+} from './api/admin/plugins';
+export type {
+  Plugin,
+  PluginDetail,
+  PluginSettings,
+  PluginSettingsSchema,
+  PluginSettingDescriptor,
+} from './api/admin/plugins';
 export { AdminHubDashboardApi } from './api/admin/hubDashboard';
 export type { HubSummary, HubServersSummary, HubAuditEvent } from './api/admin/hubDashboard';
 // Admin page-group composability (H0): the page registries + per-app builders.
