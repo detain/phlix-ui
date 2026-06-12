@@ -31,8 +31,10 @@ const props = withDefaults(
         resumeSeconds?: number | null;
         /** The router base so season links carry the `/app` prefix. */
         routerBase?: string;
+        /** Admin opt-in (U5): show a "Match metadata" action on the series hero. */
+        canMatch?: boolean;
     }>(),
-    { loading: false, resumeSeconds: null, routerBase: '/app' },
+    { loading: false, resumeSeconds: null, routerBase: '/app', canMatch: false },
 );
 
 const emit = defineEmits<{
@@ -40,6 +42,7 @@ const emit = defineEmits<{
     (e: 'resume', item: MediaItem): void;
     (e: 'watchlist', item: MediaItem): void;
     (e: 'info', item: MediaItem): void;
+    (e: 'match', item: MediaItem): void;
     (e: 'back'): void;
 }>();
 
@@ -68,10 +71,12 @@ const hasSeasons = computed(() => props.seasons.length > 0);
             :resume-seconds="resumeSeconds"
             :similar="[]"
             :similar-loading="false"
+            :can-match="canMatch"
             @play="emit('play', $event)"
             @resume="emit('resume', $event)"
             @watchlist="emit('watchlist', $event)"
             @info="emit('info', $event)"
+            @match="emit('match', $event)"
             @back="emit('back')"
         />
 

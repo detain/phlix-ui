@@ -14,6 +14,8 @@ type __VLS_Props = {
     skeletonCount?: number;
     /** Extra rows rendered above/below the visible band. */
     overscan?: number;
+    /** Admin opt-in (U5): render each card's "Match" action + forward `match`. */
+    canMatch?: boolean;
 };
 type __VLS_Slots = {
     /** Override the per-item card. Receives the item + its absolute index. */
@@ -25,17 +27,20 @@ type __VLS_Slots = {
     empty?: () => unknown;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+    match: (item: MediaItem) => any;
     play: (item: MediaItem) => any;
     info: (item: MediaItem) => any;
     watchlist: (item: MediaItem) => any;
     "load-more": () => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
+    onMatch?: ((item: MediaItem) => any) | undefined;
     onPlay?: ((item: MediaItem) => any) | undefined;
     onInfo?: ((item: MediaItem) => any) | undefined;
     onWatchlist?: ((item: MediaItem) => any) | undefined;
     "onLoad-more"?: (() => any) | undefined;
 }>, {
     loading: boolean;
+    canMatch: boolean;
     skeletonCount: number;
     hasMore: boolean;
     overscan: number;

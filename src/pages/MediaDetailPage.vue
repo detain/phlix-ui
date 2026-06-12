@@ -17,8 +17,10 @@ import { ApiClient } from '../api/client';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
+import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import { firstEpisode, type SeasonGroup } from '../components/series-grouping';
 import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -42,6 +44,7 @@ const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
 const toasts = useToastStore();
+const auth = useAuthStore();
 
 const item = ref<MediaItem | null>(null);
 const similar = ref<MediaItem[]>([]);
@@ -182,6 +185,23 @@ function onInfo(m: MediaItem): void {
 function onBack(): void {
   router?.back();
 }
+
+// Interactive metadata match (U5) — admin-only. "Match metadata" opens the modal
+// for the current item; a successful apply swaps in the server's re-shaped item
+// (instant poster/metadata refresh) and re-pulls the season tree for a series so
+// the enriched children show too.
+const matchOpen = ref(false);
+function onMatch(): void {
+  if (item.value) matchOpen.value = true;
+}
+function onMatchApplied(updated: MediaItem): void {
+  item.value = updated;
+  toasts.success(`Updated metadata for "${updated.name}"`);
+  if (updated.type === 'series') {
+    const client = new ApiClient({ baseUrl: apiBase.value });
+    void loadSeasons(client, updated);
+  }
+}
 </script>
 
 <template>
@@ -219,10 +239,12 @@ function onBack(): void {
         :loading="seasonsLoading"
         :resume-seconds="resumeSeconds"
         :router-base="routerBase"
+        :can-match="auth.isAdmin"
         @play="onPlay"
         @resume="onPlay"
         @watchlist="onWatchlist"
         @info="onInfo"
+        @match="onMatch"
         @back="onBack"
       />
 
@@ -232,13 +254,22 @@ function onBack(): void {
         :resume-seconds="resumeSeconds"
         :similar="similar"
         :similar-loading="similarLoading"
+        :can-match="auth.isAdmin"
         @play="onPlay"
         @resume="onPlay"
         @watchlist="onWatchlist"
         @info="onInfo"
+        @match="onMatch"
         @back="onBack"
       />
     </template>
+
+    <MetadataMatchModal
+      v-if="auth.isAdmin"
+      v-model="matchOpen"
+      :item="item"
+      @applied="onMatchApplied"
+    />
   </div>
 </template>
 

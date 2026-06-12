@@ -145,6 +145,31 @@ describe('HomeRow — eager (no IntersectionObserver)', () => {
     expect(w.find('.home-row__seeall').exists()).toBe(false);
   });
 
+  it('patches a rendered card in place when its applied-item arrives (U5 match refresh)', async () => {
+    const items = [media({ id: 'a', name: 'Old Title' }), media({ id: 'b', name: 'Other' })];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items, total: 2 })));
+    const w = mount(HomeRow, { props: { row, apiBase: '' } });
+    await flushPromises();
+    expect(w.findAllComponents(MediaCard)).toHaveLength(2);
+
+    // broadcast an applied item this rail owns
+    await w.setProps({ appliedItem: media({ id: 'a', name: 'New Title', poster_url: 'https://img/new.jpg' }) });
+    const titles = w.findAllComponents(MediaCard).map((c) => (c.props('item') as MediaItem).name);
+    expect(titles).toContain('New Title');
+    expect(titles).not.toContain('Old Title');
+    expect(titles).toContain('Other'); // sibling untouched
+  });
+
+  it('ignores an applied-item it does not own (no-op)', async () => {
+    const items = [media({ id: 'a', name: 'Keep' })];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items, total: 1 })));
+    const w = mount(HomeRow, { props: { row, apiBase: '' } });
+    await flushPromises();
+    await w.setProps({ appliedItem: media({ id: 'zzz', name: 'Stranger' }) });
+    const titles = w.findAllComponents(MediaCard).map((c) => (c.props('item') as MediaItem).name);
+    expect(titles).toEqual(['Keep']);
+  });
+
   it('forwards play/watchlist/info from the inner rail', async () => {
     const item = media({ id: 'fwd' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [item], total: 1 })));

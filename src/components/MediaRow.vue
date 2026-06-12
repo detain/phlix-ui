@@ -40,14 +40,17 @@ const props = withDefaults(
     hideWhenEmpty?: boolean;
     /** Override the per-card link target prefix (default the player route). */
     cardTo?: (item: MediaItem) => string;
+    /** Admin opt-in (U5): render each card's "Match" action + forward `match`. */
+    canMatch?: boolean;
   }>(),
-  { loading: false, error: null, count: null, skeletonCount: 6, hideWhenEmpty: false },
+  { loading: false, error: null, count: null, skeletonCount: 6, hideWhenEmpty: false, canMatch: false },
 );
 
 const emit = defineEmits<{
   (e: 'play', item: MediaItem): void;
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
+  (e: 'match', item: MediaItem): void;
   (e: 'retry'): void;
 }>();
 
@@ -90,9 +93,11 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
         <MediaCard
           :item="item"
           :to="cardTo ? cardTo(item) : undefined"
+          :can-match="canMatch"
           @play="emit('play', $event)"
           @watchlist="emit('watchlist', $event)"
           @info="emit('info', $event)"
+          @match="emit('match', $event)"
         />
       </li>
     </ul>

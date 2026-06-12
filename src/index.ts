@@ -4,9 +4,17 @@ export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow } from './app/ty
 export { default as PhlixApp } from './app/PhlixApp.vue';
 export { default as AppLayout } from './app/AppLayout.vue';
 
-export { ApiClient } from './api/client';
+export { ApiClient, isTmdbUnconfigured, TMDB_UNCONFIGURED_CODE } from './api/client';
 export { LocalStorageTokenStore } from './api/tokenStore';
 export type { TokenStore, AuthUser } from './api/client';
+export type {
+  MatchType,
+  MatchCandidate,
+  MatchSearchResult,
+  MatchSearchParams,
+  MatchApplyInput,
+  MatchApplyResult,
+} from './api/client';
 export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './api/errors';
 
 export type { MediaItem } from './types/media-item';
@@ -26,6 +34,7 @@ export { default as MediaGrid } from './components/MediaGrid.vue';
 export { default as MediaRow } from './components/MediaRow.vue';
 export { default as MediaHomeRow } from './components/HomeRow.vue';
 export { default as MediaDetail } from './components/MediaDetail.vue';
+export { default as MetadataMatchModal } from './components/MetadataMatchModal.vue';
 export { default as FilterBar } from './components/FilterBar.vue';
 // NOTE (R6.1a): the built-in route PAGES — BrowsePage, MediaDetailPage, PlayerPage,
 // LoginPage, SignupPage, SettingsPage — are intentionally NOT re-exported. `createPhlixApp`
