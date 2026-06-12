@@ -120,6 +120,7 @@ export type { UseResumeSync } from './composables/useResumeSync';
 export { useResumeReporter } from './composables/useResumeReporter';
 export type { UseResumeReporter } from './composables/useResumeReporter';
 export { deriveAccentVars } from './composables/color';
+export { usePageTitle, setPageTitle, setAppName, formatPageTitle, } from './composables/usePageTitle';
 export { useMessages } from './composables/useMessages';
 export type { UseMessages } from './composables/useMessages';
 export { DEFAULT_MESSAGES, createTranslator, mergeMessages } from './i18n/messages';

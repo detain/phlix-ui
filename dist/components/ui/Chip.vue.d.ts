@@ -25,12 +25,12 @@ type __VLS_Slots = {} & {
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     click: () => any;
-    "update:selected": (v: boolean) => any;
     remove: () => any;
+    "update:selected": (v: boolean) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onClick?: (() => any) | undefined;
-    "onUpdate:selected"?: ((v: boolean) => any) | undefined;
     onRemove?: (() => any) | undefined;
+    "onUpdate:selected"?: ((v: boolean) => any) | undefined;
 }>, {
     size: "sm" | "md";
     disabled: boolean;

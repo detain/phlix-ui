@@ -1,14 +1,15 @@
 import { n as e, t } from "./Icon-ax5k7_G2.js";
 import { n, t as r } from "./Button-BwQkyEkr.js";
 import { i } from "./usePlayerStore-Cffo63UC.js";
-import { t as a } from "./useToastStore-BDoKlU6N.js";
-import { t as o } from "./Skeleton-DkSoWF3C.js";
-import { n as s } from "./MediaRow-OSm7NmIO.js";
-import { t as c } from "./EmptyState-B2QnGIQT.js";
-import { n as l } from "./media-query-BcVLE7J6.js";
-import { t as u } from "./MediaDetail-DdZO-X5Q.js";
-import { Fragment as d, computed as f, createBlock as p, createCommentVNode as m, createElementBlock as h, createElementVNode as g, createTextVNode as _, createVNode as v, defineComponent as y, inject as b, onBeforeUnmount as x, onMounted as ee, openBlock as S, ref as C, renderList as w, toDisplayString as T, watch as E, withCtx as D } from "vue";
-import { useRoute as O, useRouter as k } from "vue-router";
+import { i as a } from "./usePageTitle-BO3GGF3M.js";
+import { t as o } from "./useToastStore-BDoKlU6N.js";
+import { t as s } from "./Skeleton-DkSoWF3C.js";
+import { n as c } from "./MediaRow-OSm7NmIO.js";
+import { t as l } from "./EmptyState-B2QnGIQT.js";
+import { n as u } from "./media-query-BcVLE7J6.js";
+import { t as d } from "./MediaDetail-DdZO-X5Q.js";
+import { Fragment as f, computed as p, createBlock as m, createCommentVNode as h, createElementBlock as g, createElementVNode as _, createTextVNode as v, createVNode as y, defineComponent as b, inject as x, onBeforeUnmount as S, onMounted as C, openBlock as w, ref as T, renderList as E, toDisplayString as D, watch as O, withCtx as k } from "vue";
+import { useRoute as ee, useRouter as te } from "vue-router";
 //#region src/components/SeriesSeasons.vue?vue&type=script&setup=true&lang.ts
 var A = {
 	class: "series-seasons",
@@ -19,7 +20,7 @@ var A = {
 }, B = {
 	key: 0,
 	class: "series-seasons__episode-runtime numeric"
-}, V = /*#__PURE__*/ e(/* @__PURE__ */ y({
+}, V = /*#__PURE__*/ e(/* @__PURE__ */ b({
 	__name: "SeriesSeasons",
 	props: {
 		seasons: {},
@@ -41,34 +42,34 @@ var A = {
 		function s(e) {
 			return r.openFirstOnly ? e === 0 : !0;
 		}
-		return (n, r) => (S(), h("section", A, [(S(!0), h(d, null, w(e.seasons, (e, n) => (S(), h("details", {
+		return (n, r) => (w(), g("section", A, [(w(!0), g(f, null, E(e.seasons, (e, n) => (w(), g("details", {
 			key: e.key,
 			class: "series-seasons__season",
 			open: s(n)
-		}, [g("summary", M, [
-			v(t, {
+		}, [_("summary", M, [
+			y(t, {
 				name: "chevron-right",
 				class: "series-seasons__chevron",
 				"aria-hidden": "true"
 			}),
-			g("span", N, T(e.label), 1),
-			g("span", P, T(e.episodes.length) + " " + T(e.episodes.length === 1 ? "episode" : "episodes"), 1)
-		]), g("ul", F, [(S(!0), h(d, null, w(e.episodes, (e) => (S(), h("li", {
+			_("span", N, D(e.label), 1),
+			_("span", P, D(e.episodes.length) + " " + D(e.episodes.length === 1 ? "episode" : "episodes"), 1)
+		]), _("ul", F, [(w(!0), g(f, null, E(e.episodes, (e) => (w(), g("li", {
 			key: e.id,
 			class: "series-seasons__episode"
 		}, [
-			g("button", {
+			_("button", {
 				type: "button",
 				class: "series-seasons__play",
 				"aria-label": `Play ${a(e)}`,
 				onClick: (t) => i("play", e)
-			}, [v(t, { name: "play" })], 8, I),
-			g("button", {
+			}, [y(t, { name: "play" })], 8, I),
+			_("button", {
 				type: "button",
 				class: "series-seasons__episode-main",
 				onClick: (t) => i("play", e)
-			}, [g("span", R, T(a(e)), 1), e.overview ? (S(), h("span", z, T(e.overview), 1)) : m("", !0)], 8, L),
-			o(e) ? (S(), h("span", B, T(o(e)), 1)) : m("", !0)
+			}, [_("span", R, D(a(e)), 1), e.overview ? (w(), g("span", z, D(e.overview), 1)) : h("", !0)], 8, L),
+			o(e) ? (w(), g("span", B, D(o(e)), 1)) : h("", !0)
 		]))), 128))])], 8, j))), 128))]));
 	}
 }), [["__scopeId", "data-v-9f4cfae0"]]);
@@ -108,31 +109,33 @@ function K(e) {
 function q(e) {
 	return e.some((e) => e.type === "season");
 }
-function te(e) {
+function ne(e) {
 	for (let t of e) if (t.episodes.length) return t.episodes[0];
 	return null;
 }
 //#endregion
 //#region src/pages/MediaDetailPage.vue?vue&type=script&setup=true&lang.ts
-var ne = { class: "media-detail-page" }, re = {
+var re = { class: "media-detail-page" }, ie = {
 	key: 0,
 	class: "media-detail-page__loading",
 	role: "status",
 	"aria-busy": "true",
 	"aria-label": "Loading title"
-}, ie = { class: "media-detail-page__loading-hero" }, ae = { class: "media-detail-page__loading-info" }, oe = {
+}, ae = { class: "media-detail-page__loading-hero" }, oe = { class: "media-detail-page__loading-info" }, se = {
 	key: 0,
 	class: "media-detail-page__seasons",
 	"aria-label": "Episodes"
-}, se = {
+}, ce = {
 	key: 0,
 	class: "media-detail-page__seasons-loading",
 	role: "status",
 	"aria-busy": "true"
-}, J = /*#__PURE__*/ e(/* @__PURE__ */ y({
+}, J = /*#__PURE__*/ e(/* @__PURE__ */ b({
 	__name: "MediaDetailPage",
 	setup(e) {
-		let t = b("apiBase", ""), y = f(() => typeof t == "string" ? t : t?.value ?? ""), w = O(), T = k(), A = i(), j = a(), M = C(null), N = C([]), P = C([]), F = C(!0), I = C(!1), L = C(!1), R = C(null), z = f(() => String(w.params.id ?? "")), B = f(() => A.resumePositionFor(z.value)), H = f(() => M.value?.type === "series"), U = null, W = !1;
+		let t = x("apiBase", ""), b = p(() => typeof t == "string" ? t : t?.value ?? ""), E = ee(), D = te(), A = i(), j = o(), M = T(null), N = T([]), P = T([]), F = T(!0), I = T(!1), L = T(!1), R = T(null), z = p(() => String(E.params.id ?? "")), B = p(() => A.resumePositionFor(z.value)), H = p(() => M.value?.type === "series");
+		a(() => M.value?.name);
+		let U = null, W = !1;
 		function G(e) {
 			return typeof e == "object" && !!e && e.name === "AbortError";
 		}
@@ -145,7 +148,7 @@ var ne = { class: "media-detail-page" }, re = {
 			let r = U, i = () => W || r !== U;
 			I.value = !0;
 			try {
-				let a = l(y.value, {
+				let a = u(b.value, {
 					genres: [n],
 					limit: 13,
 					sort: "rating",
@@ -161,7 +164,7 @@ var ne = { class: "media-detail-page" }, re = {
 			}
 		}
 		async function Y(e, t, n) {
-			let r = l(y.value, {
+			let r = u(b.value, {
 				parentId: t,
 				limit: 100,
 				sort: "name",
@@ -169,7 +172,7 @@ var ne = { class: "media-detail-page" }, re = {
 			});
 			return (await e.get(r, void 0, n)).items ?? [];
 		}
-		async function ce(e, t) {
+		async function le(e, t) {
 			let n = U, r = () => W || n !== U;
 			L.value = !0, P.value = [];
 			try {
@@ -195,112 +198,112 @@ var ne = { class: "media-detail-page" }, re = {
 				return;
 			}
 			try {
-				let t = new n({ baseUrl: y.value }), r = await t.get(`/api/v1/media/${encodeURIComponent(e)}`, void 0, U?.signal);
+				let t = new n({ baseUrl: b.value }), r = await t.get(`/api/v1/media/${encodeURIComponent(e)}`, void 0, U?.signal);
 				if (W) return;
 				let i = r.item;
-				M.value = i, F.value = !1, i.type === "series" ? ce(t, i) : J(t, i);
+				M.value = i, F.value = !1, i.type === "series" ? le(t, i) : J(t, i);
 			} catch (e) {
 				if (W || G(e)) return;
 				R.value = e instanceof Error ? e.message : "Failed to load title", F.value = !1;
 			}
 		}
-		ee(X), E(z, X), x(() => {
+		C(X), O(z, X), S(() => {
 			W = !0, U?.abort(), U = null;
 		});
 		function Z(e, t) {
-			T?.push({
+			D?.push({
 				name: e,
 				params: { id: t }
 			}).catch(() => {});
 		}
 		function Q(e) {
 			if (e.type === "series") {
-				let e = te(P.value);
+				let e = ne(P.value);
 				e ? Z("player", e.id) : j.info("No episodes to play yet");
 				return;
 			}
 			Z("player", e.id);
 		}
-		function le(e) {
+		function ue(e) {
 			Z("player", e.id);
 		}
-		function ue(e) {
+		function de(e) {
 			j.success(`Added "${e.name}" to your list`);
 		}
-		function de(e) {
+		function fe(e) {
 			Z("media", e.id);
 		}
 		function $() {
-			T?.back();
+			D?.back();
 		}
-		return (e, t) => (S(), h("div", ne, [F.value ? (S(), h("div", re, [g("div", ie, [v(o, {
+		return (e, t) => (w(), g("div", re, [F.value ? (w(), g("div", ie, [_("div", ae, [y(s, {
 			variant: "rect",
 			radius: "var(--radius-lg)",
 			height: "420px"
-		}), g("div", ae, [
-			v(o, {
+		}), _("div", oe, [
+			y(s, {
 				variant: "text",
 				width: "60%",
 				height: "2rem"
 			}),
-			v(o, {
+			y(s, {
 				variant: "text",
 				lines: 4
 			}),
-			v(o, {
+			y(s, {
 				variant: "rect",
 				width: "9rem",
 				height: "2.5rem",
 				radius: "var(--radius-md)"
 			})
-		])])])) : R.value ? (S(), p(c, {
+		])])])) : R.value ? (w(), m(l, {
 			key: 1,
 			icon: "alert",
 			title: "Couldn't load this title",
 			description: R.value
 		}, {
-			actions: D(() => [v(r, {
+			actions: k(() => [y(r, {
 				variant: "solid",
 				onClick: X
 			}, {
-				default: D(() => [...t[0] ||= [_("Retry", -1)]]),
+				default: k(() => [...t[0] ||= [v("Retry", -1)]]),
 				_: 1
-			}), v(r, {
+			}), y(r, {
 				variant: "ghost",
 				onClick: $
 			}, {
-				default: D(() => [...t[1] ||= [_("Back", -1)]]),
+				default: k(() => [...t[1] ||= [v("Back", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["description"])) : M.value ? (S(), h(d, { key: 2 }, [v(u, {
+		}, 8, ["description"])) : M.value ? (w(), g(f, { key: 2 }, [y(d, {
 			item: M.value,
 			"resume-seconds": B.value,
 			similar: N.value,
 			"similar-loading": I.value,
 			onPlay: Q,
 			onResume: Q,
-			onWatchlist: ue,
-			onInfo: de,
+			onWatchlist: de,
+			onInfo: fe,
 			onBack: $
 		}, null, 8, [
 			"item",
 			"resume-seconds",
 			"similar",
 			"similar-loading"
-		]), H.value ? (S(), h("section", oe, [t[2] ||= g("h2", { class: "media-detail-page__seasons-title" }, "Episodes", -1), L.value ? (S(), h("div", se, [v(s, { label: "Loading episodes" })])) : P.value.length ? (S(), p(V, {
+		]), H.value ? (w(), g("section", se, [t[2] ||= _("h2", { class: "media-detail-page__seasons-title" }, "Episodes", -1), L.value ? (w(), g("div", ce, [y(c, { label: "Loading episodes" })])) : P.value.length ? (w(), m(V, {
 			key: 1,
 			seasons: P.value,
-			onPlay: le
-		}, null, 8, ["seasons"])) : (S(), p(c, {
+			onPlay: ue
+		}, null, 8, ["seasons"])) : (w(), m(l, {
 			key: 2,
 			icon: "tv",
 			title: "No episodes yet",
 			description: "This series has no episodes available to watch."
-		}))])) : m("", !0)], 64)) : m("", !0)]));
+		}))])) : h("", !0)], 64)) : h("", !0)]));
 	}
-}), [["__scopeId", "data-v-5ceb62bc"]]);
+}), [["__scopeId", "data-v-d2bcecc4"]]);
 //#endregion
 export { J as default };
 
-//# sourceMappingURL=MediaDetailPage-BM7U68xy.js.map
+//# sourceMappingURL=MediaDetailPage-C2n7z2Sv.js.map
