@@ -32,4 +32,10 @@ describe('QualityMenu', () => {
     expect(player.quality).toBe('4k');
     expect(prefs.defaultQuality).toBe('4k'); // survives reload
   });
+
+  it('renders with the glass tone so it reads on the transparent player chrome', () => {
+    const w = mount(QualityMenu, { props: { qualities: ['auto', '1080p'] } });
+    expect(w.findComponent(Select).props('tone')).toBe('glass');
+    expect(w.find('.phlix-select.is-glass').exists()).toBe(true);
+  });
 });

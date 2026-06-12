@@ -25,6 +25,19 @@ type __VLS_Props = {
      *  direct-played the player POSTs `${apiBase}/api/v1/media/:id/transcode` and
      *  plays the resulting HLS stream via hls.js. Defaults to the page origin. */
     apiBase?: string;
+    /** Previous episode in the series order (U2) — drives the Prev button for
+     *  series content. null/absent hides the button (movies, or the very first
+     *  episode). The host (PlayerPage) resolves it across seasons + navigates. */
+    prevEpisode?: MediaItem | null;
+    /** Next episode in the series order (U2) — drives the Next button. null/absent
+     *  hides the button (movies, or the very last episode). */
+    nextEpisode?: MediaItem | null;
+    /** Start playback automatically once the source is ready (U2). The host page
+     *  enables this since the player is reached via a Play click (a user gesture),
+     *  so unmuted autoplay usually works; a rejected play() falls back to a muted
+     *  retry, then surfaces the existing play control. Defaults to false so the
+     *  component is unchanged where a host doesn't opt in. */
+    autoplay?: boolean;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     captions: () => any;
@@ -32,12 +45,14 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     theater: (active: boolean) => any;
     back: () => any;
     "play-next": (media: MediaItem) => any;
+    "play-episode": (media: MediaItem) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onCaptions?: (() => any) | undefined;
     onPip?: (() => any) | undefined;
     onTheater?: ((active: boolean) => any) | undefined;
     onBack?: (() => any) | undefined;
     "onPlay-next"?: ((media: MediaItem) => any) | undefined;
+    "onPlay-episode"?: ((media: MediaItem) => any) | undefined;
 }>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;

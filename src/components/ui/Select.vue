@@ -20,8 +20,17 @@ const props = withDefaults(
     placeholder?: string;
     label?: string;
     disabled?: boolean;
+    /**
+     * Visual tone. `default` uses the app surface tokens (opaque light surfaces).
+     * `glass` (opt-in) overrides the surface/text/border tokens for a translucent
+     * dark, white-text treatment that matches the transparent player chrome — used
+     * by the in-player menus (SpeedMenu / QualityMenu / CaptionsMenu). The variant
+     * is class-only (a scoped `is-glass` modifier) so `Select` is unchanged
+     * everywhere else it's used.
+     */
+    tone?: 'default' | 'glass';
   }>(),
-  { disabled: false },
+  { disabled: false, tone: 'default' },
 );
 
 const { t } = useMessages();
@@ -115,7 +124,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="rootEl" class="phlix-select" :class="{ 'is-open': open, 'is-disabled': disabled }">
+  <div ref="rootEl" class="phlix-select" :class="{ 'is-open': open, 'is-disabled': disabled, 'is-glass': tone === 'glass' }">
     <button
       type="button"
       class="phlix-select__trigger"
@@ -217,6 +226,38 @@ onBeforeUnmount(() => {
 .phlix-select__option[aria-selected='true'] { color: var(--accent-text); font-weight: var(--font-semibold); }
 .phlix-select__option.is-disabled { opacity: 0.45; cursor: not-allowed; }
 .phlix-select__check { display: inline-grid; place-items: center; width: 1em; font-size: 1.05em; }
+
+/* ---- glass tone (opt-in) — translucent dark + white text for the player chrome.
+   Scoped to `.is-glass` so the default Select (used across the app) is untouched.
+   Uses literal rgba()/#fff rather than the light surface tokens so the menus read
+   correctly against the dark, transparent player. Hover/active/selected stay
+   legible; the focus ring still uses the accent token. */
+.phlix-select.is-glass .phlix-select__trigger {
+  background: rgba(20, 20, 20, 0.55);
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+}
+.phlix-select.is-glass .phlix-select__trigger:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(36, 36, 36, 0.7);
+}
+.phlix-select.is-glass .phlix-select__caret { color: rgba(255, 255, 255, 0.6); }
+.phlix-select.is-glass .phlix-select__value.is-placeholder { color: rgba(255, 255, 255, 0.55); }
+.phlix-select.is-glass .phlix-select__list {
+  background: rgba(20, 20, 20, 0.92);
+  border-color: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px);
+}
+.phlix-select.is-glass .phlix-select__option { color: rgba(255, 255, 255, 0.72); }
+.phlix-select.is-glass .phlix-select__option.is-active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.phlix-select.is-glass .phlix-select__option[aria-selected='true'] {
+  color: var(--amber-300, var(--accent));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .phlix-select__trigger, .phlix-select__caret { transition: none; }
 }

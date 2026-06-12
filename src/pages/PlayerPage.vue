@@ -30,6 +30,8 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 import Player from '../components/Player.vue';
 import type { Chapter } from '../components/player/Scrubber.vue';
 import type { TimeMarker } from '../components/player/playback';
+import { hasSeasonRows } from '../components/series-grouping';
+import { orderEpisodesForPlayback, previousEpisode, nextEpisode } from '../components/player/episode-order';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -39,6 +41,17 @@ interface MediaListResponse {
   items: MediaItem[];
   total: number;
 }
+
+/**
+ * Per-session cache of the ordered (playback) episode list for a whole series,
+ * keyed by the resolved series-root id. Binge navigation (Next, Next, Next…)
+ * walks the same series, so once it's fetched + ordered we reuse it and just
+ * recompute prev/next from the current id — no parent-hop walk, no root-children
+ * fetch, no N season-children fetches per episode click. Module-level so it
+ * survives the page's own remount on each player→player route change; lifetime =
+ * the SPA session (a small Map, one entry per series watched — bounded by how
+ * many distinct series the user opens in a session). */
+const seriesEpisodeCache = new Map<string, MediaItem[]>();
 
 /** Server playback-info contract (GET /api/v1/media/:id/playback-info): intro/outro
  *  skip markers + chapter ticks. Times are in seconds. There is NO stream url —
@@ -71,6 +84,10 @@ const outroMarker = ref<TimeMarker | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const theater = ref(false);
+/** Prev/Next episode in the whole-series order (U2) — null for movies or at the
+ *  ends of the series. Drives the Player's prev/next-episode buttons. */
+const prevEp = ref<MediaItem | null>(null);
+const nextEp = ref<MediaItem | null>(null);
 
 const currentId = computed(() => String(route.params.id ?? ''));
 
@@ -131,6 +148,95 @@ async function loadQueue(client: ApiClient, base: MediaItem): Promise<void> {
   }
 }
 
+/** Fetch a parent's direct children (seasons/episodes), high limit so a full
+ *  series arrives in one page — mirrors MediaDetailPage.fetchChildren. */
+async function fetchChildren(client: ApiClient, parentId: string, signal?: AbortSignal): Promise<MediaItem[]> {
+  const url = buildMediaUrl(apiBase.value, { parentId, limit: 100, sort: 'name', order: 'asc' });
+  const res = await client.get<MediaListResponse>(url, undefined, signal);
+  return res.items ?? [];
+}
+
+/** Walk parent_id up from an episode to its series root (episode → season →
+ *  series). Best-effort: returns the highest ancestor reached (or the item
+ *  itself) so a partial chain still yields a usable grouping root. Bounded to a
+ *  few hops to avoid a pathological cycle. */
+async function resolveSeriesRoot(client: ApiClient, item: MediaItem, signal?: AbortSignal): Promise<MediaItem> {
+  let node = item;
+  for (let hops = 0; hops < 4 && node.parent_id; hops += 1) {
+    const res = await client.get<{ item: MediaItem }>(
+      `/api/v1/media/${encodeURIComponent(node.parent_id)}`,
+      undefined,
+      signal,
+    );
+    const parent = res.item;
+    if (!parent) break;
+    node = parent;
+    if (parent.type === 'series') break;
+  }
+  return node;
+}
+
+/** Set the prev/next refs from an already-ordered whole-series playback list. */
+function applyNeighbours(ordered: MediaItem[], currentEpId: string): void {
+  prevEp.value = previousEpisode(ordered, currentEpId);
+  nextEp.value = nextEpisode(ordered, currentEpId);
+}
+
+/** Find a cached ordered playback list that already contains `episodeId`, or
+ *  null. Binge nav stays within one series, so the next sibling is almost always
+ *  in a list we fetched a click ago — a cache hit skips ALL series-tree fetches. */
+function cachedOrderedFor(episodeId: string): MediaItem[] | null {
+  for (const ordered of seriesEpisodeCache.values()) {
+    if (ordered.some((e) => e.id === episodeId)) return ordered;
+  }
+  return null;
+}
+
+/** Build the whole-series ordered episode list and resolve the prev/next
+ *  neighbours of the currently-playing episode (U2). Non-fatal: any failure just
+ *  leaves the buttons hidden. Only runs for episode content; movies clear them.
+ *  Caches the ordered list per series-root id so repeated (binge) navigation
+ *  within the same series reuses it and skips the parent-hop walk + children
+ *  fetches entirely (Finding 1). Uses the PLAYBACK ordering (numbered seasons
+ *  only; Specials excluded from the auto-advance chain — Finding 2). */
+async function loadEpisodeNeighbours(client: ApiClient, base: MediaItem): Promise<void> {
+  prevEp.value = null;
+  nextEp.value = null;
+  const isEpisode = base.type === 'episode' || (base.episode_number ?? null) !== null;
+  if (!isEpisode) return;
+  // Cache hit: this episode is already in a fetched series order — just recompute
+  // prev/next, no fetches.
+  const cached = cachedOrderedFor(base.id);
+  if (cached) {
+    applyNeighbours(cached, base.id);
+    return;
+  }
+  const myController = controller;
+  const stale = () => disposed || myController !== controller;
+  try {
+    const root = await resolveSeriesRoot(client, base, myController?.signal);
+    if (stale()) return;
+    let children = await fetchChildren(client, root.id, myController?.signal);
+    if (stale()) return;
+    // Flatten season-container rows to their episodes (uniform season grouping).
+    if (hasSeasonRows(children)) {
+      const seasonRows = children.filter((c) => c.type === 'season');
+      const lists = await Promise.all(
+        seasonRows.map((s) => fetchChildren(client, s.id, myController?.signal).catch(() => [] as MediaItem[])),
+      );
+      if (stale()) return;
+      children = [...children.filter((c) => c.type !== 'season'), ...lists.flat()];
+    }
+    const ordered = orderEpisodesForPlayback(children);
+    if (ordered.length) seriesEpisodeCache.set(root.id, ordered);
+    applyNeighbours(ordered, base.id);
+  } catch (e) {
+    if (stale() || isAbort(e)) return;
+    prevEp.value = null;
+    nextEp.value = null;
+  }
+}
+
 async function load(): Promise<void> {
   const id = currentId.value;
   controller?.abort();
@@ -140,6 +246,8 @@ async function load(): Promise<void> {
   chapters.value = [];
   introMarker.value = null;
   outroMarker.value = null;
+  prevEp.value = null;
+  nextEp.value = null;
   player.hideMiniPlayer(); // the full player owns playback while we're on this route
   if (!id) {
     error.value = 'No media id provided';
@@ -171,6 +279,7 @@ async function load(): Promise<void> {
     outroMarker.value = toMarker(info?.outro_marker);
     loading.value = false;
     void loadQueue(client, mediaItem);
+    void loadEpisodeNeighbours(client, mediaItem);
   } catch (e) {
     if (disposed || isAbort(e)) return;
     error.value = e instanceof Error ? e.message : 'Failed to load media';
@@ -201,6 +310,11 @@ function onBack(): void {
  *  on the new item — sync the route so the URL + :id match (the id watch re-loads). */
 function onPlayNext(next: MediaItem): void {
   router?.push({ name: 'player', params: { id: next.id } }).catch(() => {});
+}
+/** Prev/Next episode button (U2) — navigate to the adjacent episode's player
+ *  route; the id watch re-loads the item, queue, and neighbours. */
+function onPlayEpisode(ep: MediaItem): void {
+  router?.push({ name: 'player', params: { id: ep.id } }).catch(() => {});
 }
 function onTheater(active: boolean): void {
   theater.value = active;
@@ -249,8 +363,12 @@ function onTheater(active: boolean): void {
         :chapters="chapters"
         :intro-marker="introMarker"
         :outro-marker="outroMarker"
+        :prev-episode="prevEp"
+        :next-episode="nextEp"
+        :autoplay="true"
         @back="onBack"
         @play-next="onPlayNext"
+        @play-episode="onPlayEpisode"
         @theater="onTheater"
       />
     </div>

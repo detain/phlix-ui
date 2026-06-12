@@ -121,6 +121,9 @@ export const DEFAULT_MESSAGES = {
     pause: 'Pause',
     back: 'Back',
     nowPlaying: 'Now playing',
+    // Prev/next episode (series content)
+    previousEpisode: 'Previous episode',
+    nextEpisode: 'Next episode',
     // Skip intro / outro markers (server playback-info)
     skipIntro: 'Skip intro',
     skipOutro: 'Skip outro',

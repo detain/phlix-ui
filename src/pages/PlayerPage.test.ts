@@ -223,6 +223,115 @@ describe('PlayerPage — up-next queue', () => {
   });
 });
 
+describe('PlayerPage — prev/next episode (U2)', () => {
+  function ep(over: Partial<MediaItem> & { id: string }): MediaItem {
+    return media({ name: over.id, type: 'episode', genres: [], ...over });
+  }
+
+  /** URL-routed fetch so the episode-neighbour walk (parent lookup + parentId
+   *  children) resolves deterministically regardless of call order. */
+  function routedFetch(routes: { match: (url: string) => boolean; body: unknown }[]) {
+    return vi.fn((url: string) => {
+      const hit = routes.find((r) => r.match(url));
+      return Promise.resolve(jsonResponse(hit ? hit.body : { items: [], total: 0 }));
+    });
+  }
+
+  it('resolves prev/next across the series and passes them + autoplay to the Player', async () => {
+    const e1 = ep({ id: 'e1', parent_id: 'ser1', season_number: 1, episode_number: 1 });
+    const e2 = ep({ id: 'e2', parent_id: 'ser1', season_number: 1, episode_number: 2 });
+    const e3 = ep({ id: 'e3', parent_id: 'ser1', season_number: 2, episode_number: 1 }); // cross-season
+    const fetchMock = routedFetch([
+      { match: (u) => u.includes('/api/v1/media/e2') && !u.includes('parentId') && !u.includes('playback-info'), body: { item: e2 } },
+      { match: (u) => u.includes('playback-info'), body: { intro_marker: null, outro_marker: null, chapters: [] } },
+      { match: (u) => u.includes('/api/v1/media/ser1') && !u.includes('parentId'), body: { item: media({ id: 'ser1', type: 'series' }) } },
+      { match: (u) => u.includes('parentId=ser1'), body: { items: [e1, e2, e3], total: 3 } },
+    ]);
+    const { w } = await mountAt('e2', fetchMock);
+    await flushPromises();
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect((player.props('prevEpisode') as MediaItem | null)?.id).toBe('e1');
+    expect((player.props('nextEpisode') as MediaItem | null)?.id).toBe('e3'); // rolls into next season
+    expect(player.props('autoplay')).toBe(true);
+  });
+
+  it('leaves prev/next null for a movie (no neighbour fetch)', async () => {
+    const fetchMock = okFetch(media({ id: 'm1', type: 'movie' }));
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect(player.props('prevEpisode')).toBeNull();
+    expect(player.props('nextEpisode')).toBeNull();
+  });
+
+  it('navigates to the adjacent episode route on the Player play-episode emit', async () => {
+    const fetchMock = okFetch(media({ id: 'e2', type: 'episode' }));
+    const { w, router } = await mountAt('e2', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(Player).vm.$emit('play-episode', media({ id: 'e3' }));
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'e3' } });
+  });
+
+  it('excludes Specials (season 0) from the auto-advance chain (Next off the finale is disabled)', async () => {
+    const e1 = ep({ id: 'sp-e1', parent_id: 'sp-ser', season_number: 1, episode_number: 1 });
+    const e2 = ep({ id: 'sp-e2', parent_id: 'sp-ser', season_number: 1, episode_number: 2 }); // finale
+    const sp = ep({ id: 'sp-x', parent_id: 'sp-ser', season_number: 0, episode_number: 1 }); // Special
+    const fetchMock = routedFetch([
+      { match: (u) => u.includes('/api/v1/media/sp-e2') && !u.includes('parentId') && !u.includes('playback-info'), body: { item: e2 } },
+      { match: (u) => u.includes('playback-info'), body: { intro_marker: null, outro_marker: null, chapters: [] } },
+      { match: (u) => u.includes('/api/v1/media/sp-ser') && !u.includes('parentId'), body: { item: media({ id: 'sp-ser', type: 'series' }) } },
+      { match: (u) => u.includes('parentId=sp-ser'), body: { items: [e1, e2, sp], total: 3 } },
+    ]);
+    const { w } = await mountAt('sp-e2', fetchMock);
+    await flushPromises();
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect((player.props('prevEpisode') as MediaItem | null)?.id).toBe('sp-e1');
+    expect(player.props('nextEpisode')).toBeNull(); // finale → Special is NOT auto-advanced into
+  });
+
+  it('reuses the cached series order on sibling navigation — no re-fetch of the series tree', async () => {
+    // Distinct series id so the module-level cache entry is unique to this test.
+    const e1 = ep({ id: 'cache-e1', parent_id: 'cache-ser', season_number: 1, episode_number: 1 });
+    const e2 = ep({ id: 'cache-e2', parent_id: 'cache-ser', season_number: 1, episode_number: 2 });
+    const e3 = ep({ id: 'cache-e3', parent_id: 'cache-ser', season_number: 1, episode_number: 3 });
+    const byId: Record<string, MediaItem> = { 'cache-e1': e1, 'cache-e2': e2, 'cache-e3': e3 };
+    const isById = (u: string, id: string) =>
+      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
+    const fetchMock = routedFetch([
+      { match: (u) => isById(u, 'cache-e1'), body: { item: byId['cache-e1'] } },
+      { match: (u) => isById(u, 'cache-e2'), body: { item: byId['cache-e2'] } },
+      { match: (u) => isById(u, 'cache-e3'), body: { item: byId['cache-e3'] } },
+      { match: (u) => u.includes('playback-info'), body: { intro_marker: null, outro_marker: null, chapters: [] } },
+      { match: (u) => u.includes('/api/v1/media/cache-ser') && !u.includes('parentId'), body: { item: media({ id: 'cache-ser', type: 'series' }) } },
+      { match: (u) => u.includes('parentId=cache-ser'), body: { items: [e1, e2, e3], total: 3 } },
+    ]);
+
+    const { w, router } = await mountAt('cache-e2', fetchMock);
+    await flushPromises();
+    await flushPromises();
+    // First load fetched the series tree exactly once: parent-hop + root children.
+    const rootHopCalls = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/v1/media/cache-ser') && !String(c[0]).includes('parentId')).length;
+    const childrenCalls = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes('parentId=cache-ser')).length;
+    expect(rootHopCalls()).toBe(1);
+    expect(childrenCalls()).toBe(1);
+    expect((w.findComponent(Player).props('nextEpisode') as MediaItem | null)?.id).toBe('cache-e3');
+
+    // Navigate to the next sibling (same series) — should be a CACHE HIT: no new
+    // series-root lookup, no new children fetch.
+    await router.push('/app/player/cache-e3');
+    await flushPromises();
+    await flushPromises();
+    expect(rootHopCalls()).toBe(1); // unchanged — series tree not re-walked
+    expect(childrenCalls()).toBe(1); // unchanged — children not re-fetched
+    const player = w.findComponent(Player);
+    expect((player.props('prevEpisode') as MediaItem | null)?.id).toBe('cache-e2'); // recomputed from cache
+    expect(player.props('nextEpisode')).toBeNull(); // e3 is the last numbered episode
+  });
+});
+
 describe('PlayerPage — navigation + handoff', () => {
   it('navigates to the next player route on the Player play-next emit', async () => {
     const fetchMock = okFetch(media({ id: 'm1' }));

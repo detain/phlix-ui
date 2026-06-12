@@ -36,6 +36,13 @@ describe('Select', () => {
     expect(sel.find('.phlix-select__value').text()).toBe('Year');
   });
 
+  it('defaults to the app tone (no is-glass) and opts into glass only when asked', () => {
+    const def = mount(Select, { props: { modelValue: 'year', options: opts } });
+    expect(def.classes()).not.toContain('is-glass'); // unchanged everywhere else
+    const glass = mount(Select, { props: { modelValue: 'year', options: opts, tone: 'glass' } });
+    expect(glass.classes()).toContain('is-glass');
+  });
+
   it('opens on click with listbox + aria-expanded', async () => {
     const w = mount(Select, { props: { modelValue: null, options: opts } });
     const trigger = w.find('.phlix-select__trigger');
