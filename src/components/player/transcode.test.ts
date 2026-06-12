@@ -4,6 +4,7 @@ import {
   transcodeStatusPath,
   parseTranscodeStart,
   parseTranscodeStatus,
+  parseSubtitleTracks,
   isPlayable,
   isFailedStatus,
   resolveStreamUrl,
@@ -37,6 +38,7 @@ describe('transcode helpers', () => {
         masterUrl: '/hls/job-7/master.m3u8',
         status: 'running',
         reused: false,
+        subtitles: [],
       });
     });
     it('also accepts camelCase + hls_url fallback', () => {
@@ -68,6 +70,7 @@ describe('transcode helpers', () => {
         playlistReady: true,
         progress: 42,
         masterUrl: '/hls/j/master.m3u8',
+        subtitles: [],
       });
     });
     it('coerces a numeric-string progress', () => {
@@ -93,6 +96,62 @@ describe('transcode helpers', () => {
     });
     it.each(['running', 'completed', ''])('does not fail on %s', (s) => {
       expect(isFailedStatus(s)).toBe(false);
+    });
+  });
+
+  describe('parseSubtitleTracks', () => {
+    it('reads the server subtitle shape ({index,language,label,default,url})', () => {
+      const tracks = parseSubtitleTracks([
+        { index: 0, language: 'eng', label: 'English 1', default: true, url: '/hls/j/sub-0.vtt' },
+        { index: 1, language: 'jpn', label: 'Japanese', default: false, url: '/hls/j/sub-1.vtt' },
+      ]);
+      expect(tracks).toEqual([
+        { index: 0, language: 'eng', label: 'English 1', default: true, url: '/hls/j/sub-0.vtt' },
+        { index: 1, language: 'jpn', label: 'Japanese', default: false, url: '/hls/j/sub-1.vtt' },
+      ]);
+    });
+    it('returns an empty list for a missing / non-array value', () => {
+      expect(parseSubtitleTracks(undefined)).toEqual([]);
+      expect(parseSubtitleTracks(null)).toEqual([]);
+      expect(parseSubtitleTracks({})).toEqual([]);
+      expect(parseSubtitleTracks('nope')).toEqual([]);
+    });
+    it('skips junk entries and tracks without a url', () => {
+      const tracks = parseSubtitleTracks([null, 7, { index: 0, language: 'eng' }, { url: '/hls/j/sub-2.vtt' }]);
+      expect(tracks).toEqual([{ index: 0, language: '', label: '', default: false, url: '/hls/j/sub-2.vtt' }]);
+    });
+    it('accepts camelCase / alternate field names + coerces a numeric-string index', () => {
+      const tracks = parseSubtitleTracks([
+        { index: '3', srclang: 'fre', label: 'French', isDefault: true, src: '/hls/j/sub-3.vtt' },
+      ]);
+      expect(tracks).toEqual([{ index: 3, language: 'fre', label: 'French', default: true, url: '/hls/j/sub-3.vtt' }]);
+    });
+  });
+
+  describe('subtitles on the start/status responses', () => {
+    it('parses the subtitles array from a start response', () => {
+      const r = parseTranscodeStart({
+        job_id: 'j',
+        master_url: '/hls/j/master.m3u8',
+        subtitles: [{ index: 0, language: 'eng', label: 'English', default: true, url: '/hls/j/sub-0.vtt' }],
+      });
+      expect(r.subtitles).toEqual([
+        { index: 0, language: 'eng', label: 'English', default: true, url: '/hls/j/sub-0.vtt' },
+      ]);
+    });
+    it('parses the subtitles array from a status response (snake_case alias)', () => {
+      const r = parseTranscodeStatus({
+        status: 'running',
+        playlist_ready: true,
+        subtitle_tracks: [{ index: 1, language: 'jpn', label: 'Japanese', default: false, url: '/hls/j/sub-1.vtt' }],
+      });
+      expect(r.subtitles).toEqual([
+        { index: 1, language: 'jpn', label: 'Japanese', default: false, url: '/hls/j/sub-1.vtt' },
+      ]);
+    });
+    it('defaults to an empty list when the server omits subtitles', () => {
+      expect(parseTranscodeStart({ job_id: 'j', master_url: '/m' }).subtitles).toEqual([]);
+      expect(parseTranscodeStatus({ status: 'running' }).subtitles).toEqual([]);
     });
   });
 

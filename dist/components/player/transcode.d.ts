@@ -11,6 +11,23 @@
  * (which use snake_case) into a stable camelCase shape, tolerating either
  * casing so a contract tweak doesn't silently break parsing.
  */
+/**
+ * A subtitle sidecar track the server extracted from the source as WebVTT (S4).
+ * `url` is a server-relative path (e.g. `/hls/<job>/sub-0.vtt`) that resolves
+ * against the API base the same way the master playlist URL does.
+ */
+export interface SubtitleTrack {
+    /** Source stream index (stable identity within a job). */
+    index: number;
+    /** BCP-47 language code (e.g. `eng`), or '' when the source carries none. */
+    language: string;
+    /** Human label (server-disambiguated, e.g. "English 1"). */
+    label: string;
+    /** True for the track the server marks as the default selection. */
+    default: boolean;
+    /** Server-relative WebVTT sidecar URL (`/hls/<job>/sub-<index>.vtt`). */
+    url: string;
+}
 /** Result of starting (or reusing) a transcode job. */
 export interface TranscodeStart {
     jobId: string;
@@ -18,6 +35,8 @@ export interface TranscodeStart {
     masterUrl: string;
     status: string;
     reused: boolean;
+    /** Embedded text subtitle tracks extracted to WebVTT sidecars (may be empty). */
+    subtitles: SubtitleTrack[];
 }
 /** A transcode job's readiness snapshot. */
 export interface TranscodeStatus {
@@ -27,7 +46,15 @@ export interface TranscodeStatus {
     /** 0–100 best-effort progress. */
     progress: number;
     masterUrl: string;
+    /** Embedded text subtitle tracks (may arrive late, once extraction finishes). */
+    subtitles: SubtitleTrack[];
 }
+/**
+ * Normalizes the server's `subtitles` array (per-track snake- or camelCase) into
+ * a list of {@link SubtitleTrack}. Tolerates a missing/non-array value (→ []),
+ * junk entries (skipped), and either casing so a contract tweak doesn't break it.
+ */
+export declare function parseSubtitleTracks(value: unknown): SubtitleTrack[];
 /** Path to start (or reuse) a transcode job for a media item. */
 export declare function transcodeStartPath(mediaId: string, profile?: string): string;
 /** Path to poll a transcode job's readiness. */

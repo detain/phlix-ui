@@ -12,6 +12,24 @@
  * casing so a contract tweak doesn't silently break parsing.
  */
 
+/**
+ * A subtitle sidecar track the server extracted from the source as WebVTT (S4).
+ * `url` is a server-relative path (e.g. `/hls/<job>/sub-0.vtt`) that resolves
+ * against the API base the same way the master playlist URL does.
+ */
+export interface SubtitleTrack {
+  /** Source stream index (stable identity within a job). */
+  index: number;
+  /** BCP-47 language code (e.g. `eng`), or '' when the source carries none. */
+  language: string;
+  /** Human label (server-disambiguated, e.g. "English 1"). */
+  label: string;
+  /** True for the track the server marks as the default selection. */
+  default: boolean;
+  /** Server-relative WebVTT sidecar URL (`/hls/<job>/sub-<index>.vtt`). */
+  url: string;
+}
+
 /** Result of starting (or reusing) a transcode job. */
 export interface TranscodeStart {
   jobId: string;
@@ -19,6 +37,8 @@ export interface TranscodeStart {
   masterUrl: string;
   status: string;
   reused: boolean;
+  /** Embedded text subtitle tracks extracted to WebVTT sidecars (may be empty). */
+  subtitles: SubtitleTrack[];
 }
 
 /** A transcode job's readiness snapshot. */
@@ -29,6 +49,8 @@ export interface TranscodeStatus {
   /** 0–100 best-effort progress. */
   progress: number;
   masterUrl: string;
+  /** Embedded text subtitle tracks (may arrive late, once extraction finishes). */
+  subtitles: SubtitleTrack[];
 }
 
 /** Statuses from which the job will never become playable. */
@@ -46,6 +68,30 @@ function num(value: unknown): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) return Number(value);
   return 0;
+}
+
+/**
+ * Normalizes the server's `subtitles` array (per-track snake- or camelCase) into
+ * a list of {@link SubtitleTrack}. Tolerates a missing/non-array value (→ []),
+ * junk entries (skipped), and either casing so a contract tweak doesn't break it.
+ */
+export function parseSubtitleTracks(value: unknown): SubtitleTrack[] {
+  if (!Array.isArray(value)) return [];
+  const out: SubtitleTrack[] = [];
+  for (const entry of value) {
+    if (entry == null || typeof entry !== 'object') continue;
+    const o = entry as Record<string, unknown>;
+    const url = str(o.url ?? o.src);
+    if (url === '') continue; // a track with no sidecar URL is unusable
+    out.push({
+      index: num(o.index),
+      language: str(o.language ?? o.lang ?? o.srclang),
+      label: str(o.label),
+      default: bool(o.default ?? o.isDefault),
+      url,
+    });
+  }
+  return out;
 }
 
 /** Path to start (or reuse) a transcode job for a media item. */
@@ -66,6 +112,7 @@ export function parseTranscodeStart(raw: unknown): TranscodeStart {
     masterUrl: str(o.master_url ?? o.masterUrl ?? o.hls_url ?? o.hlsUrl),
     status: str(o.status, 'running'),
     reused: bool(o.reused),
+    subtitles: parseSubtitleTracks(o.subtitles ?? o.subtitle_tracks ?? o.subtitleTracks),
   };
 }
 
@@ -78,6 +125,7 @@ export function parseTranscodeStatus(raw: unknown): TranscodeStatus {
     playlistReady: bool(o.playlist_ready ?? o.playlistReady),
     progress: num(o.progress),
     masterUrl: str(o.master_url ?? o.masterUrl),
+    subtitles: parseSubtitleTracks(o.subtitles ?? o.subtitle_tracks ?? o.subtitleTracks),
   };
 }
 
