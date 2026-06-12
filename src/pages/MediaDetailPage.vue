@@ -2,11 +2,13 @@
 /**
  * MediaDetailPage (R2.5) — route container for `/app/media/:id`.
  *
- * Fetches the title by id (`GET /api/v1/media/:id`) plus a genre-scoped "More
- * like this" list, resolves the resume position from `usePlayerStore`, and wires
- * the detail actions (Play / Resume → player route, Watchlist → toast, similar
- * card → navigate). Deep-links work and re-fetch when the route id changes
- * (navigating between details). Loading → Skeleton; error → EmptyState + retry.
+ * Fetches the title by id (`GET /api/v1/media/:id`). A SERIES renders
+ * `SeriesDetail` (info + a grid of season cards, each linking to its own
+ * per-season page — U3); a movie/episode renders `MediaDetail` + a genre-scoped
+ * "More like this" rail. Resolves the resume position from `usePlayerStore` and
+ * wires the detail actions (Play / Resume → player route, Watchlist → toast,
+ * similar/info card → navigate). Deep-links work and re-fetch when the route id
+ * changes. Loading → Skeleton; error → EmptyState + retry.
  */
 import { ref, computed, inject, onMounted, watch, onBeforeUnmount, type ComputedRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -16,17 +18,12 @@ import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
 import MediaDetail from '../components/MediaDetail.vue';
-import SeriesSeasons from '../components/SeriesSeasons.vue';
-import {
-  groupEpisodesBySeason,
-  hasSeasonRows,
-  firstEpisode,
-  type SeasonGroup,
-} from '../components/series-grouping';
+import SeriesDetail from '../components/SeriesDetail.vue';
+import { firstEpisode, type SeasonGroup } from '../components/series-grouping';
+import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
-import Spinner from '../components/ui/Spinner.vue';
 import { usePageTitle } from '../composables/usePageTitle';
 
 interface MediaListResponse {
@@ -38,6 +35,9 @@ const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBas
 const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
+// The `/app` router base so the season grid's links carry the right prefix.
+const phlixConfig = inject<{ routerBase?: string } | undefined>('phlixConfig', undefined);
+const routerBase = computed(() => phlixConfig?.routerBase || '/app');
 const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
@@ -90,37 +90,18 @@ async function loadSimilar(client: ApiClient, base: MediaItem): Promise<void> {
   }
 }
 
-async function fetchChildren(client: ApiClient, parentId: string, signal?: AbortSignal): Promise<MediaItem[]> {
-  // A high limit so a full series' episodes arrive in one page (the season tree
-  // renders the whole show at once); the browse API caps at 100 per request.
-  const url = buildMediaUrl(apiBase.value, { parentId, limit: 100, sort: 'name', order: 'asc' });
-  const res = await client.get<MediaListResponse>(url, undefined, signal);
-  return res.items ?? [];
-}
-
 async function loadSeasons(client: ApiClient, series: MediaItem): Promise<void> {
   const myController = controller;
   const stale = () => disposed || myController !== controller;
   seasonsLoading.value = true;
   seasons.value = [];
   try {
-    let children = await fetchChildren(client, series.id, myController?.signal);
+    // The shared routine fetches the series' children once (flattening any
+    // server-modelled `type: 'season'` container rows to their episodes) and
+    // groups them by season number — the season grid + per-season page share it.
+    const groups = await loadSeriesSeasons(client, apiBase.value, series.id, myController?.signal);
     if (stale()) return;
-    // If the server models seasons as their own `type: 'season'` rows, fetch each
-    // season's episodes and flatten so grouping is uniformly by season_number
-    // (keeping any episodes parented directly onto the series too).
-    if (hasSeasonRows(children)) {
-      const seasonRows = children.filter((c) => c.type === 'season');
-      const lists = await Promise.all(
-        seasonRows.map((s) =>
-          fetchChildren(client, s.id, myController?.signal).catch(() => [] as MediaItem[]),
-        ),
-      );
-      if (stale()) return;
-      const directEpisodes = children.filter((c) => c.type !== 'season');
-      children = [...directEpisodes, ...lists.flat()];
-    }
-    seasons.value = groupEpisodesBySeason(children);
+    seasons.value = groups;
   } catch (e) {
     if (stale() || isAbort(e)) return;
     seasons.value = []; // a missing season tree is non-fatal — the hero still renders
@@ -192,9 +173,6 @@ function onPlay(m: MediaItem): void {
   }
   go('player', m.id);
 }
-function onPlayEpisode(ep: MediaItem): void {
-  go('player', ep.id);
-}
 function onWatchlist(m: MediaItem): void {
   toasts.success(`Added "${m.name}" to your list`);
 }
@@ -232,7 +210,24 @@ function onBack(): void {
     </EmptyState>
 
     <template v-else-if="item">
+      <!-- A series shows its info + a grid of SEASON cards (each linking to its
+           own per-season page); a movie/episode keeps the detail + similar rail. -->
+      <SeriesDetail
+        v-if="isSeries"
+        :item="item"
+        :seasons="seasons"
+        :loading="seasonsLoading"
+        :resume-seconds="resumeSeconds"
+        :router-base="routerBase"
+        @play="onPlay"
+        @resume="onPlay"
+        @watchlist="onWatchlist"
+        @info="onInfo"
+        @back="onBack"
+      />
+
       <MediaDetail
+        v-else
         :item="item"
         :resume-seconds="resumeSeconds"
         :similar="similar"
@@ -243,33 +238,6 @@ function onBack(): void {
         @info="onInfo"
         @back="onBack"
       />
-
-      <!-- Series drill-down: season/specials → episodes (below the hero). -->
-      <section v-if="isSeries" class="media-detail-page__seasons" aria-label="Episodes">
-        <h2 class="media-detail-page__seasons-title">Episodes</h2>
-
-        <div
-          v-if="seasonsLoading"
-          class="media-detail-page__seasons-loading"
-          role="status"
-          aria-busy="true"
-        >
-          <Spinner label="Loading episodes" />
-        </div>
-
-        <SeriesSeasons
-          v-else-if="seasons.length"
-          :seasons="seasons"
-          @play="onPlayEpisode"
-        />
-
-        <EmptyState
-          v-else
-          icon="tv"
-          title="No episodes yet"
-          description="This series has no episodes available to watch."
-        />
-      </section>
     </template>
   </div>
 </template>
@@ -298,24 +266,5 @@ function onBack(): void {
   .media-detail-page__loading-hero {
     grid-template-columns: 1fr;
   }
-}
-
-.media-detail-page__seasons {
-  max-width: 1100px;
-  margin: var(--space-8) auto 0;
-  padding: 0 var(--space-6) var(--space-6);
-}
-.media-detail-page__seasons-title {
-  font-family: var(--font-display);
-  font-weight: var(--font-semibold);
-  font-size: var(--text-xl);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text);
-  margin-bottom: var(--space-4);
-}
-.media-detail-page__seasons-loading {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-8) 0;
 }
 </style>
