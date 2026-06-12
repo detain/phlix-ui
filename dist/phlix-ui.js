@@ -29,7 +29,7 @@ import { t as Pe } from "./HomeRow-jlo610n5.js";
 import { t as Fe } from "./MediaDetail-rZkdmxJ3.js";
 import { n as Ie, t as Le } from "./logs-DadTfaTq.js";
 import { t as Re } from "./dashboard-BTCOCTHQ.js";
-import { n as ze, r as Be, t as Ve } from "./users-C40iLgkq.js";
+import { n as ze, r as Be, t as Ve } from "./users-UPfbrkL3.js";
 import { n as He, r as Ue, t as We } from "./webhooks-BBTLnFKm.js";
 import { t as Ge } from "./services-Czm8hsvH.js";
 import { t as Ke } from "./integrations-DLAG9ISY.js";
@@ -679,7 +679,7 @@ var Kr = ["src", "alt"], qr = { class: "brand-wordmark" }, Jr = {
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-DVEFVwFt.js")
+	component: () => import("./UsersPage-c1cLdavj.js")
 }, ti = {
 	name: "admin-logs",
 	path: "logs",
@@ -769,7 +769,7 @@ var Kr = ["src", "alt"], qr = { class: "brand-wordmark" }, Jr = {
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-ujphcdd0.js")
+	component: () => import("./SettingsPage-Dr-njv08.js")
 }, gi = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",

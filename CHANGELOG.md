@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.30.0] - 2026-06-12
+
+### Added
+- **Admin signup-mode control + pending-user approval queue (U7).** Surfaces the
+  S1 server approval gate in the admin UI:
+  - **Settings → Access tab:** `auth.signup_mode` now renders as a proper
+    Select with three options — "Open — anyone can sign up", "Require admin
+    approval" and "Disabled — no new signups" — with a descriptive help line,
+    instead of a raw text input. (The enum-Select pattern reuses the existing
+    `SELECT_OPTIONS` map, so a `string`-typed key with known options renders a
+    dropdown; the value round-trips through the standard save/PUT flow and
+    reflects the overridden "custom" badge.) "Access" is now the first/default
+    Settings tab.
+  - **Users page:** every user row shows a status Badge (Pending / Active /
+    Disabled; a missing status degrades to Active). A prominent **Pending
+    approval** queue is shown above the table whenever there are pending
+    signups, with per-user **Approve** and **Reject** actions. In the main
+    table, pending users get **Approve** + **Reject**, active users get
+    **Disable** (confirmed), and disabled users get **Enable** (→ active).
+    Reject and Disable are confirmed via a Modal; each action refreshes the
+    list and surfaces errors as toasts.
+  - `AdminUsersApi` gains `list({ status? })` (appends `?status=`),
+    `approve(id)`, `disable(id)` and `reject(id)` hitting the S1 endpoints; the
+    `User` type now carries an optional `status` field, plus a new `UserStatus`
+    type and `USER_STATUSES` constant.
+
 ## [0.29.0] - 2026-06-12
 
 ### Added

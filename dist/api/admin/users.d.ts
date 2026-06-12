@@ -1,15 +1,29 @@
 import type { ApiClient } from '../client';
 /**
+ * A user's account status (S1 approval gate). `pending` accounts cannot log in
+ * until an admin approves them; `disabled` accounts are blocked; `active` is the
+ * normal full-access state. Returned per-row in the admin user list and in
+ * `/auth/me`.
+ */
+export type UserStatus = 'pending' | 'active' | 'disabled';
+/** The three statuses in display order (pending first — the approval queue). */
+export declare const USER_STATUSES: readonly UserStatus[];
+/**
  * A server user row as returned by `AdminUserController`.
  *
  * `is_admin` is TINYINT(1) on the DB — the wire value is `0` or `1`, never a
  * JSON boolean — so the typed interface reflects that.
+ *
+ * `status` (S1) is the account-approval state. It is optional here so older
+ * payloads (and pre-migration rows) degrade gracefully — the UI treats a missing
+ * status as `active`.
  */
 export interface User {
     id: number;
     username: string;
     email: string;
     is_admin: 0 | 1;
+    status?: UserStatus;
     created_at: string;
     updated_at: string;
 }
@@ -86,8 +100,37 @@ export interface UpdateProfileInput {
 export declare class AdminUsersApi {
     private readonly client;
     constructor(client: ApiClient);
-    /** `GET /api/v1/admin/users` → unwraps `{ users }`. */
-    list(): Promise<User[]>;
+    /**
+     * `GET /api/v1/admin/users` → unwraps `{ users }`.
+     *
+     * Optionally filters by account {@link UserStatus} (S1): when `status` is
+     * provided it is appended as `?status=` and the server returns only matching
+     * rows (e.g. the pending-approval queue). Omitting it lists every user.
+     */
+    list(params?: {
+        status?: UserStatus;
+    }): Promise<User[]>;
+    /**
+     * `POST /api/v1/admin/users/{id}/approve` → `{ message }`. Sets the account
+     * status to `active` (approves a pending user / re-enables a disabled one).
+     */
+    approve(id: number): Promise<{
+        message: string;
+    }>;
+    /**
+     * `POST /api/v1/admin/users/{id}/disable` → `{ message }`. Sets the account
+     * status to `disabled` (server refuses self + last-admin).
+     */
+    disable(id: number): Promise<{
+        message: string;
+    }>;
+    /**
+     * `POST /api/v1/admin/users/{id}/reject` → `{ message }`. Removes / disables a
+     * still-pending signup (declines the approval request).
+     */
+    reject(id: number): Promise<{
+        message: string;
+    }>;
     /** `GET /api/v1/admin/users/{id}` → unwraps `{ user }`. */
     get(id: number): Promise<User>;
     /** `POST /api/v1/admin/users` → `201 { user_id, message }`. */
