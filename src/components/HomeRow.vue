@@ -10,7 +10,7 @@
  * failures as a toast, and emits the loaded items so the page can build a
  * resume-map "Continue Watching" rail without a second request.
  */
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import MediaRow from './MediaRow.vue';
 import type { MediaItem } from '../types/media-item';
 import type { HomeRow as HomeRowConfig } from '../app/types';
@@ -32,8 +32,17 @@ const props = withDefaults(
     /** Show the "See all" affordance. Off for query-only shelves that have no
      *  navigable target (e.g. a configured genre row) so the button isn't dead. */
     showSeeAll?: boolean;
+    /** Admin opt-in (U5): render each card's "Match" action + forward `match`. */
+    canMatch?: boolean;
+    /**
+     * U5 match-apply refresh: when an item is matched elsewhere on the page it is
+     * pushed down here; if this rail currently shows that id it patches its own
+     * `items` in place so the new poster/title render without a re-fetch.
+     * No-ops for a rail that doesn't own the id.
+     */
+    appliedItem?: MediaItem | null;
   }>(),
-  { limit: 18, showSeeAll: true },
+  { limit: 18, showSeeAll: true, canMatch: false, appliedItem: null },
 );
 
 const emit = defineEmits<{
@@ -41,6 +50,7 @@ const emit = defineEmits<{
   (e: 'play', item: MediaItem): void;
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
+  (e: 'match', item: MediaItem): void;
   (e: 'see-all', row: HomeRowConfig): void;
 }>();
 
@@ -103,6 +113,25 @@ function startObserving(): void {
   io.observe(rootEl.value);
 }
 
+/**
+ * Patch one already-rendered item in place (U5 match-apply refresh). If this
+ * rail currently shows `item.id`, its entry is replaced with the new object so
+ * the updated poster/title render without a re-fetch; otherwise it no-ops, so a
+ * page can broadcast to every rail and only the owning one reacts.
+ */
+function updateItem(item: MediaItem): void {
+  const idx = items.value.findIndex((i) => i.id === item.id);
+  if (idx !== -1) items.value = items.value.map((i, n) => (n === idx ? item : i));
+}
+
+// Reconcile when the page broadcasts a freshly-applied item.
+watch(
+  () => props.appliedItem,
+  (item) => {
+    if (item) updateItem(item);
+  },
+);
+
 onMounted(startObserving);
 onBeforeUnmount(() => {
   disposed = true;
@@ -121,11 +150,13 @@ onBeforeUnmount(() => {
       :loading="loading || (!loadedOnce && !error)"
       :error="error"
       :count="total"
+      :can-match="canMatch"
       hide-when-empty
       @retry="load"
       @play="emit('play', $event)"
       @watchlist="emit('watchlist', $event)"
       @info="emit('info', $event)"
+      @match="emit('match', $event)"
     >
       <template v-if="showSeeAll" #action>
         <button type="button" class="home-row__seeall" @click="emit('see-all', row)">See all</button>

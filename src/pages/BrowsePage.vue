@@ -14,16 +14,18 @@
  * a rail fetch failure surfaces inside that rail (HomeRow), and a failure to load
  * the library list surfaces as a canonical EmptyState with Retry.
  */
-import { onMounted, watch, inject, computed, reactive, type ComputedRef } from 'vue';
+import { onMounted, watch, inject, computed, reactive, ref, type ComputedRef } from 'vue';
 import { useRouter } from 'vue-router';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
+import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig, HomeRow as HomeRowConfig } from '../app/types';
 
@@ -41,7 +43,32 @@ const homeRows = computed<HomeRowConfig[]>(() => config?.homeRows ?? []);
 const libraries = useLibrariesStore();
 const player = usePlayerStore();
 const toasts = useToastStore();
+const auth = useAuthStore();
 const router = useRouter();
+
+// Interactive metadata match (U5) — admin-only. A card "Match" action opens the
+// modal for that item; on a successful apply we (a) replace the registry entry so
+// Continue Watching reflects it AND (b) push the applied item down to every
+// HomeRow rail as the `applied-item` prop — each rail patches its OWN internal
+// `items` in place if it owns the id (no-op otherwise). The rails render from
+// their own fetched `items`, not the registry, so without (b) the clicked card
+// would stay stale until a full reload.
+const matchTarget = ref<MediaItem | null>(null);
+const matchOpen = ref(false);
+/** The most recently applied item, broadcast to every rail to reconcile. */
+const appliedItem = ref<MediaItem | null>(null);
+
+function onMatch(item: MediaItem): void {
+  matchTarget.value = item;
+  matchOpen.value = true;
+}
+function onMatchApplied(item: MediaItem): void {
+  registry.set(item.id, item);
+  // A fresh object identity each apply so re-applying the SAME id still triggers
+  // the rails' watch (a structural-equal value wouldn't re-fire on identity).
+  appliedItem.value = { ...item };
+  toasts.success(`Updated metadata for "${item.name}"`);
+}
 
 // One HomeRow config per library: a library-scoped rail titled by the library
 // name, whose "See all" carries the library id (consumed by onSeeAll → page).
@@ -129,10 +156,12 @@ function onSeeAll(row: HomeRowConfig): void {
       v-if="continueItems.length"
       title="Continue Watching"
       :items="continueItems"
+      :can-match="auth.isAdmin"
       hide-when-empty
       @play="onPlay"
       @watchlist="onWatchlist"
       @info="onInfo"
+      @match="onMatch"
     />
 
     <!-- App-configured, query-scoped shelves (genre/type rails); optional. "See
@@ -143,11 +172,14 @@ function onSeeAll(row: HomeRowConfig): void {
       :row="row"
       :api-base="apiBase"
       :show-see-all="!!row.query?.libraryId"
+      :can-match="auth.isAdmin"
+      :applied-item="appliedItem"
       @items-loaded="remember"
       @see-all="onSeeAll"
       @play="onPlay"
       @watchlist="onWatchlist"
       @info="onInfo"
+      @match="onMatch"
     />
 
     <!-- One section per library — the headline of the Browse surface. -->
@@ -156,11 +188,14 @@ function onSeeAll(row: HomeRowConfig): void {
       :key="row.id"
       :row="row"
       :api-base="apiBase"
+      :can-match="auth.isAdmin"
+      :applied-item="appliedItem"
       @items-loaded="remember"
       @see-all="onSeeAll"
       @play="onPlay"
       @watchlist="onWatchlist"
       @info="onInfo"
+      @match="onMatch"
     />
 
     <div v-if="showSpinner" class="browse-loading">
@@ -183,6 +218,13 @@ function onSeeAll(row: HomeRowConfig): void {
       icon="film"
       title="No libraries yet"
       description="Once a library is added it shows up here as its own section."
+    />
+
+    <MetadataMatchModal
+      v-if="auth.isAdmin"
+      v-model="matchOpen"
+      :item="matchTarget"
+      @applied="onMatchApplied"
     />
   </div>
 </template>

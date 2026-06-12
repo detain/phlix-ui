@@ -6,7 +6,10 @@ import BrowsePage from './BrowsePage.vue';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import MediaCard from '../components/MediaCard.vue';
+import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 import type { PhlixAppConfig } from '../app/types';
@@ -242,6 +245,35 @@ describe('BrowsePage — card actions', () => {
     await flushPromises();
     w.findComponent(HomeRow).vm.$emit('info', media({ id: 'i1' }));
     expect(push).toHaveBeenCalledWith({ name: 'media', params: { id: 'i1' } });
+  });
+});
+
+describe('BrowsePage — match-apply refresh (U5)', () => {
+  it('patches the matched card in a library rail, not only Continue Watching', async () => {
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      media: { items: [media({ id: 'p1', name: 'Old Name' })], total: 1 },
+    });
+    const w = mountPage();
+    // admin → the match action + modal mount are enabled
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true };
+    await flushPromises();
+
+    // the library rail rendered the (pre-match) card
+    const before = w.findAllComponents(MediaCard).map((c) => (c.props('item') as MediaItem).name);
+    expect(before).toContain('Old Name');
+
+    // simulate a successful apply: the modal emits the re-shaped item
+    const modal = w.findComponent(MetadataMatchModal);
+    expect(modal.exists()).toBe(true);
+    modal.vm.$emit('applied', media({ id: 'p1', name: 'New Name', poster_url: 'https://img/new.jpg' }));
+    await flushPromises();
+
+    // the library/genre rail card reflects the new data without a re-fetch
+    const after = w.findAllComponents(MediaCard).map((c) => (c.props('item') as MediaItem).name);
+    expect(after).toContain('New Name');
+    expect(after).not.toContain('Old Name');
   });
 });
 

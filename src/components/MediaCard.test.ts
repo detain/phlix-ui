@@ -230,6 +230,17 @@ describe('MediaCard — quick actions + slots', () => {
     expect(w.find('.app-badge').text()).toBe('HUB');
     expect(w.find('.app-action').exists()).toBe(true);
   });
+
+  it('hides the Match action by default and shows + emits it when canMatch (admin only)', async () => {
+    const off = mount(MediaCard, { props: { item: media() } });
+    expect(off.find('[aria-label="Match metadata"]').exists()).toBe(false);
+
+    const on = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    const btn = on.find('[aria-label="Match metadata"]');
+    expect(btn.exists()).toBe(true);
+    await btn.trigger('click');
+    expect(on.emitted('match')![0][0]).toMatchObject({ id: 'm1' });
+  });
 });
 
 describe('MediaCard — prefetch on hover/focus (R6.1c)', () => {

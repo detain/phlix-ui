@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.28.0] - 2026-06-12
+
+### Added
+- **Interactive per-item metadata matching for admins (U5).** An admin can now
+  fix a wrong or unmatched title directly from any media card or the
+  detail/series page: a "Match" quick-action opens a modal
+  (`MetadataMatchModal`) that auto-searches TMDB from the item's own title/year,
+  lets the admin refine the query + optional year and re-search, and applies a
+  chosen result to that single item. On a successful apply the affected view
+  refreshes in place (the detail page swaps in the server's re-shaped item and
+  re-pulls a series' season tree; listing pages reload/replace the card).
+  - `ApiClient.matchSearch(id, { query?, year?, type? })` and
+    `ApiClient.matchApply(id, { tmdb_id, type? })` wrap the S5 endpoints
+    (`GET /api/v1/media/{id}/match/search`, `POST .../match/apply`). New exported
+    types `MatchCandidate` / `MatchSearchResult` / `MatchSearchParams` /
+    `MatchApplyInput` / `MatchApplyResult`, plus `isTmdbUnconfigured(err)` +
+    `TMDB_UNCONFIGURED_CODE` so the UI surfaces the server's
+    `422 metadata.tmdb_unconfigured` as a clear "configure a TMDB API key in
+    admin settings" message instead of a generic failure.
+  - The modal reuses the shared `Modal` (focus-trap, Esc + backdrop close) and
+    handles loading / empty / error / unconfigured states with per-result
+    apply-in-progress feedback.
+  - The trigger is gated on `useAuthStore().isAdmin` everywhere it appears
+    (`MediaCard`/`MediaRow`/`MediaGrid`/`HomeRow` gained an opt-in `canMatch`
+    prop + `match` event; `MediaDetail`/`SeriesDetail` gained a `canMatch` prop +
+    "Match metadata" hero action) so non-admins never see it — defense in depth
+    on top of the admin-gated API.
+
 ## [0.27.0] - 2026-06-12
 
 ### Added

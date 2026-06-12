@@ -27,8 +27,10 @@ const props = withDefaults(
     similarLoading?: boolean;
     /** Show a back affordance (emits `back`). */
     showBack?: boolean;
+    /** Admin opt-in (U5): render a "Match metadata" action that emits `match`. */
+    canMatch?: boolean;
   }>(),
-  { resumeSeconds: null, similar: () => [], similarLoading: false, showBack: true },
+  { resumeSeconds: null, similar: () => [], similarLoading: false, showBack: true, canMatch: false },
 );
 
 const emit = defineEmits<{
@@ -36,6 +38,7 @@ const emit = defineEmits<{
   (e: 'resume', item: MediaItem): void;
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
+  (e: 'match', item: MediaItem): void;
   (e: 'back'): void;
 }>();
 
@@ -118,6 +121,7 @@ onMounted(() => {
             Resume <span class="media-detail__resume-at numeric">{{ resumeLabel }}</span>
           </Button>
           <Button variant="ghost" left-icon="bookmark-plus" @click="emit('watchlist', item)">Watchlist</Button>
+          <Button v-if="canMatch" variant="ghost" left-icon="search" @click="emit('match', item)">Match metadata</Button>
         </div>
 
         <dl v-if="item.director || cast.length" class="media-detail__credits">
