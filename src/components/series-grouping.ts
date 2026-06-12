@@ -23,6 +23,17 @@ export interface SeasonGroup {
     isSpecials: boolean;
     /** Episodes in this season, ordered by episode number (missing last) then title. */
     episodes: MediaItem[];
+    /**
+     * Season-level poster, when the server modelled the season as its own
+     * `type: 'season'` row carrying one — null otherwise (the series detail page
+     * falls back to the series poster for the season card). U3.
+     */
+    seasonPoster?: string | null;
+    /**
+     * The `type: 'season'` container row this group came from, when present.
+     * Carries the season overview/name for the per-season page header. U3.
+     */
+    seasonItem?: MediaItem | null;
 }
 
 /** True for the series/season container rows that group content but are not episodes. */
@@ -55,12 +66,30 @@ function compareEpisodes(a: MediaItem, b: MediaItem): number {
     return (a.episode_title ?? a.name).localeCompare(b.episode_title ?? b.name);
 }
 
+/** Index any `type: 'season'` container rows by their season-number bucket. */
+function seasonItemsByKey(items: MediaItem[]): Map<number | null, MediaItem> {
+    const map = new Map<number | null, MediaItem>();
+    for (const it of items) {
+        if (it.type !== 'season') continue;
+        const key = seasonKeyOf(it);
+        // First container row for a bucket wins (stable, deterministic order).
+        if (!map.has(key)) map.set(key, it);
+    }
+    return map;
+}
+
 /**
  * Group a series' (already flattened) child list into ordered seasons. Real
  * seasons ascend by number; the Specials bucket (season 0 / missing) sorts last.
- * Non-episode rows (the series itself, season containers) are ignored.
+ * Non-episode rows (the series itself, season containers) are ignored for the
+ * episode buckets, but any `type: 'season'` container rows in `items` (or the
+ * optional `seasonRows`) contribute the season poster/name/overview to each
+ * group (U3 — used by the series-page season grid + per-season header).
  */
-export function groupEpisodesBySeason(items: MediaItem[]): SeasonGroup[] {
+export function groupEpisodesBySeason(
+    items: MediaItem[],
+    seasonRows?: MediaItem[],
+): SeasonGroup[] {
     const buckets = new Map<number | null, MediaItem[]>();
     for (const ep of episodesOf(items)) {
         const key = seasonKeyOf(ep);
@@ -72,15 +101,23 @@ export function groupEpisodesBySeason(items: MediaItem[]): SeasonGroup[] {
         }
     }
 
+    // Season container metadata: prefer an explicit `seasonRows` list, else any
+    // season rows still present in `items` (the page flattens them to episodes
+    // before grouping but may pass the originals here).
+    const seasonMeta = seasonItemsByKey(seasonRows ?? items);
+
     const groups: SeasonGroup[] = [];
     buckets.forEach((eps, seasonNumber) => {
         eps.sort(compareEpisodes);
+        const seasonItem = seasonMeta.get(seasonNumber) ?? null;
         groups.push({
             key: seasonNumber === null ? 'specials' : `season-${seasonNumber}`,
             seasonNumber,
             label: seasonNumber === null ? 'Specials' : `Season ${seasonNumber}`,
             isSpecials: seasonNumber === null,
             episodes: eps,
+            seasonPoster: seasonItem?.poster_url ?? null,
+            seasonItem,
         });
     });
 
@@ -104,4 +141,27 @@ export function firstEpisode(groups: SeasonGroup[]): MediaItem | null {
         if (g.episodes.length) return g.episodes[0];
     }
     return null;
+}
+
+/**
+ * The route `:season` param for a season group: the season number, or `0` for
+ * the Specials bucket (so it round-trips through `/app/media/:id/season/:season`).
+ * U3.
+ */
+export function seasonRouteParam(group: SeasonGroup): string {
+    return String(group.seasonNumber ?? 0);
+}
+
+/**
+ * Find the season group matching a route `:season` param. `0` (or a non-numeric
+ * value) maps to the Specials bucket (seasonNumber null); any positive integer
+ * matches that season. Returns null when no such season exists. U3.
+ */
+export function findSeasonByParam(
+    groups: SeasonGroup[],
+    seasonParam: string | number | null | undefined,
+): SeasonGroup | null {
+    const n = typeof seasonParam === 'number' ? seasonParam : Number.parseInt(String(seasonParam ?? ''), 10);
+    const target = Number.isFinite(n) && n > 0 ? n : null;
+    return groups.find((g) => g.seasonNumber === target) ?? null;
 }

@@ -21,14 +21,40 @@ export interface SeasonGroup {
     isSpecials: boolean;
     /** Episodes in this season, ordered by episode number (missing last) then title. */
     episodes: MediaItem[];
+    /**
+     * Season-level poster, when the server modelled the season as its own
+     * `type: 'season'` row carrying one — null otherwise (the series detail page
+     * falls back to the series poster for the season card). U3.
+     */
+    seasonPoster?: string | null;
+    /**
+     * The `type: 'season'` container row this group came from, when present.
+     * Carries the season overview/name for the per-season page header. U3.
+     */
+    seasonItem?: MediaItem | null;
 }
 /**
  * Group a series' (already flattened) child list into ordered seasons. Real
  * seasons ascend by number; the Specials bucket (season 0 / missing) sorts last.
- * Non-episode rows (the series itself, season containers) are ignored.
+ * Non-episode rows (the series itself, season containers) are ignored for the
+ * episode buckets, but any `type: 'season'` container rows in `items` (or the
+ * optional `seasonRows`) contribute the season poster/name/overview to each
+ * group (U3 — used by the series-page season grid + per-season header).
  */
-export declare function groupEpisodesBySeason(items: MediaItem[]): SeasonGroup[];
+export declare function groupEpisodesBySeason(items: MediaItem[], seasonRows?: MediaItem[]): SeasonGroup[];
 /** Whether a child list contains any `type: 'season'` container rows. */
 export declare function hasSeasonRows(items: MediaItem[]): boolean;
 /** The first playable episode across all seasons in display order, or null. */
 export declare function firstEpisode(groups: SeasonGroup[]): MediaItem | null;
+/**
+ * The route `:season` param for a season group: the season number, or `0` for
+ * the Specials bucket (so it round-trips through `/app/media/:id/season/:season`).
+ * U3.
+ */
+export declare function seasonRouteParam(group: SeasonGroup): string;
+/**
+ * Find the season group matching a route `:season` param. `0` (or a non-numeric
+ * value) maps to the Specials bucket (seasonNumber null); any positive integer
+ * matches that season. Returns null when no such season exists. U3.
+ */
+export declare function findSeasonByParam(groups: SeasonGroup[], seasonParam: string | number | null | undefined): SeasonGroup | null;
