@@ -15,9 +15,18 @@ var e = {
 	constructor(e) {
 		this.client = e;
 	}
-	async list() {
-		let { users: e } = await this.client.get("/api/v1/admin/users");
-		return Array.isArray(e) ? e : [];
+	async list(e) {
+		let t = e?.status ? `?status=${encodeURIComponent(e.status)}` : "", { users: n } = await this.client.get(`/api/v1/admin/users${t}`);
+		return Array.isArray(n) ? n : [];
+	}
+	approve(e) {
+		return this.client.post(`/api/v1/admin/users/${encodeURIComponent(e)}/approve`);
+	}
+	disable(e) {
+		return this.client.post(`/api/v1/admin/users/${encodeURIComponent(e)}/disable`);
+	}
+	reject(e) {
+		return this.client.post(`/api/v1/admin/users/${encodeURIComponent(e)}/reject`);
 	}
 	async get(e) {
 		let { user: t } = await this.client.get(`/api/v1/admin/users/${encodeURIComponent(e)}`);
@@ -61,4 +70,4 @@ var e = {
 //#endregion
 export { e as n, t as r, n as t };
 
-//# sourceMappingURL=users-C40iLgkq.js.map
+//# sourceMappingURL=users-UPfbrkL3.js.map

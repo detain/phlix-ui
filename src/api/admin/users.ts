@@ -1,16 +1,32 @@
 import type { ApiClient } from '../client';
 
 /**
+ * A user's account status (S1 approval gate). `pending` accounts cannot log in
+ * until an admin approves them; `disabled` accounts are blocked; `active` is the
+ * normal full-access state. Returned per-row in the admin user list and in
+ * `/auth/me`.
+ */
+export type UserStatus = 'pending' | 'active' | 'disabled';
+
+/** The three statuses in display order (pending first — the approval queue). */
+export const USER_STATUSES: readonly UserStatus[] = ['pending', 'active', 'disabled'];
+
+/**
  * A server user row as returned by `AdminUserController`.
  *
  * `is_admin` is TINYINT(1) on the DB — the wire value is `0` or `1`, never a
  * JSON boolean — so the typed interface reflects that.
+ *
+ * `status` (S1) is the account-approval state. It is optional here so older
+ * payloads (and pre-migration rows) degrade gracefully — the UI treats a missing
+ * status as `active`.
  */
 export interface User {
   id: number;
   username: string;
   email: string;
   is_admin: 0 | 1;
+  status?: UserStatus;
   created_at: string;
   updated_at: string;
 }
@@ -106,10 +122,47 @@ export class AdminUsersApi {
 
   // ── Users ────────────────────────────────────────────────────────────────
 
-  /** `GET /api/v1/admin/users` → unwraps `{ users }`. */
-  async list(): Promise<User[]> {
-    const { users } = await this.client.get<{ users: User[] }>('/api/v1/admin/users');
+  /**
+   * `GET /api/v1/admin/users` → unwraps `{ users }`.
+   *
+   * Optionally filters by account {@link UserStatus} (S1): when `status` is
+   * provided it is appended as `?status=` and the server returns only matching
+   * rows (e.g. the pending-approval queue). Omitting it lists every user.
+   */
+  async list(params?: { status?: UserStatus }): Promise<User[]> {
+    const query = params?.status ? `?status=${encodeURIComponent(params.status)}` : '';
+    const { users } = await this.client.get<{ users: User[] }>(`/api/v1/admin/users${query}`);
     return Array.isArray(users) ? users : [];
+  }
+
+  /**
+   * `POST /api/v1/admin/users/{id}/approve` → `{ message }`. Sets the account
+   * status to `active` (approves a pending user / re-enables a disabled one).
+   */
+  approve(id: number): Promise<{ message: string }> {
+    return this.client.post<{ message: string }>(
+      `/api/v1/admin/users/${encodeURIComponent(id)}/approve`,
+    );
+  }
+
+  /**
+   * `POST /api/v1/admin/users/{id}/disable` → `{ message }`. Sets the account
+   * status to `disabled` (server refuses self + last-admin).
+   */
+  disable(id: number): Promise<{ message: string }> {
+    return this.client.post<{ message: string }>(
+      `/api/v1/admin/users/${encodeURIComponent(id)}/disable`,
+    );
+  }
+
+  /**
+   * `POST /api/v1/admin/users/{id}/reject` → `{ message }`. Removes / disables a
+   * still-pending signup (declines the approval request).
+   */
+  reject(id: number): Promise<{ message: string }> {
+    return this.client.post<{ message: string }>(
+      `/api/v1/admin/users/${encodeURIComponent(id)}/reject`,
+    );
   }
 
   /** `GET /api/v1/admin/users/{id}` → unwraps `{ user }`. */

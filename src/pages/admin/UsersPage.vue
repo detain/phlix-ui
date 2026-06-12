@@ -21,6 +21,7 @@ import {
   type UpdateProfileInput,
   type UpdateUserInput,
   type User,
+  type UserStatus,
 } from '../../api/admin/users';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
@@ -68,6 +69,77 @@ async function loadUsers(): Promise<void> {
     toasts.error(error.value);
   } finally {
     loading.value = false;
+  }
+}
+
+// ── Status (S1 approval gate) ─────────────────────────────────────────────────
+/** Effective status — a missing status (pre-migration / old payloads) = active. */
+function userStatus(user: User): UserStatus {
+  return user.status ?? 'active';
+}
+
+/** Users still awaiting approval — the prominent queue shown above the table. */
+const pendingUsers = computed<User[]>(() =>
+  users.value.filter((u) => userStatus(u) === 'pending'),
+);
+
+const STATUS_LABELS: Record<UserStatus, string> = {
+  pending: 'Pending',
+  active: 'Active',
+  disabled: 'Disabled',
+};
+const STATUS_TONES: Record<UserStatus, 'warning' | 'success' | 'neutral'> = {
+  pending: 'warning',
+  active: 'success',
+  disabled: 'neutral',
+};
+function statusLabel(user: User): string {
+  return STATUS_LABELS[userStatus(user)];
+}
+function statusTone(user: User): 'warning' | 'success' | 'neutral' {
+  return STATUS_TONES[userStatus(user)];
+}
+
+// ── Approve / disable / reject ────────────────────────────────────────────────
+async function handleApprove(user: User): Promise<void> {
+  try {
+    await api.approve(user.id);
+    toasts.success(`${user.username} approved.`);
+    await loadUsers();
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to approve user.'));
+  }
+}
+
+/** Disable a user (confirmed via the modal below). */
+const disablingUser = ref<User | null>(null);
+async function confirmDisableUser(): Promise<void> {
+  const target = disablingUser.value;
+  if (!target) return;
+  try {
+    await api.disable(target.id);
+    toasts.success(`${target.username} disabled.`);
+    disablingUser.value = null;
+    await loadUsers();
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to disable user.'));
+    disablingUser.value = null;
+  }
+}
+
+/** Reject a pending signup (confirmed via the modal below). */
+const rejectingUser = ref<User | null>(null);
+async function confirmRejectUser(): Promise<void> {
+  const target = rejectingUser.value;
+  if (!target) return;
+  try {
+    await api.reject(target.id);
+    toasts.success(`${target.username}'s signup rejected.`);
+    rejectingUser.value = null;
+    await loadUsers();
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to reject user.'));
+    rejectingUser.value = null;
   }
 }
 
@@ -406,12 +478,63 @@ onMounted(loadUsers);
         <Button variant="solid" size="sm" left-icon="plus" @click="openAddUser">Add user</Button>
       </template>
     </EmptyState>
-    <table v-else class="admin-users__table" aria-label="Users">
+    <template v-else>
+      <!-- Pending-approval queue (S1) — prominent when signup_mode = approval. -->
+      <section
+        v-if="pendingUsers.length > 0"
+        class="admin-users__pending"
+        aria-labelledby="pending-heading"
+      >
+        <h2 id="pending-heading" class="admin-users__pending-title">
+          Pending approval
+          <Badge tone="warning">{{ pendingUsers.length }}</Badge>
+        </h2>
+        <table class="admin-users__table" aria-label="Pending users">
+          <thead>
+            <tr>
+              <th scope="col">Username</th>
+              <th scope="col">Email</th>
+              <th scope="col">Requested</th>
+              <th scope="col" class="admin-users__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in pendingUsers" :key="user.id">
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td class="admin-users__date">{{ user.created_at.slice(0, 10) }}</td>
+              <td>
+                <div class="admin-users__actions">
+                  <Button
+                    variant="solid"
+                    size="sm"
+                    :aria-label="`Approve ${user.username}`"
+                    @click="handleApprove(user)"
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="`Reject ${user.username}`"
+                    @click="rejectingUser = user"
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    <table class="admin-users__table" aria-label="Users">
       <thead>
         <tr>
           <th scope="col">Username</th>
           <th scope="col">Email</th>
           <th scope="col">Role</th>
+          <th scope="col">Status</th>
           <th scope="col">Created</th>
           <th scope="col" class="admin-users__actions-col">Actions</th>
         </tr>
@@ -425,9 +548,48 @@ onMounted(loadUsers);
               {{ user.is_admin ? 'Admin' : 'User' }}
             </Badge>
           </td>
+          <td>
+            <Badge :tone="statusTone(user)">{{ statusLabel(user) }}</Badge>
+          </td>
           <td class="admin-users__date">{{ user.created_at.slice(0, 10) }}</td>
           <td>
             <div class="admin-users__actions">
+              <Button
+                v-if="userStatus(user) === 'pending'"
+                variant="solid"
+                size="sm"
+                :aria-label="`Approve ${user.username}`"
+                @click="handleApprove(user)"
+              >
+                Approve
+              </Button>
+              <Button
+                v-else-if="userStatus(user) === 'disabled'"
+                variant="ghost"
+                size="sm"
+                :aria-label="`Enable ${user.username}`"
+                @click="handleApprove(user)"
+              >
+                Enable
+              </Button>
+              <Button
+                v-else
+                variant="ghost"
+                size="sm"
+                :aria-label="`Disable ${user.username}`"
+                @click="disablingUser = user"
+              >
+                Disable
+              </Button>
+              <Button
+                v-if="userStatus(user) === 'pending'"
+                variant="ghost"
+                size="sm"
+                :aria-label="`Reject ${user.username}`"
+                @click="rejectingUser = user"
+              >
+                Reject
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -473,6 +635,7 @@ onMounted(loadUsers);
         </tr>
       </tbody>
     </table>
+    </template>
 
     <!-- Add / edit user modal -->
     <Modal v-model="userFormOpen" :title="userFormTitle" @close="closeUserForm">
@@ -521,6 +684,40 @@ onMounted(loadUsers);
       <template #footer>
         <Button variant="ghost" size="sm" @click="deletingUser = null">Cancel</Button>
         <Button variant="solid" size="sm" @click="confirmDeleteUser">Delete</Button>
+      </template>
+    </Modal>
+
+    <!-- Disable user confirm modal (S1) -->
+    <Modal
+      :model-value="disablingUser !== null"
+      title="Disable user"
+      size="sm"
+      @update:model-value="disablingUser = null"
+    >
+      <p>
+        Disable <strong>{{ disablingUser?.username }}</strong>? They will be signed out and
+        blocked from signing in until re-enabled.
+      </p>
+      <template #footer>
+        <Button variant="ghost" size="sm" @click="disablingUser = null">Cancel</Button>
+        <Button variant="solid" size="sm" @click="confirmDisableUser">Disable</Button>
+      </template>
+    </Modal>
+
+    <!-- Reject pending signup confirm modal (S1) -->
+    <Modal
+      :model-value="rejectingUser !== null"
+      title="Reject signup"
+      size="sm"
+      @update:model-value="rejectingUser = null"
+    >
+      <p>
+        Reject <strong>{{ rejectingUser?.username }}</strong>'s signup request? This removes the
+        pending account.
+      </p>
+      <template #footer>
+        <Button variant="ghost" size="sm" @click="rejectingUser = null">Cancel</Button>
+        <Button variant="solid" size="sm" @click="confirmRejectUser">Reject</Button>
       </template>
     </Modal>
 
@@ -718,6 +915,24 @@ onMounted(loadUsers);
 }
 .admin-users__skel {
   padding-block: var(--space-2);
+}
+.admin-users__pending {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-1, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--border-subtle));
+}
+.admin-users__pending-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-base);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+  margin-bottom: var(--space-3);
 }
 .admin-users__table {
   width: 100%;

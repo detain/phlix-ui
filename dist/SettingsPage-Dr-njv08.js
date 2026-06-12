@@ -57,6 +57,10 @@ var de = {
 			tokenStore: new ee()
 		})), E = re(), D = [
 			{
+				id: "access",
+				label: "Access"
+			},
+			{
 				id: "transcoding",
 				label: "Transcoding"
 			},
@@ -96,6 +100,7 @@ var de = {
 			value: e.id,
 			label: e.label
 		})), O = {
+			access: ["auth.signup_mode"],
 			transcoding: [
 				"hwaccel.enabled",
 				"hwaccel.prefer_hardware",
@@ -133,37 +138,55 @@ var de = {
 				min: 0,
 				max: 23
 			}
-		}, De = new Set(["tmdb.api_key", "trakt.client_secret"]), k = { "subtitles.default_language": [
-			{
-				value: "en",
-				label: "English"
-			},
-			{
-				value: "es",
-				label: "Spanish"
-			},
-			{
-				value: "fr",
-				label: "French"
-			},
-			{
-				value: "de",
-				label: "German"
-			},
-			{
-				value: "it",
-				label: "Italian"
-			},
-			{
-				value: "ja",
-				label: "Japanese"
-			}
-		] }, A = {
+		}, De = new Set(["tmdb.api_key", "trakt.client_secret"]), k = {
+			"auth.signup_mode": [
+				{
+					value: "open",
+					label: "Open — anyone can sign up"
+				},
+				{
+					value: "approval",
+					label: "Require admin approval"
+				},
+				{
+					value: "disabled",
+					label: "Disabled — no new signups"
+				}
+			],
+			"subtitles.default_language": [
+				{
+					value: "en",
+					label: "English"
+				},
+				{
+					value: "es",
+					label: "Spanish"
+				},
+				{
+					value: "fr",
+					label: "French"
+				},
+				{
+					value: "de",
+					label: "German"
+				},
+				{
+					value: "it",
+					label: "Italian"
+				},
+				{
+					value: "ja",
+					label: "Japanese"
+				}
+			]
+		}, A = {
+			"auth.signup_mode": "Signup mode",
 			"tmdb.api_key": "TMDB API Key",
 			"trakt.client_id": "Trakt Client ID",
 			"trakt.client_secret": "Trakt Client Secret",
 			"trakt.redirect_uri": "Trakt Redirect URI"
 		}, j = {
+			"auth.signup_mode": "Controls who can create an account. \"Open\" lets anyone register and sign in immediately. \"Require admin approval\" creates accounts in a pending state — review them in the Users page approval queue before they can sign in. \"Disabled\" turns off new signups entirely.",
 			"tmdb.api_key": "Your TMDB (The Movie Database) API key — get one free at themoviedb.org → Settings → API (v3 auth). Used to fetch movie & TV metadata, posters, and external IDs.",
 			"trakt.client_id": "Register an application at trakt.tv/oauth/applications to get a client ID and secret. Saving here overrides the TRAKT_CLIENT_ID environment variable.",
 			"trakt.client_secret": "The client secret paired with your Trakt client ID. Overrides the TRAKT_CLIENT_SECRET environment variable.",
@@ -175,7 +198,7 @@ var de = {
 		function N(e) {
 			return F.value.includes(e);
 		}
-		let P = v({}), F = v([]), I = v({}), L = v("transcoding"), R = v(!0), z = v(null), B = v(!1), V = v({}), H = _({}), U = _({}), W = _({}), G = c(() => Object.values(W).some(Boolean)), K = c(() => O[L.value] ?? []);
+		let P = v({}), F = v([]), I = v({}), L = v("access"), R = v(!0), z = v(null), B = v(!1), V = v({}), H = _({}), U = _({}), W = _({}), G = c(() => Object.values(W).some(Boolean)), K = c(() => O[L.value] ?? []);
 		function q(e) {
 			for (let e of Object.keys(U)) delete U[e];
 			for (let [t, n] of Object.entries(e)) U[t] = String(n ?? "");
@@ -383,8 +406,8 @@ var de = {
 			_: 1
 		}, 8, ["modelValue", "tabs"]))]));
 	}
-}), [["__scopeId", "data-v-b5234e12"]]);
+}), [["__scopeId", "data-v-215448d6"]]);
 //#endregion
 export { C as default };
 
-//# sourceMappingURL=SettingsPage-ujphcdd0.js.map
+//# sourceMappingURL=SettingsPage-Dr-njv08.js.map
