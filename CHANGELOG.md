@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.29.0] - 2026-06-12
+
+### Added
+- **Admin Plugins management page (U6).** A new admin section page ("Plugins",
+  mounted after Libraries in `serverAdminPages`/the server admin set) that lists
+  installed plugins (name, version, type, enabled state) and lets an admin:
+  - **Install** a plugin by URL via a Modal (`POST /api/v1/admin/plugins/install`),
+    surfacing the server's install error `code` as a clearer message.
+  - **Enable / Disable** a plugin from a per-row toggle
+    (`POST .../{name}/enable` | `/disable`).
+  - **Uninstall** behind a confirm Modal (`DELETE .../{name}`).
+  - **Configure** via a schema-driven Modal: it GETs the plugin detail
+    (`GET .../{name}`) and builds one form control per settings-schema key by
+    type (string→text, int→number, bool→Switch), showing labels, descriptions and
+    required markers. Secret fields render as password inputs prefilled with the
+    `***` mask and are only submitted when the admin actually types a new value,
+    so an unchanged secret is preserved server-side. Per-field validation errors
+    from a `400 plugin.settings.validation_failed` render under the offending field.
+  - `AdminPluginsApi` wraps the S6 endpoints with typed `Plugin` / `PluginDetail`
+    (incl. `settings_schema` + masked `settings`) interfaces; new exported helpers
+    `pluginErrorCode()` and `pluginValidationErrors()` and the `PLUGIN_SECRET_MASK`
+    sentinel.
+
 ## [0.28.0] - 2026-06-12
 
 ### Added

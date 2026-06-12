@@ -1,0 +1,597 @@
+<script setup lang="ts">
+/**
+ * Admin PluginsPage (U6) — install / enable / disable / uninstall / configure
+ * server plugins (the UI for the S6 plugin-admin endpoints). Lists installed
+ * plugins in a tokenized table; installs a plugin by URL via a Modal; toggles
+ * enabled state; uninstalls behind a confirm Modal; and opens a Configure Modal
+ * that GETs the plugin detail and renders a form from the manifest
+ * `settings_schema` (one control per key by type), with secret fields prefilled
+ * with the `***` mask and only sent when the admin actually types a new value
+ * (so the stored secret is preserved). Per-field validation errors from a `400
+ * plugin.settings.validation_failed` render under the offending field. Each
+ * mutation refetches the list. Errors surface as toasts.
+ */
+import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
+import { ApiClient } from '../../api/client';
+import { LocalStorageTokenStore } from '../../api/tokenStore';
+import {
+  AdminPluginsApi,
+  PLUGIN_SECRET_MASK,
+  pluginErrorCode,
+  pluginValidationErrors,
+  type Plugin,
+  type PluginDetail,
+  type PluginSettingDescriptor,
+} from '../../api/admin/plugins';
+import { useToastStore } from '../../stores/useToastStore';
+import { errMessage } from '../../api/errors';
+import Badge from '../../components/ui/Badge.vue';
+import Button from '../../components/ui/Button.vue';
+import Modal from '../../components/ui/Modal.vue';
+import Switch from '../../components/ui/Switch.vue';
+import Skeleton from '../../components/ui/Skeleton.vue';
+import EmptyState from '../../components/ui/EmptyState.vue';
+
+const props = defineProps<{
+  /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
+  client?: ApiClient;
+}>();
+
+const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
+const apiBase = computed(() =>
+  typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
+);
+const api = new AdminPluginsApi(
+  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+);
+const toasts = useToastStore();
+
+// ── Plugin list state ────────────────────────────────────────────────────────
+const plugins = ref<Plugin[]>([]);
+const loading = ref(true);
+const error = ref<string | null>(null);
+
+async function loadPlugins(): Promise<void> {
+  loading.value = true;
+  error.value = null;
+  try {
+    plugins.value = await api.list();
+  } catch (e) {
+    error.value = errMessage(e, 'Failed to load plugins.');
+    toasts.error(error.value);
+  } finally {
+    loading.value = false;
+  }
+}
+
+// ── Install modal ──────────────────────────────────────────────────────────────
+const installOpen = ref(false);
+const installUrl = ref('');
+const installSubmitting = ref(false);
+
+/**
+ * Map a server install error `code` to a clearer message; fall back to the raw
+ * error text. Codes are the real ones emitted by S6 `PluginAdminController::install`:
+ * `plugin.url.required`, `plugin.url.invalid_scheme`, `plugin.install.failed`.
+ */
+function installErrorMessage(e: unknown): string {
+  const code = pluginErrorCode(e);
+  switch (code) {
+    case 'plugin.url.required':
+      return 'A plugin URL is required.';
+    case 'plugin.url.invalid_scheme':
+      return 'That does not look like a valid plugin URL (use https://…).';
+    case 'plugin.install.failed':
+      return 'Install failed — the plugin could not be downloaded or read.';
+    default:
+      return errMessage(e, 'Failed to install plugin.');
+  }
+}
+
+function openInstall(): void {
+  installUrl.value = '';
+  installOpen.value = true;
+}
+
+function closeInstall(): void {
+  installOpen.value = false;
+  installUrl.value = '';
+}
+
+async function submitInstall(): Promise<void> {
+  const url = installUrl.value.trim();
+  if (!url) {
+    toasts.error('A plugin URL is required.');
+    return;
+  }
+  installSubmitting.value = true;
+  try {
+    await api.install(url);
+    toasts.success('Plugin installed.');
+    closeInstall();
+    await loadPlugins();
+  } catch (e) {
+    toasts.error(installErrorMessage(e));
+  } finally {
+    installSubmitting.value = false;
+  }
+}
+
+// ── Enable / disable ───────────────────────────────────────────────────────────
+/** Name of the plugin whose enable/disable request + refetch is currently in flight. */
+const togglingName = ref<string | null>(null);
+
+async function toggleEnabled(plugin: Plugin, enabled: boolean): Promise<void> {
+  // Ignore re-entrant toggles (rapid double-click) while one is in flight.
+  if (togglingName.value !== null) return;
+  togglingName.value = plugin.name;
+  try {
+    if (enabled) {
+      await api.enable(plugin.name);
+      toasts.success(`${plugin.name} enabled.`);
+    } else {
+      await api.disable(plugin.name);
+      toasts.success(`${plugin.name} disabled.`);
+    }
+    await loadPlugins();
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to update plugin.'));
+  } finally {
+    togglingName.value = null;
+  }
+}
+
+// ── Uninstall confirm ────────────────────────────────────────────────────────────
+const uninstalling = ref<Plugin | null>(null);
+
+async function confirmUninstall(): Promise<void> {
+  const target = uninstalling.value;
+  if (!target) return;
+  try {
+    await api.uninstall(target.name);
+    toasts.success(`${target.name} uninstalled.`);
+    uninstalling.value = null;
+    await loadPlugins();
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to uninstall plugin.'));
+    uninstalling.value = null;
+  }
+}
+
+// ── Configure modal ─────────────────────────────────────────────────────────────
+const configuring = ref<Plugin | null>(null);
+const detail = ref<PluginDetail | null>(null);
+const detailLoading = ref(false);
+const configSubmitting = ref(false);
+/** Current form values, keyed by setting key. */
+const formValues = ref<Record<string, unknown>>({});
+/** The pristine values the form was seeded with (to detect what the admin changed). */
+const pristineValues = ref<Record<string, unknown>>({});
+/** Per-field validation errors from the last save attempt. */
+const fieldErrors = ref<Record<string, string>>({});
+
+const configTitle = computed(() =>
+  configuring.value ? `Configure — ${configuring.value.name}` : 'Configure plugin',
+);
+
+/** Ordered [key, descriptor] entries of the open plugin's settings schema. */
+const schemaEntries = computed<Array<[string, PluginSettingDescriptor]>>(() =>
+  detail.value ? Object.entries(detail.value.settings_schema) : [],
+);
+
+const hasSchema = computed(() => schemaEntries.value.length > 0);
+
+/** The HTML input type for a non-secret descriptor. */
+function inputType(descriptor: PluginSettingDescriptor): 'number' | 'text' {
+  return descriptor.type === 'int' ||
+    descriptor.type === 'integer' ||
+    descriptor.type === 'number' ||
+    descriptor.type === 'float'
+    ? 'number'
+    : 'text';
+}
+
+function isBool(descriptor: PluginSettingDescriptor): boolean {
+  return descriptor.type === 'bool' || descriptor.type === 'boolean';
+}
+
+/** Coerce a stored/masked value into the form's initial control value. */
+function seedValue(descriptor: PluginSettingDescriptor, stored: unknown): unknown {
+  if (isBool(descriptor)) {
+    return stored === true || stored === 1 || stored === '1' || stored === 'true';
+  }
+  if (descriptor.secret) {
+    // The server returns every secret value AS the `***` mask, so the stored
+    // string is already the mask; an untouched submit then preserves it server-side.
+    return stored === undefined || stored === null ? '' : String(stored);
+  }
+  if (stored === undefined || stored === null) {
+    return descriptor.default !== undefined ? descriptor.default : '';
+  }
+  return stored;
+}
+
+async function openConfigure(plugin: Plugin): Promise<void> {
+  configuring.value = plugin;
+  detail.value = null;
+  formValues.value = {};
+  pristineValues.value = {};
+  fieldErrors.value = {};
+  detailLoading.value = true;
+  try {
+    const d = await api.get(plugin.name);
+    detail.value = d;
+    const values: Record<string, unknown> = {};
+    for (const [key, descriptor] of Object.entries(d.settings_schema)) {
+      values[key] = seedValue(descriptor, d.settings[key]);
+    }
+    formValues.value = values;
+    pristineValues.value = { ...values };
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to load plugin settings.'));
+    configuring.value = null;
+  } finally {
+    detailLoading.value = false;
+  }
+}
+
+function closeConfigure(): void {
+  configuring.value = null;
+  detail.value = null;
+  formValues.value = {};
+  pristineValues.value = {};
+  fieldErrors.value = {};
+}
+
+/**
+ * Build the settings payload: every key whose value changed from its pristine
+ * seed. A secret left at its prefilled value (the `***` mask, unchanged) is NOT
+ * included — so the server keeps the stored secret. A secret the admin retyped
+ * (now differs from pristine) IS included. Booleans/ints are coerced to their
+ * canonical JS type so the server's type validation passes.
+ */
+function buildChangedSettings(): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (!detail.value) return out;
+  for (const [key, descriptor] of Object.entries(detail.value.settings_schema)) {
+    const current = formValues.value[key];
+    const pristine = pristineValues.value[key];
+    if (current === pristine) continue; // untouched (incl. an unchanged masked secret)
+    if (descriptor.secret && current === PLUGIN_SECRET_MASK) continue; // re-typed the mask → treat as unchanged
+    if (isBool(descriptor)) {
+      out[key] = current === true;
+    } else if (inputType(descriptor) === 'number') {
+      out[key] = current === '' || current === null ? current : Number(current);
+    } else {
+      out[key] = current;
+    }
+  }
+  return out;
+}
+
+async function submitConfigure(): Promise<void> {
+  const plugin = configuring.value;
+  if (!plugin) return;
+  fieldErrors.value = {};
+  const changed = buildChangedSettings();
+  if (Object.keys(changed).length === 0) {
+    toasts.success('No changes to save.');
+    closeConfigure();
+    return;
+  }
+  configSubmitting.value = true;
+  try {
+    await api.updateSettings(plugin.name, changed);
+    toasts.success('Settings saved.');
+    closeConfigure();
+    await loadPlugins();
+  } catch (e) {
+    const errors = pluginValidationErrors(e);
+    if (Object.keys(errors).length > 0) {
+      fieldErrors.value = errors;
+      toasts.error('Some settings could not be saved — check the highlighted fields.');
+    } else {
+      toasts.error(errMessage(e, 'Failed to save settings.'));
+    }
+  } finally {
+    configSubmitting.value = false;
+  }
+}
+
+onMounted(loadPlugins);
+</script>
+
+<template>
+  <section class="admin-plugins" aria-labelledby="plugins-heading">
+    <header class="admin-plugins__head">
+      <h1 id="plugins-heading" class="admin-plugins__title">Plugins</h1>
+      <Button variant="solid" size="sm" left-icon="plus" @click="openInstall">Install plugin</Button>
+    </header>
+
+    <div v-if="loading" class="admin-plugins__skel"><Skeleton variant="text" :lines="6" /></div>
+    <EmptyState v-else-if="error" icon="alert" title="Couldn't load plugins" :description="error">
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="loadPlugins">Retry</Button>
+      </template>
+    </EmptyState>
+    <EmptyState v-else-if="plugins.length === 0" icon="settings" title="No plugins installed">
+      <template #actions>
+        <Button variant="solid" size="sm" left-icon="plus" @click="openInstall">Install plugin</Button>
+      </template>
+    </EmptyState>
+    <table v-else class="admin-plugins__table" aria-label="Installed plugins">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Version</th>
+          <th scope="col">Type</th>
+          <th scope="col">Enabled</th>
+          <th scope="col" class="admin-plugins__actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="plugin in plugins" :key="plugin.name">
+          <td>{{ plugin.name }}</td>
+          <td class="admin-plugins__mono">{{ plugin.version }}</td>
+          <td><Badge tone="info">{{ plugin.type }}</Badge></td>
+          <td>
+            <Switch
+              :model-value="plugin.enabled"
+              :label="plugin.enabled ? 'Enabled' : 'Disabled'"
+              :aria-label="`Toggle ${plugin.name}`"
+              :disabled="togglingName === plugin.name"
+              @update:model-value="(v) => toggleEnabled(plugin, v)"
+            />
+          </td>
+          <td>
+            <div class="admin-plugins__actions">
+              <Button
+                variant="ghost"
+                size="sm"
+                :aria-label="`Configure ${plugin.name}`"
+                @click="openConfigure(plugin)"
+              >
+                Configure
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                :aria-label="`Uninstall ${plugin.name}`"
+                @click="uninstalling = plugin"
+              >
+                Uninstall
+              </Button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Install modal -->
+    <Modal v-model="installOpen" title="Install plugin" @close="closeInstall">
+      <form class="admin-plugins__form" @submit.prevent="submitInstall">
+        <label class="admin-plugins__field">
+          <span class="admin-plugins__label">Plugin URL</span>
+          <input
+            v-model="installUrl"
+            type="url"
+            class="admin-plugins__input"
+            autocomplete="off"
+            placeholder="https://example.com/my-plugin.zip"
+            required
+          />
+          <span class="admin-plugins__hint">
+            The URL of a plugin archive or repository to download and install.
+          </span>
+        </label>
+      </form>
+      <template #footer>
+        <Button variant="ghost" size="sm" @click="closeInstall">Cancel</Button>
+        <Button variant="solid" size="sm" :loading="installSubmitting" @click="submitInstall">
+          Install
+        </Button>
+      </template>
+    </Modal>
+
+    <!-- Uninstall confirm modal -->
+    <Modal
+      :model-value="uninstalling !== null"
+      title="Uninstall plugin"
+      size="sm"
+      @update:model-value="uninstalling = null"
+    >
+      <p>
+        Uninstall <strong>{{ uninstalling?.name }}</strong>? This removes the plugin and its
+        settings and cannot be undone.
+      </p>
+      <template #footer>
+        <Button variant="ghost" size="sm" @click="uninstalling = null">Cancel</Button>
+        <Button variant="solid" size="sm" @click="confirmUninstall">Uninstall</Button>
+      </template>
+    </Modal>
+
+    <!-- Configure modal -->
+    <Modal
+      :model-value="configuring !== null"
+      :title="configTitle"
+      size="lg"
+      @update:model-value="closeConfigure"
+    >
+      <div v-if="detailLoading" class="admin-plugins__skel"><Skeleton variant="text" :lines="4" /></div>
+      <template v-else>
+        <EmptyState
+          v-if="!hasSchema"
+          icon="settings"
+          title="No configurable settings"
+          description="This plugin does not expose any settings."
+        />
+        <form v-else class="admin-plugins__form" @submit.prevent="submitConfigure">
+          <div v-for="[key, descriptor] in schemaEntries" :key="key" class="admin-plugins__field">
+            <!-- Boolean → Switch -->
+            <template v-if="descriptor.type === 'bool' || descriptor.type === 'boolean'">
+              <Switch
+                :model-value="formValues[key] === true"
+                :label="descriptor.label || key"
+                @update:model-value="(v) => (formValues[key] = v)"
+              />
+            </template>
+            <!-- string / number → labelled input -->
+            <template v-else>
+              <span class="admin-plugins__label">
+                {{ descriptor.label || key }}
+                <span v-if="descriptor.required" class="admin-plugins__req" aria-hidden="true">*</span>
+              </span>
+              <input
+                v-model="formValues[key]"
+                :type="descriptor.secret ? 'password' : inputType(descriptor)"
+                class="admin-plugins__input"
+                :class="{ 'is-invalid': fieldErrors[key] }"
+                :autocomplete="descriptor.secret ? 'new-password' : 'off'"
+                :placeholder="descriptor.secret ? 'Leave unchanged to keep the current value' : undefined"
+                :aria-label="descriptor.label || key"
+                :aria-invalid="fieldErrors[key] ? 'true' : undefined"
+              />
+            </template>
+            <span v-if="descriptor.description" class="admin-plugins__hint">
+              {{ descriptor.description }}
+            </span>
+            <span v-if="fieldErrors[key]" class="admin-plugins__error" role="alert">
+              {{ fieldErrors[key] }}
+            </span>
+          </div>
+        </form>
+      </template>
+      <template #footer>
+        <Button variant="ghost" size="sm" @click="closeConfigure">Cancel</Button>
+        <Button
+          v-if="hasSchema"
+          variant="solid"
+          size="sm"
+          :loading="configSubmitting"
+          @click="submitConfigure"
+        >
+          Save
+        </Button>
+      </template>
+    </Modal>
+  </section>
+</template>
+
+<style scoped>
+.admin-plugins {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+.admin-plugins__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.admin-plugins__title {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+}
+.admin-plugins__skel {
+  padding-block: var(--space-2);
+}
+.admin-plugins__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.admin-plugins__table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.admin-plugins__table td {
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+.admin-plugins__mono {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+.admin-plugins__actions-col {
+  width: 1%;
+}
+.admin-plugins__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* Forms */
+.admin-plugins__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.admin-plugins__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.admin-plugins__label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.admin-plugins__req {
+  color: var(--accent);
+  margin-left: 2px;
+}
+.admin-plugins__input {
+  width: 100%;
+  height: var(--control-h);
+  padding-inline: var(--control-pad-x);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.admin-plugins__input:focus-visible {
+  outline: none;
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.admin-plugins__input.is-invalid {
+  border-color: var(--danger, #e5484d);
+}
+.admin-plugins__input::placeholder {
+  color: var(--text-subtle);
+}
+.admin-plugins__hint {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+}
+.admin-plugins__error {
+  font-size: var(--text-xs);
+  color: var(--danger, #e5484d);
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-plugins__input {
+    transition: none;
+  }
+}
+</style>
