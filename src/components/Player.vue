@@ -15,7 +15,7 @@
  * guard (R3.8). PlayerPage integration (real stream-URL resolution + the
  * route-leave mini-player toggle) is R3.9.
  */
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import type { MediaItem } from '../types/media-item';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
@@ -37,6 +37,7 @@ import TranscodeNotice from './player/TranscodeNotice.vue';
 import TranscodePreparing from './player/TranscodePreparing.vue';
 import SkipButton from './player/SkipButton.vue';
 import { needsTranscode, isFatalMediaError, UPNEXT_COUNTDOWN_SECONDS, type TimeMarker } from './player/playback';
+import type { SubtitleTrack } from './player/transcode';
 import {
   listSubtitleTracks,
   listAudioTracks,
@@ -180,6 +181,7 @@ function evaluateForCurrentMedia(): void {
   showResume.value = !transcodeNeeded.value && resumeSeconds.value > 0;
   pendingSeek = null;
   autoplayAttempted = false; // a fresh source may autoplay again (U2)
+  serverDefaultApplied = false; // re-evaluate the server default for the new source (U4)
   stopUpNextCountdown();
   upNextActive.value = false;
   // Tear down any previous HLS session; start a fresh one if the new item needs it.
@@ -261,6 +263,50 @@ const captionsMenuOpen = ref(false);
 /** Last on-language, so the `c` key can restore it after toggling off. */
 let lastSubtitleLang: string | null = player.subtitleLang;
 
+// ---- server subtitle sidecars (U4) ------------------------------------------
+/** WebVTT subtitle tracks the server extracted for a transcoded source (S4).
+ *  Rendered as native `<track>` elements into the `<video>` so the existing
+ *  captions.ts enumeration + overlay pick them up automatically. Their `url`s
+ *  are already resolved against the API base by the transcode composable, the
+ *  same way the master-playlist URL is. Empty for direct-play (no job → no
+ *  sidecars), which simply renders no `<track>`s. */
+const serverSubtitleTracks = computed<SubtitleTrack[]>(() => tc.subtitleTracks.value);
+
+/** One-shot guard so the server default is adopted at most once per source (reset
+ *  per source in `evaluateForCurrentMedia`). The user-choice signal
+ *  (`prefs.subtitlePreferenceSet`) takes precedence over this: once the user has
+ *  chosen a caption state we never auto-apply, on this source or any later poll. */
+let serverDefaultApplied = false;
+
+/** Apply the server's default subtitle track once the `<track>`s are enumerated,
+ *  unless the user has already made an explicit caption choice. The precedence
+ *  signal is `prefs.subtitlePreferenceSet` — set to `true` by CaptionsMenu /
+ *  Settings on ANY user selection, INCLUDING "Off" — so an explicit Off (which is
+ *  stored as the same `defaultSubtitleLang === null` as the unset state) is no
+ *  longer overridden by a late-arriving track poll or an episode switch. This is
+ *  persisted, so the user's choice (incl. Off) carries across episodes/sessions;
+ *  a fresh source still adopts ITS server default only while the user hasn't
+ *  chosen. */
+function maybeApplyServerDefault(): void {
+  if (serverDefaultApplied) return;
+  // The user has explicitly chosen a caption state (a language OR Off) — never
+  // override it, neither now nor on any later poll for this or another source.
+  if (prefs.subtitlePreferenceSet) {
+    serverDefaultApplied = true;
+    return;
+  }
+  const def = serverSubtitleTracks.value.find((s) => s.default);
+  if (!def) return; // no server default → leave captions off
+  // Match the enumerated native track key (== its language/label) so selection
+  // round-trips through captions.ts.
+  const match = textTracks.value.find((t) => t.language === (def.language || def.label));
+  if (match) {
+    player.setSubtitle(match.language);
+    lastSubtitleLang = match.language;
+    serverDefaultApplied = true;
+  }
+}
+
 /** Captions are "on" only when the selected language resolves to a real track. */
 const captionsOn = computed(() => textTracks.value.some((t) => t.language === player.subtitleLang));
 
@@ -269,6 +315,7 @@ function refreshTracks(): void {
   textTracks.value = listSubtitleTracks(v);
   audioTracks.value = listAudioTracks(v);
   activeAudio.value = activeAudioIndex(v);
+  maybeApplyServerDefault();
 }
 
 /** `c` shortcut — quick session toggle of captions on/off (the menu persists the
@@ -291,6 +338,18 @@ function onSelectAudio(index: number): void {
   applyAudioTrack(videoRef.value, index);
   activeAudio.value = index;
 }
+
+// When the server subtitle sidecars change (initial list, or a late arrival on a
+// status poll), Vue renders/removes the `<track>` elements; re-enumerate on the
+// next tick so the menu + overlay see them (belt-and-braces alongside the
+// addtrack/removetrack listeners, which jsdom doesn't always fire).
+watch(
+  serverSubtitleTracks,
+  () => {
+    void nextTick(() => refreshTracks());
+  },
+  { deep: true },
+);
 
 let trackList: TextTrackList | null = null;
 
@@ -649,7 +708,20 @@ onBeforeUnmount(() => {
         @enterpictureinpicture="onEnterPip"
         @leavepictureinpicture="onLeavePip"
         @click="togglePlay"
-      />
+      >
+        <!-- Server-extracted WebVTT subtitle sidecars (U4). Native <track>s so the
+             existing captions.ts enumeration + custom overlay pick them up. Keyed
+             on the sidecar URL so a late-arriving list updates reactively. -->
+        <track
+          v-for="st in serverSubtitleTracks"
+          :key="st.url"
+          kind="subtitles"
+          :src="st.url"
+          :srclang="st.language || undefined"
+          :label="st.label || undefined"
+          :default="st.default"
+        />
+      </video>
 
       <div class="player__scrim player__scrim--top" aria-hidden="true" />
       <div class="player__scrim player__scrim--bottom" aria-hidden="true" />

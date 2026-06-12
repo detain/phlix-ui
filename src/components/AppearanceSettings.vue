@@ -88,6 +88,10 @@ const formatPx = (v: number) => `${v}px`;
 
 function setSubtitle(v: string | number): void {
   prefs.defaultSubtitleLang = v === '' ? null : String(v);
+  // The Settings default-subtitle dropdown is also an explicit user choice
+  // (incl. "None" → null), so it sets the same signal the player checks before
+  // adopting a server default track.
+  prefs.subtitlePreferenceSet = true;
 }
 function setCaption(key: 'size' | 'textColor' | 'background' | 'edge', v: string | number): void {
   prefs.captionStyle = { ...prefs.captionStyle, [key]: v };

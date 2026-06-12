@@ -187,8 +187,10 @@ describe('AppearanceSettings — playback panel', () => {
     const sub = selectByLabel(w, 'Default subtitle language');
     sub.vm.$emit('update:modelValue', 'en');
     expect(prefs.defaultSubtitleLang).toBe('en');
+    expect(prefs.subtitlePreferenceSet).toBe(true); // explicit user choice
     sub.vm.$emit('update:modelValue', '');
     expect(prefs.defaultSubtitleLang).toBeNull();
+    expect(prefs.subtitlePreferenceSet).toBe(true); // choosing "None" is still a choice
   });
 
   it('updates caption style as a new object (size/color/background/edge)', async () => {

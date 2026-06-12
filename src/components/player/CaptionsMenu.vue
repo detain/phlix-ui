@@ -79,6 +79,11 @@ function close(): void {
 function selectSubtitle(lang: string | null): void {
   player.setSubtitle(lang);
   prefs.defaultSubtitleLang = lang; // persist as the cross-session default
+  // Mark that the user has explicitly chosen a caption state — INCLUDING "Off"
+  // (lang === null). This is the signal the player checks before adopting a
+  // server `default:true` track, so an explicit Off is no longer mistaken for
+  // "no preference" and is never overridden by a later poll / episode switch.
+  prefs.subtitlePreferenceSet = true;
 }
 function selectAudio(index: number): void {
   emit('select-audio', index);

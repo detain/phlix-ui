@@ -17,14 +17,17 @@ vi.mock('../composables/useHlsTranscode', async () => {
   const { ref } = await import('vue');
   const state = ref('idle');
   const progress = ref(0);
+  const subtitleTracks = ref<unknown[]>([]);
   const ctrl = {
     state,
     progress,
+    subtitleTracks,
     start: vi.fn(),
     cleanup: vi.fn(),
     reset: vi.fn(() => {
       state.value = 'idle';
       progress.value = 0;
+      subtitleTracks.value = [];
     }),
   };
   return { useHlsTranscode: () => ctrl, __ctrl: ctrl };
@@ -34,6 +37,7 @@ vi.mock('../composables/useHlsTranscode', async () => {
 function tc(): {
   state: { value: string };
   progress: { value: number };
+  subtitleTracks: { value: Array<{ index: number; language: string; label: string; default: boolean; url: string }> };
   start: ReturnType<typeof vi.fn>;
   cleanup: ReturnType<typeof vi.fn>;
   reset: ReturnType<typeof vi.fn>;
@@ -117,6 +121,7 @@ beforeEach(() => {
   const ctrl = tc();
   ctrl.state.value = 'idle';
   ctrl.progress.value = 0;
+  ctrl.subtitleTracks.value = [];
   ctrl.start.mockClear();
   ctrl.cleanup.mockClear();
   ctrl.reset.mockClear();
@@ -665,6 +670,210 @@ describe('Player — captions (R3.5)', () => {
     await nextTick();
     expect(audio[1].enabled).toBe(true);
     expect(audio[0].enabled).toBe(false);
+  });
+});
+
+describe('Player — server subtitle sidecars (U4)', () => {
+  type Track = { index: number; language: string; label: string; default: boolean; url: string };
+  function srvTrack(over: Partial<Track> = {}): Track {
+    return { index: 0, language: 'eng', label: 'English', default: false, url: 'http://x/hls/j/sub-0.vtt', ...over };
+  }
+
+  /** Shadow jsdom's (empty) textTracks with a fake subtitle list so the default
+   *  selection can resolve a native track by its key (== language/label). */
+  function injectSubtitleTracks(video: HTMLVideoElement, defs: { lang: string; label: string }[]) {
+    const tracks = defs.map((d) => ({
+      kind: 'subtitles',
+      language: d.lang,
+      label: d.label,
+      mode: 'disabled',
+      activeCues: null,
+      addEventListener() {},
+      removeEventListener() {},
+    }));
+    const list: Record<number, unknown> & { length: number } = { length: tracks.length };
+    tracks.forEach((t, i) => (list[i] = t));
+    Object.defineProperty(video, 'textTracks', { configurable: true, get: () => list });
+    return tracks;
+  }
+
+  it('renders a <track> per server subtitle track with the right src/srclang/label/default', async () => {
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'eng', label: 'English 1', default: true, url: 'http://x/hls/j/sub-0.vtt' }),
+      srvTrack({ index: 1, language: 'jpn', label: 'Japanese', default: false, url: 'http://x/hls/j/sub-1.vtt' }),
+    ];
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    await nextTick();
+    const tracks = w.findAll('video track');
+    expect(tracks).toHaveLength(2);
+    expect(tracks[0].attributes('src')).toBe('http://x/hls/j/sub-0.vtt');
+    expect(tracks[0].attributes('srclang')).toBe('eng');
+    expect(tracks[0].attributes('label')).toBe('English 1');
+    expect(tracks[0].attributes('default')).toBeDefined();
+    expect(tracks[1].attributes('src')).toBe('http://x/hls/j/sub-1.vtt');
+    expect(tracks[1].attributes('default')).toBeUndefined();
+  });
+
+  it('renders no <track> for a direct-play source (no server sidecars)', () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    expect(w.findAll('video track')).toHaveLength(0);
+  });
+
+  it('adds the <track> elements reactively when tracks arrive late on a poll', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    expect(w.findAll('video track')).toHaveLength(0);
+    tc().subtitleTracks.value = [srvTrack({ url: 'http://x/hls/j/sub-0.vtt' })];
+    await nextTick();
+    const tracks = w.findAll('video track');
+    expect(tracks).toHaveLength(1);
+    expect(tracks[0].attributes('src')).toBe('http://x/hls/j/sub-0.vtt');
+  });
+
+  it('selects the server default track when the user has no persisted caption preference', async () => {
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'eng', label: 'English', default: false }),
+      srvTrack({ index: 1, language: 'jpn', label: 'Japanese', default: true, url: 'http://x/hls/j/sub-1.vtt' }),
+    ];
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    injectSubtitleTracks(video, [{ lang: 'eng', label: 'English' }, { lang: 'jpn', label: 'Japanese' }]);
+    video.dispatchEvent(new Event('loadedmetadata')); // refreshTracks → maybeApplyServerDefault
+    tc().state.value = 'ready'; // reveal the chrome so the menu button renders
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBe('jpn'); // honoured the server default
+    expect(w.find('.capmenu__btn').attributes('aria-label')).toBe('Captions (on)');
+  });
+
+  it('does NOT override an explicit persisted user caption choice with the server default', async () => {
+    const prefs = usePreferencesStore();
+    prefs.defaultSubtitleLang = 'eng'; // the user previously chose English
+    prefs.subtitlePreferenceSet = true; // …explicitly (the signal the player now keys on)
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'eng', label: 'English', default: false }),
+      srvTrack({ index: 1, language: 'jpn', label: 'Japanese', default: true, url: 'http://x/hls/j/sub-1.vtt' }),
+    ];
+    const { video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    injectSubtitleTracks(video, [{ lang: 'eng', label: 'English' }, { lang: 'jpn', label: 'Japanese' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBe('eng'); // the user's choice, NOT the server default 'jpn'
+  });
+
+  it('does NOT re-enable captions (server default) after the user explicitly turned them Off, even on a late poll', async () => {
+    // Regression for the HIGH precedence bug: explicit "Off" (defaultSubtitleLang=null
+    // + subtitlePreferenceSet=true) must be distinguishable from "no preference".
+    const prefs = usePreferencesStore();
+    prefs.defaultSubtitleLang = null; // the user chose Off …
+    prefs.subtitlePreferenceSet = true; // … explicitly (an Off choice, not the unset state)
+    const { video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    injectSubtitleTracks(video, [{ lang: 'eng', label: 'English' }, { lang: 'jpn', label: 'Japanese' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBeNull(); // still off — no default applied yet (no tracks)
+    // A track with default:true arrives late on a status poll → the deep watcher
+    // re-runs refreshTracks → maybeApplyServerDefault. It must NOT flip captions on.
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 1, language: 'jpn', label: 'Japanese', default: true, url: 'http://x/hls/j/sub-1.vtt' }),
+    ];
+    await nextTick();
+    await nextTick(); // the watcher schedules refreshTracks on nextTick
+    expect(usePlayerStore().subtitleLang).toBeNull(); // captions stay OFF (user's explicit choice wins)
+  });
+
+  it('does NOT re-enable captions after an explicit Off when the source/episode switches', async () => {
+    // The signal is persisted (global), so an explicit Off carries across episodes:
+    // switching the media prop (which resets the per-source serverDefaultApplied flag)
+    // must still not adopt the new source's server default.
+    const prefs = usePreferencesStore();
+    prefs.defaultSubtitleLang = null;
+    prefs.subtitlePreferenceSet = true; // explicit Off
+    const { w, video } = mountPlayer({ media: media({ id: 'ep1' }), streamUrl: 'http://x/Ep1.mkv' });
+    injectSubtitleTracks(video, [{ lang: 'jpn', label: 'Japanese' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBeNull();
+    // Switch episode — fresh source with its own default:true track.
+    await w.setProps({ media: media({ id: 'ep2' }), streamUrl: 'http://x/Ep2.mkv' });
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'jpn', label: 'Japanese', default: true, url: 'http://x/hls/j2/sub-0.vtt' }),
+    ];
+    const video2 = w.find('video').element as HTMLVideoElement;
+    injectSubtitleTracks(video2, [{ lang: 'jpn', label: 'Japanese' }]);
+    video2.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBeNull(); // still off across the episode switch
+  });
+
+  it('does NOT override a manual language pick made BEFORE the server default first lands', async () => {
+    // The user picks a caption (which sets subtitlePreferenceSet via CaptionsMenu)
+    // before the default:true track arrives; a later poll must not override it.
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    injectSubtitleTracks(video, [{ lang: 'eng', label: 'English' }, { lang: 'jpn', label: 'Japanese' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    tc().state.value = 'ready';
+    await nextTick();
+    // User picks English via the menu.
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    const engOpt = w.findAll('[aria-label="Subtitle track"] .capmenu__opt').find((n) => n.text().includes('English'));
+    await engOpt!.trigger('click');
+    expect(usePlayerStore().subtitleLang).toBe('eng');
+    expect(usePreferencesStore().subtitlePreferenceSet).toBe(true);
+    // A different default:true track arrives late.
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'eng', label: 'English', default: false }),
+      srvTrack({ index: 1, language: 'jpn', label: 'Japanese', default: true, url: 'http://x/hls/j/sub-1.vtt' }),
+    ];
+    await nextTick();
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBe('eng'); // user's pick survives the poll
+  });
+
+  it('applies the server default for a fresh source when the user has made NO choice', async () => {
+    // Existing behaviour preserved: no preference set → adopt the server default,
+    // including after switching to a fresh source.
+    const { w, video } = mountPlayer({ media: media({ id: 'ep1' }), streamUrl: 'http://x/Ep1.mkv' });
+    expect(usePreferencesStore().subtitlePreferenceSet).toBe(false);
+    injectSubtitleTracks(video, [{ lang: 'jpn', label: 'Japanese' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    // Switch to a fresh episode whose server default is Japanese.
+    await w.setProps({ media: media({ id: 'ep2' }), streamUrl: 'http://x/Ep2.mkv' });
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'jpn', label: 'Japanese', default: true, url: 'http://x/hls/j2/sub-0.vtt' }),
+    ];
+    const video2 = w.find('video').element as HTMLVideoElement;
+    injectSubtitleTracks(video2, [{ lang: 'jpn', label: 'Japanese' }]);
+    video2.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBe('jpn'); // fresh source adopts its server default
+  });
+
+  it('leaves captions off (no server default) when no track is flagged default and no preference is stored', async () => {
+    tc().subtitleTracks.value = [srvTrack({ index: 0, language: 'eng', label: 'English', default: false })];
+    const { video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    injectSubtitleTracks(video, [{ lang: 'eng', label: 'English' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBeNull();
+  });
+
+  it('lists the server subtitle tracks in the CaptionsMenu (Off + each track)', async () => {
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'eng', label: 'English' }),
+      srvTrack({ index: 1, language: 'jpn', label: 'Japanese', url: 'http://x/hls/j/sub-1.vtt' }),
+    ];
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    injectSubtitleTracks(video, [{ lang: 'eng', label: 'English' }, { lang: 'jpn', label: 'Japanese' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    tc().state.value = 'ready'; // reveal the chrome so the menu button is in the DOM
+    await nextTick();
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    const group = w.find('[aria-label="Subtitle track"]');
+    const labels = group.findAll('.capmenu__optlabel').map((n) => n.text());
+    expect(labels).toEqual(['Off', 'English', 'Japanese']);
   });
 });
 
