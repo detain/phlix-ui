@@ -19,6 +19,9 @@ import Placeholder from './placeholder/Placeholder.vue';
 import { applyStoredThemeEarly } from '../composables/useTheme';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { setAppName, setPageTitle } from '../composables/usePageTitle';
+import { adminPageLabel } from './admin';
+import { createTranslator, type Translate, type MessageKey } from '../i18n/messages';
 import type { PhlixAppConfig } from './types';
 
 /**
@@ -62,6 +65,33 @@ export function authGuard(
     return true;
 }
 
+/**
+ * Resolve the STATIC page title for a route (the page-specific part, WITHOUT the
+ * ` · Phlix` suffix — {@link setPageTitle} adds that). Pure (translator passed
+ * in) so it unit-tests without a live router.
+ *
+ * Resolution order:
+ * 1. `meta.title` — a string. Run through `t()`: a known i18n message key (e.g.
+ *    `shell.browse`) resolves to its (possibly overridden) translation; an
+ *    unknown key / plain literal echoes back unchanged, so a literal title also
+ *    works.
+ * 2. An `admin-*` route name → `Admin · <label>` from the canonical page labels.
+ * 3. Otherwise `null` — the page either sets its own title from async data
+ *    (media/library/player) or simply shows the bare app name (catchall).
+ */
+export function resolveRouteTitle(to: RouteLocationNormalized, t: Translate): string | null {
+    const metaTitle = to.meta?.title;
+    if (typeof metaTitle === 'string' && metaTitle) {
+        return t(metaTitle as MessageKey);
+    }
+    const name = typeof to.name === 'string' ? to.name : '';
+    const label = adminPageLabel(name);
+    if (label) {
+        return `Admin · ${label}`;
+    }
+    return null;
+}
+
 declare global {
     interface Window {
         __PHLIX__?: PhlixAppConfig;
@@ -90,10 +120,18 @@ function readConfig(): PhlixAppConfig {
 export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
     const base = config.routerBase || '/app';
 
+    // `meta.title` carries the STATIC page title for each built-in route. Where a
+    // translatable string already exists in the i18n catalog the value is that
+    // message KEY (resolved through the consumer's translator in `afterEach`);
+    // routes whose title is async data (media/library/player) carry no static
+    // title — their page sets it via `usePageTitle`/`setPageTitle` once the item
+    // or library name loads, and `afterEach` clears to the app-name-only default
+    // until then. `catchall` likewise has no static title (the app name shows).
     const routes: RouteRecordRaw[] = [
         {
             path: base,
             name: 'browse',
+            meta: { title: 'shell.browse' },
             component: () => import('../pages/BrowsePage.vue'),
         },
         {
@@ -117,16 +155,19 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
         {
             path: `${base}/login`,
             name: 'login',
+            meta: { title: 'auth.loginTitle' },
             component: () => import('../pages/LoginPage.vue'),
         },
         {
             path: `${base}/signup`,
             name: 'signup',
+            meta: { title: 'auth.signupTitle' },
             component: () => import('../pages/SignupPage.vue'),
         },
         {
             path: `${base}/settings`,
             name: 'settings',
+            meta: { title: 'settings.title' },
             component: () => import('../pages/SettingsPage.vue'),
         },
     ];
@@ -154,6 +195,16 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     // Set <html> theme/density/accent from persisted prefs before mount → no flash.
     // First-time visitors get the app's defaultTheme; a stored choice always wins.
     applyStoredThemeEarly(fullConfig.defaultTheme);
+
+    // Page-title suffix = the app's wordmark ("Phlix" by default). Set once at boot
+    // so every `setPageTitle()` (the afterEach hook + the data-driven pages) uses
+    // the same suffix without threading it through each call site.
+    setAppName(fullConfig.branding?.wordmark);
+
+    // Translator for STATIC route titles, built from the consumer's message
+    // overrides. Pure data (no Vue context needed), so it resolves titles inside
+    // the router hook below.
+    const translate = createTranslator(fullConfig.messages);
 
     const pinia = createPinia();
 
@@ -190,6 +241,17 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
         const auth = useAuthStore(pinia);
         await auth.init();
         return authGuard(to, auth.isLoggedIn, auth.isAdmin);
+    });
+
+    // Set the DEFAULT document title for every navigation from the route's static
+    // `meta.title` (or admin label). Pages whose title is async-loaded content
+    // (media/series/library/player) carry no static title and override this from
+    // their own `usePageTitle(...)` once the item/library name resolves — and
+    // because this runs on EVERY navigation, leaving such a page resets the title
+    // to the next route's default (a stale media name never lingers). A route with
+    // no resolvable title falls back to the bare app name (`setPageTitle(null)`).
+    router.afterEach((to) => {
+        setPageTitle(resolveRouteTitle(to, translate));
     });
 
     const app: VueApp = createApp(PhlixApp);

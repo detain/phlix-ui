@@ -33,6 +33,7 @@ import type { TimeMarker } from '../components/player/playback';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
+import { usePageTitle } from '../composables/usePageTitle';
 
 interface MediaListResponse {
   items: MediaItem[];
@@ -72,6 +73,11 @@ const error = ref<string | null>(null);
 const theater = ref(false);
 
 const currentId = computed(() => String(route.params.id ?? ''));
+
+// The playing item's title becomes the page title once it loads (and updates on
+// up-next advance, since the id watch reloads `item`); until then the route
+// default stands.
+usePageTitle(() => item.value?.name);
 
 /** Poster-derived ambient backdrop. The url() value is escaped (backslash/quote
  *  escaped, CR/LF stripped) like Scrubber.previewThumbCss so a poster URL containing

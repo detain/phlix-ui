@@ -20,6 +20,7 @@ import FilterBar from '../components/FilterBar.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import type { MediaItem } from '../types/media-item';
+import { usePageTitle } from '../composables/usePageTitle';
 
 const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
 const apiBase = computed(() =>
@@ -36,6 +37,11 @@ const libraryId = computed(() => {
   return Array.isArray(id) ? id[0] : (id ?? '');
 });
 const libraryName = computed(() => libraries.byId(libraryId.value)?.name ?? 'Library');
+
+// Title = the real library name once the libraries list resolves (a deep link may
+// land before it loads). The `?? undefined` keeps the title at the route default
+// rather than the generic "Library" placeholder until the name is known.
+usePageTitle(() => libraries.byId(libraryId.value)?.name);
 
 /** Enter (or switch to) a library: start from a clean filter slate, scope the
  *  shared store, and load page 0. Clearing filters here is what stops one

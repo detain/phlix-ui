@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.24.0] - 2026-06-12
+
+### Added
+- **Per-route page titles.** Every navigation now updates `document.title` to a
+  `"<page> · Phlix"` string (just `"Phlix"` when there's no page-specific part),
+  so browser tabs, history, and bookmarks are meaningful instead of all reading
+  the same thing.
+  - New `usePageTitle` composable: `setPageTitle(title)` formats and writes the
+    document title (centralizing the ` · ` separator + app-name suffix);
+    `usePageTitle(source)` watches a ref/getter and keeps the title in sync while
+    a component is mounted; `setAppName(wordmark)` overrides the suffix (set from
+    `branding.wordmark` at boot); `formatPageTitle()` is the pure formatter. All
+    `document` access is SSR-guarded.
+  - A `router.afterEach` hook in `createPhlixApp` sets each route's default title
+    from `meta.title`. Static routes carry one — `browse` (`shell.browse`),
+    `login` (`auth.loginTitle`), `signup` (`auth.signupTitle`), and `settings`
+    (`settings.title`), resolved through the i18n catalog so overrides apply —
+    and admin routes derive `Admin · <label>` from the canonical admin page
+    labels (new `adminPageLabel` helper).
+  - Data-driven pages set their own title once content loads: MediaDetailPage /
+    PlayerPage use the item/series name (e.g. `Assassination Classroom · Phlix`),
+    LibraryPage uses the library name. Leaving such a page resets to the next
+    route's default (no stale title lingers).
+
 ## [0.23.0] - 2026-06-09
 
 ### Added

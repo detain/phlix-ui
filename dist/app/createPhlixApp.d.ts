@@ -1,5 +1,6 @@
 import { type App as VueApp } from 'vue';
 import { type RouteRecordRaw, type RouteLocationNormalized, type RouteLocationRaw } from 'vue-router';
+import { type Translate } from '../i18n/messages';
 import type { PhlixAppConfig } from './types';
 /**
  * Route names reachable WITHOUT authentication. Everything else is gated by
@@ -22,6 +23,21 @@ export declare const PUBLIC_ROUTE_NAMES: readonly string[];
  *   admin UI from rendering for a non-admin or an unvalidated session.)
  */
 export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boolean, isAdmin?: boolean): true | RouteLocationRaw;
+/**
+ * Resolve the STATIC page title for a route (the page-specific part, WITHOUT the
+ * ` · Phlix` suffix — {@link setPageTitle} adds that). Pure (translator passed
+ * in) so it unit-tests without a live router.
+ *
+ * Resolution order:
+ * 1. `meta.title` — a string. Run through `t()`: a known i18n message key (e.g.
+ *    `shell.browse`) resolves to its (possibly overridden) translation; an
+ *    unknown key / plain literal echoes back unchanged, so a literal title also
+ *    works.
+ * 2. An `admin-*` route name → `Admin · <label>` from the canonical page labels.
+ * 3. Otherwise `null` — the page either sets its own title from async data
+ *    (media/library/player) or simply shows the bare app name (catchall).
+ */
+export declare function resolveRouteTitle(to: RouteLocationNormalized, t: Translate): string | null;
 declare global {
     interface Window {
         __PHLIX__?: PhlixAppConfig;
