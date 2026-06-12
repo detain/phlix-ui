@@ -53,6 +53,8 @@ export { AdminLibrariesApi, LIBRARY_TYPES } from './api/admin/libraries';
 export type { Library, LibraryType, ScanJob, CreateLibraryInput, UpdateLibraryInput, CreateLibraryResult, ScanQueuedResult, } from './api/admin/libraries';
 export { AdminSettingsApi } from './api/admin/settings';
 export type { SettingsResponse, SettingsSaveResponse } from './api/admin/settings';
+export { AdminPluginsApi, PLUGIN_SECRET_MASK, pluginErrorCode, pluginValidationErrors, } from './api/admin/plugins';
+export type { Plugin, PluginDetail, PluginSettings, PluginSettingsSchema, PluginSettingDescriptor, } from './api/admin/plugins';
 export { AdminHubDashboardApi } from './api/admin/hubDashboard';
 export type { HubSummary, HubServersSummary, HubAuditEvent } from './api/admin/hubDashboard';
 export { buildAdminRoutes, adminMenu, buildServerAdminRoutes, buildHubAdminRoutes, commonAdminPages, serverAdminPages, hubAdminPages, } from './app/admin';

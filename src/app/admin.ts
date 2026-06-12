@@ -18,12 +18,12 @@ import type { IconName } from '../components/Icon.vue';
  * - {@link commonAdminPages} — portable to BOTH apps: Users, Logs, Settings.
  * - {@link serverAdminPages} — media-server-only: Dashboard, Webhooks, Services,
  *   Integrations, Backup, Cast Devices, DLNA, Remote Access, Live TV, Collections,
- *   History, SyncPlay, Libraries.
+ *   History, SyncPlay, Libraries, Plugins.
  * - {@link hubAdminPages} — hub-only: Hub Dashboard, Audit Logs.
  *
- * `buildAdminRoutes(base)` with no `pages` argument yields the **historical 16
- * server pages in their original sidebar order** (Dashboard first), so the server
- * stays byte-identical — its admin landing page and sidebar are unchanged.
+ * `buildAdminRoutes(base)` with no `pages` argument yields the **server pages in
+ * their original sidebar order** (Dashboard first), so the server's admin landing
+ * page and sidebar ordering are unchanged (U6 adds Plugins after Libraries).
  * `buildServerAdminRoutes` is the explicit synonym for that default;
  * `buildHubAdminRoutes` mounts the hub set (Hub Dashboard, Users, Logs, Settings,
  * Audit Logs). Each child keeps a stable `admin-*` route name and resolves to
@@ -153,6 +153,13 @@ const librariesPage: AdminPage = {
   icon: 'image',
   component: () => import('../pages/admin/LibrariesPage.vue'),
 };
+const pluginsPage: AdminPage = {
+  name: 'admin-plugins',
+  path: 'plugins',
+  label: 'Plugins',
+  icon: 'settings',
+  component: () => import('../pages/admin/PluginsPage.vue'),
+};
 const settingsPage: AdminPage = {
   name: 'admin-settings',
   path: 'settings',
@@ -198,6 +205,7 @@ const ALL_ADMIN_PAGES: AdminPage[] = [
   historyPage,
   syncplayPage,
   librariesPage,
+  pluginsPage,
   settingsPage,
   hubDashboardPage,
   auditLogsPage,
@@ -219,7 +227,7 @@ export function adminPageLabel(name: string | null | undefined): string | null {
 /** Admin pages portable to BOTH apps (they hit endpoints both backends serve). */
 export const commonAdminPages: AdminPage[] = [usersPage, logsPage, settingsPage];
 
-/** Media-server-only admin pages (the 13 surfaces that depend on a media backend). */
+/** Media-server-only admin pages (the 14 surfaces that depend on a media backend). */
 export const serverAdminPages: AdminPage[] = [
   dashboardPage,
   webhooksPage,
@@ -234,17 +242,18 @@ export const serverAdminPages: AdminPage[] = [
   historyPage,
   syncplayPage,
   librariesPage,
+  pluginsPage,
 ];
 
 /** Hub-only admin pages: a hub-scoped dashboard + the re-homed audit log. */
 export const hubAdminPages: AdminPage[] = [hubDashboardPage, auditLogsPage];
 
 /**
- * The server's historical 16-page set in its original sidebar order. Used as the
- * default for {@link buildAdminRoutes}/{@link adminMenu} so the server admin
- * console — its landing page (Dashboard) and sidebar ordering — stays
- * byte-identical with zero server changes. It is the same set as
- * `[...commonAdminPages, ...serverAdminPages]` (Dashboard + the 13 media pages +
+ * The server's full page set in its original sidebar order. Used as the default
+ * for {@link buildAdminRoutes}/{@link adminMenu} so the server admin console —
+ * its landing page (Dashboard) and sidebar ordering — stays stable (U6 appends
+ * Plugins after Libraries). It is the same set as
+ * `[...commonAdminPages, ...serverAdminPages]` (Dashboard + the media pages +
  * Users/Logs/Settings), re-interleaved to preserve the legacy order.
  */
 const defaultAdminPages: AdminPage[] = [
@@ -263,6 +272,7 @@ const defaultAdminPages: AdminPage[] = [
   historyPage,
   syncplayPage,
   librariesPage,
+  pluginsPage,
   settingsPage,
 ];
 
@@ -306,7 +316,7 @@ export function buildAdminRoutes(base = '/app', pages: AdminPage[] = defaultAdmi
   ];
 }
 
-/** Server admin routes — the canonical 16-page set in the legacy sidebar order
+/** Server admin routes — the canonical default page set in the legacy sidebar order
  *  (explicit synonym for {@link buildAdminRoutes} with no `pages`). */
 export function buildServerAdminRoutes(base = '/app'): RouteRecordRaw[] {
   return buildAdminRoutes(base, defaultAdminPages);

@@ -29,6 +29,7 @@ const SERVER_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-history', 'history'],
   ['admin-syncplay', 'syncplay'],
   ['admin-libraries', 'libraries'],
+  ['admin-plugins', 'plugins'],
   ['admin-settings', 'settings'],
 ];
 
@@ -82,8 +83,8 @@ describe('buildAdminRoutes — nested AdminLayout shape (default = legacy server
     expect(namedChildren(buildAdminRoutes())[0].name).toBe('admin-dashboard');
   });
 
-  it('exposes exactly the historical 16 server pages', () => {
-    expect(namedChildren(buildAdminRoutes())).toHaveLength(16);
+  it('exposes exactly the 17 server pages (16 historical + Plugins, U6)', () => {
+    expect(namedChildren(buildAdminRoutes())).toHaveLength(17);
   });
 
   it('buildServerAdminRoutes is the explicit synonym for the default', () => {
@@ -162,10 +163,11 @@ describe('page-group registries', () => {
     expect(commonAdminPages.map((p) => p.name)).toEqual(['admin-users', 'admin-logs', 'admin-settings']);
   });
 
-  it('serverAdminPages = the 13 media-server pages (Dashboard first, no common pages)', () => {
-    expect(serverAdminPages).toHaveLength(13);
+  it('serverAdminPages = the 14 media-server pages incl. Plugins (Dashboard first, no common pages)', () => {
+    expect(serverAdminPages).toHaveLength(14);
     expect(serverAdminPages[0].name).toBe('admin-dashboard');
     const names = serverAdminPages.map((p) => p.name);
+    expect(names).toContain('admin-plugins');
     expect(names).not.toContain('admin-users');
     expect(names).not.toContain('admin-logs');
     expect(names).not.toContain('admin-settings');
@@ -185,7 +187,7 @@ describe('page-group registries', () => {
     }
   });
 
-  it('default server set is the same 16 pages as common ∪ server', () => {
+  it('default server set is the same pages as common ∪ server', () => {
     const defaultNames = new Set(namedChildren(buildAdminRoutes()).map((c) => c.name));
     const unionNames = new Set([...commonAdminPages, ...serverAdminPages].map((p) => p.name));
     expect(defaultNames).toEqual(unionNames);
@@ -223,6 +225,7 @@ describe('adminMenu', () => {
       'admin-history': { label: 'Watch History', to: '/app/admin/history' },
       'admin-syncplay': { label: 'SyncPlay', to: '/app/admin/syncplay' },
       'admin-libraries': { label: 'Libraries', to: '/app/admin/libraries' },
+      'admin-plugins': { label: 'Plugins', to: '/app/admin/plugins' },
       'admin-settings': { label: 'Settings', to: '/app/admin/settings' },
     };
     for (const [id, { label, to }] of Object.entries(expected)) {
@@ -233,9 +236,9 @@ describe('adminMenu', () => {
     }
   });
 
-  it('exposes exactly the 16 default admin pages as children', () => {
+  it('exposes exactly the 17 default admin pages as children (incl. Plugins, U6)', () => {
     const [group] = adminMenu();
-    expect(group.children).toHaveLength(16);
+    expect(group.children).toHaveLength(17);
   });
 
   it('builds a menu from an arbitrary page set (the hub set)', () => {

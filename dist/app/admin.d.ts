@@ -17,12 +17,12 @@ import type { IconName } from '../components/Icon.vue';
  * - {@link commonAdminPages} — portable to BOTH apps: Users, Logs, Settings.
  * - {@link serverAdminPages} — media-server-only: Dashboard, Webhooks, Services,
  *   Integrations, Backup, Cast Devices, DLNA, Remote Access, Live TV, Collections,
- *   History, SyncPlay, Libraries.
+ *   History, SyncPlay, Libraries, Plugins.
  * - {@link hubAdminPages} — hub-only: Hub Dashboard, Audit Logs.
  *
- * `buildAdminRoutes(base)` with no `pages` argument yields the **historical 16
- * server pages in their original sidebar order** (Dashboard first), so the server
- * stays byte-identical — its admin landing page and sidebar are unchanged.
+ * `buildAdminRoutes(base)` with no `pages` argument yields the **server pages in
+ * their original sidebar order** (Dashboard first), so the server's admin landing
+ * page and sidebar ordering are unchanged (U6 adds Plugins after Libraries).
  * `buildServerAdminRoutes` is the explicit synonym for that default;
  * `buildHubAdminRoutes` mounts the hub set (Hub Dashboard, Users, Logs, Settings,
  * Audit Logs). Each child keeps a stable `admin-*` route name and resolves to
@@ -48,7 +48,7 @@ export interface AdminPage {
 export declare function adminPageLabel(name: string | null | undefined): string | null;
 /** Admin pages portable to BOTH apps (they hit endpoints both backends serve). */
 export declare const commonAdminPages: AdminPage[];
-/** Media-server-only admin pages (the 13 surfaces that depend on a media backend). */
+/** Media-server-only admin pages (the 14 surfaces that depend on a media backend). */
 export declare const serverAdminPages: AdminPage[];
 /** Hub-only admin pages: a hub-scoped dashboard + the re-homed audit log. */
 export declare const hubAdminPages: AdminPage[];
@@ -61,7 +61,7 @@ export declare const hubAdminPages: AdminPage[];
  *   to the first page in this list (the dashboard for both shipped apps).
  */
 export declare function buildAdminRoutes(base?: string, pages?: AdminPage[]): RouteRecordRaw[];
-/** Server admin routes — the canonical 16-page set in the legacy sidebar order
+/** Server admin routes — the canonical default page set in the legacy sidebar order
  *  (explicit synonym for {@link buildAdminRoutes} with no `pages`). */
 export declare function buildServerAdminRoutes(base?: string): RouteRecordRaw[];
 /** Hub admin routes — Hub Dashboard (landing), Users, Logs, Settings, Audit Logs. */
