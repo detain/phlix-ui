@@ -26,6 +26,7 @@ function onChange(v: string | number): void {
 <template>
   <Select
     class="speed-menu"
+    tone="glass"
     :model-value="player.rate"
     :options="options"
     :label="t('player.playbackSpeed')"

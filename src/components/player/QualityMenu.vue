@@ -39,6 +39,7 @@ function onChange(v: string | number): void {
   <Select
     v-if="hasQualities"
     class="quality-menu"
+    tone="glass"
     :model-value="player.quality"
     :options="qualities"
     :label="t('player.quality')"

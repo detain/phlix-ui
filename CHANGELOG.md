@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.25.0] - 2026-06-12
+
+### Added
+- **Autoplay on load.** The player now starts playback automatically once the
+  source is ready (`canplay`) instead of waiting for a press of Play. Since the
+  player is reached by clicking Play (a user gesture), unmuted autoplay usually
+  succeeds; if the browser rejects it (`NotAllowedError` — the gesture didn't
+  carry through navigation) the player retries muted, and if even that is blocked
+  it leaves the existing play control as a "tap to play" affordance — no unhandled
+  rejection. Autoplay is opt-in per host (`<Player :autoplay="true">`, set by
+  PlayerPage), applies after a resume prompt is resolved (no double-trigger), and
+  re-arms when the media changes.
+- **Previous / Next episode buttons.** For series content (the playing item is an
+  episode) the control bar now flanks play/pause with Prev and Next buttons that
+  span the WHOLE series: episodes are ordered by `(season_number, episode_number)`
+  so the last episode of a season is followed by the first of the next, with the
+  Specials bucket last. The buttons navigate to the adjacent episode's
+  `/app/player/:id` route (the id watch re-initialises the player); Prev hides on
+  the very first episode and Next on the very last, and neither shows for movies.
+  Ordering reuses the series `groupEpisodesBySeason` grouping via a new pure
+  `episode-order` helper (`orderEpisodes` / `previousEpisode` / `nextEpisode`).
+
+### Changed
+- **Player dropdown styling.** The in-player `Select`-based menus (SpeedMenu,
+  QualityMenu) no longer render with an opaque light background / black text that
+  clashed with the transparent, white-text player chrome. `Select` gains an
+  opt-in `tone="glass"` variant — a scoped `is-glass` class that overrides the
+  trigger / list / option surfaces with a translucent dark, white-text treatment
+  (legible hover/active/selected states, subtle light border, accent-tinted
+  selection) — applied only by those player menus. `Select` is visually unchanged
+  everywhere else it's used (default tone); keyboard navigation and a11y are
+  untouched.
+
 ## [0.24.0] - 2026-06-12
 
 ### Added

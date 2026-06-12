@@ -95,6 +95,9 @@ function mountPlayer(
     chapters: { start: number; title?: string }[];
     introMarker: { start: number; end: number } | null;
     outroMarker: { start: number; end: number } | null;
+    prevEpisode: MediaItem | null;
+    nextEpisode: MediaItem | null;
+    autoplay: boolean;
   }> = {},
 ) {
   const w = mount(Player, {
@@ -1100,5 +1103,123 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     await nextTick();
     await w.find('.transcode__back').trigger('click');
     expect(w.emitted('back')).toHaveLength(1);
+  });
+});
+
+describe('Player — autoplay on load (U2)', () => {
+  function episode(over: Partial<MediaItem> = {}): MediaItem {
+    return media({ id: 'e1', name: 'Pilot', type: 'episode', season_number: 1, episode_number: 1, ...over });
+  }
+
+  it('attempts play() on canplay when autoplay is enabled', async () => {
+    const { w, video } = mountPlayer({ autoplay: true });
+    video.dispatchEvent(new Event('canplay'));
+    await nextTick();
+    expect(video.play).toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('does NOT autoplay when the prop is not set (default behaviour unchanged)', async () => {
+    const { w, video } = mountPlayer();
+    video.dispatchEvent(new Event('canplay'));
+    await nextTick();
+    expect(video.play).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('attempts play() at most once across repeated canplay events', async () => {
+    const { w, video } = mountPlayer({ autoplay: true });
+    video.dispatchEvent(new Event('canplay'));
+    video.dispatchEvent(new Event('canplay'));
+    await nextTick();
+    expect((video.play as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(1);
+    w.unmount();
+  });
+
+  it('does NOT autoplay while a resume prompt is showing', async () => {
+    setActivePinia(createPinia());
+    usePlayerStore().saveResume('m1', 60, 200);
+    const { w, video } = mountPlayer({ autoplay: true });
+    expect(w.find('.resume').exists()).toBe(true);
+    video.dispatchEvent(new Event('canplay'));
+    await nextTick();
+    expect(video.play).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('falls back to a muted retry when play() rejects with NotAllowedError (no unhandled rejection)', async () => {
+    const { w, video, state } = mountPlayer({ autoplay: true });
+    let call = 0;
+    (video as unknown as { play: () => Promise<void> }).play = vi.fn(() => {
+      call += 1;
+      if (call === 1) return Promise.reject(new DOMException('blocked', 'NotAllowedError'));
+      state.paused = false;
+      return Promise.resolve();
+    }) as unknown as HTMLVideoElement['play'];
+    video.dispatchEvent(new Event('canplay'));
+    await nextTick();
+    await Promise.resolve(); // let the rejection handler run
+    await nextTick();
+    expect(state.muted).toBe(true); // retried muted
+    expect((video.play as ReturnType<typeof vi.fn>).mock.calls.length).toBe(2);
+    w.unmount();
+  });
+
+  it('re-arms autoplay when the media changes', async () => {
+    const { w, video, state } = mountPlayer({ autoplay: true });
+    video.dispatchEvent(new Event('canplay'));
+    await nextTick();
+    expect((video.play as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(1);
+    await w.setProps({ media: episode({ id: 'e2', name: 'Episode 2', episode_number: 2 }), streamUrl: 'http://x/e2' });
+    state.paused = true; // a fresh source starts paused
+    video.dispatchEvent(new Event('canplay'));
+    await nextTick();
+    expect((video.play as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(2);
+    w.unmount();
+  });
+});
+
+describe('Player — prev/next episode (U2)', () => {
+  function episode(over: Partial<MediaItem> = {}): MediaItem {
+    return media({ id: 'e1', name: 'Pilot', type: 'episode', season_number: 1, episode_number: 1, ...over });
+  }
+  const prevBtn = (w: ReturnType<typeof mountPlayer>['w']) =>
+    w.findAll('.player__btnrow .player__iconbtn').find((b) => b.attributes('aria-label') === 'Previous episode');
+  const nextBtn = (w: ReturnType<typeof mountPlayer>['w']) =>
+    w.findAll('.player__btnrow .player__iconbtn').find((b) => b.attributes('aria-label') === 'Next episode');
+
+  it('shows no prev/next buttons for a movie (no neighbours)', () => {
+    const { w } = mountPlayer();
+    expect(prevBtn(w)).toBeFalsy();
+    expect(nextBtn(w)).toBeFalsy();
+  });
+
+  it('renders both buttons for an episode in the middle of the series', () => {
+    const { w } = mountPlayer({
+      media: episode({ id: 'e2', episode_number: 2 }),
+      prevEpisode: episode({ id: 'e1' }),
+      nextEpisode: episode({ id: 'e3', episode_number: 3 }),
+    });
+    expect(prevBtn(w)).toBeTruthy();
+    expect(nextBtn(w)).toBeTruthy();
+  });
+
+  it('hides Prev on the first episode and Next on the last', () => {
+    const first = mountPlayer({ media: episode(), prevEpisode: null, nextEpisode: episode({ id: 'e2', episode_number: 2 }) });
+    expect(prevBtn(first.w)).toBeFalsy();
+    expect(nextBtn(first.w)).toBeTruthy();
+    const last = mountPlayer({ media: episode({ id: 'e9', episode_number: 9 }), prevEpisode: episode({ id: 'e8', episode_number: 8 }), nextEpisode: null });
+    expect(nextBtn(last.w)).toBeFalsy();
+    expect(prevBtn(last.w)).toBeTruthy();
+  });
+
+  it('emits play-episode with the adjacent episode on click', async () => {
+    const prev = episode({ id: 'e1' });
+    const next = episode({ id: 'e3', episode_number: 3 });
+    const { w } = mountPlayer({ media: episode({ id: 'e2', episode_number: 2 }), prevEpisode: prev, nextEpisode: next });
+    await nextBtn(w)!.trigger('click');
+    expect(w.emitted('play-episode')?.[0]?.[0]).toMatchObject({ id: 'e3' });
+    await prevBtn(w)!.trigger('click');
+    expect(w.emitted('play-episode')?.[1]?.[0]).toMatchObject({ id: 'e1' });
   });
 });
