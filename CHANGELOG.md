@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.27.0] - 2026-06-12
+
+### Added
+- **Selectable embedded subtitle tracks in the player.** When a source is
+  transcoded on demand, the server (S4) extracts its embedded text subtitles to
+  WebVTT sidecars and returns them on the transcode start/status responses as
+  `{ index, language, label, default, url }`. The transcode composable
+  (`useHlsTranscode`) now captures that list into a reactive `subtitleTracks`
+  ref — resolving each sidecar `url` against the API base exactly like the HLS
+  master-playlist URL, and updating reactively when tracks arrive late on a
+  status poll. The player renders one native `<track kind="subtitles">` per
+  track into the `<video>`, so the existing caption enumeration + custom cue
+  overlay pick them up automatically (track selection, the CaptionsMenu list,
+  and the "Off" option all work unchanged). If a track is flagged `default` it
+  becomes the initially-selected caption — but only when the user has no
+  persisted caption preference; an explicit stored choice (a language or "off")
+  is never overridden. Direct-play sources have no sidecars and render no
+  `<track>`s, so direct-play is unaffected.
+
 ## [0.26.0] - 2026-06-12
 
 ### Added

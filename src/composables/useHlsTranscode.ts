@@ -24,6 +24,7 @@ import {
   resolveStreamUrl,
   transcodeStartPath,
   transcodeStatusPath,
+  type SubtitleTrack,
 } from '../components/player/transcode';
 
 /** State machine for the transcode-to-play flow. */
@@ -53,10 +54,20 @@ export interface UseHlsTranscodeOptions {
   sleep?: (ms: number) => Promise<void>;
 }
 
+/**
+ * A subtitle sidecar track exposed to the player, with its `url` already
+ * resolved against the API base (an absolute URL ready for a `<track src>`).
+ */
+export type ResolvedSubtitleTrack = SubtitleTrack;
+
 /** The reactive handle returned by {@link useHlsTranscode}. */
 export interface HlsTranscodeController {
   state: Ref<TranscodeState>;
   progress: Ref<number>;
+  /** Server-provided WebVTT subtitle tracks (absolute URLs). May arrive late on
+   *  a status poll once extraction completes; empty for sources with no embedded
+   *  text subtitles. The Player renders a `<track>` per entry. */
+  subtitleTracks: Ref<ResolvedSubtitleTrack[]>;
   start(video: HTMLVideoElement, mediaId: string, profile?: string): Promise<void>;
   cleanup(): void;
   reset(): void;
@@ -65,6 +76,17 @@ export interface HlsTranscodeController {
 export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeController {
   const state = ref<TranscodeState>('idle');
   const progress = ref(0);
+  const subtitleTracks = ref<ResolvedSubtitleTrack[]>([]);
+
+  /** Replace the exposed track list, resolving each sidecar URL against the API
+   *  base exactly like the master playlist URL. A later poll only overwrites the
+   *  list when it actually carries tracks, so an empty poll never clobbers tracks
+   *  the start response already surfaced. */
+  function setSubtitleTracks(tracks: SubtitleTrack[]): void {
+    if (tracks.length === 0) return;
+    const base = opts.apiBase();
+    subtitleTracks.value = tracks.map((t) => ({ ...t, url: resolveStreamUrl(base, t.url) }));
+  }
 
   const attach = opts.attach ?? defaultAttach;
   const pollIntervalMs = opts.pollIntervalMs ?? 1000;
@@ -87,6 +109,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     cancelled = false;
     state.value = 'preparing';
     progress.value = 0;
+    subtitleTracks.value = [];
 
     try {
       const client = makeClient();
@@ -95,6 +118,9 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       if (!startRes.jobId || !startRes.masterUrl) {
         throw new Error('transcode start returned no job');
       }
+      // Tracks may already be present on the start response (a reused job that
+      // already finished extracting); otherwise they arrive on a later poll.
+      setSubtitleTracks(startRes.subtitles);
 
       const masterUrl = resolveStreamUrl(opts.apiBase(), startRes.masterUrl);
 
@@ -103,6 +129,9 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         const status = parseTranscodeStatus(await client.get(transcodeStatusPath(startRes.jobId)));
         if (cancelled) return;
         progress.value = status.progress;
+        // Late-arriving tracks (extraction completes after the playlist is ready)
+        // update the exposed list reactively → the Player adds the <track>s.
+        setSubtitleTracks(status.subtitles);
         if (isFailedStatus(status.status)) {
           throw new Error(`transcode ${status.status}`);
         }
@@ -155,9 +184,10 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     cleanup();
     state.value = 'idle';
     progress.value = 0;
+    subtitleTracks.value = [];
   }
 
-  return { state, progress, start, cleanup, reset };
+  return { state, progress, subtitleTracks, start, cleanup, reset };
 }
 
 function createTokenStore(): LocalStorageTokenStore | null {

@@ -124,4 +124,83 @@ describe('useHlsTranscode', () => {
     expect(h.controller.state.value).toBe('idle');
     expect(h.controller.progress.value).toBe(0);
   });
+
+  describe('subtitle tracks (U4)', () => {
+    it('starts with no subtitle tracks', () => {
+      const { controller } = harness();
+      expect(controller.subtitleTracks.value).toEqual([]);
+    });
+
+    it('exposes subtitle tracks from the start response, resolving urls against the api base', async () => {
+      const h = harness({
+        start: {
+          job_id: 'j',
+          master_url: '/hls/j/master.m3u8',
+          status: 'completed',
+          subtitles: [{ index: 0, language: 'eng', label: 'English', default: true, url: '/hls/j/sub-0.vtt' }],
+        },
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.subtitleTracks.value).toEqual([
+        { index: 0, language: 'eng', label: 'English', default: true, url: 'http://h:8096/hls/j/sub-0.vtt' },
+      ]);
+    });
+
+    it('picks up subtitle tracks that arrive late on a status poll', async () => {
+      const h = harness({
+        statuses: [
+          { status: 'running', playlist_ready: false, progress: 10 }, // no tracks yet
+          {
+            status: 'running',
+            playlist_ready: true,
+            progress: 80,
+            subtitles: [{ index: 2, language: 'jpn', label: 'Japanese', default: false, url: '/hls/j/sub-2.vtt' }],
+          },
+        ],
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.subtitleTracks.value).toEqual([
+        { index: 2, language: 'jpn', label: 'Japanese', default: false, url: 'http://h:8096/hls/j/sub-2.vtt' },
+      ]);
+    });
+
+    it('leaves the list empty when no embedded text subtitles exist', async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.subtitleTracks.value).toEqual([]);
+    });
+
+    it('an empty poll does not clobber tracks the start response already surfaced', async () => {
+      const h = harness({
+        start: {
+          job_id: 'j',
+          master_url: '/hls/j/master.m3u8',
+          status: 'running',
+          subtitles: [{ index: 0, language: 'eng', label: 'English', default: true, url: '/hls/j/sub-0.vtt' }],
+        },
+        statuses: [{ status: 'running', playlist_ready: true, progress: 90 }], // no subtitles field
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.subtitleTracks.value).toEqual([
+        { index: 0, language: 'eng', label: 'English', default: true, url: 'http://h:8096/hls/j/sub-0.vtt' },
+      ]);
+    });
+
+    it('reset clears the subtitle track list', async () => {
+      const h = harness({
+        start: {
+          job_id: 'j',
+          master_url: '/hls/j/master.m3u8',
+          status: 'completed',
+          subtitles: [{ index: 0, language: 'eng', label: 'English', default: true, url: '/hls/j/sub-0.vtt' }],
+        },
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.subtitleTracks.value).toHaveLength(1);
+      h.controller.reset();
+      expect(h.controller.subtitleTracks.value).toEqual([]);
+    });
+  });
 });

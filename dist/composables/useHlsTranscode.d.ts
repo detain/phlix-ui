@@ -14,6 +14,7 @@
  */
 import { type Ref } from 'vue';
 import { type AttachHlsOptions, type HlsHandle } from '../components/player/hls-playback';
+import { type SubtitleTrack } from '../components/player/transcode';
 /** State machine for the transcode-to-play flow. */
 export type TranscodeState = 'idle' | 'preparing' | 'ready' | 'error';
 /** Minimal HTTP surface this composable needs (ApiClient-compatible). */
@@ -38,10 +39,19 @@ export interface UseHlsTranscodeOptions {
     /** Injectable delay (defaults to setTimeout) — overridden in tests. */
     sleep?: (ms: number) => Promise<void>;
 }
+/**
+ * A subtitle sidecar track exposed to the player, with its `url` already
+ * resolved against the API base (an absolute URL ready for a `<track src>`).
+ */
+export type ResolvedSubtitleTrack = SubtitleTrack;
 /** The reactive handle returned by {@link useHlsTranscode}. */
 export interface HlsTranscodeController {
     state: Ref<TranscodeState>;
     progress: Ref<number>;
+    /** Server-provided WebVTT subtitle tracks (absolute URLs). May arrive late on
+     *  a status poll once extraction completes; empty for sources with no embedded
+     *  text subtitles. The Player renders a `<track>` per entry. */
+    subtitleTracks: Ref<ResolvedSubtitleTrack[]>;
     start(video: HTMLVideoElement, mediaId: string, profile?: string): Promise<void>;
     cleanup(): void;
     reset(): void;

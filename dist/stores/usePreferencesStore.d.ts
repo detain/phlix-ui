@@ -38,6 +38,13 @@ export interface Preferences {
     defaultVolume: number;
     defaultQuality: string;
     defaultSubtitleLang: string | null;
+    /** True once the user has explicitly chosen a caption state (a language, or
+     *  "Off") via the CaptionsMenu or the Settings default-subtitle dropdown.
+     *  Distinguishes an explicit "Off" (`defaultSubtitleLang === null` + this
+     *  `true`) from the initial no-preference state (`null` + this `false`), so the
+     *  player only adopts a server `default:true` track when the user has NOT
+     *  chosen. Persisted (so an explicit Off carries across episodes/sessions). */
+    subtitlePreferenceSet: boolean;
     /** Persisted caption appearance (R3.5). */
     captionStyle: CaptionStyle;
     atmosphere: boolean;
@@ -67,6 +74,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    subtitlePreferenceSet: import("vue").Ref<boolean, boolean>;
     captionStyle: import("vue").Ref<{
         size: CaptionSize;
         textColor: string;
@@ -94,7 +102,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
+}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
@@ -105,6 +113,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    subtitlePreferenceSet: import("vue").Ref<boolean, boolean>;
     captionStyle: import("vue").Ref<{
         size: CaptionSize;
         textColor: string;
@@ -143,6 +152,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    subtitlePreferenceSet: import("vue").Ref<boolean, boolean>;
     captionStyle: import("vue").Ref<{
         size: CaptionSize;
         textColor: string;

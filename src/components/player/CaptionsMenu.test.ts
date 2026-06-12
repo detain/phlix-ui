@@ -69,9 +69,10 @@ describe('CaptionsMenu — track picker', () => {
     await radios[1].trigger('click'); // English
     expect(usePlayerStore().subtitleLang).toBe('en');
     expect(usePreferencesStore().defaultSubtitleLang).toBe('en');
+    expect(usePreferencesStore().subtitlePreferenceSet).toBe(true); // user made a choice
   });
 
-  it('selecting Off clears the store + default', async () => {
+  it('selecting Off clears the store + default and marks the preference as set', async () => {
     usePlayerStore().setSubtitle('en');
     usePreferencesStore().defaultSubtitleLang = 'en';
     const w = mountMenu({ tracks: [EN], open: true });
@@ -80,6 +81,9 @@ describe('CaptionsMenu — track picker', () => {
     await off.trigger('click');
     expect(usePlayerStore().subtitleLang).toBeNull();
     expect(usePreferencesStore().defaultSubtitleLang).toBeNull();
+    // Explicit Off is a real choice — flag set so the player won't re-enable
+    // captions via a server default on a later poll.
+    expect(usePreferencesStore().subtitlePreferenceSet).toBe(true);
   });
 
   it('marks "Off" as selected when subtitleLang resolves to no track', async () => {

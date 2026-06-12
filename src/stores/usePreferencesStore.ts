@@ -51,6 +51,13 @@ export interface Preferences {
   defaultVolume: number; // 0–1
   defaultQuality: string; // 'auto' | '4k' | '1080p' | …
   defaultSubtitleLang: string | null;
+  /** True once the user has explicitly chosen a caption state (a language, or
+   *  "Off") via the CaptionsMenu or the Settings default-subtitle dropdown.
+   *  Distinguishes an explicit "Off" (`defaultSubtitleLang === null` + this
+   *  `true`) from the initial no-preference state (`null` + this `false`), so the
+   *  player only adopts a server `default:true` track when the user has NOT
+   *  chosen. Persisted (so an explicit Off carries across episodes/sessions). */
+  subtitlePreferenceSet: boolean;
   /** Persisted caption appearance (R3.5). */
   captionStyle: CaptionStyle;
   atmosphere: boolean;
@@ -69,6 +76,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   defaultVolume: 1,
   defaultQuality: 'auto',
   defaultSubtitleLang: null,
+  subtitlePreferenceSet: false,
   captionStyle: { ...DEFAULT_CAPTION_STYLE },
   atmosphere: true,
   filterPresets: [],
@@ -138,6 +146,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   const defaultVolume = ref<number>(initial.defaultVolume);
   const defaultQuality = ref<string>(initial.defaultQuality);
   const defaultSubtitleLang = ref<string | null>(initial.defaultSubtitleLang);
+  const subtitlePreferenceSet = ref<boolean>(initial.subtitlePreferenceSet);
   // Merge over the defaults (readStoredPreferences shallow-spreads, so a stored
   // partial style would otherwise drop keys) AND copy so the shared
   // DEFAULT_CAPTION_STYLE object is never mutated through the ref.
@@ -169,6 +178,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       defaultVolume: defaultVolume.value,
       defaultQuality: defaultQuality.value,
       defaultSubtitleLang: defaultSubtitleLang.value,
+      subtitlePreferenceSet: subtitlePreferenceSet.value,
       captionStyle: captionStyle.value,
       atmosphere: atmosphere.value,
       filterPresets: filterPresets.value,
@@ -213,6 +223,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     defaultVolume.value = d.defaultVolume;
     defaultQuality.value = d.defaultQuality;
     defaultSubtitleLang.value = d.defaultSubtitleLang;
+    subtitlePreferenceSet.value = d.subtitlePreferenceSet;
     captionStyle.value = { ...DEFAULT_CAPTION_STYLE };
     atmosphere.value = d.atmosphere;
     filterPresets.value = [...d.filterPresets];
@@ -229,6 +240,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     defaultVolume,
     defaultQuality,
     defaultSubtitleLang,
+    subtitlePreferenceSet,
     captionStyle,
     atmosphere,
     filterPresets,

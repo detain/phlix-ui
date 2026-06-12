@@ -197,11 +197,12 @@ export {
   transcodeStatusPath,
   parseTranscodeStart,
   parseTranscodeStatus,
+  parseSubtitleTracks,
   isPlayable,
   isFailedStatus,
   resolveStreamUrl,
 } from './components/player/transcode';
-export type { TranscodeStart, TranscodeStatus } from './components/player/transcode';
+export type { TranscodeStart, TranscodeStatus, SubtitleTrack } from './components/player/transcode';
 export { attachHls, isNativeHlsSupported } from './components/player/hls-playback';
 export type { HlsHandle, AttachHlsOptions } from './components/player/hls-playback';
 export { useHlsTranscode } from './composables/useHlsTranscode';
@@ -210,6 +211,7 @@ export type {
   TranscodeHttpClient,
   HlsTranscodeController,
   UseHlsTranscodeOptions,
+  ResolvedSubtitleTrack,
 } from './composables/useHlsTranscode';
 export {
   needsTranscode,

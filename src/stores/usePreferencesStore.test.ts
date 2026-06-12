@@ -81,6 +81,41 @@ describe('usePreferencesStore', () => {
     expect(s.cardSize).toBe(DEFAULT_PREFERENCES.cardSize);
   });
 
+  describe('subtitlePreferenceSet (U4 — explicit Off vs no-preference)', () => {
+    it('defaults to false (no caption choice made yet)', () => {
+      expect(DEFAULT_PREFERENCES.subtitlePreferenceSet).toBe(false);
+      expect(usePreferencesStore().subtitlePreferenceSet).toBe(false);
+    });
+
+    it('is persisted into the prefs blob', async () => {
+      const s = usePreferencesStore();
+      s.subtitlePreferenceSet = true;
+      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 0));
+      const raw = JSON.parse(localStorage.getItem('phlix.prefs')!);
+      expect(raw.subtitlePreferenceSet).toBe(true);
+    });
+
+    it('hydrates from storage (an explicit Off survives a reload)', () => {
+      // defaultSubtitleLang null + the flag true == an explicit Off.
+      localStorage.setItem(
+        'phlix.prefs',
+        JSON.stringify({ defaultSubtitleLang: null, subtitlePreferenceSet: true }),
+      );
+      setActivePinia(createPinia());
+      const s = usePreferencesStore();
+      expect(s.defaultSubtitleLang).toBeNull();
+      expect(s.subtitlePreferenceSet).toBe(true);
+    });
+
+    it('reset() clears the flag back to false', () => {
+      const s = usePreferencesStore();
+      s.subtitlePreferenceSet = true;
+      s.reset();
+      expect(s.subtitlePreferenceSet).toBe(false);
+    });
+  });
+
   describe('filter presets', () => {
     it('saves a preset, persists it, and overwrites by name (stable id)', async () => {
       const s = usePreferencesStore();
