@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { groupEpisodesBySeason, hasSeasonRows, firstEpisode } from './series-grouping';
+import {
+  groupEpisodesBySeason,
+  hasSeasonRows,
+  firstEpisode,
+  seasonRouteParam,
+  findSeasonByParam,
+} from './series-grouping';
 import type { MediaItem } from '../types/media-item';
 
 function ep(over: Partial<MediaItem> = {}): MediaItem {
@@ -111,5 +117,74 @@ describe('firstEpisode', () => {
 
   it('returns null when no season has episodes', () => {
     expect(firstEpisode([])).toBeNull();
+  });
+});
+
+describe('season metadata (U3)', () => {
+  it('attaches the season poster/overview from season container rows passed as seasonRows', () => {
+    const seasonRows = [
+      ep({ id: 'se1', type: 'season', season_number: 1, poster_url: 'p1.jpg', overview: 'S1 overview' }),
+    ];
+    const groups = groupEpisodesBySeason(
+      [ep({ id: 's1e1', season_number: 1, episode_number: 1 })],
+      seasonRows,
+    );
+    expect(groups[0].seasonPoster).toBe('p1.jpg');
+    expect(groups[0].seasonItem?.overview).toBe('S1 overview');
+  });
+
+  it('picks up season container rows present in the items list too', () => {
+    const groups = groupEpisodesBySeason([
+      ep({ id: 'se1', type: 'season', season_number: 1, poster_url: 'p1.jpg' }),
+      ep({ id: 's1e1', season_number: 1, episode_number: 1 }),
+    ]);
+    expect(groups[0].seasonPoster).toBe('p1.jpg');
+  });
+
+  it('leaves seasonPoster null when there is no container row', () => {
+    const groups = groupEpisodesBySeason([ep({ id: 's1e1', season_number: 1, episode_number: 1 })]);
+    expect(groups[0].seasonPoster).toBeNull();
+    expect(groups[0].seasonItem).toBeNull();
+  });
+});
+
+describe('seasonRouteParam', () => {
+  it('uses the season number, and 0 for Specials', () => {
+    const groups = groupEpisodesBySeason([
+      ep({ id: 's2e1', season_number: 2, episode_number: 1 }),
+      ep({ id: 'sp1', season_number: 0, episode_number: 1 }),
+    ]);
+    expect(seasonRouteParam(groups[0])).toBe('2'); // Season 2
+    expect(seasonRouteParam(groups[1])).toBe('0'); // Specials
+  });
+});
+
+describe('findSeasonByParam', () => {
+  const groups = groupEpisodesBySeason([
+    ep({ id: 's1e1', season_number: 1, episode_number: 1 }),
+    ep({ id: 's2e1', season_number: 2, episode_number: 1 }),
+    ep({ id: 'sp1', season_number: 0, episode_number: 1 }),
+  ]);
+
+  it('finds a season by its numeric param', () => {
+    expect(findSeasonByParam(groups, '2')?.seasonNumber).toBe(2);
+    expect(findSeasonByParam(groups, 1)?.seasonNumber).toBe(1);
+  });
+
+  it('maps 0 to the Specials bucket', () => {
+    expect(findSeasonByParam(groups, '0')?.isSpecials).toBe(true);
+  });
+
+  it('returns null for a season number that does not exist', () => {
+    expect(findSeasonByParam(groups, '99')).toBeNull();
+  });
+
+  it('maps a non-numeric / empty param to the Specials bucket (target null)', () => {
+    // A non-numeric param parses to NaN → target null → the Specials bucket
+    // (when one exists); a series with no Specials yields null instead, which
+    // the page renders as a "season not found" empty state.
+    expect(findSeasonByParam(groups, 'abc')?.isSpecials).toBe(true);
+    const noSpecials = groupEpisodesBySeason([ep({ id: 's1e1', season_number: 1, episode_number: 1 })]);
+    expect(findSeasonByParam(noSpecials, 'abc')).toBeNull();
   });
 });

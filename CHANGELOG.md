@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.26.0] - 2026-06-12
+
+### Added
+- **Per-season pages with a series season grid.** A series' detail page
+  (`/app/media/:id`) no longer dumps the whole season/episode tree inline.
+  Instead it shows the series info (poster, overview, genres, year, rating) plus
+  a GRID OF SEASON CARDS — one card per season (season poster, falling back to the
+  series poster; "Season N" / "Specials"; the episode count) that links to its
+  own per-season page. A new route `/app/media/:id/season/:season` (name
+  `season`, `:season` = the season number, Specials = 0) renders that season:
+  a header (season poster/name/overview + a back-link to the series) and the
+  season's episode list (reusing the SeriesSeasons episode rows), with Play per
+  episode navigating to `/app/player/:id`. An invalid/missing season number shows
+  a "season not found" empty state. Movie/episode detail is unchanged. New
+  `SeriesDetail`/`SeasonPage` components, a shared `loadSeriesSeasons` fetch
+  routine, and `seasonRouteParam`/`findSeasonByParam` season-grouping helpers
+  (groups now carry the season poster/overview); page titles set to the series
+  name and `<Series> · Season N`.
+
 ## [0.25.0] - 2026-06-12
 
 ### Added

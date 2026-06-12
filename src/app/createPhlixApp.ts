@@ -140,6 +140,15 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             component: () => import('../pages/MediaDetailPage.vue'),
         },
         {
+            // Per-season page for a series (U3). `:season` is the season number
+            // (Specials = 0). A static segment under `/media/:id`, so it ranks
+            // above the bare `:id` detail route. Title is async (`<Series> ·
+            // Season N`, set by the page), so no static `meta.title`.
+            path: `${base}/media/:id/season/:season`,
+            name: 'season',
+            component: () => import('../pages/SeasonPage.vue'),
+        },
+        {
             // The dedicated per-library grid. A consumer's literal `/app/library/scan`
             // (registered via extraRoutes) still wins over this `:id` param — vue-router
             // ranks a static segment above a dynamic one regardless of registration order.
