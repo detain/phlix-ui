@@ -18,6 +18,8 @@ type __VLS_Props = {
     hideWhenEmpty?: boolean;
     /** Override the per-card link target prefix (default the player route). */
     cardTo?: (item: MediaItem) => string;
+    /** Admin opt-in (U5): render each card's "Match" action + forward `match`. */
+    canMatch?: boolean;
 };
 declare var __VLS_1: {}, __VLS_19: {};
 type __VLS_Slots = {} & {
@@ -26,11 +28,13 @@ type __VLS_Slots = {} & {
     empty?: (props: typeof __VLS_19) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+    match: (item: MediaItem) => any;
     play: (item: MediaItem) => any;
     info: (item: MediaItem) => any;
     retry: () => any;
     watchlist: (item: MediaItem) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
+    onMatch?: ((item: MediaItem) => any) | undefined;
     onPlay?: ((item: MediaItem) => any) | undefined;
     onInfo?: ((item: MediaItem) => any) | undefined;
     onRetry?: (() => any) | undefined;
@@ -38,6 +42,7 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
 }>, {
     error: string | null;
     loading: boolean;
+    canMatch: boolean;
     count: number | null;
     skeletonCount: number;
     hideWhenEmpty: boolean;

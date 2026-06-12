@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ApiClient, ApiError } from './client';
+import { ApiClient, ApiError, isTmdbUnconfigured } from './client';
 import { NetworkError, TimeoutError } from './errors';
 import { MemoryTokenStore, makeFetch } from './test/memoryTokenStore';
 
@@ -293,6 +293,105 @@ describe('ApiClient', () => {
             } finally {
                 vi.useRealTimers();
             }
+        });
+    });
+
+    describe('interactive metadata match (U5)', () => {
+        it('matchSearch hits the search endpoint, forwards manual params + parses results', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        results: [
+                            { tmdb_id: 42, type: 'movie', title: 'Dune', year: 2021, overview: 'o', poster_url: 'p', backdrop_url: 'b', vote_average: 8.1 },
+                        ],
+                        query: 'Dune',
+                        type: 'movie',
+                    },
+                },
+            ]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.matchSearch('m1', { query: 'Dune', year: 2021 });
+
+            expect(calls).toHaveLength(1);
+            const url = new URL(calls[0]!.url);
+            expect(url.pathname).toBe('/api/v1/media/m1/match/search');
+            expect(url.searchParams.get('query')).toBe('Dune');
+            expect(url.searchParams.get('year')).toBe('2021');
+            expect(calls[0]!.init!.method).toBe('GET');
+            expect(res.results).toHaveLength(1);
+            expect(res.results[0]!.tmdb_id).toBe(42);
+            expect(res.query).toBe('Dune');
+            expect(res.type).toBe('movie');
+        });
+
+        it('matchSearch omits empty/absent params (server derives from the item)', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { results: [], query: '', type: 'tv' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.matchSearch('s1', { query: '', year: '' });
+
+            const url = new URL(calls[0]!.url);
+            expect(url.searchParams.has('query')).toBe(false);
+            expect(url.searchParams.has('year')).toBe(false);
+            // a malformed/empty payload still yields a defended array
+            expect(res.results).toEqual([]);
+        });
+
+        it('matchSearch defends a non-array results payload to []', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch } = makeFetch([{ status: 200, body: { results: null, query: 1, type: 'bogus' } }]);
+            const client = new ApiClient({ baseUrl: '', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.matchSearch('m1', { type: 'tv' });
+            expect(res.results).toEqual([]);
+            expect(res.type).toBe('tv'); // falls back to the requested type
+        });
+
+        it('matchSearch surfaces 422 tmdb_unconfigured via isTmdbUnconfigured', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const unconfigured = { status: 422, body: { error: 'TMDB not configured', code: 'metadata.tmdb_unconfigured' } };
+            const { fetch } = makeFetch([unconfigured, unconfigured]);
+            const client = new ApiClient({ baseUrl: '', tokenStore: tokens, fetchImpl: fetch });
+
+            await expect(client.matchSearch('m1')).rejects.toMatchObject({ status: 422 });
+            try {
+                await client.matchSearch('m1');
+                throw new Error('expected matchSearch to reject');
+            } catch (e) {
+                expect(isTmdbUnconfigured(e)).toBe(true);
+            }
+        });
+
+        it('matchApply POSTs the chosen tmdb_id/type and returns the re-shaped item', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        item: { id: 'm1', name: 'Dune', type: 'movie' },
+                        applied: { item_id: 'm1', mode: 'movie', tmdb_id: 42, matched: true, children_enriched: 0 },
+                    },
+                },
+            ]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.matchApply('m1', { tmdb_id: 42, type: 'movie' });
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/match/apply');
+            expect(calls[0]!.init!.method).toBe('POST');
+            expect(calls[0]!.init!.body).toBe(JSON.stringify({ tmdb_id: 42, type: 'movie' }));
+            expect((res.item as { name: string }).name).toBe('Dune');
+            expect(res.applied.matched).toBe(true);
+        });
+
+        it('isTmdbUnconfigured is false for non-422 / non-code errors', () => {
+            expect(isTmdbUnconfigured(new ApiError('x', 404, { code: 'metadata.tmdb_unconfigured' }))).toBe(false);
+            expect(isTmdbUnconfigured(new ApiError('x', 422, { code: 'metadata.no_match' }))).toBe(false);
+            expect(isTmdbUnconfigured(new Error('plain'))).toBe(false);
         });
     });
 });

@@ -11,14 +11,16 @@
  * to this library. The title comes from `useLibrariesStore` (loading the list if
  * a deep link landed here first).
  */
-import { onMounted, onBeforeUnmount, watch, inject, computed, type ComputedRef } from 'vue';
+import { onMounted, onBeforeUnmount, watch, inject, computed, ref, type ComputedRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaStore } from '../stores/useMediaStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import MediaGrid from '../components/MediaGrid.vue';
 import FilterBar from '../components/FilterBar.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
+import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import type { MediaItem } from '../types/media-item';
 import { usePageTitle } from '../composables/usePageTitle';
 
@@ -31,6 +33,20 @@ const route = useRoute();
 const router = useRouter();
 const store = useMediaStore();
 const libraries = useLibrariesStore();
+const auth = useAuthStore();
+
+// Interactive metadata match (U5) — admin-only. The card "Match" action opens a
+// modal for that item; a successful apply reloads the scope so the refreshed
+// poster/metadata shows in the grid.
+const matchTarget = ref<MediaItem | null>(null);
+const matchOpen = ref(false);
+function onMatch(item: MediaItem): void {
+  matchTarget.value = item;
+  matchOpen.value = true;
+}
+function onMatchApplied(): void {
+  reload();
+}
 
 const libraryId = computed(() => {
   const id = route.params.id;
@@ -146,12 +162,21 @@ function onInfo(item: MediaItem): void {
         :loading="store.loading && store.items.length === 0"
         :loading-more="store.loading && store.items.length > 0"
         :has-more="store.hasMore"
+        :can-match="auth.isAdmin"
         @load-more="onLoadMore"
         @play="onPlay"
         @watchlist="onWatchlist"
         @info="onInfo"
+        @match="onMatch"
       />
     </section>
+
+    <MetadataMatchModal
+      v-if="auth.isAdmin"
+      v-model="matchOpen"
+      :item="matchTarget"
+      @applied="onMatchApplied"
+    />
   </div>
 </template>
 

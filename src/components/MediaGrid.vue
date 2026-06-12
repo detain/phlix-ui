@@ -50,8 +50,10 @@ const props = withDefaults(
     skeletonCount?: number;
     /** Extra rows rendered above/below the visible band. */
     overscan?: number;
+    /** Admin opt-in (U5): render each card's "Match" action + forward `match`. */
+    canMatch?: boolean;
   }>(),
-  { loading: false, loadingMore: false, hasMore: false, skeletonCount: 18, overscan: 2 },
+  { loading: false, loadingMore: false, hasMore: false, skeletonCount: 18, overscan: 2, canMatch: false },
 );
 
 const emit = defineEmits<{
@@ -59,6 +61,7 @@ const emit = defineEmits<{
   (e: 'play', item: MediaItem): void;
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
+  (e: 'match', item: MediaItem): void;
 }>();
 
 defineSlots<{
@@ -284,9 +287,11 @@ watch(
             <slot name="card" :item="entry.item" :index="entry.index">
               <MediaCard
                 :item="entry.item"
+                :can-match="canMatch"
                 @play="emit('play', entry.item)"
                 @watchlist="emit('watchlist', entry.item)"
                 @info="emit('info', entry.item)"
+                @match="emit('match', entry.item)"
               />
             </slot>
           </template>

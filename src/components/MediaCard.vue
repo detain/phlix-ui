@@ -42,14 +42,21 @@ const props = withDefaults(
      * poster's rendered width when omitted; ignored without responsive sources.
      */
     posterSizes?: string;
+    /**
+     * Admin opt-in (U5): render a "Match" quick-action that emits `match` so the
+     * host can open the interactive metadata-match modal for this item. Off by
+     * default; the host gates it on `isAdmin`. Keeps the card layout intact.
+     */
+    canMatch?: boolean;
   }>(),
-  { newWithinDays: 30 },
+  { newWithinDays: 30, canMatch: false },
 );
 
 const emit = defineEmits<{
   (e: 'play', item: MediaItem): void;
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
+  (e: 'match', item: MediaItem): void;
 }>();
 
 const player = usePlayerStore();
@@ -181,6 +188,15 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             @click="emit('info', item)"
           >
             <Icon name="info" />
+          </button>
+          <button
+            v-if="canMatch"
+            type="button"
+            class="media-card__iconbtn"
+            aria-label="Match metadata"
+            @click="emit('match', item)"
+          >
+            <Icon name="search" />
           </button>
           <slot name="actions" :item="item" />
         </div>

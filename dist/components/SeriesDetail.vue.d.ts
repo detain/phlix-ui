@@ -11,14 +11,18 @@ type __VLS_Props = {
     resumeSeconds?: number | null;
     /** The router base so season links carry the `/app` prefix. */
     routerBase?: string;
+    /** Admin opt-in (U5): show a "Match metadata" action on the series hero. */
+    canMatch?: boolean;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+    match: (item: MediaItem) => any;
     play: (item: MediaItem) => any;
     info: (item: MediaItem) => any;
     back: () => any;
     resume: (item: MediaItem) => any;
     watchlist: (item: MediaItem) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
+    onMatch?: ((item: MediaItem) => any) | undefined;
     onPlay?: ((item: MediaItem) => any) | undefined;
     onInfo?: ((item: MediaItem) => any) | undefined;
     onBack?: (() => any) | undefined;
@@ -26,6 +30,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     onWatchlist?: ((item: MediaItem) => any) | undefined;
 }>, {
     loading: boolean;
+    canMatch: boolean;
     resumeSeconds: number | null;
     routerBase: string;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
