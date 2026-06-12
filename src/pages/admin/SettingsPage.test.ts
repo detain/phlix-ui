@@ -11,6 +11,7 @@ import { ApiError } from '../../api/client';
 import type { ApiClient } from '../../api/client';
 
 const SETTINGS = {
+  'auth.signup_mode': 'approval',
   'hwaccel.enabled': true,
   'hwaccel.prefer_hardware': false,
   'hwaccel.probe_timeout': 30,
@@ -32,6 +33,7 @@ const SETTINGS = {
 };
 
 const TYPES = {
+  'auth.signup_mode': 'string',
   'hwaccel.enabled': 'bool',
   'hwaccel.prefer_hardware': 'bool',
   'hwaccel.probe_timeout': 'int',
@@ -100,7 +102,7 @@ describe('Admin SettingsPage — load + layout', () => {
     expect(w.find('.admin-settings__skel').exists()).toBe(true);
     resolve({ data: { settings: { ...SETTINGS }, overridden: [], types: TYPES } });
     await flushPromises();
-    expect(w.findAll('[role="tab"]').length).toBe(9);
+    expect(w.findAll('[role="tab"]').length).toBe(10);
     w.unmount();
   });
 
@@ -112,22 +114,23 @@ describe('Admin SettingsPage — load + layout', () => {
     w.unmount();
   });
 
-  it('renders all 9 group tabs', async () => {
+  it('renders all 10 group tabs', async () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     const labels = w.findAll('[role="tab"]').map((t) => t.text().trim());
     expect(labels).toEqual([
-      'Transcoding', 'Metadata', 'Markers', 'Subtitles', 'Discovery',
+      'Access', 'Transcoding', 'Metadata', 'Markers', 'Subtitles', 'Discovery',
       'Trickplay', 'Newsletter', 'Port Forward', 'Scrobblers',
     ]);
     w.unmount();
   });
 
-  it('renders the Transcoding fields initially with Save disabled', async () => {
+  it('renders the Transcoding fields with Save disabled', async () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
+    await selectTab(w, 'Transcoding');
     expect(w.text()).toContain('Enabled');
     expect(w.text()).toContain('Prefer Hardware');
     expect(w.text()).toContain('Probe Timeout');
@@ -162,7 +165,7 @@ describe('Admin SettingsPage — load + layout', () => {
     await flushPromises();
     expect(get).toHaveBeenCalledTimes(2);
     expect(w.findComponent(EmptyState).exists()).toBe(false);
-    expect(w.findAll('[role="tab"]').length).toBe(9);
+    expect(w.findAll('[role="tab"]').length).toBe(10);
     w.unmount();
   });
 
@@ -223,6 +226,7 @@ describe('Admin SettingsPage — bool field (Switch) edit + save', () => {
     const { client, put } = makeClient();
     const w = mountPage(client);
     await flushPromises();
+    await selectTab(w, 'Transcoding');
     expect(saveBtn(w).attributes('disabled')).toBeDefined();
     // hwaccel.enabled is the first Switch (currently true) → toggle off.
     await w.findComponent(Switch).vm.$emit('update:modelValue', false);
@@ -264,6 +268,38 @@ describe('Admin SettingsPage — string + select + password edit + save', () => 
     await flushPromises();
     expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
       settings: { 'subtitles.default_language': 'fr' },
+    });
+    w.unmount();
+  });
+
+  it('renders auth.signup_mode as a Select with the three options + current value', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Access');
+    const select = w.findComponent(Select);
+    expect(select.exists()).toBe(true);
+    expect(select.props('modelValue')).toBe('approval');
+    const optionLabels = (select.props('options') as Array<{ value: string; label: string }>).map(
+      (o) => o.value,
+    );
+    expect(optionLabels).toEqual(['open', 'approval', 'disabled']);
+    // No raw text input for this string key — it's a proper dropdown.
+    expect(w.find('#field-auth\\.signup_mode').exists()).toBe(false);
+    w.unmount();
+  });
+
+  it('saves the chosen auth.signup_mode value via PUT', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Access');
+    w.findComponent(Select).vm.$emit('update:modelValue', 'disabled');
+    await flushPromises();
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
+      settings: { 'auth.signup_mode': 'disabled' },
     });
     w.unmount();
   });
@@ -339,6 +375,7 @@ describe('Admin SettingsPage — save error paths', () => {
     const { client } = makeClient({ putImpl });
     const w = mountPage(client);
     await flushPromises();
+    await selectTab(w, 'Transcoding');
     await w.findComponent(Switch).vm.$emit('update:modelValue', false);
     await flushPromises();
     await saveBtn(w).trigger('click');
@@ -353,6 +390,7 @@ describe('Admin SettingsPage — save error paths', () => {
     const { client } = makeClient({ putImpl });
     const w = mountPage(client);
     await flushPromises();
+    await selectTab(w, 'Transcoding');
     await w.findComponent(Switch).vm.$emit('update:modelValue', false);
     await flushPromises();
     await saveBtn(w).trigger('click');
@@ -367,6 +405,7 @@ describe('Admin SettingsPage — save error paths', () => {
     const { client } = makeClient({ putImpl });
     const w = mountPage(client);
     await flushPromises();
+    await selectTab(w, 'Transcoding');
     await w.findComponent(Switch).vm.$emit('update:modelValue', false);
     await flushPromises();
     await saveBtn(w).trigger('click');
@@ -385,6 +424,7 @@ describe('Admin SettingsPage — save success refresh', () => {
     const { client } = makeClient({ putImpl: put });
     const w = mountPage(client);
     await flushPromises();
+    await selectTab(w, 'Transcoding');
     await w.findComponent(Switch).vm.$emit('update:modelValue', false);
     await flushPromises();
     await saveBtn(w).trigger('click');
@@ -426,10 +466,10 @@ describe('Admin SettingsPage — tab a11y (ui/Tabs adoption, R6.5a.2)', () => {
     const w = mountPage(client);
     await flushPromises();
     const list = w.find('[role="tablist"]');
-    expect(w.find('[role="tab"][aria-selected="true"]').text().trim()).toBe('Transcoding');
+    expect(w.find('[role="tab"][aria-selected="true"]').text().trim()).toBe('Access');
     await list.trigger('keydown', { key: 'ArrowRight' });
     await flushPromises();
-    expect(w.find('[role="tab"][aria-selected="true"]').text().trim()).toBe('Metadata');
+    expect(w.find('[role="tab"][aria-selected="true"]').text().trim()).toBe('Transcoding');
     w.unmount();
   });
 });

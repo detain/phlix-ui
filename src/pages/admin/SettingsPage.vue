@@ -42,6 +42,7 @@ const toasts = useToastStore();
 
 /** Tab definitions — order must match the spec. */
 const TABS = [
+  { id: 'access', label: 'Access' },
   { id: 'transcoding', label: 'Transcoding' },
   { id: 'metadata', label: 'Metadata' },
   { id: 'markers', label: 'Markers' },
@@ -60,6 +61,7 @@ const TAB_ITEMS: TabItem[] = TABS.map((t) => ({ value: t.id, label: t.label }));
 
 /** Keys that belong to each tab group. */
 const TAB_KEYS: Record<TabId, string[]> = {
+  access: ['auth.signup_mode'],
   transcoding: ['hwaccel.enabled', 'hwaccel.prefer_hardware', 'hwaccel.probe_timeout'],
   metadata: ['tmdb.api_key'],
   markers: ['marker_detection.similarity_threshold', 'marker_detection.intro_max_duration'],
@@ -89,6 +91,11 @@ const PASSWORD_FIELDS = new Set(['tmdb.api_key', 'trakt.client_secret']);
  * (A strict improvement over the React source's free-text input for these.)
  */
 const SELECT_OPTIONS: Record<string, ReadonlyArray<SelectOptionInput>> = {
+  'auth.signup_mode': [
+    { value: 'open', label: 'Open — anyone can sign up' },
+    { value: 'approval', label: 'Require admin approval' },
+    { value: 'disabled', label: 'Disabled — no new signups' },
+  ],
   'subtitles.default_language': [
     { value: 'en', label: 'English' },
     { value: 'es', label: 'Spanish' },
@@ -101,6 +108,7 @@ const SELECT_OPTIONS: Record<string, ReadonlyArray<SelectOptionInput>> = {
 
 /** Explicit, unambiguous labels for keys whose derived name is unclear. */
 const FIELD_LABELS: Record<string, string> = {
+  'auth.signup_mode': 'Signup mode',
   'tmdb.api_key': 'TMDB API Key',
   'trakt.client_id': 'Trakt Client ID',
   'trakt.client_secret': 'Trakt Client Secret',
@@ -109,6 +117,8 @@ const FIELD_LABELS: Record<string, string> = {
 
 /** Inline help shown under a field. */
 const FIELD_HELP: Record<string, string> = {
+  'auth.signup_mode':
+    'Controls who can create an account. "Open" lets anyone register and sign in immediately. "Require admin approval" creates accounts in a pending state — review them in the Users page approval queue before they can sign in. "Disabled" turns off new signups entirely.',
   'tmdb.api_key':
     'Your TMDB (The Movie Database) API key — get one free at themoviedb.org → Settings → API (v3 auth). Used to fetch movie & TV metadata, posters, and external IDs.',
   'trakt.client_id':
@@ -135,7 +145,7 @@ const overridden = ref<string[]>([]);
 const types = ref<Record<string, string>>({});
 
 // ── UI state ──────────────────────────────────────────────────────────────────
-const activeTab = ref<string>('transcoding');
+const activeTab = ref<string>('access');
 const loading = ref(true);
 const error = ref<string | null>(null);
 const submitting = ref(false);

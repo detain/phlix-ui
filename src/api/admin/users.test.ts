@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { AdminUsersApi, RATING_LABELS, RATING_OPTIONS } from './users';
+import { AdminUsersApi, RATING_LABELS, RATING_OPTIONS, USER_STATUSES } from './users';
 import type { ApiClient } from '../client';
 
 /** A mock ApiClient whose verbs are vi.fn()s the test can assert on. */
@@ -18,6 +18,7 @@ const sampleUser = {
   username: 'alice',
   email: 'alice@example.com',
   is_admin: 1 as const,
+  status: 'active' as const,
   created_at: '2026-05-27T00:00:00Z',
   updated_at: '2026-05-27T00:00:00Z',
 };
@@ -44,6 +45,53 @@ describe('AdminUsersApi — users', () => {
     const { api, get } = makeClient();
     get.mockResolvedValue({});
     expect(await api.list()).toEqual([]);
+  });
+
+  it('list({ status }) appends ?status= and unwraps { users }', async () => {
+    const { api, get } = makeClient();
+    const pending = { ...sampleUser, id: 5, status: 'pending' as const };
+    get.mockResolvedValue({ users: [pending] });
+    const res = await api.list({ status: 'pending' });
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/users?status=pending');
+    expect(res).toEqual([pending]);
+  });
+
+  it('list() with no status omits the query string', async () => {
+    const { api, get } = makeClient();
+    get.mockResolvedValue({ users: [] });
+    await api.list({});
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/users');
+  });
+
+  it('carries the status field through on each row', async () => {
+    const { api, get } = makeClient();
+    get.mockResolvedValue({ users: [{ ...sampleUser, status: 'disabled' }] });
+    const res = await api.list();
+    expect(res[0].status).toBe('disabled');
+  });
+
+  it('approve() POSTs /{id}/approve', async () => {
+    const { api, post } = makeClient();
+    post.mockResolvedValue({ message: 'approved' });
+    const res = await api.approve(5);
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/users/5/approve');
+    expect(res).toEqual({ message: 'approved' });
+  });
+
+  it('disable() POSTs /{id}/disable', async () => {
+    const { api, post } = makeClient();
+    post.mockResolvedValue({ message: 'disabled' });
+    const res = await api.disable(5);
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/users/5/disable');
+    expect(res).toEqual({ message: 'disabled' });
+  });
+
+  it('reject() POSTs /{id}/reject', async () => {
+    const { api, post } = makeClient();
+    post.mockResolvedValue({ message: 'rejected' });
+    const res = await api.reject(5);
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/users/5/reject');
+    expect(res).toEqual({ message: 'rejected' });
   });
 
   it('get(id) GETs /api/v1/admin/users/{id} and unwraps { user }', async () => {
@@ -200,5 +248,11 @@ describe('rating tables', () => {
     expect(RATING_OPTIONS).toHaveLength(7);
     expect(RATING_OPTIONS[0]).toEqual({ value: 0, label: RATING_LABELS[0] });
     expect(RATING_OPTIONS.every((o) => typeof o.value === 'number')).toBe(true);
+  });
+});
+
+describe('user statuses', () => {
+  it('USER_STATUSES lists the three statuses, pending first', () => {
+    expect(USER_STATUSES).toEqual(['pending', 'active', 'disabled']);
   });
 });

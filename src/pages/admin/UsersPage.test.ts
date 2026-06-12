@@ -14,6 +14,7 @@ const userA = {
   username: 'alice',
   email: 'alice@example.com',
   is_admin: 1 as const,
+  status: 'active' as const,
   created_at: '2026-05-27T00:00:00Z',
   updated_at: '2026-05-27T00:00:00Z',
 };
@@ -22,8 +23,27 @@ const userB = {
   username: 'bob',
   email: 'bob@example.com',
   is_admin: 0 as const,
+  status: 'active' as const,
   created_at: '2026-05-26T00:00:00Z',
   updated_at: '2026-05-26T00:00:00Z',
+};
+const userPending = {
+  id: 3,
+  username: 'carol',
+  email: 'carol@example.com',
+  is_admin: 0 as const,
+  status: 'pending' as const,
+  created_at: '2026-05-25T00:00:00Z',
+  updated_at: '2026-05-25T00:00:00Z',
+};
+const userDisabled = {
+  id: 4,
+  username: 'dave',
+  email: 'dave@example.com',
+  is_admin: 0 as const,
+  status: 'disabled' as const,
+  created_at: '2026-05-24T00:00:00Z',
+  updated_at: '2026-05-24T00:00:00Z',
 };
 const profileNoPin = {
   id: 7,
@@ -807,6 +827,153 @@ describe('Admin UsersPage — profile mutation error & branch paths', () => {
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message.includes('Maximum 5 profiles'))).toBe(true);
     expect(post).not.toHaveBeenCalledWith('/api/v1/admin/users/1/profiles', expect.anything());
+    w.unmount();
+  });
+});
+
+describe('Admin UsersPage — status badges + approval queue (S1)', () => {
+  it('renders a status badge for each user', async () => {
+    const { client } = makeClient({ users: [userA, userPending, userDisabled] });
+    const w = mountPage(client);
+    await flushPromises();
+    const text = w.text();
+    expect(text).toContain('Active');
+    expect(text).toContain('Pending');
+    expect(text).toContain('Disabled');
+    w.unmount();
+  });
+
+  it('treats a missing status as Active', async () => {
+    const noStatus = { ...userA, status: undefined };
+    const { client } = makeClient({ users: [noStatus] });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain('Active');
+    w.unmount();
+  });
+
+  it('shows a prominent Pending approval queue with the count', async () => {
+    const { client } = makeClient({ users: [userA, userPending] });
+    const w = mountPage(client);
+    await flushPromises();
+    const pending = w.find('.admin-users__pending');
+    expect(pending.exists()).toBe(true);
+    expect(pending.text()).toContain('Pending approval');
+    expect(pending.text()).toContain('carol');
+    w.unmount();
+  });
+
+  it('hides the pending queue when there are none', async () => {
+    const { client } = makeClient({ users: [userA, userB] });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.find('.admin-users__pending').exists()).toBe(false);
+    w.unmount();
+  });
+
+  it('approves a pending user and refreshes the list', async () => {
+    const { client, post, get } = makeClient({ users: [userPending] });
+    const w = mountPage(client);
+    await flushPromises();
+    const before = get.mock.calls.filter((c) => c[0] === '/api/v1/admin/users').length;
+    // Two Approve buttons exist (queue + row) — both call approve(3); use the first.
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Approve carol')!
+      .trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/users/3/approve');
+    expect(get.mock.calls.filter((c) => c[0] === '/api/v1/admin/users').length).toBeGreaterThan(before);
+    w.unmount();
+  });
+
+  it('toasts when approve fails', async () => {
+    const { client, post } = makeClient({ users: [userPending] });
+    post.mockRejectedValueOnce(new Error('approve boom'));
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Approve carol')!
+      .trigger('click');
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'approve boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('rejects a pending user after confirmation', async () => {
+    const { client, post } = makeClient({ users: [userPending] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Reject carol')!
+      .trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Reject')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/users/3/reject');
+    w.unmount();
+  });
+
+  it('cancels the reject confirm without rejecting', async () => {
+    const { client, post } = makeClient({ users: [userPending] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Reject carol')!
+      .trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
+    await flushPromises();
+    expect(post).not.toHaveBeenCalledWith('/api/v1/admin/users/3/reject');
+    w.unmount();
+  });
+
+  it('disables an active user after confirmation', async () => {
+    const { client, post } = makeClient({ users: [userB] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Disable bob')!
+      .trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Disable')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/users/2/disable');
+    w.unmount();
+  });
+
+  it('toasts when disable fails', async () => {
+    const { client, post } = makeClient({ users: [userB] });
+    post.mockRejectedValueOnce(new Error('disable boom'));
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Disable bob')!
+      .trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Disable')!.trigger('click');
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'disable boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('enables a disabled user (calls approve → active)', async () => {
+    const { client, post } = makeClient({ users: [userDisabled] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Enable dave')!
+      .trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/users/4/approve');
     w.unmount();
   });
 });
