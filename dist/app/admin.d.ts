@@ -40,6 +40,12 @@ export interface AdminPage {
     /** Lazy component loader — keeps each page in its own split chunk. */
     component: () => Promise<unknown>;
 }
+/**
+ * Resolve the sidebar label for an `admin-*` route name (e.g. `admin-users` →
+ * `Users`), or `null` when the name is not a known admin page. Lets the page-
+ * title hook reuse the canonical labels rather than re-deriving them.
+ */
+export declare function adminPageLabel(name: string | null | undefined): string | null;
 /** Admin pages portable to BOTH apps (they hit endpoints both backends serve). */
 export declare const commonAdminPages: AdminPage[];
 /** Media-server-only admin pages (the 13 surfaces that depend on a media backend). */

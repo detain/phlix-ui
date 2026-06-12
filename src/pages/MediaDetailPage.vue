@@ -27,6 +27,7 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import Spinner from '../components/ui/Spinner.vue';
+import { usePageTitle } from '../composables/usePageTitle';
 
 interface MediaListResponse {
   items: MediaItem[];
@@ -53,6 +54,10 @@ const error = ref<string | null>(null);
 const currentId = computed(() => String(route.params.id ?? ''));
 const resumeSeconds = computed(() => player.resumePositionFor(currentId.value));
 const isSeries = computed(() => item.value?.type === 'series');
+
+// Title reflects the actual title/series name once it loads (e.g. "Assassination
+// Classroom · Phlix"); until then the route default (set by afterEach) stands.
+usePageTitle(() => item.value?.name);
 
 let controller: AbortController | null = null;
 let disposed = false;
