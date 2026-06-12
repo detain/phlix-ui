@@ -28,4 +28,10 @@ describe('SpeedMenu', () => {
     w.findComponent(Select).vm.$emit('update:modelValue', 2);
     expect(player.rate).toBe(2);
   });
+
+  it('renders with the glass tone so it reads on the transparent player chrome', () => {
+    const w = mount(SpeedMenu);
+    expect(w.findComponent(Select).props('tone')).toBe('glass');
+    expect(w.find('.phlix-select.is-glass').exists()).toBe(true);
+  });
 });

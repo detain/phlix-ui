@@ -113,6 +113,8 @@ export declare const DEFAULT_MESSAGES: {
         pause: string;
         back: string;
         nowPlaying: string;
+        previousEpisode: string;
+        nextEpisode: string;
         skipIntro: string;
         skipOutro: string;
         keyboardShortcuts: string;

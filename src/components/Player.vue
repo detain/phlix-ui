@@ -70,6 +70,19 @@ const props = defineProps<{
    *  direct-played the player POSTs `${apiBase}/api/v1/media/:id/transcode` and
    *  plays the resulting HLS stream via hls.js. Defaults to the page origin. */
   apiBase?: string;
+  /** Previous episode in the series order (U2) — drives the Prev button for
+   *  series content. null/absent hides the button (movies, or the very first
+   *  episode). The host (PlayerPage) resolves it across seasons + navigates. */
+  prevEpisode?: MediaItem | null;
+  /** Next episode in the series order (U2) — drives the Next button. null/absent
+   *  hides the button (movies, or the very last episode). */
+  nextEpisode?: MediaItem | null;
+  /** Start playback automatically once the source is ready (U2). The host page
+   *  enables this since the player is reached via a Play click (a user gesture),
+   *  so unmuted autoplay usually works; a rejected play() falls back to a muted
+   *  retry, then surfaces the existing play control. Defaults to false so the
+   *  component is unchanged where a host doesn't opt in. */
+  autoplay?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -84,6 +97,9 @@ const emit = defineEmits<{
   /** Advanced to the next queued item (up-next countdown elapsed or "Play now").
    *  Payload is the new current item so the host can navigate / swap the source. */
   (e: 'play-next', media: MediaItem): void;
+  /** Prev/Next episode button pressed (U2, series content). Payload is the target
+   *  episode; the host navigates to its player route. */
+  (e: 'play-episode', media: MediaItem): void;
 }>();
 
 const player = usePlayerStore();
@@ -163,6 +179,7 @@ function evaluateForCurrentMedia(): void {
   resumeSeconds.value = player.resumePositionFor(props.media.id) ?? 0;
   showResume.value = !transcodeNeeded.value && resumeSeconds.value > 0;
   pendingSeek = null;
+  autoplayAttempted = false; // a fresh source may autoplay again (U2)
   stopUpNextCountdown();
   upNextActive.value = false;
   // Tear down any previous HLS session; start a fresh one if the new item needs it.
@@ -290,6 +307,53 @@ const metaSegments = computed(() => {
   if (g) segs.push({ text: g });
   return segs;
 });
+
+// ---- autoplay on load (U2) --------------------------------------------------
+/** Guard so the autoplay attempt fires at most once per loaded source (a media
+ *  change resets it). Avoids re-triggering on every `canplay`/`loadeddata`. */
+let autoplayAttempted = false;
+
+/** Try to start playback once the source is ready. Honours the browser autoplay
+ *  policy: an unmuted `play()` usually succeeds (the player is reached via a Play
+ *  click), but if it rejects with NotAllowedError we retry MUTED (the policy
+ *  always permits muted autoplay); if even that rejects we leave the existing
+ *  play control / center button as the "tap to play" affordance. Never throws an
+ *  unhandled rejection. Skipped while a resume prompt is showing (autoplay applies
+ *  after the user resolves resume) or while transcoding (HLS owns readiness). */
+function attemptAutoplay(): void {
+  if (!props.autoplay || autoplayAttempted) return;
+  if (showResume.value || transcodeBlocking.value) return;
+  const v = videoRef.value;
+  if (!v || !v.paused) return;
+  autoplayAttempted = true;
+  const p = v.play();
+  if (p && typeof p.then === 'function') {
+    p.catch((err: unknown) => {
+      // Gesture not carried through navigation → retry muted (always allowed).
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        v.muted = true;
+        player.muted = true;
+        void v.play()?.catch(() => {
+          /* still blocked — the play control stays as the tap-to-play affordance */
+        });
+      }
+      // Any other rejection: leave the play control visible; do not rethrow.
+    });
+  }
+}
+
+/** Source is ready to play (canplay) — try autoplay once. */
+function onCanPlay(): void {
+  attemptAutoplay();
+}
+
+// ---- prev/next episode (U2) -------------------------------------------------
+function playPrevEpisode(): void {
+  if (props.prevEpisode) emit('play-episode', props.prevEpisode);
+}
+function playNextEpisode(): void {
+  if (props.nextEpisode) emit('play-episode', props.nextEpisode);
+}
 
 // ---- transport (video → store and store → video) ----------------------------
 function togglePlay(): void {
@@ -576,6 +640,7 @@ onBeforeUnmount(() => {
         @pause="onPause"
         @timeupdate="onTimeUpdate"
         @loadedmetadata="onLoadedMetadata"
+        @canplay="onCanPlay"
         @progress="onProgress"
         @volumechange="onVolumeChange"
         @ratechange="onRateChange"
@@ -642,12 +707,32 @@ onBeforeUnmount(() => {
 
         <div class="player__btnrow">
           <button
+            v-if="prevEpisode"
+            type="button"
+            class="player__iconbtn"
+            :aria-label="t('player.previousEpisode')"
+            @click="playPrevEpisode"
+          >
+            <Icon name="skip-back" />
+          </button>
+
+          <button
             type="button"
             class="player__iconbtn player__iconbtn--lg"
             :aria-label="player.playing ? t('player.pause') : t('player.play')"
             @click="togglePlay"
           >
             <Icon :name="player.playing ? 'pause' : 'play'" />
+          </button>
+
+          <button
+            v-if="nextEpisode"
+            type="button"
+            class="player__iconbtn"
+            :aria-label="t('player.nextEpisode')"
+            @click="playNextEpisode"
+          >
+            <Icon name="skip-forward" />
           </button>
 
           <span class="player__time numeric">
