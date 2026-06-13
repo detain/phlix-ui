@@ -99,7 +99,7 @@ describe('AdminServicesApi — Last.fm', () => {
     expect(await api.disconnectLastfm()).toEqual({ message: '' });
   });
 
-  it('navigates the browser to the Last.fm connect page', () => {
+  it('navigates the browser to the Last.fm OAuth URL', () => {
     const original = window.location.href;
     const setHref = vi.fn();
     Object.defineProperty(window, 'location', {
@@ -108,7 +108,7 @@ describe('AdminServicesApi — Last.fm', () => {
     });
     const api = new AdminServicesApi(clientWith());
     api.navigateToLastfmConnect();
-    expect(setHref).toHaveBeenCalledWith('/admin/lastfm');
+    expect(setHref).toHaveBeenCalledWith('/api/v1/oauth/lastfm');
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { href: original },

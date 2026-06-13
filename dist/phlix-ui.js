@@ -31,7 +31,7 @@ import { n as Ie, t as Le } from "./logs-DadTfaTq.js";
 import { t as Re } from "./dashboard-BTCOCTHQ.js";
 import { n as ze, r as Be, t as Ve } from "./users-UPfbrkL3.js";
 import { n as He, r as Ue, t as We } from "./webhooks-BBTLnFKm.js";
-import { t as Ge } from "./services-Czm8hsvH.js";
+import { t as Ge } from "./services-C907MGdw.js";
 import { t as Ke } from "./integrations-DLAG9ISY.js";
 import { t as qe } from "./backup-IdY_vzc2.js";
 import { t as Je } from "./cast-BvFcBEB6.js";
@@ -697,7 +697,7 @@ var Kr = ["src", "alt"], qr = { class: "brand-wordmark" }, Jr = {
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-DWWzkzWn.js")
+	component: () => import("./ServicesPage-Bih3oFQz.js")
 }, ii = {
 	name: "admin-integrations",
 	path: "integrations",

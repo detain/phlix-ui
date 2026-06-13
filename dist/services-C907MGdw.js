@@ -31,10 +31,10 @@ var e = class {
 		return { message: typeof e.message == "string" ? e.message : "" };
 	}
 	navigateToLastfmConnect() {
-		typeof window < "u" && (window.location.href = "/admin/lastfm");
+		typeof window < "u" && (window.location.href = "/api/v1/oauth/lastfm");
 	}
 };
 //#endregion
 export { e as t };
 
-//# sourceMappingURL=services-Czm8hsvH.js.map
+//# sourceMappingURL=services-C907MGdw.js.map

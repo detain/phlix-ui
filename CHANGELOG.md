@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.32.0] - 2026-06-12
+
+### Changed
+- **Admin Services: Last.fm connect uses the in-app OAuth redirect and is gated
+  on the API key.** The "Connect Last.fm" button now redirects to the server's
+  `GET /api/v1/oauth/lastfm` endpoint (authorize → 302 to Last.fm) instead of the
+  legacy `/admin/lastfm` SSR page. The button is disabled (with an
+  "Add a Last.fm API key first" tooltip) when `api_key_set === false`, mirroring
+  the Trakt gating, and a setup hint (register an API account at
+  `last.fm/api/account/create`, then add the key + secret in Settings or via
+  `LASTFM_API_KEY` / `LASTFM_API_SECRET`) renders when disconnected and
+  unconfigured. On mount the page reads the `?lastfm=connected|error|not_configured`
+  (and `?trakt=…`) redirect-result query param, surfaces a success/error toast,
+  refreshes the service status, and strips the param from the URL so it doesn't
+  re-fire on refresh.
+
 ## [0.31.0] - 2026-06-12
 
 ### Added
