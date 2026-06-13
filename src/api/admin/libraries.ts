@@ -82,6 +82,12 @@ export interface CreateLibraryInput {
   type: string;
   paths: string[];
   options?: Record<string, unknown>;
+  /**
+   * Per-library "each series is in its own folder" flag (series libraries only).
+   * `LibraryController` accepts it at the body top level (or nested in `options`)
+   * and persists it canonically inside `options.series_per_directory`.
+   */
+  series_per_directory?: boolean;
 }
 
 /**
@@ -92,6 +98,8 @@ export interface UpdateLibraryInput {
   name?: string;
   paths?: string[];
   options?: Record<string, unknown>;
+  /** See {@link CreateLibraryInput.series_per_directory}. */
+  series_per_directory?: boolean;
 }
 
 /** Result of {@link AdminLibrariesApi.create}. */
