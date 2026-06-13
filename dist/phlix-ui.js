@@ -757,7 +757,7 @@ var Kr = ["src", "alt"], qr = { class: "brand-wordmark" }, Jr = {
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-CIvMVgox.js")
+	component: () => import("./LibrariesPage-BtGTlDDV.js")
 }, mi = {
 	name: "admin-plugins",
 	path: "plugins",

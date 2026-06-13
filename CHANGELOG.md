@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.31.0] - 2026-06-12
+
+### Added
+- **Admin Libraries: per-series-directory toggle for series libraries (U8).**
+  The add/edit library Modal now shows a "Each series is in its own folder"
+  Switch (with a help line: "Use each top-level folder name as the series title
+  to improve metadata matching.") whenever the selected type is `series`. The
+  toggle populates from the library's stored `options.series_per_directory`
+  option (coercing bool / `1` / `"1"` / `"true"` / `"yes"` / `"on"`) on edit and
+  is sent as a top-level `series_per_directory` boolean in both the create and
+  update payloads (the server, per S2/S3, accepts it at the body top level and
+  persists it canonically inside `options` for series libraries only).
+  `CreateLibraryInput`/`UpdateLibraryInput` gain an optional
+  `series_per_directory?: boolean`.
+
 ## [0.30.0] - 2026-06-12
 
 ### Added

@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import LibrariesPage from './LibrariesPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
+import Switch from '../../components/ui/Switch.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
@@ -201,10 +202,13 @@ describe('Admin LibrariesPage — create / edit / delete', () => {
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
     await flushPromises();
+    // The type is `series`, so the per-series-directory flag is included
+    // (default off).
     expect(post).toHaveBeenCalledWith('/api/v1/libraries', {
       name: 'Shows',
       type: 'series',
       paths: ['/media/tv'],
+      series_per_directory: false,
     });
     expect(get.mock.calls.filter((c) => c[0] === '/api/v1/libraries').length).toBeGreaterThan(1);
     w.unmount();
@@ -348,6 +352,110 @@ describe('Admin LibrariesPage — create / edit / delete', () => {
     await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
     await flushPromises();
     expect(del).not.toHaveBeenCalled();
+    w.unmount();
+  });
+});
+
+describe('Admin LibrariesPage — series-per-directory toggle', () => {
+  /** Find the per-series-directory Switch inside the currently open modal. */
+  function seriesSwitchInModal(w: VueWrapper) {
+    const panel = modalPanel();
+    return w.findAllComponents(Switch).find((s) => panel.contains(s.element));
+  }
+
+  it('hides the toggle for non-series types and shows it for series', async () => {
+    const { client } = makeClient({ libraries: [] });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    // Default type is `movie` → no toggle.
+    expect(seriesSwitchInModal(w)).toBeUndefined();
+    // Switch the type to `series` → toggle appears.
+    w.findAllComponents(Select).forEach((s) => s.vm.$emit('update:modelValue', 'series'));
+    await flushPromises();
+    const sw = seriesSwitchInModal(w);
+    expect(sw).toBeDefined();
+    expect(sw!.text()).toContain('Each series is in its own folder');
+    w.unmount();
+  });
+
+  it('creates a series library with the toggle ON → series_per_directory: true', async () => {
+    const { client, post } = makeClient({ libraries: [] });
+    post.mockResolvedValueOnce({ library_id: 'lib-9', message: 'Library created.' });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    const nameInput = document.querySelector<HTMLInputElement>('.admin-libraries__input')!;
+    nameInput.value = 'Anime'; nameInput.dispatchEvent(new Event('input'));
+    const ta = document.querySelector<HTMLTextAreaElement>('.admin-libraries__textarea')!;
+    ta.value = '/vault1/anime'; ta.dispatchEvent(new Event('input'));
+    w.findAllComponents(Select).forEach((s) => s.vm.$emit('update:modelValue', 'series'));
+    await flushPromises();
+    // Flip the toggle on.
+    await seriesSwitchInModal(w)!.find('button[role="switch"]').trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries', {
+      name: 'Anime',
+      type: 'series',
+      paths: ['/vault1/anime'],
+      series_per_directory: true,
+    });
+    w.unmount();
+  });
+
+  it('edit populates the toggle from lib.options and reflects a change in the PUT', async () => {
+    const seriesLib = {
+      id: 'lib-2',
+      name: 'TV',
+      type: 'series',
+      paths: ['/vault1/tv'],
+      options: { series_per_directory: true },
+    };
+    const { client, put } = makeClient({ libraries: [seriesLib] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Edit TV')!
+      .trigger('click');
+    await flushPromises();
+    // The toggle is pre-filled ON from options.series_per_directory.
+    const sw = seriesSwitchInModal(w)!;
+    expect(sw.props('modelValue')).toBe(true);
+    // Turn it off, then save.
+    await sw.find('button[role="switch"]').trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/libraries/lib-2', {
+      name: 'TV',
+      paths: ['/vault1/tv'],
+      series_per_directory: false,
+    });
+    w.unmount();
+  });
+
+  it('coerces a string "true" option value when populating the edit toggle', async () => {
+    const seriesLib = {
+      id: 'lib-3',
+      name: 'Shows',
+      type: 'series',
+      paths: ['/vault1/shows'],
+      options: { series_per_directory: 'true' },
+    };
+    const { client } = makeClient({ libraries: [seriesLib] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Edit Shows')!
+      .trigger('click');
+    await flushPromises();
+    expect(seriesSwitchInModal(w)!.props('modelValue')).toBe(true);
     w.unmount();
   });
 });
