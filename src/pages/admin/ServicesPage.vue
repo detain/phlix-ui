@@ -9,6 +9,7 @@
  * toasts; every disconnect awaits a status refetch afterward.
  */
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
@@ -36,6 +37,9 @@ const api = new AdminServicesApi(
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
 );
 const toasts = useToastStore();
+// Guarded: these return undefined under a router-less mount (e.g. some unit tests).
+const route = useRoute();
+const router = useRouter();
 
 // ─── Trakt state ─────────────────────────────────────────────────────────────
 const traktStatus = ref<TraktStatus | null>(null);
@@ -82,6 +86,8 @@ const lastfmLoading = ref(true);
 const lastfmError = ref<string | null>(null);
 const lastfmDisconnecting = ref(false);
 
+const lastfmConfiguredMissing = computed(() => lastfmStatus.value?.api_key_set === false);
+
 async function loadLastfmStatus(): Promise<void> {
   lastfmLoading.value = true;
   lastfmError.value = null;
@@ -113,9 +119,52 @@ async function disconnectLastfm(): Promise<void> {
   }
 }
 
+/** Read the first string value of a route query param (vue-router gives string | string[] | null). */
+function queryParam(name: string): string | undefined {
+  const raw = route?.query?.[name];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return typeof value === 'string' ? value : undefined;
+}
+
+/** Drop the named query param from the URL (without it re-firing on refresh). */
+function clearQueryParam(name: string): void {
+  if (!route || !router) return;
+  const next = { ...route.query };
+  delete next[name];
+  void router.replace({ query: next });
+}
+
+/**
+ * Surface the result of the server-side OAuth bounce. The Last.fm connect flow
+ * 302s back to `/app/admin/services?lastfm=connected|error|not_configured`; show
+ * a toast, refresh the relevant status, then strip the param so a refresh doesn't
+ * re-fire it. Trakt uses the same convention.
+ */
+async function handleOAuthResult(
+  service: 'lastfm' | 'trakt',
+  refresh: () => Promise<void>,
+): Promise<void> {
+  const result = queryParam(service);
+  if (result === undefined) return;
+  const label = service === 'lastfm' ? 'Last.fm' : 'Trakt';
+  if (result === 'connected') {
+    toasts.success(`${label} connected.`);
+  } else if (result === 'not_configured') {
+    toasts.error(
+      service === 'lastfm' ? 'Add a Last.fm API key first.' : 'Add Trakt client ID and secret first.',
+    );
+  } else {
+    toasts.error(`${label} connection failed, please try again.`);
+  }
+  clearQueryParam(service);
+  await refresh();
+}
+
 onMounted(() => {
   void loadTraktStatus();
   void loadLastfmStatus();
+  void handleOAuthResult('lastfm', loadLastfmStatus);
+  void handleOAuthResult('trakt', loadTraktStatus);
 });
 </script>
 
@@ -236,10 +285,24 @@ onMounted(() => {
             <dd>{{ lastfmStatus.api_key_set ? 'Set' : 'Not set' }}</dd>
           </dl>
 
+          <p v-if="!lastfmStatus.connected && lastfmConfiguredMissing" class="admin-services__hint">
+            Last.fm isn't configured yet. Register an API account at
+            <a
+              href="https://www.last.fm/api/account/create"
+              target="_blank"
+              rel="noopener noreferrer"
+            >last.fm/api/account/create</a>, then add the Last.fm API key and
+            secret in Settings or via the
+            <code>LASTFM_API_KEY</code> / <code>LASTFM_API_SECRET</code>
+            environment variables.
+          </p>
+
           <div class="admin-services__actions">
             <Button
               v-if="!lastfmStatus.connected"
               variant="solid"
+              :disabled="lastfmConfiguredMissing"
+              :title="lastfmConfiguredMissing ? 'Add a Last.fm API key first' : undefined"
               @click="connectLastfm"
             >
               Connect Last.fm

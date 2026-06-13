@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import ServicesPage from './ServicesPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -39,6 +40,31 @@ function makeClient(over: Overrides = {}) {
 
 function mountPage(client: ApiClient): VueWrapper {
   return mount(ServicesPage, { props: { client }, attachTo: document.body });
+}
+
+function makeRouter(): Router {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/app/admin/services', name: 'admin-services', component: { template: '<div />' } },
+    ],
+  });
+}
+
+/** Mount with a real (memory) router so the page can read + clean OAuth result query params. */
+async function mountPageAt(
+  client: ApiClient,
+  query: Record<string, string>,
+): Promise<{ w: VueWrapper; router: Router }> {
+  const router = makeRouter();
+  await router.push({ path: '/app/admin/services', query });
+  await router.isReady();
+  const w = mount(ServicesPage, {
+    props: { client },
+    attachTo: document.body,
+    global: { plugins: [router] },
+  });
+  return { w, router };
 }
 
 /** Find a Button by its (trimmed) text. */
@@ -224,18 +250,40 @@ describe('Admin ServicesPage — Last.fm section', () => {
     w.unmount();
   });
 
-  it('navigates to the Last.fm connect page when Connect is clicked', async () => {
+  it('navigates to the Last.fm OAuth URL when Connect is clicked', async () => {
     const setHref = vi.fn();
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { set href(v: string) { setHref(v); } },
     });
-    const { client } = makeClient();
+    const { client } = makeClient({ lastfm: { connected: false, username: null, api_key_set: true } });
     const w = mountPage(client);
     await flushPromises();
     await findBtn(w, 'Connect Last.fm')!.trigger('click');
-    expect(setHref).toHaveBeenCalledWith('/admin/lastfm');
+    expect(setHref).toHaveBeenCalledWith('/api/v1/oauth/lastfm');
     Object.defineProperty(window, 'location', { configurable: true, value: { href: '' } });
+    w.unmount();
+  });
+
+  it('enables the Connect button when the API key is set', async () => {
+    const { client } = makeClient({ lastfm: { connected: false, username: null, api_key_set: true } });
+    const w = mountPage(client);
+    await flushPromises();
+    const btn = findBtn(w, 'Connect Last.fm');
+    expect(btn).toBeTruthy();
+    expect(btn!.attributes('disabled')).toBeUndefined();
+    expect(w.text()).not.toContain("Last.fm isn't configured yet");
+    w.unmount();
+  });
+
+  it('disables Connect and shows setup guidance when the API key is not set', async () => {
+    const { client } = makeClient({ lastfm: { connected: false, username: null, api_key_set: false } });
+    const w = mountPage(client);
+    await flushPromises();
+    const btn = findBtn(w, 'Connect Last.fm');
+    expect(btn!.attributes('disabled')).toBeDefined();
+    expect(w.text()).toContain("Last.fm isn't configured yet");
+    expect(w.text()).toContain('last.fm/api/account/create');
     w.unmount();
   });
 
@@ -294,6 +342,52 @@ describe('Admin ServicesPage — Last.fm section', () => {
     await flushPromises();
     expect(w.text()).not.toContain("Couldn't load Last.fm");
     expect(w.text()).toContain('lastfmuser');
+    w.unmount();
+  });
+});
+
+describe('Admin ServicesPage — OAuth redirect result', () => {
+  it('toasts success, refreshes status, and clears the param on ?lastfm=connected', async () => {
+    const { client, get } = makeClient({ lastfm: { connected: true, username: 'lastfmuser', api_key_set: true } });
+    const { w, router } = await mountPageAt(client, { lastfm: 'connected' });
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'Last.fm connected.' && t.tone === 'success')).toBe(true);
+    // status fetched on mount + again from the result handler refresh
+    expect(get.mock.calls.filter((c) => c[0] === LASTFM_STATUS).length).toBeGreaterThan(1);
+    expect(router.currentRoute.value.query.lastfm).toBeUndefined();
+    w.unmount();
+  });
+
+  it('toasts an error on ?lastfm=error', async () => {
+    const { client } = makeClient();
+    const { w } = await mountPageAt(client, { lastfm: 'error' });
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some((t) => t.message === 'Last.fm connection failed, please try again.' && t.tone === 'error'),
+    ).toBe(true);
+    w.unmount();
+  });
+
+  it('toasts the not-configured hint on ?lastfm=not_configured', async () => {
+    const { client } = makeClient();
+    const { w } = await mountPageAt(client, { lastfm: 'not_configured' });
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some((t) => t.message === 'Add a Last.fm API key first.' && t.tone === 'error'),
+    ).toBe(true);
+    w.unmount();
+  });
+
+  it('does not toast an OAuth result when no result param is present', async () => {
+    const { client } = makeClient();
+    const { w } = await mountPageAt(client, {});
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message.startsWith('Last.fm connect'))).toBe(false);
+    expect(toasts.toasts.some((t) => t.message === 'Last.fm connected.')).toBe(false);
     w.unmount();
   });
 });

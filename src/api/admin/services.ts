@@ -101,12 +101,14 @@ export class AdminServicesApi {
   }
 
   /**
-   * Navigate the browser to the existing Last.fm OAuth page (`/admin/lastfm`).
+   * Navigate the browser to the Last.fm OAuth authorisation URL
+   * (`/api/v1/oauth/lastfm`). The server either 302s to Last.fm or, when the
+   * API key is unset, 302s back to `/app/admin/services?lastfm=not_configured`.
    * This is NOT a fetch call — it triggers a full-page redirect.
    */
   navigateToLastfmConnect(): void {
     if (typeof window !== 'undefined') {
-      window.location.href = '/admin/lastfm';
+      window.location.href = '/api/v1/oauth/lastfm';
     }
   }
 }
