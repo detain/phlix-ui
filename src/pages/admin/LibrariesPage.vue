@@ -29,6 +29,8 @@ import {
   type Library,
   type LibraryType,
   type ScanJob,
+  type CreateLibraryInput,
+  type UpdateLibraryInput,
 } from '../../api/admin/libraries';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
@@ -36,6 +38,7 @@ import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Select from '../../components/ui/Select.vue';
+import Switch from '../../components/ui/Switch.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
@@ -176,9 +179,24 @@ const editing = ref<Library | null>(null);
 const name = ref('');
 const type = ref<LibraryType>(LIBRARY_TYPES[0]);
 const pathsText = ref('');
+const seriesPerDirectory = ref(false);
 const submitting = ref(false);
 
 const formTitle = computed(() => (editing.value ? 'Edit library' : 'Add library'));
+
+/**
+ * Coerce a stored option value to a strict boolean. The server may surface the
+ * flag as a real bool, an int (`1`), or a string (`"1"`/`"true"`/`"yes"`/`"on"`),
+ * mirroring `LibraryRow::seriesPerDirectory()`'s truthiness on the PHP side.
+ */
+function coerceBool(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  if (typeof value === 'string') {
+    return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
+  }
+  return false;
+}
 
 /** Parse the one-path-per-line textarea into a trimmed, non-empty list. */
 function parsePaths(): string[] {
@@ -193,6 +211,7 @@ function openAdd(): void {
   name.value = '';
   type.value = LIBRARY_TYPES[0];
   pathsText.value = '';
+  seriesPerDirectory.value = false;
   formOpen.value = true;
 }
 
@@ -203,6 +222,9 @@ function openEdit(lib: Library): void {
   const known = LIBRARY_TYPES.find((t) => t === lib.type);
   type.value = known ?? LIBRARY_TYPES[0];
   pathsText.value = lib.paths.join('\n');
+  // Populate the series-per-directory toggle from the stored option (the value
+  // may be bool / 1 / "1" / "true" depending on how the server serialized it).
+  seriesPerDirectory.value = coerceBool(lib.options?.series_per_directory);
   formOpen.value = true;
 }
 
@@ -224,12 +246,20 @@ async function submitForm(): Promise<void> {
   submitting.value = true;
   try {
     const existing = editing.value;
+    // The series-per-directory flag is only meaningful for series libraries
+    // (the server drops it for other types); include it only then. On edit the
+    // type is read-only, so an existing series library still persists the toggle.
+    const isSeries = type.value === 'series';
     if (existing) {
       // Edit: send only editable fields — NEVER `type`.
-      await api.update(existing.id, { name: name.value, paths });
+      const body: UpdateLibraryInput = { name: name.value, paths };
+      if (isSeries) body.series_per_directory = seriesPerDirectory.value;
+      await api.update(existing.id, body);
       toasts.success('Library updated.');
     } else {
-      const result = await api.create({ name: name.value, type: type.value, paths });
+      const body: CreateLibraryInput = { name: name.value, type: type.value, paths };
+      if (isSeries) body.series_per_directory = seriesPerDirectory.value;
+      const result = await api.create(body);
       toasts.success(result.message || 'Library created.');
     }
     closeForm();
@@ -481,6 +511,12 @@ onBeforeUnmount(() => {
             placeholder="/media/movies"
           ></textarea>
         </label>
+        <div v-if="type === 'series'" class="admin-libraries__field">
+          <Switch v-model="seriesPerDirectory" label="Each series is in its own folder" />
+          <span class="admin-libraries__hint-text">
+            Use each top-level folder name as the series title to improve metadata matching.
+          </span>
+        </div>
       </form>
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeForm">Cancel</Button>
