@@ -39,6 +39,8 @@ const emit = defineEmits<{
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
   (e: 'match', item: MediaItem): void;
+  /** A cast member was clicked — host navigates to the actor-filtered listing. */
+  (e: 'actor', name: string): void;
   (e: 'back'): void;
 }>();
 
@@ -132,7 +134,16 @@ onMounted(() => {
           <div v-if="cast.length" class="media-detail__credit">
             <dt>Cast</dt>
             <dd class="media-detail__cast">
-              <Chip v-for="a in cast" :key="a" size="sm" icon="user">{{ a }}</Chip>
+              <button
+                v-for="a in cast"
+                :key="a"
+                type="button"
+                class="media-detail__actor"
+                :aria-label="`Show titles with ${a}`"
+                @click="emit('actor', a)"
+              >
+                <Chip size="sm" icon="user">{{ a }}</Chip>
+              </button>
             </dd>
           </div>
         </dl>
@@ -309,6 +320,23 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+/* Each cast name is a button that filters the listing by that actor. */
+.media-detail__actor {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+.media-detail__actor:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.media-detail__actor:hover :deep(.chip) {
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 .media-detail__similar {

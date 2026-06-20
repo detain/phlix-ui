@@ -47,6 +47,14 @@ describe('MediaDetail — rendering', () => {
     expect(w.text()).toContain('Denis Villeneuve');
   });
 
+  it('emits `actor` with the name when a cast member is clicked', async () => {
+    const w = mount(MediaDetail, { props: { item: media() } });
+    const actorButtons = w.findAll('.media-detail__actor');
+    expect(actorButtons.length).toBeGreaterThan(0);
+    await actorButtons[0].trigger('click');
+    expect(w.emitted('actor')?.[0]).toEqual(['Timothée Chalamet']);
+  });
+
   it('renders the poster image with the title as alt', () => {
     const w = mount(MediaDetail, { props: { item: media() } });
     const img = w.find('.media-detail__img');

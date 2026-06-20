@@ -217,6 +217,31 @@ describe('useMediaStore — URL sync', () => {
     s.applyQuery({ genres: 'Action' });
     expect(s.selectedGenres).toEqual(['Action']);
   });
+
+  it('round-trips match status + actors through toQuery/applyQuery and queryParams', () => {
+    const s = useMediaStore();
+    s.setMatchStatus('unmatched');
+    s.setActors(['Tom Hanks']);
+    expect(s.queryParams.match).toBe('unmatched');
+    expect(s.queryParams.actors).toEqual(['Tom Hanks']);
+    const q = s.toQuery();
+    expect(q.match).toBe('unmatched');
+    expect(q.actors).toEqual(['Tom Hanks']);
+
+    setActivePinia(createPinia());
+    const s2 = useMediaStore();
+    s2.applyQuery({ match: 'matched', actors: 'Sigourney Weaver' });
+    expect(s2.matchStatus).toBe('matched');
+    expect(s2.selectedActors).toEqual(['Sigourney Weaver']);
+    expect(s2.queryParams.match).toBe('matched');
+  });
+
+  it('ignores an invalid match value', () => {
+    const s = useMediaStore();
+    s.applyQuery({ match: 'bogus' });
+    expect(s.matchStatus).toBe('');
+    expect(s.queryParams.match).toBeUndefined();
+  });
 });
 
 describe('useMediaStore — topLevel scope', () => {

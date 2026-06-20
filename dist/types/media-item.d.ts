@@ -47,4 +47,7 @@ export interface MediaItem {
     season_number?: number | null;
     episode_number?: number | null;
     episode_title?: string | null;
+    /** Owning library id — present on the single-item detail shape; lets the
+     *  detail page link a clicked actor to that library's actor-filtered grid. */
+    library_id?: string | null;
 }

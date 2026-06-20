@@ -101,6 +101,19 @@ function toggleType(t: MediaType) {
   store.setTypes(cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]);
   emit('change');
 }
+/** Match-status filter is single-select: clicking the active option clears it. */
+const MATCH_OPTIONS = [
+  { value: 'matched', label: 'Matched' },
+  { value: 'unmatched', label: 'Unmatched' },
+] as const;
+function toggleMatch(v: 'matched' | 'unmatched') {
+  store.setMatchStatus(store.matchStatus === v ? '' : v);
+  emit('change');
+}
+function removeActor(a: string) {
+  store.setActors(store.selectedActors.filter((x) => x !== a));
+  emit('change');
+}
 
 // ---- year range ---------------------------------------------------------
 const currentYear = computed(() => {
@@ -167,6 +180,16 @@ const activePills = computed<ActivePill[]>(() => {
   store.selectedTypes.forEach((t) =>
     pills.push({ key: `t:${t}`, label: t, remove: () => toggleType(t) }),
   );
+  store.selectedActors.forEach((a) =>
+    pills.push({ key: `a:${a}`, label: a, remove: () => removeActor(a) }),
+  );
+  if (store.matchStatus) {
+    pills.push({
+      key: 'match',
+      label: store.matchStatus === 'matched' ? 'Matched' : 'Unmatched',
+      remove: () => toggleMatch(store.matchStatus as 'matched' | 'unmatched'),
+    });
+  }
   if (store.yearFrom !== undefined) {
     pills.push({
       key: 'yf',
@@ -187,6 +210,8 @@ const advancedCount = computed(
     store.selectedGenres.length +
     store.selectedRatings.length +
     store.selectedTypes.length +
+    store.selectedActors.length +
+    (store.matchStatus ? 1 : 0) +
     (store.yearFrom !== undefined ? 1 : 0) +
     (store.yearTo !== undefined ? 1 : 0),
 );
@@ -197,6 +222,8 @@ function clearAll() {
   store.setGenres([]);
   store.setRatings([]);
   store.setTypes([]);
+  store.setActors([]);
+  store.setMatchStatus('');
   store.setYearRange(undefined, undefined);
   emit('change');
 }
@@ -339,6 +366,20 @@ onBeforeUnmount(() => {
               @update:selected="toggleType(t)"
             >
               {{ t }}
+            </Chip>
+          </div>
+        </div>
+
+        <div class="filterbar__field">
+          <span class="filterbar__field-label">Metadata</span>
+          <div class="filterbar__chips" role="group" aria-label="Metadata match status">
+            <Chip
+              v-for="m in MATCH_OPTIONS"
+              :key="m.value"
+              :selected="store.matchStatus === m.value"
+              @update:selected="toggleMatch(m.value)"
+            >
+              {{ m.label }}
             </Chip>
           </div>
         </div>

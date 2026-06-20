@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.34.0] - 2026-06-20
+
+### Added
+- **Matched / unmatched metadata filter.** The FilterBar advanced panel gains a "Metadata" group (Matched / Unmatched, single-select) that sends `?match=` to `GET /api/v1/media`, with an active-filter pill and a contribution to the advanced-count badge. `useMediaStore` tracks `matchStatus` (queryParams / toQuery / applyQuery), and `buildMediaQuery` serializes it.
+- **Clickable cast → actor-filtered listing.** On a detail page each cast name is now a button: `MediaDetail` emits `actor`, `MediaDetailPage` opens that title's library filtered to the actor (`/app/library/:id?actors=<name>`), and `LibraryPage` seeds the FilterBar from `?actors=` / `?match=` deep-link query params (so the grid lands already filtered, with a removable actor pill). `useMediaStore` tracks `selectedActors`; the single-item `MediaItem` shape now carries `library_id`.
+
 ## [0.33.0] - 2026-06-20
 
 ### Changed
