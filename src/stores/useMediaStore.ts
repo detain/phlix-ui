@@ -50,6 +50,8 @@ export const useMediaStore = defineStore('media', () => {
     const yearTo = ref<number | undefined>(undefined);
     const selectedRatings = ref<string[]>([]);
     const selectedTypes = ref<MediaType[]>([]);
+    const matchStatus = ref<'' | 'matched' | 'unmatched'>('');
+    const selectedActors = ref<string[]>([]);
     const sort = ref<SortField>('name');
     const order = ref<SortOrder>('asc');
     const limit = ref(24);
@@ -77,6 +79,8 @@ export const useMediaStore = defineStore('media', () => {
         if (yearTo.value !== undefined) p.yearTo = yearTo.value;
         if (selectedRatings.value.length) p.ratings = selectedRatings.value;
         if (selectedTypes.value.length) p.types = selectedTypes.value;
+        if (matchStatus.value) p.match = matchStatus.value;
+        if (selectedActors.value.length) p.actors = selectedActors.value;
         p.sort = sort.value;
         p.order = order.value;
         p.limit = limit.value;
@@ -235,6 +239,8 @@ export const useMediaStore = defineStore('media', () => {
         if (yearTo.value !== undefined) q.yearTo = String(yearTo.value);
         if (selectedRatings.value.length) q.ratings = [...selectedRatings.value];
         if (selectedTypes.value.length) q.types = [...selectedTypes.value];
+        if (matchStatus.value) q.match = matchStatus.value;
+        if (selectedActors.value.length) q.actors = [...selectedActors.value];
         if (sort.value !== 'name') q.sort = sort.value;
         if (order.value !== 'asc') q.order = order.value;
         return q;
@@ -249,6 +255,9 @@ export const useMediaStore = defineStore('media', () => {
         selectedGenres.value = asArray(q.genres);
         selectedRatings.value = asArray(q.ratings);
         selectedTypes.value = asArray(q.types) as MediaType[];
+        const m = Array.isArray(q.match) ? q.match[0] : q.match;
+        matchStatus.value = m === 'matched' || m === 'unmatched' ? m : '';
+        selectedActors.value = asArray(q.actors);
         const yf = Array.isArray(q.yearFrom) ? q.yearFrom[0] : q.yearFrom;
         const yt = Array.isArray(q.yearTo) ? q.yearTo[0] : q.yearTo;
         yearFrom.value = yf ? Number(yf) : undefined;
@@ -287,6 +296,14 @@ export const useMediaStore = defineStore('media', () => {
         selectedTypes.value = v;
         offset.value = 0;
     }
+    function setMatchStatus(v: '' | 'matched' | 'unmatched'): void {
+        matchStatus.value = v;
+        offset.value = 0;
+    }
+    function setActors(v: string[]): void {
+        selectedActors.value = v;
+        offset.value = 0;
+    }
     function setSort(field: SortField, ord?: SortOrder): void {
         sort.value = field;
         if (ord) order.value = ord;
@@ -322,6 +339,8 @@ export const useMediaStore = defineStore('media', () => {
         yearTo.value = undefined;
         selectedRatings.value = [];
         selectedTypes.value = [];
+        matchStatus.value = '';
+        selectedActors.value = [];
         sort.value = 'name';
         order.value = 'asc';
         offset.value = 0;
@@ -338,6 +357,8 @@ export const useMediaStore = defineStore('media', () => {
         yearTo,
         selectedRatings,
         selectedTypes,
+        matchStatus,
+        selectedActors,
         sort,
         order,
         limit,
@@ -363,6 +384,8 @@ export const useMediaStore = defineStore('media', () => {
         setYearRange,
         setRatings,
         setTypes,
+        setMatchStatus,
+        setActors,
         setSort,
         setLibraryId,
         setTopLevel,

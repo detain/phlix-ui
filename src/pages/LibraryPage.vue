@@ -71,8 +71,20 @@ function scope(): void {
   // items are already top-level. The server lifts this while a search is active,
   // so searching still finds episodes. Series cards drill into their detail tree.
   store.setTopLevel(true);
+  applyIncomingFilters();
   store.reset();
   store.fetchMedia(apiBase.value);
+}
+
+/** Seed the FilterBar from deep-link query params — e.g. an actor link from a
+ *  detail page (`?actors=Name`) or a bookmarked `?match=unmatched` — so the grid
+ *  lands already filtered. Runs after `clearFilters()` so it isn't wiped. */
+function applyIncomingFilters(): void {
+  const a = route.query.actors;
+  const actors = Array.isArray(a) ? a.filter((x): x is string => !!x) : a ? [a] : [];
+  if (actors.length) store.setActors(actors);
+  const m = Array.isArray(route.query.match) ? route.query.match[0] : route.query.match;
+  if (m === 'matched' || m === 'unmatched') store.setMatchStatus(m);
 }
 
 /** Reload the current scope + filters (api base resolved/changed, or Retry). */
