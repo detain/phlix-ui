@@ -17,6 +17,11 @@ describe('buildMediaQuery', () => {
     expect(sp.get('offset')).toBe('0');
   });
 
+  it('serializes the match-status filter', () => {
+    expect(new URLSearchParams(buildMediaQuery({ match: 'unmatched' })).get('match')).toBe('unmatched');
+    expect(new URLSearchParams(buildMediaQuery({})).has('match')).toBe(false);
+  });
+
   it('appends repeated array params (genres/ratings/types/actors)', () => {
     const q = buildMediaQuery({
       genres: ['Sci-Fi', 'Drama'],

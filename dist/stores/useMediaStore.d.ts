@@ -35,6 +35,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        library_id?: string | null | undefined;
     }[], MediaItem[] | {
         id: string;
         name: string;
@@ -59,6 +60,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        library_id?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -69,6 +71,8 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     yearTo: import("vue").Ref<number | undefined, number | undefined>;
     selectedRatings: import("vue").Ref<string[], string[]>;
     selectedTypes: import("vue").Ref<MediaType[], MediaType[]>;
+    matchStatus: import("vue").Ref<"" | "matched" | "unmatched", "" | "matched" | "unmatched">;
+    selectedActors: import("vue").Ref<string[], string[]>;
     sort: import("vue").Ref<SortField, SortField>;
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
@@ -94,11 +98,13 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setYearRange: (from: number | undefined, to: number | undefined) => void;
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
+    setMatchStatus: (v: "" | "matched" | "unmatched") => void;
+    setActors: (v: string[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "topLevel" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "availableRatings" | "availableTypes">, Pick<{
+}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "topLevel" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "matchStatus" | "selectedActors" | "availableRatings" | "availableTypes">, Pick<{
     items: import("vue").Ref<{
         id: string;
         name: string;
@@ -123,6 +129,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        library_id?: string | null | undefined;
     }[], MediaItem[] | {
         id: string;
         name: string;
@@ -147,6 +154,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        library_id?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -157,6 +165,8 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     yearTo: import("vue").Ref<number | undefined, number | undefined>;
     selectedRatings: import("vue").Ref<string[], string[]>;
     selectedTypes: import("vue").Ref<MediaType[], MediaType[]>;
+    matchStatus: import("vue").Ref<"" | "matched" | "unmatched", "" | "matched" | "unmatched">;
+    selectedActors: import("vue").Ref<string[], string[]>;
     sort: import("vue").Ref<SortField, SortField>;
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
@@ -182,6 +192,8 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setYearRange: (from: number | undefined, to: number | undefined) => void;
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
+    setMatchStatus: (v: "" | "matched" | "unmatched") => void;
+    setActors: (v: string[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
@@ -211,6 +223,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        library_id?: string | null | undefined;
     }[], MediaItem[] | {
         id: string;
         name: string;
@@ -235,6 +248,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        library_id?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -245,6 +259,8 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     yearTo: import("vue").Ref<number | undefined, number | undefined>;
     selectedRatings: import("vue").Ref<string[], string[]>;
     selectedTypes: import("vue").Ref<MediaType[], MediaType[]>;
+    matchStatus: import("vue").Ref<"" | "matched" | "unmatched", "" | "matched" | "unmatched">;
+    selectedActors: import("vue").Ref<string[], string[]>;
     sort: import("vue").Ref<SortField, SortField>;
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
@@ -270,8 +286,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setYearRange: (from: number | undefined, to: number | undefined) => void;
     setRatings: (v: string[]) => void;
     setTypes: (v: MediaType[]) => void;
+    setMatchStatus: (v: "" | "matched" | "unmatched") => void;
+    setActors: (v: string[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;
+}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setMatchStatus" | "setActors" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;

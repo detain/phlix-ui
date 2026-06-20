@@ -185,6 +185,15 @@ function onInfo(m: MediaItem): void {
 function onBack(): void {
   router?.back();
 }
+/** A cast member was clicked — open that title's library, filtered to the actor,
+ *  so "all the matching media with that actor" shows. Needs the item's owning
+ *  library (present on the detail shape); a no-op if it's absent. */
+function onActor(name: string): void {
+  const libId = item.value?.library_id;
+  if (libId && router?.hasRoute('library')) {
+    void router.push({ name: 'library', params: { id: libId }, query: { actors: name } });
+  }
+}
 
 // Interactive metadata match (U5) — admin-only. "Match metadata" opens the modal
 // for the current item; a successful apply swaps in the server's re-shaped item
@@ -260,6 +269,7 @@ function onMatchApplied(updated: MediaItem): void {
         @watchlist="onWatchlist"
         @info="onInfo"
         @match="onMatch"
+        @actor="onActor"
         @back="onBack"
       />
     </template>

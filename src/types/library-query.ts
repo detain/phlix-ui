@@ -5,6 +5,9 @@ export interface LibraryQuery {
     yearTo?: number;
     ratings?: ('G' | 'PG' | 'PG-13' | 'R' | 'NC-17' | 'X' | 'UNRATED')[];
     actors?: string[];
+    /** Filter by metadata-match status: items that have ('matched') or have not
+     *  ('unmatched') been through metadata matching. */
+    match?: 'matched' | 'unmatched';
     sort?: 'name' | 'year' | 'rating' | 'date_added' | 'runtime';
     order?: 'asc' | 'desc';
     limit?: number;
@@ -29,6 +32,7 @@ export interface LibraryQueryParams extends Omit<LibraryQuery, 'ratings' | 'sort
     yearTo?: number;
     ratings?: string[];
     actors?: string[];
+    match?: 'matched' | 'unmatched';
     types?: string[];
     sort?: string;
     order?: string;

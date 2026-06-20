@@ -18,6 +18,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     info: (item: MediaItem) => any;
     back: () => any;
     resume: (item: MediaItem) => any;
+    actor: (name: string) => any;
     watchlist: (item: MediaItem) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onMatch?: ((item: MediaItem) => any) | undefined;
@@ -25,6 +26,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     onInfo?: ((item: MediaItem) => any) | undefined;
     onBack?: (() => any) | undefined;
     onResume?: ((item: MediaItem) => any) | undefined;
+    onActor?: ((name: string) => any) | undefined;
     onWatchlist?: ((item: MediaItem) => any) | undefined;
 }>, {
     canMatch: boolean;
