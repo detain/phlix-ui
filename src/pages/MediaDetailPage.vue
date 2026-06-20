@@ -278,7 +278,7 @@ function onMatchApplied(updated: MediaItem): void {
   width: 100%;
 }
 .media-detail-page__loading {
-  max-width: 1100px;
+  max-width: none;
   margin: 0 auto;
   padding: var(--space-6);
 }

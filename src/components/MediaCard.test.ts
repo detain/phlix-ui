@@ -52,21 +52,21 @@ describe('MediaCard — rendering', () => {
     expect(genres).toHaveLength(3); // capped at 3 of 4
   });
 
-  it('links the poster to the player route by default and honors `to`', () => {
+  it('links the poster to the info/detail route by default and honors `to`', () => {
     const def = mount(MediaCard, { props: { item: media() } });
-    expect(def.find('.media-card__link').attributes('href')).toBe('/app/player/m1');
-    const custom = mount(MediaCard, { props: { item: media(), to: '/app/media/m1' } });
-    expect(custom.find('.media-card__link').attributes('href')).toBe('/app/media/m1');
+    expect(def.find('.media-card__link').attributes('href')).toBe('/app/media/m1');
+    const custom = mount(MediaCard, { props: { item: media(), to: '/app/player/m1' } });
+    expect(custom.find('.media-card__link').attributes('href')).toBe('/app/player/m1');
   });
 
-  it('links a SERIES card to its detail page (the season tree), not the player', () => {
+  it('links a SERIES card to its detail page (the season tree)', () => {
     const w = mount(MediaCard, { props: { item: media({ id: 's1', type: 'series' }) } });
     expect(w.find('.media-card__link').attributes('href')).toBe('/app/media/s1');
   });
 
-  it('still links an episode straight to the player', () => {
+  it('links an episode to its info page by default (playback is the Play button)', () => {
     const w = mount(MediaCard, { props: { item: media({ id: 'e1', type: 'episode' }) } });
-    expect(w.find('.media-card__link').attributes('href')).toBe('/app/player/e1');
+    expect(w.find('.media-card__link').attributes('href')).toBe('/app/media/e1');
   });
 
   it('falls back to a real SVG icon (never emoji) when no poster', () => {
@@ -262,7 +262,7 @@ describe('MediaCard — prefetch on hover/focus (R6.1c)', () => {
     await router.isReady();
     expect(loader).not.toHaveBeenCalled(); // nothing warmed until hovered
     await w.find('.media-card').trigger('pointerenter');
-    expect(loader).toHaveBeenCalledTimes(1); // default href is the player route
+    expect(loader).toHaveBeenCalledTimes(1); // default href is the info/detail route
   });
 
   it('warms the configured `to` route on focusin (keyboard)', async () => {

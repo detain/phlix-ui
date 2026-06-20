@@ -404,7 +404,7 @@ function onTheater(active: boolean): void {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1280px;
+  max-width: none;
   margin: 0 auto;
   padding: var(--space-6);
 }

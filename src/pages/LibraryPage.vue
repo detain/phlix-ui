@@ -183,7 +183,7 @@ function onInfo(item: MediaItem): void {
 <style scoped>
 .library-page {
   padding: var(--space-6);
-  max-width: 1320px;
+  max-width: none;
   margin: 0 auto;
 }
 .library-header {

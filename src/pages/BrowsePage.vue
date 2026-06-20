@@ -232,7 +232,7 @@ function onSeeAll(row: HomeRowConfig): void {
 <style scoped>
 .browse-page {
   padding: var(--space-6);
-  max-width: 1320px;
+  max-width: none;
   margin: 0 auto;
 }
 

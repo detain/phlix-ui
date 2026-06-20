@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.33.0] - 2026-06-20
+
+### Changed
+- **Clicking a media card's poster opens its info/detail page by default — for every type, including movies and episodes.** Previously a movie/episode poster linked straight to the player (`/app/player/:id`) and only a series opened its detail page, so browsing from home or a listing could start playback by surprise. `MediaCard`'s default route is now `/app/media/:id` for all types; direct playback is the overlay **Play** button's job (it emits `play`), and an explicit `to` / `cardTo` prop still overrides the route. Both the home rails (`MediaRow`) and the browse/library grids (`MediaGrid`) use the default, so both now land on the info page.
+- **Full-width layout.** The app shell (`AppLayout` header + main), the browse and library listings, the media detail view and the player stage no longer cap their width at centered 1100–1400px columns — they now fill the window width (`max-width: none`, existing padding kept as gutters). Theater mode is unchanged.
+
 ## [0.32.0] - 2026-06-12
 
 ### Changed
