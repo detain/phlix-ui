@@ -156,7 +156,7 @@ onMounted(() => {
 <style scoped>
 .media-detail {
   position: relative;
-  max-width: 1100px;
+  max-width: none;
   margin: 0 auto;
   padding: var(--space-6);
 }

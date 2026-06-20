@@ -16,17 +16,17 @@ import { t as _e } from "./Slider-BMn_Lp_q.js";
 import { t as ve } from "./Switch-CFZhdkXR.js";
 import { t as ye } from "./Chip-2HcSZF4a.js";
 import { t as be } from "./Select-DLwgQInL.js";
-import { i as xe, n as Se, r as Ce, t as we } from "./FilterBar-D6z5f_eZ.js";
+import { i as xe, n as Se, r as Ce, t as we } from "./FilterBar-BEyvh5yM.js";
 import { t as Te } from "./Modal-I4tEFhoH.js";
 import { t as T } from "./useToastStore-BDoKlU6N.js";
 import { t as E } from "./Skeleton-DkSoWF3C.js";
-import { i as Ee, n as De, r as Oe, t as ke } from "./MetadataMatchModal-BHe9IKxt.js";
+import { i as Ee, n as De, r as Oe, t as ke } from "./MetadataMatchModal-OhFsKc_u.js";
 import { t as D } from "./EmptyState-B2QnGIQT.js";
 import { t as Ae } from "./Tabs-x8dUKZN5.js";
-import { t as je } from "./MediaRow-IZZlzNCX.js";
+import { t as je } from "./MediaRow-9b6UqMkE.js";
 import { n as Me, t as Ne } from "./media-query-BcVLE7J6.js";
-import { t as Pe } from "./HomeRow-jlo610n5.js";
-import { t as Fe } from "./MediaDetail-rZkdmxJ3.js";
+import { t as Pe } from "./HomeRow-DszfV4VW.js";
+import { t as Fe } from "./MediaDetail-DadXlEyL.js";
 import { n as Ie, t as Le } from "./logs-DadTfaTq.js";
 import { t as Re } from "./dashboard-BTCOCTHQ.js";
 import { n as ze, r as Be, t as Ve } from "./users-UPfbrkL3.js";
@@ -167,7 +167,7 @@ var Gn = ["aria-labelledby"], Kn = {
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-db48fc6e"]]), sr = /* @__PURE__ */ L({
+}), [["__scopeId", "data-v-aaaeed33"]]), sr = /* @__PURE__ */ L({
 	__name: "ThemeToggle",
 	setup(e) {
 		let t = a(), { t: n } = p(), i = [
@@ -920,12 +920,12 @@ function Mi(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-D_xD4Juz.js")
+			component: () => import("./BrowsePage-BGJzisFW.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-D3-RM7n9.js")
+			component: () => import("./MediaDetailPage-7_JYKtwu.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -935,12 +935,12 @@ function Mi(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-DjM21Yyx.js")
+			component: () => import("./LibraryPage-D3WylZdW.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-BeFEhNCj.js")
+			component: () => import("./PlayerPage-BZ2XxYRQ.js")
 		},
 		{
 			path: `${t}/login`,

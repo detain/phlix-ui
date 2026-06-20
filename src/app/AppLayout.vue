@@ -119,7 +119,7 @@ const { t } = useMessages();
   pointer-events: none;
 }
 .shell__inner {
-  max-width: 1400px;
+  max-width: none;
   width: 100%;
   margin: 0 auto;
   display: flex;
@@ -164,7 +164,7 @@ const { t } = useMessages();
   z-index: 1;
   flex: 1;
   width: 100%;
-  max-width: 1400px;
+  max-width: none;
   margin: 0 auto;
   padding: var(--space-6) var(--space-5);
 }

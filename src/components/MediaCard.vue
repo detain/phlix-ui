@@ -61,12 +61,11 @@ const emit = defineEmits<{
 
 const player = usePlayerStore();
 
-// A series card opens its detail page (the season/episode tree) rather than the
-// player — a series itself isn't directly playable. Everything else (movies,
-// episodes) links straight to the player. An explicit `to` prop always wins.
-const href = computed(
-  () => props.to ?? (props.item.type === 'series' ? `/app/media/${props.item.id}` : `/app/player/${props.item.id}`),
-);
+// Clicking a card's poster opens its info/detail page by default — for every
+// type, including movies and episodes — so browsing never starts playback by
+// surprise. Direct playback is the overlay "Play" button's job (it emits
+// `play`). An explicit `to` prop still wins (e.g. a rail that wants the player).
+const href = computed(() => props.to ?? `/app/media/${props.item.id}`);
 
 // Warm the destination route's lazy chunk on hover/focus (R6.1c) so navigating
 // from the card is instant. Idempotent + best-effort; no-ops without a router.
