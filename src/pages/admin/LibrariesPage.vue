@@ -16,9 +16,10 @@
  * mutable state. The interval period is the `pollIntervalMs` prop (default
  * 2000ms) so tests can drive it with fake timers.
  *
- * Honesty about progress: the worker leaves `items_*` at `0` and `current_path`
- * at `null`, so this page shows lifecycle status only — never a fabricated
- * per-file progress bar. On `failed` it shows the server `error` string.
+ * Progress: while a job runs, the worker streams `items_found` (total) /
+ * `items_updated` (processed) + `current_path` onto the job row (scan, rescan,
+ * and metadata-match all report this), so this page renders a live percentage
+ * bar + count + current file. On `failed` it shows the server `error` string.
  */
 import { ref, computed, onMounted, onBeforeUnmount, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
@@ -104,6 +105,32 @@ function statusTone(job: ScanJob | null | undefined): 'neutral' | 'info' | 'succ
     default:
       return 'neutral';
   }
+}
+
+/** Whether a running job has enough counts to show a determinate progress bar. */
+function hasProgress(job: ScanJob | null | undefined): boolean {
+  return !!job && job.status === 'running' && (job.items_found ?? 0) > 0;
+}
+
+/** Completion percentage (0–100, integer) of a running job: processed / total. */
+function progressPercent(job: ScanJob | null | undefined): number {
+  if (!hasProgress(job) || !job) return 0;
+  const pct = (job.items_updated / job.items_found) * 100;
+  return Math.max(0, Math.min(100, Math.round(pct)));
+}
+
+/** "processed / total" count label for the progress bar. */
+function progressCount(job: ScanJob | null | undefined): string {
+  if (!job) return '';
+  return `${job.items_updated} / ${job.items_found}`;
+}
+
+/** Basename of the file currently being processed, for the progress hint. */
+function progressFile(job: ScanJob | null | undefined): string {
+  const path = job?.current_path;
+  if (!path) return '';
+  const parts = path.split('/');
+  return parts[parts.length - 1] || path;
 }
 
 // ── List + status state ───────────────────────────────────────────────────────
@@ -368,8 +395,11 @@ onBeforeUnmount(() => {
     </header>
 
     <p class="admin-libraries__hint">
-      Scan progress is coarse in this release — only the lifecycle
-      (queued / running / completed / failed) is reported, not per-file detail.
+      <strong>Scan</strong> adds new files and updates changed ones (existing items are kept).
+      <strong>Rescan</strong> clears the library and rebuilds it from scratch — use it after
+      moving files or to repair bad matches. <strong>Match metadata</strong> (re)fetches
+      posters and details for items already in the library. A live percentage is shown while
+      any of these run.
     </p>
 
     <div v-if="loading" class="admin-libraries__skel"><Skeleton variant="text" :lines="6" /></div>
@@ -416,6 +446,31 @@ onBeforeUnmount(() => {
                 class="admin-libraries__error"
               >
                 {{ statuses[lib.id]?.error }}
+              </span>
+              <span
+                v-else-if="hasProgress(statuses[lib.id])"
+                class="admin-libraries__progress"
+                :data-testid="`progress-${lib.id}`"
+              >
+                <span
+                  class="admin-libraries__progress-bar"
+                  role="progressbar"
+                  :aria-valuenow="progressPercent(statuses[lib.id])"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  :aria-label="`Scan progress for ${lib.name}`"
+                >
+                  <span
+                    class="admin-libraries__progress-fill"
+                    :style="{ width: progressPercent(statuses[lib.id]) + '%' }"
+                  />
+                </span>
+                <span class="admin-libraries__progress-meta">
+                  {{ progressPercent(statuses[lib.id]) }}% · {{ progressCount(statuses[lib.id]) }}
+                </span>
+                <span v-if="progressFile(statuses[lib.id])" class="admin-libraries__progress-file">
+                  {{ progressFile(statuses[lib.id]) }}
+                </span>
               </span>
             </span>
           </td>
@@ -636,6 +691,45 @@ onBeforeUnmount(() => {
 .admin-libraries__error {
   font-size: var(--text-xs);
   color: var(--text-subtle);
+}
+.admin-libraries__progress {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+}
+.admin-libraries__progress-bar {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-subtle, rgba(127, 127, 127, 0.18));
+  overflow: hidden;
+}
+.admin-libraries__progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width var(--dur-base, 240ms) var(--ease-out, ease);
+}
+.admin-libraries__progress-meta {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.admin-libraries__progress-file {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-libraries__progress-fill {
+    transition: none;
+  }
 }
 .admin-libraries__actions-col {
   width: 1%;
