@@ -3,7 +3,7 @@ import { n as t, t as n } from "./Button-5ZSsUmsI.js";
 import { t as r } from "./useAuthStore-DWVaTITC.js";
 import { t as i } from "./useLibrariesStore-CsoGNIah.js";
 import { i as a } from "./usePageTitle-BO3GGF3M.js";
-import { n as o, r as s, t as c } from "./FilterBar-BQYkC1LI.js";
+import { n as o, r as s, t as c } from "./FilterBar-Cbbqm24x.js";
 import { t as l } from "./MetadataMatchModal-DEJW4hCM.js";
 import { t as u } from "./EmptyState-B2QnGIQT.js";
 import { t as d } from "./media-query-BJZQTDXd.js";
@@ -193,4 +193,4 @@ var I = { class: "library-page" }, L = {
 //#endregion
 export { V as default };
 
-//# sourceMappingURL=LibraryPage-DP-8i40N.js.map
+//# sourceMappingURL=LibraryPage-xVlQXwuk.js.map

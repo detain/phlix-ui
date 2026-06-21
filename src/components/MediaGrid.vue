@@ -285,7 +285,14 @@ watch(
 onMounted(() => {
   measure();
   if (typeof window !== 'undefined') {
-    window.addEventListener('scroll', scheduleMeasure, { passive: true });
+    // Measure SYNCHRONOUSLY on scroll (not rAF-deferred): the window must track
+    // the scroll position every event. A rAF defer adds latency and, worse, can
+    // stall under load — `requestAnimationFrame` is throttled aggressively during
+    // scrolling (notably on Firefox), which froze the window so the same titles
+    // appeared to "stay" on screen while scrolling. `measure()` is one cheap
+    // layout read and Vue batches the resulting re-render. Resize stays rAF-
+    // coalesced (it can fire in bursts and isn't latency-critical).
+    window.addEventListener('scroll', measure, { passive: true });
     window.addEventListener('resize', scheduleMeasure, { passive: true });
   }
   attachResizeObserver();
@@ -294,7 +301,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
-    window.removeEventListener('scroll', scheduleMeasure);
+    window.removeEventListener('scroll', measure);
     window.removeEventListener('resize', scheduleMeasure);
   }
   if (frame) {

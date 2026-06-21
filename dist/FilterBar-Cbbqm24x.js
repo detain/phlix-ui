@@ -341,9 +341,9 @@ var ce = { class: "media-grid-root" }, Z = {
 		return R(() => l.value, (e) => {
 			de(), e && (ue(), E());
 		}), O(() => {
-			v(), typeof window < "u" && (window.addEventListener("scroll", E, { passive: !0 }), window.addEventListener("resize", E, { passive: !0 })), ue(), J();
+			v(), typeof window < "u" && (window.addEventListener("scroll", v, { passive: !0 }), window.addEventListener("resize", E, { passive: !0 })), ue(), J();
 		}), ee(() => {
-			typeof window < "u" && (window.removeEventListener("scroll", E), window.removeEventListener("resize", E)), w &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(w) : clearTimeout(w), 0), clearTimeout(V), de(), Y();
+			typeof window < "u" && (window.removeEventListener("scroll", v), window.removeEventListener("resize", E)), w &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(w) : clearTimeout(w), 0), clearTimeout(V), de(), Y();
 		}), R(() => a.items.length, () => T(E)), (n, r) => (k(), b("div", ce, [e.loading && e.items.length === 0 ? (k(), b("div", {
 			key: 0,
 			class: "media-grid media-grid--skeleton",
@@ -420,7 +420,7 @@ var ce = { class: "media-grid-root" }, Z = {
 			_: 1
 		})]));
 	}
-}), [["__scopeId", "data-v-38adc1c9"]]), ue = 6e4, de = 250;
+}), [["__scopeId", "data-v-c12b3dd0"]]), ue = 6e4, de = 250;
 function fe(e) {
 	return typeof e == "object" && !!e && e.name === "AbortError";
 }
@@ -987,4 +987,4 @@ var pe = U("media", () => {
 //#endregion
 export { J as i, pe as n, $ as r, Re as t };
 
-//# sourceMappingURL=FilterBar-BQYkC1LI.js.map
+//# sourceMappingURL=FilterBar-Cbbqm24x.js.map
