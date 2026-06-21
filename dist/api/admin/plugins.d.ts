@@ -58,6 +58,46 @@ export interface PluginDetail extends Plugin {
     settings: PluginSettings;
 }
 /**
+ * One plugin entry from a catalog's `plugins.json`, annotated by the server
+ * with whether it is already installed (and enabled). `name` is the manifest
+ * name used to cross-reference the installed list; `repo` is the URL passed to
+ * the install endpoint.
+ */
+export interface CatalogPlugin {
+    name: string;
+    title: string;
+    type: string;
+    summary: string;
+    description: string;
+    repo: string;
+    author: string;
+    tags: string[];
+    installed: boolean;
+    enabled: boolean;
+}
+/** One fetched catalog: its source URL, display name, and plugin entries. */
+export interface Catalog {
+    source: string;
+    name: string;
+    plugins: CatalogPlugin[];
+}
+/** A catalog source that could not be fetched/parsed. */
+export interface CatalogError {
+    source: string;
+    error: string;
+}
+/** The aggregated catalog response across every configured source. */
+export interface CatalogResponse {
+    /** The immutable default catalog source (cannot be removed). */
+    default_source: string;
+    /** Every configured source URL (default first, then operator extras). */
+    sources: string[];
+    /** Successfully fetched catalogs. */
+    catalogs: Catalog[];
+    /** Per-source fetch/parse failures (so the UI can show them inline). */
+    errors: CatalogError[];
+}
+/**
  * The server error `code` carried by a failed install / settings save (e.g.
  * `plugin.install_failed`, `plugin.invalid_url`, `plugin.settings.validation_failed`).
  * Returns `null` when the thrown error is not an {@link ApiError} or carries no
@@ -88,6 +128,25 @@ export declare class AdminPluginsApi {
     disable(name: string): Promise<unknown>;
     /** `DELETE /api/v1/admin/plugins/{name}` → `204` (uninstall). */
     uninstall(name: string): Promise<unknown>;
+    /**
+     * `GET /api/v1/admin/plugins/catalog` → the aggregated catalog across every
+     * configured source, each entry annotated with `installed`/`enabled`. All
+     * arrays are defended so a malformed payload degrades to empty rather than
+     * throwing on `.map`.
+     */
+    catalog(): Promise<CatalogResponse>;
+    /**
+     * `POST /api/v1/admin/plugins/catalog/sources` `{ url }` → the updated source
+     * list. A `400 plugin.catalog.url.invalid` (bad scheme) surfaces as an
+     * {@link ApiError}; read its `{ code }` with {@link pluginErrorCode}.
+     */
+    addCatalogSource(url: string): Promise<string[]>;
+    /**
+     * `DELETE /api/v1/admin/plugins/catalog/sources?url=…` → the updated source
+     * list. The URL travels on the query string because the browser's DELETE
+     * carries no body. The default source cannot be removed (server no-op).
+     */
+    removeCatalogSource(url: string): Promise<string[]>;
     /**
      * `PUT /api/v1/admin/plugins/{name}/settings` `{ settings }` → the refreshed
      * masked {@link PluginDetail}. Pass ONLY the keys the admin changed; a secret

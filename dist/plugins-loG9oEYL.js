@@ -52,6 +52,23 @@ var i = class {
 	uninstall(e) {
 		return this.client.delete(`/api/v1/admin/plugins/${encodeURIComponent(e)}`);
 	}
+	async catalog() {
+		let e = await this.client.get("/api/v1/admin/plugins/catalog");
+		return {
+			default_source: typeof e.default_source == "string" ? e.default_source : "",
+			sources: Array.isArray(e.sources) ? e.sources : [],
+			catalogs: Array.isArray(e.catalogs) ? e.catalogs : [],
+			errors: Array.isArray(e.errors) ? e.errors : []
+		};
+	}
+	async addCatalogSource(e) {
+		let { sources: t } = await this.client.post("/api/v1/admin/plugins/catalog/sources", { url: e });
+		return Array.isArray(t) ? t : [];
+	}
+	async removeCatalogSource(e) {
+		let { sources: t } = await this.client.delete(`/api/v1/admin/plugins/catalog/sources?url=${encodeURIComponent(e)}`);
+		return Array.isArray(t) ? t : [];
+	}
 	async updateSettings(e, t) {
 		let { plugin: n } = await this.client.put(`/api/v1/admin/plugins/${encodeURIComponent(e)}/settings`, { settings: t });
 		return {
@@ -64,4 +81,4 @@ var i = class {
 //#endregion
 export { r as i, t as n, n as r, i as t };
 
-//# sourceMappingURL=plugins-iPnnuCAX.js.map
+//# sourceMappingURL=plugins-loG9oEYL.js.map
