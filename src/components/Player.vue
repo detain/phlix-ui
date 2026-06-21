@@ -227,9 +227,18 @@ function startUpNextCountdown(): void {
     }
   }, 1000);
 }
-/** End of playback — surface the up-next card (and count down when autoplay is on). */
+/** End of playback — surface the chrome + up-next card (and count down when autoplay is on). */
 function onEnded(): void {
-  if (!player.upNext) return; // nothing queued — just let it end
+  // Pin the chrome open explicitly: browsers do NOT reliably fire `pause` on
+  // `ended` (Safari notably does not), so the play-state watcher that normally
+  // reveals the chrome on stop may never run. Without this, the end-of-video
+  // surface (controls + the up-next card, both bottom-right) stays hidden
+  // behind the idle auto-hide until the user moves the mouse — the reported
+  // "box shows nothing until mouseover" bug. clearIdle() also cancels any
+  // pending hide scheduled during playback.
+  clearIdle();
+  showChrome.value = true;
+  if (!player.upNext) return; // nothing queued — just surface the chrome and stop
   upNextActive.value = true;
   if (prefs.autoplay) startUpNextCountdown();
 }

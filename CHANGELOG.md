@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.38.1] - 2026-06-20
+
+### Fixed
+- **End-of-video chrome no longer hides until you move the mouse.** When a video ends, browsers don't reliably fire a `pause` event (Safari notably doesn't), so the player's play-state stayed `playing` and the idle auto-hide blanked the end-of-video controls and the bottom-right **Up next** card until a pointer move. `Player.onEnded()` now explicitly cancels the pending auto-hide and pins the chrome open, so the up-next card and controls appear immediately on all browsers.
+
 ## [0.38.0] - 2026-06-20
 
 ### Added
