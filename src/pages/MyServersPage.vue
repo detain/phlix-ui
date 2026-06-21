@@ -3,22 +3,25 @@
  * MyServersPage (R5.2b) — the hub's connected-media-servers list, re-skinned onto
  * the Nocturne tokens + `@phlix/ui` primitives.
  *
- * Data flow is UNCHANGED from the pre-redo page (presentation-only re-skin):
- *   - GET /api/v1/servers → { servers }
- * The per-row "Manage" and empty-state "Add Server" buttons are pre-existing
- * placeholders (no handler/endpoint in the original); they stay styled placeholders
- * until a future functional step wires them.
+ * Data flow:
+ *   - GET /api/v1/me/servers → { servers }  (the signed-in user's own servers)
+ *   - "Add server" opens a modal that POSTs a claim code to the hub
+ *     (POST /api/v1/server-claims/claim) to link a media server, then refreshes.
+ * The per-row "Manage" button stays a styled placeholder until a future step.
  *
- * `client` is an injectable test seam; it defaults to the shared `api` singleton.
+ * `client` is an injectable test seam; it defaults to the shared `api` singleton
+ * (which now carries the session token, so the listing loads for a logged-in user).
  */
 import { ref, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
+import { claimServer, ClaimError } from '../api/claimServer';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { errMessage } from '../api/errors';
 import { unixToIso } from '../api/normalize';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
+import Modal from '../components/ui/Modal.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 
@@ -53,6 +56,35 @@ const auth = useAuthStore();
 const servers = ref<Server[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+// "Add server" claim flow: the user pastes the claim code shown on their media
+// server; we POST it to the hub (POST /api/v1/server-claims/claim) to link it.
+const addOpen = ref(false);
+const claimCode = ref('');
+const claiming = ref(false);
+const claimError = ref<string | null>(null);
+
+function openAdd(): void {
+  claimCode.value = '';
+  claimError.value = null;
+  addOpen.value = true;
+}
+
+async function submitClaim(): Promise<void> {
+  claiming.value = true;
+  claimError.value = null;
+  try {
+    // Same-origin: the hub serves this SPA, so a relative base resolves to it.
+    await claimServer('', claimCode.value);
+    addOpen.value = false;
+    toasts.success('Server added.');
+    await loadServers();
+  } catch (e) {
+    claimError.value = e instanceof ClaimError ? e.message : errMessage(e, 'Could not add the server.');
+  } finally {
+    claiming.value = false;
+  }
+}
 
 async function loadServers(): Promise<void> {
   loading.value = true;
@@ -123,7 +155,7 @@ onMounted(loadServers);
         <h1 id="my-servers-heading" class="my-servers__title">My Servers</h1>
         <p class="my-servers__subtitle">Manage your connected media servers.</p>
       </div>
-      <Button variant="solid" size="sm" left-icon="plus">Add server</Button>
+      <Button variant="solid" size="sm" left-icon="plus" @click="openAdd">Add server</Button>
     </header>
 
     <div v-if="loading" class="my-servers__skel"><Skeleton variant="text" :lines="6" /></div>
@@ -146,7 +178,7 @@ onMounted(loadServers);
       description="Connect a media server to start streaming."
     >
       <template #actions>
-        <Button variant="solid" size="sm" left-icon="plus">Add server</Button>
+        <Button variant="solid" size="sm" left-icon="plus" @click="openAdd">Add server</Button>
       </template>
     </EmptyState>
 
@@ -187,6 +219,40 @@ onMounted(loadServers);
         </tbody>
       </table>
     </div>
+
+    <Modal v-model="addOpen" title="Add a server">
+      <form class="my-servers__add-form" @submit.prevent="submitClaim">
+        <p class="my-servers__add-help">
+          On your media server, open <strong>Settings → Connect to hub</strong> to get a claim code,
+          then paste it here.
+        </p>
+        <label class="my-servers__add-label" for="claim-code">Claim code</label>
+        <input
+          id="claim-code"
+          v-model="claimCode"
+          class="my-servers__add-input"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="e.g. ABCD-1234"
+          :disabled="claiming"
+        />
+        <p v-if="claimError" class="my-servers__add-error" role="alert">{{ claimError }}</p>
+      </form>
+      <template #footer>
+        <Button variant="ghost" size="sm" :disabled="claiming" @click="addOpen = false">Cancel</Button>
+        <Button
+          variant="solid"
+          size="sm"
+          left-icon="plus"
+          :loading="claiming"
+          :disabled="claiming"
+          @click="submitClaim"
+        >
+          Add server
+        </Button>
+      </template>
+    </Modal>
   </section>
 </template>
 
@@ -274,5 +340,41 @@ onMounted(loadServers);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+.my-servers__add-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.my-servers__add-help {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
+}
+.my-servers__add-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.my-servers__add-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-family: var(--font-mono, monospace);
+  color: var(--text);
+  background: var(--surface-sunken, var(--surface));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+}
+.my-servers__add-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.my-servers__add-error {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--danger, var(--text));
 }
 </style>
