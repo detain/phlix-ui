@@ -174,3 +174,78 @@ describe('MyServersPage — status badges', () => {
     w.unmount();
   });
 });
+
+describe('MyServersPage — add server', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('opens the claim modal from the header "Add server" button', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+
+    expect(document.querySelector('#claim-code')).toBeNull();
+    await findBtnByText(w, 'Add server')!.trigger('click');
+    await flushPromises();
+    expect(document.querySelector('#claim-code')).not.toBeNull();
+    w.unmount();
+  });
+
+  it('claims a server (token + protocol header), closes the modal, and refreshes the list', async () => {
+    const { client, get } = makeClient();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, status: 200, json: async () => ({ server_id: 'srv-2' }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const w = mountPage(client);
+    await flushPromises();
+    expect(get).toHaveBeenCalledTimes(1);
+
+    await findBtnByText(w, 'Add server')!.trigger('click');
+    await flushPromises();
+    const input = document.querySelector('#claim-code') as HTMLInputElement;
+    input.value = 'ABC-123';
+    input.dispatchEvent(new Event('input'));
+    await flushPromises();
+
+    // Submit via the form to disambiguate from the header's same-label button.
+    (document.querySelector('.my-servers__add-form') as HTMLFormElement).dispatchEvent(
+      new Event('submit', { cancelable: true, bubbles: true }),
+    );
+    await flushPromises();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/api/v1/server-claims/claim');
+    expect((init.headers as Record<string, string>)['Accept-Phlix-Protocol']).toBe('v1');
+    expect(JSON.parse(init.body as string)).toEqual({ claim_code: 'ABC-123' });
+    expect(get).toHaveBeenCalledTimes(2); // list refreshed after claim
+    expect(document.querySelector('#claim-code')).toBeNull(); // modal closed
+    w.unmount();
+  });
+
+  it('keeps the modal open and shows a friendly error on a bad claim code', async () => {
+    const { client } = makeClient();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }));
+
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'Add server')!.trigger('click');
+    await flushPromises();
+    const input = document.querySelector('#claim-code') as HTMLInputElement;
+    input.value = 'WRONG';
+    input.dispatchEvent(new Event('input'));
+    await flushPromises();
+    (document.querySelector('.my-servers__add-form') as HTMLFormElement).dispatchEvent(
+      new Event('submit', { cancelable: true, bubbles: true }),
+    );
+    await flushPromises();
+
+    const err = document.querySelector('.my-servers__add-error');
+    expect(err?.textContent).toContain('was not found');
+    expect(document.querySelector('#claim-code')).not.toBeNull(); // stays open to retry
+    w.unmount();
+  });
+});

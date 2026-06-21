@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.41.0] - 2026-06-21
+
+### Fixed
+- **The SPA now sends the logged-in user's Bearer token by default**, fixing the hub's **My Servers** and **Federation** pages showing "unauthorized" with a Retry button that never cleared. Those pages (and the media list / A-Z `letter-index` requests) used `ApiClient` instances whose default token store was a **no-op**, so no `Authorization` header was ever sent — the hub's auth middleware correctly returned 401, and Retry just repeated the token-less request. `ApiClient`'s default token store now reads the session token from `localStorage` in the browser (a no-op only under SSR), so every client sends the token unless one is explicitly overridden. `fetchLetterIndex` was also switched from a raw `fetch` to `ApiClient` so it sends the token too.
+
+### Added
+- **"Add server" now works on My Servers.** The previously-placeholder button opens a modal to paste the claim code shown on your media server; it POSTs to the hub's `POST /api/v1/server-claims/claim` (with the `Accept-Phlix-Protocol: v1` header the endpoint requires), then refreshes the list. Friendly, specific errors for an unknown / expired / already-claimed code. New `claimServer()` API helper + `ClaimError`.
+
+### Security
+- Sending the token by default is also what lets **phlix-server gate its media-listing endpoints** behind authentication (companion server change): previously `GET /api/v1/media` (and friends) were world-readable; the SPA now authenticates those requests so the server can require a logged-in user without breaking browsing.
+
 ## [0.40.0] - 2026-06-21
 
 ### Added
