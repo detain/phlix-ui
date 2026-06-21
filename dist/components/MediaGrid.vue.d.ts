@@ -30,7 +30,15 @@ type __VLS_Slots = {
     /** Replace the empty state. */
     empty?: () => unknown;
 };
-declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+/**
+ * Scroll the window so the row containing `index` sits at the top — the A-Z
+ * jump rail drives this with a letter's offset. Works for any index in the
+ * pre-sized grid (on-demand paging fills the destination once it's in view).
+ */
+declare function scrollToIndex(index: number): void;
+declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {
+    scrollToIndex: typeof scrollToIndex;
+}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: MediaItem) => any;
     play: (item: MediaItem) => any;
     info: (item: MediaItem) => any;
