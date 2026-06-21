@@ -142,14 +142,14 @@ describe('LibraryPage', () => {
     expect(fetchMedia).toHaveBeenCalled();
   });
 
-  it('forwards load-more to the store', async () => {
+  it('forwards the grid need-range to store.ensureRange (random-access paging / A-Z jump)', async () => {
     stubFetch({ media: { items: [media()], total: 50 } });
     const { w } = await mountAt('lib1');
     await flushPromises();
     const store = useMediaStore();
-    const loadMore = vi.spyOn(store, 'loadMore');
-    w.findComponent({ name: 'MediaGrid' }).vm.$emit('load-more');
-    expect(loadMore).toHaveBeenCalled();
+    const ensureRange = vi.spyOn(store, 'ensureRange').mockResolvedValue();
+    w.findComponent({ name: 'MediaGrid' }).vm.$emit('need-range', 24, 48);
+    expect(ensureRange).toHaveBeenCalledWith(expect.anything(), 24, 48);
   });
 
   it('re-scopes and reloads when navigating to another library', async () => {

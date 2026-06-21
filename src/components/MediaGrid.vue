@@ -64,6 +64,10 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'load-more'): void;
+  /** The absolute index window now in view (incl. overscan). The host loads any
+   *  pages covering it — this is what fills the pre-sized grid after an A-Z jump,
+   *  where `load-more` (append-at-end) can't reach the jumped-to offset. */
+  (e: 'need-range', startIndex: number, endIndex: number): void;
   (e: 'play', item: MediaItem): void;
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
@@ -159,6 +163,21 @@ watch(
   },
 );
 
+// Random-access paging: emit the visible window so the host can load whatever
+// pages it covers — works for both scrolling AND the A-Z jump (load-more only
+// appends at the end and can't fill a jumped-to offset). Debounced so a fast
+// scroll/jump fetches the SETTLED window, not every page flown past.
+let needRangeTimer: ReturnType<typeof setTimeout> | undefined;
+watch(
+  () => [virtualized.value, windowResult.value.startIndex, windowResult.value.endIndex] as const,
+  ([isVirtual, startIndex, endIndex]) => {
+    if (!isVirtual || endIndex <= startIndex) return;
+    clearTimeout(needRangeTimer);
+    needRangeTimer = setTimeout(() => emit('need-range', startIndex, endIndex), 120);
+  },
+  { immediate: true },
+);
+
 const gridStyle = computed(() => ({
   gridTemplateColumns: virtualized.value
     ? `repeat(${columns.value}, minmax(0, 1fr))`
@@ -199,10 +218,10 @@ function scrollToIndex(index: number): void {
   const cols = Math.max(1, columns.value);
   const rowY = Math.floor(Math.max(0, index) / cols) * rowHeight.value;
   const sizerTop = window.scrollY + sizerEl.value.getBoundingClientRect().top;
-  const reduce =
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  window.scrollTo?.({ top: Math.max(0, sizerTop + rowY), behavior: reduce ? 'auto' : 'smooth' });
+  // Instant, not smooth: an A-Z jump can span thousands of rows — animating
+  // through them is janky and would fetch every page flown past. Jump straight
+  // to the target so a single settled-window `need-range` loads that letter.
+  window.scrollTo?.({ top: Math.max(0, sizerTop + rowY), behavior: 'auto' });
 }
 defineExpose({ scrollToIndex });
 
@@ -283,6 +302,7 @@ onBeforeUnmount(() => {
     else clearTimeout(frame);
     frame = 0;
   }
+  clearTimeout(needRangeTimer);
   detachResizeObserver();
   detachSentinel();
 });

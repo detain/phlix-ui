@@ -89,6 +89,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     fetchMedia: (apiBase: string, append?: boolean) => Promise<void>;
     scheduleFetch: (apiBase: string, delay?: number) => void;
     loadMore: (apiBase: string) => Promise<void>;
+    ensureRange: (apiBase: string, startIndex: number, endIndex: number) => Promise<void>;
     prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
     clearCache: () => void;
     cancelScheduled: () => void;
@@ -185,6 +186,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     fetchMedia: (apiBase: string, append?: boolean) => Promise<void>;
     scheduleFetch: (apiBase: string, delay?: number) => void;
     loadMore: (apiBase: string) => Promise<void>;
+    ensureRange: (apiBase: string, startIndex: number, endIndex: number) => Promise<void>;
     prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
     clearCache: () => void;
     cancelScheduled: () => void;
@@ -281,6 +283,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     fetchMedia: (apiBase: string, append?: boolean) => Promise<void>;
     scheduleFetch: (apiBase: string, delay?: number) => void;
     loadMore: (apiBase: string) => Promise<void>;
+    ensureRange: (apiBase: string, startIndex: number, endIndex: number) => Promise<void>;
     prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
     clearCache: () => void;
     cancelScheduled: () => void;
@@ -298,4 +301,4 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setMatchStatus" | "setActors" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;
+}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "ensureRange" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setMatchStatus" | "setActors" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;
