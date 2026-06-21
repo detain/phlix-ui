@@ -117,6 +117,10 @@ export const useMediaStore = defineStore('media', () => {
     let activeKey: string | null = null;
     let activeController: AbortController | null = null;
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    // Bumped on every fresh (page-0) load so a late random-access page fetch from
+    // a SUPERSEDED query (filters changed mid-flight) can't splice stale rows into
+    // the new list. ensureRange() captures it and drops a result if it changed.
+    let generation = 0;
 
     function fresh(entry: CacheEntry | undefined): entry is CacheEntry {
         return !!entry && Date.now() - entry.ts < CACHE_TTL;
@@ -155,6 +159,62 @@ export const useMediaStore = defineStore('media', () => {
     function applyResult(res: { items: MediaItem[]; total: number }, append: boolean): void {
         items.value = append ? [...items.value, ...res.items] : res.items;
         total.value = res.total;
+        // A fresh (replace) load starts a new generation — invalidates any
+        // in-flight random-access page fetch from the previous query.
+        if (!append) generation += 1;
+    }
+
+    /**
+     * Splice a fetched page into `items` at its ABSOLUTE offset (random access).
+     * The grid is pre-sized to `total`, so a page placed at e.g. index 5000 fills
+     * those skeleton slots without disturbing the rows already loaded elsewhere.
+     */
+    function placePage(pageOffset: number, pageItems: MediaItem[]): void {
+        if (pageItems.length === 0) return;
+        const next = items.value.slice();
+        for (let k = 0; k < pageItems.length; k++) next[pageOffset + k] = pageItems[k];
+        items.value = next;
+    }
+
+    /**
+     * Ensure every page covering the absolute index window [startIndex, endIndex)
+     * is loaded into `items`. This is what makes the A-Z jump rail work: jumping
+     * to "S" (offset ~5000) fetches the page AT that offset instead of only
+     * appending at the end, so the skeleton slots fill with the right titles.
+     * Also drives normal scrolling (the grid emits its visible window). Pages
+     * already present are skipped; concurrent identical fetches dedupe via the
+     * in-flight map; results from a superseded query are dropped.
+     */
+    async function ensureRange(apiBase: string, startIndex: number, endIndex: number): Promise<void> {
+        const size = Math.max(1, limit.value);
+        const cap = total.value > 0 ? total.value : Math.max(endIndex, 1);
+        const first = Math.max(0, Math.floor(Math.max(0, startIndex) / size) * size);
+        const lastIdx = Math.min(cap - 1, Math.max(first, endIndex - 1));
+        const gen = generation;
+        const jobs: Promise<void>[] = [];
+        for (let off = first; off <= lastIdx; off += size) {
+            if (items.value[off] !== undefined) continue; // page already loaded
+            const params = { ...queryParams.value, offset: off };
+            const key = cacheKey(params);
+            const cached = cache.get(key);
+            if (fresh(cached)) {
+                if (gen === generation) placePage(off, cached.items);
+                if (!total.value) total.value = cached.total;
+                continue;
+            }
+            jobs.push(
+                networkFetch(apiBase, params, key, false)
+                    .then((res) => {
+                        if (gen !== generation) return; // filters changed mid-flight — drop
+                        placePage(off, res.items);
+                        if (!total.value) total.value = res.total;
+                    })
+                    .catch(() => {
+                        /* leave the slots as skeletons; a later window pass retries */
+                    }),
+            );
+        }
+        if (jobs.length) await Promise.all(jobs);
     }
 
     async function fetchMedia(apiBase: string, append = false): Promise<void> {
@@ -363,6 +423,7 @@ export const useMediaStore = defineStore('media', () => {
         fetchMedia,
         scheduleFetch,
         loadMore,
+        ensureRange,
         prefetch,
         clearCache,
         cancelScheduled,

@@ -302,6 +302,29 @@ describe('MediaGrid — infinite scroll', () => {
   });
 });
 
+describe('MediaGrid — random-access paging (need-range)', () => {
+  it('emits need-range for the visible window once measured (drives A-Z jump paging)', async () => {
+    vi.useFakeTimers();
+    try {
+      mockLayout(1000, 0); // real width → virtualized
+      window.innerHeight = 768;
+      // Pre-sized to a big total with only the first page loaded — the rest are
+      // skeletons the host must fill via need-range.
+      const w = mount(MediaGrid, { props: { items: makeItems(24), total: 5000 } });
+      await nextTick();
+      await vi.advanceTimersByTimeAsync(150); // clear the 120ms debounce
+
+      const ev = w.emitted('need-range') as [number, number][] | undefined;
+      expect(ev).toBeTruthy();
+      const [start, end] = ev![ev!.length - 1];
+      expect(start).toBe(0);
+      expect(end).toBeGreaterThan(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('MediaGrid — event forwarding', () => {
   it('re-emits play/watchlist/info from the default card', async () => {
     const w = mount(MediaGrid, { props: { items: makeItems(1) } });

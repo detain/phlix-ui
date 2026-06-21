@@ -144,8 +144,11 @@ onBeforeUnmount(() => {
 function onFilterChange(): void {
   reload();
 }
-function onLoadMore(): void {
-  store.loadMore(apiBase.value);
+/** The grid asks for the pages covering its visible window — drives both
+ *  scrolling and the A-Z jump (random access), so a jumped-to letter's skeleton
+ *  slots fill with the right titles instead of staying blank. */
+function onNeedRange(startIndex: number, endIndex: number): void {
+  store.ensureRange(apiBase.value, startIndex, endIndex);
 }
 
 function go(name: string, id: string): void {
@@ -204,7 +207,7 @@ function onInfo(item: MediaItem): void {
         :loading-more="store.loading && store.items.length > 0"
         :has-more="store.hasMore"
         :can-match="auth.isAdmin"
-        @load-more="onLoadMore"
+        @need-range="onNeedRange"
         @play="onPlay"
         @watchlist="onWatchlist"
         @info="onInfo"

@@ -308,3 +308,55 @@ describe('useMediaStore — topLevel scope', () => {
     expect(s.offset).toBe(12); // paging untouched
   });
 });
+
+describe('useMediaStore — ensureRange (random-access paging / A-Z jump)', () => {
+  /** A fetch mock that tags returned items with the requested offset, so a page
+   *  placed at an absolute index can be identified. */
+  function offsetAware() {
+    return vi.fn((url: string) => {
+      const off = Number(/[?&]offset=(\d+)/.exec(url)?.[1] ?? 0);
+      return Promise.resolve(jsonResponse({ items: makeItems(`o${off}`, 3), total: 30, limit: 3, offset: off }));
+    });
+  }
+
+  it('fetches the page AT the jumped-to offset and places it at the absolute index', async () => {
+    fetchMock = offsetAware();
+    vi.stubGlobal('fetch', fetchMock);
+    const s = useMediaStore();
+    s.limit = 3;
+    await s.fetchMedia(''); // page 0 → items[0..2]
+    expect(s.items[0]?.id).toBe('o0-0');
+
+    await s.ensureRange('', 9, 12); // "jump" to index 9 → page at offset 9
+    expect(s.items[9]?.id).toBe('o9-0'); // placed at its ABSOLUTE index, not appended
+    expect(s.items[11]?.id).toBe('o9-2');
+    expect(s.items[3]).toBeUndefined(); // the un-scrolled gap stays a skeleton
+  });
+
+  it('skips pages already loaded — no duplicate network calls', async () => {
+    fetchMock = offsetAware();
+    vi.stubGlobal('fetch', fetchMock);
+    const s = useMediaStore();
+    s.limit = 3;
+    await s.fetchMedia(''); // 1 call (page 0)
+    await s.ensureRange('', 0, 3); // page 0 already loaded → no fetch
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await s.ensureRange('', 9, 12); // page 9 → 1 fetch
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await s.ensureRange('', 9, 12); // already present → no fetch
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not exceed total when the window runs past the end', async () => {
+    fetchMock = offsetAware();
+    vi.stubGlobal('fetch', fetchMock);
+    const s = useMediaStore();
+    s.limit = 3;
+    await s.fetchMedia(''); // total = 30
+    await s.ensureRange('', 28, 60); // clamps to the last page (offset 27)
+    expect(s.items[27]?.id).toBe('o27-0');
+    // never requested an offset >= total (30)
+    const requested = fetchMock.mock.calls.map((c: [string]) => Number(/[?&]offset=(\d+)/.exec(c[0])?.[1] ?? 0));
+    expect(Math.max(...requested)).toBeLessThan(30);
+  });
+});

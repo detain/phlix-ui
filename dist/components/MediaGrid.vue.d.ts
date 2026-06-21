@@ -44,12 +44,14 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {
     info: (item: MediaItem) => any;
     watchlist: (item: MediaItem) => any;
     "load-more": () => any;
+    "need-range": (startIndex: number, endIndex: number) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onMatch?: ((item: MediaItem) => any) | undefined;
     onPlay?: ((item: MediaItem) => any) | undefined;
     onInfo?: ((item: MediaItem) => any) | undefined;
     onWatchlist?: ((item: MediaItem) => any) | undefined;
     "onLoad-more"?: (() => any) | undefined;
+    "onNeed-range"?: ((startIndex: number, endIndex: number) => any) | undefined;
 }>, {
     loading: boolean;
     canMatch: boolean;

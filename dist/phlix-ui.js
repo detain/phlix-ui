@@ -15,7 +15,7 @@ import { t as xe } from "./Slider-BMn_Lp_q.js";
 import { t as Se } from "./Switch-CFZhdkXR.js";
 import { t as Ce } from "./Chip-2HcSZF4a.js";
 import { t as we } from "./Select-DLwgQInL.js";
-import { i as Te, n as Ee, r as De, t as Oe } from "./FilterBar-78X6LVxM.js";
+import { i as Te, n as Ee, r as De, t as Oe } from "./FilterBar-BQYkC1LI.js";
 import { t as ke } from "./Modal-I4tEFhoH.js";
 import { t as w } from "./useToastStore-BDoKlU6N.js";
 import { t as T } from "./Skeleton-DkSoWF3C.js";
@@ -934,7 +934,7 @@ function Fi(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-2uKkTliA.js")
+			component: () => import("./LibraryPage-DP-8i40N.js")
 		},
 		{
 			path: `${t}/player/:id`,

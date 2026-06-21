@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.42.0] - 2026-06-21
+
+### Fixed
+- **A-Z jump rail now loads the titles at the letter you jump to (were empty skeleton boxes).** The pre-sized grid only paged **sequentially** — `load-more` appended the next page from the end (`items.length`) — so jumping to "S" (offset ~5000) scrolled to slots whose page was never fetched, and the only loading that happened was 24 more items appended back at the top. Paging is now **random-access**: `MediaGrid` emits the visible absolute-index window (`need-range`, debounced), and `useMediaStore.ensureRange()` fetches the page(s) covering it and splices them in **at their absolute index** (sparse placement) — so a jumped-to letter's slots fill with the right titles. Pages already loaded are skipped; a page fetch from a superseded query (filters changed mid-flight) is dropped (generation guard); jumps are now **instant** (a smooth scroll across thousands of rows was janky and fetched every page flown past). `LibraryPage` drives the grid via `need-range`; the store keeps `loadMore` for other consumers.
+
 ## [0.41.0] - 2026-06-21
 
 ### Fixed
