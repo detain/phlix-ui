@@ -1,7 +1,34 @@
 import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
+import { LocalStorageTokenStore } from './tokenStore';
 
 /** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
 export { ApiError } from './errors';
+
+/**
+ * Default token store: persist + read the session token from `localStorage` in
+ * the browser, and a no-op when there is no `window` (SSR / unit construction).
+ *
+ * Historically the default was a pure no-op, so any `ApiClient` created WITHOUT
+ * an explicit `tokenStore` (the exported {@link api} singleton, the media store,
+ * the hub's My-Servers / Federation pages, …) silently sent NO `Authorization`
+ * header — which read as "unauthorized" against an authed endpoint and left the
+ * media listing readable without a token. Defaulting to the real store makes
+ * every client send the logged-in user's Bearer token unless one is overridden.
+ */
+function defaultTokenStore(): TokenStore {
+    if (typeof window === 'undefined') {
+        return {
+            getAccessToken: () => null,
+            setAccessToken: () => {},
+            getRefreshToken: () => null,
+            setRefreshToken: () => {},
+            getUser: () => null,
+            setUser: () => {},
+            clear: () => {},
+        };
+    }
+    return new LocalStorageTokenStore();
+}
 
 /** Default per-request timeout (ms) before the client aborts with a `TimeoutError`. */
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -124,15 +151,7 @@ export class ApiClient {
 
     constructor(options: ApiClientOptions = {}) {
         this.baseUrl = options.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
-        this.tokens = options.tokenStore ?? {
-            getAccessToken: () => null,
-            setAccessToken: () => {},
-            getRefreshToken: () => null,
-            setRefreshToken: () => {},
-            getUser: () => null,
-            setUser: () => {},
-            clear: () => {},
-        };
+        this.tokens = options.tokenStore ?? defaultTokenStore();
         this.doFetch = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
         this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     }
