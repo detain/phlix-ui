@@ -189,6 +189,23 @@ function backToTop(): void {
   window.scrollTo?.({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
 }
 
+/**
+ * Scroll the window so the row containing `index` sits at the top — the A-Z
+ * jump rail drives this with a letter's offset. Works for any index in the
+ * pre-sized grid (on-demand paging fills the destination once it's in view).
+ */
+function scrollToIndex(index: number): void {
+  if (typeof window === 'undefined' || !sizerEl.value) return;
+  const cols = Math.max(1, columns.value);
+  const rowY = Math.floor(Math.max(0, index) / cols) * rowHeight.value;
+  const sizerTop = window.scrollY + sizerEl.value.getBoundingClientRect().top;
+  const reduce =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo?.({ top: Math.max(0, sizerTop + rowY), behavior: reduce ? 'auto' : 'smooth' });
+}
+defineExpose({ scrollToIndex });
+
 // --- infinite scroll ---
 let io: IntersectionObserver | null = null;
 function attachSentinel(): void {

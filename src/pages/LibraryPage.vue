@@ -18,10 +18,12 @@ import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import MediaGrid from '../components/MediaGrid.vue';
 import FilterBar from '../components/FilterBar.vue';
+import LetterRail from '../components/LetterRail.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import type { MediaItem } from '../types/media-item';
+import { fetchLetterIndex, type LetterBucket } from '../api/letter-index';
 import { usePageTitle } from '../composables/usePageTitle';
 
 const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
@@ -34,6 +36,29 @@ const router = useRouter();
 const store = useMediaStore();
 const libraries = useLibrariesStore();
 const auth = useAuthStore();
+
+// A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
+// a letter scrolls the pre-sized grid to that letter's first title.
+const gridRef = ref<InstanceType<typeof MediaGrid> | null>(null);
+const letters = ref<LetterBucket[]>([]);
+let lettersAbort: AbortController | null = null;
+const showRail = computed(() => letters.value.some((b) => b.count > 0));
+
+async function loadLetters(): Promise<void> {
+  lettersAbort?.abort();
+  if (store.sort !== 'name' || store.order !== 'asc') {
+    letters.value = [];
+    return;
+  }
+  const ctrl = new AbortController();
+  lettersAbort = ctrl;
+  const result = await fetchLetterIndex(apiBase.value, store.queryParams, ctrl.signal);
+  if (!ctrl.signal.aborted) letters.value = result;
+}
+
+function onJump(offset: number): void {
+  gridRef.value?.scrollToIndex(offset);
+}
 
 // Interactive metadata match (U5) — admin-only. The card "Match" action opens a
 // modal for that item; a successful apply reloads the scope so the refreshed
@@ -74,6 +99,7 @@ function scope(): void {
   applyIncomingFilters();
   store.reset();
   store.fetchMedia(apiBase.value);
+  void loadLetters();
 }
 
 /** Seed the FilterBar from deep-link query params — e.g. an actor link from a
@@ -91,6 +117,7 @@ function applyIncomingFilters(): void {
 function reload(): void {
   store.reset();
   store.fetchMedia(apiBase.value);
+  void loadLetters();
 }
 
 onMounted(() => {
@@ -170,6 +197,7 @@ function onInfo(item: MediaItem): void {
       </EmptyState>
 
       <MediaGrid
+        ref="gridRef"
         :items="store.items"
         :total="store.total"
         :loading="store.loading && store.items.length === 0"
@@ -182,6 +210,8 @@ function onInfo(item: MediaItem): void {
         @info="onInfo"
         @match="onMatch"
       />
+
+      <LetterRail v-if="showRail" :letters="letters" @jump="onJump" />
     </section>
 
     <MetadataMatchModal

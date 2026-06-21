@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.36.0] - 2026-06-20
+
+### Added
+- **A-Z jump rail on long library listings.** A vertical A-Z (+`#`) rail pinned to the right edge of a library grid: clicking a letter scrolls the pre-sized grid straight to that letter's first title (on-demand paging loads the destination). Backed by the server `letter-index` (absolute item offsets honoring the active filters); empty letters render disabled, so the alphabet stays a stable map. `MediaGrid` exposes `scrollToIndex()`; `LibraryPage` fetches the index — only for the default name-ascending sort, refetched on filter change — and renders the new `LetterRail`. New `fetchLetterIndex()` API helper + `LetterRail.vue`.
+
 ## [0.35.0] - 2026-06-20
 
 ### Changed
