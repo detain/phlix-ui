@@ -21,6 +21,15 @@ export type PosterSrcsetInput = string | PosterSource[] | null | undefined;
 export interface MediaItem {
     id: string;
     name: string;
+    /**
+     * Article-stripped sort key the server derives from `name` ("The Plot" →
+     * "Plot") so listings file the title under its real letter while `name` still
+     * displays in full. The server already orders the media grid + A-Z rail by
+     * this; exposed here so any client-side sort/grouping can agree (mirror the
+     * derivation with `stripLeadingArticle` from `utils/sortTitle`). Optional so
+     * older servers that don't send it keep working.
+     */
+    sort_title?: string | null;
     type: MediaType;
     path?: string;
     poster_url: string | null;

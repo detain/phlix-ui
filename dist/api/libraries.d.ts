@@ -24,8 +24,10 @@ export interface LibrarySummary {
 }
 /**
  * Stable sort for the Browse surface: by `display_order` ascending (missing
- * orders sort last), then case-insensitively by name. Pure + side-effect free
- * (operates on a copy) so it is trivially unit-testable.
+ * orders sort last), then case-insensitively by name with a leading article
+ * ignored (so a "The …" library files under its real letter, matching how media
+ * listings sort). Pure + side-effect free (operates on a copy) so it is
+ * trivially unit-testable.
  */
 export declare function sortLibraries(list: readonly LibrarySummary[]): LibrarySummary[];
 /**

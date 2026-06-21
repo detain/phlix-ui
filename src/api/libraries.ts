@@ -1,5 +1,6 @@
 import { ApiClient } from './client';
 import { LocalStorageTokenStore } from './tokenStore';
+import { compareByStrippedTitle } from '../utils/sortTitle';
 
 /**
  * Public (non-admin) library listing used by the Browse surface to render one
@@ -29,15 +30,17 @@ export interface LibrarySummary {
 
 /**
  * Stable sort for the Browse surface: by `display_order` ascending (missing
- * orders sort last), then case-insensitively by name. Pure + side-effect free
- * (operates on a copy) so it is trivially unit-testable.
+ * orders sort last), then case-insensitively by name with a leading article
+ * ignored (so a "The …" library files under its real letter, matching how media
+ * listings sort). Pure + side-effect free (operates on a copy) so it is
+ * trivially unit-testable.
  */
 export function sortLibraries(list: readonly LibrarySummary[]): LibrarySummary[] {
   return [...list].sort((a, b) => {
     const ao = typeof a.display_order === 'number' ? a.display_order : Number.POSITIVE_INFINITY;
     const bo = typeof b.display_order === 'number' ? b.display_order : Number.POSITIVE_INFINITY;
     if (ao !== bo) return ao - bo;
-    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    return compareByStrippedTitle(a.name, b.name);
   });
 }
 

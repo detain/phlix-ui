@@ -26,6 +26,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     current: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -51,6 +52,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     } | null, MediaItem | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -78,6 +80,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     queue: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -103,6 +106,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     }[], MediaItem[] | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -170,6 +174,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     current: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -195,6 +200,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     } | null, MediaItem | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -222,6 +228,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     queue: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -247,6 +254,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     }[], MediaItem[] | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -314,6 +322,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     current: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -339,6 +348,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     } | null, MediaItem | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -366,6 +376,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     queue: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -391,6 +402,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     }[], MediaItem[] | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
         poster_url: string | null;

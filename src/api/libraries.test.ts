@@ -35,6 +35,16 @@ describe('sortLibraries', () => {
     expect(sortLibraries(list).map((l) => l.id)).toEqual(['m', 'a', 'b']);
   });
 
+  it('ignores a leading article in the name tiebreak ("The Classics" files under C)', () => {
+    const list: LibrarySummary[] = [
+      { id: 'd', name: 'Documentaries', type: 'movie' },
+      { id: 'c', name: 'The Classics', type: 'movie' },
+      { id: 'b', name: 'Anime', type: 'series' },
+    ];
+    // No display_order on any → sort by article-stripped name: Anime, [The] Classics, Documentaries.
+    expect(sortLibraries(list).map((l) => l.id)).toEqual(['b', 'c', 'd']);
+  });
+
   it('does not mutate the input array', () => {
     const list: LibrarySummary[] = [
       { id: '2', name: 'B', type: 'movie', display_order: 1 },
