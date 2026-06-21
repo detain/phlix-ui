@@ -242,6 +242,31 @@ describe('useMediaStore — URL sync', () => {
     expect(s.matchStatus).toBe('');
     expect(s.queryParams.match).toBeUndefined();
   });
+
+  it('sends match + actors in the request URL — not just in queryParams', async () => {
+    // Regression: the store serialized requests with a duplicated local builder
+    // that dropped `match` and `actors`, so the grid query never carried them
+    // (server returned the full, unfiltered set) even though queryParams had them.
+    const s = useMediaStore();
+    s.setMatchStatus('unmatched');
+    s.setActors(['Tom Hanks']);
+    await s.fetchMedia('');
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toContain('match=unmatched');
+    expect(url).toMatch(/actors(\[\]|%5B%5D)=Tom/);
+  });
+
+  it('gives matched vs unmatched DIFFERENT cache keys (a toggle refetches)', async () => {
+    const s = useMediaStore();
+    s.setMatchStatus('unmatched');
+    await s.fetchMedia('');
+    s.setMatchStatus('matched');
+    await s.fetchMedia('');
+    // Distinct match values must hit the network distinctly (no cache collision).
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('match=unmatched');
+    expect(String(fetchMock.mock.calls[1][0])).toContain('match=matched');
+  });
 });
 
 describe('useMediaStore — topLevel scope', () => {
