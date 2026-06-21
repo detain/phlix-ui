@@ -939,7 +939,7 @@ function Fi(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-Dvt7qLz9.js")
+			component: () => import("./PlayerPage-B4D2am4X.js")
 		},
 		{
 			path: `${t}/login`,
