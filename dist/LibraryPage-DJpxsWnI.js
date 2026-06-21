@@ -3,7 +3,7 @@ import { t } from "./Button-9cUUJmnN.js";
 import { t as n } from "./useAuthStore-BNt_Vq18.js";
 import { t as r } from "./useLibrariesStore-BehDWfBH.js";
 import { i } from "./usePageTitle-BO3GGF3M.js";
-import { n as a, r as o, t as s } from "./FilterBar-CaQLZ8a6.js";
+import { n as a, r as o, t as s } from "./FilterBar-DVLuliU6.js";
 import { t as c } from "./MetadataMatchModal-OhFsKc_u.js";
 import { t as l } from "./EmptyState-B2QnGIQT.js";
 import { computed as u, createBlock as d, createCommentVNode as f, createElementBlock as p, createElementVNode as m, createTextVNode as h, createVNode as g, defineComponent as _, inject as v, onBeforeUnmount as y, onMounted as b, openBlock as x, ref as S, toDisplayString as C, unref as w, watch as T, withCtx as E } from "vue";
@@ -89,6 +89,7 @@ var k = { class: "library-page" }, A = {
 			}, 8, ["description"])) : f("", !0),
 			g(o, {
 				items: w(L).items,
+				total: w(L).total,
 				loading: w(L).loading && w(L).items.length === 0,
 				"loading-more": w(L).loading && w(L).items.length > 0,
 				"has-more": w(L).hasMore,
@@ -100,6 +101,7 @@ var k = { class: "library-page" }, A = {
 				onMatch: H
 			}, null, 8, [
 				"items",
+				"total",
 				"loading",
 				"loading-more",
 				"has-more",
@@ -118,8 +120,8 @@ var k = { class: "library-page" }, A = {
 			onApplied: U
 		}, null, 8, ["modelValue", "item"])) : f("", !0)]));
 	}
-}), [["__scopeId", "data-v-72e3a202"]]);
+}), [["__scopeId", "data-v-76e40bc5"]]);
 //#endregion
 export { P as default };
 
-//# sourceMappingURL=LibraryPage-9jxVDzkw.js.map
+//# sourceMappingURL=LibraryPage-DJpxsWnI.js.map

@@ -2,6 +2,10 @@ import type { MediaItem } from '../types/media-item';
 type __VLS_Props = {
     /** Items to render (the already-loaded page set). */
     items: MediaItem[];
+    /** Full server result count. When set, the grid is sized to this up front so
+     *  the page length is final immediately and not-yet-loaded rows render as
+     *  skeletons until scrolled into view (on-demand paging fills them in). */
+    total?: number | null;
     /** Initial load — show skeleton rows instead of cards. */
     loading?: boolean;
     /** Appending a further page (controls the bottom loading row). */

@@ -82,6 +82,32 @@ export interface WindowResult {
  * `overscan` above/below) are returned, so the DOM never holds more than a
  * windowful regardless of `itemCount`.
  */
+/**
+ * The item count the grid should size itself to. When a server `total` is known
+ * it wins (so the page is the FINAL length up front and the scrollbar is
+ * accurate before every page has loaded); otherwise we fall back to the loaded
+ * count. Never returns less than what's already loaded.
+ */
+export function effectiveItemCount(loadedCount: number, total?: number | null): number {
+  if (typeof total !== 'number' || !Number.isFinite(total)) return loadedCount;
+  return Math.max(loadedCount, Math.trunc(total));
+}
+
+/**
+ * Whether the grid should request the next page. True once the rendered window
+ * reaches (or passes) the loaded edge — i.e. it wants items that haven't been
+ * fetched yet — and no fetch is already in flight. Drives on-demand paging when
+ * the grid is pre-sized to `total`, since the bottom sentinel then sits at the
+ * full height and can't fire until the very end.
+ */
+export function shouldLoadMore(
+  endIndex: number,
+  loadedCount: number,
+  state: { hasMore: boolean; loading: boolean; loadingMore: boolean },
+): boolean {
+  return state.hasMore && !state.loading && !state.loadingMore && endIndex >= loadedCount;
+}
+
 export function computeWindow(input: WindowInput): WindowResult {
   const { scrollTop, viewportHeight, rowHeight, columns, itemCount, overscan } = input;
   const cols = Math.max(1, columns);
