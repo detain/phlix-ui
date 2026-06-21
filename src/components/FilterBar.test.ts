@@ -66,6 +66,26 @@ describe('FilterBar — advanced panel', () => {
     expect(w.emitted('change')).toBeTruthy();
   });
 
+  it('toggles the metadata match filter and emits change WITHOUT needing search text', async () => {
+    const w = mountBar();
+    const store = useMediaStore();
+    await w.find('.filterbar__toggle').trigger('click'); // expand advanced
+    const matchGroup = w.find('[aria-label="Metadata match status"]');
+    const chips = matchGroup.findAll('button.phlix-chip__main');
+    // MATCH_OPTIONS = [{Matched}, {Unmatched}] — click "Unmatched".
+    await chips[1].trigger('click');
+    expect(store.matchStatus).toBe('unmatched');
+    // change → the page reloads the grid; the filter is applied server-side via
+    // queryParams.match with NO search text set (the reported expectation).
+    expect(w.emitted('change')).toBeTruthy();
+    expect(store.search).toBe('');
+    expect(store.queryParams.match).toBe('unmatched');
+    // Clicking the same chip again clears it (back to "all").
+    await chips[1].trigger('click');
+    expect(store.matchStatus).toBe('');
+    expect(store.queryParams.match).toBeUndefined();
+  });
+
   it('adds a genre from the Combobox and remounts it (no stale label) so a second add works', async () => {
     const w = mountBar();
     const store = useMediaStore();

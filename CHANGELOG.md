@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.38.2] - 2026-06-20
+
+### Fixed
+- **Plugin install failures now show a clear, persistent reason.** A failed install previously returned to the Install button with no message; it now shows the server's actual error (e.g. "Cannot create plugins base directory … re-run install.sh --update") as both a toast and a dismissible inline banner, instead of a generic "couldn't download" string. Covers both the catalog Install and the single-URL install.
+
+### Tested
+- **Locked in the matched/unmatched metadata filter.** Added a FilterBar regression test proving that toggling Matched/Unmatched sets the store, emits `change` (reloading the grid), and serializes `?match=` — with **no search text required** — so the filter can't silently regress.
+
 ## [0.38.1] - 2026-06-20
 
 ### Fixed
