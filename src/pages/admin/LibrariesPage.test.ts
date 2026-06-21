@@ -183,6 +183,39 @@ describe('Admin LibrariesPage — list', () => {
     expect(badge.text()).toContain('ffprobe missing');
     w.unmount();
   });
+
+  it('renders a live progress bar with percent, count and current file while running', async () => {
+    const { client } = makeClient({
+      scanStatus: job({
+        status: 'running',
+        items_found: 40,
+        items_updated: 10,
+        current_path: '/media/Movies/The Matrix (1999).mkv',
+      }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    const progress = w.find('[data-testid="progress-lib-1"]');
+    expect(progress.exists()).toBe(true);
+    // 10 / 40 = 25%
+    expect(progress.text()).toContain('25%');
+    expect(progress.text()).toContain('10 / 40');
+    expect(progress.text()).toContain('The Matrix (1999).mkv');
+    const bar = progress.find('[role="progressbar"]');
+    expect(bar.attributes('aria-valuenow')).toBe('25');
+    expect(progress.find('.admin-libraries__progress-fill').attributes('style')).toContain('width: 25%');
+    w.unmount();
+  });
+
+  it('shows no progress bar when a running job has no counts yet', async () => {
+    const { client } = makeClient({ scanStatus: job({ status: 'running', items_found: 0 }) });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.find('[data-testid="progress-lib-1"]').exists()).toBe(false);
+    expect(w.find('[data-testid="status-lib-1"]').text()).toContain('Running');
+    w.unmount();
+  });
 });
 
 describe('Admin LibrariesPage — create / edit / delete', () => {
