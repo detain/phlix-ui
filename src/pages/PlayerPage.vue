@@ -114,8 +114,20 @@ function isAbort(e: unknown): boolean {
 }
 
 /** Direct-stream URL for any media id — synchronous, so the player's up-next advance
- *  (which can't await playback-info) always threads a fresh URL via player.next(). */
+ *  (which can't await playback-info) always threads a fresh URL via player.next().
+ *
+ *  Prefers the server-minted **signed** `stream_url` (`/media/:id/stream?exp&sig`)
+ *  when present: `/media/:id/stream` is no longer world-readable and a `<video src>`
+ *  can't attach a Bearer header, so a bare path would 401 for SPA sessions (which
+ *  hold a localStorage token, not a cookie). Only the single-item detail shape
+ *  carries `stream_url`; queue/up-next rows (from the list endpoint) fall back to
+ *  the bare path, which is fine because advancing navigates the route and re-fetches
+ *  the detail (and thus a fresh signed URL) before that item actually plays. The
+ *  signed path is root-relative, so prefix the API base for cross-origin hosts. */
 function streamUrlFor(m: MediaItem): string {
+  if (m.stream_url) {
+    return /^https?:\/\//.test(m.stream_url) ? m.stream_url : `${apiBase.value}${m.stream_url}`;
+  }
   return `${apiBase.value}/media/${encodeURIComponent(m.id)}/stream`;
 }
 
