@@ -384,6 +384,22 @@ describe('Player — chrome auto-hide', () => {
     await nextTick();
     expect(w.classes()).not.toContain('is-chrome-hidden');
   });
+
+  it('pins the chrome open when the video ends without a pause event (Safari quirk)', async () => {
+    // Safari fires `ended` but NOT `pause`, so `playing` stays true and the
+    // idle-hide scheduled during playback would blank the end-of-video chrome
+    // (and the bottom-right up-next card) until a mouse move. onEnded() must
+    // cancel that hide and keep the chrome visible.
+    vi.useFakeTimers();
+    const { w, video } = mountPlayer({ idleTimeout: 1000 });
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+    video.dispatchEvent(new Event('ended')); // no preceding `pause`
+    await nextTick();
+    vi.advanceTimersByTime(2000); // the pending idle-hide would have fired by now
+    await nextTick();
+    expect(w.classes()).not.toContain('is-chrome-hidden');
+  });
 });
 
 describe('Player — keyboard shortcuts', () => {

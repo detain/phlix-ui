@@ -1303,7 +1303,7 @@ var It = ["aria-label"], Lt = ["src"], Rt = { class: "upnext__body" }, zt = { cl
 			}, 1e3);
 		}
 		function ve() {
-			s.upNext && (J.value = !0, l.autoplay && ge());
+			ft(), m.value = !0, s.upNext && (J.value = !0, l.autoplay && ge());
 		}
 		function ye() {
 			Y(), J.value = !1;
@@ -1738,8 +1738,8 @@ var It = ["aria-label"], Lt = ["src"], Rt = { class: "upnext__body" }, zt = { cl
 			}, null, 8, ["open"])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-c201e623"]]);
+}), [["__scopeId", "data-v-726c32bf"]]);
 //#endregion
 export { Fe as A, he as B, gt as C, Re as D, ut as E, we as F, de as G, pe as H, Ce as I, ce as J, fe as K, Te as L, xe as M, X as N, Le as O, be as P, _e as R, yt as S, ht as T, me as U, ue as V, ge as W, U as X, se as Y, ft as _, Kt as a, vt as b, Mt as c, kt as d, jt as f, bt as g, Tt as h, Zt as i, Ne as j, Ie as k, Pt as l, Ft as m, an as n, Et as o, At as p, G as q, rn as r, Dt as s, Dn as t, Nt as u, pt as v, _t as w, mt as x, dt as y, Y as z };
 
-//# sourceMappingURL=Player-BLdsVBjN.js.map
+//# sourceMappingURL=Player-CmAgZNNm.js.map
