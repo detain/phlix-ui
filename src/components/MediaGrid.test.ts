@@ -250,6 +250,28 @@ describe('MediaGrid — virtualization', () => {
     expect(window.scrollTo).toHaveBeenCalled();
   });
 
+  it('advances the window synchronously on scroll even when rAF never fires (Firefox throttle freeze)', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(200) } });
+    await nextTick();
+    await nextTick();
+
+    // Simulate the browser throttling requestAnimationFrame during scroll (it
+    // returns an id but never invokes the callback). The old rAF-deferred
+    // measurement would freeze here — the same titles would stay on screen.
+    vi.stubGlobal('requestAnimationFrame', () => 0);
+
+    mockLayout(1000, -2000); // scrolled 2000px into the grid
+    window.dispatchEvent(new Event('scroll'));
+    await nextTick();
+    await nextTick();
+
+    const inner = w.find('.media-grid');
+    // The window tracked the scroll despite rAF never firing.
+    expect(inner.attributes('style')).not.toContain('translateY(0px)');
+    expect(w.findAllComponents(MediaCard)[0].props('item').name).toBe('Title 15');
+  });
+
   it('back-to-top honors reduced-motion: smooth normally, instant ("auto") when reduced (R6.5a)', async () => {
     mockLayout(1000, -2000); // already scrolled past the fold so the button is shown
     const w = mount(MediaGrid, { props: { items: makeItems(200) } });
