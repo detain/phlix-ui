@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.38.0] - 2026-06-20
+
+### Added
+- **Live scan / rescan / match-metadata progress bar.** The admin Libraries page now renders a real percentage bar (plus `processed / total` count and the current file) while a job runs, replacing the lifecycle-only badge. Driven by the server now streaming `items_found` (total) / `items_updated` (processed) + `current_path` onto the job row for scan and rescan (metadata-match already did), surfaced through the existing `scan-status` polling. `ScanJob` progress fields are documented as live; new `hasProgress()` / `progressPercent()` / `progressCount()` / `progressFile()` helpers.
+
+### Changed
+- **Clearer scan vs. rescan vs. match-metadata explanation.** The Libraries page hint now explains that **Scan** adds/updates (keeping existing items), **Rescan** clears and rebuilds, and **Match metadata** re-fetches posters/details — so operators pick the right action.
+
 ## [0.37.0] - 2026-06-20
 
 ### Added

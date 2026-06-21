@@ -23,8 +23,10 @@ import type { ApiClient } from '../client';
  *  - `scan()`/`rescan()`/`matchMetadata()` are async: they reply
  *    `202 { job_id, status:'queued', message }`; the work runs in a worker.
  *  - `scanStatus()` may legitimately return `null` (no job has ever run).
- *  - Progress is COARSE this release: `ScanJob.items_*` stay `0` and
- *    `current_path` stays `null`; the UI shows lifecycle status only.
+ *  - Progress is LIVE: while a job runs, `ScanJob.items_found` (total) /
+ *    `items_updated` (processed) + `current_path` are streamed onto the row
+ *    (scan, rescan, and metadata-match all report this), so the UI can show a
+ *    percentage. They may still be `0`/`null` briefly before the first tick.
  */
 /**
  * The library `type` values the DB actually accepts. The `libraries.type`
@@ -52,8 +54,10 @@ export interface Library {
 /**
  * A scan-job row as returned by `ScanJobRepository::decodeRow()` (13 fields).
  *
- * COARSE progress this release: `items_*` are always `0` and `current_path` is
- * always `null`; rely on `status` for the lifecycle.
+ * Live progress: while `status === 'running'`, `items_found` is the total work,
+ * `items_updated` the amount processed, and `current_path` the item in flight
+ * (scan, rescan, and metadata-match all stream these). `items_updated /
+ * items_found` is the completion fraction.
  */
 export interface ScanJob {
     id: string;
