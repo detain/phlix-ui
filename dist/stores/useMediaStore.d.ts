@@ -14,6 +14,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     items: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -39,6 +40,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     }[], MediaItem[] | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -108,6 +110,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     items: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -133,6 +136,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     }[], MediaItem[] | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -202,6 +206,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     items: import("vue").Ref<{
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;
@@ -227,6 +232,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     }[], MediaItem[] | {
         id: string;
         name: string;
+        sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
         poster_url: string | null;

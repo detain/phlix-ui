@@ -2,7 +2,7 @@ import { n as e } from "./Icon-ax5k7_G2.js";
 import { t } from "./Button-9cUUJmnN.js";
 import { t as n } from "./useAuthStore-BNt_Vq18.js";
 import { i as ee } from "./usePlayerStore-CCov4Tvr.js";
-import { t as r } from "./useLibrariesStore-BehDWfBH.js";
+import { t as r } from "./useLibrariesStore-Uvctk-7m.js";
 import { t as i } from "./useToastStore-BDoKlU6N.js";
 import { i as a, t as o } from "./MetadataMatchModal-OhFsKc_u.js";
 import { t as s } from "./EmptyState-B2QnGIQT.js";
@@ -159,4 +159,4 @@ var D = { class: "browse-page" }, O = { class: "browse-toolbar" }, k = {
 //#endregion
 export { A as default };
 
-//# sourceMappingURL=BrowsePage-BD2jc-ye.js.map
+//# sourceMappingURL=BrowsePage-CfUqwJzA.js.map

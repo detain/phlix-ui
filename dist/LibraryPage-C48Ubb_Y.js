@@ -1,7 +1,7 @@
 import { n as e } from "./Icon-ax5k7_G2.js";
 import { t } from "./Button-9cUUJmnN.js";
 import { t as n } from "./useAuthStore-BNt_Vq18.js";
-import { t as r } from "./useLibrariesStore-BehDWfBH.js";
+import { t as r } from "./useLibrariesStore-Uvctk-7m.js";
 import { i } from "./usePageTitle-BO3GGF3M.js";
 import { n as a, r as ee, t as o } from "./FilterBar-COpk4qrX.js";
 import { t as te } from "./MetadataMatchModal-OhFsKc_u.js";
@@ -195,4 +195,4 @@ var F = { class: "library-page" }, I = {
 //#endregion
 export { B as default };
 
-//# sourceMappingURL=LibraryPage-i0j1Kagf.js.map
+//# sourceMappingURL=LibraryPage-C48Ubb_Y.js.map

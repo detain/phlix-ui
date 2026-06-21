@@ -308,6 +308,14 @@ export { useLibrariesStore } from './stores/useLibrariesStore';
 export { fetchLibraries, sortLibraries } from './api/libraries';
 export type { LibrarySummary } from './api/libraries';
 
+// Article-aware title sorting (mirror of the server's SortTitle): file "The Plot"
+// under P. Exposed so hosts can sort/group local lists the same way the server does.
+export {
+  stripLeadingArticle,
+  compareByStrippedTitle,
+  SORT_TITLE_ARTICLES,
+} from './utils/sortTitle';
+
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 

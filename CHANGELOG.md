@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.40.0] - 2026-06-21
+
+### Added
+- **Article-aware title sorting helper (`stripLeadingArticle` / `compareByStrippedTitle` / `SORT_TITLE_ARTICLES`).** Mirrors the server's `SortTitle` so listings file "The Plot" under **P** (not T) while the title still displays in full. Ignores a leading **the/a/an** + **el/la/le/les/los/las/die/der/das** (whole word, case-insensitive, accent-sensitive). Exposed from the package root for hosts that sort/group lists locally.
+- **`MediaItem.sort_title`** — optional article-stripped sort key the server now returns alongside `name` (the server already orders the media grid + A-Z rail by it; the field lets any client-side sort agree). Optional, so older servers keep working.
+
+### Changed
+- **Library Browse rails now ignore a leading article in their name tiebreak.** `sortLibraries` sorts by the article-stripped name, so a "The …"-named library files under its real letter — consistent with how the server sorts media listings. (Ordering is unchanged for the typical "Movies"/"TV"/"Music" names.)
+
 ## [0.39.0] - 2026-06-21
 
 ### Added
