@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.38.3] - 2026-06-21
+
+### Fixed
+- **Matched/unmatched metadata filter and actor filter now actually filter.** The library grid's count stayed at the full total no matter what was selected. Root cause: `useMediaStore` serialized its requests (and cache keys) with a duplicated local builder that had drifted from the shared `buildMediaQuery` and silently dropped the `match` and `actors` params — so neither reached the server (full, unfiltered result) nor the cache key (a toggle re-served the cached unfiltered page). The store now uses the shared `buildMediaQuery`/`buildMediaUrl` as the single source of truth, so both filters reach the request and each filter state gets its own cache entry. Regression tests assert the params appear in the request URL and that matched vs. unmatched refetch distinctly.
+
 ## [0.38.2] - 2026-06-20
 
 ### Fixed

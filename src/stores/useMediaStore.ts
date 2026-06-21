@@ -4,6 +4,7 @@ import type { MediaItem, MediaType } from '../types/media-item';
 import type { LibraryQueryParams } from '../types/library-query';
 import { ApiClient } from '../api/client';
 import { errMessage } from '../api/errors';
+import { buildMediaQuery, buildMediaUrl } from '../api/media-query';
 
 export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime';
 export type SortOrder = 'asc' | 'desc';
@@ -97,28 +98,17 @@ export const useMediaStore = defineStore('media', () => {
     const availableTypes: MediaType[] = ['movie', 'series', 'episode', 'audio', 'image'];
 
     // ---- query (de)serialization --------------------------------------------
-    function buildParams(params: LibraryQueryParams): URLSearchParams {
-        const sp = new URLSearchParams();
-        if (params.libraryId) sp.set('libraryId', params.libraryId);
-        if (params.topLevel) sp.set('topLevel', '1');
-        if (params.search) sp.set('search', params.search);
-        // `key[]=` so PHP parses arrays; bare repeated keys collapse to a string server-side.
-        params.genres?.forEach((g) => sp.append('genres[]', g));
-        if (params.yearFrom !== undefined) sp.set('yearFrom', String(params.yearFrom));
-        if (params.yearTo !== undefined) sp.set('yearTo', String(params.yearTo));
-        params.ratings?.forEach((r) => sp.append('ratings[]', r));
-        params.types?.forEach((t) => sp.append('types[]', t));
-        if (params.sort) sp.set('sort', params.sort);
-        if (params.order) sp.set('order', params.order);
-        sp.set('limit', String(params.limit));
-        sp.set('offset', String(params.offset));
-        return sp;
-    }
+    // Serialize via the SHARED buildMediaQuery so the store's request URL AND its
+    // cache key can never drift from it. They previously did: a duplicated local
+    // serializer silently dropped `match` and `actors`, so the matched/unmatched
+    // and actor filters reached neither the server (the grid stayed at the full,
+    // unfiltered count) nor the cache key (so a toggle re-served the cached
+    // unfiltered page). One source of truth prevents that whole class of bug.
     function buildApiQuery(apiBase: string, params: LibraryQueryParams): string {
-        return `${apiBase}/api/v1/media?${buildParams(params).toString()}`;
+        return buildMediaUrl(apiBase, params);
     }
     function cacheKey(params: LibraryQueryParams): string {
-        return buildParams(params).toString();
+        return buildMediaQuery(params);
     }
 
     // ---- cache + in-flight --------------------------------------------------
