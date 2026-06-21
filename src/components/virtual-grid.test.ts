@@ -5,8 +5,10 @@ import {
   computeColumns,
   computeRowHeight,
   computeWindow,
+  effectiveItemCount,
   LABEL_HEIGHT,
   ROW_GAP,
+  shouldLoadMore,
 } from './virtual-grid';
 
 describe('virtual-grid — computeColumns', () => {
@@ -162,5 +164,39 @@ describe('virtual-grid — flat memory (R6.3)', () => {
     expect(huge.endIndex - huge.startIndex).toBe(small.endIndex - small.startIndex);
     // only the spacer height (totalHeight) scales with the library, not the slice
     expect(huge.totalHeight).toBeGreaterThan(small.totalHeight);
+  });
+});
+
+describe('virtual-grid — effectiveItemCount', () => {
+  it('uses the server total when it exceeds the loaded count (pre-sizes the page)', () => {
+    expect(effectiveItemCount(50, 1200)).toBe(1200);
+  });
+  it('never returns less than what is already loaded', () => {
+    expect(effectiveItemCount(80, 50)).toBe(80);
+    expect(effectiveItemCount(80, 80)).toBe(80);
+  });
+  it('falls back to the loaded count when total is absent/invalid', () => {
+    expect(effectiveItemCount(40)).toBe(40);
+    expect(effectiveItemCount(40, null)).toBe(40);
+    expect(effectiveItemCount(40, Number.NaN)).toBe(40);
+  });
+  it('truncates a fractional total', () => {
+    expect(effectiveItemCount(0, 99.9)).toBe(99);
+  });
+});
+
+describe('virtual-grid — shouldLoadMore', () => {
+  const base = { hasMore: true, loading: false, loadingMore: false };
+  it('loads when the window reaches the loaded edge and more remain', () => {
+    expect(shouldLoadMore(50, 50, base)).toBe(true);
+    expect(shouldLoadMore(60, 50, base)).toBe(true);
+  });
+  it('does not load while the window is still within loaded items', () => {
+    expect(shouldLoadMore(40, 50, base)).toBe(false);
+  });
+  it('does not load when nothing remains or a fetch is in flight', () => {
+    expect(shouldLoadMore(50, 50, { ...base, hasMore: false })).toBe(false);
+    expect(shouldLoadMore(50, 50, { ...base, loading: true })).toBe(false);
+    expect(shouldLoadMore(50, 50, { ...base, loadingMore: true })).toBe(false);
   });
 });

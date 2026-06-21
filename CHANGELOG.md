@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.35.0] - 2026-06-20
+
+### Changed
+- **The listing grid is pre-sized to the full result count and pages in on demand.** `MediaGrid` now sizes its scroll height from the server `total` up front, so a long library's page length — and the scrollbar — are the final length immediately rather than growing as you scroll. Rows past the loaded set render as skeletons until scrolled into view, and the grid requests the next page when the rendered window reaches the loaded edge (the bottom sentinel can't drive paging once the sizer is the full height). New pure, unit-tested helpers `effectiveItemCount()` + `shouldLoadMore()` in `virtual-grid.ts`; `LibraryPage` passes `:total`. Memory stays flat — still only a windowful of DOM regardless of library size.
+
 ## [0.34.0] - 2026-06-20
 
 ### Added

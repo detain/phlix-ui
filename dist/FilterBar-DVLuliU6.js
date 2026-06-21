@@ -7,7 +7,7 @@ import { t as s } from "./Chip-2HcSZF4a.js";
 import { n as c, r as l, t as u } from "./listbox-htyKA_G5.js";
 import { t as d } from "./Select-DLwgQInL.js";
 import { n as f } from "./MetadataMatchModal-OhFsKc_u.js";
-import { Fragment as p, Transition as m, computed as h, createBlock as g, createCommentVNode as _, createElementBlock as v, createElementVNode as y, createTextVNode as b, createVNode as x, defineComponent as S, nextTick as C, normalizeClass as w, normalizeStyle as T, onBeforeUnmount as ee, onMounted as E, openBlock as D, ref as O, renderList as k, renderSlot as A, toDisplayString as j, unref as M, useId as N, vModelText as P, vShow as F, watch as I, withCtx as L, withDirectives as R, withKeys as z, withModifiers as te } from "vue";
+import { Fragment as p, Transition as m, computed as h, createBlock as g, createCommentVNode as _, createElementBlock as v, createElementVNode as y, createTextVNode as b, createVNode as x, defineComponent as S, nextTick as ee, normalizeClass as C, normalizeStyle as w, onBeforeUnmount as T, onMounted as E, openBlock as D, ref as O, renderList as k, renderSlot as A, toDisplayString as j, unref as M, useId as N, vModelText as P, vShow as F, watch as I, withCtx as L, withDirectives as R, withKeys as z, withModifiers as te } from "vue";
 import { defineStore as B } from "pinia";
 //#region src/components/ui/Combobox.vue?vue&type=script&setup=true&lang.ts
 var ne = { class: "phlix-combobox__field" }, V = [
@@ -18,17 +18,17 @@ var ne = { class: "phlix-combobox__field" }, V = [
 	"placeholder",
 	"disabled",
 	"value"
-], H = ["id", "aria-label"], U = [
+], H = ["id", "aria-label"], re = [
 	"id",
 	"aria-selected",
 	"aria-disabled",
 	"onClick",
 	"onPointermove"
-], W = { class: "phlix-combobox__check" }, G = {
+], U = { class: "phlix-combobox__check" }, W = {
 	key: 0,
 	class: "phlix-combobox__empty",
 	role: "presentation"
-}, K = /*#__PURE__*/ e(/* @__PURE__ */ S({
+}, G = /*#__PURE__*/ e(/* @__PURE__ */ S({
 	__name: "Combobox",
 	props: {
 		modelValue: {},
@@ -42,8 +42,8 @@ var ne = { class: "phlix-combobox__field" }, V = [
 	},
 	emits: ["update:modelValue", "change"],
 	setup(e, { emit: n }) {
-		let i = e, { t: a } = r(), o = n, s = h(() => l(i.options)), d = N(), f = O(!1), m = O(-1), S = O(""), T = O(!1), E = O(null), A = O(null), P = O(null), L = h(() => s.value.find((e) => e.value === i.modelValue)?.label ?? ""), z = h(() => {
-			if (!T.value || S.value.trim() === "") return s.value;
+		let i = e, { t: a } = r(), o = n, s = h(() => l(i.options)), d = N(), f = O(!1), m = O(-1), S = O(""), w = O(!1), E = O(null), A = O(null), P = O(null), L = h(() => s.value.find((e) => e.value === i.modelValue)?.label ?? ""), z = h(() => {
+			if (!w.value || S.value.trim() === "") return s.value;
 			let e = S.value.toLowerCase();
 			return s.value.filter((t) => t.label.toLowerCase().includes(e));
 		}), te = h(() => m.value >= 0 ? `${d}-opt-${m.value}` : void 0);
@@ -51,52 +51,52 @@ var ne = { class: "phlix-combobox__field" }, V = [
 			f.value || (S.value = L.value);
 		}, { immediate: !0 });
 		function B() {
-			i.disabled || f.value || (f.value = !0, m.value = z.value.findIndex((e) => e.value === i.modelValue), m.value < 0 && (m.value = z.value.findIndex((e) => !e.disabled)), C(Y));
+			i.disabled || f.value || (f.value = !0, m.value = z.value.findIndex((e) => e.value === i.modelValue), m.value < 0 && (m.value = z.value.findIndex((e) => !e.disabled)), ee(J));
 		}
-		function K() {
-			S.value = L.value, T.value = !1, f.value = !1;
+		function G() {
+			S.value = L.value, w.value = !1, f.value = !1;
+		}
+		function K(e) {
+			let t = z.value[e];
+			!t || t.disabled || (t.value !== i.modelValue && (o("update:modelValue", t.value), o("change", t.value)), S.value = t.label, w.value = !1, f.value = !1, A.value?.focus());
 		}
 		function q(e) {
-			let t = z.value[e];
-			!t || t.disabled || (t.value !== i.modelValue && (o("update:modelValue", t.value), o("change", t.value)), S.value = t.label, T.value = !1, f.value = !1, A.value?.focus());
+			z.value.length !== 0 && (m.value = c(z.value, m.value, e), ee(J));
 		}
-		function J(e) {
-			z.value.length !== 0 && (m.value = c(z.value, m.value, e), C(Y));
-		}
-		function Y() {
+		function J() {
 			P.value?.querySelector(".is-active")?.scrollIntoView?.({ block: "nearest" });
 		}
-		function X(e) {
-			S.value = e.target.value, T.value = !0, f.value = !0, m.value = u(z.value, "first");
+		function Y(e) {
+			S.value = e.target.value, w.value = !0, f.value = !0, m.value = u(z.value, "first");
 		}
-		function re(e) {
+		function ie(e) {
 			if (!i.disabled) switch (e.key) {
 				case "ArrowDown":
-					e.preventDefault(), f.value ? J(1) : B();
+					e.preventDefault(), f.value ? q(1) : B();
 					break;
 				case "ArrowUp":
-					e.preventDefault(), f.value ? J(-1) : B();
+					e.preventDefault(), f.value ? q(-1) : B();
 					break;
 				case "Enter":
-					f.value && m.value >= 0 && (e.preventDefault(), q(m.value));
+					f.value && m.value >= 0 && (e.preventDefault(), K(m.value));
 					break;
 				case "Escape":
-					f.value && (e.preventDefault(), K());
+					f.value && (e.preventDefault(), G());
 					break;
 				case "Tab":
-					f.value && K();
+					f.value && G();
 					break;
 			}
 		}
-		function Z(e) {
-			f.value && E.value && !E.value.contains(e.target) && K();
+		function X(e) {
+			f.value && E.value && !E.value.contains(e.target) && G();
 		}
 		return I(f, (e) => {
-			e ? document.addEventListener("pointerdown", Z, !0) : document.removeEventListener("pointerdown", Z, !0);
-		}), ee(() => document.removeEventListener("pointerdown", Z, !0)), (n, r) => (D(), v("div", {
+			e ? document.addEventListener("pointerdown", X, !0) : document.removeEventListener("pointerdown", X, !0);
+		}), T(() => document.removeEventListener("pointerdown", X, !0)), (n, r) => (D(), v("div", {
 			ref_key: "rootEl",
 			ref: E,
-			class: w(["phlix-combobox", {
+			class: C(["phlix-combobox", {
 				"is-open": f.value,
 				"is-disabled": e.disabled
 			}])
@@ -120,9 +120,9 @@ var ne = { class: "phlix-combobox__field" }, V = [
 				placeholder: e.placeholder ?? M(a)("common.searchPlaceholder"),
 				disabled: e.disabled,
 				value: S.value,
-				onInput: X,
+				onInput: Y,
 				onFocus: B,
-				onKeydown: re
+				onKeydown: ie
 			}, null, 40, V),
 			x(t, {
 				name: "chevron-down",
@@ -138,31 +138,37 @@ var ne = { class: "phlix-combobox__field" }, V = [
 		}, [(D(!0), v(p, null, k(z.value, (n, r) => (D(), v("li", {
 			id: `${M(d)}-opt-${r}`,
 			key: n.value,
-			class: w(["phlix-combobox__option", {
+			class: C(["phlix-combobox__option", {
 				"is-active": r === m.value,
 				"is-disabled": n.disabled
 			}]),
 			role: "option",
 			"aria-selected": n.value === e.modelValue,
 			"aria-disabled": n.disabled || void 0,
-			onClick: (e) => q(r),
+			onClick: (e) => K(r),
 			onPointermove: (e) => !n.disabled && (m.value = r)
-		}, [y("span", W, [n.value === e.modelValue ? (D(), g(t, {
+		}, [y("span", U, [n.value === e.modelValue ? (D(), g(t, {
 			key: 0,
 			name: "check"
-		})) : _("", !0)]), b(" " + j(n.label), 1)], 42, U))), 128)), z.value.length === 0 ? (D(), v("li", G, j(M(a)("common.noMatches")), 1)) : _("", !0)], 8, H), [[F, f.value]])], 2));
+		})) : _("", !0)]), b(" " + j(n.label), 1)], 42, re))), 128)), z.value.length === 0 ? (D(), v("li", W, j(M(a)("common.noMatches")), 1)) : _("", !0)], 8, H), [[F, f.value]])], 2));
 	}
-}), [["__scopeId", "data-v-1f9bb8a7"]]), q = 3 / 2;
-function J(e, t, n = 20) {
+}), [["__scopeId", "data-v-1f9bb8a7"]]), K = 3 / 2;
+function q(e, t, n = 20) {
 	return e <= 0 || t <= 0 ? 1 : Math.max(1, Math.floor((e + n) / (t + n)));
 }
-function Y(e, t, n = 20) {
+function J(e, t, n = 20) {
 	return t <= 0 || e <= 0 ? 0 : (e - n * (t - 1)) / t;
 }
-function X(e, t = 56, n = 24) {
-	return e <= 0 ? 0 : e * q + t + n;
+function Y(e, t = 56, n = 24) {
+	return e <= 0 ? 0 : e * K + t + n;
 }
-function re(e) {
+function ie(e, t) {
+	return typeof t != "number" || !Number.isFinite(t) ? e : Math.max(e, Math.trunc(t));
+}
+function X(e, t, n) {
+	return n.hasMore && !n.loading && !n.loadingMore && e >= t;
+}
+function ae(e) {
 	let { scrollTop: t, viewportHeight: n, rowHeight: r, columns: i, itemCount: a, overscan: o } = e, s = Math.max(1, i), c = Math.ceil(a / s), l = c * r;
 	if (c === 0 || r <= 0) return {
 		startRow: 0,
@@ -186,19 +192,24 @@ function re(e) {
 }
 //#endregion
 //#region src/components/MediaGrid.vue?vue&type=script&setup=true&lang.ts
-var Z = { class: "media-grid-root" }, ie = {
+var oe = { class: "media-grid-root" }, se = {
 	key: 1,
 	class: "media-grid-empty",
 	role: "status"
-}, ae = {
+}, ce = {
+	key: 1,
+	class: "skel-card",
+	"aria-hidden": "true"
+}, Z = {
 	key: 0,
 	class: "media-grid-more",
 	role: "status",
 	"aria-live": "polite"
-}, Q = /*#__PURE__*/ e(/* @__PURE__ */ S({
+}, le = /*#__PURE__*/ e(/* @__PURE__ */ S({
 	__name: "MediaGrid",
 	props: {
 		items: {},
+		total: {},
 		loading: {
 			type: Boolean,
 			default: !1
@@ -236,38 +247,52 @@ var Z = { class: "media-grid-root" }, ie = {
 			let n = typeof window < "u" ? window.innerHeight : 0;
 			n > 0 && (d.value = n), g.value = Math.max(0, -t.top);
 		}
-		let w = 0;
+		let C = 0;
 		function j() {
-			w ||= (typeof requestAnimationFrame == "function" ? requestAnimationFrame : (e) => setTimeout(() => e(0), 16))(() => {
-				w = 0, S();
+			C ||= (typeof requestAnimationFrame == "function" ? requestAnimationFrame : (e) => setTimeout(() => e(0), 16))(() => {
+				C = 0, S();
 			});
 		}
-		let M = h(() => J(u.value, s.value, 20)), N = h(() => X(Y(u.value, M.value, 20))), P = h(() => u.value > 0 && N.value > 0), F = h(() => re({
+		let M = h(() => q(u.value, s.value, 20)), N = h(() => Y(J(u.value, M.value, 20))), P = h(() => u.value > 0 && N.value > 0), F = h(() => ie(i.items.length, i.total)), R = h(() => ae({
 			scrollTop: g.value,
 			viewportHeight: d.value,
 			rowHeight: N.value,
 			columns: M.value,
-			itemCount: i.items.length,
+			itemCount: F.value,
 			overscan: i.overscan
-		})), R = h(() => {
+		})), z = h(() => {
 			if (!P.value) return i.items.map((e, t) => ({
 				item: e,
 				index: t
 			}));
-			let { startIndex: e, endIndex: t } = F.value, n = [];
+			let { startIndex: e, endIndex: t } = R.value, n = [];
 			for (let r = e; r < t; r++) n.push({
-				item: i.items[r],
+				item: i.items[r] ?? null,
 				index: r
 			});
 			return n;
-		}), z = h(() => ({ gridTemplateColumns: P.value ? `repeat(${M.value}, minmax(0, 1fr))` : `repeat(auto-fill, minmax(${s.value}px, 1fr))` })), te = h(() => P.value ? { height: `${F.value.totalHeight}px` } : {}), B = h(() => P.value ? {
+		});
+		I(() => [
+			R.value.endIndex,
+			i.items.length,
+			i.hasMore,
+			i.loading,
+			i.loadingMore
+		], ([e, t, n, r, i]) => {
+			P.value && X(e, t, {
+				hasMore: n,
+				loading: r,
+				loadingMore: i
+			}) && a("load-more");
+		});
+		let te = h(() => ({ gridTemplateColumns: P.value ? `repeat(${M.value}, minmax(0, 1fr))` : `repeat(auto-fill, minmax(${s.value}px, 1fr))` })), B = h(() => P.value ? { height: `${R.value.totalHeight}px` } : {}), ne = h(() => P.value ? {
 			position: "absolute",
 			top: "0",
 			left: "0",
 			right: "0",
-			transform: `translateY(${F.value.padTop}px)`
-		} : {}), ne = h(() => ({ gridTemplateColumns: `repeat(auto-fill, minmax(${s.value}px, 1fr))` })), V = h(() => P.value && g.value > d.value * 1.5);
-		function H() {
+			transform: `translateY(${R.value.padTop}px)`
+		} : {}), V = h(() => ({ gridTemplateColumns: `repeat(auto-fill, minmax(${s.value}px, 1fr))` })), H = h(() => P.value && g.value > d.value * 1.5);
+		function re() {
 			if (typeof window > "u") return;
 			let e = typeof window.matchMedia == "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 			window.scrollTo?.({
@@ -288,22 +313,22 @@ var Z = { class: "media-grid-root" }, ie = {
 			G(), e && (W(), j());
 		});
 		let K = null;
-		function q() {
+		function le() {
 			K || typeof ResizeObserver > "u" || !c.value || (K = new ResizeObserver(j), K.observe(c.value));
 		}
 		function Q() {
 			K?.disconnect(), K = null;
 		}
 		return I(() => c.value, (e) => {
-			Q(), e && (q(), j());
+			Q(), e && (le(), j());
 		}), E(() => {
-			S(), typeof window < "u" && (window.addEventListener("scroll", j, { passive: !0 }), window.addEventListener("resize", j, { passive: !0 })), q(), W();
-		}), ee(() => {
-			typeof window < "u" && (window.removeEventListener("scroll", j), window.removeEventListener("resize", j)), w &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(w) : clearTimeout(w), 0), Q(), G();
-		}), I(() => i.items.length, () => C(j)), (n, r) => (D(), v("div", Z, [e.loading && e.items.length === 0 ? (D(), v("div", {
+			S(), typeof window < "u" && (window.addEventListener("scroll", j, { passive: !0 }), window.addEventListener("resize", j, { passive: !0 })), le(), W();
+		}), T(() => {
+			typeof window < "u" && (window.removeEventListener("scroll", j), window.removeEventListener("resize", j)), C &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(C) : clearTimeout(C), 0), Q(), G();
+		}), I(() => i.items.length, () => ee(j)), (n, r) => (D(), v("div", oe, [e.loading && e.items.length === 0 ? (D(), v("div", {
 			key: 0,
 			class: "media-grid media-grid--skeleton",
-			style: T(ne.value),
+			style: w(V.value),
 			role: "status",
 			"aria-busy": "true",
 			"aria-label": "Loading media"
@@ -315,7 +340,7 @@ var Z = { class: "media-grid-root" }, ie = {
 			y("div", { class: "skel-poster" }, null, -1),
 			y("div", { class: "skel-title" }, null, -1),
 			y("div", { class: "skel-sub" }, null, -1)
-		]]))), 128))], 4)) : e.items.length === 0 ? (D(), v("div", ie, [A(n.$slots, "empty", {}, () => [
+		]]))), 128))], 4)) : e.items.length === 0 ? (D(), v("div", se, [A(n.$slots, "empty", {}, () => [
 			x(t, {
 				name: "film",
 				class: "media-grid-empty__icon"
@@ -327,12 +352,12 @@ var Z = { class: "media-grid-root" }, ie = {
 				ref_key: "sizerEl",
 				ref: c,
 				class: "media-grid-sizer",
-				style: T(te.value)
+				style: w(B.value)
 			}, [y("div", {
 				class: "media-grid",
-				style: T([z.value, B.value])
-			}, [(D(!0), v(p, null, k(R.value, (t) => A(n.$slots, "card", {
-				key: t.item.id,
+				style: w([te.value, ne.value])
+			}, [(D(!0), v(p, null, k(z.value, (t) => (D(), v(p, { key: t.item?.id ?? `skel-${t.index}` }, [t.item ? A(n.$slots, "card", {
+				key: 0,
 				item: t.item,
 				index: t.index
 			}, () => [x(f, {
@@ -349,8 +374,12 @@ var Z = { class: "media-grid-root" }, ie = {
 				"onWatchlist",
 				"onInfo",
 				"onMatch"
-			])], !0)), 128))], 4)], 4),
-			e.loadingMore ? (D(), v("div", ae, [...r[3] ||= [y("span", {
+			])], !0) : (D(), v("div", ce, [...r[3] ||= [
+				y("div", { class: "skel-poster" }, null, -1),
+				y("div", { class: "skel-title" }, null, -1),
+				y("div", { class: "skel-sub" }, null, -1)
+			]]))], 64))), 128))], 4)], 4),
+			e.loadingMore ? (D(), v("div", Z, [...r[4] ||= [y("span", {
 				class: "media-grid-more__spinner",
 				"aria-hidden": "true"
 			}, null, -1), b(" Loading more… ", -1)]])) : _("", !0),
@@ -362,28 +391,28 @@ var Z = { class: "media-grid-root" }, ie = {
 				"aria-hidden": "true"
 			}, null, 512)) : _("", !0)
 		], 64)), x(m, { name: "media-grid-fade" }, {
-			default: L(() => [V.value ? (D(), v("button", {
+			default: L(() => [H.value ? (D(), v("button", {
 				key: 0,
 				type: "button",
 				class: "media-grid-top",
 				"aria-label": "Back to top",
-				onClick: H
+				onClick: re
 			}, [x(t, { name: "arrow-up" })])) : _("", !0)]),
 			_: 1
 		})]));
 	}
-}), [["__scopeId", "data-v-9186b180"]]), oe = 6e4, $ = 250;
-function se(e) {
+}), [["__scopeId", "data-v-7b859374"]]), Q = 6e4, $ = 250;
+function ue(e) {
 	return typeof e == "object" && !!e && e.name === "AbortError";
 }
-var ce = B("media", () => {
+var de = B("media", () => {
 	let e = O([]), t = O(0), n = O(!1), r = O(null), o = O(""), s = O([]), c = O(void 0), l = O(void 0), u = O([]), d = O([]), f = O(""), p = O([]), m = O("name"), g = O("asc"), _ = O(24), v = O(0), y = O(void 0), b = O(!1), x = h(() => e.value.length < t.value), S = h(() => {
 		let e = {};
 		return y.value && (e.libraryId = y.value), b.value && (e.topLevel = !0), o.value && (e.search = o.value), s.value.length && (e.genres = s.value), c.value !== void 0 && (e.yearFrom = c.value), l.value !== void 0 && (e.yearTo = l.value), u.value.length && (e.ratings = u.value), d.value.length && (e.types = d.value), f.value && (e.match = f.value), p.value.length && (e.actors = p.value), e.sort = m.value, e.order = g.value, e.limit = _.value, e.offset = v.value, e;
-	}), C = h(() => {
+	}), ee = h(() => {
 		let t = /* @__PURE__ */ new Set();
 		return e.value.forEach((e) => e.genres?.forEach((e) => t.add(e))), Array.from(t).sort();
-	}), w = [
+	}), C = [
 		"G",
 		"PG",
 		"PG-13",
@@ -391,26 +420,26 @@ var ce = B("media", () => {
 		"NC-17",
 		"X",
 		"UNRATED"
-	], T = [
+	], w = [
 		"movie",
 		"series",
 		"episode",
 		"audio",
 		"image"
 	];
-	function ee(e) {
+	function T(e) {
 		let t = new URLSearchParams();
 		return e.libraryId && t.set("libraryId", e.libraryId), e.topLevel && t.set("topLevel", "1"), e.search && t.set("search", e.search), e.genres?.forEach((e) => t.append("genres[]", e)), e.yearFrom !== void 0 && t.set("yearFrom", String(e.yearFrom)), e.yearTo !== void 0 && t.set("yearTo", String(e.yearTo)), e.ratings?.forEach((e) => t.append("ratings[]", e)), e.types?.forEach((e) => t.append("types[]", e)), e.sort && t.set("sort", e.sort), e.order && t.set("order", e.order), t.set("limit", String(e.limit)), t.set("offset", String(e.offset)), t;
 	}
 	function E(e, t) {
-		return `${e}/api/v1/media?${ee(t).toString()}`;
+		return `${e}/api/v1/media?${T(t).toString()}`;
 	}
 	function D(e) {
-		return ee(e).toString();
+		return T(e).toString();
 	}
 	let k = /* @__PURE__ */ new Map(), A = /* @__PURE__ */ new Map(), j = null, M = null, N;
 	function P(e) {
-		return !!e && Date.now() - e.ts < oe;
+		return !!e && Date.now() - e.ts < Q;
 	}
 	function F(e, t, n, r) {
 		r && (M && n !== j && M.abort(), j = n);
@@ -445,7 +474,7 @@ var ce = B("media", () => {
 			if (!t && o !== j) return;
 			I(n, t);
 		} catch (e) {
-			if (se(e)) return;
+			if (ue(e)) return;
 			(t || o === j) && (r.value = a(e, "Failed to load media"));
 		} finally {
 			(t || o === j) && (n.value = !1);
@@ -479,7 +508,7 @@ var ce = B("media", () => {
 	function H(e) {
 		return e == null ? [] : Array.isArray(e) ? e.filter((e) => e != null) : [e];
 	}
-	function U(e) {
+	function re(e) {
 		o.value = (Array.isArray(e.search) ? e.search[0] : e.search) ?? "", s.value = H(e.genres), u.value = H(e.ratings), d.value = H(e.types);
 		let t = Array.isArray(e.match) ? e.match[0] : e.match;
 		f.value = t === "matched" || t === "unmatched" ? t : "", p.value = H(e.actors);
@@ -488,40 +517,40 @@ var ce = B("media", () => {
 		let i = Array.isArray(e.sort) ? e.sort[0] : e.sort, a = Array.isArray(e.order) ? e.order[0] : e.order;
 		m.value = i ?? "name", g.value = a ?? "asc", v.value = 0;
 	}
-	function W() {
+	function U() {
 		e.value = [], t.value = 0, v.value = 0, r.value = null;
 	}
-	function G(e) {
+	function W(e) {
 		o.value = e, v.value = 0;
 	}
-	function K(e) {
+	function G(e) {
 		s.value = e, v.value = 0;
 	}
-	function q(e, t) {
+	function K(e, t) {
 		c.value = e, l.value = t, v.value = 0;
 	}
-	function J(e) {
+	function q(e) {
 		u.value = e, v.value = 0;
 	}
-	function Y(e) {
+	function J(e) {
 		d.value = e, v.value = 0;
 	}
-	function X(e) {
+	function Y(e) {
 		f.value = e, v.value = 0;
 	}
-	function re(e) {
+	function ie(e) {
 		p.value = e, v.value = 0;
 	}
-	function Z(e, t) {
+	function X(e, t) {
 		m.value = e, t && (g.value = t), v.value = 0;
 	}
-	function ie(e) {
+	function ae(e) {
 		y.value !== e && (y.value = e, v.value = 0);
 	}
-	function ae(e) {
+	function oe(e) {
 		b.value !== e && (b.value = e, v.value = 0);
 	}
-	function Q() {
+	function se() {
 		o.value = "", s.value = [], c.value = void 0, l.value = void 0, u.value = [], d.value = [], f.value = "", p.value = [], m.value = "name", g.value = "asc", v.value = 0;
 	}
 	return {
@@ -545,9 +574,9 @@ var ce = B("media", () => {
 		topLevel: b,
 		hasMore: x,
 		queryParams: S,
-		availableGenres: C,
-		availableRatings: w,
-		availableTypes: T,
+		availableGenres: ee,
+		availableRatings: C,
+		availableTypes: w,
 		fetchMedia: L,
 		scheduleFetch: R,
 		loadMore: z,
@@ -555,42 +584,42 @@ var ce = B("media", () => {
 		clearCache: B,
 		cancelScheduled: ne,
 		toQuery: V,
-		applyQuery: U,
-		reset: W,
-		setSearch: G,
-		setGenres: K,
-		setYearRange: q,
-		setRatings: J,
-		setTypes: Y,
-		setMatchStatus: X,
-		setActors: re,
-		setSort: Z,
-		setLibraryId: ie,
-		setTopLevel: ae,
-		clearFilters: Q
+		applyQuery: re,
+		reset: U,
+		setSearch: W,
+		setGenres: G,
+		setYearRange: K,
+		setRatings: q,
+		setTypes: J,
+		setMatchStatus: Y,
+		setActors: ie,
+		setSort: X,
+		setLibraryId: ae,
+		setTopLevel: oe,
+		clearFilters: se
 	};
-}), le = { class: "filterbar__main" }, ue = { class: "filterbar__search" }, de = { class: "filterbar__sort" }, fe = ["aria-label"], pe = ["aria-expanded"], me = { class: "filterbar__advanced" }, he = { class: "filterbar__field" }, ge = { class: "filterbar__field" }, _e = {
+}), fe = { class: "filterbar__main" }, pe = { class: "filterbar__search" }, me = { class: "filterbar__sort" }, he = ["aria-label"], ge = ["aria-expanded"], _e = { class: "filterbar__advanced" }, ve = { class: "filterbar__field" }, ye = { class: "filterbar__field" }, be = {
 	class: "filterbar__chips",
 	role: "group",
 	"aria-label": "Rating"
-}, ve = { class: "filterbar__field" }, ye = {
+}, xe = { class: "filterbar__field" }, Se = {
 	class: "filterbar__chips",
 	role: "group",
 	"aria-label": "Type"
-}, be = { class: "filterbar__field" }, xe = {
+}, Ce = { class: "filterbar__field" }, we = {
 	class: "filterbar__chips",
 	role: "group",
 	"aria-label": "Metadata match status"
-}, Se = { class: "filterbar__field" }, Ce = { class: "filterbar__years" }, we = { class: "filterbar__field filterbar__presets" }, Te = { class: "filterbar__chips" }, Ee = {
+}, Te = { class: "filterbar__field" }, Ee = { class: "filterbar__years" }, De = { class: "filterbar__field filterbar__presets" }, Oe = { class: "filterbar__chips" }, ke = {
 	key: 0,
 	class: "filterbar__presets-empty"
-}, De = {
+}, Ae = {
 	key: 0,
 	class: "filterbar__preset-save"
-}, Oe = ["onKeydown"], ke = ["disabled"], Ae = { class: "filterbar__active" }, je = {
+}, je = ["onKeydown"], Me = ["disabled"], Ne = { class: "filterbar__active" }, Pe = {
 	class: "filterbar__count",
 	"aria-live": "polite"
-}, Me = { class: "filterbar__pills" }, Ne = /*#__PURE__*/ e(/* @__PURE__ */ S({
+}, Fe = { class: "filterbar__pills" }, Ie = /*#__PURE__*/ e(/* @__PURE__ */ S({
 	__name: "FilterBar",
 	props: {
 		searchDebounce: { default: 250 },
@@ -601,7 +630,7 @@ var ce = B("media", () => {
 	},
 	emits: ["change"],
 	setup(e, { emit: r }) {
-		let i = e, a = r, c = ce(), l = n(), u = [
+		let i = e, a = r, c = de(), l = n(), u = [
 			{
 				value: "name",
 				label: "Name"
@@ -626,12 +655,12 @@ var ce = B("media", () => {
 		I(() => c.search, (e) => {
 			e !== f.value.trim() && (f.value = e);
 		});
-		function C() {
+		function ee() {
 			clearTimeout(S), S = setTimeout(() => {
 				c.setSearch(f.value.trim()), a("change");
 			}, i.searchDebounce);
 		}
-		function T() {
+		function w() {
 			f.value = "", c.setSearch(""), a("change");
 		}
 		let A = O(null), N = O(0), B = h(() => c.availableGenres.filter((e) => !c.selectedGenres.includes(e)));
@@ -648,51 +677,51 @@ var ce = B("media", () => {
 			let t = c.selectedTypes;
 			c.setTypes(t.includes(e) ? t.filter((t) => t !== e) : [...t, e]), a("change");
 		}
-		let U = [{
+		let re = [{
 			value: "matched",
 			label: "Matched"
 		}, {
 			value: "unmatched",
 			label: "Unmatched"
 		}];
-		function W(e) {
+		function U(e) {
 			c.setMatchStatus(c.matchStatus === e ? "" : e), a("change");
 		}
-		function G(e) {
+		function W(e) {
 			c.setActors(c.selectedActors.filter((t) => t !== e)), a("change");
 		}
-		let q = h(() => {
+		let K = h(() => {
 			try {
 				return (/* @__PURE__ */ new Date()).getFullYear();
 			} catch {
 				return 2025;
 			}
-		}), J = h(() => {
+		}), q = h(() => {
 			let e = [];
-			for (let t = q.value; t >= 1900; t--) e.push({
+			for (let t = K.value; t >= 1900; t--) e.push({
 				value: t,
 				label: String(t)
 			});
 			return e;
 		});
-		function Y(e) {
+		function J(e) {
 			c.setYearRange(e == null || e === "" ? void 0 : Number(e), c.yearTo), a("change");
 		}
-		function X(e) {
+		function Y(e) {
 			c.setYearRange(c.yearFrom, e == null || e === "" ? void 0 : Number(e)), a("change");
 		}
-		function re(e) {
+		function ie(e) {
 			c.setSort(e), a("change");
 		}
-		function Z() {
+		function X() {
 			c.order = c.order === "asc" ? "desc" : "asc", c.offset = 0, a("change");
 		}
-		let ie = h(() => {
+		let ae = h(() => {
 			let e = [];
 			return c.search && e.push({
 				key: "search",
 				label: `“${c.search}”`,
-				remove: T
+				remove: w
 			}), c.selectedGenres.forEach((t) => e.push({
 				key: `g:${t}`,
 				label: t,
@@ -710,31 +739,31 @@ var ce = B("media", () => {
 			})), c.selectedActors.forEach((t) => e.push({
 				key: `a:${t}`,
 				label: t,
-				remove: () => G(t)
+				remove: () => W(t)
 			})), c.matchStatus && e.push({
 				key: "match",
 				label: c.matchStatus === "matched" ? "Matched" : "Unmatched",
-				remove: () => W(c.matchStatus)
+				remove: () => U(c.matchStatus)
 			}), c.yearFrom !== void 0 && e.push({
 				key: "yf",
 				label: `From ${c.yearFrom}`,
-				remove: () => Y(null)
+				remove: () => J(null)
 			}), c.yearTo !== void 0 && e.push({
 				key: "yt",
 				label: `To ${c.yearTo}`,
-				remove: () => X(null)
+				remove: () => Y(null)
 			}), e;
-		}), ae = h(() => ie.value.length > 0), Q = h(() => c.selectedGenres.length + c.selectedRatings.length + c.selectedTypes.length + c.selectedActors.length + +!!c.matchStatus + (c.yearFrom === void 0 ? 0 : 1) + (c.yearTo === void 0 ? 0 : 1));
-		function oe() {
+		}), oe = h(() => ae.value.length > 0), se = h(() => c.selectedGenres.length + c.selectedRatings.length + c.selectedTypes.length + c.selectedActors.length + +!!c.matchStatus + (c.yearFrom === void 0 ? 0 : 1) + (c.yearTo === void 0 ? 0 : 1));
+		function ce() {
 			f.value = "", c.setSearch(""), c.setGenres([]), c.setRatings([]), c.setTypes([]), c.setActors([]), c.setMatchStatus(""), c.setYearRange(void 0, void 0), a("change");
 		}
-		let $ = O(!1), se = h(() => l.filterPresets), Ne = O(!1), Pe = O("");
-		function Fe() {
-			Ne.value = !0, Pe.value = "";
+		let Z = O(!1), le = h(() => l.filterPresets), Q = O(!1), $ = O("");
+		function ue() {
+			Q.value = !0, $.value = "";
 		}
 		function Ie() {
-			let e = Pe.value.trim();
-			e && (l.saveFilterPreset(e, c.toQuery()), Ne.value = !1, Pe.value = "");
+			let e = $.value.trim();
+			e && (l.saveFilterPreset(e, c.toQuery()), Q.value = !1, $.value = "");
 		}
 		function Le(e) {
 			c.applyQuery(e.query), f.value = c.search, a("change");
@@ -748,14 +777,14 @@ var ce = B("media", () => {
 		}
 		return E(() => {
 			i.sticky && typeof window < "u" && (window.addEventListener("scroll", Be, { passive: !0 }), Be());
-		}), ee(() => {
+		}), T(() => {
 			clearTimeout(S), typeof window < "u" && window.removeEventListener("scroll", Be);
-		}), (n, r) => (D(), v("div", { class: w(["filterbar", {
+		}), (n, r) => (D(), v("div", { class: C(["filterbar", {
 			"is-sticky": e.sticky,
 			"is-stuck": e.sticky && ze.value
 		}]) }, [
-			y("div", le, [
-				y("label", ue, [
+			y("div", fe, [
+				y("label", pe, [
 					x(t, {
 						name: "search",
 						class: "filterbar__search-icon"
@@ -766,58 +795,58 @@ var ce = B("media", () => {
 						class: "filterbar__search-input",
 						placeholder: "Search titles, people, genres…",
 						"aria-label": "Search media",
-						onInput: C
+						onInput: ee
 					}, null, 544), [[P, f.value]]),
 					f.value ? (D(), v("button", {
 						key: 0,
 						type: "button",
 						class: "filterbar__search-clear",
 						"aria-label": "Clear search",
-						onClick: T
+						onClick: w
 					}, [x(t, { name: "x" })])) : _("", !0)
 				]),
-				y("div", de, [x(d, {
+				y("div", me, [x(d, {
 					"model-value": M(c).sort,
 					options: u,
 					label: "Sort by",
-					"onUpdate:modelValue": re
+					"onUpdate:modelValue": ie
 				}, null, 8, ["model-value"]), y("button", {
 					type: "button",
 					class: "filterbar__order",
 					"aria-label": `Sort ${M(c).order === "asc" ? "ascending" : "descending"}`,
-					onClick: Z
-				}, [x(t, { name: M(c).order === "asc" ? "arrow-up" : "arrow-down" }, null, 8, ["name"])], 8, fe)]),
+					onClick: X
+				}, [x(t, { name: M(c).order === "asc" ? "arrow-up" : "arrow-down" }, null, 8, ["name"])], 8, he)]),
 				y("button", {
 					type: "button",
 					class: "filterbar__toggle",
-					"aria-expanded": $.value,
-					onClick: r[1] ||= (e) => $.value = !$.value
+					"aria-expanded": Z.value,
+					onClick: r[1] ||= (e) => Z.value = !Z.value
 				}, [
 					x(t, { name: "filter" }),
 					r[4] ||= y("span", null, "Filters", -1),
-					Q.value ? (D(), g(o, {
+					se.value ? (D(), g(o, {
 						key: 0,
 						class: "filterbar__toggle-badge"
 					}, {
-						default: L(() => [b(j(Q.value), 1)]),
+						default: L(() => [b(j(se.value), 1)]),
 						_: 1
 					})) : _("", !0),
 					x(t, {
-						name: $.value ? "chevron-up" : "chevron-down",
+						name: Z.value ? "chevron-up" : "chevron-down",
 						class: "filterbar__toggle-caret"
 					}, null, 8, ["name"])
-				], 8, pe)
+				], 8, ge)
 			]),
 			x(m, { name: "filterbar-panel" }, {
-				default: L(() => [R(y("div", me, [
-					y("div", he, [r[5] ||= y("span", { class: "filterbar__field-label" }, "Genres", -1), (D(), g(K, {
+				default: L(() => [R(y("div", _e, [
+					y("div", ve, [r[5] ||= y("span", { class: "filterbar__field-label" }, "Genres", -1), (D(), g(G, {
 						key: N.value,
 						"model-value": A.value,
 						options: B.value,
 						placeholder: "Add a genre…",
 						"onUpdate:modelValue": ne
 					}, null, 8, ["model-value", "options"]))]),
-					y("div", ge, [r[6] ||= y("span", { class: "filterbar__field-label" }, "Rating", -1), y("div", _e, [(D(!0), v(p, null, k(M(c).availableRatings, (e) => (D(), g(s, {
+					y("div", ye, [r[6] ||= y("span", { class: "filterbar__field-label" }, "Rating", -1), y("div", be, [(D(!0), v(p, null, k(M(c).availableRatings, (e) => (D(), g(s, {
 						key: e,
 						selected: M(c).selectedRatings.includes(e),
 						"onUpdate:selected": (t) => V(e)
@@ -825,7 +854,7 @@ var ce = B("media", () => {
 						default: L(() => [b(j(e), 1)]),
 						_: 2
 					}, 1032, ["selected", "onUpdate:selected"]))), 128))])]),
-					y("div", ve, [r[7] ||= y("span", { class: "filterbar__field-label" }, "Type", -1), y("div", ye, [(D(!0), v(p, null, k(M(c).availableTypes, (e) => (D(), g(s, {
+					y("div", xe, [r[7] ||= y("span", { class: "filterbar__field-label" }, "Type", -1), y("div", Se, [(D(!0), v(p, null, k(M(c).availableTypes, (e) => (D(), g(s, {
 						key: e,
 						selected: M(c).selectedTypes.includes(e),
 						"onUpdate:selected": (t) => H(e)
@@ -833,37 +862,37 @@ var ce = B("media", () => {
 						default: L(() => [b(j(e), 1)]),
 						_: 2
 					}, 1032, ["selected", "onUpdate:selected"]))), 128))])]),
-					y("div", be, [r[8] ||= y("span", { class: "filterbar__field-label" }, "Metadata", -1), y("div", xe, [(D(), v(p, null, k(U, (e) => x(s, {
+					y("div", Ce, [r[8] ||= y("span", { class: "filterbar__field-label" }, "Metadata", -1), y("div", we, [(D(), v(p, null, k(re, (e) => x(s, {
 						key: e.value,
 						selected: M(c).matchStatus === e.value,
-						"onUpdate:selected": (t) => W(e.value)
+						"onUpdate:selected": (t) => U(e.value)
 					}, {
 						default: L(() => [b(j(e.label), 1)]),
 						_: 2
 					}, 1032, ["selected", "onUpdate:selected"])), 64))])]),
-					y("div", Se, [r[10] ||= y("span", { class: "filterbar__field-label" }, "Year", -1), y("div", Ce, [
-						x(K, {
+					y("div", Te, [r[10] ||= y("span", { class: "filterbar__field-label" }, "Year", -1), y("div", Ee, [
+						x(G, {
 							"model-value": M(c).yearFrom ?? null,
-							options: J.value,
+							options: q.value,
 							placeholder: "From",
 							label: "Year from",
-							"onUpdate:modelValue": Y
+							"onUpdate:modelValue": J
 						}, null, 8, ["model-value", "options"]),
 						r[9] ||= y("span", {
 							class: "filterbar__years-dash",
 							"aria-hidden": "true"
 						}, "–", -1),
-						x(K, {
+						x(G, {
 							"model-value": M(c).yearTo ?? null,
-							options: J.value,
+							options: q.value,
 							placeholder: "To",
 							label: "Year to",
-							"onUpdate:modelValue": X
+							"onUpdate:modelValue": Y
 						}, null, 8, ["model-value", "options"])
 					])]),
-					y("div", we, [
+					y("div", De, [
 						r[13] ||= y("span", { class: "filterbar__field-label" }, "Presets", -1),
-						y("div", Te, [(D(!0), v(p, null, k(se.value, (e) => (D(), g(s, {
+						y("div", Oe, [(D(!0), v(p, null, k(le.value, (e) => (D(), g(s, {
 							key: e.id,
 							removable: "",
 							"remove-label": `Delete preset ${e.name}`,
@@ -876,15 +905,15 @@ var ce = B("media", () => {
 							"remove-label",
 							"onClick",
 							"onRemove"
-						]))), 128)), se.value.length ? _("", !0) : (D(), v("span", Ee, "No saved presets"))]),
-						Ne.value ? (D(), v("div", De, [R(y("input", {
-							"onUpdate:modelValue": r[2] ||= (e) => Pe.value = e,
+						]))), 128)), le.value.length ? _("", !0) : (D(), v("span", ke, "No saved presets"))]),
+						Q.value ? (D(), v("div", Ae, [R(y("input", {
+							"onUpdate:modelValue": r[2] ||= (e) => $.value = e,
 							type: "text",
 							class: "filterbar__preset-input",
 							placeholder: "Preset name",
 							"aria-label": "Preset name",
-							onKeydown: [z(te(Ie, ["prevent"]), ["enter"]), r[3] ||= z((e) => Ne.value = !1, ["esc"])]
-						}, null, 40, Oe), [[P, Pe.value]]), y("button", {
+							onKeydown: [z(te(Ie, ["prevent"]), ["enter"]), r[3] ||= z((e) => Q.value = !1, ["esc"])]
+						}, null, 40, je), [[P, $.value]]), y("button", {
 							type: "button",
 							class: "filterbar__preset-confirm",
 							onClick: Ie
@@ -892,14 +921,14 @@ var ce = B("media", () => {
 							key: 1,
 							type: "button",
 							class: "filterbar__preset-add",
-							disabled: !ae.value,
-							onClick: Fe
-						}, [x(t, { name: "plus" }), r[12] ||= b(" Save current ", -1)], 8, ke))
+							disabled: !oe.value,
+							onClick: ue
+						}, [x(t, { name: "plus" }), r[12] ||= b(" Save current ", -1)], 8, Me))
 					])
-				], 512), [[F, $.value]])]),
+				], 512), [[F, Z.value]])]),
 				_: 1
 			}),
-			y("div", Ae, [y("span", je, [y("b", null, j(M(c).total.toLocaleString()), 1), b(" " + j(M(c).total === 1 ? "title" : "titles"), 1)]), ae.value ? (D(), v(p, { key: 0 }, [y("div", Me, [(D(!0), v(p, null, k(ie.value, (e) => (D(), g(s, {
+			y("div", Ne, [y("span", Pe, [y("b", null, j(M(c).total.toLocaleString()), 1), b(" " + j(M(c).total === 1 ? "title" : "titles"), 1)]), oe.value ? (D(), v(p, { key: 0 }, [y("div", Fe, [(D(!0), v(p, null, k(ae.value, (e) => (D(), g(s, {
 				key: e.key,
 				removable: "",
 				"remove-label": `Remove ${e.label}`,
@@ -910,12 +939,12 @@ var ce = B("media", () => {
 			}, 1032, ["remove-label", "onRemove"]))), 128))]), y("button", {
 				type: "button",
 				class: "filterbar__clear",
-				onClick: oe
+				onClick: ce
 			}, "Clear all")], 64)) : _("", !0)])
 		], 2));
 	}
 }), [["__scopeId", "data-v-ee7efac4"]]);
 //#endregion
-export { K as i, ce as n, Q as r, Ne as t };
+export { G as i, de as n, le as r, Ie as t };
 
-//# sourceMappingURL=FilterBar-CaQLZ8a6.js.map
+//# sourceMappingURL=FilterBar-DVLuliU6.js.map

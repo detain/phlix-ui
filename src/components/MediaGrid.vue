@@ -32,12 +32,18 @@ import {
   computeColumns,
   computeRowHeight,
   computeWindow,
+  effectiveItemCount,
+  shouldLoadMore,
 } from './virtual-grid';
 
 const props = withDefaults(
   defineProps<{
     /** Items to render (the already-loaded page set). */
     items: MediaItem[];
+    /** Full server result count. When set, the grid is sized to this up front so
+     *  the page length is final immediately and not-yet-loaded rows render as
+     *  skeletons until scrolled into view (on-demand paging fills them in). */
+    total?: number | null;
     /** Initial load — show skeleton rows instead of cards. */
     loading?: boolean;
     /** Appending a further page (controls the bottom loading row). */
@@ -113,26 +119,45 @@ const rowHeight = computed(() =>
 /** Virtualize only once we have real measurements; otherwise render everything. */
 const virtualized = computed(() => containerWidth.value > 0 && rowHeight.value > 0);
 
+/** Sizing count: the server `total` when known (so the page is its final length
+ *  up front), else the loaded count. */
+const effectiveCount = computed(() => effectiveItemCount(props.items.length, props.total));
+
 const windowResult = computed(() =>
   computeWindow({
     scrollTop: scrollTop.value,
     viewportHeight: viewportHeight.value,
     rowHeight: rowHeight.value,
     columns: columns.value,
-    itemCount: props.items.length,
+    itemCount: effectiveCount.value,
     overscan: props.overscan,
   }),
 );
 
 const visibleItems = computed(() => {
   if (!virtualized.value) {
-    return props.items.map((item, index) => ({ item, index }));
+    return props.items.map((item, index) => ({ item: item as MediaItem | null, index }));
   }
   const { startIndex, endIndex } = windowResult.value;
-  const out: { item: MediaItem; index: number }[] = [];
-  for (let i = startIndex; i < endIndex; i++) out.push({ item: props.items[i], index: i });
+  const out: { item: MediaItem | null; index: number }[] = [];
+  // Indices past the loaded set render as skeletons (pre-sized grid); they fill
+  // in once on-demand paging fetches them.
+  for (let i = startIndex; i < endIndex; i++) out.push({ item: props.items[i] ?? null, index: i });
   return out;
 });
+
+// On-demand paging for the pre-sized grid: when the rendered window reaches the
+// loaded edge, ask the host for the next page. The bottom sentinel can't drive
+// this once the sizer is the full `total` height (it only fires at the very end).
+watch(
+  () =>
+    [windowResult.value.endIndex, props.items.length, props.hasMore, props.loading, props.loadingMore] as const,
+  ([endIndex, loaded, hasMore, loading, loadingMore]) => {
+    if (virtualized.value && shouldLoadMore(endIndex, loaded, { hasMore, loading, loadingMore })) {
+      emit('load-more');
+    }
+  },
+);
 
 const gridStyle = computed(() => ({
   gridTemplateColumns: virtualized.value
@@ -283,8 +308,8 @@ watch(
     <template v-else>
       <div ref="sizerEl" class="media-grid-sizer" :style="sizerStyle">
         <div class="media-grid" :style="[gridStyle, innerStyle]">
-          <template v-for="entry in visibleItems" :key="entry.item.id">
-            <slot name="card" :item="entry.item" :index="entry.index">
+          <template v-for="entry in visibleItems" :key="entry.item?.id ?? `skel-${entry.index}`">
+            <slot v-if="entry.item" name="card" :item="entry.item" :index="entry.index">
               <MediaCard
                 :item="entry.item"
                 :can-match="canMatch"
@@ -294,6 +319,12 @@ watch(
                 @match="emit('match', entry.item)"
               />
             </slot>
+            <!-- not-yet-loaded index in the pre-sized grid -->
+            <div v-else class="skel-card" aria-hidden="true">
+              <div class="skel-poster" />
+              <div class="skel-title" />
+              <div class="skel-sub" />
+            </div>
           </template>
         </div>
       </div>
