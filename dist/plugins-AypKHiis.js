@@ -69,6 +69,32 @@ var i = class {
 		let { sources: t } = await this.client.delete(`/api/v1/admin/plugins/catalog/sources?url=${encodeURIComponent(e)}`);
 		return Array.isArray(t) ? t : [];
 	}
+	async checkUpdates() {
+		let e = await this.client.get("/api/v1/admin/plugins/updates");
+		return {
+			auto_update: e.auto_update === !0,
+			available: typeof e.available == "number" ? e.available : 0,
+			updates: Array.isArray(e.updates) ? e.updates : []
+		};
+	}
+	updatePlugin(e) {
+		return this.client.post(`/api/v1/admin/plugins/${encodeURIComponent(e)}/update`);
+	}
+	async updateAll() {
+		let e = await this.client.post("/api/v1/admin/plugins/updates/apply");
+		return {
+			updated: Array.isArray(e.updated) ? e.updated : [],
+			failed: Array.isArray(e.failed) ? e.failed : []
+		};
+	}
+	async getAutoUpdate() {
+		let { auto_update: e } = await this.client.get("/api/v1/admin/plugins/auto-update");
+		return e === !0;
+	}
+	async setAutoUpdate(e) {
+		let { auto_update: t } = await this.client.put("/api/v1/admin/plugins/auto-update", { enabled: e });
+		return t === !0;
+	}
 	async updateSettings(e, t) {
 		let { plugin: n } = await this.client.put(`/api/v1/admin/plugins/${encodeURIComponent(e)}/settings`, { settings: t });
 		return {
@@ -81,4 +107,4 @@ var i = class {
 //#endregion
 export { r as i, t as n, n as r, i as t };
 
-//# sourceMappingURL=plugins-loG9oEYL.js.map
+//# sourceMappingURL=plugins-AypKHiis.js.map
