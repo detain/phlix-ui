@@ -34,6 +34,7 @@ import {
   type PluginSettingDescriptor,
   type CatalogResponse,
   type CatalogPlugin,
+  type PluginUpdate,
 } from '../../api/admin/plugins';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
@@ -280,6 +281,138 @@ async function removeCatalogSource(url: string): Promise<void> {
   }
 }
 
+// ── Updates ──────────────────────────────────────────────────────────────────
+/** Per-plugin update status keyed by manifest name (populated by `checkUpdates`). */
+const updatesByName = ref<Record<string, PluginUpdate>>({});
+/** True while the manual update check is in flight (drives the button spinner). */
+const checkingUpdates = ref(false);
+/** True while "Update all" is in flight. */
+const updatingAll = ref(false);
+/** Name of the plugin whose single-plugin update is currently in flight. */
+const updatingName = ref<string | null>(null);
+/** The auto-update toggle (loaded on mount, persisted on change). */
+const autoUpdate = ref(false);
+
+/** Count of installed plugins with an update available. */
+const updateCount = computed(
+  () => Object.values(updatesByName.value).filter((u) => u.update_available).length,
+);
+
+/** The update status for a plugin (only when an update is actually available). */
+function updateFor(name: string): PluginUpdate | null {
+  const u = updatesByName.value[name];
+  return u && u.update_available ? u : null;
+}
+
+/** Index the update rows by name, keeping only the actionable (update-available) ones. */
+function indexUpdates(updates: PluginUpdate[]): void {
+  const map: Record<string, PluginUpdate> = {};
+  for (const u of updates) {
+    if (u && typeof u.name === 'string' && u.update_available) map[u.name] = u;
+  }
+  updatesByName.value = map;
+}
+
+/** Drop a single plugin from the available-updates map (after it updated). */
+function clearUpdate(name: string): void {
+  if (name in updatesByName.value) {
+    const next = { ...updatesByName.value };
+    delete next[name];
+    updatesByName.value = next;
+  }
+}
+
+/** Manually run the update check and summarise the result as a toast. */
+async function checkForUpdates(): Promise<void> {
+  if (checkingUpdates.value) return;
+  checkingUpdates.value = true;
+  try {
+    const res = await api.checkUpdates();
+    indexUpdates(res.updates);
+    autoUpdate.value = res.auto_update;
+    const n = updateCount.value;
+    toasts.success(
+      n > 0
+        ? `${n} update${n === 1 ? '' : 's'} available.`
+        : 'All plugins are up to date.',
+    );
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to check for updates.'));
+  } finally {
+    checkingUpdates.value = false;
+  }
+}
+
+/**
+ * Map a server update error `code` to a clearer message; fall back to the raw
+ * error text. Codes are the ones emitted by the update endpoint:
+ * `plugin.update.no_source`, `plugin.update.failed`.
+ */
+function updateErrorMessage(e: unknown): string {
+  const code = pluginErrorCode(e);
+  switch (code) {
+    case 'plugin.update.no_source':
+      return 'This plugin has no update source — reinstall it from a URL to update.';
+    case 'plugin.update.failed':
+      return errMessage(e, 'Update failed — the new version could not be downloaded or read.');
+    default:
+      return errMessage(e, 'Failed to update plugin.');
+  }
+}
+
+/** Update a single plugin, then refetch and drop it from the available list. */
+async function updatePlugin(plugin: Plugin): Promise<void> {
+  if (updatingName.value !== null) return;
+  updatingName.value = plugin.name;
+  try {
+    await api.updatePlugin(plugin.name);
+    toasts.success(`${plugin.name} updated.`);
+    clearUpdate(plugin.name);
+    await refreshAll();
+  } catch (e) {
+    toasts.error(updateErrorMessage(e));
+  } finally {
+    updatingName.value = null;
+  }
+}
+
+/** Apply every available update, summarise the outcome, then refetch + re-check. */
+async function updateAll(): Promise<void> {
+  if (updatingAll.value) return;
+  updatingAll.value = true;
+  try {
+    const res = await api.updateAll();
+    if (res.failed.length > 0) {
+      toasts.error(
+        `${res.updated.length} updated, ${res.failed.length} failed.`,
+      );
+    } else {
+      toasts.success(`${res.updated.length} plugin${res.updated.length === 1 ? '' : 's'} updated.`);
+    }
+    await refreshAll();
+    const check = await api.checkUpdates();
+    indexUpdates(check.updates);
+    autoUpdate.value = check.auto_update;
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to apply updates.'));
+  } finally {
+    updatingAll.value = false;
+  }
+}
+
+/** Persist the auto-update toggle; revert the optimistic flip on failure. */
+async function onToggleAutoUpdate(value: boolean): Promise<void> {
+  const previous = autoUpdate.value;
+  autoUpdate.value = value;
+  try {
+    autoUpdate.value = await api.setAutoUpdate(value);
+    toasts.success(value ? 'Auto-update enabled.' : 'Auto-update disabled.');
+  } catch (e) {
+    autoUpdate.value = previous;
+    toasts.error(errMessage(e, 'Failed to change auto-update.'));
+  }
+}
+
 // ── Enable / disable ─────────────────────────────────────────────────────────
 /** Name of the plugin whose enable/disable request + refetch is currently in flight. */
 const togglingName = ref<string | null>(null);
@@ -461,9 +594,19 @@ async function submitConfigure(): Promise<void> {
   }
 }
 
+/** Load the auto-update flag on mount; a failure is non-fatal (leave it off). */
+async function loadAutoUpdate(): Promise<void> {
+  try {
+    autoUpdate.value = await api.getAutoUpdate();
+  } catch {
+    // Non-fatal: the rest of the page works without the auto-update flag.
+  }
+}
+
 onMounted(() => {
   void loadPlugins();
   void loadCatalog();
+  void loadAutoUpdate();
 });
 </script>
 
@@ -472,6 +615,32 @@ onMounted(() => {
     <header class="admin-plugins__head">
       <h1 id="plugins-heading" class="admin-plugins__title">Plugins</h1>
       <div class="admin-plugins__head-actions">
+        <Switch
+          :model-value="autoUpdate"
+          label="Auto-update"
+          aria-label="Toggle automatic plugin updates"
+          @update:model-value="onToggleAutoUpdate"
+        />
+        <span class="admin-plugins__head-spacer" />
+        <Button
+          variant="ghost"
+          size="sm"
+          left-icon="rewind"
+          :loading="checkingUpdates"
+          @click="checkForUpdates"
+        >
+          Check for updates
+        </Button>
+        <Button
+          v-if="updateCount > 0"
+          variant="solid"
+          size="sm"
+          left-icon="forward"
+          :loading="updatingAll"
+          @click="updateAll"
+        >
+          Update all ({{ updateCount }})
+        </Button>
         <Button variant="ghost" size="sm" left-icon="plus" @click="openAddSource">Add catalog</Button>
         <Button variant="solid" size="sm" left-icon="plus" @click="openInstall">Install from URL</Button>
       </div>
@@ -545,6 +714,9 @@ onMounted(() => {
             <div class="admin-plugins__card-badges">
               <Badge v-if="p.type" tone="info">{{ p.type }}</Badge>
               <Badge v-if="p.installed" tone="success">Installed</Badge>
+              <Badge v-if="updateFor(p.name)" tone="warning" class="admin-plugins__update-badge">
+                Update → v{{ updateFor(p.name)?.latest_version }}
+              </Badge>
             </div>
           </div>
           <p v-if="p.summary || p.description" class="admin-plugins__card-summary">
@@ -563,6 +735,17 @@ onMounted(() => {
                 @update:model-value="(v) => toggleEnabled(asPlugin(p), v)"
               />
               <span class="admin-plugins__card-spacer" />
+              <Button
+                v-if="updateFor(p.name)"
+                variant="solid"
+                size="sm"
+                left-icon="forward"
+                :loading="updatingName === p.name"
+                :aria-label="`Update ${p.title}`"
+                @click="updatePlugin(asPlugin(p))"
+              >
+                Update
+              </Button>
               <Button variant="ghost" size="sm" :aria-label="`Configure ${p.title}`" @click="openConfigure(asPlugin(p))">
                 Configure
               </Button>
@@ -606,7 +789,12 @@ onMounted(() => {
         <tbody>
           <tr v-for="plugin in orphanPlugins" :key="plugin.name">
             <td>{{ plugin.name }}</td>
-            <td class="admin-plugins__mono">{{ plugin.version }}</td>
+            <td class="admin-plugins__mono">
+              {{ plugin.version }}
+              <Badge v-if="updateFor(plugin.name)" tone="warning" class="admin-plugins__update-badge">
+                → v{{ updateFor(plugin.name)?.latest_version }}
+              </Badge>
+            </td>
             <td><Badge tone="info">{{ plugin.type }}</Badge></td>
             <td>
               <Switch
@@ -619,6 +807,17 @@ onMounted(() => {
             </td>
             <td>
               <div class="admin-plugins__actions">
+                <Button
+                  v-if="updateFor(plugin.name)"
+                  variant="solid"
+                  size="sm"
+                  left-icon="forward"
+                  :loading="updatingName === plugin.name"
+                  :aria-label="`Update ${plugin.name}`"
+                  @click="updatePlugin(plugin)"
+                >
+                  Update
+                </Button>
                 <Button variant="ghost" size="sm" :aria-label="`Configure ${plugin.name}`" @click="openConfigure(plugin)">
                   Configure
                 </Button>
@@ -787,7 +986,13 @@ onMounted(() => {
 .admin-plugins__head-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
+}
+/* Pushes the install/catalog actions apart from the auto-update toggle on a
+   single row; collapses harmlessly once the actions wrap. */
+.admin-plugins__head-spacer {
+  width: var(--space-2);
 }
 .admin-plugins__title {
   font-family: var(--font-display);
@@ -924,6 +1129,11 @@ onMounted(() => {
   gap: var(--space-1);
   flex-shrink: 0;
 }
+/* "Update → vX" pill — used both on a catalog card and inline in the orphan
+   table's version cell. Keeps the version suffix on one line. */
+.admin-plugins__update-badge {
+  white-space: nowrap;
+}
 .admin-plugins__card-summary {
   font-size: var(--text-sm);
   color: var(--text-muted);
@@ -1002,6 +1212,9 @@ onMounted(() => {
   font-variant-numeric: tabular-nums;
   color: var(--text-subtle);
   white-space: nowrap;
+}
+.admin-plugins__mono .admin-plugins__update-badge {
+  margin-left: var(--space-2);
 }
 .admin-plugins__actions-col {
   width: 1%;
