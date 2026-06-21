@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.43.0] - 2026-06-21
+
+### Fixed
+- **Virtualized library grid now tracks the scroll position immediately — fixes the same titles "staying" on screen while scrolling.** The grid measured the scroll offset on a `requestAnimationFrame`-deferred path; under scroll load that measurement stalls (rAF is throttled aggressively during scrolling, notably on Firefox), freezing the rendered window so the same rows stayed on screen as you scrolled. The scroll handler now calls `measure()` **synchronously** (one cheap layout read; Vue batches the re-render), so the window follows every scroll event and can't be frozen by rAF throttling. Resize stays rAF-coalesced. Regression test asserts the window advances on scroll even when rAF never fires.
+
 ## [0.42.0] - 2026-06-21
 
 ### Fixed
