@@ -88,17 +88,33 @@ interface Overrides {
   plugins?: unknown[];
   detail?: unknown;
   catalog?: unknown;
+  updates?: unknown;
+  autoUpdate?: boolean;
 }
+
+/** The default (benign) update-check response: nothing to update. */
+const NO_UPDATES = { auto_update: false, available: 0, updates: [] };
 
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/admin/plugins') return { plugins: over.plugins ?? [PLUGIN_A, PLUGIN_B] };
     if (endpoint === '/api/v1/admin/plugins/catalog') return over.catalog ?? EMPTY_CATALOG;
+    if (endpoint === '/api/v1/admin/plugins/updates') return over.updates ?? NO_UPDATES;
+    if (endpoint === '/api/v1/admin/plugins/auto-update') return { auto_update: over.autoUpdate ?? false };
     if (/\/api\/v1\/admin\/plugins\/[^/]+$/.test(endpoint)) return { plugin: over.detail ?? DETAIL_A };
     throw new Error(`unexpected GET ${endpoint}`);
   });
-  const post = vi.fn(async () => ({ manifest: {}, sources: [DEFAULT_SOURCE] }));
-  const put = vi.fn(async () => ({ plugin: over.detail ?? DETAIL_A }));
+  // Routed by endpoint so the update endpoints get their own shapes while the
+  // install / enable / disable / sources paths keep the legacy `{ manifest, sources }`.
+  const post = vi.fn(async (endpoint: string): Promise<Record<string, unknown>> => {
+    if (endpoint === '/api/v1/admin/plugins/updates/apply') return { updated: [], failed: [] };
+    if (/\/api\/v1\/admin\/plugins\/[^/]+\/update$/.test(endpoint)) return { plugin: { name: 'x', version: '2.0.0' } };
+    return { manifest: {}, sources: [DEFAULT_SOURCE] };
+  });
+  const put = vi.fn(async (endpoint: string) => {
+    if (endpoint === '/api/v1/admin/plugins/auto-update') return { auto_update: over.autoUpdate ?? true };
+    return { plugin: over.detail ?? DETAIL_A };
+  });
   const del = vi.fn(async () => ({ sources: [DEFAULT_SOURCE] }));
   const client = { get, post, put, patch: vi.fn(), delete: del } as unknown as ApiClient;
   return { client, get, post, put, del };
@@ -148,6 +164,8 @@ describe('Admin PluginsPage — installed list', () => {
     let resolveList: (v: unknown) => void = () => {};
     const get = vi.fn((endpoint: string) => {
       if (endpoint === '/api/v1/admin/plugins/catalog') return Promise.resolve(EMPTY_CATALOG);
+      if (endpoint === '/api/v1/admin/plugins/auto-update') return Promise.resolve({ auto_update: false });
+      // Only the installed-list GET stays pending so the skeleton holds.
       return new Promise((r) => {
         resolveList = r;
       });
@@ -565,6 +583,151 @@ describe('Admin PluginsPage — configure', () => {
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'detail boom')).toBe(true);
+    w.unmount();
+  });
+});
+
+describe('Admin PluginsPage — updates', () => {
+  /** An update-check response with one actionable update (anidb → 1.3.0). */
+  const UPDATES = {
+    auto_update: false,
+    available: 1,
+    updates: [
+      {
+        name: 'anidb',
+        installed_version: '1.2.0',
+        latest_version: '1.3.0',
+        update_available: true,
+        repo: 'https://github.com/detain/phlix-plugin-anidb',
+        checkable: true,
+        error: null,
+      },
+      {
+        name: 'mal',
+        installed_version: '0.4.0',
+        latest_version: '0.4.0',
+        update_available: false,
+        repo: null,
+        checkable: true,
+        error: null,
+      },
+    ],
+  };
+
+  it('checks for updates and toasts the summary', async () => {
+    const { client, get } = makeClient({ updates: UPDATES });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Check for updates')!.trigger('click');
+    await flushPromises();
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/plugins/updates');
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === '1 update available.')).toBe(true);
+    w.unmount();
+  });
+
+  it('toasts an up-to-date summary when nothing needs updating', async () => {
+    const { client } = makeClient(); // default NO_UPDATES
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Check for updates')!.trigger('click');
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'All plugins are up to date.')).toBe(true);
+    w.unmount();
+  });
+
+  it('shows an Update button for a plugin with an update and POSTs the update + refetches', async () => {
+    // PLUGIN_A (anidb) is an orphan with the empty catalog → renders a table row.
+    const { client, post, get } = makeClient({ plugins: [PLUGIN_A], updates: UPDATES });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Check for updates')!.trigger('click');
+    await flushPromises();
+    const updateBtn = w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Update anidb');
+    expect(updateBtn).toBeTruthy();
+    await updateBtn!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/plugins/anidb/update');
+    // refreshAll re-fetches the installed list after a successful update.
+    expect(get.mock.calls.filter((c) => c[0] === '/api/v1/admin/plugins').length).toBeGreaterThan(1);
+    w.unmount();
+  });
+
+  it('shows the Update affordance on a catalog card for an installed+updatable plugin', async () => {
+    const { client } = makeClient({ plugins: [PLUGIN_A], catalog: CATALOG, updates: UPDATES });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Check for updates')!.trigger('click');
+    await flushPromises();
+    // anidb is an installed catalog card → its Update button is present.
+    expect(w.findAllComponents(Button).some((b) => b.attributes('aria-label') === 'Update AniDB')).toBe(true);
+    expect(w.text()).toContain('Update → v1.3.0');
+    w.unmount();
+  });
+
+  it('toasts the update error code as a helpful message', async () => {
+    const { client, post } = makeClient({ plugins: [PLUGIN_A], updates: UPDATES });
+    post.mockRejectedValueOnce(new ApiError('no source', 404, { code: 'plugin.update.no_source' }));
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Check for updates')!.trigger('click');
+    await flushPromises();
+    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Update anidb')!.trigger('click');
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message.includes('no update source'))).toBe(true);
+    w.unmount();
+  });
+
+  it('applies all updates via "Update all" and refetches', async () => {
+    const { client, post } = makeClient({ plugins: [PLUGIN_A], updates: UPDATES });
+    post.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/plugins/updates/apply') {
+        return { updated: [{ name: 'anidb', from: '1.2.0', to: '1.3.0' }], failed: [] };
+      }
+      return { manifest: {}, sources: [DEFAULT_SOURCE] };
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Check for updates')!.trigger('click');
+    await flushPromises();
+    // The "Update all (N)" button appears once an update is known.
+    const updateAll = w.findAllComponents(Button).find((b) => b.text().trim().startsWith('Update all'));
+    expect(updateAll).toBeTruthy();
+    await updateAll!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/plugins/updates/apply');
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === '1 plugin updated.')).toBe(true);
+    w.unmount();
+  });
+
+  it('PUTs the auto-update flag when the header Switch is toggled', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const autoSwitch = w
+      .findAllComponents(Switch)
+      .find((s) => s.attributes('aria-label') === 'Toggle automatic plugin updates');
+    expect(autoSwitch).toBeTruthy();
+    await autoSwitch!.vm.$emit('update:modelValue', true);
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/auto-update', { enabled: true });
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'Auto-update enabled.')).toBe(true);
+    w.unmount();
+  });
+
+  it('loads the initial auto-update value on mount', async () => {
+    const { client, get } = makeClient({ autoUpdate: true });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/plugins/auto-update');
+    const autoSwitch = w
+      .findAllComponents(Switch)
+      .find((s) => s.attributes('aria-label') === 'Toggle automatic plugin updates');
+    expect(autoSwitch!.props('modelValue')).toBe(true);
     w.unmount();
   });
 });

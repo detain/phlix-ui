@@ -98,6 +98,41 @@ export interface CatalogResponse {
     errors: CatalogError[];
 }
 /**
+ * One plugin's update status, as returned by the updates endpoint. `latest_version`
+ * is `null` when it can't be determined (e.g. no source or a check error);
+ * `update_available` is the server's verdict (installed < latest). `checkable` is
+ * `false` for plugins with no update source (built-ins / manual installs without a
+ * resolvable repo), and `error` carries a per-plugin check failure message.
+ */
+export interface PluginUpdate {
+    name: string;
+    installed_version: string;
+    latest_version: string | null;
+    update_available: boolean;
+    repo: string | null;
+    checkable: boolean;
+    error: string | null;
+}
+/** The aggregated update-check response: the auto-update flag + per-plugin rows. */
+export interface UpdateCheckResponse {
+    auto_update: boolean;
+    /** Count of plugins with an update available (server-computed convenience). */
+    available: number;
+    updates: PluginUpdate[];
+}
+/** The result of applying all available updates: per-plugin successes + failures. */
+export interface UpdateAllResult {
+    updated: Array<{
+        name: string;
+        from: string;
+        to: string;
+    }>;
+    failed: Array<{
+        name: string;
+        error: string;
+    }>;
+}
+/**
  * The server error `code` carried by a failed install / settings save (e.g.
  * `plugin.install_failed`, `plugin.invalid_url`, `plugin.settings.validation_failed`).
  * Returns `null` when the thrown error is not an {@link ApiError} or carries no
@@ -147,6 +182,32 @@ export declare class AdminPluginsApi {
      * carries no body. The default source cannot be removed (server no-op).
      */
     removeCatalogSource(url: string): Promise<string[]>;
+    /**
+     * `GET /api/v1/admin/plugins/updates` → the per-plugin update status across the
+     * installed set, plus the `auto_update` flag and an `available` count. All
+     * arrays/shapes are defended so a malformed payload degrades to empty rather
+     * than throwing on `.map`.
+     */
+    checkUpdates(): Promise<UpdateCheckResponse>;
+    /**
+     * `POST /api/v1/admin/plugins/{name}/update` → `200 { plugin: { name, version } }`.
+     * A `404 plugin.update.no_source` / `422 plugin.update.failed` surfaces as an
+     * {@link ApiError}; read its `{ code }` with {@link pluginErrorCode}.
+     */
+    updatePlugin(name: string): Promise<unknown>;
+    /**
+     * `POST /api/v1/admin/plugins/updates/apply` → applies every available update,
+     * returning the per-plugin successes (`updated`) and failures (`failed`). Both
+     * arrays are defended so the caller can always iterate.
+     */
+    updateAll(): Promise<UpdateAllResult>;
+    /** `GET /api/v1/admin/plugins/auto-update` → unwraps the `auto_update` flag. */
+    getAutoUpdate(): Promise<boolean>;
+    /**
+     * `PUT /api/v1/admin/plugins/auto-update` `{ enabled }` → the persisted flag.
+     * Returns the server's `auto_update` (so the UI binds to the confirmed value).
+     */
+    setAutoUpdate(enabled: boolean): Promise<boolean>;
     /**
      * `PUT /api/v1/admin/plugins/{name}/settings` `{ settings }` → the refreshed
      * masked {@link PluginDetail}. Pass ONLY the keys the admin changed; a secret

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.39.0] - 2026-06-21
+
+### Added
+- **Plugin update management in the admin Plugins section.** A **Check for updates** button compares each installed plugin against the latest version in its catalog repo and surfaces an "Update available → vX" badge plus an **Update** button on the plugin's catalog card and its "Other installed plugins" row; an **Update all (N)** button appears when any are outdated. An **Auto-update** switch toggles the server's opt-in background auto-updater. New `AdminPluginsApi.checkUpdates()` / `updatePlugin()` / `updateAll()` / `getAutoUpdate()` / `setAutoUpdate()` wrappers + `PluginUpdate`/`UpdateCheckResponse`/`UpdateAllResult` types over the server's `GET /plugins/updates`, `POST /plugins/{name}/update`, `POST /plugins/updates/apply`, and `GET`/`PUT /plugins/auto-update`.
+
 ## [0.38.3] - 2026-06-21
 
 ### Fixed
