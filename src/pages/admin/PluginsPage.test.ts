@@ -378,9 +378,26 @@ describe('Admin PluginsPage — install from URL', () => {
     await flushPromises();
   }
 
-  it('surfaces the real plugin.install.failed code as a helpful message', async () => {
+  it('surfaces the server\'s real reason for a failed install (toast + banner)', async () => {
     const { client, post } = makeClient();
-    post.mockRejectedValueOnce(new ApiError('failed', 422, { code: 'plugin.install.failed' }));
+    const serverMsg = 'Cannot create plugins base directory /var/www/phlix/var/plugins (Read-only file system).';
+    post.mockRejectedValueOnce(new ApiError(serverMsg, 422, { code: 'plugin.install.failed' }));
+    const w = mountPage(client);
+    await flushPromises();
+    await submitInstall(w, 'https://bad.example/x');
+    const toasts = useToastStore();
+    // The operator sees the actual cause (a filesystem/permissions error), not a
+    // generic "couldn't download" — both as a toast and a persistent banner.
+    expect(toasts.toasts.some((t) => t.message.includes('Cannot create plugins base directory'))).toBe(true);
+    const banner = w.find('.admin-plugins__install-error');
+    expect(banner.exists()).toBe(true);
+    expect(banner.text()).toContain('Cannot create plugins base directory');
+    w.unmount();
+  });
+
+  it('falls back to a generic message when the server gives no detail', async () => {
+    const { client, post } = makeClient();
+    post.mockRejectedValueOnce(new ApiError('', 422, { code: 'plugin.install.failed' }));
     const w = mountPage(client);
     await flushPromises();
     await submitInstall(w, 'https://bad.example/x');

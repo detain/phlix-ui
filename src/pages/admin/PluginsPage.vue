@@ -37,6 +37,7 @@ import {
 } from '../../api/admin/plugins';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
+import Icon from '../../components/Icon.vue';
 import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
@@ -153,7 +154,11 @@ function installErrorMessage(e: unknown): string {
     case 'plugin.url.invalid_scheme':
       return 'That does not look like a valid plugin URL (use https://…).';
     case 'plugin.install.failed':
-      return 'Install failed — the plugin could not be downloaded or read.';
+      // Surface the server's actual reason (e.g. "Cannot create plugins base
+      // directory … re-running install.sh --update fixes it") rather than a
+      // generic download message — the real cause is often a filesystem /
+      // permissions issue the operator needs to see verbatim.
+      return errMessage(e, 'Install failed — the plugin could not be downloaded or read.');
     default:
       return errMessage(e, 'Failed to install plugin.');
   }
@@ -169,6 +174,18 @@ function closeInstall(): void {
   installUrl.value = '';
 }
 
+/** The last install failure, shown as a persistent banner (toasts are fleeting;
+ *  a filesystem/permissions error needs to stay on screen so the operator can
+ *  read and act on it). Cleared when an install starts or succeeds. */
+const installError = ref<string | null>(null);
+
+/** Record an install failure on both the persistent banner and a toast. */
+function reportInstallError(e: unknown): void {
+  const msg = installErrorMessage(e);
+  installError.value = msg;
+  toasts.error(msg);
+}
+
 async function submitInstall(): Promise<void> {
   const url = installUrl.value.trim();
   if (!url) {
@@ -176,13 +193,14 @@ async function submitInstall(): Promise<void> {
     return;
   }
   installSubmitting.value = true;
+  installError.value = null;
   try {
     await api.install(url);
     toasts.success('Plugin installed.');
     closeInstall();
     await refreshAll();
   } catch (e) {
-    toasts.error(installErrorMessage(e));
+    reportInstallError(e);
   } finally {
     installSubmitting.value = false;
   }
@@ -195,12 +213,13 @@ const installingRepo = ref<string | null>(null);
 async function installFromCatalog(p: CatalogPlugin): Promise<void> {
   if (installingRepo.value !== null) return;
   installingRepo.value = p.repo;
+  installError.value = null;
   try {
     await api.install(p.repo);
     toasts.success(`${p.title} installed.`);
     await refreshAll();
   } catch (e) {
-    toasts.error(installErrorMessage(e));
+    reportInstallError(e);
   } finally {
     installingRepo.value = null;
   }
@@ -476,6 +495,24 @@ onMounted(() => {
           ×
         </button>
       </Badge>
+    </div>
+
+    <!-- Persistent install-failure banner (a fleeting toast is easy to miss;
+         a permissions/filesystem error needs to stay readable). -->
+    <div v-if="installError" class="admin-plugins__install-error" role="alert">
+      <Icon name="alert" class="admin-plugins__install-error-icon" />
+      <div class="admin-plugins__install-error-body">
+        <strong>Couldn't install the plugin.</strong>
+        <span>{{ installError }}</span>
+      </div>
+      <button
+        type="button"
+        class="admin-plugins__install-error-dismiss"
+        aria-label="Dismiss"
+        @click="installError = null"
+      >
+        ×
+      </button>
     </div>
 
     <!-- Catalog browse -->
@@ -802,6 +839,49 @@ onMounted(() => {
 .admin-plugins__source-remove:disabled {
   opacity: 0.5;
   cursor: progress;
+}
+
+/* Install-failure banner */
+.admin-plugins__install-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--danger, #e5484d);
+  background: var(--danger-soft, rgba(229, 72, 77, 0.1));
+  color: var(--text);
+}
+.admin-plugins__install-error-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--danger, #e5484d);
+}
+.admin-plugins__install-error-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-sm);
+  min-width: 0;
+  flex: 1;
+  word-break: break-word;
+}
+.admin-plugins__install-error-dismiss {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: var(--text-md);
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+}
+.admin-plugins__install-error-dismiss:hover {
+  color: var(--text);
 }
 
 /* Catalog grid */
