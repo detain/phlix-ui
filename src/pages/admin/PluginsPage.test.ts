@@ -4,7 +4,6 @@ import { setActivePinia, createPinia } from 'pinia';
 import PluginsPage from './PluginsPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Switch from '../../components/ui/Switch.vue';
-import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import { ApiError } from '../../api/client';
 import type { ApiClient } from '../../api/client';
@@ -36,20 +35,71 @@ const DETAIL_A = {
   settings: { api_key: '***', page_size: 25, extras: false },
 };
 
+const DEFAULT_SOURCE = 'https://github.com/detain/phlix-plugins';
+
+/** A catalog with no plugins (the default-state mock for the lifecycle tests). */
+const EMPTY_CATALOG = {
+  default_source: DEFAULT_SOURCE,
+  sources: [DEFAULT_SOURCE],
+  catalogs: [],
+  errors: [],
+};
+
+/** A catalog with one installed (anidb) + one not-installed (trakt) entry. */
+const CATALOG = {
+  default_source: DEFAULT_SOURCE,
+  sources: [DEFAULT_SOURCE, 'https://example.com/extra.json'],
+  catalogs: [
+    {
+      source: DEFAULT_SOURCE,
+      name: 'Phlix Official Plugins',
+      plugins: [
+        {
+          name: 'anidb',
+          title: 'AniDB',
+          type: 'metadata-provider',
+          summary: 'Anime metadata from AniDB.',
+          description: '',
+          repo: 'https://github.com/detain/phlix-plugin-anidb',
+          author: 'detain',
+          tags: ['anime', 'metadata'],
+          installed: true,
+          enabled: true,
+        },
+        {
+          name: 'trakt',
+          title: 'Trakt',
+          type: 'scrobbler',
+          summary: 'Scrobble playback to Trakt.',
+          description: '',
+          repo: 'https://github.com/detain/phlix-plugin-trakt',
+          author: 'detain',
+          tags: ['trakt'],
+          installed: false,
+          enabled: false,
+        },
+      ],
+    },
+  ],
+  errors: [],
+};
+
 interface Overrides {
   plugins?: unknown[];
   detail?: unknown;
+  catalog?: unknown;
 }
 
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/admin/plugins') return { plugins: over.plugins ?? [PLUGIN_A, PLUGIN_B] };
+    if (endpoint === '/api/v1/admin/plugins/catalog') return over.catalog ?? EMPTY_CATALOG;
     if (/\/api\/v1\/admin\/plugins\/[^/]+$/.test(endpoint)) return { plugin: over.detail ?? DETAIL_A };
     throw new Error(`unexpected GET ${endpoint}`);
   });
-  const post = vi.fn(async () => ({ manifest: {} }));
+  const post = vi.fn(async () => ({ manifest: {}, sources: [DEFAULT_SOURCE] }));
   const put = vi.fn(async () => ({ plugin: over.detail ?? DETAIL_A }));
-  const del = vi.fn(async () => ({}));
+  const del = vi.fn(async () => ({ sources: [DEFAULT_SOURCE] }));
   const client = { get, post, put, patch: vi.fn(), delete: del } as unknown as ApiClient;
   return { client, get, post, put, del };
 }
@@ -79,12 +129,14 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('Admin PluginsPage — list', () => {
-  it('loads and renders the plugin rows', async () => {
+describe('Admin PluginsPage — installed list', () => {
+  it('loads installed plugins + catalog and renders rows for orphan plugins', async () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     expect(get).toHaveBeenCalledWith('/api/v1/admin/plugins');
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/plugins/catalog');
+    // With an empty catalog, the installed plugins are "orphans" → table rows.
     const text = w.text();
     expect(text).toContain('anidb');
     expect(text).toContain('1.2.0');
@@ -92,35 +144,127 @@ describe('Admin PluginsPage — list', () => {
     w.unmount();
   });
 
-  it('shows a skeleton while loading then the table', async () => {
-    let resolve: (v: unknown) => void = () => {};
-    const get = vi.fn(() => new Promise((r) => { resolve = r; }));
+  it('shows a skeleton while loading then the content', async () => {
+    let resolveList: (v: unknown) => void = () => {};
+    const get = vi.fn((endpoint: string) => {
+      if (endpoint === '/api/v1/admin/plugins/catalog') return Promise.resolve(EMPTY_CATALOG);
+      return new Promise((r) => {
+        resolveList = r;
+      });
+    });
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = mountPage(client);
     expect(w.find('.admin-plugins__skel').exists()).toBe(true);
-    resolve({ plugins: [PLUGIN_A] });
+    resolveList({ plugins: [PLUGIN_A] });
     await flushPromises();
+    // PLUGIN_A is an orphan (empty catalog) → the orphan table renders.
     expect(w.find('table').exists()).toBe(true);
     w.unmount();
   });
 
-  it('shows an empty state when no plugins are installed', async () => {
+  it('shows the catalog empty state when nothing is installed or catalogued', async () => {
     const { client } = makeClient({ plugins: [] });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).toContain('No plugins installed');
+    expect(w.text()).toContain('No plugins in the catalog');
     w.unmount();
   });
 
-  it('shows an error state (+ toast) when the list fails to load', async () => {
+  it('surfaces a list-load failure as an error state + toast', async () => {
     const get = vi.fn().mockRejectedValue(new Error('boom'));
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    const empty = w.findComponent(EmptyState);
-    expect(empty.exists()).toBe(true);
-    expect(empty.text()).toContain('load plugins');
+    expect(w.text()).toContain("Couldn't load installed plugins");
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+    w.unmount();
+  });
+});
+
+describe('Admin PluginsPage — catalog', () => {
+  it('renders a card per catalog plugin with title, summary and tags', async () => {
+    const { client } = makeClient({ plugins: [PLUGIN_A], catalog: CATALOG });
+    const w = mountPage(client);
+    await flushPromises();
+    const text = w.text();
+    expect(text).toContain('AniDB');
+    expect(text).toContain('Trakt');
+    expect(text).toContain('Anime metadata from AniDB.');
+    expect(text).toContain('anime');
+    w.unmount();
+  });
+
+  it('shows Install for a not-installed entry and Configure/Uninstall for an installed one', async () => {
+    const { client } = makeClient({ plugins: [PLUGIN_A], catalog: CATALOG });
+    const w = mountPage(client);
+    await flushPromises();
+    // trakt → Install; anidb → Configure + Uninstall.
+    expect(w.findAllComponents(Button).some((b) => b.attributes('aria-label') === 'Install Trakt')).toBe(true);
+    expect(w.findAllComponents(Button).some((b) => b.attributes('aria-label') === 'Configure AniDB')).toBe(true);
+    expect(w.findAllComponents(Button).some((b) => b.attributes('aria-label') === 'Uninstall AniDB')).toBe(true);
+    w.unmount();
+  });
+
+  it('installs a catalog plugin by its repo URL and refetches', async () => {
+    const { client, post, get } = makeClient({ plugins: [PLUGIN_A], catalog: CATALOG });
+    const w = mountPage(client);
+    await flushPromises();
+    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Install Trakt')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/plugins/install', {
+      url: 'https://github.com/detain/phlix-plugin-trakt',
+    });
+    // refreshAll re-fetches both the catalog and the installed list.
+    expect(get.mock.calls.filter((c) => c[0] === '/api/v1/admin/plugins/catalog').length).toBeGreaterThan(1);
+    w.unmount();
+  });
+
+  it('lists catalog sources and removes an extra (not the default)', async () => {
+    const { client, del } = makeClient({ plugins: [], catalog: CATALOG });
+    const w = mountPage(client);
+    await flushPromises();
+    // The default source has no remove button; the extra one does.
+    const removeBtn = w.find('button[aria-label="Remove catalog example.com"]');
+    expect(removeBtn.exists()).toBe(true);
+    expect(w.find(`button[aria-label="Remove catalog detain/phlix-plugins"]`).exists()).toBe(false);
+    await removeBtn.trigger('click');
+    await flushPromises();
+    expect(del).toHaveBeenCalledWith(
+      `/api/v1/admin/plugins/catalog/sources?url=${encodeURIComponent('https://example.com/extra.json')}`,
+    );
+    w.unmount();
+  });
+
+  it('adds a catalog source via the modal', async () => {
+    const { client, post } = makeClient({ plugins: [], catalog: CATALOG });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add catalog')!.trigger('click');
+    await flushPromises();
+    const input = modalPanel().querySelector<HTMLInputElement>('.admin-plugins__input')!;
+    input.value = 'https://github.com/me/my-catalog';
+    input.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Add')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/plugins/catalog/sources', {
+      url: 'https://github.com/me/my-catalog',
+    });
+    w.unmount();
+  });
+
+  it('shows a per-source error when a catalog fails to load', async () => {
+    const catalog = {
+      default_source: DEFAULT_SOURCE,
+      sources: [DEFAULT_SOURCE],
+      catalogs: [],
+      errors: [{ source: DEFAULT_SOURCE, error: 'HTTP 404' }],
+    };
+    const { client } = makeClient({ plugins: [], catalog });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain("Couldn't load catalog");
+    expect(w.text()).toContain('HTTP 404');
     w.unmount();
   });
 });
@@ -154,7 +298,7 @@ describe('Admin PluginsPage — enable / disable', () => {
     const { client, post } = makeClient();
     // Hold the enable POST open so the toggle stays in flight.
     let releasePost: () => void = () => {};
-    post.mockImplementationOnce(() => new Promise((r) => { releasePost = () => r({ manifest: {} }); }));
+    post.mockImplementationOnce(() => new Promise((r) => { releasePost = () => r({ manifest: {}, sources: [] }); }));
     const w = mountPage(client);
     await flushPromises();
     const malSwitch = w.findAllComponents(Switch).find((s) => s.attributes('aria-label') === 'Toggle mal')!;
@@ -189,14 +333,14 @@ describe('Admin PluginsPage — enable / disable', () => {
   });
 });
 
-describe('Admin PluginsPage — install', () => {
+describe('Admin PluginsPage — install from URL', () => {
   it('submits the URL and refetches on success', async () => {
     const { client, post, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtn(w, 'Install plugin')!.trigger('click');
+    await findBtn(w, 'Install from URL')!.trigger('click');
     await flushPromises();
-    const input = document.querySelector<HTMLInputElement>('.admin-plugins__input')!;
+    const input = modalPanel().querySelector<HTMLInputElement>('.admin-plugins__input')!;
     input.value = 'https://example.com/p.zip';
     input.dispatchEvent(new Event('input'));
     await flushPromises();
@@ -213,7 +357,7 @@ describe('Admin PluginsPage — install', () => {
     const { client, post } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtn(w, 'Install plugin')!.trigger('click');
+    await findBtn(w, 'Install from URL')!.trigger('click');
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Install')!.trigger('click');
     await flushPromises();
@@ -224,9 +368,9 @@ describe('Admin PluginsPage — install', () => {
   });
 
   async function submitInstall(w: VueWrapper, url: string) {
-    await findBtn(w, 'Install plugin')!.trigger('click');
+    await findBtn(w, 'Install from URL')!.trigger('click');
     await flushPromises();
-    const input = document.querySelector<HTMLInputElement>('.admin-plugins__input')!;
+    const input = modalPanel().querySelector<HTMLInputElement>('.admin-plugins__input')!;
     input.value = url;
     input.dispatchEvent(new Event('input'));
     await flushPromises();
@@ -394,6 +538,7 @@ describe('Admin PluginsPage — configure', () => {
   it('toasts when loading the detail fails', async () => {
     const get = vi.fn(async (endpoint: string) => {
       if (endpoint === '/api/v1/admin/plugins') return { plugins: [PLUGIN_A] };
+      if (endpoint === '/api/v1/admin/plugins/catalog') return EMPTY_CATALOG;
       throw new Error('detail boom');
     });
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
