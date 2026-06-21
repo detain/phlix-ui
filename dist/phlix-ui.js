@@ -45,7 +45,7 @@ import { n as tt, t as nt } from "./libraries-CXAz_kXs.js";
 import { t as rt } from "./settings-m4upFcmH.js";
 import { i as it, n as at, r as ot, t as st } from "./plugins-loG9oEYL.js";
 import { t as ct } from "./hubDashboard-BhOaaDD-.js";
-import { A as lt, B as ut, C as dt, D as ft, E as pt, F as mt, G as ht, H as gt, I as _t, J as vt, K as yt, L as bt, M as xt, N as St, O as Ct, P as wt, R as Tt, S as Et, T as Dt, U as Ot, V as kt, W as At, X as jt, Y as Mt, _ as Nt, a as Pt, b as Ft, c as It, d as Lt, f as Rt, g as zt, h as Bt, i as Vt, j as Ht, k as Ut, l as Wt, m as Gt, n as Kt, o as qt, p as Jt, q as Yt, r as Xt, s as Zt, t as Qt, u as $t, v as en, w as tn, x as nn, y as rn, z as an } from "./Player-BLdsVBjN.js";
+import { A as lt, B as ut, C as dt, D as ft, E as pt, F as mt, G as ht, H as gt, I as _t, J as vt, K as yt, L as bt, M as xt, N as St, O as Ct, P as wt, R as Tt, S as Et, T as Dt, U as Ot, V as kt, W as At, X as jt, Y as Mt, _ as Nt, a as Pt, b as Ft, c as It, d as Lt, f as Rt, g as zt, h as Bt, i as Vt, j as Ht, k as Ut, l as Wt, m as Gt, n as Kt, o as qt, p as Jt, q as Yt, r as Xt, s as Zt, t as Qt, u as $t, v as en, w as tn, x as nn, y as rn, z as an } from "./Player-CmAgZNNm.js";
 import { a as on, c as sn, d as cn, f as ln, g as un, h as dn, i as fn, l as pn, m as mn, n as hn, o as gn, p as _n, r as vn, s as yn, t as bn, u as xn } from "./captions-COgPp5bH.js";
 import { t as Sn } from "./LoginForm-DnyDuUUr.js";
 import { t as Cn } from "./SignupForm-BMgkDv4W.js";
@@ -940,7 +940,7 @@ function Mi(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-B4QT2QeF.js")
+			component: () => import("./PlayerPage-CI_Jkh5d.js")
 		},
 		{
 			path: `${t}/login`,
