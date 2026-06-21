@@ -32,6 +32,15 @@ export interface MediaItem {
     sort_title?: string | null;
     type: MediaType;
     path?: string;
+    /**
+     * Short-lived, signed direct-play URL (`/media/{id}/stream?exp&sig`) minted by
+     * the gated detail endpoint. The `<video src>` can't attach a Bearer header and
+     * the stream route is no longer world-readable, so the player must use this
+     * signed URL rather than building a bare `/media/{id}/stream` path. Only the
+     * single-item detail shape carries it (list rows omit it); optional so older
+     * servers/list rows fall back to the bare path.
+     */
+    stream_url?: string | null;
     poster_url: string | null;
     /** Optional responsive poster sources (R6.2b); falls back to `poster_url`. */
     poster_srcset?: PosterSrcsetInput;

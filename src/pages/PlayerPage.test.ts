@@ -139,6 +139,21 @@ describe('PlayerPage — load + stream resolution', () => {
     expect(resolve(media({ id: 'abc 1' }))).toBe('/media/abc%201/stream'); // encoded
   });
 
+  it('prefers the server-minted signed stream_url over the bare path', async () => {
+    const signed = '/media/m1/stream?exp=9999999999&sig=abc123';
+    const fetchMock = okFetch(media({ id: 'm1', stream_url: signed }));
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const player = w.findComponent(Player);
+    // The <video> source (streamUrl prop) is the signed URL, not /media/m1/stream.
+    expect(player.props('streamUrl')).toBe(signed);
+    // The resolver also returns the signed URL for an item that carries one.
+    const resolve = player.props('streamUrlFor') as (m: MediaItem) => string;
+    expect(resolve(media({ id: 'm1', stream_url: signed }))).toBe(signed);
+    // ...and still falls back to the bare path for a list row without one.
+    expect(resolve(media({ id: 'm2' }))).toBe('/media/m2/stream');
+  });
+
   it('shows an error state with Retry/Back when the by-id fetch fails, and Retry re-loads', async () => {
     const fetchMock = vi
       .fn()
