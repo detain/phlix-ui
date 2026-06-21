@@ -17,6 +17,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -43,6 +44,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -114,6 +116,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -140,6 +143,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -211,6 +215,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -237,6 +242,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
