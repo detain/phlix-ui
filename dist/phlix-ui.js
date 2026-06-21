@@ -763,7 +763,7 @@ var Kr = ["src", "alt"], qr = { class: "brand-wordmark" }, Jr = {
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-B7uDfkum.js")
+	component: () => import("./PluginsPage-QlbS14Xs.js")
 }, hi = {
 	name: "admin-settings",
 	path: "settings",
