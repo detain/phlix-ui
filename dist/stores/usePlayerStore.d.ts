@@ -29,6 +29,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -55,6 +56,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -83,6 +85,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -109,6 +112,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -177,6 +181,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -203,6 +208,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -231,6 +237,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -257,6 +264,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -325,6 +333,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -351,6 +360,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -379,6 +389,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -405,6 +416,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         sort_title?: string | null | undefined;
         type: import("../types/media-item").MediaType;
         path?: string | undefined;
+        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
