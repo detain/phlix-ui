@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.44.0] - 2026-06-21
+
+### Security
+- **The player now uses the server's signed, short-lived direct-play URL — required by the server's new signed-URL gate on `/media/:id/stream`.** That route is no longer world-readable, and a `<video src>` can't attach a `Bearer` header (the SPA holds a `localStorage` token, not a session cookie), so a bare `/media/:id/stream` would `401`. `PlayerPage.streamUrlFor()` now prefers the `stream_url` field the gated detail endpoint (`GET /api/v1/media/:id`) mints (`/media/:id/stream?exp&sig`), prefixing the API base for cross-origin hosts, and falls back to the bare path only for list/up-next rows that don't carry one (those re-fetch the detail — and a fresh signed URL — when they actually play, because advancing navigates the route). `MediaItem` gains an optional `stream_url`. The hls.js transcode path is unchanged: it already attaches the Bearer token to every segment XHR via `xhrSetup`, and the server now also signs the master-playlist + subtitle URLs it returns. No bare media URL is constructed anywhere in the SPA anymore.
+
 ## [0.43.0] - 2026-06-21
 
 ### Fixed
