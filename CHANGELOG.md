@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.37.0] - 2026-06-20
+
+### Added
+- **Plugin catalog browser in the admin Plugins section.** The Plugins page now seeds itself from one or more *catalog* repositories (`plugins.json`, default `detain/phlix-plugins`) fetched server-side, instead of only accepting a single repo URL. Each catalog entry renders as a card with its title, type, summary and tags; a not-installed entry shows **Install** (by the catalog `repo` URL), an installed one shows an enable/disable switch plus **Configure** and **Uninstall**. A sources bar lists every catalog and lets the admin **Add catalog** or remove an extra one (the default is not removable). The single-repo **Install from URL** path remains, and any plugin installed that way but not listed in a catalog appears under "Other installed plugins" so it stays manageable. New `AdminPluginsApi.catalog()` / `addCatalogSource()` / `removeCatalogSource()` wrappers + `CatalogResponse`/`CatalogPlugin` types over the server's `GET /plugins/catalog` and `POST`/`DELETE /plugins/catalog/sources`.
+
 ## [0.36.0] - 2026-06-20
 
 ### Added
