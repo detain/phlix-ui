@@ -171,6 +171,7 @@ function onInfo(item: MediaItem): void {
 
       <MediaGrid
         :items="store.items"
+        :total="store.total"
         :loading="store.loading && store.items.length === 0"
         :loading-more="store.loading && store.items.length > 0"
         :has-more="store.hasMore"
