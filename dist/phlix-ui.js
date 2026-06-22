@@ -1417,6 +1417,9 @@ var la = {
 				default: return "neutral";
 			}
 		}
+		function ee(e) {
+			e.url && window.open(e.url, "_blank", "noopener,noreferrer");
+		}
 		return z(p), (e, t) => (B(), M("section", la, [
 			N("header", ua, [t[4] ||= N("div", null, [N("h1", {
 				id: "my-servers-heading",
@@ -1490,11 +1493,19 @@ var la = {
 				N("td", null, [N("div", ya, [F(y, {
 					variant: "ghost",
 					size: "sm",
-					"aria-label": `Manage ${e.name}`
+					disabled: !e.url,
+					title: e.url ? `Open ${e.url}` : "This server has not reported a reachable URL yet",
+					"aria-label": `Manage ${e.name}`,
+					onClick: (t) => ee(e)
 				}, {
 					default: J(() => [...t[7] ||= [P("Manage", -1)]]),
 					_: 1
-				}, 8, ["aria-label"])])])
+				}, 8, [
+					"disabled",
+					"title",
+					"aria-label",
+					"onClick"
+				])])])
 			]))), 128))])])])),
 			F(ke, {
 				modelValue: s.value,
@@ -1549,7 +1560,7 @@ var la = {
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-26b54022"]]), Ca = {
+}), [["__scopeId", "data-v-4971319d"]]), Ca = {
 	class: "federation",
 	"aria-labelledby": "federation-heading"
 }, wa = {

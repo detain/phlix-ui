@@ -1,75 +1,75 @@
 {
-    "name": "@phlix/ui",
-    "version": "0.44.0",
-    "description": "Shared Vue 3 UI components and utilities for Phlix",
-    "type": "module",
-    "main": "./dist/phlix-ui.umd.cjs",
-    "module": "./dist/phlix-ui.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "import": "./dist/phlix-ui.js",
-            "require": "./dist/phlix-ui.umd.cjs",
-            "types": "./dist/index.d.ts"
-        },
-        "./style.css": "./dist/style.css",
-        "./fonts.css": "./dist/fonts/fonts.css",
-        "./dist/*": "./dist/*"
+  "name": "@phlix/ui",
+  "version": "0.45.0",
+  "description": "Shared Vue 3 UI components and utilities for Phlix",
+  "type": "module",
+  "main": "./dist/phlix-ui.umd.cjs",
+  "module": "./dist/phlix-ui.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/phlix-ui.js",
+      "require": "./dist/phlix-ui.umd.cjs",
+      "types": "./dist/index.d.ts"
     },
-    "files": [
-        "dist"
-    ],
-    "scripts": {
-        "dev": "vite",
-        "build": "vue-tsc --noEmit && vite build && vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json && node scripts/copy-fonts.mjs",
-        "preview": "vite preview",
-        "test": "vitest",
-        "test:run": "vitest run",
-        "test:visual": "playwright test visual",
-        "test:visual:update": "playwright test visual --update-snapshots",
-        "test:a11y": "playwright test a11y",
-        "lint": "eslint . --ext .ts,.vue --fix",
-        "typecheck": "vue-tsc --noEmit"
-    },
-    "devDependencies": {
-        "@axe-core/playwright": "^4.11.3",
-        "@iconify-json/lucide": "^1.2.111",
-        "@playwright/test": "^1.60.0",
-        "@types/node": "^25.9.1",
-        "@vitejs/plugin-vue": "^6.0.7",
-        "@vitest/coverage-v8": "^4.1.8",
-        "@vue/test-utils": "^2.4.10",
-        "@vue/tsconfig": "^0.9.1",
-        "jsdom": "^29.1.1",
-        "typescript": "^6.0.3",
-        "unplugin-icons": "^23.0.1",
-        "vite": "^8.0.16",
-        "vitest": "^4.1.8",
-        "vue-tsc": "^3.3.3"
-    },
-    "peerDependencies": {
-        "pinia": "^3.0.0",
-        "vue": "^3.5.0",
-        "vue-router": "^5.0.0"
-    },
-    "engines": {
-        "node": ">=18.0.0"
-    },
-    "repository": {
-        "type": "git",
-        "url": "github:detain/phlix-ui"
-    },
-    "keywords": [
-        "phlix",
-        "vue",
-        "ui",
-        "components"
-    ],
-    "license": "MIT",
-    "dependencies": {
-        "hls.js": "^1.6.16",
-        "pinia": "^3.0.0",
-        "vue": "^3.5.0",
-        "vue-router": "^5.0.0"
-    }
+    "./style.css": "./dist/style.css",
+    "./fonts.css": "./dist/fonts/fonts.css",
+    "./dist/*": "./dist/*"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build && vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json && node scripts/copy-fonts.mjs",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:visual": "playwright test visual",
+    "test:visual:update": "playwright test visual --update-snapshots",
+    "test:a11y": "playwright test a11y",
+    "lint": "eslint . --ext .ts,.vue --fix",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@iconify-json/lucide": "^1.2.111",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vitest/coverage-v8": "^4.1.8",
+    "@vue/test-utils": "^2.4.10",
+    "@vue/tsconfig": "^0.9.1",
+    "jsdom": "^29.1.1",
+    "typescript": "^6.0.3",
+    "unplugin-icons": "^23.0.1",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8",
+    "vue-tsc": "^3.3.3"
+  },
+  "peerDependencies": {
+    "pinia": "^3.0.0",
+    "vue": "^3.5.0",
+    "vue-router": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github:detain/phlix-ui"
+  },
+  "keywords": [
+    "phlix",
+    "vue",
+    "ui",
+    "components"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "hls.js": "^1.6.16",
+    "pinia": "^3.0.0",
+    "vue": "^3.5.0",
+    "vue-router": "^5.0.0"
+  }
 }
