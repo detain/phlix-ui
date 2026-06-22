@@ -7,7 +7,9 @@
  *   - GET /api/v1/me/servers → { servers }  (the signed-in user's own servers)
  *   - "Add server" opens a modal that POSTs a claim code to the hub
  *     (POST /api/v1/server-claims/claim) to link a media server, then refreshes.
- * The per-row "Manage" button stays a styled placeholder until a future step.
+ * The per-row "Manage" button opens that server's own web UI (its first
+ * advertised hostname candidate) in a new tab; it is disabled when the server
+ * has not reported a reachable URL.
  *
  * `client` is an injectable test seam; it defaults to the shared `api` singleton
  * (which now carries the session token, so the listing loads for a logged-in user).
@@ -145,6 +147,16 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'error'
   }
 }
 
+/**
+ * Open the media server's own web UI in a new tab. The URL is the first
+ * hostname candidate the server advertised to the hub at pairing time; when the
+ * server reported none (`url` is empty) the Manage button is disabled.
+ */
+function manageServer(server: Server): void {
+  if (!server.url) return;
+  window.open(server.url, '_blank', 'noopener,noreferrer');
+}
+
 onMounted(loadServers);
 </script>
 
@@ -212,7 +224,14 @@ onMounted(loadServers);
             </td>
             <td>
               <div class="my-servers__actions">
-                <Button variant="ghost" size="sm" :aria-label="`Manage ${server.name}`">Manage</Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  :disabled="!server.url"
+                  :title="server.url ? `Open ${server.url}` : 'This server has not reported a reachable URL yet'"
+                  :aria-label="`Manage ${server.name}`"
+                  @click="manageServer(server)"
+                >Manage</Button>
               </div>
             </td>
           </tr>

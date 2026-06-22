@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.45.0] - 2026-06-22
+
+### Added
+
+- **My Servers: the per-row "Manage" button now works.** It opens that server's own web UI — the first hostname candidate the server advertised to the hub at pairing time — in a new tab (`window.open(url, '_blank', 'noopener,noreferrer')`). When the server reported no reachable URL, the button is disabled with an explanatory tooltip. (Previously an inert placeholder.) Pairs with the phlix-server change that advertises the server's configured public URL during pairing.
+
 ## [0.44.0] - 2026-06-21
 
 ### Security
