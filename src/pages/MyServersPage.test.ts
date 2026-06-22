@@ -70,6 +70,32 @@ describe('MyServersPage — list + states', () => {
     w.unmount();
   });
 
+  it('Manage opens the server URL in a new tab', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const manage = findBtn(w, 'Manage Home Theater');
+    expect(manage?.props('disabled')).toBeFalsy();
+    await manage!.trigger('click');
+    expect(openSpy).toHaveBeenCalledWith('https://home.example.com', '_blank', 'noopener,noreferrer');
+    w.unmount();
+  });
+
+  it('Manage is disabled when the server reported no URL', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const { client } = makeClient({
+      servers: [{ serverId: 'srv-x', serverName: 'No URL', status: 'offline', hostnameCandidates: [] }],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const manage = findBtn(w, 'Manage No URL');
+    expect(manage?.props('disabled')).toBe(true);
+    await manage!.trigger('click');
+    expect(openSpy).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
   it('shows a skeleton while loading, then the table', async () => {
     let resolve: (v: unknown) => void = () => {};
     const get = vi.fn(() => new Promise((r) => (resolve = r)));
