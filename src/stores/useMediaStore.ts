@@ -53,6 +53,7 @@ export const useMediaStore = defineStore('media', () => {
     const selectedTypes = ref<MediaType[]>([]);
     const matchStatus = ref<'' | 'matched' | 'unmatched'>('');
     const selectedActors = ref<string[]>([]);
+    const selectedCompanies = ref<string[]>([]);
     const sort = ref<SortField>('name');
     const order = ref<SortOrder>('asc');
     const limit = ref(24);
@@ -82,6 +83,7 @@ export const useMediaStore = defineStore('media', () => {
         if (selectedTypes.value.length) p.types = selectedTypes.value;
         if (matchStatus.value) p.match = matchStatus.value;
         if (selectedActors.value.length) p.actors = selectedActors.value;
+        if (selectedCompanies.value.length) p.companies = selectedCompanies.value;
         p.sort = sort.value;
         p.order = order.value;
         p.limit = limit.value;
@@ -291,6 +293,7 @@ export const useMediaStore = defineStore('media', () => {
         if (selectedTypes.value.length) q.types = [...selectedTypes.value];
         if (matchStatus.value) q.match = matchStatus.value;
         if (selectedActors.value.length) q.actors = [...selectedActors.value];
+        if (selectedCompanies.value.length) q.companies = [...selectedCompanies.value];
         if (sort.value !== 'name') q.sort = sort.value;
         if (order.value !== 'asc') q.order = order.value;
         return q;
@@ -308,6 +311,7 @@ export const useMediaStore = defineStore('media', () => {
         const m = Array.isArray(q.match) ? q.match[0] : q.match;
         matchStatus.value = m === 'matched' || m === 'unmatched' ? m : '';
         selectedActors.value = asArray(q.actors);
+        selectedCompanies.value = asArray(q.companies);
         const yf = Array.isArray(q.yearFrom) ? q.yearFrom[0] : q.yearFrom;
         const yt = Array.isArray(q.yearTo) ? q.yearTo[0] : q.yearTo;
         yearFrom.value = yf ? Number(yf) : undefined;
@@ -354,6 +358,10 @@ export const useMediaStore = defineStore('media', () => {
         selectedActors.value = v;
         offset.value = 0;
     }
+    function setCompanies(v: string[]): void {
+        selectedCompanies.value = v;
+        offset.value = 0;
+    }
     function setSort(field: SortField, ord?: SortOrder): void {
         sort.value = field;
         if (ord) order.value = ord;
@@ -391,6 +399,7 @@ export const useMediaStore = defineStore('media', () => {
         selectedTypes.value = [];
         matchStatus.value = '';
         selectedActors.value = [];
+        selectedCompanies.value = [];
         sort.value = 'name';
         order.value = 'asc';
         offset.value = 0;
@@ -409,6 +418,7 @@ export const useMediaStore = defineStore('media', () => {
         selectedTypes,
         matchStatus,
         selectedActors,
+        selectedCompanies,
         sort,
         order,
         limit,
@@ -437,6 +447,7 @@ export const useMediaStore = defineStore('media', () => {
         setTypes,
         setMatchStatus,
         setActors,
+        setCompanies,
         setSort,
         setLibraryId,
         setTopLevel,

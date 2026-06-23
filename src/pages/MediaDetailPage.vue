@@ -195,6 +195,21 @@ function onActor(name: string): void {
     void router.push({ name: 'library', params: { id: libId }, query: { actors: name } });
   }
 }
+/** A genre chip was clicked — open the owning library filtered to that genre. */
+function onGenre(genre: string): void {
+  const libId = item.value?.library_id;
+  if (libId && router?.hasRoute('library')) {
+    void router.push({ name: 'library', params: { id: libId }, query: { genres: genre } });
+  }
+}
+/** A studio / production-company chip was clicked — open the owning library
+ *  filtered to that company. */
+function onCompany(name: string): void {
+  const libId = item.value?.library_id;
+  if (libId && router?.hasRoute('library')) {
+    void router.push({ name: 'library', params: { id: libId }, query: { companies: name } });
+  }
+}
 
 // Interactive metadata match (U5) — admin-only. "Match metadata" opens the modal
 // for the current item; a successful apply swaps in the server's re-shaped item
@@ -271,6 +286,8 @@ function onMatchApplied(updated: MediaItem): void {
         @info="onInfo"
         @match="onMatch"
         @actor="onActor"
+        @genre="onGenre"
+        @company="onCompany"
         @back="onBack"
       />
     </template>

@@ -22,12 +22,13 @@ describe('buildMediaQuery', () => {
     expect(new URLSearchParams(buildMediaQuery({})).has('match')).toBe(false);
   });
 
-  it('appends repeated array params (genres/ratings/types/actors)', () => {
+  it('appends repeated array params (genres/ratings/types/actors/companies)', () => {
     const q = buildMediaQuery({
       genres: ['Sci-Fi', 'Drama'],
       ratings: ['PG-13', 'R'],
       types: ['movie'],
       actors: ['Zendaya'],
+      companies: ['Legendary', 'Warner Bros'],
     });
     const sp = new URLSearchParams(q);
     // `key[]=` form so PHP parses them into arrays (server requires is_array)
@@ -35,8 +36,10 @@ describe('buildMediaQuery', () => {
     expect(sp.getAll('ratings[]')).toEqual(['PG-13', 'R']);
     expect(sp.getAll('types[]')).toEqual(['movie']);
     expect(sp.getAll('actors[]')).toEqual(['Zendaya']);
+    expect(sp.getAll('companies[]')).toEqual(['Legendary', 'Warner Bros']);
     // and NOT the bare repeated form that the server drops
     expect(sp.getAll('genres')).toEqual([]);
+    expect(sp.getAll('companies')).toEqual([]);
   });
 
   it('omits limit/offset when not supplied (partial-query tolerant)', () => {

@@ -58,6 +58,7 @@ function makeRouter(): Router {
       { path: '/app', name: 'browse', component: stub },
       { path: '/app/media/:id', name: 'media', component: MediaDetailPage },
       { path: '/app/media/:id/season/:season', name: 'season', component: stub },
+      { path: '/app/library/:id', name: 'library', component: stub },
       { path: '/app/player/:id', name: 'player', component: stub },
     ],
   });
@@ -150,6 +151,42 @@ describe('MediaDetailPage — actions & navigation', () => {
     const push = vi.spyOn(router, 'push');
     w.findComponent(MediaDetail).vm.$emit('play', media({ id: 'm1' }));
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'm1' } });
+  });
+
+  it('onGenre pushes the owning library filtered by that genre', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', library_id: 'lib-7', genres: ['Sci-Fi'] })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w, router } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaDetail).vm.$emit('genre', 'Sci-Fi');
+    expect(push).toHaveBeenCalledWith({ name: 'library', params: { id: 'lib-7' }, query: { genres: 'Sci-Fi' } });
+  });
+
+  it('onCompany pushes the owning library filtered by that company', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', library_id: 'lib-7' })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w, router } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaDetail).vm.$emit('company', 'Legendary');
+    expect(push).toHaveBeenCalledWith({ name: 'library', params: { id: 'lib-7' }, query: { companies: 'Legendary' } });
+  });
+
+  it('onGenre is a no-op without an owning library_id', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', library_id: null, genres: ['Sci-Fi'] })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w, router } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaDetail).vm.$emit('genre', 'Sci-Fi');
+    expect(push).not.toHaveBeenCalled();
   });
 
   it('toasts on watchlist', async () => {

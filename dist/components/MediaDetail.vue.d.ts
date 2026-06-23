@@ -20,6 +20,8 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     resume: (item: MediaItem) => any;
     actor: (name: string) => any;
     watchlist: (item: MediaItem) => any;
+    genre: (name: string) => any;
+    company: (name: string) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onMatch?: ((item: MediaItem) => any) | undefined;
     onPlay?: ((item: MediaItem) => any) | undefined;
@@ -28,6 +30,8 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     onResume?: ((item: MediaItem) => any) | undefined;
     onActor?: ((name: string) => any) | undefined;
     onWatchlist?: ((item: MediaItem) => any) | undefined;
+    onGenre?: ((name: string) => any) | undefined;
+    onCompany?: ((name: string) => any) | undefined;
 }>, {
     canMatch: boolean;
     resumeSeconds: number | null;
