@@ -17,12 +17,16 @@ export declare const PUBLIC_ROUTE_NAMES: readonly string[];
  *   the intended destination so the login flow can return there).
  * - An admin-only route (`meta.requiresAdmin`, set on the whole `/app/admin/*`
  *   section and inherited by every child) requires `isAdmin`. A logged-in
- *   non-admin is sent to `browse` — NOT to `login`: they are already
- *   authenticated, so bouncing them to login would just loop back here after a
- *   successful re-auth. (The server API authorizes regardless; this stops the
- *   admin UI from rendering for a non-admin or an unvalidated session.)
+ *   non-admin is sent `home` — NOT to `login`: they are already authenticated,
+ *   so bouncing them to login would just loop back here after a successful
+ *   re-auth. `home` defaults to the `browse` route (the media server's home);
+ *   the hub passes its servers list (`/app/servers`) so a non-admin lands there
+ *   rather than on the media-server Browse page (which calls server-only
+ *   endpoints that 404 on the hub). (The server API authorizes regardless; this
+ *   only stops the admin UI from rendering for a non-admin or an unvalidated
+ *   session.)
  */
-export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boolean, isAdmin?: boolean): true | RouteLocationRaw;
+export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boolean, isAdmin?: boolean, home?: RouteLocationRaw): true | RouteLocationRaw;
 /**
  * Resolve the STATIC page title for a route (the page-specific part, WITHOUT the
  * ` · Phlix` suffix — {@link setPageTitle} adds that). Pure (translator passed
@@ -38,6 +42,16 @@ export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boole
  *    (media/library/player) or simply shows the bare app name (catchall).
  */
 export declare function resolveRouteTitle(to: RouteLocationNormalized, t: Translate): string | null;
+/**
+ * Resolve the base for MEDIA browsing from the app kind + the host's own API base
+ * + the currently selected server. On the hub with a server selected this is that
+ * server's relay-proxy base (`{apiBase}/api/v1/servers/{id}/proxy`) so the shared
+ * media pages fetch the paired server's API over the reverse tunnel; otherwise
+ * (the media server, or the hub with no server selected) it is the host's own
+ * base. Pure so it unit-tests without a live store/app; `createPhlixApp` wraps it
+ * in a computed over {@link useServerStore}.
+ */
+export declare function mediaApiBaseFor(app: 'server' | 'hub', apiBase: string, currentServerId: string | null): string;
 declare global {
     interface Window {
         __PHLIX__?: PhlixAppConfig;

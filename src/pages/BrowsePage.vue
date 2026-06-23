@@ -14,8 +14,9 @@
  * a rail fetch failure surfaces inside that rail (HomeRow), and a failure to load
  * the library list surfaces as a canonical EmptyState with Retry.
  */
-import { onMounted, watch, inject, computed, reactive, ref, type ComputedRef } from 'vue';
+import { onMounted, watch, inject, computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
@@ -33,10 +34,10 @@ defineSlots<{
   'toolbar-extra'?: never;
 }>();
 
-const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
-const apiBase = computed(() =>
-  typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
-);
+// On the hub this resolves to the relay-proxy base for the selected server, so
+// the library rails browse that paired server inline; on the media server it is
+// the app's own base (see useMediaApiBase / createPhlixApp).
+const apiBase = useMediaApiBase();
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homeRows = computed<HomeRowConfig[]>(() => config?.homeRows ?? []);
 

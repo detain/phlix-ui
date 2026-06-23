@@ -10,10 +10,11 @@
  * similar/info card → navigate). Deep-links work and re-fetch when the route id
  * changes. Loading → Skeleton; error → EmptyState + retry.
  */
-import { ref, computed, inject, onMounted, watch, onBeforeUnmount, type ComputedRef } from 'vue';
+import { ref, computed, inject, onMounted, watch, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient } from '../api/client';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
@@ -33,10 +34,10 @@ interface MediaListResponse {
   total: number;
 }
 
-const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
-const apiBase = computed(() =>
-  typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
-);
+// On the hub this is the relay-proxy base for the selected server (so the detail
+// view + "More like this" rail browse that paired server inline); on the media
+// server it is the app's own base.
+const apiBase = useMediaApiBase();
 // The `/app` router base so the season grid's links carry the right prefix.
 const phlixConfig = inject<{ routerBase?: string } | undefined>('phlixConfig', undefined);
 const routerBase = computed(() => phlixConfig?.routerBase || '/app');

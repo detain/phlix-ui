@@ -16,9 +16,11 @@ import Placeholder from './placeholder/Placeholder.vue';
 // are also intentionally NOT re-exported from `index.ts` (same reason as the admin
 // pages); a static re-export would re-merge them into the main chunk and defeat the
 // split (Rollup's INEFFECTIVE_DYNAMIC_IMPORT warning).
+import { computed } from 'vue';
 import { applyStoredThemeEarly } from '../composables/useTheme';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useServerStore } from '../stores/useServerStore';
 import { setAppName, setPageTitle } from '../composables/usePageTitle';
 import { adminPageLabel } from './admin';
 import { createTranslator, type Translate, type MessageKey } from '../i18n/messages';
@@ -40,15 +42,20 @@ export const PUBLIC_ROUTE_NAMES: readonly string[] = ['login', 'signup'];
  *   the intended destination so the login flow can return there).
  * - An admin-only route (`meta.requiresAdmin`, set on the whole `/app/admin/*`
  *   section and inherited by every child) requires `isAdmin`. A logged-in
- *   non-admin is sent to `browse` — NOT to `login`: they are already
- *   authenticated, so bouncing them to login would just loop back here after a
- *   successful re-auth. (The server API authorizes regardless; this stops the
- *   admin UI from rendering for a non-admin or an unvalidated session.)
+ *   non-admin is sent `home` — NOT to `login`: they are already authenticated,
+ *   so bouncing them to login would just loop back here after a successful
+ *   re-auth. `home` defaults to the `browse` route (the media server's home);
+ *   the hub passes its servers list (`/app/servers`) so a non-admin lands there
+ *   rather than on the media-server Browse page (which calls server-only
+ *   endpoints that 404 on the hub). (The server API authorizes regardless; this
+ *   only stops the admin UI from rendering for a non-admin or an unvalidated
+ *   session.)
  */
 export function authGuard(
     to: RouteLocationNormalized,
     isLoggedIn: boolean,
     isAdmin = false,
+    home: RouteLocationRaw = { name: 'browse' },
 ): true | RouteLocationRaw {
     const name = typeof to.name === 'string' ? to.name : '';
     const isPublic = PUBLIC_ROUTE_NAMES.includes(name) || to.meta?.public === true;
@@ -60,7 +67,7 @@ export function authGuard(
         return { name: 'login', query: to.fullPath ? { redirect: to.fullPath } : {} };
     }
     if (to.meta?.requiresAdmin === true && !isAdmin) {
-        return { name: 'browse' };
+        return home;
     }
     return true;
 }
@@ -90,6 +97,26 @@ export function resolveRouteTitle(to: RouteLocationNormalized, t: Translate): st
         return `Admin · ${label}`;
     }
     return null;
+}
+
+/**
+ * Resolve the base for MEDIA browsing from the app kind + the host's own API base
+ * + the currently selected server. On the hub with a server selected this is that
+ * server's relay-proxy base (`{apiBase}/api/v1/servers/{id}/proxy`) so the shared
+ * media pages fetch the paired server's API over the reverse tunnel; otherwise
+ * (the media server, or the hub with no server selected) it is the host's own
+ * base. Pure so it unit-tests without a live store/app; `createPhlixApp` wraps it
+ * in a computed over {@link useServerStore}.
+ */
+export function mediaApiBaseFor(
+    app: 'server' | 'hub',
+    apiBase: string,
+    currentServerId: string | null,
+): string {
+    if (app === 'hub' && currentServerId) {
+        return `${apiBase}/api/v1/servers/${currentServerId}/proxy`;
+    }
+    return apiBase;
 }
 
 declare global {
@@ -246,10 +273,15 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     // pages off an invalid session, and `user` would never be rehydrated (so the
     // account badge fell back to a generic "A"). It is memoised, so after the first
     // navigation this awaits an already-resolved promise.
+    // The home a logged-in non-admin is bounced to from an admin-only route: the
+    // hub points this at its servers list (`/app/servers`) so the bounce never
+    // lands on the media-server Browse page (server-only endpoints 404 on the hub).
+    // Defaults to the `browse` route (the media server's home).
+    const home: RouteLocationRaw = fullConfig.home ? { path: fullConfig.home } : { name: 'browse' };
     router.beforeEach(async (to) => {
         const auth = useAuthStore(pinia);
         await auth.init();
-        return authGuard(to, auth.isLoggedIn, auth.isAdmin);
+        return authGuard(to, auth.isLoggedIn, auth.isAdmin, home);
     });
 
     // Set the DEFAULT document title for every navigation from the route's static
@@ -263,8 +295,22 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
         setPageTitle(resolveRouteTitle(to, translate));
     });
 
+    // The base for MEDIA browsing (libraries/media/detail/player). On the media
+    // server it is just the app's own base. On the hub it is the relay-proxy base
+    // for the currently selected server — `/api/v1/servers/{id}/proxy` — so the
+    // shared Browse/library/detail pages fetch that paired server's API over the
+    // reverse tunnel (the proxy validates the user's Bearer + ownership, strips it,
+    // and the server trusts the tunnel). It is a COMPUTED tracking useServerStore,
+    // so picking a different server on My Servers re-points every media fetch
+    // reactively. The host's own endpoints (auth/`/me`/admin) stay on `apiBase`.
+    const serverStore = useServerStore(pinia);
+    const mediaApiBase = computed(() =>
+        mediaApiBaseFor(fullConfig.app, fullConfig.apiBase, serverStore.currentServerId),
+    );
+
     const app: VueApp = createApp(PhlixApp);
     app.provide('apiBase', fullConfig.apiBase);
+    app.provide('mediaApiBase', mediaApiBase);
     app.provide('phlixCommands', fullConfig.commands ?? []);
     app.provide('phlixConfig', fullConfig);
     app.use(pinia);

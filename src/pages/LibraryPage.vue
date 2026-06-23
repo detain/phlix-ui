@@ -11,8 +11,9 @@
  * to this library. The title comes from `useLibrariesStore` (loading the list if
  * a deep link landed here first).
  */
-import { onMounted, onBeforeUnmount, watch, inject, computed, ref, type ComputedRef } from 'vue';
+import { onMounted, onBeforeUnmount, watch, computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { useMediaStore } from '../stores/useMediaStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -26,10 +27,9 @@ import type { MediaItem } from '../types/media-item';
 import { fetchLetterIndex, type LetterBucket } from '../api/letter-index';
 import { usePageTitle } from '../composables/usePageTitle';
 
-const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
-const apiBase = computed(() =>
-  typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
-);
+// On the hub this is the relay-proxy base for the selected server (so the grid
+// browses that paired server inline); on the media server it is the app's own base.
+const apiBase = useMediaApiBase();
 
 const route = useRoute();
 const router = useRouter();

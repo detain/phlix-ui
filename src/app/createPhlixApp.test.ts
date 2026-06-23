@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router';
-import { createPhlixApp, buildRoutes, authGuard, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
+import { createPhlixApp, buildRoutes, authGuard, mediaApiBaseFor, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
 
 beforeEach(() => {
   localStorage.clear();
@@ -182,6 +182,25 @@ describe('router base handling (regression: /app/app doubling + redirect loop)',
   });
 });
 
+describe('mediaApiBaseFor', () => {
+  it('returns the host base unchanged on the media server', () => {
+    expect(mediaApiBaseFor('server', 'https://server.test', null)).toBe('https://server.test');
+    expect(mediaApiBaseFor('server', 'https://server.test', 'srv-1')).toBe('https://server.test');
+  });
+
+  it('returns the host base on the hub when no server is selected', () => {
+    expect(mediaApiBaseFor('hub', '', null)).toBe('');
+    expect(mediaApiBaseFor('hub', 'https://hub.test', null)).toBe('https://hub.test');
+  });
+
+  it('returns the selected server relay-proxy base on the hub', () => {
+    expect(mediaApiBaseFor('hub', '', 'srv-1')).toBe('/api/v1/servers/srv-1/proxy');
+    expect(mediaApiBaseFor('hub', 'https://hub.test', 'fbac1210')).toBe(
+      'https://hub.test/api/v1/servers/fbac1210/proxy',
+    );
+  });
+});
+
 describe('authGuard', () => {
   function route(
     name: string,
@@ -241,5 +260,21 @@ describe('authGuard', () => {
   it('does not block a logged-in non-admin from a normal (non-admin) protected route', () => {
     // Regression: the new isAdmin arg must only gate requiresAdmin routes.
     expect(authGuard(route('settings'), true, false)).toBe(true);
+  });
+
+  it('bounces a non-admin to the provided home when one is passed (hub: /app/servers)', () => {
+    // The hub passes { path: '/app/servers' } so the bounce never lands on the
+    // media-server Browse page (server-only endpoints 404 on the hub).
+    expect(
+      authGuard(route('admin-users', { meta: { requiresAdmin: true } }), true, false, {
+        path: '/app/servers',
+      }),
+    ).toEqual({ path: '/app/servers' });
+  });
+
+  it('defaults the non-admin bounce to the browse route when no home is passed', () => {
+    expect(authGuard(route('admin-users', { meta: { requiresAdmin: true } }), true, false)).toEqual({
+      name: 'browse',
+    });
   });
 });

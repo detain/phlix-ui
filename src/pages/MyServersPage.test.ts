@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import MyServersPage from './MyServersPage.vue';
 import Button from '../components/ui/Button.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useServerStore } from '../stores/useServerStore';
 import { api, type ApiClient } from '../api/client';
 
 // Raw hub shape from GET /api/v1/me/servers (camelCase ServerInfoDto). lastSeenAt
@@ -144,6 +146,73 @@ describe('MyServersPage — list + states', () => {
     await flushPromises();
     expect(spy).toHaveBeenCalledWith('/api/v1/me/servers');
     expect(w.text()).toContain('No servers connected yet');
+    w.unmount();
+  });
+});
+
+describe('MyServersPage — browse (inline hub browsing)', () => {
+  function makeRouter(): Router {
+    return createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/app', name: 'browse', component: { template: '<div/>' } },
+        { path: '/app/servers', name: 'my-servers', component: { template: '<div/>' } },
+      ],
+    });
+  }
+
+  async function mountWithRouter(client: ApiClient, router: Router): Promise<VueWrapper> {
+    await router.push('/app/servers');
+    await router.isReady();
+    return mount(MyServersPage, {
+      props: { client },
+      attachTo: document.body,
+      global: { plugins: [router] },
+    });
+  }
+
+  it('renders a Browse button for an online server', async () => {
+    const { client } = makeClient();
+    const w = await mountWithRouter(client, makeRouter());
+    await flushPromises();
+    const browse = findBtn(w, 'Browse Home Theater');
+    expect(browse).toBeTruthy();
+    expect(browse?.props('disabled')).toBeFalsy();
+    w.unmount();
+  });
+
+  it('Browse selects the server (persisted) and navigates to the Browse home', async () => {
+    const { client } = makeClient();
+    const router = makeRouter();
+    const pushSpy = vi.spyOn(router, 'push');
+    const w = await mountWithRouter(client, router);
+    await flushPromises();
+
+    await findBtn(w, 'Browse Home Theater')!.trigger('click');
+    await flushPromises();
+
+    const serverStore = useServerStore();
+    expect(serverStore.currentServerId).toBe('srv-1');
+    expect(serverStore.currentServerName).toBe('Home Theater');
+    expect(pushSpy).toHaveBeenCalledWith('/app');
+    w.unmount();
+  });
+
+  it('Browse is disabled for an offline server and does not navigate', async () => {
+    const { client } = makeClient({
+      servers: [{ serverId: 'srv-off', serverName: 'Offline Box', status: 'offline', hostnameCandidates: ['http://x'] }],
+    });
+    const router = makeRouter();
+    const pushSpy = vi.spyOn(router, 'push');
+    const w = await mountWithRouter(client, router);
+    await flushPromises();
+
+    const browse = findBtn(w, 'Browse Offline Box');
+    expect(browse?.props('disabled')).toBe(true);
+    pushSpy.mockClear();
+    await browse!.trigger('click');
+    expect(useServerStore().currentServerId).toBeNull();
+    expect(pushSpy).not.toHaveBeenCalled();
     w.unmount();
   });
 });

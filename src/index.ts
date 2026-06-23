@@ -308,6 +308,12 @@ export { useLibrariesStore } from './stores/useLibrariesStore';
 export { fetchLibraries, sortLibraries } from './api/libraries';
 export type { LibrarySummary } from './api/libraries';
 
+// Hub "current server" selection + the media-base resolution that points media
+// browsing at the relay proxy for that server. `useApiBase` resolves the host's
+// own base; `useMediaApiBase` resolves the (possibly proxied) media base.
+export { useServerStore, CURRENT_SERVER_ID_KEY, CURRENT_SERVER_NAME_KEY } from './stores/useServerStore';
+export { useApiBase, useMediaApiBase } from './composables/useApiBase';
+
 // Article-aware title sorting (mirror of the server's SortTitle): file "The Plot"
 // under P. Exposed so hosts can sort/group local lists the same way the server does.
 export {

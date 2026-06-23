@@ -105,6 +105,8 @@ export { bindMediaStoreToRouter } from './composables/useMediaUrlSync';
 export { useLibrariesStore } from './stores/useLibrariesStore';
 export { fetchLibraries, sortLibraries } from './api/libraries';
 export type { LibrarySummary } from './api/libraries';
+export { useServerStore, CURRENT_SERVER_ID_KEY, CURRENT_SERVER_NAME_KEY } from './stores/useServerStore';
+export { useApiBase, useMediaApiBase } from './composables/useApiBase';
 export { stripLeadingArticle, compareByStrippedTitle, SORT_TITLE_ARTICLES, } from './utils/sortTitle';
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';

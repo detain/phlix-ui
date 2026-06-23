@@ -14,11 +14,13 @@
  * `client` is an injectable test seam; it defaults to the shared `api` singleton
  * (which now carries the session token, so the listing loads for a logged-in user).
  */
-import { ref, onMounted } from 'vue';
+import { ref, inject, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { api, ApiClient } from '../api/client';
 import { claimServer, ClaimError } from '../api/claimServer';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useServerStore } from '../stores/useServerStore';
 import { errMessage } from '../api/errors';
 import { unixToIso } from '../api/normalize';
 import Badge from '../components/ui/Badge.vue';
@@ -54,6 +56,12 @@ const props = defineProps<{
 const http: Pick<ApiClient, 'get'> = props.client ?? api;
 const toasts = useToastStore();
 const auth = useAuthStore();
+const serverStore = useServerStore();
+const router = useRouter();
+// The Browse target — the SPA's `/app` Browse home. Carries the full router-base
+// prefix (history base is '/'); `routerBase` defaults to '/app'.
+const phlixConfig = inject<{ routerBase?: string } | undefined>('phlixConfig', undefined);
+const browseHome = phlixConfig?.routerBase || '/app';
 
 const servers = ref<Server[]>([]);
 const loading = ref(true);
@@ -157,6 +165,20 @@ function manageServer(server: Server): void {
   window.open(server.url, '_blank', 'noopener,noreferrer');
 }
 
+/**
+ * Browse this server's libraries INLINE on the hub. Selecting it sets the hub's
+ * "current server" (persisted) so `mediaApiBase` resolves to that server's relay
+ * proxy (`/api/v1/servers/{id}/proxy`), then navigates to the Browse home where
+ * the library rails load over the reverse tunnel. Only offered for an online
+ * server — the proxy needs the server's tunnel connected (an offline server's
+ * proxy returns 503).
+ */
+function browseServer(server: Server): void {
+  if (server.status !== 'online') return;
+  serverStore.setCurrent(server.id, server.name);
+  void router.push(browseHome);
+}
+
 onMounted(loadServers);
 </script>
 
@@ -224,6 +246,15 @@ onMounted(loadServers);
             </td>
             <td>
               <div class="my-servers__actions">
+                <Button
+                  variant="solid"
+                  size="sm"
+                  left-icon="play"
+                  :disabled="server.status !== 'online'"
+                  :title="server.status === 'online' ? `Browse ${server.name} here` : 'This server is offline — it must be connected to browse it here'"
+                  :aria-label="`Browse ${server.name}`"
+                  @click="browseServer(server)"
+                >Browse</Button>
                 <Button
                   variant="ghost"
                   size="sm"

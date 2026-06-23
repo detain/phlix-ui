@@ -21,10 +21,11 @@
  * Resume restoration + the mkv/hevc transcode notice live INSIDE <Player> (R3.8);
  * this page just feeds it real data. Deep-links work and re-fetch when the id changes.
  */
-import { ref, computed, inject, onMounted, watch, onBeforeUnmount, type ComputedRef } from 'vue';
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient } from '../api/client';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import Player from '../components/Player.vue';
@@ -66,12 +67,12 @@ interface PlaybackInfo {
   chapters: { start_seconds: number; end_seconds?: number; title?: string | null }[];
 }
 
-// createPhlixApp provides `apiBase` as a plain string; accept a ComputedRef too so a
-// host can inject a reactive base. (The legacy page read `.value` and got undefined.)
-const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
-const apiBase = computed(() =>
-  typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
-);
+// On the hub this is the relay-proxy base for the selected server, so the
+// player's metadata/playback-info fetches hit that paired server inline; on the
+// media server it is the app's own base. (NOTE: streaming the media bytes over
+// the relay tunnel is P3 — out of scope here; this only re-points the page's API
+// fetches, matching the rest of the media surface.)
+const apiBase = useMediaApiBase();
 const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
