@@ -219,6 +219,20 @@ describe('MediaCard — quick actions + slots', () => {
     expect(w.emitted('info')).toHaveLength(1);
   });
 
+  it('Play stops the click from bubbling to the card so it never falls through to the info link', async () => {
+    // The whole-card info link sits behind the overlay; a quick-action click
+    // must be consumed by the button (@click.stop) so playback starts and the
+    // tap can never also trigger the card's default navigate-to-info.
+    const onCardClick = vi.fn();
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      attrs: { onClick: onCardClick },
+    });
+    await w.find('.media-card__iconbtn--play').trigger('click');
+    expect(w.emitted('play')).toHaveLength(1);
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
   it('renders #badges and #actions slot content with the item', () => {
     const w = mount(MediaCard, {
       props: { item: media() },
