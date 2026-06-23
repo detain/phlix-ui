@@ -36,7 +36,13 @@ import UpNext from './player/UpNext.vue';
 import TranscodeNotice from './player/TranscodeNotice.vue';
 import TranscodePreparing from './player/TranscodePreparing.vue';
 import SkipButton from './player/SkipButton.vue';
-import { needsTranscode, isFatalMediaError, UPNEXT_COUNTDOWN_SECONDS, type TimeMarker } from './player/playback';
+import {
+  needsTranscode,
+  isFatalMediaError,
+  isNetworkMediaError,
+  UPNEXT_COUNTDOWN_SECONDS,
+  type TimeMarker,
+} from './player/playback';
 import type { SubtitleTrack } from './player/transcode';
 import {
   listSubtitleTracks,
@@ -255,10 +261,20 @@ function cancelUpNext(): void {
 
 // transcode guard -------------------------------------------------------------
 function onVideoError(): void {
-  // A fatal decode/format error on the DIRECT source (e.g. HEVC in an mp4 the
-  // extension check passed) flips us to the transcode path. Ignore errors once
-  // we're already on HLS — hls.js reports its own fatal errors via tc.onError.
-  if (!transcodeNeeded.value && isFatalMediaError(videoRef.value)) {
+  // Ignore errors once we're already on HLS — hls.js reports its own fatal errors
+  // via tc.onError.
+  if (transcodeNeeded.value) return;
+  const v = videoRef.value;
+  // Flip to the transcode path (which streams HLS over the relay proxy on the hub)
+  // when either:
+  //   - a fatal decode/format error on the DIRECT source (e.g. HEVC in an mp4 the
+  //     extension check passed), OR
+  //   - the direct source host was unreachable (network error) before any playback
+  //     progress — e.g. a paired server with no reachable public origin on the hub.
+  //     Gated on currentTime === 0 so a mid-playback network blip doesn't tear a
+  //     healthy session down.
+  const unreachableDirect = isNetworkMediaError(v) && (v?.currentTime ?? 0) === 0;
+  if (isFatalMediaError(v) || unreachableDirect) {
     transcodeNeeded.value = true;
     beginTranscode();
   }

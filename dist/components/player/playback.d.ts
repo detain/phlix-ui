@@ -33,6 +33,16 @@ export declare function needsTranscode(...sources: (string | null | undefined)[]
  */
 export declare function isFatalMediaError(video: HTMLVideoElement | null | undefined): boolean;
 /**
+ * True when a <video> element's current error is a network error
+ * (MEDIA_ERR_NETWORK = 2) — the source host could not be reached. On the hub a
+ * direct-play stream points at the paired server's own public origin; when that
+ * origin is unreachable from the browser the element errors with this code before
+ * any frame plays, and the player falls back to an HLS transcode over the relay
+ * proxy. The caller gates this on no playback progress yet so a transient mid-play
+ * network blip does not wrongly tear a healthy session down.
+ */
+export declare function isNetworkMediaError(video: HTMLVideoElement | null | undefined): boolean;
+/**
  * An intro / outro time range (seconds), from `GET /api/v1/media/:id/playback-info`.
  * `start`/`end` are absolute positions in the title; the player shows a "Skip"
  * affordance while the playhead sits inside `[start, end)` and seeks to `end` on use.

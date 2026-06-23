@@ -25,7 +25,7 @@ import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient } from '../api/client';
-import { useMediaApiBase } from '../composables/useApiBase';
+import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import Player from '../components/Player.vue';
@@ -73,6 +73,10 @@ interface PlaybackInfo {
 // the relay tunnel is P3 — out of scope here; this only re-points the page's API
 // fetches, matching the rest of the media surface.)
 const apiBase = useMediaApiBase();
+// The paired server's own public origin on the hub (else ''). The player streams
+// media bytes from here directly (native Range) since the proxy doesn't route the
+// byte-stream endpoint; transcode/HLS still go over `apiBase` (the proxy).
+const directBase = useMediaDirectBase();
 const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
@@ -124,12 +128,23 @@ function isAbort(e: unknown): boolean {
  *  carries `stream_url`; queue/up-next rows (from the list endpoint) fall back to
  *  the bare path, which is fine because advancing navigates the route and re-fetches
  *  the detail (and thus a fresh signed URL) before that item actually plays. The
- *  signed path is root-relative, so prefix the API base for cross-origin hosts. */
+ *  signed path is root-relative, so prefix a base for cross-origin hosts.
+ *
+ *  On the hub the signed path is prefixed with the paired server's OWN public
+ *  origin (`directBase`) so the `<video>` streams the bytes straight from the
+ *  server with native Range — the relay proxy does not route `/media/:id/stream`
+ *  (it carries only JSON/browse + small HLS segments). The signature authenticates
+ *  the request cross-origin (no cookie needed). If the server reported no reachable
+ *  origin, `directBase` is '' and we fall back to the media-api base; an unreachable
+ *  origin surfaces as a `<video>` error that flips the player to an HLS transcode
+ *  over the proxy (see Player.onVideoError). On the media server `directBase` is ''
+ *  so this is unchanged (the page origin serves the bytes). */
 function streamUrlFor(m: MediaItem): string {
+  const base = directBase.value || apiBase.value;
   if (m.stream_url) {
-    return /^https?:\/\//.test(m.stream_url) ? m.stream_url : `${apiBase.value}${m.stream_url}`;
+    return /^https?:\/\//.test(m.stream_url) ? m.stream_url : `${base}${m.stream_url}`;
   }
-  return `${apiBase.value}/media/${encodeURIComponent(m.id)}/stream`;
+  return `${base}/media/${encodeURIComponent(m.id)}/stream`;
 }
 
 /** Map a server marker ({start_seconds,end_seconds}) to a client TimeMarker, or null. */

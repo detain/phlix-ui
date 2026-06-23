@@ -4,6 +4,7 @@ import {
   useServerStore,
   CURRENT_SERVER_ID_KEY,
   CURRENT_SERVER_NAME_KEY,
+  CURRENT_SERVER_URL_KEY,
 } from './useServerStore';
 
 beforeEach(() => {
@@ -59,5 +60,54 @@ describe('useServerStore', () => {
     expect(store.hasCurrent).toBe(false);
     expect(localStorage.getItem(CURRENT_SERVER_ID_KEY)).toBeNull();
     expect(localStorage.getItem(CURRENT_SERVER_NAME_KEY)).toBeNull();
+  });
+
+  // --- currentServerUrl (P3: the paired server's own public origin for direct streaming) ---
+
+  it('setCurrent with a url persists currentServerUrl to localStorage', () => {
+    const store = useServerStore();
+    store.setCurrent('srv-1', 'Living Room', 'https://server.test');
+    expect(store.currentServerUrl).toBe('https://server.test');
+    expect(localStorage.getItem(CURRENT_SERVER_URL_KEY)).toBe('https://server.test');
+  });
+
+  it('setCurrent with an empty-string url nulls currentServerUrl and removes the key', () => {
+    localStorage.setItem(CURRENT_SERVER_URL_KEY, 'https://old.test');
+    setActivePinia(createPinia());
+    const store = useServerStore();
+    store.setCurrent('srv-1', 'Living Room', '');
+    expect(store.currentServerUrl).toBeNull();
+    expect(localStorage.getItem(CURRENT_SERVER_URL_KEY)).toBeNull();
+    // id/name behaviour is unaffected by the empty url
+    expect(store.currentServerId).toBe('srv-1');
+    expect(store.currentServerName).toBe('Living Room');
+  });
+
+  it('setCurrent without a url arg nulls currentServerUrl and removes the key (id/name unaffected)', () => {
+    localStorage.setItem(CURRENT_SERVER_URL_KEY, 'https://old.test');
+    setActivePinia(createPinia());
+    const store = useServerStore();
+    store.setCurrent('srv-2', 'Den');
+    expect(store.currentServerUrl).toBeNull();
+    expect(localStorage.getItem(CURRENT_SERVER_URL_KEY)).toBeNull();
+    expect(store.currentServerId).toBe('srv-2');
+    expect(store.currentServerName).toBe('Den');
+  });
+
+  it('rehydrates the persisted currentServerUrl on construction', () => {
+    localStorage.setItem(CURRENT_SERVER_ID_KEY, 'srv-restored');
+    localStorage.setItem(CURRENT_SERVER_URL_KEY, 'https://restored.test');
+    setActivePinia(createPinia());
+    const store = useServerStore();
+    expect(store.currentServerUrl).toBe('https://restored.test');
+  });
+
+  it('clear() nulls currentServerUrl and removes its key', () => {
+    const store = useServerStore();
+    store.setCurrent('srv-3', 'Den', 'https://server.test');
+    expect(localStorage.getItem(CURRENT_SERVER_URL_KEY)).toBe('https://server.test');
+    store.clear();
+    expect(store.currentServerUrl).toBeNull();
+    expect(localStorage.getItem(CURRENT_SERVER_URL_KEY)).toBeNull();
   });
 });

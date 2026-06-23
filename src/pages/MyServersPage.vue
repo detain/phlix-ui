@@ -175,7 +175,11 @@ function manageServer(server: Server): void {
  */
 function browseServer(server: Server): void {
   if (server.status !== 'online') return;
-  serverStore.setCurrent(server.id, server.name);
+  // Pass the server's own public origin (its first hostname candidate) so the
+  // player can stream media bytes DIRECTLY from the server with native Range — the
+  // relay proxy doesn't route `/media/:id/stream`. Empty when the server reported
+  // no reachable URL; playback then falls back to an HLS transcode over the proxy.
+  serverStore.setCurrent(server.id, server.name, server.url);
   void router.push(browseHome);
 }
 

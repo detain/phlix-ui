@@ -82,13 +82,17 @@ function makeRouter(): Router {
 const wrappers: VueWrapper[] = [];
 /** Mount the player route through a <router-view> harness so onBeforeRouteLeave is a
  *  real route-component guard (matches production; no "must be a route component" warn). */
-async function mountAt(id: string, fetchMock: ReturnType<typeof vi.fn>) {
+async function mountAt(
+  id: string,
+  fetchMock: ReturnType<typeof vi.fn>,
+  provide: Record<string, unknown> = {},
+) {
   vi.stubGlobal('fetch', fetchMock);
   const router = makeRouter();
   await router.push(`/app/player/${id}`);
   await router.isReady();
   const Harness = { template: '<router-view />' };
-  const w = mount(Harness, { global: { plugins: [router] } });
+  const w = mount(Harness, { global: { plugins: [router], provide } });
   wrappers.push(w);
   return { w, router };
 }
@@ -152,6 +156,50 @@ describe('PlayerPage — load + stream resolution', () => {
     expect(resolve(media({ id: 'm1', stream_url: signed }))).toBe(signed);
     // ...and still falls back to the bare path for a list row without one.
     expect(resolve(media({ id: 'm2' }))).toBe('/media/m2/stream');
+  });
+
+  it('resolves a root-relative stream_url against the direct base (hub: paired server origin), NOT the proxy base', async () => {
+    // On the hub `mediaApiBase` is the relay-proxy base and `mediaDirectBase` is the
+    // paired server's own origin. A signed, root-relative stream_url must stream
+    // straight from the server (direct base), bypassing the proxy.
+    const signed = '/media/m1/stream?exp=9999999999&sig=abc123';
+    const fetchMock = okFetch(media({ id: 'm1', stream_url: signed }));
+    const { w } = await mountAt('m1', fetchMock, {
+      mediaApiBase: '/api/v1/servers/srv-1/proxy',
+      mediaDirectBase: 'https://server.test',
+    });
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect(player.props('streamUrl')).toBe(`https://server.test${signed}`);
+    // The bare-path branch resolves against the direct base too.
+    const resolve = player.props('streamUrlFor') as (m: MediaItem) => string;
+    expect(resolve(media({ id: 'm2' }))).toBe('https://server.test/media/m2/stream');
+  });
+
+  it('resolves a root-relative stream_url against the media-api base when no direct base is provided (media server)', async () => {
+    const signed = '/media/m1/stream?exp=9999999999&sig=abc123';
+    const fetchMock = okFetch(media({ id: 'm1', stream_url: signed }));
+    // mediaApiBase given, but mediaDirectBase absent → resolve against the api base.
+    const { w } = await mountAt('m1', fetchMock, { mediaApiBase: 'https://server.test' });
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect(player.props('streamUrl')).toBe(`https://server.test${signed}`);
+    const resolve = player.props('streamUrlFor') as (m: MediaItem) => string;
+    expect(resolve(media({ id: 'm2' }))).toBe('https://server.test/media/m2/stream');
+  });
+
+  it('returns an absolute http(s) stream_url unchanged even when a direct base is provided', async () => {
+    const absolute = 'https://cdn.test/media/m1/stream?sig=abc';
+    const fetchMock = okFetch(media({ id: 'm1', stream_url: absolute }));
+    const { w } = await mountAt('m1', fetchMock, {
+      mediaApiBase: '/api/v1/servers/srv-1/proxy',
+      mediaDirectBase: 'https://server.test',
+    });
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect(player.props('streamUrl')).toBe(absolute);
+    const resolve = player.props('streamUrlFor') as (m: MediaItem) => string;
+    expect(resolve(media({ id: 'm9', stream_url: absolute }))).toBe(absolute);
   });
 
   it('shows an error state with Retry/Back when the by-id fetch fails, and Retry re-loads', async () => {

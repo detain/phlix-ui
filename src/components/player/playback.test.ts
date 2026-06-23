@@ -3,6 +3,7 @@ import {
   extensionOf,
   needsTranscode,
   isFatalMediaError,
+  isNetworkMediaError,
   ringDashoffset,
   DIRECT_PLAY_EXTENSIONS,
   TRANSCODE_EXTENSIONS,
@@ -69,6 +70,23 @@ describe('playback — isFatalMediaError', () => {
     expect(isFatalMediaError(withError(undefined))).toBe(false);
     expect(isFatalMediaError(null)).toBe(false);
     expect(isFatalMediaError(undefined)).toBe(false);
+  });
+});
+
+describe('playback — isNetworkMediaError', () => {
+  const withError = (code: number | undefined) =>
+    ({ error: code === undefined ? null : { code } }) as unknown as HTMLVideoElement;
+
+  it('is true only for NETWORK (2)', () => {
+    expect(isNetworkMediaError(withError(2))).toBe(true);
+  });
+  it('is false for ABORTED (1) / DECODE (3) / SRC_NOT_SUPPORTED (4) / no error / nullish element', () => {
+    expect(isNetworkMediaError(withError(1))).toBe(false);
+    expect(isNetworkMediaError(withError(3))).toBe(false);
+    expect(isNetworkMediaError(withError(4))).toBe(false);
+    expect(isNetworkMediaError(withError(undefined))).toBe(false);
+    expect(isNetworkMediaError(null)).toBe(false);
+    expect(isNetworkMediaError(undefined)).toBe(false);
   });
 });
 

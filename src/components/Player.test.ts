@@ -1300,13 +1300,57 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     expect(w.find('.prep').exists()).toBe(true);
   });
 
-  it('ignores a non-fatal media error (network/abort)', async () => {
-    const { w, video } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+  it('starts a transcode on a NETWORK error before any playback progress (unreachable direct origin, hub P3)', async () => {
+    // On the hub the direct-play src points at the paired server's own origin; if that
+    // origin is unreachable the <video> errors with MEDIA_ERR_NETWORK (2) before any
+    // frame — fall back to the HLS transcode over the relay proxy.
+    const { w, video, state } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    state.currentTime = 0; // no playback progress yet
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 2 }) });
+    video.dispatchEvent(new Event('error'));
+    await nextTick();
+    expect(tc().start).toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(true);
+  });
+
+  it('ignores a mid-playback NETWORK error (currentTime > 0 — a transient blip, not an unreachable origin)', async () => {
+    const { w, video, state } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    state.currentTime = 42; // already playing — a network blip must not tear it down
     Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 2 }) });
     video.dispatchEvent(new Event('error'));
     await nextTick();
     expect(tc().start).not.toHaveBeenCalled();
     expect(w.find('.prep').exists()).toBe(false);
+  });
+
+  it('ignores ABORTED (1) media errors (not a transcode trigger)', async () => {
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 1 }) });
+    video.dispatchEvent(new Event('error'));
+    await nextTick();
+    expect(tc().start).not.toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(false);
+  });
+
+  it('still starts a transcode on a fatal SRC_NOT_SUPPORTED (3) error regardless of currentTime (decode path unchanged)', async () => {
+    const { w, video, state } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    state.currentTime = 99; // a fatal decode/format error is independent of progress
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 3 }) });
+    video.dispatchEvent(new Event('error'));
+    await nextTick();
+    expect(tc().start).toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(true);
+  });
+
+  it('early-returns on a media error once already transcoding (no double start)', async () => {
+    // mkv → transcode from the start (one start). A subsequent <video> error must not
+    // kick off a second transcode (onVideoError early-returns when transcodeNeeded).
+    const { video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    expect(tc().start).toHaveBeenCalledTimes(1);
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 2 }) });
+    video.dispatchEvent(new Event('error'));
+    await nextTick();
+    expect(tc().start).toHaveBeenCalledTimes(1); // unchanged — already on HLS
   });
 
   it('suppresses the resume prompt while preparing a transcode', () => {

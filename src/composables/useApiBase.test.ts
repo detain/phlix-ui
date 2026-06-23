@@ -1,22 +1,29 @@
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { defineComponent, computed, ref, type ComputedRef } from 'vue';
-import { useApiBase, useMediaApiBase } from './useApiBase';
+import { useApiBase, useMediaApiBase, useMediaDirectBase } from './useApiBase';
 
 /**
- * Mount a tiny host that captures the two resolved bases, with the given
- * `apiBase`/`mediaApiBase` provides. Returns the captured refs so a test can read
- * (and, for a reactive provide, mutate the source then re-read) the values.
+ * Mount a tiny host that captures the resolved bases, with the given
+ * `apiBase`/`mediaApiBase`/`mediaDirectBase` provides. Returns the captured refs so
+ * a test can read (and, for a reactive provide, mutate the source then re-read) the
+ * values.
  */
 function mountWith(provide: Record<string, unknown>): {
   appBase: ComputedRef<string>;
   mediaBase: ComputedRef<string>;
+  directBase: ComputedRef<string>;
 } {
-  const captured = {} as { appBase: ComputedRef<string>; mediaBase: ComputedRef<string> };
+  const captured = {} as {
+    appBase: ComputedRef<string>;
+    mediaBase: ComputedRef<string>;
+    directBase: ComputedRef<string>;
+  };
   const Host = defineComponent({
     setup() {
       captured.appBase = useApiBase();
       captured.mediaBase = useMediaApiBase();
+      captured.directBase = useMediaDirectBase();
       return () => null;
     },
   });
@@ -67,5 +74,30 @@ describe('useApiBase / useMediaApiBase', () => {
     const { appBase, mediaBase } = mountWith({ apiBase: base });
     expect(appBase.value).toBe('https://hub.test');
     expect(mediaBase.value).toBe('https://hub.test');
+  });
+});
+
+describe('useMediaDirectBase', () => {
+  it('returns "" when no mediaDirectBase is provided (media server / no server selected)', () => {
+    const { directBase } = mountWith({ apiBase: 'https://server.test' });
+    // The direct base never falls back to apiBase — absence means "stream from page origin".
+    expect(directBase.value).toBe('');
+  });
+
+  it('returns a provided plain-string mediaDirectBase', () => {
+    const { directBase } = mountWith({ apiBase: '', mediaDirectBase: 'https://server.test' });
+    expect(directBase.value).toBe('https://server.test');
+  });
+
+  it('unwraps a provided ComputedRef and tracks its reactive changes', () => {
+    const url = ref<string | null>(null);
+    const mediaDirectBase = computed(() => url.value ?? '');
+    const { directBase } = mountWith({ apiBase: '', mediaDirectBase });
+    // No server origin selected → empty.
+    expect(directBase.value).toBe('');
+    url.value = 'https://server.test';
+    expect(directBase.value).toBe('https://server.test');
+    url.value = 'https://other.test';
+    expect(directBase.value).toBe('https://other.test');
   });
 });
