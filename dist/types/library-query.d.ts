@@ -31,6 +31,9 @@ export interface LibraryQueryParams extends Omit<LibraryQuery, 'ratings' | 'sort
     yearTo?: number;
     ratings?: string[];
     actors?: string[];
+    /** Filter by production company / studio name — drives the clickable studio
+     *  chips on the detail page. */
+    companies?: string[];
     match?: 'matched' | 'unmatched';
     types?: string[];
     sort?: string;

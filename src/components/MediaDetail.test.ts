@@ -40,19 +40,42 @@ describe('MediaDetail — rendering', () => {
     expect(meta).toContain('166m');
     expect(w.find('.media-detail__cert').text()).toBe('PG-13');
     expect(w.find('.media-detail__overview').text()).toBe('Paul unites with the Fremen.');
-    // genre chips + cast chips
+    // genre chips
     const chipTexts = w.findAllComponents(Chip).map((c) => c.text());
     expect(chipTexts).toContain('Sci-Fi');
-    expect(chipTexts).toContain('Zendaya');
-    expect(w.text()).toContain('Denis Villeneuve');
+    // cast + crew render as people (avatar layout)
+    const people = w.findAll('.media-detail__person-name').map((n) => n.text());
+    expect(people).toContain('Zendaya');
+    expect(people).toContain('Denis Villeneuve');
   });
 
   it('emits `actor` with the name when a cast member is clicked', async () => {
     const w = mount(MediaDetail, { props: { item: media() } });
-    const actorButtons = w.findAll('.media-detail__actor');
-    expect(actorButtons.length).toBeGreaterThan(0);
-    await actorButtons[0].trigger('click');
+    const people = w.findAll('.media-detail__person');
+    expect(people.length).toBeGreaterThan(0);
+    // crew (Director) renders first, then cast — click the first cast person
+    const names = w.findAll('.media-detail__person-name').map((n) => n.text());
+    const idx = names.indexOf('Timothée Chalamet');
+    expect(idx).toBeGreaterThanOrEqual(0);
+    await people[idx].trigger('click');
     expect(w.emitted('actor')?.[0]).toEqual(['Timothée Chalamet']);
+  });
+
+  it('emits `genre` with the name when a genre chip is clicked', async () => {
+    const w = mount(MediaDetail, { props: { item: media() } });
+    const genreButtons = w.findAll('.media-detail__genre');
+    expect(genreButtons.length).toBe(2);
+    await genreButtons[0].trigger('click');
+    expect(w.emitted('genre')?.[0]).toEqual(['Sci-Fi']);
+  });
+
+  it('emits `actor` with the person name when a crew member is clicked', async () => {
+    const w = mount(MediaDetail, { props: { item: media() } });
+    const names = w.findAll('.media-detail__person-name').map((n) => n.text());
+    const idx = names.indexOf('Denis Villeneuve');
+    expect(idx).toBeGreaterThanOrEqual(0);
+    await w.findAll('.media-detail__person')[idx].trigger('click');
+    expect(w.emitted('actor')?.[0]).toEqual(['Denis Villeneuve']);
   });
 
   it('renders the poster image with the title as alt', () => {
@@ -100,6 +123,100 @@ describe('MediaDetail — sparse metadata (degrades)', () => {
   it('does not render an ambient layer without a poster', () => {
     const w = mount(MediaDetail, { props: { item: media({ poster_url: null }) } });
     expect(w.find('.media-detail__ambient').exists()).toBe(false);
+  });
+});
+
+describe('MediaDetail — rich cast / crew / companies', () => {
+  it('renders a cast avatar img when profile_url is present and initials when null', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          actors: [],
+          director: null,
+          cast: [
+            { name: 'Timothée Chalamet', role: 'Paul', profile_url: 'https://img/tc.jpg' },
+            { name: 'Zendaya', role: 'Chani', profile_url: null },
+          ],
+        }),
+      },
+    });
+    const imgs = w.findAll('.media-detail__avatar-img');
+    expect(imgs).toHaveLength(1);
+    expect(imgs[0].attributes('src')).toBe('https://img/tc.jpg');
+    expect(imgs[0].attributes('loading')).toBe('lazy');
+    // the photo-less person falls back to initials
+    const initials = w.findAll('.media-detail__avatar-initials').map((n) => n.text());
+    expect(initials).toContain('ZE'); // single-word name → first 1–2 letters
+    // sub-label shows the character role
+    const subs = w.findAll('.media-detail__person-sub').map((n) => n.text());
+    expect(subs).toContain('Paul');
+    expect(subs).toContain('Chani');
+  });
+
+  it('renders crew (incl. director) with job sub-labels from item.crew', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          director: null,
+          crew: [
+            { name: 'Denis Villeneuve', job: 'Director', profile_url: 'https://img/dv.jpg' },
+            { name: 'Hans Zimmer', job: 'Composer', profile_url: null },
+          ],
+        }),
+      },
+    });
+    const names = w.findAll('.media-detail__person-name').map((n) => n.text());
+    expect(names).toContain('Denis Villeneuve');
+    expect(names).toContain('Hans Zimmer');
+    const subs = w.findAll('.media-detail__person-sub').map((n) => n.text());
+    expect(subs).toContain('Director');
+    expect(subs).toContain('Composer');
+  });
+
+  it('falls back to flat actors when cast objects are absent', () => {
+    const w = mount(MediaDetail, { props: { item: media({ cast: undefined, actors: ['Florence Pugh'] }) } });
+    const names = w.findAll('.media-detail__person-name').map((n) => n.text());
+    expect(names).toContain('Florence Pugh');
+    // no photos → initials fallback (FP → multi-word? single word → "FL")
+    expect(w.findAll('.media-detail__avatar-img')).toHaveLength(0);
+  });
+
+  it('renders clickable company chips with logos and emits `company`', async () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          production_companies: [
+            { name: 'Legendary', logo_url: 'https://img/leg.png', origin_country: 'US' },
+            { name: 'Warner Bros', logo_url: null, origin_country: 'US' },
+          ],
+        }),
+      },
+    });
+    const chips = w.findAll('.media-detail__company');
+    expect(chips).toHaveLength(2);
+    const logo = w.find('.media-detail__company-logo');
+    expect(logo.exists()).toBe(true);
+    expect(logo.attributes('src')).toBe('https://img/leg.png');
+    await chips[0].trigger('click');
+    expect(w.emitted('company')?.[0]).toEqual(['Legendary']);
+  });
+
+  it('falls back to a single studio chip when only item.studio is set', async () => {
+    const w = mount(MediaDetail, {
+      props: { item: media({ production_companies: undefined, studio: 'A24' }) },
+    });
+    const chips = w.findAll('.media-detail__company');
+    expect(chips).toHaveLength(1);
+    expect(chips[0].text()).toContain('A24');
+    await chips[0].trigger('click');
+    expect(w.emitted('company')?.[0]).toEqual(['A24']);
+  });
+
+  it('omits the studios section when no companies or studio', () => {
+    const w = mount(MediaDetail, {
+      props: { item: media({ production_companies: undefined, studio: null }) },
+    });
+    expect(w.find('.media-detail__companies').exists()).toBe(false);
   });
 });
 

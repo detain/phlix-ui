@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.49.0] - 2026-06-23
+
+### Added
+
+- **Cast & crew with profile photos on the detail page.** Cast and key crew
+  (incl. director) now render as avatar cards — a circular profile photo (from
+  the server's new `cast[].profile_url` / `crew[].profile_url`), or an initials
+  fallback when no photo — with the person's name and their role/job. Falls back
+  to the flat `actors`/`director` names on older servers. Clicking a person
+  still filters the library by that name.
+- **Clickable production companies / studios.** The detail page shows a Studios
+  section (from `production_companies[]` with logos, or the single `studio`
+  string) whose chips are clickable and filter the owning library by company
+  (new `companies[]` media filter, end-to-end through `useMediaStore` and
+  `buildMediaQuery`).
+
+### Changed
+
+- **Genre chips are now clickable** — each navigates to the owning library's
+  grid filtered by that genre (`?genres=`). `LibraryPage` reads `genres` and
+  `companies` deep-link query params alongside the existing `actors`/`match`.
+- **Player scrubber starts at the true total length.** `usePlayerStore` seeds
+  `duration` from the server's probed `media.duration` (seconds) in
+  `setCurrent`, and `updateProgress` never shrinks below a known total (only
+  adopts a larger element duration). The scrubber/seek bar shows the full length
+  immediately instead of growing as a transcode/HLS stream loads, so seeking is
+  accurate from the start.
 ## [0.48.3] - 2026-06-23
 
 ### Fixed
