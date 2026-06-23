@@ -182,7 +182,18 @@ export class ApiClient {
             return init;
         };
 
-        const url = `${this.baseUrl}${endpoint}`;
+        // Resolve the request URL against the configured base. Guard against a
+        // double-prepend: several media helpers (`buildMediaUrl`) bake the base
+        // INTO the endpoint and are then fetched through a client whose `baseUrl`
+        // is that same base. When `baseUrl` is '' (same-origin media server) the
+        // extra prefix is empty and harmless, but on the hub `baseUrl` is the
+        // relay-proxy path (`/api/v1/servers/{id}/proxy`), so prepending it again
+        // produced `…/proxy/api/v1/servers/{id}/proxy/api/v1/media` → 404. If the
+        // endpoint already starts with the (non-empty) base, treat it as resolved.
+        const url =
+            this.baseUrl !== '' && endpoint.startsWith(this.baseUrl)
+                ? endpoint
+                : `${this.baseUrl}${endpoint}`;
 
         // Drive every request through our own controller so we can enforce a
         // timeout AND honour a caller's abort signal (e.g. a superseded media
