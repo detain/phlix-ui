@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.48.1] - 2026-06-23
+
+### Fixed
+
+- **Hub media browse showed empty rails / "Not found" (relay-proxy double-prefix).**
+  The media helpers (`buildMediaUrl`) bake the API base INTO the URL, and that URL
+  was then fetched through an `ApiClient` whose `baseUrl` was the same base — so
+  the base was applied twice. Invisible on the media server (base is `''`), but on
+  the hub the base is the relay-proxy path, so every Browse rail / library grid /
+  similar / season fetch hit `…/proxy/api/v1/servers/{id}/proxy/api/v1/media` → 404
+  (the libraries names still loaded, but no content). Fixed centrally in
+  `ApiClient`: a non-empty `baseUrl` is no longer prepended to an endpoint that
+  already starts with it. This corrects all media call sites (Browse `HomeRow`,
+  `useMediaStore` grid, `MediaDetailPage`, `PlayerPage`, `useSeriesSeasons`) at once.
+
 ## [0.48.0] - 2026-06-23
 
 ### Added

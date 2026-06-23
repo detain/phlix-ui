@@ -29,6 +29,37 @@ describe('ApiClient', () => {
         expect(headers['Authorization']).toBeUndefined();
     });
 
+    it('prepends a non-empty baseUrl to a relative endpoint', async () => {
+        const { fetch, calls } = makeFetch([{ status: 200, body: {} }]);
+        const client = new ApiClient({
+            baseUrl: '/api/v1/servers/srv-1/proxy',
+            tokenStore: new MemoryTokenStore({ access: 't' }),
+            fetchImpl: fetch,
+        });
+
+        await client.get('/api/v1/libraries');
+
+        expect(calls[0]!.url).toBe('/api/v1/servers/srv-1/proxy/api/v1/libraries');
+    });
+
+    it('does NOT double-prepend a baseUrl the endpoint already starts with', async () => {
+        // Regression: media helpers (buildMediaUrl) bake the base INTO the endpoint
+        // and are fetched through a client whose baseUrl is that same base. On the
+        // hub the base is the relay-proxy path, so a naive prepend produced
+        // `…/proxy/api/v1/servers/{id}/proxy/api/v1/media` → 404.
+        const base = '/api/v1/servers/srv-1/proxy';
+        const { fetch, calls } = makeFetch([{ status: 200, body: {} }]);
+        const client = new ApiClient({
+            baseUrl: base,
+            tokenStore: new MemoryTokenStore({ access: 't' }),
+            fetchImpl: fetch,
+        });
+
+        await client.get(`${base}/api/v1/media?libraryId=lib-1`);
+
+        expect(calls[0]!.url).toBe('/api/v1/servers/srv-1/proxy/api/v1/media?libraryId=lib-1');
+    });
+
     it('serialises a JSON body for POST/PUT/PATCH but not GET/DELETE', async () => {
         const tokens = new MemoryTokenStore({ access: 't' });
         const { fetch, calls } = makeFetch([
