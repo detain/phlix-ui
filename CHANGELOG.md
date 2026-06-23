@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.48.2] - 2026-06-23
+
+### Fixed
+
+- **Mini-player was unreadable on the Daylight theme.** The docked mini-player
+  hardcoded a white title (`#fff`) and white control icons while pulling its
+  background from the theme token `--surface-glass-strong` — which is a dark
+  glass on Nocturne/Midnight but **off-white** on Daylight. The result was white
+  text + white icons on a near-white dock (invisible), with only the close
+  button appearing, and only on hover. The title now uses `--text`, the control
+  icons use `--text-muted` (→ `--text` on hover), and the progress track uses
+  `--border-strong`, so the dock is legible on every theme.
+
 ## [0.48.1] - 2026-06-23
 
 ### Fixed
