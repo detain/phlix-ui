@@ -15,7 +15,7 @@ var D = {
 	__name: "SignupForm",
 	emits: ["success"],
 	setup(n, { emit: g }) {
-		let A = g, j = o(), M = s(), N = E(), { t: P } = i(), F = _("phlixConfig", null), I = l(() => F?.routerBase ?? "/app"), L = l(() => `${I.value}/login`), R = /^[^\s@]+@[^\s@]+\.[^\s@]+$/, z = y(""), B = y(""), V = y(""), H = y(""), U = y(null), W = y(null), G = y(null), K = y(null);
+		let A = g, j = o(), M = s(), N = E(), { t: P } = i(), F = _("phlixConfig", null), I = l(() => F?.home ?? F?.routerBase ?? "/app"), L = l(() => `${F?.routerBase ?? "/app"}/login`), R = /^[^\s@]+@[^\s@]+\.[^\s@]+$/, z = y(""), B = y(""), V = y(""), H = y(""), U = y(null), W = y(null), G = y(null), K = y(null);
 		function q() {
 			return U.value = z.value.trim() ? R.test(z.value.trim()) ? null : P("auth.emailInvalid") : P("auth.emailRequired"), W.value = B.value.trim() ? B.value.trim().length < 3 ? P("auth.usernameMinLength") : null : P("auth.usernameRequired"), G.value = V.value ? V.value.length < 8 ? P("auth.passwordMinLength") : null : P("auth.passwordChoose"), K.value = H.value === V.value ? null : P("auth.passwordMismatch"), !U.value && !W.value && !G.value && !K.value;
 		}
@@ -127,8 +127,8 @@ var D = {
 			]);
 		};
 	}
-}), [["__scopeId", "data-v-d3e5903e"]]);
+}), [["__scopeId", "data-v-e4b9693e"]]);
 //#endregion
 export { A as t };
 
-//# sourceMappingURL=SignupForm-DL9yhU-T.js.map
+//# sourceMappingURL=SignupForm-jTnWBBlx.js.map

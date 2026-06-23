@@ -15,7 +15,7 @@ var D = {
 	__name: "LoginForm",
 	emits: ["success"],
 	setup(n, { emit: g }) {
-		let A = g, j = o(), M = s(), N = E(), { t: P } = i(), F = _("phlixConfig", null), I = l(() => F?.routerBase ?? "/app"), L = l(() => `${I.value}/signup`), R = y(""), z = y(""), B = y(null), V = y(null);
+		let A = g, j = o(), M = s(), N = E(), { t: P } = i(), F = _("phlixConfig", null), I = l(() => F?.home ?? F?.routerBase ?? "/app"), L = l(() => `${F?.routerBase ?? "/app"}/signup`), R = y(""), z = y(""), B = y(null), V = y(null);
 		function H() {
 			return B.value = R.value.trim() ? null : P("auth.identifierRequired"), V.value = z.value ? null : P("auth.passwordRequired"), !B.value && !V.value;
 		}
@@ -95,8 +95,8 @@ var D = {
 			]);
 		};
 	}
-}), [["__scopeId", "data-v-a6e03ab2"]]);
+}), [["__scopeId", "data-v-10a405d3"]]);
 //#endregion
 export { A as t };
 
-//# sourceMappingURL=LoginForm-_TI2yKSK.js.map
+//# sourceMappingURL=LoginForm-Cg_g4AlO.js.map
