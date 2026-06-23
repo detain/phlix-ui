@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.49.1] - 2026-06-23
+
+### Fixed
+
+- **My Servers showed "—" for Libraries even when the server was online.** The
+  page now reads `libraryCount` from the hub's server payload
+  (`ServerInfoDto.libraryCount`, hub-side fix) and renders the real count;
+  still "—" on older hubs that don't report it. ("Last seen" is fixed on the
+  hub side in the same release — the SPA already rendered `lastSeenAt`.)
+
 ## [0.49.0] - 2026-06-23
 
 ### Added

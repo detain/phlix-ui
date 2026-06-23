@@ -1426,7 +1426,8 @@ var ba = {
 					url: e.hostnameCandidates?.[0] ?? "",
 					status: e.status ?? "offline",
 					owner: n,
-					last_seen: ya(e.lastSeenAt)
+					last_seen: ya(e.lastSeenAt),
+					library_count: typeof e.libraryCount == "number" ? e.libraryCount : void 0
 				}));
 			} catch (e) {
 				l.value = g(e, "Failed to load servers."), n.error(l.value);
@@ -1615,7 +1616,7 @@ var ba = {
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-4871228b"]]), Pa = {
+}), [["__scopeId", "data-v-7ed0eb3e"]]), Pa = {
 	class: "federation",
 	"aria-labelledby": "federation-heading"
 }, Fa = {

@@ -46,6 +46,9 @@ interface HubServer {
   status?: string;
   hostnameCandidates?: string[];
   lastSeenAt?: number | null;
+  /** Library count the server last reported via heartbeat (hub `server_libraries`
+   *  cache, surfaced by ServerInfoDto.libraryCount). Null/absent on older hubs. */
+  libraryCount?: number | null;
 }
 
 const props = defineProps<{
@@ -112,7 +115,9 @@ async function loadServers(): Promise<void> {
       status: s.status ?? 'offline',
       owner: ownerName,
       last_seen: unixToIso(s.lastSeenAt),
-      // library_count: not tracked by the hub (it lives on the media server) → "—".
+      // Library count the hub caches from the server's heartbeats; undefined on
+      // older hubs that don't report it → the table renders "—".
+      library_count: typeof s.libraryCount === 'number' ? s.libraryCount : undefined,
     }));
   } catch (e) {
     error.value = errMessage(e, 'Failed to load servers.');
