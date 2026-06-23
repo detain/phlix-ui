@@ -352,7 +352,7 @@ var Qn = ["aria-labelledby"], $n = {
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-56cf834c"]]);
+}), [["__scopeId", "data-v-76ca97c5"]]);
 //#endregion
 //#region src/composables/color.ts
 function Mr(e) {

@@ -158,7 +158,10 @@ onBeforeUnmount(() => {
   font-family: var(--font-display);
   font-weight: var(--font-semibold);
   font-size: var(--text-sm);
-  color: #fff;
+  /* Theme-aware: the dock background is `--surface-glass-strong`, which is a
+     dark glass in Nocturne/Midnight but off-white in Daylight. A hardcoded
+     white title vanished on the light theme — use the semantic text token. */
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -174,11 +177,14 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   border-radius: var(--radius-md);
-  color: rgba(255, 255, 255, 0.92);
-  transition: background var(--dur-fast) var(--ease-out);
+  /* Theme-aware icon colour — a hardcoded white was invisible on the Daylight
+     theme's off-white dock (only the close button showed, and only on hover). */
+  color: var(--text-muted);
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 .mini__btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--surface-3);
+  color: var(--text);
 }
 .mini__btn:focus-visible {
   outline: none;
@@ -200,7 +206,7 @@ onBeforeUnmount(() => {
   bottom: 4px;
   height: 3px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--border-strong);
   overflow: hidden;
 }
 .mini__progress-fill {
