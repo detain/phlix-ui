@@ -9,7 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
-## [0.48.2] - 2026-06-23
+## [0.48.3] - 2026-06-23
+
+### Fixed
+
+- **Poster "Play" button fell through to the info page on touch / first tap.**
+  The quick-action row is `pointer-events: none` until the card is hovered, so
+  on touch devices (no hover) — and on any tap before hover registered — a tap
+  on Play passed straight through to the stretched whole-card info link
+  (`/app/media/:id`) instead of starting playback. On coarse-pointer devices
+  (`@media (hover: none)`) the overlay now reveals and the quick-actions are
+  armed, so a single tap on Play starts playback. The action buttons also now
+  `@click.stop.prevent`, so a Play/watchlist/info/match click is consumed by the
+  button and can never also trigger the card's navigate-to-info default.
+  (Hover-capable pointers are unchanged: Play has always emitted `play` →
+  player route with autoplay.)
 
 ### Fixed
 
