@@ -10,10 +10,11 @@
  * SeriesSeasons' episode rows). Play an episode → the player route. An invalid /
  * missing season number shows an empty state with a link back to the series.
  */
-import { ref, computed, inject, onMounted, watch, onBeforeUnmount, type ComputedRef } from 'vue';
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient } from '../api/client';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
 import { findSeasonByParam, type SeasonGroup } from '../components/series-grouping';
 import SeriesSeasons from '../components/SeriesSeasons.vue';
@@ -23,10 +24,9 @@ import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import { usePageTitle } from '../composables/usePageTitle';
 
-const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
-const apiBase = computed(() =>
-    typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
-);
+// On the hub this is the relay-proxy base for the selected server; on the media
+// server it is the app's own base.
+const apiBase = useMediaApiBase();
 const route = useRoute();
 const router = useRouter();
 

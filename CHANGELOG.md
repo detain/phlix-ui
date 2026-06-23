@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.47.0] - 2026-06-23
+
+### Added
+
+- **Hub inline media browsing (P2).** The hub's SPA can now browse a paired
+  server's libraries/media/detail INLINE by routing every media API call through
+  the relay proxy (`/api/v1/servers/{id}/proxy/…`), instead of redirecting to the
+  server. New pieces:
+  - `useServerStore` — the hub's "current server" selection, persisted to
+    `localStorage` (`phlix.currentServerId` / `phlix.currentServerName`) so a
+    reload / deep link keeps browsing the same server.
+  - `useApiBase()` / `useMediaApiBase()` composables. `useMediaApiBase()` is the
+    base for media browsing: on the hub with a server selected it is that server's
+    relay-proxy base; otherwise it equals the app's own base. The media pages
+    (Browse / Library / MediaDetail / Season / Player) now use it.
+  - `createPhlixApp` provides a reactive `mediaApiBase` computed (from
+    `useServerStore`) alongside the unchanged `apiBase` (kept for auth / `/me` /
+    admin, which must never be proxied). Exported pure helper `mediaApiBaseFor()`.
+  - My Servers gains a **Browse** action per online server: it selects that
+    server and navigates to the Browse home, where the rails load over the tunnel.
+
+### Changed
+
+- `authGuard` takes an optional `home` argument (default: the `browse` route) for
+  the logged-in-non-admin bounce. `createPhlixApp` passes `config.home`, so on the
+  hub a non-admin denied an admin route lands on `/app/servers` rather than the
+  media-server Browse page (which 404s server-only endpoints on the hub).
+
 ## [0.46.0] - 2026-06-23
 
 ### Added
