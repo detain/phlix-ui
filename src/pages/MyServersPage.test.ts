@@ -140,6 +140,25 @@ describe('MyServersPage — list + states', () => {
     w.unmount();
   });
 
+  it('renders the reported library count from ServerInfoDto.libraryCount', async () => {
+    const { client } = makeClient({
+      servers: [
+        {
+          serverId: 'srv-3',
+          serverName: 'Counted',
+          status: 'online',
+          hostnameCandidates: ['https://c'],
+          lastSeenAt: 1748304000,
+          libraryCount: 7,
+        },
+      ],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain('7');
+    w.unmount();
+  });
+
   it('falls back to the shared api singleton when no client prop is given', async () => {
     const spy = vi.spyOn(api, 'get').mockResolvedValue({ servers: [] } as never);
     const w = mount(MyServersPage, { attachTo: document.body });
