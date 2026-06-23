@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router';
-import { createPhlixApp, buildRoutes, authGuard, mediaApiBaseFor, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
+import { createPhlixApp, buildRoutes, authGuard, mediaApiBaseFor, mediaDirectBaseFor, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
 
 beforeEach(() => {
   localStorage.clear();
@@ -198,6 +198,27 @@ describe('mediaApiBaseFor', () => {
     expect(mediaApiBaseFor('hub', 'https://hub.test', 'fbac1210')).toBe(
       'https://hub.test/api/v1/servers/fbac1210/proxy',
     );
+  });
+});
+
+describe('mediaDirectBaseFor', () => {
+  it('returns "" on the media server even when a url is given (page origin serves bytes)', () => {
+    expect(mediaDirectBaseFor('server', null)).toBe('');
+    expect(mediaDirectBaseFor('server', 'https://s.test')).toBe('');
+  });
+
+  it('returns "" on the hub when no server url is selected (null or empty)', () => {
+    expect(mediaDirectBaseFor('hub', null)).toBe('');
+    expect(mediaDirectBaseFor('hub', '')).toBe('');
+  });
+
+  it('returns the selected server origin on the hub', () => {
+    expect(mediaDirectBaseFor('hub', 'https://s.test')).toBe('https://s.test');
+  });
+
+  it('trims trailing slashes from the origin so a root-relative path concatenates cleanly', () => {
+    expect(mediaDirectBaseFor('hub', 'https://s.test/')).toBe('https://s.test');
+    expect(mediaDirectBaseFor('hub', 'https://s.test///')).toBe('https://s.test');
   });
 });
 

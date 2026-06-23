@@ -52,6 +52,19 @@ export declare function resolveRouteTitle(to: RouteLocationNormalized, t: Transl
  * in a computed over {@link useServerStore}.
  */
 export declare function mediaApiBaseFor(app: 'server' | 'hub', apiBase: string, currentServerId: string | null): string;
+/**
+ * Resolve the base the player streams media BYTES from directly (bypassing the
+ * relay proxy). On the hub this is the selected server's own public origin
+ * (`https://server.example`), so a `<video src>` hits the paired server directly
+ * with native Range support — the relay proxy intentionally does NOT route the
+ * `/media/:id/stream` byte-stream endpoint (it carries only JSON/browse traffic
+ * and small HLS segments). Returns '' on the media server (where the page origin
+ * already serves the bytes) or when no server / no reachable URL is selected, in
+ * which case the caller falls back to {@link mediaApiBaseFor}. The origin is
+ * normalised (trailing slashes trimmed) so concatenating a root-relative signed
+ * path yields a clean URL. Pure for unit testing.
+ */
+export declare function mediaDirectBaseFor(app: 'server' | 'hub', currentServerUrl: string | null): string;
 declare global {
     interface Window {
         __PHLIX__?: PhlixAppConfig;

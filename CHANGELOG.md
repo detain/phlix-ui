@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.48.0] - 2026-06-23
+
+### Added
+
+- **Hub media playback over the relay (P3).** A paired server's media now plays
+  from the hub. The player streams the bytes DIRECTLY from the paired server's own
+  public origin (native HTTP Range, multi-GB safe) — the relay proxy intentionally
+  does not route the `/media/:id/stream` byte endpoint; it carries only JSON/browse
+  traffic and small HLS segments. When the direct origin is unreachable, or the
+  file needs transcoding (MKV/HEVC), the player falls back to an on-demand HLS
+  transcode served THROUGH the proxy (same-origin, so hls.js segment fetches work
+  without CORS). New pieces:
+  - `useServerStore` now persists `currentServerUrl` (the paired server's own
+    public origin, its first advertised hostname candidate) under
+    `phlix.currentServerUrl`; `setCurrent(id, name?, url?)` accepts it and My
+    Servers' Browse button passes it.
+  - `mediaDirectBaseFor(app, currentServerUrl)` + the `useMediaDirectBase()`
+    composable + a `mediaDirectBase` provide (computed over `useServerStore`):
+    resolve the server's own origin on the hub (else `''`).
+  - `PlayerPage.streamUrlFor` resolves a signed `/media/:id/stream` path against
+    that direct base on the hub (the server's origin), falling back to the
+    media-api base; transcode/HLS still go over the proxy (`mediaApiBase`).
+  - `Player.onVideoError` now also flips to the transcode-over-proxy fallback on a
+    `<video>` network error (`MEDIA_ERR_NETWORK`) before any playback progress, so
+    a paired server with no reachable public origin still plays via HLS.
+  - `isNetworkMediaError()` helper in `player/playback.ts`.
+
 ## [0.47.0] - 2026-06-23
 
 ### Added

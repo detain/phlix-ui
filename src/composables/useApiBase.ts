@@ -40,3 +40,20 @@ export function useMediaApiBase(): ComputedRef<string> {
   const fallback = inject<InjectedBase>('apiBase', '');
   return computed(() => resolveBase(media) || resolveBase(fallback));
 }
+
+/**
+ * Resolve the base the player streams media BYTES from directly, as a reactive
+ * `ComputedRef<string>`.
+ *
+ * On the hub this is the currently selected server's own public origin (e.g.
+ * `https://server.example`), provided by `createPhlixApp` as a computed over
+ * `useServerStore`; the player prefixes a signed `/media/:id/stream` path with it
+ * so a `<video src>` streams straight from the paired server (native Range) rather
+ * than through the relay proxy, which does not route the byte-stream endpoint.
+ * Resolves to '' on the media server or when no server (or no reachable URL) is
+ * selected — the caller then falls back to {@link useMediaApiBase}.
+ */
+export function useMediaDirectBase(): ComputedRef<string> {
+  const direct = inject<InjectedBase>('mediaDirectBase', undefined);
+  return computed(() => resolveBase(direct));
+}

@@ -119,6 +119,28 @@ export function mediaApiBaseFor(
     return apiBase;
 }
 
+/**
+ * Resolve the base the player streams media BYTES from directly (bypassing the
+ * relay proxy). On the hub this is the selected server's own public origin
+ * (`https://server.example`), so a `<video src>` hits the paired server directly
+ * with native Range support — the relay proxy intentionally does NOT route the
+ * `/media/:id/stream` byte-stream endpoint (it carries only JSON/browse traffic
+ * and small HLS segments). Returns '' on the media server (where the page origin
+ * already serves the bytes) or when no server / no reachable URL is selected, in
+ * which case the caller falls back to {@link mediaApiBaseFor}. The origin is
+ * normalised (trailing slashes trimmed) so concatenating a root-relative signed
+ * path yields a clean URL. Pure for unit testing.
+ */
+export function mediaDirectBaseFor(
+    app: 'server' | 'hub',
+    currentServerUrl: string | null,
+): string {
+    if (app !== 'hub' || currentServerUrl === null || currentServerUrl === '') {
+        return '';
+    }
+    return currentServerUrl.replace(/\/+$/, '');
+}
+
 declare global {
     interface Window {
         __PHLIX__?: PhlixAppConfig;
@@ -308,9 +330,18 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
         mediaApiBaseFor(fullConfig.app, fullConfig.apiBase, serverStore.currentServerId),
     );
 
+    // The base the player streams media BYTES from directly (bypassing the proxy):
+    // on the hub it is the selected server's own public origin, so a `<video>` plays
+    // the paired server's stream straight from the server with native Range; '' on
+    // the media server (the page origin serves the bytes) or with no server selected.
+    const mediaDirectBase = computed(() =>
+        mediaDirectBaseFor(fullConfig.app, serverStore.currentServerUrl),
+    );
+
     const app: VueApp = createApp(PhlixApp);
     app.provide('apiBase', fullConfig.apiBase);
     app.provide('mediaApiBase', mediaApiBase);
+    app.provide('mediaDirectBase', mediaDirectBase);
     app.provide('phlixCommands', fullConfig.commands ?? []);
     app.provide('phlixConfig', fullConfig);
     app.use(pinia);
