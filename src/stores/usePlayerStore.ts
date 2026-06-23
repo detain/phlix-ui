@@ -141,7 +141,12 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     if (opts.streamUrl !== undefined) streamUrl.value = opts.streamUrl;
     if (opts.resetPosition !== false) {
       position.value = 0;
-      duration.value = 0;
+      // Seed the scrubber length from the server's probed total length (seconds)
+      // when known, so it starts at the true total instead of growing as a
+      // transcode/HLS stream loads. With no server duration this is 0 (today's
+      // reset) and updateProgress fills it from the <video> element.
+      duration.value =
+        typeof media.duration === 'number' && isFinite(media.duration) && media.duration > 0 ? media.duration : 0;
       buffered.value = 0;
     }
     setMediaSessionMetadata(media);
@@ -149,7 +154,17 @@ export const usePlayerStore = defineStore('phlix-player', () => {
 
   function updateProgress(pos: number, dur?: number, buf?: number): void {
     position.value = pos;
-    if (dur !== undefined) duration.value = dur;
+    if (dur !== undefined) {
+      if (duration.value > 0) {
+        // A server-probed total is already seeded — only ADOPT the element's
+        // duration if it is finite and LARGER, so the scrubber never shrinks below
+        // the known total while a transcode/HLS stream is still loading.
+        if (isFinite(dur) && dur > duration.value) duration.value = dur;
+      } else {
+        // No seed — keep the original behavior (the element's duration drives it).
+        duration.value = dur;
+      }
+    }
     if (buf !== undefined) buffered.value = buf;
     if (current.value) saveResume(current.value.id, pos, duration.value);
   }

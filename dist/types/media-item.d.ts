@@ -50,6 +50,48 @@ export interface MediaItem {
     overview: string | null;
     actors: string[];
     director: string | null;
+    /**
+     * Total length in SECONDS, probed by the server at scan/transcode. Lets the
+     * player seed the scrubber at the true total up front instead of growing it as
+     * the (transcode/HLS) stream loads. Only the single-item detail shape carries
+     * it (list rows omit it); optional so older servers keep working.
+     */
+    duration?: number | null;
+    /**
+     * Rich cast (detail shape): per-person name + character `role` + optional
+     * `profile_url` headshot. Preferred over the flat `actors` string list for the
+     * avatar credit layout; falls back to `actors` when absent. Detail shape only.
+     */
+    cast?: Array<{
+        name: string;
+        role?: string | null;
+        profile_url?: string | null;
+    }>;
+    /**
+     * Rich crew (detail shape): per-person name + `job` (e.g. Director, Writer) +
+     * optional `profile_url` headshot. Preferred over the flat `director` for the
+     * crew credit layout; falls back to `director` when absent. Detail shape only.
+     */
+    crew?: Array<{
+        name: string;
+        job?: string | null;
+        profile_url?: string | null;
+    }>;
+    /**
+     * Production companies / studios (detail shape): name + optional `logo_url`
+     * and `origin_country`. Rendered as clickable chips that filter the owning
+     * library by company. Detail shape only.
+     */
+    production_companies?: Array<{
+        name: string;
+        logo_url?: string | null;
+        origin_country?: string | null;
+    }>;
+    /**
+     * Single primary studio name (detail shape) — used as a fallback chip when
+     * `production_companies` is absent. Detail shape only.
+     */
+    studio?: string | null;
     created_at: string | null;
     updated_at: string | null;
     /**

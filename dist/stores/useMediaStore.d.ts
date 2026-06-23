@@ -31,6 +31,23 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -58,6 +75,23 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -77,6 +111,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     selectedTypes: import("vue").Ref<MediaType[], MediaType[]>;
     matchStatus: import("vue").Ref<"" | "matched" | "unmatched", "" | "matched" | "unmatched">;
     selectedActors: import("vue").Ref<string[], string[]>;
+    selectedCompanies: import("vue").Ref<string[], string[]>;
     sort: import("vue").Ref<SortField, SortField>;
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
@@ -105,11 +140,12 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setTypes: (v: MediaType[]) => void;
     setMatchStatus: (v: "" | "matched" | "unmatched") => void;
     setActors: (v: string[]) => void;
+    setCompanies: (v: string[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "topLevel" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "matchStatus" | "selectedActors" | "availableRatings" | "availableTypes">, Pick<{
+}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "topLevel" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "matchStatus" | "selectedActors" | "selectedCompanies" | "availableRatings" | "availableTypes">, Pick<{
     items: import("vue").Ref<{
         id: string;
         name: string;
@@ -130,6 +166,23 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -157,6 +210,23 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -176,6 +246,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     selectedTypes: import("vue").Ref<MediaType[], MediaType[]>;
     matchStatus: import("vue").Ref<"" | "matched" | "unmatched", "" | "matched" | "unmatched">;
     selectedActors: import("vue").Ref<string[], string[]>;
+    selectedCompanies: import("vue").Ref<string[], string[]>;
     sort: import("vue").Ref<SortField, SortField>;
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
@@ -204,6 +275,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setTypes: (v: MediaType[]) => void;
     setMatchStatus: (v: "" | "matched" | "unmatched") => void;
     setActors: (v: string[]) => void;
+    setCompanies: (v: string[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
@@ -229,6 +301,23 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -256,6 +345,23 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -275,6 +381,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     selectedTypes: import("vue").Ref<MediaType[], MediaType[]>;
     matchStatus: import("vue").Ref<"" | "matched" | "unmatched", "" | "matched" | "unmatched">;
     selectedActors: import("vue").Ref<string[], string[]>;
+    selectedCompanies: import("vue").Ref<string[], string[]>;
     sort: import("vue").Ref<SortField, SortField>;
     order: import("vue").Ref<SortOrder, SortOrder>;
     limit: import("vue").Ref<number, number>;
@@ -303,8 +410,9 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setTypes: (v: MediaType[]) => void;
     setMatchStatus: (v: "" | "matched" | "unmatched") => void;
     setActors: (v: string[]) => void;
+    setCompanies: (v: string[]) => void;
     setSort: (field: SortField, ord?: SortOrder) => void;
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "ensureRange" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setMatchStatus" | "setActors" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;
+}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "ensureRange" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setMatchStatus" | "setActors" | "setCompanies" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;

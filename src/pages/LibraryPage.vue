@@ -109,6 +109,12 @@ function applyIncomingFilters(): void {
   const a = route.query.actors;
   const actors = Array.isArray(a) ? a.filter((x): x is string => !!x) : a ? [a] : [];
   if (actors.length) store.setActors(actors);
+  const g = route.query.genres;
+  const genres = Array.isArray(g) ? g.filter((x): x is string => !!x) : g ? [g] : [];
+  if (genres.length) store.setGenres(genres);
+  const c = route.query.companies;
+  const companies = Array.isArray(c) ? c.filter((x): x is string => !!x) : c ? [c] : [];
+  if (companies.length) store.setCompanies(companies);
   const m = Array.isArray(route.query.match) ? route.query.match[0] : route.query.match;
   if (m === 'matched' || m === 'unmatched') store.setMatchStatus(m);
 }

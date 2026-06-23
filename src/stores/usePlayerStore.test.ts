@@ -65,6 +65,55 @@ describe('usePlayerStore — transport + seeding', () => {
     expect(p.muted).toBe(true);
   });
 
+  it('setCurrent seeds duration from the server-probed media.duration (seconds)', () => {
+    const p = usePlayerStore();
+    p.setCurrent(media('seed', { duration: 7200 }));
+    expect(p.duration).toBe(7200);
+  });
+
+  it('setCurrent resets duration to 0 when media.duration is absent/invalid', () => {
+    const p = usePlayerStore();
+    p.duration = 999;
+    p.setCurrent(media('a', { duration: null }));
+    expect(p.duration).toBe(0);
+    p.duration = 999;
+    p.setCurrent(media('b', { duration: 0 }));
+    expect(p.duration).toBe(0);
+    p.duration = 999;
+    p.setCurrent(media('c', { duration: Infinity }));
+    expect(p.duration).toBe(0);
+  });
+
+  it('updateProgress never shrinks a seeded duration but adopts a larger element duration', () => {
+    const p = usePlayerStore();
+    p.setCurrent(media('seed', { duration: 7200 }));
+    // a small/growing element duration (transcode/HLS still loading) must not shrink it
+    p.updateProgress(10, 30);
+    expect(p.duration).toBe(7200);
+    // an element duration LARGER than the seed is adopted (probe was an underestimate)
+    p.updateProgress(20, 7300);
+    expect(p.duration).toBe(7300);
+    // a non-finite element duration is ignored
+    p.updateProgress(30, Infinity);
+    expect(p.duration).toBe(7300);
+  });
+
+  it('updateProgress without a seed adopts the first element duration (no shrink below 0)', () => {
+    const p = usePlayerStore();
+    p.setCurrent(media('noseed', { duration: null }));
+    expect(p.duration).toBe(0);
+    // with no seed the FIRST element duration is adopted as-is (original behavior)
+    p.updateProgress(5, 30);
+    expect(p.duration).toBe(30);
+    // thereafter a known length is never shrunk by a smaller element duration
+    // (the same no-shrink guard now protects an element-derived total too)
+    p.updateProgress(6, 25);
+    expect(p.duration).toBe(30);
+    // but a larger element duration is still adopted
+    p.updateProgress(7, 35);
+    expect(p.duration).toBe(35);
+  });
+
   it('progress + play/pause flags', () => {
     const p = usePlayerStore();
     p.updateProgress(30, 120);

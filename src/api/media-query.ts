@@ -28,6 +28,7 @@ export function buildMediaQuery(params: Partial<LibraryQueryParams> = {}): strin
   params.ratings?.forEach((r) => sp.append('ratings[]', r));
   params.types?.forEach((t) => sp.append('types[]', t));
   params.actors?.forEach((a) => sp.append('actors[]', a));
+  params.companies?.forEach((c) => sp.append('companies[]', c));
   if (params.match) sp.set('match', params.match);
   if (params.sort) sp.set('sort', params.sort);
   if (params.order) sp.set('order', params.order);

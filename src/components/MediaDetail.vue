@@ -39,8 +39,13 @@ const emit = defineEmits<{
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
   (e: 'match', item: MediaItem): void;
-  /** A cast member was clicked — host navigates to the actor-filtered listing. */
+  /** A cast/crew member was clicked — host navigates to the person-filtered listing. */
   (e: 'actor', name: string): void;
+  /** A genre chip was clicked — host navigates to the genre-filtered listing. */
+  (e: 'genre', name: string): void;
+  /** A production-company / studio chip was clicked — host navigates to the
+   *  company-filtered listing. */
+  (e: 'company', name: string): void;
   (e: 'back'): void;
 }>();
 
@@ -48,7 +53,58 @@ const fallbackIcon = computed(() =>
   props.item.type === 'audio' ? 'music' : props.item.type === 'image' ? 'image' : props.item.type === 'series' ? 'tv' : 'film',
 );
 
-const cast = computed(() => props.item.actors?.slice(0, 8) ?? []);
+/** A credited person (cast or crew) for the avatar layout. */
+interface Person {
+  name: string;
+  /** Character (cast) or job (crew) sub-label; null when unknown. */
+  sub: string | null;
+  profileUrl: string | null;
+}
+
+/**
+ * Cast for the avatar layout — prefer the rich `item.cast` objects (≤12), else
+ * fall back to mapping the flat `item.actors` names (older servers / list-shape).
+ */
+const cast = computed<Person[]>(() => {
+  const rich = props.item.cast;
+  if (rich?.length) {
+    return rich.slice(0, 12).map((c) => ({ name: c.name, sub: c.role ?? null, profileUrl: c.profile_url ?? null }));
+  }
+  return (props.item.actors ?? []).slice(0, 12).map((name) => ({ name, sub: null, profileUrl: null }));
+});
+
+/**
+ * Key crew for the avatar layout — prefer the rich `item.crew` objects (≤8), else
+ * fall back to the flat `item.director` as a single "Director" entry.
+ */
+const crew = computed<Person[]>(() => {
+  const rich = props.item.crew;
+  if (rich?.length) {
+    return rich.slice(0, 8).map((c) => ({ name: c.name, sub: c.job ?? null, profileUrl: c.profile_url ?? null }));
+  }
+  if (props.item.director) return [{ name: props.item.director, sub: 'Director', profileUrl: null }];
+  return [];
+});
+
+/**
+ * Production companies / studios as clickable chips — prefer the rich
+ * `item.production_companies` (name + optional logo), else a single chip for the
+ * flat `item.studio` when that's all the server sent.
+ */
+const companies = computed<Array<{ name: string; logoUrl: string | null }>>(() => {
+  const rich = props.item.production_companies;
+  if (rich?.length) return rich.map((c) => ({ name: c.name, logoUrl: c.logo_url ?? null }));
+  if (props.item.studio) return [{ name: props.item.studio, logoUrl: null }];
+  return [];
+});
+
+/** 1–2 letter initials for an avatar fallback when there's no profile photo. */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 /** Format the resume seconds as h:mm:ss / m:ss for the Resume label. */
 const resumeLabel = computed(() => {
@@ -112,7 +168,42 @@ onMounted(() => {
         </div>
 
         <div v-if="item.genres?.length" class="media-detail__genres">
-          <Chip v-for="g in item.genres" :key="g" size="sm">{{ g }}</Chip>
+          <button
+            v-for="g in item.genres"
+            :key="g"
+            type="button"
+            class="media-detail__genre"
+            :aria-label="`Show ${g} titles`"
+            @click="emit('genre', g)"
+          >
+            <Chip size="sm">{{ g }}</Chip>
+          </button>
+        </div>
+
+        <div v-if="companies.length" class="media-detail__companies">
+          <span class="media-detail__companies-label">Studios</span>
+          <div class="media-detail__company-list">
+            <button
+              v-for="c in companies"
+              :key="c.name"
+              type="button"
+              class="media-detail__company"
+              :aria-label="`Show ${c.name} titles`"
+              @click="emit('company', c.name)"
+            >
+              <Chip size="sm">
+                <img
+                  v-if="c.logoUrl"
+                  class="media-detail__company-logo"
+                  :src="c.logoUrl"
+                  :alt="c.name"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span>{{ c.name }}</span>
+              </Chip>
+            </button>
+          </div>
         </div>
 
         <p class="media-detail__overview">{{ item.overview || 'No overview available.' }}</p>
@@ -126,27 +217,63 @@ onMounted(() => {
           <Button v-if="canMatch" variant="ghost" left-icon="search" @click="emit('match', item)">Match metadata</Button>
         </div>
 
-        <dl v-if="item.director || cast.length" class="media-detail__credits">
-          <div v-if="item.director" class="media-detail__credit">
-            <dt>Director</dt>
-            <dd>{{ item.director }}</dd>
-          </div>
-          <div v-if="cast.length" class="media-detail__credit">
-            <dt>Cast</dt>
-            <dd class="media-detail__cast">
-              <button
-                v-for="a in cast"
-                :key="a"
-                type="button"
-                class="media-detail__actor"
-                :aria-label="`Show titles with ${a}`"
-                @click="emit('actor', a)"
-              >
-                <Chip size="sm" icon="user">{{ a }}</Chip>
-              </button>
-            </dd>
-          </div>
-        </dl>
+        <div v-if="crew.length || cast.length" class="media-detail__credits">
+          <section v-if="crew.length" class="media-detail__credit-group">
+            <h2 class="media-detail__credit-heading">Crew</h2>
+            <ul class="media-detail__people">
+              <li v-for="(p, i) in crew" :key="`crew-${i}-${p.name}`">
+                <button
+                  type="button"
+                  class="media-detail__person"
+                  :aria-label="`Show titles with ${p.name}`"
+                  @click="emit('actor', p.name)"
+                >
+                  <span class="media-detail__avatar">
+                    <img
+                      v-if="p.profileUrl"
+                      class="media-detail__avatar-img"
+                      :src="p.profileUrl"
+                      :alt="p.name"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <span v-else class="media-detail__avatar-initials" aria-hidden="true">{{ initials(p.name) }}</span>
+                  </span>
+                  <span class="media-detail__person-name">{{ p.name }}</span>
+                  <span v-if="p.sub" class="media-detail__person-sub">{{ p.sub }}</span>
+                </button>
+              </li>
+            </ul>
+          </section>
+
+          <section v-if="cast.length" class="media-detail__credit-group">
+            <h2 class="media-detail__credit-heading">Cast</h2>
+            <ul class="media-detail__people">
+              <li v-for="(p, i) in cast" :key="`cast-${i}-${p.name}`">
+                <button
+                  type="button"
+                  class="media-detail__person"
+                  :aria-label="`Show titles with ${p.name}`"
+                  @click="emit('actor', p.name)"
+                >
+                  <span class="media-detail__avatar">
+                    <img
+                      v-if="p.profileUrl"
+                      class="media-detail__avatar-img"
+                      :src="p.profileUrl"
+                      :alt="p.name"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <span v-else class="media-detail__avatar-initials" aria-hidden="true">{{ initials(p.name) }}</span>
+                  </span>
+                  <span class="media-detail__person-name">{{ p.name }}</span>
+                  <span v-if="p.sub" class="media-detail__person-sub">{{ p.sub }}</span>
+                </button>
+              </li>
+            </ul>
+          </section>
+        </div>
       </div>
     </div>
 
@@ -271,7 +398,65 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+/* Each genre is a button that filters the listing by that genre. */
+.media-detail__genre {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+.media-detail__genre:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.media-detail__genre:hover :deep(.phlix-chip) {
+  border-color: var(--accent-ring);
+  color: var(--text);
+}
+
+.media-detail__companies {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
   margin-bottom: var(--space-5);
+}
+.media-detail__companies-label {
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.media-detail__company-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.media-detail__company {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+.media-detail__company:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.media-detail__company:hover :deep(.phlix-chip) {
+  border-color: var(--accent-ring);
+  color: var(--text);
+}
+.media-detail__company-logo {
+  height: 1.1em;
+  max-width: 4em;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .media-detail__overview {
@@ -296,47 +481,90 @@ onMounted(() => {
 .media-detail__credits {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-5);
   margin: 0;
 }
-.media-detail__credit {
+.media-detail__credit-group {
   display: flex;
+  flex-direction: column;
   gap: var(--space-3);
-  align-items: baseline;
 }
-.media-detail__credit dt {
-  flex: 0 0 4.5rem;
+.media-detail__credit-heading {
   color: var(--text-subtle);
   font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
 }
-.media-detail__credit dd {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--text-sm);
-}
-.media-detail__cast {
+.media-detail__people {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-}
-/* Each cast name is a button that filters the listing by that actor. */
-.media-detail__actor {
-  display: inline-flex;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
   padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  border-radius: var(--radius-full);
 }
-.media-detail__actor:focus-visible {
+/* Each person is a button that filters the listing by their name. */
+.media-detail__person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 5.5rem;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.media-detail__person:hover {
+  background: var(--surface-2);
+}
+.media-detail__person:hover .media-detail__person-name {
+  color: var(--text);
+}
+.media-detail__person:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
-.media-detail__actor:hover :deep(.chip) {
-  border-color: var(--accent);
-  color: var(--text);
+.media-detail__avatar {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.media-detail__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.media-detail__avatar-initials {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  letter-spacing: var(--tracking-tight);
+}
+.media-detail__person-name {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  line-height: var(--leading-tight, 1.2);
+}
+.media-detail__person-sub {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  line-height: var(--leading-tight, 1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .media-detail__person {
+    transition: none;
+  }
 }
 
 .media-detail__similar {

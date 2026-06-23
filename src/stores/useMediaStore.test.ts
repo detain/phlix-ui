@@ -236,6 +236,26 @@ describe('useMediaStore — URL sync', () => {
     expect(s2.queryParams.match).toBe('matched');
   });
 
+  it('round-trips companies through setCompanies/queryParams/toQuery/applyQuery and the URL', async () => {
+    const s = useMediaStore();
+    s.setCompanies(['Legendary']);
+    expect(s.selectedCompanies).toEqual(['Legendary']);
+    expect(s.queryParams.companies).toEqual(['Legendary']);
+    const q = s.toQuery();
+    expect(q.companies).toEqual(['Legendary']);
+
+    setActivePinia(createPinia());
+    const s2 = useMediaStore();
+    s2.applyQuery({ companies: 'A24' });
+    expect(s2.selectedCompanies).toEqual(['A24']);
+    expect(s2.queryParams.companies).toEqual(['A24']);
+
+    // and it reaches the request URL as `companies[]=`
+    await s2.fetchMedia('');
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toMatch(/companies(\[\]|%5B%5D)=A24/);
+  });
+
   it('ignores an invalid match value', () => {
     const s = useMediaStore();
     s.applyQuery({ match: 'bogus' });

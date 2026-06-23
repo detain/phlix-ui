@@ -43,6 +43,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -70,6 +87,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -99,6 +133,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -126,6 +177,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -195,6 +263,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -222,6 +307,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -251,6 +353,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -278,6 +397,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -347,6 +483,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -374,6 +527,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -403,6 +573,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
@@ -430,6 +617,23 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         overview: string | null;
         actors: string[];
         director: string | null;
+        duration?: number | null | undefined;
+        cast?: {
+            name: string;
+            role?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        crew?: {
+            name: string;
+            job?: string | null | undefined;
+            profile_url?: string | null | undefined;
+        }[] | undefined;
+        production_companies?: {
+            name: string;
+            logo_url?: string | null | undefined;
+            origin_country?: string | null | undefined;
+        }[] | undefined;
+        studio?: string | null | undefined;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
