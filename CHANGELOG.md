@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.46.0] - 2026-06-23
+
+### Added
+
+- `PhlixAppConfig.home` — the path login/signup land on and the brand link target.
+  Defaults to `routerBase`. Lets the hub land on its servers list instead of the
+  media-server Browse page.
+- `features.resumeSync` flag gating the shell's cross-device continue-watching fetch
+  (`GET /api/v1/users/me/continue-watching`). Defaults on for `app: 'server'`, off
+  for `app: 'hub'` (the endpoint is a media-server surface and 404s on the hub).
+
+### Fixed
+
+- The hub no longer renders the media-server Browse page on login (which fired
+  `/api/v1/libraries` + continue-watching against the hub and 404'd). It now lands on
+  its configured `home` and skips the server-only resume sync.
+
 ## [0.45.0] - 2026-06-22
 
 ### Added

@@ -1,15 +1,15 @@
 import { r as e } from "./AuthField-n1LgzcyM.js";
 import { n as t } from "./Icon-ax5k7_G2.js";
 import { a as n } from "./usePreferencesStore-DkTu9l9P.js";
-import { t as r } from "./LoginForm-_TI2yKSK.js";
+import { t as r } from "./SignupForm-jTnWBBlx.js";
 import { createCommentVNode as i, createElementBlock as a, createElementVNode as o, createSlots as s, createVNode as c, defineComponent as l, openBlock as u, renderSlot as d, unref as f, withCtx as p } from "vue";
-//#region src/pages/LoginPage.vue?vue&type=script&setup=true&lang.ts
+//#region src/pages/SignupPage.vue?vue&type=script&setup=true&lang.ts
 var m = { class: "auth-page" }, h = {
 	key: 0,
 	class: "auth-page__glow",
 	"aria-hidden": "true"
 }, g = { class: "auth-page__center" }, _ = /*#__PURE__*/ t(/* @__PURE__ */ l({
-	__name: "LoginPage",
+	__name: "SignupPage",
 	setup(t) {
 		let l = n();
 		return (t, n) => (u(), a("div", m, [
@@ -26,8 +26,8 @@ var m = { class: "auth-page" }, h = {
 			} : void 0]), 1024)])
 		]));
 	}
-}), [["__scopeId", "data-v-bd363f07"]]);
+}), [["__scopeId", "data-v-b98af69c"]]);
 //#endregion
 export { _ as default };
 
-//# sourceMappingURL=LoginPage-rPzAEdbf.js.map
+//# sourceMappingURL=SignupPage-Ds7xf01u.js.map

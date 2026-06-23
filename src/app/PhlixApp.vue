@@ -127,9 +127,16 @@ const auth = useAuthStore();
 // Cross-device resume: once authenticated, pull the user's server-side resume
 // positions and merge them into the local map (best-effort), so a title paused on
 // another device offers to resume here. `immediate` covers an already-signed-in
-// load; the watch re-runs it on a later login.
+// load; the watch re-runs it on a later login. Gated by the `resumeSync` feature
+// (default: on for the media server, off for the hub) — the continue-watching
+// endpoint is a media-server surface, so firing it on the hub only 404s.
+const resumeSyncEnabled = config?.features?.resumeSync ?? (config?.app !== 'hub');
 const { syncResume } = useResumeSync();
-watch(() => auth.isLoggedIn, (loggedIn) => { if (loggedIn) void syncResume(); }, { immediate: true });
+watch(
+    () => auth.isLoggedIn,
+    (loggedIn) => { if (loggedIn && resumeSyncEnabled) void syncResume(); },
+    { immediate: true },
+);
 
 // Write path: report THIS device's playback position back to the server (throttled,
 // best-effort) so resume syncs cross-device. Mounted once here — it watches the
@@ -143,7 +150,7 @@ const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');
 const menu = computed<MenuItem[]>(() =>
     (config?.menu ?? []).filter((item) => !item.requiresAdmin || auth.isAdmin),
 );
-const homePath = computed(() => config?.routerBase ?? '/app');
+const homePath = computed(() => config?.home ?? config?.routerBase ?? '/app');
 
 // When a menu item opts into `libraryLinks` (the media server's "Browse"), load
 // the library list once authenticated so the nav can render a link per library.

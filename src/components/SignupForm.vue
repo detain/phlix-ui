@@ -26,8 +26,8 @@ const router = useRouter();
 const { t } = useMessages();
 
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
-const homePath = computed(() => config?.routerBase ?? '/app');
-const loginPath = computed(() => `${homePath.value}/login`);
+const homePath = computed(() => config?.home ?? config?.routerBase ?? '/app');
+const loginPath = computed(() => `${config?.routerBase ?? '/app'}/login`);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

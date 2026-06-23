@@ -85,6 +85,16 @@ describe('LoginForm', () => {
     expect(push).toHaveBeenCalledWith('/app');
   });
 
+  it('routes to the configured home on success (hub lands on /app/servers, not Browse)', async () => {
+    const { w, auth, push } = mountForm({ config: { app: 'hub', home: '/app/servers' } });
+    vi.spyOn(auth, 'login').mockResolvedValue(true);
+    await setIdentifier(w, 'a@b.c');
+    await setPassword(w, 'pw');
+    await submit(w);
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith('/app/servers');
+  });
+
   it('shows an error banner + fires a toast when login fails', async () => {
     const { w, auth, toasts } = mountForm();
     const toastErr = vi.spyOn(toasts, 'error');

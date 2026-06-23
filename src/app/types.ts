@@ -61,8 +61,18 @@ export interface PhlixAppConfig {
      *  from the API host), and a same-origin host is skipped (nothing to warm). */
     imageOrigin?: string;
     routerBase?: string;
+    /** Path the app treats as "home": where login/signup land, where the brand
+     *  link points, and where a logged-in non-admin is bounced from an admin-only
+     *  route. Defaults to `routerBase` (the media server's Browse home). The hub
+     *  sets it to its servers list (`/app/servers`) so it never lands on the
+     *  media-server Browse page (which calls server-only endpoints). */
+    home?: string;
     menu?: MenuItem[];
     extraRoutes?: RouteRecordRaw[];
+    /** Feature flags. Recognized keys include `resumeSync` — whether the shell
+     *  pulls cross-device continue-watching (`GET /api/v1/users/me/continue-watching`)
+     *  on login. Defaults to true on the media server, false on the hub (which has
+     *  no such endpoint until inline browsing is scoped to a selected server). */
     features?: Record<string, boolean>;
     /** App-injected ⌘K command-palette commands (R1.4). Registered alongside the
      *  built-ins by `createPhlixApp` (provided under the `phlixCommands` key). */

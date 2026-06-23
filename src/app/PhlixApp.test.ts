@@ -255,6 +255,34 @@ describe('PhlixApp — dynamic library nav (libraryLinks)', () => {
   });
 });
 
+describe('PhlixApp — resume sync gating', () => {
+  it('does NOT fetch continue-watching on the hub (server-only endpoint)', async () => {
+    localStorage.setItem('access_token', 'tok'); // isLoggedIn = token presence
+    const fetchMock = vi.fn((_url: unknown) => Promise.resolve(jsonResponse({})));
+    vi.stubGlobal('fetch', fetchMock);
+
+    wrapper = await mountApp({ app: 'hub', apiBase: '', routerBase: '/app', home: '/app/servers' });
+    await flushPromises();
+
+    expect(
+      fetchMock.mock.calls.some(([u]) => String(u).includes('/users/me/continue-watching')),
+    ).toBe(false);
+  });
+
+  it('DOES fetch continue-watching on the media server', async () => {
+    localStorage.setItem('access_token', 'tok');
+    const fetchMock = vi.fn((_url: unknown) => Promise.resolve(jsonResponse({ items: [] })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await flushPromises();
+
+    expect(
+      fetchMock.mock.calls.some(([u]) => String(u).includes('/users/me/continue-watching')),
+    ).toBe(true);
+  });
+});
+
 describe('PhlixApp — command palette trigger', () => {
   it('the ⌘K button opens the command palette', async () => {
     wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });

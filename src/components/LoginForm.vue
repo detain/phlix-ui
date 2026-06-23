@@ -26,8 +26,8 @@ const router = useRouter();
 const { t } = useMessages();
 
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
-const homePath = computed(() => config?.routerBase ?? '/app');
-const signupPath = computed(() => `${homePath.value}/signup`);
+const homePath = computed(() => config?.home ?? config?.routerBase ?? '/app');
+const signupPath = computed(() => `${config?.routerBase ?? '/app'}/signup`);
 
 // The identifier may be a username OR an email — the store sends it under both
 // keys and the back ends resolve either, so there's no email-format gate here.
