@@ -15,17 +15,17 @@ import { t as Se } from "./Slider-BMn_Lp_q.js";
 import { t as Ce } from "./Switch-CFZhdkXR.js";
 import { t as we } from "./Chip-2HcSZF4a.js";
 import { t as Te } from "./Select-DLwgQInL.js";
-import { i as Ee, n as De, r as Oe, t as ke } from "./FilterBar-C7Mg2CUL.js";
+import { i as Ee, n as De, r as Oe, t as ke } from "./FilterBar-BQ7ML2K2.js";
 import { t as Ae } from "./Modal-I4tEFhoH.js";
 import { t as C } from "./useToastStore-BDoKlU6N.js";
 import { t as w } from "./Skeleton-DkSoWF3C.js";
-import { i as je, n as Me, r as Ne, t as Pe } from "./MetadataMatchModal-hIdpcmqb.js";
+import { i as je, n as Me, r as Ne, t as Pe } from "./MetadataMatchModal-zcWQDvkg.js";
 import { t as T } from "./EmptyState-B2QnGIQT.js";
 import { t as Fe } from "./Tabs-x8dUKZN5.js";
-import { t as Ie } from "./MediaRow-BrjSpOQn.js";
+import { t as Ie } from "./MediaRow-D3z3ulPs.js";
 import { a as Le, i as Re, n as ze, t as Be } from "./useApiBase-DHZp4E4v.js";
-import { t as Ve } from "./HomeRow-IyEjcWNc.js";
-import { t as He } from "./MediaDetail-BMjyMhso.js";
+import { t as Ve } from "./HomeRow-CoxvNEFr.js";
+import { t as He } from "./MediaDetail-BzziP6a3.js";
 import { n as Ue, t as We } from "./logs-DadTfaTq.js";
 import { t as Ge } from "./dashboard-BTCOCTHQ.js";
 import { n as Ke, r as qe, t as Je } from "./users-UPfbrkL3.js";
@@ -955,12 +955,12 @@ function Ki(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-SGzqsOfg.js")
+			component: () => import("./BrowsePage-a-PuChhQ.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-BLTOqSKY.js")
+			component: () => import("./MediaDetailPage-CPcmoBYE.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -970,7 +970,7 @@ function Ki(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CWxD0kMy.js")
+			component: () => import("./LibraryPage-Bx4ZrTgd.js")
 		},
 		{
 			path: `${t}/player/:id`,

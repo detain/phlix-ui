@@ -168,7 +168,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             type="button"
             class="media-card__iconbtn media-card__iconbtn--play"
             aria-label="Play"
-            @click="emit('play', item)"
+            @click.stop.prevent="emit('play', item)"
           >
             <Icon name="play" />
           </button>
@@ -176,7 +176,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             type="button"
             class="media-card__iconbtn"
             aria-label="Add to watchlist"
-            @click="emit('watchlist', item)"
+            @click.stop.prevent="emit('watchlist', item)"
           >
             <Icon name="bookmark-plus" />
           </button>
@@ -184,7 +184,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             type="button"
             class="media-card__iconbtn"
             aria-label="More info"
-            @click="emit('info', item)"
+            @click.stop.prevent="emit('info', item)"
           >
             <Icon name="info" />
           </button>
@@ -193,7 +193,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             type="button"
             class="media-card__iconbtn"
             aria-label="Match metadata"
-            @click="emit('match', item)"
+            @click.stop.prevent="emit('match', item)"
           >
             <Icon name="search" />
           </button>
@@ -451,6 +451,22 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 .media-card:hover .media-card__actions,
 .media-card:focus-within .media-card__actions {
   pointer-events: auto;
+}
+
+/* Touch devices have no hover, so the overlay never reveals and a first tap on
+   the Play button used to fall straight through to the stretched info link
+   (`.media-card__link`) — the user saw "the play button just opens the info
+   page". On coarse pointers, surface the overlay + arm the quick-actions so a
+   single tap on Play starts playback directly. Hover-capable pointers keep the
+   reveal-on-hover behaviour above. */
+@media (hover: none) {
+  .media-card__overlay {
+    opacity: 1;
+    transform: none;
+  }
+  .media-card__actions {
+    pointer-events: auto;
+  }
 }
 .media-card__iconbtn {
   width: 40px;
