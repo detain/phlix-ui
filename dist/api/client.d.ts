@@ -23,7 +23,19 @@ export interface ApiClientOptions {
     fetchImpl?: typeof fetch;
     /** Per-request timeout in ms before aborting with a `TimeoutError` (default 15000). */
     timeoutMs?: number;
+    /** Extra headers merged into every request from THIS instance (e.g. native-device
+     *  identity headers). `Content-Type`/`Authorization` always win; a falsy/empty
+     *  value is omitted rather than sent as an empty header. */
+    headers?: Record<string, string>;
 }
+/**
+ * Set the headers merged into EVERY `ApiClient` request (e.g. native-device
+ * identity). Replaces any previously-set defaults. Falsy/empty values are
+ * dropped. Call once early at app boot, before any client is constructed.
+ */
+export declare function setDefaultApiHeaders(headers: Record<string, string>): void;
+/** The current default headers (a copy; mainly for tests/debug). */
+export declare function getDefaultApiHeaders(): Record<string, string>;
 export declare function normalizeBool(value: unknown): boolean;
 /** TMDB match type — series/season/episode resolve as `tv`, everything else `movie`. */
 export type MatchType = 'tv' | 'movie';
@@ -93,6 +105,7 @@ export declare class ApiClient {
     private readonly tokens;
     private readonly doFetch;
     private readonly timeoutMs;
+    private readonly instanceHeaders;
     constructor(options?: ApiClientOptions);
     request<T = unknown>(method: string, endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
     private handleResponse;

@@ -58,6 +58,45 @@ export interface ApiClientOptions {
     fetchImpl?: typeof fetch;
     /** Per-request timeout in ms before aborting with a `TimeoutError` (default 15000). */
     timeoutMs?: number;
+    /** Extra headers merged into every request from THIS instance (e.g. native-device
+     *  identity headers). `Content-Type`/`Authorization` always win; a falsy/empty
+     *  value is omitted rather than sent as an empty header. */
+    headers?: Record<string, string>;
+}
+
+/**
+ * Headers merged into EVERY {@link ApiClient} request, set once at app boot
+ * (e.g. the native-client device headers `X-Phlix-Device-*` / `X-Phlix-Session-ID`).
+ * Module-level so the ~30 `new ApiClient(...)` call sites need no change — every
+ * client constructed AFTER {@link setDefaultApiHeaders} picks these up. Falsy/empty
+ * values are dropped on set so a not-yet-known header (e.g. an empty session id)
+ * never emits a broken empty header.
+ */
+let defaultHeaders: Record<string, string> = {};
+
+/** Drop falsy/empty-string header values so they never emit a broken empty header. */
+function pruneHeaders(headers: Record<string, string>): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const [key, value] of Object.entries(headers)) {
+        if (value) {
+            out[key] = value;
+        }
+    }
+    return out;
+}
+
+/**
+ * Set the headers merged into EVERY `ApiClient` request (e.g. native-device
+ * identity). Replaces any previously-set defaults. Falsy/empty values are
+ * dropped. Call once early at app boot, before any client is constructed.
+ */
+export function setDefaultApiHeaders(headers: Record<string, string>): void {
+    defaultHeaders = pruneHeaders(headers);
+}
+
+/** The current default headers (a copy; mainly for tests/debug). */
+export function getDefaultApiHeaders(): Record<string, string> {
+    return { ...defaultHeaders };
 }
 
 export function normalizeBool(value: unknown): boolean {
@@ -148,12 +187,14 @@ export class ApiClient {
     private readonly tokens: TokenStore;
     private readonly doFetch: typeof fetch;
     private readonly timeoutMs: number;
+    private readonly instanceHeaders: Record<string, string>;
 
     constructor(options: ApiClientOptions = {}) {
         this.baseUrl = options.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
         this.tokens = options.tokenStore ?? defaultTokenStore();
         this.doFetch = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
         this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+        this.instanceHeaders = pruneHeaders(options.headers ?? {});
     }
 
     async request<T = unknown>(
@@ -163,7 +204,13 @@ export class ApiClient {
         signal?: AbortSignal,
     ): Promise<T> {
         const build = (effectiveSignal: AbortSignal): RequestInit => {
+            // Merge order: module defaults (device headers) < this instance's
+            // headers < the fixed Content-Type — so Content-Type/Authorization
+            // always win and a consumer header can never clobber them. `defaultHeaders`
+            // and `instanceHeaders` are pre-pruned of falsy/empty values.
             const headers: Record<string, string> = {
+                ...defaultHeaders,
+                ...this.instanceHeaders,
                 'Content-Type': 'application/json',
             };
             const token = this.tokens.getAccessToken();
