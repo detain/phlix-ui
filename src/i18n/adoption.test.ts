@@ -21,7 +21,6 @@ function mountWith(
   props: Record<string, unknown>,
   config: Partial<PhlixAppConfig> | null,
 ): VueWrapper {
-   
   const w = mount(component as any, {
     props,
     global: { provide: { phlixConfig: config } },
