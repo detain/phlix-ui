@@ -4,7 +4,13 @@ export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow } from './app/ty
 export { default as PhlixApp } from './app/PhlixApp.vue';
 export { default as AppLayout } from './app/AppLayout.vue';
 
-export { ApiClient, isTmdbUnconfigured, TMDB_UNCONFIGURED_CODE } from './api/client';
+export {
+  ApiClient,
+  isTmdbUnconfigured,
+  TMDB_UNCONFIGURED_CODE,
+  setDefaultApiHeaders,
+  getDefaultApiHeaders,
+} from './api/client';
 export { LocalStorageTokenStore } from './api/tokenStore';
 export type { TokenStore, AuthUser } from './api/client';
 export type {

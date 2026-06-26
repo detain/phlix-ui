@@ -17,6 +17,7 @@ import Placeholder from './placeholder/Placeholder.vue';
 // pages); a static re-export would re-merge them into the main chunk and defeat the
 // split (Rollup's INEFFECTIVE_DYNAMIC_IMPORT warning).
 import { computed } from 'vue';
+import { setDefaultApiHeaders } from '../api/client';
 import { applyStoredThemeEarly } from '../composables/useTheme';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -158,6 +159,7 @@ function readConfig(): PhlixAppConfig {
         menu: [],
         extraRoutes: [],
         features: {},
+        deviceHeaders: {},
     };
 }
 
@@ -249,6 +251,12 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
         ...readConfig(),
         ...config,
     };
+
+    // Register the per-app device-identity headers (X-Phlix-Device-*) into the
+    // shared ApiClient default-headers registry BEFORE any store/component
+    // constructs a client — so every request (incl. the boot-time auth.init())
+    // carries them. Native clients (Windows/Tizen) pass these via deviceHeaders.
+    setDefaultApiHeaders(fullConfig.deviceHeaders ?? {});
 
     // Set <html> theme/density/accent from persisted prefs before mount → no flash.
     // First-time visitors get the app's defaultTheme; a stored choice always wins.

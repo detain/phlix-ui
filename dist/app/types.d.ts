@@ -85,4 +85,9 @@ export interface PhlixAppConfig {
      *  fall back to the English defaults. Omit entirely for the default English UI.
      *  Resolve strings in components via `useMessages().t('group.key')`. */
     messages?: PhlixMessagesConfig;
+    /** Extra headers sent on every API request — e.g. native-device identity
+     *  (`X-Phlix-Device-ID` / `X-Phlix-Device-Name` / `X-Phlix-Device-Type` /
+     *  `X-Phlix-Session-ID`). Registered once at boot via `setDefaultApiHeaders`,
+     *  so the Windows/Tizen apps (built on `createPhlixApp`) identify as devices. */
+    deviceHeaders?: Record<string, string>;
 }

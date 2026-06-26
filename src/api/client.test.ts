@@ -1,5 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
-import { ApiClient, ApiError, isTmdbUnconfigured } from './client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+    ApiClient,
+    ApiError,
+    isTmdbUnconfigured,
+    setDefaultApiHeaders,
+    getDefaultApiHeaders,
+} from './client';
 import { NetworkError, TimeoutError } from './errors';
 import { MemoryTokenStore, makeFetch } from './test/memoryTokenStore';
 
@@ -82,6 +88,98 @@ describe('ApiClient', () => {
         expect(calls[2]!.init!.body).toBe(JSON.stringify({ c: 3 }));
         expect(calls[3]!.init!.body).toBeUndefined();
         expect(calls[4]!.init!.body).toBeUndefined();
+    });
+
+    describe('custom headers', () => {
+        // Reset the module-level default-headers registry so state never leaks
+        // between tests (or into the rest of the suite).
+        afterEach(() => {
+            setDefaultApiHeaders({});
+        });
+
+        it('sends per-instance headers on every request', async () => {
+            const { fetch, calls } = makeFetch([{ status: 200, body: {} }]);
+            const client = new ApiClient({
+                baseUrl: '',
+                tokenStore: new MemoryTokenStore(),
+                fetchImpl: fetch,
+                headers: { 'X-Phlix-Device-ID': 'dev-1', 'X-Phlix-Device-Type': 'tizen' },
+            });
+
+            await client.get('/x');
+
+            const headers = (calls[0]!.init!.headers ?? {}) as Record<string, string>;
+            expect(headers['X-Phlix-Device-ID']).toBe('dev-1');
+            expect(headers['X-Phlix-Device-Type']).toBe('tizen');
+        });
+
+        it('sends setDefaultApiHeaders headers on a client constructed AFTER the call', async () => {
+            setDefaultApiHeaders({ 'X-Phlix-Device-ID': 'dev-default', 'X-Phlix-Session-ID': 'sess-1' });
+            expect(getDefaultApiHeaders()).toEqual({
+                'X-Phlix-Device-ID': 'dev-default',
+                'X-Phlix-Session-ID': 'sess-1',
+            });
+
+            const { fetch, calls } = makeFetch([{ status: 200, body: {} }]);
+            const client = new ApiClient({ baseUrl: '', tokenStore: new MemoryTokenStore(), fetchImpl: fetch });
+
+            await client.get('/x');
+
+            const headers = (calls[0]!.init!.headers ?? {}) as Record<string, string>;
+            expect(headers['X-Phlix-Device-ID']).toBe('dev-default');
+            expect(headers['X-Phlix-Session-ID']).toBe('sess-1');
+        });
+
+        it('never lets default/instance headers override Content-Type or Authorization', async () => {
+            setDefaultApiHeaders({ 'Content-Type': 'text/evil', Authorization: 'Bearer hijack' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: {} }]);
+            const client = new ApiClient({
+                baseUrl: '',
+                tokenStore: new MemoryTokenStore({ access: 'real-token' }),
+                fetchImpl: fetch,
+                headers: { 'Content-Type': 'text/also-evil', Authorization: 'Bearer also-hijack' },
+            });
+
+            await client.get('/x');
+
+            const headers = (calls[0]!.init!.headers ?? {}) as Record<string, string>;
+            expect(headers['Content-Type']).toBe('application/json');
+            expect(headers['Authorization']).toBe('Bearer real-token');
+        });
+
+        it('omits a falsy header value rather than sending an empty header', async () => {
+            const { fetch, calls } = makeFetch([{ status: 200, body: {} }, { status: 200, body: {} }]);
+
+            // Empty instance header value.
+            const instanceClient = new ApiClient({
+                baseUrl: '',
+                tokenStore: new MemoryTokenStore(),
+                fetchImpl: fetch,
+                headers: { 'X-Phlix-Session-ID': '', 'X-Phlix-Device-ID': 'd' },
+            });
+            await instanceClient.get('/x');
+            const instanceHeaders = (calls[0]!.init!.headers ?? {}) as Record<string, string>;
+            expect('X-Phlix-Session-ID' in instanceHeaders).toBe(false);
+            expect(instanceHeaders['X-Phlix-Device-ID']).toBe('d');
+
+            // Empty default header value (also dropped from getDefaultApiHeaders()).
+            setDefaultApiHeaders({ 'X-Phlix-Session-ID': '', 'X-Phlix-Device-ID': 'd2' });
+            expect(getDefaultApiHeaders()).toEqual({ 'X-Phlix-Device-ID': 'd2' });
+            const defaultClient = new ApiClient({ baseUrl: '', tokenStore: new MemoryTokenStore(), fetchImpl: fetch });
+            await defaultClient.get('/x');
+            const defaultHeaders = (calls[1]!.init!.headers ?? {}) as Record<string, string>;
+            expect('X-Phlix-Session-ID' in defaultHeaders).toBe(false);
+            expect(defaultHeaders['X-Phlix-Device-ID']).toBe('d2');
+        });
+
+        it('defaults the registry to empty (no leak into the base case)', async () => {
+            expect(getDefaultApiHeaders()).toEqual({});
+            const { fetch, calls } = makeFetch([{ status: 200, body: {} }]);
+            const client = new ApiClient({ baseUrl: '', tokenStore: new MemoryTokenStore(), fetchImpl: fetch });
+            await client.get('/x');
+            const headers = (calls[0]!.init!.headers ?? {}) as Record<string, string>;
+            expect(Object.keys(headers)).toEqual(['Content-Type']);
+        });
     });
 
     describe('token refresh on 401', () => {
