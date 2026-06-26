@@ -1,12 +1,23 @@
 /// <reference types="node" />
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 
 // Read the shipped token CSS as a string. (`?raw` is swallowed by the CSS plugin
-// under vitest, so read the co-located file directly.)
-const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'index.css'), 'utf8');
+// under vitest, so read the file directly.) Tokens now live in the standalone
+// @phlix/tokens package (single source of truth); resolve its installed index.css.
+// Prefer the package's `./css/*` export; fall back to its `src/css/` if a `.css`
+// subpath can't be resolved under the test runner's node resolution.
+const require = createRequire(import.meta.url);
+function resolveTokenCss(name: string): string {
+  try {
+    return require.resolve(`@phlix/tokens/css/${name}`);
+  } catch {
+    return join(dirname(require.resolve('@phlix/tokens/package.json')), 'src/css', name);
+  }
+}
+const css = readFileSync(resolveTokenCss('index.css'), 'utf8');
 
 /**
  * R6.5a — lock the GLOBAL reduced-motion kill-switch.
@@ -22,7 +33,7 @@ const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'index.cs
  */
 const flat = css.replace(/\s+/g, ' ');
 
-describe('reduced-motion global kill-switch (tokens/index.css)', () => {
+describe('reduced-motion global kill-switch (@phlix/tokens index.css)', () => {
   it('targets every element + pseudo-element under html[data-reduced-motion="true"]', () => {
     expect(flat).toContain("html[data-reduced-motion='true'] *");
     expect(flat).toContain("html[data-reduced-motion='true'] *::before");

@@ -129,7 +129,7 @@ describe('PhlixApp — menu from config', () => {
       app: 'server',
       apiBase: '',
       routerBase: '/app',
-      // eslint-disable-next-line no-script-url
+       
       menu: [
         { id: 'bad', label: 'Bad', href: 'javascript:alert(1)' },
         { id: 'ext', label: 'External', href: 'https://example.com', target: '_blank' },

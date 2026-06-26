@@ -21,7 +21,7 @@ function mountWith(
   props: Record<string, unknown>,
   config: Partial<PhlixAppConfig> | null,
 ): VueWrapper {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const w = mount(component as any, {
     props,
     global: { provide: { phlixConfig: config } },
