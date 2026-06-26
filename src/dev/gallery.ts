@@ -2,7 +2,7 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import '../assets/fonts/fonts.css';
-import '../tokens/index.css';
+import '@phlix/tokens/style.css';
 import Gallery from './Gallery.vue';
 
 createApp(Gallery).use(createPinia()).mount('#app');

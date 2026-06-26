@@ -147,7 +147,7 @@ async function handleToggleTuner(tuner: Tuner): Promise<void> {
   if (tunerBusy[tuner.tuner_id]) return;
   tunerBusy[tuner.tuner_id] = true;
   try {
-    const updated = await api.updateTuner(tuner.tuner_id, { enabled: !Boolean(tuner.enabled) });
+    const updated = await api.updateTuner(tuner.tuner_id, { enabled: !tuner.enabled });
     tuners.value = tuners.value.map((t) => (t.tuner_id === tuner.tuner_id ? { ...t, ...updated } : t));
   } catch (e) {
     toasts.error(errMessage(e, 'Failed to update tuner.'));

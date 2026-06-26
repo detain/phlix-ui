@@ -25,7 +25,7 @@ import { createApp, type Component } from 'vue';
 import { createPinia, type Pinia } from 'pinia';
 import { createRouter, createMemoryHistory } from 'vue-router';
 import '../../assets/fonts/fonts.css';
-import '../../tokens/index.css';
+import '@phlix/tokens/style.css';
 import { usePreferencesStore, type ThemeName } from '../../stores/usePreferencesStore';
 import type { PhlixAppConfig } from '../../app/types';
 

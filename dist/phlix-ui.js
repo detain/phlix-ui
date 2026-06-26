@@ -762,7 +762,7 @@ var li = qn("server", () => {
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-CkAiwQh3.js")
+	component: () => import("./LiveTvPage-DnHYoEAL.js")
 }, xi = {
 	name: "admin-collections",
 	path: "collections",

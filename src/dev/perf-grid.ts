@@ -12,7 +12,7 @@
 import { createApp, h } from 'vue';
 import { createPinia } from 'pinia';
 import '../assets/fonts/fonts.css';
-import '../tokens/index.css';
+import '@phlix/tokens/style.css';
 import MediaGrid from '../components/MediaGrid.vue';
 import Scrubber from '../components/player/Scrubber.vue';
 import type { MediaItem, MediaType } from '../types/media-item';

@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.50.0] - 2026-06-26
+
+### Changed
+
+- **Tokens now sourced from `@phlix/tokens` (single source of truth);** the local
+  `src/tokens/*.css` files were removed so they can't drift. `src/tokens/index.ts`
+  now side-effect-imports `@phlix/tokens/style.css` (bundled into `dist/style.css`
+  at build time, exactly as before). No visual change — the CSS is byte-identical.
+
+### Added
+
+- **ESLint is now an installed dev dependency with a working flat config**
+  (`eslint.config.js`): js + typescript-eslint recommended + `eslint-plugin-vue`
+  essential, tuned for a component library (single-word component names allowed,
+  `_`-prefixed unused vars, short-circuit/ternary statements). `npm run lint`
+  (report) and `npm run lint:fix` now function — previously the script referenced
+  an uninstalled `eslint` with a deprecated `--ext` flag.
+
 ## [0.49.1] - 2026-06-23
 
 ### Fixed
