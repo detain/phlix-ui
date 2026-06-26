@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 
 /**
@@ -31,7 +31,19 @@ import { dirname, join } from 'node:path';
  * would still pass, so this is the only guard against a silent contrast regression.
  */
 
-const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'colors.css'), 'utf8');
+// Tokens now live in the standalone @phlix/tokens package (single source of truth);
+// resolve its installed colors.css rather than a sibling file. Prefer the package's
+// `./css/*` export; fall back to its `src/css/` if a `.css` subpath can't be resolved
+// under the test runner's node resolution.
+const require = createRequire(import.meta.url);
+function resolveTokenCss(name: string): string {
+  try {
+    return require.resolve(`@phlix/tokens/css/${name}`);
+  } catch {
+    return join(dirname(require.resolve('@phlix/tokens/package.json')), 'src/css', name);
+  }
+}
+const css = readFileSync(resolveTokenCss('colors.css'), 'utf8');
 
 /* ----------------------------- WCAG 2.1 math ----------------------------- */
 type Rgb = [number, number, number];
@@ -128,7 +140,7 @@ const AA_TEXT = 4.5;
 const AA_UI = 3.0;
 
 /* --------------------------------- specs --------------------------------- */
-describe('WCAG AA color-contrast lock (tokens/colors.css)', () => {
+describe('WCAG AA color-contrast lock (@phlix/tokens colors.css)', () => {
   it('parses the amber ramp and three theme blocks', () => {
     expect(ramp['500']).toBe('#f5a524');
     expect(ramp['800']).toBeDefined();

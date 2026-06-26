@@ -1,1 +1,1 @@
-export * from './index.css';
+import '@phlix/tokens/style.css';

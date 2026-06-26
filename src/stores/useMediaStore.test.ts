@@ -25,7 +25,7 @@ function jsonResponse(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let fetchMock: any;
 let signals: AbortSignal[];
 
