@@ -583,6 +583,21 @@ watch(
   },
 );
 
+// External transport command bus (R-player-seam) — a host outside the Vue tree
+// (Electron tray / media keys, TV remotes) pushes a seek intent onto the store;
+// the live element owner applies it here via the internal `seekTo`, which defers
+// through `pendingSeek` when duration isn't known yet (seek-before-metadata). The
+// element move then drives `updateProgress` via its own events, exactly like the
+// user's scrubber seek — so external + user seeks behave identically.
+watch(
+  () => player.lastCommand,
+  (cmd) => {
+    if (!cmd) return;
+    if (cmd.type === 'seekTo') seekTo(cmd.value);
+    else if (cmd.type === 'seekBy') seekTo(player.position + cmd.value);
+  },
+);
+
 // ---- fullscreen -------------------------------------------------------------
 function toggleFullscreen(): void {
   if (typeof document === 'undefined') return;

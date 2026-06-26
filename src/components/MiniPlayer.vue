@@ -72,6 +72,25 @@ watch(
   },
 );
 
+// External transport command bus (R-player-seam) — a host outside the Vue tree
+// (Electron tray / media keys, TV remotes) pushes a seek intent onto the store.
+// When the mini-player is the live element owner, apply it to OUR element clamped
+// to [0, duration] and push the new position into the store (mirroring how
+// onTimeUpdate keeps the store in sync), so seek works whether the full player or
+// the dock is on screen.
+watch(
+  () => player.lastCommand,
+  (cmd) => {
+    const v = videoRef.value;
+    if (!cmd || !v) return;
+    const target = cmd.type === 'seekTo' ? cmd.value : player.position + cmd.value;
+    const dur = v.duration && v.duration > 0 ? v.duration : player.duration;
+    const clamped = dur > 0 ? Math.min(dur, Math.max(0, target)) : Math.max(0, target);
+    v.currentTime = clamped;
+    player.updateProgress(clamped, v.duration || undefined);
+  },
+);
+
 // pause our element if the dock is torn down while still playing
 onBeforeUnmount(() => {
   videoRef.value?.pause?.();

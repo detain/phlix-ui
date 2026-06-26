@@ -161,6 +161,46 @@ describe('MiniPlayer — transport + store sync', () => {
   });
 });
 
+describe('MiniPlayer — external command bus (seek seam)', () => {
+  it('applies an absolute store.seekTo to its element + syncs the store position', async () => {
+    const { store, state } = mountActive();
+    state.duration = 200;
+    store.seekTo(45);
+    await nextTick();
+    expect(state.currentTime).toBe(45);
+    expect(store.position).toBe(45);
+  });
+
+  it('applies store.seekBy relative to the current store position', async () => {
+    const { store, video, state } = mountActive();
+    state.currentTime = 30;
+    state.duration = 200;
+    video.dispatchEvent(new Event('timeupdate')); // store.position → 30
+    await nextTick();
+    store.seekBy(10);
+    await nextTick();
+    expect(state.currentTime).toBe(40);
+    expect(store.position).toBe(40);
+  });
+
+  it('clamps an over-long seek to the element duration', async () => {
+    const { store, state } = mountActive();
+    state.duration = 100;
+    store.seekTo(999);
+    await nextTick();
+    expect(state.currentTime).toBe(100);
+  });
+
+  it('falls back to the store duration when the element duration is unknown', async () => {
+    const { store, state } = mountActive();
+    state.duration = 0;
+    store.updateProgress(0, 120); // store knows the length
+    store.seekTo(150);
+    await nextTick();
+    expect(state.currentTime).toBe(120); // clamped to store duration
+  });
+});
+
 describe('MiniPlayer — expand + close', () => {
   it('emits expand with the media id from the video and the expand button', async () => {
     const { w } = mountActive();

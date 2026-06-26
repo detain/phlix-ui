@@ -125,6 +125,54 @@ describe('usePlayerStore — transport + seeding', () => {
   });
 });
 
+describe('usePlayerStore — command bus (external transport seam)', () => {
+  it('seekTo records an absolute seekTo command with a fresh seq', () => {
+    const p = usePlayerStore();
+    expect(p.lastCommand).toBeNull();
+    p.seekTo(30);
+    expect(p.lastCommand).toEqual({ type: 'seekTo', value: 30, seq: expect.any(Number) });
+    expect(p.lastCommand?.type).toBe('seekTo');
+    expect(p.lastCommand?.value).toBe(30);
+  });
+
+  it('seekBy records a relative seekBy command', () => {
+    const p = usePlayerStore();
+    p.seekBy(10);
+    expect(p.lastCommand?.type).toBe('seekBy');
+    expect(p.lastCommand?.value).toBe(10);
+  });
+
+  it('seq strictly increments across calls (identical successive commands differ)', () => {
+    const p = usePlayerStore();
+    p.seekBy(10);
+    const first = p.lastCommand!.seq;
+    p.seekBy(10); // same type+value, must still re-trigger
+    const second = p.lastCommand!.seq;
+    expect(second).toBeGreaterThan(first);
+    p.seekTo(5);
+    expect(p.lastCommand!.seq).toBeGreaterThan(second);
+  });
+
+  it('playLocalFile sets current + streamUrl and clears the queue', () => {
+    const p = usePlayerStore();
+    p.setQueue([media('q1'), media('q2')]);
+    p.playLocalFile('file:///movies/My%20Film.mkv');
+    expect(p.current?.id).toBe('local');
+    expect(p.current?.name).toBe('My Film.mkv'); // url basename, decoded
+    expect(p.current?.type).toBe('movie');
+    expect(p.streamUrl).toBe('file:///movies/My%20Film.mkv');
+    expect(p.position).toBe(0);
+    expect(p.queue).toEqual([]);
+  });
+
+  it('playLocalFile honours a provided title/meta override', () => {
+    const p = usePlayerStore();
+    p.playLocalFile('http://x/clip.mp4', { name: 'Custom Title' });
+    expect(p.current?.name).toBe('Custom Title');
+    expect(p.streamUrl).toBe('http://x/clip.mp4');
+  });
+});
+
 describe('usePlayerStore — resume map', () => {
   it('saves a resume position only inside the 30s–95% band', () => {
     const p = usePlayerStore();
