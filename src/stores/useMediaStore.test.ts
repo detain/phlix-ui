@@ -25,7 +25,6 @@ function jsonResponse(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
 }
 
- 
 let fetchMock: any;
 let signals: AbortSignal[];
 
