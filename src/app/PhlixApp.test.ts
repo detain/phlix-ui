@@ -129,7 +129,6 @@ describe('PhlixApp — menu from config', () => {
       app: 'server',
       apiBase: '',
       routerBase: '/app',
-       
       menu: [
         { id: 'bad', label: 'Bad', href: 'javascript:alert(1)' },
         { id: 'ext', label: 'External', href: 'https://example.com', target: '_blank' },
