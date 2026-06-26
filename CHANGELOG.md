@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.51.0] - 2026-06-26
+
+### Added
+
+- **Custom request headers through the shared `ApiClient`** — so the native
+  clients (Windows/Tizen, built on `createPhlixApp`) can identify as devices by
+  sending `X-Phlix-Device-ID` / `X-Phlix-Device-Name` / `X-Phlix-Device-Type` /
+  `X-Phlix-Session-ID` on every API request.
+  - `setDefaultApiHeaders(headers)` / `getDefaultApiHeaders()` — a module-level
+    default-headers registry merged into EVERY `ApiClient` request (set once at
+    boot, before any client is constructed); no change needed at the ~30
+    `new ApiClient(...)` sites.
+  - `ApiClientOptions.headers` — per-instance extra headers.
+  - `PhlixAppConfig.deviceHeaders` — `createPhlixApp` registers these into the
+    default-headers registry early at boot (before the first client / `auth.init()`).
+  - Precedence: `Content-Type` and `Authorization` always win over default/instance
+    headers; a falsy/empty header value (e.g. an empty session id) is omitted rather
+    than sent as a broken empty header.
+
 ## [0.50.0] - 2026-06-26
 
 ### Changed
