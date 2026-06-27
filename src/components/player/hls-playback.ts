@@ -23,6 +23,12 @@ export interface AttachHlsOptions {
   onError?: (detail: string) => void;
   /** Called once media is attached and the manifest is parsed (ready to play). */
   onReady?: () => void;
+  /** Optional per-app hls.js config overrides (e.g. a constrained TV tuning
+   *  `maxBufferLength` / `backBufferLength` down to cap RAM). Shallow-merged
+   *  OVER phlix-ui's defaults (`enableWorker` / `lowLatencyMode`), so a consumer
+   *  key wins — EXCEPT `xhrSetup`, which is always re-applied last so a consumer
+   *  can never accidentally drop the bearer-token auth header (see {@link attachHls}). */
+  hlsConfig?: Partial<import('hls.js').HlsConfig>;
 }
 
 /** True when the browser can play HLS natively (Safari / iOS). */
@@ -55,9 +61,15 @@ export async function attachHls(
   const { default: Hls } = await import('hls.js');
 
   if (Hls.isSupported()) {
+    // Config precedence (left → right, later wins):
+    //   1. phlix-ui defaults (enableWorker / lowLatencyMode)
+    //   2. consumer `opts.hlsConfig` overrides (e.g. TV RAM tuning) — these win
+    //   3. `xhrSetup` LAST and unoverridable — it carries the bearer token, so
+    //      spreading it after `hlsConfig` guarantees a consumer can't drop auth.
     const hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
+      ...opts.hlsConfig,
       xhrSetup: (xhr: XMLHttpRequest) => {
         const token = opts.getToken?.();
         if (token) {

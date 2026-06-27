@@ -23,6 +23,7 @@ function harness(opts: {
   statuses?: Array<Record<string, unknown>>;
   postRejects?: boolean;
   attachRejects?: boolean;
+  hlsConfig?: Record<string, unknown>;
 } = {}): Harness {
   const destroy = vi.fn();
   const attach = vi.fn(async (): Promise<HlsHandle> => {
@@ -46,6 +47,7 @@ function harness(opts: {
     pollIntervalMs: 1,
     maxWaitMs: 50,
     sleep: async () => {},
+    hlsConfig: opts.hlsConfig as never,
   });
   return { controller, attach, destroy, post, get };
 }
@@ -72,6 +74,29 @@ describe('useHlsTranscode', () => {
     expect(h.attach.mock.calls[0][1]).toBe('http://h:8096/hls/job-1/master.m3u8');
     expect(h.controller.state.value).toBe('ready');
     expect(h.controller.progress.value).toBe(60);
+  });
+
+  it('omits the ?profile= query when no profile is passed (server maps from device header)', async () => {
+    const h = harness({ start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' } });
+    await h.controller.start(fakeVideo(), 'media-1');
+    expect(h.post).toHaveBeenCalledWith('/api/v1/media/media-1/transcode');
+  });
+
+  it('includes the ?profile= query when a profile is passed explicitly', async () => {
+    const h = harness({ start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' } });
+    await h.controller.start(fakeVideo(), 'media-1', 'tv-4k');
+    expect(h.post).toHaveBeenCalledWith('/api/v1/media/media-1/transcode?profile=tv-4k');
+  });
+
+  it('forwards the per-app hlsConfig into attach (TV RAM tuning)', async () => {
+    const h = harness({
+      start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+      hlsConfig: { maxBufferLength: 10 },
+    });
+    await h.controller.start(fakeVideo(), 'media-1');
+    expect(h.attach).toHaveBeenCalledTimes(1);
+    const passedOpts = h.attach.mock.calls[0][2] as { hlsConfig?: Record<string, unknown> };
+    expect(passedOpts.hlsConfig).toEqual({ maxBufferLength: 10 });
   });
 
   it('skips polling when the job is already completed', async () => {

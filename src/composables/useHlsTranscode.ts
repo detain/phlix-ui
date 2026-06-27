@@ -52,6 +52,10 @@ export interface UseHlsTranscodeOptions {
   maxWaitMs?: number;
   /** Injectable delay (defaults to setTimeout) — overridden in tests. */
   sleep?: (ms: number) => Promise<void>;
+  /** Optional per-app hls.js config overrides threaded down to {@link attachHls}
+   *  (e.g. a constrained TV tuning buffer lengths down to cap RAM). Merged OVER
+   *  phlix-ui's defaults; never overrides the auth `xhrSetup` (see hls-playback). */
+  hlsConfig?: Partial<import('hls.js').HlsConfig>;
 }
 
 /**
@@ -68,6 +72,10 @@ export interface HlsTranscodeController {
    *  a status poll once extraction completes; empty for sources with no embedded
    *  text subtitles. The Player renders a `<track>` per entry. */
   subtitleTracks: Ref<ResolvedSubtitleTrack[]>;
+  /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when
+   *  omitted the start request sends NO `?profile=` query, letting the server map
+   *  the quality profile from the request's `X-Phlix-Device-Type` header (a TV
+   *  identifies itself → gets >1080p). Pass an explicit profile to pin it. */
   start(video: HTMLVideoElement, mediaId: string, profile?: string): Promise<void>;
   cleanup(): void;
   reset(): void;
@@ -104,7 +112,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     return opts.client ?? new ApiClient({ baseUrl: opts.apiBase(), tokenStore: tokenStore ?? undefined });
   }
 
-  async function start(video: HTMLVideoElement, mediaId: string, profile = 'web'): Promise<void> {
+  async function start(video: HTMLVideoElement, mediaId: string, profile?: string): Promise<void> {
     cleanup();
     cancelled = false;
     state.value = 'preparing';
@@ -149,6 +157,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
 
       handle = await attach(video, masterUrl, {
         getToken,
+        hlsConfig: opts.hlsConfig,
         onError: () => {
           if (!cancelled) {
             state.value = 'error';

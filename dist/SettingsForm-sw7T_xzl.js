@@ -4,27 +4,32 @@ import { s as n, t as r } from "./Button-MsRePfWv.js";
 import { t as i } from "./useAuthStore-BNs-pZEK.js";
 import { t as a } from "./Switch-CFZhdkXR.js";
 import { t as o } from "./useToastStore-BDoKlU6N.js";
-import { t as ee } from "./Skeleton-DkSoWF3C.js";
-import { t as s } from "./EmptyState-B2QnGIQT.js";
-import { Fragment as c, computed as l, createBlock as u, createCommentVNode as d, createElementBlock as f, createElementVNode as p, createTextVNode as m, createVNode as h, defineComponent as g, normalizeClass as _, onMounted as v, openBlock as y, ref as b, renderList as x, toDisplayString as S, unref as C, withCtx as w } from "vue";
+import { t as s } from "./Skeleton-DkSoWF3C.js";
+import { t as c } from "./EmptyState-B2QnGIQT.js";
+import { Fragment as l, computed as u, createBlock as d, createCommentVNode as f, createElementBlock as p, createElementVNode as m, createTextVNode as h, createVNode as g, defineComponent as _, normalizeClass as v, onMounted as y, openBlock as b, ref as x, renderList as S, toDisplayString as C, unref as w, withCtx as T } from "vue";
+//#region src/utils/safeClone.ts
+function E(e) {
+	return typeof structuredClone == "function" ? structuredClone(e) : JSON.parse(JSON.stringify(e));
+}
+//#endregion
 //#region src/components/SettingsForm.vue?vue&type=script&setup=true&lang.ts
-var T = { class: "setform" }, E = {
+var D = { class: "setform" }, O = {
 	key: 0,
 	class: "setform__loading"
-}, D = { class: "setform__head" }, O = { class: "setform__title" }, k = {
+}, k = { class: "setform__head" }, A = { class: "setform__title" }, j = {
 	key: 0,
 	class: "setform__dirty"
-}, A = ["for"], j = [
+}, M = ["for"], N = [
 	"id",
 	"type",
 	"value",
 	"onInput"
-], M = { class: "setform__actions" }, N = /*#__PURE__*/ e(/* @__PURE__ */ g({
+], ee = { class: "setform__actions" }, P = /*#__PURE__*/ e(/* @__PURE__ */ _({
 	__name: "SettingsForm",
 	props: { groups: {} },
 	emits: ["saved"],
-	setup(e, { emit: g }) {
-		let N = e, P = g, F = i(), I = o(), { t: L } = t(), R = b({}), z = b({}), B = b(!0), V = b(null), H = b(null), U = [
+	setup(e, { emit: _ }) {
+		let P = e, F = _, I = i(), L = o(), { t: R } = t(), z = x({}), B = x({}), V = x(!0), H = x(null), U = x(null), W = [
 			"transcoding",
 			"metadata",
 			"markers",
@@ -34,7 +39,7 @@ var T = { class: "setform" }, E = {
 			"newsletter",
 			"port-forward",
 			"scrobblers"
-		], W = l(() => N.groups ? U.filter((e) => N.groups.includes(e)) : U), G = {
+		], G = u(() => P.groups ? W.filter((e) => P.groups.includes(e)) : W), K = {
 			transcoding: "Transcoding",
 			metadata: "Metadata",
 			markers: "Marker Detection",
@@ -44,7 +49,7 @@ var T = { class: "setform" }, E = {
 			newsletter: "Newsletter",
 			"port-forward": "Port Forwarding",
 			scrobblers: "Scrobblers"
-		}, K = {
+		}, q = {
 			"hwaccel.enabled": {
 				label: "Hardware acceleration",
 				type: "bool",
@@ -136,103 +141,103 @@ var T = { class: "setform" }, E = {
 				group: "scrobblers"
 			}
 		};
-		function q(e) {
-			return Object.keys(K).filter((t) => K[t].group === e);
+		function J(e) {
+			return Object.keys(q).filter((t) => q[t].group === e);
 		}
-		function J(e, t) {
+		function Y(e, t) {
 			let n = t.target.value;
 			if (n === "") return $(e, 0);
 			let r = Number(n);
 			Number.isFinite(r) && $(e, r);
 		}
-		function Y(e, t) {
+		function X(e, t) {
 			return t === "bool" ? n(e) : t === "number" ? e == null || e === "" ? 0 : Number(e) : e == null ? "" : String(e);
 		}
-		async function X() {
-			B.value = !0, V.value = null;
+		async function Z() {
+			V.value = !0, H.value = null;
 			try {
-				let e = await F.client.get("/api/v1/users/me/settings"), t = { ...e };
-				for (let [n, r] of Object.entries(K)) t[n] = Y(e[n], r.type);
-				R.value = t, z.value = structuredClone(t);
+				let e = await I.client.get("/api/v1/users/me/settings"), t = { ...e };
+				for (let [n, r] of Object.entries(q)) t[n] = X(e[n], r.type);
+				z.value = t, B.value = E(t);
 			} catch (e) {
-				V.value = e instanceof Error ? e.message : L("settings.loadFailed");
+				H.value = e instanceof Error ? e.message : R("settings.loadFailed");
 			} finally {
-				B.value = !1;
+				V.value = !1;
 			}
 		}
-		function Z(e) {
-			return q(e).some((e) => R.value[e] !== z.value[e]);
+		function Q(e) {
+			return J(e).some((e) => z.value[e] !== B.value[e]);
 		}
-		async function Q(e) {
-			H.value = e;
+		async function te(e) {
+			U.value = e;
 			try {
 				let t = {};
-				for (let n of q(e)) t[n] = R.value[n];
-				await F.client.put("/api/v1/users/me/settings", t);
-				for (let t of q(e)) z.value[t] = R.value[t];
-				I.success(L("settings.groupSaved", { name: G[e] })), P("saved", R.value);
+				for (let n of J(e)) t[n] = z.value[n];
+				await I.client.put("/api/v1/users/me/settings", t);
+				for (let t of J(e)) B.value[t] = z.value[t];
+				L.success(R("settings.groupSaved", { name: K[e] })), F("saved", z.value);
 			} catch (t) {
-				I.error(t instanceof Error ? t.message : L("settings.groupSaveError", { name: G[e] }));
+				L.error(t instanceof Error ? t.message : R("settings.groupSaveError", { name: K[e] }));
 			} finally {
-				H.value = null;
+				U.value = null;
 			}
 		}
 		function $(e, t) {
-			R.value[e] = t;
+			z.value[e] = t;
 		}
-		return v(X), (e, t) => (y(), f("div", T, [B.value ? (y(), f("div", E, [(y(), f(c, null, x(3, (e) => h(ee, {
+		return y(Z), (e, t) => (b(), p("div", D, [V.value ? (b(), p("div", O, [(b(), p(l, null, S(3, (e) => g(s, {
 			key: e,
 			height: "6.5rem",
 			radius: "var(--radius-lg)"
-		})), 64))])) : V.value ? (y(), u(s, {
+		})), 64))])) : H.value ? (b(), d(c, {
 			key: 1,
 			icon: "alert",
-			title: C(L)("settings.loadErrorTitle"),
-			description: V.value
+			title: w(R)("settings.loadErrorTitle"),
+			description: H.value
 		}, {
-			actions: w(() => [h(r, {
+			actions: T(() => [g(r, {
 				"left-icon": "rewind",
-				onClick: X
+				onClick: Z
 			}, {
-				default: w(() => [m(S(C(L)("common.retry")), 1)]),
+				default: T(() => [h(C(w(R)("common.retry")), 1)]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["title", "description"])) : (y(!0), f(c, { key: 2 }, x(W.value, (e) => (y(), f("section", {
+		}, 8, ["title", "description"])) : (b(!0), p(l, { key: 2 }, S(G.value, (e) => (b(), p("section", {
 			key: e,
 			class: "setform__group"
 		}, [
-			p("header", D, [p("h3", O, S(G[e]), 1), Z(e) ? (y(), f("span", k, S(C(L)("settings.unsaved")), 1)) : d("", !0)]),
-			(y(!0), f(c, null, x(q(e), (e) => (y(), f("div", {
+			m("header", k, [m("h3", A, C(K[e]), 1), Q(e) ? (b(), p("span", j, C(w(R)("settings.unsaved")), 1)) : f("", !0)]),
+			(b(!0), p(l, null, S(J(e), (e) => (b(), p("div", {
 				key: e,
-				class: _(["setform__row", { "setform__row--switch": K[e].type === "bool" }])
-			}, [K[e].type === "bool" ? (y(), u(a, {
+				class: v(["setform__row", { "setform__row--switch": q[e].type === "bool" }])
+			}, [q[e].type === "bool" ? (b(), d(a, {
 				key: 0,
-				"model-value": !!R.value[e],
-				label: K[e].label,
+				"model-value": !!z.value[e],
+				label: q[e].label,
 				"onUpdate:modelValue": (t) => $(e, t)
 			}, null, 8, [
 				"model-value",
 				"label",
 				"onUpdate:modelValue"
-			])) : (y(), f(c, { key: 1 }, [p("label", {
+			])) : (b(), p(l, { key: 1 }, [m("label", {
 				for: `set-${e}`,
 				class: "setform__label"
-			}, S(K[e].label), 9, A), p("input", {
+			}, C(q[e].label), 9, M), m("input", {
 				id: `set-${e}`,
 				class: "setform__input",
-				type: K[e].type === "number" ? "number" : "text",
-				value: R.value[e] ?? "",
-				onInput: (t) => K[e].type === "number" ? J(e, t) : $(e, t.target.value)
-			}, null, 40, j)], 64))], 2))), 128)),
-			p("div", M, [h(r, {
+				type: q[e].type === "number" ? "number" : "text",
+				value: z.value[e] ?? "",
+				onInput: (t) => q[e].type === "number" ? Y(e, t) : $(e, t.target.value)
+			}, null, 40, N)], 64))], 2))), 128)),
+			m("div", ee, [g(r, {
 				variant: "solid",
 				size: "sm",
-				disabled: !Z(e),
-				loading: H.value === e,
-				onClick: (t) => Q(e)
+				disabled: !Q(e),
+				loading: U.value === e,
+				onClick: (t) => te(e)
 			}, {
-				default: w(() => [m(S(C(L)("settings.saveGroup", { name: G[e] })), 1)]),
+				default: T(() => [h(C(w(R)("settings.saveGroup", { name: K[e] })), 1)]),
 				_: 2
 			}, 1032, [
 				"disabled",
@@ -241,8 +246,8 @@ var T = { class: "setform" }, E = {
 			])])
 		]))), 128))]));
 	}
-}), [["__scopeId", "data-v-710c87d1"]]);
+}), [["__scopeId", "data-v-5000a6bb"]]);
 //#endregion
-export { N as t };
+export { P as t };
 
-//# sourceMappingURL=SettingsForm-Qfv999Sk.js.map
+//# sourceMappingURL=SettingsForm-sw7T_xzl.js.map
