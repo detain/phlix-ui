@@ -26,6 +26,7 @@ beforeEach(() => {
   document.documentElement.removeAttribute('data-theme');
   document.documentElement.removeAttribute('data-density');
   document.documentElement.removeAttribute('data-reduced-motion');
+  document.documentElement.removeAttribute('data-tv');
   document.documentElement.removeAttribute('style');
 });
 afterEach(() => {
@@ -85,6 +86,38 @@ describe('useTheme', () => {
     await nextTick();
     expect(el.hasAttribute('data-reduced-motion')).toBe(false);
     w.unmount();
+  });
+
+  it('sets + clears data-tv when TV mode toggles', async () => {
+    const w = mount(Host);
+    const el = document.documentElement;
+    const prefs = usePreferencesStore();
+    expect(el.hasAttribute('data-tv')).toBe(false); // default off
+    prefs.tv = true;
+    await nextTick();
+    expect(el.getAttribute('data-tv')).toBe('true');
+    prefs.tv = false;
+    await nextTick();
+    expect(el.hasAttribute('data-tv')).toBe(false);
+    w.unmount();
+  });
+});
+
+describe('applyStoredThemeEarly — TV mode', () => {
+  it('seeds data-tv for a first-time visitor when defaultTv is true', () => {
+    applyStoredThemeEarly(undefined, true);
+    expect(document.documentElement.getAttribute('data-tv')).toBe('true');
+  });
+
+  it('does not set data-tv when defaultTv is omitted (default off)', () => {
+    applyStoredThemeEarly();
+    expect(document.documentElement.hasAttribute('data-tv')).toBe(false);
+  });
+
+  it('lets a stored tv:false preference win over defaultTv:true', () => {
+    localStorage.setItem('phlix.prefs', JSON.stringify({ tv: false }));
+    applyStoredThemeEarly(undefined, true);
+    expect(document.documentElement.hasAttribute('data-tv')).toBe(false);
   });
 });
 

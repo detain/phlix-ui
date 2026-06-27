@@ -7,8 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Post-release changes land here._
+
+## [0.52.0] - 2026-06-26
+
 ### Added
 
+- **TV mode** — a `data-tv` boolean flag on `<html>` (orthogonal to theme &
+  density, modeled like `data-reduced-motion`) that turns on 10-foot sizing
+  (larger control vars) and a high-contrast focus ring shown on plain `:focus`
+  (TVs have no pointer / `:focus-visible` heuristic). Surfaced as a `tv`
+  preference (persisted), a "TV mode" toggle in Appearance settings, a
+  `PhlixAppConfig.defaultTv` first-run default, and `src/tokens/tv.css` (fully
+  scoped under `[data-tv]` — zero effect for desktop users). `createPhlixApp`
+  now also registers the `v-focusable` directive globally.
 - **TV / remote spatial-focus engine** (opt-in; a no-op on desktop) for 10-foot
   / D-pad navigation:
   - `useSpatialNav(opts)` — arrow/D-pad directional focus movement. The keydown

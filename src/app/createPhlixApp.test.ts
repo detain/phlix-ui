@@ -6,6 +6,7 @@ beforeEach(() => {
   localStorage.clear();
   document.documentElement.removeAttribute('data-theme');
   document.documentElement.removeAttribute('data-density');
+  document.documentElement.removeAttribute('data-tv');
   delete (window as { __PHLIX__?: unknown }).__PHLIX__;
   vi.stubGlobal(
     'matchMedia',
@@ -78,6 +79,23 @@ describe('createPhlixApp', () => {
     localStorage.setItem('phlix.prefs', JSON.stringify({ theme: 'daylight' }));
     createPhlixApp({ apiBase: '', defaultTheme: 'midnight' });
     expect(document.documentElement.getAttribute('data-theme')).toBe('daylight');
+  });
+
+  it('seeds defaultTv onto <html> for a first-time visitor (TV mode)', () => {
+    createPhlixApp({ apiBase: '', defaultTv: true });
+    expect(document.documentElement.getAttribute('data-tv')).toBe('true');
+  });
+
+  it('does not let defaultTv override a stored user preference', () => {
+    localStorage.setItem('phlix.prefs', JSON.stringify({ tv: false }));
+    createPhlixApp({ apiBase: '', defaultTv: true });
+    expect(document.documentElement.hasAttribute('data-tv')).toBe(false);
+  });
+
+  it('registers the v-focusable directive globally', () => {
+    const app = createPhlixApp({ apiBase: '' });
+    expect(app._context.directives.focusable).toBeDefined();
+    app.unmount?.();
   });
 });
 

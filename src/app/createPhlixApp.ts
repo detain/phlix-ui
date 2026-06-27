@@ -19,6 +19,7 @@ import Placeholder from './placeholder/Placeholder.vue';
 import { computed } from 'vue';
 import { setDefaultApiHeaders } from '../api/client';
 import { applyStoredThemeEarly } from '../composables/useTheme';
+import { installFocusable } from '../directives/focusable';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useServerStore } from '../stores/useServerStore';
@@ -258,9 +259,10 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     // carries them. Native clients (Windows/Tizen) pass these via deviceHeaders.
     setDefaultApiHeaders(fullConfig.deviceHeaders ?? {});
 
-    // Set <html> theme/density/accent from persisted prefs before mount → no flash.
-    // First-time visitors get the app's defaultTheme; a stored choice always wins.
-    applyStoredThemeEarly(fullConfig.defaultTheme);
+    // Set <html> theme/density/accent + TV mode from persisted prefs before mount
+    // → no flash. First-time visitors get the app's defaultTheme/defaultTv; a
+    // stored choice always wins.
+    applyStoredThemeEarly(fullConfig.defaultTheme, fullConfig.defaultTv);
 
     // Page-title suffix = the app's wordmark ("Phlix" by default). Set once at boot
     // so every `setPageTitle()` (the afterEach hook + the data-driven pages) uses
@@ -274,9 +276,13 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
 
     const pinia = createPinia();
 
-    // Seed the per-app default theme into the store for first-time visitors only.
-    if (fullConfig.defaultTheme && !hasStoredPreferences()) {
-        usePreferencesStore(pinia).theme = fullConfig.defaultTheme;
+    // Seed the per-app default theme + TV mode into the store for first-time
+    // visitors only (a stored user choice always wins). Read once so a single
+    // hasStoredPreferences() decides both.
+    if (!hasStoredPreferences()) {
+        const prefs = usePreferencesStore(pinia);
+        if (fullConfig.defaultTheme) prefs.theme = fullConfig.defaultTheme;
+        if (fullConfig.defaultTv !== undefined) prefs.tv = fullConfig.defaultTv;
     }
 
     // History base stays at '/'. Every route path AND every nav link already
@@ -354,6 +360,10 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     app.provide('phlixConfig', fullConfig);
     app.use(pinia);
     app.use(router);
+
+    // Register `v-focusable` globally so consumers get the spatial-nav directive
+    // (used by TV mode's D-pad engine) without manual registration.
+    installFocusable(app);
 
     return app;
 }
