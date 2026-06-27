@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Post-release changes land here._
+### Added
+
+- **External player command / SEEK seam** — a command bus on `usePlayerStore`
+  lets a host outside the Vue tree (Electron tray / media keys, TV remotes)
+  drive the player's transport without holding a component ref:
+  - `seekTo(seconds)` / `seekBy(delta)` — absolute / relative seek; the live
+    media component (`Player`/`MiniPlayer`) watches `lastCommand` and applies it
+    to the real `<video>` (honoring pre-metadata seeks via the existing
+    `pendingSeek` defer path). A monotonic `seq` ensures two identical
+    successive commands still fire.
+  - `playLocalFile(url, meta?)` — load an arbitrary local/served URL into the
+    player (for the Windows "Open File" path); reuses `setCurrent` + clears the
+    queue.
+  - New exported `PlayerCommand` type. Purely additive — `play`/`pause`/
+    `closePlayer`/`updateProgress`/`setCurrent` are unchanged.
 
 ## [0.51.0] - 2026-06-26
 
