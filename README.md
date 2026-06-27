@@ -1,5 +1,11 @@
 # @phlix/ui
 
+[![CI](https://github.com/detain/phlix-ui/actions/workflows/ui-ci.yml/badge.svg)](https://github.com/detain/phlix-ui/actions/workflows/ui-ci.yml)
+[![codecov](https://codecov.io/gh/detain/phlix-ui/graph/badge.svg)](https://codecov.io/gh/detain/phlix-ui)
+[![Version](https://img.shields.io/github/v/tag/detain/phlix-ui?label=version&sort=semver)](https://github.com/detain/phlix-ui/tags)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Vue 3](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+
 The shared **Vue 3 design system + application shell** for [Phlix](https://github.com/detain).
 Both Phlix products — **phlix-server** (the media server) and **phlix-hub** (the federation hub) —
 mount this one package to render their entire `/app/*` single-page experience. Build a feature here
