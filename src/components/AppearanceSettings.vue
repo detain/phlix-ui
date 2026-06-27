@@ -241,6 +241,10 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
       <div class="aps__row aps__row--switch">
         <Switch :model-value="prefs.atmosphere" :label="t('settings.filmGrainGlow')" @update:model-value="(v) => (prefs.atmosphere = v)" />
       </div>
+      <div class="aps__row aps__row--switch">
+        <Switch :model-value="prefs.tv" label="TV mode" @update:model-value="(v) => (prefs.tv = v)" />
+      </div>
+      <p class="aps__hint">Larger controls and a visible focus outline for TV / remote navigation.</p>
       <div class="aps__row">
         <span class="aps__label">{{ t('settings.motion') }}</span>
         <Select
@@ -454,6 +458,11 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
 .aps__label {
   font-size: var(--text-sm);
   color: var(--text);
+}
+.aps__hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 .aps__value {
   margin-left: var(--space-2);

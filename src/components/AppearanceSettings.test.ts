@@ -134,6 +134,16 @@ describe('AppearanceSettings — appearance panel', () => {
     expect(prefs.atmosphere).toBe(false);
   });
 
+  it('toggles the TV mode switch', async () => {
+    const w = mountPanel('appearance');
+    const prefs = usePreferencesStore();
+    expect(prefs.tv).toBe(false);
+    const tvSwitch = w.findAllComponents(Switch).find((s) => s.props('label') === 'TV mode')!;
+    expect(tvSwitch).toBeTruthy();
+    tvSwitch.vm.$emit('update:modelValue', true);
+    expect(prefs.tv).toBe(true);
+  });
+
   it('requires a second click to reset all preferences (and toasts)', async () => {
     const w = mountPanel('appearance');
     const prefs = usePreferencesStore();

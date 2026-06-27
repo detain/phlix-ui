@@ -48,6 +48,10 @@ export interface Preferences {
     /** Persisted caption appearance (R3.5). */
     captionStyle: CaptionStyle;
     atmosphere: boolean;
+    /** TV mode — a device/mode flag (orthogonal to theme + density). When true the
+     *  app applies 10-foot sizing + a visible focus ring (`[data-tv]` on <html>).
+     *  Composes with any theme; default false. */
+    tv: boolean;
     /** Saved Browse filter presets. */
     filterPresets: FilterPreset[];
 }
@@ -87,6 +91,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
         edge: CaptionEdge;
     }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    tv: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
         name: string;
@@ -102,7 +107,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
+}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
@@ -126,6 +131,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
         edge: CaptionEdge;
     }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    tv: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
         name: string;
@@ -165,6 +171,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
         edge: CaptionEdge;
     }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    tv: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
         name: string;

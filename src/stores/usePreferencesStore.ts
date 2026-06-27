@@ -61,6 +61,10 @@ export interface Preferences {
   /** Persisted caption appearance (R3.5). */
   captionStyle: CaptionStyle;
   atmosphere: boolean;
+  /** TV mode — a device/mode flag (orthogonal to theme + density). When true the
+   *  app applies 10-foot sizing + a visible focus ring (`[data-tv]` on <html>).
+   *  Composes with any theme; default false. */
+  tv: boolean;
   /** Saved Browse filter presets. */
   filterPresets: FilterPreset[];
 }
@@ -79,6 +83,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   subtitlePreferenceSet: false,
   captionStyle: { ...DEFAULT_CAPTION_STYLE },
   atmosphere: true,
+  tv: false,
   filterPresets: [],
 };
 
@@ -152,6 +157,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   // DEFAULT_CAPTION_STYLE object is never mutated through the ref.
   const captionStyle = ref<CaptionStyle>({ ...DEFAULT_CAPTION_STYLE, ...initial.captionStyle });
   const atmosphere = ref<boolean>(initial.atmosphere);
+  const tv = ref<boolean>(initial.tv);
   // Copy so the shared DEFAULT_PREFERENCES.filterPresets array is never mutated.
   const filterPresets = ref<FilterPreset[]>(initial.filterPresets ? [...initial.filterPresets] : []);
 
@@ -181,6 +187,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       subtitlePreferenceSet: subtitlePreferenceSet.value,
       captionStyle: captionStyle.value,
       atmosphere: atmosphere.value,
+      tv: tv.value,
       filterPresets: filterPresets.value,
     };
   }
@@ -226,6 +233,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     subtitlePreferenceSet.value = d.subtitlePreferenceSet;
     captionStyle.value = { ...DEFAULT_CAPTION_STYLE };
     atmosphere.value = d.atmosphere;
+    tv.value = d.tv;
     filterPresets.value = [...d.filterPresets];
   }
 
@@ -243,6 +251,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     subtitlePreferenceSet,
     captionStyle,
     atmosphere,
+    tv,
     filterPresets,
     systemReduced,
     effectiveReducedMotion,
