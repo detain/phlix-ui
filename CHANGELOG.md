@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TV / remote spatial-focus engine** (opt-in; a no-op on desktop) for 10-foot
+  / D-pad navigation:
+  - `useSpatialNav(opts)` — arrow/D-pad directional focus movement. The keydown
+    listener only acts while `enabled` (default **false**) and bails on typing
+    targets, modifier chords, and an active `[data-focus-trap]` modal; a miss
+    never `preventDefault`s (page scroll + the player's own Arrow shortcuts
+    survive). Reactive `enabled`, `onEdge` callback, `move`/`focus`/`focusFirst`.
+  - `v-focusable` directive (+ `installFocusable(app)`, `focusableRegistry`) —
+    registers elements for the engine; `{ disabled, group, order }` options.
+  - Pure, exported geometry: `bestCandidate` / `rectCenter` (+ `Dir`/`Rect`/
+    `Candidate` types). `useFocusTrap` now tags its container `data-focus-trap`
+    so spatial-nav yields to modals.
 - **External player command / SEEK seam** — a command bus on `usePlayerStore`
   lets a host outside the Vue tree (Electron tray / media keys, TV remotes)
   drive the player's transport without holding a component ref:

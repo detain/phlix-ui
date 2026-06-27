@@ -84,18 +84,24 @@ export function useFocusTrap(
 
   function activate() {
     prevFocus = document.activeElement as HTMLElement | null;
+    container.value?.setAttribute('data-focus-trap', '');
     if (lockScroll) {
       lockBodyScroll();
       locked = true;
     }
     document.addEventListener('keydown', onKeydown, true);
     nextTick(() => {
+      // Re-assert once the container ref is bound (e.g. mounted already-active,
+      // where it was still null synchronously above) so the spatial-nav engine
+      // can detect the active trap.
+      container.value?.setAttribute('data-focus-trap', '');
       const items = focusables();
       (items[0] ?? container.value)?.focus();
     });
   }
 
   function deactivate() {
+    container.value?.removeAttribute('data-focus-trap');
     document.removeEventListener('keydown', onKeydown, true);
     if (locked) {
       unlockBodyScroll();
@@ -107,6 +113,7 @@ export function useFocusTrap(
 
   watch(active, (v) => (v ? activate() : deactivate()), { immediate: true });
   onBeforeUnmount(() => {
+    container.value?.removeAttribute('data-focus-trap');
     document.removeEventListener('keydown', onKeydown, true);
     if (locked) {
       unlockBodyScroll();

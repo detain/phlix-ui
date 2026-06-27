@@ -114,6 +114,12 @@ export { usePreferencesStore, readStoredPreferences, hasStoredPreferences, DEFAU
 export type { Preferences, ThemeName, Density, MotionPref, FilterPreset, CaptionStyle, CaptionSize, CaptionBackground, CaptionEdge } from './stores/usePreferencesStore';
 export { usePlayerStore, RESUME_MIN_SECONDS, RESUME_MAX_RATIO } from './stores/usePlayerStore';
 export type { MediaSessionHandlers, PlayerCommand } from './stores/usePlayerStore';
+export { useSpatialNav } from './composables/useSpatialNav';
+export type { SpatialNavOptions, SpatialNavHandle } from './composables/useSpatialNav';
+export { bestCandidate, rectCenter } from './composables/spatial-nav';
+export type { Dir, Rect, Candidate } from './composables/spatial-nav';
+export { focusable, installFocusable, focusableRegistry } from './directives/focusable';
+export type { FocusableOptions } from './directives/focusable';
 export { useCommandStore, fuzzyScore, matchCommand } from './stores/useCommandStore';
 export type { Command } from './stores/useCommandStore';
 export { useCommandPaletteHotkey } from './composables/useCommandPaletteHotkey';
