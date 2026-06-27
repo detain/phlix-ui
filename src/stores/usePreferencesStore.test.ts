@@ -81,6 +81,42 @@ describe('usePreferencesStore', () => {
     expect(s.cardSize).toBe(DEFAULT_PREFERENCES.cardSize);
   });
 
+  describe('tv (TV mode flag)', () => {
+    it('defaults to false', () => {
+      expect(DEFAULT_PREFERENCES.tv).toBe(false);
+      expect(usePreferencesStore().tv).toBe(false);
+    });
+
+    it('persists into the prefs blob', async () => {
+      const s = usePreferencesStore();
+      s.tv = true;
+      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 0));
+      const raw = JSON.parse(localStorage.getItem('phlix.prefs')!);
+      expect(raw.tv).toBe(true);
+    });
+
+    it('hydrates from storage', () => {
+      localStorage.setItem('phlix.prefs', JSON.stringify({ tv: true }));
+      setActivePinia(createPinia());
+      const s = usePreferencesStore();
+      expect(s.tv).toBe(true);
+    });
+
+    it('is included in snapshot()', () => {
+      const s = usePreferencesStore();
+      s.tv = true;
+      expect(s.snapshot().tv).toBe(true);
+    });
+
+    it('reset() clears it back to false', () => {
+      const s = usePreferencesStore();
+      s.tv = true;
+      s.reset();
+      expect(s.tv).toBe(false);
+    });
+  });
+
   describe('subtitlePreferenceSet (U4 — explicit Off vs no-preference)', () => {
     it('defaults to false (no caption choice made yet)', () => {
       expect(DEFAULT_PREFERENCES.subtitlePreferenceSet).toBe(false);

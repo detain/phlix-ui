@@ -80,6 +80,11 @@ export interface PhlixAppConfig {
     /** Initial theme for first-time visitors (no stored preference). Once the user
      *  picks a theme it always wins. Applied pre-mount to avoid a flash. */
     defaultTheme?: ThemeName;
+    /** Initial TV mode for first-time visitors (no stored preference). Once the
+     *  user toggles it their choice always wins. Applied pre-mount (like
+     *  `defaultTheme`) to avoid a flash. A native TV/console app sets this true so
+     *  it boots into 10-foot sizing + visible focus rings. */
+    defaultTv?: boolean;
     /** Per-app brand identity for the shell's `#logo` slot. */
     branding?: BrandingConfig;
     /** Configured Browse home rows (consumed by the R2 Browse surface). */

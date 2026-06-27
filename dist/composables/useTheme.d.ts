@@ -5,8 +5,9 @@ import { type Preferences, type ThemeName } from '../stores/usePreferencesStore'
  *
  * `defaultTheme` (R1.5) seeds the theme for first-time visitors with no stored
  * preference (an app's per-app default); a stored user choice always wins.
+ * `defaultTv` follows the same first-time-visitor rule for TV mode.
  */
-export declare function applyStoredThemeEarly(defaultTheme?: ThemeName): void;
+export declare function applyStoredThemeEarly(defaultTheme?: ThemeName, defaultTv?: boolean): void;
 /**
  * useTheme (R1.1) — reactively reflect the preferences store onto <html>. Call
  * once near the app root (PhlixApp). Switching theme/accent/density/reduced-motion
@@ -36,6 +37,7 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
         edge: import("..").CaptionEdge;
     }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    tv: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
         name: string;
@@ -51,7 +53,7 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => import("..").FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
+}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<import("..").Density, import("..").Density>;
@@ -75,6 +77,7 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
         edge: import("..").CaptionEdge;
     }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    tv: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
         name: string;
@@ -114,6 +117,7 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
         edge: import("..").CaptionEdge;
     }>;
     atmosphere: import("vue").Ref<boolean, boolean>;
+    tv: import("vue").Ref<boolean, boolean>;
     filterPresets: import("vue").Ref<{
         id: string;
         name: string;
