@@ -13,6 +13,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
 import { normalizeBool } from '../api/client';
+import { safeClone } from '../utils/safeClone';
 import Switch from './ui/Switch.vue';
 import Button from './ui/Button.vue';
 import Skeleton from './ui/Skeleton.vue';
@@ -107,7 +108,9 @@ async function load(): Promise<void> {
     const next: Record<string, unknown> = { ...data };
     for (const [key, meta] of Object.entries(settingMeta)) next[key] = coerce(data[key], meta.type);
     settings.value = next;
-    baseline.value = structuredClone(next);
+    // safeClone (not structuredClone directly): older Tizen webviews lack
+    // structuredClone (Chrome <98) — fall back to a JSON round-trip there.
+    baseline.value = safeClone(next);
   } catch (e) {
     error.value = e instanceof Error ? e.message : t('settings.loadFailed');
   } finally {

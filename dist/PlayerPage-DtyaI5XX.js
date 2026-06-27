@@ -5,7 +5,7 @@ import { i } from "./usePageTitle-BO3GGF3M.js";
 import { t as a } from "./Skeleton-DkSoWF3C.js";
 import { t as o } from "./EmptyState-B2QnGIQT.js";
 import { a as s, n as ee, r as c } from "./useApiBase-DhSHB6Qp.js";
-import { t as l } from "./Player-BqmTl1by.js";
+import { t as l } from "./Player-CaRNZdo8.js";
 import { i as te, r as u } from "./series-grouping-BTZK8Agh.js";
 import { computed as d, createBlock as f, createCommentVNode as p, createElementBlock as m, createElementVNode as h, createTextVNode as g, createVNode as _, defineComponent as v, normalizeClass as y, normalizeStyle as b, onBeforeUnmount as x, onMounted as ne, openBlock as S, ref as C, unref as re, watch as ie, withCtx as w } from "vue";
 import { onBeforeRouteLeave as T, useRoute as E, useRouter as ae } from "vue-router";
@@ -227,4 +227,4 @@ var O = { class: "player-page__stage" }, k = {
 //#endregion
 export { A as default };
 
-//# sourceMappingURL=PlayerPage-DaCzulPL.js.map
+//# sourceMappingURL=PlayerPage-DtyaI5XX.js.map

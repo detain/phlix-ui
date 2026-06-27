@@ -78,6 +78,23 @@ describe('SettingsForm — load + render', () => {
     }
   });
 
+  it('loads + clones the baseline even when structuredClone is missing (older Tizen webviews)', async () => {
+    const original = globalThis.structuredClone;
+    // Build the payload BEFORE removing structuredClone (the setup harness uses it).
+    const payload = original(SETTINGS);
+    (globalThis as { structuredClone?: unknown }).structuredClone = undefined;
+    try {
+      const { w } = setup((s) => s.mockResolvedValue(payload as never));
+      await flushPromises();
+      // Renders normally — the baseline clone fell back to a JSON round-trip.
+      expect(w.findAll('.setform__group')).toHaveLength(9);
+      // Dirty detection works (baseline === settings on load → nothing dirty).
+      expect(w.findAll('button').some((b) => b.text() === 'Save' && !b.attributes('disabled'))).toBe(false);
+    } finally {
+      globalThis.structuredClone = original;
+    }
+  });
+
   it('surfaces a load error with a retry that re-fetches', async () => {
     const { w, getSpy } = setup((s) => s.mockRejectedValueOnce(new Error('boom')));
     await flushPromises();

@@ -117,6 +117,45 @@ describe('hls-playback', () => {
       FakeHls.instances[0].emit('error', { fatal: false });
       expect(onError).not.toHaveBeenCalled();
     });
+
+    it('keeps the phlix-ui defaults when no hlsConfig is given', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const cfg = FakeHls.instances[0].config;
+      expect(cfg.enableWorker).toBe(true);
+      expect(cfg.lowLatencyMode).toBe(false);
+    });
+
+    it('merges a consumer hlsConfig (TV RAM tuning) into the Hls config', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {
+        hlsConfig: { maxBufferLength: 10, backBufferLength: 0 } as Record<string, unknown>,
+      });
+      const cfg = FakeHls.instances[0].config;
+      expect(cfg.maxBufferLength).toBe(10);
+      expect(cfg.backBufferLength).toBe(0);
+      // defaults still present (not clobbered by the partial override)
+      expect(cfg.enableWorker).toBe(true);
+      expect(cfg.lowLatencyMode).toBe(false);
+    });
+
+    it('lets a consumer override a phlix-ui default key', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {
+        hlsConfig: { enableWorker: false } as Record<string, unknown>,
+      });
+      expect(FakeHls.instances[0].config.enableWorker).toBe(false);
+    });
+
+    it('never lets a consumer hlsConfig clobber the auth xhrSetup', async () => {
+      const rogue = vi.fn();
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {
+        getToken: () => 'tokABC',
+        // A consumer tries to drop auth by passing its own xhrSetup — it must lose.
+        hlsConfig: { xhrSetup: rogue } as unknown as Record<string, unknown>,
+      });
+      const xhr = { setRequestHeader: vi.fn() };
+      (FakeHls.instances[0].config.xhrSetup as (x: unknown) => void)(xhr);
+      expect(rogue).not.toHaveBeenCalled();
+      expect(xhr.setRequestHeader).toHaveBeenCalledWith('Authorization', 'Bearer tokABC');
+    });
   });
 
   describe('attachHls native fallback', () => {

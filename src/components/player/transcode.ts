@@ -94,9 +94,18 @@ export function parseSubtitleTracks(value: unknown): SubtitleTrack[] {
   return out;
 }
 
-/** Path to start (or reuse) a transcode job for a media item. */
-export function transcodeStartPath(mediaId: string, profile = 'web'): string {
-  return `/api/v1/media/${encodeURIComponent(mediaId)}/transcode?profile=${encodeURIComponent(profile)}`;
+/**
+ * Path to start (or reuse) a transcode job for a media item.
+ *
+ * `profile` is OPTIONAL: when omitted (or empty) NO `?profile=` query is sent, so
+ * the server maps the quality profile from the request's `X-Phlix-Device-Type`
+ * header (a TV identifies itself → gets >1080p; a browser sends no device header
+ * → the server still defaults to `web`, unchanged). Pass an explicit profile to
+ * pin it client-side (e.g. `'tv-4k'`).
+ */
+export function transcodeStartPath(mediaId: string, profile?: string): string {
+  const base = `/api/v1/media/${encodeURIComponent(mediaId)}/transcode`;
+  return profile ? `${base}?profile=${encodeURIComponent(profile)}` : base;
 }
 
 /** Path to poll a transcode job's readiness. */

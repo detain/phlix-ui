@@ -15,8 +15,9 @@
  * guard (R3.8). PlayerPage integration (real stream-URL resolution + the
  * route-leave mini-player toggle) is R3.9.
  */
-import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount, inject } from 'vue';
 import type { MediaItem } from '../types/media-item';
+import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import Icon from './Icon.vue';
@@ -139,10 +140,20 @@ const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
  *  flash); a fatal <video> error flips it at runtime. */
 const transcodeNeeded = ref(needsTranscode(props.streamUrl, props.media.path));
 
+/** App config (provided by `createPhlixApp`). Read so the Player can thread the
+ *  per-app hls.js overrides (`playerHlsConfig`, e.g. a TV's RAM tuning) into the
+ *  transcode controller. Absent in standalone/test mounts → defaults apply. */
+const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+
 /** HLS transcode-to-play controller: starts the server job, polls readiness, and
  *  attaches the resulting playlist to <video> via hls.js. `apiBase` falls back to
- *  the page origin (the SPA is served by phlix-server) when the host omits it. */
-const tc = useHlsTranscode({ apiBase: () => props.apiBase ?? '' });
+ *  the page origin (the SPA is served by phlix-server) when the host omits it.
+ *  `hlsConfig` carries the per-app overrides (TV RAM tuning) merged over the
+ *  defaults; omitted on the browser/web-ui. */
+const tc = useHlsTranscode({
+  apiBase: () => props.apiBase ?? '',
+  hlsConfig: phlixConfig?.playerHlsConfig,
+});
 
 /** Direct-play source for the <video>. Cleared while transcoding so hls.js owns
  *  the element's source instead of a (now-incompatible) direct URL binding. */

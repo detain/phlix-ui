@@ -99,4 +99,11 @@ export interface PhlixAppConfig {
      *  `X-Phlix-Session-ID`). Registered once at boot via `setDefaultApiHeaders`,
      *  so the Windows/Tizen apps (built on `createPhlixApp`) identify as devices. */
     deviceHeaders?: Record<string, string>;
+    /** Per-app hls.js config overrides for the transcode player, e.g. a constrained
+     *  TV tuning `maxBufferLength` / `backBufferLength` down to cap RAM. Merged OVER
+     *  phlix-ui's defaults (`enableWorker` / `lowLatencyMode`); the auth `xhrSetup`
+     *  is always preserved (a consumer can't drop the bearer token). The Player
+     *  injects `phlixConfig` and threads this into `useHlsTranscode`. Omit on the
+     *  browser/web-ui (defaults are fine). */
+    playerHlsConfig?: Partial<import('hls.js').HlsConfig>;
 }

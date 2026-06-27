@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.53.0] - 2026-06-26
+
+### Added
+
+- **`PhlixAppConfig.playerHlsConfig`** — per-app hls.js overrides
+  (`Partial<HlsConfig>`) merged over phlix-ui's defaults, threaded through
+  `Player.vue` → `useHlsTranscode` → `attachHls`. Lets a constrained TV
+  consumer (Tizen) pass RAM-bounding buffer config (`maxBufferLength`,
+  `backBufferLength`, `capLevelToPlayerSize`, …). The token-attaching
+  `xhrSetup` is spread last and is NOT overridable, so auth can't be dropped.
+
+### Changed
+
+- **Transcode no longer hard-codes `?profile=web`.** `transcodeStartPath` /
+  `useHlsTranscode.start` now take an OPTIONAL profile; when omitted the
+  `?profile=` query is left off so the server maps the quality profile from the
+  `X-Phlix-Device-Type` header (TV → `tv-4k`, etc.). Non-device clients
+  (browser web-ui) are unchanged — the server still defaults to `web`.
+
+### Fixed
+
+- **`structuredClone` guard** in `SettingsForm` — falls back to a JSON clone
+  when `structuredClone` is absent (older Tizen / Chrome <98 webviews), so the
+  settings form doesn't throw on TV.
+
 ## [0.52.0] - 2026-06-26
 
 ### Added
