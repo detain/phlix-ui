@@ -6,7 +6,7 @@ import { a, i as o, n as s, r as c, t as l } from "./usePreferencesStore-DkTu9l9
 import { i as u, n as d, r as f, t as p } from "./useMessages-Dwm0lQlG.js";
 import { a as m, c as h, d as g, f as _, i as v, l as y, m as ee, n as te, o as ne, p as b, r as re, t as x, u as ie } from "./Button-MsRePfWv.js";
 import { t as S } from "./useAuthStore-BNs-pZEK.js";
-import { i as C, n as ae, r as oe, t as se } from "./usePlayerStore-BMGj8146.js";
+import { i as C, n as ae, r as oe, t as se } from "./usePlayerStore-dMohDTWc.js";
 import { i as ce, n as le, r as ue, t as de } from "./Kbd-CSMm1T0l.js";
 import { a as fe, i as pe, n as me, o as he, r as ge, t as _e } from "./useLibrariesStore-DJmmZLu-.js";
 import { i as ve, n as ye, r as be, t as xe } from "./usePageTitle-BO3GGF3M.js";
@@ -15,17 +15,17 @@ import { t as Se } from "./Slider-BMn_Lp_q.js";
 import { t as Ce } from "./Switch-CFZhdkXR.js";
 import { t as we } from "./Chip-2HcSZF4a.js";
 import { t as Te } from "./Select-DLwgQInL.js";
-import { i as Ee, n as De, r as Oe, t as ke } from "./FilterBar-CbU26KoZ.js";
+import { i as Ee, n as De, r as Oe, t as ke } from "./FilterBar-xEg0-8iP.js";
 import { t as Ae } from "./Modal-I4tEFhoH.js";
 import { t as T } from "./useToastStore-BDoKlU6N.js";
 import { t as E } from "./Skeleton-DkSoWF3C.js";
-import { i as je, n as Me, r as Ne, t as Pe } from "./MetadataMatchModal-HXVG4hcc.js";
+import { i as je, n as Me, r as Ne, t as Pe } from "./MetadataMatchModal-Dg9_FRcQ.js";
 import { t as D } from "./EmptyState-B2QnGIQT.js";
 import { t as Fe } from "./Tabs-x8dUKZN5.js";
-import { t as Ie } from "./MediaRow-ugP6RUWT.js";
+import { t as Ie } from "./MediaRow-Drh_OdeG.js";
 import { a as Le, i as Re, n as ze, t as Be } from "./useApiBase-DhSHB6Qp.js";
-import { t as Ve } from "./HomeRow--F-SWdAh.js";
-import { t as He } from "./MediaDetail-CwORNScs.js";
+import { t as Ve } from "./HomeRow-VJbpWyC3.js";
+import { t as He } from "./MediaDetail-kGPPPwu1.js";
 import { n as Ue, t as We } from "./logs-DadTfaTq.js";
 import { t as Ge } from "./dashboard-BTCOCTHQ.js";
 import { n as Ke, r as qe, t as Je } from "./users-UPfbrkL3.js";
@@ -44,7 +44,7 @@ import { n as ct, t as lt } from "./libraries-CXAz_kXs.js";
 import { t as ut } from "./settings-m4upFcmH.js";
 import { i as dt, n as ft, r as pt, t as mt } from "./plugins-UjYR2rXk.js";
 import { t as ht } from "./hubDashboard-BhOaaDD-.js";
-import { A as gt, B as _t, C as vt, D as yt, E as bt, F as xt, G as St, H as Ct, I as wt, J as Tt, K as Et, L as Dt, M as Ot, N as kt, O as At, P as jt, R as Mt, S as Nt, T as Pt, U as Ft, V as It, W as Lt, X as Rt, Y as zt, _ as Bt, a as Vt, b as Ht, c as Ut, d as Wt, f as Gt, g as Kt, h as qt, i as Jt, j as Yt, k as Xt, l as Zt, m as Qt, n as $t, o as en, p as tn, q as nn, r as rn, s as an, t as on, u as sn, v as cn, w as ln, x as un, y as dn, z as fn } from "./Player-DlUUpwBp.js";
+import { A as gt, B as _t, C as vt, D as yt, E as bt, F as xt, G as St, H as Ct, I as wt, J as Tt, K as Et, L as Dt, M as Ot, N as kt, O as At, P as jt, R as Mt, S as Nt, T as Pt, U as Ft, V as It, W as Lt, X as Rt, Y as zt, _ as Bt, a as Vt, b as Ht, c as Ut, d as Wt, f as Gt, g as Kt, h as qt, i as Jt, j as Yt, k as Xt, l as Zt, m as Qt, n as $t, o as en, p as tn, q as nn, r as rn, s as an, t as on, u as sn, v as cn, w as ln, x as un, y as dn, z as fn } from "./Player-BsfTIh5I.js";
 import { a as pn, c as mn, d as hn, f as gn, g as _n, h as vn, i as yn, l as bn, m as xn, n as Sn, o as Cn, p as wn, r as Tn, s as En, t as Dn, u as On } from "./captions-COgPp5bH.js";
 import { t as kn } from "./LoginForm-C3zU1Nvo.js";
 import { t as An } from "./SignupForm-9B30CYd-.js";
@@ -301,6 +301,11 @@ var Qn = ["aria-labelledby"], $n = {
 		return J(() => i.playing, (e) => {
 			let t = o.value;
 			t && (e && t.paused ? t.play()?.catch(() => {}) : !e && !t.paused && t.pause());
+		}), J(() => i.lastCommand, (e) => {
+			let t = o.value;
+			if (!e || !t) return;
+			let n = e.type === "seekTo" ? e.value : i.position + e.value, r = t.duration && t.duration > 0 ? t.duration : i.duration, a = r > 0 ? Math.min(r, Math.max(0, n)) : Math.max(0, n);
+			t.currentTime = a, i.updateProgress(a, t.duration || void 0);
 		}), z(() => {
 			o.value?.pause?.();
 		}), (e, t) => (V(), j(k, { name: "mini" }, {
@@ -352,7 +357,7 @@ var Qn = ["aria-labelledby"], $n = {
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-76ca97c5"]]);
+}), [["__scopeId", "data-v-723c01d3"]]);
 //#endregion
 //#region src/composables/color.ts
 function Mr(e) {
@@ -956,12 +961,12 @@ function Ji(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-DR2DBmb7.js")
+			component: () => import("./BrowsePage-A5nu1anx.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-n3hcAUko.js")
+			component: () => import("./MediaDetailPage-CUlE3_ND.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -971,12 +976,12 @@ function Ji(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CTUEMo_y.js")
+			component: () => import("./LibraryPage-CLdJ3unY.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-BPFAfKt4.js")
+			component: () => import("./PlayerPage-B0P5JFHW.js")
 		},
 		{
 			path: `${t}/login`,

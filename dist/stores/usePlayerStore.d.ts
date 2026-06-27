@@ -6,6 +6,21 @@ export declare const RESUME_MAX_RATIO = 0.95;
 /** 100-nanosecond ticks per second — the server reports playback position in these
  *  (Jellyfin-style) ticks; the local resume map is in whole seconds. */
 export declare const TICKS_PER_SECOND = 10000000;
+/**
+ * A transport command pushed onto the store's command bus by a host OUTSIDE the
+ * Vue tree (Electron tray / media keys, TV remotes). The live media component
+ * (Player.vue or MiniPlayer.vue) watches `lastCommand` and applies it to its REAL
+ * `<video>` element — mirroring the `bindMediaSession` pattern: the store records
+ * an intent, the element owner enacts it. `seq` is bumped on every dispatch so two
+ * identical successive commands still re-trigger the watcher.
+ */
+export interface PlayerCommand {
+    type: 'seekTo' | 'seekBy';
+    /** seconds (seekTo = absolute) or delta seconds (seekBy = relative). */
+    value: number;
+    /** bump id so two identical successive commands still trigger the watcher. */
+    seq: number;
+}
 export interface MediaSessionHandlers {
     onPlay?: () => void;
     onPause?: () => void;
@@ -213,6 +228,15 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     subtitleLang: import("vue").Ref<string | null, string | null>;
     miniPlayer: import("vue").Ref<boolean, boolean>;
     resumeMap: import("vue").Ref<Record<string, number>, Record<string, number>>;
+    lastCommand: import("vue").Ref<{
+        type: "seekTo" | "seekBy";
+        value: number;
+        seq: number;
+    } | null, PlayerCommand | {
+        type: "seekTo" | "seekBy";
+        value: number;
+        seq: number;
+    } | null>;
     progress: import("vue").ComputedRef<number>;
     upNext: import("vue").ComputedRef<MediaItem | null>;
     inResumeBand: (pos: number, dur: number) => boolean;
@@ -225,6 +249,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         streamUrl?: string;
     }) => void;
     updateProgress: (pos: number, dur?: number, buf?: number) => void;
+    seekTo: (seconds: number) => void;
+    seekBy: (delta: number) => void;
+    playLocalFile: (url: string, meta?: Partial<MediaItem>) => void;
     play: () => void;
     pause: () => void;
     setVolume: (v: number) => void;
@@ -242,7 +269,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "volume" | "playing" | "duration" | "miniPlayer" | "quality" | "current" | "streamUrl" | "queue" | "position" | "buffered" | "muted" | "rate" | "subtitleLang" | "resumeMap">, Pick<{
+}, "volume" | "playing" | "duration" | "miniPlayer" | "quality" | "current" | "streamUrl" | "queue" | "position" | "buffered" | "muted" | "rate" | "subtitleLang" | "resumeMap" | "lastCommand">, Pick<{
     current: import("vue").Ref<{
         id: string;
         name: string;
@@ -433,6 +460,15 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     subtitleLang: import("vue").Ref<string | null, string | null>;
     miniPlayer: import("vue").Ref<boolean, boolean>;
     resumeMap: import("vue").Ref<Record<string, number>, Record<string, number>>;
+    lastCommand: import("vue").Ref<{
+        type: "seekTo" | "seekBy";
+        value: number;
+        seq: number;
+    } | null, PlayerCommand | {
+        type: "seekTo" | "seekBy";
+        value: number;
+        seq: number;
+    } | null>;
     progress: import("vue").ComputedRef<number>;
     upNext: import("vue").ComputedRef<MediaItem | null>;
     inResumeBand: (pos: number, dur: number) => boolean;
@@ -445,6 +481,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         streamUrl?: string;
     }) => void;
     updateProgress: (pos: number, dur?: number, buf?: number) => void;
+    seekTo: (seconds: number) => void;
+    seekBy: (delta: number) => void;
+    playLocalFile: (url: string, meta?: Partial<MediaItem>) => void;
     play: () => void;
     pause: () => void;
     setVolume: (v: number) => void;
@@ -653,6 +692,15 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     subtitleLang: import("vue").Ref<string | null, string | null>;
     miniPlayer: import("vue").Ref<boolean, boolean>;
     resumeMap: import("vue").Ref<Record<string, number>, Record<string, number>>;
+    lastCommand: import("vue").Ref<{
+        type: "seekTo" | "seekBy";
+        value: number;
+        seq: number;
+    } | null, PlayerCommand | {
+        type: "seekTo" | "seekBy";
+        value: number;
+        seq: number;
+    } | null>;
     progress: import("vue").ComputedRef<number>;
     upNext: import("vue").ComputedRef<MediaItem | null>;
     inResumeBand: (pos: number, dur: number) => boolean;
@@ -665,6 +713,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         streamUrl?: string;
     }) => void;
     updateProgress: (pos: number, dur?: number, buf?: number) => void;
+    seekTo: (seconds: number) => void;
+    seekBy: (delta: number) => void;
+    playLocalFile: (url: string, meta?: Partial<MediaItem>) => void;
     play: () => void;
     pause: () => void;
     setVolume: (v: number) => void;
@@ -682,4 +733,4 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "play" | "pause" | "closePlayer" | "next" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "mergeServerResume" | "setCurrent" | "updateProgress" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;
+}, "play" | "pause" | "closePlayer" | "next" | "seekTo" | "seekBy" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "mergeServerResume" | "setCurrent" | "updateProgress" | "playLocalFile" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;

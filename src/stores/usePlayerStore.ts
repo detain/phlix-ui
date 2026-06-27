@@ -14,6 +14,22 @@ const RESUME_KEY = 'phlix.resume';
  *  (Jellyfin-style) ticks; the local resume map is in whole seconds. */
 export const TICKS_PER_SECOND = 10_000_000;
 
+/**
+ * A transport command pushed onto the store's command bus by a host OUTSIDE the
+ * Vue tree (Electron tray / media keys, TV remotes). The live media component
+ * (Player.vue or MiniPlayer.vue) watches `lastCommand` and applies it to its REAL
+ * `<video>` element — mirroring the `bindMediaSession` pattern: the store records
+ * an intent, the element owner enacts it. `seq` is bumped on every dispatch so two
+ * identical successive commands still re-trigger the watcher.
+ */
+export interface PlayerCommand {
+  type: 'seekTo' | 'seekBy';
+  /** seconds (seekTo = absolute) or delta seconds (seekBy = relative). */
+  value: number;
+  /** bump id so two identical successive commands still trigger the watcher. */
+  seq: number;
+}
+
 export interface MediaSessionHandlers {
   onPlay?: () => void;
   onPause?: () => void;
@@ -62,6 +78,11 @@ export const usePlayerStore = defineStore('phlix-player', () => {
 
   const miniPlayer = ref(false);
   const resumeMap = ref<Record<string, number>>(readResumeMap());
+
+  /** Command bus (see PlayerCommand) — the latest external transport intent. The
+   *  live media component watches this and applies it to its real <video>. */
+  const lastCommand = ref<PlayerCommand | null>(null);
+  let cmdSeq = 0;
 
   const progress = computed(() => (duration.value > 0 ? position.value / duration.value : 0));
   const upNext = computed<MediaItem | null>(() => queue.value[0] ?? null);
@@ -167,6 +188,48 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     }
     if (buf !== undefined) buffered.value = buf;
     if (current.value) saveResume(current.value.id, pos, duration.value);
+  }
+
+  // ---- command bus (external transport seam) ------------------------------
+  /** Request an ABSOLUTE seek (seconds). Records an intent on `lastCommand`; the
+   *  live media component applies it to its real <video>. Does NOT touch the
+   *  element or store position directly — the element's seek then drives
+   *  `updateProgress`, exactly as a user scrubber seek does. */
+  function seekTo(seconds: number): void {
+    lastCommand.value = { type: 'seekTo', value: seconds, seq: ++cmdSeq };
+  }
+  /** Request a RELATIVE seek (delta seconds). See `seekTo`. */
+  function seekBy(delta: number): void {
+    lastCommand.value = { type: 'seekBy', value: delta, seq: ++cmdSeq };
+  }
+
+  /**
+   * Play an arbitrary local file (Windows host "Open File…"). Builds a minimal
+   * synthetic MediaItem (stable id `'local'`, title from `meta` or the URL
+   * basename) and routes it through the EXISTING setCurrent so all the usual
+   * media-session + transport seeding runs, then clears the queue (a local file
+   * has no up-next). `url` becomes the stream URL with a fresh position.
+   */
+  function playLocalFile(url: string, meta: Partial<MediaItem> = {}): void {
+    const basename = decodeURIComponent(url.split(/[?#]/)[0].split('/').pop() ?? '') || url;
+    const item: MediaItem = {
+      id: 'local',
+      name: basename,
+      type: 'movie',
+      poster_url: null,
+      genres: [],
+      year: null,
+      rating: null,
+      runtime: null,
+      overview: null,
+      actors: [],
+      director: null,
+      created_at: null,
+      updated_at: null,
+      ...meta,
+    };
+    setCurrent(item, { streamUrl: url, resetPosition: true });
+    queue.value = [];
   }
 
   function play(): void {
@@ -309,6 +372,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     subtitleLang,
     miniPlayer,
     resumeMap,
+    lastCommand,
     progress,
     upNext,
     inResumeBand,
@@ -318,6 +382,9 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     mergeServerResume,
     setCurrent,
     updateProgress,
+    seekTo,
+    seekBy,
+    playLocalFile,
     play,
     pause,
     setVolume,

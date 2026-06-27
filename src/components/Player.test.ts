@@ -360,6 +360,50 @@ describe('Player — Scrubber integration', () => {
   });
 });
 
+describe('Player — external command bus (seek seam)', () => {
+  it('applies an absolute store.seekTo to the element when duration is known', async () => {
+    const store = usePlayerStore();
+    const { state } = mountPlayer();
+    state.duration = 200;
+    store.seekTo(30);
+    await nextTick();
+    expect(state.currentTime).toBe(30);
+  });
+
+  it('applies store.seekBy relative to the current store position', async () => {
+    const store = usePlayerStore();
+    const { video, state } = mountPlayer();
+    state.currentTime = 50;
+    state.duration = 200;
+    video.dispatchEvent(new Event('timeupdate')); // sync store.position to 50
+    await nextTick();
+    store.seekBy(10);
+    await nextTick();
+    expect(state.currentTime).toBe(60);
+  });
+
+  it('defers an external seek issued before metadata (duration unknown) until loadedmetadata', async () => {
+    const store = usePlayerStore();
+    const { video, state } = mountPlayer();
+    state.duration = 0; // not loaded yet
+    store.seekTo(90);
+    await nextTick();
+    expect(state.currentTime).toBe(0); // deferred via pendingSeek
+    state.duration = 300;
+    video.dispatchEvent(new Event('loadedmetadata'));
+    expect(state.currentTime).toBe(90); // applied on metadata
+  });
+
+  it('clamps an over-long absolute seek to the duration', async () => {
+    const store = usePlayerStore();
+    const { state } = mountPlayer();
+    state.duration = 100;
+    store.seekTo(999);
+    await nextTick();
+    expect(state.currentTime).toBe(100);
+  });
+});
+
 describe('Player — chrome auto-hide', () => {
   it('hides the chrome after the idle timeout while playing, reveals on pointer move', async () => {
     vi.useFakeTimers();
