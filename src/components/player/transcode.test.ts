@@ -17,8 +17,14 @@ describe('transcode helpers', () => {
         '/api/v1/media/a%20b%2Fc/transcode?profile=mobile-high',
       );
     });
-    it('defaults the profile to web', () => {
-      expect(transcodeStartPath('m1')).toBe('/api/v1/media/m1/transcode?profile=web');
+    it('omits the ?profile= query when no profile is given (server maps from device header)', () => {
+      expect(transcodeStartPath('m1')).toBe('/api/v1/media/m1/transcode');
+    });
+    it('omits the ?profile= query for an empty-string profile', () => {
+      expect(transcodeStartPath('m1', '')).toBe('/api/v1/media/m1/transcode');
+    });
+    it('includes the ?profile= query for an explicit profile (e.g. tv-4k)', () => {
+      expect(transcodeStartPath('m1', 'tv-4k')).toBe('/api/v1/media/m1/transcode?profile=tv-4k');
     });
     it('builds the status path with an encoded job id', () => {
       expect(transcodeStatusPath('job 7')).toBe('/api/v1/transcode/job%207/status');

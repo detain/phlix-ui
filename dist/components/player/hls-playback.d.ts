@@ -21,6 +21,12 @@ export interface AttachHlsOptions {
     onError?: (detail: string) => void;
     /** Called once media is attached and the manifest is parsed (ready to play). */
     onReady?: () => void;
+    /** Optional per-app hls.js config overrides (e.g. a constrained TV tuning
+     *  `maxBufferLength` / `backBufferLength` down to cap RAM). Shallow-merged
+     *  OVER phlix-ui's defaults (`enableWorker` / `lowLatencyMode`), so a consumer
+     *  key wins — EXCEPT `xhrSetup`, which is always re-applied last so a consumer
+     *  can never accidentally drop the bearer-token auth header (see {@link attachHls}). */
+    hlsConfig?: Partial<import('hls.js').HlsConfig>;
 }
 /** True when the browser can play HLS natively (Safari / iOS). */
 export declare function isNativeHlsSupported(video: HTMLVideoElement): boolean;

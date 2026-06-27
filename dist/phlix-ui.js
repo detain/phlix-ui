@@ -44,11 +44,11 @@ import { n as lt, t as ut } from "./libraries-CXAz_kXs.js";
 import { t as dt } from "./settings-m4upFcmH.js";
 import { i as ft, n as pt, r as mt, t as ht } from "./plugins-UjYR2rXk.js";
 import { t as gt } from "./hubDashboard-BhOaaDD-.js";
-import { A as _t, B as vt, C as yt, D as bt, E as xt, F as St, G as Ct, H as wt, I as Tt, J as Et, K as Dt, L as Ot, M as kt, N as At, O as jt, P as Mt, R as Nt, S as Pt, T as Ft, U as It, V as Lt, W as Rt, X as zt, Y as Bt, _ as Vt, a as Ht, b as Ut, c as Wt, d as Gt, f as Kt, g as qt, h as Jt, i as Yt, j as Xt, k as Zt, l as Qt, m as $t, n as en, o as tn, p as nn, q as rn, r as an, s as on, t as sn, u as cn, v as ln, w as un, x as dn, y as fn, z as pn } from "./Player-BqmTl1by.js";
+import { A as _t, B as vt, C as yt, D as bt, E as xt, F as St, G as Ct, H as wt, I as Tt, J as Et, K as Dt, L as Ot, M as kt, N as At, O as jt, P as Mt, R as Nt, S as Pt, T as Ft, U as It, V as Lt, W as Rt, X as zt, Y as Bt, _ as Vt, a as Ht, b as Ut, c as Wt, d as Gt, f as Kt, g as qt, h as Jt, i as Yt, j as Xt, k as Zt, l as Qt, m as $t, n as en, o as tn, p as nn, q as rn, r as an, s as on, t as sn, u as cn, v as ln, w as un, x as dn, y as fn, z as pn } from "./Player-CaRNZdo8.js";
 import { a as mn, c as hn, d as gn, f as _n, g as vn, h as yn, i as bn, l as xn, m as Sn, n as Cn, o as wn, p as Tn, r as En, s as Dn, t as On, u as kn } from "./captions-COgPp5bH.js";
 import { t as An } from "./LoginForm-C3zU1Nvo.js";
 import { t as jn } from "./SignupForm-9B30CYd-.js";
-import { t as Mn } from "./SettingsForm-Qfv999Sk.js";
+import { t as Mn } from "./SettingsForm-sw7T_xzl.js";
 import { Fragment as D, Teleport as Nn, Transition as O, TransitionGroup as Pn, computed as k, createApp as Fn, createBlock as A, createCommentVNode as j, createElementBlock as M, createElementVNode as N, createTextVNode as P, createVNode as F, defineAsyncComponent as In, defineComponent as I, inject as Ln, normalizeClass as L, normalizeStyle as Rn, onBeforeUnmount as R, onMounted as z, onScopeDispose as zn, openBlock as B, readonly as Bn, ref as V, renderList as H, renderSlot as U, resolveDynamicComponent as Vn, toDisplayString as W, toValue as Hn, unref as G, useId as Un, vModelText as Wn, watch as K, watchEffect as Gn, withCtx as q, withDirectives as Kn, withKeys as qn, withModifiers as Jn } from "vue";
 import { createPinia as Yn, defineStore as Xn } from "pinia";
 import { RouterLink as J, RouterView as Zn, createRouter as Qn, createWebHistory as $n, useRouter as er } from "vue-router";
@@ -1002,7 +1002,7 @@ function ea(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-DaCzulPL.js")
+			component: () => import("./PlayerPage-DtyaI5XX.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1020,7 +1020,7 @@ function ea(e) {
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-BrjLaTcl.js")
+			component: () => import("./SettingsPage-Dkssc2Nk.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({
