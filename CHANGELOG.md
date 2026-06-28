@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.54.0] - 2026-06-27
+
+### Added
+
+- **First-run Connect screen for native clients** — a new public `connect` route
+  (`ConnectPage.vue`) lets a native client with no baked-in server origin
+  (Windows/Tizen/…) ask the user which Phlix server (or hub) to talk to, instead
+  of silently defaulting to `localhost` and showing a login form that
+  authenticates against nothing. The user enters an address; the page infers a
+  scheme (LAN/IP/port → `http`, public host → `https`), probes the server's
+  public `/health`, and on success persists the choice — with a non-blocking
+  "Connect anyway" fallback for back ends that don't expose `/health`
+  cross-origin.
+- **`useConnectionStore`** — holds the runtime-chosen API base (persisted to
+  `localStorage` under `phlix.connection.apiBase`), with `configure()` to notify
+  the host shell, plus exported helpers `normalizeBase`, `withScheme`, and
+  `probeServer`.
+- **`PhlixAppConfig.requireConnection`** — when true, any route visited with no
+  resolved base redirects to `connect` (and `auth.init()` is skipped until a base
+  exists). **`PhlixAppConfig.onConnectionChange`** — callback fired when the
+  chosen base is set/cleared, so a native shell can mirror it into its own
+  durable store (e.g. the Electron client's `setServerUrl`).
+- **`connectGuard`** — pure navigation guard for the connect-gate, unit-tested
+  alongside `authGuard`.
+
+### Changed
+
+- **`apiBase` is now provided as a reactive `ComputedRef`** (the runtime
+  connection if set, else the seeded config base) rather than a static string, so
+  a native client's connection choice re-points every API consumer reactively.
+  `useApiBase` and the admin pages already accept `string | ComputedRef`;
+  `useAuthStore` now resolves the base via `useApiBase` and re-points its
+  long-lived client in place via the new **`ApiClient.setBaseUrl()`**.
+
 ## [0.53.0] - 2026-06-26
 
 ### Added

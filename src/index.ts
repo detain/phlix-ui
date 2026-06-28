@@ -318,6 +318,13 @@ export type { LibrarySummary } from './api/libraries';
 // browsing at the relay proxy for that server. `useApiBase` resolves the host's
 // own base; `useMediaApiBase` resolves the (possibly proxied) media base.
 export { useServerStore, CURRENT_SERVER_ID_KEY, CURRENT_SERVER_NAME_KEY } from './stores/useServerStore';
+export {
+    useConnectionStore,
+    CONNECTION_API_BASE_KEY,
+    normalizeBase,
+    withScheme,
+    probeServer,
+} from './stores/useConnectionStore';
 export { useApiBase, useMediaApiBase } from './composables/useApiBase';
 
 // Article-aware title sorting (mirror of the server's SortTitle): file "The Plot"

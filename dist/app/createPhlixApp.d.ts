@@ -28,6 +28,20 @@ export declare const PUBLIC_ROUTE_NAMES: readonly string[];
  */
 export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boolean, isAdmin?: boolean, home?: RouteLocationRaw): true | RouteLocationRaw;
 /**
+ * Connect-gate for native clients (no baked-in server origin). Pure (the state is
+ * passed in) so it unit-tests without a live router/store. Returns:
+ *
+ * - `null` when the gate does NOT apply (web-hosted app, or a base is already
+ *   resolved) — the caller falls through to {@link authGuard}.
+ * - `true` when the gate applies and the target IS the `connect` screen itself
+ *   (let it render; it is public and must reach the user with no base).
+ * - a redirect to `connect` (preserving the intended destination) otherwise.
+ *
+ * While unconnected the caller must NOT run `auth.init()` — there is no server to
+ * validate a token against — which a non-null return here lets it skip.
+ */
+export declare function connectGuard(to: RouteLocationNormalized, requireConnection: boolean, hasBase: boolean): true | RouteLocationRaw | null;
+/**
  * Resolve the STATIC page title for a route (the page-specific part, WITHOUT the
  * ` · Phlix` suffix — {@link setPageTitle} adds that). Pure (translator passed
  * in) so it unit-tests without a live router.

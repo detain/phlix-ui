@@ -1,12 +1,18 @@
 import { defineStore } from 'pinia';
-import { ref, computed, inject } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { ApiClient, type AuthUser } from '../api/client';
 import { LocalStorageTokenStore } from '../api/tokenStore';
+import { useApiBase } from '../composables/useApiBase';
 
 export const useAuthStore = defineStore('auth', () => {
     const tokenStore = new LocalStorageTokenStore();
-    const apiBase = inject<string>('apiBase', '');
-    const client = new ApiClient({ tokenStore, baseUrl: apiBase });
+    // The app's own API base, resolved reactively (a native client picks it at
+    // runtime on the Connect screen, so it can change after this store — and its
+    // client — already exist). The single `client` instance is kept (consumers
+    // hold the reference); we re-point it in place whenever the base changes.
+    const apiBase = useApiBase();
+    const client = new ApiClient({ tokenStore, baseUrl: apiBase.value });
+    watch(apiBase, (base) => client.setBaseUrl(base));
 
     const user = ref<AuthUser | null>(null);
     const loading = ref(false);
