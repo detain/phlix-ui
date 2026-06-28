@@ -95,6 +95,17 @@ export interface PhlixAppConfig {
      *  `X-Phlix-Session-ID`). Registered once at boot via `setDefaultApiHeaders`,
      *  so the Windows/Tizen apps (built on `createPhlixApp`) identify as devices. */
     deviceHeaders?: Record<string, string>;
+    /** When true, the app must resolve its API base at RUNTIME before it can reach
+     *  login: any route visited with no base resolved (neither a stored connection
+     *  nor a seeded `apiBase`) redirects to the `connect` screen. Native
+     *  desktop/TV clients set this — they ship with no baked-in server origin. A
+     *  web-hosted server/hub leaves it false (its own origin IS the base). */
+    requireConnection?: boolean;
+    /** Called whenever the Connect screen persists (or clears, with `null`) the
+     *  chosen API base. Native shells use it to mirror the URL into their own
+     *  durable store (e.g. the Electron client writes it back via `setServerUrl`
+     *  so `resolveAppConfig` re-seeds it on the next launch). */
+    onConnectionChange?: (url: string | null) => void;
     /** Per-app hls.js config overrides for the transcode player, e.g. a constrained
      *  TV tuning `maxBufferLength` / `backBufferLength` down to cap RAM. Merged OVER
      *  phlix-ui's defaults (`enableWorker` / `lowLatencyMode`); the auth `xhrSetup`

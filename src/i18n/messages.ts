@@ -115,6 +115,20 @@ export const DEFAULT_MESSAGES = {
     signInFailed: 'Sign in failed.',
     signupFailed: 'Registration failed.',
   },
+  connect: {
+    // First-run "point this app at your server" screen (native clients)
+    eyebrow: 'Get started',
+    title: 'Connect to your server',
+    subtitle: 'Enter the address of your Phlix media server or hub.',
+    addressLabel: 'Server address',
+    addressPlaceholder: 'https://your-server:8096',
+    hint: 'For a server on your network this is usually its local address, e.g. http://192.168.1.50:8096.',
+    connect: 'Connect',
+    connecting: 'Connecting…',
+    addressRequired: 'Enter your server address.',
+    unreachable: "Couldn't reach a Phlix server at that address. Check it and try again.",
+    connectAnyway: 'Connect anyway',
+  },
   player: {
     // Transport + chrome (Player.vue)
     play: 'Play',

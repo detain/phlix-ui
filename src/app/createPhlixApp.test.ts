@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router';
-import { createPhlixApp, buildRoutes, authGuard, mediaApiBaseFor, mediaDirectBaseFor, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
+import { createPhlixApp, buildRoutes, authGuard, connectGuard, mediaApiBaseFor, mediaDirectBaseFor, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
 
 beforeEach(() => {
   localStorage.clear();
@@ -100,7 +100,7 @@ describe('createPhlixApp', () => {
 });
 
 describe('buildRoutes — R6.1a lazy route chunks', () => {
-  const BUILTIN_PAGES = ['browse', 'media', 'library', 'player', 'login', 'signup', 'settings'] as const;
+  const BUILTIN_PAGES = ['browse', 'media', 'library', 'player', 'login', 'signup', 'connect', 'settings'] as const;
 
   /** Pull a route's `component` field across the RouteRecordRaw union (redirect
    *  records have no `component`). A lazy `() => import()` loader is a function;
@@ -112,7 +112,7 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     return route?.component;
   }
 
-  it('mounts the 6 built-in pages as lazy () => import() chunks, not static components', () => {
+  it('mounts the built-in pages as lazy () => import() chunks, not static components', () => {
     const routes = buildRoutes({ app: 'server', apiBase: '', routerBase: '/app' });
     for (const name of BUILTIN_PAGES) {
       expect(typeof componentOf(routes, name), `route "${name}" is a lazy loader`).toBe('function');
@@ -315,5 +315,41 @@ describe('authGuard', () => {
     expect(authGuard(route('admin-users', { meta: { requiresAdmin: true } }), true, false)).toEqual({
       name: 'browse',
     });
+  });
+});
+
+describe('connectGuard', () => {
+  function route(
+    name: string,
+    opts: { fullPath?: string } = {},
+  ): RouteLocationNormalized {
+    return {
+      name,
+      meta: {},
+      fullPath: opts.fullPath ?? `/app/${name}`,
+    } as unknown as RouteLocationNormalized;
+  }
+
+  it('does not apply when requireConnection is false (web-hosted app)', () => {
+    expect(connectGuard(route('browse'), false, false)).toBeNull();
+  });
+
+  it('does not apply once a base is resolved', () => {
+    expect(connectGuard(route('browse'), true, true)).toBeNull();
+  });
+
+  it('redirects to connect (preserving destination) when required and no base', () => {
+    expect(connectGuard(route('media', { fullPath: '/app/media/42' }), true, false)).toEqual({
+      name: 'connect',
+      query: { redirect: '/app/media/42' },
+    });
+  });
+
+  it('lets the connect route itself render while unconnected', () => {
+    expect(connectGuard(route('connect'), true, false)).toBe(true);
+  });
+
+  it('is a public route name (reachable unauthenticated)', () => {
+    expect(PUBLIC_ROUTE_NAMES).toContain('connect');
   });
 });

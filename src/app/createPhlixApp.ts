@@ -23,6 +23,7 @@ import { installFocusable } from '../directives/focusable';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useServerStore } from '../stores/useServerStore';
+import { useConnectionStore } from '../stores/useConnectionStore';
 import { setAppName, setPageTitle } from '../composables/usePageTitle';
 import { adminPageLabel } from './admin';
 import { createTranslator, type Translate, type MessageKey } from '../i18n/messages';
@@ -33,7 +34,7 @@ import type { PhlixAppConfig } from './types';
  * {@link authGuard} — an unauthenticated visit redirects to `login`. A consumer
  * route can also opt out by setting `meta: { public: true }`.
  */
-export const PUBLIC_ROUTE_NAMES: readonly string[] = ['login', 'signup'];
+export const PUBLIC_ROUTE_NAMES: readonly string[] = ['login', 'signup', 'connect'];
 
 /**
  * Navigation guard. Pure (the auth state is passed in) so it unit-tests without a
@@ -72,6 +73,33 @@ export function authGuard(
         return home;
     }
     return true;
+}
+
+/**
+ * Connect-gate for native clients (no baked-in server origin). Pure (the state is
+ * passed in) so it unit-tests without a live router/store. Returns:
+ *
+ * - `null` when the gate does NOT apply (web-hosted app, or a base is already
+ *   resolved) — the caller falls through to {@link authGuard}.
+ * - `true` when the gate applies and the target IS the `connect` screen itself
+ *   (let it render; it is public and must reach the user with no base).
+ * - a redirect to `connect` (preserving the intended destination) otherwise.
+ *
+ * While unconnected the caller must NOT run `auth.init()` — there is no server to
+ * validate a token against — which a non-null return here lets it skip.
+ */
+export function connectGuard(
+    to: RouteLocationNormalized,
+    requireConnection: boolean,
+    hasBase: boolean,
+): true | RouteLocationRaw | null {
+    if (!requireConnection || hasBase) {
+        return null;
+    }
+    if (to.name === 'connect') {
+        return true;
+    }
+    return { name: 'connect', query: to.fullPath ? { redirect: to.fullPath } : {} };
 }
 
 /**
@@ -226,6 +254,16 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             component: () => import('../pages/SignupPage.vue'),
         },
         {
+            // First-run "connect to your server" screen for native clients with no
+            // baked-in origin. Public (in PUBLIC_ROUTE_NAMES) + reached via the
+            // connect-gate in `beforeEach` when `requireConnection` is set and no
+            // base is resolved yet. A web-hosted server/hub never routes here.
+            path: `${base}/connect`,
+            name: 'connect',
+            meta: { title: 'connect.title' },
+            component: () => import('../pages/ConnectPage.vue'),
+        },
+        {
             path: `${base}/settings`,
             name: 'settings',
             meta: { title: 'settings.title' },
@@ -314,7 +352,25 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     // lands on the media-server Browse page (server-only endpoints 404 on the hub).
     // Defaults to the `browse` route (the media server's home).
     const home: RouteLocationRaw = fullConfig.home ? { path: fullConfig.home } : { name: 'browse' };
+
+    // The runtime-chosen API base for a native client (no baked-in origin). A
+    // web-hosted server/hub leaves this empty and falls back to `fullConfig.apiBase`
+    // (its own origin). `configure()` lets the host shell mirror the chosen URL into
+    // its own durable store (e.g. the Electron client's `setServerUrl`).
+    const connection = useConnectionStore(pinia);
+    connection.configure(fullConfig.onConnectionChange ?? null);
+
+    /** The app's own API base: the runtime connection if set, else the seeded config base. */
+    const effectiveBase = (): string => connection.apiBase || fullConfig.apiBase;
+
     router.beforeEach(async (to) => {
+        // Connect-gate (native clients only): until a base is resolved, force the
+        // Connect screen and DON'T run auth.init() — there's no server to validate
+        // a token against yet. A non-null return short-circuits before auth.init().
+        const gate = connectGuard(to, fullConfig.requireConnection === true, effectiveBase() !== '');
+        if (gate !== null) {
+            return gate;
+        }
         const auth = useAuthStore(pinia);
         await auth.init();
         return authGuard(to, auth.isLoggedIn, auth.isAdmin, home);
@@ -341,7 +397,7 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     // reactively. The host's own endpoints (auth/`/me`/admin) stay on `apiBase`.
     const serverStore = useServerStore(pinia);
     const mediaApiBase = computed(() =>
-        mediaApiBaseFor(fullConfig.app, fullConfig.apiBase, serverStore.currentServerId),
+        mediaApiBaseFor(fullConfig.app, effectiveBase(), serverStore.currentServerId),
     );
 
     // The base the player streams media BYTES from directly (bypassing the proxy):
@@ -353,7 +409,10 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     );
 
     const app: VueApp = createApp(PhlixApp);
-    app.provide('apiBase', fullConfig.apiBase);
+    // Provide `apiBase` as a COMPUTED (not the static config string) so a native
+    // client's runtime connection choice re-points every consumer reactively.
+    // `useApiBase` and the admin pages already accept `string | ComputedRef`.
+    app.provide('apiBase', computed(() => effectiveBase()));
     app.provide('mediaApiBase', mediaApiBase);
     app.provide('mediaDirectBase', mediaDirectBase);
     app.provide('phlixCommands', fullConfig.commands ?? []);

@@ -108,6 +108,19 @@ export declare const DEFAULT_MESSAGES: {
         signInFailed: string;
         signupFailed: string;
     };
+    connect: {
+        eyebrow: string;
+        title: string;
+        subtitle: string;
+        addressLabel: string;
+        addressPlaceholder: string;
+        hint: string;
+        connect: string;
+        connecting: string;
+        addressRequired: string;
+        unreachable: string;
+        connectAnyway: string;
+    };
     player: {
         play: string;
         pause: string;
