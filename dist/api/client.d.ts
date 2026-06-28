@@ -101,12 +101,20 @@ export declare const TMDB_UNCONFIGURED_CODE = "metadata.tmdb_unconfigured";
  */
 export declare function isTmdbUnconfigured(e: unknown): boolean;
 export declare class ApiClient {
-    private readonly baseUrl;
+    private baseUrl;
     private readonly tokens;
     private readonly doFetch;
     private readonly timeoutMs;
     private readonly instanceHeaders;
     constructor(options?: ApiClientOptions);
+    /**
+     * Re-point this client at a different API base after construction. Lets a
+     * long-lived client (e.g. the one held by `useAuthStore`) follow a runtime
+     * connection change — the native Connect screen sets the base AFTER the store
+     * has already created its client, and consumers hold that same instance, so
+     * mutating it in place keeps every reference valid rather than swapping it.
+     */
+    setBaseUrl(baseUrl: string): void;
     request<T = unknown>(method: string, endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
     private handleResponse;
     private extractError;

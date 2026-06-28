@@ -183,7 +183,7 @@ export function isTmdbUnconfigured(e: unknown): boolean {
 }
 
 export class ApiClient {
-    private readonly baseUrl: string;
+    private baseUrl: string;
     private readonly tokens: TokenStore;
     private readonly doFetch: typeof fetch;
     private readonly timeoutMs: number;
@@ -195,6 +195,17 @@ export class ApiClient {
         this.doFetch = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
         this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         this.instanceHeaders = pruneHeaders(options.headers ?? {});
+    }
+
+    /**
+     * Re-point this client at a different API base after construction. Lets a
+     * long-lived client (e.g. the one held by `useAuthStore`) follow a runtime
+     * connection change — the native Connect screen sets the base AFTER the store
+     * has already created its client, and consumers hold that same instance, so
+     * mutating it in place keeps every reference valid rather than swapping it.
+     */
+    setBaseUrl(baseUrl: string): void {
+        this.baseUrl = baseUrl;
     }
 
     async request<T = unknown>(
