@@ -188,6 +188,17 @@ export class ApiClient {
     private readonly doFetch: typeof fetch;
     private readonly timeoutMs: number;
     private readonly instanceHeaders: Record<string, string>;
+    /**
+     * In-flight token refresh, single-flighted per `ApiClient` instance. When an
+     * access token expires, every concurrent request gets a 401 and calls
+     * {@link refreshToken} at once; without coordination each would POST
+     * `/api/v1/auth/refresh` with the same refresh token. The hub rotates
+     * refresh tokens one-time-use, so the second+ POST presents an
+     * already-consumed token, fails, and spuriously logs the user out
+     * mid-session. Memoising the promise (cleared in `.finally()`) makes the N
+     * callers await the SAME refresh — exactly one POST, one rotation.
+     */
+    private refreshPromise: Promise<boolean> | null = null;
 
     constructor(options: ApiClientOptions = {}) {
         this.baseUrl = options.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
@@ -337,36 +348,52 @@ export class ApiClient {
         return 'Request failed';
     }
 
+    /**
+     * Refresh the access token, single-flighted per instance. Concurrent callers
+     * (e.g. several requests that all hit a 401 at once) share ONE in-flight
+     * refresh rather than each POSTing `/api/v1/auth/refresh` — see
+     * {@link refreshPromise}. The promise is cleared in `.finally()` so a later
+     * expiry starts a fresh refresh. Returns `true` on success / `false` on any
+     * failure (no refresh token, non-2xx, network error, missing access_token).
+     */
     async refreshToken(): Promise<boolean> {
-        const refreshToken = this.tokens.getRefreshToken();
-        if (!refreshToken) {
-            return false;
+        if (this.refreshPromise !== null) {
+            return this.refreshPromise;
         }
-        try {
-            const response = await this.doFetch(`${this.baseUrl}/api/v1/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify({ refresh_token: refreshToken }),
-            });
-            if (!response.ok) {
+        this.refreshPromise = (async (): Promise<boolean> => {
+            const refreshToken = this.tokens.getRefreshToken();
+            if (!refreshToken) {
                 return false;
             }
-            const data = (await response.json()) as {
-                access_token?: string;
-                refresh_token?: string;
-            };
-            if (typeof data.access_token !== 'string') {
+            try {
+                const response = await this.doFetch(`${this.baseUrl}/api/v1/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ refresh_token: refreshToken }),
+                });
+                if (!response.ok) {
+                    return false;
+                }
+                const data = (await response.json()) as {
+                    access_token?: string;
+                    refresh_token?: string;
+                };
+                if (typeof data.access_token !== 'string') {
+                    return false;
+                }
+                this.tokens.setAccessToken(data.access_token);
+                if (typeof data.refresh_token === 'string') {
+                    this.tokens.setRefreshToken(data.refresh_token);
+                }
+                return true;
+            } catch {
                 return false;
             }
-            this.tokens.setAccessToken(data.access_token);
-            if (typeof data.refresh_token === 'string') {
-                this.tokens.setRefreshToken(data.refresh_token);
-            }
-            return true;
-        } catch {
-            return false;
-        }
+        })().finally(() => {
+            this.refreshPromise = null;
+        });
+        return this.refreshPromise;
     }
 
     async get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T> {
