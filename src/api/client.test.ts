@@ -258,6 +258,93 @@ describe('ApiClient', () => {
         });
     });
 
+    describe('single-flight token refresh (B3)', () => {
+        // A URL-aware fetch: every non-refresh request 401s on its first hit (per
+        // URL) and 200s on the retry; `/auth/refresh` POSTs are counted and each
+        // rotates the access token. With concurrent requests all hitting a 401 at
+        // once, single-flighting must collapse the N refresh calls into ONE POST.
+        // A deferred microtask makes the responses settle out of call order so any
+        // accidental per-caller refresh would race a fresh (un-rotated) POST.
+        function makeUrlAwareFetch(): {
+            fetch: typeof fetch;
+            refreshCount: () => number;
+        } {
+            const seen = new Set<string>();
+            let refreshCalls = 0;
+            let issued = 0;
+            const fetchImpl = async (url: string, init?: RequestInit): Promise<Response> => {
+                // Yield so concurrent callers all enqueue before any settles.
+                await Promise.resolve();
+                const respond = (status: number, body: unknown): Response =>
+                    ({
+                        ok: status >= 200 && status < 300,
+                        status,
+                        headers: new Headers({ 'content-type': 'application/json' }),
+                        json: () => Promise.resolve(body),
+                        text: () => Promise.resolve(JSON.stringify(body)),
+                    }) as unknown as Response;
+
+                if (url.endsWith('/api/v1/auth/refresh')) {
+                    refreshCalls += 1;
+                    issued += 1;
+                    // Echo the presented refresh token so a stale (already-rotated)
+                    // token would be observable; rotate to a fresh access token.
+                    return respond(200, { access_token: `acc-${issued}`, refresh_token: `ref-${issued}` });
+                }
+
+                const auth = ((init?.headers ?? {}) as Record<string, string>)['Authorization'];
+                if (!seen.has(url)) {
+                    seen.add(url);
+                    return respond(401, { error: 'expired' });
+                }
+                // Retry after refresh — must carry the rotated bearer token.
+                return respond(200, { ok: true, sentAuth: auth });
+            };
+            return { fetch: fetchImpl as unknown as typeof fetch, refreshCount: () => refreshCalls };
+        }
+
+        it('collapses N concurrent 401s into a SINGLE refresh POST; all requests resolve', async () => {
+            const tokens = new MemoryTokenStore({ access: 'old', refresh: 'ref-0' });
+            const { fetch, refreshCount } = makeUrlAwareFetch();
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const N = 6;
+            const results = await Promise.all(
+                Array.from({ length: N }, (_unused, i) =>
+                    client.get<{ ok: boolean; sentAuth: string }>(`/api/v1/r${i}`),
+                ),
+            );
+
+            // Exactly one refresh POST despite all N requests racing a 401.
+            expect(refreshCount()).toBe(1);
+            // Every request resolved against its retry.
+            expect(results).toHaveLength(N);
+            for (const r of results) {
+                expect(r.ok).toBe(true);
+                // The retry carried the rotated access token from the single refresh.
+                expect(r.sentAuth).toBe('Bearer acc-1');
+            }
+            expect(tokens.getAccessToken()).toBe('acc-1');
+            expect(tokens.getRefreshToken()).toBe('ref-1');
+        });
+
+        it('clears the in-flight promise so a LATER expiry starts a fresh refresh POST', async () => {
+            const tokens = new MemoryTokenStore({ access: 'old', refresh: 'ref-0' });
+            const { fetch, refreshCount } = makeUrlAwareFetch();
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            // First wave — one refresh.
+            await client.get('/api/v1/a');
+            expect(refreshCount()).toBe(1);
+
+            // A second, fully-settled refresh must start a brand-new POST (the
+            // `.finally()` cleared `refreshPromise`).
+            const second = await client.refreshToken();
+            expect(second).toBe(true);
+            expect(refreshCount()).toBe(2);
+        });
+    });
+
     describe('error handling', () => {
         it('throws ApiError with the JSON `error` message and status', async () => {
             const { fetch } = makeFetch([{ status: 403, body: { error: 'Forbidden', code: 'auth.not_admin' } }]);
