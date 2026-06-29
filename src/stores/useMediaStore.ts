@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import type { MediaItem, MediaType } from '../types/media-item';
 import type { LibraryQueryParams } from '../types/library-query';
 import { ApiClient } from '../api/client';
-import { errMessage } from '../api/errors';
+import { ApiError, errMessage } from '../api/errors';
 import { buildMediaQuery, buildMediaUrl } from '../api/media-query';
 
 export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime';
@@ -19,6 +19,18 @@ interface MediaResponse {
 interface CacheEntry {
     items: MediaItem[];
     total: number;
+    ts: number;
+}
+
+/** Facets returned by GET /api/v1/media/facets — genres are the primary seam.
+ *  Additional facet dimensions can be added as the server implements them. */
+export interface MediaFacets {
+    genres: string[];
+}
+
+/** Cache entry for server facets. */
+interface FacetsCacheEntry {
+    facets: MediaFacets;
     ts: number;
 }
 
@@ -44,6 +56,8 @@ export const useMediaStore = defineStore('media', () => {
     const total = ref(0);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    /** Server-provided facets (populated by loadFacets when the endpoint exists). */
+    const serverFacets = ref<MediaFacets | null>(null);
 
     /** Lazily-constructed, long-lived ApiClient — reused across all fetch calls.
      *  When apiBase changes between calls we call setBaseUrl() instead of
@@ -98,6 +112,7 @@ export const useMediaStore = defineStore('media', () => {
     });
 
     const availableGenres = computed(() => {
+        if (serverFacets.value?.genres) return [...serverFacets.value.genres].sort();
         const genres = new Set<string>();
         items.value.forEach((item) => item.genres?.forEach((g) => genres.add(g)));
         return Array.from(genres).sort();
@@ -121,6 +136,7 @@ export const useMediaStore = defineStore('media', () => {
 
     // ---- cache + in-flight --------------------------------------------------
     const cache = new Map<string, CacheEntry>();
+    const facetsCache = new Map<string, FacetsCacheEntry>();
     const inflight = new Map<string, { promise: Promise<MediaResponse>; controller: AbortController }>();
     let activeKey: string | null = null;
     let activeController: AbortController | null = null;
@@ -291,6 +307,52 @@ export const useMediaStore = defineStore('media', () => {
         clearTimeout(debounceTimer);
     }
 
+    // ---- facets -------------------------------------------------------------
+    /** Build the cache key for facets (scoped by libraryId when set). */
+    function facetsCacheKey(libraryId: string | undefined): string {
+        return libraryId ?? '__all__';
+    }
+
+    /**
+     * Load genre facets from the server.
+     *
+     * When the server implements `GET /api/v1/media/facets` the returned genres
+     * are used for `availableGenres` — providing the complete list even under
+     * sparse / random-access paging. When the endpoint is absent (404) or the
+     * request fails, the store falls back to the derived set from loaded items,
+     * so this call is safe on older servers and degrades gracefully.
+     */
+    async function loadFacets(apiBase: string): Promise<void> {
+        const key = facetsCacheKey(libraryId.value);
+        const cached = facetsCache.get(key);
+        if (cached && Date.now() - cached.ts < CACHE_TTL) {
+            serverFacets.value = cached.facets;
+            return;
+        }
+
+        if (!apiClient) {
+            apiClient = new ApiClient({ baseUrl: apiBase });
+        } else {
+            apiClient.setBaseUrl(apiBase);
+        }
+
+        try {
+            const params: Record<string, string> = {};
+            if (libraryId.value) params['libraryId'] = libraryId.value;
+            const facets = await apiClient.get<MediaFacets>('/api/v1/media/facets', Object.keys(params).length ? params : undefined);
+            serverFacets.value = facets;
+            facetsCache.set(key, { facets, ts: Date.now() });
+        } catch (e) {
+            // 404 (absent endpoint) or any other error — fall back to derived genres.
+            // Do not clobber a previously-loaded serverFacets value so the fallback
+            // only kicks in when the endpoint is genuinely unavailable.
+            if (e instanceof ApiError && e.status === 404) {
+                serverFacets.value = null;
+            }
+            /* otherwise silently ignore — derived genres remain active */
+        }
+    }
+
     // ---- URL sync -----------------------------------------------------------
     /** Current filters as a flat query object (paging omitted — it's transient). */
     function toQuery(): Record<string, string | string[]> {
@@ -424,6 +486,7 @@ export const useMediaStore = defineStore('media', () => {
         total,
         loading,
         error,
+        serverFacets,
         search,
         selectedGenres,
         yearFrom,
@@ -451,6 +514,7 @@ export const useMediaStore = defineStore('media', () => {
         prefetch,
         clearCache,
         cancelScheduled,
+        loadFacets,
         toQuery,
         applyQuery,
         reset,

@@ -379,3 +379,73 @@ describe('useMediaStore — ensureRange (random-access paging / A-Z jump)', () =
     expect(Math.max(...requested)).toBeLessThan(30);
   });
 });
+
+describe('useMediaStore — facets', () => {
+  it('loadFacets populates serverFacets and availableGenres from the server', async () => {
+    // Build the mock so first call (media items) returns items, second (facets) returns facets
+    let callCount = 0;
+    fetchMock.mockImplementation((_url: string) => {
+      callCount++;
+      if (callCount === 1) {
+        return Promise.resolve(jsonResponse({ items: makeItems('a', 3), total: 30, limit: 24, offset: 0 }));
+      }
+      return Promise.resolve(jsonResponse({ genres: ['Sci-Fi', 'Drama', 'Comedy', 'Horror'] }));
+    });
+    const s = useMediaStore();
+    s.reset();
+    expect(s.serverFacets).toBeNull(); // Initial state
+    await s.fetchMedia('');
+    await s.loadFacets('');
+    expect(callCount).toBe(2);
+    expect(s.serverFacets).toEqual({ genres: ['Sci-Fi', 'Drama', 'Comedy', 'Horror'] });
+    expect(s.availableGenres).toEqual(['Comedy', 'Drama', 'Horror', 'Sci-Fi']);
+  });
+
+  it('availableGenres falls back to derived genres when facets endpoint is absent (404)', async () => {
+    let callCount = 0;
+    fetchMock.mockImplementation((_url: string) => {
+      callCount++;
+      if (callCount === 1) {
+        return Promise.resolve(jsonResponse({ items: makeItems('a', 3), total: 30, limit: 24, offset: 0 }));
+      }
+      return Promise.resolve(new Response(null, { status: 404 }));
+    });
+    const s = useMediaStore();
+    s.reset();
+    await s.fetchMedia('');
+    // Simulate items with genres in the loaded items
+    s.items[0] = { ...s.items[0], genres: ['Action', 'Thriller'] };
+    s.items[1] = { ...s.items[1], genres: ['Comedy'] };
+    s.items[2] = { ...s.items[2], genres: ['Drama'] };
+    await s.loadFacets('');
+    expect(s.serverFacets).toBeNull();
+    expect(s.availableGenres).toEqual(['Action', 'Comedy', 'Drama', 'Thriller']);
+  });
+
+  it('loadFacets caches results and does not re-fetch within TTL', async () => {
+    let facetsCalls = 0;
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('/media/facets')) facetsCalls++;
+      return Promise.resolve(jsonResponse({ genres: ['Sci-Fi'] }));
+    });
+    const s = useMediaStore();
+    s.reset();
+    await s.fetchMedia('');
+    await s.loadFacets('');
+    await s.loadFacets('');
+    expect(facetsCalls).toBe(1);
+  });
+
+  it('loadFacets includes libraryId in the request when set', async () => {
+    let capturedUrl: string | undefined;
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('/media/facets')) capturedUrl = url;
+      return Promise.resolve(jsonResponse({ genres: ['Sci-Fi'] }));
+    });
+    const s = useMediaStore();
+    s.reset();
+    s.setLibraryId('lib-123');
+    await s.loadFacets('');
+    expect(capturedUrl).toContain('libraryId=lib-123');
+  });
+});
