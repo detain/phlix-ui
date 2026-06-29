@@ -126,8 +126,19 @@ export const DEFAULT_MESSAGES = {
     connect: 'Connect',
     connecting: 'Connecting…',
     addressRequired: 'Enter your server address.',
+    invalidAddress: 'Enter a valid http:// or https:// server address.',
     unreachable: "Couldn't reach a Phlix server at that address. Check it and try again.",
     connectAnyway: 'Connect anyway',
+    // Non-blocking warning shown for an http:// address on a PUBLIC host —
+    // credentials would travel unencrypted and could be intercepted.
+    plaintextWarning:
+      'This server is unencrypted (http). Your login could be intercepted in transit. Use https if you can.',
+    plaintextConfirm: 'Connect over http anyway',
+    // One-time confirm before the first authed call sends your token to a NEW
+    // origin you have not connected to before.
+    originConfirm: 'You are connecting to {origin} for the first time. Your sign-in token will be sent there. Continue?',
+    confirmContinue: 'Yes, connect',
+    confirmCancel: 'Cancel',
   },
   player: {
     // Transport + chrome (Player.vue)
