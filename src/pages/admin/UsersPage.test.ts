@@ -304,6 +304,69 @@ describe('Admin UsersPage — set admin + reset password', () => {
     w.unmount();
   });
 
+  it('computes the row toggle target correctly for every is_admin wire shape', async () => {
+    // The list flows through the real AdminUsersApi (normalizeBool), so a row that
+    // arrives as `1`/`"1"`/`true` is an admin (label "Demote", target false) and a
+    // row that arrives as `0`/`"0"`/`false` is not (label "Set Admin", target true).
+    // Pre-normalization this compared `0 | 1` against a boolean and mis-toggled.
+    const adminNum = { ...userA, id: 11, username: 'an', is_admin: 1 as unknown as boolean };
+    const adminStr = { ...userA, id: 12, username: 'as', is_admin: '1' as unknown as boolean };
+    const adminBool = { ...userA, id: 13, username: 'ab', is_admin: true };
+    const plainNum = { ...userB, id: 21, username: 'pn', is_admin: 0 as unknown as boolean };
+    const plainStr = { ...userB, id: 22, username: 'ps', is_admin: '0' as unknown as boolean };
+    const plainBool = { ...userB, id: 23, username: 'pb', is_admin: false };
+    const { client, post } = makeClient({
+      users: [adminNum, adminStr, adminBool, plainNum, plainStr, plainBool],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    // Admins (any wire shape) render a "Demote" action that targets is_admin:false.
+    for (const u of [adminNum, adminStr, adminBool]) {
+      await w
+        .findAllComponents(Button)
+        .find((b) => b.attributes('aria-label') === `Demote ${u.username}`)!
+        .trigger('click');
+      await flushPromises();
+      expect(post).toHaveBeenCalledWith(`/api/v1/admin/users/${u.id}/set-admin`, { is_admin: false });
+    }
+    // Non-admins (any wire shape) render a "Promote" action that targets is_admin:true.
+    for (const u of [plainNum, plainStr, plainBool]) {
+      await w
+        .findAllComponents(Button)
+        .find((b) => b.attributes('aria-label') === `Promote ${u.username}`)!
+        .trigger('click');
+      await flushPromises();
+      expect(post).toHaveBeenCalledWith(`/api/v1/admin/users/${u.id}/set-admin`, { is_admin: true });
+    }
+    w.unmount();
+  });
+
+  it('edit form preselects the admin switch from a numeric is_admin wire value', async () => {
+    // `is_admin: 1` (numeric wire) must normalize so the edit switch starts ON and
+    // saving WITHOUT toggling does NOT spuriously hit set-admin (the latent bug).
+    const adminNum = { ...userA, id: 31, username: 'numadmin', is_admin: 1 as unknown as boolean };
+    const { client, post, put } = makeClient({ users: [adminNum] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Edit numadmin')!
+      .trigger('click');
+    await flushPromises();
+    // Switch reflects normalized admin = true.
+    expect(w.findComponent(Switch).props('modelValue')).toBe(true);
+    await findBtn(w, 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/users/31', {
+      username: 'numadmin',
+      email: 'alice@example.com',
+    });
+    // Admin flag unchanged (true → true) → set-admin never hit.
+    expect(post).not.toHaveBeenCalledWith('/api/v1/admin/users/31/set-admin', expect.anything());
+    w.unmount();
+  });
+
   it('resets a password and reveals the generated value', async () => {
     const { client, post } = makeClient();
     const w = mountPage(client);

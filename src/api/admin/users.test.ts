@@ -38,7 +38,26 @@ describe('AdminUsersApi — users', () => {
     get.mockResolvedValue({ users: [sampleUser] });
     const res = await api.list();
     expect(get).toHaveBeenCalledWith('/api/v1/admin/users');
-    expect(res).toEqual([sampleUser]);
+    // `is_admin` is normalized to a real boolean (sampleUser ships `1`).
+    expect(res).toEqual([{ ...sampleUser, is_admin: true }]);
+  });
+
+  it('list() normalizes is_admin to a boolean for every wire shape', async () => {
+    const { api, get } = makeClient();
+    get.mockResolvedValue({
+      users: [
+        { ...sampleUser, id: 1, is_admin: 1 },
+        { ...sampleUser, id: 2, is_admin: true },
+        { ...sampleUser, id: 3, is_admin: '1' },
+        { ...sampleUser, id: 4, is_admin: 0 },
+        { ...sampleUser, id: 5, is_admin: '0' },
+        { ...sampleUser, id: 6, is_admin: false },
+      ],
+    });
+    const res = await api.list();
+    expect(res.map((u) => u.is_admin)).toEqual([true, true, true, false, false, false]);
+    // Every value is a real boolean, never a number/string.
+    expect(res.every((u) => typeof u.is_admin === 'boolean')).toBe(true);
   });
 
   it('list() degrades to [] when users is not an array', async () => {
@@ -53,7 +72,8 @@ describe('AdminUsersApi — users', () => {
     get.mockResolvedValue({ users: [pending] });
     const res = await api.list({ status: 'pending' });
     expect(get).toHaveBeenCalledWith('/api/v1/admin/users?status=pending');
-    expect(res).toEqual([pending]);
+    // `is_admin` is normalized to a real boolean (pending inherits sampleUser's `1`).
+    expect(res).toEqual([{ ...pending, is_admin: true }]);
   });
 
   it('list() with no status omits the query string', async () => {
@@ -99,7 +119,16 @@ describe('AdminUsersApi — users', () => {
     get.mockResolvedValue({ user: sampleUser });
     const res = await api.get(1);
     expect(get).toHaveBeenCalledWith('/api/v1/admin/users/1');
-    expect(res).toEqual(sampleUser);
+    // `is_admin` is normalized to a real boolean (sampleUser ships `1`).
+    expect(res).toEqual({ ...sampleUser, is_admin: true });
+  });
+
+  it('get(id) normalizes is_admin to a boolean (e.g. wire "0")', async () => {
+    const { api, get } = makeClient();
+    get.mockResolvedValue({ user: { ...sampleUser, is_admin: '0' } });
+    const res = await api.get(1);
+    expect(res.is_admin).toBe(false);
+    expect(typeof res.is_admin).toBe('boolean');
   });
 
   it('create() POSTs the body and returns { user_id, message }', async () => {

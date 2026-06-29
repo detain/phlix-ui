@@ -1,4 +1,4 @@
-import type { ApiClient } from '../client';
+import { normalizeBool, type ApiClient } from '../client';
 
 /**
  * A user's account status (S1 approval gate). `pending` accounts cannot log in
@@ -14,8 +14,12 @@ export const USER_STATUSES: readonly UserStatus[] = ['pending', 'active', 'disab
 /**
  * A server user row as returned by `AdminUserController`.
  *
- * `is_admin` is TINYINT(1) on the DB — the wire value is `0` or `1`, never a
- * JSON boolean — so the typed interface reflects that.
+ * `is_admin` is TINYINT(1) on the DB, so the wire value may arrive as `0`/`1`,
+ * `"0"`/`"1"`, or a JSON boolean depending on the driver/transport. Every row
+ * returned by {@link AdminUsersApi.list} / {@link AdminUsersApi.get} is run
+ * through {@link normalizeBool} so consumers always read a single shape:
+ * `is_admin: boolean`. This avoids the latent bug where a `0 | 1` row was
+ * compared against a boolean toggle target and never matched.
  *
  * `status` (S1) is the account-approval state. It is optional here so older
  * payloads (and pre-migration rows) degrade gracefully — the UI treats a missing
@@ -25,10 +29,19 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  is_admin: 0 | 1;
+  is_admin: boolean;
   status?: UserStatus;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Coerce a raw user row's `is_admin` to a real boolean via {@link normalizeBool}
+ * so wire shapes `0 | 1 | "0" | "1" | true | false` all collapse to one type.
+ * Other fields are passed through unchanged.
+ */
+function normalizeUser(row: User): User {
+  return { ...row, is_admin: normalizeBool(row.is_admin) };
 }
 
 /** Body accepted by {@link AdminUsersApi.create}. */
@@ -132,7 +145,7 @@ export class AdminUsersApi {
   async list(params?: { status?: UserStatus }): Promise<User[]> {
     const query = params?.status ? `?status=${encodeURIComponent(params.status)}` : '';
     const { users } = await this.client.get<{ users: User[] }>(`/api/v1/admin/users${query}`);
-    return Array.isArray(users) ? users : [];
+    return Array.isArray(users) ? users.map(normalizeUser) : [];
   }
 
   /**
@@ -170,7 +183,7 @@ export class AdminUsersApi {
     const { user } = await this.client.get<{ user: User }>(
       `/api/v1/admin/users/${encodeURIComponent(id)}`,
     );
-    return user;
+    return normalizeUser(user);
   }
 
   /** `POST /api/v1/admin/users` → `201 { user_id, message }`. */
