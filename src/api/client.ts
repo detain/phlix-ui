@@ -1,8 +1,11 @@
 import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
-import { LocalStorageTokenStore } from './tokenStore';
+import { LocalStorageTokenStore, type TokenStore } from './tokenStore';
 
 /** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
 export { ApiError } from './errors';
+
+/** Re-exported so `import type { TokenStore } from '.../api/client'` deep imports keep working. */
+export type { TokenStore } from './tokenStore';
 
 /**
  * Default token store: persist + read the session token from `localStorage` in
@@ -40,16 +43,6 @@ export interface AuthUser {
     name?: string;
     is_admin?: boolean;
     [key: string]: unknown;
-}
-
-export interface TokenStore {
-    getAccessToken(): string | null;
-    setAccessToken(token: string): void;
-    getRefreshToken(): string | null;
-    setRefreshToken(token: string): void;
-    getUser(): unknown | null;
-    setUser(user: unknown): void;
-    clear(): void;
 }
 
 export interface ApiClientOptions {
