@@ -16,7 +16,7 @@
  * Reuses the cinematic auth chrome (AppBackdrop + AuthCard + AuthField + Button)
  * so it reads as part of the same "box office" entry flow as Login/Signup.
  */
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppBackdrop from '../components/AppBackdrop.vue';
 import AuthCard from '../components/auth/AuthCard.vue';
@@ -49,10 +49,17 @@ const probing = ref(false);
 // Set after a failed probe so we can reveal a non-blocking "Connect anyway"
 // affordance (the URL may still be valid behind a CORS-restricted /health).
 const unreachable = ref(false);
-// Set when the resolved base is plain http:// on a PUBLIC host — surface a
-// non-blocking warning and require an explicit "connect over http anyway"
-// before we hand the server any credentials.
-const plaintextWarned = ref(false);
+// Holds the resolved ORIGIN for which the plaintext-public warning has been
+// acknowledged. Keying the acknowledgement to the exact origin (rather than a
+// one-shot boolean) means editing the address to a DIFFERENT plaintext-public
+// host re-warns on its own — a stale ack can never wave a new host through.
+const plaintextWarnedOrigin = ref<string | null>(null);
+// True only while the CURRENT resolved origin is the one that was acknowledged.
+const plaintextWarned = computed(
+  () =>
+    plaintextWarnedOrigin.value !== null &&
+    plaintextWarnedOrigin.value === originOf(address.value),
+);
 // Set when committing would point the client (and its Bearer token) at an origin
 // the user has not confirmed before — require a one-time explicit confirm. Holds
 // the origin string for the prompt copy; null when no confirm is pending.
@@ -60,6 +67,17 @@ const pendingOrigin = ref<string | null>(null);
 // The resolved (scheme-prefixed) base awaiting a pending confirm, so the confirm
 // button commits exactly what was probed — not a value the user has since edited.
 const pendingUrl = ref<string | null>(null);
+
+// Editing the address invalidates any state keyed to the PREVIOUS value: the
+// "couldn't reach" affordance and a pending new-origin confirm both describe a
+// URL the user has now changed, so clear them. (The plaintext acknowledgement is
+// keyed to its origin via `plaintextWarned`, so it self-invalidates and needs no
+// reset here.)
+watch(address, () => {
+  unreachable.value = false;
+  pendingOrigin.value = null;
+  pendingUrl.value = null;
+});
 
 /** Resolve where to go once connected: the route that bounced us here, else home. */
 function destination(): string {
@@ -83,7 +101,7 @@ function commit(url: string): void {
  */
 function commitWithGuards(url: string): boolean {
   if (isPlaintextPublic(url) && !plaintextWarned.value) {
-    plaintextWarned.value = true;
+    plaintextWarnedOrigin.value = originOf(url);
     fieldError.value = null;
     return false;
   }
@@ -113,7 +131,7 @@ async function handleConnect(): Promise<void> {
   // Surface the plaintext-public warning up front (before any network call), so
   // the user acknowledges it before we probe/commit.
   if (isPlaintextPublic(url) && !plaintextWarned.value) {
-    plaintextWarned.value = true;
+    plaintextWarnedOrigin.value = originOf(url);
     return;
   }
   probing.value = true;

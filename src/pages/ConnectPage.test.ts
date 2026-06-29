@@ -175,6 +175,37 @@ describe('ConnectPage', () => {
     expect(push).toHaveBeenCalledWith('/app');
   });
 
+  it('re-warns for a DIFFERENT plaintext host after acknowledging the first (no stale ack)', async () => {
+    stubFetch(okHealth);
+    const { w, router } = await mountPage();
+    const push = vi.spyOn(router, 'push');
+
+    // Acknowledge the plaintext warning for host A (up-front warning → ack).
+    await w.find('input[name="server-address"]').setValue('http://attacker-a.com');
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    expect(w.find('.connect__warning').exists()).toBe(true);
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    // Host A acknowledged → probed → its own new-origin confirm pending.
+    expect(fetch).toHaveBeenCalledWith('http://attacker-a.com/health', expect.anything());
+    expect(w.find('.connect__confirm').exists()).toBe(true);
+
+    // Edit the field to a DIFFERENT public-http host B. The stale ack (and the
+    // host-A pending confirm) must not carry over.
+    await w.find('input[name="server-address"]').setValue('http://attacker-b.com');
+    await flushPromises();
+    expect(w.find('.connect__confirm').exists()).toBe(false);
+
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    // Host B gets its OWN plaintext warning — not waved through by host A's ack.
+    expect(w.find('.connect__warning').exists()).toBe(true);
+    expect(fetch).not.toHaveBeenCalledWith('http://attacker-b.com/health', expect.anything());
+    expect(useConnectionStore().apiBase).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it('reveals "Connect anyway" on a failed probe and commits via the origin confirm', async () => {
     stubFetch(() => Promise.reject(new TypeError('Failed to fetch')));
     const { w, router } = await mountPage();
