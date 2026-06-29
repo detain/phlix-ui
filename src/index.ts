@@ -321,8 +321,13 @@ export { useServerStore, CURRENT_SERVER_ID_KEY, CURRENT_SERVER_NAME_KEY } from '
 export {
     useConnectionStore,
     CONNECTION_API_BASE_KEY,
+    CONNECTION_CONFIRMED_ORIGIN_KEY,
     normalizeBase,
     withScheme,
+    isAllowedBase,
+    isPrivateHost,
+    isPlaintextPublic,
+    originOf,
     probeServer,
 } from './stores/useConnectionStore';
 export { useApiBase, useMediaApiBase } from './composables/useApiBase';

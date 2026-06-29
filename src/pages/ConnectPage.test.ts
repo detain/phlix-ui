@@ -66,18 +66,60 @@ describe('ConnectPage', () => {
     expect(useConnectionStore().apiBase).toBeNull();
   });
 
-  it('probes, persists, and navigates home on a reachable server', async () => {
+  it('probes, then confirms the new origin before persisting + navigating home', async () => {
     stubFetch(okHealth);
     const { w, router } = await mountPage();
     const push = vi.spyOn(router, 'push');
     await w.find('input[name="server-address"]').setValue('192.168.1.50:8096');
     await w.find('form').trigger('submit.prevent');
     await flushPromises();
-    // Bare LAN host → http:// inferred, trailing-slash-free, persisted.
+    // First-time origin → the probe ran, but a token-send confirm is now pending;
+    // nothing is persisted and we have NOT navigated yet.
+    expect(fetch).toHaveBeenCalledWith('http://192.168.1.50:8096/health', expect.anything());
+    expect(useConnectionStore().apiBase).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+    const confirm = w.find('.connect__confirm');
+    expect(confirm.exists()).toBe(true);
+    expect(confirm.text()).toContain('http://192.168.1.50:8096');
+
+    // Confirm → bare LAN host → http:// inferred, trailing-slash-free, persisted.
+    await confirm.findAll('button')[0]?.trigger('click');
+    await flushPromises();
     expect(useConnectionStore().apiBase).toBe('http://192.168.1.50:8096');
     expect(localStorage.getItem(CONNECTION_API_BASE_KEY)).toBe('http://192.168.1.50:8096');
     expect(push).toHaveBeenCalledWith('/app');
-    expect(fetch).toHaveBeenCalledWith('http://192.168.1.50:8096/health', expect.anything());
+  });
+
+  it('does NOT re-prompt the origin confirm for an already-confirmed origin', async () => {
+    localStorage.setItem(CONNECTION_API_BASE_KEY, 'https://srv:8096');
+    localStorage.setItem('phlix.connection.confirmedOrigin', 'https://srv:8096');
+    setActivePinia(createPinia());
+    stubFetch(okHealth);
+    const { w, router } = await mountPage();
+    const push = vi.spyOn(router, 'push');
+    await w.find('input[name="server-address"]').setValue('https://srv:8096');
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    // Same (confirmed) origin → commits straight through, no pending confirm.
+    expect(w.find('.connect__confirm').exists()).toBe(false);
+    expect(push).toHaveBeenCalledWith('/app');
+  });
+
+  it('cancelling the origin confirm leaves the connection unset', async () => {
+    stubFetch(okHealth);
+    const { w, router } = await mountPage();
+    const push = vi.spyOn(router, 'push');
+    await w.find('input[name="server-address"]').setValue('https://srv:8096');
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    const confirm = w.find('.connect__confirm');
+    expect(confirm.exists()).toBe(true);
+    // Second button = Cancel.
+    await confirm.findAll('button')[1]?.trigger('click');
+    await flushPromises();
+    expect(useConnectionStore().apiBase).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+    expect(w.find('.connect__confirm').exists()).toBe(false);
   });
 
   it('navigates to the ?redirect target instead of home when present', async () => {
@@ -87,10 +129,53 @@ describe('ConnectPage', () => {
     await w.find('input[name="server-address"]').setValue('https://srv:8096');
     await w.find('form').trigger('submit.prevent');
     await flushPromises();
+    // Confirm the new origin, then it routes to the redirect target.
+    await w.find('.connect__confirm').findAll('button')[0]?.trigger('click');
+    await flushPromises();
     expect(push).toHaveBeenCalledWith('/app/media/42');
   });
 
-  it('reveals "Connect anyway" on a failed probe and commits without re-probing', async () => {
+  it('rejects a non-http(s) address with an invalid-address error and no commit', async () => {
+    const { w, router } = await mountPage();
+    const push = vi.spyOn(router, 'push');
+    await w.find('input[name="server-address"]').setValue('javascript:alert(1)');
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    expect(w.text()).toContain('Enter a valid http:// or https:// server address.');
+    expect(useConnectionStore().apiBase).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+    expect(w.find('.connect__confirm').exists()).toBe(false);
+  });
+
+  it('warns before persisting a plaintext PUBLIC address and only commits after confirms', async () => {
+    stubFetch(okHealth);
+    const { w, router } = await mountPage();
+    const push = vi.spyOn(router, 'push');
+    await w.find('input[name="server-address"]').setValue('http://media.example.com');
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+
+    // Up-front plaintext warning; nothing probed/persisted yet.
+    expect(w.find('.connect__warning').exists()).toBe(true);
+    expect(w.text()).toContain('This server is unencrypted');
+    expect(useConnectionStore().apiBase).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+
+    // "Connect" again = acknowledge the warning → probe → new-origin confirm.
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    expect(fetch).toHaveBeenCalledWith('http://media.example.com/health', expect.anything());
+    expect(useConnectionStore().apiBase).toBeNull(); // origin confirm still pending
+    const confirm = w.find('.connect__confirm');
+    expect(confirm.exists()).toBe(true);
+    await confirm.findAll('button')[0]?.trigger('click');
+    await flushPromises();
+    expect(useConnectionStore().apiBase).toBe('http://media.example.com');
+    expect(push).toHaveBeenCalledWith('/app');
+  });
+
+  it('reveals "Connect anyway" on a failed probe and commits via the origin confirm', async () => {
     stubFetch(() => Promise.reject(new TypeError('Failed to fetch')));
     const { w, router } = await mountPage();
     const push = vi.spyOn(router, 'push');
@@ -104,6 +189,11 @@ describe('ConnectPage', () => {
     expect(anyway.exists()).toBe(true);
 
     await anyway.trigger('click');
+    await flushPromises();
+    // Connect-anyway routes through the same new-origin guard.
+    const confirm = w.find('.connect__confirm');
+    expect(confirm.exists()).toBe(true);
+    await confirm.findAll('button')[0]?.trigger('click');
     await flushPromises();
     expect(useConnectionStore().apiBase).toBe('https://srv:8096');
     expect(push).toHaveBeenCalledWith('/app');
