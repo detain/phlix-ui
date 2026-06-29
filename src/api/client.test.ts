@@ -416,6 +416,33 @@ describe('ApiClient', () => {
             expect(tokens.getRefreshToken()).toBeNull();
             expect(tokens.getUser()).toBeNull();
         });
+
+        it('logout redirects to /login by default', () => {
+            const tokens = new MemoryTokenStore({ access: 'a' });
+            const client = new ApiClient({ tokenStore: tokens });
+            const locationSpy = vi.spyOn(window, 'location', 'get').mockReturnValue({ href: '' } as Location);
+            client.logout();
+            expect(window.location.href).toBe('/login');
+            locationSpy.mockRestore();
+        });
+
+        it('logout redirects to custom loginPath when configured', () => {
+            const tokens = new MemoryTokenStore({ access: 'a' });
+            const client = new ApiClient({ tokenStore: tokens, loginPath: '/app/login' });
+            const locationSpy = vi.spyOn(window, 'location', 'get').mockReturnValue({ href: '' } as Location);
+            client.logout();
+            expect(window.location.href).toBe('/app/login');
+            locationSpy.mockRestore();
+        });
+
+        it('logout does not redirect when redirect is false', () => {
+            const tokens = new MemoryTokenStore({ access: 'a' });
+            const client = new ApiClient({ tokenStore: tokens, loginPath: '/app/login' });
+            const locationSpy = vi.spyOn(window, 'location', 'get').mockReturnValue({ href: 'http://localhost/' } as Location);
+            client.logout(false);
+            expect(window.location.href).toBe('http://localhost/');
+            locationSpy.mockRestore();
+        });
     });
 
     describe('network resilience (R5.3a)', () => {

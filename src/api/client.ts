@@ -62,6 +62,12 @@ export interface ApiClientOptions {
      *  identity headers). `Content-Type`/`Authorization` always win; a falsy/empty
      *  value is omitted rather than sent as an empty header. */
     headers?: Record<string, string>;
+    /**
+     * Path (relative or absolute) the {@link ApiClient.logout} redirect target is
+     * prepended with. Defaults to `'/login'`. On the hub where the SPA lives under
+     * `/app` this would be set to `'/app/login'` so a logout redirect does not 404.
+     */
+    loginPath?: string;
 }
 
 /**
@@ -188,6 +194,7 @@ export class ApiClient {
     private readonly doFetch: typeof fetch;
     private readonly timeoutMs: number;
     private readonly instanceHeaders: Record<string, string>;
+    private readonly loginPath: string;
     /**
      * In-flight token refresh, single-flighted per `ApiClient` instance. When an
      * access token expires, every concurrent request gets a 401 and calls
@@ -206,6 +213,7 @@ export class ApiClient {
         this.doFetch = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
         this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         this.instanceHeaders = pruneHeaders(options.headers ?? {});
+        this.loginPath = options.loginPath ?? '/login';
     }
 
     /**
@@ -474,7 +482,7 @@ export class ApiClient {
     logout(redirect = true): void {
         this.tokens.clear();
         if (redirect && typeof window !== 'undefined') {
-            window.location.href = '/login';
+            window.location.href = this.loginPath;
         }
     }
 }
