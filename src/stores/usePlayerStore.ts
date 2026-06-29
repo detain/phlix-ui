@@ -10,6 +10,14 @@ export const RESUME_MAX_RATIO = 0.95;
 /** Throttle window for persisting the resume map to localStorage. */
 const RESUME_PERSIST_THROTTLE = 5000;
 const RESUME_KEY = 'phlix.resume';
+/** Companion key holding per-id last-touched epoch-ms timestamps used to bound the
+ *  resume map (LRU). Stored SEPARATELY so `phlix.resume`'s payload shape stays a
+ *  flat `Record<string, number>` (id → seconds) for backward compatibility. */
+const RESUME_TOUCHED_KEY = 'phlix.resume.touched';
+/** Hard cap on the number of distinct ids the persisted resume map may hold. Beyond
+ *  this, the least-recently-touched entries are evicted before each persist so the
+ *  map can never grow unbounded across a user's lifetime of watching. */
+export const RESUME_MAX_ENTRIES = 200;
 /** 100-nanosecond ticks per second — the server reports playback position in these
  *  (Jellyfin-style) ticks; the local resume map is in whole seconds. */
 export const TICKS_PER_SECOND = 10_000_000;
@@ -48,6 +56,20 @@ function readResumeMap(): Record<string, number> {
   }
 }
 
+/** Best-effort read of the companion last-touched map. Always returns a usable
+ *  object — a missing/corrupt/partial map just means those ids have no recorded
+ *  touch time (treated as oldest), so eviction still works without it. */
+function readTouchedMap(): Record<string, number> {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(RESUME_TOUCHED_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, number>) : {};
+  } catch {
+    return {};
+  }
+}
+
 /**
  * usePlayerStore (R1.3) — singleton playback state shared across routes so a
  * mini-player can keep playing during navigation and "resume" / "up-next" work.
@@ -78,6 +100,10 @@ export const usePlayerStore = defineStore('phlix-player', () => {
 
   const miniPlayer = ref(false);
   const resumeMap = ref<Record<string, number>>(readResumeMap());
+  /** INTERNAL per-id last-touched timestamps (epoch ms) driving LRU eviction of the
+   *  bounded resume map. Deliberately NOT in the public store return — no consumer
+   *  reads it; it exists only to decide which resume entries to drop at the cap. */
+  const lastTouched = ref<Record<string, number>>(readTouchedMap());
 
   /** Command bus (see PlayerCommand) — the latest external transport intent. The
    *  live media component watches this and applies it to its real <video>. */
@@ -88,16 +114,62 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   const upNext = computed<MediaItem | null>(() => queue.value[0] ?? null);
 
   // ---- resume map (throttled persistence) ---------------------------------
+  /** Stamp an id as touched-now (called on every write to the resume map). */
+  function touch(id: string): void {
+    lastTouched.value[id] = Date.now();
+  }
+
+  /**
+   * Evict the least-recently-touched resume entries until at most `cap` remain,
+   * dropping each evicted id from BOTH the resume map and the touched map. Ids with
+   * no recorded touch time sort as oldest. Also prunes any orphaned touched entries
+   * (ids no longer present in the resume map) so the companion map can't drift
+   * unbounded either. Returns true if anything was removed.
+   */
+  function evictToCapacity(cap: number): boolean {
+    const ids = Object.keys(resumeMap.value);
+    // Prune orphaned touched entries (touched ids not in the resume map).
+    let removed = false;
+    for (const id of Object.keys(lastTouched.value)) {
+      if (!(id in resumeMap.value)) {
+        delete lastTouched.value[id];
+        removed = true;
+      }
+    }
+    if (ids.length <= cap) return removed;
+    // Oldest-first by last-touched (absent → 0 → evicted first).
+    ids.sort((a, b) => (lastTouched.value[a] ?? 0) - (lastTouched.value[b] ?? 0));
+    const evictCount = ids.length - cap;
+    for (let i = 0; i < evictCount; i++) {
+      const id = ids[i];
+      delete resumeMap.value[id];
+      delete lastTouched.value[id];
+    }
+    return true;
+  }
+
   let persistTimer: ReturnType<typeof setTimeout> | undefined;
   let lastPersist = 0;
   function persistResume(force = false): void {
     if (typeof localStorage === 'undefined') return;
     const write = () => {
       lastPersist = Date.now();
-      try {
+      const commit = () => {
         localStorage.setItem(RESUME_KEY, JSON.stringify(resumeMap.value));
+        localStorage.setItem(RESUME_TOUCHED_KEY, JSON.stringify(lastTouched.value));
+      };
+      try {
+        commit();
       } catch {
-        /* ignore quota */
+        // Likely a quota error. Make ONE eviction pass (drop the oldest ~25%) and
+        // retry the write once; if it still fails, swallow it (no UX regression —
+        // an unpersisted resume position is recoverable, an exception is not).
+        try {
+          evictToCapacity(Math.floor(Object.keys(resumeMap.value).length * 0.75));
+          commit();
+        } catch {
+          /* ignore quota */
+        }
       }
     };
     const since = Date.now() - lastPersist;
@@ -117,8 +189,11 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   function saveResume(id: string, pos: number, dur: number): void {
     if (inResumeBand(pos, dur)) {
       resumeMap.value[id] = Math.floor(pos);
+      touch(id);
+      evictToCapacity(RESUME_MAX_ENTRIES);
     } else {
       delete resumeMap.value[id]; // too early or effectively finished
+      delete lastTouched.value[id];
     }
     persistResume();
   }
@@ -129,6 +204,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   }
   function clearResume(id: string): void {
     delete resumeMap.value[id];
+    delete lastTouched.value[id];
     persistResume(true);
   }
 
@@ -150,10 +226,16 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     for (const [id, seconds] of Object.entries(positions)) {
       if (id && !(id in resumeMap.value) && seconds > 0) {
         resumeMap.value[id] = Math.floor(seconds);
+        touch(id);
         changed = true;
       }
     }
-    if (changed) persistResume(true);
+    if (changed) {
+      // Server-seeded ids count toward the cap too — bound the map before persisting
+      // so a large continue-watching payload can't blow past RESUME_MAX_ENTRIES.
+      evictToCapacity(RESUME_MAX_ENTRIES);
+      persistResume(true);
+    }
   }
 
   // ---- transport ----------------------------------------------------------
