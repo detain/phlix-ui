@@ -5,7 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.55.0] - 2026-06-29
+
+### Fixed
+
+- **TokenStore interface deduplicated** — single source of truth in `tokenStore.ts`; `client.ts` re-exports from there. Eliminates the duplicate `TokenStore` interface that existed in both files.
+- **MediaItem split into MediaListItem + MediaDetail** — formalises the detail-only vs list-only field distinction with a `MediaDetail extends MediaListItem` hierarchy and an `isMediaDetail()` type guard. `MediaItem` retained as a back-compat alias for all consumers.
+- **B3: single-flight token refresh** — `ApiClient.refreshToken()` now de-duplicates concurrent refresh calls; multiple 401s no longer trigger N refresh POSTs.
+- **B1/Q2: `is_admin` normalised to boolean** — `AdminUsersApi.list()`/`get()` now normalise any wire value (0/1/"0"/"1"/true/false) to a strict boolean; UsersPage comparisons fixed.
+- **B2/P2: bounded resume map** — `usePlayerStore` now evicts the least-recently-touched entries when the map exceeds 200 entries, with a quota-exceeded retry pass.
+- **P1: reuse single ApiClient in useMediaStore** — `networkFetch()` now reuses a lazy client instead of allocating a new one per fetch; calls `setBaseUrl()` on API base change.
+- **B4/P3: server-side genre facets with graceful fallback** — `loadFacets(apiBase)` fetches `GET /api/v1/media/facets`; `availableGenres` uses server facets when available, falls back to the derived set on 404/absent.
+
+### Changed
+
+- **S2/B7: scheme allow-list on Connect screen** — `withScheme()` now rejects non-http(s) schemes (javascript:, data:, file:) and fixes the `:port → http://` downgrade for public hosts; plaintext-public address shows a warning before token send.
+- **S4/B5: logout() redirect respects configurable loginPath** — `ApiClient.logout()` now uses `this.loginPath` (default `/login`) instead of hard-coded `/login`, fixing hub 404 on logout.
+
+### Security
+
+- **S1/F1 token-store seam** — `InMemoryAccessTokenStore` introduced as a seam (access token in memory, refresh token from httpOnly cookie). `LocalStorageTokenStore` retained as default. This ships only the seam; the default flip is deferred until the server cookie contract lands.
 
 _Post-release changes land here._
 
