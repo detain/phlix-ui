@@ -45,6 +45,12 @@ export const useMediaStore = defineStore('media', () => {
     const loading = ref(false);
     const error = ref<string | null>(null);
 
+    /** Lazily-constructed, long-lived ApiClient — reused across all fetch calls.
+     *  When apiBase changes between calls we call setBaseUrl() instead of
+     *  allocating a fresh client, so the token store (default: localStorage) is
+     *  preserved and the instance-level refresh promise stays valid. */
+    let apiClient: ApiClient | null = null;
+
     const search = ref('');
     const selectedGenres = ref<string[]>([]);
     const yearFrom = ref<number | undefined>(undefined);
@@ -144,8 +150,12 @@ export const useMediaStore = defineStore('media', () => {
 
         const controller = new AbortController();
         if (track) activeController = controller;
-        const client = new ApiClient({ baseUrl: apiBase });
-        const promise = client
+        if (!apiClient) {
+            apiClient = new ApiClient({ baseUrl: apiBase });
+        } else {
+            apiClient.setBaseUrl(apiBase);
+        }
+        const promise = apiClient
             .get<MediaResponse>(buildApiQuery(apiBase, params), undefined, controller.signal)
             .then((res) => {
                 cache.set(key, { items: res.items, total: res.total, ts: Date.now() });
@@ -328,6 +338,10 @@ export const useMediaStore = defineStore('media', () => {
         total.value = 0;
         offset.value = 0;
         error.value = null;
+        // Discard the shared ApiClient so the next fetch creates (or reuses)
+        // one in a clean state — particularly important when a new Pinia
+        // instance (test) shares the same module-level apiClient variable.
+        apiClient = null;
     }
     function setSearch(v: string): void {
         search.value = v;
