@@ -18,7 +18,11 @@ export type PosterSource =
  */
 export type PosterSrcsetInput = string | PosterSource[] | null | undefined;
 
-export interface MediaItem {
+/**
+ * Shape returned by list endpoints (GET /api/v1/media). These fields are always
+ * populated on every item regardless of context.
+ */
+export interface MediaListItem {
     id: string;
     name: string;
     /**
@@ -32,15 +36,6 @@ export interface MediaItem {
     sort_title?: string | null;
     type: MediaType;
     path?: string;
-    /**
-     * Short-lived, signed direct-play URL (`/media/{id}/stream?exp&sig`) minted by
-     * the gated detail endpoint. The `<video src>` can't attach a Bearer header and
-     * the stream route is no longer world-readable, so the player must use this
-     * signed URL rather than building a bare `/media/{id}/stream` path. Only the
-     * single-item detail shape carries it (list rows omit it); optional so older
-     * servers/list rows fall back to the bare path.
-     */
-    stream_url?: string | null;
     poster_url: string | null;
     /** Optional responsive poster sources (R6.2b); falls back to `poster_url`. */
     poster_srcset?: PosterSrcsetInput;
@@ -51,36 +46,6 @@ export interface MediaItem {
     overview: string | null;
     actors: string[];
     director: string | null;
-    /**
-     * Total length in SECONDS, probed by the server at scan/transcode. Lets the
-     * player seed the scrubber at the true total up front instead of growing it as
-     * the (transcode/HLS) stream loads. Only the single-item detail shape carries
-     * it (list rows omit it); optional so older servers keep working.
-     */
-    duration?: number | null;
-    /**
-     * Rich cast (detail shape): per-person name + character `role` + optional
-     * `profile_url` headshot. Preferred over the flat `actors` string list for the
-     * avatar credit layout; falls back to `actors` when absent. Detail shape only.
-     */
-    cast?: Array<{ name: string; role?: string | null; profile_url?: string | null }>;
-    /**
-     * Rich crew (detail shape): per-person name + `job` (e.g. Director, Writer) +
-     * optional `profile_url` headshot. Preferred over the flat `director` for the
-     * crew credit layout; falls back to `director` when absent. Detail shape only.
-     */
-    crew?: Array<{ name: string; job?: string | null; profile_url?: string | null }>;
-    /**
-     * Production companies / studios (detail shape): name + optional `logo_url`
-     * and `origin_country`. Rendered as clickable chips that filter the owning
-     * library by company. Detail shape only.
-     */
-    production_companies?: Array<{ name: string; logo_url?: string | null; origin_country?: string | null }>;
-    /**
-     * Single primary studio name (detail shape) — used as a fallback chip when
-     * `production_companies` is absent. Detail shape only.
-     */
-    studio?: string | null;
     created_at: string | null;
     updated_at: string | null;
     /**
@@ -96,7 +61,53 @@ export interface MediaItem {
     season_number?: number | null;
     episode_number?: number | null;
     episode_title?: string | null;
-    /** Owning library id — present on the single-item detail shape; lets the
-     *  detail page link a clicked actor to that library's actor-filtered grid. */
+}
+
+/**
+ * Full detail shape (GET /api/v1/media/{id}). Extends the list shape with
+ * fields that are only populated on the single-item detail response.
+ * All detail-only fields remain optional so the type is assignable from
+ * list-item contexts (back-compat + synthetic items like local files).
+ */
+export interface MediaDetail extends MediaListItem {
+    /** Short-lived signed direct-play URL; list rows / local files omit this. */
+    stream_url?: string | null;
+    /** Duration in seconds; list rows / local files omit this. */
+    duration?: number | null;
+    /** Rich cast; falls back to `actors` when absent. Detail shape only. */
+    cast?: Array<{ name: string; role?: string | null; profile_url?: string | null }>;
+    /** Rich crew; falls back to `director` when absent. Detail shape only. */
+    crew?: Array<{ name: string; job?: string | null; profile_url?: string | null }>;
+    /** Production companies; used for clickable filter chips. Detail shape only. */
+    production_companies?: Array<{ name: string; logo_url?: string | null; origin_country?: string | null }>;
+    /** Primary studio name; fallback when production_companies absent. Detail shape only. */
+    studio?: string | null;
+    /** Owning library id. Detail shape only. */
     library_id?: string | null;
+}
+
+/**
+ * Back-compat alias — all existing code uses `MediaItem`. Retained so native
+ * clients and any deep-import consumers keep compiling without changes.
+ * New code should prefer `MediaListItem` (list context) or `MediaDetail` (detail
+ * context) for clarity.
+ */
+export type MediaItem = MediaDetail;
+
+/**
+ * Type guard: returns true when the item has at least one detail-only field
+ * populated, indicating it is a true detail response (not just a list row or
+ * synthetic item). Use this to narrow `MediaItem` → `MediaDetail` at call sites
+ * that may receive either shape.
+ */
+export function isMediaDetail(item: MediaItem): item is MediaDetail {
+    return (
+        item.stream_url !== undefined ||
+        item.duration !== undefined ||
+        item.cast !== undefined ||
+        item.crew !== undefined ||
+        item.production_companies !== undefined ||
+        item.studio !== undefined ||
+        item.library_id !== undefined
+    );
 }
