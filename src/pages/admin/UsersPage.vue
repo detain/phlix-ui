@@ -170,7 +170,7 @@ function openEditUser(user: User): void {
   username.value = user.username;
   email.value = user.email;
   password.value = '';
-  isAdmin.value = user.is_admin === 1;
+  isAdmin.value = user.is_admin;
   userFormOpen.value = true;
 }
 
@@ -199,8 +199,7 @@ async function submitUserForm(): Promise<void> {
       const input: UpdateUserInput = { username: username.value, email: email.value };
       if (password.value) input.password = password.value;
       await api.update(existing.id, input);
-      const targetAdmin: 0 | 1 = isAdmin.value ? 1 : 0;
-      if (existing.is_admin !== targetAdmin) {
+      if (existing.is_admin !== isAdmin.value) {
         await api.setAdmin(existing.id, isAdmin.value);
       }
       toasts.success('User updated.');
@@ -602,7 +601,7 @@ onMounted(loadUsers);
                 variant="ghost"
                 size="sm"
                 :aria-label="`${user.is_admin ? 'Demote' : 'Promote'} ${user.username}`"
-                @click="handleSetAdmin(user, user.is_admin !== 1)"
+                @click="handleSetAdmin(user, !user.is_admin)"
               >
                 {{ user.is_admin ? 'Demote' : 'Set Admin' }}
               </Button>
