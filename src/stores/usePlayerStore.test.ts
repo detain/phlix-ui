@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { usePlayerStore, RESUME_MIN_SECONDS } from './usePlayerStore';
+import { usePlayerStore, RESUME_MIN_SECONDS, RESUME_MAX_ENTRIES } from './usePlayerStore';
 import { usePreferencesStore } from './usePreferencesStore';
 import type { MediaItem } from '../types/media-item';
 
@@ -376,5 +376,174 @@ describe('usePlayerStore — mergeServerResume (cross-device read sync)', () => 
     const p = usePlayerStore();
     p.mergeServerResume({ x: 77 });
     expect(JSON.parse(localStorage.getItem('phlix.resume') ?? '{}')).toEqual({ x: 77 });
+  });
+});
+
+describe('usePlayerStore — bounded resume map (LRU + quota retry)', () => {
+  // saveResume uses Date.now() to stamp last-touched; advance a fake clock so each
+  // write has a strictly increasing timestamp (and thus a deterministic LRU order).
+  function saveSequential(p: ReturnType<typeof usePlayerStore>, ids: string[]): void {
+    vi.useFakeTimers();
+    let t = 1_700_000_000_000;
+    for (const id of ids) {
+      vi.setSystemTime(t);
+      p.saveResume(id, 60, 120); // in-band → recorded + touched
+      t += 1000;
+    }
+    // saveResume persists THROTTLED; flush the pending write so storage reflects the
+    // final bounded map (a forced clearResume of an absent id triggers persist(true)).
+    p.clearResume('__flush__');
+    vi.useRealTimers();
+  }
+
+  it('caps the resume map at RESUME_MAX_ENTRIES, retaining the most-recently-touched ids', () => {
+    const p = usePlayerStore();
+    const total = RESUME_MAX_ENTRIES + 5; // write 5 over the cap
+    const ids = Array.from({ length: total }, (_, i) => `m${i}`);
+    saveSequential(p, ids);
+
+    expect(Object.keys(p.resumeMap).length).toBe(RESUME_MAX_ENTRIES);
+    // the 5 OLDEST ids (m0..m4) are evicted
+    for (let i = 0; i < 5; i++) expect(p.resumePositionFor(`m${i}`)).toBeNull();
+    // the cap most-recently-touched ids survive (m5..m{total-1})
+    for (let i = 5; i < total; i++) expect(p.resumePositionFor(`m${i}`)).toBe(60);
+  });
+
+  it('persists exactly the cap most-recently-touched ids (a fresh store reloads them)', () => {
+    const p = usePlayerStore();
+    const total = RESUME_MAX_ENTRIES + 3;
+    const ids = Array.from({ length: total }, (_, i) => `k${i}`);
+    saveSequential(p, ids);
+
+    const persisted = JSON.parse(localStorage.getItem('phlix.resume')!) as Record<string, number>;
+    expect(Object.keys(persisted).length).toBe(RESUME_MAX_ENTRIES);
+    expect(persisted.k0).toBeUndefined(); // oldest evicted from storage too
+
+    setActivePinia(createPinia());
+    const p2 = usePlayerStore();
+    expect(Object.keys(p2.resumeMap).length).toBe(RESUME_MAX_ENTRIES);
+    expect(p2.resumePositionFor('k0')).toBeNull();
+    expect(p2.resumePositionFor(`k${total - 1}`)).toBe(60);
+  });
+
+  it('re-touching an old id keeps it from being evicted at the cap', () => {
+    const p = usePlayerStore();
+    vi.useFakeTimers();
+    let t = 1_700_000_000_000;
+    // Fill exactly to the cap.
+    for (let i = 0; i < RESUME_MAX_ENTRIES; i++) {
+      vi.setSystemTime(t);
+      p.saveResume(`f${i}`, 60, 120);
+      t += 1000;
+    }
+    // Re-touch the OLDEST (f0) so it becomes the most-recently-touched.
+    vi.setSystemTime(t);
+    p.saveResume('f0', 90, 120);
+    t += 1000;
+    // One new id pushes over the cap — f1 (now the oldest) should be evicted, NOT f0.
+    vi.setSystemTime(t);
+    p.saveResume('new', 60, 120);
+    vi.useRealTimers();
+
+    expect(Object.keys(p.resumeMap).length).toBe(RESUME_MAX_ENTRIES);
+    expect(p.resumePositionFor('f0')).toBe(90); // survived (re-touched)
+    expect(p.resumePositionFor('f1')).toBeNull(); // evicted (now oldest)
+    expect(p.resumePositionFor('new')).toBe(60);
+  });
+
+  it('mergeServerResume respects the cap (evicting oldest local entries)', () => {
+    const p = usePlayerStore();
+    // Seed the cap with local entries first.
+    const ids = Array.from({ length: RESUME_MAX_ENTRIES }, (_, i) => `g${i}`);
+    saveSequential(p, ids);
+    expect(Object.keys(p.resumeMap).length).toBe(RESUME_MAX_ENTRIES);
+
+    // Merge 3 new server ids — total would be cap+3, must evict back to the cap.
+    p.mergeServerResume({ s0: 100, s1: 200, s2: 300 });
+
+    expect(Object.keys(p.resumeMap).length).toBe(RESUME_MAX_ENTRIES);
+    // the 3 freshly-merged (most-recently-touched) ids are retained …
+    expect(p.resumePositionFor('s0')).toBe(100);
+    expect(p.resumePositionFor('s1')).toBe(200);
+    expect(p.resumePositionFor('s2')).toBe(300);
+    // … at the expense of the 3 oldest local entries (g0..g2)
+    expect(p.resumePositionFor('g0')).toBeNull();
+    expect(p.resumePositionFor('g1')).toBeNull();
+    expect(p.resumePositionFor('g2')).toBeNull();
+  });
+
+  it('persists a companion phlix.resume.touched map and reloads it (LRU survives reload)', () => {
+    const p = usePlayerStore();
+    saveSequential(p, ['t-old', 't-new']);
+    const touched = JSON.parse(localStorage.getItem('phlix.resume.touched')!) as Record<string, number>;
+    expect(touched['t-old']).toBeLessThan(touched['t-new']);
+
+    // After reload + filling to the cap, the previously-OLDER id evicts first.
+    setActivePinia(createPinia());
+    const p2 = usePlayerStore();
+    vi.useFakeTimers();
+    let t = 1_700_000_500_000;
+    for (let i = 0; i < RESUME_MAX_ENTRIES - 1; i++) {
+      vi.setSystemTime(t);
+      p2.saveResume(`r${i}`, 60, 120); // pushes total to cap+1 → one eviction
+      t += 1000;
+    }
+    vi.useRealTimers();
+    expect(Object.keys(p2.resumeMap).length).toBe(RESUME_MAX_ENTRIES);
+    expect(p2.resumePositionFor('t-old')).toBeNull(); // evicted first (older touch)
+    expect(p2.resumePositionFor('t-new')).toBe(60); // survived
+  });
+
+  it('a QuotaExceededError on persist triggers eviction + retry and never throws', () => {
+    const p = usePlayerStore();
+    // Fill the map (well under the cap so the cap-eviction path is NOT the trigger).
+    vi.useFakeTimers();
+    let t = 1_700_000_000_000;
+    for (let i = 0; i < 50; i++) {
+      vi.setSystemTime(t);
+      p.saveResume(`q${i}`, 60, 120);
+      t += 1000;
+    }
+    vi.useRealTimers();
+    expect(Object.keys(p.resumeMap).length).toBe(50);
+
+    // Make setItem throw once (quota), then succeed on the retry write.
+    const real = Storage.prototype.setItem;
+    let calls = 0;
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      calls += 1;
+      if (calls === 1) {
+        const err = new DOMException('quota', 'QuotaExceededError');
+        throw err;
+      }
+      return real.call(this, key, value);
+    });
+
+    // A forced persist (via clearResume of an absent id → persistResume(true)).
+    expect(() => p.clearResume('absent')).not.toThrow();
+
+    // Eviction dropped the oldest ~25% (50 → 37) and the retry persisted them.
+    expect(Object.keys(p.resumeMap).length).toBe(37);
+    expect(p.resumePositionFor('q0')).toBeNull(); // oldest dropped by quota eviction
+    expect(p.resumePositionFor('q49')).toBe(60); // newest retained
+    const persisted = JSON.parse(localStorage.getItem('phlix.resume')!) as Record<string, number>;
+    expect(Object.keys(persisted).length).toBe(37);
+    expect(calls).toBeGreaterThanOrEqual(2); // initial failed write + retry
+
+    spy.mockRestore();
+  });
+
+  it('a persistent QuotaExceededError is swallowed (retry also fails, no throw)', () => {
+    const p = usePlayerStore();
+    p.saveResume('z', 60, 120);
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+    expect(() => p.clearResume('z')).not.toThrow();
+    spy.mockRestore();
   });
 });
