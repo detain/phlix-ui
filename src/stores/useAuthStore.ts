@@ -1,8 +1,14 @@
 import { defineStore } from 'pinia';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, inject, type ComputedRef } from 'vue';
 import { ApiClient, type AuthUser } from '../api/client';
 import { LocalStorageTokenStore } from '../api/tokenStore';
 import { useApiBase } from '../composables/useApiBase';
+
+/** The login path injected by the app (e.g. '/app/login'). Falls back to '/login'. */
+type InjectedLoginPath = string | ComputedRef<string> | undefined;
+function resolveLoginPath(injected: InjectedLoginPath): string {
+    return typeof injected === 'string' ? injected : injected?.value ?? '/login';
+}
 
 export const useAuthStore = defineStore('auth', () => {
     const tokenStore = new LocalStorageTokenStore();
@@ -11,7 +17,11 @@ export const useAuthStore = defineStore('auth', () => {
     // client — already exist). The single `client` instance is kept (consumers
     // hold the reference); we re-point it in place whenever the base changes.
     const apiBase = useApiBase();
-    const client = new ApiClient({ tokenStore, baseUrl: apiBase.value });
+    // loginPath is set once at app boot (from config.routerBase) and never changes
+    // after, but we watch it in case a native client ever supplies it as a ref.
+    const injectedLoginPath = inject<InjectedLoginPath>('loginPath', '/login');
+    const loginPath = computed(() => resolveLoginPath(injectedLoginPath));
+    const client = new ApiClient({ tokenStore, baseUrl: apiBase.value, loginPath: loginPath.value });
     watch(apiBase, (base) => client.setBaseUrl(base));
 
     const user = ref<AuthUser | null>(null);
@@ -128,9 +138,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     function logout(): void {
-        tokenStore.clear();
+        // Delegate to the client so the loginPath-aware redirect is exercised.
+        // Pass redirect=false so we handle navigation ourselves (consistent with
+        // how fetchUser clears state on failure — the store owns the reactive vars).
+        client.logout(false);
         accessToken.value = null;
         user.value = null;
+        if (typeof window !== 'undefined') {
+            window.location.href = loginPath.value;
+        }
     }
 
     return {

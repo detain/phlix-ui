@@ -415,6 +415,10 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     app.provide('apiBase', computed(() => effectiveBase()));
     app.provide('mediaApiBase', mediaApiBase);
     app.provide('mediaDirectBase', mediaDirectBase);
+    // loginPath: the redirect target for logout. Uses config.routerBase when set
+    // (e.g. '/app' → '/app/login' on the hub), falling back to '/login' for the
+    // media server. Provided as a ComputedRef for API consistency with apiBase.
+    app.provide('loginPath', computed(() => `${fullConfig.routerBase ?? '/app'}/login`));
     app.provide('phlixCommands', fullConfig.commands ?? []);
     app.provide('phlixConfig', fullConfig);
     app.use(pinia);
