@@ -18,12 +18,15 @@
 import { computed, ref, onMounted, inject } from 'vue';
 import Icon from './Icon.vue';
 import LoveButton from './LoveButton.vue';
+import Menu from './ui/Menu.vue';
 import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import { usePrefetch } from '../composables/usePrefetch';
 import { resolvePosterSources } from './media-poster';
+import { buildMediaItemMenu } from './mediaItemMenu';
 
 const props = withDefaults(
   defineProps<{
@@ -60,9 +63,14 @@ const emit = defineEmits<{
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
   (e: 'match', item: MediaItem): void;
+  (e: 'mark-watched', item: MediaItem): void;
+  (e: 'refresh', item: MediaItem): void;
+  (e: 'choose-poster', item: MediaItem): void;
+  (e: 'remove', item: MediaItem): void;
 }>();
 
 const player = usePlayerStore();
+const auth = useAuthStore();
 
 // Per-user favorite/rating/love state (Feature 17). The bookmark/favorite button
 // flips this store optimistically; the host page's `watchlist` handler still runs
@@ -77,6 +85,40 @@ const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
 
 /** Current 0-3 love level for THIS item per the store (0 when unknown). */
 const loveLevel = computed(() => userItemData.likeLevel(props.item.id));
+
+/** Whether the current user is an admin. */
+const isAdmin = computed(() => auth.isAdmin);
+
+/** Whether this item is in the user's watched/favorite state. */
+const isWatched = computed(() => userItemData.isFavorite(props.item.id));
+
+const menuOpen = ref(false);
+
+const menuItems = computed(() =>
+  buildMediaItemMenu(props.item, {
+    isAdmin: isAdmin.value,
+    isWatched: isWatched.value,
+    canChoosePoster: isAdmin.value,
+  }),
+);
+
+function onMenuSelect(item: { label: string }): void {
+  switch (item.label) {
+    case 'Mark watched':
+    case 'Mark unwatched':
+      emit('mark-watched', props.item);
+      break;
+    case 'Refresh/Match…':
+      emit('refresh', props.item);
+      break;
+    case 'Choose poster…':
+      emit('choose-poster', props.item);
+      break;
+    case 'Remove':
+      emit('remove', props.item);
+      break;
+  }
+}
 
 /**
  * Cycle the multi-level love (0→1→2→3→0) in the store (optimistic + rollback +
@@ -251,8 +293,12 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             <Icon name="info" />
           </button>
 
-          <!-- [ ⋯ Menu(placeholder) ] — overflow "more actions" menu lands in W2;
-               nothing rendered yet (out of scope for 17.3). -->
+          <!-- [ ⋯ Menu ] -->
+          <Menu v-model:open="menuOpen" :items="menuItems" @select="onMenuSelect">
+            <button type="button" class="media-card__iconbtn" aria-label="More actions" @click.stop.prevent>
+              <Icon name="more" />
+            </button>
+          </Menu>
 
           <!-- [ Match(admin) ] -->
           <button

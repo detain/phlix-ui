@@ -18,8 +18,12 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     info: (item: import("../types/media-item").MediaDetail) => any;
     back: () => any;
     resume: (item: import("../types/media-item").MediaDetail) => any;
+    refresh: (item: import("../types/media-item").MediaDetail) => any;
     actor: (name: string) => any;
+    remove: (item: import("../types/media-item").MediaDetail) => any;
     watchlist: (item: import("../types/media-item").MediaDetail) => any;
+    "mark-watched": (item: import("../types/media-item").MediaDetail) => any;
+    "choose-poster": (item: import("../types/media-item").MediaDetail) => any;
     genre: (name: string) => any;
     company: (name: string) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
@@ -28,8 +32,12 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     onInfo?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onBack?: (() => any) | undefined;
     onResume?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onRefresh?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onActor?: ((name: string) => any) | undefined;
+    onRemove?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onGenre?: ((name: string) => any) | undefined;
     onCompany?: ((name: string) => any) | undefined;
 }>, {

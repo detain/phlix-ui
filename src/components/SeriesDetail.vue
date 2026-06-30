@@ -44,6 +44,10 @@ const emit = defineEmits<{
     (e: 'info', item: MediaItem): void;
     (e: 'match', item: MediaItem): void;
     (e: 'back'): void;
+    (e: 'mark-watched', item: MediaItem): void;
+    (e: 'refresh', item: MediaItem): void;
+    (e: 'choose-poster', item: MediaItem): void;
+    (e: 'remove', item: MediaItem): void;
 }>();
 
 /** Per-season route path, e.g. `/app/media/sh1/season/2` (Specials → `0`). */
@@ -78,6 +82,10 @@ const hasSeasons = computed(() => props.seasons.length > 0);
             @info="emit('info', $event)"
             @match="emit('match', $event)"
             @back="emit('back')"
+            @mark-watched="emit('mark-watched', $event)"
+            @refresh="emit('refresh', $event)"
+            @choose-poster="emit('choose-poster', $event)"
+            @remove="emit('remove', $event)"
         />
 
         <section class="series-detail__seasons" aria-label="Seasons">
