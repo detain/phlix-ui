@@ -207,10 +207,23 @@ function onLoad() {
 onMounted(() => {
   if (imgEl.value?.complete) loaded.value = true;
 });
+
+/** Encoded backdrop URL for CSS background-image; null when absent. */
+const backdropUrl = computed(() => {
+  const url = props.item.backdrop_url;
+  return url ? encodeURI(url) : null;
+});
 </script>
 
 <template>
   <article class="media-detail">
+    <div
+      v-if="backdropUrl"
+      class="media-detail__backdrop"
+      :style="{ backgroundImage: `url(${backdropUrl})` }"
+      aria-hidden="true"
+    />
+
     <div
       v-if="item.poster_url"
       class="media-detail__ambient"
@@ -415,6 +428,26 @@ onMounted(() => {
   pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
   mask-image: linear-gradient(to bottom, #000, transparent);
+}
+
+/* backdrop layer — full-width background image behind the hero, with dark
+   gradient overlay so title/meta text remains readable on top. */
+.media-detail__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 60%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 60%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-detail__backdrop {
+    transition: none;
+  }
 }
 
 .media-detail__bar {
