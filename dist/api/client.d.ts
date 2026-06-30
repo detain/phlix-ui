@@ -1,4 +1,5 @@
 import { type TokenStore } from './tokenStore';
+import type { MediaItem } from '../types/media-item';
 /** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
 export { ApiError } from './errors';
 /** Re-exported so `import type { TokenStore } from '.../api/client'` deep imports keep working. */
@@ -92,6 +93,18 @@ export interface MatchApplyResult<TItem = unknown> {
         [key: string]: unknown;
     };
 }
+/**
+ * Envelope returned by {@link ApiClient.listFavorites}
+ * (`GET /api/v1/users/me/favorites`). Mirrors the server's paginated list shape:
+ * fully shaped media items (each carrying its add-only `user_data` block), plus
+ * the effective `limit`/`offset` the server applied. `total` is NOT sent by this
+ * endpoint (unlike the browse list) so it is intentionally absent here.
+ */
+export interface FavoritesResult {
+    items: MediaItem[];
+    limit: number;
+    offset: number;
+}
 /** The server error `code` returned (422) when no TMDB API key is configured. */
 export declare const TMDB_UNCONFIGURED_CODE = "metadata.tmdb_unconfigured";
 /**
@@ -163,6 +176,45 @@ export declare class ApiClient {
      * shared `ApiError`.
      */
     matchApply<TItem = unknown>(id: string, input: MatchApplyInput): Promise<MatchApplyResult<TItem>>;
+    /**
+     * Mark a media item as a favorite for the authenticated user
+     * (`POST /api/v1/media/{id}/favorite`). The backend persists the favorite
+     * flag and returns a flat `{ message }`, which we surface verbatim. Non-2xx
+     * (401 unauth, 404 unknown id) throw the shared {@link ApiError}.
+     */
+    addFavorite(id: string): Promise<{
+        message: string;
+    }>;
+    /**
+     * Remove a media item from the authenticated user's favorites
+     * (`DELETE /api/v1/media/{id}/favorite`). Returns the server's flat
+     * `{ message }`. Non-2xx (401, 404) throw the shared {@link ApiError}.
+     */
+    removeFavorite(id: string): Promise<{
+        message: string;
+    }>;
+    /**
+     * Set (or clear) the authenticated user's personal 1-10 rating for a media
+     * item (`PUT /api/v1/media/{id}/rating`, body `{ rating }`). Pass `null` to
+     * clear the rating. The server returns a flat `{ message }`. A non-integer /
+     * out-of-range rating is a 400 → shared {@link ApiError}; 401/404 likewise.
+     */
+    setRating(id: string, rating: number | null): Promise<{
+        message: string;
+    }>;
+    /**
+     * List the authenticated user's favorited media items, most-recently
+     * favorited first (`GET /api/v1/users/me/favorites`). Each returned item is a
+     * fully shaped {@link MediaItem} carrying its add-only `user_data` block.
+     * `limit` (default server-side 50, clamped 1-100) and `offset` (default 0)
+     * mirror the browse list endpoint. The `{ items, limit, offset }` envelope is
+     * returned verbatim, with `items` defended to an array so a malformed payload
+     * degrades to empty rather than throwing downstream.
+     */
+    listFavorites(params?: {
+        limit?: number;
+        offset?: number;
+    }, signal?: AbortSignal): Promise<FavoritesResult>;
     isLoggedIn(): boolean;
     getCurrentUser(): Promise<AuthUser>;
     logout(redirect?: boolean): void;
