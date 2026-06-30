@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Admin Duplicates page (Feature 1.7)** — new server-admin page (`admin-duplicates`, `/app/admin/duplicates`) that lists the duplicate series/movie groups the server's `DuplicateFinder` finds per library and merges each group's duplicates into its primary. Pick a library, review each group (canonical key + type, primary pre-selected as the keep target, duplicates individually checkable, child counts shown per row), and "Merge selected" calls the `AdminMergeController` apply endpoint then refreshes the list. Adds `AdminDuplicatesApi` (`src/api/admin/duplicates.ts`) wrapping `GET /api/v1/admin/libraries/{id}/duplicates` and `POST /api/v1/admin/media/merge`. _The `@phlix/ui` version bump + consumer re-pin/bundle rebuild are deferred to the W0.BUMP step._
+
 ## [0.55.0] - 2026-06-29
 
 ### Fixed

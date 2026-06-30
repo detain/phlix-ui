@@ -18,7 +18,7 @@ import type { IconName } from '../components/Icon.vue';
  * - {@link commonAdminPages} — portable to BOTH apps: Users, Logs, Settings.
  * - {@link serverAdminPages} — media-server-only: Dashboard, Webhooks, Services,
  *   Integrations, Backup, Cast Devices, DLNA, Remote Access, Live TV, Collections,
- *   History, SyncPlay, Libraries, Plugins.
+ *   History, SyncPlay, Libraries, Duplicates, Plugins.
  * - {@link hubAdminPages} — hub-only: Hub Dashboard, Audit Logs.
  *
  * `buildAdminRoutes(base)` with no `pages` argument yields the **server pages in
@@ -153,6 +153,13 @@ const librariesPage: AdminPage = {
   icon: 'image',
   component: () => import('../pages/admin/LibrariesPage.vue'),
 };
+const duplicatesPage: AdminPage = {
+  name: 'admin-duplicates',
+  path: 'duplicates',
+  label: 'Duplicates',
+  icon: 'filter',
+  component: () => import('../pages/admin/DuplicatesPage.vue'),
+};
 const pluginsPage: AdminPage = {
   name: 'admin-plugins',
   path: 'plugins',
@@ -205,6 +212,7 @@ const ALL_ADMIN_PAGES: AdminPage[] = [
   historyPage,
   syncplayPage,
   librariesPage,
+  duplicatesPage,
   pluginsPage,
   settingsPage,
   hubDashboardPage,
@@ -227,7 +235,7 @@ export function adminPageLabel(name: string | null | undefined): string | null {
 /** Admin pages portable to BOTH apps (they hit endpoints both backends serve). */
 export const commonAdminPages: AdminPage[] = [usersPage, logsPage, settingsPage];
 
-/** Media-server-only admin pages (the 14 surfaces that depend on a media backend). */
+/** Media-server-only admin pages (the surfaces that depend on a media backend). */
 export const serverAdminPages: AdminPage[] = [
   dashboardPage,
   webhooksPage,
@@ -242,6 +250,7 @@ export const serverAdminPages: AdminPage[] = [
   historyPage,
   syncplayPage,
   librariesPage,
+  duplicatesPage,
   pluginsPage,
 ];
 
@@ -272,6 +281,7 @@ const defaultAdminPages: AdminPage[] = [
   historyPage,
   syncplayPage,
   librariesPage,
+  duplicatesPage,
   pluginsPage,
   settingsPage,
 ];
