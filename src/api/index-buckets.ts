@@ -5,6 +5,7 @@ export interface IndexBucket {
   label: string;
   offset: number;
   count: number;
+  ariaLabel?: string;
 }
 
 export interface MediaIndexResponse {
