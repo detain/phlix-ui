@@ -6,8 +6,11 @@ import Player from './Player.vue';
 import Scrubber from './player/Scrubber.vue';
 import AmbientCanvas from './player/AmbientCanvas.vue';
 import SkipButton from './player/SkipButton.vue';
+import LoveButton from './LoveButton.vue';
+import Icon from './Icon.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 import * as hlsTranscodeMod from '../composables/useHlsTranscode';
 
@@ -1534,5 +1537,116 @@ describe('Player — prev/next episode (U2)', () => {
     expect(w.emitted('play-episode')?.[0]?.[0]).toMatchObject({ id: 'e3' });
     await prevBtn(w)!.trigger('click');
     expect(w.emitted('play-episode')?.[1]?.[0]).toMatchObject({ id: 'e1' });
+  });
+});
+
+describe('Player — favorite + Love controls (Feature 16.1)', () => {
+  // Locate the favorite/bookmark + Love controls in the right-hand control cluster.
+  const favBtn = (w: ReturnType<typeof mountPlayer>['w']) => w.find('.player__btnrow .player__favorite');
+  const love = (w: ReturnType<typeof mountPlayer>['w']) => w.findComponent(LoveButton);
+
+  it('renders both controls in the control cluster (default: not favorited, love level 0)', () => {
+    const { w } = mountPlayer();
+    const fav = favBtn(w);
+    expect(fav.exists()).toBe(true);
+    expect(fav.attributes('aria-pressed')).toBe('false');
+    expect(fav.attributes('aria-label')).toBe('Add to favorites');
+    // outline bookmark when not favorited
+    expect(fav.findComponent(Icon).props('name')).toBe('bookmark-plus');
+    const lb = love(w);
+    expect(lb.exists()).toBe(true);
+    expect(lb.props('level')).toBe(0);
+  });
+
+  it('reflects the store: favorite aria-pressed from isFavorite, Love level from likeLevel', async () => {
+    const { w } = mountPlayer();
+    const store = useUserItemDataStore();
+    // seed the store entry for the played item and assert the controls reflect it
+    store.entries.set('m1', { favorite: true, rating: null, like_level: 2 });
+    await nextTick();
+    const fav = favBtn(w);
+    expect(fav.attributes('aria-pressed')).toBe('true');
+    expect(fav.attributes('aria-label')).toBe('Remove from favorites');
+    expect(fav.findComponent(Icon).props('name')).toBe('bookmark'); // filled bookmark
+    expect(love(w).props('level')).toBe(2);
+  });
+
+  it('clicking the favorite button calls toggleFavorite(id, apiBase) exactly once', async () => {
+    const { w } = mountPlayer();
+    const store = useUserItemDataStore();
+    const spy = vi.spyOn(store, 'toggleFavorite').mockResolvedValue();
+    await favBtn(w).trigger('click');
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith('m1', ''); // empty apiBase fallback (no phlixConfig in test mount)
+  });
+
+  it('clicking Love calls cycleLove(id, apiBase) exactly once per click (single-cycle guard)', async () => {
+    const { w } = mountPlayer();
+    const store = useUserItemDataStore();
+    const spy = vi.spyOn(store, 'cycleLove').mockResolvedValue();
+    // a single activate emits BOTH cycle + update:level from LoveButton; only @cycle
+    // is bound, so exactly ONE cycleLove must fire (no double-cycle / double-PUT).
+    await love(w).find('button').trigger('click');
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith('m1', '');
+  });
+
+  it('fires exactly ONE favorite write per click (non-vacuous: real fetch spy)', async () => {
+    const fetchMock = vi.fn(
+      (_url: RequestInfo | URL, _init?: RequestInit) =>
+        Promise.resolve(new Response(JSON.stringify({ message: 'Added to favorites' }), { status: 200 })),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { w } = mountPlayer();
+    await favBtn(w).trigger('click');
+    await nextTick();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain('/api/v1/media/m1/favorite');
+    expect(init?.method).toBe('POST');
+    // optimistic flip already reflected in the control
+    expect(favBtn(w).attributes('aria-pressed')).toBe('true');
+    vi.unstubAllGlobals();
+  });
+
+  it('fires exactly ONE love PUT per click (non-vacuous: real fetch spy — proves the single-cycle binding)', async () => {
+    const fetchMock = vi.fn(
+      (_url: RequestInfo | URL, _init?: RequestInit) =>
+        Promise.resolve(new Response(JSON.stringify({ message: 'Saved' }), { status: 200 })),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { w } = mountPlayer();
+    await love(w).find('button').trigger('click');
+    await nextTick();
+    // If @update:level were ALSO bound this would be 2 (double-PUT) — assert ONE.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain('/api/v1/media/m1/like'); // setLikeLevel endpoint
+    expect(init?.method).toBe('PUT');
+    expect(love(w).props('level')).toBe(1); // optimistic 0→1
+    vi.unstubAllGlobals();
+  });
+
+  it('hydrates the store from props.media.user_data on mount', () => {
+    const store = useUserItemDataStore();
+    const spy = vi.spyOn(store, 'hydrate');
+    mountPlayer({ media: media({ id: 'm1', user_data: { favorite: true, rating: 7, like_level: 3 } }) });
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
+    // the controls reflect the hydrated server state
+    expect(store.isFavorite('m1')).toBe(true);
+    expect(store.likeLevel('m1')).toBe(3);
+  });
+
+  it('re-hydrates when the media id changes', async () => {
+    const { w } = mountPlayer({ media: media({ id: 'm1', user_data: { favorite: false, rating: null, like_level: 0 } }) });
+    const store = useUserItemDataStore();
+    const spy = vi.spyOn(store, 'hydrate');
+    await w.setProps({ media: media({ id: 'm2', name: 'Arrival', user_data: { favorite: true, rating: null, like_level: 1 } }), streamUrl: 'http://x/m2' });
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ id: 'm2' }));
+    expect(store.isFavorite('m2')).toBe(true);
+    expect(store.likeLevel('m2')).toBe(1);
+    // the player chrome now reflects the new item
+    expect(w.find('.player__btnrow .player__favorite').attributes('aria-pressed')).toBe('true');
+    expect(w.findComponent(LoveButton).props('level')).toBe(1);
   });
 });
