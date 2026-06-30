@@ -862,4 +862,119 @@ describe('ApiClient', () => {
             expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb');
         });
     });
+
+    describe('poster list + set (item 15)', () => {
+        it('listPosters GETs the posters endpoint and returns candidates + current url', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        candidates: [
+                            {
+                                provider: 'tmdb',
+                                poster_url: 'https://image.tmdb.org/t/p/w500/abc.jpg',
+                                width: 500,
+                                height: 750,
+                                votes: 120,
+                                vote_average: 7.5,
+                                tmdb_id: 123,
+                            },
+                            { provider: 'fanart.tv', poster_url: 'https://fanart.io/xyz.jpg' },
+                        ],
+                        current_poster_url: 'https://image.tmdb.org/t/p/w500/abc.jpg',
+                    },
+                },
+            ]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.listPosters('m1');
+
+            expect(calls).toHaveLength(1);
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/posters');
+            expect(calls[0]!.init!.method).toBe('GET');
+            expect(res.candidates).toHaveLength(2);
+            expect(res.candidates[0]!.provider).toBe('tmdb');
+            expect(res.candidates[0]!.poster_url).toBe('https://image.tmdb.org/t/p/w500/abc.jpg');
+            expect(res.candidates[0]!.width).toBe(500);
+            expect(res.candidates[0]!.votes).toBe(120);
+            expect(res.candidates[1]!.provider).toBe('fanart.tv');
+            expect(res.current_poster_url).toBe('https://image.tmdb.org/t/p/w500/abc.jpg');
+        });
+
+        it('listPosters url-encodes the id', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { candidates: [], current_poster_url: null } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.listPosters('a/b');
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb/posters');
+        });
+
+        it('listPosters defends malformed payloads (non-array candidates → [], null current → null)', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch } = makeFetch([{ status: 200, body: { candidates: null, current_poster_url: 42 } }]);
+            const client = new ApiClient({ baseUrl: '', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.listPosters('m1');
+
+            expect(res.candidates).toEqual([]);
+            expect(res.current_poster_url).toBeNull();
+        });
+
+        it('listPosters surfaces 422 tmdb_unconfigured via isTmdbUnconfigured', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const unconfigured = { status: 422, body: { error: 'TMDB not configured', code: 'metadata.tmdb_unconfigured' } };
+            const { fetch } = makeFetch([unconfigured, unconfigured]);
+            const client = new ApiClient({ baseUrl: '', tokenStore: tokens, fetchImpl: fetch });
+
+            await expect(client.listPosters('m1')).rejects.toMatchObject({ status: 422 });
+            try {
+                await client.listPosters('m1');
+                throw new Error('expected listPosters to reject');
+            } catch (e) {
+                expect(isTmdbUnconfigured(e)).toBe(true);
+            }
+        });
+
+        it('setPoster PUTs the poster_url in the body', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: { id: 'm1', name: 'Dune', type: 'movie', poster_url: 'https://new.poster.jpg' },
+                },
+            ]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.setPoster('m1', 'https://new.poster.jpg');
+
+            expect(calls).toHaveLength(1);
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/poster');
+            expect(calls[0]!.init!.method).toBe('PUT');
+            expect(calls[0]!.init!.body).toBe(JSON.stringify({ poster_url: 'https://new.poster.jpg' }));
+            expect((res as { poster_url: string }).poster_url).toBe('https://new.poster.jpg');
+        });
+
+        it('setPoster url-encodes the id', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { id: 'a/b' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.setPoster('a/b', 'https://p.jpg');
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb/poster');
+        });
+
+        it('setPoster sends an empty string to clear the poster', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { id: 'm1', poster_url: '' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.setPoster('m1', '');
+
+            expect(calls[0]!.init!.body).toBe(JSON.stringify({ poster_url: '' }));
+        });
+    });
 });

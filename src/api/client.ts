@@ -1,6 +1,6 @@
 import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
 import { LocalStorageTokenStore, type TokenStore } from './tokenStore';
-import type { MediaItem } from '../types/media-item';
+import type { MediaItem, PosterCandidatesResponse } from '../types/media-item';
 
 /** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
 export { ApiError } from './errors';
@@ -578,6 +578,39 @@ export class ApiClient {
             limit: typeof res.limit === 'number' ? res.limit : (params.limit ?? 50),
             offset: typeof res.offset === 'number' ? res.offset : (params.offset ?? 0),
         };
+    }
+
+    /**
+     * List available poster candidates for one media item
+     * (`GET /api/v1/media/{id}/posters`). Returns `{ candidates, current_poster_url }`
+     * with `candidates` defended to an array so a malformed payload degrades
+     * gracefully. A `422 metadata.tmdb_unconfigured` surfaces as an `ApiError`
+     * the caller can detect with {@link isTmdbUnconfigured}.
+     */
+    async listPosters(id: string, signal?: AbortSignal): Promise<PosterCandidatesResponse> {
+        const res = await this.get<Partial<PosterCandidatesResponse>>(
+            `/api/v1/media/${encodeURIComponent(id)}/posters`,
+            undefined,
+            signal,
+        );
+        return {
+            candidates: Array.isArray(res.candidates) ? res.candidates : [],
+            current_poster_url:
+                typeof res.current_poster_url === 'string' ? res.current_poster_url : null,
+        };
+    }
+
+    /**
+     * Set (or clear) the poster for one media item
+     * (`PUT /api/v1/media/{id}/poster`, body `{ poster_url }`). Pass an empty
+     * string to clear the poster. Returns the updated {@link MediaItem}. A
+     * `422 metadata.tmdb_unconfigured` surfaces as an `ApiError` the caller
+     * can detect with {@link isTmdbUnconfigured}.
+     */
+    setPoster(id: string, posterUrl: string): Promise<MediaItem> {
+        return this.put<MediaItem>(`/api/v1/media/${encodeURIComponent(id)}/poster`, {
+            poster_url: posterUrl,
+        });
     }
 
     isLoggedIn(): boolean {
