@@ -1,0 +1,2 @@
+const e=require("./media-query-AUxco_lE.cjs"),t=require("./series-grouping-DTE48Bvy.cjs");var n=100;async function r(t,r,i,a){let o=e.n(r,{parentId:i,limit:n,sort:`name`,order:`asc`});return(await t.get(o,void 0,a)).items??[]}async function i(e,n,i,a){let o=await r(e,n,i,a),s;if(t.r(o)){s=o.filter(e=>e.type===`season`);let t=await Promise.all(s.map(t=>r(e,n,t.id,a).catch(()=>[])));o=[...o.filter(e=>e.type!==`season`),...t.flat()]}return t.n(o,s)}Object.defineProperty(exports,"t",{enumerable:!0,get:function(){return i}});
+//# sourceMappingURL=useSeriesSeasons-0YUcZWbz.cjs.map
