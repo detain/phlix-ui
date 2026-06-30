@@ -20,7 +20,9 @@ import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import Icon from './Icon.vue';
+import LoveButton from './LoveButton.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
 import { useMessages } from '../composables/useMessages';
@@ -114,6 +116,41 @@ const player = usePlayerStore();
 const prefs = usePreferencesStore();
 const { t } = useMessages();
 
+// Per-user favorite/love state (Feature 16). The favorite toggle + 4-state Love
+// controls in the player chrome flip this store optimistically (one PUT each),
+// mirroring MediaCard's wiring. The store keeps no global apiBase — every action
+// is threaded `apiBase` from the app config (same `inject('phlixConfig')` source
+// used below for the transcode endpoints + by MediaCard). `props.media` may be a
+// MediaListItem or a MediaDetail; `hydrate` tolerates an absent `user_data` and a
+// null/undefined item, so the controls seed from server state when the player
+// opens / the media changes.
+const userItemData = useUserItemDataStore();
+
+/** Whether the currently-playing item is favorited per the store (false when unknown). */
+const isFavorited = computed(() => userItemData.isFavorite(props.media.id));
+
+/** Current 0-3 love level for the currently-playing item per the store (0 when unknown). */
+const loveLevel = computed(() => userItemData.likeLevel(props.media.id));
+
+/**
+ * Favorite toggle handler — flips the favorite flag in the store (optimistic +
+ * rollback + one add/remove write there). Mirrors MediaCard.onFavorite, minus the
+ * back-compat `watchlist` re-emit (the player has no such host contract).
+ */
+function onFavorite(): void {
+  void userItemData.toggleFavorite(props.media.id, apiBaseForUserData());
+}
+
+/**
+ * Cycle the multi-level love (0→1→2→3→0) in the store (optimistic + rollback +
+ * one PUT there). Bound to LoveButton's `@cycle` ONLY (NOT `@update:level`) — the
+ * button emits BOTH on a single activate, so binding both would double-cycle /
+ * double-PUT (the locked single-cycle rule from Step 10.6).
+ */
+function onLove(): void {
+  void userItemData.cycleLove(props.media.id, apiBaseForUserData());
+}
+
 /** Playback-speed ladder for the `<`/`>` shortcuts. */
 const SPEED_LADDER = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -144,6 +181,14 @@ const transcodeNeeded = ref(needsTranscode(props.streamUrl, props.media.path));
  *  per-app hls.js overrides (`playerHlsConfig`, e.g. a TV's RAM tuning) into the
  *  transcode controller. Absent in standalone/test mounts → defaults apply. */
 const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+
+/** API base for the favorite/love writes (Feature 16). Read from the app config
+ *  exactly like MediaCard (`inject('phlixConfig')?.apiBase ?? ''`) — NOT a new
+ *  source. Empty-string fallback for standalone/test mounts; the store flips
+ *  optimistically and the network call uses its lazily-built client. */
+function apiBaseForUserData(): string {
+  return phlixConfig?.apiBase ?? '';
+}
 
 /** HLS transcode-to-play controller: starts the server job, polls readiness, and
  *  attaches the resulting playlist to <video> via hls.js. `apiBase` falls back to
@@ -683,6 +728,10 @@ let mediaSessionTeardown: (() => void) | null = null;
 // ---- lifecycle --------------------------------------------------------------
 onMounted(() => {
   player.setCurrent(props.media, { resetPosition: false, streamUrl: props.streamUrl });
+  // Seed the favorite/love controls from the item's server `user_data` (Feature
+  // 16). Tolerant of an absent `user_data` (seeds neutral defaults) and a null
+  // item, so this is safe for both MediaListItem and MediaDetail props.
+  userItemData.hydrate(props.media);
   if (typeof document !== 'undefined') {
     document.addEventListener('fullscreenchange', onFullscreenChange);
     pipSupported.value = document.pictureInPictureEnabled === true;
@@ -706,6 +755,14 @@ watch(
   (m) => {
     player.setCurrent(m, { resetPosition: false, streamUrl: props.streamUrl });
     evaluateForCurrentMedia();
+  },
+);
+// Re-seed the favorite/love controls whenever the played item changes (Feature
+// 16) — keyed on the id so an in-place same-id update doesn't re-hydrate.
+watch(
+  () => props.media?.id,
+  () => {
+    userItemData.hydrate(props.media);
   },
 );
 onBeforeUnmount(() => {
@@ -863,6 +920,23 @@ onBeforeUnmount(() => {
           </span>
 
           <span class="player__grow" />
+
+          <!-- Favorite + 4-state Love (Feature 16). Favorite mirrors MediaCard's
+               bookmark toggle (filled/amber + aria-pressed from the store). Love
+               binds ONLY @cycle (NOT @update:level) so a single activate triggers
+               exactly one store cycle + one PUT — the locked single-cycle rule. -->
+          <button
+            type="button"
+            class="player__iconbtn player__favorite"
+            :class="{ 'is-on': isFavorited }"
+            :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+            :aria-pressed="isFavorited ? 'true' : 'false'"
+            @click="onFavorite"
+          >
+            <Icon :name="isFavorited ? 'bookmark' : 'bookmark-plus'" />
+          </button>
+
+          <LoveButton :level="loveLevel" @cycle="onLove" />
 
           <VolumeControl />
           <SpeedMenu />
@@ -1146,6 +1220,11 @@ onBeforeUnmount(() => {
 /* active toggle (theater on) — amber tint */
 .player__iconbtn.is-on {
   color: var(--accent);
+}
+/* favorited bookmark reads filled + amber (like MediaCard's is-active state),
+   scoped to the favorite button so it does NOT fill the theater/pip glyphs. */
+.player__favorite.is-on :deep(svg) {
+  fill: currentColor;
 }
 .player__iconbtn :deep(svg) {
   width: 21px;
