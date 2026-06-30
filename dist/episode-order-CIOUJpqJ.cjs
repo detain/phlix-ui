@@ -1,0 +1,2 @@
+const e=require("./series-grouping-DTE48Bvy.cjs");function t(t){return e.n(t).filter(e=>!e.isSpecials).flatMap(e=>e.episodes)}function n(e,t){let n=e.findIndex(e=>e.id===t);return n>0?e[n-1]:null}function r(e,t){let n=e.findIndex(e=>e.id===t);return n>=0&&n<e.length-1?e[n+1]:null}Object.defineProperty(exports,"n",{enumerable:!0,get:function(){return t}}),Object.defineProperty(exports,"r",{enumerable:!0,get:function(){return n}}),Object.defineProperty(exports,"t",{enumerable:!0,get:function(){return r}});
+//# sourceMappingURL=episode-order-CIOUJpqJ.cjs.map

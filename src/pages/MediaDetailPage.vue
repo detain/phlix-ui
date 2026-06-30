@@ -23,8 +23,9 @@ import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
-import { firstEpisode, type SeasonGroup } from '../components/series-grouping';
+import { type SeasonGroup } from '../components/series-grouping';
 import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
+import { pickPlayableEpisode } from '../composables/useResolvePlayable';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -173,12 +174,16 @@ function go(name: string, id: string): void {
   router?.push({ name, params: { id } }).catch(() => {});
 }
 function onPlay(m: MediaItem): void {
-  // A series itself isn't directly playable — "Play" starts its first episode
-  // (first season, first episode). With no episodes loaded yet there's nothing
-  // to start, so it no-ops rather than navigating to an unplayable series id.
+  // A series itself isn't directly playable — "Play" starts the viewer's
+  // resume-in-progress / next-up episode (the furthest-along in-progress episode
+  // in whole-series playback order), or the very first episode when they've never
+  // watched it. The season tree is already loaded for the detail view, so reuse it
+  // via the pure `pickPlayableEpisode` (no redundant fetch). null (no playable
+  // episodes — incl. a Specials-only tree) toasts rather than navigating to an
+  // unplayable series id.
   if (m.type === 'series') {
-    const first = firstEpisode(seasons.value);
-    if (first) go('player', first.id);
+    const next = pickPlayableEpisode(seasons.value, player.resumeMap);
+    if (next) go('player', next.id);
     else toasts.info('No episodes to play yet');
     return;
   }
