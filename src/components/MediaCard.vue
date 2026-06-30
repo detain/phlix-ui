@@ -15,10 +15,12 @@
  * app-specific adornment. Keyboard-activatable (Enter on the link) and
  * reduced-motion safe.
  */
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, inject } from 'vue';
 import Icon from './Icon.vue';
 import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
+import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { usePrefetch } from '../composables/usePrefetch';
 import { resolvePosterSources } from './media-poster';
 
@@ -60,6 +62,27 @@ const emit = defineEmits<{
 }>();
 
 const player = usePlayerStore();
+
+// Per-user favorite/rating/love state (Feature 17). The bookmark/favorite button
+// flips this store optimistically; the host page's `watchlist` handler still runs
+// for back-compat. `apiBase` is read from the app config exactly like Player.vue
+// (`inject('phlixConfig')`) — NOT a new source — and threaded into the store's
+// `toggleFavorite(id, apiBase)` (the store keeps no global apiBase).
+const userItemData = useUserItemDataStore();
+const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+
+/** Whether THIS item is currently favorited per the store (false when unknown). */
+const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
+
+/**
+ * Bookmark/favorite quick-action handler. Flips the favorite flag in the store
+ * (optimistic + rollback there) AND re-emits `watchlist` so existing host wiring
+ * (BrowsePage/MediaDetailPage) keeps working — the store wiring is additive.
+ */
+function onFavorite(): void {
+  void userItemData.toggleFavorite(props.item.id, phlixConfig?.apiBase ?? '');
+  emit('watchlist', props.item);
+}
 
 // Clicking a card's poster opens its info/detail page by default — for every
 // type, including movies and episodes — so browsing never starts playback by
@@ -163,7 +186,18 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         <div v-if="genres.length" class="media-card__genres">
           <span v-for="g in genres" :key="g">{{ g }}</span>
         </div>
+        <!--
+          CANONICAL action-row order (locked cross-wave per plan_missing.md §2 —
+          every later W1/W2 card edit must PRESERVE this sequence):
+            [ Play ] [ Love(placeholder) ] [ Favorite/Bookmark ] [ Info ]
+            [ ⋯ Menu(placeholder) ] [ Match(admin) ]
+          Love (10.5/10.6) and the ⋯ menu (W2) are reserved SLOTS here so those
+          steps drop their button into the correct position WITHOUT reflowing the
+          row. Every button uses @click.stop.prevent so it never falls through to
+          the card's stretched info link.
+        -->
         <div class="media-card__actions">
+          <!-- [ Play ] -->
           <button
             type="button"
             class="media-card__iconbtn media-card__iconbtn--play"
@@ -172,14 +206,23 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           >
             <Icon name="play" />
           </button>
+
+          <!-- [ Love(placeholder) ] — LoveButton (4-state like_level) lands in
+               Step 10.5/10.6; nothing rendered yet (out of scope for 17.3). -->
+
+          <!-- [ Favorite/Bookmark ] -->
           <button
             type="button"
             class="media-card__iconbtn"
-            aria-label="Add to watchlist"
-            @click.stop.prevent="emit('watchlist', item)"
+            :class="{ 'is-active': isFavorited }"
+            :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+            :aria-pressed="isFavorited ? 'true' : 'false'"
+            @click.stop.prevent="onFavorite"
           >
-            <Icon name="bookmark-plus" />
+            <Icon :name="isFavorited ? 'bookmark' : 'bookmark-plus'" />
           </button>
+
+          <!-- [ Info ] -->
           <button
             type="button"
             class="media-card__iconbtn"
@@ -188,6 +231,11 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           >
             <Icon name="info" />
           </button>
+
+          <!-- [ ⋯ Menu(placeholder) ] — overflow "more actions" menu lands in W2;
+               nothing rendered yet (out of scope for 17.3). -->
+
+          <!-- [ Match(admin) ] -->
           <button
             v-if="canMatch"
             type="button"
@@ -487,6 +535,14 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 .media-card__iconbtn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-ring);
+}
+/* Favorited state: the bookmark renders filled + amber so it reads as "saved". */
+.media-card__iconbtn.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.media-card__iconbtn.is-active :deep(svg) {
+  fill: currentColor;
 }
 .media-card__iconbtn--play {
   width: 46px;
