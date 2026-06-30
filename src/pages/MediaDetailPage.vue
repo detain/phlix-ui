@@ -141,6 +141,7 @@ async function load(): Promise<void> {
     if (disposed) return;
     const data = response.item;
     item.value = data;
+    matchTarget.value = data;
     loading.value = false;
     // Seed the per-user favorite/love state from the server `user_data` block so
     // the heart/bookmark (on the detail hero + any card rendered from this item)
@@ -238,16 +239,59 @@ function onCompany(name: string): void {
 // for the current item; a successful apply swaps in the server's re-shaped item
 // (instant poster/metadata refresh) and re-pulls the season tree for a series so
 // the enriched children show too.
+const matchTarget = ref<MediaItem | null>(null);
 const matchOpen = ref(false);
 function onMatch(): void {
-  if (item.value) matchOpen.value = true;
+  if (item.value) {
+    matchTarget.value = item.value;
+    matchOpen.value = true;
+  }
 }
 function onMatchApplied(updated: MediaItem): void {
   item.value = updated;
+  matchTarget.value = updated;
   toasts.success(`Updated metadata for "${updated.name}"`);
   if (updated.type === 'series') {
     const client = new ApiClient({ baseUrl: apiBase.value });
     void loadSeasons(client, updated);
+  }
+}
+
+function onMarkWatched(m: MediaItem): void {
+  void userItemData.toggleFavorite(m.id, apiBase.value);
+  if (userItemData.isFavorite(m.id)) {
+    toasts.success(`Marked "${m.name}" as watched`);
+  } else {
+    toasts.info(`Marked "${m.name}" as unwatched`);
+  }
+}
+
+function onRefresh(m: MediaItem): void {
+  matchTarget.value = m;
+  matchOpen.value = true;
+}
+
+function onChoosePoster(_m: MediaItem): void {
+  toasts.info('Poster picker is coming soon');
+}
+
+let removeController: AbortController | null = null;
+async function onRemove(m: MediaItem): Promise<void> {
+  if (!window.confirm(`Remove "${m.name}" from the library? This cannot be undone.`)) return;
+  removeController?.abort();
+  const myController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  removeController = myController;
+  const stale = (): boolean => myController !== removeController;
+  try {
+    const client = new ApiClient({ baseUrl: apiBase.value });
+    await client.deleteMediaItem(m.id);
+    if (stale()) return;
+    item.value = null;
+    toasts.success(`Removed "${m.name}"`);
+    router?.back();
+  } catch (e) {
+    if (stale() || isAbort(e)) return;
+    toasts.error(`Failed to remove "${m.name}": ${e instanceof Error ? e.message : 'Unknown error'}`);
   }
 }
 </script>
@@ -293,6 +337,10 @@ function onMatchApplied(updated: MediaItem): void {
         @watchlist="onWatchlist"
         @info="onInfo"
         @match="onMatch"
+        @mark-watched="onMarkWatched"
+        @refresh="onRefresh"
+        @choose-poster="onChoosePoster"
+        @remove="onRemove"
         @back="onBack"
       />
 
@@ -311,6 +359,10 @@ function onMatchApplied(updated: MediaItem): void {
         @actor="onActor"
         @genre="onGenre"
         @company="onCompany"
+        @mark-watched="onMarkWatched"
+        @refresh="onRefresh"
+        @choose-poster="onChoosePoster"
+        @remove="onRemove"
         @back="onBack"
       />
     </template>
@@ -318,7 +370,7 @@ function onMatchApplied(updated: MediaItem): void {
     <MetadataMatchModal
       v-if="auth.isAdmin"
       v-model="matchOpen"
-      :item="item"
+      :item="matchTarget"
       @applied="onMatchApplied"
     />
   </div>
