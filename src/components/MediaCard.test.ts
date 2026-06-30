@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
 import MediaCard from './MediaCard.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -212,10 +213,13 @@ describe('MediaCard — quick actions + slots', () => {
   it('emits play/watchlist/info from the quick-action buttons', async () => {
     const w = mount(MediaCard, { props: { item: media() } });
     await w.find('.media-card__iconbtn--play').trigger('click');
-    await w.find('[aria-label="Add to watchlist"]').trigger('click');
+    // The favorite button keeps emitting `watchlist` for back-compat (the store
+    // wiring is additive) — it is the canonical favorite/bookmark slot.
+    await w.find('[aria-label="Add to favorites"]').trigger('click');
     await w.find('[aria-label="More info"]').trigger('click');
     expect(w.emitted('play')![0][0]).toMatchObject({ id: 'm1' });
     expect(w.emitted('watchlist')).toHaveLength(1);
+    expect(w.emitted('watchlist')![0][0]).toMatchObject({ id: 'm1' });
     expect(w.emitted('info')).toHaveLength(1);
   });
 
@@ -254,6 +258,95 @@ describe('MediaCard — quick actions + slots', () => {
     expect(btn.exists()).toBe(true);
     await btn.trigger('click');
     expect(on.emitted('match')![0][0]).toMatchObject({ id: 'm1' });
+  });
+});
+
+describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
+  it('reflects the store: outline + aria-pressed=false when not favorited', () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    const btn = w.find('[aria-label="Add to favorites"]');
+    expect(btn.exists()).toBe(true);
+    expect(btn.attributes('aria-pressed')).toBe('false');
+    expect(btn.classes()).not.toContain('is-active');
+    // outline bookmark icon when not favorited
+    expect(w.find('[aria-label="Add to favorites"] svg').exists()).toBe(true);
+  });
+
+  it('reflects the store: filled + aria-pressed=true when the item is favorited', () => {
+    const store = useUserItemDataStore();
+    store.entries.set('m1', { favorite: true, rating: null, like_level: 0 });
+    const w = mount(MediaCard, { props: { item: media() } });
+    const btn = w.find('[aria-label="Remove from favorites"]');
+    expect(btn.exists()).toBe(true);
+    expect(btn.attributes('aria-pressed')).toBe('true');
+    expect(btn.classes()).toContain('is-active');
+  });
+
+  it('clicking calls toggleFavorite(id, apiBase) and flips aria-pressed', async () => {
+    const store = useUserItemDataStore();
+    // Stub the store action so no network call is attempted; it still flips the
+    // optimistic flag synchronously so the component re-renders the new state.
+    const toggle = vi
+      .spyOn(store, 'toggleFavorite')
+      .mockImplementation(async (id: string) => {
+        store.entries.set(id, { favorite: true, rating: null, like_level: 0 });
+      });
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+    });
+    expect(w.find('[aria-label="Add to favorites"]').attributes('aria-pressed')).toBe('false');
+
+    await w.find('[aria-label="Add to favorites"]').trigger('click');
+
+    expect(toggle).toHaveBeenCalledTimes(1);
+    expect(toggle).toHaveBeenCalledWith('m1', '/api-host');
+    await nextTick();
+    // visual now reflects the store's favorited state
+    const on = w.find('[aria-label="Remove from favorites"]');
+    expect(on.exists()).toBe(true);
+    expect(on.attributes('aria-pressed')).toBe('true');
+  });
+
+  it('still emits `watchlist` on favorite click (back-compat) and stops propagation', async () => {
+    const store = useUserItemDataStore();
+    vi.spyOn(store, 'toggleFavorite').mockResolvedValue(undefined);
+    const onCardClick = vi.fn();
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      attrs: { onClick: onCardClick },
+    });
+    await w.find('[aria-label="Add to favorites"]').trigger('click');
+    expect(w.emitted('watchlist')).toHaveLength(1);
+    expect(w.emitted('watchlist')![0][0]).toMatchObject({ id: 'm1' });
+    // @click.stop.prevent: the click never reaches the card / stretched info link
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it('passes an empty apiBase when no phlixConfig is provided (standalone mount)', async () => {
+    const store = useUserItemDataStore();
+    const toggle = vi.spyOn(store, 'toggleFavorite').mockResolvedValue(undefined);
+    const w = mount(MediaCard, { props: { item: media() } });
+    await w.find('[aria-label="Add to favorites"]').trigger('click');
+    expect(toggle).toHaveBeenCalledWith('m1', '');
+  });
+
+  it('lays out the action row in the canonical order [Play][Favorite][Info][Match]', () => {
+    // Love (10.5/10.6) and the ⋯ menu (W2) are reserved comment slots, so the
+    // RENDERED buttons today are Play → Favorite → Info → Match (admin).
+    const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    const labels = w
+      .findAll('.media-card__actions .media-card__iconbtn')
+      .map((b) => b.attributes('aria-label'));
+    expect(labels).toEqual(['Play', 'Add to favorites', 'More info', 'Match metadata']);
+  });
+
+  it('keeps the canonical order without the admin Match button', () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    const labels = w
+      .findAll('.media-card__actions .media-card__iconbtn')
+      .map((b) => b.attributes('aria-label'));
+    expect(labels).toEqual(['Play', 'Add to favorites', 'More info']);
   });
 });
 
