@@ -58,14 +58,6 @@ export interface MatchCandidate {
     vote_average?: number;
     [key: string]: unknown;
 }
-/** Context block attached to each match candidate when the server has metadata. */
-export interface MatchContext {
-    original_filename?: string | null;
-    path?: string | null;
-    parsed_title?: string | null;
-    year?: number | null;
-    tags?: Record<string, unknown>;
-}
 /** Envelope returned by {@link ApiClient.matchSearch}. */
 export interface MatchSearchResult {
     results: MatchCandidate[];
@@ -73,7 +65,6 @@ export interface MatchSearchResult {
     query: string;
     /** The effective TMDB type the server searched. */
     type: MatchType;
-    context?: MatchContext;
 }
 /** Optional manual overrides for {@link ApiClient.matchSearch}. */
 export interface MatchSearchParams {
