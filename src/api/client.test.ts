@@ -637,4 +637,122 @@ describe('ApiClient', () => {
             expect(isTmdbUnconfigured(new Error('plain'))).toBe(false);
         });
     });
+
+    describe('favorites + ratings (item 17)', () => {
+        it('addFavorite POSTs to the favorite endpoint with no body', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Added to favorites' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.addFavorite('m1');
+
+            expect(calls).toHaveLength(1);
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/favorite');
+            expect(calls[0]!.init!.method).toBe('POST');
+            expect(calls[0]!.init!.body).toBeUndefined();
+            expect(res.message).toBe('Added to favorites');
+        });
+
+        it('addFavorite url-encodes the id', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'ok' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.addFavorite('a/b');
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb/favorite');
+        });
+
+        it('removeFavorite DELETEs the favorite endpoint', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Removed from favorites' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.removeFavorite('m1');
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/favorite');
+            expect(calls[0]!.init!.method).toBe('DELETE');
+            expect(calls[0]!.init!.body).toBeUndefined();
+            expect(res.message).toBe('Removed from favorites');
+        });
+
+        it('setRating PUTs the rating in the body', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Rating saved' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.setRating('m1', 8);
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/rating');
+            expect(calls[0]!.init!.method).toBe('PUT');
+            expect(calls[0]!.init!.body).toBe(JSON.stringify({ rating: 8 }));
+            expect(res.message).toBe('Rating saved');
+        });
+
+        it('setRating(null) clears the rating (sends rating:null in the body)', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Rating saved' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.setRating('m1', null);
+
+            expect(calls[0]!.init!.method).toBe('PUT');
+            expect(calls[0]!.init!.body).toBe(JSON.stringify({ rating: null }));
+        });
+
+        it('listFavorites GETs the favorites endpoint, forwards paging + returns the envelope', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        items: [
+                            { id: 'm1', name: 'Dune', type: 'movie', user_data: { favorite: true, rating: 8 } },
+                        ],
+                        limit: 25,
+                        offset: 50,
+                    },
+                },
+            ]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.listFavorites({ limit: 25, offset: 50 });
+
+            expect(calls).toHaveLength(1);
+            const url = new URL(calls[0]!.url);
+            expect(url.pathname).toBe('/api/v1/users/me/favorites');
+            expect(url.searchParams.get('limit')).toBe('25');
+            expect(url.searchParams.get('offset')).toBe('50');
+            expect(calls[0]!.init!.method).toBe('GET');
+            expect(res.items).toHaveLength(1);
+            expect(res.items[0]!.id).toBe('m1');
+            expect(res.items[0]!.user_data).toEqual({ favorite: true, rating: 8 });
+            expect(res.limit).toBe(25);
+            expect(res.offset).toBe(50);
+        });
+
+        it('listFavorites omits paging params when none are given', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { items: [], limit: 50, offset: 0 } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.listFavorites();
+
+            const url = new URL(calls[0]!.url);
+            expect(url.searchParams.has('limit')).toBe(false);
+            expect(url.searchParams.has('offset')).toBe(false);
+        });
+
+        it('listFavorites defends a malformed payload (non-array items → [], paging falls back)', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch } = makeFetch([{ status: 200, body: { items: null } }]);
+            const client = new ApiClient({ baseUrl: '', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.listFavorites({ limit: 10 });
+
+            expect(res.items).toEqual([]);
+            expect(res.limit).toBe(10); // falls back to the requested limit
+            expect(res.offset).toBe(0);
+        });
+    });
 });
