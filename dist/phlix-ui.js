@@ -1017,7 +1017,7 @@ function ga(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-BDuJR_nn.js")
+			component: () => import("./BrowsePage-Cl40oI3B.js")
 		},
 		{
 			path: `${t}/media/:id`,
@@ -1032,12 +1032,12 @@ function ga(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-DAJmFdtP.js")
+			component: () => import("./LibraryPage-wrVHS3a9.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-C7AakkAf.js")
+			component: () => import("./PlayerPage-D4XdArHn.js")
 		},
 		{
 			path: `${t}/login`,

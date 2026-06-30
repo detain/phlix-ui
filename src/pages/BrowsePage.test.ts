@@ -82,6 +82,58 @@ function stubFetch(
   return fn;
 }
 
+/**
+ * Like {@link stubFetch} but a `parentId=` request (the series-children fetch
+ * that `resolvePlayable` issues for a series Play) returns `episodes`; the
+ * library list + plain rail media still resolve normally. Used by the Feature 9
+ * series-resolve tests.
+ */
+function stubSeriesFetch(episodes: MediaItem[]) {
+  const fn = vi.fn((url: unknown) => {
+    const u = typeof url === 'string' ? url : '';
+    if (u.includes('/api/v1/users/me/favorites')) {
+      return Promise.resolve(jsonResponse({ items: [], limit: 24, offset: 0 }));
+    }
+    if (u.includes('/api/v1/libraries')) {
+      return Promise.resolve(jsonResponse({ libraries: ONE_LIBRARY }));
+    }
+    if (u.includes('parentId=')) {
+      return Promise.resolve(jsonResponse({ items: episodes, total: episodes.length }));
+    }
+    return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+  });
+  vi.stubGlobal('fetch', fn);
+  return fn;
+}
+
+/**
+ * A series-children fetch whose `parentId=` response is held open until
+ * `resolveWith(episodes)` is called — lets a test start a slow series resolve,
+ * supersede it with a second Play, then complete the stale one and assert it
+ * never navigated.
+ */
+function deferredSeriesFetch() {
+  let release!: (eps: MediaItem[]) => void;
+  const gate = new Promise<MediaItem[]>((res) => {
+    release = res;
+  });
+  const fn = vi.fn((url: unknown) => {
+    const u = typeof url === 'string' ? url : '';
+    if (u.includes('/api/v1/users/me/favorites')) {
+      return Promise.resolve(jsonResponse({ items: [], limit: 24, offset: 0 }));
+    }
+    if (u.includes('/api/v1/libraries')) {
+      return Promise.resolve(jsonResponse({ libraries: ONE_LIBRARY }));
+    }
+    if (u.includes('parentId=')) {
+      return gate.then((eps) => jsonResponse({ items: eps, total: eps.length }));
+    }
+    return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+  });
+  vi.stubGlobal('fetch', fn);
+  return { fn, resolveWith: (eps: MediaItem[]) => release(eps) };
+}
+
 function makeRouter(withMedia = false): Router {
   const stub = { template: '<div />' };
   const routes = [
@@ -318,25 +370,86 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
 });
 
 describe('BrowsePage — card actions', () => {
-  it('routes Play to the player route', async () => {
+  it('routes Play on a movie straight to the player route (resolves to self)', async () => {
     stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'p1' })], total: 1 } });
     const router = makeRouter();
     const push = vi.spyOn(router, 'push');
     const w = mountPage({ router });
     await flushPromises();
     w.findComponent(HomeRow).vm.$emit('play', media({ id: 'p1' }));
+    await flushPromises();
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'p1' } });
   });
 
-  it('routes Play on a SERIES to its detail page, not the (unplayable) player', async () => {
-    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 's1', type: 'series' })], total: 1 } });
-    const router = makeRouter(true); // media route present
+  it('resolves Play on a SERIES to its next-up/first episode and plays THAT (not the series id)', async () => {
+    // The series fetch returns two episodes; with no resume the first plays.
+    const episodes = [
+      media({ id: 'e1', type: 'episode', season_number: 1, episode_number: 1 }),
+      media({ id: 'e2', type: 'episode', season_number: 1, episode_number: 2 }),
+    ];
+    const fn = stubSeriesFetch(episodes);
+    const router = makeRouter(true); // media route present (poster click target)
     const push = vi.spyOn(router, 'push');
     const w = mountPage({ router });
     await flushPromises();
     w.findComponent(HomeRow).vm.$emit('play', media({ id: 's1', type: 'series' }));
-    expect(push).toHaveBeenCalledWith({ name: 'media', params: { id: 's1' } });
+    await flushPromises();
+    // Plays the RESOLVED episode, never the (unplayable) series id.
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'e1' } });
     expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 's1' } });
+    // It actually fetched the series' children to resolve.
+    expect(fn.mock.calls.some(([u]) => typeof u === 'string' && (u as string).includes('parentId=s1'))).toBe(true);
+  });
+
+  it('plays the resume-in-progress episode when the series has one', async () => {
+    localStorage.setItem('phlix.resume', JSON.stringify({ e2: 600 }));
+    const episodes = [
+      media({ id: 'e1', type: 'episode', season_number: 1, episode_number: 1 }),
+      media({ id: 'e2', type: 'episode', season_number: 1, episode_number: 2 }),
+    ];
+    stubSeriesFetch(episodes);
+    const router = makeRouter(true);
+    const push = vi.spyOn(router, 'push');
+    const w = mountPage({ router });
+    await flushPromises();
+    w.findComponent(HomeRow).vm.$emit('play', media({ id: 's1', type: 'series' }));
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'e2' } });
+  });
+
+  it('toasts and does NOT navigate when a series resolves to nothing playable', async () => {
+    stubSeriesFetch([]); // no episodes → resolvePlayable returns null
+    const router = makeRouter(true);
+    const push = vi.spyOn(router, 'push');
+    const w = mountPage({ router });
+    const toasts = useToastStore();
+    await flushPromises();
+    w.findComponent(HomeRow).vm.$emit('play', media({ id: 's1', type: 'series' }));
+    await flushPromises();
+    expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 's1' } });
+    expect(toasts.toasts.some((t) => /nothing to play/i.test(t.message))).toBe(true);
+  });
+
+  it('a rapid second Play supersedes the first (stale resolve is discarded)', async () => {
+    // First Play is a slow series resolve; a second Play (a movie) lands while the
+    // first is still in flight. The first must be aborted and never navigate.
+    const slow = deferredSeriesFetch();
+    const router = makeRouter(true);
+    const push = vi.spyOn(router, 'push');
+    const w = mountPage({ router });
+    await flushPromises();
+    const row = w.findComponent(HomeRow);
+    // Kick off the slow series resolve (its fetch hangs until we resolve it).
+    row.vm.$emit('play', media({ id: 's1', type: 'series' }));
+    await Promise.resolve();
+    // Second Play supersedes — a directly-playable movie navigates immediately.
+    row.vm.$emit('play', media({ id: 'm9' }));
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'm9' } });
+    // Now let the first (superseded) series fetch finish; it must NOT navigate.
+    slow.resolveWith([media({ id: 'e1', type: 'episode', season_number: 1, episode_number: 1 })]);
+    await flushPromises();
+    expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 'e1' } });
   });
 
   it('shows a state-aware "added" toast when the item is now favorited', async () => {
