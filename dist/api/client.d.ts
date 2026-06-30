@@ -1,5 +1,8 @@
+import { type TokenStore } from './tokenStore';
 /** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
 export { ApiError } from './errors';
+/** Re-exported so `import type { TokenStore } from '.../api/client'` deep imports keep working. */
+export type { TokenStore } from './tokenStore';
 export interface AuthUser {
     id: string;
     email?: string;
@@ -7,15 +10,6 @@ export interface AuthUser {
     name?: string;
     is_admin?: boolean;
     [key: string]: unknown;
-}
-export interface TokenStore {
-    getAccessToken(): string | null;
-    setAccessToken(token: string): void;
-    getRefreshToken(): string | null;
-    setRefreshToken(token: string): void;
-    getUser(): unknown | null;
-    setUser(user: unknown): void;
-    clear(): void;
 }
 export interface ApiClientOptions {
     baseUrl?: string;
@@ -27,6 +21,12 @@ export interface ApiClientOptions {
      *  identity headers). `Content-Type`/`Authorization` always win; a falsy/empty
      *  value is omitted rather than sent as an empty header. */
     headers?: Record<string, string>;
+    /**
+     * Path (relative or absolute) the {@link ApiClient.logout} redirect target is
+     * prepended with. Defaults to `'/login'`. On the hub where the SPA lives under
+     * `/app` this would be set to `'/app/login'` so a logout redirect does not 404.
+     */
+    loginPath?: string;
 }
 /**
  * Set the headers merged into EVERY `ApiClient` request (e.g. native-device
@@ -106,6 +106,18 @@ export declare class ApiClient {
     private readonly doFetch;
     private readonly timeoutMs;
     private readonly instanceHeaders;
+    private readonly loginPath;
+    /**
+     * In-flight token refresh, single-flighted per `ApiClient` instance. When an
+     * access token expires, every concurrent request gets a 401 and calls
+     * {@link refreshToken} at once; without coordination each would POST
+     * `/api/v1/auth/refresh` with the same refresh token. The hub rotates
+     * refresh tokens one-time-use, so the second+ POST presents an
+     * already-consumed token, fails, and spuriously logs the user out
+     * mid-session. Memoising the promise (cleared in `.finally()`) makes the N
+     * callers await the SAME refresh — exactly one POST, one rotation.
+     */
+    private refreshPromise;
     constructor(options?: ApiClientOptions);
     /**
      * Re-point this client at a different API base after construction. Lets a
@@ -118,6 +130,14 @@ export declare class ApiClient {
     request<T = unknown>(method: string, endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
     private handleResponse;
     private extractError;
+    /**
+     * Refresh the access token, single-flighted per instance. Concurrent callers
+     * (e.g. several requests that all hit a 401 at once) share ONE in-flight
+     * refresh rather than each POSTing `/api/v1/auth/refresh` — see
+     * {@link refreshPromise}. The promise is cleared in `.finally()` so a later
+     * expiry starts a fresh refresh. Returns `true` on success / `false` on any
+     * failure (no refresh token, non-2xx, network error, missing access_token).
+     */
     refreshToken(): Promise<boolean>;
     get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T>;
     post<T = unknown>(endpoint: string, data?: unknown): Promise<T>;

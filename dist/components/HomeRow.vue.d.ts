@@ -19,18 +19,18 @@ type __VLS_Props = {
     appliedItem?: MediaItem | null;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
-    match: (item: MediaItem) => any;
-    play: (item: MediaItem) => any;
-    info: (item: MediaItem) => any;
-    watchlist: (item: MediaItem) => any;
-    "items-loaded": (items: MediaItem[]) => any;
+    match: (item: import("../types/media-item").MediaDetail) => any;
+    play: (item: import("../types/media-item").MediaDetail) => any;
+    info: (item: import("../types/media-item").MediaDetail) => any;
+    watchlist: (item: import("../types/media-item").MediaDetail) => any;
+    "items-loaded": (items: import("../types/media-item").MediaDetail[]) => any;
     "see-all": (row: HomeRowConfig) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
-    onMatch?: ((item: MediaItem) => any) | undefined;
-    onPlay?: ((item: MediaItem) => any) | undefined;
-    onInfo?: ((item: MediaItem) => any) | undefined;
-    onWatchlist?: ((item: MediaItem) => any) | undefined;
-    "onItems-loaded"?: ((items: MediaItem[]) => any) | undefined;
+    onMatch?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onPlay?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onInfo?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onItems-loaded"?: ((items: import("../types/media-item").MediaDetail[]) => any) | undefined;
     "onSee-all"?: ((row: HomeRowConfig) => any) | undefined;
 }>, {
     limit: number;

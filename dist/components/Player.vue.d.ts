@@ -44,15 +44,15 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     pip: () => any;
     theater: (active: boolean) => any;
     back: () => any;
-    "play-next": (media: MediaItem) => any;
-    "play-episode": (media: MediaItem) => any;
+    "play-next": (media: import("../types/media-item").MediaDetail) => any;
+    "play-episode": (media: import("../types/media-item").MediaDetail) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onCaptions?: (() => any) | undefined;
     onPip?: (() => any) | undefined;
     onTheater?: ((active: boolean) => any) | undefined;
     onBack?: (() => any) | undefined;
-    "onPlay-next"?: ((media: MediaItem) => any) | undefined;
-    "onPlay-episode"?: ((media: MediaItem) => any) | undefined;
+    "onPlay-next"?: ((media: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onPlay-episode"?: ((media: import("../types/media-item").MediaDetail) => any) | undefined;
 }>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;
