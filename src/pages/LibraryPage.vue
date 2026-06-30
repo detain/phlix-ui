@@ -24,6 +24,7 @@ import LetterRail from '../components/LetterRail.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import PosterPicker from '../components/PosterPicker.vue';
 import { ApiClient } from '../api/client';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -73,12 +74,22 @@ function onJump(offset: number): void {
 // poster/metadata shows in the grid.
 const matchTarget = ref<MediaItem | null>(null);
 const matchOpen = ref(false);
+
+// Poster picker state — opened from the "Choose poster…" card action.
+const posterPickerOpen = ref(false);
+const posterPickerTarget = ref<MediaItem | null>(null);
+
 function onMatch(item: MediaItem): void {
   matchTarget.value = item;
   matchOpen.value = true;
 }
 function onMatchApplied(): void {
   reload();
+}
+
+function onPosterApplied(updated: MediaItem): void {
+  store.items = store.items.map((i) => (i.id === updated.id ? updated : i));
+  toasts.success(`Updated poster for "${updated.name}"`);
 }
 
 const libraryId = computed(() => {
@@ -229,8 +240,9 @@ function onRefresh(item: MediaItem): void {
   matchOpen.value = true;
 }
 
-function onChoosePoster(_item: MediaItem): void {
-  toasts.info('Poster picker is coming soon');
+function onChoosePoster(item: MediaItem): void {
+  posterPickerTarget.value = item;
+  posterPickerOpen.value = true;
 }
 
 let removeController: AbortController | null = null;
@@ -308,6 +320,13 @@ async function onRemove(item: MediaItem): Promise<void> {
       v-model="matchOpen"
       :item="matchTarget"
       @applied="onMatchApplied"
+    />
+
+    <PosterPicker
+      v-if="auth.isAdmin"
+      v-model="posterPickerOpen"
+      :item="posterPickerTarget"
+      @applied="onPosterApplied"
     />
   </div>
 </template>
