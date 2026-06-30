@@ -23,6 +23,7 @@ import {
   isTmdbUnconfigured,
   type MatchCandidate,
   type MatchApplyResult,
+  type MatchContext,
 } from '../api/client';
 import { errMessage } from '../api/errors';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -56,6 +57,8 @@ const unconfigured = ref(false);
 /** tmdb_id currently being applied (drives the per-row busy state). */
 const applyingId = ref<string | null>(null);
 const applyError = ref<string | null>(null);
+const matchContext = ref<MatchContext | null>(null);
+const queryDirty = ref(false);
 
 const open = computed({
   get: () => props.modelValue,
@@ -70,6 +73,16 @@ let searchController: AbortController | null = null;
 
 function isAbort(e: unknown): boolean {
   return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function pathBreadcrumb(path: string): string {
+  const separator = ' › ';
+  const segments = path.split(/[/\\]/);
+  return segments.map((seg) => escapeHtml(seg)).join(separator);
 }
 
 /** A stable key for a candidate row (tmdb id + type — ids can repeat across types). */
@@ -90,6 +103,8 @@ function resetState(): void {
   unconfigured.value = false;
   applyingId.value = null;
   applyError.value = null;
+  matchContext.value = null;
+  queryDirty.value = false;
 }
 
 /** Run a search (auto on open or manual from the form). */
@@ -117,6 +132,13 @@ async function search(): Promise<void> {
     );
     if (stale()) return; // a newer search (or a close) superseded this one
     results.value = res.results;
+    matchContext.value = res.context ?? null;
+    if (matchContext.value?.parsed_title && !queryDirty.value) {
+      const newQuery = matchContext.value.parsed_title;
+      if (query.value !== newQuery) {
+        query.value = newQuery;
+      }
+    }
   } catch (e) {
     if (stale() || isAbort(e)) return; // superseded / aborted — leave state to the winner
     results.value = [];
@@ -132,6 +154,11 @@ async function search(): Promise<void> {
 
 function onSubmit(): void {
   void search();
+}
+
+function onQueryInput(): void {
+  const itemName = props.item?.name ?? '';
+  queryDirty.value = query.value !== itemName;
 }
 
 /** Apply a candidate, then emit the re-shaped item + close. */
@@ -201,6 +228,7 @@ onBeforeUnmount(abortSearch);
             class="match-modal__input"
             placeholder="Title to search for"
             autocomplete="off"
+            @input="onQueryInput"
           />
         </div>
         <div class="match-modal__field match-modal__field--year">
@@ -217,6 +245,26 @@ onBeforeUnmount(abortSearch);
         </div>
         <Button type="submit" variant="solid" left-icon="search" :loading="searching">Search</Button>
       </form>
+
+      <details v-if="matchContext && (matchContext.original_filename || matchContext.path || (matchContext.tags && Object.keys(matchContext.tags).length))" class="match-modal__source">
+        <summary class="match-modal__source-summary">Source info</summary>
+        <div class="match-modal__source-body">
+          <p v-if="matchContext.original_filename" class="match-modal__source-filename">
+            <span class="match-modal__source-label">File:</span>
+            <code>{{ matchContext.original_filename }}</code>
+          </p>
+          <p v-if="matchContext.path" class="match-modal__source-path" :title="matchContext.path">
+            <span class="match-modal__source-label">Path:</span>
+            <span v-html="pathBreadcrumb(matchContext.path)" />
+          </p>
+          <dl v-if="matchContext.tags && Object.keys(matchContext.tags).length" class="match-modal__source-tags">
+            <template v-for="(value, key) in matchContext.tags" :key="String(key)">
+              <dt>{{ key }}</dt>
+              <dd>{{ value }}</dd>
+            </template>
+          </dl>
+        </div>
+      </details>
 
       <!-- TMDB not configured -->
       <div v-if="unconfigured" class="match-modal__state" role="status">
@@ -445,5 +493,73 @@ onBeforeUnmount(abortSearch);
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.match-modal__source {
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+.match-modal__source-summary {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.match-modal__source-summary::before {
+  content: '▶';
+  font-size: var(--text-2xs);
+  transition: transform 0.15s;
+}
+.match-modal__source[open] .match-modal__source-summary::before {
+  transform: rotate(90deg);
+}
+.match-modal__source-body {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.match-modal__source-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-right: var(--space-2);
+}
+.match-modal__source-filename code {
+  font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.match-modal__source-path {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+.match-modal__source-tags {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+}
+.match-modal__source-tags dt {
+  color: var(--text-subtle);
+  font-weight: var(--font-semibold);
+}
+.match-modal__source-tags dd {
+  color: var(--text-muted);
+  margin: 0;
 }
 </style>
