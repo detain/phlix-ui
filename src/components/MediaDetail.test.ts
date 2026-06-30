@@ -437,3 +437,83 @@ describe('avatar sizing', () => {
     expect(cssRuleExists('.media-detail__person', 'width', 'clamp(5.5rem, 8vw, 7rem)')).toBe(true);
   });
 });
+
+describe('MediaDetail — files', () => {
+  it('renders a Files section when item.files is present and non-empty', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          files: [{ path: '/data/movies/dune.mp4', size_bytes: 25600000000, container: 'mp4', codec: 'h264', resolution: '1920x1080' }],
+        }),
+      },
+    });
+    expect(w.find('.media-detail__files').exists()).toBe(true);
+    expect(w.find('.media-detail__files-heading').text()).toBe('Files');
+  });
+
+  it('does not render a Files section when item.files is absent', () => {
+    const w = mount(MediaDetail, { props: { item: media() } });
+    expect(w.find('.media-detail__files').exists()).toBe(false);
+  });
+
+  it('does not render a Files section when item.files is empty', () => {
+    const w = mount(MediaDetail, { props: { item: media({ files: [] }) } });
+    expect(w.find('.media-detail__files').exists()).toBe(false);
+  });
+
+  it('shows the file path and formatted size', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          files: [{ path: '/data/movies/dune.mp4', size_bytes: 25600000000, container: 'mp4', codec: 'h264', resolution: '1920x1080' }],
+        }),
+      },
+    });
+    expect(w.find('.media-detail__file-path').text()).toBe('/data/movies/dune.mp4');
+    expect(w.find('.media-detail__file-size').text()).toBe('23.8 GB');
+  });
+
+  it('shows container and resolution when present', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          files: [{ path: '/data/movies/dune.mkv', size_bytes: 5000000000, container: 'mkv', codec: 'h265', resolution: '3840x2160' }],
+        }),
+      },
+    });
+    expect(w.find('.media-detail__file-container').text()).toBe('mkv');
+    expect(w.find('.media-detail__file-resolution').text()).toBe('3840x2160');
+    expect(w.find('.media-detail__file-size').text()).toBe('4.7 GB');
+  });
+
+  it('renders multiple files in the list', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          files: [
+            { path: '/data/movies/dune.mp4', size_bytes: 25600000000, container: 'mp4', codec: 'h264', resolution: '1920x1080' },
+            { path: '/data/movies/dune.en.srt', size_bytes: 50000, container: null, codec: null, resolution: null },
+          ],
+        }),
+      },
+    });
+    const files = w.findAll('.media-detail__file');
+    expect(files).toHaveLength(2);
+    expect(files[0].find('.media-detail__file-path').text()).toBe('/data/movies/dune.mp4');
+    expect(files[1].find('.media-detail__file-path').text()).toBe('/data/movies/dune.en.srt');
+    expect(files[1].find('.media-detail__file-size').text()).toBe('48.8 KB');
+  });
+
+  it('omits container and resolution chips when null', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          files: [{ path: '/data/movies/dune.txt', size_bytes: 1000, container: null, codec: null, resolution: null }],
+        }),
+      },
+    });
+    expect(w.find('.media-detail__file-container').exists()).toBe(false);
+    expect(w.find('.media-detail__file-resolution').exists()).toBe(false);
+    expect(w.find('.media-detail__file-size').text()).toBe('1 KB');
+  });
+});
