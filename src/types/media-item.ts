@@ -113,6 +113,31 @@ export type MediaItem = MediaDetail;
  * synthetic item). Use this to narrow `MediaItem` → `MediaDetail` at call sites
  * that may receive either shape.
  */
+/**
+ * One poster candidate returned by {@link ApiClient.listPosters}
+ * (`GET /api/v1/media/{id}/posters`). `provider` identifies the source
+ * (e.g. `"tmdb"`, `"fanart.tv"`, `"tvdb"`). `poster_url` is the absolute
+ * URL; `width`/`height` are hints for the img element when available.
+ * Optional fields are defended so a missing field degrades gracefully.
+ */
+export interface PosterCandidate {
+    provider: string;
+    poster_url: string;
+    width?: number | null;
+    height?: number | null;
+    votes?: number | null;
+    vote_average?: number | null;
+    tmdb_id?: number | string | null;
+    [key: string]: unknown;
+}
+
+/** Envelope returned by {@link ApiClient.listPosters}. */
+export interface PosterCandidatesResponse {
+    candidates: PosterCandidate[];
+    /** The server's current `poster_url` for this item at the time of the call. */
+    current_poster_url: string | null;
+}
+
 export function isMediaDetail(item: MediaItem): item is MediaDetail {
     return (
         item.stream_url !== undefined ||
