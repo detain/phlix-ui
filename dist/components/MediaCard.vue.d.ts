@@ -26,9 +26,9 @@ type __VLS_Props = {
     canMatch?: boolean;
 };
 declare var __VLS_6: {
-    item: MediaItem;
+    item: import("../types/media-item").MediaDetail;
 }, __VLS_28: {
-    item: MediaItem;
+    item: import("../types/media-item").MediaDetail;
 };
 type __VLS_Slots = {} & {
     badges?: (props: typeof __VLS_6) => any;
@@ -36,15 +36,15 @@ type __VLS_Slots = {} & {
     actions?: (props: typeof __VLS_28) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
-    match: (item: MediaItem) => any;
-    play: (item: MediaItem) => any;
-    info: (item: MediaItem) => any;
-    watchlist: (item: MediaItem) => any;
+    match: (item: import("../types/media-item").MediaDetail) => any;
+    play: (item: import("../types/media-item").MediaDetail) => any;
+    info: (item: import("../types/media-item").MediaDetail) => any;
+    watchlist: (item: import("../types/media-item").MediaDetail) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
-    onMatch?: ((item: MediaItem) => any) | undefined;
-    onPlay?: ((item: MediaItem) => any) | undefined;
-    onInfo?: ((item: MediaItem) => any) | undefined;
-    onWatchlist?: ((item: MediaItem) => any) | undefined;
+    onMatch?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onPlay?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onInfo?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
 }>, {
     newWithinDays: number;
     canMatch: boolean;

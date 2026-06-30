@@ -1,3 +1,4 @@
+import { type ComputedRef } from 'vue';
 import { ApiClient, type AuthUser } from '../api/client';
 export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<{
     user: import("vue").Ref<{
@@ -17,8 +18,8 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     } | null>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
-    isLoggedIn: import("vue").ComputedRef<boolean>;
-    isAdmin: import("vue").ComputedRef<boolean>;
+    isLoggedIn: ComputedRef<boolean>;
+    isAdmin: ComputedRef<boolean>;
     client: ApiClient;
     login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;
@@ -43,8 +44,8 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     } | null>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
-    isLoggedIn: import("vue").ComputedRef<boolean>;
-    isAdmin: import("vue").ComputedRef<boolean>;
+    isLoggedIn: ComputedRef<boolean>;
+    isAdmin: ComputedRef<boolean>;
     client: ApiClient;
     login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;
@@ -69,8 +70,8 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     } | null>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
-    isLoggedIn: import("vue").ComputedRef<boolean>;
-    isAdmin: import("vue").ComputedRef<boolean>;
+    isLoggedIn: ComputedRef<boolean>;
+    isAdmin: ComputedRef<boolean>;
     client: ApiClient;
     login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;

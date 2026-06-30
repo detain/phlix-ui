@@ -1,7 +1,12 @@
-import type { MediaItem, MediaType } from '../types/media-item';
+import type { MediaType } from '../types/media-item';
 import type { LibraryQueryParams } from '../types/library-query';
 export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime';
 export type SortOrder = 'asc' | 'desc';
+/** Facets returned by GET /api/v1/media/facets — genres are the primary seam.
+ *  Additional facet dimensions can be added as the server implements them. */
+export interface MediaFacets {
+    genres: string[];
+}
 /**
  * useMediaStore (rewritten R1.2) — same public API as 0.7.0 plus:
  *   · query-keyed in-memory cache (TTL) — instant back/forward + revisited pages
@@ -12,25 +17,7 @@ export type SortOrder = 'asc' | 'desc';
  */
 export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pick<{
     items: import("vue").Ref<{
-        id: string;
-        name: string;
-        sort_title?: string | null | undefined;
-        type: MediaType;
-        path?: string | undefined;
         stream_url?: string | null | undefined;
-        poster_url: string | null;
-        poster_srcset?: string | (string | {
-            url: string;
-            width?: number | undefined;
-            density?: number | undefined;
-        })[] | null | undefined;
-        genres: string[];
-        year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
-        runtime: number | null;
-        overview: string | null;
-        actors: string[];
-        director: string | null;
         duration?: number | null | undefined;
         cast?: {
             name: string;
@@ -48,20 +35,12 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             origin_country?: string | null | undefined;
         }[] | undefined;
         studio?: string | null | undefined;
-        created_at: string | null;
-        updated_at: string | null;
-        parent_id?: string | null | undefined;
-        season_number?: number | null | undefined;
-        episode_number?: number | null | undefined;
-        episode_title?: string | null | undefined;
         library_id?: string | null | undefined;
-    }[], MediaItem[] | {
         id: string;
         name: string;
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
-        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -75,6 +54,14 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
+    }[], import("../types/media-item").MediaDetail[] | {
+        stream_url?: string | null | undefined;
         duration?: number | null | undefined;
         cast?: {
             name: string;
@@ -92,17 +79,40 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             origin_country?: string | null | undefined;
         }[] | undefined;
         studio?: string | null | undefined;
+        library_id?: string | null | undefined;
+        id: string;
+        name: string;
+        sort_title?: string | null | undefined;
+        type: MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
-        library_id?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    serverFacets: import("vue").Ref<{
+        genres: string[];
+    } | null, MediaFacets | {
+        genres: string[];
+    } | null>;
     search: import("vue").Ref<string, string>;
     selectedGenres: import("vue").Ref<string[], string[]>;
     yearFrom: import("vue").Ref<number | undefined, number | undefined>;
@@ -130,6 +140,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
     clearCache: () => void;
     cancelScheduled: () => void;
+    loadFacets: (apiBase: string) => Promise<void>;
     toQuery: () => Record<string, string | string[]>;
     applyQuery: (q: Record<string, string | string[] | null | undefined>) => void;
     reset: () => void;
@@ -145,27 +156,9 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "topLevel" | "items" | "total" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "matchStatus" | "selectedActors" | "selectedCompanies" | "availableRatings" | "availableTypes">, Pick<{
+}, "search" | "sort" | "error" | "loading" | "order" | "yearFrom" | "yearTo" | "limit" | "offset" | "libraryId" | "topLevel" | "items" | "total" | "serverFacets" | "selectedGenres" | "selectedRatings" | "selectedTypes" | "matchStatus" | "selectedActors" | "selectedCompanies" | "availableRatings" | "availableTypes">, Pick<{
     items: import("vue").Ref<{
-        id: string;
-        name: string;
-        sort_title?: string | null | undefined;
-        type: MediaType;
-        path?: string | undefined;
         stream_url?: string | null | undefined;
-        poster_url: string | null;
-        poster_srcset?: string | (string | {
-            url: string;
-            width?: number | undefined;
-            density?: number | undefined;
-        })[] | null | undefined;
-        genres: string[];
-        year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
-        runtime: number | null;
-        overview: string | null;
-        actors: string[];
-        director: string | null;
         duration?: number | null | undefined;
         cast?: {
             name: string;
@@ -183,20 +176,12 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             origin_country?: string | null | undefined;
         }[] | undefined;
         studio?: string | null | undefined;
-        created_at: string | null;
-        updated_at: string | null;
-        parent_id?: string | null | undefined;
-        season_number?: number | null | undefined;
-        episode_number?: number | null | undefined;
-        episode_title?: string | null | undefined;
         library_id?: string | null | undefined;
-    }[], MediaItem[] | {
         id: string;
         name: string;
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
-        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -210,6 +195,14 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
+    }[], import("../types/media-item").MediaDetail[] | {
+        stream_url?: string | null | undefined;
         duration?: number | null | undefined;
         cast?: {
             name: string;
@@ -227,17 +220,40 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             origin_country?: string | null | undefined;
         }[] | undefined;
         studio?: string | null | undefined;
+        library_id?: string | null | undefined;
+        id: string;
+        name: string;
+        sort_title?: string | null | undefined;
+        type: MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
-        library_id?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    serverFacets: import("vue").Ref<{
+        genres: string[];
+    } | null, MediaFacets | {
+        genres: string[];
+    } | null>;
     search: import("vue").Ref<string, string>;
     selectedGenres: import("vue").Ref<string[], string[]>;
     yearFrom: import("vue").Ref<number | undefined, number | undefined>;
@@ -265,6 +281,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
     clearCache: () => void;
     cancelScheduled: () => void;
+    loadFacets: (apiBase: string) => Promise<void>;
     toQuery: () => Record<string, string | string[]>;
     applyQuery: (q: Record<string, string | string[] | null | undefined>) => void;
     reset: () => void;
@@ -282,25 +299,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     clearFilters: () => void;
 }, "hasMore" | "queryParams" | "availableGenres">, Pick<{
     items: import("vue").Ref<{
-        id: string;
-        name: string;
-        sort_title?: string | null | undefined;
-        type: MediaType;
-        path?: string | undefined;
         stream_url?: string | null | undefined;
-        poster_url: string | null;
-        poster_srcset?: string | (string | {
-            url: string;
-            width?: number | undefined;
-            density?: number | undefined;
-        })[] | null | undefined;
-        genres: string[];
-        year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
-        runtime: number | null;
-        overview: string | null;
-        actors: string[];
-        director: string | null;
         duration?: number | null | undefined;
         cast?: {
             name: string;
@@ -318,20 +317,12 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             origin_country?: string | null | undefined;
         }[] | undefined;
         studio?: string | null | undefined;
-        created_at: string | null;
-        updated_at: string | null;
-        parent_id?: string | null | undefined;
-        season_number?: number | null | undefined;
-        episode_number?: number | null | undefined;
-        episode_title?: string | null | undefined;
         library_id?: string | null | undefined;
-    }[], MediaItem[] | {
         id: string;
         name: string;
         sort_title?: string | null | undefined;
         type: MediaType;
         path?: string | undefined;
-        stream_url?: string | null | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
             url: string;
@@ -345,6 +336,14 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         overview: string | null;
         actors: string[];
         director: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+        parent_id?: string | null | undefined;
+        season_number?: number | null | undefined;
+        episode_number?: number | null | undefined;
+        episode_title?: string | null | undefined;
+    }[], import("../types/media-item").MediaDetail[] | {
+        stream_url?: string | null | undefined;
         duration?: number | null | undefined;
         cast?: {
             name: string;
@@ -362,17 +361,40 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             origin_country?: string | null | undefined;
         }[] | undefined;
         studio?: string | null | undefined;
+        library_id?: string | null | undefined;
+        id: string;
+        name: string;
+        sort_title?: string | null | undefined;
+        type: MediaType;
+        path?: string | undefined;
+        poster_url: string | null;
+        poster_srcset?: string | (string | {
+            url: string;
+            width?: number | undefined;
+            density?: number | undefined;
+        })[] | null | undefined;
+        genres: string[];
+        year: number | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        runtime: number | null;
+        overview: string | null;
+        actors: string[];
+        director: string | null;
         created_at: string | null;
         updated_at: string | null;
         parent_id?: string | null | undefined;
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
-        library_id?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    serverFacets: import("vue").Ref<{
+        genres: string[];
+    } | null, MediaFacets | {
+        genres: string[];
+    } | null>;
     search: import("vue").Ref<string, string>;
     selectedGenres: import("vue").Ref<string[], string[]>;
     yearFrom: import("vue").Ref<number | undefined, number | undefined>;
@@ -400,6 +422,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     prefetch: (apiBase: string, overrides?: Partial<LibraryQueryParams>) => Promise<void>;
     clearCache: () => void;
     cancelScheduled: () => void;
+    loadFacets: (apiBase: string) => Promise<void>;
     toQuery: () => Record<string, string | string[]>;
     applyQuery: (q: Record<string, string | string[] | null | undefined>) => void;
     reset: () => void;
@@ -415,4 +438,4 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
     setLibraryId: (id: string | undefined) => void;
     setTopLevel: (v: boolean) => void;
     clearFilters: () => void;
-}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "ensureRange" | "clearCache" | "cancelScheduled" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setMatchStatus" | "setActors" | "setCompanies" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;
+}, "reset" | "prefetch" | "fetchMedia" | "scheduleFetch" | "loadMore" | "ensureRange" | "clearCache" | "cancelScheduled" | "loadFacets" | "toQuery" | "applyQuery" | "setSearch" | "setGenres" | "setYearRange" | "setRatings" | "setTypes" | "setMatchStatus" | "setActors" | "setCompanies" | "setSort" | "setLibraryId" | "setTopLevel" | "clearFilters">>;
