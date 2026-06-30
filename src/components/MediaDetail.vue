@@ -643,7 +643,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
-  width: 5.5rem;
+  width: clamp(5.5rem, 8vw, 7rem);
   padding: var(--space-2);
   border: 0;
   border-radius: var(--radius-md);
@@ -666,8 +666,8 @@ onMounted(() => {
 .media-detail__avatar {
   display: grid;
   place-items: center;
-  width: 3.25rem;
-  height: 3.25rem;
+  width: clamp(3.75rem, 6vw, 5rem);
+  height: clamp(3.75rem, 6vw, 5rem);
   border-radius: var(--radius-full);
   overflow: hidden;
   background: var(--surface-3);
@@ -678,7 +678,7 @@ onMounted(() => {
   object-fit: cover;
 }
 .media-detail__avatar-initials {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--font-semibold);
   color: var(--text-muted);
   letter-spacing: var(--tracking-tight);
