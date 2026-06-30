@@ -21,3 +21,5 @@ export type { TabItem } from './Tabs.vue';
 export { default as Kbd } from './Kbd.vue';
 export { default as Reveal } from './Reveal.vue';
 export { default as PageTransition } from './PageTransition.vue';
+export { default as Menu } from './Menu.vue';
+export type { MenuItem } from './Menu.vue';
