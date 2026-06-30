@@ -1017,12 +1017,12 @@ function _a(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-BqEUMpUJ.js")
+			component: () => import("./BrowsePage-Jx74_UkW.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-BRf7VYoS.js")
+			component: () => import("./MediaDetailPage-fgm16rw9.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -1032,7 +1032,7 @@ function _a(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CtAK_-8U.js")
+			component: () => import("./LibraryPage-DPQ1wJB6.js")
 		},
 		{
 			path: `${t}/player/:id`,

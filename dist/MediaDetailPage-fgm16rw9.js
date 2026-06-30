@@ -10,12 +10,12 @@ import { t as u } from "./Skeleton-DkSoWF3C.js";
 import { t as ee } from "./MetadataMatchModal-H5-IXqpz.js";
 import { t as te } from "./EmptyState-B2QnGIQT.js";
 import { n as ne } from "./media-query-C8oxSF4h.js";
-import { t as d } from "./MediaDetail-BepK60sr.js";
-import { i as re } from "./series-grouping-Bbs1zX87.js";
-import { t as ie } from "./useSeriesSeasons-ezSOXOgO.js";
-import { t as ae } from "./useResolvePlayable-CDFCMfKq.js";
-import { Fragment as oe, computed as f, createBlock as p, createCommentVNode as m, createElementBlock as h, createElementVNode as g, createTextVNode as _, createVNode as v, defineComponent as y, inject as se, onBeforeUnmount as ce, onMounted as le, openBlock as b, ref as x, renderList as S, resolveComponent as C, toDisplayString as w, unref as T, watch as ue, withCtx as E } from "vue";
-import { useRoute as de, useRouter as fe } from "vue-router";
+import { t as re } from "./MediaDetail-BepK60sr.js";
+import { r as ie, t as ae } from "./useResolvePlayable-DIIz32oI.js";
+import { i as d } from "./series-grouping-Bbs1zX87.js";
+import { t as oe } from "./useSeriesSeasons-ezSOXOgO.js";
+import { Fragment as f, computed as p, createBlock as m, createCommentVNode as h, createElementBlock as g, createElementVNode as _, createTextVNode as v, createVNode as y, defineComponent as b, inject as se, onBeforeUnmount as ce, onMounted as le, openBlock as x, ref as S, renderList as ue, resolveComponent as C, toDisplayString as w, unref as T, watch as de, withCtx as E } from "vue";
+import { useRoute as fe, useRouter as pe } from "vue-router";
 //#region src/components/SeriesDetail.vue?vue&type=script&setup=true&lang.ts
 var D = { class: "series-detail" }, O = {
 	class: "series-detail__seasons",
@@ -36,7 +36,7 @@ var D = { class: "series-detail" }, O = {
 }, P = { class: "series-detail__caption" }, F = { class: "series-detail__label" }, I = { class: "series-detail__count numeric" }, L = {
 	key: 2,
 	class: "series-detail__empty"
-}, pe = /*#__PURE__*/ e(/* @__PURE__ */ y({
+}, me = /*#__PURE__*/ e(/* @__PURE__ */ b({
 	__name: "SeriesDetail",
 	props: {
 		item: {},
@@ -67,7 +67,7 @@ var D = { class: "series-detail" }, O = {
 	setup(e, { emit: n }) {
 		let r = e, i = n;
 		function a(e) {
-			return `${r.routerBase}/media/${r.item.id}/season/${re(e)}`;
+			return `${r.routerBase}/media/${r.item.id}/season/${d(e)}`;
 		}
 		function o(e) {
 			return e.seasonPoster ?? r.item.poster_url ?? null;
@@ -76,10 +76,10 @@ var D = { class: "series-detail" }, O = {
 			let t = e.episodes.length;
 			return `${t} ${t === 1 ? "episode" : "episodes"}`;
 		}
-		let c = f(() => r.seasons.length > 0);
+		let c = p(() => r.seasons.length > 0);
 		return (n, r) => {
 			let l = C("RouterLink");
-			return b(), h("div", D, [v(d, {
+			return x(), g("div", D, [y(re, {
 				item: e.item,
 				"resume-seconds": e.resumeSeconds,
 				similar: [],
@@ -99,41 +99,41 @@ var D = { class: "series-detail" }, O = {
 				"item",
 				"resume-seconds",
 				"can-match"
-			]), g("section", O, [r[10] ||= g("h2", { class: "series-detail__seasons-title" }, "Seasons", -1), e.loading ? (b(), h("div", k)) : c.value ? (b(), h("ul", A, [(b(!0), h(oe, null, S(e.seasons, (e) => (b(), h("li", {
+			]), _("section", O, [r[10] ||= _("h2", { class: "series-detail__seasons-title" }, "Seasons", -1), e.loading ? (x(), g("div", k)) : c.value ? (x(), g("ul", A, [(x(!0), g(f, null, ue(e.seasons, (e) => (x(), g("li", {
 				key: e.key,
 				class: "series-detail__cell"
-			}, [v(l, {
+			}, [y(l, {
 				to: a(e),
 				class: "series-detail__card"
 			}, {
-				default: E(() => [g("div", j, [o(e) ? (b(), h("img", {
+				default: E(() => [_("div", j, [o(e) ? (x(), g("img", {
 					key: 0,
 					class: "series-detail__img",
 					src: o(e) ?? void 0,
 					alt: e.label,
 					loading: "lazy",
 					decoding: "async"
-				}, null, 8, M)) : (b(), h("div", N, [v(t, { name: "tv" })]))]), g("div", P, [g("span", F, w(e.label), 1), g("span", I, w(s(e)), 1)])]),
+				}, null, 8, M)) : (x(), g("div", N, [y(t, { name: "tv" })]))]), _("div", P, [_("span", F, w(e.label), 1), _("span", I, w(s(e)), 1)])]),
 				_: 2
-			}, 1032, ["to"])]))), 128))])) : (b(), h("p", L, "This series has no seasons available to watch."))])]);
+			}, 1032, ["to"])]))), 128))])) : (x(), g("p", L, "This series has no seasons available to watch."))])]);
 		};
 	}
-}), [["__scopeId", "data-v-a36e15f5"]]), me = { class: "media-detail-page" }, he = {
+}), [["__scopeId", "data-v-a36e15f5"]]), he = { class: "media-detail-page" }, ge = {
 	key: 0,
 	class: "media-detail-page__loading",
 	role: "status",
 	"aria-busy": "true",
 	"aria-label": "Loading title"
-}, ge = { class: "media-detail-page__loading-hero" }, _e = { class: "media-detail-page__loading-info" }, R = /*#__PURE__*/ e(/* @__PURE__ */ y({
+}, _e = { class: "media-detail-page__loading-hero" }, ve = { class: "media-detail-page__loading-info" }, R = /*#__PURE__*/ e(/* @__PURE__ */ b({
 	__name: "MediaDetailPage",
 	setup(e) {
-		let t = r(), re = se("phlixConfig", void 0), y = f(() => re?.routerBase || "/app"), S = de(), C = fe(), w = o(), D = s(), O = i(), k = a(), A = x(null), j = x([]), M = x([]), N = x(!0), P = x(!1), F = x(!1), I = x(null), L = f(() => String(S.params.id ?? "")), R = f(() => w.resumePositionFor(L.value)), ve = f(() => A.value?.type === "series");
+		let t = r(), d = se("phlixConfig", void 0), b = p(() => d?.routerBase || "/app"), ue = fe(), C = pe(), w = o(), D = s(), O = i(), k = a(), A = S(null), j = S([]), M = S([]), N = S(!0), P = S(!1), F = S(!1), I = S(null), L = p(() => String(ue.params.id ?? "")), R = p(() => w.resumePositionFor(L.value)), ye = p(() => A.value?.type === "series");
 		c(() => A.value?.name);
 		let z = null, B = !1;
 		function V(e) {
 			return typeof e == "object" && !!e && e.name === "AbortError";
 		}
-		async function ye(e, n) {
+		async function be(e, n) {
 			let r = n.genres?.[0];
 			if (!r) {
 				j.value = [];
@@ -157,11 +157,11 @@ var D = { class: "series-detail" }, O = {
 				a() || (P.value = !1);
 			}
 		}
-		async function H(e, n) {
+		async function xe(e, n) {
 			let r = z, i = () => B || r !== z;
 			F.value = !0, M.value = [];
 			try {
-				let a = await ie(e, t.value, n.id, r?.signal);
+				let a = await oe(e, t.value, n.id, r?.signal);
 				if (i()) return;
 				M.value = a;
 			} catch (e) {
@@ -171,7 +171,7 @@ var D = { class: "series-detail" }, O = {
 				i() || (F.value = !1);
 			}
 		}
-		async function U() {
+		async function H() {
 			let e = L.value;
 			if (z?.abort(), z = typeof AbortController < "u" ? new AbortController() : null, N.value = !0, I.value = null, j.value = [], M.value = [], !e) {
 				I.value = "No media id provided", N.value = !1;
@@ -181,39 +181,39 @@ var D = { class: "series-detail" }, O = {
 				let r = new n({ baseUrl: t.value }), i = await r.get(`/api/v1/media/${encodeURIComponent(e)}`, void 0, z?.signal);
 				if (B) return;
 				let a = i.item;
-				A.value = a, Y.value = a, N.value = !1, k.hydrate(a), a.type === "series" ? H(r, a) : ye(r, a);
+				A.value = a, J.value = a, N.value = !1, k.hydrate(a), a.type === "series" ? xe(r, a) : be(r, a);
 			} catch (e) {
 				if (B || V(e)) return;
 				I.value = e instanceof Error ? e.message : "Failed to load title", N.value = !1;
 			}
 		}
-		le(U), ue(L, U), ce(() => {
+		le(H), de(L, H), ce(() => {
 			B = !0, z?.abort(), z = null;
 		});
-		function W(e, t) {
+		function U(e, t) {
 			C?.push({
 				name: e,
 				params: { id: t }
 			}).catch(() => {});
 		}
-		function G(e) {
+		function W(e) {
 			if (e.type === "series") {
 				let e = ae(M.value, w.resumeMap);
-				e ? W("player", e.id) : D.info("No episodes to play yet");
+				e ? U("player", e.id) : D.info("No episodes to play yet");
 				return;
 			}
-			W("player", e.id);
+			U("player", e.id);
 		}
-		function K(e) {
+		function G(e) {
 			k.isFavorite(e.id) ? D.success(`Added "${e.name}" to your favorites`) : D.info(`Removed "${e.name}" from your favorites`);
 		}
-		function q(e) {
-			W("media", e.id);
+		function K(e) {
+			U("media", e.id);
 		}
-		function J() {
+		function q() {
 			C?.back();
 		}
-		function be(e) {
+		function Se(e) {
 			let t = A.value?.library_id;
 			t && C?.hasRoute("library") && C.push({
 				name: "library",
@@ -221,7 +221,7 @@ var D = { class: "series-detail" }, O = {
 				query: { actors: e }
 			});
 		}
-		function xe(e) {
+		function Ce(e) {
 			let t = A.value?.library_id;
 			t && C?.hasRoute("library") && C.push({
 				name: "library",
@@ -229,7 +229,7 @@ var D = { class: "series-detail" }, O = {
 				query: { genres: e }
 			});
 		}
-		function Se(e) {
+		function we(e) {
 			let t = A.value?.library_id;
 			t && C?.hasRoute("library") && C.push({
 				name: "library",
@@ -237,21 +237,24 @@ var D = { class: "series-detail" }, O = {
 				query: { companies: e }
 			});
 		}
-		let Y = x(null), X = x(!1);
-		function Z() {
-			A.value && (Y.value = A.value, X.value = !0);
-		}
-		function Ce(e) {
-			A.value = e, Y.value = e, D.success(`Updated metadata for "${e.name}"`), e.type === "series" && H(new n({ baseUrl: t.value }), e);
-		}
-		function we(e) {
-			k.toggleFavorite(e.id, t.value), k.isFavorite(e.id) ? D.success(`Marked "${e.name}" as watched`) : D.info(`Marked "${e.name}" as unwatched`);
-		}
-		function Te(e) {
-			Y.value = e, X.value = !0;
+		let J = S(null), Y = S(!1), X = S(!1);
+		function Te() {
+			A.value && (J.value = A.value, Y.value = !0);
 		}
 		function Ee(e) {
-			D.info("Poster picker is coming soon");
+			A.value = e, J.value = e, D.success(`Updated metadata for "${e.name}"`), e.type === "series" && xe(new n({ baseUrl: t.value }), e);
+		}
+		function Z(e) {
+			k.toggleFavorite(e.id, t.value), k.isFavorite(e.id) ? D.success(`Marked "${e.name}" as watched`) : D.info(`Marked "${e.name}" as unwatched`);
+		}
+		function De(e) {
+			J.value = e, Y.value = !0;
+		}
+		function Oe(e) {
+			J.value = e, X.value = !0;
+		}
+		function ke(e) {
+			A.value = e, J.value = e, D.success(`Updated poster for "${e.name}"`);
 		}
 		let Q = null;
 		async function $(e) {
@@ -268,107 +271,117 @@ var D = { class: "series-detail" }, O = {
 				D.error(`Failed to remove "${e.name}": ${t instanceof Error ? t.message : "Unknown error"}`);
 			}
 		}
-		return (e, t) => (b(), h("div", me, [N.value ? (b(), h("div", he, [g("div", ge, [v(u, {
-			variant: "rect",
-			radius: "var(--radius-lg)",
-			height: "420px"
-		}), g("div", _e, [
-			v(u, {
-				variant: "text",
-				width: "60%",
-				height: "2rem"
-			}),
-			v(u, {
-				variant: "text",
-				lines: 4
-			}),
-			v(u, {
+		return (e, t) => (x(), g("div", he, [
+			N.value ? (x(), g("div", ge, [_("div", _e, [y(u, {
 				variant: "rect",
-				width: "9rem",
-				height: "2.5rem",
-				radius: "var(--radius-md)"
-			})
-		])])])) : I.value ? (b(), p(te, {
-			key: 1,
-			icon: "alert",
-			title: "Couldn't load this title",
-			description: I.value
-		}, {
-			actions: E(() => [v(l, {
-				variant: "solid",
-				onClick: U
+				radius: "var(--radius-lg)",
+				height: "420px"
+			}), _("div", ve, [
+				y(u, {
+					variant: "text",
+					width: "60%",
+					height: "2rem"
+				}),
+				y(u, {
+					variant: "text",
+					lines: 4
+				}),
+				y(u, {
+					variant: "rect",
+					width: "9rem",
+					height: "2.5rem",
+					radius: "var(--radius-md)"
+				})
+			])])])) : I.value ? (x(), m(te, {
+				key: 1,
+				icon: "alert",
+				title: "Couldn't load this title",
+				description: I.value
 			}, {
-				default: E(() => [...t[1] ||= [_("Retry", -1)]]),
+				actions: E(() => [y(l, {
+					variant: "solid",
+					onClick: H
+				}, {
+					default: E(() => [...t[2] ||= [v("Retry", -1)]]),
+					_: 1
+				}), y(l, {
+					variant: "ghost",
+					onClick: q
+				}, {
+					default: E(() => [...t[3] ||= [v("Back", -1)]]),
+					_: 1
+				})]),
 				_: 1
-			}), v(l, {
-				variant: "ghost",
-				onClick: J
-			}, {
-				default: E(() => [...t[2] ||= [_("Back", -1)]]),
-				_: 1
-			})]),
-			_: 1
-		}, 8, ["description"])) : A.value ? (b(), h(oe, { key: 2 }, [ve.value ? (b(), p(pe, {
-			key: 0,
-			item: A.value,
-			seasons: M.value,
-			loading: F.value,
-			"resume-seconds": R.value,
-			"router-base": y.value,
-			"can-match": T(O).isAdmin,
-			onPlay: G,
-			onResume: G,
-			onWatchlist: K,
-			onInfo: q,
-			onMatch: Z,
-			onMarkWatched: we,
-			onRefresh: Te,
-			onChoosePoster: Ee,
-			onRemove: $,
-			onBack: J
-		}, null, 8, [
-			"item",
-			"seasons",
-			"loading",
-			"resume-seconds",
-			"router-base",
-			"can-match"
-		])) : (b(), p(d, {
-			key: 1,
-			item: A.value,
-			"resume-seconds": R.value,
-			similar: j.value,
-			"similar-loading": P.value,
-			"can-match": T(O).isAdmin,
-			onPlay: G,
-			onResume: G,
-			onWatchlist: K,
-			onInfo: q,
-			onMatch: Z,
-			onActor: be,
-			onGenre: xe,
-			onCompany: Se,
-			onMarkWatched: we,
-			onRefresh: Te,
-			onChoosePoster: Ee,
-			onRemove: $,
-			onBack: J
-		}, null, 8, [
-			"item",
-			"resume-seconds",
-			"similar",
-			"similar-loading",
-			"can-match"
-		]))], 64)) : m("", !0), T(O).isAdmin ? (b(), p(ee, {
-			key: 3,
-			modelValue: X.value,
-			"onUpdate:modelValue": t[0] ||= (e) => X.value = e,
-			item: Y.value,
-			onApplied: Ce
-		}, null, 8, ["modelValue", "item"])) : m("", !0)]));
+			}, 8, ["description"])) : A.value ? (x(), g(f, { key: 2 }, [ye.value ? (x(), m(me, {
+				key: 0,
+				item: A.value,
+				seasons: M.value,
+				loading: F.value,
+				"resume-seconds": R.value,
+				"router-base": b.value,
+				"can-match": T(O).isAdmin,
+				onPlay: W,
+				onResume: W,
+				onWatchlist: G,
+				onInfo: K,
+				onMatch: Te,
+				onMarkWatched: Z,
+				onRefresh: De,
+				onChoosePoster: Oe,
+				onRemove: $,
+				onBack: q
+			}, null, 8, [
+				"item",
+				"seasons",
+				"loading",
+				"resume-seconds",
+				"router-base",
+				"can-match"
+			])) : (x(), m(re, {
+				key: 1,
+				item: A.value,
+				"resume-seconds": R.value,
+				similar: j.value,
+				"similar-loading": P.value,
+				"can-match": T(O).isAdmin,
+				onPlay: W,
+				onResume: W,
+				onWatchlist: G,
+				onInfo: K,
+				onMatch: Te,
+				onActor: Se,
+				onGenre: Ce,
+				onCompany: we,
+				onMarkWatched: Z,
+				onRefresh: De,
+				onChoosePoster: Oe,
+				onRemove: $,
+				onBack: q
+			}, null, 8, [
+				"item",
+				"resume-seconds",
+				"similar",
+				"similar-loading",
+				"can-match"
+			]))], 64)) : h("", !0),
+			T(O).isAdmin ? (x(), m(ee, {
+				key: 3,
+				modelValue: Y.value,
+				"onUpdate:modelValue": t[0] ||= (e) => Y.value = e,
+				item: J.value,
+				onApplied: Ee
+			}, null, 8, ["modelValue", "item"])) : h("", !0),
+			T(O).isAdmin ? (x(), m(ie, {
+				key: 4,
+				modelValue: X.value,
+				"onUpdate:modelValue": t[1] ||= (e) => X.value = e,
+				item: J.value,
+				onApplied: ke
+			}, null, 8, ["modelValue", "item"])) : h("", !0)
+		]));
 	}
-}), [["__scopeId", "data-v-0dbccd4b"]]);
+}), [["__scopeId", "data-v-b9eb952a"]]);
 //#endregion
 export { R as default };
 
-//# sourceMappingURL=MediaDetailPage-BRf7VYoS.js.map
+//# sourceMappingURL=MediaDetailPage-fgm16rw9.js.map

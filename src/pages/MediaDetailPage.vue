@@ -23,6 +23,7 @@ import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import PosterPicker from '../components/PosterPicker.vue';
 import { type SeasonGroup } from '../components/series-grouping';
 import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
 import { pickPlayableEpisode } from '../composables/useResolvePlayable';
@@ -241,6 +242,10 @@ function onCompany(name: string): void {
 // the enriched children show too.
 const matchTarget = ref<MediaItem | null>(null);
 const matchOpen = ref(false);
+
+// Poster picker state — opened from the "Choose poster…" card/detail action.
+const posterPickerOpen = ref(false);
+
 function onMatch(): void {
   if (item.value) {
     matchTarget.value = item.value;
@@ -271,8 +276,15 @@ function onRefresh(m: MediaItem): void {
   matchOpen.value = true;
 }
 
-function onChoosePoster(_m: MediaItem): void {
-  toasts.info('Poster picker is coming soon');
+function onChoosePoster(m: MediaItem): void {
+  matchTarget.value = m;
+  posterPickerOpen.value = true;
+}
+
+function onPosterApplied(updated: MediaItem): void {
+  item.value = updated;
+  matchTarget.value = updated;
+  toasts.success(`Updated poster for "${updated.name}"`);
 }
 
 let removeController: AbortController | null = null;
@@ -372,6 +384,13 @@ async function onRemove(m: MediaItem): Promise<void> {
       v-model="matchOpen"
       :item="matchTarget"
       @applied="onMatchApplied"
+    />
+
+    <PosterPicker
+      v-if="auth.isAdmin"
+      v-model="posterPickerOpen"
+      :item="matchTarget"
+      @applied="onPosterApplied"
     />
   </div>
 </template>
