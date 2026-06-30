@@ -17,6 +17,7 @@ import { useMediaApiBase } from '../composables/useApiBase';
 import { useMediaStore } from '../stores/useMediaStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import MediaGrid from '../components/MediaGrid.vue';
 import FilterBar from '../components/FilterBar.vue';
 import LetterRail from '../components/LetterRail.vue';
@@ -42,6 +43,7 @@ const libraries = useLibrariesStore();
 const auth = useAuthStore();
 const player = usePlayerStore();
 const toasts = useToastStore();
+const userItemData = useUserItemDataStore();
 
 // A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
 // a letter scrolls the pre-sized grid to that letter's first title.
@@ -212,6 +214,43 @@ function onWatchlist(): void {
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
 }
+
+function onMarkWatched(item: MediaItem): void {
+  void userItemData.toggleFavorite(item.id, apiBase.value);
+  if (userItemData.isFavorite(item.id)) {
+    toasts.success(`Marked "${item.name}" as watched`);
+  } else {
+    toasts.info(`Marked "${item.name}" as unwatched`);
+  }
+}
+
+function onRefresh(item: MediaItem): void {
+  matchTarget.value = item;
+  matchOpen.value = true;
+}
+
+function onChoosePoster(_item: MediaItem): void {
+  toasts.info('Poster picker is coming soon');
+}
+
+let removeController: AbortController | null = null;
+async function onRemove(item: MediaItem): Promise<void> {
+  if (!window.confirm(`Remove "${item.name}" from the library? This cannot be undone.`)) return;
+  removeController?.abort();
+  const myController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  removeController = myController;
+  const stale = (): boolean => myController !== removeController;
+  try {
+    const client = new ApiClient({ baseUrl: apiBase.value });
+    await client.deleteMediaItem(item.id);
+    if (stale()) return;
+    store.items = store.items.filter((i) => i.id !== item.id);
+    toasts.success(`Removed "${item.name}"`);
+  } catch (e) {
+    if (stale() || isAbort(e)) return;
+    toasts.error(`Failed to remove "${item.name}": ${e instanceof Error ? e.message : 'Unknown error'}`);
+  }
+}
 </script>
 
 <template>
@@ -255,6 +294,10 @@ function onInfo(item: MediaItem): void {
         @watchlist="onWatchlist"
         @info="onInfo"
         @match="onMatch"
+        @mark-watched="onMarkWatched"
+        @refresh="onRefresh"
+        @choose-poster="onChoosePoster"
+        @remove="onRemove"
       />
 
       <LetterRail v-if="showRail" :letters="letters" @jump="onJump" />

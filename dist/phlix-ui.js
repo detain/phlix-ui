@@ -4,13 +4,13 @@ import { t as r } from "./IconButton-C5x9ZDfp.js";
 import { t as i } from "./useFocusTrap-DZxA3ZEr.js";
 import { a, i as o, n as s, r as c, t as l } from "./usePreferencesStore-FeMLCFE3.js";
 import { i as u, n as d, r as f, t as p } from "./useMessages-CLrAkqxK.js";
-import { a as m, c as h, d as g, f as _, i as v, l as y, n as b, p as ee, r as x, s as te, t as ne, u as re } from "./client-cUL8r-1I.js";
+import { a as m, c as h, d as g, f as _, i as v, l as y, n as b, p as ee, r as x, s as te, t as ne, u as re } from "./client-CX6TRWS-.js";
 import { n as ie, t as ae } from "./useApiBase-CV_r-Kk4.js";
-import { t as S } from "./useAuthStore-CJrazXSP.js";
-import { a as oe, i as se, n as ce, o as le, r as ue, t as de } from "./LoveButton-Cfe3jzXL.js";
+import { t as S } from "./useAuthStore-Co09iQFW.js";
+import { a as oe, i as se, n as ce, o as le, r as ue, t as de } from "./LoveButton-By5cp7rf.js";
 import { t as C } from "./useToastStore-BDoKlU6N.js";
 import { i as fe, n as pe, r as me, t as he } from "./Kbd-CSMm1T0l.js";
-import { a as ge, i as _e, n as ve, o as ye, r as be, t as xe } from "./useLibrariesStore-Bpp1SwfJ.js";
+import { a as ge, i as _e, n as ve, o as ye, r as be, t as xe } from "./useLibrariesStore-Cko4vXKJ.js";
 import { a as Se, c as Ce, i as we, l as Te, n as Ee, o as De, r as Oe, s as ke, t as Ae, u as je } from "./useConnectionStore-BxMhAb3d.js";
 import { i as Me, n as Ne, r as Pe, t as Fe } from "./usePageTitle-BO3GGF3M.js";
 import { t as w } from "./Button-k7aQagzg.js";
@@ -19,20 +19,20 @@ import { t as Ie } from "./Slider-BMn_Lp_q.js";
 import { t as Le } from "./Switch-CFZhdkXR.js";
 import { t as Re } from "./Chip-2HcSZF4a.js";
 import { t as ze } from "./Select-BR5EXV0L.js";
-import { i as Be, n as Ve, r as He, t as Ue } from "./FilterBar-CtTl8o46.js";
+import { i as Be, n as Ve, r as He, t as Ue } from "./FilterBar-Cdrz0_fF.js";
 import { t as We } from "./Modal-CWarEzTU.js";
 import { t as E } from "./Skeleton-DkSoWF3C.js";
-import { a as Ge, i as Ke, n as qe, o as Je, t as Ye } from "./MetadataMatchModal-vCPqVr65.js";
+import { a as Ge, i as Ke, n as qe, o as Je, t as Ye } from "./MetadataMatchModal-DcbN9Cga.js";
 import { t as D } from "./EmptyState-B2QnGIQT.js";
 import { t as Xe } from "./Tabs-x8dUKZN5.js";
-import { t as Ze } from "./MediaRow-Cq5cr38I.js";
+import { t as Ze } from "./MediaRow-Bbjr9sZ4.js";
 import { n as Qe, t as $e } from "./media-query-C8oxSF4h.js";
-import { t as et } from "./HomeRow-CYYLxrUS.js";
-import { t as tt } from "./MediaDetail-D3QnGZWi.js";
+import { t as et } from "./HomeRow-O-byQRan.js";
+import { t as tt } from "./MediaDetail-D8ocEptF.js";
 import { n as nt, r as rt, t as it } from "./metadata-sources-ChdcZ749.js";
 import { n as at, t as ot } from "./logs-DadTfaTq.js";
 import { t as st } from "./dashboard-BTCOCTHQ.js";
-import { n as ct, r as lt, t as ut } from "./users-CdFPFxKb.js";
+import { n as ct, r as lt, t as ut } from "./users-B1JPxfwk.js";
 import { n as dt, r as ft, t as pt } from "./webhooks-BBTLnFKm.js";
 import { t as mt } from "./services-C907MGdw.js";
 import { t as ht } from "./integrations-DLAG9ISY.js";
@@ -45,13 +45,13 @@ import { t as xt } from "./collections-CH3HLdcd.js";
 import { t as St } from "./history-ByCY8OYj.js";
 import { t as Ct } from "./syncPlay-DPzJkgkK.js";
 import { n as wt, t as Tt } from "./libraries-CXAz_kXs.js";
-import { i as Et, n as Dt, r as Ot, t as kt } from "./plugins-CCdP1g_9.js";
+import { i as Et, n as Dt, r as Ot, t as kt } from "./plugins-xDvScrXL.js";
 import { t as At } from "./hubDashboard-BhOaaDD-.js";
-import { A as jt, B as Mt, C as Nt, D as Pt, E as Ft, F as It, G as Lt, H as Rt, I as zt, J as Bt, K as Vt, L as Ht, M as Ut, N as Wt, O as Gt, P as Kt, R as qt, S as Jt, T as Yt, U as Xt, V as Zt, W as Qt, X as $t, Y as en, _ as tn, a as nn, b as rn, c as an, d as on, f as sn, g as cn, h as ln, i as un, j as dn, k as fn, l as pn, m as mn, n as hn, o as gn, p as _n, q as vn, r as yn, s as bn, t as xn, u as Sn, v as Cn, w as wn, x as Tn, y as En, z as Dn } from "./Player-DLZg5UMI.js";
+import { A as jt, B as Mt, C as Nt, D as Pt, E as Ft, F as It, G as Lt, H as Rt, I as zt, J as Bt, K as Vt, L as Ht, M as Ut, N as Wt, O as Gt, P as Kt, R as qt, S as Jt, T as Yt, U as Xt, V as Zt, W as Qt, X as $t, Y as en, _ as tn, a as nn, b as rn, c as an, d as on, f as sn, g as cn, h as ln, i as un, j as dn, k as fn, l as pn, m as mn, n as hn, o as gn, p as _n, q as vn, r as yn, s as bn, t as xn, u as Sn, v as Cn, w as wn, x as Tn, y as En, z as Dn } from "./Player-BQzTNTyo.js";
 import { a as On, c as kn, d as An, f as jn, g as Mn, h as Nn, i as Pn, l as Fn, m as In, n as Ln, o as Rn, p as zn, r as Bn, s as Vn, t as Hn, u as Un } from "./captions-COgPp5bH.js";
-import { t as Wn } from "./LoginForm-CyG6tqBs.js";
-import { t as Gn } from "./SignupForm-DVNzfD-L.js";
-import { t as Kn } from "./SettingsForm-BUp85t4u.js";
+import { t as Wn } from "./LoginForm-ZenNbdv6.js";
+import { t as Gn } from "./SignupForm-BYrmmYxA.js";
+import { t as Kn } from "./SettingsForm-BdZt3BU5.js";
 import { Fragment as O, Teleport as qn, Transition as k, TransitionGroup as Jn, computed as A, createApp as Yn, createBlock as j, createCommentVNode as M, createElementBlock as N, createElementVNode as P, createTextVNode as F, createVNode as I, defineAsyncComponent as Xn, defineComponent as L, inject as Zn, normalizeClass as R, normalizeStyle as Qn, onBeforeUnmount as z, onMounted as B, onScopeDispose as $n, openBlock as V, readonly as er, ref as H, renderList as U, renderSlot as W, resolveDynamicComponent as tr, toDisplayString as G, toValue as nr, unref as K, useId as rr, vModelText as ir, watch as q, watchEffect as ar, withCtx as J, withDirectives as or, withKeys as sr, withModifiers as cr } from "vue";
 import { createPinia as lr, defineStore as ur } from "pinia";
 import { RouterLink as Y, RouterView as dr, createRouter as fr, createWebHistory as pr, useRouter as mr } from "vue-router";
@@ -744,121 +744,121 @@ var Mi = ur("server", () => {
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-z16mWy_a.js")
+	component: () => import("./DashboardPage-iAtglVBE.js")
 }, Pi = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-B0kqDHZY.js")
+	component: () => import("./UsersPage-Da--o5Vs.js")
 }, Fi = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-CGv5jL6w.js")
+	component: () => import("./LogsPage-CCR_TAdM.js")
 }, Ii = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-qGKb59BS.js")
+	component: () => import("./WebhooksPage-DwNz1Aek.js")
 }, Li = {
 	name: "admin-services",
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-D16-w4N5.js")
+	component: () => import("./ServicesPage-C0pthvPn.js")
 }, Ri = {
 	name: "admin-integrations",
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-DnBNDXMR.js")
+	component: () => import("./IntegrationsPage-_tpExP2k.js")
 }, zi = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-QMsiLCWZ.js")
+	component: () => import("./BackupPage-Bn9H3fSt.js")
 }, Bi = {
 	name: "admin-cast",
 	path: "cast-devices",
 	label: "Cast Devices",
 	icon: "cast",
-	component: () => import("./CastDevicesPage-CyamFERt.js")
+	component: () => import("./CastDevicesPage-qrUykzdu.js")
 }, Vi = {
 	name: "admin-dlna",
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-DtLojHma.js")
+	component: () => import("./DlnaServerPage-BOPXiW8R.js")
 }, Hi = {
 	name: "admin-remote-access",
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-DHddIRUU.js")
+	component: () => import("./RemoteAccessPage-BoysDktL.js")
 }, Ui = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-DiUBZNQl.js")
+	component: () => import("./LiveTvPage-CmleFW51.js")
 }, Wi = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-DqHJixCW.js")
+	component: () => import("./CollectionsPage-C8OFzg7u.js")
 }, Gi = {
 	name: "admin-history",
 	path: "history",
 	label: "Watch History",
 	icon: "film",
-	component: () => import("./HistoryPage-DCXrFVMc.js")
+	component: () => import("./HistoryPage-e5_fhgzk.js")
 }, Ki = {
 	name: "admin-syncplay",
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-CDyaINaa.js")
+	component: () => import("./SyncPlayPage-BCzLOupo.js")
 }, qi = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-Bfsohee5.js")
+	component: () => import("./LibrariesPage-Dbt7uwZV.js")
 }, Ji = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-C2sGIKo6.js")
+	component: () => import("./DuplicatesPage-C5UzhB5Q.js")
 }, Yi = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-D1WuGgXx.js")
+	component: () => import("./PluginsPage-GbsQdf_k.js")
 }, Xi = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-CxqMjGVU.js")
+	component: () => import("./SettingsPage-DRwUSJf-.js")
 }, Zi = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./HubDashboardPage-CSYGZTOs.js")
+	component: () => import("./HubDashboardPage-CEzcfz9U.js")
 }, Qi = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
 	label: "Audit Logs",
 	icon: "eye",
-	component: () => import("./AuditLogsPage-CGbFV6_C.js")
+	component: () => import("./AuditLogsPage-DeW7AF5-.js")
 }, $i = Object.fromEntries([
 	Ni,
 	Pi,
@@ -1017,39 +1017,39 @@ function _a(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-BEGFuQj6.js")
+			component: () => import("./BrowsePage-Bt8B6t1w.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-BUTlCAJt.js")
+			component: () => import("./MediaDetailPage-CVyvDnw-.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-DGWb05Cx.js")
+			component: () => import("./SeasonPage-Dgw6XAaG.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-Ba_om_cQ.js")
+			component: () => import("./LibraryPage-LNNEkk3Y.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-9g4u37At.js")
+			component: () => import("./PlayerPage-BqMsmW5k.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-DuTlvw71.js")
+			component: () => import("./LoginPage-B860LewT.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-kjReMOEn.js")
+			component: () => import("./SignupPage-CMBvErUJ.js")
 		},
 		{
 			path: `${t}/connect`,
@@ -1061,7 +1061,7 @@ function _a(e) {
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-B42sKt2a.js")
+			component: () => import("./SettingsPage-CzI6jNrn.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({

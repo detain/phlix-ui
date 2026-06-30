@@ -243,6 +243,44 @@ function onInfo(item: MediaItem): void {
   else toasts.info(`Details for "${item.name}" are coming soon`);
 }
 
+function onMarkWatched(item: MediaItem): void {
+  void userItemData.toggleFavorite(item.id, apiBase.value);
+  if (userItemData.isFavorite(item.id)) {
+    toasts.success(`Marked "${item.name}" as watched`);
+  } else {
+    toasts.info(`Marked "${item.name}" as unwatched`);
+  }
+}
+
+function onRefresh(item: MediaItem): void {
+  matchTarget.value = item;
+  matchOpen.value = true;
+}
+
+function onChoosePoster(_item: MediaItem): void {
+  toasts.info('Poster picker is coming soon');
+}
+
+let removeController: AbortController | null = null;
+async function onRemove(item: MediaItem): Promise<void> {
+  if (!window.confirm(`Remove "${item.name}" from the library? This cannot be undone.`)) return;
+  removeController?.abort();
+  const myController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  removeController = myController;
+  const stale = (): boolean => myController !== removeController;
+  try {
+    const client = new ApiClient({ baseUrl: apiBase.value });
+    await client.deleteMediaItem(item.id);
+    if (stale()) return;
+    favoriteItems.value = favoriteItems.value.filter((f) => f.id !== item.id);
+    registry.delete(item.id);
+    toasts.success(`Removed "${item.name}"`);
+  } catch (e) {
+    if (stale() || isAbort(e)) return;
+    toasts.error(`Failed to remove "${item.name}": ${e instanceof Error ? e.message : 'Unknown error'}`);
+  }
+}
+
 // --- see-all -----------------------------------------------------------------
 // A library rail carries its library id in `query.libraryId` → open that
 // library's dedicated page. A configured (non-library) home row has no library
@@ -271,6 +309,10 @@ function onSeeAll(row: HomeRowConfig): void {
       @watchlist="onWatchlist"
       @info="onInfo"
       @match="onMatch"
+      @mark-watched="onMarkWatched"
+      @refresh="onRefresh"
+      @choose-poster="onChoosePoster"
+      @remove="onRemove"
     />
 
     <!-- Favorites rail (Feature 17.5) — fed by api.listFavorites(); hidden when
@@ -285,6 +327,10 @@ function onSeeAll(row: HomeRowConfig): void {
       @watchlist="onWatchlist"
       @info="onInfo"
       @match="onMatch"
+      @mark-watched="onMarkWatched"
+      @refresh="onRefresh"
+      @choose-poster="onChoosePoster"
+      @remove="onRemove"
     />
 
     <!-- App-configured, query-scoped shelves (genre/type rails); optional. "See
@@ -303,6 +349,10 @@ function onSeeAll(row: HomeRowConfig): void {
       @watchlist="onWatchlist"
       @info="onInfo"
       @match="onMatch"
+      @mark-watched="onMarkWatched"
+      @refresh="onRefresh"
+      @choose-poster="onChoosePoster"
+      @remove="onRemove"
     />
 
     <!-- One section per library — the headline of the Browse surface. -->
@@ -319,6 +369,10 @@ function onSeeAll(row: HomeRowConfig): void {
       @watchlist="onWatchlist"
       @info="onInfo"
       @match="onMatch"
+      @mark-watched="onMarkWatched"
+      @refresh="onRefresh"
+      @choose-poster="onChoosePoster"
+      @remove="onRemove"
     />
 
     <div v-if="showSpinner" class="browse-loading">

@@ -51,6 +51,10 @@ const emit = defineEmits<{
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
   (e: 'match', item: MediaItem): void;
+  (e: 'mark-watched', item: MediaItem): void;
+  (e: 'refresh', item: MediaItem): void;
+  (e: 'choose-poster', item: MediaItem): void;
+  (e: 'remove', item: MediaItem): void;
   (e: 'retry'): void;
 }>();
 
@@ -98,6 +102,10 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
           @watchlist="emit('watchlist', $event)"
           @info="emit('info', $event)"
           @match="emit('match', $event)"
+          @mark-watched="emit('mark-watched', $event)"
+          @refresh="emit('refresh', $event)"
+          @choose-poster="emit('choose-poster', $event)"
+          @remove="emit('remove', $event)"
         />
       </li>
     </ul>
