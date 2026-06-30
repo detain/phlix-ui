@@ -28,6 +28,7 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import PosterPicker from '../components/PosterPicker.vue';
 import { ApiClient } from '../api/client';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import type { MediaItem } from '../types/media-item';
@@ -63,6 +64,10 @@ const matchOpen = ref(false);
 /** The most recently applied item, broadcast to every rail to reconcile. */
 const appliedItem = ref<MediaItem | null>(null);
 
+// Poster picker state — opened from the "Choose poster…" card action.
+const posterPickerOpen = ref(false);
+const posterPickerTarget = ref<MediaItem | null>(null);
+
 function onMatch(item: MediaItem): void {
   matchTarget.value = item;
   matchOpen.value = true;
@@ -73,6 +78,14 @@ function onMatchApplied(item: MediaItem): void {
   // the rails' watch (a structural-equal value wouldn't re-fire on identity).
   appliedItem.value = { ...item };
   toasts.success(`Updated metadata for "${item.name}"`);
+}
+
+/** Patch the item's poster in place after the admin picks a new one (same
+ *  reconciliation pattern as onMatchApplied — find in registry + broadcast). */
+function onPosterApplied(updated: MediaItem): void {
+  registry.set(updated.id, updated);
+  appliedItem.value = { ...updated };
+  toasts.success(`Updated poster for "${updated.name}"`);
 }
 
 // One HomeRow config per library: a library-scoped rail titled by the library
@@ -257,8 +270,9 @@ function onRefresh(item: MediaItem): void {
   matchOpen.value = true;
 }
 
-function onChoosePoster(_item: MediaItem): void {
-  toasts.info('Poster picker is coming soon');
+function onChoosePoster(item: MediaItem): void {
+  posterPickerTarget.value = item;
+  posterPickerOpen.value = true;
 }
 
 let removeController: AbortController | null = null;
@@ -402,6 +416,13 @@ function onSeeAll(row: HomeRowConfig): void {
       v-model="matchOpen"
       :item="matchTarget"
       @applied="onMatchApplied"
+    />
+
+    <PosterPicker
+      v-if="auth.isAdmin"
+      v-model="posterPickerOpen"
+      :item="posterPickerTarget"
+      @applied="onPosterApplied"
     />
   </div>
 </template>
