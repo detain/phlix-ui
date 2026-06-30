@@ -1037,7 +1037,7 @@ function ga(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-Bjjz2toK.js")
+			component: () => import("./PlayerPage-C7AakkAf.js")
 		},
 		{
 			path: `${t}/login`,

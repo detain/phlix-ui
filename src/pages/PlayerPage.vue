@@ -28,6 +28,7 @@ import { ApiClient } from '../api/client';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import Player from '../components/Player.vue';
 import type { Chapter } from '../components/player/Scrubber.vue';
 import type { TimeMarker } from '../components/player/playback';
@@ -80,6 +81,15 @@ const directBase = useMediaDirectBase();
 const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
+// Per-user favorite/love state (Feature 16). The by-id fetch below resolves the
+// MediaDetail — the AUTHORITATIVE source of `user_data` — so the page seeds the
+// store from it as soon as the item loads. <Player> also hydrates from
+// `props.media` on mount/media-change, but `hydrate` is idempotent (it `set()`s
+// the entry keyed by id from the item's `user_data`), so the page seeding the
+// SAME item is the source of truth and the Player's redundant re-hydrate is a
+// harmless no-op. This guarantees the favorite + Love controls pre-fill from the
+// server the moment the player opens.
+const userItemData = useUserItemDataStore();
 
 const item = ref<MediaItem | null>(null);
 const streamUrl = ref('');
@@ -292,6 +302,12 @@ async function load(): Promise<void> {
     if (disposed) return;
     const mediaItem = response.item;
     item.value = mediaItem;
+    // Seed the per-user favorite/love controls from the fetched MediaDetail's
+    // server `user_data` (Feature 16). This is the authoritative source; <Player>
+    // also hydrates from the same item on mount, but `hydrate` is idempotent so
+    // pre-filling here ensures the controls reflect server state when the player
+    // opens. Guarded on a non-null fetched item.
+    if (mediaItem) userItemData.hydrate(mediaItem);
     // Playback is the deterministic direct-stream endpoint (synchronous, so up-next
     // auto-advance threads the same resolver). Resolve it up front.
     streamUrl.value = streamUrlFor(mediaItem);
