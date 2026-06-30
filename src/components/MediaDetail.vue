@@ -9,8 +9,10 @@
  * wires navigation. Degrades gracefully when metadata is sparse (missing poster,
  * overview, cast, runtime…). Keyboard-operable, reduced-motion safe, no emoji.
  */
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, inject } from 'vue';
 import type { MediaItem } from '../types/media-item';
+import type { PhlixAppConfig } from '../app/types';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import Icon from './Icon.vue';
 import Button from './ui/Button.vue';
 import Chip from './ui/Chip.vue';
@@ -48,6 +50,31 @@ const emit = defineEmits<{
   (e: 'company', name: string): void;
   (e: 'back'): void;
 }>();
+
+// Per-user favorite/rating/love state (Feature 17). The hero "Watchlist"/favorite
+// control flips this store optimistically (the SAME contract as MediaCard's
+// `onFavorite`, Step 17.3) and persists once; the host page's `watchlist` handler
+// still runs for back-compat but does NOT toggle again. `apiBase` is read from the
+// app config exactly like MediaCard/Player.vue (`inject('phlixConfig')`) — NOT a
+// new source — and threaded into the store's `toggleFavorite(id, apiBase)` (the
+// store keeps no global apiBase).
+const userItemData = useUserItemDataStore();
+const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+
+/** Whether THIS item is currently favorited per the store (false when unknown). */
+const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
+
+/**
+ * Hero favorite/Watchlist handler. Flips the favorite flag in the store
+ * (optimistic + rollback there) AND persists via one network call, THEN re-emits
+ * `watchlist` so existing host wiring (MediaDetailPage) keeps working — the store
+ * wiring is additive and matches MediaCard's `onFavorite` shape exactly so the
+ * page handler (which never toggles) reads the correct post-toggle state.
+ */
+function onFavorite(): void {
+  void userItemData.toggleFavorite(props.item.id, phlixConfig?.apiBase ?? '');
+  emit('watchlist', props.item);
+}
 
 const fallbackIcon = computed(() =>
   props.item.type === 'audio' ? 'music' : props.item.type === 'image' ? 'image' : props.item.type === 'series' ? 'tv' : 'film',
@@ -213,7 +240,17 @@ onMounted(() => {
           <Button v-if="resumeLabel" variant="outline" left-icon="rewind" @click="emit('resume', item)">
             Resume <span class="media-detail__resume-at numeric">{{ resumeLabel }}</span>
           </Button>
-          <Button variant="ghost" left-icon="bookmark-plus" @click="emit('watchlist', item)">Watchlist</Button>
+          <Button
+            variant="ghost"
+            class="media-detail__favorite"
+            :class="{ 'is-active': isFavorited }"
+            :left-icon="isFavorited ? 'bookmark' : 'bookmark-plus'"
+            :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+            :aria-pressed="isFavorited ? 'true' : 'false'"
+            @click="onFavorite"
+          >
+            {{ isFavorited ? 'In favorites' : 'Watchlist' }}
+          </Button>
           <Button v-if="canMatch" variant="ghost" left-icon="search" @click="emit('match', item)">Match metadata</Button>
         </div>
 
@@ -476,6 +513,14 @@ onMounted(() => {
   margin-left: var(--space-1);
   opacity: 0.8;
   font-size: var(--text-xs);
+}
+/* Favorited state: the hero favorite button reads filled + amber so it matches
+   the card's bookmark and signals the item is saved. */
+.media-detail__favorite.is-active {
+  color: var(--accent);
+}
+.media-detail__favorite.is-active :deep(svg) {
+  fill: currentColor;
 }
 
 .media-detail__credits {

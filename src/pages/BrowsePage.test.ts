@@ -10,6 +10,7 @@ import MediaCard from '../components/MediaCard.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 import type { PhlixAppConfig } from '../app/types';
@@ -228,13 +229,51 @@ describe('BrowsePage — card actions', () => {
     expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 's1' } });
   });
 
-  it('shows a toast when adding to the watchlist', async () => {
+  it('shows a state-aware "added" toast when the item is now favorited', async () => {
     stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'p1', name: 'Dune' })], total: 1 } });
     const w = mountPage();
     const toasts = useToastStore();
+    // The card already toggled the favorite ON (Step 17.3) before re-emitting
+    // `watchlist`; the page reads that persisted state and toasts accordingly.
+    const userItemData = useUserItemDataStore();
+    userItemData.hydrate(media({ id: 'p1', user_data: { favorite: true, rating: null } }));
     await flushPromises();
     w.findComponent(HomeRow).vm.$emit('watchlist', media({ id: 'p1', name: 'Dune' }));
-    expect(toasts.toasts.some((t) => t.tone === 'success' && t.message.includes('Dune'))).toBe(true);
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'success' && t.message.includes('Dune') && /favorites/i.test(t.message),
+      ),
+    ).toBe(true);
+  });
+
+  it('shows a state-aware "removed" toast when the item is no longer favorited', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'p2', name: 'Arrival' })], total: 1 } });
+    const w = mountPage();
+    const toasts = useToastStore();
+    const userItemData = useUserItemDataStore();
+    userItemData.hydrate(media({ id: 'p2', user_data: { favorite: false, rating: null } }));
+    await flushPromises();
+    w.findComponent(HomeRow).vm.$emit('watchlist', media({ id: 'p2', name: 'Arrival' }));
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'info' && t.message.includes('Arrival') && /favorites/i.test(t.message),
+      ),
+    ).toBe(true);
+  });
+
+  it('does NOT toggle the favorite a second time from the watchlist handler (no double-flip)', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'p3', name: 'Sicario' })], total: 1 } });
+    const w = mountPage();
+    const userItemData = useUserItemDataStore();
+    // Simulate the card having already toggled the favorite ON.
+    userItemData.hydrate(media({ id: 'p3', user_data: { favorite: true, rating: null } }));
+    const toggleSpy = vi.spyOn(userItemData, 'toggleFavorite');
+    await flushPromises();
+    w.findComponent(HomeRow).vm.$emit('watchlist', media({ id: 'p3', name: 'Sicario' }));
+    // The page never calls toggleFavorite — the card is the single source of truth.
+    expect(toggleSpy).not.toHaveBeenCalled();
+    // …and the favorite state survives the handler (no flip back to false).
+    expect(userItemData.isFavorite('p3')).toBe(true);
   });
 
   it('routes Info to the detail route when it exists', async () => {

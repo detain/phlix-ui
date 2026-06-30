@@ -19,6 +19,7 @@ import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
@@ -46,6 +47,7 @@ const router = useRouter();
 const player = usePlayerStore();
 const toasts = useToastStore();
 const auth = useAuthStore();
+const userItemData = useUserItemDataStore();
 
 const item = ref<MediaItem | null>(null);
 const similar = ref<MediaItem[]>([]);
@@ -139,6 +141,11 @@ async function load(): Promise<void> {
     const data = response.item;
     item.value = data;
     loading.value = false;
+    // Seed the per-user favorite/love state from the server `user_data` block so
+    // the heart/bookmark (on the detail hero + any card rendered from this item)
+    // reflects the real persisted state the moment the page opens. Safe + idempotent
+    // — `hydrate` no-ops on a null item and defaults missing `user_data` to neutral.
+    userItemData.hydrate(data);
     // A series drills into its season/episode tree; everything else shows the
     // genre-based "More like this" rail. (Mutually exclusive so the tree isn't
     // buried under a similar rail.)
@@ -177,8 +184,19 @@ function onPlay(m: MediaItem): void {
   }
   go('player', m.id);
 }
+// State-aware toast for the `watchlist` action. EVERY `watchlist` emitter that
+// reaches this handler has ALREADY toggled the favorite store + persisted the
+// change before re-emitting: the "More like this" rail cards via MediaCard's
+// `onFavorite` (Step 17.3) AND the detail hero's own favorite button via
+// MediaDetail's `onFavorite` (Step 17.4). So this handler must NOT toggle again
+// (a second toggle would flip it straight back) — it only reports the resulting
+// persisted state from the store, which is now correct for both paths.
 function onWatchlist(m: MediaItem): void {
-  toasts.success(`Added "${m.name}" to your list`);
+  if (userItemData.isFavorite(m.id)) {
+    toasts.success(`Added "${m.name}" to your favorites`);
+  } else {
+    toasts.info(`Removed "${m.name}" from your favorites`);
+  }
 }
 function onInfo(m: MediaItem): void {
   go('media', m.id); // navigate to that title's detail (re-fetches via the id watch)
