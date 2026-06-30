@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Post-release changes land here._
+### Added
+
+- **Immediate series/season Play (Feature 9)** — series/season Play now resolves to the first playable episode (respecting resume-in-progress and the playback-order sequence), instead of navigating to the series/season container. Added `useResolvePlayable` composable (`resolvePlayable`/`pickPlayableEpisode`) and wired it into BrowsePage, LibraryPage, and MediaDetailPage. Movie/episode/audio/image Play is unchanged (no fetch, returns item directly). A stale-guard pattern (AbortController per call) ensures a rapid second Play supersedes an in-flight resolve.
+- **Menu dropdown primitive (Feature 11.1)** — new `Menu.vue` reusable accessible dropdown: teleport-to-body, viewport-flip, roving tabindex keyboard nav (ArrowUp/Down/Home/End/Enter/Space/Tab), full ARIA menu semantics, reduced-motion safe. Exported as `Menu` and `MenuItem` from `src/components/ui`.
+- **Media item action menu (Features 11.2–11.5)** — `buildMediaItemMenu(item, ctx)` pure function produces `MenuItem[]` with "Mark watched/unwatched" (always), "Refresh/Match…" / "Choose poster…" / "Remove" (admin only, gated by server capability flags). Wired into `MediaCard` and `MediaDetail` action rows via the new `Menu` primitive; event forwarding chain built through `MediaRow`/`HomeRow`/`MediaGrid` into BrowsePage/LibraryPage/MediaDetailPage. `ApiClient` gains `markWatched`/`markUnwatched`/`deleteMediaItem`.
+- **PosterPicker component (Feature 15)** — new poster picker dialog for choosing media item artwork. Integrated into the media item action menu and detail pages.
 
 ## [0.57.0] - 2026-06-30
 
