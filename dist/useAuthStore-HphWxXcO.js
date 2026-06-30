@@ -1,0 +1,83 @@
+import { c as e, t } from "./client-CZc6ehUa.js";
+import { t as n } from "./useApiBase-CV_r-Kk4.js";
+import { computed as r, inject as i, ref as a, watch as o } from "vue";
+import { defineStore as s } from "pinia";
+//#region src/stores/useAuthStore.ts
+function c(e) {
+	return typeof e == "string" ? e : e?.value ?? "/login";
+}
+var l = s("auth", () => {
+	let s = new e(), l = n(), u = i("loginPath", "/login"), d = r(() => c(u)), f = new t({
+		tokenStore: s,
+		baseUrl: l.value,
+		loginPath: d.value
+	});
+	o(l, (e) => f.setBaseUrl(e));
+	let p = a(null), m = a(!1), h = a(null), g = a(s.getAccessToken()), _ = a(!1), v = null, y = r(() => g.value !== null), b = r(() => p.value?.is_admin === !0);
+	function x(e, t) {
+		s.setAccessToken(e), s.setRefreshToken(t), g.value = e;
+	}
+	async function S(e, t) {
+		m.value = !0, h.value = null;
+		try {
+			let n = {
+				username: e,
+				password: t
+			};
+			e.includes("@") && (n.email = e);
+			let r = await f.post("/api/v1/auth/login", n);
+			return x(r.access_token, r.refresh_token), await w(), y.value;
+		} catch (e) {
+			return h.value = e instanceof Error ? e.message : "Login failed", !1;
+		} finally {
+			m.value = !1;
+		}
+	}
+	async function C(e, t, n) {
+		m.value = !0, h.value = null;
+		try {
+			let r = await f.post("/api/v1/auth/register", {
+				email: e,
+				username: t,
+				password: n
+			});
+			return x(r.access_token, r.refresh_token), await w(), y.value;
+		} catch (e) {
+			return h.value = e instanceof Error ? e.message : "Registration failed", !1;
+		} finally {
+			m.value = !1;
+		}
+	}
+	async function w() {
+		if (y.value) try {
+			p.value = await f.getCurrentUser();
+		} catch {
+			p.value = null, s.clear(), g.value = null;
+		}
+	}
+	async function T() {
+		if (!_.value) return v === null && (v = w().finally(() => {
+			_.value = !0;
+		})), v;
+	}
+	function E() {
+		f.logout(!1), g.value = null, p.value = null, typeof window < "u" && (window.location.href = d.value);
+	}
+	return {
+		user: p,
+		loading: m,
+		error: h,
+		isLoggedIn: y,
+		isAdmin: b,
+		client: f,
+		login: S,
+		signup: C,
+		fetchUser: w,
+		init: T,
+		logout: E
+	};
+});
+//#endregion
+export { l as t };
+
+//# sourceMappingURL=useAuthStore-HphWxXcO.js.map

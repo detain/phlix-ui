@@ -1,5 +1,5 @@
 import { type TokenStore } from './tokenStore';
-import type { MediaItem } from '../types/media-item';
+import type { MediaItem, PosterCandidatesResponse } from '../types/media-item';
 /** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
 export { ApiError } from './errors';
 /** Re-exported so `import type { TokenStore } from '.../api/client'` deep imports keep working. */
@@ -251,6 +251,22 @@ export declare class ApiClient {
         limit?: number;
         offset?: number;
     }, signal?: AbortSignal): Promise<FavoritesResult>;
+    /**
+     * List available poster candidates for one media item
+     * (`GET /api/v1/media/{id}/posters`). Returns `{ candidates, current_poster_url }`
+     * with `candidates` defended to an array so a malformed payload degrades
+     * gracefully. A `422 metadata.tmdb_unconfigured` surfaces as an `ApiError`
+     * the caller can detect with {@link isTmdbUnconfigured}.
+     */
+    listPosters(id: string, signal?: AbortSignal): Promise<PosterCandidatesResponse>;
+    /**
+     * Set (or clear) the poster for one media item
+     * (`PUT /api/v1/media/{id}/poster`, body `{ poster_url }`). Pass an empty
+     * string to clear the poster. Returns the updated {@link MediaItem}. A
+     * `422 metadata.tmdb_unconfigured` surfaces as an `ApiError` the caller
+     * can detect with {@link isTmdbUnconfigured}.
+     */
+    setPoster(id: string, posterUrl: string): Promise<MediaItem>;
     isLoggedIn(): boolean;
     getCurrentUser(): Promise<AuthUser>;
     logout(redirect?: boolean): void;
