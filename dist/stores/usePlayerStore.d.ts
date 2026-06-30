@@ -62,6 +62,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -111,6 +112,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -162,6 +164,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -211,6 +214,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -314,6 +318,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -363,6 +368,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -414,6 +420,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -463,6 +470,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -566,6 +574,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -615,6 +624,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -666,6 +676,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -715,6 +726,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        backdrop_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
