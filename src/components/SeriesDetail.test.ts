@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router, RouterLink } from 'vue-router';
+import { nextTick } from 'vue';
+import { computed } from 'vue';
 import SeriesDetail from './SeriesDetail.vue';
 import MediaDetail from './MediaDetail.vue';
 import { groupEpisodesBySeason } from './series-grouping';
@@ -56,10 +58,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function mountIt(props: Record<string, unknown> = {}) {
+function mountIt(props: Record<string, unknown> = {}, provide: Record<string, unknown> = {}) {
   return mount(SeriesDetail, {
     props: { item: media(), seasons, ...props },
-    global: { plugins: [router], components: { RouterLink } },
+    global: {
+      plugins: [router],
+      components: { RouterLink },
+      provide: {
+        phlixConfig: { app: 'server', apiBase: '' },
+        apiBase: '',
+        mediaApiBase: computed(() => ''),
+        mediaDirectBase: computed(() => ''),
+        ...provide,
+      },
+    },
   });
 }
 
@@ -130,5 +142,44 @@ describe('SeriesDetail (U3)', () => {
     expect(w.emitted('play')).toBeTruthy();
     expect(w.emitted('watchlist')).toBeTruthy();
     expect(w.emitted('back')).toBeTruthy();
+  });
+});
+
+describe('SeriesDetail — theme audio', () => {
+  it('does not render an audio element when theme_audio_url is absent', () => {
+    const w = mountIt({ item: media({ theme_audio_url: undefined }) });
+    expect(w.find('audio').exists()).toBe(false);
+  });
+
+  it('renders a looping audio element with correct attributes when all conditions are met', () => {
+    const w = mountIt({ item: media({ theme_audio_url: '/api/v1/media/sh1/theme-audio?sig=abc' }) });
+    const audio = w.find('audio');
+    expect(audio.exists()).toBe(true);
+    // boolean attributes return '' (empty string) in JSDOM when present
+    expect(audio.attributes('loop')).not.toBe(undefined);
+    expect(audio.attributes('aria-hidden')).toBe('true');
+    expect(audio.attributes('tabindex')).toBe('-1');
+  });
+
+  it('uses absolute theme_audio_url directly when provided as an absolute URL', () => {
+    const absoluteUrl = 'https://media.example.com/api/v1/media/sh1/theme-audio?sig=xyz';
+    const w = mountIt({ item: media({ theme_audio_url: absoluteUrl }) });
+    expect(w.find('audio').attributes('src')).toBe(absoluteUrl);
+  });
+
+  it('resolves relative theme_audio_url against the mediaApiBase', () => {
+    const w = mountIt(
+      { item: media({ theme_audio_url: '/api/v1/media/sh1/theme-audio?sig=abc' }) },
+      { mediaApiBase: computed(() => 'https://server.test') },
+    );
+    expect(w.find('audio').attributes('src')).toBe('https://server.test/api/v1/media/sh1/theme-audio?sig=abc');
+  });
+
+  it('unmounting the component removes the audio element from the DOM', async () => {
+    const w = mountIt({ item: media({ theme_audio_url: '/api/v1/media/sh1/theme-audio?sig=abc' }) });
+    expect(w.find('audio').exists()).toBe(true);
+    w.unmount();
+    await nextTick();
+    expect(w.find('audio').exists()).toBe(false);
   });
 });
