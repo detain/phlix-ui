@@ -67,6 +67,13 @@ export interface MediaListItem {
  * All detail-only fields remain optional so the type is assignable from
  * list-item contexts (back-compat + synthetic items like local files).
  */
+export type MediaFile = {
+    path: string;
+    size_bytes: number;
+    container?: string | null;
+    codec?: string | null;
+    resolution?: string | null;
+};
 export interface MediaDetail extends MediaListItem {
     /** Short-lived signed direct-play URL; list rows / local files omit this. */
     stream_url?: string | null;
@@ -96,6 +103,8 @@ export interface MediaDetail extends MediaListItem {
     library_id?: string | null;
     /** Backdrop image URL; detail only. */
     backdrop_url?: string | null;
+    /** Theme music audio URL (signed, short-lived); detail only. */
+    theme_audio_url?: string | null;
     /**
      * Per-user state for the authenticated viewer, an ADD-ONLY block the server
      * attaches to the detail (`GET /api/v1/media/{id}`) and favorites
@@ -113,6 +122,12 @@ export interface MediaDetail extends MediaListItem {
         rating: number | null;
         like_level?: number;
     } | null;
+    /**
+     * Per-file metadata (container, codec, resolution, size) for each physical
+     * file backing this item. Only populated on the detail response; absent on
+     * list rows. Full `path` is admin-gated (non-admin sees basename only).
+     */
+    files?: MediaFile[];
 }
 /**
  * Back-compat alias — all existing code uses `MediaItem`. Retained so native
