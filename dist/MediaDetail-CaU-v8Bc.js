@@ -49,7 +49,16 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 }, Oe = { class: "media-detail__person-name" }, ke = {
 	key: 0,
 	class: "media-detail__person-sub"
-}, R = /*#__PURE__*/ e(/* @__PURE__ */ h({
+}, Ae = {
+	key: 2,
+	class: "media-detail__files"
+}, je = { class: "media-detail__files-list" }, Me = { class: "media-detail__file-path" }, Ne = { class: "media-detail__file-meta" }, Pe = {
+	key: 0,
+	class: "media-detail__file-container"
+}, Fe = {
+	key: 1,
+	class: "media-detail__file-resolution"
+}, Ie = { class: "media-detail__file-size" }, R = /*#__PURE__*/ e(/* @__PURE__ */ h({
 	__name: "MediaDetail",
 	props: {
 		item: {},
@@ -84,16 +93,16 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 		"remove"
 	],
 	setup(e, { emit: h }) {
-		let R = e, z = h, B = r(), V = re("phlixConfig", null), Ae = n(), H = c(() => B.isFavorite(R.item.id));
-		function je() {
+		let R = e, z = h, B = r(), V = re("phlixConfig", null), Le = n(), H = c(() => B.isFavorite(R.item.id));
+		function Re() {
 			B.toggleFavorite(R.item.id, V?.apiBase ?? ""), z("watchlist", R.item);
 		}
-		let Me = c(() => B.likeLevel(R.item.id)), U = c(() => Ae.isAdmin), Ne = c(() => B.isFavorite(R.item.id)), W = y(!1), Pe = c(() => te(R.item, {
+		let ze = c(() => B.likeLevel(R.item.id)), U = c(() => Le.isAdmin), Be = c(() => B.isFavorite(R.item.id)), W = y(!1), Ve = c(() => te(R.item, {
 			isAdmin: U.value,
-			isWatched: Ne.value,
+			isWatched: Be.value,
 			canChoosePoster: U.value
 		}));
-		function Fe(e) {
+		function He(e) {
 			switch (e.label) {
 				case "Mark watched":
 				case "Mark unwatched":
@@ -113,7 +122,7 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 		function G() {
 			B.cycleLove(R.item.id, V?.apiBase ?? "");
 		}
-		let Ie = c(() => R.item.type === "audio" ? "music" : R.item.type === "image" ? "image" : R.item.type === "series" ? "tv" : "film"), K = c(() => {
+		let Ue = c(() => R.item.type === "audio" ? "music" : R.item.type === "image" ? "image" : R.item.type === "series" ? "tv" : "film"), K = c(() => {
 			let e = R.item.cast;
 			return e?.length ? e.slice(0, 12).map((e) => ({
 				name: e.name,
@@ -154,8 +163,21 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 			if (!e || e <= 0) return null;
 			let t = Math.floor(e / 3600), n = Math.floor(e % 3600 / 60), r = Math.floor(e % 60), i = t > 0 ? String(n).padStart(2, "0") : String(n);
 			return `${t > 0 ? `${t}:` : ""}${i}:${String(r).padStart(2, "0")}`;
-		}), Z = y(!1), Q = y(null);
-		function Le() {
+		});
+		function We(e) {
+			if (e <= 0) return "0 B";
+			let t = [
+				"B",
+				"KB",
+				"MB",
+				"GB",
+				"TB"
+			], n = 0, r = e;
+			for (; r >= 1024 && n < t.length - 1;) r /= 1024, n++;
+			return n === 0 && e >= 960 && (n = 1, r = e / 1024), n > 0 && Math.round(r) === 1 ? `1 ${t[n]}` : `${r.toFixed(+(r < 100))} ${t[n]}`;
+		}
+		let Z = y(!1), Q = y(null);
+		function Ge() {
 			Z.value = !0;
 		}
 		ie(() => {
@@ -196,8 +218,8 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 				src: e.item.poster_url,
 				alt: e.item.name,
 				decoding: "async",
-				onLoad: Le
-			}, null, 42, ue)) : (v(), d("div", de, [m(t, { name: Ie.value }, null, 8, ["name"])]))]), f("div", fe, [
+				onLoad: Ge
+			}, null, 42, ue)) : (v(), d("div", de, [m(t, { name: Ue.value }, null, 8, ["name"])]))]), f("div", fe, [
 				f("h1", pe, x(e.item.name), 1),
 				f("div", me, [
 					e.item.year ? (v(), d("span", he, [m(t, {
@@ -260,7 +282,7 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 						"left-icon": H.value ? "bookmark" : "bookmark-plus",
 						"aria-label": H.value ? "Remove from favorites" : "Add to favorites",
 						"aria-pressed": H.value ? "true" : "false",
-						onClick: je
+						onClick: Re
 					}, {
 						default: S(() => [p(x(H.value ? "In favorites" : "Watchlist"), 1)]),
 						_: 1
@@ -271,14 +293,14 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 						"aria-pressed"
 					]),
 					m(i, {
-						level: Me.value,
+						level: ze.value,
 						onCycle: G
 					}, null, 8, ["level"]),
 					m(ee, {
 						open: W.value,
 						"onUpdate:open": r[4] ||= (e) => W.value = e,
-						items: Pe.value,
-						onSelect: Fe
+						items: Ve.value,
+						onSelect: He
 					}, {
 						default: S(() => [f("button", {
 							type: "button",
@@ -332,8 +354,16 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 					e.sub ? (v(), d("span", ke, x(e.sub), 1)) : u("", !0)
 				], 8, we)]))), 128))])])) : u("", !0)])) : u("", !0)
 			])]),
+			e.item.files?.length ? (v(), d("section", Ae, [r[16] ||= f("h2", { class: "media-detail__files-heading" }, "Files", -1), f("ul", je, [(v(!0), d(s, null, b(e.item.files, (e, t) => (v(), d("li", {
+				key: t,
+				class: "media-detail__file"
+			}, [f("span", Me, x(e.path), 1), f("span", Ne, [
+				e.container ? (v(), d("span", Pe, x(e.container), 1)) : u("", !0),
+				e.resolution ? (v(), d("span", Fe, x(e.resolution), 1)) : u("", !0),
+				f("span", Ie, x(We(e.size_bytes)), 1)
+			])]))), 128))])])) : u("", !0),
 			e.similarLoading || e.similar.length ? (v(), l(ne, {
-				key: 2,
+				key: 3,
 				class: "media-detail__similar",
 				title: "More like this",
 				items: e.similar,
@@ -345,8 +375,8 @@ var oe = { class: "media-detail" }, se = { class: "media-detail__bar" }, ce = { 
 			}, null, 8, ["items", "loading"])) : u("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-400da50a"]]);
+}), [["__scopeId", "data-v-198ff50e"]]);
 //#endregion
 export { R as t };
 
-//# sourceMappingURL=MediaDetail-CMkQC34v.js.map
+//# sourceMappingURL=MediaDetail-CaU-v8Bc.js.map

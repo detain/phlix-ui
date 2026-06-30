@@ -28,7 +28,7 @@ import { t as Xe } from "./Tabs-x8dUKZN5.js";
 import { t as Ze } from "./MediaRow-BdvNwzM4.js";
 import { n as Qe, t as $e } from "./media-query-C8oxSF4h.js";
 import { t as et } from "./HomeRow-CbOHwDpS.js";
-import { t as tt } from "./MediaDetail-CMkQC34v.js";
+import { t as tt } from "./MediaDetail-CaU-v8Bc.js";
 import { n as nt, r as rt, t as it } from "./metadata-sources-DYYd3X0h.js";
 import { n as at, t as ot } from "./logs-DadTfaTq.js";
 import { t as st } from "./dashboard-BTCOCTHQ.js";
@@ -1022,12 +1022,12 @@ function _a(e) {
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-_q8CZRsu.js")
+			component: () => import("./MediaDetailPage-Bos_b8Tc.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-jkgtYbq-.js")
+			component: () => import("./SeasonPage-RXuPZd-y.js")
 		},
 		{
 			path: `${t}/library/:id`,
@@ -1097,7 +1097,7 @@ function va(e) {
 		Pe(pa(e, n));
 	});
 	let u = Mi(r), d = A(() => ma(t.app, l(), u.currentServerId)), p = A(() => ha(t.app, u.currentServerUrl)), m = Yn(xi);
-	return m.provide("apiBase", A(() => l())), m.provide("mediaApiBase", d), m.provide("mediaDirectBase", p), m.provide("loginPath", A(() => `${t.routerBase ?? "/app"}/login`)), m.provide("phlixCommands", t.commands ?? []), m.provide("phlixConfig", t), m.use(r), m.use(i), Di(m), m;
+	return m.provide("apiBase", A(() => l())), m.provide("mediaApiBase", d), m.provide("mediaDirectBase", p), m.provide("loginPath", A(() => `${t.routerBase ?? "/app"}/login`)), m.provide("phlixCommands", t.commands ?? []), m.provide("phlixConfig", t), m.use(r), m.provide("auth", S(r)), m.use(i), Di(m), m;
 }
 //#endregion
 //#region src/components/ui/Tooltip.vue?vue&type=script&setup=true&lang.ts
