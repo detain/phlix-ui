@@ -438,9 +438,17 @@ export const useMediaStore = defineStore('media', () => {
         selectedCompanies.value = v;
         offset.value = 0;
     }
+    const FIELD_DEFAULTS: Record<SortField, SortOrder> = {
+        name: 'asc',
+        year: 'desc',
+        rating: 'desc',
+        runtime: 'desc',
+        date_added: 'desc',
+    };
+
     function setSort(field: SortField, ord?: SortOrder): void {
         sort.value = field;
-        if (ord) order.value = ord;
+        order.value = ord ?? FIELD_DEFAULTS[field];
         offset.value = 0;
     }
     /** Scope every subsequent fetch to one library (or clear with `undefined`).

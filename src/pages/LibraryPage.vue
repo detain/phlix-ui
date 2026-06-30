@@ -20,7 +20,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import MediaGrid from '../components/MediaGrid.vue';
 import FilterBar from '../components/FilterBar.vue';
-import LetterRail from '../components/LetterRail.vue';
+import IndexRail from '../components/IndexRail.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
@@ -30,7 +30,7 @@ import { resolvePlayable } from '../composables/useResolvePlayable';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
 import type { MediaItem } from '../types/media-item';
-import { fetchLetterIndex, type LetterBucket } from '../api/letter-index';
+import { fetchIndexBuckets, type IndexBucket } from '../api/index-buckets';
 import { usePageTitle } from '../composables/usePageTitle';
 
 // On the hub this is the relay-proxy base for the selected server (so the grid
@@ -49,20 +49,34 @@ const userItemData = useUserItemDataStore();
 // A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
 // a letter scrolls the pre-sized grid to that letter's first title.
 const gridRef = ref<InstanceType<typeof MediaGrid> | null>(null);
-const letters = ref<LetterBucket[]>([]);
-let lettersAbort: AbortController | null = null;
-const showRail = computed(() => letters.value.some((b) => b.count > 0));
+const buckets = ref<IndexBucket[]>([]);
+let bucketsAbort: AbortController | null = null;
+const showRail = computed(() => buckets.value.some((b) => b.count > 0));
 
-async function loadLetters(): Promise<void> {
-  lettersAbort?.abort();
-  if (store.sort !== 'name' || store.order !== 'asc') {
-    letters.value = [];
-    return;
-  }
+async function loadBuckets(): Promise<void> {
+  bucketsAbort?.abort();
   const ctrl = new AbortController();
-  lettersAbort = ctrl;
-  const result = await fetchLetterIndex(apiBase.value, store.queryParams, ctrl.signal);
-  if (!ctrl.signal.aborted) letters.value = result;
+  bucketsAbort = ctrl;
+  const qp = store.queryParams;
+  const result = await fetchIndexBuckets(
+    apiBase.value,
+    {
+      field: store.sort,
+      order: qp.order,
+      libraryId: qp.libraryId,
+      query: qp.search,
+      topLevel: qp.topLevel,
+      yearMin: qp.yearFrom,
+      yearMax: qp.yearTo,
+      match: qp.match,
+      genres: qp.genres,
+      ratings: qp.ratings?.map((r) => Number(r)),
+      actors: qp.actors,
+      studios: qp.companies,
+    },
+    ctrl.signal,
+  );
+  if (!ctrl.signal.aborted) buckets.value = result.buckets;
 }
 
 function onJump(offset: number): void {
@@ -118,7 +132,7 @@ function scope(): void {
   applyIncomingFilters();
   store.reset();
   store.fetchMedia(apiBase.value);
-  void loadLetters();
+  void loadBuckets();
 }
 
 /** Seed the FilterBar from deep-link query params — e.g. an actor link from a
@@ -142,7 +156,7 @@ function applyIncomingFilters(): void {
 function reload(): void {
   store.reset();
   store.fetchMedia(apiBase.value);
-  void loadLetters();
+  void loadBuckets();
 }
 
 onMounted(() => {
@@ -156,6 +170,7 @@ onMounted(() => {
 // slate; an api-base change just reloads the current scope.
 watch(libraryId, scope);
 watch(apiBase, reload);
+watch(() => store.sort, () => { void loadBuckets(); });
 
 onBeforeUnmount(() => {
   // Drop the scope, the top-level restriction, and the filter state so the next
@@ -312,7 +327,7 @@ async function onRemove(item: MediaItem): Promise<void> {
         @remove="onRemove"
       />
 
-      <LetterRail v-if="showRail" :letters="letters" @jump="onJump" />
+      <IndexRail v-if="showRail" :buckets="buckets" @jump="onJump" />
     </section>
 
     <MetadataMatchModal
