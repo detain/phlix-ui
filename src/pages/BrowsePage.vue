@@ -28,6 +28,7 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import { ApiClient } from '../api/client';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig, HomeRow as HomeRowConfig } from '../app/types';
 
@@ -100,14 +101,76 @@ const continueItems = computed<MediaItem[]>(() => {
     .slice(0, 12);
 });
 
+// --- Favorites rail (Feature 17.5) -------------------------------------------
+// A dedicated "Favorites" rail fed by `GET /api/v1/users/me/favorites`
+// (api.listFavorites → { items, limit, offset }; NO total). It is hidden when
+// empty (no favorites → the section renders nothing, via v-if + hideWhenEmpty).
+//
+// Refresh-on-toggle: favoriting/unfavoriting happens through
+// `useUserItemDataStore.toggleFavorite` (optimistic). The store's reactive
+// `entries` map is the single source of truth, so we derive a signature of the
+// currently-favorited ids from it and re-fetch the rail whenever that set
+// changes — so an un-favorited item drops off (and a newly favorited one shows
+// up) on the next fetch. We also hydrate the fetched items into the store so
+// each card's bookmark reflects the correct state.
+const FAVORITES_LIMIT = 24;
+const favoriteItems = ref<MediaItem[]>([]);
+const favoritesLoading = ref(false);
+const favoritesError = ref<string | null>(null);
+
+let favoritesClient: ApiClient | null = null;
+function favClient(base: string): ApiClient {
+  if (!favoritesClient) favoritesClient = new ApiClient({ baseUrl: base });
+  else favoritesClient.setBaseUrl(base);
+  return favoritesClient;
+}
+
+async function loadFavorites(): Promise<void> {
+  if (favoritesLoading.value) return;
+  favoritesLoading.value = true;
+  favoritesError.value = null;
+  try {
+    const { items } = await favClient(apiBase.value).listFavorites({ limit: FAVORITES_LIMIT });
+    favoriteItems.value = items;
+    items.forEach((i) => userItemData.hydrate(i));
+    remember(items);
+  } catch (e) {
+    favoritesError.value = e instanceof Error ? e.message : 'Failed to load favorites';
+  } finally {
+    favoritesLoading.value = false;
+  }
+}
+
+// Signature of the favorited id set, derived from the store's reactive cache.
+// Sorted+joined so it changes iff the SET of favorited ids changes (toggle on
+// a card flips an entry's `favorite` flag → this string changes → re-fetch).
+const favoriteSignature = computed(() => {
+  const ids: string[] = [];
+  userItemData.entries.forEach((entry, id) => {
+    if (entry.favorite) ids.push(id);
+  });
+  return ids.sort().join(',');
+});
+
+const showFavorites = computed(
+  () => !favoritesLoading.value && !favoritesError.value && favoriteItems.value.length > 0,
+);
+
 // --- library list load -------------------------------------------------------
 function load(): void {
   void libraries.load(apiBase.value, true);
+  void loadFavorites();
 }
 onMounted(() => {
   void libraries.load(apiBase.value);
+  void loadFavorites();
 });
 watch(apiBase, load);
+// Re-fetch the Favorites rail when the favorited id set changes (a card toggle
+// flips the store entry). Skip the initial fire — onMounted already loaded it.
+watch(favoriteSignature, () => {
+  void loadFavorites();
+});
 
 const showEmpty = computed(
   () => libraries.loaded && libraries.items.length === 0 && !libraries.error,
@@ -170,6 +233,20 @@ function onSeeAll(row: HomeRowConfig): void {
       v-if="continueItems.length"
       title="Continue Watching"
       :items="continueItems"
+      :can-match="auth.isAdmin"
+      hide-when-empty
+      @play="onPlay"
+      @watchlist="onWatchlist"
+      @info="onInfo"
+      @match="onMatch"
+    />
+
+    <!-- Favorites rail (Feature 17.5) — fed by api.listFavorites(); hidden when
+         empty; re-fetched when a favorite is toggled (favoriteSignature watch). -->
+    <MediaRow
+      v-if="showFavorites"
+      title="Favorites"
+      :items="favoriteItems"
       :can-match="auth.isAdmin"
       hide-when-empty
       @play="onPlay"
