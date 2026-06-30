@@ -48,6 +48,7 @@ export interface Preferences {
   gridDensity: 'cozy' | 'comfy' | 'dense';
   reducedMotion: MotionPref;
   autoplay: boolean;
+  seriesThemeAutoplay: boolean;
   defaultVolume: number; // 0–1
   defaultQuality: string; // 'auto' | '4k' | '1080p' | …
   defaultSubtitleLang: string | null;
@@ -77,6 +78,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   gridDensity: 'comfy',
   reducedMotion: 'auto',
   autoplay: true,
+  seriesThemeAutoplay: false,
   defaultVolume: 1,
   defaultQuality: 'auto',
   defaultSubtitleLang: null,
@@ -148,6 +150,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   const gridDensity = ref<Preferences['gridDensity']>(initial.gridDensity);
   const reducedMotion = ref<MotionPref>(initial.reducedMotion);
   const autoplay = ref<boolean>(initial.autoplay);
+  const seriesThemeAutoplay = ref<boolean>(initial.seriesThemeAutoplay);
   const defaultVolume = ref<number>(initial.defaultVolume);
   const defaultQuality = ref<string>(initial.defaultQuality);
   const defaultSubtitleLang = ref<string | null>(initial.defaultSubtitleLang);
@@ -181,6 +184,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       gridDensity: gridDensity.value,
       reducedMotion: reducedMotion.value,
       autoplay: autoplay.value,
+      seriesThemeAutoplay: seriesThemeAutoplay.value,
       defaultVolume: defaultVolume.value,
       defaultQuality: defaultQuality.value,
       defaultSubtitleLang: defaultSubtitleLang.value,
@@ -227,6 +231,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     gridDensity.value = d.gridDensity;
     reducedMotion.value = d.reducedMotion;
     autoplay.value = d.autoplay;
+    seriesThemeAutoplay.value = d.seriesThemeAutoplay;
     defaultVolume.value = d.defaultVolume;
     defaultQuality.value = d.defaultQuality;
     defaultSubtitleLang.value = d.defaultSubtitleLang;
@@ -245,6 +250,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     gridDensity,
     reducedMotion,
     autoplay,
+    seriesThemeAutoplay,
     defaultVolume,
     defaultQuality,
     defaultSubtitleLang,

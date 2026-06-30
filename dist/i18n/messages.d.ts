@@ -200,6 +200,7 @@ export declare const DEFAULT_MESSAGES: {
         motion: string;
         filmGrainGlow: string;
         autoplayNext: string;
+        seriesThemeAutoplay: string;
         defaultVolume: string;
         defaultQuality: string;
         defaultLanguage: string;
