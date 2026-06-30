@@ -84,6 +84,19 @@ export interface MediaDetail extends MediaListItem {
     studio?: string | null;
     /** Owning library id. Detail shape only. */
     library_id?: string | null;
+    /**
+     * Per-user state for the authenticated viewer, an ADD-ONLY block the server
+     * attaches to the detail (`GET /api/v1/media/{id}`) and favorites
+     * (`GET /api/v1/users/me/favorites`) responses — NOT to plain list rows. It
+     * is therefore a detail-only field (and optional, so list-context items still
+     * type-check). `favorite` is the bookmark/favorite flag; `rating` is the
+     * personal 1-10 score (null when unrated); `like_level` is the 4-state Love
+     * axis (0-3, added in a later W1 step — optional so older servers that omit
+     * it keep working). `null` means the request was unauthenticated / the store
+     * is not wired. Distinct from the list-level `rating` (the content/parental
+     * rating like "PG-13") — never conflate the two.
+     */
+    user_data?: { favorite: boolean; rating: number | null; like_level?: number } | null;
 }
 
 /**

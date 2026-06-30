@@ -36,6 +36,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        user_data?: {
+            favorite: boolean;
+            rating: number | null;
+            like_level?: number | undefined;
+        } | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -80,6 +85,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        user_data?: {
+            favorite: boolean;
+            rating: number | null;
+            like_level?: number | undefined;
+        } | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -177,6 +187,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        user_data?: {
+            favorite: boolean;
+            rating: number | null;
+            like_level?: number | undefined;
+        } | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -221,6 +236,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        user_data?: {
+            favorite: boolean;
+            rating: number | null;
+            like_level?: number | undefined;
+        } | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -318,6 +338,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        user_data?: {
+            favorite: boolean;
+            rating: number | null;
+            like_level?: number | undefined;
+        } | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -362,6 +387,11 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         }[] | undefined;
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
+        user_data?: {
+            favorite: boolean;
+            rating: number | null;
+            like_level?: number | undefined;
+        } | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;

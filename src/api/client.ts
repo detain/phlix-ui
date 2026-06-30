@@ -1,5 +1,6 @@
 import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
 import { LocalStorageTokenStore, type TokenStore } from './tokenStore';
+import type { MediaItem } from '../types/media-item';
 
 /** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
 export { ApiError } from './errors';
@@ -161,6 +162,19 @@ export interface MatchApplyResult<TItem = unknown> {
         children_enriched: number;
         [key: string]: unknown;
     };
+}
+
+/**
+ * Envelope returned by {@link ApiClient.listFavorites}
+ * (`GET /api/v1/users/me/favorites`). Mirrors the server's paginated list shape:
+ * fully shaped media items (each carrying its add-only `user_data` block), plus
+ * the effective `limit`/`offset` the server applied. `total` is NOT sent by this
+ * endpoint (unlike the browse list) so it is intentionally absent here.
+ */
+export interface FavoritesResult {
+    items: MediaItem[];
+    limit: number;
+    offset: number;
 }
 
 /** The server error `code` returned (422) when no TMDB API key is configured. */
@@ -461,6 +475,66 @@ export class ApiClient {
             `/api/v1/media/${encodeURIComponent(id)}/match/apply`,
             input,
         );
+    }
+
+    /**
+     * Mark a media item as a favorite for the authenticated user
+     * (`POST /api/v1/media/{id}/favorite`). The backend persists the favorite
+     * flag and returns a flat `{ message }`, which we surface verbatim. Non-2xx
+     * (401 unauth, 404 unknown id) throw the shared {@link ApiError}.
+     */
+    addFavorite(id: string): Promise<{ message: string }> {
+        return this.post<{ message: string }>(`/api/v1/media/${encodeURIComponent(id)}/favorite`);
+    }
+
+    /**
+     * Remove a media item from the authenticated user's favorites
+     * (`DELETE /api/v1/media/{id}/favorite`). Returns the server's flat
+     * `{ message }`. Non-2xx (401, 404) throw the shared {@link ApiError}.
+     */
+    removeFavorite(id: string): Promise<{ message: string }> {
+        return this.delete<{ message: string }>(`/api/v1/media/${encodeURIComponent(id)}/favorite`);
+    }
+
+    /**
+     * Set (or clear) the authenticated user's personal 1-10 rating for a media
+     * item (`PUT /api/v1/media/{id}/rating`, body `{ rating }`). Pass `null` to
+     * clear the rating. The server returns a flat `{ message }`. A non-integer /
+     * out-of-range rating is a 400 → shared {@link ApiError}; 401/404 likewise.
+     */
+    setRating(id: string, rating: number | null): Promise<{ message: string }> {
+        return this.put<{ message: string }>(
+            `/api/v1/media/${encodeURIComponent(id)}/rating`,
+            { rating },
+        );
+    }
+
+    /**
+     * List the authenticated user's favorited media items, most-recently
+     * favorited first (`GET /api/v1/users/me/favorites`). Each returned item is a
+     * fully shaped {@link MediaItem} carrying its add-only `user_data` block.
+     * `limit` (default server-side 50, clamped 1-100) and `offset` (default 0)
+     * mirror the browse list endpoint. The `{ items, limit, offset }` envelope is
+     * returned verbatim, with `items` defended to an array so a malformed payload
+     * degrades to empty rather than throwing downstream.
+     */
+    async listFavorites(
+        params: { limit?: number; offset?: number } = {},
+        signal?: AbortSignal,
+    ): Promise<FavoritesResult> {
+        const query: Record<string, string> = {};
+        if (params.limit !== undefined) query['limit'] = String(params.limit);
+        if (params.offset !== undefined) query['offset'] = String(params.offset);
+        const res = await this.get<Partial<FavoritesResult>>(
+            '/api/v1/users/me/favorites',
+            Object.keys(query).length ? query : undefined,
+            signal,
+        );
+        return {
+            items: Array.isArray(res.items) ? res.items : [],
+            limit: typeof res.limit === 'number' ? res.limit : (params.limit ?? 50),
+            offset: typeof res.offset === 'number' ? res.offset : (params.offset ?? 0),
+        };
     }
 
     isLoggedIn(): boolean {

@@ -20,6 +20,7 @@ export type {
   MatchSearchParams,
   MatchApplyInput,
   MatchApplyResult,
+  FavoritesResult,
 } from './api/client';
 export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './api/errors';
 
