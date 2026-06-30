@@ -199,6 +199,24 @@ const resumeLabel = computed(() => {
   return `${h > 0 ? `${h}:` : ''}${mm}:${String(sec).padStart(2, '0')}`;
 });
 
+/** Format bytes as a human-readable size string (e.g. "2.4 GB"). */
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let unitIndex = 0;
+  let value = bytes;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+  if (unitIndex === 0 && bytes >= 960) {
+    unitIndex = 1;
+    value = bytes / 1024;
+  }
+  if (unitIndex > 0 && Math.round(value) === 1) return `1 ${units[unitIndex]}`;
+  return `${value.toFixed(value < 100 ? 1 : 0)} ${units[unitIndex]}`;
+}
+
 const loaded = ref(false);
 const imgEl = ref<HTMLImageElement | null>(null);
 function onLoad() {
@@ -392,6 +410,20 @@ const backdropUrl = computed(() => {
         </div>
       </div>
     </div>
+
+    <section v-if="item.files?.length" class="media-detail__files">
+      <h2 class="media-detail__files-heading">Files</h2>
+      <ul class="media-detail__files-list">
+        <li v-for="(file, i) in item.files" :key="i" class="media-detail__file">
+          <span class="media-detail__file-path">{{ file.path }}</span>
+          <span class="media-detail__file-meta">
+            <span v-if="file.container" class="media-detail__file-container">{{ file.container }}</span>
+            <span v-if="file.resolution" class="media-detail__file-resolution">{{ file.resolution }}</span>
+            <span class="media-detail__file-size">{{ formatBytes(file.size_bytes) }}</span>
+          </span>
+        </li>
+      </ul>
+    </section>
 
     <MediaRow
       v-if="similarLoading || similar.length"
@@ -737,6 +769,68 @@ const backdropUrl = computed(() => {
   position: relative;
   z-index: 1;
   margin-top: var(--space-10);
+}
+
+.media-detail__files {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  max-width: 800px;
+}
+.media-detail__files-heading {
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-3);
+}
+.media-detail__files-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.media-detail__file {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+}
+.media-detail__file-path {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+.media-detail__file-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+}
+.media-detail__file-container {
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+}
+.media-detail__file-resolution {
+  font-family: var(--font-mono, monospace);
+}
+.media-detail__file-size {
+  font-family: var(--font-mono, monospace);
+  color: var(--text-muted);
 }
 
 @media (max-width: 720px) {
