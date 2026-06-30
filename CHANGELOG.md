@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Post-release changes land here._
 
+## [0.57.0] - 2026-06-30
+
+### Added
+
+- **Favorites wiring (Feature 17)** — end-to-end favorites support against the existing server backend. The detail-only `user_data` field (`{ favorite: boolean; rating: number | null; like_level?: number }`) is added to `MediaDetail`. `ApiClient` gains `addFavorite`/`removeFavorite`/`setRating`/`listFavorites` (mapped to `POST/DELETE /api/v1/media/{id}/favorite`, `PUT /api/v1/media/{id}/rating`, `GET /api/v1/users/me/favorites`) plus an exported `FavoritesResult`. A new Pinia store `useUserItemDataStore` holds a reactive per-item cache with an optimistic `toggleFavorite(id, apiBase)` (synchronous flip, rollback + error toast on failure), `hydrate(item)`, `isFavorite(id)`, and `reset()`. `MediaCard` now renders a wired favorite/bookmark quick-action (active/`aria-pressed` state, filled-amber when favorited) and establishes the canonical action-row order `[Play] [Love] [Favorite] [Info] [⋯] [Match]`. Browse and detail pages persist the toggle and hydrate `user_data` on load (the detail hero favorite button toggles + persists through the store), and a "Favorites" row appears on Browse immediately after Continue Watching, sourced from `listFavorites()` and hidden when empty.
+- **Multi-level Love (Feature 10)** — a new `LoveButton.vue` 4-state control (cycles through love levels) bound to the `like_level` axis on `user_data`. `ApiClient` gains `setLikeLevel` and `useUserItemDataStore` gains `cycleLove`; `like_level` is carried and persisted on `user_data`. The Love button is rendered on both `MediaCard` and the media detail view, in the canonical action-row slot reserved in Feature 17.
+- **Player favorite + Love controls (Feature 16)** — `Player.vue` integrates the favorite toggle and the `LoveButton`; the `MiniPlayer` dock gains a compact single favorite toggle bound to the current item; and `PlayerPage` hydrates `user_data` after fetching the item so the player controls pre-fill for favorited/loved items.
+
 ## [0.56.0] - 2026-06-30
 
 ### Added
