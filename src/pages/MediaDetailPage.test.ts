@@ -6,6 +6,7 @@ import MediaDetailPage from './MediaDetailPage.vue';
 import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -189,16 +190,63 @@ describe('MediaDetailPage — actions & navigation', () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it('toasts on watchlist', async () => {
+  it('hydrates the favorite store from the server user_data on load', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: true, rating: 8 } })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    await mountAt('m1', fetchMock);
+    const userItemData = useUserItemDataStore();
+    await flushPromises();
+    // Detail shows the correct initial favorite state right after load()+hydrate.
+    expect(userItemData.isFavorite('m1')).toBe(true);
+    expect(userItemData.get('m1').rating).toBe(8);
+  });
+
+  it('emits a state-aware "added" toast on watchlist when the item is favorited', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: true, rating: null } })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
     const { w } = await mountAt('m1', fetchMock);
     const toasts = useToastStore();
     await flushPromises();
     w.findComponent(MediaDetail).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
-    expect(toasts.toasts.some((t) => t.tone === 'success' && t.message.includes('Dune'))).toBe(true);
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'success' && t.message.includes('Dune') && /favorites/i.test(t.message),
+      ),
+    ).toBe(true);
+  });
+
+  it('emits a state-aware "removed" toast on watchlist when the item is not favorited', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: false, rating: null } })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAt('m1', fetchMock);
+    const toasts = useToastStore();
+    await flushPromises();
+    w.findComponent(MediaDetail).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'info' && t.message.includes('Dune') && /favorites/i.test(t.message),
+      ),
+    ).toBe(true);
+  });
+
+  it('does NOT toggle the favorite from the watchlist handler (no double-flip)', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: true, rating: null } })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAt('m1', fetchMock);
+    const userItemData = useUserItemDataStore();
+    await flushPromises();
+    const toggleSpy = vi.spyOn(userItemData, 'toggleFavorite');
+    w.findComponent(MediaDetail).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
+    expect(toggleSpy).not.toHaveBeenCalled();
+    expect(userItemData.isFavorite('m1')).toBe(true);
   });
 
   it('goes back via router.back from the detail back affordance', async () => {

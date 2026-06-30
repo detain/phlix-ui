@@ -1004,12 +1004,12 @@ function ma(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-DXY13QFj.js")
+			component: () => import("./BrowsePage-ZQQX6JbX.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-CC2Zi0e3.js")
+			component: () => import("./MediaDetailPage-Dq28HgrT.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,

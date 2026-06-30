@@ -21,6 +21,7 @@ import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -45,6 +46,7 @@ const libraries = useLibrariesStore();
 const player = usePlayerStore();
 const toasts = useToastStore();
 const auth = useAuthStore();
+const userItemData = useUserItemDataStore();
 const router = useRouter();
 
 // Interactive metadata match (U5) — admin-only. A card "Match" action opens the
@@ -127,8 +129,19 @@ function onPlay(item: MediaItem): void {
   }
   go('player', item.id);
 }
+// The card's favorite/bookmark button ALREADY toggled the store optimistically
+// (MediaCard.onFavorite → useUserItemDataStore.toggleFavorite, Step 17.3) and then
+// re-emits `watchlist` for back-compat. This handler must therefore NOT toggle
+// again (a second toggle would flip the favorite right back off). It only surfaces
+// a state-aware toast reflecting the NEW persisted state read from the store, so
+// favoriting persists across a reload (the single source of truth is the store +
+// server, mutated once by the card).
 function onWatchlist(item: MediaItem): void {
-  toasts.success(`Added "${item.name}" to your list`);
+  if (userItemData.isFavorite(item.id)) {
+    toasts.success(`Added "${item.name}" to your favorites`);
+  } else {
+    toasts.info(`Removed "${item.name}" from your favorites`);
+  }
 }
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
