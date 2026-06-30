@@ -118,8 +118,14 @@ export declare const DEFAULT_MESSAGES: {
         connect: string;
         connecting: string;
         addressRequired: string;
+        invalidAddress: string;
         unreachable: string;
         connectAnyway: string;
+        plaintextWarning: string;
+        plaintextConfirm: string;
+        originConfirm: string;
+        confirmContinue: string;
+        confirmCancel: string;
     };
     player: {
         play: string;

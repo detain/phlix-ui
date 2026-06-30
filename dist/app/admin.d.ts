@@ -17,7 +17,7 @@ import type { IconName } from '../components/Icon.vue';
  * - {@link commonAdminPages} — portable to BOTH apps: Users, Logs, Settings.
  * - {@link serverAdminPages} — media-server-only: Dashboard, Webhooks, Services,
  *   Integrations, Backup, Cast Devices, DLNA, Remote Access, Live TV, Collections,
- *   History, SyncPlay, Libraries, Plugins.
+ *   History, SyncPlay, Libraries, Duplicates, Plugins.
  * - {@link hubAdminPages} — hub-only: Hub Dashboard, Audit Logs.
  *
  * `buildAdminRoutes(base)` with no `pages` argument yields the **server pages in
@@ -48,7 +48,7 @@ export interface AdminPage {
 export declare function adminPageLabel(name: string | null | undefined): string | null;
 /** Admin pages portable to BOTH apps (they hit endpoints both backends serve). */
 export declare const commonAdminPages: AdminPage[];
-/** Media-server-only admin pages (the 14 surfaces that depend on a media backend). */
+/** Media-server-only admin pages (the surfaces that depend on a media backend). */
 export declare const serverAdminPages: AdminPage[];
 /** Hub-only admin pages: a hub-scoped dashboard + the re-homed audit log. */
 export declare const hubAdminPages: AdminPage[];

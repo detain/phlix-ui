@@ -39,17 +39,17 @@ declare function scrollToIndex(index: number): void;
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {
     scrollToIndex: typeof scrollToIndex;
 }, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
-    match: (item: MediaItem) => any;
-    play: (item: MediaItem) => any;
-    info: (item: MediaItem) => any;
-    watchlist: (item: MediaItem) => any;
+    match: (item: import("../types/media-item").MediaDetail) => any;
+    play: (item: import("../types/media-item").MediaDetail) => any;
+    info: (item: import("../types/media-item").MediaDetail) => any;
+    watchlist: (item: import("../types/media-item").MediaDetail) => any;
     "load-more": () => any;
     "need-range": (startIndex: number, endIndex: number) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
-    onMatch?: ((item: MediaItem) => any) | undefined;
-    onPlay?: ((item: MediaItem) => any) | undefined;
-    onInfo?: ((item: MediaItem) => any) | undefined;
-    onWatchlist?: ((item: MediaItem) => any) | undefined;
+    onMatch?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onPlay?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onInfo?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onLoad-more"?: (() => any) | undefined;
     "onNeed-range"?: ((startIndex: number, endIndex: number) => any) | undefined;
 }>, {
