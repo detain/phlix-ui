@@ -7,8 +7,10 @@
  * episode. Driven purely by props so it tests without a router/store; the page
  * container fetches the children, groups them, and wires navigation.
  */
-import type { MediaItem } from '../types/media-item';
+import { ref, computed, inject } from 'vue';
+import type { MediaItem, MediaFile } from '../types/media-item';
 import type { SeasonGroup } from './series-grouping';
+import { api } from '../api/client';
 import Icon from './Icon.vue';
 
 const props = withDefaults(
@@ -16,13 +18,49 @@ const props = withDefaults(
         seasons: SeasonGroup[];
         /** Open only the first season by default (others collapsed). */
         openFirstOnly?: boolean;
+        /** API base URL for fetching episode detail (files are detail-only). */
+        apiBase?: string;
     }>(),
-    { openFirstOnly: true },
+    { openFirstOnly: true, apiBase: '' },
 );
 
 const emit = defineEmits<{
     (e: 'play', item: MediaItem): void;
 }>();
+
+const auth = inject('auth', { isAdmin: false } as { isAdmin: boolean }) as { isAdmin: boolean };
+
+const episodeFiles = ref<Record<string, MediaFile[]>>({});
+const expandedEpisodes = ref<Set<string>>(new Set());
+
+function episodeFilesById(episodeId: string): MediaFile[] | undefined {
+    return episodeFiles.value[episodeId];
+}
+
+function isExpanded(episodeId: string): boolean {
+    return expandedEpisodes.value.has(episodeId);
+}
+
+async function fetchEpisodeFiles(episodeId: string): Promise<void> {
+    if (episodeFiles.value[episodeId] !== undefined) return;
+    try {
+        const detail = await api.get<MediaItem>(
+            `${props.apiBase}/api/v1/media/${encodeURIComponent(episodeId)}`,
+        );
+        episodeFiles.value[episodeId] = detail.files ?? [];
+    } catch {
+        episodeFiles.value[episodeId] = [];
+    }
+}
+
+function toggleExpanded(episodeId: string): void {
+    if (isExpanded(episodeId)) {
+        expandedEpisodes.value.delete(episodeId);
+    } else {
+        expandedEpisodes.value.add(episodeId);
+        fetchEpisodeFiles(episodeId);
+    }
+}
 
 /** "1. Pilot" — episode number (when known) then per-episode title/name. */
 function episodeTitle(ep: MediaItem): string {
@@ -38,6 +76,26 @@ function runtimeLabel(ep: MediaItem): string | null {
 function shouldOpen(index: number): boolean {
     return props.openFirstOnly ? index === 0 : true;
 }
+
+/** Format bytes as a human-readable size string (e.g. "2.4 GB"). */
+function formatBytes(bytes: number): string {
+    if (bytes <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let unitIndex = 0;
+    let value = bytes;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+        value /= 1024;
+        unitIndex++;
+    }
+    if (unitIndex === 0 && bytes >= 960) {
+        unitIndex = 1;
+        value = bytes / 1024;
+    }
+    const decimals = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+    return `${value.toFixed(decimals)} ${units[unitIndex]}`;
+}
+
+const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
 </script>
 
 <template>
@@ -80,6 +138,42 @@ function shouldOpen(index: number): boolean {
                     <span v-if="runtimeLabel(ep)" class="series-seasons__episode-runtime numeric">{{
                         runtimeLabel(ep)
                     }}</span>
+                    <button
+                        v-if="showAdminFileInfo"
+                        type="button"
+                        class="series-seasons__files-btn"
+                        :aria-label="`Files info for ${episodeTitle(ep)}${isExpanded(ep.id) ? ' (expanded)' : ''}`"
+                        :title="isExpanded(ep.id) ? 'Collapse files' : 'Expand files'"
+                        @click.stop="toggleExpanded(ep.id)"
+                    >
+                        <Icon :name="isExpanded(ep.id) ? 'x' : 'info'" aria-hidden="true" />
+                    </button>
+                    <div
+                        v-if="showAdminFileInfo && isExpanded(ep.id)"
+                        class="series-seasons__files-detail"
+                    >
+                        <span
+                            v-if="episodeFilesById(ep.id) === undefined"
+                            class="series-seasons__files-loading"
+                        >
+                            Loading…
+                        </span>
+                        <template v-else-if="episodeFilesById(ep.id)?.length">
+                            <span
+                                v-for="(file, fi) in episodeFilesById(ep.id)"
+                                :key="fi"
+                                class="series-seasons__file-row"
+                            >
+                                <span class="series-seasons__file-path">{{ file.path }}</span>
+                                <span class="series-seasons__file-meta numeric">
+                                    {{ formatBytes(file.size_bytes) }}
+                                    <template v-if="file.container"> · {{ file.container }}</template>
+                                    <template v-if="file.resolution"> · {{ file.resolution }}</template>
+                                </span>
+                            </span>
+                        </template>
+                        <span v-else class="series-seasons__files-empty">No files</span>
+                    </div>
                 </li>
             </ul>
         </details>
@@ -149,7 +243,8 @@ function shouldOpen(index: number): boolean {
 }
 
 .series-seasons__episode {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
@@ -208,6 +303,69 @@ function shouldOpen(index: number): boolean {
 .series-seasons__episode-runtime {
     flex: 0 0 auto;
     font-size: var(--text-sm);
+    color: var(--text-subtle);
+}
+
+.series-seasons__files-btn {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text-subtle);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+.series-seasons__files-btn:hover {
+    background: var(--surface-3);
+    color: var(--text);
+}
+.series-seasons__files-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-ring);
+}
+
+.series-seasons__files-detail {
+    width: 100%;
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    margin-top: var(--space-2);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+.series-seasons__files-loading,
+.series-seasons__files-empty {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    font-style: italic;
+}
+.series-seasons__file-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-1) 0;
+    border-bottom: 1px solid var(--border);
+}
+.series-seasons__file-row:last-child {
+    border-bottom: none;
+}
+.series-seasons__file-path {
+    font-family: var(--font-mono, monospace);
+    font-size: var(--text-xs);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.series-seasons__file-meta {
+    font-size: var(--text-xs);
     color: var(--text-subtle);
 }
 </style>

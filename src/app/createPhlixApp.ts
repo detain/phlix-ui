@@ -422,6 +422,9 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     app.provide('phlixCommands', fullConfig.commands ?? []);
     app.provide('phlixConfig', fullConfig);
     app.use(pinia);
+    // Provide auth store for components that use inject (e.g. SeriesSeasons).
+    // Must be after app.use(pinia) so getActivePinia() resolves correctly.
+    app.provide('auth', useAuthStore(pinia));
     app.use(router);
 
     // Register `v-focusable` globally so consumers get the spatial-nav directive

@@ -169,6 +169,7 @@ const seasonOverview = computed(() => season.value?.seasonItem?.overview ?? null
                     v-if="season.episodes.length"
                     :seasons="seasonGroups"
                     :open-first-only="false"
+                    :api-base="apiBase"
                     @play="onPlayEpisode"
                 />
                 <EmptyState
