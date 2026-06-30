@@ -7,35 +7,35 @@ import { i as o } from "./usePageTitle-BO3GGF3M.js";
 import { t as s } from "./Button-k7aQagzg.js";
 import { t as c } from "./useToastStore-BDoKlU6N.js";
 import { t as l } from "./Skeleton-DkSoWF3C.js";
-import { t as ee } from "./MetadataMatchModal-CIp61Nci.js";
-import { t as te } from "./EmptyState-B2QnGIQT.js";
-import { n as ne } from "./media-query-C8oxSF4h.js";
-import { t as u } from "./MediaDetail-B-GgF1Mu.js";
-import { a as d, n as re } from "./series-grouping-BTZK8Agh.js";
-import { t as f } from "./useSeriesSeasons-LD7RRPM9.js";
-import { Fragment as p, computed as m, createBlock as h, createCommentVNode as g, createElementBlock as _, createElementVNode as v, createTextVNode as y, createVNode as b, defineComponent as x, inject as S, onBeforeUnmount as ie, onMounted as ae, openBlock as C, ref as w, renderList as T, resolveComponent as E, toDisplayString as D, unref as O, watch as oe, withCtx as k } from "vue";
-import { useRoute as se, useRouter as ce } from "vue-router";
+import { i as ee, t as te } from "./MetadataMatchModal-CIp61Nci.js";
+import { t as ne } from "./EmptyState-B2QnGIQT.js";
+import { n as u } from "./media-query-C8oxSF4h.js";
+import { t as d } from "./MediaDetail-CED9xUia.js";
+import { a as f, n as re } from "./series-grouping-BTZK8Agh.js";
+import { t as ie } from "./useSeriesSeasons-LD7RRPM9.js";
+import { Fragment as p, computed as m, createBlock as h, createCommentVNode as g, createElementBlock as _, createElementVNode as v, createTextVNode as y, createVNode as b, defineComponent as x, inject as ae, onBeforeUnmount as oe, onMounted as se, openBlock as S, ref as C, renderList as w, resolveComponent as T, toDisplayString as E, unref as D, watch as ce, withCtx as O } from "vue";
+import { useRoute as le, useRouter as ue } from "vue-router";
 //#region src/components/SeriesDetail.vue?vue&type=script&setup=true&lang.ts
-var A = { class: "series-detail" }, j = {
+var k = { class: "series-detail" }, A = {
 	class: "series-detail__seasons",
 	"aria-label": "Seasons"
-}, M = {
+}, j = {
 	key: 0,
 	class: "series-detail__seasons-loading",
 	role: "status",
 	"aria-busy": "true",
 	"aria-label": "Loading seasons"
-}, N = {
+}, M = {
 	key: 1,
 	class: "series-detail__grid"
-}, P = { class: "series-detail__poster" }, F = ["src", "alt"], I = {
+}, N = { class: "series-detail__poster" }, P = ["src", "alt"], F = {
 	key: 1,
 	class: "series-detail__fallback",
 	"aria-hidden": "true"
-}, L = { class: "series-detail__caption" }, R = { class: "series-detail__label" }, z = { class: "series-detail__count numeric" }, B = {
+}, I = { class: "series-detail__caption" }, L = { class: "series-detail__label" }, R = { class: "series-detail__count numeric" }, z = {
 	key: 2,
 	class: "series-detail__empty"
-}, le = /*#__PURE__*/ e(/* @__PURE__ */ x({
+}, de = /*#__PURE__*/ e(/* @__PURE__ */ x({
 	__name: "SeriesDetail",
 	props: {
 		item: {},
@@ -62,7 +62,7 @@ var A = { class: "series-detail" }, j = {
 	setup(e, { emit: n }) {
 		let r = e, i = n;
 		function a(e) {
-			return `${r.routerBase}/media/${r.item.id}/season/${d(e)}`;
+			return `${r.routerBase}/media/${r.item.id}/season/${f(e)}`;
 		}
 		function o(e) {
 			return e.seasonPoster ?? r.item.poster_url ?? null;
@@ -73,8 +73,8 @@ var A = { class: "series-detail" }, j = {
 		}
 		let c = m(() => r.seasons.length > 0);
 		return (n, r) => {
-			let l = E("RouterLink");
-			return C(), _("div", A, [b(u, {
+			let l = T("RouterLink");
+			return S(), _("div", k, [b(d, {
 				item: e.item,
 				"resume-seconds": e.resumeSeconds,
 				similar: [],
@@ -90,41 +90,41 @@ var A = { class: "series-detail" }, j = {
 				"item",
 				"resume-seconds",
 				"can-match"
-			]), v("section", j, [r[6] ||= v("h2", { class: "series-detail__seasons-title" }, "Seasons", -1), e.loading ? (C(), _("div", M)) : c.value ? (C(), _("ul", N, [(C(!0), _(p, null, T(e.seasons, (e) => (C(), _("li", {
+			]), v("section", A, [r[6] ||= v("h2", { class: "series-detail__seasons-title" }, "Seasons", -1), e.loading ? (S(), _("div", j)) : c.value ? (S(), _("ul", M, [(S(!0), _(p, null, w(e.seasons, (e) => (S(), _("li", {
 				key: e.key,
 				class: "series-detail__cell"
 			}, [b(l, {
 				to: a(e),
 				class: "series-detail__card"
 			}, {
-				default: k(() => [v("div", P, [o(e) ? (C(), _("img", {
+				default: O(() => [v("div", N, [o(e) ? (S(), _("img", {
 					key: 0,
 					class: "series-detail__img",
 					src: o(e) ?? void 0,
 					alt: e.label,
 					loading: "lazy",
 					decoding: "async"
-				}, null, 8, F)) : (C(), _("div", I, [b(t, { name: "tv" })]))]), v("div", L, [v("span", R, D(e.label), 1), v("span", z, D(s(e)), 1)])]),
+				}, null, 8, P)) : (S(), _("div", F, [b(t, { name: "tv" })]))]), v("div", I, [v("span", L, E(e.label), 1), v("span", R, E(s(e)), 1)])]),
 				_: 2
-			}, 1032, ["to"])]))), 128))])) : (C(), _("p", B, "This series has no seasons available to watch."))])]);
+			}, 1032, ["to"])]))), 128))])) : (S(), _("p", z, "This series has no seasons available to watch."))])]);
 		};
 	}
-}), [["__scopeId", "data-v-84f77d59"]]), ue = { class: "media-detail-page" }, de = {
+}), [["__scopeId", "data-v-84f77d59"]]), fe = { class: "media-detail-page" }, B = {
 	key: 0,
 	class: "media-detail-page__loading",
 	role: "status",
 	"aria-busy": "true",
 	"aria-label": "Loading title"
-}, fe = { class: "media-detail-page__loading-hero" }, pe = { class: "media-detail-page__loading-info" }, V = /*#__PURE__*/ e(/* @__PURE__ */ x({
+}, pe = { class: "media-detail-page__loading-hero" }, me = { class: "media-detail-page__loading-info" }, V = /*#__PURE__*/ e(/* @__PURE__ */ x({
 	__name: "MediaDetailPage",
 	setup(e) {
-		let t = r(), d = S("phlixConfig", void 0), x = m(() => d?.routerBase || "/app"), T = se(), E = ce(), D = a(), A = c(), j = i(), M = w(null), N = w([]), P = w([]), F = w(!0), I = w(!1), L = w(!1), R = w(null), z = m(() => String(T.params.id ?? "")), B = m(() => D.resumePositionFor(z.value)), V = m(() => M.value?.type === "series");
+		let t = r(), f = ae("phlixConfig", void 0), x = m(() => f?.routerBase || "/app"), w = le(), T = ue(), E = a(), k = c(), A = i(), j = ee(), M = C(null), N = C([]), P = C([]), F = C(!0), I = C(!1), L = C(!1), R = C(null), z = m(() => String(w.params.id ?? "")), V = m(() => E.resumePositionFor(z.value)), he = m(() => M.value?.type === "series");
 		o(() => M.value?.name);
 		let H = null, U = !1;
 		function W(e) {
 			return typeof e == "object" && !!e && e.name === "AbortError";
 		}
-		async function me(e, n) {
+		async function ge(e, n) {
 			let r = n.genres?.[0];
 			if (!r) {
 				N.value = [];
@@ -133,7 +133,7 @@ var A = { class: "series-detail" }, j = {
 			let i = H, a = () => U || i !== H;
 			I.value = !0;
 			try {
-				let o = ne(t.value, {
+				let o = u(t.value, {
 					genres: [r],
 					limit: 13,
 					sort: "rating",
@@ -152,7 +152,7 @@ var A = { class: "series-detail" }, j = {
 			let r = H, i = () => U || r !== H;
 			L.value = !0, P.value = [];
 			try {
-				let a = await f(e, t.value, n.id, r?.signal);
+				let a = await ie(e, t.value, n.id, r?.signal);
 				if (i()) return;
 				P.value = a;
 			} catch (e) {
@@ -172,17 +172,17 @@ var A = { class: "series-detail" }, j = {
 				let r = new n({ baseUrl: t.value }), i = await r.get(`/api/v1/media/${encodeURIComponent(e)}`, void 0, H?.signal);
 				if (U) return;
 				let a = i.item;
-				M.value = a, F.value = !1, a.type === "series" ? G(r, a) : me(r, a);
+				M.value = a, F.value = !1, j.hydrate(a), a.type === "series" ? G(r, a) : ge(r, a);
 			} catch (e) {
 				if (U || W(e)) return;
 				R.value = e instanceof Error ? e.message : "Failed to load title", F.value = !1;
 			}
 		}
-		ae(K), oe(z, K), ie(() => {
+		se(K), ce(z, K), oe(() => {
 			U = !0, H?.abort(), H = null;
 		});
 		function q(e, t) {
-			E?.push({
+			T?.push({
 				name: e,
 				params: { id: t }
 			}).catch(() => {});
@@ -190,56 +190,56 @@ var A = { class: "series-detail" }, j = {
 		function J(e) {
 			if (e.type === "series") {
 				let e = re(P.value);
-				e ? q("player", e.id) : A.info("No episodes to play yet");
+				e ? q("player", e.id) : k.info("No episodes to play yet");
 				return;
 			}
 			q("player", e.id);
 		}
 		function Y(e) {
-			A.success(`Added "${e.name}" to your list`);
+			j.isFavorite(e.id) ? k.success(`Added "${e.name}" to your favorites`) : k.info(`Removed "${e.name}" from your favorites`);
 		}
 		function X(e) {
 			q("media", e.id);
 		}
 		function Z() {
-			E?.back();
+			T?.back();
 		}
-		function he(e) {
+		function _e(e) {
 			let t = M.value?.library_id;
-			t && E?.hasRoute("library") && E.push({
+			t && T?.hasRoute("library") && T.push({
 				name: "library",
 				params: { id: t },
 				query: { actors: e }
 			});
 		}
-		function ge(e) {
+		function ve(e) {
 			let t = M.value?.library_id;
-			t && E?.hasRoute("library") && E.push({
+			t && T?.hasRoute("library") && T.push({
 				name: "library",
 				params: { id: t },
 				query: { genres: e }
 			});
 		}
-		function _e(e) {
+		function ye(e) {
 			let t = M.value?.library_id;
-			t && E?.hasRoute("library") && E.push({
+			t && T?.hasRoute("library") && T.push({
 				name: "library",
 				params: { id: t },
 				query: { companies: e }
 			});
 		}
-		let Q = w(!1);
+		let Q = C(!1);
 		function $() {
 			M.value && (Q.value = !0);
 		}
-		function ve(e) {
-			M.value = e, A.success(`Updated metadata for "${e.name}"`), e.type === "series" && G(new n({ baseUrl: t.value }), e);
+		function be(e) {
+			M.value = e, k.success(`Updated metadata for "${e.name}"`), e.type === "series" && G(new n({ baseUrl: t.value }), e);
 		}
-		return (e, t) => (C(), _("div", ue, [F.value ? (C(), _("div", de, [v("div", fe, [b(l, {
+		return (e, t) => (S(), _("div", fe, [F.value ? (S(), _("div", B, [v("div", pe, [b(l, {
 			variant: "rect",
 			radius: "var(--radius-lg)",
 			height: "420px"
-		}), v("div", pe, [
+		}), v("div", me, [
 			b(l, {
 				variant: "text",
 				width: "60%",
@@ -255,34 +255,34 @@ var A = { class: "series-detail" }, j = {
 				height: "2.5rem",
 				radius: "var(--radius-md)"
 			})
-		])])])) : R.value ? (C(), h(te, {
+		])])])) : R.value ? (S(), h(ne, {
 			key: 1,
 			icon: "alert",
 			title: "Couldn't load this title",
 			description: R.value
 		}, {
-			actions: k(() => [b(s, {
+			actions: O(() => [b(s, {
 				variant: "solid",
 				onClick: K
 			}, {
-				default: k(() => [...t[1] ||= [y("Retry", -1)]]),
+				default: O(() => [...t[1] ||= [y("Retry", -1)]]),
 				_: 1
 			}), b(s, {
 				variant: "ghost",
 				onClick: Z
 			}, {
-				default: k(() => [...t[2] ||= [y("Back", -1)]]),
+				default: O(() => [...t[2] ||= [y("Back", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["description"])) : M.value ? (C(), _(p, { key: 2 }, [V.value ? (C(), h(le, {
+		}, 8, ["description"])) : M.value ? (S(), _(p, { key: 2 }, [he.value ? (S(), h(de, {
 			key: 0,
 			item: M.value,
 			seasons: P.value,
 			loading: L.value,
-			"resume-seconds": B.value,
+			"resume-seconds": V.value,
 			"router-base": x.value,
-			"can-match": O(j).isAdmin,
+			"can-match": D(A).isAdmin,
 			onPlay: J,
 			onResume: J,
 			onWatchlist: Y,
@@ -296,21 +296,21 @@ var A = { class: "series-detail" }, j = {
 			"resume-seconds",
 			"router-base",
 			"can-match"
-		])) : (C(), h(u, {
+		])) : (S(), h(d, {
 			key: 1,
 			item: M.value,
-			"resume-seconds": B.value,
+			"resume-seconds": V.value,
 			similar: N.value,
 			"similar-loading": I.value,
-			"can-match": O(j).isAdmin,
+			"can-match": D(A).isAdmin,
 			onPlay: J,
 			onResume: J,
 			onWatchlist: Y,
 			onInfo: X,
 			onMatch: $,
-			onActor: he,
-			onGenre: ge,
-			onCompany: _e,
+			onActor: _e,
+			onGenre: ve,
+			onCompany: ye,
 			onBack: Z
 		}, null, 8, [
 			"item",
@@ -318,16 +318,16 @@ var A = { class: "series-detail" }, j = {
 			"similar",
 			"similar-loading",
 			"can-match"
-		]))], 64)) : g("", !0), O(j).isAdmin ? (C(), h(ee, {
+		]))], 64)) : g("", !0), D(A).isAdmin ? (S(), h(te, {
 			key: 3,
 			modelValue: Q.value,
 			"onUpdate:modelValue": t[0] ||= (e) => Q.value = e,
 			item: M.value,
-			onApplied: ve
+			onApplied: be
 		}, null, 8, ["modelValue", "item"])) : g("", !0)]));
 	}
-}), [["__scopeId", "data-v-7a4556fe"]]);
+}), [["__scopeId", "data-v-eb6ffdac"]]);
 //#endregion
 export { V as default };
 
-//# sourceMappingURL=MediaDetailPage-CC2Zi0e3.js.map
+//# sourceMappingURL=MediaDetailPage-BnBGZXQB.js.map

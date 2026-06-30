@@ -6,6 +6,7 @@ import MediaDetailPage from './MediaDetailPage.vue';
 import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -189,16 +190,125 @@ describe('MediaDetailPage — actions & navigation', () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it('toasts on watchlist', async () => {
+  it('hydrates the favorite store from the server user_data on load', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune' })))
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: true, rating: 8 } })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    await mountAt('m1', fetchMock);
+    const userItemData = useUserItemDataStore();
+    await flushPromises();
+    // Detail shows the correct initial favorite state right after load()+hydrate.
+    expect(userItemData.isFavorite('m1')).toBe(true);
+    expect(userItemData.get('m1').rating).toBe(8);
+  });
+
+  it('emits a state-aware "added" toast on watchlist when the item is favorited', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: true, rating: null } })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
     const { w } = await mountAt('m1', fetchMock);
     const toasts = useToastStore();
     await flushPromises();
     w.findComponent(MediaDetail).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
-    expect(toasts.toasts.some((t) => t.tone === 'success' && t.message.includes('Dune'))).toBe(true);
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'success' && t.message.includes('Dune') && /favorites/i.test(t.message),
+      ),
+    ).toBe(true);
+  });
+
+  it('emits a state-aware "removed" toast on watchlist when the item is not favorited', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: false, rating: null } })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAt('m1', fetchMock);
+    const toasts = useToastStore();
+    await flushPromises();
+    w.findComponent(MediaDetail).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'info' && t.message.includes('Dune') && /favorites/i.test(t.message),
+      ),
+    ).toBe(true);
+  });
+
+  it('does NOT toggle the favorite from the watchlist handler (no double-flip)', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: true, rating: null } })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAt('m1', fetchMock);
+    const userItemData = useUserItemDataStore();
+    await flushPromises();
+    const toggleSpy = vi.spyOn(userItemData, 'toggleFavorite');
+    w.findComponent(MediaDetail).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
+    expect(toggleSpy).not.toHaveBeenCalled();
+    expect(userItemData.isFavorite('m1')).toBe(true);
+  });
+
+  // The reviewer flagged that the page tests above pre-seed the store and emit
+  // `watchlist` directly — which masked the real defect. These exercise an ACTUAL
+  // hero-button CLICK end-to-end (MediaDetail.onFavorite → store.toggleFavorite →
+  // emit watchlist → page.onWatchlist → toast) so the toggle, the persistence and
+  // the toast accuracy are all proven, with NO pre-seeding for the add case.
+  it('hero favorite click on a NON-favorited item persists (toggles once) and yields an accurate "Added" toast', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: false, rating: null } })))
+      .mockResolvedValueOnce(jsonResponse({ items: [], total: 0 })) // similar
+      .mockResolvedValueOnce(jsonResponse({ message: 'Added to favorites' })); // POST favorite
+    const { w } = await mountAt('m1', fetchMock);
+    const userItemData = useUserItemDataStore();
+    const toasts = useToastStore();
+    await flushPromises();
+    const toggleSpy = vi.spyOn(userItemData, 'toggleFavorite');
+
+    await w.find('.media-detail__favorite').trigger('click');
+    await flushPromises();
+
+    // exactly one toggle (the hero button), and it persisted via a POST
+    expect(toggleSpy).toHaveBeenCalledTimes(1);
+    expect(toggleSpy).toHaveBeenCalledWith('m1', expect.any(String));
+    expect(userItemData.isFavorite('m1')).toBe(true);
+    const favCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/v1/media/m1/favorite'));
+    expect(favCall).toBeTruthy();
+    expect((favCall?.[1] as RequestInit | undefined)?.method).toBe('POST');
+    // the page toast reads the CORRECT post-toggle state → "Added" (success)
+    expect(
+      toasts.toasts.some((t) => t.tone === 'success' && t.message.includes('Dune') && /favorites/i.test(t.message)),
+    ).toBe(true);
+    // and NOT a misleading "Removed" toast
+    expect(toasts.toasts.some((t) => /removed/i.test(t.message))).toBe(false);
+  });
+
+  it('hero favorite click on an ALREADY-favorited item persists (toggles once → remove) and yields an accurate "Removed" toast', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune', user_data: { favorite: true, rating: null } })))
+      .mockResolvedValueOnce(jsonResponse({ items: [], total: 0 })) // similar
+      .mockResolvedValueOnce(jsonResponse({ message: 'Removed from favorites' })); // DELETE favorite
+    const { w } = await mountAt('m1', fetchMock);
+    const userItemData = useUserItemDataStore();
+    const toasts = useToastStore();
+    await flushPromises();
+    const toggleSpy = vi.spyOn(userItemData, 'toggleFavorite');
+
+    await w.find('.media-detail__favorite').trigger('click');
+    await flushPromises();
+
+    expect(toggleSpy).toHaveBeenCalledTimes(1);
+    expect(userItemData.isFavorite('m1')).toBe(false);
+    const favCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/v1/media/m1/favorite'));
+    expect(favCall).toBeTruthy();
+    expect((favCall?.[1] as RequestInit | undefined)?.method).toBe('DELETE');
+    // the page toast reads the CORRECT post-toggle state → "Removed" (info)
+    expect(
+      toasts.toasts.some((t) => t.tone === 'info' && t.message.includes('Dune') && /favorites/i.test(t.message)),
+    ).toBe(true);
+    expect(toasts.toasts.some((t) => /added/i.test(t.message))).toBe(false);
   });
 
   it('goes back via router.back from the detail back affordance', async () => {
