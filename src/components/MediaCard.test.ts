@@ -331,14 +331,12 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     expect(toggle).toHaveBeenCalledWith('m1', '');
   });
 
-  it('lays out the action row in the canonical order [Play][Favorite][Info][Match]', () => {
-    // Love (10.5/10.6) and the ⋯ menu (W2) are reserved comment slots, so the
-    // RENDERED buttons today are Play → Favorite → Info → Match (admin).
+  it('lays out the action row in the canonical order [Play][Love][Favorite][Info][⋯][Match]', () => {
     const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
     const labels = w
       .findAll('.media-card__actions .media-card__iconbtn')
       .map((b) => b.attributes('aria-label'));
-    expect(labels).toEqual(['Play', 'Add to favorites', 'More info', 'Match metadata']);
+    expect(labels).toEqual(['Play', 'Add to favorites', 'More info', 'More actions', 'Match metadata']);
   });
 
   it('keeps the canonical order without the admin Match button', () => {
@@ -346,7 +344,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     const labels = w
       .findAll('.media-card__actions .media-card__iconbtn')
       .map((b) => b.attributes('aria-label'));
-    expect(labels).toEqual(['Play', 'Add to favorites', 'More info']);
+    expect(labels).toEqual(['Play', 'Add to favorites', 'More info', 'More actions']);
   });
 });
 
@@ -364,6 +362,7 @@ describe('MediaCard — Love button (Feature 10)', () => {
       'Love',
       'Add to favorites',
       'More info',
+      'More actions',
       'Match metadata',
     ]);
   });
