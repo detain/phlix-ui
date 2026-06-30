@@ -10,7 +10,7 @@ import { t as u } from "./Skeleton-DkSoWF3C.js";
 import { t as ee } from "./MetadataMatchModal-H5-IXqpz.js";
 import { t as te } from "./EmptyState-B2QnGIQT.js";
 import { n as ne } from "./media-query-C8oxSF4h.js";
-import { t as re } from "./MediaDetail-DgQqTMhI.js";
+import { t as re } from "./MediaDetail-R9dKhRsM.js";
 import { r as ie, t as ae } from "./useResolvePlayable-DIIz32oI.js";
 import { i as d } from "./series-grouping-Bbs1zX87.js";
 import { t as oe } from "./useSeriesSeasons-ezSOXOgO.js";
@@ -384,4 +384,4 @@ var D = { class: "series-detail" }, O = {
 //#endregion
 export { R as default };
 
-//# sourceMappingURL=MediaDetailPage-BJwk3rzX.js.map
+//# sourceMappingURL=MediaDetailPage-BzySKVVF.js.map
