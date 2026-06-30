@@ -69,6 +69,14 @@ export interface MediaListItem {
  * All detail-only fields remain optional so the type is assignable from
  * list-item contexts (back-compat + synthetic items like local files).
  */
+export type MediaFile = {
+    path: string;
+    size_bytes: number;
+    container?: string | null;
+    codec?: string | null;
+    resolution?: string | null;
+};
+
 export interface MediaDetail extends MediaListItem {
     /** Short-lived signed direct-play URL; list rows / local files omit this. */
     stream_url?: string | null;
@@ -101,6 +109,12 @@ export interface MediaDetail extends MediaListItem {
      * rating like "PG-13") — never conflate the two.
      */
     user_data?: { favorite: boolean; rating: number | null; like_level?: number } | null;
+    /**
+     * Per-file metadata (container, codec, resolution, size) for each physical
+     * file backing this item. Only populated on the detail response; absent on
+     * list rows. Full `path` is admin-gated (non-admin sees basename only).
+     */
+    files?: MediaFile[];
 }
 
 /**
