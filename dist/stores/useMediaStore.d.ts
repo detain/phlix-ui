@@ -37,11 +37,19 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
         } | null | undefined;
+        files?: {
+            path: string;
+            size_bytes: number;
+            container?: string | null | undefined;
+            codec?: string | null | undefined;
+            resolution?: string | null | undefined;
+        }[] | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -87,11 +95,19 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
         } | null | undefined;
+        files?: {
+            path: string;
+            size_bytes: number;
+            container?: string | null | undefined;
+            codec?: string | null | undefined;
+            resolution?: string | null | undefined;
+        }[] | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -190,11 +206,19 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
         } | null | undefined;
+        files?: {
+            path: string;
+            size_bytes: number;
+            container?: string | null | undefined;
+            codec?: string | null | undefined;
+            resolution?: string | null | undefined;
+        }[] | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -240,11 +264,19 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
         } | null | undefined;
+        files?: {
+            path: string;
+            size_bytes: number;
+            container?: string | null | undefined;
+            codec?: string | null | undefined;
+            resolution?: string | null | undefined;
+        }[] | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -343,11 +375,19 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
         } | null | undefined;
+        files?: {
+            path: string;
+            size_bytes: number;
+            container?: string | null | undefined;
+            codec?: string | null | undefined;
+            resolution?: string | null | undefined;
+        }[] | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -393,11 +433,19 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
         } | null | undefined;
+        files?: {
+            path: string;
+            size_bytes: number;
+            container?: string | null | undefined;
+            codec?: string | null | undefined;
+            resolution?: string | null | undefined;
+        }[] | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
