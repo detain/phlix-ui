@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import MediaDetail from './MediaDetail.vue';
 import MediaRow from './MediaRow.vue';
 import Chip from './ui/Chip.vue';
@@ -374,5 +377,41 @@ describe('MediaDetail — actions & similar', () => {
   it('shows the similar rail while it is loading even with no items yet', () => {
     const w = mount(MediaDetail, { props: { item: media(), similar: [], similarLoading: true } });
     expect(w.findComponent(MediaRow).exists()).toBe(true);
+  });
+});
+
+describe('avatar sizing', () => {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+
+  function getSfcCss(): string {
+    const path = resolve(__dirname, './MediaDetail.vue');
+    const content = readFileSync(path, 'utf8');
+    const match = content.match(/<style[^>]*>([\s\S]*?)<\/style>/);
+    return match ? match[1] : '';
+  }
+
+  function cssRuleExists(selector: string, property: string, value: string): boolean {
+    const css = getSfcCss();
+    const propRe = new RegExp(selectorReplacement(selector) + '[\\s\\S]*?' + property + ':\\s*' + escapeRe(value));
+    return propRe.test(css);
+  }
+
+  function escapeRe(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function selectorReplacement(selector: string): string {
+    return selector.replace('.', '\\.');
+  }
+
+  it('applies clamp(3.75rem, 6vw, 5rem) to .media-detail__avatar width and height', () => {
+    mount(MediaDetail, { props: { item: media() } });
+    expect(cssRuleExists('.media-detail__avatar', 'width', 'clamp(3.75rem, 6vw, 5rem)')).toBe(true);
+    expect(cssRuleExists('.media-detail__avatar', 'height', 'clamp(3.75rem, 6vw, 5rem)')).toBe(true);
+  });
+
+  it('applies clamp(5.5rem, 8vw, 7rem) to .media-detail__person width', () => {
+    mount(MediaDetail, { props: { item: media() } });
+    expect(cssRuleExists('.media-detail__person', 'width', 'clamp(5.5rem, 8vw, 7rem)')).toBe(true);
   });
 });
