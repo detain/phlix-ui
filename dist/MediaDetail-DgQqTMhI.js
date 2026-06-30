@@ -334,8 +334,8 @@ var se = { class: "media-detail" }, ce = { class: "media-detail__bar" }, le = { 
 			}, null, 8, ["items", "loading"])) : u("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-9943757f"]]);
+}), [["__scopeId", "data-v-d5293e87"]]);
 //#endregion
 export { z as t };
 
-//# sourceMappingURL=MediaDetail-BepK60sr.js.map
+//# sourceMappingURL=MediaDetail-DgQqTMhI.js.map
