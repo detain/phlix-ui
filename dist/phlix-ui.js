@@ -1017,27 +1017,27 @@ function ga(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-Cl40oI3B.js")
+			component: () => import("./BrowsePage-e9v629Mv.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-D1BeVLfi.js")
+			component: () => import("./MediaDetailPage-CjvHZLUN.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-BoXUB0TW.js")
+			component: () => import("./SeasonPage-DGWb05Cx.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-wrVHS3a9.js")
+			component: () => import("./LibraryPage-DFXOz96W.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-D4XdArHn.js")
+			component: () => import("./PlayerPage-9g4u37At.js")
 		},
 		{
 			path: `${t}/login`,

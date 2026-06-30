@@ -410,7 +410,7 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     expect(hrefs).toContain('/app/media/sh1/season/0'); // Specials → 0
   });
 
-  it('starts the first episode when Play is pressed on the series hero', async () => {
+  it('starts the first episode when Play is pressed on the series hero (no resume entry)', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
@@ -427,7 +427,56 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     await flushPromises();
     const push = vi.spyOn(router, 'push');
     w.findComponent(MediaDetail).vm.$emit('play', media({ id: 'sh1', type: 'series' }));
+    // No resume entry → first episode in whole-series playback order (s1e1),
+    // explicitly NOT the series id and NOT the higher-season s2e1.
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e1' } });
+    expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 'sh1' } });
+  });
+
+  it('resumes the in-progress episode when Play is pressed on the series hero', async () => {
+    // The player store seeds resumeMap from localStorage('phlix.resume'); a
+    // positive entry on s1e2 marks it resume-in-progress.
+    localStorage.setItem('phlix.resume', JSON.stringify({ s1e2: 240 }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            episode({ id: 's1e1', season_number: 1, episode_number: 1 }),
+            episode({ id: 's1e2', season_number: 1, episode_number: 2 }),
+            episode({ id: 's2e1', season_number: 2, episode_number: 1 }),
+          ],
+          total: 3,
+        }),
+      );
+    const { w, router } = await mountAt('sh1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaDetail).vm.$emit('play', media({ id: 'sh1', type: 'series' }));
+    // Resume-in-progress wins over the first episode.
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e2' } });
+    expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 's1e1' } });
+  });
+
+  it('toasts and does NOT navigate when a series has no playable episodes on Play', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
+      // only a Specials (season 0) episode → excluded from playback order → null
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [episode({ id: 'sp1', season_number: 0, episode_number: 1 })],
+          total: 1,
+        }),
+      );
+    const { w, router } = await mountAt('sh1', fetchMock);
+    const toasts = useToastStore();
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaDetail).vm.$emit('play', media({ id: 'sh1', type: 'series' }));
+    expect(push).not.toHaveBeenCalled();
+    expect(toasts.toasts.some((t) => /no episodes to play/i.test(t.message))).toBe(true);
   });
 
   it('flattens server-modeled season rows by fetching each season\'s episodes', async () => {
