@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PlayerPage from './PlayerPage.vue';
 import Player from '../components/Player.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 
 /** Server playback-info shape (markers + chapters; NO stream url). */
@@ -525,6 +526,41 @@ describe('PlayerPage — edge cases', () => {
     expect(w.text()).toContain('No media id provided');
     expect(w.findComponent(Player).exists()).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('PlayerPage — user_data hydrate (Feature 16.3)', () => {
+  it('hydrates the favorites store from the fetched item after a successful load', async () => {
+    const userItemData = useUserItemDataStore();
+    const hydrate = vi.spyOn(userItemData, 'hydrate');
+    const item = media({
+      id: 'm1',
+      // user_data lives on MediaDetail (type split) — the page-level fetch is the
+      // authoritative source the player controls pre-fill from.
+      user_data: { favorite: true, rating: 8, like_level: 2 },
+    } as Partial<MediaItem>);
+    const fetchMock = okFetch(item);
+    await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    // The page hydrated with the fetched item (carrying user_data).
+    expect(hydrate).toHaveBeenCalled();
+    const hydratedWith = hydrate.mock.calls.map((c) => c[0] as MediaItem | null | undefined);
+    expect(hydratedWith.some((m) => m?.id === 'm1')).toBe(true);
+    // And the store reflects the server state so the controls pre-fill on open.
+    expect(userItemData.isFavorite('m1')).toBe(true);
+    expect(userItemData.likeLevel('m1')).toBe(2);
+  });
+
+  it('does not hydrate when the by-id fetch fails (no <Player>, no item)', async () => {
+    const userItemData = useUserItemDataStore();
+    const hydrate = vi.spyOn(userItemData, 'hydrate');
+    const fetchMock = vi.fn().mockResolvedValue(errorResponse(500)); // load fails
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    expect(w.findComponent(Player).exists()).toBe(false); // no Player ⇒ no Player-side hydrate either
+    expect(hydrate).not.toHaveBeenCalled();
   });
 });
 
