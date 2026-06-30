@@ -6,6 +6,7 @@ import Button from '../../components/ui/Button.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Select from '../../components/ui/Select.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
+import SourcePriorityEditor from '../../components/SourcePriorityEditor.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import { ApiError } from '../../api/client';
 import type { ApiClient } from '../../api/client';
@@ -54,12 +55,30 @@ const TYPES = {
   'trakt.redirect_uri': 'string',
 };
 
-function makeClient(over: { overridden?: string[]; putImpl?: ReturnType<typeof vi.fn> } = {}) {
+function makeClient(
+  over: {
+    overridden?: string[];
+    putImpl?: ReturnType<typeof vi.fn>;
+    /** Extra settings keys (e.g. metadata.provider_priority) merged into GET. */
+    extraSettings?: Record<string, unknown>;
+    /** Extra types merged into GET. */
+    extraTypes?: Record<string, string>;
+    /** Sources returned by GET /api/v1/admin/metadata/sources. */
+    sources?: string[];
+  } = {},
+) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/admin/settings') {
       return {
-        data: { settings: { ...SETTINGS }, overridden: over.overridden ?? ['tmdb.api_key'], types: TYPES },
+        data: {
+          settings: { ...SETTINGS, ...(over.extraSettings ?? {}) },
+          overridden: over.overridden ?? ['tmdb.api_key'],
+          types: { ...TYPES, ...(over.extraTypes ?? {}) },
+        },
       };
+    }
+    if (endpoint === '/api/v1/admin/metadata/sources') {
+      return { sources: over.sources ?? ['tmdb', 'imdb', 'tvdb', 'fanart', 'local', 'anidb'] };
     }
     throw new Error(`unexpected GET ${endpoint}`);
   });
@@ -69,6 +88,15 @@ function makeClient(over: { overridden?: string[]; putImpl?: ReturnType<typeof v
   const client = { get, post: vi.fn(), put, patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
   return { client, get, put };
 }
+
+/** GET shape carrying the bespoke metadata keys + their types. */
+const METADATA_OVER = {
+  extraSettings: {
+    'metadata.provider_priority': { movie: ['tmdb', 'imdb'], series: ['tmdb', 'imdb'] },
+    'metadata.genres_mode': 'first',
+  },
+  extraTypes: { 'metadata.provider_priority': 'json', 'metadata.genres_mode': 'string' },
+};
 
 function mountPage(client: ApiClient): VueWrapper {
   return mount(SettingsPage, { props: { client }, attachTo: document.body });
@@ -470,6 +498,83 @@ describe('Admin SettingsPage — tab a11y (ui/Tabs adoption, R6.5a.2)', () => {
     await list.trigger('keydown', { key: 'ArrowRight' });
     await flushPromises();
     expect(w.find('[role="tab"][aria-selected="true"]').text().trim()).toBe('Transcoding');
+    w.unmount();
+  });
+});
+
+describe('Admin SettingsPage — Metadata source priority (Feature 3.6)', () => {
+  it('lazily fetches the available sources the first time the Metadata tab opens', async () => {
+    const { client, get } = makeClient(METADATA_OVER);
+    const w = mountPage(client);
+    await flushPromises();
+    // Not fetched on mount (only the settings GET so far).
+    expect(get).not.toHaveBeenCalledWith('/api/v1/admin/metadata/sources');
+    await selectTab(w, 'Metadata');
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/metadata/sources');
+    w.unmount();
+  });
+
+  it('renders a SourcePriorityEditor per media type in the Metadata tab', async () => {
+    const { client } = makeClient(METADATA_OVER);
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    const editors = w.findAllComponents(SourcePriorityEditor);
+    expect(editors.length).toBe(2); // movie + series
+    expect(editors[0]!.props('modelValue')).toEqual(['tmdb', 'imdb']);
+    expect(editors[0]!.props('available')).toEqual([
+      'tmdb', 'imdb', 'tvdb', 'fanart', 'local', 'anidb',
+    ]);
+    w.unmount();
+  });
+
+  it('reordering a media type list saves the new provider_priority object verbatim', async () => {
+    const { client, put } = makeClient(METADATA_OVER);
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    const editor = w.findAllComponents(SourcePriorityEditor)[0]!; // movie
+    // Emit a reordered list (as the editor would on a Down click).
+    editor.vm.$emit('update:modelValue', ['imdb', 'tmdb']);
+    await flushPromises();
+    expect(saveBtn(w).attributes('disabled')).toBeUndefined();
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
+      settings: {
+        'metadata.provider_priority': { movie: ['imdb', 'tmdb'], series: ['tmdb', 'imdb'] },
+      },
+    });
+    w.unmount();
+  });
+
+  it('renders genres_mode as a Select and saves the chosen value', async () => {
+    const { client, put } = makeClient(METADATA_OVER);
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    // The genres-mode select is the LAST Select in the Metadata tab.
+    const selects = w.findAllComponents(Select);
+    const genresSelect = selects[selects.length - 1]!;
+    genresSelect.vm.$emit('update:modelValue', 'union');
+    await flushPromises();
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
+      settings: { 'metadata.genres_mode': 'union' },
+    });
+    w.unmount();
+  });
+
+  it('still renders the Metadata tab without error when the metadata keys are absent', async () => {
+    // The default makeClient() (no METADATA_OVER) has no provider_priority key;
+    // the tab must still render (empty editor list + genres select defaulting).
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    expect(w.findAllComponents(SourcePriorityEditor).length).toBe(0);
+    expect(w.text()).toContain('Genres mode');
     w.unmount();
   });
 });
