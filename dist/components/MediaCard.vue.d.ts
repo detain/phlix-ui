@@ -27,24 +27,32 @@ type __VLS_Props = {
 };
 declare var __VLS_6: {
     item: import("../types/media-item").MediaDetail;
-}, __VLS_36: {
+}, __VLS_49: {
     item: import("../types/media-item").MediaDetail;
 };
 type __VLS_Slots = {} & {
     badges?: (props: typeof __VLS_6) => any;
 } & {
-    actions?: (props: typeof __VLS_36) => any;
+    actions?: (props: typeof __VLS_49) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: import("../types/media-item").MediaDetail) => any;
     play: (item: import("../types/media-item").MediaDetail) => any;
     info: (item: import("../types/media-item").MediaDetail) => any;
+    refresh: (item: import("../types/media-item").MediaDetail) => any;
+    remove: (item: import("../types/media-item").MediaDetail) => any;
     watchlist: (item: import("../types/media-item").MediaDetail) => any;
+    "mark-watched": (item: import("../types/media-item").MediaDetail) => any;
+    "choose-poster": (item: import("../types/media-item").MediaDetail) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onMatch?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onPlay?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onInfo?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onRefresh?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onRemove?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
 }>, {
     newWithinDays: number;
     canMatch: boolean;
