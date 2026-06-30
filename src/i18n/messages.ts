@@ -233,6 +233,7 @@ export const DEFAULT_MESSAGES = {
     // Atmosphere / playback switches + rows
     filmGrainGlow: 'Film-grain + ambient glow',
     autoplayNext: 'Autoplay next episode',
+    seriesThemeAutoplay: 'Autoplay theme music on series pages',
     defaultVolume: 'Default volume',
     defaultQuality: 'Default quality',
     // Subtitles rows
