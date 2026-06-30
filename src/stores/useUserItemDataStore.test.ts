@@ -164,6 +164,107 @@ describe('useUserItemDataStore', () => {
     });
   });
 
+  describe('likeLevel', () => {
+    it('returns 0 for an unknown id', () => {
+      const store = useUserItemDataStore();
+      expect(store.likeLevel('nope')).toBe(0);
+    });
+
+    it('reflects a hydrated like_level', () => {
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: false, rating: null, like_level: 2 }));
+      expect(store.likeLevel('m1')).toBe(2);
+    });
+  });
+
+  describe('cycleLove', () => {
+    it('advances the level synchronously (optimistic) before the API resolves', () => {
+      const fetchMock = vi.fn().mockReturnValue(
+        new Promise<Response>(() => {
+          /* never resolves — proves the bump is synchronous */
+        }),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1'));
+
+      const p = store.cycleLove('m1', '');
+      expect(store.likeLevel('m1')).toBe(1);
+      void p;
+    });
+
+    it('PUTs the next level exactly once per click', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: 'Love level saved' }));
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1'));
+
+      await store.cycleLove('m1', '');
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0]!;
+      expect(url).toContain('/api/v1/media/m1/like');
+      expect((init as RequestInit).method).toBe('PUT');
+      expect((init as RequestInit).body).toBe(JSON.stringify({ level: 1 }));
+      expect(store.likeLevel('m1')).toBe(1);
+    });
+
+    it('cycles 0→1→2→3→0 across successive clicks', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' }));
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1'));
+
+      await store.cycleLove('m1', '');
+      expect(store.likeLevel('m1')).toBe(1);
+      await store.cycleLove('m1', '');
+      expect(store.likeLevel('m1')).toBe(2);
+      await store.cycleLove('m1', '');
+      expect(store.likeLevel('m1')).toBe(3);
+      await store.cycleLove('m1', '');
+      expect(store.likeLevel('m1')).toBe(0);
+
+      // One PUT per click — never a double-cycle.
+      expect(fetchMock).toHaveBeenCalledTimes(4);
+      expect((fetchMock.mock.calls[0]![1] as RequestInit).body).toBe(JSON.stringify({ level: 1 }));
+      expect((fetchMock.mock.calls[3]![1] as RequestInit).body).toBe(JSON.stringify({ level: 0 }));
+    });
+
+    it('rolls back to the prior level and toasts on API failure', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
+      const toasts = useToastStore();
+      const toastSpy = vi.spyOn(toasts, 'error');
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: false, rating: null, like_level: 2 }));
+
+      await store.cycleLove('m1', '');
+
+      // 2 → 3 optimistically, then rolled back to 2.
+      expect(store.likeLevel('m1')).toBe(2);
+      expect(toastSpy).toHaveBeenCalledTimes(1);
+      expect(toastSpy.mock.calls[0]![0]).toContain('love level');
+    });
+
+    it('preserves favorite and rating across a love cycle', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' })));
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: true, rating: 9, like_level: 1 }));
+
+      await store.cycleLove('m1', '');
+
+      expect(store.get('m1')).toEqual({ favorite: true, rating: 9, like_level: 2 });
+    });
+
+    it('cycles an unknown id from 0 → 1', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' })));
+      const store = useUserItemDataStore();
+
+      await store.cycleLove('fresh', '');
+
+      expect(store.likeLevel('fresh')).toBe(1);
+    });
+  });
+
   describe('reset', () => {
     it('clears the cache', () => {
       const store = useUserItemDataStore();

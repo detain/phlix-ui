@@ -318,6 +318,36 @@ describe('MediaDetail — actions & similar', () => {
     });
   });
 
+  describe('hero Love button (Feature 10.6)', () => {
+    function loveButton(w: ReturnType<typeof mount>) {
+      return w.find('.media-detail__actions .love-button');
+    }
+
+    it('renders a LoveButton in the hero action cluster', () => {
+      const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
+      expect(loveButton(w).exists()).toBe(true);
+    });
+
+    it('reflects the store like_level', () => {
+      const store = useUserItemDataStore();
+      store.entries.set('m1', { favorite: false, rating: null, like_level: 3 });
+      const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
+      expect(loveButton(w).attributes('data-level')).toBe('3');
+    });
+
+    it('clicking Love calls cycleLove(id, apiBase) exactly ONCE per click (single PUT)', async () => {
+      const store = useUserItemDataStore();
+      const cycle = vi.spyOn(store, 'cycleLove').mockResolvedValue();
+      const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
+
+      await loveButton(w).trigger('click');
+
+      // `@cycle` is bound, `@update:level` is NOT → exactly one cycle/PUT per click.
+      expect(cycle).toHaveBeenCalledTimes(1);
+      expect(cycle).toHaveBeenCalledWith('m1', '');
+    });
+  });
+
   it('emits back from the back affordance, hidden when showBack=false', async () => {
     const w = mount(MediaDetail, { props: { item: media() } });
     await w.find('.media-detail__bar button').trigger('click');

@@ -17,6 +17,7 @@
  */
 import { computed, ref, onMounted, inject } from 'vue';
 import Icon from './Icon.vue';
+import LoveButton from './LoveButton.vue';
 import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -73,6 +74,18 @@ const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 /** Whether THIS item is currently favorited per the store (false when unknown). */
 const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
+
+/** Current 0-3 love level for THIS item per the store (0 when unknown). */
+const loveLevel = computed(() => userItemData.likeLevel(props.item.id));
+
+/**
+ * Cycle the multi-level love (0→1→2→3→0) in the store (optimistic + rollback +
+ * one PUT there). Bound to LoveButton's `@cycle` ONLY (not `@update:level`) so a
+ * single click triggers exactly one store cycle + one PUT.
+ */
+function onLove(): void {
+  void userItemData.cycleLove(props.item.id, phlixConfig?.apiBase ?? '');
+}
 
 /**
  * Bookmark/favorite quick-action handler. Flips the favorite flag in the store
@@ -207,8 +220,14 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             <Icon name="play" />
           </button>
 
-          <!-- [ Love(placeholder) ] — LoveButton (4-state like_level) lands in
-               Step 10.5/10.6; nothing rendered yet (out of scope for 17.3). -->
+          <!-- [ Love ] — 4-state like_level. Only `@cycle` is bound (NOT
+               `@update:level`) so each click triggers exactly ONE store cycle +
+               ONE PUT. `.stop.prevent` keeps the click off the stretched link. -->
+          <LoveButton
+            :level="loveLevel"
+            @cycle="onLove"
+            @click.stop.prevent
+          />
 
           <!-- [ Favorite/Bookmark ] -->
           <button
