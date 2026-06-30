@@ -25,7 +25,7 @@ export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './a
 
 export type { MediaItem } from './types/media-item';
 export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
-export type { ServerSettings } from './types/server-settings';
+export type { ServerSettings, ProviderPriority, GenresMode } from './types/server-settings';
 
 export { default as Icon } from './components/Icon.vue';
 export type { IconName } from './components/Icon.vue';
@@ -42,6 +42,7 @@ export { default as MediaHomeRow } from './components/HomeRow.vue';
 export { default as MediaDetail } from './components/MediaDetail.vue';
 export { default as MetadataMatchModal } from './components/MetadataMatchModal.vue';
 export { default as FilterBar } from './components/FilterBar.vue';
+export { default as SourcePriorityEditor } from './components/SourcePriorityEditor.vue';
 // NOTE (R6.1a): the built-in route PAGES — BrowsePage, MediaDetailPage, PlayerPage,
 // LoginPage, SignupPage, SettingsPage — are intentionally NOT re-exported. `createPhlixApp`
 // mounts them as lazy `() => import()` route chunks; a static re-export here would re-merge
@@ -174,6 +175,7 @@ export type {
 } from './api/admin/libraries';
 export { AdminSettingsApi } from './api/admin/settings';
 export type { SettingsResponse, SettingsSaveResponse } from './api/admin/settings';
+export { AdminMetadataSourcesApi } from './api/admin/metadata-sources';
 export {
   AdminPluginsApi,
   PLUGIN_SECRET_MASK,
