@@ -1004,7 +1004,7 @@ function ma(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-ZQQX6JbX.js")
+			component: () => import("./BrowsePage-Dp1sdLzd.js")
 		},
 		{
 			path: `${t}/media/:id`,
