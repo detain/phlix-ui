@@ -27,13 +27,13 @@ type __VLS_Props = {
 };
 declare var __VLS_6: {
     item: import("../types/media-item").MediaDetail;
-}, __VLS_28: {
+}, __VLS_36: {
     item: import("../types/media-item").MediaDetail;
 };
 type __VLS_Slots = {} & {
     badges?: (props: typeof __VLS_6) => any;
 } & {
-    actions?: (props: typeof __VLS_28) => any;
+    actions?: (props: typeof __VLS_36) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: import("../types/media-item").MediaDetail) => any;
