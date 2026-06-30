@@ -32,13 +32,21 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     play: (item: import("../types/media-item").MediaDetail) => any;
     info: (item: import("../types/media-item").MediaDetail) => any;
     retry: () => any;
+    refresh: (item: import("../types/media-item").MediaDetail) => any;
+    remove: (item: import("../types/media-item").MediaDetail) => any;
     watchlist: (item: import("../types/media-item").MediaDetail) => any;
+    "mark-watched": (item: import("../types/media-item").MediaDetail) => any;
+    "choose-poster": (item: import("../types/media-item").MediaDetail) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onMatch?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onPlay?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onInfo?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onRetry?: (() => any) | undefined;
+    onRefresh?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onRemove?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
 }>, {
     error: string | null;
     loading: boolean;

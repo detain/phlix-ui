@@ -789,5 +789,77 @@ describe('ApiClient', () => {
 
             expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb/like');
         });
+
+        it('markWatched POSTs to the watched endpoint with no body', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Marked as watched' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.markWatched('m1');
+
+            expect(calls).toHaveLength(1);
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/watched');
+            expect(calls[0]!.init!.method).toBe('POST');
+            expect(calls[0]!.init!.body).toBeUndefined();
+            expect(res.message).toBe('Marked as watched');
+        });
+
+        it('markWatched url-encodes the id', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'ok' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.markWatched('a/b');
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb/watched');
+        });
+
+        it('markUnwatched POSTs to the unwatched endpoint with no body', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Marked as unwatched' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.markUnwatched('m1');
+
+            expect(calls).toHaveLength(1);
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/unwatched');
+            expect(calls[0]!.init!.method).toBe('POST');
+            expect(calls[0]!.init!.body).toBeUndefined();
+            expect(res.message).toBe('Marked as unwatched');
+        });
+
+        it('markUnwatched url-encodes the id', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'ok' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.markUnwatched('a/b');
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb/unwatched');
+        });
+
+        it('deleteMediaItem DELETEs the media endpoint and returns the id', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { id: 'm1' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.deleteMediaItem('m1');
+
+            expect(calls).toHaveLength(1);
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1');
+            expect(calls[0]!.init!.method).toBe('DELETE');
+            expect(calls[0]!.init!.body).toBeUndefined();
+            expect(res.id).toBe('m1');
+        });
+
+        it('deleteMediaItem url-encodes the id', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { id: 'a/b' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.deleteMediaItem('a/b');
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb');
+        });
     });
 });

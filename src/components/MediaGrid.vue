@@ -72,6 +72,10 @@ const emit = defineEmits<{
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
   (e: 'match', item: MediaItem): void;
+  (e: 'mark-watched', item: MediaItem): void;
+  (e: 'refresh', item: MediaItem): void;
+  (e: 'choose-poster', item: MediaItem): void;
+  (e: 'remove', item: MediaItem): void;
 }>();
 
 defineSlots<{
@@ -361,6 +365,10 @@ watch(
                 @watchlist="emit('watchlist', entry.item)"
                 @info="emit('info', entry.item)"
                 @match="emit('match', entry.item)"
+                @mark-watched="emit('mark-watched', entry.item)"
+                @refresh="emit('refresh', entry.item)"
+                @choose-poster="emit('choose-poster', entry.item)"
+                @remove="emit('remove', entry.item)"
               />
             </slot>
             <!-- not-yet-loaded index in the pre-sized grid -->

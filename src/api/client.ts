@@ -492,8 +492,37 @@ export class ApiClient {
      * (`DELETE /api/v1/media/{id}/favorite`). Returns the server's flat
      * `{ message }`. Non-2xx (401, 404) throw the shared {@link ApiError}.
      */
-    removeFavorite(id: string): Promise<{ message: string }> {
+     removeFavorite(id: string): Promise<{ message: string }> {
         return this.delete<{ message: string }>(`/api/v1/media/${encodeURIComponent(id)}/favorite`);
+    }
+
+    /**
+     * Mark a media item as watched for the authenticated user
+     * (`POST /api/v1/media/{id}/watched`). Stub — server endpoint is Step 11.6.
+     * The server returns a flat `{ message }`. Non-2xx throw the shared
+     * {@link ApiError}.
+     */
+    markWatched(id: string): Promise<{ message: string }> {
+        return this.post<{ message: string }>(`/api/v1/media/${encodeURIComponent(id)}/watched`);
+    }
+
+    /**
+     * Mark a media item as unwatched (clear watched state) for the authenticated
+     * user (`POST /api/v1/media/{id}/unwatched`). Stub — server endpoint is
+     * Step 11.6. The server returns a flat `{ message }`. Non-2xx throw the
+     * shared {@link ApiError}.
+     */
+    markUnwatched(id: string): Promise<{ message: string }> {
+        return this.post<{ message: string }>(`/api/v1/media/${encodeURIComponent(id)}/unwatched`);
+    }
+
+    /**
+     * Delete a media item (`DELETE /api/v1/media/{id}`). Admin-only (server
+     * enforces). Returns the deleted item id on success. Non-2xx throw the
+     * shared {@link ApiError}.
+     */
+    deleteMediaItem(id: string): Promise<{ id: string }> {
+        return this.delete<{ id: string }>(`/api/v1/media/${encodeURIComponent(id)}`);
     }
 
     /**

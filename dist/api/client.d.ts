@@ -194,6 +194,32 @@ export declare class ApiClient {
         message: string;
     }>;
     /**
+     * Mark a media item as watched for the authenticated user
+     * (`POST /api/v1/media/{id}/watched`). Stub — server endpoint is Step 11.6.
+     * The server returns a flat `{ message }`. Non-2xx throw the shared
+     * {@link ApiError}.
+     */
+    markWatched(id: string): Promise<{
+        message: string;
+    }>;
+    /**
+     * Mark a media item as unwatched (clear watched state) for the authenticated
+     * user (`POST /api/v1/media/{id}/unwatched`). Stub — server endpoint is
+     * Step 11.6. The server returns a flat `{ message }`. Non-2xx throw the
+     * shared {@link ApiError}.
+     */
+    markUnwatched(id: string): Promise<{
+        message: string;
+    }>;
+    /**
+     * Delete a media item (`DELETE /api/v1/media/{id}`). Admin-only (server
+     * enforces). Returns the deleted item id on success. Non-2xx throw the
+     * shared {@link ApiError}.
+     */
+    deleteMediaItem(id: string): Promise<{
+        id: string;
+    }>;
+    /**
      * Set (or clear) the authenticated user's personal 1-10 rating for a media
      * item (`PUT /api/v1/media/{id}/rating`, body `{ rating }`). Pass `null` to
      * clear the rating. The server returns a flat `{ message }`. A non-integer /
