@@ -86,6 +86,8 @@ export interface MediaDetail extends MediaListItem {
     library_id?: string | null;
     /** Backdrop image URL; detail only. */
     backdrop_url?: string | null;
+    /** Theme music audio URL (signed, short-lived); detail only. */
+    theme_audio_url?: string | null;
     /**
      * Per-user state for the authenticated viewer, an ADD-ONLY block the server
      * attaches to the detail (`GET /api/v1/media/{id}`) and favorites

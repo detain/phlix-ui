@@ -12,12 +12,15 @@
  * page wires navigation. Season cards are `<RouterLink>`s so they are real,
  * keyboard-operable navigation; a season poster falls back to the series poster.
  */
-import { computed } from 'vue';
+import { computed, ref, watch, onMounted, onBeforeUnmount, inject } from 'vue';
 import type { MediaItem } from '../types/media-item';
 import type { SeasonGroup } from './series-grouping';
 import { seasonRouteParam } from './series-grouping';
 import MediaDetail from './MediaDetail.vue';
 import Icon from './Icon.vue';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
+import type { PhlixAppConfig } from '../app/types';
 
 const props = withDefaults(
     defineProps<{
@@ -66,10 +69,83 @@ function episodeCountLabel(group: SeasonGroup): string {
 }
 
 const hasSeasons = computed(() => props.seasons.length > 0);
+
+const prefs = usePreferencesStore();
+const mediaApiBase = useMediaApiBase();
+const mediaDirectBase = useMediaDirectBase();
+const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+
+const themeAudioEl = ref<HTMLAudioElement | null>(null);
+let audioStarted = false;
+
+const themeAudioUrl = computed(() => {
+    const url = props.item.theme_audio_url;
+    if (!url) return null;
+    if (/^https?:\/\//.test(url)) return url;
+    const base = mediaDirectBase.value || mediaApiBase.value || (phlixConfig?.apiBase ?? '');
+    return `${base}${url}`;
+});
+
+const shouldPlayThemeAudio = computed(
+    () =>
+        !prefs.effectiveReducedMotion &&
+        prefs.seriesThemeAutoplay &&
+        !!themeAudioUrl.value,
+);
+
+function startThemeAudio(): void {
+    if (!shouldPlayThemeAudio.value || audioStarted) return;
+    const el = themeAudioEl.value;
+    if (!el) return;
+    audioStarted = true;
+    const playResult = el.play();
+    if (playResult != null) {
+        playResult.catch(() => {
+            audioStarted = false;
+        });
+    }
+}
+
+function stopThemeAudio(): void {
+    const el = themeAudioEl.value;
+    if (!el) return;
+    el.pause();
+    el.src = '';
+    el.load();
+    audioStarted = false;
+}
+
+onMounted(() => {
+    if (shouldPlayThemeAudio.value) {
+        startThemeAudio();
+    }
+});
+
+watch(shouldPlayThemeAudio, (play) => {
+    if (play) {
+        startThemeAudio();
+    } else {
+        stopThemeAudio();
+    }
+});
+
+onBeforeUnmount(() => {
+    stopThemeAudio();
+});
 </script>
 
 <template>
     <div class="series-detail">
+        <audio
+            v-if="themeAudioUrl"
+            ref="themeAudioEl"
+            :src="themeAudioUrl"
+            class="series-detail__theme-audio"
+            loop
+            aria-hidden="true"
+            tabindex="-1"
+        />
+
         <MediaDetail
             :item="item"
             :resume-seconds="resumeSeconds"
@@ -131,6 +207,18 @@ const hasSeasons = computed(() => props.seasons.length > 0);
 <style scoped>
 .series-detail {
     width: 100%;
+}
+
+.series-detail__theme-audio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .series-detail__seasons {
