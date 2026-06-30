@@ -449,3 +449,50 @@ describe('useMediaStore — facets', () => {
     expect(capturedUrl).toContain('libraryId=lib-123');
   });
 });
+
+describe('useMediaStore — setSort per-field defaults', () => {
+  it('sets name→asc by default', () => {
+    const store = useMediaStore();
+    store.setSort('name');
+    expect(store.sort).toBe('name');
+    expect(store.order).toBe('asc');
+  });
+
+  it('sets year→desc by default', () => {
+    const store = useMediaStore();
+    store.setSort('year');
+    expect(store.sort).toBe('year');
+    expect(store.order).toBe('desc');
+  });
+
+  it('sets rating→desc by default', () => {
+    const store = useMediaStore();
+    store.setSort('rating');
+    expect(store.order).toBe('desc');
+  });
+
+  it('sets runtime→desc by default', () => {
+    const store = useMediaStore();
+    store.setSort('runtime');
+    expect(store.order).toBe('desc');
+  });
+
+  it('sets date_added→desc by default', () => {
+    const store = useMediaStore();
+    store.setSort('date_added');
+    expect(store.order).toBe('desc');
+  });
+
+  it('honors explicit order', () => {
+    const store = useMediaStore();
+    store.setSort('name', 'desc');
+    expect(store.order).toBe('desc');
+  });
+
+  it('resets offset', () => {
+    const store = useMediaStore();
+    store.offset = 50;
+    store.setSort('year');
+    expect(store.offset).toBe(0);
+  });
+});
