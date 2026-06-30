@@ -4,6 +4,7 @@ import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import MiniPlayer from './MiniPlayer.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -221,5 +222,71 @@ describe('MiniPlayer — expand + close', () => {
   it('has no emoji glyphs (anti-slop)', () => {
     const { w } = mountActive();
     expect(/[🎬▶❚🔊🔇⤢⤓←↑↓]/u.test(w.html())).toBe(false);
+  });
+});
+
+describe('MiniPlayer — favorite toggle (Feature 16.2)', () => {
+  const FAV = '[aria-label="Add to favorites"], [aria-label="Remove from favorites"]';
+
+  /** Activate the dock and provide a phlixConfig apiBase via global.provide. */
+  function mountActiveWithConfig(apiBase = '/api-host', over: Partial<MediaItem> = {}) {
+    const store = usePlayerStore();
+    store.setCurrent(media(over), { streamUrl: 'http://x/stream' });
+    store.showMiniPlayer();
+    const w = mount(MiniPlayer, {
+      attachTo: document.body,
+      global: { stubs: { transition: true }, provide: { phlixConfig: { apiBase } } },
+    });
+    mounted.push(w);
+    stubVideo(w.find('video').element as HTMLVideoElement);
+    return { w, store };
+  }
+
+  it('renders the favorite button only when there is a current item', async () => {
+    // No current item → the whole dock (and the favorite button) is absent.
+    const idle = mountMini();
+    await nextTick();
+    expect(idle.find(FAV).exists()).toBe(false);
+
+    // With a current item docked → the favorite button renders.
+    const { w } = mountActiveWithConfig();
+    expect(w.find(FAV).exists()).toBe(true);
+  });
+
+  it('reflects store.isFavorite via aria-pressed + icon, reactively', async () => {
+    const userData = useUserItemDataStore();
+    const { w } = mountActiveWithConfig();
+    const btn = w.find(FAV);
+    // not favorited initially
+    expect(btn.attributes('aria-pressed')).toBe('false');
+    expect(btn.attributes('aria-label')).toBe('Add to favorites');
+
+    // seed the store as favorited → the button reflects it after a tick
+    userData.hydrate({ ...media(), user_data: { favorite: true, rating: null } } as MediaItem);
+    await nextTick();
+    const onBtn = w.find(FAV);
+    expect(onBtn.attributes('aria-pressed')).toBe('true');
+    expect(onBtn.attributes('aria-label')).toBe('Remove from favorites');
+  });
+
+  it('calls toggleFavorite(id, apiBase) exactly once on click', async () => {
+    const userData = useUserItemDataStore();
+    const spy = vi.spyOn(userData, 'toggleFavorite').mockResolvedValue();
+    const { w } = mountActiveWithConfig('/api-host');
+    await w.find(FAV).trigger('click');
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith('m1', '/api-host');
+  });
+
+  it('threads an empty apiBase when no phlixConfig is provided', async () => {
+    const { store } = mountActive(); // mountActive provides no phlixConfig
+    const userData = useUserItemDataStore();
+    const spy = vi.spyOn(userData, 'toggleFavorite').mockResolvedValue();
+    // re-find the dock from the last mounted wrapper
+    const w = mounted[mounted.length - 1];
+    await w.find(FAV).trigger('click');
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith('m1', '');
+    expect(store.current?.id).toBe('m1');
   });
 });

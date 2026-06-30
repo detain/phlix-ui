@@ -13,8 +13,10 @@
  * The route-leave trigger that calls `store.showMiniPlayer()` lives in the
  * PlayerPage integration (R3.9); this component just renders the dock when asked.
  */
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, inject, onBeforeUnmount, ref, watch } from 'vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import type { PhlixAppConfig } from '../app/types';
 import Icon from './Icon.vue';
 import { useMessages } from '../composables/useMessages';
 
@@ -23,6 +25,27 @@ const emit = defineEmits<{ (e: 'expand', id: string): void }>();
 const player = usePlayerStore();
 const { t } = useMessages();
 const videoRef = ref<HTMLVideoElement | null>(null);
+
+// Per-user favorite state (Feature 16.2). A SINGLE compact favorite toggle in the
+// dock (NOT the 4-state LoveButton — the dock stays compact) bound to the current
+// item. The store keeps no global apiBase, so each call is threaded `apiBase` from
+// the app config via the same `inject('phlixConfig')` source MediaCard/Player use.
+//
+// No hydrate here: the item shown in the dock is the one the full Player/PlayerPage
+// already set + hydrated into the store (Player.vue onMounted/watch + PlayerPage),
+// so reading `store.isFavorite(id)` reflects that without a redundant double-fetch.
+const userItemData = useUserItemDataStore();
+const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+
+/** Favorited state of the current dock item per the store (false when unknown). */
+const isFavorited = computed(() => (player.current ? userItemData.isFavorite(player.current.id) : false));
+
+/** Flip the favorite for the current item (optimistic + rollback + one write in the store). */
+function toggleFavorite(): void {
+  const id = player.current?.id;
+  if (!id) return;
+  void userItemData.toggleFavorite(id, phlixConfig?.apiBase ?? '');
+}
 
 const visible = computed(() => player.miniPlayer && !!player.current && !!player.streamUrl);
 const title = computed(() => player.current?.name ?? '');
@@ -120,6 +143,17 @@ onBeforeUnmount(() => {
           <button type="button" class="mini__btn" :aria-label="player.playing ? t('player.pause') : t('player.play')" @click="togglePlay">
             <Icon :name="player.playing ? 'pause' : 'play'" />
           </button>
+          <button
+            v-if="player.current"
+            type="button"
+            class="mini__btn mini__btn--favorite"
+            :class="{ 'is-on': isFavorited }"
+            :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+            :aria-pressed="isFavorited ? 'true' : 'false'"
+            @click="toggleFavorite"
+          >
+            <Icon :name="isFavorited ? 'bookmark' : 'bookmark-plus'" />
+          </button>
           <button type="button" class="mini__btn" :aria-label="t('player.expand')" @click="expand">
             <Icon name="expand" />
           </button>
@@ -215,6 +249,14 @@ onBeforeUnmount(() => {
 }
 .mini__btn--close:hover {
   color: var(--accent-text);
+}
+/* Favorited reads filled + amber (like MediaCard/Player), scoped to the favorite
+   button so it does NOT fill the play/expand/close glyphs. */
+.mini__btn--favorite.is-on {
+  color: var(--accent);
+}
+.mini__btn--favorite.is-on :deep(svg) {
+  fill: currentColor;
 }
 
 /* progress bar pinned to the bottom edge */
