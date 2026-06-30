@@ -28,7 +28,7 @@ import { t as Xe } from "./Tabs-x8dUKZN5.js";
 import { t as Ze } from "./MediaRow-BGNk2enu.js";
 import { n as Qe, t as $e } from "./media-query-C8oxSF4h.js";
 import { t as et } from "./HomeRow-B7yeNT7a.js";
-import { t as tt } from "./MediaDetail-B-GgF1Mu.js";
+import { t as tt } from "./MediaDetail-CED9xUia.js";
 import { n as nt, r as rt, t as it } from "./metadata-sources-ChdcZ749.js";
 import { n as at, t as ot } from "./logs-DadTfaTq.js";
 import { t as st } from "./dashboard-BTCOCTHQ.js";
@@ -1009,7 +1009,7 @@ function ma(e) {
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-Dq28HgrT.js")
+			component: () => import("./MediaDetailPage-BnBGZXQB.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,

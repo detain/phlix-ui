@@ -5,6 +5,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import MediaDetail from './MediaDetail.vue';
 import MediaRow from './MediaRow.vue';
 import Chip from './ui/Chip.vue';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -243,13 +244,78 @@ describe('MediaDetail — actions & similar', () => {
   it('emits play / resume / watchlist from the hero actions', async () => {
     const item = media();
     const w = mount(MediaDetail, { props: { item, resumeSeconds: 120 } });
+    // The favorite/Watchlist button now toggles the store as part of `onFavorite`;
+    // stub it so this generic emit test never hits the network.
+    const store = useUserItemDataStore();
+    vi.spyOn(store, 'toggleFavorite').mockResolvedValue();
     const buttons = w.findAll('.media-detail__actions button');
     await buttons[0].trigger('click'); // Play
     await buttons[1].trigger('click'); // Resume
-    await buttons[2].trigger('click'); // Watchlist
+    await buttons[2].trigger('click'); // Watchlist (favorite)
     expect(w.emitted('play')?.[0]).toEqual([item]);
     expect(w.emitted('resume')?.[0]).toEqual([item]);
     expect(w.emitted('watchlist')?.[0]).toEqual([item]);
+  });
+
+  describe('hero favorite button (Feature 17.4)', () => {
+    function favButton(w: ReturnType<typeof mount>) {
+      return w.find('.media-detail__favorite');
+    }
+
+    it('persists by toggling the store ONCE then re-emits watchlist (non-favorited → add)', async () => {
+      const item = media({ id: 'm1' });
+      const w = mount(MediaDetail, { props: { item } });
+      const store = useUserItemDataStore();
+      const toggle = vi.spyOn(store, 'toggleFavorite').mockResolvedValue();
+      const btn = favButton(w);
+      expect(btn.attributes('aria-pressed')).toBe('false');
+      expect(btn.attributes('aria-label')).toBe('Add to favorites');
+      await btn.trigger('click');
+      // exactly one toggle + one persist, with the item id + injected apiBase ('' in test)
+      expect(toggle).toHaveBeenCalledTimes(1);
+      expect(toggle).toHaveBeenCalledWith('m1', '');
+      // back-compat emit still fires for the host page's state-aware toast
+      expect(w.emitted('watchlist')?.[0]).toEqual([item]);
+    });
+
+    it('reflects favorited state from the store (aria-pressed + active class + filled icon)', async () => {
+      const store = useUserItemDataStore();
+      store.hydrate(media({ id: 'm1', user_data: { favorite: true, rating: null } }));
+      const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
+      const btn = favButton(w);
+      expect(btn.attributes('aria-pressed')).toBe('true');
+      expect(btn.attributes('aria-label')).toBe('Remove from favorites');
+      expect(btn.classes()).toContain('is-active');
+      expect(btn.text()).toContain('In favorites');
+    });
+
+    it('toggles exactly once per click on an already-favorited item (favorited → remove)', async () => {
+      const store = useUserItemDataStore();
+      store.hydrate(media({ id: 'm1', user_data: { favorite: true, rating: null } }));
+      const toggle = vi.spyOn(store, 'toggleFavorite').mockResolvedValue();
+      const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
+      await favButton(w).trigger('click');
+      expect(toggle).toHaveBeenCalledTimes(1);
+      expect(toggle).toHaveBeenCalledWith('m1', '');
+      expect(w.emitted('watchlist')?.[0]).toEqual([media({ id: 'm1' })]);
+    });
+
+    it('aria-pressed flips after the optimistic store mutation', async () => {
+      const item = media({ id: 'm1' });
+      const w = mount(MediaDetail, { props: { item } });
+      const store = useUserItemDataStore();
+      // toggleFavorite flips synchronously (optimistic) before the network await;
+      // stub the network half so no fetch is attempted but keep the optimistic flip.
+      vi.spyOn(store, 'toggleFavorite').mockImplementation((id) => {
+        store.hydrate(media({ id, user_data: { favorite: true, rating: null } }));
+        return Promise.resolve();
+      });
+      const btn = favButton(w);
+      expect(btn.attributes('aria-pressed')).toBe('false');
+      await btn.trigger('click');
+      await nextTick();
+      expect(w.find('.media-detail__favorite').attributes('aria-pressed')).toBe('true');
+    });
   });
 
   it('emits back from the back affordance, hidden when showBack=false', async () => {

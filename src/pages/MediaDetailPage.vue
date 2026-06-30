@@ -184,12 +184,13 @@ function onPlay(m: MediaItem): void {
   }
   go('player', m.id);
 }
-// State-aware toast for the `watchlist` action. Cards in the "More like this"
-// rail already toggled the favorite store on click (MediaCard, Step 17.3), so this
-// handler must NOT toggle again — it only reports the resulting persisted state from
-// the store. (The detail hero's own "Watchlist"/favorite control gains a real store
-// toggle in Step 10.6, which edits MediaDetail.vue's action cluster; until then it
-// surfaces this state-aware toast without a second toggle, avoiding any double-flip.)
+// State-aware toast for the `watchlist` action. EVERY `watchlist` emitter that
+// reaches this handler has ALREADY toggled the favorite store + persisted the
+// change before re-emitting: the "More like this" rail cards via MediaCard's
+// `onFavorite` (Step 17.3) AND the detail hero's own favorite button via
+// MediaDetail's `onFavorite` (Step 17.4). So this handler must NOT toggle again
+// (a second toggle would flip it straight back) — it only reports the resulting
+// persisted state from the store, which is now correct for both paths.
 function onWatchlist(m: MediaItem): void {
   if (userItemData.isFavorite(m.id)) {
     toasts.success(`Added "${m.name}" to your favorites`);

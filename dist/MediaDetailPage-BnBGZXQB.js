@@ -10,7 +10,7 @@ import { t as l } from "./Skeleton-DkSoWF3C.js";
 import { i as ee, t as te } from "./MetadataMatchModal-CIp61Nci.js";
 import { t as ne } from "./EmptyState-B2QnGIQT.js";
 import { n as u } from "./media-query-C8oxSF4h.js";
-import { t as d } from "./MediaDetail-B-GgF1Mu.js";
+import { t as d } from "./MediaDetail-CED9xUia.js";
 import { a as f, n as re } from "./series-grouping-BTZK8Agh.js";
 import { t as ie } from "./useSeriesSeasons-LD7RRPM9.js";
 import { Fragment as p, computed as m, createBlock as h, createCommentVNode as g, createElementBlock as _, createElementVNode as v, createTextVNode as y, createVNode as b, defineComponent as x, inject as ae, onBeforeUnmount as oe, onMounted as se, openBlock as S, ref as C, renderList as w, resolveComponent as T, toDisplayString as E, unref as D, watch as ce, withCtx as O } from "vue";
@@ -326,8 +326,8 @@ var k = { class: "series-detail" }, A = {
 			onApplied: be
 		}, null, 8, ["modelValue", "item"])) : g("", !0)]));
 	}
-}), [["__scopeId", "data-v-4bf95a8c"]]);
+}), [["__scopeId", "data-v-eb6ffdac"]]);
 //#endregion
 export { V as default };
 
-//# sourceMappingURL=MediaDetailPage-Dq28HgrT.js.map
+//# sourceMappingURL=MediaDetailPage-BnBGZXQB.js.map
