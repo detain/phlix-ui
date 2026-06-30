@@ -23,6 +23,10 @@ import LetterRail from '../components/LetterRail.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import { ApiClient } from '../api/client';
+import { resolvePlayable } from '../composables/useResolvePlayable';
+import { usePlayerStore } from '../stores/usePlayerStore';
+import { useToastStore } from '../stores/useToastStore';
 import type { MediaItem } from '../types/media-item';
 import { fetchLetterIndex, type LetterBucket } from '../api/letter-index';
 import { usePageTitle } from '../composables/usePageTitle';
@@ -36,6 +40,8 @@ const router = useRouter();
 const store = useMediaStore();
 const libraries = useLibrariesStore();
 const auth = useAuthStore();
+const player = usePlayerStore();
+const toasts = useToastStore();
 
 // A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
 // a letter scrolls the pre-sized grid to that letter's first title.
@@ -160,14 +166,45 @@ function onNeedRange(startIndex: number, endIndex: number): void {
 function go(name: string, id: string): void {
   router?.push({ name, params: { id } }).catch(() => {});
 }
-function onPlay(item: MediaItem): void {
-  // A series isn't directly playable — its "Play" opens the detail page (the
-  // season/episode tree) where an episode is chosen. Everything else plays.
-  if (item.type === 'series' && router?.hasRoute('media')) {
-    go('media', item.id);
-    return;
+
+let playController: AbortController | null = null;
+function isAbort(e: unknown): boolean {
+  return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
+}
+
+/**
+ * Play a card immediately (Feature 9). A movie/episode/audio/image plays as-is;
+ * a series/season is resolved to the viewer's next-up / resume episode (or its
+ * first) via `resolvePlayable`. A rapid second Play supersedes the first: each
+ * call aborts the previous controller, so the older (now-stale) resolve rejects
+ * with an `AbortError` we swallow and discards its navigation. Nothing playable
+ * (e.g. a series with no episodes) toasts rather than navigating. The poster
+ * CLICK still routes to detail — only this Play action resolves-then-plays.
+ */
+async function onPlay(item: MediaItem): Promise<void> {
+  playController?.abort();
+  const myController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  playController = myController;
+  const stale = (): boolean => myController !== playController;
+  try {
+    const client = new ApiClient({ baseUrl: apiBase.value });
+    const resolved = await resolvePlayable(
+      client,
+      apiBase.value,
+      item,
+      player.resumeMap,
+      myController?.signal,
+    );
+    if (stale()) return;
+    if (!resolved) {
+      toasts.info('Nothing to play yet');
+      return;
+    }
+    go('player', resolved.id);
+  } catch (e) {
+    if (stale() || isAbort(e)) return;
+    toasts.info('Nothing to play yet');
   }
-  go('player', item.id);
 }
 function onWatchlist(): void {
   /* watchlist toast lives on Browse; the grid here just plays/infos */

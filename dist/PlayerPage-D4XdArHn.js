@@ -8,24 +8,12 @@ import { t as c } from "./Skeleton-DkSoWF3C.js";
 import { t as l } from "./EmptyState-B2QnGIQT.js";
 import { n as u } from "./media-query-C8oxSF4h.js";
 import { t as ee } from "./Player-DLZg5UMI.js";
-import { i as te, r as d } from "./series-grouping-BTZK8Agh.js";
-import { computed as f, createBlock as p, createCommentVNode as m, createElementBlock as h, createElementVNode as g, createTextVNode as _, createVNode as v, defineComponent as y, normalizeClass as ne, normalizeStyle as re, onBeforeUnmount as b, onMounted as x, openBlock as S, ref as C, unref as w, watch as T, withCtx as E } from "vue";
-import { onBeforeRouteLeave as D, useRoute as O, useRouter as ie } from "vue-router";
-//#region src/components/player/episode-order.ts
-function ae(e) {
-	return d(e).filter((e) => !e.isSpecials).flatMap((e) => e.episodes);
-}
-function oe(e, t) {
-	let n = e.findIndex((e) => e.id === t);
-	return n > 0 ? e[n - 1] : null;
-}
-function se(e, t) {
-	let n = e.findIndex((e) => e.id === t);
-	return n >= 0 && n < e.length - 1 ? e[n + 1] : null;
-}
-//#endregion
+import { i as te } from "./series-grouping-BTZK8Agh.js";
+import { n as ne, r as d, t as f } from "./episode-order-DHMxnH-X.js";
+import { computed as p, createBlock as m, createCommentVNode as h, createElementBlock as g, createElementVNode as re, createTextVNode as _, createVNode as v, defineComponent as y, normalizeClass as b, normalizeStyle as x, onBeforeUnmount as S, onMounted as C, openBlock as w, ref as T, unref as E, watch as D, withCtx as O } from "vue";
+import { onBeforeRouteLeave as ie, useRoute as ae, useRouter as oe } from "vue-router";
 //#region src/pages/PlayerPage.vue?vue&type=script&setup=true&lang.ts
-var ce = { class: "player-page__stage" }, le = {
+var se = { class: "player-page__stage" }, ce = {
 	key: 0,
 	class: "player-page__skeleton",
 	role: "status",
@@ -34,9 +22,9 @@ var ce = { class: "player-page__stage" }, le = {
 }, k = /*#__PURE__*/ e(/* @__PURE__ */ y({
 	__name: "PlayerPage",
 	setup(e) {
-		let d = /* @__PURE__ */ new Map(), y = n(), k = r(), ue = O(), A = ie(), j = a(), de = i(), M = C(null), N = C(""), P = C([]), F = C(null), I = C(null), L = C(!0), R = C(null), z = C(!1), B = C(null), V = C(null), H = f(() => String(ue.params.id ?? ""));
+		let y = /* @__PURE__ */ new Map(), k = n(), le = r(), ue = ae(), A = oe(), j = a(), de = i(), M = T(null), N = T(""), P = T([]), F = T(null), I = T(null), L = T(!0), R = T(null), z = T(!1), B = T(null), V = T(null), H = p(() => String(ue.params.id ?? ""));
 		o(() => M.value?.name);
-		let U = f(() => {
+		let U = p(() => {
 			let e = M.value?.poster_url;
 			if (e) return { backgroundImage: `url("${e.replace(/[\\"]/g, "\\$&").replace(/[\r\n]/g, "")}")` };
 		}), W = null, G = !1;
@@ -44,7 +32,7 @@ var ce = { class: "player-page__stage" }, le = {
 			return typeof e == "object" && !!e && e.name === "AbortError";
 		}
 		function q(e) {
-			let t = k.value || y.value;
+			let t = le.value || k.value;
 			return e.stream_url ? /^https?:\/\//.test(e.stream_url) ? e.stream_url : `${t}${e.stream_url}` : `${t}/media/${encodeURIComponent(e.id)}/stream`;
 		}
 		function J(e) {
@@ -61,7 +49,7 @@ var ce = { class: "player-page__stage" }, le = {
 			}
 			let r = W, i = () => G || r !== W;
 			try {
-				let a = u(y.value, {
+				let a = u(k.value, {
 					genres: [n],
 					limit: 13,
 					sort: "rating",
@@ -75,7 +63,7 @@ var ce = { class: "player-page__stage" }, le = {
 			}
 		}
 		async function Y(e, t, n) {
-			let r = u(y.value, {
+			let r = u(k.value, {
 				parentId: t,
 				limit: 100,
 				sort: "name",
@@ -92,10 +80,10 @@ var ce = { class: "player-page__stage" }, le = {
 			return r;
 		}
 		function X(e, t) {
-			B.value = oe(e, t), V.value = se(e, t);
+			B.value = d(e, t), V.value = f(e, t);
 		}
 		function me(e) {
-			for (let t of d.values()) if (t.some((t) => t.id === e)) return t;
+			for (let t of y.values()) if (t.some((t) => t.id === e)) return t;
 			return null;
 		}
 		async function he(e, t) {
@@ -116,8 +104,8 @@ var ce = { class: "player-page__stage" }, le = {
 					if (i()) return;
 					a = [...a.filter((e) => e.type !== "season"), ...n.flat()];
 				}
-				let o = ae(a);
-				o.length && d.set(n.id, o), X(o, t.id);
+				let o = ne(a);
+				o.length && y.set(n.id, o), X(o, t.id);
 			} catch (e) {
 				if (i() || K(e)) return;
 				B.value = null, V.value = null;
@@ -130,7 +118,7 @@ var ce = { class: "player-page__stage" }, le = {
 				return;
 			}
 			try {
-				let n = new t({ baseUrl: y.value }), r = await n.get(`/api/v1/media/${encodeURIComponent(e)}`, void 0, W?.signal);
+				let n = new t({ baseUrl: k.value }), r = await n.get(`/api/v1/media/${encodeURIComponent(e)}`, void 0, W?.signal);
 				if (G) return;
 				let i = r.item;
 				M.value = i, i && de.hydrate(i), N.value = q(i);
@@ -145,9 +133,9 @@ var ce = { class: "player-page__stage" }, le = {
 				R.value = e instanceof Error ? e.message : "Failed to load media", L.value = !1;
 			}
 		}
-		x(Z), T(H, Z), D(() => {
+		C(Z), D(H, Z), ie(() => {
 			j.current && j.streamUrl && j.showMiniPlayer();
-		}), b(() => {
+		}), S(() => {
 			G = !0, W?.abort(), W = null;
 		});
 		function Q() {
@@ -168,42 +156,42 @@ var ce = { class: "player-page__stage" }, le = {
 		function _e(e) {
 			z.value = e;
 		}
-		return (e, t) => (S(), h("div", { class: ne(["player-page", { "is-theater": z.value }]) }, [U.value && !L.value && !R.value ? (S(), h("div", {
+		return (e, t) => (w(), g("div", { class: b(["player-page", { "is-theater": z.value }]) }, [U.value && !L.value && !R.value ? (w(), g("div", {
 			key: 0,
 			class: "player-page__ambient",
-			style: re(U.value),
+			style: x(U.value),
 			"aria-hidden": "true"
-		}, null, 4)) : m("", !0), g("div", ce, [L.value ? (S(), h("div", le, [v(c, {
+		}, null, 4)) : h("", !0), re("div", se, [L.value ? (w(), g("div", ce, [v(c, {
 			variant: "rect",
 			radius: "var(--radius-xl)",
 			height: "100%"
-		})])) : R.value ? (S(), p(l, {
+		})])) : R.value ? (w(), m(l, {
 			key: 1,
 			class: "player-page__error",
 			icon: "alert",
 			title: "Couldn't play this title",
 			description: R.value
 		}, {
-			actions: E(() => [v(s, {
+			actions: O(() => [v(s, {
 				variant: "solid",
 				onClick: Z
 			}, {
-				default: E(() => [...t[0] ||= [_("Retry", -1)]]),
+				default: O(() => [...t[0] ||= [_("Retry", -1)]]),
 				_: 1
 			}), v(s, {
 				variant: "ghost",
 				onClick: Q
 			}, {
-				default: E(() => [...t[1] ||= [_("Back", -1)]]),
+				default: O(() => [...t[1] ||= [_("Back", -1)]]),
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["description"])) : M.value ? (S(), p(ee, {
+		}, 8, ["description"])) : M.value ? (w(), m(ee, {
 			key: 2,
 			media: M.value,
 			"stream-url": N.value,
 			"stream-url-for": q,
-			"api-base": w(y),
+			"api-base": E(k),
 			chapters: P.value,
 			"intro-marker": F.value,
 			"outro-marker": I.value,
@@ -223,10 +211,10 @@ var ce = { class: "player-page__stage" }, le = {
 			"outro-marker",
 			"prev-episode",
 			"next-episode"
-		])) : m("", !0)])], 2));
+		])) : h("", !0)])], 2));
 	}
 }), [["__scopeId", "data-v-72011e10"]]);
 //#endregion
 export { k as default };
 
-//# sourceMappingURL=PlayerPage-C7AakkAf.js.map
+//# sourceMappingURL=PlayerPage-D4XdArHn.js.map

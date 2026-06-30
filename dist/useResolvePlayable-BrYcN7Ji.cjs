@@ -1,0 +1,2 @@
+const e=require("./episode-order-CmxNPT55.cjs"),t=require("./useSeriesSeasons-DQM1VEu5.cjs");function n(e,t){return(e[t]??0)>0}function r(t,r){let i=e.n(t.flatMap(e=>e.episodes));return i.length===0?null:i.find(e=>n(r,e.id))??i[0]}async function i(e,n,i,a,o){return i.type===`series`||i.type===`season`?r(await t.t(e,n,i.id,o),a):i}Object.defineProperty(exports,"t",{enumerable:!0,get:function(){return i}});
+//# sourceMappingURL=useResolvePlayable-BrYcN7Ji.cjs.map
