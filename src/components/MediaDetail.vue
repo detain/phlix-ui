@@ -13,11 +13,14 @@ import { computed, ref, onMounted, inject } from 'vue';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import Icon from './Icon.vue';
 import LoveButton from './LoveButton.vue';
 import Button from './ui/Button.vue';
+import Menu from './ui/Menu.vue';
 import Chip from './ui/Chip.vue';
 import MediaRow from './MediaRow.vue';
+import { buildMediaItemMenu } from './mediaItemMenu';
 
 const props = withDefaults(
   defineProps<{
@@ -50,6 +53,10 @@ const emit = defineEmits<{
    *  company-filtered listing. */
   (e: 'company', name: string): void;
   (e: 'back'): void;
+  (e: 'mark-watched', item: MediaItem): void;
+  (e: 'refresh', item: MediaItem): void;
+  (e: 'choose-poster', item: MediaItem): void;
+  (e: 'remove', item: MediaItem): void;
 }>();
 
 // Per-user favorite/rating/love state (Feature 17). The hero "Watchlist"/favorite
@@ -61,6 +68,7 @@ const emit = defineEmits<{
 // store keeps no global apiBase).
 const userItemData = useUserItemDataStore();
 const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+const auth = useAuthStore();
 
 /** Whether THIS item is currently favorited per the store (false when unknown). */
 const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
@@ -79,6 +87,40 @@ function onFavorite(): void {
 
 /** Current 0-3 love level for THIS item per the store (0 when unknown). */
 const loveLevel = computed(() => userItemData.likeLevel(props.item.id));
+
+/** Whether the current user is an admin. */
+const isAdmin = computed(() => auth.isAdmin);
+
+/** Whether this item is in the user's watched/favorite state. */
+const isWatched = computed(() => userItemData.isFavorite(props.item.id));
+
+const menuOpen = ref(false);
+
+const menuItems = computed(() =>
+  buildMediaItemMenu(props.item, {
+    isAdmin: isAdmin.value,
+    isWatched: isWatched.value,
+    canChoosePoster: isAdmin.value,
+  }),
+);
+
+function onMenuSelect(item: { label: string }): void {
+  switch (item.label) {
+    case 'Mark watched':
+    case 'Mark unwatched':
+      emit('mark-watched', props.item);
+      break;
+    case 'Refresh/Match…':
+      emit('refresh', props.item);
+      break;
+    case 'Choose poster…':
+      emit('choose-poster', props.item);
+      break;
+    case 'Remove':
+      emit('remove', props.item);
+      break;
+  }
+}
 
 /**
  * Cycle the multi-level love (0→1→2→3→0) in the store (optimistic + rollback +
@@ -267,6 +309,14 @@ onMounted(() => {
           <!-- [ Love ] — 4-state like_level. Only `@cycle` is bound (NOT
                `@update:level`) so each click triggers exactly ONE store cycle + ONE PUT. -->
           <LoveButton :level="loveLevel" @cycle="onLove" />
+
+          <!-- [ ⋯ Menu ] -->
+          <Menu v-model:open="menuOpen" :items="menuItems" @select="onMenuSelect">
+            <button type="button" class="media-detail__menu-btn" aria-label="More actions" @click.stop.prevent>
+              <Icon name="more" />
+            </button>
+          </Menu>
+
           <Button v-if="canMatch" variant="ghost" left-icon="search" @click="emit('match', item)">Match metadata</Button>
         </div>
 
@@ -537,6 +587,28 @@ onMounted(() => {
 }
 .media-detail__favorite.is-active :deep(svg) {
   fill: currentColor;
+}
+
+/* Menu ⋯ trigger button in the hero action row */
+.media-detail__menu-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  color: var(--text);
+  background: var(--surface-glass-strong);
+  border: 1px solid var(--border-strong);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-base) var(--ease-out);
+}
+.media-detail__menu-btn:hover {
+  transform: scale(1.08);
+}
+.media-detail__menu-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 .media-detail__credits {
