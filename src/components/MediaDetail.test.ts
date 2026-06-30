@@ -130,6 +130,28 @@ describe('MediaDetail — sparse metadata (degrades)', () => {
   });
 });
 
+describe('MediaDetail — backdrop', () => {
+  it('renders a backdrop div when backdrop_url is set', () => {
+    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: 'https://img/dune-backdrop.jpg' }) } });
+    const backdrop = w.find('.media-detail__backdrop');
+    expect(backdrop.exists()).toBe(true);
+    const style = backdrop.attributes('style');
+    expect(style).toContain('background-image');
+    expect(style).toContain('url("https://img/dune-backdrop.jpg")');
+  });
+
+  it('does not render a backdrop div when backdrop_url is null', () => {
+    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: null }) } });
+    expect(w.find('.media-detail__backdrop').exists()).toBe(false);
+  });
+
+  it('encodes the backdrop URL for use in background-image', () => {
+    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: 'https://img/dune wide.jpg' }) } });
+    const backdrop = w.find('.media-detail__backdrop');
+    expect(backdrop.attributes('style')).toContain('url("https://img/dune%20wide.jpg")');
+  });
+});
+
 describe('MediaDetail — rich cast / crew / companies', () => {
   it('renders a cast avatar img when profile_url is present and initials when null', () => {
     const w = mount(MediaDetail, {
