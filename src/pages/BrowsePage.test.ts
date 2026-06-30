@@ -47,21 +47,31 @@ function jsonResponse(body: unknown): Response {
 const ONE_LIBRARY: LibrarySummary[] = [{ id: 'lib1', name: 'Movies', type: 'movie' }];
 
 /**
- * Stub fetch, branching by URL: `/api/v1/libraries` → `{ libraries }`, any
- * `/api/v1/media` rail fetch → `{ items, total }`. `libraryError` rejects the
- * library-list request specifically.
+ * Stub fetch, branching by URL: `/api/v1/libraries` → `{ libraries }`,
+ * `/api/v1/users/me/favorites` → `{ items, limit, offset }` (the favorites rail;
+ * `favorites` defaults to none so the rail is hidden unless a test supplies
+ * items — and it can supply a `() => MediaItem[]` so a re-fetch sees fresh data),
+ * any other `/api/v1/media` rail fetch → `{ items, total }`. `libraryError`
+ * rejects the library-list request specifically.
  */
 function stubFetch(
   opts: {
     libraries?: LibrarySummary[];
     media?: { items: MediaItem[]; total: number };
+    favorites?: MediaItem[] | (() => MediaItem[]);
     libraryError?: boolean;
   } = {},
 ) {
   const libraries = opts.libraries ?? ONE_LIBRARY;
   const mediaBody = opts.media ?? { items: [], total: 0 };
+  const favoritesOf = (): MediaItem[] =>
+    typeof opts.favorites === 'function' ? opts.favorites() : (opts.favorites ?? []);
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
+    if (u.includes('/api/v1/users/me/favorites')) {
+      const items = favoritesOf();
+      return Promise.resolve(jsonResponse({ items, limit: 24, offset: 0 }));
+    }
     if (u.includes('/api/v1/libraries')) {
       if (opts.libraryError) return Promise.reject(new Error('library list offline'));
       return Promise.resolve(jsonResponse({ libraries }));
@@ -107,6 +117,10 @@ afterEach(() => {
 
 function continueRow(w: ReturnType<typeof mountPage>) {
   return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Continue Watching');
+}
+
+function favoritesRow(w: ReturnType<typeof mountPage>) {
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Favorites');
 }
 
 describe('BrowsePage — per-library sections', () => {
@@ -204,6 +218,102 @@ describe('BrowsePage — Continue Watching', () => {
     const w = mountPage();
     await flushPromises();
     expect(continueRow(w)).toBeUndefined();
+  });
+});
+
+describe('BrowsePage — Favorites row (Feature 17.5)', () => {
+  it('renders a "Favorites" rail with the favorited items from listFavorites()', async () => {
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      favorites: [media({ id: 'f1', name: 'Favorited Movie' }), media({ id: 'f2', name: 'Another Fave' })],
+    });
+    const w = mountPage();
+    await flushPromises();
+    const row = favoritesRow(w);
+    expect(row).toBeTruthy();
+    const items = row!.props('items') as MediaItem[];
+    expect(items.map((i) => i.id)).toEqual(['f1', 'f2']);
+  });
+
+  it('placed immediately after Continue Watching', async () => {
+    localStorage.setItem('phlix.resume', JSON.stringify({ a: 600 }));
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      media: { items: [media({ id: 'a', name: 'Resumed' })], total: 1 },
+      favorites: [media({ id: 'f1', name: 'Favorited Movie' })],
+    });
+    const w = mountPage();
+    await flushPromises();
+    const titles = w.findAllComponents(MediaRow).map((r) => r.props('title'));
+    const ci = titles.indexOf('Continue Watching');
+    const fav = titles.indexOf('Favorites');
+    expect(ci).toBeGreaterThanOrEqual(0);
+    expect(fav).toBe(ci + 1);
+  });
+
+  it('hides the Favorites rail when there are no favorites', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, favorites: [] });
+    const w = mountPage();
+    await flushPromises();
+    expect(favoritesRow(w)).toBeUndefined();
+  });
+
+  it('hydrates the favorites store from the fetched items', async () => {
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      favorites: [media({ id: 'f1', name: 'Fave', user_data: { favorite: true, rating: 7 } })],
+    });
+    const w = mountPage();
+    const userItemData = useUserItemDataStore();
+    await flushPromises();
+    expect(favoritesRow(w)).toBeTruthy();
+    expect(userItemData.isFavorite('f1')).toBe(true);
+    expect(userItemData.get('f1').rating).toBe(7);
+  });
+
+  it('re-fetches and drops an un-favorited item when the favorite set changes', async () => {
+    // The server returns favorites carrying `user_data.favorite: true`, so the
+    // rail's loadFavorites() seeds the store — that populates the favorite-id
+    // signature the page watches. The dynamic source shrinks between the first
+    // load and the toggle-driven re-fetch (the server-side un-favorite).
+    const fav = (id: string, name: string) =>
+      media({ id, name, user_data: { favorite: true, rating: null } });
+    let current: MediaItem[] = [fav('f1', 'Keep'), fav('f2', 'Drop')];
+    stubFetch({ libraries: ONE_LIBRARY, favorites: () => current });
+    const w = mountPage();
+    const userItemData = useUserItemDataStore();
+    await flushPromises();
+
+    // Both seeded into the store + rendered in the rail.
+    expect((favoritesRow(w)!.props('items') as MediaItem[]).map((i) => i.id)).toEqual(['f1', 'f2']);
+    expect(userItemData.isFavorite('f1')).toBe(true);
+    expect(userItemData.isFavorite('f2')).toBe(true);
+
+    // Un-favorite f2: the store entry flips → the favorite-id signature changes
+    // → the rail re-fetches; the server now returns only f1.
+    current = [fav('f1', 'Keep')];
+    userItemData.entries.set('f2', { favorite: false, rating: null, like_level: 0 });
+    await flushPromises();
+
+    const items = favoritesRow(w)!.props('items') as MediaItem[];
+    expect(items.map((i) => i.id)).toEqual(['f1']);
+  });
+
+  it('hides the rail after un-favoriting the last favorite (now empty)', async () => {
+    let current: MediaItem[] = [
+      media({ id: 'f1', name: 'Only Fave', user_data: { favorite: true, rating: null } }),
+    ];
+    stubFetch({ libraries: ONE_LIBRARY, favorites: () => current });
+    const w = mountPage();
+    const userItemData = useUserItemDataStore();
+    await flushPromises();
+    expect(favoritesRow(w)).toBeTruthy();
+
+    current = [];
+    userItemData.entries.set('f1', { favorite: false, rating: null, like_level: 0 });
+    await flushPromises();
+
+    expect(favoritesRow(w)).toBeUndefined();
   });
 });
 
