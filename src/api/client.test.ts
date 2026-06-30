@@ -754,5 +754,40 @@ describe('ApiClient', () => {
             expect(res.limit).toBe(10); // falls back to the requested limit
             expect(res.offset).toBe(0);
         });
+
+        it('setLikeLevel PUTs the level in the body', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Love level saved' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const res = await client.setLikeLevel('m1', 2);
+
+            expect(calls).toHaveLength(1);
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/m1/like');
+            expect(calls[0]!.init!.method).toBe('PUT');
+            expect(calls[0]!.init!.body).toBe(JSON.stringify({ level: 2 }));
+            expect(res.message).toBe('Love level saved');
+        });
+
+        it('setLikeLevel sends level:0 in the body (clears love)', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Love level saved' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.setLikeLevel('m1', 0);
+
+            expect(calls[0]!.init!.method).toBe('PUT');
+            expect(calls[0]!.init!.body).toBe(JSON.stringify({ level: 0 }));
+        });
+
+        it('setLikeLevel url-encodes the id', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'ok' } }]);
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            await client.setLikeLevel('a/b', 3);
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb/like');
+        });
     });
 });

@@ -510,6 +510,20 @@ export class ApiClient {
     }
 
     /**
+     * Set the authenticated user's multi-level "love" level for a media item
+     * (`PUT /api/v1/media/{id}/like`, body `{ level }`). `level` is the 0-3 Love
+     * axis (0 = not loved … 3 = most), a SEPARATE axis from `rating`/`favorite`.
+     * The server returns a flat `{ message }`. A non-integer / out-of-range level
+     * is a 400 → shared {@link ApiError}; 401/404 likewise.
+     */
+    setLikeLevel(id: string, level: number): Promise<{ message: string }> {
+        return this.put<{ message: string }>(
+            `/api/v1/media/${encodeURIComponent(id)}/like`,
+            { level },
+        );
+    }
+
+    /**
      * List the authenticated user's favorited media items, most-recently
      * favorited first (`GET /api/v1/users/me/favorites`). Each returned item is a
      * fully shaped {@link MediaItem} carrying its add-only `user_data` block.

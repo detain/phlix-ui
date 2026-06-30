@@ -14,6 +14,7 @@ import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import Icon from './Icon.vue';
+import LoveButton from './LoveButton.vue';
 import Button from './ui/Button.vue';
 import Chip from './ui/Chip.vue';
 import MediaRow from './MediaRow.vue';
@@ -74,6 +75,18 @@ const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
 function onFavorite(): void {
   void userItemData.toggleFavorite(props.item.id, phlixConfig?.apiBase ?? '');
   emit('watchlist', props.item);
+}
+
+/** Current 0-3 love level for THIS item per the store (0 when unknown). */
+const loveLevel = computed(() => userItemData.likeLevel(props.item.id));
+
+/**
+ * Cycle the multi-level love (0→1→2→3→0) in the store (optimistic + rollback +
+ * one PUT there). Bound to LoveButton's `@cycle` ONLY (not `@update:level`) so a
+ * single click triggers exactly one store cycle + one PUT.
+ */
+function onLove(): void {
+  void userItemData.cycleLove(props.item.id, phlixConfig?.apiBase ?? '');
 }
 
 const fallbackIcon = computed(() =>
@@ -251,6 +264,9 @@ onMounted(() => {
           >
             {{ isFavorited ? 'In favorites' : 'Watchlist' }}
           </Button>
+          <!-- [ Love ] — 4-state like_level. Only `@cycle` is bound (NOT
+               `@update:level`) so each click triggers exactly ONE store cycle + ONE PUT. -->
+          <LoveButton :level="loveLevel" @cycle="onLove" />
           <Button v-if="canMatch" variant="ghost" left-icon="search" @click="emit('match', item)">Match metadata</Button>
         </div>
 
