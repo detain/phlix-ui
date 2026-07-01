@@ -6,6 +6,7 @@ import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
+import SourcePriorityEditor from '../../components/SourcePriorityEditor.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
@@ -41,11 +42,19 @@ interface Overrides {
   /** Default scan-status returned for the per-library status fetch on load. */
   scanStatus?: unknown;
   history?: unknown[];
+  /** Sources returned by GET /api/v1/admin/metadata/sources. */
+  sources?: string[];
 }
+
+/** Default built-in source order the metadata-sources endpoint returns. */
+const DEFAULT_SOURCES = ['tmdb', 'imdb', 'tvdb', 'fanart', 'local'];
 
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/libraries') return { libraries: over.libraries ?? [lib] };
+    if (endpoint === '/api/v1/admin/metadata/sources') {
+      return { sources: over.sources ?? DEFAULT_SOURCES };
+    }
     if (endpoint.endsWith('/scan-status')) return { scan_status: over.scanStatus ?? null };
     if (endpoint.endsWith('/scan-history')) return { history: over.history ?? [] };
     throw new Error(`unexpected GET ${endpoint}`);
@@ -144,14 +153,20 @@ describe('Admin LibrariesPage — list', () => {
   });
 
   it('retries the list load from the error state', async () => {
-    const get = vi
-      .fn()
-      .mockImplementationOnce(async () => { throw new Error('DB down'); })
-      .mockImplementation(async (endpoint: string) => {
-        if (endpoint === '/api/v1/libraries') return { libraries: [lib] };
-        if (endpoint.endsWith('/scan-status')) return { scan_status: null };
-        throw new Error(`unexpected GET ${endpoint}`);
-      });
+    // Fail the FIRST /api/v1/libraries call, succeed on the retry. The mock is
+    // endpoint-aware (not order-based) because the page also fetches the source
+    // list on mount, which must not consume the one-shot failure.
+    let libraryCall = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/libraries') {
+        libraryCall += 1;
+        if (libraryCall === 1) throw new Error('DB down');
+        return { libraries: [lib] };
+      }
+      if (endpoint === '/api/v1/admin/metadata/sources') return { sources: DEFAULT_SOURCES };
+      if (endpoint.endsWith('/scan-status')) return { scan_status: null };
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
     const w = mountPage(
       { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient,
       100000,
@@ -675,6 +690,151 @@ describe('Admin LibrariesPage — scan history modal', () => {
     await findBtnIn(w, modalPanel(), 'Close')!.trigger('click');
     await flushPromises();
     expect(findBtn(w, 'Close')).toBeUndefined();
+    w.unmount();
+  });
+});
+
+describe('Admin LibrariesPage — per-library metadata source priority', () => {
+  /** The SourcePriorityEditor inside the currently open form modal. */
+  function priorityEditorInModal(w: VueWrapper) {
+    const panel = modalPanel();
+    return w.findAllComponents(SourcePriorityEditor).find((e) => panel.contains(e.element));
+  }
+
+  it('fetches the source list on mount', async () => {
+    const { client, get } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/metadata/sources');
+    w.unmount();
+  });
+
+  it('seeds the editor from the default source list when adding, and sends the reordered priority on create', async () => {
+    const { client, post } = makeClient({ libraries: [] });
+    post.mockResolvedValueOnce({ library_id: 'lib-9', message: 'Library created.' });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    // The editor is seeded with the default-ordered available sources.
+    const editor = priorityEditorInModal(w)!;
+    expect(editor.props('modelValue')).toEqual(DEFAULT_SOURCES);
+    expect(editor.props('available')).toEqual(DEFAULT_SOURCES);
+
+    const nameInput = document.querySelector<HTMLInputElement>('.admin-libraries__input')!;
+    nameInput.value = 'Movies'; nameInput.dispatchEvent(new Event('input'));
+    const ta = document.querySelector<HTMLTextAreaElement>('.admin-libraries__textarea')!;
+    ta.value = '/media/movies'; ta.dispatchEvent(new Event('input'));
+    // Reorder (as the editor would on a Down click): local first.
+    editor.vm.$emit('update:modelValue', ['local', 'tmdb', 'imdb', 'tvdb', 'fanart']);
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries', {
+      name: 'Movies',
+      type: 'movie',
+      paths: ['/media/movies'],
+      metadata_priority: { movie: ['local', 'tmdb', 'imdb', 'tvdb', 'fanart'] },
+    });
+    w.unmount();
+  });
+
+  it('does NOT include metadata_priority in the create body when the editor is untouched', async () => {
+    const { client, post } = makeClient({ libraries: [] });
+    post.mockResolvedValueOnce({ library_id: 'lib-9', message: 'Library created.' });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    const nameInput = document.querySelector<HTMLInputElement>('.admin-libraries__input')!;
+    nameInput.value = 'Movies'; nameInput.dispatchEvent(new Event('input'));
+    const ta = document.querySelector<HTMLTextAreaElement>('.admin-libraries__textarea')!;
+    ta.value = '/media/movies'; ta.dispatchEvent(new Event('input'));
+    await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries', {
+      name: 'Movies',
+      type: 'movie',
+      paths: ['/media/movies'],
+    });
+    const body = post.mock.calls[0]![1] as Record<string, unknown>;
+    expect(body).not.toHaveProperty('metadata_priority');
+    w.unmount();
+  });
+
+  it('seeds the editor from a library’s saved options.metadata_priority when editing', async () => {
+    const savedLib = {
+      id: 'lib-5',
+      name: 'Films',
+      type: 'movie',
+      paths: ['/media/films'],
+      options: { metadata_priority: { movie: ['local', 'tmdb'] } },
+    };
+    const { client } = makeClient({ libraries: [savedLib] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Edit Films')!
+      .trigger('click');
+    await flushPromises();
+    expect(priorityEditorInModal(w)!.props('modelValue')).toEqual(['local', 'tmdb']);
+    w.unmount();
+  });
+
+  it('does NOT include metadata_priority in the update body when the editor is untouched', async () => {
+    const savedLib = {
+      id: 'lib-5',
+      name: 'Films',
+      type: 'movie',
+      paths: ['/media/films'],
+      options: { metadata_priority: { movie: ['local', 'tmdb'] } },
+    };
+    const { client, put } = makeClient({ libraries: [savedLib] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Edit Films')!
+      .trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/libraries/lib-5', {
+      name: 'Films',
+      paths: ['/media/films'],
+    });
+    const body = put.mock.calls[0]![1] as Record<string, unknown>;
+    expect(body).not.toHaveProperty('metadata_priority');
+    w.unmount();
+  });
+
+  it('sends metadata_priority: null when the admin removes every source', async () => {
+    const savedLib = {
+      id: 'lib-5',
+      name: 'Films',
+      type: 'movie',
+      paths: ['/media/films'],
+      options: { metadata_priority: { movie: ['local', 'tmdb'] } },
+    };
+    const { client, put } = makeClient({ libraries: [savedLib] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Edit Films')!
+      .trigger('click');
+    await flushPromises();
+    // Editor emits an empty list (admin removed every source).
+    priorityEditorInModal(w)!.vm.$emit('update:modelValue', []);
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/libraries/lib-5', {
+      name: 'Films',
+      paths: ['/media/films'],
+      metadata_priority: null,
+    });
     w.unmount();
   });
 });
