@@ -1,27 +1,24 @@
 <script setup lang="ts">
 /**
- * Admin HistoryPage (RA.13) — the user-facing "Watch History" view, ported 1:1
- * from the deleted React `HistoryPage` onto the `@phlix/ui` primitives. Lists
- * recently-watched items in a tokenized table, shows a progress bar for
- * in-progress items (0 < progress < 100), removes a single item, and clears all
- * history behind a confirmation Modal. Each mutation refetches the list
- * afterward (matching the React source). Errors surface as toasts.
+ * Admin HistoryPage — the **all-users** "Watch History" oversight view. Reads
+ * the admin-only endpoint `GET /api/v1/admin/watch-history` (every user's
+ * history, not just the current admin's) and lists who watched what & when.
  *
- * Deviation from React: the per-item "Continue watching" action emits a
- * `continue` event with the media id rather than calling react-router's
- * `navigate` — the package admin pages have no router DI, so the host wires
- * navigation. See the worklog / report.
+ * This is a READ-ONLY surface: there is no admin delete/clear endpoint, so the
+ * per-user mutation actions (Remove / Clear all / Continue) were removed — they
+ * would be semantically wrong against a cross-user list. Each row's title links
+ * to the media detail page (`/app/media/:id`) so an admin can open it. A
+ * progress bar reflects each entry's `progress_percent`.
  */
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
-import { AdminHistoryApi, type RecentlyWatchedItem } from '../../api/admin/history';
+import { AdminHistoryApi, type AdminWatchHistoryItem } from '../../api/admin/history';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
-import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Icon from '../../components/Icon.vue';
@@ -30,8 +27,6 @@ const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
   client?: ApiClient;
 }>();
-
-const emit = defineEmits<{ (e: 'continue', mediaItemId: string): void }>();
 
 const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
 const apiBase = computed(() =>
@@ -42,51 +37,21 @@ const api = new AdminHistoryApi(
 );
 const toasts = useToastStore();
 
-const items = ref<RecentlyWatchedItem[]>([]);
+const items = ref<AdminWatchHistoryItem[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
-const showClearConfirm = ref(false);
-const clearing = ref(false);
 
 async function loadHistory(): Promise<void> {
   loading.value = true;
   error.value = null;
   try {
-    items.value = await api.getRecentlyWatched();
+    items.value = await api.getAllWatchHistory();
   } catch (e) {
     error.value = errMessage(e, 'Failed to load watch history.');
     toasts.error(error.value);
   } finally {
     loading.value = false;
   }
-}
-
-async function handleRemoveItem(mediaItemId: string): Promise<void> {
-  try {
-    await api.removeFromHistory(mediaItemId);
-    toasts.success('Removed from watch history.');
-    await loadHistory();
-  } catch (e) {
-    toasts.error(errMessage(e, 'Failed to remove item.'));
-  }
-}
-
-async function handleClearHistory(): Promise<void> {
-  clearing.value = true;
-  try {
-    await api.clearHistory();
-    toasts.success('Watch history cleared.');
-    showClearConfirm.value = false;
-    await loadHistory();
-  } catch (e) {
-    toasts.error(errMessage(e, 'Failed to clear history.'));
-  } finally {
-    clearing.value = false;
-  }
-}
-
-function handleContinueWatching(mediaItemId: string): void {
-  emit('continue', mediaItemId);
 }
 
 /** Format a relative "X ago" string from an ISO timestamp. */
@@ -105,29 +70,23 @@ function formatTimeAgo(isoString: string): string {
   return `${diffMonth} month${diffMonth === 1 ? '' : 's'} ago`;
 }
 
-function mediaTitle(item: RecentlyWatchedItem): string {
-  return item.title ?? item.name ?? item.media_item_id ?? item.id;
+/** The media detail route for a row. Admin pages are always mounted under `/app`. */
+function mediaTo(item: AdminWatchHistoryItem): string {
+  return `/app/media/${item.media_item_id || item.id}`;
 }
 
-function mediaType(item: RecentlyWatchedItem): string {
-  return item.media_type ?? item.type ?? 'media';
+/** Who watched the item: display name, falling back to username, then a dash. */
+function userLabel(item: AdminWatchHistoryItem): string {
+  return item.display_name || item.username || '—';
 }
 
-function thumbnailUrl(item: RecentlyWatchedItem): string | undefined {
-  return item.thumbnail_url ?? item.poster_url;
-}
-
-function showProgressBar(item: RecentlyWatchedItem): boolean {
+function showProgressBar(item: AdminWatchHistoryItem): boolean {
   const progress = item.progress_percent;
-  return progress !== undefined && progress > 0 && progress < 100;
+  return progress > 0 && progress < 100;
 }
 
-function progressValue(item: RecentlyWatchedItem): number {
-  return Math.round(item.progress_percent ?? 0);
-}
-
-function targetId(item: RecentlyWatchedItem): string {
-  return item.media_item_id ?? item.id;
+function progressValue(item: AdminWatchHistoryItem): number {
+  return Math.round(item.progress_percent);
 }
 
 const hasItems = computed(() => Array.isArray(items.value) && items.value.length > 0);
@@ -139,22 +98,12 @@ onMounted(loadHistory);
   <section class="admin-history" aria-labelledby="history-heading">
     <header class="admin-history__head">
       <h1 id="history-heading" class="admin-history__title">Watch History</h1>
-      <Button
-        v-if="hasItems"
-        variant="outline"
-        size="sm"
-        left-icon="x"
-        @click="showClearConfirm = true"
-      >
-        Clear All
-      </Button>
     </header>
 
     <PageHint>
-      Everything that's been watched on the server, with how far each title was played.
-      <strong>Continue</strong> appears on partly-watched items to jump back to where you left off,
-      <strong>Remove</strong> deletes a single entry, and <strong>Clear All</strong> wipes the
-      entire history (after a confirmation).
+      A read-only view of what everyone on the server has watched — who watched
+      each title and when, with how far each entry was played. Click a title to
+      open it.
     </PageHint>
 
     <div v-if="loading" class="admin-history__skel"><Skeleton variant="text" :lines="6" /></div>
@@ -172,28 +121,26 @@ onMounted(loadHistory);
       v-else-if="!hasItems"
       icon="film"
       title="No watch history yet"
-      description="Items you watch will appear here."
+      description="Items watched across all users will appear here."
     />
     <template v-else>
       <ul class="admin-history__list" aria-label="Watch history">
         <li v-for="item in items" :key="item.id" class="admin-history__item">
           <div class="admin-history__thumb">
-            <img
-              v-if="thumbnailUrl(item)"
-              :src="thumbnailUrl(item)"
-              :alt="`Thumbnail for ${mediaTitle(item)}`"
-              class="admin-history__img"
-            />
-            <span v-else class="admin-history__placeholder" aria-hidden="true">
+            <span class="admin-history__placeholder" aria-hidden="true">
               <Icon name="film" />
             </span>
           </div>
 
           <div class="admin-history__info">
             <div class="admin-history__title-row">
-              <span class="admin-history__item-title">{{ mediaTitle(item) }}</span>
-              <Badge tone="neutral">{{ mediaType(item) }}</Badge>
+              <RouterLink :to="mediaTo(item)" class="admin-history__item-title">
+                {{ item.media_name }}
+              </RouterLink>
+              <Badge tone="neutral">{{ item.media_type }}</Badge>
             </div>
+
+            <p class="admin-history__user">Watched by {{ userLabel(item) }}</p>
 
             <p v-if="item.last_watched_at" class="admin-history__time">
               Watched {{ formatTimeAgo(item.last_watched_at) }}
@@ -212,53 +159,13 @@ onMounted(loadHistory);
               <span class="admin-history__progress-label">{{ progressValue(item) }}%</span>
             </div>
           </div>
-
-          <div class="admin-history__actions">
-            <Button
-              v-if="showProgressBar(item)"
-              variant="solid"
-              size="sm"
-              left-icon="play"
-              :aria-label="`Continue watching ${mediaTitle(item)}`"
-              @click="handleContinueWatching(targetId(item))"
-            >
-              Continue
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              left-icon="x"
-              :aria-label="`Remove ${mediaTitle(item)} from history`"
-              @click="handleRemoveItem(targetId(item))"
-            >
-              Remove
-            </Button>
-          </div>
         </li>
       </ul>
 
       <p v-if="items.length >= 50" class="admin-history__more" role="note">
-        Showing {{ items.length }} items. Older items are not shown.
+        Showing {{ items.length }} items (capped at 200). Older items are not shown.
       </p>
     </template>
-
-    <!-- Clear history confirmation modal -->
-    <Modal
-      v-model="showClearConfirm"
-      title="Clear Watch History"
-      size="sm"
-      @close="showClearConfirm = false"
-    >
-      <p>Clear all items from your watch history? This cannot be undone.</p>
-      <template #footer>
-        <Button variant="ghost" size="sm" :disabled="clearing" @click="showClearConfirm = false">
-          Cancel
-        </Button>
-        <Button variant="solid" size="sm" :loading="clearing" @click="handleClearHistory">
-          Clear All
-        </Button>
-      </template>
-    </Modal>
   </section>
 </template>
 
@@ -311,12 +218,6 @@ onMounted(loadHistory);
   overflow: hidden;
   background: var(--surface-2);
 }
-.admin-history__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
 .admin-history__placeholder {
   display: grid;
   place-items: center;
@@ -339,9 +240,18 @@ onMounted(loadHistory);
 .admin-history__item-title {
   font-weight: var(--font-semibold);
   color: var(--text);
+  text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.admin-history__item-title:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.admin-history__user {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 .admin-history__time {
   font-size: var(--text-xs);
@@ -367,12 +277,6 @@ onMounted(loadHistory);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--text-subtle);
-}
-.admin-history__actions {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
 }
 .admin-history__more {
   margin-top: var(--space-4);

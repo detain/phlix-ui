@@ -462,6 +462,38 @@ describe('Admin PluginsPage — uninstall', () => {
     expect(del).not.toHaveBeenCalled();
     w.unmount();
   });
+
+  it('removes the plugin from the list after a successful uninstall (no manual refresh)', async () => {
+    // Stateful installed-list mock: the plugin is dropped after the uninstall
+    // DELETE, so the post-uninstall refetch (`refreshAll` → `loadPlugins`)
+    // reflects the removal without any manual page refresh.
+    let installed = [PLUGIN_A, PLUGIN_B];
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/plugins') return { plugins: installed };
+      if (endpoint === '/api/v1/admin/plugins/catalog') return EMPTY_CATALOG;
+      if (endpoint === '/api/v1/admin/plugins/updates') return NO_UPDATES;
+      if (endpoint === '/api/v1/admin/plugins/auto-update') return { auto_update: false };
+      if (/\/api\/v1\/admin\/plugins\/[^/]+$/.test(endpoint)) return { plugin: DETAIL_A };
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const del = vi.fn(async () => {
+      installed = installed.filter((p) => p.name !== 'anidb');
+      return { uninstalled: true, name: 'anidb' };
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: del } as unknown as ApiClient;
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain('anidb');
+    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Uninstall anidb')!.trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Uninstall')!.trigger('click');
+    await flushPromises();
+    expect(del).toHaveBeenCalledWith('/api/v1/admin/plugins/anidb');
+    // The row is gone from the reactive list without a page refresh.
+    expect(w.text()).not.toContain('anidb');
+    expect(w.text()).toContain('mal');
+    w.unmount();
+  });
 });
 
 describe('Admin PluginsPage — configure', () => {

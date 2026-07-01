@@ -384,10 +384,18 @@ onBeforeUnmount(() => {
         <ol v-else class="admin-dash__media-list" role="list">
           <li v-for="(m, i) in topMedia" :key="m.media_item_id" class="admin-dash__media-item">
             <span class="admin-dash__media-rank">{{ i + 1 }}</span>
-            <div class="admin-dash__media-info">
+            <RouterLink
+              v-if="m.media_item_id"
+              :to="`/app/media/${m.media_item_id}`"
+              class="admin-dash__media-info admin-dash__media-info--link"
+            >
               <span class="admin-dash__media-title" :title="m.media_title">{{ m.media_title }}</span>
               <Badge :tone="mediaTypeTone(m.media_type)">{{ m.media_type }}</Badge>
-            </div>
+            </RouterLink>
+            <span v-else class="admin-dash__media-info">
+              <span class="admin-dash__media-title" :title="m.media_title">{{ m.media_title }}</span>
+              <Badge :tone="mediaTypeTone(m.media_type)">{{ m.media_type }}</Badge>
+            </span>
             <div class="admin-dash__media-stats">
               <span>{{ m.play_count }} plays</span>
               <span>{{ formatDuration(m.total_duration_seconds) }}</span>
@@ -617,6 +625,14 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+.admin-dash__media-info--link {
+  text-decoration: none;
+  color: inherit;
+}
+.admin-dash__media-info--link:hover .admin-dash__media-title {
+  color: var(--accent);
+  text-decoration: underline;
 }
 .admin-dash__media-stats {
   display: flex;

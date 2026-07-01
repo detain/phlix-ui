@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
+import { mount, flushPromises, RouterLinkStub, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import HistoryPage from './HistoryPage.vue';
 import Button from '../../components/ui/Button.vue';
@@ -7,55 +7,48 @@ import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 
-const sampleItem = {
+const sampleRow = {
   id: 'wh-1',
   media_item_id: 'media-1',
-  name: 'Test Movie',
-  title: 'Test Movie',
+  media_name: 'Test Movie',
   media_type: 'movie',
-  type: 'movie',
-  progress_percent: 45.5,
+  library_id: 'lib-1',
+  user_id: 'u-1',
+  username: 'alice',
+  display_name: 'Alice Anderson',
+  profile_name: '',
   last_watched_at: '2026-05-28T10:30:00Z',
-  thumbnail_url: 'https://example.com/thumb.jpg',
-  poster_url: 'https://example.com/poster.jpg',
+  completed_at: '',
+  playback_status: 'in_progress',
+  progress_percent: 45.5,
 };
 
 interface Overrides {
-  items?: unknown[];
+  data?: unknown[];
 }
 
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
-    if (endpoint === '/api/v1/users/me/recently-watched') {
-      return { items: over.items ?? [sampleItem] };
+    if (endpoint === '/api/v1/admin/watch-history') {
+      return { success: true, data: over.data ?? [sampleRow], count: (over.data ?? [sampleRow]).length };
     }
     throw new Error(`unexpected GET ${endpoint}`);
   });
-  const del = vi.fn(async () => ({ message: 'ok' }));
-  const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: del } as unknown as ApiClient;
-  return { client, get, del };
+  const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+  return { client, get };
 }
 
 function mountPage(client: ApiClient): VueWrapper {
-  return mount(HistoryPage, { props: { client }, attachTo: document.body });
+  return mount(HistoryPage, {
+    props: { client },
+    attachTo: document.body,
+    global: { stubs: { RouterLink: RouterLinkStub } },
+  });
 }
 
 /** Find a Button by its trimmed text. */
 function findBtn(w: VueWrapper, text: string) {
   return w.findAllComponents(Button).find((b) => b.text().trim() === text);
-}
-
-/** Find a Button by trimmed text whose root element is inside `root`. */
-function findBtnIn(w: VueWrapper, root: Element, text: string) {
-  return w
-    .findAllComponents(Button)
-    .find((b) => b.text().trim() === text && root.contains(b.element));
-}
-
-/** The currently-open modal panel teleported to body. */
-function modalPanel(): HTMLElement {
-  const panels = document.querySelectorAll<HTMLElement>('.phlix-modal__panel');
-  return panels[panels.length - 1];
 }
 
 beforeEach(() => {
@@ -66,16 +59,45 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('Admin HistoryPage — list', () => {
-  it('loads and renders the history rows', async () => {
+describe('Admin HistoryPage — all-users list', () => {
+  it('loads from the admin endpoint and renders the media title, user label, and time', async () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    expect(get).toHaveBeenCalledWith('/api/v1/users/me/recently-watched');
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/watch-history', undefined);
     const text = w.text();
     expect(text).toContain('Test Movie');
     expect(text).toContain('movie');
+    expect(text).toContain('Watched by Alice Anderson');
     expect(text).toContain('Watched');
+    w.unmount();
+  });
+
+  it('falls back to the username for the user label when display_name is empty', async () => {
+    const { client } = makeClient({ data: [{ ...sampleRow, display_name: '' }] });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain('Watched by alice');
+    w.unmount();
+  });
+
+  it('links each row title to the media detail page under /app', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const links = w.findAllComponents(RouterLinkStub);
+    const titleLink = links.find((l) => l.text().includes('Test Movie'));
+    expect(titleLink).toBeTruthy();
+    expect(titleLink!.props('to')).toBe('/app/media/media-1');
+    w.unmount();
+  });
+
+  it('falls back to the row id in the link when media_item_id is empty', async () => {
+    const { client } = makeClient({ data: [{ ...sampleRow, media_item_id: '' }] });
+    const w = mountPage(client);
+    await flushPromises();
+    const link = w.findAllComponents(RouterLinkStub).find((l) => l.text().includes('Test Movie'));
+    expect(link!.props('to')).toBe('/app/media/wh-1');
     w.unmount();
   });
 
@@ -85,19 +107,18 @@ describe('Admin HistoryPage — list', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = mountPage(client);
     expect(w.find('.admin-history__skel').exists()).toBe(true);
-    resolve({ items: [sampleItem] });
+    resolve({ success: true, data: [sampleRow] });
     await flushPromises();
     expect(w.find('.admin-history__list').exists()).toBe(true);
     w.unmount();
   });
 
   it('shows an empty state when there is no history', async () => {
-    const { client } = makeClient({ items: [] });
+    const { client } = makeClient({ data: [] });
     const w = mountPage(client);
     await flushPromises();
     expect(w.text()).toContain('No watch history yet');
-    // No "Clear All" button when empty.
-    expect(findBtn(w, 'Clear All')).toBeUndefined();
+    expect(w.text()).toContain('Items watched across all users will appear here.');
     w.unmount();
   });
 
@@ -106,8 +127,6 @@ describe('Admin HistoryPage — list', () => {
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    // R5.3d.2: a load failure renders an in-body EmptyState (error + Retry)
-    // instead of falling through to the misleading "No watch history yet".
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
     expect(empty.text()).toContain("Couldn't load watch history");
@@ -121,7 +140,7 @@ describe('Admin HistoryPage — list', () => {
     const get = vi
       .fn()
       .mockRejectedValueOnce(new Error('load boom'))
-      .mockResolvedValue({ items: [sampleItem] });
+      .mockResolvedValue({ success: true, data: [sampleRow] });
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
     expect(w.findComponent(EmptyState).exists()).toBe(true);
@@ -141,7 +160,7 @@ describe('Admin HistoryPage — list', () => {
     w.unmount();
   });
 
-  it('renders a progressbar + Continue for in-progress items', async () => {
+  it('renders a progressbar for in-progress items', async () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
@@ -149,142 +168,34 @@ describe('Admin HistoryPage — list', () => {
     expect(bar.exists()).toBe(true);
     expect(bar.attributes('aria-valuenow')).toBe('45.5');
     expect(w.text()).toContain('46%');
-    expect(findBtn(w, 'Continue')).toBeTruthy();
     w.unmount();
   });
 
-  it('hides the progressbar + Continue for completed items', async () => {
-    const completed = { ...sampleItem, progress_percent: 100 };
-    const { client } = makeClient({ items: [completed] });
+  it('hides the progressbar for completed items', async () => {
+    const completed = { ...sampleRow, progress_percent: 100 };
+    const { client } = makeClient({ data: [completed] });
     const w = mountPage(client);
     await flushPromises();
     expect(w.find('[role="progressbar"]').exists()).toBe(false);
-    expect(findBtn(w, 'Continue')).toBeUndefined();
-    w.unmount();
-  });
-
-  it('falls back to a placeholder + id-based title when fields are missing', async () => {
-    const bare = { id: 'only-id', progress_percent: 0 };
-    const { client } = makeClient({ items: [bare] });
-    const w = mountPage(client);
-    await flushPromises();
-    expect(w.text()).toContain('only-id');
-    expect(w.text()).toContain('media');
-    // No thumbnail → placeholder icon, no <img>, no time line.
-    expect(w.find('.admin-history__img').exists()).toBe(false);
-    expect(w.find('.admin-history__placeholder').exists()).toBe(true);
     w.unmount();
   });
 
   it('shows the truncation note past 50 items', async () => {
-    const many = Array.from({ length: 50 }, (_, i) => ({ ...sampleItem, id: `wh-${i}` }));
-    const { client } = makeClient({ items: many });
+    const many = Array.from({ length: 50 }, (_, i) => ({ ...sampleRow, id: `wh-${i}` }));
+    const { client } = makeClient({ data: many });
     const w = mountPage(client);
     await flushPromises();
     expect(w.text()).toContain('Showing 50 items');
     w.unmount();
   });
-});
 
-describe('Admin HistoryPage — remove + continue', () => {
-  it('removes an item and refetches the list', async () => {
-    const { client, get, del } = makeClient();
-    const w = mountPage(client);
-    await flushPromises();
-    await findBtn(w, 'Remove')!.trigger('click');
-    await flushPromises();
-    expect(del).toHaveBeenCalledWith('/api/v1/users/me/history/media-1');
-    expect(get.mock.calls.filter((c) => c[0] === '/api/v1/users/me/recently-watched').length).toBeGreaterThan(1);
-    const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message.includes('Removed'))).toBe(true);
-    w.unmount();
-  });
-
-  it('toasts when removing an item fails', async () => {
-    const { client, del } = makeClient();
-    del.mockRejectedValueOnce(new Error('remove boom'));
-    const w = mountPage(client);
-    await flushPromises();
-    await findBtn(w, 'Remove')!.trigger('click');
-    await flushPromises();
-    const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message === 'remove boom')).toBe(true);
-    w.unmount();
-  });
-
-  it('emits continue with the media id', async () => {
+  it('drops the per-user mutation actions (read-only admin view)', async () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtn(w, 'Continue')!.trigger('click');
-    await flushPromises();
-    expect(w.emitted('continue')?.[0]).toEqual(['media-1']);
-    w.unmount();
-  });
-
-  it('emits continue with the bare id when media_item_id is absent', async () => {
-    const noMediaId = { ...sampleItem, media_item_id: undefined };
-    const { client } = makeClient({ items: [noMediaId] });
-    const w = mountPage(client);
-    await flushPromises();
-    await findBtn(w, 'Continue')!.trigger('click');
-    await flushPromises();
-    expect(w.emitted('continue')?.[0]).toEqual(['wh-1']);
-    w.unmount();
-  });
-});
-
-describe('Admin HistoryPage — clear all', () => {
-  it('opens the confirm modal from the header', async () => {
-    const { client } = makeClient();
-    const w = mountPage(client);
-    await flushPromises();
-    await findBtn(w, 'Clear All')!.trigger('click');
-    await flushPromises();
-    expect(modalPanel()).toBeTruthy();
-    expect(document.body.textContent).toContain('cannot be undone');
-    w.unmount();
-  });
-
-  it('clears history after confirmation and refetches', async () => {
-    const { client, del, get } = makeClient();
-    const w = mountPage(client);
-    await flushPromises();
-    await findBtn(w, 'Clear All')!.trigger('click');
-    await flushPromises();
-    // Scope to the modal — the header also has a "Clear All" button.
-    await findBtnIn(w, modalPanel(), 'Clear All')!.trigger('click');
-    await flushPromises();
-    expect(del).toHaveBeenCalledWith('/api/v1/users/me/history');
-    expect(get.mock.calls.filter((c) => c[0] === '/api/v1/users/me/recently-watched').length).toBeGreaterThan(1);
-    const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message.includes('cleared'))).toBe(true);
-    w.unmount();
-  });
-
-  it('toasts when clearing fails', async () => {
-    const { client, del } = makeClient();
-    del.mockRejectedValueOnce(new Error('clear boom'));
-    const w = mountPage(client);
-    await flushPromises();
-    await findBtn(w, 'Clear All')!.trigger('click');
-    await flushPromises();
-    await findBtnIn(w, modalPanel(), 'Clear All')!.trigger('click');
-    await flushPromises();
-    const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message === 'clear boom')).toBe(true);
-    w.unmount();
-  });
-
-  it('cancels the clear confirm without mutating', async () => {
-    const { client, del } = makeClient();
-    const w = mountPage(client);
-    await flushPromises();
-    await findBtn(w, 'Clear All')!.trigger('click');
-    await flushPromises();
-    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
-    await flushPromises();
-    expect(del).not.toHaveBeenCalled();
+    expect(w.text()).not.toContain('Clear All');
+    expect(findBtn(w, 'Remove')).toBeUndefined();
+    expect(findBtn(w, 'Continue')).toBeUndefined();
     w.unmount();
   });
 });
@@ -295,17 +206,17 @@ describe('Admin HistoryPage — relative time formatting', () => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
     const iso = (msAgo: number) => new Date(now.getTime() - msAgo).toISOString();
-    const items = [
-      { ...sampleItem, id: 'a', last_watched_at: iso(10 * 1000) }, // just now
-      { ...sampleItem, id: 'b', last_watched_at: iso(60 * 1000) }, // 1 minute ago
-      { ...sampleItem, id: 'c', last_watched_at: iso(5 * 60 * 1000) }, // 5 minutes ago
-      { ...sampleItem, id: 'd', last_watched_at: iso(60 * 60 * 1000) }, // 1 hour ago
-      { ...sampleItem, id: 'e', last_watched_at: iso(3 * 60 * 60 * 1000) }, // 3 hours ago
-      { ...sampleItem, id: 'f', last_watched_at: iso(24 * 60 * 60 * 1000) }, // 1 day ago
-      { ...sampleItem, id: 'g', last_watched_at: iso(5 * 24 * 60 * 60 * 1000) }, // 5 days ago
-      { ...sampleItem, id: 'h', last_watched_at: iso(60 * 24 * 60 * 60 * 1000) }, // 2 months ago
+    const data = [
+      { ...sampleRow, id: 'a', last_watched_at: iso(10 * 1000) }, // just now
+      { ...sampleRow, id: 'b', last_watched_at: iso(60 * 1000) }, // 1 minute ago
+      { ...sampleRow, id: 'c', last_watched_at: iso(5 * 60 * 1000) }, // 5 minutes ago
+      { ...sampleRow, id: 'd', last_watched_at: iso(60 * 60 * 1000) }, // 1 hour ago
+      { ...sampleRow, id: 'e', last_watched_at: iso(3 * 60 * 60 * 1000) }, // 3 hours ago
+      { ...sampleRow, id: 'f', last_watched_at: iso(24 * 60 * 60 * 1000) }, // 1 day ago
+      { ...sampleRow, id: 'g', last_watched_at: iso(5 * 24 * 60 * 60 * 1000) }, // 5 days ago
+      { ...sampleRow, id: 'h', last_watched_at: iso(60 * 24 * 60 * 60 * 1000) }, // 2 months ago
     ];
-    const { client } = makeClient({ items });
+    const { client } = makeClient({ data });
     const w = mountPage(client);
     await flushPromises();
     const text = w.text();
