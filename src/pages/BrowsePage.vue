@@ -30,6 +30,7 @@ import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import PosterPicker from '../components/PosterPicker.vue';
 import { ApiClient } from '../api/client';
+import { libraryLoadErrorInfo } from './browseErrors';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig, HomeRow as HomeRowConfig } from '../app/types';
@@ -185,6 +186,14 @@ watch(apiBase, load);
 watch(favoriteSignature, () => {
   void loadFavorites();
 });
+
+// Map the store's failure to an actionable title/description. On the hub, a browse
+// of a server whose relay tunnel isn't connected surfaces a `server.*` code (see
+// libraryLoadErrorInfo); otherwise this falls back to the generic error with the
+// store's own message.
+const errorInfo = computed(() =>
+  libraryLoadErrorInfo(libraries.errorCode ?? null, libraries.error ?? ''),
+);
 
 const showEmpty = computed(
   () => libraries.loaded && libraries.items.length === 0 && !libraries.error,
@@ -396,8 +405,8 @@ function onSeeAll(row: HomeRowConfig): void {
     <EmptyState
       v-if="libraries.error"
       icon="alert"
-      title="Couldn't load your libraries"
-      :description="libraries.error"
+      :title="errorInfo.title"
+      :description="errorInfo.description"
     >
       <template #actions>
         <Button variant="solid" size="sm" left-icon="rewind" @click="load">Retry</Button>

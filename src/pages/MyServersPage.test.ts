@@ -15,6 +15,7 @@ const hubServer = {
   serverId: 'srv-1',
   serverName: 'Home Theater',
   status: 'online',
+  relayActive: true,
   hostnameCandidates: ['https://home.example.com'],
   lastSeenAt: 1748304000,
 };
@@ -232,6 +233,46 @@ describe('MyServersPage — browse (inline hub browsing)', () => {
     await browse!.trigger('click');
     expect(useServerStore().currentServerId).toBeNull();
     expect(pushSpy).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('Browse is disabled + shows "Relay connecting" when online but the relay tunnel is not up', async () => {
+    const { client } = makeClient({
+      servers: [
+        {
+          serverId: 'srv-pending',
+          serverName: 'Connecting Box',
+          status: 'online',
+          relayActive: false,
+          hostnameCandidates: ['http://x'],
+          lastSeenAt: 1748304000,
+        },
+      ],
+    });
+    const router = makeRouter();
+    const pushSpy = vi.spyOn(router, 'push');
+    const w = await mountWithRouter(client, router);
+    await flushPromises();
+
+    // Status cell shows both the Online badge and the transient "Relay connecting" badge.
+    const statusCell = w.find('[data-testid="status-srv-pending"]');
+    expect(statusCell.text()).toContain('Online');
+    expect(statusCell.text()).toContain('Relay connecting');
+
+    const browse = findBtn(w, 'Browse Connecting Box');
+    expect(browse?.props('disabled')).toBe(true);
+    pushSpy.mockClear();
+    await browse!.trigger('click');
+    expect(useServerStore().currentServerId).toBeNull();
+    expect(pushSpy).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('does not show "Relay connecting" once the relay tunnel is active', async () => {
+    const { client } = makeClient(); // default hubServer: online + relayActive
+    const w = await mountWithRouter(client, makeRouter());
+    await flushPromises();
+    expect(w.find('[data-testid="status-srv-1"]').text()).not.toContain('Relay connecting');
     w.unmount();
   });
 });
