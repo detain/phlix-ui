@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { fetchLibraries, type LibrarySummary } from '../api/libraries';
-import { errMessage } from '../api/errors';
+import { errMessage, ApiError } from '../api/errors';
 
 /**
  * useLibrariesStore — a tiny shared cache of the viewer's libraries (already
@@ -19,6 +19,12 @@ export const useLibrariesStore = defineStore('libraries', () => {
   const loading = ref(false);
   const loaded = ref(false);
   const error = ref<string | null>(null);
+  // The machine-readable error `code` from an `ApiError` body (e.g. the hub relay
+  // proxy's `server.offline` / `server.relay_unavailable` 503s), preserved
+  // ALONGSIDE `error` because `extractError` collapses the payload to its short
+  // `error` label and drops the `code`. Consumers (BrowsePage) map it to an
+  // actionable message; null when the failure carried no code (plain Error, etc.).
+  const errorCode = ref<string | null>(null);
 
   let inflight: Promise<void> | null = null;
 
@@ -28,12 +34,17 @@ export const useLibrariesStore = defineStore('libraries', () => {
 
     loading.value = true;
     error.value = null;
+    errorCode.value = null;
     inflight = (async () => {
       try {
         items.value = await fetchLibraries(apiBase);
         loaded.value = true;
       } catch (e) {
         error.value = errMessage(e, 'Failed to load libraries');
+        errorCode.value =
+          e instanceof ApiError && e.body && typeof e.body === 'object' && 'code' in e.body
+            ? String((e.body as { code?: unknown }).code ?? '') || null
+            : null;
       } finally {
         loading.value = false;
         inflight = null;
@@ -47,5 +58,5 @@ export const useLibrariesStore = defineStore('libraries', () => {
     return items.value.find((l) => l.id === id);
   }
 
-  return { items, loading, loaded, error, load, byId };
+  return { items, loading, loaded, error, errorCode, load, byId };
 });
