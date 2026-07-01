@@ -65,12 +65,6 @@ export const useMediaStore = defineStore('media', () => {
      *  preserved and the instance-level refresh promise stays valid. */
     let apiClient: ApiClient | null = null;
 
-    /** Lazily-constructed, long-lived ApiClient — reused across all fetch calls.
-     *  When apiBase changes between calls we call setBaseUrl() instead of
-     *  allocating a fresh client, so the token store (default: localStorage) is
-     *  preserved and the instance-level refresh promise stays valid. */
-    let apiClient: ApiClient | null = null;
-
     const search = ref('');
     const selectedGenres = ref<string[]>([]);
     const yearFrom = ref<number | undefined>(undefined);
