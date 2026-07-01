@@ -146,6 +146,118 @@ describe('useAuthStore', () => {
   });
 });
 
+describe('useAuthStore avatar actions (step 12.6)', () => {
+    // NOTE: These tests mock client.uploadAvatar/deleteAvatar directly to avoid
+    // fetch interception issues with ApiClient's bound doFetch reference.
+    // The actual API method tests are in src/__tests__/api/avatar.test.ts.
+
+    it('uploadAvatar calls client.uploadAvatar and updates user.avatar_url on success', async () => {
+        routes['/api/v1/auth/login'] = () =>
+            new Response(JSON.stringify({ access_token: 'AT', refresh_token: 'RT' }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+        routes['/api/v1/auth/me'] = () =>
+            new Response(JSON.stringify({ user: { id: 1, email: 'a@b.c', is_admin: false } }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+
+        const s = useAuthStore();
+        await s.login('a@b.c', 'pw');
+
+        // Mock the client's uploadAvatar method
+        const uploadMock = vi.spyOn(s.client, 'uploadAvatar').mockResolvedValue({
+            avatar_url: 'https://cdn.example.com/avatars/me.jpg',
+        });
+
+        const file = new File(['hello'], 'profile.png', { type: 'image/png' });
+        await s.uploadAvatar(file);
+
+        expect(uploadMock).toHaveBeenCalledWith(file);
+        expect(s.user?.avatar_url).toBe('https://cdn.example.com/avatars/me.jpg');
+        expect(s.loading).toBe(false);
+        expect(s.error).toBeNull();
+
+        uploadMock.mockRestore();
+    });
+
+    it('uploadAvatar sets error and throws on failure', async () => {
+        routes['/api/v1/auth/login'] = () =>
+            new Response(JSON.stringify({ access_token: 'AT', refresh_token: 'RT' }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+        routes['/api/v1/auth/me'] = () =>
+            new Response(JSON.stringify({ user: { id: 1, email: 'a@b.c', is_admin: false } }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+
+        const s = useAuthStore();
+        await s.login('a@b.c', 'pw');
+
+        const uploadMock = vi.spyOn(s.client, 'uploadAvatar').mockRejectedValue(new Error('Avatar upload failed'));
+        const file = new File(['hello'], 'bad.exe', { type: 'application/octet-stream' });
+
+        await expect(s.uploadAvatar(file)).rejects.toThrow('Avatar upload failed');
+        expect(s.error).toBe('Avatar upload failed');
+        expect(s.loading).toBe(false);
+
+        uploadMock.mockRestore();
+    });
+
+    it('deleteAvatar calls client.deleteAvatar and clears user.avatar_url on success', async () => {
+        routes['/api/v1/auth/login'] = () =>
+            new Response(JSON.stringify({ access_token: 'AT', refresh_token: 'RT' }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+        routes['/api/v1/auth/me'] = () =>
+            new Response(JSON.stringify({ user: { id: 1, email: 'a@b.c', is_admin: false, avatar_url: 'https://cdn.example.com/old.jpg' } }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+
+        const s = useAuthStore();
+        await s.login('a@b.c', 'pw');
+        expect(s.user?.avatar_url).toBe('https://cdn.example.com/old.jpg');
+
+        const deleteMock = vi.spyOn(s.client, 'deleteAvatar').mockResolvedValue();
+        await s.deleteAvatar();
+
+        expect(deleteMock).toHaveBeenCalled();
+        expect(s.user?.avatar_url).toBeNull();
+        expect(s.loading).toBe(false);
+        expect(s.error).toBeNull();
+
+        deleteMock.mockRestore();
+    });
+
+    it('deleteAvatar sets error and throws on failure', async () => {
+        routes['/api/v1/auth/login'] = () =>
+            new Response(JSON.stringify({ access_token: 'AT', refresh_token: 'RT' }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+        routes['/api/v1/auth/me'] = () =>
+            new Response(JSON.stringify({ user: { id: 1, email: 'a@b.c', is_admin: false } }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+
+        const s = useAuthStore();
+        await s.login('a@b.c', 'pw');
+
+        const deleteMock = vi.spyOn(s.client, 'deleteAvatar').mockRejectedValue(new Error('Avatar deletion failed'));
+        await expect(s.deleteAvatar()).rejects.toThrow('Avatar deletion failed');
+        expect(s.error).toBe('Avatar deletion failed');
+        expect(s.loading).toBe(false);
+
+        deleteMock.mockRestore();
+    });
+});
+
 describe('useAuthStore.init — boot session validation', () => {
   it('validates a token restored from localStorage and rehydrates the user (fixes the "A" badge + isAdmin after a reload)', async () => {
     // A returning user: token present in storage, but `user` starts null and

@@ -57,7 +57,7 @@ describe('UserMenu — signed out', () => {
 describe('UserMenu — signed in', () => {
   it('shows the avatar initial + name and a Settings link', async () => {
     const { w, push } = mountMenu(true);
-    expect(w.get('.usermenu__trigger .usermenu__avatar').text()).toBe('A');
+    expect(w.get('.usermenu__trigger .usermenu__avatar').text()).toBe('AD');
     await w.get('.usermenu__trigger').trigger('click');
     const panel = w.get('.usermenu__panel');
     expect(panel.text()).toContain('Ada');
@@ -96,7 +96,7 @@ describe('UserMenu — signed in', () => {
 
   it('falls back to the name then email for the display name', async () => {
     const byName = mountMenu(true, { id: '2', name: 'Bob Bobson' });
-    expect(byName.w.get('.usermenu__trigger .usermenu__avatar').text()).toBe('B');
+    expect(byName.w.get('.usermenu__trigger .usermenu__avatar').text()).toBe('BB');
     await byName.w.get('.usermenu__trigger').trigger('click');
     expect(byName.w.get('.usermenu__panel').text()).toContain('Bob Bobson');
 
