@@ -1562,7 +1562,7 @@ describe('Player — favorite + rating controls (Feature 16.1)', () => {
     const { w } = mountPlayer();
     const store = useUserItemDataStore();
     // seed the store entry for the played item and assert the controls reflect it
-    store.entries.set('m1', { favorite: true, rating: null, like_level: 2 });
+    store.entries.set('m1', { favorite: true, rating: null, like_level: 2, watched: false });
     await nextTick();
     const fav = favBtn(w);
     expect(fav.attributes('aria-pressed')).toBe('true');

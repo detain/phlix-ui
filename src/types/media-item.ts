@@ -107,9 +107,18 @@ export interface MediaDetail extends MediaListItem {
      * optional so older servers that omit it keep working). `null` means the
      * request was unauthenticated / the store
      * is not wired. Distinct from the list-level `rating` (the content/parental
-     * rating like "PG-13") — never conflate the two.
+     * rating like "PG-13") — never conflate the two. `watched` is the per-user
+     * watched flag (the eye toggle on cards + the detail hero); optional so older
+     * servers that don't send it default to not-watched.
      */
-    user_data?: { favorite: boolean; rating: number | null; like_level?: number } | null;
+    user_data?: { favorite: boolean; rating: number | null; like_level?: number; watched?: boolean } | null;
+    /**
+     * External metadata-provider IDs the item is matched to, keyed by provider
+     * (`tmdb`, `imdb`, `tvdb`, `anidb`, …). Detail-only + optional; the detail
+     * page renders these as outbound "Links" to each provider's page. Values are
+     * strings; absent/empty when the item is unmatched or on older servers.
+     */
+    external_ids?: Record<string, string> | null;
     /**
      * Per-file metadata (container, codec, resolution, size) for each physical
      * file backing this item. Only populated on the detail response; absent on

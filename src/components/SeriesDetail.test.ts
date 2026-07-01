@@ -89,16 +89,16 @@ describe('SeriesDetail (U3)', () => {
 
   it('renders one season card per season with correct labels and counts (Specials last)', () => {
     const w = mountIt();
-    const labels = w.findAll('.series-detail__label').map((n) => n.text());
+    const labels = w.findAll('.media-card__caption-title').map((n) => n.text());
     expect(labels).toEqual(['Season 1', 'Season 2', 'Specials']);
-    const counts = w.findAll('.series-detail__count').map((n) => n.text());
+    const counts = w.findAll('.media-card__caption-sub').map((n) => n.text());
     expect(counts[0]).toContain('2 episodes');
     expect(counts[1]).toContain('1 episode');
   });
 
   it('links each season card to its per-season route (Specials → 0)', () => {
     const w = mountIt();
-    const hrefs = w.findAll('.series-detail__card').map((a) => a.attributes('href'));
+    const hrefs = w.findAll('.media-card__link').map((a) => a.attributes('href'));
     expect(hrefs).toEqual([
       '/app/media/sh1/season/1',
       '/app/media/sh1/season/2',
@@ -108,12 +108,12 @@ describe('SeriesDetail (U3)', () => {
 
   it('honors a custom routerBase in the season links', () => {
     const w = mountIt({ routerBase: '/app' });
-    expect(w.findAll('.series-detail__card')[0].attributes('href')).toBe('/app/media/sh1/season/1');
+    expect(w.findAll('.media-card__link')[0].attributes('href')).toBe('/app/media/sh1/season/1');
   });
 
   it('falls back to the series poster for a season with no own poster', () => {
     const w = mountIt();
-    const img = w.find('.series-detail__img');
+    const img = w.find('.media-card__img');
     expect(img.attributes('src')).toBe('series-poster.jpg');
   });
 
@@ -123,18 +123,18 @@ describe('SeriesDetail (U3)', () => {
       [media({ id: 'se1', type: 'season', season_number: 1, poster_url: 'season1.jpg' })],
     );
     const w = mountIt({ seasons: withPoster });
-    expect(w.find('.series-detail__img').attributes('src')).toBe('season1.jpg');
+    expect(w.find('.media-card__img').attributes('src')).toBe('season1.jpg');
   });
 
   it('shows a busy region while loading and no cards', () => {
     const w = mountIt({ seasons: [], loading: true });
     expect(w.find('[role="status"][aria-busy="true"]').exists()).toBe(true);
-    expect(w.findAll('.series-detail__card')).toHaveLength(0);
+    expect(w.findAll('.media-card__link')).toHaveLength(0);
   });
 
   it('shows an empty message when there are no seasons', () => {
     const w = mountIt({ seasons: [] });
-    expect(w.findAll('.series-detail__card')).toHaveLength(0);
+    expect(w.findAll('.media-card__link')).toHaveLength(0);
     expect(w.text()).toContain('no seasons available');
   });
 

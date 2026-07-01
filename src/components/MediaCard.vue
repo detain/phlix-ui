@@ -54,8 +54,21 @@ const props = withDefaults(
      * default; the host gates it on `isAdmin`. Keeps the card layout intact.
      */
     canMatch?: boolean;
+    /**
+     * Suppress the hover action row (Play/Watched/Favorite/Rating/Info/Menu).
+     * Used when the card is purely navigational — e.g. the season grid on the
+     * series page, where per-item favorite/rating/watched don't apply and the
+     * card just links to the season. The poster, badges, hover-lift, title
+     * overlay and caption are unchanged, so it stays visually the library card.
+     */
+    hideActions?: boolean;
+    /**
+     * Override the caption sub-line (defaults to year · runtime). Used by the
+     * season grid to show "N episodes" while reusing this exact card design.
+     */
+    subtitle?: string | null;
   }>(),
-  { newWithinDays: 30, canMatch: false },
+  { newWithinDays: 30, canMatch: false, hideActions: false, subtitle: null },
 );
 
 const emit = defineEmits<{
@@ -89,8 +102,8 @@ const loveLevel = computed(() => userItemData.likeLevel(props.item.id));
 /** Whether the current user is an admin. */
 const isAdmin = computed(() => auth.isAdmin);
 
-/** Whether this item is in the user's watched/favorite state. */
-const isWatched = computed(() => userItemData.isFavorite(props.item.id));
+/** Whether this item is marked watched by the user (drives the eye toggle). */
+const isWatched = computed(() => userItemData.isWatched(props.item.id));
 
 const menuOpen = ref(false);
 
@@ -106,7 +119,7 @@ function onMenuSelect(item: { label: string }): void {
   switch (item.label) {
     case 'Mark watched':
     case 'Mark unwatched':
-      emit('mark-watched', props.item);
+      onWatched();
       break;
     case 'Refresh/Match…':
       emit('refresh', props.item);
@@ -138,6 +151,18 @@ function onLove(next: number): void {
 function onFavorite(): void {
   void userItemData.toggleFavorite(props.item.id, phlixConfig?.apiBase ?? '');
   emit('watchlist', props.item);
+}
+
+/**
+ * Watched (eye) quick-action handler. Flips the watched flag in the store
+ * (optimistic + rollback + one markWatched/markUnwatched write there) AND
+ * re-emits `mark-watched` so the host page's toast wiring runs. Mirrors
+ * `onFavorite` exactly — the host handler must NOT toggle again, only report the
+ * resulting state. Also invoked by the ⋯ menu's Mark watched/unwatched item.
+ */
+function onWatched(): void {
+  void userItemData.toggleWatched(props.item.id, phlixConfig?.apiBase ?? '');
+  emit('mark-watched', props.item);
 }
 
 // Clicking a card's poster opens its info/detail page by default — for every
@@ -252,7 +277,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           row. Every button uses @click.stop.prevent so it never falls through to
           the card's stretched info link.
         -->
-        <div class="media-card__actions">
+        <div v-if="!hideActions" class="media-card__actions">
           <!-- [ Play ] -->
           <button
             type="button"
@@ -283,6 +308,20 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             @click.stop.prevent="onFavorite"
           >
             <Icon :name="isFavorited ? 'bookmark' : 'bookmark-plus'" />
+          </button>
+
+          <!-- [ Watched ] — eye toggle. Open eye = watched, closed (slashed) eye =
+               not watched. Click flips the per-user watched flag (store optimistic
+               + one write). -->
+          <button
+            type="button"
+            class="media-card__iconbtn media-card__iconbtn--watched"
+            :class="{ 'is-active': isWatched }"
+            :aria-label="isWatched ? 'Mark as unwatched' : 'Mark as watched'"
+            :aria-pressed="isWatched ? 'true' : 'false'"
+            @click.stop.prevent="onWatched"
+          >
+            <Icon :name="isWatched ? 'eye' : 'eye-off'" />
           </button>
 
           <!-- [ Info ] -->
@@ -320,9 +359,12 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
     <div class="media-card__caption">
       <div class="media-card__caption-title" :title="item.name">{{ item.name }}</div>
       <div class="media-card__caption-sub numeric">
-        <template v-if="item.year">{{ item.year }}</template>
-        <template v-if="item.year && item.runtime"> · </template>
-        <template v-if="item.runtime">{{ item.runtime }}m</template>
+        <template v-if="subtitle != null">{{ subtitle }}</template>
+        <template v-else>
+          <template v-if="item.year">{{ item.year }}</template>
+          <template v-if="item.year && item.runtime"> · </template>
+          <template v-if="item.runtime">{{ item.runtime }}m</template>
+        </template>
       </div>
     </div>
   </article>
@@ -555,10 +597,15 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   padding: 2px var(--space-2);
 }
 .media-card__actions {
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  /* WRAP so the full set of quick-actions (Play/Rating/Favorite/Watched/Info/
+     Menu/Match) never overflows the clipped poster and gets cut off on narrow
+     cards — the old nowrap row shrank buttons to unusable slivers or clipped
+     them past the poster's right edge. */
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-1);
   /* Off by default so an idle (opacity:0) overlay never swallows clicks meant
      for the stretched link; enabled once the overlay is actually shown. */
   pointer-events: none;
@@ -566,6 +613,24 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 .media-card:hover .media-card__actions,
 .media-card:focus-within .media-card__actions {
   pointer-events: auto;
+}
+/* The thumbs widget defaults to `var(--text)` (near-black on daylight) — force it
+   WHITE + non-shrinking + slightly smaller in the (always-dark) card overlay, and
+   give it the same legibility drop-shadow as the icon buttons. Scoped to the card
+   so ThumbRating on the light detail page keeps its themed colour. */
+.media-card__actions :deep(.thumb-rating) {
+  flex: 0 0 auto;
+  gap: var(--space-1);
+}
+.media-card__actions :deep(.thumb-rating__btn) {
+  width: 34px;
+  height: 34px;
+  font-size: 1.2rem;
+  color: #fff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+}
+.media-card__actions :deep(.thumb-rating__btn.is-blue) {
+  color: var(--thumb-blue, #3b82f6);
 }
 
 /* Touch devices have no hover, so the overlay never reveals and a first tap on
@@ -584,45 +649,51 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   }
 }
 .media-card__iconbtn {
-  width: 40px;
-  height: 40px;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-full);
-  /* White wireframe icons on a transparent background — no button chrome, so the
-     overlay reads as icons over the poster rather than a row of pills. */
-  color: var(--text);
+  /* ALWAYS-white wireframe icons over the (always-dark) overlay gradient — the
+     old `var(--text)` was near-black on the daylight theme, so the buttons were
+     invisible on light mode. A drop-shadow keeps them legible over bright poster
+     areas too. No button chrome, so the overlay reads as icons over the poster. */
+  color: #fff;
   background: transparent;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1rem;
   cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
   transition: transform var(--dur-fast) var(--ease-spring), color var(--dur-base) var(--ease-out);
 }
 /* Hover feedback without a background: tint amber + a small scale. */
 .media-card__iconbtn:hover {
-  transform: scale(1.08);
+  transform: scale(1.12);
   color: var(--accent);
 }
 .media-card__iconbtn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
-/* Favorited state: the bookmark renders filled + amber so it reads as "saved". */
+/* Active (saved/watched) state tints amber. */
 .media-card__iconbtn.is-active {
   color: var(--accent);
 }
-.media-card__iconbtn.is-active :deep(svg) {
+/* Favorited: the bookmark renders FILLED + amber so it reads as "saved". The
+   watched eye only tints (a filled eyeball reads poorly), so it's excluded. */
+.media-card__iconbtn.is-active:not(.media-card__iconbtn--watched) :deep(svg) {
   fill: currentColor;
 }
 .media-card__iconbtn--play {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   /* No background chrome either — the play glyph itself carries the amber accent. */
   background: transparent;
   color: var(--accent);
   border: none;
   box-shadow: none;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
 }
 
 .media-card__caption {

@@ -379,7 +379,7 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
     // Un-favorite f2: the store entry flips → the favorite-id signature changes
     // → the rail re-fetches; the server now returns only f1.
     current = [fav('f1', 'Keep')];
-    userItemData.entries.set('f2', { favorite: false, rating: null, like_level: 0 });
+    userItemData.entries.set('f2', { favorite: false, rating: null, like_level: 0, watched: false });
     await flushPromises();
 
     const items = favoritesRow(w)!.props('items') as MediaItem[];
@@ -397,7 +397,7 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
     expect(favoritesRow(w)).toBeTruthy();
 
     current = [];
-    userItemData.entries.set('f1', { favorite: false, rating: null, like_level: 0 });
+    userItemData.entries.set('f1', { favorite: false, rating: null, like_level: 0, watched: false });
     await flushPromises();
 
     expect(favoritesRow(w)).toBeUndefined();

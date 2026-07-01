@@ -74,7 +74,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'nocturne',
   accent: null,
   density: 'comfortable',
-  cardSize: 180,
+  cardSize: 200,
   gridDensity: 'comfy',
   reducedMotion: 'auto',
   autoplay: true,

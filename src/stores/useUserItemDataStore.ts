@@ -19,12 +19,15 @@ export interface UserItemData {
   rating: number | null;
   /** Thumbs rating on the −2..2 axis (0 = not set). */
   like_level: number;
+  /** Whether the authenticated user has marked this item watched (the eye toggle). */
+  watched: boolean;
 }
 
 const DEFAULT_ENTRY: Readonly<UserItemData> = Object.freeze({
   favorite: false,
   rating: null,
   like_level: 0,
+  watched: false,
 });
 
 export const useUserItemDataStore = defineStore('user-item-data', () => {
@@ -56,6 +59,11 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
     return entries.value.get(id)?.like_level ?? 0;
   }
 
+  /** Current watched state for an id (false when the item is unknown). */
+  function isWatched(id: string): boolean {
+    return entries.value.get(id)?.watched ?? false;
+  }
+
   /** Read the full cached entry (defaulted) for an id. */
   function get(id: string): UserItemData {
     return entries.value.get(id) ?? { ...DEFAULT_ENTRY };
@@ -73,6 +81,7 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
       favorite: ud?.favorite ?? false,
       rating: ud?.rating ?? null,
       like_level: ud?.like_level ?? 0,
+      watched: ud?.watched ?? false,
     });
   }
 
@@ -107,6 +116,32 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
       setEntry(id, { favorite: previous });
       const verb = next ? 'add to' : 'remove from';
       useToastStore().error(`Failed to ${verb} favorites: ${errMessage(e)}`);
+    }
+  }
+
+  /**
+   * Toggle the watched flag for an item. The map is flipped SYNCHRONOUSLY
+   * (optimistic) so the eye icon reflects the new state immediately; the matching
+   * `markWatched`/`markUnwatched` write goes out in the background. On API error
+   * the optimistic change is rolled back and an error toast is surfaced (mirrors
+   * `toggleFavorite`).
+   */
+  async function toggleWatched(id: string, apiBase: string): Promise<void> {
+    const previous = isWatched(id);
+    const next = !previous;
+    setEntry(id, { watched: next });
+
+    try {
+      const api = client(apiBase);
+      if (next) {
+        await api.markWatched(id);
+      } else {
+        await api.markUnwatched(id);
+      }
+    } catch (e) {
+      setEntry(id, { watched: previous });
+      const verb = next ? 'watched' : 'unwatched';
+      useToastStore().error(`Failed to mark ${verb}: ${errMessage(e)}`);
     }
   }
 
@@ -147,5 +182,5 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
     apiClient = null;
   }
 
-  return { entries, isFavorite, likeLevel, get, hydrate, toggleFavorite, setLike, reset };
+  return { entries, isFavorite, likeLevel, isWatched, get, hydrate, toggleFavorite, toggleWatched, setLike, reset };
 });

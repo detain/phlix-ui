@@ -17,7 +17,7 @@ import type { MediaItem } from '../types/media-item';
 import type { SeasonGroup } from './series-grouping';
 import { seasonRouteParam } from './series-grouping';
 import MediaDetail from './MediaDetail.vue';
-import Icon from './Icon.vue';
+import MediaCard from './MediaCard.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import type { PhlixAppConfig } from '../app/types';
@@ -68,9 +68,42 @@ function episodeCountLabel(group: SeasonGroup): string {
     return `${n} ${n === 1 ? 'episode' : 'episodes'}`;
 }
 
+/**
+ * Adapt a season group to a `MediaItem` so the season grid can reuse the SAME
+ * `MediaCard` design as the library listings (U-cards). When the server modelled
+ * the season as its own `type: 'season'` row we reuse it (real id → its poster
+ * falls back to the series poster); otherwise we synthesise a minimal season item
+ * (the card is navigational — `hide-actions` — so there's no per-item store write
+ * keyed on the synthetic id).
+ */
+function seasonAsItem(group: SeasonGroup): MediaItem {
+    if (group.seasonItem) {
+        // Reuse the real season row but always title the card with the season
+        // label ("Season 1"/"Specials"), not the row's raw name.
+        return { ...group.seasonItem, name: group.label, poster_url: seasonPoster(group) };
+    }
+    return {
+        id: `${props.item.id}:${group.key}`,
+        name: group.label,
+        type: 'season',
+        poster_url: seasonPoster(group),
+        genres: [],
+        year: null,
+        rating: null,
+        runtime: null,
+        overview: null,
+        actors: [],
+        director: null,
+        created_at: null,
+        updated_at: null,
+    };
+}
+
 const hasSeasons = computed(() => props.seasons.length > 0);
 
 const prefs = usePreferencesStore();
+/** Season cards track the same size as the library grid so they match visually. */
+const cardSize = computed(() => prefs.cardSize ?? 200);
 const mediaApiBase = useMediaApiBase();
 const mediaDirectBase = useMediaDirectBase();
 const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
@@ -175,27 +208,18 @@ onBeforeUnmount(() => {
                 aria-label="Loading seasons"
             />
 
-            <ul v-else-if="hasSeasons" class="series-detail__grid">
+            <ul
+                v-else-if="hasSeasons"
+                class="series-detail__grid"
+                :style="{ gridTemplateColumns: `repeat(auto-fill, minmax(${cardSize}px, 1fr))` }"
+            >
                 <li v-for="season in seasons" :key="season.key" class="series-detail__cell">
-                    <RouterLink :to="seasonTo(season)" class="series-detail__card">
-                        <div class="series-detail__poster">
-                            <img
-                                v-if="seasonPoster(season)"
-                                class="series-detail__img"
-                                :src="seasonPoster(season) ?? undefined"
-                                :alt="season.label"
-                                loading="lazy"
-                                decoding="async"
-                            />
-                            <div v-else class="series-detail__fallback" aria-hidden="true">
-                                <Icon name="tv" />
-                            </div>
-                        </div>
-                        <div class="series-detail__caption">
-                            <span class="series-detail__label">{{ season.label }}</span>
-                            <span class="series-detail__count numeric">{{ episodeCountLabel(season) }}</span>
-                        </div>
-                    </RouterLink>
+                    <MediaCard
+                        :item="seasonAsItem(season)"
+                        :to="seasonTo(season)"
+                        :subtitle="episodeCountLabel(season)"
+                        hide-actions
+                    />
                 </li>
             </ul>
 
@@ -243,80 +267,16 @@ onBeforeUnmount(() => {
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    /* Column template is set inline from the card-size preference so season cards
+       track the same size as the library grid; this is the SSR/no-JS fallback. */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: var(--space-5);
 }
 .series-detail__cell {
     min-width: 0;
 }
 
-.series-detail__card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    border-radius: var(--radius-lg);
-    color: inherit;
-    text-decoration: none;
-    outline: none;
-}
-.series-detail__card:focus-visible .series-detail__poster {
-    box-shadow: var(--shadow-2), 0 0 0 3px var(--accent-ring);
-}
-
-.series-detail__poster {
-    position: relative;
-    aspect-ratio: 2 / 3;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    background: linear-gradient(145deg, var(--surface-3), var(--surface));
-    box-shadow: var(--shadow-2);
-    transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out);
-}
-.series-detail__card:hover .series-detail__poster {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: var(--shadow-4);
-}
-.series-detail__img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.series-detail__fallback {
-    display: grid;
-    place-items: center;
-    height: 100%;
-    font-size: 2.4rem;
-    color: var(--text-subtle);
-}
-
-.series-detail__caption {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 0 var(--space-1);
-}
-.series-detail__label {
-    font-family: var(--font-display);
-    font-weight: var(--font-medium);
-    font-size: var(--text-base);
-    color: var(--text);
-    letter-spacing: var(--tracking-snug);
-}
-.series-detail__count {
-    font-size: var(--text-xs);
-    color: var(--text-subtle);
-}
-
 .series-detail__empty {
     color: var(--text-muted);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .series-detail__poster {
-        transition: none;
-    }
-    .series-detail__card:hover .series-detail__poster {
-        transform: none;
-    }
 }
 </style>

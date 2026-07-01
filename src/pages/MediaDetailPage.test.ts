@@ -383,9 +383,9 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     const series = w.findComponent(SeriesDetail);
     expect(series.exists()).toBe(true);
     // one card per season with the correct labels + episode counts
-    const labels = w.findAll('.series-detail__label').map((n) => n.text());
+    const labels = w.findAll('.media-card__caption-title').map((n) => n.text());
     expect(labels).toEqual(['Season 1', 'Season 2']);
-    const counts = w.findAll('.series-detail__count').map((n) => n.text());
+    const counts = w.findAll('.media-card__caption-sub').map((n) => n.text());
     expect(counts[0]).toContain('2 episodes');
     expect(counts[1]).toContain('1 episode');
   });
@@ -405,7 +405,7 @@ describe('MediaDetailPage — series season grid (U3)', () => {
       );
     const { w } = await mountAt('sh1', fetchMock);
     await flushPromises();
-    const hrefs = w.findAll('.series-detail__card').map((a) => a.attributes('href'));
+    const hrefs = w.findAll('.media-card__link').map((a) => a.attributes('href'));
     expect(hrefs).toContain('/app/media/sh1/season/1');
     expect(hrefs).toContain('/app/media/sh1/season/0'); // Specials → 0
   });
@@ -503,7 +503,7 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     const { w } = await mountAt('sh1', fetchMock);
     await flushPromises();
     await flushPromises();
-    const labels = w.findAll('.series-detail__label').map((n) => n.text());
+    const labels = w.findAll('.media-card__caption-title').map((n) => n.text());
     expect(labels).toEqual(['Season 1', 'Season 2']);
     // season-row children were fetched by their own ids
     const urls = fetchMock.mock.calls.map((c) => String(c[0]));
@@ -519,7 +519,7 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     const { w } = await mountAt('sh1', fetchMock);
     await flushPromises();
     expect(w.findComponent(SeriesDetail).exists()).toBe(true);
-    expect(w.findAll('.series-detail__card')).toHaveLength(0);
+    expect(w.findAll('.media-card__link')).toHaveLength(0);
     expect(w.text()).toContain('no seasons available');
   });
 

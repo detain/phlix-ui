@@ -92,6 +92,7 @@ export const HERO: MediaItem = {
     'to sink the harbour to erase.',
   actors: ['Ava Mercer', 'Idris Calloway', 'Lena Park', 'Marcus Vane', 'Sofia Reyes'],
   director: 'Denis Okonkwo',
+  external_ids: { tmdb: '693134', imdb: 'tt1160419', tvdb: '' },
   created_at: null,
   updated_at: null,
 };

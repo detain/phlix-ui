@@ -140,6 +140,15 @@ describe('SeasonPage (U3)', () => {
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e1' } });
   });
 
+  it('navigates opening an episode row to that episode’s detail page', async () => {
+    const fetchMock = seriesFetch();
+    const { w, router } = await mountAt('sh1', '1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(SeriesSeasons).vm.$emit('open', episode({ id: 's1e1' }));
+    expect(push).toHaveBeenCalledWith({ name: 'media', params: { id: 's1e1' } });
+  });
+
   it('the back-link navigates to the series detail', async () => {
     const fetchMock = seriesFetch();
     const { w, router } = await mountAt('sh1', '1', fetchMock);

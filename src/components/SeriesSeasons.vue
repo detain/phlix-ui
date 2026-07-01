@@ -26,6 +26,9 @@ const props = withDefaults(
 
 const emit = defineEmits<{
     (e: 'play', item: MediaItem): void;
+    /** The episode row body was clicked — open that episode's detail/info page
+     *  (like a movie). The explicit play button still emits `play`. */
+    (e: 'open', item: MediaItem): void;
 }>();
 
 const auth = inject('auth', { isAdmin: false } as { isAdmin: boolean }) as { isAdmin: boolean };
@@ -128,7 +131,8 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
                     <button
                         type="button"
                         class="series-seasons__episode-main"
-                        @click="emit('play', ep)"
+                        :aria-label="`View ${episodeTitle(ep)}`"
+                        @click="emit('open', ep)"
                     >
                         <span class="series-seasons__episode-title">{{ episodeTitle(ep) }}</span>
                         <span v-if="ep.overview" class="series-seasons__episode-overview">{{

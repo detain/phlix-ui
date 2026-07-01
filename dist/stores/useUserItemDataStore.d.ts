@@ -13,22 +13,28 @@ export interface UserItemData {
     rating: number | null;
     /** Thumbs rating on the −2..2 axis (0 = not set). */
     like_level: number;
+    /** Whether the authenticated user has marked this item watched (the eye toggle). */
+    watched: boolean;
 }
 export declare const useUserItemDataStore: import("pinia").StoreDefinition<"user-item-data", Pick<{
     entries: import("vue").Ref<Map<string, {
         favorite: boolean;
         rating: number | null;
         like_level: number;
+        watched: boolean;
     }> & Omit<Map<string, UserItemData>, keyof Map<any, any>>, Map<string, UserItemData> | (Map<string, {
         favorite: boolean;
         rating: number | null;
         like_level: number;
+        watched: boolean;
     }> & Omit<Map<string, UserItemData>, keyof Map<any, any>>)>;
     isFavorite: (id: string) => boolean;
     likeLevel: (id: string) => number;
+    isWatched: (id: string) => boolean;
     get: (id: string) => UserItemData;
     hydrate: (item: MediaDetail | MediaListItem | null | undefined) => void;
     toggleFavorite: (id: string, apiBase: string) => Promise<void>;
+    toggleWatched: (id: string, apiBase: string) => Promise<void>;
     setLike: (id: string, level: number, apiBase: string) => Promise<void>;
     reset: () => void;
 }, "entries">, Pick<{
@@ -36,16 +42,20 @@ export declare const useUserItemDataStore: import("pinia").StoreDefinition<"user
         favorite: boolean;
         rating: number | null;
         like_level: number;
+        watched: boolean;
     }> & Omit<Map<string, UserItemData>, keyof Map<any, any>>, Map<string, UserItemData> | (Map<string, {
         favorite: boolean;
         rating: number | null;
         like_level: number;
+        watched: boolean;
     }> & Omit<Map<string, UserItemData>, keyof Map<any, any>>)>;
     isFavorite: (id: string) => boolean;
     likeLevel: (id: string) => number;
+    isWatched: (id: string) => boolean;
     get: (id: string) => UserItemData;
     hydrate: (item: MediaDetail | MediaListItem | null | undefined) => void;
     toggleFavorite: (id: string, apiBase: string) => Promise<void>;
+    toggleWatched: (id: string, apiBase: string) => Promise<void>;
     setLike: (id: string, level: number, apiBase: string) => Promise<void>;
     reset: () => void;
 }, never>, Pick<{
@@ -53,16 +63,20 @@ export declare const useUserItemDataStore: import("pinia").StoreDefinition<"user
         favorite: boolean;
         rating: number | null;
         like_level: number;
+        watched: boolean;
     }> & Omit<Map<string, UserItemData>, keyof Map<any, any>>, Map<string, UserItemData> | (Map<string, {
         favorite: boolean;
         rating: number | null;
         like_level: number;
+        watched: boolean;
     }> & Omit<Map<string, UserItemData>, keyof Map<any, any>>)>;
     isFavorite: (id: string) => boolean;
     likeLevel: (id: string) => number;
+    isWatched: (id: string) => boolean;
     get: (id: string) => UserItemData;
     hydrate: (item: MediaDetail | MediaListItem | null | undefined) => void;
     toggleFavorite: (id: string, apiBase: string) => Promise<void>;
+    toggleWatched: (id: string, apiBase: string) => Promise<void>;
     setLike: (id: string, level: number, apiBase: string) => Promise<void>;
     reset: () => void;
-}, "reset" | "hydrate" | "get" | "isFavorite" | "likeLevel" | "toggleFavorite" | "setLike">>;
+}, "reset" | "hydrate" | "get" | "isFavorite" | "likeLevel" | "isWatched" | "toggleFavorite" | "toggleWatched" | "setLike">>;
