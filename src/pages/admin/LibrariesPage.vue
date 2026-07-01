@@ -21,7 +21,7 @@
  * and metadata-match all report this), so this page renders a live percentage
  * bar + count + current file. On `failed` it shows the server `error` string.
  */
-import { ref, computed, onMounted, onBeforeUnmount, inject, type ComputedRef } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
@@ -33,6 +33,7 @@ import {
   type CreateLibraryInput,
   type UpdateLibraryInput,
 } from '../../api/admin/libraries';
+import { AdminMetadataSourcesApi } from '../../api/admin/metadata-sources';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
@@ -43,6 +44,7 @@ import Switch from '../../components/ui/Switch.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import SourcePriorityEditor from '../../components/SourcePriorityEditor.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 
 /** Default polling period for live scan status (ms). */
@@ -59,9 +61,10 @@ const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBas
 const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
-const api = new AdminLibrariesApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
-);
+const apiClient =
+  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() });
+const api = new AdminLibrariesApi(apiClient);
+const sourcesApi = new AdminMetadataSourcesApi(apiClient);
 const toasts = useToastStore();
 
 const pollMs = computed(() => props.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS);
@@ -212,6 +215,63 @@ const submitting = ref(false);
 
 const formTitle = computed(() => (editing.value ? 'Edit library' : 'Add library'));
 
+// ── Metadata-source priority (per-library override) ─────────────────────────────
+/** The selectable/default-ordered source names (built-ins + enabled plugins). */
+const availableSources = ref<string[]>([]);
+/** The working ordered list shown in the SourcePriorityEditor. */
+const priorityOrder = ref<string[]>([]);
+/** True once the admin has edited the order — gates persisting the field. */
+const priorityDirty = ref(false);
+/** Guards a single sources fetch (they do not change per-library). */
+const sourcesLoaded = ref(false);
+
+/**
+ * Fetch the selectable source names once. The default order returned by the
+ * endpoint (`tmdb, imdb, tvdb, fanart, local` + enabled plugin sources) IS the
+ * "global default" seed used when a library has no override. Non-fatal: a
+ * failure degrades to an empty list (the editor still renders any saved order).
+ */
+async function loadSources(): Promise<void> {
+  if (sourcesLoaded.value) return;
+  sourcesLoaded.value = true;
+  try {
+    availableSources.value = await sourcesApi.listSources();
+  } catch {
+    availableSources.value = [];
+  }
+}
+
+/**
+ * Seed the working priority order for the open form. Reads the library's stored
+ * `options.metadata_priority[type]` override; when absent, falls back to the
+ * default-ordered `availableSources` list (for display). Resets the dirty flag.
+ */
+function seedPriority(lib: Library | null): void {
+  const opts = lib?.options as Record<string, unknown> | undefined;
+  const raw = opts?.['metadata_priority'];
+  const perType =
+    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const own = Array.isArray(perType[type.value])
+    ? (perType[type.value] as unknown[]).filter((s): s is string => typeof s === 'string')
+    : [];
+  priorityOrder.value = own.length ? own : availableSources.value.slice();
+  priorityDirty.value = false;
+}
+
+/** Record a reordered/added/removed source list from the editor as a user edit. */
+function setPriorityOrder(order: string[]): void {
+  priorityOrder.value = order;
+  priorityDirty.value = true;
+}
+
+// When the sources load AFTER the form was opened with no stored override and the
+// admin hasn't touched the editor, fill in the default order for display.
+watch(availableSources, () => {
+  if (formOpen.value && !priorityDirty.value && priorityOrder.value.length === 0) {
+    priorityOrder.value = availableSources.value.slice();
+  }
+});
+
 /**
  * Coerce a stored option value to a strict boolean. The server may surface the
  * flag as a real bool, an int (`1`), or a string (`"1"`/`"true"`/`"yes"`/`"on"`),
@@ -240,6 +300,7 @@ function openAdd(): void {
   type.value = LIBRARY_TYPES[0];
   pathsText.value = '';
   seriesPerDirectory.value = false;
+  seedPriority(null);
   formOpen.value = true;
 }
 
@@ -253,6 +314,7 @@ function openEdit(lib: Library): void {
   // Populate the series-per-directory toggle from the stored option (the value
   // may be bool / 1 / "1" / "true" depending on how the server serialized it).
   seriesPerDirectory.value = coerceBool(lib.options?.series_per_directory);
+  seedPriority(lib);
   formOpen.value = true;
 }
 
@@ -282,11 +344,23 @@ async function submitForm(): Promise<void> {
       // Edit: send only editable fields — NEVER `type`.
       const body: UpdateLibraryInput = { name: name.value, paths };
       if (isSeries) body.series_per_directory = seriesPerDirectory.value;
+      // Only persist the per-library priority when the admin actually edited it.
+      // An emptied list sends `null` to clear the override (fall back to default).
+      if (priorityDirty.value) {
+        body.metadata_priority = priorityOrder.value.length
+          ? { [type.value]: priorityOrder.value }
+          : null;
+      }
       await api.update(existing.id, body);
       toasts.success('Library updated.');
     } else {
       const body: CreateLibraryInput = { name: name.value, type: type.value, paths };
       if (isSeries) body.series_per_directory = seriesPerDirectory.value;
+      if (priorityDirty.value) {
+        body.metadata_priority = priorityOrder.value.length
+          ? { [type.value]: priorityOrder.value }
+          : null;
+      }
       const result = await api.create(body);
       toasts.success(result.message || 'Library created.');
     }
@@ -377,7 +451,10 @@ function closeHistory(): void {
   history.value = [];
 }
 
-onMounted(loadLibraries);
+onMounted(() => {
+  void loadSources();
+  void loadLibraries();
+});
 
 // Clear ALL intervals on unmount — no leaked timers.
 onBeforeUnmount(() => {
@@ -572,6 +649,20 @@ onBeforeUnmount(() => {
           <span class="admin-libraries__hint-text">
             Use each top-level folder name as the series title to improve metadata matching.
           </span>
+        </div>
+        <div class="admin-libraries__field">
+          <span class="admin-libraries__label">Metadata source priority</span>
+          <p class="admin-libraries__hint-text">
+            The order metadata sources are tried for this library. The first source with a value for a
+            field wins. Leave as the default to use the server-wide order, or reorder / remove sources
+            to override it just for this library.
+          </p>
+          <SourcePriorityEditor
+            :model-value="priorityOrder"
+            :available="availableSources"
+            :label="`${type} sources`"
+            @update:model-value="setPriorityOrder"
+          />
         </div>
       </form>
       <template #footer>

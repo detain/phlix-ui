@@ -92,6 +92,13 @@ export interface CreateLibraryInput {
    * and persists it canonically inside `options.series_per_directory`.
    */
   series_per_directory?: boolean;
+  /**
+   * Per-library metadata-source priority, keyed by the library's media type,
+   * e.g. `{ movie: ['tmdb','local'] }`. `LibraryController` accepts it at the
+   * body top level and persists it canonically in `options.metadata_priority`.
+   * Send `null` to clear the per-library override (falls back to the global default).
+   */
+  metadata_priority?: Record<string, string[]> | null;
 }
 
 /**
@@ -104,6 +111,8 @@ export interface UpdateLibraryInput {
   options?: Record<string, unknown>;
   /** See {@link CreateLibraryInput.series_per_directory}. */
   series_per_directory?: boolean;
+  /** See {@link CreateLibraryInput.metadata_priority}. */
+  metadata_priority?: Record<string, string[]> | null;
 }
 
 /** Result of {@link AdminLibrariesApi.create}. */
