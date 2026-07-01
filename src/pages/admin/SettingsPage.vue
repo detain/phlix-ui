@@ -11,15 +11,12 @@
  * toasts. Each save refetches the resolved settings + overridden list (matching
  * the React source).
  */
-import { ref, computed, reactive, onMounted, watch, inject, type ComputedRef } from 'vue';
+import { ref, computed, reactive, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient, ApiError } from '../../api/client';
 import { errMessage } from '../../api/errors';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import { AdminSettingsApi } from '../../api/admin/settings';
-import { AdminMetadataSourcesApi } from '../../api/admin/metadata-sources';
 import { useToastStore } from '../../stores/useToastStore';
-import SourcePriorityEditor from '../../components/SourcePriorityEditor.vue';
-import type { ProviderPriority } from '../../types/server-settings';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
@@ -42,18 +39,15 @@ const apiBase = computed(() =>
 const apiClient =
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() });
 const api = new AdminSettingsApi(apiClient);
-const sourcesApi = new AdminMetadataSourcesApi(apiClient);
 const toasts = useToastStore();
 
 /**
- * The two object/enum metadata keys that drive the bespoke Metadata-tab UI
- * (the per-media-type {@link SourcePriorityEditor} + the genres-mode select).
- * They are served by the same `/api/v1/admin/settings` map (the shared schema
- * types them `object`→`json` and `string` respectively) but cannot use the
- * generic string-coercing form path — they are tracked in their own state and
- * sent back through the same PUT.
+ * The enum metadata key that drives the bespoke Metadata-tab UI (the genres-mode
+ * select). It is served by the same `/api/v1/admin/settings` map (the shared
+ * schema types it `string`) but cannot use the generic string-coercing form path
+ * — it is tracked in its own state and sent back through the same PUT.
+ * (Per-media-type source priority now lives per-library on the Libraries page.)
  */
-const PROVIDER_PRIORITY_KEY = 'metadata.provider_priority';
 const GENRES_MODE_KEY = 'metadata.genres_mode';
 
 /** Options for the genres-mode select (mirrors the shared schema `enum`). */
@@ -85,7 +79,7 @@ const TAB_ITEMS: TabItem[] = TABS.map((t) => ({ value: t.id, label: t.label }));
 const TAB_KEYS: Record<TabId, string[]> = {
   access: ['auth.signup_mode'],
   transcoding: ['hwaccel.enabled', 'hwaccel.prefer_hardware', 'hwaccel.probe_timeout'],
-  metadata: ['tmdb.api_key', 'metadata.provider_priority', 'metadata.genres_mode'],
+  metadata: ['tmdb.api_key', 'metadata.genres_mode'],
   markers: ['marker_detection.similarity_threshold', 'marker_detection.intro_max_duration'],
   subtitles: ['subtitles.enabled', 'subtitles.default_language', 'subtitles.burn_in_by_default'],
   discovery: ['discovery.discovery_port'],
@@ -132,7 +126,6 @@ const SELECT_OPTIONS: Record<string, ReadonlyArray<SelectOptionInput>> = {
 const FIELD_LABELS: Record<string, string> = {
   'auth.signup_mode': 'Signup mode',
   'tmdb.api_key': 'TMDB API Key',
-  'metadata.provider_priority': 'Metadata source priority',
   'metadata.genres_mode': 'Genres mode',
   'trakt.client_id': 'Trakt Client ID',
   'trakt.client_secret': 'Trakt Client Secret',
@@ -151,8 +144,6 @@ const FIELD_HELP: Record<string, string> = {
     'The client secret paired with your Trakt client ID. Overrides the TRAKT_CLIENT_SECRET environment variable.',
   'trakt.redirect_uri':
     "Must exactly match the redirect URI registered in your Trakt app — this server's /api/v1/oauth/trakt/callback URL.",
-  'metadata.provider_priority':
-    'For each media type, the ordered list of metadata sources the matcher walks per field — the first source supplying a non-empty value wins. Reorder with the up/down buttons; remove or add sources per type. A media type left empty falls back to the server default.',
   'metadata.genres_mode':
     'How genres are combined across sources. "First" takes the genres from the first source in the priority order that supplies any; "Union" merges the distinct genres from every contributing source.',
 };
@@ -184,43 +175,25 @@ const showPassword = reactive<Record<string, boolean>>({});
 const formValues = reactive<Record<string, string>>({});
 const dirty = reactive<Record<string, boolean>>({});
 
-// ── Metadata tab bespoke state (provider_priority object + genres_mode) ─────────
-/** Available metadata-source names (built-ins + plugin sources) for the editors. */
-const availableSources = ref<string[]>([]);
-/** Working copy of the provider_priority object (mediaType → ordered source list). */
-const providerPriority = ref<ProviderPriority>({});
+// ── Metadata tab bespoke state (genres_mode enum) ───────────────────────────────
 /** Working copy of the genres_mode enum. */
 const genresMode = ref<string>('first');
 
 const hasAnyChanges = computed(() => Object.values(dirty).some(Boolean));
 const activeKeys = computed<string[]>(() => TAB_KEYS[activeTab.value as TabId] ?? []);
 
-/** The media types present in the provider_priority object, in a stable order. */
-const providerTypes = computed<string[]>(() => Object.keys(providerPriority.value));
-
-/** Narrow an unknown into the provider_priority shape (mediaType → string[]). */
-function asProviderPriority(v: unknown): ProviderPriority {
-  if (typeof v !== 'object' || v === null || Array.isArray(v)) return {};
-  const out: ProviderPriority = {};
-  for (const [type, list] of Object.entries(v as Record<string, unknown>)) {
-    out[type] = Array.isArray(list) ? list.filter((s): s is string => typeof s === 'string') : [];
-  }
-  return out;
-}
-
 function syncFormValues(source: Record<string, unknown>): void {
   for (const key of Object.keys(formValues)) delete formValues[key];
   for (const [key, val] of Object.entries(source)) {
-    // The bespoke metadata keys are object/enum-shaped and have their own
-    // editors + state — never stringify them into the generic text formValues.
-    if (key === PROVIDER_PRIORITY_KEY || key === GENRES_MODE_KEY) continue;
+    // The bespoke metadata enum has its own select + state — never stringify it
+    // into the generic text formValues.
+    if (key === GENRES_MODE_KEY) continue;
     formValues[key] = String(val ?? '');
   }
 }
 
 /** Seed the bespoke Metadata-tab state from the loaded settings map. */
 function syncMetadataState(source: Record<string, unknown>): void {
-  providerPriority.value = asProviderPriority(source[PROVIDER_PRIORITY_KEY]);
   const mode = source[GENRES_MODE_KEY];
   genresMode.value = typeof mode === 'string' && mode !== '' ? mode : 'first';
 }
@@ -274,12 +247,6 @@ function toggleShowPassword(key: string): void {
   showPassword[key] = !showPassword[key];
 }
 
-/** Apply a reordered list for one media type and mark the key dirty. */
-function setProviderOrder(type: string, order: string[]): void {
-  providerPriority.value = { ...providerPriority.value, [type]: order };
-  dirty[PROVIDER_PRIORITY_KEY] = true;
-}
-
 /** Apply the chosen genres mode and mark the key dirty. */
 function setGenresMode(mode: string): void {
   genresMode.value = mode;
@@ -293,12 +260,8 @@ async function handleSubmit(): Promise<void> {
     const toSave: Record<string, unknown> = {};
     for (const [key, isDirty] of Object.entries(dirty)) {
       if (!isDirty) continue;
-      // Bespoke object/enum metadata keys carry their own working state and are
-      // sent verbatim (the server types them json/string), NOT string-coerced.
-      if (key === PROVIDER_PRIORITY_KEY) {
-        toSave[key] = providerPriority.value;
-        continue;
-      }
+      // The bespoke enum metadata key carries its own working state and is sent
+      // verbatim (the server types it string), NOT string-coerced.
       if (key === GENRES_MODE_KEY) {
         toSave[key] = genresMode.value;
         continue;
@@ -340,31 +303,6 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
-/** Guards a single sources fetch (lazy, on first Metadata-tab entry). */
-const sourcesLoaded = ref(false);
-
-/**
- * Fetch the selectable source names for the priority editors. Runs LAZILY the
- * first time the Metadata tab is opened, independently of {@link loadSettings}
- * (it does NOT gate the page's loading/error state): a failure is non-fatal —
- * the editors still render the current order, marking any source not in this
- * list as "unknown".
- */
-async function loadSources(): Promise<void> {
-  if (sourcesLoaded.value) return;
-  sourcesLoaded.value = true;
-  try {
-    availableSources.value = await sourcesApi.listSources();
-  } catch {
-    availableSources.value = [];
-  }
-}
-
-/** Lazily fetch the editor source list the first time Metadata is opened. */
-watch(activeTab, (tab) => {
-  if (tab === 'metadata') void loadSources();
-});
-
 onMounted(loadSettings);
 </script>
 
@@ -376,8 +314,8 @@ onMounted(loadSettings);
 
     <PageHint>
       All of your server's configuration, grouped into tabs — <strong>Access</strong> (sign-up
-      mode), <strong>Transcoding</strong>, <strong>Metadata</strong> (TMDB key and provider
-      priority), <strong>Markers</strong>, <strong>Subtitles</strong>,
+      mode), <strong>Transcoding</strong>, <strong>Metadata</strong> (TMDB key and genres
+      mode), <strong>Markers</strong>, <strong>Subtitles</strong>,
       <strong>Discovery</strong>, <strong>Trickplay</strong>, <strong>Newsletter</strong>,
       <strong>Port Forward</strong>, and <strong>Scrobblers</strong>. Change fields on any tab,
       then click <strong>Save settings</strong> to apply only what you changed; a
@@ -406,39 +344,8 @@ onMounted(loadSettings);
         </p>
         <form v-else class="admin-settings__form" @submit.prevent="handleSubmit">
           <div v-for="key in activeKeys" :key="key" class="admin-settings__field">
-            <!-- metadata.provider_priority → per-media-type SourcePriorityEditor -->
-            <template v-if="key === PROVIDER_PRIORITY_KEY">
-              <span class="admin-settings__label">
-                {{ getDisplayName(key) }}
-                <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
-              </span>
-              <p v-if="FIELD_HELP[key]" class="admin-settings__help">{{ FIELD_HELP[key] }}</p>
-              <div class="admin-settings__priority">
-                <div
-                  v-for="type in providerTypes"
-                  :key="type"
-                  class="admin-settings__priority-group"
-                >
-                  <h3 class="admin-settings__priority-title">{{ type }}</h3>
-                  <SourcePriorityEditor
-                    :model-value="providerPriority[type] ?? []"
-                    :available="availableSources"
-                    :label="`${type} sources`"
-                    @update:model-value="(order) => setProviderOrder(type, order)"
-                  />
-                </div>
-                <p
-                  v-if="providerTypes.length === 0"
-                  class="admin-settings__empty"
-                  role="status"
-                >
-                  No media-type priority lists configured.
-                </p>
-              </div>
-            </template>
-
             <!-- metadata.genres_mode → enumerated Select -->
-            <template v-else-if="key === GENRES_MODE_KEY">
+            <template v-if="key === GENRES_MODE_KEY">
               <label class="admin-settings__label" :for="`field-${key}`">
                 {{ getDisplayName(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
@@ -542,10 +449,7 @@ onMounted(loadSettings);
             <span v-if="fieldErrors[key]" class="admin-settings__error" role="alert">
               {{ fieldErrors[key] }}
             </span>
-            <p
-              v-if="FIELD_HELP[key] && key !== PROVIDER_PRIORITY_KEY"
-              class="admin-settings__help"
-            >
+            <p v-if="FIELD_HELP[key]" class="admin-settings__help">
               {{ FIELD_HELP[key] }}
             </p>
           </div>
@@ -651,24 +555,6 @@ onMounted(loadSettings);
   color: var(--text-subtle);
   line-height: var(--leading-normal, 1.5);
   max-width: 40rem;
-}
-.admin-settings__priority {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-.admin-settings__priority-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.admin-settings__priority-title {
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: capitalize;
-  color: var(--text);
-  margin: 0;
 }
 .admin-settings__actions {
   display: flex;
