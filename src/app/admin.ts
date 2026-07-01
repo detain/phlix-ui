@@ -181,6 +181,13 @@ const hubDashboardPage: AdminPage = {
   icon: 'speed',
   component: () => import('../pages/admin/HubDashboardPage.vue'),
 };
+const metricsPage: AdminPage = {
+  name: 'admin-metrics',
+  path: 'metrics',
+  label: 'Server Traffic',
+  icon: 'speed',
+  component: () => import('../pages/admin/MetricsPage.vue'),
+};
 const auditLogsPage: AdminPage = {
   name: 'admin-audit-logs',
   path: 'audit-logs',
@@ -198,6 +205,7 @@ const auditLogsPage: AdminPage = {
  */
 const ALL_ADMIN_PAGES: AdminPage[] = [
   dashboardPage,
+  metricsPage,
   usersPage,
   logsPage,
   webhooksPage,
@@ -238,6 +246,7 @@ export const commonAdminPages: AdminPage[] = [usersPage, logsPage, settingsPage]
 /** Media-server-only admin pages (the surfaces that depend on a media backend). */
 export const serverAdminPages: AdminPage[] = [
   dashboardPage,
+  metricsPage,
   webhooksPage,
   servicesPage,
   integrationsPage,
@@ -255,7 +264,7 @@ export const serverAdminPages: AdminPage[] = [
 ];
 
 /** Hub-only admin pages: a hub-scoped dashboard + the re-homed audit log. */
-export const hubAdminPages: AdminPage[] = [hubDashboardPage, auditLogsPage];
+export const hubAdminPages: AdminPage[] = [hubDashboardPage, metricsPage, auditLogsPage];
 
 /**
  * The server's full page set in its original sidebar order. Used as the default
@@ -267,6 +276,7 @@ export const hubAdminPages: AdminPage[] = [hubDashboardPage, auditLogsPage];
  */
 const defaultAdminPages: AdminPage[] = [
   dashboardPage,
+  metricsPage,
   usersPage,
   logsPage,
   webhooksPage,
@@ -287,7 +297,7 @@ const defaultAdminPages: AdminPage[] = [
 ];
 
 /** The hub admin set: Hub Dashboard (landing), the common pages, then Audit Logs. */
-const hubAdminSet: AdminPage[] = [hubDashboardPage, ...commonAdminPages, auditLogsPage];
+const hubAdminSet: AdminPage[] = [hubDashboardPage, metricsPage, ...commonAdminPages, auditLogsPage];
 
 /**
  * Build the nested admin route record for a consumer's `extraRoutes`.
