@@ -26,7 +26,20 @@ const panelEl = ref<HTMLElement | null>(null);
 const displayName = computed(
   () => auth.user?.username || auth.user?.name || auth.user?.email || t('shell.account'),
 );
-const initial = computed(() => displayName.value.charAt(0).toUpperCase() || 'A');
+const avatarError = ref(false);
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// Reset error flag when avatar_url changes so the new URL is tried
+watch(
+  () => auth.user?.avatar_url,
+  () => { avatarError.value = false; },
+);
 
 function close(): void {
   open.value = false;
@@ -72,7 +85,16 @@ onBeforeUnmount(() => {
       :aria-expanded="open"
       @click="open = !open"
     >
-      <span v-if="auth.isLoggedIn" class="usermenu__avatar">{{ initial }}</span>
+      <span v-if="auth.isLoggedIn" class="usermenu__avatar">
+        <img
+          v-if="auth.user?.avatar_url && !avatarError"
+          :src="auth.user.avatar_url"
+          :alt="displayName"
+          class="usermenu__avatar-img"
+          @error="avatarError = true"
+        />
+        <span v-else class="usermenu__avatar-initials">{{ getInitials(displayName) }}</span>
+      </span>
       <Icon v-else name="user" />
     </button>
 
@@ -86,7 +108,16 @@ onBeforeUnmount(() => {
     >
       <template v-if="auth.isLoggedIn">
         <div class="usermenu__head">
-          <span class="usermenu__avatar usermenu__avatar--lg">{{ initial }}</span>
+          <span class="usermenu__avatar usermenu__avatar--lg">
+            <img
+              v-if="auth.user?.avatar_url && !avatarError"
+              :src="auth.user.avatar_url"
+              :alt="displayName"
+              class="usermenu__avatar-img"
+              @error="avatarError = true"
+            />
+            <span v-else class="usermenu__avatar-initials">{{ getInitials(displayName) }}</span>
+          </span>
           <span class="usermenu__name">{{ displayName }}</span>
         </div>
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/settings`)">
@@ -129,8 +160,9 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
 .usermenu__avatar {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -145,6 +177,15 @@ onBeforeUnmount(() => {
   width: 38px;
   height: 38px;
   font-size: var(--text-base);
+}
+.usermenu__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.usermenu__avatar-initials {
+  line-height: 1;
 }
 .usermenu__panel {
   position: absolute;

@@ -149,6 +149,38 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    async function uploadAvatar(file: File): Promise<void> {
+        loading.value = true;
+        error.value = null;
+        try {
+            const result = await client.uploadAvatar(file);
+            if (user.value) {
+                user.value.avatar_url = result.avatar_url;
+            }
+        } catch (e) {
+            error.value = e instanceof Error ? e.message : 'Avatar upload failed';
+            throw e;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function deleteAvatar(): Promise<void> {
+        loading.value = true;
+        error.value = null;
+        try {
+            await client.deleteAvatar();
+            if (user.value) {
+                user.value.avatar_url = null;
+            }
+        } catch (e) {
+            error.value = e instanceof Error ? e.message : 'Avatar deletion failed';
+            throw e;
+        } finally {
+            loading.value = false;
+        }
+    }
+
     return {
         user,
         loading,
@@ -161,5 +193,7 @@ export const useAuthStore = defineStore('auth', () => {
         fetchUser,
         init,
         logout,
+        uploadAvatar,
+        deleteAvatar,
     };
 });

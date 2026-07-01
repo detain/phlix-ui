@@ -43,6 +43,7 @@ export interface AuthUser {
     username?: string;
     name?: string;
     is_admin?: boolean;
+    avatar_url?: string | null;
     [key: string]: unknown;
 }
 
@@ -622,6 +623,63 @@ export class ApiClient {
         return this.put<MediaItem>(`/api/v1/media/${encodeURIComponent(id)}/poster`, {
             poster_url: posterUrl,
         });
+    }
+
+    /**
+     * POST multipart/form-data to an endpoint. Used for file uploads like avatar
+     * images. The Content-Type header is deliberately omitted so the browser
+     * sets `Content-Type: multipart/form-data; boundary=...` with the correct
+     * boundary automatically.
+     */
+    async postFormData(endpoint: string, body: FormData): Promise<unknown> {
+        const headers: Record<string, string> = {
+            ...defaultHeaders,
+            ...this.instanceHeaders,
+        };
+        const token = this.tokens.getAccessToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        // NOTE: NOT setting Content-Type — browser must set it with boundary for multipart/form-data
+        const response = await this.doFetch(`${this.baseUrl}${endpoint}`, {
+            method: 'POST',
+            headers,
+            credentials: 'same-origin',
+            body,
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Upload the authenticated user's avatar image (`POST /api/v1/users/me/avatar`).
+     * The server returns `{ avatar_url }`. Non-2xx throws the shared {@link ApiError}.
+     */
+    async uploadAvatar(file: File): Promise<{ avatar_url: string }> {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        return this.postFormData('/api/v1/users/me/avatar', formData) as Promise<{ avatar_url: string }>;
+    }
+
+    /**
+     * Delete the authenticated user's avatar (`DELETE /api/v1/users/me/avatar`).
+     * Non-2xx throws the shared {@link ApiError}.
+     */
+    async deleteAvatar(): Promise<void> {
+        const headers: Record<string, string> = {
+            ...defaultHeaders,
+            ...this.instanceHeaders,
+        };
+        const token = this.tokens.getAccessToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await this.doFetch(`${this.baseUrl}/api/v1/users/me/avatar`, {
+            method: 'DELETE',
+            headers,
+            credentials: 'same-origin',
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
     }
 
     isLoggedIn(): boolean {
