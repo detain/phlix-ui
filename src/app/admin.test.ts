@@ -15,6 +15,7 @@ import {
  *  in its historical sidebar order (the byte-identical server default). */
 const SERVER_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-dashboard', 'dashboard'],
+  ['admin-metrics', 'metrics'],
   ['admin-users', 'users'],
   ['admin-logs', 'logs'],
   ['admin-webhooks', 'webhooks'],
@@ -37,6 +38,7 @@ const SERVER_PAGES: ReadonlyArray<readonly [string, string]> = [
 /** name → URL segment for the hub admin set (Hub Dashboard, common, Audit Logs). */
 const HUB_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-hub-dashboard', 'dashboard'],
+  ['admin-metrics', 'metrics'],
   ['admin-users', 'users'],
   ['admin-logs', 'logs'],
   ['admin-settings', 'settings'],
@@ -84,8 +86,8 @@ describe('buildAdminRoutes — nested AdminLayout shape (default = legacy server
     expect(namedChildren(buildAdminRoutes())[0].name).toBe('admin-dashboard');
   });
 
-  it('exposes exactly the 18 server pages (16 historical + Plugins (U6) + Duplicates (1.7))', () => {
-    expect(namedChildren(buildAdminRoutes())).toHaveLength(18);
+  it('exposes exactly the 19 server pages (17 historical + Plugins (U6) + Duplicates (1.7) + Metrics (S3))', () => {
+    expect(namedChildren(buildAdminRoutes())).toHaveLength(19);
   });
 
   it('buildServerAdminRoutes is the explicit synonym for the default', () => {
@@ -164,19 +166,20 @@ describe('page-group registries', () => {
     expect(commonAdminPages.map((p) => p.name)).toEqual(['admin-users', 'admin-logs', 'admin-settings']);
   });
 
-  it('serverAdminPages = the 15 media-server pages incl. Plugins + Duplicates (Dashboard first, no common pages)', () => {
-    expect(serverAdminPages).toHaveLength(15);
+  it('serverAdminPages = the 16 media-server pages incl. Plugins + Duplicates + Metrics (Dashboard first, no common pages)', () => {
+    expect(serverAdminPages).toHaveLength(16);
     expect(serverAdminPages[0].name).toBe('admin-dashboard');
     const names = serverAdminPages.map((p) => p.name);
     expect(names).toContain('admin-plugins');
     expect(names).toContain('admin-duplicates');
+    expect(names).toContain('admin-metrics');
     expect(names).not.toContain('admin-users');
     expect(names).not.toContain('admin-logs');
     expect(names).not.toContain('admin-settings');
   });
 
-  it('hubAdminPages = Hub Dashboard + Audit Logs', () => {
-    expect(hubAdminPages.map((p) => p.name)).toEqual(['admin-hub-dashboard', 'admin-audit-logs']);
+  it('hubAdminPages = Hub Dashboard + Metrics + Audit Logs', () => {
+    expect(hubAdminPages.map((p) => p.name)).toEqual(['admin-hub-dashboard', 'admin-metrics', 'admin-audit-logs']);
   });
 
   it('every page descriptor carries a name, segment, label, icon and a lazy loader', () => {
@@ -213,6 +216,7 @@ describe('adminMenu', () => {
     const [group] = adminMenu();
     const expected: Record<string, { label: string; to: string }> = {
       'admin-dashboard': { label: 'Dashboard', to: '/app/admin/dashboard' },
+      'admin-metrics': { label: 'Server Traffic', to: '/app/admin/metrics' },
       'admin-users': { label: 'Users', to: '/app/admin/users' },
       'admin-logs': { label: 'Logs', to: '/app/admin/logs' },
       'admin-webhooks': { label: 'Webhooks', to: '/app/admin/webhooks' },
@@ -239,14 +243,14 @@ describe('adminMenu', () => {
     }
   });
 
-  it('exposes exactly the 18 default admin pages as children (incl. Plugins (U6) + Duplicates (1.7))', () => {
+  it('exposes exactly the 19 default admin pages as children (incl. Plugins (U6) + Duplicates (1.7) + Metrics (S3))', () => {
     const [group] = adminMenu();
-    expect(group.children).toHaveLength(18);
+    expect(group.children).toHaveLength(19);
   });
 
   it('builds a menu from an arbitrary page set (the hub set)', () => {
     const [group] = adminMenu('/app', hubAdminPages);
-    expect(group.children?.map((c) => c.id)).toEqual(['admin-hub-dashboard', 'admin-audit-logs']);
+    expect(group.children?.map((c) => c.id)).toEqual(['admin-hub-dashboard', 'admin-metrics', 'admin-audit-logs']);
     expect(group.children?.find((c) => c.id === 'admin-hub-dashboard')?.to).toBe('/app/admin/dashboard');
   });
 });
