@@ -34,6 +34,10 @@ interface Server {
   name: string;
   url: string;
   status: string;
+  /** True once the server's secure relay tunnel is connected to the hub — only
+   *  then can its libraries be browsed inline over the relay proxy. A server can
+   *  be `status: 'online'` but not yet `relayActive` while the tunnel connects. */
+  relayActive: boolean;
   owner: string;
   library_count?: number;
   last_seen?: string;
@@ -44,6 +48,9 @@ interface HubServer {
   serverId?: string;
   serverName?: string;
   status?: string;
+  /** Whether the server's relay tunnel is connected (ServerInfoDto.relayActive);
+   *  absent on older hubs that don't report it → treated as not connected. */
+  relayActive?: boolean;
   hostnameCandidates?: string[];
   lastSeenAt?: number | null;
   /** Library count the server last reported via heartbeat (hub `server_libraries`
@@ -113,6 +120,7 @@ async function loadServers(): Promise<void> {
       // The hub has no single canonical URL — use the first hostname candidate.
       url: s.hostnameCandidates?.[0] ?? '',
       status: s.status ?? 'offline',
+      relayActive: s.relayActive === true,
       owner: ownerName,
       last_seen: unixToIso(s.lastSeenAt),
       // Library count the hub caches from the server's heartbeats; undefined on
@@ -161,6 +169,15 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'error'
 }
 
 /**
+ * True while the server is online but its relay tunnel hasn't connected yet — a
+ * transient state during which the server can't be browsed inline over the hub
+ * (the relay proxy would return 503). The row shows a "Relay connecting" badge.
+ */
+function relayPending(server: Server): boolean {
+  return server.status === 'online' && !server.relayActive;
+}
+
+/**
  * Open the media server's own web UI in a new tab. The URL is the first
  * hostname candidate the server advertised to the hub at pairing time; when the
  * server reported none (`url` is empty) the Manage button is disabled.
@@ -174,12 +191,13 @@ function manageServer(server: Server): void {
  * Browse this server's libraries INLINE on the hub. Selecting it sets the hub's
  * "current server" (persisted) so `mediaApiBase` resolves to that server's relay
  * proxy (`/api/v1/servers/{id}/proxy`), then navigates to the Browse home where
- * the library rails load over the reverse tunnel. Only offered for an online
- * server — the proxy needs the server's tunnel connected (an offline server's
- * proxy returns 503).
+ * the library rails load over the reverse tunnel. Only offered once the server's
+ * relay tunnel is connected (`relayActive`) — the proxy needs the tunnel up, so a
+ * server that is merely `status: 'online'` but not yet relay-connected (or an
+ * offline one) returns 503.
  */
 function browseServer(server: Server): void {
-  if (server.status !== 'online') return;
+  if (!server.relayActive) return;
   // Pass the server's own public origin (its first hostname candidate) so the
   // player can stream media bytes DIRECTLY from the server with native Range — the
   // relay proxy doesn't route `/media/:id/stream`. Empty when the server reported
@@ -251,6 +269,7 @@ onMounted(loadServers);
             <td>
               <span class="my-servers__status" :data-testid="`status-${server.id}`">
                 <Badge :tone="statusTone(server.status)">{{ statusLabel(server.status) }}</Badge>
+                <Badge v-if="relayPending(server)" tone="warning">Relay connecting</Badge>
               </span>
             </td>
             <td>
@@ -259,8 +278,14 @@ onMounted(loadServers);
                   variant="solid"
                   size="sm"
                   left-icon="play"
-                  :disabled="server.status !== 'online'"
-                  :title="server.status === 'online' ? `Browse ${server.name} here` : 'This server is offline — it must be connected to browse it here'"
+                  :disabled="!server.relayActive"
+                  :title="
+                    server.relayActive
+                      ? `Browse ${server.name} here`
+                      : relayPending(server)
+                        ? `${server.name} is online but its relay tunnel isn't connected yet — it can't be browsed here until it reconnects.`
+                        : 'This server is offline — it must be connected to browse it here'
+                  "
                   :aria-label="`Browse ${server.name}`"
                   @click="browseServer(server)"
                 >Browse</Button>

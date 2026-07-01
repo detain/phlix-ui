@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useLibrariesStore } from './useLibrariesStore';
+import { ApiError } from '../api/errors';
+import * as librariesApi from '../api/libraries';
 import type { LibrarySummary } from '../api/libraries';
 
 function jsonResponse(body: unknown): Response {
@@ -70,5 +72,53 @@ describe('useLibrariesStore', () => {
     await store.load('');
     expect(store.byId('tv')?.name).toBe('TV');
     expect(store.byId('missing')).toBeUndefined();
+  });
+});
+
+describe('useLibrariesStore — errorCode (relay 503 codes)', () => {
+  it('captures the ApiError body `code` alongside the message', async () => {
+    // The hub relay proxy returns 503s whose body carries `{error, code}`;
+    // `extractError` keeps only `error` as the message, so the store surfaces the
+    // `code` separately for the page to map to an actionable string.
+    vi.spyOn(librariesApi, 'fetchLibraries').mockRejectedValue(
+      new ApiError('Relay tunnel unavailable', 503, { code: 'server.relay_unavailable' }),
+    );
+    const store = useLibrariesStore();
+    await store.load('');
+    expect(store.error).toBe('Relay tunnel unavailable');
+    expect(store.errorCode).toBe('server.relay_unavailable');
+  });
+
+  it('leaves errorCode null for a plain (non-ApiError) failure', async () => {
+    vi.spyOn(librariesApi, 'fetchLibraries').mockRejectedValue(new Error('boom'));
+    const store = useLibrariesStore();
+    await store.load('');
+    expect(store.error).toContain('boom');
+    expect(store.errorCode).toBeNull();
+  });
+
+  it('leaves errorCode null for an ApiError whose body has no code', async () => {
+    vi.spyOn(librariesApi, 'fetchLibraries').mockRejectedValue(
+      new ApiError('Server error', 500, { message: 'oops' }),
+    );
+    const store = useLibrariesStore();
+    await store.load('');
+    expect(store.errorCode).toBeNull();
+  });
+
+  it('resets errorCode to null on a subsequent successful (forced) load', async () => {
+    const spy = vi.spyOn(librariesApi, 'fetchLibraries');
+    spy.mockRejectedValueOnce(
+      new ApiError('Server offline', 503, { code: 'server.offline' }),
+    );
+    const store = useLibrariesStore();
+    await store.load('');
+    expect(store.errorCode).toBe('server.offline');
+
+    spy.mockResolvedValueOnce(LIBS);
+    await store.load('', true);
+    expect(store.errorCode).toBeNull();
+    expect(store.error).toBeNull();
+    expect(store.loaded).toBe(true);
   });
 });

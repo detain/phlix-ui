@@ -60,6 +60,9 @@ function stubFetch(
     media?: { items: MediaItem[]; total: number };
     favorites?: MediaItem[] | (() => MediaItem[]);
     libraryError?: boolean;
+    /** Reject the library-list request with a hub-style 503 `{error, code}` body
+     *  (drives the relay-code → actionable-message mapping in BrowsePage). */
+    library503?: { error: string; code: string };
   } = {},
 ) {
   const libraries = opts.libraries ?? ONE_LIBRARY;
@@ -74,12 +77,24 @@ function stubFetch(
     }
     if (u.includes('/api/v1/libraries')) {
       if (opts.libraryError) return Promise.reject(new Error('library list offline'));
+      if (opts.library503) return Promise.resolve(errorResponse(503, opts.library503));
       return Promise.resolve(jsonResponse({ libraries }));
     }
     return Promise.resolve(jsonResponse(mediaBody));
   });
   vi.stubGlobal('fetch', fn);
   return fn;
+}
+
+/** A non-2xx JSON response (so ApiClient throws an ApiError carrying `body`). */
+function errorResponse(status: number, body: unknown): Response {
+  return {
+    ok: false,
+    status,
+    headers: { get: () => 'application/json' },
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  } as unknown as Response;
 }
 
 /**
@@ -239,6 +254,26 @@ describe('BrowsePage — empty + error', () => {
     await empty.find('button').trigger('click');
     await flushPromises();
     expect(fn.mock.calls.length).toBeGreaterThan(callsBefore);
+  });
+
+  it('maps a hub relay 503 to the actionable "relay not connected" EmptyState', async () => {
+    stubFetch({
+      library503: { error: 'Relay tunnel unavailable', code: 'server.relay_unavailable' },
+    });
+    const w = mountPage();
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.props('title')).toBe('Server relay not connected');
+    expect(empty.text()).toContain("secure relay tunnel isn't connected");
+  });
+
+  it('maps a hub server.offline 503 to the "Server offline" EmptyState', async () => {
+    stubFetch({ library503: { error: 'Server is offline.', code: 'server.offline' } });
+    const w = mountPage();
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.props('title')).toBe('Server offline');
   });
 });
 
