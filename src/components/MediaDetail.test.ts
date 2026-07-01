@@ -355,7 +355,7 @@ describe('MediaDetail — actions & similar', () => {
 
     it('reflects the store like_level', () => {
       const store = useUserItemDataStore();
-      store.entries.set('m1', { favorite: false, rating: null, like_level: 2 });
+      store.entries.set('m1', { favorite: false, rating: null, like_level: 2, watched: false });
       const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
       expect(thumbRating(w).attributes('data-level')).toBe('2');
     });
@@ -413,7 +413,65 @@ describe('MediaDetail — actions & similar', () => {
   });
 });
 
-describe('avatar sizing', () => {
+describe('MediaDetail — provider links', () => {
+  it('renders outbound links for each matched provider with correct URLs', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          type: 'movie',
+          external_ids: { tmdb: '693134', imdb: 'tt15239678', tvdb: '', anidb: '17835' },
+        }),
+      },
+    });
+    const links = w.findAll('.media-detail__link');
+    const byText = new Map(links.map((a) => [a.text().trim(), a.attributes('href')]));
+    // tvdb is empty → no link; tmdb (movie), imdb, anidb render.
+    expect(byText.has('TheTVDB')).toBe(false);
+    expect(byText.get('TMDB')).toBe('https://www.themoviedb.org/movie/693134');
+    expect(byText.get('IMDb')).toBe('https://www.imdb.com/title/tt15239678/');
+    expect(byText.get('AniDB')).toBe('https://anidb.net/anime/17835');
+    // outbound links open in a new tab, safely
+    expect(links[0].attributes('target')).toBe('_blank');
+    expect(links[0].attributes('rel')).toContain('noopener');
+  });
+
+  it('uses the /tv/ TMDB path for series items', () => {
+    const w = mount(MediaDetail, { props: { item: media({ type: 'series', external_ids: { tmdb: '1396' } }) } });
+    expect(w.find('.media-detail__link').attributes('href')).toBe('https://www.themoviedb.org/tv/1396');
+  });
+
+  it('renders no Links section when there are no external ids', () => {
+    expect(mount(MediaDetail, { props: { item: media() } }).find('.media-detail__links').exists()).toBe(false);
+    expect(
+      mount(MediaDetail, { props: { item: media({ external_ids: {} }) } }).find('.media-detail__links').exists(),
+    ).toBe(false);
+  });
+});
+
+describe('MediaDetail — watched (eye) button', () => {
+  it('toggles watched via the store and emits mark-watched, with label + icon reflecting state', async () => {
+    const store = useUserItemDataStore();
+    const toggle = vi.spyOn(store, 'toggleWatched').mockResolvedValue(undefined);
+    const w = mount(MediaDetail, {
+      props: { item: media() },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+    });
+    const btn = w.find('[aria-label="Mark as watched"]');
+    expect(btn.exists()).toBe(true);
+    expect(btn.text()).toContain('Mark watched');
+    await btn.trigger('click');
+    expect(toggle).toHaveBeenCalledWith('m1', '/api-host');
+    expect(w.emitted('mark-watched')).toHaveLength(1);
+
+    store.entries.set('m1', { favorite: false, rating: null, like_level: 0, watched: true });
+    await nextTick();
+    const on = w.find('[aria-label="Mark as unwatched"]');
+    expect(on.exists()).toBe(true);
+    expect(on.text()).toContain('Watched');
+  });
+});
+
+describe('cast/crew card sizing', () => {
   const __dirname = dirname(fileURLToPath(import.meta.url));
 
   function getSfcCss(): string {
@@ -437,15 +495,18 @@ describe('avatar sizing', () => {
     return selector.replace('.', '\\.');
   }
 
-  it('applies clamp(3.75rem, 6vw, 5rem) to .media-detail__avatar width and height', () => {
+  it('renders cast/crew as poster-shaped (2:3) card tiles like the listings', () => {
     mount(MediaDetail, { props: { item: media() } });
-    expect(cssRuleExists('.media-detail__avatar', 'width', 'clamp(3.75rem, 6vw, 5rem)')).toBe(true);
-    expect(cssRuleExists('.media-detail__avatar', 'height', 'clamp(3.75rem, 6vw, 5rem)')).toBe(true);
+    expect(cssRuleExists('.media-detail__avatar', 'aspect-ratio', '2 / 3')).toBe(true);
+    expect(cssRuleExists('.media-detail__avatar', 'width', '100%')).toBe(true);
   });
 
-  it('applies clamp(5.5rem, 8vw, 7rem) to .media-detail__person width', () => {
+  it('lays cast/crew out in a poster-card grid (matching the library card size)', () => {
     mount(MediaDetail, { props: { item: media() } });
-    expect(cssRuleExists('.media-detail__person', 'width', 'clamp(5.5rem, 8vw, 7rem)')).toBe(true);
+    expect(
+      cssRuleExists('.media-detail__people', 'grid-template-columns', 'repeat(auto-fill, minmax(140px, 1fr))'),
+    ).toBe(true);
+    expect(cssRuleExists('.media-detail__person', 'width', '100%')).toBe(true);
   });
 });
 

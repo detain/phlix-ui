@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.63.0] - 2026-07-01
+
+### Added
+
+- **Watched (eye) toggle on cards + detail** — every `MediaCard` action row and the `MediaDetail` hero gain a watched control: an **open eye** when the item is watched, a **closed (slashed) eye** when not; clicking flips the per-user watched state. Backed by a new `watched` field in `useUserItemDataStore` (`isWatched` getter + `toggleWatched(id, apiBase)` — optimistic + rollback, calling `markWatched`/`markUnwatched`) seeded from the server `user_data.watched` block. The `⋯` menu's Mark watched/unwatched item now drives the same real state (previously it was aliased to *favorite*). Host `onMarkWatched` handlers now only toast the resulting state (mirroring `watchlist`).
+- **Metadata-provider links on detail** — `MediaDetail` renders a **Links** section of outbound links (TMDB / IMDb / TheTVDB / AniDB / TVmaze / Trakt) built from a new detail-only `external_ids` map, opening each provider's page in a new tab (TMDB uses the movie vs. tv path by item type).
+
+### Changed
+
+- **Poster overlay actions are visible on every theme + never clip** — the card hover action row now uses fixed white icons with a drop-shadow (was `var(--text)`, invisible on the daylight theme over the dark overlay) and `flex-wrap` + non-shrinking controls, so Play / Rating / Favorite / Watched / Info / Menu / Match all stay legible and on-card instead of shrinking to slivers or clipping past the poster edge on narrow cards.
+- **Series season cards reuse `MediaCard`** — the season grid on the series page renders the shared library card (new `hideActions` + `subtitle` props on `MediaCard`) instead of a bespoke smaller card, so seasons match the listings visually and track the card-size preference.
+- **Cast/crew are poster-shaped card tiles** — `MediaDetail` credits render as 2:3 poster cards in a grid at the library card size (was small circular avatars).
+- **Detail `⋯` menu button is icon-only** — dropped the opaque `surface-glass-strong` background/border that read as a white box on the daylight theme; it's now a transparent foreground glyph like the other ghost actions.
+- **Bigger default poster cards** — the default `cardSize` preference is `200` (was `180`).
+
+### Fixed
+
+- **Episode rows open an episode detail page** — clicking an episode row in `SeriesSeasons` now navigates to that episode's detail/info page (a movie-style `MediaDetail`) via a new `open` event, instead of jumping straight into playback; the row's explicit play button still plays.
+
 ## [0.62.0] - 2026-07-01
 
 ### Added

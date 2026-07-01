@@ -197,7 +197,7 @@ describe('MediaGrid — #card slot', () => {
 describe('MediaGrid — virtualization', () => {
   it('renders only the visible window of rows for a large list', async () => {
     mockLayout(1000, 0); // 5 columns at cardSize 180; rowHeight ~356; vh 768
-    const w = mount(MediaGrid, { props: { items: makeItems(200) } });
+    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
     await nextTick();
     await nextTick();
     const cards = w.findAllComponents(MediaCard);
@@ -209,7 +209,7 @@ describe('MediaGrid — virtualization', () => {
 
   it('uses an explicit column count and a full-height sizer when virtualized', async () => {
     mockLayout(1000, 0);
-    const w = mount(MediaGrid, { props: { items: makeItems(200) } });
+    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
     await nextTick();
     await nextTick();
     const grid = w.find('.media-grid');
@@ -221,7 +221,7 @@ describe('MediaGrid — virtualization', () => {
 
   it('slides the window and reveals "back to top" once scrolled past the fold', async () => {
     mockLayout(1000, 0);
-    const w = mount(MediaGrid, { props: { items: makeItems(200) } });
+    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
     await nextTick();
     await nextTick();
     expect(w.find('.media-grid-top').exists()).toBe(false);
@@ -252,7 +252,7 @@ describe('MediaGrid — virtualization', () => {
 
   it('advances the window synchronously on scroll even when rAF never fires (Firefox throttle freeze)', async () => {
     mockLayout(1000, 0);
-    const w = mount(MediaGrid, { props: { items: makeItems(200) } });
+    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
     await nextTick();
     await nextTick();
 
@@ -274,7 +274,7 @@ describe('MediaGrid — virtualization', () => {
 
   it('back-to-top honors reduced-motion: smooth normally, instant ("auto") when reduced (R6.5a)', async () => {
     mockLayout(1000, -2000); // already scrolled past the fold so the button is shown
-    const w = mount(MediaGrid, { props: { items: makeItems(200) } });
+    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
     await nextTick();
     await nextTick();
     const top = w.get('.media-grid-top');

@@ -24,16 +24,29 @@ type __VLS_Props = {
      * default; the host gates it on `isAdmin`. Keeps the card layout intact.
      */
     canMatch?: boolean;
+    /**
+     * Suppress the hover action row (Play/Watched/Favorite/Rating/Info/Menu).
+     * Used when the card is purely navigational — e.g. the season grid on the
+     * series page, where per-item favorite/rating/watched don't apply and the
+     * card just links to the season. The poster, badges, hover-lift, title
+     * overlay and caption are unchanged, so it stays visually the library card.
+     */
+    hideActions?: boolean;
+    /**
+     * Override the caption sub-line (defaults to year · runtime). Used by the
+     * season grid to show "N episodes" while reusing this exact card design.
+     */
+    subtitle?: string | null;
 };
 declare var __VLS_6: {
     item: import("../types/media-item").MediaDetail;
-}, __VLS_49: {
+}, __VLS_54: {
     item: import("../types/media-item").MediaDetail;
 };
 type __VLS_Slots = {} & {
     badges?: (props: typeof __VLS_6) => any;
 } & {
-    actions?: (props: typeof __VLS_49) => any;
+    actions?: (props: typeof __VLS_54) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: import("../types/media-item").MediaDetail) => any;
@@ -54,8 +67,10 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
 }>, {
+    subtitle: string | null;
     newWithinDays: number;
     canMatch: boolean;
+    hideActions: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
 declare const _default: typeof __VLS_export;

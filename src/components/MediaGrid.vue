@@ -86,7 +86,7 @@ defineSlots<{
 }>();
 
 const prefs = usePreferencesStore();
-const cardSize = computed(() => props.cardSize ?? prefs.cardSize ?? 180);
+const cardSize = computed(() => props.cardSize ?? prefs.cardSize ?? 200);
 
 const sizerEl = ref<HTMLElement | null>(null);
 const sentinelEl = ref<HTMLElement | null>(null);

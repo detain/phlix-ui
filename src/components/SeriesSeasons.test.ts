@@ -95,10 +95,12 @@ describe('SeriesSeasons', () => {
     expect((emitted?.[0]?.[0] as MediaItem).id).toBe('s1e1');
   });
 
-  it('emits play when the episode title row is clicked', async () => {
+  it('emits open (episode detail) when the episode title row is clicked', async () => {
     const w = mount(SeriesSeasons, { props: { seasons } });
     await w.find('.series-seasons__episode-main').trigger('click');
-    expect((w.emitted('play')?.[0]?.[0] as MediaItem).id).toBe('s1e1');
+    // The row body opens the episode's info page; the play button still plays.
+    expect((w.emitted('open')?.[0]?.[0] as MediaItem).id).toBe('s1e1');
+    expect(w.emitted('play')).toBeFalsy();
   });
 
   it('renders nothing extra for an empty season list', () => {

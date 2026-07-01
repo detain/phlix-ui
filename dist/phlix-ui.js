@@ -2,12 +2,12 @@ import { r as e } from "./AuthField-ChUtSiX0.js";
 import { n as t, t as n } from "./Icon-24ngwBUH.js";
 import { t as r } from "./IconButton-tqdU5uf9.js";
 import { t as i } from "./useFocusTrap-DZxA3ZEr.js";
-import { a, i as o, n as s, r as c, t as l } from "./usePreferencesStore-CXHWLjml.js";
+import { a, i as o, n as s, r as c, t as l } from "./usePreferencesStore-DJWQcYN2.js";
 import { i as u, n as d, r as f, t as p } from "./useMessages-C21WhqOh.js";
 import { a as m, c as h, d as g, f as _, i as v, l as ee, n as y, p as b, r as x, s as te, t as ne, u as re } from "./client-fw74f3l_.js";
 import { n as ie, t as ae } from "./useApiBase-CV_r-Kk4.js";
 import { t as S } from "./useAuthStore-CUoTkm_k.js";
-import { a as oe, i as se, n as ce, o as le, r as ue, t as de } from "./ThumbRating-CDDVfYEs.js";
+import { a as oe, i as se, n as ce, o as le, r as ue, t as de } from "./ThumbRating-uWe6prMH.js";
 import { t as C } from "./useToastStore-BDoKlU6N.js";
 import { i as fe, n as pe, r as me, t as he } from "./Kbd-BDwM0nWN.js";
 import { a as ge, i as _e, n as ve, o as ye, r as be, t as xe } from "./useLibrariesStore-alvdv0Y4.js";
@@ -19,17 +19,17 @@ import { t as Ie } from "./Slider-CaOjV5mW.js";
 import { t as Le } from "./Switch-D-Y4B9p8.js";
 import { t as Re } from "./Chip-vZeocErt.js";
 import { t as ze } from "./Select-DHe4oeCr.js";
-import { i as Be, n as Ve, r as He, t as Ue } from "./FilterBar-C0XHaJ8-.js";
+import { i as Be, n as Ve, r as He, t as Ue } from "./FilterBar-B3JLpx5v.js";
 import { t as We } from "./Modal-CBoJ1z1N.js";
 import { t as E } from "./Skeleton-BUq2D39t.js";
-import { a as Ge, i as Ke, n as qe, o as Je, t as Ye } from "./MetadataMatchModal-Cd3M7_Wl.js";
+import { a as Ge, i as Ke, n as qe, o as Je, t as Ye } from "./MetadataMatchModal-DHRbr1am.js";
 import { t as D } from "./EmptyState-0XgHKEGf.js";
 import { t as Xe } from "./PageHint-DR8OWfto.js";
 import { t as Ze } from "./Tabs-Cx4iZtlC.js";
-import { t as Qe } from "./MediaRow-KSnh27b4.js";
+import { t as Qe } from "./MediaRow-CWes3GZB.js";
 import { n as $e, t as et } from "./media-query-C8oxSF4h.js";
-import { t as tt } from "./HomeRow-XjqRddVp.js";
-import { t as nt } from "./MediaDetail-Ccn0W21e.js";
+import { t as tt } from "./HomeRow-R21_8TF7.js";
+import { t as nt } from "./MediaDetail-PJdgHgNL.js";
 import { n as rt, t as it } from "./metadata-sources-DdG90AUs.js";
 import { n as at, t as ot } from "./logs-DadTfaTq.js";
 import { t as st } from "./dashboard-BTCOCTHQ.js";
@@ -49,7 +49,7 @@ import { n as wt, t as Tt } from "./libraries-CXAz_kXs.js";
 import { t as Et } from "./settings-m4upFcmH.js";
 import { i as Dt, n as Ot, r as kt, t as At } from "./plugins-jAHdgJSw.js";
 import { t as jt } from "./hubDashboard-BhOaaDD-.js";
-import { A as Mt, B as Nt, C as Pt, D as Ft, E as It, F as Lt, G as Rt, H as zt, I as Bt, J as Vt, K as Ht, L as Ut, M as Wt, N as Gt, O as Kt, P as qt, R as Jt, S as Yt, T as Xt, U as Zt, V as Qt, W as $t, X as en, Y as tn, _ as nn, a as rn, b as an, c as on, d as sn, f as cn, g as ln, h as un, i as dn, j as fn, k as pn, l as mn, m as hn, n as gn, o as _n, p as vn, q as yn, r as bn, s as xn, t as Sn, u as Cn, v as wn, w as Tn, x as En, y as Dn, z as On } from "./Player-VyYyUWQc.js";
+import { A as Mt, B as Nt, C as Pt, D as Ft, E as It, F as Lt, G as Rt, H as zt, I as Bt, J as Vt, K as Ht, L as Ut, M as Wt, N as Gt, O as Kt, P as qt, R as Jt, S as Yt, T as Xt, U as Zt, V as Qt, W as $t, X as en, Y as tn, _ as nn, a as rn, b as an, c as on, d as sn, f as cn, g as ln, h as un, i as dn, j as fn, k as pn, l as mn, m as hn, n as gn, o as _n, p as vn, q as yn, r as bn, s as xn, t as Sn, u as Cn, v as wn, w as Tn, x as En, y as Dn, z as On } from "./Player-B8Ta4iBe.js";
 import { a as kn, c as An, d as jn, f as Mn, g as Nn, h as Pn, i as Fn, l as In, m as Ln, n as Rn, o as zn, p as Bn, r as Vn, s as Hn, t as Un, u as Wn } from "./captions-COgPp5bH.js";
 import { t as Gn } from "./LoginForm-DgkZGXkR.js";
 import { t as Kn } from "./SignupForm-CfWzvh0V.js";
@@ -610,7 +610,7 @@ var Ci = ["src", "alt"], wi = { class: "brand-wordmark" }, Ti = {
 		fi();
 		let t = fe(), i = hr(), { t: a } = p();
 		pi();
-		let o = Qn(() => import("./CommandPalette-CnoWgE0d.js")), s = V(!1);
+		let o = Qn(() => import("./CommandPalette-BYvxfXvd.js")), s = V(!1);
 		q(() => t.open, (e) => {
 			e && (s.value = !0);
 		});
@@ -1044,51 +1044,51 @@ function Sa(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-Z4BQbHET.js")
+			component: () => import("./BrowsePage-Cccr505h.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-CiPpuzm0.js")
+			component: () => import("./MediaDetailPage-Cv6tSzIP.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-C02bUZF5.js")
+			component: () => import("./SeasonPage-OieN4o1r.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-EcOUeXuw.js")
+			component: () => import("./LibraryPage-0ssAAGnd.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-k32KVJSn.js")
+			component: () => import("./PlayerPage-CQ4NvvG9.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-Dj6qF7B5.js")
+			component: () => import("./LoginPage-CMZj9HDG.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-NFu48Mxm.js")
+			component: () => import("./SignupPage-BEtWehv0.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-dOKbddM2.js")
+			component: () => import("./ConnectPage-DoX0M1db.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-BYnTvqyp.js")
+			component: () => import("./SettingsPage-CK4gr5bi.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({

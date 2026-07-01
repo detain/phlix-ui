@@ -91,8 +91,47 @@ const loveLevel = computed(() => userItemData.likeLevel(props.item.id));
 /** Whether the current user is an admin. */
 const isAdmin = computed(() => auth.isAdmin);
 
-/** Whether this item is in the user's watched/favorite state. */
-const isWatched = computed(() => userItemData.isFavorite(props.item.id));
+/** Whether this item is marked watched by the user (drives the eye toggle). */
+const isWatched = computed(() => userItemData.isWatched(props.item.id));
+
+/**
+ * Hero Watched handler. Flips the watched flag in the store (optimistic +
+ * rollback + one markWatched/markUnwatched write there) AND re-emits
+ * `mark-watched` for the host toast — mirrors `onFavorite`. Also invoked by the
+ * ⋯ menu's Mark watched/unwatched item.
+ */
+function onWatched(): void {
+  void userItemData.toggleWatched(props.item.id, phlixConfig?.apiBase ?? '');
+  emit('mark-watched', props.item);
+}
+
+/**
+ * Outbound links to the metadata providers this title is matched to, built from
+ * `item.external_ids` ({tmdb, imdb, tvdb, anidb, …}). TMDB movies vs. TV use
+ * different path segments, so the type drives the tmdb URL. Only providers with
+ * a non-empty id render.
+ */
+const providerLinks = computed<Array<{ key: string; label: string; url: string }>>(() => {
+  const ids = props.item.external_ids;
+  if (!ids) return [];
+  const tmdbKind = props.item.type === 'movie' ? 'movie' : 'tv';
+  const builders: Record<string, { label: string; url: (id: string) => string }> = {
+    tmdb: { label: 'TMDB', url: (id) => `https://www.themoviedb.org/${tmdbKind}/${encodeURIComponent(id)}` },
+    imdb: { label: 'IMDb', url: (id) => `https://www.imdb.com/title/${encodeURIComponent(id)}/` },
+    tvdb: { label: 'TheTVDB', url: (id) => `https://thetvdb.com/dereferrer/series/${encodeURIComponent(id)}` },
+    anidb: { label: 'AniDB', url: (id) => `https://anidb.net/anime/${encodeURIComponent(id)}` },
+    tvmaze: { label: 'TVmaze', url: (id) => `https://www.tvmaze.com/shows/${encodeURIComponent(id)}` },
+    trakt: { label: 'Trakt', url: (id) => `https://trakt.tv/search/trakt/${encodeURIComponent(id)}` },
+  };
+  const links: Array<{ key: string; label: string; url: string }> = [];
+  for (const [key, raw] of Object.entries(ids)) {
+    const id = typeof raw === 'string' ? raw.trim() : raw != null ? String(raw).trim() : '';
+    if (!id) continue;
+    const b = builders[key.toLowerCase()];
+    if (b) links.push({ key, label: b.label, url: b.url(id) });
+  }
+  return links;
+});
 
 const menuOpen = ref(false);
 
@@ -108,7 +147,7 @@ function onMenuSelect(item: { label: string }): void {
   switch (item.label) {
     case 'Mark watched':
     case 'Mark unwatched':
-      emit('mark-watched', props.item);
+      onWatched();
       break;
     case 'Refresh/Match…':
       emit('refresh', props.item);
@@ -338,6 +377,17 @@ const backdropUrl = computed(() => {
           >
             {{ isFavorited ? 'In favorites' : 'Watchlist' }}
           </Button>
+          <Button
+            variant="ghost"
+            class="media-detail__watched"
+            :class="{ 'is-active': isWatched }"
+            :left-icon="isWatched ? 'eye' : 'eye-off'"
+            :aria-label="isWatched ? 'Mark as unwatched' : 'Mark as watched'"
+            :aria-pressed="isWatched ? 'true' : 'false'"
+            @click="onWatched"
+          >
+            {{ isWatched ? 'Watched' : 'Mark watched' }}
+          </Button>
           <!-- [ Rating ] — thumbs up/down (−2..2 like_level). Only `@cycle` is
                bound (NOT `@update:level`) so each thumb click triggers exactly ONE
                store write + ONE PUT. -->
@@ -351,6 +401,24 @@ const backdropUrl = computed(() => {
           </Menu>
 
           <Button v-if="canMatch" variant="ghost" left-icon="search" @click="emit('match', item)">Match metadata</Button>
+        </div>
+
+        <div v-if="providerLinks.length" class="media-detail__links">
+          <span class="media-detail__links-label">Links</span>
+          <div class="media-detail__links-list">
+            <a
+              v-for="link in providerLinks"
+              :key="link.key"
+              class="media-detail__link"
+              :href="link.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              :aria-label="`Open on ${link.label} (opens in a new tab)`"
+            >
+              <span>{{ link.label }}</span>
+              <Icon name="arrow-right" class="media-detail__link-icon" aria-hidden="true" />
+            </a>
+          </div>
         </div>
 
         <div v-if="crew.length || cast.length" class="media-detail__credits">
@@ -656,26 +724,82 @@ const backdropUrl = computed(() => {
   fill: currentColor;
 }
 
-/* Menu ⋯ trigger button in the hero action row */
+/* Menu ⋯ trigger button in the hero action row. Icon-only — NO background box or
+   border (the old `surface-glass-strong` fill rendered as an opaque white box on
+   the daylight theme, unlike the other ghost actions). Just the foreground glyph
+   with an amber hover tint. */
 .media-detail__menu-btn {
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  color: var(--text);
-  background: var(--surface-glass-strong);
-  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-base) var(--ease-out);
+  transition: transform var(--dur-fast) var(--ease-spring), color var(--dur-base) var(--ease-out);
 }
 .media-detail__menu-btn:hover {
   transform: scale(1.08);
+  color: var(--text);
 }
 .media-detail__menu-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+/* Watched state on the hero eye button reads amber like the favorite button. */
+.media-detail__watched.is-active {
+  color: var(--accent);
+}
+
+/* Outbound provider links (TMDB / IMDb / TVDB / AniDB …). */
+.media-detail__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-6);
+}
+.media-detail__links-label {
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.media-detail__links-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.media-detail__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  text-decoration: none;
+  transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.media-detail__link:hover {
+  border-color: var(--accent-ring);
+  color: var(--text);
+}
+.media-detail__link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.media-detail__link-icon {
+  font-size: 0.85em;
+  transform: rotate(-45deg);
+  opacity: 0.7;
 }
 
 .media-detail__credits {
@@ -696,10 +820,12 @@ const backdropUrl = computed(() => {
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
 }
+/* Cast/crew are a grid of poster-shaped cards — the SAME 2:3 tile + caption as
+   the library/season cards (was a wall of small round avatars). */
 .media-detail__people {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-5);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -708,36 +834,41 @@ const backdropUrl = computed(() => {
 .media-detail__person {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  width: clamp(5.5rem, 8vw, 7rem);
-  padding: var(--space-2);
+  align-items: stretch;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 0;
   border: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: none;
   color: inherit;
   cursor: pointer;
-  text-align: center;
-  transition: background var(--dur-fast) var(--ease-out);
+  text-align: left;
+  transition: transform var(--dur-slow) var(--ease-out);
 }
-.media-detail__person:hover {
-  background: var(--surface-2);
+.media-detail__person:hover .media-detail__avatar {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: var(--shadow-4);
 }
 .media-detail__person:hover .media-detail__person-name {
   color: var(--text);
 }
 .media-detail__person:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.media-detail__person:focus-visible .media-detail__avatar {
+  box-shadow: var(--shadow-2), 0 0 0 3px var(--accent-ring);
 }
 .media-detail__avatar {
   display: grid;
   place-items: center;
-  width: clamp(3.75rem, 6vw, 5rem);
-  height: clamp(3.75rem, 6vw, 5rem);
-  border-radius: var(--radius-full);
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: var(--surface-3);
+  background: linear-gradient(145deg, var(--surface-3), var(--surface));
+  box-shadow: var(--shadow-2);
+  transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out);
 }
 .media-detail__avatar-img {
   width: 100%;
@@ -762,8 +893,12 @@ const backdropUrl = computed(() => {
   line-height: var(--leading-tight, 1.2);
 }
 @media (prefers-reduced-motion: reduce) {
-  .media-detail__person {
+  .media-detail__person,
+  .media-detail__avatar {
     transition: none;
+  }
+  .media-detail__person:hover .media-detail__avatar {
+    transform: none;
   }
 }
 
