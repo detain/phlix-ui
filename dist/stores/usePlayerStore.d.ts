@@ -63,6 +63,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -124,6 +126,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -187,6 +191,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -248,6 +254,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -363,6 +371,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -424,6 +434,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -487,6 +499,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -548,6 +562,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -663,6 +679,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -724,6 +742,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -787,6 +807,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
@@ -848,6 +870,8 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         studio?: string | null | undefined;
         library_id?: string | null | undefined;
         backdrop_url?: string | null | undefined;
+        backdrop_url_large?: string | null | undefined;
+        backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;

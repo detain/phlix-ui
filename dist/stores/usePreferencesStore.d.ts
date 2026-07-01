@@ -35,7 +35,6 @@ export interface Preferences {
     gridDensity: 'cozy' | 'comfy' | 'dense';
     reducedMotion: MotionPref;
     autoplay: boolean;
-    seriesThemeAutoplay: boolean;
     defaultVolume: number;
     defaultQuality: string;
     defaultSubtitleLang: string | null;
@@ -76,7 +75,6 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
     reducedMotion: import("vue").Ref<MotionPref, MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
-    seriesThemeAutoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
@@ -109,7 +107,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "seriesThemeAutoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
+}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
@@ -117,7 +115,6 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
     reducedMotion: import("vue").Ref<MotionPref, MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
-    seriesThemeAutoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
@@ -158,7 +155,6 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
     reducedMotion: import("vue").Ref<MotionPref, MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
-    seriesThemeAutoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
