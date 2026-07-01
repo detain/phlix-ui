@@ -31,6 +31,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -366,6 +367,18 @@ onBeforeUnmount(clearSyncTimer);
     <header class="admin-integrations__head">
       <h1 id="integrations-heading" class="admin-integrations__title">Integrations</h1>
     </header>
+
+    <PageHint title="What's on this page">
+      Connect Phlix to outside tools. <strong>Arr sync</strong> pulls quality-profile settings
+      from TRaSH-Guides for Radarr/Sonarr — <strong>Sync now</strong> runs it once, and
+      <strong>Auto-sync</strong> keeps it updated on a schedule. The
+      <strong>OIDC</strong> and <strong>LDAP</strong> sections let people sign in with your
+      company's single-sign-on or directory: flip a section's switch to turn that login method on,
+      then use <strong>Configure</strong> to enter the connection details (provider URL, client
+      ID/secret for OIDC; host, port, base DN, and bind credentials for LDAP).
+      <strong>Test connection</strong> in the LDAP dialog checks your settings before you
+      <strong>Save</strong>.
+    </PageHint>
 
     <!-- Section 1: Arr sync -->
     <section class="admin-integrations__section" aria-labelledby="arr-sync-heading">

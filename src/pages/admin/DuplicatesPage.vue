@@ -30,6 +30,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -170,6 +171,14 @@ onMounted(loadLibraries);
     <header class="admin-duplicates__head">
       <h1 id="duplicates-heading" class="admin-duplicates__title">Duplicates</h1>
     </header>
+
+    <PageHint>
+      Finds titles that appear more than once (matched by a canonical key) so you can tidy them up.
+      Pick a <strong>library</strong> to scope the search; each group keeps one entry marked
+      <strong>Keep</strong> as the primary. Tick the duplicates you want to fold in, then
+      <strong>Merge selected</strong> to combine them into that primary — the extras' data is
+      merged in and their rows removed.
+    </PageHint>
 
     <p class="admin-duplicates__hint">
       When the same series or movie was scanned more than once, its copies show up here grouped by a

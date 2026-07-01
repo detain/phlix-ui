@@ -42,6 +42,7 @@ import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 
 /** Default polling period for live scan status (ms). */
@@ -394,13 +395,13 @@ onBeforeUnmount(() => {
       <Button variant="solid" size="sm" left-icon="plus" @click="openAdd">Add library</Button>
     </header>
 
-    <p class="admin-libraries__hint">
+    <PageHint>
       <strong>Scan</strong> adds new files and updates changed ones (existing items are kept).
       <strong>Rescan</strong> clears the library and rebuilds it from scratch — use it after
       moving files or to repair bad matches. <strong>Match metadata</strong> (re)fetches
       posters and details for items already in the library. A live percentage is shown while
       any of these run.
-    </p>
+    </PageHint>
 
     <div v-if="loading" class="admin-libraries__skel"><Skeleton variant="text" :lines="6" /></div>
     <EmptyState
@@ -648,11 +649,6 @@ onBeforeUnmount(() => {
   font-size: var(--text-xl);
   letter-spacing: var(--tracking-tight);
   color: var(--text);
-}
-.admin-libraries__hint {
-  margin-bottom: var(--space-5);
-  font-size: var(--text-sm);
-  color: var(--text-subtle);
 }
 .admin-libraries__skel {
   padding-block: var(--space-2);

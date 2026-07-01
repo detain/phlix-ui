@@ -77,7 +77,7 @@ describe('Admin LogsPage', () => {
     w.findAllComponents(Select)[0].vm.$emit('update:modelValue', ALL_LOGS);
     await flushPromises();
     expect(w.find('[data-testid="logs-output"]').text()).toContain('merged line');
-    expect(w.find('[role="note"]').text()).toContain('more lines available across files');
+    expect(w.find('.admin-logs__truncated').text()).toContain('more lines available across files');
   });
 
   it('polls on a 5s interval while auto-refresh is on, and stops on unmount', async () => {
