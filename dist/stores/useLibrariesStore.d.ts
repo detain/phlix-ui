@@ -29,9 +29,10 @@ export declare const useLibrariesStore: import("pinia").StoreDefinition<"librari
     loading: import("vue").Ref<boolean, boolean>;
     loaded: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    errorCode: import("vue").Ref<string | null, string | null>;
     load: (apiBase: string, force?: boolean) => Promise<void>;
     byId: (id: string) => LibrarySummary | undefined;
-}, "error" | "loading" | "items" | "loaded">, Pick<{
+}, "error" | "loading" | "items" | "loaded" | "errorCode">, Pick<{
     items: import("vue").Ref<{
         [x: string]: unknown;
         id: string;
@@ -50,6 +51,7 @@ export declare const useLibrariesStore: import("pinia").StoreDefinition<"librari
     loading: import("vue").Ref<boolean, boolean>;
     loaded: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    errorCode: import("vue").Ref<string | null, string | null>;
     load: (apiBase: string, force?: boolean) => Promise<void>;
     byId: (id: string) => LibrarySummary | undefined;
 }, never>, Pick<{
@@ -71,6 +73,7 @@ export declare const useLibrariesStore: import("pinia").StoreDefinition<"librari
     loading: import("vue").Ref<boolean, boolean>;
     loaded: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    errorCode: import("vue").Ref<string | null, string | null>;
     load: (apiBase: string, force?: boolean) => Promise<void>;
     byId: (id: string) => LibrarySummary | undefined;
 }, "load" | "byId">>;

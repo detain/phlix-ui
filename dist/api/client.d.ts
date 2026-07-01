@@ -10,6 +10,7 @@ export interface AuthUser {
     username?: string;
     name?: string;
     is_admin?: boolean;
+    avatar_url?: string | null;
     [key: string]: unknown;
 }
 export interface ApiClientOptions {
@@ -58,6 +59,14 @@ export interface MatchCandidate {
     vote_average?: number;
     [key: string]: unknown;
 }
+/** Context block attached to each match candidate when the server has metadata. */
+export interface MatchContext {
+    original_filename?: string | null;
+    path?: string | null;
+    parsed_title?: string | null;
+    year?: number | null;
+    tags?: Record<string, unknown>;
+}
 /** Envelope returned by {@link ApiClient.matchSearch}. */
 export interface MatchSearchResult {
     results: MatchCandidate[];
@@ -65,6 +74,7 @@ export interface MatchSearchResult {
     query: string;
     /** The effective TMDB type the server searched. */
     type: MatchType;
+    context?: MatchContext;
 }
 /** Optional manual overrides for {@link ApiClient.matchSearch}. */
 export interface MatchSearchParams {
@@ -229,11 +239,12 @@ export declare class ApiClient {
         message: string;
     }>;
     /**
-     * Set the authenticated user's multi-level "love" level for a media item
-     * (`PUT /api/v1/media/{id}/like`, body `{ level }`). `level` is the 0-3 Love
-     * axis (0 = not loved … 3 = most), a SEPARATE axis from `rating`/`favorite`.
-     * The server returns a flat `{ message }`. A non-integer / out-of-range level
-     * is a 400 → shared {@link ApiError}; 401/404 likewise.
+     * Set the authenticated user's thumbs rating for a media item
+     * (`PUT /api/v1/media/{id}/like`, body `{ level }`). `level` is the −2..2
+     * thumbs axis (−2 strongly dislike … 0 not set … 2 love), a SEPARATE axis
+     * from `rating`/`favorite`. The server returns a flat `{ message }`. A
+     * non-integer / out-of-range level is a 400 → shared {@link ApiError};
+     * 401/404 likewise.
      */
     setLikeLevel(id: string, level: number): Promise<{
         message: string;
@@ -267,6 +278,25 @@ export declare class ApiClient {
      * can detect with {@link isTmdbUnconfigured}.
      */
     setPoster(id: string, posterUrl: string): Promise<MediaItem>;
+    /**
+     * POST multipart/form-data to an endpoint. Used for file uploads like avatar
+     * images. The Content-Type header is deliberately omitted so the browser
+     * sets `Content-Type: multipart/form-data; boundary=...` with the correct
+     * boundary automatically.
+     */
+    postFormData(endpoint: string, body: FormData): Promise<unknown>;
+    /**
+     * Upload the authenticated user's avatar image (`POST /api/v1/users/me/avatar`).
+     * The server returns `{ avatar_url }`. Non-2xx throws the shared {@link ApiError}.
+     */
+    uploadAvatar(file: File): Promise<{
+        avatar_url: string;
+    }>;
+    /**
+     * Delete the authenticated user's avatar (`DELETE /api/v1/users/me/avatar`).
+     * Non-2xx throws the shared {@link ApiError}.
+     */
+    deleteAvatar(): Promise<void>;
     isLoggedIn(): boolean;
     getCurrentUser(): Promise<AuthUser>;
     logout(redirect?: boolean): void;
