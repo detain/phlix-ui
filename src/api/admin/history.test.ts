@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { AdminHistoryApi, type RecentlyWatchedItem } from './history';
+import { AdminHistoryApi, type RecentlyWatchedItem, type AdminWatchHistoryItem } from './history';
 import type { ApiClient } from '../client';
 
 function clientWith(over: Partial<Record<'get' | 'delete', ReturnType<typeof vi.fn>>>): ApiClient {
@@ -85,5 +85,87 @@ describe('AdminHistoryApi', () => {
     const del = vi.fn().mockRejectedValue(new Error('unauthorized'));
     const api = new AdminHistoryApi(clientWith({ delete: del }));
     await expect(api.clearHistory()).rejects.toThrow('unauthorized');
+  });
+
+  describe('getAllWatchHistory()', () => {
+    const rawRow = {
+      id: 'wh-9',
+      media_item_id: 'media-9',
+      media_name: 'Admin Movie',
+      media_type: 'movie',
+      library_id: 'lib-1',
+      user_id: 'u-1',
+      username: 'alice',
+      display_name: '', // empty → normalises to ''
+      profile_name: '',
+      last_watched_at: '2026-06-30T10:30:00Z',
+      completed_at: '', // empty → ''
+      playback_status: 'completed',
+      progress_percent: 42,
+    };
+
+    it('GETs the admin endpoint with no params and normalises a raw row', async () => {
+      const get = vi.fn().mockResolvedValue({ success: true, data: [rawRow], count: 1 });
+      const api = new AdminHistoryApi(clientWith({ get }));
+      const result = await api.getAllWatchHistory();
+      expect(get).toHaveBeenCalledWith('/api/v1/admin/watch-history', undefined);
+      const expected: AdminWatchHistoryItem = {
+        id: 'wh-9',
+        media_item_id: 'media-9',
+        media_name: 'Admin Movie',
+        media_type: 'movie',
+        library_id: 'lib-1',
+        user_id: 'u-1',
+        username: 'alice',
+        display_name: '',
+        profile_name: '',
+        last_watched_at: '2026-06-30T10:30:00Z',
+        completed_at: '',
+        playback_status: 'completed',
+        progress_percent: 42,
+      };
+      expect(result).toEqual([expected]);
+      expect(typeof result[0].progress_percent).toBe('number');
+    });
+
+    it('coerces a numeric-string progress_percent to a number and missing fields to empty strings', async () => {
+      const get = vi.fn().mockResolvedValue({
+        success: true,
+        data: [{ id: 'wh-10', progress_percent: '73.5' }],
+      });
+      const api = new AdminHistoryApi(clientWith({ get }));
+      const [row] = await api.getAllWatchHistory();
+      expect(row.progress_percent).toBe(73.5);
+      expect(row.media_name).toBe('');
+      expect(row.display_name).toBe('');
+      expect(row.completed_at).toBe('');
+    });
+
+    it('passes { limit, userId, libraryId } through as string query params', async () => {
+      const get = vi.fn().mockResolvedValue({ success: true, data: [] });
+      const api = new AdminHistoryApi(clientWith({ get }));
+      await api.getAllWatchHistory({ limit: 25, userId: 'u-1', libraryId: 'lib-2' });
+      expect(get).toHaveBeenCalledWith('/api/v1/admin/watch-history', {
+        limit: '25',
+        userId: 'u-1',
+        libraryId: 'lib-2',
+      });
+    });
+
+    it('degrades to [] when data is missing or non-array', async () => {
+      const getMissing = vi.fn().mockResolvedValue({ success: true });
+      const apiMissing = new AdminHistoryApi(clientWith({ get: getMissing }));
+      expect(await apiMissing.getAllWatchHistory()).toEqual([]);
+
+      const getBad = vi.fn().mockResolvedValue({ success: true, data: 'nope' });
+      const apiBad = new AdminHistoryApi(clientWith({ get: getBad }));
+      expect(await apiBad.getAllWatchHistory()).toEqual([]);
+    });
+
+    it('propagates errors from getAllWatchHistory()', async () => {
+      const get = vi.fn().mockRejectedValue(new Error('forbidden'));
+      const api = new AdminHistoryApi(clientWith({ get }));
+      await expect(api.getAllWatchHistory()).rejects.toThrow('forbidden');
+    });
   });
 });

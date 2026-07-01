@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, flushPromises } from '@vue/test-utils';
+import { mount, flushPromises, RouterLinkStub } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import DashboardPage from './DashboardPage.vue';
 import Select from '../../components/ui/Select.vue';
@@ -83,7 +83,11 @@ function makeClient(over: Overrides = {}) {
 }
 
 function mountPage(client: ApiClient) {
-  return mount(DashboardPage, { props: { client }, attachTo: document.body });
+  return mount(DashboardPage, {
+    props: { client },
+    attachTo: document.body,
+    global: { stubs: { RouterLink: RouterLinkStub } },
+  });
 }
 
 beforeEach(() => {
@@ -118,6 +122,17 @@ describe('Admin DashboardPage', () => {
     expect(text).toContain('1h 1m');
     // Storage formats bytes + item count.
     expect(text).toContain('150 items');
+    w.unmount();
+  });
+
+  it('links each top-media row title to the media detail page', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const links = w.findAllComponents(RouterLinkStub);
+    const mediaLink = links.find((l) => l.props('to') === `/app/media/${topMedia.media_item_id}`);
+    expect(mediaLink).toBeTruthy();
+    expect(mediaLink!.text()).toContain('Movie One');
     w.unmount();
   });
 
