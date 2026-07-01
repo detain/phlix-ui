@@ -280,7 +280,11 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   min-width: 160px;
-  max-height: 280px;
+  /* Grow to fit every item with no scrollbar; only scroll once the list would
+     exceed the viewport. `updatePosition()` clamps the list ≥8px from each edge,
+     so cap the height at the viewport minus that gutter (dvh tracks mobile URL
+     bars). No small fixed cap → no premature scrollbar when there's room. */
+  max-height: calc(100dvh - 16px);
   overflow-y: auto;
   padding: var(--space-1);
   border-radius: var(--radius-md);
