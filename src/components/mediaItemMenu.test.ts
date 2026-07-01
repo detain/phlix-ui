@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildMediaItemMenu } from './mediaItemMenu';
+import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import type { MediaItem } from '../types/media-item';
 
 const makeItem = (overrides: Partial<MediaItem> = {}): MediaItem =>
@@ -20,97 +20,80 @@ const makeItem = (overrides: Partial<MediaItem> = {}): MediaItem =>
     ...overrides,
   } as MediaItem);
 
+const ctx = (over: Partial<Parameters<typeof buildMediaItemMenu>[1]> = {}) => ({
+  isAdmin: false,
+  isWatched: false,
+  isSeriesOrSeason: false,
+  canChoosePoster: false,
+  ...over,
+});
+
 describe('buildMediaItemMenu', () => {
-  it('returns mark-watched label when item is not watched', () => {
-    const item = makeItem();
-    const menu = buildMediaItemMenu(item, { isAdmin: false, isWatched: false, canChoosePoster: false });
-    expect(menu[0].label).toBe('Mark watched');
+  it('everyone gets the core actions (playlist, like, dislike, played, download, shuffle)', () => {
+    const labels = buildMediaItemMenu(makeItem(), ctx()).map((m) => m.label);
+    expect(labels).toContain(MENU_LABELS.addToPlaylist);
+    expect(labels).toContain(MENU_LABELS.like);
+    expect(labels).toContain(MENU_LABELS.dislike);
+    expect(labels).toContain(MENU_LABELS.markPlayed);
+    expect(labels).toContain(MENU_LABELS.download);
+    expect(labels).toContain(MENU_LABELS.shuffle);
   });
 
-  it('returns mark-unwatched label when item is watched', () => {
-    const item = makeItem();
-    const menu = buildMediaItemMenu(item, { isAdmin: false, isWatched: true, canChoosePoster: false });
-    expect(menu[0].label).toBe('Mark unwatched');
+  it('shows "Mark played" when not watched and "Mark unplayed" when watched', () => {
+    expect(buildMediaItemMenu(makeItem(), ctx({ isWatched: false })).map((m) => m.label)).toContain(
+      MENU_LABELS.markPlayed,
+    );
+    const watched = buildMediaItemMenu(makeItem(), ctx({ isWatched: true })).map((m) => m.label);
+    expect(watched).toContain(MENU_LABELS.markUnplayed);
+    expect(watched).not.toContain(MENU_LABELS.markPlayed);
   });
 
-  it('non-admin gets only the watched toggle', () => {
-    const item = makeItem();
-    const menu = buildMediaItemMenu(item, { isAdmin: false, isWatched: false, canChoosePoster: false });
-    expect(menu).toHaveLength(1);
+  it('only series/season items get "View missing episodes"', () => {
+    expect(buildMediaItemMenu(makeItem(), ctx({ isSeriesOrSeason: false })).map((m) => m.label)).not.toContain(
+      MENU_LABELS.missingEpisodes,
+    );
+    expect(buildMediaItemMenu(makeItem(), ctx({ isSeriesOrSeason: true })).map((m) => m.label)).toContain(
+      MENU_LABELS.missingEpisodes,
+    );
   });
 
-  it('admin gets Refresh/Match… item', () => {
-    const item = makeItem();
-    const menu = buildMediaItemMenu(item, { isAdmin: true, isWatched: false, canChoosePoster: false });
-    const labels = menu.map((m) => m.label);
-    expect(labels).toContain('Refresh/Match…');
+  it('non-admin does NOT get the admin actions (refresh/identify/edit metadata/explore/remove)', () => {
+    const labels = buildMediaItemMenu(makeItem(), ctx({ isAdmin: false })).map((m) => m.label);
+    expect(labels).not.toContain(MENU_LABELS.refreshMetadata);
+    expect(labels).not.toContain(MENU_LABELS.identify);
+    expect(labels).not.toContain(MENU_LABELS.editMetadata);
+    expect(labels).not.toContain(MENU_LABELS.exploreData);
+    expect(labels).not.toContain(MENU_LABELS.editImages);
+    expect(labels).not.toContain(MENU_LABELS.remove);
   });
 
-  it('admin without canChoosePoster does not get Choose poster…', () => {
-    const item = makeItem();
-    const menu = buildMediaItemMenu(item, { isAdmin: true, isWatched: false, canChoosePoster: false });
-    const labels = menu.map((m) => m.label);
-    expect(labels).not.toContain('Choose poster…');
+  it('admin gets refresh metadata, identify, edit metadata, and explore item data', () => {
+    const labels = buildMediaItemMenu(makeItem(), ctx({ isAdmin: true })).map((m) => m.label);
+    expect(labels).toContain(MENU_LABELS.refreshMetadata);
+    expect(labels).toContain(MENU_LABELS.identify);
+    expect(labels).toContain(MENU_LABELS.editMetadata);
+    expect(labels).toContain(MENU_LABELS.exploreData);
   });
 
-  it('admin with canChoosePoster gets Choose poster…', () => {
-    const item = makeItem();
-    const menu = buildMediaItemMenu(item, { isAdmin: true, isWatched: false, canChoosePoster: true });
-    const labels = menu.map((m) => m.label);
-    expect(labels).toContain('Choose poster…');
+  it('"Edit images" is gated on canChoosePoster', () => {
+    expect(
+      buildMediaItemMenu(makeItem(), ctx({ isAdmin: true, canChoosePoster: false })).map((m) => m.label),
+    ).not.toContain(MENU_LABELS.editImages);
+    expect(
+      buildMediaItemMenu(makeItem(), ctx({ isAdmin: true, canChoosePoster: true })).map((m) => m.label),
+    ).toContain(MENU_LABELS.editImages);
   });
 
-  it('admin without canDelete does not get Remove', () => {
-    const item = makeItem({});
-    const menu = buildMediaItemMenu(item, { isAdmin: true, isWatched: false, canChoosePoster: false });
-    const labels = menu.map((m) => m.label);
-    expect(labels).not.toContain('Remove');
-  });
-
-  it('admin with canDelete=true gets Remove as danger', () => {
+  it('Remove is admin + canDelete only, and flagged danger', () => {
+    expect(buildMediaItemMenu(makeItem(), ctx({ isAdmin: true })).map((m) => m.label)).not.toContain(
+      MENU_LABELS.remove,
+    );
     const item = makeItem({ canDelete: true } as unknown as MediaItem);
-    const menu = buildMediaItemMenu(item, { isAdmin: true, isWatched: false, canChoosePoster: false });
-    const removeItem = menu.find((m) => m.label === 'Remove');
-    expect(removeItem).toBeDefined();
-    expect(removeItem!.danger).toBe(true);
-  });
-
-  it('non-admin never gets Remove even with canDelete=true', () => {
-    const item = makeItem({ canDelete: true } as unknown as MediaItem);
-    const menu = buildMediaItemMenu(item, { isAdmin: false, isWatched: false, canChoosePoster: false });
-    const labels = menu.map((m) => m.label);
-    expect(labels).not.toContain('Remove');
-  });
-
-  it('non-admin never gets Refresh/Match…', () => {
-    const item = makeItem();
-    const menu = buildMediaItemMenu(item, { isAdmin: false, isWatched: true, canChoosePoster: false });
-    const labels = menu.map((m) => m.label);
-    expect(labels).not.toContain('Refresh/Match…');
-  });
-
-  it('non-admin never gets Choose poster…', () => {
-    const item = makeItem();
-    const menu = buildMediaItemMenu(item, { isAdmin: false, isWatched: true, canChoosePoster: true });
-    const labels = menu.map((m) => m.label);
-    expect(labels).not.toContain('Choose poster…');
-  });
-
-  it('full admin menu: watched + Refresh + Choose poster + Remove', () => {
-    const item = makeItem({ canDelete: true } as unknown as MediaItem);
-    const menu = buildMediaItemMenu(item, { isAdmin: true, isWatched: true, canChoosePoster: true });
-    expect(menu).toHaveLength(4);
-    expect(menu[0].label).toBe('Mark unwatched');
-    expect(menu[1].label).toBe('Refresh/Match…');
-    expect(menu[2].label).toBe('Choose poster…');
-    expect(menu[3].label).toBe('Remove');
-    expect(menu[3].danger).toBe(true);
-  });
-
-  it('admin with canDelete=false does not get Remove', () => {
-    const item = makeItem({ canDelete: false } as unknown as MediaItem);
-    const menu = buildMediaItemMenu(item, { isAdmin: true, isWatched: false, canChoosePoster: true });
-    const labels = menu.map((m) => m.label);
-    expect(labels).not.toContain('Remove');
+    const remove = buildMediaItemMenu(item, ctx({ isAdmin: true })).find((m) => m.label === MENU_LABELS.remove);
+    expect(remove?.danger).toBe(true);
+    // never for a non-admin, even with canDelete
+    expect(buildMediaItemMenu(item, ctx({ isAdmin: false })).map((m) => m.label)).not.toContain(
+      MENU_LABELS.remove,
+    );
   });
 });

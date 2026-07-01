@@ -1,6 +1,6 @@
 import type { MediaType } from '../types/media-item';
 import type { LibraryQueryParams } from '../types/library-query';
-export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime';
+export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime' | 'genre';
 export type SortOrder = 'asc' | 'desc';
 /** Facets returned by GET /api/v1/media/facets — genres are the primary seam.
  *  Additional facet dimensions can be added as the server implements them. */
@@ -76,6 +76,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -136,6 +137,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -249,6 +251,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -309,6 +312,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -422,6 +426,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -482,6 +487,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
