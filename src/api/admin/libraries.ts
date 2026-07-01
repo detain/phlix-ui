@@ -42,6 +42,32 @@ export const LIBRARY_TYPES = ['movie', 'series', 'music', 'photo', 'video'] as c
 export type LibraryType = (typeof LIBRARY_TYPES)[number];
 
 /**
+ * One artwork/image type in the per-library catalogue (M5). `type` is the
+ * canonical key persisted under `options.image_types`; `label` is the
+ * human-readable name; `default` is whether the type is enabled by default when
+ * a library has no explicit selection; `providers` names the metadata providers
+ * that can supply it (a hint shown to the admin).
+ */
+export interface ImageTypeOption {
+  type: string;
+  label: string;
+  default: boolean;
+  providers: string[];
+}
+
+/**
+ * The `image_types` block on a library row (M5), emitted by
+ * `LibraryRow::toArray()` on both the list and single-get responses.
+ * `available` is the full canonical catalogue (identical across libraries);
+ * `enabled` is THIS library's selection in catalogue order, falling back to the
+ * default-on set when the library has no stored selection.
+ */
+export interface LibraryImageTypes {
+  available: ImageTypeOption[];
+  enabled: string[];
+}
+
+/**
  * A library row as returned by `LibraryManager`/`LibraryRow::toArray()` — the
  * raw `libraries` row with `paths`/`options` already JSON-decoded.
  */
@@ -53,6 +79,12 @@ export interface Library {
   options?: Record<string, unknown>;
   created_at?: string;
   display_order?: number;
+  /**
+   * Per-library artwork selection (M5). Present on every row from
+   * `LibraryRow::toArray()` (list + get): `available` is the catalogue of every
+   * selectable type, `enabled` is this library's current selection.
+   */
+  image_types?: LibraryImageTypes;
   [k: string]: unknown;
 }
 
@@ -99,6 +131,15 @@ export interface CreateLibraryInput {
    * Send `null` to clear the per-library override (falls back to the global default).
    */
   metadata_priority?: Record<string, string[]> | null;
+  /**
+   * Per-library artwork selection (M5). A `{type: boolean}` map (or a
+   * `string[]` of enabled type names) sent at the body top level;
+   * `LibraryController` normalises it via `ImageType::toStorageMap()` (unknown
+   * type keys are dropped) and persists it canonically under
+   * `options.image_types`. Send `null` to clear the override (fall back to the
+   * default image-type set).
+   */
+  image_types?: Record<string, boolean> | string[] | null;
 }
 
 /**
@@ -113,6 +154,8 @@ export interface UpdateLibraryInput {
   series_per_directory?: boolean;
   /** See {@link CreateLibraryInput.metadata_priority}. */
   metadata_priority?: Record<string, string[]> | null;
+  /** See {@link CreateLibraryInput.image_types}. */
+  image_types?: Record<string, boolean> | string[] | null;
 }
 
 /** Result of {@link AdminLibrariesApi.create}. */
