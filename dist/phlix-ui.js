@@ -19,7 +19,7 @@ import { t as Ie } from "./Slider-CaOjV5mW.js";
 import { t as Le } from "./Switch-D-Y4B9p8.js";
 import { t as Re } from "./Chip-vZeocErt.js";
 import { t as ze } from "./Select-DHe4oeCr.js";
-import { i as Be, n as Ve, r as He, t as Ue } from "./FilterBar-CokbTD58.js";
+import { i as Be, n as Ve, r as He, t as Ue } from "./FilterBar-BFZqAv_C.js";
 import { t as We } from "./Modal-CBoJ1z1N.js";
 import { t as E } from "./Skeleton-BUq2D39t.js";
 import { a as Ge, n as Ke, o as qe, s as Je, t as Ye } from "./MetadataMatchModal-ozGAKR2V.js";
@@ -1059,7 +1059,7 @@ function Sa(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-RoFHzNsV.js")
+			component: () => import("./LibraryPage-CPrCmr_y.js")
 		},
 		{
 			path: `${t}/player/:id`,

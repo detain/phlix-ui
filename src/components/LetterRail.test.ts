@@ -17,7 +17,7 @@ describe('LetterRail', () => {
     expect(btns[0].attributes('disabled')).toBeDefined(); // '#' count 0
     expect(btns[1].attributes('disabled')).toBeUndefined(); // 'A' count 12
     expect(btns[2].attributes('disabled')).toBeDefined(); // 'B' count 0
-    expect(btns[1].text()).toBe('A');
+    expect(btns[1].find('.index-rail__label').text()).toBe('A');
   });
 
   it('emits `jump` with the bucket offset when a non-empty letter is clicked', async () => {
