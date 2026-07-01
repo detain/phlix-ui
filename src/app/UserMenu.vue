@@ -193,6 +193,11 @@ onBeforeUnmount(() => {
   right: 0;
   top: calc(100% + 8px);
   min-width: 12rem;
+  /* Grow to fit all items with no scrollbar; only scroll if the panel would run
+     past the bottom of the viewport (accounts for the ~8px top offset + a small
+     gutter). dvh so a mobile browser's collapsing chrome doesn't clip it. */
+  max-height: calc(100dvh - var(--space-4));
+  overflow-y: auto;
   padding: var(--space-2);
   border-radius: var(--radius-lg);
   background: var(--surface-2);
