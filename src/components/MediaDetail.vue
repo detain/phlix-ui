@@ -407,11 +407,22 @@ const backdropUrl = computed(() => {
                store write + ONE PUT. -->
           <ThumbRating :level="loveLevel" @cycle="onLove" />
 
-          <!-- [ ⋯ Menu ] -->
+          <!-- [ ⋯ Menu ] — bind the trigger to the Menu's own `toggle` (from the
+               slot); `.stop` keeps the click off the surrounding actions but also
+               stops it reaching the Menu wrapper, so `toggle` must open it. -->
           <Menu v-model:open="menuOpen" :items="menuItems" @select="onMenuSelect">
-            <button type="button" class="media-detail__menu-btn" aria-label="More actions" @click.stop.prevent>
-              <Icon name="more" />
-            </button>
+            <template #default="{ toggle }">
+              <button
+                type="button"
+                class="media-detail__menu-btn"
+                aria-label="More actions"
+                :aria-expanded="menuOpen ? 'true' : 'false'"
+                aria-haspopup="menu"
+                @click.stop.prevent="toggle"
+              >
+                <Icon name="more" />
+              </button>
+            </template>
           </Menu>
 
           <Button v-if="canMatch" variant="ghost" left-icon="search" @click="emit('match', item)">Match metadata</Button>
