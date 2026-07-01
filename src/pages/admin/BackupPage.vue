@@ -18,6 +18,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -256,6 +257,16 @@ onMounted(() => {
         <h1 id="backups-heading" class="admin-backup__title">Backups</h1>
         <Button variant="solid" size="sm" left-icon="plus" @click="openCreate">Create backup</Button>
       </header>
+
+      <PageHint>
+        Save and restore snapshots of your server's database and settings.
+        <strong>Create backup</strong> makes a new snapshot (with an optional label);
+        <strong>Restore</strong> rolls the server back to a chosen one, and
+        <strong>Delete</strong> removes it. <strong>Upload to S3</strong> copies a local backup to
+        cloud storage. Under <strong>Scheduled backups</strong>, set the
+        <strong>interval</strong> (days between automatic backups) and
+        <strong>retention count</strong> (how many to keep), then <strong>Save schedule</strong>.
+      </PageHint>
 
       <div v-if="loading" class="admin-backup__skel"><Skeleton variant="text" :lines="5" /></div>
       <EmptyState

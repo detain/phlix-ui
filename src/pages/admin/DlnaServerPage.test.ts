@@ -224,7 +224,7 @@ describe('Admin DlnaServerPage', () => {
     const { client } = makeClient({ status: stoppedStatus });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.find('[role="note"]').text()).toContain('UPnP MediaServer');
+    expect(w.find('.admin-dlna__note').text()).toContain('UPnP MediaServer');
     w.unmount();
   });
 });

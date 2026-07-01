@@ -21,6 +21,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import SourcePriorityEditor from '../../components/SourcePriorityEditor.vue';
 import type { ProviderPriority } from '../../types/server-settings';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -372,6 +373,16 @@ onMounted(loadSettings);
     <header class="admin-settings__head">
       <h1 id="settings-heading" class="admin-settings__title">Settings</h1>
     </header>
+
+    <PageHint>
+      All of your server's configuration, grouped into tabs — <strong>Access</strong> (sign-up
+      mode), <strong>Transcoding</strong>, <strong>Metadata</strong> (TMDB key and provider
+      priority), <strong>Markers</strong>, <strong>Subtitles</strong>,
+      <strong>Discovery</strong>, <strong>Trickplay</strong>, <strong>Newsletter</strong>,
+      <strong>Port Forward</strong>, and <strong>Scrobblers</strong>. Change fields on any tab,
+      then click <strong>Save settings</strong> to apply only what you changed; a
+      <strong>custom</strong> badge marks values overridden by your environment or config file.
+    </PageHint>
 
     <div v-if="loading" class="admin-settings__skel"><Skeleton variant="text" :lines="6" /></div>
 

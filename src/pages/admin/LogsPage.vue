@@ -12,6 +12,7 @@ import { AdminLogsApi, ALL_LOGS, type LogFile } from '../../api/admin/logs';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Select from '../../components/ui/Select.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -119,6 +120,14 @@ onBeforeUnmount(stopTimer);
     <header class="admin-logs__head">
       <h1 id="logs-heading" class="admin-logs__title">Logs</h1>
     </header>
+
+    <PageHint>
+      Read the server's log files to troubleshoot problems. Pick a file with the
+      <strong>File</strong> menu (or <strong>All logs</strong> to merge them), set how many recent
+      lines to show with <strong>Lines</strong>, and press <strong>Refresh</strong> to reload.
+      Turn on <strong>Auto-refresh</strong> to keep the newest entries streaming in every few
+      seconds.
+    </PageHint>
 
     <div class="admin-logs__controls">
       <label class="admin-logs__field">

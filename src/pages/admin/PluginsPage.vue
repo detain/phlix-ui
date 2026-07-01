@@ -40,6 +40,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Icon from '../../components/Icon.vue';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -645,6 +646,16 @@ onMounted(() => {
         <Button variant="solid" size="sm" left-icon="plus" @click="openInstall">Install from URL</Button>
       </div>
     </header>
+
+    <PageHint>
+      Extend Phlix with add-ons from the plugin catalog. On each catalog plugin, toggle its switch
+      to <strong>enable/disable</strong> it, <strong>Install</strong> or <strong>Uninstall</strong>
+      it, <strong>Configure</strong> its settings, or <strong>Update</strong> when a new version is
+      out. Up top, <strong>Check for updates</strong> refreshes availability,
+      <strong>Update all</strong> upgrades everything at once, <strong>Auto-update</strong> keeps
+      plugins current automatically, and <strong>Add catalog</strong> /
+      <strong>Install from URL</strong> pull in sources or plugins from outside the default catalog.
+    </PageHint>
 
     <!-- Catalog sources bar -->
     <div class="admin-plugins__sources" aria-label="Catalog sources">

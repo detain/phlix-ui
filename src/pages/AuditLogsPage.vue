@@ -15,6 +15,7 @@ import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
 import { errMessage } from '../api/errors';
 import Badge from '../components/ui/Badge.vue';
+import PageHint from '../components/ui/PageHint.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -113,6 +114,12 @@ onMounted(() => loadLogs());
       <h1 id="audit-heading" class="audit__title">Audit Logs</h1>
       <p class="audit__subtitle">View system activity and user actions.</p>
     </header>
+
+    <PageHint>
+      A running record of everything that happens on your hub — pairings, sign-ins, and other
+      system and user actions — for security and troubleshooting. Entries are shown newest-first;
+      use <strong>Previous</strong> and <strong>Next</strong> to page through the history.
+    </PageHint>
 
     <div v-if="loading" class="audit__skel"><Skeleton variant="text" :lines="8" /></div>
 

@@ -22,6 +22,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -284,6 +285,14 @@ onBeforeUnmount(() => {
         @update:model-value="(v) => (dateRange = Number(v))"
       />
     </header>
+
+    <PageHint>
+      A live overview of your server. The cards show <strong>who's watching right now</strong>,
+      your <strong>top users</strong> and <strong>most-watched titles</strong>, current
+      <strong>storage use</strong>, and a feed of <strong>recent activity</strong>. Use the
+      <strong>Date range</strong> menu to switch the top-users and top-media stats between the
+      last 7, 30, or 90 days.
+    </PageHint>
 
     <div class="admin-dash__grid">
       <!-- Now Playing -->

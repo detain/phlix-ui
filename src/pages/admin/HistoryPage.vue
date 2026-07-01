@@ -19,6 +19,7 @@ import { AdminHistoryApi, type RecentlyWatchedItem } from '../../api/admin/histo
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -148,6 +149,13 @@ onMounted(loadHistory);
         Clear All
       </Button>
     </header>
+
+    <PageHint>
+      Everything that's been watched on the server, with how far each title was played.
+      <strong>Continue</strong> appears on partly-watched items to jump back to where you left off,
+      <strong>Remove</strong> deletes a single entry, and <strong>Clear All</strong> wipes the
+      entire history (after a confirmation).
+    </PageHint>
 
     <div v-if="loading" class="admin-history__skel"><Skeleton variant="text" :lines="6" /></div>
     <EmptyState

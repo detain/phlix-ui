@@ -27,6 +27,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Select from '../../components/ui/Select.vue';
@@ -530,6 +531,15 @@ onMounted(() => {
     <header class="admin-livetv__head">
       <h1 id="livetv-heading" class="admin-livetv__title">Live TV / DVR</h1>
     </header>
+
+    <PageHint>
+      Set up over-the-air or IPTV channels and record them. In <strong>Tuners</strong>,
+      <strong>Scan for Tuners</strong> finds devices on your network, which you can then enable or
+      remove. The <strong>Guide</strong> shows what's on — pick a day and
+      <strong>Refresh Guide</strong> to update listings. <strong>Recordings</strong> lists what's
+      scheduled or captured (<strong>Schedule Recording</strong> adds one manually), and
+      <strong>Series Rules</strong> auto-records a show every time it airs.
+    </PageHint>
 
     <!-- ── Section 1: Tuners ────────────────────────────────────────────── -->
     <section class="admin-livetv__section" aria-labelledby="livetv-tuners-heading">
