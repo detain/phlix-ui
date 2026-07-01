@@ -30,8 +30,6 @@ function posterFor(title: string, i: number): string {
     `<defs><linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">` +
     `<stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>` +
     `<rect width="200" height="300" fill="url(#g)"/>` +
-    `<circle cx="100" cy="120" r="34" fill="none" stroke="#f5a524" stroke-width="2" opacity="0.5"/>` +
-    `<polygon points="92,104 92,136 120,120" fill="#f5a524" opacity="0.7"/>` +
     `<text x="16" y="262" font-family="Georgia,serif" font-size="17" font-weight="700" fill="#f3ede1">${safeTitle}</text>` +
     `<rect x="16" y="276" width="44" height="4" rx="2" fill="#f5a524" opacity="0.8"/>` +
     `</svg>`;

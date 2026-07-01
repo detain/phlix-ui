@@ -225,6 +225,23 @@ const priorityDirty = ref(false);
 /** Guards a single sources fetch (they do not change per-library). */
 const sourcesLoaded = ref(false);
 
+/** Providers that only apply to VIDEO libraries — hidden for music libraries. */
+const VIDEO_ONLY_SOURCES = ['imdb', 'tmdb', 'tvdb'];
+/**
+ * The selectable sources filtered for the current library type: a `music`
+ * library never lists imdb/tmdb/tvdb (those are movie/series providers; music
+ * resolves via musicbrainz/audiodb server-side by type).
+ */
+const visibleSources = computed(() =>
+  type.value === 'music'
+    ? availableSources.value.filter((s) => !VIDEO_ONLY_SOURCES.includes(s))
+    : availableSources.value,
+);
+/** The priority order shown in the editor, restricted to the type-visible sources. */
+const visiblePriorityOrder = computed(() =>
+  priorityOrder.value.filter((s) => visibleSources.value.includes(s)),
+);
+
 /**
  * Fetch the selectable source names once. The default order returned by the
  * endpoint (`tmdb, imdb, tvdb, fanart, local` + enabled plugin sources) IS the
@@ -658,8 +675,8 @@ onBeforeUnmount(() => {
             to override it just for this library.
           </p>
           <SourcePriorityEditor
-            :model-value="priorityOrder"
-            :available="availableSources"
+            :model-value="visiblePriorityOrder"
+            :available="visibleSources"
             :label="`${type} sources`"
             @update:model-value="setPriorityOrder"
           />

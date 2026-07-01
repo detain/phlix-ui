@@ -45,6 +45,7 @@ const sortOptions: { value: SortField; label: string }[] = [
   { value: 'rating', label: 'Rating' },
   { value: 'date_added', label: 'Date added' },
   { value: 'runtime', label: 'Runtime' },
+  { value: 'genre', label: 'Genre' },
 ];
 
 // ---- search (debounced) -------------------------------------------------

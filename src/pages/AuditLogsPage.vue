@@ -198,7 +198,8 @@ onMounted(() => loadLogs());
 
 <style scoped>
 .audit {
-  max-width: 1100px;
+  /* Full available width so the log table has room and wraps far less. */
+  max-width: 100%;
   margin: 0 auto;
   padding: var(--space-6);
 }

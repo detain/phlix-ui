@@ -14,13 +14,14 @@ import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useToastStore } from '../stores/useToastStore';
 import Icon from './Icon.vue';
 import ThumbRating from './ThumbRating.vue';
 import Button from './ui/Button.vue';
 import Menu from './ui/Menu.vue';
 import Chip from './ui/Chip.vue';
 import MediaRow from './MediaRow.vue';
-import { buildMediaItemMenu } from './mediaItemMenu';
+import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 
 const props = withDefaults(
   defineProps<{
@@ -135,29 +136,42 @@ const providerLinks = computed<Array<{ key: string; label: string; url: string }
 
 const menuOpen = ref(false);
 
+const isSeriesOrSeason = computed(() => props.item.type === 'series' || props.item.type === 'season');
+
 const menuItems = computed(() =>
   buildMediaItemMenu(props.item, {
     isAdmin: isAdmin.value,
     isWatched: isWatched.value,
+    isSeriesOrSeason: isSeriesOrSeason.value,
     canChoosePoster: isAdmin.value,
   }),
 );
 
-function onMenuSelect(item: { label: string }): void {
-  switch (item.label) {
-    case 'Mark watched':
-    case 'Mark unwatched':
+function onMenuSelect(menuItem: { label: string }): void {
+  const L = MENU_LABELS;
+  switch (menuItem.label) {
+    case L.markPlayed:
+    case L.markUnplayed:
       onWatched();
       break;
-    case 'Refresh/Match…':
+    case L.like:
+      void userItemData.setLike(props.item.id, 1, phlixConfig?.apiBase ?? '');
+      break;
+    case L.dislike:
+      void userItemData.setLike(props.item.id, -1, phlixConfig?.apiBase ?? '');
+      break;
+    case L.refreshMetadata:
+    case L.identify:
       emit('refresh', props.item);
       break;
-    case 'Choose poster…':
+    case L.editImages:
       emit('choose-poster', props.item);
       break;
-    case 'Remove':
+    case L.remove:
       emit('remove', props.item);
       break;
+    default:
+      useToastStore().info(`${menuItem.label} isn't available yet`);
   }
 }
 

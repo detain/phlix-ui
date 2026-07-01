@@ -183,7 +183,9 @@ onBeforeUnmount(stopTimer);
 
 <style scoped>
 .admin-logs {
-  max-width: 1100px;
+  /* Use (almost) the full available width so long log lines wrap far less than
+     at the old fixed 1100px document width. */
+  max-width: 100%;
   margin: 0 auto;
   padding: var(--space-6);
 }
@@ -237,7 +239,9 @@ onBeforeUnmount(stopTimer);
   font-size: var(--text-xs);
   line-height: 1.5;
   color: var(--text-muted);
-  white-space: pre-wrap;
-  word-break: break-word;
+  /* Don't wrap long log lines — scroll horizontally instead, so each entry stays
+     on one line and is far easier to scan (the container is now full-width). */
+  white-space: pre;
+  overflow-x: auto;
 }
 </style>

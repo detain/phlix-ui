@@ -76,6 +76,23 @@ function runtimeLabel(ep: MediaItem): string | null {
     return ep.runtime ? `${ep.runtime}m` : null;
 }
 
+/** Human air date ("Jan 5, 2020") from an ISO-ish `air_date`, or null. */
+function airDateLabel(ep: MediaItem): string | null {
+    const raw = ep.air_date;
+    if (!raw) return null;
+    const t = Date.parse(raw);
+    if (Number.isNaN(t)) return raw;
+    return new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+/** The episode description — first paragraph of the overview when it has several. */
+function episodeDescription(ep: MediaItem): string | null {
+    const ov = ep.overview?.trim();
+    if (!ov) return null;
+    const firstPara = ov.split(/\n\s*\n/)[0]?.trim();
+    return firstPara || ov;
+}
+
 function shouldOpen(index: number): boolean {
     return props.openFirstOnly ? index === 0 : true;
 }
@@ -135,13 +152,18 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
                         @click="emit('open', ep)"
                     >
                         <span class="series-seasons__episode-title">{{ episodeTitle(ep) }}</span>
-                        <span v-if="ep.overview" class="series-seasons__episode-overview">{{
-                            ep.overview
+                        <span
+                            v-if="airDateLabel(ep) || runtimeLabel(ep)"
+                            class="series-seasons__episode-meta numeric"
+                        >
+                            <template v-if="airDateLabel(ep)">{{ airDateLabel(ep) }}</template>
+                            <template v-if="airDateLabel(ep) && runtimeLabel(ep)"> · </template>
+                            <template v-if="runtimeLabel(ep)">{{ runtimeLabel(ep) }}</template>
+                        </span>
+                        <span v-if="episodeDescription(ep)" class="series-seasons__episode-description">{{
+                            episodeDescription(ep)
                         }}</span>
                     </button>
-                    <span v-if="runtimeLabel(ep)" class="series-seasons__episode-runtime numeric">{{
-                        runtimeLabel(ep)
-                    }}</span>
                     <button
                         v-if="showAdminFileInfo"
                         type="button"
@@ -248,8 +270,8 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
 
 .series-seasons__episode {
     display: grid;
-    grid-template-columns: auto 1fr auto auto;
-    align-items: center;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
     border-bottom: 1px solid var(--border);
@@ -296,18 +318,24 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.series-seasons__episode-overview {
+/* Air date · runtime meta line under the episode title. */
+.series-seasons__episode-meta {
+    font-size: var(--text-xs);
+    color: var(--text-subtle);
+    margin-top: 2px;
+}
+/* Episode description — first paragraph, clamped to a few lines (no longer a
+   single nowrap-ellipsis line, so viewers can actually read it). */
+.series-seasons__episode-description {
     font-size: var(--text-sm);
     color: var(--text-muted);
+    margin-top: var(--space-1);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.series-seasons__episode-runtime {
-    flex: 0 0 auto;
-    font-size: var(--text-sm);
-    color: var(--text-subtle);
 }
 
 .series-seasons__files-btn {

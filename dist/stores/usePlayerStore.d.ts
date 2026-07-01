@@ -102,6 +102,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     } | null, import("../types/media-item").MediaDetail | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -162,6 +163,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     } | null>;
     streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
@@ -224,6 +226,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -284,6 +287,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[]>;
     playing: import("vue").Ref<boolean, boolean>;
     position: import("vue").Ref<number, number>;
@@ -398,6 +402,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     } | null, import("../types/media-item").MediaDetail | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -458,6 +463,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     } | null>;
     streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
@@ -520,6 +526,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -580,6 +587,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[]>;
     playing: import("vue").Ref<boolean, boolean>;
     position: import("vue").Ref<number, number>;
@@ -694,6 +702,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     } | null, import("../types/media-item").MediaDetail | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -754,6 +763,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     } | null>;
     streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
@@ -816,6 +826,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -876,6 +887,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         season_number?: number | null | undefined;
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
+        air_date?: string | null | undefined;
     }[]>;
     playing: import("vue").Ref<boolean, boolean>;
     position: import("vue").Ref<number, number>;

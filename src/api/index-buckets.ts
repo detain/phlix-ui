@@ -26,8 +26,40 @@ export { CACHE_TTL };
 const cache = new Map<string, CacheEntry>();
 export { cache };
 
-function cacheKey(libraryId: string | undefined): string {
-  return libraryId ?? '';
+/**
+ * Cache key MUST include every param that changes the returned buckets — most
+ * importantly `field` and `order`, plus the active filters. Keying on
+ * `libraryId` alone (the old bug) meant changing the sort (name → year → genre…)
+ * returned the previously-cached buckets, so the jump rail never updated.
+ */
+function cacheKey(params: {
+  field: string;
+  order?: string;
+  libraryId?: string;
+  query?: string;
+  genres?: string[];
+  yearMin?: number;
+  yearMax?: number;
+  ratings?: number[];
+  actors?: string[];
+  studios?: string[];
+  match?: string;
+  topLevel?: boolean;
+}): string {
+  return JSON.stringify([
+    params.libraryId ?? '',
+    params.field,
+    params.order ?? '',
+    params.query ?? '',
+    params.genres ?? [],
+    params.ratings ?? [],
+    params.actors ?? [],
+    params.studios ?? [],
+    params.yearMin ?? '',
+    params.yearMax ?? '',
+    params.match ?? '',
+    params.topLevel ? 1 : 0,
+  ]);
 }
 
 async function apiFetch(
@@ -90,7 +122,7 @@ export async function fetchIndexBuckets(
   },
   signal?: AbortSignal,
 ): Promise<{ field: string; buckets: IndexBucket[]; total: number }> {
-  const key = cacheKey(params.libraryId);
+  const key = cacheKey(params);
   const cached = cache.get(key);
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
     return cached.data;

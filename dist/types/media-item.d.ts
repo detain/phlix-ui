@@ -60,6 +60,12 @@ export interface MediaListItem {
     season_number?: number | null;
     episode_number?: number | null;
     episode_title?: string | null;
+    /**
+     * Original air/release date (YYYY-MM-DD) — populated for episodes (and dated
+     * items) from the matched metadata. Optional; absent on older servers or
+     * unmatched items. Shown alongside the runtime/description on episode rows.
+     */
+    air_date?: string | null;
 }
 /**
  * Full detail shape (GET /api/v1/media/{id}). Extends the list shape with
