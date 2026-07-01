@@ -15,6 +15,7 @@ export { default as ToastHost } from './ToastHost.vue';
 export { default as Skeleton } from './Skeleton.vue';
 export { default as Spinner } from './Spinner.vue';
 export { default as EmptyState } from './EmptyState.vue';
+export { default as PageHint } from './PageHint.vue';
 export { default as Tabs } from './Tabs.vue';
 export type { TabItem } from './Tabs.vue';
 export { default as Kbd } from './Kbd.vue';

@@ -1,16 +1,17 @@
 import type { MediaDetail, MediaListItem } from '../types/media-item';
 /**
  * Per-item, per-user interaction state (favorite flag, personal rating, and the
- * multi-level "love" level) cached client-side so the bookmark/heart on a card
- * can flip *immediately* on click while the write goes out in the background.
+ * thumbs up/down rating level) cached client-side so the bookmark/thumbs on a
+ * card can flip *immediately* on click while the write goes out in the background.
  *
- * Shape note: `like_level` (0-3) is carried in the map; `cycleLove` (Step 10.6)
- * advances it 0→1→2→3→0 with the same optimistic+rollback pattern as the
- * favorite toggle.
+ * Shape note: `like_level` (−2..2) is carried in the map — the thumbs axis
+ * (−2 strongly dislike … 0 not set … 2 love). `setLike` writes it directly with
+ * the same optimistic+rollback pattern as the favorite toggle.
  */
 export interface UserItemData {
     favorite: boolean;
     rating: number | null;
+    /** Thumbs rating on the −2..2 axis (0 = not set). */
     like_level: number;
 }
 export declare const useUserItemDataStore: import("pinia").StoreDefinition<"user-item-data", Pick<{
@@ -28,7 +29,7 @@ export declare const useUserItemDataStore: import("pinia").StoreDefinition<"user
     get: (id: string) => UserItemData;
     hydrate: (item: MediaDetail | MediaListItem | null | undefined) => void;
     toggleFavorite: (id: string, apiBase: string) => Promise<void>;
-    cycleLove: (id: string, apiBase: string) => Promise<void>;
+    setLike: (id: string, level: number, apiBase: string) => Promise<void>;
     reset: () => void;
 }, "entries">, Pick<{
     entries: import("vue").Ref<Map<string, {
@@ -45,7 +46,7 @@ export declare const useUserItemDataStore: import("pinia").StoreDefinition<"user
     get: (id: string) => UserItemData;
     hydrate: (item: MediaDetail | MediaListItem | null | undefined) => void;
     toggleFavorite: (id: string, apiBase: string) => Promise<void>;
-    cycleLove: (id: string, apiBase: string) => Promise<void>;
+    setLike: (id: string, level: number, apiBase: string) => Promise<void>;
     reset: () => void;
 }, never>, Pick<{
     entries: import("vue").Ref<Map<string, {
@@ -62,6 +63,6 @@ export declare const useUserItemDataStore: import("pinia").StoreDefinition<"user
     get: (id: string) => UserItemData;
     hydrate: (item: MediaDetail | MediaListItem | null | undefined) => void;
     toggleFavorite: (id: string, apiBase: string) => Promise<void>;
-    cycleLove: (id: string, apiBase: string) => Promise<void>;
+    setLike: (id: string, level: number, apiBase: string) => Promise<void>;
     reset: () => void;
-}, "reset" | "hydrate" | "get" | "isFavorite" | "likeLevel" | "toggleFavorite" | "cycleLove">>;
+}, "reset" | "hydrate" | "get" | "isFavorite" | "likeLevel" | "toggleFavorite" | "setLike">>;

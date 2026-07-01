@@ -35,6 +35,8 @@ declare const icons: {
     readonly bookmark: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'bookmark-plus': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly heart: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly 'thumbs-up': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly 'thumbs-down': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly user: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'log-out': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly menu: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
