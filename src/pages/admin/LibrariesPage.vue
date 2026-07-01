@@ -32,6 +32,7 @@ import {
   type ScanJob,
   type CreateLibraryInput,
   type UpdateLibraryInput,
+  type ImageTypeOption,
 } from '../../api/admin/libraries';
 import { AdminMetadataSourcesApi } from '../../api/admin/metadata-sources';
 import { useToastStore } from '../../stores/useToastStore';
@@ -182,6 +183,8 @@ async function loadLibraries(): Promise<void> {
   try {
     const rows = await api.list();
     libraries.value = rows;
+    // Capture the image-type catalogue so the Add form can render its checklist.
+    captureImageCatalog(rows);
     // Prime status + resume polling for any library with an in-flight job.
     await Promise.all(
       rows.map(async (lib) => {
@@ -224,6 +227,59 @@ const priorityOrder = ref<string[]>([]);
 const priorityDirty = ref(false);
 /** Guards a single sources fetch (they do not change per-library). */
 const sourcesLoaded = ref(false);
+
+// ── Per-library image-type selection (U5 / M5) ─────────────────────────────────
+/**
+ * The canonical image-type catalogue (identical for every library). Captured
+ * from the first loaded library that carries an `image_types.available` block so
+ * the Add form can render the checklist before any specific library is chosen.
+ * Empty until at least one library with the block has loaded (e.g. a cold system
+ * with zero libraries) — the checklist is simply hidden then, and the server
+ * applies its default image-type set when `image_types` is omitted.
+ */
+const imageCatalog = ref<ImageTypeOption[]>([]);
+/** Working checkbox state for the open form: `{type: enabled}` over the catalogue. */
+const imageEnabled = ref<Record<string, boolean>>({});
+/** True once the admin toggles a checkbox — gates persisting `image_types`. */
+const imageTypesDirty = ref(false);
+
+/** Remember the image-type catalogue from the first library row that carries it. */
+function captureImageCatalog(rows: Library[]): void {
+  const withCatalog = rows.find(
+    (r) => Array.isArray(r.image_types?.available) && r.image_types!.available.length > 0,
+  );
+  if (withCatalog?.image_types?.available) {
+    imageCatalog.value = withCatalog.image_types.available;
+  }
+}
+
+/**
+ * Seed the image-type checkboxes for the open form. On edit, uses the library's
+ * own `available` + `enabled`; on add (or a row without the block), uses the
+ * shared catalogue with each type's default-on state. Resets the dirty flag so
+ * an untouched form NEVER persists `image_types` (mirrors the metadata-priority
+ * dirty-gate — an unchanged selection is left to the server's stored value /
+ * defaults). An explicit empty `enabled` list (admin disabled all) is honored as
+ * "none checked" — `??` only falls back on a missing block, not an empty list.
+ */
+function seedImageTypes(lib: Library | null): void {
+  const cat = lib?.image_types?.available ?? imageCatalog.value;
+  if (cat.length) imageCatalog.value = cat;
+  const enabledList =
+    lib?.image_types?.enabled ?? imageCatalog.value.filter((o) => o.default).map((o) => o.type);
+  const map: Record<string, boolean> = {};
+  for (const opt of imageCatalog.value) {
+    map[opt.type] = enabledList.includes(opt.type);
+  }
+  imageEnabled.value = map;
+  imageTypesDirty.value = false;
+}
+
+/** Toggle one image type in the form (marks the selection dirty). */
+function setImageType(typeKey: string, on: boolean): void {
+  imageEnabled.value = { ...imageEnabled.value, [typeKey]: on };
+  imageTypesDirty.value = true;
+}
 
 /** Providers that only apply to VIDEO libraries — hidden for music libraries. */
 const VIDEO_ONLY_SOURCES = ['imdb', 'tmdb', 'tvdb'];
@@ -318,6 +374,7 @@ function openAdd(): void {
   pathsText.value = '';
   seriesPerDirectory.value = false;
   seedPriority(null);
+  seedImageTypes(null);
   formOpen.value = true;
 }
 
@@ -332,6 +389,7 @@ function openEdit(lib: Library): void {
   // may be bool / 1 / "1" / "true" depending on how the server serialized it).
   seriesPerDirectory.value = coerceBool(lib.options?.series_per_directory);
   seedPriority(lib);
+  seedImageTypes(lib);
   formOpen.value = true;
 }
 
@@ -368,6 +426,11 @@ async function submitForm(): Promise<void> {
           ? { [type.value]: priorityOrder.value }
           : null;
       }
+      // Persist the artwork selection only when the admin toggled a checkbox;
+      // send the full {type: bool} map so every known type has an explicit state.
+      if (imageTypesDirty.value) {
+        body.image_types = { ...imageEnabled.value };
+      }
       await api.update(existing.id, body);
       toasts.success('Library updated.');
     } else {
@@ -377,6 +440,9 @@ async function submitForm(): Promise<void> {
         body.metadata_priority = priorityOrder.value.length
           ? { [type.value]: priorityOrder.value }
           : null;
+      }
+      if (imageTypesDirty.value) {
+        body.image_types = { ...imageEnabled.value };
       }
       const result = await api.create(body);
       toasts.success(result.message || 'Library created.');
@@ -681,6 +747,39 @@ onBeforeUnmount(() => {
             @update:model-value="setPriorityOrder"
           />
         </div>
+        <div v-if="imageCatalog.length" class="admin-libraries__field">
+          <span class="admin-libraries__label">Artwork types</span>
+          <p class="admin-libraries__hint-text">
+            Which artwork types this library downloads and stores during scan and metadata
+            matching. Unchecked types are skipped. Leave as-is to use the defaults.
+          </p>
+          <ul class="admin-libraries__imagetypes" role="group" aria-label="Artwork types">
+            <li
+              v-for="opt in imageCatalog"
+              :key="opt.type"
+              class="admin-libraries__imagetype"
+            >
+              <label class="admin-libraries__checkbox">
+                <input
+                  type="checkbox"
+                  class="admin-libraries__checkbox-input"
+                  :checked="imageEnabled[opt.type] ?? false"
+                  :aria-label="opt.label"
+                  @change="setImageType(opt.type, ($event.target as HTMLInputElement).checked)"
+                />
+                <span class="admin-libraries__checkbox-text">
+                  <span class="admin-libraries__checkbox-label">{{ opt.label }}</span>
+                  <span
+                    v-if="opt.providers.length"
+                    class="admin-libraries__checkbox-providers"
+                  >
+                    {{ opt.providers.join(', ') }}
+                  </span>
+                </span>
+              </label>
+            </li>
+          </ul>
+        </div>
       </form>
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeForm">Cancel</Button>
@@ -865,6 +964,48 @@ onBeforeUnmount(() => {
 .admin-libraries__hint-text {
   font-size: var(--text-xs);
   color: var(--text-subtle);
+}
+.admin-libraries__imagetypes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-2);
+}
+.admin-libraries__imagetype {
+  min-width: 0;
+}
+.admin-libraries__checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.admin-libraries__checkbox-input {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.admin-libraries__checkbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.admin-libraries__checkbox-label {
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+.admin-libraries__checkbox-providers {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .admin-libraries__input,
 .admin-libraries__textarea {
