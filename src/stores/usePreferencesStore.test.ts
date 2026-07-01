@@ -81,6 +81,20 @@ describe('usePreferencesStore', () => {
     expect(s.cardSize).toBe(DEFAULT_PREFERENCES.cardSize);
   });
 
+  it('no longer carries the vestigial seriesThemeAutoplay preference (U4)', () => {
+    // Theme music moved from a series-only Settings pref to MediaDetail's
+    // muted-autoplay-first policy (persisted via `phlix.theme.muted`), so this key
+    // is gone from the defaults, the store, and the persisted snapshot.
+    expect('seriesThemeAutoplay' in DEFAULT_PREFERENCES).toBe(false);
+    const s = usePreferencesStore();
+    expect('seriesThemeAutoplay' in s.snapshot()).toBe(false);
+    expect((s as unknown as Record<string, unknown>).seriesThemeAutoplay).toBeUndefined();
+    // A legacy persisted value must NOT resurrect into the snapshot the store saves.
+    localStorage.setItem('phlix.prefs', JSON.stringify({ seriesThemeAutoplay: true }));
+    setActivePinia(createPinia());
+    expect('seriesThemeAutoplay' in usePreferencesStore().snapshot()).toBe(false);
+  });
+
   describe('tv (TV mode flag)', () => {
     it('defaults to false', () => {
       expect(DEFAULT_PREFERENCES.tv).toBe(false);

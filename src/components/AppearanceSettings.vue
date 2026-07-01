@@ -273,9 +273,6 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
       <div class="aps__row aps__row--switch">
         <Switch :model-value="prefs.autoplay" :label="t('settings.autoplayNext')" @update:model-value="(v) => (prefs.autoplay = v)" />
       </div>
-      <div class="aps__row aps__row--switch">
-        <Switch :model-value="prefs.seriesThemeAutoplay" :label="t('settings.seriesThemeAutoplay')" @update:model-value="(v) => (prefs.seriesThemeAutoplay = v)" />
-      </div>
       <div class="aps__row">
         <span class="aps__label">{{ t('settings.defaultVolume') }} <span class="aps__value">{{ formatPercent(prefs.defaultVolume) }}</span></span>
         <div class="aps__slider">
