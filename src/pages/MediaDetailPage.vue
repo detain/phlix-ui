@@ -262,9 +262,11 @@ function onMatchApplied(updated: MediaItem): void {
   }
 }
 
+// MediaDetail/MediaCard already toggled the watched store + persisted before
+// re-emitting `mark-watched`, so only report the resulting state here (mirrors
+// `onWatchlist`) — a second toggle would flip it straight back.
 function onMarkWatched(m: MediaItem): void {
-  void userItemData.toggleFavorite(m.id, apiBase.value);
-  if (userItemData.isFavorite(m.id)) {
+  if (userItemData.isWatched(m.id)) {
     toasts.success(`Marked "${m.name}" as watched`);
   } else {
     toasts.info(`Marked "${m.name}" as unwatched`);

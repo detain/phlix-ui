@@ -32,28 +32,29 @@ describe('useUserItemDataStore', () => {
   describe('hydrate', () => {
     it('seeds the entry from the item user_data', () => {
       const store = useUserItemDataStore();
-      store.hydrate(detail('m1', { favorite: true, rating: 7, like_level: 2 }));
+      store.hydrate(detail('m1', { favorite: true, rating: 7, like_level: 2, watched: true }));
       expect(store.isFavorite('m1')).toBe(true);
-      expect(store.get('m1')).toEqual({ favorite: true, rating: 7, like_level: 2 });
+      expect(store.isWatched('m1')).toBe(true);
+      expect(store.get('m1')).toEqual({ favorite: true, rating: 7, like_level: 2, watched: true });
     });
 
     it('defaults favorite=false, rating=null, like_level=0 when user_data is absent', () => {
       const store = useUserItemDataStore();
       store.hydrate(detail('m2'));
       expect(store.isFavorite('m2')).toBe(false);
-      expect(store.get('m2')).toEqual({ favorite: false, rating: null, like_level: 0 });
+      expect(store.get('m2')).toEqual({ favorite: false, rating: null, like_level: 0, watched: false });
     });
 
     it('defaults when user_data is null', () => {
       const store = useUserItemDataStore();
       store.hydrate(detail('m3', null));
-      expect(store.get('m3')).toEqual({ favorite: false, rating: null, like_level: 0 });
+      expect(store.get('m3')).toEqual({ favorite: false, rating: null, like_level: 0, watched: false });
     });
 
     it('defaults missing like_level to 0 while keeping favorite/rating', () => {
       const store = useUserItemDataStore();
       store.hydrate(detail('m4', { favorite: true, rating: null }));
-      expect(store.get('m4')).toEqual({ favorite: true, rating: null, like_level: 0 });
+      expect(store.get('m4')).toEqual({ favorite: true, rating: null, like_level: 0, watched: false });
     });
 
     it('ignores a null/undefined item', () => {
@@ -151,7 +152,7 @@ describe('useUserItemDataStore', () => {
 
       await store.toggleFavorite('m1', '');
 
-      expect(store.get('m1')).toEqual({ favorite: true, rating: 9, like_level: 3 });
+      expect(store.get('m1')).toEqual({ favorite: true, rating: 9, like_level: 3, watched: false });
     });
 
     it('toggles an unknown id (defaulted entry → favorited)', async () => {
@@ -161,6 +162,88 @@ describe('useUserItemDataStore', () => {
       await store.toggleFavorite('fresh', '');
 
       expect(store.isFavorite('fresh')).toBe(true);
+    });
+  });
+
+  describe('isWatched', () => {
+    it('returns false for an unknown id', () => {
+      const store = useUserItemDataStore();
+      expect(store.isWatched('nope')).toBe(false);
+    });
+
+    it('reflects a hydrated watched flag', () => {
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: false, rating: null, like_level: 0, watched: true }));
+      expect(store.isWatched('m1')).toBe(true);
+    });
+  });
+
+  describe('toggleWatched', () => {
+    it('flips the getter synchronously (optimistic) before the API resolves', () => {
+      const fetchMock = vi.fn().mockReturnValue(
+        new Promise<Response>(() => {
+          /* never resolves — proves the flip is synchronous */
+        }),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1'));
+
+      const p = store.toggleWatched('m1', '');
+      expect(store.isWatched('m1')).toBe(true);
+      void p;
+    });
+
+    it('POSTs /watched when marking watched and keeps the flag on success', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' }));
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1'));
+
+      await store.toggleWatched('m1', '');
+
+      expect(store.isWatched('m1')).toBe(true);
+      const [url, init] = fetchMock.mock.calls[0]!;
+      expect(url).toContain('/api/v1/media/m1/watched');
+      expect((init as RequestInit).method).toBe('POST');
+    });
+
+    it('POSTs /unwatched when clearing watched', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' }));
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: false, rating: null, like_level: 0, watched: true }));
+
+      await store.toggleWatched('m1', '');
+
+      expect(store.isWatched('m1')).toBe(false);
+      const [url, init] = fetchMock.mock.calls[0]!;
+      expect(url).toContain('/api/v1/media/m1/unwatched');
+      expect((init as RequestInit).method).toBe('POST');
+    });
+
+    it('rolls back the optimistic flip and toasts on API failure', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
+      const toasts = useToastStore();
+      const toastSpy = vi.spyOn(toasts, 'error');
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1'));
+
+      await store.toggleWatched('m1', '');
+
+      expect(store.isWatched('m1')).toBe(false);
+      expect(toastSpy).toHaveBeenCalledTimes(1);
+      expect(toastSpy.mock.calls[0]![0]).toContain('watched');
+    });
+
+    it('preserves favorite/rating/like_level across a watched toggle', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' })));
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: true, rating: 9, like_level: 3 }));
+
+      await store.toggleWatched('m1', '');
+
+      expect(store.get('m1')).toEqual({ favorite: true, rating: 9, like_level: 3, watched: true });
     });
   });
 
@@ -260,7 +343,7 @@ describe('useUserItemDataStore', () => {
 
       await store.setLike('m1', 2, '');
 
-      expect(store.get('m1')).toEqual({ favorite: true, rating: 9, like_level: 2 });
+      expect(store.get('m1')).toEqual({ favorite: true, rating: 9, like_level: 2, watched: false });
     });
 
     it('rates an unknown id from the default 0', async () => {

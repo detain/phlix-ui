@@ -68,7 +68,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -126,7 +128,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -186,7 +190,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -244,7 +250,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -356,7 +364,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -414,7 +424,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -474,7 +486,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -532,7 +546,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -644,7 +660,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -702,7 +720,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -762,7 +782,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;
@@ -820,7 +842,9 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
             favorite: boolean;
             rating: number | null;
             like_level?: number | undefined;
+            watched?: boolean | undefined;
         } | null | undefined;
+        external_ids?: (Record<string, string> | null) | undefined;
         files?: {
             path: string;
             size_bytes: number;

@@ -8,8 +8,10 @@ type __VLS_Props = {
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     play: (item: import("../types/media-item").MediaDetail) => any;
+    open: (item: import("../types/media-item").MediaDetail) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onPlay?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onOpen?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
 }>, {
     apiBase: string;
     openFirstOnly: boolean;

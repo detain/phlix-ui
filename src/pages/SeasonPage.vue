@@ -106,6 +106,11 @@ function go(name: string, params: Record<string, string>): void {
 function onPlayEpisode(ep: MediaItem): void {
     go('player', { id: ep.id });
 }
+/** Clicking an episode row opens its detail/info page (like a movie); the row's
+ *  explicit play button still starts playback via onPlayEpisode. */
+function onOpenEpisode(ep: MediaItem): void {
+    go('media', { id: ep.id });
+}
 function onBackToSeries(): void {
     if (seriesId.value) go('media', { id: seriesId.value });
     else router?.back();
@@ -171,6 +176,7 @@ const seasonOverview = computed(() => season.value?.seasonItem?.overview ?? null
                     :open-first-only="false"
                     :api-base="apiBase"
                     @play="onPlayEpisode"
+                    @open="onOpenEpisode"
                 />
                 <EmptyState
                     v-else

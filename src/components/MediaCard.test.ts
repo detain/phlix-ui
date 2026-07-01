@@ -274,7 +274,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
 
   it('reflects the store: filled + aria-pressed=true when the item is favorited', () => {
     const store = useUserItemDataStore();
-    store.entries.set('m1', { favorite: true, rating: null, like_level: 0 });
+    store.entries.set('m1', { favorite: true, rating: null, like_level: 0, watched: false });
     const w = mount(MediaCard, { props: { item: media() } });
     const btn = w.find('[aria-label="Remove from favorites"]');
     expect(btn.exists()).toBe(true);
@@ -289,7 +289,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     const toggle = vi
       .spyOn(store, 'toggleFavorite')
       .mockImplementation(async (id: string) => {
-        store.entries.set(id, { favorite: true, rating: null, like_level: 0 });
+        store.entries.set(id, { favorite: true, rating: null, like_level: 0, watched: false });
       });
     const w = mount(MediaCard, {
       props: { item: media() },
@@ -331,12 +331,12 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     expect(toggle).toHaveBeenCalledWith('m1', '');
   });
 
-  it('lays out the action row in the canonical order [Play][Love][Favorite][Info][⋯][Match]', () => {
+  it('lays out the action row in the canonical order [Play][Love][Favorite][Watched][Info][⋯][Match]', () => {
     const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
     const labels = w
       .findAll('.media-card__actions .media-card__iconbtn')
       .map((b) => b.attributes('aria-label'));
-    expect(labels).toEqual(['Play', 'Add to favorites', 'More info', 'More actions', 'Match metadata']);
+    expect(labels).toEqual(['Play', 'Add to favorites', 'Mark as watched', 'More info', 'More actions', 'Match metadata']);
   });
 
   it('keeps the canonical order without the admin Match button', () => {
@@ -344,7 +344,54 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     const labels = w
       .findAll('.media-card__actions .media-card__iconbtn')
       .map((b) => b.attributes('aria-label'));
-    expect(labels).toEqual(['Play', 'Add to favorites', 'More info', 'More actions']);
+    expect(labels).toEqual(['Play', 'Add to favorites', 'Mark as watched', 'More info', 'More actions']);
+  });
+});
+
+describe('MediaCard — watched (eye) toggle', () => {
+  it('shows a closed (eye-off) icon when not watched and an open (eye) icon when watched', async () => {
+    const store = useUserItemDataStore();
+    const w = mount(MediaCard, { props: { item: media() } });
+    // Not watched → "Mark as watched" affordance.
+    const off = w.find('[aria-label="Mark as watched"]');
+    expect(off.exists()).toBe(true);
+    expect(off.attributes('aria-pressed')).toBe('false');
+
+    store.entries.set('m1', { favorite: false, rating: null, like_level: 0, watched: true });
+    await nextTick();
+    const on = w.find('[aria-label="Mark as unwatched"]');
+    expect(on.exists()).toBe(true);
+    expect(on.attributes('aria-pressed')).toBe('true');
+  });
+
+  it('clicking calls toggleWatched(id, apiBase), emits mark-watched, and stops propagation', async () => {
+    const store = useUserItemDataStore();
+    const toggle = vi.spyOn(store, 'toggleWatched').mockResolvedValue(undefined);
+    const onCardClick = vi.fn();
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      attrs: { onClick: onCardClick },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+    });
+    await w.find('[aria-label="Mark as watched"]').trigger('click');
+    expect(toggle).toHaveBeenCalledTimes(1);
+    expect(toggle).toHaveBeenCalledWith('m1', '/api-host');
+    expect(w.emitted('mark-watched')).toHaveLength(1);
+    expect(w.emitted('mark-watched')![0][0]).toMatchObject({ id: 'm1' });
+    // @click.stop.prevent: never falls through to the stretched info link.
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it('hides the action row entirely when hideActions is set (navigational season card)', () => {
+    const w = mount(MediaCard, { props: { item: media(), hideActions: true } });
+    expect(w.find('.media-card__actions').exists()).toBe(false);
+    // caption is still the library-card caption
+    expect(w.find('.media-card__caption-title').exists()).toBe(true);
+  });
+
+  it('renders the subtitle override in the caption sub-line', () => {
+    const w = mount(MediaCard, { props: { item: media(), subtitle: '12 episodes' } });
+    expect(w.find('.media-card__caption-sub').text()).toContain('12 episodes');
   });
 });
 
@@ -365,6 +412,7 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
       'Like',
       'Dislike',
       'Add to favorites',
+      'Mark as watched',
       'More info',
       'More actions',
       'Match metadata',
@@ -373,7 +421,7 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
 
   it('reflects the store like_level on the ThumbRating', () => {
     const store = useUserItemDataStore();
-    store.entries.set('m1', { favorite: false, rating: null, like_level: 2 });
+    store.entries.set('m1', { favorite: false, rating: null, like_level: 2, watched: false });
     const w = mount(MediaCard, { props: { item: media() } });
     const rating = w.find('.media-card__actions .thumb-rating');
     expect(rating.exists()).toBe(true);
