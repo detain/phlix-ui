@@ -14,6 +14,7 @@ import { AdminDlnaServerApi, type DlnaServerStatus } from '../../api/admin/dlnaS
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Button from '../../components/ui/Button.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Badge from '../../components/ui/Badge.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
@@ -97,6 +98,14 @@ onMounted(loadStatus);
     <header class="admin-dlna__head">
       <h1 id="dlna-heading" class="admin-dlna__title">DLNA Server</h1>
     </header>
+
+    <PageHint>
+      Broadcasts your library over <strong>DLNA / UPnP</strong> so smart TVs, game consoles, and
+      other players on your network can browse and play it without an app. The
+      <strong>Start</strong> / <strong>Stop</strong> button turns the server on or off; the badge
+      shows whether it's running, and once it is you'll see its friendly name, UDN, port, and base
+      URL.
+    </PageHint>
 
     <div class="admin-dlna__card" aria-live="polite">
       <div v-if="loading" class="admin-dlna__loading" aria-hidden="true">

@@ -26,6 +26,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import { nextEnabledIndex } from '../../components/ui/listbox';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Slider from '../../components/ui/Slider.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -321,6 +322,14 @@ onMounted(() => {
     <header class="admin-cast__head">
       <h1 id="cast-heading" class="admin-cast__title">Cast Devices</h1>
     </header>
+
+    <PageHint>
+      See the <strong>Chromecast</strong> and <strong>AirPlay</strong> devices Phlix has found on
+      your network and control what they're playing. Switch between the two with the tabs, click a
+      device to select it, then use <strong>Play</strong>, <strong>Pause</strong>, and
+      <strong>Stop</strong> to control it — for Chromecast you can also drag the position slider to
+      seek.
+    </PageHint>
 
     <div
       ref="tablistEl"

@@ -19,6 +19,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -152,6 +153,13 @@ onMounted(loadGroups);
         Create group
       </Button>
     </header>
+
+    <PageHint>
+      SyncPlay keeps playback in step across several viewers so everyone watches the same moment
+      together. <strong>Create group</strong> starts a new shared session (optionally
+      password-protected), and <strong>Join</strong> on a listed group lets someone hop into an
+      existing session by ID.
+    </PageHint>
 
     <div v-if="loading" class="admin-syncplay__skel"><Skeleton variant="text" :lines="5" /></div>
     <EmptyState

@@ -18,6 +18,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
@@ -124,6 +125,13 @@ onMounted(() => {
     <header class="hub-dash__head">
       <h1 id="hub-dash-heading" class="hub-dash__title">Dashboard</h1>
     </header>
+
+    <PageHint>
+      An at-a-glance view of your hub's health: how many <strong>servers</strong> are connected,
+      active <strong>relay sessions</strong>, <strong>pending requests</strong>, and total
+      <strong>users</strong>, plus a feed of recent audit activity. If a section fails to load,
+      use its <strong>Retry</strong> button to fetch it again.
+    </PageHint>
 
     <!-- Metric cards -->
     <div v-if="loadingSummary" class="hub-dash__metrics-skel"><Skeleton variant="text" :lines="2" /></div>

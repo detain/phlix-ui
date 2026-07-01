@@ -27,6 +27,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -245,6 +246,15 @@ onMounted(loadCollections);
         New collection
       </Button>
     </header>
+
+    <PageHint>
+      Group titles into curated sets (like "Marvel" or "Christmas movies") that appear on the
+      browse screen. <strong>New collection</strong> creates one; on each row,
+      <strong>Items</strong> opens its contents where you can add titles by query (e.g.
+      <em>genre:action</em>) or <strong>Remove</strong> them, <strong>Refresh</strong>
+      re-evaluates membership, <strong>Edit</strong> renames it, and <strong>Delete</strong>
+      removes it.
+    </PageHint>
 
     <div v-if="loading" class="admin-collections__skel"><Skeleton variant="text" :lines="6" /></div>
     <EmptyState

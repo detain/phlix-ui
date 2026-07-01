@@ -26,6 +26,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Select from '../../components/ui/Select.vue';
@@ -460,6 +461,15 @@ onMounted(loadUsers);
       <h1 id="users-heading" class="admin-users__title">Users</h1>
       <Button variant="solid" size="sm" left-icon="plus" @click="openAddUser">Add user</Button>
     </header>
+
+    <PageHint>
+      Manage everyone who can sign in. <strong>Add user</strong> creates an account;
+      <strong>Edit</strong> changes a name, email, or password. <strong>Approve</strong> /
+      <strong>Reject</strong> handle pending sign-up requests, and <strong>Disable</strong> /
+      <strong>Enable</strong> block or restore access. <strong>Set Admin</strong> /
+      <strong>Demote</strong> toggles admin rights, <strong>Reset Password</strong> issues a new
+      one, and <strong>Profiles</strong> manages a user's watch profiles and their optional PINs.
+    </PageHint>
 
     <div v-if="loading" class="admin-users__skel"><Skeleton variant="text" :lines="6" /></div>
     <EmptyState

@@ -21,6 +21,7 @@ import {
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -240,6 +241,14 @@ onMounted(loadWebhooks);
       <h1 id="webhooks-heading" class="admin-webhooks__title">Webhooks</h1>
       <Button variant="solid" size="sm" left-icon="plus" @click="openAdd">Add webhook</Button>
     </header>
+
+    <PageHint>
+      Send a POST to an external URL whenever chosen events happen on your server (for
+      notifications or automations). <strong>Add webhook</strong> creates one — you give it a
+      name, a URL, an optional signing secret, and tick the events to subscribe to.
+      <strong>Test</strong> fires a sample payload so you can confirm it's wired up correctly,
+      and <strong>Edit</strong> / <strong>Delete</strong> update or remove an endpoint.
+    </PageHint>
 
     <div v-if="loading" class="admin-webhooks__skel"><Skeleton variant="text" :lines="6" /></div>
     <EmptyState
