@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-07-01
+
+### Fixed
+
+- **Card & detail ⋯ menu now opens on click** — clicking the ⋯ (more actions) button on a poster/card or on a detail page did nothing. The trigger button used `@click.stop.prevent` with no handler; `.stop` swallowed the click before it reached the `Menu` wrapper's own toggle, so the menu never opened. The trigger is now bound to the `Menu`'s `toggle` (exposed via its default slot) and carries `aria-haspopup`/`aria-expanded`.
+- **`Menu` dropdown positions at its trigger** — the list is teleported to `<body>` and is `position: fixed`, so its old `top: 100%` resolved to 100vh and rendered off-screen. `Menu` now measures the trigger rect and sets an explicit `top`/`left` (clamped to the viewport, flipping above the trigger when there's no room below), so the popup appears right at the button everywhere `Menu` is used.
+
 ## [0.65.0] - 2026-07-01
 
 ### Fixed

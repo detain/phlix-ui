@@ -65,13 +65,20 @@ const triggerEl = ref<HTMLElement | null>(null);
 const menuEl = ref<HTMLElement | null>(null);
 const activeIndex = ref(-1);
 const flipped = ref(false);
+/**
+ * Inline position for the teleported list. The list is `position: fixed` and
+ * teleported to <body>, so it CANNOT be positioned with `top: 100%` relative to
+ * the trigger (that resolves to 100vh — off-screen). {@see updatePosition}
+ * measures the trigger and anchors the list right at it.
+ */
+const menuStyle = ref<Record<string, string>>({});
 
 function openMenu() {
   if (isOpen.value) return;
   isOpen.value = true;
       activeIndex.value = edgeMenuIndex(props.items, 'first');
   nextTick(() => {
-    updateFlip();
+    updatePosition();
     menuEl.value?.querySelector<HTMLElement>('[tabindex="0"]')?.focus();
   });
 }
@@ -101,13 +108,31 @@ function selectItem(index: number) {
   closeMenu();
 }
 
-function updateFlip() {
+/**
+ * Anchor the teleported list to the trigger. Measures the trigger + the rendered
+ * list and sets explicit `top`/`left` (clamped to the viewport), flipping above
+ * the trigger when there isn't room below. Called in `nextTick` after the list
+ * mounts so `menuEl` dimensions are available.
+ */
+function updatePosition() {
   if (!triggerEl.value) return;
-  const triggerRect = triggerEl.value.getBoundingClientRect();
-  const spaceBelow = window.innerHeight - triggerRect.bottom;
-  const spaceAbove = triggerRect.top;
-  const menuHeight = 280; // max-height
-  flipped.value = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+  const r = triggerEl.value.getBoundingClientRect();
+  const gap = 4;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const menuW = menuEl.value?.offsetWidth ?? 200;
+  const menuH = menuEl.value?.offsetHeight ?? 280;
+
+  const spaceBelow = vh - r.bottom;
+  flipped.value = spaceBelow < menuH + gap && r.top > spaceBelow;
+
+  // Align the list's left edge with the trigger, clamped into the viewport.
+  let left = r.left;
+  if (left + menuW > vw - 8) left = vw - menuW - 8;
+  if (left < 8) left = 8;
+
+  const top = flipped.value ? Math.max(8, r.top - menuH - gap) : r.bottom + gap;
+  menuStyle.value = { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` };
 }
 
 function openMenuAtEdge(edge: 'first' | 'last') {
@@ -115,7 +140,7 @@ function openMenuAtEdge(edge: 'first' | 'last') {
   isOpen.value = true;
   activeIndex.value = edgeMenuIndex(props.items, edge);
   nextTick(() => {
-    updateFlip();
+    updatePosition();
     menuEl.value?.querySelector<HTMLElement>('[tabindex="0"]')?.focus();
   });
 }
@@ -210,6 +235,7 @@ onBeforeUnmount(() => {
           ref="menuEl"
           class="phlix-menu__list"
           :class="{ 'is-flipped': flipped }"
+          :style="menuStyle"
           role="menu"
           @keydown="onMenuKeydown"
         >
@@ -247,9 +273,11 @@ onBeforeUnmount(() => {
 }
 
 .phlix-menu__list {
+  /* Teleported to <body>; `top`/`left` are set inline from the trigger rect by
+     updatePosition() (a static `top: 100%` would resolve to 100vh here). */
   position: fixed;
   z-index: 500;
-  top: calc(100% + 4px);
+  top: 0;
   left: 0;
   min-width: 160px;
   max-height: 280px;
@@ -259,11 +287,6 @@ onBeforeUnmount(() => {
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
   box-shadow: var(--shadow-3);
-}
-
-.phlix-menu.is-flipped .phlix-menu__list {
-  top: auto;
-  bottom: calc(100% + 4px);
 }
 
 .phlix-menu__item {
