@@ -855,7 +855,7 @@ var Ri = fr("server", () => {
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-BEmkyd0a.js")
+	component: () => import("./LibrariesPage-DXUcr7b3.js")
 }, ea = {
 	name: "admin-duplicates",
 	path: "duplicates",
