@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.62.0] - 2026-07-01
+
 ### Added
+
+- **Signed thumbs rating + restyled poster overlay (9-item build, item 1)** — new `ThumbRating.vue` replaces `LoveButton` with a signed thumbs up/down scale (−2..2: strongly-dislike / dislike / not-set / like / love; level 0 = both white wireframes, ±1 = one filled, ±2 = solid blue and slightly larger; click-again resets). `useMediaStore.setLike(id, level, apiBase)` + `client.setLikeLevel` send `{ level }` over −2..2. Poster overlay + play buttons are now transparent-bg / no-border with white wireframe icons (play icon amber). `ApiClient.handleResponse` is 204/205-safe so uninstall-style refreshes don't throw.
+- **Reusable admin help callout (item 6)** — new `PageHint.vue` (props `title?`, `tone: info|accent`; exported from the ui barrel) renders a plain-English help callout, added to all 20 admin pages.
+- **All-users watch history + clickable media (items 7, 8)** — `DashboardPage` Top-Media rows are now `RouterLink`s to `/app/media/:id`. The admin `HistoryPage` repoints from the current-user `recently-watched` endpoint to the new all-users `GET /api/v1/admin/watch-history`, gaining **user** and **time** columns with each title linking to the media detail (read-only oversight view). `AdminHistoryApi.getAllWatchHistory()` + `AdminWatchHistoryItem` added.
+- **Per-library metadata-source priority (item 5)** — the source-priority editor moved out of the global Settings → Metadata tab into the per-library add/edit modal; seeded from `options.metadata_priority[type]` (falling back to the default source order) and persisted via the library create/update `metadata_priority` field.
+- **Relay-aware My-Servers Browse (item 9)** — `MyServersPage` Browse is gated on `relayActive` (not just `status`), with a "Relay connecting" state when a server is online but its relay tunnel isn't connected. `BrowsePage` maps the hub proxy's relay 503 codes (`server.relay_unavailable` / `server.no_tunnel` / `server.offline`) to actionable messages; `useLibrariesStore` additively exposes `errorCode`.
+
+### Added (earlier, unreleased)
 
 - **Responsive avatar sizing (Feature 2)** — `.media-detail__avatar` is now `clamp(3.75rem,6vw,5rem)` (up from fixed `3.25rem`) and `.media-detail__person` is `clamp(5.5rem,8vw,7rem)`; initials font is bumped one step. Avatars remain circular with `object-fit:cover` and the change is gated behind `[data-reduced-motion]`.
 - **Backdrop image layer on detail (Feature 4)** — `MediaDetail` now surfaces `backdrop_url?: string | null` (from `metadata.backdrop_url`) and renders a full-bleed blurred/darkened backdrop layer behind the detail hero with a gradient scrim. Falls back to poster ambient when `backdrop_url` is absent. All URLs pass through `safeUrl()`; the backdrop is `pointer-events:none`/`aria-hidden` and gated behind reduced-data/motion preferences.
