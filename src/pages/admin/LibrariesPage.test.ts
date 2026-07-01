@@ -838,3 +838,145 @@ describe('Admin LibrariesPage — per-library metadata source priority', () => {
     w.unmount();
   });
 });
+
+describe('Admin LibrariesPage — image-type checkboxes (U5)', () => {
+  /** A three-type catalogue with mixed defaults (poster/backdrop on, logo off). */
+  const IMAGE_CATALOG = [
+    { type: 'poster', label: 'Poster', default: true, providers: ['tmdb', 'fanart'] },
+    { type: 'backdrop', label: 'Backdrop', default: true, providers: ['tmdb', 'fanart'] },
+    { type: 'logo', label: 'Logo', default: false, providers: ['fanart'] },
+  ];
+
+  /** Find an artwork-type checkbox in the open modal by its aria-label. */
+  function imageCheckbox(label: string): HTMLInputElement | null {
+    return modalPanel().querySelector<HTMLInputElement>(
+      `input[type="checkbox"][aria-label="${label}"]`,
+    );
+  }
+
+  /** Toggle an artwork-type checkbox to `on` and fire its change handler. */
+  function toggleImage(label: string, on: boolean): void {
+    const box = imageCheckbox(label)!;
+    box.checked = on;
+    box.dispatchEvent(new Event('change'));
+  }
+
+  it('Add form seeds the checklist from defaults and POSTs the full map when toggled', async () => {
+    const libWithImages = { ...lib, image_types: { available: IMAGE_CATALOG, enabled: ['poster'] } };
+    const { client, post } = makeClient({ libraries: [libWithImages] });
+    post.mockResolvedValueOnce({ library_id: 'lib-9', message: 'Library created.' });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    // Defaults seed the checklist (NOT the edited library's `enabled`): poster +
+    // backdrop checked, logo unchecked.
+    expect(imageCheckbox('Poster')!.checked).toBe(true);
+    expect(imageCheckbox('Backdrop')!.checked).toBe(true);
+    expect(imageCheckbox('Logo')!.checked).toBe(false);
+    const nameInput = document.querySelector<HTMLInputElement>('.admin-libraries__input')!;
+    nameInput.value = 'Shows'; nameInput.dispatchEvent(new Event('input'));
+    const ta = document.querySelector<HTMLTextAreaElement>('.admin-libraries__textarea')!;
+    ta.value = '/media/tv'; ta.dispatchEvent(new Event('input'));
+    toggleImage('Logo', true);
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries', {
+      name: 'Shows',
+      type: 'movie',
+      paths: ['/media/tv'],
+      image_types: { poster: true, backdrop: true, logo: true },
+    });
+    w.unmount();
+  });
+
+  it('Add form omits image_types when the checklist is untouched', async () => {
+    const libWithImages = { ...lib, image_types: { available: IMAGE_CATALOG, enabled: ['poster'] } };
+    const { client, post } = makeClient({ libraries: [libWithImages] });
+    post.mockResolvedValueOnce({ library_id: 'lib-9', message: 'Library created.' });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    const nameInput = document.querySelector<HTMLInputElement>('.admin-libraries__input')!;
+    nameInput.value = 'Shows'; nameInput.dispatchEvent(new Event('input'));
+    const ta = document.querySelector<HTMLTextAreaElement>('.admin-libraries__textarea')!;
+    ta.value = '/media/tv'; ta.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries', {
+      name: 'Shows',
+      type: 'movie',
+      paths: ['/media/tv'],
+    });
+    const body = post.mock.calls[0]![1] as Record<string, unknown>;
+    expect(body).not.toHaveProperty('image_types');
+    w.unmount();
+  });
+
+  it('Edit form seeds from the library enabled set and PUTs the map when toggled', async () => {
+    const libWithImages = { ...lib, image_types: { available: IMAGE_CATALOG, enabled: ['poster'] } };
+    const { client, put } = makeClient({ libraries: [libWithImages] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Edit Movies')!.trigger('click');
+    await flushPromises();
+    // Seeded from enabled:['poster'] — only poster checked.
+    expect(imageCheckbox('Poster')!.checked).toBe(true);
+    expect(imageCheckbox('Backdrop')!.checked).toBe(false);
+    expect(imageCheckbox('Logo')!.checked).toBe(false);
+    toggleImage('Backdrop', true);
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/libraries/lib-1', {
+      name: 'Movies',
+      paths: ['/media/movies'],
+      image_types: { poster: true, backdrop: true, logo: false },
+    });
+    w.unmount();
+  });
+
+  it('Edit form omits image_types when the checklist is untouched', async () => {
+    const libWithImages = { ...lib, image_types: { available: IMAGE_CATALOG, enabled: ['poster'] } };
+    const { client, put } = makeClient({ libraries: [libWithImages] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Edit Movies')!.trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/libraries/lib-1', {
+      name: 'Movies',
+      paths: ['/media/movies'],
+    });
+    const body = put.mock.calls[0]![1] as Record<string, unknown>;
+    expect(body).not.toHaveProperty('image_types');
+    w.unmount();
+  });
+
+  it('honors an explicit empty enabled set (all unchecked, not defaults)', async () => {
+    const libNoneEnabled = { ...lib, image_types: { available: IMAGE_CATALOG, enabled: [] } };
+    const { client } = makeClient({ libraries: [libNoneEnabled] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Edit Movies')!.trigger('click');
+    await flushPromises();
+    expect(imageCheckbox('Poster')!.checked).toBe(false);
+    expect(imageCheckbox('Backdrop')!.checked).toBe(false);
+    expect(imageCheckbox('Logo')!.checked).toBe(false);
+    w.unmount();
+  });
+
+  it('hides the artwork checklist when no catalogue is available', async () => {
+    const { client } = makeClient({ libraries: [] });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    expect(modalPanel().querySelector('.admin-libraries__imagetypes')).toBeNull();
+    w.unmount();
+  });
+});
