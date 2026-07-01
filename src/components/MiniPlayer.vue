@@ -27,7 +27,7 @@ const { t } = useMessages();
 const videoRef = ref<HTMLVideoElement | null>(null);
 
 // Per-user favorite state (Feature 16.2). A SINGLE compact favorite toggle in the
-// dock (NOT the 4-state LoveButton — the dock stays compact) bound to the current
+// dock (NOT the ThumbRating widget — the dock stays compact) bound to the current
 // item. The store keeps no global apiBase, so each call is threaded `apiBase` from
 // the app config via the same `inject('phlixConfig')` source MediaCard/Player use.
 //

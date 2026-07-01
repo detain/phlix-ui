@@ -58,7 +58,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function mountIt(props: Record<string, unknown> = {}, provide: Record<string, unknown> = {}) {
+function mountIt(
+  props: Record<string, unknown> = {},
+  provide: Record<string, unknown> = {},
+  opts: Record<string, unknown> = {},
+) {
   return mount(SeriesDetail, {
     props: { item: media(), seasons, ...props },
     global: {
@@ -72,6 +76,7 @@ function mountIt(props: Record<string, unknown> = {}, provide: Record<string, un
         ...provide,
       },
     },
+    ...opts,
   });
 }
 
@@ -176,10 +181,20 @@ describe('SeriesDetail — theme audio', () => {
   });
 
   it('unmounting the component removes the audio element from the DOM', async () => {
-    const w = mountIt({ item: media({ theme_audio_url: '/api/v1/media/sh1/theme-audio?sig=abc' }) });
-    expect(w.find('audio').exists()).toBe(true);
+    // Attach to the live document so unmount() actually detaches nodes — a
+    // detached VTU mount keeps its subtree in memory, so we assert against the
+    // real DOM (theme audio must not linger after the component is torn down).
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const w = mountIt(
+      { item: media({ theme_audio_url: '/api/v1/media/sh1/theme-audio?sig=abc' }) },
+      {},
+      { attachTo: host },
+    );
+    expect(document.querySelector('.series-detail__theme-audio')).not.toBeNull();
     w.unmount();
     await nextTick();
-    expect(w.find('audio').exists()).toBe(false);
+    expect(document.querySelector('.series-detail__theme-audio')).toBeNull();
+    host.remove();
   });
 });

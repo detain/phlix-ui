@@ -347,6 +347,13 @@ export class ApiClient {
     }
 
     private async handleResponse<T>(response: Response): Promise<T> {
+        // Empty-body success responses (204 No Content / 205 Reset Content) have
+        // no JSON to parse — calling `response.json()` on them throws. Some
+        // endpoints (e.g. certain DELETEs) return 204, so short-circuit here so
+        // the caller's success path runs instead of surfacing a bogus parse error.
+        if (response.status === 204 || response.status === 205) {
+            return undefined as T;
+        }
         const contentType = response.headers.get('content-type') ?? '';
         const isJson = contentType.includes('application/json');
         const payload: unknown = isJson
@@ -551,11 +558,12 @@ export class ApiClient {
     }
 
     /**
-     * Set the authenticated user's multi-level "love" level for a media item
-     * (`PUT /api/v1/media/{id}/like`, body `{ level }`). `level` is the 0-3 Love
-     * axis (0 = not loved … 3 = most), a SEPARATE axis from `rating`/`favorite`.
-     * The server returns a flat `{ message }`. A non-integer / out-of-range level
-     * is a 400 → shared {@link ApiError}; 401/404 likewise.
+     * Set the authenticated user's thumbs rating for a media item
+     * (`PUT /api/v1/media/{id}/like`, body `{ level }`). `level` is the −2..2
+     * thumbs axis (−2 strongly dislike … 0 not set … 2 love), a SEPARATE axis
+     * from `rating`/`favorite`. The server returns a flat `{ message }`. A
+     * non-integer / out-of-range level is a 400 → shared {@link ApiError};
+     * 401/404 likewise.
      */
     setLikeLevel(id: string, level: number): Promise<{ message: string }> {
         return this.put<{ message: string }>(

@@ -15,7 +15,7 @@ import type { PhlixAppConfig } from '../app/types';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import Icon from './Icon.vue';
-import LoveButton from './LoveButton.vue';
+import ThumbRating from './ThumbRating.vue';
 import Button from './ui/Button.vue';
 import Menu from './ui/Menu.vue';
 import Chip from './ui/Chip.vue';
@@ -85,7 +85,7 @@ function onFavorite(): void {
   emit('watchlist', props.item);
 }
 
-/** Current 0-3 love level for THIS item per the store (0 when unknown). */
+/** Current −2..2 thumbs rating for THIS item per the store (0 when unknown). */
 const loveLevel = computed(() => userItemData.likeLevel(props.item.id));
 
 /** Whether the current user is an admin. */
@@ -123,12 +123,13 @@ function onMenuSelect(item: { label: string }): void {
 }
 
 /**
- * Cycle the multi-level love (0→1→2→3→0) in the store (optimistic + rollback +
- * one PUT there). Bound to LoveButton's `@cycle` ONLY (not `@update:level`) so a
- * single click triggers exactly one store cycle + one PUT.
+ * Persist the thumbs rating in the store (optimistic + rollback + one PUT there).
+ * Bound to ThumbRating's `@cycle` ONLY (not `@update:level`) so a single thumb
+ * click triggers exactly one store write + one PUT. The widget hands us the
+ * already-computed NEXT level on the −2..2 axis.
  */
-function onLove(): void {
-  void userItemData.cycleLove(props.item.id, phlixConfig?.apiBase ?? '');
+function onLove(next: number): void {
+  void userItemData.setLike(props.item.id, next, phlixConfig?.apiBase ?? '');
 }
 
 const fallbackIcon = computed(() =>
@@ -337,9 +338,10 @@ const backdropUrl = computed(() => {
           >
             {{ isFavorited ? 'In favorites' : 'Watchlist' }}
           </Button>
-          <!-- [ Love ] — 4-state like_level. Only `@cycle` is bound (NOT
-               `@update:level`) so each click triggers exactly ONE store cycle + ONE PUT. -->
-          <LoveButton :level="loveLevel" @cycle="onLove" />
+          <!-- [ Rating ] — thumbs up/down (−2..2 like_level). Only `@cycle` is
+               bound (NOT `@update:level`) so each thumb click triggers exactly ONE
+               store write + ONE PUT. -->
+          <ThumbRating :level="loveLevel" @cycle="onLove" />
 
           <!-- [ ⋯ Menu ] -->
           <Menu v-model:open="menuOpen" :items="menuItems" @select="onMenuSelect">
