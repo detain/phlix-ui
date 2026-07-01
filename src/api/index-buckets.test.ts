@@ -109,6 +109,24 @@ describe('fetchIndexBuckets', () => {
     expect(fetchMock2).toHaveBeenCalledTimes(1);
   });
 
+  it('cache miss on different sort field (rail updates when sort changes)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ field: 'name', buckets: [{ key: 'A', label: 'A', offset: 0, count: 2 }], total: 2 }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchIndexBuckets('http://x', { field: 'name', libraryId: 'lib-1' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const fetchMock2 = vi.fn().mockResolvedValue(
+      jsonResponse({ field: 'year', buckets: [{ key: '2024', label: '2024', offset: 0, count: 7 }], total: 7 }),
+    );
+    vi.stubGlobal('fetch', fetchMock2);
+    // Same library, DIFFERENT field → must re-fetch (not serve the cached name buckets).
+    const r = await fetchIndexBuckets('http://x', { field: 'year', libraryId: 'lib-1' });
+    expect(fetchMock2).toHaveBeenCalledTimes(1);
+    expect(r.field).toBe('year');
+  });
+
   it('cache expires after TTL', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({ field: 'name', buckets: [{ key: 'A', label: 'A', offset: 0, count: 3 }], total: 3 }),

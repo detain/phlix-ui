@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-07-01
+
+### Added
+
+- **Expanded card/detail ⋯ menu** — the action menu now offers Add to playlist, Like, Dislike, Mark played/unplayed, Download, View missing episodes (series/season only), Shuffle, and (admin) Refresh metadata, Identify from beginning, Edit metadata, Edit images, Explore item data, Remove. Like/Dislike/Mark-played/Refresh/Edit-images/Remove are wired to existing backends; the remaining items are surfaced and acknowledge the click (backends pending).
+- **Genre as a sort option** — the FilterBar sort adds "Genre"; the jump rail shows genre buckets when selected (requires the server genre index).
+- **Episode rows show description + air date + runtime** — `SeriesSeasons` episode rows now render the first paragraph of the episode description (clamped, readable) plus an air-date · runtime meta line (new optional `air_date` field on the media item).
+
+### Changed
+
+- **Sort-aware jump rail actually updates on sort change** — `fetchIndexBuckets` was cached by `libraryId` only, so switching the sort (name → year → rating → runtime → genre) returned the previously-cached buckets and the rail never changed. The cache key now includes the field, order, and active filters.
+- **Music libraries hide imdb/tmdb/tvdb metadata sources** — the per-library source-priority editor filters out the video-only providers for `music` libraries.
+- **Wider admin logs** — the Logs and Audit Logs pages use the full available width (was a fixed 1100px), and log lines scroll horizontally instead of wrapping.
+
+### Fixed
+
+- **Removed the fake center "play" glyph from the dev/mock posters** so mock screenshots match production (real posters never drew one); the single hover Play button is unchanged.
+
 ## [0.63.0] - 2026-07-01
 
 ### Added
