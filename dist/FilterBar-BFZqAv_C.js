@@ -624,7 +624,8 @@ var me = U("media", () => {
 		rating: "desc",
 		runtime: "desc",
 		date_added: "desc",
-		genre: "asc"
+		genre: "asc",
+		artist: "asc"
 	};
 	function _e(e, t) {
 		x.value = e, S.value = t ?? ge[e], w.value = 0;
@@ -716,11 +717,19 @@ var me = U("media", () => {
 		sticky: {
 			type: Boolean,
 			default: !0
+		},
+		showArtistSort: {
+			type: Boolean,
+			default: !1
 		}
 	},
 	emits: ["change"],
 	setup(e, { emit: r }) {
-		let i = e, a = r, o = me(), l = n(), u = [
+		let i = e, a = r, o = me(), l = n(), u = v(() => [
+			...i.showArtistSort ? [{
+				value: "artist",
+				label: "Artist"
+			}] : [],
 			{
 				value: "name",
 				label: "Name"
@@ -745,7 +754,7 @@ var me = U("media", () => {
 				value: "genre",
 				label: "Genre"
 			}
-		], d = A(o.search), p;
+		]), d = A(o.search), p;
 		R(() => o.search, (e) => {
 			e !== d.value.trim() && (d.value = e);
 		});
@@ -901,10 +910,10 @@ var me = U("media", () => {
 				]),
 				S("div", _e, [w(f, {
 					"model-value": P(o).sort,
-					options: u,
+					options: u.value,
 					label: "Sort by",
 					"onUpdate:modelValue": oe
-				}, null, 8, ["model-value"]), S("button", {
+				}, null, 8, ["model-value", "options"]), S("button", {
 					type: "button",
 					class: "filterbar__order",
 					"aria-label": `Sort ${P(o).order === "asc" ? "ascending" : "descending"}`,
@@ -1037,8 +1046,8 @@ var me = U("media", () => {
 			}, "Clear all")], 64)) : b("", !0)])
 		], 2));
 	}
-}), [["__scopeId", "data-v-8dea249a"]]);
+}), [["__scopeId", "data-v-c7ddb58c"]]);
 //#endregion
 export { K as i, me as n, de as r, ze as t };
 
-//# sourceMappingURL=FilterBar-CokbTD58.js.map
+//# sourceMappingURL=FilterBar-BFZqAv_C.js.map

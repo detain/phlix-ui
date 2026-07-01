@@ -19,6 +19,16 @@ function mountBar() {
   return mount(FilterBar);
 }
 
+describe('FilterBar — artist sort (music libraries)', () => {
+  it('omits the Artist sort option by default and includes it when showArtistSort', () => {
+    const off = mount(FilterBar);
+    expect(off.text()).not.toContain('Artist');
+
+    const on = mount(FilterBar, { props: { showArtistSort: true } });
+    expect(on.text()).toContain('Artist');
+  });
+});
+
 describe('FilterBar — search', () => {
   it('debounces the search and emits change once after the pause', async () => {
     vi.useFakeTimers();
