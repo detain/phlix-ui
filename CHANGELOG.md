@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.65.0] - 2026-07-01
+
+### Fixed
+
+- **Jump rail reveals full labels on hover/focus** — rail entries were clipped to ~2 characters ("2026"→"20", "Drama"→"Dr"). Entries now fit short labels (letters, years, ratings) fully and reveal the complete label in a pill that slides out on hover/focus for longer ones (genres, runtime ranges).
+
+### Added
+
+- **Artist sort for music libraries** — a `music` library now defaults to sorting by artist (grouping tracks by artist) and the FilterBar shows an "Artist" sort option there; the jump rail becomes an A–Z artist index (paired with the server-side artist index/sort). Non-music libraries never keep the artist sort left over from a previously-viewed music library.
+
+### Notes
+
+- The year/rating/runtime/genre rails are driven by the server index; this release pairs with the server fix that makes those rails use the correct data (year = release year with ~25 sampled labels; rating/runtime no longer error).
+
 ## [0.64.0] - 2026-07-01
 
 ### Added

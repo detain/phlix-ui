@@ -6,7 +6,7 @@ import { ApiClient } from '../api/client';
 import { ApiError, errMessage } from '../api/errors';
 import { buildMediaQuery, buildMediaUrl } from '../api/media-query';
 
-export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime' | 'genre';
+export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime' | 'genre' | 'artist';
 export type SortOrder = 'asc' | 'desc';
 
 interface MediaResponse {
@@ -445,6 +445,7 @@ export const useMediaStore = defineStore('media', () => {
         runtime: 'desc',
         date_added: 'desc',
         genre: 'asc',
+        artist: 'asc',
     };
 
     function setSort(field: SortField, ord?: SortOrder): void {

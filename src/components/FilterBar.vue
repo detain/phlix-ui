@@ -27,8 +27,10 @@ const props = withDefaults(
     searchDebounce?: number;
     /** Stick the bar to the top of the scroll container and condense on scroll. */
     sticky?: boolean;
+    /** Offer the "Artist" sort (music libraries only). */
+    showArtistSort?: boolean;
   }>(),
-  { searchDebounce: 250, sticky: true },
+  { searchDebounce: 250, sticky: true, showArtistSort: false },
 );
 
 const emit = defineEmits<{
@@ -39,14 +41,16 @@ const emit = defineEmits<{
 const store = useMediaStore();
 const prefs = usePreferencesStore();
 
-const sortOptions: { value: SortField; label: string }[] = [
+const sortOptions = computed<{ value: SortField; label: string }[]>(() => [
+  // Artist first for music libraries so it reads as the primary/default sort.
+  ...(props.showArtistSort ? [{ value: 'artist' as SortField, label: 'Artist' }] : []),
   { value: 'name', label: 'Name' },
   { value: 'year', label: 'Year' },
   { value: 'rating', label: 'Rating' },
   { value: 'date_added', label: 'Date added' },
   { value: 'runtime', label: 'Runtime' },
   { value: 'genre', label: 'Genre' },
-];
+]);
 
 // ---- search (debounced) -------------------------------------------------
 const searchText = ref(store.search);

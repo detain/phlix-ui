@@ -117,6 +117,30 @@ const libraryName = computed(() => libraries.byId(libraryId.value)?.name ?? 'Lib
 // rather than the generic "Library" placeholder until the name is known.
 usePageTitle(() => libraries.byId(libraryId.value)?.name);
 
+/** True for a music library — it defaults to (and offers) the artist sort. */
+const isMusic = computed(() => libraries.byId(libraryId.value)?.type === 'music');
+
+// Music libraries default to sorting by ARTIST (grouping tracks by artist). The
+// libraries list can resolve AFTER the initial scope (deep link), so react to the
+// type becoming known — but never override a sort the viewer has since changed.
+// Non-music libraries never keep the (music-only) artist sort left over from a
+// previously-viewed music library.
+watch(
+  [libraryId, isMusic],
+  () => {
+    if (isMusic.value && store.sort === 'name') {
+      store.setSort('artist');
+      store.reset();
+      void store.fetchMedia(apiBase.value);
+    } else if (!isMusic.value && store.sort === 'artist') {
+      store.setSort('name');
+      store.reset();
+      void store.fetchMedia(apiBase.value);
+    }
+  },
+  { immediate: true },
+);
+
 /** Enter (or switch to) a library: start from a clean filter slate, scope the
  *  shared store, and load page 0. Clearing filters here is what stops one
  *  library's FilterBar selections from bleeding into the next. */
@@ -295,7 +319,7 @@ async function onRemove(item: MediaItem): Promise<void> {
         <span class="library-count numeric">{{ store.total.toLocaleString() }} titles</span>
       </div>
 
-      <FilterBar @change="onFilterChange" />
+      <FilterBar :show-artist-sort="isMusic" @change="onFilterChange" />
 
       <EmptyState
         v-if="store.error"

@@ -1,6 +1,6 @@
 import type { MediaType } from '../types/media-item';
 import type { LibraryQueryParams } from '../types/library-query';
-export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime' | 'genre';
+export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime' | 'genre' | 'artist';
 export type SortOrder = 'asc' | 'desc';
 /** Facets returned by GET /api/v1/media/facets — genres are the primary seam.
  *  Additional facet dimensions can be added as the server implements them. */
