@@ -98,9 +98,21 @@ export interface MediaDetail extends MediaListItem {
     studio?: string | null;
     /** Owning library id. Detail shape only. */
     library_id?: string | null;
-    /** Backdrop image URL; detail only. */
+    /** Backdrop image URL (TMDB w500); detail only. Used as the fallback source
+     *  for the full-bleed page background when `backdrop_url_large` is absent. */
     backdrop_url?: string | null;
-    /** Theme music audio URL (signed, short-lived); detail only. */
+    /** Full-resolution (/original) backdrop for the full-bleed page background;
+     *  detail only. Preferred over `backdrop_url` when present. */
+    backdrop_url_large?: string | null;
+    /** Responsive `srcset` string for the backdrop, e.g.
+     *  `"url w780, url w1280, url original"`; detail only + optional. When present
+     *  the backdrop `<img>` uses it so the browser fetches an appropriately-sized
+     *  image; degrades to the single `backdrop_url_large`/`backdrop_url` src. */
+    backdrop_srcset?: string | null;
+    /** Theme music audio URL (signed, short-lived, streamable MP3); detail only.
+     *  When present the detail hero renders an unobtrusive mute/stop control and
+     *  plays it muted+looping (autoplay), unmutable by the viewer. Absent → no
+     *  control, no audio. */
     theme_audio_url?: string | null;
     /**
      * Per-user state for the authenticated viewer, an ADD-ONLY block the server

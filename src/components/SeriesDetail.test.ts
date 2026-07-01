@@ -150,20 +150,30 @@ describe('SeriesDetail (U3)', () => {
   });
 });
 
-describe('SeriesDetail — theme audio', () => {
+// Theme-music playback + the mute/stop control now live in MediaDetail (U4);
+// SeriesDetail delegates to it (the series hero IS a MediaDetail). These tests
+// assert the delegation renders through — the exhaustive theme behavior
+// (mute persistence, cleanup, re-arm on navigation) is covered in
+// MediaDetail.test.ts.
+describe('SeriesDetail — theme audio (delegated to MediaDetail)', () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined as unknown as void);
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  });
+
   it('does not render an audio element when theme_audio_url is absent', () => {
     const w = mountIt({ item: media({ theme_audio_url: undefined }) });
     expect(w.find('audio').exists()).toBe(false);
   });
 
-  it('renders a looping audio element with correct attributes when all conditions are met', () => {
+  it('renders the delegated MediaDetail theme audio + control when a theme is present', () => {
     const w = mountIt({ item: media({ theme_audio_url: '/api/v1/media/sh1/theme-audio?sig=abc' }) });
     const audio = w.find('audio');
     expect(audio.exists()).toBe(true);
-    // boolean attributes return '' (empty string) in JSDOM when present
+    expect(audio.classes()).toContain('media-detail__theme-audio');
     expect(audio.attributes('loop')).not.toBe(undefined);
-    expect(audio.attributes('aria-hidden')).toBe('true');
-    expect(audio.attributes('tabindex')).toBe('-1');
+    expect(w.find('[aria-label="Unmute theme music"]').exists()).toBe(true);
   });
 
   it('uses absolute theme_audio_url directly when provided as an absolute URL', () => {
@@ -181,9 +191,6 @@ describe('SeriesDetail — theme audio', () => {
   });
 
   it('unmounting the component removes the audio element from the DOM', async () => {
-    // Attach to the live document so unmount() actually detaches nodes — a
-    // detached VTU mount keeps its subtree in memory, so we assert against the
-    // real DOM (theme audio must not linger after the component is torn down).
     const host = document.createElement('div');
     document.body.appendChild(host);
     const w = mountIt(
@@ -191,10 +198,10 @@ describe('SeriesDetail — theme audio', () => {
       {},
       { attachTo: host },
     );
-    expect(document.querySelector('.series-detail__theme-audio')).not.toBeNull();
+    expect(document.querySelector('.media-detail__theme-audio')).not.toBeNull();
     w.unmount();
     await nextTick();
-    expect(document.querySelector('.series-detail__theme-audio')).toBeNull();
+    expect(document.querySelector('.media-detail__theme-audio')).toBeNull();
     host.remove();
   });
 });

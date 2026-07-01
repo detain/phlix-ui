@@ -9,9 +9,10 @@
  * wires navigation. Degrades gracefully when metadata is sparse (missing poster,
  * overview, cast, runtime…). Keyboard-operable, reduced-motion safe, no emoji.
  */
-import { computed, ref, onMounted, inject } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, watch, inject } from 'vue';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
+import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
@@ -280,20 +281,168 @@ onMounted(() => {
   if (imgEl.value?.complete) loaded.value = true;
 });
 
-/** Encoded backdrop URL for CSS background-image; null when absent. */
-const backdropUrl = computed(() => {
-  const url = props.item.backdrop_url;
-  return url ? encodeURI(url) : null;
+// ── U3: backdrop as full-bleed page background ──────────────────────────────
+/**
+ * Backdrop source for the fixed page-background `<img>`: prefer the full-res
+ * `/original` (`backdrop_url_large`), fall back to the w500 `backdrop_url`.
+ * null when the item has neither — the layer isn't rendered at all (no empty
+ * layer, no layout shift, current background unchanged).
+ */
+const backdropSrc = computed<string | null>(() => props.item.backdrop_url_large || props.item.backdrop_url || null);
+/** Responsive `srcset` for the backdrop `<img>`; passed through as-is (already a
+ *  ready-made `url w780, url w1280, …` string from the server). */
+const backdropSrcset = computed<string | null>(() => props.item.backdrop_srcset || null);
+/** Cross-fade the backdrop in once it decodes (respects reduced-motion in CSS). */
+const backdropLoaded = ref(false);
+function onBackdropLoad(): void {
+  backdropLoaded.value = true;
+}
+// Reset the fade when the backdrop source changes (detail→detail navigation).
+watch(backdropSrc, () => {
+  backdropLoaded.value = false;
+});
+
+// ── U4: theme-music player ──────────────────────────────────────────────────
+// Resolve the streamable theme URL against the media base (absolute URLs pass
+// through). Injected the same way SeriesDetail does; safe empty-string defaults
+// so the component still mounts in tests that don't provide the media bases.
+const mediaApiBase = useMediaApiBase();
+const mediaDirectBase = useMediaDirectBase();
+
+/** Fully-resolved theme audio URL, or null when the item has no theme. */
+const themeAudioUrl = computed<string | null>(() => {
+  const url = props.item.theme_audio_url;
+  if (!url) return null;
+  if (/^https?:\/\//.test(url)) return url;
+  const base = mediaDirectBase.value || mediaApiBase.value || (phlixConfig?.apiBase ?? '');
+  return `${base}${url}`;
+});
+
+/** localStorage key for the remembered mute preference (across items/sessions). */
+const THEME_MUTED_KEY = 'phlix.theme.muted';
+/** Gentle volume when the viewer unmutes the theme. */
+const THEME_UNMUTED_VOLUME = 0.35;
+
+function readThemeMuted(): boolean {
+  if (typeof localStorage === 'undefined') return true; // default muted
+  try {
+    // Absent (never chosen) → muted, honoring browser autoplay policy.
+    return localStorage.getItem(THEME_MUTED_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+}
+function writeThemeMuted(muted: boolean): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(THEME_MUTED_KEY, muted ? 'true' : 'false');
+  } catch {
+    /* quota / private mode — ignore */
+  }
+}
+
+const themeAudioEl = ref<HTMLAudioElement | null>(null);
+/** Viewer's remembered mute preference (persisted). Muted by default. */
+const themeMuted = ref(readThemeMuted());
+/** True once the viewer explicitly stops the theme this visit (hides the toggle). */
+const themeStopped = ref(false);
+
+const themeIcon = computed(() => (themeMuted.value ? 'mute' : 'volume'));
+const themeToggleLabel = computed(() =>
+  themeMuted.value ? 'Unmute theme music' : 'Mute theme music',
+);
+
+/** Apply the current muted/volume state to the element. */
+function applyThemeVolume(): void {
+  const el = themeAudioEl.value;
+  if (!el) return;
+  el.muted = themeMuted.value;
+  el.volume = themeMuted.value ? 0 : THEME_UNMUTED_VOLUME;
+}
+
+/** Start muted+looping autoplay (browsers allow muted autoplay without a gesture). */
+function startThemeAudio(): void {
+  const el = themeAudioEl.value;
+  if (!el || themeStopped.value) return;
+  applyThemeVolume();
+  const p = el.play();
+  if (p != null) p.catch(() => {}); // autoplay blocked / not-ready — non-fatal
+}
+
+/** Stop + tear down the audio so themes never overlap or leak. */
+function stopThemeAudio(): void {
+  const el = themeAudioEl.value;
+  if (!el) return;
+  el.pause();
+  el.src = '';
+  el.load();
+}
+
+/** Toggle mute; raises to a gentle volume when unmuting. Persists the choice. */
+function onToggleThemeMute(): void {
+  themeMuted.value = !themeMuted.value;
+  writeThemeMuted(themeMuted.value);
+  applyThemeVolume();
+  // Unmuting after a blocked autoplay is a user gesture — (re)start playback.
+  if (!themeMuted.value) startThemeAudio();
+}
+
+/** Fully stop the theme for this visit and hide the control. */
+function onStopTheme(): void {
+  themeStopped.value = true;
+  stopThemeAudio();
+}
+
+onMounted(() => {
+  if (themeAudioUrl.value) startThemeAudio();
+});
+
+// Re-arm when navigating between items (the page container swaps `item` in place
+// rather than remounting): stop the old theme, reset, and start the new one.
+watch(themeAudioUrl, (next, prev) => {
+  if (next === prev) return;
+  stopThemeAudio();
+  themeStopped.value = false;
+  if (next) startThemeAudio();
+});
+
+onBeforeUnmount(() => {
+  stopThemeAudio();
 });
 </script>
 
 <template>
   <article class="media-detail">
-    <div
-      v-if="backdropUrl"
-      class="media-detail__backdrop"
-      :style="{ backgroundImage: `url(${backdropUrl})` }"
+    <!-- U3: full-bleed page backdrop. A fixed layer behind the content holds a
+         lazily-loaded <img> (responsive via srcset) + a dim/blur scrim so
+         foreground text stays legible in both themes. Rendered only when a
+         backdrop exists — no empty layer, no layout shift otherwise. -->
+    <div v-if="backdropSrc" class="media-detail__backdrop" aria-hidden="true">
+      <img
+        class="media-detail__backdrop-img"
+        :class="{ 'is-loaded': backdropLoaded }"
+        :src="backdropSrc"
+        :srcset="backdropSrcset || undefined"
+        sizes="100vw"
+        alt=""
+        loading="lazy"
+        decoding="async"
+        @load="onBackdropLoad"
+      />
+      <div class="media-detail__backdrop-scrim" />
+    </div>
+
+    <!-- U4: theme-music audio. Muted+looping autoplay; the hero control (below)
+         unmutes/stops it. Visually hidden + inert; never overlaps between items. -->
+    <audio
+      v-if="themeAudioUrl"
+      ref="themeAudioEl"
+      :src="themeAudioUrl"
+      class="media-detail__theme-audio"
+      loop
+      preload="auto"
       aria-hidden="true"
+      tabindex="-1"
     />
 
     <div
@@ -406,6 +555,30 @@ const backdropUrl = computed(() => {
                bound (NOT `@update:level`) so each thumb click triggers exactly ONE
                store write + ONE PUT. -->
           <ThumbRating :level="loveLevel" @cycle="onLove" />
+
+          <!-- [ Theme music ] — U4. Only when the item has a theme and the viewer
+               hasn't stopped it this visit. Mute/unmute toggles the low-volume
+               loop; the adjacent stop button tears it down + hides the control. -->
+          <div v-if="themeAudioUrl && !themeStopped" class="media-detail__theme">
+            <button
+              type="button"
+              class="media-detail__theme-btn"
+              :class="{ 'is-active': !themeMuted }"
+              :aria-label="themeToggleLabel"
+              :aria-pressed="themeMuted ? 'false' : 'true'"
+              @click="onToggleThemeMute"
+            >
+              <Icon :name="themeIcon" />
+            </button>
+            <button
+              type="button"
+              class="media-detail__theme-btn media-detail__theme-stop"
+              aria-label="Stop theme music"
+              @click="onStopTheme"
+            >
+              <Icon name="x" />
+            </button>
+          </div>
 
           <!-- [ ⋯ Menu ] — bind the trigger to the Menu's own `toggle` (from the
                slot); `.stop` keeps the click off the surrounding actions but also
@@ -557,24 +730,66 @@ const backdropUrl = computed(() => {
   mask-image: linear-gradient(to bottom, #000, transparent);
 }
 
-/* backdrop layer — full-width background image behind the hero, with dark
-   gradient overlay so title/meta text remains readable on top. */
+/* U3: full-bleed page backdrop — a fixed layer behind the content holding a
+   responsive <img> + a dim/blur scrim so title/meta/overview stay legible in
+   both the dark and daylight themes. Scoped to the detail view; does not touch
+   the global/app background. */
 .media-detail__backdrop {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  overflow: hidden;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 60%);
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 60%);
+  /* Fade the whole layer out toward the page bottom so the content region below
+     the hero reads on the plain app surface (no hard image edge). */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 70%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 70%);
+}
+.media-detail__backdrop-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.media-detail__backdrop-img.is-loaded {
+  opacity: 1;
+}
+/* Scrim: a strong dark gradient + slight blur. Uses the app surface color so the
+   fade bottoms out into the real page background rather than a fixed black. The
+   left→right + top→bottom dark bias keeps the hero text (poster side + title)
+   readable regardless of the image's own brightness. */
+.media-detail__backdrop-scrim {
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(2px) saturate(1.05);
+  backdrop-filter: blur(2px) saturate(1.05);
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
+    linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 60%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .media-detail__backdrop {
+  .media-detail__backdrop-img {
     transition: none;
+    opacity: 1;
   }
+}
+
+/* U4: theme-music audio is inert + visually hidden (the control drives it). */
+.media-detail__theme-audio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .media-detail__bar {
@@ -778,6 +993,47 @@ const backdropUrl = computed(() => {
 /* Watched state on the hero eye button reads amber like the favorite button. */
 .media-detail__watched.is-active {
   color: var(--accent);
+}
+
+/* U4: theme-music control — a small unobtrusive icon pair (mute/unmute + stop)
+   matching the ⋯ menu button's icon-only language. Unmuted → amber like the
+   other active hero controls. */
+.media-detail__theme {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.media-detail__theme-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring), color var(--dur-base) var(--ease-out);
+}
+.media-detail__theme-btn:hover {
+  transform: scale(1.08);
+  color: var(--text);
+}
+.media-detail__theme-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.media-detail__theme-btn.is-active {
+  color: var(--accent);
+}
+.media-detail__theme-stop {
+  font-size: 0.95rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .media-detail__theme-btn {
+    transition: none;
+  }
 }
 
 /* Outbound provider links (TMDB / IMDb / TVDB / AniDB …). */
