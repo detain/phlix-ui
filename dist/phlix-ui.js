@@ -19,17 +19,17 @@ import { t as Ie } from "./Slider-CaOjV5mW.js";
 import { t as Le } from "./Switch-D-Y4B9p8.js";
 import { t as Re } from "./Chip-vZeocErt.js";
 import { t as ze } from "./Select-DHe4oeCr.js";
-import { i as Be, n as Ve, r as He, t as Ue } from "./FilterBar-BFZqAv_C.js";
+import { i as Be, n as Ve, r as He, t as Ue } from "./FilterBar-B-ES_SkX.js";
 import { t as We } from "./Modal-CBoJ1z1N.js";
 import { t as E } from "./Skeleton-BUq2D39t.js";
-import { a as Ge, n as Ke, o as qe, s as Je, t as Ye } from "./MetadataMatchModal-ozGAKR2V.js";
+import { a as Ge, n as Ke, o as qe, s as Je, t as Ye } from "./MetadataMatchModal-6zRG2fyA.js";
 import { t as D } from "./EmptyState-0XgHKEGf.js";
 import { t as Xe } from "./PageHint-DR8OWfto.js";
 import { t as Ze } from "./Tabs-Cx4iZtlC.js";
-import { t as Qe } from "./MediaRow-BG_zIIQN.js";
+import { t as Qe } from "./MediaRow-BmwPBh3n.js";
 import { n as $e, t as et } from "./media-query-C8oxSF4h.js";
-import { t as tt } from "./HomeRow-C4GWcQMQ.js";
-import { t as nt } from "./MediaDetail-U0_4vbNd.js";
+import { t as tt } from "./HomeRow-Br2nEtWx.js";
+import { t as nt } from "./MediaDetail-DOb1cU7Y.js";
 import { n as rt, t as it } from "./metadata-sources-DdG90AUs.js";
 import { n as at, t as ot } from "./logs-DadTfaTq.js";
 import { t as st } from "./dashboard-BTCOCTHQ.js";
@@ -1044,12 +1044,12 @@ function Sa(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-BVnFlrmT.js")
+			component: () => import("./BrowsePage-DdOr-7Hu.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-nbc45yJZ.js")
+			component: () => import("./MediaDetailPage-CsmBSFhN.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -1059,7 +1059,7 @@ function Sa(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CPrCmr_y.js")
+			component: () => import("./LibraryPage-Dtn0MASA.js")
 		},
 		{
 			path: `${t}/player/:id`,

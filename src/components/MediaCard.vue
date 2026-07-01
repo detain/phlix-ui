@@ -351,11 +351,24 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             <Icon name="info" />
           </button>
 
-          <!-- [ ⋯ Menu ] -->
+          <!-- [ ⋯ Menu ] — the trigger MUST call the Menu's own `toggle` (from
+               the slot): `@click.stop.prevent` keeps the click off the card's
+               stretched link, but `.stop` also prevents it bubbling to the Menu
+               wrapper's own click handler, so without calling `toggle` here the
+               menu would never open. -->
           <Menu v-model:open="menuOpen" :items="menuItems" @select="onMenuSelect">
-            <button type="button" class="media-card__iconbtn" aria-label="More actions" @click.stop.prevent>
-              <Icon name="more" />
-            </button>
+            <template #default="{ toggle }">
+              <button
+                type="button"
+                class="media-card__iconbtn"
+                aria-label="More actions"
+                :aria-expanded="menuOpen ? 'true' : 'false'"
+                aria-haspopup="menu"
+                @click.stop.prevent="toggle"
+              >
+                <Icon name="more" />
+              </button>
+            </template>
           </Menu>
 
           <!-- [ Match(admin) ] -->

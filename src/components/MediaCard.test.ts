@@ -393,6 +393,15 @@ describe('MediaCard — watched (eye) toggle', () => {
     const w = mount(MediaCard, { props: { item: media(), subtitle: '12 episodes' } });
     expect(w.find('.media-card__caption-sub').text()).toContain('12 episodes');
   });
+
+  it('opens the ⋯ menu when its trigger is clicked (regression: .stop swallowed the toggle)', async () => {
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+    await w.find('[aria-label="More actions"]').trigger('click');
+    // The Menu teleports its list to <body>; it must actually be open now.
+    expect(document.querySelector('[role="menu"]')).not.toBeNull();
+    w.unmount();
+  });
 });
 
 describe('MediaCard — ThumbRating (thumbs up/down)', () => {
