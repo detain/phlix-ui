@@ -42,7 +42,7 @@ async function mountAdmin(
 }
 
 describe('AdminLayout — server set', () => {
-  it('renders a labelled Admin nav landmark with all 18 page links', async () => {
+  it('renders a labelled Admin nav landmark with all 19 page links', async () => {
     const { wrapper } = await mountAdmin();
     const nav = wrapper.find('nav.admin__nav');
     expect(nav.exists()).toBe(true);
@@ -50,9 +50,10 @@ describe('AdminLayout — server set', () => {
     expect(wrapper.find('#admin-nav-heading').text()).toBe('Admin');
 
     const links = wrapper.findAll('.admin__link');
-    expect(links).toHaveLength(18);
+    expect(links).toHaveLength(19);
     const labels = links.map((l) => l.text());
     expect(labels).toContain('Dashboard');
+    expect(labels).toContain('Server Traffic');
     expect(labels).toContain('Cast Devices');
     expect(labels).toContain('Live TV / DVR');
     expect(labels).toContain('Libraries');
@@ -63,7 +64,7 @@ describe('AdminLayout — server set', () => {
 
   it('renders a real Icon component for every link (icon-only, never emoji)', async () => {
     const { wrapper } = await mountAdmin();
-    expect(wrapper.findAll('.admin__icon')).toHaveLength(18);
+    expect(wrapper.findAll('.admin__icon')).toHaveLength(19);
   });
 
   it('points each sidebar link at its admin page URL', async () => {
@@ -111,10 +112,10 @@ describe('AdminLayout — server set', () => {
 });
 
 describe('AdminLayout — hub set', () => {
-  it('renders only the 5 hub admin links, in order', async () => {
+  it('renders only the 6 hub admin links, in order', async () => {
     const { wrapper } = await mountAdmin(buildHubAdminRoutes);
     const labels = wrapper.findAll('.admin__link').map((l) => l.text());
-    expect(labels).toEqual(['Dashboard', 'Users', 'Logs', 'Settings', 'Audit Logs']);
+    expect(labels).toEqual(['Dashboard', 'Server Traffic', 'Users', 'Logs', 'Settings', 'Audit Logs']);
   });
 
   it('links the hub dashboard + audit logs to their /app/admin/* URLs', async () => {
