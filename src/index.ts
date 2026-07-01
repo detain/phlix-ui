@@ -38,7 +38,7 @@ export { default as AppBackdrop } from './components/AppBackdrop.vue';
 export * from './components/ui';
 
 export { default as MediaCard } from './components/MediaCard.vue';
-export { default as LoveButton } from './components/LoveButton.vue';
+export { default as ThumbRating } from './components/ThumbRating.vue';
 export { default as MediaGrid } from './components/MediaGrid.vue';
 export { default as MediaRow } from './components/MediaRow.vue';
 export { default as MediaHomeRow } from './components/HomeRow.vue';

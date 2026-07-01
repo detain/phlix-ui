@@ -177,57 +177,65 @@ describe('useUserItemDataStore', () => {
     });
   });
 
-  describe('cycleLove', () => {
-    it('advances the level synchronously (optimistic) before the API resolves', () => {
+  describe('setLike', () => {
+    it('sets the level synchronously (optimistic) before the API resolves', () => {
       const fetchMock = vi.fn().mockReturnValue(
         new Promise<Response>(() => {
-          /* never resolves — proves the bump is synchronous */
+          /* never resolves — proves the set is synchronous */
         }),
       );
       vi.stubGlobal('fetch', fetchMock);
       const store = useUserItemDataStore();
       store.hydrate(detail('m1'));
 
-      const p = store.cycleLove('m1', '');
+      const p = store.setLike('m1', 1, '');
       expect(store.likeLevel('m1')).toBe(1);
       void p;
     });
 
-    it('PUTs the next level exactly once per click', async () => {
-      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: 'Love level saved' }));
+    it('PUTs the requested level exactly once', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: 'Rating saved' }));
       vi.stubGlobal('fetch', fetchMock);
       const store = useUserItemDataStore();
       store.hydrate(detail('m1'));
 
-      await store.cycleLove('m1', '');
+      await store.setLike('m1', 2, '');
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const [url, init] = fetchMock.mock.calls[0]!;
       expect(url).toContain('/api/v1/media/m1/like');
       expect((init as RequestInit).method).toBe('PUT');
-      expect((init as RequestInit).body).toBe(JSON.stringify({ level: 1 }));
-      expect(store.likeLevel('m1')).toBe(1);
+      expect((init as RequestInit).body).toBe(JSON.stringify({ level: 2 }));
+      expect(store.likeLevel('m1')).toBe(2);
     });
 
-    it('cycles 0→1→2→3→0 across successive clicks', async () => {
+    it('accepts the full −2..2 axis (like, love, dislike, strongly dislike, clear)', async () => {
       const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' }));
       vi.stubGlobal('fetch', fetchMock);
       const store = useUserItemDataStore();
       store.hydrate(detail('m1'));
 
-      await store.cycleLove('m1', '');
-      expect(store.likeLevel('m1')).toBe(1);
-      await store.cycleLove('m1', '');
-      expect(store.likeLevel('m1')).toBe(2);
-      await store.cycleLove('m1', '');
-      expect(store.likeLevel('m1')).toBe(3);
-      await store.cycleLove('m1', '');
-      expect(store.likeLevel('m1')).toBe(0);
+      for (const level of [1, 2, -1, -2, 0]) {
+        await store.setLike('m1', level, '');
+        expect(store.likeLevel('m1')).toBe(level);
+      }
+      expect((fetchMock.mock.calls[2]![1] as RequestInit).body).toBe(JSON.stringify({ level: -1 }));
+      expect((fetchMock.mock.calls[3]![1] as RequestInit).body).toBe(JSON.stringify({ level: -2 }));
+    });
 
-      // One PUT per click — never a double-cycle.
-      expect(fetchMock).toHaveBeenCalledTimes(4);
-      expect((fetchMock.mock.calls[0]![1] as RequestInit).body).toBe(JSON.stringify({ level: 1 }));
-      expect((fetchMock.mock.calls[3]![1] as RequestInit).body).toBe(JSON.stringify({ level: 0 }));
+    it('clamps out-of-range levels into −2..2 before caching + persisting', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' }));
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1'));
+
+      await store.setLike('m1', 9, '');
+      expect(store.likeLevel('m1')).toBe(2);
+      expect((fetchMock.mock.calls[0]![1] as RequestInit).body).toBe(JSON.stringify({ level: 2 }));
+
+      await store.setLike('m1', -9, '');
+      expect(store.likeLevel('m1')).toBe(-2);
+      expect((fetchMock.mock.calls[1]![1] as RequestInit).body).toBe(JSON.stringify({ level: -2 }));
     });
 
     it('rolls back to the prior level and toasts on API failure', async () => {
@@ -237,31 +245,31 @@ describe('useUserItemDataStore', () => {
       const store = useUserItemDataStore();
       store.hydrate(detail('m1', { favorite: false, rating: null, like_level: 2 }));
 
-      await store.cycleLove('m1', '');
+      await store.setLike('m1', -1, '');
 
-      // 2 → 3 optimistically, then rolled back to 2.
+      // 2 → −1 optimistically, then rolled back to 2 on the rejected write.
       expect(store.likeLevel('m1')).toBe(2);
       expect(toastSpy).toHaveBeenCalledTimes(1);
-      expect(toastSpy.mock.calls[0]![0]).toContain('love level');
+      expect(toastSpy.mock.calls[0]![0]).toContain('rating');
     });
 
-    it('preserves favorite and rating across a love cycle', async () => {
+    it('preserves favorite and rating across a rating change', async () => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' })));
       const store = useUserItemDataStore();
       store.hydrate(detail('m1', { favorite: true, rating: 9, like_level: 1 }));
 
-      await store.cycleLove('m1', '');
+      await store.setLike('m1', 2, '');
 
       expect(store.get('m1')).toEqual({ favorite: true, rating: 9, like_level: 2 });
     });
 
-    it('cycles an unknown id from 0 → 1', async () => {
+    it('rates an unknown id from the default 0', async () => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ message: 'ok' })));
       const store = useUserItemDataStore();
 
-      await store.cycleLove('fresh', '');
+      await store.setLike('fresh', -1, '');
 
-      expect(store.likeLevel('fresh')).toBe(1);
+      expect(store.likeLevel('fresh')).toBe(-1);
     });
   });
 

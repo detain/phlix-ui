@@ -343,33 +343,44 @@ describe('MediaDetail — actions & similar', () => {
     });
   });
 
-  describe('hero Love button (Feature 10.6)', () => {
-    function loveButton(w: ReturnType<typeof mount>) {
-      return w.find('.media-detail__actions .love-button');
+  describe('hero ThumbRating (thumbs up/down)', () => {
+    function thumbRating(w: ReturnType<typeof mount>) {
+      return w.find('.media-detail__actions .thumb-rating');
     }
 
-    it('renders a LoveButton in the hero action cluster', () => {
+    it('renders a ThumbRating in the hero action cluster', () => {
       const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
-      expect(loveButton(w).exists()).toBe(true);
+      expect(thumbRating(w).exists()).toBe(true);
     });
 
     it('reflects the store like_level', () => {
       const store = useUserItemDataStore();
-      store.entries.set('m1', { favorite: false, rating: null, like_level: 3 });
+      store.entries.set('m1', { favorite: false, rating: null, like_level: 2 });
       const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
-      expect(loveButton(w).attributes('data-level')).toBe('3');
+      expect(thumbRating(w).attributes('data-level')).toBe('2');
     });
 
-    it('clicking Love calls cycleLove(id, apiBase) exactly ONCE per click (single PUT)', async () => {
+    it('clicking thumbs-up calls setLike(id, 1, apiBase) exactly ONCE per click (single PUT)', async () => {
       const store = useUserItemDataStore();
-      const cycle = vi.spyOn(store, 'cycleLove').mockResolvedValue();
+      const setLike = vi.spyOn(store, 'setLike').mockResolvedValue();
       const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
 
-      await loveButton(w).trigger('click');
+      await w.find('.media-detail__actions .thumb-rating__btn--up').trigger('click');
 
-      // `@cycle` is bound, `@update:level` is NOT → exactly one cycle/PUT per click.
-      expect(cycle).toHaveBeenCalledTimes(1);
-      expect(cycle).toHaveBeenCalledWith('m1', '');
+      // `@cycle` is bound, `@update:level` is NOT → exactly one write/PUT per click.
+      expect(setLike).toHaveBeenCalledTimes(1);
+      expect(setLike).toHaveBeenCalledWith('m1', 1, '');
+    });
+
+    it('clicking thumbs-down calls setLike(id, -1, apiBase)', async () => {
+      const store = useUserItemDataStore();
+      const setLike = vi.spyOn(store, 'setLike').mockResolvedValue();
+      const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
+
+      await w.find('.media-detail__actions .thumb-rating__btn--down').trigger('click');
+
+      expect(setLike).toHaveBeenCalledTimes(1);
+      expect(setLike).toHaveBeenCalledWith('m1', -1, '');
     });
   });
 

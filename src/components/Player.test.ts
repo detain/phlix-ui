@@ -6,7 +6,7 @@ import Player from './Player.vue';
 import Scrubber from './player/Scrubber.vue';
 import AmbientCanvas from './player/AmbientCanvas.vue';
 import SkipButton from './player/SkipButton.vue';
-import LoveButton from './LoveButton.vue';
+import ThumbRating from './ThumbRating.vue';
 import Icon from './Icon.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
@@ -1540,12 +1540,12 @@ describe('Player — prev/next episode (U2)', () => {
   });
 });
 
-describe('Player — favorite + Love controls (Feature 16.1)', () => {
-  // Locate the favorite/bookmark + Love controls in the right-hand control cluster.
+describe('Player — favorite + rating controls (Feature 16.1)', () => {
+  // Locate the favorite/bookmark + thumbs rating controls in the right-hand cluster.
   const favBtn = (w: ReturnType<typeof mountPlayer>['w']) => w.find('.player__btnrow .player__favorite');
-  const love = (w: ReturnType<typeof mountPlayer>['w']) => w.findComponent(LoveButton);
+  const love = (w: ReturnType<typeof mountPlayer>['w']) => w.findComponent(ThumbRating);
 
-  it('renders both controls in the control cluster (default: not favorited, love level 0)', () => {
+  it('renders both controls in the control cluster (default: not favorited, rating level 0)', () => {
     const { w } = mountPlayer();
     const fav = favBtn(w);
     expect(fav.exists()).toBe(true);
@@ -1558,7 +1558,7 @@ describe('Player — favorite + Love controls (Feature 16.1)', () => {
     expect(lb.props('level')).toBe(0);
   });
 
-  it('reflects the store: favorite aria-pressed from isFavorite, Love level from likeLevel', async () => {
+  it('reflects the store: favorite aria-pressed from isFavorite, rating level from likeLevel', async () => {
     const { w } = mountPlayer();
     const store = useUserItemDataStore();
     // seed the store entry for the played item and assert the controls reflect it
@@ -1580,15 +1580,15 @@ describe('Player — favorite + Love controls (Feature 16.1)', () => {
     expect(spy).toHaveBeenCalledWith('m1', ''); // empty apiBase fallback (no phlixConfig in test mount)
   });
 
-  it('clicking Love calls cycleLove(id, apiBase) exactly once per click (single-cycle guard)', async () => {
+  it('clicking thumbs-up calls setLike(id, 1, apiBase) exactly once per click (single-write guard)', async () => {
     const { w } = mountPlayer();
     const store = useUserItemDataStore();
-    const spy = vi.spyOn(store, 'cycleLove').mockResolvedValue();
-    // a single activate emits BOTH cycle + update:level from LoveButton; only @cycle
-    // is bound, so exactly ONE cycleLove must fire (no double-cycle / double-PUT).
-    await love(w).find('button').trigger('click');
+    const spy = vi.spyOn(store, 'setLike').mockResolvedValue();
+    // a single activate emits BOTH cycle + update:level from ThumbRating; only @cycle
+    // is bound, so exactly ONE setLike must fire (no double-write / double-PUT).
+    await love(w).find('.thumb-rating__btn--up').trigger('click');
     expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenCalledWith('m1', '');
+    expect(spy).toHaveBeenCalledWith('m1', 1, '');
   });
 
   it('fires exactly ONE favorite write per click (non-vacuous: real fetch spy)', async () => {
@@ -1609,14 +1609,14 @@ describe('Player — favorite + Love controls (Feature 16.1)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('fires exactly ONE love PUT per click (non-vacuous: real fetch spy — proves the single-cycle binding)', async () => {
+  it('fires exactly ONE rating PUT per click (non-vacuous: real fetch spy — proves the single-write binding)', async () => {
     const fetchMock = vi.fn(
       (_url: RequestInfo | URL, _init?: RequestInit) =>
         Promise.resolve(new Response(JSON.stringify({ message: 'Saved' }), { status: 200 })),
     );
     vi.stubGlobal('fetch', fetchMock);
     const { w } = mountPlayer();
-    await love(w).find('button').trigger('click');
+    await love(w).find('.thumb-rating__btn--up').trigger('click');
     await nextTick();
     // If @update:level were ALSO bound this would be 2 (double-PUT) — assert ONE.
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -1630,11 +1630,11 @@ describe('Player — favorite + Love controls (Feature 16.1)', () => {
   it('hydrates the store from props.media.user_data on mount', () => {
     const store = useUserItemDataStore();
     const spy = vi.spyOn(store, 'hydrate');
-    mountPlayer({ media: media({ id: 'm1', user_data: { favorite: true, rating: 7, like_level: 3 } }) });
+    mountPlayer({ media: media({ id: 'm1', user_data: { favorite: true, rating: 7, like_level: 2 } }) });
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
     // the controls reflect the hydrated server state
     expect(store.isFavorite('m1')).toBe(true);
-    expect(store.likeLevel('m1')).toBe(3);
+    expect(store.likeLevel('m1')).toBe(2);
   });
 
   it('re-hydrates when the media id changes', async () => {
@@ -1647,6 +1647,6 @@ describe('Player — favorite + Love controls (Feature 16.1)', () => {
     expect(store.likeLevel('m2')).toBe(1);
     // the player chrome now reflects the new item
     expect(w.find('.player__btnrow .player__favorite').attributes('aria-pressed')).toBe('true');
-    expect(w.findComponent(LoveButton).props('level')).toBe(1);
+    expect(w.findComponent(ThumbRating).props('level')).toBe(1);
   });
 });
