@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { nextTick, computed } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -130,25 +130,58 @@ describe('MediaDetail — sparse metadata (degrades)', () => {
   });
 });
 
-describe('MediaDetail — backdrop', () => {
-  it('renders a backdrop div when backdrop_url is set', () => {
+describe('MediaDetail — backdrop (U3)', () => {
+  it('renders the fixed backdrop layer with a lazy img when backdrop_url is set', () => {
     const w = mount(MediaDetail, { props: { item: media({ backdrop_url: 'https://img/dune-backdrop.jpg' }) } });
     const backdrop = w.find('.media-detail__backdrop');
     expect(backdrop.exists()).toBe(true);
-    const style = backdrop.attributes('style');
-    expect(style).toContain('background-image');
-    expect(style).toContain('url("https://img/dune-backdrop.jpg")');
+    const img = w.find('.media-detail__backdrop-img');
+    expect(img.exists()).toBe(true);
+    expect(img.attributes('src')).toBe('https://img/dune-backdrop.jpg');
+    // lazy-loaded so it never blocks the content
+    expect(img.attributes('loading')).toBe('lazy');
+    expect(img.attributes('decoding')).toBe('async');
+    // decorative — empty alt + aria-hidden layer
+    expect(img.attributes('alt')).toBe('');
+    expect(backdrop.attributes('aria-hidden')).toBe('true');
+    // a scrim overlay preserves foreground text contrast
+    expect(w.find('.media-detail__backdrop-scrim').exists()).toBe(true);
   });
 
-  it('does not render a backdrop div when backdrop_url is null', () => {
-    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: null }) } });
+  it('prefers backdrop_url_large over backdrop_url for the full-bleed background', () => {
+    const w = mount(MediaDetail, {
+      props: { item: media({ backdrop_url: 'https://img/w500.jpg', backdrop_url_large: 'https://img/original.jpg' }) },
+    });
+    expect(w.find('.media-detail__backdrop-img').attributes('src')).toBe('https://img/original.jpg');
+  });
+
+  it('passes backdrop_srcset through to the img srcset when present', () => {
+    const srcset = 'https://img/w780.jpg 780w, https://img/w1280.jpg 1280w, https://img/original.jpg';
+    const w = mount(MediaDetail, {
+      props: { item: media({ backdrop_url: 'https://img/w500.jpg', backdrop_srcset: srcset }) },
+    });
+    const img = w.find('.media-detail__backdrop-img');
+    expect(img.attributes('srcset')).toBe(srcset);
+    expect(img.attributes('sizes')).toBe('100vw');
+  });
+
+  it('omits the srcset attribute when backdrop_srcset is absent', () => {
+    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: 'https://img/w500.jpg' }) } });
+    expect(w.find('.media-detail__backdrop-img').attributes('srcset')).toBeUndefined();
+  });
+
+  it('fades the backdrop in on the img load event', async () => {
+    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: 'https://img/b.jpg' }) } });
+    const img = w.find('.media-detail__backdrop-img');
+    expect(img.classes()).not.toContain('is-loaded');
+    await img.trigger('load');
+    expect(w.find('.media-detail__backdrop-img').classes()).toContain('is-loaded');
+  });
+
+  it('does not render the backdrop layer when the item has no backdrop', () => {
+    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: null, backdrop_url_large: null }) } });
     expect(w.find('.media-detail__backdrop').exists()).toBe(false);
-  });
-
-  it('encodes the backdrop URL for use in background-image', () => {
-    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: 'https://img/dune wide.jpg' }) } });
-    const backdrop = w.find('.media-detail__backdrop');
-    expect(backdrop.attributes('style')).toContain('url("https://img/dune%20wide.jpg")');
+    expect(w.find('.media-detail__backdrop-img').exists()).toBe(false);
   });
 });
 
@@ -468,6 +501,103 @@ describe('MediaDetail — watched (eye) button', () => {
     const on = w.find('[aria-label="Mark as unwatched"]');
     expect(on.exists()).toBe(true);
     expect(on.text()).toContain('Watched');
+  });
+});
+
+describe('MediaDetail — theme music (U4)', () => {
+  const THEME_URL = 'https://media.example.com/api/v1/media/m1/theme-audio?sig=abc';
+
+  beforeEach(() => {
+    // JSDOM's HTMLMediaElement has no real playback; stub play/pause/load so the
+    // control logic runs without "Not implemented" noise or rejections.
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined as unknown as void);
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  });
+
+  it('renders NOTHING (no control, no audio) when there is no theme_audio_url', () => {
+    const w = mount(MediaDetail, { props: { item: media({ theme_audio_url: undefined }) } });
+    expect(w.find('audio').exists()).toBe(false);
+    expect(w.find('.media-detail__theme').exists()).toBe(false);
+  });
+
+  it('renders a looping, inert audio element and a mute/stop control when a theme is present', () => {
+    const w = mount(MediaDetail, { props: { item: media({ theme_audio_url: THEME_URL }) } });
+    const audio = w.find('audio');
+    expect(audio.exists()).toBe(true);
+    expect(audio.attributes('src')).toBe(THEME_URL); // absolute URL passes through
+    expect(audio.attributes('loop')).not.toBe(undefined);
+    expect(audio.attributes('aria-hidden')).toBe('true');
+    expect(audio.attributes('tabindex')).toBe('-1');
+    // control: mute toggle has an aria-label; a stop button tears it down
+    expect(w.find('[aria-label="Unmute theme music"]').exists()).toBe(true);
+    expect(w.find('[aria-label="Stop theme music"]').exists()).toBe(true);
+  });
+
+  it('starts muted by default (autoplay policy) with an aria-pressed=false toggle', () => {
+    const w = mount(MediaDetail, { props: { item: media({ theme_audio_url: THEME_URL }) } });
+    const toggle = w.find('.media-detail__theme-btn');
+    expect(toggle.attributes('aria-pressed')).toBe('false');
+    expect(toggle.attributes('aria-label')).toBe('Unmute theme music');
+  });
+
+  it('persists the mute preference to localStorage and reflects it across mounts', async () => {
+    const w = mount(MediaDetail, { props: { item: media({ theme_audio_url: THEME_URL }) } });
+    // unmute → persists "false", raises gentle volume, aria updates
+    await w.find('.media-detail__theme-btn').trigger('click');
+    expect(localStorage.getItem('phlix.theme.muted')).toBe('false');
+    expect(w.find('.media-detail__theme-btn').attributes('aria-label')).toBe('Mute theme music');
+    expect(w.find('.media-detail__theme-btn').attributes('aria-pressed')).toBe('true');
+
+    // a fresh mount remembers the unmuted preference
+    const w2 = mount(MediaDetail, { props: { item: media({ theme_audio_url: THEME_URL }) } });
+    expect(w2.find('.media-detail__theme-btn').attributes('aria-pressed')).toBe('true');
+  });
+
+  it('stops + hides the control when the stop button is clicked', async () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause');
+    const w = mount(MediaDetail, { props: { item: media({ theme_audio_url: THEME_URL }) } });
+    await w.find('[aria-label="Stop theme music"]').trigger('click');
+    expect(pause).toHaveBeenCalled();
+    expect(w.find('.media-detail__theme').exists()).toBe(false);
+  });
+
+  it('resolves a relative theme_audio_url against the media base', () => {
+    const w = mount(MediaDetail, {
+      props: { item: media({ theme_audio_url: '/api/v1/media/m1/theme-audio?sig=abc' }) },
+      global: { provide: { mediaApiBase: computed(() => 'https://server.test') } },
+    });
+    expect(w.find('audio').attributes('src')).toBe('https://server.test/api/v1/media/m1/theme-audio?sig=abc');
+  });
+
+  it('tears down the audio on unmount so themes never leak between items', async () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause');
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const w = mount(MediaDetail, {
+      props: { item: media({ theme_audio_url: THEME_URL }) },
+      attachTo: host,
+    });
+    expect(document.querySelector('.media-detail__theme-audio')).not.toBeNull();
+    w.unmount();
+    await nextTick();
+    expect(pause).toHaveBeenCalled();
+    expect(document.querySelector('.media-detail__theme-audio')).toBeNull();
+    host.remove();
+  });
+
+  it('re-arms the theme when navigating to a different item (id/url change)', async () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play');
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause');
+    const w = mount(MediaDetail, { props: { item: media({ id: 'm1', theme_audio_url: THEME_URL }) } });
+    play.mockClear();
+    pause.mockClear();
+    await w.setProps({
+      item: media({ id: 'm2', theme_audio_url: 'https://media.example.com/api/v1/media/m2/theme-audio?sig=xyz' }),
+    });
+    await nextTick();
+    expect(pause).toHaveBeenCalled(); // old theme stopped
+    expect(play).toHaveBeenCalled(); // new theme started
   });
 });
 
