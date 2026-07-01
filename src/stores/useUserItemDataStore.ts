@@ -7,16 +7,17 @@ import type { MediaDetail, MediaListItem } from '../types/media-item';
 
 /**
  * Per-item, per-user interaction state (favorite flag, personal rating, and the
- * multi-level "love" level) cached client-side so the bookmark/heart on a card
- * can flip *immediately* on click while the write goes out in the background.
+ * thumbs up/down rating level) cached client-side so the bookmark/thumbs on a
+ * card can flip *immediately* on click while the write goes out in the background.
  *
- * Shape note: `like_level` (0-3) is carried in the map; `cycleLove` (Step 10.6)
- * advances it 0→1→2→3→0 with the same optimistic+rollback pattern as the
- * favorite toggle.
+ * Shape note: `like_level` (−2..2) is carried in the map — the thumbs axis
+ * (−2 strongly dislike … 0 not set … 2 love). `setLike` writes it directly with
+ * the same optimistic+rollback pattern as the favorite toggle.
  */
 export interface UserItemData {
   favorite: boolean;
   rating: number | null;
+  /** Thumbs rating on the −2..2 axis (0 = not set). */
   like_level: number;
 }
 
@@ -50,7 +51,7 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
     return entries.value.get(id)?.favorite ?? false;
   }
 
-  /** Current love level (0-3) for an id (0 when the item is unknown). */
+  /** Current thumbs rating (−2..2) for an id (0 when the item is unknown). */
   function likeLevel(id: string): number {
     return entries.value.get(id)?.like_level ?? 0;
   }
@@ -110,15 +111,23 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
   }
 
   /**
-   * Advance the multi-level "love" level for an item 0→1→2→3→0. The map is
-   * mutated SYNCHRONOUSLY (optimistic) to the next level so the LoveButton
-   * reflects it immediately; the `setLikeLevel` write goes out in the
-   * background. On API error the optimistic change is rolled back to the prior
-   * level and an error toast is surfaced (mirrors `toggleFavorite`).
+   * Set the thumbs rating for an item to an explicit `level` on the −2..2 axis
+   * (the caller — the ThumbRating widget — computes the next level itself). The
+   * incoming level is clamped/validated into range, then the map is mutated
+   * SYNCHRONOUSLY (optimistic) so the widget reflects it immediately while the
+   * `setLikeLevel` write goes out in the background. On API error the optimistic
+   * change is rolled back to the prior level and an error toast is surfaced
+   * (mirrors `toggleFavorite`).
    */
-  async function cycleLove(id: string, apiBase: string): Promise<void> {
+  async function setLike(id: string, level: number, apiBase: string): Promise<void> {
+    // Clamp/validate the requested level into the −2..2 integer axis so a stray
+    // out-of-range value can never be persisted or cached.
+    let next = Math.trunc(Number(level));
+    if (!Number.isFinite(next)) next = 0;
+    if (next < -2) next = -2;
+    if (next > 2) next = 2;
+
     const previous = likeLevel(id);
-    const next = (previous + 1) % 4;
     setEntry(id, { like_level: next });
 
     try {
@@ -128,7 +137,7 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
       // user. errMessage() prefers the Error's own message, so we prepend the
       // action context ourselves.
       setEntry(id, { like_level: previous });
-      useToastStore().error(`Failed to set love level: ${errMessage(e)}`);
+      useToastStore().error(`Failed to set rating: ${errMessage(e)}`);
     }
   }
 
@@ -138,5 +147,5 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
     apiClient = null;
   }
 
-  return { entries, isFavorite, likeLevel, get, hydrate, toggleFavorite, cycleLove, reset };
+  return { entries, isFavorite, likeLevel, get, hydrate, toggleFavorite, setLike, reset };
 });

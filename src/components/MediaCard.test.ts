@@ -348,18 +348,22 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
   });
 });
 
-describe('MediaCard — Love button (Feature 10)', () => {
-  it('renders the LoveButton in the canonical slot between Play and Favorite', () => {
+describe('MediaCard — ThumbRating (thumbs up/down)', () => {
+  it('renders the ThumbRating in the canonical slot between Play and Favorite', () => {
     const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
-    // EVERY button in the action row, in DOM order. The Love button is the
-    // .love-button (its own component); Play/Favorite/Info/Match are iconbtns.
+    // EVERY button in the action row, in DOM order. The rating widget is the
+    // .thumb-rating (its own component, two buttons at level 0); Play/Favorite/
+    // Info/Match are iconbtns.
     const all = w.findAll('.media-card__actions button');
-    const order = all.map((b) =>
-      b.classes().includes('love-button') ? 'Love' : (b.attributes('aria-label') ?? ''),
-    );
+    const order = all.map((b) => {
+      if (b.classes().includes('thumb-rating__btn--up')) return 'Like';
+      if (b.classes().includes('thumb-rating__btn--down')) return 'Dislike';
+      return b.attributes('aria-label') ?? '';
+    });
     expect(order).toEqual([
       'Play',
-      'Love',
+      'Like',
+      'Dislike',
       'Add to favorites',
       'More info',
       'More actions',
@@ -367,49 +371,66 @@ describe('MediaCard — Love button (Feature 10)', () => {
     ]);
   });
 
-  it('reflects the store like_level on the LoveButton', () => {
+  it('reflects the store like_level on the ThumbRating', () => {
     const store = useUserItemDataStore();
     store.entries.set('m1', { favorite: false, rating: null, like_level: 2 });
     const w = mount(MediaCard, { props: { item: media() } });
-    const love = w.find('.media-card__actions .love-button');
-    expect(love.exists()).toBe(true);
-    expect(love.attributes('data-level')).toBe('2');
+    const rating = w.find('.media-card__actions .thumb-rating');
+    expect(rating.exists()).toBe(true);
+    expect(rating.attributes('data-level')).toBe('2');
+    // At level 2 only the up thumb is shown.
+    expect(w.find('.thumb-rating__btn--up').exists()).toBe(true);
+    expect(w.find('.thumb-rating__btn--down').exists()).toBe(false);
   });
 
-  it('clicking Love calls cycleLove(id, apiBase) exactly ONCE per click (single PUT)', async () => {
+  it('clicking thumbs-up calls setLike(id, 1, apiBase) exactly ONCE per click (single PUT)', async () => {
     const store = useUserItemDataStore();
-    const cycle = vi.spyOn(store, 'cycleLove').mockResolvedValue(undefined);
+    const setLike = vi.spyOn(store, 'setLike').mockResolvedValue(undefined);
     const w = mount(MediaCard, {
       props: { item: media() },
       global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
     });
 
-    await w.find('.media-card__actions .love-button').trigger('click');
+    await w.find('.media-card__actions .thumb-rating__btn--up').trigger('click');
 
-    // ONE cycle per click — `@cycle` is bound, `@update:level` is NOT, so the
-    // LoveButton emitting BOTH does not double-cycle.
-    expect(cycle).toHaveBeenCalledTimes(1);
-    expect(cycle).toHaveBeenCalledWith('m1', '/api-host');
+    // ONE write per click — `@cycle` is bound, `@update:level` is NOT, so the
+    // widget emitting BOTH does not double-write.
+    expect(setLike).toHaveBeenCalledTimes(1);
+    expect(setLike).toHaveBeenCalledWith('m1', 1, '/api-host');
   });
 
-  it('Love click stops propagation (never reaches the card / stretched info link)', async () => {
+  it('clicking thumbs-down calls setLike(id, -1, apiBase)', async () => {
     const store = useUserItemDataStore();
-    vi.spyOn(store, 'cycleLove').mockResolvedValue(undefined);
+    const setLike = vi.spyOn(store, 'setLike').mockResolvedValue(undefined);
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+    });
+
+    await w.find('.media-card__actions .thumb-rating__btn--down').trigger('click');
+
+    expect(setLike).toHaveBeenCalledTimes(1);
+    expect(setLike).toHaveBeenCalledWith('m1', -1, '/api-host');
+  });
+
+  it('thumb click stops propagation (never reaches the card / stretched info link)', async () => {
+    const store = useUserItemDataStore();
+    vi.spyOn(store, 'setLike').mockResolvedValue(undefined);
     const onCardClick = vi.fn();
     const w = mount(MediaCard, {
       props: { item: media() },
       attrs: { onClick: onCardClick },
     });
-    await w.find('.media-card__actions .love-button').trigger('click');
+    await w.find('.media-card__actions .thumb-rating__btn--up').trigger('click');
     expect(onCardClick).not.toHaveBeenCalled();
   });
 
   it('passes an empty apiBase when no phlixConfig is provided (standalone mount)', async () => {
     const store = useUserItemDataStore();
-    const cycle = vi.spyOn(store, 'cycleLove').mockResolvedValue(undefined);
+    const setLike = vi.spyOn(store, 'setLike').mockResolvedValue(undefined);
     const w = mount(MediaCard, { props: { item: media() } });
-    await w.find('.media-card__actions .love-button').trigger('click');
-    expect(cycle).toHaveBeenCalledWith('m1', '');
+    await w.find('.media-card__actions .thumb-rating__btn--up').trigger('click');
+    expect(setLike).toHaveBeenCalledWith('m1', 1, '');
   });
 });
 

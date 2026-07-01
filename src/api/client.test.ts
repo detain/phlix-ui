@@ -790,6 +790,32 @@ describe('ApiClient', () => {
             expect(calls[0]!.url).toBe('https://h/api/v1/media/a%2Fb/like');
         });
 
+        it('a 204 No Content success resolves to undefined WITHOUT parsing the (empty) body', async () => {
+            const tokens = new MemoryTokenStore({ access: 't' });
+            // A real empty-body 204: calling .json() on it throws. handleResponse must
+            // short-circuit on the 204 BEFORE ever touching .json(), so this never fires.
+            const jsonSpy = vi.fn(() => Promise.reject(new SyntaxError('Unexpected end of JSON input')));
+            const fetchImpl = () =>
+                Promise.resolve({
+                    ok: true,
+                    status: 204,
+                    headers: new Headers(),
+                    json: jsonSpy,
+                    text: () => Promise.resolve(''),
+                } as unknown as Response);
+            const client = new ApiClient({
+                baseUrl: 'https://h',
+                tokenStore: tokens,
+                fetchImpl: fetchImpl as unknown as typeof fetch,
+            });
+
+            // removeFavorite() goes through delete() → handleResponse(); a 204 must
+            // resolve (not throw) so the caller's success path runs.
+            const res = await client.removeFavorite('m1');
+            expect(res).toBeUndefined();
+            expect(jsonSpy).not.toHaveBeenCalled();
+        });
+
         it('markWatched POSTs to the watched endpoint with no body', async () => {
             const tokens = new MemoryTokenStore({ access: 't' });
             const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Marked as watched' } }]);

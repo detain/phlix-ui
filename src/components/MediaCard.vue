@@ -17,7 +17,7 @@
  */
 import { computed, ref, onMounted, inject } from 'vue';
 import Icon from './Icon.vue';
-import LoveButton from './LoveButton.vue';
+import ThumbRating from './ThumbRating.vue';
 import Menu from './ui/Menu.vue';
 import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
@@ -83,7 +83,7 @@ const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
 /** Whether THIS item is currently favorited per the store (false when unknown). */
 const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
 
-/** Current 0-3 love level for THIS item per the store (0 when unknown). */
+/** Current −2..2 thumbs rating for THIS item per the store (0 when unknown). */
 const loveLevel = computed(() => userItemData.likeLevel(props.item.id));
 
 /** Whether the current user is an admin. */
@@ -121,12 +121,13 @@ function onMenuSelect(item: { label: string }): void {
 }
 
 /**
- * Cycle the multi-level love (0→1→2→3→0) in the store (optimistic + rollback +
- * one PUT there). Bound to LoveButton's `@cycle` ONLY (not `@update:level`) so a
- * single click triggers exactly one store cycle + one PUT.
+ * Persist the thumbs rating for this item in the store (optimistic + rollback +
+ * one PUT there). Bound to ThumbRating's `@cycle` ONLY (not `@update:level`) so a
+ * single thumb click triggers exactly one store write + one PUT. The widget hands
+ * us the already-computed NEXT level on the −2..2 axis.
  */
-function onLove(): void {
-  void userItemData.cycleLove(props.item.id, phlixConfig?.apiBase ?? '');
+function onLove(next: number): void {
+  void userItemData.setLike(props.item.id, next, phlixConfig?.apiBase ?? '');
 }
 
 /**
@@ -262,10 +263,11 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             <Icon name="play" />
           </button>
 
-          <!-- [ Love ] — 4-state like_level. Only `@cycle` is bound (NOT
-               `@update:level`) so each click triggers exactly ONE store cycle +
-               ONE PUT. `.stop.prevent` keeps the click off the stretched link. -->
-          <LoveButton
+          <!-- [ Rating ] — thumbs up/down (−2..2 like_level). Only `@cycle` is
+               bound (NOT `@update:level`) so each thumb click triggers exactly ONE
+               store write + ONE PUT. `.stop.prevent` keeps the click off the
+               stretched link. -->
+          <ThumbRating
             :level="loveLevel"
             @cycle="onLove"
             @click.stop.prevent
@@ -587,15 +589,19 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   display: grid;
   place-items: center;
   border-radius: var(--radius-full);
+  /* White wireframe icons on a transparent background — no button chrome, so the
+     overlay reads as icons over the poster rather than a row of pills. */
   color: var(--text);
-  background: var(--surface-glass-strong);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: none;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-base) var(--ease-out);
+  transition: transform var(--dur-fast) var(--ease-spring), color var(--dur-base) var(--ease-out);
 }
+/* Hover feedback without a background: tint amber + a small scale. */
 .media-card__iconbtn:hover {
   transform: scale(1.08);
+  color: var(--accent);
 }
 .media-card__iconbtn:focus-visible {
   outline: none;
@@ -604,7 +610,6 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 /* Favorited state: the bookmark renders filled + amber so it reads as "saved". */
 .media-card__iconbtn.is-active {
   color: var(--accent);
-  border-color: var(--accent);
 }
 .media-card__iconbtn.is-active :deep(svg) {
   fill: currentColor;
@@ -612,10 +617,11 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 .media-card__iconbtn--play {
   width: 46px;
   height: 46px;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-color: transparent;
-  box-shadow: var(--glow-amber);
+  /* No background chrome either — the play glyph itself carries the amber accent. */
+  background: transparent;
+  color: var(--accent);
+  border: none;
+  box-shadow: none;
   font-size: 1.25rem;
 }
 

@@ -22,7 +22,7 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import Icon from './Icon.vue';
-import LoveButton from './LoveButton.vue';
+import ThumbRating from './ThumbRating.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
 import { useMessages } from '../composables/useMessages';
@@ -129,7 +129,7 @@ const userItemData = useUserItemDataStore();
 /** Whether the currently-playing item is favorited per the store (false when unknown). */
 const isFavorited = computed(() => userItemData.isFavorite(props.media.id));
 
-/** Current 0-3 love level for the currently-playing item per the store (0 when unknown). */
+/** Current −2..2 thumbs rating for the currently-playing item per the store (0 when unknown). */
 const loveLevel = computed(() => userItemData.likeLevel(props.media.id));
 
 /**
@@ -142,13 +142,13 @@ function onFavorite(): void {
 }
 
 /**
- * Cycle the multi-level love (0→1→2→3→0) in the store (optimistic + rollback +
- * one PUT there). Bound to LoveButton's `@cycle` ONLY (NOT `@update:level`) — the
- * button emits BOTH on a single activate, so binding both would double-cycle /
- * double-PUT (the locked single-cycle rule from Step 10.6).
+ * Persist the thumbs rating in the store (optimistic + rollback + one PUT there).
+ * Bound to ThumbRating's `@cycle` ONLY (NOT `@update:level`) — the widget emits
+ * BOTH on a single activate, so binding both would double-write / double-PUT. The
+ * widget hands us the already-computed NEXT level on the −2..2 axis.
  */
-function onLove(): void {
-  void userItemData.cycleLove(props.media.id, apiBaseForUserData());
+function onLove(next: number): void {
+  void userItemData.setLike(props.media.id, next, apiBaseForUserData());
 }
 
 /** Playback-speed ladder for the `<`/`>` shortcuts. */
@@ -936,7 +936,7 @@ onBeforeUnmount(() => {
             <Icon :name="isFavorited ? 'bookmark' : 'bookmark-plus'" />
           </button>
 
-          <LoveButton :level="loveLevel" @cycle="onLove" />
+          <ThumbRating :level="loveLevel" @cycle="onLove" />
 
           <VolumeControl />
           <SpeedMenu />
