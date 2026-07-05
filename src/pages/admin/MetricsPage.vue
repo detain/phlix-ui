@@ -89,15 +89,22 @@ const routesError = ref<string | null>(null);
 // Chart series helpers
 // ---------------------------------------------------------------------------
 
-/** Convert bytes/s to Mbps. */
+/** Convert bytes/s to Mbps (megaBITS/s): bytes×8 ÷ 1e6. */
 function bpsToMbps(bps: number): number {
-  return bps / 1_000_000;
+  return (bps * 8) / 1_000_000;
 }
 
-/** History bucket timestamps as ISO strings for ApexCharts xaxis. */
+/** Parse a server datetime bucket ("Y-m-d H:i:s") to epoch ms, or NaN. */
+function bucketToMs(bucket: string): number {
+  // Normalise the SQL "space" separator to ISO so Date.parse is deterministic.
+  return Date.parse(bucket.replace(' ', 'T'));
+}
+
+/** History bucket timestamps as clock strings for the ApexCharts xaxis. */
 const historyLabels = computed<string[]>(() =>
   history.value.map((b) => {
-    const d = new Date(b.bucket * 1000);
+    const ms = bucketToMs(b.bucket);
+    const d = new Date(Number.isFinite(ms) ? ms : 0);
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }),
 );
@@ -135,13 +142,20 @@ function formatMbps(bps: number): string {
   return `${bpsToMbps(bps).toFixed(2)} Mbps`;
 }
 
-/** Format a Unix timestamp bucket as a relative time string. */
-function relativeTime(bucket: number): string {
-  const diff = Math.floor((Date.now() / 1000) - bucket);
+/** Format a Unix timestamp (seconds) as a relative time string. */
+function relativeTime(epochSeconds: number): string {
+  const diff = Math.floor((Date.now() / 1000) - epochSeconds);
   if (diff < 60) return `${diff}s ago`;
   const m = Math.floor(diff / 60);
   if (m < 60) return `${m}m ago`;
   return `${Math.floor(m / 60)}h ago`;
+}
+
+/** "Started" cell: a server datetime string → relative time, or "—" if unparseable. */
+function openedAgo(openedAt: string): string {
+  const ms = bucketToMs(openedAt);
+  if (!Number.isFinite(ms)) return '—';
+  return relativeTime(Math.floor(ms / 1000));
 }
 
 /** ms tone: green under 100, yellow under 500, red otherwise. */
@@ -460,22 +474,23 @@ const gridDefaults = {
             <tr>
               <th scope="col">Remote</th>
               <th scope="col">User</th>
+              <th scope="col">Kind</th>
               <th scope="col">Started</th>
               <th scope="col" class="metrics__th--bar">Throughput (in / out)</th>
-              <th scope="col">Requests</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="c in connections" :key="c.id">
-              <td class="metrics__mono">{{ c.remote_addr }}</td>
-              <td>{{ c.user_name ?? '—' }}</td>
-              <td class="metrics__muted">{{ relativeTime(Math.floor(new Date(c.started_at).getTime() / 1000)) }}</td>
+              <td class="metrics__mono">{{ c.remote_ip || '—' }}</td>
+              <td class="metrics__mono">{{ c.user_id ?? '—' }}</td>
+              <td><Badge tone="neutral">{{ c.kind }}</Badge></td>
+              <td class="metrics__muted">{{ openedAgo(c.opened_at) }}</td>
               <td class="metrics__bar-cell">
                 <div class="metrics__bar-row">
                   <div class="metrics__bar-wrap">
                     <div
                       class="metrics__bar metrics__bar--in"
-                      :style="{ width: `${Math.min(100, (c.bytes_in_rate / (1024 * 1024)) * 10)}%` }"
+                      :style="{ width: `${Math.min(100, bpsToMbps(c.bytes_in_rate))}%` }"
                       :title="`In: ${formatMbps(c.bytes_in_rate)}`"
                     />
                   </div>
@@ -485,14 +500,13 @@ const gridDefaults = {
                   <div class="metrics__bar-wrap">
                     <div
                       class="metrics__bar metrics__bar--out"
-                      :style="{ width: `${Math.min(100, (c.bytes_out_rate / (1024 * 1024)) * 10)}%` }"
+                      :style="{ width: `${Math.min(100, bpsToMbps(c.bytes_out_rate))}%` }"
                       :title="`Out: ${formatMbps(c.bytes_out_rate)}`"
                     />
                   </div>
                   <span class="metrics__bar-label">{{ formatMbps(c.bytes_out_rate) }}</span>
                 </div>
               </td>
-              <td class="metrics__mono">{{ c.requests.toLocaleString() }}</td>
             </tr>
           </tbody>
         </table>

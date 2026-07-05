@@ -12,7 +12,7 @@ export interface MetricsSnapshot {
 }
 /** One time-bucket from the history series. */
 export interface MetricsHistoryBucket {
-    bucket: number;
+    bucket: string;
     bytes_in: number;
     bytes_out: number;
     requests: number;
@@ -20,16 +20,19 @@ export interface MetricsHistoryBucket {
     p50_ms: number;
     p95_ms: number;
 }
-/** An active server connection with per-client throughput rates. */
+/**
+ * An active server connection with per-client throughput rates. Field names
+ * mirror the server row (MetricsRepository::liveConnections()): connection_id,
+ * kind, remote_ip, user_id, bytes_*_rate, opened_at.
+ */
 export interface MetricsConnection {
     id: string;
-    remote_addr: string;
+    kind: string;
+    remote_ip: string;
     user_id: string | null;
-    user_name: string | null;
-    started_at: string;
     bytes_in_rate: number;
     bytes_out_rate: number;
-    requests: number;
+    opened_at: string;
 }
 /** A route entry with aggregated request stats. */
 export interface MetricsRoute {
