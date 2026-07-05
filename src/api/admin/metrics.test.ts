@@ -18,7 +18,7 @@ const snapshot = {
 };
 
 const historyBucket = {
-  bucket: 1_725_782_400,
+  bucket: '2026-09-08 08:00:00', // server datetime STRING (FROM_UNIXTIME), NOT epoch
   bytes_in: 2_000_000_000,
   bytes_out: 10_000_000_000,
   requests: 5000,
@@ -27,15 +27,31 @@ const historyBucket = {
   p95_ms: 75,
 };
 
-const connection = {
-  id: 'conn-1',
-  remote_addr: '192.168.1.100',
+// Raw server row exactly as MetricsRepository::liveConnections() emits it.
+const serverConnection = {
+  connection_id: 'conn-1',
+  kind: 'websocket',
   user_id: 'u1',
-  user_name: 'Alice',
-  started_at: '2026-07-01T10:00:00Z',
+  remote_ip: '192.168.1.100',
+  session_id: null,
+  media_item_id: null,
+  bytes_in: 1_000,
+  bytes_out: 2_000,
   bytes_in_rate: 50_000,
   bytes_out_rate: 500_000,
-  requests: 120,
+  opened_at: '2026-07-01 10:00:00',
+  last_seen_at: '2026-07-01 10:05:00',
+};
+
+// The SPA-facing shape toConnection() maps the server row to.
+const mappedConnection = {
+  id: 'conn-1',
+  kind: 'websocket',
+  remote_ip: '192.168.1.100',
+  user_id: 'u1',
+  bytes_in_rate: 50_000,
+  bytes_out_rate: 500_000,
+  opened_at: '2026-07-01 10:00:00',
 };
 
 const route = {
@@ -104,23 +120,55 @@ describe('AdminMetricsApi', () => {
     expect(await api.getHistory()).toEqual([]);
   });
 
+  it('getHistory() keeps the datetime-string bucket (not collapsed to epoch 0)', async () => {
+    // Regression for the bucket type drift: the server sends a datetime STRING;
+    // asNumber() previously turned it into NaN -> 0, stacking the whole X axis
+    // on 1970. The bucket must survive as the raw string.
+    const get = vi.fn().mockResolvedValue({ data: [historyBucket] });
+    const api = new AdminMetricsApi(clientWith(get));
+    const [b] = await api.getHistory();
+    expect(b.bucket).toBe('2026-09-08 08:00:00');
+  });
+
   // -------------------------------------------------------------------------
   // getConnections
   // -------------------------------------------------------------------------
 
-  it('getConnections() GETs connections with ttl param and unwraps { data }', async () => {
-    const get = vi.fn().mockResolvedValue({ data: [connection] });
+  it('getConnections() GETs connections with ttl param and maps the server row', async () => {
+    const get = vi.fn().mockResolvedValue({ data: [serverConnection] });
     const api = new AdminMetricsApi(clientWith(get));
     const res = await api.getConnections(30);
     expect(get).toHaveBeenCalledWith('/api/v1/admin/metrics/connections', { ttl: '30' });
-    expect(res).toEqual([connection]);
+    expect(res).toEqual([mappedConnection]);
   });
 
   it('getConnections() defaults to ttl=15', async () => {
-    const get = vi.fn().mockResolvedValue({ data: [connection] });
+    const get = vi.fn().mockResolvedValue({ data: [serverConnection] });
     const api = new AdminMetricsApi(clientWith(get));
     await api.getConnections();
     expect(get).toHaveBeenCalledWith('/api/v1/admin/metrics/connections', { ttl: '15' });
+  });
+
+  it('getConnections() reads the server keys (connection_id/remote_ip/opened_at/kind)', async () => {
+    const get = vi.fn().mockResolvedValue({ data: [serverConnection] });
+    const api = new AdminMetricsApi(clientWith(get));
+    const [c] = await api.getConnections();
+    expect(c.id).toBe('conn-1');
+    expect(c.remote_ip).toBe('192.168.1.100');
+    expect(c.opened_at).toBe('2026-07-01 10:00:00');
+    expect(c.kind).toBe('websocket');
+  });
+
+  it('getConnections() no longer reads the legacy id/remote_addr/started_at keys', async () => {
+    // Regression for the field drift: a payload carrying only the OLD names maps
+    // to empty fields, proving the mapper switched to the real server shape.
+    const get = vi.fn().mockResolvedValue({
+      data: [{ id: 'legacy', remote_addr: '10.0.0.1', started_at: 'x', requests: 9 }],
+    });
+    const api = new AdminMetricsApi(clientWith(get));
+    const [c] = await api.getConnections();
+    expect(c.id).toBe('');
+    expect(c.remote_ip).toBe('');
   });
 
   it('getConnections() degrades to [] when data is not an array', async () => {
@@ -182,13 +230,12 @@ describe('AdminMetricsApi', () => {
     expect(res.active_connections).toBe(42);
   });
 
-  it('getConnections() handles null user_id / user_name', async () => {
+  it('getConnections() maps a null user_id to null', async () => {
     const get = vi.fn().mockResolvedValue({
-      data: [{ ...connection, user_id: null, user_name: null }],
+      data: [{ ...serverConnection, user_id: null }],
     });
     const api = new AdminMetricsApi(clientWith(get));
     const res = await api.getConnections();
     expect(res[0].user_id).toBeNull();
-    expect(res[0].user_name).toBeNull();
   });
 });

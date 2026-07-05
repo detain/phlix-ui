@@ -26,7 +26,7 @@ const snapshot = {
 };
 
 const historyBucket = {
-  bucket: Math.floor(Date.now() / 1000) - 120,
+  bucket: '2026-09-08 08:00:00', // server datetime STRING (not epoch)
   bytes_in: 2_000_000_000,
   bytes_out: 10_000_000_000,
   requests: 5000,
@@ -35,15 +35,20 @@ const historyBucket = {
   p95_ms: 75,
 };
 
+// Raw server connection row (the component's AdminMetricsApi maps it via toConnection).
 const connection = {
-  id: 'conn-1',
-  remote_addr: '192.168.1.100',
-  user_id: 'u1',
-  user_name: 'Alice',
-  started_at: new Date(Date.now() - 30_000).toISOString(),
+  connection_id: 'conn-1',
+  kind: 'websocket',
+  user_id: 'user-alice',
+  remote_ip: '192.168.1.100',
+  session_id: null,
+  media_item_id: null,
+  bytes_in: 1_000,
+  bytes_out: 2_000,
   bytes_in_rate: 50_000,
   bytes_out_rate: 500_000,
-  requests: 120,
+  opened_at: '2026-07-01 10:00:00',
+  last_seen_at: '2026-07-01 10:05:00',
 };
 
 const route = {
@@ -127,7 +132,7 @@ describe('Admin MetricsPage', () => {
     expect(text).toContain('Request Rate');
     expect(text).toContain('Live Connections');
     expect(text).toContain('Top Routes by Latency');
-    expect(text).toContain('Alice'); // connection user
+    expect(text).toContain('user-alice'); // connection user_id (no user_name from the server)
     expect(text).toContain('/api/v1/media'); // route path
     w.unmount();
   });
@@ -140,8 +145,8 @@ describe('Admin MetricsPage', () => {
 
     const text = w.text();
     expect(text).toContain('42 active connections');
-    expect(text).toContain('1.23 Mbps'); // bytes_in_per_sec in Mbps
-    expect(text).toContain('9.88 Mbps'); // bytes_out_per_sec in Mbps
+    expect(text).toContain('9.88 Mbps'); // bytes_in_per_sec (1_234_567 B/s ×8 ÷1e6)
+    expect(text).toContain('79.01 Mbps'); // bytes_out_per_sec (9_876_543 B/s ×8 ÷1e6)
     expect(text).toContain('128.5 req/s');
     expect(text).toContain('p50 12ms');
     w.unmount();
@@ -157,8 +162,9 @@ describe('Admin MetricsPage', () => {
     const connTable = w.find('table[aria-label="Live connections"]');
     const rows = connTable!.findAll('tbody tr');
     expect(rows.length).toBe(1);
-    expect(rows[0].text()).toContain('192.168.1.100');
-    expect(rows[0].text()).toContain('Alice');
+    expect(rows[0].text()).toContain('192.168.1.100'); // remote_ip
+    expect(rows[0].text()).toContain('user-alice'); // user_id
+    expect(rows[0].text()).toContain('websocket'); // kind badge
     // Throughput bars render as divs
     expect(rows[0].find('.metrics__bar--in').exists()).toBe(true);
     expect(rows[0].find('.metrics__bar--out').exists()).toBe(true);

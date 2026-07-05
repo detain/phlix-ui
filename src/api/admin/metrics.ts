@@ -43,7 +43,10 @@ export interface MetricsSnapshot {
 
 /** One time-bucket from the history series. */
 export interface MetricsHistoryBucket {
-  bucket: number; // Unix timestamp (seconds)
+  // The server emits this as a datetime STRING ("Y-m-d H:i:s" via FROM_UNIXTIME),
+  // NOT epoch seconds — typing it as a number made asNumber() collapse every
+  // bucket to 0 and stack the whole X axis on the 1970 epoch.
+  bucket: string;
   bytes_in: number;
   bytes_out: number;
   requests: number;
@@ -52,16 +55,19 @@ export interface MetricsHistoryBucket {
   p95_ms: number;
 }
 
-/** An active server connection with per-client throughput rates. */
+/**
+ * An active server connection with per-client throughput rates. Field names
+ * mirror the server row (MetricsRepository::liveConnections()): connection_id,
+ * kind, remote_ip, user_id, bytes_*_rate, opened_at.
+ */
 export interface MetricsConnection {
   id: string;
-  remote_addr: string;
+  kind: string;
+  remote_ip: string;
   user_id: string | null;
-  user_name: string | null;
-  started_at: string;
   bytes_in_rate: number;
   bytes_out_rate: number;
-  requests: number;
+  opened_at: string;
 }
 
 /** A route entry with aggregated request stats. */
@@ -93,7 +99,7 @@ function toSnapshot(r: Raw): MetricsSnapshot {
 
 function toHistoryBucket(r: Raw): MetricsHistoryBucket {
   return {
-    bucket: asNumber(r['bucket']),
+    bucket: asString(r['bucket']),
     bytes_in: asNumber(r['bytes_in']),
     bytes_out: asNumber(r['bytes_out']),
     requests: asNumber(r['requests']),
@@ -105,14 +111,13 @@ function toHistoryBucket(r: Raw): MetricsHistoryBucket {
 
 function toConnection(r: Raw): MetricsConnection {
   return {
-    id: asString(r['id']),
-    remote_addr: asString(r['remote_addr']),
+    id: asString(r['connection_id']),
+    kind: asString(r['kind'], 'http'),
+    remote_ip: asString(r['remote_ip']),
     user_id: r['user_id'] != null ? asString(r['user_id']) : null,
-    user_name: r['user_name'] != null ? asString(r['user_name']) : null,
-    started_at: asString(r['started_at']),
     bytes_in_rate: asNumber(r['bytes_in_rate']),
     bytes_out_rate: asNumber(r['bytes_out_rate']),
-    requests: asNumber(r['requests']),
+    opened_at: asString(r['opened_at']),
   };
 }
 

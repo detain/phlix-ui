@@ -885,7 +885,7 @@ var Ri = fr("server", () => {
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-BDlHLBSv.js")
+	component: () => import("./MetricsPage-BwpFtE-X.js")
 }, ia = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
