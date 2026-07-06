@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.71.0] - 2026-07-06
+
+### Fixed
+
+- **Subtitles that start enabled now paint right away** — when a video opened with captions already on (a server-default subtitle track), the cues stayed blank until you toggled captions off and back on. The custom caption overlay reads the selected track's active cues synchronously the moment it's selected, but a server subtitle sidecar (WebVTT) loads its cues asynchronously — so that first read came back empty and the browser didn't reliably fire `cuechange` for the cue already active at load. The overlay now also re-reads once the `<track>` finishes loading, so the first cue appears without the manual toggle.
+
 ## [0.66.0] - 2026-07-01
 
 ### Fixed
