@@ -96,6 +96,13 @@ const containerWidth = ref(0);
 const viewportHeight = ref(0);
 const scrollTop = ref(0); // grid-top scrolled above viewport top (≥ 0)
 
+// Throttle scroll measurements to avoid calling getBoundingClientRect on every
+// scroll event (which can fire hundreds of times per second). We use a timestamp
+// check rather than rAF because Firefox aggressively throttles rAF during
+// scrolling, causing the window position to "freeze" visually.
+let lastScrollMeasureTime = 0;
+const SCROLL_MEASURE_THROTTLE_MS = 16;
+
 function measure(): void {
   const el = sizerEl.value;
   if (!el || typeof el.getBoundingClientRect !== 'function') return;
@@ -104,6 +111,14 @@ function measure(): void {
   const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
   if (vh > 0) viewportHeight.value = vh;
   scrollTop.value = Math.max(0, -rect.top);
+}
+
+// Throttled scroll handler — at most one measure() per SCROLL_MEASURE_THROTTLE_MS.
+function throttledMeasure(): void {
+  const now = performance.now();
+  if (now - lastScrollMeasureTime < SCROLL_MEASURE_THROTTLE_MS) return;
+  lastScrollMeasureTime = now;
+  measure();
 }
 
 // rAF-coalesced scroll/resize so we measure at most once per frame.
@@ -289,14 +304,12 @@ watch(
 onMounted(() => {
   measure();
   if (typeof window !== 'undefined') {
-    // Measure SYNCHRONOUSLY on scroll (not rAF-deferred): the window must track
-    // the scroll position every event. A rAF defer adds latency and, worse, can
-    // stall under load — `requestAnimationFrame` is throttled aggressively during
-    // scrolling (notably on Firefox), which froze the window so the same titles
-    // appeared to "stay" on screen while scrolling. `measure()` is one cheap
-    // layout read and Vue batches the resulting re-render. Resize stays rAF-
-    // coalesced (it can fire in bursts and isn't latency-critical).
-    window.addEventListener('scroll', measure, { passive: true });
+    // Throttle scroll measurements to avoid calling getBoundingClientRect on
+    // every scroll event. The throttle uses a timestamp (not rAF) because
+    // Firefox aggressively throttles rAF during scrolling, which caused the
+    // window to visually "freeze". Resize stays rAF-coalesced (it can fire in
+    // bursts and isn't latency-critical).
+    window.addEventListener('scroll', throttledMeasure, { passive: true });
     window.addEventListener('resize', scheduleMeasure, { passive: true });
   }
   attachResizeObserver();
@@ -305,7 +318,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
-    window.removeEventListener('scroll', measure);
+    window.removeEventListener('scroll', throttledMeasure);
     window.removeEventListener('resize', scheduleMeasure);
   }
   if (frame) {

@@ -238,23 +238,51 @@ async function fetchRoutes(): Promise<void> {
 // Lifecycle
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Visibility-aware polling: pause timers when the tab is hidden to avoid
+// wasting CPU/bandwidth and restart them when the tab becomes visible again.
+// ---------------------------------------------------------------------------
+
+function pausePolling(): void {
+  if (snapshotTimer !== null) { clearInterval(snapshotTimer); snapshotTimer = null; }
+  if (connectionsTimer !== null) { clearInterval(connectionsTimer); connectionsTimer = null; }
+  if (historyTimer !== null) { clearInterval(historyTimer); historyTimer = null; }
+  if (routesTimer !== null) { clearInterval(routesTimer); routesTimer = null; }
+}
+
+function resumePolling(): void {
+  if (snapshotTimer === null) snapshotTimer = setInterval(() => void fetchSnapshot(), SNAPSHOT_POLL_MS);
+  if (connectionsTimer === null) connectionsTimer = setInterval(() => void fetchConnections(), SNAPSHOT_POLL_MS);
+  if (historyTimer === null) historyTimer = setInterval(() => void fetchHistory(), HISTORY_POLL_MS);
+  if (routesTimer === null) routesTimer = setInterval(() => void fetchRoutes(), HISTORY_POLL_MS);
+}
+
+function handleVisibilityChange(): void {
+  if (document.hidden) {
+    pausePolling();
+  } else {
+    resumePolling();
+  }
+}
+
 onMounted(() => {
   void fetchSnapshot();
   void fetchHistory();
   void fetchConnections();
   void fetchRoutes();
 
-  snapshotTimer = setInterval(() => void fetchSnapshot(), SNAPSHOT_POLL_MS);
-  connectionsTimer = setInterval(() => void fetchConnections(), SNAPSHOT_POLL_MS);
-  historyTimer = setInterval(() => void fetchHistory(), HISTORY_POLL_MS);
-  routesTimer = setInterval(() => void fetchRoutes(), HISTORY_POLL_MS);
+  resumePolling();
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
 });
 
 onBeforeUnmount(() => {
-  if (snapshotTimer !== null) { clearInterval(snapshotTimer); snapshotTimer = null; }
-  if (connectionsTimer !== null) { clearInterval(connectionsTimer); connectionsTimer = null; }
-  if (historyTimer !== null) { clearInterval(historyTimer); historyTimer = null; }
-  if (routesTimer !== null) { clearInterval(routesTimer); routesTimer = null; }
+  pausePolling();
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }
 });
 
 // ---------------------------------------------------------------------------

@@ -99,10 +99,27 @@ function stopTimer(): void {
     timer = null;
   }
 }
+
 function syncTimer(): void {
   stopTimer();
   if (autoRefresh.value && selected.value !== '') {
     timer = setInterval(() => void refresh(), AUTO_REFRESH_MS);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Visibility-aware polling: pause auto-refresh when the tab is hidden and
+// resume it when the tab becomes visible again (if conditions still met).
+// ---------------------------------------------------------------------------
+
+function handleVisibilityChange(): void {
+  if (document.hidden) {
+    stopTimer();
+  } else {
+    // Restart timer if auto-refresh is still enabled and a file is selected
+    if (autoRefresh.value && selected.value !== '') {
+      timer = setInterval(() => void refresh(), AUTO_REFRESH_MS);
+    }
   }
 }
 
@@ -111,8 +128,19 @@ const autoRefresh = ref(false);
 watch([selected, lineCount], () => void refresh());
 watch([autoRefresh, selected, lineCount], syncTimer);
 
-onMounted(loadList);
-onBeforeUnmount(stopTimer);
+onMounted(() => {
+  loadList();
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
+});
+
+onBeforeUnmount(() => {
+  stopTimer();
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }
+});
 </script>
 
 <template>
