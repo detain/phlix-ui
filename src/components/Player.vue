@@ -248,6 +248,14 @@ function evaluateForCurrentMedia(): void {
   upNextActive.value = false;
   // Tear down any previous HLS session; start a fresh one if the new item needs it.
   tc.reset();
+  // The <video> element is REUSED across episode navigation (PlayerPage swaps
+  // `media` with no `:key`). Its `currentTime` carries over — and on the transcode
+  // path `videoSrc` stays undefined (hls.js drives the element via MSE), so the
+  // browser never resets it and hls.js re-attaches at the PREVIOUS episode's
+  // position (watch 75% of one, hit Next → the next starts 75% in). Zero it so a
+  // new item starts at the beginning; a genuine resume is applied afterwards via
+  // `pendingSeek` / the resume prompt (which the transcode path suppresses).
+  if (videoRef.value) videoRef.value.currentTime = 0;
   if (transcodeNeeded.value) beginTranscode();
 }
 

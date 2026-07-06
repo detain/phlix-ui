@@ -1125,6 +1125,16 @@ describe('Player — PiP & Media Session (R3.7)', () => {
     expect(store.streamUrl).toBe('http://x/m2');
   });
 
+  it('resets the reused <video> currentTime to 0 when the media changes (next episode starts at the beginning)', async () => {
+    // The element is reused across episode nav (no :key); on the transcode path the
+    // browser never resets currentTime, so hls.js would re-attach at the previous
+    // episode's position. Simulate being 75% into ep1, then switch to ep2.
+    const { w, state } = mountPlayer({ media: media({ id: 'ep1', path: '/lib/Ep1.mkv' }), streamUrl: 'http://x/media/ep1/stream' });
+    state.currentTime = 1350;
+    await w.setProps({ media: media({ id: 'ep2', path: '/lib/Ep2.mkv' }), streamUrl: 'http://x/media/ep2/stream' });
+    expect(state.currentTime).toBe(0);
+  });
+
   it('tears down the media-session handlers on unmount', () => {
     const setActionHandler = vi.fn();
     Object.defineProperty(navigator, 'mediaSession', {

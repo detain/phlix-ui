@@ -162,6 +162,7 @@ async function fe(e, t, n = {}) {
 		let i = new r({
 			enableWorker: !0,
 			lowLatencyMode: !1,
+			renderTextTracksNatively: !1,
 			...n.hlsConfig,
 			xhrSetup: (e) => {
 				let t = n.getToken?.();
@@ -1315,7 +1316,7 @@ var Bt = ["aria-label"], Vt = ["src"], Ht = { class: "upnext__body" }, Ut = { cl
 		}
 		let J = F(s.resumePositionFor(r.media.id) ?? 0), Y = F(!W.value && J.value > 0), X = null, Z = F(!1), ge = F(8), _e, ye = w(() => s.upNext);
 		function be() {
-			W.value = Nt(r.streamUrl, r.media.path), J.value = s.resumePositionFor(r.media.id) ?? 0, Y.value = !W.value && J.value > 0, X = null, Ye = !1, Ve = !1, we(), Z.value = !1, G.reset(), W.value && he();
+			W.value = Nt(r.streamUrl, r.media.path), J.value = s.resumePositionFor(r.media.id) ?? 0, Y.value = !W.value && J.value > 0, X = null, Ye = !1, Ve = !1, we(), Z.value = !1, G.reset(), x.value && (x.value.currentTime = 0), W.value && he();
 		}
 		function xe(e) {
 			let t = x.value;
@@ -1788,8 +1789,8 @@ var Bt = ["aria-label"], Vt = ["src"], Ht = { class: "upnext__body" }, Ut = { cl
 			}, null, 8, ["open"])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-86338ed0"]]);
+}), [["__scopeId", "data-v-bc19cd60"]]);
 //#endregion
 export { Le as A, Z as B, yt as C, Be as D, ft as E, Ee as F, he as G, Y as H, Te as I, de as J, J as K, De as L, Se as M, Ce as N, ze as O, xe as P, ve as R, St as S, vt as T, X as U, me as V, _e as W, H as X, ue as Y, mt as _, Xt as a, xt as b, It as c, Mt as d, Pt as f, Ct as g, Ot as h, tn as i, Fe as j, Re as k, Rt as l, zt as m, ln as n, kt as o, Nt as p, fe as q, cn as r, At as s, Mn as t, Lt as u, ht as v, bt as w, _t as x, pt as y, ge as z };
 
-//# sourceMappingURL=Player-Dy4-tSJa.js.map
+//# sourceMappingURL=Player-DmS-h7PP.js.map
