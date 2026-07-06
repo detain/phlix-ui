@@ -73,7 +73,7 @@ var ge = {
 		function Ze(e) {
 			return e === "completed" || e === "failed";
 		}
-		function E(e) {
+		function Qe(e) {
 			if (!e) return "Idle";
 			switch (e.status) {
 				case "queued": return "Queued";
@@ -83,7 +83,7 @@ var ge = {
 				default: return e.status;
 			}
 		}
-		function Qe(e) {
+		function $e(e) {
 			if (!e) return "neutral";
 			switch (e.status) {
 				case "queued":
@@ -93,107 +93,117 @@ var ge = {
 				default: return "neutral";
 			}
 		}
-		function $e(e) {
+		function et(e) {
 			return !!e && e.status === "running" && (e.items_found ?? 0) > 0;
 		}
-		function D(e) {
-			if (!$e(e) || !e) return 0;
+		function E(e) {
+			if (!et(e) || !e) return 0;
 			let t = e.items_updated / e.items_found * 100;
 			return Math.max(0, Math.min(100, Math.round(t)));
 		}
-		function et(e) {
+		function tt(e) {
 			return e ? `${e.items_updated} / ${e.items_found}` : "";
 		}
-		function tt(e) {
+		function nt(e) {
 			let t = e?.current_path;
 			if (!t) return "";
 			let n = t.split("/");
 			return n[n.length - 1] || t;
 		}
-		let O = y([]), k = y(!0), A = y(null), j = y({}), M = {};
-		function nt(e) {
-			let t = M[e];
-			t !== void 0 && (clearInterval(t), delete M[e]);
+		let D = y([]), O = y(!0), k = y(null), A = y({}), j = {}, M = /* @__PURE__ */ new Set();
+		function rt(e) {
+			let t = j[e];
+			t !== void 0 && (clearInterval(t), delete j[e]), M.delete(e);
 		}
-		async function rt(e) {
+		async function it(e) {
 			try {
 				let t = await w.scanStatus(e);
-				j.value = {
-					...j.value,
+				A.value = {
+					...A.value,
 					[e]: t
-				}, (t === null || Ze(t.status)) && nt(e);
+				}, (t === null || Ze(t.status)) && rt(e);
 			} catch {
-				nt(e);
+				rt(e);
 			}
 		}
-		function it(e) {
-			M[e] === void 0 && (M[e] = setInterval(() => {
-				rt(e);
+		function N(e) {
+			j[e] === void 0 && (j[e] = setInterval(() => {
+				it(e);
 			}, Ye.value));
 		}
-		async function N() {
-			k.value = !0, A.value = null;
+		function at() {
+			for (let e of Object.keys(j)) clearInterval(j[e]), delete j[e], M.add(e);
+		}
+		function ot() {
+			for (let e of M) N(e);
+			M.clear();
+		}
+		function st() {
+			document.hidden ? at() : ot();
+		}
+		async function P() {
+			O.value = !0, k.value = null;
 			try {
 				let e = await w.list();
-				O.value = e, st(e), await Promise.all(e.map(async (e) => {
+				D.value = e, ut(e), await Promise.all(e.map(async (e) => {
 					try {
 						let t = await w.scanStatus(e.id);
-						j.value = {
-							...j.value,
+						A.value = {
+							...A.value,
 							[e.id]: t
-						}, t !== null && !Ze(t.status) && it(e.id);
+						}, t !== null && !Ze(t.status) && N(e.id);
 					} catch {}
 				}));
 			} catch (e) {
-				A.value = n(e, "Failed to load libraries."), T.error(A.value);
+				k.value = n(e, "Failed to load libraries."), T.error(k.value);
 			} finally {
-				k.value = !1;
+				O.value = !1;
 			}
 		}
-		let P = y(!1), F = y(null), I = y(""), L = y(c[0]), R = y(""), z = y(!1), B = y(!1), at = u(() => F.value ? "Edit library" : "Add library"), V = y([]), H = y([]), U = y(!1), ot = y(!1), W = y([]), G = y({}), K = y(!1);
-		function st(e) {
+		let F = y(!1), I = y(null), L = y(""), R = y(c[0]), z = y(""), B = y(!1), V = y(!1), ct = u(() => I.value ? "Edit library" : "Add library"), H = y([]), U = y([]), W = y(!1), lt = y(!1), G = y([]), K = y({}), q = y(!1);
+		function ut(e) {
 			let t = e.find((e) => Array.isArray(e.image_types?.available) && e.image_types.available.length > 0);
-			t?.image_types?.available && (W.value = t.image_types.available);
+			t?.image_types?.available && (G.value = t.image_types.available);
 		}
-		function ct(e) {
-			let t = e?.image_types?.available ?? W.value;
-			t.length && (W.value = t);
-			let n = e?.image_types?.enabled ?? W.value.filter((e) => e.default).map((e) => e.type), r = {};
-			for (let e of W.value) r[e.type] = n.includes(e.type);
-			G.value = r, K.value = !1;
+		function dt(e) {
+			let t = e?.image_types?.available ?? G.value;
+			t.length && (G.value = t);
+			let n = e?.image_types?.enabled ?? G.value.filter((e) => e.default).map((e) => e.type), r = {};
+			for (let e of G.value) r[e.type] = n.includes(e.type);
+			K.value = r, q.value = !1;
 		}
-		function lt(e, t) {
-			G.value = {
-				...G.value,
+		function ft(e, t) {
+			K.value = {
+				...K.value,
 				[e]: t
-			}, K.value = !0;
+			}, q.value = !0;
 		}
-		let ut = [
+		let pt = [
 			"imdb",
 			"tmdb",
 			"tvdb"
-		], dt = u(() => L.value === "music" ? V.value.filter((e) => !ut.includes(e)) : V.value), ft = u(() => H.value.filter((e) => dt.value.includes(e)));
-		async function pt() {
-			if (!ot.value) {
-				ot.value = !0;
+		], mt = u(() => R.value === "music" ? H.value.filter((e) => !pt.includes(e)) : H.value), ht = u(() => U.value.filter((e) => mt.value.includes(e)));
+		async function gt() {
+			if (!lt.value) {
+				lt.value = !0;
 				try {
-					V.value = await Je.listSources();
+					H.value = await Je.listSources();
 				} catch {
-					V.value = [];
+					H.value = [];
 				}
 			}
 		}
-		function mt(e) {
-			let t = e?.options?.metadata_priority, n = t && typeof t == "object" && !Array.isArray(t) ? t : {}, r = Array.isArray(n[L.value]) ? n[L.value].filter((e) => typeof e == "string") : [];
-			H.value = r.length ? r : V.value.slice(), U.value = !1;
+		function _t(e) {
+			let t = e?.options?.metadata_priority, n = t && typeof t == "object" && !Array.isArray(t) ? t : {}, r = Array.isArray(n[R.value]) ? n[R.value].filter((e) => typeof e == "string") : [];
+			U.value = r.length ? r : H.value.slice(), W.value = !1;
 		}
-		function ht(e) {
-			H.value = e, U.value = !0;
+		function vt(e) {
+			U.value = e, W.value = !0;
 		}
-		pe(V, () => {
-			P.value && !U.value && H.value.length === 0 && (H.value = V.value.slice());
+		pe(H, () => {
+			F.value && !W.value && U.value.length === 0 && (U.value = H.value.slice());
 		});
-		function gt(e) {
+		function yt(e) {
 			return typeof e == "boolean" ? e : typeof e == "number" ? e === 1 : typeof e == "string" ? [
 				"1",
 				"true",
@@ -201,102 +211,103 @@ var ge = {
 				"on"
 			].includes(e.trim().toLowerCase()) : !1;
 		}
-		function _t() {
-			return R.value.split("\n").map((e) => e.trim()).filter((e) => e.length > 0);
+		function bt() {
+			return z.value.split("\n").map((e) => e.trim()).filter((e) => e.length > 0);
 		}
-		function vt() {
-			F.value = null, I.value = "", L.value = c[0], R.value = "", z.value = !1, mt(null), ct(null), P.value = !0;
+		function xt() {
+			I.value = null, L.value = "", R.value = c[0], z.value = "", B.value = !1, _t(null), dt(null), F.value = !0;
 		}
-		function yt(e) {
-			F.value = e, I.value = e.name, L.value = c.find((t) => t === e.type) ?? c[0], R.value = e.paths.join("\n"), z.value = gt(e.options?.series_per_directory), mt(e), ct(e), P.value = !0;
+		function St(e) {
+			I.value = e, L.value = e.name, R.value = c.find((t) => t === e.type) ?? c[0], z.value = e.paths.join("\n"), B.value = yt(e.options?.series_per_directory), _t(e), dt(e), F.value = !0;
 		}
-		function q() {
-			P.value = !1, F.value = null;
+		function J() {
+			F.value = !1, I.value = null;
 		}
-		async function bt() {
-			if (!I.value.trim()) {
+		async function Ct() {
+			if (!L.value.trim()) {
 				T.error("Name is required.");
 				return;
 			}
-			let e = _t();
+			let e = bt();
 			if (e.length === 0) {
 				T.error("Select at least one path.");
 				return;
 			}
-			B.value = !0;
+			V.value = !0;
 			try {
-				let t = F.value, n = L.value === "series";
+				let t = I.value, n = R.value === "series";
 				if (t) {
 					let r = {
-						name: I.value,
+						name: L.value,
 						paths: e
 					};
-					n && (r.series_per_directory = z.value), U.value && (r.metadata_priority = H.value.length ? { [L.value]: H.value } : null), K.value && (r.image_types = { ...G.value }), await w.update(t.id, r), T.success("Library updated.");
+					n && (r.series_per_directory = B.value), W.value && (r.metadata_priority = U.value.length ? { [R.value]: U.value } : null), q.value && (r.image_types = { ...K.value }), await w.update(t.id, r), T.success("Library updated.");
 				} else {
 					let t = {
-						name: I.value,
-						type: L.value,
+						name: L.value,
+						type: R.value,
 						paths: e
 					};
-					n && (t.series_per_directory = z.value), U.value && (t.metadata_priority = H.value.length ? { [L.value]: H.value } : null), K.value && (t.image_types = { ...G.value });
+					n && (t.series_per_directory = B.value), W.value && (t.metadata_priority = U.value.length ? { [R.value]: U.value } : null), q.value && (t.image_types = { ...K.value });
 					let r = await w.create(t);
 					T.success(r.message || "Library created.");
 				}
-				q(), await N();
+				J(), await P();
 			} catch (e) {
 				T.error(n(e, "Failed to save library."));
 			} finally {
-				B.value = !1;
+				V.value = !1;
 			}
 		}
-		let J = y(null);
-		async function xt() {
-			let e = J.value;
+		let Y = y(null);
+		async function wt() {
+			let e = Y.value;
 			if (e) try {
-				await w.remove(e.id), T.success("Library deleted."), J.value = null, await N();
+				await w.remove(e.id), T.success("Library deleted."), Y.value = null, await P();
 			} catch (e) {
-				T.error(n(e, "Failed to delete library.")), J.value = null;
+				T.error(n(e, "Failed to delete library.")), Y.value = null;
 			}
 		}
-		async function Y(e, t) {
+		async function X(e, t) {
 			try {
 				let n = t === "metadata" ? await w.matchMetadata(e.id) : t === "rescan" ? await w.rescan(e.id) : await w.scan(e.id), r = t === "metadata" ? `Metadata match queued (job ${n.job_id}).` : `Scan queued (job ${n.job_id}).`;
 				T.success(n.message || r);
-				let i = j.value[e.id];
-				j.value = {
-					...j.value,
+				let i = A.value[e.id];
+				A.value = {
+					...A.value,
 					[e.id]: i ? {
 						...i,
 						status: "queued"
 					} : null
-				}, it(e.id), rt(e.id);
+				}, N(e.id), it(e.id);
 			} catch (e) {
 				T.error(n(e, "Failed to queue scan."));
 			}
 		}
-		let X = y(null), Z = y([]), Q = y(!1), St = u(() => X.value ? `Scan history — ${X.value.name}` : "Scan history"), Ct = u({
-			get: () => X.value !== null,
+		let Z = y(null), Q = y([]), $ = y(!1), Tt = u(() => Z.value ? `Scan history — ${Z.value.name}` : "Scan history"), Et = u({
+			get: () => Z.value !== null,
 			set: (e) => {
-				e || $();
+				e || Ot();
 			}
 		});
-		async function wt(e) {
-			X.value = e, Z.value = [], Q.value = !0;
+		async function Dt(e) {
+			Z.value = e, Q.value = [], $.value = !0;
 			try {
-				Z.value = await w.scanHistory(e.id);
+				Q.value = await w.scanHistory(e.id);
 			} catch (e) {
 				T.error(n(e, "Failed to load history."));
 			} finally {
-				Q.value = !1;
+				$.value = !1;
 			}
 		}
-		function $() {
-			X.value = null, Z.value = [];
+		function Ot() {
+			Z.value = null, Q.value = [];
 		}
 		return de(() => {
-			pt(), N();
+			gt(), P(), typeof document < "u" && document.addEventListener("visibilitychange", st);
 		}), ue(() => {
-			for (let e of Object.keys(M)) clearInterval(M[e]), delete M[e];
+			for (let e of Object.keys(j)) clearInterval(j[e]), delete j[e];
+			typeof document < "u" && document.removeEventListener("visibilitychange", st);
 		}), (e, t) => (v(), p("section", ge, [
 			m("header", _e, [t[9] ||= m("h1", {
 				id: "libraries-heading",
@@ -305,7 +316,7 @@ var ge = {
 				variant: "solid",
 				size: "sm",
 				"left-icon": "plus",
-				onClick: vt
+				onClick: xt
 			}, {
 				default: S(() => [...t[8] ||= [h("Add library", -1)]]),
 				_: 1
@@ -321,26 +332,26 @@ var ge = {
 				]]),
 				_: 1
 			}),
-			k.value ? (v(), p("div", ve, [g(re, {
+			O.value ? (v(), p("div", ve, [g(re, {
 				variant: "text",
 				lines: 6
-			})])) : A.value ? (v(), d(s, {
+			})])) : k.value ? (v(), d(s, {
 				key: 1,
 				icon: "alert",
 				title: "Couldn't load libraries",
-				description: A.value
+				description: k.value
 			}, {
 				actions: S(() => [g(a, {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "rewind",
-					onClick: N
+					onClick: P
 				}, {
 					default: S(() => [...t[11] ||= [h("Retry", -1)]]),
 					_: 1
 				})]),
 				_: 1
-			}, 8, ["description"])) : O.value.length === 0 ? (v(), d(s, {
+			}, 8, ["description"])) : D.value.length === 0 ? (v(), d(s, {
 				key: 2,
 				icon: "film",
 				title: "No libraries yet",
@@ -350,7 +361,7 @@ var ge = {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "plus",
-					onClick: vt
+					onClick: xt
 				}, {
 					default: S(() => [...t[12] ||= [h("Add library", -1)]]),
 					_: 1
@@ -365,17 +376,17 @@ var ge = {
 					scope: "col",
 					class: "admin-libraries__actions-col"
 				}, "Actions")
-			])], -1), m("tbody", null, [(v(!0), p(l, null, b(O.value, (e) => (v(), p("tr", { key: e.id }, [
+			])], -1), m("tbody", null, [(v(!0), p(l, null, b(D.value, (e) => (v(), p("tr", { key: e.id }, [
 				m("td", null, x(e.name), 1),
 				m("td", null, x(e.type), 1),
 				m("td", null, x(e.paths.length) + " paths", 1),
 				m("td", null, [m("span", {
 					class: "admin-libraries__status",
 					"data-testid": `status-${e.id}`
-				}, [g(ee, { tone: Qe(j.value[e.id]) }, {
-					default: S(() => [h(x(E(j.value[e.id])), 1)]),
+				}, [g(ee, { tone: $e(A.value[e.id]) }, {
+					default: S(() => [h(x(Qe(A.value[e.id])), 1)]),
 					_: 2
-				}, 1032, ["tone"]), j.value[e.id]?.status === "failed" && j.value[e.id]?.error ? (v(), p("span", xe, x(j.value[e.id]?.error), 1)) : $e(j.value[e.id]) ? (v(), p("span", {
+				}, 1032, ["tone"]), A.value[e.id]?.status === "failed" && A.value[e.id]?.error ? (v(), p("span", xe, x(A.value[e.id]?.error), 1)) : et(A.value[e.id]) ? (v(), p("span", {
 					key: 1,
 					class: "admin-libraries__progress",
 					"data-testid": `progress-${e.id}`
@@ -383,23 +394,23 @@ var ge = {
 					m("span", {
 						class: "admin-libraries__progress-bar",
 						role: "progressbar",
-						"aria-valuenow": D(j.value[e.id]),
+						"aria-valuenow": E(A.value[e.id]),
 						"aria-valuemin": "0",
 						"aria-valuemax": "100",
 						"aria-label": `Scan progress for ${e.name}`
 					}, [m("span", {
 						class: "admin-libraries__progress-fill",
-						style: le({ width: D(j.value[e.id]) + "%" })
+						style: le({ width: E(A.value[e.id]) + "%" })
 					}, null, 4)], 8, Ce),
-					m("span", we, x(D(j.value[e.id])) + "% · " + x(et(j.value[e.id])), 1),
-					tt(j.value[e.id]) ? (v(), p("span", Te, x(tt(j.value[e.id])), 1)) : f("", !0)
+					m("span", we, x(E(A.value[e.id])) + "% · " + x(tt(A.value[e.id])), 1),
+					nt(A.value[e.id]) ? (v(), p("span", Te, x(nt(A.value[e.id])), 1)) : f("", !0)
 				], 8, Se)) : f("", !0)], 8, be)]),
 				m("td", null, [m("div", Ee, [
 					g(a, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Edit ${e.name}`,
-						onClick: (t) => yt(e)
+						onClick: (t) => St(e)
 					}, {
 						default: S(() => [...t[13] ||= [h(" Edit ", -1)]]),
 						_: 1
@@ -408,7 +419,7 @@ var ge = {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Scan ${e.name}`,
-						onClick: (t) => Y(e, "scan")
+						onClick: (t) => X(e, "scan")
 					}, {
 						default: S(() => [...t[14] ||= [h(" Scan ", -1)]]),
 						_: 1
@@ -417,7 +428,7 @@ var ge = {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Rescan ${e.name}`,
-						onClick: (t) => Y(e, "rescan")
+						onClick: (t) => X(e, "rescan")
 					}, {
 						default: S(() => [...t[15] ||= [h(" Rescan ", -1)]]),
 						_: 1
@@ -426,7 +437,7 @@ var ge = {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Match metadata for ${e.name}`,
-						onClick: (t) => Y(e, "metadata")
+						onClick: (t) => X(e, "metadata")
 					}, {
 						default: S(() => [...t[16] ||= [h(" Match metadata ", -1)]]),
 						_: 1
@@ -435,7 +446,7 @@ var ge = {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `History for ${e.name}`,
-						onClick: (t) => wt(e)
+						onClick: (t) => Dt(e)
 					}, {
 						default: S(() => [...t[17] ||= [h(" History ", -1)]]),
 						_: 1
@@ -444,7 +455,7 @@ var ge = {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Delete ${e.name}`,
-						onClick: (t) => J.value = e
+						onClick: (t) => Y.value = e
 					}, {
 						default: S(() => [...t[18] ||= [h(" Delete ", -1)]]),
 						_: 1
@@ -452,145 +463,145 @@ var ge = {
 				])])
 			]))), 128))])])),
 			g(o, {
-				modelValue: P.value,
-				"onUpdate:modelValue": t[4] ||= (e) => P.value = e,
-				title: at.value,
-				onClose: q
+				modelValue: F.value,
+				"onUpdate:modelValue": t[4] ||= (e) => F.value = e,
+				title: ct.value,
+				onClose: J
 			}, {
 				footer: S(() => [g(a, {
 					variant: "ghost",
 					size: "sm",
-					onClick: q
+					onClick: J
 				}, {
 					default: S(() => [...t[28] ||= [h("Cancel", -1)]]),
 					_: 1
 				}), g(a, {
 					variant: "solid",
 					size: "sm",
-					loading: B.value,
-					onClick: bt
+					loading: V.value,
+					onClick: Ct
 				}, {
-					default: S(() => [h(x(F.value ? "Save" : "Create"), 1)]),
+					default: S(() => [h(x(I.value ? "Save" : "Create"), 1)]),
 					_: 1
 				}, 8, ["loading"])]),
 				default: S(() => [m("form", {
 					class: "admin-libraries__form",
-					onSubmit: he(bt, ["prevent"])
+					onSubmit: he(Ct, ["prevent"])
 				}, [
 					m("label", De, [t[20] ||= m("span", { class: "admin-libraries__label" }, "Name", -1), me(m("input", {
-						"onUpdate:modelValue": t[0] ||= (e) => I.value = e,
+						"onUpdate:modelValue": t[0] ||= (e) => L.value = e,
 						type: "text",
 						class: "admin-libraries__input",
 						autocomplete: "off",
 						required: ""
-					}, null, 512), [[fe, I.value]])]),
+					}, null, 512), [[fe, L.value]])]),
 					m("div", Oe, [
 						t[21] ||= m("span", { class: "admin-libraries__label" }, "Type", -1),
-						F.value ? (v(), p("input", {
+						I.value ? (v(), p("input", {
 							key: 0,
 							class: "admin-libraries__input",
-							value: L.value,
+							value: R.value,
 							readonly: "",
 							"aria-readonly": "true",
 							"aria-label": "Type"
 						}, null, 8, ke)) : (v(), d(ne, {
 							key: 1,
-							"model-value": L.value,
+							"model-value": R.value,
 							options: Xe.value,
 							label: "Type",
-							"onUpdate:modelValue": t[1] ||= (e) => L.value = String(e)
+							"onUpdate:modelValue": t[1] ||= (e) => R.value = String(e)
 						}, null, 8, ["model-value", "options"])),
-						F.value ? (v(), p("span", Ae, "Type cannot be changed.")) : f("", !0)
+						I.value ? (v(), p("span", Ae, "Type cannot be changed.")) : f("", !0)
 					]),
 					m("label", je, [t[22] ||= m("span", { class: "admin-libraries__label" }, "Paths (one per line)", -1), me(m("textarea", {
-						"onUpdate:modelValue": t[2] ||= (e) => R.value = e,
+						"onUpdate:modelValue": t[2] ||= (e) => z.value = e,
 						class: "admin-libraries__textarea",
 						rows: "4",
 						autocomplete: "off",
 						placeholder: "/media/movies"
-					}, null, 512), [[fe, R.value]])]),
-					L.value === "series" ? (v(), p("div", Me, [g(te, {
-						modelValue: z.value,
-						"onUpdate:modelValue": t[3] ||= (e) => z.value = e,
+					}, null, 512), [[fe, z.value]])]),
+					R.value === "series" ? (v(), p("div", Me, [g(te, {
+						modelValue: B.value,
+						"onUpdate:modelValue": t[3] ||= (e) => B.value = e,
 						label: "Each series is in its own folder"
 					}, null, 8, ["modelValue"]), t[23] ||= m("span", { class: "admin-libraries__hint-text" }, " Use each top-level folder name as the series title to improve metadata matching. ", -1)])) : f("", !0),
 					m("div", Ne, [
 						t[24] ||= m("span", { class: "admin-libraries__label" }, "Metadata source priority", -1),
 						t[25] ||= m("p", { class: "admin-libraries__hint-text" }, " The order metadata sources are tried for this library. The first source with a value for a field wins. Leave as the default to use the server-wide order, or reorder / remove sources to override it just for this library. ", -1),
 						g(ae, {
-							"model-value": ft.value,
-							available: dt.value,
-							label: `${L.value} sources`,
-							"onUpdate:modelValue": ht
+							"model-value": ht.value,
+							available: mt.value,
+							label: `${R.value} sources`,
+							"onUpdate:modelValue": vt
 						}, null, 8, [
 							"model-value",
 							"available",
 							"label"
 						])
 					]),
-					W.value.length ? (v(), p("div", Pe, [
+					G.value.length ? (v(), p("div", Pe, [
 						t[26] ||= m("span", { class: "admin-libraries__label" }, "Artwork types", -1),
 						t[27] ||= m("p", { class: "admin-libraries__hint-text" }, " Which artwork types this library downloads and stores during scan and metadata matching. Unchecked types are skipped. Leave as-is to use the defaults. ", -1),
-						m("ul", Fe, [(v(!0), p(l, null, b(W.value, (e) => (v(), p("li", {
+						m("ul", Fe, [(v(!0), p(l, null, b(G.value, (e) => (v(), p("li", {
 							key: e.type,
 							class: "admin-libraries__imagetype"
 						}, [m("label", Ie, [m("input", {
 							type: "checkbox",
 							class: "admin-libraries__checkbox-input",
-							checked: G.value[e.type] ?? !1,
+							checked: K.value[e.type] ?? !1,
 							"aria-label": e.label,
-							onChange: (t) => lt(e.type, t.target.checked)
+							onChange: (t) => ft(e.type, t.target.checked)
 						}, null, 40, Le), m("span", Re, [m("span", ze, x(e.label), 1), e.providers.length ? (v(), p("span", Be, x(e.providers.join(", ")), 1)) : f("", !0)])])]))), 128))])
 					])) : f("", !0)
 				], 32)]),
 				_: 1
 			}, 8, ["modelValue", "title"]),
 			g(o, {
-				"model-value": J.value !== null,
+				"model-value": Y.value !== null,
 				title: "Delete library",
 				size: "sm",
-				"onUpdate:modelValue": t[6] ||= (e) => J.value = null
+				"onUpdate:modelValue": t[6] ||= (e) => Y.value = null
 			}, {
 				footer: S(() => [g(a, {
 					variant: "ghost",
 					size: "sm",
-					onClick: t[5] ||= (e) => J.value = null
+					onClick: t[5] ||= (e) => Y.value = null
 				}, {
 					default: S(() => [...t[31] ||= [h("Cancel", -1)]]),
 					_: 1
 				}), g(a, {
 					variant: "solid",
 					size: "sm",
-					onClick: xt
+					onClick: wt
 				}, {
 					default: S(() => [...t[32] ||= [h("Delete", -1)]]),
 					_: 1
 				})]),
 				default: S(() => [m("p", null, [
 					t[29] ||= h(" Delete library ", -1),
-					m("strong", null, x(J.value?.name), 1),
+					m("strong", null, x(Y.value?.name), 1),
 					t[30] ||= h("? This cannot be undone. ", -1)
 				])]),
 				_: 1
 			}, 8, ["model-value"]),
 			g(o, {
-				modelValue: Ct.value,
-				"onUpdate:modelValue": t[7] ||= (e) => Ct.value = e,
-				title: St.value,
+				modelValue: Et.value,
+				"onUpdate:modelValue": t[7] ||= (e) => Et.value = e,
+				title: Tt.value,
 				size: "lg"
 			}, {
 				footer: S(() => [g(a, {
 					variant: "solid",
 					size: "sm",
-					onClick: $
+					onClick: Ot
 				}, {
 					default: S(() => [...t[34] ||= [h("Close", -1)]]),
 					_: 1
 				})]),
-				default: S(() => [Q.value ? (v(), p("div", Ve, [g(re, {
+				default: S(() => [$.value ? (v(), p("div", Ve, [g(re, {
 					variant: "text",
 					lines: 4
-				})])) : Z.value.length === 0 ? (v(), d(s, {
+				})])) : Q.value.length === 0 ? (v(), d(s, {
 					key: 1,
 					icon: "list",
 					title: "No scans yet"
@@ -600,10 +611,10 @@ var ge = {
 					m("th", { scope: "col" }, "Queued"),
 					m("th", { scope: "col" }, "Completed"),
 					m("th", { scope: "col" }, "Error")
-				])], -1), m("tbody", null, [(v(!0), p(l, null, b(Z.value, (e) => (v(), p("tr", { key: e.id }, [
+				])], -1), m("tbody", null, [(v(!0), p(l, null, b(Q.value, (e) => (v(), p("tr", { key: e.id }, [
 					m("td", null, x(e.type), 1),
-					m("td", null, [g(ee, { tone: Qe(e) }, {
-						default: S(() => [h(x(E(e)), 1)]),
+					m("td", null, [g(ee, { tone: $e(e) }, {
+						default: S(() => [h(x(Qe(e)), 1)]),
 						_: 2
 					}, 1032, ["tone"])]),
 					m("td", Ue, x(e.queued_at ?? ""), 1),
@@ -614,8 +625,8 @@ var ge = {
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-cdced808"]]);
+}), [["__scopeId", "data-v-2fd87448"]]);
 //#endregion
 export { C as default };
 
-//# sourceMappingURL=LibrariesPage-DXUcr7b3.js.map
+//# sourceMappingURL=LibrariesPage-CAsgXQx8.js.map

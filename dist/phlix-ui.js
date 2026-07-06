@@ -19,7 +19,7 @@ import { t as Le } from "./Slider-CaOjV5mW.js";
 import { t as Re } from "./Switch-D-Y4B9p8.js";
 import { t as ze } from "./Chip-vZeocErt.js";
 import { t as Be } from "./Select-C7fVtNk5.js";
-import { i as Ve, n as He, r as Ue, t as We } from "./FilterBar-PqVLZrzs.js";
+import { i as Ve, n as He, r as Ue, t as We } from "./FilterBar-Dly7UMdY.js";
 import { t as Ge } from "./Modal-Cf28TADR.js";
 import { t as T } from "./Skeleton-BUq2D39t.js";
 import { a as Ke, n as qe, o as Je, s as Ye, t as Xe } from "./MetadataMatchModal-BGNvfEb7.js";
@@ -771,7 +771,7 @@ var Ri = fr("server", () => {
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-BPO2x-gS.js")
+	component: () => import("./DashboardPage-DEMsbFyN.js")
 }, Bi = {
 	name: "admin-users",
 	path: "users",
@@ -783,7 +783,7 @@ var Ri = fr("server", () => {
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-TUwmHfnB.js")
+	component: () => import("./LogsPage-BmlEBNH2.js")
 }, Hi = {
 	name: "admin-webhooks",
 	path: "webhooks",
@@ -855,7 +855,7 @@ var Ri = fr("server", () => {
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-DXUcr7b3.js")
+	component: () => import("./LibrariesPage-CAsgXQx8.js")
 }, ea = {
 	name: "admin-duplicates",
 	path: "duplicates",
@@ -885,7 +885,7 @@ var Ri = fr("server", () => {
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-BwpFtE-X.js")
+	component: () => import("./MetricsPage-BIimbuYN.js")
 }, ia = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -1073,7 +1073,7 @@ function Ca(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-Cqjo442R.js")
+			component: () => import("./LibraryPage-BKWILbLY.js")
 		},
 		{
 			path: `${t}/player/:id`,
