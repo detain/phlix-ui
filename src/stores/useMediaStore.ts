@@ -111,12 +111,16 @@ export const useMediaStore = defineStore('media', () => {
         return p;
     });
 
+    // Memoized availableGenres — only recomputes when serverFacets or items changes.
+    // The Vue computed caches the result and only re-evaluates when dependencies change.
     const availableGenres = computed(() => {
         if (serverFacets.value?.genres) return [...serverFacets.value.genres].sort();
+        if (!items.value || items.value.length === 0) return [];
         const genres = new Set<string>();
         items.value.forEach((item) => item.genres?.forEach((g) => genres.add(g)));
         return Array.from(genres).sort();
     });
+
     const availableRatings = ['G', 'PG', 'PG-13', 'R', 'NC-17', 'X', 'UNRATED'];
     const availableTypes: MediaType[] = ['movie', 'series', 'episode', 'audio', 'image'];
 

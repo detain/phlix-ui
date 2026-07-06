@@ -147,12 +147,17 @@ const statuses = ref<Record<string, ScanJob | null>>({});
 // Live-polling timers, keyed by library id.
 const timers: Record<string, ReturnType<typeof setInterval>> = {};
 
+// Track libraries that were actively polling when tab was hidden so we can
+// resume them when the tab becomes visible again.
+const pausedLibraryIds = new Set<string>();
+
 function stopPolling(libraryId: string): void {
   const timer = timers[libraryId];
   if (timer !== undefined) {
     clearInterval(timer);
     delete timers[libraryId];
   }
+  pausedLibraryIds.delete(libraryId);
 }
 
 async function pollOnce(libraryId: string): Promise<void> {
@@ -175,6 +180,34 @@ function startPolling(libraryId: string): void {
   timers[libraryId] = setInterval(() => {
     void pollOnce(libraryId);
   }, pollMs.value);
+}
+
+// ---------------------------------------------------------------------------
+// Visibility-aware polling: pause all timers when the tab is hidden and
+// resume them when the tab becomes visible again.
+// ---------------------------------------------------------------------------
+
+function pauseAllPolling(): void {
+  for (const libraryId of Object.keys(timers)) {
+    clearInterval(timers[libraryId]);
+    delete timers[libraryId];
+    pausedLibraryIds.add(libraryId);
+  }
+}
+
+function resumeAllPolling(): void {
+  for (const libraryId of pausedLibraryIds) {
+    startPolling(libraryId);
+  }
+  pausedLibraryIds.clear();
+}
+
+function handleVisibilityChange(): void {
+  if (document.hidden) {
+    pauseAllPolling();
+  } else {
+    resumeAllPolling();
+  }
 }
 
 async function loadLibraries(): Promise<void> {
@@ -537,6 +570,9 @@ function closeHistory(): void {
 onMounted(() => {
   void loadSources();
   void loadLibraries();
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
 });
 
 // Clear ALL intervals on unmount — no leaked timers.
@@ -544,6 +580,9 @@ onBeforeUnmount(() => {
   for (const id of Object.keys(timers)) {
     clearInterval(timers[id]);
     delete timers[id];
+  }
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
   }
 });
 </script>

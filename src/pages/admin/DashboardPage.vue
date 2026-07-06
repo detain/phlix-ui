@@ -240,6 +240,43 @@ function loadMoreActivity(): void {
 
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
+// ---------------------------------------------------------------------------
+// Visibility-aware polling: pause the now-playing refresh timer when the tab
+// is hidden to avoid wasting CPU/bandwidth and restart it when visible again.
+// ---------------------------------------------------------------------------
+
+function pauseRefresh(): void {
+  if (refreshTimer !== null) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
+function resumeRefresh(): void {
+  if (refreshTimer === null) {
+    refreshTimer = setInterval(() => {
+      void api
+        .getNowPlaying()
+        .then((data) => {
+          nowPlaying.value = data;
+          // A successful background refresh clears any prior initial-load error.
+          nowPlayingError.value = null;
+        })
+        .catch(() => {
+          // Swallow refresh errors so the timer doesn't spam toasts.
+        });
+    }, NOW_PLAYING_REFRESH_MS);
+  }
+}
+
+function handleVisibilityChange(): void {
+  if (document.hidden) {
+    pauseRefresh();
+  } else {
+    resumeRefresh();
+  }
+}
+
 watch(dateRange, (days) => {
   void fetchTopUsers(days);
   void fetchTopMedia(days);
@@ -251,24 +288,16 @@ onMounted(() => {
   void fetchActivity(ACTIVITY_PAGE_SIZE);
   void fetchTopUsers(dateRange.value);
   void fetchTopMedia(dateRange.value);
-  refreshTimer = setInterval(() => {
-    void api
-      .getNowPlaying()
-      .then((data) => {
-        nowPlaying.value = data;
-        // A successful background refresh clears any prior initial-load error.
-        nowPlayingError.value = null;
-      })
-      .catch(() => {
-        // Swallow refresh errors so the timer doesn't spam toasts.
-      });
-  }, NOW_PLAYING_REFRESH_MS);
+  resumeRefresh();
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
 });
 
 onBeforeUnmount(() => {
-  if (refreshTimer !== null) {
-    clearInterval(refreshTimer);
-    refreshTimer = null;
+  pauseRefresh();
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
   }
 });
 </script>
