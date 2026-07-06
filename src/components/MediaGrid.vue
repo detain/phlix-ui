@@ -101,6 +101,7 @@ const scrollTop = ref(0); // grid-top scrolled above viewport top (≥ 0)
 // check rather than rAF because Firefox aggressively throttles rAF during
 // scrolling, causing the window position to "freeze" visually.
 let lastScrollMeasureTime = 0;
+let trailingScrollTimer: ReturnType<typeof setTimeout> | null = null;
 const SCROLL_MEASURE_THROTTLE_MS = 16;
 
 function measure(): void {
@@ -113,12 +114,35 @@ function measure(): void {
   scrollTop.value = Math.max(0, -rect.top);
 }
 
-// Throttled scroll handler — at most one measure() per SCROLL_MEASURE_THROTTLE_MS.
+// Throttled scroll handler — at most one measure() per SCROLL_MEASURE_THROTTLE_MS,
+// leading-edge. A trailing-edge measure() is also scheduled so the FINAL scroll
+// position within (or right after) a throttle window is never dropped — without
+// this, a scroll event that lands inside the throttle window and is the last one
+// fired (e.g. scrolling stops immediately after) would never get measured, leaving
+// the virtualization window stale/frozen at an intermediate position.
 function throttledMeasure(): void {
   const now = performance.now();
-  if (now - lastScrollMeasureTime < SCROLL_MEASURE_THROTTLE_MS) return;
-  lastScrollMeasureTime = now;
-  measure();
+  if (now - lastScrollMeasureTime >= SCROLL_MEASURE_THROTTLE_MS) {
+    lastScrollMeasureTime = now;
+    if (trailingScrollTimer !== null) {
+      clearTimeout(trailingScrollTimer);
+      trailingScrollTimer = null;
+    }
+    measure();
+    return;
+  }
+  // Inside the throttle window — schedule (or refresh) a trailing call so the
+  // last position still gets measured once the window elapses.
+  if (trailingScrollTimer !== null) clearTimeout(trailingScrollTimer);
+  const remaining = SCROLL_MEASURE_THROTTLE_MS - (now - lastScrollMeasureTime);
+  trailingScrollTimer = setTimeout(
+    () => {
+      trailingScrollTimer = null;
+      lastScrollMeasureTime = performance.now();
+      measure();
+    },
+    Math.max(0, remaining),
+  );
 }
 
 // rAF-coalesced scroll/resize so we measure at most once per frame.
@@ -320,6 +344,10 @@ onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('scroll', throttledMeasure);
     window.removeEventListener('resize', scheduleMeasure);
+  }
+  if (trailingScrollTimer !== null) {
+    clearTimeout(trailingScrollTimer);
+    trailingScrollTimer = null;
   }
   if (frame) {
     if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame);

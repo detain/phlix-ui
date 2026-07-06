@@ -7,7 +7,7 @@ import { t as o } from "./useToastStore-BDoKlU6N.js";
 import { t as s } from "./useLibrariesStore-alvdv0Y4.js";
 import { i as ee } from "./usePageTitle-BO3GGF3M.js";
 import { t as te } from "./Button-CInT03Lp.js";
-import { n as ne, r as re, t as ie } from "./FilterBar-PqVLZrzs.js";
+import { n as ne, r as re, t as ie } from "./FilterBar-Dly7UMdY.js";
 import { t as ae } from "./MetadataMatchModal-BGNvfEb7.js";
 import { t as c } from "./EmptyState-0XgHKEGf.js";
 import { n as oe, r as l } from "./useResolvePlayable-BQXDt-BO.js";
@@ -304,4 +304,4 @@ var N = { class: "library-page" }, P = {
 //#endregion
 export { R as default };
 
-//# sourceMappingURL=LibraryPage-Cqjo442R.js.map
+//# sourceMappingURL=LibraryPage-BKWILbLY.js.map

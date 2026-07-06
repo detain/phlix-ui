@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.72.0] - 2026-07-06
+## [0.73.0] - 2026-07-06
+
+### Fixed
+
+- **Admin pages stop polling in background tabs** — MetricsPage, DashboardPage, LibrariesPage, and LogsPage now listen for the Page Visibility API and pause their `setInterval` refresh timers while the tab is hidden, resuming them (from a clean state, no double-firing) when it becomes visible again. Previously all four kept polling their endpoints every few seconds indefinitely, even when the tab was backgrounded, wasting client CPU/bandwidth and server load.
+- **MediaGrid scroll handler no longer drops the final scroll position** — the scroll listener is now throttled to at most one `measure()` per ~16ms instead of running on every `scroll` event (which can fire hundreds of times per second and call `getBoundingClientRect()` each time). The throttle also schedules a trailing-edge measurement so the last scroll position inside a throttle window is still captured — a naive leading-edge-only throttle would silently swallow that final event and could leave the virtualized window frozen at a stale position once scrolling stops.
+- **`availableGenres` guards against an empty/undefined item list** in `useMediaStore`, avoiding an unnecessary `Set` build when there's nothing to derive genres from.
+
+### Notes
+
+- This release also merges the phase-9 documentation update (README "Async Patterns" section) from master.
 
 ### Fixed
 
