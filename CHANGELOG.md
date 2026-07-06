@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.72.0] - 2026-07-06
+
+### Fixed
+
+- **Subtitles that start enabled now actually render** (the real fix; supersedes the v0.71.0 attempt) — on the transcode path, hls.js drives the `<video>` and, with native text-track rendering left on (its default), its subtitle-track controller reacts to every `textTracks` change and _disables_ any subtitle track it doesn't own. Our WebVTT subtitles are external `<track>` sidecars owned by `CaptionOverlay`, so the instant we put one in `mode='hidden'` hls.js flipped it back to `disabled` (no active cues, no `cuechange`) and captions stayed blank until toggled off/on. `attachHls` now sets `renderTextTracksNatively: false`, so hls.js leaves `video.textTracks` alone and our overlay fully controls the sidecars.
+- **Next-episode no longer starts partway in** — the `<video>` element is reused across episode navigation (the player has no per-item `:key`), and on the transcode path `videoSrc` stays undefined (hls.js drives the element via MSE), so the browser never reset `currentTime` between episodes — hls.js re-attached at the _previous_ episode's position (75% into one → the next started 75% in). The player now zeroes the element's `currentTime` when the media changes, so a new episode begins at the start (a genuine resume is still applied afterwards).
+
 ## [0.71.0] - 2026-07-06
 
 ### Fixed

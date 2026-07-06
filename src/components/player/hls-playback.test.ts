@@ -123,6 +123,10 @@ describe('hls-playback', () => {
       const cfg = FakeHls.instances[0].config;
       expect(cfg.enableWorker).toBe(true);
       expect(cfg.lowLatencyMode).toBe(false);
+      // hls.js must NOT manage native text tracks — our external <track> WebVTT
+      // sidecars are owned by CaptionOverlay; leaving this on lets hls.js disable
+      // them (blank captions until toggled).
+      expect(cfg.renderTextTracksNatively).toBe(false);
     });
 
     it('merges a consumer hlsConfig (TV RAM tuning) into the Hls config', async () => {

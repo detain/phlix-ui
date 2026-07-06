@@ -69,6 +69,17 @@ export async function attachHls(
     const hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
+      // Leave the media element's <track> sidecars alone. Our WebVTT subtitles are
+      // EXTERNAL `<track>` elements (extracted server-side, not in the HLS manifest)
+      // rendered by our own CaptionOverlay. With native text-track rendering ON
+      // (hls.js's default), its subtitle-track controller reacts to every
+      // `textTracks` `change` and DISABLES any subtitle track it doesn't own — so
+      // the moment CaptionOverlay puts our sidecar in `mode='hidden'`, hls.js flips
+      // it back to `disabled` (null activeCues, no `cuechange`) and captions that
+      // start enabled render blank until the user toggles them. Turning this off
+      // stops hls.js from touching `video.textTracks` at all (it has no manifest
+      // subtitles to render here anyway). A consumer can still override it.
+      renderTextTracksNatively: false,
       ...opts.hlsConfig,
       xhrSetup: (xhr: XMLHttpRequest) => {
         const token = opts.getToken?.();
