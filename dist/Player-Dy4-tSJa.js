@@ -620,19 +620,33 @@ var Oe = ["aria-label"], ke = { class: "shortcuts__head" }, Ae = { class: "short
 		lifted: { type: Boolean }
 	},
 	setup(e, { expose: t }) {
-		let n = e, r = F([]), i = w(() => _(n.styleConfig)), a = null;
-		function o() {
+		let n = e, r = F([]), i = w(() => _(n.styleConfig)), a = null, o = null;
+		function s() {
 			r.value = h(a);
 		}
-		function s() {
-			a?.removeEventListener("cuechange", o), a = null;
-		}
 		function c() {
-			s(), p(n.video, n.language);
-			let e = m(n.video, n.language);
-			e ? (a = e, e.addEventListener("cuechange", o), r.value = h(e)) : r.value = [];
+			a?.removeEventListener("cuechange", s), o?.removeEventListener("load", s), a = null, o = null;
 		}
-		return B(() => [n.video, n.language], c, { immediate: !0 }), ae(s), t({ lines: r }), (t, n) => r.value.length ? (P(), D("div", {
+		function l(e, t) {
+			let n = e?.querySelectorAll?.("track");
+			if (!n) return null;
+			for (let e = 0; e < n.length; e++) {
+				let r = n[e];
+				if (r.track === t) return r;
+			}
+			return null;
+		}
+		function u() {
+			c(), p(n.video, n.language);
+			let e = m(n.video, n.language);
+			if (e) {
+				if (a = e, e.addEventListener("cuechange", s), r.value = h(e), !r.value.length) {
+					let t = l(n.video, e);
+					t && t.readyState !== 2 && (o = t, t.addEventListener("load", s));
+				}
+			} else r.value = [];
+		}
+		return B(() => [n.video, n.language], u, { immediate: !0 }), ae(c), t({ lines: r }), (t, n) => r.value.length ? (P(), D("div", {
 			key: 0,
 			class: M(["player__captions", { "is-lifted": e.lifted }]),
 			style: N(i.value)
@@ -641,7 +655,7 @@ var Oe = ["aria-label"], ke = { class: "shortcuts__head" }, Ae = { class: "short
 			class: "player__caption-line"
 		}, L(e), 1))), 128))], 6)) : E("", !0);
 	}
-}), [["__scopeId", "data-v-15a0f3c5"]]), Ve = ["aria-label", "aria-expanded"], He = ["aria-label"], Ue = { class: "capmenu__head" }, $ = { class: "capmenu__title" }, We = ["aria-label"], Ge = ["aria-checked", "tabindex"], Ke = { class: "capmenu__check" }, qe = { class: "capmenu__optlabel" }, Je = [
+}), [["__scopeId", "data-v-4780408d"]]), Ve = ["aria-label", "aria-expanded"], He = ["aria-label"], Ue = { class: "capmenu__head" }, $ = { class: "capmenu__title" }, We = ["aria-label"], Ge = ["aria-checked", "tabindex"], Ke = { class: "capmenu__check" }, qe = { class: "capmenu__optlabel" }, Je = [
 	"aria-checked",
 	"tabindex",
 	"onClick"
@@ -1778,4 +1792,4 @@ var Bt = ["aria-label"], Vt = ["src"], Ht = { class: "upnext__body" }, Ut = { cl
 //#endregion
 export { Le as A, Z as B, yt as C, Be as D, ft as E, Ee as F, he as G, Y as H, Te as I, de as J, J as K, De as L, Se as M, Ce as N, ze as O, xe as P, ve as R, St as S, vt as T, X as U, me as V, _e as W, H as X, ue as Y, mt as _, Xt as a, xt as b, It as c, Mt as d, Pt as f, Ct as g, Ot as h, tn as i, Fe as j, Re as k, Rt as l, zt as m, ln as n, kt as o, Nt as p, fe as q, cn as r, At as s, Mn as t, Lt as u, ht as v, bt as w, _t as x, pt as y, ge as z };
 
-//# sourceMappingURL=Player-DmNPY5zu.js.map
+//# sourceMappingURL=Player-Dy4-tSJa.js.map

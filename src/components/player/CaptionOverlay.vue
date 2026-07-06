@@ -27,13 +27,29 @@ const lines = ref<string[]>([]);
 const vars = computed(() => captionStyleVars(props.styleConfig));
 
 let boundTrack: TextTrack | null = null;
+let boundTrackEl: HTMLTrackElement | null = null;
 function onCueChange(): void {
   lines.value = readActiveCueLines(boundTrack);
 }
 
 function unbind(): void {
   boundTrack?.removeEventListener('cuechange', onCueChange);
+  boundTrackEl?.removeEventListener('load', onCueChange);
   boundTrack = null;
+  boundTrackEl = null;
+}
+
+/** The `<track>` element backing a resolved TextTrack (matched by identity), or
+ *  null when the video isn't a real DOM element (jsdom/tests) or has no `<track>`
+ *  children. Used by `rebind` to re-read the cues once the sidecar VTT loads. */
+function trackElementFor(video: HTMLVideoElement | null, track: TextTrack): HTMLTrackElement | null {
+  const els = video?.querySelectorAll?.('track');
+  if (!els) return null;
+  for (let i = 0; i < els.length; i++) {
+    const el = els[i] as HTMLTrackElement;
+    if (el.track === track) return el;
+  }
+  return null;
 }
 
 /** Re-point the cuechange listener at the currently-selected track. */
@@ -45,6 +61,20 @@ function rebind(): void {
     boundTrack = track;
     track.addEventListener('cuechange', onCueChange);
     lines.value = readActiveCueLines(track); // catch already-active cues
+    // Server subtitle sidecars (VTT) load their cues asynchronously the moment
+    // the track flips to `hidden` above. When captions START enabled (a server
+    // default), that fetch races this synchronous read — `activeCues` is still
+    // empty here, and the engine does NOT reliably fire `cuechange` for the cue
+    // that is already active at load time. Captions then stay blank until the
+    // user toggles them off/on (which re-reads a now-loaded track). Re-read on
+    // the `<track>`'s own `load` so that first cue paints without the toggle.
+    if (!lines.value.length) {
+      const el = trackElementFor(props.video, track);
+      if (el && el.readyState !== 2 /* HTMLTrackElement.LOADED */) {
+        boundTrackEl = el;
+        el.addEventListener('load', onCueChange);
+      }
+    }
   } else {
     lines.value = [];
   }
