@@ -233,6 +233,65 @@ run inside an app created by `createPhlixApp` (which provides `apiBase`).
 | `useFocusTrap(container, active, opts?)` | Focus-trap + scroll-lock + Escape for overlays (powers `Modal`/`Sheet`). |
 | `deriveAccentVars(hex)` | Pure: a hex → the full `--accent*` custom-property ramp. |
 
+### Performance Patterns
+
+**Page Visibility API for Polling:**
+
+Polling timers (e.g., for live scan status) should pause when the tab is hidden to avoid unnecessary server load and battery drain. Use the Page Visibility API (`document.visibilityState` / `visibilitychange` event):
+
+```ts
+function handleVisibilityChange(): void {
+  if (document.hidden) {
+    pauseAllPolling();
+  } else {
+    resumeAllPolling();
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+});
+```
+
+See `LibrariesPage.vue` (scan status polling), `LogsPage.vue` (auto-refresh), `DashboardPage.vue` (now-playing refresh), and `MetricsPage.vue` (snapshot/connections/history polling) for examples.
+
+**Scroll Handler Throttling:**
+
+Scroll events can fire hundreds of times per second. Use timestamp-based throttling rather than `requestAnimationFrame` alone, because Firefox aggressively throttles rAF during scrolling which causes visual "freezing":
+
+```ts
+let lastScrollMeasureTime = 0;
+const SCROLL_MEASURE_THROTTLE_MS = 16; // ~60fps
+
+function throttledMeasure(): void {
+  const now = performance.now();
+  if (now - lastScrollMeasureTime < SCROLL_MEASURE_THROTTLE_MS) return;
+  lastScrollMeasureTime = now;
+  measure();
+}
+
+window.addEventListener('scroll', throttledMeasure, { passive: true });
+```
+
+For rAF-coalesced measurements (used in `MediaGrid.vue` for layout calculations after scroll settles):
+
+```ts
+let frame = 0;
+function scheduleMeasure(): void {
+  if (frame) return;
+  frame = requestAnimationFrame(() => {
+    frame = 0;
+    measure();
+  });
+}
+```
+
+The two patterns are complementary: timestamp throttling limits how often the measurement runs, while rAF coalescing ensures layout recalculations sync with the browser's paint cycle.
+
 ---
 
 ## Component catalog
