@@ -80,6 +80,23 @@ export async function attachHls(
       // stops hls.js from touching `video.textTracks` at all (it has no manifest
       // subtitles to render here anyway). A consumer can still override it.
       renderTextTracksNatively: false,
+      // Phlix serves on-demand HLS by transcoding each segment ON REQUEST and only
+      // sending the first byte once the whole segment is encoded — so a fragment's
+      // time-to-first-byte equals its encode time. hls.js's stock 10s TTFB budget
+      // abandons any segment that's merely slow under load and re-requests it,
+      // which (before the server-side dedup/cap) piled on duplicate encodes and
+      // cascaded into the "can't prepare a playable version" overlay. Give segments
+      // a generous first-byte budget so a legitimately slow encode completes instead
+      // of being abandoned. Retry counts match hls.js defaults. Consumers can still
+      // override via opts.hlsConfig (spread below).
+      fragLoadPolicy: {
+        default: {
+          maxTimeToFirstByteMs: 30_000,
+          maxLoadTimeMs: 120_000,
+          timeoutRetry: { maxNumRetry: 4, retryDelayMs: 0, maxRetryDelayMs: 0 },
+          errorRetry: { maxNumRetry: 6, retryDelayMs: 1_000, maxRetryDelayMs: 8_000 },
+        },
+      },
       ...opts.hlsConfig,
       xhrSetup: (xhr: XMLHttpRequest) => {
         const token = opts.getToken?.();

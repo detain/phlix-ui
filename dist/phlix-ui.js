@@ -49,7 +49,7 @@ import { n as Tt, t as Et } from "./libraries-CXAz_kXs.js";
 import { t as Dt } from "./settings-m4upFcmH.js";
 import { i as Ot, n as kt, r as At, t as jt } from "./plugins-jAHdgJSw.js";
 import { t as Mt } from "./hubDashboard-BhOaaDD-.js";
-import { A as Nt, B as Pt, C as Ft, D as It, E as Lt, F as Rt, G as zt, H as Bt, I as Vt, J as Ht, K as Ut, L as Wt, M as Gt, N as Kt, O as qt, P as Jt, R as Yt, S as Xt, T as Zt, U as Qt, V as $t, W as en, X as tn, Y as nn, _ as rn, a as an, b as on, c as sn, d as cn, f as ln, g as un, h as dn, i as fn, j as pn, k as mn, l as hn, m as gn, n as _n, o as vn, p as yn, q as bn, r as xn, s as Sn, t as Cn, u as wn, v as Tn, w as En, x as Dn, y as On, z as kn } from "./Player-DmS-h7PP.js";
+import { A as Nt, B as Pt, C as Ft, D as It, E as Lt, F as Rt, G as zt, H as Bt, I as Vt, J as Ht, K as Ut, L as Wt, M as Gt, N as Kt, O as qt, P as Jt, R as Yt, S as Xt, T as Zt, U as Qt, V as $t, W as en, X as tn, Y as nn, _ as rn, a as an, b as on, c as sn, d as cn, f as ln, g as un, h as dn, i as fn, j as pn, k as mn, l as hn, m as gn, n as _n, o as vn, p as yn, q as bn, r as xn, s as Sn, t as Cn, u as wn, v as Tn, w as En, x as Dn, y as On, z as kn } from "./Player-oMxJyjh9.js";
 import { a as An, c as jn, d as Mn, f as Nn, g as Pn, h as Fn, i as In, l as Ln, m as Rn, n as zn, o as Bn, p as Vn, r as Hn, s as Un, t as Wn, u as Gn } from "./captions-COgPp5bH.js";
 import { t as Kn } from "./LoginForm-7hKqkFop.js";
 import { t as qn } from "./SignupForm-DZ5FZMuh.js";
@@ -1078,7 +1078,7 @@ function Ca(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-Zwfi7eRH.js")
+			component: () => import("./PlayerPage-BY9cqPYT.js")
 		},
 		{
 			path: `${t}/login`,
