@@ -129,6 +129,35 @@ describe('hls-playback', () => {
       expect(cfg.renderTextTracksNatively).toBe(false);
     });
 
+    it('gives fragments a generous first-byte budget for on-demand transcode', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const cfg = FakeHls.instances[0].config as {
+        fragLoadPolicy?: { default?: { maxTimeToFirstByteMs?: number } };
+      };
+      // A transcoded segment's first byte only arrives once it's fully encoded, so
+      // the stock 10s budget is too tight — must be raised well above it.
+      expect(cfg.fragLoadPolicy?.default?.maxTimeToFirstByteMs).toBe(30_000);
+    });
+
+    it('lets a consumer override the fragment load policy', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {
+        hlsConfig: {
+          fragLoadPolicy: {
+            default: {
+              maxTimeToFirstByteMs: 5_000,
+              maxLoadTimeMs: 10_000,
+              timeoutRetry: { maxNumRetry: 1, retryDelayMs: 0, maxRetryDelayMs: 0 },
+              errorRetry: { maxNumRetry: 1, retryDelayMs: 0, maxRetryDelayMs: 0 },
+            },
+          },
+        } as unknown as Record<string, unknown>,
+      });
+      const cfg = FakeHls.instances[0].config as {
+        fragLoadPolicy?: { default?: { maxTimeToFirstByteMs?: number } };
+      };
+      expect(cfg.fragLoadPolicy?.default?.maxTimeToFirstByteMs).toBe(5_000);
+    });
+
     it('merges a consumer hlsConfig (TV RAM tuning) into the Hls config', async () => {
       await attachHls(fakeVideo(), 'http://h/m.m3u8', {
         hlsConfig: { maxBufferLength: 10, backBufferLength: 0 } as Record<string, unknown>,
