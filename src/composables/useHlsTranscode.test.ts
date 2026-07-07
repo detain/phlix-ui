@@ -28,7 +28,16 @@ function harness(opts: {
   const destroy = vi.fn();
   const attach = vi.fn(async (): Promise<HlsHandle> => {
     if (opts.attachRejects) throw new Error('attach failed');
-    return { destroy };
+    return {
+      destroy,
+      levels: [],
+      getCurrentLevel: () => -1,
+      setCurrentLevel: () => undefined,
+      setNextLevel: () => undefined,
+      autoLevelEnabled: true,
+      bandwidthEstimate: 0,
+      onLevelSwitched: () => () => undefined,
+    };
   });
   const post = vi.fn(async () => {
     if (opts.postRejects) throw new Error('post failed');
