@@ -163,6 +163,20 @@ async function fe(e, t, n = {}) {
 			enableWorker: !0,
 			lowLatencyMode: !1,
 			renderTextTracksNatively: !1,
+			fragLoadPolicy: { default: {
+				maxTimeToFirstByteMs: 3e4,
+				maxLoadTimeMs: 12e4,
+				timeoutRetry: {
+					maxNumRetry: 4,
+					retryDelayMs: 0,
+					maxRetryDelayMs: 0
+				},
+				errorRetry: {
+					maxNumRetry: 6,
+					retryDelayMs: 1e3,
+					maxRetryDelayMs: 8e3
+				}
+			} },
 			...n.hlsConfig,
 			xhrSetup: (e) => {
 				let t = n.getToken?.();
@@ -1793,4 +1807,4 @@ var Bt = ["aria-label"], Vt = ["src"], Ht = { class: "upnext__body" }, Ut = { cl
 //#endregion
 export { Le as A, Z as B, yt as C, Be as D, ft as E, Ee as F, he as G, Y as H, Te as I, de as J, J as K, De as L, Se as M, Ce as N, ze as O, xe as P, ve as R, St as S, vt as T, X as U, me as V, _e as W, H as X, ue as Y, mt as _, Xt as a, xt as b, It as c, Mt as d, Pt as f, Ct as g, Ot as h, tn as i, Fe as j, Re as k, Rt as l, zt as m, ln as n, kt as o, Nt as p, fe as q, cn as r, At as s, Mn as t, Lt as u, ht as v, bt as w, _t as x, pt as y, ge as z };
 
-//# sourceMappingURL=Player-DmS-h7PP.js.map
+//# sourceMappingURL=Player-oMxJyjh9.js.map

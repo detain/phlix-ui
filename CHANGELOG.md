@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.73.1] - 2026-07-07
+
+### Fixed
+
+- **Seeking a transcoded video no longer intermittently fails with "Can't play this file here"** — Phlix serves on-demand HLS by transcoding each segment on request and sending the first byte only once the whole segment is encoded, so a fragment's time-to-first-byte equals its encode time. hls.js's stock 10s first-byte budget abandoned any segment that was merely slow under load and re-requested it, which (combined with the server having no per-segment dedup/cap) piled on duplicate encodes and cascaded into the fatal "We couldn't prepare a playable version" overlay. `attachHls` now sets a `fragLoadPolicy` with a generous 30s first-byte budget so a legitimately slow encode completes instead of being abandoned; retry counts match hls.js defaults and a consumer can still override the whole policy via `hlsConfig`. (Paired with the server-side segment dedup + concurrency cap in phlix-server.)
+
 ## [0.73.0] - 2026-07-06
 
 ### Fixed
