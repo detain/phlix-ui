@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`attachHls`'s returned `HlsHandle` gains an hls.js level/ABR API (Stream Quality/ABR step E1) — internal groundwork only; no UI wiring yet.** This is the first `@phlix/ui` step of the multi-track Stream Quality/ABR program (server Track A shipped the multi-variant HLS pipeline in A1–A7); it lands the primitive the player will build a quality menu on top of in later steps, but nothing user-visible changes here.
+  - **`levels: HlsLevel[]`** — a live getter over `hls.levels`, mapped to the new `HlsLevel` shape (`{index, height, width, bitrate, name}`), highest-first as the master playlist lists them. It's empty until hls.js's `MANIFEST_PARSED` fires (asynchronous, after `attachHls` resolves) — callers read it again from `onReady` or an `onLevelSwitched` callback to get the populated ladder.
+  - **`getCurrentLevel()` / `setCurrentLevel(index)`** — read/pin the active level by index (`-1` = Auto/ABR); setting it assigns `hls.currentLevel`, which flushes the buffer for an immediate switch.
+  - **`setNextLevel(index)`** — assigns `hls.nextLevel` for a switch that takes effect on the next fragment without a buffer flush, for a smoother (if less immediate) quality change.
+  - **`autoLevelEnabled: boolean`** and **`bandwidthEstimate: number`** — live getters mirroring hls.js's ABR state and rolling bandwidth estimate (bits/sec).
+  - **`onLevelSwitched(callback): () => void`** — subscribes to `Hls.Events.LEVEL_SWITCHED`; returns an unsubscribe function.
+  - New `HlsLevel` type, barrel-exported alongside `HlsHandle`/`AttachHlsOptions` from the package root.
+  - **Native-HLS (Safari/iOS) path degrades gracefully, never throws**: `levels: []`, `getCurrentLevel()` → `-1`, `setCurrentLevel`/`setNextLevel` are no-ops, `autoLevelEnabled` is always `true`, `bandwidthEstimate` is `0`, `onLevelSwitched` is a no-op subscribe/unsubscribe — the browser owns ABR there and exposes no level API, so callers can use the same `HlsHandle` shape unconditionally regardless of playback path.
+  - `destroy()`, `renderTextTracksNatively: false`, the tuned `fragLoadPolicy` (30s TTFB), and the `xhrSetup` bearer-token injection are all unchanged — this step is purely additive on top of the existing transcode-playback fixes.
+  - **Not yet wired to any UI** — `QualityMenu`/`PlayerPage` don't consume this API yet; that lands in later steps of the same program (menu UI, then the release that makes manual quality selection user-visible).
+
 ## [0.73.1] - 2026-07-07
 
 ### Fixed

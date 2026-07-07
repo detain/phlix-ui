@@ -10,9 +10,71 @@
  * actually played — direct-play sessions never pull it into the bundle.
  */
 
-/** A live HLS attachment; call `destroy()` to stop loading and detach. */
+/**
+ * A single selectable quality rung, mapped from an hls.js {@link https://github.com/video-dev/hls.js Level}.
+ *
+ * `index` is the position in {@link HlsHandle.levels} — pass it to
+ * {@link HlsHandle.setCurrentLevel}/{@link HlsHandle.setNextLevel} to pin that
+ * rung. It is the same numbering hls.js uses for `currentLevel`/`nextLevel`
+ * (an index of `-1` everywhere means "Auto / ABR").
+ */
+export interface HlsLevel {
+  /** Position in the master playlist / {@link HlsHandle.levels}; the value to pin. */
+  index: number;
+  /** Encoded height in px (e.g. 720). */
+  height: number;
+  /** Encoded width in px (e.g. 1280). */
+  width: number;
+  /** Advertised `BANDWIDTH` in bits/sec. */
+  bitrate: number;
+  /** hls.js level name (usually the resolution label), if the manifest carried one. */
+  name: string | undefined;
+}
+
+/**
+ * A live HLS attachment.
+ *
+ * `destroy()` stops loading and detaches (critical: an undestroyed hls.js
+ * instance keeps fetching segments). The level API drives manual quality
+ * selection; on the native-HLS (Safari/iOS) path the browser owns ABR, so the
+ * level members degrade to an Auto-only, no-op shape rather than throwing.
+ */
 export interface HlsHandle {
   destroy(): void;
+  /**
+   * The available quality rungs, highest-first as the master lists them.
+   *
+   * This is a **live getter**: hls.js only populates its levels once the master
+   * manifest is parsed, which happens asynchronously AFTER {@link attachHls}
+   * resolves — so reads before `MANIFEST_PARSED` (see {@link AttachHlsOptions.onReady})
+   * return `[]`. Read it again after `onReady`, or on an
+   * {@link HlsHandle.onLevelSwitched} callback, to get the populated ladder.
+   * Always `[]` on the native-HLS path.
+   */
+  readonly levels: HlsLevel[];
+  /** Current pinned level index, or `-1` when ABR ("Auto") is choosing. */
+  getCurrentLevel(): number;
+  /**
+   * Pin a level by index, flushing the buffer for an IMMEDIATE switch. Pass `-1`
+   * to re-enable Auto/ABR. No-op on the native-HLS path.
+   */
+  setCurrentLevel(index: number): void;
+  /**
+   * Queue a level switch that takes effect on the NEXT fragment (no buffer
+   * flush) — smoother than {@link setCurrentLevel} but not immediate. Pass `-1`
+   * for Auto. No-op on the native-HLS path.
+   */
+  setNextLevel(index: number): void;
+  /** True while ABR ("Auto") is picking the level. Always `true` on native HLS. */
+  readonly autoLevelEnabled: boolean;
+  /** hls.js's rolling bandwidth estimate in bits/sec (0 on the native path). */
+  readonly bandwidthEstimate: number;
+  /**
+   * Subscribe to hls.js `LEVEL_SWITCHED` — fires with the newly-active level
+   * index after a switch settles. Returns an unsubscribe function. On the
+   * native-HLS path this never fires and returns a no-op unsubscribe.
+   */
+  onLevelSwitched(callback: (levelIndex: number) => void): () => void;
 }
 
 /** Options for {@link attachHls}. */
@@ -125,6 +187,35 @@ export async function attachHls(
           /* already torn down */
         }
       },
+      get levels(): HlsLevel[] {
+        return hls.levels.map((lvl, index) => ({
+          index,
+          height: lvl.height,
+          width: lvl.width,
+          bitrate: lvl.bitrate,
+          name: lvl.name,
+        }));
+      },
+      getCurrentLevel(): number {
+        return hls.currentLevel;
+      },
+      setCurrentLevel(index: number): void {
+        hls.currentLevel = index;
+      },
+      setNextLevel(index: number): void {
+        hls.nextLevel = index;
+      },
+      get autoLevelEnabled(): boolean {
+        return hls.autoLevelEnabled;
+      },
+      get bandwidthEstimate(): number {
+        return hls.bandwidthEstimate;
+      },
+      onLevelSwitched(callback: (levelIndex: number) => void): () => void {
+        const listener = (_event: unknown, data: { level: number }): void => callback(data.level);
+        hls.on(Hls.Events.LEVEL_SWITCHED, listener);
+        return (): void => hls.off(Hls.Events.LEVEL_SWITCHED, listener);
+      },
     };
   }
 
@@ -134,6 +225,8 @@ export async function attachHls(
     video.addEventListener('loadedmetadata', onLoaded);
     video.addEventListener('error', onErr);
     video.src = url;
+    // Native HLS: the browser drives ABR and exposes no level API, so the level
+    // members degrade to an Auto-only, no-op shape. UI code can call them safely.
     return {
       destroy(): void {
         video.removeEventListener('loadedmetadata', onLoaded);
@@ -141,6 +234,13 @@ export async function attachHls(
         video.removeAttribute('src');
         video.load();
       },
+      levels: [],
+      getCurrentLevel: () => -1,
+      setCurrentLevel: () => undefined,
+      setNextLevel: () => undefined,
+      autoLevelEnabled: true,
+      bandwidthEstimate: 0,
+      onLevelSwitched: () => () => undefined,
     };
   }
 
