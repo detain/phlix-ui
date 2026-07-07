@@ -3,8 +3,15 @@ import Hls from 'hls.js';
 import { attachHls, isNativeHlsSupported } from './hls-playback';
 
 // Fake hls.js: controllable isSupported, captured instances, manual event firing.
+interface FakeLevel {
+  height: number;
+  width: number;
+  bitrate: number;
+  name: string | undefined;
+}
+
 vi.mock('hls.js', () => {
-  const Events = { MANIFEST_PARSED: 'manifestParsed', ERROR: 'error' };
+  const Events = { MANIFEST_PARSED: 'manifestParsed', ERROR: 'error', LEVEL_SWITCHED: 'levelSwitched' };
   class FakeHls {
     static supported = true;
     static instances: FakeHls[] = [];
@@ -17,12 +24,21 @@ vi.mock('hls.js', () => {
     loaded?: string;
     attached?: unknown;
     destroyed = false;
+    // Level API surface mirrored from hls.js.
+    levels: FakeLevel[] = [];
+    currentLevel = -1;
+    nextLevel = -1;
+    autoLevelEnabled = true;
+    bandwidthEstimate = 0;
     constructor(config: Record<string, unknown>) {
       this.config = config;
       FakeHls.instances.push(this);
     }
     on(ev: string, cb: (...args: unknown[]) => void): void {
       (this.handlers[ev] ??= []).push(cb);
+    }
+    off(ev: string, cb: (...args: unknown[]) => void): void {
+      this.handlers[ev] = (this.handlers[ev] ?? []).filter((h) => h !== cb);
     }
     emit(ev: string, data?: unknown): void {
       (this.handlers[ev] ?? []).forEach((h) => h(ev, data));
@@ -40,15 +56,23 @@ vi.mock('hls.js', () => {
   return { default: FakeHls, Events };
 });
 
+type FakeHlsInstance = {
+  config: Record<string, unknown>;
+  loaded?: string;
+  attached?: unknown;
+  destroyed: boolean;
+  levels: FakeLevel[];
+  currentLevel: number;
+  nextLevel: number;
+  autoLevelEnabled: boolean;
+  bandwidthEstimate: number;
+  handlers: Record<string, Array<(...args: unknown[]) => void>>;
+  emit(ev: string, data?: unknown): void;
+};
+
 type FakeHlsCtor = typeof Hls & {
   supported: boolean;
-  instances: Array<{
-    config: Record<string, unknown>;
-    loaded?: string;
-    attached?: unknown;
-    destroyed: boolean;
-    emit(ev: string, data?: unknown): void;
-  }>;
+  instances: FakeHlsInstance[];
 };
 
 const FakeHls = Hls as unknown as FakeHlsCtor;
@@ -191,6 +215,90 @@ describe('hls-playback', () => {
     });
   });
 
+  describe('attachHls level API (hls.js path)', () => {
+    it('starts with no levels and exposes them once the manifest populates hls.levels', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      // attachHls resolves before MANIFEST_PARSED — levels are empty until then.
+      expect(handle.levels).toEqual([]);
+
+      const inst = FakeHls.instances[0];
+      inst.levels = [
+        { height: 1080, width: 1920, bitrate: 5_000_000, name: '1080p' },
+        { height: 720, width: 1280, bitrate: 2_800_000, name: '720p' },
+      ];
+      inst.emit('manifestParsed');
+
+      expect(handle.levels).toEqual([
+        { index: 0, height: 1080, width: 1920, bitrate: 5_000_000, name: '1080p' },
+        { index: 1, height: 720, width: 1280, bitrate: 2_800_000, name: '720p' },
+      ]);
+    });
+
+    it('reads and writes currentLevel / nextLevel through to the hls instance', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+
+      expect(handle.getCurrentLevel()).toBe(-1);
+      handle.setCurrentLevel(2);
+      expect(inst.currentLevel).toBe(2);
+      expect(handle.getCurrentLevel()).toBe(2);
+
+      handle.setNextLevel(1);
+      expect(inst.nextLevel).toBe(1);
+
+      // -1 re-enables Auto/ABR.
+      handle.setCurrentLevel(-1);
+      expect(inst.currentLevel).toBe(-1);
+    });
+
+    it('exposes live autoLevelEnabled and bandwidthEstimate getters', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+      expect(handle.autoLevelEnabled).toBe(true);
+      expect(handle.bandwidthEstimate).toBe(0);
+
+      inst.autoLevelEnabled = false;
+      inst.bandwidthEstimate = 3_200_000;
+      expect(handle.autoLevelEnabled).toBe(false);
+      expect(handle.bandwidthEstimate).toBe(3_200_000);
+    });
+
+    it('fires onLevelSwitched with the new index and unsubscribes cleanly', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+      const cb = vi.fn();
+      const off = handle.onLevelSwitched(cb);
+
+      inst.emit('levelSwitched', { level: 3 });
+      expect(cb).toHaveBeenCalledWith(3);
+
+      off();
+      inst.emit('levelSwitched', { level: 1 });
+      expect(cb).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps independent onLevelSwitched subscribers isolated when one unsubscribes', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+      const a = vi.fn();
+      const b = vi.fn();
+      const offA = handle.onLevelSwitched(a);
+      handle.onLevelSwitched(b);
+
+      // Both live subscribers see the first switch.
+      inst.emit('levelSwitched', { level: 2 });
+      expect(a).toHaveBeenCalledWith(2);
+      expect(b).toHaveBeenCalledWith(2);
+
+      // Unsubscribing A must not detach B (distinct listener references).
+      offA();
+      inst.emit('levelSwitched', { level: 0 });
+      expect(a).toHaveBeenCalledTimes(1);
+      expect(b).toHaveBeenCalledTimes(2);
+      expect(b).toHaveBeenLastCalledWith(0);
+    });
+  });
+
   describe('attachHls native fallback', () => {
     it('sets video.src when hls.js is unsupported but native HLS is', async () => {
       FakeHls.supported = false;
@@ -205,6 +313,24 @@ describe('hls-playback', () => {
     it('throws when neither hls.js nor native HLS is available', async () => {
       FakeHls.supported = false;
       await expect(attachHls(fakeVideo(''), 'http://h/x.m3u8')).rejects.toThrow(/not supported/i);
+    });
+
+    it('returns a degraded, Auto-only level API that never throws', async () => {
+      FakeHls.supported = false;
+      const handle = await attachHls(fakeVideo('probably'), 'http://h/native.m3u8');
+
+      expect(handle.levels).toEqual([]);
+      expect(handle.getCurrentLevel()).toBe(-1);
+      expect(handle.autoLevelEnabled).toBe(true);
+      expect(handle.bandwidthEstimate).toBe(0);
+
+      // No-op setters and a no-op subscription must not throw.
+      expect(() => handle.setCurrentLevel(2)).not.toThrow();
+      expect(() => handle.setNextLevel(1)).not.toThrow();
+      const off = handle.onLevelSwitched(vi.fn());
+      expect(() => off()).not.toThrow();
+      // Still Auto after a no-op set.
+      expect(handle.getCurrentLevel()).toBe(-1);
     });
   });
 });

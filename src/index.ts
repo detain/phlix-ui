@@ -237,7 +237,7 @@ export {
 } from './components/player/transcode';
 export type { TranscodeStart, TranscodeStatus, SubtitleTrack } from './components/player/transcode';
 export { attachHls, isNativeHlsSupported } from './components/player/hls-playback';
-export type { HlsHandle, AttachHlsOptions } from './components/player/hls-playback';
+export type { HlsHandle, HlsLevel, AttachHlsOptions } from './components/player/hls-playback';
 export { useHlsTranscode } from './composables/useHlsTranscode';
 export type {
   TranscodeState,
