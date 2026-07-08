@@ -28,7 +28,7 @@ Vue app.
   reduced-motion, an i18n-readiness seam.
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
-> **Status:** `v0.9.0`. Pre-1.0, so minor releases may include breaking changes. See
+> **Status:** `v0.74.0`. Pre-1.0, so minor releases may include breaking changes. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
 
 ---
@@ -58,7 +58,7 @@ Vue app.
 // package.json
 {
   "dependencies": {
-    "@phlix/ui": "github:detain/phlix-ui#v0.9.0"
+    "@phlix/ui": "github:detain/phlix-ui#v0.74.0"
   }
 }
 ```

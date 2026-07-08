@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.74.0] - 2026-07-07
+
+Headline: **manual stream-quality selection in the player.** This release lands the
+`@phlix/ui` side of the multi-track Stream Quality/ABR program (server Track A shipped the
+multi-variant HLS pipeline): a new consumer-facing quality menu that reads the live hls.js
+level ladder and lets the viewer pin a rung or hand the choice back to ABR. E1/E2 added the
+internal `HlsHandle`/`useHlsTranscode` level API, E3 wired it into the player control bar and
+made it user-visible, and E4 refreshed the player visual baselines and added the `quality-menu`
+a11y surface. Also folds in a `Select` combobox-role a11y fix (found via E4) and the
+separately-landed media-detail company/genre chip a11y fixes.
+
 ### Added
 
 - **`attachHls`'s returned `HlsHandle` gains an hls.js level/ABR API (Stream Quality/ABR step E1) — internal groundwork only; no UI wiring yet.** This is the first `@phlix/ui` step of the multi-track Stream Quality/ABR program (server Track A shipped the multi-variant HLS pipeline in A1–A7); it lands the primitive the player will build a quality menu on top of in later steps, but nothing user-visible changes here.
@@ -38,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **`Select`'s trigger is missing `role="combobox"`, tripping axe's `aria-allowed-attr` (critical) whenever it's open** — found while building E4's `quality-menu` a11y surface (the first surface to axe-scan an *open* `Select`; every other surface only ever scanned it closed). The trigger button sets `aria-activedescendant`/`aria-controls` when open, both of which are only valid ARIA attributes on a combobox-role element, not on a plain (implicit) `button` role. `Select` — the shared primitive behind `SpeedMenu`, `QualityMenu`, sort/filter dropdowns, and every other app dropdown — now sets `role="combobox"` on the trigger (the WAI-ARIA APG "select-only combobox" pattern), an AT-only attribute with zero visual/behavioral change; the closed-state render and every other axe-clean surface are unaffected.
+
+- **`MediaDetail`'s genre and studio (company) chips no longer nest a button inside a button** — the genre filter and the "Studios" list each rendered a `<button>` wrapping a `<Chip>`, which itself renders an internal `<button>`, an interactive-inside-interactive that axe flags as `nested-interactive` (serious, WCAG 2.0/2.1 A). Both now use `Chip` directly as the single interactive control, forwarding the "Show {genre}/{company} titles" label via a new `Chip` `ariaLabel` prop, and drop the redundant wrapper CSS. The media-detail visual/a11y harness previously never rendered the studios section (its `HERO` mock had no `production_companies`); the mock now includes two companies (one with an offline SVG logo, one text-only) so the a11y suite exercises that section. (Landed on master separately from E1–E4 but released here.)
 
 ## [0.73.1] - 2026-07-07
 
