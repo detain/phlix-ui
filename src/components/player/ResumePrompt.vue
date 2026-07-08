@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * ResumePrompt (R3.8) — the "resume where you left off" prompt shown on open.

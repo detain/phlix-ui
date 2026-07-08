@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import type { RouteRecordRaw } from 'vue-router';
 import type { Command } from '../stores/useCommandStore';
 import type { ThemeName } from '../stores/usePreferencesStore';

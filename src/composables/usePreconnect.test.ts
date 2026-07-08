@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { effectScope } from 'vue';
 import { resolveImageOrigin, usePreconnect } from './usePreconnect';

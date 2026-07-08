@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * HomeRow (R2.4) — a query-scoped, lazy-loading container around `MediaRow`.

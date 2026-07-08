@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * SettingsForm (R4.2) — the schema-driven server/user settings form, rebuilt on

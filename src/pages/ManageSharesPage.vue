@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * ManageSharesPage (R5.2d) — the hub's library-shares page, re-skinned onto the

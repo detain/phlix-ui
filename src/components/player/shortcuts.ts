@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { onMounted, onBeforeUnmount } from 'vue';
 
 /** A keyboard shortcut row — display only (the matching lives in the handler). */

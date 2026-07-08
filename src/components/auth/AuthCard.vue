@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * AuthCard (R4.1) — the cinematic glass "ticket-stub" shell shared by the login

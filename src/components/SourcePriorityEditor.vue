@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * SourcePriorityEditor (Feature 3.6) — a reorderable list editor for an ordered

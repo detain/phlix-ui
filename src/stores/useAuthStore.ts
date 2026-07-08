@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { defineStore } from 'pinia';
 import { ref, computed, watch, inject, type ComputedRef } from 'vue';
 import { ApiClient, type AuthUser } from '../api/client';

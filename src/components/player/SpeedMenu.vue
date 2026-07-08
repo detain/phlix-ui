@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * SpeedMenu (R3.4) — playback-speed picker (0.25–2×) on the `Select` primitive

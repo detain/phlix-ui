@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import type { MenuItem } from './ui';
 import type { MediaItem } from '../types/media-item';
 

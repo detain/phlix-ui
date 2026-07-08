@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 export { createPhlixApp } from './app/createPhlixApp';
 export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow } from './app/types';
 

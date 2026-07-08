@@ -7,6 +7,7 @@
  * playable container) would otherwise render as a silent black screen — these
  * helpers let the player detect that case (proactively by extension, reactively
  * by the <video> error code) and show a clear notice instead.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 
 /** Containers a browser <video> can generally play directly (no transcode). */

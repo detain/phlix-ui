@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, vi } from 'vitest';
 import { AdminUsersApi, RATING_LABELS, RATING_OPTIONS, USER_STATUSES } from './users';
 import type { ApiClient } from '../client';

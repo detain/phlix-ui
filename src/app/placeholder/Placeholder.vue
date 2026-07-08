@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <template>
     <div class="phlix-placeholder">
         <div class="placeholder-content">

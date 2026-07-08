@@ -3,6 +3,7 @@
  * (client-unification parity). No DOM, fully deterministic — the bulk of the
  * test coverage lives against this. The impure wiring (keydown listener,
  * registry, `getBoundingClientRect`) is in `./useSpatialNav`.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 
 export type Dir = 'up' | 'down' | 'left' | 'right';

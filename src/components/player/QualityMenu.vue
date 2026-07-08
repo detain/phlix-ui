@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * QualityMenu (R3.4 + R3.9) — stream-quality picker on the `Select` primitive.

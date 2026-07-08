@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import type { TokenStore } from '../tokenStore';
 
 export class MemoryTokenStore implements TokenStore {

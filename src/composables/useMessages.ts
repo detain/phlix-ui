@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { inject } from 'vue';
 import type { PhlixAppConfig } from '../app/types';
 import { createTranslator, type Translate } from '../i18n/messages';

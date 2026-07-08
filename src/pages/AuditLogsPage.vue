@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * AuditLogsPage (R5.2e) — the hub's audit-log viewer (paginated), re-skinned onto

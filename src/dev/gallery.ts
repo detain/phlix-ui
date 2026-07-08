@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 // Dev entry for the primitive Gallery (R0.7). Served by `vite` via gallery.html.
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';

@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { fetchLetterIndex } from './letter-index';
 import { ACCESS_TOKEN_KEY } from './tokenStore';

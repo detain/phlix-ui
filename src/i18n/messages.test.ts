@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_MESSAGES,

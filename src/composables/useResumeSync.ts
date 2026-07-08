@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { usePlayerStore, TICKS_PER_SECOND } from '../stores/usePlayerStore';
 import { useAuthStore } from '../stores/useAuthStore';
 

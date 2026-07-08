@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import type { IconName } from '../components/Icon.vue';

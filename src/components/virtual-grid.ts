@@ -5,6 +5,7 @@
  * (jsdom has no layout, so the component gates measurement and delegates the
  * arithmetic here). The component feeds them measured pixel values and renders
  * only the rows the window selects.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 
 /** Layout constants mirrored from `MediaGrid.vue`'s scoped CSS (px). */

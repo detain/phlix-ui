@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { ApiClient } from '../api/client';
 import { buildMediaUrl } from '../api/media-query';
 import type { MediaItem } from '../types/media-item';

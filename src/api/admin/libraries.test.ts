@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AdminLibrariesApi, LIBRARY_TYPES } from './libraries';
 import type { ApiClient } from '../client';

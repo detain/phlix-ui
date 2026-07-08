@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Admin CastDevicesPage (RA.8) — Chromecast + AirPlay device management, a 1:1

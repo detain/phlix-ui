@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * AmbientCanvas (R3.6) — the live "Ambilight" glow behind the video.

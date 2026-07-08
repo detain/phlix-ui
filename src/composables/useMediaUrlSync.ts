@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { watch } from 'vue';
 import type { Router } from 'vue-router';
 import { useMediaStore } from '../stores/useMediaStore';

@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, vi } from 'vitest';
 import { AdminHistoryApi, type RecentlyWatchedItem, type AdminWatchHistoryItem } from './history';
 import type { ApiClient } from '../client';

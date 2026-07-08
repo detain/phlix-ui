@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Skeleton (R0.4e) — loading placeholder. variant text|rect|circle; `lines` for

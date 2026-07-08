@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect } from 'vitest';
 import type { HlsLevel } from './hls-playback';
 import { AUTO_QUALITY, qualityId, qualityLabel, qualityRungs, levelIndexForQuality, qualityForLevel } from './quality';

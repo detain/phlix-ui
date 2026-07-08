@@ -20,6 +20,7 @@
  * theme via `?theme=`. A minimal in-memory `vue-router` is installed
  * so the router-dependent surfaces (Auth `useRouter`, shell `UserMenu`/RouterLink)
  * mount without errors; the router-free surfaces ignore it.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 import { createApp, type Component } from 'vue';
 import { createPinia, type Pinia } from 'pinia';

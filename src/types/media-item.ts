@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 export type MediaType = 'movie' | 'series' | 'season' | 'episode' | 'audio' | 'image';
 
 /**

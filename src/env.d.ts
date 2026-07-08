@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 /// <reference types="vite/client" />
 /// <reference types="unplugin-icons/types/vue" />
 
