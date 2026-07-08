@@ -264,8 +264,22 @@ describe('MediaDetail — rich cast / crew / companies', () => {
     const logo = w.find('.media-detail__company-logo');
     expect(logo.exists()).toBe(true);
     expect(logo.attributes('src')).toBe('https://img/leg.png');
-    await chips[0].trigger('click');
+    await chips[0].find('button').trigger('click');
     expect(w.emitted('company')?.[0]).toEqual(['Legendary']);
+  });
+
+  it('renders each company chip as a single interactive control (no nested button)', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          production_companies: [{ name: 'Legendary', logo_url: 'https://img/leg.png', origin_country: 'US' }],
+        }),
+      },
+    });
+    const chip = w.findAll('.media-detail__company')[0];
+    expect(chip.element.tagName).not.toBe('BUTTON');
+    expect(chip.findAll('button').length).toBe(1);
+    expect(chip.find('button').attributes('aria-label')).toBe('Show Legendary titles');
   });
 
   it('falls back to a single studio chip when only item.studio is set', async () => {
@@ -275,7 +289,7 @@ describe('MediaDetail — rich cast / crew / companies', () => {
     const chips = w.findAll('.media-detail__company');
     expect(chips).toHaveLength(1);
     expect(chips[0].text()).toContain('A24');
-    await chips[0].trigger('click');
+    await chips[0].find('button').trigger('click');
     expect(w.emitted('company')?.[0]).toEqual(['A24']);
   });
 
