@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, type Mock } from 'vitest';
 import { useHlsTranscode, type TranscodeHttpClient } from './useHlsTranscode';
-import type { HlsHandle } from '../components/player/hls-playback';
+import type { HlsHandle, HlsLevel } from '../components/player/hls-playback';
 
 function fakeVideo(): HTMLVideoElement {
   return {} as HTMLVideoElement;
@@ -12,6 +12,33 @@ interface Harness {
   destroy: ReturnType<typeof vi.fn>;
   post: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
+  /** Controls over the mocked HlsHandle, so reactivity tests can drive the
+   *  handle's live getters + fire the `onReady`/`onLevelSwitched` callbacks. */
+  hls: MockHls;
+}
+
+/**
+ * A stand-in for the object {@link attachHls} returns. Its `levels`,
+ * `currentLevel` and `autoLevelEnabled` are mutable so a test can flip them
+ * "as hls.js would" and then fire the captured callbacks to prove the composable
+ * re-reads them. `onReady` is captured off the attach options.
+ */
+interface MockHls {
+  levels: HlsLevel[];
+  currentLevel: number;
+  autoLevelEnabled: boolean;
+  bandwidthEstimate: number;
+  setCurrentLevel: Mock<(index: number) => void>;
+  setNextLevel: Mock<(index: number) => void>;
+  unsubscribe: Mock<() => void>;
+  /** Fire the attach `onReady` (hls.js MANIFEST_PARSED) callback, if captured. */
+  fireReady(): void;
+  /** Fire the `onLevelSwitched` subscriber with a settled level index. */
+  fireLevelSwitched(index: number): void;
+}
+
+function level(index: number, height: number, width: number, bitrate: number): HlsLevel {
+  return { index, height, width, bitrate, name: `${height}p` };
 }
 
 /**
@@ -24,19 +51,66 @@ function harness(opts: {
   postRejects?: boolean;
   attachRejects?: boolean;
   hlsConfig?: Record<string, unknown>;
+  levels?: HlsLevel[];
+  nativeDegraded?: boolean;
 } = {}): Harness {
   const destroy = vi.fn();
-  const attach = vi.fn(async (): Promise<HlsHandle> => {
+  const hls: MockHls = {
+    levels: opts.levels ?? [],
+    currentLevel: -1,
+    autoLevelEnabled: true,
+    bandwidthEstimate: 0,
+    setCurrentLevel: vi.fn<(index: number) => void>((index: number) => {
+      if (index === -1) {
+        // Real hls.js: re-enabling Auto flips `autoLevelEnabled` synchronously,
+        // but the `currentLevel` getter keeps reporting whatever level is
+        // ACTUALLY still playing until a later LEVEL_SWITCHED event settles it
+        // to the newly auto-selected level — it does NOT jump straight to -1.
+        hls.autoLevelEnabled = true;
+        return;
+      }
+      hls.currentLevel = index;
+      hls.autoLevelEnabled = false;
+    }),
+    setNextLevel: vi.fn<(index: number) => void>(),
+    unsubscribe: vi.fn<() => void>(),
+    fireReady: () => undefined,
+    fireLevelSwitched: () => undefined,
+  };
+  const attach = vi.fn(async (_video: HTMLVideoElement, _url: string, attachOpts?: { onReady?: () => void }): Promise<HlsHandle> => {
     if (opts.attachRejects) throw new Error('attach failed');
+    hls.fireReady = () => attachOpts?.onReady?.();
+    if (opts.nativeDegraded) {
+      // The exact Auto-only, no-op shape attachHls returns on the native (Safari) path.
+      return {
+        destroy,
+        levels: [],
+        getCurrentLevel: () => -1,
+        setCurrentLevel: hls.setCurrentLevel,
+        setNextLevel: hls.setNextLevel,
+        autoLevelEnabled: true,
+        bandwidthEstimate: 0,
+        onLevelSwitched: () => hls.unsubscribe,
+      };
+    }
     return {
       destroy,
-      levels: [],
-      getCurrentLevel: () => -1,
-      setCurrentLevel: () => undefined,
-      setNextLevel: () => undefined,
-      autoLevelEnabled: true,
-      bandwidthEstimate: 0,
-      onLevelSwitched: () => () => undefined,
+      get levels(): HlsLevel[] {
+        return hls.levels;
+      },
+      getCurrentLevel: () => hls.currentLevel,
+      setCurrentLevel: hls.setCurrentLevel,
+      setNextLevel: hls.setNextLevel,
+      get autoLevelEnabled(): boolean {
+        return hls.autoLevelEnabled;
+      },
+      get bandwidthEstimate(): number {
+        return hls.bandwidthEstimate;
+      },
+      onLevelSwitched: (cb: (levelIndex: number) => void): (() => void) => {
+        hls.fireLevelSwitched = (index: number) => cb(index);
+        return hls.unsubscribe;
+      },
     };
   });
   const post = vi.fn(async () => {
@@ -58,7 +132,7 @@ function harness(opts: {
     sleep: async () => {},
     hlsConfig: opts.hlsConfig as never,
   });
-  return { controller, attach, destroy, post, get };
+  return { controller, attach, destroy, post, get, hls };
 }
 
 describe('useHlsTranscode', () => {
@@ -235,6 +309,201 @@ describe('useHlsTranscode', () => {
       expect(h.controller.subtitleTracks.value).toHaveLength(1);
       h.controller.reset();
       expect(h.controller.subtitleTracks.value).toEqual([]);
+    });
+  });
+
+  describe('quality levels (E2)', () => {
+    const ladder = [level(0, 1080, 1920, 5_000_000), level(1, 720, 1280, 2_800_000), level(2, 480, 854, 1_400_000)];
+
+    it('starts with empty levels, Auto current level, auto enabled, no active height', () => {
+      const { controller } = harness();
+      expect(controller.levels.value).toEqual([]);
+      expect(controller.currentLevel.value).toBe(-1);
+      expect(controller.autoEnabled.value).toBe(true);
+      expect(controller.activeLevelHeight.value).toBeNull();
+    });
+
+    it('populates levels from the handle after attach (seed sync)', async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        levels: ladder,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.levels.value).toEqual(ladder);
+      expect(h.controller.currentLevel.value).toBe(-1);
+      expect(h.controller.autoEnabled.value).toBe(true);
+    });
+
+    it('re-reads the live levels getter when onReady (MANIFEST_PARSED) fires', async () => {
+      const h = harness({ start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' }, levels: [] });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.levels.value).toEqual([]); // empty at seed time
+      h.hls.levels = ladder; // hls.js parses the manifest -> populates its live getter
+      h.hls.fireReady();
+      expect(h.controller.levels.value).toEqual(ladder);
+    });
+
+    it('updates currentLevel / autoEnabled / activeLevelHeight on a settled level switch', async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        levels: ladder,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      // ABR settles on the 720p rung (index 1) while still in Auto mode.
+      h.hls.currentLevel = -1;
+      h.hls.autoLevelEnabled = true;
+      h.hls.fireLevelSwitched(1);
+      expect(h.controller.currentLevel.value).toBe(-1);
+      expect(h.controller.autoEnabled.value).toBe(true);
+      expect(h.controller.activeLevelHeight.value).toBe(720);
+    });
+
+    it("setLevel(n) pins the level immediately (setCurrentLevel) and updates reactive state", async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        levels: ladder,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.setLevel(2);
+      expect(h.hls.setCurrentLevel).toHaveBeenCalledWith(2);
+      expect(h.hls.setNextLevel).not.toHaveBeenCalled();
+      expect(h.controller.currentLevel.value).toBe(2);
+      expect(h.controller.autoEnabled.value).toBe(false);
+      expect(h.controller.activeLevelHeight.value).toBe(480);
+    });
+
+    it("setLevel('auto') hands back to ABR immediately (autoEnabled), then reconciles currentLevel/activeLevelHeight once LEVEL_SWITCHED settles", async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        levels: ladder,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.setLevel(1);
+      expect(h.controller.autoEnabled.value).toBe(false);
+      expect(h.controller.currentLevel.value).toBe(1);
+
+      h.controller.setLevel('auto');
+      expect(h.hls.setCurrentLevel).toHaveBeenLastCalledWith(-1);
+      // Optimistic window: autoEnabled is the reliable "is Auto" signal and
+      // flips right away. currentLevel/activeLevelHeight still reflect whatever
+      // rung was ACTUALLY still playing — hls.js hasn't reconciled yet — so they
+      // must NOT be asserted as -1/null here (that would mislead E3 into
+      // trusting currentLevel === -1 as the "is Auto" signal instead of
+      // autoEnabled).
+      expect(h.controller.autoEnabled.value).toBe(true);
+      expect(h.controller.currentLevel.value).toBe(1);
+      expect(h.controller.activeLevelHeight.value).toBe(720);
+
+      // ABR settles on the 1080p rung (index 0) — real hls.js's `currentLevel`
+      // getter reports the actually-playing index, not -1, even while Auto.
+      h.hls.currentLevel = 0;
+      h.hls.fireLevelSwitched(0);
+      expect(h.controller.currentLevel.value).toBe(0);
+      expect(h.controller.autoEnabled.value).toBe(true);
+      expect(h.controller.activeLevelHeight.value).toBe(1080);
+    });
+
+    it('setLevel before any stream is attached is a safe no-op', () => {
+      const { controller } = harness();
+      expect(() => controller.setLevel(1)).not.toThrow();
+      expect(() => controller.setLevel('auto')).not.toThrow();
+      expect(controller.currentLevel.value).toBe(-1);
+    });
+
+    it('calling start() twice without an intervening reset() tears down the first subscription before attaching the second (no leak)', async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        levels: ladder,
+      });
+      await h.controller.start(fakeVideo(), 'm1');
+      expect(h.controller.state.value).toBe('ready');
+      expect(h.controller.levels.value).toEqual(ladder);
+
+      await h.controller.start(fakeVideo(), 'm2');
+      // start() calls cleanup() first: the prior handle's destroy + level-switch
+      // unsubscribe must fire exactly once before the new attach, not leak.
+      expect(h.destroy).toHaveBeenCalledTimes(1);
+      expect(h.hls.unsubscribe).toHaveBeenCalledTimes(1);
+      expect(h.attach).toHaveBeenCalledTimes(2);
+      expect(h.controller.state.value).toBe('ready');
+      expect(h.controller.levels.value).toEqual(ladder);
+    });
+
+    it('unsubscribes from level-switch events on cleanup/reset', async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        levels: ladder,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.reset();
+      expect(h.hls.unsubscribe).toHaveBeenCalled();
+      // reset returns the level refs to their Auto/empty defaults.
+      expect(h.controller.levels.value).toEqual([]);
+      expect(h.controller.currentLevel.value).toBe(-1);
+      expect(h.controller.autoEnabled.value).toBe(true);
+      expect(h.controller.activeLevelHeight.value).toBeNull();
+    });
+
+    it('native-HLS degraded handle keeps Auto-only levels state without breaking', async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        nativeDegraded: true,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.levels.value).toEqual([]);
+      expect(h.controller.currentLevel.value).toBe(-1);
+      expect(h.controller.autoEnabled.value).toBe(true);
+      expect(h.controller.activeLevelHeight.value).toBeNull();
+      // setLevel drives the handle's no-op setter; state stays Auto (getCurrentLevel
+      // is pinned to -1 / autoLevelEnabled to true on the native path).
+      h.controller.setLevel(0);
+      expect(h.hls.setCurrentLevel).toHaveBeenCalledWith(0);
+      expect(h.controller.currentLevel.value).toBe(-1);
+      expect(h.controller.autoEnabled.value).toBe(true);
+    });
+
+    it('activeLevelHeight is null when a settled switch names an index absent from levels (defensive/edge case)', async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        levels: ladder,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      // hls.js reports a switch to an index not present in the ladder we cached
+      // (e.g. a stale/rebuilt levels array on a live-updating stream). The
+      // composable must not throw and must fall back to `null` rather than
+      // reporting a stale/incorrect height.
+      h.hls.currentLevel = 99;
+      h.hls.autoLevelEnabled = false;
+      expect(() => h.hls.fireLevelSwitched(99)).not.toThrow();
+      expect(h.controller.currentLevel.value).toBe(99);
+      expect(h.controller.activeLevelHeight.value).toBeNull();
+    });
+
+    it('ignores a stale onReady/onLevelSwitched callback that fires after cleanup/reset already tore the handle down (no resurrection of stale state)', async () => {
+      const h = harness({
+        start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+        levels: ladder,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      const fireReadyAfterTeardown = h.hls.fireReady;
+      const fireSwitchAfterTeardown = h.hls.fireLevelSwitched;
+
+      h.controller.reset();
+      expect(h.controller.levels.value).toEqual([]);
+      expect(h.controller.currentLevel.value).toBe(-1);
+
+      // The real hls.js instance is destroyed but a callback already in flight
+      // (e.g. queued on the microtask/event queue) can still fire after `handle`
+      // has been nulled out. `syncLevelState` must no-op rather than crash or
+      // repopulate the reset state from the torn-down handle's live getters.
+      h.hls.levels = ladder;
+      h.hls.currentLevel = 1;
+      expect(() => fireReadyAfterTeardown()).not.toThrow();
+      expect(() => fireSwitchAfterTeardown(1)).not.toThrow();
+      expect(h.controller.levels.value).toEqual([]);
+      expect(h.controller.currentLevel.value).toBe(-1);
+      expect(h.controller.autoEnabled.value).toBe(true);
+      expect(h.controller.activeLevelHeight.value).toBeNull();
     });
   });
 });
