@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **`setLevel(level: number | 'auto')`** — pins a rung for an immediate (buffer-flushing) switch, or hands the choice back to ABR; a safe no-op before a stream is attached or on the native-HLS path.
   - The rest of the composable's return shape (`state`, `progress`, `subtitleTracks`, `start`, `cleanup`, `reset`) is unchanged.
 
+- **Manual stream-quality selection in the player (Stream Quality/ABR step E3) — the feature is now user-visible.** Building on E1/E2's internal plumbing, the control bar's quality menu is wired to the live hls.js ladder and actually switches the playing stream:
+  - **`QualityMenu`** now renders `Auto` (labelled live, e.g. "Auto (720p)", to reflect whatever height ABR is currently playing) plus one discrete rung per distinct resolution the current stream offers, highest-first. It only appears once there's a real choice (≥2 rungs); a single-quality stream or the native-HLS/Safari path (where the browser owns ABR and exposes no level list) hides it entirely rather than showing a broken control.
+  - Picking a rung pins that hls.js level for an immediate switch; picking `Auto` hands the choice back to ABR. The choice persists as a stable resolution id (`'auto'` / `'240p'`…`'2160p'`) to `defaultQuality` in Settings, so it survives a reload and applies again — once the new stream's ladder is known — the next time you play something.
+  - New `src/components/player/quality.ts` supplies the pure mapping between hls.js levels and these stable rung ids; the id vocabulary mirrors `@phlix/contracts`' `RenditionId` rungs (that package isn't a dependency yet — still untagged — but the ids are forward-compatible) so a value written today keeps meaning the same thing later. Resolution-to-rung mapping is floor-based, not nearest-snap: an off-standard encode height never gets rounded up to a rung it doesn't actually meet.
+  - **Fixed:** Settings' "Default quality" control previously saved 4K as `'4k'`, which never matched the menu's `'2160p'` rung id, so a 4K default silently never took effect in either direction; it now saves `'2160p'` and the dropdown also gained `'1440p'`/`'360p'`/`'240p'` options to match the full rung set.
+
 ## [0.73.1] - 2026-07-07
 
 ### Fixed
