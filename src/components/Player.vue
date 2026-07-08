@@ -55,7 +55,7 @@ import {
   type TextTrackInfo,
 } from './player/captions';
 import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
-import type { SelectOptionInput } from './ui/listbox';
+import { levelIndexForQuality, AUTO_QUALITY } from './player/quality';
 
 const props = defineProps<{
   media: MediaItem;
@@ -70,8 +70,6 @@ const props = defineProps<{
   outroMarker?: TimeMarker | null;
   /** Preview-thumbnail source for a given time (VTT sprite / server hint — optional). */
   thumbnailAt?: (seconds: number) => string | null | undefined;
-  /** Server-supplied stream-quality variants (optional; the menu hides when empty). */
-  qualities?: SelectOptionInput[];
   /** Resolve the stream URL for a queued item when auto-advancing to "up next".
    *  R3.9's PlayerPage supplies the real `/media/:id/stream` resolver; without it,
    *  advancing clears the store's stream URL rather than leaving a stale one. */
@@ -221,6 +219,34 @@ function beginTranscode(): void {
   if (v) void tc.start(v, props.media.id);
 }
 
+/** A quality rung was picked in the menu — pin it (or hand back to ABR) on the
+ *  live HLS session. The menu already persisted the choice to prefs. */
+function onSelectQuality(level: number | 'auto'): void {
+  tc.setLevel(level);
+}
+
+/** One-shot guard so the persisted default quality is applied at most once per
+ *  source, the first time the ladder is known (reset per source below). */
+let qualitySeeded = false;
+
+/** Seed the initial rung from the stored `prefs.defaultQuality` once hls.js has
+ *  parsed the ladder (the "pin this level as soon as levels are known" approach —
+ *  hls.js's `startLevel` config takes an index we can't know until parse time,
+ *  and our pref is a stable resolution id). 'auto' (or an unknown/stale pref)
+ *  leaves ABR in charge. Fires only for the transcode/HLS path; the native path
+ *  reports no levels, so it correctly no-ops. */
+watch(
+  () => tc.levels.value,
+  (levels) => {
+    if (qualitySeeded || levels.length === 0) return;
+    qualitySeeded = true;
+    const pref = prefs.defaultQuality;
+    if (!pref || pref === AUTO_QUALITY) return;
+    const index = levelIndexForQuality(levels, pref);
+    if (index >= 0) tc.setLevel(index);
+  },
+);
+
 const resumeSeconds = ref(player.resumePositionFor(props.media.id) ?? 0);
 /** Resume prompt — shown on open when an in-band position is stored (the store
  *  only ever persists in-band positions, so a stored value is in-band already). */
@@ -244,6 +270,7 @@ function evaluateForCurrentMedia(): void {
   pendingSeek = null;
   autoplayAttempted = false; // a fresh source may autoplay again (U2)
   serverDefaultApplied = false; // re-evaluate the server default for the new source (U4)
+  qualitySeeded = false; // re-seed the default quality once the new ladder is known (R3.9)
   stopUpNextCountdown();
   upNextActive.value = false;
   // Tear down any previous HLS session; start a fresh one if the new item needs it.
@@ -948,7 +975,13 @@ onBeforeUnmount(() => {
 
           <VolumeControl />
           <SpeedMenu />
-          <QualityMenu :qualities="qualities" />
+          <QualityMenu
+            :levels="tc.levels.value"
+            :current-level="tc.currentLevel.value"
+            :auto-enabled="tc.autoEnabled.value"
+            :active-height="tc.activeLevelHeight.value"
+            @select="onSelectQuality"
+          />
           <CaptionsMenu
             v-model:open="captionsMenuOpen"
             :tracks="textTracks"

@@ -171,6 +171,8 @@ export const DEFAULT_MESSAGES = {
     volume: 'Volume',
     playbackSpeed: 'Playback speed',
     quality: 'Quality',
+    qualityAuto: 'Auto',
+    qualityAutoActive: 'Auto ({label})',
     // Captions menu
     captionsOn: 'Captions (on)',
     captionsOff: 'Captions (off)',

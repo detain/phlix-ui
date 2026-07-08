@@ -67,12 +67,19 @@ const MOTION_OPTIONS = [
   { value: 'on', label: 'Reduced' },
   { value: 'off', label: 'Full' },
 ];
+// Values MUST match the rung ids `player/quality.ts`'s `qualityId()`/`qualityRungs()`
+// produce (and what `QualityMenu.vue` persists to `prefs.defaultQuality`) — e.g.
+// '2160p', not '4k' — or a default picked here silently never matches a live rung
+// and this control's persisted preference is never honoured (Stream Quality/ABR E3).
 const QUALITY_OPTIONS = [
   { value: 'auto', label: 'Auto' },
-  { value: '4k', label: '4K' },
+  { value: '2160p', label: '4K' },
+  { value: '1440p', label: '1440p' },
   { value: '1080p', label: '1080p' },
   { value: '720p', label: '720p' },
   { value: '480p', label: '480p' },
+  { value: '360p', label: '360p' },
+  { value: '240p', label: '240p' },
 ];
 const SUBTITLE_OPTIONS = [
   { value: '', label: 'Off' },

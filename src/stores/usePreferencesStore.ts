@@ -49,7 +49,10 @@ export interface Preferences {
   reducedMotion: MotionPref;
   autoplay: boolean;
   defaultVolume: number; // 0–1
-  defaultQuality: string; // 'auto' | '4k' | '1080p' | …
+  // 'auto' or a RenditionId rung: 'auto' | '2160p' | '1440p' | '1080p' | '720p' | '480p' | '360p' | '240p' | 'original'.
+  // Kept as `string` (not a union) — an unknown/stale value safely falls back to Auto (see
+  // quality.ts's levelIndexForQuality), so this store's type doesn't need to widen per new rung.
+  defaultQuality: string;
   defaultSubtitleLang: string | null;
   /** True once the user has explicitly chosen a caption state (a language, or
    *  "Off") via the CaptionsMenu or the Settings default-subtitle dropdown.
