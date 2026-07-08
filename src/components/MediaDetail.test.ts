@@ -67,10 +67,18 @@ describe('MediaDetail — rendering', () => {
 
   it('emits `genre` with the name when a genre chip is clicked', async () => {
     const w = mount(MediaDetail, { props: { item: media() } });
-    const genreButtons = w.findAll('.media-detail__genre');
-    expect(genreButtons.length).toBe(2);
-    await genreButtons[0].trigger('click');
+    const genreChips = w.findAll('.media-detail__genre');
+    expect(genreChips.length).toBe(2);
+    await genreChips[0].find('button').trigger('click');
     expect(w.emitted('genre')?.[0]).toEqual(['Sci-Fi']);
+  });
+
+  it('renders each genre chip as a single interactive control (no nested button)', () => {
+    const w = mount(MediaDetail, { props: { item: media() } });
+    const genreChip = w.findAll('.media-detail__genre')[0];
+    expect(genreChip.element.tagName).not.toBe('BUTTON');
+    expect(genreChip.findAll('button').length).toBe(1);
+    expect(genreChip.find('button').attributes('aria-label')).toBe('Show Sci-Fi titles');
   });
 
   it('emits `actor` with the person name when a crew member is clicked', async () => {

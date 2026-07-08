@@ -484,16 +484,16 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="item.genres?.length" class="media-detail__genres">
-          <button
+          <Chip
             v-for="g in item.genres"
             :key="g"
-            type="button"
+            size="sm"
             class="media-detail__genre"
             :aria-label="`Show ${g} titles`"
             @click="emit('genre', g)"
           >
-            <Chip size="sm">{{ g }}</Chip>
-          </button>
+            {{ g }}
+          </Chip>
         </div>
 
         <div v-if="companies.length" class="media-detail__companies">
@@ -878,20 +878,8 @@ onBeforeUnmount(() => {
   gap: var(--space-2);
   margin-bottom: var(--space-4);
 }
-/* Each genre is a button that filters the listing by that genre. */
-.media-detail__genre {
-  display: inline-flex;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  border-radius: var(--radius-full);
-}
-.media-detail__genre:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--accent-ring);
-}
-.media-detail__genre:hover :deep(.phlix-chip) {
+/* Each genre chip filters the listing by that genre (Chip is the single interactive control). */
+.media-detail__genre:hover {
   border-color: var(--accent-ring);
   color: var(--text);
 }
