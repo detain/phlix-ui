@@ -314,7 +314,7 @@ Everything below is a named export from the package root (`import { Button } fro
 `Player` · `MiniPlayer` · `Scrubber` · `VolumeControl` · `SpeedMenu` · `QualityMenu` ·
 `CaptionsMenu` · `CaptionOverlay` · `AmbientCanvas` · `ResumePrompt` · `UpNext` · `TranscodeNotice` ·
 `ShortcutsHelp`. Pure helpers live alongside (`playback.ts`, `captions.ts`, `ambient.ts`,
-`shortcuts.ts`, `format-time.ts`).
+`shortcuts.ts`, `format-time.ts`, `quality.ts`).
 
 ### Forms & long-tail pages
 

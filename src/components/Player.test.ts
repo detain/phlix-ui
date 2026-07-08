@@ -8,6 +8,8 @@ import AmbientCanvas from './player/AmbientCanvas.vue';
 import SkipButton from './player/SkipButton.vue';
 import ThumbRating from './ThumbRating.vue';
 import Icon from './Icon.vue';
+import QualityMenu from './player/QualityMenu.vue';
+import Select from './ui/Select.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
@@ -21,26 +23,53 @@ vi.mock('../composables/useHlsTranscode', async () => {
   const state = ref('idle');
   const progress = ref(0);
   const subtitleTracks = ref<unknown[]>([]);
+  // E2 level state — the QualityMenu binds these; tests drive them by hand.
+  const levels = ref<Array<{ index: number; height: number; width: number; bitrate: number; name?: string }>>([]);
+  const currentLevel = ref(-1);
+  const autoEnabled = ref(true);
+  const activeLevelHeight = ref<number | null>(null);
   const ctrl = {
     state,
     progress,
     subtitleTracks,
+    levels,
+    currentLevel,
+    autoEnabled,
+    activeLevelHeight,
+    setLevel: vi.fn(),
     start: vi.fn(),
     cleanup: vi.fn(),
     reset: vi.fn(() => {
       state.value = 'idle';
       progress.value = 0;
       subtitleTracks.value = [];
+      levels.value = [];
+      currentLevel.value = -1;
+      autoEnabled.value = true;
+      activeLevelHeight.value = null;
     }),
   };
   return { useHlsTranscode: () => ctrl, __ctrl: ctrl };
 });
 
-/** The singleton mocked transcode controller (state/progress refs + spies). */
+interface MockLevel {
+  index: number;
+  height: number;
+  width: number;
+  bitrate: number;
+  name?: string;
+}
+
+/** The singleton mocked transcode controller (state/progress/level refs + spies). */
 function tc(): {
   state: { value: string };
   progress: { value: number };
   subtitleTracks: { value: Array<{ index: number; language: string; label: string; default: boolean; url: string }> };
+  levels: { value: MockLevel[] };
+  currentLevel: { value: number };
+  autoEnabled: { value: boolean };
+  activeLevelHeight: { value: number | null };
+  setLevel: ReturnType<typeof vi.fn>;
   start: ReturnType<typeof vi.fn>;
   cleanup: ReturnType<typeof vi.fn>;
   reset: ReturnType<typeof vi.fn>;
@@ -125,6 +154,11 @@ beforeEach(() => {
   ctrl.state.value = 'idle';
   ctrl.progress.value = 0;
   ctrl.subtitleTracks.value = [];
+  ctrl.levels.value = [];
+  ctrl.currentLevel.value = -1;
+  ctrl.autoEnabled.value = true;
+  ctrl.activeLevelHeight.value = null;
+  ctrl.setLevel.mockClear();
   ctrl.start.mockClear();
   ctrl.cleanup.mockClear();
   ctrl.reset.mockClear();
@@ -1658,5 +1692,121 @@ describe('Player — favorite + rating controls (Feature 16.1)', () => {
     // the player chrome now reflects the new item
     expect(w.find('.player__btnrow .player__favorite').attributes('aria-pressed')).toBe('true');
     expect(w.findComponent(ThumbRating).props('level')).toBe(1);
+  });
+});
+
+describe('Player — quality menu wiring (R3.9)', () => {
+  const ladder = [
+    { index: 0, height: 1080, width: 1920, bitrate: 5_000_000, name: '1080p' },
+    { index: 1, height: 720, width: 1280, bitrate: 2_800_000, name: '720p' },
+    { index: 2, height: 480, width: 854, bitrate: 1_400_000, name: '480p' },
+  ];
+
+  it('hides the quality menu until there are ≥2 switchable levels', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().state.value = 'ready'; // reveal the chrome
+    await nextTick();
+    expect(w.findComponent(QualityMenu).findComponent(Select).exists()).toBe(false);
+    tc().levels.value = ladder; // the ladder is parsed
+    await nextTick();
+    expect(w.findComponent(QualityMenu).findComponent(Select).exists()).toBe(true);
+  });
+
+  it('threads a rung selection to the controller setLevel as an hls.js index', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().state.value = 'ready';
+    tc().levels.value = ladder;
+    await nextTick();
+    w.findComponent(QualityMenu).findComponent(Select).vm.$emit('update:modelValue', '720p');
+    expect(tc().setLevel).toHaveBeenCalledWith(1);
+  });
+
+  it('hands the choice back to ABR when Auto is picked', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().state.value = 'ready';
+    tc().levels.value = ladder;
+    tc().autoEnabled.value = false;
+    tc().currentLevel.value = 0;
+    await nextTick();
+    w.findComponent(QualityMenu).findComponent(Select).vm.$emit('update:modelValue', 'auto');
+    expect(tc().setLevel).toHaveBeenCalledWith('auto');
+  });
+
+  it('seeds the pinned rung from prefs.defaultQuality once the ladder is known', async () => {
+    usePreferencesStore().defaultQuality = '720p'; // a prior pinned choice
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().levels.value = ladder; // hls.js parses the manifest → levels populate
+    await nextTick();
+    expect(tc().setLevel).toHaveBeenCalledWith(1); // 720p → index 1
+  });
+
+  it('does NOT seed a level when the stored preference is Auto', async () => {
+    usePreferencesStore().defaultQuality = 'auto';
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().levels.value = ladder;
+    await nextTick();
+    expect(tc().setLevel).not.toHaveBeenCalled();
+  });
+
+  it('seeds the default quality at most once per source', async () => {
+    usePreferencesStore().defaultQuality = '480p';
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().levels.value = ladder;
+    await nextTick();
+    expect(tc().setLevel).toHaveBeenCalledTimes(1);
+    tc().levels.value = [...ladder]; // a later re-read must NOT re-seed
+    await nextTick();
+    expect(tc().setLevel).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-seeds the stored preference when the media source switches (qualitySeeded resets per source)', async () => {
+    usePreferencesStore().defaultQuality = '480p';
+    const { w } = mountPlayer({ media: media({ id: 'm1' }), streamUrl: 'http://x/Dune.mkv' });
+    tc().levels.value = ladder;
+    await nextTick();
+    expect(tc().setLevel).toHaveBeenCalledTimes(1);
+    expect(tc().setLevel).toHaveBeenLastCalledWith(2); // 480p → index 2
+
+    // A new source resets the transcode session (levels go back to empty) and
+    // presents a FRESH ladder — evaluateForCurrentMedia must have re-armed the
+    // one-shot seed guard so the stored pref is re-applied to the new levels.
+    tc().levels.value = [];
+    await w.setProps({ media: media({ id: 'm2', name: 'Arrival' }), streamUrl: 'http://x/Arrival.mkv' });
+    await nextTick();
+    const newLadder = [
+      { index: 0, height: 1080, width: 1920, bitrate: 5_000_000, name: '1080p' },
+      { index: 1, height: 480, width: 854, bitrate: 1_400_000, name: '480p' },
+    ];
+    tc().levels.value = newLadder;
+    await nextTick();
+    expect(tc().setLevel).toHaveBeenCalledTimes(2);
+    expect(tc().setLevel).toHaveBeenLastCalledWith(1); // 480p → index 1 in the NEW ladder
+  });
+
+  it('threads the live controller state through to the menu (pinned rung, then Auto restores ABR with a live label)', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    const sel = () => w.findComponent(QualityMenu).findComponent(Select);
+    tc().state.value = 'ready';
+    tc().levels.value = ladder;
+
+    // A rung is pinned (ABR off) — Player must reflect currentLevel/autoEnabled so
+    // the menu shows the pinned rung, not "auto".
+    tc().autoEnabled.value = false;
+    tc().currentLevel.value = 2; // 480p
+    tc().activeLevelHeight.value = 480;
+    await nextTick();
+    expect(sel().props('modelValue')).toBe('480p');
+    // The Auto label always mirrors the level ABR is playing, even while pinned.
+    expect((sel().props('options') as ReadonlyArray<{ label: string }>)[0].label).toBe('Auto (480p)');
+
+    // ABR is handed back the choice and climbs to 720p — Player must thread the
+    // live activeLevelHeight into the Auto label ("Auto (720p)") and reflect that
+    // "auto" is once again the selection, all without a prop change on Player.
+    tc().autoEnabled.value = true;
+    tc().currentLevel.value = 1; // ABR is currently at 720p
+    tc().activeLevelHeight.value = 720;
+    await nextTick();
+    expect(sel().props('modelValue')).toBe('auto');
+    expect((sel().props('options') as ReadonlyArray<{ label: string }>)[0].label).toBe('Auto (720p)');
   });
 });
