@@ -15,7 +15,7 @@
 import { ref, type Ref } from 'vue';
 import { ApiClient } from '../api/client';
 import { LocalStorageTokenStore } from '../api/tokenStore';
-import { attachHls as defaultAttach, type AttachHlsOptions, type HlsHandle } from '../components/player/hls-playback';
+import { attachHls as defaultAttach, type AttachHlsOptions, type HlsHandle, type HlsLevel } from '../components/player/hls-playback';
 import {
   isFailedStatus,
   isPlayable,
@@ -72,6 +72,24 @@ export interface HlsTranscodeController {
    *  a status poll once extraction completes; empty for sources with no embedded
    *  text subtitles. The Player renders a `<track>` per entry. */
   subtitleTracks: Ref<ResolvedSubtitleTrack[]>;
+  /** The selectable quality rungs of the attached stream, highest-first (mirrors
+   *  {@link HlsHandle.levels}). Empty until the manifest is parsed, and always
+   *  empty on the native-HLS (Safari) path where the browser owns ABR. */
+  levels: Ref<HlsLevel[]>;
+  /** The pinned level index, or `-1` when ABR ("Auto") is choosing. Reflects the
+   *  user's {@link setLevel} choice and any ABR/manual switch. */
+  currentLevel: Ref<number>;
+  /** True while ABR ("Auto") is picking the level; stays `true` on native HLS. */
+  autoEnabled: Ref<boolean>;
+  /** Height (px) of whichever level is currently playing — useful for an
+   *  "Auto (→720p)" label — or `null` when unknown / no levels (e.g. native HLS
+   *  or before the first level switch settles). */
+  activeLevelHeight: Ref<number | null>;
+  /** Pin a quality rung by level index for an IMMEDIATE switch, or pass `'auto'`
+   *  to hand the choice back to ABR. Safe no-op before a stream is attached or on
+   *  the native-HLS path. Updates {@link currentLevel}/{@link autoEnabled}
+   *  optimistically; a later switch event reconciles the exact active level. */
+  setLevel(level: number | 'auto'): void;
   /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when
    *  omitted the start request sends NO `?profile=` query, letting the server map
    *  the quality profile from the request's `X-Phlix-Device-Type` header (a TV
@@ -85,6 +103,33 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   const state = ref<TranscodeState>('idle');
   const progress = ref(0);
   const subtitleTracks = ref<ResolvedSubtitleTrack[]>([]);
+  const levels = ref<HlsLevel[]>([]);
+  const currentLevel = ref<number>(-1);
+  const autoEnabled = ref<boolean>(true);
+  const activeLevelHeight = ref<number | null>(null);
+
+  /** Pull the live level getters off the attached handle into reactive state.
+   *  Called on manifest-parse (`onReady`) and on every settled level switch —
+   *  the two moments hls.js's live `levels`/`autoLevelEnabled` getters change.
+   *  `activeIndex`, when given (from the switch event), names the level that is
+   *  actually playing; otherwise we fall back to the pinned level. */
+  function syncLevelState(activeIndex?: number): void {
+    if (!handle) return;
+    levels.value = handle.levels;
+    currentLevel.value = handle.getCurrentLevel();
+    autoEnabled.value = handle.autoLevelEnabled;
+    const active = activeIndex ?? handle.getCurrentLevel();
+    const match = active >= 0 ? levels.value.find((l) => l.index === active) : undefined;
+    activeLevelHeight.value = match ? match.height : null;
+  }
+
+  /** Return the level refs to their Auto/empty defaults (no handle attached). */
+  function resetLevelState(): void {
+    levels.value = [];
+    currentLevel.value = -1;
+    autoEnabled.value = true;
+    activeLevelHeight.value = null;
+  }
 
   /** Replace the exposed track list, resolving each sidecar URL against the API
    *  base exactly like the master playlist URL. A later poll only overwrites the
@@ -106,6 +151,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   const getToken = opts.getToken ?? (() => safeToken(tokenStore));
 
   let handle: HlsHandle | null = null;
+  let unsubscribeLevelSwitched: (() => void) | null = null;
   let cancelled = false;
 
   function makeClient(): TranscodeHttpClient {
@@ -118,6 +164,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     state.value = 'preparing';
     progress.value = 0;
     subtitleTracks.value = [];
+    resetLevelState();
 
     try {
       const client = makeClient();
@@ -158,6 +205,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       handle = await attach(video, masterUrl, {
         getToken,
         hlsConfig: opts.hlsConfig,
+        onReady: () => syncLevelState(),
         onError: () => {
           if (!cancelled) {
             state.value = 'error';
@@ -169,6 +217,10 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         handle = null;
         return;
       }
+      unsubscribeLevelSwitched = handle.onLevelSwitched((index) => syncLevelState(index));
+      // Seed from the handle now: covers the native/degraded shape (empty levels,
+      // Auto) and a manifest that parsed before this point.
+      syncLevelState();
       state.value = 'ready';
     } catch {
       if (!cancelled) {
@@ -177,8 +229,25 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     }
   }
 
+  function setLevel(level: number | 'auto'): void {
+    if (!handle) return;
+    // Immediate (buffer-flushing) switch: a user clicking "480p" expects the
+    // picture to change now, not on the next fragment. The optimistic sync below
+    // updates the label instantly; the settled LEVEL_SWITCHED event reconciles it.
+    handle.setCurrentLevel(level === 'auto' ? -1 : level);
+    syncLevelState();
+  }
+
   function cleanup(): void {
     cancelled = true;
+    if (unsubscribeLevelSwitched) {
+      try {
+        unsubscribeLevelSwitched();
+      } catch {
+        /* already unsubscribed */
+      }
+      unsubscribeLevelSwitched = null;
+    }
     if (handle) {
       try {
         handle.destroy();
@@ -194,9 +263,22 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     state.value = 'idle';
     progress.value = 0;
     subtitleTracks.value = [];
+    resetLevelState();
   }
 
-  return { state, progress, subtitleTracks, start, cleanup, reset };
+  return {
+    state,
+    progress,
+    subtitleTracks,
+    levels,
+    currentLevel,
+    autoEnabled,
+    activeLevelHeight,
+    setLevel,
+    start,
+    cleanup,
+    reset,
+  };
 }
 
 function createTokenStore(): LocalStorageTokenStore | null {
