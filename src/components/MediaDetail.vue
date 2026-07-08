@@ -499,26 +499,24 @@ onBeforeUnmount(() => {
         <div v-if="companies.length" class="media-detail__companies">
           <span class="media-detail__companies-label">Studios</span>
           <div class="media-detail__company-list">
-            <button
+            <Chip
               v-for="c in companies"
               :key="c.name"
-              type="button"
+              size="sm"
               class="media-detail__company"
               :aria-label="`Show ${c.name} titles`"
               @click="emit('company', c.name)"
             >
-              <Chip size="sm">
-                <img
-                  v-if="c.logoUrl"
-                  class="media-detail__company-logo"
-                  :src="c.logoUrl"
-                  :alt="c.name"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <span>{{ c.name }}</span>
-              </Chip>
-            </button>
+              <img
+                v-if="c.logoUrl"
+                class="media-detail__company-logo"
+                :src="c.logoUrl"
+                :alt="c.name"
+                loading="lazy"
+                decoding="async"
+              />
+              <span>{{ c.name }}</span>
+            </Chip>
           </div>
         </div>
 
@@ -902,19 +900,8 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   gap: var(--space-2);
 }
-.media-detail__company {
-  display: inline-flex;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  border-radius: var(--radius-full);
-}
-.media-detail__company:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--accent-ring);
-}
-.media-detail__company:hover :deep(.phlix-chip) {
+/* Each studio chip filters the listing by that company (Chip is the single interactive control). */
+.media-detail__company:hover {
   border-color: var(--accent-ring);
   color: var(--text);
 }

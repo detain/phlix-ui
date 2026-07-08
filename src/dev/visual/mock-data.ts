@@ -36,6 +36,18 @@ function posterFor(title: string, i: number): string {
   return 'data:image/svg+xml,' + encodeURIComponent(svg).replace(/\(/g, '%28').replace(/\)/g, '%29');
 }
 
+/** Build a deterministic, offline SVG studio-logo data-URI (wordmark on a bar). */
+function studioLogo(label: string): string {
+  const safe = label.replace(/[<>&]/g, '').slice(0, 20);
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="34" viewBox="0 0 120 34">` +
+    `<rect width="120" height="34" rx="4" fill="#12100b"/>` +
+    `<text x="60" y="22" text-anchor="middle" font-family="Georgia,serif" font-size="13" ` +
+    `font-weight="700" fill="#f5a524">${safe}</text>` +
+    `</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg).replace(/\(/g, '%28').replace(/\)/g, '%29');
+}
+
 const GENRES = ['Drama', 'Sci-Fi', 'Thriller', 'Action', 'Mystery', 'Romance', 'Noir'];
 const RATINGS: MediaItem['rating'][] = ['PG', 'PG-13', 'R', 'PG-13', 'R', 'G', 'NC-17'];
 const TITLES = [
@@ -91,6 +103,13 @@ export const HERO: MediaItem = {
   actors: ['Ava Mercer', 'Idris Calloway', 'Lena Park', 'Marcus Vane', 'Sofia Reyes'],
   director: 'Denis Okonkwo',
   external_ids: { tmdb: '693134', imdb: 'tt1160419', tvdb: '' },
+  // Exercises MediaDetail's "Studios" section so the a11y harness scans the
+  // company chips (one WITH a logo image, one without — the logoless entry keeps
+  // the axe scan covering the text-only chip path too).
+  production_companies: [
+    { name: 'Harbour Light Pictures', logo_url: studioLogo('Harbour Light'), origin_country: 'US' },
+    { name: 'Drowned City Films', logo_url: null, origin_country: 'GB' },
+  ],
   created_at: null,
   updated_at: null,
 };
