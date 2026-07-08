@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Admin DlnaServerPage (RA.9) — DLNA CDS server status & toggle, ported 1:1

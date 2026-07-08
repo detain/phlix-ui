@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import type { ApiClient } from '../client';
 
 /** A currently-playing playback session. */

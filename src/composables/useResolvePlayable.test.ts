@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { MediaItem } from '../types/media-item';
 import type { SeasonGroup } from '../components/series-grouping';

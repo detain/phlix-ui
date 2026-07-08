@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * VolumeControl (R3.4) — mute toggle + a `Slider`-based volume, with mute memory.

@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import type { ApiClient } from '../client';
 
 /** A log file as listed by `GET /api/v1/admin/logs`. */

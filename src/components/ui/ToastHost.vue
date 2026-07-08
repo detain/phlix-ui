@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script lang="ts">
 // Module-scoped across all instances — see the mount-once guard below.
 let hostCount = 0;

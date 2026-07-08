@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect } from 'vitest';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import type { MediaItem } from '../types/media-item';

@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchIndexBuckets, cache, CACHE_TTL } from './index-buckets';
 

@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Hub admin HubDashboardPage (H0) — the hub's admin landing surface. Unlike the

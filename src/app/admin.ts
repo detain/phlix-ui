@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import type { RouteRecordRaw } from 'vue-router';
 import type { MenuItem } from './types';
 import type { IconName } from '../components/Icon.vue';

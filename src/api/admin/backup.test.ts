@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, vi } from 'vitest';
 import { AdminBackupApi, type Backup, type ScheduleData } from './backup';
 import type { ApiClient } from '../client';

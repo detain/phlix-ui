@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { effectScope, nextTick, ref } from 'vue';
 import {

@@ -3,6 +3,7 @@
  * (`metadata.genres_mode`): `'first'` = take the genres from the first source
  * in the priority order that supplies any (first-non-empty); `'union'` = merge
  * the distinct genres from every contributing source.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 export type GenresMode = 'first' | 'union';
 

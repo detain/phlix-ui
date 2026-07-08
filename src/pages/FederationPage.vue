@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * FederationPage (R5.2c) — the hub's peer-federation page, re-skinned onto the

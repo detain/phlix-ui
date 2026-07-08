@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, expect, it, vi } from 'vitest';
 import { effectScope, nextTick } from 'vue';
 import { useOnline } from './useOnline';

@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import type { ApiClient } from '../client';
 
 /** A recently-watched item as returned by `GET /api/v1/users/me/recently-watched`. */

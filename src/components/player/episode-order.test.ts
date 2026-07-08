@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect } from 'vitest';
 import type { MediaItem } from '../../types/media-item';
 import { orderEpisodes, orderEpisodesForPlayback, previousEpisode, nextEpisode } from './episode-order';

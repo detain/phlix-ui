@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { ApiClient } from './client';
 import { LocalStorageTokenStore } from './tokenStore';
 import { compareByStrippedTitle } from '../utils/sortTitle';

@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Spinner (R0.4e) — indeterminate progress. role=status + aria-label; spin slows

@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * PlayerPage (R3.9) — route container for `/app/player/:id`, the final R3 step.

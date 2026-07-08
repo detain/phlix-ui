@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * LibraryPage (`/app/library/:id`) — the dedicated, full, filterable grid for a

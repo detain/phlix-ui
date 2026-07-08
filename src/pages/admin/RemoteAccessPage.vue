@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Admin RemoteAccessPage (RA.10) — remote-access configuration, ported 1:1 from
