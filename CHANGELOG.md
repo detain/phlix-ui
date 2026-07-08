@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `destroy()`, `renderTextTracksNatively: false`, the tuned `fragLoadPolicy` (30s TTFB), and the `xhrSetup` bearer-token injection are all unchanged — this step is purely additive on top of the existing transcode-playback fixes.
   - **Not yet wired to any UI** — `QualityMenu`/`PlayerPage` don't consume this API yet; that lands in later steps of the same program (menu UI, then the release that makes manual quality selection user-visible).
 
+- **`useHlsTranscode` exposes the E1 level/ABR API as reactive state (Stream Quality/ABR step E2)** — internal groundwork only; still no UI wiring. The transcode-to-play composable now lifts `HlsHandle`'s level getters into refs the player will bind a quality menu to:
+  - **`levels: Ref<HlsLevel[]>`** and **`currentLevel: Ref<number>`** (`-1` = Auto) mirror the attached `HlsHandle`, refreshed on `MANIFEST_PARSED` (via `attach`'s `onReady`) and on every `Hls.Events.LEVEL_SWITCHED`.
+  - **`autoEnabled: Ref<boolean>`** is the reliable "is Auto" signal — prefer it over `currentLevel` right after calling `setLevel('auto')`, since `currentLevel` can briefly lag until the switch settles (matches real hls.js semantics).
+  - **`activeLevelHeight: Ref<number | null>`** — the height of whichever level is actually playing, for an "Auto (→720p)"-style label; `null` when unknown (native-HLS path, or before the first switch settles).
+  - **`setLevel(level: number | 'auto')`** — pins a rung for an immediate (buffer-flushing) switch, or hands the choice back to ABR; a safe no-op before a stream is attached or on the native-HLS path.
+  - The rest of the composable's return shape (`state`, `progress`, `subtitleTracks`, `start`, `cleanup`, `reset`) is unchanged.
+
 ## [0.73.1] - 2026-07-07
 
 ### Fixed
