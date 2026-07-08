@@ -7,6 +7,7 @@
  * cue lines into our own layer. Everything here is feature-detected + array-like
  * guarded so it degrades to no-ops under jsdom/SSR (which expose empty track
  * lists). Cue text is stripped of markup and rendered as TEXT (never v-html).
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 import type { SelectOption } from '../ui/listbox';
 import type {

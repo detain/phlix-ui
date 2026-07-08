@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * ShortcutsHelp (R3.3) — the player's keyboard-shortcut overlay (toggled by `?`).

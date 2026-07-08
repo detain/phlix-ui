@@ -8,6 +8,7 @@
  *
  * hls.js is imported dynamically so its ~100 kB only loads when a transcode is
  * actually played — direct-play sessions never pull it into the bundle.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 
 /**

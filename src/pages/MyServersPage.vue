@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * MyServersPage (R5.2b) — the hub's connected-media-servers list, re-skinned onto

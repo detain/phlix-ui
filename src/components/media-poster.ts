@@ -11,6 +11,7 @@
  * `virtual-grid.ts`). The optional image-proxy server hook that would emit sized
  * URLs (`phlix_ui_redo.md` §Optional#6) is NOT built yet — this is the opt-in
  * client seam that lights up the moment a consumer provides sized URLs.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 import type { PosterSrcsetInput, PosterSource } from '../types/media-item';
 

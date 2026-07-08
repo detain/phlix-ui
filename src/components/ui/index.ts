@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 // @phlix/ui — primitive component layer (R0.4). Token-driven, a11y, theme-aware.
 export { default as Button } from './Button.vue';
 export { default as IconButton } from './IconButton.vue';

@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * SignupPage (R4.1) — full-bleed cinematic host for the account-creation card.

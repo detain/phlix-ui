@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import type { ApiClient } from '../client';
 
 /** Server fleet summary — totals split by heartbeat-derived online/offline state. */

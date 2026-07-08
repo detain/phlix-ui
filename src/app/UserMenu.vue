@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * UserMenu (R5.1) — the shell account affordance. An avatar button opens a

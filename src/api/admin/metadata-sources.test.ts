@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AdminMetadataSourcesApi } from './metadata-sources';
 import type { ApiClient } from '../client';

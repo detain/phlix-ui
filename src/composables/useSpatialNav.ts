@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { onMounted, onBeforeUnmount, toValue, type MaybeRefOrGetter } from 'vue';
 import { bestCandidate, type Candidate, type Dir, type Rect } from './spatial-nav';
 import { focusableRegistry } from '../directives/focusable';

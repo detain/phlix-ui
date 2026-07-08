@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { mountVisual } from './harness';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 import BrowseHarness from './BrowseHarness.vue';

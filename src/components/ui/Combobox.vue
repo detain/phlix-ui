@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Combobox — accessible filterable single-select (R0.4c).

@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, vi } from 'vitest';
 import { AdminLiveTvApi } from './liveTv';
 import type { ApiClient } from '../client';

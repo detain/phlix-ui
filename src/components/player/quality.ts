@@ -11,6 +11,7 @@
  * what gets persisted to `prefs.defaultQuality`, so a pinned choice survives a
  * reload and a fresh stream whose level indices differ. The `'auto'` sentinel
  * (also from the contracts vocabulary) means "let ABR decide".
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 import type { HlsLevel } from './hls-playback';
 import type { SelectOption } from '../ui/listbox';

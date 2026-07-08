@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * CaptionOverlay (R3.5) — renders the active subtitle cues as a CUSTOM overlay

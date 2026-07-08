@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 /// <reference types="node" />
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';

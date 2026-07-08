@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
 import { LocalStorageTokenStore, type TokenStore } from './tokenStore';
 import type { MediaItem, PosterCandidatesResponse } from '../types/media-item';

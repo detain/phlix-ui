@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, vi } from 'vitest';
 import { AdminLogsApi, ALL_LOGS } from './logs';
 import type { ApiClient } from '../client';

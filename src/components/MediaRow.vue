@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * MediaRow (R2.4) — a horizontal, scroll-snapping rail of poster cards for the

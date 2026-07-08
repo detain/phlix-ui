@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { ApiClient } from '../api/client';
 import type { MediaItem } from '../types/media-item';
 import { type SeasonGroup } from '../components/series-grouping';

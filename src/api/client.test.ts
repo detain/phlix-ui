@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     ApiClient,

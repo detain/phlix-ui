@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Admin LiveTvPage (RA.11) — Live TV / DVR administration, ported 1:1 from the

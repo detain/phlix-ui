@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * CommandPalette (R1.4) — the ⌘K / Ctrl-K command palette.

@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { ApiClient } from '../api/client';

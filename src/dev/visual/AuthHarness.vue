@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Auth surface visual harness (R6.4b). Mounts the real `LoginForm` (which renders

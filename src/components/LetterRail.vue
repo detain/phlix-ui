@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * LetterRail (P6) — a vertical A-Z (+ `#`) jump rail for long listings, pinned

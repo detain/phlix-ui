@@ -8,6 +8,7 @@
  * into an UNQUOTED CSS `url(...)` (`media-detail__ambient`) where a raw paren
  * would break the declaration. The result is therefore safe in BOTH an
  * `<img src>` and an unquoted CSS `url()`.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 import type { MediaItem } from '../../types/media-item';
 

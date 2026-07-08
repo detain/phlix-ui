@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * Admin DuplicatesPage (Feature 1.7) — the duplicate-merge console for a media

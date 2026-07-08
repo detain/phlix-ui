@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect } from 'vitest';
 import { createRouter, createMemoryHistory, type RouteRecordRaw } from 'vue-router';
 import {

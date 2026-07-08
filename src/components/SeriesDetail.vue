@@ -1,3 +1,7 @@
+<!--
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+-->
+
 <script setup lang="ts">
 /**
  * SeriesDetail (U3) — the series surface for `/app/media/:id` when the item is a

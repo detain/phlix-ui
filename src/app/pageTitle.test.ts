@@ -1,3 +1,9 @@
+/**
+ * Source file.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ */
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRouter, createMemoryHistory, type RouteLocationNormalized } from 'vue-router';
 import { buildRoutes, resolveRouteTitle } from './createPhlixApp';

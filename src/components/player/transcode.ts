@@ -10,6 +10,7 @@
  * These helpers build the endpoint paths and normalize the server payloads
  * (which use snake_case) into a stable camelCase shape, tolerating either
  * casing so a contract tweak doesn't silently break parsing.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 
 /**

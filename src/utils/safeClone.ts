@@ -7,6 +7,7 @@
  * otherwise. The JSON fallback is sufficient for the plain JSON-ish settings
  * payloads phlix-ui clones (no functions / cycles / non-JSON values), and modern
  * browsers keep identical structuredClone behaviour.
+ * @copyright 2026 Joe Huss <detain@interserver.net>
  */
 export function safeClone<T>(value: T): T {
   if (typeof structuredClone === 'function') {
