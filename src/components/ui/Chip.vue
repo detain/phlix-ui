@@ -21,6 +21,8 @@ const props = withDefaults(
     disabled?: boolean;
     /** aria-label for the remove button; defaults to "Remove". */
     removeLabel?: string;
+    /** Overrides the main button's accessible name; defaults to the slot content. */
+    ariaLabel?: string;
   }>(),
   { selected: undefined, removable: false, size: 'sm', disabled: false, removeLabel: 'Remove' },
 );
@@ -44,6 +46,7 @@ function onMain() {
       type="button"
       class="phlix-chip__main"
       :disabled="disabled"
+      :aria-label="ariaLabel"
       :aria-pressed="selected === undefined ? undefined : selected"
       @click="onMain"
     >
