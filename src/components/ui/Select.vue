@@ -4,7 +4,11 @@
  *
  *   <Select v-model="sort" :options="[{value:'year',label:'Year'},…]" label="Sort" />
  *
- * Button + listbox (aria-haspopup=listbox / aria-expanded / aria-activedescendant).
+ * Select-only combobox pattern (WAI-ARIA APG): the trigger is `role="combobox"`
+ * with `aria-haspopup=listbox` / `aria-expanded` / `aria-controls` /
+ * `aria-activedescendant`. `role="combobox"` is required for those attributes to
+ * be valid on the trigger — a plain `role="button"` may not carry
+ * `aria-activedescendant`/`aria-controls` (axe `aria-allowed-attr`).
  * Keyboard: Up/Down move, Home/End edges, Enter/Space select-or-open, Esc close,
  * type-to-jump. Click-outside closes. Reduced-motion aware.
  */
@@ -128,6 +132,7 @@ onBeforeUnmount(() => {
     <button
       type="button"
       class="phlix-select__trigger"
+      role="combobox"
       :aria-haspopup="'listbox'"
       :aria-expanded="open"
       :aria-controls="open ? `${baseId}-list` : undefined"

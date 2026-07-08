@@ -42,6 +42,9 @@ const SURFACES: { name: string; path: string; ready: string }[] = [
   { name: 'browse', path: '/src/dev/visual/browse.html', ready: '.vh-browse' },
   { name: 'media-detail', path: '/src/dev/visual/media-detail.html', ready: '.media-detail' },
   { name: 'player', path: '/src/dev/visual/player.html', ready: '.player' },
+  // QualityMenu OPEN — its own harness (the `player` surface has no hls.js levels,
+  // so the menu is hidden there). Opened on mount; axe samples the expanded listbox.
+  { name: 'quality-menu', path: '/src/dev/visual/quality-menu.html', ready: '.quality-menu .phlix-select__list' },
   { name: 'auth', path: '/src/dev/visual/auth.html', ready: '.authcard' },
   { name: 'settings', path: '/src/dev/visual/settings.html', ready: '.vh-settings' },
   { name: 'shell', path: '/src/dev/visual/shell.html', ready: '.shell' },

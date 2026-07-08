@@ -93,3 +93,74 @@ describe('QualityMenu', () => {
     expect(w.find('.phlix-select.is-glass').exists()).toBe(true);
   });
 });
+
+/**
+ * E4 — accessibility coverage. The QualityMenu delegates its ARIA/keyboard
+ * semantics to the `Select` primitive, so these assertions mount the REAL Select
+ * child (not a stub) and prove the menu exposes correct listbox/option roles,
+ * a named trigger, `aria-selected` on the active rung, `aria-activedescendant`
+ * tracking, and keyboard operability — the interactive half of "a11y clean" that
+ * the on-demand axe suite (`e2e/a11y.spec.ts`, `quality-menu` surface) mirrors in
+ * a real browser. Same pattern as `SpeedMenu`/`Select`'s own a11y tests.
+ */
+describe('QualityMenu — a11y (ARIA + keyboard)', () => {
+  it('exposes a named combobox trigger (role / aria-haspopup / aria-expanded / aria-label)', () => {
+    const w = mount(QualityMenu, { props: { levels: ladder } });
+    const trigger = w.find('.phlix-select__trigger');
+    expect(trigger.attributes('role')).toBe('combobox'); // so aria-activedescendant is valid when open
+    expect(trigger.attributes('aria-haspopup')).toBe('listbox');
+    expect(trigger.attributes('aria-expanded')).toBe('false');
+    expect(trigger.attributes('aria-label')).toBe('Quality');
+  });
+
+  it('opens a named listbox of role=option rungs (Auto + one per resolution)', async () => {
+    const w = mount(QualityMenu, { props: { levels: ladder } });
+    await w.find('.phlix-select__trigger').trigger('click');
+    const list = w.find('[role="listbox"]');
+    expect(list.exists()).toBe(true);
+    expect(list.attributes('aria-label')).toBe('Quality');
+    const options = w.findAll('[role="option"]');
+    expect(options).toHaveLength(4); // auto + 1080p + 720p + 480p
+    expect(options.map((o) => o.text().trim())).toEqual(['Auto', '1080p', '720p', '480p']);
+  });
+
+  it('marks the Auto option aria-selected while ABR owns the choice', async () => {
+    const w = mount(QualityMenu, { props: { levels: ladder, autoEnabled: true, activeHeight: 720 } });
+    await w.find('.phlix-select__trigger').trigger('click');
+    const selected = w.findAll('[role="option"]').filter((o) => o.attributes('aria-selected') === 'true');
+    expect(selected).toHaveLength(1);
+    expect(selected[0].text()).toContain('Auto');
+  });
+
+  it('marks the pinned rung aria-selected when ABR is off', async () => {
+    const w = mount(QualityMenu, { props: { levels: ladder, autoEnabled: false, currentLevel: 2 } });
+    await w.find('.phlix-select__trigger').trigger('click');
+    const selected = w.findAll('[role="option"]').filter((o) => o.attributes('aria-selected') === 'true');
+    expect(selected).toHaveLength(1);
+    expect(selected[0].text()).toContain('480p');
+  });
+
+  it('is keyboard-operable: ArrowDown tracks aria-activedescendant, Enter picks the rung', async () => {
+    const w = mount(QualityMenu, { props: { levels: ladder } });
+    const trigger = w.find('.phlix-select__trigger');
+    await trigger.trigger('keydown', { key: 'ArrowDown' }); // open, active = selected (auto, 0)
+    await trigger.trigger('keydown', { key: 'ArrowDown' }); // -> 1080p (1)
+    const activeId = trigger.attributes('aria-activedescendant');
+    expect(activeId).toBeTruthy();
+    expect(w.find(`#${activeId}`).attributes('role')).toBe('option');
+    expect(w.find(`#${activeId}`).text()).toContain('1080p');
+    await trigger.trigger('keydown', { key: 'Enter' });
+    expect(w.emitted('select')?.at(-1)).toEqual([0]); // hls.js level index for 1080p
+    expect(trigger.attributes('aria-expanded')).toBe('false'); // Enter closes + returns focus
+  });
+
+  it('Escape closes the listbox without emitting a selection', async () => {
+    const w = mount(QualityMenu, { props: { levels: ladder } });
+    const trigger = w.find('.phlix-select__trigger');
+    await trigger.trigger('click');
+    expect(trigger.attributes('aria-expanded')).toBe('true');
+    await trigger.trigger('keydown', { key: 'Escape' });
+    expect(trigger.attributes('aria-expanded')).toBe('false');
+    expect(w.emitted('select')).toBeFalsy();
+  });
+});

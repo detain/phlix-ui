@@ -44,6 +44,10 @@ const SURFACES: { name: string; path: string; ready: string }[] = [
   { name: 'browse', path: 'browse', ready: '.vh-browse' },
   { name: 'media-detail', path: 'media-detail', ready: '.media-detail' },
   { name: 'player', path: 'player', ready: '.player' },
+  // The QualityMenu open state — captured on its own component harness because the
+  // `player` surface serves a direct-play stream (no hls.js levels) so the menu is
+  // hidden there. The harness opens the listbox on mount; `ready` waits for it.
+  { name: 'quality-menu', path: 'quality-menu', ready: '.quality-menu .phlix-select__list' },
   { name: 'auth', path: 'auth', ready: '.authcard' },
   { name: 'settings', path: 'settings', ready: '.vh-settings' },
   { name: 'shell', path: 'shell', ready: '.shell' },

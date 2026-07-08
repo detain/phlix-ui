@@ -406,6 +406,10 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
 - **Visual + a11y harnesses** (`src/dev/visual/*`) mount the real surfaces (Browse, Detail, Player,
   Auth, Settings, shell) with deterministic offline data for Playwright. These suites are **on-demand**
   — they're not part of the blocking `build`/`vitest` gate (PNG baselines are environment-fragile).
+  One surface, **`quality-menu`**, mounts `QualityMenu` on its own (rather than inside the `Player`
+  chrome) with a deterministic offline ladder and the listbox forced open — the control only renders
+  with ≥2 real hls.js levels, which the offline `Player` harness's direct-play sample can never
+  produce, so this is the only way to capture (and axe-scan) its expanded state.
 - Toolchain: **Vite 8 · Vitest 4 · TypeScript 6 · vue-tsc 3 · Vue 3.5 · Pinia 3 · Vue Router 5.**
 
 ---
