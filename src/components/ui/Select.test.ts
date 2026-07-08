@@ -43,6 +43,19 @@ describe('Select', () => {
     expect(glass.classes()).toContain('is-glass');
   });
 
+  it('is a select-only combobox: role=combobox so aria-activedescendant/-controls are valid ARIA', async () => {
+    // Regression guard (axe aria-allowed-attr): the trigger sets aria-activedescendant
+    // + aria-controls when open, which are only allowed on a combobox-role element, not
+    // a plain button. Surfaced by the QualityMenu open-state a11y harness (E4).
+    const w = mount(Select, { props: { modelValue: 'year', options: opts } });
+    const trigger = w.find('.phlix-select__trigger');
+    expect(trigger.attributes('role')).toBe('combobox');
+    expect(trigger.attributes('aria-haspopup')).toBe('listbox');
+    await trigger.trigger('click');
+    expect(trigger.attributes('aria-activedescendant')).toBeTruthy();
+    expect(trigger.attributes('aria-controls')).toBeTruthy();
+  });
+
   it('opens on click with listbox + aria-expanded', async () => {
     const w = mount(Select, { props: { modelValue: null, options: opts } });
     const trigger = w.find('.phlix-select__trigger');
