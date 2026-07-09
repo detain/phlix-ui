@@ -45,6 +45,7 @@ import TranscodePreparing from './player/TranscodePreparing.vue';
 import SkipButton from './player/SkipButton.vue';
 import SkipControls, { type SkipMarker } from './player/SkipControls.vue';
 import MarkerTimeline from './player/MarkerTimeline.vue';
+import SleepTimer from './player/SleepTimer.vue';
 import Modal from './ui/Modal.vue';
 import Spinner from './ui/Spinner.vue';
 import { api } from '../api/client';
@@ -173,6 +174,8 @@ const theater = ref(false);
 const inPip = ref(false);
 /** Whether the browser supports Picture-in-Picture (the button hides if not). */
 const pipSupported = ref(false);
+/** Ref to the sleep timer component (for keyboard shortcut access). */
+const sleepTimerRef = ref<InstanceType<typeof SleepTimer> | null>(null);
 
 /** Ambient glow brightens in theater mode (the "dim surroundings" cinema feel). */
 const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
@@ -677,6 +680,33 @@ function speedStep(direction: 1 | -1): void {
   player.setRate(next); // the rate watch mirrors it onto the element
 }
 
+/** Seek to the start of the next upcoming intro marker (within 60s ahead). */
+function skipIntro(): void {
+  if (!props.markers) return;
+  const nowSec = player.position;
+  const windowSec = 60;
+  const intro = props.markers
+    .filter((m) => m.type === 'intro' && m.startMs / 1000 > nowSec && m.startMs / 1000 - nowSec <= windowSec)
+    .sort((a, b) => a.startMs - b.startMs)[0];
+  if (intro) onSeek(intro.startMs / 1000);
+}
+
+/** Seek to the start of the next upcoming outro/credits marker (within 60s ahead). */
+function skipOutro(): void {
+  if (!props.markers) return;
+  const nowSec = player.position;
+  const windowSec = 60;
+  const outro = props.markers
+    .filter((m) => (m.type === 'outro' || m.type === 'credits') && m.startMs / 1000 > nowSec && m.startMs / 1000 - nowSec <= windowSec)
+    .sort((a, b) => a.startMs - b.startMs)[0];
+  if (outro) onSeek(outro.startMs / 1000);
+}
+
+/** Toggle the sleep timer (cycles through options or cancels). */
+function sleepTimer(): void {
+  sleepTimerRef.value?.toggleOpen();
+}
+
 const shortcutActions: ShortcutActions = {
   playPause: togglePlay,
   seekBy: (delta) => onSeek(player.position + delta),
@@ -689,6 +719,9 @@ const shortcutActions: ShortcutActions = {
   toggleCaptions,
   toggleTheater,
   togglePip,
+  skipIntro,
+  skipOutro,
+  sleepTimer,
   seekToPercent: (frac) => onSeek(frac * player.duration),
   speedStep,
   toggleHelp: () => {
@@ -1060,6 +1093,11 @@ onBeforeUnmount(() => {
             :audio-tracks="audioTracks"
             :active-audio="activeAudio"
             @select-audio="onSelectAudio"
+          />
+
+          <SleepTimer
+            ref="sleepTimerRef"
+            :on-expire="() => { videoRef?.pause(); player.pause(); }"
           />
 
           <button

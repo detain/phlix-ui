@@ -18,6 +18,9 @@ function actions(): Record<keyof ShortcutActions, ReturnType<typeof vi.fn>> & Sh
     toggleCaptions: vi.fn(),
     toggleTheater: vi.fn(),
     togglePip: vi.fn(),
+    skipIntro: vi.fn(),
+    skipOutro: vi.fn(),
+    sleepTimer: vi.fn(),
     seekToPercent: vi.fn(),
     speedStep: vi.fn(),
     toggleHelp: vi.fn(),
@@ -61,8 +64,17 @@ describe('handleShortcut — keymap', () => {
     expect(press('f').a.toggleFullscreen).toHaveBeenCalled();
     expect(press('c').a.toggleCaptions).toHaveBeenCalled();
     expect(press('t').a.toggleTheater).toHaveBeenCalled();
-    expect(press('i').a.togglePip).toHaveBeenCalled();
+    expect(press('p').a.togglePip).toHaveBeenCalled();
     expect(press('?').a.toggleHelp).toHaveBeenCalled();
+  });
+
+  it('maps skipIntro/skipOutro/sleepTimer to i/o/n', () => {
+    expect(press('i').a.skipIntro).toHaveBeenCalled();
+    expect(press('I').a.skipIntro).toHaveBeenCalled();
+    expect(press('o').a.skipOutro).toHaveBeenCalled();
+    expect(press('O').a.skipOutro).toHaveBeenCalled();
+    expect(press('n').a.sleepTimer).toHaveBeenCalled();
+    expect(press('N').a.sleepTimer).toHaveBeenCalled();
   });
 
   it('steps speed with < and >', () => {

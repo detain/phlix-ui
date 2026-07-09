@@ -30,7 +30,10 @@ export const PLAYER_SHORTCUTS: ShortcutRow[] = [
   { id: 'fullscreen', keys: ['F'], label: 'Fullscreen' },
   { id: 'captions', keys: ['C'], label: 'Captions' },
   { id: 'theater', keys: ['T'], label: 'Theater' },
-  { id: 'pip', keys: ['I'], label: 'Picture-in-picture' },
+  { id: 'skipIntro', keys: ['I'], label: 'Skip intro' },
+  { id: 'skipOutro', keys: ['O'], label: 'Skip outro' },
+  { id: 'pip', keys: ['P'], label: 'Picture-in-picture' },
+  { id: 'sleepTimer', keys: ['N'], label: 'Sleep timer' },
   { id: 'seekpct', keys: ['0', '–', '9'], label: 'Seek to %' },
   { id: 'speed', keys: ['<', '>'], label: 'Speed' },
   { id: 'help', keys: ['?'], label: 'This help' },
@@ -74,6 +77,12 @@ export interface ShortcutActions {
   toggleCaptions(): void;
   toggleTheater(): void;
   togglePip(): void;
+  /** Seek to the start of the next intro marker. */
+  skipIntro(): void;
+  /** Seek to the start of the next outro/credits marker. */
+  skipOutro(): void;
+  /** Toggle the sleep timer. */
+  sleepTimer(): void;
   /** Seek to a 0–1 fraction of the duration. */
   seekToPercent(fraction: number): void;
   /** Step playback speed up/down the ladder. */
@@ -152,7 +161,19 @@ export function handleShortcut(e: KeyboardEvent, a: ShortcutActions): boolean {
       return true;
     case 'i':
     case 'I':
+      a.skipIntro();
+      return true;
+    case 'o':
+    case 'O':
+      a.skipOutro();
+      return true;
+    case 'p':
+    case 'P':
       a.togglePip();
+      return true;
+    case 'n':
+    case 'N':
+      a.sleepTimer();
       return true;
     case '<':
       a.speedStep(-1);
