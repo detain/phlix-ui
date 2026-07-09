@@ -76,6 +76,8 @@ export interface Preferences {
   tv: boolean;
   /** Saved Browse filter presets. */
   filterPresets: FilterPreset[];
+  /** Whether to show the marker timeline bar (chapter/ad markers) in the player. */
+  showMarkerTimeline: boolean;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -94,6 +96,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   atmosphere: true,
   tv: false,
   filterPresets: [],
+  showMarkerTimeline: true,
 };
 
 /** Stable id from a preset name (so re-saving the same name overwrites it). */
@@ -169,6 +172,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   const tv = ref<boolean>(initial.tv);
   // Copy so the shared DEFAULT_PREFERENCES.filterPresets array is never mutated.
   const filterPresets = ref<FilterPreset[]>(initial.filterPresets ? [...initial.filterPresets] : []);
+  const showMarkerTimeline = ref<boolean>(initial.showMarkerTimeline);
 
   const systemReduced = ref(systemPrefersReduced());
   let mq: MediaQueryList | null = null;
@@ -198,6 +202,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       atmosphere: atmosphere.value,
       tv: tv.value,
       filterPresets: filterPresets.value,
+      showMarkerTimeline: showMarkerTimeline.value,
     };
   }
 
@@ -244,6 +249,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     atmosphere.value = d.atmosphere;
     tv.value = d.tv;
     filterPresets.value = [...d.filterPresets];
+    showMarkerTimeline.value = d.showMarkerTimeline;
   }
 
   return {
@@ -262,6 +268,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     atmosphere,
     tv,
     filterPresets,
+    showMarkerTimeline,
     systemReduced,
     effectiveReducedMotion,
     snapshot,
