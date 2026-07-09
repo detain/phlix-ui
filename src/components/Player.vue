@@ -45,6 +45,7 @@ import TranscodeNotice from './player/TranscodeNotice.vue';
 import TranscodePreparing from './player/TranscodePreparing.vue';
 import SkipButton from './player/SkipButton.vue';
 import SkipControls, { type SkipMarker } from './player/SkipControls.vue';
+import ChapterList from './player/ChapterList.vue';
 import MarkerTimeline from './player/MarkerTimeline.vue';
 import SleepTimer from './player/SleepTimer.vue';
 import Modal from './ui/Modal.vue';
@@ -448,6 +449,7 @@ const textTracks = ref<TextTrackInfo[]>([]);
 const audioTracks = ref<TextTrackInfo[]>([]);
 const activeAudio = ref(-1);
 const captionsMenuOpen = ref(false);
+const chaptersListOpen = ref(false);
 /** Last on-language, so the `c` key can restore it after toggling off. */
 let lastSubtitleLang: string | null = player.subtitleLang;
 
@@ -738,7 +740,7 @@ const shortcutActions: ShortcutActions = {
 };
 // Suppress player shortcuts while the help modal or captions menu is open (their
 // own Esc/close + the inner Select's arrow keys win, no double-fire).
-useKeyboardShortcuts(shortcutActions, { enabled: () => !showHelp.value && !captionsMenuOpen.value });
+useKeyboardShortcuts(shortcutActions, { enabled: () => !showHelp.value && !captionsMenuOpen.value && !chaptersListOpen.value });
 
 function toggleMute(): void {
   // Drive the store; the `player.muted` watch mirrors it onto the element (which,
@@ -1117,6 +1119,12 @@ onBeforeUnmount(() => {
             :audio-tracks="audioTracks"
             :active-audio="activeAudio"
             @select-audio="onSelectAudio"
+          />
+
+          <ChapterList
+            v-model:open="chaptersListOpen"
+            :chapters="chapters ?? []"
+            @seek="onSeek"
           />
 
           <SleepTimer
