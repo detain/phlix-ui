@@ -42,6 +42,7 @@
                 <RouterLink :to="homePath" class="nav-link">{{ t('shell.browse') }}</RouterLink>
                 <RouterLink :to="`${homePath}/recommendations`" class="nav-link">{{ t('shell.recommendations') }}</RouterLink>
                 <RouterLink :to="`${homePath}/explore`" class="nav-link">{{ t('shell.explore') }}</RouterLink>
+                <RouterLink :to="`${homePath}/syncplay`" class="nav-link">{{ t('syncplay.syncPlay') }}</RouterLink>
                 <RouterLink :to="`${homePath}/settings`" class="nav-link">{{ t('shell.settings') }}</RouterLink>
             </template>
         </template>
