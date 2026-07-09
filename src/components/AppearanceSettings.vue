@@ -93,9 +93,16 @@ const SUBTITLE_OPTIONS = [
   { value: 'de', label: 'German' },
   { value: 'ja', label: 'Japanese' },
 ];
+const AUDIO_QUALITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'lossless', label: 'Lossless' },
+];
 
 const formatPercent = (v: number) => `${Math.round(v * 100)}%`;
 const formatPx = (v: number) => `${v}px`;
+const formatSecs = (v: number) => `${v}s`;
 
 function setSubtitle(v: string | number): void {
   prefs.defaultSubtitleLang = v === '' ? null : String(v);
@@ -305,6 +312,36 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
           :options="QUALITY_OPTIONS"
           :label="t('settings.defaultQuality')"
           @update:model-value="(v) => (prefs.defaultQuality = String(v))"
+        />
+      </div>
+    </section>
+
+    <section class="aps__group">
+      <h3 class="aps__title">{{ t('settings.crossfade') }}</h3>
+      <div class="aps__row">
+        <span class="aps__label">{{ t('settings.crossfadeDuration') }} <span class="aps__value">{{ formatSecs(prefs.crossfadeDuration) }}</span></span>
+        <div class="aps__slider">
+          <Slider
+            :model-value="prefs.crossfadeDuration"
+            :min="0"
+            :max="12"
+            :step="1"
+            :label="t('settings.crossfadeDuration')"
+            :format-value="formatSecs"
+            @update:model-value="(v) => (prefs.crossfadeDuration = v)"
+          />
+        </div>
+      </div>
+      <div class="aps__row aps__row--switch">
+        <Switch :model-value="prefs.gaplessEnabled" :label="t('settings.gaplessEnabled')" @update:model-value="(v) => (prefs.gaplessEnabled = v)" />
+      </div>
+      <div class="aps__row">
+        <span class="aps__label">{{ t('settings.preferredAudioQuality') }}</span>
+        <Select
+          :model-value="prefs.preferredAudioQuality"
+          :options="AUDIO_QUALITY_OPTIONS"
+          :label="t('settings.preferredAudioQuality')"
+          @update:model-value="(v) => (prefs.preferredAudioQuality = v as 'low' | 'medium' | 'high' | 'lossless')"
         />
       </div>
     </section>
