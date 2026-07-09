@@ -6,11 +6,11 @@
 /**
  * MusicTrackList — displays a list of tracks with play buttons and duration.
  */
-import type { MusicTrack } from '@phlix/contracts';
+import type { MusicTrack } from '../types/music';
 import Icon from './Icon.vue';
 import { useMessages } from '../composables/useMessages';
 
-const props = defineProps<{
+defineProps<{
   tracks: MusicTrack[];
   playingTrackId?: number | null;
   loading?: boolean;

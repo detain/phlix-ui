@@ -6,7 +6,7 @@
 /**
  * MusicAlbumCard — card displaying an album with its cover, title, year, and track count.
  */
-import type { MusicAlbum } from '@phlix/contracts';
+import type { MusicAlbum } from '../types/music';
 import Icon from './Icon.vue';
 
 defineProps<{

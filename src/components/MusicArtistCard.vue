@@ -6,7 +6,7 @@
 /**
  * MusicArtistCard — card displaying an artist with their image, name, and album count.
  */
-import type { MusicArtist } from '@phlix/contracts';
+import type { MusicArtist } from '../types/music';
 import Icon from './Icon.vue';
 
 defineProps<{

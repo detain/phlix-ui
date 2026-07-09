@@ -16,7 +16,7 @@ import MusicArtistCard from '../components/MusicArtistCard.vue';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
 import MusicTrackList from '../components/MusicTrackList.vue';
 import Icon from '../components/Icon.vue';
-import type { MusicArtist, MusicAlbum, MusicTrack } from '@phlix/contracts';
+import type { MusicArtist, MusicAlbum, MusicTrack } from '../types/music';
 
 // --- navigation state ---
 type View = 'artists' | 'albums' | 'tracks';
