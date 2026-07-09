@@ -514,11 +514,11 @@ describe('Player — keyboard shortcuts', () => {
     expect(w.find('[role="dialog"]').exists()).toBe(true);
   });
 
-  it('emits captions/theater/pip for c/t/i', async () => {
+  it('emits captions/theater/pip for c/t/p', async () => {
     const { w } = mountPlayer();
     key('c');
     key('t');
-    key('i');
+    key('p');
     await nextTick();
     expect(w.emitted('captions')).toHaveLength(1);
     expect(w.emitted('theater')).toHaveLength(1);
@@ -1121,9 +1121,9 @@ describe('Player — PiP & Media Session (R3.7)', () => {
     delete (document as { pictureInPictureEnabled?: unknown }).pictureInPictureEnabled;
   });
 
-  it('the i key still emits pip for host hooks', async () => {
+  it('the p key emits pip for host hooks', async () => {
     const { w } = mountPlayer();
-    key('i');
+    key('p');
     await nextTick();
     expect(w.emitted('pip')).toHaveLength(1);
   });
