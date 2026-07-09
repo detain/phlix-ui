@@ -43,6 +43,8 @@ import UpNext from './player/UpNext.vue';
 import TranscodeNotice from './player/TranscodeNotice.vue';
 import TranscodePreparing from './player/TranscodePreparing.vue';
 import SkipButton from './player/SkipButton.vue';
+import SkipControls, { type SkipMarker } from './player/SkipControls.vue';
+import MarkerTimeline from './player/MarkerTimeline.vue';
 import {
   needsTranscode,
   isFatalMediaError,
@@ -72,6 +74,8 @@ const props = defineProps<{
   introMarker?: TimeMarker | null;
   /** Outro range (server playback-info) — shows a "Skip outro" button while in-range. */
   outroMarker?: TimeMarker | null;
+  /** All skip markers from `GET /api/v1/media/:id/markers` — drives SkipControls. */
+  markers?: SkipMarker[];
   /** Preview-thumbnail source for a given time (VTT sprite / server hint — optional). */
   thumbnailAt?: (seconds: number) => string | null | undefined;
   /** Resolve the stream URL for a queued item when auto-advancing to "up next".
@@ -924,6 +928,15 @@ onBeforeUnmount(() => {
           @scrub-end="onScrubEnd"
         />
 
+        <!-- Marker timeline bar (chapter/ad markers) — visible only when markers exist and user hasn't hidden it -->
+        <MarkerTimeline
+          v-if="prefs.showMarkerTimeline && markers && markers.length > 0"
+          :position="player.position"
+          :duration="player.duration"
+          :markers="markers"
+          @seek="onSeek"
+        />
+
         <div class="player__btnrow">
           <button
             v-if="prevEpisode"
@@ -1045,6 +1058,14 @@ onBeforeUnmount(() => {
         :position="player.position"
         :intro-marker="introMarker"
         :outro-marker="outroMarker"
+        @skip="onSeek"
+      />
+
+      <!-- upcoming skip markers (R3.10) — shows skip buttons before markers are reached -->
+      <SkipControls
+        v-if="!transcodeBlocking"
+        :position="player.position"
+        :markers="markers"
         @skip="onSeek"
       />
 
