@@ -23,8 +23,8 @@ import { LocalStorageTokenStore } from '../api/tokenStore';
 import { AdminNetworkHealthApi, type HealthSnapshot } from '../api/admin/networkHealth';
 import { errMessage } from '../api/errors';
 import Tooltip from './ui/Tooltip.vue';
-import Icon from '../Icon.vue';
-import Spinner from '../ui/Spinner.vue';
+import Icon from './Icon.vue';
+import Spinner from './ui/Spinner.vue';
 
 const POLL_INTERVAL_MS = 30_000;
 

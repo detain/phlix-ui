@@ -69,8 +69,8 @@ describe('UserMenu — signed in', () => {
     expect(panel.text()).toContain('Ada');
     expect(panel.text()).toContain('Settings');
     expect(panel.text()).toContain('Sign out');
-    // Settings is the first menu item
-    await panel.findAll('.usermenu__item')[0].trigger('click');
+    // Settings is the second menu item (History is first now)
+    await panel.findAll('.usermenu__item')[1].trigger('click');
     expect(push).toHaveBeenCalledWith('/app/settings');
   });
 

@@ -62,18 +62,19 @@ function makeRouter(): Router {
   return createRouter({ history: createMemoryHistory(), routes });
 }
 
-function mountPage(opts: { config?: Partial<PhlixAppConfig>; router?: Router; query?: Record<string, string> } = {}) {
+async function mountPage(opts: { config?: Partial<PhlixAppConfig>; router?: Router; query?: Record<string, string> } = {}) {
   const router = opts.router ?? makeRouter();
   const config: PhlixAppConfig = { app: 'server', apiBase: '', ...opts.config };
+  if (opts.query) {
+    // Navigate to explore route first so router.replace doesn't fail on unmatched root
+    await router.push({ path: '/app/explore', query: opts.query });
+  }
   const page = mount(ExplorePage, {
     global: {
       plugins: [router],
       provide: { apiBase: config.apiBase, phlixConfig: config },
     },
   });
-  if (opts.query) {
-    router.replace({ query: opts.query });
-  }
   return page;
 }
 
@@ -90,14 +91,14 @@ afterEach(() => {
 describe('ExplorePage — renders', () => {
   it('shows spinner while loading', async () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
-    const w = mountPage({ query: { item: 'm1' } });
+    const w = await mountPage({ query: { item: 'm1' } });
     await flushPromises();
     expect(w.findComponent(Spinner).exists()).toBe(true);
   });
 
   it('renders MediaGrid with items when loaded', async () => {
     stubFetch();
-    const w = mountPage({ query: { item: 'm1' } });
+    const w = await mountPage({ query: { item: 'm1' } });
     await flushPromises();
     expect(w.findComponent(MediaGrid).exists()).toBe(true);
     expect(w.findComponent(MediaGrid).props('items').length).toBeGreaterThan(0);
@@ -105,7 +106,7 @@ describe('ExplorePage — renders', () => {
 
   it('renders empty state when no item is selected', async () => {
     stubFetch();
-    const w = mountPage();
+    const w = await mountPage();
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
@@ -114,7 +115,7 @@ describe('ExplorePage — renders', () => {
 
   it('renders empty state when API returns no items', async () => {
     stubFetch({ items: [] });
-    const w = mountPage({ query: { item: 'm1' } });
+    const w = await mountPage({ query: { item: 'm1' } });
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
@@ -123,7 +124,7 @@ describe('ExplorePage — renders', () => {
 
   it('renders error state when API fails', async () => {
     stubFetch({ error: true });
-    const w = mountPage({ query: { item: 'm1' } });
+    const w = await mountPage({ query: { item: 'm1' } });
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
@@ -132,7 +133,7 @@ describe('ExplorePage — renders', () => {
 
   it('renders retry button on error', async () => {
     stubFetch({ error: true });
-    const w = mountPage({ query: { item: 'm1' } });
+    const w = await mountPage({ query: { item: 'm1' } });
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.find('button').exists()).toBe(true);
@@ -145,7 +146,7 @@ describe('ExplorePage — converts SimilarItem to MediaItem', () => {
       { id: 's1', title: 'Test Title', posterUrl: 'https://img.jpg', year: 2024, score: 0.9, reason: 'genre' },
     ];
     stubFetch({ items });
-    const w = mountPage({ query: { item: 'm1' } });
+    const w = await mountPage({ query: { item: 'm1' } });
     await flushPromises();
     const gridItems = w.findComponent(MediaGrid).props('items') as Array<{ id: string; name: string; poster_url: string | null; year: number | null }>;
     expect(gridItems[0].id).toBe('s1');
