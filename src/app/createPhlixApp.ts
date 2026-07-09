@@ -293,6 +293,12 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             meta: { title: 'history.title' },
             component: () => import('../pages/WatchHistoryPage.vue'),
         },
+        {
+            path: `${base}/syncplay`,
+            name: 'syncplay',
+            meta: { title: 'syncplay.syncPlay' },
+            component: () => import('../pages/SyncPlayPage.vue'),
+        },
     ];
 
     if (config.extraRoutes) {
