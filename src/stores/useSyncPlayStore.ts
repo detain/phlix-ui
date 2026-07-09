@@ -5,6 +5,7 @@
  * synchronization state for the local user.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 import { defineStore } from 'pinia';

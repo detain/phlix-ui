@@ -12,6 +12,7 @@
  * reload and a fresh stream whose level indices differ. The `'auto'` sentinel
  * (also from the contracts vocabulary) means "let ABR decide".
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 import type { HlsLevel } from './hls-playback';
 import type { SelectOption } from '../ui/listbox';

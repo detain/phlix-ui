@@ -4,6 +4,7 @@
  * in the priority order that supplies any (first-non-empty); `'union'` = merge
  * the distinct genres from every contributing source.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 export type GenresMode = 'first' | 'union';
 

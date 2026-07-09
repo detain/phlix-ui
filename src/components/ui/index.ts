@@ -2,6 +2,7 @@
  * Source file.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 // @phlix/ui — primitive component layer (R0.4). Token-driven, a11y, theme-aware.

@@ -9,6 +9,7 @@
  * would break the declaration. The result is therefore safe in BOTH an
  * `<img src>` and an unquoted CSS `url()`.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 import type { MediaItem } from '../../types/media-item';
 

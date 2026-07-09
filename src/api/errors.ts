@@ -6,6 +6,7 @@
  * so offline / slow-network failures surface as friendly, recoverable copy
  * instead of an opaque `TypeError: Failed to fetch`.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 /** A non-2xx HTTP response. `message` is the server-provided error text. */

@@ -4,6 +4,7 @@
  * test coverage lives against this. The impure wiring (keydown listener,
  * registry, `getBoundingClientRect`) is in `./useSpatialNav`.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 export type Dir = 'up' | 'down' | 'left' | 'right';

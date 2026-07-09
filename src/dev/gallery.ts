@@ -2,6 +2,7 @@
  * Source file.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 // Dev entry for the primitive Gallery (R0.7). Served by `vite` via gallery.html.
