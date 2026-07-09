@@ -36,6 +36,7 @@ import EmptyState from '../../components/ui/EmptyState.vue';
 import Badge from '../../components/ui/Badge.vue';
 import ServerInfoCard from '../../components/admin/ServerInfo.vue';
 import ServerSelector from '../../components/admin/ServerSelector.vue';
+import NetworkHealthIndicator from '../../components/NetworkHealthIndicator.vue';
 import { defineAsyncComponent } from 'vue';
 
 // Lazy-load the ApexCharts wrapper so the library lands in its own chunk.
@@ -388,6 +389,7 @@ const gridDefaults = {
           :loading="loadingServers"
           @change="handleServerChange"
         />
+        <NetworkHealthIndicator />
       </div>
       <div class="metrics__snapshot" v-if="snapshot !== null && !loadingSnapshot">
         <Badge tone="accent">{{ snapshot.active_connections }} active connections</Badge>
