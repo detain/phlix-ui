@@ -299,6 +299,12 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             meta: { title: 'syncplay.syncPlay' },
             component: () => import('../pages/SyncPlayPage.vue'),
         },
+        {
+            path: `${base}/music`,
+            name: 'music',
+            meta: { title: 'music.title' },
+            component: () => import('../pages/MusicLibraryPage.vue'),
+        },
     ];
 
     if (config.extraRoutes) {
