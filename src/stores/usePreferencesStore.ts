@@ -78,6 +78,16 @@ export interface Preferences {
   filterPresets: FilterPreset[];
   /** Whether to show the marker timeline bar (chapter/ad markers) in the player. */
   showMarkerTimeline: boolean;
+  /** Crossfade duration in seconds (0 = disabled). */
+  crossfadeDuration: number;
+  /** Crossfade fade-in fraction (0–1). */
+  crossfadeFadeIn: number;
+  /** Crossfade fade-out fraction (0–1). */
+  crossfadeFadeOut: number;
+  /** Enable gapless playback. */
+  gaplessEnabled: boolean;
+  /** Preferred audio quality tier. */
+  preferredAudioQuality: 'low' | 'medium' | 'high' | 'lossless';
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -97,6 +107,11 @@ export const DEFAULT_PREFERENCES: Preferences = {
   tv: false,
   filterPresets: [],
   showMarkerTimeline: true,
+  crossfadeDuration: 0,
+  crossfadeFadeIn: 0.5,
+  crossfadeFadeOut: 0.5,
+  gaplessEnabled: true,
+  preferredAudioQuality: 'high',
 };
 
 /** Stable id from a preset name (so re-saving the same name overwrites it). */
@@ -173,6 +188,11 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   // Copy so the shared DEFAULT_PREFERENCES.filterPresets array is never mutated.
   const filterPresets = ref<FilterPreset[]>(initial.filterPresets ? [...initial.filterPresets] : []);
   const showMarkerTimeline = ref<boolean>(initial.showMarkerTimeline);
+  const crossfadeDuration = ref<number>(initial.crossfadeDuration);
+  const crossfadeFadeIn = ref<number>(initial.crossfadeFadeIn);
+  const crossfadeFadeOut = ref<number>(initial.crossfadeFadeOut);
+  const gaplessEnabled = ref<boolean>(initial.gaplessEnabled);
+  const preferredAudioQuality = ref<Preferences['preferredAudioQuality']>(initial.preferredAudioQuality);
 
   const systemReduced = ref(systemPrefersReduced());
   let mq: MediaQueryList | null = null;
@@ -203,6 +223,11 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       tv: tv.value,
       filterPresets: filterPresets.value,
       showMarkerTimeline: showMarkerTimeline.value,
+      crossfadeDuration: crossfadeDuration.value,
+      crossfadeFadeIn: crossfadeFadeIn.value,
+      crossfadeFadeOut: crossfadeFadeOut.value,
+      gaplessEnabled: gaplessEnabled.value,
+      preferredAudioQuality: preferredAudioQuality.value,
     };
   }
 
@@ -250,6 +275,11 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     tv.value = d.tv;
     filterPresets.value = [...d.filterPresets];
     showMarkerTimeline.value = d.showMarkerTimeline;
+    crossfadeDuration.value = d.crossfadeDuration;
+    crossfadeFadeIn.value = d.crossfadeFadeIn;
+    crossfadeFadeOut.value = d.crossfadeFadeOut;
+    gaplessEnabled.value = d.gaplessEnabled;
+    preferredAudioQuality.value = d.preferredAudioQuality;
   }
 
   return {
@@ -269,6 +299,11 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     tv,
     filterPresets,
     showMarkerTimeline,
+    crossfadeDuration,
+    crossfadeFadeIn,
+    crossfadeFadeOut,
+    gaplessEnabled,
+    preferredAudioQuality,
     systemReduced,
     effectiveReducedMotion,
     snapshot,
