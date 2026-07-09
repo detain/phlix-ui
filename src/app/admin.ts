@@ -173,6 +173,13 @@ const pluginsPage: AdminPage = {
   icon: 'settings',
   component: () => import('../pages/admin/PluginsPage.vue'),
 };
+const transcodingPage: AdminPage = {
+  name: 'admin-transcoding',
+  path: 'transcoding',
+  label: 'Transcoding',
+  icon: 'play',
+  component: () => import('../pages/admin/TranscodingSettingsPage.vue'),
+};
 const settingsPage: AdminPage = {
   name: 'admin-settings',
   path: 'settings',
@@ -228,6 +235,7 @@ const ALL_ADMIN_PAGES: AdminPage[] = [
   librariesPage,
   duplicatesPage,
   pluginsPage,
+  transcodingPage,
   settingsPage,
   hubDashboardPage,
   auditLogsPage,
@@ -267,6 +275,7 @@ export const serverAdminPages: AdminPage[] = [
   librariesPage,
   duplicatesPage,
   pluginsPage,
+  transcodingPage,
 ];
 
 /** Hub-only admin pages: a hub-scoped dashboard + the re-homed audit log. */
@@ -299,6 +308,7 @@ const defaultAdminPages: AdminPage[] = [
   librariesPage,
   duplicatesPage,
   pluginsPage,
+  transcodingPage,
   settingsPage,
 ];
 
