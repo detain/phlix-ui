@@ -15,7 +15,7 @@
  * Supports filtering by webhook and status. Failed deliveries can be
  * manually re-queued. Each row can be expanded to show full details.
  */
-import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
+import { ref, computed, watch, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
@@ -34,7 +34,6 @@ import PageHint from '../../components/ui/PageHint.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Select from '../../components/ui/Select.vue';
-import Pagination from '../../components/ui/Pagination.vue';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -117,6 +116,9 @@ function onFilterChange(): void {
   void loadLogs();
 }
 
+// Watch filter changes and reload
+watch([selectedWebhookId, selectedStatus], onFilterChange);
+
 function onPageChange(newPage: number): void {
   page.value = newPage;
   void loadLogs();
@@ -161,12 +163,12 @@ async function handleDelete(logId: string): Promise<void> {
 }
 
 // ── Status badge tone ─────────────────────────────────────────────────────────
-function statusTone(status: WebhookDeliveryStatus): 'success' | 'danger' | 'warning' | 'neutral' {
+function statusTone(status: WebhookDeliveryStatus): 'success' | 'error' | 'warning' | 'neutral' {
   switch (status) {
     case 'success':
       return 'success';
     case 'failed':
-      return 'danger';
+      return 'error';
     case 'retry':
       return 'warning';
     case 'pending':
@@ -178,11 +180,6 @@ function statusTone(status: WebhookDeliveryStatus): 'success' | 'danger' | 'warn
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatTimestamp(ts: number): string {
   return new Date(ts * 1000).toLocaleString();
-}
-
-function truncateBody(body: string | null, maxLen = 200): string {
-  if (!body) return '';
-  return body.length > maxLen ? body.slice(0, maxLen) + '…' : body;
 }
 
 // ── Expand row state ──────────────────────────────────────────────────────────
@@ -222,7 +219,6 @@ onMounted(async () => {
             { value: '', label: 'All webhooks' },
             ...webhooks.map(w => ({ value: w.id, label: w.name }))
           ]"
-          @change="onFilterChange"
         />
       </div>
 
@@ -232,7 +228,6 @@ onMounted(async () => {
           id="status-filter"
           v-model="selectedStatus"
           :options="STATUS_OPTIONS"
-          @change="onFilterChange"
         />
       </div>
 
@@ -308,7 +303,7 @@ onMounted(async () => {
                     <Button
                       v-if="log.status === 'failed'"
                       variant="ghost"
-                      size="xs"
+                      size="sm"
                       :loading="retryingId === log.id"
                       @click="handleRetry(log.id)"
                     >
@@ -316,7 +311,7 @@ onMounted(async () => {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="xs"
+                      size="sm"
                       :loading="deletingId === log.id"
                       @click="handleDelete(log.id)"
                     >
@@ -367,12 +362,29 @@ onMounted(async () => {
           </tbody>
         </table>
 
-        <Pagination
-          :total="total"
-          :page="page"
-          :per-page="perPage"
-          @page-change="onPageChange"
-        />
+        <div class="admin-webhook-logs__pagination">
+          <span class="admin-webhook-logs__pagination-info">
+            Page {{ page }} of {{ Math.ceil(total / perPage) || 1 }}
+          </span>
+          <div class="admin-webhook-logs__pagination-btns">
+            <Button
+              variant="ghost"
+              size="sm"
+              :disabled="page <= 1"
+              @click="onPageChange(page - 1)"
+            >
+              Previous
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              :disabled="page >= Math.ceil(total / perPage)"
+              @click="onPageChange(page + 1)"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </template>
     </div>
   </section>
@@ -555,5 +567,24 @@ onMounted(async () => {
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+.admin-webhook-logs__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface, #f8f9fa);
+}
+
+.admin-webhook-logs__pagination-info {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.admin-webhook-logs__pagination-btns {
+  display: flex;
+  gap: 0.5rem;
 }
 </style>
