@@ -153,7 +153,11 @@ export const DEFAULT_MESSAGES = {
     // Skip intro / outro markers (server playback-info)
     skipIntro: 'Skip intro',
     skipOutro: 'Skip outro',
+    skipLabelIntro: 'Intro',
+    skipLabelCredits: 'End credits',
+    skipLabelSkipCredits: 'Skip Credits',
     keyboardShortcuts: 'Keyboard shortcuts',
+    sleepTimer: 'Sleep timer',
     pip: 'Picture-in-picture',
     exitPip: 'Exit picture-in-picture',
     theater: 'Theater mode',
