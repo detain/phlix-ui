@@ -51,6 +51,7 @@ describe('transcode helpers', () => {
         status: 'running',
         reused: false,
         subtitles: [],
+        variants: null,
       });
     });
     it('also accepts camelCase + hls_url fallback', () => {
@@ -83,6 +84,7 @@ describe('transcode helpers', () => {
         progress: 42,
         masterUrl: '/hls/j/master.m3u8',
         subtitles: [],
+        variants: null,
       });
     });
     it('coerces a numeric-string progress', () => {

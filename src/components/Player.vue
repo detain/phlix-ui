@@ -981,6 +981,7 @@ onBeforeUnmount(() => {
           <SpeedMenu />
           <QualityMenu
             :levels="tc.levels.value"
+            :variants="tc.variants.value"
             :current-level="tc.currentLevel.value"
             :auto-enabled="tc.autoEnabled.value"
             :active-height="tc.activeLevelHeight.value"

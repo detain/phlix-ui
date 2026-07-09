@@ -13,6 +13,12 @@
  * quality stream (or the native-HLS/Safari path, where `levels` is empty and the
  * browser owns ABR) has nothing to choose, so the menu stays hidden.
  *
+ * When the hls.js manifest exposes fewer distinct rungs than the server's quality
+ * ladder (`variants`), the menu falls back to the server ladder so the user still
+ * has a choice. A selection emits the hls.js level index (or `'auto'`) that the
+ * player applies via the controller's `setLevel`; if the chosen rung is not yet
+ * loaded in hls.js the selection falls back to `'auto'`.
+ *
  * The `Auto` label reflects the level ABR is currently playing ("Auto (720p)"),
  * updating live as the bitrate climbs. A selection:
  *   - persists the stable rung id to `usePreferencesStore.defaultQuality` (survives
@@ -27,13 +33,18 @@ import { usePlayerStore } from '../../stores/usePlayerStore';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { useMessages } from '../../composables/useMessages';
 import type { HlsLevel } from './hls-playback';
+import type { Variant } from './transcode';
 import type { SelectOption } from '../ui/listbox';
-import { AUTO_QUALITY, qualityRungs, qualityLabel, qualityForLevel, levelIndexForQuality } from './quality';
+import { AUTO_QUALITY, qualityRungs, qualityLabel, qualityForLevel, levelIndexForQuality, qualityId } from './quality';
 
 const props = withDefaults(
   defineProps<{
     /** The live hls.js quality ladder (empty on native-HLS / before manifest parse). */
     levels?: HlsLevel[];
+    /** Server-provided quality ladder from the transcode start/status response.
+     *  Used as fallback when hls.js levels are insufficient (e.g. manifest only
+     *  has one quality but the server knows about more). */
+    variants?: Variant[] | null;
     /** Pinned hls.js level index, or `-1` when ABR ("Auto") is choosing. */
     currentLevel?: number;
     /** True while ABR owns the choice — the reliable "is Auto" signal (E2). */
@@ -41,7 +52,7 @@ const props = withDefaults(
     /** Height (px) of the level ABR is currently playing, for the "Auto (720p)" label. */
     activeHeight?: number | null;
   }>(),
-  { levels: () => [], currentLevel: -1, autoEnabled: true, activeHeight: null },
+  { levels: () => [], variants: null, currentLevel: -1, autoEnabled: true, activeHeight: null },
 );
 
 const emit = defineEmits<{
@@ -53,7 +64,29 @@ const player = usePlayerStore();
 const prefs = usePreferencesStore();
 const { t } = useMessages();
 
-const rungs = computed(() => qualityRungs(props.levels));
+/** The switchable rungs from hls.js levels. */
+const hlsRungs = computed(() => qualityRungs(props.levels));
+
+/**
+ * The switchable rungs from server variants (highest-first, one per distinct
+ * height). Only used when hls.js levels are insufficient (< 2 distinct rungs).
+ */
+const variantRungs = computed<SelectOption[]>(() => {
+  const seen = new Set<string>();
+  const rungs: SelectOption[] = [];
+  if (!props.variants) return [];
+  for (const v of [...props.variants].sort((a, b) => b.height - a.height)) {
+    const id = qualityId(v.height);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    rungs.push({ value: id, label: qualityLabel(v.height) });
+  }
+  return rungs;
+});
+
+/** Use hls.js rungs when sufficient, otherwise fall back to server variants. */
+const rungs = computed(() => (hlsRungs.value.length >= 2 ? hlsRungs.value : variantRungs.value));
+
 /** Show the menu only when there's a real choice — Auto + ≥2 switchable rungs. */
 const hasQualities = computed(() => rungs.value.length >= 2);
 
@@ -78,6 +111,9 @@ function onChange(v: string | number): void {
     emit('select', 'auto');
     return;
   }
+  // Find the hls.js level index for this quality. If hls.js levels are a subset
+  // of server variants (e.g. manifest has 1 level but server has 3), the index
+  // will be -1 and we fall back to 'auto'.
   const index = levelIndexForQuality(props.levels, id);
   emit('select', index >= 0 ? index : 'auto');
 }
