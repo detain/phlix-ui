@@ -241,8 +241,8 @@ describe('PlayerPage — playback-info (chapters + skip markers)', () => {
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     expect(w.findComponent(Player).props('chapters')).toEqual([
-      { start: 0, title: 'Cold open' },
-      { start: 90, title: undefined },
+      { start: 0, end: 60, title: 'Cold open' },
+      { start: 90, end: 200, title: undefined },
     ]);
   });
 

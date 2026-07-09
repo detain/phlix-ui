@@ -27,6 +27,8 @@ const { t: translate } = useMessages();
 export interface Chapter {
   /** Chapter start, in seconds. */
   start: number;
+  /** Chapter end, in seconds (used for duration display in chapter list). */
+  end?: number;
   title?: string;
 }
 

@@ -200,6 +200,10 @@ export const DEFAULT_MESSAGES = {
     captionBackground: 'Caption background',
     edge: 'Edge',
     captionEdge: 'Caption edge',
+    // Chapter list
+    chapters: 'Chapters',
+    chapterList: 'Chapter list',
+    noChapters: 'No chapters',
     // Shortcuts help overlay (the per-row shortcut descriptions stay English —
     // they live in the shared exported `shortcuts.ts` keymap, not a component)
     keyboard: 'Keyboard',
