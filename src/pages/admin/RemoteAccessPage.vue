@@ -25,6 +25,7 @@ import {
   type PortForwardStatus,
   type HostnameCandidate,
 } from '../../api/admin/remoteAccess';
+import { AdminNetworkHealthApi, type RelayHealth, type NetworkHealth } from '../../api/admin/networkHealth';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
@@ -47,6 +48,9 @@ const apiBase = computed(() =>
 const api = new AdminRemoteAccessApi(
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
 );
+const healthApi = new AdminNetworkHealthApi(
+  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+);
 const toasts = useToastStore();
 
 function formatDate(value: string): string {
@@ -60,9 +64,15 @@ const expanded = ref<Record<string, boolean>>({
   subdomain: false,
   relay: false,
   portforward: false,
+  networkhealth: false,
 });
 function toggleSection(section: string): void {
-  expanded.value[section] = !expanded.value[section];
+  const wasExpanded = expanded.value[section];
+  expanded.value[section] = !wasExpanded;
+  // Load network health on first expansion (P3B-S7)
+  if (section === 'networkhealth' && !wasExpanded) {
+    void handleNetworkHealthExpand();
+  }
 }
 
 // ── Hub pairing state ────────────────────────────────────────────────────────
@@ -380,6 +390,62 @@ async function disablePortForward(): Promise<void> {
   }
 }
 
+// ── Network health state (P3B-S7) ──────────────────────────────────────────
+const MAX_LATENCY_HISTORY = 10;
+
+const relayHealth = ref<RelayHealth['relay'] | null>(null);
+const hubHealth = ref<RelayHealth['hub'] | null>(null);
+const networkHealth = ref<NetworkHealth | null>(null);
+const latencyHistory = ref<{ ms: number; at: string }[]>([]);
+const networkHealthLoading = ref(false);
+const networkHealthError = ref<string | null>(null);
+
+async function loadNetworkHealth(): Promise<void> {
+  networkHealthLoading.value = true;
+  networkHealthError.value = null;
+  try {
+    const snapshot = await healthApi.getHealthSnapshot();
+    relayHealth.value = snapshot.relay;
+    hubHealth.value = snapshot.hub;
+    networkHealth.value = snapshot.network;
+    // Add current measurement to history
+    if (snapshot.network.latencyMs !== null) {
+      latencyHistory.value.push({
+        ms: snapshot.network.latencyMs,
+        at: snapshot.network.measuredAt,
+      });
+      // Keep only last MAX_LATENCY_HISTORY entries
+      if (latencyHistory.value.length > MAX_LATENCY_HISTORY) {
+        latencyHistory.value = latencyHistory.value.slice(-MAX_LATENCY_HISTORY);
+      }
+    }
+  } catch (e) {
+    networkHealthError.value = errMessage(e, 'Failed to load network health.');
+    toasts.error(networkHealthError.value);
+  } finally {
+    networkHealthLoading.value = false;
+  }
+}
+
+/** Load network health when section is expanded, but only once per expansion. */
+function handleNetworkHealthExpand(): void {
+  if (!networkHealthLoading.value && relayHealth.value === null) {
+    void loadNetworkHealth();
+  }
+}
+
+const networkHealthSummary = computed(() => {
+  if (networkHealthLoading.value) return 'Loading…';
+  if (networkHealthError.value) return 'Error loading';
+  if (relayHealth.value === null) return 'Not available';
+  const latency = networkHealth.value?.latencyMs;
+  const status = networkHealth.value?.status ?? 'offline';
+  if (latency !== null && latency !== undefined) {
+    return `${status} (${latency}ms)`;
+  }
+  return status;
+});
+
 onMounted(() => {
   void loadHubStatus();
   void loadSubdomainStatus();
@@ -681,6 +747,134 @@ onMounted(() => {
       </div>
     </section>
 
+    <!-- Section 5: Network Health (P3B-S7) -->
+    <section class="admin-remote__section" aria-labelledby="remote-networkhealth-heading">
+      <button
+        type="button"
+        class="admin-remote__section-header"
+        :aria-expanded="expanded.networkhealth"
+        aria-controls="remote-networkhealth-body"
+        @click="toggleSection('networkhealth')"
+      >
+        <span class="admin-remote__section-title">
+          <h2 id="remote-networkhealth-heading">Network Health</h2>
+          <Icon :name="expanded.networkhealth ? 'chevron-up' : 'chevron-down'" class="admin-remote__chevron" />
+        </span>
+        <span class="admin-remote__section-summary">{{ networkHealthSummary }}</span>
+      </button>
+      <div v-if="expanded.networkhealth" id="remote-networkhealth-body" class="admin-remote__section-body">
+        <div v-if="networkHealthLoading" class="admin-remote__skel"><Skeleton variant="text" :lines="4" /></div>
+        <EmptyState
+          v-else-if="networkHealthError"
+          icon="alert"
+          title="Couldn't load network health"
+          :description="networkHealthError ?? undefined"
+        >
+          <template #actions>
+            <Button variant="solid" size="sm" left-icon="rewind" @click="loadNetworkHealth">Retry</Button>
+          </template>
+        </EmptyState>
+        <template v-else-if="relayHealth !== null && hubHealth !== null">
+          <!-- Relay Health -->
+          <div class="admin-remote__health-grid">
+            <div class="admin-remote__health-card">
+              <h3 class="admin-remote__health-card-title">Relay Tunnel</h3>
+              <dl class="admin-remote__dl">
+                <dt>Status</dt>
+                <dd>
+                  <Badge :tone="relayHealth.connected ? 'success' : 'error'">
+                    {{ relayHealth.connected ? (relayHealth.active ? 'Active' : 'Connecting') : 'Disconnected' }}
+                  </Badge>
+                </dd>
+                <dt>Reconnect attempts</dt>
+                <dd>{{ relayHealth.reconnectAttempts }}</dd>
+                <template v-if="relayHealth.lastDisconnectTime">
+                  <dt>Last disconnect</dt>
+                  <dd>{{ formatDate(relayHealth.lastDisconnectTime) }}</dd>
+                </template>
+                <dt>Active sessions</dt>
+                <dd>{{ relayHealth.activeSessions }}</dd>
+              </dl>
+            </div>
+            <div class="admin-remote__health-card">
+              <h3 class="admin-remote__health-card-title">Hub Heartbeat</h3>
+              <dl class="admin-remote__dl">
+                <dt>Enrolled</dt>
+                <dd>
+                  <Badge :tone="hubHealth.isEnrolled ? 'success' : 'neutral'">
+                    {{ hubHealth.isEnrolled ? 'Yes' : 'No' }}
+                  </Badge>
+                </dd>
+                <dt>Consecutive failures</dt>
+                <dd>
+                  <Badge :tone="hubHealth.consecutiveFailures > 0 ? 'warning' : 'success'">
+                    {{ hubHealth.consecutiveFailures }}
+                  </Badge>
+                </dd>
+                <template v-if="hubHealth.lastSuccessfulHeartbeat">
+                  <dt>Last success</dt>
+                  <dd>{{ formatDate(hubHealth.lastSuccessfulHeartbeat) }}</dd>
+                </template>
+                <template v-if="hubHealth.enrollmentExpiresAt">
+                  <dt>Expires</dt>
+                  <dd>{{ formatDate(hubHealth.enrollmentExpiresAt) }}</dd>
+                </template>
+              </dl>
+            </div>
+            <div class="admin-remote__health-card">
+              <h3 class="admin-remote__health-card-title">Network Latency</h3>
+              <dl class="admin-remote__dl">
+                <dt>Current</dt>
+                <dd>
+                  <Badge :tone="networkHealth?.status === 'healthy' ? 'success' : networkHealth?.status === 'degraded' ? 'warning' : 'error'">
+                    {{ networkHealth?.latencyMs != null ? `${networkHealth?.latencyMs}ms` : 'N/A' }}
+                  </Badge>
+                </dd>
+                <dt>Status</dt>
+                <dd class="admin-remote__capitalize">{{ networkHealth?.status ?? 'unknown' }}</dd>
+                <template v-if="networkHealth?.measuredAt">
+                  <dt>Measured</dt>
+                  <dd>{{ formatDate(networkHealth?.measuredAt) }}</dd>
+                </template>
+              </dl>
+            </div>
+          </div>
+          <!-- Latency graph -->
+          <div v-if="latencyHistory.length > 0" class="admin-remote__latency-graph">
+            <h3 class="admin-remote__latency-graph-title">Latency History (last {{ latencyHistory.length }} measurements)</h3>
+            <div class="admin-remote__latency-bars" role="img" :aria-label="`Latency graph showing ${latencyHistory.length} measurements`">
+              <div
+                v-for="(point, index) in latencyHistory"
+                :key="index"
+                class="admin-remote__latency-bar-wrap"
+                :title="`${point.ms}ms at ${formatDate(point.at)}`"
+              >
+                <div
+                  class="admin-remote__latency-bar"
+                  :class="`admin-remote__latency-bar--${point.ms < 100 ? 'good' : point.ms < 500 ? 'warn' : 'bad'}`"
+                  :style="{ height: `${Math.min(100, (point.ms / 600) * 100)}%` }"
+                />
+                <span class="admin-remote__latency-value">{{ point.ms }}</span>
+              </div>
+            </div>
+            <div class="admin-remote__latency-legend">
+              <span class="admin-remote__latency-legend-item"><span class="admin-remote__latency-dot admin-remote__latency-dot--good" /> &lt;100ms</span>
+              <span class="admin-remote__latency-legend-item"><span class="admin-remote__latency-dot admin-remote__latency-dot--warn" /> 100-500ms</span>
+              <span class="admin-remote__latency-legend-item"><span class="admin-remote__latency-dot admin-remote__latency-dot--bad" /> &gt;500ms</span>
+            </div>
+          </div>
+          <div class="admin-remote__actions">
+            <Button variant="outline" size="sm" :loading="networkHealthLoading" @click="loadNetworkHealth">
+              Refresh
+            </Button>
+          </div>
+        </template>
+        <p v-else class="admin-remote__empty" role="status">
+          No network health data available.
+        </p>
+      </div>
+    </section>
+
     <!-- Pairing modal -->
     <Modal v-model="showPairModal" title="Initiate Hub Pairing" @close="closePairModal">
       <div v-if="pairingClaimCode" class="admin-remote__claim">
@@ -915,4 +1109,96 @@ onMounted(() => {
     transition: none;
   }
 }
+
+/* Network Health section (P3B-S7) */
+.admin-remote__health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+.admin-remote__health-card {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+}
+.admin-remote__health-card-title {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  color: var(--text);
+  margin-bottom: var(--space-3);
+}
+.admin-remote__capitalize {
+  text-transform: capitalize;
+}
+
+/* Latency graph */
+.admin-remote__latency-graph {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+}
+.admin-remote__latency-graph-title {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  color: var(--text);
+  margin-bottom: var(--space-3);
+}
+.admin-remote__latency-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  height: 80px;
+  padding: var(--space-2) 0;
+}
+.admin-remote__latency-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+.admin-remote__latency-bar {
+  width: 100%;
+  max-width: 40px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: height var(--dur-base) var(--ease-out);
+  min-height: 4px;
+}
+.admin-remote__latency-bar--good { background: var(--success); }
+.admin-remote__latency-bar--warn { background: var(--warning); }
+.admin-remote__latency-bar--bad  { background: var(--error); }
+.admin-remote__latency-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+.admin-remote__latency-legend {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+.admin-remote__latency-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+}
+.admin-remote__latency-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+.admin-remote__latency-dot--good { background: var(--success); }
+.admin-remote__latency-dot--warn { background: var(--warning); }
+.admin-remote__latency-dot--bad  { background: var(--error); }
 </style>

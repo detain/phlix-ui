@@ -124,6 +124,9 @@ onBeforeUnmount(() => {
           </span>
           <span class="usermenu__name">{{ displayName }}</span>
         </div>
+        <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/history`)">
+          <Icon name="film" /> {{ t('shell.watchHistory') }}
+        </button>
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/settings`)">
           <Icon name="settings" /> {{ t('shell.settings') }}
         </button>

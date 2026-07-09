@@ -275,6 +275,24 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             meta: { title: 'settings.title' },
             component: () => import('../pages/SettingsPage.vue'),
         },
+        {
+            path: `${base}/explore`,
+            name: 'explore',
+            meta: { title: 'explore.title' },
+            component: () => import('../pages/ExplorePage.vue'),
+        },
+        {
+            path: `${base}/recommendations`,
+            name: 'recommendations',
+            meta: { title: 'recommendations.title' },
+            component: () => import('../pages/RecommendationsPage.vue'),
+        },
+        {
+            path: `${base}/history`,
+            name: 'history',
+            meta: { title: 'history.title' },
+            component: () => import('../pages/WatchHistoryPage.vue'),
+        },
     ];
 
     if (config.extraRoutes) {

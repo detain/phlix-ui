@@ -42,6 +42,9 @@ export const DEFAULT_MESSAGES = {
     menu: 'Menu',
     openCommandPalette: 'Open command palette (⌘K)',
     browse: 'Browse',
+    explore: 'Explore',
+    recommendations: 'For You',
+    watchHistory: 'Watch History',
     settings: 'Settings',
     themeToggleLabel: 'Theme: {current} (switch to {next})',
     account: 'Account',
@@ -272,6 +275,15 @@ export const DEFAULT_MESSAGES = {
     // (the 9 group names + per-key labels like "TMDB API Key"/"Trakt client ID"/
     // "Enable UPnP") deliberately stay inline-English — operator/technical copy,
     // matching the R6.5c decision to keep enum + admin labels English.
+  },
+  explore: {
+    title: 'Explore Similar',
+  },
+  recommendations: {
+    title: 'For You',
+  },
+  history: {
+    title: 'Watch History',
   },
 } satisfies Record<string, Record<string, string>>;
 
