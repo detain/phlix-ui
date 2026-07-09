@@ -66,6 +66,9 @@ import {
 } from './player/captions';
 import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
 import { levelIndexForQuality, AUTO_QUALITY } from './player/quality';
+import { useSyncPlayStore } from '../stores/useSyncPlayStore';
+import SyncPlayOverlay from './syncplay/SyncPlayOverlay.vue';
+import SyncPlayModal from './syncplay/SyncPlayModal.vue';
 
 const props = defineProps<{
   media: MediaItem;
@@ -125,6 +128,7 @@ const emit = defineEmits<{
 const player = usePlayerStore();
 const prefs = usePreferencesStore();
 const { t } = useMessages();
+const syncPlay = useSyncPlayStore();
 
 // Per-user favorite/love state (Feature 16). The favorite toggle + 4-state Love
 // controls in the player chrome flip this store optimistically (one PUT each),
@@ -176,6 +180,9 @@ const inPip = ref(false);
 const pipSupported = ref(false);
 /** Ref to the sleep timer component (for keyboard shortcut access). */
 const sleepTimerRef = ref<InstanceType<typeof SleepTimer> | null>(null);
+
+/** Whether to show the SyncPlay create/join modal. */
+const showSyncPlayModal = ref(false);
 
 /** Ambient glow brightens in theater mode (the "dim surroundings" cinema feel). */
 const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
@@ -894,6 +901,22 @@ watch(
     userItemData.hydrate(props.media);
   },
 );
+
+// SyncPlay: apply remote playback state (play/pause) from other members.
+// Position sync is handled by the store's periodic refresh.
+watch(
+  () => syncPlay.currentSession,
+  (session) => {
+    if (!session) return;
+    if (session.state === 'playing') {
+      void videoRef.value?.play();
+      player.play();
+    } else if (session.state === 'paused') {
+      videoRef.value?.pause();
+      player.pause();
+    }
+  },
+);
 onBeforeUnmount(() => {
   clearIdle();
   stopUpNextCountdown();
@@ -1102,6 +1125,17 @@ onBeforeUnmount(() => {
 
           <button
             type="button"
+            class="player__iconbtn player__syncplay"
+            :class="{ 'is-on': syncPlay.isInRoom }"
+            :aria-label="syncPlay.isInRoom ? t('syncplay.inRoom') : t('syncplay.syncPlay')"
+            aria-haspopup="dialog"
+            @click="showSyncPlayModal = true"
+          >
+            <Icon name="user" />
+          </button>
+
+          <button
+            type="button"
             class="player__iconbtn"
             :aria-label="t('player.keyboardShortcuts')"
             aria-haspopup="dialog"
@@ -1246,6 +1280,12 @@ onBeforeUnmount(() => {
 
       <!-- direct-play guard: opaque notice shown only when the transcode itself failed -->
       <TranscodeNotice v-if="showTranscodeNotice" :title="media.name" @back="emit('back')" />
+
+      <!-- SyncPlay overlay: shown below player when in a SyncPlay room -->
+      <SyncPlayOverlay v-if="syncPlay.isInRoom" />
+
+      <!-- SyncPlay create/join modal -->
+      <SyncPlayModal v-model="showSyncPlayModal" />
 
       <ShortcutsHelp :open="showHelp" @close="showHelp = false" />
     </div>
@@ -1453,6 +1493,9 @@ onBeforeUnmount(() => {
 .player__iconbtn--lg :deep(svg) {
   width: 25px;
   height: 25px;
+}
+.player__syncplay.is-on :deep(svg) {
+  color: var(--color-accent);
 }
 .player__back {
   margin-top: 2px;
