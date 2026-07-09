@@ -40,6 +40,8 @@
             </template>
             <template v-else>
                 <RouterLink :to="homePath" class="nav-link">{{ t('shell.browse') }}</RouterLink>
+                <RouterLink :to="`${homePath}/recommendations`" class="nav-link">{{ t('shell.recommendations') }}</RouterLink>
+                <RouterLink :to="`${homePath}/explore`" class="nav-link">{{ t('shell.explore') }}</RouterLink>
                 <RouterLink :to="`${homePath}/settings`" class="nav-link">{{ t('shell.settings') }}</RouterLink>
             </template>
         </template>
@@ -52,6 +54,7 @@
                 @click="commands.openPalette()"
             />
             <ThemeToggle />
+            <NetworkHealthIndicator v-if="config?.app !== 'hub'" />
             <UserMenu />
         </template>
 
@@ -70,6 +73,7 @@ import UserMenu from './UserMenu.vue';
 import Icon from '../components/Icon.vue';
 import IconButton from '../components/ui/IconButton.vue';
 import MiniPlayer from '../components/MiniPlayer.vue';
+import NetworkHealthIndicator from '../components/NetworkHealthIndicator.vue';
 import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
