@@ -263,6 +263,11 @@ export const DEFAULT_MESSAGES = {
     publicHint: 'Anyone can join with the room ID',
     privateHint: 'Only people with the room ID can join',
     publicRooms: 'Public rooms',
+    waitingForMembers: 'Waiting for members…',
+    rewind: 'Rewind',
+    fastForward: 'Fast forward',
+    playAll: 'Play for everyone',
+    pauseAll: 'Pause for everyone',
   },
   music: {
     title: 'Music Library',
