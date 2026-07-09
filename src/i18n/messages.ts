@@ -285,6 +285,12 @@ export const DEFAULT_MESSAGES = {
   history: {
     title: 'Watch History',
   },
+  admin: {
+    'transcoding.title': 'Transcoding',
+    'transcoding.preferredAccelerator': 'Preferred Accelerator',
+    'transcoding.hdrOutput': 'HDR Output',
+    'transcoding.toneMapMode': 'Tone Map Mode',
+  },
 } satisfies Record<string, Record<string, string>>;
 
 /** The full English catalog type (derived from the defaults — single source of truth). */
