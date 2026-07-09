@@ -9,6 +9,7 @@
  * Used with the chrome-devtools MCP performance trace; see
  * `steps/R6-perf-rollout.worklog.md` (R6.3 verification).
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 import { createApp, h } from 'vue';
 import { createPinia } from 'pinia';

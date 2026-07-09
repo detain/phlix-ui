@@ -7,6 +7,7 @@
  * `player-chrome.html` .player-wrap::before). These helpers do the maths on a
  * raw RGBA pixel buffer so `AmbientCanvas.vue` stays a thin canvas shell.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 /** Downscaled frame the canvas samples (tiny -> cheap drawImage + getImageData). */

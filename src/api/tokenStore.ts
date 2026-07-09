@@ -2,6 +2,7 @@
  * Source file.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 export const ACCESS_TOKEN_KEY = 'access_token';

@@ -8,6 +8,7 @@
  * guarded so it degrades to no-ops under jsdom/SSR (which expose empty track
  * lists). Cue text is stripped of markup and rendered as TEXT (never v-html).
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 import type { SelectOption } from '../ui/listbox';
 import type {

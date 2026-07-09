@@ -12,6 +12,7 @@
  * Catalog shape is intentionally TWO levels — `group.key` — so the override type
  * and the `MessageKey` union stay simple and the merge is a single per-group spread.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 /**

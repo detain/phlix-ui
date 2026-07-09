@@ -2,6 +2,7 @@
  * Source file.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

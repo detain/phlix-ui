@@ -2,6 +2,7 @@
   * SyncPlay player overlay — shown when in a SyncPlay room.
   *
   * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
 -->
 
 <script setup lang="ts">

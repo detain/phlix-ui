@@ -5,6 +5,7 @@
  * and synchronizing playback state across multiple users.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 import { ApiClient } from './client';

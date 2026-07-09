@@ -12,6 +12,7 @@
  * Everything external (the HTTP client, the hls attach, the inter-poll sleep) is
  * injectable so the flow can be unit-tested without a network or a real browser.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 import { ref, type Ref } from 'vue';
 import { ApiClient } from '../api/client';

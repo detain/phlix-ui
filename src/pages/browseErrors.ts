@@ -16,6 +16,7 @@
  * Pure + side-effect free so it is trivially unit-testable without mounting the
  * heavy BrowsePage SFC.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 export function libraryLoadErrorInfo(
   code: string | null,

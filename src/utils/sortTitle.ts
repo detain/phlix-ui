@@ -15,6 +15,7 @@
  * mirroring the server's `LOWER(...) COLLATE utf8mb4_bin` test and space-only SQL
  * `TRIM()`.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 /**

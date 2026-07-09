@@ -8,6 +8,7 @@
  * payloads phlix-ui clones (no functions / cycles / non-JSON values), and modern
  * browsers keep identical structuredClone behaviour.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 export function safeClone<T>(value: T): T {
   if (typeof structuredClone === 'function') {

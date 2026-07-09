@@ -2,6 +2,7 @@
  * Small shape-normalization helpers for reconciling hub/server JSON responses
  * with the SPA's display models. Pure + dependency-free.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 /**

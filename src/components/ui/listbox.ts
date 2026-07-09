@@ -1,5 +1,6 @@
 /** Shared option model + helpers for Select / Combobox (R0.4c).
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 export interface SelectOption {
   value: string | number;

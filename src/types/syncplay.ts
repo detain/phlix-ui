@@ -6,6 +6,7 @@
  * for coordinated multi-user playback with roles, permissions, and chat.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 export type SyncPlayRole = 'none' | 'contributor' | 'editor' | 'owner';

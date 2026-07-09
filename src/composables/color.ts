@@ -1,5 +1,6 @@
 /** Tiny color helpers for the accent picker (R1.1). Pure, no deps.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 export interface RGB {

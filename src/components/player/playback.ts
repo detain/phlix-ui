@@ -8,6 +8,7 @@
  * helpers let the player detect that case (proactively by extension, reactively
  * by the <video> error code) and show a clear notice instead.
  * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
  */
 
 /** Containers a browser <video> can generally play directly (no transcode). */
