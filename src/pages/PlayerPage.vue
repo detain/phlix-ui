@@ -323,7 +323,7 @@ async function load(): Promise<void> {
       .get<PlaybackInfo>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, controller?.signal)
       .catch(() => null);
     if (disposed) return;
-    chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, title: c.title ?? undefined }));
+    chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, end: c.end_seconds, title: c.title ?? undefined }));
     introMarker.value = toMarker(info?.intro_marker);
     outroMarker.value = toMarker(info?.outro_marker);
     loading.value = false;
