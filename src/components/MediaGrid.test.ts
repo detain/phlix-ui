@@ -201,59 +201,81 @@ describe('MediaGrid — #card slot', () => {
 });
 
 describe('MediaGrid — virtualization', () => {
+  // Note: These tests use vi.useFakeTimers which can interfere with other parallel tests.
+  // They pass when run individually or with other MediaGrid/FilterBar/createPhlixApp tests.
+  // jsdom does not properly simulate scrolling, so these tests verify the component
+  // logic works correctly when scroll position is manually controlled.
+
   it('renders only the visible window of rows for a large list', async () => {
-    mockLayout(1000, 0); // 5 columns at cardSize 180; rowHeight ~356; vh 768
-    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
-    await nextTick();
-    await nextTick();
-    const cards = w.findAllComponents(MediaCard);
-    // window at the top = ~6 rows * 5 cols = 30; far fewer than 200
-    expect(cards.length).toBeGreaterThan(0);
-    expect(cards.length).toBeLessThanOrEqual(35);
-    expect(cards.length).toBeLessThan(200);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      mockLayout(1000, 0); // 5 columns at cardSize 180; rowHeight ~356; vh 768
+      const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
+      await vi.runAllTimersAsync();
+      await nextTick();
+      const cards = w.findAllComponents(MediaCard);
+      // window at the top = ~6 rows * 5 cols = 30; far fewer than 200
+      expect(cards.length).toBeGreaterThan(0);
+      expect(cards.length).toBeLessThanOrEqual(35);
+      expect(cards.length).toBeLessThan(200);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('uses an explicit column count and a full-height sizer when virtualized', async () => {
-    mockLayout(1000, 0);
-    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
-    await nextTick();
-    await nextTick();
-    const grid = w.find('.media-grid');
-    expect(grid.attributes('style')).toContain('repeat(5,');
-    // sizer reserves the full scroll height (40 rows * 356 = 14240px)
-    const sizer = w.find('.media-grid-sizer');
-    expect(sizer.attributes('style')).toContain('height: 14240px');
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      mockLayout(1000, 0);
+      const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
+      await vi.runAllTimersAsync();
+      await nextTick();
+      const grid = w.find('.media-grid');
+      expect(grid.attributes('style')).toContain('repeat(5,');
+      // sizer reserves the full scroll height (40 rows * 356 = 14240px)
+      const sizer = w.find('.media-grid-sizer');
+      expect(sizer.attributes('style')).toContain('height: 14240px');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('slides the window and reveals "back to top" once scrolled past the fold', async () => {
-    mockLayout(1000, 0);
-    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
-    await nextTick();
-    await nextTick();
-    expect(w.find('.media-grid-top').exists()).toBe(false);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      mockLayout(1000, 0);
+      const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
+      await vi.runAllTimersAsync();
+      await nextTick();
+      expect(w.find('.media-grid-top').exists()).toBe(false);
 
-    // scroll 2000px into the grid (> 1.5 * viewportHeight)
-    mockLayout(1000, -2000);
-    window.dispatchEvent(new Event('scroll'));
-    await nextTick();
-    await nextTick();
+      // scroll 2000px into the grid (> 1.5 * viewportHeight)
+      // Set window.scrollY so measure() picks up the correct scrollTop
+      Object.defineProperty(window, 'scrollY', { value: 2000, configurable: true });
+      mockLayout(1000, -2000);
+      window.dispatchEvent(new Event('scroll'));
+      await vi.runAllTimersAsync();
+      await nextTick();
 
-    // padTop offsets the rendered slice
-    const inner = w.find('.media-grid');
-    expect(inner.attributes('style')).toContain('translateY(');
-    expect(inner.attributes('style')).not.toContain('translateY(0px)');
+      // padTop offsets the rendered slice
+      const inner = w.find('.media-grid');
+      expect(inner.attributes('style')).toContain('translateY(');
+      expect(inner.attributes('style')).not.toContain('translateY(0px)');
 
-    // the slice starts at the CORRECT item, not just "few nodes":
-    // width 1000 → 5 cols, cardWidth 184, rowHeight 356; scrollTop 2000 →
-    // firstVisible 5, startRow 3 (overscan 2), startIndex 15.
-    const cards = w.findAllComponents(MediaCard);
-    expect(cards[0].props('item').name).toBe('Title 15');
+      // the slice starts at the CORRECT item, not just "few nodes":
+      // width 1000 → 5 cols, cardWidth 184, rowHeight 356; scrollTop 2000 →
+      // firstVisible 5, startRow 3 (overscan 2), startIndex 15.
+      const cards = w.findAllComponents(MediaCard);
+      expect(cards[0].props('item').name).toBe('Title 15');
 
-    // back-to-top now visible and scrolls to the top on click
-    const top = w.find('.media-grid-top');
-    expect(top.exists()).toBe(true);
-    await top.trigger('click');
-    expect(window.scrollTo).toHaveBeenCalled();
+      // back-to-top now visible and scrolls to the top on click
+      const top = w.find('.media-grid-top');
+      expect(top.exists()).toBe(true);
+      await top.trigger('click');
+      expect(window.scrollTo).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('advances the window synchronously on scroll even when rAF never fires (Firefox throttle freeze)', async () => {
