@@ -7,8 +7,12 @@
  * SyncPlayPage — group-watch rooms management.
  * Route: /app/syncplay
  * Shows user's active rooms and provides create/join functionality.
+ *
+ * Supports "join by link" via ?room=<roomId> query parameter,
+ * which auto-opens the modal in join mode with the room ID pre-filled.
  */
 import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useSyncPlayStore } from '../stores/useSyncPlayStore';
 import { useMediaApiBase } from '../composables/useApiBase';
@@ -22,8 +26,10 @@ import type { SyncPlayRole } from '../types/syncplay';
 const { t } = useMessages();
 const syncPlay = useSyncPlayStore();
 const mediaApiBase = useMediaApiBase();
+const route = useRoute();
 
 const showModal = ref(false);
+const prefilledRoomId = ref<string | undefined>(undefined);
 
 const effectiveApiBase = computed(() => mediaApiBase.value);
 
@@ -77,6 +83,12 @@ async function refresh(): Promise<void> {
 
 onMounted(() => {
   void refresh();
+  // Support "join by link" — if ?room=<id> is in the URL, pre-fill and open join modal
+  const roomParam = route.query.room as string | undefined;
+  if (roomParam && roomParam.trim()) {
+    prefilledRoomId.value = roomParam.trim();
+    showModal.value = true;
+  }
 });
 
 async function handleLeaveRoom(): Promise<void> {
@@ -175,8 +187,8 @@ async function handleLeaveRoom(): Promise<void> {
       </div>
     </div>
 
-    <!-- SyncPlay modal -->
-    <SyncPlayModal v-model="showModal" />
+    <!-- SyncPlay modal (prefilledRoomId from ?room= query param triggers join mode) -->
+    <SyncPlayModal v-model="showModal" :prefilled-room-id="prefilledRoomId" />
   </div>
 </template>
 
