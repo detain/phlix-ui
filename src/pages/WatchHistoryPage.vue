@@ -9,10 +9,11 @@
  * Fetches from GET /api/v1/me/history if available, otherwise falls back to
  * GET /api/v1/me/progress and shows items with progress > 0.
  */
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed, ref, type PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { ApiClient } from '../api/client';
+import type { ApiClient as ApiClientType } from '../api/client';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
@@ -22,10 +23,27 @@ import { resolvePlayable } from '../composables/useResolvePlayable';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import type { MediaItem } from '../types/media-item';
 
+const props = defineProps({
+  /**
+   * Optional API client for testing. When provided, this client is used instead of
+   * creating a new ApiClient instance. Follows the pattern used by other pages.
+   */
+  client: {
+    type: Object as PropType<ApiClientType>,
+    default: null,
+  },
+});
+
 const router = useRouter();
-const apiBase = useMediaApiBase();
+const injectedClient = useMediaApiBase();
 const toasts = useToastStore();
 const player = usePlayerStore();
+
+/** Returns the provided client prop or creates a new ApiClient from the injected apiBase. */
+function getClient(): ApiClient {
+  if (props.client) return props.client;
+  return new ApiClient({ baseUrl: injectedClient.value });
+}
 
 interface HistoryItem {
   id: string;
@@ -73,7 +91,7 @@ async function load(): Promise<void> {
   loading.value = true;
   error.value = null;
   try {
-    const client = new ApiClient({ baseUrl: apiBase.value });
+    const client = getClient();
 
     // Try the dedicated history endpoint first
     try {
@@ -114,10 +132,10 @@ function isAbort(e: unknown): boolean {
 
 async function onPlay(item: MediaItem): Promise<void> {
   try {
-    const client = new ApiClient({ baseUrl: apiBase.value });
+    const client = getClient();
     const resolved = await resolvePlayable(
       client,
-      apiBase.value,
+      injectedClient.value,
       item,
       player.resumeMap,
     );
