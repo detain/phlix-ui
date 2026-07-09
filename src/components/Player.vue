@@ -45,6 +45,9 @@ import TranscodePreparing from './player/TranscodePreparing.vue';
 import SkipButton from './player/SkipButton.vue';
 import SkipControls, { type SkipMarker } from './player/SkipControls.vue';
 import MarkerTimeline from './player/MarkerTimeline.vue';
+import Modal from './ui/Modal.vue';
+import Spinner from './ui/Spinner.vue';
+import { api } from '../api/client';
 import {
   needsTranscode,
   isFatalMediaError,
@@ -265,6 +268,56 @@ let pendingSeek: number | null = null;
 const upNextActive = ref(false);
 const upNextRemaining = ref(UPNEXT_COUNTDOWN_SECONDS);
 let upNextTimer: ReturnType<typeof setInterval> | undefined;
+
+// ---- P3B-S8: similar-by-marker search -----------------------------------
+/** Marker type currently being searched. */
+const similarMarkerType = ref<'intro' | 'outro' | 'credits' | 'ad' | null>(null);
+/** Position (ms) of the marker that triggered the search. */
+const similarPositionMs = ref(0);
+/** Whether the similar-media modal is open. */
+const similarModalOpen = ref(false);
+/** Search results from `searchByMarker`. */
+const similarResults = ref<MediaItem[]>([]);
+/** Whether a search is in-flight. */
+const similarLoading = ref(false);
+/** Error message if the search failed. */
+const similarError = ref<string | null>(null);
+
+function onSimilarMarker(type: 'intro' | 'outro' | 'credits' | 'ad', startMs: number): void {
+  similarMarkerType.value = type;
+  similarPositionMs.value = startMs;
+  similarResults.value = [];
+  similarError.value = null;
+  similarModalOpen.value = true;
+  void performSimilarSearch(type, startMs);
+}
+
+let similarController: AbortController | null = null;
+
+async function performSimilarSearch(
+  type: 'intro' | 'outro' | 'credits' | 'ad',
+  positionMs: number,
+): Promise<void> {
+  similarLoading.value = true;
+  similarError.value = null;
+  try {
+    const res = await api.searchByMarker(type, positionMs, 30, 20);
+    similarResults.value = Array.isArray(res.items) ? res.items : [];
+  } catch (_e) {
+    similarError.value = 'Failed to load similar media. Please try again.';
+    similarResults.value = [];
+  } finally {
+    similarLoading.value = false;
+  }
+}
+
+function closeSimilarModal(): void {
+  similarController?.abort();
+  similarModalOpen.value = false;
+  similarResults.value = [];
+  similarError.value = null;
+  similarMarkerType.value = null;
+}
 
 /** The next queued item, if any (drives the up-next card). */
 const nextItem = computed(() => player.upNext);
@@ -935,6 +988,7 @@ onBeforeUnmount(() => {
           :duration="player.duration"
           :markers="markers"
           @seek="onSeek"
+          @similar="onSimilarMarker"
         />
 
         <div class="player__btnrow">
@@ -1087,6 +1141,67 @@ onBeforeUnmount(() => {
         @play-now="playNext"
         @cancel="cancelUpNext"
       />
+
+      <!-- P3B-S8: similar media by marker search -->
+      <Modal
+        v-model="similarModalOpen"
+        :title="`Similar ${similarMarkerType ?? 'marker'}s`"
+        size="lg"
+        @close="closeSimilarModal"
+      >
+        <div class="similar-modal">
+          <!-- loading -->
+          <div v-if="similarLoading" class="similar-modal__loading" role="status" aria-busy="true">
+            <Spinner label="Finding similar media" />
+          </div>
+
+          <!-- error -->
+          <div v-else-if="similarError" class="similar-modal__state" role="alert">
+            <Icon name="error" class="similar-modal__state-icon" />
+            <p class="similar-modal__state-title">{{ similarError }}</p>
+          </div>
+
+          <!-- empty -->
+          <div
+            v-else-if="!similarLoading && similarResults.length === 0"
+            class="similar-modal__state"
+            role="status"
+          >
+            <Icon name="search" class="similar-modal__state-icon" />
+            <p class="similar-modal__state-title">No similar media found</p>
+            <p class="similar-modal__state-hint">Try a different marker or position.</p>
+          </div>
+
+          <!-- results -->
+          <ul v-else class="similar-modal__results">
+            <li
+              v-for="item in similarResults"
+              :key="item.id"
+              class="similar-modal__result"
+            >
+              <div class="similar-modal__poster">
+                <img
+                  v-if="item.poster_url"
+                  :src="item.poster_url"
+                  :alt="item.name"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div v-else class="similar-modal__poster-fallback" aria-hidden="true">
+                  <Icon name="film" />
+                </div>
+              </div>
+              <div class="similar-modal__result-body">
+                <p class="similar-modal__result-title">{{ item.name }}</p>
+                <p v-if="item.year" class="similar-modal__result-meta numeric">
+                  {{ item.year }}
+                  <span v-if="item.runtime"> · {{ item.runtime }}m</span>
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </Modal>
 
       <!-- transcode preparing: spinner+progress while the server warms up the HLS job -->
       <TranscodePreparing v-if="showPreparing" :title="media.name" :progress="tc.progress.value" @back="emit('back')" />
@@ -1345,5 +1460,112 @@ onBeforeUnmount(() => {
   .player__bigplay {
     transition: none;
   }
+}
+
+/* P3B-S8: similar-by-marker modal */
+.similar-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--text);
+}
+
+.similar-modal__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8) 0;
+}
+
+.similar-modal__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--text-subtle);
+}
+
+.similar-modal__state-icon {
+  width: 32px;
+  height: 32px;
+  opacity: 0.6;
+}
+
+.similar-modal__state-title {
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+}
+
+.similar-modal__state-hint {
+  font-size: var(--text-sm);
+}
+
+.similar-modal__results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.similar-modal__result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.similar-modal__result:hover {
+  border-color: var(--border-strong);
+}
+
+.similar-modal__poster {
+  flex-shrink: 0;
+  width: 48px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-3);
+}
+
+.similar-modal__poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.similar-modal__poster-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-subtle);
+}
+
+.similar-modal__result-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.similar-modal__result-title {
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.similar-modal__result-meta {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
 }
 </style>
