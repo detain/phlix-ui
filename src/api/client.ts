@@ -705,6 +705,33 @@ export class ApiClient {
         return { ...(user as AuthUser), is_admin: normalizeBool(user['is_admin']) };
     }
 
+    /**
+     * Search for media items with markers near a specific playhead position (P3B-S8).
+     *
+     * Calls `GET /api/v1/media/search/by-marker?type={type}&around={around}&position={position}&limit={limit}`.</a>
+     * Returns media items that have a marker of the specified type within $around seconds
+     * of the given position, excluding already-watched items.
+     *
+     * @param type       Marker type: 'intro' | 'outro' | 'credits' | 'ad'
+     * @param positionMs Current playhead position in milliseconds
+     * @param aroundSec  Search window in seconds (default: 30)
+     * @param limit      Maximum results (default: 20)
+     */
+    async searchByMarker(
+        type: 'intro' | 'outro' | 'credits' | 'ad',
+        positionMs: number,
+        aroundSec = 30,
+        limit = 20,
+    ): Promise<{ items: MediaItem[]; marker_type: string; around: number; position: number }> {
+        const params: Record<string, string> = {
+            type,
+            position: String(positionMs),
+            around: String(aroundSec),
+            limit: String(limit),
+        };
+        return this.get('/api/v1/media/search/by-marker', params);
+    }
+
     logout(redirect = true): void {
         this.tokens.clear();
         if (redirect && typeof window !== 'undefined') {
