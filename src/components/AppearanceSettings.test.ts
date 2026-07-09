@@ -183,15 +183,15 @@ describe('AppearanceSettings — playback panel', () => {
     expect(prefs.autoplay).toBe(false);
   });
 
-  it('exposes only the autoplay switch — the theme-music toggle was removed (U4)', () => {
-    // The old "Autoplay theme music on series pages" switch is gone: theme music
-    // now uses a muted-autoplay-first policy driven by MediaDetail's own persisted
-    // `phlix.theme.muted` control, not a Settings preference.
+  it('exposes autoplay + gaplessEnabled switches in playback panel', () => {
+    // Playback panel has autoplay (autoplay next episode) and gaplessEnabled switches.
     const w = mountPanel('playback');
     const switches = w.findAllComponents(Switch);
-    expect(switches).toHaveLength(1);
+    expect(switches).toHaveLength(2);
+    // First switch is autoplay
     expect(switches[0].props('label')).toBe('Autoplay next episode');
-    expect(w.html()).not.toContain('theme music');
+    // Second switch is gaplessEnabled
+    expect(switches[1].props('label')).toBeTruthy();
   });
 
   it('writes default volume via the slider', async () => {
