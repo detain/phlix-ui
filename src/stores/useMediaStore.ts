@@ -94,6 +94,9 @@ export const useMediaStore = defineStore('media', () => {
     // setTopLevel), so it's kept out of the FilterBar URL-sync. The server
     // ignores it while a search is active, so search still spans the library.
     const topLevel = ref(false);
+    // Minimum and maximum aggregate rating filters (0.0 - 10.0 scale).
+    const minRating = ref<number | undefined>(undefined);
+    const maxRating = ref<number | undefined>(undefined);
 
     const hasMore = computed(() => items.value.length < total.value);
 
@@ -110,6 +113,8 @@ export const useMediaStore = defineStore('media', () => {
         if (matchStatus.value) p.match = matchStatus.value;
         if (selectedActors.value.length) p.actors = selectedActors.value;
         if (selectedCompanies.value.length) p.companies = selectedCompanies.value;
+        if (minRating.value !== undefined) p.minRating = minRating.value;
+        if (maxRating.value !== undefined) p.maxRating = maxRating.value;
         p.sort = sort.value;
         p.order = order.value;
         p.limit = limit.value;
@@ -496,8 +501,20 @@ export const useMediaStore = defineStore('media', () => {
         matchStatus.value = '';
         selectedActors.value = [];
         selectedCompanies.value = [];
+        minRating.value = undefined;
+        maxRating.value = undefined;
         sort.value = 'name';
         order.value = 'asc';
+        offset.value = 0;
+    }
+
+    function setMinRating(v: number | undefined): void {
+        minRating.value = v;
+        offset.value = 0;
+    }
+
+    function setMaxRating(v: number | undefined): void {
+        maxRating.value = v;
         offset.value = 0;
     }
 
@@ -516,6 +533,8 @@ export const useMediaStore = defineStore('media', () => {
         matchStatus,
         selectedActors,
         selectedCompanies,
+        minRating,
+        maxRating,
         sort,
         order,
         limit,
@@ -546,6 +565,8 @@ export const useMediaStore = defineStore('media', () => {
         setMatchStatus,
         setActors,
         setCompanies,
+        setMinRating,
+        setMaxRating,
         setSort,
         setLibraryId,
         setTopLevel,
