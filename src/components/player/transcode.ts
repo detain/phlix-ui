@@ -31,6 +31,19 @@ export interface SubtitleTrack {
   url: string;
 }
 
+/**
+ * A server-provided quality rung, mirroring the wire shape verbatim.
+ * Only the fields needed for the quality menu (height, bitrate, label) are
+ * captured; full fidelity is not needed since hls.js is the primary source.
+ */
+export interface Variant {
+  id: string;
+  label: string;
+  height: number;
+  width: number;
+  bitrate: number;
+}
+
 /** Result of starting (or reusing) a transcode job. */
 export interface TranscodeStart {
   jobId: string;
@@ -40,6 +53,8 @@ export interface TranscodeStart {
   reused: boolean;
   /** Embedded text subtitle tracks extracted to WebVTT sidecars (may be empty). */
   subtitles: SubtitleTrack[];
+  /** The playable quality ladder from the server (null on a legacy pre-ABR job). */
+  variants: Variant[] | null;
 }
 
 /** A transcode job's readiness snapshot. */
@@ -52,6 +67,8 @@ export interface TranscodeStatus {
   masterUrl: string;
   /** Embedded text subtitle tracks (may arrive late, once extraction finishes). */
   subtitles: SubtitleTrack[];
+  /** The playable quality ladder from the server (null on a legacy pre-ABR job). */
+  variants: Variant[] | null;
 }
 
 /** Statuses from which the job will never become playable. */
@@ -96,6 +113,30 @@ export function parseSubtitleTracks(value: unknown): SubtitleTrack[] {
 }
 
 /**
+ * Normalizes the server's `variants` array (per-rung snake- or camelCase) into
+ * a list of {@link Variant}. Tolerates a missing/null value (→ null), junk
+ * entries (skipped), and either casing so a contract tweak doesn't break it.
+ */
+export function parseVariants(value: unknown): Variant[] | null {
+  if (value == null || !Array.isArray(value)) return null;
+  const out: Variant[] = [];
+  for (const entry of value) {
+    if (entry == null || typeof entry !== 'object') continue;
+    const o = entry as Record<string, unknown>;
+    const height = num(o.height);
+    if (height <= 0) continue;
+    out.push({
+      id: str(o.id),
+      label: str(o.label),
+      height,
+      width: num(o.width),
+      bitrate: num(o.bitrate),
+    });
+  }
+  return out.length > 0 ? out : null;
+}
+
+/**
  * Path to start (or reuse) a transcode job for a media item.
  *
  * `profile` is OPTIONAL: when omitted (or empty) NO `?profile=` query is sent, so
@@ -123,6 +164,7 @@ export function parseTranscodeStart(raw: unknown): TranscodeStart {
     status: str(o.status, 'running'),
     reused: bool(o.reused),
     subtitles: parseSubtitleTracks(o.subtitles ?? o.subtitle_tracks ?? o.subtitleTracks),
+    variants: parseVariants(o.variants ?? o.variants_list ?? o.Variants),
   };
 }
 
@@ -136,6 +178,7 @@ export function parseTranscodeStatus(raw: unknown): TranscodeStatus {
     progress: num(o.progress),
     masterUrl: str(o.master_url ?? o.masterUrl),
     subtitles: parseSubtitleTracks(o.subtitles ?? o.subtitle_tracks ?? o.subtitleTracks),
+    variants: parseVariants(o.variants ?? o.variants_list ?? o.Variants),
   };
 }
 

@@ -34,6 +34,7 @@ vi.mock('../composables/useHlsTranscode', async () => {
   const currentLevel = ref(-1);
   const autoEnabled = ref(true);
   const activeLevelHeight = ref<number | null>(null);
+  const variants = ref<unknown[] | null>(null);
   const ctrl = {
     state,
     progress,
@@ -42,6 +43,7 @@ vi.mock('../composables/useHlsTranscode', async () => {
     currentLevel,
     autoEnabled,
     activeLevelHeight,
+    variants,
     setLevel: vi.fn(),
     start: vi.fn(),
     cleanup: vi.fn(),
@@ -53,6 +55,7 @@ vi.mock('../composables/useHlsTranscode', async () => {
       currentLevel.value = -1;
       autoEnabled.value = true;
       activeLevelHeight.value = null;
+      variants.value = null;
     }),
   };
   return { useHlsTranscode: () => ctrl, __ctrl: ctrl };
@@ -75,6 +78,7 @@ function tc(): {
   currentLevel: { value: number };
   autoEnabled: { value: boolean };
   activeLevelHeight: { value: number | null };
+  variants: { value: unknown[] | null };
   setLevel: ReturnType<typeof vi.fn>;
   start: ReturnType<typeof vi.fn>;
   cleanup: ReturnType<typeof vi.fn>;

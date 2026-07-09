@@ -26,6 +26,7 @@ import {
   transcodeStartPath,
   transcodeStatusPath,
   type SubtitleTrack,
+  type Variant,
 } from '../components/player/transcode';
 
 /** State machine for the transcode-to-play flow. */
@@ -86,6 +87,11 @@ export interface HlsTranscodeController {
    *  "Auto (→720p)" label — or `null` when unknown / no levels (e.g. native HLS
    *  or before the first level switch settles). */
   activeLevelHeight: Ref<number | null>;
+  /** Server-provided quality ladder ({@link Variant}[]) from the transcode
+   *  start/status response. Used as fallback when hls.js levels are insufficient
+   *  (e.g. manifest only has one quality) to populate the quality selector.
+   *  Null on a legacy pre-ABR job. */
+  variants: Ref<Variant[] | null>;
   /** Pin a quality rung by level index for an IMMEDIATE switch, or pass `'auto'`
    *  to hand the choice back to ABR. Safe no-op before a stream is attached or on
    *  the native-HLS path. Updates {@link currentLevel}/{@link autoEnabled}
@@ -108,6 +114,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   const currentLevel = ref<number>(-1);
   const autoEnabled = ref<boolean>(true);
   const activeLevelHeight = ref<number | null>(null);
+  const variants = ref<Variant[] | null>(null);
 
   /** Pull the live level getters off the attached handle into reactive state.
    *  Called on manifest-parse (`onReady`) and on every settled level switch —
@@ -130,6 +137,14 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     currentLevel.value = -1;
     autoEnabled.value = true;
     activeLevelHeight.value = null;
+    variants.value = null;
+  }
+
+  /** Replace the exposed variants list. Overwrites only when non-empty so a
+   *  later poll never clobbers variants the start response already surfaced. */
+  function setVariants(v: Variant[] | null): void {
+    if (!v || v.length === 0) return;
+    variants.value = v;
   }
 
   /** Replace the exposed track list, resolving each sidecar URL against the API
@@ -177,6 +192,8 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       // Tracks may already be present on the start response (a reused job that
       // already finished extracting); otherwise they arrive on a later poll.
       setSubtitleTracks(startRes.subtitles);
+      // Variants (the quality ladder) may also be present on the start response.
+      setVariants(startRes.variants);
 
       const masterUrl = resolveStreamUrl(opts.apiBase(), startRes.masterUrl);
 
@@ -188,6 +205,9 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         // Late-arriving tracks (extraction completes after the playlist is ready)
         // update the exposed list reactively → the Player adds the <track>s.
         setSubtitleTracks(status.subtitles);
+        // Late-arriving variants update the quality ladder if the start response
+        // had none (e.g. a reused job where variants arrived after initial response).
+        setVariants(status.variants);
         if (isFailedStatus(status.status)) {
           throw new Error(`transcode ${status.status}`);
         }
@@ -275,6 +295,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     currentLevel,
     autoEnabled,
     activeLevelHeight,
+    variants,
     setLevel,
     start,
     cleanup,
