@@ -305,6 +305,12 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             meta: { title: 'music.title' },
             component: () => import('../pages/MusicLibraryPage.vue'),
         },
+        {
+            path: `${base}/parental`,
+            name: 'parental',
+            meta: { title: 'parental.title' },
+            component: () => import('../pages/ParentalControlsPage.vue'),
+        },
     ];
 
     if (config.extraRoutes) {

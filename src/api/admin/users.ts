@@ -114,6 +114,36 @@ export interface UpdateProfileInput {
   rating?: number;
 }
 
+// ── Parental control types ─────────────────────────────────────────────────────
+
+/**
+ * Access schedule entry for a profile.
+ * Days of week are mon|tue|wed|thu|fri|sat|sun.
+ */
+export interface AccessSchedule {
+  id: number;
+  profile_id: number;
+  name: string;
+  start_time: string;
+  end_time: string;
+  days_of_week: string[];
+  is_active: boolean;
+}
+
+/** Profile content tag (block or allow). */
+export interface ProfileTag {
+  id: number;
+  profile_id: number;
+  tag: string;
+  tag_type: 'blocked' | 'allowed';
+}
+
+/** Stream limit settings for a profile. */
+export interface ProfileStreamLimit {
+  max_concurrent_streams: number;
+  max_total_bandwidth_kbps: number | null;
+}
+
 /**
  * AdminUsersApi (RA.3) — typed wrapper over the admin user + profile endpoints
  * (`/api/v1/admin/users/*` and `/api/v1/admin/profiles/*`), ported from the
@@ -284,6 +314,109 @@ export class AdminUsersApi {
   clearPin(id: number): Promise<{ message: string }> {
     return this.client.delete<{ message: string }>(
       `/api/v1/admin/profiles/${encodeURIComponent(id)}/pin`,
+    );
+  }
+
+  // ── Parental controls ─────────────────────────────────────────────────────────
+
+  /**
+   * `GET /api/v1/admin/profiles/{id}/schedules` → list of access schedules.
+   */
+  async profileSchedules(profileId: number): Promise<AccessSchedule[]> {
+    const { schedules } = await this.client.get<{ schedules: AccessSchedule[] }>(
+      `/api/v1/admin/profiles/${encodeURIComponent(profileId)}/schedules`,
+    );
+    return Array.isArray(schedules) ? schedules : [];
+  }
+
+  /**
+   * `POST /api/v1/admin/profiles/{id}/schedules` → `{ id, message }`.
+   */
+  createProfileSchedule(
+    profileId: number,
+    name: string,
+    startTime: string,
+    endTime: string,
+    daysOfWeek: string[],
+    isActive: boolean,
+  ): Promise<{ id: number; message: string }> {
+    return this.client.post<{ id: number; message: string }>(
+      `/api/v1/admin/profiles/${encodeURIComponent(profileId)}/schedules`,
+      {
+        name,
+        start_time: startTime,
+        end_time: endTime,
+        days_of_week: daysOfWeek,
+        is_active: isActive,
+      },
+    );
+  }
+
+  /**
+   * `DELETE /api/v1/admin/profiles/{id}/schedules/{scheduleId}` → `{ message }`.
+   */
+  deleteProfileSchedule(profileId: number, scheduleId: number): Promise<{ message: string }> {
+    return this.client.delete<{ message: string }>(
+      `/api/v1/admin/profiles/${encodeURIComponent(profileId)}/schedules/${encodeURIComponent(scheduleId)}`,
+    );
+  }
+
+  /**
+   * `GET /api/v1/admin/profiles/{id}/tags` → list of profile tags.
+   */
+  async profileTags(profileId: number): Promise<ProfileTag[]> {
+    const { tags } = await this.client.get<{ tags: ProfileTag[] }>(
+      `/api/v1/admin/profiles/${encodeURIComponent(profileId)}/tags`,
+    );
+    return Array.isArray(tags) ? tags : [];
+  }
+
+  /**
+   * `POST /api/v1/admin/profiles/{id}/tags` → `{ id, message }`.
+   */
+  addProfileTag(
+    profileId: number,
+    tag: string,
+    tagType: 'blocked' | 'allowed',
+  ): Promise<{ id: number; message: string }> {
+    return this.client.post<{ id: number; message: string }>(
+      `/api/v1/admin/profiles/${encodeURIComponent(profileId)}/tags`,
+      { tag, tag_type: tagType },
+    );
+  }
+
+  /**
+   * `DELETE /api/v1/admin/profiles/{id}/tags/{tagId}` → `{ message }`.
+   */
+  deleteProfileTag(profileId: number, tagId: number): Promise<{ message: string }> {
+    return this.client.delete<{ message: string }>(
+      `/api/v1/admin/profiles/${encodeURIComponent(profileId)}/tags/${encodeURIComponent(tagId)}`,
+    );
+  }
+
+  /**
+   * `GET /api/v1/admin/profiles/{id}/stream-limits` → stream limit settings.
+   */
+  async profileStreamLimits(profileId: number): Promise<ProfileStreamLimit> {
+    return this.client.get<ProfileStreamLimit>(
+      `/api/v1/admin/profiles/${encodeURIComponent(profileId)}/stream-limits`,
+    );
+  }
+
+  /**
+   * `PUT /api/v1/admin/profiles/{id}/stream-limits` → `{ message }`.
+   */
+  updateProfileStreamLimits(
+    profileId: number,
+    maxConcurrentStreams: number,
+    maxTotalBandwidthKbps: number | null,
+  ): Promise<{ message: string }> {
+    return this.client.put<{ message: string }>(
+      `/api/v1/admin/profiles/${encodeURIComponent(profileId)}/stream-limits`,
+      {
+        max_concurrent_streams: maxConcurrentStreams,
+        max_total_bandwidth_kbps: maxTotalBandwidthKbps,
+      },
     );
   }
 }
