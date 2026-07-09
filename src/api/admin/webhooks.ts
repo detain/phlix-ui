@@ -162,3 +162,103 @@ export class AdminWebhooksApi {
     );
   }
 }
+
+/**
+ * Delivery status for a webhook log entry.
+ * - `pending`: scheduled for delivery
+ * - `success`: delivered successfully (2xx response)
+ * - `failed`: delivery failed (non-2xx or network error)
+ * - `retry`: scheduled for retry after previous failure
+ */
+export type WebhookDeliveryStatus = 'pending' | 'success' | 'failed' | 'retry';
+
+/**
+ * One webhook delivery log entry as returned by
+ * `WebhookAdminController::getDeliveryLogs()` (`GET /api/v1/admin/webhooks/logs`).
+ */
+export interface WebhookDeliveryLog {
+  id: string;
+  webhook_id: string;
+  webhook_name: string;
+  event: string;
+  status: WebhookDeliveryStatus;
+  /** Unix timestamp when delivery was attempted. */
+  attempted_at: number;
+  /** HTTP status code from the target server (null for network errors). */
+  status_code: number | null;
+  /** Response body from the target server (truncated to 500 chars). */
+  response_body: string | null;
+  /** Error message if delivery failed. */
+  error_message: string | null;
+  /** Number of retry attempts made. */
+  retry_count: number;
+  /** Next retry timestamp if status is `retry`. */
+  next_retry_at: number | null;
+}
+
+/** Paginated response for webhook delivery logs. */
+export interface WebhookLogsResponse {
+  logs: WebhookDeliveryLog[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+/**
+ * Query params for filtering webhook delivery logs.
+ */
+export interface WebhookLogsFilter {
+  webhook_id?: string;
+  status?: WebhookDeliveryStatus;
+  page?: number;
+  per_page?: number;
+}
+
+/**
+ * AdminWebhooksApi extension for delivery logs (RA.4 extended).
+ * These methods provide visibility into webhook delivery history.
+ */
+export class AdminWebhookLogsApi {
+  constructor(private readonly client: ApiClient) {}
+
+  /**
+   * `GET /api/v1/admin/webhooks/logs` → paginated delivery logs.
+   * Optionally filter by webhook_id and/or status.
+   */
+  async list(filter?: WebhookLogsFilter): Promise<WebhookLogsResponse> {
+    const params = new URLSearchParams();
+    if (filter?.webhook_id) params.set('webhook_id', filter.webhook_id);
+    if (filter?.status) params.set('status', filter.status);
+    if (filter?.page) params.set('page', String(filter.page));
+    if (filter?.per_page) params.set('per_page', String(filter.per_page));
+
+    const query = params.toString();
+    const url = query ? `/api/v1/admin/webhooks/logs?${query}` : '/api/v1/admin/webhooks/logs';
+
+    const result = await this.client.get<WebhookLogsResponse>(url);
+    return {
+      logs: Array.isArray(result.logs) ? result.logs : [],
+      total: typeof result.total === 'number' ? result.total : 0,
+      page: typeof result.page === 'number' ? result.page : 1,
+      per_page: typeof result.per_page === 'number' ? result.per_page : 50,
+    };
+  }
+
+  /**
+   * `POST /api/v1/admin/webhooks/logs/{id}/retry` → re-queue a failed delivery.
+   */
+  async retry(logId: string): Promise<{ success: boolean; message: string }> {
+    return this.client.post<{ success: boolean; message: string }>(
+      `/api/v1/admin/webhooks/logs/${encodeURIComponent(logId)}/retry`,
+    );
+  }
+
+  /**
+   * `DELETE /api/v1/admin/webhooks/logs/{id}` → delete a log entry.
+   */
+  async deleteLog(logId: string): Promise<{ message: string }> {
+    return this.client.delete<{ message: string }>(
+      `/api/v1/admin/webhooks/logs/${encodeURIComponent(logId)}`,
+    );
+  }
+}

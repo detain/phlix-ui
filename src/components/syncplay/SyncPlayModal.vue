@@ -31,6 +31,8 @@ const props = defineProps<{
   modelValue: boolean;
   /** Optional override; falls back to useMediaApiBase(). */
   apiBase?: string;
+  /** Optional room ID to pre-fill (e.g., from a join-link ?room= query param). */
+  prefilledRoomId?: string;
 }>();
 
 const emit = defineEmits<{
@@ -65,9 +67,15 @@ watch(
     if (open) {
       error.value = null;
       roomName.value = '';
-      roomId.value = '';
       isPublic.value = true;
-      mode.value = 'create';
+      // If a prefilledRoomId is provided (e.g. from a join-link), use it
+      if (props.prefilledRoomId) {
+        roomId.value = props.prefilledRoomId;
+        mode.value = 'join';
+      } else {
+        roomId.value = '';
+        mode.value = 'create';
+      }
       // Load public rooms when modal opens
       await loadPublicRooms();
     }
