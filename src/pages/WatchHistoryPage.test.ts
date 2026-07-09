@@ -13,6 +13,7 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import type { PhlixAppConfig } from '../app/types';
 import type { MediaItem } from '../types/media-item';
+import type { ApiClient } from '../api/client';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -33,16 +34,6 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
   };
 }
 
-function jsonResponse(body: unknown): Response {
-  return {
-    ok: true,
-    status: 200,
-    headers: { get: () => 'application/json' },
-    json: async () => body,
-    text: async () => JSON.stringify(body),
-  } as unknown as Response;
-}
-
 interface ProgressItem {
   id: string;
   progress: number;
@@ -50,25 +41,42 @@ interface ProgressItem {
   media: MediaItem;
 }
 
-function stubFetch(opts: {
-  historyItems?: Array<{ id: string; media: MediaItem; progress: number; updated_at: string }>;
+interface HistoryItem {
+  id: string;
+  media: MediaItem;
+  progress: number;
+  updated_at: string;
+}
+
+function makeClient(overrides: {
+  historyItems?: HistoryItem[];
   progressItems?: ProgressItem[];
   error?: boolean;
 } = {}) {
-  const fn = vi.fn((url: unknown) => {
-    const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/me/history')) {
-      if (opts.error) return Promise.reject(new Error('server error'));
-      return Promise.resolve(jsonResponse({ items: opts.historyItems ?? [] }));
+  const { historyItems = [], progressItems = [], error = false } = overrides;
+
+  const get = vi.fn(async (endpoint: string) => {
+    if (error) {
+      throw new Error('server error');
     }
-    if (u.includes('/api/v1/me/progress')) {
-      if (opts.error) return Promise.reject(new Error('server error'));
-      return Promise.resolve(jsonResponse({ items: opts.progressItems ?? [] }));
+    if (endpoint.startsWith('/api/v1/me/history')) {
+      return { items: historyItems };
     }
-    return Promise.resolve(jsonResponse({ items: [] }));
+    if (endpoint.startsWith('/api/v1/me/progress')) {
+      return { items: progressItems };
+    }
+    throw new Error(`unexpected GET ${endpoint}`);
   });
-  vi.stubGlobal('fetch', fn);
-  return fn;
+
+  const client = {
+    get,
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  } as unknown as ApiClient;
+
+  return { client, get };
 }
 
 function makeRouter(): Router {
@@ -82,10 +90,15 @@ function makeRouter(): Router {
   return createRouter({ history: createMemoryHistory(), routes });
 }
 
-function mountPage(opts: { config?: Partial<PhlixAppConfig>; router?: Router } = {}) {
+function mountPage(opts: {
+  client?: ApiClient;
+  config?: Partial<PhlixAppConfig>;
+  router?: Router;
+} = {}) {
   const router = opts.router ?? makeRouter();
   const config: PhlixAppConfig = { app: 'server', apiBase: '', ...opts.config };
   return mount(WatchHistoryPage, {
+    props: { client: opts.client },
     global: {
       plugins: [router],
       provide: { apiBase: config.apiBase, phlixConfig: config },
@@ -105,15 +118,16 @@ afterEach(() => {
 
 describe('WatchHistoryPage — renders', () => {
   it('shows spinner while loading', async () => {
-    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
-    const w = mountPage();
+    const get = vi.fn(() => new Promise(() => {}));
+    const client = { get } as unknown as ApiClient;
+    const w = mountPage({ client });
     await flushPromises();
     expect(w.findComponent(Spinner).exists()).toBe(true);
   });
 
   it('renders empty state when no history', async () => {
-    stubFetch({ historyItems: [] });
-    const w = mountPage();
+    const { client } = makeClient({ historyItems: [] });
+    const w = mountPage({ client });
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
@@ -121,8 +135,8 @@ describe('WatchHistoryPage — renders', () => {
   });
 
   it('renders error state when API fails', async () => {
-    stubFetch({ error: true });
-    const w = mountPage();
+    const { client } = makeClient({ error: true });
+    const w = mountPage({ client });
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
@@ -130,8 +144,8 @@ describe('WatchHistoryPage — renders', () => {
   });
 
   it('renders retry button on error', async () => {
-    stubFetch({ error: true });
-    const w = mountPage();
+    const { client } = makeClient({ error: true });
+    const w = mountPage({ client });
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.find('button').exists()).toBe(true);
@@ -144,11 +158,32 @@ describe('WatchHistoryPage — groups by date', () => {
       { id: 'p1', progress: 0.5, updated_at: '2026-07-09T10:00:00Z', media: media({ id: 'm1', name: 'Movie 1' }) },
       { id: 'p2', progress: 0.3, updated_at: '2026-07-08T10:00:00Z', media: media({ id: 'm2', name: 'Movie 2' }) },
     ];
-    const fn = stubFetch({ progressItems });
-    const w = mountPage();
+
+    // History endpoint fails, progress succeeds
+    const historyGet = vi.fn(async () => {
+      throw new Error('server error');
+    });
+    const progressGet = vi.fn(async () => {
+      return { items: progressItems };
+    });
+
+    const client = {
+      get: vi.fn(async (endpoint: string) => {
+        if (endpoint.startsWith('/api/v1/me/history')) return historyGet();
+        if (endpoint.startsWith('/api/v1/me/progress')) return progressGet();
+        throw new Error(`unexpected GET ${endpoint}`);
+      }),
+      post: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as ApiClient;
+
+    const w = mountPage({ client });
     await flushPromises();
+
     // Should have called progress endpoint as fallback
-    expect(fn.mock.calls.some(([u]) => typeof u === 'string' && (u as string).includes('/me/progress'))).toBe(true);
+    expect(progressGet).toHaveBeenCalled();
     // Should show items
     expect(w.findAll('.history-group')).toHaveLength(2);
   });
@@ -158,23 +193,62 @@ describe('WatchHistoryPage — groups by date', () => {
       { id: 'p1', progress: 0.5, updated_at: '2026-07-09T10:00:00Z', media: media({ id: 'm1' }) },
       { id: 'p2', progress: 0, updated_at: '2026-07-09T11:00:00Z', media: media({ id: 'm2' }) }, // should be filtered
     ];
-    stubFetch({ progressItems });
-    const w = mountPage();
+    // Create a client that throws for history (forcing fallback to progress)
+    const historyGet = vi.fn(async () => {
+      throw new Error('server error');
+    });
+    const progressGet = vi.fn(async () => {
+      return { items: progressItems };
+    });
+    const client = {
+      get: vi.fn(async (endpoint: string) => {
+        if (endpoint.startsWith('/api/v1/me/history')) return historyGet();
+        if (endpoint.startsWith('/api/v1/me/progress')) return progressGet();
+        throw new Error(`unexpected GET ${endpoint}`);
+      }),
+      post: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as ApiClient;
+    const w = mountPage({ client });
     await flushPromises();
     const items = w.findAll('.history-item');
     expect(items).toHaveLength(1);
   });
 
   it('displays Today and Yesterday labels correctly', async () => {
+    // Use fixed dates that fall within the test execution
     const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const progressItems: ProgressItem[] = [
       { id: 'p1', progress: 0.5, updated_at: `${today}T10:00:00Z`, media: media({ id: 'm1' }) },
       { id: 'p2', progress: 0.3, updated_at: `${yesterday}T10:00:00Z`, media: media({ id: 'm2' }) },
     ];
-    stubFetch({ progressItems });
-    const w = mountPage();
+
+    // Force the history endpoint to fail so we use the progress fallback
+    const historyGet = vi.fn(async () => {
+      throw new Error('server error');
+    });
+    const progressGet = vi.fn(async () => {
+      return { items: progressItems };
+    });
+
+    const client = {
+      get: vi.fn(async (endpoint: string) => {
+        if (endpoint.startsWith('/api/v1/me/history')) return historyGet();
+        if (endpoint.startsWith('/api/v1/me/progress')) return progressGet();
+        throw new Error(`unexpected GET ${endpoint}`);
+      }),
+      post: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as ApiClient;
+
+    const w = mountPage({ client });
     await flushPromises();
+
     const dates = w.findAll('.history-group__date').map((el) => el.text());
     expect(dates).toContain('Today');
     expect(dates).toContain('Yesterday');
