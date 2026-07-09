@@ -35,6 +35,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** Seek to the start of this marker. */
   (e: 'seek', targetSeconds: number): void;
+  /** Find similar media by this marker's type and position (P3B-S8). */
+  (e: 'similar', type: Marker['type'], startMs: number): void;
 }>();
 
 /** Convert milliseconds to seconds. */
@@ -92,6 +94,11 @@ const activeAdLabel = computed(() => activeAdMarker.value?.label ?? 'Ad');
 function onTickClick(tick: (typeof ticks.value)[number]): void {
   emit('seek', tick.startSec);
 }
+
+/** Emit 'similar' to find media with a similar marker (P3B-S8). */
+function onFindSimilar(tick: (typeof ticks.value)[number]): void {
+  emit('similar', tick.type, tick.startMs);
+}
 </script>
 
 <template>
@@ -120,6 +127,13 @@ function onTickClick(tick: (typeof ticks.value)[number]): void {
         <span class="marker-timeline__tooltip">
           <span class="marker-timeline__tooltip-label">{{ tick.label }}</span>
           <span class="marker-timeline__tooltip-time numeric">{{ formatTime(tick.startSec) }}</span>
+          <button
+            type="button"
+            class="marker-timeline__similar-btn"
+            @click.stop="onFindSimilar(tick)"
+          >
+            Find similar
+          </button>
         </span>
       </button>
     </div>
@@ -243,6 +257,29 @@ function onTickClick(tick: (typeof ticks.value)[number]): void {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   color: var(--text-muted);
+}
+
+.marker-timeline__similar-btn {
+  margin-top: var(--space-1);
+  padding: 2px var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-semibold);
+  color: var(--accent, #f59e0b);
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.marker-timeline__similar-btn:hover,
+.marker-timeline__similar-btn:focus-visible {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.marker-timeline__similar-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-ring);
 }
 
 @media (prefers-reduced-motion: reduce) {
