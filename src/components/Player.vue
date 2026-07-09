@@ -71,6 +71,7 @@ import { levelIndexForQuality, AUTO_QUALITY } from './player/quality';
 import { useSyncPlayStore } from '../stores/useSyncPlayStore';
 import SyncPlayOverlay from './syncplay/SyncPlayOverlay.vue';
 import SyncPlayModal from './syncplay/SyncPlayModal.vue';
+import SyncPlayControls from './syncplay/SyncPlayControls.vue';
 
 const props = defineProps<{
   media: MediaItem;
@@ -1289,6 +1290,17 @@ onBeforeUnmount(() => {
 
       <!-- direct-play guard: opaque notice shown only when the transcode itself failed -->
       <TranscodeNotice v-if="showTranscodeNotice" :title="media.name" @back="emit('back')" />
+
+      <!-- SyncPlay controls: synced transport buttons when in a SyncPlay room -->
+      <SyncPlayControls
+        v-if="syncPlay.isInRoom"
+        :position="player.position"
+        :duration="player.duration"
+        :is-playing="player.playing"
+        @seek="onSeek"
+        @play="void videoRef?.play()"
+        @pause="void videoRef?.pause()"
+      />
 
       <!-- SyncPlay overlay: shown below player when in a SyncPlay room -->
       <SyncPlayOverlay v-if="syncPlay.isInRoom" />
