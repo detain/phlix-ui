@@ -26,6 +26,7 @@ import {
   type MetricsConnection,
   type MetricsRoute,
 } from '../../api/admin/metrics';
+import { AdminServersApi, type ServerListItem, type ServerInfo } from '../../api/admin/servers';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import PageHint from '../../components/ui/PageHint.vue';
@@ -33,6 +34,8 @@ import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Badge from '../../components/ui/Badge.vue';
+import ServerInfoCard from '../../components/admin/ServerInfo.vue';
+import ServerSelector from '../../components/admin/ServerSelector.vue';
 import { defineAsyncComponent } from 'vue';
 
 // Lazy-load the ApexCharts wrapper so the library lands in its own chunk.
@@ -54,6 +57,9 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminMetricsApi(
+  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+);
+const serversApi = new AdminServersApi(
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
 );
 const toasts = useToastStore();
@@ -88,6 +94,15 @@ const snapshotError = ref<string | null>(null);
 const historyError = ref<string | null>(null);
 const connectionsError = ref<string | null>(null);
 const routesError = ref<string | null>(null);
+
+// Server list + selection (for multi-server setups)
+const servers = ref<ServerListItem[]>([]);
+const serverInfo = ref<ServerInfo | null>(null);
+const selectedServerId = ref<string | null>(null);
+const loadingServers = ref(true);
+const loadingServerInfo = ref(true);
+const serversError = ref<string | null>(null);
+const serverInfoError = ref<string | null>(null);
 
 // ---------------------------------------------------------------------------
 // Chart series helpers
@@ -238,6 +253,42 @@ async function fetchRoutes(): Promise<void> {
   }
 }
 
+async function fetchServers(): Promise<void> {
+  serversError.value = null;
+  try {
+    servers.value = await serversApi.listServers();
+  } catch (e) {
+    serversError.value = errMessage(e, 'Failed to load servers.');
+    toasts.error(serversError.value);
+  } finally {
+    loadingServers.value = false;
+  }
+}
+
+async function fetchServerInfo(id: string | null): Promise<void> {
+  serverInfoError.value = null;
+  if (!id) {
+    serverInfo.value = null;
+    loadingServerInfo.value = false;
+    return;
+  }
+  try {
+    serverInfo.value = await serversApi.getServerInfo(id);
+  } catch (e) {
+    serverInfoError.value = errMessage(e, 'Failed to load server info.');
+    toasts.error(serverInfoError.value);
+  } finally {
+    loadingServerInfo.value = false;
+  }
+}
+
+/** Watcher to re-fetch server info when the selected server changes. */
+function handleServerChange(id: string | null): void {
+  selectedServerId.value = id;
+  loadingServerInfo.value = true;
+  void fetchServerInfo(id);
+}
+
 // ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
@@ -270,6 +321,7 @@ function handleVisibilityChange(): void {
 }
 
 onMounted(() => {
+  void fetchServers();
   void fetchSnapshot();
   void fetchHistory();
   void fetchConnections();
@@ -328,7 +380,15 @@ const gridDefaults = {
 <template>
   <section class="metrics" aria-labelledby="metrics-heading">
     <header class="metrics__head">
-      <h1 id="metrics-heading" class="metrics__title">Server Traffic</h1>
+      <div class="metrics__title-row">
+        <h1 id="metrics-heading" class="metrics__title">Server Traffic</h1>
+        <ServerSelector
+          v-model="selectedServerId"
+          :servers="servers"
+          :loading="loadingServers"
+          @change="handleServerChange"
+        />
+      </div>
       <div class="metrics__snapshot" v-if="snapshot !== null && !loadingSnapshot">
         <Badge tone="accent">{{ snapshot.active_connections }} active connections</Badge>
         <span class="metrics__rate">
@@ -354,6 +414,14 @@ const gridDefaults = {
       <strong>Request Rate</strong> shows requests vs. errors over time. Data refreshes
       automatically — snapshot every 5s, history every 15s.
     </PageHint>
+
+    <!-- Server Info Card -->
+    <div v-if="servers.length > 0" class="metrics__server-info">
+      <ServerInfoCard
+        :server-info="serverInfo"
+        :loading="loadingServerInfo"
+      />
+    </div>
 
     <!-- Snapshot loading skeleton -->
     <div v-if="loadingSnapshot" class="metrics__snapshot-skel">
@@ -601,10 +669,15 @@ const gridDefaults = {
 }
 .metrics__head {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.metrics__title-row {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-4);
-  margin-bottom: var(--space-6);
 }
 .metrics__title {
   font-family: var(--font-display);
@@ -634,6 +707,9 @@ const gridDefaults = {
 .metrics__snapshot-skel {
   margin-bottom: var(--space-4);
   max-width: 400px;
+}
+.metrics__server-info {
+  margin-bottom: var(--space-6);
 }
 .metrics__grid {
   display: grid;

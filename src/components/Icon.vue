@@ -55,6 +55,7 @@ import IconPlus from '~icons/lucide/plus';
 import IconInfo from '~icons/lucide/info';
 import IconX from '~icons/lucide/x';
 import IconCheck from '~icons/lucide/check';
+import IconLock from '~icons/lucide/lock';
 import IconBookmark from '~icons/lucide/bookmark';
 import IconBookmarkPlus from '~icons/lucide/bookmark-plus';
 import IconHeart from '~icons/lucide/heart';
@@ -123,6 +124,7 @@ const icons = {
   info: IconInfo,
   x: IconX,
   check: IconCheck,
+  lock: IconLock,
   bookmark: IconBookmark,
   'bookmark-plus': IconBookmarkPlus,
   heart: IconHeart,

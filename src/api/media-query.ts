@@ -36,6 +36,8 @@ export function buildMediaQuery(params: Partial<LibraryQueryParams> = {}): strin
   params.actors?.forEach((a) => sp.append('actors[]', a));
   params.companies?.forEach((c) => sp.append('companies[]', c));
   if (params.match) sp.set('match', params.match);
+  if (params.minRating !== undefined) sp.set('minRating', String(params.minRating));
+  if (params.maxRating !== undefined) sp.set('maxRating', String(params.maxRating));
   if (params.sort) sp.set('sort', params.sort);
   if (params.order) sp.set('order', params.order);
   if (params.limit !== undefined) sp.set('limit', String(params.limit));

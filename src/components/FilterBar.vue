@@ -147,6 +147,16 @@ function setYearTo(v: string | number | null) {
   emit('change');
 }
 
+// ---- rating range -------------------------------------------------------
+function setMinRating(v: number | null) {
+  store.setMinRating(v == null ? undefined : Number(v));
+  emit('change');
+}
+function setMaxRating(v: number | null) {
+  store.setMaxRating(v == null ? undefined : Number(v));
+  emit('change');
+}
+
 // ---- sort + order -------------------------------------------------------
 function onSort(v: string | number) {
   store.setSort(v as SortField);
@@ -209,6 +219,20 @@ const activePills = computed<ActivePill[]>(() => {
   if (store.yearTo !== undefined) {
     pills.push({ key: 'yt', label: `To ${store.yearTo}`, remove: () => setYearTo(null) });
   }
+  if (store.minRating !== undefined) {
+    pills.push({
+      key: 'minR',
+      label: `Min ${store.minRating.toFixed(1)}★`,
+      remove: () => setMinRating(null),
+    });
+  }
+  if (store.maxRating !== undefined) {
+    pills.push({
+      key: 'maxR',
+      label: `Max ${store.maxRating.toFixed(1)}★`,
+      remove: () => setMaxRating(null),
+    });
+  }
   return pills;
 });
 const hasActiveFilters = computed(() => activePills.value.length > 0);
@@ -222,7 +246,9 @@ const advancedCount = computed(
     store.selectedActors.length +
     (store.matchStatus ? 1 : 0) +
     (store.yearFrom !== undefined ? 1 : 0) +
-    (store.yearTo !== undefined ? 1 : 0),
+    (store.yearTo !== undefined ? 1 : 0) +
+    (store.minRating !== undefined ? 1 : 0) +
+    (store.maxRating !== undefined ? 1 : 0),
 );
 
 function clearAll() {
@@ -234,6 +260,8 @@ function clearAll() {
   store.setActors([]);
   store.setMatchStatus('');
   store.setYearRange(undefined, undefined);
+  store.setMinRating(undefined);
+  store.setMaxRating(undefined);
   emit('change');
 }
 
@@ -411,6 +439,41 @@ onBeforeUnmount(() => {
               label="Year to"
               @update:model-value="setYearTo"
             />
+          </div>
+        </div>
+
+        <div class="filterbar__field">
+          <span class="filterbar__field-label">Rating range</span>
+          <div class="filterbar__ratings">
+            <label class="filterbar__rating-input">
+              <span>Min</span>
+              <input
+                type="number"
+                class="filterbar__rating-number"
+                :value="store.minRating ?? ''"
+                placeholder="0"
+                min="0"
+                max="10"
+                step="0.5"
+                aria-label="Minimum rating"
+                @change="setMinRating(($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value))"
+              />
+            </label>
+            <span class="filterbar__years-dash" aria-hidden="true">–</span>
+            <label class="filterbar__rating-input">
+              <span>Max</span>
+              <input
+                type="number"
+                class="filterbar__rating-number"
+                :value="store.maxRating ?? ''"
+                placeholder="10"
+                min="0"
+                max="10"
+                step="0.5"
+                aria-label="Maximum rating"
+                @change="setMaxRating(($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value))"
+              />
+            </label>
           </div>
         </div>
 
@@ -638,6 +701,43 @@ onBeforeUnmount(() => {
   max-width: 360px;
 }
 .filterbar__years-dash {
+  color: var(--text-subtle, #71717a);
+}
+
+.filterbar__ratings {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  max-width: 360px;
+}
+
+.filterbar__rating-input {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-subtle, #71717a);
+}
+
+.filterbar__rating-number {
+  width: 60px;
+  padding: var(--space-2, 8px) var(--space-2, 8px);
+  background: var(--surface, #141420);
+  border: 1px solid var(--border, #27272a);
+  border-radius: var(--radius-md, 8px);
+  color: var(--text, #e4e4e7);
+  font-size: var(--text-sm, 0.875rem);
+  text-align: center;
+  outline: none;
+  transition: border-color var(--dur-base, 0.18s), box-shadow var(--dur-base, 0.18s);
+}
+
+.filterbar__rating-number:focus {
+  border-color: var(--accent-ring, #f5a524);
+  box-shadow: 0 0 0 3px var(--accent-soft, rgba(245, 165, 36, 0.18));
+}
+
+.filterbar__rating-number::placeholder {
   color: var(--text-subtle, #71717a);
 }
 

@@ -49,4 +49,8 @@ export interface LibraryQueryParams extends Omit<LibraryQuery, 'ratings' | 'sort
     offset?: number;
     /** Scope the query to a single library (its `id`). */
     libraryId?: string;
+    /** Minimum aggregate rating filter (0.0 - 10.0). */
+    minRating?: number;
+    /** Maximum aggregate rating filter (0.0 - 10.0). */
+    maxRating?: number;
 }
