@@ -22,7 +22,7 @@ import { ApiClient } from '../api/client';
 import { LocalStorageTokenStore } from '../api/tokenStore';
 import { AdminNetworkHealthApi, type HealthSnapshot } from '../api/admin/networkHealth';
 import { errMessage } from '../api/errors';
-import Tooltip from '../ui/Tooltip.vue';
+import Tooltip from './ui/Tooltip.vue';
 import Icon from '../Icon.vue';
 import Spinner from '../ui/Spinner.vue';
 
@@ -77,6 +77,7 @@ const iconName = computed(() => {
     case 'healthy':  return 'check';
     case 'degraded': return 'alert';
     case 'offline':  return 'error';
+    default:         return 'error';
   }
 });
 
@@ -86,6 +87,7 @@ const statusLabel = computed(() => {
     case 'healthy':  return 'Network Healthy';
     case 'degraded': return 'Network Degraded';
     case 'offline':  return 'Network Offline';
+    default:         return 'Network Offline';
   }
 });
 
