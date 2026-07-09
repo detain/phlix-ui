@@ -273,13 +273,20 @@ describe('FilterBar — presets', () => {
 
 describe('FilterBar — sticky', () => {
   it('adds is-stuck once the window scrolls past the threshold', async () => {
-    const w = mountBar();
-    expect(w.find('.filterbar').classes()).toContain('is-sticky');
-    expect(w.find('.filterbar').classes()).not.toContain('is-stuck');
-    Object.defineProperty(window, 'scrollY', { value: 100, configurable: true });
-    window.dispatchEvent(new Event('scroll'));
-    await nextTick();
-    expect(w.find('.filterbar').classes()).toContain('is-stuck');
+    vi.useFakeTimers();
+    try {
+      const w = mountBar();
+      expect(w.find('.filterbar').classes()).toContain('is-sticky');
+      expect(w.find('.filterbar').classes()).not.toContain('is-stuck');
+      // jsdom doesn't have window.scrollY, so we must define it
+      Object.defineProperty(window, 'scrollY', { value: 100, configurable: true });
+      window.dispatchEvent(new Event('scroll'));
+      await vi.runAllTimersAsync();
+      await nextTick();
+      expect(w.find('.filterbar').classes()).toContain('is-stuck');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not stick when sticky=false', () => {
