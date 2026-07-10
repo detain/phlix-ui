@@ -36,6 +36,8 @@ vi.mock('../composables/useHlsTranscode', async () => {
   const autoEnabled = ref(true);
   const activeLevelHeight = ref<number | null>(null);
   const variants = ref<unknown[] | null>(null);
+  const audioTracks = ref<Array<{ index: number; name: string; lang: string; default: boolean; autoselect: boolean }>>([]);
+  const currentAudioTrack = ref(-1);
   const ctrl = {
     state,
     progress,
@@ -45,7 +47,10 @@ vi.mock('../composables/useHlsTranscode', async () => {
     autoEnabled,
     activeLevelHeight,
     variants,
+    audioTracks,
+    currentAudioTrack,
     setLevel: vi.fn(),
+    setAudioTrack: vi.fn(),
     start: vi.fn(),
     cleanup: vi.fn(),
     reset: vi.fn(() => {
@@ -57,6 +62,8 @@ vi.mock('../composables/useHlsTranscode', async () => {
       autoEnabled.value = true;
       activeLevelHeight.value = null;
       variants.value = null;
+      audioTracks.value = [];
+      currentAudioTrack.value = -1;
     }),
   };
   return { useHlsTranscode: () => ctrl, __ctrl: ctrl };
@@ -80,7 +87,10 @@ function tc(): {
   autoEnabled: { value: boolean };
   activeLevelHeight: { value: number | null };
   variants: { value: unknown[] | null };
+  audioTracks: { value: Array<{ index: number; name: string; lang: string; default: boolean; autoselect: boolean }> };
+  currentAudioTrack: { value: number };
   setLevel: ReturnType<typeof vi.fn>;
+  setAudioTrack: ReturnType<typeof vi.fn>;
   start: ReturnType<typeof vi.fn>;
   cleanup: ReturnType<typeof vi.fn>;
   reset: ReturnType<typeof vi.fn>;
@@ -145,6 +155,8 @@ function mountPlayer(
     prevEpisode: MediaItem | null;
     nextEpisode: MediaItem | null;
     autoplay: boolean;
+    playbackAudioTracks: Array<{ index: number; streamIndex: number; language: string; label: string; default: boolean }>;
+    playbackSubtitleTracks: Array<{ index: number; language: string; label: string; default: boolean; url: string }>;
   }> = {},
 ) {
   const w = mount(Player, {
@@ -169,7 +181,11 @@ beforeEach(() => {
   ctrl.currentLevel.value = -1;
   ctrl.autoEnabled.value = true;
   ctrl.activeLevelHeight.value = null;
+  ctrl.variants.value = null;
+  ctrl.audioTracks.value = [];
+  ctrl.currentAudioTrack.value = -1;
   ctrl.setLevel.mockClear();
+  ctrl.setAudioTrack.mockClear();
   ctrl.start.mockClear();
   ctrl.cleanup.mockClear();
   ctrl.reset.mockClear();
@@ -982,6 +998,88 @@ describe('Player — server subtitle sidecars (U4)', () => {
     const group = w.find('[aria-label="Subtitle track"]');
     const labels = group.findAll('.capmenu__optlabel').map((n) => n.text());
     expect(labels).toEqual(['Off', 'English', 'Japanese']);
+  });
+});
+
+describe('Player — direct-play playback-info tracks (audio menu + signed subtitle sidecars)', () => {
+  /** A parsed playback-info audio_tracks entry (audio-relative `index`). */
+  function paTrack(over: Partial<{ index: number; streamIndex: number; language: string; label: string; default: boolean }> = {}) {
+    return { index: 0, streamIndex: 1, language: 'eng', label: 'English 5.1', default: true, ...over };
+  }
+  const twoAudio = [paTrack(), paTrack({ index: 1, streamIndex: 2, language: 'jpn', label: 'Japanese', default: false })];
+
+  it('renders a <track> per playback-info subtitle on DIRECT play (signed VTT urls)', async () => {
+    const { w } = mountPlayer({
+      streamUrl: 'http://x/movie.mp4', // direct-playable → no transcode job/sidecars
+      playbackSubtitleTracks: [
+        { index: 0, language: 'eng', label: 'English', default: false, url: 'http://x/media/m1/subtitles/0.vtt?exp=1&sig=abc' },
+        { index: 1, language: 'jpn', label: 'Japanese', default: false, url: 'http://x/media/m1/subtitles/1.vtt?exp=1&sig=def' },
+      ],
+    });
+    await nextTick();
+    const tracks = w.findAll('video track');
+    expect(tracks).toHaveLength(2);
+    expect(tracks[0].attributes('src')).toBe('http://x/media/m1/subtitles/0.vtt?exp=1&sig=abc');
+    expect(tracks[0].attributes('srclang')).toBe('eng');
+    expect(tracks[0].attributes('label')).toBe('English');
+    expect(tracks[1].attributes('src')).toBe('http://x/media/m1/subtitles/1.vtt?exp=1&sig=def');
+  });
+
+  it('does NOT render playback-info subtitles on the transcode path (the job sidecars own it)', () => {
+    const { w } = mountPlayer({
+      streamUrl: 'http://x/Dune.mkv', // transcode path
+      playbackSubtitleTracks: [{ index: 0, language: 'eng', label: 'English', default: false, url: 'http://x/signed-0.vtt' }],
+    });
+    expect(w.findAll('video track')).toHaveLength(0); // tc.subtitleTracks is empty
+  });
+
+  it('shows the playback-info audio list in the CaptionsMenu on direct play (no native audioTracks)', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4', playbackAudioTracks: twoAudio });
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    const group = w.find('[aria-label="Audio track"]');
+    expect(group.exists()).toBe(true); // menu shown even though video.audioTracks is unavailable
+    const radios = group.findAll('[role="radio"]');
+    expect(radios.map((r) => r.text())).toEqual(['English 5.1', 'Japanese']);
+    expect(radios[0].attributes('aria-checked')).toBe('true'); // the server default is active
+    expect(radios[1].attributes('aria-checked')).toBe('false');
+  });
+
+  it('hides the audio list when playback-info advertises a single track', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4', playbackAudioTracks: [paTrack()] });
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    expect(w.find('[aria-label="Audio track"]').exists()).toBe(false);
+  });
+
+  it('falls over to the HLS transcode on a non-default pick, then selects the hls.js track by index', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4', playbackAudioTracks: twoAudio });
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    await w.find('[aria-label="Audio track"]').findAll('[role="radio"]')[1].trigger('click');
+    await nextTick();
+    // The pick triggered the same fallback path as an undecodable codec…
+    expect(tc().start).toHaveBeenCalledTimes(1);
+    expect(w.find('.prep').exists()).toBe(true);
+    // …and once the HLS session exposes its audio tracks, the matching one is picked
+    // (audio-relative playback-info index == hls.js audioTracks order).
+    tc().state.value = 'ready';
+    tc().audioTracks.value = [
+      { index: 0, name: 'English 5.1', lang: 'eng', default: true, autoselect: true },
+      { index: 1, name: 'Japanese', lang: 'jpn', default: false, autoselect: false },
+    ];
+    await nextTick();
+    expect(tc().setAudioTrack).toHaveBeenCalledWith(1);
+  });
+
+  it('picking the already-active (default) playback-info track is a no-op (no transcode)', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4', playbackAudioTracks: twoAudio });
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    await w.find('[aria-label="Audio track"]').findAll('[role="radio"]')[0].trigger('click');
+    await nextTick();
+    expect(tc().start).not.toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(false);
   });
 });
 

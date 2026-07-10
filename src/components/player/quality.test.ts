@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { HlsLevel } from './hls-playback';
-import { AUTO_QUALITY, qualityId, qualityLabel, qualityRungs, levelIndexForQuality, qualityForLevel } from './quality';
+import { AUTO_QUALITY, ORIGINAL_QUALITY, qualityId, qualityLabel, qualityRungs, levelIndexForQuality, levelIndexForVariant, qualityForLevel } from './quality';
 
 function level(index: number, height: number, bitrate: number): HlsLevel {
   return { index, height, width: Math.round((height * 16) / 9), bitrate, name: `${height}p` };
@@ -77,6 +77,34 @@ describe('quality helpers', () => {
     it('picks the highest-bitrate level when two snap to the same rung', () => {
       const dupes = [level(0, 1080, 4_000_000), level(1, 1080, 6_000_000)];
       expect(levelIndexForQuality(dupes, '1080p')).toBe(1);
+    });
+  });
+
+  describe('levelIndexForVariant', () => {
+    const levels = [level(0, 1080, 8_000_000), level(1, 1080, 5_000_000), level(2, 720, 2_800_000)];
+
+    it('exports the "original" sentinel used for prefs persistence', () => {
+      expect(ORIGINAL_QUALITY).toBe('original');
+    });
+
+    it('matches the level with the variant exact height and closest bitrate', () => {
+      expect(levelIndexForVariant(levels, { height: 1080, bitrate: 8_100_000 })).toBe(0);
+      expect(levelIndexForVariant(levels, { height: 1080, bitrate: 4_900_000 })).toBe(1);
+    });
+
+    it('falls back to the best level of the same RUNG when no exact height matches', () => {
+      // 1088 → rung 1080p → highest-bitrate 1080p level (index 0)
+      expect(levelIndexForVariant(levels, { height: 1088, bitrate: 9_000_000 })).toBe(0);
+    });
+
+    it('returns -1 when no level matches the variant rung at all', () => {
+      expect(levelIndexForVariant(levels, { height: 2160, bitrate: 20_000_000 })).toBe(-1);
+    });
+
+    it('returns -1 for an absent or junk variant', () => {
+      expect(levelIndexForVariant(levels, null)).toBe(-1);
+      expect(levelIndexForVariant(levels, undefined)).toBe(-1);
+      expect(levelIndexForVariant(levels, { height: 0, bitrate: 1 })).toBe(-1);
     });
   });
 

@@ -83,6 +83,53 @@ export function isNetworkMediaError(video: HTMLVideoElement | null | undefined):
 }
 
 /**
+ * An audio stream advertised by `GET /api/v1/media/:id/playback-info`
+ * (`audio_tracks[]`). On direct play (non-Safari) the browser exposes NO
+ * `video.audioTracks`, so this server-side list is what lets the player show an
+ * audio menu at all; switching to a non-default entry falls the session over to
+ * the HLS transcode path, where `index` (0-based among the source's AUDIO streams)
+ * aligns with the hls.js `audioTracks` order of the transcode master playlist.
+ */
+export interface PlaybackAudioTrack {
+  /** 0-based position among the source's audio streams (== hls.js audioTracks order). */
+  index: number;
+  /** Absolute ffmpeg stream index in the container. */
+  streamIndex: number;
+  /** BCP-47 / ISO language code, or '' when the source carries none. */
+  language: string;
+  /** Human label (stream title → language → "Audio N"). */
+  label: string;
+  /** True for the source's default audio stream. */
+  default: boolean;
+}
+
+/**
+ * Normalizes the server's `audio_tracks` array (snake- or camelCase) into
+ * {@link PlaybackAudioTrack}s. Tolerates a missing/non-array value (→ []) and
+ * junk entries (skipped). Mirrors `transcode.ts`' parser conventions.
+ */
+export function parsePlaybackAudioTracks(value: unknown): PlaybackAudioTrack[] {
+  if (!Array.isArray(value)) return [];
+  const out: PlaybackAudioTrack[] = [];
+  for (const entry of value) {
+    if (entry == null || typeof entry !== 'object') continue;
+    const o = entry as Record<string, unknown>;
+    const index = typeof o.index === 'number' && Number.isInteger(o.index) && o.index >= 0 ? o.index : out.length;
+    const language = typeof o.language === 'string' ? o.language : '';
+    const title = typeof o.title === 'string' ? o.title : '';
+    const streamIndexRaw = o.stream_index ?? o.streamIndex;
+    out.push({
+      index,
+      streamIndex: typeof streamIndexRaw === 'number' ? streamIndexRaw : index,
+      language,
+      label: title || language || `Audio ${index + 1}`,
+      default: o.default === true,
+    });
+  }
+  return out;
+}
+
+/**
  * An intro / outro time range (seconds), from `GET /api/v1/media/:id/playback-info`.
  * `start`/`end` are absolute positions in the title; the player shows a "Skip"
  * affordance while the playhead sits inside `[start, end)` and seeks to `end` on use.
