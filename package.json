@@ -76,6 +76,7 @@
   "license": "MIT",
   "dependencies": {
     "@phlix/contracts": "github:detain/phlix-contracts#v0.3.6",
+    "@phlix/syncplay": "github:detain/phlix-syncplay#v0.1.2",
     "apexcharts": "^5.15.2",
     "hls.js": "^1.6.16",
     "pinia": "^3.0.0",
