@@ -32,6 +32,7 @@ import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
 import { useMessages } from '../composables/useMessages';
 import { useHlsTranscode } from '../composables/useHlsTranscode';
+import { useTrickplay } from '../composables/useTrickplay';
 import ShortcutsHelp from './player/ShortcutsHelp.vue';
 import VolumeControl from './player/VolumeControl.vue';
 import SpeedMenu from './player/SpeedMenu.vue';
@@ -222,6 +223,15 @@ const tc = useHlsTranscode({
   hlsConfig: phlixConfig?.playerHlsConfig,
 });
 
+/** Trickplay (sprite preview) controller — fetches sprite + timeline when media loads. */
+const trickplay = useTrickplay();
+
+/**
+ * Thumbnail source for the scrubber — uses the host-provided `thumbnailAt` prop when
+ * available, otherwise falls back to the trickplay composable's sprite-position function.
+ */
+const scrubThumbnailAt = computed(() => props.thumbnailAt ?? trickplay.thumbnailAt);
+
 /** Direct-play source for the <video>. Cleared while transcoding so hls.js owns
  *  the element's source instead of a (now-incompatible) direct URL binding. */
 const videoSrc = computed(() => (transcodeNeeded.value ? undefined : props.streamUrl));
@@ -358,6 +368,8 @@ function evaluateForCurrentMedia(): void {
   // `pendingSeek` / the resume prompt (which the transcode path suppresses).
   if (videoRef.value) videoRef.value.currentTime = 0;
   if (transcodeNeeded.value) beginTranscode();
+  // Fetch trickplay sprite/timeline for the scrubber preview.
+  void trickplay.fetch(props.media.id);
 }
 
 // resume ----------------------------------------------------------------------
@@ -1035,7 +1047,7 @@ onBeforeUnmount(() => {
           :duration="player.duration"
           :buffered="player.buffered"
           :chapters="chapters"
-          :thumbnail-at="thumbnailAt"
+          :thumbnail-at="scrubThumbnailAt"
           @seek="onSeek"
           @scrub-start="onScrubStart"
           @scrub-end="onScrubEnd"

@@ -733,6 +733,21 @@ export class ApiClient {
         return this.get('/api/v1/media/search/by-marker', params);
     }
 
+    /**
+     * Get trickplay (sprite preview) data for a media item.
+     *
+     * Calls `GET /api/v1/media/{id}/trickplay`. Returns the sprite sheet URL and
+     * timeline mapping for thumbnail previews during scrubbing.
+     *
+     * @param id Media item ID
+     */
+    async getTrickplay(id: string): Promise<{
+        sprite_url: string | null;
+        timeline: Array<{ seconds: number; frame: number }>;
+    }> {
+        return this.get(`/api/v1/media/${encodeURIComponent(id)}/trickplay`);
+    }
+
     logout(redirect = true): void {
         this.tokens.clear();
         if (redirect && typeof window !== 'undefined') {
