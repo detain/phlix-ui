@@ -22,6 +22,7 @@ import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import Icon from './Icon.vue';
+import RatingBadge from './RatingBadge.vue';
 import ThumbRating from './ThumbRating.vue';
 import Button from './ui/Button.vue';
 import Menu from './ui/Menu.vue';
@@ -483,7 +484,7 @@ onBeforeUnmount(() => {
           <span v-if="item.year" class="media-detail__meta-item">
             <Icon name="calendar" class="media-detail__meta-icon" />{{ item.year }}
           </span>
-          <span v-if="item.rating" class="media-detail__cert">{{ item.rating }}</span>
+          <RatingBadge v-if="item.rating" :rating="item.rating" size="sm" />
           <span v-if="item.runtime" class="media-detail__meta-item">{{ item.runtime }}m</span>
           <span class="media-detail__type">{{ item.type }}</span>
         </div>

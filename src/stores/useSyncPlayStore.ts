@@ -11,7 +11,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
-import { getSyncPlayApi } from '../api/syncplay';
+import { getSyncPlayApi, openSyncPlayConnection, closeSyncPlayConnection } from '../api/syncplay';
 
 export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   // ---- state --------------------------------------------------------------
@@ -86,6 +86,10 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       }
       // Refresh members from session
       members.value = session.activeUsers;
+      // P8: Open the WebSocket connection for real-time sync once successfully joined.
+      openSyncPlayConnection(roomId, (msg) => {
+        onRemoteStateUpdate(msg as SyncPlayPlaybackCommand);
+      });
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to join room';
       throw e;
@@ -104,6 +108,8 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     try {
       const api = getSyncPlayApi(apiBase);
       await api.leaveRoom(currentRoom.value.id);
+      // P8: Close the WebSocket connection when leaving the room.
+      closeSyncPlayConnection();
       currentRoom.value = null;
       currentSession.value = null;
       members.value = [];
