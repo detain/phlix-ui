@@ -62,8 +62,28 @@ const selectedIndex = computed(() => opts.value.findIndex((o) => o.value === pro
 const selectedLabel = computed(() => opts.value[selectedIndex.value]?.label ?? '');
 const activeId = computed(() => (active.value >= 0 ? `${baseId}-opt-${active.value}` : undefined));
 
+/** True when the list should open ABOVE the trigger. The list is absolutely
+ *  positioned below by default; for triggers near the bottom of the viewport
+ *  (the player's control bar is the canonical case) a downward list runs past
+ *  the screen edge — only the first option is visible and the rest are
+ *  unreachable clipped pixels. Flip up when the space below can't fit the
+ *  list's max-height (280px + margin) and there's more room above. */
+const dropUp = ref(false);
+
+function updatePlacement() {
+  const root = rootEl.value;
+  if (!root) return;
+  const rect = root.getBoundingClientRect();
+  const viewport = window.innerHeight || document.documentElement.clientHeight;
+  const spaceBelow = viewport - rect.bottom;
+  const spaceAbove = rect.top;
+  const needed = 284; // list max-height (280px) + 4px gap
+  dropUp.value = spaceBelow < needed && spaceAbove > spaceBelow;
+}
+
 function openList() {
   if (props.disabled || open.value) return;
+  updatePlacement();
   open.value = true;
   active.value = selectedIndex.value >= 0 ? selectedIndex.value : edgeEnabledIndex(opts.value, 'first');
   nextTick(scrollActiveIntoView);
@@ -158,6 +178,7 @@ onBeforeUnmount(() => {
       :id="`${baseId}-list`"
       ref="listEl"
       class="phlix-select__list"
+      :class="{ 'is-up': dropUp }"
       role="listbox"
       :aria-label="label"
     >
@@ -213,6 +234,12 @@ onBeforeUnmount(() => {
   z-index: 50;
   top: calc(100% + 4px);
   left: 0;
+}
+.phlix-select__list.is-up {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+.phlix-select__list {
   min-width: 100%;
   max-height: 280px;
   overflow-y: auto;
