@@ -98,3 +98,35 @@ export declare class SyncPlayApi {
     sendCommand(sessionId: string, command: SyncPlayPlaybackCommand): Promise<void>;
 }
 export declare function getSyncPlayApi(apiBase: string): SyncPlayApi;
+/** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
+type SyncPlayMessageHandler = (msg: SyncPlayPlaybackCommand & {
+    type: string;
+    roomId?: string;
+}) => void;
+/**
+ * Open a WebSocket connection to the SyncPlay server for the given room.
+ * If a connection is already open for a different room, it is closed first.
+ *
+ * @param roomId - The SyncPlay room/group ID to connect to.
+ * @param onMessage - Callback invoked for each server-to-client SyncPlay message.
+ */
+export declare function openSyncPlayConnection(roomId: string, onMessage?: SyncPlayMessageHandler): void;
+/**
+ * Close the current SyncPlay WebSocket connection.
+ */
+export declare function closeSyncPlayConnection(): void;
+/**
+ * Send a playback state update over the SyncPlay WebSocket.
+ * No-op if the WebSocket is not connected.
+ *
+ * @param state - The current playback state to broadcast to other room members.
+ */
+export declare function sendSyncPlayStateUpdate(state: SyncPlayStateUpdate): void;
+/**
+ * Send a playback command (play/pause/seek/sync) over the SyncPlay WebSocket.
+ * No-op if the WebSocket is not connected.
+ *
+ * @param command - The playback command to broadcast to other room members.
+ */
+export declare function sendSyncPlayCommand(command: SyncPlayPlaybackCommand): void;
+export {};

@@ -11,7 +11,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
-import { getSyncPlayApi, openSyncPlayConnection, closeSyncPlayConnection } from '../api/syncplay';
+import { getSyncPlayApi, openSyncPlayConnection, closeSyncPlayConnection, sendSyncPlayCommand } from '../api/syncplay';
 
 export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   // ---- state --------------------------------------------------------------
@@ -172,28 +172,23 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   }
 
   /**
-   * Send a local playback command to the server.
+   * Send a local playback command to all room members via WebSocket.
    */
-  async function sendCommand(
-    apiBase: string,
+  function sendCommand(
+    _apiBase: string,
     type: SyncPlayPlaybackCommand['type'],
     options?: { position?: number; rate?: number },
-  ): Promise<void> {
+  ): void {
     if (!currentSession.value) return;
-    try {
-      const api = getSyncPlayApi(apiBase);
-      const command: SyncPlayPlaybackCommand = {
-        type,
-        position: options?.position,
-        rate: options?.rate,
-        issuedBy: currentSession.value.createdBy,
-        issuedAt: new Date().toISOString(),
-      };
-      await api.sendCommand(currentSession.value.id, command);
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to send command';
-      throw e;
-    }
+    const command: SyncPlayPlaybackCommand = {
+      type,
+      position: options?.position,
+      rate: options?.rate,
+      issuedBy: currentSession.value.createdBy,
+      issuedAt: new Date().toISOString(),
+    };
+    // P8: Send via WebSocket using @phlix/syncplay protocol — not REST.
+    sendSyncPlayCommand(command);
   }
 
   /**

@@ -798,7 +798,6 @@ function sleepTimer(): void {
 function fadeOutAndPause(): void {
   const v = videoRef.value;
   if (!v) {
-    videoRef?.pause();
     player.pause();
     return;
   }
@@ -808,10 +807,8 @@ function fadeOutAndPause(): void {
     player.pause();
     return;
   }
-  const startVolume = v.volume;
   const fadeStep = 0.05;
   const fadeInterval = 50; // ms
-  const stepDuration = (fadeInterval / 1000) * startVolume / fadeStep;
   const fadeTimer = setInterval(() => {
     if (v.volume > fadeStep) {
       v.volume = Math.max(0, v.volume - fadeStep);
