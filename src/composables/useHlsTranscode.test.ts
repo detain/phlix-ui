@@ -42,6 +42,10 @@ interface MockHls {
   fireReady(): void;
   /** Fire the `onLevelSwitched` subscriber with a settled level index. */
   fireLevelSwitched(index: number): void;
+  // Audio track properties (P3B-S3)
+  audioTracks: Array<{ index: number; name: string; lang: string; default: boolean; autoselect: boolean }>;
+  currentAudioTrack: number;
+  fireAudioTrackSwitched?(index: number): void;
 }
 
 function level(index: number, height: number, width: number, bitrate: number): HlsLevel {
@@ -83,6 +87,9 @@ function harness(opts: {
     unsubscribe: vi.fn<() => void>(),
     fireReady: () => undefined,
     fireLevelSwitched: () => undefined,
+    // Audio track properties (P3B-S3)
+    audioTracks: [],
+    currentAudioTrack: -1,
   };
   const attach = vi.fn(async (_video: HTMLVideoElement, _url: string, attachOpts?: { onReady?: () => void }): Promise<HlsHandle> => {
     if (opts.attachRejects) throw new Error('attach failed');
@@ -98,6 +105,11 @@ function harness(opts: {
         autoLevelEnabled: true,
         bandwidthEstimate: 0,
         onLevelSwitched: () => hls.unsubscribe,
+        // Audio track properties (P3B-S3)
+        audioTracks: [],
+        getCurrentAudioTrack: () => -1,
+        setAudioTrack: () => {},
+        onAudioTrackSwitched: () => () => {},
       };
     }
     return {
@@ -118,6 +130,13 @@ function harness(opts: {
         hls.fireLevelSwitched = (index: number) => cb(index);
         return hls.unsubscribe;
       },
+      // Audio track properties (P3B-S3)
+      get audioTracks() {
+        return hls.audioTracks;
+      },
+      getCurrentAudioTrack: () => hls.currentAudioTrack,
+      setAudioTrack: () => {},
+      onAudioTrackSwitched: () => () => {},
     };
   });
   const post = vi.fn(async () => {
