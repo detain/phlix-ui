@@ -462,6 +462,32 @@ const textTracks = ref<TextTrackInfo[]>([]);
 const audioTracks = ref<TextTrackInfo[]>([]);
 const activeAudio = ref(-1);
 const captionsMenuOpen = ref(false);
+
+// ---- HLS audio track handling (P3B) -----------------------------------------
+/** True when the HLS path is active AND the manifest carries audio tracks. */
+const isHlsAudioActive = computed<boolean>(
+  () => tc.state.value === 'ready' && tc.audioTracks.value.length > 0,
+);
+
+/** HLS audio tracks converted to the TextTrackInfo shape CaptionsMenu expects. */
+const hlsAudioTrackList = computed<TextTrackInfo[]>(() =>
+  tc.audioTracks.value.map((t) => ({
+    index: t.index,
+    language: t.lang || `audio-${t.index}`,
+    label: t.name || `Audio ${t.index + 1}`,
+    kind: 'audio' as const,
+  })),
+);
+
+/** The audio track list to show: HLS audio tracks when active, else native. */
+const effectiveAudioTracks = computed<TextTrackInfo[]>(
+  () => (isHlsAudioActive.value ? hlsAudioTrackList.value : audioTracks.value),
+);
+
+/** The active audio track index: HLS currentAudioTrack when active, else native. */
+const effectiveActiveAudio = computed<number>(
+  () => (isHlsAudioActive.value ? tc.currentAudioTrack.value : activeAudio.value),
+);
 const chaptersListOpen = ref(false);
 /** Last on-language, so the `c` key can restore it after toggling off. */
 let lastSubtitleLang: string | null = player.subtitleLang;
@@ -538,8 +564,13 @@ function toggleCaptions(): void {
 }
 
 function onSelectAudio(index: number): void {
-  applyAudioTrack(videoRef.value, index);
-  activeAudio.value = index;
+  if (isHlsAudioActive.value) {
+    // P3B: route audio track selection through the hls.js controller
+    tc.setAudioTrack(index);
+  } else {
+    applyAudioTrack(videoRef.value, index);
+    activeAudio.value = index;
+  }
 }
 
 // When the server subtitle sidecars change (initial list, or a late arrival on a
@@ -1129,8 +1160,8 @@ onBeforeUnmount(() => {
           <CaptionsMenu
             v-model:open="captionsMenuOpen"
             :tracks="textTracks"
-            :audio-tracks="audioTracks"
-            :active-audio="activeAudio"
+            :audio-tracks="effectiveAudioTracks"
+            :active-audio="effectiveActiveAudio"
             @select-audio="onSelectAudio"
           />
 

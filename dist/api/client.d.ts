@@ -323,6 +323,21 @@ export declare class ApiClient {
         around: number;
         position: number;
     }>;
+    /**
+     * Get trickplay (sprite preview) data for a media item.
+     *
+     * Calls `GET /api/v1/media/{id}/trickplay`. Returns the sprite sheet URL and
+     * timeline mapping for thumbnail previews during scrubbing.
+     *
+     * @param id Media item ID
+     */
+    getTrickplay(id: string): Promise<{
+        sprite_url: string | null;
+        timeline: Array<{
+            seconds: number;
+            frame: number;
+        }>;
+    }>;
     logout(redirect?: boolean): void;
 }
 export declare const api: ApiClient;
