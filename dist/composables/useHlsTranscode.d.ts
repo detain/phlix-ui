@@ -15,7 +15,7 @@
  * @license MIT
  */
 import { type Ref } from 'vue';
-import { type AttachHlsOptions, type HlsHandle, type HlsLevel } from '../components/player/hls-playback';
+import { type AttachHlsOptions, type HlsAudioTrack, type HlsHandle, type HlsLevel } from '../components/player/hls-playback';
 import { type SubtitleTrack, type Variant } from '../components/player/transcode';
 /** State machine for the transcode-to-play flow. */
 export type TranscodeState = 'idle' | 'preparing' | 'ready' | 'error';
@@ -76,11 +76,24 @@ export interface HlsTranscodeController {
      *  (e.g. manifest only has one quality) to populate the quality selector.
      *  Null on a legacy pre-ABR job. */
     variants: Ref<Variant[] | null>;
+    /** The available audio tracks from the HLS manifest (P3B-S3 multi-audio).
+     *  Populated once the manifest is parsed via {@link HlsHandle.audioTracks}.
+     *  Empty when the manifest has no #EXT-X-MEDIA:TYPE=AUDIO groups or on the
+     *  native-HLS (Safari) path where audio tracks come from video.audioTracks. */
+    audioTracks: Ref<HlsAudioTrack[]>;
+    /** The currently selected audio track index, or `-1` when no audio track
+     *  is active (e.g. native HLS path or a manifest with no audio groups). */
+    currentAudioTrack: Ref<number>;
     /** Pin a quality rung by level index for an IMMEDIATE switch, or pass `'auto'`
      *  to hand the choice back to ABR. Safe no-op before a stream is attached or on
      *  the native-HLS path. Updates {@link currentLevel}/{@link autoEnabled}
      *  optimistically; a later switch event reconciles the exact active level. */
     setLevel(level: number | 'auto'): void;
+    /** Switch to a different audio track by index (P3B-S3). Safe no-op before a
+     *  stream is attached, when there are no audio tracks, or on the native-HLS
+     *  path. Updates {@link currentAudioTrack} optimistically; a later
+     *  AUDIO_TRACK_SWITCHED event reconciles the exact active track. */
+    setAudioTrack(track: number): void;
     /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when
      *  omitted the start request sends NO `?profile=` query, letting the server map
      *  the quality profile from the request's `X-Phlix-Device-Type` header (a TV

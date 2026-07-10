@@ -44,6 +44,8 @@ export interface Preferences {
     defaultVolume: number;
     defaultQuality: string;
     defaultSubtitleLang: string | null;
+    /** Preferred audio language (BCP-47, e.g. 'en', 'es-ES'); null = no preference. */
+    defaultAudioLang: string | null;
     /** True once the user has explicitly chosen a caption state (a language, or
      *  "Off") via the CaptionsMenu or the Settings default-subtitle dropdown.
      *  Distinguishes an explicit "Off" (`defaultSubtitleLang === null` + this
@@ -96,6 +98,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    defaultAudioLang: import("vue").Ref<string | null, string | null>;
     subtitlePreferenceSet: import("vue").Ref<boolean, boolean>;
     captionStyle: import("vue").Ref<{
         size: CaptionSize;
@@ -131,7 +134,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
+}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
@@ -142,6 +145,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    defaultAudioLang: import("vue").Ref<string | null, string | null>;
     subtitlePreferenceSet: import("vue").Ref<boolean, boolean>;
     captionStyle: import("vue").Ref<{
         size: CaptionSize;
@@ -188,6 +192,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     defaultVolume: import("vue").Ref<number, number>;
     defaultQuality: import("vue").Ref<string, string>;
     defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
+    defaultAudioLang: import("vue").Ref<string | null, string | null>;
     subtitlePreferenceSet: import("vue").Ref<boolean, boolean>;
     captionStyle: import("vue").Ref<{
         size: CaptionSize;
