@@ -33,6 +33,14 @@ type __VLS_Props = {
      */
     hideActions?: boolean;
     /**
+     * Render ONLY the Play quick-action in the hover row (no rating/favorite/
+     * watched/info/menu). Used by the season grid on the series page: the card
+     * stays purely navigational (poster → season page) but gains a Play button
+     * that starts whole-season playback via the `play` emit. Ignored when
+     * `hideActions` is set (that suppresses the row entirely).
+     */
+    playOnly?: boolean;
+    /**
      * Override the caption sub-line (defaults to year · runtime). Used by the
      * season grid to show "N episodes" while reusing this exact card design.
      */
@@ -52,18 +60,18 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     match: (item: import("../types/media-item").MediaDetail) => any;
     play: (item: import("../types/media-item").MediaDetail) => any;
     info: (item: import("../types/media-item").MediaDetail) => any;
+    watchlist: (item: import("../types/media-item").MediaDetail) => any;
     refresh: (item: import("../types/media-item").MediaDetail) => any;
     remove: (item: import("../types/media-item").MediaDetail) => any;
-    watchlist: (item: import("../types/media-item").MediaDetail) => any;
     "mark-watched": (item: import("../types/media-item").MediaDetail) => any;
     "choose-poster": (item: import("../types/media-item").MediaDetail) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onMatch?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onPlay?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onInfo?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onRefresh?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onRemove?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
-    onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
 }>, {
@@ -71,6 +79,7 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     newWithinDays: number;
     canMatch: boolean;
     hideActions: boolean;
+    playOnly: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
 declare const _default: typeof __VLS_export;

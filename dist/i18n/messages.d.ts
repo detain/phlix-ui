@@ -316,6 +316,18 @@ export declare const DEFAULT_MESSAGES: {
     history: {
         title: string;
     };
+    season: {
+        play: string;
+        watchlist: string;
+        inFavorites: string;
+        addFavorite: string;
+        removeFavorite: string;
+        markWatched: string;
+        watched: string;
+        markWatchedAria: string;
+        markUnwatchedAria: string;
+        noEpisodes: string;
+    };
     parental: {
         title: string;
         schedules: string;
