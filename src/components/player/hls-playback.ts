@@ -34,12 +34,38 @@ export interface HlsLevel {
 }
 
 /**
+ * A single selectable audio track, mapped from an hls.js audio track group
+ * ({@link https://github.com/video-dev/hls.js/blob/master/docs/API.md#audiotracks}.
+ *
+ * hls.js exposes `audioTracks` (array) and `audioTrack` (current index) once
+ * the manifest is parsed. Each entry has `name`, `lang`, `url` (if external),
+ * and `details` (the audio-only playlist).
+ *
+ * An index of `-1` means no audio track is active (or the native path where
+ * hls.js audio track API is unavailable).
+ */
+export interface HlsAudioTrack {
+  /** Position in the audio track list. */
+  index: number;
+  /** Display name (e.g. "English", "Spanish", "Director's Commentary"). */
+  name: string;
+  /** BCP 47 language tag (e.g. "en", "es-ES"), or empty string if unknown. */
+  lang: string;
+  /** True when this track is marked DEFAULT in the manifest. */
+  default: boolean;
+  /** True when this track is marked AUTOSELECT in the manifest. */
+  autoselect: boolean;
+}
+
+/**
  * A live HLS attachment.
  *
  * `destroy()` stops loading and detaches (critical: an undestroyed hls.js
  * instance keeps fetching segments). The level API drives manual quality
  * selection; on the native-HLS (Safari/iOS) path the browser owns ABR, so the
  * level members degrade to an Auto-only, no-op shape rather than throwing.
+ * The audio-track API drives audio language selection on the hls.js path;
+ * on native HLS audio tracks come from `video.audioTracks` instead.
  */
 export interface HlsHandle {
   destroy(): void;
@@ -77,6 +103,28 @@ export interface HlsHandle {
    * native-HLS path this never fires and returns a no-op unsubscribe.
    */
   onLevelSwitched(callback: (levelIndex: number) => void): () => void;
+  /**
+   * The available audio tracks parsed from the manifest (P3B-S3 multi-audio).
+   * Empty when the manifest has no #EXT-X-MEDIA:TYPE=AUDIO entries, and always
+   * empty on the native-HLS path where audio tracks come from `video.audioTracks`.
+   */
+  readonly audioTracks: HlsAudioTrack[];
+  /**
+   * The current audio track index, or `-1` when no audio track is active
+   * (native HLS path or a manifest with no audio groups).
+   */
+  getCurrentAudioTrack(): number;
+  /**
+   * Switch to a different audio track by index. The index maps into
+   * {@link HlsHandle.audioTracks}. No-op on the native-HLS path.
+   */
+  setAudioTrack(index: number): void;
+  /**
+   * Subscribe to hls.js `AUDIO_TRACK_SWITCHED` — fires when the active audio
+   * track changes. Returns an unsubscribe function. On the native-HLS path this
+   * never fires and returns a no-op unsubscribe.
+   */
+  onAudioTrackSwitched(callback: (trackIndex: number) => void): () => void;
 }
 
 /** Options for {@link attachHls}. */
@@ -218,6 +266,26 @@ export async function attachHls(
         hls.on(Hls.Events.LEVEL_SWITCHED, listener);
         return (): void => hls.off(Hls.Events.LEVEL_SWITCHED, listener);
       },
+      get audioTracks(): HlsAudioTrack[] {
+        return (hls.audioTracks ?? []).map((t, index) => ({
+          index,
+          name: t.name ?? '',
+          lang: t.lang ?? '',
+          default: t.default ?? false,
+          autoselect: t.autoselect ?? false,
+        }));
+      },
+      getCurrentAudioTrack(): number {
+        return hls.audioTrack ?? -1;
+      },
+      setAudioTrack(index: number): void {
+        hls.audioTrack = index;
+      },
+      onAudioTrackSwitched(callback: (trackIndex: number) => void): () => void {
+        const listener = (_event: unknown, data: { id: number }): void => callback(data.id);
+        hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, listener);
+        return (): void => hls.off(Hls.Events.AUDIO_TRACK_SWITCHED, listener);
+      },
     };
   }
 
@@ -229,6 +297,8 @@ export async function attachHls(
     video.src = url;
     // Native HLS: the browser drives ABR and exposes no level API, so the level
     // members degrade to an Auto-only, no-op shape. UI code can call them safely.
+    // Audio tracks on native HLS come from video.audioTracks (handled separately
+    // by the Player), not from hls.js — these members are no-ops here.
     return {
       destroy(): void {
         video.removeEventListener('loadedmetadata', onLoaded);
@@ -243,6 +313,10 @@ export async function attachHls(
       autoLevelEnabled: true,
       bandwidthEstimate: 0,
       onLevelSwitched: () => () => undefined,
+      audioTracks: [],
+      getCurrentAudioTrack: () => -1,
+      setAudioTrack: () => undefined,
+      onAudioTrackSwitched: () => () => undefined,
     };
   }
 

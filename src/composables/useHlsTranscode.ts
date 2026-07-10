@@ -17,7 +17,7 @@
 import { ref, type Ref } from 'vue';
 import { ApiClient } from '../api/client';
 import { LocalStorageTokenStore } from '../api/tokenStore';
-import { attachHls as defaultAttach, type AttachHlsOptions, type HlsHandle, type HlsLevel } from '../components/player/hls-playback';
+import { attachHls as defaultAttach, type AttachHlsOptions, type HlsAudioTrack, type HlsHandle, type HlsLevel } from '../components/player/hls-playback';
 import {
   isFailedStatus,
   isPlayable,
@@ -93,11 +93,24 @@ export interface HlsTranscodeController {
    *  (e.g. manifest only has one quality) to populate the quality selector.
    *  Null on a legacy pre-ABR job. */
   variants: Ref<Variant[] | null>;
+  /** The available audio tracks from the HLS manifest (P3B-S3 multi-audio).
+   *  Populated once the manifest is parsed via {@link HlsHandle.audioTracks}.
+   *  Empty when the manifest has no #EXT-X-MEDIA:TYPE=AUDIO groups or on the
+   *  native-HLS (Safari) path where audio tracks come from video.audioTracks. */
+  audioTracks: Ref<HlsAudioTrack[]>;
+  /** The currently selected audio track index, or `-1` when no audio track
+   *  is active (e.g. native HLS path or a manifest with no audio groups). */
+  currentAudioTrack: Ref<number>;
   /** Pin a quality rung by level index for an IMMEDIATE switch, or pass `'auto'`
    *  to hand the choice back to ABR. Safe no-op before a stream is attached or on
    *  the native-HLS path. Updates {@link currentLevel}/{@link autoEnabled}
    *  optimistically; a later switch event reconciles the exact active level. */
   setLevel(level: number | 'auto'): void;
+  /** Switch to a different audio track by index (P3B-S3). Safe no-op before a
+   *  stream is attached, when there are no audio tracks, or on the native-HLS
+   *  path. Updates {@link currentAudioTrack} optimistically; a later
+   *  AUDIO_TRACK_SWITCHED event reconciles the exact active track. */
+  setAudioTrack(track: number): void;
   /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when
    *  omitted the start request sends NO `?profile=` query, letting the server map
    *  the quality profile from the request's `X-Phlix-Device-Type` header (a TV
@@ -116,6 +129,8 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   const autoEnabled = ref<boolean>(true);
   const activeLevelHeight = ref<number | null>(null);
   const variants = ref<Variant[] | null>(null);
+  const audioTracks = ref<HlsAudioTrack[]>([]);
+  const currentAudioTrack = ref<number>(-1);
 
   /** Pull the live level getters off the attached handle into reactive state.
    *  Called on manifest-parse (`onReady`) and on every settled level switch —
@@ -139,6 +154,21 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     autoEnabled.value = true;
     activeLevelHeight.value = null;
     variants.value = null;
+  }
+
+  /** Pull audio track state from the attached handle. Called on manifest-parse
+   *  and on every settled audio track switch. `activeIndex`, when given (from
+   *  the switch event), names the track that is actually playing. */
+  function syncAudioTrackState(activeIndex?: number): void {
+    if (!handle) return;
+    audioTracks.value = handle.audioTracks;
+    currentAudioTrack.value = activeIndex ?? handle.getCurrentAudioTrack();
+  }
+
+  /** Return the audio track refs to their defaults (no handle attached). */
+  function resetAudioTrackState(): void {
+    audioTracks.value = [];
+    currentAudioTrack.value = -1;
   }
 
   /** Replace the exposed variants list. Overwrites only when non-empty so a
@@ -169,6 +199,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
 
   let handle: HlsHandle | null = null;
   let unsubscribeLevelSwitched: (() => void) | null = null;
+  let unsubscribeAudioTrackSwitched: (() => void) | null = null;
   let cancelled = false;
 
   function makeClient(): TranscodeHttpClient {
@@ -240,9 +271,11 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         return;
       }
       unsubscribeLevelSwitched = handle.onLevelSwitched((index) => syncLevelState(index));
+      unsubscribeAudioTrackSwitched = handle.onAudioTrackSwitched((index) => syncAudioTrackState(index));
       // Seed from the handle now: covers the native/degraded shape (empty levels,
       // Auto) and a manifest that parsed before this point.
       syncLevelState();
+      syncAudioTrackState();
       state.value = 'ready';
     } catch {
       if (!cancelled) {
@@ -260,6 +293,12 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     syncLevelState();
   }
 
+  function setAudioTrack(track: number): void {
+    if (!handle) return;
+    handle.setAudioTrack(track);
+    syncAudioTrackState();
+  }
+
   function cleanup(): void {
     cancelled = true;
     if (unsubscribeLevelSwitched) {
@@ -269,6 +308,14 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         /* already unsubscribed */
       }
       unsubscribeLevelSwitched = null;
+    }
+    if (unsubscribeAudioTrackSwitched) {
+      try {
+        unsubscribeAudioTrackSwitched();
+      } catch {
+        /* already unsubscribed */
+      }
+      unsubscribeAudioTrackSwitched = null;
     }
     if (handle) {
       try {
@@ -286,6 +333,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     progress.value = 0;
     subtitleTracks.value = [];
     resetLevelState();
+    resetAudioTrackState();
   }
 
   return {
@@ -297,7 +345,10 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     autoEnabled,
     activeLevelHeight,
     variants,
+    audioTracks,
+    currentAudioTrack,
     setLevel,
+    setAudioTrack,
     start,
     cleanup,
     reset,
