@@ -396,6 +396,37 @@ describe('MediaCard — watched (eye) toggle', () => {
     expect(w.find('.media-card__caption-title').exists()).toBe(true);
   });
 
+  it('renders ONLY the Play action in playOnly mode (season card)', () => {
+    const w = mount(MediaCard, {
+      props: { item: media({ id: 'sea1', type: 'season' }), playOnly: true, canMatch: true },
+    });
+    const row = w.find('.media-card__actions');
+    expect(row.exists()).toBe(true);
+    // exactly one button — Play — no thumbs/favorite/watched/info/menu/match
+    const buttons = w.findAll('.media-card__actions button');
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].attributes('aria-label')).toBe('Play');
+    expect(w.find('.thumb-rating').exists()).toBe(false);
+    expect(w.find('[aria-label="Add to favorites"]').exists()).toBe(false);
+    expect(w.find('[aria-label="More actions"]').exists()).toBe(false);
+  });
+
+  it('playOnly Play emits play with the item and never falls through to the link', async () => {
+    const onCardClick = vi.fn();
+    const w = mount(MediaCard, {
+      props: { item: media({ id: 'sea1', type: 'season' }), playOnly: true },
+      attrs: { onClick: onCardClick },
+    });
+    await w.find('.media-card__iconbtn--play').trigger('click');
+    expect(w.emitted('play')![0][0]).toMatchObject({ id: 'sea1' });
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it('hideActions still wins over playOnly (no action row at all)', () => {
+    const w = mount(MediaCard, { props: { item: media(), hideActions: true, playOnly: true } });
+    expect(w.find('.media-card__actions').exists()).toBe(false);
+  });
+
   it('renders the subtitle override in the caption sub-line', () => {
     const w = mount(MediaCard, { props: { item: media(), subtitle: '12 episodes' } });
     expect(w.find('.media-card__caption-sub').text()).toContain('12 episodes');

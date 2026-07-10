@@ -31,7 +31,7 @@ import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import PosterPicker from '../components/PosterPicker.vue';
 import { type SeasonGroup } from '../components/series-grouping';
 import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
-import { pickPlayableEpisode } from '../composables/useResolvePlayable';
+import { pickPlayableEpisode, pickSeasonPlayable } from '../composables/useResolvePlayable';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -196,6 +196,18 @@ function onPlay(m: MediaItem): void {
   }
   go('player', m.id);
 }
+/**
+ * Play pressed on a SEASON card in the series' season grid — start whole-season
+ * playback: the season's resume-in-progress episode, else its first episode
+ * (Specials play their first special). Auto-advance across the following
+ * episodes is the player's existing series chain (PlayerPage rebuilds the
+ * ordered episode list for any episode id).
+ */
+function onPlaySeason(group: SeasonGroup): void {
+  const next = pickSeasonPlayable(group, player.resumeMap);
+  if (next) go('player', next.id);
+  else toasts.info('No episodes to play yet');
+}
 // State-aware toast for the `watchlist` action. EVERY `watchlist` emitter that
 // reaches this handler has ALREADY toggled the favorite store + persisted the
 // change before re-emitting: the "More like this" rail cards via MediaCard's
@@ -353,6 +365,7 @@ async function onRemove(m: MediaItem): Promise<void> {
         :can-match="auth.isAdmin"
         @play="onPlay"
         @resume="onPlay"
+        @play-season="onPlaySeason"
         @watchlist="onWatchlist"
         @info="onInfo"
         @match="onMatch"

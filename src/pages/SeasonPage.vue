@@ -21,19 +21,29 @@ import type { MediaItem } from '../types/media-item';
 import { ApiClient } from '../api/client';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
+import { pickSeasonPlayable } from '../composables/useResolvePlayable';
 import { findSeasonByParam, type SeasonGroup } from '../components/series-grouping';
 import SeriesSeasons from '../components/SeriesSeasons.vue';
+import ThumbRating from '../components/ThumbRating.vue';
 import Icon from '../components/Icon.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import { usePageTitle } from '../composables/usePageTitle';
+import { useMessages } from '../composables/useMessages';
+import { usePlayerStore } from '../stores/usePlayerStore';
+import { useToastStore } from '../stores/useToastStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 
 // On the hub this is the relay-proxy base for the selected server; on the media
 // server it is the app's own base.
 const apiBase = useMediaApiBase();
 const route = useRoute();
 const router = useRouter();
+const { t } = useMessages();
+const player = usePlayerStore();
+const toasts = useToastStore();
+const userItemData = useUserItemDataStore();
 
 const series = ref<MediaItem | null>(null);
 const season = ref<SeasonGroup | null>(null);
@@ -87,6 +97,9 @@ async function load(): Promise<void> {
         const groups = await loadSeriesSeasons(client, apiBase.value, id, myController?.signal);
         if (stale()) return;
         season.value = findSeasonByParam(groups, seasonParam.value);
+        // Seed the per-user favorite/watched/like state for the REAL season row
+        // (when the server models one) so the top actions reflect persisted state.
+        if (season.value?.seasonItem) userItemData.hydrate(season.value.seasonItem);
         loading.value = false;
     } catch (e) {
         if (stale() || isAbort(e)) return;
@@ -123,6 +136,39 @@ function onBackToSeries(): void {
 
 const seasonPoster = computed(() => season.value?.seasonPoster ?? series.value?.poster_url ?? null);
 const seasonOverview = computed(() => season.value?.seasonItem?.overview ?? null);
+
+/**
+ * Play the WHOLE season: the season's resume-in-progress episode, else its first
+ * episode (Specials play their first special). From there the player's existing
+ * up-next auto-advance chain continues through the following episodes.
+ */
+function onPlaySeason(): void {
+    if (!season.value) return;
+    const next = pickSeasonPlayable(season.value, player.resumeMap);
+    if (next) go('player', { id: next.id });
+    else toasts.info(t('season.noEpisodes'));
+}
+
+// Per-user favorite / watched / thumbs state for the season CONTAINER. These are
+// wired ONLY when the server models the season as its own media row
+// (`season.seasonItem`) — the user-data endpoints are per-media-row (item must
+// exist → 404 otherwise), exactly like the series hero's own buttons. A
+// synthesised season bucket (no server row) gets no user-data actions, and no
+// container semantics are invented client-side.
+const seasonItemId = computed(() => season.value?.seasonItem?.id ?? null);
+const isFavorited = computed(() => (seasonItemId.value ? userItemData.isFavorite(seasonItemId.value) : false));
+const isWatched = computed(() => (seasonItemId.value ? userItemData.isWatched(seasonItemId.value) : false));
+const loveLevel = computed(() => (seasonItemId.value ? userItemData.likeLevel(seasonItemId.value) : 0));
+
+function onFavorite(): void {
+    if (seasonItemId.value) void userItemData.toggleFavorite(seasonItemId.value, apiBase.value);
+}
+function onWatched(): void {
+    if (seasonItemId.value) void userItemData.toggleWatched(seasonItemId.value, apiBase.value);
+}
+function onLove(next: number): void {
+    if (seasonItemId.value) void userItemData.setLike(seasonItemId.value, next, apiBase.value);
+}
 </script>
 
 <template>
@@ -169,6 +215,44 @@ const seasonOverview = computed(() => season.value?.seasonItem?.overview ?? null
                             {{ season.episodes.length }}
                             {{ season.episodes.length === 1 ? 'episode' : 'episodes' }}
                         </p>
+                        <!-- Top action row: prominent whole-season Play, plus the
+                             per-season-row user-data actions (favorite / watched /
+                             thumbs) when the server models this season as a real
+                             media row. Resume is intentionally absent — Play is
+                             already resume-aware, and a season container has no
+                             resume position of its own. -->
+                        <div class="season-page__actions">
+                            <Button variant="solid" left-icon="play" @click="onPlaySeason">
+                                {{ t('season.play') }}
+                            </Button>
+                            <template v-if="seasonItemId">
+                                <Button
+                                    variant="ghost"
+                                    class="season-page__favorite"
+                                    :class="{ 'is-active': isFavorited }"
+                                    :left-icon="isFavorited ? 'bookmark' : 'bookmark-plus'"
+                                    :aria-label="isFavorited ? t('season.removeFavorite') : t('season.addFavorite')"
+                                    :aria-pressed="isFavorited ? 'true' : 'false'"
+                                    @click="onFavorite"
+                                >
+                                    {{ isFavorited ? t('season.inFavorites') : t('season.watchlist') }}
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    class="season-page__watched"
+                                    :class="{ 'is-active': isWatched }"
+                                    :left-icon="isWatched ? 'eye' : 'eye-off'"
+                                    :aria-label="isWatched ? t('season.markUnwatchedAria') : t('season.markWatchedAria')"
+                                    :aria-pressed="isWatched ? 'true' : 'false'"
+                                    @click="onWatched"
+                                >
+                                    {{ isWatched ? t('season.watched') : t('season.markWatched') }}
+                                </Button>
+                                <!-- Only `@cycle` is bound (not `@update:level`) so one
+                                     thumb click = exactly one store write + one PUT. -->
+                                <ThumbRating :level="loveLevel" @cycle="onLove" />
+                            </template>
+                        </div>
                         <p v-if="seasonOverview" class="season-page__overview">{{ seasonOverview }}</p>
                     </div>
                 </div>
@@ -283,6 +367,23 @@ const seasonOverview = computed(() => season.value?.seasonItem?.overview ?? null
     font-size: var(--text-sm);
     margin-top: var(--space-1);
 }
+/* Top action row — mirrors the detail hero's action row (MediaDetail). */
+.season-page__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+/* Favorited/watched states read amber like the detail hero's buttons. */
+.season-page__favorite.is-active,
+.season-page__watched.is-active {
+    color: var(--accent);
+}
+.season-page__favorite.is-active :deep(svg) {
+    fill: currentColor;
+}
+
 .season-page__overview {
     max-width: 60ch;
     color: var(--text-muted);

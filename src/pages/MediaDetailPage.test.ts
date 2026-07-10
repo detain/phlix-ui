@@ -417,6 +417,49 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     expect(hrefs).toContain('/app/media/sh1/season/0'); // Specials → 0
   });
 
+  it('plays the whole season from a season card: first episode when nothing is in progress', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            episode({ id: 's1e1', season_number: 1, episode_number: 1 }),
+            episode({ id: 's1e2', season_number: 1, episode_number: 2 }),
+            episode({ id: 's2e1', season_number: 2, episode_number: 1 }),
+          ],
+          total: 3,
+        }),
+      );
+    const { w, router } = await mountAt('sh1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    // Season 2's card is the second Play button in the season grid.
+    await w.findAll('.media-card__iconbtn--play')[1].trigger('click');
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's2e1' } });
+  });
+
+  it('plays the whole season from a season card: prefers that season\'s resume-in-progress episode', async () => {
+    localStorage.setItem('phlix.resume', JSON.stringify({ s1e2: 240 }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', type: 'series' })))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            episode({ id: 's1e1', season_number: 1, episode_number: 1 }),
+            episode({ id: 's1e2', season_number: 1, episode_number: 2 }),
+          ],
+          total: 2,
+        }),
+      );
+    const { w, router } = await mountAt('sh1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    await w.find('.media-card__iconbtn--play').trigger('click');
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e2' } });
+  });
+
   it('starts the first episode when Play is pressed on the series hero (no resume entry)', async () => {
     const fetchMock = vi
       .fn()

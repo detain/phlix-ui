@@ -145,6 +145,26 @@ describe('SeriesDetail (U3)', () => {
     expect(w.text()).toContain('no seasons available');
   });
 
+  it('season cards render a play-only action row (Play, nothing else)', () => {
+    const w = mountIt();
+    // one Play per season card, and no other quick-actions on the cards
+    const plays = w.findAll('.media-card__iconbtn--play');
+    expect(plays).toHaveLength(3);
+    expect(w.find('.media-card__actions .thumb-rating').exists()).toBe(false);
+    expect(w.find('.media-card__actions [aria-label="Add to favorites"]').exists()).toBe(false);
+    expect(w.find('.media-card__actions [aria-label="More actions"]').exists()).toBe(false);
+  });
+
+  it('emits play-season with the season group when a season card Play is clicked', async () => {
+    const w = mountIt();
+    await w.findAll('.media-card__iconbtn--play')[1].trigger('click');
+    const emitted = w.emitted('play-season')!;
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0][0]).toMatchObject({ label: 'Season 2' });
+    // the poster link itself still targets the season page (navigation intact)
+    expect(w.findAll('.media-card__link')[1].attributes('href')).toBe('/app/media/sh1/season/2');
+  });
+
   it('re-emits the hero actions to the parent', () => {
     const w = mountIt();
     const detail = w.findComponent(MediaDetail);

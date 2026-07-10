@@ -360,6 +360,19 @@ export const DEFAULT_MESSAGES = {
   history: {
     title: 'Watch History',
   },
+  season: {
+    // Season page top actions (whole-season Play + per-season-row user data)
+    play: 'Play',
+    watchlist: 'Watchlist',
+    inFavorites: 'In favorites',
+    addFavorite: 'Add to favorites',
+    removeFavorite: 'Remove from favorites',
+    markWatched: 'Mark watched',
+    watched: 'Watched',
+    markWatchedAria: 'Mark as watched',
+    markUnwatchedAria: 'Mark as unwatched',
+    noEpisodes: 'No episodes to play yet',
+  },
   parental: {
     title: 'Parental Controls',
     schedules: 'Schedules',
