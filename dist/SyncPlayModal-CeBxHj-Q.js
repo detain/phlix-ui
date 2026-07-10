@@ -17,31 +17,30 @@ var O = class {
 		});
 	}
 	async createRoom(e) {
-		return (await this.client.post("/api/v1/syncplay/rooms", e)).room;
+		return (await this.client.post("/api/v1/syncplay/groups", e)).group;
 	}
 	async joinRoom(e) {
-		return (await this.client.post(`/api/v1/syncplay/rooms/${encodeURIComponent(e)}/join`)).session;
+		return (await this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/join`)).session;
 	}
 	async leaveRoom(e) {
-		await this.client.post(`/api/v1/syncplay/rooms/${encodeURIComponent(e)}/leave`);
-	}
-	async sendStateUpdate(e, t) {
-		await this.client.put(`/api/v1/syncplay/sessions/${encodeURIComponent(e)}/state`, t);
-	}
-	async sendCommand(e, t) {
-		await this.client.post(`/api/v1/syncplay/sessions/${encodeURIComponent(e)}/command`, t);
+		await this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/leave`);
 	}
 	async getState(e) {
-		return (await this.client.get(`/api/v1/syncplay/sessions/${encodeURIComponent(e)}`)).session;
+		return (await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).session;
 	}
 	async getMembers(e) {
-		let t = await this.client.get(`/api/v1/syncplay/rooms/${encodeURIComponent(e)}/members`);
+		let t = await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/members`);
 		return Array.isArray(t.members) ? t.members : [];
 	}
-	async listPublicRooms() {
-		let e = await this.client.get("/api/v1/syncplay/rooms/public");
-		return Array.isArray(e.rooms) ? e.rooms : [];
+	async listGroups() {
+		let e = await this.client.get("/api/v1/syncplay/groups");
+		return Array.isArray(e.groups) ? e.groups : [];
 	}
+	async listPublicRooms() {
+		return this.listGroups();
+	}
+	async sendStateUpdate(e, t) {}
+	async sendCommand(e, t) {}
 }, k = null;
 function A(e) {
 	return k ||= new O(e), k;
@@ -327,4 +326,4 @@ var j = D("phlix-syncplay", () => {
 //#endregion
 export { j as n, H as t };
 
-//# sourceMappingURL=SyncPlayModal-DBHGLQUP.js.map
+//# sourceMappingURL=SyncPlayModal-CeBxHj-Q.js.map
