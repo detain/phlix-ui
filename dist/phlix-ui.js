@@ -21,8 +21,8 @@ import { t as T } from "./Badge-Dq-pYhrz.js";
 import { t as Be } from "./Slider-B3epfxUp.js";
 import { t as Ve } from "./Switch-B9lejr6_.js";
 import { t as He } from "./Chip-CnJPGjy7.js";
-import { t as Ue } from "./Select-ByFRzjrJ.js";
-import { n as We, r as Ge, t as Ke } from "./FilterBar-HrVy-bjn.js";
+import { t as Ue } from "./Select-CcnHklAn.js";
+import { n as We, r as Ge, t as Ke } from "./FilterBar-oLFJzwkA.js";
 import { t as E } from "./Skeleton-CzU_l53W.js";
 import { t as D } from "./EmptyState-588Z_81C.js";
 import { t as qe } from "./PageHint-7Giwob0l.js";
@@ -34,7 +34,7 @@ import { n as et, t as tt } from "./media-query-DKjhlX8r.js";
 import { t as nt } from "./HomeRow-DNu0phGF.js";
 import { t as rt } from "./MediaDetail-DOZlLhBx.js";
 import { t as it } from "./MetadataMatchModal-I7G7fZxM.js";
-import { n as at, t as ot } from "./metadata-sources-BeOU8UtG.js";
+import { n as at, t as ot } from "./metadata-sources-Cup1M6PU.js";
 import { n as st, t as ct } from "./logs-DadTfaTq.js";
 import { t as lt } from "./dashboard-BTCOCTHQ.js";
 import { n as ut, r as dt, t as ft } from "./users-BJ1qtKiW.js";
@@ -53,7 +53,7 @@ import { n as Et, t as Dt } from "./libraries-CXAz_kXs.js";
 import { t as Ot } from "./settings-m4upFcmH.js";
 import { i as kt, n as At, r as jt, t as Mt } from "./plugins-BQfgYg2E.js";
 import { t as Nt } from "./hubDashboard-BhOaaDD-.js";
-import { A as Pt, B as Ft, C as It, D as Lt, E as Rt, F as zt, G as Bt, H as Vt, I as Ht, J as Ut, K as Wt, L as Gt, M as Kt, N as qt, O as Jt, P as Yt, R as Xt, S as Zt, T as Qt, U as $t, V as en, W as tn, X as nn, Y as rn, Z as an, _ as on, a as sn, b as cn, c as ln, d as un, f as dn, g as fn, h as pn, i as mn, j as hn, k as gn, l as _n, n as vn, o as yn, p as bn, q as xn, r as Sn, s as Cn, t as wn, u as Tn, v as En, w as Dn, x as On, y as kn, z as An } from "./Player-jLTvednj.js";
+import { A as Pt, B as Ft, C as It, D as Lt, E as Rt, F as zt, G as Bt, H as Vt, I as Ht, J as Ut, K as Wt, L as Gt, M as Kt, N as qt, O as Jt, P as Yt, R as Xt, S as Zt, T as Qt, U as $t, V as en, W as tn, X as nn, Y as rn, Z as an, _ as on, a as sn, b as cn, c as ln, d as un, f as dn, g as fn, h as pn, i as mn, j as hn, k as gn, l as _n, n as vn, o as yn, p as bn, q as xn, r as Sn, s as Cn, t as wn, u as Tn, v as En, w as Dn, x as On, y as kn, z as An } from "./Player-DrHp3Cbs.js";
 import { a as jn, c as Mn, d as Nn, f as Pn, g as Fn, h as In, i as Ln, l as Rn, m as zn, n as Bn, o as Vn, p as Hn, r as Un, s as Wn, t as Gn, u as Kn } from "./captions-COgPp5bH.js";
 import { t as qn } from "./LoginForm-DH6Y7ww8.js";
 import { t as Jn } from "./SignupForm-Ck1Muifb.js";
@@ -813,19 +813,19 @@ var zi = pr("server", () => {
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-BMkLc2s9.js")
+	component: () => import("./DashboardPage-DrSwLsUi.js")
 }, Vi = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-BQIeZmMy.js")
+	component: () => import("./UsersPage-C6FkgItT.js")
 }, Hi = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-lZg3zB1U.js")
+	component: () => import("./LogsPage-C_6YqUFM.js")
 }, Ui = {
 	name: "admin-webhooks",
 	path: "webhooks",
@@ -873,7 +873,7 @@ var zi = pr("server", () => {
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-BSZnzGXb.js")
+	component: () => import("./LiveTvPage-t5Zy39aC.js")
 }, Zi = {
 	name: "admin-collections",
 	path: "collections",
@@ -897,13 +897,13 @@ var zi = pr("server", () => {
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-beb0aOyo.js")
+	component: () => import("./LibrariesPage-D88Of5l1.js")
 }, ta = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-Bb1rM_Ot.js")
+	component: () => import("./DuplicatesPage-DNAKYtz5.js")
 }, na = {
 	name: "admin-plugins",
 	path: "plugins",
@@ -915,13 +915,13 @@ var zi = pr("server", () => {
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-Cq3khBYu.js")
+	component: () => import("./TranscodingSettingsPage-Bhe_CBi_.js")
 }, ia = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-DS6pPMfk.js")
+	component: () => import("./SettingsPage-KMgOGTAB.js")
 }, aa = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -933,7 +933,7 @@ var zi = pr("server", () => {
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-NPo6voPC.js")
+	component: () => import("./MetricsPage-BTq-3DL3.js")
 }, oa = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -1124,12 +1124,12 @@ function Ta(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-BnfMZrNk.js")
+			component: () => import("./LibraryPage-DzJiaQNz.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-aF60kXBL.js")
+			component: () => import("./PlayerPage-itDFgHvJ.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1153,7 +1153,7 @@ function Ta(e) {
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-DTA7i6lc.js")
+			component: () => import("./SettingsPage-DVaQX8xJ.js")
 		},
 		{
 			path: `${t}/explore`,
@@ -1189,7 +1189,7 @@ function Ta(e) {
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-Bb2cTZhb.js")
+			component: () => import("./ParentalControlsPage-1iK2_25H.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({
