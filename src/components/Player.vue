@@ -354,6 +354,7 @@ function evaluateForCurrentMedia(): void {
   pendingSeek = null;
   autoplayAttempted = false; // a fresh source may autoplay again (U2)
   serverDefaultApplied = false; // re-evaluate the server default for the new source (U4)
+  audioPrefAutoApplied = false; // re-evaluate the default audio lang for the new source (P3B-S2)
   qualitySeeded = false; // re-seed the default quality once the new ladder is known (R3.9)
   stopUpNextCountdown();
   upNextActive.value = false;
@@ -506,6 +507,11 @@ const serverSubtitleTracks = computed<SubtitleTrack[]>(() => tc.subtitleTracks.v
  *  (`prefs.subtitlePreferenceSet`) takes precedence over this: once the user has
  *  chosen a caption state we never auto-apply, on this source or any later poll. */
 let serverDefaultApplied = false;
+/** One-shot guard so the user's default audio language is applied at most once per
+ *  source (reset per source in `evaluateForCurrentMedia`). Only applies when the
+ *  user has a `prefs.defaultAudioLang` preference and no explicit audio track has
+ *  been selected yet. */
+let audioPrefAutoApplied = false;
 
 /** Apply the server's default subtitle track once the `<track>`s are enumerated,
  *  unless the user has already made an explicit caption choice. The precedence
@@ -536,6 +542,29 @@ function maybeApplyServerDefault(): void {
   }
 }
 
+/** Auto-select an audio track matching `prefs.defaultAudioLang` if the user has
+ *  a preference and no explicit audio track has been selected yet (P3B-S2).
+ *  Runs once per source after tracks are enumerated; a manual track selection
+ *  through `onSelectAudio` marks the flag complete via the watch on
+ *  `effectiveActiveAudio`. */
+function maybeApplyDefaultAudioLang(): void {
+  if (audioPrefAutoApplied) return;
+  const preferredLang = prefs.defaultAudioLang;
+  if (!preferredLang) return; // no preference set
+  // Find a track matching the preferred language (case-insensitive BCP-47 match).
+  const tracks = effectiveAudioTracks.value;
+  if (!tracks.length) return;
+  const matchIndex = tracks.findIndex((t) =>
+    t.language?.toLowerCase() === preferredLang.toLowerCase(),
+  );
+  if (matchIndex < 0) return;
+  // Only auto-apply if no explicit track has been selected yet.
+  const current = effectiveActiveAudio.value;
+  if (current >= 0 && current < tracks.length) return; // explicit selection already active
+  onSelectAudio(matchIndex);
+  audioPrefAutoApplied = true;
+}
+
 /** Captions are "on" only when the selected language resolves to a real track. */
 const captionsOn = computed(() => textTracks.value.some((t) => t.language === player.subtitleLang));
 
@@ -545,6 +574,7 @@ function refreshTracks(): void {
   audioTracks.value = listAudioTracks(v);
   activeAudio.value = activeAudioIndex(v);
   maybeApplyServerDefault();
+  maybeApplyDefaultAudioLang();
 }
 
 /** `c` shortcut — quick session toggle of captions on/off (the menu persists the
@@ -759,6 +789,40 @@ function skipOutro(): void {
 /** Toggle the sleep timer (cycles through options or cancels). */
 function sleepTimer(): void {
   sleepTimerRef.value?.toggleOpen();
+}
+
+/**
+ * Sleep timer expire handler — fade out volume over ~3 seconds, then pause.
+ * Replaces a hard pause for a gentler user experience.
+ */
+function fadeOutAndPause(): void {
+  const v = videoRef.value;
+  if (!v) {
+    videoRef?.pause();
+    player.pause();
+    return;
+  }
+  // If already muted or volume is near zero, pause immediately.
+  if (v.muted || v.volume < 0.05) {
+    v.pause();
+    player.pause();
+    return;
+  }
+  const startVolume = v.volume;
+  const fadeStep = 0.05;
+  const fadeInterval = 50; // ms
+  const stepDuration = (fadeInterval / 1000) * startVolume / fadeStep;
+  const fadeTimer = setInterval(() => {
+    if (v.volume > fadeStep) {
+      v.volume = Math.max(0, v.volume - fadeStep);
+    } else {
+      clearInterval(fadeTimer);
+      v.volume = 0;
+      v.pause();
+      player.pause();
+    }
+  }, fadeInterval);
+  void fadeTimer;
 }
 
 const shortcutActions: ShortcutActions = {
@@ -1173,7 +1237,7 @@ onBeforeUnmount(() => {
 
           <SleepTimer
             ref="sleepTimerRef"
-            :on-expire="() => { videoRef?.pause(); player.pause(); }"
+            :on-expire="fadeOutAndPause"
           />
 
           <button
