@@ -22,7 +22,6 @@
  */
 import { computed, ref, onMounted, inject } from 'vue';
 import Icon from './Icon.vue';
-import RatingBadge from './RatingBadge.vue';
 import ThumbRating from './ThumbRating.vue';
 import Menu from './ui/Menu.vue';
 import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
@@ -283,7 +282,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         <div class="media-card__meta">
           <span v-if="item.year" class="numeric">{{ item.year }}</span>
           <span v-if="item.year && (item.rating || item.runtime)" class="media-card__dot" />
-          <RatingBadge v-if="item.rating" :rating="item.rating" size="sm" />
+          <span v-if="item.rating" class="media-card__cert">{{ item.rating }}</span>
           <span v-if="item.rating && item.runtime" class="media-card__dot" />
           <span v-if="item.runtime" class="numeric">{{ item.runtime }}m</span>
         </div>

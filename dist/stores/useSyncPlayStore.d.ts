@@ -169,10 +169,10 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     joinRoom: (apiBase: string, roomId: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
     onRemoteStateUpdate: (command: SyncPlayPlaybackCommand) => void;
-    sendCommand: (apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
+    sendCommand: (_apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
         position?: number;
         rate?: number;
-    }) => Promise<void>;
+    }) => void;
     refreshState: (apiBase: string) => Promise<void>;
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
@@ -337,10 +337,10 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     joinRoom: (apiBase: string, roomId: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
     onRemoteStateUpdate: (command: SyncPlayPlaybackCommand) => void;
-    sendCommand: (apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
+    sendCommand: (_apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
         position?: number;
         rate?: number;
-    }) => Promise<void>;
+    }) => void;
     refreshState: (apiBase: string) => Promise<void>;
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
@@ -505,10 +505,10 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     joinRoom: (apiBase: string, roomId: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
     onRemoteStateUpdate: (command: SyncPlayPlaybackCommand) => void;
-    sendCommand: (apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
+    sendCommand: (_apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
         position?: number;
         rate?: number;
-    }) => Promise<void>;
+    }) => void;
     refreshState: (apiBase: string) => Promise<void>;
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
