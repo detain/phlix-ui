@@ -182,6 +182,7 @@ export const DEFAULT_MESSAGES = {
     quality: 'Quality',
     qualityAuto: 'Auto',
     qualityAutoActive: 'Auto ({label})',
+    qualityOriginal: 'Original ({height}p)',
     // Captions menu
     captionsOn: 'Captions (on)',
     captionsOff: 'Captions (off)',

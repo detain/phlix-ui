@@ -20,6 +20,12 @@ import type { SelectOption } from '../ui/listbox';
 /** "Let ABR decide" sentinel — mirrors `@phlix/contracts`' `AUTO_QUALITY`. */
 export const AUTO_QUALITY = 'auto';
 
+/** The "play the untouched source rendition" rung id. The server's variants list
+ *  carries a real playable variant with `id: 'original'` (the source's own
+ *  height/bitrate); this sentinel is what the menu persists to
+ *  `prefs.defaultQuality` when the user picks it. */
+export const ORIGINAL_QUALITY = 'original';
+
 /**
  * Map an encoded height (px) to a stable rung id, aligned with the fixed
  * `RenditionId` rungs. Uses inclusive lower bounds, so a height is FLOORED to
@@ -80,6 +86,36 @@ export function levelIndexForQuality(levels: readonly HlsLevel[], id: string): n
     }
   }
   return best;
+}
+
+/**
+ * The hls.js level index that carries a given server variant (e.g. the
+ * `id: 'original'` rendition) — matched by EXACT height first, tie-broken by the
+ * bitrate closest to the variant's advertised one (the master playlist re-states
+ * the source's own height/bitrate for the original rendition, so an exact-height
+ * match normally exists). When no level has that exact height, falls back to the
+ * best level of the same RUNG (via {@link levelIndexForQuality}) so an
+ * off-by-rounding encode height still resolves. Returns `-1` when the variant is
+ * absent/junk or no level matches — callers must treat that as "not applicable"
+ * (hide the option), NEVER as a silent 'auto'.
+ */
+export function levelIndexForVariant(
+  levels: readonly HlsLevel[],
+  variant: { height: number; bitrate: number } | null | undefined,
+): number {
+  if (!variant || !(variant.height > 0)) return -1;
+  let best = -1;
+  let bestDelta = Number.POSITIVE_INFINITY;
+  for (const lvl of levels) {
+    if (lvl.height !== variant.height) continue;
+    const delta = Math.abs(lvl.bitrate - variant.bitrate);
+    if (delta < bestDelta) {
+      best = lvl.index;
+      bestDelta = delta;
+    }
+  }
+  if (best >= 0) return best;
+  return levelIndexForQuality(levels, qualityId(variant.height));
 }
 
 /**

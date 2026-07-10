@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
   extensionOf,
   needsTranscode,
+  parsePlaybackAudioTracks,
   isFatalMediaError,
   isNetworkMediaError,
   ringDashoffset,
@@ -119,5 +120,40 @@ describe('playback — ringDashoffset + constants', () => {
   });
   it('defaults the circumference to the ring constant', () => {
     expect(ringDashoffset(0, 8)).toBeCloseTo(UPNEXT_RING_CIRCUMFERENCE, 5);
+  });
+});
+
+describe('playback — parsePlaybackAudioTracks (playback-info audio_tracks)', () => {
+  it('parses the server wire shape (snake_case stream_index, title → label)', () => {
+    const out = parsePlaybackAudioTracks([
+      { id: 'a0', codec: 'aac', language: 'eng', channels: 6, bitrate: 384000, title: 'English 5.1', index: 0, stream_index: 1, default: true },
+      { id: 'a1', codec: 'ac3', language: 'jpn', channels: 2, bitrate: 192000, title: '', index: 1, stream_index: 2, default: false },
+    ]);
+    expect(out).toEqual([
+      { index: 0, streamIndex: 1, language: 'eng', label: 'English 5.1', default: true },
+      { index: 1, streamIndex: 2, language: 'jpn', label: 'jpn', default: false },
+    ]);
+  });
+
+  it('falls back to "Audio N" when a track has neither title nor language', () => {
+    const out = parsePlaybackAudioTracks([{ index: 0, stream_index: 1 }, { index: 1, stream_index: 2 }]);
+    expect(out[0].label).toBe('Audio 1');
+    expect(out[1].label).toBe('Audio 2');
+    expect(out[0].default).toBe(false);
+  });
+
+  it('returns [] for a missing / non-array value and skips junk entries', () => {
+    expect(parsePlaybackAudioTracks(undefined)).toEqual([]);
+    expect(parsePlaybackAudioTracks(null)).toEqual([]);
+    expect(parsePlaybackAudioTracks('nope')).toEqual([]);
+    const out = parsePlaybackAudioTracks([null, 'junk', { index: 0, language: 'eng' }]);
+    expect(out).toHaveLength(1);
+    expect(out[0].language).toBe('eng');
+  });
+
+  it('synthesises a sane index/streamIndex when the entry omits them', () => {
+    const out = parsePlaybackAudioTracks([{ language: 'eng' }, { language: 'jpn' }]);
+    expect(out[0]).toMatchObject({ index: 0, streamIndex: 0 });
+    expect(out[1]).toMatchObject({ index: 1, streamIndex: 1 });
   });
 });
