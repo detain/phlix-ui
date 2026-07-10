@@ -21,4 +21,4 @@ playwright/.cache/
 .opencode/memory/
 .opencode/.env
 .caliber
-dist/
+# dist/
