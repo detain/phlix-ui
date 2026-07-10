@@ -29,7 +29,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
-import { ApiClient } from '../api/client';
+import { ApiClient, ApiError } from '../api/client';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -42,6 +42,7 @@ import { orderEpisodesForPlayback, previousEpisode, nextEpisode } from '../compo
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
+import Modal from '../components/ui/Modal.vue';
 import { usePageTitle } from '../composables/usePageTitle';
 
 interface MediaListResponse {
@@ -104,6 +105,9 @@ const outroMarker = ref<TimeMarker | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const theater = ref(false);
+/** P5-S5: AccessSchedule (403) or StreamLimitExceeded (429) — shown in a modal, not the error state. */
+const blockingError = ref<string | null>(null);
+const blockingErrorVisible = ref(false);
 /** Prev/Next episode in the whole-series order (U2) — null for movies or at the
  *  ends of the series. Drives the Player's prev/next-episode buttons. */
 const prevEp = ref<MediaItem | null>(null);
@@ -331,6 +335,20 @@ async function load(): Promise<void> {
     void loadEpisodeNeighbours(client, mediaItem);
   } catch (e) {
     if (disposed || isAbort(e)) return;
+    // P5-S5: detect AccessSchedule (403) and StreamLimitExceeded (429)
+    if (e instanceof ApiError && (e.status === 403 || e.status === 429)) {
+      const body = e.body as { error?: string } | null;
+      const errorCode = body?.error;
+      if (errorCode === 'AccessSchedule' || errorCode === 'StreamLimitExceeded') {
+        blockingError.value =
+          errorCode === 'AccessSchedule'
+            ? 'Playback blocked by access schedule. Try again during allowed hours.'
+            : 'Stream limit reached. Stop another stream to continue watching.';
+        blockingErrorVisible.value = true;
+        loading.value = false;
+        return;
+      }
+    }
     error.value = e instanceof Error ? e.message : 'Failed to load media';
     loading.value = false;
   }
@@ -367,6 +385,11 @@ function onPlayEpisode(ep: MediaItem): void {
 }
 function onTheater(active: boolean): void {
   theater.value = active;
+}
+/** P5-S5: dismiss the blocking-error modal and return to browse. */
+function onBlockingErrorOk(): void {
+  blockingErrorVisible.value = false;
+  onBack();
 }
 </script>
 
@@ -421,6 +444,14 @@ function onTheater(active: boolean): void {
         @theater="onTheater"
       />
     </div>
+
+    <!-- P5-S5: AccessSchedule / StreamLimitExceeded blocking-error modal -->
+    <Modal v-model="blockingErrorVisible" title="Cannot Play" size="sm" :dismissible="false" hide-close>
+      <p class="player-page__blocking-error">{{ blockingError }}</p>
+      <template #footer>
+        <Button variant="solid" @click="onBlockingErrorOk">OK</Button>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -467,6 +498,14 @@ function onTheater(active: boolean): void {
 
 .player-page__error {
   min-height: 50vh;
+}
+
+/* P5-S5: blocking-error modal message */
+.player-page__blocking-error {
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
 }
 
 /* theater mode (driven by <Player>'s @theater) — go full-bleed + dim the surround */
