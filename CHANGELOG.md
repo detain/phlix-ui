@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.76.3] - 2026-07-10
+
+Release: phlix-ui v0.76.3
+
 ## [0.74.0] - 2026-07-07
 
 Headline: **manual stream-quality selection in the player.** This release lands the
