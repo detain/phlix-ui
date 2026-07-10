@@ -69,12 +69,20 @@ const props = withDefaults(
      */
     hideActions?: boolean;
     /**
+     * Render ONLY the Play quick-action in the hover row (no rating/favorite/
+     * watched/info/menu). Used by the season grid on the series page: the card
+     * stays purely navigational (poster → season page) but gains a Play button
+     * that starts whole-season playback via the `play` emit. Ignored when
+     * `hideActions` is set (that suppresses the row entirely).
+     */
+    playOnly?: boolean;
+    /**
      * Override the caption sub-line (defaults to year · runtime). Used by the
      * season grid to show "N episodes" while reusing this exact card design.
      */
     subtitle?: string | null;
   }>(),
-  { newWithinDays: 30, canMatch: false, hideActions: false, subtitle: null },
+  { newWithinDays: 30, canMatch: false, hideActions: false, playOnly: false, subtitle: null },
 );
 
 const emit = defineEmits<{
@@ -310,6 +318,9 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             <Icon name="play" />
           </button>
 
+          <!-- Everything past Play is suppressed in `playOnly` mode (season
+               cards: navigational + whole-season Play, nothing else). -->
+          <template v-if="!playOnly">
           <!-- [ Rating ] — thumbs up/down (−2..2 like_level). Only `@cycle` is
                bound (NOT `@update:level`) so each thumb click triggers exactly ONE
                store write + ONE PUT. `.stop.prevent` keeps the click off the
@@ -387,6 +398,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
             <Icon name="search" />
           </button>
           <slot name="actions" :item="item" />
+          </template>
         </div>
       </div>
     </div>
@@ -641,6 +653,17 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
      them past the poster's right edge. */
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-1);
+  /* Reclaim part of the overlay's --space-4 side padding for the action row only
+     (title/meta keep the full inset) so all 8 quick-actions fit 2 rows of 4 even
+     on the narrower Browse-rail cards (160–180px vs the ≥200px library grid).
+     8px still separates the outermost buttons from the poster edge. */
+  margin-inline: calc(-1 * var(--space-2));
+  /* Cap each row at four 32px buttons (the thumbs widget is one flex item holding
+     two of them: 32+4+32=68 ⇒ both row compositions come to 140px), so the full
+     8-button set lays out as 2 rows of 4 on EVERY card width — the rail cards
+     stop wrapping into 3 ragged rows and the wider library cards can't stretch
+     to 5-per-row either. */
+  max-width: calc(4 * 32px + 3 * var(--space-1));
   /* Off by default so an idle (opacity:0) overlay never swallows clicks meant
      for the stretched link; enabled once the overlay is actually shown. */
   pointer-events: none;
@@ -658,8 +681,9 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   gap: var(--space-1);
 }
 .media-card__actions :deep(.thumb-rating__btn) {
-  width: 34px;
-  height: 34px;
+  /* 2rem — matches .media-card__iconbtn so a row of four fits the rail cards. */
+  width: 32px;
+  height: 32px;
   font-size: 1.2rem;
   color: #fff;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
@@ -685,8 +709,10 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 }
 .media-card__iconbtn {
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
+  /* 2rem touch target — small enough that four buttons + gaps fit the 160–180px
+     rail cards (2 rows of 4), no smaller. */
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-full);
@@ -720,16 +746,10 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 .media-card__iconbtn.is-active:not(.media-card__iconbtn--watched) :deep(svg) {
   fill: currentColor;
 }
-.media-card__iconbtn--play {
-  width: 40px;
-  height: 40px;
-  /* No background chrome either — the play glyph itself carries the amber accent. */
-  background: transparent;
-  color: var(--accent);
-  border: none;
-  box-shadow: none;
-  font-size: 1.2rem;
-}
+/* The Play button is styled EXACTLY like its siblings — white idle glyph, amber
+   only on hover/focus/active (the old permanently-amber 40px special case made it
+   the odd one out and overflowed the rail cards' 2×4 action layout). The modifier
+   class is kept as a stable hook for tests/hosts. */
 
 .media-card__caption {
   padding: var(--space-3) var(--space-1) 0;

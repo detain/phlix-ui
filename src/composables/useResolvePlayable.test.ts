@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { MediaItem } from '../types/media-item';
 import type { SeasonGroup } from '../components/series-grouping';
-import { resolvePlayable, pickPlayableEpisode, type ResumeMap } from './useResolvePlayable';
+import { resolvePlayable, pickPlayableEpisode, pickSeasonPlayable, type ResumeMap } from './useResolvePlayable';
 
 function item(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -107,6 +107,52 @@ describe('pickPlayableEpisode (pure)', () => {
     ];
     // Even with a resume on the special, only numbered seasons are playable order.
     expect(pickPlayableEpisode(groups, { sp1: 500 })?.id).toBe('s1e1');
+  });
+});
+
+describe('pickSeasonPlayable (pure — whole-season Play)', () => {
+  function group(seasonNumber: number, episodes: MediaItem[]): SeasonGroup {
+    return {
+      key: `season-${seasonNumber}`,
+      seasonNumber,
+      label: `Season ${seasonNumber}`,
+      isSpecials: false,
+      episodes,
+    };
+  }
+
+  it('returns the season\'s first episode when nothing is in progress', () => {
+    const g = group(1, [
+      ep({ id: 's1e2', season_number: 1, episode_number: 2 }),
+      ep({ id: 's1e1', season_number: 1, episode_number: 1 }),
+    ]);
+    expect(pickSeasonPlayable(g, {})?.id).toBe('s1e1');
+  });
+
+  it('prefers the season\'s resume-in-progress episode', () => {
+    const g = group(1, [
+      ep({ id: 's1e1', season_number: 1, episode_number: 1 }),
+      ep({ id: 's1e2', season_number: 1, episode_number: 2 }),
+    ]);
+    expect(pickSeasonPlayable(g, { s1e2: 300 })?.id).toBe('s1e2');
+  });
+
+  it('plays the first special for a SPECIALS season (unlike the series-wide picker)', () => {
+    const specials: SeasonGroup = {
+      key: 'specials',
+      seasonNumber: null,
+      label: 'Specials',
+      isSpecials: true,
+      episodes: [
+        ep({ id: 'sp1', season_number: 0, episode_number: 1 }),
+        ep({ id: 'sp2', season_number: 0, episode_number: 2 }),
+      ],
+    };
+    expect(pickSeasonPlayable(specials, {})?.id).toBe('sp1');
+  });
+
+  it('returns null for an empty season', () => {
+    expect(pickSeasonPlayable(group(1, []), {})).toBeNull();
   });
 });
 

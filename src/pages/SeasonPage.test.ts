@@ -11,6 +11,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import SeasonPage from './SeasonPage.vue';
 import SeriesSeasons from '../components/SeriesSeasons.vue';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -185,6 +186,121 @@ describe('SeasonPage (U3)', () => {
     await mountAt('sh1', '1', fetchMock);
     await flushPromises();
     expect(document.title).toContain('Breaking Bad · Season 1');
+  });
+
+  it('renders a top Play button that starts the season\'s first episode', async () => {
+    const fetchMock = seriesFetch();
+    const { w, router } = await mountAt('sh1', '1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    const play = w.find('.season-page__actions button');
+    expect(play.exists()).toBe(true);
+    expect(play.text()).toContain('Play');
+    await play.trigger('click');
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e1' } });
+  });
+
+  it('top Play prefers the season\'s resume-in-progress episode', async () => {
+    // usePlayerStore seeds resumeMap from localStorage('phlix.resume').
+    localStorage.setItem('phlix.resume', JSON.stringify({ s1e2: 240 }));
+    const fetchMock = seriesFetch();
+    const { w, router } = await mountAt('sh1', '1', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    await w.find('.season-page__actions button').trigger('click');
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e2' } });
+  });
+
+  it('top Play on the Specials bucket plays the first special', async () => {
+    const fetchMock = seriesFetch();
+    const { w, router } = await mountAt('sh1', '0', fetchMock);
+    await flushPromises();
+    const push = vi.spyOn(router, 'push');
+    await w.find('.season-page__actions button').trigger('click');
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'sp1' } });
+  });
+
+  it('omits favorite/watched/thumbs when the season has no server row (synthetic bucket)', async () => {
+    const fetchMock = seriesFetch(); // children are plain episodes — no type:'season' rows
+    const { w } = await mountAt('sh1', '1', fetchMock);
+    await flushPromises();
+    expect(w.find('.season-page__actions').exists()).toBe(true); // Play is still there
+    expect(w.find('.season-page__favorite').exists()).toBe(false);
+    expect(w.find('.season-page__watched').exists()).toBe(false);
+    expect(w.find('.season-page__actions .thumb-rating').exists()).toBe(false);
+  });
+
+  /** Series whose children include a REAL season container row (se1) with episodes. */
+  function seasonRowFetch(): ReturnType<typeof vi.fn> {
+    return vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', name: 'Breaking Bad', type: 'series' })))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [media({ id: 'se1', type: 'season', season_number: 1, name: 'Season 1' })],
+          total: 1,
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            episode({ id: 's1e1', season_number: 1, episode_number: 1 }),
+            episode({ id: 's1e2', season_number: 1, episode_number: 2 }),
+          ],
+          total: 2,
+        }),
+      );
+  }
+
+  it('wires favorite/watched/thumbs to the REAL season row via the user-data store', async () => {
+    const fetchMock = seasonRowFetch();
+    const { w } = await mountAt('sh1', '1', fetchMock);
+    await flushPromises();
+    const store = useUserItemDataStore();
+    const fav = vi.spyOn(store, 'toggleFavorite').mockResolvedValue(undefined);
+    const watched = vi.spyOn(store, 'toggleWatched').mockResolvedValue(undefined);
+    const like = vi.spyOn(store, 'setLike').mockResolvedValue(undefined);
+
+    await w.find('.season-page__favorite').trigger('click');
+    expect(fav).toHaveBeenCalledWith('se1', '');
+
+    await w.find('.season-page__watched').trigger('click');
+    expect(watched).toHaveBeenCalledWith('se1', '');
+
+    await w.find('.season-page__actions .thumb-rating__btn--up').trigger('click');
+    expect(like).toHaveBeenCalledWith('se1', 1, '');
+  });
+
+  it('reflects the persisted season-row user_data (hydrate) in the top actions', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', name: 'Breaking Bad', type: 'series' })))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            media({
+              id: 'se1',
+              type: 'season',
+              season_number: 1,
+              name: 'Season 1',
+              user_data: { favorite: true, rating: null, like_level: 0, watched: true },
+            }),
+          ],
+          total: 1,
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [episode({ id: 's1e1', season_number: 1, episode_number: 1 })],
+          total: 1,
+        }),
+      );
+    const { w } = await mountAt('sh1', '1', fetchMock);
+    await flushPromises();
+    expect(w.find('.season-page__favorite').attributes('aria-pressed')).toBe('true');
+    expect(w.find('.season-page__favorite').text()).toContain('In favorites');
+    expect(w.find('.season-page__watched').attributes('aria-pressed')).toBe('true');
+    expect(w.find('.season-page__watched').text()).toContain('Watched');
   });
 
   it('re-fetches when the season param changes', async () => {

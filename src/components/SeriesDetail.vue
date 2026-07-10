@@ -50,6 +50,10 @@ const emit = defineEmits<{
     (e: 'info', item: MediaItem): void;
     (e: 'match', item: MediaItem): void;
     (e: 'back'): void;
+    /** The Play quick-action on a SEASON card — start whole-season playback.
+     *  Emits the season GROUP (not a MediaItem) so the host can pick the
+     *  resume/next-up episode from its already-loaded episode list. */
+    (e: 'play-season', group: SeasonGroup): void;
     (e: 'mark-watched', item: MediaItem): void;
     (e: 'refresh', item: MediaItem): void;
     (e: 'choose-poster', item: MediaItem): void;
@@ -76,8 +80,8 @@ function episodeCountLabel(group: SeasonGroup): string {
  * `MediaCard` design as the library listings (U-cards). When the server modelled
  * the season as its own `type: 'season'` row we reuse it (real id → its poster
  * falls back to the series poster); otherwise we synthesise a minimal season item
- * (the card is navigational — `hide-actions` — so there's no per-item store write
- * keyed on the synthetic id).
+ * (the card is `play-only` — poster navigates, Play emits `play-season` — so
+ * there's still no per-item store write keyed on the synthetic id).
  */
 function seasonAsItem(group: SeasonGroup): MediaItem {
     if (group.seasonItem) {
@@ -151,11 +155,15 @@ const cardSize = computed(() => prefs.cardSize ?? 200);
                 :style="{ gridTemplateColumns: `repeat(auto-fill, minmax(${cardSize}px, 1fr))` }"
             >
                 <li v-for="season in seasons" :key="season.key" class="series-detail__cell">
+                    <!-- `play-only`: the card keeps navigating to the season page
+                         (poster = stretched link) but gains ONLY the Play hover
+                         button, which starts whole-season playback via the host. -->
                     <MediaCard
                         :item="seasonAsItem(season)"
                         :to="seasonTo(season)"
                         :subtitle="episodeCountLabel(season)"
-                        hide-actions
+                        play-only
+                        @play="emit('play-season', season)"
                     />
                 </li>
             </ul>

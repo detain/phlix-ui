@@ -70,6 +70,23 @@ export function pickPlayableEpisode(
 }
 
 /**
+ * PURE single-season picker: the episode to play when Play is pressed on ONE
+ * season (a season card on the series page, or the season page's top Play).
+ * Prefers the season's first resume-in-progress episode in playback order, else
+ * its first episode. Unlike {@link pickPlayableEpisode}, a SPECIALS season falls
+ * back to its first special (orderEpisodesForPlayback excludes season 0, but an
+ * explicit Play on the Specials bucket must still play a special); `null` only
+ * when the season has no episodes at all. Auto-advance from the picked episode
+ * is the player's existing whole-series chain.
+ */
+export function pickSeasonPlayable(
+    group: SeasonGroup,
+    resumeMap: ResumeMap,
+): MediaItem | null {
+    return pickPlayableEpisode([group], resumeMap) ?? group.episodes[0] ?? null;
+}
+
+/**
  * Resolve the playable item for a Play action. Returns the item whose `.id` the
  * player route should use, or `null` when nothing is playable.
  *
