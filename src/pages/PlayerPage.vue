@@ -36,7 +36,8 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import Player from '../components/Player.vue';
 import type { Chapter } from '../components/player/Scrubber.vue';
-import type { TimeMarker } from '../components/player/playback';
+import { parsePlaybackAudioTracks, type PlaybackAudioTrack, type TimeMarker } from '../components/player/playback';
+import { parseSubtitleTracks, type SubtitleTrack } from '../components/player/transcode';
 import { hasSeasonRows } from '../components/series-grouping';
 import { orderEpisodesForPlayback, previousEpisode, nextEpisode } from '../components/player/episode-order';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -72,6 +73,12 @@ interface PlaybackInfo {
   intro_marker: ServerMarker | null;
   outro_marker: ServerMarker | null;
   chapters: { start_seconds: number; end_seconds?: number; title?: string | null }[];
+  /** The source's audio streams — drives the direct-play audio menu (parsed
+   *  leniently via parsePlaybackAudioTracks; absent on older servers). */
+  audio_tracks?: unknown;
+  /** Embedded text subtitles with SIGNED WebVTT urls usable directly in a
+   *  `<track>` — drives direct-play captions (absent on older servers). */
+  subtitle_tracks?: unknown;
 }
 
 // On the hub this is the relay-proxy base for the selected server, so the
@@ -102,6 +109,10 @@ const streamUrl = ref('');
 const chapters = ref<Chapter[]>([]);
 const introMarker = ref<TimeMarker | null>(null);
 const outroMarker = ref<TimeMarker | null>(null);
+/** Playback-info audio_tracks / subtitle_tracks — the Player's direct-play audio
+ *  menu + captions sources (empty when the server doesn't send them). */
+const playbackAudioTracks = ref<PlaybackAudioTrack[]>([]);
+const playbackSubtitleTracks = ref<SubtitleTrack[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const theater = ref(false);
@@ -293,6 +304,8 @@ async function load(): Promise<void> {
   chapters.value = [];
   introMarker.value = null;
   outroMarker.value = null;
+  playbackAudioTracks.value = [];
+  playbackSubtitleTracks.value = [];
   prevEp.value = null;
   nextEp.value = null;
   player.hideMiniPlayer(); // the full player owns playback while we're on this route
@@ -330,6 +343,8 @@ async function load(): Promise<void> {
     chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, end: c.end_seconds, title: c.title ?? undefined }));
     introMarker.value = toMarker(info?.intro_marker);
     outroMarker.value = toMarker(info?.outro_marker);
+    playbackAudioTracks.value = parsePlaybackAudioTracks(info?.audio_tracks);
+    playbackSubtitleTracks.value = parseSubtitleTracks(info?.subtitle_tracks);
     loading.value = false;
     void loadQueue(client, mediaItem);
     void loadEpisodeNeighbours(client, mediaItem);
@@ -435,6 +450,8 @@ function onBlockingErrorOk(): void {
         :chapters="chapters"
         :intro-marker="introMarker"
         :outro-marker="outroMarker"
+        :playback-audio-tracks="playbackAudioTracks"
+        :playback-subtitle-tracks="playbackSubtitleTracks"
         :prev-episode="prevEp"
         :next-episode="nextEp"
         :autoplay="true"

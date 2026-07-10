@@ -101,6 +101,75 @@ describe('QualityMenu', () => {
   });
 });
 
+describe('QualityMenu — Original rendition + no silent auto', () => {
+  function variant(id: string, height: number, bitrate: number) {
+    return { id, label: id === 'original' ? 'Original' : `${height}p`, height, width: Math.round((height * 16) / 9), bitrate };
+  }
+
+  it('renders an "Original (<height>p)" option right after Auto when the original variant maps to a level', () => {
+    const w = mount(QualityMenu, {
+      props: { levels: ladder, variants: [variant('original', 1080, 5_000_000), variant('720p', 720, 2_800_000)] },
+    });
+    const opts = w.findComponent(Select).props('options') as ReadonlyArray<{ value: string; label: string }>;
+    expect(opts.map((o) => o.value)).toEqual(['auto', 'original', '1080p', '720p', '480p']);
+    expect(opts[1].label).toBe('Original (1080p)');
+  });
+
+  it('applies Original: emits its matched hls.js level index and persists "original" to prefs', () => {
+    const w = mount(QualityMenu, {
+      props: { levels: ladder, variants: [variant('original', 1080, 5_000_000)] },
+    });
+    const player = usePlayerStore();
+    const prefs = usePreferencesStore();
+    w.findComponent(Select).vm.$emit('update:modelValue', 'original');
+    expect(w.emitted('select')?.[0]).toEqual([0]); // ladder's 1080p@5M level
+    expect(player.quality).toBe('original');
+    expect(prefs.defaultQuality).toBe('original'); // survives reload like other rungs
+  });
+
+  it('hides the Original option when no hls.js level matches the original variant', () => {
+    const w = mount(QualityMenu, {
+      props: { levels: ladder, variants: [variant('original', 2160, 20_000_000)] },
+    });
+    const opts = w.findComponent(Select).props('options') as ReadonlyArray<{ value: string }>;
+    expect(opts.map((o) => o.value)).toEqual(['auto', '1080p', '720p', '480p']);
+  });
+
+  it('reflects Original as the selection when its level is pinned and the stored choice is original', () => {
+    usePreferencesStore().defaultQuality = 'original';
+    const w = mount(QualityMenu, {
+      props: {
+        levels: ladder,
+        variants: [variant('original', 1080, 5_000_000)],
+        autoEnabled: false,
+        currentLevel: 0,
+      },
+    });
+    expect(w.findComponent(Select).props('modelValue')).toBe('original');
+  });
+
+  it('NEVER emits a silent "auto" for a rung with no matching hls.js level (pick is ignored)', () => {
+    const w = mount(QualityMenu, { props: { levels: ladder } });
+    const prefs = usePreferencesStore();
+    w.findComponent(Select).vm.$emit('update:modelValue', '1440p'); // stale/unmatchable rung
+    expect(w.emitted('select')).toBeFalsy(); // no silent downgrade to auto
+    expect(prefs.defaultQuality).toBe('auto'); // and the stale pick is not persisted
+  });
+
+  it('hides variant-fallback rungs that cannot be applied (menu shows only real choices)', () => {
+    // hls.js only loaded one 480p level but the server advertises a 3-rung ladder:
+    // the unmatchable 1080p/720p variants are hidden, leaving <2 rungs → no menu
+    // (previously they rendered as dead options whose pick fell back to 'auto').
+    const w = mount(QualityMenu, {
+      props: {
+        levels: [level(0, 480, 854, 1_400_000)],
+        variants: [variant('1080p', 1080, 5_000_000), variant('720p', 720, 2_800_000), variant('480p', 480, 1_400_000)],
+      },
+    });
+    expect(w.findComponent(Select).exists()).toBe(false);
+  });
+});
+
 /**
  * E4 — accessibility coverage. The QualityMenu delegates its ARIA/keyboard
  * semantics to the `Select` primitive, so these assertions mount the REAL Select

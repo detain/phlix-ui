@@ -163,6 +163,7 @@ export declare const DEFAULT_MESSAGES: {
         quality: string;
         qualityAuto: string;
         qualityAutoActive: string;
+        qualityOriginal: string;
         captionsOn: string;
         captionsOff: string;
         captionsAndSubtitles: string;

@@ -1,7 +1,8 @@
 import type { MediaItem } from '../types/media-item';
 import { type Chapter } from './player/Scrubber.vue';
 import { type SkipMarker } from './player/SkipControls.vue';
-import { type TimeMarker } from './player/playback';
+import { type TimeMarker, type PlaybackAudioTrack } from './player/playback';
+import type { SubtitleTrack } from './player/transcode';
 type __VLS_Props = {
     media: MediaItem;
     streamUrl: string;
@@ -32,6 +33,15 @@ type __VLS_Props = {
     /** Next episode in the series order (U2) — drives the Next button. null/absent
      *  hides the button (movies, or the very last episode). */
     nextEpisode?: MediaItem | null;
+    /** Server playback-info `audio_tracks[]` (parsed). On DIRECT play (non-Safari,
+     *  where `video.audioTracks` is unavailable) a >1 list surfaces the audio menu;
+     *  picking a non-default track falls the session over to the HLS transcode and
+     *  selects the matching hls.js audio track by its audio-relative `index`. */
+    playbackAudioTracks?: PlaybackAudioTrack[] | null;
+    /** Server playback-info `subtitle_tracks[]` (parsed). Each `url` is a SIGNED
+     *  WebVTT sidecar usable directly in a `<track>` (no Bearer header needed), so
+     *  DIRECT play gets the same captions pipeline as the transcode path. */
+    playbackSubtitleTracks?: SubtitleTrack[] | null;
     /** Start playback automatically once the source is ready (U2). The host page
      *  enables this since the player is reached via a Play click (a user gesture),
      *  so unmuted autoplay usually works; a rejected play() falls back to a muted

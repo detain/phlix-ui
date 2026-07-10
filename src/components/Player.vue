@@ -58,6 +58,7 @@ import {
   isNetworkMediaError,
   UPNEXT_COUNTDOWN_SECONDS,
   type TimeMarker,
+  type PlaybackAudioTrack,
 } from './player/playback';
 import type { SubtitleTrack } from './player/transcode';
 import {
@@ -68,7 +69,7 @@ import {
   type TextTrackInfo,
 } from './player/captions';
 import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
-import { levelIndexForQuality, AUTO_QUALITY } from './player/quality';
+import { levelIndexForQuality, levelIndexForVariant, AUTO_QUALITY, ORIGINAL_QUALITY } from './player/quality';
 import { useSyncPlayStore } from '../stores/useSyncPlayStore';
 import SyncPlayOverlay from './syncplay/SyncPlayOverlay.vue';
 import SyncPlayModal from './syncplay/SyncPlayModal.vue';
@@ -104,6 +105,15 @@ const props = defineProps<{
   /** Next episode in the series order (U2) — drives the Next button. null/absent
    *  hides the button (movies, or the very last episode). */
   nextEpisode?: MediaItem | null;
+  /** Server playback-info `audio_tracks[]` (parsed). On DIRECT play (non-Safari,
+   *  where `video.audioTracks` is unavailable) a >1 list surfaces the audio menu;
+   *  picking a non-default track falls the session over to the HLS transcode and
+   *  selects the matching hls.js audio track by its audio-relative `index`. */
+  playbackAudioTracks?: PlaybackAudioTrack[] | null;
+  /** Server playback-info `subtitle_tracks[]` (parsed). Each `url` is a SIGNED
+   *  WebVTT sidecar usable directly in a `<track>` (no Bearer header needed), so
+   *  DIRECT play gets the same captions pipeline as the transcode path. */
+  playbackSubtitleTracks?: SubtitleTrack[] | null;
   /** Start playback automatically once the source is ready (U2). The host page
    *  enables this since the player is reached via a Play click (a user gesture),
    *  so unmuted autoplay usually works; a rejected play() falls back to a muted
@@ -276,7 +286,12 @@ watch(
     qualitySeeded = true;
     const pref = prefs.defaultQuality;
     if (!pref || pref === AUTO_QUALITY) return;
-    const index = levelIndexForQuality(levels, pref);
+    // 'original' pins the server's untouched-source rendition (matched by the
+    // 'original' variant's height/bitrate); resolution rungs pin as before.
+    const index =
+      pref === ORIGINAL_QUALITY
+        ? levelIndexForVariant(levels, tc.variants.value?.find((v) => v.id === ORIGINAL_QUALITY) ?? null)
+        : levelIndexForQuality(levels, pref);
     if (index >= 0) tc.setLevel(index);
   },
 );
@@ -355,6 +370,8 @@ function evaluateForCurrentMedia(): void {
   autoplayAttempted = false; // a fresh source may autoplay again (U2)
   serverDefaultApplied = false; // re-evaluate the server default for the new source (U4)
   audioPrefAutoApplied = false; // re-evaluate the default audio lang for the new source (P3B-S2)
+  infoAudioSelected.value = -1; // clear any direct-play audio pick for the new source
+  pendingHlsAudioIndex = null; // a queued audio switch belongs to the previous source
   qualitySeeded = false; // re-seed the default quality once the new ladder is known (R3.9)
   stopUpNextCountdown();
   upNextActive.value = false;
@@ -480,27 +497,64 @@ const hlsAudioTrackList = computed<TextTrackInfo[]>(() =>
   })),
 );
 
-/** The audio track list to show: HLS audio tracks when active, else native. */
-const effectiveAudioTracks = computed<TextTrackInfo[]>(
-  () => (isHlsAudioActive.value ? hlsAudioTrackList.value : audioTracks.value),
+/** Playback-info audio tracks converted to the TextTrackInfo shape (direct play
+ *  on non-Safari browsers, where `video.audioTracks` is unavailable). */
+const infoAudioTrackList = computed<TextTrackInfo[]>(() =>
+  (props.playbackAudioTracks ?? []).map((t) => ({
+    index: t.index,
+    language: t.language || `audio-${t.index}`,
+    label: t.label,
+    kind: 'audio' as const,
+  })),
 );
 
-/** The active audio track index: HLS currentAudioTrack when active, else native. */
-const effectiveActiveAudio = computed<number>(
-  () => (isHlsAudioActive.value ? tc.currentAudioTrack.value : activeAudio.value),
+/** User's pick within the playback-info audio list (-1 = none yet → the server
+ *  default is shown as active). Reset per source in `evaluateForCurrentMedia`. */
+const infoAudioSelected = ref(-1);
+
+/** True when the playback-info list is the audio menu's source: direct play with
+ *  >1 server-advertised audio streams and no native/hls list available. */
+const isInfoAudioActive = computed<boolean>(
+  () =>
+    !isHlsAudioActive.value &&
+    !transcodeNeeded.value &&
+    audioTracks.value.length === 0 &&
+    infoAudioTrackList.value.length > 1,
 );
+
+/** The audio track list to show: HLS when active, else native (Safari), else the
+ *  server playback-info list on direct play. */
+const effectiveAudioTracks = computed<TextTrackInfo[]>(() => {
+  if (isHlsAudioActive.value) return hlsAudioTrackList.value;
+  if (isInfoAudioActive.value) return infoAudioTrackList.value;
+  return audioTracks.value;
+});
+
+/** The active audio track index: HLS currentAudioTrack when active; on the
+ *  playback-info path the user's pick, else the server's default stream. */
+const effectiveActiveAudio = computed<number>(() => {
+  if (isHlsAudioActive.value) return tc.currentAudioTrack.value;
+  if (isInfoAudioActive.value) {
+    if (infoAudioSelected.value >= 0) return infoAudioSelected.value;
+    const def = (props.playbackAudioTracks ?? []).find((t) => t.default);
+    return def ? def.index : (props.playbackAudioTracks?.[0]?.index ?? 0);
+  }
+  return activeAudio.value;
+});
 const chaptersListOpen = ref(false);
 /** Last on-language, so the `c` key can restore it after toggling off. */
 let lastSubtitleLang: string | null = player.subtitleLang;
 
 // ---- server subtitle sidecars (U4) ------------------------------------------
-/** WebVTT subtitle tracks the server extracted for a transcoded source (S4).
- *  Rendered as native `<track>` elements into the `<video>` so the existing
- *  captions.ts enumeration + overlay pick them up automatically. Their `url`s
- *  are already resolved against the API base by the transcode composable, the
- *  same way the master-playlist URL is. Empty for direct-play (no job → no
- *  sidecars), which simply renders no `<track>`s. */
-const serverSubtitleTracks = computed<SubtitleTrack[]>(() => tc.subtitleTracks.value);
+/** WebVTT subtitle tracks rendered as native `<track>` elements into the
+ *  `<video>` so the existing captions.ts enumeration + overlay pick them up
+ *  automatically. On the TRANSCODE path these are the job's extracted sidecars
+ *  (S4; urls already resolved against the API base by the composable). On the
+ *  DIRECT-PLAY path they come from playback-info `subtitle_tracks[]`, whose
+ *  `url`s are signed VTT endpoints usable without a Bearer header. */
+const serverSubtitleTracks = computed<SubtitleTrack[]>(() =>
+  transcodeNeeded.value ? tc.subtitleTracks.value : (props.playbackSubtitleTracks ?? []),
+);
 
 /** One-shot guard so the server default is adopted at most once per source (reset
  *  per source in `evaluateForCurrentMedia`). The user-choice signal
@@ -593,15 +647,43 @@ function toggleCaptions(): void {
   emit('captions'); // host hook (e.g. PlayerPage, R3.9)
 }
 
+/** An audio-relative index to apply on the hls.js session once it attaches —
+ *  set when a direct-play audio pick falls the session over to the transcode
+ *  path (the playback-info `index` aligns with the transcode master playlist's
+ *  hls.js `audioTracks` order). */
+let pendingHlsAudioIndex: number | null = null;
+
 function onSelectAudio(index: number): void {
   if (isHlsAudioActive.value) {
     // P3B: route audio track selection through the hls.js controller
     tc.setAudioTrack(index);
+  } else if (isInfoAudioActive.value) {
+    // Direct play, non-Safari: the browser cannot switch the container's embedded
+    // audio streams. Picking a different track reuses the same fallback that
+    // handles undecodable codecs — flip to the on-demand HLS transcode (whose
+    // master playlist carries every audio rendition) and select the matching
+    // hls.js audio track once attached. Picking the already-active track is a no-op.
+    if (index === effectiveActiveAudio.value) return;
+    infoAudioSelected.value = index;
+    pendingHlsAudioIndex = index;
+    transcodeNeeded.value = true;
+    beginTranscode();
   } else {
     applyAudioTrack(videoRef.value, index);
     activeAudio.value = index;
   }
 }
+
+// Apply a direct-play audio pick once the fallback HLS session exposes its audio
+// tracks. The playback-info `index` is 0-based among the source's audio streams,
+// which is exactly the order the transcode master playlist lists its renditions
+// in — so it maps 1:1 onto the hls.js audioTracks index.
+watch(isHlsAudioActive, (active) => {
+  if (!active || pendingHlsAudioIndex === null) return;
+  const target = pendingHlsAudioIndex;
+  pendingHlsAudioIndex = null;
+  if (target >= 0 && target < tc.audioTracks.value.length) tc.setAudioTrack(target);
+});
 
 // When the server subtitle sidecars change (initial list, or a late arrival on a
 // status poll), Vue renders/removes the `<track>` elements; re-enumerate on the
