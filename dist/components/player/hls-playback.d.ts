@@ -137,6 +137,10 @@ export interface AttachHlsOptions {
      *  key wins — EXCEPT `xhrSetup`, which is always re-applied last so a consumer
      *  can never accidentally drop the bearer-token auth header (see {@link attachHls}). */
     hlsConfig?: Partial<import('hls.js').HlsConfig>;
+    /** Playback position in seconds to resume from (e.g. when falling back from
+     *  direct play to HLS transcode). For MSE/hls.js this goes into hls.js config;
+     *  for native HLS it is set on video.currentTime after src is assigned. */
+    startPosition?: number;
 }
 /** True when the browser can play HLS natively (Safari / iOS). */
 export declare function isNativeHlsSupported(video: HTMLVideoElement): boolean;

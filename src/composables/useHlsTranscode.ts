@@ -114,8 +114,10 @@ export interface HlsTranscodeController {
   /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when
    *  omitted the start request sends NO `?profile=` query, letting the server map
    *  the quality profile from the request's `X-Phlix-Device-Type` header (a TV
-   *  identifies itself → gets >1080p). Pass an explicit profile to pin it. */
-  start(video: HTMLVideoElement, mediaId: string, profile?: string): Promise<void>;
+   *  identifies itself → gets >1080p). Pass an explicit profile to pin it.
+   *  `startPosition` is the playback position in seconds to resume from on the
+   *  transcode path (preserves position when falling back from direct play). */
+  start(video: HTMLVideoElement, mediaId: string, profile?: string, startPosition?: number): Promise<void>;
   cleanup(): void;
   reset(): void;
 }
@@ -206,7 +208,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     return opts.client ?? new ApiClient({ baseUrl: opts.apiBase(), tokenStore: tokenStore ?? undefined });
   }
 
-  async function start(video: HTMLVideoElement, mediaId: string, profile?: string): Promise<void> {
+  async function start(video: HTMLVideoElement, mediaId: string, profile?: string, startPosition?: number): Promise<void> {
     cleanup();
     cancelled = false;
     state.value = 'preparing';
@@ -258,6 +260,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       handle = await attach(video, masterUrl, {
         getToken,
         hlsConfig: opts.hlsConfig,
+        startPosition,
         onReady: () => syncLevelState(),
         onError: () => {
           if (!cancelled) {

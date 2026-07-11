@@ -141,6 +141,10 @@ export interface AttachHlsOptions {
    *  key wins — EXCEPT `xhrSetup`, which is always re-applied last so a consumer
    *  can never accidentally drop the bearer-token auth header (see {@link attachHls}). */
   hlsConfig?: Partial<import('hls.js').HlsConfig>;
+  /** Playback position in seconds to resume from (e.g. when falling back from
+   *  direct play to HLS transcode). For MSE/hls.js this goes into hls.js config;
+   *  for native HLS it is set on video.currentTime after src is assigned. */
+  startPosition?: number;
 }
 
 /** True when the browser can play HLS natively (Safari / iOS). */
@@ -181,6 +185,7 @@ export async function attachHls(
     const hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
+      startPosition: opts.startPosition ?? 0,
       // Leave the media element's <track> sidecars alone. Our WebVTT subtitles are
       // EXTERNAL `<track>` elements (extracted server-side, not in the HLS manifest)
       // rendered by our own CaptionOverlay. With native text-track rendering ON
@@ -295,6 +300,8 @@ export async function attachHls(
     video.addEventListener('loadedmetadata', onLoaded);
     video.addEventListener('error', onErr);
     video.src = url;
+    // Resume from the captured position (e.g. mid-film direct→HLS fallback).
+    if (opts.startPosition) video.currentTime = opts.startPosition;
     // Native HLS: the browser drives ABR and exposes no level API, so the level
     // members degrade to an Auto-only, no-op shape. UI code can call them safely.
     // Audio tracks on native HLS come from video.audioTracks (handled separately

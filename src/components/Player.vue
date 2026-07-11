@@ -257,10 +257,11 @@ const showPreparing = computed(
 /** Show the "can't play" notice only when the transcode genuinely failed. */
 const showTranscodeNotice = computed(() => transcodeNeeded.value && tc.state.value === 'error');
 
-/** Kick off (or restart) the transcode-to-play flow for the current media. */
-function beginTranscode(): void {
+/** Kick off (or restart) the transcode-to-play flow for the current media.
+ *  `startPosition` is the playback position (seconds) to resume from. */
+function beginTranscode(startPosition = 0): void {
   const v = videoRef.value;
-  if (v) void tc.start(v, props.media.id);
+  if (v) void tc.start(v, props.media.id, undefined, startPosition);
 }
 
 /** A quality rung was picked in the menu — pin it (or hand back to ABR) on the
@@ -478,7 +479,7 @@ function onVideoError(): void {
   const unreachableDirect = isNetworkMediaError(v) && (v?.currentTime ?? 0) === 0;
   if (isFatalMediaError(v) || unreachableDirect) {
     transcodeNeeded.value = true;
-    beginTranscode();
+    beginTranscode(v?.currentTime ?? 0);
   }
 }
 
@@ -674,7 +675,7 @@ function onSelectAudio(index: number): void {
     infoAudioSelected.value = index;
     pendingHlsAudioIndex = index;
     transcodeNeeded.value = true;
-    beginTranscode();
+    beginTranscode(videoRef.value?.currentTime ?? 0);
   } else {
     applyAudioTrack(videoRef.value, index);
     activeAudio.value = index;

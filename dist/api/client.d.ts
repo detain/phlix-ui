@@ -316,8 +316,9 @@ export declare class ApiClient {
      * @param positionMs Current playhead position in milliseconds
      * @param aroundSec  Search window in seconds (default: 30)
      * @param limit      Maximum results (default: 20)
+     * @param signal     Optional AbortSignal to cancel the request
      */
-    searchByMarker(type: 'intro' | 'outro' | 'credits' | 'ad', positionMs: number, aroundSec?: number, limit?: number): Promise<{
+    searchByMarker(type: 'intro' | 'outro' | 'credits' | 'ad', positionMs: number, aroundSec?: number, limit?: number, signal?: AbortSignal): Promise<{
         items: MediaItem[];
         marker_type: string;
         around: number;
@@ -330,8 +331,9 @@ export declare class ApiClient {
      * timeline mapping for thumbnail previews during scrubbing.
      *
      * @param id Media item ID
+     * @param signal Optional AbortSignal to cancel the request
      */
-    getTrickplay(id: string): Promise<{
+    getTrickplay(id: string, signal?: AbortSignal): Promise<{
         sprite_url: string | null;
         timeline: Array<{
             seconds: number;

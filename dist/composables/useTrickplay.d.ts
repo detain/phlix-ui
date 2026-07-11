@@ -16,6 +16,13 @@ export interface TrickplayData {
         frame: number;
     }>;
 }
+/** Options for {@link useTrickplay}. */
+export interface UseTrickplayOptions {
+    /** Resolver for the API base (PlayerPage injects the app's relay proxy base). */
+    apiBase: () => string;
+    /** Optional AbortSignal to cancel in-flight requests. */
+    signal?: AbortSignal;
+}
 /** Return type of the useTrickplay composable. */
 export interface TrickplayController {
     /** The trickplay data once loaded, or null if not yet loaded / unavailable. */
@@ -30,7 +37,7 @@ export interface TrickplayController {
      */
     thumbnailAt: (seconds: number) => string | null;
     /** Fetch trickplay data for a given media ID. */
-    fetch: (mediaId: string) => Promise<void>;
+    fetch: (mediaId: string, signal?: AbortSignal) => Promise<void>;
     /** Clear the cached data (e.g., when media changes). */
     reset: () => void;
 }
@@ -39,5 +46,9 @@ export interface TrickplayController {
  *
  * Fetches trickplay data from the server and provides a `thumbnailAt` function
  * that maps playback position to a CSS background-position string for the sprite.
+ *
+ * @param opts - Configuration options
+ * @param opts.apiBase - Resolver for the API base URL (e.g., the relay proxy on hub)
+ * @param opts.signal - Optional AbortSignal to cancel in-flight requests on unmount
  */
-export declare function useTrickplay(): TrickplayController;
+export declare function useTrickplay(opts: UseTrickplayOptions): TrickplayController;
