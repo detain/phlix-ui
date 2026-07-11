@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   extensionOf,
   needsTranscode,
@@ -18,6 +18,9 @@ import {
   UPNEXT_COUNTDOWN_SECONDS,
   UPNEXT_RING_RADIUS,
   UPNEXT_RING_CIRCUMFERENCE,
+  canDecodeAudioCodec,
+  canDecodeHevcInMp4,
+  needsTranscodeWithCapabilities,
 } from './playback';
 
 describe('playback — extensionOf', () => {
@@ -130,8 +133,8 @@ describe('playback — parsePlaybackAudioTracks (playback-info audio_tracks)', (
       { id: 'a1', codec: 'ac3', language: 'jpn', channels: 2, bitrate: 192000, title: '', index: 1, stream_index: 2, default: false },
     ]);
     expect(out).toEqual([
-      { index: 0, streamIndex: 1, language: 'eng', label: 'English 5.1', default: true },
-      { index: 1, streamIndex: 2, language: 'jpn', label: 'jpn', default: false },
+      { index: 0, streamIndex: 1, language: 'eng', label: 'English 5.1', default: true, codec: 'aac' },
+      { index: 1, streamIndex: 2, language: 'jpn', label: 'jpn', default: false, codec: 'ac3' },
     ]);
   });
 
@@ -155,5 +158,247 @@ describe('playback — parsePlaybackAudioTracks (playback-info audio_tracks)', (
     const out = parsePlaybackAudioTracks([{ language: 'eng' }, { language: 'jpn' }]);
     expect(out[0]).toMatchObject({ index: 0, streamIndex: 0 });
     expect(out[1]).toMatchObject({ index: 1, streamIndex: 1 });
+  });
+});
+
+// ---- MediaCapabilities / codec probing (UI-1.3) ------------------------------
+
+const fakeMediaCapabilities = (supported: boolean) => ({
+  decodingInfo: vi.fn().mockResolvedValue({ supported }),
+});
+
+function fakeDocument(canPlayTypeResult: '' | 'maybe' | 'probably' = '') {
+  return {
+    createElement: vi.fn(() => ({
+      canPlayType: vi.fn(() => canPlayTypeResult),
+    })),
+  };
+}
+
+describe('playback — canDecodeAudioCodec', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns true when decodingInfo reports supported: true', async () => {
+    const mc = fakeMediaCapabilities(true);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await canDecodeAudioCodec('eac3', 'video/mp4');
+
+    expect(result).toBe(true);
+    expect(mc.decodingInfo).toHaveBeenCalledOnce();
+  });
+
+  it('returns false when decodingInfo reports supported: false', async () => {
+    const mc = fakeMediaCapabilities(false);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await canDecodeAudioCodec('eac3', 'video/mp4');
+
+    expect(result).toBe(false);
+    expect(mc.decodingInfo).toHaveBeenCalledOnce();
+  });
+
+  it('returns false when audioCodec is empty (no restriction)', async () => {
+    const mc = fakeMediaCapabilities(true);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+
+    const result = await canDecodeAudioCodec('', 'video/mp4');
+
+    expect(result).toBe(true);
+    // Must not probe when codec is empty — safe fallback for missing codec data.
+    expect(mc.decodingInfo).not.toHaveBeenCalled();
+  });
+
+  it('returns false for an unrecognised codec', async () => {
+    const mc = fakeMediaCapabilities(true);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await canDecodeAudioCodec('unsupported-codec', 'video/mp4');
+
+    expect(result).toBe(false);
+    expect(mc.decodingInfo).not.toHaveBeenCalled();
+  });
+
+  it('falls back to canPlayType when decodingInfo throws', async () => {
+    const mc = {
+      decodingInfo: vi.fn().mockRejectedValue(new Error('not supported')),
+    };
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument('probably'));
+
+    const result = await canDecodeAudioCodec('eac3', 'video/mp4');
+
+    expect(result).toBe(true);
+    expect(mc.decodingInfo).toHaveBeenCalledOnce();
+  });
+
+  it('returns false when canPlayType also returns empty (no fallback available)', async () => {
+    const mc = {
+      decodingInfo: vi.fn().mockRejectedValue(new Error('not supported')),
+    };
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument(''));
+
+    const result = await canDecodeAudioCodec('eac3', 'video/mp4');
+
+    expect(result).toBe(false);
+  });
+});
+
+describe('playback — canDecodeHevcInMp4', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns true when decodingInfo reports supported: true', async () => {
+    const mc = fakeMediaCapabilities(true);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await canDecodeHevcInMp4();
+
+    expect(result).toBe(true);
+    expect(mc.decodingInfo).toHaveBeenCalledOnce();
+  });
+
+  it('returns false when decodingInfo reports supported: false', async () => {
+    const mc = fakeMediaCapabilities(false);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await canDecodeHevcInMp4();
+
+    expect(result).toBe(false);
+    expect(mc.decodingInfo).toHaveBeenCalledOnce();
+  });
+
+  it('returns true when canPlayType returns "probably" after decodingInfo fails', async () => {
+    const mc = {
+      decodingInfo: vi.fn().mockRejectedValue(new Error('not supported')),
+    };
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument('probably'));
+
+    const result = await canDecodeHevcInMp4();
+
+    expect(result).toBe(true);
+  });
+
+  it('returns false when canPlayType also returns empty', async () => {
+    const mc = {
+      decodingInfo: vi.fn().mockRejectedValue(new Error('not supported')),
+    };
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument(''));
+
+    const result = await canDecodeHevcInMp4();
+
+    expect(result).toBe(false);
+  });
+
+  it('returns false when navigator is undefined', async () => {
+    vi.stubGlobal('navigator', undefined);
+
+    const result = await canDecodeHevcInMp4();
+
+    expect(result).toBe(false);
+  });
+});
+
+describe('playback — needsTranscodeWithCapabilities', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns true when the extension is a known transcode container', async () => {
+    vi.stubGlobal('navigator', { mediaCapabilities: fakeMediaCapabilities(true) });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await needsTranscodeWithCapabilities(['/lib/movie.mkv'], []);
+
+    expect(result).toBe(true);
+  });
+
+  it('returns false when extension is a direct-play container and audio codec is supported', async () => {
+    const mc = fakeMediaCapabilities(true);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await needsTranscodeWithCapabilities(
+      ['/lib/movie.mp4'],
+      [{ index: 0, streamIndex: 1, language: 'eng', label: 'English', default: true, codec: 'aac' }],
+    );
+
+    expect(result).toBe(false);
+  });
+
+  it('returns true when the primary audio codec is unsupported', async () => {
+    // decodingInfo reports unsupported.
+    const mc = fakeMediaCapabilities(false);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await needsTranscodeWithCapabilities(
+      ['/lib/movie.mp4'],
+      [{ index: 0, streamIndex: 1, language: 'eng', label: 'English', default: true, codec: 'eac3' }],
+    );
+
+    expect(result).toBe(true);
+  });
+
+  it('returns true when the source is mp4 and HEVC is unsupported (black-flash guard)', async () => {
+    // First call: audio codec check → supported. Second call: HEVC check → unsupported.
+    const mc = {
+      decodingInfo: vi
+        .fn()
+        .mockResolvedValueOnce({ supported: true })  // audio codec check
+        .mockResolvedValueOnce({ supported: false }), // HEVC check
+    };
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await needsTranscodeWithCapabilities(
+      ['/lib/movie.mp4'],
+      [{ index: 0, streamIndex: 1, language: 'eng', label: 'English', default: true, codec: 'aac' }],
+    );
+
+    expect(result).toBe(true);
+  });
+
+  it('returns false when all checks pass (extension, audio codec, HEVC)', async () => {
+    const mc = {
+      decodingInfo: vi
+        .fn()
+        .mockResolvedValueOnce({ supported: true })  // audio codec check
+        .mockResolvedValueOnce({ supported: true }), // HEVC check
+    };
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    const result = await needsTranscodeWithCapabilities(
+      ['/lib/movie.mp4'],
+      [{ index: 0, streamIndex: 1, language: 'eng', label: 'English', default: true, codec: 'aac' }],
+    );
+
+    expect(result).toBe(false);
+  });
+
+  it('skips audio probe when playbackAudioTracks is empty (no server data yet)', async () => {
+    const mc = fakeMediaCapabilities(false);
+    vi.stubGlobal('navigator', { mediaCapabilities: mc });
+    vi.stubGlobal('document', fakeDocument());
+
+    // Even though decodingInfo returns false for audio, empty tracks means
+    // the caller should watch for late audio-track arrival and re-evaluate.
+    const result = await needsTranscodeWithCapabilities(['/lib/movie.mp4'], []);
+
+    // Extension check passes (mp4 is direct-play) and no audio probe when tracks empty.
+    expect(result).toBe(false);
+    expect(mc.decodingInfo).not.toHaveBeenCalled();
   });
 });
