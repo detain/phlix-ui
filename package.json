@@ -12,6 +12,11 @@
       "require": "./dist/phlix-ui.umd.cjs",
       "types": "./dist/index.d.ts"
     },
+    "./player": {
+      "import": "./dist/player.js",
+      "require": "./dist/player.umd.cjs",
+      "types": "./dist/player.d.ts"
+    },
     "./style.css": "./dist/style.css",
     "./fonts.css": "./dist/fonts/fonts.css",
     "./dist/*": "./dist/*"
@@ -21,7 +26,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build && vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json && node scripts/copy-fonts.mjs",
+    "build": "vue-tsc --noEmit && vite build && vite build --config vite.player.config.ts && vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json && node scripts/copy-fonts.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
