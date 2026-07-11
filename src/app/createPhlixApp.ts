@@ -415,6 +415,26 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
             return gate;
         }
         const auth = useAuthStore(pinia);
+
+        // Admin routes require strict validation: await auth.init() to confirm
+        // isAdmin before rendering. Non-admin routes resolve optimistically on
+        // token presence and validate /auth/me in the background — if the token
+        // is invalid, fetchUser clears it and the next navigation redirects.
+        if (to.meta?.requiresAdmin === true) {
+            await auth.init();
+            return authGuard(to, auth.isLoggedIn, auth.isAdmin, home);
+        }
+
+        // Non-admin route: token presence is sufficient to render immediately.
+        // Start background validation (fire-and-forget); fetchUser() clears tokens
+        // on failure, so the next navigation will see isLoggedIn=false and redirect.
+        if (auth.isLoggedIn === true) {
+            auth.init(); // fire-and-forget background validation
+            return authGuard(to, true, false, home);
+        }
+
+        // No token — must validate to confirm (handles edge case where a cleared
+        // token hasn't propagated to isLoggedIn yet via the reactive update).
         await auth.init();
         return authGuard(to, auth.isLoggedIn, auth.isAdmin, home);
     });
