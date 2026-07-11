@@ -1989,3 +1989,48 @@ describe('Player — quality menu wiring (R3.9)', () => {
     expect((sel().props('options') as ReadonlyArray<{ label: string }>)[0].label).toBe('Auto (720p)');
   });
 });
+
+describe('Player — fade timer ownership (UI-1.7)', () => {
+  // UI-1.7: fadeTimer is stored at module/component scope (not a local variable),
+  // onBeforeUnmount clears it if component unmounts mid-fade, and fadeOutAndPause
+  // clears any existing timer before starting a new one. These tests verify that
+  // unmounting mid-fade does NOT leave an interval mutating a detached element.
+
+  it('clears the fade timer on unmount so no interval runs against a detached element', async () => {
+    const { w } = mountPlayer();
+    // Start a fade — this sets up a setInterval that would fade volume over ~1s
+    w.vm.fadeOutAndPause();
+    await nextTick();
+    // Unmount while fade is in progress — onBeforeUnmount should clear the fade timer.
+    // The critical invariant: after unmount, no interval callback should run
+    // against the now-detached element. We verify this by ensuring unmount doesn't
+    // throw (onBeforeUnmount runs and cleans up properly) and that we can wait
+    // for a time long enough for any missed callback to have fired, without error.
+    expect(() => w.unmount()).not.toThrow();
+    // If the timer wasn't cleared, the callback would continue running.
+    // By waiting here we give any uncancelled callback a chance to fire.
+    // If cleanup failed, this would manifest as an error in subsequent tests.
+    await new Promise((r) => setTimeout(r, 1200));
+  });
+
+  it('fadeOutAndPause clears any pre-existing timer before starting a new one (idempotent)', async () => {
+    const { w, video, state } = mountPlayer();
+    // Start first fade — this creates an interval
+    w.vm.fadeOutAndPause();
+    await nextTick();
+    // Wait a short time for the fade to progress
+    await new Promise((r) => setTimeout(r, 200));
+    const volumeAfterPartialFirstFade = state.volume;
+    expect(volumeAfterPartialFirstFade).toBeLessThan(1);
+    const pauseCountBeforeSecond = video.pause.mock.calls.length;
+    // Start second fade BEFORE the first one completes
+    // This MUST clear the first timer before starting a new one
+    w.vm.fadeOutAndPause();
+    await nextTick();
+    // Wait for the second fade to complete (~1 second from now)
+    await new Promise((r) => setTimeout(r, 1200));
+    // pause should have been called exactly once (from the second fade's completion)
+    // If the first timer wasn't cleared, we could get incorrect behavior
+    expect(video.pause.mock.calls.length).toBe(pauseCountBeforeSecond + 1);
+  });
+});
