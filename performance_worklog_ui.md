@@ -13,7 +13,7 @@
 - [x] UI-0.1  fix Library mark watched favorite-corruption bug    (commit: 7326b11)  DONE
 - [x] UI-0.2  RouterLink navigation on poster cards              (commits: b01372f, 30fe245)  DONE
 - [x] UI-0.3  scrub: preview-only during drag, seek on release    (commits: e8c115b, 385dc1e)  DONE
-- [ ] UI-0.4  parallelize PlayerPage item + playback-info
+- [x] UI-0.4  parallelize PlayerPage item + playback-info    (commit: d0e8cfb)  DONE
 - [ ] UI-0.5  fetch trickplay on first player mount
 - [ ] UI-0.6  thread apiBase + AbortSignal into trickplay & marker-search
 - [ ] UI-0.7  episode-aware up next queue
