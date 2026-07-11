@@ -9,6 +9,63 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
+
+// Mock useAuthStore before importing BrowsePage (which uses it).
+// This is needed because useResumeSync calls auth.client.get() for continue-watching,
+// and vi.stubGlobal('fetch') doesn't work with ApiClient's bound fetch reference.
+const { authGet, authState, authUser } = vi.hoisted(() => ({
+  authGet: vi.fn(),
+  authState: { loggedIn: true },
+  // Use a plain object so tests can directly assign auth.user = { id: 'admin', is_admin: true }
+  authUser: { id: '', is_admin: false } as { id: string; is_admin?: boolean },
+}));
+vi.mock('../stores/useAuthStore', () => ({
+  useAuthStore: () => ({
+    get isLoggedIn() {
+      return authState.loggedIn;
+    },
+    get isAdmin() {
+      return authUser.is_admin === true;
+    },
+    client: { get: authGet },
+    get user() {
+      return authUser;
+    },
+    set user(val) {
+      // Keep authUser in sync when tests do auth.user = {...}
+      Object.assign(authUser, val);
+    },
+  }),
+}));
+
+// Mock useResumeSync to bypass the auth.client.get chain.
+// Tests can configure continueWatchingItems by setting mockContinueWatchingItems
+// before calling stubFetch/mountPage.
+import { usePlayerStore, TICKS_PER_SECOND } from '../stores/usePlayerStore';
+const mockContinueWatchingItems: MediaItem[] = [];
+const mockSyncResume = vi.fn().mockImplementation(async () => {
+  // Simulate what the real syncResume does: update player.resumeMap from the
+  // continueWatchingItems and keep the items for continueWatchingItems getter.
+  // This ensures continueItems computed (which filters by resumeMap) works in tests.
+  const positions: Record<string, number> = {};
+  for (const item of mockContinueWatchingItems) {
+    const ticks = (item as MediaItem & { position_ticks?: number }).position_ticks;
+    if (typeof item.id === 'string' && typeof ticks === 'number' && ticks > 0) {
+      positions[item.id] = Math.floor(ticks / TICKS_PER_SECOND);
+    }
+  }
+  const player = usePlayerStore();
+  player.mergeServerResume(positions);
+});
+vi.mock('../composables/useResumeSync', () => ({
+  useResumeSync: () => ({
+    syncResume: mockSyncResume,
+    get continueWatchingItems() {
+      return mockContinueWatchingItems;
+    },
+  }),
+}));
+
 import BrowsePage from './BrowsePage.vue';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
@@ -58,6 +115,9 @@ const ONE_LIBRARY: LibrarySummary[] = [{ id: 'lib1', name: 'Movies', type: 'movi
  * `/api/v1/users/me/favorites` → `{ items, limit, offset }` (the favorites rail;
  * `favorites` defaults to none so the rail is hidden unless a test supplies
  * items — and it can supply a `() => MediaItem[]` so a re-fetch sees fresh data),
+ * `/api/v1/users/me/continue-watching` → `{ items }` (the Continue Watching rail;
+ * `continueWatching` defaults to none so the rail is hidden unless a test supplies
+ * items — items can include `position_ticks` for resume position),
  * any other `/api/v1/media` rail fetch → `{ items, total }`. `libraryError`
  * rejects the library-list request specifically.
  */
@@ -66,6 +126,9 @@ function stubFetch(
     libraries?: LibrarySummary[];
     media?: { items: MediaItem[]; total: number };
     favorites?: MediaItem[] | (() => MediaItem[]);
+    /** Continue Watching items with optional position_ticks for resume position.
+     *  Defaults to empty, hiding the Continue Watching rail unless supplied. */
+    continueWatching?: MediaItem[];
     libraryError?: boolean;
     /** Reject the library-list request with a hub-style 503 `{error, code}` body
      *  (drives the relay-code → actionable-message mapping in BrowsePage). */
@@ -76,11 +139,20 @@ function stubFetch(
   const mediaBody = opts.media ?? { items: [], total: 0 };
   const favoritesOf = (): MediaItem[] =>
     typeof opts.favorites === 'function' ? opts.favorites() : (opts.favorites ?? []);
+  const continueWatchingItems = opts.continueWatching ?? [];
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
     if (u.includes('/api/v1/users/me/favorites')) {
       const items = favoritesOf();
       return Promise.resolve(jsonResponse({ items, limit: 24, offset: 0 }));
+    }
+    if (u.includes('/api/v1/users/me/continue-watching')) {
+      // Return items with position_ticks for resume position
+      const items = continueWatchingItems.map((item) => ({
+        ...item,
+        position_ticks: (item as MediaItem & { position_ticks?: number }).position_ticks ?? 0,
+      }));
+      return Promise.resolve(jsonResponse({ items }));
     }
     if (u.includes('/api/v1/libraries')) {
       if (opts.libraryError) return Promise.reject(new Error('library list offline'));
@@ -90,6 +162,16 @@ function stubFetch(
     return Promise.resolve(jsonResponse(mediaBody));
   });
   vi.stubGlobal('fetch', fn);
+
+  // Configure mock useResumeSync for continue-watching items (U-N4).
+  // Clear and repopulate the mock array so tests get fresh state.
+  mockContinueWatchingItems.splice(0, mockContinueWatchingItems.length);
+  if (continueWatchingItems.length > 0) {
+    for (const item of continueWatchingItems) {
+      mockContinueWatchingItems.push({ ...item });
+    }
+  }
+
   return fn;
 }
 
@@ -285,11 +367,16 @@ describe('BrowsePage — empty + error', () => {
 });
 
 describe('BrowsePage — Continue Watching', () => {
-  it('derives the rail from the resume map resolved against library-rail items', async () => {
-    localStorage.setItem('phlix.resume', JSON.stringify({ a: 600 }));
+  it('renders Continue Watching items from the sync payload regardless of loaded rails', async () => {
+    // U-N4: Continue Watching items come from the server sync payload (via
+    // continueWatchingItems), not from resolving against loaded rails. A title
+    // paused on another device shows even if not in any rail.
     stubFetch({
       libraries: ONE_LIBRARY,
-      media: { items: [media({ id: 'a', name: 'Resumed' }), media({ id: 'b' })], total: 2 },
+      // Media items are NOT required for Continue Watching in the new behavior
+      media: { items: [media({ id: 'other', name: 'Other Title' })], total: 1 },
+      // continueWatching items come from GET /api/v1/users/me/continue-watching
+      continueWatching: [{ id: 'a', name: 'Resumed', type: 'movie', position_ticks: 600_000_000 }],
     });
     const w = mountPage();
     await flushPromises();
@@ -330,10 +417,12 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
   });
 
   it('placed immediately after Continue Watching', async () => {
-    localStorage.setItem('phlix.resume', JSON.stringify({ a: 600 }));
+    // U-N4: Continue Watching comes from the sync payload, Favorites follows it
     stubFetch({
       libraries: ONE_LIBRARY,
-      media: { items: [media({ id: 'a', name: 'Resumed' })], total: 1 },
+      // Item 'a' is in continueWatching (not in media items), showing that
+      // Continue Watching works even when the title is not in any loaded rail
+      continueWatching: [{ id: 'a', name: 'Resumed', type: 'movie', position_ticks: 600_000_000 }],
       favorites: [media({ id: 'f1', name: 'Favorited Movie' })],
     });
     const w = mountPage();

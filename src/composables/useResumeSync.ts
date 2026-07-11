@@ -31,8 +31,6 @@ export interface UseResumeSync {
   continueWatchingItems: readonly MediaItem[];
 }
 
-let syncedItems: MediaItem[] = [];
-
 function handleVisibilityChange(): void {
   if (document.visibilityState === 'visible') {
     // Re-sync positions when the tab regains focus so the rail reflects any
@@ -59,6 +57,10 @@ function handleVisibilityChange(): void {
 export function useResumeSync(): UseResumeSync {
   const player = usePlayerStore();
   const auth = useAuthStore();
+
+  // Instance-level syncedItems so each composable call has isolated state.
+  // This enables proper test isolation without module-level state leakage.
+  let syncedItems: MediaItem[] = [];
 
   // Attach visibilitychange once per composable instance (on first syncResume call
   // from this instance). Subsequent calls skip the attachment. The listener is
