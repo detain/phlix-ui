@@ -432,6 +432,7 @@ onBeforeUnmount(() => {
         alt=""
         loading="lazy"
         decoding="async"
+        fetchpriority="high"
         @load="onBackdropLoad"
       />
       <div class="media-detail__backdrop-scrim" />
@@ -471,6 +472,7 @@ onBeforeUnmount(() => {
           :src="item.poster_url"
           :alt="item.name"
           decoding="async"
+          fetchpriority="high"
           @load="onLoad"
         />
         <div v-else class="media-detail__fallback" aria-hidden="true"><Icon :name="fallbackIcon" /></div>

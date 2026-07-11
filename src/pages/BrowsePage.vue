@@ -331,6 +331,7 @@ function onSeeAll(row: HomeRowConfig): void {
       :items="continueItems"
       :can-match="auth.isAdmin"
       hide-when-empty
+      fetch-priority="high"
       @play="onPlay"
       @watchlist="onWatchlist"
       @info="onInfo"

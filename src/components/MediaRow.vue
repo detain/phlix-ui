@@ -47,6 +47,12 @@ const props = withDefaults(
     cardTo?: (item: MediaItem) => string;
     /** Admin opt-in (U5): render each card's "Match" action + forward `match`. */
     canMatch?: boolean;
+    /**
+     * Hints the browser to prioritize loading the posters in this row (maps to
+     * the HTML `fetchpriority` attribute on the underlying `<img>` elements).
+     * Use `high` for the first visible row to improve LCP.
+     */
+    fetchPriority?: 'high' | 'low' | 'auto';
   }>(),
   { loading: false, error: null, count: null, skeletonCount: 6, hideWhenEmpty: false, canMatch: false },
 );
@@ -103,6 +109,7 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
           :item="item"
           :to="cardTo ? cardTo(item) : undefined"
           :can-match="canMatch"
+          :fetch-priority="fetchPriority"
           @play="emit('play', $event)"
           @watchlist="emit('watchlist', $event)"
           @info="emit('info', $event)"

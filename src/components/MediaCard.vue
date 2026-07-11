@@ -56,6 +56,12 @@ const props = withDefaults(
      */
     posterSizes?: string;
     /**
+     * Hint to the browser about the relative loading priority of this poster
+     * (maps directly to the HTML `fetchpriority` attribute). `high` is
+     * appropriate for above-the-fold or first-row posters to improve LCP.
+     */
+    fetchPriority?: 'high' | 'low' | 'auto';
+    /**
      * Admin opt-in (U5): render a "Match" quick-action that emits `match` so the
      * host can open the interactive metadata-match modal for this item. Off by
      * default; the host gates it on `isAdmin`. Keeps the card layout intact.
@@ -282,6 +288,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         :alt="item.name"
         loading="lazy"
         decoding="async"
+        :fetchpriority="fetchPriority"
         @load="onLoad"
       />
       <div v-else class="media-card__fallback" aria-hidden="true">
