@@ -314,43 +314,21 @@ async function load(): Promise<void> {
     loading.value = false;
     return;
   }
+  const client = new ApiClient({ baseUrl: apiBase.value });
+  // Fire item + playback-info concurrently. The item is critical (errors propagate);
+  // playback-info is best-effort — markers/tracks populate reactively when it resolves.
+  // Loading clears after the item resolves so the player mounts as soon as possible,
+  // without waiting for playback-info (which may be slow/missing).
+  let mediaItem: MediaItem | null = null;
   try {
-    const client = new ApiClient({ baseUrl: apiBase.value });
-    const response = await client.get<{ item: MediaItem }>(
+    const itemResponse = await client.get<{ item: MediaItem }>(
       `/api/v1/media/${encodeURIComponent(id)}`,
       undefined,
       controller?.signal,
     );
-    if (disposed) return;
-    const mediaItem = response.item;
-    item.value = mediaItem;
-    // Seed the per-user favorite/love controls from the fetched MediaDetail's
-    // server `user_data` (Feature 16). This is the authoritative source; <Player>
-    // also hydrates from the same item on mount, but `hydrate` is idempotent so
-    // pre-filling here ensures the controls reflect server state when the player
-    // opens. Guarded on a non-null fetched item.
-    if (mediaItem) userItemData.hydrate(mediaItem);
-    // Playback is the deterministic direct-stream endpoint (synchronous, so up-next
-    // auto-advance threads the same resolver). Resolve it up front.
-    streamUrl.value = streamUrlFor(mediaItem);
-    // Enrich with intro/outro skip markers + chapter ticks from playback-info. Best-
-    // effort: a 404 / non-JSON / slow response just leaves them empty (no skip buttons,
-    // no chapter ticks) and never blocks playback.
-    const info = await client
-      .get<PlaybackInfo>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, controller?.signal)
-      .catch(() => null);
-    if (disposed) return;
-    chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, end: c.end_seconds, title: c.title ?? undefined }));
-    introMarker.value = toMarker(info?.intro_marker);
-    outroMarker.value = toMarker(info?.outro_marker);
-    playbackAudioTracks.value = parsePlaybackAudioTracks(info?.audio_tracks);
-    playbackSubtitleTracks.value = parseSubtitleTracks(info?.subtitle_tracks);
-    loading.value = false;
-    void loadQueue(client, mediaItem);
-    void loadEpisodeNeighbours(client, mediaItem);
+    mediaItem = itemResponse.item;
   } catch (e) {
     if (disposed || isAbort(e)) return;
-    // P5-S5: detect AccessSchedule (403) and StreamLimitExceeded (429)
     if (e instanceof ApiError && (e.status === 403 || e.status === 429)) {
       const body = e.body as { error?: string } | null;
       const errorCode = body?.error;
@@ -366,7 +344,46 @@ async function load(): Promise<void> {
     }
     error.value = e instanceof Error ? e.message : 'Failed to load media';
     loading.value = false;
+    return;
   }
+  if (disposed) return;
+  // Guard: if mediaItem is falsy despite a resolved promise, treat as a load failure
+  // rather than propagating undefined into streamUrlFor (Fail Fast).
+  if (!mediaItem) {
+    error.value = 'Failed to load media item';
+    loading.value = false;
+    return;
+  }
+  item.value = mediaItem;
+  // Seed the per-user favorite/love controls from the fetched MediaDetail's
+  // server `user_data` (Feature 16). This is the authoritative source; <Player>
+  // also hydrates from the same item on mount, but `hydrate` is idempotent so
+  // pre-filling here ensures the controls reflect server state when the player
+  // opens. Guarded on a non-null fetched item.
+  userItemData.hydrate(mediaItem);
+  // Playback is the deterministic direct-stream endpoint (synchronous, so up-next
+  // auto-advance threads the same resolver). Resolve it up front.
+  streamUrl.value = streamUrlFor(mediaItem);
+  loading.value = false;
+  if (mediaItem) {
+    void loadQueue(client, mediaItem);
+    void loadEpisodeNeighbours(client, mediaItem);
+  }
+  // Fetch playback-info in the background — errors degrade to empty markers (no
+  // skip buttons, no chapter ticks). The reactive refs update automatically when
+  // the promise resolves, and the Player watch at Player.vue:692-698 handles late
+  // serverSubtitleTracks the same way.
+  client
+    .get<PlaybackInfo>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, controller?.signal)
+    .then((info) => {
+      if (disposed) return;
+      chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, end: c.end_seconds, title: c.title ?? undefined }));
+      introMarker.value = toMarker(info?.intro_marker);
+      outroMarker.value = toMarker(info?.outro_marker);
+      playbackAudioTracks.value = parsePlaybackAudioTracks(info?.audio_tracks);
+      playbackSubtitleTracks.value = parseSubtitleTracks(info?.subtitle_tracks);
+    })
+    .catch(() => null);
 }
 
 onMounted(load);

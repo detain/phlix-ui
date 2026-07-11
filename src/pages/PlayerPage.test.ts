@@ -64,13 +64,31 @@ function errorResponse(status = 500, body: unknown = { error: 'boom' }): Respons
  *  The real server wraps the item as `{ item }` and returns playback-info as
  *  `{ intro_marker, outro_marker, chapters }` (NO stream url — playback is always the
  *  deterministic /media/:id/stream endpoint). Pass `playback` to seed markers/chapters,
- *  or `null` to make playback-info 404 (absent). */
+ *  or `null` to make playback-info 404 (absent).
+ *
+ *  Uses mockImplementation to route by URL so retry calls (which re-use the same
+ *  mock) still get the correct response per endpoint, not the fallback queue response.
+ *  Routing order: queue (/similar) → by-id (exact /media/:id) → playback-info. */
 function okFetch(item: MediaItem, playback: Partial<PlaybackInfo> | null = {}, items: MediaItem[] = []) {
-  const fn = vi.fn();
-  fn.mockResolvedValueOnce(jsonResponse({ item })); // GET /api/v1/media/:id
-  if (playback === null) fn.mockResolvedValueOnce(errorResponse(404)); // playback-info absent
-  else fn.mockResolvedValueOnce(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [], ...playback }));
-  fn.mockResolvedValue(jsonResponse({ items, total: items.length })); // up-next queue (+ any tail)
+  const fn = vi.fn().mockImplementation((url: string) => {
+    const urlStr = String(url);
+    // Queue endpoint: /api/v1/media/{id}/similar?genres[]=...
+    if (urlStr.includes('/similar')) {
+      return Promise.resolve(jsonResponse({ items, total: items.length }));
+    }
+    // by-id endpoint: /api/v1/media/{id} (NOT /media/{id}/playback-info or /media/{id}/...)
+    // Use a regex to match /media/{id} exactly (no trailing path segments beyond the id)
+    if (urlStr.match(/\/api\/v1\/media\/[^/?]+(\?|$)/) && !urlStr.includes('playback-info') && !urlStr.includes('parentId')) {
+      return Promise.resolve(jsonResponse({ item }));
+    }
+    // playback-info endpoint: /api/v1/media/{id}/playback-info
+    if (urlStr.includes('/playback-info')) {
+      if (playback === null) return Promise.resolve(errorResponse(404));
+      return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [], ...playback }));
+    }
+    // Fallback: queue (for any other URL pattern, e.g. series children with parentId)
+    return Promise.resolve(jsonResponse({ items, total: items.length }));
+  });
   return fn;
 }
 
@@ -276,6 +294,7 @@ describe('PlayerPage — up-next queue', () => {
     const fetchMock = okFetch(base, {}, items);
     await mountAt('m1', fetchMock);
     await flushPromises();
+    await flushPromises(); // drain loadQueue's fetch + .then (fire-and-forget after item resolves)
     const player = usePlayerStore();
     expect(player.queue.find((m) => m.id === 'm1')).toBeUndefined(); // self excluded
     expect(player.queue).toHaveLength(12); // capped
