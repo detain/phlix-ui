@@ -524,9 +524,8 @@ export class ApiClient {
 
     /**
      * Mark a media item as watched for the authenticated user
-     * (`POST /api/v1/media/{id}/watched`). Stub — server endpoint is Step 11.6.
-     * The server returns a flat `{ message }`. Non-2xx throw the shared
-     * {@link ApiError}.
+     * (`POST /api/v1/media/{id}/watched`). The server returns a flat
+     * `{ message }`. Non-2xx throw the shared {@link ApiError}.
      */
     markWatched(id: string): Promise<{ message: string }> {
         return this.post<{ message: string }>(`/api/v1/media/${encodeURIComponent(id)}/watched`);
@@ -534,9 +533,8 @@ export class ApiClient {
 
     /**
      * Mark a media item as unwatched (clear watched state) for the authenticated
-     * user (`POST /api/v1/media/{id}/unwatched`). Stub — server endpoint is
-     * Step 11.6. The server returns a flat `{ message }`. Non-2xx throw the
-     * shared {@link ApiError}.
+     * user (`POST /api/v1/media/{id}/unwatched`). The server returns a flat
+     * `{ message }`. Non-2xx throw the shared {@link ApiError}.
      */
     markUnwatched(id: string): Promise<{ message: string }> {
         return this.post<{ message: string }>(`/api/v1/media/${encodeURIComponent(id)}/unwatched`);
