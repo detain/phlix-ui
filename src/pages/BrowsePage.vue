@@ -27,6 +27,7 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useResumeSync } from '../composables/useResumeSync';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -57,6 +58,7 @@ const toasts = useToastStore();
 const auth = useAuthStore();
 const userItemData = useUserItemDataStore();
 const router = useRouter();
+const { syncResume, continueWatchingItems } = useResumeSync();
 
 // Interactive metadata match (U5) — admin-only. A card "Match" action opens the
 // modal for that item; on a successful apply we (a) replace the registry entry so
@@ -106,17 +108,20 @@ const libraryRows = computed<HomeRowConfig[]>(() =>
   })),
 );
 
-// --- continue-watching registry (resume ids resolved against rail items) -----
+// --- continue-watching (fed directly from the server payload, U-N4) -----
+// Registry still used for metadata-match / poster-pick reconciliation with rails.
 const registry = reactive(new Map<string, MediaItem>());
 function remember(list: MediaItem[]): void {
   list.forEach((i) => registry.set(i.id, i));
 }
-
+// `continueWatchingItems` comes from `useResumeSync`, which stores the full
+// MediaItem payloads returned by `GET /users/me/continue-watching`. This
+// means a title paused on another device shows in Continue Watching even if
+// not loaded in any rail. Positions are sorted via `player.resumeMap`.
 const continueItems = computed<MediaItem[]>(() => {
   const map = player.resumeMap;
-  return Object.keys(map)
-    .map((id) => registry.get(id))
-    .filter((x): x is MediaItem => !!x)
+  return continueWatchingItems
+    .filter((item) => (map[item.id] ?? 0) > 0)
     .sort((a, b) => (map[b.id] ?? 0) - (map[a.id] ?? 0))
     .slice(0, 12);
 });
@@ -184,6 +189,7 @@ function load(): void {
 onMounted(() => {
   void libraries.load(apiBase.value);
   void loadFavorites();
+  void syncResume(); // U-N8: re-sync positions when entering BrowsePage
 });
 watch(apiBase, load);
 // Re-fetch the Favorites rail when the favorited id set changes (a card toggle

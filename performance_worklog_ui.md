@@ -27,7 +27,7 @@
 - [x] UI-1.7  own the fade timer    (commits: e48d42a, 6f956fe, 6cc5b36)  DONE
 - [ ] UI-1.8  mini-player HLS support
 - [x] UI-2.1  media detail/player item cache (stale-while-revalidate)    (commit: ad6b34f)  DONE
-- [ ] UI-2.2  LRU-cap the media store cache
+- [x] UI-2.2  LRU-cap the media store cache    (commits: 73c8cf7, bfbf4da, 91db9cc)  DONE
 - [ ] UI-2.3  complete Continue Watching from server payload
 - [ ] UI-2.4  local favorites patch instead of full refetch
 - [ ] UI-2.5  MediaGrid scroll perf
