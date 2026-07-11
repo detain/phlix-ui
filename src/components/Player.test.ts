@@ -1230,7 +1230,7 @@ describe('Player — PiP & Media Session (R3.7)', () => {
     expect(w.emitted('pip')).toHaveLength(1);
   });
 
-  it('binds OS media-session handlers on mount and reports position state on timeupdate', async () => {
+  it('binds OS media-session handlers on mount and reports position state on state-change events (not timeupdate)', async () => {
     const setActionHandler = vi.fn();
     const setPositionState = vi.fn();
     Object.defineProperty(navigator, 'mediaSession', {
@@ -1242,11 +1242,42 @@ describe('Player — PiP & Media Session (R3.7)', () => {
     expect(actions).toContain('play');
     expect(actions).toContain('pause');
     expect(actions).toContain('seekto');
+
+    // timeupdate must NOT call setPositionState (UI-1.6 optimization)
     state.currentTime = 40;
     state.duration = 200;
     video.dispatchEvent(new Event('timeupdate'));
     await nextTick();
-    expect(setPositionState).toHaveBeenCalledWith(expect.objectContaining({ duration: 200, position: 40 }));
+    expect(setPositionState).not.toHaveBeenCalled();
+
+    // state-change events MUST call setPositionState
+    setPositionState.mockClear();
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+    expect(setPositionState).toHaveBeenCalledTimes(1);
+
+    setPositionState.mockClear();
+    video.dispatchEvent(new Event('pause'));
+    await nextTick();
+    expect(setPositionState).toHaveBeenCalledTimes(1);
+
+    setPositionState.mockClear();
+    state.currentTime = 50;
+    video.dispatchEvent(new Event('seeked'));
+    await nextTick();
+    expect(setPositionState).toHaveBeenCalledTimes(1);
+
+    setPositionState.mockClear();
+    state.playbackRate = 1.5;
+    video.dispatchEvent(new Event('ratechange'));
+    await nextTick();
+    expect(setPositionState).toHaveBeenCalledTimes(1);
+
+    setPositionState.mockClear();
+    state.duration = 300;
+    video.dispatchEvent(new Event('durationchange'));
+    await nextTick();
+    expect(setPositionState).toHaveBeenCalledTimes(1);
 
     // the registered handlers drive the element (OS media keys)
     const reg = Object.fromEntries(setActionHandler.mock.calls.filter((c) => typeof c[1] === 'function')) as Record<
@@ -1358,6 +1389,42 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     video.dispatchEvent(new Event('play')); // e.g. the center button / OS key
     await nextTick();
     expect(w.find('.resume').exists()).toBe(false);
+  });
+
+  // ---- saveResume / evictToCapacity (UI-1.6) ---------------------------------
+  // saveResume calls evictToCapacity ONLY when the id is NEW to the map.
+  // This prevents redundant eviction runs when merely updating position on an
+  // existing entry (which would otherwise cause unnecessary localStorage writes).
+  it('saveResume with an EXISTING id does NOT increase map size (no eviction)', () => {
+    setActivePinia(createPinia());
+    const store = usePlayerStore();
+    // Add several entries
+    store.saveResume('id1', 60, 120);
+    store.saveResume('id2', 60, 120);
+    store.saveResume('id3', 60, 120);
+    expect(Object.keys(store.resumeMap).length).toBe(3);
+
+    // Updating an EXISTING id should NOT trigger eviction (no new entry added)
+    store.saveResume('id1', 90, 120); // same id, updated position
+    expect(Object.keys(store.resumeMap).length).toBe(3); // still 3, no eviction occurred
+  });
+
+  it('saveResume with a NEW id triggers evictToCapacity when at capacity (oldest LRU entry evicted)', () => {
+    setActivePinia(createPinia());
+    const store = usePlayerStore();
+    // Add 200 entries via saveResume so lastTouched is set in order (id0=oldest, id199=newest)
+    for (let i = 0; i < 200; i++) {
+      store.saveResume(`id-${i}`, 60, 120);
+    }
+
+    // Adding a NEW id triggers evictToCapacity(200), evicting the oldest (id-0)
+    store.saveResume('brand-new-id', 60, 120);
+
+    // id-0 (oldest by lastTouched) was evicted, brand-new-id was added, id-1 through id-199 remain
+    expect(store.resumeMap['brand-new-id']).toBe(60);
+    expect(store.resumeMap['id-0']).toBeUndefined(); // evicted (oldest)
+    expect(store.resumeMap['id-1']).toBe(60); // still present
+    expect(Object.keys(store.resumeMap).length).toBe(200); // capped at 200
   });
 
   // ---- up-next + autoplay ---------------------------------------------------
