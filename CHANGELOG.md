@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **MediaGrid scroll performance (UI-2.5)** — replaces `getBoundingClientRect()` per scroll tick with cached `window.scrollY`; `menuItems` lazily computed on menu open; ResizeObserver invalidates cached `sizerTop`; window cache prevents redundant array re-slicing.
+- **Composited hover/skeleton animations on compositor thread (UI-2.6)** — card shadow hover now uses `opacity` on pseudo-element (compositor-only); skeleton shimmer uses `transform: translateX()` on pseudo-elements; `animation-play-state: paused` available when many skeletons visible.
+- **Debounced preferences persistence (UI-2.7)** — localStorage writes from the deep-watch preferences persist are now debounced at 250ms trailing edge; `pagehide` event triggers immediate flush so no writes are lost on tab close.
+- **Optimistic auth guard (UI-3.2)** — non-admin routes resolve immediately on token presence (no blocking `/auth/me` round trip); `auth.init()` runs fire-and-forget in background; admin routes still strictly await validation.
+- **Admin CSS split (UI-3.3)** — admin-page styles extracted from the 282 KB monolith into a separate `admin.css` chunk (~1.9 KB); login/browse pages now download ~35 KB of CSS instead of 282 KB.
+- **apexcharts dedupe (UI-3.4)** — `apexcharts` marked as external in Vite config; `vue3-apexcharts` wrapper is now 6.3 KB (was 754 KB); single apexcharts chunk at 626 KB instead of duplicate browser+SSR bundles.
 - **Composited hover/skeleton animations on compositor thread (UI-2.6)** — hover and skeleton loading transitions are now driven entirely by CSS `will-change`, `transform`, and `opacity` — compositor-only properties that never block the main thread. No JavaScript-driven animation logic was added; this is a pure CSS optimization for smoother 60fps hover states and skeleton pulse effects.
 
 - **Continue Watching driven by full MediaItem payloads from server (UI-2.3)** — `useResumeSync` now stores complete `MediaItem` objects from `GET /users/me/continue-watching` in `syncedItems`, replacing the previous rail-only summary. A `continueWatchingItems` getter exposes them for `BrowsePage`. A `visibilitychange` handler re-syncs with a 100ms debounce so the rail stays fresh when the tab returns to the foreground. `BrowsePage` consumes `continueWatchingItems` directly, eliminating the separate rail data-fetch step.
