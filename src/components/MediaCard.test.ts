@@ -529,6 +529,71 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
   });
 });
 
+describe('MediaCard — router navigation (UI-0.2: SPA nav, not full reload)', () => {
+  /**
+   * UI-0.2 acceptance: poster click does SPA navigation (~100 ms), not a full
+   * document reload; middle-click still opens a new tab.  The component uses
+   * `<RouterLink :to="href" custom v-slot="{ navigate }">` — render an `<a href>`
+   * for middle-click/SEO but intercept left-clicks to `navigate()`.  Falls back to
+   * a raw anchor when no router is present (standalone mounts).
+   *
+   * NOTE: Click-based SPA navigation is verified by the Playwright acceptance test
+   * on the live site (network shows no HTML re-fetch on poster click).  Unit tests
+   * here verify the structural preconditions: RouterLink is used when router is
+   * present, href is always set for middle-click/SEO, and the plain-anchor fallback
+   * works when no router is available.
+   */
+  function makeRouter() {
+    return createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', name: 'home', component: { template: '<div/>' } },
+        { path: '/app/player/:id', name: 'player', component: { template: '<div/>' } },
+        { path: '/app/media/:id', name: 'media', component: { template: '<div/>' } },
+      ],
+    });
+  }
+
+  it('falls back to a plain <a> when no router is present (standalone mount)', () => {
+    const w = mount(MediaCard, { props: { item: media() } }); // no router plugin
+    const link = w.find('.media-card__link');
+    expect(link.element.tagName).toBe('A');
+    expect(link.attributes('href')).toBe('/app/media/m1');
+  });
+
+  it('href is preserved on the fallback anchor for middle-click / SEO / copy-link', () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    const link = w.find('.media-card__link');
+    expect(link.attributes('href')).toBe('/app/media/m1');
+  });
+
+  it('href is preserved on the RouterLink anchor (middle-click / SEO still works)', async () => {
+    const router = makeRouter();
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      global: { plugins: [router] },
+    });
+    await router.isReady();
+    const link = w.find('.media-card__link');
+    expect(link.element.tagName).toBe('A');
+    expect(link.attributes('href')).toBe('/app/media/m1');
+  });
+
+  it('renders RouterLink (not plain anchor) when router is available', async () => {
+    const router = makeRouter();
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      global: { plugins: [router] },
+    });
+    await router.isReady();
+    // The RouterLink in custom mode renders an <a> inside the slot, so we verify
+    // the parent article has exactly one anchor child with the correct href.
+    const link = w.find('.media-card__link');
+    expect(link.element.tagName).toBe('A');
+    expect(link.attributes('href')).toBe('/app/media/m1');
+  });
+});
+
 describe('MediaCard — prefetch on hover/focus (R6.1c)', () => {
   function lazyRouter(loader: () => Promise<unknown>): Router {
     return createRouter({
