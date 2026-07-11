@@ -166,17 +166,6 @@ async function loadFavorites(): Promise<void> {
   }
 }
 
-// Signature of the favorited id set, derived from the store's reactive cache.
-// Sorted+joined so it changes iff the SET of favorited ids changes (toggle on
-// a card flips an entry's `favorite` flag → this string changes → re-fetch).
-const favoriteSignature = computed(() => {
-  const ids: string[] = [];
-  userItemData.entries.forEach((entry, id) => {
-    if (entry.favorite) ids.push(id);
-  });
-  return ids.sort().join(',');
-});
-
 const showFavorites = computed(
   () => !favoritesLoading.value && !favoritesError.value && favoriteItems.value.length > 0,
 );
@@ -192,11 +181,7 @@ onMounted(() => {
   void syncResume(); // U-N8: re-sync positions when entering BrowsePage
 });
 watch(apiBase, load);
-// Re-fetch the Favorites rail when the favorited id set changes (a card toggle
-// flips the store entry). Skip the initial fire — onMounted already loaded it.
-watch(favoriteSignature, () => {
-  void loadFavorites();
-});
+
 
 // Map the store's failure to an actionable title/description. On the hub, a browse
 // of a server whose relay tunnel isn't connected surfaces a `server.*` code (see
@@ -265,10 +250,16 @@ async function onPlay(item: MediaItem): Promise<void> {
 // favoriting persists across a reload (the single source of truth is the store +
 // server, mutated once by the card).
 function onWatchlist(item: MediaItem): void {
+  // U-N5: patch favoriteItems locally instead of refetching the whole list.
+  // The store was already toggled optimistically by MediaCard.
   if (userItemData.isFavorite(item.id)) {
     toasts.success(`Added "${item.name}" to your favorites`);
+    if (!favoriteItems.value.some((f) => f.id === item.id)) {
+      favoriteItems.value = [...favoriteItems.value, item];
+    }
   } else {
     toasts.info(`Removed "${item.name}" from your favorites`);
+    favoriteItems.value = favoriteItems.value.filter((f) => f.id !== item.id);
   }
 }
 function onInfo(item: MediaItem): void {
@@ -353,7 +344,7 @@ function onSeeAll(row: HomeRowConfig): void {
     />
 
     <!-- Favorites rail (Feature 17.5) — fed by api.listFavorites(); hidden when
-         empty; re-fetched when a favorite is toggled (favoriteSignature watch). -->
+         empty; patched locally on toggle (U-N5). -->
     <MediaRow
       v-if="showFavorites"
       title="Favorites"
