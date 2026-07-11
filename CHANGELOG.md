@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Fade timer ownership prevents premature garbage collection (UI-1.7)** — `fadeTimer` is stored at module/component scope rather than as a local variable, ensuring it cannot be garbage collected mid-fade. `onBeforeUnmount` clears the timer if the component unmounts while a fade is in progress. `fadeOutAndPause` clears any existing timer before starting a new one, making it idempotent and preventing duplicate timer accumulation.
+
 - **`timeupdate` no longer drives position state or resume eviction (UI-1.6)** — `setPositionState` is removed from the `timeupdate` handler and is now only called on genuine state-change events (`seeked`, `ratechange`, `durationchange`, `play`, `pause`). `saveResume` now calls `evictToCapacity` only when the media id is new to the resume map, not on every position update — eliminating continuous eviction scans during playback.
 
 - **AbortSignal + 60s timeout for transcode start/poll (UI-1.5)** — `start()` now creates an `AbortController` whose signal is threaded through to both the `post()` call (transcode start) and the `get()` call (poll). `cleanup()` aborts the controller and nulls it, cancelling any in-flight transcode initiation. The transcode client is constructed with `timeoutMs: 60000` (60 seconds, up from 15 seconds) to accommodate slower encodes. `api/client.ts` threads the signal through to the fetch layer so the entire start/poll cycle is abortable end-to-end.
