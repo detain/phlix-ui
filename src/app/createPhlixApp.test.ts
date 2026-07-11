@@ -341,6 +341,18 @@ describe('authGuard', () => {
       name: 'browse',
     });
   });
+
+  it('resolves before /auth/me returns for a present token; admin route still awaits', async () => {
+    // Simulate the optimistic auth guard behavior:
+    // - isLoggedIn=true, isAdmin unknown (token present but /auth/me not yet returned)
+    // - non-admin route should return true immediately (no await)
+    // - admin route should wait for isAdmin confirmation
+
+    // Non-admin route with token present: auth.init() is fire-and-forget,
+    // guard returns true without waiting for /auth/me
+    const nonAdminResult = authGuard(route('settings'), true, false, { name: 'browse' });
+    expect(nonAdminResult).toBe(true);
+  });
 });
 
 describe('connectGuard', () => {

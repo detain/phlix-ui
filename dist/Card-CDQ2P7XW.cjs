@@ -1,0 +1,2 @@
+const e=require("./_plugin-vue_export-helper-BTmtiIyf.cjs");let t=require("vue");var n=(0,t.defineComponent)({__name:`Card`,props:{padding:{type:Boolean,default:!0}},setup(e){return(n,r)=>((0,t.openBlock)(),(0,t.createElementBlock)(`div`,{class:(0,t.normalizeClass)([`phlix-card`,{"phlix-card--no-padding":!e.padding}])},[(0,t.renderSlot)(n.$slots,`default`,{},void 0,!0)],2))}}),r=e.t(n,[[`__scopeId`,`data-v-0e99c3b2`]]);Object.defineProperty(exports,"t",{enumerable:!0,get:function(){return r}});
+//# sourceMappingURL=Card-CDQ2P7XW.cjs.map

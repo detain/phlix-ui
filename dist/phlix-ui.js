@@ -16,7 +16,7 @@ import { n as _e, t as ve } from "./NetworkHealthIndicator-Dv2jrGVK.js";
 import { t as ye } from "./Spinner-BzsmsoQs.js";
 import { i as be, n as xe, r as Se, t as Ce } from "./Kbd-CucML1uh.js";
 import { a as we, i as Te, n as Ee, o as De, r as Oe, t as ke } from "./useLibrariesStore-mabc4pZx.js";
-import { n as Ae, t as je } from "./HomeRow-CAB6ALD_.js";
+import { n as Ae, t as je } from "./HomeRow-Cu_qHykY.js";
 import { a as Me, c as Ne, i as Pe, l as Fe, n as Ie, o as Le, r as Re, s as ze, t as Be, u as Ve } from "./useConnectionStore-BxMhAb3d.js";
 import { i as He, n as Ue, r as We, t as Ge } from "./usePageTitle-BO3GGF3M.js";
 import { t as w } from "./Button-Bi3-A35D.js";
@@ -30,10 +30,10 @@ import { t as E } from "./Skeleton-C0F2lCpC.js";
 import { t as D } from "./EmptyState-qUL7hIJh.js";
 import { t as $e } from "./PageHint-COMqJ-QX.js";
 import { t as et } from "./Tabs-hBBLSsVu.js";
-import { a as tt, i as nt, t as rt } from "./MediaCard-DBCDtyDU.js";
-import { t as it } from "./MediaGrid-D-V5xpxR.js";
-import { t as at } from "./MediaRow-DRR_0zWj.js";
-import { t as ot } from "./MediaDetail-bkEht-DA.js";
+import { a as tt, i as nt, t as rt } from "./MediaCard-g40amwmP.js";
+import { t as it } from "./MediaGrid-tlQJF4QM.js";
+import { t as at } from "./MediaRow-CvA16cL9.js";
+import { t as ot } from "./MediaDetail-BJLXvk_M.js";
 import { t as st } from "./MetadataMatchModal-DlmqGe0p.js";
 import { n as ct, t as lt } from "./metadata-sources-P5xX7_pw.js";
 import { n as ut, t as dt } from "./logs-DadTfaTq.js";
@@ -1113,12 +1113,12 @@ function hi(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-DFf8IqGG.js")
+			component: () => import("./BrowsePage-BTvIoNjh.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-Di31hi9u.js")
+			component: () => import("./MediaDetailPage-kcPt5cQi.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -1128,7 +1128,7 @@ function hi(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-D06oNNFA.js")
+			component: () => import("./LibraryPage-DZGX9bKj.js")
 		},
 		{
 			path: `${t}/player/:id`,
@@ -1163,13 +1163,13 @@ function hi(e) {
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-DMKy3T-A.js")
+			component: () => import("./ExplorePage-DMFQNe6u.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-NZP1E0_u.js")
+			component: () => import("./RecommendationsPage-CFIQ4S4w.js")
 		},
 		{
 			path: `${t}/history`,
