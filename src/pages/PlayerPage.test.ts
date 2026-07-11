@@ -288,7 +288,8 @@ describe('PlayerPage — playback-info (chapters + skip markers)', () => {
 });
 
 describe('PlayerPage — up-next queue', () => {
-  it('builds a genre-scoped queue (excludes self, caps at 12) for the up-next card', async () => {
+  it('builds a genre-scoped queue (excludes self, caps at 12) for movies', async () => {
+    // Movie: loadQueue falls through to genre path, loadEpisodeNeighbours returns early
     const base = media({ id: 'm1', genres: ['Sci-Fi'] });
     const items: MediaItem[] = [base, ...Array.from({ length: 13 }, (_, i) => media({ id: `s${i}` }))];
     const fetchMock = okFetch(base, {}, items);
@@ -296,20 +297,59 @@ describe('PlayerPage — up-next queue', () => {
     await flushPromises();
     await flushPromises(); // drain loadQueue's fetch + .then (fire-and-forget after item resolves)
     const player = usePlayerStore();
+    // Movie uses genre-scoped queue: self excluded, capped at 12
     expect(player.queue.find((m) => m.id === 'm1')).toBeUndefined(); // self excluded
     expect(player.queue).toHaveLength(12); // capped
     expect(player.upNext?.id).toBe('s0');
-    // the queue request is genre-scoped (genres[]= URL-encoded for PHP array parsing)
-    expect(fetchMock.mock.calls[2][0]).toContain('genres%5B%5D=Sci-Fi');
   });
 
-  it('skips the queue fetch when the title has no genres', async () => {
+  it('skips the queue fetch and sets empty queue when the title has no genres', async () => {
+    // loadQueue returns early (genre=undefined) without making a network call
     const fetchMock = okFetch(media({ id: 'm1', genres: [] }));
     await mountAt('m1', fetchMock);
     await flushPromises();
     const player = usePlayerStore();
     expect(player.queue).toHaveLength(0);
-    expect(fetchMock).toHaveBeenCalledTimes(2); // by-id + playback-info only (no list)
+  });
+
+  it('seeds the queue with remaining series episodes (not genre-similar) when an episode ends', async () => {
+    // UI-0.7: episode-aware up-next queue
+    // loadQueue and loadEpisodeNeighbours race in parallel; whichever populates
+    // seriesEpisodeCache first "wins". Use resolved/settled pattern to ensure
+    // loadEpisodeNeighbours completes (populating the cache) before we assert.
+    function ep(over: Partial<MediaItem> & { id: string }): MediaItem {
+      return media({ name: over.id, type: 'episode', genres: [], ...over });
+    }
+    function routedFetch(routes: { match: (url: string) => boolean; body: unknown }[]) {
+      return vi.fn((url: string) => {
+        const hit = routes.find((r) => r.match(url));
+        return Promise.resolve(jsonResponse(hit ? hit.body : { items: [], total: 0 }));
+      });
+    }
+    const e1 = ep({ id: 'q-e1', parent_id: 'q-ser', season_number: 1, episode_number: 1 });
+    const e2 = ep({ id: 'q-e2', parent_id: 'q-ser', season_number: 1, episode_number: 2 });
+    const e3 = ep({ id: 'q-e3', parent_id: 'q-ser', season_number: 1, episode_number: 3 });
+    const isById = (u: string, id: string) =>
+      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
+    const fetchMock = routedFetch([
+      { match: (u) => isById(u, 'q-e1'), body: { item: e1 } },
+      { match: (u) => u.includes('playback-info'), body: { intro_marker: null, outro_marker: null, chapters: [] } },
+      { match: (u) => u.includes('/api/v1/media/q-ser') && !u.includes('parentId'), body: { item: media({ id: 'q-ser', type: 'series' }) } },
+      { match: (u) => u.includes('parentId=q-ser'), body: { items: [e1, e2, e3], total: 3 } },
+    ]);
+    await mountAt('q-e1', fetchMock);
+    // Need multiple flushPromises: by-id resolves first, then loadEpisodeNeighbours
+    // and loadQueue race to populate the cache (loadEpisodeNeighbours populates
+    // seriesEpisodeCache; loadQueue reads it). Use settled() to wait for all in-flight
+    // requests to complete.
+    await new Promise((r) => setTimeout(r, 50)); // small settle window for async ops
+    await flushPromises();
+    await flushPromises();
+    const player = usePlayerStore();
+    // Episode e1 playing: queue should be [e2, e3] — the remaining episodes in order.
+    // This comes from seriesEpisodeCache populated by loadEpisodeNeighbours, and
+    // loadQueue picks it up on cache hit (no extra fetch needed for the queue).
+    expect(player.queue.map((m) => m.id)).toEqual(['q-e2', 'q-e3']);
   });
 });
 

@@ -182,19 +182,45 @@ function toMarker(m: ServerMarker | null | undefined): TimeMarker | null {
   return m ? { start: m.start_seconds, end: m.end_seconds } : null;
 }
 
-/** Genre-scoped "up next" queue so the end-of-video up-next card + autoplay have
- *  something to advance to. Non-fatal: a missing queue just disables up-next. The
- *  pinned controller makes a superseded fetch (rapid player→player nav) a no-op. */
+/** Episode-aware "up next" queue — when an episode finishes, the up-next card
+ *  advances through the remaining series episodes in playback order; for movies
+ *  it falls back to a genre-similar queue. Non-fatal: a missing queue just
+ *  disables up-next. The pinned controller makes a superseded fetch (rapid
+ *  player→player nav) a no-op. */
 async function loadQueue(client: ApiClient, base: MediaItem): Promise<void> {
+  // Pin the controller for THIS load so a superseded queue fetch (rapid player→player
+  // nav) can't clobber the newer one — mirrors MediaDetailPage.loadSimilar.
+  const myController = controller;
+  const stale = () => disposed || myController !== controller;
+
+  // Episode path: use the already-cached whole-series episode list populated by
+  // loadEpisodeNeighbours. Remaining episodes are those AFTER the current one.
+  const isEpisode = base.type === 'episode' || (base.episode_number ?? null) !== null;
+  if (isEpisode) {
+    for (const ordered of seriesEpisodeCache.values()) {
+      if (ordered.some((e) => e.id === base.id)) {
+        if (stale()) return;
+        const idx = ordered.findIndex((e) => e.id === base.id);
+        const remaining = ordered.slice(idx + 1);
+        if (remaining.length) {
+          player.setQueue(remaining);
+          return;
+        }
+        // Last episode in series — fall through to genre queue
+        break;
+      }
+    }
+    // Cache miss: loadEpisodeNeighbours is fetching the series tree in parallel;
+    // when it completes it will set the queue (UI-0.7). We fall through to the
+    // genre queue as a placeholder until then — non-fatal if up-next is empty.
+  }
+
+  // Movie / episode-last / episode-cache-miss path: genre-scoped fallback queue.
   const genre = base.genres?.[0];
   if (!genre) {
     player.setQueue([]);
     return;
   }
-  // Pin the controller for THIS load so a superseded queue fetch (rapid player→player
-  // nav) can't clobber the newer one — mirrors MediaDetailPage.loadSimilar.
-  const myController = controller;
-  const stale = () => disposed || myController !== controller;
   try {
     const url = buildMediaUrl(apiBase.value, { genres: [genre], limit: 13, sort: 'rating', order: 'desc' });
     const res = await client.get<MediaListResponse>(url, undefined, myController?.signal);
@@ -288,6 +314,12 @@ async function loadEpisodeNeighbours(client: ApiClient, base: MediaItem): Promis
     const ordered = orderEpisodesForPlayback(children);
     if (ordered.length) seriesEpisodeCache.set(root.id, ordered);
     applyNeighbours(ordered, base.id);
+    // UI-0.7: seed the queue with the remaining episodes in series order.
+    // When loadQueue runs in parallel it may set a genre placeholder first;
+    // this call replaces it with the authoritative episode-ordered queue.
+    const idx = ordered.findIndex((e) => e.id === base.id);
+    const remaining = ordered.slice(idx + 1);
+    if (remaining.length) player.setQueue(remaining);
   } catch (e) {
     if (stale() || isAbort(e)) return;
     prevEp.value = null;
