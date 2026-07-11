@@ -131,13 +131,11 @@ const continueItems = computed<MediaItem[]>(() => {
 // (api.listFavorites → { items, limit, offset }; NO total). It is hidden when
 // empty (no favorites → the section renders nothing, via v-if + hideWhenEmpty).
 //
-// Refresh-on-toggle: favoriting/unfavoriting happens through
-// `useUserItemDataStore.toggleFavorite` (optimistic). The store's reactive
-// `entries` map is the single source of truth, so we derive a signature of the
-// currently-favorited ids from it and re-fetch the rail whenever that set
-// changes — so an un-favorited item drops off (and a newly favorited one shows
-// up) on the next fetch. We also hydrate the fetched items into the store so
-// each card's bookmark reflects the correct state.
+// Optimistic local-patch: `useUserItemDataStore.toggleFavorite` (called by MediaCard)
+// already mutates the store optimistically. The `watchlist` event from the card
+// (back-compat relay) is handled by `onWatchlist` which adds/removes the item from
+// `favoriteItems` in-place — no refetch. The rail refreshes only on page (re)entry
+// via `onMounted` → `loadFavorites()`.
 const FAVORITES_LIMIT = 24;
 const favoriteItems = ref<MediaItem[]>([]);
 const favoritesLoading = ref(false);
