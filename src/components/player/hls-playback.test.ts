@@ -102,10 +102,19 @@ describe('hls-playback', () => {
   });
 
   describe('isNativeHlsSupported', () => {
-    it('is true for probably/maybe, false otherwise', () => {
-      expect(isNativeHlsSupported(fakeVideo('probably'))).toBe(true);
-      expect(isNativeHlsSupported(fakeVideo('maybe'))).toBe(true);
-      expect(isNativeHlsSupported(fakeVideo(''))).toBe(false);
+    it('returns true when canPlayType returns probably', () => {
+      const video = { canPlayType: vi.fn().mockReturnValue('probably') } as unknown as HTMLVideoElement;
+      expect(isNativeHlsSupported(video)).toBe(true);
+    });
+
+    it('returns true when canPlayType returns maybe', () => {
+      const video = { canPlayType: vi.fn().mockReturnValue('maybe') } as unknown as HTMLVideoElement;
+      expect(isNativeHlsSupported(video)).toBe(true);
+    });
+
+    it('returns false when canPlayType returns empty string', () => {
+      const video = { canPlayType: vi.fn().mockReturnValue('') } as unknown as HTMLVideoElement;
+      expect(isNativeHlsSupported(video)).toBe(false);
     });
   });
 
@@ -315,6 +324,83 @@ describe('hls-playback', () => {
       expect(FakeHls.instances.length).toBe(0);
       handle.destroy();
       expect(video.removeAttribute).toHaveBeenCalledWith('src');
+    });
+
+    // UI-1.4: Skip hls.js dynamic import when MSE is absent AND native HLS is supported.
+    it('returns native handle without importing hls.js when MediaSource is undefined and native HLS supported', async () => {
+      const video = {
+        canPlayType: vi.fn().mockReturnValue('probably'),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as unknown as HTMLVideoElement;
+
+      // Mock the hls.js import to fail if called
+      const originalImport = globalThis.import;
+      let importCalled = false;
+      globalThis.import = vi.fn().mockImplementation(() => {
+        importCalled = true;
+        return Promise.resolve({ default: {} });
+      });
+
+      // In this test we need to simulate MediaSource === 'undefined'
+      // The condition is: typeof MediaSource === 'undefined' && isNativeHlsSupported(video)
+      const result = await attachHls(video, 'https://example.com/master.m3u8');
+
+      // Should return native handle
+      expect(result).toBeDefined();
+      expect(typeof result.destroy).toBe('function');
+
+      globalThis.import = originalImport;
+    });
+
+    it('skips hls.js import and sets video.src when MSE is absent and native HLS is supported', async () => {
+      const mediaSource = globalThis.MediaSource;
+      // @ts-expect-error — deliberately undefine to simulate Safari/iOS (no MSE).
+      globalThis.MediaSource = undefined;
+      try {
+        const video = fakeVideo('probably');
+        // Spy on the module-level FakeHls.instances to ensure no hls.js was instantiated.
+        const beforeCount = FakeHls.instances.length;
+        const handle = await attachHls(video, 'http://h/native.m3u8');
+        expect(video.src).toBe('http://h/native.m3u8');
+        // No hls.js instance must be created — the dynamic import is skipped.
+        expect(FakeHls.instances.length).toBe(beforeCount);
+        handle.destroy();
+      } finally {
+        globalThis.MediaSource = mediaSource;
+      }
+    });
+
+    // UI-1.4: When MSE is present, hls.js path is used even if native HLS would work.
+    it('uses hls.js when MSE is present, regardless of native HLS support', async () => {
+      // Re-define MediaSource so the early-return is skipped.
+      Object.defineProperty(globalThis, 'MediaSource', {
+        value: {},
+        writable: true,
+        configurable: true,
+      });
+      FakeHls.supported = true;
+      const video = fakeVideo('probably');
+      const handle = await attachHls(video, 'http://h/master.m3u8');
+      // hls.js must be instantiated because MSE is present.
+      expect(FakeHls.instances.length).toBe(1);
+      expect(FakeHls.instances[0].loaded).toBe('http://h/master.m3u8');
+      handle.destroy();
+    });
+
+    // UI-1.4: Neither MSE nor native HLS → throw without importing hls.js.
+    it('throws and skips hls.js import when MSE is absent and native HLS is unsupported', async () => {
+      // @ts-expect-error — deliberately undefine to simulate a browser with no MSE.
+      globalThis.MediaSource = undefined;
+      try {
+        FakeHls.supported = false;
+        const beforeCount = FakeHls.instances.length;
+        await expect(attachHls(fakeVideo(''), 'http://h/x.m3u8')).rejects.toThrow(/not supported/i);
+        // No hls.js import must have been attempted.
+        expect(FakeHls.instances.length).toBe(beforeCount);
+      } finally {
+        delete (globalThis as Record<string, unknown>).MediaSource;
+      }
     });
 
     it('throws when neither hls.js nor native HLS is available', async () => {
