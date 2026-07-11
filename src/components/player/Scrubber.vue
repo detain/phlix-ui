@@ -13,8 +13,8 @@
  * timestamp bubble). Pointer-events based so mouse + touch drag identically.
  *
  * Driven purely by props (position/duration/buffered/chapters/thumbnailAt) and
- * emits `seek` (seconds) live during a drag plus `scrub-start`/`scrub-end` so the
- * host can suspend chrome auto-hide. The slider owns its own keyboard contract
+ * emits `seek` (seconds) on drag-end and keyboard navigation, plus `scrub-start`/`scrub-end`
+ * so the host can suspend chrome auto-hide. The slider owns its own keyboard contract
  * (arrows ±5s, Home/End); the global player shortcut map is R3.3.
  */
 import { ref, computed } from 'vue';
@@ -107,7 +107,10 @@ function onPointerDown(e: PointerEvent): void {
   const r = ratioFromEvent(e);
   dragRatio.value = r;
   emit('scrub-start');
-  emit('seek', r * props.duration);
+  // NOTE: no emit('seek') here — preview renders from dragRatio without
+  // issuing a seek.  A single seek fires on scrub-end/release (X1: removes
+  // the load at source before server SV-4.2 and hub HB-4.9 wire the
+  // scrub→encode→cancel chain).
   e.preventDefault();
 }
 function onPointerMove(e: PointerEvent): void {
@@ -115,7 +118,8 @@ function onPointerMove(e: PointerEvent): void {
   hoverRatio.value = r;
   if (dragging.value) {
     dragRatio.value = r;
-    emit('seek', r * props.duration);
+    // NOTE: no emit('seek') here — preview updates instantly from dragRatio
+    // (compositor-only scaleX).  Seek fires only once on drag release (endDrag).
   }
 }
 function endDrag(e: PointerEvent): void {
@@ -126,6 +130,11 @@ function endDrag(e: PointerEvent): void {
   } catch {
     /* ignore */
   }
+  // Emit exactly one seek on release — this is the client end of the
+  // scrub→encode→cancel chain (X1).  Removing per-pointermove seeks removes
+  // the load at source before server SV-4.2 and hub HB-4.9 implement the
+  // backend cancellation.
+  emit('seek', dragRatio.value * props.duration);
   emit('scrub-end');
 }
 function onPointerEnter(): void {

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Scrubber: seek fires once on release, not during drag (UI-0.3)** — `onPointerDown` and `onPointerMove` no longer emit `seek`; only `endDrag` emits exactly one seek with the final drag position. This removes the per-pointermove seek storm at the source before the server (SV-4.2) and hub (HB-4.9) implement the scrub→encode→cancel chain backend. Preview (time bubble / thumbnail) still updates live from `dragRatio` via compositor-only `scaleX` transforms.
+
 - **MediaCard poster uses `<RouterLink custom>` for SPA navigation (UI-0.2)** — the poster's stretched link is now `<RouterLink :to="href" custom v-slot="{ navigate }">` wrapping a raw `<a :href>`. Left-click navigates via the Vue router (~100ms SPA transition) instead of causing a full-page reload; middle-click, right-click "Open in new tab", and copy-link still work because the raw `href` is preserved on the inner anchor. Falls back to a plain `<a :href>` when no router is injected (standalone mounts).
 
 ### Fixed
