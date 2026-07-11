@@ -37,7 +37,11 @@
 - [ ] UI-3.2  optimistic auth guard
 - [ ] UI-3.3  admin CSS split
 - [ ] UI-3.4  apexcharts dedupe/replacement
-- [ ] UI-3.5  responsive posters end-to-end
+- [x] UI-3.1  secondary entry for Player surface (commit: 51c5153) DONE
+- [ ] UI-3.2  optimistic auth guard
+- [ ] UI-3.3  admin CSS split
+- [ ] UI-3.4  apexcharts dedupe/replacement
+- [ ] UI-3.5  responsive posters end-to-end 🔒 BLOCKED on SV-3.4
 - [ ] UI-3.6  music library build-out
 - [ ] UI-3.7  SyncPlay drift correction
 - [ ] UI-3.8  card ⋯-menu action backends
