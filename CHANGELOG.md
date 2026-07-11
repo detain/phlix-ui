@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Composited hover/skeleton animations on compositor thread (UI-2.6)** — hover and skeleton loading transitions are now driven entirely by CSS `will-change`, `transform`, and `opacity` — compositor-only properties that never block the main thread. No JavaScript-driven animation logic was added; this is a pure CSS optimization for smoother 60fps hover states and skeleton pulse effects.
+
 - **Continue Watching driven by full MediaItem payloads from server (UI-2.3)** — `useResumeSync` now stores complete `MediaItem` objects from `GET /users/me/continue-watching` in `syncedItems`, replacing the previous rail-only summary. A `continueWatchingItems` getter exposes them for `BrowsePage`. A `visibilitychange` handler re-syncs with a 100ms debounce so the rail stays fresh when the tab returns to the foreground. `BrowsePage` consumes `continueWatchingItems` directly, eliminating the separate rail data-fetch step.
 
 - **Media store cache LRU-capped at 100 entries (UI-2.2)** — `CACHE_MAX = 100` constant added; `networkFetch()` now evicts the least-recently-used entry when the cache exceeds the cap, preventing unbounded memory growth during extended browsing sessions.
