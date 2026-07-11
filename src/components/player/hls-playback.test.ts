@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Hls from 'hls.js';
 import { attachHls, clampBandwidth, isNativeHlsSupported } from './hls-playback';
 

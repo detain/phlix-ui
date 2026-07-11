@@ -269,18 +269,18 @@ export async function canDecodeHevcInMp4(): Promise<boolean> {
   const mc = (navigator as Navigator & { mediaCapabilities?: MediaCapabilities }).mediaCapabilities;
 
   if (mc && typeof mc.decodingInfo === 'function') {
-    for (const codecString of HEVC_CODEC_STRINGS) {
-      try {
-        const result = await mc.decodingInfo({
-          type: 'media-source',
-          video: { contentType: codecString, width: 3840, height: 2160, bitrate: 50_000_000, framerate: 60 },
-        } as MediaDecodingConfiguration);
-        if (result.supported) return true;
-      } catch {
-        // try next string
-      }
+    // Probe with the base video/mp4 MIME type — the browser resolves codec support
+    // from its own internal tables; passing the full RFC 6381 string (hvc1…/hev1…)
+    // is invalid for VideoConfiguration.contentType and always throws.
+    try {
+      const result = await mc.decodingInfo({
+        type: 'media-source',
+        video: { contentType: 'video/mp4', width: 3840, height: 2160, bitrate: 50_000_000, framerate: 60 },
+      } as MediaDecodingConfiguration);
+      if (result.supported) return true;
+    } catch {
+      // decodingInfo failed — fall through to canPlayType
     }
-    return false;
   }
 
   // Fallback canPlayType
