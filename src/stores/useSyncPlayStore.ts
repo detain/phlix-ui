@@ -13,6 +13,9 @@ import { ref, computed } from 'vue';
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
 import { getSyncPlayApi, openSyncPlayConnection, closeSyncPlayConnection, sendSyncPlayCommand } from '../api/syncplay';
 
+/** Drift threshold in seconds beyond which we mark out-of-sync and seek. */
+export const SYNC_DRIFT_THRESHOLD_SECONDS = 2;
+
 export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   // ---- state --------------------------------------------------------------
   const currentRoom = ref<SyncPlayRoom | null>(null);
@@ -20,6 +23,12 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   const members = ref<SyncPlayUser[]>([]);
   const error = ref<string | null>(null);
   const isLoading = ref(false);
+  /** Local playback position reported by the Player (seconds). Updated by
+   *  Player.vue after each sync round so drift can be computed. */
+  const localPlaybackPosition = ref(0);
+  /** Monotonic capture of `Date.now()` (ms) at the moment we last received a
+   *  session update from the server — used to extrapolate expected position. */
+  let _lastDriftCaptureMs = 0;
 
   // ---- computed -----------------------------------------------------------
   const isInRoom = computed(() => currentSession.value !== null);
@@ -31,10 +40,33 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
 
   const onlineMembers = computed(() => members.value.filter((m) => m.isOnline));
 
+  /**
+   * Estimated playback drift in seconds — positive means local is AHEAD of where
+   * the server expects, negative means local is BEHIND. Only meaningful when
+   * playback is active; returns 0 while paused.
+   */
+  const driftAmount = computed<number>(() => {
+    const session = currentSession.value;
+    if (!session) return 0;
+    // Pause introduces arbitrary local position offset — cannot compute drift.
+    if (session.state === 'paused' || session.state === 'waiting') return 0;
+
+    const elapsedMs = Date.now() - _lastDriftCaptureMs;
+    const elapsedSec = elapsedMs / 1000;
+    // Expected server position = last known position + time elapsed × rate
+    const expectedPosition =
+      session.playbackPosition + elapsedSec * session.playbackRate;
+    const drift = localPlaybackPosition.value - expectedPosition;
+    return drift;
+  });
+
   const syncStatus = computed<'synced' | 'outOfSync' | 're-syncing'>(() => {
     if (!currentSession.value) return 'outOfSync';
-    // TODO: Implement actual sync drift detection based on server time vs local time
-    return isSynced.value ? 'synced' : 're-syncing';
+    if (currentSession.value.state === 'waiting') return 're-syncing';
+    if (Math.abs(driftAmount.value) > SYNC_DRIFT_THRESHOLD_SECONDS) {
+      return 'outOfSync';
+    }
+    return 'synced';
   });
 
   // ---- actions -----------------------------------------------------------
@@ -77,6 +109,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       // Then join the room
       const session = await api.joinRoom(roomId);
       currentSession.value = session;
+      _lastDriftCaptureMs = Date.now(); // anchor for drift computation
       // Update room with session info
       if (currentRoom.value) {
         currentRoom.value = {
@@ -144,6 +177,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
         break;
       case 'seek':
         if (command.position !== undefined) {
+          _lastDriftCaptureMs = Date.now();
           currentSession.value = {
             ...currentSession.value,
             playbackPosition: command.position,
@@ -153,6 +187,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       case 'sync':
         // Full state sync - update all fields
         if (command.position !== undefined) {
+          _lastDriftCaptureMs = Date.now();
           currentSession.value = {
             ...currentSession.value,
             playbackPosition: command.position,
@@ -200,6 +235,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       const api = getSyncPlayApi(apiBase);
       const session = await api.getState(currentSession.value.id);
       currentSession.value = session;
+      _lastDriftCaptureMs = Date.now(); // anchor for drift computation
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to refresh state';
       throw e;
@@ -228,6 +264,14 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     error.value = null;
   }
 
+  /**
+   * Update the local playback position reported by the Player.
+   * Called by Player.vue after each sync round so drift can be computed.
+   */
+  function updateLocalPosition(position: number): void {
+    localPlaybackPosition.value = position;
+  }
+
   return {
     // state
     currentRoom,
@@ -240,6 +284,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     isSynced,
     onlineMembers,
     syncStatus,
+    driftAmount,
     // actions
     createAndJoinRoom,
     joinRoom,
@@ -249,5 +294,6 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     refreshState,
     refreshMembers,
     clearError,
+    updateLocalPosition,
   };
 });

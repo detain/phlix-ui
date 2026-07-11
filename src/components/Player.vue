@@ -71,7 +71,7 @@ import {
 } from './player/captions';
 import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
 import { levelIndexForQuality, levelIndexForVariant, AUTO_QUALITY, ORIGINAL_QUALITY } from './player/quality';
-import { useSyncPlayStore } from '../stores/useSyncPlayStore';
+import { useSyncPlayStore, SYNC_DRIFT_THRESHOLD_SECONDS } from '../stores/useSyncPlayStore';
 import SyncPlayOverlay from './syncplay/SyncPlayOverlay.vue';
 import SyncPlayModal from './syncplay/SyncPlayModal.vue';
 import SyncPlayControls from './syncplay/SyncPlayControls.vue';
@@ -1154,7 +1154,7 @@ watch(
 );
 
 // SyncPlay: apply remote playback state (play/pause) from other members.
-// Position sync is handled by the store's periodic refresh.
+// When drift exceeds the threshold, seek to the server's playbackPosition.
 watch(
   () => syncPlay.currentSession,
   (session) => {
@@ -1165,6 +1165,12 @@ watch(
     } else if (session.state === 'paused') {
       videoRef.value?.pause();
       player.pause();
+    }
+    // Feed local position into the store so drift can be computed.
+    syncPlay.updateLocalPosition(player.position);
+    // Seek to server position when drift is too large (buffering hiccup recovery).
+    if (Math.abs(syncPlay.driftAmount) > SYNC_DRIFT_THRESHOLD_SECONDS) {
+      seekTo(session.playbackPosition);
     }
   },
 );
