@@ -579,5 +579,10 @@ export const useMediaStore = defineStore('media', () => {
         setLibraryId,
         setTopLevel,
         clearFilters,
+        // test helpers — not for production use
+        /** Exposes the internal cache Map for testing LRU eviction. */
+        get cache() { return cache; },
+        /** Exposes cacheKey for testing. */
+        cacheKey,
     };
 });

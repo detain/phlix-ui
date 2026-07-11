@@ -503,3 +503,51 @@ describe('useMediaStore — setSort per-field defaults', () => {
     expect(store.offset).toBe(0);
   });
 });
+
+describe('useMediaStore — LRU cache eviction', () => {
+  it('cache size stays at 100 after adding 101+ entries', async () => {
+    const store = useMediaStore();
+    store.limit = 3;
+
+    // Set up mock that returns unique content per call (by checking call order)
+    let callCount = 0;
+    fetchMock.mockImplementation((_url: string) => {
+      const i = callCount++;
+      return Promise.resolve(jsonResponse({ items: makeItems(`offset${i}`, 3), total: 303, limit: 3, offset: i * 3 }));
+    });
+
+    // Fill cache with 101 entries via prefetch (each with a unique offset → unique cache key)
+    for (let i = 0; i < 101; i++) {
+      await store.prefetch('', { offset: i * 3 });
+    }
+
+    expect(store.cache.size).toBe(100);
+  });
+
+  it('oldest entry (first inserted) is evicted when cache exceeds max capacity', async () => {
+    const store = useMediaStore();
+    store.limit = 3;
+
+    // Capture the first cache key that will be inserted (offset=0)
+    const firstKey = store.cacheKey({ ...store.queryParams, offset: 0 });
+
+    // Set up mock that returns unique content per call
+    let callCount = 0;
+    fetchMock.mockImplementation((_url: string) => {
+      const i = callCount++;
+      return Promise.resolve(jsonResponse({ items: makeItems(`offset${i}`, 3), total: 303, limit: 3, offset: i * 3 }));
+    });
+
+    // Fill cache with 101 entries
+    for (let i = 0; i < 101; i++) {
+      await store.prefetch('', { offset: i * 3 });
+    }
+
+    // The first-inserted key must have been evicted (LRU: oldest removed)
+    expect(store.cache.has(firstKey)).toBe(false);
+
+    // The most recent entry (offset=300) should still be in cache
+    const lastKey = store.cacheKey({ ...store.queryParams, offset: 300 });
+    expect(store.cache.has(lastKey)).toBe(true);
+  });
+});
