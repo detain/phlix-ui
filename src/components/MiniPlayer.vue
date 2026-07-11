@@ -18,18 +18,21 @@
  * The route-leave trigger that calls `store.showMiniPlayer()` lives in the
  * PlayerPage integration (R3.9); this component just renders the dock when asked.
  */
-import { computed, inject, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { PhlixAppConfig } from '../app/types';
 import Icon from './Icon.vue';
 import { useMessages } from '../composables/useMessages';
+import { attachHls } from './player/hls-playback';
+import type { HlsHandle } from './player/hls-playback';
 
 const emit = defineEmits<{ (e: 'expand', id: string): void }>();
 
 const player = usePlayerStore();
 const { t } = useMessages();
 const videoRef = ref<HTMLVideoElement | null>(null);
+const hlsHandle = ref<HlsHandle | null>(null);
 
 // Per-user favorite state (Feature 16.2). A SINGLE compact favorite toggle in the
 // dock (NOT the ThumbRating widget — the dock stays compact) bound to the current
@@ -52,7 +55,7 @@ function toggleFavorite(): void {
   void userItemData.toggleFavorite(id, phlixConfig?.apiBase ?? '');
 }
 
-const visible = computed(() => player.miniPlayer && !!player.current && !!player.streamUrl);
+const visible = computed(() => player.miniPlayer && !!player.current && (!!player.streamUrl || !!player.hlsMasterUrl));
 const title = computed(() => player.current?.name ?? '');
 const progressPct = computed(() => Math.max(0, Math.min(1, player.progress)));
 
@@ -89,6 +92,49 @@ function close(): void {
   player.closePlayer();
 }
 
+/** Set up HLS playback via hls.js when hlsMasterUrl is persisted from a transcoded session. */
+async function setupHls(): Promise<void> {
+  const v = videoRef.value;
+  if (!v || !player.hlsMasterUrl) return;
+  // Destroy any previous handle before creating a new one.
+  hlsHandle.value?.destroy();
+  hlsHandle.value = null;
+  hlsHandle.value = await attachHls(v, player.hlsMasterUrl, {
+    startPosition: player.position,
+    onReady: () => {
+      const video = videoRef.value;
+      if (!video) return;
+      video.volume = player.volume;
+      video.muted = player.muted;
+      video.playbackRate = player.rate;
+      if (player.playing) void video.play()?.catch(() => {});
+    },
+  });
+}
+
+/** Watch visible to attach HLS when the dock becomes active with a transcoded session. */
+watch(
+  () => visible.value,
+  async (v) => {
+    if (!v) {
+      // Tear down HLS when hiding — the handle keeps fetching segments if left alive.
+      hlsHandle.value?.destroy();
+      hlsHandle.value = null;
+      return;
+    }
+    // Only use HLS when streamUrl is absent but hlsMasterUrl is present (transcoded session).
+    if (!player.hlsMasterUrl || !!player.streamUrl) return;
+    await setupHls();
+  },
+);
+
+// Also try to attach HLS on mount in case visible was already true (e.g. store state restored).
+onMounted(async () => {
+  if (visible.value && player.hlsMasterUrl && !player.streamUrl) {
+    await setupHls();
+  }
+});
+
 // reflect a store play/pause (e.g. from OS media keys) onto the mini element
 watch(
   () => player.playing,
@@ -121,6 +167,8 @@ watch(
 
 // pause our element if the dock is torn down while still playing
 onBeforeUnmount(() => {
+  hlsHandle.value?.destroy();
+  hlsHandle.value = null;
   videoRef.value?.pause?.();
 });
 </script>
@@ -131,7 +179,7 @@ onBeforeUnmount(() => {
       <video
         ref="videoRef"
         class="mini__video"
-        :src="player.streamUrl"
+        :src="player.hlsMasterUrl ? '' : player.streamUrl"
         :poster="player.current?.poster_url ?? undefined"
         preload="metadata"
         playsinline

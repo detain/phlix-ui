@@ -17,6 +17,7 @@
 import { ref, type Ref } from 'vue';
 import { ApiClient } from '../api/client';
 import { LocalStorageTokenStore } from '../api/tokenStore';
+import { usePlayerStore } from '../stores/usePlayerStore';
 import { attachHls as defaultAttach, type AttachHlsOptions, type HlsAudioTrack, type HlsHandle, type HlsLevel } from '../components/player/hls-playback';
 import {
   isFailedStatus,
@@ -286,6 +287,14 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       // Auto) and a manifest that parsed before this point.
       syncLevelState();
       syncAudioTrackState();
+      // Persist the resolved HLS master URL so the mini-player can continue
+      // a transcoded title when the user docks away from the full player.
+      try {
+        const playerStore = usePlayerStore();
+        playerStore.hlsMasterUrl = masterUrl;
+      } catch {
+        /* store not available (e.g. test environment without Pinia) — ignore */
+      }
       state.value = 'ready';
     } catch {
       if (!cancelled) {

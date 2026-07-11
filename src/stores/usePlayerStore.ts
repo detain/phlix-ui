@@ -105,6 +105,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   const quality = ref(prefs.defaultQuality);
   const subtitleLang = ref<string | null>(prefs.defaultSubtitleLang);
 
+  const hlsMasterUrl = ref('');
   const miniPlayer = ref(false);
   const resumeMap = ref<Record<string, number>>(readResumeMap());
   /** INTERNAL per-id last-touched timestamps (epoch ms) driving LRU eviction of the
@@ -384,6 +385,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     miniPlayer.value = false;
     current.value = null;
     streamUrl.value = '';
+    hlsMasterUrl.value = '';
   }
 
   // ---- Media Session ------------------------------------------------------
@@ -460,6 +462,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     rate,
     quality,
     subtitleLang,
+    hlsMasterUrl,
     miniPlayer,
     resumeMap,
     lastCommand,
