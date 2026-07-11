@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`timeupdate` no longer drives position state or resume eviction (UI-1.6)** — `setPositionState` is removed from the `timeupdate` handler and is now only called on genuine state-change events (`seeked`, `ratechange`, `durationchange`, `play`, `pause`). `saveResume` now calls `evictToCapacity` only when the media id is new to the resume map, not on every position update — eliminating continuous eviction scans during playback.
+
 - **AbortSignal + 60s timeout for transcode start/poll (UI-1.5)** — `start()` now creates an `AbortController` whose signal is threaded through to both the `post()` call (transcode start) and the `get()` call (poll). `cleanup()` aborts the controller and nulls it, cancelling any in-flight transcode initiation. The transcode client is constructed with `timeoutMs: 60000` (60 seconds, up from 15 seconds) to accommodate slower encodes. `api/client.ts` threads the signal through to the fetch layer so the entire start/poll cycle is abortable end-to-end.
 
 - **Skip hls.js download on native-HLS-only browsers (UI-1.4)** — `attachHls()` now checks for native HLS support and the absence of MSE before triggering the `import('hls.js')` dynamic import. On Safari/iOS where `MediaSource === 'undefined'` but `isNativeHlsSupported(video)` is true, the function returns the native HLS handle immediately — skipping the 641 KB hls.js chunk download entirely.
