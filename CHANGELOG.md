@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Media store cache LRU-capped at 100 entries (UI-2.2)** — `CACHE_MAX = 100` constant added; `networkFetch()` now evicts the least-recently-used entry when the cache exceeds the cap, preventing unbounded memory growth during extended browsing sessions.
+
 - **Mini-player HLS support (UI-1.8)** — `hlsMasterUrl` added to `usePlayerStore` as a persisted ref, populated by `useHlsTranscode` after successful HLS attach and cleared in `closePlayer()`. `MiniPlayer.vue` now calls `attachHls(videoRef, player.hlsMasterUrl, ...)` when `hlsMasterUrl` is set, enabling transcoded sessions to play in the mini-player; direct-play sessions fall back to the raw `<video :src>` path.
 
 - **Fade timer ownership prevents premature garbage collection (UI-1.7)** — `fadeTimer` is stored at module/component scope rather than as a local variable, ensuring it cannot be garbage collected mid-fade. `onBeforeUnmount` clears the timer if the component unmounts while a fade is in progress. `fadeOutAndPause` clears any existing timer before starting a new one, making it idempotent and preventing duplicate timer accumulation.
