@@ -14,6 +14,8 @@ export default defineConfig({
         // dist/assets/ rather than base64-inlining them into style.css — keeps
         // CSS small and lets the self-hosted woff2 be cached + font-display:swap.
         assetsInlineLimit: 0,
+        // Allow CSS code splitting so admin.css can be a separate chunk.
+        cssCodeSplit: true,
         lib: {
             entry: resolve(__dirname, 'src/index.ts'),
             name: 'PhlixUi',
@@ -21,10 +23,17 @@ export default defineConfig({
             fileName: (format) => `phlix-ui.${format === 'es' ? 'js' : 'umd.cjs'}`,
             // Vite 8 names lib CSS after the package ("ui.css") by default; pin it
             // to style.css to keep the published `@phlix/ui/style.css` export stable.
+            // admin.css is a separate chunk loaded only by the admin section.
             cssFileName: 'style',
         },
         rollupOptions: {
-            external: ['vue', 'vue-router', 'pinia'],
+            external: ['vue', 'vue-router', 'pinia', 'apexcharts'],
+            // Admin CSS as a separate input entry — emits admin.css as its own
+            // chunk so it is only loaded when the admin section is navigated to.
+            input: {
+                style: resolve(__dirname, 'src/index.ts'),
+                admin: resolve(__dirname, 'src/admin/admin.css'),
+            },
             output: {
                 globals: {
                     vue: 'Vue',

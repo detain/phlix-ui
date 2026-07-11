@@ -1,0 +1,1 @@
+.phlix-spinner[data-v-736b299d]{color:var(--accent-text);display:inline-flex}.phlix-spinner__icon[data-v-736b299d]{animation:.7s linear infinite phlix-spin-736b299d}@keyframes phlix-spin-736b299d{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.phlix-spinner__icon[data-v-736b299d]{animation-duration:1.6s}}

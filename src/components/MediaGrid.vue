@@ -157,6 +157,9 @@ function scheduleMeasure(): void {
 }
 
 // --- derived layout ---
+/** Guards visibleItems recompute: only re-slice when startIndex/endIndex change. */
+const prevWindow = ref<{ startIndex: number; endIndex: number; items: { item: MediaItem | null; index: number }[] } | null>(null);
+
 const columns = computed(() => computeColumns(containerWidth.value, cardSize.value, COL_GAP));
 const rowHeight = computed(() =>
   computeRowHeight(computeCardWidth(containerWidth.value, columns.value, COL_GAP)),
@@ -185,10 +188,21 @@ const visibleItems = computed(() => {
     return props.items.map((item, index) => ({ item: item as MediaItem | null, index }));
   }
   const { startIndex, endIndex } = windowResult.value;
+  // Gating on integer indices: skip recompute when the window hasn't moved.
+  // The scrollTop ref updates on every tick, but startIndex/endIndex only
+  // change when the row band actually shifts — no point re-slicing the array.
+  if (
+    prevWindow.value &&
+    prevWindow.value.startIndex === startIndex &&
+    prevWindow.value.endIndex === endIndex
+  ) {
+    return prevWindow.value.items;
+  }
   const out: { item: MediaItem | null; index: number }[] = [];
   // Indices past the loaded set render as skeletons (pre-sized grid); they fill
   // in once on-demand paging fetches them.
   for (let i = startIndex; i < endIndex; i++) out.push({ item: props.items[i] ?? null, index: i });
+  prevWindow.value = { startIndex, endIndex, items: out };
   return out;
 });
 

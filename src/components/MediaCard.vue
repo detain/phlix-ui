@@ -125,16 +125,29 @@ const isWatched = computed(() => userItemData.isWatched(props.item.id));
 
 const menuOpen = ref(false);
 
+/** Gates the action-row DOM (saves ~400 button instances in a 40-card window). */
+const hovered = ref(false);
+const focused = ref(false);
+
 const isSeriesOrSeason = computed(() => props.item.type === 'series' || props.item.type === 'season');
 
-const menuItems = computed(() =>
-  buildMediaItemMenu(props.item, {
+/**
+ * Menu items built lazily — computed ONLY when menuOpen is true (Menu mounts).
+ * A 40-card window was eagerly building ~400 Menu instances (10 buttons each)
+ * even though only a handful are ever opened; this defers the build until the
+ * user actually clicks ⋯ on a card. The void isAdmin.value forces Vue to track
+ * isAdmin as a dependency so the menu refreshes if admin status changes mid-open.
+ */
+const menuItems = computed(() => {
+  void isAdmin.value;
+  if (!menuOpen.value) return [] as ReturnType<typeof buildMediaItemMenu>;
+  return buildMediaItemMenu(props.item, {
     isAdmin: isAdmin.value,
     isWatched: isWatched.value,
     isSeriesOrSeason: isSeriesOrSeason.value,
     canChoosePoster: isAdmin.value,
-  }),
-);
+  });
+});
 
 function onMenuSelect(menuItem: { label: string }): void {
   const L = MENU_LABELS;
@@ -248,7 +261,13 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 </script>
 
 <template>
-  <article class="media-card" @pointerenter="prefetchTarget" @focusin="prefetchTarget">
+  <article
+    class="media-card"
+    @pointerenter="hovered = true; prefetchTarget()"
+    @pointerleave="hovered = false"
+    @focusin="focused = true; prefetchTarget()"
+    @focusout="focused = false"
+  >
     <div class="media-card__poster">
       <!-- SPA navigation via RouterLink (intercepts left-click for ~100ms SPA nav);
            falls back to plain anchor when router is unavailable (standalone mounts).
@@ -319,7 +338,9 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           row. Every button uses @click.stop.prevent so it never falls through to
           the card's stretched info link.
         -->
-        <div v-if="!hideActions" class="media-card__actions">
+        <!-- The action row is gated: not rendered until hover/focus, saving ~400
+             button instances in a 40-card window from mounting invisible DOM. -->
+        <div v-if="!hideActions && (hovered || focused)" class="media-card__actions">
           <!-- [ Play ] -->
           <button
             type="button"

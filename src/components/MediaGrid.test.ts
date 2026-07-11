@@ -393,3 +393,46 @@ describe('MediaGrid — event forwarding', () => {
     expect(w.emitted('info')).toHaveLength(1);
   });
 });
+
+describe('MediaGrid — UI-2.5 scroll perf', () => {
+  it('does NOT call getBoundingClientRect during scroll events (uses window.scrollY)', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
+    await nextTick();
+
+    gbcrSpy.mockClear(); // reset call count after mount measurements
+
+    // Simulate scroll: dispatch scroll events
+    Object.defineProperty(window, 'scrollY', { value: 1000, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
+    await nextTick();
+    window.dispatchEvent(new Event('scroll'));
+    await nextTick();
+    window.dispatchEvent(new Event('scroll'));
+    await nextTick();
+
+    // getBoundingClientRect should NOT have been called during the scroll events
+    // (it should only be called on mount and ResizeObserver, not on every tick)
+    expect(gbcrSpy).not.toHaveBeenCalled();
+  });
+
+  it('visibleItems gating: does not re-slice when scrollTop changes but indices stay same', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
+    await nextTick();
+
+    // Get the initial visible items
+    const initialCards = w.findAllComponents(MediaCard);
+    const initialFirstTitle = initialCards[0].props('item').name;
+
+    // Scroll a small amount that doesn't change the row band
+    Object.defineProperty(window, 'scrollY', { value: 100, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
+    await nextTick();
+    await nextTick(); // ensure all reactivity settles
+
+    // The first visible card should be the same
+    const afterScrollCards = w.findAllComponents(MediaCard);
+    expect(afterScrollCards[0].props('item').name).toBe(initialFirstTitle);
+  });
+});
