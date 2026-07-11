@@ -446,14 +446,31 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   border-radius: var(--radius-lg);
   background: var(--surface-2);
   isolation: isolate;
-  transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+/* Shadow layer: box-shadow lives here; only opacity is animated (compositor-only,
+   avoids per-frame paint on hover). pointer-events: none ensures clicks pass through. */
+.media-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+  box-shadow: var(--shadow-4);
+  pointer-events: none;
+  z-index: -1;
 }
 .media-card:hover,
 .media-card:focus-within {
   transform: translateY(-8px) scale(1.025);
-  box-shadow: var(--shadow-4);
 }
-.media-card:focus-within {
+.media-card:hover::after,
+.media-card:focus-within::after {
+  opacity: 1;
+}
+/* Focus ring: additive on top of shadow for :focus-within */
+.media-card:focus-within::after {
   box-shadow: var(--shadow-4), 0 0 0 3px var(--accent-ring);
 }
 

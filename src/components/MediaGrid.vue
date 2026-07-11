@@ -101,53 +101,47 @@ const containerWidth = ref(0);
 const viewportHeight = ref(0);
 const scrollTop = ref(0); // grid-top scrolled above viewport top (≥ 0)
 
-// Throttle scroll measurements to avoid calling getBoundingClientRect on every
-// scroll event (which can fire hundreds of times per second). We use a timestamp
-// check rather than rAF because Firefox aggressively throttles rAF during
+/**
+ * Cached offset of the sizer element's top edge from the document top (px).
+ * Invalidated by the ResizeObserver (layout changes) and recomputed in measure().
+ * Using this instead of getBoundingClientRect() per scroll tick eliminates a
+ * forced layout read on every scroll event — critical on low-end devices.
+ */
+let sizerTop = 0;
+
+// Throttle scroll measurements to avoid measuring on every scroll tick
+// (scroll can fire hundreds of times per second). We use a timestamp check
+// rather than rAF because Firefox aggressively throttles rAF during
 // scrolling, causing the window position to "freeze" visually.
 let lastScrollMeasureTime = 0;
-let trailingScrollTimer: ReturnType<typeof setTimeout> | null = null;
 const SCROLL_MEASURE_THROTTLE_MS = 16;
 
 function measure(): void {
   const el = sizerEl.value;
-  if (!el || typeof el.getBoundingClientRect !== 'function') return;
-  const rect = el.getBoundingClientRect();
-  if (rect.width > 0) containerWidth.value = rect.width;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
   if (vh > 0) viewportHeight.value = vh;
-  scrollTop.value = Math.max(0, -rect.top);
+  // getBoundingClientRect is only called here (on mount and ResizeObserver),
+  // NOT on every scroll tick — scrollTop is derived from window.scrollY instead.
+  if (el && typeof el.getBoundingClientRect === 'function') {
+    const rect = el.getBoundingClientRect();
+    if (rect.width > 0) containerWidth.value = rect.width;
+    sizerTop = typeof window !== 'undefined' ? window.scrollY + rect.top : 0;
+  }
 }
 
-// Throttled scroll handler — at most one measure() per SCROLL_MEASURE_THROTTLE_MS,
-// leading-edge. A trailing-edge measure() is also scheduled so the FINAL scroll
-// position within (or right after) a throttle window is never dropped — without
-// this, a scroll event that lands inside the throttle window and is the last one
-// fired (e.g. scrolling stops immediately after) would never get measured, leaving
-// the virtualization window stale/frozen at an intermediate position.
+/**
+ * Scroll handler: reads window.scrollY directly (no getBoundingClientRect).
+ * sizerTop is cached and updated only by measure() (ResizeObserver fires on
+ * layout changes, keeping the cache valid for the scroll-driven case).
+ */
 function throttledMeasure(): void {
   const now = performance.now();
   if (now - lastScrollMeasureTime >= SCROLL_MEASURE_THROTTLE_MS) {
     lastScrollMeasureTime = now;
-    if (trailingScrollTimer !== null) {
-      clearTimeout(trailingScrollTimer);
-      trailingScrollTimer = null;
-    }
+    // scrollTop derived from cached sizerTop — no layout read needed.
+    scrollTop.value = typeof window !== 'undefined' ? Math.max(0, window.scrollY - sizerTop) : 0;
     measure();
-    return;
   }
-  // Inside the throttle window — schedule (or refresh) a trailing call so the
-  // last position still gets measured once the window elapses.
-  if (trailingScrollTimer !== null) clearTimeout(trailingScrollTimer);
-  const remaining = SCROLL_MEASURE_THROTTLE_MS - (now - lastScrollMeasureTime);
-  trailingScrollTimer = setTimeout(
-    () => {
-      trailingScrollTimer = null;
-      lastScrollMeasureTime = performance.now();
-      measure();
-    },
-    Math.max(0, remaining),
-  );
 }
 
 // rAF-coalesced scroll/resize so we measure at most once per frame.
@@ -262,10 +256,9 @@ function backToTop(): void {
  * pre-sized grid (on-demand paging fills the destination once it's in view).
  */
 function scrollToIndex(index: number): void {
-  if (typeof window === 'undefined' || !sizerEl.value) return;
+  if (typeof window === 'undefined') return;
   const cols = Math.max(1, columns.value);
   const rowY = Math.floor(Math.max(0, index) / cols) * rowHeight.value;
-  const sizerTop = window.scrollY + sizerEl.value.getBoundingClientRect().top;
   // Instant, not smooth: an A-Z jump can span thousands of rows — animating
   // through them is janky and would fetch every page flown past. Jump straight
   // to the target so a single settled-window `need-range` loads that letter.
@@ -349,10 +342,6 @@ onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('scroll', throttledMeasure);
     window.removeEventListener('resize', scheduleMeasure);
-  }
-  if (trailingScrollTimer !== null) {
-    clearTimeout(trailingScrollTimer);
-    trailingScrollTimer = null;
   }
   if (frame) {
     if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame);
@@ -476,29 +465,56 @@ watch(
 .skel-card {
   display: block;
 }
+/* Shimmer via transform (compositor-only) instead of background-position
+   (which triggers per-frame paint). The pseudo-element slides across. */
 .skel-poster {
+  position: relative;
   aspect-ratio: 2 / 3;
   border-radius: var(--radius-lg, 12px);
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
-  background-size: 400% 100%;
-  animation: media-grid-shimmer 1.4s ease infinite;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.skel-poster::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--surface-3), transparent);
+  transform: translateX(-100%);
+  animation: media-grid-shimmer 1.4s ease-in-out infinite;
 }
 .skel-title,
 .skel-sub {
+  position: relative;
   height: 0.85em;
   margin-top: var(--space-3, 12px);
   border-radius: var(--radius-sm, 6px);
   background: var(--surface-2);
-  animation: media-grid-shimmer 1.4s ease infinite;
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
-  background-size: 400% 100%;
+  overflow: hidden;
+}
+.skel-title::before,
+.skel-sub::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--surface-3), transparent);
+  transform: translateX(-100%);
+  animation: media-grid-shimmer 1.4s ease-in-out infinite;
 }
 .skel-title { width: 75%; }
 .skel-sub { width: 45%; margin-top: var(--space-2, 8px); height: 0.7em; }
 
 @keyframes media-grid-shimmer {
-  0% { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Pause shimmer when many skeletons are visible (e.g., initial load) to reduce
+   GPU jank on low-power devices (TVs).  The host can set `skeleton-count-high`
+   via a class binding on the grid root when appropriate. */
+.media-grid--skeleton.paused .skel-poster::before,
+.media-grid--skeleton.paused .skel-title::before,
+.media-grid--skeleton.paused .skel-sub::before {
+  animation-play-state: paused;
 }
 
 /* --- empty state --- */
