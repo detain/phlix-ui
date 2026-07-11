@@ -27,11 +27,11 @@ import { t as E } from "./Skeleton-CzU_l53W.js";
 import { t as D } from "./EmptyState-588Z_81C.js";
 import { t as Ye } from "./PageHint-7Giwob0l.js";
 import { t as Xe } from "./Tabs-CZgtYptR.js";
-import { a as Ze, i as Qe, t as $e } from "./MediaCard-DdLF1Ai9.js";
-import { t as et } from "./MediaGrid-CRXHd3WT.js";
-import { t as tt } from "./MediaRow-BzBPBeRa.js";
-import { t as nt } from "./HomeRow-DP1rKC00.js";
-import { t as rt } from "./MediaDetail-KjgeNRrV.js";
+import { a as Ze, i as Qe, t as $e } from "./MediaCard-B_cPvcUh.js";
+import { t as et } from "./MediaGrid-BrJVl1G2.js";
+import { t as tt } from "./MediaRow-BvnCadf9.js";
+import { t as nt } from "./HomeRow-DS7nCk-C.js";
+import { t as rt } from "./MediaDetail-sHbPS30y.js";
 import { t as it } from "./MetadataMatchModal-COh5jLCO.js";
 import { n as at, t as ot } from "./metadata-sources-bxLQT4lm.js";
 import { n as st, t as ct } from "./logs-DadTfaTq.js";
@@ -1108,12 +1108,12 @@ function Ta(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-Ne8ZlHA7.js")
+			component: () => import("./BrowsePage-DYjeDzyH.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-DgsONtiP.js")
+			component: () => import("./MediaDetailPage-DpEz2bDp.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -1123,7 +1123,7 @@ function Ta(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CAyJ2jpS.js")
+			component: () => import("./LibraryPage-DJhoZ8kp.js")
 		},
 		{
 			path: `${t}/player/:id`,
@@ -1158,13 +1158,13 @@ function Ta(e) {
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-CPKSfBZH.js")
+			component: () => import("./ExplorePage-Cc_f-yCT.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-BKKkz9xu.js")
+			component: () => import("./RecommendationsPage-MAO1nHDT.js")
 		},
 		{
 			path: `${t}/history`,

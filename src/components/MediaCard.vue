@@ -21,6 +21,7 @@
  * reduced-motion safe.
  */
 import { computed, ref, onMounted, inject } from 'vue';
+import { RouterLink, routerKey } from 'vue-router';
 import Icon from './Icon.vue';
 import ThumbRating from './ThumbRating.vue';
 import Menu from './ui/Menu.vue';
@@ -106,6 +107,9 @@ const auth = useAuthStore();
 // `toggleFavorite(id, apiBase)` (the store keeps no global apiBase).
 const userItemData = useUserItemDataStore();
 const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+
+// Router instance for SPA navigation (null when router unavailable, e.g. standalone mounts).
+const router = inject(routerKey, null);
 
 /** Whether THIS item is currently favorited per the store (false when unknown). */
 const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
@@ -246,7 +250,15 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 <template>
   <article class="media-card" @pointerenter="prefetchTarget" @focusin="prefetchTarget">
     <div class="media-card__poster">
-      <a :href="href" class="media-card__link" :aria-label="item.name">
+      <!-- SPA navigation via RouterLink (intercepts left-click for ~100ms SPA nav);
+           falls back to plain anchor when router is unavailable (standalone mounts).
+           The raw anchor href is preserved so middle-click/SEO/copy-link work. -->
+      <RouterLink v-if="router" :to="href" custom v-slot="{ navigate }">
+        <a :href="href" class="media-card__link" :aria-label="item.name" @click.prevent="navigate">
+          <span class="visually-hidden">{{ item.name }}</span>
+        </a>
+      </RouterLink>
+      <a v-else :href="href" class="media-card__link" :aria-label="item.name">
         <span class="visually-hidden">{{ item.name }}</span>
       </a>
 

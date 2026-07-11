@@ -46,15 +46,15 @@ type __VLS_Props = {
      */
     subtitle?: string | null;
 };
-declare var __VLS_6: {
+declare var __VLS_12: {
     item: import("../types/media-item").MediaDetail;
-}, __VLS_55: {
+}, __VLS_61: {
     item: import("../types/media-item").MediaDetail;
 };
 type __VLS_Slots = {} & {
-    badges?: (props: typeof __VLS_6) => any;
+    badges?: (props: typeof __VLS_12) => any;
 } & {
-    actions?: (props: typeof __VLS_55) => any;
+    actions?: (props: typeof __VLS_61) => any;
 };
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: import("../types/media-item").MediaDetail) => any;

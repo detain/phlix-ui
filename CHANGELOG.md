@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **MediaCard poster uses `<RouterLink custom>` for SPA navigation (UI-0.2)** — the poster's stretched link is now `<RouterLink :to="href" custom v-slot="{ navigate }">` wrapping a raw `<a :href>`. Left-click navigates via the Vue router (~100ms SPA transition) instead of causing a full-page reload; middle-click, right-click "Open in new tab", and copy-link still work because the raw `href` is preserved on the inner anchor. Falls back to a plain `<a :href>` when no router is injected (standalone mounts).
+
 ### Fixed
 
 - **LibraryPage `onMarkWatched` no longer corrupts favorite state** — the handler was incorrectly calling `toggleFavorite` and branching on `isFavorite`, which had no connection to the watched axis that the card/menu already persisted before firing `mark-watched`. It now matches the `BrowsePage`/`MediaDetailPage` pattern: reads `isWatched` and reports the resulting state via toast only. (UI-0.1)
