@@ -54,6 +54,7 @@ import Spinner from './ui/Spinner.vue';
 import { api } from '../api/client';
 import {
   needsTranscode,
+  needsTranscodeWithCapabilities,
   isFatalMediaError,
   isNetworkMediaError,
   UPNEXT_COUNTDOWN_SECONDS,
@@ -209,6 +210,36 @@ const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
  *  synchronous so the preparing overlay paints on the first frame (no black
  *  flash); a fatal <video> error flips it at runtime. */
 const transcodeNeeded = ref(needsTranscode(props.streamUrl, props.media.path));
+
+/** Re-evaluates `transcodeNeeded` using MediaCapabilities codec probing once
+ *  playback-info audio tracks arrive from the server. The synchronous
+ *  extension-based `needsTranscode` already handles the common container cases;
+ *  this augments it with runtime codec support checks (E-AC-3 / AC-3 / DTS audio,
+ *  HEVC video) so the transcode path is chosen proactively instead of producing
+ *  a silent black frame that only errors after playback begins. */
+async function evaluateTranscodeWithCapabilities(): Promise<void> {
+  if (transcodeNeeded.value) return; // already flagged — no need to probe
+  const tracks = props.playbackAudioTracks ?? [];
+  if (tracks.length === 0) return;   // no audio track data yet
+  const needsTc = await needsTranscodeWithCapabilities(
+    [props.streamUrl, props.media.path],
+    tracks,
+  );
+  if (needsTc) transcodeNeeded.value = true;
+}
+
+// When playback-info audio tracks arrive, probe codec support and flip
+// transcodeNeeded if the browser can't decode the primary audio or video.
+// Tracks arrive asynchronously after the initial synchronous needsTranscode
+// check, so this catches late-arriving codec info that rules out direct play.
+watch(
+  () => props.playbackAudioTracks,
+  (tracks) => {
+    if (!tracks || tracks.length === 0) return;
+    void evaluateTranscodeWithCapabilities();
+  },
+  { immediate: false },
+);
 
 /** App config (provided by `createPhlixApp`). Read so the Player can thread the
  *  per-app hls.js overrides (`playerHlsConfig`, e.g. a TV's RAM tuning) into the
@@ -372,6 +403,8 @@ const nextItem = computed(() => player.upNext);
  *  any in-flight up-next — used when the media prop changes. */
 function evaluateForCurrentMedia(): void {
   transcodeNeeded.value = needsTranscode(props.streamUrl, props.media.path);
+  // Re-evaluate with runtime codec probing (E-AC-3 / AC-3 / HEVC).
+  void evaluateTranscodeWithCapabilities();
   resumeSeconds.value = player.resumePositionFor(props.media.id) ?? 0;
   showResume.value = !transcodeNeeded.value && resumeSeconds.value > 0;
   pendingSeek = null;

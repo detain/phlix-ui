@@ -101,6 +101,9 @@ export interface PlaybackAudioTrack {
   label: string;
   /** True for the source's default audio stream. */
   default: boolean;
+  /** Audio codec identifier from the server (e.g. 'aac', 'ac3', 'ec-3', 'dts').
+   *  Empty string when the server doesn't send codec info (older servers). */
+  codec?: string;
 }
 
 /**
@@ -118,12 +121,14 @@ export function parsePlaybackAudioTracks(value: unknown): PlaybackAudioTrack[] {
     const language = typeof o.language === 'string' ? o.language : '';
     const title = typeof o.title === 'string' ? o.title : '';
     const streamIndexRaw = o.stream_index ?? o.streamIndex;
+    const codec = typeof o.codec === 'string' ? o.codec : '';
     out.push({
       index,
       streamIndex: typeof streamIndexRaw === 'number' ? streamIndexRaw : index,
       language,
       label: title || language || `Audio ${index + 1}`,
       default: o.default === true,
+      codec,
     });
   }
   return out;
@@ -160,4 +165,176 @@ export function ringDashoffset(
   if (!(total > 0)) return circumference;
   const fraction = Math.max(0, Math.min(1, remaining / total));
   return circumference * (1 - fraction);
+}
+
+// ---- MediaCapabilities / codec probing (U-1.3) ------------------------------
+
+/** Maps server-side audio codec names to their RFC 6381 codec string parameter.
+ *  Unrecognised codecs return null (caller should treat as "unsupported"). */
+const AUDIO_CODEC_MAP: ReadonlyMap<string, string> = new Map([
+  ['aac', 'mp4a.40.2'],
+  ['aac-latm', 'mp4a.40.2'],
+  ['ac3', 'ac-3'],
+  ['eac3', 'ec-3'],
+  ['ec3', 'ec-3'],
+  ['dts', 'dtsc'],
+  ['dtshd', 'dtshd'],
+  ['mp3', 'mp4a.40.34'],
+  ['opus', 'opus'],
+  ['vorbis', 'vorbis'],
+  ['flac', 'flac'],
+  ['truehd', 'mlp'],
+]);
+
+/** Known HEVC profile/level strings to probe for HEVC-in-MP4 support.
+ *  These are broad enough to detect HEVC-capable browsers without needing
+ *  the exact server-sent profile/level. Probing fails gracefully in browsers
+ *  that don't support HEVC at all. */
+const HEVC_CODEC_STRINGS = [
+  'video/mp4; codecs="hvc1.1.4.L120.90"',   // HEVC Main 4.1 L120 (common)
+  'video/mp4; codecs="hev1.1.4.L120.90"',   // HEVC alternate hvc1/hev1 branding
+  'video/mp4; codecs="hvc1.1.6.L93.B0"',   // HEVC Main 4.1 L93
+  'video/mp4; codecs="hvc1.1.4.L120"',     // without tier
+] as const;
+
+/**
+ * Builds a `video/mp4; codecs="..."` string for the given audio codec, or null
+ * if the codec is not recognised. Suitable for both `decodingInfo()` and the
+ * `video.canPlayType()` fallback.
+ */
+export function buildAudioCodecString(
+  audioCodec: string,
+  containerMime = 'video/mp4',
+): string | null {
+  const codecParam = AUDIO_CODEC_MAP.get(audioCodec.toLowerCase());
+  if (!codecParam) return null;
+  return `${containerMime}; codecs="${codecParam}"`;
+}
+
+/**
+ * Checks whether the browser can decode a specific audio codec when wrapped in
+ * the given container, using `navigator.mediaCapabilities.decodingInfo()` where
+ * available and falling back to `HTMLVideoElement.prototype.canPlayType()`.
+ *
+ * Returns `true` for supported, `false` for unsupported, and `false` for any
+ * error (we do not throw on capability-probing failures — safe fallback is
+ * transcode).
+ */
+export async function canDecodeAudioCodec(
+  audioCodec: string,
+  containerMime = 'video/mp4',
+): Promise<boolean> {
+  if (!audioCodec) return true; // empty codec = no restriction
+
+  const fullMime = buildAudioCodecString(audioCodec, containerMime);
+  if (!fullMime) return false; // unknown codec = transcode
+
+  // Try MediaCapabilities API first (most accurate).
+  if (
+    typeof navigator !== 'undefined' &&
+    typeof (navigator as Navigator & { mediaCapabilities?: MediaCapabilities }).mediaCapabilities?.decodingInfo ===
+      'function'
+  ) {
+    try {
+      const mc = (navigator as Navigator & { mediaCapabilities: MediaCapabilities }).mediaCapabilities;
+      const result = await mc.decodingInfo({
+        type: 'media-source',
+        video: { contentType: containerMime, width: 1920, height: 1080, bitrate: 10_000_000, framerate: 30 },
+        audio: { contentType: fullMime, channels: 6, bitrate: 384_000, samplerate: 48_000 },
+      } as unknown as MediaDecodingConfiguration);
+      return result.supported;
+    } catch {
+      // decodingInfo threw — fall through to canPlayType
+    }
+  }
+
+  // Fallback: canPlayType on a detached video element.
+  if (typeof document !== 'undefined') {
+    const v = document.createElement('video');
+    const result = v.canPlayType(fullMime);
+    return result === 'probably' || result === 'maybe';
+  }
+
+  return false;
+}
+
+/**
+ * Probes HEVC-in-MP4 support by attempting to decode a known HEVC codec string.
+ * Returns `true` if HEVC appears to be decodable, `false` otherwise.
+ * Uses the same MediaCapabilities → canPlayType fallback chain.
+ */
+export async function canDecodeHevcInMp4(): Promise<boolean> {
+  if (typeof navigator === 'undefined') return false;
+
+  const mc = (navigator as Navigator & { mediaCapabilities?: MediaCapabilities }).mediaCapabilities;
+
+  if (mc && typeof mc.decodingInfo === 'function') {
+    for (const codecString of HEVC_CODEC_STRINGS) {
+      try {
+        const result = await mc.decodingInfo({
+          type: 'media-source',
+          video: { contentType: codecString, width: 3840, height: 2160, bitrate: 50_000_000, framerate: 60 },
+        } as MediaDecodingConfiguration);
+        if (result.supported) return true;
+      } catch {
+        // try next string
+      }
+    }
+    return false;
+  }
+
+  // Fallback canPlayType
+  if (typeof document !== 'undefined') {
+    const v = document.createElement('video');
+    for (const codecString of HEVC_CODEC_STRINGS) {
+      const result = v.canPlayType(codecString);
+      if (result === 'probably' || result === 'maybe') return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Combines the extension-based `needsTranscode` check with a runtime
+ * MediaCapabilities probe of the audio codecs listed in `playback-info`.
+ *
+ * Returns `true` (transcode recommended) if:
+ *   - the extension is a known non-web container, OR
+ *   - the browser cannot decode the primary audio codec (E-AC-3 / AC-3 / DTS, …), OR
+ *   - the source is an mp4 but HEVC is unsupported (black-flash guard).
+ *
+ * When `playbackAudioTracks` is empty the probe is skipped (no server data yet —
+ * the caller should watch for late audio-track arrival and re-evaluate).
+ *
+ * @param sources              - URL / path strings to check by extension.
+ * @param playbackAudioTracks - Parsed audio tracks from playback-info `audio_tracks`.
+ */
+export async function needsTranscodeWithCapabilities(
+  sources: (string | null | undefined)[],
+  playbackAudioTracks: PlaybackAudioTrack[],
+): Promise<boolean> {
+  // Extension check first — the cheap synchronous gate.
+  if (needsTranscode(...sources)) return true;
+
+  const ext = sources.map((s) => extensionOf(s)).find((e) => (DIRECT_PLAY_EXTENSIONS as readonly string[]).includes(e)) ?? '';
+  const containerMime = ext ? (`video/${ext}` as const) : 'video/mp4';
+
+  // If the file extension is a known direct-play container, probe the audio codecs.
+  if ((DIRECT_PLAY_EXTENSIONS as readonly string[]).includes(ext) && playbackAudioTracks.length > 0) {
+    // Check the primary (default) audio track's codec.
+    const primaryTrack = playbackAudioTracks.find((t) => t.default) ?? playbackAudioTracks[0];
+    if (primaryTrack?.codec) {
+      const canAudio = await canDecodeAudioCodec(primaryTrack.codec, containerMime);
+      if (!canAudio) return true;
+    }
+
+    // HEVC-in-MP4 black-flash guard.
+    if (ext === 'mp4' || ext === 'm4v') {
+      const canHevc = await canDecodeHevcInMp4();
+      if (!canHevc) return true;
+    }
+  }
+
+  return false;
 }
