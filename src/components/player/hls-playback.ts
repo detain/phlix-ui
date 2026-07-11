@@ -220,9 +220,38 @@ export async function attachHls(
   url: string,
   opts: AttachHlsOptions = {},
 ): Promise<HlsHandle> {
-  // Native HLS (Safari) — set the src directly; cheapest path, no extra JS.
+  // Native HLS (Safari/iOS) — set the src directly; cheapest path, no extra JS.
   // hls.js is preferred elsewhere because it gives consistent buffer/error
   // control, but where MSE is unavailable native is the only option.
+  // Skip the 641 KB hls.js download when the browser has native HLS but no MSE.
+  if (typeof MediaSource === 'undefined' && isNativeHlsSupported(video)) {
+    const onLoaded = (): void => opts.onReady?.();
+    const onErr = (): void => opts.onError?.('native hls error');
+    video.addEventListener('loadedmetadata', onLoaded);
+    video.addEventListener('error', onErr);
+    video.src = url;
+    if (opts.startPosition) video.currentTime = opts.startPosition;
+    return {
+      destroy(): void {
+        video.removeEventListener('loadedmetadata', onLoaded);
+        video.removeEventListener('error', onErr);
+        video.removeAttribute('src');
+        video.load();
+      },
+      levels: [],
+      getCurrentLevel: () => -1,
+      setCurrentLevel: () => undefined,
+      setNextLevel: () => undefined,
+      autoLevelEnabled: true,
+      bandwidthEstimate: 0,
+      onLevelSwitched: () => () => undefined,
+      audioTracks: [],
+      getCurrentAudioTrack: () => -1,
+      setAudioTrack: () => undefined,
+      onAudioTrackSwitched: () => () => undefined,
+    };
+  }
+
   const { default: Hls } = await import('hls.js');
 
   if (Hls.isSupported()) {
@@ -366,38 +395,6 @@ export async function attachHls(
     };
   }
 
-  if (isNativeHlsSupported(video)) {
-    const onLoaded = (): void => opts.onReady?.();
-    const onErr = (): void => opts.onError?.('native hls error');
-    video.addEventListener('loadedmetadata', onLoaded);
-    video.addEventListener('error', onErr);
-    video.src = url;
-    // Resume from the captured position (e.g. mid-film direct→HLS fallback).
-    if (opts.startPosition) video.currentTime = opts.startPosition;
-    // Native HLS: the browser drives ABR and exposes no level API, so the level
-    // members degrade to an Auto-only, no-op shape. UI code can call them safely.
-    // Audio tracks on native HLS come from video.audioTracks (handled separately
-    // by the Player), not from hls.js — these members are no-ops here.
-    return {
-      destroy(): void {
-        video.removeEventListener('loadedmetadata', onLoaded);
-        video.removeEventListener('error', onErr);
-        video.removeAttribute('src');
-        video.load();
-      },
-      levels: [],
-      getCurrentLevel: () => -1,
-      setCurrentLevel: () => undefined,
-      setNextLevel: () => undefined,
-      autoLevelEnabled: true,
-      bandwidthEstimate: 0,
-      onLevelSwitched: () => () => undefined,
-      audioTracks: [],
-      getCurrentAudioTrack: () => -1,
-      setAudioTrack: () => undefined,
-      onAudioTrackSwitched: () => () => undefined,
-    };
-  }
-
+  // Neither MSE (hls.js) nor native HLS is available in this browser.
   throw new Error('HLS is not supported in this browser');
 }
