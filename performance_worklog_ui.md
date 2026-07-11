@@ -28,7 +28,7 @@
 - [ ] UI-1.8  mini-player HLS support
 - [x] UI-2.1  media detail/player item cache (stale-while-revalidate)    (commit: ad6b34f)  DONE
 - [x] UI-2.2  LRU-cap the media store cache    (commits: 73c8cf7, bfbf4da, 91db9cc)  DONE
-- [ ] UI-2.3  complete Continue Watching from server payload
+- [x] UI-2.3  complete Continue Watching from server payload    (commits: a2cb5d5, 99f3ff1, b5aacf9)  DONE
 - [ ] UI-2.4  local favorites patch instead of full refetch
 - [ ] UI-2.5  MediaGrid scroll perf
 - [ ] UI-2.6  composited hover/skeleton animations
