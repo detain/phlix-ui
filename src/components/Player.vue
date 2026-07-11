@@ -924,6 +924,9 @@ function sleepTimer(): void {
   sleepTimerRef.value?.toggleOpen();
 }
 
+// Timer reference for fadeOutAndPause — stored at module scope so onBeforeUnmount can clear it.
+let fadeTimer: ReturnType<typeof setInterval> | null = null;
+
 /**
  * Sleep timer expire handler — fade out volume over ~3 seconds, then pause.
  * Replaces a hard pause for a gentler user experience.
@@ -940,19 +943,24 @@ function fadeOutAndPause(): void {
     player.pause();
     return;
   }
+  // Clear any pre-existing fade timer from a previous call.
+  if (fadeTimer !== null) {
+    clearInterval(fadeTimer);
+    fadeTimer = null;
+  }
   const fadeStep = 0.05;
   const fadeInterval = 50; // ms
-  const fadeTimer = setInterval(() => {
+  fadeTimer = setInterval(() => {
     if (v.volume > fadeStep) {
       v.volume = Math.max(0, v.volume - fadeStep);
     } else {
-      clearInterval(fadeTimer);
+      clearInterval(fadeTimer!);
+      fadeTimer = null;
       v.volume = 0;
       v.pause();
       player.pause();
     }
   }, fadeInterval);
-  void fadeTimer;
 }
 
 const shortcutActions: ShortcutActions = {
@@ -1168,6 +1176,10 @@ onBeforeUnmount(() => {
   mediaSessionTeardown?.();
   trackList?.removeEventListener?.('addtrack', refreshTracks);
   trackList?.removeEventListener?.('removetrack', refreshTracks);
+  if (fadeTimer !== null) {
+    clearInterval(fadeTimer);
+    fadeTimer = null;
+  }
 });
 </script>
 
