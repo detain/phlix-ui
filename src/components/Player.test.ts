@@ -50,6 +50,7 @@ vi.mock('../composables/useHlsTranscode', async () => {
     audioTracks,
     currentAudioTrack,
     setLevel: vi.fn(),
+    setNextLevel: vi.fn(),
     setAudioTrack: vi.fn(),
     start: vi.fn(),
     cleanup: vi.fn(),
@@ -90,6 +91,7 @@ function tc(): {
   audioTracks: { value: Array<{ index: number; name: string; lang: string; default: boolean; autoselect: boolean }> };
   currentAudioTrack: { value: number };
   setLevel: ReturnType<typeof vi.fn>;
+  setNextLevel: ReturnType<typeof vi.fn>;
   setAudioTrack: ReturnType<typeof vi.fn>;
   start: ReturnType<typeof vi.fn>;
   cleanup: ReturnType<typeof vi.fn>;
@@ -185,6 +187,7 @@ beforeEach(() => {
   ctrl.audioTracks.value = [];
   ctrl.currentAudioTrack.value = -1;
   ctrl.setLevel.mockClear();
+  ctrl.setNextLevel.mockClear();
   ctrl.setAudioTrack.mockClear();
   ctrl.start.mockClear();
   ctrl.cleanup.mockClear();
@@ -1846,7 +1849,7 @@ describe('Player — quality menu wiring (R3.9)', () => {
     mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
     tc().levels.value = ladder; // hls.js parses the manifest → levels populate
     await nextTick();
-    expect(tc().setLevel).toHaveBeenCalledWith(1); // 720p → index 1
+    expect(tc().setNextLevel).toHaveBeenCalledWith(1); // 720p → index 1
   });
 
   it('does NOT seed a level when the stored preference is Auto', async () => {
@@ -1854,7 +1857,7 @@ describe('Player — quality menu wiring (R3.9)', () => {
     mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
     tc().levels.value = ladder;
     await nextTick();
-    expect(tc().setLevel).not.toHaveBeenCalled();
+    expect(tc().setNextLevel).not.toHaveBeenCalled();
   });
 
   it('seeds the default quality at most once per source', async () => {
@@ -1862,10 +1865,10 @@ describe('Player — quality menu wiring (R3.9)', () => {
     mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
     tc().levels.value = ladder;
     await nextTick();
-    expect(tc().setLevel).toHaveBeenCalledTimes(1);
+    expect(tc().setNextLevel).toHaveBeenCalledTimes(1);
     tc().levels.value = [...ladder]; // a later re-read must NOT re-seed
     await nextTick();
-    expect(tc().setLevel).toHaveBeenCalledTimes(1);
+    expect(tc().setNextLevel).toHaveBeenCalledTimes(1);
   });
 
   it('re-seeds the stored preference when the media source switches (qualitySeeded resets per source)', async () => {
@@ -1873,8 +1876,8 @@ describe('Player — quality menu wiring (R3.9)', () => {
     const { w } = mountPlayer({ media: media({ id: 'm1' }), streamUrl: 'http://x/Dune.mkv' });
     tc().levels.value = ladder;
     await nextTick();
-    expect(tc().setLevel).toHaveBeenCalledTimes(1);
-    expect(tc().setLevel).toHaveBeenLastCalledWith(2); // 480p → index 2
+    expect(tc().setNextLevel).toHaveBeenCalledTimes(1);
+    expect(tc().setNextLevel).toHaveBeenLastCalledWith(2); // 480p → index 2
 
     // A new source resets the transcode session (levels go back to empty) and
     // presents a FRESH ladder — evaluateForCurrentMedia must have re-armed the
@@ -1888,8 +1891,8 @@ describe('Player — quality menu wiring (R3.9)', () => {
     ];
     tc().levels.value = newLadder;
     await nextTick();
-    expect(tc().setLevel).toHaveBeenCalledTimes(2);
-    expect(tc().setLevel).toHaveBeenLastCalledWith(1); // 480p → index 1 in the NEW ladder
+    expect(tc().setNextLevel).toHaveBeenCalledTimes(2);
+    expect(tc().setNextLevel).toHaveBeenLastCalledWith(1); // 480p → index 1 in the NEW ladder
   });
 
   it('threads the live controller state through to the menu (pinned rung, then Auto restores ABR with a live label)', async () => {

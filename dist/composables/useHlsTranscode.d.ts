@@ -85,10 +85,15 @@ export interface HlsTranscodeController {
      *  is active (e.g. native HLS path or a manifest with no audio groups). */
     currentAudioTrack: Ref<number>;
     /** Pin a quality rung by level index for an IMMEDIATE switch, or pass `'auto'`
-     *  to hand the choice back to ABR. Safe no-op before a stream is attached or on
-     *  the native-HLS path. Updates {@link currentLevel}/{@link autoEnabled}
-     *  optimistically; a later switch event reconciles the exact active level. */
+      *  to hand the choice back to ABR. Safe no-op before a stream is attached or on
+      *  the native-HLS path. Updates {@link currentLevel}/{@link autoEnabled}
+      *  optimistically; a later switch event reconciles the exact active level. */
     setLevel(level: number | 'auto'): void;
+    /** Like {@link setLevel} but schedules the switch for the NEXT fragment load
+      *  (non-flushing). Use for automatic/pref-seeded quality pins where you do
+      *  NOT want to interrupt the in-flight buffer. User-initiated quality changes
+      *  should still use {@link setLevel} (buffer-flushing is correct there). */
+    setNextLevel(level: number | 'auto'): void;
     /** Switch to a different audio track by index (P3B-S3). Safe no-op before a
      *  stream is attached, when there are no audio tracks, or on the native-HLS
      *  path. Updates {@link currentAudioTrack} optimistically; a later

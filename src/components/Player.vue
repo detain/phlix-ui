@@ -293,7 +293,7 @@ watch(
       pref === ORIGINAL_QUALITY
         ? levelIndexForVariant(levels, tc.variants.value?.find((v) => v.id === ORIGINAL_QUALITY) ?? null)
         : levelIndexForQuality(levels, pref);
-    if (index >= 0) tc.setLevel(index);
+    if (index >= 0) tc.setNextLevel(index);
   },
 );
 
