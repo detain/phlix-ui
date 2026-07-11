@@ -16,7 +16,7 @@
 - [x] UI-0.4  parallelize PlayerPage item + playback-info    (commit: d0e8cfb)  DONE
 - [x] UI-0.5  fetch trickplay on first player mount    (commit: 05489b1)  DONE
 - [x] UI-0.6  thread apiBase + AbortSignal into trickplay & marker-search    (commit: 05489b1)  DONE
-- [ ] UI-0.7  episode-aware up next queue
+- [x] UI-0.7  episode-aware up next queue    (commit: 2fce901)  DONE
 - [ ] UI-0.8  gate NetworkHealthIndicator on admin + visibility
 - [ ] UI-1.1  preserve position on direct→HLS fallback
 - [ ] UI-1.2  hls.js tuning + bandwidth-estimate persistence
