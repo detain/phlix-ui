@@ -11,7 +11,7 @@
 
 ## Progress
 - [x] UI-0.1  fix Library mark watched favorite-corruption bug    (commit: 7326b11)  DONE
-- [ ] UI-0.2  RouterLink navigation on poster cards
+- [x] UI-0.2  RouterLink navigation on poster cards              (commits: b01372f, 30fe245)  DONE
 - [ ] UI-0.3  scrub: preview-only during drag, seek on release
 - [ ] UI-0.4  parallelize PlayerPage item + playback-info
 - [ ] UI-0.5  fetch trickplay on first player mount
