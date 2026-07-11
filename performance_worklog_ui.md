@@ -23,8 +23,8 @@
 - [ ] UI-1.3  MediaCapabilities/codec probing before direct play
 - [ ] UI-1.4  skip hls.js download on native-HLS-only browsers
 - [x] UI-1.5  transcode start/poll: AbortSignal + longer timeout    (commits: 0fd2fba, f3b4019, 13767067c82242603bd5e65cb00e9f952afacfcb)  DONE
-- [ ] UI-1.6  reduce timeupdate work (position state + eviction)
-- [ ] UI-1.7  own the fade timer
+- [x] UI-1.6  reduce timeupdate work (position state + eviction)    (commits: e38b8db, e2fd9c5, 694fbd8)  DONE
+- [x] UI-1.7  own the fade timer    (commits: e48d42a, 6f956fe, 6cc5b36)  DONE
 - [ ] UI-1.8  mini-player HLS support
 - [x] UI-2.1  media detail/player item cache (stale-while-revalidate)    (commit: ad6b34f)  DONE
 - [ ] UI-2.2  LRU-cap the media store cache

@@ -297,3 +297,113 @@ describe('MiniPlayer — favorite toggle (Feature 16.2)', () => {
     expect(store.current?.id).toBe('m1');
   });
 });
+
+describe('MiniPlayer — HLS support (UI-1.8)', () => {
+  /** Build a mock HlsHandle for attachHls to return. */
+  function mockHlsHandle(destroy = vi.fn()) {
+    return {
+      destroy,
+      levels: [],
+      getCurrentLevel: () => -1,
+      setCurrentLevel: vi.fn(),
+      setNextLevel: vi.fn(),
+      autoLevelEnabled: true,
+      bandwidthEstimate: 0,
+      onLevelSwitched: () => vi.fn(),
+      audioTracks: [],
+      getCurrentAudioTrack: () => -1,
+      setAudioTrack: () => {},
+      onAudioTrackSwitched: () => () => {},
+    };
+  }
+
+  /**
+   * Activate the dock with an hlsMasterUrl (transcoded session) but no streamUrl.
+   * Spies on attachHls so tests can assert it was called with the right URL.
+   */
+  function mountTranscoded(attachHlsSpy: ReturnType<typeof vi.spyOn>, masterUrl = 'http://h:8096/hls/job-1/master.m3u8') {
+    const store = usePlayerStore();
+    store.setCurrent(media(), { streamUrl: '' });
+    store.hlsMasterUrl = masterUrl;
+    store.showMiniPlayer();
+    const w = mount(MiniPlayer, {
+      attachTo: document.body,
+      global: { stubs: { transition: true } },
+    });
+    mounted.push(w);
+    return { w, store, attachHlsSpy };
+  }
+
+  /**
+   * Activate the dock with a direct-play streamUrl and no hlsMasterUrl.
+   * attachHls should NOT be called.
+   */
+  function mountDirectPlay() {
+    const store = usePlayerStore();
+    store.setCurrent(media(), { streamUrl: 'http://x/stream' });
+    store.hlsMasterUrl = '';
+    store.showMiniPlayer();
+    const w = mount(MiniPlayer, {
+      attachTo: document.body,
+      global: { stubs: { transition: true } },
+    });
+    mounted.push(w);
+    return { w, store };
+  }
+
+  it('visible shows the dock when hlsMasterUrl is set even if streamUrl is empty', async () => {
+    const attachHls = vi.fn(async () => mockHlsHandle());
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { w } = mountTranscoded(attachHls);
+    await nextTick();
+    expect(w.find('.mini').exists()).toBe(true);
+    expect(w.find('.mini__title').text()).toBe('Dune: Part Two');
+  });
+
+  it('attachHls is called with the correct URL when the dock becomes visible with hlsMasterUrl', async () => {
+    const attachHls = vi.fn(async () => mockHlsHandle());
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { store } = mountTranscoded();
+    await nextTick();
+    // attachHls should have been called on mount (onMounted hook in MiniPlayer.vue).
+    expect(attachHls).toHaveBeenCalledTimes(1);
+    expect(attachHls.mock.calls[0][1]).toBe('http://h:8096/hls/job-1/master.m3u8');
+  });
+
+  it('attachHls is NOT called when hlsMasterUrl is empty (direct play) and raw video src is used', async () => {
+    const attachHls = vi.fn(async () => mockHlsHandle());
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { w } = mountDirectPlay();
+    await nextTick();
+    expect(attachHls).not.toHaveBeenCalled();
+    // Raw video src should be set.
+    const v = w.find('video');
+    expect(v.attributes('src')).toBe('http://x/stream');
+  });
+
+  it('HLS handle is destroyed when the dock is hidden', async () => {
+    const destroy = vi.fn();
+    const attachHls = vi.fn(async () => mockHlsHandle(destroy));
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { store, w } = mountTranscoded(attachHls);
+    await nextTick();
+    expect(destroy).not.toHaveBeenCalled();
+    // Hide the dock.
+    store.hideMiniPlayer();
+    await nextTick();
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('HLS handle is destroyed on unmount', async () => {
+    const destroy = vi.fn();
+    const attachHls = vi.fn(async () => mockHlsHandle(destroy));
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { w } = mountTranscoded(attachHls);
+    await nextTick();
+    expect(destroy).not.toHaveBeenCalled();
+    // Unmount the component.
+    w.unmount();
+    await nextTick();
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+});
