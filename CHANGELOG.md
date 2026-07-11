@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Mini-player HLS support (UI-1.8)** — `hlsMasterUrl` added to `usePlayerStore` as a persisted ref, populated by `useHlsTranscode` after successful HLS attach and cleared in `closePlayer()`. `MiniPlayer.vue` now calls `attachHls(videoRef, player.hlsMasterUrl, ...)` when `hlsMasterUrl` is set, enabling transcoded sessions to play in the mini-player; direct-play sessions fall back to the raw `<video :src>` path.
+
 - **Fade timer ownership prevents premature garbage collection (UI-1.7)** — `fadeTimer` is stored at module/component scope rather than as a local variable, ensuring it cannot be garbage collected mid-fade. `onBeforeUnmount` clears the timer if the component unmounts while a fade is in progress. `fadeOutAndPause` clears any existing timer before starting a new one, making it idempotent and preventing duplicate timer accumulation.
 
 - **`timeupdate` no longer drives position state or resume eviction (UI-1.6)** — `setPositionState` is removed from the `timeupdate` handler and is now only called on genuine state-change events (`seeked`, `ratechange`, `durationchange`, `play`, `pause`). `saveResume` now calls `evictToCapacity` only when the media id is new to the resume map, not on every position update — eliminating continuous eviction scans during playback.
