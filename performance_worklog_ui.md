@@ -10,7 +10,7 @@
 - node version: >=18.0.0 (engines.node in package.json)
 
 ## Progress
-- [ ] UI-0.1  fix Library mark watched favorite-corruption bug
+- [x] UI-0.1  fix Library mark watched favorite-corruption bug    (commit: 7326b11)  DONE
 - [ ] UI-0.2  RouterLink navigation on poster cards
 - [ ] UI-0.3  scrub: preview-only during drag, seek on release
 - [ ] UI-0.4  parallelize PlayerPage item + playback-info
