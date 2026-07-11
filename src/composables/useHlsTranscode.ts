@@ -35,7 +35,7 @@ export type TranscodeState = 'idle' | 'preparing' | 'ready' | 'error';
 
 /** Minimal HTTP surface this composable needs (ApiClient-compatible). */
 export interface TranscodeHttpClient {
-  post<T = unknown>(endpoint: string, data?: unknown): Promise<T>;
+  post<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
   get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T>;
 }
 
@@ -208,14 +208,16 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   let unsubscribeLevelSwitched: (() => void) | null = null;
   let unsubscribeAudioTrackSwitched: (() => void) | null = null;
   let cancelled = false;
+  let abortController: AbortController | null = null;
 
   function makeClient(): TranscodeHttpClient {
-    return opts.client ?? new ApiClient({ baseUrl: opts.apiBase(), tokenStore: tokenStore ?? undefined });
+    return opts.client ?? new ApiClient({ baseUrl: opts.apiBase(), tokenStore: tokenStore ?? undefined, timeoutMs: 60000 });
   }
 
   async function start(video: HTMLVideoElement, mediaId: string, profile?: string, startPosition?: number): Promise<void> {
     cleanup();
     cancelled = false;
+    abortController = new AbortController();
     state.value = 'preparing';
     progress.value = 0;
     subtitleTracks.value = [];
@@ -223,7 +225,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
 
     try {
       const client = makeClient();
-      const startRes = parseTranscodeStart(await client.post(transcodeStartPath(mediaId, profile)));
+      const startRes = parseTranscodeStart(await client.post(transcodeStartPath(mediaId, profile), undefined, abortController.signal));
       if (cancelled) return;
       if (!startRes.jobId || !startRes.masterUrl) {
         throw new Error('transcode start returned no job');
@@ -238,7 +240,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
 
       let ready = startRes.status === 'completed';
       for (let attempt = 0; !ready && attempt < maxAttempts; attempt++) {
-        const status = parseTranscodeStatus(await client.get(transcodeStatusPath(startRes.jobId)));
+        const status = parseTranscodeStatus(await client.get(transcodeStatusPath(startRes.jobId), undefined, abortController.signal));
         if (cancelled) return;
         progress.value = status.progress;
         // Late-arriving tracks (extraction completes after the playlist is ready)
@@ -317,6 +319,10 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
 
   function cleanup(): void {
     cancelled = true;
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
     if (unsubscribeLevelSwitched) {
       try {
         unsubscribeLevelSwitched();

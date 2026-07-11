@@ -441,8 +441,8 @@ export class ApiClient {
         return this.request<T>('GET', endpoint + query, null, signal);
     }
 
-    async post<T = unknown>(endpoint: string, data?: unknown): Promise<T> {
-        return this.request<T>('POST', endpoint, data ?? null);
+    async post<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T> {
+        return this.request<T>('POST', endpoint, data ?? null, signal);
     }
 
     async put<T = unknown>(endpoint: string, data?: unknown): Promise<T> {
