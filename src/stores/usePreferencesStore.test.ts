@@ -26,8 +26,10 @@ beforeEach(() => {
   mockMatchMedia(false);
   setActivePinia(createPinia());
 });
+
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('usePreferencesStore', () => {
@@ -39,11 +41,12 @@ describe('usePreferencesStore', () => {
   });
 
   it('persists changes to localStorage', async () => {
+    vi.useFakeTimers();
     const s = usePreferencesStore();
     s.theme = 'daylight';
     s.accent = '#3366ff';
-    await Promise.resolve();
-    await new Promise((r) => setTimeout(r, 0));
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.runAllTimersAsync();
     const raw = JSON.parse(localStorage.getItem('phlix.prefs')!);
     expect(raw.theme).toBe('daylight');
     expect(raw.accent).toBe('#3366ff');
@@ -109,10 +112,11 @@ describe('usePreferencesStore', () => {
     });
 
     it('persists into the prefs blob', async () => {
+      vi.useFakeTimers();
       const s = usePreferencesStore();
       s.tv = true;
-      await Promise.resolve();
-      await new Promise((r) => setTimeout(r, 0));
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.runAllTimersAsync();
       const raw = JSON.parse(localStorage.getItem('phlix.prefs')!);
       expect(raw.tv).toBe(true);
     });
@@ -145,10 +149,11 @@ describe('usePreferencesStore', () => {
     });
 
     it('is persisted into the prefs blob', async () => {
+      vi.useFakeTimers();
       const s = usePreferencesStore();
       s.subtitlePreferenceSet = true;
-      await Promise.resolve();
-      await new Promise((r) => setTimeout(r, 0));
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.runAllTimersAsync();
       const raw = JSON.parse(localStorage.getItem('phlix.prefs')!);
       expect(raw.subtitlePreferenceSet).toBe(true);
     });
@@ -175,6 +180,7 @@ describe('usePreferencesStore', () => {
 
   describe('filter presets', () => {
     it('saves a preset, persists it, and overwrites by name (stable id)', async () => {
+      vi.useFakeTimers();
       const s = usePreferencesStore();
       const p = s.saveFilterPreset('Sci-Fi Nights', { genres: ['Sci-Fi'], ratings: ['R'] });
       expect(p.id).toBe('sci-fi-nights');
@@ -182,8 +188,8 @@ describe('usePreferencesStore', () => {
       expect(s.filterPresets[0].query).toEqual({ genres: ['Sci-Fi'], ratings: ['R'] });
 
       // persisted into the prefs blob
-      await Promise.resolve();
-      await new Promise((r) => setTimeout(r, 0));
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.runAllTimersAsync();
       const stored = JSON.parse(localStorage.getItem('phlix.prefs') as string);
       expect(stored.filterPresets[0].name).toBe('Sci-Fi Nights');
 
@@ -229,10 +235,11 @@ describe('usePreferencesStore', () => {
     });
 
     it('persists caption-style changes to localStorage', async () => {
+      vi.useFakeTimers();
       const s = usePreferencesStore();
       s.captionStyle = { ...s.captionStyle, size: 'xl', textColor: '#ffd400' };
-      await Promise.resolve();
-      await new Promise((r) => setTimeout(r, 0));
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.runAllTimersAsync();
       const raw = JSON.parse(localStorage.getItem('phlix.prefs') as string);
       expect(raw.captionStyle.size).toBe('xl');
       expect(raw.captionStyle.textColor).toBe('#ffd400');
@@ -259,6 +266,68 @@ describe('usePreferencesStore', () => {
       const s = usePreferencesStore();
       s.captionStyle.size = 'xl'; // direct mutation of the ref object
       expect(DEFAULT_CAPTION_STYLE.size).toBe('md'); // shared default untouched
+    });
+  });
+
+  describe('debounced persistence', () => {
+    it('debounces rapid changes — N rapid ticks results in a single localStorage write', async () => {
+      vi.useFakeTimers();
+
+      const s = usePreferencesStore();
+
+      // Make 10 rapid changes in quick succession (simulating slider drags)
+      for (let i = 0; i < 10; i++) {
+        s.cardSize = 100 + i;
+        // Each call resets the 250 ms debounce timer
+      }
+
+      // Before debounce window closes, nothing should be written yet
+      const midStored = localStorage.getItem('phlix.prefs');
+      expect(midStored).toBeNull();
+
+      // Advance past 250 ms — only the final debounce fires, writing once
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.runAllTimersAsync();
+
+      const stored = JSON.parse(localStorage.getItem('phlix.prefs')!);
+      // Only the last value (cardSize = 109) is persisted — proves 1 write
+      expect(stored.cardSize).toBe(109);
+    });
+
+    it('each debounce window persists its own change independently', async () => {
+      vi.useFakeTimers();
+      const s = usePreferencesStore();
+
+      // First change + debounce fires
+      s.cardSize = 150;
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.runAllTimersAsync();
+      expect(JSON.parse(localStorage.getItem('phlix.prefs')!).cardSize).toBe(150);
+
+      // Second, separate debounce window
+      s.cardSize = 200;
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.runAllTimersAsync();
+      expect(JSON.parse(localStorage.getItem('phlix.prefs')!).cardSize).toBe(200);
+    });
+  });
+
+  describe('pagehide flush', () => {
+    it('flushes pending debounced writes immediately on pagehide', async () => {
+      vi.useFakeTimers();
+      const s = usePreferencesStore();
+
+      // Make a change — debounce timer is pending (not yet fired)
+      s.cardSize = 400;
+
+      // Simulate pagehide — must flush synchronously without waiting 250 ms
+      const event = new Event('pagehide');
+      Object.defineProperty(event, 'persisted', { value: false });
+      window.dispatchEvent(event);
+
+      // Value written immediately despite pending debounce
+      const stored = JSON.parse(localStorage.getItem('phlix.prefs')!);
+      expect(stored.cardSize).toBe(400);
     });
   });
 });

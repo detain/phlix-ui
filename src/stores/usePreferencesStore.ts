@@ -249,19 +249,39 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     filterPresets.value = filterPresets.value.filter((p) => p.id !== id);
   }
 
-  // persist on any change
-  watch(
-    snapshot,
-    (val) => {
-      if (typeof localStorage === 'undefined') return;
+  // Debounced persist — 250 ms trailing prevents hammering localStorage on
+  // rapid slider drags. flush() forces an immediate write (used on pagehide).
+  let persistTimer: ReturnType<typeof setTimeout> | null = null;
+  function flushPersist() {
+    if (persistTimer !== null) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    const val = snapshot();
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(val));
+    } catch {
+      /* quota / private mode — ignore */
+    }
+  }
+  const debouncedPersist = (val: Preferences) => {
+    if (persistTimer !== null) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      persistTimer = null;
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(val));
       } catch {
         /* quota / private mode — ignore */
       }
-    },
-    { deep: true },
-  );
+    }, 250);
+  };
+  watch(snapshot, debouncedPersist, { deep: true });
+
+  // Flush immediately when the page is being discarded (mobile tab close, etc.).
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', flushPersist);
+  }
 
   function reset() {
     const d = DEFAULT_PREFERENCES;
