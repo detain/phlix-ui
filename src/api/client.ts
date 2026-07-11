@@ -749,6 +749,65 @@ export class ApiClient {
         return this.get(`/api/v1/media/${encodeURIComponent(id)}/trickplay`, undefined, signal);
     }
 
+    /**
+     * Create a new playlist, optionally adding a media item to it
+     * (`POST /api/v1/playlists`, body `{ name: string, media_id?: string }`).
+     * Returns the created playlist object. Non-2xx throws the shared {@link ApiError}.
+     */
+    createPlaylist(name: string, mediaId?: string): Promise<{ id: string; name: string }> {
+        const body: { name: string; media_id?: string } = { name };
+        if (mediaId) body.media_id = mediaId;
+        return this.post<{ id: string; name: string }>('/api/v1/playlists', body);
+    }
+
+    /**
+     * Add a media item to an existing playlist
+     * (`POST /api/v1/playlists/{playlistId}/items`, body `{ media_id: string }`).
+     * Non-2xx throws the shared {@link ApiError}.
+     */
+    addToPlaylist(playlistId: string, mediaId: string): Promise<{ message: string }> {
+        return this.post<{ message: string }>(
+            `/api/v1/playlists/${encodeURIComponent(playlistId)}/items`,
+            { media_id: mediaId },
+        );
+    }
+
+    /**
+     * Get a download URL for a media item (`GET /api/v1/media/{id}/download`).
+     * Returns `{ url: string }`. Non-2xx throws the shared {@link ApiError}.
+     */
+    getDownloadUrl(id: string): Promise<{ url: string }> {
+        return this.get<{ url: string }>(`/api/v1/media/${encodeURIComponent(id)}/download`);
+    }
+
+    /**
+     * Get the list of missing episodes for a series/season media item
+     * (`GET /api/v1/media/{id}/missing-episodes`). Returns an array of episode
+     * objects. Non-2xx throws the shared {@link ApiError}.
+     */
+    getMissingEpisodes(id: string): Promise<Array<{ id: string; title?: string; season?: number; episode?: number }>> {
+        return this.get<Array<{ id: string; title?: string; season?: number; episode?: number }>>(
+            `/api/v1/media/${encodeURIComponent(id)}/missing-episodes`,
+        );
+    }
+
+    /**
+     * Shuffle-play a media item (`POST /api/v1/shuffle`, body `{ media_id: string }`).
+     * Returns a message. Non-2xx throws the shared {@link ApiError}.
+     */
+    shufflePlay(id: string): Promise<{ message: string }> {
+        return this.post<{ message: string }>('/api/v1/shuffle', { media_id: id });
+    }
+
+    /**
+     * Update metadata fields for a media item
+     * (`PATCH /api/v1/media/{id}/metadata`, body is a partial media item).
+     * Returns the updated media item. Non-2xx throws the shared {@link ApiError}.
+     */
+    updateMetadata(id: string, metadata: Record<string, unknown>): Promise<MediaItem> {
+        return this.patch<MediaItem>(`/api/v1/media/${encodeURIComponent(id)}/metadata`, metadata);
+    }
+
     logout(redirect = true): void {
         this.tokens.clear();
         if (redirect && typeof window !== 'undefined') {

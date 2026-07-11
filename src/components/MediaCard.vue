@@ -34,6 +34,7 @@ import { useToastStore } from '../stores/useToastStore';
 import { usePrefetch } from '../composables/usePrefetch';
 import { resolvePosterSources } from './media-poster';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
+import { api } from '../api/client';
 
 const props = withDefaults(
   defineProps<{
@@ -101,6 +102,7 @@ const emit = defineEmits<{
   (e: 'refresh', item: MediaItem): void;
   (e: 'choose-poster', item: MediaItem): void;
   (e: 'remove', item: MediaItem): void;
+  (e: 'edit-metadata', item: MediaItem): void;
 }>();
 
 const player = usePlayerStore();
@@ -153,6 +155,7 @@ const menuItems = computed(() => {
 
 function onMenuSelect(menuItem: { label: string }): void {
   const L = MENU_LABELS;
+  const toasts = useToastStore();
   switch (menuItem.label) {
     case L.markPlayed:
     case L.markUnplayed:
@@ -163,6 +166,65 @@ function onMenuSelect(menuItem: { label: string }): void {
       break;
     case L.dislike:
       void userItemData.setLike(props.item.id, -1, phlixConfig?.apiBase ?? '');
+      break;
+    case L.addToPlaylist: {
+      const name = window.prompt('Enter playlist name:');
+      if (!name?.trim()) break;
+      const trimmed = name.trim();
+      toasts.info('Creating playlist\u2026');
+      api
+        .createPlaylist(trimmed, props.item.id)
+        .then(() => toasts.success('Playlist created'))
+        .catch((err) => {
+          toasts.error('Failed to create playlist', {
+            message: err instanceof Error ? err.message : String(err),
+          });
+        });
+      break;
+    }
+    case L.download:
+      toasts.info('Preparing download\u2026');
+      api
+        .getDownloadUrl(props.item.id)
+        .then(({ url }) => {
+          window.open(url, '_blank', 'noopener');
+          toasts.success('Download started');
+        })
+        .catch((err) => {
+          toasts.error('Download failed', {
+            message: err instanceof Error ? err.message : String(err),
+          });
+        });
+      break;
+    case L.missingEpisodes:
+      toasts.info('Loading\u2026');
+      api
+        .getMissingEpisodes(props.item.id)
+        .then((episodes) => {
+          if (episodes.length === 0) {
+            toasts.success('No missing episodes');
+          } else {
+            toasts.warning(`${episodes.length} episode${episodes.length === 1 ? '' : 's'} missing`);
+          }
+        })
+        .catch((err) => {
+          toasts.error('Failed to load missing episodes', {
+            message: err instanceof Error ? err.message : String(err),
+          });
+        });
+      break;
+    case L.shuffle:
+      api
+        .shufflePlay(props.item.id)
+        .then(() => toasts.success('Shuffle play started'))
+        .catch((err) => {
+          toasts.error('Shuffle play failed', {
+            message: err instanceof Error ? err.message : String(err),
+          });
+        });
+      break;
+    case L.editMetadata:
+      emit('edit-metadata', props.item);
       break;
     case L.refreshMetadata:
     case L.identify:
@@ -175,10 +237,7 @@ function onMenuSelect(menuItem: { label: string }): void {
       emit('remove', props.item);
       break;
     default:
-      // Actions without a backend yet (add to playlist, download, view missing
-      // episodes, shuffle, edit metadata, explore item data) — acknowledge the
-      // click instead of silently no-opping.
-      useToastStore().info(`${menuItem.label} isn't available yet`);
+      toasts.info(`${menuItem.label} isn't available yet`);
   }
 }
 

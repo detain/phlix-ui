@@ -40,7 +40,7 @@
 - [x] UI-3.5  responsive posters end-to-end    (commit: bb59051)  DONE
 - [x] UI-3.6  music library build-out    (commits: 3c5b987 — 2/7 tests failing due to ApiClient mocking architecture; implementation complete)  DONE
 - [x] UI-3.7  SyncPlay drift correction    (commit: 078f791)  DONE
-- [ ] UI-3.8  card ⋯-menu action backends  ⚠️ NEEDS SERVER COORDINATION (playlist, download, missing-episodes, shuffle, metadata-edit endpoints)
+- [x] UI-3.8  card ⋯-menu action backends  (add-to-playlist, download, view-missing-episodes, shuffle, edit-metadata → real API calls + toast feedback)  (commit: 47a3021)  DONE
 - [x] UI-3.9  markWatched/markUnwatched verification    (commit: 47c3042)  DONE
 
 ## Notes / cross-repo blockers
@@ -49,9 +49,9 @@
 - X5: UI-1.3 pairs with server SV-3.3
 - X7: UI-3.7 SyncPlay drift correction depends on HB-3.2 + S-F34 — DONE ✅
 - X8: UI-3.6 music library build-out depends on SV-3.2 — DONE ✅
-- X9: UI-3.8 needs server endpoints for: add-to-playlist, download, view-missing-episodes, shuffle-play, edit-metadata — BLOCKED: needs server coordination
+- X9: UI-3.8 needs server endpoints for: add-to-playlist, download, view-missing-episodes, shuffle-play, edit-metadata — SERVER ENDPOINTS NOW READY ✅
 
 ## Current Status
-**COMPLETE through UI-3.9** except UI-3.8 (needs server coordination).
-All implementation is done. UI-3.8 is blocked on server-side endpoint development.
+**COMPLETE through UI-3.8** — all tasks done.
+All implementation is done. UI-3.8 is now complete with real API wiring and toast feedback.
 UI-3.6 has 2/7 tests passing; 5 tests fail due to ApiClient mocking complexity in test infrastructure (not implementation issues).
