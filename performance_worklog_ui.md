@@ -17,7 +17,7 @@
 - [x] UI-0.5  fetch trickplay on first player mount    (commit: 05489b1)  DONE
 - [x] UI-0.6  thread apiBase + AbortSignal into trickplay & marker-search    (commit: 05489b1)  DONE
 - [x] UI-0.7  episode-aware up next queue    (commit: 2fce901)  DONE
-- [ ] UI-0.8  gate NetworkHealthIndicator on admin + visibility
+- [x] UI-0.8  gate NetworkHealthIndicator on admin + visibility    (commit: cb2a668)  DONE
 - [ ] UI-1.1  preserve position on direct→HLS fallback
 - [ ] UI-1.2  hls.js tuning + bandwidth-estimate persistence
 - [ ] UI-1.3  MediaCapabilities/codec probing before direct play
