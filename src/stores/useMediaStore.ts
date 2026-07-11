@@ -43,6 +43,8 @@ interface FacetsCacheEntry {
 
 /** Cache TTL (ms). A query re-issued within this window is served from memory. */
 const CACHE_TTL = 60_000;
+/** Max cache entries — LRU eviction fires once the map grows past this. */
+const CACHE_MAX = 100;
 /** Debounce for search-driven refetch (ms). */
 const SEARCH_DEBOUNCE = 250;
 
@@ -191,6 +193,11 @@ export const useMediaStore = defineStore('media', () => {
             .get<MediaResponse>(buildApiQuery(apiBase, params), undefined, controller.signal)
             .then((res) => {
                 cache.set(key, { items: res.items, total: res.total, ts: Date.now() });
+                // LRU eviction: cap at CACHE_MAX by deleting the oldest entry.
+                if (cache.size > CACHE_MAX) {
+                    const oldestKey = cache.keys().next().value;
+                    if (oldestKey !== undefined) cache.delete(oldestKey);
+                }
                 return res;
             })
             .finally(() => {
