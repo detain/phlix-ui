@@ -1116,7 +1116,7 @@ function Ta(e) {
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-D-MFt1U7.js")
+			component: () => import("./MediaDetailPage-Cca89Fil.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,

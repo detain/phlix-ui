@@ -37,6 +37,18 @@ import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import { usePageTitle } from '../composables/usePageTitle';
 
+/** Stale-while-revalidate cache for media items (UI-2.1).
+ * Module-level so it survives page remounts on route changes within an SPA
+ * session. browse→detail→back→detail hits the cache within the 60s TTL.
+ * Entry shape: { item: MediaItem, ts: number } where ts = Date.now() at cache time.
+ * Stale entries (past TTL) are still served instantly while a background refresh runs. */
+interface CachedMediaItem {
+  item: MediaItem;
+  ts: number;
+}
+const mediaItemCache = new Map<string, CachedMediaItem>();
+const MEDIA_CACHE_TTL_MS = 60_000; // 60 seconds
+
 interface MediaListResponse {
   items: MediaItem[];
   total: number;
@@ -136,6 +148,33 @@ async function load(): Promise<void> {
     loading.value = false;
     return;
   }
+
+  // Check stale-while-revalidate cache first.
+  // Fresh cache (< TTL): render immediately, no network request.
+  // Stale/expired or absent: show skeleton and fetch.
+  const cached = mediaItemCache.get(id);
+  const now = Date.now();
+  const isCacheFresh = cached && now - cached.ts < MEDIA_CACHE_TTL_MS;
+
+  if (cached && isCacheFresh) {
+    // Fresh cache hit — render immediately without any loading state.
+    if (disposed || controller !== controller) return;
+    item.value = cached.item;
+    matchTarget.value = cached.item;
+    loading.value = false;
+    userItemData.hydrate(cached.item);
+    // Seasons/similar are NOT cached (they change with user state) — load them.
+    if (cached.item.type === 'series') {
+      const client = new ApiClient({ baseUrl: apiBase.value });
+      void loadSeasons(client, cached.item);
+    } else {
+      const client = new ApiClient({ baseUrl: apiBase.value });
+      void loadSimilar(client, cached.item);
+    }
+    return;
+  }
+
+  // Cache miss or stale — fetch fresh data.
   try {
     const client = new ApiClient({ baseUrl: apiBase.value });
     // The server wraps the item as { item } (matches getMediaItem / WebPortalRouter).
@@ -148,6 +187,9 @@ async function load(): Promise<void> {
     const data = response.item;
     item.value = data;
     matchTarget.value = data;
+    // Update cache for next visit (stale-while-revalidate: even stale cached
+    // data was shown immediately above; this refreshes it for the next request).
+    mediaItemCache.set(id, { item: data, ts: now });
     loading.value = false;
     // Seed the per-user favorite/love state from the server `user_data` block so
     // the heart/bookmark (on the detail hero + any card rendered from this item)
@@ -164,6 +206,21 @@ async function load(): Promise<void> {
     }
   } catch (e) {
     if (disposed || isAbort(e)) return;
+    // If we had a stale cache, show it even if the refresh fetch failed.
+    if (cached) {
+      item.value = cached.item;
+      matchTarget.value = cached.item;
+      loading.value = false;
+      userItemData.hydrate(cached.item);
+      if (cached.item.type === 'series') {
+        const client = new ApiClient({ baseUrl: apiBase.value });
+        void loadSeasons(client, cached.item);
+      } else {
+        const client = new ApiClient({ baseUrl: apiBase.value });
+        void loadSimilar(client, cached.item);
+      }
+      return;
+    }
     error.value = e instanceof Error ? e.message : 'Failed to load title';
     loading.value = false;
   }
