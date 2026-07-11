@@ -270,9 +270,12 @@ function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
 }
 
+// The card/menu already toggled the watched store + persisted the change before
+// re-emitting `mark-watched` (MediaCard.onWatched), so this handler must NOT
+// toggle again — it only reports the resulting persisted state (mirrors
+// `onWatchlist`).
 function onMarkWatched(item: MediaItem): void {
-  void userItemData.toggleFavorite(item.id, apiBase.value);
-  if (userItemData.isFavorite(item.id)) {
+  if (userItemData.isWatched(item.id)) {
     toasts.success(`Marked "${item.name}" as watched`);
   } else {
     toasts.info(`Marked "${item.name}" as unwatched`);

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **LibraryPage `onMarkWatched` no longer corrupts favorite state** — the handler was incorrectly calling `toggleFavorite` and branching on `isFavorite`, which had no connection to the watched axis that the card/menu already persisted before firing `mark-watched`. It now matches the `BrowsePage`/`MediaDetailPage` pattern: reads `isWatched` and reports the resulting state via toast only. (UI-0.1)
+
 ## [0.79.0] - 2026-07-10
 
 ### Added
