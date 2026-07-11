@@ -8,7 +8,7 @@
  * @license MIT
  */
 import { ref, type Ref } from 'vue';
-import { api } from '../api/client';
+import { ApiClient } from '../api/client';
 
 /** Sprite grid dimensions — 10 columns × 6 rows = 60 frames per sprite. */
 const SPRITE_COLS = 10;
@@ -26,6 +26,14 @@ interface TimelineEntry {
     frame: number;
 }
 
+/** Options for {@link useTrickplay}. */
+export interface UseTrickplayOptions {
+    /** Resolver for the API base (PlayerPage injects the app's relay proxy base). */
+    apiBase: () => string;
+    /** Optional AbortSignal to cancel in-flight requests. */
+    signal?: AbortSignal;
+}
+
 /** Return type of the useTrickplay composable. */
 export interface TrickplayController {
     /** The trickplay data once loaded, or null if not yet loaded / unavailable. */
@@ -40,7 +48,7 @@ export interface TrickplayController {
      */
     thumbnailAt: (seconds: number) => string | null;
     /** Fetch trickplay data for a given media ID. */
-    fetch: (mediaId: string) => Promise<void>;
+    fetch: (mediaId: string, signal?: AbortSignal) => Promise<void>;
     /** Clear the cached data (e.g., when media changes). */
     reset: () => void;
 }
@@ -50,11 +58,25 @@ export interface TrickplayController {
  *
  * Fetches trickplay data from the server and provides a `thumbnailAt` function
  * that maps playback position to a CSS background-position string for the sprite.
+ *
+ * @param opts - Configuration options
+ * @param opts.apiBase - Resolver for the API base URL (e.g., the relay proxy on hub)
+ * @param opts.signal - Optional AbortSignal to cancel in-flight requests on unmount
  */
-export function useTrickplay(): TrickplayController {
+export function useTrickplay(opts: UseTrickplayOptions): TrickplayController {
     const data = ref<TrickplayData | null>(null);
     const loading = ref(false);
     const error = ref<string | null>(null);
+
+    /** Per-media-id cache so repeated fetches for the same ID are no-ops. */
+    const cache = new Map<string, TrickplayData | null>();
+
+    /** Build a client wired to the caller's apiBase. */
+    function clientForBase(): ApiClient {
+        return new ApiClient({
+            baseUrl: opts.apiBase(),
+        });
+    }
 
     /** Find the timeline entry for the given second, using linear interpolation. */
     function findTimelineEntry(seconds: number, timeline: TimelineEntry[]): TimelineEntry | null {
@@ -129,13 +151,26 @@ export function useTrickplay(): TrickplayController {
         return `url("${d.sprite_url}") ${xPercent}% ${yPercent}% / cover no-repeat`;
     }
 
-    async function fetch(mediaId: string): Promise<void> {
+    async function fetch(mediaId: string, signal?: AbortSignal): Promise<void> {
+        // Return cached data immediately without refetching.
+        if (cache.has(mediaId)) {
+            data.value = cache.get(mediaId) ?? null;
+            // If we have cached data, don't show loading state for cache hits.
+            if (data.value !== null) return;
+        }
+
         loading.value = true;
         error.value = null;
         try {
-            const result = await api.getTrickplay(mediaId);
+            // Merge provided signal with any component-level signal.
+            const composedSignal = signal ?? opts.signal;
+            const client = clientForBase();
+            const result = await client.getTrickplay(mediaId, composedSignal);
+            cache.set(mediaId, result);
             data.value = result;
         } catch (e) {
+            // Cache negative results so we don't repeatedly hammer a missing resource.
+            cache.set(mediaId, null);
             error.value = e instanceof Error ? e.message : 'Failed to load trickplay data';
             data.value = null;
         } finally {
@@ -147,6 +182,7 @@ export function useTrickplay(): TrickplayController {
         data.value = null;
         loading.value = false;
         error.value = null;
+        cache.clear();
     }
 
     return {

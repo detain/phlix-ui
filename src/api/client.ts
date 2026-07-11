@@ -717,12 +717,14 @@ export class ApiClient {
      * @param positionMs Current playhead position in milliseconds
      * @param aroundSec  Search window in seconds (default: 30)
      * @param limit      Maximum results (default: 20)
+     * @param signal     Optional AbortSignal to cancel the request
      */
     async searchByMarker(
         type: 'intro' | 'outro' | 'credits' | 'ad',
         positionMs: number,
         aroundSec = 30,
         limit = 20,
+        signal?: AbortSignal,
     ): Promise<{ items: MediaItem[]; marker_type: string; around: number; position: number }> {
         const params: Record<string, string> = {
             type,
@@ -730,7 +732,7 @@ export class ApiClient {
             around: String(aroundSec),
             limit: String(limit),
         };
-        return this.get('/api/v1/media/search/by-marker', params);
+        return this.get('/api/v1/media/search/by-marker', params, signal);
     }
 
     /**
@@ -740,12 +742,13 @@ export class ApiClient {
      * timeline mapping for thumbnail previews during scrubbing.
      *
      * @param id Media item ID
+     * @param signal Optional AbortSignal to cancel the request
      */
-    async getTrickplay(id: string): Promise<{
+    async getTrickplay(id: string, signal?: AbortSignal): Promise<{
         sprite_url: string | null;
         timeline: Array<{ seconds: number; frame: number }>;
     }> {
-        return this.get(`/api/v1/media/${encodeURIComponent(id)}/trickplay`);
+        return this.get(`/api/v1/media/${encodeURIComponent(id)}/trickplay`, undefined, signal);
     }
 
     logout(redirect = true): void {

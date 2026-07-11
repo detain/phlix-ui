@@ -234,7 +234,7 @@ const tc = useHlsTranscode({
 });
 
 /** Trickplay (sprite preview) controller — fetches sprite + timeline when media loads. */
-const trickplay = useTrickplay();
+const trickplay = useTrickplay({ apiBase: () => props.apiBase ?? '' });
 
 /**
  * Thumbnail source for the scrubber — uses the host-provided `thumbnailAt` prop when
@@ -336,12 +336,19 @@ async function performSimilarSearch(
   type: 'intro' | 'outro' | 'credits' | 'ad',
   positionMs: number,
 ): Promise<void> {
+  // Cancel any in-flight search before starting a new one.
+  similarController?.abort();
+  similarController = new AbortController();
+
   similarLoading.value = true;
   similarError.value = null;
   try {
-    const res = await api.searchByMarker(type, positionMs, 30, 20);
+    const res = await api.searchByMarker(type, positionMs, 30, 20, similarController.signal);
     similarResults.value = Array.isArray(res.items) ? res.items : [];
   } catch (_e) {
+    // Silently ignore abort errors — they're expected when the user closes the modal
+    // or starts a new search before the previous one completes.
+    if (_e instanceof Error && _e.name === 'AbortError') return;
     similarError.value = 'Failed to load similar media. Please try again.';
     similarResults.value = [];
   } finally {
@@ -1075,6 +1082,8 @@ onMounted(() => {
   refreshTracks();
   // A file flagged as non-direct-playable by extension transcodes from the start.
   if (transcodeNeeded.value) beginTranscode();
+  // Fetch trickplay sprite/timeline for the scrubber preview on first mount.
+  void trickplay.fetch(props.media.id);
 });
 watch(
   () => props.media,
