@@ -320,6 +320,8 @@ describe('PhlixApp — command palette trigger', () => {
 
 describe('PhlixApp — persistent mini-player', () => {
   it('mounts the mini-player in the shell and expand navigates to the player route', async () => {
+    // MiniPlayer is gated on auth.isLoggedIn — set a token so it mounts
+    localStorage.setItem('access_token', 'test-token');
     wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
     const mini = wrapper.findComponent(MiniPlayer);
     expect(mini.exists()).toBe(true); // lives at the shell level, surviving route changes

@@ -57,13 +57,13 @@
                 @click="commands.openPalette()"
             />
             <ThemeToggle />
-            <NetworkHealthIndicator v-if="config?.app !== 'hub'" />
+            <NetworkHealthIndicator v-if="auth.isAdmin" />
             <UserMenu />
         </template>
 
         <RouterView />
         <CommandPalette v-if="paletteActivated" />
-        <MiniPlayer @expand="onExpandMini" />
+        <MiniPlayer v-if="auth.isLoggedIn" @expand="onExpandMini" />
     </AppLayout>
 </template>
 

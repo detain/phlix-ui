@@ -26,8 +26,11 @@ import { errMessage } from '../api/errors';
 import Tooltip from './ui/Tooltip.vue';
 import Icon from './Icon.vue';
 import Spinner from './ui/Spinner.vue';
+import { useAuthStore } from '../stores/useAuthStore';
 
 const POLL_INTERVAL_MS = 30_000;
+const BACKOFF_MULTIPLIER = 2;
+const MAX_BACKOFF_MS = 120_000;
 
 const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
 const apiBase = computed(() =>
@@ -39,10 +42,12 @@ const api = new AdminNetworkHealthApi(
 
 // ── State ───────────────────────────────────────────────────────────────────
 
+const auth = useAuthStore();
 const health = ref<HealthSnapshot | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 let pollTimer: ReturnType<typeof setInterval> | undefined;
+let currentIntervalMs = POLL_INTERVAL_MS;
 
 // ── Computed health status ─────────────────────────────────────────────────
 
@@ -147,16 +152,20 @@ async function fetchHealth(): Promise<void> {
   try {
     health.value = await api.getHealthSnapshot();
     error.value = null;
+    currentIntervalMs = POLL_INTERVAL_MS;
   } catch (e) {
     error.value = errMessage(e, 'Failed to fetch health');
+    // Exponential backoff on repeated failure
+    currentIntervalMs = Math.min(currentIntervalMs * BACKOFF_MULTIPLIER, MAX_BACKOFF_MS);
   } finally {
     loading.value = false;
   }
 }
 
 function startPolling(): void {
+  if (!auth.isAdmin) return;
   void fetchHealth();
-  pollTimer = setInterval(() => { void fetchHealth(); }, POLL_INTERVAL_MS);
+  pollTimer = setInterval(() => { void fetchHealth(); }, currentIntervalMs);
 }
 
 function stopPolling(): void {
@@ -166,8 +175,28 @@ function stopPolling(): void {
   }
 }
 
-onMounted(startPolling);
-onUnmounted(stopPolling);
+function handleVisibilityChange(): void {
+  if (document.hidden) {
+    stopPolling();
+  } else {
+    // Resume polling when tab becomes visible (reset to base interval)
+    currentIntervalMs = POLL_INTERVAL_MS;
+    startPolling();
+  }
+}
+
+onMounted(() => {
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
+  startPolling();
+});
+onUnmounted(() => {
+  stopPolling();
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }
+});
 </script>
 
 <template>
