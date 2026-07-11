@@ -155,7 +155,7 @@ const BW_EST_KEY = 'phlix-bandwidth-estimate';
  * land at the bottom rung on a fast network or blow up on a stale cached value.
  * Range: 100 Kbps – 100 Mbps.
  */
-function clampBandwidth(bw: number): number {
+export function clampBandwidth(bw: number): number {
   const MIN = 100_000;
   const MAX = 100_000_000;
   return Math.min(MAX, Math.max(MIN, bw));

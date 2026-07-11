@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Hls from 'hls.js';
-import { attachHls, isNativeHlsSupported } from './hls-playback';
+import { attachHls, clampBandwidth, isNativeHlsSupported } from './hls-playback';
 
 // Fake hls.js: controllable isSupported, captured instances, manual event firing.
 interface FakeLevel {
@@ -338,6 +338,85 @@ describe('hls-playback', () => {
       expect(() => off()).not.toThrow();
       // Still Auto after a no-op set.
       expect(handle.getCurrentLevel()).toBe(-1);
+    });
+  });
+
+  describe('bandwidth clamp (UI-1.2)', () => {
+    it('clamps values below 100 Kbps to 100 Kbps', () => {
+      expect(clampBandwidth(0)).toBe(100_000);
+      expect(clampBandwidth(50_000)).toBe(100_000);
+      expect(clampBandwidth(99_999)).toBe(100_000);
+    });
+
+    it('clamps values above 100 Mbps to 100 Mbps', () => {
+      expect(clampBandwidth(100_000_001)).toBe(100_000_000);
+      expect(clampBandwidth(200_000_000)).toBe(100_000_000);
+    });
+
+    it('leaves values in the 100 Kbps–100 Mbps range unchanged', () => {
+      expect(clampBandwidth(100_000)).toBe(100_000);
+      expect(clampBandwidth(5_000_000)).toBe(5_000_000);
+      expect(clampBandwidth(100_000_000)).toBe(100_000_000);
+    });
+  });
+
+  describe('bandwidth persistence via localStorage (UI-1.2)', () => {
+    const BW_KEY = 'phlix-bandwidth-estimate';
+
+    beforeEach(() => {
+      localStorage.removeItem(BW_KEY);
+      FakeHls.instances.length = 0;
+    });
+
+    afterEach(() => {
+      localStorage.removeItem(BW_KEY);
+      FakeHls.instances.length = 0;
+    });
+
+    it('seeds abrEwmaDefaultEstimate from persisted bandwidth on attachHls', async () => {
+      // Store a clamped bandwidth value (5 Mbps) in localStorage.
+      localStorage.setItem(BW_KEY, String(5_000_000));
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const cfg = FakeHls.instances[0].config;
+      expect(cfg.abrEwmaDefaultEstimate).toBe(5_000_000);
+    });
+
+    it('clamps and seeds a persisted bandwidth below 100 Kbps', async () => {
+      // Stale cached value of 50 Kbps should be clamped to 100 Kbps.
+      localStorage.setItem(BW_KEY, String(50_000));
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const cfg = FakeHls.instances[0].config;
+      expect(cfg.abrEwmaDefaultEstimate).toBe(100_000);
+    });
+
+    it('clamps and seeds a persisted bandwidth above 100 Mbps', async () => {
+      // Unrealistic 150 Mbps should be clamped to 100 Mbps.
+      localStorage.setItem(BW_KEY, String(150_000_000));
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const cfg = FakeHls.instances[0].config;
+      expect(cfg.abrEwmaDefaultEstimate).toBe(100_000_000);
+    });
+
+    it('seeds 0 (hls.js built-in ABR) when no bandwidth is stored', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const cfg = FakeHls.instances[0].config;
+      expect(cfg.abrEwmaDefaultEstimate).toBe(0);
+    });
+
+    it('seeds 0 when localStorage contains a non-numeric value', async () => {
+      localStorage.setItem(BW_KEY, 'not-a-number');
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const cfg = FakeHls.instances[0].config;
+      expect(cfg.abrEwmaDefaultEstimate).toBe(0);
+    });
+
+    it('persists the final bandwidth estimate on destroy()', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      // Set a live bandwidth estimate on the captured hls instance.
+      FakeHls.instances[0].bandwidthEstimate = 8_000_000;
+      handle.destroy();
+      // destroy() must persist the current bandwidthEstimate to localStorage.
+      expect(localStorage.getItem(BW_KEY)).toBe(String(8_000_000));
     });
   });
 });
