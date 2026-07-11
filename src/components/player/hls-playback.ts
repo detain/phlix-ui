@@ -147,6 +147,41 @@ export interface AttachHlsOptions {
   startPosition?: number;
 }
 
+/** localStorage key for the last-seen hls.js bandwidth estimate (bits/sec). */
+const BW_EST_KEY = 'phlix-bandwidth-estimate';
+
+/**
+ * Clamp a bandwidth estimate to a reasonable range so a cold-start doesn't
+ * land at the bottom rung on a fast network or blow up on a stale cached value.
+ * Range: 100 Kbps – 100 Mbps.
+ */
+function clampBandwidth(bw: number): number {
+  const MIN = 100_000;
+  const MAX = 100_000_000;
+  return Math.min(MAX, Math.max(MIN, bw));
+}
+
+/** Load and clamp the persisted bandwidth estimate, or 0 if none is stored. */
+function loadPersistedBandwidth(): number {
+  try {
+    const raw = localStorage.getItem(BW_EST_KEY);
+    if (!raw) return 0;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? clampBandwidth(parsed) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Persist the given bandwidth estimate (bits/sec) to localStorage. */
+function persistBandwidth(bw: number): void {
+  try {
+    localStorage.setItem(BW_EST_KEY, String(bw));
+  } catch {
+    /* storage quota exceeded or private mode — ignore */
+  }
+}
+
 /** True when the browser can play HLS natively (Safari / iOS). */
 export function isNativeHlsSupported(video: HTMLVideoElement): boolean {
   const t = video.canPlayType('application/vnd.apple.mpegurl');
@@ -166,6 +201,20 @@ export function isNativeHlsSupported(video: HTMLVideoElement): boolean {
  *
  * @returns A handle whose `destroy()` detaches and stops loading.
  */
+
+/** Tracks the active hls.js instance for bandwidth persistence across sessions. */
+let _activeHls: import('hls.js').default | null = null;
+
+/** Tracks the periodic bandwidth-persist interval id. */
+let _persistInterval: ReturnType<typeof setInterval> | null = null;
+
+/** Saves the current bandwidth estimate to localStorage. */
+function _saveBandwidth(): void {
+  if (_activeHls) {
+    persistBandwidth(_activeHls.bandwidthEstimate);
+  }
+}
+
 export async function attachHls(
   video: HTMLVideoElement,
   url: string,
@@ -182,10 +231,21 @@ export async function attachHls(
     //   2. consumer `opts.hlsConfig` overrides (e.g. TV RAM tuning) — these win
     //   3. `xhrSetup` LAST and unoverridable — it carries the bearer token, so
     //      spreading it after `hlsConfig` guarantees a consumer can't drop auth.
+    // Seed ABR with the persisted bandwidth estimate so fast networks don't
+    // cold-start at the lowest rung. Clamped to a reasonable range to handle
+    // stale or extreme values gracefully.
+    const persistedBw = loadPersistedBandwidth();
     const hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
       startPosition: opts.startPosition ?? 0,
+      // VOD-friendly buffer bounds: 90 s back-buffer (lower RAM on TVs) and
+      // 60 s forward buffer. Consumer hlsConfig can override both (TV tuning).
+      backBufferLength: 90,
+      maxBufferLength: 60,
+      // Seed the ABREwma with the clamped persisted estimate; 0 falls through
+      // to hls.js's built-in default probe logic.
+      abrEwmaDefaultEstimate: persistedBw,
       // Leave the media element's <track> sidecars alone. Our WebVTT subtitles are
       // EXTERNAL `<track>` elements (extracted server-side, not in the HLS manifest)
       // rendered by our own CaptionOverlay. With native text-track rendering ON
@@ -231,11 +291,23 @@ export async function attachHls(
       }
     });
 
+    // Track the instance and set up periodic bandwidth persistence so the
+    // estimate survives even if the tab is closed without an explicit destroy.
+    _activeHls = hls;
+    if (_persistInterval !== null) clearInterval(_persistInterval);
+    _persistInterval = setInterval(_saveBandwidth, 30_000);
     hls.loadSource(url);
     hls.attachMedia(video);
 
     return {
       destroy(): void {
+        // Persist the final bandwidth estimate before tearing down.
+        persistBandwidth(hls.bandwidthEstimate);
+        if (_persistInterval !== null) {
+          clearInterval(_persistInterval);
+          _persistInterval = null;
+        }
+        _activeHls = null;
         try {
           hls.destroy();
         } catch {
