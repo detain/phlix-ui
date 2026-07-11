@@ -819,15 +819,16 @@ function bufferedEnd(v: HTMLVideoElement): number {
 
 function onPlay(): void {
   player.play();
+  player.setMediaPositionState();
 }
 function onPause(): void {
   player.pause();
+  player.setMediaPositionState();
 }
 function onTimeUpdate(): void {
   const v = videoRef.value;
   if (v) {
     player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
-    player.setMediaPositionState(); // keep the OS scrubber in sync
   }
 }
 function onLoadedMetadata(): void {
@@ -861,6 +862,15 @@ function onVolumeChange(): void {
 function onRateChange(): void {
   const v = videoRef.value;
   if (v && v.playbackRate !== player.rate) player.setRate(v.playbackRate);
+  player.setMediaPositionState();
+}
+
+function onSeeked(): void {
+  player.setMediaPositionState();
+}
+
+function onDurationChange(): void {
+  player.setMediaPositionState();
 }
 
 /** Seek to an absolute time (seconds) — driven by the Scrubber. */
@@ -1196,6 +1206,8 @@ onBeforeUnmount(() => {
         @progress="onProgress"
         @volumechange="onVolumeChange"
         @ratechange="onRateChange"
+        @seeked="onSeeked"
+        @durationchange="onDurationChange"
         @ended="onEnded"
         @error="onVideoError"
         @enterpictureinpicture="onEnterPip"

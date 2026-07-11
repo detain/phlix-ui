@@ -195,9 +195,10 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   /** Record (or clear) the resume position for a media id, throttled. */
   function saveResume(id: string, pos: number, dur: number): void {
     if (inResumeBand(pos, dur)) {
+      const isNew = !(id in resumeMap.value);
       resumeMap.value[id] = Math.floor(pos);
       touch(id);
-      evictToCapacity(RESUME_MAX_ENTRIES);
+      if (isNew) evictToCapacity(RESUME_MAX_ENTRIES);
     } else {
       delete resumeMap.value[id]; // too early or effectively finished
       delete lastTouched.value[id];

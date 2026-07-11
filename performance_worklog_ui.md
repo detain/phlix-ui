@@ -22,7 +22,7 @@
 - [ ] UI-1.2  hls.js tuning + bandwidth-estimate persistence
 - [ ] UI-1.3  MediaCapabilities/codec probing before direct play
 - [ ] UI-1.4  skip hls.js download on native-HLS-only browsers
-- [ ] UI-1.5  transcode start/poll: AbortSignal + longer timeout
+- [x] UI-1.5  transcode start/poll: AbortSignal + longer timeout    (commits: 0fd2fba, f3b4019, 13767067c82242603bd5e65cb00e9f952afacfcb)  DONE
 - [ ] UI-1.6  reduce timeupdate work (position state + eviction)
 - [ ] UI-1.7  own the fade timer
 - [ ] UI-1.8  mini-player HLS support
