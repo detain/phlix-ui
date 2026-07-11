@@ -397,7 +397,7 @@ describe('MediaGrid — event forwarding', () => {
 describe('MediaGrid — UI-2.5 scroll perf', () => {
   it('does NOT call getBoundingClientRect during scroll events (uses window.scrollY)', async () => {
     mockLayout(1000, 0);
-    const w = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
+    mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
     await nextTick();
 
     gbcrSpy.mockClear(); // reset call count after mount measurements

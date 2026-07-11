@@ -133,6 +133,8 @@ function measure(): void {
  * Scroll handler: reads window.scrollY directly (no getBoundingClientRect).
  * sizerTop is cached and updated only by measure() (ResizeObserver fires on
  * layout changes, keeping the cache valid for the scroll-driven case).
+ * measure() is NOT called here — containerWidth/viewportHeight are stable
+ * after layout and are updated by the ResizeObserver on any size change.
  */
 function throttledMeasure(): void {
   const now = performance.now();
@@ -140,7 +142,6 @@ function throttledMeasure(): void {
     lastScrollMeasureTime = now;
     // scrollTop derived from cached sizerTop — no layout read needed.
     scrollTop.value = typeof window !== 'undefined' ? Math.max(0, window.scrollY - sizerTop) : 0;
-    measure();
   }
 }
 
@@ -157,8 +158,13 @@ function scheduleMeasure(): void {
 }
 
 // --- derived layout ---
-/** Guards visibleItems recompute: only re-slice when startIndex/endIndex change. */
-const prevWindow = ref<{ startIndex: number; endIndex: number; items: { item: MediaItem | null; index: number }[] } | null>(null);
+/**
+ * Guards visibleItems recompute: only re-slice when startIndex/endIndex change.
+ * Uses a plain closure variable (not reactive) to avoid vue/no-side-effects in computed.
+ * Each component instance gets its own closure, so no cross-instance pollution.
+ */
+type WindowCache = { startIndex: number; endIndex: number; items: { item: MediaItem | null; index: number }[] };
+let windowCache: WindowCache | null = null;
 
 const columns = computed(() => computeColumns(containerWidth.value, cardSize.value, COL_GAP));
 const rowHeight = computed(() =>
@@ -191,18 +197,14 @@ const visibleItems = computed(() => {
   // Gating on integer indices: skip recompute when the window hasn't moved.
   // The scrollTop ref updates on every tick, but startIndex/endIndex only
   // change when the row band actually shifts — no point re-slicing the array.
-  if (
-    prevWindow.value &&
-    prevWindow.value.startIndex === startIndex &&
-    prevWindow.value.endIndex === endIndex
-  ) {
-    return prevWindow.value.items;
+  if (windowCache && windowCache.startIndex === startIndex && windowCache.endIndex === endIndex) {
+    return windowCache.items;
   }
   const out: { item: MediaItem | null; index: number }[] = [];
   // Indices past the loaded set render as skeletons (pre-sized grid); they fill
   // in once on-demand paging fetches them.
   for (let i = startIndex; i < endIndex; i++) out.push({ item: props.items[i] ?? null, index: i });
-  prevWindow.value = { startIndex, endIndex, items: out };
+  windowCache = { startIndex, endIndex, items: out };
   return out;
 });
 

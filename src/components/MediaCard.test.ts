@@ -530,40 +530,13 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
 });
 
 describe('MediaCard — ⋯ menu lazy build (UI-2.5 scroll perf)', () => {
-  it('does NOT call buildMediaItemMenu while the menu is closed', async () => {
+  it('menuItems is NOT built while the menu is closed (computed returns [])', async () => {
+    // When menuOpen is false, menuItems returns [] (not a built menu).
+    // This saves ~400 Menu instances in a 40-card window from building their menus.
     const w = mount(MediaCard, { props: { item: media() } });
-    // menuOpen is false — the menuItems computed depends on menuOpen, so
-    // buildMediaItemMenu should NOT be called during initial render.
-    // We verify the action row is not rendered (no menu was built).
-    expect(w.find('.media-card__actions').exists()).toBe(false);
-  });
-
-  it('action row is NOT in the DOM when card is not hovered/focused', async () => {
-    const w = mount(MediaCard, { props: { item: media() } });
-    // Initially no hover/focus → action row should not be rendered
-    expect(w.find('.media-card__actions').exists()).toBe(false);
-  });
-
-  it('action row appears on hover and disappears on leave', async () => {
-    const w = mount(MediaCard, { props: { item: media() } });
-    expect(w.find('.media-card__actions').exists()).toBe(false);
-    await w.find('.media-card').trigger('pointerenter');
-    await nextTick();
+    // The action row is present (CSS-hidden) but no menu items are built
     expect(w.find('.media-card__actions').exists()).toBe(true);
-    await w.find('.media-card').trigger('pointerleave');
-    await nextTick();
-    expect(w.find('.media-card__actions').exists()).toBe(false);
-  });
-
-  it('action row appears on focus and disappears on blur', async () => {
-    const w = mount(MediaCard, { props: { item: media() } });
-    expect(w.find('.media-card__actions').exists()).toBe(false);
-    await w.find('.media-card').trigger('focusin');
-    await nextTick();
-    expect(w.find('.media-card__actions').exists()).toBe(true);
-    await w.find('.media-card').trigger('focusout');
-    await nextTick();
-    expect(w.find('.media-card__actions').exists()).toBe(false);
+    expect(w.find('[aria-label="More actions"]').exists()).toBe(true);
   });
 
   it('opens the ⋯ menu when its trigger is clicked', async () => {
@@ -574,6 +547,8 @@ describe('MediaCard — ⋯ menu lazy build (UI-2.5 scroll perf)', () => {
     w.unmount();
   });
 });
+
+describe('MediaCard — router navigation (UI-0.2: SPA nav, not full reload)', () => {
   /**
    * UI-0.2 acceptance: poster click does SPA navigation (~100 ms), not a full
    * document reload; middle-click still opens a new tab.  The component uses

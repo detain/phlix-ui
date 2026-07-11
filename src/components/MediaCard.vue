@@ -125,10 +125,6 @@ const isWatched = computed(() => userItemData.isWatched(props.item.id));
 
 const menuOpen = ref(false);
 
-/** Gates the action-row DOM (saves ~400 button instances in a 40-card window). */
-const hovered = ref(false);
-const focused = ref(false);
-
 const isSeriesOrSeason = computed(() => props.item.type === 'series' || props.item.type === 'season');
 
 /**
@@ -261,13 +257,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 </script>
 
 <template>
-  <article
-    class="media-card"
-    @pointerenter="hovered = true; prefetchTarget()"
-    @pointerleave="hovered = false"
-    @focusin="focused = true; prefetchTarget()"
-    @focusout="focused = false"
-  >
+  <article class="media-card" @pointerenter="prefetchTarget" @focusin="prefetchTarget">
     <div class="media-card__poster">
       <!-- SPA navigation via RouterLink (intercepts left-click for ~100ms SPA nav);
            falls back to plain anchor when router is unavailable (standalone mounts).
@@ -338,9 +328,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           row. Every button uses @click.stop.prevent so it never falls through to
           the card's stretched info link.
         -->
-        <!-- The action row is gated: not rendered until hover/focus, saving ~400
-             button instances in a 40-card window from mounting invisible DOM. -->
-        <div v-if="!hideActions && (hovered || focused)" class="media-card__actions">
+        <div v-if="!hideActions" class="media-card__actions">
           <!-- [ Play ] -->
           <button
             type="button"
