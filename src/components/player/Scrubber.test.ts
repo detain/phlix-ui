@@ -113,21 +113,22 @@ describe('Scrubber — hover preview', () => {
 });
 
 describe('Scrubber — drag to seek (pointer)', () => {
-  it('emits scrub-start + live seek on down, seek on drag, scrub-end on up', async () => {
+  it('emits scrub-start on down, preview-only during drag, single seek on release', async () => {
     const { w, track } = mountScrubber({ position: 0, duration: 200 });
     firePointer(track.element, 'pointerdown', 25);
     await w.vm.$nextTick();
     expect(w.emitted('scrub-start')).toHaveLength(1);
-    expect(w.emitted('seek')?.[0]).toEqual([50]); // 25%
+    expect(w.emitted('seek')).toBeUndefined(); // no seek on down — preview only
 
     firePointer(track.element, 'pointermove', 75);
     await w.vm.$nextTick();
-    expect(w.emitted('seek')?.[1]).toEqual([150]); // 75% while dragging
+    expect(w.emitted('seek')).toBeUndefined(); // no seek during drag
     // head follows the drag, not the (still 0) position prop
     expect(w.find('.scrubber__head').attributes('style')).toContain('left: 75%');
 
     firePointer(track.element, 'pointerup', 75);
     await w.vm.$nextTick();
+    expect(w.emitted('seek')?.[0]).toEqual([150]); // single seek on release: 75% × 200s
     expect(w.emitted('scrub-end')).toHaveLength(1);
   });
 
