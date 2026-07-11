@@ -26,7 +26,7 @@
 - [ ] UI-1.6  reduce timeupdate work (position state + eviction)
 - [ ] UI-1.7  own the fade timer
 - [ ] UI-1.8  mini-player HLS support
-- [ ] UI-2.1  media detail/player item cache (stale-while-revalidate)
+- [x] UI-2.1  media detail/player item cache (stale-while-revalidate)    (commit: ad6b34f)  DONE
 - [ ] UI-2.2  LRU-cap the media store cache
 - [ ] UI-2.3  complete Continue Watching from server payload
 - [ ] UI-2.4  local favorites patch instead of full refetch
