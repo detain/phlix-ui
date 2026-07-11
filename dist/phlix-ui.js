@@ -50,7 +50,7 @@ import { t as wt } from "./history-Cz9DDbWX.js";
 import { t as Tt } from "./syncPlay-DPzJkgkK.js";
 import { n as Et, t as Dt } from "./libraries-CXAz_kXs.js";
 import { t as Ot } from "./settings-m4upFcmH.js";
-import { i as kt, n as At, r as jt, t as Mt } from "./plugins-BQfgYg2E.js";
+import { i as kt, n as At, r as jt, t as Mt } from "./plugins-B2zw0xY5.js";
 import { t as Nt } from "./hubDashboard-BhOaaDD-.js";
 import { A as Pt, B as Ft, C as It, D as Lt, E as Rt, F as zt, G as Bt, H as Vt, I as Ht, J as Ut, K as Wt, L as Gt, M as Kt, N as qt, O as Jt, P as Yt, R as Xt, S as Zt, T as Qt, U as $t, V as en, W as tn, X as nn, Y as rn, Z as an, _ as on, a as sn, b as cn, c as ln, d as un, f as dn, g as fn, h as pn, i as mn, j as hn, k as gn, l as _n, n as vn, o as yn, p as bn, q as xn, r as Sn, s as Cn, t as wn, u as Tn, v as En, w as Dn, x as On, y as kn, z as An } from "./Player-DKYl0U3Z.js";
 import { a as jn, c as Mn, d as Nn, f as Pn, g as Fn, h as In, i as Ln, l as Rn, m as zn, n as Bn, o as Vn, p as Hn, r as Un, s as Wn, t as Gn, u as Kn } from "./captions-COgPp5bH.js";
@@ -908,7 +908,7 @@ var zi = pr("server", () => {
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-C67E7Knu.js")
+	component: () => import("./PluginsPage-Cj7xEn6g.js")
 }, ra = {
 	name: "admin-transcoding",
 	path: "transcoding",

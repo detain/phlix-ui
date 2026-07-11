@@ -48,6 +48,10 @@ export interface PluginSettingDescriptor {
   description: string;
   /** Present ONLY when the manifest declares a default (distinguish "no default" from "default null"). */
   default?: unknown;
+  /** Optional "where to get this value" URL (from the manifest or the server field-help overlay). */
+  link?: string;
+  /** Optional anchor text for {@link link}; defaults to a generic label in the UI. */
+  link_text?: string;
 }
 
 /** The manifest settings schema: one descriptor per setting key. */
@@ -55,6 +59,19 @@ export type PluginSettingsSchema = Record<string, PluginSettingDescriptor>;
 
 /** Current (masked) setting values: secrets are replaced by {@link PLUGIN_SECRET_MASK}. */
 export type PluginSettings = Record<string, unknown>;
+
+/**
+ * Per-secret "is it set?" status: whether a non-empty value is stored and its
+ * character length (never the value itself). Lets the configure form tell a set
+ * secret from an unset one and render a length-appropriate row of dots.
+ */
+export interface PluginSecretStatus {
+  set: boolean;
+  length: number;
+}
+
+/** Map of secret setting key → {@link PluginSecretStatus} (only secret keys appear). */
+export type PluginSecretStatusMap = Record<string, PluginSecretStatus>;
 
 /** A plugin row as returned by the list endpoint. */
 export interface Plugin {
@@ -71,6 +88,8 @@ export interface Plugin {
 export interface PluginDetail extends Plugin {
   settings_schema: PluginSettingsSchema;
   settings: PluginSettings;
+  /** Per-secret set/length status (secret keys only); absent on older servers. */
+  secret_status?: PluginSecretStatusMap;
 }
 
 /**
@@ -194,7 +213,7 @@ export class AdminPluginsApi {
     return Array.isArray(plugins) ? plugins : [];
   }
 
-  /** `GET /api/v1/admin/plugins/{name}` → unwraps `{ plugin }` (schema + masked settings). */
+  /** `GET /api/v1/admin/plugins/{name}` → unwraps `{ plugin }` (schema + masked settings + secret status). */
   async get(name: string): Promise<PluginDetail> {
     const { plugin } = await this.client.get<{ plugin: PluginDetail }>(
       `/api/v1/admin/plugins/${encodeURIComponent(name)}`,
@@ -208,6 +227,10 @@ export class AdminPluginsApi {
       settings:
         plugin && typeof plugin.settings === 'object' && plugin.settings !== null
           ? plugin.settings
+          : {},
+      secret_status:
+        plugin && typeof plugin.secret_status === 'object' && plugin.secret_status !== null
+          ? plugin.secret_status
           : {},
     };
   }

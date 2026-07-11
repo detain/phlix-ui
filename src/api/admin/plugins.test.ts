@@ -90,6 +90,14 @@ describe('AdminPluginsApi — list / get', () => {
     const detail = await api.get('anidb');
     expect(detail.settings_schema).toEqual({});
     expect(detail.settings).toEqual({});
+    expect(detail.secret_status).toEqual({});
+  });
+
+  it('get() passes through the secret_status map', async () => {
+    const detail = { ...sampleDetail, secret_status: { api_key: { set: true, length: 24 } } };
+    const { api } = makeApi({ get: () => ({ plugin: detail }) });
+    const got = await api.get('anidb');
+    expect(got.secret_status?.api_key).toEqual({ set: true, length: 24 });
   });
 
   it('encodes the plugin name in the URL', async () => {

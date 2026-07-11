@@ -31,12 +31,12 @@ import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminPluginsApi,
-  PLUGIN_SECRET_MASK,
   pluginErrorCode,
   pluginValidationErrors,
   type Plugin,
   type PluginDetail,
   type PluginSettingDescriptor,
+  type PluginSecretStatus,
   type CatalogResponse,
   type CatalogPlugin,
   type PluginUpdate,
@@ -370,12 +370,14 @@ function updateErrorMessage(e: unknown): string {
 async function updatePlugin(plugin: Plugin): Promise<void> {
   if (updatingName.value !== null) return;
   updatingName.value = plugin.name;
+  opError.value = null;
   try {
     await api.updatePlugin(plugin.name);
     toasts.success(`${plugin.name} updated.`);
     clearUpdate(plugin.name);
     await refreshAll();
   } catch (e) {
+    opError.value = { title: `Couldn't update ${plugin.name}`, message: updateErrorMessage(e) };
     toasts.error(updateErrorMessage(e));
   } finally {
     updatingName.value = null;
@@ -419,6 +421,23 @@ async function onToggleAutoUpdate(value: boolean): Promise<void> {
   }
 }
 
+// ── Lifecycle-action error banner ────────────────────────────────────────────
+/**
+ * The last enable/disable/update/uninstall failure, shown as a persistent
+ * banner. A plugin that refuses to enable reports a real reason (missing API
+ * key, an onEnable() error, an unresolvable entry class) that a fleeting toast
+ * is too easy to miss — it needs to stay on screen so the operator can read and
+ * act on it. `title` names what failed. Cleared when a new action starts.
+ */
+const opError = ref<{ title: string; message: string } | null>(null);
+
+/** Record a lifecycle-action failure on both the persistent banner and a toast. */
+function reportOpError(title: string, e: unknown, fallback: string): void {
+  const message = errMessage(e, fallback);
+  opError.value = { title, message };
+  toasts.error(message);
+}
+
 // ── Enable / disable ─────────────────────────────────────────────────────────
 /** Name of the plugin whose enable/disable request + refetch is currently in flight. */
 const togglingName = ref<string | null>(null);
@@ -427,6 +446,7 @@ async function toggleEnabled(plugin: Plugin, enabled: boolean): Promise<void> {
   // Ignore re-entrant toggles (rapid double-click) while one is in flight.
   if (togglingName.value !== null) return;
   togglingName.value = plugin.name;
+  opError.value = null;
   try {
     if (enabled) {
       await api.enable(plugin.name);
@@ -437,7 +457,16 @@ async function toggleEnabled(plugin: Plugin, enabled: boolean): Promise<void> {
     }
     await refreshAll();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to update plugin.'));
+    // The switch stays bound to the server's real enabled state (it never
+    // flipped), so on failure it simply shows "off" again — the banner is what
+    // tells the operator WHY. Enable errors carry the server's message
+    // verbatim (e.g. "OMDb API key not configured", "entry class … could not
+    // be resolved"), so surface it rather than a generic line.
+    reportOpError(
+      enabled ? `Couldn't enable ${plugin.name}` : `Couldn't disable ${plugin.name}`,
+      e,
+      'Failed to update plugin.',
+    );
   } finally {
     togglingName.value = null;
   }
@@ -455,7 +484,7 @@ async function confirmUninstall(): Promise<void> {
     uninstalling.value = null;
     await refreshAll();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to uninstall plugin.'));
+    reportOpError(`Couldn't uninstall ${target.name}`, e, 'Failed to uninstall plugin.');
     uninstalling.value = null;
   }
 }
@@ -503,14 +532,45 @@ function seedValue(descriptor: PluginSettingDescriptor, stored: unknown): unknow
     return stored === true || stored === 1 || stored === '1' || stored === 'true';
   }
   if (descriptor.secret) {
-    // The server returns every secret value AS the `***` mask, so the stored
-    // string is already the mask; an untouched submit then preserves it server-side.
-    return stored === undefined || stored === null ? '' : String(stored);
+    // Secret inputs ALWAYS start empty — we never prefill them with the masked
+    // value (nor echo it back). Whether a secret is already stored is shown by
+    // the `secret_status` line beside the field; leaving the box blank keeps the
+    // stored value, typing replaces it. This removes the old `***`-round-trip
+    // ambiguity where a set and an unset secret looked identical.
+    return '';
   }
   if (stored === undefined || stored === null) {
     return descriptor.default !== undefined ? descriptor.default : '';
   }
   return stored;
+}
+
+/** The stored secret's set/length status for a field (null for non-secret / unknown). */
+function secretStatusFor(key: string): PluginSecretStatus | null {
+  const status = detail.value?.secret_status?.[key];
+  return status ?? null;
+}
+
+/** A row of bullet dots ~matching a stored secret's length (capped so it never overflows). */
+function secretDots(length: number): string {
+  return '•'.repeat(Math.max(1, Math.min(length, 32)));
+}
+
+/** Human hint for a field's declared default, or null when there is none / it is empty. */
+function defaultHint(descriptor: PluginSettingDescriptor): string | null {
+  if (descriptor.secret) return null; // never surface a secret default
+  if (!('default' in descriptor)) return null;
+  const d = descriptor.default;
+  if (d === null || d === undefined || d === '') return null;
+  if (typeof d === 'boolean') return d ? 'on' : 'off';
+  return String(d);
+}
+
+/** Anchor text for a field's help link. */
+function linkText(descriptor: PluginSettingDescriptor): string {
+  return descriptor.link_text && descriptor.link_text.trim() !== ''
+    ? descriptor.link_text
+    : 'Where to get this';
 }
 
 async function openConfigure(plugin: Plugin): Promise<void> {
@@ -547,19 +607,24 @@ function closeConfigure(): void {
 
 /**
  * Build the settings payload: every key whose value changed from its pristine
- * seed. A secret left at its prefilled value (the `***` mask, unchanged) is NOT
- * included — so the server keeps the stored secret. A secret the admin retyped
- * (now differs from pristine) IS included. Booleans/ints are coerced to their
- * canonical JS type so the server's type validation passes.
+ * seed. Secret fields always start EMPTY, so a blank secret is left out — the
+ * server preserves the stored value — and a secret is only sent when the admin
+ * actually types one (which then replaces the stored value). Booleans/ints are
+ * coerced to their canonical JS type so the server's type validation passes.
  */
 function buildChangedSettings(): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (!detail.value) return out;
   for (const [key, descriptor] of Object.entries(detail.value.settings_schema)) {
     const current = formValues.value[key];
+    if (descriptor.secret) {
+      // Blank → keep the stored secret; only a typed value is sent.
+      if (current === '' || current === null || current === undefined) continue;
+      out[key] = current;
+      continue;
+    }
     const pristine = pristineValues.value[key];
-    if (current === pristine) continue; // untouched (incl. an unchanged masked secret)
-    if (descriptor.secret && current === PLUGIN_SECRET_MASK) continue; // re-typed the mask → treat as unchanged
+    if (current === pristine) continue; // untouched
     if (isBool(descriptor)) {
       out[key] = current === true;
     } else if (inputType(descriptor) === 'number') {
@@ -695,6 +760,26 @@ onMounted(() => {
         class="admin-plugins__install-error-dismiss"
         aria-label="Dismiss"
         @click="installError = null"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Persistent lifecycle-action (enable/disable/update/uninstall) failure
+         banner. Enabling can fail for a real, actionable reason (missing API
+         key, a plugin onEnable() error) that the operator MUST see — a toast
+         alone is too easy to miss. -->
+    <div v-if="opError" class="admin-plugins__install-error" role="alert">
+      <Icon name="alert" class="admin-plugins__install-error-icon" />
+      <div class="admin-plugins__install-error-body">
+        <strong>{{ opError.title }}.</strong>
+        <span>{{ opError.message }}</span>
+      </div>
+      <button
+        type="button"
+        class="admin-plugins__install-error-dismiss"
+        aria-label="Dismiss"
+        @click="opError = null"
       >
         ×
       </button>
@@ -953,7 +1038,13 @@ onMounted(() => {
             <template v-else>
               <span class="admin-plugins__label">
                 {{ descriptor.label || key }}
-                <span v-if="descriptor.required" class="admin-plugins__req" aria-hidden="true">*</span>
+                <span
+                  v-if="descriptor.required"
+                  class="admin-plugins__req"
+                  aria-hidden="true"
+                  title="Required"
+                >*</span>
+                <span v-else class="admin-plugins__optional">optional</span>
               </span>
               <input
                 v-model="formValues[key]"
@@ -961,14 +1052,47 @@ onMounted(() => {
                 class="admin-plugins__input"
                 :class="{ 'is-invalid': fieldErrors[key] }"
                 :autocomplete="descriptor.secret ? 'new-password' : 'off'"
-                :placeholder="descriptor.secret ? 'Leave unchanged to keep the current value' : undefined"
+                :placeholder="
+                  descriptor.secret
+                    ? secretStatusFor(key)?.set
+                      ? 'Leave blank to keep the current value'
+                      : 'Not set — enter a value'
+                    : undefined
+                "
                 :aria-label="descriptor.label || key"
                 :aria-invalid="fieldErrors[key] ? 'true' : undefined"
               />
+              <!-- Secret status: show whether a value is stored (and a length cue)
+                   so a set secret is distinguishable from an unset one. -->
+              <span
+                v-if="descriptor.secret"
+                class="admin-plugins__secret-status"
+                :class="{ 'is-set': secretStatusFor(key)?.set }"
+              >
+                <template v-if="secretStatusFor(key)?.set">
+                  <span class="admin-plugins__secret-dots" aria-hidden="true">{{
+                    secretDots(secretStatusFor(key)?.length ?? 0)
+                  }}</span>
+                  Currently set ({{ secretStatusFor(key)?.length }} characters) — leave blank to keep it.
+                </template>
+                <template v-else>Not set.</template>
+              </span>
             </template>
             <span v-if="descriptor.description" class="admin-plugins__hint">
               {{ descriptor.description }}
             </span>
+            <span v-if="defaultHint(descriptor)" class="admin-plugins__hint admin-plugins__default-hint">
+              Default: <code>{{ defaultHint(descriptor) }}</code>
+            </span>
+            <a
+              v-if="descriptor.link"
+              class="admin-plugins__field-link"
+              :href="descriptor.link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ linkText(descriptor) }} ↗
+            </a>
             <span v-if="fieldErrors[key]" class="admin-plugins__error" role="alert">
               {{ fieldErrors[key] }}
             </span>
@@ -1262,6 +1386,43 @@ onMounted(() => {
 .admin-plugins__req {
   color: var(--accent);
   margin-left: 2px;
+}
+.admin-plugins__optional {
+  margin-left: var(--space-2);
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--font-normal, 400);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-subtle);
+}
+.admin-plugins__secret-status {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+}
+.admin-plugins__secret-status.is-set {
+  color: var(--text-muted);
+}
+.admin-plugins__secret-dots {
+  margin-right: var(--space-2);
+  letter-spacing: 0.15em;
+  color: var(--success, #46a758);
+  font-variant-numeric: tabular-nums;
+}
+.admin-plugins__default-hint code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle, rgba(127, 127, 127, 0.12));
+}
+.admin-plugins__field-link {
+  font-size: var(--text-xs);
+  color: var(--accent);
+  text-decoration: none;
+  width: fit-content;
+}
+.admin-plugins__field-link:hover {
+  text-decoration: underline;
 }
 .admin-plugins__input {
   width: 100%;

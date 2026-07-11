@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.79.0] - 2026-07-10
+
+### Added
+- **Admin → Plugins: enable/disable/update/uninstall failures now show a persistent banner** carrying the server's real reason (e.g. "OMDb API key not configured", a plugin `onEnable()` error, or an unresolvable entry class), not just a fleeting toast — so a plugin that refuses to enable tells you *why*.
+- **Configure form: secret fields now show whether a value is stored.** Secret inputs start EMPTY (the value/mask is never prefilled or echoed back); a status line shows "Currently set (N characters)" with a length-appropriate row of dots, or "Not set." Leaving the box blank keeps the stored secret; typing replaces it. This removes the old `***` ambiguity where a set and an unset secret looked identical and you couldn't tell a save had taken.
+- **Configure form: richer field help.** Each field renders a "where to get this value" link (`↗`), a `Default: …` hint, and an "optional" marker (alongside the existing `*` for required), sourced from the manifest schema and the server's field-help overlay.
+
+### Changed
+- The plugin settings API type (`PluginSettingDescriptor`) gains optional `link`/`link_text`; `PluginDetail` gains `secret_status` (`{ key: { set, length } }`), passed through by `AdminPluginsApi.get()`.
+
 ## [0.76.3] - 2026-07-10
 
 Release: phlix-ui v0.76.3
