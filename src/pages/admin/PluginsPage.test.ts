@@ -35,11 +35,20 @@ const PLUGIN_B = {
 const DETAIL_A = {
   ...PLUGIN_A,
   settings_schema: {
-    api_key: { type: 'string', required: true, secret: true, label: 'API Key', description: 'Your key' },
+    api_key: {
+      type: 'string',
+      required: true,
+      secret: true,
+      label: 'API Key',
+      description: 'Your key',
+      link: 'https://anidb.net/software/api',
+      link_text: 'AniDB API docs',
+    },
     page_size: { type: 'int', required: false, secret: false, label: 'Page size', description: '', default: 25 },
     extras: { type: 'bool', required: false, secret: false, label: 'Extras', description: '' },
   },
   settings: { api_key: '***', page_size: 25, extras: false },
+  secret_status: { api_key: { set: true, length: 12 } },
 };
 
 const DEFAULT_SOURCE = 'https://github.com/detain/phlix-plugins';
@@ -356,6 +365,27 @@ describe('Admin PluginsPage — enable / disable', () => {
     expect(toasts.toasts.some((t) => t.message === 'enable boom')).toBe(true);
     w.unmount();
   });
+
+  it('shows a persistent banner with the real reason when enable fails', async () => {
+    const { client, post } = makeClient();
+    // The server surfaces the actual PluginEnableException message via ApiError.
+    post.mockRejectedValueOnce(
+      new ApiError('OMDb API key not configured. Add your API key in the plugin settings.', 422, {
+        error: 'OMDb API key not configured. Add your API key in the plugin settings.',
+        code: 'plugin.enable.failed',
+      }),
+    );
+    const w = mountPage(client);
+    await flushPromises();
+    const malSwitch = w.findAllComponents(Switch).find((s) => s.attributes('aria-label') === 'Toggle mal');
+    await malSwitch!.vm.$emit('update:modelValue', true);
+    await flushPromises();
+    const banner = document.querySelector('.admin-plugins__install-error[role="alert"]');
+    expect(banner).toBeTruthy();
+    expect(banner!.textContent).toContain("Couldn't enable mal");
+    expect(banner!.textContent).toContain('OMDb API key not configured');
+    w.unmount();
+  });
 });
 
 describe('Admin PluginsPage — install from URL', () => {
@@ -518,12 +548,35 @@ describe('Admin PluginsPage — configure', () => {
     const panel = modalPanel();
     expect(panel.textContent).toContain('API Key');
     expect(panel.textContent).toContain('Page size');
-    // Secret renders as a password input prefilled with the mask.
+    // Secret renders as a password input that starts EMPTY (never prefilled
+    // with the value or the mask).
     const secret = panel.querySelector<HTMLInputElement>('input[type="password"]')!;
     expect(secret).toBeTruthy();
-    expect(secret.value).toBe('***');
+    expect(secret.value).toBe('');
+    // …and its stored-status is shown instead, with the length (not the value).
+    expect(panel.textContent).toContain('Currently set (12 characters)');
+    // A "where to get it" link is rendered from the schema.
+    const link = panel.querySelector<HTMLAnchorElement>('a[href="https://anidb.net/software/api"]');
+    expect(link).toBeTruthy();
+    expect(link!.textContent).toContain('AniDB API docs');
     // Non-secret int renders as a number input.
     expect(panel.querySelector('input[type="number"]')).toBeTruthy();
+    w.unmount();
+  });
+
+  it('shows "Not set" for an unstored secret', async () => {
+    const detail = {
+      ...DETAIL_A,
+      settings: { ...DETAIL_A.settings, api_key: '***' },
+      secret_status: { api_key: { set: false, length: 0 } },
+    };
+    const { client } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    expect(panel.textContent).toContain('Not set.');
+    expect(panel.textContent).not.toContain('Currently set');
     w.unmount();
   });
 

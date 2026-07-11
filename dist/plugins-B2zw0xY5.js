@@ -37,7 +37,8 @@ var i = class {
 		return {
 			...t,
 			settings_schema: t && typeof t.settings_schema == "object" && t.settings_schema !== null ? t.settings_schema : {},
-			settings: t && typeof t.settings == "object" && t.settings !== null ? t.settings : {}
+			settings: t && typeof t.settings == "object" && t.settings !== null ? t.settings : {},
+			secret_status: t && typeof t.secret_status == "object" && t.secret_status !== null ? t.secret_status : {}
 		};
 	}
 	install(e) {
@@ -107,4 +108,4 @@ var i = class {
 //#endregion
 export { r as i, t as n, n as r, i as t };
 
-//# sourceMappingURL=plugins-BQfgYg2E.js.map
+//# sourceMappingURL=plugins-B2zw0xY5.js.map
