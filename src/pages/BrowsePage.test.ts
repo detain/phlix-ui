@@ -454,15 +454,17 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
     expect(userItemData.get('f1').rating).toBe(7);
   });
 
-  it('re-fetches and drops an un-favorited item when the favorite set changes', async () => {
-    // The server returns favorites carrying `user_data.favorite: true`, so the
-    // rail's loadFavorites() seeds the store — that populates the favorite-id
-    // signature the page watches. The dynamic source shrinks between the first
-    // load and the toggle-driven re-fetch (the server-side un-favorite).
+  it('patches favoriteItems in-place when onWatchlist is called (no refetch)', async () => {
+    // U-N5: onWatchlist patches favoriteItems locally instead of refetching.
+    // The MediaCard already toggled the store optimistically before emitting
+    // `watchlist`. onWatchlist reads userItemData.isFavorite(id) and patches
+    // favoriteItems in-place: adding the item if favorite=true, removing it if false.
     const fav = (id: string, name: string) =>
       media({ id, name, user_data: { favorite: true, rating: null } });
-    let current: MediaItem[] = [fav('f1', 'Keep'), fav('f2', 'Drop')];
-    stubFetch({ libraries: ONE_LIBRARY, favorites: () => current });
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      favorites: [fav('f1', 'Keep'), fav('f2', 'Drop')],
+    });
     const w = mountPage();
     const userItemData = useUserItemDataStore();
     await flushPromises();
@@ -472,28 +474,45 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
     expect(userItemData.isFavorite('f1')).toBe(true);
     expect(userItemData.isFavorite('f2')).toBe(true);
 
-    // Un-favorite f2: the store entry flips → the favorite-id signature changes
-    // → the rail re-fetches; the server now returns only f1.
-    current = [fav('f1', 'Keep')];
-    userItemData.entries.set('f2', { favorite: false, rating: null, like_level: 0, watched: false });
+    // Simulate MediaCard's optimistic toggle + watchlist relay: toggle f2 off,
+    // then emit `watchlist` from the favorites MediaRow so BrowsePage.onWatchlist
+    // receives it and patches favoriteItems in-place.
+    const favRow = favoritesRow(w)!;
+    await userItemData.toggleFavorite('f2', '');
+    await flushPromises();
+    // Pass the item without user_data.favorite — onWatchlist reads the store.
+    favRow.vm.$emit('watchlist', media({ id: 'f2', name: 'Drop' }));
     await flushPromises();
 
     const items = favoritesRow(w)!.props('items') as MediaItem[];
     expect(items.map((i) => i.id)).toEqual(['f1']);
+    // The store reflects the unfavorite state.
+    expect(userItemData.isFavorite('f2')).toBe(false);
   });
 
-  it('hides the rail after un-favoriting the last favorite (now empty)', async () => {
-    let current: MediaItem[] = [
-      media({ id: 'f1', name: 'Only Fave', user_data: { favorite: true, rating: null } }),
-    ];
-    stubFetch({ libraries: ONE_LIBRARY, favorites: () => current });
+  it('hides the favorites rail when onWatchlist removes the last item', async () => {
+    // U-N5: onWatchlist locally removes the item; when favoriteItems becomes
+    // empty, showFavorites computed flips and the rail v-if hides it.
+    // Note: f1 must be in media response so userItemData.get('f1') is hydrated
+    // (loadFavorites only populates favoriteItems, not userItemData store).
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      media: { items: [media({ id: 'f1', name: 'Only Fave', user_data: { favorite: true, rating: null } })], total: 1 },
+      favorites: [media({ id: 'f1', name: 'Only Fave', user_data: { favorite: true, rating: null } })],
+    });
     const w = mountPage();
     const userItemData = useUserItemDataStore();
     await flushPromises();
     expect(favoritesRow(w)).toBeTruthy();
+    // Confirm userItemData is hydrated so toggleFavorite flips correctly.
+    expect(userItemData.isFavorite('f1')).toBe(true);
 
-    current = [];
-    userItemData.entries.set('f1', { favorite: false, rating: null, like_level: 0, watched: false });
+    // Simulate MediaCard's toggle + watchlist relay: emit from the MediaRow.
+    const favRow = favoritesRow(w)!;
+    await userItemData.toggleFavorite('f1', '');
+    await flushPromises();
+    // Pass the item without user_data.favorite — onWatchlist reads the store.
+    favRow.vm.$emit('watchlist', media({ id: 'f1', name: 'Only Fave' }));
     await flushPromises();
 
     expect(favoritesRow(w)).toBeUndefined();
