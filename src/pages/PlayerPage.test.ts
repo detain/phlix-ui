@@ -13,6 +13,7 @@ import PlayerPage from './PlayerPage.vue';
 import Player from '../components/Player.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
 
 /** Server playback-info shape (markers + chapters; NO stream url). */
@@ -126,6 +127,9 @@ async function mountAt(
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
+  // The SWR item cache (UI-2.1) is a module-level singleton shared across tests + with
+  // MediaDetailPage; clear it so each test starts cold and by-id fetch assertions hold.
+  clearMediaItemCache();
 });
 afterEach(() => {
   while (wrappers.length) wrappers.pop()?.unmount();

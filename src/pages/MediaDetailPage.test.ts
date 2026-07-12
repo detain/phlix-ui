@@ -14,6 +14,7 @@ import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -84,6 +85,9 @@ async function mountAt(id: string, fetchMock: ReturnType<typeof vi.fn>) {
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
+  // The SWR item cache (UI-2.1) is a module-level singleton shared across tests; clear
+  // it so each test starts cold and the by-id fetch assertions below are deterministic.
+  clearMediaItemCache();
 });
 afterEach(() => {
   vi.unstubAllGlobals();
