@@ -286,6 +286,56 @@ function prefetchTarget(): void {
   prefetch(href.value);
 }
 
+/**
+ * UI-2.5 [U-R2] — lazy-MOUNT the overlay action row only while the card is
+ * hovered or keyboard-focused (it is CSS-hidden until then anyway). A 40-card
+ * windowed grid was eagerly mounting ~400 invisible Play/Rating/Favorite/
+ * Watched/Info/⋯-Menu/Match instances every time a row scrolled into the
+ * window; deferring the mount keeps them out of the component tree until the
+ * user actually reaches the card.
+ *
+ * Keyboard accessibility is PRESERVED: the stretched `.media-card__link`
+ * anchor is a real focusable entry point, so tabbing onto the card fires
+ * `focusin` and reveals the action row BEFORE the user can tab into the
+ * buttons. `focusout` only collapses the row when focus truly leaves the card
+ * (relatedTarget is outside), so moving focus link → Play never yanks the row.
+ *
+ * Coarse-pointer (touch) devices have no hover; the CSS `@media (hover: none)`
+ * rule reveals the overlay permanently there, so we keep the actions mounted on
+ * touch to preserve the single-tap-to-Play behaviour.
+ */
+const hovered = ref(false);
+const focused = ref(false);
+const coarsePointer =
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(hover: none)').matches;
+const actionsVisible = computed(
+  () => !props.hideActions && (hovered.value || focused.value || coarsePointer),
+);
+
+function onPointerEnter(): void {
+  hovered.value = true;
+  prefetchTarget();
+}
+function onPointerLeave(): void {
+  hovered.value = false;
+}
+function onFocusIn(): void {
+  focused.value = true;
+  prefetchTarget();
+}
+function onFocusOut(e: FocusEvent): void {
+  // Collapse only when focus actually LEFT the card. Moving focus from the
+  // stretched link INTO a just-revealed action button keeps focus within the
+  // card (relatedTarget is a descendant), so the row must stay mounted.
+  const next = e.relatedTarget as Node | null;
+  const root = e.currentTarget as HTMLElement | null;
+  if (!next || !root || !root.contains(next)) {
+    focused.value = false;
+  }
+}
+
 const loaded = ref(false);
 const imgEl = ref<HTMLImageElement | null>(null);
 function onLoad() {
@@ -322,7 +372,13 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 </script>
 
 <template>
-  <article class="media-card" @pointerenter="prefetchTarget" @focusin="prefetchTarget">
+  <article
+    class="media-card"
+    @pointerenter="onPointerEnter"
+    @pointerleave="onPointerLeave"
+    @focusin="onFocusIn"
+    @focusout="onFocusOut"
+  >
     <div class="media-card__poster">
       <!-- SPA navigation via RouterLink (intercepts left-click for ~100ms SPA nav);
            falls back to plain anchor when router is unavailable (standalone mounts).
@@ -398,7 +454,9 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           row. Every button uses @click.stop.prevent so it never falls through to
           the card's stretched info link.
         -->
-        <div v-if="!hideActions" class="media-card__actions">
+        <!-- Lazy-mounted (UI-2.5 [U-R2]): only present while hovered/focused
+             (or on touch). CSS reveal still animates opacity/pointer-events. -->
+        <div v-if="actionsVisible" class="media-card__actions">
           <!-- [ Play ] -->
           <button
             type="button"
