@@ -114,13 +114,16 @@ const registry = reactive(new Map<string, MediaItem>());
 function remember(list: MediaItem[]): void {
   list.forEach((i) => registry.set(i.id, i));
 }
-// `continueWatchingItems` comes from `useResumeSync`, which stores the full
-// MediaItem payloads returned by `GET /users/me/continue-watching`. This
-// means a title paused on another device shows in Continue Watching even if
-// not loaded in any rail. Positions are sorted via `player.resumeMap`.
+// `continueWatchingItems` is the REACTIVE ref from `useResumeSync`, holding the
+// full MediaItem payloads returned by `GET /users/me/continue-watching`. Reading
+// `.value` inside this computed subscribes to it, so a later `syncResume()`
+// (login / tab refocus / BrowsePage mount) that reassigns the shared ref
+// propagates here — a title paused on another device shows in Continue Watching
+// even if not loaded in any rail (U-N4). Positions are sorted via
+// `player.resumeMap`.
 const continueItems = computed<MediaItem[]>(() => {
   const map = player.resumeMap;
-  return continueWatchingItems
+  return continueWatchingItems.value
     .filter((item) => (map[item.id] ?? 0) > 0)
     .sort((a, b) => (map[b.id] ?? 0) - (map[a.id] ?? 0))
     .slice(0, 12);
