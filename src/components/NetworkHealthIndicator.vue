@@ -48,6 +48,9 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 let pollTimer: ReturnType<typeof setInterval> | undefined;
 let currentIntervalMs = POLL_INTERVAL_MS;
+/** The period the running `pollTimer` was armed with — so we can detect when a
+ *  backoff/recovery has changed the cadence and re-arm the live interval. */
+let armedIntervalMs = POLL_INTERVAL_MS;
 
 // ── Computed health status ─────────────────────────────────────────────────
 
@@ -159,13 +162,27 @@ async function fetchHealth(): Promise<void> {
     currentIntervalMs = Math.min(currentIntervalMs * BACKOFF_MULTIPLIER, MAX_BACKOFF_MS);
   } finally {
     loading.value = false;
+    // A bare setInterval keeps its ORIGINAL period, so a widened (backoff) or
+    // restored cadence would otherwise only take effect after a stop/start
+    // (visibility toggle). Re-arm the running poll when the cadence changed so
+    // it applies to the live poll immediately.
+    if (pollTimer !== undefined && currentIntervalMs !== armedIntervalMs) {
+      armPollTimer();
+    }
   }
+}
+
+/** (Re)create the poll interval with the current cadence. */
+function armPollTimer(): void {
+  if (pollTimer !== undefined) clearInterval(pollTimer);
+  armedIntervalMs = currentIntervalMs;
+  pollTimer = setInterval(() => { void fetchHealth(); }, currentIntervalMs);
 }
 
 function startPolling(): void {
   if (!auth.isAdmin) return;
   void fetchHealth();
-  pollTimer = setInterval(() => { void fetchHealth(); }, currentIntervalMs);
+  armPollTimer();
 }
 
 function stopPolling(): void {

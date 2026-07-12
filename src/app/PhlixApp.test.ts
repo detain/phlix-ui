@@ -12,6 +12,7 @@ import { setActivePinia, createPinia, type Pinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PhlixApp from './PhlixApp.vue';
 import MiniPlayer from '../components/MiniPlayer.vue';
+import NetworkHealthIndicator from '../components/NetworkHealthIndicator.vue';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import type { PhlixAppConfig } from './types';
@@ -328,6 +329,14 @@ describe('PhlixApp — persistent mini-player', () => {
     mini.vm.$emit('expand', 'm1');
     await flushPromises();
     expect(router.currentRoute.value.path).toBe('/app/player/m1');
+  });
+
+  it('does NOT mount the MiniPlayer or NetworkHealthIndicator for a logged-out non-admin (U-B5/U-N1)', async () => {
+    // No access token and no admin user → the login-page shell must not spin up the
+    // persistent mini-player (isLoggedIn) nor the admin health poller (isAdmin).
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    expect(wrapper.findComponent(MiniPlayer).exists()).toBe(false);
+    expect(wrapper.findComponent(NetworkHealthIndicator).exists()).toBe(false);
   });
 });
 

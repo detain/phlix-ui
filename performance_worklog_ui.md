@@ -14,10 +14,10 @@
 - [x] UI-0.2  RouterLink navigation on poster cards   RE-AUDIT 2026-07-12: was a LIVE REGRESSION — `@click.prevent="navigate"` set defaultPrevented BEFORE navigate → vue-router navigate bailed → dead left-click. UI-W0-fix: dropped `.prevent` → `@click="navigate"` (MediaCard.vue) + real click tests (left-click SPA-navigates to /app/media/<id>; ctrl/cmd/shift/middle DON'T push, native new-tab preserved). Playwright re-verify on live warranted. DONE. (b01372f, 30fe245 + UI-W0-fix)
 - [x] UI-0.3  scrub: preview-only during drag, seek on release   RE-AUDIT 2026-07-12: DONE + genuinely well-tested (Scrubber.test.ts asserts no seek on pointerdown/move, exactly one seek on release, pointercancel). No action. (e8c115b, 385dc1e)
 - [x] UI-0.4  parallelize PlayerPage item + playback-info   RE-AUDIT 2026-07-12: was only quasi-parallel (playback-info fired AFTER item await; misleading "concurrently" comment). UI-W0-fix: playback-info promise now dispatched BEFORE awaiting the item → truly concurrent, marker latency = max(item, pbinfo); loading still gates on item only. Added test (never-resolving playback-info → loading clears, Player mounts). DONE. (d0e8cfb + UI-W0-fix)
-- [x] UI-0.5  fetch trickplay on first player mount    (commit: 05489b1)  DONE
-- [x] UI-0.6  thread apiBase + AbortSignal into trickplay & marker-search    (commit: 05489b1)  DONE
-- [x] UI-0.7  episode-aware up next queue    (commit: 2fce901)  DONE
-- [x] UI-0.8  gate NetworkHealthIndicator on admin + visibility    (commit: cb2a668)  DONE
+- [x] UI-0.5  fetch trickplay on first player mount   RE-AUDIT 2026-07-12: PARTIAL — code CORRECT (prefetchTrickplay unconditional in onMounted; macrotask deferral preserves AC — thumbnails DO appear on first title; cleared onBeforeUnmount). GAP: mandated mount test ABSENT. UI-W0rem-fix (f12dbc4): added Player.test.ts mount test (spy ApiClient.getTrickplay; deferred setTimeout(0) fires exactly once with props.media.id; no double-fire). DONE. (05489b1 + f12dbc4)
+- [x] UI-0.6  thread apiBase + AbortSignal into trickplay & marker-search   RE-AUDIT 2026-07-12: PARTIAL + LIVE HUB RISK. Trickplay half DONE (useTrickplay apiBase + signal + memoize; getTrickplay signal). U-P11 similarController now assigned+aborted in closeSimilarModal. BUT marker-search STILL used global `api` singleton (page origin) not props.apiBase → similar-by-marker 404s on hub-proxied playback = the exact U-P6 defect STILL LIVE. UI-W0rem-fix (344fd48): Player.vue now routes searchByMarker through a memoized per-apiBase ApiClient (markerClient(), rebuilt on apiBase change) instead of the global singleton; kept per-search similarController abort wiring. Tests: request URL hits props.apiBase (relay proxy), NOT page origin; in-flight search aborts on modal close. DONE. Live Playwright re-verify on the hub warranted (like UI-0.2). (05489b1 + 344fd48)
+- [x] UI-0.7  episode-aware up next queue   RE-AUDIT 2026-07-12: DONE + real tests (episode base → ordered remaining episodes from seriesEpisodeCache, zero extra fetch; movie → genre queue; PlayerPage.test.ts:328/:352 + episode-order.test.ts). No action. (2fce901)
+- [x] UI-0.8  gate NetworkHealthIndicator on admin + visibility   RE-AUDIT 2026-07-12: PARTIAL — gating DONE (NetworkHealthIndicator v-if isAdmin; MiniPlayer v-if isLoggedIn; startPolling !isAdmin guard; visibilitychange stop/resume; backoff). MINOR live: backoff mutated currentIntervalMs but running setInterval kept old period → widened interval only applied after a visibility toggle. GAP: tests ENTIRELY missing. UI-W0rem-fix (d361e37): backoff tweak — added armPollTimer() + armedIntervalMs; fetchHealth re-arms the running interval whenever the cadence changes (backoff/recovery) so it applies to the live poll, not only after a stop/start. Tests: NetworkHealthIndicator.test.ts (non-admin never polls / no timer armed; admin polls on mount then STOPS when hidden; resumes on visible) + PhlixApp.test.ts negative gating (logged-out non-admin → neither MiniPlayer nor NetworkHealthIndicator mounted). DONE. (cb2a668 + d361e37)
 - [x] UI-1.1  preserve position on direct→HLS fallback    (commit: 8ebfaf2)  DONE
 - [x] UI-1.2  hls.js tuning + bandwidth-estimate persistence    (commits: c406306, 71565d6, 7621680, 72a96f4)  DONE
 - [x] UI-1.3  MediaCapabilities/codec probing before direct play    (commits: 859776a, fc47139, 55bf280)  DONE
@@ -209,3 +209,26 @@ Fixed all three W0 gaps found by the re-audit; suite green, dist/ NOT rebuilt/co
 skip / 0 fail** (baseline 2922 + 6 new). `vue-tsc --noEmit` 0 errors. `eslint .` 0 errors.
 `npm run build` exit 0. **dist/ NOT committed** — restored to the tracked state after the verify
 build (release-time gate).
+
+## Implementer — 2026-07-12 (UI-W0rem: UI-0.5 / UI-0.6 / UI-0.8)
+Fixed the audit gaps for the W0 remainder.
+- **UI-0.6 (LIVE HUB FIX)** `src/components/Player.vue`: replaced the global `api`
+  singleton (import → `ApiClient`) with a memoized per-apiBase client `markerClient()`
+  (rebuilt only when `props.apiBase` changes); `performSimilarSearch` now calls
+  `markerClient().searchByMarker(..., similarController.signal)`. Marker-search now hits
+  the relay proxy base on hub-proxied playback (no more 404); abort-on-close preserved.
+  Tests in `Player.test.ts`: request URL starts with `props.apiBase` (not page origin);
+  in-flight search's `AbortSignal.aborted` is true after `closeSimilarModal`. (344fd48)
+- **UI-0.5 (test)** `Player.test.ts`: mount test — `ApiClient.getTrickplay` fires exactly
+  once with `props.media.id` after the deferred `setTimeout(0)` and not synchronously /
+  not double-fired. (f12dbc4)
+- **UI-0.8** `src/components/NetworkHealthIndicator.vue`: `armPollTimer()` + `armedIntervalMs`;
+  `fetchHealth` re-arms the running interval when the cadence changes (backoff/recovery)
+  so it applies to the live poll (was: only after a visibility stop/start). Visibility
+  logic untouched. Tests: `NetworkHealthIndicator.test.ts` (non-admin → no fetch/no timer;
+  admin polls on mount, STOPS when `document.hidden`, RESUMES on visible) +
+  `PhlixApp.test.ts` negative gating (logged-out non-admin → neither MiniPlayer nor
+  NetworkHealthIndicator in the tree).
+- Verify: target files pass; full suite **2935 pass / 6 skip / 0 fail** (baseline 2928 + 7
+  new). `vue-tsc --noEmit` 0 errors; `eslint .` 0 errors; `npm run build` exit 0.
+  **dist/ NOT committed** — restored to tracked state after the verify build.
