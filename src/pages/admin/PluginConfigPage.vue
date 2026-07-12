@@ -83,6 +83,10 @@ const validationErrors = ref<Record<string, string>>({});
 const saving = ref(false);
 const savingError = ref<string | null>(null);
 
+// Test credentials state
+const testing = ref(false);
+const testResult = ref<{ success: boolean; message: string } | null>(null);
+
 /** Map of setting key → whether the user has typed a new secret value */
 const secretTouched = ref<Record<string, boolean>>({});
 
@@ -193,6 +197,39 @@ async function handleSaveSettings(): Promise<void> {
     }
   } finally {
     saving.value = false;
+  }
+}
+
+async function testPluginCredentials(): Promise<void> {
+  if (!selectedPlugin.value || testing.value) return;
+
+  testing.value = true;
+  testResult.value = null;
+
+  const payload = buildSettingsPayload();
+
+  try {
+    const result = await api.testCredentials(selectedPlugin.value.name, payload as Record<string, string>);
+    testResult.value = result;
+    if (result.success) {
+      toasts.success(`Test succeeded: ${result.message}`);
+    } else {
+      toasts.error(`Test failed: ${result.message}`);
+    }
+  } catch (e) {
+    testResult.value = { success: false, message: errMessage(e, 'Test request failed.') };
+    toasts.error(testResult.value.message);
+  } finally {
+    testing.value = false;
+  }
+}
+
+async function copyToClipboard(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+    toasts.success('Copied to clipboard.');
+  } catch {
+    toasts.error('Failed to copy to clipboard.');
   }
 }
 
@@ -338,6 +375,21 @@ onMounted(loadPlugins);
             </p>
           </header>
 
+          <!-- Redirect URL display for OAuth-style plugins -->
+          <div v-if="selectedPlugin.redirect_url" class="admin-plugin-config__redirect-url">
+            <label class="admin-plugin-config__label">Redirect URL</label>
+            <div class="admin-plugin-config__redirect-url-row">
+              <code class="admin-plugin-config__redirect-url-value">{{ selectedPlugin.redirect_url }}</code>
+              <Button
+                variant="outline"
+                size="sm"
+                @click="copyToClipboard(selectedPlugin.redirect_url!)"
+              >
+                Copy
+              </Button>
+            </div>
+          </div>
+
           <form class="admin-plugin-config__form" @submit.prevent="handleSaveSettings">
             <!-- Global error -->
             <div v-if="savingError" class="admin-plugin-config__error-banner" role="alert">
@@ -406,6 +458,24 @@ onMounted(loadPlugins);
               >
                 Save settings
               </Button>
+              <Button
+                variant="outline"
+                :loading="testing"
+                :disabled="testing || saving"
+                @click="testPluginCredentials"
+              >
+                Test credentials
+              </Button>
+            </div>
+
+            <!-- Inline test result -->
+            <div
+              v-if="testResult"
+              class="admin-plugin-config__test-result"
+              :class="testResult.success ? 'admin-plugin-config__test-result--success' : 'admin-plugin-config__test-result--error'"
+              role="alert"
+            >
+              {{ testResult.message }}
             </div>
           </form>
         </div>
@@ -648,5 +718,53 @@ onMounted(loadPlugins);
   margin-top: 0.5rem;
   padding-top: 1rem;
   border-top: 1px solid var(--color-border, #e5e7eb);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.admin-plugin-config__redirect-url {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface, #f8f9fa);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 6px;
+}
+
+.admin-plugin-config__redirect-url-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.375rem;
+}
+
+.admin-plugin-config__redirect-url-value {
+  font-size: 0.8125rem;
+  color: var(--color-text, #1a1a1a);
+  background: var(--color-background, #ffffff);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  word-break: break-all;
+  flex: 1;
+}
+
+.admin-plugin-config__test-result {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.admin-plugin-config__test-result--success {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
+.admin-plugin-config__test-result--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
 }
 </style>

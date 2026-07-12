@@ -90,6 +90,8 @@ export interface PluginDetail extends Plugin {
   settings: PluginSettings;
   /** Per-secret set/length status (secret keys only); absent on older servers. */
   secret_status?: PluginSecretStatusMap;
+  /** Optional redirect URL for OAuth-style plugins. */
+  redirect_url?: string;
 }
 
 /**
@@ -383,5 +385,20 @@ export class AdminPluginsApi {
           ? plugin.settings
           : {},
     };
+  }
+
+  /**
+   * `POST /api/v1/admin/plugins/{name}/test` `{ settings }` → tests credentials
+   * and returns `{ success: boolean; message: string }`.
+   */
+  async testCredentials(
+    name: string,
+    settings: Record<string, string>,
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await this.client.post<{ success: boolean; message: string }>(
+      `/api/v1/admin/plugins/${encodeURIComponent(name)}/test`,
+      { settings },
+    );
+    return response;
   }
 }
