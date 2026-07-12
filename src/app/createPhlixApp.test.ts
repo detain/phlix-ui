@@ -6,7 +6,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router';
+import { flushPromises } from '@vue/test-utils';
+import { createRouter, createWebHistory, type RouteLocationNormalized, type Router, type RouteRecordRaw } from 'vue-router';
 import { createPhlixApp, buildRoutes, authGuard, connectGuard, mediaApiBaseFor, mediaDirectBaseFor, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
 
 beforeEach(() => {
@@ -342,16 +343,216 @@ describe('authGuard', () => {
     });
   });
 
-  it('resolves before /auth/me returns for a present token; admin route still awaits', async () => {
-    // Simulate the optimistic auth guard behavior:
-    // - isLoggedIn=true, isAdmin unknown (token present but /auth/me not yet returned)
-    // - non-admin route should return true immediately (no await)
-    // - admin route should wait for isAdmin confirmation
+  // NOTE: the optimistic-guard behavior (a present token resolves a non-admin
+  // route WITHOUT awaiting /auth/me; admin routes keep the strict await; a bad
+  // token redirects on the next nav) is verified by DRIVING the real installed
+  // router.beforeEach guard in the "router.beforeEach — optimistic auth guard"
+  // suite below — not by calling this pure helper (which cannot observe timing).
+});
 
-    // Non-admin route with token present: auth.init() is fire-and-forget,
-    // guard returns true without waiting for /auth/me
-    const nonAdminResult = authGuard(route('settings'), true, false, { name: 'browse' });
-    expect(nonAdminResult).toBe(true);
+/**
+ * UI-3.2 [U-B1] — drive the REAL `router.beforeEach` guard that `createPhlixApp`
+ * installs (NOT the pure `authGuard` helper). These assert the optimistic boot
+ * behavior end-to-end: a present token renders a non-admin route WITHOUT
+ * awaiting `/auth/me`, admin routes keep the strict await, and an invalid token
+ * is corrected (redirect to login) on the next navigation once background
+ * validation clears it.
+ *
+ * The auth store's `ApiClient` binds `globalThis.fetch` at construction, so the
+ * `/auth/me` fetch is stubbed BEFORE `createPhlixApp` (which creates the store).
+ * A deferred controls exactly when `/auth/me` settles — the whole point is to
+ * observe the guard's behavior while it is still pending.
+ */
+describe('router.beforeEach — optimistic auth guard (UI-3.2 / U-B1)', () => {
+  interface Deferred<T> {
+    promise: Promise<T>;
+    resolve: (v: T) => void;
+    reject: (e?: unknown) => void;
+  }
+  function deferred<T>(): Deferred<T> {
+    let resolve!: (v: T) => void;
+    let reject!: (e?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  /** A minimal fetch `Response` stand-in the ApiClient can parse. */
+  function jsonResponse(status: number, body: unknown): Response {
+    return {
+      status,
+      ok: status >= 200 && status < 300,
+      headers: { get: (k: string) => (k.toLowerCase() === 'content-type' ? 'application/json' : null) },
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    } as unknown as Response;
+  }
+
+  /** An admin-only route the server app doesn't register by default (admin
+   *  routes arrive via the consumer's `extraRoutes`/`buildAdminRoutes` seam). */
+  const adminRoute: RouteRecordRaw = {
+    path: '/app/admin/users',
+    name: 'admin-users',
+    meta: { requiresAdmin: true },
+    component: { template: '<div class="admin-users-page" />' },
+  };
+
+  function routerOf(app: ReturnType<typeof createPhlixApp>): Router {
+    const r = (app.config.globalProperties as { $router?: Router }).$router;
+    if (!r) throw new Error('vue-router did not install $router on the app');
+    return r;
+  }
+
+  async function waitUntil(cond: () => boolean, tries = 50): Promise<void> {
+    for (let i = 0; i < tries && !cond(); i++) {
+      await new Promise((r) => setTimeout(r, 0));
+    }
+  }
+
+  beforeEach(() => {
+    // Normalise the history so the router's initial navigation lands on a known
+    // route (browse) regardless of where a prior test left window.location.
+    window.history.replaceState({}, '', '/app');
+  });
+
+  it('renders a non-admin route on token PRESENCE without awaiting /auth/me (optimistic first paint)', async () => {
+    const me = deferred<Response>();
+    let meSettled = false;
+    me.promise.then(
+      () => {
+        meSettled = true;
+      },
+      () => {
+        meSettled = true;
+      },
+    );
+    const fetchSpy = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/v1/auth/me')) return me.promise;
+      return Promise.resolve(jsonResponse(200, {}));
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    // Token present in storage BEFORE the app (and its auth store/client) exist.
+    localStorage.setItem('access_token', 'present-token');
+
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const router = routerOf(app);
+
+    // Navigate to a NON-admin protected route. If the guard AWAITED /auth/me
+    // (never resolved here) this push would hang forever and the test would time
+    // out — so the fact that it resolves at all IS the optimistic assertion.
+    await router.push('/app/settings');
+
+    expect(router.currentRoute.value.name).toBe('settings');
+    // Background validation WAS kicked off (fire-and-forget) …
+    expect(fetchSpy.mock.calls.some(([u]) => String(u).includes('/api/v1/auth/me'))).toBe(true);
+    // … but the route resolved BEFORE /auth/me settled — the guard did not block
+    // first paint on the round trip.
+    expect(meSettled).toBe(false);
+
+    // Cleanup: settle /auth/me so the client's request timeout timer clears.
+    me.resolve(jsonResponse(200, { user: { id: 'u1', is_admin: false } }));
+    await flushPromises();
+  });
+
+  it('AWAITS /auth/me for an admin route, then bounces a confirmed NON-admin to home (strict path)', async () => {
+    const me = deferred<Response>();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/api/v1/auth/me')) return me.promise;
+        return Promise.resolve(jsonResponse(200, {}));
+      }),
+    );
+    localStorage.setItem('access_token', 'present-token');
+
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app', extraRoutes: [adminRoute] });
+    const router = routerOf(app);
+
+    let navResolved = false;
+    const nav = router.push('/app/admin/users').then(() => {
+      navResolved = true;
+    });
+    // Let the guard run up to its `await auth.init()` for the admin route.
+    await flushPromises();
+    // The admin route is BLOCKED on /auth/me — unlike the optimistic non-admin
+    // path, it must not resolve until isAdmin is confirmed.
+    expect(navResolved).toBe(false);
+    expect(router.currentRoute.value.name).not.toBe('admin-users');
+
+    // /auth/me resolves the user as a NON-admin → the guard bounces to home.
+    me.resolve(jsonResponse(200, { user: { id: 'u1', is_admin: false } }));
+    await nav;
+    expect(navResolved).toBe(true);
+    expect(router.currentRoute.value.name).toBe('browse');
+  });
+
+  it('lets a confirmed admin through to an admin route once /auth/me resolves is_admin=true', async () => {
+    const me = deferred<Response>();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/api/v1/auth/me')) return me.promise;
+        return Promise.resolve(jsonResponse(200, {}));
+      }),
+    );
+    localStorage.setItem('access_token', 'present-token');
+
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app', extraRoutes: [adminRoute] });
+    const router = routerOf(app);
+
+    let navResolved = false;
+    const nav = router.push('/app/admin/users').then(() => {
+      navResolved = true;
+    });
+    await flushPromises();
+    expect(navResolved).toBe(false); // still awaiting /auth/me
+
+    me.resolve(jsonResponse(200, { user: { id: 'u1', is_admin: true } }));
+    await nav;
+    expect(navResolved).toBe(true);
+    expect(router.currentRoute.value.name).toBe('admin-users');
+  });
+
+  it('optimistically renders first, then redirects to login on the NEXT nav after a bad token clears', async () => {
+    // Control /auth/me so first paint happens while it is still pending, then
+    // settle it as 401 to drive the background token-clear. No refresh_token is
+    // stored, so the 401 is not retried and fetchUser() clears the session.
+    const me = deferred<Response>();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/api/v1/auth/me')) return me.promise;
+        return Promise.resolve(jsonResponse(200, {}));
+      }),
+    );
+    localStorage.setItem('access_token', 'stale-token');
+
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const router = routerOf(app);
+
+    // First navigation: optimistic — renders even though the token is stale,
+    // because /auth/me has not yet come back to invalidate it.
+    await router.push('/app/settings');
+    expect(router.currentRoute.value.name).toBe('settings');
+    expect(localStorage.getItem('access_token')).toBe('stale-token');
+
+    // Background validation now fails → fetchUser() clears the token.
+    me.resolve(jsonResponse(401, { error: 'unauthorized' }));
+    await waitUntil(() => localStorage.getItem('access_token') === null);
+    expect(localStorage.getItem('access_token')).toBeNull();
+
+    // The NEXT navigation to a protected route now sees isLoggedIn=false and is
+    // corrected to login (with the intended destination preserved).
+    await router.push('/app/parental');
+    expect(router.currentRoute.value.name).toBe('login');
+    expect(router.currentRoute.value.query).toMatchObject({ redirect: '/app/parental' });
   });
 });
 

@@ -539,3 +539,46 @@ Files changed (absolute): `/home/sites/phlix/phlix-ui/src/components/MediaCard.v
 `/home/sites/phlix/phlix-ui/src/components/SeriesDetail.test.ts`,
 `/home/sites/phlix/phlix-ui/src/pages/MediaDetailPage.test.ts`.
 Commits: 0233d3a (source) + 13cef09 (tests). Pushed `45b2ce0..13cef09` to master. UI-2.5 fully DONE.
+
+## TestEngineer — UI-3.2 — 2026-07-12
+
+Optimistic auth guard `[U-B1]` — the mandated test existed but was INERT: it only called the
+pure `authGuard(route('settings'), true, false, {name:'browse'})` helper and asserted `toBe(true)`,
+duplicating coverage at authGuard:313-314. It drove NOTHING through `router.beforeEach`, asserted no
+timing, and had no admin-await assertion despite its title. Source is correct and untouched
+(`createPhlixApp.ts:409-440`, `useAuthStore.ts:135-145`) — TEST-ONLY change.
+
+**Replaced** the inert `it` (was `createPhlixApp.test.ts:345`) with a new suite
+`describe('router.beforeEach — optimistic auth guard (UI-3.2 / U-B1)')` that drives the REAL guard
+installed by `createPhlixApp` (grabbed via `app.config.globalProperties.$router`), stubs
+`globalThis.fetch` BEFORE app creation (the auth `ApiClient` binds fetch at construction), and uses a
+deferred so `/auth/me` settles on demand. Kept all pure-helper `authGuard` unit tests.
+
+Real behaviors now asserted (would FAIL if the guard awaited `/auth/me` for non-admin):
+1. **Optimistic non-admin** — with a present token and `/auth/me` held PENDING (deferred never
+   settled until cleanup), `await router.push('/app/settings')` resolves to the `settings` route; the
+   `/auth/me` fetch spy WAS called (background validation kicked off) yet `meSettled === false`. If the
+   guard awaited the pending `/auth/me`, this push would hang forever → vitest timeout → test FAILS.
+   That hang-on-await is the load-bearing negative assertion.
+2. **Admin still awaits** — `router.push('/app/admin/users')` (extraRoute `meta.requiresAdmin`) does
+   NOT resolve while `/auth/me` is pending (`navResolved===false`, currentRoute not `admin-users`);
+   after resolving `is_admin:false` it bounces to home (`browse`); a sibling test resolving
+   `is_admin:true` lands ON `admin-users`.
+3. **Bad token redirects** — present-but-stale token renders `settings` optimistically first
+   (token still in storage), then `/auth/me`→401 (no refresh_token, so no retry) makes `fetchUser`
+   clear the token; the NEXT nav to `/app/parental` is corrected to `login` with
+   `query.redirect === '/app/parental'`.
+
+**Verify (ACTUAL output — vitest ALONE first, then vue-tsc/eslint separately):**
+- `npx vitest run src/app/createPhlixApp.test.ts --reporter=dot` → `Test Files 1 passed (1) / Tests
+  47 passed (47)` (was 44: −1 inert removed, +4 new driven tests).
+- FULL `npx vitest run` → `Test Files 172 passed (172) / Tests 2961 passed | 6 skipped (2967)` — 0
+  fail (baseline 2958 pass → +3 net: −1 inert, +4 new). No MediaGrid flake (vitest run alone).
+- `npx vue-tsc --noEmit` → exit 0 (0 errors). `npx eslint .` → exit 0 (0 errors).
+- dist/ NOT rebuilt/committed (release-time gate).
+
+New-code coverage: the 4 driven tests exercise every branch of the installed `router.beforeEach`
+optimistic path (admin strict-await, non-admin fire-and-forget optimistic, no-token await, bad-token
+clear-then-redirect). GREEN.
+
+File changed (absolute): `/home/sites/phlix/phlix-ui/src/app/createPhlixApp.test.ts`.
