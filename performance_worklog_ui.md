@@ -10,10 +10,10 @@
 - node version: >=18.0.0 (engines.node in package.json)
 
 ## Progress
-- [x] UI-0.1  fix Library mark watched favorite-corruption bug    (commit: 7326b11)  DONE
-- [x] UI-0.2  RouterLink navigation on poster cards              (commits: b01372f, 30fe245)  DONE
-- [x] UI-0.3  scrub: preview-only during drag, seek on release    (commits: e8c115b, 385dc1e)  DONE
-- [x] UI-0.4  parallelize PlayerPage item + playback-info    (commit: d0e8cfb)  DONE
+- [x] UI-0.1  fix Library mark watched favorite-corruption bug   RE-AUDIT 2026-07-12: code was DONE (onMarkWatched report-only, no toggleFavorite, one write) but regression test ABSENT. UI-W0-fix: added 2 LibraryPage.test.ts cases (mark-watched never calls toggleFavorite; toast tone/text matches isWatched()). DONE. (7326b11 + UI-W0-fix)
+- [x] UI-0.2  RouterLink navigation on poster cards   RE-AUDIT 2026-07-12: was a LIVE REGRESSION — `@click.prevent="navigate"` set defaultPrevented BEFORE navigate → vue-router navigate bailed → dead left-click. UI-W0-fix: dropped `.prevent` → `@click="navigate"` (MediaCard.vue) + real click tests (left-click SPA-navigates to /app/media/<id>; ctrl/cmd/shift/middle DON'T push, native new-tab preserved). Playwright re-verify on live warranted. DONE. (b01372f, 30fe245 + UI-W0-fix)
+- [x] UI-0.3  scrub: preview-only during drag, seek on release   RE-AUDIT 2026-07-12: DONE + genuinely well-tested (Scrubber.test.ts asserts no seek on pointerdown/move, exactly one seek on release, pointercancel). No action. (e8c115b, 385dc1e)
+- [x] UI-0.4  parallelize PlayerPage item + playback-info   RE-AUDIT 2026-07-12: was only quasi-parallel (playback-info fired AFTER item await; misleading "concurrently" comment). UI-W0-fix: playback-info promise now dispatched BEFORE awaiting the item → truly concurrent, marker latency = max(item, pbinfo); loading still gates on item only. Added test (never-resolving playback-info → loading clears, Player mounts). DONE. (d0e8cfb + UI-W0-fix)
 - [x] UI-0.5  fetch trickplay on first player mount    (commit: 05489b1)  DONE
 - [x] UI-0.6  thread apiBase + AbortSignal into trickplay & marker-search    (commit: 05489b1)  DONE
 - [x] UI-0.7  episode-aware up next queue    (commit: 2fce901)  DONE
@@ -38,7 +38,7 @@
 - [x] UI-3.3  admin CSS split    (commit: ae701cd)  DONE
 - [x] UI-3.4  apexcharts dedupe/replacement    (commit: fce73b8)  DONE
 - [x] UI-3.5  responsive posters end-to-end    (commit: bb59051)  DONE
-- [~] UI-3.6  music library build-out    RE-AUDIT 2026-07-12: NOT-DONE (genuinely STUBBED, opencode "mock issue" claim FALSE). MusicLibraryPage.vue = UI shell w/ local refs only: no ApiClient/fetch/Audio/usePreferencesStore imports; album/track/artist load all `// TODO`; play/pause stub; crossfade/gapless prefs DEAD. All 5 failing tests = real missing behavior. Server BROWSE endpoints exist (flat: /api/v1/music/artists|artists/{mbid}|albums|albums/{mbid}|tracks|tracks/{id}|now-playing) — tests assume NESTED routes (drift). NO music-track STREAM endpoint server-side; gapless cmd unwired. PLAN: (a) browse half NOW (client methods + load artists onMount/albums/tracks + reconcile tests to flat routes) → 4 tests green; (b) playback+crossfade/gapless DEFERRED — blocked on X8 server music-stream producer (SV-3.2/SV-3.3). → BROWSE-completion agent spawned; play test skipped w/ X8 reason.
+- [~] UI-3.6  music library build-out    RE-AUDIT 2026-07-12: NOT-DONE (genuinely STUBBED, opencode "mock issue" claim FALSE). MusicLibraryPage.vue = UI shell w/ local refs only: no ApiClient/fetch/Audio/usePreferencesStore imports; album/track/artist load all `// TODO`; play/pause stub; crossfade/gapless prefs DEAD. All 5 failing tests = real missing behavior. Server BROWSE endpoints exist (flat: /api/v1/music/artists|artists/{mbid}|albums|albums/{mbid}|tracks|tracks/{id}|now-playing) — tests assume NESTED routes (drift). NO music-track STREAM endpoint server-side; gapless cmd unwired. PLAN: (a) browse half NOW; (b) playback DEFERRED (X8). BROWSE DONE 2026-07-12 (commit 34b3362): ApiClient music methods (listArtists/getArtist/listAlbums/getAlbum/listTracks + normalizers) matched to REAL flat snake_case server routes (artist filter is CLIENT-SIDE — server returns all albums; album drill-down uses embedded tracks; track id = UUID string); MusicLibraryPage loads artists onMount/albums/tracks; tests reconciled to flat contract; play test it.skip w/ X8 reason. Full UI suite 2922 pass / 6 skip / 0 FAIL — UI MASTER GREEN. REMAINS (X8, task #5): real playback + crossfade/gapless via useMusicPlayer vs server music-track STREAM endpoint. FLAG: pre-existing dead `src/api/music.ts` (wrong nested routes, superseded by new ApiClient methods) → §6 removal-confirmation queue (task #7), left in place per no-delete policy.
 - [x] UI-3.7  SyncPlay drift correction    (commit: 078f791)  DONE
 - [x] UI-3.8  card ⋯-menu action backends  (add-to-playlist, download, view-missing-episodes, shuffle, edit-metadata → real API calls + toast feedback)  (commit: 47a3021)  DONE
 - [x] UI-3.9  markWatched/markUnwatched verification    (commit: 47c3042)  DONE
@@ -164,3 +164,48 @@ previously-passing (empty-state, prefs-store) stay green ✓.
 **Remains for UI-3.6 (blocked on X8):** real audio playback + crossfade/gapless via `useMusicPlayer`
 against a server music-track STREAM endpoint (SV-3.2 / SV-3.3), which does not exist yet. The
 crossfade/gapless settings UI and `useMusicPlayer` composable are left in place (not deleted).
+
+## Implementer — 2026-07-12 — UI-W0 gaps (UI-0.2 regression + UI-0.1 test + UI-0.4 concurrency)
+
+Fixed all three W0 gaps found by the re-audit; suite green, dist/ NOT rebuilt/committed.
+
+**UI-0.2 — LIVE REGRESSION fixed (highest priority):**
+- `src/components/MediaCard.vue` — changed `@click.prevent="navigate"` → `@click="navigate"` on the
+  RouterLink slot anchor. `.prevent` set `e.defaultPrevented` BEFORE vue-router's `navigate`, so
+  `guardEvent` bailed → `router.push` was never called AND native anchor nav was killed → poster
+  left-click (and ctrl/cmd/shift/middle) did NOTHING. vue-router's `navigate` calls
+  `preventDefault()` itself only when it actually SPA-navigates and lets modifier/middle clicks fall
+  through to the native `href` for new-tab. Kept the `v-else` plain-anchor fallback + `usePrefetch`
+  hover prefetch intact. Added an explanatory comment so `.prevent` isn't re-added.
+- `src/components/MediaCard.test.ts` — replaced the structural-only note with REAL click tests:
+  (a) plain left-click → `router.push` called once + `currentRoute` becomes `/app/media/m1`;
+  (b) `to` prop honored on left-click → navigates to `/app/player/m1`;
+  (c) ctrl/cmd/shift/middle-click → `router.push` NOT called, route stays on origin (native new-tab
+  semantics preserved). Kept the existing structural/prefetch tests.
+  → Acceptance met: SPA navigate on left-click; middle/modifier-click preserves native tab. A
+  Playwright re-verify on live (network shows no HTML re-fetch on poster click) is still warranted.
+
+**UI-0.1 — regression test added (code was already correct):**
+- `src/pages/LibraryPage.test.ts` — added a `mark-watched` describe with 2 cases: emits the grid's
+  `mark-watched`, stubs `useUserItemDataStore.toggleFavorite` with a spy, and asserts `toggleFavorite`
+  is NEVER called; toast `tone`+text matches `isWatched()` (success "as watched" when watched, info
+  "as unwatched" when not). Guards against re-introducing the favorite-corruption bug (U-H4).
+  → Acceptance met: watched toggle never mutates favorite; toast matches watched state.
+
+**UI-0.4 — true concurrency:**
+- `src/pages/PlayerPage.vue` `load()` — the playback-info request (`.then/.catch` populating
+  markers/tracks reactively) is now dispatched BEFORE the `await client.get(/media/:id)`, so both
+  requests are in flight before either is awaited. `loading` still clears on the item resolving
+  (first-paint unchanged); marker latency is now `max(item, playback-info)` instead of the sum.
+  Corrected the misleading "concurrently" comment to describe the real behavior.
+- `src/pages/PlayerPage.test.ts` — added a test: playback-info as a never-resolving promise while the
+  item resolves → `loading` clears, `<Player>` mounts, markers stay empty, and playback-info was
+  still dispatched. Updated 2 existing order-coupled tests (error-retry + non-fatal-queue) to route
+  the fetch stub by URL instead of by call order (the concurrency change legitimately reorders the
+  dispatch of item vs playback-info).
+  → Acceptance met: player mounts after one round trip regardless of playback-info timing.
+
+**Verify (all local):** `vitest run` (targeted 3 files) 111 pass; full `vitest run` **2928 pass / 6
+skip / 0 fail** (baseline 2922 + 6 new). `vue-tsc --noEmit` 0 errors. `eslint .` 0 errors.
+`npm run build` exit 0. **dist/ NOT committed** — restored to the tracked state after the verify
+build (release-time gate).

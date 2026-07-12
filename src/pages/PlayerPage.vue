@@ -347,8 +347,24 @@ async function load(): Promise<void> {
     return;
   }
   const client = new ApiClient({ baseUrl: apiBase.value });
-  // Fire item + playback-info concurrently. The item is critical (errors propagate);
-  // playback-info is best-effort — markers/tracks populate reactively when it resolves.
+  // Fire item + playback-info concurrently — BOTH requests are dispatched before we
+  // await either, so total marker latency is max(item, playback-info) rather than the
+  // sum of two serial round trips. The item is critical (errors propagate) and gates
+  // `loading`; playback-info is best-effort — markers/tracks populate reactively via the
+  // .then below when it resolves, and the Player watch at Player.vue:692-698 handles late
+  // serverSubtitleTracks the same way. Errors degrade to empty markers (no skip buttons,
+  // no chapter ticks).
+  client
+    .get<PlaybackInfo>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, controller?.signal)
+    .then((info) => {
+      if (disposed) return;
+      chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, end: c.end_seconds, title: c.title ?? undefined }));
+      introMarker.value = toMarker(info?.intro_marker);
+      outroMarker.value = toMarker(info?.outro_marker);
+      playbackAudioTracks.value = parsePlaybackAudioTracks(info?.audio_tracks);
+      playbackSubtitleTracks.value = parseSubtitleTracks(info?.subtitle_tracks);
+    })
+    .catch(() => null);
   // Loading clears after the item resolves so the player mounts as soon as possible,
   // without waiting for playback-info (which may be slow/missing).
   let mediaItem: MediaItem | null = null;
@@ -401,21 +417,6 @@ async function load(): Promise<void> {
     void loadQueue(client, mediaItem);
     void loadEpisodeNeighbours(client, mediaItem);
   }
-  // Fetch playback-info in the background — errors degrade to empty markers (no
-  // skip buttons, no chapter ticks). The reactive refs update automatically when
-  // the promise resolves, and the Player watch at Player.vue:692-698 handles late
-  // serverSubtitleTracks the same way.
-  client
-    .get<PlaybackInfo>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, controller?.signal)
-    .then((info) => {
-      if (disposed) return;
-      chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, end: c.end_seconds, title: c.title ?? undefined }));
-      introMarker.value = toMarker(info?.intro_marker);
-      outroMarker.value = toMarker(info?.outro_marker);
-      playbackAudioTracks.value = parsePlaybackAudioTracks(info?.audio_tracks);
-      playbackSubtitleTracks.value = parseSubtitleTracks(info?.subtitle_tracks);
-    })
-    .catch(() => null);
 }
 
 onMounted(load);

@@ -229,12 +229,22 @@ describe('PlayerPage — load + stream resolution', () => {
   });
 
   it('shows an error state with Retry/Back when the by-id fetch fails, and Retry re-loads', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(errorResponse(500)) // initial by-id fails
-      .mockResolvedValueOnce(jsonResponse({ item: media({ id: 'm1' }) })) // retry by-id
-      .mockResolvedValueOnce(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] })) // retry playback-info
-      .mockResolvedValue(jsonResponse({ items: [], total: 0 })); // retry queue
+    // UI-0.4: item + playback-info fire concurrently, so this routes by URL (not by
+    // call order). The by-id endpoint fails once then succeeds on retry.
+    let byIdCalls = 0;
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes('/playback-info')) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (u.match(/\/api\/v1\/media\/[^/?]+(\?|$)/) && !u.includes('parentId')) {
+        byIdCalls += 1;
+        return byIdCalls === 1
+          ? Promise.resolve(errorResponse(500)) // initial by-id fails
+          : Promise.resolve(jsonResponse({ item: media({ id: 'm1' }) })); // retry by-id
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 })); // queue
+    });
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     expect(w.findComponent(Player).exists()).toBe(false);
@@ -284,6 +294,33 @@ describe('PlayerPage — playback-info (chapters + skip markers)', () => {
     expect(player.props('chapters')).toEqual([]);
     expect(player.props('introMarker')).toBeNull();
     expect(player.props('outroMarker')).toBeNull();
+  });
+
+  // UI-0.4: item + playback-info are fired CONCURRENTLY (both dispatched before
+  // either is awaited). `loading` gates on the item ONLY, so the <Player> mounts as
+  // soon as the item resolves even if playback-info never settles — markers just stay
+  // empty and fill in reactively later.
+  it('clears loading and mounts <Player> when the item resolves even if playback-info never settles', async () => {
+    const item = media({ id: 'm1' });
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes('/playback-info')) return new Promise<Response>(() => {}); // NEVER resolves
+      if (u.match(/\/api\/v1\/media\/[^/?]+(\?|$)/) && !u.includes('parentId')) {
+        return Promise.resolve(jsonResponse({ item }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    // Player mounted (loading cleared) despite the hung playback-info request.
+    const player = w.findComponent(Player);
+    expect(player.exists()).toBe(true);
+    expect(player.props('streamUrl')).toBe('/media/m1/stream');
+    // Markers stay empty until playback-info lands (it never does here).
+    expect(player.props('chapters')).toEqual([]);
+    expect(player.props('introMarker')).toBeNull();
+    // playback-info WAS dispatched (concurrent), not skipped.
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/playback-info'))).toBe(true);
   });
 });
 
@@ -558,11 +595,18 @@ describe('PlayerPage — edge cases', () => {
   });
 
   it('treats a failed up-next queue fetch as non-fatal (player still renders, empty queue)', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse({ item: media({ id: 'm1', genres: ['Sci-Fi'] }) })) // by-id
-      .mockResolvedValueOnce(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] })) // playback-info
-      .mockRejectedValueOnce(new Error('queue down')); // up-next list rejects
+    // UI-0.4: item + playback-info fire concurrently → route by URL, not call order.
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes('/similar')) return Promise.reject(new Error('queue down')); // up-next list rejects
+      if (u.includes('/playback-info')) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (u.match(/\/api\/v1\/media\/[^/?]+(\?|$)/) && !u.includes('parentId')) {
+        return Promise.resolve(jsonResponse({ item: media({ id: 'm1', genres: ['Sci-Fi'] }) }));
+      }
+      return Promise.reject(new Error('queue down'));
+    });
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     expect(w.findComponent(Player).exists()).toBe(true);
