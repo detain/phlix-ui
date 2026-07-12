@@ -147,9 +147,11 @@ describe('theme persists across a reload (write-path ↔ read-path agree)', () =
     expect(el.getAttribute('data-density')).toBe('compact');
     expect(el.style.getPropertyValue('--accent')).toBe('#3366ff');
 
-    // let the store's debounced persistence flush to localStorage
-    await Promise.resolve();
-    await new Promise((r) => setTimeout(r, 0));
+    // Preferences persistence is DEBOUNCED 250ms (UI-2.7), so the write to
+    // localStorage only lands on the trailing edge. Await past the debounce window
+    // (300 > 250) so the persisted value is deterministically observed — a bare
+    // microtask + setTimeout(0) flush races (and loses to) the 250ms debounce.
+    await new Promise((r) => setTimeout(r, 300));
     expect(JSON.parse(localStorage.getItem('phlix.prefs')!).theme).toBe('midnight');
 
     w.unmount();
