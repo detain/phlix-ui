@@ -30,7 +30,7 @@
 - [x] UI-2.2  LRU-cap the media store cache    (commits: 73c8cf7, bfbf4da, 91db9cc)  DONE
 - [x] UI-2.3  complete Continue Watching from server payload    (commits: a2cb5d5, 99f3ff1, b5aacf9)  DONE
 - [x] UI-2.4  local favorites patch instead of full refetch    (commits: eead9e7, 262603b)  DONE
-- [x] UI-2.5  MediaGrid scroll perf    (commits: 61d9794)  DONE
+- [x] UI-2.5  MediaGrid scroll perf + lazy overlay [U-R2]    (commits: 61d9794 scroll half; 0233d3a+13cef09 overlay lazy-mount half, a11y-preserving)  DONE
 - [x] UI-2.6  composited hover/skeleton animations    (commits: 3570b2d, 6bc03e9)  DONE
 - [x] UI-2.7  debounce prefs persistence    (commits: 8e9c1be)  DONE
 - [x] UI-3.1  secondary entry for Player surface (commit: 51c5153) DONE
@@ -485,3 +485,57 @@ MediaItem / continue-watching shapes still align).
 
 ### Findings
 NO FINDINGS
+
+## Implementer — UI-2.5 — 2026-07-12 (missing overlay-gating half; scroll-perf half untouched)
+
+The MediaGrid scroll-perf half (commit 61d9794) was already DONE + well-tested — NOT touched.
+Closed the still-open `[U-R2]` half: the overlay action row was mounted for EVERY card and only
+CSS-hidden, so a 40-card windowed grid eagerly mounted ~400 invisible Play/ThumbRating/Favorite/
+Watched/Info/⋯-Menu/Match instances. (`menuItems` was already correctly lazy `[]`-when-closed.)
+
+**How the overlay is gated:** added reactive `hovered`/`focused` refs on `MediaCard.vue`;
+`@pointerenter`→`onPointerEnter` (sets hovered + keeps prefetch), `@pointerleave`→hovered=false,
+`@focusin`→`onFocusIn` (sets focused + keeps prefetch), `@focusout`→`onFocusOut`. The action-row
+`v-if` is now `actionsVisible = !hideActions && (hovered || focused || coarsePointer)`, so the whole
+row (and all its component instances) is UNMOUNTED until the card is actually reached, and freed
+again on leave/blur.
+
+**Keyboard a11y PRESERVED (no compromise):** the card's stretched `.media-card__link` anchor is a
+real focusable entry point (href, not tabindex=-1). Tabbing onto the card fires `focusin` on the
+`<article>` → the row mounts BEFORE the user can Tab into the buttons — no keyboard dead-end.
+`onFocusOut` only collapses when focus truly LEFT the card (`relatedTarget` not contained), so moving
+focus link→Play (relatedTarget is a descendant) keeps the row mounted; only leaving the card entirely
+collapses it. No new tabindex was needed.
+
+**Touch preserved:** `coarsePointer` (matchMedia `'(hover: none)'`, guarded for jsdom) keeps the
+actions mounted on touch devices, matching the existing `@media (hover: none)` CSS that reveals the
+overlay permanently there — single-tap-to-Play still works. In jsdom (no matchMedia) coarsePointer is
+false, so tests gate purely on hover/focus.
+
+**Tests (MediaCard.test.ts):**
+- New "overlay action row lazy-mount" suite: buttons are NOT in the DOM at mount, ARE after
+  `pointerenter`, gone again after `pointerleave`; a11y case — `focusin` reveals, `focusout` to an
+  in-card `relatedTarget` KEEPS the row, `focusout` leaving the card collapses it; plus a
+  focusable-entry-point assertion (link has href, not tabindex=-1).
+- Replaced the shallow menuItems test: `buildMediaItemMenu` is now spied via `vi.mock` (delegating to
+  the real impl) and asserted NOT called while idle OR hovered-but-closed, then called exactly once
+  (and the built menu is non-empty, `[role="menuitem"]` present) on first ⋯ open — the real lazy
+  `[]`-when-closed contract.
+- ~20 existing action-button tests now reveal the row first via a shared `async reveal(w)` helper.
+- Cross-file: `SeriesDetail.test.ts` (2) + `MediaDetailPage.test.ts` (2) reveal each card's overlay
+  before clicking its Play button (season/similar grids embed MediaCard).
+
+**Verify (ACTUAL output, vitest run ALONE first, then vue-tsc/eslint):**
+- `vitest run MediaCard MediaGrid SeriesDetail MediaDetailPage --reporter=dot` →
+  `Test Files 4 passed (4) / Tests 121 passed | 5 skipped (126)` (MediaGrid scroll test green, no
+  flake this run).
+- FULL `vitest run` → `Test Files 172 passed (172) / Tests 2958 passed | 6 skipped (2964)` — 0 fail
+  (baseline 2956 + 2 net new; replaced 2 shallow menu tests with 4).
+- `vue-tsc --noEmit` → exit 0 (0 errors). `eslint .` → exit 0 (0 errors).
+- **dist/ NOT rebuilt/committed** (release-time gate, §0.5).
+
+Files changed (absolute): `/home/sites/phlix/phlix-ui/src/components/MediaCard.vue`,
+`/home/sites/phlix/phlix-ui/src/components/MediaCard.test.ts`,
+`/home/sites/phlix/phlix-ui/src/components/SeriesDetail.test.ts`,
+`/home/sites/phlix/phlix-ui/src/pages/MediaDetailPage.test.ts`.
+Commits: 0233d3a (source) + 13cef09 (tests). Pushed `45b2ce0..13cef09` to master. UI-2.5 fully DONE.
