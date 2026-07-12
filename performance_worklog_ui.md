@@ -26,7 +26,7 @@
 - [x] UI-1.6  reduce timeupdate work (position state + eviction)    (commits: e38b8db, e2fd9c5, 694fbd8)  DONE
 - [x] UI-1.7  own the fade timer    (commits: e48d42a, 6f956fe, 6cc5b36)  DONE
 - [x] UI-1.8  mini-player HLS support    (commits: 0c9761f, 82c4746, 926e7e6)  DONE
-- [x] UI-2.1  media detail/player item cache (stale-while-revalidate)    (commit: ad6b34f)  DONE
+- [x] UI-2.1  media detail/player item cache (stale-while-revalidate)    RE-AUDIT/COMPLETE 2026-07-12: was PARTIAL — MediaDetailPage's "module-level" cache actually lived INSIDE <script setup> (per-instance → cached NOTHING across navs) and PlayerPage had NO cache; dead guard `controller !== controller`; test absent. FIXED: extracted a genuine singleton `src/composables/useMediaItemCache.ts`, both pages use it, guard wired to `myController !== controller`, 11-case cache test added. DONE. (commits: d0615d7 source + e20c27d tests; supersedes opencode ad6b34f)
 - [x] UI-2.2  LRU-cap the media store cache    (commits: 73c8cf7, bfbf4da, 91db9cc)  DONE
 - [x] UI-2.3  complete Continue Watching from server payload    (commits: a2cb5d5, 99f3ff1, b5aacf9)  DONE
 - [x] UI-2.4  local favorites patch instead of full refetch    (commits: eead9e7, 262603b)  DONE
@@ -338,3 +338,81 @@ stale-while-revalidate item cache still missing — separate task); UI-2.2 DONE;
 UI-2.3 FIXED (this note); UI-2.4 DONE.
 
 Commits: c5b178c (source fix) + b3fe827 (tests).
+
+## Implementer — UI-2.1 — 2026-07-12
+
+Closed the UI-2.1 gaps flagged by the Fixer/UI-2.3 audit (PARTIAL): PlayerPage
+had no SWR item cache (half the AC), the mandated cache test was absent, and
+MediaDetailPage carried a dead guard. Also uncovered — and fixed — a REAL latent
+defect: the SWR cache was NEVER effective in production.
+
+**Root defect found (why the cache did nothing):** MediaDetailPage declared its
+`mediaItemCache = new Map()` / `MEDIA_CACHE_TTL_MS` / `CachedMediaItem` at the top
+of `<script setup>`. Vue compiles `<script setup>` bodies into the component's
+`setup()` function, so those `const`s are RECREATED on every mount — the cache was
+per-instance, not module-level. Every route navigation remounts the page with a
+fresh EMPTY map, so `browse→detail→back→detail` refetched every time (the exact
+U-N2 finding the step was meant to fix). A probe test confirmed a second mount of
+the same id within the TTL still issued the by-id fetch. Only `import` statements
+are hoisted to module scope from `<script setup>`; a true singleton must live in a
+separate module.
+
+**How the cache is now shared (new module):**
+`src/composables/useMediaItemCache.ts` — a genuine module-level singleton
+`Map<id,{item,ts}>` with `MEDIA_CACHE_TTL_MS = 60_000` and a small API:
+`getMediaItemCacheEntry`, `isMediaItemCacheFresh(entry, now?)`,
+`cacheMediaItem(id,item,ts?)`, `clearMediaItemCache()`. BOTH `MediaDetailPage.vue`
+and `PlayerPage.vue` import it, so `browse→detail→player→back` all hit ONE cache.
+The docblock warns against re-inlining it into `<script setup>`.
+
+**PlayerPage SWR (the missing AC half)** — `PlayerPage.vue:load()`: after the
+UI-0.4 concurrent playback-info dispatch (unchanged), it now checks the shared
+cache before the by-id fetch. A fresh hit mounts `<Player>` instantly with NO
+`/media/:id` round trip (playback-info still fetched fresh for markers), via a new
+`applyItem(client, item)` helper (hydrate → streamUrl → clear loading → queue +
+episode-neighbour lookups). A stale/absent entry falls through to fetch + re-cache;
+a transient refresh failure serves the stale entry. A hard access block (403/429
+`AccessSchedule`/`StreamLimitExceeded`) still takes precedence and is NOT masked by
+the cache. `seriesEpisodeCache` and the UI-0.4 parallel dispatch are untouched.
+
+**Dead-guard resolution** — `MediaDetailPage.vue:161` had
+`if (disposed || controller !== controller)` (always false). Pinned
+`const myController = controller;` at the start of `load()` and changed the guard
+to `disposed || myController !== controller`, matching the real staleness pattern
+already used by `loadSimilar`/`loadSeasons`. (It rode in the source commit because
+it sits inside the same `load()` hunk as the cache-lookup rename; splitting it into
+its own commit would have produced a non-compiling intermediate.)
+
+**Tests added** — `src/pages/media-item-cache.test.ts` (11 cases):
+- shared module: store/get + TTL freshness boundaries + `clearMediaItemCache` +
+  one importer populates the singleton another reads;
+- MediaDetailPage: 2nd visit within TTL renders from cache with 0 by-id fetches;
+  a stale entry triggers a background refresh (and re-stamps fresh); a fetch
+  failure serves the stale cache (no error state);
+- PlayerPage: same three (cache-hit skips by-id, mounts `<Player>` from cache;
+  stale → by-id refresh; fetch failure → stale cache played) + a hard access block
+  is NOT masked by the stale cache;
+- cross-page: a detail visit primes the cache the player then reuses with 0 by-id
+  fetches.
+Also added `clearMediaItemCache()` to the `beforeEach` of `MediaDetailPage.test.ts`
+and `PlayerPage.test.ts` — now that the cache is a real persisted singleton, their
+by-id fetch/call-order assertions need a cold cache each test.
+
+**Files changed (absolute):**
+- `/home/sites/phlix/phlix-ui/src/composables/useMediaItemCache.ts` (new)
+- `/home/sites/phlix/phlix-ui/src/pages/MediaDetailPage.vue`
+- `/home/sites/phlix/phlix-ui/src/pages/PlayerPage.vue`
+- `/home/sites/phlix/phlix-ui/src/pages/media-item-cache.test.ts` (new)
+- `/home/sites/phlix/phlix-ui/src/pages/MediaDetailPage.test.ts`
+- `/home/sites/phlix/phlix-ui/src/pages/PlayerPage.test.ts`
+
+**Verify (ACTUAL output):**
+- `vitest run MediaDetailPage.test.ts PlayerPage.test.ts media-item-cache.test.ts
+  --reporter=dot` → `Test Files 3 passed (3) / Tests 77 passed (77)`.
+- FULL `vitest run` → `Test Files 172 passed (172) / Tests 2956 passed | 6 skipped
+  (2962)` — 0 fail (baseline 2945 + 11 new).
+- `vue-tsc --noEmit` → exit 0 (0 errors). `eslint .` → exit 0 (0 errors).
+- **dist/ NOT rebuilt/committed** (release-time gate, §0.5).
+
+Commits: d0615d7 (source: module + both pages + dead-guard) + e20c27d (tests).
+Pushed to master (`2cab33d..e20c27d`).
