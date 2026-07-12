@@ -2047,6 +2047,28 @@ describe('Player — fade timer ownership (UI-1.7)', () => {
   });
 });
 
+describe('Player — trickplay prefetch on first mount (UI-0.5)', () => {
+  it('fetches trickplay exactly once for the current media on first mount (deferred macrotask)', async () => {
+    // UI-0.5: the seekbar sprite preview must load on the FIRST opened title, not
+    // only after navigating to a second. prefetchTrickplay() is scheduled in
+    // onMounted via setTimeout(0) (off the mount critical path). Spy the real
+    // fetch the composable makes so we assert the deferred prefetch actually fires.
+    const spy = vi
+      .spyOn(ApiClient.prototype, 'getTrickplay')
+      .mockResolvedValue({ sprite_url: null, timeline: [] });
+    vi.useFakeTimers();
+    mountPlayer({ media: media({ id: 'm1' }) });
+    // Not fired synchronously on mount — it is deferred to a macrotask.
+    expect(spy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(0); // run the setTimeout(0)
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0]).toBe('m1'); // fetched for the current media id
+    // And it does NOT double-fire for the same media on subsequent ticks.
+    await vi.advanceTimersByTimeAsync(50);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('Player — marker-search routes through apiBase (UI-0.6, U-P6/U-P11)', () => {
   const HUB_BASE = 'https://hub.example/api/v1/servers/S1/proxy';
   const markerFixture = [{ id: 'mk1', type: 'intro' as const, startMs: 5000, endMs: 35000, label: 'Intro' }];
