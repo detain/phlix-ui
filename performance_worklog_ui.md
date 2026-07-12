@@ -39,7 +39,7 @@
 - [x] UI-3.4  apexcharts dedupe/replacement    (commit: fce73b8)  DONE
 - [x] UI-3.5  responsive posters end-to-end    (commit: bb59051)  DONE
 - [~] UI-3.6  music library build-out    RE-AUDIT 2026-07-12: NOT-DONE (genuinely STUBBED, opencode "mock issue" claim FALSE). MusicLibraryPage.vue = UI shell w/ local refs only: no ApiClient/fetch/Audio/usePreferencesStore imports; album/track/artist load all `// TODO`; play/pause stub; crossfade/gapless prefs DEAD. All 5 failing tests = real missing behavior. Server BROWSE endpoints exist (flat: /api/v1/music/artists|artists/{mbid}|albums|albums/{mbid}|tracks|tracks/{id}|now-playing) — tests assume NESTED routes (drift). NO music-track STREAM endpoint server-side; gapless cmd unwired. PLAN: (a) browse half NOW; (b) playback DEFERRED (X8). BROWSE DONE 2026-07-12 (commit 34b3362): ApiClient music methods (listArtists/getArtist/listAlbums/getAlbum/listTracks + normalizers) matched to REAL flat snake_case server routes (artist filter is CLIENT-SIDE — server returns all albums; album drill-down uses embedded tracks; track id = UUID string); MusicLibraryPage loads artists onMount/albums/tracks; tests reconciled to flat contract; play test it.skip w/ X8 reason. Full UI suite 2922 pass / 6 skip / 0 FAIL — UI MASTER GREEN. REMAINS (X8, task #5): real playback + crossfade/gapless via useMusicPlayer vs server music-track STREAM endpoint. FLAG: pre-existing dead `src/api/music.ts` (wrong nested routes, superseded by new ApiClient methods) → §6 removal-confirmation queue (task #7), left in place per no-delete policy.
-- [x] UI-3.7  SyncPlay drift correction    (commit: 078f791)  DONE
+- [x] UI-3.7  SyncPlay drift correction    (commit: 078f791; tests hardened 2026-07-12 — see TestEngineer note below)  DONE
 - [x] UI-3.8  card ⋯-menu action backends  (add-to-playlist, download, view-missing-episodes, shuffle, edit-metadata, explore-item-data → real API calls / host emits + toast feedback; all 6 actions real + per-action tested)  (commit: 47a3021 + Fixer 2026-07-12)  DONE
 - [x] UI-3.9  markWatched/markUnwatched verification    (commit: 47c3042)  DONE
 
@@ -724,3 +724,55 @@ Files changed (absolute): `/home/sites/phlix/phlix-ui/src/api/client.ts`,
 `/home/sites/phlix/phlix-ui/src/components/MediaDetail.vue`,
 `/home/sites/phlix/phlix-ui/src/components/MediaCard.test.ts`. UI-3.8: all 6
 actions real + per-action tested → marked [x].
+
+## TestEngineer — UI-3.7 — 2026-07-12
+
+RE-AUDIT confirmed the impl is REAL and correct (no source change made):
+- `src/stores/useSyncPlayStore.ts:48-61` genuinely computes
+  `drift = localPlaybackPosition − (playbackPosition + elapsedSec × playbackRate)`,
+  guards paused/waiting → 0, and `syncStatus` (`:63-70`) returns `outOfSync` when
+  `|drift| > 2`, else `synced` (and `re-syncing`/`outOfSync` for waiting/null).
+- `src/components/Player.vue:1200-1217` session watcher applies play/pause AND
+  `if (Math.abs(syncPlay.driftAmount) > SYNC_DRIFT_THRESHOLD_SECONDS) seekTo(session.playbackPosition)`.
+
+The existing tests were SHALLOW (only zero/guard cases) — real drift math and the
+seek-on-drift behavior were untested. Strengthened, test-only:
+
+**`src/stores/useSyncPlayStore.test.ts` — real drift math (deterministic clock).**
+`Date.now()` stubbed via `vi.spyOn(Date,'now').mockImplementation(() => nowMs)`; the
+private `_lastDriftCaptureMs` is anchored through `onRemoteStateUpdate('seek')` (which
+stamps it to the frozen clock), then the clock is advanced by exactly 10s so
+`elapsedSec` is exact. Added 5 cases:
+- POSITIVE drift: server anchored 100s rate 1×, +10s → expected 110; local 113 →
+  `driftAmount ≈ 3` (asserted `toBeCloseTo(3)`) and `syncStatus === 'outOfSync'`.
+- NEGATIVE drift: local 107 → `driftAmount ≈ −3`, `outOfSync`.
+- rate ≠ 1: 1.5× → expected 115; local 115 → 0/`synced`, local 120 → 5/`outOfSync`.
+- within threshold: local 111.5 → 1.5/`synced`.
+- BOUNDARY: 112.001 → 2.001/`outOfSync`; 111.999 → 1.999/`synced`;
+  112 → exactly 2/`synced` (impl uses strict `> 2`).
+These assert a NONZERO, sign-correct numeric value — a hardwired `driftAmount === 0`
+(or dropping the `elapsedSec × rate` term) fails every one.
+
+**`src/components/Player.test.ts` — seek-on-drift (real store + component watcher).**
+New `describe('Player — SyncPlay drift correction (U-I1)')`; `vi.useFakeTimers()` +
+`vi.setSystemTime(T0)` freeze the clock, local `<video>` position parked via a
+`timeupdate` event, session anchored PLAYING at `T0` (elapsed 0) so drift == local−server:
+- drift > threshold (local 500 vs server 200 → +300): asserts
+  `state.currentTime === 200` (video SEEKED to `session.playbackPosition`) and
+  `video.play` called. Would FAIL if no seek were issued (currentTime would stay 500)
+  or if driftAmount were always 0 (`|0| > 2` false → no seek).
+- drift ≤ threshold (local 201 vs server 200 → +1): asserts `state.currentTime === 201`
+  (UNTOUCHED — no correction).
+- remote PAUSE (divergent local 500, paused): `driftAmount === 0`, `video.pause` called,
+  `state.currentTime === 500` (no seek).
+
+**Verify (ACTUAL output; vitest ALONE, then vue-tsc/eslint separately):**
+- `npx vitest run src/stores/useSyncPlayStore.test.ts src/components/Player.test.ts --reporter=dot`
+  → `Test Files 2 passed (2) / Tests 155 passed (155)`.
+- FULL `npx vitest run` → `Test Files 173 passed (173) / Tests 2985 passed | 6 skipped (2991)`
+  — 0 fail (baseline 2977 + 8 net new: 5 store + 3 Player).
+- `npx vue-tsc --noEmit` → exit 0 (0 errors). `npx eslint .` → exit 0 (0 errors).
+- **dist/ NOT rebuilt/committed** (release-time gate, §0.5). No source change.
+
+Files changed (absolute): `/home/sites/phlix/phlix-ui/src/stores/useSyncPlayStore.test.ts`,
+`/home/sites/phlix/phlix-ui/src/components/Player.test.ts`. UI-3.7 impl confirmed real → stays [x].

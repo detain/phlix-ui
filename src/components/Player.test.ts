@@ -23,7 +23,9 @@ import Select from './ui/Select.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useSyncPlayStore } from '../stores/useSyncPlayStore';
 import type { MediaItem } from '../types/media-item';
+import type { SyncPlaySession, SyncPlayPlaybackCommand } from '../types/syncplay';
 import * as hlsTranscodeMod from '../composables/useHlsTranscode';
 
 // The real useHlsTranscode hits the network + hls.js; mock it so tests can flip
@@ -474,6 +476,90 @@ describe('Player — external command bus (seek seam)', () => {
     store.seekTo(999);
     await nextTick();
     expect(state.currentTime).toBe(100);
+  });
+});
+
+// ── U-I1: SyncPlay drift correction ─────────────────────────────────────────────
+// The session watcher (Player.vue) applies remote play/pause AND, when the store's
+// driftAmount exceeds the threshold, seeks the local <video> to the server's
+// playbackPosition. We drive the REAL useSyncPlayStore with a stubbed clock so the
+// extrapolated drift is exact, then assert the seek effect on video.currentTime.
+describe('Player — SyncPlay drift correction (U-I1)', () => {
+  const T0 = 1_700_000_000_000;
+
+  /** A full SyncPlay session anchored at position/rate/state. */
+  function syncSession(position: number, rate: number, state: SyncPlaySession['state']): SyncPlaySession {
+    return {
+      id: 'sess-1',
+      roomId: 'room-1',
+      serverId: 'srv-1',
+      createdBy: 'user-1',
+      createdAt: '2026-07-12T00:00:00Z',
+      state,
+      playbackPosition: position,
+      playbackRate: rate,
+      serverTime: T0,
+      lastSync: '2026-07-12T00:00:00Z',
+      activeUsers: [],
+      roles: {},
+      permissions: {},
+    };
+  }
+
+  /**
+   * Put the store into a PLAYING session anchored NOW (elapsed = 0), with the local
+   * <video> parked at `localPos`. Because the clock is frozen at T0 and the capture
+   * timestamp is stamped at T0 by the 'seek' command, drift == localPos − serverPos.
+   */
+  async function primeSession(
+    video: HTMLVideoElement,
+    state: Record<string, number | boolean>,
+    syncPlay: ReturnType<typeof useSyncPlayStore>,
+    opts: { serverPos: number; rate: number; localPos: number; state?: SyncPlaySession['state'] },
+  ): Promise<void> {
+    vi.setSystemTime(T0);
+    // Park the local player position (fed into the store as localPlaybackPosition by the watcher).
+    state.duration = 1000;
+    state.currentTime = opts.localPos;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick(); // store.position = localPos
+    // Anchor a playing session with capture timestamp == T0 (elapsedSec becomes 0).
+    syncPlay.currentSession = syncSession(opts.serverPos, opts.rate, opts.state ?? 'playing');
+    const cmd: SyncPlayPlaybackCommand = { type: 'seek', position: opts.serverPos, issuedBy: 'u1', issuedAt: '2026-07-12T00:00:00Z' };
+    syncPlay.onRemoteStateUpdate(cmd); // stamps _lastDriftCaptureMs = Date.now() == T0
+    await nextTick(); // flush the session watcher
+  }
+
+  it('seeks the local video to the server position when drift exceeds the threshold', async () => {
+    vi.useFakeTimers();
+    const { video, state } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    const syncPlay = useSyncPlayStore();
+    // local 500 vs server 200 at rate 1, elapsed 0 → drift = +300 (>> 2s).
+    await primeSession(video, state, syncPlay, { serverPos: 200, rate: 1, localPos: 500 });
+    expect(Math.abs(syncPlay.driftAmount)).toBeGreaterThan(2); // guard: the store agrees it's out of sync
+    expect(state.currentTime).toBe(200); // seeked to the server's playbackPosition
+    expect(video.play).toHaveBeenCalled(); // playing state also applied
+  });
+
+  it('does NOT seek when drift is within the threshold', async () => {
+    vi.useFakeTimers();
+    const { video, state } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    const syncPlay = useSyncPlayStore();
+    // local 201 vs server 200 at rate 1, elapsed 0 → drift = +1 (< 2s).
+    await primeSession(video, state, syncPlay, { serverPos: 200, rate: 1, localPos: 201 });
+    expect(Math.abs(syncPlay.driftAmount)).toBeLessThanOrEqual(2);
+    expect(state.currentTime).toBe(201); // untouched — no drift correction issued
+  });
+
+  it('applies a remote PAUSE without seeking (drift is undefined while paused → 0)', async () => {
+    vi.useFakeTimers();
+    const { video, state } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    const syncPlay = useSyncPlayStore();
+    // Even with a wildly divergent local position, a paused session must not seek.
+    await primeSession(video, state, syncPlay, { serverPos: 200, rate: 1, localPos: 500, state: 'paused' });
+    expect(syncPlay.driftAmount).toBe(0); // paused → drift not computed
+    expect(video.pause).toHaveBeenCalled(); // pause applied
+    expect(state.currentTime).toBe(500); // no seek
   });
 });
 
