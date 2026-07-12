@@ -45,6 +45,14 @@ import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import Modal from '../components/ui/Modal.vue';
 import { usePageTitle } from '../composables/usePageTitle';
+// Stale-while-revalidate item cache (UI-2.1, U-N2) — the SAME module-level singleton the
+// MediaDetailPage uses, so a browse→detail→player→back round trip reuses one cached item
+// within the 60s TTL instead of re-fetching /media/:id on every visit.
+import {
+  getMediaItemCacheEntry,
+  isMediaItemCacheFresh,
+  cacheMediaItem,
+} from '../composables/useMediaItemCache';
 
 interface MediaListResponse {
   items: MediaItem[];
@@ -365,6 +373,18 @@ async function load(): Promise<void> {
       playbackSubtitleTracks.value = parseSubtitleTracks(info?.subtitle_tracks);
     })
     .catch(() => null);
+
+  // UI-2.1 stale-while-revalidate item cache (shared singleton with MediaDetailPage).
+  // A fresh cached item mounts the player instantly with NO by-id round trip; playback-info
+  // is STILL fetched fresh above (best-effort markers). A stale/absent entry falls through
+  // to the fetch below and, on failure, is served as a fallback.
+  const cached = getMediaItemCacheEntry(id);
+  const now = Date.now();
+  if (cached && isMediaItemCacheFresh(cached, now)) {
+    applyItem(client, cached.item);
+    return;
+  }
+
   // Loading clears after the item resolves so the player mounts as soon as possible,
   // without waiting for playback-info (which may be slow/missing).
   let mediaItem: MediaItem | null = null;
@@ -381,6 +401,7 @@ async function load(): Promise<void> {
       const body = e.body as { error?: string } | null;
       const errorCode = body?.error;
       if (errorCode === 'AccessSchedule' || errorCode === 'StreamLimitExceeded') {
+        // A hard access block must NOT be masked by a stale cache — surface it.
         blockingError.value =
           errorCode === 'AccessSchedule'
             ? 'Playback blocked by access schedule. Try again during allowed hours.'
@@ -390,33 +411,48 @@ async function load(): Promise<void> {
         return;
       }
     }
+    // SWR fallback: a transient refresh failure (network blip / 5xx) still lets a
+    // previously-cached title play. Mirrors MediaDetailPage's stale-on-failure behavior.
+    if (cached) {
+      applyItem(client, cached.item);
+      return;
+    }
     error.value = e instanceof Error ? e.message : 'Failed to load media';
     loading.value = false;
     return;
   }
   if (disposed) return;
   // Guard: if mediaItem is falsy despite a resolved promise, treat as a load failure
-  // rather than propagating undefined into streamUrlFor (Fail Fast).
+  // rather than propagating undefined into streamUrlFor (Fail Fast). A stale cache, if
+  // present, still beats erroring out.
   if (!mediaItem) {
+    if (cached) {
+      applyItem(client, cached.item);
+      return;
+    }
     error.value = 'Failed to load media item';
     loading.value = false;
     return;
   }
+  // Refresh the shared cache for the next visit (browse→detail→player→back reuse).
+  cacheMediaItem(id, mediaItem, now);
+  applyItem(client, mediaItem);
+}
+
+/**
+ * Mount the player from a resolved (freshly-fetched OR cached) item: seed the per-user
+ * favorite/love controls from the server `user_data` (Feature 16; <Player> also hydrates
+ * on mount but `hydrate` is idempotent), resolve the deterministic direct-stream URL
+ * up front (synchronous, so up-next auto-advance can reuse the resolver), clear loading,
+ * and kick off the best-effort up-next queue + episode-neighbour lookups.
+ */
+function applyItem(client: ApiClient, mediaItem: MediaItem): void {
   item.value = mediaItem;
-  // Seed the per-user favorite/love controls from the fetched MediaDetail's
-  // server `user_data` (Feature 16). This is the authoritative source; <Player>
-  // also hydrates from the same item on mount, but `hydrate` is idempotent so
-  // pre-filling here ensures the controls reflect server state when the player
-  // opens. Guarded on a non-null fetched item.
   userItemData.hydrate(mediaItem);
-  // Playback is the deterministic direct-stream endpoint (synchronous, so up-next
-  // auto-advance threads the same resolver). Resolve it up front.
   streamUrl.value = streamUrlFor(mediaItem);
   loading.value = false;
-  if (mediaItem) {
-    void loadQueue(client, mediaItem);
-    void loadEpisodeNeighbours(client, mediaItem);
-  }
+  void loadQueue(client, mediaItem);
+  void loadEpisodeNeighbours(client, mediaItem);
 }
 
 onMounted(load);

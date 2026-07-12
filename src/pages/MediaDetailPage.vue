@@ -36,18 +36,15 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import { usePageTitle } from '../composables/usePageTitle';
-
-/** Stale-while-revalidate cache for media items (UI-2.1).
- * Module-level so it survives page remounts on route changes within an SPA
- * session. browse→detail→back→detail hits the cache within the 60s TTL.
- * Entry shape: { item: MediaItem, ts: number } where ts = Date.now() at cache time.
- * Stale entries (past TTL) are still served instantly while a background refresh runs. */
-interface CachedMediaItem {
-  item: MediaItem;
-  ts: number;
-}
-const mediaItemCache = new Map<string, CachedMediaItem>();
-const MEDIA_CACHE_TTL_MS = 60_000; // 60 seconds
+// Stale-while-revalidate item cache (UI-2.1, U-N2). A genuine module-level singleton
+// SHARED with PlayerPage — so browse→detail→player→back all hit one cache within the
+// 60s TTL. (It must NOT live inside <script setup>: that would recreate it per mount and
+// cache nothing across route navigations — see the module docblock.)
+import {
+  getMediaItemCacheEntry,
+  isMediaItemCacheFresh,
+  cacheMediaItem,
+} from '../composables/useMediaItemCache';
 
 interface MediaListResponse {
   items: MediaItem[];
@@ -139,6 +136,9 @@ async function load(): Promise<void> {
   const id = currentId.value;
   controller?.abort();
   controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  // Pin this run's controller so a superseded load (rapid detail→detail navigation that
+  // re-enters load() and swaps `controller`) can bail instead of clobbering newer state.
+  const myController = controller;
   loading.value = true;
   error.value = null;
   similar.value = [];
@@ -152,13 +152,13 @@ async function load(): Promise<void> {
   // Check stale-while-revalidate cache first.
   // Fresh cache (< TTL): render immediately, no network request.
   // Stale/expired or absent: show skeleton and fetch.
-  const cached = mediaItemCache.get(id);
+  const cached = getMediaItemCacheEntry(id);
   const now = Date.now();
-  const isCacheFresh = cached && now - cached.ts < MEDIA_CACHE_TTL_MS;
+  const isCacheFresh = isMediaItemCacheFresh(cached, now);
 
   if (cached && isCacheFresh) {
-    // Fresh cache hit — render immediately without any loading state.
-    if (disposed || controller !== controller) return;
+    // Fresh cache hit — render immediately without any loading state (bail if superseded).
+    if (disposed || myController !== controller) return;
     item.value = cached.item;
     matchTarget.value = cached.item;
     loading.value = false;
@@ -189,7 +189,7 @@ async function load(): Promise<void> {
     matchTarget.value = data;
     // Update cache for next visit (stale-while-revalidate: even stale cached
     // data was shown immediately above; this refreshes it for the next request).
-    mediaItemCache.set(id, { item: data, ts: now });
+    cacheMediaItem(id, data, now);
     loading.value = false;
     // Seed the per-user favorite/love state from the server `user_data` block so
     // the heart/bookmark (on the detail hero + any card rendered from this item)
