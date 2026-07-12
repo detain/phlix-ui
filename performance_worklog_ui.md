@@ -270,3 +270,71 @@ Re-audited the four Wave U-W1-head steps this pass (code only — NO source/prod
 - **dist/ NOT rebuilt/committed** (release-time gate, §0.5). Only 3 `*.test.ts` files changed.
 
 GREEN. UI-1.1 PARTIAL→closed, UI-1.2 minor gap closed; UI-1.3/UI-1.4 re-audited DONE (no action).
+
+## Fixer — UI-2.3 — 2026-07-12
+
+Fixed a REAL production defect: the Continue Watching rail never rendered
+cross-device / cross-rail items, and the mandated test masked it.
+
+**Root cause (U-N4):** `useResumeSync.ts` stored the synced item payloads in a
+per-call plain `let syncedItems` and exposed them via
+`get continueWatchingItems() { return syncedItems }`. `BrowsePage.vue:61`
+destructures `const { continueWatchingItems } = useResumeSync()`, which invokes
+that getter ONCE at setup and captures the initial EMPTY array reference. A
+later `syncResume()` REASSIGNED the internal `let` to a fresh array, so
+BrowsePage's captured reference was stale forever → the rail never showed a
+title paused on another device. The old test passed only because it fully
+mocked the composable and mutated a plain array IN PLACE (splice/push) — a
+pattern production never uses — so the captured reference stayed valid.
+
+**Reactive approach chosen:** a MODULE-LEVEL shared `shallowRef<readonly
+MediaItem[]>` (`syncedItems`) as the single source of truth for the item feed,
+exposed as `continueWatchingItems: Readonly<Ref<readonly MediaItem[]>>`.
+`syncResume()` reassigns `.value` wholesale (never in place). BrowsePage's
+`continueItems` computed reads `continueWatchingItems.value`, so it subscribes
+reactively; and because the ref is module-level, every `useResumeSync()`
+instance (PhlixApp on login, BrowsePage on mount, the visibility handler) shares
+ONE reactive source — item feed, not just positions, is shared. A shallowRef
+suffices since the array is replaced wholesale each sync. Kept the
+visibilitychange + onMounted(BrowsePage) + on-login(PhlixApp) re-sync (U-N8).
+Moved the module-top `onUnmounted` into `attachVisibilityListener()` guarded by
+`getCurrentInstance()` (first caller is always a component setup) — eliminates
+the "onUnmounted outside setup" Vue warning; the listener is attached
+idempotently once and torn down on that component's unmount.
+
+**Files changed (absolute):**
+- `/home/sites/phlix/phlix-ui/src/composables/useResumeSync.ts` — module-level
+  `shallowRef` feed; `continueWatchingItems` now a `Readonly<Ref<...>>`;
+  `attachVisibilityListener()` with getCurrentInstance-guarded onUnmounted;
+  syncResume reassigns `.value`.
+- `/home/sites/phlix/phlix-ui/src/pages/BrowsePage.vue` — `continueItems`
+  computed reads `continueWatchingItems.value` (was the destructured plain
+  array); comment updated.
+- `/home/sites/phlix/phlix-ui/src/pages/BrowsePage.test.ts` — removed the
+  `useResumeSync` mock; drive the REAL composable via the mocked auth client
+  (`authGet` routes `/continue-watching`; beforeEach defaults it to `{}` so each
+  mount clears the shared ref). The mandated test now exercises real reactivity.
+- `/home/sites/phlix/phlix-ui/src/composables/useResumeSync.test.ts` — added 2
+  cases: `continueWatchingItems` is a reactive ref updating on reassignment;
+  one reactive source shared across instances.
+
+**Does the test fail pre-fix?** YES. `git stash`-ing ONLY the two source files
+(keeping the new tests) → `vitest run` of the two files = **4 failed / 32
+passed**: both new useResumeSync reactivity cases, the mandated BrowsePage
+"renders Continue Watching items from the sync payload regardless of loaded
+rails", and the "placed immediately after Continue Watching" order test (depends
+on the rail rendering). After restoring the fix all 36 pass.
+
+**Verify (actual output):**
+- `vitest run BrowsePage.test.ts useResumeSync.test.ts --reporter=dot` →
+  `Test Files 2 passed (2) / Tests 36 passed (36)`.
+- FULL `vitest run` → `Test Files 171 passed (171) / Tests 2945 passed | 6
+  skipped (2951)` — 0 fail (baseline 2943 + 2 new).
+- `vue-tsc --noEmit` → exit 0 (0 errors). `eslint .` → exit 0 (0 errors).
+- **dist/ NOT rebuilt/committed** (release-time gate, §0.5).
+
+**Batch audit verdicts recorded this pass:** UI-2.1 PARTIAL (PlayerPage
+stale-while-revalidate item cache still missing — separate task); UI-2.2 DONE;
+UI-2.3 FIXED (this note); UI-2.4 DONE.
+
+Commits: c5b178c (source fix) + b3fe827 (tests).
