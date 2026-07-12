@@ -7,12 +7,21 @@
 /**
  * MusicLibraryPage — browse music library: artists → albums → tracks.
  *
- * UI rails for the music library. The three-panel drill-down (artist grid →
- * album list → track list) is wired to local state so it is ready to
- * connect to real API endpoints once the server scanner (P7-S1) surfaces them.
+ * The three-panel drill-down (artist grid → album list → track list) loads real
+ * data from the server music API via {@link ApiClient}:
+ *   - artists  → `GET /api/v1/music/artists`   (on mount)
+ *   - albums   → `GET /api/v1/music/albums`    (on artist select, filtered by artist)
+ *   - tracks   → embedded in the album (fast-path), else `GET /api/v1/music/tracks`
+ *
+ * Playback (crossfade / gapless via {@link useMusicPlayer}) is DEFERRED for
+ * UI-3.6 — it is blocked on the server music-track stream endpoint (X8 /
+ * SV-3.2, SV-3.3), which does not exist yet. `playTrack` therefore only toggles
+ * the highlight so browse/UI stay usable. See performance_worklog_ui.md.
  */
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useMessages } from '../composables/useMessages';
+import { useMediaApiBase } from '../composables/useApiBase';
+import { ApiClient } from '../api/client';
 import MusicArtistCard from '../components/MusicArtistCard.vue';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
 import MusicTrackList from '../components/MusicTrackList.vue';
@@ -25,16 +34,33 @@ const view = ref<View>('artists');
 const selectedArtist = ref<MusicArtist | null>(null);
 const selectedAlbum = ref<MusicAlbum | null>(null);
 
-// --- currently playing ---
-const playingTrackId = ref<number | null>(null);
+// --- currently playing (track UUID) ---
+const playingTrackId = ref<string | null>(null);
 
-// --- mock data (populated when real API is available) ---
+// --- library data (loaded from the server music API) ---
 const artists = ref<MusicArtist[]>([]);
 const albums = ref<MusicAlbum[]>([]);
 const tracks = ref<MusicTrack[]>([]);
 const loading = ref(false);
 
 const { t } = useMessages();
+const apiBase = useMediaApiBase();
+
+/** A fresh client bound to the current media API base (mirrors sibling pages). */
+function getClient(): ApiClient {
+  return new ApiClient({ baseUrl: apiBase.value });
+}
+
+onMounted(async () => {
+  loading.value = true;
+  try {
+    artists.value = await getClient().listArtists();
+  } catch {
+    artists.value = [];
+  } finally {
+    loading.value = false;
+  }
+});
 
 const viewTitle = computed(() => {
   if (view.value === 'artists') return t('music.artists');
@@ -43,29 +69,53 @@ const viewTitle = computed(() => {
   return t('music.title');
 });
 
-function selectArtist(artist: MusicArtist): void {
+async function selectArtist(artist: MusicArtist): Promise<void> {
   selectedArtist.value = artist;
   selectedAlbum.value = null;
-  // TODO: load albums from API — artists/:id/albums
   albums.value = [];
   tracks.value = [];
   view.value = 'albums';
+  loading.value = true;
+  try {
+    // Server has no per-artist albums route; listAlbums filters client-side by
+    // artist name (the artist has no PK — `name` is the identity).
+    albums.value = await getClient().listAlbums(artist.name);
+  } catch {
+    albums.value = [];
+  } finally {
+    loading.value = false;
+  }
 }
 
-function selectAlbum(album: MusicAlbum): void {
+async function selectAlbum(album: MusicAlbum): Promise<void> {
   selectedAlbum.value = album;
-  // TODO: load tracks from API — albums/:id/tracks
-  tracks.value = album.tracks ?? [];
   view.value = 'tracks';
+  // Fast-path: albums from listAlbums carry their embedded track list, so no
+  // extra fetch is needed. Fall back to the tracks endpoint only if empty.
+  const embedded = album.tracks ?? [];
+  if (embedded.length > 0) {
+    tracks.value = embedded;
+    return;
+  }
+  tracks.value = [];
+  loading.value = true;
+  try {
+    tracks.value = await getClient().listTracks(album.title);
+  } catch {
+    tracks.value = [];
+  } finally {
+    loading.value = false;
+  }
 }
 
 function playTrack(track: MusicTrack): void {
+  // TODO(UI-3.6 playback, X8): wire real audio playback + crossfade/gapless
+  // (useMusicPlayer) once the server music-track stream endpoint lands
+  // (SV-3.2 / SV-3.3). For now only toggle the now-playing highlight.
   if (playingTrackId.value === track.id) {
     playingTrackId.value = null;
-    // TODO: pause playback
   } else {
     playingTrackId.value = track.id;
-    // TODO: start playback with gapless/crossfade from prefs
   }
 }
 

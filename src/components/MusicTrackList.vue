@@ -13,7 +13,7 @@ import { useMessages } from '../composables/useMessages';
 
 defineProps<{
   tracks: MusicTrack[];
-  playingTrackId?: number | null;
+  playingTrackId?: string | null;
   loading?: boolean;
 }>();
 

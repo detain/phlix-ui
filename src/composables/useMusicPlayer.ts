@@ -14,10 +14,10 @@ import type { MusicTrack } from '../types/music';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 
 /** Server base URL for media streaming (e.g. signed /music/:id/stream). */
-function buildStreamUrl(apiBase: string, trackId: number): string {
+function buildStreamUrl(apiBase: string, trackId: string): string {
   // Strip trailing slash then append the stream path.
   const base = apiBase.replace(/\/$/, '');
-  return `${base}/api/v1/music/tracks/${trackId}/stream`;
+  return `${base}/api/v1/music/tracks/${encodeURIComponent(trackId)}/stream`;
 }
 
 /**

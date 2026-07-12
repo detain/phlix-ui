@@ -31,7 +31,8 @@ export interface MusicAlbum {
  * A music track within an album.
  */
 export interface MusicTrack {
-  id: number;
+  /** Server track id — a media-item UUID string. */
+  id: string;
   title: string;
   durationSecs: number;
   trackNumber: number | null;

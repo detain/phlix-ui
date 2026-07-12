@@ -8,6 +8,7 @@
 import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
 import { LocalStorageTokenStore, type TokenStore } from './tokenStore';
 import type { MediaItem, PosterCandidatesResponse } from '../types/media-item';
+import type { MusicArtist, MusicAlbum, MusicTrack } from '../types/music';
 
 /** Re-exported so `import { ApiError } from '.../api/client'` deep imports keep working. */
 export { ApiError } from './errors';
@@ -109,6 +110,86 @@ export function getDefaultApiHeaders(): Record<string, string> {
 
 export function normalizeBool(value: unknown): boolean {
     return value === true || value === 1 || value === '1' || value === 'true';
+}
+
+/** Narrow an unknown to a trimmed string (numbers stringify), else null. */
+function musicStr(value: unknown): string | null {
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+        return String(value);
+    }
+    return null;
+}
+
+/** Narrow an unknown to a finite number (numeric strings parse), else null. */
+function musicNum(value: unknown): number | null {
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+        return value;
+    }
+    if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) {
+        return Number(value);
+    }
+    return null;
+}
+
+/**
+ * Normalize one raw artist row from `GET /api/v1/music/artists` (snake_case,
+ * grouped by artist name — the server has no artist PK, so the display `name`
+ * doubles as the drill-down key/`mbid`) into the camelCase {@link MusicArtist}.
+ */
+function normalizeMusicArtist(raw: unknown): MusicArtist {
+    const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    const name = musicStr(r['name']) ?? 'Unknown Artist';
+    const albumCount = musicNum(r['album_count']);
+    return {
+        id: name,
+        name,
+        imageUrl: musicStr(r['image_url']),
+        albumCount: albumCount ?? undefined,
+    };
+}
+
+/**
+ * Normalize one raw track — accepts either the flat formatted shape from
+ * `GET /api/v1/music/tracks` (`{ id, name, duration_secs, track_number }`) or a
+ * raw scanner item embedded in an album (`{ id, metadata: { title, ... } }`).
+ * Track ids are server UUID strings.
+ */
+function normalizeMusicTrack(raw: unknown): MusicTrack {
+    const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    const meta = (r['metadata'] && typeof r['metadata'] === 'object'
+        ? r['metadata']
+        : {}) as Record<string, unknown>;
+    const title = musicStr(meta['title']) ?? musicStr(r['name']) ?? musicStr(r['title']) ?? 'Unknown Track';
+    return {
+        id: musicStr(r['id']) ?? '',
+        title,
+        durationSecs: musicNum(meta['duration_secs']) ?? musicNum(r['duration_secs']) ?? 0,
+        trackNumber: musicNum(meta['track_number']) ?? musicNum(r['track_number']),
+    };
+}
+
+/**
+ * Normalize one raw album row from `GET /api/v1/music/albums` (snake_case,
+ * grouped by album name with embedded raw track items) into the camelCase
+ * {@link MusicAlbum}. The server groups by album `name` (no album PK), so `name`
+ * doubles as the drill-down key/`mbid`; embedded `tracks` are normalized so the
+ * album carries a ready track list (browse fast-path — no separate track fetch).
+ */
+function normalizeMusicAlbum(raw: unknown): MusicAlbum {
+    const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    const title = musicStr(r['name']) ?? musicStr(r['title']) ?? 'Unknown Album';
+    const rawTracks = Array.isArray(r['tracks']) ? r['tracks'] : [];
+    return {
+        id: title,
+        title,
+        albumArtUrl: musicStr(r['album_art_url']),
+        year: musicNum(r['year']),
+        totalTracks: musicNum(r['track_count']) ?? rawTracks.length,
+        tracks: rawTracks.map(normalizeMusicTrack),
+    };
 }
 
 /** TMDB match type — series/season/episode resolve as `tv`, everything else `movie`. */
@@ -806,6 +887,85 @@ export class ApiClient {
      */
     updateMetadata(id: string, metadata: Record<string, unknown>): Promise<MediaItem> {
         return this.patch<MediaItem>(`/api/v1/media/${encodeURIComponent(id)}/metadata`, metadata);
+    }
+
+    /**
+     * List all music artists (`GET /api/v1/music/artists`). The server groups
+     * tracks by artist name across every music library and returns
+     * `{ artists: [...] }` in snake_case; each row is normalized to a camelCase
+     * {@link MusicArtist} (the display `name` doubles as the drill-down key).
+     * A malformed payload degrades to an empty array.
+     */
+    async listArtists(signal?: AbortSignal): Promise<MusicArtist[]> {
+        const res = await this.get<{ artists?: unknown }>('/api/v1/music/artists', undefined, signal);
+        const raw = Array.isArray(res.artists) ? res.artists : [];
+        return raw.map(normalizeMusicArtist);
+    }
+
+    /**
+     * Fetch one artist by name (`GET /api/v1/music/artists/{mbid}` — the server
+     * keys artists by name, so `mbid` here is the artist name). Returns a
+     * normalized {@link MusicArtist}. A non-2xx (404 unknown artist) throws the
+     * shared {@link ApiError}.
+     */
+    async getArtist(mbid: string, signal?: AbortSignal): Promise<MusicArtist> {
+        const res = await this.get<{ artist?: unknown }>(
+            `/api/v1/music/artists/${encodeURIComponent(mbid)}`,
+            undefined,
+            signal,
+        );
+        return normalizeMusicArtist(res.artist);
+    }
+
+    /**
+     * List albums (`GET /api/v1/music/albums`). The server returns every album
+     * across music libraries (no server-side artist filter), so when `artist`
+     * is supplied the list is filtered client-side by the album's `artist` name
+     * before normalizing. Each album carries its embedded (normalized) track
+     * list. A malformed payload degrades to an empty array.
+     */
+    async listAlbums(artist?: string, signal?: AbortSignal): Promise<MusicAlbum[]> {
+        const res = await this.get<{ albums?: unknown }>('/api/v1/music/albums', undefined, signal);
+        const raw = Array.isArray(res.albums) ? res.albums : [];
+        const filtered = artist === undefined || artist === ''
+            ? raw
+            : raw.filter(
+                (a) => musicStr((a && typeof a === 'object' ? a : {} as Record<string, unknown>)['artist']) === artist,
+            );
+        return filtered.map(normalizeMusicAlbum);
+    }
+
+    /**
+     * Fetch one album by name (`GET /api/v1/music/albums/{mbid}` — the server
+     * keys albums by name, so `mbid` here is the album name). Returns a
+     * normalized {@link MusicAlbum} with its embedded track list. A non-2xx
+     * (404 unknown album) throws the shared {@link ApiError}.
+     */
+    async getAlbum(mbid: string, signal?: AbortSignal): Promise<MusicAlbum> {
+        const res = await this.get<{ album?: unknown }>(
+            `/api/v1/music/albums/${encodeURIComponent(mbid)}`,
+            undefined,
+            signal,
+        );
+        return normalizeMusicAlbum(res.album);
+    }
+
+    /**
+     * List tracks (`GET /api/v1/music/tracks`). The server returns formatted
+     * tracks across music libraries (no server-side album filter), so when
+     * `album` is supplied the list is filtered client-side by the track's
+     * `album` name before normalizing. Used as the fallback when an album has no
+     * embedded tracks. A malformed payload degrades to an empty array.
+     */
+    async listTracks(album?: string, signal?: AbortSignal): Promise<MusicTrack[]> {
+        const res = await this.get<{ tracks?: unknown }>('/api/v1/music/tracks', undefined, signal);
+        const raw = Array.isArray(res.tracks) ? res.tracks : [];
+        const filtered = album === undefined || album === ''
+            ? raw
+            : raw.filter(
+                (t) => musicStr((t && typeof t === 'object' ? t : {} as Record<string, unknown>)['album']) === album,
+            );
+        return filtered.map(normalizeMusicTrack);
     }
 
     logout(redirect = true): void {
