@@ -33,7 +33,7 @@
 - [x] UI-2.5  MediaGrid scroll perf + lazy overlay [U-R2]    (commits: 61d9794 scroll half; 0233d3a+13cef09 overlay lazy-mount half, a11y-preserving)  DONE
 - [x] UI-2.6  composited hover/skeleton animations    (commits: 3570b2d, 6bc03e9)  DONE
 - [x] UI-2.7  debounce prefs persistence    (commits: 8e9c1be)  DONE
-- [x] UI-3.1  secondary entry for Player surface (commit: 51c5153) DONE
+- [x] UI-3.1  secondary entry for Player surface (commit: 51c5153; completed 2026-07-12 — see note below) DONE
 - [x] UI-3.2  optimistic auth guard    (commits: 3bfd787, fce73b8)  DONE
 - [x] UI-3.3  admin CSS split    (commit: ae701cd)  DONE
 - [x] UI-3.4  apexcharts dedupe/replacement    (commit: fce73b8)  DONE
@@ -776,3 +776,44 @@ New `describe('Player — SyncPlay drift correction (U-I1)')`; `vi.useFakeTimers
 
 Files changed (absolute): `/home/sites/phlix/phlix-ui/src/stores/useSyncPlayStore.test.ts`,
 `/home/sites/phlix/phlix-ui/src/components/Player.test.ts`. UI-3.7 impl confirmed real → stays [x].
+
+## Implementer — UI-3.1 — 2026-07-12 (audit PARTIAL → closed: build-assertion + boot-graph defer)
+
+Closed the two audit gaps. The Player split itself was already real (src/player.ts →
+@phlix/ui/player, absent from dist/phlix-ui.js) — kept as-is.
+
+**GAP 2 (REQUIRED) — build-output assertion added.** New `src/__tests__/dist-player-split.test.ts`.
+Unlike `dist-css-bundle.test.ts` (reads the COMMITTED dist), this test BUILDS both entries fresh into
+a throwaway outDir (`node_modules/.cache/ui-3.1-split-dist`) in `beforeAll` and asserts against that.
+Rationale: per-step workers must NOT commit dist/, so the committed dist lags src/ between releases;
+CI runs `npm run build` before `test:run` but the local/worklog verify command is a bare `vitest run`.
+Building fresh keeps the assertion green under EVERY run mode without committing dist, and doubles as
+the "split still builds" check. Assertions: (1) main entry + `player.js` both build; (2) main entry has
+NO static `import … "./Player-*.js"` (GAP 2); (3) a real TRANSITIVE static-import closure walk from
+phlix-ui.js contains none of Player-/MediaDetail-/FilterBar-/MetadataMatchModal- (catches shared-chunk
+leaks); (4) the three deferred surfaces exist as standalone chunks (guards the Rollup-inlines-into-entry
+false-green). Prefixes anchored with a trailing hyphen so `MediaDetail-*` ≠ `MediaDetailPage-*` and
+`Player-*` ≠ `PlayerPage-*`.
+
+**GAP 1 (consumer-risk gate PASSED → applied) — defer MediaDetail/FilterBar/MetadataMatchModal.**
+Consumer check FIRST: grepped `phlix-server/web-ui/src` and `phlix-hub/web-ui/src` — NEITHER consumer
+imports MediaDetail, FilterBar, or MetadataMatchModal at all (server imports createPhlixApp/
+buildAdminRoutes/LibraryScanPage; hub imports createPhlixApp/MyServersPage/FederationPage/
+ManageSharesPage/buildHubAdminRoutes). So converting the three static default re-exports in
+`src/index.ts:52-54` to `defineAsyncComponent(() => import('./components/X.vue'))` factories (same named
+exports) is SAFE — no consumer usage to break. Verified with a fresh build: the three chunks were
+STATICALLY imported by phlix-ui.js before (in the boot graph); after the change the entry's static
+closure no longer reaches them (they're dynamically-imported chunks), no INEFFECTIVE_DYNAMIC_IMPORT
+warning, and each is a standalone chunk (not inlined). ~56KB removed from the eager entry.
+
+**⚠️ Release-time dist rebuild NEEDED to realize GAP 1 on consumers.** dist/ was NOT committed
+(release-time gate, §0.5). The committed dist/phlix-ui.js still statically imports the three chunks;
+consumers only get the smaller boot graph once dist/ is rebuilt+committed at the next release/tag.
+
+**Verify (actual):** `vue-tsc --noEmit` exit 0 (0 errors); `eslint .` exit 0 (0 errors);
+`vitest run src/__tests__/dist-player-split.test.ts` → 4 passed; FULL `vitest run` → 174 files, 2989
+pass / 6 skip / 0 fail; `vite build` main exit 0 + `vite build --config vite.player.config.ts` exit 0.
+dist/ restored to committed state (git checkout) — NOT committed.
+
+Files: `/home/sites/phlix/phlix-ui/src/index.ts` (defineAsyncComponent factories + import),
+`/home/sites/phlix/phlix-ui/src/__tests__/dist-player-split.test.ts` (new).

@@ -5,6 +5,8 @@
  * @license MIT
  */
 
+import { defineAsyncComponent } from 'vue';
+
 export { createPhlixApp } from './app/createPhlixApp';
 export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow } from './app/types';
 
@@ -49,9 +51,20 @@ export { default as ThumbRating } from './components/ThumbRating.vue';
 export { default as MediaGrid } from './components/MediaGrid.vue';
 export { default as MediaRow } from './components/MediaRow.vue';
 export { default as MediaHomeRow } from './components/HomeRow.vue';
-export { default as MediaDetail } from './components/MediaDetail.vue';
-export { default as MetadataMatchModal } from './components/MetadataMatchModal.vue';
-export { default as FilterBar } from './components/FilterBar.vue';
+// Deferred out of the boot graph (UI-3.1 / U-H2): MediaDetail, MetadataMatchModal
+// and FilterBar are consumed ONLY inside already-lazy route pages
+// (MediaDetailPage / LibraryPage / BrowsePage). Static default re-exports here
+// forced Rollup to hoist all three (~56KB) into the eager `@phlix/ui` entry
+// bundle every consumer boots. Exposing them as `defineAsyncComponent` factories
+// keeps the SAME named exports working (consumers use them purely as template
+// components) while moving the component code into dynamically-imported chunks
+// OUT of the main entry's static boot graph — mirroring the CommandPalette /
+// AuditLogsPage lazy precedent noted below.
+export const MediaDetail = defineAsyncComponent(() => import('./components/MediaDetail.vue'));
+export const MetadataMatchModal = defineAsyncComponent(
+  () => import('./components/MetadataMatchModal.vue'),
+);
+export const FilterBar = defineAsyncComponent(() => import('./components/FilterBar.vue'));
 export { default as SourcePriorityEditor } from './components/SourcePriorityEditor.vue';
 // NOTE (R6.1a): the built-in route PAGES — BrowsePage, MediaDetailPage, PlayerPage,
 // LoginPage, SignupPage, SettingsPage — are intentionally NOT re-exported. `createPhlixApp`
