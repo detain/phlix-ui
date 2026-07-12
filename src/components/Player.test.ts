@@ -1618,6 +1618,33 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     expect(w.find('.prep').exists()).toBe(true);
   });
 
+  // UI-1.1: recovering from a decode error mid-film resumes at the same position.
+  it('passes the current playback position as startPosition on a decode-error fallback (resume, not 0:00)', async () => {
+    const { video, state } = mountPlayer({ streamUrl: 'http://x/movie.mp4' });
+    state.currentTime = 99; // already 99 s into the direct-play source when it fails
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 3 }) });
+    video.dispatchEvent(new Event('error'));
+    await nextTick();
+    expect(tc().start).toHaveBeenCalledTimes(1);
+    // 4th positional arg is startPosition — must be the captured 99, NOT 0.
+    expect(tc().start.mock.calls[0][3]).toBe(99);
+  });
+
+  it('passes the current playback position as startPosition when switching audio language (resume, not 0:00)', async () => {
+    const twoAudio = [
+      { index: 0, streamIndex: 1, language: 'eng', label: 'English 5.1', default: true },
+      { index: 1, streamIndex: 2, language: 'jpn', label: 'Japanese', default: false },
+    ];
+    const { w, state } = mountPlayer({ streamUrl: 'http://x/movie.mp4', playbackAudioTracks: twoAudio });
+    state.currentTime = 42; // mid-film when the viewer switches to the Japanese track
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    await w.find('[aria-label="Audio track"]').findAll('[role="radio"]')[1].trigger('click');
+    await nextTick();
+    expect(tc().start).toHaveBeenCalledTimes(1);
+    expect(tc().start.mock.calls[0][3]).toBe(42);
+  });
+
   it('early-returns on a media error once already transcoding (no double start)', async () => {
     // mkv → transcode from the start (one start). A subsequent <video> error must not
     // kick off a second transcode (onVideoError early-returns when transcodeNeeded).

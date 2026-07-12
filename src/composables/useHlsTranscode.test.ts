@@ -299,6 +299,28 @@ describe('useHlsTranscode', () => {
     expect(passedOpts.hlsConfig).toEqual({ maxBufferLength: 10 });
   });
 
+  // UI-1.1: the 4th positional arg (startPosition) is threaded into attach opts so
+  // an audio-switch / decode-error fallback resumes at the same second, not 0:00.
+  it('forwards the startPosition (4th arg) into attach opts on fallback (resume mid-film)', async () => {
+    const h = harness({
+      start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+    });
+    await h.controller.start(fakeVideo(), 'media-1', undefined, 42);
+    expect(h.attach).toHaveBeenCalledTimes(1);
+    const passedOpts = h.attach.mock.calls[0][2] as { startPosition?: number };
+    // Regression guard: must be the captured 42, NOT 0 (would restart from the top).
+    expect(passedOpts.startPosition).toBe(42);
+  });
+
+  it('leaves startPosition undefined when no position is passed (fresh play from 0)', async () => {
+    const h = harness({
+      start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' },
+    });
+    await h.controller.start(fakeVideo(), 'media-1');
+    const passedOpts = h.attach.mock.calls[0][2] as { startPosition?: number };
+    expect(passedOpts.startPosition).toBeUndefined();
+  });
+
   it('skips polling when the job is already completed', async () => {
     const h = harness({ start: { job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'completed' } });
     await h.controller.start(fakeVideo(), 'm');

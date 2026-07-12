@@ -232,3 +232,41 @@ Fixed the audit gaps for the W0 remainder.
 - Verify: target files pass; full suite **2935 pass / 6 skip / 0 fail** (baseline 2928 + 7
   new). `vue-tsc --noEmit` 0 errors; `eslint .` 0 errors; `npm run build` exit 0.
   **dist/ NOT committed** — restored to tracked state after the verify build.
+
+## TestEngineer — 2026-07-12 (UI-1.1 / UI-1.2 test build-out; Wave U-W1 re-audit)
+
+Re-audited the four Wave U-W1-head steps this pass (code only — NO source/product file touched):
+- **UI-1.1 (Preserve position on direct→HLS fallback) — was PARTIAL → CLOSED.** Code path verified
+  correct end-to-end (`Player.vue` decode-error + audio-switch fallbacks capture
+  `videoRef.value?.currentTime ?? 0` → `beginTranscode(startPosition)` → `tc.start(v, id, undefined,
+  startPosition)`; `useHlsTranscode.start()` threads the 4th arg into attach `opts.startPosition`;
+  `hls-playback.ts` seeds `hlsConfig.startPosition` on the MSE path and `video.currentTime` on the
+  native path). The mandated startPosition-passthrough test was ABSENT — now added.
+- **UI-1.2 (hls.js tuning) — DONE; minor gap CLOSED.** Added the missing default-config assertion
+  (`backBufferLength === 90`, `maxBufferLength === 60` with no consumer override). Bandwidth
+  clamp/persist round-trip tests already present (`hls-playback.test.ts` UI-1.2 blocks).
+- **UI-1.3 (MediaCapabilities/codec probing) — DONE.** `playback.test.ts` maps codec→transcode
+  decision with mocked `decodingInfo`/`canPlayType`; no gap.
+- **UI-1.4 (skip hls.js on native-HLS-only) — DONE.** `hls-playback.test.ts` native-fallback block
+  asserts the import is skipped when `MediaSource` is undefined + native HLS supported; no gap.
+
+**Tests added (8, all test-only — no source change):**
+- `src/composables/useHlsTranscode.test.ts` (2): `start(video, id, undefined, 42)` forwards
+  `startPosition: 42` into attach opts (regression guard: must be 42, NOT 0); no 4th arg ⇒
+  `startPosition` undefined (fresh play from 0).
+- `src/components/player/hls-playback.test.ts` (4): default VOD buffers `backBufferLength === 90` /
+  `maxBufferLength === 60` (UI-1.2); hls.js `config.startPosition` seeded from `opts.startPosition`
+  (42) and defaults to 0; native path seeks `video.currentTime` to `opts.startPosition` (UI-1.1).
+- `src/components/Player.test.ts` (2): a decode-error fallback (SRC_NOT_SUPPORTED, currentTime 99)
+  calls `tc.start` with 4th arg 99, not 0; switching audio language at currentTime 42 calls
+  `tc.start` with 4th arg 42 — both guard the "resumes at 0:00" regression.
+
+**Verify (ACTUAL output):**
+- Targeted `vitest run useHlsTranscode.test.ts hls-playback.test.ts Player.test.ts --reporter=dot`:
+  `Test Files 3 passed (3) / Tests 216 passed (216)`.
+- Full `vitest run`: `Test Files 171 passed (171) / Tests 2943 passed | 6 skipped (2949)` —
+  0 fail (baseline 2935 pass + 8 new = 2943).
+- `vue-tsc --noEmit` → exit 0 (0 errors). `eslint .` → exit 0 (0 errors).
+- **dist/ NOT rebuilt/committed** (release-time gate, §0.5). Only 3 `*.test.ts` files changed.
+
+GREEN. UI-1.1 PARTIAL→closed, UI-1.2 minor gap closed; UI-1.3/UI-1.4 re-audited DONE (no action).

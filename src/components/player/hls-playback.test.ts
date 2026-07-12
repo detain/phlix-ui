@@ -169,6 +169,26 @@ describe('hls-playback', () => {
       expect(cfg.renderTextTracksNatively).toBe(false);
     });
 
+    it('applies the VOD-friendly buffer defaults when no hlsConfig is given (UI-1.2)', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const cfg = FakeHls.instances[0].config;
+      // Bounded back buffer (lower RAM on TVs) + 60 s forward buffer.
+      expect(cfg.backBufferLength).toBe(90);
+      expect(cfg.maxBufferLength).toBe(60);
+    });
+
+    // UI-1.1: startPosition threads into the hls.js config so a decode-error /
+    // audio-switch fallback resumes mid-film, not at 0:00.
+    it('seeds hls.js startPosition from opts.startPosition (resume on fallback)', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', { startPosition: 42 });
+      expect(FakeHls.instances[0].config.startPosition).toBe(42);
+    });
+
+    it('defaults hls.js startPosition to 0 when none is given', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      expect(FakeHls.instances[0].config.startPosition).toBe(0);
+    });
+
     it('gives fragments a generous first-byte budget for on-demand transcode', async () => {
       await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
       const cfg = FakeHls.instances[0].config as {
@@ -324,6 +344,24 @@ describe('hls-playback', () => {
       expect(FakeHls.instances.length).toBe(0);
       handle.destroy();
       expect(video.removeAttribute).toHaveBeenCalledWith('src');
+    });
+
+    // UI-1.1: on the native (Safari/iOS) path a non-zero startPosition seeks the
+    // element so a decode-error / audio-switch fallback resumes mid-film, not 0:00.
+    it('seeks video.currentTime to opts.startPosition on the native path', async () => {
+      FakeHls.supported = false;
+      const video = {
+        canPlayType: () => 'probably',
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        load: vi.fn(),
+        removeAttribute: vi.fn(),
+        src: '',
+        currentTime: 0,
+      } as unknown as HTMLVideoElement;
+      await attachHls(video, 'http://h/native.m3u8', { startPosition: 42 });
+      expect(video.src).toBe('http://h/native.m3u8');
+      expect(video.currentTime).toBe(42);
     });
 
     // UI-1.4: Skip hls.js dynamic import when MSE is absent AND native HLS is supported.
