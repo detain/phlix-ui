@@ -13,8 +13,11 @@ import { setActivePinia, createPinia } from 'pinia';
 import MediaCard from './MediaCard.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useToastStore } from '../stores/useToastStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import type { MediaItem } from '../types/media-item';
-import { buildMediaItemMenu } from './mediaItemMenu';
+import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
+import { api } from '../api/client';
 
 // UI-2.5 [U-R2]: wrap buildMediaItemMenu in a spy (delegating to the real impl)
 // so we can assert the ⋯ menu MODEL is only built on first open — never for the
@@ -813,5 +816,208 @@ describe('MediaCard — prefetch on hover/focus (R6.1c)', () => {
     const w = mount(MediaCard, { props: { item: media() } }); // no router plugin
     await w.find('.media-card').trigger('pointerenter'); // useRouter() undefined → no-op, no throw
     expect(w.find('.media-card').exists()).toBe(true);
+  });
+});
+
+/**
+ * UI-3.8 — each ⋯-menu action must invoke its REAL backend (API call / host
+ * emit), never fall through to a dead "isn't available yet" toast. These tests
+ * open the menu the way a user does (reveal → click ⋯ → click the item, which
+ * teleports to <body>) and assert the concrete side-effect.
+ */
+describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
+  // `api` is a MODULE singleton, so its spies live across tests in this file.
+  // Clear call history before each case so per-action `toHaveBeenCalledTimes`
+  // assertions count only this test (mockResolvedValue implementations survive).
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** Admin so the admin-gated items (Edit metadata / Explore item data) render. */
+  function asAdmin(): void {
+    useAuthStore().user = { id: 'admin1', is_admin: true };
+  }
+
+  /**
+   * Reveal the overlay, open the ⋯ menu, and click the item whose visible label
+   * matches `label`. The Menu teleports its list to <body>, so the item lives in
+   * the document (not the wrapper). Throws (listing what IS present) when absent,
+   * so a menu-model regression fails loudly instead of silently no-op'ing.
+   */
+  async function selectMenuItem(w: ReturnType<typeof mount>, label: string): Promise<void> {
+    await reveal(w);
+    await w.find('[aria-label="More actions"]').trigger('click');
+    await nextTick();
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const target = items.find((el) => el.textContent?.trim() === label);
+    if (!target) {
+      throw new Error(
+        `menu item "${label}" not found — present: ${items
+          .map((i) => i.textContent?.trim())
+          .join(', ')}`,
+      );
+    }
+    target.click();
+    await flushPromises();
+  }
+
+  it('Add to playlist → api.createPlaylist(name, itemId) + success toast', async () => {
+    const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'Faves' });
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+
+    await selectMenuItem(w, MENU_LABELS.addToPlaylist);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith('Faves', 'm1');
+    expect(success).toHaveBeenCalledWith('Playlist created');
+    promptSpy.mockRestore();
+    w.unmount();
+  });
+
+  it('Add to playlist → does NOTHING when the name prompt is cancelled', async () => {
+    const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'x' });
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue(null);
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+
+    await selectMenuItem(w, MENU_LABELS.addToPlaylist);
+
+    expect(create).not.toHaveBeenCalled();
+    promptSpy.mockRestore();
+    w.unmount();
+  });
+
+  it('Download → api.getDownloadUrl(itemId), opens the URL + success toast', async () => {
+    const dl = vi.spyOn(api, 'getDownloadUrl').mockResolvedValue({ url: 'https://dl/dune.mp4' });
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+
+    await selectMenuItem(w, MENU_LABELS.download);
+
+    expect(dl).toHaveBeenCalledTimes(1);
+    expect(dl).toHaveBeenCalledWith('m1');
+    expect(openSpy).toHaveBeenCalledWith('https://dl/dune.mp4', '_blank', 'noopener');
+    expect(success).toHaveBeenCalledWith('Download started');
+    openSpy.mockRestore();
+    w.unmount();
+  });
+
+  it('Shuffle → api.shufflePlay(itemId) + success toast', async () => {
+    const shuffle = vi.spyOn(api, 'shufflePlay').mockResolvedValue({ message: 'ok' });
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+
+    await selectMenuItem(w, MENU_LABELS.shuffle);
+
+    expect(shuffle).toHaveBeenCalledTimes(1);
+    expect(shuffle).toHaveBeenCalledWith('m1');
+    expect(success).toHaveBeenCalledWith('Shuffle play started');
+    w.unmount();
+  });
+
+  it('Edit metadata (admin) → emits `edit-metadata` with the item (host-handled)', async () => {
+    asAdmin();
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+
+    await selectMenuItem(w, MENU_LABELS.editMetadata);
+
+    expect(w.emitted('edit-metadata')).toBeTruthy();
+    expect(w.emitted('edit-metadata')?.[0]).toEqual([media()]);
+    w.unmount();
+  });
+
+  it('Explore item data (admin) → emits `explore-data` with the item, NOT a dead toast', async () => {
+    asAdmin();
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const info = vi.spyOn(useToastStore(), 'info');
+
+    await selectMenuItem(w, MENU_LABELS.exploreData);
+
+    // Real host emit fired…
+    expect(w.emitted('explore-data')).toBeTruthy();
+    expect(w.emitted('explore-data')?.[0]).toEqual([media()]);
+    // …and the old default-case "isn't available yet" toast did NOT.
+    const calls = info.mock.calls.map((c) => String(c[0]));
+    expect(calls.some((m) => m.includes("isn't available yet"))).toBe(false);
+    w.unmount();
+  });
+
+  describe('View missing episodes → api.getMissingEpisodes + correct count (envelope contract)', () => {
+    it('reports the real count from missing_episodes.length (plural)', async () => {
+      const getMissing = vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({
+        total_expected: 10,
+        total_existing: 8,
+        missing_episodes: [{ episode_number: 3 }, { episode_number: 7 }],
+      });
+      const w = mount(MediaCard, {
+        props: { item: media({ id: 's1', type: 'series' }) },
+        attachTo: document.body,
+      });
+      const warning = vi.spyOn(useToastStore(), 'warning');
+
+      await selectMenuItem(w, MENU_LABELS.missingEpisodes);
+
+      expect(getMissing).toHaveBeenCalledWith('s1');
+      // Regression guard: the pre-fix code read `.length` off the ENVELOPE object
+      // → `undefined` → "undefined episodes missing". Must be the real count.
+      expect(warning).toHaveBeenCalledWith('2 episodes missing');
+      w.unmount();
+    });
+
+    it('reports singular when exactly one episode is missing', async () => {
+      vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({
+        total_expected: 10,
+        total_existing: 9,
+        missing_episodes: [{ episode_number: 4 }],
+      });
+      const w = mount(MediaCard, {
+        props: { item: media({ id: 's1', type: 'series' }) },
+        attachTo: document.body,
+      });
+      const warning = vi.spyOn(useToastStore(), 'warning');
+
+      await selectMenuItem(w, MENU_LABELS.missingEpisodes);
+
+      expect(warning).toHaveBeenCalledWith('1 episode missing');
+      w.unmount();
+    });
+
+    it('fires the zero-missing branch when missing_episodes is empty', async () => {
+      vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({
+        total_expected: 10,
+        total_existing: 10,
+        missing_episodes: [],
+      });
+      const w = mount(MediaCard, {
+        props: { item: media({ id: 's1', type: 'series' }) },
+        attachTo: document.body,
+      });
+      const toasts = useToastStore();
+      const success = vi.spyOn(toasts, 'success');
+      const warning = vi.spyOn(toasts, 'warning');
+
+      await selectMenuItem(w, MENU_LABELS.missingEpisodes);
+
+      // The zero branch must fire (it never did when `.length` was undefined).
+      expect(success).toHaveBeenCalledWith('No missing episodes');
+      expect(warning).not.toHaveBeenCalled();
+      w.unmount();
+    });
+
+    it('degraded envelope (only missing_episodes, no totals) still counts correctly', async () => {
+      vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({ missing_episodes: [] });
+      const w = mount(MediaCard, {
+        props: { item: media({ id: 's1', type: 'series' }) },
+        attachTo: document.body,
+      });
+      const success = vi.spyOn(useToastStore(), 'success');
+
+      await selectMenuItem(w, MENU_LABELS.missingEpisodes);
+
+      expect(success).toHaveBeenCalledWith('No missing episodes');
+      w.unmount();
+    });
   });
 });

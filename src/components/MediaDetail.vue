@@ -66,6 +66,9 @@ const emit = defineEmits<{
   (e: 'choose-poster', item: MediaItem): void;
   (e: 'remove', item: MediaItem): void;
   (e: 'edit-metadata', item: MediaItem): void;
+  /** Admin ⋯-menu "Explore item data" — host opens its raw item-data inspector
+   *  for this item (mirrors `edit-metadata`; the full MediaItem is client-side). */
+  (e: 'explore-data', item: MediaItem): void;
 }>();
 
 // Per-user favorite/rating/love state (Feature 17). The hero "Watchlist"/favorite
@@ -202,11 +205,14 @@ function onMenuSelect(menuItem: { label: string }): void {
       toasts.info('Loading\u2026');
       api
         .getMissingEpisodes(props.item.id)
-        .then((episodes) => {
-          if (episodes.length === 0) {
+        .then((report) => {
+          // Envelope { total_expected, total_existing, missing_episodes:[...] } \u2014
+          // canonical count is missing_episodes.length (see ApiClient docblock).
+          const count = report.missing_episodes.length;
+          if (count === 0) {
             toasts.success('No missing episodes');
           } else {
-            toasts.warning(`${episodes.length} episode${episodes.length === 1 ? '' : 's'} missing`);
+            toasts.warning(`${count} episode${count === 1 ? '' : 's'} missing`);
           }
         })
         .catch((err) => {
@@ -227,6 +233,11 @@ function onMenuSelect(menuItem: { label: string }): void {
       break;
     case L.editMetadata:
       emit('edit-metadata', props.item);
+      break;
+    case L.exploreData:
+      // "Explore item data" — emit the item so the host opens its data inspector
+      // (NOT a dead "isn't available yet" toast).
+      emit('explore-data', props.item);
       break;
     case L.refreshMetadata:
     case L.identify:

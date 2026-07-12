@@ -40,7 +40,7 @@
 - [x] UI-3.5  responsive posters end-to-end    (commit: bb59051)  DONE
 - [~] UI-3.6  music library build-out    RE-AUDIT 2026-07-12: NOT-DONE (genuinely STUBBED, opencode "mock issue" claim FALSE). MusicLibraryPage.vue = UI shell w/ local refs only: no ApiClient/fetch/Audio/usePreferencesStore imports; album/track/artist load all `// TODO`; play/pause stub; crossfade/gapless prefs DEAD. All 5 failing tests = real missing behavior. Server BROWSE endpoints exist (flat: /api/v1/music/artists|artists/{mbid}|albums|albums/{mbid}|tracks|tracks/{id}|now-playing) — tests assume NESTED routes (drift). NO music-track STREAM endpoint server-side; gapless cmd unwired. PLAN: (a) browse half NOW; (b) playback DEFERRED (X8). BROWSE DONE 2026-07-12 (commit 34b3362): ApiClient music methods (listArtists/getArtist/listAlbums/getAlbum/listTracks + normalizers) matched to REAL flat snake_case server routes (artist filter is CLIENT-SIDE — server returns all albums; album drill-down uses embedded tracks; track id = UUID string); MusicLibraryPage loads artists onMount/albums/tracks; tests reconciled to flat contract; play test it.skip w/ X8 reason. Full UI suite 2922 pass / 6 skip / 0 FAIL — UI MASTER GREEN. REMAINS (X8, task #5): real playback + crossfade/gapless via useMusicPlayer vs server music-track STREAM endpoint. FLAG: pre-existing dead `src/api/music.ts` (wrong nested routes, superseded by new ApiClient methods) → §6 removal-confirmation queue (task #7), left in place per no-delete policy.
 - [x] UI-3.7  SyncPlay drift correction    (commit: 078f791)  DONE
-- [x] UI-3.8  card ⋯-menu action backends  (add-to-playlist, download, view-missing-episodes, shuffle, edit-metadata → real API calls + toast feedback)  (commit: 47a3021)  DONE
+- [x] UI-3.8  card ⋯-menu action backends  (add-to-playlist, download, view-missing-episodes, shuffle, edit-metadata, explore-item-data → real API calls / host emits + toast feedback; all 6 actions real + per-action tested)  (commit: 47a3021 + Fixer 2026-07-12)  DONE
 - [x] UI-3.9  markWatched/markUnwatched verification    (commit: 47c3042)  DONE
 
 ## Notes / cross-repo blockers
@@ -655,3 +655,72 @@ Files changed (absolute): `/home/sites/phlix/phlix-ui/vite.config.ts`,
 `/home/sites/phlix/phlix-ui/vite.player.config.ts`,
 `/home/sites/phlix/phlix-ui/src/app/AdminLayout.vue`,
 `/home/sites/phlix/phlix-ui/src/__tests__/dist-css-bundle.test.ts`, and the rebuilt `dist/`.
+
+## Fixer — UI-3.8 — 2026-07-12
+
+Re-audit of the 6 card ⋯-menu actions confirmed the audit's two defects and the
+missing per-action tests. 4 of 6 were real (add-to-playlist, download, shuffle,
+edit-metadata); missing-episodes was green-but-wrong; explore-item-data was a
+dead default-case toast. All 6 are now real + tested.
+
+**(1) REAL BUG — missing-episodes broken contract (fixed).** The client typed
+`getMissingEpisodes` as a BARE ARRAY and `MediaCard.vue` did `episodes.length`,
+but the server (`MediaItemController::getMissingEpisodes` :599-602) returns an
+ENVELOPE `{ total_expected, total_existing, missing_episodes: [{ episode_number }] }`
+(the degraded branches at :575/:580 return only `{ missing_episodes: [] }`). So
+`.length` was read off the envelope OBJECT → `undefined` → the toast read
+"undefined episodes missing" and the zero-missing branch never fired.
+- `src/api/client.ts` — retyped `getMissingEpisodes(id)` to the real envelope
+  (`total_expected?`, `total_existing?` optional to cover the degraded branches;
+  `missing_episodes: Array<{ episode_number: number }>`), with a docblock pinning
+  the snake_case server shape and noting `missing_episodes.length` is the
+  canonical count.
+- `src/components/MediaCard.vue` + `src/components/MediaDetail.vue` (shares the
+  same `onMenuSelect`) — both now read `report.missing_episodes.length` for the
+  count. Chose `.length` over `total_expected - total_existing` because the latter
+  under-counts when a series has extra episodes beyond `episode_count`. The count
+  is now correct and the zero-missing branch fires. (MediaDetail HAD to be fixed
+  too — the retyped client made its old `episodes.length` a vue-tsc error.)
+
+**(2) STUB — explore-item-data now real (host emit, not a toast).** No
+data-inspector modal/component exists in the codebase and no host currently
+handles it, so — consistent with the sibling `edit-metadata` action
+(`emit('edit-metadata', item)`, host-wired) — "Explore item data" now
+`emit('explore-data', props.item)` for the host's admin data-inspector to handle
+(the full `MediaItem` is already client-side). Added the typed `explore-data`
+emit + a JSDoc'd handler case in BOTH `MediaCard.vue` and `MediaDetail.vue`;
+removed it from the dead default-case `"isn't available yet"` toast.
+
+**(3) Per-action tests added** (`src/components/MediaCard.test.ts`, new describe
+"MediaCard — ⋯ menu action backends (UI-3.8)"). Each opens the menu the way a
+user does (reveal overlay → click ⋯ → click the teleported `[role=menuitem]`) via
+a `selectMenuItem` helper (throws listing present items if a label is missing, so
+a menu-model regression fails loudly). A scoped `beforeEach(vi.clearAllMocks)`
+resets the `api` module-singleton spies' call history between cases.
+- add-to-playlist → `api.createPlaylist('Faves','m1')` + success toast (prompt
+  spied); + a cancelled-prompt case asserting `createPlaylist` is NOT called.
+- download → `api.getDownloadUrl('m1')`, `window.open(url,'_blank','noopener')`,
+  success toast.
+- shuffle → `api.shufflePlay('m1')` + success toast.
+- edit-metadata (admin) → emits `edit-metadata` with the item.
+- explore-item-data (admin) → emits `explore-data` with the item AND asserts the
+  old `"isn't available yet"` info toast did NOT fire.
+- view-missing-episodes → 4 cases guarding the fixed envelope contract:
+  plural ("2 episodes missing"), singular ("1 episode missing"), zero
+  ("No missing episodes" — the branch that never fired pre-fix), and a degraded
+  envelope (only `missing_episodes`, no totals). Item is `type:'series'` so the
+  menu includes the item.
+
+**Verify (ACTUAL output; vitest run ALONE first, then vue-tsc/eslint separately):**
+- `npx vitest run src/components/MediaCard.test.ts --reporter=dot` →
+  `Test Files 1 passed (1) / Tests 70 passed (70)`.
+- FULL `npx vitest run` → `Test Files 173 passed (173) / Tests 2977 passed |
+  6 skipped (2983)` — 0 fail (baseline 2967 + 10 net new).
+- `npx vue-tsc --noEmit` → exit 0 (0 errors). `npx eslint .` → exit 0 (0 errors).
+- **dist/ NOT rebuilt/committed** (release-time gate, §0.5).
+
+Files changed (absolute): `/home/sites/phlix/phlix-ui/src/api/client.ts`,
+`/home/sites/phlix/phlix-ui/src/components/MediaCard.vue`,
+`/home/sites/phlix/phlix-ui/src/components/MediaDetail.vue`,
+`/home/sites/phlix/phlix-ui/src/components/MediaCard.test.ts`. UI-3.8: all 6
+actions real + per-action tested → marked [x].

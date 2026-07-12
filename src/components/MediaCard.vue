@@ -103,6 +103,15 @@ const emit = defineEmits<{
   (e: 'choose-poster', item: MediaItem): void;
   (e: 'remove', item: MediaItem): void;
   (e: 'edit-metadata', item: MediaItem): void;
+  /**
+   * Admin ⋯-menu "Explore item data" — request the host open its raw
+   * item-data / metadata inspector for this item. The card already holds the
+   * full `MediaItem` (all metadata is client-side), so it emits the item to the
+   * host rather than owning an inspector UI itself — mirroring the
+   * `edit-metadata` host-event pattern. The host (admin surfaces) wires this to
+   * its data-inspector panel/modal.
+   */
+  (e: 'explore-data', item: MediaItem): void;
 }>();
 
 const player = usePlayerStore();
@@ -200,11 +209,19 @@ function onMenuSelect(menuItem: { label: string }): void {
       toasts.info('Loading\u2026');
       api
         .getMissingEpisodes(props.item.id)
-        .then((episodes) => {
-          if (episodes.length === 0) {
+        .then((report) => {
+          // The server returns an envelope { total_expected, total_existing,
+          // missing_episodes: [...] } \u2014 NOT a bare array. The canonical count is
+          // the length of missing_episodes (robust even when the item has extra
+          // episodes beyond episode_count, where total_expected - total_existing
+          // would under-count). Previously read `.length` off the envelope object,
+          // so the count was always `undefined` and the zero-missing branch never
+          // fired (the toast read "undefined episodes missing").
+          const count = report.missing_episodes.length;
+          if (count === 0) {
             toasts.success('No missing episodes');
           } else {
-            toasts.warning(`${episodes.length} episode${episodes.length === 1 ? '' : 's'} missing`);
+            toasts.warning(`${count} episode${count === 1 ? '' : 's'} missing`);
           }
         })
         .catch((err) => {
@@ -225,6 +242,12 @@ function onMenuSelect(menuItem: { label: string }): void {
       break;
     case L.editMetadata:
       emit('edit-metadata', props.item);
+      break;
+    case L.exploreData:
+      // "Explore item data" — open the host's item-data inspector for this item
+      // (the full MediaItem is already client-side). Emits the item to the host,
+      // mirroring `edit-metadata`; NOT a dead "isn't available yet" toast.
+      emit('explore-data', props.item);
       break;
     case L.refreshMetadata:
     case L.identify:
