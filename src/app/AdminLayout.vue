@@ -16,15 +16,20 @@
  * groups with no shared-code branching. Admin strings stay English, matching the
  * admin pages and the R6.5c i18n cut-line.
  *
- * CSS is imported as a side-effect so Rollup emits it as a separate `admin.css`
- * chunk that is lazy-loaded with this component (only when admin pages render).
+ * Admin styles live in `../admin/admin.css` and are pulled in via a side-effect
+ * import. With CSS code-splitting disabled (the lib-mode default — see
+ * vite.config.ts), this CSS aggregates into the single published `style.css`
+ * rather than a separate chunk: async-chunk CSS is NOT auto-injected in Vite
+ * library mode, and the consumers (phlix-server / phlix-hub web-ui) bundle the
+ * prebuilt `dist/phlix-ui.js` + import only `@phlix/ui/style.css`, so a separate
+ * admin.css would never reach the browser (the reverted UI-3.3 regression).
  */
 import { computed } from 'vue';
 import { RouterView, RouterLink } from 'vue-router';
 import Icon from '../components/Icon.vue';
 import type { AdminPage } from './admin';
-// Side-effect import — Rollup emits admin.css as a separate chunk that loads
-// when AdminLayout (lazy) is fetched, keeping login/browse CSS minimal.
+// Side-effect import — aggregated into the single style.css the consumers load
+// (cssCodeSplit is off in lib mode; async-chunk CSS isn't injected at runtime).
 import '../admin/admin.css';
 
 // `buildAdminRoutes`/`buildHubAdminRoutes` always pass `pages` via the parent

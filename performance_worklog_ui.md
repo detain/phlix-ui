@@ -582,3 +582,76 @@ optimistic path (admin strict-await, non-admin fire-and-forget optimistic, no-to
 clear-then-redirect). GREEN.
 
 File changed (absolute): `/home/sites/phlix/phlix-ui/src/app/createPhlixApp.test.ts`.
+
+## Investigator/Fixer — UI-3.3 — 2026-07-12
+
+**VERDICT (b): admin WAS broken in production — and far worse than admin-only.** The UI-3.3
+`cssCodeSplit: true` split orphaned ~248 KB of CSS (admin AND every lazy page) into inert chunks
+that NOTHING loads. The whole app (browse, media cards, player, login, admin) ships UNSTYLED in the
+prebuilt `dist/` the consumers deploy.
+
+### Evidence (consumer import lines + build output)
+- Both production consumers import EXACTLY ONE stylesheet and bundle the PREBUILT dist (no
+  `@phlix/ui` source alias in their `vite.config.ts` — plain `plugins:[vue()]`):
+  - `phlix-server/web-ui/src/main.ts:1-2`: `import { createPhlixApp, buildAdminRoutes, ... } from '@phlix/ui';`
+    then `import '@phlix/ui/style.css';` (+ `fonts.css`). No `admin.css`, no per-page CSS import.
+  - `phlix-hub/web-ui/src/main.ts:1-2`: same shape (`import '@phlix/ui/style.css';`).
+  - `@phlix/ui` resolves via `package.json` `exports["."]` → `dist/phlix-ui.js`; `@phlix/ui/style.css`
+    → `dist/style.css`. (`exports` has NO `admin.css` entry.)
+- The shipped dist proved the CSS inert:
+  - `dist/style.css` = 35,105 B and contained ZERO of `media-card / browse / admin / player /
+    media-grid / .btn / login / modal / sidebar`. 248,239 B of CSS sat across 70 orphaned `*.css`
+    chunk files (`admin.css` 1,878 B, `PlayerPage.css` 38 KB, `MediaCard.css` 9.7 KB, …).
+  - The lazy dist JS chunks carry inert markers and DON'T inject CSS: `dist/AdminLayout-*.js` head =
+    `import{...}from"./Icon-*.js"; /* empty css */ ...`; `grep -rl MediaCard.css dist/*.js` → EMPTY.
+  - History: `dist/style.css` was 282,868 B at every commit before UI-3.3 (`e70e41a`) and dropped to
+    35,105 B at it. Finding U-B2 itself notes "Vite lib builds aggregate all SFC CSS regardless of JS
+    chunking" — UI-3.3 broke exactly that invariant by forcing `cssCodeSplit`.
+
+### Fix (revert the split → single aggregated style.css; §0.1 no-delete honored)
+A reliable split is NOT achievable for these consumers (they bundle prebuilt dist JS with no CSS
+injection runtime and import only `style.css`), so per the task guidance a correct-but-unsplit result
+beats an unstyled regression. Reverted ONLY the UI-3.3 CSS-split (left UI-3.4's `external: apexcharts`
+untouched):
+- `vite.config.ts`: `cssCodeSplit: true` → `false`; removed the `rollupOptions.input` multi-entry
+  (`{style, admin}`); dropped the now-wrong `cssFileName` comment. Added an explanatory comment so the
+  split isn't re-introduced.
+- `src/app/AdminLayout.vue`: kept the `import '../admin/admin.css'` side-effect (with `cssCodeSplit:false`
+  it aggregates into `style.css`); rewrote the two stale "separate chunk / lazy-loaded" comments to
+  state it now merges into the single `style.css`.
+
+**Secondary build-correctness fix (needed to rebuild+commit a coherent dist):** `npm run build` runs
+`vite build` (main) THEN `vite build --config vite.player.config.ts` (player). The player build's
+`emptyOutDir` defaulted to true (dist is inside root), so it WIPED the main entry — `npm run build`
+was producing a dist with ONLY `player.js`/`ui.css` and NO `phlix-ui.js`/`style.css`. That is also why
+the committed dist had lost `player.js` (a prior UI-3.1/U-W3 dist regression). Added
+`emptyOutDir: false` to `vite.player.config.ts` so the player build appends without wiping. Consumers
+do NOT import `@phlix/ui/player` (grep empty) and `phlix-ui.js` doesn't reference it, so the missing
+player entry wasn't actively breaking them — but the wipe made the whole package un-rebuildable.
+
+### Build-output guard test (audit's smaller ask)
+`src/__tests__/dist-css-bundle.test.ts` (6 cases): style.css exists; is a monolith (>150 KB, guards
+the shrink); contains admin (`admin__sidebar`, `admin-dash`) + core/lazy-page selectors
+(`media-card/media-grid/browse/modal/login/metrics/webhook/admin-livetv`); emits NO orphaned per-page
+CSS chunks (guards re-enabling `cssCodeSplit`); and ships a complete build (`phlix-ui.js` +
+`phlix-ui.umd.cjs` + `style.css` all survive the player build). No dead-CSS trim done — over-trimming
+is risky and the aggregate is the correct, pre-regression state.
+
+### dist REBUILT + COMMITTED (yes — this is a build-artifact correctness fix)
+Ran `npm run build` (exit 0). Result: `dist/style.css` **283,286 B** (was 35,105), **0** orphaned CSS
+chunks (all 70 merged, `admin.css` gone/merged — `admin-dash` ×42, `admin__sidebar`, `media-card`,
+`player`, `live-tv`, `metrics`, `webhook` all present in style.css), `phlix-ui.js` + `player.js` both
+present. ~700 dist files changed (chunk hashes shifted since CSS imports were stripped from the JS
+chunks; orphan `.css` deleted; player entry restored). Committed dist for this step.
+
+### Verify (ACTUAL)
+- `npm run build` → exit 0. `dist/style.css` 283,286 B; orphan css chunks 0; `phlix-ui.js` yes;
+  `player.js` yes; `admin-dash` in style.css ×42.
+- `npx vitest run` (ALONE) → `Test Files 173 passed (173) / Tests 2967 passed | 6 skipped (2973)` —
+  0 fail (baseline 2961 + 6 new build-output tests).
+- `npx vue-tsc --noEmit` → exit 0. `npx eslint .` → exit 0.
+
+Files changed (absolute): `/home/sites/phlix/phlix-ui/vite.config.ts`,
+`/home/sites/phlix/phlix-ui/vite.player.config.ts`,
+`/home/sites/phlix/phlix-ui/src/app/AdminLayout.vue`,
+`/home/sites/phlix/phlix-ui/src/__tests__/dist-css-bundle.test.ts`, and the rebuilt `dist/`.

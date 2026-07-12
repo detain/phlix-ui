@@ -11,6 +11,12 @@ export default defineConfig({
     plugins: [vue(), Icons({ compiler: 'vue3', scale: 1 })],
     build: {
         assetsInlineLimit: 0,
+        // This is the SECOND build in `npm run build` (main `vite build` runs
+        // first). dist/ is inside root, so Vite's emptyOutDir defaults to true —
+        // which would WIPE the main build's phlix-ui.js + style.css, leaving the
+        // package with only the player entry. Keep the main output by NOT emptying
+        // here; the main build already cleaned dist/ before writing.
+        emptyOutDir: false,
         lib: {
             entry: resolve(__dirname, 'src/player.ts'),
             name: 'PhlixUiPlayer',

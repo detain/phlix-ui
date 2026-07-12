@@ -14,8 +14,16 @@ export default defineConfig({
         // dist/assets/ rather than base64-inlining them into style.css — keeps
         // CSS small and lets the self-hosted woff2 be cached + font-display:swap.
         assetsInlineLimit: 0,
-        // Allow CSS code splitting so admin.css can be a separate chunk.
-        cssCodeSplit: true,
+        // Keep CSS code-splitting DISABLED (the Vite lib-mode default). This repo
+        // is a LIBRARY consumed via its prebuilt `dist/` (phlix-server/phlix-hub
+        // `web-ui` resolve `@phlix/ui` → `dist/phlix-ui.js` and import only
+        // `@phlix/ui/style.css`). In lib mode Vite does NOT inject async-chunk CSS
+        // at runtime — split chunks get `/* empty css */` markers and no dist JS
+        // references them — so any code-split CSS would be INERT in the consumers
+        // (admin AND every lazy page rendered unstyled: the UI-3.3 `cssCodeSplit`
+        // regression). With splitting off, ALL SFC CSS (incl. AdminLayout's
+        // admin.css) aggregates into the single `style.css` the consumers load.
+        cssCodeSplit: false,
         lib: {
             entry: resolve(__dirname, 'src/index.ts'),
             name: 'PhlixUi',
@@ -23,17 +31,10 @@ export default defineConfig({
             fileName: (format) => `phlix-ui.${format === 'es' ? 'js' : 'umd.cjs'}`,
             // Vite 8 names lib CSS after the package ("ui.css") by default; pin it
             // to style.css to keep the published `@phlix/ui/style.css` export stable.
-            // admin.css is a separate chunk loaded only by the admin section.
             cssFileName: 'style',
         },
         rollupOptions: {
             external: ['vue', 'vue-router', 'pinia', 'apexcharts'],
-            // Admin CSS as a separate input entry — emits admin.css as its own
-            // chunk so it is only loaded when the admin section is navigated to.
-            input: {
-                style: resolve(__dirname, 'src/index.ts'),
-                admin: resolve(__dirname, 'src/admin/admin.css'),
-            },
             output: {
                 globals: {
                     vue: 'Vue',
