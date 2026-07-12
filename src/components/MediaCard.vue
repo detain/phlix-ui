@@ -328,7 +328,11 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
            falls back to plain anchor when router is unavailable (standalone mounts).
            The raw anchor href is preserved so middle-click/SEO/copy-link work. -->
       <RouterLink v-if="router" :to="href" custom v-slot="{ navigate }">
-        <a :href="href" class="media-card__link" :aria-label="item.name" @click.prevent="navigate">
+        <!-- @click (NOT @click.prevent): vue-router's navigate calls preventDefault
+             itself only when it actually SPA-navigates, and lets ctrl/cmd/shift/middle
+             clicks fall through to the native href for new-tab. A .prevent here would
+             set defaultPrevented before navigate, making guardEvent bail → dead click. -->
+        <a :href="href" class="media-card__link" :aria-label="item.name" @click="navigate">
           <span class="visually-hidden">{{ item.name }}</span>
         </a>
       </RouterLink>

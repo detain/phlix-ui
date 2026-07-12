@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
@@ -610,6 +610,64 @@ describe('MediaCard — router navigation (UI-0.2: SPA nav, not full reload)', (
     const link = w.find('.media-card__link');
     expect(link.element.tagName).toBe('A');
     expect(link.attributes('href')).toBe('/app/media/m1');
+  });
+
+  // UI-0.2 REGRESSION GUARD: a plain left-click must SPA-navigate (vue-router's
+  // `navigate` runs → router.push). The prior `@click.prevent="navigate"` set
+  // defaultPrevented BEFORE navigate, so guardEvent bailed and the click did
+  // NOTHING (no push, no native nav). This asserts the LIVE behaviour, not just
+  // structure — it fails if `.prevent` is ever re-added.
+  it('left-click SPA-navigates to /app/media/<id> (navigate runs — no dead click)', async () => {
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      global: { plugins: [router] },
+    });
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/');
+
+    await w.find('.media-card__link').trigger('click');
+    await flushPromises();
+
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(router.currentRoute.value.path).toBe('/app/media/m1');
+  });
+
+  it('honors the `to` prop on left-click (navigates to the player route)', async () => {
+    const router = makeRouter();
+    const w = mount(MediaCard, {
+      props: { item: media(), to: '/app/player/m1' },
+      global: { plugins: [router] },
+    });
+    await router.isReady();
+
+    await w.find('.media-card__link').trigger('click');
+    await flushPromises();
+
+    expect(router.currentRoute.value.path).toBe('/app/player/m1');
+  });
+
+  // Modifier / middle clicks must fall through to the native href (new-tab
+  // semantics) — vue-router's guardEvent bails without pushing.
+  it('does NOT router.push on ctrl/cmd/shift/middle-click (native new-tab preserved)', async () => {
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      global: { plugins: [router] },
+    });
+    await router.isReady();
+    const link = w.find('.media-card__link');
+
+    await link.trigger('click', { ctrlKey: true });
+    await link.trigger('click', { metaKey: true });
+    await link.trigger('click', { shiftKey: true });
+    await link.trigger('click', { button: 1 }); // middle-click
+
+    expect(push).not.toHaveBeenCalled();
+    // still on the origin route — no SPA navigation happened
+    expect(router.currentRoute.value.path).toBe('/');
   });
 });
 
