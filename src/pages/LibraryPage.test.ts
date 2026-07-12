@@ -13,6 +13,7 @@ import LibraryPage from './LibraryPage.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import { useMediaStore } from '../stores/useMediaStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 
@@ -325,5 +326,46 @@ describe('LibraryPage', () => {
     slow.resolveWith([media({ id: 'e1', type: 'episode', season_number: 1, episode_number: 1 })]);
     await flushPromises();
     expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 'e1' } });
+  });
+
+  // UI-0.1 REGRESSION GUARD: the card already toggled + persisted the watched
+  // state (MediaCard.onWatched → toggleWatched) before re-emitting `mark-watched`.
+  // LibraryPage.onMarkWatched must be REPORT-ONLY: it must NEVER call
+  // toggleFavorite (the historical favorite-corruption bug U-H4) and its toast
+  // must match the resulting `isWatched()` state.
+  describe('mark-watched (UI-0.1: report-only, never mutates favorite)', () => {
+    it('never calls toggleFavorite and toasts success when the item is now watched', async () => {
+      stubFetch({ media: { items: [media({ id: 'w1' })], total: 1 } });
+      const { w } = await mountAt('lib1');
+      await flushPromises();
+      const userItemData = useUserItemDataStore();
+      const toasts = useToastStore();
+      const toggleFavorite = vi.spyOn(userItemData, 'toggleFavorite').mockResolvedValue(undefined);
+      // Card has already persisted the toggle → item is watched.
+      userItemData.entries.set('w1', { favorite: false, rating: null, like_level: 0, watched: true });
+
+      w.findComponent({ name: 'MediaGrid' }).vm.$emit('mark-watched', media({ id: 'w1', name: 'Dune' }));
+      await flushPromises();
+
+      expect(toggleFavorite).not.toHaveBeenCalled();
+      expect(toasts.toasts.some((t) => t.tone === 'success' && /marked "Dune" as watched/i.test(t.message))).toBe(true);
+    });
+
+    it('never calls toggleFavorite and toasts info when the item is now unwatched', async () => {
+      stubFetch({ media: { items: [media({ id: 'w2' })], total: 1 } });
+      const { w } = await mountAt('lib1');
+      await flushPromises();
+      const userItemData = useUserItemDataStore();
+      const toasts = useToastStore();
+      const toggleFavorite = vi.spyOn(userItemData, 'toggleFavorite').mockResolvedValue(undefined);
+      // Card toggled watched OFF → item is unwatched (no entry / watched:false).
+      userItemData.entries.set('w2', { favorite: false, rating: null, like_level: 0, watched: false });
+
+      w.findComponent({ name: 'MediaGrid' }).vm.$emit('mark-watched', media({ id: 'w2', name: 'Dune' }));
+      await flushPromises();
+
+      expect(toggleFavorite).not.toHaveBeenCalled();
+      expect(toasts.toasts.some((t) => t.tone === 'info' && /marked "Dune" as unwatched/i.test(t.message))).toBe(true);
+    });
   });
 });
