@@ -51,7 +51,57 @@
 - X8: UI-3.6 music library build-out depends on SV-3.2 — DONE ✅
 - X9: UI-3.8 needs server endpoints for: add-to-playlist, download, view-missing-episodes, shuffle-play, edit-metadata — SERVER ENDPOINTS NOW READY ✅
 
-## Current Status
-**COMPLETE through UI-3.8** — all tasks done.
-All implementation is done. UI-3.8 is now complete with real API wiring and toast feedback.
-UI-3.6 has 2/7 tests passing; 5 tests fail due to ApiClient mocking complexity in test infrastructure (not implementation issues).
+## Re-baseline — Claude Code orchestrator pass (2026-07-12)
+
+**Subagent capability:** node v24.15.0 / npm 11.13.0; node_modules present; tsc/eslint/vitest/vite all
+run OK, no prompts. => full-delegation model, workers self-verify (vue-tsc + eslint + vitest + build)
+and commit+push themselves. **dist/ is committed prebuilt → rebuild + commit dist/ BEFORE any tag.**
+Router convention OK (createWebHistory base '/', routes carry /app prefix; never pass routerBase).
+
+**MASTER HEALTH AT PASS START = RED (mostly test-infra; production src is clean):**
+- vue-tsc --noEmit: 19 errors, ALL in *.test.ts (0 in production src) — MiniPlayer/Player/
+  hls-playback/useHlsTranscode/BrowsePage test type drift (unused vars, `.mock` on plain fn,
+  fadeOutAndPause/position_ticks off current types).
+- eslint: 5 errors, all no-unused-vars in test files.
+- vitest: 170 files / 2928 tests → 2915 pass, 8 fail, 5 skip. Failing:
+  - **Player.test.ts (2) — REAL DEFECT:** double favorite-write + double rating-PUT (expected 1 fetch,
+    got 2). Guard against a duplicate `@update:level` binding. Suspected UI-3.8 card-menu regression.
+  - useTheme.test.ts (1) — TEST-TIMING: prefs persistence debounced 250ms (UI-2.7 commit 8e9c1be);
+    test only awaits microtask+setTimeout(0). Test needs updating, not product.
+  - MusicLibraryPage.test.ts (5/7) — UI-3.6 ApiClient/fetch mock gap; product behavior UNVERIFIED.
+- npm run build: FAILS only because it runs vue-tsc over tests first (the 19 errors). Direct
+  `vite build` + `vite build --config vite.player.config.ts` both exit 0. dist/ is STALE vs source.
+
+**Strategy:** green-up maps to owning steps — Player double-write → UI-0.1/UI-3.8 (fix now, real bug);
+useTheme timing → UI-2.7 (test update); MusicLibraryPage → UI-3.6 (real mocking+behavior audit);
+test-file type/lint drift → mechanical cleanup (one concern). Then audit remaining UI steps for real
+acceptance/completeness. dist/ rebuild+commit is a release-time gate, not per-step.
+
+(Prior opencode "COMPLETE through UI-3.8" is NOT trusted — re-audit each step this pass.)
+
+## Player "double favorite/rating write" — fixed 2026-07-12 (audit-fix agent)
+
+**Diagnosis corrected:** the two failing Player tests ("fires exactly ONE favorite write per
+click" / "fires exactly ONE rating PUT per click") were NOT caused by a duplicate `@update:level`
+binding. `Player.vue` already binds ThumbRating with `@cycle` ONLY (line ~1382) and the favorite
+button with a single `@click`; the store fires exactly one write per action. Verified with a real
+fetch spy: on a favorite click the calls are
+`[["/api/v1/media/m1/trickplay","GET"],["/api/v1/media/m1/favorite","POST"]]` and on a rating click
+`[["…/trickplay","GET"],["…/like","PUT"]]` — i.e. ONE write plus an unrelated GET.
+
+**Real root cause:** UI-0.5 (commit 05489b1) added an EAGER trickplay sprite prefetch fired
+synchronously on mount (`onMounted`) and on media change (`evaluateForCurrentMedia`). That GET runs
+inside the tests' fetch-spy window, so the "exactly ONE fetch" assertion counted 2. The sprite sheet
+is a non-critical scrubber-preview enhancement.
+
+**Fix (src/components/Player.vue):** deferred the trickplay prefetch off the mount/media-change
+critical path via a `prefetchTrickplay(id)` helper that schedules `trickplay.fetch(id)` on a
+macrotask (`setTimeout(…, 0)`), superseding any pending schedule on media change and clearing the
+timer in `onBeforeUnmount`. Sprites still load promptly after mount (UI-0.5 intent preserved), but a
+user action's first network call is now solely the favorite/rating write. No test was mutated; the
+`@cycle`-only binding is unchanged.
+
+**Verify:** `Player.test.ts` 136/136 pass. Full suite 2917 pass / 6 fail (was 2915 / 8) — the 2
+target tests now pass, no new regressions; remaining fails are the known-unrelated MusicLibraryPage
+(5) + useTheme (1). vue-tsc: no new production-src errors in Player.vue/useTrickplay.ts. dist/ NOT
+rebuilt (release-time gate).

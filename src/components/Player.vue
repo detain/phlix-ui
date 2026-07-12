@@ -268,6 +268,29 @@ const tc = useHlsTranscode({
 const trickplay = useTrickplay({ apiBase: () => props.apiBase ?? '' });
 
 /**
+ * Pending timer for the deferred trickplay prefetch (see {@link prefetchTrickplay}).
+ * Held so a media change can supersede an in-flight schedule and unmount can clear it.
+ */
+let trickplayPrefetchTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Prefetch trickplay sprites for the current item OFF the mount/media-change
+ * critical path. The sprite sheet is a non-critical scrubber-preview enhancement,
+ * so kicking its network request synchronously on mount both competes with player
+ * startup and makes the item's very first user action look like it issued an extra
+ * network call (a real-fetch spy on a favorite/rating write would otherwise count
+ * the trickplay GET too). Deferring to a macrotask keeps exactly one network call
+ * attributable to a user action while still loading sprites promptly after mount.
+ */
+function prefetchTrickplay(id: string): void {
+  if (trickplayPrefetchTimer !== null) clearTimeout(trickplayPrefetchTimer);
+  trickplayPrefetchTimer = setTimeout(() => {
+    trickplayPrefetchTimer = null;
+    void trickplay.fetch(id);
+  }, 0);
+}
+
+/**
  * Thumbnail source for the scrubber — uses the host-provided `thumbnailAt` prop when
  * available, otherwise falls back to the trickplay composable's sprite-position function.
  */
@@ -427,8 +450,9 @@ function evaluateForCurrentMedia(): void {
   // `pendingSeek` / the resume prompt (which the transcode path suppresses).
   if (videoRef.value) videoRef.value.currentTime = 0;
   if (transcodeNeeded.value) beginTranscode();
-  // Fetch trickplay sprite/timeline for the scrubber preview.
-  void trickplay.fetch(props.media.id);
+  // Fetch trickplay sprite/timeline for the scrubber preview (deferred off the
+  // media-change critical path — see prefetchTrickplay).
+  prefetchTrickplay(props.media.id);
 }
 
 // resume ----------------------------------------------------------------------
@@ -1134,8 +1158,9 @@ onMounted(() => {
   refreshTracks();
   // A file flagged as non-direct-playable by extension transcodes from the start.
   if (transcodeNeeded.value) beginTranscode();
-  // Fetch trickplay sprite/timeline for the scrubber preview on first mount.
-  void trickplay.fetch(props.media.id);
+  // Fetch trickplay sprite/timeline for the scrubber preview on first mount,
+  // deferred off the mount critical path (see prefetchTrickplay).
+  prefetchTrickplay(props.media.id);
 });
 watch(
   () => props.media,
@@ -1185,6 +1210,10 @@ onBeforeUnmount(() => {
   if (fadeTimer !== null) {
     clearInterval(fadeTimer);
     fadeTimer = null;
+  }
+  if (trickplayPrefetchTimer !== null) {
+    clearTimeout(trickplayPrefetchTimer);
+    trickplayPrefetchTimer = null;
   }
 });
 </script>
