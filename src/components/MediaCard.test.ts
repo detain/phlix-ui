@@ -14,6 +14,15 @@ import MediaCard from './MediaCard.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
+import { buildMediaItemMenu } from './mediaItemMenu';
+
+// UI-2.5 [U-R2]: wrap buildMediaItemMenu in a spy (delegating to the real impl)
+// so we can assert the ⋯ menu MODEL is only built on first open — never for the
+// ~400 idle cards in a windowed grid.
+vi.mock('./mediaItemMenu', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./mediaItemMenu')>();
+  return { ...actual, buildMediaItemMenu: vi.fn(actual.buildMediaItemMenu) };
+});
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -32,6 +41,18 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
     updated_at: null,
     ...over,
   };
+}
+
+/**
+ * UI-2.5 [U-R2]: the overlay action row is lazy-mounted only while the card is
+ * hovered/focused (see MediaCard.vue). Tests that exercise the quick-action
+ * buttons must first reveal the row the way a real pointer/keyboard user does.
+ * `pointerenter` mirrors a mouse hover; `await` lets Vue mount the row before
+ * the assertion runs.
+ */
+async function reveal(w: ReturnType<typeof mount>): Promise<typeof w> {
+  await w.find('.media-card').trigger('pointerenter');
+  return w;
 }
 
 beforeEach(() => {
@@ -219,6 +240,7 @@ describe('MediaCard — resume progress', () => {
 describe('MediaCard — quick actions + slots', () => {
   it('emits play/watchlist/info from the quick-action buttons', async () => {
     const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
     await w.find('.media-card__iconbtn--play').trigger('click');
     // The favorite button keeps emitting `watchlist` for back-compat (the store
     // wiring is additive) — it is the canonical favorite/bookmark slot.
@@ -239,12 +261,13 @@ describe('MediaCard — quick actions + slots', () => {
       props: { item: media() },
       attrs: { onClick: onCardClick },
     });
+    await reveal(w);
     await w.find('.media-card__iconbtn--play').trigger('click');
     expect(w.emitted('play')).toHaveLength(1);
     expect(onCardClick).not.toHaveBeenCalled();
   });
 
-  it('renders #badges and #actions slot content with the item', () => {
+  it('renders #badges and #actions slot content with the item', async () => {
     const w = mount(MediaCard, {
       props: { item: media() },
       slots: {
@@ -252,15 +275,19 @@ describe('MediaCard — quick actions + slots', () => {
         actions: '<button class="app-action">x</button>',
       },
     });
+    // #badges lives outside the (lazy) action row; #actions is inside it.
     expect(w.find('.app-badge').text()).toBe('HUB');
+    await reveal(w);
     expect(w.find('.app-action').exists()).toBe(true);
   });
 
   it('hides the Match action by default and shows + emits it when canMatch (admin only)', async () => {
     const off = mount(MediaCard, { props: { item: media() } });
+    await reveal(off);
     expect(off.find('[aria-label="Match metadata"]').exists()).toBe(false);
 
     const on = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(on);
     const btn = on.find('[aria-label="Match metadata"]');
     expect(btn.exists()).toBe(true);
     await btn.trigger('click');
@@ -269,8 +296,9 @@ describe('MediaCard — quick actions + slots', () => {
 });
 
 describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
-  it('reflects the store: outline + aria-pressed=false when not favorited', () => {
+  it('reflects the store: outline + aria-pressed=false when not favorited', async () => {
     const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
     const btn = w.find('[aria-label="Add to favorites"]');
     expect(btn.exists()).toBe(true);
     expect(btn.attributes('aria-pressed')).toBe('false');
@@ -279,10 +307,11 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     expect(w.find('[aria-label="Add to favorites"] svg').exists()).toBe(true);
   });
 
-  it('reflects the store: filled + aria-pressed=true when the item is favorited', () => {
+  it('reflects the store: filled + aria-pressed=true when the item is favorited', async () => {
     const store = useUserItemDataStore();
     store.entries.set('m1', { favorite: true, rating: null, like_level: 0, watched: false });
     const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
     const btn = w.find('[aria-label="Remove from favorites"]');
     expect(btn.exists()).toBe(true);
     expect(btn.attributes('aria-pressed')).toBe('true');
@@ -302,6 +331,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
       props: { item: media() },
       global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
     });
+    await reveal(w);
     expect(w.find('[aria-label="Add to favorites"]').attributes('aria-pressed')).toBe('false');
 
     await w.find('[aria-label="Add to favorites"]').trigger('click');
@@ -323,6 +353,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
       props: { item: media() },
       attrs: { onClick: onCardClick },
     });
+    await reveal(w);
     await w.find('[aria-label="Add to favorites"]').trigger('click');
     expect(w.emitted('watchlist')).toHaveLength(1);
     expect(w.emitted('watchlist')![0][0]).toMatchObject({ id: 'm1' });
@@ -334,20 +365,23 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     const store = useUserItemDataStore();
     const toggle = vi.spyOn(store, 'toggleFavorite').mockResolvedValue(undefined);
     const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
     await w.find('[aria-label="Add to favorites"]').trigger('click');
     expect(toggle).toHaveBeenCalledWith('m1', '');
   });
 
-  it('lays out the action row in the canonical order [Play][Love][Favorite][Watched][Info][⋯][Match]', () => {
+  it('lays out the action row in the canonical order [Play][Love][Favorite][Watched][Info][⋯][Match]', async () => {
     const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(w);
     const labels = w
       .findAll('.media-card__actions .media-card__iconbtn')
       .map((b) => b.attributes('aria-label'));
     expect(labels).toEqual(['Play', 'Add to favorites', 'Mark as watched', 'More info', 'More actions', 'Match metadata']);
   });
 
-  it('keeps the canonical order without the admin Match button', () => {
+  it('keeps the canonical order without the admin Match button', async () => {
     const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
     const labels = w
       .findAll('.media-card__actions .media-card__iconbtn')
       .map((b) => b.attributes('aria-label'));
@@ -359,6 +393,7 @@ describe('MediaCard — watched (eye) toggle', () => {
   it('shows a closed (eye-off) icon when not watched and an open (eye) icon when watched', async () => {
     const store = useUserItemDataStore();
     const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
     // Not watched → "Mark as watched" affordance.
     const off = w.find('[aria-label="Mark as watched"]');
     expect(off.exists()).toBe(true);
@@ -380,6 +415,7 @@ describe('MediaCard — watched (eye) toggle', () => {
       attrs: { onClick: onCardClick },
       global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
     });
+    await reveal(w);
     await w.find('[aria-label="Mark as watched"]').trigger('click');
     expect(toggle).toHaveBeenCalledTimes(1);
     expect(toggle).toHaveBeenCalledWith('m1', '/api-host');
@@ -396,10 +432,11 @@ describe('MediaCard — watched (eye) toggle', () => {
     expect(w.find('.media-card__caption-title').exists()).toBe(true);
   });
 
-  it('renders ONLY the Play action in playOnly mode (season card)', () => {
+  it('renders ONLY the Play action in playOnly mode (season card)', async () => {
     const w = mount(MediaCard, {
       props: { item: media({ id: 'sea1', type: 'season' }), playOnly: true, canMatch: true },
     });
+    await reveal(w);
     const row = w.find('.media-card__actions');
     expect(row.exists()).toBe(true);
     // exactly one button — Play — no thumbs/favorite/watched/info/menu/match
@@ -417,6 +454,7 @@ describe('MediaCard — watched (eye) toggle', () => {
       props: { item: media({ id: 'sea1', type: 'season' }), playOnly: true },
       attrs: { onClick: onCardClick },
     });
+    await reveal(w);
     await w.find('.media-card__iconbtn--play').trigger('click');
     expect(w.emitted('play')![0][0]).toMatchObject({ id: 'sea1' });
     expect(onCardClick).not.toHaveBeenCalled();
@@ -434,6 +472,7 @@ describe('MediaCard — watched (eye) toggle', () => {
 
   it('opens the ⋯ menu when its trigger is clicked (regression: .stop swallowed the toggle)', async () => {
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    await reveal(w);
     expect(document.querySelector('[role="menu"]')).toBeNull();
     await w.find('[aria-label="More actions"]').trigger('click');
     // The Menu teleports its list to <body>; it must actually be open now.
@@ -443,8 +482,9 @@ describe('MediaCard — watched (eye) toggle', () => {
 });
 
 describe('MediaCard — ThumbRating (thumbs up/down)', () => {
-  it('renders the ThumbRating in the canonical slot between Play and Favorite', () => {
+  it('renders the ThumbRating in the canonical slot between Play and Favorite', async () => {
     const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(w);
     // EVERY button in the action row, in DOM order. The rating widget is the
     // .thumb-rating (its own component, two buttons at level 0); Play/Favorite/
     // Info/Match are iconbtns.
@@ -466,10 +506,11 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
     ]);
   });
 
-  it('reflects the store like_level on the ThumbRating', () => {
+  it('reflects the store like_level on the ThumbRating', async () => {
     const store = useUserItemDataStore();
     store.entries.set('m1', { favorite: false, rating: null, like_level: 2, watched: false });
     const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
     const rating = w.find('.media-card__actions .thumb-rating');
     expect(rating.exists()).toBe(true);
     expect(rating.attributes('data-level')).toBe('2');
@@ -486,6 +527,7 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
       global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
     });
 
+    await reveal(w);
     await w.find('.media-card__actions .thumb-rating__btn--up').trigger('click');
 
     // ONE write per click — `@cycle` is bound, `@update:level` is NOT, so the
@@ -502,6 +544,7 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
       global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
     });
 
+    await reveal(w);
     await w.find('.media-card__actions .thumb-rating__btn--down').trigger('click');
 
     expect(setLike).toHaveBeenCalledTimes(1);
@@ -516,6 +559,7 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
       props: { item: media() },
       attrs: { onClick: onCardClick },
     });
+    await reveal(w);
     await w.find('.media-card__actions .thumb-rating__btn--up').trigger('click');
     expect(onCardClick).not.toHaveBeenCalled();
   });
@@ -524,26 +568,86 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
     const store = useUserItemDataStore();
     const setLike = vi.spyOn(store, 'setLike').mockResolvedValue(undefined);
     const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
     await w.find('.media-card__actions .thumb-rating__btn--up').trigger('click');
     expect(setLike).toHaveBeenCalledWith('m1', 1, '');
   });
 });
 
-describe('MediaCard — ⋯ menu lazy build (UI-2.5 scroll perf)', () => {
-  it('menuItems is NOT built while the menu is closed (computed returns [])', async () => {
-    // When menuOpen is false, menuItems returns [] (not a built menu).
-    // This saves ~400 Menu instances in a 40-card window from building their menus.
-    const w = mount(MediaCard, { props: { item: media() } });
-    // The action row is present (CSS-hidden) but no menu items are built
+describe('MediaCard — overlay action row lazy-mount (UI-2.5 [U-R2])', () => {
+  it('does NOT mount the action buttons until the card is hovered, and unmounts on leave', async () => {
+    const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    // Idle (the state of ~all cards in a windowed grid): the whole action row and
+    // every button/menu/rating instance is ABSENT from the DOM — not just CSS-hidden.
+    expect(w.find('.media-card__actions').exists()).toBe(false);
+    expect(w.find('.media-card__iconbtn--play').exists()).toBe(false);
+    expect(w.find('[aria-label="Add to favorites"]').exists()).toBe(false);
+    expect(w.find('[aria-label="More actions"]').exists()).toBe(false);
+    expect(w.find('.thumb-rating').exists()).toBe(false);
+
+    // Hover reveals (mounts) the row.
+    await w.find('.media-card').trigger('pointerenter');
     expect(w.find('.media-card__actions').exists()).toBe(true);
+    expect(w.find('.media-card__iconbtn--play').exists()).toBe(true);
     expect(w.find('[aria-label="More actions"]').exists()).toBe(true);
+
+    // Leaving unmounts it again, so a scrolled-past card frees its instances.
+    await w.find('.media-card').trigger('pointerleave');
+    expect(w.find('.media-card__actions').exists()).toBe(false);
+    expect(w.find('.media-card__iconbtn--play').exists()).toBe(false);
   });
 
-  it('opens the ⋯ menu when its trigger is clicked', async () => {
+  it('reveals the actions on keyboard focus so they stay reachable (a11y)', async () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    expect(w.find('.media-card__actions').exists()).toBe(false);
+
+    // Tabbing onto the card focuses the stretched link → focusin mounts the row
+    // BEFORE the user can Tab into the buttons (no keyboard dead-end).
+    await w.find('.media-card').trigger('focusin');
+    expect(w.find('.media-card__actions').exists()).toBe(true);
+    const play = w.find('.media-card__iconbtn--play');
+    expect(play.exists()).toBe(true);
+
+    // Moving focus link → Play (relatedTarget INSIDE the card) must NOT collapse
+    // the row, or focus could never land on the button.
+    await w.find('.media-card').trigger('focusout', { relatedTarget: play.element });
+    expect(w.find('.media-card__actions').exists()).toBe(true);
+
+    // Focus leaving the card entirely collapses the row.
+    await w.find('.media-card').trigger('focusout', { relatedTarget: document.body });
+    expect(w.find('.media-card__actions').exists()).toBe(false);
+  });
+
+  it('exposes a focusable entry point (the stretched link) so keyboard nav can trigger the reveal', () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    const link = w.find('.media-card__link');
+    expect(link.exists()).toBe(true);
+    // Real href, not removed from the tab order — focus can enter the card.
+    expect(link.attributes('href')).toBeTruthy();
+    expect(link.attributes('tabindex')).not.toBe('-1');
+  });
+});
+
+describe('MediaCard — ⋯ menu lazy build (UI-2.5 scroll perf)', () => {
+  it('never builds the ⋯ menu model for an idle/hovered-but-closed card (menuItems stays [])', async () => {
+    vi.mocked(buildMediaItemMenu).mockClear();
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
-    expect(document.querySelector('[role="menu"]')).toBeNull();
+
+    // Idle: no overlay, no build.
+    expect(buildMediaItemMenu).not.toHaveBeenCalled();
+
+    // Hovered but menu still CLOSED: the ⋯ trigger is mounted, yet the model is
+    // NOT built — the computed short-circuits to [] while menuOpen is false.
+    await reveal(w);
+    expect(w.find('[aria-label="More actions"]').exists()).toBe(true);
+    expect(buildMediaItemMenu).not.toHaveBeenCalled();
+    expect(document.querySelector('[role="menuitem"]')).toBeNull();
+
+    // Opening the menu is the FIRST time the model is built, and it's non-empty.
     await w.find('[aria-label="More actions"]').trigger('click');
+    expect(buildMediaItemMenu).toHaveBeenCalledTimes(1);
     expect(document.querySelector('[role="menu"]')).not.toBeNull();
+    expect(document.querySelectorAll('[role="menuitem"]').length).toBeGreaterThan(0);
     w.unmount();
   });
 });

@@ -439,6 +439,8 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     await flushPromises();
     const push = vi.spyOn(router, 'push');
     // Season 2's card is the second Play button in the season grid.
+    // UI-2.5: reveal the lazy overlay action rows before clicking a card's Play.
+    for (const c of w.findAll('.media-card')) await c.trigger('pointerenter');
     await w.findAll('.media-card__iconbtn--play')[1].trigger('click');
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's2e1' } });
   });
@@ -460,6 +462,7 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     const { w, router } = await mountAt('sh1', fetchMock);
     await flushPromises();
     const push = vi.spyOn(router, 'push');
+    for (const c of w.findAll('.media-card')) await c.trigger('pointerenter');
     await w.find('.media-card__iconbtn--play').trigger('click');
     expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 's1e2' } });
   });

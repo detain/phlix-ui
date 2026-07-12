@@ -145,8 +145,10 @@ describe('SeriesDetail (U3)', () => {
     expect(w.text()).toContain('no seasons available');
   });
 
-  it('season cards render a play-only action row (Play, nothing else)', () => {
+  it('season cards render a play-only action row (Play, nothing else)', async () => {
     const w = mountIt();
+    // UI-2.5: the overlay action row is lazy-mounted on hover — reveal each card.
+    for (const c of w.findAll('.media-card')) await c.trigger('pointerenter');
     // one Play per season card, and no other quick-actions on the cards
     const plays = w.findAll('.media-card__iconbtn--play');
     expect(plays).toHaveLength(3);
@@ -157,6 +159,7 @@ describe('SeriesDetail (U3)', () => {
 
   it('emits play-season with the season group when a season card Play is clicked', async () => {
     const w = mountIt();
+    for (const c of w.findAll('.media-card')) await c.trigger('pointerenter');
     await w.findAll('.media-card__iconbtn--play')[1].trigger('click');
     const emitted = w.emitted('play-season')!;
     expect(emitted).toHaveLength(1);
