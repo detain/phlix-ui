@@ -982,3 +982,46 @@ temporarily disabled → **3 of 4 fail** with `chart type "area" is not register
 
 Files changed (absolute): `/home/sites/phlix/phlix-ui/src/pages/admin/MetricsPage.vue`,
 `/home/sites/phlix/phlix-ui/src/pages/admin/MetricsPage.apex-registration.test.ts` (new).
+
+## Reviewer (re-review) — UI-3.4 fix — 2026-07-12
+
+Re-reviewed commit **6b9679e** (range `918ee81..6b9679e`) — the fix for the BLOCKING
+"charts un-registered at runtime" finding. **VERDICT: NO FINDINGS.**
+
+1. **Runtime bug genuinely closed.** `node_modules/apexcharts/dist/line.esm.js` opens with
+   `import _core__default from "apexcharts/core";` — the SAME bare specifier the wrapper
+   `vue3-apexcharts-core.js` imports (`import x from "apexcharts/core";`) → one shared singleton →
+   Rollup dedupes to one chunk. Its tail calls `_core__default.use({ line: Line, area: Line,
+   scatter: Line, bubble: Line, rangeArea: Line })`, registering both types MetricsPage draws.
+   `apexcharts` `package.json` `sideEffects` includes `./dist/*.esm.js`, so the bare
+   `import 'apexcharts/line'` is preserved (not tree-shaken). Confirmed against node_modules, not
+   guesswork.
+2. **COMPLETENESS — all used chart types registered.** `grep -rn` of the whole `src/` confirms
+   **MetricsPage.vue is the ONLY apexcharts consumer in the app** (only file importing
+   vue3-apexcharts / rendering `<VueApexCharts>`). Chart types used: `area` (`type="area"` :490,
+   `chart.type:'area'` :494) and `line` (:526/:530 latency, :565/:569 request-rate). Both are
+   covered by `apexcharts/line`'s `use({line, area, scatter, bubble, rangeArea})`. No bar / column /
+   pie / donut / radialBar / heatmap / candlestick usage anywhere → no additional
+   `apexcharts/<type>` import needed.
+3. **Single-apex-chunk dedupe invariant holds.** `src/__tests__/dist-apex-dedupe.test.ts` green
+   (fresh-build assertions). Confirmed on the real committed-dist path too: `npm run build` (exit 0)
+   emits ZERO `apexcharts.ssr.esm-*` chunks and exactly ONE `.js` chunk carrying the
+   `apexcharts-canvas` marker (`dist/core.esm-*.js`; the sibling `.cjs` is the lib's CJS emit of the
+   same single copy). `apexcharts/line` re-importing core added no second copy.
+4. **Regression test genuine (not a tautology) — independently proven.** A throwaway test importing
+   ONLY `apexcharts/core` (no `apexcharts/line`) has `getChartClass('area')` and `('line')` THROW
+   `/is not registered/`; MetricsPage.apex-registration.test.ts passes only because importing
+   MetricsPage.vue runs its `import 'apexcharts/line'` side effect. Remove the import → test goes red.
+   Real render-time registry guard, confirming vitest per-file module isolation (green isn't leaking
+   from another file).
+5. **dist/ NOT committed (§0.5).** The fix commit touched only `performance_worklog_ui.md`,
+   `src/pages/admin/MetricsPage.vue`, and the new
+   `src/pages/admin/MetricsPage.apex-registration.test.ts`. No `dist/` files. My verify build's dist
+   output was restored (`git checkout -- dist/ && git clean -fdq dist/`) — tree left clean.
+6. **No collateral.** MetricsPage.vue change is limited to the `import 'apexcharts/line'` +
+   explanatory comment; nothing else altered. Gates: `vitest run` (dedupe + registration +
+   MetricsPage = 14 pass), `vue-tsc --noEmit` exit 0, `eslint` exit 0, `npm run build` exit 0.
+
+BLOCKING finding CLEARED. ⚠️ Still owed (out of scope here, already tracked): the release-time
+`dist/` rebuild+commit — consumers receive this fix only after `npm run build` (both vite entries) +
+committing `dist/` at the next tag.
