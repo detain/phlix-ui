@@ -38,33 +38,15 @@ vi.mock('../stores/useAuthStore', () => ({
   }),
 }));
 
-// Mock useResumeSync to bypass the auth.client.get chain.
-// Tests can configure continueWatchingItems by setting mockContinueWatchingItems
-// before calling stubFetch/mountPage.
-import { usePlayerStore, TICKS_PER_SECOND } from '../stores/usePlayerStore';
-const mockContinueWatchingItems: MediaItem[] = [];
-const mockSyncResume = vi.fn().mockImplementation(async () => {
-  // Simulate what the real syncResume does: update player.resumeMap from the
-  // continueWatchingItems and keep the items for continueWatchingItems getter.
-  // This ensures continueItems computed (which filters by resumeMap) works in tests.
-  const positions: Record<string, number> = {};
-  for (const item of mockContinueWatchingItems) {
-    const ticks = (item as MediaItem & { position_ticks?: number }).position_ticks;
-    if (typeof item.id === 'string' && typeof ticks === 'number' && ticks > 0) {
-      positions[item.id] = Math.floor(ticks / TICKS_PER_SECOND);
-    }
-  }
-  const player = usePlayerStore();
-  player.mergeServerResume(positions);
-});
-vi.mock('../composables/useResumeSync', () => ({
-  useResumeSync: () => ({
-    syncResume: mockSyncResume,
-    get continueWatchingItems() {
-      return mockContinueWatchingItems;
-    },
-  }),
-}));
+// NOTE (U-N4 regression guard): `useResumeSync` is intentionally NOT mocked here.
+// The Continue Watching rail is driven by the REAL composable so this suite
+// genuinely exercises the reactivity contract — a `syncResume()` that REASSIGNS
+// the shared reactive ref must propagate to BrowsePage's `continueItems`. The
+// composable fetches continue-watching via `auth.client.get(...)` (= `authGet`
+// above), so `stubFetch`/`beforeEach` configure that call. (This test FAILS
+// against the pre-fix code, where the composable reassigned a plain `let` and
+// BrowsePage destructured a getter-returned array — capturing a stale empty
+// reference that never updated, so the rail never showed cross-device items.)
 
 import BrowsePage from './BrowsePage.vue';
 import MediaRow from '../components/MediaRow.vue';
@@ -165,14 +147,23 @@ function stubFetch(
   });
   vi.stubGlobal('fetch', fn);
 
-  // Configure mock useResumeSync for continue-watching items (U-N4).
-  // Clear and repopulate the mock array so tests get fresh state.
-  mockContinueWatchingItems.splice(0, mockContinueWatchingItems.length);
-  if (continueWatchingItems.length > 0) {
-    for (const item of continueWatchingItems) {
-      mockContinueWatchingItems.push({ ...item });
+  // Drive the REAL useResumeSync via the mocked auth client (U-N4). The
+  // composable fetches continue-watching through `auth.client.get` (= authGet),
+  // NOT the global fetch, so route that call to the configured items (carrying
+  // their position_ticks) and everything else to an empty payload.
+  authGet.mockImplementation((url: unknown) => {
+    const u = typeof url === 'string' ? url : '';
+    if (u.includes('/api/v1/users/me/continue-watching')) {
+      return Promise.resolve({
+        items: continueWatchingItems.map((item) => ({
+          ...item,
+          position_ticks:
+            (item as MediaItem & { position_ticks?: number }).position_ticks ?? 0,
+        })),
+      });
     }
-  }
+    return Promise.resolve({});
+  });
 
   return fn;
 }
@@ -267,6 +258,12 @@ beforeEach(() => {
   setActivePinia(createPinia());
   // HomeRow loads eagerly without an IntersectionObserver (SSR/jsdom path).
   vi.stubGlobal('IntersectionObserver', undefined);
+  // Real useResumeSync reads auth.client.get; default to an empty payload so a
+  // mount without configured continue-watching clears the shared module ref
+  // (self-heals any items retained from a prior test). stubFetch overrides this.
+  authState.loggedIn = true;
+  authGet.mockReset();
+  authGet.mockResolvedValue({});
 });
 afterEach(() => {
   vi.unstubAllGlobals();

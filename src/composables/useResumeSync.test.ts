@@ -96,4 +96,42 @@ describe('useResumeSync', () => {
     await expect(useResumeSync().syncResume()).resolves.toBeUndefined();
     expect(player.resumeMap).toEqual({});
   });
+
+  it('exposes the full synced items as a REACTIVE ref that updates on reassignment (U-N4)', async () => {
+    // Guards the production reactivity bug: syncResume must publish the full
+    // item payloads through a ref whose reassignment propagates to consumers.
+    // A consumer that captured the ref BEFORE the first sync must still see the
+    // items after syncResume — which is impossible with a getter-returned plain
+    // array that gets reassigned (the old, buggy shape).
+    get.mockResolvedValue({
+      items: [
+        { id: 'm1', name: 'Resumed', type: 'movie', position_ticks: 600_000_000 },
+        { id: 'no-ticks', name: 'Skip' }, // filtered out (no position)
+      ],
+    });
+    // Destructure/capture the handle BEFORE the sync — mirrors BrowsePage's
+    // `const { continueWatchingItems } = useResumeSync()` at setup.
+    const { syncResume, continueWatchingItems } = useResumeSync();
+
+    await syncResume();
+
+    // The SAME captured handle now reflects the reassigned payload (only the row
+    // with positive ticks is retained). Impossible if it were a getter-returned
+    // plain array that syncResume reassigns out from under the caller.
+    expect(continueWatchingItems.value.map((i) => i.id)).toEqual(['m1']);
+  });
+
+  it('shares one reactive source across composable instances', async () => {
+    // PhlixApp, BrowsePage and the visibility handler each call useResumeSync();
+    // a sync from ONE instance must be visible to the others (shared item feed).
+    get.mockResolvedValue({
+      items: [{ id: 'shared', name: 'Shared', type: 'movie', position_ticks: 300_000_000 }],
+    });
+    const producer = useResumeSync();
+    const consumer = useResumeSync();
+
+    await producer.syncResume();
+
+    expect(consumer.continueWatchingItems.value.map((i) => i.id)).toEqual(['shared']);
+  });
 });
