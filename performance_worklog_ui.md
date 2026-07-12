@@ -817,3 +817,108 @@ dist/ restored to committed state (git checkout) — NOT committed.
 
 Files: `/home/sites/phlix/phlix-ui/src/index.ts` (defineAsyncComponent factories + import),
 `/home/sites/phlix/phlix-ui/src/__tests__/dist-player-split.test.ts` (new).
+
+## Reviewer — UI-3.1 (commit 8664f9f, parent 204b7a0) — 2026-07-12
+
+Confirming review of the two audit-gap closures. READ-ONLY (no source touched).
+
+**AC — MET.** Player surface already code-split to the `@phlix/ui/player` secondary entry
+(`src/player.ts`); this commit locks it + defers the three components.
+- **defineAsyncComponent conversion correct + safe.** `src/index.ts:63-67` converts the three
+  static default re-exports to `defineAsyncComponent(() => import('./components/X.vue'))` keeping the
+  SAME named exports. Consumer claim RE-VERIFIED myself: grep of `phlix-server/web-ui/src` and
+  `phlix-hub/web-ui/src` shows NEITHER consumer imports MediaDetail/FilterBar/MetadataMatchModal
+  (server imports createPhlixApp/buildAdminRoutes/LibraryScanPage; hub imports createPhlixApp/
+  MyServersPage/FederationPage/ManageSharesPage/buildHubAdminRoutes). Internal callers
+  (MediaDetailPage/BrowsePage/LibraryPage/DetailHarness) import the `.vue` files DIRECTLY, never via
+  the barrel — so the async wrap can't break any synchronous options-object/`.props`/`.name` usage;
+  there is none. All three are used purely as template components. No router-base/SPA-contract impact.
+- **Build-assertion test is REAL** (`src/__tests__/dist-player-split.test.ts`). The transitive
+  static-import closure walk from `phlix-ui.js` + the trailing-hyphen anchoring
+  (`^MediaDetail-[A-Za-z0-9_-]+\.js$` does NOT match the legitimately-lazy `MediaDetailPage-*`;
+  `Player-*` ≠ `PlayerPage-*`) are correct. `STATIC_IMPORT_RE` matches static `from"./x.js"`/bare
+  `import"./x.js"` re-export forms and NOT dynamic `import("./x.js")` (the `(` after `import` blocks
+  the import-branch; no `from`). Would FAIL pre-fix by construction: static re-exports force Rollup
+  either to (a) emit a shared `MediaDetail-*` chunk statically imported by the entry → closure test
+  (GAP 1) red, or (b) inline the component into the entry → standalone-chunk test red. Not a grep-only
+  false-green. Test builds fresh into a throwaway `node_modules/.cache/ui-3.1-split-dist`
+  (cleaned in afterAll — verified gone) so it never touches committed dist/ and is deterministic under
+  bare `vitest run`; the fresh-build deviation from dist-css-bundle.test.ts is sound and documented.
+- **dist/ correctly NOT committed** — commit 8664f9f touches exactly 3 files (src/index.ts, the new
+  test, worklog); no dist/ paths. §0.5 release-time gate honored.
+
+**Verify (ACTUAL, this box):** `npx vue-tsc --noEmit` exit 0; `npx eslint .` exit 0;
+`npx vitest run src/__tests__/dist-player-split.test.ts` → 4 passed; FULL `npx vitest run` →
+174 files, **2989 pass / 6 skip / 0 fail** (matches baseline). `git status` clean afterward.
+
+**Observations (non-blocking, not findings):**
+- The companion U-B3 broad export surface (the ~30 admin API classes + long-tail pages
+  MyServersPage/FederationPage/etc. still statically exported from index.ts) is NOT reduced here — but
+  that is outside this step's actionable "Do" list (Player/MediaDetail/MetadataMatchModal/FilterBar/
+  player/*), and those long-tail pages ARE imported directly by the hub consumer so they can't be
+  async-wrapped without breaking it. Correctly left alone.
+- The ~56KB win only reaches consumers after a release-time dist/ rebuild+commit (committed
+  dist/phlix-ui.js still statically imports the three chunks). Already flagged in the implementer note;
+  the coordinator must ensure `npm run build` + commit dist/ happens at the next tag.
+
+### Findings
+NO FINDINGS
+
+## Implementer — UI-3.4 [U-B4] apexcharts dedupe — 2026-07-12
+
+Closed the audit PARTIAL: the prior `external: ['apexcharts']` (fce73b8) was INEFFECTIVE +
+consumer-risky. It only removed the tiny static `import "apexcharts/core"` from the vue3-apexcharts
+wrapper while the **626 KB dynamic SSR chunk** (`apexcharts.ssr.esm-fe46cd2d-*.js`) still fully
+bundled → apex double-shipped, AND it created a live consumer dependency surviving only via npm
+transitive hoisting (breaks under pnpm/isolated node_modules).
+
+**Root cause confirmed in node_modules (not guessed):**
+- `vue3-apexcharts@1.11.1` `exports["."]` → `dist/vue3-apexcharts.js`, which has a **dynamic**
+  `import("./apexcharts.ssr.esm-fe46cd2d.js")` (749,989 B raw self-contained SSR apex copy) that
+  Rollup always emits as a chunk. `exports["./core"]` → `dist/vue3-apexcharts-core.js` (4,902 B) which
+  instead statically `import x from "apexcharts/core"` and has **NO** SSR dynamic import.
+- `apexcharts@5.16.0` `exports["./core"]` → `dist/core.esm.js` (804 KB raw) — a self-contained BROWSER
+  build that inlines all chart types (verified: `area`/`line`/`bar` + all others present) and only
+  lazy-loads tiny internal Dimensions/Graphics/Tooltip modules. Covers MetricsPage's 4 charts
+  (area/line/line at :464/:500/:539).
+
+**UI-3.4a (the real win) — DONE.** `src/pages/admin/MetricsPage.vue:44`
+`import('vue3-apexcharts')` → `import('vue3-apexcharts/core')`. The `/core` wrapper hard-imports
+`apexcharts/core` itself, so no separate register/import of ApexCharts was needed — the wrapper's
+component API (props `options`/`series`/`type`/`width`/`height`, default export) is identical, so the
+template `<VueApexCharts>` usage is unchanged. Docblock + inline comment explain why `/core`.
+
+**UI-3.4b — DONE.** `vite.config.ts` `build.rollupOptions.external`:
+`['vue','vue-router','pinia','apexcharts']` → `['vue','vue-router','pinia']`. The ONE apex browser
+copy now bundles INSIDE dist (self-contained). apexcharts stays in `dependencies` (^5.15.2), NOT
+peerDependencies. Restores the UI-3.3-safe invariant: **consumers no longer need to provide
+apexcharts**. Added a comment so it isn't re-externalized.
+
+**UI-3.4c — DONE.** New `src/__tests__/dist-apex-dedupe.test.ts` (mirrors the UI-3.1
+dist-player-split fresh-build-into-throwaway-dir pattern): builds the main entry fresh into
+`node_modules/.cache/ui-3.4-apex-dist`, then asserts (1) NO `apexcharts.ssr.esm-*` chunk exists,
+(2) exactly ONE `.js` chunk contains the apex library marker `apexcharts-canvas` (one bundled copy;
+scoped to `.js` since lib emits es+cjs), (3) that chunk < the old 626,615 B SSR copy. 3 cases green.
+
+**SKIPPED UI-3.4d** (uPlot replacement) — out of scope for a dedupe step.
+
+**Before → after (throwaway + real build output):**
+- BEFORE (committed dist, fce73b8): `apexcharts.ssr.esm-fe46cd2d-BhujGxHE.js` = **626,615 B** (raw)
+  bundled DEAD + apexcharts externalized (a SECOND browser copy provided by the consumer). Double-ship.
+- AFTER: NO ssr chunk; ONE `vue3-apexcharts-core-*.js` = **457,826 B** raw / gzip **112.51 kB**
+  (.cjs 370,417 B / gzip 101.70 kB). MetricsPage chunk 27,372 B → 26,385/26,390 B. Net apex payload
+  dropped by >½ AND the second (consumer-provided) copy is eliminated.
+
+**Verify (ACTUAL output):**
+- `npx vitest run src/__tests__/dist-apex-dedupe.test.ts` → Test Files 1 passed / Tests 3 passed.
+- `npx vue-tsc --noEmit` → exit 0 (0 errors). `npx eslint .` → exit 0 (0 errors).
+- FULL `npx vitest run` → 175 files, **2992 pass / 6 skip / 0 fail** (baseline 2989 + 3 new).
+- `npx vite build` exit 0 + `npx vite build --config vite.player.config.ts` exit 0; dist confirmed to
+  contain the single apex chunk and NO `apexcharts.ssr.esm` chunk.
+- **dist/ NOT committed** — `git checkout -- dist/ && git clean -fdq dist/` restored it to tracked
+  state after the verify build (§0.5 release-time gate). A release-time `dist/` rebuild+commit is
+  required for consumers to actually receive the dedupe.
+
+Files changed (absolute): `/home/sites/phlix/phlix-ui/src/pages/admin/MetricsPage.vue`,
+`/home/sites/phlix/phlix-ui/vite.config.ts`,
+`/home/sites/phlix/phlix-ui/src/__tests__/dist-apex-dedupe.test.ts` (new).

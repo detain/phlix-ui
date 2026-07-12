@@ -34,7 +34,16 @@ export default defineConfig({
             cssFileName: 'style',
         },
         rollupOptions: {
-            external: ['vue', 'vue-router', 'pinia', 'apexcharts'],
+            // apexcharts is intentionally NOT external (UI-3.4 [U-B4]). Externalizing
+            // it only removed the tiny static `import "apexcharts/core"` from the
+            // vue3-apexcharts wrapper while the ~626 KB `apexcharts.ssr.esm-*` SSR
+            // chunk still bundled — so apex double-shipped — AND it created a live
+            // consumer dependency that survived only via npm transitive hoisting
+            // (breaks under pnpm/isolated node_modules; the UI-3.3 consumer-risk
+            // class). MetricsPage now imports `vue3-apexcharts/core` (browser build,
+            // no SSR copy); bundling the ONE apex copy inside dist keeps @phlix/ui
+            // self-contained — consumers do NOT need to provide apexcharts.
+            external: ['vue', 'vue-router', 'pinia'],
             output: {
                 globals: {
                     vue: 'Vue',

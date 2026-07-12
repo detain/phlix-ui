@@ -16,6 +16,16 @@
  * Polling: snapshot + connections every 5s; history + routes every 15s.
  * ApexCharts and vue3-apexcharts are lazy-imported so they stay in their
  * own chunk and do not bloat the main bundle for users who never visit this page.
+ *
+ * UI-3.4 [U-B4] — apex dedupe: we import the `vue3-apexcharts/core` wrapper, NOT
+ * the default `vue3-apexcharts` entry. The default entry carries a dynamic
+ * `import("./apexcharts.ssr.esm-*.js")` — a self-contained ~626 KB SSR copy of
+ * ApexCharts for the onServerPrefetch/SSR path — that Rollup always emits as a
+ * chunk. Phlix is a client-only SPA that never server-prefetches, so that copy is
+ * dead weight AND double-ships alongside the browser build. The `/core` wrapper
+ * instead statically imports `apexcharts/core` (the browser build) and bundles a
+ * SINGLE apex copy. See vite.config.ts (apexcharts is NOT externalized so the one
+ * copy is self-contained in dist) and src/__tests__/dist-apex-dedupe.test.ts.
  */
 import { ref, computed, onMounted, onBeforeUnmount, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
@@ -41,7 +51,9 @@ import NetworkHealthIndicator from '../../components/NetworkHealthIndicator.vue'
 import { defineAsyncComponent } from 'vue';
 
 // Lazy-load the ApexCharts wrapper so the library lands in its own chunk.
-const VueApexCharts = defineAsyncComponent(() => import('vue3-apexcharts'));
+// Use the `/core` entry (browser build via `apexcharts/core`) — NOT the default
+// entry, which would drag in the ~626 KB `apexcharts.ssr.esm-*` SSR copy (UI-3.4).
+const VueApexCharts = defineAsyncComponent(() => import('vue3-apexcharts/core'));
 
 // ---------------------------------------------------------------------------
 // Props / API setup
