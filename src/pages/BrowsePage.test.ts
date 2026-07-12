@@ -127,8 +127,10 @@ function stubFetch(
     media?: { items: MediaItem[]; total: number };
     favorites?: MediaItem[] | (() => MediaItem[]);
     /** Continue Watching items with optional position_ticks for resume position.
-     *  Defaults to empty, hiding the Continue Watching rail unless supplied. */
-    continueWatching?: MediaItem[];
+     *  Defaults to empty, hiding the Continue Watching rail unless supplied.
+     *  Items carry an extra `position_ticks` field (the resume payload shape,
+     *  see useResumeSync) on top of the list-row MediaItem fields. */
+    continueWatching?: Array<MediaItem & { position_ticks?: number }>;
     libraryError?: boolean;
     /** Reject the library-list request with a hub-style 503 `{error, code}` body
      *  (drives the relay-code → actionable-message mapping in BrowsePage). */
@@ -376,7 +378,7 @@ describe('BrowsePage — Continue Watching', () => {
       // Media items are NOT required for Continue Watching in the new behavior
       media: { items: [media({ id: 'other', name: 'Other Title' })], total: 1 },
       // continueWatching items come from GET /api/v1/users/me/continue-watching
-      continueWatching: [{ id: 'a', name: 'Resumed', type: 'movie', position_ticks: 600_000_000 }],
+      continueWatching: [{ ...media({ id: 'a', name: 'Resumed', type: 'movie' }), position_ticks: 600_000_000 }],
     });
     const w = mountPage();
     await flushPromises();
@@ -422,7 +424,7 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
       libraries: ONE_LIBRARY,
       // Item 'a' is in continueWatching (not in media items), showing that
       // Continue Watching works even when the title is not in any loaded rail
-      continueWatching: [{ id: 'a', name: 'Resumed', type: 'movie', position_ticks: 600_000_000 }],
+      continueWatching: [{ ...media({ id: 'a', name: 'Resumed', type: 'movie' }), position_ticks: 600_000_000 }],
       favorites: [media({ id: 'f1', name: 'Favorited Movie' })],
     });
     const w = mountPage();

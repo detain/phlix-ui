@@ -1998,8 +1998,10 @@ describe('Player — fade timer ownership (UI-1.7)', () => {
 
   it('clears the fade timer on unmount so no interval runs against a detached element', async () => {
     const { w } = mountPlayer();
-    // Start a fade — this sets up a setInterval that would fade volume over ~1s
-    w.vm.fadeOutAndPause();
+    // Start a fade — this sets up a setInterval that would fade volume over ~1s.
+    // fadeOutAndPause is a <script setup> binding (not exposed via defineExpose),
+    // so it is reachable on the runtime vm but not on the typed public instance.
+    (w.vm as unknown as { fadeOutAndPause: () => void }).fadeOutAndPause();
     await nextTick();
     // Unmount while fade is in progress — onBeforeUnmount should clear the fade timer.
     // The critical invariant: after unmount, no interval callback should run
@@ -2015,22 +2017,26 @@ describe('Player — fade timer ownership (UI-1.7)', () => {
 
   it('fadeOutAndPause clears any pre-existing timer before starting a new one (idempotent)', async () => {
     const { w, video, state } = mountPlayer();
+    const fade = (w.vm as unknown as { fadeOutAndPause: () => void }).fadeOutAndPause;
+    // video.pause was replaced with a vi.fn() in stubVideo() but is typed as the
+    // native HTMLVideoElement['pause'] (() => void), so reach .mock through a cast.
+    const pauseMock = video.pause as unknown as ReturnType<typeof vi.fn>;
     // Start first fade — this creates an interval
-    w.vm.fadeOutAndPause();
+    fade();
     await nextTick();
     // Wait a short time for the fade to progress
     await new Promise((r) => setTimeout(r, 200));
     const volumeAfterPartialFirstFade = state.volume;
     expect(volumeAfterPartialFirstFade).toBeLessThan(1);
-    const pauseCountBeforeSecond = video.pause.mock.calls.length;
+    const pauseCountBeforeSecond = pauseMock.mock.calls.length;
     // Start second fade BEFORE the first one completes
     // This MUST clear the first timer before starting a new one
-    w.vm.fadeOutAndPause();
+    fade();
     await nextTick();
     // Wait for the second fade to complete (~1 second from now)
     await new Promise((r) => setTimeout(r, 1200));
     // pause should have been called exactly once (from the second fade's completion)
     // If the first timer wasn't cleared, we could get incorrect behavior
-    expect(video.pause.mock.calls.length).toBe(pauseCountBeforeSecond + 1);
+    expect(pauseMock.mock.calls.length).toBe(pauseCountBeforeSecond + 1);
   });
 });

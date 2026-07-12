@@ -335,10 +335,9 @@ describe('hls-playback', () => {
       } as unknown as HTMLVideoElement;
 
       // Mock the hls.js import to fail if called
-      const originalImport = globalThis.import;
-      let importCalled = false;
-      globalThis.import = vi.fn().mockImplementation(() => {
-        importCalled = true;
+      const g = globalThis as unknown as { import?: unknown };
+      const originalImport = g.import;
+      g.import = vi.fn().mockImplementation(() => {
         return Promise.resolve({ default: {} });
       });
 
@@ -350,7 +349,7 @@ describe('hls-playback', () => {
       expect(result).toBeDefined();
       expect(typeof result.destroy).toBe('function');
 
-      globalThis.import = originalImport;
+      g.import = originalImport;
     });
 
     it('skips hls.js import and sets video.src when MSE is absent and native HLS is supported', async () => {

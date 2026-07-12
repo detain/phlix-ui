@@ -241,11 +241,13 @@ describe('useHlsTranscode', () => {
   it('transcode client is constructed with timeoutMs: 60000 (60s for slow start)', async () => {
     // Spy ApiClient so we can verify the timeout option without a real HTTP call.
     const { ApiClient } = await import('../api/client');
-    const spyClient = vi.spyOn(ApiClient.prototype as unknown as Record<string, unknown>, 'post').mockResolvedValue({
-      job_id: 'j',
-      master_url: '/hls/j/master.m3u8',
-      status: 'completed',
-    });
+    const spyClient = vi
+      .spyOn(ApiClient.prototype as unknown as { post: (...args: unknown[]) => unknown }, 'post')
+      .mockResolvedValue({
+        job_id: 'j',
+        master_url: '/hls/j/master.m3u8',
+        status: 'completed',
+      });
 
     const controller = useHlsTranscode({
       apiBase: () => 'http://h:8096',
@@ -350,23 +352,8 @@ describe('useHlsTranscode', () => {
 
   describe('playerStore.hlsMasterUrl persistence (UI-1.8)', () => {
     // We intercept the start response so we can observe what the composable
-    // persists to the store after a successful attach.  We inject a mock store
-    // via the `makeClient` override so that `usePlayerStore()` inside start()
-    // returns our mock instead of throwing (no Pinia in this unit test).
-    async function harnessWithPlayerStore(over: Parameters<typeof harness>[0] = {}) {
-      const storeRefs = { hlsMasterUrl: { value: '' } };
-      const h = harness({
-        start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' },
-        ...over,
-      });
-      // Override the client factory so we can intercept the controller after
-      // construction and inject our mock playerStore.
-      const originalController = h.controller;
-      // We recreate a controller that captures hlsMasterUrl by patching the
-      // makeClient call. Since the controller is already built, we instead
-      // just test the URL that would have been passed to attach (masterUrl).
-      return { ...h, storeRefs };
-    }
+    // persists to the store after a successful attach — verified below via the
+    // master URL passed to attach() (no Pinia store is stubbed in this unit test).
 
     it('after successful transcode start, playerStore.hlsMasterUrl is set to the master URL', async () => {
       const h = harness({

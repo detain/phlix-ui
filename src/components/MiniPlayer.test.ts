@@ -361,9 +361,9 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
   });
 
   it('attachHls is called with the correct URL when the dock becomes visible with hlsMasterUrl', async () => {
-    const attachHls = vi.fn(async () => mockHlsHandle());
+    const attachHls = vi.fn(async (_video: HTMLVideoElement, _url: string) => mockHlsHandle());
     vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
-    const { store } = mountTranscoded();
+    mountTranscoded(attachHls);
     await nextTick();
     // attachHls should have been called on mount (onMounted hook in MiniPlayer.vue).
     expect(attachHls).toHaveBeenCalledTimes(1);
@@ -385,7 +385,7 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
     const destroy = vi.fn();
     const attachHls = vi.fn(async () => mockHlsHandle(destroy));
     vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
-    const { store, w } = mountTranscoded(attachHls);
+    const { store } = mountTranscoded(attachHls);
     await nextTick();
     expect(destroy).not.toHaveBeenCalled();
     // Hide the dock.
