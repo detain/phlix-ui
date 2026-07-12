@@ -416,3 +416,72 @@ by-id fetch/call-order assertions need a cold cache each test.
 
 Commits: d0615d7 (source: module + both pages + dead-guard) + e20c27d (tests).
 Pushed to master (`2cab33d..e20c27d`).
+
+## Reviewer — UI-2.1 + UI-2.3 (post-deps verify) — 2026-07-12
+
+Combined VERIFY + confirming-REVIEW after the pause-window external commits landed
+(HEAD `859695c` @phlix/contracts→v0.3.11; `f87afa0` git pins repointed after upstream
+history rewrite). This repo IS `@phlix/ui`; its own `package.json` version is **0.79.0**,
+coherent with the server/hub bump to @phlix/ui v0.79.0.
+
+### Job A — MASTER GREEN: YES (no new red from the deps bump)
+- `npm install` → `up to date, audited 352 packages ... found 0 vulnerabilities` (the
+  contracts v0.3.11 bump + repointed git pins needed no reinstall churn).
+- `npx vue-tsc --noEmit` → **exit 0, 0 errors** (a contracts type change would have surfaced
+  here — item / continue-watching payload shapes still type-align; no drift).
+- `npx eslint .` → **exit 0, 0 errors**.
+- `npm run build` → **exit 0** (vite build + vite build --config vite.player.config.ts both
+  ok). **dist/ restored to tracked state, untracked build artifacts cleaned — NOT committed.**
+- `npx vitest run` (full) → first pass showed `2955 pass / 1 fail / 6 skip`: the single
+  failure was `MediaGrid.test.ts` UI-2.5 "does NOT call getBoundingClientRect during scroll"
+  **timing out at 5000ms** — a CPU-contention flake from my running vue-tsc concurrently with
+  vitest (note the pathological 475s import / 289s transform in that run). Re-run in isolation:
+  `npx vitest run src/components/MediaGrid.test.ts` → **15 passed / 5 skipped, 0 fail** in 8.6s.
+  So the effective suite is **2956 pass / 6 skip / 0 fail** — matches the pre-deps baseline
+  exactly. NO new failure attributable to @phlix/contracts v0.3.11.
+- Targeted re-run of the UI-2.1 + UI-2.3 files
+  (`media-item-cache MediaDetailPage PlayerPage BrowsePage useResumeSync`) →
+  **Test Files 5 passed / Tests 113 passed**.
+
+### Job B — confirming review
+
+**UI-2.1 (shared SWR item cache) — CONFIRMED.**
+- `src/composables/useMediaItemCache.ts` is a genuine module-level singleton
+  (`const mediaItemCache = new Map()` at module scope, NOT inside `<script setup>`); docblock
+  explicitly warns against re-inlining — the latent per-instance bug the fix found is closed.
+- Both `MediaDetailPage.vue` (imports at :44-47) and `PlayerPage.vue` (:52-55) consume it;
+  cross-page reuse verified by the `media-item-cache.test.ts` cross-page case.
+- SWR semantics correct: fresh hit (<60s TTL) renders with NO by-id fetch and returns early
+  (MediaDetailPage:159-175, PlayerPage:381-386); stale/absent → fetch + `cacheMediaItem`
+  re-stamp (MediaDetailPage:192, PlayerPage:438); transient refresh failure serves the stale
+  entry (PlayerPage:414-419 + falsy-item guard :428-432); a hard 403/429
+  `AccessSchedule`/`StreamLimitExceeded` block wins over the cache and is surfaced, NOT masked
+  (PlayerPage:400-413).
+- The dead `controller !== controller` guard is now the intended staleness check
+  `myController !== controller` in both pages (pinned at MediaDetailPage:141/:161,
+  PlayerPage:201-202); matches the loadSimilar/loadSeasons pattern.
+- UI-0.4 parallel dispatch preserved: playback-info promise is dispatched BEFORE the cache
+  check (PlayerPage:375), so even a fresh cache hit doesn't skip markers; `seriesEpisodeCache`
+  / up-next / episode-neighbour lookups untouched (applyItem:449+).
+- Tests genuinely assert cache-hit-no-refetch, stale-refresh, failure-serves-stale,
+  hard-access-block-not-masked, and cross-page reuse.
+
+**UI-2.3 (Continue Watching reactivity) — CONFIRMED.**
+- `useResumeSync.ts` uses a module-level shared `shallowRef<readonly MediaItem[]>`
+  (`syncedItems`, :45) reassigned WHOLESALE (`syncedItems.value = validItems`, :120), never
+  mutated in place — the wholesale reassignment is what propagates to consumers.
+- `BrowsePage.vue` `continueItems` computed reads `continueWatchingItems.value` reactively
+  (:124-130) — no stale destructured plain-array capture (the exact U-N4 defect); sorted by
+  `player.resumeMap`, sliced to 12.
+- `onUnmounted` moved into `attachVisibilityListener()` guarded by `getCurrentInstance()`
+  (:61-76) — the "onUnmounted outside setup" warning is gone; listener attached idempotently.
+- Fixer note documents the rewritten test FAILS pre-fix (git-stash of the two source files →
+  4 failed / 32 passed), and it drives the REAL composable (mock removed).
+- Full continue-watching item payloads retained (not just id/position); positions re-sync on
+  `visibilitychange` + BrowsePage mount + login.
+
+Neither fix regressed against @phlix/contracts v0.3.11 (vue-tsc 0 errors confirms the
+MediaItem / continue-watching shapes still align).
+
+### Findings
+NO FINDINGS
