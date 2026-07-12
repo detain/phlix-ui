@@ -50,6 +50,24 @@ import ServerSelector from '../../components/admin/ServerSelector.vue';
 import NetworkHealthIndicator from '../../components/NetworkHealthIndicator.vue';
 import { defineAsyncComponent } from 'vue';
 
+// UI-3.4 [U-B4] — register the chart types this page renders.
+//
+// `vue3-apexcharts/core` statically imports `apexcharts/core`, the browser build
+// that ships with ZERO chart types registered (that is how it stays a single
+// deduped copy). MetricsPage renders `area` and `line` charts, so without an
+// explicit registration `ApexCharts` throws at render time:
+//   `chart type "area" is not registered. Import it via ApexCharts.use()`.
+// (The build-only dedupe assertion never renders, so it cannot catch this.)
+//
+// `apexcharts/line` is a side-effect module that re-imports `apexcharts/core`
+// (the SAME singleton the wrapper uses — NO second apex copy, so the single-chunk
+// dedupe is preserved) and calls `ApexCharts.use({ line, area, scatter, bubble,
+// rangeArea })`, registering BOTH types MetricsPage uses. It is explicitly listed
+// in apexcharts' package.json `sideEffects` (`./dist/*.esm.js`) so bundlers will
+// NOT tree-shake this bare import. See src/pages/admin/MetricsPage.apex-registration.test.ts
+// (registration guard) and src/__tests__/dist-apex-dedupe.test.ts (single-chunk guard).
+import 'apexcharts/line';
+
 // Lazy-load the ApexCharts wrapper so the library lands in its own chunk.
 // Use the `/core` entry (browser build via `apexcharts/core`) — NOT the default
 // entry, which would drag in the ~626 KB `apexcharts.ssr.esm-*` SSR copy (UI-3.4).

@@ -922,3 +922,63 @@ scoped to `.js` since lib emits es+cjs), (3) that chunk < the old 626,615 B SSR 
 Files changed (absolute): `/home/sites/phlix/phlix-ui/src/pages/admin/MetricsPage.vue`,
 `/home/sites/phlix/phlix-ui/vite.config.ts`,
 `/home/sites/phlix/phlix-ui/src/__tests__/dist-apex-dedupe.test.ts` (new).
+
+## Fixer — UI-3.4 — 2026-07-12 (BLOCKING review finding: charts un-registered at runtime)
+
+**The finding (CRITICAL/BLOCKING):** the dedupe commit (918ee81) switched MetricsPage to
+`vue3-apexcharts/core`, whose wrapper statically imports `apexcharts/core` — the browser build that
+ships with ZERO chart types registered. MetricsPage renders `type="area"` (bandwidth) and `type="line"`
+(latency + request-rate) charts, so at first render ApexCharts throws
+`chart type "area" is not registered. Import it via ApexCharts.use()`. The build-only dedupe test never
+renders, and the existing MetricsPage.test.ts STUBS `VueApexCharts` with a `<div>`, so neither caught it.
+
+**Root-cause verification (from node_modules, not guesswork):**
+- `apexcharts@5.16.0/dist/core.esm.js` — the registry is `globalThis['__apexcharts_registry__']`;
+  `getChartClass(type)` (exported as `__apex_ChartFactory_getChartClass`) reads it and throws the exact
+  "is not registered" error when a type is absent (core registers NONE).
+- `apexcharts/dist/line.esm.js` ends with `_core__default.use({ line, area, scatter, bubble, rangeArea })`
+  where `_core__default` is `apexcharts/core`'s default export — i.e. importing `apexcharts/line` for its
+  side effect registers BOTH types MetricsPage uses (area + line) onto the SAME `apexcharts/core`
+  singleton the `vue3-apexcharts/core` wrapper imports.
+- `apexcharts` `package.json` `sideEffects` includes `./dist/*.esm.js`, so a bare `import 'apexcharts/line'`
+  is NOT tree-shaken by Rollup/vite.
+
+**Fix (registration form chosen + WHY):** added `import 'apexcharts/line';` (static side-effect import)
+to `src/pages/admin/MetricsPage.vue`. Chosen over `ApexCharts.use({line, area})` because the wrapper
+exposes no `ApexCharts` handle to the page (it hard-imports core internally); the `/line` subpath entry
+already calls `.use()` on that same core singleton, registers line+area (+scatter/bubble/rangeArea) in
+one import, and — critically — re-imports `apexcharts/core` rather than pulling a second copy, so the
+single-chunk dedupe is preserved. MetricsPage is a lazy admin route, so apex still never touches the boot
+bundle. Added a docblock explaining the registration + the sideEffects/tree-shake guarantee.
+
+**Single-apex-chunk dedupe RE-VERIFIED (holds):** `src/__tests__/dist-apex-dedupe.test.ts` (fresh
+`vite build`) — all 3 assertions green WITH the fix: "emits NO apexcharts.ssr.esm-* chunk" ✓, "ships
+exactly ONE apex chunk (a single self-contained browser copy)" ✓, "single apex chunk < old 626 KB SSR
+copy" ✓. Confirmed on the REAL committed-dist build path too: `npm run build` → exactly one chunk with
+the `apexcharts-canvas` marker (`dist/core.esm-*.js`), zero `apexcharts.ssr.esm` chunks. So
+`apexcharts/line` re-importing core added NO second copy.
+
+**Regression test added (what the build-only test can't do) —**
+`src/pages/admin/MetricsPage.apex-registration.test.ts` (4 cases). Importing MetricsPage runs its
+`import 'apexcharts/line'` side effect; the test then asserts `getChartClass('area')`/`('line')` (the
+exact registry lookup ApexCharts performs at render) do NOT throw. Also mounts MetricsPage with the REAL
+(un-stubbed) `vue3-apexcharts/core` wrapper + mock history and asserts `apexcharts-canvas` renders.
+**Diagnostic note baked into the test:** a plain jsdom "renders without throwing" mount does NOT catch
+the bug — ApexCharts short-circuits before drawing the series when the container has no layout, so the
+throw is unreachable in jsdom and nothing reaches the app errorHandler/console. The registry assertion is
+the only deterministic guard. **Red-without / green-with proven:** with `import 'apexcharts/line'`
+temporarily disabled → **3 of 4 fail** with `chart type "area" is not registered`; restored →
+**4/4 pass**.
+
+**Verify (ACTUAL output):**
+- `npx vitest run src/__tests__/dist-apex-dedupe.test.ts src/pages/admin/MetricsPage.apex-registration.test.ts src/pages/admin/MetricsPage.test.ts` → Test Files 3 passed / Tests 14 passed.
+- FULL `npx vitest run` → **176 files, 2996 pass / 6 skip / 0 fail** (baseline 2992 + 4 new).
+- `npx vue-tsc --noEmit` → exit 0 (0 errors). `npx eslint .` → exit 0 (0 errors).
+- `npm run build` → exit 0; dist confirmed single apex chunk + no SSR chunk, then reverted
+  (`git checkout -- dist/ && git clean -fdq dist/`). **dist/ NOT committed** (§0.5 release-time gate).
+
+**⚠️ Release-time dist rebuild still owed** (out of scope here): consumers only receive this fix after
+`npm run build` (both vite entries) + committing `dist/` at the next tag.
+
+Files changed (absolute): `/home/sites/phlix/phlix-ui/src/pages/admin/MetricsPage.vue`,
+`/home/sites/phlix/phlix-ui/src/pages/admin/MetricsPage.apex-registration.test.ts` (new).
