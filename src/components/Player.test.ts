@@ -11,6 +11,9 @@ import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import Player from './Player.vue';
 import Scrubber from './player/Scrubber.vue';
+import MarkerTimeline from './player/MarkerTimeline.vue';
+import Modal from './ui/Modal.vue';
+import { ApiClient } from '../api/client';
 import AmbientCanvas from './player/AmbientCanvas.vue';
 import SkipButton from './player/SkipButton.vue';
 import ThumbRating from './ThumbRating.vue';
@@ -159,6 +162,8 @@ function mountPlayer(
     autoplay: boolean;
     playbackAudioTracks: Array<{ index: number; streamIndex: number; language: string; label: string; default: boolean }>;
     playbackSubtitleTracks: Array<{ index: number; language: string; label: string; default: boolean; url: string }>;
+    apiBase: string;
+    markers: Array<{ id: string; type: 'intro' | 'outro' | 'credits' | 'ad'; startMs: number; endMs: number; label: string }>;
   }> = {},
 ) {
   const w = mount(Player, {
@@ -197,6 +202,7 @@ afterEach(() => {
   // unmount so the document-level keyboard listener is removed (no cross-test bleed)
   while (mounted.length) mounted.pop()?.unmount();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -2038,5 +2044,55 @@ describe('Player — fade timer ownership (UI-1.7)', () => {
     // pause should have been called exactly once (from the second fade's completion)
     // If the first timer wasn't cleared, we could get incorrect behavior
     expect(pauseMock.mock.calls.length).toBe(pauseCountBeforeSecond + 1);
+  });
+});
+
+describe('Player — marker-search routes through apiBase (UI-0.6, U-P6/U-P11)', () => {
+  const HUB_BASE = 'https://hub.example/api/v1/servers/S1/proxy';
+  const markerFixture = [{ id: 'mk1', type: 'intro' as const, startMs: 5000, endMs: 35000, label: 'Intro' }];
+
+  it('sends the marker-search request to props.apiBase (relay proxy), not the page origin', async () => {
+    // U-P6: on hub-proxied playback the marker-search must hit the relay proxy base.
+    // The global `api` singleton is pinned to the page origin and would 404 there.
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ items: [], marker_type: 'intro', around: 30, position: 5000 }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    vi.stubGlobal('fetch', fetchSpy);
+    const { w } = mountPlayer({ apiBase: HUB_BASE, markers: markerFixture });
+    w.findComponent(MarkerTimeline).vm.$emit('similar', 'intro', 5000);
+    await new Promise((r) => setTimeout(r, 0));
+    // Isolate the marker-search request (the deferred trickplay prefetch also fetches).
+    const markerCalls = fetchSpy.mock.calls.filter((c) => String(c[0]).includes('by-marker'));
+    expect(markerCalls).toHaveLength(1);
+    const url = String(markerCalls[0][0]);
+    expect(url.startsWith(HUB_BASE)).toBe(true); // hits the relay proxy base, not page origin
+    expect(url).not.toContain(window.location.origin + '/api/v1/media/search/by-marker');
+    expect(url).toContain('/api/v1/media/search/by-marker');
+  });
+
+  it('aborts the in-flight marker-search when the similar modal closes', async () => {
+    // U-P11: the per-search AbortController must be aborted on close so a torn-down
+    // search never lands results into a closed modal.
+    let capturedSignal: AbortSignal | undefined;
+    vi.spyOn(ApiClient.prototype, 'searchByMarker').mockImplementation(
+      (_type, _pos, _around, _limit, signal) => {
+        capturedSignal = signal;
+        return new Promise(() => {}); // never resolves — stays in-flight
+      },
+    );
+    const { w } = mountPlayer({ apiBase: HUB_BASE, markers: markerFixture });
+    w.findComponent(MarkerTimeline).vm.$emit('similar', 'intro', 5000);
+    await nextTick();
+    expect(capturedSignal).toBeDefined();
+    expect(capturedSignal!.aborted).toBe(false);
+    // Closing the modal must abort the in-flight search.
+    w.findComponent(Modal).vm.$emit('close');
+    await nextTick();
+    expect(capturedSignal!.aborted).toBe(true);
   });
 });

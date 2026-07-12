@@ -51,7 +51,7 @@ import MarkerTimeline from './player/MarkerTimeline.vue';
 import SleepTimer from './player/SleepTimer.vue';
 import Modal from './ui/Modal.vue';
 import Spinner from './ui/Spinner.vue';
-import { api } from '../api/client';
+import { ApiClient } from '../api/client';
 import {
   needsTranscode,
   needsTranscodeWithCapabilities,
@@ -387,6 +387,23 @@ function onSimilarMarker(type: 'intro' | 'outro' | 'credits' | 'ad', startMs: nu
 
 let similarController: AbortController | null = null;
 
+/**
+ * Client for marker-search, memoized by `apiBase`. On hub-proxied playback the
+ * host threads `props.apiBase` (the relay proxy base); the global `api` singleton
+ * is pinned to the page origin and would 404 there. Rebuilt only when apiBase
+ * changes (mirrors the per-base client pattern used by useTrickplay/useHlsTranscode).
+ */
+let markerClientInstance: ApiClient | null = null;
+let markerClientBase: string | null = null;
+function markerClient(): ApiClient {
+  const base = props.apiBase ?? '';
+  if (markerClientInstance === null || markerClientBase !== base) {
+    markerClientInstance = new ApiClient({ baseUrl: base });
+    markerClientBase = base;
+  }
+  return markerClientInstance;
+}
+
 async function performSimilarSearch(
   type: 'intro' | 'outro' | 'credits' | 'ad',
   positionMs: number,
@@ -398,7 +415,7 @@ async function performSimilarSearch(
   similarLoading.value = true;
   similarError.value = null;
   try {
-    const res = await api.searchByMarker(type, positionMs, 30, 20, similarController.signal);
+    const res = await markerClient().searchByMarker(type, positionMs, 30, 20, similarController.signal);
     similarResults.value = Array.isArray(res.items) ? res.items : [];
   } catch (_e) {
     // Silently ignore abort errors — they're expected when the user closes the modal
