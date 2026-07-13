@@ -248,6 +248,12 @@ function goBack(): void {
     <footer v-if="player.currentTrack.value" class="music-bar" role="region" :aria-label="t('music.nowPlaying')">
       <div class="music-bar__meta">
         <span class="music-bar__title">{{ player.currentTrack.value.title }}</span>
+        <span v-if="player.error.value" class="music-bar__error" role="alert">
+          {{ t('music.streamError') }}
+        </span>
+        <span v-else-if="player.loading.value" class="music-bar__status" role="status" aria-live="polite">
+          {{ t('music.loading') }}
+        </span>
       </div>
       <div class="music-bar__controls">
         <button
@@ -461,6 +467,16 @@ function goBack(): void {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.music-bar__error {
+  display: block;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--danger, #f87171);
+}
+.music-bar__status {
+  display: block;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #a1a1aa);
 }
 .music-bar__controls {
   display: flex;

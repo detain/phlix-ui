@@ -289,6 +289,8 @@ export const DEFAULT_MESSAGES = {
     year: 'Year',
     duration: 'Duration',
     nowPlaying: 'Now playing',
+    loading: 'Loading…',
+    streamError: 'Playback unavailable — the stream link may have expired.',
     crossfade: 'Crossfade',
     crossfadeDuration: 'Crossfade duration',
     crossfadeSeconds: '{seconds}s',

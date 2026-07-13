@@ -344,6 +344,37 @@ describe('MusicLibraryPage', () => {
     expect(wrapper.find('.track-list').attributes('data-playing')).toBe('');
   });
 
+  it('surfaces a stream error in the transport bar when the signed URL is unavailable', async () => {
+    // Album track carries NO stream_url; the getTrack fast-path resolve also
+    // yields none (the /tracks/{id} stub returns no `track`), so the player
+    // cannot resolve a playable URL and sets error='stream-unavailable'.
+    const artistsList = [artist()];
+    const albumsList = [
+      album({
+        tracks: [
+          track({ id: 'tX', metadata: { title: 'Broken', duration_secs: 100, track_number: 1 } }),
+        ],
+      }),
+    ];
+    stubFetch(artistsList, albumsList, []);
+
+    const wrapper = mountPage();
+    await flushPromises();
+    await wrapper.find('.artist-card').trigger('click');
+    await flushPromises();
+    await wrapper.find('.album-card').trigger('click');
+    await flushPromises();
+
+    await wrapper.find('.track-play').trigger('click');
+    await flushPromises();
+
+    // The transport bar renders and shows the error state (not a silent failure).
+    expect(wrapper.find('.music-bar').exists()).toBe(true);
+    const err = wrapper.find('.music-bar__error');
+    expect(err.exists()).toBe(true);
+    expect(err.text()).toContain('Playback unavailable');
+  });
+
   // ---- Gapless / Crossfade settings in usePreferencesStore ---------------
 
   it('reads gaplessEnabled and crossfadeDuration from usePreferencesStore', async () => {

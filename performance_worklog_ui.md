@@ -1081,3 +1081,118 @@ Re-reviewed commit **6b9679e** (range `918ee81..6b9679e`) — the fix for the BL
 BLOCKING finding CLEARED. ⚠️ Still owed (out of scope here, already tracked): the release-time
 `dist/` rebuild+commit — consumers receive this fix only after `npm run build` (both vite entries) +
 committing `dist/` at the next tag.
+
+## Orchestrator — UI-3.6 DONE (2026-07-13, perf-5)
+- [x] UI-3.6 music playback — 27b2801. useMusicPlayer rewritten (dual-<audio>, consumes signed streamUrl; play/pause/seek/next/prev; gapless=next-track preload, crossfade=dual-element volume fade reading prefs); MusicLibraryPage transport bar; api/client normalizeMusicTrack stream_url→streamUrl + getTrack; lazy streamUrl resolve for browse fast-path. vitest 3006 pass (play test un-skipped), vue-tsc/eslint 0, build 0, dist NOT committed. src/api/music.ts DEAD (0 imports) → §6 queue.
+- REVIEW deferred to resume (paused per user). Release-time dist rebuild owed (per §0.5).
+- UI now has NO remaining code work this pass except the UI-3.6 review + the batched UI docs sweep + release-time dist rebuild (UI-3.1/3.4/3.6).
+
+## Reviewer (per-step) — UI-3.6 — 2026-07-13
+
+Reviewed commit `27b2801` (music playback via signed `stream_url` + client-side crossfade/gapless).
+Scope clean (only `useMusicPlayer.ts`, `MusicLibraryPage.vue`, `api/client.ts`, `types/music.ts`,
+`i18n/messages.ts`, the two tests, worklog). No `dist/` committed (§0.5 OK). `stream_url`→`streamUrl`
+normalization is in the api layer per §0.5; template refs use `.value` explicitly so reactivity is
+fine (no non-reactive-getter regression). Tests are genuine (real `src`/`play`/`volume`/`getTrack`
+assertions, not stubs). BUT the following behavioral findings:
+
+1. **`src/composables/useMusicPlayer.ts:playAt` (advance path) — GAPLESS PRELOAD IS NEVER CONSUMED,
+   so gapless playback does not actually take effect.** For the pure-gapless case
+   (`gaplessEnabled=true`, `crossfadeDuration=0`), `onEnded`/`next()` → `advance()` →
+   `playAt(index)`. `playAt` always reloads the **active** element (`const el = activeEl(); el.src =
+   src; el.load()`) and never swaps to the `idleEl` that `preloadNext()` pre-buffered with exactly
+   that track. The preloaded/buffered idle element is discarded, so there is still a
+   load/decode gap at the track boundary — the feature the step exists to deliver. Only the
+   *crossfade* path (`crossfadeTo`, `fadeIn = idleEl()` with the `if (fadeIn.src !== src)` reuse)
+   actually consumes the preload. **Why it matters:** Acceptance "crossfade/gapless settings take
+   effect" is only half-met — gapless is inert (preloads then throws it away). The
+   "gapless: preloads the next track" test only asserts the preload happened, not that the
+   transition uses it, so it passes while the feature is not delivered. **Fix:** on the gapless
+   (crossfade==0) advance, swap to the preloaded idle element (play `idleEl`, `swapSlots()`,
+   re-preload) instead of reloading `activeEl`; add a test asserting the post-advance active element
+   is the previously-preloaded one (i.e. no fresh `load()` of a new src on the active element).
+
+2. **`useMusicPlayer.ts:onLoadedMetadata` / `crossfadeTo` — `duration` stays 0 (and `position`
+   shows the outgoing track) for any track reached via crossfade.** During a crossfade the fade-in
+   element is the `idleEl`, so `onLoadedMetadata(fadeIn)` hits `if (el !== activeEl()) return;` and
+   is ignored — and `loadedmetadata` will not re-fire after `swapSlots()` (same element, same src).
+   `crossfadeTo` resets `duration.value = 0` and nothing ever sets it again for that track.
+   Likewise, while the fade runs `onTimeUpdate` reads `activeEl()` = the *outgoing* element, so
+   `position.value` reflects the old track's elapsed time even though `currentTrack` already
+   advanced. **Why it matters:** after any crossfade transition the transport bar's seek slider
+   `:max="player.duration.value || 0"` is 0 (un-seekable, wrong total-time) and the elapsed time is
+   momentarily the previous track's. **Fix:** capture the fade-in element's duration on crossfade
+   (e.g. set `duration` when the fade-in element's metadata is available, or re-read
+   `activeEl().duration` right after `swapSlots()`); don't gate `position`/`duration` purely on the
+   pre-swap `activeEl()`.
+
+3. **`useMusicPlayer.ts:crossfadeToNext`/`crossfadeTo` — re-entrant crossfade race that orphans a
+   `setInterval`.** The `crossfading.value` guard (checked in `onTimeUpdate`) is only set to `true`
+   *after* `await resolveSrc(track)` and `await fadeIn.play()`. For album fast-path tracks
+   (`streamUrl === null`, resolved via a network `getTrack`), `resolveSrc` can take longer than the
+   ~250ms `timeupdate` cadence, so several near-end `timeupdate` events each pass the
+   `!crossfading.value` guard and call `crossfadeToNext()` concurrently. Each eventually assigns
+   `crossfadeTimer = setInterval(...)`, overwriting the prior handle — the earlier interval(s) are
+   never cleared and keep mutating element `.volume` forever (leaked timer, fighting volume writes).
+   **Why it matters:** dropped/fighting audio + a leaked interval on exactly the fast-path this
+   commit added (`getTrack` resolve). **Fix:** set a re-entrancy guard (or set `crossfading.value =
+   true`) synchronously at the top of `crossfadeToNext`/`crossfadeTo`, before the first `await`.
+
+4. **`MusicLibraryPage.vue` — signed-URL failure is not surfaced.** `resolveSrc` returns `''` and
+   `playAt`/`crossfadeTo` set `error.value = 'stream-unavailable'` on an unresolvable/expired signed
+   URL, but the page never renders `player.error`, so a failed/expired stream fails silently (button
+   shows "playing", no audio, no message). **Why it matters:** review focus #2 (graceful expired/
+   failed signed URL) is only partially met — no crash, but no user feedback. **Fix:** show
+   `player.error` in the transport bar (or a toast) when set. Low severity.
+
+5. **`useMusicPlayer.ts` — `loading` ref exposed but never assigned.** `loading` is returned in the
+   public API but is never set `true` during the async `getTrack`/resolve, so there is no loading
+   state during the album fast-path network resolve. Low severity (dead-ish state; either wire it or
+   drop it).
+
+6. **VERIFY (cross-repo, producer side): `ApiClient.getTrack` depends on `GET
+   /api/v1/music/tracks/{id}` returning `{ track: { …, stream_url } }`.** The album fast-path
+   resolve (`resolveSrc` → `getTrack`) is the primary path for embedded tracks that carry no
+   `streamUrl`. If the server X8 work only added `stream_url` to the *list* endpoint and not a
+   single-track `/tracks/{id}` route, album fast-path playback 404s. Not a UI-code defect —
+   confirm the route exists on the box (server repo / live) as part of the X8 producer/consumer
+   sync before considering UI-3.6 done.
+
+Findings 1-3 are behavioral correctness issues against the step's Acceptance ("crossfade/gapless
+settings take effect") and review focus #1 (dual-`<audio>` correctness / race). Recommend a Fixer
+loop.
+
+## Fixer — UI-3.6 — 2026-07-13 (5 review findings on 27b2801 fixed)
+
+All 5 behavioral findings fixed in `src/composables/useMusicPlayer.ts` + `src/pages/MusicLibraryPage.vue`
+(+ `src/i18n/messages.ts`). Finding 6 (server `GET /api/v1/music/tracks/{id}` route) confirmed by
+orchestrator as already-present producer — no UI action; the track payload DOES carry a signed
+`stream_url` (X8 `formatTrack`), so the album fast-path `getTrack` resolves rather than 404s.
+
+1. **Gapless preload now CONSUMED.** New `gaplessAdvance(index)` (routed from `advance()` when
+   `crossfadeDuration==0`): swaps IN the already-preloaded idle element (plays it, `swapSlots`,
+   re-preloads) instead of reloading `activeEl`. The active element is never reloaded, so a
+   pre-buffered gapless transition is instant. Test asserts the preloaded element is played and NOT
+   re-`load()`ed (still exactly one load — the preload).
+2. **`duration` restored after crossfade.** `crossfadeTo` now reads `fadeIn.duration` at fade-start
+   AND re-reads `activeEl().duration` after `swapSlots()`; `onTimeUpdate` tracks the incoming (idle)
+   element's position/duration while `crossfading`. Seek slider `:max` no longer stuck at 0. Test
+   asserts `duration===100` post-crossfade.
+3. **Re-entrant crossfade race fixed.** `crossfading.value=true` is now set SYNCHRONOUSLY at the top
+   of `crossfadeTo` (before any await) + any lingering `crossfadeTimer` is cleared first, so
+   concurrent near-end `timeupdate`/`getTrack`-slow-path advances start only ONE crossfade. Test
+   fires two concurrent `next()` on a `getTrack`-resolved track and asserts the idle element plays
+   exactly once (pre-fix: twice + leaked interval).
+4. **Signed-URL failure surfaced.** MusicLibraryPage transport bar renders `player.error`
+   (`music.streamError`) in `.music-bar__error` with `role="alert"`. Test asserts it renders when a
+   track resolves to no URL.
+5. **`loading` ref made real.** Assigned `true` before `resolveSrc`/load and `false` once
+   playable/errored in `playAt`/`gaplessAdvance`/`crossfadeTo`; transport bar shows
+   `.music-bar__status` (`music.loading`) when loading and no error.
+
+Verify: `vitest run` → **177 files, 3010 pass / 5 skip / 0 fail** (baseline 3006 + 4 net new: 3
+useMusicPlayer + 1 MusicLibraryPage). `vue-tsc --noEmit` exit 0. `eslint` (changed files) exit 0.
+`npm run build` exit 0. **dist/ NOT committed** (restored via `git checkout -- dist/ && git clean
+-fdq dist/`, §0.5 release-time gate). Files: `src/composables/useMusicPlayer.ts`,
+`src/composables/useMusicPlayer.test.ts`, `src/pages/MusicLibraryPage.vue`,
+`src/pages/MusicLibraryPage.test.ts`, `src/i18n/messages.ts`.

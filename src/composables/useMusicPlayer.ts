@@ -137,13 +137,23 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
 
   // ---- Event handlers (bound once per element) -------------------------------
   function onTimeUpdate(el: HTMLAudioElement): void {
+    // While a crossfade is running the incoming (idle) element is the logical
+    // "current" track, so track ITS position/duration (the transport bar must
+    // reflect the new track, not the outgoing one) and never re-trigger a
+    // crossfade mid-fade.
+    if (crossfading.value) {
+      if (el === idleEl()) {
+        position.value = el.currentTime;
+        if (isFinite(el.duration) && el.duration > 0) duration.value = el.duration;
+      }
+      return;
+    }
     if (el !== activeEl()) return;
     position.value = el.currentTime;
 
-    // Near-end crossfade trigger (crossfade on, gapless off, next available).
+    // Near-end crossfade trigger (crossfade on, next available).
     if (
       prefs.crossfadeDuration > 0
-      && !crossfading.value
       && hasNext.value
       && isFinite(el.duration)
       && el.duration > 0
@@ -181,6 +191,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     if (!track) return;
     clearCrossfade();
     const el = activeEl();
+    loading.value = true;
     const src = await resolveSrc(track);
     error.value = src === '' ? 'stream-unavailable' : null;
     el.src = src;
@@ -192,6 +203,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     duration.value = 0;
     await el.play().catch(() => { /* autoplay-blocked — UI shows paused */ });
     playing.value = true;
+    loading.value = false;
     void preloadNext();
   }
 
@@ -203,8 +215,47 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     if (prefs.crossfadeDuration > 0) {
       await crossfadeTo(index);
     } else {
-      await playAt(index);
+      await gaplessAdvance(index);
     }
+  }
+
+  /**
+   * Gapless (crossfade-off) advance to `queue[index]`: consume the idle element
+   * that {@link preloadNext} already pre-buffered with exactly this track — swap
+   * it in rather than reloading the active element, so there is no load/decode
+   * gap at the boundary. If it was NOT preloaded (gapless pref off, or the src
+   * doesn't match) it is loaded onto the idle element now; either way the active
+   * element is never reloaded, so a pre-buffered transition is instant.
+   */
+  async function gaplessAdvance(index: number): Promise<void> {
+    const track = queue.value[index];
+    if (!track) return;
+    clearCrossfade();
+    loading.value = true;
+    const src = await resolveSrc(track);
+    error.value = src === '' ? 'stream-unavailable' : null;
+
+    const incoming = idleEl();
+    const outgoing = activeEl();
+    // Reuse the preloaded idle element when it already points at this track;
+    // only (re)load when the preload is absent or stale.
+    if (incoming.src !== src) {
+      incoming.src = src;
+      incoming.load();
+    }
+    incoming.volume = 1;
+    outgoing.pause();
+    outgoing.currentTime = 0;
+    swapSlots();
+
+    currentTrack.value = track;
+    currentIndex.value = index;
+    position.value = 0;
+    duration.value = isFinite(incoming.duration) && incoming.duration > 0 ? incoming.duration : 0;
+    await incoming.play().catch(() => { /* autoplay-blocked — UI shows paused */ });
+    playing.value = true;
+    loading.value = false;
+    void preloadNext();
   }
 
   /** Crossfade from the active track to the next track in the queue. */
@@ -220,11 +271,23 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
   async function crossfadeTo(index: number): Promise<void> {
     const track = queue.value[index];
     if (!track) return;
-    clearCrossfade();
+    // Re-entrancy guard set SYNCHRONOUSLY before any await. Multiple near-end
+    // `timeupdate` events (and especially the album fast-path `getTrack` resolve,
+    // which can outlast the ~250ms timeupdate cadence) would otherwise each pass
+    // the guard and start a crossfade, overwriting `crossfadeTimer` and orphaning
+    // the prior interval. Guarding here means only ONE crossfade runs at a time.
+    if (crossfading.value) return;
+    // Defensively clear any lingering interval before starting a new one.
+    if (crossfadeTimer !== null) {
+      clearInterval(crossfadeTimer);
+      crossfadeTimer = null;
+    }
+    crossfading.value = true;
 
     const fadeOut = activeEl();
     const fadeIn = idleEl();
 
+    loading.value = true;
     // Reuse a matching preload; otherwise resolve + load now.
     const src = await resolveSrc(track);
     if (fadeIn.src !== src) {
@@ -235,14 +298,17 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
 
     fadeIn.volume = 0;
     await fadeIn.play().catch(() => {});
+    loading.value = false;
 
     // Advance logical state immediately (the fade-in element is now "current").
+    // Read the fade-in element's duration NOW — `loadedmetadata` fired (or will
+    // fire) on the idle element, which `onLoadedMetadata` ignores because it is
+    // not `activeEl()` yet, and it won't re-fire after `swapSlots()`.
     currentTrack.value = track;
     currentIndex.value = index;
     position.value = 0;
-    duration.value = 0;
+    duration.value = isFinite(fadeIn.duration) && fadeIn.duration > 0 ? fadeIn.duration : 0;
     playing.value = true;
-    crossfading.value = true;
 
     const dur = prefs.crossfadeDuration;
     const stepMs = Math.max(10, (dur * 1000) / CROSSFADE_STEPS);
@@ -260,6 +326,11 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
         fadeOut.volume = 1;
         swapSlots();
         crossfading.value = false;
+        // Metadata may only have arrived after the swap — make sure `duration`
+        // reflects the now-active (fade-in) element.
+        if (isFinite(activeEl().duration) && activeEl().duration > 0) {
+          duration.value = activeEl().duration;
+        }
         void preloadNext();
       }
     }, stepMs);

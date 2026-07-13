@@ -182,6 +182,92 @@ describe('useMusicPlayer', () => {
     player.dispose(); // clear the fade interval
   });
 
+  it('gapless: advance CONSUMES the preloaded idle element (no reload of a new src)', async () => {
+    const prefs = usePreferencesStore();
+    prefs.gaplessEnabled = true;
+    prefs.crossfadeDuration = 0;
+
+    const player = makePlayer();
+    player.loadTracks([mkTrack('a', '/media/a/stream?sig=1'), mkTrack('b', '/media/b/stream?sig=2')]);
+
+    await player.play(player.queue.value[0]);
+    await flushPromises();
+
+    // Track b was preloaded onto the idle element (created[1]) — loaded exactly once.
+    expect(created.length).toBe(2);
+    expect(created[1].src).toBe('/media/b/stream?sig=2');
+    expect(created[1].load).toHaveBeenCalledTimes(1);
+
+    await player.next();
+    await flushPromises();
+
+    // The gapless advance SWAPPED IN the already-preloaded element (played it),
+    // rather than reloading the active element with a fresh src.
+    expect(player.currentTrack.value?.id).toBe('b');
+    expect(created[1].play).toHaveBeenCalled();
+    // Not reloaded: the preload's single load() is the only one — the feature the
+    // step exists to deliver (no load/decode gap at the boundary).
+    expect(created[1].load).toHaveBeenCalledTimes(1);
+    // The outgoing element was paused, and no fresh third element was created.
+    expect(created[0].pause).toHaveBeenCalled();
+    expect(created.length).toBe(2);
+  });
+
+  it('duration reflects the NEW track after a crossfade (seek slider max not stuck at 0)', async () => {
+    const prefs = usePreferencesStore();
+    prefs.crossfadeDuration = 5;
+    prefs.gaplessEnabled = false;
+
+    const player = makePlayer();
+    player.loadTracks([mkTrack('a', '/media/a/stream?sig=1'), mkTrack('b', '/media/b/stream?sig=2')]);
+
+    await player.play(player.queue.value[0]);
+    await flushPromises();
+
+    await player.next();
+    await flushPromises();
+
+    // After the crossfade begins, the transport bar reads the fade-in track's
+    // duration (FakeAudioElement default 100), NOT 0.
+    expect(player.crossfading.value).toBe(true);
+    expect(player.currentTrack.value?.id).toBe('b');
+    expect(player.duration.value).toBe(100);
+
+    player.dispose(); // clear the fade interval
+  });
+
+  it('concurrent near-end triggers start only ONE crossfade (no orphaned interval)', async () => {
+    // Track b has no streamUrl → resolved via a network getTrack, the slow path
+    // where the pre-fix guard-after-await allowed re-entrant crossfades.
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      track: { id: 'b', name: 'B', duration_secs: 100, track_number: 2, stream_url: '/media/b/stream?sig=2' },
+    })));
+
+    const prefs = usePreferencesStore();
+    prefs.crossfadeDuration = 5;
+    prefs.gaplessEnabled = false;
+
+    const player = makePlayer();
+    player.loadTracks([mkTrack('a', '/media/a/stream?sig=1'), mkTrack('b', null)]);
+
+    await player.play(player.queue.value[0]);
+    await flushPromises();
+
+    // Two near-simultaneous advances (as two near-end timeupdate events would do).
+    const p1 = player.next();
+    const p2 = player.next();
+    await Promise.all([p1, p2]);
+    await flushPromises();
+
+    // Only one crossfade ran: the single idle element was played exactly once
+    // (pre-fix: two concurrent crossfades → play called twice + a leaked interval).
+    expect(created.length).toBe(2);
+    expect(created[1].play).toHaveBeenCalledTimes(1);
+    expect(player.crossfading.value).toBe(true);
+
+    player.dispose();
+  });
+
   it('resolves stream_url via getTrack when a track has none (album fast-path)', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
       track: { id: 'z', name: 'Z', duration_secs: 50, track_number: 1, stream_url: '/media/z/stream?sig=zz' },
