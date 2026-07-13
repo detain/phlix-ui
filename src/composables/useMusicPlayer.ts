@@ -59,6 +59,32 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
   /** 0 = elA is audible, 1 = elB is audible. */
   let activeSlot: 0 | 1 = 0;
 
+  /**
+   * The exact `stream_url` we last assigned to each element via `el.src = …`
+   * (as returned by {@link resolveSrc}). We compare against THIS — never the
+   * `HTMLMediaElement.src` getter — to decide whether an element already holds
+   * the track we want. The IDL `.src` getter returns the RESOLVED ABSOLUTE URL,
+   * so on a same-origin media-server deployment (`streamBase()===''`, where
+   * `resolveSrc` yields a RELATIVE path) `el.src` would never equal our relative
+   * string and the reuse guard would always miss — re-`load()`ing (and thus
+   * discarding) the pre-buffered idle element on every gapless/crossfade swap.
+   * Tracking the assigned value keeps reuse robust to relative-vs-absolute.
+   * WeakMap → no leak (entries collected with their element).
+   */
+  const loadedSrc = new WeakMap<HTMLAudioElement, string>();
+
+  /** Assign `src` to `el`, (re)load it, and record what we loaded. */
+  function setElementSource(el: HTMLAudioElement, src: string): void {
+    el.src = src;
+    el.load();
+    loadedSrc.set(el, src);
+  }
+
+  /** True when `el` already holds exactly `src` (compared against the tracked value). */
+  function elementHolds(el: HTMLAudioElement, src: string): boolean {
+    return loadedSrc.get(el) === src;
+  }
+
   function createAudioElement(): HTMLAudioElement {
     const el = new Audio();
     el.preload = 'none';
@@ -194,9 +220,8 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     loading.value = true;
     const src = await resolveSrc(track);
     error.value = src === '' ? 'stream-unavailable' : null;
-    el.src = src;
+    setElementSource(el, src);
     el.volume = 1;
-    el.load();
     currentTrack.value = track;
     currentIndex.value = index;
     position.value = 0;
@@ -238,10 +263,11 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     const incoming = idleEl();
     const outgoing = activeEl();
     // Reuse the preloaded idle element when it already points at this track;
-    // only (re)load when the preload is absent or stale.
-    if (incoming.src !== src) {
-      incoming.src = src;
-      incoming.load();
+    // only (re)load when the preload is absent or stale. Compare against the
+    // TRACKED assigned src (not the `.src` getter) so this stays correct when
+    // `resolveSrc` returns a relative URL on a same-origin deployment.
+    if (!elementHolds(incoming, src)) {
+      setElementSource(incoming, src);
     }
     incoming.volume = 1;
     outgoing.pause();
@@ -288,11 +314,12 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     const fadeIn = idleEl();
 
     loading.value = true;
-    // Reuse a matching preload; otherwise resolve + load now.
+    // Reuse a matching preload; otherwise resolve + load now. Compare against the
+    // TRACKED assigned src (not the `.src` getter) so reuse stays correct when
+    // `resolveSrc` returns a relative URL on a same-origin deployment.
     const src = await resolveSrc(track);
-    if (fadeIn.src !== src) {
-      fadeIn.src = src;
-      fadeIn.load();
+    if (!elementHolds(fadeIn, src)) {
+      setElementSource(fadeIn, src);
     }
     error.value = src === '' ? 'stream-unavailable' : null;
 
@@ -348,8 +375,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     if (src === '') return;
     const el = idleEl();
     el.preload = 'auto';
-    el.src = src;
-    el.load();
+    setElementSource(el, src);
   }
 
   // ---- Public API ------------------------------------------------------------
@@ -410,6 +436,8 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     getB().pause();
     getA().src = '';
     getB().src = '';
+    loadedSrc.set(getA(), '');
+    loadedSrc.set(getB(), '');
     playing.value = false;
     position.value = 0;
     duration.value = 0;
@@ -440,8 +468,8 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
   /** Tear down elements + timers (call from onUnmounted). */
   function dispose(): void {
     clearCrossfade();
-    if (elA.value) { elA.value.pause(); elA.value.src = ''; }
-    if (elB.value) { elB.value.pause(); elB.value.src = ''; }
+    if (elA.value) { elA.value.pause(); elA.value.src = ''; loadedSrc.set(elA.value, ''); }
+    if (elB.value) { elB.value.pause(); elB.value.src = ''; loadedSrc.set(elB.value, ''); }
   }
 
   return {

@@ -1196,3 +1196,67 @@ useMusicPlayer + 1 MusicLibraryPage). `vue-tsc --noEmit` exit 0. `eslint` (chang
 -fdq dist/`, §0.5 release-time gate). Files: `src/composables/useMusicPlayer.ts`,
 `src/composables/useMusicPlayer.test.ts`, `src/pages/MusicLibraryPage.vue`,
 `src/pages/MusicLibraryPage.test.ts`, `src/i18n/messages.ts`.
+
+## Reviewer (re-review, per-step) — UI-3.6 — 2026-07-13
+
+Re-reviewed the Fixer commit `2423801` (range `27b2801..2423801`) against the 5 findings from the
+first review. Verified each fix in the actual source (`src/composables/useMusicPlayer.ts` full read)
++ ran `npx vitest run src/composables/useMusicPlayer.test.ts src/pages/MusicLibraryPage.test.ts` →
+**2 files, 20 pass / 0 fail.** Scope clean: `git show --stat` = worklog + useMusicPlayer.ts/.test.ts
++ MusicLibraryPage.vue/.test.ts + i18n/messages.ts only — **no `dist/`** (§0.5 OK).
+
+VERIFIED CORRECT:
+- **Finding 2 (duration after crossfade):** `crossfadeTo` reads `fadeIn.duration` at fade-start
+  (:310) and re-reads `activeEl().duration` after `swapSlots()` (:331); `onTimeUpdate` tracks the
+  incoming (`idleEl()`) element's position/duration while `crossfading` (:144-149) and only that
+  element, so the outgoing element's timeupdates don't corrupt position; normal (non-crossfade)
+  tracking (:151) is unaffected. Seek `:max` is non-zero post-crossfade. Correct.
+- **Finding 3 (re-entrant race):** `crossfadeTo` sets `if (crossfading.value) return;` → clears any
+  lingering `crossfadeTimer` → `crossfading.value = true` all SYNCHRONOUSLY before the first `await`
+  (:279-285). Second concurrent `next()` runs `crossfadeTo`'s sync prefix and bails at the guard.
+  Guard is reset on the completion path (:328) and via `clearCrossfade()` (called by playAt/
+  gaplessAdvance/loadTracks/stop/dispose); `resolveSrc` and `.play()` both swallow their own errors
+  so there is no throw-before-reset that could wedge playback. Correct.
+- **Finding 4 (error surfaced):** transport bar renders `player.error.value` → `music.streamError`,
+  `role="alert"`; i18n key present; reactive via `.value`; error takes priority over loading. Correct.
+- **Finding 5 (loading state):** `loading` set true before `resolveSrc` and false after `.play()` on
+  ALL three paths (playAt :194/:206, gaplessAdvance :234/:257, crossfadeTo :290/:301, incl. the
+  error case since the false-assignment is unconditional); shown only when `!error`. Correct.
+- **Tests genuine:** the "one crossfade" test fires two concurrent `next()` on a `getTrack`-resolved
+  (slow-path) track and asserts `created[1].play` called exactly once — would fail if the guard were
+  moved back after the awaits. The gapless test asserts the preloaded `created[1]` is played and
+  NOT re-`load()`ed and no third element created — would fail if the advance reloaded `activeEl()`.
+  The crossfade-duration test asserts `duration===100` post-crossfade. Not tautologies. Un-skipped
+  play test still meaningful. No regression to normal play/pause/seek/next/prev (existing suites green).
+
+FINDING (1):
+
+1. **`src/composables/useMusicPlayer.ts:242` (gaplessAdvance) — the preload-reuse guard
+   `if (incoming.src !== src)` never matches on the same-origin media-server deployment
+   (`streamBase()===''`), so the pre-buffered idle element is RE-`load()`ed on every gapless
+   transition, defeating the "no load/decode gap at the boundary" benefit that finding 1's fix
+   exists to deliver.** `resolveSrc` returns a RELATIVE string (`/media/:id/stream?...`) when
+   `streamBase()===''` (the media-server case per the composable's own docblock :42-43), but
+   `preloadNext` (:351) assigned that relative string to `el.src`, and the HTMLMediaElement `.src`
+   IDL getter returns the RESOLVED ABSOLUTE URL. So at :242 `incoming.src` (absolute
+   `http://host/media/...`) `!==` `src` (relative `/media/...`) is always true → `incoming.src=src;
+   incoming.load()` re-initialises the element and discards the pre-buffered data. The gapless fix
+   is architecturally correct (it does swap in and play the idle element — no element leak, no
+   double-play, slots re-preload), but the actual gap-elimination engages only on the HUB path
+   (`streamBase()` absolute → strings match). **Why it matters:** the step Acceptance "gapless
+   settings take effect" / "no load/decode gap" is only met on the hub deployment, not on the
+   primary same-origin media server. **Masked by the tests:** `FakeAudioElement.src` (test :18)
+   stores the raw assigned string, so `created[1].src === '/media/b/stream?sig=2'` matches and the
+   reuse branch is taken in vitest — the real-browser normalization is invisible to jsdom/the fake.
+   **Note:** the identical idiom is pre-existing in the crossfade reuse path (`crossfadeTo` :293) and
+   `preloadNext`, i.e. this is a shared latent gap, but the gapless fix now makes it load-bearing.
+   **Fix:** compare against a normalized form — e.g. track the preloaded track id/URL on the element
+   (a dataset marker set in `preloadNext`) and reuse when THAT matches, or resolve both sides to
+   absolute before comparing (`new URL(x, location.href).href`); add a test whose fake `.src` getter
+   returns an absolute-normalized value (or assert reuse via the marker) so the same-origin case is
+   actually exercised.
+
+Findings 2-5 CLEARED. 1 finding remains → recommend a Fixer loop.
+
+## Fixer (re-review) — UI-3.6 — 2026-07-13 (finding 1 fixed)
+Fixed the same-origin gapless-reuse inertness: `useMusicPlayer.ts` now tracks the exact assigned `stream_url` per `<audio>` element in a per-instance `WeakMap<HTMLAudioElement,string>` (`loadedSrc`) via `setElementSource()`/`elementHolds()`; `gaplessAdvance`, `crossfadeTo`, `playAt`, `preloadNext` all reuse/assign through it (never read the `.src` IDL getter for the reuse decision), so reuse holds when `resolveSrc` returns a RELATIVE URL (`streamBase()===''`); `stop`/`dispose` clear the marker. Test double `FakeAudioElement.src` now NORMALIZES to an absolute URL like a real element (getter resolves relative against `http://localhost/`), un-hiding the bug; updated the 5 relative `.src` assertions to absolute; added a same-origin regression-guard test asserting the preloaded idle element is played and NOT re-`load()`ed even though `.src` reads back absolute (≠ the relative resolveSrc output). Verified: reverting to the old `incoming.src !== src` compare makes 2 tests go RED. `npx vitest run` = **3010 pass / 1 flaky-fail (unrelated UI-3.4 MetricsPage.apex-registration under full-suite parallelism — passes 4/4 in isolation) / 5 skip**; useMusicPlayer file = 12/12; `vue-tsc --noEmit` exit 0; `eslint` on changed files exit 0; `npm run build` exit 0 (dist restored, NOT committed).

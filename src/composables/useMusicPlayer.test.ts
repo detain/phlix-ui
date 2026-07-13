@@ -14,8 +14,22 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
 import type { MusicTrack } from '../types/music';
 
 // --- Fake <audio> element (distinct instance per `new Audio()`) --------------
+// The `src` accessor MIMICS a real HTMLMediaElement: the getter returns the
+// RESOLVED ABSOLUTE URL (relative assignments are resolved against a base),
+// while the raw assigned string is only kept internally. A prior test double
+// stored the raw string, which HID the relative-vs-absolute gapless-reuse bug
+// (reading `.src` back matched the relative resolveSrc() output in jsdom but
+// never would in a real browser). With normalization, any code that decides
+// reuse by reading `.src` (relative-vs-absolute) regresses RED.
+const FAKE_DOC_BASE = 'http://localhost/';
 class FakeAudioElement {
-  src = '';
+  private _src = '';
+  get src(): string {
+    if (this._src === '') return '';
+    if (/^https?:\/\//.test(this._src)) return this._src;
+    return new URL(this._src, FAKE_DOC_BASE).href;
+  }
+  set src(v: string) { this._src = v; }
   preload = 'none';
   currentTime = 0;
   duration = 100;
@@ -72,7 +86,7 @@ describe('useMusicPlayer', () => {
     await player.play(player.queue.value[0]);
     await flushPromises();
 
-    expect(created[0].src).toBe('/media/a/stream?sig=1');
+    expect(created[0].src).toBe('http://localhost/media/a/stream?sig=1');
     expect(created[0].play).toHaveBeenCalled();
     expect(player.playing.value).toBe(true);
     expect(player.currentTrack.value?.id).toBe('a');
@@ -148,7 +162,7 @@ describe('useMusicPlayer', () => {
 
     // A second element was created (the idle one) and pre-loaded with track b.
     expect(created.length).toBe(2);
-    expect(created[1].src).toBe('/media/b/stream?sig=2');
+    expect(created[1].src).toBe('http://localhost/media/b/stream?sig=2');
     expect(created[1].preload).toBe('auto');
     // Preload does NOT start playback on the idle element.
     expect(created[1].play).not.toHaveBeenCalled();
@@ -173,7 +187,7 @@ describe('useMusicPlayer', () => {
     // is still playing (the two overlap-fade).
     expect(player.crossfading.value).toBe(true);
     expect(created.length).toBe(2);
-    expect(created[1].src).toBe('/media/b/stream?sig=2');
+    expect(created[1].src).toBe('http://localhost/media/b/stream?sig=2');
     expect(created[1].play).toHaveBeenCalled();
     expect(created[1].volume).toBe(0);
     expect(created[0].play).toHaveBeenCalled();
@@ -194,8 +208,13 @@ describe('useMusicPlayer', () => {
     await flushPromises();
 
     // Track b was preloaded onto the idle element (created[1]) — loaded exactly once.
+    // NOTE: `.src` reads back the ABSOLUTE resolved URL (as a real element would),
+    // even though resolveSrc() returned the RELATIVE '/media/b/stream?sig=2' on
+    // this same-origin (`streamBase()===''`) player — the very mismatch that would
+    // break a `.src`-based reuse guard. Reuse below must still hold.
     expect(created.length).toBe(2);
-    expect(created[1].src).toBe('/media/b/stream?sig=2');
+    expect(created[1].src).toBe('http://localhost/media/b/stream?sig=2');
+    expect(created[1].src).not.toBe('/media/b/stream?sig=2');
     expect(created[1].load).toHaveBeenCalledTimes(1);
 
     await player.next();
@@ -279,7 +298,43 @@ describe('useMusicPlayer', () => {
     await player.play(player.queue.value[0]);
     await flushPromises();
 
-    expect(created[0].src).toBe('/media/z/stream?sig=zz');
+    expect(created[0].src).toBe('http://localhost/media/z/stream?sig=zz');
     expect(created[0].play).toHaveBeenCalled();
+  });
+
+  it('gapless (same-origin/relative): reuses the preloaded idle element even though .src is absolute (relative-vs-absolute regression guard)', async () => {
+    // Same-origin media-server deployment: streamBase()==='' so resolveSrc()
+    // returns a RELATIVE path. A real <audio>.src getter (and our fake) reports
+    // the RESOLVED ABSOLUTE URL, which is NOT equal to that relative string.
+    // Reuse must be decided on the tracked assigned value, not `.src` — otherwise
+    // the idle element is re-load()ed on every gapless swap and the pre-buffer
+    // (the whole point of gapless) is discarded. This test goes RED if the reuse
+    // guard regresses to comparing `incoming.src` against resolveSrc()'s output.
+    const prefs = usePreferencesStore();
+    prefs.gaplessEnabled = true;
+    prefs.crossfadeDuration = 0;
+
+    const player = useMusicPlayer({ apiBase: () => '', streamBase: () => '' });
+    player.loadTracks([mkTrack('a', '/media/a/stream?sig=1'), mkTrack('b', '/media/b/stream?sig=2')]);
+
+    await player.play(player.queue.value[0]);
+    await flushPromises();
+
+    // Idle element preloaded with track b, loaded exactly once. Its `.src` getter
+    // is ABSOLUTE and deliberately differs from the relative resolveSrc() output.
+    expect(created.length).toBe(2);
+    expect(created[1].src).toBe('http://localhost/media/b/stream?sig=2');
+    expect(created[1].src).not.toBe('/media/b/stream?sig=2');
+    expect(created[1].load).toHaveBeenCalledTimes(1);
+
+    await player.next();
+    await flushPromises();
+
+    // The idle element was PLAYED (swapped in) and NOT re-loaded — reuse held
+    // despite the absolute-vs-relative `.src` mismatch. No third element created.
+    expect(player.currentTrack.value?.id).toBe('b');
+    expect(created[1].play).toHaveBeenCalled();
+    expect(created[1].load).toHaveBeenCalledTimes(1);
+    expect(created.length).toBe(2);
   });
 });
