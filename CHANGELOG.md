@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Test credentials button and redirect URL display** — adds a test credentials button and redirect URL display functionality.
+
 ### Changed
 
 - **MediaGrid scroll performance (UI-2.5)** — replaces `getBoundingClientRect()` per scroll tick with cached `window.scrollY`; `menuItems` lazily computed on menu open; ResizeObserver invalidates cached `sizerTop`; window cache prevents redundant array re-slicing.

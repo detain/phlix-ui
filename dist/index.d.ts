@@ -25,9 +25,89 @@ export { default as ThumbRating } from './components/ThumbRating.vue';
 export { default as MediaGrid } from './components/MediaGrid.vue';
 export { default as MediaRow } from './components/MediaRow.vue';
 export { default as MediaHomeRow } from './components/HomeRow.vue';
-export { default as MediaDetail } from './components/MediaDetail.vue';
-export { default as MetadataMatchModal } from './components/MetadataMatchModal.vue';
-export { default as FilterBar } from './components/FilterBar.vue';
+export declare const MediaDetail: import("vue").DefineComponent<{
+    item: import("./index.ts").MediaItem;
+    resumeSeconds?: number | null;
+    similar?: import("./index.ts").MediaItem[];
+    similarLoading?: boolean;
+    showBack?: boolean;
+    canMatch?: boolean;
+}, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+    match: (item: import("./types/media-item").MediaDetail) => any;
+    play: (item: import("./types/media-item").MediaDetail) => any;
+    info: (item: import("./types/media-item").MediaDetail) => any;
+    back: () => any;
+    resume: (item: import("./types/media-item").MediaDetail) => any;
+    watchlist: (item: import("./types/media-item").MediaDetail) => any;
+    refresh: (item: import("./types/media-item").MediaDetail) => any;
+    actor: (name: string) => any;
+    remove: (item: import("./types/media-item").MediaDetail) => any;
+    "mark-watched": (item: import("./types/media-item").MediaDetail) => any;
+    "choose-poster": (item: import("./types/media-item").MediaDetail) => any;
+    "edit-metadata": (item: import("./types/media-item").MediaDetail) => any;
+    "explore-data": (item: import("./types/media-item").MediaDetail) => any;
+    genre: (name: string) => any;
+    company: (name: string) => any;
+}, string, import("vue").PublicProps, Readonly<{
+    item: import("./index.ts").MediaItem;
+    resumeSeconds?: number | null;
+    similar?: import("./index.ts").MediaItem[];
+    similarLoading?: boolean;
+    showBack?: boolean;
+    canMatch?: boolean;
+}> & Readonly<{
+    onMatch?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    onPlay?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    onInfo?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    onBack?: (() => any) | undefined;
+    onResume?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    onWatchlist?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    onRefresh?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    onActor?: ((name: string) => any) | undefined;
+    onRemove?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    "onMark-watched"?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    "onChoose-poster"?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    "onEdit-metadata"?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    "onExplore-data"?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    onGenre?: ((name: string) => any) | undefined;
+    onCompany?: ((name: string) => any) | undefined;
+}>, {
+    canMatch: boolean;
+    resumeSeconds: number | null;
+    similar: import("./index.ts").MediaItem[];
+    similarLoading: boolean;
+    showBack: boolean;
+}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+export declare const MetadataMatchModal: import("vue").DefineComponent<{
+    modelValue: boolean;
+    item: import("./index.ts").MediaItem | null;
+}, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+    "update:modelValue": (v: boolean) => any;
+    applied: (item: import("./types/media-item").MediaDetail) => any;
+}, string, import("vue").PublicProps, Readonly<{
+    modelValue: boolean;
+    item: import("./index.ts").MediaItem | null;
+}> & Readonly<{
+    "onUpdate:modelValue"?: ((v: boolean) => any) | undefined;
+    onApplied?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+export declare const FilterBar: import("vue").DefineComponent<{
+    searchDebounce?: number;
+    sticky?: boolean;
+    showArtistSort?: boolean;
+}, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+    change: () => any;
+}, string, import("vue").PublicProps, Readonly<{
+    searchDebounce?: number;
+    sticky?: boolean;
+    showArtistSort?: boolean;
+}> & Readonly<{
+    onChange?: (() => any) | undefined;
+}>, {
+    sticky: boolean;
+    searchDebounce: number;
+    showArtistSort: boolean;
+}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export { default as SourcePriorityEditor } from './components/SourcePriorityEditor.vue';
 export { AdminLogsApi, ALL_LOGS } from './api/admin/logs';
 export type { LogFile, LogTail, LogTailAll } from './api/admin/logs';

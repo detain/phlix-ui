@@ -25,6 +25,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     "mark-watched": (item: import("../types/media-item").MediaDetail) => any;
     "choose-poster": (item: import("../types/media-item").MediaDetail) => any;
     "edit-metadata": (item: import("../types/media-item").MediaDetail) => any;
+    "explore-data": (item: import("../types/media-item").MediaDetail) => any;
     genre: (name: string) => any;
     company: (name: string) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
@@ -40,6 +41,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onEdit-metadata"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onExplore-data"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onGenre?: ((name: string) => any) | undefined;
     onCompany?: ((name: string) => any) | undefined;
 }>, {

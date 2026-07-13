@@ -1,4 +1,5 @@
 import { ApiClient } from '../../api/client';
+import 'apexcharts/line';
 type __VLS_Props = {
     /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
     client?: ApiClient;

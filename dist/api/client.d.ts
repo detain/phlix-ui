@@ -364,16 +364,25 @@ export declare class ApiClient {
         url: string;
     }>;
     /**
-     * Get the list of missing episodes for a series/season media item
-     * (`GET /api/v1/media/{id}/missing-episodes`). Returns an array of episode
-     * objects. Non-2xx throws the shared {@link ApiError}.
+     * Get the missing-episode report for a series media item
+     * (`GET /api/v1/media/{id}/missing-episodes`).
+     *
+     * The server returns an ENVELOPE (snake_case, matching
+     * `MediaItemController::getMissingEpisodes`), NOT a bare array:
+     *   `{ total_expected, total_existing, missing_episodes: [{ episode_number }] }`.
+     * `total_expected`/`total_existing` are omitted on the degraded branches
+     * (item has no `metadata_json` or no positive `episode_count`), which still
+     * return `{ missing_episodes: [] }` — hence both totals are optional and the
+     * canonical count is always `missing_episodes.length`. Non-2xx throws the
+     * shared {@link ApiError}.
      */
-    getMissingEpisodes(id: string): Promise<Array<{
-        id: string;
-        title?: string;
-        season?: number;
-        episode?: number;
-    }>>;
+    getMissingEpisodes(id: string): Promise<{
+        total_expected?: number;
+        total_existing?: number;
+        missing_episodes: Array<{
+            episode_number: number;
+        }>;
+    }>;
     /**
      * Shuffle-play a media item (`POST /api/v1/shuffle`, body `{ media_id: string }`).
      * Returns a message. Non-2xx throws the shared {@link ApiError}.

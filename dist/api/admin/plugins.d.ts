@@ -79,6 +79,8 @@ export interface PluginDetail extends Plugin {
     settings: PluginSettings;
     /** Per-secret set/length status (secret keys only); absent on older servers. */
     secret_status?: PluginSecretStatusMap;
+    /** Optional redirect URL for OAuth-style plugins. */
+    redirect_url?: string;
 }
 /**
  * One plugin entry from a catalog's `plugins.json`, annotated by the server
@@ -239,4 +241,12 @@ export declare class AdminPluginsApi {
      * read its per-field map with {@link pluginValidationErrors}.
      */
     updateSettings(name: string, settings: PluginSettings): Promise<PluginDetail>;
+    /**
+     * `POST /api/v1/admin/plugins/{name}/test` `{ settings }` → tests credentials
+     * and returns `{ success: boolean; message: string }`.
+     */
+    testCredentials(name: string, settings: Record<string, string>): Promise<{
+        success: boolean;
+        message: string;
+    }>;
 }
