@@ -19,7 +19,7 @@
  * `400 plugin.settings.validation_failed` render under the offending field.
  * Errors surface as toasts.
  */
-import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
+import { ref, computed, onMounted, inject, watch, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
@@ -89,6 +89,12 @@ const testResult = ref<{ success: boolean; message: string } | null>(null);
 
 /** Map of setting key → whether the user has typed a new secret value */
 const secretTouched = ref<Record<string, boolean>>({});
+
+watch(settingsValues, () => {
+  if (testResult.value !== null) {
+    testResult.value = null;
+  }
+});
 
 async function selectPlugin(plugin: Plugin): Promise<void> {
   // Already selected — deselect
@@ -207,9 +213,13 @@ async function testPluginCredentials(): Promise<void> {
   testResult.value = null;
 
   const payload = buildSettingsPayload();
+  const stringSettings: Record<string, string> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    stringSettings[key] = typeof value === 'string' ? value : JSON.stringify(value);
+  }
 
   try {
-    const result = await api.testCredentials(selectedPlugin.value.name, payload as Record<string, string>);
+    const result = await api.testCredentials(selectedPlugin.value.name, stringSettings);
     testResult.value = result;
     if (result.success) {
       toasts.success(`Test succeeded: ${result.message}`);
