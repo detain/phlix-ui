@@ -20,6 +20,8 @@ import MusicLibraryPage from './MusicLibraryPage.vue';
 interface ServerTrackItem {
   id: string;
   metadata: { title: string; duration_secs: number; track_number: number | null };
+  /** Signed direct-play URL (present on /tracks + when a fixture opts in). */
+  stream_url?: string;
 }
 interface ServerArtist {
   name: string;
@@ -74,6 +76,7 @@ class FakeAudioElement {
   currentTime = 0;
   duration = NaN;
   paused = true;
+  volume = 1;
   private _listeners: Map<string, Set<(...args: unknown[]) => void>> = new Map();
 
   play = vi.fn(async () => { this.paused = false; });
@@ -152,7 +155,11 @@ function mountPage() {
         },
         MusicTrackList: {
           props: ['tracks', 'playingTrackId', 'loading'],
-          template: '<div class="track-list"><slot /></div>',
+          emits: ['play'],
+          template:
+            '<div class="track-list" :data-playing="playingTrackId ?? \'\'">'
+            + '<button v-for="tk in tracks" :key="tk.id" class="track-play" :data-id="tk.id" @click="$emit(\'play\', tk)">{{ tk.title }}</button>'
+            + '</div>',
         },
         Icon: { template: '<span class="icon" />' },
       },
@@ -167,9 +174,11 @@ function mountPage() {
 describe('MusicLibraryPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Replace Audio with a fake for the player.
+    // Replace Audio with a fake for the player (`new Audio()` needs a real
+    // constructor — a vi.fn arrow cannot be `new`-ed).
     fakeAudio = new FakeAudioElement();
-    vi.stubGlobal('Audio', vi.fn(() => fakeAudio) as unknown as typeof Audio);
+    function AudioMock(this: unknown) { return fakeAudio; }
+    vi.stubGlobal('Audio', AudioMock as unknown as typeof Audio);
   });
 
   afterEach(() => {
@@ -263,36 +272,76 @@ describe('MusicLibraryPage', () => {
 
   // ---- Playback -----------------------------------------------------------
 
-  // UI-3.6 playback deferred — blocked on server music-track stream endpoint
-  // (X8/SV-3.2); see performance_worklog_ui.md
-  it.skip('emits play event and calls audio play', async () => {
+  // UI-3.6 / X8 — playback now consumes the server's signed `stream_url`.
+  it('plays a track: sets <audio>.src to the signed stream_url and starts playback', async () => {
+    const streamUrl = '/media/t42/stream?exp=9999999999&sig=deadbeef';
     const artistsList = [artist()];
-    const albumsList = [album({ tracks: [track({ id: 't42', metadata: { title: 'Test Track', duration_secs: 200, track_number: 1 } })] })];
+    const albumsList = [
+      album({
+        tracks: [
+          track({
+            id: 't42',
+            metadata: { title: 'Test Track', duration_secs: 200, track_number: 1 },
+            stream_url: streamUrl,
+          }),
+        ],
+      }),
+    ];
     stubFetch(artistsList, albumsList, []);
 
     const wrapper = mountPage();
     await flushPromises();
 
-    // Click artist → albums.
+    // Artist → albums → tracks.
     await wrapper.find('.artist-card').trigger('click');
     await flushPromises();
-
-    // Click album → tracks.
     await wrapper.find('.album-card').trigger('click');
     await flushPromises();
 
-    // Find the MusicTrackList component
-    const trackList = wrapper.findComponent({ name: 'MusicTrackList' });
-    expect(trackList.exists()).toBe(true);
+    expect(wrapper.find('.track-list').exists()).toBe(true);
 
-    // Set up spy on fakeAudio.play BEFORE emitting play event
-    const playSpy = vi.spyOn(fakeAudio, 'play');
+    // Click the track's play button (emits play with the normalized MusicTrack).
+    await wrapper.find('.track-play').trigger('click');
+    await flushPromises();
 
-    // Emit play with track id t42
-    await trackList.vm.$emit('play', track({ id: 't42' }));
+    // The active <audio> element was pointed at the signed stream_url and played.
+    expect(fakeAudio.play).toHaveBeenCalled();
+    expect(fakeAudio.src).toBe(streamUrl);
 
-    // The audio element's play should have been called.
-    expect(playSpy).toHaveBeenCalled();
+    // The now-playing highlight reflects the current track, and the transport
+    // bar renders.
+    expect(wrapper.find('.track-list').attributes('data-playing')).toBe('t42');
+    expect(wrapper.find('.music-bar').exists()).toBe(true);
+  });
+
+  it('toggles pause when the currently-playing track is played again', async () => {
+    const streamUrl = '/media/t7/stream?exp=1&sig=ab';
+    const artistsList = [artist()];
+    const albumsList = [
+      album({
+        tracks: [
+          track({ id: 't7', metadata: { title: 'Loop', duration_secs: 100, track_number: 1 }, stream_url: streamUrl }),
+        ],
+      }),
+    ];
+    stubFetch(artistsList, albumsList, []);
+
+    const wrapper = mountPage();
+    await flushPromises();
+    await wrapper.find('.artist-card').trigger('click');
+    await flushPromises();
+    await wrapper.find('.album-card').trigger('click');
+    await flushPromises();
+
+    await wrapper.find('.track-play').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('.track-list').attributes('data-playing')).toBe('t7');
+
+    // Playing the same track again pauses it.
+    await wrapper.find('.track-play').trigger('click');
+    await flushPromises();
+    expect(fakeAudio.pause).toHaveBeenCalled();
+    expect(wrapper.find('.track-list').attributes('data-playing')).toBe('');
   });
 
   // ---- Gapless / Crossfade settings in usePreferencesStore ---------------

@@ -168,6 +168,10 @@ function normalizeMusicTrack(raw: unknown): MusicTrack {
         title,
         durationSecs: musicNum(meta['duration_secs']) ?? musicNum(r['duration_secs']) ?? 0,
         trackNumber: musicNum(meta['track_number']) ?? musicNum(r['track_number']),
+        // Signed direct-play URL from `formatTrack` (/tracks[/{id}]). Raw items
+        // embedded in an album carry no `stream_url`, so this stays null there —
+        // useMusicPlayer resolves it lazily via getTrack at play time.
+        streamUrl: musicStr(r['stream_url']),
     };
 }
 
@@ -980,6 +984,23 @@ export class ApiClient {
                 (t) => musicStr((t && typeof t === 'object' ? t : {} as Record<string, unknown>)['album']) === album,
             );
         return filtered.map(normalizeMusicTrack);
+    }
+
+    /**
+     * Fetch one track by id (`GET /api/v1/music/tracks/{id}` → `{ track }`).
+     * Unlike the raw items embedded in an album, this formatted track carries a
+     * server-minted signed `stream_url`, so `useMusicPlayer` calls it to resolve
+     * a playable URL for tracks browsed via the album fast-path. Returns a
+     * normalized {@link MusicTrack}; a non-2xx (404 unknown track) throws the
+     * shared {@link ApiError}.
+     */
+    async getTrack(id: string, signal?: AbortSignal): Promise<MusicTrack> {
+        const res = await this.get<{ track?: unknown }>(
+            `/api/v1/music/tracks/${encodeURIComponent(id)}`,
+            undefined,
+            signal,
+        );
+        return normalizeMusicTrack(res.track);
     }
 
     logout(redirect = true): void {

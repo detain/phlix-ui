@@ -1,255 +1,291 @@
 /**
- * Music playback composable with gapless/crossfade support.
+ * Music playback composable — gapless + crossfade, fully client-side.
  *
- * Uses Web Audio API with two audio elements (primary + secondary) and
- * GainNode for crossfade curves. Reads crossfade/gapless settings from
- * usePreferencesStore so the existing settings UI actually takes effect.
+ * Drives two alternating `<audio>` elements whose `src` is a track's
+ * server-minted **signed** `stream_url` (`/media/:id/stream?exp&sig`, the field
+ * emitted by the server's `formatTrack`; see UI-3.6 / X8). No Bearer header is
+ * needed — the signature authorizes the byte stream — so the URL works directly
+ * as an `<audio src>`.
+ *
+ * Crossfade and gapless are implemented with NO server dependency:
+ *   - **Gapless:** the next track's `stream_url` is pre-loaded onto the idle
+ *     `<audio>` element (`preload='auto'`) so the swap at track-end is instant.
+ *   - **Crossfade:** the idle element starts at `volume = 0` while the active
+ *     element ramps down, stepping both volumes over `crossfadeDuration` so the
+ *     two overlap-fade. The server `buildGaplessSegmentCommand` path is NOT used.
+ *
+ * Both settings are read live from {@link usePreferencesStore}, so the existing
+ * crossfade/gapless settings UI finally takes effect.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import type { MusicTrack } from '../types/music';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { ApiClient } from '../api/client';
 
-/** Server base URL for media streaming (e.g. signed /music/:id/stream). */
-function buildStreamUrl(apiBase: string, trackId: string): string {
-  // Strip trailing slash then append the stream path.
-  const base = apiBase.replace(/\/$/, '');
-  return `${base}/api/v1/music/tracks/${encodeURIComponent(trackId)}/stream`;
+/** Number of volume steps used to render a crossfade ramp. */
+const CROSSFADE_STEPS = 20;
+
+export interface MusicPlayerOptions {
+  /**
+   * Media API base for resolving a track's signed `stream_url` via `getTrack`
+   * (relay-proxied on the hub). Called lazily, only when a track lacks its own
+   * `stream_url` (e.g. album fast-path items).
+   */
+  apiBase: () => string;
+  /**
+   * Byte-stream base that prefixes the signed relative `/media/:id/stream` path
+   * (mirrors `PlayerPage.streamUrlFor`: `directBase || apiBase`). On the media
+   * server this is '' (same-origin); on the hub it is the selected server's own
+   * public origin so audio bytes stream direct with native Range.
+   */
+  streamBase: () => string;
 }
 
 /**
- * useMusicPlayer — gapless + crossfade audio playback composable.
+ * useMusicPlayer — dual-`<audio>` gapless + crossfade playback.
  *
- * Uses two HTMLAudioElement nodes (primary / secondary) wired through a
- * shared AudioContext + GainNode so crossfade curves can be applied via the
- * Web Audio API.  The "active" element is the one currently audible; the
- * "idle" element is pre-loaded with the next track for gapless transitions.
- *
- * Call `loadTracks()` to set the current album's track list, then
- * `play(track)` to start playback of a specific track.
+ * @param opts base resolvers ({@link MusicPlayerOptions}).
  */
-export function useMusicPlayer(apiBase: () => string) {
+export function useMusicPlayer(opts: MusicPlayerOptions) {
   const prefs = usePreferencesStore();
 
-  // ---- AudioContext + GainNode (created lazily on first user interaction) ----
-  let audioCtx: AudioContext | null = null;
-  let primaryGain: GainNode | null = null;
-  let secondaryGain: GainNode | null = null;
-  /** Tracks which audio elements have already been connected to the AudioContext */
-  const connectedElements = new WeakMap<HTMLAudioElement, true>();
-  // 'primary' = primaryEl is currently audible, 'secondary' = secondaryEl is
-  let activeSlot: 'primary' | 'secondary' = 'primary';
-
-  function ensureContext(): AudioContext {
-    if (audioCtx) return audioCtx;
-    audioCtx = new AudioContext();
-    primaryGain = audioCtx.createGain();
-    secondaryGain = audioCtx.createGain();
-    primaryGain.connect(audioCtx.destination);
-    secondaryGain.connect(audioCtx.destination);
-    primaryGain.gain.value = 1;
-    secondaryGain.gain.value = 0;
-    return audioCtx;
-  }
-
-  // ---- Two audio nodes for gapless / crossfade --------------------------------
-  const primaryEl = ref<HTMLAudioElement | null>(null);
-  const secondaryEl = ref<HTMLAudioElement | null>(null);
+  // ---- Two audio elements (created lazily to avoid SSR / test issues) --------
+  const elA = ref<HTMLAudioElement | null>(null);
+  const elB = ref<HTMLAudioElement | null>(null);
+  /** 0 = elA is audible, 1 = elB is audible. */
+  let activeSlot: 0 | 1 = 0;
 
   function createAudioElement(): HTMLAudioElement {
     const el = new Audio();
     el.preload = 'none';
+    // Persistent listeners: each element only reacts while it is the active one.
+    el.addEventListener('timeupdate', () => onTimeUpdate(el));
+    el.addEventListener('loadedmetadata', () => onLoadedMetadata(el));
+    el.addEventListener('ended', () => onEnded(el));
     return el;
   }
 
-  // Lazily create audio elements on first access (avoids SSR issues).
-  function getOrCreatePrimary(): HTMLAudioElement {
-    if (!primaryEl.value) primaryEl.value = createAudioElement();
-    return primaryEl.value;
+  function getA(): HTMLAudioElement {
+    if (!elA.value) elA.value = createAudioElement();
+    return elA.value;
   }
-  function getOrCreateSecondary(): HTMLAudioElement {
-    if (!secondaryEl.value) secondaryEl.value = createAudioElement();
-    return secondaryEl.value;
+  function getB(): HTMLAudioElement {
+    if (!elB.value) elB.value = createAudioElement();
+    return elB.value;
+  }
+  function activeEl(): HTMLAudioElement {
+    return activeSlot === 0 ? getA() : getB();
+  }
+  function idleEl(): HTMLAudioElement {
+    return activeSlot === 0 ? getB() : getA();
+  }
+  function swapSlots(): void {
+    activeSlot = activeSlot === 0 ? 1 : 0;
   }
 
-  // ---- Playback state ---------------------------------------------------------
+  // ---- Playback state --------------------------------------------------------
   const queue = ref<MusicTrack[]>([]);
   const currentTrack = ref<MusicTrack | null>(null);
-  const currentIndex = ref<number>(-1);
+  const currentIndex = ref(-1);
   const playing = ref(false);
-  /** Playback position in seconds (updated via timeupdate event). */
+  /** Playback position in seconds (timeupdate). */
   const position = ref(0);
-  /** Total duration in seconds (updated via loadedmetadata / canplay). */
+  /** Total duration in seconds (loadedmetadata). */
   const duration = ref(0);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  /** True while a crossfade overlap is in progress. */
+  const crossfading = ref(false);
 
-  // ---- Derived helpers --------------------------------------------------------
-  const hasNext = computed(() => currentIndex.value < queue.value.length - 1);
+  const hasNext = computed(() => currentIndex.value >= 0 && currentIndex.value < queue.value.length - 1);
   const hasPrev = computed(() => currentIndex.value > 0);
 
-  // ---- Crossfade helpers ------------------------------------------------------
-  /**
-   * Apply the configured crossfade curve using Web Audio API GainNodes.
-   * @param fadeOutEl  Element currently playing (to fade out)
-   * @param fadeInEl   Element to fade in
-   * @param fadeInGain GainNode for the fade-in element
-   */
-  function applyCrossfade(fadeOutEl: HTMLAudioElement, _fadeInEl: HTMLAudioElement, fadeInGain: GainNode | null): void {
-    const ctx = ensureContext();
-    const dur = prefs.crossfadeDuration;
-    const fadeIn = prefs.crossfadeFadeIn;
-    const fadeOut = prefs.crossfadeFadeOut;
-    const now = ctx.currentTime;
+  let crossfadeTimer: ReturnType<typeof setInterval> | null = null;
 
-    // fade-out: primaryGain.gain.value → 0 using curve
-    if (primaryGain) {
-      primaryGain.gain.setValueCurveAtTime(
-        new Float32Array([1, 1 - fadeOut]),
-        now,
-        dur,
-      );
+  function clearCrossfade(): void {
+    if (crossfadeTimer !== null) {
+      clearInterval(crossfadeTimer);
+      crossfadeTimer = null;
     }
-    // fade-in: 0 → 1 using curve
-    if (fadeInGain) {
-      fadeInGain.gain.setValueCurveAtTime(
-        new Float32Array([0, fadeIn]),
-        now,
-        dur,
-      );
+    crossfading.value = false;
+  }
+
+  // ---- Stream-URL resolution -------------------------------------------------
+  /**
+   * Resolve a playable, base-prefixed URL for `track`. Prefers the track's own
+   * signed `stream_url`; falls back to `getTrack(id)` (which carries one) for
+   * album fast-path items that have none. Returns '' if unresolvable.
+   */
+  async function resolveSrc(track: MusicTrack): Promise<string> {
+    let url = track.streamUrl;
+    if (!url) {
+      try {
+        const full = await new ApiClient({ baseUrl: opts.apiBase() }).getTrack(track.id);
+        url = full.streamUrl;
+      } catch {
+        url = null;
+      }
     }
-
-    // After crossfade ends, detach the faded-out element.
-    setTimeout(() => {
-      fadeOutEl.pause();
-      fadeOutEl.src = '';
-    }, dur * 1000 + 100);
+    if (!url) return '';
+    if (/^https?:\/\//.test(url)) return url;
+    return `${opts.streamBase()}${url}`;
   }
 
-  /**
-   * Swap the active/secondary audio elements after a crossfade completes.
-   * The previously-active element becomes the idle one for future pre-loading.
-   */
-  function swapActiveSlot(): void {
-    activeSlot = activeSlot === 'primary' ? 'secondary' : 'primary';
-  }
+  // ---- Event handlers (bound once per element) -------------------------------
+  function onTimeUpdate(el: HTMLAudioElement): void {
+    if (el !== activeEl()) return;
+    position.value = el.currentTime;
 
-  /**
-   * Start playing `track` on the specified audio element, routing it through
-   * the correct GainNode (primary or secondary).
-   */
-  function playOnElement(el: HTMLAudioElement, track: MusicTrack, gainNode: GainNode | null): void {
-    const ctx = ensureContext();
-    // Resume AudioContext if suspended (browser autoplay policy).
-    if (ctx.state === 'suspended') ctx.resume();
-
-    el.src = buildStreamUrl(apiBase(), track.id);
-    el.load();
-
-    // Wire MediaElementSourceNode if not already connected.
-    if (gainNode && !connectedElements.has(el)) {
-      const source = ctx.createMediaElementSource(el);
-      source.connect(gainNode);
-      connectedElements.set(el, true);
+    // Near-end crossfade trigger (crossfade on, gapless off, next available).
+    if (
+      prefs.crossfadeDuration > 0
+      && !crossfading.value
+      && hasNext.value
+      && isFinite(el.duration)
+      && el.duration > 0
+    ) {
+      const timeLeft = el.duration - el.currentTime;
+      if (timeLeft > 0 && timeLeft <= prefs.crossfadeDuration) {
+        void crossfadeToNext();
+      }
     }
-
-    el.play().catch(() => {
-      /* ignore autoplay-blocked — UI can show paused state */
-    });
   }
 
-  /**
-   * Pre-load the next track onto the idle audio element (gapless prep).
-   * Does NOT start playing — just loads and buffers so the swap is instant.
-   */
-  function preloadNext(): void {
-    if (!prefs.gaplessEnabled || !hasNext.value) return;
-    const nextTrack = queue.value[currentIndex.value + 1];
-    const idleEl = activeSlot === 'primary' ? getOrCreateSecondary() : getOrCreatePrimary();
-    idleEl.preload = 'auto';
-    idleEl.src = buildStreamUrl(apiBase(), nextTrack.id);
-    idleEl.load();
+  function onLoadedMetadata(el: HTMLAudioElement): void {
+    if (el !== activeEl()) return;
+    if (isFinite(el.duration)) duration.value = el.duration;
   }
 
-  /**
-   * Advance to the next track in the queue, honouring gapless/crossfade prefs.
-   * Returns true if a next track was started, false if queue is exhausted.
-   */
-  function advanceToNext(): boolean {
-    if (!hasNext.value) {
+  function onEnded(el: HTMLAudioElement): void {
+    if (el !== activeEl()) return;
+    // A crossfade already advanced the queue; ignore the tail element's end.
+    if (crossfading.value) return;
+    if (hasNext.value) {
+      void advance(currentIndex.value + 1);
+    } else {
       playing.value = false;
-      currentTrack.value = null;
-      return false;
     }
-    const nextTrack = queue.value[currentIndex.value + 1];
-    return transitionTo(nextTrack, currentIndex.value + 1);
   }
 
+  // ---- Transitions -----------------------------------------------------------
   /**
-   * Perform the transition from current track to `nextTrack` at index `nextIndex`.
-   * Uses gapless (instant swap) when gaplessEnabled && crossfadeDuration == 0,
-   * otherwise applies a crossfade curve.
+   * Hard-switch to `queue[index]` on the active element (immediate cut). Used
+   * for explicit track selection, previous(), and gapless/no-crossfade advance.
    */
-  function transitionTo(nextTrack: MusicTrack, nextIndex: number): boolean {
-    const crossfadeDur = prefs.crossfadeDuration;
-    const useGapless = prefs.gaplessEnabled && crossfadeDur === 0;
-
-    const curEl = activeSlot === 'primary' ? getOrCreatePrimary() : getOrCreateSecondary();
-    const nextEl = activeSlot === 'primary' ? getOrCreateSecondary() : getOrCreatePrimary();
-    const nextGain = activeSlot === 'primary' ? secondaryGain : primaryGain;
-
-    if (useGapless) {
-      // Gapless: pause current, swap immediately, start next.
-      curEl.pause();
-      curEl.src = '';
-      currentTrack.value = nextTrack;
-      currentIndex.value = nextIndex;
-      position.value = 0;
-      duration.value = 0;
-      playOnElement(nextEl, nextTrack, nextGain);
-      swapActiveSlot();
-      preloadNext();
-      return true;
-    }
-
-    // Crossfade: schedule gain curves, then swap after duration.
-    currentTrack.value = nextTrack;
-    currentIndex.value = nextIndex;
+  async function playAt(index: number): Promise<void> {
+    const track = queue.value[index];
+    if (!track) return;
+    clearCrossfade();
+    const el = activeEl();
+    const src = await resolveSrc(track);
+    error.value = src === '' ? 'stream-unavailable' : null;
+    el.src = src;
+    el.volume = 1;
+    el.load();
+    currentTrack.value = track;
+    currentIndex.value = index;
     position.value = 0;
     duration.value = 0;
-
-    nextEl.src = buildStreamUrl(apiBase(), nextTrack.id);
-    nextEl.load();
-
-    if (crossfadeDur > 0) {
-      applyCrossfade(curEl, nextEl, nextGain);
-      nextEl.play().catch(() => {});
-
-      setTimeout(() => {
-        swapActiveSlot();
-        preloadNext();
-      }, crossfadeDur * 1000 + 200);
-    } else {
-      // crossfadeDur == 0 but gaplessEnabled == false: hard cut.
-      curEl.pause();
-      curEl.src = '';
-      playOnElement(nextEl, nextTrack, nextGain);
-      swapActiveSlot();
-      preloadNext();
-    }
-
-    return true;
+    await el.play().catch(() => { /* autoplay-blocked — UI shows paused */ });
+    playing.value = true;
+    void preloadNext();
   }
 
-  // ---- Public API -------------------------------------------------------------
+  /**
+   * Advance to `index` honouring prefs: crossfade when `crossfadeDuration > 0`,
+   * otherwise an immediate (gapless-preloaded) cut.
+   */
+  async function advance(index: number): Promise<void> {
+    if (prefs.crossfadeDuration > 0) {
+      await crossfadeTo(index);
+    } else {
+      await playAt(index);
+    }
+  }
+
+  /** Crossfade from the active track to the next track in the queue. */
+  async function crossfadeToNext(): Promise<void> {
+    if (!hasNext.value) return;
+    await crossfadeTo(currentIndex.value + 1);
+  }
 
   /**
-   * Load a track list as the playback queue. Resets playback state.
+   * Overlap-fade to `queue[index]`: bring the idle element up from volume 0
+   * while the active element ramps to 0, stepping over `crossfadeDuration`.
    */
+  async function crossfadeTo(index: number): Promise<void> {
+    const track = queue.value[index];
+    if (!track) return;
+    clearCrossfade();
+
+    const fadeOut = activeEl();
+    const fadeIn = idleEl();
+
+    // Reuse a matching preload; otherwise resolve + load now.
+    const src = await resolveSrc(track);
+    if (fadeIn.src !== src) {
+      fadeIn.src = src;
+      fadeIn.load();
+    }
+    error.value = src === '' ? 'stream-unavailable' : null;
+
+    fadeIn.volume = 0;
+    await fadeIn.play().catch(() => {});
+
+    // Advance logical state immediately (the fade-in element is now "current").
+    currentTrack.value = track;
+    currentIndex.value = index;
+    position.value = 0;
+    duration.value = 0;
+    playing.value = true;
+    crossfading.value = true;
+
+    const dur = prefs.crossfadeDuration;
+    const stepMs = Math.max(10, (dur * 1000) / CROSSFADE_STEPS);
+    let step = 0;
+    crossfadeTimer = setInterval(() => {
+      step += 1;
+      const p = Math.min(1, step / CROSSFADE_STEPS);
+      fadeOut.volume = Math.max(0, 1 - p);
+      fadeIn.volume = Math.min(1, p);
+      if (step >= CROSSFADE_STEPS) {
+        clearInterval(crossfadeTimer as ReturnType<typeof setInterval>);
+        crossfadeTimer = null;
+        fadeOut.pause();
+        fadeOut.currentTime = 0;
+        fadeOut.volume = 1;
+        swapSlots();
+        crossfading.value = false;
+        void preloadNext();
+      }
+    }, stepMs);
+  }
+
+  /**
+   * Pre-load the next track's resolved `stream_url` onto the idle element so a
+   * gapless (or crossfade) transition is instant. No-op when gapless is off.
+   */
+  async function preloadNext(): Promise<void> {
+    if (!prefs.gaplessEnabled || !hasNext.value) return;
+    const next = queue.value[currentIndex.value + 1];
+    if (!next) return;
+    const src = await resolveSrc(next);
+    if (src === '') return;
+    const el = idleEl();
+    el.preload = 'auto';
+    el.src = src;
+    el.load();
+  }
+
+  // ---- Public API ------------------------------------------------------------
+
+  /** Load a track list as the playback queue. Resets playback state. */
   function loadTracks(tracks: MusicTrack[]): void {
+    clearCrossfade();
     queue.value = [...tracks];
     currentTrack.value = null;
     currentIndex.value = -1;
@@ -260,56 +296,49 @@ export function useMusicPlayer(apiBase: () => string) {
   }
 
   /**
-   * Start (or resume) playback.
-   * If a track is already current, resumes from its position.
-   * If not playing anything, starts the first track in queue.
+   * Start or resume playback.
+   * - `play(track)` plays that queue track (resumes if already current).
+   * - `play()` resumes the current track, or starts the queue from the top.
    */
   async function play(track?: MusicTrack): Promise<void> {
-    const ctx = ensureContext();
-    if (ctx.state === 'suspended') ctx.resume();
-
     if (track) {
       const idx = queue.value.findIndex((t) => t.id === track.id);
       if (idx === -1) return;
-      if (currentTrack.value?.id === track.id && primaryEl.value) {
-        // Already this track — just resume.
-        await primaryEl.value.play().catch(() => {});
+      if (currentTrack.value?.id === track.id) {
+        await activeEl().play().catch(() => {});
         playing.value = true;
         return;
       }
-      // Switch to the requested track.
-      transitionTo(track, idx);
-      playing.value = true;
+      await playAt(idx);
       return;
     }
-
     if (currentTrack.value) {
-      const el = activeSlot === 'primary' ? getOrCreatePrimary() : getOrCreateSecondary();
-      await el.play().catch(() => {});
+      await activeEl().play().catch(() => {});
       playing.value = true;
       return;
     }
-
-    // Nothing playing — start queue from beginning if available.
-    if (queue.value.length > 0) {
-      const first = queue.value[0];
-      transitionTo(first, 0);
-      playing.value = true;
-    }
+    if (queue.value.length > 0) await playAt(0);
   }
 
-  /** Pause playback. */
+  /** Pause the active element. */
   function pause(): void {
-    const el = activeSlot === 'primary' ? getOrCreatePrimary() : getOrCreateSecondary();
-    el.pause();
+    activeEl().pause();
     playing.value = false;
   }
 
-  /** Stop playback and reset position. */
+  /** Toggle play/pause for the current track. */
+  async function toggle(): Promise<void> {
+    if (playing.value) pause();
+    else await play();
+  }
+
+  /** Stop playback and reset position/queue pointer. */
   function stop(): void {
-    const el = activeSlot === 'primary' ? getOrCreatePrimary() : getOrCreateSecondary();
-    el.pause();
-    el.src = '';
+    clearCrossfade();
+    getA().pause();
+    getB().pause();
+    getA().src = '';
+    getB().src = '';
     playing.value = false;
     position.value = 0;
     duration.value = 0;
@@ -317,104 +346,32 @@ export function useMusicPlayer(apiBase: () => string) {
     currentIndex.value = -1;
   }
 
-  /** Skip to the next track. */
-  function next(): void {
+  /** Skip to the next track (crossfades when the pref is set). */
+  async function next(): Promise<void> {
     if (!hasNext.value) return;
-    const idx = currentIndex.value + 1;
-    const track = queue.value[idx];
-    transitionTo(track, idx);
+    await advance(currentIndex.value + 1);
   }
 
-  /** Go to the previous track. */
-  function previous(): void {
+  /** Go to the previous track (immediate cut). */
+  async function previous(): Promise<void> {
     if (!hasPrev.value) return;
-    const idx = currentIndex.value - 1;
-    const track = queue.value[idx];
-    transitionTo(track, idx);
+    await playAt(currentIndex.value - 1);
   }
 
-  /** Seek to an absolute position in seconds. */
+  /** Seek to an absolute position (seconds) on the active element. */
   function seek(seconds: number): void {
-    const el = activeSlot === 'primary' ? getOrCreatePrimary() : getOrCreateSecondary();
     if (isFinite(seconds) && seconds >= 0) {
-      el.currentTime = seconds;
+      activeEl().currentTime = seconds;
+      position.value = seconds;
     }
   }
 
-  /**
-   * Wire up the timeupdate + ended event listeners on the currently active
-   * audio element. Call this once after creating the composable.
-   * Returns a teardown function.
-   */
-  function bindActiveElement(): () => void {
-    function getActiveEl(): HTMLAudioElement | null {
-      return activeSlot === 'primary' ? primaryEl.value : secondaryEl.value;
-    }
-
-    const onTimeUpdate = (): void => {
-      const el = getActiveEl();
-      if (!el) return;
-      position.value = el.currentTime;
-
-      // Trigger crossfade when close to end (if crossfade enabled and not already crossfading).
-      if (prefs.crossfadeDuration > 0 && !prefs.gaplessEnabled && hasNext.value) {
-        const timeLeft = (el.duration || 0) - el.currentTime;
-        if (timeLeft <= prefs.crossfadeDuration && timeLeft > 0) {
-          advanceToNext();
-        }
-      }
-    };
-
-    const onLoadedMetadata = (): void => {
-      const el = getActiveEl();
-      if (el && isFinite(el.duration)) {
-        duration.value = el.duration;
-      }
-    };
-
-    const onEnded = (): void => {
-      // If gapless + crossfade disabled: advance immediately.
-      if (prefs.gaplessEnabled && prefs.crossfadeDuration === 0) {
-        advanceToNext();
-      } else if (!prefs.gaplessEnabled && !hasNext.value) {
-        // End of queue.
-        playing.value = false;
-        currentTrack.value = null;
-        currentIndex.value = -1;
-      } else if (hasNext.value) {
-        advanceToNext();
-      } else {
-        playing.value = false;
-      }
-    };
-
-    const el = getActiveEl();
-    if (el) {
-      el.addEventListener('timeupdate', onTimeUpdate);
-      el.addEventListener('loadedmetadata', onLoadedMetadata);
-      el.addEventListener('ended', onEnded);
-    }
-
-    return () => {
-      const e = getActiveEl();
-      if (e) {
-        e.removeEventListener('timeupdate', onTimeUpdate);
-        e.removeEventListener('loadedmetadata', onLoadedMetadata);
-        e.removeEventListener('ended', onEnded);
-      }
-    };
+  /** Tear down elements + timers (call from onUnmounted). */
+  function dispose(): void {
+    clearCrossfade();
+    if (elA.value) { elA.value.pause(); elA.value.src = ''; }
+    if (elB.value) { elB.value.pause(); elB.value.src = ''; }
   }
-
-  // When the crossfadeDuration preference changes to 0 while gapless is on,
-  // preloadNext on the now-idle element so gapless is ready.
-  watch(
-    () => [prefs.gaplessEnabled, prefs.crossfadeDuration],
-    () => {
-      if (prefs.gaplessEnabled && prefs.crossfadeDuration === 0 && playing.value) {
-        preloadNext();
-      }
-    },
-  );
 
   return {
     // State
@@ -426,6 +383,7 @@ export function useMusicPlayer(apiBase: () => string) {
     duration,
     loading,
     error,
+    crossfading,
     // Computed
     hasNext,
     hasPrev,
@@ -433,10 +391,11 @@ export function useMusicPlayer(apiBase: () => string) {
     loadTracks,
     play,
     pause,
+    toggle,
     stop,
     next,
     previous,
     seek,
-    bindActiveElement,
+    dispose,
   };
 }

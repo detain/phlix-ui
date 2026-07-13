@@ -13,14 +13,16 @@
  *   - albums   → `GET /api/v1/music/albums`    (on artist select, filtered by artist)
  *   - tracks   → embedded in the album (fast-path), else `GET /api/v1/music/tracks`
  *
- * Playback (crossfade / gapless via {@link useMusicPlayer}) is DEFERRED for
- * UI-3.6 — it is blocked on the server music-track stream endpoint (X8 /
- * SV-3.2, SV-3.3), which does not exist yet. `playTrack` therefore only toggles
- * the highlight so browse/UI stay usable. See performance_worklog_ui.md.
+ * Playback (crossfade / gapless via {@link useMusicPlayer}) is wired here: the
+ * track objects from the server carry a signed `stream_url` (UI-3.6 / X8), which
+ * the player consumes for an `<audio src>`. Crossfade + gapless are entirely
+ * client-side (dual `<audio>` volume-fade + next-track preload) driven by the
+ * usePreferencesStore settings. See performance_worklog_ui.md.
  */
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useMessages } from '../composables/useMessages';
-import { useMediaApiBase } from '../composables/useApiBase';
+import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
+import { useMusicPlayer } from '../composables/useMusicPlayer';
 import { ApiClient } from '../api/client';
 import MusicArtistCard from '../components/MusicArtistCard.vue';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
@@ -34,9 +36,6 @@ const view = ref<View>('artists');
 const selectedArtist = ref<MusicArtist | null>(null);
 const selectedAlbum = ref<MusicAlbum | null>(null);
 
-// --- currently playing (track UUID) ---
-const playingTrackId = ref<string | null>(null);
-
 // --- library data (loaded from the server music API) ---
 const artists = ref<MusicArtist[]>([]);
 const albums = ref<MusicAlbum[]>([]);
@@ -45,6 +44,21 @@ const loading = ref(false);
 
 const { t } = useMessages();
 const apiBase = useMediaApiBase();
+const directBase = useMediaDirectBase();
+
+// --- audio playback (signed stream_url + client-side crossfade/gapless) ---
+const player = useMusicPlayer({
+  apiBase: () => apiBase.value,
+  // Mirror PlayerPage.streamUrlFor: prefer the direct byte-stream origin, fall
+  // back to the media-api base (own-server / unit tests).
+  streamBase: () => directBase.value || apiBase.value,
+});
+onUnmounted(() => player.dispose());
+
+// The now-playing highlight shows a pause icon only while actually playing.
+const playingTrackId = computed(() =>
+  player.playing.value ? player.currentTrack.value?.id ?? null : null,
+);
 
 /** A fresh client bound to the current media API base (mirrors sibling pages). */
 function getClient(): ApiClient {
@@ -109,14 +123,31 @@ async function selectAlbum(album: MusicAlbum): Promise<void> {
 }
 
 function playTrack(track: MusicTrack): void {
-  // TODO(UI-3.6 playback, X8): wire real audio playback + crossfade/gapless
-  // (useMusicPlayer) once the server music-track stream endpoint lands
-  // (SV-3.2 / SV-3.3). For now only toggle the now-playing highlight.
-  if (playingTrackId.value === track.id) {
-    playingTrackId.value = null;
-  } else {
-    playingTrackId.value = track.id;
+  // Toggle if the row is already the current, playing track; otherwise load the
+  // visible track list as the queue (so next/prev work) and play from `track`.
+  if (player.currentTrack.value?.id === track.id && player.playing.value) {
+    player.pause();
+    return;
   }
+  if (player.currentTrack.value?.id === track.id) {
+    void player.play();
+    return;
+  }
+  player.loadTracks(tracks.value);
+  void player.play(track);
+}
+
+/** Format seconds as `m:ss` for the transport bar. */
+function formatTime(secs: number): string {
+  if (!isFinite(secs) || secs < 0) return '0:00';
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function onSeek(event: Event): void {
+  const value = Number((event.target as HTMLInputElement).value);
+  player.seek(value);
 }
 
 function goBack(): void {
@@ -212,6 +243,54 @@ function goBack(): void {
         @play="playTrack"
       />
     </div>
+
+    <!-- Now-playing transport bar -->
+    <footer v-if="player.currentTrack.value" class="music-bar" role="region" :aria-label="t('music.nowPlaying')">
+      <div class="music-bar__meta">
+        <span class="music-bar__title">{{ player.currentTrack.value.title }}</span>
+      </div>
+      <div class="music-bar__controls">
+        <button
+          type="button"
+          class="music-bar__btn"
+          :disabled="!player.hasPrev.value"
+          :aria-label="t('music.previous')"
+          @click="player.previous()"
+        >
+          <Icon name="skip-back" class="music-bar__icon" />
+        </button>
+        <button
+          type="button"
+          class="music-bar__btn music-bar__btn--primary"
+          :aria-label="player.playing.value ? t('music.pause') : t('music.play')"
+          @click="player.toggle()"
+        >
+          <Icon :name="player.playing.value ? 'pause' : 'play'" class="music-bar__icon" />
+        </button>
+        <button
+          type="button"
+          class="music-bar__btn"
+          :disabled="!player.hasNext.value"
+          :aria-label="t('music.next')"
+          @click="player.next()"
+        >
+          <Icon name="skip-forward" class="music-bar__icon" />
+        </button>
+      </div>
+      <div class="music-bar__progress">
+        <span class="music-bar__time">{{ formatTime(player.position.value) }}</span>
+        <input
+          type="range"
+          class="music-bar__seek"
+          min="0"
+          :max="player.duration.value || 0"
+          :value="player.position.value"
+          :aria-label="t('music.seek')"
+          @input="onSeek"
+        >
+        <span class="music-bar__time">{{ formatTime(player.duration.value) }}</span>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -355,6 +434,84 @@ function goBack(): void {
 }
 .music-page__empty-text {
   font-size: var(--text-sm, 0.875rem);
+}
+
+/* Now-playing transport bar */
+.music-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  background: var(--surface-1, #18181b);
+  border-top: 1px solid var(--border, #3f3f46);
+}
+.music-bar__meta {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.music-bar__title {
+  display: block;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text, #e4e4e7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.music-bar__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+.music-bar__btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--surface-2, #27272a);
+  border: 1px solid var(--border, #3f3f46);
+  color: var(--text, #e4e4e7);
+  cursor: pointer;
+}
+.music-bar__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.music-bar__btn--primary {
+  background: var(--accent, #f5a524);
+  color: var(--accent-contrast, #1a1205);
+  border-color: transparent;
+}
+.music-bar__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring, rgba(245, 165, 36, 0.4));
+}
+.music-bar__icon {
+  width: 16px;
+  height: 16px;
+}
+.music-bar__progress {
+  flex: 2 1 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+.music-bar__seek {
+  flex: 1 1 0;
+  min-width: 0;
+  accent-color: var(--accent, #f5a524);
+}
+.music-bar__time {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #a1a1aa);
+  font-family: var(--font-mono, monospace);
+  min-width: 3ch;
+  text-align: center;
 }
 
 @keyframes shimmer {

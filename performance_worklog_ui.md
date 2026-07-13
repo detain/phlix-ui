@@ -38,7 +38,8 @@
 - [x] UI-3.3  admin CSS split    (commit: ae701cd)  DONE
 - [x] UI-3.4  apexcharts dedupe/replacement    (commit: fce73b8)  DONE
 - [x] UI-3.5  responsive posters end-to-end    (commit: bb59051)  DONE
-- [~] UI-3.6  music library build-out    RE-AUDIT 2026-07-12: NOT-DONE (genuinely STUBBED, opencode "mock issue" claim FALSE). MusicLibraryPage.vue = UI shell w/ local refs only: no ApiClient/fetch/Audio/usePreferencesStore imports; album/track/artist load all `// TODO`; play/pause stub; crossfade/gapless prefs DEAD. All 5 failing tests = real missing behavior. Server BROWSE endpoints exist (flat: /api/v1/music/artists|artists/{mbid}|albums|albums/{mbid}|tracks|tracks/{id}|now-playing) — tests assume NESTED routes (drift). NO music-track STREAM endpoint server-side; gapless cmd unwired. PLAN: (a) browse half NOW; (b) playback DEFERRED (X8). BROWSE DONE 2026-07-12 (commit 34b3362): ApiClient music methods (listArtists/getArtist/listAlbums/getAlbum/listTracks + normalizers) matched to REAL flat snake_case server routes (artist filter is CLIENT-SIDE — server returns all albums; album drill-down uses embedded tracks; track id = UUID string); MusicLibraryPage loads artists onMount/albums/tracks; tests reconciled to flat contract; play test it.skip w/ X8 reason. Full UI suite 2922 pass / 6 skip / 0 FAIL — UI MASTER GREEN. REMAINS (X8, task #5): real playback + crossfade/gapless via useMusicPlayer vs server music-track STREAM endpoint. FLAG: pre-existing dead `src/api/music.ts` (wrong nested routes, superseded by new ApiClient methods) → §6 removal-confirmation queue (task #7), left in place per no-delete policy.
+- [x] UI-3.6  music library build-out    DONE 2026-07-13 (playback half): server X8 (stream_url) live → useMusicPlayer REWRITTEN to consume signed `track.stream_url` (dual-`<audio>` client-side crossfade/gapless, no Web Audio, no server gapless cmd); MusicLibraryPage plays/pauses/next/prev/seek via a now-playing transport bar; `stream_url`→`streamUrl` normalizer + `getTrack(id)` for album fast-path lazy resolve; play test UN-SKIPPED + new useMusicPlayer.test.ts (8). Full suite 3006 pass / 5 skip / 0 fail; tsc/eslint/build clean. `src/api/music.ts` still dead → §6. [prior BROWSE-half note below]
+  RE-AUDIT 2026-07-12: NOT-DONE (genuinely STUBBED, opencode "mock issue" claim FALSE). MusicLibraryPage.vue = UI shell w/ local refs only: no ApiClient/fetch/Audio/usePreferencesStore imports; album/track/artist load all `// TODO`; play/pause stub; crossfade/gapless prefs DEAD. All 5 failing tests = real missing behavior. Server BROWSE endpoints exist (flat: /api/v1/music/artists|artists/{mbid}|albums|albums/{mbid}|tracks|tracks/{id}|now-playing) — tests assume NESTED routes (drift). NO music-track STREAM endpoint server-side; gapless cmd unwired. PLAN: (a) browse half NOW; (b) playback DEFERRED (X8). BROWSE DONE 2026-07-12 (commit 34b3362): ApiClient music methods (listArtists/getArtist/listAlbums/getAlbum/listTracks + normalizers) matched to REAL flat snake_case server routes (artist filter is CLIENT-SIDE — server returns all albums; album drill-down uses embedded tracks; track id = UUID string); MusicLibraryPage loads artists onMount/albums/tracks; tests reconciled to flat contract; play test it.skip w/ X8 reason. Full UI suite 2922 pass / 6 skip / 0 FAIL — UI MASTER GREEN. REMAINS (X8, task #5): real playback + crossfade/gapless via useMusicPlayer vs server music-track STREAM endpoint. FLAG: pre-existing dead `src/api/music.ts` (wrong nested routes, superseded by new ApiClient methods) → §6 removal-confirmation queue (task #7), left in place per no-delete policy.
 - [x] UI-3.7  SyncPlay drift correction    (commit: 078f791; tests hardened 2026-07-12 — see TestEngineer note below)  DONE
 - [x] UI-3.8  card ⋯-menu action backends  (add-to-playlist, download, view-missing-episodes, shuffle, edit-metadata, explore-item-data → real API calls / host emits + toast feedback; all 6 actions real + per-action tested)  (commit: 47a3021 + Fixer 2026-07-12)  DONE
 - [x] UI-3.9  markWatched/markUnwatched verification    (commit: 47c3042)  DONE
@@ -164,6 +165,61 @@ previously-passing (empty-state, prefs-store) stay green ✓.
 **Remains for UI-3.6 (blocked on X8):** real audio playback + crossfade/gapless via `useMusicPlayer`
 against a server music-track STREAM endpoint (SV-3.2 / SV-3.3), which does not exist yet. The
 crossfade/gapless settings UI and `useMusicPlayer` composable are left in place (not deleted).
+
+## Implementer — 2026-07-13 — UI-3.6 PLAYBACK half (X8 now live — SHIPPED)
+
+The server producer (X8, phlix-server `1b760ad7`) is live: each track object from `formatTrack`
+carries a signed **`stream_url`** = `/media/{trackId}/stream?exp&sig` (Range-safe, signature-auth, no
+Bearer — works directly as `<audio src>`). Wired real playback + client-side crossfade/gapless.
+
+**Contract nuance found:** `stream_url` is minted ONLY by `formatTrack` (used by `GET
+/api/v1/music/tracks` and `/tracks/{id}`). The raw items embedded in an album's `tracks` (the browse
+fast-path, `MusicLibraryManager::getAlbums`) are bare `media_items` rows with **no `stream_url`**. So
+the player must resolve a missing URL lazily via `getTrack(id)`. I did NOT touch the server (producer
+done/reviewed) and did NOT change the album fast-path (kept the "no /tracks fetch on album click"
+browse behavior + its test).
+
+**What was stubbed → now built:**
+- `useMusicPlayer.ts` — was a Web-Audio composable that built a WRONG URL
+  (`/api/v1/music/tracks/{id}/stream`, an endpoint that does not exist) and was unused. **Rewrote** it
+  as a fully client-side dual-`<audio>` player that consumes `track.streamUrl`:
+  play/pause/toggle/seek/next/previous/stop, queue advance on `ended`, position/duration tracking.
+  **Crossfade** = idle `<audio>` starts at `volume 0` while the active ramps to 0, stepped over
+  `crossfadeDuration` (20 steps via `setInterval`) so the two overlap-fade — NO Web Audio, NO server
+  `buildGaplessSegmentCommand`. **Gapless** = next track's resolved `stream_url` pre-loaded onto the
+  idle element (`preload='auto'`). Both read `usePreferencesStore` live, so the crossfade/gapless
+  settings UI finally takes effect. Base resolution mirrors `PlayerPage.streamUrlFor`
+  (`directBase || apiBase` prefix; absolute URLs passed through).
+- `MusicLibraryPage.vue` — `playTrack` was a highlight-only stub (`TODO(X8)`). Now instantiates
+  `useMusicPlayer`, loads the visible track list as the queue and plays via signed `stream_url`;
+  toggle-pauses the current row; `playingTrackId` is a computed off live player state; added a
+  now-playing transport bar (prev / play-pause / next / seek slider / time) + `onUnmounted` dispose.
+- `api/client.ts` — `normalizeMusicTrack` now maps `stream_url` → `streamUrl`; added
+  `getTrack(id)` → `GET /api/v1/music/tracks/{id}` → `{track}` → normalized (carries `stream_url`),
+  used for the album fast-path lazy resolution.
+- `types/music.ts` — `MusicTrack.streamUrl: string | null`.
+- `i18n/messages.ts` — added `music.previous` / `music.next` / `music.seek` (transport a11y labels).
+
+**Tests:** un-skipped the play test (now: click play → active `<audio>.src` === signed `stream_url` +
+`play()` called + now-playing + transport bar renders) and added a same-track toggle-pause test in
+`MusicLibraryPage.test.ts` (interactive `MusicTrackList` stub w/ play buttons + `data-playing`). New
+`useMusicPlayer.test.ts` (8 cases): play→src=stream_url, relative-URL base-prefix, pause, seek,
+next/prev queue advance, gapless preload onto idle element, crossfade dual-element overlap fade
+(both elements playing, idle at volume 0, `crossfading` true), and `getTrack` fallback when a track
+has no `stream_url` (album fast-path). NB: `new Audio()` mock must be a real constructor function
+(a `vi.fn` arrow cannot be `new`-ed → "did not use function/class").
+
+**Verify:** `vitest run` (music suites) 16/16 pass. Full `vitest run` → **177 files, 3006 pass / 5
+skip, 0 fail** (was 6 skip — one un-skipped). `vue-tsc --noEmit` 0 errors. `eslint` 0 errors.
+`npm run build` exit 0. dist/ NOT committed (release-time gate; discarded after the verify build).
+
+**§6 removal queue:** `src/api/music.ts` (fetchArtists/fetchAlbumsByArtist/fetchTracksByAlbum) is
+CONFIRMED dead — zero imports repo-wide, superseded by the ApiClient music methods, and it points at
+the non-existent NESTED routes (`/artists/{id}/albums`, `/albums/{id}/tracks`). Left in place per the
+no-delete-without-confirmation policy (§0.1); flagged here for §6.
+
+**Deferred/none:** UI-3.6 acceptance fully met (browses + plays; crossfade & gapless take effect). No
+remaining polish deferred beyond the §6 dead-file removal.
 
 ## Implementer — 2026-07-12 — UI-W0 gaps (UI-0.2 regression + UI-0.1 test + UI-0.4 concurrency)
 
