@@ -1301,3 +1301,46 @@ cycles — signed `stream_url`, dual-`<audio>` crossfade/gapless, the `loadedSrc
 absolute reuse rationale; and `apiBase`/`AbortSignal`/memoized cache respectively) — no stale docblocks
 to change. None of `useMusicPlayer`/`useMediaItemCache`/`useTrickplay` are barrel-exported, so they
 stay out of the README public-API tables.
+
+## TestEngineer — UI-3.4 apex-registration full-suite parallelism flake — 2026-07-13
+
+**Root-caused + fixed the long-standing `MetricsPage.apex-registration` full-suite flake** (noted as a
+known flake across several worklog entries — green 4/4 in isolation, intermittently red only under the
+full parallel `npx vitest run`). It is NOT a global-registry / module-isolation problem, despite the
+suspicion in the resume notes.
+
+**Reproduced (evidence, not guesswork):** ran the FULL suite in a loop on this 48-core box. It flaked on
+**2 of 15** runs (~13%). Every failure was the SAME single assertion — test case 4 only:
+`MetricsPage.apex-registration.test.ts:134` → `expect(w.html()).toContain('apexcharts-canvas')`
+(`AssertionError: expected '<section …' to contain 'apexcharts-canvas'`), and the failing file always
+reported `4 tests | 1 failed` — i.e. cases 1-3 (the sanity check + the two `getChartClass('area')` /
+`('line')` REGISTRATION asserts) PASSED even inside the failing parallel runs. So the chart-type
+registration (`import 'apexcharts/line'` → `ApexCharts.use()` → the synchronous
+`globalThis['__apexcharts_registry__']`) is rock-solid and re-runs per file via the side-effect import;
+it never flaked.
+
+**Root cause = a fixed-duration wait racing a genuinely-async render under CPU contention.** Case 4 mounts
+the REAL (un-stubbed) `vue3-apexcharts/core` wrapper — a `defineAsyncComponent` dynamic import — and the
+heavy ApexCharts library draws its `apexcharts-canvas` root ASYNCHRONOUSLY (its own timers/rAF). The old
+code guessed the delay: `await flushPromises(); await new Promise(r => setTimeout(r, 60)); await flushPromises();`
+then asserted. Under the full parallel run vitest launches ~1 worker per core (48) and saturates the CPU,
+so the worker's event loop is starved and the real library routinely needs **> 60 ms of WALL-CLOCK** to
+finish drawing (the failing test took 358 ms to reach the assertion) — the fixed 60 ms wait fires before
+the canvas exists. In isolation the box is idle → render completes well under 60 ms → 4/4. Purely a
+test-environment timing artifact (no production-registration risk).
+
+**Fix (not a retry/skip):** replaced the fixed `setTimeout(60)` guess in
+`src/pages/admin/MetricsPage.apex-registration.test.ts` with a proper poll for the genuine async
+condition — `vi.waitFor(async () => { await flushPromises(); expect(w.html()).toContain('apexcharts-canvas'); },
+{ timeout: 3000, interval: 25 })`. It succeeds the instant the canvas renders and fails only if it
+genuinely never renders within a generous ceiling — correct async waiting, robust to CPU contention, and
+NOT a quarantine/retry of the assertion. Added a docblock explaining the flake + why polling replaces the
+fixed delay.
+
+**Verify (ACTUAL output):**
+- Isolation: `npx vitest run src/pages/admin/MetricsPage.apex-registration.test.ts` → **Test Files 1 passed / Tests 4 passed**.
+- `npx vue-tsc --noEmit` → exit 0.
+- Full-suite loop AFTER the fix: **19 consecutive clean `npx vitest run`** (each **3011 pass / 5 skip / 0 fail**), 0 apex failures (a 20th run was cut off by a 10-min wall-clock, not a failure). Pre-fix baseline reproduced the flake 2×/15; 19 clean in a row = strong confidence it is resolved.
+- `dist/` NOT touched (§0.5 release-time gate).
+
+Files changed (absolute): `/home/sites/phlix/phlix-ui/src/pages/admin/MetricsPage.apex-registration.test.ts`.

@@ -123,15 +123,33 @@ describe('UI-3.4 MetricsPage ApexCharts chart-type registration', () => {
       },
     });
     // Resolve the async wrapper component + the mocked data fetches, then let
-    // ApexCharts draw.
+    // ApexCharts draw. ApexCharts draws ASYNCHRONOUSLY (its own timers/rAF), and
+    // the `<VueApexCharts>` wrapper resolves via a `defineAsyncComponent` dynamic
+    // import — so the `apexcharts-canvas` root appears an indeterminate time after
+    // mount. The previous `await new Promise(r => setTimeout(r, 60))` GUESSED that
+    // delay; under the full-suite PARALLEL run vitest launches ~1 worker per core
+    // (48 here) and saturates the CPU, so the worker's event loop is starved and
+    // the real (heavy) library routinely needs > 60 ms of WALL-CLOCK to finish
+    // drawing — the fixed wait then raced the render and this one assertion flaked
+    // (green 4/4 in isolation; intermittently red ONLY in the full parallel run —
+    // the registration asserts above never flaked because they read the synchronous
+    // globalThis registry). Poll for the genuine async condition instead of guessing
+    // a delay: `vi.waitFor` re-runs the callback (flushing promises each pass) until
+    // the canvas is present, succeeding the instant it renders and failing only if
+    // it never renders within a generous ceiling. This is a correct async wait, NOT
+    // a retry/skip of the assertion.
     await flushPromises();
-    await new Promise((resolve) => setTimeout(resolve, 60));
-    await flushPromises();
+    await vi.waitFor(
+      async () => {
+        await flushPromises();
+        // The real ApexCharts library rendered its chart root (only the genuine
+        // library emits this class — the ~5 KB wrapper does not), proving the
+        // un-stubbed wrapper mounted and area/line resolved.
+        expect(w.html()).toContain('apexcharts-canvas');
+      },
+      { timeout: 3000, interval: 25 },
+    );
 
-    // The real ApexCharts library rendered its chart root (only the genuine
-    // library emits this class — the ~5 KB wrapper does not), proving the
-    // un-stubbed wrapper mounted and area/line resolved.
-    expect(w.html()).toContain('apexcharts-canvas');
     // No chart-type registration error reached the app error handler.
     expect(errorHandlerCaught.join('\n')).not.toMatch(/is not registered/);
     // The registry still resolves both rendered types after a full mount.
