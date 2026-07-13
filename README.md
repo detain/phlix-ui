@@ -292,6 +292,14 @@ function scheduleMeasure(): void {
 
 The two patterns are complementary: timestamp throttling limits how often the measurement runs, while rAF coalescing ensures layout recalculations sync with the browser's paint cycle.
 
+**Stale-While-Revalidate Item Cache:**
+
+The media-detail and player pages share a module-level singleton item cache (`useMediaItemCache`, 60 s TTL) so navigating `browse → detail → player → back` reuses the already-fetched item and renders instantly, refreshing in the background when the entry is stale (and serving the stale copy if the refresh fails). Keep such a cache in its **own module** — a `const` declared at the top of `<script setup>` is recompiled into `setup()` and recreated on every mount, so it would cache nothing across navigations.
+
+**Debounced Preference Persistence:**
+
+Deep-watched preference writes to `localStorage` are debounced (250 ms trailing edge) so rapid slider/toggle changes don't thrash storage; a `pagehide` listener flushes immediately so no write is lost on tab close.
+
 ---
 
 ## Component catalog

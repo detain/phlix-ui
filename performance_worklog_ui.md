@@ -1260,3 +1260,44 @@ Findings 2-5 CLEARED. 1 finding remains → recommend a Fixer loop.
 
 ## Fixer (re-review) — UI-3.6 — 2026-07-13 (finding 1 fixed)
 Fixed the same-origin gapless-reuse inertness: `useMusicPlayer.ts` now tracks the exact assigned `stream_url` per `<audio>` element in a per-instance `WeakMap<HTMLAudioElement,string>` (`loadedSrc`) via `setElementSource()`/`elementHolds()`; `gaplessAdvance`, `crossfadeTo`, `playAt`, `preloadNext` all reuse/assign through it (never read the `.src` IDL getter for the reuse decision), so reuse holds when `resolveSrc` returns a RELATIVE URL (`streamBase()===''`); `stop`/`dispose` clear the marker. Test double `FakeAudioElement.src` now NORMALIZES to an absolute URL like a real element (getter resolves relative against `http://localhost/`), un-hiding the bug; updated the 5 relative `.src` assertions to absolute; added a same-origin regression-guard test asserting the preloaded idle element is played and NOT re-`load()`ed even though `.src` reads back absolute (≠ the relative resolveSrc output). Verified: reverting to the old `incoming.src !== src` compare makes 2 tests go RED. `npx vitest run` = **3010 pass / 1 flaky-fail (unrelated UI-3.4 MetricsPage.apex-registration under full-suite parallelism — passes 4/4 in isolation) / 5 skip**; useMusicPlayer file = 12/12; `vue-tsc --noEmit` exit 0; `eslint` on changed files exit 0; `npm run build` exit 0 (dist restored, NOT committed).
+
+## Reviewer (confirming re-review) — UI-3.6 — 2026-07-13 (perf-7)
+**NO FINDINGS.** Confirmed commit `f5ef763` (HEAD, tree clean) closes the last open finding: `loadedSrc` WeakMap (`setElementSource()`/`elementHolds()`) fully replaces `.src`-getter comparisons at ALL FOUR reuse/assign sites (`playAt`, `gaplessAdvance`, `crossfadeTo`, `preloadNext`) — not just the one originally flagged; map entries cleared in lockstep on `stop`/`dispose`, so no stale-reuse risk. `FakeAudioElement.src` test double now normalizes to an absolute URL (mirrors real `HTMLMediaElement` IDL behavior), genuinely exercising the same-origin regression (reverting the fix goes red, verified by the Fixer). Targeted run 21/21 pass; full suite **3011 pass / 5 skip / 0 fail** (the UI-3.4 `MetricsPage.apex-registration` full-suite flake didn't even reproduce this run). Scope clean — worklog + composable + test only, no `dist/`. **UI-3.6 is CODE-COMPLETE.** Remaining for UI-3.6: Docs cycle (CHANGELOG/README/phlix-docs) + release-time `dist/` rebuild (batched with UI-3.1/UI-3.4, per the cross-cutting queue — not per-step).
+
+## Scribe — 2026-07-13
+
+Docs-debt sweep for the UI-0.1 → UI-3.9 pass (every `[x]` step in the Progress list). No behavioral
+code changes — CHANGELOG / README / phlix-docs / docblocks only. Full `npx vitest run` = **3011 pass /
+5 skip / 0 fail**; `npx vue-tsc --noEmit` exit 0; `git status` shows **no `dist/` changes** (release-time
+gate honored per §0.5). Committed + pushed to master.
+
+**phlix-ui files changed (absolute):**
+- `/home/sites/phlix/phlix-ui/CHANGELOG.md` — under `## [Unreleased]`: **corrected two now-stale
+  entries** — UI-3.3 (CSS-split was REVERTED → documented the single aggregated `style.css` + why the
+  split shipped the app unstyled) and UI-3.4 (rewrote from the old "external, 626 KB" text to what
+  actually shipped: `vue3-apexcharts/core` + `import 'apexcharts/line'` registration, apexcharts now
+  BUNDLED not external, one ~458 KB browser copy). Removed a duplicate UI-2.6 entry. **Added the ~15
+  missing steps:** UI-3.6 music playback (Added), and UI-3.1/2.1/3.5/3.7/3.8/2.4/0.7/0.5/0.8/3.9
+  (Changed), UI-1.1/0.6 (Fixed). Added a `### Notes` block: release-time `dist/` rebuild owed for
+  UI-3.1/3.4/3.6, and the dead `src/api/music.ts` flagged for §6 removal.
+- `/home/sites/phlix/phlix-ui/README.md` — added two "Performance Patterns" subsections that shipped
+  this pass and are already in the committed `dist/`: Stale-While-Revalidate item cache (UI-2.1,
+  `useMediaItemCache`) and Debounced Preference Persistence (UI-2.7).
+
+**phlix-docs files changed (absolute) — committed + pushed separately:**
+- `/home/sites/phlix/phlix-docs/docs/clients/web.md` — new "Music playback" section under Playback
+  (UI-3.6: now-playing transport bar, signed per-track stream URLs, Settings-driven client-side
+  crossfade + gapless).
+- `/home/sites/phlix/phlix-docs/docs/advanced/music-audio.md` — NOTE reconciling the doc with what the
+  web player actually ships: crossfade/gapless are done **client-side** (dual `<audio>`, reading
+  Settings → Playback), not the server-side LADSPA/`audio_config` model the page otherwise describes
+  (native clients still use `audio_config`).
+- `/home/sites/phlix/phlix-docs/docs/advanced/syncplay.md` — new "Automatic Drift Correction"
+  subsection (UI-3.7: web player extrapolates the host position and auto-seeks past the 2 s tolerance).
+
+**Docblocks:** verified `src/composables/useMusicPlayer.ts` and `src/composables/useTrickplay.ts`
+public-contract docblocks are already COMPLETE + accurate (written during their UI-3.6 / UI-0.5-0.6 fix
+cycles — signed `stream_url`, dual-`<audio>` crossfade/gapless, the `loadedSrc` WeakMap relative-vs-
+absolute reuse rationale; and `apiBase`/`AbortSignal`/memoized cache respectively) — no stale docblocks
+to change. None of `useMusicPlayer`/`useMediaItemCache`/`useTrickplay` are barrel-exported, so they
+stay out of the README public-API tables.
