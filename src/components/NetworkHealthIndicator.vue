@@ -12,8 +12,8 @@
  * state, hub heartbeat metrics, active sessions, and network latency.
  *
  * Green  = healthy:  latency < 100ms, relay connected, no heartbeat failures
- * Yellow = degraded: latency 100-500ms OR some relay issues OR heartbeat failures
- * Red    = offline:  latency > 500ms OR relay disconnected OR not enrolled
+ * Yellow = degraded: latency 100-500ms OR relay reconnecting OR heartbeat failures
+ * Red    = offline:  not enrolled OR network reports offline OR latency > 500ms
  *
  * Polls `/api/v1/health/relay` + `/api/v1/health/network` every 30 seconds.
  * Shows a spinner while the first request is in-flight.
@@ -64,14 +64,15 @@ const status = computed<'healthy' | 'degraded' | 'offline'>(() => {
   if (health.value === null) return 'offline';
   const { relay, hub, network } = health.value;
 
-  // Offline: not enrolled, relay disconnected, or network error
+  // Offline: not enrolled OR network reports offline OR critically high latency
   if (!hub.isEnrolled) return 'offline';
-  if (!relay.connected) return 'offline';
+  if (network.latencyMs !== null && network.latencyMs > 500) return 'offline';
   if (network.status === 'offline') return 'offline';
 
-  // Degraded: elevated latency, relay issues, or heartbeat failures
-  if (network.latencyMs !== null && network.latencyMs > 500) return 'offline';
-  if (network.status === 'degraded') return 'degraded';
+  // Degraded: relay disconnected (can flap during normal reconnect cycles),
+  // reconnecting, or heartbeat failures. relay.connected falling false briefly
+  // is expected during tunnel re-establishment — show degraded not offline.
+  if (!relay.connected) return 'degraded';
   if (relay.reconnectAttempts > 0) return 'degraded';
   if (hub.consecutiveFailures > 0) return 'degraded';
 
