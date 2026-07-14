@@ -110,6 +110,7 @@ function harness(opts: {
         getCurrentAudioTrack: () => -1,
         setAudioTrack: () => {},
         onAudioTrackSwitched: () => () => {},
+        loadSource: () => {},
       };
     }
     return {
@@ -137,6 +138,7 @@ function harness(opts: {
       getCurrentAudioTrack: () => hls.currentAudioTrack,
       setAudioTrack: () => {},
       onAudioTrackSwitched: () => () => {},
+      loadSource: () => {},
     };
   });
   const post = vi.fn(async () => {

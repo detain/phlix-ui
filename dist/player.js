@@ -2811,7 +2811,10 @@ async function fi(e, t, n = {}) {
 			audioTracks: [],
 			getCurrentAudioTrack: () => -1,
 			setAudioTrack: () => void 0,
-			onAudioTrackSwitched: () => () => void 0
+			onAudioTrackSwitched: () => () => void 0,
+			loadSource(t) {
+				e.src = t;
+			}
 		};
 	}
 	let { default: r } = await import("./hls-Be5Qwv5L.js");
@@ -2899,6 +2902,9 @@ async function fi(e, t, n = {}) {
 			onAudioTrackSwitched(e) {
 				let t = (t, n) => e(n.id);
 				return a.on(r.Events.AUDIO_TRACK_SWITCHED, t), () => a.off(r.Events.AUDIO_TRACK_SWITCHED, t);
+			},
+			loadSource(e) {
+				a.loadSource(e);
 			}
 		};
 	}
@@ -2995,26 +3001,26 @@ function wi(e, t) {
 //#endregion
 //#region src/composables/useHlsTranscode.ts
 function Ti(e) {
-	let t = y("idle"), n = y(0), r = y([]), i = y([]), a = y(-1), o = y(!0), s = y(null), c = y(null), l = y([]), u = y(-1);
-	function d(e) {
-		if (!T) return;
-		i.value = T.levels, a.value = T.getCurrentLevel(), o.value = T.autoLevelEnabled;
-		let t = e ?? T.getCurrentLevel(), n = t >= 0 ? i.value.find((e) => e.index === t) : void 0;
+	let t = y("idle"), n = y(0), r = y([]), i = y([]), a = y(-1), o = y(!0), s = y(null), c = y(null), l = y([]), u = y(-1), d = y(null), f = y(null);
+	function p(e) {
+		if (!D) return;
+		i.value = D.levels, a.value = D.getCurrentLevel(), o.value = D.autoLevelEnabled;
+		let t = e ?? D.getCurrentLevel(), n = t >= 0 ? i.value.find((e) => e.index === t) : void 0;
 		s.value = n ? n.height : null;
 	}
-	function f() {
+	function m() {
 		i.value = [], a.value = -1, o.value = !0, s.value = null, c.value = null;
 	}
-	function p(e) {
-		T && (l.value = T.audioTracks, u.value = e ?? T.getCurrentAudioTrack());
+	function h(e) {
+		D && (l.value = D.audioTracks, u.value = e ?? D.getCurrentAudioTrack());
 	}
-	function m() {
+	function g() {
 		l.value = [], u.value = -1;
 	}
-	function h(e) {
+	function _(e) {
 		!e || e.length === 0 || (c.value = e);
 	}
-	function g(t) {
+	function v(t) {
 		if (t.length === 0) return;
 		let n = e.apiBase();
 		r.value = t.map((e) => ({
@@ -3022,86 +3028,92 @@ function Ti(e) {
 			url: wi(n, e.url)
 		}));
 	}
-	let _ = e.attach ?? fi, v = e.pollIntervalMs ?? 1e3, b = e.maxWaitMs ?? 12e4, x = e.sleep ?? ((e) => new Promise((t) => setTimeout(t, e))), S = Math.max(1, Math.ceil(b / Math.max(1, v))), C = Ei(), w = e.getToken ?? (() => Di(C)), T = null, E = null, D = null, O = !1, k = null;
-	function A() {
+	let b = e.attach ?? fi, x = e.pollIntervalMs ?? 1e3, S = e.maxWaitMs ?? 12e4, C = e.sleep ?? ((e) => new Promise((t) => setTimeout(t, e))), w = Math.max(1, Math.ceil(S / Math.max(1, x))), T = Ei(), E = e.getToken ?? (() => Di(T)), D = null, O = null, k = null, A = !1, j = null;
+	function M() {
 		return e.client ?? new xe({
 			baseUrl: e.apiBase(),
-			tokenStore: C ?? void 0,
+			tokenStore: T ?? void 0,
 			timeoutMs: 6e4
 		});
 	}
-	async function j(i, a, o, s) {
-		F(), O = !1, k = new AbortController(), t.value = "preparing", n.value = 0, r.value = [], f();
+	async function N(i, a, o, s) {
+		R(), A = !1, j = new AbortController(), t.value = "preparing", n.value = 0, r.value = [], m();
 		try {
-			let r = A(), c = bi(await r.post(vi(a, o), void 0, k.signal));
-			if (O) return;
+			let r = M(), c = bi(await r.post(vi(a, o), void 0, j.signal));
+			if (A) return;
 			if (!c.jobId || !c.masterUrl) throw Error("transcode start returned no job");
-			g(c.subtitles), h(c.variants);
-			let l = wi(e.apiBase(), c.masterUrl), u = c.status === "completed";
-			for (let e = 0; !u && e < S; e++) {
-				let e = xi(await r.get(yi(c.jobId), void 0, k.signal));
-				if (O) return;
-				if (n.value = e.progress, g(e.subtitles), h(e.variants), Ci(e.status)) throw Error(`transcode ${e.status}`);
+			v(c.subtitles), _(c.variants), d.value = c.jobId, f.value = wi(e.apiBase(), c.masterUrl);
+			let l = c.status === "completed";
+			for (let e = 0; !l && e < w; e++) {
+				let e = xi(await r.get(yi(c.jobId), void 0, j.signal));
+				if (A) return;
+				if (n.value = e.progress, v(e.subtitles), _(e.variants), Ci(e.status)) throw Error(`transcode ${e.status}`);
 				if (Si(e)) {
-					u = !0;
+					l = !0;
 					break;
 				}
-				if (await x(v), O) return;
+				if (await C(x), A) return;
 			}
-			if (!u) throw Error("transcode timed out");
-			if (T = await _(i, l, {
-				getToken: w,
+			if (!l) throw Error("transcode timed out");
+			if (D = await b(i, f.value, {
+				getToken: E,
 				hlsConfig: e.hlsConfig,
 				startPosition: s,
-				onReady: () => d(),
+				onReady: () => p(),
 				onError: () => {
-					O || (t.value = "error");
+					A || (t.value = "error");
 				}
-			}), O) {
-				T.destroy(), T = null;
+			}), A) {
+				D.destroy(), D = null;
 				return;
 			}
-			E = T.onLevelSwitched((e) => d(e)), D = T.onAudioTrackSwitched((e) => p(e)), d(), p();
+			O = D.onLevelSwitched((e) => p(e)), k = D.onAudioTrackSwitched((e) => h(e)), p(), h();
 			try {
 				let e = oe();
-				e.hlsMasterUrl = l;
+				e.hlsMasterUrl = f.value;
 			} catch {}
 			t.value = "ready";
 		} catch {
-			O || (t.value = "error");
+			A || (t.value = "error");
 		}
 	}
-	function M(e) {
-		T && (T.setCurrentLevel(e === "auto" ? -1 : e), d());
-	}
-	function N(e) {
-		T && (T.setNextLevel(e === "auto" ? -1 : e), d());
-	}
 	function P(e) {
-		T && (T.setAudioTrack(e), p());
+		D && (D.setCurrentLevel(e === "auto" ? -1 : e), p());
 	}
-	function F() {
-		if (O = !0, k &&= (k.abort(), null), E) {
+	function F(e) {
+		D && (D.setNextLevel(e === "auto" ? -1 : e), p());
+	}
+	function I(e) {
+		D && (D.setAudioTrack(e), h());
+	}
+	function L(e) {
+		if (!D || !f.value) return;
+		let t = f.value.replace("master.m3u8", `media_v${e}.m3u8`);
+		D.loadSource(t), m();
+	}
+	function R() {
+		if (A = !0, j &&= (j.abort(), null), O) {
 			try {
-				E();
+				O();
 			} catch {}
-			E = null;
+			O = null;
+		}
+		if (k) {
+			try {
+				k();
+			} catch {}
+			k = null;
 		}
 		if (D) {
 			try {
-				D();
+				D.destroy();
 			} catch {}
 			D = null;
 		}
-		if (T) {
-			try {
-				T.destroy();
-			} catch {}
-			T = null;
-		}
+		d.value = null, f.value = null;
 	}
-	function I() {
-		F(), t.value = "idle", n.value = 0, r.value = [], f(), m();
+	function z() {
+		R(), t.value = "idle", n.value = 0, r.value = [], m(), g();
 	}
 	return {
 		state: t,
@@ -3114,12 +3126,15 @@ function Ti(e) {
 		variants: c,
 		audioTracks: l,
 		currentAudioTrack: u,
-		setLevel: M,
-		setNextLevel: N,
-		setAudioTrack: P,
-		start: j,
-		cleanup: F,
-		reset: I
+		setLevel: P,
+		setNextLevel: F,
+		setAudioTrack: I,
+		jobId: d,
+		masterUrl: f,
+		loadVariantPlaylist: L,
+		start: N,
+		cleanup: R,
+		reset: z
 	};
 }
 function Ei() {
@@ -5963,6 +5978,10 @@ var Mc = {
 			t && U.start(t, u.media.id, void 0, e);
 		}
 		function G(e) {
+			if (h.quality === "original" && e !== "auto") {
+				U.loadVariantPlaylist(ha);
+				return;
+			}
 			U.setLevel(e);
 		}
 		let K = !1;
@@ -5971,16 +5990,24 @@ var Mc = {
 			K = !0;
 			let t = x.defaultQuality;
 			if (!t || t === "auto") return;
-			let n = t === "original" ? ba(e, U.variants.value?.find((e) => e.id === "original") ?? null) : ya(e, t);
+			if (t === "original") {
+				U.loadVariantPlaylist(ha);
+				return;
+			}
+			let n = ya(e, t);
 			n >= 0 && U.setNextLevel(n);
 		}), k(() => U.variants.value, (e) => {
 			e?.length && !K && (K = !1, p(() => {
 				if (U.levels.value.length > 0) {
 					K = !0;
-					let t = x.defaultQuality;
-					if (!t || t === "auto") return;
-					let n = t === "original" ? ba(U.levels.value, e.find((e) => e.id === "original") ?? null) : ya(U.levels.value, t);
-					n >= 0 && U.setNextLevel(n);
+					let e = x.defaultQuality;
+					if (!e || e === "auto") return;
+					if (e === "original") {
+						U.loadVariantPlaylist(ha);
+						return;
+					}
+					let t = ya(U.levels.value, e);
+					t >= 0 && U.setNextLevel(t);
 				}
 			}));
 		}, { deep: !0 });
@@ -6663,7 +6690,7 @@ var Mc = {
 			}, null, 8, ["open"])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-cb8de521"]]), cu = ["aria-label"], lu = ["src", "poster"], uu = { class: "mini__body" }, du = { class: "mini__title" }, fu = { class: "mini__controls" }, pu = ["aria-label"], mu = ["aria-label", "aria-pressed"], hu = ["aria-label"], gu = ["aria-label"], _u = {
+}), [["__scopeId", "data-v-78bdffc4"]]), cu = ["aria-label"], lu = ["src", "poster"], uu = { class: "mini__body" }, du = { class: "mini__title" }, fu = { class: "mini__controls" }, pu = ["aria-label"], mu = ["aria-label", "aria-pressed"], hu = ["aria-label"], gu = ["aria-label"], _u = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, vu = /*#__PURE__*/ Y(/* @__PURE__ */ u({

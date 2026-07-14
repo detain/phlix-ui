@@ -117,6 +117,17 @@ export interface HlsTranscodeController {
    *  path. Updates {@link currentAudioTrack} optimistically; a later
    *  AUDIO_TRACK_SWITCHED event reconciles the exact active track. */
   setAudioTrack(track: number): void;
+  /** The transcode job ID, set once the start response arrives. Used to
+   *  construct variant playlist URLs for non-ABR quality selection (e.g. "Original"). */
+  jobId: Ref<string | null>;
+  /** The master playlist URL, set once the start response arrives. Used to
+   *  construct variant playlist URLs for non-ABR quality selection. */
+  masterUrl: Ref<string | null>;
+  /** Load a specific variant playlist directly (e.g. `media_voriginal.m3u8`)
+   *  instead of using ABR level switching. This is used for the "Original"
+   *  quality option when the original variant is not in the ABR ladder.
+   *  Calling this will clear the buffer and restart playback. */
+  loadVariantPlaylist(variantId: string): void;
   /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when
    *  omitted the start request sends NO `?profile=` query, letting the server map
    *  the quality profile from the request's `X-Phlix-Device-Type` header (a TV
@@ -139,6 +150,10 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   const variants = ref<Variant[] | null>(null);
   const audioTracks = ref<HlsAudioTrack[]>([]);
   const currentAudioTrack = ref<number>(-1);
+  /** The transcode job ID, set once the start response arrives. */
+  const jobId = ref<string | null>(null);
+  /** The master playlist URL, set once the start response arrives. */
+  const masterUrl = ref<string | null>(null);
 
   /** Pull the live level getters off the attached handle into reactive state.
    *  Called on manifest-parse (`onReady`) and on every settled level switch —
@@ -237,7 +252,9 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       // Variants (the quality ladder) may also be present on the start response.
       setVariants(startRes.variants);
 
-      const masterUrl = resolveStreamUrl(opts.apiBase(), startRes.masterUrl);
+      // Store jobId and masterUrl for variant playlist construction (e.g. "Original").
+      jobId.value = startRes.jobId;
+      masterUrl.value = resolveStreamUrl(opts.apiBase(), startRes.masterUrl);
 
       let ready = startRes.status === 'completed';
       for (let attempt = 0; !ready && attempt < maxAttempts; attempt++) {
@@ -265,7 +282,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         throw new Error('transcode timed out');
       }
 
-      handle = await attach(video, masterUrl, {
+      handle = await attach(video, masterUrl.value, {
         getToken,
         hlsConfig: opts.hlsConfig,
         startPosition,
@@ -291,7 +308,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       // a transcoded title when the user docks away from the full player.
       try {
         const playerStore = usePlayerStore();
-        playerStore.hlsMasterUrl = masterUrl;
+        playerStore.hlsMasterUrl = masterUrl.value!;
       } catch {
         /* store not available (e.g. test environment without Pinia) — ignore */
       }
@@ -326,6 +343,18 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     syncAudioTrackState();
   }
 
+  /** Load a specific variant playlist directly (e.g. `media_voriginal.m3u8`).
+   *  Used for "Original" quality when the original variant is not in the ABR ladder.
+   *  This clears the buffer and restarts playback. */
+  function loadVariantPlaylist(variantId: string): void {
+    if (!handle || !masterUrl.value) return;
+    // Construct variant URL from master URL: replace "master.m3u8" with "media_v{variantId}.m3u8"
+    const variantUrl = masterUrl.value.replace('master.m3u8', `media_v${variantId}.m3u8`);
+    handle.loadSource(variantUrl);
+    // Reset level state since the variant playlist has different levels
+    resetLevelState();
+  }
+
   function cleanup(): void {
     cancelled = true;
     if (abortController) {
@@ -356,6 +385,9 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       }
       handle = null;
     }
+    // Clear job tracking since this session's stream is done.
+    jobId.value = null;
+    masterUrl.value = null;
   }
 
   function reset(): void {
@@ -381,6 +413,9 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     setLevel,
     setNextLevel,
     setAudioTrack,
+    jobId,
+    masterUrl,
+    loadVariantPlaylist,
     start,
     cleanup,
     reset,

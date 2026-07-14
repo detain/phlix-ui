@@ -125,6 +125,13 @@ export interface HlsHandle {
    * never fires and returns a no-op unsubscribe.
    */
   onAudioTrackSwitched(callback: (trackIndex: number) => void): () => void;
+  /**
+   * Load a different HLS playlist URL (e.g. a specific variant playlist like
+   * `media_voriginal.m3u8`). This switches the hls.js source, which will clear
+   * the buffer and restart playback from the beginning of the new playlist.
+   * Use this for non-ABR variant selection (e.g. "Original" quality).
+   */
+  loadSource(url: string): void;
 }
 
 /** Options for {@link attachHls}. */
@@ -249,6 +256,9 @@ export async function attachHls(
       getCurrentAudioTrack: () => -1,
       setAudioTrack: () => undefined,
       onAudioTrackSwitched: () => () => undefined,
+      loadSource(newUrl: string): void {
+        video.src = newUrl;
+      },
     };
   }
 
@@ -391,6 +401,9 @@ export async function attachHls(
         const listener = (_event: unknown, data: { id: number }): void => callback(data.id);
         hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, listener);
         return (): void => hls.off(Hls.Events.AUDIO_TRACK_SWITCHED, listener);
+      },
+      loadSource(newUrl: string): void {
+        hls.loadSource(newUrl);
       },
     };
   }

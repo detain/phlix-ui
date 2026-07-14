@@ -11,7 +11,7 @@ import { t as b } from "./useAuthStore-C_Rnq3Bo.js";
 import { i as le, n as ue, r as de, t as fe } from "./usePlayerStore-fCCh6mOw.js";
 import { t as x } from "./useToastStore-BDoKlU6N.js";
 import { n as pe, t as me } from "./ThumbRating-jRpqLBjb.js";
-import { i as he, o as ge } from "./shortcuts-DGdfkJbu.js";
+import { i as he, o as ge } from "./shortcuts-BqRA1aW9.js";
 import { n as _e, t as ve } from "./NetworkHealthIndicator-BvK3FV8I.js";
 import { t as ye } from "./Spinner-D1bwTvld.js";
 import { i as be, n as xe, r as Se, t as Ce } from "./Kbd-Bmk72RCb.js";
@@ -1153,7 +1153,7 @@ function pi(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-C1czli0x.js")
+			component: () => import("./PlayerPage-BxE1lg3S.js")
 		},
 		{
 			path: `${t}/login`,

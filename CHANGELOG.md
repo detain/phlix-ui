@@ -1,3 +1,9 @@
+## v0.80.3 (2026-07-14)
+
+### Fixes
+- fix(player): properly select Original variant playlist instead of falling back to ladder rung
+
+
 ## v0.80.2 (2026-07-14)
 
 ### Fixes

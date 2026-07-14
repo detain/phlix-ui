@@ -99,6 +99,17 @@ export interface HlsTranscodeController {
      *  path. Updates {@link currentAudioTrack} optimistically; a later
      *  AUDIO_TRACK_SWITCHED event reconciles the exact active track. */
     setAudioTrack(track: number): void;
+    /** The transcode job ID, set once the start response arrives. Used to
+     *  construct variant playlist URLs for non-ABR quality selection (e.g. "Original"). */
+    jobId: Ref<string | null>;
+    /** The master playlist URL, set once the start response arrives. Used to
+     *  construct variant playlist URLs for non-ABR quality selection. */
+    masterUrl: Ref<string | null>;
+    /** Load a specific variant playlist directly (e.g. `media_voriginal.m3u8`)
+     *  instead of using ABR level switching. This is used for the "Original"
+     *  quality option when the original variant is not in the ABR ladder.
+     *  Calling this will clear the buffer and restart playback. */
+    loadVariantPlaylist(variantId: string): void;
     /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when
      *  omitted the start request sends NO `?profile=` query, letting the server map
      *  the quality profile from the request's `X-Phlix-Device-Type` header (a TV

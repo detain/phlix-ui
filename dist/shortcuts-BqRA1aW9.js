@@ -44,7 +44,10 @@ async function u(e, t, n = {}) {
 			audioTracks: [],
 			getCurrentAudioTrack: () => -1,
 			setAudioTrack: () => void 0,
-			onAudioTrackSwitched: () => () => void 0
+			onAudioTrackSwitched: () => () => void 0,
+			loadSource(t) {
+				e.src = t;
+			}
 		};
 	}
 	let { default: r } = await import("./hls-Be5Qwv5L.js");
@@ -132,6 +135,9 @@ async function u(e, t, n = {}) {
 			onAudioTrackSwitched(e) {
 				let t = (t, n) => e(n.id);
 				return u.on(r.Events.AUDIO_TRACK_SWITCHED, t), () => u.off(r.Events.AUDIO_TRACK_SWITCHED, t);
+			},
+			loadSource(e) {
+				u.loadSource(e);
 			}
 		};
 	}
@@ -299,4 +305,4 @@ function _(n, r = {}) {
 //#endregion
 export { _ as a, h as i, p as n, u as o, d as r, f as t };
 
-//# sourceMappingURL=shortcuts-DGdfkJbu.js.map
+//# sourceMappingURL=shortcuts-BqRA1aW9.js.map

@@ -70,7 +70,7 @@ import {
   type TextTrackInfo,
 } from './player/captions';
 import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
-import { levelIndexForQuality, levelIndexForVariant, AUTO_QUALITY, ORIGINAL_QUALITY } from './player/quality';
+import { levelIndexForQuality, AUTO_QUALITY, ORIGINAL_QUALITY } from './player/quality';
 import { useSyncPlayStore, SYNC_DRIFT_THRESHOLD_SECONDS } from '../stores/useSyncPlayStore';
 import SyncPlayOverlay from './syncplay/SyncPlayOverlay.vue';
 import SyncPlayModal from './syncplay/SyncPlayModal.vue';
@@ -319,8 +319,22 @@ function beginTranscode(startPosition = 0): void {
 }
 
 /** A quality rung was picked in the menu — pin it (or hand back to ABR) on the
- *  live HLS session. The menu already persisted the choice to prefs. */
+ *  live HLS session. The menu already persisted the choice to prefs.
+ *
+ *  Special case: when the user explicitly selects "Original" quality, we load
+ *  the original variant's playlist directly (media_voriginal.m3u8) instead of
+ *  using ABR level switching. This is because the Original variant is filtered
+ *  from the ABR ladder (SV-4.6) since copy segments may have drifting boundaries.
+ *  Even when levelIndexForVariant finds a height-matched ladder rung, it is a
+ *  transcoded version, NOT the original copy the user expects. */
 function onSelectQuality(level: number | 'auto'): void {
+  // When player.quality is 'original', the user explicitly selected "Original".
+  // Load the original variant playlist directly instead of using setLevel with
+  // a potentially wrong ladder rung index.
+  if (player.quality === ORIGINAL_QUALITY && level !== 'auto') {
+    tc.loadVariantPlaylist(ORIGINAL_QUALITY);
+    return;
+  }
   tc.setLevel(level);
 }
 
@@ -341,12 +355,14 @@ watch(
     qualitySeeded = true;
     const pref = prefs.defaultQuality;
     if (!pref || pref === AUTO_QUALITY) return;
-    // 'original' pins the server's untouched-source rendition (matched by the
-    // 'original' variant's height/bitrate); resolution rungs pin as before.
-    const index =
-      pref === ORIGINAL_QUALITY
-        ? levelIndexForVariant(levels, tc.variants.value?.find((v) => v.id === ORIGINAL_QUALITY) ?? null)
-        : levelIndexForQuality(levels, pref);
+    // 'original' loads the server's untouched-source rendition playlist directly
+    // (media_voriginal.m3u8), not a ladder rung. Copy variants are filtered from
+    // the ABR ladder (SV-4.6) because their segments may have drifting boundaries.
+    if (pref === ORIGINAL_QUALITY) {
+      tc.loadVariantPlaylist(ORIGINAL_QUALITY);
+      return;
+    }
+    const index = levelIndexForQuality(levels, pref);
     if (index >= 0) tc.setNextLevel(index);
   },
 );
@@ -364,10 +380,12 @@ watch(
           qualitySeeded = true;
           const pref = prefs.defaultQuality;
           if (!pref || pref === AUTO_QUALITY) return;
-          const index =
-            pref === ORIGINAL_QUALITY
-              ? levelIndexForVariant(tc.levels.value, newVariants.find((v) => v.id === ORIGINAL_QUALITY) ?? null)
-              : levelIndexForQuality(tc.levels.value, pref);
+          // 'original' loads the server's untouched-source rendition playlist directly.
+          if (pref === ORIGINAL_QUALITY) {
+            tc.loadVariantPlaylist(ORIGINAL_QUALITY);
+            return;
+          }
+          const index = levelIndexForQuality(tc.levels.value, pref);
           if (index >= 0) tc.setNextLevel(index);
         }
       });
