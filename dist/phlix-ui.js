@@ -1153,7 +1153,7 @@ function pi(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-Dmh-WkSi.js")
+			component: () => import("./PlayerPage-C1czli0x.js")
 		},
 		{
 			path: `${t}/login`,

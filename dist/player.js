@@ -3858,7 +3858,13 @@ function ba(e, t) {
 		let e = Math.abs(i.bitrate - t.bitrate);
 		e < r && (n = i.index, r = e);
 	}
-	return n >= 0 ? n : ya(e, ga(t.height));
+	if (n >= 0) return n;
+	let i = -1, a = Infinity;
+	for (let n of e) if (n.height >= t.height) {
+		let e = n.height - t.height;
+		e < a && (i = n.index, a = e);
+	}
+	return i;
 }
 function xa(e, t) {
 	if (t < 0) return ma;
@@ -5967,7 +5973,17 @@ var Mc = {
 			if (!t || t === "auto") return;
 			let n = t === "original" ? ba(e, U.variants.value?.find((e) => e.id === "original") ?? null) : ya(e, t);
 			n >= 0 && U.setNextLevel(n);
-		});
+		}), k(() => U.variants.value, (e) => {
+			e?.length && !K && (K = !1, p(() => {
+				if (U.levels.value.length > 0) {
+					K = !0;
+					let t = x.defaultQuality;
+					if (!t || t === "auto") return;
+					let n = t === "original" ? ba(U.levels.value, e.find((e) => e.id === "original") ?? null) : ya(U.levels.value, t);
+					n >= 0 && U.setNextLevel(n);
+				}
+			}));
+		}, { deep: !0 });
 		let ve = y(h.resumePositionFor(u.media.id) ?? 0), ye = y(!H.value && ve.value > 0), be = null, Se = y(!1), Ce = y(8), Te, Ee = y(null), De = y(0), Oe = y(!1), ke = y([]), Ae = y(!1), je = y(null);
 		function Me(e, t) {
 			Ee.value = e, De.value = t, ke.value = [], je.value = null, Oe.value = !0, Le(e, t);
@@ -6647,7 +6663,7 @@ var Mc = {
 			}, null, 8, ["open"])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-34dca0c3"]]), cu = ["aria-label"], lu = ["src", "poster"], uu = { class: "mini__body" }, du = { class: "mini__title" }, fu = { class: "mini__controls" }, pu = ["aria-label"], mu = ["aria-label", "aria-pressed"], hu = ["aria-label"], gu = ["aria-label"], _u = {
+}), [["__scopeId", "data-v-cb8de521"]]), cu = ["aria-label"], lu = ["src", "poster"], uu = { class: "mini__body" }, du = { class: "mini__title" }, fu = { class: "mini__controls" }, pu = ["aria-label"], mu = ["aria-label", "aria-pressed"], hu = ["aria-label"], gu = ["aria-label"], _u = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, vu = /*#__PURE__*/ Y(/* @__PURE__ */ u({

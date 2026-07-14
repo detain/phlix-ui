@@ -1,3 +1,9 @@
+## v0.80.2 (2026-07-14)
+
+### Fixes
+- fix(player): select closest quality >= source height instead of flooring
+
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
