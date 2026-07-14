@@ -8,7 +8,7 @@ import { t as c } from "./Skeleton-DhQmxeNg.js";
 import { t as l } from "./EmptyState-CfyGawh7.js";
 import { t as ee } from "./PageHint-CPoTKHik.js";
 import { n as te, t as u } from "./logs-DadTfaTq.js";
-import { Fragment as d, computed as f, createBlock as p, createCommentVNode as ne, createElementBlock as m, createElementVNode as h, createTextVNode as g, createVNode as _, defineComponent as v, inject as re, nextTick as ie, onBeforeUnmount as ae, onMounted as oe, openBlock as y, ref as b, renderList as x, toDisplayString as S, unref as C, watch as w, withCtx as T } from "vue";
+import { Fragment as d, computed as f, createBlock as p, createCommentVNode as ne, createElementBlock as m, createElementVNode as h, createTextVNode as g, createVNode as _, defineComponent as v, inject as re, nextTick as y, onBeforeUnmount as ie, onMounted as ae, openBlock as b, ref as x, renderList as oe, toDisplayString as S, unref as C, watch as w, withCtx as T } from "vue";
 //#region src/pages/admin/LogsPage.vue?vue&type=script&setup=true&lang.ts
 var se = {
 	class: "admin-logs",
@@ -44,23 +44,23 @@ var se = {
 			for (let [t, n] of Object.entries(D)) if (n.test(e)) return t;
 			return null;
 		}
-		function k(e) {
+		function he(e) {
 			return e.replace(/\s+\[\]$/, "");
 		}
-		function he(e) {
+		function ge(e) {
 			return e.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/("([^"]+)":\s*)("(?:[^"\\]|\\.)*"|\d+\.?\d*|true|false|null)/g, (e, t, n, r) => {
 				let i = `<span class="json-key">${t}</span>`, a = r;
 				return r.startsWith("\"") ? a = `<span class="json-string">${r}</span>` : r === "true" || r === "false" ? a = `<span class="json-boolean">${r}</span>` : r === "null" ? a = `<span class="json-null">${r}</span>` : isNaN(Number(r)) || (a = `<span class="json-number">${r}</span>`), i + a;
 			});
 		}
-		function A(e) {
+		function k(e) {
 			return e.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 		}
-		function ge(e) {
+		function _e(e) {
 			return `<span class="log-badge log-badge--${e}">${e}</span>`;
 		}
-		function _e(e) {
-			let t = k(e), n = 0, r = "", i = t.match(/^\[(\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2}))/);
+		function ve(e) {
+			let t = he(e), n = 0, r = "", i = t.match(/^\[(\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2}))/);
 			if (i) {
 				try {
 					let e = /* @__PURE__ */ new Date(i[1] + "Z");
@@ -89,51 +89,51 @@ var se = {
 				message: t
 			};
 		}
-		function j(e, t) {
-			let n = e.level ? ge(e.level) : "", r = A(t || e.source), i = A(e.message), a = i ? he(i) : "";
-			return `${r} ${n}${e.localTime} ${a}`;
+		function A(e, t) {
+			let n = e.level ? _e(e.level) : "", r = k(t || e.source), i = k(e.message), a = i ? ge(i) : "";
+			return `${r}${n ? ` ${n}` : ""}${n ? ` ${e.localTime}` : e.localTime} ${a}`;
 		}
-		let M = e, N = re("apiBase", ""), P = f(() => typeof N == "string" ? N : N?.value ?? ""), F = new te(M.client ?? new r({
-			baseUrl: P.value,
+		let j = e, M = re("apiBase", ""), N = f(() => typeof M == "string" ? M : M?.value ?? ""), P = new te(j.client ?? new r({
+			baseUrl: N.value,
 			tokenStore: new t()
-		})), I = i(), L = b([]), R = b(""), z = b(200), B = b([]), V = b(!1), H = b(!1), U = b(!0), W = b(null), G = b(null), K = b(null), q = null, ve = f(() => L.value.length === 0 ? [{
+		})), F = i(), I = x([]), L = x(""), R = x(200), z = x([]), B = x(!1), V = x(!1), H = x(!0), U = x(null), W = x(null), G = x(null), K = null, q = f(() => I.value.length === 0 ? [{
 			value: "",
 			label: "(no log files)"
 		}] : [{
 			value: u,
 			label: "All logs (combined)"
-		}, ...L.value.map((e) => ({
+		}, ...I.value.map((e) => ({
 			value: e.name,
 			label: O(e.name)
 		}))]), J = f(() => {
-			let e = B.value.map(_e), t = [], n = 0;
+			let e = z.value.map(ve), t = [], n = 0;
 			for (; n < e.length;) {
 				let r = e[n];
 				if (r.timestamp === 0 || r.source === "") {
 					t.push({
 						level: r.level,
-						content: j(r)
+						content: A(r)
 					}), n++;
 					continue;
 				}
-				let i = [r], a = new Set([r.source]), o = n + 1;
-				for (; o < e.length;) {
-					let t = e[o];
-					if (Math.abs(t.timestamp - r.timestamp) <= 1e3 && t.message === r.message && !a.has(t.source)) i.push(t), a.add(t.source), o++;
+				let i = [r], a = new Set([r.source]), o = r.timestamp, s = n + 1;
+				for (; s < e.length;) {
+					let t = e[s];
+					if (Math.abs(t.timestamp - o) <= 1e3 && t.message === r.message && !a.has(t.source)) i.push(t), a.add(t.source), o = t.timestamp, s++;
 					else break;
 				}
 				if (i.length === 1) t.push({
 					level: r.level,
-					content: j(r)
+					content: A(r)
 				});
 				else {
 					let e = [...new Set(i.map((e) => e.source))].sort().join(", ");
 					t.push({
 						level: r.level,
-						content: j(r, e)
+						content: A(r, e)
 					});
 				}
-				n = o;
+				n = s;
 			}
 			return t;
 		}), ye = f(() => v.map((e) => ({
@@ -141,51 +141,51 @@ var se = {
 			label: String(e)
 		})));
 		async function Y() {
-			U.value = !0, W.value = null;
+			H.value = !0, U.value = null;
 			try {
-				let e = await F.list();
-				L.value = e, e.length > 0 && R.value === "" && (R.value = u);
+				let e = await P.list();
+				I.value = e, e.length > 0 && L.value === "" && (L.value = u);
 			} catch (e) {
-				W.value = n(e, "Failed to list logs."), I.error(W.value);
+				U.value = n(e, "Failed to list logs."), F.error(U.value);
 			} finally {
-				U.value = !1;
+				H.value = !1;
 			}
 		}
 		async function X() {
-			let e = R.value;
+			let e = L.value;
 			if (e !== "") {
-				H.value = !0, G.value = null;
+				V.value = !0, W.value = null;
 				try {
-					let t = e === "__all__" ? await F.tailAll(z.value) : await F.tail(e, z.value);
-					B.value = t.lines, V.value = t.truncated, ie(() => {
-						K.value && (K.value.scrollTop = K.value.scrollHeight);
+					let t = e === "__all__" ? await P.tailAll(R.value) : await P.tail(e, R.value);
+					z.value = t.lines, B.value = t.truncated, y(() => {
+						G.value && (G.value.scrollTop = G.value.scrollHeight);
 					});
 				} catch (e) {
-					G.value = n(e, "Failed to read log."), I.error(G.value);
+					W.value = n(e, "Failed to read log."), F.error(W.value);
 				} finally {
-					H.value = !1;
+					V.value = !1;
 				}
 			}
 		}
 		function Z() {
-			q !== null && (clearInterval(q), q = null);
+			K !== null && (clearInterval(K), K = null);
 		}
 		function be() {
-			Z(), $.value && R.value !== "" && (q = setInterval(() => void X(), E));
+			Z(), $.value && L.value !== "" && (K = setInterval(() => void X(), E));
 		}
 		function Q() {
-			document.hidden ? Z() : $.value && R.value !== "" && (q = setInterval(() => void X(), E));
+			document.hidden ? Z() : $.value && L.value !== "" && (K = setInterval(() => void X(), E));
 		}
-		let $ = b(!1);
-		return w([R, z], () => void X()), w([
+		let $ = x(!1);
+		return w([L, R], () => void X()), w([
 			$,
-			R,
-			z
-		], be), oe(() => {
+			L,
+			R
+		], be), ae(() => {
 			Y(), typeof document < "u" && document.addEventListener("visibilitychange", Q);
-		}), ae(() => {
+		}), ie(() => {
 			Z(), typeof document < "u" && document.removeEventListener("visibilitychange", Q);
-		}), (e, t) => (y(), m("section", se, [
+		}), (e, t) => (b(), m("section", se, [
 			t[10] ||= h("header", { class: "admin-logs__head" }, [h("h1", {
 				id: "logs-heading",
 				class: "admin-logs__title"
@@ -208,22 +208,22 @@ var se = {
 			}),
 			h("div", ce, [
 				h("label", le, [t[4] ||= h("span", { class: "admin-logs__label" }, "File", -1), _(s, {
-					modelValue: R.value,
-					"onUpdate:modelValue": t[0] ||= (e) => R.value = e,
-					options: ve.value,
+					modelValue: L.value,
+					"onUpdate:modelValue": t[0] ||= (e) => L.value = e,
+					options: q.value,
 					label: "Log file"
 				}, null, 8, ["modelValue", "options"])]),
 				h("label", ue, [t[5] ||= h("span", { class: "admin-logs__label" }, "Lines", -1), _(s, {
-					"model-value": z.value,
+					"model-value": R.value,
 					options: ye.value,
 					label: "Line count",
-					"onUpdate:modelValue": t[1] ||= (e) => z.value = Number(e)
+					"onUpdate:modelValue": t[1] ||= (e) => R.value = Number(e)
 				}, null, 8, ["model-value", "options"])]),
 				_(a, {
 					variant: "outline",
 					size: "sm",
-					loading: H.value,
-					disabled: R.value === "",
+					loading: V.value,
+					disabled: L.value === "",
 					onClick: X
 				}, {
 					default: T(() => [...t[6] ||= [g(" Refresh ", -1)]]),
@@ -236,15 +236,15 @@ var se = {
 					class: "admin-logs__toggle"
 				}, null, 8, ["modelValue"])
 			]),
-			V.value ? (y(), m("p", de, " Showing the most recent " + S(z.value) + " lines (" + S(R.value === C("__all__") ? "more lines available across files" : "file is larger") + "). ", 1)) : ne("", !0),
-			(U.value || H.value) && B.value.length === 0 ? (y(), m("div", fe, [_(c, {
+			B.value ? (b(), m("p", de, " Showing the most recent " + S(R.value) + " lines (" + S(L.value === C("__all__") ? "more lines available across files" : "file is larger") + "). ", 1)) : ne("", !0),
+			(H.value || V.value) && z.value.length === 0 ? (b(), m("div", fe, [_(c, {
 				variant: "text",
 				lines: 8
-			})])) : W.value ? (y(), p(l, {
+			})])) : U.value ? (b(), p(l, {
 				key: 2,
 				icon: "alert",
 				title: "Couldn't load log files",
-				description: W.value
+				description: U.value
 			}, {
 				actions: T(() => [_(a, {
 					variant: "solid",
@@ -256,11 +256,11 @@ var se = {
 					_: 1
 				})]),
 				_: 1
-			}, 8, ["description"])) : G.value ? (y(), p(l, {
+			}, 8, ["description"])) : W.value ? (b(), p(l, {
 				key: 3,
 				icon: "alert",
 				title: "Couldn't read log",
-				description: G.value
+				description: W.value
 			}, {
 				actions: T(() => [_(a, {
 					variant: "solid",
@@ -272,18 +272,18 @@ var se = {
 					_: 1
 				})]),
 				_: 1
-			}, 8, ["description"])) : (y(), m("pre", {
+			}, 8, ["description"])) : (b(), m("pre", {
 				key: 4,
 				ref_key: "preEl",
-				ref: K,
+				ref: G,
 				class: "admin-logs__output",
 				"data-testid": "logs-output",
 				"aria-live": "polite"
-			}, [J.value.length === 0 ? (y(), m(d, { key: 0 }, [g("(no output)")], 64)) : (y(!0), m(d, { key: 1 }, x(J.value, (e, n) => (y(), m(d, { key: n }, [h("span", { innerHTML: e.content }, null, 8, pe), t[9] ||= g("\n", -1)], 64))), 128))], 512))
+			}, [J.value.length === 0 ? (b(), m(d, { key: 0 }, [g("(no output)")], 64)) : (b(!0), m(d, { key: 1 }, oe(J.value, (e, n) => (b(), m(d, { key: n }, [h("span", { innerHTML: e.content }, null, 8, pe), t[9] ||= g("\n", -1)], 64))), 128))], 512))
 		]));
 	}
-}), [["__scopeId", "data-v-11e21037"]]);
+}), [["__scopeId", "data-v-fa59877f"]]);
 //#endregion
 export { D as default };
 
-//# sourceMappingURL=LogsPage-DpwypJtS.js.map
+//# sourceMappingURL=LogsPage-cBFA-Kp5.js.map

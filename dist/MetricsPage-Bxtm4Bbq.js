@@ -1,7 +1,7 @@
 import { t as e } from "./_plugin-vue_export-helper-B3ysoDQm.js";
 import { c as t, f as n, t as r } from "./client-D1nDQ0cP.js";
 import { t as i } from "./useToastStore-BDoKlU6N.js";
-import { t as a } from "./NetworkHealthIndicator-BvK3FV8I.js";
+import { t as a } from "./NetworkHealthIndicator-2IF4-qBN.js";
 import { t as o } from "./Button-DGsvHynO.js";
 import { t as s } from "./Badge-D_aUH3dO.js";
 import { t as c } from "./Select-Bx8h2mSF.js";
@@ -1422,4 +1422,4 @@ var et = {
 //#endregion
 export { Gt as default };
 
-//# sourceMappingURL=MetricsPage-BDV3RJLY.js.map
+//# sourceMappingURL=MetricsPage-Bxtm4Bbq.js.map

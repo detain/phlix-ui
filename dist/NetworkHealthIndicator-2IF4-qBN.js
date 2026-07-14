@@ -58,7 +58,7 @@ var A = ["id"], j = /*#__PURE__*/ e(/* @__PURE__ */ g({
 		})), f = a(), m = C(null), h = C(!0), g = C(null), y, w = N, T = N, E = l(() => {
 			if (m.value === null) return "offline";
 			let { relay: e, hub: t, network: n } = m.value;
-			return !t.isEnrolled || !e.connected || n.status === "offline" || n.latencyMs !== null && n.latencyMs > 500 ? "offline" : n.status === "degraded" || e.reconnectAttempts > 0 || t.consecutiveFailures > 0 ? "degraded" : n.latencyMs !== null && n.latencyMs < 100 ? "healthy" : "degraded";
+			return !t.isEnrolled || n.latencyMs !== null && n.latencyMs > 500 || n.status === "offline" ? "offline" : !e.connected || e.reconnectAttempts > 0 || t.consecutiveFailures > 0 ? "degraded" : n.latencyMs !== null && n.latencyMs < 100 ? "healthy" : "degraded";
 		}), D = l(() => {
 			switch (E.value) {
 				case "healthy": return "check";
@@ -134,8 +134,8 @@ var A = ["id"], j = /*#__PURE__*/ e(/* @__PURE__ */ g({
 			_: 1
 		}, 8, ["text"]));
 	}
-}), [["__scopeId", "data-v-bb1e69e4"]]);
+}), [["__scopeId", "data-v-4bccd9e9"]]);
 //#endregion
 export { j as n, I as t };
 
-//# sourceMappingURL=NetworkHealthIndicator-BvK3FV8I.js.map
+//# sourceMappingURL=NetworkHealthIndicator-2IF4-qBN.js.map

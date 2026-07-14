@@ -12,7 +12,7 @@ import { i as ce, n as le, r as ue, t as de } from "./usePlayerStore-fCCh6mOw.js
 import { t as S } from "./useToastStore-BDoKlU6N.js";
 import { n as fe, t as pe } from "./ThumbRating-Db3pVsxe.js";
 import { i as me, o as he } from "./shortcuts-BqRA1aW9.js";
-import { n as ge, t as _e } from "./NetworkHealthIndicator-BvK3FV8I.js";
+import { n as ge, t as _e } from "./NetworkHealthIndicator-2IF4-qBN.js";
 import { t as ve } from "./Spinner-D1bwTvld.js";
 import { i as ye, n as be, r as xe, t as Se } from "./Kbd-Bmk72RCb.js";
 import { a as Ce, i as we, n as Te, o as Ee, r as De, t as Oe } from "./useLibrariesStore-B4M08nqy.js";
@@ -849,7 +849,7 @@ var Er = en("server", () => {
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-DpwypJtS.js")
+	component: () => import("./LogsPage-cBFA-Kp5.js")
 }, Ar = {
 	name: "admin-webhooks",
 	path: "webhooks",
@@ -957,7 +957,7 @@ var Er = en("server", () => {
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-BDV3RJLY.js")
+	component: () => import("./MetricsPage-Bxtm4Bbq.js")
 }, qr = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
