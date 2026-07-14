@@ -1,3 +1,10 @@
+## v0.80.5 (2026-07-14)
+
+### Changes
+- fix(player): show quality dropdown when hls.js has limited levels
+- feat(admin/logs): add log level badges, JSON highlighting, and filename cleanup
+
+
 ## v0.80.4 (2026-07-14)
 
 ### Fixes
