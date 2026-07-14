@@ -178,13 +178,16 @@ function processLine(line: string): RawLine {
 
 /**
  * Build display string for a processed line (with deduplication).
+ * Badge replaces the level text inline; sources appear at the start.
  */
 function formatLine(info: RawLine, combinedSources?: string): string {
   const badge = info.level ? getLevelBadgeHtml(info.level) : '';
   const sourceDisplay = combinedSources ? escapeHtml(combinedSources) : escapeHtml(info.source);
   const escapedMsg = escapeHtml(info.message);
   const highlightedMsg = escapedMsg ? highlightJson(escapedMsg) : '';
-  return `${sourceDisplay} ${badge} ${info.localTime} ${highlightedMsg}`;
+  const badgeSuffix = badge ? ` ${badge}` : '';
+  const timePart = badge ? ` ${info.localTime}` : info.localTime;
+  return `${sourceDisplay}${badgeSuffix}${timePart} ${highlightedMsg}`;
 }
 
 const props = defineProps<{
