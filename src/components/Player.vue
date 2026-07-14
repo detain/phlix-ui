@@ -326,13 +326,22 @@ function beginTranscode(startPosition = 0): void {
  *  using ABR level switching. This is because the Original variant is filtered
  *  from the ABR ladder (SV-4.6) since copy segments may have drifting boundaries.
  *  Even when levelIndexForVariant finds a height-matched ladder rung, it is a
- *  transcoded version, NOT the original copy the user expects. */
-function onSelectQuality(level: number | 'auto'): void {
+ *  transcoded version, NOT the original copy the user expects.
+ *
+ *  When `level` is a string id (not 'auto'), it means the selected variant doesn't
+ *  have a matching hls.js level, so we load its playlist directly. */
+function onSelectQuality(level: number | 'auto' | string): void {
   // When player.quality is 'original', the user explicitly selected "Original".
   // Load the original variant playlist directly instead of using setLevel with
   // a potentially wrong ladder rung index.
   if (player.quality === ORIGINAL_QUALITY && level !== 'auto') {
     tc.loadVariantPlaylist(ORIGINAL_QUALITY);
+    return;
+  }
+  // If level is a string id (not 'auto'), load the variant playlist directly
+  // since there's no matching hls.js level for ABR switching.
+  if (typeof level === 'string' && level !== 'auto') {
+    tc.loadVariantPlaylist(level);
     return;
   }
   tc.setLevel(level);

@@ -61,8 +61,9 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  /** A quality choice — the hls.js level index to pin, or `'auto'` for ABR. */
-  (e: 'select', level: number | 'auto'): void;
+  /** A quality choice — the hls.js level index to pin, `'auto'` for ABR,
+   *  or a variant id string when loading a variant playlist directly. */
+  (e: 'select', level: number | 'auto' | string): void;
 }>();
 
 const player = usePlayerStore();
@@ -74,20 +75,25 @@ const hlsRungs = computed(() => qualityRungs(props.levels));
 
 /**
  * The switchable rungs from server variants (highest-first, one per distinct
- * height). Only used when hls.js levels are insufficient (< 2 distinct rungs),
- * and restricted to variants that CAN actually be applied — i.e. that resolve to
- * a live hls.js level. A variant with no matching level used to render as a dead
- * option whose pick silently fell back to 'auto'; now it is simply hidden, so
- * every rung the menu shows is genuinely switchable.
+ * height). Only used when hls.js levels are insufficient (< 2 distinct rungs).
+ *
+ * When hls.js has < 2 levels, we show ALL server variants (without filtering by
+ * hls.js level matching) so the user can manually select any quality. The player
+ * will use `setLevel` for variants that map to an hls.js level, or
+ * `loadVariantPlaylist` for variants (like "original") that aren't in the ABR ladder.
+ *
+ * When hls.js has ≥ 2 levels, variants are filtered to only those that resolve
+ * to a live hls.js level, since those are the genuinely switchable options via ABR.
  */
 const variantRungs = computed<SelectOption[]>(() => {
   const seen = new Set<string>();
   const rungs: SelectOption[] = [];
   if (!props.variants) return [];
+  const useLevelMatching = hlsRungs.value.length >= 2;
   for (const v of [...props.variants].sort((a, b) => b.height - a.height)) {
     const id = qualityId(v.height);
     if (seen.has(id)) continue;
-    if (levelIndexForQuality(props.levels, id) < 0) continue; // unmatchable → hide
+    if (useLevelMatching && levelIndexForQuality(props.levels, id) < 0) continue;
     seen.add(id);
     rungs.push({ value: id, label: qualityLabel(v.height) });
   }
@@ -151,15 +157,17 @@ function onChange(v: string | number): void {
     emit('select', 'auto');
     return;
   }
-  // Resolve the hls.js level FIRST. A rung that doesn't map to a live level is
-  // never applied as a silent 'auto' downgrade — the pick is simply ignored (the
-  // option lists above already hide unmatchable rungs, so this is a stale-race
-  // guard, not a normal path).
+  // Resolve the hls.js level for this variant. If no matching level exists
+  // (-1), emit the variant id so Player can load it via loadVariantPlaylist.
   const index = id === ORIGINAL_QUALITY ? originalLevelIndex.value : levelIndexForQuality(props.levels, id);
-  if (index < 0) return;
   player.setQuality(id);
   prefs.defaultQuality = id;
-  emit('select', index);
+  if (index >= 0) {
+    emit('select', index);
+  } else {
+    // No matching hls.js level — emit the variant id for Player to handle
+    emit('select', id);
+  }
 }
 </script>
 
