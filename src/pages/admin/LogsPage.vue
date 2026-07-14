@@ -184,7 +184,7 @@ function formatLine(info: RawLine, combinedSources?: string): string {
   const sourceDisplay = combinedSources ? escapeHtml(combinedSources) : escapeHtml(info.source);
   const escapedMsg = escapeHtml(info.message);
   const highlightedMsg = escapedMsg ? highlightJson(escapedMsg) : '';
-  return `${sourceDisplay} ${badge}${info.localTime} ${highlightedMsg}`;
+  return `${sourceDisplay} ${badge} ${info.localTime} ${highlightedMsg}`;
 }
 
 const props = defineProps<{
@@ -478,8 +478,8 @@ onBeforeUnmount(() => {
   overflow-x: auto;
 }
 
-/* Log level badges */
-.log-badge {
+/* Log level badges — :deep needed because badge HTML is injected via v-html */
+:deep(.log-badge) {
   display: inline-block;
   padding: 0.1em 0.4em;
   border-radius: 3px;
@@ -489,27 +489,27 @@ onBeforeUnmount(() => {
   letter-spacing: 0.03em;
   vertical-align: middle;
 }
-.log-badge--info {
+:deep(.log-badge--info) {
   background: rgba(59, 130, 246, 0.15);
   color: #3b82f6;
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
-.log-badge--debug {
+:deep(.log-badge--debug) {
   background: rgba(107, 114, 128, 0.15);
   color: #6b7280;
   border: 1px solid rgba(107, 114, 128, 0.3);
 }
-.log-badge--warning {
+:deep(.log-badge--warning) {
   background: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
-.log-badge--error {
+:deep(.log-badge--error) {
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
-.log-badge--critical {
+:deep(.log-badge--critical) {
   background: rgba(153, 27, 27, 0.2);
   color: #991b1b;
   border: 1px solid rgba(153, 27, 27, 0.4);
