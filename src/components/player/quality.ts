@@ -115,7 +115,20 @@ export function levelIndexForVariant(
     }
   }
   if (best >= 0) return best;
-  return levelIndexForQuality(levels, qualityId(variant.height));
+  // Fallback: find the LOWEST hls.js level that is >= variant.height.
+  // This ensures "Original" doesn't select a lower quality than the source.
+  let closest = -1;
+  let closestHeightDiff = Number.POSITIVE_INFINITY;
+  for (const lvl of levels) {
+    if (lvl.height >= variant.height) {
+      const diff = lvl.height - variant.height;
+      if (diff < closestHeightDiff) {
+        closest = lvl.index;
+        closestHeightDiff = diff;
+      }
+    }
+  }
+  return closest;
 }
 
 /**

@@ -351,6 +351,31 @@ watch(
   },
 );
 
+// Retry quality seeding when variants become available — the 'original' variant
+// may arrive after the levels watch fires, leaving originalLevelIndex at -1.
+watch(
+  () => tc.variants.value,
+  (newVariants) => {
+    if (newVariants?.length && !qualitySeeded) {
+      // Re-trigger the levels watch logic by resetting qualitySeeded
+      qualitySeeded = false;
+      void nextTick(() => {
+        if (tc.levels.value.length > 0) {
+          qualitySeeded = true;
+          const pref = prefs.defaultQuality;
+          if (!pref || pref === AUTO_QUALITY) return;
+          const index =
+            pref === ORIGINAL_QUALITY
+              ? levelIndexForVariant(tc.levels.value, newVariants.find((v) => v.id === ORIGINAL_QUALITY) ?? null)
+              : levelIndexForQuality(tc.levels.value, pref);
+          if (index >= 0) tc.setNextLevel(index);
+        }
+      });
+    }
+  },
+  { deep: true },
+);
+
 const resumeSeconds = ref(player.resumePositionFor(props.media.id) ?? 0);
 /** Resume prompt — shown on open when an in-band position is stored (the store
  *  only ever persists in-band positions, so a stored value is in-band already). */
