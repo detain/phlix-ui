@@ -1,6 +1,6 @@
 import { type IconName } from '../Icon.vue';
 type __VLS_Props = {
-    variant?: 'solid' | 'ghost' | 'outline' | 'subtle';
+    variant?: 'solid' | 'ghost' | 'outline' | 'subtle' | 'danger';
     size?: 'sm' | 'md' | 'lg';
     type?: 'button' | 'submit' | 'reset';
     loading?: boolean;
@@ -16,7 +16,7 @@ type __VLS_Slots = {} & {
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
     type: "button" | "submit" | "reset";
     size: "sm" | "md" | "lg";
-    variant: "solid" | "ghost" | "outline" | "subtle";
+    variant: "solid" | "ghost" | "outline" | "subtle" | "danger";
     loading: boolean;
     disabled: boolean;
     block: boolean;

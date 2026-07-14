@@ -235,11 +235,17 @@ const processedLines = computed<ProcessedLine[]>(() => {
       continue;
     }
     const group: RawLine[] = [line];
+    const groupSources = new Set<string>([line.source]);
     let j = i + 1;
     while (j < rawLines.length) {
       const next = rawLines[j];
-      if (Math.abs(next.timestamp - line.timestamp) <= 1000 && next.message === line.message && next.source !== line.source) {
+      if (
+        Math.abs(next.timestamp - line.timestamp) <= 1000 &&
+        next.message === line.message &&
+        !groupSources.has(next.source)
+      ) {
         group.push(next);
+        groupSources.add(next.source);
         j++;
       } else {
         break;

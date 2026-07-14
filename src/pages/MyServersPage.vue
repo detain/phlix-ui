@@ -81,6 +81,7 @@ const browseHome = phlixConfig?.routerBase || '/app';
 const servers = ref<Server[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const removing = ref<string | null>(null);
 
 // "Add server" claim flow: the user pastes the claim code shown on their media
 // server; we POST it to the hub (POST /api/v1/server-claims/claim) to link it.
@@ -211,6 +212,24 @@ function browseServer(server: Server): void {
   void router.push(browseHome);
 }
 
+/**
+ * Remove a server from the user's list after confirmation.
+ * Calls DELETE /api/v1/me/servers/{id} and removes the row from UI on success.
+ */
+async function removeServer(server: Server): Promise<void> {
+  if (!confirm(`Remove "${server.name}"? This cannot be undone.`)) return;
+  removing.value = server.id;
+  try {
+    await api.delete(`/api/v1/me/servers/${server.id}`);
+    servers.value = servers.value.filter((s) => s.id !== server.id);
+    toasts.success(`"${server.name}" removed.`);
+  } catch (e) {
+    toasts.error(errMessage(e, `Failed to remove "${server.name}".`));
+  } finally {
+    removing.value = null;
+  }
+}
+
 onMounted(loadServers);
 </script>
 
@@ -302,6 +321,14 @@ onMounted(loadServers);
                   :aria-label="`Manage ${server.name}`"
                   @click="manageServer(server)"
                 >Manage</Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  :loading="removing === server.id"
+                  :disabled="removing === server.id"
+                  :aria-label="`Remove ${server.name}`"
+                  @click="removeServer(server)"
+                >Remove</Button>
               </div>
             </td>
           </tr>

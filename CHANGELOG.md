@@ -1,3 +1,11 @@
+## v0.80.6 (2026-07-14)
+
+### Changes
+- fix(parseVariants): handle LadderResult.toArray() format
+- fix(logs): deduplicate repeated log entries
+- fix(admin/logs): inline level badge instead of badge + text
+
+
 ## v0.80.5 (2026-07-14)
 
 ### Changes

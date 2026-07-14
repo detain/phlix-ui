@@ -2944,7 +2944,12 @@ function gi(e) {
 	return t;
 }
 function _i(e) {
-	if (e == null || !Array.isArray(e)) return null;
+	if (e == null) return null;
+	if (!Array.isArray(e) && typeof e == "object") {
+		let t = e;
+		Array.isArray(t.renditions) && (e = t.renditions);
+	}
+	if (!Array.isArray(e)) return null;
 	let t = [];
 	for (let n of e) {
 		if (typeof n != "object" || !n) continue;
@@ -5527,7 +5532,7 @@ var Tc = N("phlix-syncplay", () => {
 			}, null, 8, ["name"])) : a("", !0)
 		], 10, Ec));
 	}
-}), [["__scopeId", "data-v-2a75c0ce"]]);
+}), [["__scopeId", "data-v-38abf89d"]]);
 //#endregion
 //#region src/composables/useApiBase.ts
 function Ac(e) {

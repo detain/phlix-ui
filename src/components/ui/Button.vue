@@ -18,7 +18,7 @@ import Icon, { type IconName } from '../Icon.vue';
 
 const props = withDefaults(
   defineProps<{
-    variant?: 'solid' | 'ghost' | 'outline' | 'subtle';
+    variant?: 'solid' | 'ghost' | 'outline' | 'subtle' | 'danger';
     size?: 'sm' | 'md' | 'lg';
     type?: 'button' | 'submit' | 'reset';
     loading?: boolean;
@@ -98,6 +98,10 @@ const isDisabled = computed(() => props.disabled || props.loading);
 
 .phlix-btn--subtle { background: var(--surface-2); color: var(--text); }
 .phlix-btn--subtle:hover:not(:disabled) { background: var(--surface-3); }
+
+.phlix-btn--danger { background: var(--danger, #dc2626); color: #fff; box-shadow: var(--shadow-1); }
+.phlix-btn--danger:hover:not(:disabled) { background: var(--danger-hover, #b91c1c); }
+.phlix-btn--danger:active:not(:disabled) { background: var(--danger-active, #991b1b); }
 
 .phlix-btn__icon { font-size: 1.15em; }
 .phlix-btn__spinner { display: inline-flex; font-size: 1.15em; animation: phlix-btn-spin 0.7s linear infinite; }
