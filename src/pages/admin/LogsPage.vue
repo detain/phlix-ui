@@ -27,6 +27,97 @@ import type { SelectOptionInput } from '../../components/ui/listbox';
 const LINE_OPTIONS = [200, 500, 1000, 2000];
 const AUTO_REFRESH_MS = 5000;
 
+// ---------------------------------------------------------------------------
+// Log level detection (syslog-style)
+type LogLevel = 'info' | 'debug' | 'warning' | 'error' | 'critical';
+
+const LOG_LEVEL_PATTERNS: Record<LogLevel, RegExp> = {
+  info: /\binfo\b/i,
+  debug: /\bdebug\b/i,
+  warning: /\b(warning|warn)\b/i,
+  error: /\b(error|err)\b/i,
+  critical: /\b(critical|crit|alert|emerg)\b/i,
+};
+
+/**
+ * Strip date suffix from log filename.
+ * e.g. "app.2025-07-14.log" → "app"
+ */
+function stripDateFromFilename(filename: string): string {
+  return filename.replace(/\.\d{4}-\d{2}-\d{2}\.log$/, '');
+}
+
+/**
+ * Detect syslog log level from a log line.
+ */
+function detectLogLevel(line: string): LogLevel | null {
+  for (const [level, pattern] of Object.entries(LOG_LEVEL_PATTERNS)) {
+    if (pattern.test(line)) {
+      return level as LogLevel;
+    }
+  }
+  return null;
+}
+
+/**
+ * Remove trailing empty JSON array " []" from a line.
+ */
+function stripEmptyJson(line: string): string {
+  return line.replace(/\s+\[\]$/, '');
+}
+
+/**
+ * Apply basic JSON syntax highlighting to text.
+ * Returns HTML string with <span> elements wrapping highlighted tokens.
+ */
+function highlightJson(text: string): string {
+  // Escape HTML entities first for safety
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Match JSON-like segments: "key": value patterns
+  // We use a functional replace to apply highlighting
+  return escaped.replace(
+    /("([^"]+)":\s*)("(?:[^"\\]|\\.)*"|\d+\.?\d*|true|false|null)/g,
+    (_match, keyPart, _key, value) => {
+      // keyPart includes the quoted key and colon
+      const highlightedKey = `<span class="json-key">${keyPart}</span>`;
+      let highlightedValue = value;
+
+      if (value.startsWith('"')) {
+        // String value
+        highlightedValue = `<span class="json-string">${value}</span>`;
+      } else if (value === 'true' || value === 'false') {
+        highlightedValue = `<span class="json-boolean">${value}</span>`;
+      } else if (value === 'null') {
+        highlightedValue = `<span class="json-null">${value}</span>`;
+      } else if (!isNaN(Number(value))) {
+        highlightedValue = `<span class="json-number">${value}</span>`;
+      }
+
+      return highlightedKey + highlightedValue;
+    },
+  );
+}
+
+export interface ProcessedLine {
+  level: LogLevel | null;
+  content: string;
+}
+
+/**
+ * Process a single log line: strip empty JSON, detect level, highlight JSON.
+ */
+function processLine(line: string): ProcessedLine {
+  const cleaned = stripEmptyJson(line);
+  return {
+    level: detectLogLevel(cleaned),
+    content: highlightJson(cleaned),
+  };
+}
+
 const props = defineProps<{
   /** Inject a pre-built API for tests; otherwise one is built from `apiBase`. */
   client?: ApiClient;
@@ -58,9 +149,12 @@ const fileOptions = computed<SelectOptionInput[]>(() => {
   if (files.value.length === 0) return [{ value: '', label: '(no log files)' }];
   return [
     { value: ALL_LOGS, label: 'All logs (combined)' },
-    ...files.value.map((f) => ({ value: f.name, label: f.name })),
+    ...files.value.map((f) => ({ value: f.name, label: stripDateFromFilename(f.name) })),
   ];
 });
+
+/** Computed processed log lines with level badges and JSON highlighting */
+const processedLines = computed<ProcessedLine[]>(() => lines.value.map(processLine));
 const lineOptions = computed<SelectOptionInput[]>(() => LINE_OPTIONS.map((n) => ({ value: n, label: String(n) })));
 
 async function loadList(): Promise<void> {
@@ -210,7 +304,7 @@ onBeforeUnmount(() => {
         <Button variant="solid" size="sm" left-icon="rewind" @click="refresh">Retry</Button>
       </template>
     </EmptyState>
-    <pre v-else ref="preEl" class="admin-logs__output" data-testid="logs-output" aria-live="polite">{{ lines.length === 0 ? '(no output)' : lines.join('\n') }}</pre>
+    <pre v-else ref="preEl" class="admin-logs__output" data-testid="logs-output" aria-live="polite"><template v-if="processedLines.length === 0">(no output)</template><template v-else v-for="(line, i) in processedLines" :key="i"><span v-if="line.level" class="log-badge" :class="`log-badge--${line.level}`">{{ line.level }}</span><span v-html="line.content"></span>&#10;</template></pre>
   </section>
 </template>
 
@@ -276,5 +370,61 @@ onBeforeUnmount(() => {
      on one line and is far easier to scan (the container is now full-width). */
   white-space: pre;
   overflow-x: auto;
+}
+
+/* Log level badges */
+.log-badge {
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  margin-right: 0.5em;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+}
+.log-badge--info {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.log-badge--debug {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+.log-badge--warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.log-badge--error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.log-badge--critical {
+  background: rgba(153, 27, 27, 0.2);
+  color: #991b1b;
+  border: 1px solid rgba(153, 27, 27, 0.4);
+  font-weight: var(--font-bold);
+}
+
+/* JSON syntax highlighting */
+:deep(.json-key) {
+  color: #60a5fa;
+}
+:deep(.json-string) {
+  color: #34d399;
+}
+:deep(.json-number) {
+  color: #fbbf24;
+}
+:deep(.json-boolean) {
+  color: #f472b6;
+}
+:deep(.json-null) {
+  color: #a78bfa;
 }
 </style>
