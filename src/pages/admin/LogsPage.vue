@@ -236,16 +236,18 @@ const processedLines = computed<ProcessedLine[]>(() => {
     }
     const group: RawLine[] = [line];
     const groupSources = new Set<string>([line.source]);
+    let lastTs = line.timestamp;
     let j = i + 1;
     while (j < rawLines.length) {
       const next = rawLines[j];
       if (
-        Math.abs(next.timestamp - line.timestamp) <= 1000 &&
+        Math.abs(next.timestamp - lastTs) <= 1000 &&
         next.message === line.message &&
         !groupSources.has(next.source)
       ) {
         group.push(next);
         groupSources.add(next.source);
+        lastTs = next.timestamp;
         j++;
       } else {
         break;
