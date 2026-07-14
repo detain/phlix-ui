@@ -434,6 +434,15 @@ export declare class ApiClient {
      * embedded tracks. A malformed payload degrades to an empty array.
      */
     listTracks(album?: string, signal?: AbortSignal): Promise<MusicTrack[]>;
+    /**
+     * Fetch one track by id (`GET /api/v1/music/tracks/{id}` → `{ track }`).
+     * Unlike the raw items embedded in an album, this formatted track carries a
+     * server-minted signed `stream_url`, so `useMusicPlayer` calls it to resolve
+     * a playable URL for tracks browsed via the album fast-path. Returns a
+     * normalized {@link MusicTrack}; a non-2xx (404 unknown track) throws the
+     * shared {@link ApiError}.
+     */
+    getTrack(id: string, signal?: AbortSignal): Promise<MusicTrack>;
     logout(redirect?: boolean): void;
 }
 export declare const api: ApiClient;

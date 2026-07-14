@@ -247,6 +247,9 @@ export declare const DEFAULT_MESSAGES: {
         tracks: string;
         play: string;
         pause: string;
+        previous: string;
+        next: string;
+        seek: string;
         noArtists: string;
         noAlbums: string;
         noTracks: string;
@@ -255,6 +258,8 @@ export declare const DEFAULT_MESSAGES: {
         year: string;
         duration: string;
         nowPlaying: string;
+        loading: string;
+        streamError: string;
         crossfade: string;
         crossfadeDuration: string;
         crossfadeSeconds: string;

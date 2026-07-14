@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.80.1] - 2026-07-14
 
 ### Added
 
@@ -65,6 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Release-time `dist/` rebuild owed for UI-3.1, UI-3.4, and UI-3.6.** These three steps change source only; per repo convention the prebuilt `dist/` is rebuilt and committed at tag time, so consumers receive the Player/MediaDetail deferral (UI-3.1), the apexcharts dedupe (UI-3.4), and the music-playback wiring (UI-3.6) only after the next `npm run build` (both Vite entries) + `dist/` commit. The other Unreleased UI changes are already in the committed `dist/` (rebuilt during the UI-3.3 fix).
 - **`src/api/music.ts` is dead code** — superseded by the `ApiClient` music methods and pointing at non-existent nested routes (`/artists/{id}/albums`, `/albums/{id}/tracks`); it is retained pending a separate removal cleanup.
+
+## [Unreleased]
 
 ## [0.79.0] - 2026-07-10
 

@@ -488,7 +488,8 @@ function ye(e) {
 		id: G(t.id) ?? "",
 		title: r,
 		durationSecs: K(n.duration_secs) ?? K(t.duration_secs) ?? 0,
-		trackNumber: K(n.track_number) ?? K(t.track_number)
+		trackNumber: K(n.track_number) ?? K(t.track_number),
+		streamUrl: G(t.stream_url)
 	};
 }
 function be(e) {
@@ -740,6 +741,9 @@ var xe = class {
 	async listTracks(e, t) {
 		let n = await this.get("/api/v1/music/tracks", void 0, t), r = Array.isArray(n.tracks) ? n.tracks : [];
 		return (e === void 0 || e === "" ? r : r.filter((t) => G((t && typeof t == "object" ? t : {}).album) === e)).map(ye);
+	}
+	async getTrack(e, t) {
+		return ye((await this.get(`/api/v1/music/tracks/${encodeURIComponent(e)}`, void 0, t)).track);
 	}
 	logout(e = !0) {
 		this.tokens.clear(), e && typeof window < "u" && (window.location.href = this.loginPath);
@@ -2470,6 +2474,9 @@ var Jr = {
 		tracks: "Tracks",
 		play: "Play",
 		pause: "Pause",
+		previous: "Previous track",
+		next: "Next track",
+		seek: "Seek",
 		noArtists: "No artists found",
 		noAlbums: "No albums found",
 		noTracks: "No tracks found",
@@ -2478,6 +2485,8 @@ var Jr = {
 		year: "Year",
 		duration: "Duration",
 		nowPlaying: "Now playing",
+		loading: "Loading…",
+		streamError: "Playback unavailable — the stream link may have expired.",
 		crossfade: "Crossfade",
 		crossfadeDuration: "Crossfade duration",
 		crossfadeSeconds: "{seconds}s",
