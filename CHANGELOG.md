@@ -1,3 +1,10 @@
+## v0.80.4 (2026-07-14)
+
+### Fixes
+- fix(player): make thumbs up/down buttons visible like other player buttons
+- fix(player): show quality dropdown when variants are available
+
+
 ## v0.80.3 (2026-07-14)
 
 ### Fixes
