@@ -119,7 +119,15 @@ export function parseSubtitleTracks(value: unknown): SubtitleTrack[] {
  * entries (skipped), and either casing so a contract tweak doesn't break it.
  */
 export function parseVariants(value: unknown): Variant[] | null {
-  if (value == null || !Array.isArray(value)) return null;
+  if (value == null) return null;
+  // Handle LadderResult.toArray() format: {renditions: [...], original: {...}}
+  if (!Array.isArray(value) && typeof value === 'object') {
+    const o = value as Record<string, unknown>;
+    if (Array.isArray(o.renditions)) {
+      value = o.renditions;
+    }
+  }
+  if (!Array.isArray(value)) return null;
   const out: Variant[] = [];
   for (const entry of value) {
     if (entry == null || typeof entry !== 'object') continue;

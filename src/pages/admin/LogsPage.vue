@@ -107,6 +107,14 @@ export interface ProcessedLine {
   content: string;
 }
 
+interface RawLine {
+  timestamp: number;
+  localTime: string;
+  source: string;
+  level: LogLevel | null;
+  message: string;
+}
+
 /**
  * Escape HTML special characters.
  */
@@ -125,45 +133,58 @@ function getLevelBadgeHtml(level: LogLevel): string {
 }
 
 /**
- * Process a single log line: parse timestamp, filename, level, and format for display.
+ * Process a single log line: parse timestamp, filename, level, and message.
  * Input format: [2026-07-14T17:43:41.778647+00:00] filename.LEVEL: message
- * Output format: filename <badge>HH:MM:SS</badge> message (with badge replacing level text)
+ * Returns structured data for deduplication.
  */
-function processLine(line: string): ProcessedLine {
+function processLine(line: string): RawLine {
   let cleaned = stripEmptyJson(line);
 
-  // Extract timestamp and convert to local HH:MM:SS
+  let timestamp = 0;
   let localTime = '';
   const tsMatch = cleaned.match(/^\[(\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2}))/);
   if (tsMatch) {
     try {
       const d = new Date(tsMatch[1] + 'Z');
+      timestamp = d.getTime();
       localTime = d.toLocaleTimeString('en-US', { hour12: false });
     } catch {
+      timestamp = 0;
       localTime = tsMatch[2];
     }
     cleaned = cleaned.slice(tsMatch[0].length).trim();
   }
 
-  // Match filename.LEVEL: message pattern
   const partsMatch = cleaned.match(/^([^.]+)\.(INFO|DEBUG|WARNING|ERROR|CRITICAL):\s*(.*)$/i);
   if (partsMatch) {
     const [, filename, levelStr, message] = partsMatch;
-    const level = levelStr.toLowerCase() as LogLevel;
-    const escapedMsg = escapeHtml(message);
-    const highlightedMsg = escapedMsg ? highlightJson(escapedMsg) : '';
-    const badge = getLevelBadgeHtml(level);
     return {
-      level,
-      content: `${escapeHtml(filename)} ${badge}${localTime} ${highlightedMsg}`,
+      timestamp,
+      localTime,
+      source: stripDateFromFilename(filename),
+      level: levelStr.toLowerCase() as LogLevel,
+      message,
     };
   }
 
-  // Fallback for unrecognized formats (still apply JSON highlighting and level detection)
   return {
+    timestamp,
+    localTime,
+    source: '',
     level: detectLogLevel(cleaned),
-    content: highlightJson(cleaned),
+    message: cleaned,
   };
+}
+
+/**
+ * Build display string for a processed line (with deduplication).
+ */
+function formatLine(info: RawLine, combinedSources?: string): string {
+  const badge = info.level ? getLevelBadgeHtml(info.level) : '';
+  const sourceDisplay = combinedSources ? escapeHtml(combinedSources) : escapeHtml(info.source);
+  const escapedMsg = escapeHtml(info.message);
+  const highlightedMsg = escapedMsg ? highlightJson(escapedMsg) : '';
+  return `${sourceDisplay} ${badge}${info.localTime} ${highlightedMsg}`;
 }
 
 const props = defineProps<{
@@ -201,8 +222,39 @@ const fileOptions = computed<SelectOptionInput[]>(() => {
   ];
 });
 
-/** Computed processed log lines with level badges and JSON highlighting */
-const processedLines = computed<ProcessedLine[]>(() => lines.value.map(processLine));
+/** Computed processed log lines with deduplication and level badges */
+const processedLines = computed<ProcessedLine[]>(() => {
+  const rawLines = lines.value.map(processLine);
+  const result: ProcessedLine[] = [];
+  let i = 0;
+  while (i < rawLines.length) {
+    const line = rawLines[i];
+    if (line.timestamp === 0 || line.source === '') {
+      result.push({ level: line.level, content: formatLine(line) });
+      i++;
+      continue;
+    }
+    const group: RawLine[] = [line];
+    let j = i + 1;
+    while (j < rawLines.length) {
+      const next = rawLines[j];
+      if (Math.abs(next.timestamp - line.timestamp) <= 1000 && next.message === line.message && next.source !== line.source) {
+        group.push(next);
+        j++;
+      } else {
+        break;
+      }
+    }
+    if (group.length === 1) {
+      result.push({ level: line.level, content: formatLine(line) });
+    } else {
+      const sources = [...new Set(group.map((l) => l.source))].sort().join(', ');
+      result.push({ level: line.level, content: formatLine(line, sources) });
+    }
+    i = j;
+  }
+  return result;
+});
 const lineOptions = computed<SelectOptionInput[]>(() => LINE_OPTIONS.map((n) => ({ value: n, label: String(n) })));
 
 async function loadList(): Promise<void> {
