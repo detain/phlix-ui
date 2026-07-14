@@ -108,10 +108,58 @@ export interface ProcessedLine {
 }
 
 /**
- * Process a single log line: strip empty JSON, detect level, highlight JSON.
+ * Escape HTML special characters.
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
+ * Get level badge HTML that replaces the level text inline.
+ */
+function getLevelBadgeHtml(level: LogLevel): string {
+  return `<span class="log-badge log-badge--${level}">${level}</span>`;
+}
+
+/**
+ * Process a single log line: parse timestamp, filename, level, and format for display.
+ * Input format: [2026-07-14T17:43:41.778647+00:00] filename.LEVEL: message
+ * Output format: filename <badge>HH:MM:SS</badge> message (with badge replacing level text)
  */
 function processLine(line: string): ProcessedLine {
-  const cleaned = stripEmptyJson(line);
+  let cleaned = stripEmptyJson(line);
+
+  // Extract timestamp and convert to local HH:MM:SS
+  let localTime = '';
+  const tsMatch = cleaned.match(/^\[(\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2}))/);
+  if (tsMatch) {
+    try {
+      const d = new Date(tsMatch[1] + 'Z');
+      localTime = d.toLocaleTimeString('en-US', { hour12: false });
+    } catch {
+      localTime = tsMatch[2];
+    }
+    cleaned = cleaned.slice(tsMatch[0].length).trim();
+  }
+
+  // Match filename.LEVEL: message pattern
+  const partsMatch = cleaned.match(/^([^.]+)\.(INFO|DEBUG|WARNING|ERROR|CRITICAL):\s*(.*)$/i);
+  if (partsMatch) {
+    const [, filename, levelStr, message] = partsMatch;
+    const level = levelStr.toLowerCase() as LogLevel;
+    const escapedMsg = escapeHtml(message);
+    const highlightedMsg = escapedMsg ? highlightJson(escapedMsg) : '';
+    const badge = getLevelBadgeHtml(level);
+    return {
+      level,
+      content: `${escapeHtml(filename)} ${badge}${localTime} ${highlightedMsg}`,
+    };
+  }
+
+  // Fallback for unrecognized formats (still apply JSON highlighting and level detection)
   return {
     level: detectLogLevel(cleaned),
     content: highlightJson(cleaned),
@@ -163,7 +211,7 @@ async function loadList(): Promise<void> {
   try {
     const list = await api.list();
     files.value = list;
-    if (list.length > 0 && selected.value === '') selected.value = list[0].name;
+    if (list.length > 0 && selected.value === '') selected.value = ALL_LOGS;
   } catch (e) {
     listError.value = errMessage(e, 'Failed to list logs.');
     toasts.error(listError.value);
@@ -304,7 +352,7 @@ onBeforeUnmount(() => {
         <Button variant="solid" size="sm" left-icon="rewind" @click="refresh">Retry</Button>
       </template>
     </EmptyState>
-    <pre v-else ref="preEl" class="admin-logs__output" data-testid="logs-output" aria-live="polite"><template v-if="processedLines.length === 0">(no output)</template><template v-else v-for="(line, i) in processedLines" :key="i"><span v-if="line.level" class="log-badge" :class="`log-badge--${line.level}`">{{ line.level }}</span><span v-html="line.content"></span>&#10;</template></pre>
+    <pre v-else ref="preEl" class="admin-logs__output" data-testid="logs-output" aria-live="polite"><template v-if="processedLines.length === 0">(no output)</template><template v-else v-for="(line, i) in processedLines" :key="i"><span v-html="line.content"></span>&#10;</template></pre>
   </section>
 </template>
 
@@ -376,7 +424,6 @@ onBeforeUnmount(() => {
 .log-badge {
   display: inline-block;
   padding: 0.1em 0.4em;
-  margin-right: 0.5em;
   border-radius: 3px;
   font-size: 0.85em;
   font-weight: var(--font-semibold);
