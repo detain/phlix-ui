@@ -849,7 +849,7 @@ var Dr = nn("server", () => {
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-Dts-SPCb.js")
+	component: () => import("./LogsPage-BySCbH30.js")
 }, jr = {
 	name: "admin-webhooks",
 	path: "webhooks",

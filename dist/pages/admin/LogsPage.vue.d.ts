@@ -1,4 +1,9 @@
 import { ApiClient } from '../../api/client';
+type LogLevel = 'info' | 'debug' | 'warning' | 'error' | 'critical';
+export interface ProcessedLine {
+    level: LogLevel | null;
+    content: string;
+}
 type __VLS_Props = {
     /** Inject a pre-built API for tests; otherwise one is built from `apiBase`. */
     client?: ApiClient;

@@ -156,17 +156,20 @@ describe('QualityMenu — Original rendition + no silent auto', () => {
     expect(prefs.defaultQuality).toBe('auto'); // and the stale pick is not persisted
   });
 
-  it('hides variant-fallback rungs that cannot be applied (menu shows only real choices)', () => {
-    // hls.js only loaded one 480p level but the server advertises a 3-rung ladder:
-    // the unmatchable 1080p/720p variants are hidden, leaving <2 rungs → no menu
-    // (previously they rendered as dead options whose pick fell back to 'auto').
+  it('shows all server variants when hls.js has < 2 levels (manual selection allowed)', () => {
+    // hls.js only loaded one 480p level but the server advertises a 3-rung ladder.
+    // When hls.js has < 2 levels, ALL server variants are shown so the user can
+    // manually select any quality - the player will load the variant playlist directly.
     const w = mount(QualityMenu, {
       props: {
         levels: [level(0, 480, 854, 1_400_000)],
         variants: [variant('1080p', 1080, 5_000_000), variant('720p', 720, 2_800_000), variant('480p', 480, 1_400_000)],
       },
     });
-    expect(w.findComponent(Select).exists()).toBe(false);
+    // With the fix: all 3 variants are shown, so hasQualities=true and menu shows
+    expect(w.findComponent(Select).exists()).toBe(true);
+    const opts = w.findComponent(Select).props('options') as ReadonlyArray<{ value: string }>;
+    expect(opts.map((o) => o.value)).toEqual(['auto', '1080p', '720p', '480p']);
   });
 });
 
