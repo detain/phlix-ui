@@ -870,6 +870,17 @@ onMounted(() => {
             </Button>
           </div>
         </template>
+        <div v-else-if="networkHealth?.status === 'offline'" class="admin-remote__offline-info">
+          <p v-if="hubHealth !== null && hubHealth.isEnrolled === false" class="admin-remote__offline-msg">
+            Not enrolled in hub.
+          </p>
+          <p v-else-if="relayHealth !== null && relayHealth.connected === false" class="admin-remote__offline-msg">
+            Relay disconnected.
+          </p>
+          <p v-else class="admin-remote__offline-msg">
+            Hub unreachable.
+          </p>
+        </div>
         <p v-else class="admin-remote__empty" role="status">
           No network health data available.
         </p>

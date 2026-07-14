@@ -20,10 +20,12 @@ import Sheet from '../components/ui/Sheet.vue';
 import IconButton from '../components/ui/IconButton.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { useMessages } from '../composables/useMessages';
+import { useHeaderHideOnScroll } from '../composables/useHeaderHideOnScroll';
 
 const prefs = usePreferencesStore();
 const drawer = ref(false);
 const { t } = useMessages();
+const { isHidden: headerHidden } = useHeaderHideOnScroll();
 </script>
 
 <template>
@@ -31,7 +33,7 @@ const { t } = useMessages();
     <a class="shell__skip" href="#main">{{ t('shell.skipToContent') }}</a>
     <AppBackdrop :enabled="prefs.atmosphere" />
 
-    <header class="shell__bar">
+    <header class="shell__bar" :class="{ 'is-hidden': headerHidden }">
       <div class="shell__inner">
         <div class="shell__brand">
           <slot name="logo"><span class="shell__wordmark">Phlix<span class="shell__dot">.</span></span></slot>
@@ -114,6 +116,7 @@ const { t } = useMessages();
   backdrop-filter: blur(18px) saturate(1.2);
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-2);
+  transition: transform 300ms var(--ease-out);
 }
 .shell__bar::before {
   content: '';
@@ -122,6 +125,10 @@ const { t } = useMessages();
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent-soft) 30%, var(--accent-soft) 70%, transparent);
   pointer-events: none;
+}
+/* Hide header on scroll down — slides up out of view. */
+.shell__bar.is-hidden {
+  transform: translateY(-100%);
 }
 .shell__inner {
   max-width: none;
@@ -198,6 +205,13 @@ const { t } = useMessages();
   }
   .shell__inner {
     gap: var(--space-3);
+  }
+}
+
+/* Respect motion preference — disable hide animation entirely when set. */
+@media (prefers-reduced-motion: reduce) {
+  .shell__bar {
+    transition: none;
   }
 }
 </style>

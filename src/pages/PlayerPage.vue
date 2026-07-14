@@ -445,14 +445,31 @@ async function load(): Promise<void> {
  * on mount but `hydrate` is idempotent), resolve the deterministic direct-stream URL
  * up front (synchronous, so up-next auto-advance can reuse the resolver), clear loading,
  * and kick off the best-effort up-next queue + episode-neighbour lookups.
+ *
+ * For episodes, we MUST await loadEpisodeNeighbours before returning so the episode-ordered
+ * queue is fully populated before auto-play checks player.upNext. Without this await, a race
+ * condition occurs where onEnded() fires before the queue is ready, causing auto-play to fail.
  */
-function applyItem(client: ApiClient, mediaItem: MediaItem): void {
+async function applyItem(client: ApiClient, mediaItem: MediaItem): Promise<void> {
   item.value = mediaItem;
   userItemData.hydrate(mediaItem);
   streamUrl.value = streamUrlFor(mediaItem);
   loading.value = false;
-  void loadQueue(client, mediaItem);
-  void loadEpisodeNeighbours(client, mediaItem);
+
+  const isEpisode = (mediaItem.episode_number ?? null) !== null;
+
+  // Fire genre fallback queue load non-blocking (continues in background)
+  const queuePromise = loadQueue(client, mediaItem);
+
+  // For episodes, we MUST wait for episode-ordered queue before declaring ready
+  // so that player.upNext is populated when onEnded() fires (Issue 8).
+  if (isEpisode) {
+    await loadEpisodeNeighbours(client, mediaItem);
+  }
+
+  // Don't await queuePromise - let it settle in background; for episodes the
+  // episode-ordered queue set by loadEpisodeNeighbours supersedes it anyway.
+  void queuePromise;
 }
 
 onMounted(load);
