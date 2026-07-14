@@ -10,13 +10,13 @@ import { n as se, t as ce } from "./useApiBase-CV_r-Kk4.js";
 import { t as b } from "./useAuthStore-C_Rnq3Bo.js";
 import { i as le, n as ue, r as de, t as fe } from "./usePlayerStore-fCCh6mOw.js";
 import { t as x } from "./useToastStore-BDoKlU6N.js";
-import { n as pe, t as me } from "./ThumbRating-jRpqLBjb.js";
+import { n as pe, t as me } from "./ThumbRating-Db3pVsxe.js";
 import { i as he, o as ge } from "./shortcuts-BqRA1aW9.js";
 import { n as _e, t as ve } from "./NetworkHealthIndicator-BvK3FV8I.js";
 import { t as ye } from "./Spinner-D1bwTvld.js";
 import { i as be, n as xe, r as Se, t as Ce } from "./Kbd-Bmk72RCb.js";
 import { a as we, i as Te, n as Ee, o as De, r as Oe, t as ke } from "./useLibrariesStore-B4M08nqy.js";
-import { n as Ae, t as je } from "./HomeRow-Du7QPUpq.js";
+import { n as Ae, t as je } from "./HomeRow-CrdyiISF.js";
 import { a as Me, c as Ne, i as Pe, l as Fe, n as Ie, o as Le, r as Re, s as ze, t as Be, u as Ve } from "./useConnectionStore-BxMhAb3d.js";
 import { i as He, n as Ue, r as We, t as Ge } from "./usePageTitle-BO3GGF3M.js";
 import { t as S } from "./Button-btm-GCUN.js";
@@ -30,9 +30,9 @@ import { t as w } from "./Skeleton-DhQmxeNg.js";
 import { t as T } from "./EmptyState-CfyGawh7.js";
 import { t as Qe } from "./PageHint-CPoTKHik.js";
 import { t as $e } from "./Tabs-D8iKNBl3.js";
-import { a as et, i as tt, t as nt } from "./MediaCard-BJNzaxG9.js";
-import { t as rt } from "./MediaGrid--nL1f8dY.js";
-import { t as it } from "./MediaRow-Chl6-trt.js";
+import { a as et, i as tt, t as nt } from "./MediaCard-BPOdw-U9.js";
+import { t as rt } from "./MediaGrid-BTSLkoqH.js";
+import { t as it } from "./MediaRow-YhbMWVqR.js";
 import { n as at, t as ot } from "./media-query-DKjhlX8r.js";
 import { n as st, t as ct } from "./metadata-sources-DZjIprJK.js";
 import { n as lt, t as ut } from "./logs-DadTfaTq.js";
@@ -1133,27 +1133,27 @@ function pi(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-CDQEZ63a.js")
+			component: () => import("./BrowsePage-DmFUpqlg.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-DA8LafcG.js")
+			component: () => import("./MediaDetailPage-BBfEq_Z1.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-DPAGQrEP.js")
+			component: () => import("./SeasonPage-BjE9FPyU.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CL49WU24.js")
+			component: () => import("./LibraryPage-Ck8Q6dP1.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-BxE1lg3S.js")
+			component: () => import("./PlayerPage-DoReXlvp.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1183,13 +1183,13 @@ function pi(e) {
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-DV1S3m2p.js")
+			component: () => import("./ExplorePage-CXFumgic.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-D0p4iCYH.js")
+			component: () => import("./RecommendationsPage-DnHfvZEV.js")
 		},
 		{
 			path: `${t}/history`,
@@ -2293,7 +2293,7 @@ function Na() {
 }
 //#endregion
 //#region src/index.ts
-var Pa = Ut(() => import("./MediaDetail-B_c7vh1d.js").then((e) => e.n)), Fa = Ut(() => import("./MetadataMatchModal-Mf19Mq1U.js").then((e) => e.n)), Ia = Ut(() => import("./FilterBar-E1xjEKWA.js").then((e) => e.n));
+var Pa = Ut(() => import("./MediaDetail-CA36tFVq.js").then((e) => e.n)), Fa = Ut(() => import("./MetadataMatchModal-Mf19Mq1U.js").then((e) => e.n)), Ia = Ut(() => import("./FilterBar-E1xjEKWA.js").then((e) => e.n));
 //#endregion
 export { ut as ALL_LOGS, bt as AdminBackupApi, xt as AdminCastApi, Tt as AdminCollectionsApi, dt as AdminDashboardApi, St as AdminDlnaServerApi, Et as AdminHistoryApi, Ft as AdminHubDashboardApi, yt as AdminIntegrationsApi, kt as AdminLibrariesApi, wt as AdminLiveTvApi, lt as AdminLogsApi, ct as AdminMetadataSourcesApi, Pt as AdminPluginsApi, Ct as AdminRemoteAccessApi, vt as AdminServicesApi, At as AdminSettingsApi, Dt as AdminSyncPlayApi, mt as AdminUsersApi, _t as AdminWebhooksApi, ae as ApiClient, te as ApiError, e as AppBackdrop, Cn as AppLayout, C as Badge, S as Button, Be as CONNECTION_API_BASE_KEY, Ie as CONNECTION_CONFIRMED_ORIGIN_KEY, Cr as CURRENT_SERVER_ID_KEY, wr as CURRENT_SERVER_NAME_KEY, Je as Chip, Xe as Combobox, u as DEFAULT_CAPTION_STYLE, f as DEFAULT_MESSAGES, c as DEFAULT_PREFERENCES, T as EmptyState, da as FederationPage, Ia as FilterBar, n as Icon, r as IconButton, Ce as Kbd, Ot as LIBRARY_TYPES, Ii as LibraryScanPage, g as LocalStorageTokenStore, It as LoginForm, xa as ManageSharesPage, nt as MediaCard, Pa as MediaDetail, rt as MediaGrid, je as MediaHomeRow, it as MediaRow, et as Menu, Fa as MetadataMatchModal, i as Modal, Qi as MyServersPage, oe as NetworkError, Mt as PLUGIN_SECRET_MASK, Qe as PageHint, wi as PageTransition, gr as PhlixApp, ft as RATING_LABELS, pt as RATING_OPTIONS, fe as RESUME_MAX_RATIO, ue as RESUME_MIN_SECONDS, Ci as Reveal, Te as SORT_TITLE_ARTICLES, ht as SUBSCRIBABLE_EVENTS, Ye as Select, Rt as SettingsForm, pn as Sheet, Lt as SignupForm, w as Skeleton, Ke as Slider, st as SourcePriorityEditor, ye as Spinner, qe as Switch, ne as TMDB_UNCONFIGURED_CODE, $e as Tabs, me as ThumbRating, _ as TimeoutError, Si as ToastHost, _e as Tooltip, gt as WEBHOOK_EVENT_CATEGORIES, ai as adminMenu, nr as applyStoredThemeEarly, Da as bestCandidate, Sa as bindMediaStoreToRouter, ni as buildAdminRoutes, ii as buildHubAdminRoutes, ot as buildMediaQuery, at as buildMediaUrl, ri as buildServerAdminRoutes, Zr as commonAdminPages, we as compareByStrippedTitle, mi as createPhlixApp, p as createTranslator, $n as deriveAccentVars, v as errMessage, Ee as fetchLibraries, xr as focusable, Y as focusableRegistry, Ge as formatPageTitle, xe as fuzzyScore, ee as getDefaultApiHeaders, l as hasStoredPreferences, $r as hubAdminPages, Sr as installFocusable, Re as isAllowedBase, re as isOffline, Pe as isPlaintextPublic, Me as isPrivateHost, h as isTmdbUnconfigured, Se as matchCommand, d as mergeMessages, Le as normalizeBase, ze as originOf, Nt as pluginErrorCode, jt as pluginValidationErrors, Ne as probeServer, s as readStoredPreferences, Ca as rectCenter, Qr as serverAdminPages, Ue as setAppName, ie as setDefaultApiHeaders, We as setPageTitle, Oe as sortLibraries, De as stripLeadingArticle, ce as useApiBase, b as useAuthStore, ir as useCommandPaletteHotkey, be as useCommandStore, Fe as useConnectionStore, a as useFocusTrap, ke as useLibrariesStore, se as useMediaApiBase, Ze as useMediaStore, m as useMessages, Na as useOnline, He as usePageTitle, le as usePlayerStore, cr as usePreconnect, o as usePreferencesStore, tt as usePrefetch, fr as useResumeReporter, Ae as useResumeSync, Dr as useServerStore, Ma as useSpatialNav, rr as useTheme, x as useToastStore, pe as useUserItemDataStore, Ve as withScheme };
 

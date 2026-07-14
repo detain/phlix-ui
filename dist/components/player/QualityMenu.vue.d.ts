@@ -15,9 +15,9 @@ type __VLS_Props = {
     activeHeight?: number | null;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
-    select: (level: number | "auto") => any;
+    select: (level: string | number) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
-    onSelect?: ((level: number | "auto") => any) | undefined;
+    onSelect?: ((level: string | number) => any) | undefined;
 }>, {
     levels: HlsLevel[];
     variants: Variant[] | null;

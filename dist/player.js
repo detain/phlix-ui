@@ -2241,7 +2241,7 @@ var Hr = f({
 	let n = e.__vccOpts || e;
 	for (let [e, r] of t) n[e] = r;
 	return n;
-}, qr = /*#__PURE__*/ Y(Kr, [["__scopeId", "data-v-bdbb33d8"]]);
+}, qr = /*#__PURE__*/ Y(Kr, [["__scopeId", "data-v-554f8af9"]]);
 //#endregion
 //#region src/components/player/format-time.ts
 function X(e) {
@@ -3905,11 +3905,12 @@ var Sa = /*#__PURE__*/ Y(/* @__PURE__ */ u({
 		let n = e, o = t, s = oe(), c = ee(), { t: l } = Z(), u = r(() => va(n.levels)), d = r(() => {
 			let e = /* @__PURE__ */ new Set(), t = [];
 			if (!n.variants) return [];
-			for (let r of [...n.variants].sort((e, t) => t.height - e.height)) {
-				let i = ga(r.height);
-				e.has(i) || ya(n.levels, i) < 0 || (e.add(i), t.push({
-					value: i,
-					label: _a(r.height)
+			let r = u.value.length >= 2;
+			for (let i of [...n.variants].sort((e, t) => t.height - e.height)) {
+				let a = ga(i.height);
+				e.has(a) || r && ya(n.levels, a) < 0 || (e.add(a), t.push({
+					value: a,
+					label: _a(i.height)
 				}));
 			}
 			return t;
@@ -3931,7 +3932,7 @@ var Sa = /*#__PURE__*/ Y(/* @__PURE__ */ u({
 				return;
 			}
 			let r = t === "original" ? m.value : ya(n.levels, t);
-			r < 0 || (s.setQuality(t), c.defaultQuality = t, o("select", r));
+			s.setQuality(t), c.defaultQuality = t, r >= 0 ? o("select", r) : o("select", t);
 		}
 		return (e, t) => g.value ? (v(), i(fa, {
 			key: 0,
@@ -3947,7 +3948,7 @@ var Sa = /*#__PURE__*/ Y(/* @__PURE__ */ u({
 			"label"
 		])) : a("", !0);
 	}
-}), [["__scopeId", "data-v-719cf103"]]);
+}), [["__scopeId", "data-v-b87f53e6"]]);
 //#endregion
 //#region src/components/player/captions.ts
 function Ca(e) {
@@ -5982,6 +5983,10 @@ var Mc = {
 				U.loadVariantPlaylist(ha);
 				return;
 			}
+			if (typeof e == "string" && e !== "auto") {
+				U.loadVariantPlaylist(e);
+				return;
+			}
 			U.setLevel(e);
 		}
 		let K = !1;
@@ -6690,7 +6695,7 @@ var Mc = {
 			}, null, 8, ["open"])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-78bdffc4"]]), cu = ["aria-label"], lu = ["src", "poster"], uu = { class: "mini__body" }, du = { class: "mini__title" }, fu = { class: "mini__controls" }, pu = ["aria-label"], mu = ["aria-label", "aria-pressed"], hu = ["aria-label"], gu = ["aria-label"], _u = {
+}), [["__scopeId", "data-v-0ea924f3"]]), cu = ["aria-label"], lu = ["src", "poster"], uu = { class: "mini__body" }, du = { class: "mini__title" }, fu = { class: "mini__controls" }, pu = ["aria-label"], mu = ["aria-label", "aria-pressed"], hu = ["aria-label"], gu = ["aria-label"], _u = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, vu = /*#__PURE__*/ Y(/* @__PURE__ */ u({

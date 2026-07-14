@@ -155,9 +155,8 @@ function onDown(): void {
   display: grid;
   place-items: center;
   border-radius: var(--radius-full);
-  /* Wireframe-on-transparent: no fill, no border (matches the poster overlay
-     restyle); white glyph via the text token. */
-  color: var(--text);
+  /* Wireframe-on-transparent: white glyph matching player icon buttons. */
+  color: rgba(255, 255, 255, 0.92);
   background: transparent;
   border: none;
   font-size: 1.5rem;
@@ -177,6 +176,9 @@ function onDown(): void {
 
 /* The glyph scales per state; wireframe at rest, filled once the axis engages. */
 .thumb-rating__icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
   transition: transform var(--dur-base) var(--ease-spring);
 }
 
