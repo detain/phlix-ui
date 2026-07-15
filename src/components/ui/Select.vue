@@ -55,8 +55,22 @@ const open = ref(false);
 const active = ref(-1);
 const rootEl = ref<HTMLElement | null>(null);
 const listEl = ref<HTMLElement | null>(null);
+
+/** Toggle the dropdown open/closed — exposed for programmatic control (e.g. QualityMenu Q-key). */
+function toggleMenu(): void {
+  if (open.value) closeList();
+  else openList();
+}
+defineExpose({ toggleMenu });
 let typeahead = '';
 let typeaheadTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Optional external open control — lets a parent (e.g. QualityMenu) open the list programmatically via v-open. */
+const openModel = defineModel<boolean>('open', { default: false });
+watch(openModel, (v) => {
+  if (v && !open.value) openList();
+  else if (!v && open.value) closeList();
+}, { immediate: true });
 
 const selectedIndex = computed(() => opts.value.findIndex((o) => o.value === props.modelValue));
 const selectedLabel = computed(() => opts.value[selectedIndex.value]?.label ?? '');

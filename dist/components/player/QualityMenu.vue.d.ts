@@ -14,10 +14,22 @@ type __VLS_Props = {
     /** Height (px) of the level ABR is currently playing, for the "Auto (720p)" label. */
     activeHeight?: number | null;
 };
-declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
+/** Toggle the dropdown open/closed — called by Player via qualityMenuRef.toggleMenu(). */
+declare function toggleMenu(): void;
+type __VLS_ModelProps = {
+    /** Optional programmatic open — lets the parent (e.g. Player via 'Q' key) open the menu. */
+    'open'?: boolean;
+};
+type __VLS_PublicProps = __VLS_Props & __VLS_ModelProps;
+declare const __VLS_export: import("vue").DefineComponent<__VLS_PublicProps, {
+    toggleMenu: typeof toggleMenu;
+}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
+    "update:open": (value: boolean) => any;
+} & {
     select: (level: string | number) => any;
-}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
+}, string, import("vue").PublicProps, Readonly<__VLS_PublicProps> & Readonly<{
     onSelect?: ((level: string | number) => any) | undefined;
+    "onUpdate:open"?: ((value: boolean) => any) | undefined;
 }>, {
     levels: HlsLevel[];
     variants: Variant[] | null;

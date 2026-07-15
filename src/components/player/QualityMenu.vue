@@ -32,7 +32,7 @@
  *   - emits `select` with the resolved hls.js level index (or `'auto'`) for the
  *     host (Player.vue) to apply via the controller's `setLevel`.
  */
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import Select from '../ui/Select.vue';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
@@ -59,6 +59,17 @@ const props = withDefaults(
   }>(),
   { levels: () => [], variants: null, currentLevel: -1, autoEnabled: true, activeHeight: null },
 );
+
+/** Optional programmatic open — lets the parent (e.g. Player via 'Q' key) open the menu. */
+const openModel = defineModel<boolean>('open', { default: false });
+
+/** Ref to the underlying Select so we can call its toggleMenu. */
+const selectRef = ref<{ toggleMenu: () => void } | null>(null);
+
+/** Toggle the dropdown open/closed — called by Player via qualityMenuRef.toggleMenu(). */
+function toggleMenu(): void {
+  selectRef.value?.toggleMenu();
+}
 
 const emit = defineEmits<{
   /** A quality choice — the hls.js level index to pin, `'auto'` for ABR,
@@ -169,16 +180,20 @@ function onChange(v: string | number): void {
     emit('select', id);
   }
 }
+/** Expose toggleMenu so Player.vue can call it via qualityMenuRef.toggleMenu(). */
+defineExpose({ toggleMenu });
 </script>
 
 <template>
   <Select
-    v-if="hasQualities"
+    v-if="hasQualities || openModel"
+    ref="selectRef"
     class="quality-menu"
     tone="glass"
     :model-value="selected"
     :options="options"
     :label="t('player.quality')"
+    v-model:open="openModel"
     @update:model-value="onChange"
   />
 </template>

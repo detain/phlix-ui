@@ -26,6 +26,7 @@ import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useToastStore } from '../stores/useToastStore';
 import Icon from './Icon.vue';
 import ThumbRating from './ThumbRating.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
@@ -195,6 +196,13 @@ const inPip = ref(false);
 const pipSupported = ref(false);
 /** Ref to the sleep timer component (for keyboard shortcut access). */
 const sleepTimerRef = ref<InstanceType<typeof SleepTimer> | null>(null);
+/** Ref to the quality menu (for Q-key programmatic open). */
+const qualityMenuRef = ref<InstanceType<typeof QualityMenu> | null>(null);
+/** Whether the quality menu is programmatically open (Q key). */
+const qualityMenuOpen = ref(false);
+
+/** Toast store for transient player messages. */
+const toasts = useToastStore();
 
 /** Whether to show the SyncPlay create/join modal. */
 const showSyncPlayModal = ref(false);
@@ -1076,6 +1084,16 @@ const shortcutActions: ShortcutActions = {
   toggleHelp: () => {
     showHelp.value = !showHelp.value;
   },
+  toggleQuality: () => {
+    if (transcodeNeeded.value) {
+      // Open the quality menu — it may or may not have items depending on ladder
+      qualityMenuOpen.value = !qualityMenuOpen.value;
+      qualityMenuRef.value?.toggleMenu?.();
+    } else {
+      // Direct stream — show a toast
+      toasts.show({ message: t('player.qualityDirectStream'), tone: 'info', duration: 3000 });
+    }
+  },
 };
 // Suppress player shortcuts while the help modal or captions menu is open (their
 // own Esc/close + the inner Select's arrow keys win, no double-fire).
@@ -1464,6 +1482,8 @@ onBeforeUnmount(() => {
           <VolumeControl />
           <SpeedMenu />
           <QualityMenu
+            ref="qualityMenuRef"
+            v-model:open="qualityMenuOpen"
             :levels="tc.levels.value"
             :variants="tc.variants.value"
             :current-level="tc.currentLevel.value"
@@ -1471,6 +1491,11 @@ onBeforeUnmount(() => {
             :active-height="tc.activeLevelHeight.value"
             @select="onSelectQuality"
           />
+          <!-- Direct Stream badge — shown in place of QualityMenu when playing a
+               direct (non-transcoded) file so the user knows quality is fixed. -->
+          <span v-if="!transcodeNeeded" class="player__direct-badge" :title="t('player.qualityDirectStream')">
+            {{ t('player.directStream') }}
+          </span>
           <CaptionsMenu
             v-model:open="captionsMenuOpen"
             :tracks="textTracks"
@@ -1877,6 +1902,22 @@ onBeforeUnmount(() => {
 }
 .player__back {
   margin-top: 2px;
+}
+/* Direct Stream badge — replaces QualityMenu on direct-play sources */
+.player__direct-badge {
+  display: inline-flex;
+  align-items: center;
+  height: var(--control-h);
+  padding-inline: var(--control-pad-x);
+  border-radius: var(--radius-md);
+  background: rgba(20, 20, 20, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  cursor: default;
 }
 .player__time {
   font-family: var(--font-mono);

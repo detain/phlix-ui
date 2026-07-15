@@ -183,6 +183,8 @@ export const DEFAULT_MESSAGES = {
     qualityAuto: 'Auto',
     qualityAutoActive: 'Auto ({label})',
     qualityOriginal: 'Original ({height}p)',
+    directStream: 'Direct',
+    qualityDirectStream: 'Direct Stream — quality is determined by the source file',
     // Captions menu
     captionsOn: 'Captions (on)',
     captionsOff: 'Captions (off)',

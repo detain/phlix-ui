@@ -47,6 +47,8 @@ export interface ShortcutActions {
     /** Step playback speed up/down the ladder. */
     speedStep(direction: 1 | -1): void;
     toggleHelp(): void;
+    /** Toggle the quality menu (or show direct-stream toast). */
+    toggleQuality(): void;
 }
 /** True when the event originates from a text-entry control (don't hijack typing). */
 export declare function isTypingTarget(target: EventTarget | null): boolean;

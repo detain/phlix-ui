@@ -37,6 +37,7 @@ export const PLAYER_SHORTCUTS: ShortcutRow[] = [
   { id: 'sleepTimer', keys: ['N'], label: 'Sleep timer' },
   { id: 'seekpct', keys: ['0', '–', '9'], label: 'Seek to %' },
   { id: 'speed', keys: ['<', '>'], label: 'Speed' },
+  { id: 'quality', keys: ['Q'], label: 'Quality' },
   { id: 'help', keys: ['?'], label: 'This help' },
 ];
 
@@ -89,6 +90,8 @@ export interface ShortcutActions {
   /** Step playback speed up/down the ladder. */
   speedStep(direction: 1 | -1): void;
   toggleHelp(): void;
+  /** Toggle the quality menu (or show direct-stream toast). */
+  toggleQuality(): void;
 }
 
 /** True when the event originates from a text-entry control (don't hijack typing). */
@@ -184,6 +187,10 @@ export function handleShortcut(e: KeyboardEvent, a: ShortcutActions): boolean {
       return true;
     case '?':
       a.toggleHelp();
+      return true;
+    case 'q':
+    case 'Q':
+      a.toggleQuality();
       return true;
     default:
       if (e.key >= '0' && e.key <= '9') {
