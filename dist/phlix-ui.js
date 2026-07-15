@@ -24,7 +24,7 @@ import { t as w } from "./Badge-D_aUH3dO.js";
 import { t as Ge } from "./Slider-LnnvB5jy.js";
 import { t as Ke } from "./Switch-DyS2L5gX.js";
 import { t as qe } from "./Chip-Dqypy8Bt.js";
-import { t as Je } from "./Select-DwAQcvz1.js";
+import { t as Je } from "./Select-Dl5D-rQ_.js";
 import { n as Ye, t as Xe } from "./useMediaStore-B2Y6eUkm.js";
 import { t as T } from "./Skeleton-DhQmxeNg.js";
 import { t as E } from "./EmptyState-CfyGawh7.js";
@@ -34,7 +34,7 @@ import { a as $e, i as et, t as tt } from "./MediaCard-BPOdw-U9.js";
 import { t as nt } from "./MediaGrid-BTSLkoqH.js";
 import { t as rt } from "./MediaRow-YhbMWVqR.js";
 import { n as it, t as at } from "./media-query-DKjhlX8r.js";
-import { n as ot, t as st } from "./metadata-sources-BKrQGTgw.js";
+import { n as ot, t as st } from "./metadata-sources-CxfvM6nA.js";
 import { n as ct, t as lt } from "./logs-DadTfaTq.js";
 import { t as ut } from "./dashboard-BTCOCTHQ.js";
 import { n as dt, r as ft, t as pt } from "./users-B74FC_jE.js";
@@ -837,19 +837,19 @@ var Er = en("server", () => {
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-zsNQdat3.js")
+	component: () => import("./DashboardPage-COy609Cz.js")
 }, Or = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-BkbmmOoq.js")
+	component: () => import("./UsersPage-CKJl8he9.js")
 }, kr = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-Jp67l-uI.js")
+	component: () => import("./LogsPage-DH6rqojC.js")
 }, Ar = {
 	name: "admin-webhooks",
 	path: "webhooks",
@@ -897,7 +897,7 @@ var Er = en("server", () => {
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-Bie6sLkt.js")
+	component: () => import("./LiveTvPage-LuG7oKru.js")
 }, Rr = {
 	name: "admin-collections",
 	path: "collections",
@@ -921,13 +921,13 @@ var Er = en("server", () => {
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-90x-gJLi.js")
+	component: () => import("./LibrariesPage-b6uy9P_T.js")
 }, Hr = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-Df0FOHRV.js")
+	component: () => import("./DuplicatesPage-BTbBFPSD.js")
 }, Ur = {
 	name: "admin-plugins",
 	path: "plugins",
@@ -939,13 +939,13 @@ var Er = en("server", () => {
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-C1JIwm8P.js")
+	component: () => import("./TranscodingSettingsPage-Cmt3M0Q8.js")
 }, Gr = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-D--lBgBA.js")
+	component: () => import("./SettingsPage-D9DgTlAe.js")
 }, Kr = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -957,7 +957,7 @@ var Er = en("server", () => {
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-lEGygoX6.js")
+	component: () => import("./MetricsPage-BUc8VNUV.js")
 }, qr = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -1148,12 +1148,12 @@ function fi(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-DfvXOshk.js")
+			component: () => import("./LibraryPage-DKo4Mgsd.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-CmFP4hrK.js")
+			component: () => import("./PlayerPage-DlXXD817.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1177,7 +1177,7 @@ function fi(e) {
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-ByLNN5Zo.js")
+			component: () => import("./SettingsPage-qWNDPJbz.js")
 		},
 		{
 			path: `${t}/explore`,
@@ -1213,7 +1213,7 @@ function fi(e) {
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-CL4_I9WA.js")
+			component: () => import("./ParentalControlsPage-C2waNJRl.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({
@@ -2324,7 +2324,7 @@ function Na() {
 }
 //#endregion
 //#region src/index.ts
-var Pa = Ht(() => import("./MediaDetail-Vl-PuRe-.js").then((e) => e.n)), Fa = Ht(() => import("./MetadataMatchModal-BfcvXP3C.js").then((e) => e.n)), Ia = Ht(() => import("./FilterBar-r0jeGyhh.js").then((e) => e.n));
+var Pa = Ht(() => import("./MediaDetail-Vl-PuRe-.js").then((e) => e.n)), Fa = Ht(() => import("./MetadataMatchModal-BfcvXP3C.js").then((e) => e.n)), Ia = Ht(() => import("./FilterBar-DFnwJZGZ.js").then((e) => e.n));
 //#endregion
 export { lt as ALL_LOGS, yt as AdminBackupApi, bt as AdminCastApi, wt as AdminCollectionsApi, ut as AdminDashboardApi, xt as AdminDlnaServerApi, Tt as AdminHistoryApi, Pt as AdminHubDashboardApi, vt as AdminIntegrationsApi, Ot as AdminLibrariesApi, Ct as AdminLiveTvApi, ct as AdminLogsApi, st as AdminMetadataSourcesApi, Nt as AdminPluginsApi, St as AdminRemoteAccessApi, _t as AdminServicesApi, kt as AdminSettingsApi, Et as AdminSyncPlayApi, pt as AdminUsersApi, gt as AdminWebhooksApi, ie as ApiClient, ee as ApiError, e as AppBackdrop, xn as AppLayout, w as Badge, C as Button, ze as CONNECTION_API_BASE_KEY, Fe as CONNECTION_CONFIRMED_ORIGIN_KEY, Sr as CURRENT_SERVER_ID_KEY, Cr as CURRENT_SERVER_NAME_KEY, qe as Chip, Ye as Combobox, u as DEFAULT_CAPTION_STYLE, f as DEFAULT_MESSAGES, c as DEFAULT_PREFERENCES, E as EmptyState, ua as FederationPage, Ia as FilterBar, n as Icon, r as IconButton, Se as Kbd, Dt as LIBRARY_TYPES, Fi as LibraryScanPage, g as LocalStorageTokenStore, Ft as LoginForm, ba as ManageSharesPage, tt as MediaCard, Pa as MediaDetail, nt as MediaGrid, Ae as MediaHomeRow, rt as MediaRow, $e as Menu, Fa as MetadataMatchModal, i as Modal, Zi as MyServersPage, ae as NetworkError, jt as PLUGIN_SECRET_MASK, Ze as PageHint, Ci as PageTransition, hr as PhlixApp, dt as RATING_LABELS, ft as RATING_OPTIONS, de as RESUME_MAX_RATIO, le as RESUME_MIN_SECONDS, Si as Reveal, we as SORT_TITLE_ARTICLES, mt as SUBSCRIBABLE_EVENTS, Je as Select, Lt as SettingsForm, dn as Sheet, It as SignupForm, T as Skeleton, Ge as Slider, ot as SourcePriorityEditor, ve as Spinner, Ke as Switch, te as TMDB_UNCONFIGURED_CODE, Qe as Tabs, pe as ThumbRating, _ as TimeoutError, xi as ToastHost, ge as Tooltip, ht as WEBHOOK_EVENT_CATEGORIES, ii as adminMenu, tr as applyStoredThemeEarly, Da as bestCandidate, xa as bindMediaStoreToRouter, ti as buildAdminRoutes, ri as buildHubAdminRoutes, at as buildMediaQuery, it as buildMediaUrl, ni as buildServerAdminRoutes, Xr as commonAdminPages, Ce as compareByStrippedTitle, pi as createPhlixApp, p as createTranslator, Qn as deriveAccentVars, v as errMessage, Te as fetchLibraries, br as focusable, X as focusableRegistry, We as formatPageTitle, be as fuzzyScore, y as getDefaultApiHeaders, l as hasStoredPreferences, Qr as hubAdminPages, xr as installFocusable, Le as isAllowedBase, ne as isOffline, Ne as isPlaintextPublic, je as isPrivateHost, h as isTmdbUnconfigured, xe as matchCommand, d as mergeMessages, Ie as normalizeBase, Re as originOf, Mt as pluginErrorCode, At as pluginValidationErrors, Me as probeServer, s as readStoredPreferences, Sa as rectCenter, Zr as serverAdminPages, He as setAppName, re as setDefaultApiHeaders, Ue as setPageTitle, De as sortLibraries, Ee as stripLeadingArticle, se as useApiBase, x as useAuthStore, rr as useCommandPaletteHotkey, ye as useCommandStore, Pe as useConnectionStore, a as useFocusTrap, Oe as useLibrariesStore, oe as useMediaApiBase, Xe as useMediaStore, m as useMessages, Na as useOnline, Ve as usePageTitle, ce as usePlayerStore, sr as usePreconnect, o as usePreferencesStore, et as usePrefetch, dr as useResumeReporter, ke as useResumeSync, Er as useServerStore, Ma as useSpatialNav, nr as useTheme, S as useToastStore, fe as useUserItemDataStore, Be as withScheme };
 

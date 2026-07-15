@@ -67,12 +67,13 @@ let typeaheadTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** Optional external open control — lets a parent (e.g. QualityMenu) open the list programmatically via v-open. */
 const openModel = defineModel<boolean>('open', { default: false });
+
+const selectedIndex = computed(() => opts.value.findIndex((o) => o.value === props.modelValue));
+
 watch(openModel, (v) => {
   if (v && !open.value) openList();
   else if (!v && open.value) closeList();
 }, { immediate: true });
-
-const selectedIndex = computed(() => opts.value.findIndex((o) => o.value === props.modelValue));
 const selectedLabel = computed(() => opts.value[selectedIndex.value]?.label ?? '');
 const activeId = computed(() => (active.value >= 0 ? `${baseId}-opt-${active.value}` : undefined));
 
