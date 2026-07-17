@@ -49,10 +49,13 @@ function stripDateFromFilename(filename: string): string {
 
 /**
  * Detect syslog log level from a log line.
+ * Only searches the syslog prefix (first 100 chars) to avoid false matches
+ * when the message content happens to contain level keywords.
  */
 function detectLogLevel(line: string): LogLevel | null {
+  const prefix = line.slice(0, 100);
   for (const [level, pattern] of Object.entries(LOG_LEVEL_PATTERNS)) {
-    if (pattern.test(line)) {
+    if (pattern.test(prefix)) {
       return level as LogLevel;
     }
   }
@@ -183,11 +186,18 @@ function processLine(line: string): RawLine {
 function formatLine(info: RawLine, combinedSources?: string): string {
   const badge = info.level ? getLevelBadgeHtml(info.level) : '';
   const sourceDisplay = combinedSources ? escapeHtml(combinedSources) : escapeHtml(info.source);
-  const escapedMsg = escapeHtml(info.message);
+  let msg = info.message;
+  if (info.level) {
+    // Strip the syslog level from the message to avoid duplication with the badge
+    const levelPattern = new RegExp(`^${info.level.toUpperCase()}:\\s*`, 'i');
+    msg = msg.replace(levelPattern, '');
+  }
+  const escapedMsg = escapeHtml(msg);
   const highlightedMsg = escapedMsg ? highlightJson(escapedMsg) : '';
-  const badgeSuffix = badge ? ` ${badge}` : '';
-  const timePart = badge ? ` ${info.localTime}` : info.localTime;
-  return `${sourceDisplay}${badgeSuffix}${timePart} ${highlightedMsg}`;
+  const badgePart = badge ? ` ${badge}` : '';
+  const timePart = info.localTime;
+  const sourcePart = sourceDisplay ? `${sourceDisplay} ` : '';
+  return `${sourcePart}${timePart}${badgePart} ${highlightedMsg}`;
 }
 
 const props = defineProps<{
@@ -232,7 +242,7 @@ const processedLines = computed<ProcessedLine[]>(() => {
   let i = 0;
   while (i < rawLines.length) {
     const line = rawLines[i];
-    if (line.timestamp === 0 || line.source === '') {
+    if (line.timestamp === 0 && line.source === '') {
       result.push({ level: line.level, content: formatLine(line) });
       i++;
       continue;

@@ -99,8 +99,9 @@ export declare class SyncPlayApi {
 }
 export declare function getSyncPlayApi(apiBase: string): SyncPlayApi;
 /** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
-type SyncPlayMessageHandler = (msg: SyncPlayPlaybackCommand & {
+type SyncPlayMessageHandler = (msg: {
     type: string;
+    position?: number;
     roomId?: string;
 }) => void;
 /**
@@ -109,21 +110,24 @@ type SyncPlayMessageHandler = (msg: SyncPlayPlaybackCommand & {
  *
  * @param roomId - The SyncPlay room/group ID to connect to.
  * @param onMessage - Callback invoked for each server-to-client SyncPlay message.
+ * @param memberId - The member ID for this client.
+ * @param memberName - The member name for this client.
  */
-export declare function openSyncPlayConnection(roomId: string, onMessage?: SyncPlayMessageHandler): void;
+export declare function openSyncPlayConnection(roomId: string, onMessage?: SyncPlayMessageHandler, memberId?: string, memberName?: string): void;
 /**
  * Close the current SyncPlay WebSocket connection.
  */
 export declare function closeSyncPlayConnection(): void;
 /**
- * Send a playback state update over the SyncPlay WebSocket.
+ * Send a playback state update over the SyncPlay WebSocket using @phlix/syncplay protocol.
  * No-op if the WebSocket is not connected.
  *
  * @param state - The current playback state to broadcast to other room members.
  */
 export declare function sendSyncPlayStateUpdate(state: SyncPlayStateUpdate): void;
 /**
- * Send a playback command (play/pause/seek/sync) over the SyncPlay WebSocket.
+ * Send a playback command (play/pause/seek/sync) over the SyncPlay WebSocket
+ * using @phlix/syncplay protocol.
  * No-op if the WebSocket is not connected.
  *
  * @param command - The playback command to broadcast to other room members.
