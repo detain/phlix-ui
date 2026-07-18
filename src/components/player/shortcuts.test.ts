@@ -25,6 +25,7 @@ function actions(): Record<keyof ShortcutActions, ReturnType<typeof vi.fn>> & Sh
     seekToPercent: vi.fn(),
     speedStep: vi.fn(),
     toggleHelp: vi.fn(),
+    toggleQuality: vi.fn(),
   } as never;
 }
 
@@ -89,8 +90,14 @@ describe('handleShortcut — keymap', () => {
     expect(press('9').a.seekToPercent).toHaveBeenCalledWith(0.9);
   });
 
+  it('toggles the quality menu with q/Q', () => {
+    expect(press('q').handled).toBe(true);
+    expect(press('q').a.toggleQuality).toHaveBeenCalled();
+    expect(press('Q').a.toggleQuality).toHaveBeenCalled();
+  });
+
   it('returns false (unhandled) for unmapped keys', () => {
-    const { a, handled } = press('q');
+    const { a, handled } = press('z');
     expect(handled).toBe(false);
     expect(a.playPause).not.toHaveBeenCalled();
   });

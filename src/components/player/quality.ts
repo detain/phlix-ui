@@ -94,10 +94,10 @@ export function levelIndexForQuality(levels: readonly HlsLevel[], id: string): n
  * bitrate closest to the variant's advertised one (the master playlist re-states
  * the source's own height/bitrate for the original rendition, so an exact-height
  * match normally exists). When no level has that exact height, falls back to the
- * best level of the same RUNG (via {@link levelIndexForQuality}) so an
- * off-by-rounding encode height still resolves. Returns `-1` when the variant is
- * absent/junk or no level matches — callers must treat that as "not applicable"
- * (hide the option), NEVER as a silent 'auto'.
+ * CLOSEST level whose height is >= the variant's, so an off-by-rounding encode
+ * height still resolves WITHOUT ever selecting a quality below the source. Returns
+ * `-1` when the variant is absent/junk or no level is tall enough — callers must
+ * treat that as "not applicable" (hide the option), NEVER as a silent 'auto'.
  */
 export function levelIndexForVariant(
   levels: readonly HlsLevel[],

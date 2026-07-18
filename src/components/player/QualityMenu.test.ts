@@ -148,12 +148,21 @@ describe('QualityMenu — Original rendition + no silent auto', () => {
     expect(w.findComponent(Select).props('modelValue')).toBe('original');
   });
 
-  it('NEVER emits a silent "auto" for a rung with no matching hls.js level (pick is ignored)', () => {
-    const w = mount(QualityMenu, { props: { levels: ladder } });
+  it('emits the variant id (never a silent "auto") for a rung with no matching hls.js level, so Player loads the variant playlist', () => {
+    // hls.js only exposes a single 480p level, but the server advertises taller
+    // variants. Picking 1080p has no live hls.js level to pin, so the menu emits the
+    // variant id STRING (not a numeric index, and never a silent 'auto') for Player
+    // to load via loadVariantPlaylist — and persists the pick.
+    const w = mount(QualityMenu, {
+      props: {
+        levels: [level(0, 480, 854, 1_400_000)],
+        variants: [variant('1080p', 1080, 5_000_000), variant('720p', 720, 2_800_000), variant('480p', 480, 1_400_000)],
+      },
+    });
     const prefs = usePreferencesStore();
-    w.findComponent(Select).vm.$emit('update:modelValue', '1440p'); // stale/unmatchable rung
-    expect(w.emitted('select')).toBeFalsy(); // no silent downgrade to auto
-    expect(prefs.defaultQuality).toBe('auto'); // and the stale pick is not persisted
+    w.findComponent(Select).vm.$emit('update:modelValue', '1080p');
+    expect(w.emitted('select')?.[0]).toEqual(['1080p']); // variant id string — not an index, not 'auto'
+    expect(prefs.defaultQuality).toBe('1080p'); // the pick is persisted
   });
 
   it('shows all server variants when hls.js has < 2 levels (manual selection allowed)', () => {

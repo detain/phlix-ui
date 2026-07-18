@@ -92,9 +92,11 @@ describe('quality helpers', () => {
       expect(levelIndexForVariant(levels, { height: 1080, bitrate: 4_900_000 })).toBe(1);
     });
 
-    it('falls back to the best level of the same RUNG when no exact height matches', () => {
-      // 1088 → rung 1080p → highest-bitrate 1080p level (index 0)
-      expect(levelIndexForVariant(levels, { height: 1088, bitrate: 9_000_000 })).toBe(0);
+    it('falls back to the closest level whose height is >= the source (never downgrades below it)', () => {
+      // 700px source → no exact-height match; the closest level still ≥ 700 is the
+      // 720p level (index 2), NOT a floored-down lower rung. Keeps "Original" from
+      // selecting a quality below the source encode.
+      expect(levelIndexForVariant(levels, { height: 700, bitrate: 2_500_000 })).toBe(2);
     });
 
     it('returns -1 when no level matches the variant rung at all', () => {
