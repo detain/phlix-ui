@@ -643,6 +643,157 @@ describe('Admin LibrariesPage — scan / rescan / metadata + polling', () => {
   });
 });
 
+describe('Admin LibrariesPage — operations help text', () => {
+  it('renders the expanded per-operation help disclosure', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const details = w.find('.admin-libraries__help');
+    expect(details.exists()).toBe(true);
+    const text = details.text();
+    // Every operation is explained with accurate semantics.
+    expect(text).toContain('Scan');
+    expect(text).toContain('Match metadata');
+    expect(text).toContain('Recheck all metadata');
+    expect(text).toContain('Rescan');
+    expect(text).toContain('Non-destructive');
+    expect(text).toContain('Prune removed');
+    expect(text).toContain('Clear metadata');
+    expect(text).toContain('Clear cached artwork');
+    expect(text).toContain('Delete all items');
+    expect(text).toContain('Destructive');
+    w.unmount();
+  });
+});
+
+describe('Admin LibrariesPage — operations overflow menu', () => {
+  /** Open the "More actions" menu for the row and return its teleported item buttons. */
+  async function openMoreMenu(w: VueWrapper): Promise<HTMLButtonElement[]> {
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'More actions for Movies')!
+      .trigger('click');
+    await flushPromises();
+    return Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+  }
+
+  function menuItem(items: HTMLButtonElement[], label: string): HTMLButtonElement {
+    return items.find((el) => el.textContent?.trim() === label)!;
+  }
+
+  it('renders all five new ops in the More menu', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    const labels = items.map((el) => el.textContent?.trim());
+    expect(labels).toEqual([
+      'Recheck all metadata',
+      'Prune removed',
+      'Clear metadata',
+      'Clear cached artwork',
+      'Delete all items',
+    ]);
+    w.unmount();
+  });
+
+  it('Recheck all metadata → POSTs /refresh-metadata immediately (no confirm)', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Recheck all metadata').click();
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/refresh-metadata');
+    w.unmount();
+  });
+
+  it('Prune removed → POSTs /prune immediately (no confirm)', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Prune removed').click();
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/prune');
+    w.unmount();
+  });
+
+  it('Clear metadata → shows a confirm gate first, then POSTs /clear-metadata', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Clear metadata').click();
+    await flushPromises();
+    // Gate: the POST has NOT fired yet — a confirm modal is shown.
+    expect(post).not.toHaveBeenCalled();
+    expect(modalPanel().textContent).toContain('filesystem basics');
+    await findBtnIn(w, modalPanel(), 'Clear metadata')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/clear-metadata');
+    w.unmount();
+  });
+
+  it('Clear cached artwork → shows a confirm gate first, then POSTs /clear-artwork', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Clear cached artwork').click();
+    await flushPromises();
+    expect(post).not.toHaveBeenCalled();
+    await findBtnIn(w, modalPanel(), 'Clear artwork')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/clear-artwork');
+    w.unmount();
+  });
+
+  it('Delete all items → confirm gate, then POSTs /delete-all with confirm=true', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Delete all items').click();
+    await flushPromises();
+    // DESTRUCTIVE: nothing fires until the confirm dialog is accepted.
+    expect(post).not.toHaveBeenCalled();
+    expect(modalPanel().textContent).toContain('cannot be undone');
+    await findBtnIn(w, modalPanel(), 'Delete all items')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/delete-all?confirm=true', {
+      confirm: true,
+    });
+    w.unmount();
+  });
+
+  it('Delete all items → cancelling the confirm does NOT fire the POST', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Delete all items').click();
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
+    await flushPromises();
+    expect(post).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('toasts when a menu op POST fails', async () => {
+    const { client, post } = makeClient();
+    post.mockRejectedValueOnce(new Error('Worker offline'));
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Prune removed').click();
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'Worker offline')).toBe(true);
+    w.unmount();
+  });
+});
+
 describe('Admin LibrariesPage — scan history modal', () => {
   it('loads and renders the scan history', async () => {
     const { client, get } = makeClient({

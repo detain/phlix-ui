@@ -44,6 +44,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
+import Menu, { type MenuItem } from '../../components/ui/Menu.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -511,20 +512,69 @@ async function confirmDelete(): Promise<void> {
   }
 }
 
-// ── Scan / rescan / match-metadata ─────────────────────────────────────────────
-async function triggerScan(lib: Library, kind: 'scan' | 'rescan' | 'metadata'): Promise<void> {
+// ── Library operations (scan / rescan / metadata + maintenance ops) ─────────────
+/**
+ * Every async library operation the admin can trigger. All map to a
+ * `POST /api/v1/libraries/{id}/<op>` that replies `202 { job_id, status,
+ * message }` and streams progress onto the same scan-job row, so they ALL feed
+ * the shared status/polling UI. The destructive ones
+ * (`clear-metadata`/`clear-artwork`/`delete-all`) are gated behind a confirm
+ * dialog before they reach {@link runOp}.
+ */
+type LibraryOp =
+  | 'scan'
+  | 'rescan'
+  | 'metadata'
+  | 'refresh-metadata'
+  | 'prune'
+  | 'clear-metadata'
+  | 'clear-artwork'
+  | 'delete-all';
+
+/** Dispatch one op to its typed API wrapper (all share the 202 job shape). */
+function callOp(lib: Library, op: LibraryOp) {
+  switch (op) {
+    case 'scan':
+      return api.scan(lib.id);
+    case 'rescan':
+      return api.rescan(lib.id);
+    case 'metadata':
+      return api.matchMetadata(lib.id);
+    case 'refresh-metadata':
+      return api.refreshMetadata(lib.id);
+    case 'prune':
+      return api.prune(lib.id);
+    case 'clear-metadata':
+      return api.clearMetadata(lib.id);
+    case 'clear-artwork':
+      return api.clearArtwork(lib.id);
+    case 'delete-all':
+      return api.deleteAll(lib.id);
+  }
+}
+
+/** Human fallback toast when the server omits a `message`. */
+function opFallback(op: LibraryOp, jobId: string): string {
+  switch (op) {
+    case 'metadata':
+    case 'refresh-metadata':
+    case 'clear-metadata':
+      return `Metadata job queued (job ${jobId}).`;
+    case 'clear-artwork':
+      return `Artwork job queued (job ${jobId}).`;
+    case 'prune':
+    case 'delete-all':
+      return `Cleanup queued (job ${jobId}).`;
+    default:
+      return `Scan queued (job ${jobId}).`;
+  }
+}
+
+/** Fire an op, toast the result, reflect the queued state, and start polling. */
+async function runOp(lib: Library, op: LibraryOp): Promise<void> {
   try {
-    const result =
-      kind === 'metadata'
-        ? await api.matchMetadata(lib.id)
-        : kind === 'rescan'
-          ? await api.rescan(lib.id)
-          : await api.scan(lib.id);
-    const fallback =
-      kind === 'metadata'
-        ? `Metadata match queued (job ${result.job_id}).`
-        : `Scan queued (job ${result.job_id}).`;
-    toasts.success(result.message || fallback);
+    const result = await callOp(lib, op);
+    toasts.success(result.message || opFallback(op, result.job_id));
     // Reflect the queued state immediately, then start polling.
     const prev = statuses.value[lib.id];
     statuses.value = {
@@ -535,8 +585,73 @@ async function triggerScan(lib: Library, kind: 'scan' | 'rescan' | 'metadata'): 
     // Kick an immediate poll so the UI updates without waiting a full tick.
     void pollOnce(lib.id);
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to queue scan.'));
+    toasts.error(errMessage(e, 'Failed to queue operation.'));
   }
+}
+
+// ── Destructive-op confirm dialog ───────────────────────────────────────────────
+/** The ops that must be confirmed before they fire. */
+type ConfirmableOp = 'clear-metadata' | 'clear-artwork' | 'delete-all';
+
+/** Static copy for each confirmable op's dialog. `{name}` is replaced with the library name. */
+const CONFIRM_COPY: Record<
+  ConfirmableOp,
+  { title: string; confirmLabel: string; danger: boolean; message: string }
+> = {
+  'clear-metadata': {
+    title: 'Clear metadata',
+    confirmLabel: 'Clear metadata',
+    danger: false,
+    message:
+      'Reset every item in “{name}” to filesystem basics? The items and your watch progress / favorites are kept — run Match metadata afterwards to re-fetch details.',
+  },
+  'clear-artwork': {
+    title: 'Clear cached artwork',
+    confirmLabel: 'Clear artwork',
+    danger: false,
+    message:
+      'Delete the locally cached images for “{name}” to free disk space? Artwork is re-downloaded on the next metadata match.',
+  },
+  'delete-all': {
+    title: 'Delete all items',
+    confirmLabel: 'Delete all items',
+    danger: true,
+    message:
+      'Permanently remove EVERY item in “{name}”, including all watch progress, favorites and ratings? This cannot be undone.',
+  },
+};
+
+const confirmOp = ref<{ lib: Library; op: ConfirmableOp } | null>(null);
+
+const confirmCopy = computed(() => (confirmOp.value ? CONFIRM_COPY[confirmOp.value.op] : null));
+const confirmMessage = computed(() =>
+  confirmOp.value && confirmCopy.value
+    ? confirmCopy.value.message.replace('{name}', confirmOp.value.lib.name)
+    : '',
+);
+
+/** Open the confirm dialog for a destructive op. */
+function askConfirm(lib: Library, op: ConfirmableOp): void {
+  confirmOp.value = { lib, op };
+}
+
+/** Run the pending confirmed op and close the dialog. */
+async function runConfirmedOp(): Promise<void> {
+  const pending = confirmOp.value;
+  if (!pending) return;
+  confirmOp.value = null;
+  await runOp(pending.lib, pending.op);
+}
+
+/** The overflow-menu items for a library row (non-primary + destructive ops). */
+function moreMenuItems(lib: Library): MenuItem[] {
+  return [
+    { label: 'Recheck all metadata', onClick: () => void runOp(lib, 'refresh-metadata') },
+    { label: 'Prune removed', onClick: () => void runOp(lib, 'prune') },
+    { label: 'Clear metadata', onClick: () => askConfirm(lib, 'clear-metadata') },
+    { label: 'Clear cached artwork', onClick: () => askConfirm(lib, 'clear-artwork') },
+    { label: 'Delete all items', danger: true, onClick: () => askConfirm(lib, 'delete-all') },
+  ];
 }
 
 // ── Scan history ───────────────────────────────────────────────────────────────
@@ -600,12 +715,66 @@ onBeforeUnmount(() => {
     </header>
 
     <PageHint>
-      <strong>Scan</strong> adds new files and updates changed ones (existing items are kept).
-      <strong>Rescan</strong> clears the library and rebuilds it from scratch — use it after
-      moving files or to repair bad matches. <strong>Match metadata</strong> (re)fetches
-      posters and details for items already in the library. A live percentage is shown while
-      any of these run.
+      Each library has a set of operations for keeping it in sync with disk and with online
+      metadata. A live percentage is shown while any of them run. Expand
+      <strong>“What do these operations do?”</strong> below for when to use each.
     </PageHint>
+
+    <details class="admin-libraries__help">
+      <summary class="admin-libraries__help-summary">What do these operations do?</summary>
+      <dl class="admin-libraries__help-list">
+        <dt>Scan</dt>
+        <dd>
+          Imports new and changed files from disk, keeping every existing item along with its
+          posters, watch progress and favorites. Does <em>not</em> contact TMDB/IMDB. Run it
+          after you add, rename or remove media.
+        </dd>
+
+        <dt>Match metadata</dt>
+        <dd>
+          Fetches TMDB/IMDB details and artwork <em>only</em> for items that don’t have metadata
+          yet — already-matched items are skipped. Run it after a Scan to fill in the new items.
+        </dd>
+
+        <dt>Recheck all metadata</dt>
+        <dd>
+          Forces a fresh metadata fetch for <em>every</em> item: updates existing entries and
+          backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it
+          after a metadata feature update or to refresh stale data.
+        </dd>
+
+        <dt>Rescan</dt>
+        <dd>
+          Re-scans from disk and prunes only the items whose files are truly gone.
+          <strong>Non-destructive</strong> — surviving items keep their watch progress, favorites
+          and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library
+          that has drifted out of sync.
+        </dd>
+
+        <dt>Prune removed</dt>
+        <dd>
+          Removes only the items whose files no longer exist, without a full rescan.
+        </dd>
+
+        <dt>Clear metadata</dt>
+        <dd>
+          Resets items to filesystem basics (the items and your watch data are kept) so a later
+          Match metadata can re-fetch cleanly.
+        </dd>
+
+        <dt>Clear cached artwork</dt>
+        <dd>
+          Deletes locally cached images to free disk space; they are re-downloaded on the next
+          metadata match.
+        </dd>
+
+        <dt class="admin-libraries__help-danger">Delete all items</dt>
+        <dd>
+          <strong>Destructive.</strong> Removes every item in the library <em>and</em> its watch
+          progress, favorites and ratings. Only use this for a full reset.
+        </dd>
+      </dl>
+    </details>
 
     <div v-if="loading" class="admin-libraries__skel"><Skeleton variant="text" :lines="6" /></div>
     <EmptyState
@@ -693,7 +862,7 @@ onBeforeUnmount(() => {
                 variant="ghost"
                 size="sm"
                 :aria-label="`Scan ${lib.name}`"
-                @click="triggerScan(lib, 'scan')"
+                @click="runOp(lib, 'scan')"
               >
                 Scan
               </Button>
@@ -701,7 +870,7 @@ onBeforeUnmount(() => {
                 variant="ghost"
                 size="sm"
                 :aria-label="`Rescan ${lib.name}`"
-                @click="triggerScan(lib, 'rescan')"
+                @click="runOp(lib, 'rescan')"
               >
                 Rescan
               </Button>
@@ -709,10 +878,20 @@ onBeforeUnmount(() => {
                 variant="ghost"
                 size="sm"
                 :aria-label="`Match metadata for ${lib.name}`"
-                @click="triggerScan(lib, 'metadata')"
+                @click="runOp(lib, 'metadata')"
               >
                 Match metadata
               </Button>
+              <Menu :items="moreMenuItems(lib)">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  right-icon="chevron-down"
+                  :aria-label="`More actions for ${lib.name}`"
+                >
+                  More
+                </Button>
+              </Menu>
               <Button
                 variant="ghost"
                 size="sm"
@@ -849,6 +1028,26 @@ onBeforeUnmount(() => {
       </template>
     </Modal>
 
+    <!-- Destructive-op confirm modal (clear metadata / clear artwork / delete all items) -->
+    <Modal
+      :model-value="confirmOp !== null"
+      :title="confirmCopy?.title ?? ''"
+      size="sm"
+      @update:model-value="confirmOp = null"
+    >
+      <p>{{ confirmMessage }}</p>
+      <template #footer>
+        <Button variant="ghost" size="sm" @click="confirmOp = null">Cancel</Button>
+        <Button
+          :variant="confirmCopy?.danger ? 'danger' : 'solid'"
+          size="sm"
+          @click="runConfirmedOp"
+        >
+          {{ confirmCopy?.confirmLabel ?? 'Confirm' }}
+        </Button>
+      </template>
+    </Modal>
+
     <!-- Scan history modal -->
     <Modal v-model="historyModalOpen" :title="historyTitle" size="lg">
       <div v-if="historyLoading" class="admin-libraries__skel"><Skeleton variant="text" :lines="4" /></div>
@@ -903,6 +1102,59 @@ onBeforeUnmount(() => {
 }
 .admin-libraries__skel {
   padding-block: var(--space-2);
+}
+
+/* Operations help disclosure */
+.admin-libraries__help {
+  margin-block: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-2, var(--surface));
+}
+.admin-libraries__help-summary {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+  cursor: pointer;
+  list-style: revert;
+}
+.admin-libraries__help-summary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  border-radius: var(--radius-sm);
+}
+.admin-libraries__help[open] .admin-libraries__help-summary {
+  margin-bottom: var(--space-3);
+}
+.admin-libraries__help-list {
+  display: grid;
+  grid-template-columns: minmax(140px, max-content) 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.admin-libraries__help-list dt {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+}
+.admin-libraries__help-list dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: var(--leading-normal, 1.5);
+}
+.admin-libraries__help-danger {
+  color: var(--red-400, #f87171) !important;
+}
+@media (max-width: 640px) {
+  .admin-libraries__help-list {
+    grid-template-columns: 1fr;
+    gap: var(--space-1) 0;
+  }
+  .admin-libraries__help-list dd {
+    margin-bottom: var(--space-2);
+  }
 }
 .admin-libraries__table {
   width: 100%;

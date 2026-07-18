@@ -143,6 +143,61 @@ describe('AdminLibrariesApi', () => {
     expect(result.job_id).toBe('job-m');
   });
 
+  it('refreshMetadata() POSTs /refresh-metadata with the 202 shape', async () => {
+    const { api, post } = makeApi({
+      post: () => ({ job_id: 'job-r', status: 'queued', message: 'ok' }),
+    });
+    const result = await api.refreshMetadata('lib-1');
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/refresh-metadata');
+    expect(result.job_id).toBe('job-r');
+  });
+
+  it('prune() POSTs /prune with the 202 shape', async () => {
+    const { api, post } = makeApi({
+      post: () => ({ job_id: 'job-p', status: 'queued', message: 'ok' }),
+    });
+    const result = await api.prune('lib-1');
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/prune');
+    expect(result.job_id).toBe('job-p');
+  });
+
+  it('clearMetadata() POSTs /clear-metadata with the 202 shape', async () => {
+    const { api, post } = makeApi({
+      post: () => ({ job_id: 'job-cm', status: 'queued', message: 'ok' }),
+    });
+    const result = await api.clearMetadata('lib-1');
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/clear-metadata');
+    expect(result.job_id).toBe('job-cm');
+  });
+
+  it('clearArtwork() POSTs /clear-artwork with the 202 shape', async () => {
+    const { api, post } = makeApi({
+      post: () => ({ job_id: 'job-ca', status: 'queued', message: 'ok' }),
+    });
+    const result = await api.clearArtwork('lib-1');
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/clear-artwork');
+    expect(result.job_id).toBe('job-ca');
+  });
+
+  it('deleteAll() POSTs /delete-all with confirm=true in BOTH the query and body', async () => {
+    const { api, post } = makeApi({
+      post: () => ({ job_id: 'job-d', status: 'queued', message: 'ok' }),
+    });
+    const result = await api.deleteAll('lib-1');
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/delete-all?confirm=true', {
+      confirm: true,
+    });
+    expect(result.job_id).toBe('job-d');
+  });
+
+  it('deleteAll() encodes a path-unsafe id before the ?confirm=true query', async () => {
+    const { api, post } = makeApi({ post: () => ({ job_id: 'j', status: 'queued', message: 'ok' }) });
+    await api.deleteAll('a/b');
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/a%2Fb/delete-all?confirm=true', {
+      confirm: true,
+    });
+  });
+
   it('scanStatus() unwraps { scan_status } (job)', async () => {
     const { api, get } = makeApi({ get: () => ({ scan_status: sampleJob }) });
     const result = await api.scanStatus('lib-1');
