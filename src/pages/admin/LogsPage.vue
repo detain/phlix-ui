@@ -28,23 +28,50 @@ const LINE_OPTIONS = [200, 500, 1000, 2000];
 const AUTO_REFRESH_MS = 5000;
 
 // ---------------------------------------------------------------------------
-// Log level detection (syslog-style)
-type LogLevel = 'info' | 'debug' | 'warning' | 'error' | 'critical';
+// Log levels — the full Monolog/PSR-3 set. Some collapse onto a shared badge
+// "tone" (colour) since we only carry five badge palettes.
+type LogLevel =
+  | 'debug'
+  | 'info'
+  | 'notice'
+  | 'warning'
+  | 'error'
+  | 'critical'
+  | 'alert'
+  | 'emergency';
 
-const LOG_LEVEL_PATTERNS: Record<LogLevel, RegExp> = {
-  info: /\binfo\b/i,
-  debug: /\bdebug\b/i,
-  warning: /\b(warning|warn)\b/i,
-  error: /\b(error|err)\b/i,
-  critical: /\b(critical|crit|alert|emerg)\b/i,
+type LevelTone = 'debug' | 'info' | 'warning' | 'error' | 'critical';
+
+/** Map each Monolog level onto one of the five badge colour tones. */
+const LEVEL_TONE: Record<LogLevel, LevelTone> = {
+  debug: 'debug',
+  info: 'info',
+  notice: 'info',
+  warning: 'warning',
+  error: 'error',
+  critical: 'critical',
+  alert: 'critical',
+  emergency: 'critical',
 };
 
+// Fallback keyword detection (severity-descending) for lines we can't parse
+// structurally — e.g. bare stack-trace continuations without a Monolog header.
+const LOG_LEVEL_PATTERNS: ReadonlyArray<readonly [LogLevel, RegExp]> = [
+  ['critical', /\b(critical|crit|alert|emerg)\b/i],
+  ['error', /\b(error|err)\b/i],
+  ['warning', /\b(warning|warn)\b/i],
+  ['notice', /\bnotice\b/i],
+  ['info', /\binfo\b/i],
+  ['debug', /\bdebug\b/i],
+];
+
 /**
- * Strip date suffix from log filename.
- * e.g. "app.2025-07-14.log" → "app"
+ * Strip the rotation date suffix from a log filename.
+ * Monolog rotates with a HYPHEN separator (`app-2026-07-18.log`); older files
+ * used a dot (`app.2026-07-18.log`). Accept both → "app".
  */
 function stripDateFromFilename(filename: string): string {
-  return filename.replace(/\.\d{4}-\d{2}-\d{2}\.log$/, '');
+  return filename.replace(/[.-]\d{4}-\d{2}-\d{2}\.log$/, '');
 }
 
 /**
@@ -54,9 +81,9 @@ function stripDateFromFilename(filename: string): string {
  */
 function detectLogLevel(line: string): LogLevel | null {
   const prefix = line.slice(0, 100);
-  for (const [level, pattern] of Object.entries(LOG_LEVEL_PATTERNS)) {
+  for (const [level, pattern] of LOG_LEVEL_PATTERNS) {
     if (pattern.test(prefix)) {
-      return level as LogLevel;
+      return level;
     }
   }
   return null;
@@ -111,10 +138,18 @@ export interface ProcessedLine {
 }
 
 interface RawLine {
+  /** The original, untouched log line (useful for tooltips/debugging). */
+  raw: string;
+  /** Epoch milliseconds parsed from the ISO timestamp; 0 when unparseable. */
   timestamp: number;
+  /** Formatted local time string for display. */
   localTime: string;
+  /** Source log file, date-stripped (from the tail-all column or the selection). */
   source: string;
+  /** Monolog channel (e.g. "http"), rendered as its own badge. */
+  channel: string;
   level: LogLevel | null;
+  /** The message body, with timestamp/channel/level/inline-prefix removed. */
   message: string;
 }
 
@@ -129,75 +164,149 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Get level badge HTML that replaces the level text inline.
+ * Level badge HTML. `level` is a controlled enum, but we escape defensively.
+ * The colour comes from the mapped tone; the text shows the true level.
  */
 function getLevelBadgeHtml(level: LogLevel): string {
-  return `<span class="log-badge log-badge--${level}">${level}</span>`;
+  const tone = LEVEL_TONE[level] ?? 'debug';
+  return `<span class="log-badge log-badge--${tone}">${escapeHtml(level.toUpperCase())}</span>`;
 }
 
 /**
- * Process a single log line: parse timestamp, filename, level, and message.
- * Input format: [2026-07-14T17:43:41.778647+00:00] filename.LEVEL: message
- * Returns structured data for deduplication.
+ * Channel badge HTML. The channel is derived from raw log text, so it MUST be
+ * HTML-escaped before it reaches `v-html`.
  */
-function processLine(line: string): RawLine {
+function getChannelBadgeHtml(channel: string): string {
+  return `<span class="log-badge log-badge--channel">${escapeHtml(channel)}</span>`;
+}
+
+/**
+ * Format an ISO timestamp for display in the viewer's LOCAL timezone.
+ *
+ * Format: `h:mm:ss.<micros>AM/PM` (12-hour). When the entry's local date is not
+ * today, a compact `YYYY-MM-DD ` prefix is prepended. Sub-second precision is
+ * preserved from the RAW ISO string (JS `Date` truncates to milliseconds, so we
+ * splice the original micro-/nanoseconds back in). This is deliberately the one
+ * place that owns the wall-clock format, so it is easy to tweak.
+ *
+ * @param d   the already-parsed Date (its offset came from the raw string).
+ * @param iso the raw ISO string, used only to recover fractional seconds.
+ * @param now injectable "today" reference (defaults to real now).
+ */
+function formatLocalTimestamp(d: Date, iso: string, now: Date = new Date()): string {
+  if (isNaN(d.getTime())) return iso;
+
+  // Recover the full fractional seconds from the raw string (Date loses them).
+  const fracMatch = iso.match(/T\d{2}:\d{2}:\d{2}\.(\d+)/);
+  const frac = fracMatch ? `.${fracMatch[1]}` : '';
+
+  const period = d.getHours() >= 12 ? 'PM' : 'AM';
+  const hour12 = d.getHours() % 12 || 12;
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  const time = `${hour12}:${mm}:${ss}${frac}${period}`;
+
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (sameDay) return time;
+
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+    d.getDate(),
+  ).padStart(2, '0')}`;
+  return `${date} ${time}`;
+}
+
+/** Inline `[LEVEL] YYYY-MM-DD HH:MM:SS(.mmm) ` prefix some legacy lines carry. */
+const INLINE_LEVEL_PREFIX =
+  /^\[(?:DEBUG|INFO|WARNING|ERROR|CRITICAL|NOTICE|ALERT|EMERGENCY)\]\s+\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?\s+/i;
+
+/**
+ * Parse a single log line into a structured {@link RawLine}.
+ *
+ * Handles both shapes identically:
+ *  - single-file:  `[2026-07-18T07:09:44.079957+00:00] http.DEBUG: msg [ctx]`
+ *  - tail-all:     `app-2026-07-18.log     [2026-07-18T…] http.DEBUG: msg [ctx]`
+ *    (the server glues a `sprintf('%-22s %s', file, line)` filename column on).
+ *
+ * @param fallbackSource used as the source when no filename column is present
+ *   (i.e. the single-file view's selected file), so `source` is populated in
+ *   both shapes.
+ */
+function processLine(line: string, fallbackSource = ''): RawLine {
+  const raw = line;
   let cleaned = stripEmptyJson(line);
 
+  // 1. Peel off the tail-all filename column (`\S+\.log` padded before the `[`).
+  let source = fallbackSource;
+  const fileMatch = cleaned.match(/^(\S+\.log)\s+(?=\[)/i);
+  if (fileMatch) {
+    source = stripDateFromFilename(fileMatch[1]);
+    cleaned = cleaned.slice(fileMatch[0].length);
+  }
+
+  // 2. Fully consume the ISO timestamp bracket (offset/fraction included).
   let timestamp = 0;
   let localTime = '';
-  const tsMatch = cleaned.match(/^\[(\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2}))/);
+  const tsMatch = cleaned.match(/^\[([^\]]+)\]\s*/);
   if (tsMatch) {
-    try {
-      const d = new Date(tsMatch[1] + 'Z');
+    const iso = tsMatch[1];
+    // The raw string already carries its offset (e.g. +00:00) — do NOT add 'Z'.
+    const d = new Date(iso);
+    if (!isNaN(d.getTime())) {
       timestamp = d.getTime();
-      localTime = d.toLocaleTimeString('en-US', { hour12: false });
-    } catch {
-      timestamp = 0;
-      localTime = tsMatch[2];
+      localTime = formatLocalTimestamp(d, iso);
+    } else {
+      localTime = iso;
     }
-    cleaned = cleaned.slice(tsMatch[0].length).trim();
+    cleaned = cleaned.slice(tsMatch[0].length);
   }
 
-  const partsMatch = cleaned.match(/^([^.]+)\.(INFO|DEBUG|WARNING|ERROR|CRITICAL):\s*(.*)$/i);
-  if (partsMatch) {
-    const [, filename, levelStr, message] = partsMatch;
-    return {
-      timestamp,
-      localTime,
-      source: stripDateFromFilename(filename),
-      level: levelStr.toLowerCase() as LogLevel,
-      message,
-    };
+  // 3. Split `channel.LEVEL:` into a channel + level, stripping it from the msg.
+  let channel = '';
+  let level: LogLevel | null = null;
+  const clMatch = cleaned.match(
+    /^([^.\s]+)\.(DEBUG|INFO|NOTICE|WARNING|ERROR|CRITICAL|ALERT|EMERGENCY):\s*/i,
+  );
+  if (clMatch) {
+    channel = clMatch[1];
+    level = clMatch[2].toLowerCase() as LogLevel;
+    cleaned = cleaned.slice(clMatch[0].length);
   }
 
-  return {
-    timestamp,
-    localTime,
-    source: '',
-    level: detectLogLevel(cleaned),
-    message: cleaned,
-  };
+  // 4. Defensively strip a redundant inline `[LEVEL] datetime ` message prefix.
+  cleaned = cleaned.replace(INLINE_LEVEL_PREFIX, '');
+
+  // 5. Only fall back to keyword sniffing for lines we couldn't parse.
+  if (level === null && channel === '') {
+    level = detectLogLevel(cleaned);
+  }
+
+  return { raw, timestamp, localTime, source, channel, level, message: cleaned.trim() };
 }
 
 /**
- * Build display string for a processed line (with deduplication).
- * Badge replaces the level text inline; sources appear at the start.
+ * Build the display HTML for a processed line.
+ *
+ * Layout: `source  localTime  [channel] [LEVEL]: message`, where `channel` and
+ * `LEVEL` are separate badges (never duplicated as plain text). Every fragment
+ * derived from raw log text is HTML-escaped before it reaches `v-html`:
+ * `source`/`channel` via {@link escapeHtml}, the message via {@link highlightJson}
+ * (which escapes `& < >` first). This is the XSS boundary for log content.
+ *
+ * @param combinedSources overrides `info.source` when several files' identical
+ *   lines were merged into one row (comma-joined source list).
  */
 function formatLine(info: RawLine, combinedSources?: string): string {
-  const badge = info.level ? getLevelBadgeHtml(info.level) : '';
-  const sourceDisplay = combinedSources ? escapeHtml(combinedSources) : escapeHtml(info.source);
-  let msg = info.message;
-  if (info.level) {
-    // Strip the syslog level from the message to avoid duplication with the badge
-    const levelPattern = new RegExp(`^${info.level.toUpperCase()}:\\s*`, 'i');
-    msg = msg.replace(levelPattern, '');
-  }
-  const escapedMsg = escapeHtml(msg);
-  const highlightedMsg = escapedMsg ? highlightJson(escapedMsg) : '';
-  const badgePart = badge ? ` ${badge}` : '';
-  const timePart = info.localTime;
-  const sourcePart = sourceDisplay ? `${sourceDisplay} ` : '';
-  return `${sourcePart}${timePart}${badgePart} ${highlightedMsg}`;
+  const sourceStr = combinedSources ?? info.source;
+  const sourceHtml = sourceStr ? `${escapeHtml(sourceStr)} ` : '';
+  const timeHtml = info.localTime ? `${escapeHtml(info.localTime)} ` : '';
+  const channelHtml = info.channel ? `${getChannelBadgeHtml(info.channel)} ` : '';
+  const levelHtml = info.level ? `${getLevelBadgeHtml(info.level)}: ` : '';
+  // highlightJson escapes &<> itself — pass the raw message (no double-escape).
+  const messageHtml = info.message ? highlightJson(info.message) : '';
+  return `${sourceHtml}${timeHtml}${channelHtml}${levelHtml}${messageHtml}`;
 }
 
 const props = defineProps<{
@@ -237,7 +346,11 @@ const fileOptions = computed<SelectOptionInput[]>(() => {
 
 /** Computed processed log lines with deduplication and level badges */
 const processedLines = computed<ProcessedLine[]>(() => {
-  const rawLines = lines.value.map(processLine);
+  // In the single-file view the lines carry no filename column, so seed the
+  // source from the selected file; the combined view leaves it to the column.
+  const fallbackSource =
+    selected.value && selected.value !== ALL_LOGS ? stripDateFromFilename(selected.value) : '';
+  const rawLines = lines.value.map((l) => processLine(l, fallbackSource));
   const result: ProcessedLine[] = [];
   let i = 0;
   while (i < rawLines.length) {
@@ -529,6 +642,14 @@ onBeforeUnmount(() => {
   color: #991b1b;
   border: 1px solid rgba(153, 27, 27, 0.4);
   font-weight: var(--font-bold);
+}
+/* Channel badge — distinct from level tones; keep the channel's own casing. */
+:deep(.log-badge--channel) {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 /* JSON syntax highlighting */

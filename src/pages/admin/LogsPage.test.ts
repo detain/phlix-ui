@@ -156,3 +156,148 @@ describe('Admin LogsPage', () => {
     w.unmount();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Renderer overhaul (U1–U6): parse-model, level+channel badges, local time,
+// filename strip, cross-file combine. These exercise the actual parser with
+// REAL Monolog-shaped lines and tail-all `%-22s`-prefixed lines.
+// ---------------------------------------------------------------------------
+
+type FakeFiles = { name: string; size: number; modified_at: string }[];
+
+function makeRenderClient(opts: { files?: FakeFiles; tail?: string[]; tailAll?: string[] }) {
+  const files: FakeFiles = opts.files ?? [{ name: 'app-2026-07-18.log', size: 1, modified_at: 't' }];
+  const get = vi.fn(async (endpoint: string, params?: Record<string, string>) => {
+    if (endpoint === '/api/v1/admin/logs') return { files };
+    if (endpoint === '/api/v1/admin/logs/tail') {
+      return { file: params?.file, lines: opts.tail ?? [], truncated: false };
+    }
+    if (endpoint === '/api/v1/admin/logs/tail-all') {
+      return { files: files.map((f) => f.name), lines: opts.tailAll ?? [], truncated: false };
+    }
+    throw new Error(`unexpected ${endpoint}`);
+  });
+  return { client: { get } as unknown as ApiClient, get };
+}
+
+/** Mount and stay in the combined "All logs" view (the default selection). */
+async function mountAll(tailAll: string[], files?: FakeFiles) {
+  const { client } = makeRenderClient({ files, tailAll });
+  const w = mountPage(client);
+  await flushPromises();
+  return w;
+}
+
+/** Mount and switch to a single file so its `tail` lines render. */
+async function mountSingle(tail: string[], name = 'app-2026-07-18.log') {
+  const { client } = makeRenderClient({ files: [{ name, size: 1, modified_at: 't' }], tail });
+  const w = mountPage(client);
+  await flushPromises();
+  w.findAllComponents(Select)[0].vm.$emit('update:modelValue', name);
+  await flushPromises();
+  return w;
+}
+
+function outText(w: ReturnType<typeof mountPage>): string {
+  return w.find('[data-testid="logs-output"]').text();
+}
+/** Direct-child <span>s of the <pre> = one per rendered (post-combine) row. */
+function rowCount(w: ReturnType<typeof mountPage>): number {
+  return w.find('[data-testid="logs-output"]').element.querySelectorAll(':scope > span').length;
+}
+function occurrences(hay: string, needle: string): number {
+  return hay.split(needle).length - 1;
+}
+
+const REAL_LINE =
+  '[2026-07-18T07:09:44.079957+00:00] http.DEBUG: HttpHandler.__invoke Application::dispatch [uid=52b7c64c9e95984e] {"channel":"http"}';
+
+describe('Admin LogsPage — renderer overhaul', () => {
+  it('emits exactly one level badge and one channel badge (no duplicate DEBUG)', async () => {
+    const w = await mountSingle([REAL_LINE]);
+    expect(w.findAll('.log-badge--debug')).toHaveLength(1);
+    expect(w.findAll('.log-badge--channel')).toHaveLength(1);
+    expect(w.find('.log-badge--debug').text()).toBe('DEBUG');
+    expect(w.find('.log-badge--channel').text()).toBe('http');
+    const text = outText(w);
+    expect(text).not.toContain('http.DEBUG'); // the combined channel.LEVEL token is gone
+    expect(occurrences(text, 'DEBUG')).toBe(1); // only the badge — no stray level text
+    w.unmount();
+  });
+
+  it('keeps the message + context but strips the trailing empty %extra% []', async () => {
+    const w = await mountSingle([`${REAL_LINE} []`]);
+    const text = outText(w);
+    expect(text).toContain('HttpHandler.__invoke Application::dispatch');
+    expect(text).toContain('{"channel":"http"}');
+    expect(text).not.toMatch(/\[\]\s*$/);
+    w.unmount();
+  });
+
+  it('splits the tail-all %-22s filename column and strips it from the message', async () => {
+    const w = await mountAll([`app-2026-07-18.log     ${REAL_LINE}`]);
+    const text = outText(w);
+    expect(text).not.toContain('app-2026-07-18.log'); // padded column consumed
+    expect(text).not.toContain('.log'); // no filename token leaks into the row
+    expect(text.trimStart().startsWith('app ')).toBe(true); // date-stripped source column
+    expect(w.findAll('.log-badge--debug')).toHaveLength(1);
+    expect(w.findAll('.log-badge--channel')).toHaveLength(1);
+    w.unmount();
+  });
+
+  it('renders local 12-hour time with micros and OMITS today\'s date', async () => {
+    const iso = new Date().toISOString().replace('Z', '+00:00');
+    const w = await mountSingle([`[${iso}] http.INFO: today happened`]);
+    const text = outText(w);
+    expect(text).toMatch(/\d{1,2}:\d{2}:\d{2}\.\d+(AM|PM)/); // h:mm:ss.micros AM/PM
+    expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}/); // today's YYYY-MM-DD is dropped
+    w.unmount();
+  });
+
+  it('includes a compact date for non-today entries and preserves full microseconds', async () => {
+    const w = await mountSingle(['[2000-06-15T12:00:00.123456+00:00] http.INFO: long ago']);
+    const text = outText(w);
+    expect(text).toMatch(/\d{4}-\d{2}-\d{2}/); // date shown for a non-today entry
+    expect(text).toContain('2000');
+    expect(text).toContain('.123456'); // full sub-second precision retained (beyond ms)
+    expect(text).toMatch(/(AM|PM)/);
+    w.unmount();
+  });
+
+  it('strips the rotation date from filenames in the file dropdown (hyphen separator)', async () => {
+    const { client } = makeRenderClient({
+      files: [{ name: 'app-2026-07-18.log', size: 1, modified_at: 't' }],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const opts = w.findAllComponents(Select)[0].props('options') as { value: string; label: string }[];
+    expect(opts).toContainEqual({ value: 'app-2026-07-18.log', label: 'app' });
+    w.unmount();
+  });
+
+  it('defensively strips an inline [LEVEL] datetime prefix from the message body', async () => {
+    const legacy =
+      '[2026-07-18T07:09:44.079957+00:00] http.DEBUG: [DEBUG] 2026-07-18 07:09:44.000 HttpHandler dispatch';
+    const w = await mountSingle([legacy]);
+    const text = outText(w);
+    expect(text).not.toContain('[DEBUG] 2026-07-18'); // redundant inline prefix removed
+    expect(text).toContain('HttpHandler dispatch');
+    expect(occurrences(text, 'DEBUG')).toBe(1); // just the badge, no inline duplicate
+    w.unmount();
+  });
+
+  it('combines identical concurrent lines across files into one row', async () => {
+    const tail = '[2026-07-18T07:09:44.079957+00:00] http.DEBUG: same message here {"channel":"http"}';
+    const w = await mountAll([
+      `app-2026-07-18.log     ${tail}`,
+      `events-2026-07-18.log  ${tail}`,
+      `plugins-2026-07-18.log ${tail}`,
+    ]);
+    expect(rowCount(w)).toBe(1); // three files → a single merged row
+    const text = outText(w);
+    expect(text).toContain('app, events, plugins'); // comma-joined, sorted source list
+    expect(w.findAll('.log-badge--debug')).toHaveLength(1); // not one badge per file
+    expect(w.findAll('.log-badge--channel')).toHaveLength(1);
+    w.unmount();
+  });
+});
