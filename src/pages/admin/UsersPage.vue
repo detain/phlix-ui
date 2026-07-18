@@ -19,6 +19,7 @@ import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminUsersApi,
   RATING_LABELS,
+  RATING_MAX,
   RATING_OPTIONS,
   type CreateProfileInput,
   type CreateUserInput,
@@ -454,7 +455,7 @@ async function handleClearPin(profile: Profile): Promise<void> {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function ratingLabel(rating: number): string {
-  return RATING_LABELS[rating] ?? RATING_LABELS[6];
+  return RATING_LABELS[rating] ?? RATING_LABELS[RATING_MAX];
 }
 
 onMounted(loadUsers);

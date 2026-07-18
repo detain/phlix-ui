@@ -79,23 +79,47 @@ export interface Profile {
   name: string;
   /** Always null in GET responses — PIN is write-only. */
   pin_hash: null;
-  /** 0=G, 1=PG, 2=PG-13, 3=R, 4=NC-17, 5=X, 6=UNRATED */
+  /**
+   * Parental content-rating cap on the expanded 0–12 age scale that interleaves
+   * the MPAA movie ratings with the US TV vocabulary (see {@link RATING_LABELS}).
+   */
   rating: number;
   created_at: string;
 }
 
-/** Rating display labels (parental-rating scale, 0-6). */
+/**
+ * Rating display labels for the parental content-rating cap on the expanded
+ * 0–12 age scale. The scale interleaves the MPAA movie ratings with the US TV
+ * vocabulary in ascending age/maturity order so a single numeric cap gates both
+ * movies and TV consistently:
+ *
+ *   0 G · 1 TV-Y · 2 TV-G · 3 TV-Y7 · 4 PG · 5 TV-PG · 6 PG-13 · 7 TV-14 ·
+ *   8 R · 9 TV-MA · 10 NC-17 · 11 X · 12 UNRATED
+ *
+ * Matches the server's expanded content-rating vocabulary. Values are stable
+ * indices; the label text carries a "(Movies)"/"(TV)" hint so the two families
+ * are distinguishable in flat pickers.
+ */
 export const RATING_LABELS: Record<number, string> = {
-  0: 'G — General Audiences',
-  1: 'PG — Parental Guidance',
-  2: 'PG-13 — Parents Strongly Cautioned',
-  3: 'R — Restricted',
-  4: 'NC-17 — No One 17 & Under',
-  5: 'X — Adult',
-  6: 'UNRATED — Unrated Content',
+  0: 'G — General Audiences (Movies)',
+  1: 'TV-Y — All Children (TV)',
+  2: 'TV-G — General Audience (TV)',
+  3: 'TV-Y7 — Older Children (TV)',
+  4: 'PG — Parental Guidance (Movies)',
+  5: 'TV-PG — Parental Guidance (TV)',
+  6: 'PG-13 — Parents Strongly Cautioned (Movies)',
+  7: 'TV-14 — Parents Strongly Cautioned (TV)',
+  8: 'R — Restricted (Movies)',
+  9: 'TV-MA — Mature Audience (TV)',
+  10: 'NC-17 — No One 17 & Under (Movies)',
+  11: 'X — Adult (Movies)',
+  12: 'UNRATED — Unrated Content',
 };
 
-/** Rating options for select elements. */
+/** Highest cap index (UNRATED) — the safe fallback when a value is unknown. */
+export const RATING_MAX = 12;
+
+/** Rating options for select elements (age-ordered, 0–12). */
 export const RATING_OPTIONS: ReadonlyArray<{ value: number; label: string }> =
   Object.entries(RATING_LABELS).map(([value, label]) => ({
     value: Number(value),
@@ -105,7 +129,7 @@ export const RATING_OPTIONS: ReadonlyArray<{ value: number; label: string }> =
 /** Body accepted by {@link AdminUsersApi.createProfile}. */
 export interface CreateProfileInput {
   name: string;
-  /** 0=G … 6=UNRATED */
+  /** Content-rating cap on the 0–12 age scale (0=G … 12=UNRATED). */
   rating: number;
 }
 
@@ -163,7 +187,7 @@ export interface ProfileStreamLimit {
  *    0/1); the controller casts it server-side.
  *  - `resetPassword()` returns `{ message, new_password }` — the plaintext
  *    password is only available in that response.
- *  - `rating` is an integer 0-6 (see {@link RATING_LABELS}).
+ *  - `rating` is an integer 0-12 (see {@link RATING_LABELS}).
  *  - `POST /profiles/{id}/pin` accepts `{ pin: "1234" }` — 4 or 6 digits.
  *  - Max 5 profiles per user is enforced server-side.
  */

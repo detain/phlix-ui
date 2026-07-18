@@ -748,3 +748,115 @@ describe('MediaDetail — files', () => {
     expect(w.find('.media-detail__file-size').text()).toBe('1 KB');
   });
 });
+
+describe('MediaDetail — Play Trailer', () => {
+  it('shows the Play Trailer button when trailer_url is present', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({ trailer_url: 'https://youtu.be/abc123', trailer_site: 'YouTube', trailer_key: 'abc123' }),
+      },
+    });
+    const btn = w.find('.media-detail__trailer-btn');
+    expect(btn.exists()).toBe(true);
+    expect(btn.text()).toContain('Play Trailer');
+  });
+
+  it('hides the Play Trailer button when there is no trailer_url', () => {
+    const w = mount(MediaDetail, { props: { item: media({ trailer_url: null }) } });
+    expect(w.find('.media-detail__trailer-btn').exists()).toBe(false);
+  });
+
+  it('opens an in-app modal with a correct YouTube embed src for a valid key', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({ trailer_url: 'https://youtu.be/dQw4w9WgXcQ', trailer_site: 'YouTube', trailer_key: 'dQw4w9WgXcQ' }),
+      },
+      attachTo: host,
+    });
+    // No modal / iframe until the button is clicked.
+    expect(document.querySelector('.media-detail__trailer-iframe')).toBeNull();
+    await w.find('.media-detail__trailer-btn').trigger('click');
+    await nextTick();
+    const iframe = document.querySelector<HTMLIFrameElement>('.media-detail__trailer-iframe');
+    expect(iframe).not.toBeNull();
+    expect(iframe!.getAttribute('src')).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ');
+    w.unmount();
+    host.remove();
+  });
+
+  it('rejects a bad trailer_key and falls back to opening the URL in a new tab', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          trailer_url: 'https://example.com/trailer',
+          trailer_site: 'YouTube',
+          // Contains characters outside /^[A-Za-z0-9_-]{1,20}$/ — must be rejected.
+          trailer_key: 'evil"/><script>',
+        }),
+      },
+      attachTo: host,
+    });
+    await w.find('.media-detail__trailer-btn').trigger('click');
+    await nextTick();
+    // No embed built for a bad key; opened the raw URL safely instead.
+    expect(document.querySelector('.media-detail__trailer-iframe')).toBeNull();
+    expect(openSpy).toHaveBeenCalledWith('https://example.com/trailer', '_blank', 'noopener,noreferrer');
+    openSpy.mockRestore();
+    w.unmount();
+    host.remove();
+  });
+
+  it('opens a non-YouTube trailer in a new tab (no embed modal)', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const w = mount(MediaDetail, {
+      props: { item: media({ trailer_url: 'https://vimeo.com/12345', trailer_site: 'Vimeo', trailer_key: '12345' }) },
+    });
+    await w.find('.media-detail__trailer-btn').trigger('click');
+    expect(document.querySelector('.media-detail__trailer-iframe')).toBeNull();
+    expect(openSpy).toHaveBeenCalledWith('https://vimeo.com/12345', '_blank', 'noopener,noreferrer');
+    openSpy.mockRestore();
+  });
+});
+
+describe('MediaDetail — title logo overlay', () => {
+  it('renders the logo image in place of the text title when logo_url is present', () => {
+    const w = mount(MediaDetail, {
+      props: { item: media({ logo_url: 'https://img/logo.png' }) },
+    });
+    const logo = w.find('.media-detail__logo');
+    expect(logo.exists()).toBe(true);
+    expect(logo.attributes('src')).toBe('https://img/logo.png');
+    expect(logo.attributes('alt')).toBe('Dune: Part Two');
+    // The plain text <h1> title is not rendered while the logo is shown.
+    expect(w.find('.media-detail__title').exists()).toBe(false);
+  });
+
+  it('renders a remote SVG logo via a plain img', () => {
+    const w = mount(MediaDetail, {
+      props: { item: media({ logo_url: 'https://image.tmdb.org/t/p/original/logo.svg' }) },
+    });
+    expect(w.find('.media-detail__logo').attributes('src')).toBe('https://image.tmdb.org/t/p/original/logo.svg');
+  });
+
+  it('falls back to the text title when logo_url is absent', () => {
+    const w = mount(MediaDetail, { props: { item: media({ logo_url: null }) } });
+    expect(w.find('.media-detail__logo').exists()).toBe(false);
+    expect(w.find('.media-detail__title').text()).toBe('Dune: Part Two');
+  });
+
+  it('falls back to the text title when the logo image fails to load', async () => {
+    const w = mount(MediaDetail, {
+      props: { item: media({ logo_url: 'https://img/broken.png' }) },
+    });
+    expect(w.find('.media-detail__logo').exists()).toBe(true);
+    await w.find('.media-detail__logo').trigger('error');
+    await nextTick();
+    expect(w.find('.media-detail__logo').exists()).toBe(false);
+    expect(w.find('.media-detail__title').text()).toBe('Dune: Part Two');
+  });
+});

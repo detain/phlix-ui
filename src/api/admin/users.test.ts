@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { AdminUsersApi, RATING_LABELS, RATING_OPTIONS, USER_STATUSES } from './users';
+import { AdminUsersApi, RATING_LABELS, RATING_MAX, RATING_OPTIONS, USER_STATUSES } from './users';
 import type { ApiClient } from '../client';
 
 /** A mock ApiClient whose verbs are vi.fn()s the test can assert on. */
@@ -274,14 +274,33 @@ describe('AdminUsersApi — profiles', () => {
 });
 
 describe('rating tables', () => {
-  it('RATING_LABELS covers the full 0-6 scale', () => {
-    expect(Object.keys(RATING_LABELS)).toHaveLength(7);
+  it('RATING_LABELS covers the full 0-12 scale (movies + TV)', () => {
+    expect(Object.keys(RATING_LABELS)).toHaveLength(13);
+    expect(RATING_MAX).toBe(12);
     expect(RATING_LABELS[0]).toContain('G');
-    expect(RATING_LABELS[6]).toContain('UNRATED');
+    expect(RATING_LABELS[RATING_MAX]).toContain('UNRATED');
+  });
+
+  it('RATING_LABELS includes the expanded US TV vocabulary in age order', () => {
+    // Each TV rating is present exactly once, labelled as TV.
+    for (const tv of ['TV-Y', 'TV-Y7', 'TV-G', 'TV-PG', 'TV-14', 'TV-MA']) {
+      const hits = Object.values(RATING_LABELS).filter((l) => l.startsWith(`${tv} `));
+      expect(hits, `expected one label for ${tv}`).toHaveLength(1);
+    }
+    // Ascending age order: G < PG < PG-13 < R < NC-17, and TV siblings sit
+    // alongside their movie peers (TV-14 after PG-13, TV-MA after R).
+    const indexOf = (prefix: string) =>
+      Number(Object.entries(RATING_LABELS).find(([, l]) => l.startsWith(`${prefix} `))![0]);
+    expect(indexOf('G')).toBeLessThan(indexOf('PG'));
+    expect(indexOf('PG')).toBeLessThan(indexOf('PG-13'));
+    expect(indexOf('PG-13')).toBeLessThan(indexOf('R'));
+    expect(indexOf('R')).toBeLessThan(indexOf('NC-17'));
+    expect(indexOf('PG-13')).toBeLessThan(indexOf('TV-14'));
+    expect(indexOf('R')).toBeLessThan(indexOf('TV-MA'));
   });
 
   it('RATING_OPTIONS mirrors RATING_LABELS with numeric values', () => {
-    expect(RATING_OPTIONS).toHaveLength(7);
+    expect(RATING_OPTIONS).toHaveLength(13);
     expect(RATING_OPTIONS[0]).toEqual({ value: 0, label: RATING_LABELS[0] });
     expect(RATING_OPTIONS.every((o) => typeof o.value === 'number')).toBe(true);
   });

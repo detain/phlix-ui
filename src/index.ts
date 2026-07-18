@@ -89,7 +89,7 @@ export type {
   StorageSummary,
   ActivityEvent,
 } from './api/admin/dashboard';
-export { AdminUsersApi, RATING_LABELS, RATING_OPTIONS } from './api/admin/users';
+export { AdminUsersApi, RATING_LABELS, RATING_MAX, RATING_OPTIONS } from './api/admin/users';
 export type {
   User,
   CreateUserInput,

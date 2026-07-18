@@ -25,6 +25,7 @@ import Icon from './Icon.vue';
 import ThumbRating from './ThumbRating.vue';
 import Button from './ui/Button.vue';
 import Menu from './ui/Menu.vue';
+import Modal from './ui/Modal.vue';
 import Chip from './ui/Chip.vue';
 import MediaRow from './MediaRow.vue';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
@@ -380,6 +381,59 @@ watch(backdropSrc, () => {
   backdropLoaded.value = false;
 });
 
+// ── Trailer (Play Trailer button + in-app YouTube embed) ────────────────────
+/** Whether this title has a trailer at all (drives the "Play Trailer" button). */
+const hasTrailer = computed<boolean>(() => !!props.item.trailer_url);
+
+/**
+ * A safe in-app YouTube embed URL, or null when we can't build one. We ONLY
+ * embed when the site is YouTube AND the key is a plausible video id — the key
+ * is validated client-side (`/^[A-Za-z0-9_-]{1,20}$/`) before it is ever placed
+ * in the iframe src, so a hostile/garbage key can never break out of the URL.
+ * When null the "Play Trailer" button falls back to opening `trailer_url` in a
+ * new tab. The URL is bound via `:src` (Vue escapes) — never string-injected.
+ */
+const YOUTUBE_KEY_RE = /^[A-Za-z0-9_-]{1,20}$/;
+const youtubeEmbedUrl = computed<string | null>(() => {
+  const site = props.item.trailer_site;
+  const key = props.item.trailer_key;
+  if (site !== 'YouTube' || !key || !YOUTUBE_KEY_RE.test(key)) return null;
+  return `https://www.youtube.com/embed/${key}`;
+});
+
+/** Whether the in-app trailer modal is open. */
+const trailerOpen = ref(false);
+
+/**
+ * Play the trailer. Prefer the in-app YouTube embed modal (safe, validated key);
+ * otherwise open the raw `trailer_url` in a new tab with `noopener,noreferrer`.
+ */
+function onPlayTrailer(): void {
+  if (youtubeEmbedUrl.value) {
+    trailerOpen.value = true;
+    return;
+  }
+  const url = props.item.trailer_url;
+  if (url && typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
+// ── Title logo overlay ──────────────────────────────────────────────────────
+/** Title-logo URL (signed local PNG or remote SVG); null → plain text title. */
+const logoUrl = computed<string | null>(() => props.item.logo_url || null);
+/** Set when the logo image fails to load so we fall back to the text title. */
+const logoFailed = ref(false);
+function onLogoError(): void {
+  logoFailed.value = true;
+}
+/** Show the image logo only when we have a URL and it hasn't failed to load. */
+const showLogo = computed<boolean>(() => !!logoUrl.value && !logoFailed.value);
+// Reset the error flag when navigating between items (item swapped in place).
+watch(logoUrl, () => {
+  logoFailed.value = false;
+});
+
 // ── U4: theme-music player ──────────────────────────────────────────────────
 // Resolve the streamable theme URL against the media base (absolute URLs pass
 // through). Injected the same way SeriesDetail does; safe empty-string defaults
@@ -552,7 +606,18 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="media-detail__info">
-        <h1 class="media-detail__title">{{ item.name }}</h1>
+        <!-- Title logo overlay: prefer the artwork logo (local PNG or remote
+             SVG); a plain <img> handles both. Falls back to the text title when
+             absent or on load error. `:src` binding keeps the URL escaped. -->
+        <img
+          v-if="showLogo"
+          class="media-detail__logo"
+          :src="logoUrl!"
+          :alt="item.name"
+          decoding="async"
+          @error="onLogoError"
+        />
+        <h1 v-else class="media-detail__title">{{ item.name }}</h1>
 
         <div class="media-detail__meta numeric">
           <span v-if="item.year" class="media-detail__meta-item">
@@ -606,6 +671,18 @@ onBeforeUnmount(() => {
           <Button variant="solid" left-icon="play" @click="emit('play', item)">Play</Button>
           <Button v-if="resumeLabel" variant="outline" left-icon="rewind" @click="emit('resume', item)">
             Resume <span class="media-detail__resume-at numeric">{{ resumeLabel }}</span>
+          </Button>
+          <!-- [ Play Trailer ] — only when the item has a trailer. Opens the
+               in-app YouTube embed modal when we can build a safe embed URL,
+               else opens the raw trailer_url in a new tab. -->
+          <Button
+            v-if="hasTrailer"
+            variant="outline"
+            left-icon="film"
+            class="media-detail__trailer-btn"
+            @click="onPlayTrailer"
+          >
+            Play Trailer
           </Button>
           <Button
             variant="ghost"
@@ -782,6 +859,22 @@ onBeforeUnmount(() => {
       @watchlist="emit('watchlist', $event)"
       @info="emit('info', $event)"
     />
+
+    <!-- In-app trailer embed. Rendered only when we could build a SAFE YouTube
+         embed URL (site === YouTube + validated key); the src is bound via
+         `:src` so Vue escapes it — the key is never string-injected into HTML. -->
+    <Modal v-if="youtubeEmbedUrl" v-model="trailerOpen" :title="`Trailer — ${item.name}`" size="lg">
+      <div class="media-detail__trailer-embed">
+        <iframe
+          class="media-detail__trailer-iframe"
+          :src="youtubeEmbedUrl"
+          :title="`${item.name} trailer`"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin"
+        />
+      </div>
+    </Modal>
   </article>
 </template>
 
@@ -918,6 +1011,18 @@ onBeforeUnmount(() => {
   font-size: var(--text-3xl);
   letter-spacing: var(--tracking-tight);
   color: var(--text);
+  margin-bottom: var(--space-3);
+}
+
+/* Title-logo overlay — a fitted title artwork in place of the text title.
+   Transparent PNGs / SVGs sit on the hero; capped so tall logos stay tidy. */
+.media-detail__logo {
+  display: block;
+  max-width: min(100%, 420px);
+  max-height: 160px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   margin-bottom: var(--space-3);
 }
 
@@ -1242,6 +1347,23 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1;
   margin-top: var(--space-10);
+}
+
+/* Trailer embed — a responsive 16:9 frame inside the modal body. */
+.media-detail__trailer-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.media-detail__trailer-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .media-detail__files {
