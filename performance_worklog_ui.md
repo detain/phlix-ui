@@ -1344,3 +1344,22 @@ fixed delay.
 - `dist/` NOT touched (§0.5 release-time gate).
 
 Files changed (absolute): `/home/sites/phlix/phlix-ui/src/pages/admin/MetricsPage.apex-registration.test.ts`.
+
+---
+
+## Implementer — 2026-07-18 — SV-6 remove dead `src/api/music.ts` (§6 removal-queue #8a)
+
+**Change:** Deleted `src/api/music.ts` entirely (80 lines) via `git rm`. Module exported `fetchArtists`/`fetchAlbumsByArtist`/`fetchTracksByAlbum`, all superseded by `ApiClient` music methods (live `src/pages/MusicLibraryPage.vue` uses `ApiClient` from `../api/client`).
+
+**Audit (pre-removal, at HEAD 7d7c7af):** ZERO importers confirmed. `git grep` for `api/music`, `from '.../music'`, `vi.mock` of music, and the three exported symbols found NO references outside `music.ts` itself. No barrel/`index.ts`, no `music.test.ts`, no `vi.mock('../api/music')`. `MusicLibraryPage.test.ts:207` mentions `fetchArtists` only in a test-description string (imports the Vue component, not this module).
+
+**Verification (all PASS):**
+- Typecheck: `npm run typecheck` (= `vue-tsc --noEmit`) → exit 0, clean (no dangling import).
+- Unit: `npx vitest run` → 178 files, **3054 passed / 5 skipped / 0 fail**, exit 0. `MusicLibraryPage.test.ts` specifically → 9/9 pass.
+- Post-removal `git grep` → only unrelated `../types/music` type imports + `~icons/lucide/music` glyph remain; no `api/music` module refs.
+
+**dist/:** NOT touched (module was never bundled — zero importers; §0.5 release-time rebuild gate).
+
+**Git:** committed `7cade5a` `ui: SV-6 remove dead src/api/music.ts`; pushed to origin/master (7d7c7af..7cade5a). HEAD == origin/master.
+
+Files changed (absolute): `/home/sites/phlix/phlix-ui/src/api/music.ts` (deleted).
