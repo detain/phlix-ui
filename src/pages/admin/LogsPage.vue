@@ -140,7 +140,7 @@ export interface ProcessedLine {
 interface RawLine {
   /** The original, untouched log line (useful for tooltips/debugging). */
   raw: string;
-  /** Epoch milliseconds parsed from the ISO timestamp; 0 when unparseable. */
+  /** Epoch milliseconds parsed from the ISO timestamp; NaN when absent/unparseable. */
   timestamp: number;
   /** Formatted local time string for display. */
   localTime: string;
@@ -234,20 +234,30 @@ const INLINE_LEVEL_PREFIX =
  *   (i.e. the single-file view's selected file), so `source` is populated in
  *   both shapes.
  */
-function processLine(line: string, fallbackSource = ''): RawLine {
+function processLine(line: string, fallbackSource = '', isCombined = false): RawLine {
   const raw = line;
   let cleaned = stripEmptyJson(line);
 
-  // 1. Peel off the tail-all filename column (`\S+\.log` padded before the `[`).
+  // 1. Peel off the tail-all filename column. In the combined "All logs" view the
+  //    server prepends a padded `sprintf('%-22s %s', file, line)` filename to
+  //    EVERY line — INCLUDING bracket-less continuation lines (stack traces that
+  //    inherit the previous entry's timestamp). Strip the leading `\S+\.log`
+  //    token unconditionally in combined mode — NOT gated on a following `[` — so
+  //    the column is consumed for continuation lines too and never leaks into the
+  //    message. Single-file lines carry no column, so we never strip there.
   let source = fallbackSource;
-  const fileMatch = cleaned.match(/^(\S+\.log)\s+(?=\[)/i);
-  if (fileMatch) {
-    source = stripDateFromFilename(fileMatch[1]);
-    cleaned = cleaned.slice(fileMatch[0].length);
+  if (isCombined) {
+    const fileMatch = cleaned.match(/^(\S+\.log)\s+/i);
+    if (fileMatch) {
+      source = stripDateFromFilename(fileMatch[1]);
+      cleaned = cleaned.slice(fileMatch[0].length);
+    }
   }
 
   // 2. Fully consume the ISO timestamp bracket (offset/fraction included).
-  let timestamp = 0;
+  //    Lines with no parseable timestamp keep NaN so they can never chain-merge
+  //    with each other (see the |Δts| ≤ 1000ms combine check below).
+  let timestamp = NaN;
   let localTime = '';
   const tsMatch = cleaned.match(/^\[([^\]]+)\]\s*/);
   if (tsMatch) {
@@ -348,14 +358,15 @@ const fileOptions = computed<SelectOptionInput[]>(() => {
 const processedLines = computed<ProcessedLine[]>(() => {
   // In the single-file view the lines carry no filename column, so seed the
   // source from the selected file; the combined view leaves it to the column.
+  const isCombined = selected.value === ALL_LOGS;
   const fallbackSource =
     selected.value && selected.value !== ALL_LOGS ? stripDateFromFilename(selected.value) : '';
-  const rawLines = lines.value.map((l) => processLine(l, fallbackSource));
+  const rawLines = lines.value.map((l) => processLine(l, fallbackSource, isCombined));
   const result: ProcessedLine[] = [];
   let i = 0;
   while (i < rawLines.length) {
     const line = rawLines[i];
-    if (line.timestamp === 0 && line.source === '') {
+    if (Number.isNaN(line.timestamp) && line.source === '') {
       result.push({ level: line.level, content: formatLine(line) });
       i++;
       continue;
