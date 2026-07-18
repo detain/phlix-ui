@@ -853,7 +853,7 @@ var Dr = tn("server", () => {
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-DMaFzpqf.js")
+	component: () => import("./LogsPage-CVhi-wYr.js")
 }, jr = {
 	name: "admin-webhooks",
 	path: "webhooks",

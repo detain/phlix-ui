@@ -1,5 +1,5 @@
 import { ApiClient } from '../../api/client';
-type LogLevel = 'info' | 'debug' | 'warning' | 'error' | 'critical';
+type LogLevel = 'debug' | 'info' | 'notice' | 'warning' | 'error' | 'critical' | 'alert' | 'emergency';
 export interface ProcessedLine {
     level: LogLevel | null;
     content: string;

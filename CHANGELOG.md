@@ -1,3 +1,15 @@
+## v0.82.0 (2026-07-18)
+
+### Changes
+- feat(admin/logs): overhaul the log renderer — emit separate **channel** and **level** badges (the full Monolog/PSR-3 level set mapped onto five colour tones), no more duplicated level text
+- feat(admin/logs): show timestamps in the viewer's **local time** as `h:mm:ss.<micros>AM/PM` (12-hour), splicing sub-second precision back from the raw ISO (JS `Date` truncates to ms) and dropping the date when the entry is from today
+- feat(admin/logs): strip the `-YYYY-MM-DD.log` rotation suffix from filenames (accepts both the Monolog hyphen separator and the legacy dot separator)
+- feat(admin/logs): **cross-file line combine** now fires — the parser populates source/timestamp/message so identical lines across multiple files merge into a single row with a comma-joined source list
+- fix(admin/logs): defensively strip a redundant legacy inline `[LEVEL] datetime ` prefix from message bodies
+- fix(admin/logs): fix message **double-escape** (`highlightJson` already escapes `& < >`, so the message is no longer escaped twice) and HTML-escape the channel/source fragments before `v-html` (the XSS boundary for raw log content)
+- test(player): refresh stale QualityMenu/quality/shortcuts specs left behind by earlier feature commits (closest-level-≥-source contract, the q/Q quality shortcut, and the variant-id emit); only a stale docstring changes in product code
+
+
 ## v0.81.0 (2026-07-18)
 
 ### Changes
