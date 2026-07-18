@@ -197,6 +197,43 @@ export declare class AdminLibrariesApi {
     /** `POST /api/v1/libraries/{id}/match-metadata` → `202 { job_id, status, message }`. */
     matchMetadata(id: string): Promise<ScanQueuedResult>;
     /**
+     * `POST /api/v1/libraries/{id}/refresh-metadata` → `202 { job_id, status, message }`.
+     * Forces a metadata re-fetch for EVERY item (updates existing entries and
+     * backfills newly-tracked fields — episode stills, trailers, logos,
+     * certifications), unlike {@link matchMetadata} which only fills items that
+     * have no metadata yet. Same async job shape as scan, so it drives the same
+     * status-polling UI.
+     */
+    refreshMetadata(id: string): Promise<ScanQueuedResult>;
+    /**
+     * `POST /api/v1/libraries/{id}/prune` → `202 { job_id, status, message }`.
+     * Removes ONLY items whose files no longer exist on disk, without a full
+     * rescan; surviving items keep their metadata / watch data. Same async job
+     * shape as scan.
+     */
+    prune(id: string): Promise<ScanQueuedResult>;
+    /**
+     * `POST /api/v1/libraries/{id}/clear-metadata` → `202 { job_id, status, message }`.
+     * Resets every item to filesystem basics (keeps the items + user watch data)
+     * so a later {@link matchMetadata} can re-fetch cleanly. Same async job shape.
+     */
+    clearMetadata(id: string): Promise<ScanQueuedResult>;
+    /**
+     * `POST /api/v1/libraries/{id}/clear-artwork` → `202 { job_id, status, message }`.
+     * Deletes locally cached images to free disk; artwork is re-downloaded on the
+     * next metadata match. Same async job shape.
+     */
+    clearArtwork(id: string): Promise<ScanQueuedResult>;
+    /**
+     * `POST /api/v1/libraries/{id}/delete-all?confirm=true` → `202 { job_id, status,
+     * message }`. DESTRUCTIVE: removes EVERY item in the library along with its
+     * watch progress / favorites / ratings. The server 400s without an explicit
+     * `confirm=true`, so it is sent both in the query string AND the JSON body to
+     * satisfy the guard regardless of how the controller reads it. Same async job
+     * shape, so it drives the same status-polling UI.
+     */
+    deleteAll(id: string): Promise<ScanQueuedResult>;
+    /**
      * `GET /api/v1/libraries/{id}/scan-status` → unwraps
      * `{ scan_status: ScanJob | null }`. A `null` means no job has run yet.
      */

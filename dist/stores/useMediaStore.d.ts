@@ -51,6 +51,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -78,7 +82,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -90,6 +94,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -114,6 +119,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -141,7 +150,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -153,6 +162,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -238,6 +248,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -265,7 +279,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -277,6 +291,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -301,6 +316,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -328,7 +347,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -340,6 +359,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;
@@ -425,6 +445,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -452,7 +476,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -464,6 +488,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -488,6 +513,10 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -515,7 +544,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -527,6 +556,7 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[]>;
     total: import("vue").Ref<number, number>;
     loading: import("vue").Ref<boolean, boolean>;

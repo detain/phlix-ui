@@ -63,13 +63,30 @@ export interface Profile {
     name: string;
     /** Always null in GET responses — PIN is write-only. */
     pin_hash: null;
-    /** 0=G, 1=PG, 2=PG-13, 3=R, 4=NC-17, 5=X, 6=UNRATED */
+    /**
+     * Parental content-rating cap on the expanded 0–12 age scale that interleaves
+     * the MPAA movie ratings with the US TV vocabulary (see {@link RATING_LABELS}).
+     */
     rating: number;
     created_at: string;
 }
-/** Rating display labels (parental-rating scale, 0-6). */
+/**
+ * Rating display labels for the parental content-rating cap on the expanded
+ * 0–12 age scale. The scale interleaves the MPAA movie ratings with the US TV
+ * vocabulary in ascending age/maturity order so a single numeric cap gates both
+ * movies and TV consistently:
+ *
+ *   0 G · 1 TV-Y · 2 TV-G · 3 TV-Y7 · 4 PG · 5 TV-PG · 6 PG-13 · 7 TV-14 ·
+ *   8 R · 9 TV-MA · 10 NC-17 · 11 X · 12 UNRATED
+ *
+ * Matches the server's expanded content-rating vocabulary. Values are stable
+ * indices; the label text carries a "(Movies)"/"(TV)" hint so the two families
+ * are distinguishable in flat pickers.
+ */
 export declare const RATING_LABELS: Record<number, string>;
-/** Rating options for select elements. */
+/** Highest cap index (UNRATED) — the safe fallback when a value is unknown. */
+export declare const RATING_MAX = 12;
+/** Rating options for select elements (age-ordered, 0–12). */
 export declare const RATING_OPTIONS: ReadonlyArray<{
     value: number;
     label: string;
@@ -77,7 +94,7 @@ export declare const RATING_OPTIONS: ReadonlyArray<{
 /** Body accepted by {@link AdminUsersApi.createProfile}. */
 export interface CreateProfileInput {
     name: string;
-    /** 0=G … 6=UNRATED */
+    /** Content-rating cap on the 0–12 age scale (0=G … 12=UNRATED). */
     rating: number;
 }
 /** Body accepted by {@link AdminUsersApi.updateProfile}. */
@@ -128,7 +145,7 @@ export interface ProfileStreamLimit {
  *    0/1); the controller casts it server-side.
  *  - `resetPassword()` returns `{ message, new_password }` — the plaintext
  *    password is only available in that response.
- *  - `rating` is an integer 0-6 (see {@link RATING_LABELS}).
+ *  - `rating` is an integer 0-12 (see {@link RATING_LABELS}).
  *  - `POST /profiles/{id}/pin` accepts `{ pin: "1234" }` — 4 or 6 digits.
  *  - Max 5 profiles per user is enforced server-side.
  */

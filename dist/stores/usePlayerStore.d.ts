@@ -72,6 +72,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -99,7 +103,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -111,6 +115,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     } | null, import("../types/media-item").MediaDetail | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -135,6 +140,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -162,7 +171,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -174,6 +183,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     } | null>;
     streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
@@ -200,6 +210,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -227,7 +241,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -239,6 +253,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -263,6 +278,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -290,7 +309,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -302,6 +321,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[]>;
     playing: import("vue").Ref<boolean, boolean>;
     position: import("vue").Ref<number, number>;
@@ -381,6 +401,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -408,7 +432,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -420,6 +444,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     } | null, import("../types/media-item").MediaDetail | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -444,6 +469,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -471,7 +500,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -483,6 +512,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     } | null>;
     streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
@@ -509,6 +539,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -536,7 +570,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -548,6 +582,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -572,6 +607,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -599,7 +638,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -611,6 +650,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[]>;
     playing: import("vue").Ref<boolean, boolean>;
     position: import("vue").Ref<number, number>;
@@ -690,6 +730,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -717,7 +761,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -729,6 +773,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     } | null, import("../types/media-item").MediaDetail | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -753,6 +798,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -780,7 +829,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -792,6 +841,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     } | null>;
     streamUrl: import("vue").Ref<string, string>;
     queue: import("vue").Ref<{
@@ -818,6 +868,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -845,7 +899,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -857,6 +911,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[], import("../types/media-item").MediaDetail[] | {
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -881,6 +936,10 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         backdrop_url_large?: string | null | undefined;
         backdrop_srcset?: string | null | undefined;
         theme_audio_url?: string | null | undefined;
+        trailer_url?: string | null | undefined;
+        trailer_key?: string | null | undefined;
+        trailer_site?: string | null | undefined;
+        logo_url?: string | null | undefined;
         user_data?: {
             favorite: boolean;
             rating: number | null;
@@ -908,7 +967,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         })[] | null | undefined;
         genres: string[];
         year: number | null;
-        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | null;
+        rating: "G" | "PG" | "PG-13" | "R" | "NC-17" | "X" | "UNRATED" | "TV-Y" | "TV-Y7" | "TV-G" | "TV-PG" | "TV-14" | "TV-MA" | null;
         runtime: number | null;
         overview: string | null;
         actors: string[];
@@ -920,6 +979,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         episode_number?: number | null | undefined;
         episode_title?: string | null | undefined;
         air_date?: string | null | undefined;
+        still_url?: string | null | undefined;
     }[]>;
     playing: import("vue").Ref<boolean, boolean>;
     position: import("vue").Ref<number, number>;

@@ -46,7 +46,13 @@ export interface MediaListItem {
     poster_srcset?: PosterSrcsetInput;
     genres: string[];
     year: number | null;
-    rating: 'G' | 'PG' | 'PG-13' | 'R' | 'NC-17' | 'X' | 'UNRATED' | null;
+    /**
+     * Content / parental rating. Movie ratings (MPAA) plus the US TV rating
+     * vocabulary (TV-Y … TV-MA) the server now emits. Distinct from the per-user
+     * `user_data.rating` score — never conflate the two. Optional TV values are
+     * additive; older servers only ever send the movie subset.
+     */
+    rating: 'G' | 'PG' | 'PG-13' | 'R' | 'NC-17' | 'X' | 'UNRATED' | 'TV-Y' | 'TV-Y7' | 'TV-G' | 'TV-PG' | 'TV-14' | 'TV-MA' | null;
     runtime: number | null;
     overview: string | null;
     actors: string[];
@@ -72,6 +78,12 @@ export interface MediaListItem {
      * unmatched items. Shown alongside the runtime/description on episode rows.
      */
     air_date?: string | null;
+    /**
+     * Episode still frame image URL (a representative frame from the episode),
+     * populated for episodes from the matched metadata. Optional; absent on
+     * movies/series and older servers. Distinct from `poster_url`.
+     */
+    still_url?: string | null;
 }
 /**
  * Full detail shape (GET /api/v1/media/{id}). Extends the list shape with
@@ -129,6 +141,31 @@ export interface MediaDetail extends MediaListItem {
      *  plays it muted+looping (autoplay), unmutable by the viewer. Absent → no
      *  control, no audio. */
     theme_audio_url?: string | null;
+    /**
+     * Trailer video URL (detail only). When present the detail hero renders a
+     * "Play Trailer" action. Prefer an in-app embed when {@link trailer_site} is
+     * `YouTube` and {@link trailer_key} is a valid id; otherwise this URL opens
+     * in a new tab. Absent → no trailer control.
+     */
+    trailer_url?: string | null;
+    /**
+     * Provider video key for the trailer (e.g. a YouTube video id). Combined with
+     * {@link trailer_site} to build a safe in-app embed URL. Optional.
+     */
+    trailer_key?: string | null;
+    /**
+     * Trailer host/site (e.g. `YouTube`). Only `YouTube` currently yields an
+     * in-app embed; anything else falls back to opening {@link trailer_url}.
+     */
+    trailer_site?: string | null;
+    /**
+     * Title-logo image URL (detail only) — either a signed local PNG
+     * (`/api/v1/artwork/{id}?size=logo`) or a remote SVG. When present the detail
+     * hero shows this logo in place of the plain text title, falling back to the
+     * text title when absent or on image load error. A plain `<img>` handles both
+     * PNG and SVG. Optional.
+     */
+    logo_url?: string | null;
     /**
      * Per-user state for the authenticated viewer, an ADD-ONLY block the server
      * attaches to the detail (`GET /api/v1/media/{id}`) and favorites

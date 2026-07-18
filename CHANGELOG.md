@@ -1,3 +1,32 @@
+## v0.81.0 (2026-07-18)
+
+### Changes
+- feat(detail): "Play Trailer" button with in-app YouTube embed modal (validated key/URL)
+- feat(detail): title-logo hero overlay (falls back to text title; handles local PNG or remote SVG)
+- feat(admin/profiles): content-rating cap picker expanded with TV ratings (0–12 age scale)
+- feat(admin/libraries): expose Recheck-all-metadata / Prune / Clear-metadata / Clear-artwork / Delete-all ops (destructive ops confirm-gated)
+- feat(admin/libraries): greatly expanded help text documenting each operation and when to use it
+
+
+## v0.80.9 (2026-07-17)
+
+### Changes
+- fix(ui): syncplay API and Select component updates
+
+
+## v0.80.8 (2026-07-14)
+
+### Changes
+- feat(player): Q-key quality shortcut, direct-stream badge, Select.toggleMenu()
+
+
+## v0.80.7 (2026-07-14)
+
+### Changes
+- fix(NetworkHealthIndicator): treat relay disconnect as degraded, not offline
+- fix(admin/logs): inline level badge + proper deduplication of repeated log lines
+
+
 ## v0.80.6 (2026-07-14)
 
 ### Changes
