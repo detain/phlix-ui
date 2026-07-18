@@ -46,7 +46,7 @@ afterEach(() => {
 });
 
 describe('Admin LogsPage', () => {
-  it('lists files, defaults to the first, and tails it', async () => {
+  it('lists files, defaults to the combined "All logs" view, and tails all', async () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
@@ -55,8 +55,14 @@ describe('Admin LogsPage', () => {
     const fileOpts = selects[0].props('options') as { value: string; label: string }[];
     expect(fileOpts[0]).toEqual({ value: ALL_LOGS, label: 'All logs (combined)' });
     expect(fileOpts.map((o) => o.value)).toContain('app.log');
-    expect(get).toHaveBeenCalledWith('/api/v1/admin/logs/tail', { file: 'app.log', lines: '200' });
-    expect(w.find('[data-testid="logs-output"]').text()).toContain('tail of app.log @ 200');
+    // The default selection is the combined view, so it tails every file (not one).
+    expect(selects[0].props('modelValue')).toBe(ALL_LOGS);
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/logs/tail-all', { lines: '200' });
+    expect(get).not.toHaveBeenCalledWith(
+      '/api/v1/admin/logs/tail',
+      expect.objectContaining({ file: 'app.log' }),
+    );
+    expect(w.find('[data-testid="logs-output"]').text()).toContain('merged line');
   });
 
   it('re-tails when the selected file changes', async () => {
@@ -74,7 +80,8 @@ describe('Admin LogsPage', () => {
     await flushPromises();
     w.findAllComponents(Select)[1].vm.$emit('update:modelValue', 1000);
     await flushPromises();
-    expect(get).toHaveBeenCalledWith('/api/v1/admin/logs/tail', { file: 'app.log', lines: '1000' });
+    // Combined view is the default, so the line-count change re-tails every file.
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/logs/tail-all', { lines: '1000' });
   });
 
   it('tails all files merged and shows the truncated note', async () => {
@@ -92,7 +99,8 @@ describe('Admin LogsPage', () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await vi.advanceTimersByTimeAsync(0); // flush mount
-    const tailCalls = () => get.mock.calls.filter((c) => c[0] === '/api/v1/admin/logs/tail').length;
+    // Default selection is the combined view, so polling re-tails via tail-all.
+    const tailCalls = () => get.mock.calls.filter((c) => c[0] === '/api/v1/admin/logs/tail-all').length;
     const before = tailCalls();
     w.findComponent(Switch).vm.$emit('update:modelValue', true);
     await vi.advanceTimersByTimeAsync(5000);
@@ -119,14 +127,15 @@ describe('Admin LogsPage', () => {
 
   it('retries the file-list load from the error state', async () => {
     let listCalls = 0;
-    const get = vi.fn(async (endpoint: string, params?: Record<string, string>) => {
+    const get = vi.fn(async (endpoint: string) => {
       if (endpoint === '/api/v1/admin/logs') {
         listCalls++;
         if (listCalls === 1) throw new Error('disk gone');
         return { files: [{ name: 'app.log', size: 1, modified_at: 't' }] };
       }
-      if (endpoint === '/api/v1/admin/logs/tail') {
-        return { file: params?.file, lines: ['recovered line'], truncated: false };
+      // The default combined view reads content via tail-all after recovery.
+      if (endpoint === '/api/v1/admin/logs/tail-all') {
+        return { files: ['app.log'], lines: ['recovered line'], truncated: false };
       }
       throw new Error(`unexpected ${endpoint}`);
     });
@@ -143,7 +152,8 @@ describe('Admin LogsPage', () => {
   it('shows an EmptyState error when reading the log content fails', async () => {
     const get = vi.fn(async (endpoint: string) => {
       if (endpoint === '/api/v1/admin/logs') return { files: [{ name: 'app.log', size: 1, modified_at: 't' }] };
-      if (endpoint === '/api/v1/admin/logs/tail') throw new Error('read fail');
+      // The default combined view reads content via tail-all.
+      if (endpoint === '/api/v1/admin/logs/tail-all') throw new Error('read fail');
       throw new Error(`unexpected ${endpoint}`);
     });
     const w = mountPage({ get } as unknown as ApiClient);
@@ -242,6 +252,30 @@ describe('Admin LogsPage — renderer overhaul', () => {
     expect(text.trimStart().startsWith('app ')).toBe(true); // date-stripped source column
     expect(w.findAll('.log-badge--debug')).toHaveLength(1);
     expect(w.findAll('.log-badge--channel')).toHaveLength(1);
+    w.unmount();
+  });
+
+  it('strips the filename column from bracket-less continuation lines (combined view)', async () => {
+    // A normal entry followed by a continuation line (a stack frame) that carries
+    // NO `[timestamp]` bracket. The server still prepends the padded filename
+    // column to EVERY line, so that column must be consumed on the continuation
+    // line too — not rendered verbatim as part of the message.
+    const w = await mountAll([
+      'app-2026-07-18.log     [2026-07-18T07:09:44.079957+00:00] http.ERROR: Uncaught RuntimeException',
+      'app-2026-07-18.log     #0 /var/www/app/Http.php(42): dispatch()',
+    ]);
+    const rows = w
+      .find('[data-testid="logs-output"]')
+      .element.querySelectorAll(':scope > span');
+    // The NaN-timestamp continuation never chain-merges with the entry above it.
+    expect(rows).toHaveLength(2);
+    const contText = rows[1].textContent ?? '';
+    // The padded filename column is consumed — no filename token leaks through.
+    expect(contText).not.toContain('app-2026-07-18.log');
+    expect(contText).not.toContain('.log');
+    // …yet the source column is still attributed to its file (date-stripped).
+    expect(contText.trimStart().startsWith('app ')).toBe(true);
+    expect(contText).toContain('#0 /var/www/app/Http.php(42)');
     w.unmount();
   });
 
