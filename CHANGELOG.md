@@ -1,3 +1,9 @@
+## Unreleased
+
+### Changes
+- chore(cleanup): remove the dead `src/api/music.ts` module (zero importers; `fetchArtists`/`fetchAlbumsByArtist`/`fetchTracksByAlbum` were superseded by the `ApiClient` music methods). Never bundled, so no `dist/` rebuild — internal source cleanup only.
+
+
 ## v0.82.0 (2026-07-18)
 
 ### Changes
