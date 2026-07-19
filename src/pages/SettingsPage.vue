@@ -13,14 +13,21 @@ import { ref } from 'vue';
 import Tabs, { type TabItem } from '../components/ui/Tabs.vue';
 import AppearanceSettings from '../components/AppearanceSettings.vue';
 import SettingsForm from '../components/SettingsForm.vue';
+import SecuritySettingsPage from './SecuritySettingsPage.vue';
 import { useMessages } from '../composables/useMessages';
 
 const { t } = useMessages();
 
+// The Security tab hosts SecuritySettingsPage (WebAuthn/passkeys). That page
+// resolves its API base via `useMediaApiBase()`, so it targets the media
+// server's `/api/v1/me/webauthn/*` endpoints directly on the server app and via
+// the relay proxy to the selected server on the hub app (where those endpoints
+// actually live) — so the tab is safe in both consumers of this shared page.
 const TABS: TabItem[] = [
   { value: 'appearance', label: t('settings.tabAppearance'), icon: 'sun' },
   { value: 'playback', label: t('settings.tabPlayback'), icon: 'play' },
   { value: 'server', label: t('settings.tabServer'), icon: 'settings' },
+  { value: 'security', label: t('settings.tabSecurity'), icon: 'key' },
 ];
 
 const tab = ref('appearance');
@@ -42,6 +49,9 @@ const tab = ref('appearance');
       </template>
       <template #server>
         <SettingsForm />
+      </template>
+      <template #security>
+        <SecuritySettingsPage />
       </template>
     </Tabs>
   </div>

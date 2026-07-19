@@ -372,6 +372,7 @@ export const DEFAULT_MESSAGES = {
     tabAppearance: 'Appearance',
     tabPlayback: 'Playback',
     tabServer: 'Server',
+    tabSecurity: 'Security',
     // SettingsForm (Server tab) chrome
     unsaved: 'Unsaved',
     saveGroup: 'Save {name}',
