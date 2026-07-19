@@ -30,12 +30,14 @@ const apiBase = useMediaApiBase();
 
 const currentId = computed(() => String(route.params.id ?? ''));
 
-// Page title reflects the audiobook name once it loads
-usePageTitle(() => audiobook.value?.name);
-
 const audiobook = ref<AudiobookDetail | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+// Page title reflects the audiobook name once it loads. Declared AFTER
+// `audiobook` so the immediate title watcher does not read the ref in its
+// temporal dead zone.
+usePageTitle(() => audiobook.value?.name);
 
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: apiBase.value });

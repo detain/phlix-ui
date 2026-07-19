@@ -30,12 +30,13 @@ const apiBase = useMediaApiBase();
 
 const currentId = computed(() => String(route.params.id ?? ''));
 
-// Page title reflects the book name once it loads
-usePageTitle(() => book.value?.name);
-
 const book = ref<BookDetail | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+// Page title reflects the book name once it loads. Declared AFTER `book` so the
+// immediate title watcher does not read the ref in its temporal dead zone.
+usePageTitle(() => book.value?.name);
 
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: apiBase.value });

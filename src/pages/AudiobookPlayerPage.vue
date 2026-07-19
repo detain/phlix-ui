@@ -29,12 +29,14 @@ const directBase = useMediaDirectBase();
 
 const currentId = computed(() => String(route.params.id ?? ''));
 
-usePageTitle(() => audiobook.value?.name);
-
 const audiobook = ref<AudiobookDetail | null>(null);
 const progress = ref<AudiobookProgress | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+// Declared AFTER `audiobook` so the immediate title watcher does not read the
+// ref in its temporal dead zone.
+usePageTitle(() => audiobook.value?.name);
 
 // Audio element ref
 const audioRef = ref<HTMLAudioElement | null>(null);
