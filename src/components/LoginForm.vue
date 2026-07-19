@@ -13,7 +13,7 @@
  * `useAuthStore.login` -> on success emit `success` + route to the app home.
  */
 import { computed, inject, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import AuthCard from './auth/AuthCard.vue';
 import AuthField from './auth/AuthField.vue';
 import Button from './ui/Button.vue';
@@ -21,6 +21,7 @@ import Icon from './Icon.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
+import { safeRedirect } from '../utils/safeRedirect';
 import type { PhlixAppConfig } from '../app/types';
 
 const emit = defineEmits<{ success: [] }>();
@@ -28,6 +29,7 @@ const emit = defineEmits<{ success: [] }>();
 const auth = useAuthStore();
 const toasts = useToastStore();
 const router = useRouter();
+const route = useRoute();
 const { t } = useMessages();
 
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
@@ -52,7 +54,15 @@ async function handleSubmit(): Promise<void> {
   const ok = await auth.login(identifier.value.trim(), password.value);
   if (ok) {
     emit('success');
-    void router.push(homePath.value);
+    // Honor an internal `?redirect=` hop (e.g. the public invite-accept flow) but
+    // ONLY when it is a safe same-origin `/app/` path — never an absolute or
+    // protocol-relative URL (open-redirect guard). Otherwise land on the app home.
+    const redirect = safeRedirect(route.query.redirect);
+    if (redirect) {
+      void router.replace(redirect);
+    } else {
+      void router.push(homePath.value);
+    }
   } else {
     toasts.error(auth.error ?? t('auth.signInFailed'));
   }

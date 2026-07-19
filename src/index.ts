@@ -275,6 +275,7 @@ export { default as ManageSharesPage } from './pages/ManageSharesPage.vue';
 export { default as SharedWithMePage } from './pages/SharedWithMePage.vue';
 export { default as RequestsPage } from './pages/RequestsPage.vue';
 export { default as InviteLinksPage } from './pages/InviteLinksPage.vue';
+export { default as AcceptInvitePage } from './pages/AcceptInvitePage.vue';
 export { default as SearchPage } from './pages/SearchPage.vue';
 export { default as SecuritySettingsPage } from './pages/SecuritySettingsPage.vue';
 export { default as MusicAlbumPage } from './pages/MusicAlbumPage.vue';
