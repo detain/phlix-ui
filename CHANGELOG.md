@@ -1,6 +1,11 @@
 ## Unreleased
 
 ### Changes
+- feat(invite): new `AcceptInvitePage.vue` — the PUBLIC invite-acceptance surface reached at `/app/invite/:token`. Consumed by the hub (which redirects its public `GET /invite/{token}` link here) to restore the invite-accept flow the retired Smarty `accept-invite.tpl` provided: unauthenticated visitors get Log In / Sign Up buttons that carry a safe `?redirect` hop back to the invite; authenticated visitors get an **Accept Invite** button that calls `POST /api/v1/me/invite-links/{token}/redeem` and, on success, a **View Shared Libraries** link to `/app/shared-with-me`. Route is `meta.public` so the auth guard lets unauthenticated invitees through.
+- feat(auth): new `safeRedirect(value)` util (`src/utils/safeRedirect.ts`) — an open-redirect guard that only honours same-origin `?redirect=` values under the SPA root `/app/` (rejecting absolute URLs, protocol-relative `//host`, and `/\host` backslash tricks). `LoginForm`/`SignupForm` now honour a validated internal `?redirect` so a post-login/signup hop returns the user to where they started (e.g. the invite page).
+- feat(settings): new **Security** tab in `SettingsPage.vue` surfacing WebAuthn/passkey management (register/list/remove passkeys), replacing the standalone Smarty `settings/security` page.
+- fix(reader): fix a crash-on-mount in `BookDetailPage`, `BookReaderPage`, `AudiobookDetailPage`, and `AudiobookPlayerPage` — `usePageTitle()` was called before the reactive title ref was declared, tripping a temporal-dead-zone `ReferenceError` on mount. These pages now mount cleanly (they are the media surfaces the server now registers under `/app`).
+- test(pages): add Vitest specs covering the previously-untested SPA pages now reachable under `/app` — `AcceptInvitePage`, `safeRedirect`, and the Books/Audiobooks/Photo/Search/Music sub-pages plus the Settings Security tab (~15 new specs).
 - chore(cleanup): remove the dead `src/api/music.ts` module (zero importers; `fetchArtists`/`fetchAlbumsByArtist`/`fetchTracksByAlbum` were superseded by the `ApiClient` music methods). Never bundled, so no `dist/` rebuild — internal source cleanup only.
 
 
