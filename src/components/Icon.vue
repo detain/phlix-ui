@@ -28,6 +28,10 @@ import IconRotateCw from '~icons/lucide/rotate-cw';
 import IconVolume from '~icons/lucide/volume-2';
 import IconVolumeLow from '~icons/lucide/volume-1';
 import IconVolumeMute from '~icons/lucide/volume-x';
+import IconShuffle from '~icons/lucide/shuffle';
+import IconRepeat from '~icons/lucide/repeat';
+import IconRepeatOnce from '~icons/lucide/repeat-1';
+import IconListMusic from '~icons/lucide/list-music';
 import IconCaptions from '~icons/lucide/captions';
 import IconCaptionsOff from '~icons/lucide/captions-off';
 import IconPip from '~icons/lucide/picture-in-picture-2';
@@ -68,6 +72,8 @@ import IconMenu from '~icons/lucide/menu';
 import IconMore from '~icons/lucide/more-horizontal';
 import IconEye from '~icons/lucide/eye';
 import IconEyeOff from '~icons/lucide/eye-off';
+import IconKey from '~icons/lucide/key';
+import IconTrash from '~icons/lucide/trash';
 
 // Arrows / chevrons
 import IconArrowLeft from '~icons/lucide/arrow-left';
@@ -99,6 +105,10 @@ const icons = {
   volume: IconVolume,
   'volume-low': IconVolumeLow,
   mute: IconVolumeMute,
+  shuffle: IconShuffle,
+  repeat: IconRepeat,
+  'repeat-1': IconRepeatOnce,
+  'list-music': IconListMusic,
   captions: IconCaptions,
   'captions-off': IconCaptionsOff,
   pip: IconPip,
@@ -137,6 +147,9 @@ const icons = {
   more: IconMore,
   eye: IconEye,
   'eye-off': IconEyeOff,
+  refresh: IconRotateCw,
+  key: IconKey,
+  trash: IconTrash,
   // arrows / chevrons (replaces the legacy arrow emoji)
   'arrow-left': IconArrowLeft,
   'arrow-right': IconArrowRight,
@@ -149,6 +162,7 @@ const icons = {
   // status / theme
   spinner: IconSpinner,
   alert: IconAlert,
+  'alert-circle': IconAlert,
   success: IconSuccess,
   error: IconError,
   sun: IconSun,

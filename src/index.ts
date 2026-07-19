@@ -35,6 +35,30 @@ export type {
 export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './api/errors';
 
 export type { MediaItem } from './types/media-item';
+export type {
+    BookProgress,
+    BookChapter,
+    BookMetadata,
+    BookListItem,
+    BookDetail,
+    BooksResponse,
+    BookResponse,
+    BookReaderResponse,
+    BookProgressResponse,
+    SaveBookProgressInput,
+} from './types/book';
+export type {
+    AudiobookChapter,
+    AudiobookMetadata,
+    AudiobookListItem,
+    AudiobookDetail,
+    AudiobookProgress,
+    AudiobooksResponse,
+    AudiobookResponse,
+    AudiobookReaderResponse,
+    AudiobookProgressResponse,
+    SaveAudiobookProgressInput,
+} from './types/audiobook';
 export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
 export type { ServerSettings, ProviderPriority, GenresMode } from './types/server-settings';
 
@@ -244,8 +268,30 @@ export { default as SettingsForm } from './components/SettingsForm.vue';
 // main bundle (Rollup INEFFECTIVE_DYNAMIC_IMPORT) and defeat the code-split.
 export { default as LibraryScanPage } from './pages/LibraryScanPage.vue';
 export { default as MyServersPage } from './pages/MyServersPage.vue';
+export { default as ServerDetailPage } from './pages/ServerDetailPage.vue';
 export { default as FederationPage } from './pages/FederationPage.vue';
+export { default as FederationSharesPage } from './pages/FederationSharesPage.vue';
 export { default as ManageSharesPage } from './pages/ManageSharesPage.vue';
+export { default as SharedWithMePage } from './pages/SharedWithMePage.vue';
+export { default as RequestsPage } from './pages/RequestsPage.vue';
+export { default as InviteLinksPage } from './pages/InviteLinksPage.vue';
+export { default as SearchPage } from './pages/SearchPage.vue';
+export { default as SecuritySettingsPage } from './pages/SecuritySettingsPage.vue';
+export { default as MusicAlbumPage } from './pages/MusicAlbumPage.vue';
+export { default as MusicArtistsPage } from './pages/MusicArtistsPage.vue';
+export { default as MusicArtistPage } from './pages/MusicArtistPage.vue';
+export { default as MusicTracksPage } from './pages/MusicTracksPage.vue';
+export { default as MusicPlayerPage } from './pages/MusicPlayerPage.vue';
+export { default as BooksPage } from './pages/BooksPage.vue';
+export { default as BookDetailPage } from './pages/BookDetailPage.vue';
+export { default as BookReaderPage } from './pages/BookReaderPage.vue';
+export { default as AudiobooksPage } from './pages/AudiobooksPage.vue';
+export { default as AudiobookDetailPage } from './pages/AudiobookDetailPage.vue';
+export { default as AudiobookPlayerPage } from './pages/AudiobookPlayerPage.vue';
+export { default as PhotoAlbumsPage } from './pages/PhotoAlbumsPage.vue';
+export { default as PhotoAlbumPage } from './pages/PhotoAlbumPage.vue';
+export { default as PhotoViewPage } from './pages/PhotoViewPage.vue';
+export { default as PhotoSlideshowPage } from './pages/PhotoSlideshowPage.vue';
 
 export { useAuthStore } from './stores/useAuthStore';
 

@@ -174,6 +174,13 @@ export const DEFAULT_MESSAGES = {
     closePlayer: 'Close player',
     // Scrubber
     seek: 'Seek',
+    // Music player
+    shuffle: 'Shuffle',
+    repeat: 'Repeat',
+    selectTrack: 'Select a track to play',
+    queue: 'Queue',
+    queueEmpty: 'Queue is empty',
+    removeFromQueue: 'Remove from queue',
     // Volume / speed / quality
     mute: 'Mute',
     unmute: 'Unmute',
@@ -302,6 +309,26 @@ export const DEFAULT_MESSAGES = {
     qualityMedium: 'Medium',
     qualityHigh: 'High',
     qualityLossless: 'Lossless',
+    // Tracks page
+    allTracks: 'All Tracks',
+    searchTracks: 'Search tracks…',
+    playAll: 'Play All',
+    matching: 'matching',
+    noTracksMatch: 'No tracks match your search.',
+    selectTrack: 'Select a track to play',
+    artist: 'Artist',
+    album: 'Album',
+    of: 'of',
+    // Player page
+    shuffle: 'Shuffle',
+    queue: 'Queue',
+    queueEmpty: 'Queue is empty',
+    removeFromQueue: 'Remove from queue',
+    // Artist/album pages
+    albumNotFound: 'Album not found',
+    artistNotFound: 'Artist not found',
+    artistsNotFound: 'No artists found',
+    artistsDescription: 'Browse all artists in your library',
   },
   settings: {
     // Appearance section titles + radiogroup labels

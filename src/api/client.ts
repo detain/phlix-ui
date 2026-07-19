@@ -189,6 +189,7 @@ function normalizeMusicAlbum(raw: unknown): MusicAlbum {
     return {
         id: title,
         title,
+        artist: musicStr(r['artist']),
         albumArtUrl: musicStr(r['album_art_url']),
         year: musicNum(r['year']),
         totalTracks: musicNum(r['track_count']) ?? rawTracks.length,

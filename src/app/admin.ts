@@ -209,6 +209,13 @@ const auditLogsPage: AdminPage = {
   icon: 'eye',
   component: () => import('../pages/AuditLogsPage.vue'),
 };
+const requestsPage: AdminPage = {
+  name: 'admin-requests',
+  path: 'requests',
+  label: 'Request Queue',
+  icon: 'list',
+  component: () => import('../pages/admin/RequestsPage.vue'),
+};
 
 /**
  * Every admin page descriptor, keyed by route name → label. The single source
@@ -240,6 +247,7 @@ const ALL_ADMIN_PAGES: AdminPage[] = [
   settingsPage,
   hubDashboardPage,
   auditLogsPage,
+  requestsPage,
 ];
 
 const ADMIN_LABELS: Readonly<Record<string, string>> = Object.fromEntries(
@@ -280,7 +288,7 @@ export const serverAdminPages: AdminPage[] = [
 ];
 
 /** Hub-only admin pages: a hub-scoped dashboard + the re-homed audit log. */
-export const hubAdminPages: AdminPage[] = [hubDashboardPage, metricsPage, auditLogsPage];
+export const hubAdminPages: AdminPage[] = [hubDashboardPage, metricsPage, auditLogsPage, requestsPage];
 
 /**
  * The server's full page set in its original sidebar order. Used as the default
@@ -313,8 +321,8 @@ const defaultAdminPages: AdminPage[] = [
   settingsPage,
 ];
 
-/** The hub admin set: Hub Dashboard (landing), the common pages, then Audit Logs. */
-const hubAdminSet: AdminPage[] = [hubDashboardPage, metricsPage, ...commonAdminPages, auditLogsPage];
+/** The hub admin set: Hub Dashboard (landing), the common pages, then Audit Logs and Requests. */
+const hubAdminSet: AdminPage[] = [hubDashboardPage, metricsPage, ...commonAdminPages, auditLogsPage, requestsPage];
 
 /**
  * Build the nested admin route record for a consumer's `extraRoutes`.
