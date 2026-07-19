@@ -37,9 +37,9 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     match: (item: import("../types/media-item").MediaDetail) => any;
     play: (item: import("../types/media-item").MediaDetail) => any;
     info: (item: import("../types/media-item").MediaDetail) => any;
+    refresh: (item: import("../types/media-item").MediaDetail) => any;
     retry: () => any;
     watchlist: (item: import("../types/media-item").MediaDetail) => any;
-    refresh: (item: import("../types/media-item").MediaDetail) => any;
     remove: (item: import("../types/media-item").MediaDetail) => any;
     "mark-watched": (item: import("../types/media-item").MediaDetail) => any;
     "choose-poster": (item: import("../types/media-item").MediaDetail) => any;
@@ -47,9 +47,9 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     onMatch?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onPlay?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onInfo?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    onRefresh?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onRetry?: (() => any) | undefined;
     onWatchlist?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
-    onRefresh?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     onRemove?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;

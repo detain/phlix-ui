@@ -8,6 +8,10 @@ declare const icons: {
     readonly volume: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'volume-low': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly mute: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly shuffle: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly repeat: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly 'repeat-1': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly 'list-music': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly captions: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'captions-off': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly pip: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
@@ -44,6 +48,9 @@ declare const icons: {
     readonly more: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly eye: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'eye-off': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly refresh: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly key: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly trash: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'arrow-left': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'arrow-right': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'arrow-up': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
@@ -54,6 +61,7 @@ declare const icons: {
     readonly 'chevron-right': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly spinner: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly alert: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly 'alert-circle': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly success: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly error: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly sun: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;

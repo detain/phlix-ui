@@ -19,6 +19,8 @@ export interface MusicArtist {
 export interface MusicAlbum {
     id: string;
     title: string;
+    /** Album artist name — available when album is fetched by name. */
+    artist?: string | null;
     albumArtUrl: string | null;
     year: number | null;
     totalTracks: number;

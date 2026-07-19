@@ -156,6 +156,12 @@ export declare const DEFAULT_MESSAGES: {
         expand: string;
         closePlayer: string;
         seek: string;
+        shuffle: string;
+        repeat: string;
+        selectTrack: string;
+        queue: string;
+        queueEmpty: string;
+        removeFromQueue: string;
         mute: string;
         unmute: string;
         volume: string;
@@ -271,6 +277,23 @@ export declare const DEFAULT_MESSAGES: {
         qualityMedium: string;
         qualityHigh: string;
         qualityLossless: string;
+        allTracks: string;
+        searchTracks: string;
+        playAll: string;
+        matching: string;
+        noTracksMatch: string;
+        selectTrack: string;
+        artist: string;
+        album: string;
+        of: string;
+        shuffle: string;
+        queue: string;
+        queueEmpty: string;
+        removeFromQueue: string;
+        albumNotFound: string;
+        artistNotFound: string;
+        artistsNotFound: string;
+        artistsDescription: string;
     };
     settings: {
         theme: string;
