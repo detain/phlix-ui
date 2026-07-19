@@ -330,6 +330,7 @@ export declare const DEFAULT_MESSAGES: {
         tabAppearance: string;
         tabPlayback: string;
         tabServer: string;
+        tabSecurity: string;
         unsaved: string;
         saveGroup: string;
         groupSaved: string;

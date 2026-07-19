@@ -2685,6 +2685,7 @@ var gi = {
 		tabAppearance: "Appearance",
 		tabPlayback: "Playback",
 		tabServer: "Server",
+		tabSecurity: "Security",
 		unsaved: "Unsaved",
 		saveGroup: "Save {name}",
 		groupSaved: "{name} settings saved.",

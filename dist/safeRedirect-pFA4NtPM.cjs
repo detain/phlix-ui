@@ -1,0 +1,2 @@
+function e(e){return typeof e!=`string`||e===``||e.startsWith(`//`)||e.startsWith(`/\\`)||!e.startsWith(`/app/`)?null:e}Object.defineProperty(exports,"t",{enumerable:!0,get:function(){return e}});
+//# sourceMappingURL=safeRedirect-pFA4NtPM.cjs.map
