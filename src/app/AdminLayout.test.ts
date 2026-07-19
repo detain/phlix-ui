@@ -120,10 +120,18 @@ describe('AdminLayout — server set', () => {
 });
 
 describe('AdminLayout — hub set', () => {
-  it('renders only the 6 hub admin links, in order', async () => {
+  it('renders only the 7 hub admin links, in order', async () => {
     const { wrapper } = await mountAdmin(buildHubAdminRoutes);
     const labels = wrapper.findAll('.admin__link').map((l) => l.text());
-    expect(labels).toEqual(['Dashboard', 'Server Traffic', 'Users', 'Logs', 'Settings', 'Audit Logs']);
+    expect(labels).toEqual([
+      'Dashboard',
+      'Server Traffic',
+      'Users',
+      'Logs',
+      'Settings',
+      'Audit Logs',
+      'Request Queue',
+    ]);
   });
 
   it('links the hub dashboard + audit logs to their /app/admin/* URLs', async () => {

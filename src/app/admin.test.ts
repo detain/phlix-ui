@@ -43,7 +43,7 @@ const SERVER_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-settings', 'settings'],
 ];
 
-/** name → URL segment for the hub admin set (Hub Dashboard, common, Audit Logs). */
+/** name → URL segment for the hub admin set (Hub Dashboard, common, Audit Logs, Request Queue). */
 const HUB_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-hub-dashboard', 'dashboard'],
   ['admin-metrics', 'metrics'],
@@ -51,6 +51,7 @@ const HUB_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-logs', 'logs'],
   ['admin-settings', 'settings'],
   ['admin-audit-logs', 'audit-logs'],
+  ['admin-requests', 'requests'],
 ];
 
 function childrenOf(routes: RouteRecordRaw[]): RouteRecordRaw[] {
@@ -140,7 +141,7 @@ describe('buildAdminRoutes — resolved URLs + redirect (real router)', () => {
 });
 
 describe('buildHubAdminRoutes — the hub admin set', () => {
-  it('mounts exactly Hub Dashboard, Users, Logs, Settings, Audit Logs', () => {
+  it('mounts exactly Hub Dashboard, Metrics, Users, Logs, Settings, Audit Logs, Request Queue', () => {
     const named = namedChildren(buildHubAdminRoutes());
     expect(named.map((c) => [c.name, c.path])).toEqual(HUB_PAGES.map(([n, s]) => [n, s]));
   });
@@ -186,8 +187,13 @@ describe('page-group registries', () => {
     expect(names).not.toContain('admin-settings');
   });
 
-  it('hubAdminPages = Hub Dashboard + Metrics + Audit Logs', () => {
-    expect(hubAdminPages.map((p) => p.name)).toEqual(['admin-hub-dashboard', 'admin-metrics', 'admin-audit-logs']);
+  it('hubAdminPages = Hub Dashboard + Metrics + Audit Logs + Request Queue', () => {
+    expect(hubAdminPages.map((p) => p.name)).toEqual([
+      'admin-hub-dashboard',
+      'admin-metrics',
+      'admin-audit-logs',
+      'admin-requests',
+    ]);
   });
 
   it('every page descriptor carries a name, segment, label, icon and a lazy loader', () => {
@@ -259,7 +265,12 @@ describe('adminMenu', () => {
 
   it('builds a menu from an arbitrary page set (the hub set)', () => {
     const [group] = adminMenu('/app', hubAdminPages);
-    expect(group.children?.map((c) => c.id)).toEqual(['admin-hub-dashboard', 'admin-metrics', 'admin-audit-logs']);
+    expect(group.children?.map((c) => c.id)).toEqual([
+      'admin-hub-dashboard',
+      'admin-metrics',
+      'admin-audit-logs',
+      'admin-requests',
+    ]);
     expect(group.children?.find((c) => c.id === 'admin-hub-dashboard')?.to).toBe('/app/admin/dashboard');
   });
 });
