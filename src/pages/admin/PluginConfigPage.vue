@@ -39,6 +39,7 @@ import PageHint from '../../components/ui/PageHint.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Switch from '../../components/ui/Switch.vue';
+import HelpText from '../../components/ui/HelpText.vue';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -421,9 +422,11 @@ onMounted(loadPlugins);
                 <span v-if="descriptor.secret" class="admin-plugin-config__secret-badge">Secret</span>
               </label>
 
-              <p v-if="descriptor.description" class="admin-plugin-config__desc">
-                {{ descriptor.description }}
-              </p>
+              <HelpText
+                v-if="descriptor.description"
+                :text="descriptor.description"
+                :links="descriptor.link && descriptor.link_text ? [{ text: descriptor.link_text, url: descriptor.link }] : undefined"
+              />
 
               <!-- Boolean (checkbox) -->
               <template v-if="descriptor.type === 'bool' || descriptor.type === 'boolean'">
