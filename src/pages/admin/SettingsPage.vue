@@ -235,10 +235,17 @@ function setGenresMode(mode: string): void {
   dirty[GENRES_MODE_KEY] = mode !== String(settings.value[GENRES_MODE_KEY] ?? 'first');
 }
 
-/** Placeholder for restart functionality (Phase 8). */
-function restartServer(): void {
-  // TODO(Phase 8): Implement actual restart HTTP call
-  toasts.info('Restart triggered (placeholder).');
+async function restartServer(): Promise<void> {
+  try {
+    await api.restartServer();
+    toasts.success('Restart signal sent — server is reloading.');
+    // Wait for the server to restart, then re-fetch settings and clear the banner
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    await loadSettings();
+    clearDirty();
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to restart server.'));
+  }
 }
 
 async function handleSubmit(): Promise<void> {

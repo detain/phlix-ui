@@ -101,6 +101,18 @@ export class AdminSettingsApi {
       overridden: Array.isArray(data?.overridden) ? data.overridden : [],
     };
   }
+
+  /**
+   * `POST /api/v1/admin/restart` → sends a restart signal to the server.
+   * Returns `{ message }` on success.
+   */
+  async restartServer(): Promise<{ message: string }> {
+    const { data } = await this.client.post<{ data: { message: string } }>(
+      '/api/v1/admin/restart',
+      {},
+    );
+    return { message: data?.message ?? 'Restart signal sent' };
+  }
 }
 
 /** Narrow an `unknown` to a plain `Record<string, unknown>`. */
