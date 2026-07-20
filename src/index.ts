@@ -220,8 +220,8 @@ export type {
   CreateLibraryResult,
   ScanQueuedResult,
 } from './api/admin/libraries';
-export { AdminSettingsApi } from './api/admin/settings';
-export type { SettingsResponse, SettingsSaveResponse } from './api/admin/settings';
+export { AdminSettingsApi, SETTINGS_SECRET_MASK } from './api/admin/settings';
+export type { SecretStatus, SettingsResponse, SettingsSaveResponse } from './api/admin/settings';
 export { AdminMetadataSourcesApi } from './api/admin/metadata-sources';
 export {
   AdminPluginsApi,

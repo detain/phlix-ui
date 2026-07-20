@@ -30,7 +30,12 @@ import { ref, computed, reactive, onMounted, inject, type ComputedRef } from 'vu
 import { ApiClient, ApiError } from '../../api/client';
 import { errMessage } from '../../api/errors';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
-import { AdminSettingsApi, type SettingMeta } from '../../api/admin/settings';
+import {
+  AdminSettingsApi,
+  SETTINGS_SECRET_MASK,
+  type SecretStatus,
+  type SettingMeta,
+} from '../../api/admin/settings';
 import { useToastStore } from '../../stores/useToastStore';
 import { useSettingsPrefsStore } from '../../stores/useSettingsPrefs';
 import Badge from '../../components/ui/Badge.vue';
@@ -76,6 +81,14 @@ const RESTART_PENDING_PREFIX = 'phlix-restart-pending';
 const settings = ref<Record<string, unknown>>({});
 const overridden = ref<string[]>([]);
 const types = ref<Record<string, string>>({});
+
+/**
+ * Per-secret `{ set, length }` from the server. The masked `settings` map cannot
+ * distinguish a configured secret from an empty one — both arrive as
+ * {@link SETTINGS_SECRET_MASK} — so this is the ONLY source for the
+ * configured/not-configured cue. An older server omits it, leaving `{}`.
+ */
+const secretStatus = ref<Record<string, SecretStatus>>({});
 
 // ── Schema-driven meta ─────────────────────────────────────────────────────────
 /** Full metadata block from server — drives all labels, help, options, constraints. */
@@ -262,8 +275,49 @@ function isJsonField(key: string): boolean {
   return fieldType(key) === 'json';
 }
 
-/** Serialise a loaded value into its editable string form. */
+/** True when the schema flags this key `secret: true` (value is masked in transit). */
+function isSecret(key: string): boolean {
+  return effectiveMeta.value[key]?.secret === true;
+}
+
+/**
+ * Whether a secret is configured on the server, or `null` when the server did
+ * not report a status for it (too old to emit `secretStatus`) — which must read
+ * as "unknown", never as "not configured".
+ */
+function secretState(key: string): SecretStatus | null {
+  return secretStatus.value[key] ?? null;
+}
+
+function secretIsSet(key: string): boolean {
+  return secretState(key)?.set === true;
+}
+
+/** Character count of a configured secret, or 0 when unset/unknown. */
+function secretLength(key: string): number {
+  const state = secretState(key);
+  return state?.set === true ? state.length : 0;
+}
+
+/** `id` of the status line describing a secret field, for `aria-describedby`. */
+function secretStatusId(key: string): string {
+  return `secret-status-${key}`;
+}
+
+/**
+ * Serialise a loaded value into its editable string form.
+ *
+ * Secret fields deliberately start EMPTY rather than pre-filled: the server only
+ * ever sends {@link SETTINGS_SECRET_MASK} for them, and rendering that sentinel
+ * in the input made a configured secret indistinguishable from an unset one
+ * while giving the Show button nothing to reveal but `***`. An empty box plus
+ * the adjacent Configured/Not set cue tells the truth instead. It also means an
+ * untouched secret is never dirty (its baseline IS the empty string), so it is
+ * excluded from the PUT entirely and the stored value survives — and if a server
+ * ever regressed and sent a real secret, this still keeps it out of the DOM.
+ */
 function toFormString(key: string, val: unknown): string {
+  if (isSecret(key)) return '';
   if (isJsonField(key) || (val !== null && typeof val === 'object')) {
     try {
       return JSON.stringify(val ?? null, null, 2);
@@ -284,12 +338,25 @@ function syncFormValues(source: Record<string, unknown>): void {
 
 function clearDirty(): void {
   for (const key of Object.keys(dirty)) delete dirty[key];
+  // Nothing is being edited any more, so no secret is in the clear: collapse
+  // every reveal toggle rather than leave one armed for the next keystroke.
+  for (const key of Object.keys(showPassword)) delete showPassword[key];
 }
 
-/** Apply a freshly fetched/saved payload to the page state. */
-function applySettings(data: { settings: Record<string, unknown>; overridden: string[] }): void {
+/**
+ * Apply a freshly fetched/saved payload to the page state.
+ *
+ * `secretStatus` is only present on the GET; the PUT response omits it, so it is
+ * left untouched on a save and reconciled separately from what was persisted.
+ */
+function applySettings(data: {
+  settings: Record<string, unknown>;
+  overridden: string[];
+  secretStatus?: Record<string, SecretStatus>;
+}): void {
   settings.value = data.settings;
   overridden.value = data.overridden;
+  if (data.secretStatus) secretStatus.value = data.secretStatus;
   syncFormValues(data.settings);
   clearDirty();
 }
@@ -425,8 +492,26 @@ const blockingJsonKeys = computed<string[]>(() =>
   Object.keys(jsonErrors).filter(k => dirty[k] && !isDisabled(k)),
 );
 
+/**
+ * Reveal toggle for a secret field. Only offered once the field is dirty (see
+ * `canRevealSecret`), so it can only ever reveal the value the ADMIN is
+ * currently typing — never a stored secret, which the browser does not have.
+ */
 function toggleShowPassword(key: string): void {
   showPassword[key] = !showPassword[key];
+}
+
+/**
+ * Whether to offer a Show toggle for a secret field.
+ *
+ * Only when the admin has typed something. An untouched secret box is empty and
+ * its stored value is unknown to the browser, so a Show button there would
+ * reveal nothing at best, and — back when the box was pre-filled with the mask —
+ * actively implied `***` was the secret. Gating on dirty keeps the affordance
+ * exactly where it is useful: checking a long API key you just pasted.
+ */
+function canRevealSecret(key: string): boolean {
+  return dirty[key] === true && !isDisabled(key);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -519,6 +604,18 @@ async function handleSubmit(): Promise<void> {
     const result = await api.save(toSave);
     toasts.success('Settings saved.');
     applySettings(result);
+
+    // The PUT response carries no `secretStatus`, so reconcile it from what we
+    // just persisted — otherwise a freshly saved secret would keep reading
+    // "Not set" until the next full load.
+    for (const [key, value] of Object.entries(toSave)) {
+      if (!isSecret(key)) continue;
+      const text = String(value ?? '');
+      secretStatus.value = {
+        ...secretStatus.value,
+        [key]: { set: text !== '', length: text.length },
+      };
+    }
 
     // Restart semantics: the banner is driven by what was SUCCESSFULLY SAVED,
     // never by the dirty set — so it appears exactly when a restart becomes
@@ -740,7 +837,14 @@ onMounted(() => {
               </span>
             </template>
 
-            <!-- secret string → text/password input with show toggle -->
+            <!--
+              secret string → always-empty password box + a configured/not-set
+              cue. The stored value never reaches the browser (the server sends
+              only the mask sentinel), so the box starts blank and stays out of
+              the PUT unless the admin types a replacement; the Show toggle
+              appears only once they have, since it can then reveal their OWN
+              input rather than a meaningless `***`.
+            -->
             <template v-else-if="effectiveMeta[key]?.secret">
               <label class="admin-settings__label" :for="`field-${key}`">
                 {{ getLabel(key) }}
@@ -754,17 +858,42 @@ onMounted(() => {
                   :title="getLabel(key)"
                 />
               </label>
+              <p :id="secretStatusId(key)" class="admin-settings__secret-status">
+                <template v-if="secretState(key) === null">
+                  <span class="admin-settings__secret-hint">
+                    This server did not report whether a value is stored. Type a new one to
+                    replace whatever is there; leave it blank to keep it.
+                  </span>
+                </template>
+                <template v-else-if="secretIsSet(key)">
+                  <Badge tone="accent" class="admin-settings__secret-badge">Configured</Badge>
+                  <span class="admin-settings__secret-hint">
+                    A value is stored ({{ secretLength(key) }}
+                    {{ secretLength(key) === 1 ? 'character' : 'characters' }}). It is never sent
+                    to your browser. Leave this blank to keep it, or type a new one to replace it.
+                  </span>
+                </template>
+                <template v-else>
+                  <Badge tone="neutral" class="admin-settings__secret-badge">Not set</Badge>
+                  <span class="admin-settings__secret-hint">
+                    No value is stored yet.
+                  </span>
+                </template>
+              </p>
               <div class="admin-settings__row">
                 <input
                   :id="`field-${key}`"
                   class="admin-settings__input"
                   :type="showPassword[key] ? 'text' : 'password'"
                   autocomplete="off"
+                  :aria-describedby="secretStatusId(key)"
+                  :placeholder="secretIsSet(key) ? 'Leave blank to keep the stored value' : `Enter ${getLabel(key)}`"
                   :value="formValues[key]"
                   :disabled="isDisabled(key)"
                   @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
                 />
                 <Button
+                  v-if="canRevealSecret(key)"
                   variant="ghost"
                   size="sm"
                   :left-icon="showPassword[key] ? 'eye-off' : 'eye'"
@@ -945,6 +1074,23 @@ onMounted(() => {
 .admin-settings__error {
   font-size: var(--text-xs);
   color: var(--error);
+}
+/* Secret field: configured / not-set cue above the (always empty) input */
+.admin-settings__secret-status {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  max-width: 40rem;
+}
+.admin-settings__secret-badge {
+  flex-shrink: 0;
+}
+.admin-settings__secret-hint {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  line-height: var(--leading-normal, 1.5);
 }
 .admin-settings__help {
   font-size: var(--text-xs);

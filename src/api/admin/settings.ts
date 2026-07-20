@@ -36,20 +36,51 @@ export interface SettingMeta {
 }
 
 /**
+ * Sentinel the server substitutes for every `secret: true` value before it
+ * leaves the process — the server-side constant is `SettingsMasker::MASK`.
+ *
+ * A secret's real value NEVER reaches the browser, so this is what
+ * `settings[<secretKey>]` contains for a configured secret AND for an empty
+ * one; {@link SettingsResponse.secretStatus} is the only way to tell them
+ * apart. Re-submitting this exact string on a PUT is the server's "unchanged"
+ * signal and is skipped rather than persisted.
+ *
+ * Identical by construction to {@link PLUGIN_SECRET_MASK} — both mirror the one
+ * server constant. `settings.masker-parity.test.ts` asserts they stay in step.
+ */
+export const SETTINGS_SECRET_MASK = '***';
+
+/**
+ * Per-secret "is it actually set?" summary emitted alongside the masked
+ * `settings` map, mirroring the server's `secretStatus()`.
+ *
+ * Carries no secret material: only whether a non-empty value is stored and how
+ * many characters it has, so the UI can distinguish a configured secret from an
+ * unconfigured one without ever receiving the value.
+ */
+export interface SecretStatus {
+  set: boolean;
+  length: number;
+}
+
+/**
  * Shape of the `GET /api/v1/admin/settings` response `data` envelope.
  *
- * `settings` is a flat map of dotted setting key → current value (mixed types).
- * `overridden` lists the keys whose value differs from the env/config default
- * (rendered with a "custom" badge). `types` maps each key to its schema type
- * (`bool` | `int` | `float` | `string`) so the UI knows how to render + coerce.
- * `meta` maps each key to its full metadata for rendering help, labels, and
- * validation hints.
+ * `settings` is a flat map of dotted setting key → current value (mixed types),
+ * with every `secret: true` key's value replaced by
+ * {@link SETTINGS_SECRET_MASK}. `overridden` lists the keys whose value differs
+ * from the env/config default (rendered with a "custom" badge). `types` maps
+ * each key to its schema type (`bool` | `int` | `float` | `string`) so the UI
+ * knows how to render + coerce. `meta` maps each key to its full metadata for
+ * rendering help, labels, and validation hints. `secretStatus` is keyed by
+ * secret key only and says whether each one is configured.
  */
 export interface SettingsResponse {
   settings: Record<string, unknown>;
   overridden: string[];
   types: Record<string, string>;
   meta: Record<string, SettingMeta>;
+  secretStatus: Record<string, SecretStatus>;
 }
 
 /**
@@ -78,7 +109,11 @@ export class AdminSettingsApi {
   constructor(private readonly client: ApiClient) {}
 
   /**
-   * `GET /api/v1/admin/settings` → unwraps `{ data: { settings, overridden, types, meta } }`.
+   * `GET /api/v1/admin/settings` → unwraps
+   * `{ data: { settings, overridden, types, meta, secretStatus } }`.
+   *
+   * A server too old to emit `secretStatus` yields `{}`, which the UI reads as
+   * "unknown" rather than "not configured".
    */
   async get(): Promise<SettingsResponse> {
     const { data } = await this.client.get<{ data: Partial<SettingsResponse> }>(
@@ -89,6 +124,7 @@ export class AdminSettingsApi {
       overridden: Array.isArray(data?.overridden) ? data.overridden : [],
       types: isRecord(data?.types) ? (data.types as Record<string, string>) : {},
       meta: isRecord(data?.meta) ? (data.meta as Record<string, SettingMeta>) : {},
+      secretStatus: normaliseSecretStatus(data?.secretStatus),
     };
   }
 
@@ -125,4 +161,25 @@ export class AdminSettingsApi {
 /** Narrow an `unknown` to a plain `Record<string, unknown>`. */
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+/**
+ * Coerce the raw `secretStatus` payload into a well-typed map, dropping any
+ * entry that is not a `{ set, length }` record.
+ *
+ * `set` is taken strictly (only a real `true` counts as configured) so a
+ * malformed payload degrades to "not configured" rather than claiming a secret
+ * exists when it may not; `length` falls back to 0.
+ */
+function normaliseSecretStatus(raw: unknown): Record<string, SecretStatus> {
+  if (!isRecord(raw)) return {};
+  const out: Record<string, SecretStatus> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!isRecord(value)) continue;
+    out[key] = {
+      set: value.set === true,
+      length: typeof value.length === 'number' && Number.isFinite(value.length) ? value.length : 0,
+    };
+  }
+  return out;
 }

@@ -21,9 +21,9 @@ import type { SettingMeta } from '../../api/admin/settings';
 
 /**
  * Fixtures mirror the REAL `GET /api/v1/admin/settings` contract as of
- * `phlix-shared` v0.24.0 (40 keys / 13 groups): `settings` + `overridden` +
- * `types` + a per-key `meta` block whose 13 fields are exactly what
- * `AdminSettingsController::loadSchemaMeta()` emits — `label`, `helpText`,
+ * `phlix-shared` v0.25.0 (43 keys / 14 groups): `settings` + `overridden` +
+ * `types` + `secretStatus` + a per-key `meta` block whose 13 fields are exactly
+ * what `AdminSettingsController::loadSchemaMeta()` emits — `label`, `helpText`,
  * `helpLinks` ([] when absent), `tier` ('standard' when absent), `group`,
  * `enum`, `enumLabels`, `optionHelp`, `minimum`, `maximum`, `default`, `secret`,
  * `restart` (the last two always booleans, the rest null when absent).
@@ -34,6 +34,18 @@ import type { SettingMeta } from '../../api/admin/settings';
  * members including the empty-string auto-detect sentinel, `optionHelp`, and
  * numeric bounds. Tiers, bounds and restart flags are copied verbatim from the
  * shared schema rather than invented.
+ *
+ * All FIVE `secret: true` keys in the schema are represented — `tmdb.api_key`
+ * plus the `scrobblers` group's `lastfm.api_key`, `lastfm.shared_secret`,
+ * `trakt.client_id` and `trakt.client_secret` (`trakt.client_id` is secret
+ * because it is sent as the `trakt-api-key` header, mirroring `lastfm.api_key`)
+ * — alongside the plain-public `trakt.redirect_uri`, so the meta-driven secret
+ * path is exercised against the real quintet rather than a single key.
+ *
+ * Crucially, every secret's value in {@link SETTINGS} is the MASK, because that
+ * is all the server ever sends: `maskSecrets()` substitutes
+ * `SettingsMasker::MASK` before the response leaves the process, and
+ * {@link SECRET_STATUS} is the only carrier of "is it actually configured".
  */
 function meta(over: Partial<SettingMeta> & Pick<SettingMeta, 'label' | 'group'>): SettingMeta {
   return {
@@ -153,7 +165,43 @@ const META: Record<string, SettingMeta> = {
     group: 'port-forward',
     default: true,
   }),
+  // ── The scrobblers group: 4 of the 5 secrets + one plain public URL ────────
+  'lastfm.api_key': meta({
+    label: 'Last.fm API key',
+    group: 'scrobblers',
+    secret: true,
+    default: '',
+  }),
+  'lastfm.shared_secret': meta({
+    label: 'Last.fm shared secret',
+    group: 'scrobblers',
+    secret: true,
+    default: '',
+  }),
+  'trakt.client_id': meta({
+    label: 'Trakt client ID',
+    group: 'scrobblers',
+    // Secret despite the "id" name: Phlix sends it as the `trakt-api-key`
+    // header, exactly like `lastfm.api_key`.
+    secret: true,
+    default: '',
+  }),
+  'trakt.client_secret': meta({
+    label: 'Trakt client secret',
+    group: 'scrobblers',
+    secret: true,
+    default: '',
+  }),
+  'trakt.redirect_uri': meta({
+    label: 'Trakt redirect URI',
+    group: 'scrobblers',
+    // A public URL, NOT a credential — must render as a plain text input.
+    default: 'https://your-server.com/api/v1/oauth/trakt/callback',
+  }),
 };
+
+/** The exact sentinel `maskSecrets()` substitutes for every secret value. */
+const MASK = '***';
 
 /** The server's internal type vocabulary: schema array/object both map to `json`. */
 const TYPES: Record<string, string> = {
@@ -170,6 +218,11 @@ const TYPES: Record<string, string> = {
   'subtitles.default_language': 'string',
   'process.library-scan.enabled': 'bool',
   'port-forward.port_forwarding.upnp_enabled': 'bool',
+  'lastfm.api_key': 'string',
+  'lastfm.shared_secret': 'string',
+  'trakt.client_id': 'string',
+  'trakt.client_secret': 'string',
+  'trakt.redirect_uri': 'string',
 };
 
 const SETTINGS: Record<string, unknown> = {
@@ -177,7 +230,8 @@ const SETTINGS: Record<string, unknown> = {
   'hwaccel.enabled': true,
   'hwaccel.probe_timeout': 30,
   'transcoding.preferred_accelerator': '',
-  'tmdb.api_key': 'super-secret-key',
+  // Every secret arrives as the mask — never the real value.
+  'tmdb.api_key': MASK,
   'metadata.provider_priority': { movie: ['tmdb', 'imdb'], series: ['tmdb'] },
   'metadata.genres_mode': 'first',
   'matching.noise_suffixes': ['directors cut', 'remastered'],
@@ -186,6 +240,25 @@ const SETTINGS: Record<string, unknown> = {
   'subtitles.default_language': 'eng',
   'process.library-scan.enabled': true,
   'port-forward.port_forwarding.upnp_enabled': true,
+  'lastfm.api_key': MASK,
+  'lastfm.shared_secret': MASK,
+  'trakt.client_id': MASK,
+  'trakt.client_secret': MASK,
+  'trakt.redirect_uri': 'https://media.example.com/api/v1/oauth/trakt/callback',
+};
+
+/**
+ * `secretStatus` as the server emits it: one entry per `secret: true` key, and
+ * ONLY those keys. Mixed set/unset so the two indicator states are both live in
+ * the default fixture — `tmdb.api_key` and `trakt.client_id` are configured,
+ * the rest are not.
+ */
+const SECRET_STATUS: Record<string, { set: boolean; length: number }> = {
+  'tmdb.api_key': { set: true, length: 32 },
+  'lastfm.api_key': { set: false, length: 0 },
+  'lastfm.shared_secret': { set: false, length: 0 },
+  'trakt.client_id': { set: true, length: 64 },
+  'trakt.client_secret': { set: false, length: 0 },
 };
 
 /** Every group present in META, sorted + humanised — the expected tab captions. */
@@ -196,6 +269,7 @@ const TAB_LABELS = [
   'Metadata',
   'Newsletter',
   'Port Forward',
+  'Scrobblers',
   'Subsystem',
   'Subtitles',
   'Transcoding',
@@ -210,6 +284,10 @@ function makeClient(
     omitMeta?: boolean;
     /** Replace the whole GET implementation. */
     getImpl?: ReturnType<typeof vi.fn>;
+    /** Override the `settings` map (e.g. to simulate an UNMASKED server). */
+    settings?: Record<string, unknown>;
+    /** Override `secretStatus`; pass `null` to omit it entirely (older server). */
+    secretStatus?: Record<string, { set: boolean; length: number }> | null;
   } = {},
 ) {
   const get =
@@ -218,10 +296,13 @@ function makeClient(
       if (endpoint === '/api/v1/admin/settings') {
         return {
           data: {
-            settings: { ...SETTINGS },
+            settings: over.settings ?? { ...SETTINGS },
             overridden: over.overridden ?? ['tmdb.api_key'],
             types: { ...TYPES },
             ...(over.omitMeta ? {} : { meta: { ...META } }),
+            ...(over.secretStatus === null
+              ? {}
+              : { secretStatus: over.secretStatus ?? { ...SECRET_STATUS } }),
           },
         };
       }
@@ -547,23 +628,279 @@ describe('Admin SettingsPage — string + select + secret edit + save', () => {
     w.unmount();
   });
 
-  it('renders secret fields masked and toggles visibility', async () => {
+  it('renders a secret field as a password input', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    expect(w.find('#field-tmdb\\.api_key').attributes('type')).toBe('password');
+    w.unmount();
+  });
+
+  it('saves a secret the admin actually typed', async () => {
     const { client, put } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     await selectTab(w, 'Metadata');
-    const input = w.find<HTMLInputElement>('#field-tmdb\\.api_key');
-    expect(input.attributes('type')).toBe('password');
-    const toggle = w.findAllComponents(Button).find((b) => b.text().trim() === 'Show')!;
-    await toggle.trigger('click');
-    await flushPromises();
-    expect(w.find<HTMLInputElement>('#field-tmdb\\.api_key').attributes('type')).toBe('text');
     await w.find<HTMLInputElement>('#field-tmdb\\.api_key').setValue('new-key');
     await saveBtn(w).trigger('click');
     await flushPromises();
     expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
       settings: { 'tmdb.api_key': 'new-key' },
     });
+    w.unmount();
+  });
+});
+
+/**
+ * Secret handling — asserted by CONSEQUENCE, not by flag.
+ *
+ * The server masks every `secret: true` value (`maskSecrets()`), publishes a
+ * separate `secretStatus` map, and skips a PUT value equal to the mask
+ * sentinel. These tests pin the three things that actually matter to an admin:
+ * no secret material ever reaches the DOM, an untouched secret cannot be
+ * clobbered by a save, and the page tells the truth about whether a secret is
+ * configured.
+ */
+describe('Admin SettingsPage — masked secrets + secretStatus', () => {
+  /** The rendered field block for a secret key, including its status line. */
+  function secretField(w: VueWrapper, key: string) {
+    const input = w.find(`#field-${key.replace(/\./g, '\\.')}`);
+    if (!input.exists()) throw new Error(`no field rendered for "${key}"`);
+    const block = input.element.closest('.admin-settings__field');
+    if (!block) throw new Error(`field "${key}" has no enclosing field block`);
+    return block as HTMLElement;
+  }
+
+  it('never renders the mask sentinel into a secret input', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    // The server sent '***' for this key; the box must still start empty, or
+    // the admin cannot tell a stored secret from the literal string '***'.
+    expect(w.find<HTMLInputElement>('#field-tmdb\\.api_key').element.value).toBe('');
+    w.unmount();
+  });
+
+  it('never renders a plaintext secret, even if the server fails to mask it', async () => {
+    // Defence in depth: a server regression that leaked the real value must not
+    // put it in the DOM. The UI drops secret values unconditionally.
+    const leaked = 'super-secret-key-do-not-leak';
+    const { client } = makeClient({
+      settings: { ...SETTINGS, 'tmdb.api_key': leaked, 'trakt.client_secret': leaked },
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    for (const tab of ['Metadata', 'Scrobblers']) {
+      await selectTab(w, tab);
+      expect(w.html()).not.toContain(leaked);
+    }
+    await selectTab(w, 'Metadata');
+    expect(w.find<HTMLInputElement>('#field-tmdb\\.api_key').element.value).toBe('');
+    w.unmount();
+  });
+
+  it('shows a Configured cue with the stored length when secretStatus.set is true', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    // SECRET_STATUS marks tmdb.api_key set, length 32.
+    const text = secretField(w, 'tmdb.api_key').textContent ?? '';
+    expect(text).toContain('Configured');
+    expect(text).toContain('32 characters');
+    expect(text).not.toContain('Not set');
+    w.unmount();
+  });
+
+  it('shows a Not set cue when secretStatus.set is false', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    // Same tab, same code path, opposite status: trakt.client_id is set,
+    // trakt.client_secret is not — the cue must follow secretStatus, not meta.
+    const configured = secretField(w, 'trakt.client_id').textContent ?? '';
+    const unset = secretField(w, 'trakt.client_secret').textContent ?? '';
+    expect(configured).toContain('Configured');
+    expect(configured).toContain('64 characters');
+    expect(unset).toContain('Not set');
+    expect(unset).not.toContain('Configured');
+    w.unmount();
+  });
+
+  it('flips the cue when secretStatus flips, with identical meta', async () => {
+    // Proves the indicator is driven by secretStatus and nothing else.
+    const { client } = makeClient({
+      secretStatus: { ...SECRET_STATUS, 'tmdb.api_key': { set: false, length: 0 } },
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    const text = secretField(w, 'tmdb.api_key').textContent ?? '';
+    expect(text).toContain('Not set');
+    expect(text).not.toContain('Configured');
+    w.unmount();
+  });
+
+  it('does not claim "Not set" when the server sent no secretStatus at all', async () => {
+    const { client } = makeClient({ secretStatus: null });
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    const text = secretField(w, 'tmdb.api_key').textContent ?? '';
+    expect(text).not.toContain('Not set');
+    expect(text).not.toContain('Configured');
+    expect(text).toContain('did not report');
+    w.unmount();
+  });
+
+  it('excludes an UNTOUCHED secret from the PUT payload entirely', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    // Change only the public sibling; every secret on this tab stays untouched.
+    await w.find<HTMLInputElement>('#field-trakt\\.redirect_uri').setValue('https://x.test/cb');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+
+    const body = put.mock.calls[0][1] as { settings: Record<string, unknown> };
+    expect(body.settings).toEqual({ 'trakt.redirect_uri': 'https://x.test/cb' });
+    // The consequence: no secret key is present under ANY value — not the mask,
+    // not an empty string — so the server cannot overwrite a stored credential.
+    for (const key of Object.keys(SECRET_STATUS)) {
+      expect(body.settings).not.toHaveProperty(key);
+    }
+    w.unmount();
+  });
+
+  it('leaves a secret out of the payload after typing and then clearing it', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    const input = w.find<HTMLInputElement>('#field-trakt\\.client_secret');
+    await input.setValue('typed-then-removed');
+    await input.setValue('');
+    await w.find<HTMLInputElement>('#field-trakt\\.redirect_uri').setValue('https://x.test/cb');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+
+    const body = put.mock.calls[0][1] as { settings: Record<string, unknown> };
+    expect(body.settings).not.toHaveProperty('trakt.client_secret');
+    w.unmount();
+  });
+
+  it('includes a MODIFIED secret in the PUT payload as the typed plaintext', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    await w.find<HTMLInputElement>('#field-trakt\\.client_secret').setValue('brand-new-secret');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+
+    const body = put.mock.calls[0][1] as { settings: Record<string, unknown> };
+    expect(body.settings).toEqual({ 'trakt.client_secret': 'brand-new-secret' });
+    // Never the sentinel — that would mean "unchanged" and silently no-op.
+    expect(body.settings['trakt.client_secret']).not.toBe(MASK);
+    w.unmount();
+  });
+
+  it('does not enable Save merely by rendering secret fields', async () => {
+    // Guards the regression where pre-filling the model marks secrets dirty on
+    // mount, which would push all five into every save.
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    expect(saveBtn(w).props('disabled')).toBe(true);
+    w.unmount();
+  });
+
+  it('offers no Show toggle until the admin types a new value', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    const showButtons = () => w.findAllComponents(Button).filter((b) => b.text().trim() === 'Show');
+    // Revealing a value the browser does not have is pointless and misleading.
+    expect(showButtons()).toHaveLength(0);
+
+    await w.find<HTMLInputElement>('#field-tmdb\\.api_key').setValue('typed-key');
+    await flushPromises();
+    expect(showButtons()).toHaveLength(1);
+    w.unmount();
+  });
+
+  it('reveals what the admin typed when Show is used', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    await w.find<HTMLInputElement>('#field-tmdb\\.api_key').setValue('typed-key');
+    await flushPromises();
+    await w.findAllComponents(Button).find((b) => b.text().trim() === 'Show')!.trigger('click');
+    await flushPromises();
+
+    const input = w.find<HTMLInputElement>('#field-tmdb\\.api_key');
+    expect(input.attributes('type')).toBe('text');
+    expect(input.element.value).toBe('typed-key');
+    w.unmount();
+  });
+
+  it('re-hides and re-empties a secret after a successful save', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    await w.find<HTMLInputElement>('#field-tmdb\\.api_key').setValue('typed-key');
+    await flushPromises();
+    await w.findAllComponents(Button).find((b) => b.text().trim() === 'Show')!.trigger('click');
+    await flushPromises();
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+
+    const input = w.find<HTMLInputElement>('#field-tmdb\\.api_key');
+    // The typed secret must not linger in the DOM in the clear after saving.
+    expect(input.attributes('type')).toBe('password');
+    expect(input.element.value).toBe('');
+    expect(w.html()).not.toContain('typed-key');
+    w.unmount();
+  });
+
+  it('updates the cue to Configured after saving a secret that was Not set', async () => {
+    // The PUT response carries no secretStatus, so the page must reconcile it
+    // from what it persisted rather than keep showing a stale "Not set".
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    expect(secretField(w, 'trakt.client_secret').textContent ?? '').toContain('Not set');
+
+    await w.find<HTMLInputElement>('#field-trakt\\.client_secret').setValue('abcdefgh');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+
+    const text = secretField(w, 'trakt.client_secret').textContent ?? '';
+    expect(text).toContain('Configured');
+    expect(text).toContain('8 characters');
+    w.unmount();
+  });
+
+  it('renders the public trakt.redirect_uri as a plain text input, not a secret', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    const input = w.find<HTMLInputElement>('#field-trakt\\.redirect_uri');
+    expect(input.attributes('type')).toBe('text');
+    // A non-secret keeps its value — only secrets are blanked.
+    expect(input.element.value).toBe('https://media.example.com/api/v1/oauth/trakt/callback');
+    expect(secretField(w, 'trakt.redirect_uri').textContent ?? '').not.toContain('Configured');
     w.unmount();
   });
 });

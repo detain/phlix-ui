@@ -90,7 +90,7 @@ describe('AdminSettingsApi', () => {
     const { client } = clientWith({ get: vi.fn().mockResolvedValue({}) });
     const api = new AdminSettingsApi(client);
     const res = await api.get();
-    expect(res).toEqual({ settings: {}, overridden: [], types: {}, meta: {} });
+    expect(res).toEqual({ settings: {}, overridden: [], types: {}, meta: {}, secretStatus: {} });
   });
 
   it('get() degrades non-object/array fields defensively', async () => {
@@ -101,7 +101,7 @@ describe('AdminSettingsApi', () => {
     });
     const api = new AdminSettingsApi(client);
     const res = await api.get();
-    expect(res).toEqual({ settings: {}, overridden: [], types: {}, meta: {} });
+    expect(res).toEqual({ settings: {}, overridden: [], types: {}, meta: {}, secretStatus: {} });
   });
 
   it('get() degrades a MISSING meta block to {} (older server, no metadata)', async () => {
@@ -114,6 +114,69 @@ describe('AdminSettingsApi', () => {
     const res = await api.get();
     expect(res.meta).toEqual({});
     expect(res.types).toEqual({ 'tmdb.api_key': 'string' });
+  });
+
+  it('get() surfaces the secretStatus map keyed by secret key', async () => {
+    const { client } = clientWith({
+      get: vi.fn().mockResolvedValue({
+        data: {
+          // What the server really sends: the mask, never the value.
+          settings: { 'tmdb.api_key': '***', 'trakt.client_secret': '***' },
+          overridden: [],
+          types: { 'tmdb.api_key': 'string', 'trakt.client_secret': 'string' },
+          meta: { 'tmdb.api_key': TMDB_META },
+          secretStatus: {
+            'tmdb.api_key': { set: true, length: 32 },
+            'trakt.client_secret': { set: false, length: 0 },
+          },
+        },
+      }),
+    });
+    const api = new AdminSettingsApi(client);
+    const res = await api.get();
+    expect(res.secretStatus).toEqual({
+      'tmdb.api_key': { set: true, length: 32 },
+      'trakt.client_secret': { set: false, length: 0 },
+    });
+  });
+
+  it('get() degrades a MISSING secretStatus to {} (older server)', async () => {
+    const { client } = clientWith({
+      get: vi.fn().mockResolvedValue({
+        data: { settings: { 'tmdb.api_key': '***' }, overridden: [], types: {}, meta: {} },
+      }),
+    });
+    const api = new AdminSettingsApi(client);
+    expect((await api.get()).secretStatus).toEqual({});
+  });
+
+  it('get() treats a malformed secretStatus entry as NOT configured', async () => {
+    // Claiming "Configured" off a garbage payload would be the dangerous
+    // failure: an admin could believe a credential is stored when it is not.
+    const { client } = clientWith({
+      get: vi.fn().mockResolvedValue({
+        data: {
+          settings: {},
+          overridden: [],
+          types: {},
+          meta: {},
+          secretStatus: {
+            'a.key': { set: 'yes', length: '32' },
+            'b.key': 'not-a-record',
+            'c.key': { set: true, length: Number.NaN },
+            'd.key': { set: true },
+          },
+        },
+      }),
+    });
+    const api = new AdminSettingsApi(client);
+    const res = await api.get();
+    expect(res.secretStatus).toEqual({
+      'a.key': { set: false, length: 0 },
+      'c.key': { set: true, length: 0 },
+      'd.key': { set: true, length: 0 },
+    });
+    expect(res.secretStatus).not.toHaveProperty('b.key');
   });
 
   it('save() issues PUT with the { settings } body and unwraps data', async () => {
