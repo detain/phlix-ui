@@ -25,8 +25,12 @@ withDefaults(
     title?: string;
     /** Accent colour of the left border + icon. */
     tone?: 'info' | 'accent';
+    /** Optional external links rendered below the main text. */
+    links?: Array<{ text: string; url: string }>;
+    /** Optional longer explanation rendered as a collapsible details element. */
+    details?: string;
   }>(),
-  { title: undefined, tone: 'info' },
+  { title: undefined, tone: 'info', links: undefined, details: undefined },
 );
 </script>
 
@@ -36,6 +40,22 @@ withDefaults(
     <div class="phlix-page-hint__body">
       <p v-if="title" class="phlix-page-hint__title">{{ title }}</p>
       <p class="phlix-page-hint__text"><slot /></p>
+      <div v-if="links && links.length" class="phlix-page-hint__links">
+        <a
+          v-for="link in links"
+          :key="link.url"
+          :href="link.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="phlix-page-hint__link"
+        >
+          {{ link.text }}<Icon name="external-link" class="phlix-page-hint__link-icon" />
+        </a>
+      </div>
+      <details v-if="details" class="phlix-page-hint__details">
+        <summary>Learn more</summary>
+        <p>{{ details }}</p>
+      </details>
     </div>
   </aside>
 </template>
@@ -79,5 +99,56 @@ withDefaults(
 .phlix-page-hint__text :deep(strong) {
   font-weight: var(--font-semibold);
   color: var(--text);
+}
+.phlix-page-hint__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.phlix-page-hint__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: var(--font-medium);
+  transition: color 150ms ease;
+}
+.phlix-page-hint__link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+.phlix-page-hint__link-icon {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+.phlix-page-hint__details {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+.phlix-page-hint__details summary {
+  cursor: pointer;
+  font-weight: var(--font-medium);
+  color: var(--text);
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+.phlix-page-hint__details summary::-webkit-details-marker { display: none; }
+.phlix-page-hint__details summary::before {
+  content: '▶';
+  font-size: 0.7em;
+  transition: transform 200ms ease;
+}
+.phlix-page-hint__details[open] summary::before {
+  transform: rotate(90deg);
+}
+.phlix-page-hint__details p {
+  margin: var(--space-2) 0 0;
+  color: var(--text-subtle);
 }
 </style>
