@@ -72,6 +72,7 @@ declare const icons: {
     readonly sun: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly moon: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly monitor: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly 'external-link': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
 };
 export type IconName = keyof typeof icons;
 type __VLS_Props = {

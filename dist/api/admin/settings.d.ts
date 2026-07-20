@@ -6,17 +6,43 @@
  */
 import type { ApiClient } from '../client';
 /**
+ * Metadata for a single setting, providing UI hints like labels, help text,
+ * validation bounds, enum options, and whether changing the value requires a
+ * service restart.
+ */
+export interface SettingMeta {
+    label: string;
+    helpText: string;
+    helpLinks: Array<{
+        text: string;
+        url: string;
+    }>;
+    tier: 'standard' | 'advanced';
+    group: string;
+    enum: string[] | null;
+    enumLabels: Record<string, string> | null;
+    optionHelp: Record<string, string> | null;
+    minimum: number | null;
+    maximum: number | null;
+    default: unknown;
+    secret: boolean;
+    restart: boolean;
+}
+/**
  * Shape of the `GET /api/v1/admin/settings` response `data` envelope.
  *
  * `settings` is a flat map of dotted setting key → current value (mixed types).
  * `overridden` lists the keys whose value differs from the env/config default
  * (rendered with a "custom" badge). `types` maps each key to its schema type
  * (`bool` | `int` | `float` | `string`) so the UI knows how to render + coerce.
+ * `meta` maps each key to its full metadata for rendering help, labels, and
+ * validation hints.
  */
 export interface SettingsResponse {
     settings: Record<string, unknown>;
     overridden: string[];
     types: Record<string, string>;
+    meta: Record<string, SettingMeta>;
 }
 /**
  * Shape of the `PUT /api/v1/admin/settings` success `data` envelope. The save
@@ -43,7 +69,7 @@ export declare class AdminSettingsApi {
     private readonly client;
     constructor(client: ApiClient);
     /**
-     * `GET /api/v1/admin/settings` → unwraps `{ data: { settings, overridden, types } }`.
+     * `GET /api/v1/admin/settings` → unwraps `{ data: { settings, overridden, types, meta } }`.
      */
     get(): Promise<SettingsResponse>;
     /**

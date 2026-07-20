@@ -98,6 +98,7 @@ import IconError from '~icons/lucide/circle-x';
 import IconSun from '~icons/lucide/sun';
 import IconMoon from '~icons/lucide/moon';
 import IconMonitor from '~icons/lucide/monitor';
+import IconExternalLink from '~icons/lucide/external-link';
 
 const icons = {
   // playback (maps the legacy play/pause/volume/mute/back emoji)
@@ -181,6 +182,7 @@ const icons = {
   sun: IconSun,
   moon: IconMoon,
   monitor: IconMonitor,
+  'external-link': IconExternalLink,
 } as const;
 
 export type IconName = keyof typeof icons;

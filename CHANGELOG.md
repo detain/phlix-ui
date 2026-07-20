@@ -1,5 +1,7 @@
 ## Unreleased
 
+## [0.88.0] (2026-07-20)
+
 ### Changes
 - feat(settings): **Phase 1 schema-driven settings UI** — fully revamps the settings surface to consume server-provided setting metadata and render adaptively:
   - New `HelpText.vue` and `HelpPopover.vue` components for per-field contextual help (inline text callouts and popover overlays respectively)
