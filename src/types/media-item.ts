@@ -5,7 +5,20 @@
  * @license MIT
  */
 
-export type MediaType = 'movie' | 'series' | 'season' | 'episode' | 'audio' | 'image';
+/**
+ * Media type discriminator — re-exported from `@phlix/contracts`, which is the
+ * single source of truth for the `media_items.type` column ENUM.
+ *
+ * This was previously a local copy that drifted to a stale six members and
+ * carried a bogus `image` (the photo kind is `photo`; `image` is a scanner-side
+ * label that never reaches the wire). The same stale list in the server's
+ * `MediaItemShaper::VALID_TYPES` was relabelling real photo/book/audiobook/track
+ * rows as "movie" (phlix-server#527). Re-exporting rather than redeclaring means
+ * this cannot drift a fourth time — do not turn it back into a literal union.
+ */
+import type { MediaType } from '@phlix/contracts';
+
+export type { MediaType };
 
 /**
  * One responsive poster candidate (R6.2b): a URL, optionally tagged with a width

@@ -26,6 +26,11 @@ declare const icons: {
     readonly image: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly music: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly tv: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly book: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly headphones: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly disc: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly mic: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly video: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly search: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly filter: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly calendar: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;

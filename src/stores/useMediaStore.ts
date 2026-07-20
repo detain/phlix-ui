@@ -136,7 +136,26 @@ export const useMediaStore = defineStore('media', () => {
     });
 
     const availableRatings = ['G', 'PG', 'PG-13', 'R', 'NC-17', 'X', 'UNRATED'];
-    const availableTypes: MediaType[] = ['movie', 'series', 'episode', 'audio', 'image'];
+    // Filter-bar type chips. Must be real `media_items.type` ENUM values or the
+    // chip matches nothing: `image` used to sit here and was permanently dead
+    // (the photo kind is `photo`), while photo/book/audiobook/music/track rows
+    // were unfilterable because their types were missing entirely.
+    // `season` is intentionally omitted — seasons are reached by drilling into a
+    // series, not filtered for in the flat grid.
+    const availableTypes: MediaType[] = [
+        'movie',
+        'series',
+        'episode',
+        'video',
+        'music',
+        'album',
+        'artist',
+        'track',
+        'audio',
+        'book',
+        'audiobook',
+        'photo',
+    ];
 
     // ---- query (de)serialization --------------------------------------------
     // Serialize via the SHARED buildMediaQuery so the store's request URL AND its
