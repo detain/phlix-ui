@@ -66,6 +66,33 @@ export declare function levelIndexForVariant(levels: readonly HlsLevel[], varian
     bitrate: number;
 } | null | undefined): number;
 /**
+ * The hls.js level index of the highest-resolution rung (tie-broken by the
+ * highest bitrate). Used as the graceful fallback when a persisted quality
+ * choice cannot be honored by the current item's ladder and we still want the
+ * best available picture rather than dropping straight to ABR. Returns `-1` for
+ * an empty ladder (native-HLS / pre-manifest → caller leaves ABR in charge).
+ */
+export declare function topLevelIndex(levels: readonly HlsLevel[]): number;
+/**
+ * Whether the current item ACTUALLY advertises a playable "original"
+ * (untouched-source) rendition — the SAME availability test
+ * {@link QualityMenu} uses to show/hide the "Original" option: the server
+ * `variants` list carries an entry with `id: 'original'` (`height > 0`) AND that
+ * variant resolves to a live hls.js level ({@link levelIndexForVariant} `>= 0`).
+ *
+ * This is the seed-path guard for the reported bug: the server's v7 ABR ladder
+ * FOLDS the original rung when it merely duplicates the top rung, so for many
+ * items `media_voriginal.m3u8` does NOT exist. Blindly seeding
+ * `loadVariantPlaylist('original')` from a stale `prefs.defaultQuality` then
+ * 404s → a fatal hls.js error and no quality menu. Callers must only load the
+ * original playlist when this returns `true`.
+ */
+export declare function originalVariantAvailable(levels: readonly HlsLevel[], variants: ReadonlyArray<{
+    id: string;
+    height: number;
+    bitrate: number;
+}> | null | undefined): boolean;
+/**
  * The rung id currently selected for the Select's model, derived from the pinned
  * hls.js level index. `'auto'` when nothing is pinned (`currentLevel < 0`) or the
  * pinned index is no longer in the ladder.

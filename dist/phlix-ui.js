@@ -1168,7 +1168,7 @@ function Ti(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-C0e0Y9Xo.js")
+			component: () => import("./PlayerPage-DFXutftR.js")
 		},
 		{
 			path: `${t}/login`,
