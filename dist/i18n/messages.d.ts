@@ -329,8 +329,8 @@ export declare const DEFAULT_MESSAGES: {
         sectionsLabel: string;
         tabAppearance: string;
         tabPlayback: string;
-        tabServer: string;
         tabSecurity: string;
+        tabServer: string;
         unsaved: string;
         saveGroup: string;
         groupSaved: string;

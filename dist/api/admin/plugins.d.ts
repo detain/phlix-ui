@@ -47,6 +47,12 @@ export interface PluginSettingDescriptor {
     link?: string;
     /** Optional anchor text for {@link link}; defaults to a generic label in the UI. */
     link_text?: string;
+    /**
+     * OPTIONAL disclosure tier, mirroring the server-settings schema `tier`
+     * keyword (plan §3.2/§3.3). A manifest or field-help overlay that predates the
+     * concept simply omits it, and the UI treats a missing tier as `standard`.
+     */
+    tier?: 'standard' | 'advanced';
 }
 /** The manifest settings schema: one descriptor per setting key. */
 export type PluginSettingsSchema = Record<string, PluginSettingDescriptor>;

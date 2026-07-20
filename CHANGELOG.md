@@ -1,4 +1,4 @@
-## Unreleased
+## 0.90.0 - 2026-07-20
 
 ### Fixed
 - **fix(settings): a masked secret was indistinguishable from an unset one.** The server replaces every `secret: true` value with the sentinel `***` before responding (`AdminSettingsController::maskSecrets()`), so the page was rendering that literal string into a password box with a Show button — an admin could not tell a configured credential from an empty one, and Show revealed only `***`. The page now reads the `secretStatus` map the same response already published and renders a **Configured** badge with the stored character count, or **Not set**, next to each secret. Affects all five `secret: true` keys (`tmdb.api_key`, `lastfm.api_key`, `lastfm.shared_secret`, `trakt.client_id`, `trakt.client_secret`) via the existing meta-driven path — no per-key code.
