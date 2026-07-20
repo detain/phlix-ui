@@ -31,3 +31,6 @@ export { default as Reveal } from './Reveal.vue';
 export { default as PageTransition } from './PageTransition.vue';
 export { default as Menu } from './Menu.vue';
 export type { MenuItem } from './Menu.vue';
+export { default as HelpText } from './HelpText.vue';
+export type { HelpLink } from './HelpText.vue';
+export { default as HelpPopover } from './HelpPopover.vue';
