@@ -24,6 +24,7 @@ import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
+import PageHint from '../../components/ui/PageHint.vue';
 
 /** Raw entry shape from the hub's GET /api/v1/admin/requests (snake_case). */
 interface AdminRequest {
@@ -155,10 +156,9 @@ onMounted(() => void loadRequests(activeTab.value));
 
 <template>
   <section class="requests" aria-labelledby="requests-heading">
-    <header class="requests__head">
-      <h1 id="requests-heading" class="requests__title">Request Queue</h1>
-      <p class="requests__subtitle">Review and act on content requests from your users.</p>
-    </header>
+    <PageHint title="Request Queue">
+      Review and act on content requests from your users.
+    </PageHint>
 
     <div class="requests__tabs" role="tablist" aria-label="Request status filter">
       <button
