@@ -123,6 +123,10 @@ var D = { class: "phlix-help-text" }, O = { class: "phlix-help-text__paragraph" 
 			overridden: Array.isArray(t?.overridden) ? t.overridden : []
 		};
 	}
+	async restartServer() {
+		let { data: e } = await this.client.post("/api/v1/admin/restart", {});
+		return { message: e?.message ?? "Restart signal sent" };
+	}
 };
 function B(e) {
 	return typeof e == "object" && !!e && !Array.isArray(e);
@@ -168,4 +172,4 @@ var W = E("phlix-settings-prefs", () => {
 //#endregion
 export { j as i, z as n, R as r, W as t };
 
-//# sourceMappingURL=useSettingsPrefs-B57OICA8.js.map
+//# sourceMappingURL=useSettingsPrefs-ne0n-EMv.js.map

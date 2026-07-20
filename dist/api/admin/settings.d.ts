@@ -79,4 +79,11 @@ export declare class AdminSettingsApi {
      *   (bool/int/float/string). The controller validates + persists them.
      */
     save(settings: Record<string, unknown>): Promise<SettingsSaveResponse>;
+    /**
+     * `POST /api/v1/admin/restart` → sends a restart signal to the server.
+     * Returns `{ message }` on success.
+     */
+    restartServer(): Promise<{
+        message: string;
+    }>;
 }

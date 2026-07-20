@@ -32,7 +32,7 @@ import { t as N } from "./EmptyState-ZlI5t4KT.js";
 import { t as Ge } from "./PageHint-BoAlFFBN.js";
 import { t as Ke } from "./Tabs-CLKYop2E.js";
 import { t as qe } from "./Menu-DRkKveJV.js";
-import { i as Je, n as Ye, r as Xe, t as Ze } from "./useSettingsPrefs-B57OICA8.js";
+import { i as Je, n as Ye, r as Xe, t as Ze } from "./useSettingsPrefs-ne0n-EMv.js";
 import { a as Qe, t as $e } from "./MediaCard-BPECjoW5.js";
 import { t as et } from "./MediaGrid-Nocxtp0u.js";
 import { t as tt } from "./MediaRow-C61qLE1F.js";
@@ -952,7 +952,7 @@ var Br = dn("server", () => {
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-BoIpUB7U.js")
+	component: () => import("./SettingsPage-CI7gg5fD.js")
 }, oi = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -976,7 +976,7 @@ var Br = dn("server", () => {
 	path: "requests",
 	label: "Request Queue",
 	icon: "list",
-	component: () => import("./RequestsPage-yKZtjUFX.js")
+	component: () => import("./RequestsPage-CoNWzQlz.js")
 }, ui = Object.fromEntries([
 	Vr,
 	si,

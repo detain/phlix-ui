@@ -1,5 +1,11 @@
 ## Unreleased
 
+## [0.89.0] (2026-07-20)
+
+### Changes
+- Phase 8: restart button wired to POST /api/v1/admin/restart (commit 0f43e0b)
+- Phase 9: PageHint added to RequestsPage (commit dfc2bd6)
+
 ## [0.88.0] (2026-07-20)
 
 ### Changes
