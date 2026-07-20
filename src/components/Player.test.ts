@@ -57,6 +57,7 @@ vi.mock('../composables/useHlsTranscode', async () => {
     setLevel: vi.fn(),
     setNextLevel: vi.fn(),
     setAudioTrack: vi.fn(),
+    loadVariantPlaylist: vi.fn(),
     start: vi.fn(),
     cleanup: vi.fn(),
     reset: vi.fn(() => {
@@ -98,6 +99,7 @@ function tc(): {
   setLevel: ReturnType<typeof vi.fn>;
   setNextLevel: ReturnType<typeof vi.fn>;
   setAudioTrack: ReturnType<typeof vi.fn>;
+  loadVariantPlaylist: ReturnType<typeof vi.fn>;
   start: ReturnType<typeof vi.fn>;
   cleanup: ReturnType<typeof vi.fn>;
   reset: ReturnType<typeof vi.fn>;
@@ -196,6 +198,7 @@ beforeEach(() => {
   ctrl.setLevel.mockClear();
   ctrl.setNextLevel.mockClear();
   ctrl.setAudioTrack.mockClear();
+  ctrl.loadVariantPlaylist.mockClear();
   ctrl.start.mockClear();
   ctrl.cleanup.mockClear();
   ctrl.reset.mockClear();
@@ -2079,6 +2082,53 @@ describe('Player — quality menu wiring (R3.9)', () => {
     await nextTick();
     expect(tc().setNextLevel).toHaveBeenCalledTimes(2);
     expect(tc().setNextLevel).toHaveBeenLastCalledWith(1); // 480p → index 1 in the NEW ladder
+  });
+
+  // Regression: a stale `defaultQuality === 'original'` (persisted from a prior
+  // "Original" pick) must NOT blindly seed loadVariantPlaylist('original') — the
+  // v7 ABR ladder FOLDS the original rung on many items, so media_voriginal.m3u8
+  // 404s → fatal hls.js error + no quality menu.
+  it("seeds the original variant playlist when the item ADVERTISES original", async () => {
+    usePreferencesStore().defaultQuality = 'original';
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    // Server advertises an original rendition that resolves to the top level.
+    tc().variants.value = [
+      { id: 'original', height: 1080, width: 1920, bitrate: 5_000_000, label: 'Original' },
+    ];
+    tc().levels.value = ladder; // 1080p level exists → original resolves
+    await nextTick();
+    expect(tc().loadVariantPlaylist).toHaveBeenCalledWith('original');
+    expect(tc().setNextLevel).not.toHaveBeenCalled();
+    // A genuinely available pref is left intact.
+    expect(usePreferencesStore().defaultQuality).toBe('original');
+  });
+
+  it("does NOT seed original when the item's ladder FOLDED it — falls back to the top rung and self-heals the pref to auto", async () => {
+    usePreferencesStore().defaultQuality = 'original';
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    // Folded ladder: variants advertise only transcoded rungs, NO id:'original'.
+    tc().variants.value = [
+      { id: 'v0', height: 1080, width: 1920, bitrate: 5_000_000, label: '1080p' },
+      { id: 'v1', height: 720, width: 1280, bitrate: 2_800_000, label: '720p' },
+    ];
+    tc().levels.value = ladder;
+    await nextTick();
+    // Never requests the non-existent media_voriginal.m3u8.
+    expect(tc().loadVariantPlaylist).not.toHaveBeenCalled();
+    // Falls back to the highest available rung (1080p → index 0) rather than 404ing.
+    expect(tc().setNextLevel).toHaveBeenCalledWith(0);
+    // Self-heals so the stale pref stops breaking every future item.
+    expect(usePreferencesStore().defaultQuality).toBe('auto');
+  });
+
+  it('does NOT request a variant playlist for a persisted rung absent from the ladder — falls back to auto + self-heals', async () => {
+    usePreferencesStore().defaultQuality = '1440p'; // not present in `ladder` (max 1080p)
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    tc().levels.value = ladder;
+    await nextTick();
+    expect(tc().loadVariantPlaylist).not.toHaveBeenCalled();
+    expect(tc().setNextLevel).not.toHaveBeenCalled();
+    expect(usePreferencesStore().defaultQuality).toBe('auto');
   });
 
   it('threads the live controller state through to the menu (pinned rung, then Auto restores ABR with a live label)', async () => {

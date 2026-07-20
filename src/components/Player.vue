@@ -71,7 +71,7 @@ import {
   type TextTrackInfo,
 } from './player/captions';
 import { useKeyboardShortcuts, type ShortcutActions } from './player/shortcuts';
-import { levelIndexForQuality, AUTO_QUALITY, ORIGINAL_QUALITY } from './player/quality';
+import { levelIndexForQuality, AUTO_QUALITY, ORIGINAL_QUALITY, originalVariantAvailable, topLevelIndex } from './player/quality';
 import { useSyncPlayStore, SYNC_DRIFT_THRESHOLD_SECONDS } from '../stores/useSyncPlayStore';
 import SyncPlayOverlay from './syncplay/SyncPlayOverlay.vue';
 import SyncPlayModal from './syncplay/SyncPlayModal.vue';
@@ -359,54 +359,82 @@ function onSelectQuality(level: number | 'auto' | string): void {
  *  source, the first time the ladder is known (reset per source below). */
 let qualitySeeded = false;
 
-/** Seed the initial rung from the stored `prefs.defaultQuality` once hls.js has
- *  parsed the ladder (the "pin this level as soon as levels are known" approach —
- *  hls.js's `startLevel` config takes an index we can't know until parse time,
- *  and our pref is a stable resolution id). 'auto' (or an unknown/stale pref)
- *  leaves ABR in charge. Fires only for the transcode/HLS path; the native path
- *  reports no levels, so it correctly no-ops. */
+/** Self-heal a stale/unhonorable persisted quality: reset `prefs.defaultQuality`
+ *  to Auto so a rung the server folded (e.g. 'original') stops breaking every
+ *  future item's playback. The menu re-persists a real choice on the next pick. */
+function healQualityPrefToAuto(): void {
+  prefs.defaultQuality = AUTO_QUALITY;
+}
+
+/** Seed the initial rung from the stored `prefs.defaultQuality` against the
+ *  now-known ladder. Returns `true` once a decision was made (the caller latches
+ *  the one-shot guard) or `false` when we still lack the info to decide (only for
+ *  an 'original' pref before `variants` have arrived — the variants watch retries).
+ *
+ *  'auto' (or an unknown/stale pref) leaves ABR in charge. For 'original' we ONLY
+ *  load the untouched-source playlist (media_voriginal.m3u8) when the item ACTUALLY
+ *  advertises it — the SAME availability check QualityMenu uses to show/hide the
+ *  option. The v7 ABR ladder FOLDS the original rung when it duplicates the top
+ *  rung, so an unconditional load would 404 → fatal hls.js error + no quality menu.
+ *  When 'original' is folded (or a specific persisted rung is absent from this
+ *  ladder), fall back gracefully (top rung, else ABR) and self-heal the pref. */
+function seedDefaultQuality(): boolean {
+  const levels = tc.levels.value;
+  if (levels.length === 0) return false; // ladder not parsed yet — wait
+  const pref = prefs.defaultQuality;
+  if (!pref || pref === AUTO_QUALITY) return true; // ABR owns it
+  if (pref === ORIGINAL_QUALITY) {
+    const variants = tc.variants.value;
+    // Defer until the server variants list is known — it decides availability.
+    if (!variants || variants.length === 0) return false;
+    if (originalVariantAvailable(levels, variants)) {
+      // Original IS advertised — load its untouched-source playlist directly.
+      tc.loadVariantPlaylist(ORIGINAL_QUALITY);
+    } else {
+      // Folded/absent: prefer the highest available rung, else leave ABR in
+      // charge — and self-heal the stale pref so it stops mis-seeding.
+      const top = topLevelIndex(levels);
+      if (top >= 0) tc.setNextLevel(top);
+      healQualityPrefToAuto();
+    }
+    return true;
+  }
+  const index = levelIndexForQuality(levels, pref);
+  if (index >= 0) {
+    tc.setNextLevel(index);
+  } else {
+    // The persisted rung isn't in this item's ladder (folded/absent) — fall back
+    // to ABR (Auto) rather than requesting a non-existent variant, and self-heal.
+    healQualityPrefToAuto();
+  }
+  return true;
+}
+
+/** Seed the persisted default quality once hls.js has parsed the ladder (the
+ *  "pin this level as soon as levels are known" approach — hls.js's `startLevel`
+ *  config takes an index we can't know until parse time, and our pref is a stable
+ *  resolution id). Fires only for the transcode/HLS path; the native path reports
+ *  no levels, so it correctly no-ops. */
 watch(
   () => tc.levels.value,
   (levels) => {
     if (qualitySeeded || levels.length === 0) return;
-    qualitySeeded = true;
-    const pref = prefs.defaultQuality;
-    if (!pref || pref === AUTO_QUALITY) return;
-    // 'original' loads the server's untouched-source rendition playlist directly
-    // (media_voriginal.m3u8), not a ladder rung. Copy variants are filtered from
-    // the ABR ladder (SV-4.6) because their segments may have drifting boundaries.
-    if (pref === ORIGINAL_QUALITY) {
-      tc.loadVariantPlaylist(ORIGINAL_QUALITY);
-      return;
-    }
-    const index = levelIndexForQuality(levels, pref);
-    if (index >= 0) tc.setNextLevel(index);
+    if (seedDefaultQuality()) qualitySeeded = true;
   },
 );
 
-// Retry quality seeding when variants become available — the 'original' variant
-// may arrive after the levels watch fires, leaving originalLevelIndex at -1.
+// Retry quality seeding when variants become available — for an 'original' pref
+// the variants list decides availability and may arrive after the levels watch
+// fires. seedDefaultQuality() only returns false while it still lacks that info,
+// so this latches the guard once the decision can finally be made.
 watch(
   () => tc.variants.value,
   (newVariants) => {
-    if (newVariants?.length && !qualitySeeded) {
-      // Re-trigger the levels watch logic by resetting qualitySeeded
-      qualitySeeded = false;
-      void nextTick(() => {
-        if (tc.levels.value.length > 0) {
-          qualitySeeded = true;
-          const pref = prefs.defaultQuality;
-          if (!pref || pref === AUTO_QUALITY) return;
-          // 'original' loads the server's untouched-source rendition playlist directly.
-          if (pref === ORIGINAL_QUALITY) {
-            tc.loadVariantPlaylist(ORIGINAL_QUALITY);
-            return;
-          }
-          const index = levelIndexForQuality(tc.levels.value, pref);
-          if (index >= 0) tc.setNextLevel(index);
-        }
-      });
-    }
+    if (qualitySeeded || !newVariants?.length) return;
+    void nextTick(() => {
+      if (qualitySeeded) return;
+      if (seedDefaultQuality()) qualitySeeded = true;
+    });
   },
   { deep: true },
 );

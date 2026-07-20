@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { HlsLevel } from './hls-playback';
-import { AUTO_QUALITY, ORIGINAL_QUALITY, qualityId, qualityLabel, qualityRungs, levelIndexForQuality, levelIndexForVariant, qualityForLevel } from './quality';
+import { AUTO_QUALITY, ORIGINAL_QUALITY, qualityId, qualityLabel, qualityRungs, levelIndexForQuality, levelIndexForVariant, qualityForLevel, topLevelIndex, originalVariantAvailable } from './quality';
 
 function level(index: number, height: number, bitrate: number): HlsLevel {
   return { index, height, width: Math.round((height * 16) / 9), bitrate, name: `${height}p` };
@@ -123,6 +123,46 @@ describe('quality helpers', () => {
 
     it('is auto when the pinned index is no longer in the ladder', () => {
       expect(qualityForLevel(levels, 9)).toBe(AUTO_QUALITY);
+    });
+  });
+
+  describe('topLevelIndex', () => {
+    it('returns the index of the highest-resolution rung', () => {
+      const levels = [level(0, 720, 2_800_000), level(1, 1080, 5_000_000), level(2, 480, 1_400_000)];
+      expect(topLevelIndex(levels)).toBe(1);
+    });
+
+    it('tie-breaks equal heights by the highest bitrate', () => {
+      const levels = [level(0, 1080, 4_000_000), level(1, 1080, 6_000_000)];
+      expect(topLevelIndex(levels)).toBe(1);
+    });
+
+    it('returns -1 for an empty ladder', () => {
+      expect(topLevelIndex([])).toBe(-1);
+    });
+  });
+
+  describe('originalVariantAvailable', () => {
+    const levels = [level(0, 1080, 5_000_000), level(1, 720, 2_800_000)];
+
+    it('is true when an id:"original" variant resolves to a live level', () => {
+      const variants = [{ id: ORIGINAL_QUALITY, height: 1080, bitrate: 5_000_000 }];
+      expect(originalVariantAvailable(levels, variants)).toBe(true);
+    });
+
+    it('is false when the ladder folded original (no id:"original" advertised)', () => {
+      const variants = [
+        { id: 'v0', height: 1080, bitrate: 5_000_000 },
+        { id: 'v1', height: 720, bitrate: 2_800_000 },
+      ];
+      expect(originalVariantAvailable(levels, variants)).toBe(false);
+    });
+
+    it('is false when variants are null/empty or the variant resolves to no level', () => {
+      expect(originalVariantAvailable(levels, null)).toBe(false);
+      expect(originalVariantAvailable(levels, [])).toBe(false);
+      // An advertised original taller than every level resolves to no rung.
+      expect(originalVariantAvailable(levels, [{ id: ORIGINAL_QUALITY, height: 2160, bitrate: 9_000_000 }])).toBe(false);
     });
   });
 });
