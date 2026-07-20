@@ -326,7 +326,7 @@ Everything below is a named export from the package root (`import { Button } fro
 
 ### Forms & long-tail pages
 
-`LoginForm` · `SignupForm` · `SettingsForm`, plus the directly-exported consumer pages
+`LoginForm` · `SignupForm`, plus the directly-exported consumer pages
 `LibraryScanPage` · `MyServersPage` · `FederationPage` · `ManageSharesPage` · `AuditLogsPage`.
 
 > The six built-in **route** pages (Browse/Detail/Player/Login/Signup/Settings) and the 16 admin pages

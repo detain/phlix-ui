@@ -32,6 +32,7 @@ import {
   type PluginSettingDescriptor,
 } from '../../api/admin/plugins';
 import { useToastStore } from '../../stores/useToastStore';
+import { useSettingsPrefsStore } from '../../stores/useSettingsPrefs';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import Button from '../../components/ui/Button.vue';
@@ -54,6 +55,7 @@ const api = new AdminPluginsApi(
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
 );
 const toasts = useToastStore();
+const settingsPrefsStore = useSettingsPrefsStore();
 
 // ── Installed plugin list state ──────────────────────────────────────────────
 const plugins = ref<Plugin[]>([]);
@@ -140,6 +142,10 @@ function buildSettingsPayload(): Record<string, unknown> {
 
   for (const [key, descriptor] of Object.entries(selectedPlugin.value.settings_schema)) {
     const value = settingsValues.value[key];
+
+    // Advanced fields the admin cannot currently edit are omitted entirely, so a
+    // save in Standard mode is a partial update and never rewrites them.
+    if (isDisabled(descriptor)) continue;
 
     // Secret fields: only send if user typed a new value (not the mask)
     if (descriptor.secret) {
@@ -267,6 +273,34 @@ async function handleToggle(plugin: Plugin): Promise<void> {
   }
 }
 
+// ── Standard / Advanced tier gating (plan §3.3) ───────────────────────────────
+/**
+ * True when a descriptor is advanced-tier. Manifests (and the server's
+ * field-help overlay) that predate the `tier` concept omit it entirely — a
+ * missing tier is treated as `standard` so those plugins keep rendering exactly
+ * as before.
+ */
+function isAdvanced(descriptor: PluginSettingDescriptor): boolean {
+  return descriptor.tier === 'advanced';
+}
+
+/** Advanced fields always render, but stay greyed + disabled until Advanced is on. */
+function isDisabled(descriptor: PluginSettingDescriptor): boolean {
+  return isAdvanced(descriptor) && !settingsPrefsStore.advancedMode;
+}
+
+/**
+ * Help links for a descriptor. `link_text` is independently optional, so a
+ * link-only entry must still render — with a sensible default anchor — rather
+ * than silently dropping the URL.
+ */
+function helpLinks(
+  descriptor: PluginSettingDescriptor,
+): Array<{ text: string; url: string }> | undefined {
+  if (!descriptor.link) return undefined;
+  return [{ text: descriptor.link_text || 'Learn more', url: descriptor.link }];
+}
+
 // ── Control type renderer helper ──────────────────────────────────────────────
 function inputType(descriptor: PluginSettingDescriptor): string {
   switch (descriptor.type) {
@@ -291,12 +325,20 @@ onMounted(loadPlugins);
   <section class="admin-plugin-config" aria-labelledby="plugin-config-heading">
     <header class="admin-plugin-config__head">
       <h1 id="plugin-config-heading" class="admin-plugin-config__title">Plugin Configuration</h1>
+      <div class="settings-advanced-toggle">
+        <span class="settings-advanced-toggle__label">Advanced</span>
+        <Switch
+          :model-value="settingsPrefsStore.advancedMode"
+          @update:model-value="settingsPrefsStore.setAdvancedMode($event)"
+        />
+      </div>
     </header>
 
     <PageHint>
       Manage settings for installed plugins. Click a plugin to expand its configuration
       form. Use the <strong>toggle</strong> to enable or disable a plugin without
-      uninstalling it. Settings are validated against the plugin manifest schema.
+      uninstalling it, and the <strong>Advanced</strong> switch to unlock expert-tier
+      fields. Settings are validated against the plugin manifest schema.
     </PageHint>
 
     <!-- Plugin list -->
@@ -420,12 +462,13 @@ onMounted(loadPlugins);
                 {{ descriptor.label || key }}
                 <span v-if="descriptor.required" class="admin-plugin-config__required">*</span>
                 <span v-if="descriptor.secret" class="admin-plugin-config__secret-badge">Secret</span>
+                <span v-if="isAdvanced(descriptor)" class="admin-plugin-config__advanced-badge">Advanced</span>
               </label>
 
               <HelpText
-                v-if="descriptor.description"
+                v-if="descriptor.description || descriptor.link"
                 :text="descriptor.description"
-                :links="descriptor.link && descriptor.link_text ? [{ text: descriptor.link_text, url: descriptor.link }] : undefined"
+                :links="helpLinks(descriptor)"
               />
 
               <!-- Boolean (checkbox) -->
@@ -437,6 +480,7 @@ onMounted(loadPlugins);
                   :true-value="'true'"
                   :false-value="'false'"
                   class="admin-plugin-config__checkbox"
+                  :disabled="isDisabled(descriptor)"
                 />
                 <span class="admin-plugin-config__checkbox-label">
                   {{ settingsValues[key] === 'true' ? 'Enabled' : 'Disabled' }}
@@ -452,6 +496,7 @@ onMounted(loadPlugins);
                   class="admin-plugin-config__input"
                   :class="{ 'admin-plugin-config__input--error': validationErrors[key] }"
                   :placeholder="descriptor.default !== undefined ? String(descriptor.default) : ''"
+                  :disabled="isDisabled(descriptor)"
                   @input="descriptor.secret ? onSecretInput(key as string) : undefined"
                 />
               </template>
@@ -504,7 +549,47 @@ onMounted(loadPlugins);
 }
 
 .admin-plugin-config__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 0.5rem;
+}
+
+.settings-advanced-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border-radius: var(--radius-md, 6px);
+  background: var(--surface-2, #f8f9fa);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+}
+
+.settings-advanced-toggle__label {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #6b7280);
+}
+
+.admin-plugin-config__advanced-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--surface-2, #f8f9fa);
+  border: 1px solid var(--border, #e5e7eb);
+  color: var(--text-subtle, #6b7280);
+}
+
+.admin-plugin-config__input:disabled,
+.admin-plugin-config__checkbox:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .admin-plugin-config__title {

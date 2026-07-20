@@ -10,17 +10,27 @@
  * ALL rendering is driven by the server's `meta` block received from
  * `GET /api/v1/admin/settings`. The server provides: group (tab), label,
  * helpText, helpLinks, tier (standard|advanced), restart flag, numeric
- * min/max, enum options/labels, and secret flag — replacing all formerly
- * hardcoded maps.
+ * min/max, enum options/labels/optionHelp, and secret flag — replacing all
+ * formerly hardcoded maps. There is no per-key special case in this file: a new
+ * schema key auto-renders with the correct control, tab, label, help and tier.
  *
- * Per-key dirty state, type coercion, per-field validation errors, and
- * partial PUT are preserved from the original implementation.
+ * Control selection is driven by the server `types` map (`bool` | `int` |
+ * `float` | `json` | `string`) plus `meta.enum` / `meta.secret`; `json` (the
+ * server's projection of schema `array`/`object`) renders a JSON textarea whose
+ * contents are parsed before the PUT, and an unparseable value blocks the save.
+ *
+ * Degradation: when a server is too old to emit `meta`, the page falls back to
+ * rendering every key in `types` under a single "Other" tab with derived labels,
+ * and shows a notice explaining that help/tiers are unavailable.
+ *
+ * Per-key dirty state, type coercion, per-field validation errors, and partial
+ * PUT are preserved from the original implementation.
  */
 import { ref, computed, reactive, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient, ApiError } from '../../api/client';
 import { errMessage } from '../../api/errors';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
-import { AdminSettingsApi } from '../../api/admin/settings';
+import { AdminSettingsApi, type SettingMeta } from '../../api/admin/settings';
 import { useToastStore } from '../../stores/useToastStore';
 import { useSettingsPrefsStore } from '../../stores/useSettingsPrefs';
 import Badge from '../../components/ui/Badge.vue';
@@ -34,10 +44,17 @@ import EmptyState from '../../components/ui/EmptyState.vue';
 import HelpPopover from '../../components/ui/HelpPopover.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 
-const props = defineProps<{
-  /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
-  client?: ApiClient;
-}>();
+const props = withDefaults(
+  defineProps<{
+    /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
+    client?: ApiClient;
+    /** Delay between "is the server back?" polls after a restart (ms). */
+    restartPollIntervalMs?: number;
+    /** Total budget to wait for the server to come back after a restart (ms). */
+    restartPollTimeoutMs?: number;
+  }>(),
+  { client: undefined, restartPollIntervalMs: 1000, restartPollTimeoutMs: 60000 },
+);
 
 const injectedApiBase = inject<string | ComputedRef<string> | undefined>('apiBase', '');
 const apiBase = computed(() =>
@@ -49,12 +66,11 @@ const api = new AdminSettingsApi(apiClient);
 const toasts = useToastStore();
 const settingsPrefsStore = useSettingsPrefsStore();
 
-/**
- * The enum metadata key that drives the bespoke Metadata-tab UI (the genres-mode
- * select). It cannot use the generic string-coercing form path — it is tracked
- * in its own state and sent back through the same PUT.
- */
-const GENRES_MODE_KEY = 'metadata.genres_mode';
+/** Group assigned to every key when the server sent no `meta` at all. */
+const FALLBACK_GROUP = 'other';
+
+/** localStorage key prefix for the "a restart is pending" flag (per API base). */
+const RESTART_PENDING_PREFIX = 'phlix-restart-pending';
 
 // ── Settings data ─────────────────────────────────────────────────────────────
 const settings = ref<Record<string, unknown>>({});
@@ -63,13 +79,90 @@ const types = ref<Record<string, string>>({});
 
 // ── Schema-driven meta ─────────────────────────────────────────────────────────
 /** Full metadata block from server — drives all labels, help, options, constraints. */
-const serverMeta = ref<Record<string, import('../../api/admin/settings').SettingMeta>>({});
+const serverMeta = ref<Record<string, SettingMeta>>({});
 
-/** Build tab list from unique groups in meta. */
-const tabs = computed<TabItem[]>(() => {
-  const groups = new Set(Object.values(serverMeta.value).map(m => m.group));
-  return Array.from(groups).sort().map(g => ({ value: g, label: g }));
+/** True when the server sent settings but no `meta` block (older server). */
+const metaMissing = computed(
+  () => Object.keys(serverMeta.value).length === 0 && Object.keys(types.value).length > 0,
+);
+
+/** Human-readable label derived from a dotted setting key. */
+function humanizeKey(key: string): string {
+  return (
+    key
+      .split('.')
+      .pop()
+      ?.replace(/[_-]+/g, ' ')
+      .replace(/\b[a-z]/g, c => c.toUpperCase()) ?? key
+  );
+}
+
+/** Human-readable label derived from a group key (`port-forward` → `Port Forward`). */
+function humanizeGroup(group: string): string {
+  return group.replace(/[_-]+/g, ' ').replace(/\b[a-z]/g, c => c.toUpperCase());
+}
+
+/**
+ * Human-readable label derived from the WHOLE dotted key. Used only in the
+ * no-`meta` fallback, where the trailing segment alone is often ambiguous
+ * (a dozen keys end in `.enabled`).
+ */
+function humanizeFullKey(key: string): string {
+  return key.replace(/[._-]+/g, ' ').replace(/\b[a-z]/g, c => c.toUpperCase());
+}
+
+/** A synthesised meta entry for a key the server described only in `types`. */
+function fallbackMeta(key: string): SettingMeta {
+  return {
+    label: humanizeFullKey(key),
+    helpText: '',
+    helpLinks: [],
+    tier: 'standard',
+    group: FALLBACK_GROUP,
+    enum: null,
+    enumLabels: null,
+    optionHelp: null,
+    minimum: null,
+    maximum: null,
+    default: undefined,
+    secret: false,
+    restart: false,
+  };
+}
+
+/**
+ * The meta map the whole page renders from. Normally this is the server's
+ * `meta` verbatim; when the server sent none, it is synthesised from `types` so
+ * an older server still yields an editable page rather than a blank one.
+ */
+const effectiveMeta = computed<Record<string, SettingMeta>>(() => {
+  if (!metaMissing.value) return serverMeta.value;
+  const synth: Record<string, SettingMeta> = {};
+  for (const key of Object.keys(types.value)) synth[key] = fallbackMeta(key);
+  return synth;
 });
+
+/** Build tab list from unique groups in meta, labelled for humans. */
+const tabs = computed<TabItem[]>(() => {
+  const groups = new Set(Object.values(effectiveMeta.value).map(m => m.group));
+  return Array.from(groups)
+    .sort()
+    .map(g => ({ value: g, label: groupLabel(g) }));
+});
+
+/**
+ * Tab caption for a group. Prefers a server-supplied `groupLabel` (optional, so
+ * the server can take over this responsibility later without a UI change) and
+ * otherwise derives one from the group key.
+ */
+function groupLabel(group: string): string {
+  for (const m of Object.values(effectiveMeta.value)) {
+    if (m.group === group && typeof m.groupLabel === 'string' && m.groupLabel !== '') {
+      return m.groupLabel;
+    }
+  }
+  return humanizeGroup(group);
+}
 
 /** Currently active tab. */
 const currentTab = ref<string>('');
@@ -78,65 +171,127 @@ const currentTab = ref<string>('');
 const loading = ref(true);
 const error = ref<string | null>(null);
 const submitting = ref(false);
+const restarting = ref(false);
 const fieldErrors = ref<Record<string, string>>({});
 const showPassword = reactive<Record<string, boolean>>({});
 
 // ── Form state ────────────────────────────────────────────────────────────────
 const formValues = reactive<Record<string, string>>({});
 const dirty = reactive<Record<string, boolean>>({});
-
-// ── Metadata tab bespoke state (genres_mode enum) ───────────────────────────────
-/** Working copy of the genres_mode enum. */
-const genresMode = ref<string>('first');
+/** Per-key JSON parse errors for `json`-typed fields (blocks the save). */
+const jsonErrors = reactive<Record<string, string>>({});
 
 const hasAnyChanges = computed(() => Object.values(dirty).some(Boolean));
 
-/** Keys belonging to the current tab, ordered by their index in serverMeta. */
+/** Keys belonging to the current tab, in schema declaration order. */
 const tabKeys = computed<string[]>(() =>
-  Object.entries(serverMeta.value)
+  Object.entries(effectiveMeta.value)
     .filter(([, m]) => m.group === currentTab.value)
-    .sort(([, a], [, b]) => {
-      // Maintain server-provided ordering if available, otherwise alphabetical
-      const aIdx = (a as any)._order ?? 0;
-      const bIdx = (b as any)._order ?? 0;
-      return aIdx - bIdx;
-    })
-    .map(([key]) => key)
+    .map(([key]) => key),
 );
 
 /** Keys that require a server restart when changed. */
 const restartKeys = computed<string[]>(() =>
-  Object.entries(serverMeta.value)
+  Object.entries(effectiveMeta.value)
     .filter(([, m]) => m.restart === true)
-    .map(([key]) => key)
+    .map(([key]) => key),
 );
 
-/** Whether any dirty key requires a restart. */
-const needsRestart = computed(() =>
-  Object.keys(dirty).filter(k => dirty[k]).some(k => restartKeys.value.includes(k))
-);
+function requiresRestart(key: string): boolean {
+  return effectiveMeta.value[key]?.restart === true;
+}
+
+// ── Pending-restart state (survives navigation + reload) ──────────────────────
+/**
+ * Keys that were SUCCESSFULLY SAVED and carry `restart: true`. Persisted so the
+ * banner (and its Restart button) survives navigation and a page reload, and is
+ * cleared only by a confirmed restart or an explicit dismissal.
+ */
+const restartPendingKeys = ref<string[]>([]);
+const restartPending = computed(() => restartPendingKeys.value.length > 0);
+
+const restartStorageKey = computed(() => `${RESTART_PENDING_PREFIX}:${apiBase.value || 'default'}`);
+
+/** Labels of the pending keys, for the banner copy. */
+const restartPendingLabels = computed(() => restartPendingKeys.value.map(k => getLabel(k)));
+
+function loadRestartPending(): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(restartStorageKey.value);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed)) {
+      restartPendingKeys.value = parsed.filter((v): v is string => typeof v === 'string');
+    }
+  } catch {
+    /* corrupt entry — ignore */
+  }
+}
+
+function persistRestartPending(): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (restartPendingKeys.value.length === 0) {
+      localStorage.removeItem(restartStorageKey.value);
+    } else {
+      localStorage.setItem(restartStorageKey.value, JSON.stringify(restartPendingKeys.value));
+    }
+  } catch {
+    /* quota / private mode — ignore */
+  }
+}
+
+function markRestartPending(keys: string[]): void {
+  const merged = new Set([...restartPendingKeys.value, ...keys]);
+  restartPendingKeys.value = Array.from(merged);
+  persistRestartPending();
+}
+
+function clearRestartPending(): void {
+  restartPendingKeys.value = [];
+  persistRestartPending();
+}
 
 function isOverridden(key: string): boolean {
   return overridden.value.includes(key);
 }
 
-function syncFormValues(source: Record<string, unknown>): void {
-  for (const key of Object.keys(formValues)) delete formValues[key];
-  for (const [key, val] of Object.entries(source)) {
-    if (key === GENRES_MODE_KEY) continue;
-    if (key.startsWith('_')) continue; // skip internal keys like _meta
-    formValues[key] = String(val ?? '');
-  }
+/** True when the server projects this key as JSON (schema `array` / `object`). */
+function isJsonField(key: string): boolean {
+  return fieldType(key) === 'json';
 }
 
-/** Seed the bespoke Metadata-tab state from the loaded settings map. */
-function syncMetadataState(source: Record<string, unknown>): void {
-  const mode = source[GENRES_MODE_KEY];
-  genresMode.value = typeof mode === 'string' && mode !== '' ? mode : 'first';
+/** Serialise a loaded value into its editable string form. */
+function toFormString(key: string, val: unknown): string {
+  if (isJsonField(key) || (val !== null && typeof val === 'object')) {
+    try {
+      return JSON.stringify(val ?? null, null, 2);
+    } catch {
+      return '';
+    }
+  }
+  return String(val ?? '');
+}
+
+function syncFormValues(source: Record<string, unknown>): void {
+  for (const key of Object.keys(formValues)) delete formValues[key];
+  for (const key of Object.keys(jsonErrors)) delete jsonErrors[key];
+  for (const [key, val] of Object.entries(source)) {
+    formValues[key] = toFormString(key, val);
+  }
 }
 
 function clearDirty(): void {
   for (const key of Object.keys(dirty)) delete dirty[key];
+}
+
+/** Apply a freshly fetched/saved payload to the page state. */
+function applySettings(data: { settings: Record<string, unknown>; overridden: string[] }): void {
+  settings.value = data.settings;
+  overridden.value = data.overridden;
+  syncFormValues(data.settings);
+  clearDirty();
 }
 
 async function loadSettings(): Promise<void> {
@@ -144,16 +299,12 @@ async function loadSettings(): Promise<void> {
   error.value = null;
   try {
     const data = await api.get();
-    settings.value = data.settings;
-    overridden.value = data.overridden;
     types.value = data.types;
     serverMeta.value = data.meta;
-    syncFormValues(data.settings);
-    syncMetadataState(data.settings);
-    clearDirty();
+    applySettings(data);
     fieldErrors.value = {};
     // Set initial tab to first available group
-    if (!currentTab.value && tabs.value.length > 0) {
+    if ((!currentTab.value || !tabs.value.some(t => t.value === currentTab.value)) && tabs.value.length > 0) {
       currentTab.value = tabs.value[0].value;
     }
   } catch (e) {
@@ -170,24 +321,39 @@ function fieldType(key: string): string {
 
 /** True when meta declares enum options for this key (render as Select). */
 function isEnumField(key: string): boolean {
-  const m = serverMeta.value[key];
-  return m != null && Array.isArray(m['enum']) && (m['enum'] as unknown[]).length > 0;
+  const m = effectiveMeta.value[key];
+  return m != null && Array.isArray(m.enum) && m.enum.length > 0;
 }
 
 /** Build Select options from meta enum + enumLabels. */
 function selectOptions(key: string): ReadonlyArray<SelectOptionInput> {
-  const m = serverMeta.value[key];
-  if (!m || !Array.isArray(m['enum'])) return [];
-  const enumArr = m['enum'] as string[];
-  const labels = m['enumLabels'] as Record<string, string> | null;
-  return enumArr.map(v => ({
+  const m = effectiveMeta.value[key];
+  if (!m || !Array.isArray(m.enum)) return [];
+  const labels = m.enumLabels;
+  return m.enum.map(v => ({
     value: v,
-    label: labels?.[v] ?? v,
+    // The empty string is a real enum member on some keys (an "auto-detect"
+    // sentinel); it needs a readable caption rather than an invisible one.
+    label: labels?.[v] ?? (v === '' ? 'Auto' : v),
   }));
 }
 
+/** Per-option help entries for an enum key (`optionHelp`), in enum order. */
+function optionHelpEntries(key: string): Array<{ value: string; label: string; help: string }> {
+  const m = effectiveMeta.value[key];
+  if (!m || !Array.isArray(m.enum) || !m.optionHelp) return [];
+  const help = m.optionHelp;
+  return m.enum
+    .filter(v => typeof help[v] === 'string' && help[v] !== '')
+    .map(v => ({
+      value: v,
+      label: m.enumLabels?.[v] ?? (v === '' ? 'Auto' : v),
+      help: help[v],
+    }));
+}
+
 function constraintFor(key: string): { min?: number; max?: number } {
-  const m = serverMeta.value[key];
+  const m = effectiveMeta.value[key];
   if (!m) return {};
   return {
     min: typeof m.minimum === 'number' ? m.minimum : undefined,
@@ -197,7 +363,7 @@ function constraintFor(key: string): { min?: number; max?: number } {
 
 /** True if this key's tier is 'advanced' and advanced mode is off. */
 function isAdvanced(key: string): boolean {
-  return serverMeta.value[key]?.tier === 'advanced';
+  return effectiveMeta.value[key]?.tier === 'advanced';
 }
 function isDisabled(key: string): boolean {
   return isAdvanced(key) && !settingsPrefsStore.advancedMode;
@@ -205,64 +371,136 @@ function isDisabled(key: string): boolean {
 
 /** Field label from meta, falling back to a human-readable key derivative. */
 function getLabel(key: string): string {
-  return serverMeta.value[key]?.label
-    ?? key.split('.').pop()?.replace(/_/g, ' ').replace(/\b[a-z]/g, c => c.toUpperCase())
-    ?? key;
+  return effectiveMeta.value[key]?.label || humanizeKey(key);
 }
 
 /** Help text from meta. */
 function getHelpText(key: string): string | undefined {
-  return serverMeta.value[key]?.helpText;
+  return effectiveMeta.value[key]?.helpText;
 }
 
 /** Help links from meta. */
 function getHelpLinks(key: string): Array<{ text: string; url: string }> | undefined {
-  return serverMeta.value[key]?.helpLinks;
+  return effectiveMeta.value[key]?.helpLinks;
+}
+
+/** True when a key has any help affordance worth rendering a (?) for. */
+function hasHelp(key: string): boolean {
+  return Boolean(getHelpText(key)) || (getHelpLinks(key)?.length ?? 0) > 0;
 }
 
 function setFieldValue(key: string, value: string): void {
   formValues[key] = value;
-  dirty[key] = value !== String(settings.value[key] ?? '');
+  dirty[key] = value !== toFormString(key, settings.value[key]);
 }
+
+/** Canonical JSON of the currently stored value, for dirty comparison. */
+function jsonBaseline(key: string): string {
+  try {
+    return JSON.stringify(settings.value[key] ?? null);
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * `json` field input: keeps the raw text (so the user's formatting survives),
+ * records a parse error when it is not valid JSON, and only marks the key dirty
+ * against the canonical form of the stored value.
+ */
+function setJsonValue(key: string, raw: string): void {
+  formValues[key] = raw;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    delete jsonErrors[key];
+    dirty[key] = JSON.stringify(parsed) !== jsonBaseline(key);
+  } catch (e) {
+    jsonErrors[key] = `Invalid JSON: ${e instanceof Error ? e.message : 'could not be parsed'}`;
+    dirty[key] = true;
+  }
+}
+
+/** Dirty, editable `json` keys whose current text does not parse. */
+const blockingJsonKeys = computed<string[]>(() =>
+  Object.keys(jsonErrors).filter(k => dirty[k] && !isDisabled(k)),
+);
 
 function toggleShowPassword(key: string): void {
   showPassword[key] = !showPassword[key];
 }
 
-/** Apply the chosen genres mode and mark the key dirty. */
-function setGenresMode(mode: string): void {
-  genresMode.value = mode;
-  dirty[GENRES_MODE_KEY] = mode !== String(settings.value[GENRES_MODE_KEY] ?? 'first');
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Poll the settings endpoint until the server answers again, with a linear
+ * backoff capped at 3× the base interval and a hard budget. The previously
+ * loaded settings stay on screen throughout, so the page never blanks while the
+ * server is coming back.
+ *
+ * @returns true when the server answered within the budget.
+ */
+async function waitForServer(): Promise<boolean> {
+  const start = Date.now();
+  let wait = props.restartPollIntervalMs;
+  while (Date.now() - start < props.restartPollTimeoutMs) {
+    await sleep(wait);
+    wait = Math.min(wait + props.restartPollIntervalMs / 2, props.restartPollIntervalMs * 3);
+    try {
+      const data = await api.get();
+      types.value = data.types;
+      serverMeta.value = data.meta;
+      applySettings(data);
+      fieldErrors.value = {};
+      return true;
+    } catch {
+      /* not back yet — keep polling */
+    }
+  }
+  return false;
 }
 
 async function restartServer(): Promise<void> {
+  if (restarting.value) return;
+  restarting.value = true;
   try {
     await api.restartServer();
-    toasts.success('Restart signal sent — server is reloading.');
-    // Wait for the server to restart, then re-fetch settings and clear the banner
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    await loadSettings();
-    clearDirty();
+    toasts.success('Restart signal sent — waiting for the server to come back…');
+    if (await waitForServer()) {
+      clearRestartPending();
+      toasts.success('Server is back online.');
+    } else {
+      toasts.error(
+        `The server did not respond within ${Math.round(props.restartPollTimeoutMs / 1000)}s. ` +
+          'It may still be starting — reload this page in a moment.',
+      );
+    }
   } catch (e) {
     toasts.error(errMessage(e, 'Failed to restart server.'));
+  } finally {
+    restarting.value = false;
   }
 }
 
 async function handleSubmit(): Promise<void> {
+  if (submitting.value) return;
+
+  // Save-gate: never PUT a `json` field whose text does not parse.
+  if (blockingJsonKeys.value.length > 0) {
+    const names = blockingJsonKeys.value.map(getLabel).join(', ');
+    toasts.error(`Fix the invalid JSON in ${names} before saving.`);
+    return;
+  }
+
   submitting.value = true;
   fieldErrors.value = {};
   try {
     const toSave: Record<string, unknown> = {};
-    for (const [key, isDirty] of Object.entries(dirty)) {
-      if (!isDirty) continue;
+    for (const [key, isDirtyKey] of Object.entries(dirty)) {
+      if (!isDirtyKey) continue;
       // Skip disabled advanced fields (they can't be edited)
       if (isDisabled(key)) continue;
-      // The bespoke enum metadata key carries its own working state and is sent
-      // verbatim (the server types it string), NOT string-coerced.
-      if (key === GENRES_MODE_KEY) {
-        toSave[key] = genresMode.value;
-        continue;
-      }
       const type = types.value[key];
       const value = formValues[key] ?? '';
       if (type === 'bool') {
@@ -271,6 +509,8 @@ async function handleSubmit(): Promise<void> {
         toSave[key] = parseInt(value, 10);
       } else if (type === 'float') {
         toSave[key] = parseFloat(value);
+      } else if (type === 'json') {
+        toSave[key] = JSON.parse(value);
       } else {
         toSave[key] = value;
       }
@@ -278,11 +518,13 @@ async function handleSubmit(): Promise<void> {
 
     const result = await api.save(toSave);
     toasts.success('Settings saved.');
-    settings.value = result.settings;
-    overridden.value = result.overridden;
-    clearDirty();
-    syncFormValues(result.settings);
-    syncMetadataState(result.settings);
+    applySettings(result);
+
+    // Restart semantics: the banner is driven by what was SUCCESSFULLY SAVED,
+    // never by the dirty set — so it appears exactly when a restart becomes
+    // necessary and stays until the restart happens (or is dismissed).
+    const savedRestartKeys = Object.keys(toSave).filter(k => restartKeys.value.includes(k));
+    if (savedRestartKeys.length > 0) markRestartPending(savedRestartKeys);
   } catch (e) {
     if (e instanceof ApiError && e.status === 400) {
       const body = e.body as { errors?: Record<string, string> } | undefined;
@@ -300,7 +542,10 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
-onMounted(loadSettings);
+onMounted(() => {
+  loadRestartPending();
+  return loadSettings();
+});
 </script>
 
 <template>
@@ -310,13 +555,10 @@ onMounted(loadSettings);
     </header>
 
     <PageHint>
-      All of your server's configuration, grouped into tabs — <strong>Access</strong> (sign-up
-      mode), <strong>Transcoding</strong>, <strong>Metadata</strong> (TMDB key and genres
-      mode), <strong>Markers</strong>, <strong>Subtitles</strong>,
-      <strong>Discovery</strong>, <strong>Trickplay</strong>, <strong>Newsletter</strong>,
-      <strong>Port Forward</strong>, and <strong>Scrobblers</strong>. Change fields on any tab,
-      then click <strong>Save settings</strong> to apply only what you changed; a
-      <strong>custom</strong> badge marks values overridden by your environment or config file.
+      All of your server's configuration, grouped into tabs. Change fields on any tab, then
+      click <strong>Save settings</strong> to apply only what you changed; a
+      <strong>custom</strong> badge marks values overridden by your environment or config
+      file, and the <strong>Advanced</strong> switch unlocks the expert-tier fields.
     </PageHint>
 
     <div v-if="loading" class="admin-settings__skel"><Skeleton variant="text" :lines="6" /></div>
@@ -333,6 +575,13 @@ onMounted(loadSettings);
     </EmptyState>
 
     <template v-else>
+      <!-- Older server: no `meta` block, so labels/help/tiers are unavailable. -->
+      <div v-if="metaMissing" class="settings-meta-notice" role="status">
+        This server did not send settings metadata, so help, grouping and Advanced tiers are
+        unavailable. Every setting is listed below with a name derived from its key. Update the
+        server to restore the full settings experience.
+      </div>
+
       <!-- Tabs driven from meta groups -->
       <div class="admin-settings__header-row">
         <Tabs v-model="currentTab" :tabs="tabs" label="Settings groups" />
@@ -345,12 +594,34 @@ onMounted(loadSettings);
         </div>
       </div>
 
-      <!-- Restart banner — only shows when dirty keys include a restart:true field -->
-      <div v-if="needsRestart" class="settings-restart-banner" role="alert">
-        <span>Some changes require a server restart to take effect.</span>
-        <button type="button" class="settings-restart-banner__btn" @click="restartServer">
-          Restart server
-        </button>
+      <!--
+        Restart banner — driven by SAVED restart:true keys (persisted), so it
+        appears once the restart actually becomes necessary and survives
+        navigation and reload until the restart is confirmed or dismissed.
+      -->
+      <div v-if="restartPending" class="settings-restart-banner" role="alert">
+        <span>
+          Saved changes to {{ restartPendingLabels.join(', ') }} require a server restart to take
+          effect.
+        </span>
+        <span class="settings-restart-banner__actions">
+          <button
+            type="button"
+            class="settings-restart-banner__btn"
+            :disabled="restarting"
+            @click="restartServer"
+          >
+            {{ restarting ? 'Restarting…' : 'Restart server' }}
+          </button>
+          <button
+            type="button"
+            class="settings-restart-banner__dismiss"
+            :disabled="restarting"
+            @click="clearRestartPending"
+          >
+            Dismiss
+          </button>
+        </span>
       </div>
 
       <div class="admin-settings__panel">
@@ -359,28 +630,8 @@ onMounted(loadSettings);
         </p>
         <form v-else class="admin-settings__form" @submit.prevent="handleSubmit">
           <div v-for="key in tabKeys" :key="key" class="admin-settings__field">
-            <!-- metadata.genres_mode → enumerated Select (special case, kept from original) -->
-            <template v-if="key === GENRES_MODE_KEY">
-              <label class="admin-settings__label" :for="`field-${key}`">
-                {{ getLabel(key) }}
-                <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
-                <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
-                <HelpPopover
-                  v-if="getHelpText(key)"
-                  :help-text="getHelpText(key) ?? ''"
-                  :help-links="getHelpLinks(key)"
-                />
-              </label>
-              <Select
-                :model-value="genresMode"
-                :options="selectOptions(key)"
-                :label="getLabel(key)"
-                @update:model-value="(v) => setGenresMode(String(v))"
-              />
-            </template>
-
             <!-- bool → Switch -->
-            <template v-else-if="fieldType(key) === 'bool'">
+            <template v-if="fieldType(key) === 'bool'">
               <div class="admin-settings__row">
                 <Switch
                   :model-value="formValues[key] === 'true' || formValues[key] === '1'"
@@ -391,9 +642,11 @@ onMounted(loadSettings);
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
                 <HelpPopover
-                  v-if="getHelpText(key)"
+                  v-if="hasHelp(key)"
                   :help-text="getHelpText(key) ?? ''"
                   :help-links="getHelpLinks(key)"
+                  :field-label="getLabel(key)"
+                  :title="getLabel(key)"
                 />
               </div>
             </template>
@@ -405,9 +658,11 @@ onMounted(loadSettings);
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
                 <HelpPopover
-                  v-if="getHelpText(key)"
+                  v-if="hasHelp(key)"
                   :help-text="getHelpText(key) ?? ''"
                   :help-links="getHelpLinks(key)"
+                  :field-label="getLabel(key)"
+                  :title="getLabel(key)"
                 />
               </label>
               <input
@@ -431,9 +686,11 @@ onMounted(loadSettings);
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
                 <HelpPopover
-                  v-if="getHelpText(key)"
+                  v-if="hasHelp(key)"
                   :help-text="getHelpText(key) ?? ''"
                   :help-links="getHelpLinks(key)"
+                  :field-label="getLabel(key)"
+                  :title="getLabel(key)"
                 />
               </label>
               <Select
@@ -443,18 +700,58 @@ onMounted(loadSettings);
                 :disabled="isDisabled(key)"
                 @update:model-value="(v) => setFieldValue(key, String(v))"
               />
+              <!-- Per-option help (schema `optionHelp`) — one line per choice. -->
+              <dl v-if="optionHelpEntries(key).length" class="admin-settings__option-help">
+                <template v-for="opt in optionHelpEntries(key)" :key="opt.value">
+                  <dt class="admin-settings__option-help-term">{{ opt.label }}</dt>
+                  <dd class="admin-settings__option-help-desc">{{ opt.help }}</dd>
+                </template>
+              </dl>
             </template>
 
-            <!-- secret string → text/password input with show toggle -->
-            <template v-else-if="serverMeta[key]?.secret">
+            <!-- array / object → JSON textarea -->
+            <template v-else-if="isJsonField(key)">
               <label class="admin-settings__label" :for="`field-${key}`">
                 {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
                 <HelpPopover
-                  v-if="getHelpText(key)"
+                  v-if="hasHelp(key)"
                   :help-text="getHelpText(key) ?? ''"
                   :help-links="getHelpLinks(key)"
+                  :field-label="getLabel(key)"
+                  :title="getLabel(key)"
+                />
+              </label>
+              <textarea
+                :id="`field-${key}`"
+                class="admin-settings__input admin-settings__textarea"
+                :class="{ 'admin-settings__textarea--invalid': jsonErrors[key] }"
+                rows="6"
+                spellcheck="false"
+                autocomplete="off"
+                :value="formValues[key]"
+                :aria-invalid="jsonErrors[key] ? 'true' : undefined"
+                :disabled="isDisabled(key)"
+                @input="(e) => setJsonValue(key, (e.target as HTMLTextAreaElement).value)"
+              />
+              <span v-if="jsonErrors[key]" class="admin-settings__error" role="alert">
+                {{ jsonErrors[key] }}
+              </span>
+            </template>
+
+            <!-- secret string → text/password input with show toggle -->
+            <template v-else-if="effectiveMeta[key]?.secret">
+              <label class="admin-settings__label" :for="`field-${key}`">
+                {{ getLabel(key) }}
+                <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
+                <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
+                <HelpPopover
+                  v-if="hasHelp(key)"
+                  :help-text="getHelpText(key) ?? ''"
+                  :help-links="getHelpLinks(key)"
+                  :field-label="getLabel(key)"
+                  :title="getLabel(key)"
                 />
               </label>
               <div class="admin-settings__row">
@@ -486,9 +783,11 @@ onMounted(loadSettings);
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
                 <HelpPopover
-                  v-if="getHelpText(key)"
+                  v-if="hasHelp(key)"
                   :help-text="getHelpText(key) ?? ''"
                   :help-links="getHelpLinks(key)"
+                  :field-label="getLabel(key)"
+                  :title="getLabel(key)"
                 />
               </label>
               <input
@@ -501,6 +800,11 @@ onMounted(loadSettings);
                 @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
               />
             </template>
+
+            <!-- Per-field restart note (schema `restart: true`) — §3.35 -->
+            <span v-if="requiresRestart(key)" class="field-restart-note">
+              Requires a server restart to take effect
+            </span>
 
             <span v-if="fieldErrors[key]" class="admin-settings__error" role="alert">
               {{ fieldErrors[key] }}
@@ -611,6 +915,33 @@ onMounted(loadSettings);
   cursor: not-allowed;
   background: var(--surface-2);
 }
+.admin-settings__textarea {
+  height: auto;
+  min-height: 8rem;
+  padding: var(--space-2) var(--control-pad-x);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  line-height: 1.5;
+  resize: vertical;
+}
+.admin-settings__textarea--invalid {
+  border-color: var(--error);
+}
+.admin-settings__option-help {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  max-width: 40rem;
+  font-size: var(--text-xs);
+}
+.admin-settings__option-help-term {
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+}
+.admin-settings__option-help-desc {
+  margin: 0;
+  color: var(--text-subtle);
+}
 .admin-settings__error {
   font-size: var(--text-xs);
   color: var(--error);
@@ -646,6 +977,17 @@ onMounted(loadSettings);
   color: var(--text-muted);
 }
 
+/* "This server is too old to send metadata" notice */
+.settings-meta-notice {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
 /* Restart banner */
 .settings-restart-banner {
   display: flex;
@@ -659,6 +1001,12 @@ onMounted(loadSettings);
   border: 1px solid var(--warning-border, rgba(234, 179, 8, 0.3));
   color: var(--warning-text, var(--text));
   font-size: var(--text-sm);
+}
+.settings-restart-banner__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 .settings-restart-banner__btn {
   padding: var(--space-1) var(--space-3);
@@ -674,6 +1022,20 @@ onMounted(loadSettings);
 .settings-restart-banner__btn:hover {
   background: var(--warning-hover, #ca8a04);
 }
+.settings-restart-banner__btn:disabled,
+.settings-restart-banner__dismiss:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.settings-restart-banner__dismiss {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid currentcolor;
+  color: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
 
 /* Advanced badge */
 .field-advanced-badge {
@@ -686,6 +1048,12 @@ onMounted(loadSettings);
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text-subtle);
+}
+
+/* Per-field "requires restart" note */
+.field-restart-note {
+  font-size: var(--text-xs);
+  color: var(--warning-text, var(--text-muted));
 }
 
 @media (prefers-reduced-motion: reduce) {

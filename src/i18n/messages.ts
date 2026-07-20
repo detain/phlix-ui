@@ -371,9 +371,11 @@ export const DEFAULT_MESSAGES = {
     sectionsLabel: 'Settings sections',
     tabAppearance: 'Appearance',
     tabPlayback: 'Playback',
-    tabServer: 'Server',
     tabSecurity: 'Security',
-    // SettingsForm (Server tab) chrome
+    // DEPRECATED — the keys below belonged to the removed "Server" tab
+    // (SettingsForm.vue). They are retained so a consumer that overrides them in
+    // its own message catalogue does not break; nothing renders them any more.
+    tabServer: 'Server',
     unsaved: 'Unsaved',
     saveGroup: 'Save {name}',
     groupSaved: '{name} settings saved.',
@@ -381,10 +383,10 @@ export const DEFAULT_MESSAGES = {
     loadFailed: 'Failed to load settings',
     loadErrorTitle: "Couldn't load settings",
     // NOTE: the appearance option *enum* labels (theme/accent/density/grid/motion/
-    // quality/subtitle-language names) AND the SettingsForm Server-config labels
-    // (the 9 group names + per-key labels like "TMDB API Key"/"Trakt client ID"/
-    // "Enable UPnP") deliberately stay inline-English — operator/technical copy,
-    // matching the R6.5c decision to keep enum + admin labels English.
+    // quality/subtitle-language names) deliberately stay inline-English —
+    // operator/technical copy, matching the R6.5c decision to keep enum + admin
+    // labels English. Admin server-settings labels now come from the server's
+    // schema `meta` block, not from this catalogue at all.
   },
   explore: {
     title: 'Explore Similar',

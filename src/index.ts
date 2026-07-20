@@ -60,7 +60,7 @@ export type {
     SaveAudiobookProgressInput,
 } from './types/audiobook';
 export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
-export type { ServerSettings, ProviderPriority, GenresMode } from './types/server-settings';
+export type { ProviderPriority, GenresMode } from './types/server-settings';
 
 export { default as Icon } from './components/Icon.vue';
 export type { IconName } from './components/Icon.vue';
@@ -95,7 +95,7 @@ export { default as SourcePriorityEditor } from './components/SourcePriorityEdit
 // mounts them as lazy `() => import()` route chunks; a static re-export here would re-merge
 // them into the main bundle (Rollup INEFFECTIVE_DYNAMIC_IMPORT) and defeat the code-split.
 // The reusable *building blocks* (MediaCard/MediaGrid/MediaRow/MediaHomeRow/MediaDetail/
-// FilterBar above; Player + player/* parts and LoginForm/SignupForm/SettingsForm below) ARE
+// FilterBar above; Player + player/* parts and LoginForm/SignupForm below) ARE
 // exported — consumers compose pages from those, not from the page shells.
 
 // Admin port (RA) — server admin surfaces + their mount seam. NOTE: the admin
@@ -256,7 +256,6 @@ export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 // Player surface exports moved to @phlix/ui/player secondary entry
 export { default as LoginForm } from './components/LoginForm.vue';
 export { default as SignupForm } from './components/SignupForm.vue';
-export { default as SettingsForm } from './components/SettingsForm.vue';
 // NOTE (R6.1a): PlayerPage / LoginPage / SignupPage / SettingsPage are lazy route chunks
 // mounted by `createPhlixApp` (see the built-in-pages note near MediaDetail) — not
 // re-exported. The long-tail consumer pages below ARE still exported because the

@@ -5,14 +5,23 @@
 
 <script setup lang="ts">
 /**
- * SettingsPage (R4.2) — hosts the user/appearance + server settings under the
- * shared Tabs primitive: Appearance + Playback (live `usePreferencesStore`
- * controls via AppearanceSettings) and Server (the schema-driven SettingsForm).
+ * SettingsPage (R4.2) — hosts the per-user preferences under the shared Tabs
+ * primitive: Appearance + Playback (live `usePreferencesStore` controls via
+ * AppearanceSettings) and Security (WebAuthn/passkeys).
+ *
+ * NOTE: the former "Server" tab (`SettingsForm.vue`) was removed. It rendered a
+ * hand-maintained subset of the SERVER settings schema against the PER-USER
+ * endpoint `GET/PUT /api/v1/users/me/settings`, which returns
+ * `{ settings: { max_streams, max_bitrate, preferred_*_language,
+ * subtitle_mode } }` — none of the keys it rendered — so every field showed a
+ * coerced default and every save wrote server-setting keys into the user
+ * settings row. Server configuration lives on the admin-gated
+ * `pages/admin/SettingsPage.vue`, which is driven entirely by the server's
+ * schema `meta`.
  */
 import { ref } from 'vue';
 import Tabs, { type TabItem } from '../components/ui/Tabs.vue';
 import AppearanceSettings from '../components/AppearanceSettings.vue';
-import SettingsForm from '../components/SettingsForm.vue';
 import SecuritySettingsPage from './SecuritySettingsPage.vue';
 import { useMessages } from '../composables/useMessages';
 
@@ -26,7 +35,6 @@ const { t } = useMessages();
 const TABS: TabItem[] = [
   { value: 'appearance', label: t('settings.tabAppearance'), icon: 'sun' },
   { value: 'playback', label: t('settings.tabPlayback'), icon: 'play' },
-  { value: 'server', label: t('settings.tabServer'), icon: 'settings' },
   { value: 'security', label: t('settings.tabSecurity'), icon: 'key' },
 ];
 
@@ -46,9 +54,6 @@ const tab = ref('appearance');
       </template>
       <template #playback>
         <AppearanceSettings panel="playback" />
-      </template>
-      <template #server>
-        <SettingsForm />
       </template>
       <template #security>
         <SecuritySettingsPage />

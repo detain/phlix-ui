@@ -1,10 +1,28 @@
 /**
+ * Value shapes for the two non-scalar server settings.
+ *
+ * This module used to also declare a hand-maintained `ServerSettings` interface
+ * and a `SettingGroup` union enumerating every server setting key and group.
+ * Both were RETIRED: the server settings schema is the single source of truth
+ * and reaches the UI at runtime through the `meta` block of
+ * `GET /api/v1/admin/settings` (see {@link ../api/admin/settings.SettingMeta}).
+ * The hand-written copies had drifted to roughly a third of the real key set and
+ * three quarters of the groups, and nothing consumed them once the settings page
+ * became schema-driven.
+ *
+ * What remains here are the two value-shape aliases that describe how a setting's
+ * VALUE is structured — information the schema's `type: object` / `type: array`
+ * does not carry — and which are useful to consumers reading those settings.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
+ */
+
+/**
  * How the `genres` field is combined across metadata sources
  * (`metadata.genres_mode`): `'first'` = take the genres from the first source
  * in the priority order that supplies any (first-non-empty); `'union'` = merge
  * the distinct genres from every contributing source.
- * @copyright 2026 Joe Huss <detain@interserver.net>
- * @license MIT
  */
 export type GenresMode = 'first' | 'union';
 
@@ -18,30 +36,3 @@ export type GenresMode = 'first' | 'union';
  * default for that type.
  */
 export type ProviderPriority = Record<string, string[]>;
-
-export interface ServerSettings {
-    'hwaccel.enabled'?: boolean;
-    'hwaccel.prefer_hardware'?: boolean;
-    'hwaccel.probe_timeout'?: number;
-    'tmdb.api_key'?: string;
-    /** Per-media-type ordered metadata-source priority (object → JSON). */
-    'metadata.provider_priority'?: ProviderPriority;
-    /** How genres are combined across sources: 'first' | 'union'. */
-    'metadata.genres_mode'?: GenresMode;
-    'marker_detection.similarity_threshold'?: number;
-    'marker_detection.intro_max_duration'?: number;
-    'subtitles.enabled'?: boolean;
-    'subtitles.default_language'?: string;
-    'subtitles.burn_in_by_default'?: boolean;
-    'discovery.discovery_port'?: number;
-    'trickplay.enabled'?: boolean;
-    'trickplay.interval_seconds'?: number;
-    'newsletter.enabled'?: boolean;
-    'newsletter.send_hour'?: number;
-    'port-forward.port_forwarding.upnp_enabled'?: boolean;
-    'trakt.client_id'?: string;
-    'trakt.client_secret'?: string;
-    'trakt.redirect_uri'?: string;
-}
-
-export type SettingGroup = 'transcoding' | 'metadata' | 'markers' | 'subtitles' | 'discovery' | 'trickplay' | 'newsletter' | 'port-forward' | 'scrobblers';

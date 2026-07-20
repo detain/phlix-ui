@@ -18,6 +18,13 @@ export interface SettingMeta {
   helpLinks: Array<{ text: string; url: string }>;
   tier: 'standard' | 'advanced';
   group: string;
+  /**
+   * OPTIONAL human-readable caption for {@link group}. The server does not emit
+   * this today — the UI derives a tab caption from the group key — but the field
+   * is honoured when present so the server can become the single authority for
+   * group captions without a UI change.
+   */
+  groupLabel?: string;
   enum: string[] | null;
   enumLabels: Record<string, string> | null;
   optionHelp: Record<string, string> | null;

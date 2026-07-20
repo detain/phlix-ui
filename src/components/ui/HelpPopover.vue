@@ -13,7 +13,7 @@
  * On open it traps focus inside the panel; on close focus returns to the trigger.
  * Uses `useFocusTrap` for accessibility. Reduced-motion aware.
  */
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 import Icon from '../Icon.vue';
 import IconButton from './IconButton.vue';
 import HelpText, { type HelpLink } from './HelpText.vue';
@@ -30,11 +30,22 @@ const props = withDefaults(
     helpLinks?: readonly HelpLink[];
     /** Optional label for the popover header. */
     title?: string;
+    /**
+     * Name of the field this help belongs to. Used to build a distinct
+     * accessible name for the trigger ("Help for Discovery port") so a screen
+     * reader user on a tab with a dozen fields can tell the (?) buttons apart.
+     */
+    fieldLabel?: string;
   }>(),
-  { helpLinks: undefined, title: undefined },
+  { helpLinks: undefined, title: undefined, fieldLabel: undefined },
 );
 
-const id = computed(() => `phlix-help-popover-${Math.random().toString(36).slice(2)}`);
+const id = `phlix-help-popover-${useId()}`;
+
+/** Accessible name for the (?) trigger — names its field whenever we know it. */
+const triggerLabel = computed(() =>
+  props.fieldLabel ? `Help for ${props.fieldLabel}` : 'Help',
+);
 
 const open = ref(false);
 const triggerEl = ref<HTMLButtonElement | null>(null);
@@ -118,7 +129,7 @@ useFocusTrap(panelEl, open, {
       class="phlix-help-popover__trigger"
       :aria-expanded="open"
       :aria-controls="open ? id : undefined"
-      aria-label="Help"
+      :aria-label="triggerLabel"
       @click="togglePopover"
     >
       <Icon name="info" :size="0.9" />
@@ -136,7 +147,7 @@ useFocusTrap(panelEl, open, {
           role="dialog"
           aria-modal="false"
         >
-          <header v-if="title || true" class="phlix-help-popover__header">
+          <header class="phlix-help-popover__header">
             <span class="phlix-help-popover__title">{{ title ?? 'Help' }}</span>
             <IconButton
               name="x"
