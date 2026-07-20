@@ -1,20 +1,20 @@
 <!--
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
--->
+ -->
 
 <script setup lang="ts">
 /**
- * Admin SettingsPage (RA.16) — server "Settings" administration, ported 1:1 from
- * the deleted React `SettingsPage` onto the `@phlix/ui` primitives. Reads the
- * grouped `/api/v1/admin/settings` map (9 schema groups / ~19 keys), renders each
- * group as a tab of fields typed from the server `types` map (bool → Switch,
- * int/float → native number input, string → native text/password input, and an
- * enumerated string → Select), tracks per-key dirty state, coerces each changed
- * value to its schema type, and PUTs only the changed keys. Per-field validation
- * errors from a 400 response render inline; success/error otherwise surface as
- * toasts. Each save refetches the resolved settings + overridden list (matching
- * the React source).
+ * Admin SettingsPage (RA.16) — schema-driven settings administration.
+ *
+ * ALL rendering is driven by the server's `meta` block received from
+ * `GET /api/v1/admin/settings`. The server provides: group (tab), label,
+ * helpText, helpLinks, tier (standard|advanced), restart flag, numeric
+ * min/max, enum options/labels, and secret flag — replacing all formerly
+ * hardcoded maps.
+ *
+ * Per-key dirty state, type coercion, per-field validation errors, and
+ * partial PUT are preserved from the original implementation.
  */
 import { ref, computed, reactive, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient, ApiError } from '../../api/client';
@@ -22,6 +22,7 @@ import { errMessage } from '../../api/errors';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import { AdminSettingsApi } from '../../api/admin/settings';
 import { useToastStore } from '../../stores/useToastStore';
+import { useSettingsPrefsStore } from '../../stores/useSettingsPrefs';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
 import Button from '../../components/ui/Button.vue';
@@ -30,6 +31,7 @@ import Switch from '../../components/ui/Switch.vue';
 import Tabs, { type TabItem } from '../../components/ui/Tabs.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
+import HelpPopover from '../../components/ui/HelpPopover.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 
 const props = defineProps<{
@@ -45,131 +47,34 @@ const apiClient =
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() });
 const api = new AdminSettingsApi(apiClient);
 const toasts = useToastStore();
+const settingsPrefsStore = useSettingsPrefsStore();
 
 /**
  * The enum metadata key that drives the bespoke Metadata-tab UI (the genres-mode
- * select). It is served by the same `/api/v1/admin/settings` map (the shared
- * schema types it `string`) but cannot use the generic string-coercing form path
- * — it is tracked in its own state and sent back through the same PUT.
- * (Per-media-type source priority now lives per-library on the Libraries page.)
+ * select). It cannot use the generic string-coercing form path — it is tracked
+ * in its own state and sent back through the same PUT.
  */
 const GENRES_MODE_KEY = 'metadata.genres_mode';
-
-/** Options for the genres-mode select (mirrors the shared schema `enum`). */
-const GENRES_MODE_OPTIONS: ReadonlyArray<SelectOptionInput> = [
-  { value: 'first', label: 'First — genres from the first source that supplies any' },
-  { value: 'union', label: 'Union — merge distinct genres from every source' },
-];
-
-/** Tab definitions — order must match the spec. */
-const TABS = [
-  { id: 'access', label: 'Access' },
-  { id: 'transcoding', label: 'Transcoding' },
-  { id: 'metadata', label: 'Metadata' },
-  { id: 'markers', label: 'Markers' },
-  { id: 'subtitles', label: 'Subtitles' },
-  { id: 'discovery', label: 'Discovery' },
-  { id: 'trickplay', label: 'Trickplay' },
-  { id: 'newsletter', label: 'Newsletter' },
-  { id: 'port-forward', label: 'Port Forward' },
-  { id: 'scrobblers', label: 'Scrobblers' },
-] as const;
-
-type TabId = (typeof TABS)[number]['id'];
-
-/** Tabs in the shared `ui/Tabs` primitive's `{ value, label }` shape. */
-const TAB_ITEMS: TabItem[] = TABS.map((t) => ({ value: t.id, label: t.label }));
-
-/** Keys that belong to each tab group. */
-const TAB_KEYS: Record<TabId, string[]> = {
-  access: ['auth.signup_mode'],
-  transcoding: ['hwaccel.enabled', 'hwaccel.prefer_hardware', 'hwaccel.probe_timeout'],
-  metadata: ['tmdb.api_key', 'metadata.genres_mode'],
-  markers: ['marker_detection.similarity_threshold', 'marker_detection.intro_max_duration'],
-  subtitles: ['subtitles.enabled', 'subtitles.default_language', 'subtitles.burn_in_by_default'],
-  discovery: ['discovery.discovery_port'],
-  trickplay: ['trickplay.enabled', 'trickplay.interval_seconds'],
-  newsletter: ['newsletter.enabled', 'newsletter.send_hour'],
-  'port-forward': ['port-forward.port_forwarding.upnp_enabled'],
-  scrobblers: ['trakt.client_id', 'trakt.client_secret', 'trakt.redirect_uri'],
-};
-
-/** Constraints for number fields (min/max from schema). */
-const NUMERIC_CONSTRAINTS: Record<string, { min?: number; max?: number }> = {
-  'hwaccel.probe_timeout': { min: 0 },
-  'marker_detection.similarity_threshold': { min: 0, max: 1 },
-  'marker_detection.intro_max_duration': { min: 0 },
-  'discovery.discovery_port': { min: 1, max: 65535 },
-  'trickplay.interval_seconds': { min: 1 },
-  'newsletter.send_hour': { min: 0, max: 23 },
-};
-
-/** Fields that should render as a password input. */
-const PASSWORD_FIELDS = new Set(['tmdb.api_key', 'trakt.client_secret']);
-
-/**
- * String keys with a fixed enumerated set of values — rendered as a Select.
- * (A strict improvement over the React source's free-text input for these.)
- */
-const SELECT_OPTIONS: Record<string, ReadonlyArray<SelectOptionInput>> = {
-  'auth.signup_mode': [
-    { value: 'open', label: 'Open — anyone can sign up' },
-    { value: 'approval', label: 'Require admin approval' },
-    { value: 'disabled', label: 'Disabled — no new signups' },
-  ],
-  'subtitles.default_language': [
-    { value: 'en', label: 'English' },
-    { value: 'es', label: 'Spanish' },
-    { value: 'fr', label: 'French' },
-    { value: 'de', label: 'German' },
-    { value: 'it', label: 'Italian' },
-    { value: 'ja', label: 'Japanese' },
-  ],
-};
-
-/** Explicit, unambiguous labels for keys whose derived name is unclear. */
-const FIELD_LABELS: Record<string, string> = {
-  'auth.signup_mode': 'Signup mode',
-  'tmdb.api_key': 'TMDB API Key',
-  'metadata.genres_mode': 'Genres mode',
-  'trakt.client_id': 'Trakt Client ID',
-  'trakt.client_secret': 'Trakt Client Secret',
-  'trakt.redirect_uri': 'Trakt Redirect URI',
-};
-
-/** Inline help shown under a field. */
-const FIELD_HELP: Record<string, string> = {
-  'auth.signup_mode':
-    'Controls who can create an account. "Open" lets anyone register and sign in immediately. "Require admin approval" creates accounts in a pending state — review them in the Users page approval queue before they can sign in. "Disabled" turns off new signups entirely.',
-  'tmdb.api_key':
-    'Your TMDB (The Movie Database) API key — get one free at themoviedb.org → Settings → API (v3 auth). Used to fetch movie & TV metadata, posters, and external IDs.',
-  'trakt.client_id':
-    'Register an application at trakt.tv/oauth/applications to get a client ID and secret. Saving here overrides the TRAKT_CLIENT_ID environment variable.',
-  'trakt.client_secret':
-    'The client secret paired with your Trakt client ID. Overrides the TRAKT_CLIENT_SECRET environment variable.',
-  'trakt.redirect_uri':
-    "Must exactly match the redirect URI registered in your Trakt app — this server's /api/v1/oauth/trakt/callback URL.",
-  'metadata.genres_mode':
-    'How genres are combined across sources. "First" takes the genres from the first source in the priority order that supplies any; "Union" merges the distinct genres from every contributing source.',
-};
-
-function getDisplayName(key: string): string {
-  if (FIELD_LABELS[key]) return FIELD_LABELS[key];
-  const tail = key.split('.').pop() ?? key;
-  return tail.replace(/_/g, ' ').replace(/\b[a-z]/g, (c) => c.toUpperCase());
-}
-
-function isOverridden(key: string): boolean {
-  return overridden.value.includes(key);
-}
 
 // ── Settings data ─────────────────────────────────────────────────────────────
 const settings = ref<Record<string, unknown>>({});
 const overridden = ref<string[]>([]);
 const types = ref<Record<string, string>>({});
 
+// ── Schema-driven meta ─────────────────────────────────────────────────────────
+/** Full metadata block from server — drives all labels, help, options, constraints. */
+const serverMeta = ref<Record<string, import('../../api/admin/settings').SettingMeta>>({});
+
+/** Build tab list from unique groups in meta. */
+const tabs = computed<TabItem[]>(() => {
+  const groups = new Set(Object.values(serverMeta.value).map(m => m.group));
+  return Array.from(groups).sort().map(g => ({ value: g, label: g }));
+});
+
+/** Currently active tab. */
+const currentTab = ref<string>('');
+
 // ── UI state ──────────────────────────────────────────────────────────────────
-const activeTab = ref<string>('access');
 const loading = ref(true);
 const error = ref<string | null>(null);
 const submitting = ref(false);
@@ -185,14 +90,41 @@ const dirty = reactive<Record<string, boolean>>({});
 const genresMode = ref<string>('first');
 
 const hasAnyChanges = computed(() => Object.values(dirty).some(Boolean));
-const activeKeys = computed<string[]>(() => TAB_KEYS[activeTab.value as TabId] ?? []);
+
+/** Keys belonging to the current tab, ordered by their index in serverMeta. */
+const tabKeys = computed<string[]>(() =>
+  Object.entries(serverMeta.value)
+    .filter(([, m]) => m.group === currentTab.value)
+    .sort(([, a], [, b]) => {
+      // Maintain server-provided ordering if available, otherwise alphabetical
+      const aIdx = (a as any)._order ?? 0;
+      const bIdx = (b as any)._order ?? 0;
+      return aIdx - bIdx;
+    })
+    .map(([key]) => key)
+);
+
+/** Keys that require a server restart when changed. */
+const restartKeys = computed<string[]>(() =>
+  Object.entries(serverMeta.value)
+    .filter(([, m]) => m.restart === true)
+    .map(([key]) => key)
+);
+
+/** Whether any dirty key requires a restart. */
+const needsRestart = computed(() =>
+  Object.keys(dirty).filter(k => dirty[k]).some(k => restartKeys.value.includes(k))
+);
+
+function isOverridden(key: string): boolean {
+  return overridden.value.includes(key);
+}
 
 function syncFormValues(source: Record<string, unknown>): void {
   for (const key of Object.keys(formValues)) delete formValues[key];
   for (const [key, val] of Object.entries(source)) {
-    // The bespoke metadata enum has its own select + state — never stringify it
-    // into the generic text formValues.
     if (key === GENRES_MODE_KEY) continue;
+    if (key.startsWith('_')) continue; // skip internal keys like _meta
     formValues[key] = String(val ?? '');
   }
 }
@@ -215,10 +147,15 @@ async function loadSettings(): Promise<void> {
     settings.value = data.settings;
     overridden.value = data.overridden;
     types.value = data.types;
+    serverMeta.value = data.meta;
     syncFormValues(data.settings);
     syncMetadataState(data.settings);
     clearDirty();
     fieldErrors.value = {};
+    // Set initial tab to first available group
+    if (!currentTab.value && tabs.value.length > 0) {
+      currentTab.value = tabs.value[0].value;
+    }
   } catch (e) {
     error.value = errMessage(e, 'Failed to load settings.');
     toasts.error(error.value);
@@ -231,16 +168,56 @@ function fieldType(key: string): string {
   return types.value[key] ?? 'string';
 }
 
-function isSelectField(key: string): boolean {
-  return SELECT_OPTIONS[key] !== undefined;
+/** True when meta declares enum options for this key (render as Select). */
+function isEnumField(key: string): boolean {
+  const m = serverMeta.value[key];
+  return m != null && Array.isArray(m['enum']) && (m['enum'] as unknown[]).length > 0;
 }
 
+/** Build Select options from meta enum + enumLabels. */
 function selectOptions(key: string): ReadonlyArray<SelectOptionInput> {
-  return SELECT_OPTIONS[key] ?? [];
+  const m = serverMeta.value[key];
+  if (!m || !Array.isArray(m['enum'])) return [];
+  const enumArr = m['enum'] as string[];
+  const labels = m['enumLabels'] as Record<string, string> | null;
+  return enumArr.map(v => ({
+    value: v,
+    label: labels?.[v] ?? v,
+  }));
 }
 
 function constraintFor(key: string): { min?: number; max?: number } {
-  return NUMERIC_CONSTRAINTS[key] ?? {};
+  const m = serverMeta.value[key];
+  if (!m) return {};
+  return {
+    min: typeof m.minimum === 'number' ? m.minimum : undefined,
+    max: typeof m.maximum === 'number' ? m.maximum : undefined,
+  };
+}
+
+/** True if this key's tier is 'advanced' and advanced mode is off. */
+function isAdvanced(key: string): boolean {
+  return serverMeta.value[key]?.tier === 'advanced';
+}
+function isDisabled(key: string): boolean {
+  return isAdvanced(key) && !settingsPrefsStore.advancedMode;
+}
+
+/** Field label from meta, falling back to a human-readable key derivative. */
+function getLabel(key: string): string {
+  return serverMeta.value[key]?.label
+    ?? key.split('.').pop()?.replace(/_/g, ' ').replace(/\b[a-z]/g, c => c.toUpperCase())
+    ?? key;
+}
+
+/** Help text from meta. */
+function getHelpText(key: string): string | undefined {
+  return serverMeta.value[key]?.helpText;
+}
+
+/** Help links from meta. */
+function getHelpLinks(key: string): Array<{ text: string; url: string }> | undefined {
+  return serverMeta.value[key]?.helpLinks;
 }
 
 function setFieldValue(key: string, value: string): void {
@@ -258,6 +235,12 @@ function setGenresMode(mode: string): void {
   dirty[GENRES_MODE_KEY] = mode !== String(settings.value[GENRES_MODE_KEY] ?? 'first');
 }
 
+/** Placeholder for restart functionality (Phase 8). */
+function restartServer(): void {
+  // TODO(Phase 8): Implement actual restart HTTP call
+  toasts.info('Restart triggered (placeholder).');
+}
+
 async function handleSubmit(): Promise<void> {
   submitting.value = true;
   fieldErrors.value = {};
@@ -265,6 +248,8 @@ async function handleSubmit(): Promise<void> {
     const toSave: Record<string, unknown> = {};
     for (const [key, isDirty] of Object.entries(dirty)) {
       if (!isDirty) continue;
+      // Skip disabled advanced fields (they can't be edited)
+      if (isDisabled(key)) continue;
       // The bespoke enum metadata key carries its own working state and is sent
       // verbatim (the server types it string), NOT string-coerced.
       if (key === GENRES_MODE_KEY) {
@@ -341,24 +326,48 @@ onMounted(loadSettings);
     </EmptyState>
 
     <template v-else>
-      <!-- Tabs (shared a11y primitive: roving tabindex + aria-controls/labelledby) -->
-      <Tabs v-model="activeTab" :tabs="TAB_ITEMS" label="Settings groups">
-        <div class="admin-settings__panel">
-        <p v-if="activeKeys.length === 0" class="admin-settings__empty" role="status">
+      <!-- Tabs driven from meta groups -->
+      <div class="admin-settings__header-row">
+        <Tabs v-model="currentTab" :tabs="tabs" label="Settings groups" />
+        <div class="settings-advanced-toggle">
+          <span class="settings-advanced-toggle__label">Advanced</span>
+          <Switch
+            :model-value="settingsPrefsStore.advancedMode"
+            @update:model-value="settingsPrefsStore.setAdvancedMode($event)"
+          />
+        </div>
+      </div>
+
+      <!-- Restart banner — only shows when dirty keys include a restart:true field -->
+      <div v-if="needsRestart" class="settings-restart-banner" role="alert">
+        <span>Some changes require a server restart to take effect.</span>
+        <button type="button" class="settings-restart-banner__btn" @click="restartServer">
+          Restart server
+        </button>
+      </div>
+
+      <div class="admin-settings__panel">
+        <p v-if="tabKeys.length === 0" class="admin-settings__empty" role="status">
           No settings in this group.
         </p>
         <form v-else class="admin-settings__form" @submit.prevent="handleSubmit">
-          <div v-for="key in activeKeys" :key="key" class="admin-settings__field">
-            <!-- metadata.genres_mode → enumerated Select -->
+          <div v-for="key in tabKeys" :key="key" class="admin-settings__field">
+            <!-- metadata.genres_mode → enumerated Select (special case, kept from original) -->
             <template v-if="key === GENRES_MODE_KEY">
               <label class="admin-settings__label" :for="`field-${key}`">
-                {{ getDisplayName(key) }}
+                {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
+                <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
+                <HelpPopover
+                  v-if="getHelpText(key)"
+                  :help-text="getHelpText(key) ?? ''"
+                  :help-links="getHelpLinks(key)"
+                />
               </label>
               <Select
                 :model-value="genresMode"
-                :options="GENRES_MODE_OPTIONS"
-                :label="getDisplayName(key)"
+                :options="selectOptions(key)"
+                :label="getLabel(key)"
                 @update:model-value="(v) => setGenresMode(String(v))"
               />
             </template>
@@ -368,18 +377,31 @@ onMounted(loadSettings);
               <div class="admin-settings__row">
                 <Switch
                   :model-value="formValues[key] === 'true' || formValues[key] === '1'"
-                  :label="getDisplayName(key)"
+                  :label="getLabel(key)"
+                  :disabled="isDisabled(key)"
                   @update:model-value="(v) => setFieldValue(key, v ? 'true' : 'false')"
                 />
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
+                <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
+                <HelpPopover
+                  v-if="getHelpText(key)"
+                  :help-text="getHelpText(key) ?? ''"
+                  :help-links="getHelpLinks(key)"
+                />
               </div>
             </template>
 
             <!-- int / float → native number input -->
             <template v-else-if="fieldType(key) === 'int' || fieldType(key) === 'float'">
               <label class="admin-settings__label" :for="`field-${key}`">
-                {{ getDisplayName(key) }}
+                {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
+                <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
+                <HelpPopover
+                  v-if="getHelpText(key)"
+                  :help-text="getHelpText(key) ?? ''"
+                  :help-links="getHelpLinks(key)"
+                />
               </label>
               <input
                 :id="`field-${key}`"
@@ -390,29 +412,43 @@ onMounted(loadSettings);
                 :max="constraintFor(key).max"
                 :step="fieldType(key) === 'float' ? 'any' : undefined"
                 :placeholder="constraintFor(key).min !== undefined ? `min: ${constraintFor(key).min}` : undefined"
+                :disabled="isDisabled(key)"
                 @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
               />
             </template>
 
-            <!-- enumerated string → Select -->
-            <template v-else-if="isSelectField(key)">
+            <!-- enumerated string → Select (driven by meta enum) -->
+            <template v-else-if="isEnumField(key)">
               <label class="admin-settings__label" :for="`field-${key}`">
-                {{ getDisplayName(key) }}
+                {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
+                <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
+                <HelpPopover
+                  v-if="getHelpText(key)"
+                  :help-text="getHelpText(key) ?? ''"
+                  :help-links="getHelpLinks(key)"
+                />
               </label>
               <Select
                 :model-value="formValues[key] ?? ''"
                 :options="selectOptions(key)"
-                :label="getDisplayName(key)"
+                :label="getLabel(key)"
+                :disabled="isDisabled(key)"
                 @update:model-value="(v) => setFieldValue(key, String(v))"
               />
             </template>
 
-            <!-- password string → text/password input with show toggle -->
-            <template v-else-if="PASSWORD_FIELDS.has(key)">
+            <!-- secret string → text/password input with show toggle -->
+            <template v-else-if="serverMeta[key]?.secret">
               <label class="admin-settings__label" :for="`field-${key}`">
-                {{ getDisplayName(key) }}
+                {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
+                <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
+                <HelpPopover
+                  v-if="getHelpText(key)"
+                  :help-text="getHelpText(key) ?? ''"
+                  :help-links="getHelpLinks(key)"
+                />
               </label>
               <div class="admin-settings__row">
                 <input
@@ -421,13 +457,14 @@ onMounted(loadSettings);
                   :type="showPassword[key] ? 'text' : 'password'"
                   autocomplete="off"
                   :value="formValues[key]"
+                  :disabled="isDisabled(key)"
                   @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
                 />
                 <Button
                   variant="ghost"
                   size="sm"
                   :left-icon="showPassword[key] ? 'eye-off' : 'eye'"
-                  :aria-label="showPassword[key] ? `Hide ${getDisplayName(key)}` : `Show ${getDisplayName(key)}`"
+                  :aria-label="showPassword[key] ? `Hide ${getLabel(key)}` : `Show ${getLabel(key)}`"
                   @click="toggleShowPassword(key)"
                 >
                   {{ showPassword[key] ? 'Hide' : 'Show' }}
@@ -438,8 +475,14 @@ onMounted(loadSettings);
             <!-- plain string → text input -->
             <template v-else>
               <label class="admin-settings__label" :for="`field-${key}`">
-                {{ getDisplayName(key) }}
+                {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
+                <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
+                <HelpPopover
+                  v-if="getHelpText(key)"
+                  :help-text="getHelpText(key) ?? ''"
+                  :help-links="getHelpLinks(key)"
+                />
               </label>
               <input
                 :id="`field-${key}`"
@@ -447,6 +490,7 @@ onMounted(loadSettings);
                 type="text"
                 autocomplete="off"
                 :value="formValues[key]"
+                :disabled="isDisabled(key)"
                 @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
               />
             </template>
@@ -454,9 +498,6 @@ onMounted(loadSettings);
             <span v-if="fieldErrors[key]" class="admin-settings__error" role="alert">
               {{ fieldErrors[key] }}
             </span>
-            <p v-if="FIELD_HELP[key]" class="admin-settings__help">
-              {{ FIELD_HELP[key] }}
-            </p>
           </div>
 
           <div class="admin-settings__actions">
@@ -472,8 +513,7 @@ onMounted(loadSettings);
             </Button>
           </div>
         </form>
-        </div>
-      </Tabs>
+      </div>
     </template>
   </section>
 </template>
@@ -496,6 +536,14 @@ onMounted(loadSettings);
 }
 .admin-settings__skel {
   padding-block: var(--space-2);
+}
+
+.admin-settings__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
 }
 
 .admin-settings__panel {
@@ -551,6 +599,11 @@ onMounted(loadSettings);
 .admin-settings__input::placeholder {
   color: var(--text-subtle);
 }
+.admin-settings__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--surface-2);
+}
 .admin-settings__error {
   font-size: var(--text-xs);
   color: var(--error);
@@ -567,8 +620,70 @@ onMounted(loadSettings);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border-subtle);
 }
+
+/* Advanced toggle */
+.settings-advanced-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+}
+.settings-advanced-toggle__label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-muted);
+}
+
+/* Restart banner */
+.settings-restart-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--warning-soft, rgba(234, 179, 8, 0.1));
+  border: 1px solid var(--warning-border, rgba(234, 179, 8, 0.3));
+  color: var(--warning-text, var(--text));
+  font-size: var(--text-sm);
+}
+.settings-restart-banner__btn {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--warning, #eab308);
+  color: var(--warning-fg, #000);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  border: none;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.settings-restart-banner__btn:hover {
+  background: var(--warning-hover, #ca8a04);
+}
+
+/* Advanced badge */
+.field-advanced-badge {
+  font-size: 0.6rem;
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-subtle);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .admin-settings__input {
+  .admin-settings__input,
+  .settings-restart-banner__btn {
     transition: none;
   }
 }
