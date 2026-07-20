@@ -93,7 +93,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -161,7 +161,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -231,7 +231,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -299,7 +299,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -422,7 +422,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -490,7 +490,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -560,7 +560,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -628,7 +628,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -751,7 +751,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -819,7 +819,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -889,7 +889,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {
@@ -957,7 +957,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
         id: string;
         name: string;
         sort_title?: string | null | undefined;
-        type: import("../types/media-item").MediaType;
+        type: import("@phlix/contracts").MediaType;
         path?: string | undefined;
         poster_url: string | null;
         poster_srcset?: string | (string | {

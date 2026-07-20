@@ -179,7 +179,7 @@ describe('resolvePlayable', () => {
 
   it('image resolves to itself', async () => {
     const { client } = fakeClient([]);
-    const im = item({ id: 'i1', type: 'image' });
+    const im = item({ id: 'i1', type: 'photo' });
     await expect(resolvePlayable(client, apiBase, im, {})).resolves.toBe(im);
   });
 

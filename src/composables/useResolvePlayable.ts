@@ -120,6 +120,11 @@ export async function resolvePlayable(
         const groups = await loadSeriesSeasons(client, apiBase, item.id, signal);
         return pickPlayableEpisode(groups, resumeMap);
     }
-    // movie / episode / audio / image are directly playable → self.
+    // Everything else is directly playable → self. That is every non-container
+    // kind in the media_items.type ENUM: movie, episode, video, track, music,
+    // audio, book, audiobook, photo. (`series`/`season` are the only containers
+    // needing resolution, and `album`/`artist` are browsed rather than resolved
+    // through here.) This comment previously said "movie / episode / audio /
+    // image"; `image` is not a media type at all — the photo kind is `photo`.
     return item;
 }

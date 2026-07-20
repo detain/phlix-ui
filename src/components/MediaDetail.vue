@@ -15,8 +15,9 @@
  * overview, cast, runtime…). Keyboard-operable, reduced-motion safe, no emoji.
  */
 import { computed, ref, onMounted, onBeforeUnmount, watch, inject } from 'vue';
-import type { MediaItem } from '../types/media-item';
+import type { MediaItem, MediaType } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
+import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -123,13 +124,29 @@ function onWatched(): void {
  * `item.external_ids` ({tmdb, imdb, tvdb, anidb, …}). TMDB movies vs. TV use
  * different path segments, so the type drives the tmdb URL. Only providers with
  * a non-empty id render.
+ *
+ * TMDB only catalogues films and TV, so the tmdb link is emitted ONLY for those
+ * kinds. This used to be `type === 'movie' ? 'movie' : 'tv'`, which sent every
+ * non-movie kind — including books, audiobooks, music and photos — to a
+ * themoviedb.org/tv/ URL that cannot resolve.
  */
+const TMDB_KIND: Partial<Record<MediaType, 'movie' | 'tv'>> = {
+  movie: 'movie',
+  series: 'tv',
+  season: 'tv',
+  episode: 'tv',
+};
+
 const providerLinks = computed<Array<{ key: string; label: string; url: string }>>(() => {
   const ids = props.item.external_ids;
   if (!ids) return [];
-  const tmdbKind = props.item.type === 'movie' ? 'movie' : 'tv';
+  const tmdbKind = TMDB_KIND[props.item.type];
   const builders: Record<string, { label: string; url: (id: string) => string }> = {
-    tmdb: { label: 'TMDB', url: (id) => `https://www.themoviedb.org/${tmdbKind}/${encodeURIComponent(id)}` },
+    // Omitted entirely for non-film/TV kinds — a book's tmdb id (if any) has no
+    // themoviedb.org page, so a link would only 404.
+    ...(tmdbKind
+      ? { tmdb: { label: 'TMDB', url: (id: string) => `https://www.themoviedb.org/${tmdbKind}/${encodeURIComponent(id)}` } }
+      : {}),
     imdb: { label: 'IMDb', url: (id) => `https://www.imdb.com/title/${encodeURIComponent(id)}/` },
     tvdb: { label: 'TheTVDB', url: (id) => `https://thetvdb.com/dereferrer/series/${encodeURIComponent(id)}` },
     anidb: { label: 'AniDB', url: (id) => `https://anidb.net/anime/${encodeURIComponent(id)}` },
@@ -265,9 +282,7 @@ function onLove(next: number): void {
   void userItemData.setLike(props.item.id, next, phlixConfig?.apiBase ?? '');
 }
 
-const fallbackIcon = computed(() =>
-  props.item.type === 'audio' ? 'music' : props.item.type === 'image' ? 'image' : props.item.type === 'series' ? 'tv' : 'film',
-);
+const fallbackIcon = computed(() => mediaTypeIcon(props.item.type));
 
 /** A credited person (cast or crew) for the avatar layout. */
 interface Person {

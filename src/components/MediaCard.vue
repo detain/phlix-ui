@@ -33,6 +33,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { usePrefetch } from '../composables/usePrefetch';
 import { resolvePosterSources } from './media-poster';
+import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import { api } from '../api/client';
 
@@ -434,7 +435,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         @load="onLoad"
       />
       <div v-else class="media-card__fallback" aria-hidden="true">
-        <Icon :name="item.type === 'audio' ? 'music' : item.type === 'image' ? 'image' : item.type === 'series' ? 'tv' : 'film'" />
+        <Icon :name="mediaTypeIcon(item.type)" />
       </div>
 
       <div class="media-card__badges">

@@ -48,6 +48,11 @@ import IconFilm from '~icons/lucide/film';
 import IconImage from '~icons/lucide/image';
 import IconMusic from '~icons/lucide/music';
 import IconTv from '~icons/lucide/tv';
+import IconBook from '~icons/lucide/book';
+import IconHeadphones from '~icons/lucide/headphones';
+import IconDisc from '~icons/lucide/disc-3';
+import IconMic from '~icons/lucide/mic-2';
+import IconVideo from '~icons/lucide/video';
 import IconSearch from '~icons/lucide/search';
 import IconFilter from '~icons/lucide/sliders-horizontal';
 import IconCalendar from '~icons/lucide/calendar';
@@ -124,6 +129,14 @@ const icons = {
   image: IconImage,
   music: IconMusic,
   tv: IconTv,
+  // per-MediaType fallbacks — one per non-video kind in the media_items.type
+  // ENUM, so book/audiobook/track/album/artist/video rows stop falling through
+  // to the generic film icon (see mediaTypeIcon in utils/mediaTypeIcon).
+  book: IconBook,
+  headphones: IconHeadphones,
+  disc: IconDisc,
+  mic: IconMic,
+  video: IconVideo,
   search: IconSearch,
   filter: IconFilter,
   calendar: IconCalendar,
