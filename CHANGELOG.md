@@ -1,6 +1,13 @@
 ## Unreleased
 
 ### Changes
+- feat(settings): **Phase 1 schema-driven settings UI** — fully revamps the settings surface to consume server-provided setting metadata and render adaptively:
+  - New `HelpText.vue` and `HelpPopover.vue` components for per-field contextual help (inline text callouts and popover overlays respectively)
+  - New `useSettingsPrefs.ts` Pinia store tracking Advanced mode toggle state
+  - `PageHint.vue` enhanced with `links` (optional outbound link list) and `details` (collapsible detail section) props
+  - `SettingsPage.vue` now renders entirely from schema: each setting field type (text, number, secret, select, multiselect, bool) maps to the correct input; Advanced toggle gates expert-only fields; a restart-required banner surfaces when any setting marked `restart_required` changes; `HelpPopover` is rendered per field from the field's `help` description
+  - `src/api/admin/settings.ts` gains `SettingMeta` type and a `meta` field on the settings response carrying per-field metadata (`type`, `help`, `options`, `restart_required`, `advanced`, `default`, `secret_status`)
+  - `PluginConfigPage.vue` now renders overlay help links via `HelpText` using the plugin manifest's `configure_hint` / `configure_link` fields
 - feat(invite): new `AcceptInvitePage.vue` — the PUBLIC invite-acceptance surface reached at `/app/invite/:token`. Consumed by the hub (which redirects its public `GET /invite/{token}` link here) to restore the invite-accept flow the retired Smarty `accept-invite.tpl` provided: unauthenticated visitors get Log In / Sign Up buttons that carry a safe `?redirect` hop back to the invite; authenticated visitors get an **Accept Invite** button that calls `POST /api/v1/me/invite-links/{token}/redeem` and, on success, a **View Shared Libraries** link to `/app/shared-with-me`. Route is `meta.public` so the auth guard lets unauthenticated invitees through.
 - feat(auth): new `safeRedirect(value)` util (`src/utils/safeRedirect.ts`) — an open-redirect guard that only honours same-origin `?redirect=` values under the SPA root `/app/` (rejecting absolute URLs, protocol-relative `//host`, and `/\host` backslash tricks). `LoginForm`/`SignupForm` now honour a validated internal `?redirect` so a post-login/signup hop returns the user to where they started (e.g. the invite page).
 - feat(settings): new **Security** tab in `SettingsPage.vue` surfacing WebAuthn/passkey management (register/list/remove passkeys), replacing the standalone Smarty `settings/security` page.
