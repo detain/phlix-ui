@@ -252,8 +252,37 @@ export declare class AdminPluginsApi {
     /**
      * `POST /api/v1/admin/plugins/{name}/test` `{ settings }` → tests credentials
      * and returns `{ success: boolean; message: string }`.
+     *
+     * Pass the settings the admin has TYPED, using the same rules as
+     * {@link updateSettings}: only the changed keys, and a secret only when a new
+     * value was actually entered. An untouched secret must be OMITTED — never sent
+     * as {@link PLUGIN_SECRET_MASK}, which the plugin would test as a literal
+     * credential. The server instantiates the plugin entry with its *persisted*
+     * settings before calling `testCredentials()` (`PluginLoader::getEntryInstance()`
+     * → `applyPersistedSettings()`), so an omitted secret is still available to the
+     * plugin under test; the submitted map is the delta layered on top.
+     *
+     * `settings` is deliberately `unknown`-valued rather than string-valued:
+     * booleans and numbers must reach the plugin as their real JSON types, not as
+     * `"true"`/`"30"`, or a plugin that type-checks its own config sees the wrong
+     * shape.
+     *
+     * Failure modes worth distinguishing at the call site:
+     *  - `501 plugin.test_not_supported` — the plugin implements no
+     *    `testCredentials()` method. That is a capability gap, NOT a failed test,
+     *    and must not be presented as "credentials are invalid".
+     *  - `404 plugin.not_found` — no such installed plugin / entry class.
+     * A plugin whose own test throws is mapped server-side to a normal
+     * `200 { success: false, message }`, so a rejected promise always means the
+     * request itself failed.
+     *
+     * SECURITY: the server scrubs every submitted credential out of `message`
+     * before it is returned (`PluginAdminController::redactSubmittedSecrets()`),
+     * because a plugin's exception text routinely embeds a request URI carrying
+     * the API key. Do not log this response, and render `message` only in the
+     * result line the admin asked for.
      */
-    testCredentials(name: string, settings: Record<string, string>): Promise<{
+    testCredentials(name: string, settings: Record<string, unknown>): Promise<{
         success: boolean;
         message: string;
     }>;

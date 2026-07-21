@@ -9,8 +9,7 @@ import { t as re } from "./Skeleton-DhQmxeNg.js";
 import { t as ie } from "./EmptyState-ZlI5t4KT.js";
 import { t as ae } from "./PageHint-BoAlFFBN.js";
 import { t as oe } from "./Tabs-CLKYop2E.js";
-import { t as se } from "./useSettingsPrefs-CCSyOWj_.js";
-import { r as s, t as ce } from "./settings-DucNNZds.js";
+import { i as s, n as se, t as ce } from "./useSettingsPrefs-0HXyMqIe.js";
 import { Fragment as c, computed as l, createBlock as u, createCommentVNode as d, createElementBlock as f, createElementVNode as p, createTextVNode as m, createVNode as h, defineComponent as g, inject as le, normalizeClass as ue, onMounted as de, openBlock as _, reactive as v, ref as y, renderList as fe, toDisplayString as b, unref as pe, withCtx as x, withModifiers as me } from "vue";
 //#region src/pages/admin/SettingsPage.vue?vue&type=script&setup=true&lang.ts
 var he = {
@@ -87,22 +86,22 @@ var he = {
 		restartPollTimeoutMs: { default: 6e4 }
 	},
 	setup(e) {
-		let g = e, S = le("apiBase", ""), Ye = l(() => typeof S == "string" ? S : S?.value ?? ""), C = new ce(g.client ?? new i({
+		let g = e, S = le("apiBase", ""), Ye = l(() => typeof S == "string" ? S : S?.value ?? ""), C = new se(g.client ?? new i({
 			baseUrl: Ye.value,
 			tokenStore: new t()
-		})), w = ee(), Xe = se(), Ze = y({}), Qe = y([]), T = y({}), E = y({}), D = y({}), $e = l(() => Object.keys(D.value).length === 0 && Object.keys(T.value).length > 0);
-		function et(e) {
+		})), w = ee(), T = ce(), Xe = y({}), Ze = y([]), E = y({}), D = y({}), O = y({}), Qe = l(() => Object.keys(O.value).length === 0 && Object.keys(E.value).length > 0);
+		function $e(e) {
 			return e.split(".").pop()?.replace(/[_-]+/g, " ").replace(/\b[a-z]/g, (e) => e.toUpperCase()) ?? e;
 		}
-		function tt(e) {
+		function et(e) {
 			return e.replace(/[_-]+/g, " ").replace(/\b[a-z]/g, (e) => e.toUpperCase());
 		}
-		function nt(e) {
+		function tt(e) {
 			return e.replace(/[._-]+/g, " ").replace(/\b[a-z]/g, (e) => e.toUpperCase());
 		}
-		function rt(e) {
+		function nt(e) {
 			return {
-				label: nt(e),
+				label: tt(e),
 				helpText: "",
 				helpLinks: [],
 				tier: "standard",
@@ -117,58 +116,58 @@ var he = {
 				restart: !1
 			};
 		}
-		let O = l(() => {
-			if (!$e.value) return D.value;
+		let k = l(() => {
+			if (!Qe.value) return O.value;
 			let e = {};
-			for (let t of Object.keys(T.value)) e[t] = rt(t);
+			for (let t of Object.keys(E.value)) e[t] = nt(t);
 			return e;
-		}), k = l(() => {
-			let e = new Set(Object.values(O.value).map((e) => e.group));
+		}), A = l(() => {
+			let e = new Set(Object.values(k.value).map((e) => e.group));
 			return Array.from(e).sort().map((e) => ({
 				value: e,
-				label: it(e)
+				label: rt(e)
 			}));
 		});
-		function it(e) {
-			for (let t of Object.values(O.value)) if (t.group === e && typeof t.groupLabel == "string" && t.groupLabel !== "") return t.groupLabel;
-			return tt(e);
+		function rt(e) {
+			for (let t of Object.values(k.value)) if (t.group === e && typeof t.groupLabel == "string" && t.groupLabel !== "") return t.groupLabel;
+			return et(e);
 		}
-		let A = y(""), at = y(!0), j = y(null), M = y(!1), N = y(!1), P = y({}), F = v({}), I = v({}), L = v({}), R = v({}), z = v({}), ot = l(() => Object.values(R).some(Boolean) || Object.values(I).some(Boolean)), st = l(() => Object.entries(O.value).filter(([, e]) => e.group === A.value).map(([e]) => e)), ct = l(() => Object.entries(O.value).filter(([, e]) => e.restart === !0).map(([e]) => e));
-		function lt(e) {
-			return O.value[e]?.restart === !0;
+		let j = y(""), it = y(!0), M = y(null), N = y(!1), P = y(!1), F = y({}), I = v({}), L = v({}), R = v({}), z = v({}), B = v({}), at = l(() => Object.values(z).some(Boolean) || Object.values(L).some(Boolean)), ot = l(() => Object.entries(k.value).filter(([, e]) => e.group === j.value).map(([e]) => e)), st = l(() => Object.entries(k.value).filter(([, e]) => e.restart === !0).map(([e]) => e));
+		function ct(e) {
+			return k.value[e]?.restart === !0;
 		}
-		let B = y([]), ut = l(() => B.value.length > 0), V = l(() => `${Je}:${Ye.value || "default"}`), dt = l(() => B.value.map((e) => J(e)));
+		let V = y([]), lt = l(() => V.value.length > 0), ut = l(() => `${Je}:${Ye.value || "default"}`), dt = l(() => V.value.map((e) => J(e)));
 		function ft() {
 			if (!(typeof localStorage > "u")) try {
-				let e = localStorage.getItem(V.value);
+				let e = localStorage.getItem(ut.value);
 				if (!e) return;
 				let t = JSON.parse(e);
-				Array.isArray(t) && (B.value = t.filter((e) => typeof e == "string"));
+				Array.isArray(t) && (V.value = t.filter((e) => typeof e == "string"));
 			} catch {}
 		}
 		function pt() {
 			if (!(typeof localStorage > "u")) try {
-				B.value.length === 0 ? localStorage.removeItem(V.value) : localStorage.setItem(V.value, JSON.stringify(B.value));
+				V.value.length === 0 ? localStorage.removeItem(ut.value) : localStorage.setItem(ut.value, JSON.stringify(V.value));
 			} catch {}
 		}
 		function mt(e) {
-			let t = /* @__PURE__ */ new Set([...B.value, ...e]);
-			B.value = Array.from(t), pt();
+			let t = /* @__PURE__ */ new Set([...V.value, ...e]);
+			V.value = Array.from(t), pt();
 		}
 		function ht() {
-			B.value = [], pt();
+			V.value = [], pt();
 		}
 		function H(e) {
-			return Qe.value.includes(e);
+			return Ze.value.includes(e);
 		}
 		function gt(e) {
 			return W(e) === "json";
 		}
 		function _t(e) {
-			return O.value[e]?.secret === !0;
+			return k.value[e]?.secret === !0;
 		}
 		function U(e) {
-			return E.value[e] ?? null;
+			return D.value[e] ?? null;
 		}
 		function vt(e) {
 			return U(e)?.set === !0;
@@ -190,38 +189,38 @@ var he = {
 			return String(t ?? "");
 		}
 		function St(e) {
-			for (let e of Object.keys(L)) delete L[e];
-			for (let e of Object.keys(z)) delete z[e];
-			for (let [t, n] of Object.entries(e)) L[t] = xt(t, n);
+			for (let e of Object.keys(R)) delete R[e];
+			for (let e of Object.keys(B)) delete B[e];
+			for (let [t, n] of Object.entries(e)) R[t] = xt(t, n);
 		}
 		function Ct() {
-			for (let e of Object.keys(R)) delete R[e];
-			for (let e of Object.keys(F)) delete F[e];
+			for (let e of Object.keys(z)) delete z[e];
 			for (let e of Object.keys(I)) delete I[e];
+			for (let e of Object.keys(L)) delete L[e];
 		}
 		function wt(e) {
-			Ze.value = e.settings, Qe.value = e.overridden, e.secretStatus && (E.value = e.secretStatus), St(e.settings), Ct();
+			Xe.value = e.settings, Ze.value = e.overridden, e.secretStatus && (D.value = e.secretStatus), St(e.settings), Ct();
 		}
 		async function Tt() {
-			at.value = !0, j.value = null;
+			it.value = !0, M.value = null;
 			try {
 				let e = await C.get();
-				T.value = e.types, D.value = e.meta, wt(e), P.value = {}, (!A.value || !k.value.some((e) => e.value === A.value)) && k.value.length > 0 && (A.value = k.value[0].value);
+				E.value = e.types, O.value = e.meta, wt(e), F.value = {}, (!j.value || !A.value.some((e) => e.value === j.value)) && A.value.length > 0 && (j.value = A.value[0].value);
 			} catch (e) {
-				j.value = n(e, "Failed to load settings."), w.error(j.value);
+				M.value = n(e, "Failed to load settings."), w.error(M.value);
 			} finally {
-				at.value = !1;
+				it.value = !1;
 			}
 		}
 		function W(e) {
-			return T.value[e] ?? "string";
+			return E.value[e] ?? "string";
 		}
 		function Et(e) {
-			let t = O.value[e];
+			let t = k.value[e];
 			return t != null && Array.isArray(t.enum) && t.enum.length > 0;
 		}
 		function Dt(e) {
-			let t = O.value[e];
+			let t = k.value[e];
 			if (!t || !Array.isArray(t.enum)) return [];
 			let n = t.enumLabels;
 			return t.enum.map((e) => ({
@@ -230,7 +229,7 @@ var he = {
 			}));
 		}
 		function Ot(e) {
-			let t = O.value[e];
+			let t = k.value[e];
 			if (!t || !Array.isArray(t.enum) || !t.optionHelp) return [];
 			let n = t.optionHelp;
 			return t.enum.filter((e) => typeof n[e] == "string" && n[e] !== "").map((e) => ({
@@ -240,67 +239,67 @@ var he = {
 			}));
 		}
 		function G(e) {
-			let t = O.value[e];
+			let t = k.value[e];
 			return t ? {
 				min: typeof t.minimum == "number" ? t.minimum : void 0,
 				max: typeof t.maximum == "number" ? t.maximum : void 0
 			} : {};
 		}
 		function K(e) {
-			return O.value[e]?.tier === "advanced";
+			return k.value[e]?.tier === "advanced";
 		}
 		function q(e) {
-			return K(e) && !Xe.advancedMode;
+			return K(e) && !T.advancedMode;
 		}
 		function J(e) {
-			return O.value[e]?.label || et(e);
+			return k.value[e]?.label || $e(e);
 		}
 		function Y(e) {
-			return O.value[e]?.helpText;
+			return k.value[e]?.helpText;
 		}
 		function X(e) {
-			return O.value[e]?.helpLinks;
+			return k.value[e]?.helpLinks;
 		}
 		function Z(e) {
 			return !!Y(e) || (X(e)?.length ?? 0) > 0;
 		}
 		function Q(e, t) {
-			L[e] = t, R[e] = t !== xt(e, Ze.value[e]);
+			R[e] = t, z[e] = t !== xt(e, Xe.value[e]);
 		}
 		function kt(e) {
 			try {
-				return JSON.stringify(Ze.value[e] ?? null);
+				return JSON.stringify(Xe.value[e] ?? null);
 			} catch {
 				return "";
 			}
 		}
 		function At(e, t) {
-			L[e] = t;
+			R[e] = t;
 			try {
 				let n = JSON.parse(t);
-				delete z[e], R[e] = JSON.stringify(n) !== kt(e);
+				delete B[e], z[e] = JSON.stringify(n) !== kt(e);
 			} catch (t) {
-				z[e] = `Invalid JSON: ${t instanceof Error ? t.message : "could not be parsed"}`, R[e] = !0;
+				B[e] = `Invalid JSON: ${t instanceof Error ? t.message : "could not be parsed"}`, z[e] = !0;
 			}
 		}
-		let jt = l(() => Object.keys(z).filter((e) => R[e] && !q(e)));
+		let jt = l(() => Object.keys(B).filter((e) => z[e] && !q(e)));
 		function Mt(e) {
-			F[e] = !F[e];
+			I[e] = !I[e];
 		}
 		function Nt(e) {
-			return R[e] === !0 && !q(e) && !$(e);
+			return z[e] === !0 && !q(e) && !$(e);
 		}
 		function $(e) {
-			return I[e] === !0;
+			return L[e] === !0;
 		}
 		function Pt(e) {
 			return _t(e) && !q(e) && U(e)?.set !== !1;
 		}
 		function Ft(e) {
-			I[e] = !0, Q(e, ""), F[e] = !1;
+			L[e] = !0, Q(e, ""), I[e] = !1;
 		}
 		function It(e) {
-			delete I[e];
+			delete L[e];
 		}
 		function Lt(e) {
 			return new Promise((t) => setTimeout(t, e));
@@ -311,61 +310,61 @@ var he = {
 				await Lt(t), t = Math.min(t + g.restartPollIntervalMs / 2, g.restartPollIntervalMs * 3);
 				try {
 					let e = await C.get();
-					return T.value = e.types, D.value = e.meta, wt(e), P.value = {}, !0;
+					return E.value = e.types, O.value = e.meta, wt(e), F.value = {}, !0;
 				} catch {}
 			}
 			return !1;
 		}
 		async function zt() {
-			if (!N.value) {
-				N.value = !0;
+			if (!P.value) {
+				P.value = !0;
 				try {
 					await C.restartServer(), w.success("Restart signal sent — waiting for the server to come back…"), await Rt() ? (ht(), w.success("Server is back online.")) : w.error(`The server did not respond within ${Math.round(g.restartPollTimeoutMs / 1e3)}s. It may still be starting — reload this page in a moment.`);
 				} catch (e) {
 					w.error(n(e, "Failed to restart server."));
 				} finally {
-					N.value = !1;
+					P.value = !1;
 				}
 			}
 		}
 		async function Bt() {
-			if (!M.value) {
+			if (!N.value) {
 				if (jt.value.length > 0) {
 					let e = jt.value.map(J).join(", ");
 					w.error(`Fix the invalid JSON in ${e} before saving.`);
 					return;
 				}
-				M.value = !0, P.value = {};
+				N.value = !0, F.value = {};
 				try {
 					let e = {};
-					for (let [t, n] of Object.entries(R)) {
+					for (let [t, n] of Object.entries(z)) {
 						if (!n || q(t)) continue;
-						let r = T.value[t], i = L[t] ?? "";
+						let r = E.value[t], i = R[t] ?? "";
 						r === "bool" ? e[t] = i === "true" || i === "1" : r === "int" ? e[t] = parseInt(i, 10) : r === "float" ? e[t] = parseFloat(i) : r === "json" ? e[t] = JSON.parse(i) : e[t] = i;
 					}
-					for (let t of Object.keys(I)) !$(t) || q(t) || (e[t] = "");
+					for (let t of Object.keys(L)) !$(t) || q(t) || (e[t] = "");
 					let t = await C.save(e);
 					w.success("Settings saved."), wt(t);
 					for (let [t, n] of Object.entries(e)) {
 						if (!_t(t)) continue;
 						let e = String(n ?? "");
-						E.value = {
-							...E.value,
+						D.value = {
+							...D.value,
 							[t]: {
 								set: e !== "",
 								length: e.length
 							}
 						};
 					}
-					let n = Object.keys(e).filter((e) => ct.value.includes(e));
+					let n = Object.keys(e).filter((e) => st.value.includes(e));
 					n.length > 0 && mt(n);
 				} catch (e) {
 					if (e instanceof r && e.status === 400) {
 						let t = e.body;
-						t?.errors && Object.keys(t.errors).length > 0 ? (P.value = t.errors, w.error("Please fix the validation errors.")) : w.error(e.message);
+						t?.errors && Object.keys(t.errors).length > 0 ? (F.value = t.errors, w.error("Please fix the validation errors.")) : w.error(e.message);
 					} else w.error(e instanceof r ? e.message : "Failed to save settings.");
 				} finally {
-					M.value = !1;
+					N.value = !1;
 				}
 			}
 		}
@@ -386,14 +385,14 @@ var he = {
 				]]),
 				_: 1
 			}),
-			at.value ? (_(), f("div", ge, [h(re, {
+			it.value ? (_(), f("div", ge, [h(re, {
 				variant: "text",
 				lines: 6
-			})])) : j.value ? (_(), u(ie, {
+			})])) : M.value ? (_(), u(ie, {
 				key: 1,
 				icon: "alert",
 				title: "Couldn't load settings",
-				description: j.value
+				description: M.value
 			}, {
 				actions: x(() => [h(a, {
 					variant: "solid",
@@ -406,38 +405,38 @@ var he = {
 				})]),
 				_: 1
 			}, 8, ["description"])) : (_(), f(c, { key: 2 }, [
-				$e.value ? (_(), f("div", _e, " This server did not send settings metadata, so help, grouping and Advanced tiers are unavailable. Every setting is listed below with a name derived from its key. Update the server to restore the full settings experience. ")) : d("", !0),
+				Qe.value ? (_(), f("div", _e, " This server did not send settings metadata, so help, grouping and Advanced tiers are unavailable. Every setting is listed below with a name derived from its key. Update the server to restore the full settings experience. ")) : d("", !0),
 				p("div", ve, [h(oe, {
-					modelValue: A.value,
-					"onUpdate:modelValue": t[0] ||= (e) => A.value = e,
-					tabs: k.value,
+					modelValue: j.value,
+					"onUpdate:modelValue": t[0] ||= (e) => j.value = e,
+					tabs: A.value,
 					label: "Settings groups"
 				}, null, 8, ["modelValue", "tabs"]), p("div", ye, [t[4] ||= p("span", { class: "settings-advanced-toggle__label" }, "Advanced", -1), h(te, {
-					"model-value": pe(Xe).advancedMode,
-					"onUpdate:modelValue": t[1] ||= (e) => pe(Xe).setAdvancedMode(e)
+					"model-value": pe(T).advancedMode,
+					"onUpdate:modelValue": t[1] ||= (e) => pe(T).setAdvancedMode(e)
 				}, null, 8, ["model-value"])])]),
-				ut.value ? (_(), f("div", be, [p("span", null, " Saved changes to " + b(dt.value.join(", ")) + " require a server restart to take effect. ", 1), p("span", xe, [p("button", {
+				lt.value ? (_(), f("div", be, [p("span", null, " Saved changes to " + b(dt.value.join(", ")) + " require a server restart to take effect. ", 1), p("span", xe, [p("button", {
 					type: "button",
 					class: "settings-restart-banner__btn",
-					disabled: N.value,
+					disabled: P.value,
 					onClick: zt
-				}, b(N.value ? "Restarting…" : "Restart server"), 9, Se), p("button", {
+				}, b(P.value ? "Restarting…" : "Restart server"), 9, Se), p("button", {
 					type: "button",
 					class: "settings-restart-banner__dismiss",
-					disabled: N.value,
+					disabled: P.value,
 					onClick: ht
 				}, " Dismiss ", 8, Ce)])])) : d("", !0),
-				p("div", we, [st.value.length === 0 ? (_(), f("p", Te, " No settings in this group. ")) : (_(), f("form", {
+				p("div", we, [ot.value.length === 0 ? (_(), f("p", Te, " No settings in this group. ")) : (_(), f("form", {
 					key: 1,
 					class: "admin-settings__form",
 					onSubmit: me(Bt, ["prevent"])
-				}, [(_(!0), f(c, null, fe(st.value, (e) => (_(), f("div", {
+				}, [(_(!0), f(c, null, fe(ot.value, (e) => (_(), f("div", {
 					key: e,
 					class: "admin-settings__field"
 				}, [
 					W(e) === "bool" ? (_(), f("div", Ee, [
 						h(te, {
-							"model-value": L[e] === "true" || L[e] === "1",
+							"model-value": R[e] === "true" || R[e] === "1",
 							label: J(e),
 							disabled: q(e),
 							"onUpdate:modelValue": (t) => Q(e, t ? "true" : "false")
@@ -510,7 +509,7 @@ var he = {
 						id: `field-${e}`,
 						class: "admin-settings__input",
 						type: "number",
-						value: L[e],
+						value: R[e],
 						min: G(e).min,
 						max: G(e).max,
 						step: W(e) === "float" ? "any" : void 0,
@@ -552,7 +551,7 @@ var he = {
 							])) : d("", !0)
 						], 8, ke),
 						h(ne, {
-							"model-value": L[e] ?? "",
+							"model-value": R[e] ?? "",
 							options: Dt(e),
 							label: J(e),
 							disabled: q(e),
@@ -601,17 +600,17 @@ var he = {
 						], 8, Ne),
 						p("textarea", {
 							id: `field-${e}`,
-							class: ue(["admin-settings__input admin-settings__textarea", { "admin-settings__textarea--invalid": z[e] }]),
+							class: ue(["admin-settings__input admin-settings__textarea", { "admin-settings__textarea--invalid": B[e] }]),
 							rows: "6",
 							spellcheck: "false",
 							autocomplete: "off",
-							value: L[e],
-							"aria-invalid": z[e] ? "true" : void 0,
+							value: R[e],
+							"aria-invalid": B[e] ? "true" : void 0,
 							disabled: q(e),
 							onInput: (t) => At(e, t.target.value)
 						}, null, 42, Pe),
-						z[e] ? (_(), f("span", Fe, b(z[e]), 1)) : d("", !0)
-					], 64)) : O.value[e]?.secret ? (_(), f(c, { key: 4 }, [
+						B[e] ? (_(), f("span", Fe, b(B[e]), 1)) : d("", !0)
+					], 64)) : k.value[e]?.secret ? (_(), f(c, { key: 4 }, [
 						p("label", {
 							class: "admin-settings__label",
 							for: `field-${e}`
@@ -671,11 +670,11 @@ var he = {
 							p("input", {
 								id: `field-${e}`,
 								class: "admin-settings__input",
-								type: F[e] ? "text" : "password",
+								type: I[e] ? "text" : "password",
 								autocomplete: "off",
 								"aria-describedby": bt(e),
 								placeholder: $(e) ? "Will be removed on save" : vt(e) ? "Leave blank to keep the stored value" : `Enter ${J(e)}`,
-								value: L[e],
+								value: R[e],
 								disabled: q(e) || $(e),
 								onInput: (t) => Q(e, t.target.value)
 							}, null, 40, Ve),
@@ -683,11 +682,11 @@ var he = {
 								key: 0,
 								variant: "ghost",
 								size: "sm",
-								"left-icon": F[e] ? "eye-off" : "eye",
-								"aria-label": F[e] ? `Hide ${J(e)}` : `Show ${J(e)}`,
+								"left-icon": I[e] ? "eye-off" : "eye",
+								"aria-label": I[e] ? `Hide ${J(e)}` : `Show ${J(e)}`,
 								onClick: (t) => Mt(e)
 							}, {
-								default: x(() => [m(b(F[e] ? "Hide" : "Show"), 1)]),
+								default: x(() => [m(b(I[e] ? "Hide" : "Show"), 1)]),
 								_: 2
 							}, 1032, [
 								"left-icon",
@@ -751,18 +750,18 @@ var he = {
 						class: "admin-settings__input",
 						type: "text",
 						autocomplete: "off",
-						value: L[e],
+						value: R[e],
 						disabled: q(e),
 						onInput: (t) => Q(e, t.target.value)
 					}, null, 40, Ue)], 64)),
-					lt(e) ? (_(), f("span", We, " Requires a server restart to take effect ")) : d("", !0),
-					P.value[e] ? (_(), f("span", Ge, b(P.value[e]), 1)) : d("", !0)
+					ct(e) ? (_(), f("span", We, " Requires a server restart to take effect ")) : d("", !0),
+					F.value[e] ? (_(), f("span", Ge, b(F.value[e]), 1)) : d("", !0)
 				]))), 128)), p("div", Ke, [h(a, {
 					type: "button",
 					variant: "solid",
 					size: "sm",
-					disabled: !ot.value,
-					loading: M.value,
+					disabled: !at.value,
+					loading: N.value,
 					onClick: Bt
 				}, {
 					default: x(() => [...t[24] ||= [m(" Save settings ", -1)]]),
@@ -775,4 +774,4 @@ var he = {
 //#endregion
 export { S as default };
 
-//# sourceMappingURL=SettingsPage-DGSJvZW9.js.map
+//# sourceMappingURL=SettingsPage-BQi2sN_4.js.map
