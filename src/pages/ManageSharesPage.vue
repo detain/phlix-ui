@@ -23,6 +23,8 @@ import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import PageHint from '../components/ui/PageHint.vue';
+import { hubPageHelp } from './hubHelpLinks';
 
 interface Share {
   id: string;
@@ -129,6 +131,12 @@ onMounted(() => loadShares(true));
       <h1 id="shares-heading" class="shares__title">Manage Shares</h1>
       <p class="shares__subtitle">View and manage your shared libraries.</p>
     </header>
+
+    <PageHint :links="hubPageHelp['manage-shares'].links" :details="hubPageHelp['manage-shares'].details">
+      The libraries you have shared with other people, with the permission you granted and
+      any expiry. <strong>Revoke</strong> ends a share immediately. Libraries others have
+      shared with you appear under <strong>Shared With Me</strong>.
+    </PageHint>
 
     <div v-if="loading" class="shares__skel"><Skeleton variant="text" :lines="6" /></div>
 

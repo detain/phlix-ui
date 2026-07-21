@@ -33,6 +33,8 @@ import Button from '../components/ui/Button.vue';
 import Modal from '../components/ui/Modal.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import PageHint from '../components/ui/PageHint.vue';
+import { hubPageHelp } from './hubHelpLinks';
 
 interface Server {
   id: string;
@@ -242,6 +244,13 @@ onMounted(loadServers);
       </div>
       <Button variant="solid" size="sm" left-icon="plus" @click="openAdd">Add server</Button>
     </header>
+
+    <PageHint :links="hubPageHelp['my-servers'].links" :details="hubPageHelp['my-servers'].details">
+      The Phlix servers you have claimed to your hub account. <strong>Add server</strong>
+      claims another; <strong>Browse</strong> opens a server's library once its relay is
+      active; <strong>Manage</strong> opens the server's own admin page; <strong>Remove</strong>
+      unlinks it from your account.
+    </PageHint>
 
     <div v-if="loading" class="my-servers__skel"><Skeleton variant="text" :lines="6" /></div>
 

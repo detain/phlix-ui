@@ -25,6 +25,8 @@ import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import PageHint from '../components/ui/PageHint.vue';
+import { hubPageHelp } from './hubHelpLinks';
 import Modal from '../components/ui/Modal.vue';
 import Input from '../components/ui/Input.vue';
 
@@ -162,6 +164,12 @@ onMounted(() => loadRequests(true));
       </div>
       <Button variant="solid" size="sm" @click="showCreateModal = true">New Request</Button>
     </header>
+
+    <PageHint :links="hubPageHelp.requests.links" :details="hubPageHelp.requests.details">
+      Ask a server owner to add a specific movie or show. <strong>New Request</strong> takes
+      the title and its TMDB id; a request moves from Pending to Approved or Rejected as the
+      owner acts on it. Requesting something does not download it.
+    </PageHint>
 
     <div v-if="loading" class="requests__skel"><Skeleton variant="text" :lines="6" /></div>
 

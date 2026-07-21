@@ -28,6 +28,8 @@ import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import PageHint from '../components/ui/PageHint.vue';
+import { hubPageHelp } from './hubHelpLinks';
 
 interface FederationPeer {
   id: string;
@@ -167,6 +169,12 @@ onMounted(() => loadPeers(true));
       <h1 id="federation-heading" class="federation__title">Federation</h1>
       <p class="federation__subtitle">Connect with other Phlix servers to share libraries.</p>
     </header>
+
+    <PageHint :links="hubPageHelp.federation.links" :details="hubPageHelp.federation.details">
+      Federation links whole servers together as <strong>peers</strong> so their libraries
+      can be shared across the group. Adding a peer needs that server's address and public
+      key. This is an administrator feature.
+    </PageHint>
 
     <div v-if="loading" class="federation__skel"><Skeleton variant="text" :lines="6" /></div>
 

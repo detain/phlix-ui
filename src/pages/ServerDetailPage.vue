@@ -22,6 +22,8 @@ import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import PageHint from '../components/ui/PageHint.vue';
+import { hubPageHelp } from './hubHelpLinks';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -198,6 +200,12 @@ onMounted(() => loadServer(true));
         Back to My Servers
       </Button>
     </div>
+
+    <PageHint :links="hubPageHelp['server-detail'].links" :details="hubPageHelp['server-detail'].details">
+      One server's status in detail: its version and reachability, the current
+      <strong>relay session</strong> if a tunnel is open, TLS status, and the recent
+      <strong>heartbeat history</strong> the hub uses to decide whether it is online.
+    </PageHint>
 
     <!-- Loading skeleton -->
     <div v-if="loading" class="server-detail__skeleton">

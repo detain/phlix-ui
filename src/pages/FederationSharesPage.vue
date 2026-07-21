@@ -27,6 +27,8 @@ import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import PageHint from '../components/ui/PageHint.vue';
+import { hubPageHelp } from './hubHelpLinks';
 import { unixToIso } from '../api/normalize';
 import type { IncomingOffer, OutgoingShare, HubIncomingOffer, HubOutgoingShare } from '../types/federation-share';
 
@@ -201,6 +203,12 @@ onMounted(() => loadAll());
       <h1 id="fed-shares-heading" class="fed-shares__title">Federation Library Shares</h1>
       <p class="fed-shares__subtitle">Manage library share offers between your federation peers.</p>
     </header>
+
+    <PageHint :links="hubPageHelp['federation-shares'].links" :details="hubPageHelp['federation-shares'].details">
+      Library shares that flow between federated servers. <strong>Incoming</strong> lists
+      libraries peers have offered this server, which you can accept or reject;
+      <strong>Outgoing</strong> lists libraries this server has offered. An administrator feature.
+    </PageHint>
 
     <div class="fed-shares__tabs" role="tablist" aria-label="Share offers">
       <button

@@ -23,6 +23,8 @@ import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import PageHint from '../components/ui/PageHint.vue';
+import { hubPageHelp } from './hubHelpLinks';
 
 /**
  * Incoming share shape from `GET /api/v1/me/shares` — mirrors the hub's
@@ -157,6 +159,12 @@ onMounted(() => loadShares(true));
                 Libraries shared with you by other users.
             </p>
         </header>
+
+        <PageHint :links="hubPageHelp['shared-with-me'].links" :details="hubPageHelp['shared-with-me'].details">
+            Libraries other people have shared with you. Each card shows the owner, the server
+            the library lives on, and whether you have <strong>read-only</strong> or
+            <strong>read and write</strong> access. Only currently-active shares appear here.
+        </PageHint>
 
         <div v-if="loading" class="shared-with-me__skel">
             <Skeleton variant="text" :lines="6" />

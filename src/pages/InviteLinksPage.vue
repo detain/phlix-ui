@@ -28,6 +28,8 @@ import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import PageHint from '../components/ui/PageHint.vue';
+import { hubPageHelp } from './hubHelpLinks';
 import Select from '../components/ui/Select.vue';
 
 const EXPIRY_OPTIONS = [
@@ -290,6 +292,12 @@ onMounted(() => loadLinks(true));
         New Invite
       </Button>
     </header>
+
+    <PageHint :links="hubPageHelp['invite-links'].links" :details="hubPageHelp['invite-links'].details">
+      Give someone access to a library on one of your servers by sending them a URL.
+      <strong>New Invite</strong> creates a link scoped to a server and permission, with an
+      optional use limit and expiry. <strong>Revoke</strong> disables a link immediately.
+    </PageHint>
 
     <!-- Loading skeleton -->
     <div v-if="loading" class="invite-links__skel">
