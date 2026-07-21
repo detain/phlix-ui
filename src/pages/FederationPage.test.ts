@@ -10,6 +10,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import FederationPage from './FederationPage.vue';
 import Button from '../components/ui/Button.vue';
+import Badge from '../components/ui/Badge.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { api, type ApiClient } from '../api/client';
 
@@ -174,6 +175,7 @@ describe('FederationPage — status + remove', () => {
   it.each([
     ['connected', 'Connected'],
     ['disconnected', 'Disconnected'],
+    ['suspended', 'Suspended'],
     ['pending', 'Pending'],
     ['blocked', 'blocked'],
   ])('renders the %s status as "%s"', async (status, label) => {
@@ -181,6 +183,21 @@ describe('FederationPage — status + remove', () => {
     const w = mountPage(client);
     await flushPromises();
     expect(w.find('[data-testid="status-p1"]').text()).toContain(label);
+    w.unmount();
+  });
+
+  it('renders a SUSPENDED peer with a real "Suspended" label and a non-default tone', async () => {
+    const { client } = makeClient({ peers: [{ ...hubPeer, status: 'suspended' }] });
+    const w = mountPage(client);
+    await flushPromises();
+    const cell = w.find('[data-testid="status-p1"]');
+    // A real word, not the raw lowercase enum value.
+    expect(cell.text()).toContain('Suspended');
+    expect(cell.text()).not.toContain('suspended');
+    // A distinct, non-default tone (warning), NOT the neutral fall-through.
+    const badge = cell.findComponent(Badge);
+    expect(badge.classes()).toContain('phlix-badge--warning');
+    expect(badge.classes()).not.toContain('phlix-badge--neutral');
     w.unmount();
   });
 

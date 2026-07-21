@@ -90,7 +90,7 @@ async function loadOutgoing(): Promise<void> {
       library_name: s.library_name ?? '',
       peer_id: s.peer_id ?? '',
       permission: (s.permission === 'readwrite' ? 'readwrite' : 'read') as 'read' | 'readwrite',
-      status: (s.status ?? 'pending') as 'pending' | 'accepted' | 'rejected',
+      status: (s.status ?? 'pending') as 'pending' | 'active' | 'revoked',
       shared_at: unixToIso(s.shared_at) ?? '',
       revoked_at: s.revoked_at ?? null,
     }));
@@ -167,17 +167,36 @@ function incomingStatusTone(status: string): 'warning' | 'success' | 'error' {
   }
 }
 
-/** Badge tone for outgoing share status. */
+/**
+ * Badge tone for outgoing share status.
+ *
+ * Statuses are the hub's `federation_library_shares.status` ENUM
+ * (`pending | active | revoked`), not the incoming-offer vocabulary.
+ */
 function outgoingStatusTone(status: string): 'warning' | 'success' | 'neutral' {
   switch (status) {
     case 'pending':
       return 'warning';
-    case 'accepted':
+    case 'active':
       return 'success';
-    case 'rejected':
+    case 'revoked':
       return 'neutral';
     default:
       return 'warning';
+  }
+}
+
+/** Human-readable label for an outgoing share status. */
+function outgoingStatusLabel(status: string): string {
+  switch (status) {
+    case 'pending':
+      return 'Pending';
+    case 'active':
+      return 'Active';
+    case 'revoked':
+      return 'Revoked';
+    default:
+      return status;
   }
 }
 
@@ -352,12 +371,12 @@ onMounted(() => loadAll());
               </td>
               <td>
                 <Badge :tone="outgoingStatusTone(share.status)">
-                  {{ share.status === 'rejected' ? 'Declined' : share.status }}
+                  {{ outgoingStatusLabel(share.status) }}
                 </Badge>
               </td>
               <td class="fed-shares__date">{{ formatDate(share.shared_at) }}</td>
               <td>
-                <div v-if="share.status !== 'rejected'" class="fed-shares__actions">
+                <div v-if="share.status !== 'revoked'" class="fed-shares__actions">
                   <Button
                     variant="ghost"
                     size="sm"

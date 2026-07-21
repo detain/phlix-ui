@@ -10,6 +10,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import FederationSharesPage from './FederationSharesPage.vue';
 import Button from '../components/ui/Button.vue';
+import Badge from '../components/ui/Badge.vue';
 import { useToastStore } from '../stores/useToastStore';
 import type { ApiClient } from '../api/client';
 
@@ -30,7 +31,8 @@ const outgoingShare = {
   library_name: 'Shows',
   peer_id: 'peer-b',
   permission: 'readwrite',
-  status: 'accepted',
+  // Real federation_library_shares.status ENUM member (pending|active|revoked).
+  status: 'active',
   shared_at: 1746057600,
   revoked_at: null,
 };
@@ -58,6 +60,18 @@ function mountPage(client: ApiClient): VueWrapper {
 
 function findBtnByLabel(w: VueWrapper, label: string) {
   return w.findAllComponents(Button).find((b) => b.attributes('aria-label') === label);
+}
+
+/** Find the Badge whose rendered text matches `label` (e.g. the status badge). */
+function findBadgeByText(w: VueWrapper, label: string) {
+  return w.findAllComponents(Badge).find((b) => b.text().trim() === label);
+}
+
+/** Switch to the Outgoing tab and settle. */
+async function openOutgoingTab(w: VueWrapper): Promise<void> {
+  const outgoingTab = w.findAll('[role="tab"]').find((t) => t.text().trim().startsWith('Outgoing'))!;
+  await outgoingTab.trigger('click');
+  await flushPromises();
 }
 
 beforeEach(() => {
@@ -199,12 +213,52 @@ describe('FederationSharesPage — revoke (outgoing)', () => {
     del.mockRejectedValueOnce(new Error('revoke failed'));
     const w = mountPage(client);
     await flushPromises();
-    const outgoingTab = w.findAll('[role="tab"]').find((t) => t.text().trim().startsWith('Outgoing'))!;
-    await outgoingTab.trigger('click');
-    await flushPromises();
+    await openOutgoingTab(w);
     await findBtnByLabel(w, 'Revoke share of Shows')!.trigger('click');
     await flushPromises();
     expect(useToastStore().toasts.some((t) => t.tone === 'error' && t.message === 'revoke failed')).toBe(true);
+    w.unmount();
+  });
+});
+
+describe('FederationSharesPage — outgoing status vocabulary (real DB enum)', () => {
+  it('renders an ACTIVE share with the proper "Active" label and a success tone', async () => {
+    const { client } = makeClient({ outgoing: [{ ...outgoingShare, status: 'active' }] });
+    const w = mountPage(client);
+    await flushPromises();
+    await openOutgoingTab(w);
+
+    // The proper word is rendered, NOT the raw lowercase enum value.
+    const badge = findBadgeByText(w, 'Active');
+    expect(badge, 'status badge should read "Active", not raw "active"').toBeTruthy();
+    expect(findBadgeByText(w, 'active')).toBeUndefined();
+    // Correct tone: active → success (not the warning fall-through).
+    expect(badge!.classes()).toContain('phlix-badge--success');
+    expect(badge!.classes()).not.toContain('phlix-badge--warning');
+    w.unmount();
+  });
+
+  it('renders a REVOKED share with a "Revoked" label, neutral tone, and NO Revoke button', async () => {
+    const { client } = makeClient({ outgoing: [{ ...outgoingShare, status: 'revoked' }] });
+    const w = mountPage(client);
+    await flushPromises();
+    await openOutgoingTab(w);
+
+    const badge = findBadgeByText(w, 'Revoked');
+    expect(badge, 'status badge should read "Revoked", not raw "revoked"').toBeTruthy();
+    expect(findBadgeByText(w, 'revoked')).toBeUndefined();
+    expect(badge!.classes()).toContain('phlix-badge--neutral');
+    // Terminal state: a revoked share must NOT offer a Revoke action.
+    expect(findBtnByLabel(w, 'Revoke share of Shows')).toBeUndefined();
+    w.unmount();
+  });
+
+  it('still offers a Revoke button for a non-terminal (active) share', async () => {
+    const { client } = makeClient({ outgoing: [{ ...outgoingShare, status: 'active' }] });
+    const w = mountPage(client);
+    await flushPromises();
+    await openOutgoingTab(w);
+    expect(findBtnByLabel(w, 'Revoke share of Shows')).toBeTruthy();
     w.unmount();
   });
 });

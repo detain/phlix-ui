@@ -18,14 +18,20 @@ export interface IncomingOffer {
   accepted_by: string | null;
 }
 
-/** A library share the current user sent to a peer. */
+/**
+ * A library share the current user sent to a peer.
+ *
+ * `status` mirrors the hub's `federation_library_shares.status` ENUM
+ * (`pending | active | revoked`; migrations/028_federation.sql), NOT the
+ * incoming-offer vocabulary (`accepted | rejected`).
+ */
 export interface OutgoingShare {
   id: string;
   library_id: string;
   library_name: string;
   peer_id: string;
   permission: 'read' | 'readwrite';
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'active' | 'revoked';
   shared_at: string;
   revoked_at: string | null;
 }

@@ -132,13 +132,20 @@ function formatDate(dateStr: string | undefined): string {
   return new Date(dateStr).toLocaleString();
 }
 
-/** Human-readable label for a peer status. */
+/**
+ * Human-readable label for a peer status.
+ *
+ * Statuses are the hub's `federation_peers.status` ENUM
+ * (`pending | connected | suspended | disconnected`; migrations/028_federation.sql).
+ */
 function statusLabel(status: string): string {
   switch (status) {
     case 'connected':
       return 'Connected';
     case 'disconnected':
       return 'Disconnected';
+    case 'suspended':
+      return 'Suspended';
     case 'pending':
       return 'Pending';
     default:
@@ -153,6 +160,8 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'error'
       return 'success';
     case 'disconnected':
       return 'error';
+    case 'suspended':
+      return 'warning';
     case 'pending':
       return 'warning';
     default:
