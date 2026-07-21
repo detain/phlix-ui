@@ -42,17 +42,27 @@ export interface CreateInviteLinkResponse {
     expires_at: number;
     id: string;
 }
-/** Server shape from GET /api/v1/me/servers. */
+/**
+ * Server shape from GET /api/v1/me/servers.
+ *
+ * The hub returns `ServerInfoDto::toPayload()`, which is **camelCase** — this is the
+ * established server↔hub wire convention and `MyServersPage.vue` already depends on
+ * it. Fields are optional because older hubs may omit them.
+ */
 export interface Server {
-    id: string;
-    server_name: string;
-    status: string;
+    serverId?: string;
+    serverName?: string;
+    status?: string;
 }
-/** Library shape from GET /api/v1/me/libraries?server_id={id}. */
+/**
+ * Library shape from GET /api/v1/me/libraries?server_id={id}.
+ *
+ * `LibraryController::listLibraries()` returns ONLY `{ id, name }` — there is no
+ * `server_id` on the wire (the server is already scoped by the query parameter).
+ */
 export interface Library {
     id: string;
     name: string;
-    server_id: string;
 }
 /**
  * InviteLinksApi — thin typed wrapper around the invite-links endpoints.

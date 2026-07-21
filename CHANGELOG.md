@@ -1,3 +1,17 @@
+## 0.96.0 - 2026-07-21
+
+### Added
+- **Per-page help on the 8 user-facing hub management pages (plan_settings.md Phase 9 extension).** The admin section was done in 0.95.0; this extends the same infrastructure to My Servers, Server Detail, Federation, Federation Shares, Manage Shares, Shared With Me, Invite Links and Requests. Both `PageHint` slots — `links` and `details` — are populated on every one.
+  - Content lives in one module, `src/pages/hubHelpLinks.ts`, mirroring the admin corpus. These pages are routed from OUTSIDE this library (the `phlix-hub`/`phlix-server` `web-ui` trees), so they get their own corpus and guard rather than joining `admin/helpLinks.ts`, whose test walks the admin route table.
+  - `hubHelpLinks.test.ts` pins: every target page has an entry, **every entry is actually bound by its page** (a class-(g) render check), URL shape, and an opt-in `PHLIX_NETWORK_TESTS=1` liveness probe that asserts its own discrimination (a fake docs URL must 404). It uses `node:https`, not the stubbed `fetch`.
+  - Every one of the 8 documentation URLs was probed 200 against the live docs site with fake sibling controls probed 404 alongside. **Federation and Federation Shares ship `links: []` deliberately** — no user-facing federation documentation exists, only the operator-level `hub-admin/federation-policy` page, and an invented link is worse than none. The omission is pinned by a test.
+
+### Fixed
+- **`SharedWithMePage` showed every active share as "Access revoked by owner".** The page's `HubIncomingShare` interface expected `id`/`owner_email`/`status`/`created_at`, but the hub returns `SharedLibraryDto` keys `share_id`/`owner_name`/`permission_level`/`created_at` and has **no** `status` field — `getSharedWithMe()` only ever returns active shares. So `share.status` was `undefined`, the "Revoked" branch always rendered, "Shared by" was blank and the date was "Invalid Date". The interface now matches the real payload; the fabricated status badge and revoked branch are gone; the "Browse Library" button (which pointed at a `/browse/:server/:library` route that does not exist) is replaced by an "Open Server" link to `access_urls[0]`, disabled when empty.
+- **`InviteLinksPage`'s server dropdown was always empty.** `invite-links.ts` typed the servers response as `{id, server_name}`, but the hub returns camelCase `serverId`/`serverName` (`ServerInfoDto`). Every option resolved to `{value: undefined, label: undefined}` and New Invite always failed with "Please select a server." The consumer now reads the camelCase fields, matching `MyServersPage`.
+
+### Notes
+- The two fixes above pair with a `phlix-hub` change adding `created_at` to `SharedLibraryDto`.
 ## 0.95.0 - 2026-07-21
 
 ### Added
