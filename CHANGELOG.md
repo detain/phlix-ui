@@ -1,3 +1,22 @@
+## 0.95.0 - 2026-07-21
+
+### Added
+- **Per-page help on all 22 routed admin pages (plan_settings.md Phase 9).** Every admin page already carried a `PageHint` describing what it does, but the component's other two slots were unused everywhere: **no page had ever populated a `PageHint`'s `links`**, and nothing used `details`. The plan's recorded "2 of 23 pages populate links" was counting `HelpText` — the per-field overlay at `PluginsPage.vue:1393` — not `PageHint`, so the real gap was 22 of 22.
+  - Content lives in one module, `src/pages/admin/helpLinks.ts`, rather than inline per page. The plan lists "no owner for the 80+ help links going stale" as an unaddressed gap and two in-tree Trakt links had already 404'd; centralising them gives the corpus exactly one owner and makes it mechanically checkable.
+  - `helpLinks.test.ts` guards four things: every routed admin page has an entry, **every entry is actually bound by its page** (an entry nothing renders is the "resolvable but not consumed" failure this codebase keeps hitting), URLs are well-formed, and — opt-in via `PHLIX_NETWORK_TESTS=1` — they still resolve. All 40 URLs were verified 200 against the live docs site, with a deliberately fake URL probed alongside to confirm the check discriminates.
+  - The liveness probe uses `node:https`, **not** `fetch`: `src/test/setup.ts:10` stubs `globalThis.fetch`, so a fetch-based probe measures the stub and reports every URL as dead. The test asserts its own discrimination so that false result cannot recur.
+
+### Fixed
+- **The Settings page described the `custom` badge backwards.** It said the badge "marks values overridden by your environment or config file". `isOverridden` is driven by the server's `overridden` list, which comes from `SettingsRepository::getAllOverrides()` — a read of the `server_settings` table. The badge means *you saved this value here*, overriding the built-in default. The hint now says that, and the new help panel adds the non-obvious corollary: a saved value beats an environment variable, which is the opposite of what most tools do.
+- **The Live TV page promised automatic series recording that does not happen.** The hint said Series Rules "auto-records a show every time it airs". `SeriesRuleManager::matchAndSchedule()` — the method that would turn a rule into scheduled recordings — has **zero callers anywhere in the repo**, not even a test; the manager is reached only by `AdminLiveTvController`'s CRUD paths. Rules are stored and managed and never acted upon. The hint and help panel now say so and point at Schedule Recording.
+- **`npm run lint` was red on master** (verified by linting `HEAD~1`'s copy): `SettingsPage.vue` imported `SETTINGS_SECRET_MASK` but referenced it only from docblock `{@link}` tags, which `no-unused-vars` does not count. The runtime import is gone and both references remain as code spans.
+- **`HubDashboardPage`'s "omits the offline badge" test scanned the whole page for the bare word "offline"**, so it collided with any prose using the word. It now matches the badge's rendered form (`/\d+\s+offline/`), mirroring the positive test — re-verified by mutation to confirm narrowing did not weaken it.
+
+### Notes
+- **`WebhookLogsPage.vue` is deliberately undocumented and is asserted absent from the corpus.** Its only reference in `src/` is its own docblock, nothing routes it, and all three of its API calls (`/api/v1/admin/webhooks/logs`, `.../retry`, `DELETE .../{id}`) target endpoints the server does not implement — `grep "webhooks/logs"` in `phlix-server` returns zero hits. Giving it help text would document a page no one can reach.
+- **Cast Devices ships `links: []` on purpose.** There is no user-facing casting document, and `developers/discovery.md` is developer-level and documents a Roku service string (`_ roku-ecnp._tcp.local.`) that cannot work. An invented link is worse than none. Both this and the `WebhookLogsPage` exclusion are pinned by tests so a later pass does not "helpfully" undo them.
+- 22 of 59 drafted factual claims were checked against source and found wrong before shipping — including the transcoding panel, which originally said encoding-setting changes leave cached titles alone. The opposite is true: the encode fingerprint is folded into the transcode job key, so changing preset/CRF/audio-bitrate re-encodes already-watched titles on next play, and reverting every value to its default restores the original key and reuses the existing cache.
+
 ## 0.94.0 - 2026-07-21
 
 ### Fixed

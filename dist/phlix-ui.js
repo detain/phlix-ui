@@ -845,127 +845,127 @@ var Br = dn("server", () => {
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-BY6JqIEm.js")
+	component: () => import("./DashboardPage-C9KsA0LJ.js")
 }, Hr = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-UxYXRuzW.js")
+	component: () => import("./UsersPage-4a4cX6_S.js")
 }, Ur = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-B7yGVuF1.js")
+	component: () => import("./LogsPage-C1DV8MQ7.js")
 }, Wr = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-BCgqgRXs.js")
+	component: () => import("./WebhooksPage-C5YwQZCP.js")
 }, Gr = {
 	name: "admin-services",
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-C_yYBiDX.js")
+	component: () => import("./ServicesPage-sjvtAN2N.js")
 }, Kr = {
 	name: "admin-integrations",
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-CAohSZ7t.js")
+	component: () => import("./IntegrationsPage-BWGxwe7k.js")
 }, qr = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-B5M0gzdX.js")
+	component: () => import("./BackupPage-DOeXSrc3.js")
 }, Jr = {
 	name: "admin-cast",
 	path: "cast-devices",
 	label: "Cast Devices",
 	icon: "cast",
-	component: () => import("./CastDevicesPage-DBjlth-I.js")
+	component: () => import("./CastDevicesPage-B5x5tluX.js")
 }, Yr = {
 	name: "admin-dlna",
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-CIsy6GcM.js")
+	component: () => import("./DlnaServerPage-C03g-qJJ.js")
 }, Xr = {
 	name: "admin-remote-access",
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-goal783W.js")
+	component: () => import("./RemoteAccessPage-CcsH7pGd.js")
 }, Zr = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-C7mne7f_.js")
+	component: () => import("./LiveTvPage-D9onIliw.js")
 }, Qr = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-B4mHhAHl.js")
+	component: () => import("./CollectionsPage-CxOvp-E7.js")
 }, $r = {
 	name: "admin-history",
 	path: "history",
 	label: "Watch History",
 	icon: "film",
-	component: () => import("./HistoryPage-BrlyZODF.js")
+	component: () => import("./HistoryPage-C8QmnjaF.js")
 }, ei = {
 	name: "admin-syncplay",
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-C5fCp1JF.js")
+	component: () => import("./SyncPlayPage-_e1sz3di.js")
 }, ti = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-ymwWxq7M.js")
+	component: () => import("./LibrariesPage-Cfv7qVO0.js")
 }, ni = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-B3BUkRzJ.js")
+	component: () => import("./DuplicatesPage-BK1Fuzg3.js")
 }, ri = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-Bmextev3.js")
+	component: () => import("./PluginsPage-B8eZILGy.js")
 }, ii = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-C7dRw20n.js")
+	component: () => import("./TranscodingSettingsPage-uAd1Q5N-.js")
 }, ai = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-BQi2sN_4.js")
+	component: () => import("./SettingsPage-DKxbqsft.js")
 }, oi = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./HubDashboardPage-4Qcup699.js")
+	component: () => import("./HubDashboardPage-CQfYGsnp.js")
 }, si = {
 	name: "admin-metrics",
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-CwTKn9os.js")
+	component: () => import("./MetricsPage-2D5Mkhrt.js")
 }, ci = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -977,7 +977,7 @@ var Br = dn("server", () => {
 	path: "requests",
 	label: "Request Queue",
 	icon: "list",
-	component: () => import("./RequestsPage-CoNWzQlz.js")
+	component: () => import("./RequestsPage-Cn4qLfGp.js")
 }, ui = Object.fromEntries([
 	Vr,
 	si,
