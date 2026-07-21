@@ -49,7 +49,35 @@ async function mountAdmin(
 }
 
 describe('AdminLayout — server set', () => {
-  it('renders a labelled Admin nav landmark with all 21 page links', async () => {
+  /**
+   * The server sidebar, in order. Pinned as an exact ordered list rather than a
+   * handful of `toContain` spot-checks, so both a missing page AND a reordered
+   * one fail — the count alone would not catch a swap.
+   */
+  const SERVER_SIDEBAR_LABELS = [
+    'Dashboard',
+    'Server Traffic',
+    'Users',
+    'Logs',
+    'Webhooks',
+    'Services',
+    'Integrations',
+    'Backup',
+    'Cast Devices',
+    'DLNA Server',
+    'Remote Access',
+    'Live TV / DVR',
+    'Collections',
+    'Watch History',
+    'SyncPlay',
+    'Libraries',
+    'Duplicates',
+    'Plugins',
+    'Transcoding',
+    'Settings',
+  ];
+
+  it('renders a labelled Admin nav landmark with all 20 page links, in order', async () => {
     const { wrapper } = await mountAdmin();
     const nav = wrapper.find('nav.admin__nav');
     expect(nav.exists()).toBe(true);
@@ -57,23 +85,15 @@ describe('AdminLayout — server set', () => {
     expect(wrapper.find('#admin-nav-heading').text()).toBe('Admin');
 
     const links = wrapper.findAll('.admin__link');
-    expect(links).toHaveLength(21);
-    const labels = links.map((l) => l.text());
-    expect(labels).toContain('Dashboard');
-    expect(labels).toContain('Server Traffic');
-    expect(labels).toContain('Cast Devices');
-    expect(labels).toContain('Live TV / DVR');
-    expect(labels).toContain('Libraries');
-    expect(labels).toContain('Duplicates');
-    expect(labels).toContain('Plugins');
-    expect(labels).toContain('Plugin Config');
-    expect(labels).toContain('Settings');
-    expect(labels).toContain('Transcoding');
+    expect(links).toHaveLength(SERVER_SIDEBAR_LABELS.length);
+    expect(links.map((l) => l.text())).toEqual(SERVER_SIDEBAR_LABELS);
+    // The merged-away surface must not reappear as a second plugin entry.
+    expect(links.map((l) => l.text())).not.toContain('Plugin Config');
   });
 
   it('renders a real Icon component for every link (icon-only, never emoji)', async () => {
     const { wrapper } = await mountAdmin();
-    expect(wrapper.findAll('.admin__icon')).toHaveLength(21);
+    expect(wrapper.findAll('.admin__icon')).toHaveLength(SERVER_SIDEBAR_LABELS.length);
   });
 
   it('points each sidebar link at its admin page URL', async () => {

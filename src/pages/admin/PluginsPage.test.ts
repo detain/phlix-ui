@@ -159,6 +159,10 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  // Modals teleport to <body> and a test that fails before its `unmount()` leaves
+  // its panel behind. `modalPanel()` reads the LAST panel, so a stale one turns a
+  // single regression into a cascade of misleading failures in later tests.
+  document.body.innerHTML = '';
 });
 
 describe('Admin PluginsPage — installed list', () => {
@@ -575,8 +579,133 @@ describe('Admin PluginsPage — configure', () => {
     await flushPromises();
     await openConfigure(w);
     const panel = modalPanel();
-    expect(panel.textContent).toContain('Not set.');
+    expect(panel.textContent).toContain('Not set');
+    expect(panel.textContent).toContain('No value is stored yet.');
     expect(panel.textContent).not.toContain('Currently set');
+    // A positively-reported unset secret is NOT the unknown state.
+    expect(panel.textContent).not.toContain('did not report');
+    w.unmount();
+  });
+
+  /**
+   * The third secret state. `secret_status` is absent from every server that
+   * predates it, and reporting that absence as "Not set" asserts a secret is
+   * missing when it may well be stored — which invites the admin to overwrite a
+   * working credential. Unknown must read as unknown.
+   */
+  it('does not claim "Not set" when the server sent no secret_status at all', async () => {
+    const detail = { ...DETAIL_A };
+    delete (detail as { secret_status?: unknown }).secret_status;
+    const { client } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const cue = panel.querySelector('#plugin-secret-status-api_key')!;
+    expect(cue.textContent).toContain('did not report');
+    expect(cue.textContent).not.toContain('Not set');
+    expect(cue.textContent).not.toContain('Currently set');
+    w.unmount();
+  });
+
+  it('flips the cue when secret_status flips, with an identical schema', async () => {
+    // Proves the cue is driven by secret_status and nothing else — the schema
+    // and the masked `settings` map are byte-identical across both mounts.
+    const set = mountPage(makeClient({ detail: { ...DETAIL_A, secret_status: { api_key: { set: true, length: 8 } } } }).client);
+    await flushPromises();
+    await openConfigure(set);
+    expect(modalPanel().querySelector('#plugin-secret-status-api_key')!.textContent).toContain(
+      'Configured',
+    );
+    set.unmount();
+
+    const unset = mountPage(makeClient({ detail: { ...DETAIL_A, secret_status: { api_key: { set: false, length: 0 } } } }).client);
+    await flushPromises();
+    await openConfigure(unset);
+    expect(modalPanel().querySelector('#plugin-secret-status-api_key')!.textContent).toContain(
+      'Not set',
+    );
+    unset.unmount();
+  });
+
+  it('never renders the mask sentinel, in the input or anywhere else', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    expect(panel.querySelector<HTMLInputElement>('input[type="password"]')!.value).toBe('');
+    expect(panel.innerHTML).not.toContain('***');
+    w.unmount();
+  });
+
+  it('keeps a real secret out of the DOM even if a server regressed and sent one', async () => {
+    // Defence in depth: the seed is unconditional for secret keys, so a plaintext
+    // value on the wire still never lands in the input.
+    const detail = { ...DETAIL_A, settings: { ...DETAIL_A.settings, api_key: 'sk-live-leaked' } };
+    const { client } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    expect(panel.querySelector<HTMLInputElement>('input[type="password"]')!.value).toBe('');
+    expect(panel.innerHTML).not.toContain('sk-live-leaked');
+    w.unmount();
+  });
+
+  it('renders the secret as a password field with autocomplete off', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const secret = modalPanel().querySelector<HTMLInputElement>('#plugin-setting-api_key')!;
+    expect(secret.getAttribute('type')).toBe('password');
+    expect(secret.getAttribute('autocomplete')).toBe('new-password');
+    w.unmount();
+  });
+
+  it('describes the secret input with its status line for screen readers', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const describedBy = panel
+      .querySelector('#plugin-setting-api_key')!
+      .getAttribute('aria-describedby');
+    expect(describedBy).toBe('plugin-secret-status-api_key');
+    // The referenced node must actually exist, or the association is dead.
+    expect(panel.querySelector(`#${describedBy}`)).toBeTruthy();
+    w.unmount();
+  });
+
+  it('renders the status cue only for secret fields', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    expect(panel.querySelectorAll('.admin-plugins__secret-status').length).toBe(1);
+    expect(panel.querySelector('#plugin-secret-status-page_size')).toBeFalsy();
+    // …and the non-secret input carries no dangling describedby.
+    expect(
+      panel.querySelector('#plugin-setting-page_size')!.getAttribute('aria-describedby'),
+    ).toBeNull();
+    w.unmount();
+  });
+
+  it('associates a real <label> with each input, so clicking the label focuses it', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    for (const key of ['api_key', 'page_size']) {
+      const label = panel.querySelector<HTMLLabelElement>(`label[for="plugin-setting-${key}"]`);
+      expect(label).toBeTruthy();
+      // htmlFor resolves only when an element with that id actually exists.
+      expect(label!.control).toBe(panel.querySelector(`#plugin-setting-${key}`));
+    }
     w.unmount();
   });
 
@@ -732,6 +861,156 @@ describe('Admin PluginsPage — configure', () => {
     w.unmount();
   });
 
+  it('banners a validation failure inside the modal, not just as a toast', async () => {
+    // The offending field can sit far below the fold in a long schema; a toast
+    // is gone before the admin finds it, so the modal itself must say so.
+    const { client, put } = makeClient();
+    put.mockRejectedValueOnce(
+      new ApiError('invalid', 400, {
+        code: 'plugin.settings.validation_failed',
+        errors: { page_size: 'must be an integer' },
+      }),
+    );
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const numberInput = panel.querySelector<HTMLInputElement>('input[type="number"]')!;
+    numberInput.value = '7';
+    numberInput.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    const banner = modalPanel().querySelector('.admin-plugins__config-error')!;
+    expect(banner).toBeTruthy();
+    expect(banner.getAttribute('role')).toBe('alert');
+    expect(banner.textContent).toContain('fix the errors below');
+    w.unmount();
+  });
+
+  it('banners a non-validation save failure with the server reason', async () => {
+    const { client, put } = makeClient();
+    put.mockRejectedValueOnce(new ApiError('disk is full', 500, {}));
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const numberInput = panel.querySelector<HTMLInputElement>('input[type="number"]')!;
+    numberInput.value = '7';
+    numberInput.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    expect(modalPanel().querySelector('.admin-plugins__config-error')!.textContent).toContain(
+      'disk is full',
+    );
+    w.unmount();
+  });
+
+  it('clears a stale save banner when the modal is reopened', async () => {
+    const { client, put } = makeClient();
+    put.mockRejectedValueOnce(new ApiError('disk is full', 500, {}));
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    let panel = modalPanel();
+    const numberInput = panel.querySelector<HTMLInputElement>('input[type="number"]')!;
+    numberInput.value = '7';
+    numberInput.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
+    await flushPromises();
+    await openConfigure(w);
+    panel = modalPanel();
+    expect(panel.querySelector('.admin-plugins__config-error')).toBeFalsy();
+    w.unmount();
+  });
+
+  /**
+   * Clearing an optional field must express "unset", not "the empty string".
+   * Only `null` reaches the server as an unset value; `''` is a value in its own
+   * right and would be stored as one.
+   */
+  it('sends null — not an empty string — for a field the admin cleared', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const numberInput = panel.querySelector<HTMLInputElement>('#plugin-setting-page_size')!;
+    numberInput.value = '';
+    numberInput.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/anidb/settings', {
+      settings: { page_size: null },
+    });
+    w.unmount();
+  });
+
+  /**
+   * `array` / `object` settings have no dedicated control — they edit as JSON in
+   * a text box. Seeding must serialise (or the box shows `[object Object]`) and
+   * saving must parse (or the server receives a string where it validates a
+   * structured value).
+   */
+  it('round-trips an array setting as JSON rather than sending a raw string', async () => {
+    const detail = {
+      ...PLUGIN_A,
+      settings_schema: {
+        hosts: { type: 'array', required: false, secret: false, label: 'Hosts', description: '' },
+      },
+      settings: { hosts: ['a.example', 'b.example'] },
+      secret_status: {},
+    };
+    const { client, put } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const input = panel.querySelector<HTMLInputElement>('#plugin-setting-hosts')!;
+    // Seeded as JSON text, not "[object Object]" / a comma-joined blur.
+    expect(input.value).toBe('["a.example","b.example"]');
+    input.value = '["c.example"]';
+    input.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/anidb/settings', {
+      settings: { hosts: ['c.example'] },
+    });
+    w.unmount();
+  });
+
+  it('falls back to the raw string for malformed JSON, so the server can reject it', async () => {
+    const detail = {
+      ...PLUGIN_A,
+      settings_schema: {
+        hosts: { type: 'array', required: false, secret: false, label: 'Hosts', description: '' },
+      },
+      settings: { hosts: [] },
+      secret_status: {},
+    };
+    const { client, put } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const input = panel.querySelector<HTMLInputElement>('#plugin-setting-hosts')!;
+    input.value = '[not json';
+    input.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/anidb/settings', {
+      settings: { hosts: '[not json' },
+    });
+    w.unmount();
+  });
+
   it('skips the PUT when nothing changed', async () => {
     const { client, put } = makeClient();
     const w = mountPage(client);
@@ -767,6 +1046,246 @@ describe('Admin PluginsPage — configure', () => {
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'detail boom')).toBe(true);
+    w.unmount();
+  });
+});
+
+/**
+ * Per-field help links. `link` and `link_text` are INDEPENDENTLY optional — the
+ * manifest and the server's `plugin_field_help.php` overlay each supply either
+ * key on its own — so a link that arrives without anchor text must still render
+ * rather than being silently dropped.
+ */
+describe('Admin PluginsPage — configure: field help links', () => {
+  const DETAIL_LINKS = {
+    ...PLUGIN_A,
+    settings_schema: {
+      api_key: {
+        type: 'string',
+        required: true,
+        secret: true,
+        label: 'API key',
+        description: 'Credential for the upstream service.',
+        link: 'https://example.test/api-keys',
+        link_text: 'Get an API key',
+      },
+      // link WITHOUT link_text — the natural authoring slip.
+      endpoint: {
+        type: 'string',
+        required: false,
+        secret: false,
+        label: 'Endpoint',
+        description: 'Base URL of the service.',
+        link: 'https://example.test/endpoints',
+      },
+      retries: {
+        type: 'int',
+        required: false,
+        secret: false,
+        label: 'Retries',
+        description: 'How many times to retry.',
+      },
+    },
+    settings: { api_key: '***', endpoint: 'https://api.example.test', retries: 3 },
+    secret_status: { api_key: { set: true, length: 24 } },
+  };
+
+  async function open(w: VueWrapper) {
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Configure anidb')!
+      .trigger('click');
+    await flushPromises();
+  }
+
+  it('renders a link that supplies its own anchor text', async () => {
+    const { client } = makeClient({ detail: DETAIL_LINKS });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    const link = modalPanel().querySelector<HTMLAnchorElement>(
+      'a[href="https://example.test/api-keys"]',
+    );
+    expect(link).toBeTruthy();
+    expect(link!.textContent).toContain('Get an API key');
+    w.unmount();
+  });
+
+  it('still renders a link that has NO link_text, using a default anchor', async () => {
+    const { client } = makeClient({ detail: DETAIL_LINKS });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    const link = modalPanel().querySelector<HTMLAnchorElement>(
+      'a[href="https://example.test/endpoints"]',
+    );
+    expect(link).toBeTruthy();
+    expect(link!.textContent).toContain('Where to get this');
+    w.unmount();
+  });
+
+  it('keeps external-link security attributes on help links', async () => {
+    const { client } = makeClient({ detail: DETAIL_LINKS });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    const link = modalPanel().querySelector<HTMLAnchorElement>(
+      'a[href="https://example.test/endpoints"]',
+    )!;
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    w.unmount();
+  });
+
+  it('renders no link for a descriptor that has none', async () => {
+    const { client } = makeClient({ detail: DETAIL_LINKS });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    const panel = modalPanel();
+    // Three fields, but only two carry a link.
+    expect(panel.querySelectorAll('.phlix-help-text__link').length).toBe(2);
+    expect(panel.textContent).toContain('How many times to retry.');
+    w.unmount();
+  });
+});
+
+/**
+ * OAuth redirect URL.
+ *
+ * `serializeDetail()` has emitted `redirect_url` all along. A scrobbler plugin
+ * (Trakt, Last.fm) cannot be authorised until that exact string is pasted into
+ * the provider's own application settings, and this modal is the only surface
+ * that reveals it — so losing it would leave admins with no way to discover it.
+ */
+describe('Admin PluginsPage — configure: OAuth redirect URL', () => {
+  const REDIRECT = 'https://media.example.test/api/v1/plugins/trakt/callback';
+  const DETAIL_OAUTH = { ...DETAIL_A, redirect_url: REDIRECT };
+
+  let writeText: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    writeText = vi.fn(async () => {});
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+  });
+
+  async function open(w: VueWrapper) {
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Configure anidb')!
+      .trigger('click');
+    await flushPromises();
+  }
+
+  it('renders the redirect URL verbatim so it can be pasted into the provider', async () => {
+    const { client } = makeClient({ detail: DETAIL_OAUTH });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    const panel = modalPanel();
+    expect(panel.textContent).toContain('Redirect URL');
+    expect(panel.querySelector('.admin-plugins__redirect-value')!.textContent).toBe(REDIRECT);
+    w.unmount();
+  });
+
+  it('renders nothing when the server reports no redirect URL', async () => {
+    const { client } = makeClient(); // DETAIL_A has no redirect_url
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    expect(modalPanel().querySelector('.admin-plugins__redirect')).toBeFalsy();
+    w.unmount();
+  });
+
+  it('still shows the redirect URL for a plugin with no configurable settings', async () => {
+    // An OAuth plugin whose whole configuration happens at the provider still
+    // needs its callback URL surfaced.
+    const detail = { ...PLUGIN_A, settings_schema: {}, settings: {}, redirect_url: REDIRECT };
+    const { client } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    const panel = modalPanel();
+    expect(panel.textContent).toContain('No configurable settings');
+    expect(panel.querySelector('.admin-plugins__redirect-value')!.textContent).toBe(REDIRECT);
+    w.unmount();
+  });
+
+  it('copies the redirect URL to the clipboard', async () => {
+    const { client } = makeClient({ detail: DETAIL_OAUTH });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    await findBtnIn(w, modalPanel(), 'Copy')!.trigger('click');
+    await flushPromises();
+    expect(writeText).toHaveBeenCalledWith(REDIRECT);
+    w.unmount();
+  });
+
+  it('gives the copy button an accessible name that names the plugin', async () => {
+    const { client } = makeClient({ detail: DETAIL_OAUTH });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    const copy = findBtnIn(w, modalPanel(), 'Copy')!;
+    expect(copy.attributes('aria-label')).toBe('Copy the redirect URL for anidb');
+    w.unmount();
+  });
+
+  it('announces a successful copy in a live region as well as a toast', async () => {
+    const { client } = makeClient({ detail: DETAIL_OAUTH });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    const status = () => modalPanel().querySelector('[role="status"].admin-plugins__visually-hidden')!;
+    expect(status().textContent).toBe('');
+    await findBtnIn(w, modalPanel(), 'Copy')!.trigger('click');
+    await flushPromises();
+    expect(status().textContent).toContain('copied to clipboard');
+    expect(useToastStore().toasts.some((t) => t.message.includes('copied to clipboard'))).toBe(true);
+    w.unmount();
+  });
+
+  it('tells the admin to copy manually when the clipboard is unavailable', async () => {
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    const { client } = makeClient({ detail: DETAIL_OAUTH });
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    await findBtnIn(w, modalPanel(), 'Copy')!.trigger('click');
+    await flushPromises();
+    const status = modalPanel().querySelector('[role="status"].admin-plugins__visually-hidden')!;
+    expect(status.textContent).toContain('Copy it manually');
+    // …and the URL is still on screen to copy by hand.
+    expect(modalPanel().querySelector('.admin-plugins__redirect-value')!.textContent).toBe(REDIRECT);
+    w.unmount();
+  });
+
+  it('does not leak one plugin\'s redirect URL into the next plugin opened', async () => {
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/plugins') return { plugins: [PLUGIN_A, PLUGIN_B] };
+      if (endpoint === '/api/v1/admin/plugins/catalog') return EMPTY_CATALOG;
+      if (endpoint === '/api/v1/admin/plugins/updates') return NO_UPDATES;
+      if (endpoint === '/api/v1/admin/plugins/auto-update') return { auto_update: false };
+      if (endpoint === '/api/v1/admin/plugins/anidb') return { plugin: DETAIL_OAUTH };
+      return { plugin: { ...PLUGIN_B, settings_schema: {}, settings: {} } };
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountPage(client);
+    await flushPromises();
+    await open(w);
+    expect(modalPanel().querySelector('.admin-plugins__redirect-value')!.textContent).toBe(REDIRECT);
+    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Configure mal')!
+      .trigger('click');
+    await flushPromises();
+    expect(modalPanel().querySelector('.admin-plugins__redirect')).toBeFalsy();
     w.unmount();
   });
 });

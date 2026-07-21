@@ -23,9 +23,16 @@
  * the manifest `settings_schema` (one control per key by type). Secret fields
  * start EMPTY — never prefilled with the `***` mask — and are sent only when the
  * admin types a new value, or explicitly clicks Remove to clear the stored one.
- * Per-field validation errors from a `400 plugin.settings.validation_failed`
- * render under the offending field. Every mutation refetches both the catalog
- * and the installed list. Errors surface as toasts.
+ * A secret's Configured / Not set / Unknown cue is driven entirely by the
+ * server's `secret_status`; "unknown" (an older server that omits the map) is
+ * reported honestly rather than as "not set". Only keys the admin actually
+ * changed are sent, so an untouched field is never rewritten. Per-field
+ * validation errors from a `400 plugin.settings.validation_failed` render under
+ * the offending field, under a banner pointing at them. Plugins that complete an
+ * OAuth handshake also get their `redirect_url` rendered with a copy button —
+ * the provider's app configuration needs that exact string and this is the only
+ * surface that reveals it. Every mutation refetches both the catalog and the
+ * installed list. Errors surface as toasts.
  */
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
@@ -52,6 +59,7 @@ import Modal from '../../components/ui/Modal.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
+import HelpText from '../../components/ui/HelpText.vue';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -502,6 +510,17 @@ const pristineValues = ref<Record<string, unknown>>({});
 /** Per-field validation errors from the last save attempt. */
 const fieldErrors = ref<Record<string, string>>({});
 /**
+ * Modal-level save error. A toast is too fleeting to pair with per-field errors
+ * rendered further down a long form, so a persistent banner points at them.
+ */
+const configError = ref<string | null>(null);
+/**
+ * Polite announcement for the Redirect-URL copy button. Clipboard success is
+ * otherwise invisible to a screen-reader user (the toast is not in this modal's
+ * live region), so the outcome is mirrored into a visually-hidden status node.
+ */
+const copyAnnouncement = ref('');
+/**
  * Secret keys the admin has explicitly armed for removal.
  *
  * Secret inputs start blank and a blank field means "keep the stored value", so
@@ -521,6 +540,41 @@ const schemaEntries = computed<Array<[string, PluginSettingDescriptor]>>(() =>
 );
 
 const hasSchema = computed(() => schemaEntries.value.length > 0);
+
+/**
+ * The plugin's OAuth redirect/callback URL, when the server reports one.
+ *
+ * `serializeDetail()` emits `redirect_url` for plugins that complete an OAuth
+ * handshake (Trakt, Last.fm, …). The provider's own application settings need
+ * that exact URL pasted in, and this modal is the only place an admin can read
+ * it — so it renders verbatim with a copy affordance rather than being left for
+ * the admin to reconstruct by hand.
+ */
+const redirectUrl = computed(() => detail.value?.redirect_url ?? '');
+
+/** Copy the redirect URL, announcing the outcome politely as well as by toast. */
+async function copyRedirectUrl(): Promise<void> {
+  const url = redirectUrl.value;
+  if (!url) return;
+  try {
+    await navigator.clipboard.writeText(url);
+    copyAnnouncement.value = 'Redirect URL copied to clipboard.';
+    toasts.success('Redirect URL copied to clipboard.');
+  } catch {
+    copyAnnouncement.value = 'Could not copy the redirect URL. Copy it manually instead.';
+    toasts.error('Failed to copy the redirect URL.');
+  }
+}
+
+/** `id` of the status line describing a secret field, for `aria-describedby`. */
+function secretStatusId(key: string): string {
+  return `plugin-secret-status-${key}`;
+}
+
+/** True for the structured types whose control is a text box holding JSON. */
+function isJsonType(descriptor: PluginSettingDescriptor): boolean {
+  return descriptor.type === 'array' || descriptor.type === 'object';
+}
 
 /** The HTML input type for a non-secret descriptor. */
 function inputType(descriptor: PluginSettingDescriptor): 'number' | 'text' {
@@ -550,7 +604,14 @@ function seedValue(descriptor: PluginSettingDescriptor, stored: unknown): unknow
     return '';
   }
   if (stored === undefined || stored === null) {
-    return descriptor.default !== undefined ? descriptor.default : '';
+    const fallback = descriptor.default !== undefined ? descriptor.default : '';
+    return isJsonType(descriptor) && fallback !== '' ? JSON.stringify(fallback) : fallback;
+  }
+  // `array` / `object` have no dedicated control — they edit as JSON in a text
+  // box, so the structured value is serialised on the way in and parsed on the
+  // way out. Rendering the raw value would stringify it as `[object Object]`.
+  if (isJsonType(descriptor) && typeof stored !== 'string') {
+    return JSON.stringify(stored);
   }
   return stored;
 }
@@ -615,12 +676,25 @@ function linkText(descriptor: PluginSettingDescriptor): string {
     : 'Where to get this';
 }
 
+/**
+ * A field's help links for {@link HelpText}. `link_text` is independently
+ * optional — the manifest and the server's field-help overlay each supply either
+ * key on its own — so a link with no anchor text must still render (under
+ * {@link linkText}'s default) rather than being silently dropped.
+ */
+function helpLinks(descriptor: PluginSettingDescriptor): Array<{ text: string; url: string }> | undefined {
+  if (!descriptor.link) return undefined;
+  return [{ text: linkText(descriptor), url: descriptor.link }];
+}
+
 async function openConfigure(plugin: Plugin): Promise<void> {
   configuring.value = plugin;
   detail.value = null;
   formValues.value = {};
   pristineValues.value = {};
   fieldErrors.value = {};
+  configError.value = null;
+  copyAnnouncement.value = '';
   secretRemoval.value = {};
   detailLoading.value = true;
   try {
@@ -646,6 +720,8 @@ function closeConfigure(): void {
   formValues.value = {};
   pristineValues.value = {};
   fieldErrors.value = {};
+  configError.value = null;
+  copyAnnouncement.value = '';
   secretRemoval.value = {};
 }
 
@@ -674,21 +750,40 @@ function buildChangedSettings(): Record<string, unknown> {
     }
     const pristine = pristineValues.value[key];
     if (current === pristine) continue; // untouched
-    if (isBool(descriptor)) {
-      out[key] = current === true;
-    } else if (inputType(descriptor) === 'number') {
-      out[key] = current === '' || current === null ? current : Number(current);
-    } else {
-      out[key] = current;
-    }
+    out[key] = coerceOutgoing(descriptor, current);
   }
   return out;
+}
+
+/**
+ * Coerce one changed control value into the type the server validates against.
+ *
+ * A cleared optional field becomes `null` rather than `''`: an empty string is a
+ * value, and only `null` expresses "unset" to the server. Booleans are already
+ * real booleans (the `Switch` emits one); numbers are parsed; `array`/`object`
+ * are parsed back out of their JSON text box, falling back to the raw string so
+ * a syntax slip surfaces as the server's validation error rather than being
+ * silently swallowed here.
+ */
+function coerceOutgoing(descriptor: PluginSettingDescriptor, current: unknown): unknown {
+  if (isBool(descriptor)) return current === true;
+  if (current === '' || current === null || current === undefined) return null;
+  if (inputType(descriptor) === 'number') return Number(current);
+  if (isJsonType(descriptor)) {
+    try {
+      return JSON.parse(String(current));
+    } catch {
+      return current;
+    }
+  }
+  return current;
 }
 
 async function submitConfigure(): Promise<void> {
   const plugin = configuring.value;
   if (!plugin) return;
   fieldErrors.value = {};
+  configError.value = null;
   const changed = buildChangedSettings();
   if (Object.keys(changed).length === 0) {
     toasts.success('No changes to save.');
@@ -705,9 +800,13 @@ async function submitConfigure(): Promise<void> {
     const errors = pluginValidationErrors(e);
     if (Object.keys(errors).length > 0) {
       fieldErrors.value = errors;
+      // A banner as well as the toast: the offending field may be scrolled well
+      // out of view in a long schema, and a toast is gone before it is found.
+      configError.value = 'Please fix the errors below and try again.';
       toasts.error('Some settings could not be saved — check the highlighted fields.');
     } else {
-      toasts.error(errMessage(e, 'Failed to save settings.'));
+      configError.value = errMessage(e, 'Failed to save settings.');
+      toasts.error(configError.value);
     }
   } finally {
     configSubmitting.value = false;
@@ -1066,7 +1165,34 @@ onMounted(() => {
       @update:model-value="closeConfigure"
     >
       <div v-if="detailLoading" class="admin-plugins__skel"><Skeleton variant="text" :lines="4" /></div>
-      <template v-else>
+      <div v-else class="admin-plugins__config-body" aria-live="polite">
+        <!--
+          OAuth redirect/callback URL. Scrobbler-style plugins cannot be
+          authorised until this exact string is pasted into the provider's own
+          app configuration, and this is the only place it is surfaced — so it
+          renders above the form whether or not the plugin has settings.
+        -->
+        <div v-if="redirectUrl" class="admin-plugins__redirect">
+          <span :id="`plugin-redirect-url-${configuring?.name}`" class="admin-plugins__label">
+            Redirect URL
+          </span>
+          <div class="admin-plugins__redirect-row">
+            <code class="admin-plugins__redirect-value">{{ redirectUrl }}</code>
+            <Button
+              variant="outline"
+              size="sm"
+              :aria-label="`Copy the redirect URL for ${configuring?.name}`"
+              @click="copyRedirectUrl"
+            >
+              Copy
+            </Button>
+          </div>
+          <span class="admin-plugins__hint">
+            Paste this into the provider's application settings to complete the connection.
+          </span>
+          <span class="admin-plugins__visually-hidden" role="status">{{ copyAnnouncement }}</span>
+        </div>
+
         <EmptyState
           v-if="!hasSchema"
           icon="settings"
@@ -1074,6 +1200,9 @@ onMounted(() => {
           description="This plugin does not expose any settings."
         />
         <form v-else class="admin-plugins__form" @submit.prevent="submitConfigure">
+          <div v-if="configError" class="admin-plugins__config-error" role="alert">
+            {{ configError }}
+          </div>
           <div v-for="[key, descriptor] in schemaEntries" :key="key" class="admin-plugins__field">
             <!-- Boolean → Switch -->
             <template v-if="descriptor.type === 'bool' || descriptor.type === 'boolean'">
@@ -1085,7 +1214,7 @@ onMounted(() => {
             </template>
             <!-- string / number → labelled input -->
             <template v-else>
-              <span class="admin-plugins__label">
+              <label :for="`plugin-setting-${key}`" class="admin-plugins__label">
                 {{ descriptor.label || key }}
                 <span
                   v-if="descriptor.required"
@@ -1094,9 +1223,10 @@ onMounted(() => {
                   title="Required"
                 >*</span>
                 <span v-else class="admin-plugins__optional">optional</span>
-              </span>
+              </label>
               <div class="admin-plugins__secret-row">
                 <input
+                  :id="`plugin-setting-${key}`"
                   v-model="formValues[key]"
                   :type="descriptor.secret ? 'password' : inputType(descriptor)"
                   class="admin-plugins__input"
@@ -1106,13 +1236,15 @@ onMounted(() => {
                     descriptor.secret
                       ? isRemovingSecret(key)
                         ? 'Will be removed on save'
-                        : secretStatusFor(key)?.set
-                          ? 'Leave blank to keep the current value'
-                          : 'Not set — enter a value'
+                        : secretStatusFor(key) === null
+                          ? 'Leave blank to keep whatever is stored'
+                          : secretStatusFor(key)?.set
+                            ? 'Leave blank to keep the current value'
+                            : 'Not set — enter a value'
                       : undefined
                   "
                   :disabled="descriptor.secret && isRemovingSecret(key)"
-                  :aria-label="descriptor.label || key"
+                  :aria-describedby="descriptor.secret ? secretStatusId(key) : undefined"
                   :aria-invalid="fieldErrors[key] ? 'true' : undefined"
                 />
                 <Button
@@ -1134,46 +1266,54 @@ onMounted(() => {
                   Remove
                 </Button>
               </div>
-              <!-- Secret status: show whether a value is stored (and a length cue)
-                   so a set secret is distinguishable from an unset one. -->
+              <!--
+                Secret status. Three states, not two: a server too old to emit
+                `secret_status` reports UNKNOWN, and claiming "Not set" there
+                would invite an admin to overwrite a perfectly good secret
+                believing none was stored.
+              -->
               <span
                 v-if="descriptor.secret"
+                :id="secretStatusId(key)"
                 class="admin-plugins__secret-status"
                 :class="{ 'is-set': secretStatusFor(key)?.set }"
               >
                 <template v-if="isRemovingSecret(key)">
+                  <Badge tone="warning" class="admin-plugins__secret-state">Will be removed</Badge>
                   The stored value will be deleted when you save. Undo to keep it.
                 </template>
+                <template v-else-if="secretStatusFor(key) === null">
+                  <Badge tone="neutral" class="admin-plugins__secret-state">Unknown</Badge>
+                  This server did not report whether a value is stored. Type a new one to replace
+                  whatever is there; leave it blank to keep it.
+                </template>
                 <template v-else-if="secretStatusFor(key)?.set">
+                  <Badge tone="success" class="admin-plugins__secret-state">Configured</Badge>
                   <span class="admin-plugins__secret-dots" aria-hidden="true">{{
                     secretDots(secretStatusFor(key)?.length ?? 0)
                   }}</span>
                   Currently set ({{ secretStatusFor(key)?.length }} characters) — leave blank to keep it.
                 </template>
-                <template v-else>Not set.</template>
+                <template v-else>
+                  <Badge tone="neutral" class="admin-plugins__secret-state">Not set</Badge>
+                  No value is stored yet.
+                </template>
               </span>
             </template>
-            <span v-if="descriptor.description" class="admin-plugins__hint">
-              {{ descriptor.description }}
-            </span>
+            <HelpText
+              v-if="descriptor.description || descriptor.link"
+              :text="descriptor.description"
+              :links="helpLinks(descriptor)"
+            />
             <span v-if="defaultHint(descriptor)" class="admin-plugins__hint admin-plugins__default-hint">
               Default: <code>{{ defaultHint(descriptor) }}</code>
             </span>
-            <a
-              v-if="descriptor.link"
-              class="admin-plugins__field-link"
-              :href="descriptor.link"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {{ linkText(descriptor) }} ↗
-            </a>
             <span v-if="fieldErrors[key]" class="admin-plugins__error" role="alert">
               {{ fieldErrors[key] }}
             </span>
           </div>
         </form>
-      </template>
+      </div>
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeConfigure">Cancel</Button>
         <Button v-if="hasSchema" variant="solid" size="sm" :loading="configSubmitting" @click="submitConfigure">
@@ -1441,6 +1581,56 @@ onMounted(() => {
 }
 
 /* Forms */
+.admin-plugins__config-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.admin-plugins__config-error {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--danger, #e5484d);
+  border-radius: var(--radius-md);
+  color: var(--danger, #e5484d);
+  font-size: var(--text-sm);
+}
+.admin-plugins__redirect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle, rgba(127, 127, 127, 0.08));
+}
+.admin-plugins__redirect-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.admin-plugins__redirect-value {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  word-break: break-all;
+}
+/* Keeps the copy outcome available to assistive tech without showing it twice. */
+.admin-plugins__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .admin-plugins__form {
   display: flex;
   flex-direction: column;
@@ -1483,6 +1673,10 @@ onMounted(() => {
   font-size: var(--text-xs);
   color: var(--text-subtle);
 }
+.admin-plugins__secret-state {
+  margin-right: var(--space-2);
+  vertical-align: middle;
+}
 .admin-plugins__secret-status.is-set {
   color: var(--text-muted);
 }
@@ -1498,15 +1692,6 @@ onMounted(() => {
   padding: 0 4px;
   border-radius: var(--radius-sm);
   background: var(--surface-subtle, rgba(127, 127, 127, 0.12));
-}
-.admin-plugins__field-link {
-  font-size: var(--text-xs);
-  color: var(--accent);
-  text-decoration: none;
-  width: fit-content;
-}
-.admin-plugins__field-link:hover {
-  text-decoration: underline;
 }
 .admin-plugins__input {
   width: 100%;

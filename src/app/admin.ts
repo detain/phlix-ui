@@ -174,18 +174,6 @@ const pluginsPage: AdminPage = {
   icon: 'settings',
   component: () => import('../pages/admin/PluginsPage.vue'),
 };
-/**
- * Dedicated configure surface for installed plugins. Overlaps PluginsPage's
- * configure modal, but is the settings-focused view (no catalog browsing or
- * installation) and is the only one with the Standard/Advanced tier toggle.
- */
-const pluginConfigPage: AdminPage = {
-  name: 'admin-plugin-config',
-  path: 'plugin-config',
-  label: 'Plugin Config',
-  icon: 'key',
-  component: () => import('../pages/admin/PluginConfigPage.vue'),
-};
 const transcodingPage: AdminPage = {
   name: 'admin-transcoding',
   path: 'transcoding',
@@ -255,7 +243,6 @@ const ALL_ADMIN_PAGES: AdminPage[] = [
   librariesPage,
   duplicatesPage,
   pluginsPage,
-  pluginConfigPage,
   transcodingPage,
   settingsPage,
   hubDashboardPage,
@@ -297,7 +284,6 @@ export const serverAdminPages: AdminPage[] = [
   librariesPage,
   duplicatesPage,
   pluginsPage,
-  pluginConfigPage,
   transcodingPage,
 ];
 
@@ -331,7 +317,6 @@ const defaultAdminPages: AdminPage[] = [
   librariesPage,
   duplicatesPage,
   pluginsPage,
-  pluginConfigPage,
   transcodingPage,
   settingsPage,
 ];
