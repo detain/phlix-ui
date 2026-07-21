@@ -18,6 +18,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Select from '../../components/ui/Select.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Switch from '../../components/ui/Switch.vue';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -493,7 +494,7 @@ onBeforeUnmount(() => {
       <h1 id="logs-heading" class="admin-logs__title">Logs</h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.logs.links" :details="adminPageHelp.logs.details">
       Read the server's log files to troubleshoot problems. Pick a file with the
       <strong>File</strong> menu (or <strong>All logs</strong> to merge them), set how many recent
       lines to show with <strong>Lines</strong>, and press <strong>Refresh</strong> to reload.

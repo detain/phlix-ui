@@ -25,6 +25,7 @@ import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 
 /** Raw entry shape from the hub's GET /api/v1/admin/requests (snake_case). */
 interface AdminRequest {
@@ -156,7 +157,7 @@ onMounted(() => void loadRequests(activeTab.value));
 
 <template>
   <section class="requests" aria-labelledby="requests-heading">
-    <PageHint title="Request Queue">
+    <PageHint :links="adminPageHelp.requests.links" :details="adminPageHelp.requests.details" title="Request Queue">
       Review and act on content requests from your users.
     </PageHint>
 

@@ -51,6 +51,7 @@ import Switch from '../../components/ui/Switch.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import SourcePriorityEditor from '../../components/SourcePriorityEditor.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 
@@ -714,7 +715,7 @@ onBeforeUnmount(() => {
       <Button variant="solid" size="sm" left-icon="plus" @click="openAdd">Add library</Button>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.libraries.links" :details="adminPageHelp.libraries.details">
       Each library has a set of operations for keeping it in sync with disk and with online
       metadata. A live percentage is shown while any of them run. Expand
       <strong>“What do these operations do?”</strong> below for when to use each.

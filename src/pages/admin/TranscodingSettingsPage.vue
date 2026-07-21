@@ -25,6 +25,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { useMessages } from '../../composables/useMessages';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -150,7 +151,7 @@ onMounted(loadData);
       </h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.transcoding.links" :details="adminPageHelp.transcoding.details">
       Configure hardware-accelerated encoding and HDR tone-mapping for transcoding.
       The server detects available accelerators from FFmpeg on startup.
     </PageHint>

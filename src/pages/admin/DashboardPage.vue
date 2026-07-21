@@ -28,6 +28,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -320,7 +321,7 @@ onBeforeUnmount(() => {
       />
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.dashboard.links" :details="adminPageHelp.dashboard.details">
       A live overview of your server. The cards show <strong>who's watching right now</strong>,
       your <strong>top users</strong> and <strong>most-watched titles</strong>, current
       <strong>storage use</strong>, and a feed of <strong>recent activity</strong>. Use the

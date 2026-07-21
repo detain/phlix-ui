@@ -32,6 +32,7 @@ import { errMessage } from '../../api/errors';
 import { nextEnabledIndex } from '../../components/ui/listbox';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Slider from '../../components/ui/Slider.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -328,7 +329,7 @@ onMounted(() => {
       <h1 id="cast-heading" class="admin-cast__title">Cast Devices</h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.cast.links" :details="adminPageHelp.cast.details">
       See the <strong>Chromecast</strong> and <strong>AirPlay</strong> devices Phlix has found on
       your network and control what they're playing. Switch between the two with the tabs, click a
       device to select it, then use <strong>Play</strong>, <strong>Pause</strong>, and

@@ -41,6 +41,7 @@ import { AdminServersApi, type ServerListItem, type ServerInfo } from '../../api
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
@@ -441,7 +442,7 @@ const gridDefaults = {
       </div>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.metrics.links" :details="adminPageHelp.metrics.details">
       Real-time server traffic graphs. <strong>Bandwidth</strong> shows in/out throughput,
       <strong>Latency</strong> shows response-time percentiles, and
       <strong>Request Rate</strong> shows requests vs. errors over time. Data refreshes

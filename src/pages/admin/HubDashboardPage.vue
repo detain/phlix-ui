@@ -24,6 +24,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
@@ -131,7 +132,7 @@ onMounted(() => {
       <h1 id="hub-dash-heading" class="hub-dash__title">Dashboard</h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp['hub-dashboard'].links" :details="adminPageHelp['hub-dashboard'].details">
       An at-a-glance view of your hub's health: how many <strong>servers</strong> are connected,
       active <strong>relay sessions</strong>, <strong>pending requests</strong>, and total
       <strong>users</strong>, plus a feed of recent audit activity. If a section fails to load,

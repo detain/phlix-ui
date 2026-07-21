@@ -36,6 +36,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -177,7 +178,7 @@ onMounted(loadLibraries);
       <h1 id="duplicates-heading" class="admin-duplicates__title">Duplicates</h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.duplicates.links" :details="adminPageHelp.duplicates.details">
       Finds titles that appear more than once (matched by a canonical key) so you can tidy them up.
       Pick a <strong>library</strong> to scope the search; each group keeps one entry marked
       <strong>Keep</strong> as the primary. Tick the duplicates you want to fold in, then

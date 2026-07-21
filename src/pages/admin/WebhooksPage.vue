@@ -27,6 +27,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -247,7 +248,7 @@ onMounted(loadWebhooks);
       <Button variant="solid" size="sm" left-icon="plus" @click="openAdd">Add webhook</Button>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.webhooks.links" :details="adminPageHelp.webhooks.details">
       Send a POST to an external URL whenever chosen events happen on your server (for
       notifications or automations). <strong>Add webhook</strong> creates one — you give it a
       name, a URL, an optional signing secret, and tick the events to subscribe to.

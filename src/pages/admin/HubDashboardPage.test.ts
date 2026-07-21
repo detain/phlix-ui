@@ -100,7 +100,11 @@ describe('HubDashboardPage', () => {
     const { client } = makeClient({ summary: { ...summary, servers: { total: 3, online: 3, offline: 0 } } });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).not.toContain('offline');
+    // Match the badge's rendered form (`{{ offlineCount }} offline`), mirroring the
+    // positive test above, rather than scanning the whole page for the bare word.
+    // The page also carries explanatory help text that legitimately uses "offline"
+    // as prose, and a substring check on w.text() cannot tell the two apart.
+    expect(w.text()).not.toMatch(/\d+\s+offline/);
     w.unmount();
   });
 

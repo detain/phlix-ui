@@ -20,6 +20,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Button from '../../components/ui/Button.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Badge from '../../components/ui/Badge.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
@@ -104,7 +105,7 @@ onMounted(loadStatus);
       <h1 id="dlna-heading" class="admin-dlna__title">DLNA Server</h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.dlna.links" :details="adminPageHelp.dlna.details">
       Broadcasts your library over <strong>DLNA / UPnP</strong> so smart TVs, game consoles, and
       other players on your network can browse and play it without an app. The
       <strong>Start</strong> / <strong>Stop</strong> button turns the server on or off; the badge

@@ -33,6 +33,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -252,7 +253,7 @@ onMounted(loadCollections);
       </Button>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.collections.links" :details="adminPageHelp.collections.details">
       Group titles into curated sets (like "Marvel" or "Christmas movies") that appear on the
       browse screen. <strong>New collection</strong> creates one; on each row,
       <strong>Items</strong> opens its contents where you can add titles by query (e.g.

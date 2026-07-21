@@ -37,6 +37,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -373,7 +374,7 @@ onBeforeUnmount(clearSyncTimer);
       <h1 id="integrations-heading" class="admin-integrations__title">Integrations</h1>
     </header>
 
-    <PageHint title="What's on this page">
+    <PageHint :links="adminPageHelp.integrations.links" :details="adminPageHelp.integrations.details" title="What's on this page">
       Connect Phlix to outside tools. <strong>Arr sync</strong> pulls quality-profile settings
       from TRaSH-Guides for Radarr/Sonarr — <strong>Sync now</strong> runs it once, and
       <strong>Auto-sync</strong> keeps it updated on a schedule. The

@@ -23,6 +23,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
@@ -105,7 +106,7 @@ onMounted(loadHistory);
       <h1 id="history-heading" class="admin-history__title">Watch History</h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.history.links" :details="adminPageHelp.history.details">
       A read-only view of what everyone on the server has watched — who watched
       each title and when, with how far each entry was played. Click a title to
       open it.

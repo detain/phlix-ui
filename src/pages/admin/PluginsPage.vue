@@ -59,6 +59,7 @@ import { errMessage } from '../../api/errors';
 import Icon from '../../components/Icon.vue';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -952,7 +953,7 @@ onMounted(() => {
       </div>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.plugins.links" :details="adminPageHelp.plugins.details">
       Extend Phlix with add-ons from the plugin catalog. On each catalog plugin, toggle its switch
       to <strong>enable/disable</strong> it, <strong>Install</strong> or <strong>Uninstall</strong>
       it, <strong>Configure</strong> its settings, or <strong>Update</strong> when a new version is

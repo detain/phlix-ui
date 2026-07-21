@@ -33,6 +33,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Select from '../../components/ui/Select.vue';
@@ -468,7 +469,7 @@ onMounted(loadUsers);
       <Button variant="solid" size="sm" left-icon="plus" @click="openAddUser">Add user</Button>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.users.links" :details="adminPageHelp.users.details">
       Manage everyone who can sign in. <strong>Add user</strong> creates an account;
       <strong>Edit</strong> changes a name, email, or password. <strong>Approve</strong> /
       <strong>Reject</strong> handle pending sign-up requests, and <strong>Disable</strong> /

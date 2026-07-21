@@ -40,6 +40,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { useSettingsPrefsStore } from '../../stores/useSettingsPrefs';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -712,11 +713,12 @@ onMounted(() => {
       <h1 id="settings-heading" class="admin-settings__title">Settings</h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.settings.links" :details="adminPageHelp.settings.details">
       All of your server's configuration, grouped into tabs. Change fields on any tab, then
       click <strong>Save settings</strong> to apply only what you changed; a
-      <strong>custom</strong> badge marks values overridden by your environment or config
-      file, and the <strong>Advanced</strong> switch unlocks the expert-tier fields.
+      <strong>custom</strong> badge marks a value you have saved here, overriding the
+      built-in default, and the <strong>Advanced</strong> switch unlocks the expert-tier
+      fields.
     </PageHint>
 
     <div v-if="loading" class="admin-settings__skel"><Skeleton variant="text" :lines="6" /></div>

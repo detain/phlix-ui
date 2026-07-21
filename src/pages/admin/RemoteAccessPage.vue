@@ -31,6 +31,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -464,7 +465,7 @@ onMounted(() => {
       </h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp['remote-access'].links" :details="adminPageHelp['remote-access'].details">
       Reach your server from outside your home network. <strong>Hub Pairing</strong> links this
       server to a Phlix hub — <strong>Initiate Pairing</strong> starts it, then
       <strong>Send Heartbeat</strong> keeps it alive and <strong>Unenroll</strong> disconnects.

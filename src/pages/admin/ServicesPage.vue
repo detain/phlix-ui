@@ -26,6 +26,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Button from '../../components/ui/Button.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Badge from '../../components/ui/Badge.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
@@ -180,7 +181,7 @@ onMounted(() => {
       <h1 id="services-heading" class="admin-services__title">Services</h1>
     </header>
 
-    <PageHint>
+    <PageHint :links="adminPageHelp.services.links" :details="adminPageHelp.services.details">
       Link your <strong>Trakt.tv</strong> and <strong>Last.fm</strong> accounts so watches and
       listens are scrobbled automatically. <strong>Connect</strong> starts the sign-in flow for a
       service (it's greyed out until you add that service's API keys under Settings), and

@@ -24,6 +24,7 @@ import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
+import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -263,7 +264,7 @@ onMounted(() => {
         <Button variant="solid" size="sm" left-icon="plus" @click="openCreate">Create backup</Button>
       </header>
 
-      <PageHint>
+      <PageHint :links="adminPageHelp.backup.links" :details="adminPageHelp.backup.details">
         Save and restore snapshots of your server's database and settings.
         <strong>Create backup</strong> makes a new snapshot (with an optional label);
         <strong>Restore</strong> rolls the server back to a chosen one, and
