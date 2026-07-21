@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Added
+- **feat(admin): `PluginConfigPage` is wired into the admin router.** The page existed since U6 but was imported by nothing except its own test file — no route, no export, and it had never appeared in a built `dist/` in any commit, so the fixes it received in 0.91.0 reached no users. It is now registered in `src/app/admin.ts` as `admin-plugin-config` at `<base>/admin/plugin-config` ("Plugin Config", `key` icon), placed after Plugins in the server page set, and ships as its own lazy chunk. The server admin sidebar goes from 20 entries to 21.
+  - It overlaps `PluginsPage`'s configure modal, but is the settings-only view (no catalog browsing or installation) and is the only surface carrying the Standard/Advanced tier toggle. If that overlap is unwanted, the alternative is deleting the page rather than routing it — this change makes it reachable so that call can be made against something an admin can actually see.
+
 ## 0.91.0 - 2026-07-20
 
 ### Fixed

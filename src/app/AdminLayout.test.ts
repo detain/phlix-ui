@@ -49,7 +49,7 @@ async function mountAdmin(
 }
 
 describe('AdminLayout — server set', () => {
-  it('renders a labelled Admin nav landmark with all 20 page links', async () => {
+  it('renders a labelled Admin nav landmark with all 21 page links', async () => {
     const { wrapper } = await mountAdmin();
     const nav = wrapper.find('nav.admin__nav');
     expect(nav.exists()).toBe(true);
@@ -57,7 +57,7 @@ describe('AdminLayout — server set', () => {
     expect(wrapper.find('#admin-nav-heading').text()).toBe('Admin');
 
     const links = wrapper.findAll('.admin__link');
-    expect(links).toHaveLength(20);
+    expect(links).toHaveLength(21);
     const labels = links.map((l) => l.text());
     expect(labels).toContain('Dashboard');
     expect(labels).toContain('Server Traffic');
@@ -66,13 +66,14 @@ describe('AdminLayout — server set', () => {
     expect(labels).toContain('Libraries');
     expect(labels).toContain('Duplicates');
     expect(labels).toContain('Plugins');
+    expect(labels).toContain('Plugin Config');
     expect(labels).toContain('Settings');
     expect(labels).toContain('Transcoding');
   });
 
   it('renders a real Icon component for every link (icon-only, never emoji)', async () => {
     const { wrapper } = await mountAdmin();
-    expect(wrapper.findAll('.admin__icon')).toHaveLength(20);
+    expect(wrapper.findAll('.admin__icon')).toHaveLength(21);
   });
 
   it('points each sidebar link at its admin page URL', async () => {
