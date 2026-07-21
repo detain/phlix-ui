@@ -18,24 +18,38 @@
 import { ref, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { errMessage } from '../api/errors';
+import { unixToIso } from '../api/normalize';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 
-/** Incoming share shape from `GET /api/v1/me/shares` (snake_case, ISO dates). */
+/**
+ * Incoming share shape from `GET /api/v1/me/shares` — mirrors the hub's
+ * `SharedLibraryDto::toPayload()` exactly (snake_case; dates are UNIX seconds).
+ *
+ * There is deliberately NO `status` field: `LibrarySharingHandler::getSharedWithMe()`
+ * filters on `revoked_at IS NULL` AND skips `!$share->isActive()`, so a revoked share
+ * is never returned. Every share this page receives is live — the only lifecycle
+ * state worth showing is expiry, derived from `expires_at`.
+ */
 interface HubIncomingShare {
-    id: string;
-    library_id: string;
-    library_name: string;
+    share_id: string;
+    owner_user_id: string;
+    owner_name: string;
     server_id: string;
     server_name: string;
-    owner_user_id: string;
-    owner_email: string;
-    permission: 'read' | 'readwrite';
-    status: 'active' | 'revoked';
-    created_at: string;
-    updated_at: string;
+    library_id: string;
+    library_name: string;
+    /** Hardcoded to 0 by the hub — NOT displayed, rendering it would state a falsehood. */
+    library_item_count: number;
+    permission_level: 'read' | 'readwrite';
+    /** The server's advertised hostname candidates; may be empty. */
+    access_urls: string[];
+    /** UNIX seconds, or null when the hub couldn't read the column. */
+    created_at: number | null;
+    /** UNIX seconds, or null when the share never expires. */
+    expires_at: number | null;
 }
 
 interface SharesResponse {
@@ -65,9 +79,12 @@ async function loadShares(initial = false): Promise<void> {
         // The hub returns `{ outgoing, incoming }`; "Shared With Me" lists the
         // libraries OTHER users share WITH the current user.
         const data = await http.get<SharesResponse>('/api/v1/me/shares');
-        // Sort by created_at descending (most recent first)
+        // Sort by created_at descending (most recent first). `created_at` is UNIX
+        // seconds (or null) — compare the raw numbers, treating null as oldest so a
+        // share with no timestamp sinks to the bottom instead of poisoning the sort
+        // with NaN.
         shares.value = [...(data.incoming || [])].sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            (a, b) => (b.created_at ?? 0) - (a.created_at ?? 0)
         );
     } catch (e) {
         error.value = errMessage(e, 'Failed to load shared libraries.');
@@ -88,21 +105,45 @@ function permissionTone(permission: string): 'info' | 'success' | 'neutral' {
     }
 }
 
-/** Badge tone for share status. */
-function statusTone(status: string): 'success' | 'warning' | 'neutral' {
-    switch (status) {
-        case 'active':
-            return 'success';
-        case 'revoked':
-            return 'warning';
-        default:
-            return 'neutral';
-    }
-}
-
 /** Format permission for display. */
 function formatPermission(permission: string): string {
     return permission === 'readwrite' ? 'Read / Write' : 'Read only';
+}
+
+/**
+ * Format a hub UNIX-seconds timestamp for display. Mirrors ManageSharesPage's
+ * convention: convert through `unixToIso()` and render an em dash when absent,
+ * rather than letting `new Date(undefined)` print "Invalid Date".
+ */
+function formatDate(unixSeconds: number | null): string {
+    const iso = unixToIso(unixSeconds);
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString();
+}
+
+/**
+ * True once the share's expiry has passed. Same derivation as ManageSharesPage's
+ * `isExpired()`; a null `expires_at` means the share never expires.
+ */
+function isExpired(unixSeconds: number | null): boolean {
+    const iso = unixToIso(unixSeconds);
+    if (!iso) return false;
+    return new Date(iso) < new Date();
+}
+
+/**
+ * Open the media server hosting this shared library in a new tab.
+ *
+ * The payload carries no hub-side browse route (`/browse/:server/:library` matches
+ * NO route in the SPA — every route is under `/app`), so the only honest target is
+ * the server's own web UI at its first advertised hostname candidate. This mirrors
+ * `MyServersPage.manageServer()`, which consumes the same `hostnameCandidates` data.
+ * The button is disabled when the server advertised no reachable URL.
+ */
+function openServer(share: HubIncomingShare): void {
+    const url = share.access_urls?.[0];
+    if (!url) return;
+    window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 onMounted(() => loadShares(true));
@@ -144,19 +185,17 @@ onMounted(() => loadShares(true));
         <div v-else class="shared-with-me__grid">
             <article
                 v-for="share in shares"
-                :key="share.id"
+                :key="share.share_id"
                 class="share-card"
-                :class="{ 'share-card--revoked': share.status === 'revoked' }"
+                :class="{ 'share-card--expired': isExpired(share.expires_at) }"
             >
                 <div class="share-card__header">
                     <h2 class="share-card__library">{{ share.library_name }}</h2>
                     <div class="share-card__badges">
-                        <Badge :tone="permissionTone(share.permission)">
-                            {{ formatPermission(share.permission) }}
+                        <Badge :tone="permissionTone(share.permission_level)">
+                            {{ formatPermission(share.permission_level) }}
                         </Badge>
-                        <Badge :tone="statusTone(share.status)">
-                            {{ share.status === 'active' ? 'Active' : 'Revoked' }}
-                        </Badge>
+                        <Badge v-if="isExpired(share.expires_at)" tone="error">Expired</Badge>
                     </div>
                 </div>
 
@@ -168,28 +207,35 @@ onMounted(() => loadShares(true));
                         </div>
                         <div class="share-card__detail">
                             <dt>Shared by</dt>
-                            <dd>{{ share.owner_email }}</dd>
+                            <dd>{{ share.owner_name }}</dd>
                         </div>
                         <div class="share-card__detail">
                             <dt>Received</dt>
-                            <dd>{{ new Date(share.created_at).toLocaleDateString() }}</dd>
+                            <dd>{{ formatDate(share.created_at) }}</dd>
+                        </div>
+                        <div class="share-card__detail">
+                            <dt>Expires</dt>
+                            <dd>{{ share.expires_at === null ? 'Never' : formatDate(share.expires_at) }}</dd>
                         </div>
                     </dl>
                 </div>
 
                 <div class="share-card__footer">
                     <Button
-                        v-if="share.status === 'active'"
                         variant="solid"
                         size="sm"
                         left-icon="list"
-                        :to="`/browse/${share.server_id}/${share.library_id}`"
+                        :disabled="!share.access_urls?.length"
+                        :title="
+                            share.access_urls?.length
+                                ? `Open ${share.server_name} at ${share.access_urls[0]}`
+                                : 'This server has not reported a reachable URL yet'
+                        "
+                        :aria-label="`Open ${share.server_name}`"
+                        @click="openServer(share)"
                     >
-                        Browse Library
+                        Open Server
                     </Button>
-                    <span v-else class="share-card__revoked-label">
-                        Access revoked by owner
-                    </span>
                 </div>
             </article>
         </div>
@@ -245,10 +291,10 @@ onMounted(() => loadShares(true));
     border-color: var(--border-strong);
     transform: translateY(-2px);
 }
-.share-card--revoked {
+.share-card--expired {
     opacity: 0.65;
 }
-.share-card--revoked:hover {
+.share-card--expired:hover {
     transform: none;
     box-shadow: none;
 }
@@ -299,10 +345,5 @@ onMounted(() => loadShares(true));
 .share-card__footer {
     margin-top: auto;
     padding-top: var(--space-2);
-}
-.share-card__revoked-label {
-    font-size: var(--text-xs);
-    color: var(--text-subtle);
-    font-style: italic;
 }
 </style>

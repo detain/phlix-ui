@@ -36,8 +36,10 @@ interface Overrides {
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/me/invite-links') return { invite_links: over.links ?? [link] };
-    if (endpoint === '/api/v1/me/servers') return { servers: over.servers ?? [{ id: 'srv-1', server_name: 'Home Theater', status: 'online' }] };
-    if (endpoint.startsWith('/api/v1/me/libraries')) return { libraries: over.libraries ?? [{ id: 'lib-1', name: 'Movies', server_id: 'srv-1' }] };
+    // The hub returns ServerInfoDto::toPayload() — camelCase, NOT {id, server_name}.
+    if (endpoint === '/api/v1/me/servers') return { servers: over.servers ?? [{ serverId: 'srv-1', serverName: 'Home Theater', status: 'online' }] };
+    // LibraryController::listLibraries() returns ONLY {id, name} — no server_id.
+    if (endpoint.startsWith('/api/v1/me/libraries')) return { libraries: over.libraries ?? [{ id: 'lib-1', name: 'Movies' }] };
     throw new Error(`unexpected GET ${endpoint}`);
   });
   const post = vi.fn(async () => ({ url: 'https://hub/invite/new', expires_at: 4070908800, id: 'l2' }));
@@ -117,6 +119,60 @@ describe('InviteLinksPage — create modal', () => {
     await flushPromises();
     expect(document.querySelector('.modal')).not.toBeNull();
     expect(get).toHaveBeenCalledWith('/api/v1/me/servers');
+    w.unmount();
+  });
+
+  // Discriminating regression test: the page typed the servers response as
+  // {id, server_name} while the hub sends camelCase {serverId, serverName}, so every
+  // option was {value: undefined, label: undefined} and createLink() always failed
+  // with "Please select a server."
+  it('builds selectable server options with DEFINED values from the camelCase payload', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await flushPromises();
+
+    const options = w.findAllComponents(Select)[0].props('options') as ReadonlyArray<{
+      value: unknown;
+      label: unknown;
+    }>;
+    expect(options).toHaveLength(1);
+    expect(options[0].value).toBe('srv-1');
+    expect(options[0].label).toBe('Home Theater');
+    expect(options.every((o) => o.value !== undefined)).toBe(true);
+    w.unmount();
+  });
+
+  it('resolves the server NAME on a link card from the camelCase payload', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    // Server names resolve only once /me/servers has loaded (via the modal).
+    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).toContain('Home Theater');
+    w.unmount();
+  });
+
+  it('drops servers with no serverId rather than emitting an undefined-valued option', async () => {
+    const { client } = makeClient({ servers: [{ serverName: 'Nameless', status: 'online' }] });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await flushPromises();
+    expect(w.findAllComponents(Select)[0].props('options')).toHaveLength(0);
+    w.unmount();
+  });
+
+  it('falls back to the server id as the label when the hub reports no name', async () => {
+    const { client } = makeClient({ servers: [{ serverId: 'srv-9', status: 'online' }] });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await flushPromises();
+    const options = w.findAllComponents(Select)[0].props('options') as ReadonlyArray<{ label: unknown }>;
+    expect(options[0].label).toBe('srv-9');
     w.unmount();
   });
 

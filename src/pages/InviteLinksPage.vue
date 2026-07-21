@@ -81,10 +81,17 @@ const copyingId = ref<string | null>(null);
 
 // ─── Computed ───────────────────────────────────────────────────────────────
 
-/** Map server_id → server_name for display. */
+/**
+ * Map server id → server name for display. The hub's `GET /api/v1/me/servers`
+ * returns camelCase `ServerInfoDto` fields (`serverId`/`serverName`) — same as
+ * `MyServersPage.vue` consumes. Servers missing an id are skipped so they can't
+ * poison the map with an `undefined` key.
+ */
 const serverNameMap = computed(() => {
   const m = new Map<string, string>();
-  for (const s of servers.value) m.set(s.id, s.server_name);
+  for (const s of servers.value) {
+    if (s.serverId) m.set(s.serverId, s.serverName ?? s.serverId);
+  }
   return m;
 });
 
@@ -95,8 +102,16 @@ const libraryNameMap = computed(() => {
   return m;
 });
 
+/**
+ * Options for the required "Server" dropdown. Built from the camelCase wire fields;
+ * entries with no `serverId` are dropped rather than rendered as an unselectable
+ * `{value: undefined}` option (which silently broke create with "Please select a
+ * server"). Falls back to the id as the label when the hub reports no name.
+ */
 const serverOptions = computed(() =>
-  servers.value.map((s) => ({ value: s.id, label: s.server_name })),
+  servers.value
+    .filter((s): s is Server & { serverId: string } => Boolean(s.serverId))
+    .map((s) => ({ value: s.serverId, label: s.serverName ?? s.serverId })),
 );
 
 const libraryOptions = computed(() => [
