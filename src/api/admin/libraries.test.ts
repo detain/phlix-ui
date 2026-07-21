@@ -62,9 +62,35 @@ afterEach(() => {
 });
 
 describe('AdminLibrariesApi', () => {
-  it('exposes only the 5 DB-valid types (no `book`)', () => {
-    expect(LIBRARY_TYPES).toEqual(['movie', 'series', 'music', 'photo', 'video']);
-    expect(LIBRARY_TYPES).not.toContain('book');
+  // This asserted the OLD five-member list and, explicitly,
+  // `not.toContain('book')`. Migration 035 added `book` and `audiobook` to the
+  // libraries.type ENUM, so the test had become a lock on the defect: the admin
+  // UI offered no way to create either kind on a server that accepted both.
+  // Verified against the live column and LibraryController::create()'s
+  // $validTypes, which are the same seven.
+  it('exposes all 7 DB-valid library types, including book and audiobook', () => {
+    expect(LIBRARY_TYPES).toEqual([
+      'movie',
+      'series',
+      'music',
+      'photo',
+      'video',
+      'book',
+      'audiobook',
+    ]);
+  });
+
+  it('offers book and audiobook, which migration 035 made insertable', () => {
+    expect(LIBRARY_TYPES).toContain('book');
+    expect(LIBRARY_TYPES).toContain('audiobook');
+  });
+
+  // The library-kind vocabulary is NOT media_items.type (13 members). Guard
+  // against someone "helpfully" merging the two lists.
+  it('does not leak media-item-only types into the library kinds', () => {
+    for (const notALibraryKind of ['episode', 'season', 'track', 'album', 'artist', 'audio']) {
+      expect(LIBRARY_TYPES).not.toContain(notALibraryKind);
+    }
   });
 
   it('list() GETs /api/v1/libraries and unwraps { libraries }', async () => {

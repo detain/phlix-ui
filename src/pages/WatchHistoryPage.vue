@@ -23,6 +23,7 @@ import { useToastStore } from '../stores/useToastStore';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import type { MediaItem } from '../types/media-item';
+import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 
 const props = defineProps({
   /**
@@ -217,7 +218,7 @@ onMounted(() => {
                 decoding="async"
               />
               <div v-else class="history-item__fallback">
-                <Icon :name="historyItem.media.type === 'series' ? 'tv' : 'film'" />
+                <Icon :name="mediaTypeIcon(historyItem.media.type)" />
               </div>
               <!-- Progress bar -->
               <div
