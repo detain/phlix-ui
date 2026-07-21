@@ -31,11 +31,16 @@
  * the offending field, under a banner pointing at them. Plugins that complete an
  * OAuth handshake also get their `redirect_url` rendered with a copy button —
  * the provider's app configuration needs that exact string and this is the only
- * surface that reveals it. Every mutation refetches both the catalog and the
+ * surface that reveals it. A **Test credentials** button submits that same
+ * changed-keys map to `POST /plugins/{name}/test` without saving, so an admin can
+ * check a key before committing it; the result is cleared the moment the form
+ * changes, so a stale PASS can never sit beside edited credentials, and a
+ * `501` ("this plugin has no `testCredentials()`") reads as *not supported*
+ * rather than as a failure. Every mutation refetches both the catalog and the
  * installed list. Errors surface as toasts.
  */
-import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
-import { ApiClient } from '../../api/client';
+import { ref, computed, watch, onMounted, inject, type ComputedRef } from 'vue';
+import { ApiClient, ApiError } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminPluginsApi,
@@ -530,6 +535,39 @@ const copyAnnouncement = ref('');
  */
 const secretRemoval = ref<Record<string, boolean>>({});
 
+/**
+ * The outcome of the last credential test, or `null` when there is none to show.
+ *
+ * Three tones, not two. `unsupported` is the `501 plugin.test_not_supported`
+ * case — the plugin ships no `testCredentials()` method at all — which says
+ * nothing about whether the credentials are good and must never be dressed up as
+ * a failure; an admin who reads "test failed" next to a perfectly valid key will
+ * go and replace it.
+ */
+const testResult = ref<{ tone: 'success' | 'failure' | 'unsupported'; message: string } | null>(
+  null,
+);
+/** True while a credential test is in flight (drives the button's spinner). */
+const testing = ref(false);
+
+/**
+ * Drop a stale test result.
+ *
+ * A PASS is only ever a statement about the exact values that were submitted, so
+ * the moment the admin edits a field — or opens a different plugin — the result
+ * on screen is describing credentials that are no longer the ones in the form.
+ * Leaving it up would let a green "Credentials are valid" sit next to a freshly
+ * mistyped API key.
+ */
+function clearTestResult(): void {
+  testResult.value = null;
+}
+
+// Any edit to the form invalidates the result: the values, and the pending
+// secret-removal intent (which changes what is submitted without touching an
+// input's value on its way back — `cancelSecretRemoval` mutates only this map).
+watch([formValues, secretRemoval], clearTestResult, { deep: true });
+
 const configTitle = computed(() =>
   configuring.value ? `Configure — ${configuring.value.name}` : 'Configure plugin',
 );
@@ -696,6 +734,7 @@ async function openConfigure(plugin: Plugin): Promise<void> {
   configError.value = null;
   copyAnnouncement.value = '';
   secretRemoval.value = {};
+  clearTestResult();
   detailLoading.value = true;
   try {
     const d = await api.get(plugin.name);
@@ -723,6 +762,7 @@ function closeConfigure(): void {
   configError.value = null;
   copyAnnouncement.value = '';
   secretRemoval.value = {};
+  clearTestResult();
 }
 
 /**
@@ -810,6 +850,53 @@ async function submitConfigure(): Promise<void> {
     }
   } finally {
     configSubmitting.value = false;
+  }
+}
+
+/**
+ * Test the credentials currently in the form against the provider, without
+ * saving them.
+ *
+ * The payload is {@link buildChangedSettings} — the SAME map a save would send,
+ * deliberately, so the two can never disagree about what "the current settings"
+ * are. In particular it carries a newly-typed secret but OMITS an untouched one
+ * rather than sending the `***` mask sentinel, which the plugin would otherwise
+ * dutifully test as if it were the API key. The server has already instantiated
+ * the plugin with its persisted settings, so an omitted secret is still the one
+ * under test; testing without editing anything therefore tests what is stored.
+ *
+ * Nothing here logs the response. A plugin's message can quote a request URI
+ * containing the key it was handed — the server scrubs the submitted values back
+ * out before replying, and that guarantee is worth nothing if the client turns
+ * around and writes the message to the console.
+ */
+async function testCredentials(): Promise<void> {
+  const plugin = configuring.value;
+  if (!plugin || testing.value) return;
+  clearTestResult();
+  testing.value = true;
+  try {
+    const result = await api.testCredentials(plugin.name, buildChangedSettings());
+    testResult.value = {
+      tone: result.success ? 'success' : 'failure',
+      message: result.message || (result.success ? 'Credentials are valid.' : 'Credentials were rejected.'),
+    };
+  } catch (e) {
+    // 501: the plugin implements no testCredentials() method. Not a failed test
+    // — there was no test — so it gets its own neutral tone and no error toast.
+    if (pluginErrorCode(e) === 'plugin.test_not_supported' || (e instanceof ApiError && e.status === 501)) {
+      testResult.value = {
+        tone: 'unsupported',
+        message: 'This plugin does not support testing credentials.',
+      };
+    } else {
+      testResult.value = {
+        tone: 'failure',
+        message: errMessage(e, 'Could not run the credential test.'),
+      };
+    }
+  } finally {
+    testing.value = false;
   }
 }
 
@@ -1312,10 +1399,47 @@ onMounted(() => {
               {{ fieldErrors[key] }}
             </span>
           </div>
+          <!--
+            The credential-test outcome. It lives INSIDE `.admin-plugins__config-body`
+            so the modal's existing `aria-live="polite"` announces it — a second
+            live region here would make the two compete. It sits at the end of the
+            form, directly above the footer's Test button, so the result is next
+            to the control that produced it.
+          -->
+          <div
+            v-if="testResult"
+            class="admin-plugins__test-result"
+            :class="`admin-plugins__test-result--${testResult.tone}`"
+          >
+            <Badge
+              :tone="testResult.tone === 'success' ? 'success' : testResult.tone === 'failure' ? 'error' : 'neutral'"
+              class="admin-plugins__test-state"
+            >
+              {{
+                testResult.tone === 'success'
+                  ? 'Passed'
+                  : testResult.tone === 'failure'
+                    ? 'Failed'
+                    : 'Not supported'
+              }}
+            </Badge>
+            {{ testResult.message }}
+          </div>
         </form>
       </div>
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeConfigure">Cancel</Button>
+        <Button
+          v-if="hasSchema"
+          variant="outline"
+          size="sm"
+          :loading="testing"
+          :disabled="testing || configSubmitting"
+          :aria-label="`Test the credentials for ${configuring?.name}`"
+          @click="testCredentials"
+        >
+          Test credentials
+        </Button>
         <Button v-if="hasSchema" variant="solid" size="sm" :loading="configSubmitting" @click="submitConfigure">
           Save
         </Button>
@@ -1592,6 +1716,24 @@ onMounted(() => {
   border-radius: var(--radius-md);
   color: var(--danger, #e5484d);
   font-size: var(--text-sm);
+}
+.admin-plugins__test-result {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  word-break: break-word;
+}
+.admin-plugins__test-result--success {
+  border-color: var(--success, #46a758);
+}
+.admin-plugins__test-result--failure {
+  border-color: var(--danger, #e5484d);
+}
+.admin-plugins__test-state {
+  margin-right: var(--space-2);
+  vertical-align: middle;
 }
 .admin-plugins__redirect {
   display: flex;

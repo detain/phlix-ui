@@ -125,6 +125,11 @@ function makeClient(over: Overrides = {}) {
   const post = vi.fn(async (endpoint: string): Promise<Record<string, unknown>> => {
     if (endpoint === '/api/v1/admin/plugins/updates/apply') return { updated: [], failed: [] };
     if (/\/api\/v1\/admin\/plugins\/[^/]+\/update$/.test(endpoint)) return { plugin: { name: 'x', version: '2.0.0' } };
+    // Credential test: `{ success, message }`. A plugin whose own test throws is
+    // mapped server-side to `success:false`, so only a transport/501 failure rejects.
+    if (/\/api\/v1\/admin\/plugins\/[^/]+\/test$/.test(endpoint)) {
+      return { success: true, message: 'Credentials are valid.' };
+    }
     return { manifest: {}, sources: [DEFAULT_SOURCE] };
   });
   const put = vi.fn(async (endpoint: string) => {
@@ -1046,6 +1051,244 @@ describe('Admin PluginsPage — configure', () => {
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'detail boom')).toBe(true);
+    w.unmount();
+  });
+
+  // ── Test credentials ───────────────────────────────────────────────────────
+  //
+  // `POST /plugins/{name}/test` lets an admin check a credential BEFORE saving
+  // it. Two things make it more than a thin button: the payload must obey the
+  // same secret contract as save (a typed secret goes, an untouched one is
+  // omitted — never the `***` mask, which the plugin would test as if it were
+  // the key), and the result is only ever true of the exact values submitted, so
+  // it must not outlive them.
+
+  /** The last `settings` object posted to the test endpoint. */
+  function lastTestPayload(post: ReturnType<typeof vi.fn>): Record<string, unknown> {
+    const call = post.mock.calls.filter((c) => String(c[0]).endsWith('/test')).at(-1)!;
+    return (call[1] as { settings: Record<string, unknown> }).settings;
+  }
+  const testResultEl = () => modalPanel().querySelector('.admin-plugins__test-result');
+
+  it('tests the credentials against the server and renders the outcome', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    // No result until the admin asks for one.
+    expect(testResultEl()).toBeFalsy();
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/plugins/anidb/test', { settings: {} });
+    expect(testResultEl()!.textContent).toContain('Passed');
+    expect(testResultEl()!.textContent).toContain('Credentials are valid.');
+    w.unmount();
+  });
+
+  /**
+   * The whole point of testing before saving: the value under test is the one in
+   * the box, not the one on disk.
+   */
+  it('submits the values the admin typed, including a brand-new secret', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const secret = panel.querySelector<HTMLInputElement>('#plugin-setting-api_key')!;
+    secret.value = 'freshly-typed-key';
+    secret.dispatchEvent(new Event('input'));
+    const numberInput = panel.querySelector<HTMLInputElement>('#plugin-setting-page_size')!;
+    numberInput.value = '50';
+    numberInput.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    expect(lastTestPayload(post)).toEqual({ api_key: 'freshly-typed-key', page_size: 50 });
+    w.unmount();
+  });
+
+  /**
+   * The mask sentinel must never be submitted for a secret the admin left alone.
+   * The server hands `settings` straight to third-party plugin code, so sending
+   * `***` would have the plugin authenticate with the literal string `***` and
+   * report a failure for a credential that is actually fine. Omitting the key is
+   * correct AND sufficient: the server instantiates the entry with its persisted
+   * settings first, so the stored secret is what gets tested.
+   */
+  it('never sends the mask sentinel for a secret the admin did not touch', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    // Dirty only the non-secret field, so the payload is provably non-empty and
+    // an omitted `api_key` cannot be mistaken for "nothing was sent at all".
+    const numberInput = modalPanel().querySelector<HTMLInputElement>('#plugin-setting-page_size')!;
+    numberInput.value = '50';
+    numberInput.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    const payload = lastTestPayload(post);
+    expect(payload).toEqual({ page_size: 50 });
+    expect('api_key' in payload).toBe(false);
+    expect(Object.values(payload)).not.toContain('***');
+    w.unmount();
+  });
+
+  it('renders a rejected credential as a failure, with the server reason', async () => {
+    const { client, post } = makeClient();
+    post.mockResolvedValueOnce({ success: false, message: 'AniDB rejected the key.' });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    const el = testResultEl()!;
+    expect(el.textContent).toContain('Failed');
+    expect(el.textContent).toContain('AniDB rejected the key.');
+    expect(el.className).toContain('admin-plugins__test-result--failure');
+    w.unmount();
+  });
+
+  /**
+   * A `501 plugin.test_not_supported` means the plugin ships no
+   * `testCredentials()` method at all — nothing was tested. Presenting that as a
+   * failure tells the admin their working API key is bad and sends them off to
+   * regenerate a perfectly good credential.
+   */
+  it('presents a 501 as "not supported" rather than as a failed test', async () => {
+    const { client, post } = makeClient();
+    post.mockRejectedValueOnce(
+      new ApiError('This plugin does not support credential testing.', 501, {
+        code: 'plugin.test_not_supported',
+        error: 'This plugin does not support credential testing.',
+      }),
+    );
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    const el = testResultEl()!;
+    expect(el.textContent).toContain('Not supported');
+    expect(el.textContent).toContain('does not support testing credentials');
+    // Emphatically NOT the failure presentation.
+    expect(el.textContent).not.toContain('Failed');
+    expect(el.className).not.toContain('admin-plugins__test-result--failure');
+    w.unmount();
+  });
+
+  it('reports a transport failure as a failure, not as "not supported"', async () => {
+    const { client, post } = makeClient();
+    post.mockRejectedValueOnce(new ApiError('upstream timed out', 502, {}));
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    const el = testResultEl()!;
+    expect(el.textContent).toContain('Failed');
+    expect(el.textContent).toContain('upstream timed out');
+    expect(el.textContent).not.toContain('Not supported');
+    w.unmount();
+  });
+
+  /**
+   * §6.2 #18. A PASS is a claim about the exact values that were submitted. Once
+   * a field changes, that claim no longer describes what is on screen — a green
+   * "Credentials are valid." beside a freshly mistyped key is worse than no
+   * result at all.
+   */
+  it('clears a stale result as soon as any field is edited', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    expect(testResultEl()!.textContent).toContain('Passed');
+    const secret = modalPanel().querySelector<HTMLInputElement>('#plugin-setting-api_key')!;
+    secret.value = 'a-different-key';
+    secret.dispatchEvent(new Event('input'));
+    await flushPromises();
+    expect(testResultEl()).toBeFalsy();
+    w.unmount();
+  });
+
+  /** Arming a secret for removal changes what is submitted without touching an input. */
+  it('clears a stale result when a secret is armed for removal', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    expect(testResultEl()).toBeTruthy();
+    await findBtnIn(w, modalPanel(), 'Remove')!.trigger('click');
+    await flushPromises();
+    expect(testResultEl()).toBeFalsy();
+    w.unmount();
+  });
+
+  it('does not carry a result over to a different plugin', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w); // anidb
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    expect(testResultEl()!.textContent).toContain('Passed');
+    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
+    await flushPromises();
+    // …now configure a DIFFERENT plugin: anidb's PASS says nothing about mal.
+    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Configure mal')!.trigger('click');
+    await flushPromises();
+    expect(modalPanel().textContent).toContain('API Key'); // the form did open
+    expect(testResultEl()).toBeFalsy();
+    w.unmount();
+  });
+
+  /**
+   * The result must reach a screen-reader user, and it does so through the
+   * modal body's EXISTING `aria-live="polite"` — a second live region inside the
+   * first makes the two announcements race.
+   */
+  it('announces the result through the modal body live region, not a second one', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    await findBtnIn(w, modalPanel(), 'Test credentials')!.trigger('click');
+    await flushPromises();
+    const panel = modalPanel();
+    const live = panel.querySelector('[aria-live="polite"]')!;
+    expect(live).toBeTruthy();
+    expect(live.contains(testResultEl())).toBe(true);
+    // The result itself declares no competing live region / alert role.
+    expect(testResultEl()!.getAttribute('aria-live')).toBeNull();
+    expect(testResultEl()!.getAttribute('role')).toBeNull();
+    w.unmount();
+  });
+
+  it('gives the Test button an accessible name naming the plugin', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    expect(findBtnIn(w, modalPanel(), 'Test credentials')!.attributes('aria-label')).toBe(
+      'Test the credentials for anidb',
+    );
+    w.unmount();
+  });
+
+  it('offers no Test button for a plugin with no settings at all', async () => {
+    const detail = { ...PLUGIN_A, settings_schema: {}, settings: {}, secret_status: {} };
+    const { client } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    expect(findBtnIn(w, modalPanel(), 'Test credentials')).toBeFalsy();
     w.unmount();
   });
 });

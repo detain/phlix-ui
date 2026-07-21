@@ -20,8 +20,9 @@ import type { ApiClient } from '../../api/client';
 import type { SettingMeta } from '../../api/admin/settings';
 
 /**
- * Fixtures mirror the REAL `GET /api/v1/admin/settings` contract as of
- * `phlix-shared` v0.25.0 (43 keys / 14 groups): `settings` + `overridden` +
+ * Fixtures mirror the REAL `GET /api/v1/admin/settings` contract — see
+ * `phlix-shared`'s `schemas/server-settings.schema.json`, currently 41 keys
+ * across 13 groups: `settings` + `overridden` +
  * `types` + `secretStatus` + a per-key `meta` block whose 13 fields are exactly
  * what `AdminSettingsController::loadSchemaMeta()` emits — `label`, `helpText`,
  * `helpLinks` ([] when absent), `tier` ('standard' when absent), `group`,
@@ -32,8 +33,12 @@ import type { SettingMeta } from '../../api/admin/settings';
  * type vocabulary can produce (`bool` / `int` / `float` / `string` / enum /
  * secret / `json`), both tiers, `restart: true` and `restart: false`, `enum`
  * members including the empty-string auto-detect sentinel, `optionHelp`, and
- * numeric bounds. Tiers, bounds and restart flags are copied verbatim from the
- * shared schema rather than invented.
+ * numeric bounds. Every key here is a key that ACTUALLY EXISTS in the shared
+ * schema, and its tier, bounds and restart flag are copied verbatim from it
+ * rather than invented — otherwise the fixtures drift into describing a server
+ * that does not exist, and the next reader trusts them. (They did: this file
+ * named a `hwaccel.probe_timeout` for some time after that key was deleted from
+ * the schema.) If you add a key here, copy it from the schema file.
  *
  * All FIVE `secret: true` keys in the schema are represented — `tmdb.api_key`
  * plus the `scrobblers` group's `lastfm.api_key`, `lastfm.shared_secret`,
@@ -84,13 +89,14 @@ const META: Record<string, SettingMeta> = {
     restart: true,
     default: true,
   }),
-  'hwaccel.probe_timeout': meta({
-    label: 'Hardware probe timeout',
+  'ffmpeg.transcode_timeout': meta({
+    label: 'Transcode job timeout',
     group: 'transcoding',
     tier: 'advanced',
-    minimum: 0,
+    minimum: 60,
+    maximum: 86400,
     restart: true,
-    default: 30,
+    default: 7200,
   }),
   'transcoding.preferred_accelerator': meta({
     label: 'Preferred hardware accelerator',
@@ -207,7 +213,7 @@ const MASK = '***';
 const TYPES: Record<string, string> = {
   'auth.signup_mode': 'string',
   'hwaccel.enabled': 'bool',
-  'hwaccel.probe_timeout': 'int',
+  'ffmpeg.transcode_timeout': 'int',
   'transcoding.preferred_accelerator': 'string',
   'tmdb.api_key': 'string',
   'metadata.provider_priority': 'json',
@@ -228,7 +234,7 @@ const TYPES: Record<string, string> = {
 const SETTINGS: Record<string, unknown> = {
   'auth.signup_mode': 'approval',
   'hwaccel.enabled': true,
-  'hwaccel.probe_timeout': 30,
+  'ffmpeg.transcode_timeout': 7200,
   'transcoding.preferred_accelerator': '',
   // Every secret arrives as the mask — never the real value.
   'tmdb.api_key': MASK,
@@ -416,7 +422,7 @@ describe('Admin SettingsPage — load + layout', () => {
     await flushPromises();
     await selectTab(w, 'Transcoding');
     expect(w.text()).toContain('Enable hardware acceleration');
-    expect(w.text()).toContain('Hardware probe timeout');
+    expect(w.text()).toContain('Transcode job timeout');
     expect(w.text()).toContain('Preferred hardware accelerator');
     expect(saveBtn(w).attributes('disabled')).toBeDefined();
     w.unmount();
@@ -1010,7 +1016,7 @@ describe('Admin SettingsPage — Advanced tier gating', () => {
     const w = mountPage(client);
     await flushPromises();
     await selectTab(w, 'Transcoding');
-    const advanced = w.find('#field-hwaccel\\.probe_timeout');
+    const advanced = w.find('#field-ffmpeg\\.transcode_timeout');
     expect(advanced.exists()).toBe(true); // rendered, not hidden
     expect(advanced.attributes('disabled')).toBeDefined();
     expect(w.text()).toContain('Advanced');
@@ -1043,7 +1049,7 @@ describe('Admin SettingsPage — Advanced tier gating', () => {
     const w = mountPage(client);
     await flushPromises();
     await selectTab(w, 'Transcoding');
-    expect(w.find('#field-hwaccel\\.probe_timeout').attributes('disabled')).toBeUndefined();
+    expect(w.find('#field-ffmpeg\\.transcode_timeout').attributes('disabled')).toBeUndefined();
     expect(w.findAllComponents(Select).at(-1)!.props('disabled')).toBe(false);
     w.unmount();
   });
@@ -1202,7 +1208,7 @@ describe('Admin SettingsPage — dirty state', () => {
     const w = mountPage(client);
     await flushPromises();
     await selectTab(w, 'Transcoding');
-    await w.find<HTMLInputElement>('#field-hwaccel\\.probe_timeout').setValue('45');
+    await w.find<HTMLInputElement>('#field-ffmpeg\\.transcode_timeout').setValue('3600');
     prefs.setAdvancedMode(false);
     await flushPromises();
     await saveBtn(w).trigger('click');

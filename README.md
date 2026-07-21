@@ -329,7 +329,7 @@ Everything below is a named export from the package root (`import { Button } fro
 `LoginForm` · `SignupForm`, plus the directly-exported consumer pages
 `LibraryScanPage` · `MyServersPage` · `FederationPage` · `ManageSharesPage` · `AuditLogsPage`.
 
-> The six built-in **route** pages (Browse/Detail/Player/Login/Signup/Settings) and the 16 admin pages
+> The six built-in **route** pages (Browse/Detail/Player/Login/Signup/Settings) and every admin page
 > are intentionally **not** re-exported — they are lazy chunks mounted by `createPhlixApp` /
 > `buildAdminRoutes`. Compose your own pages from the building blocks above, or let the factory mount
 > the built-ins.
@@ -360,8 +360,11 @@ const dispose = commands.register({
 
 ## Admin surface
 
-The 16 admin pages (Dashboard, Users, Libraries, Settings, Live TV, Cast Devices, …) are produced as
-lazy routes — no static JS in the entry:
+The server admin pages — Dashboard, Server Traffic, Users, Logs, Webhooks, Services, Integrations,
+Backup, Cast Devices, DLNA Server, Remote Access, Live TV / DVR, Collections, Watch History,
+SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Settings — are produced as lazy routes, with
+no static JS in the entry. `defaultAdminPages` in `src/app/admin.ts` is the source of truth for that
+list and its sidebar order; `buildHubAdminRoutes` mounts the smaller hub set instead.
 
 ```ts
 import { createPhlixApp, buildAdminRoutes, adminMenu } from '@phlix/ui';
@@ -369,7 +372,7 @@ import { createPhlixApp, buildAdminRoutes, adminMenu } from '@phlix/ui';
 createPhlixApp({
   app: 'server',
   apiBase: '',
-  extraRoutes: buildAdminRoutes('/app'), // 16 lazy routes under /app/admin/*
+  extraRoutes: buildAdminRoutes('/app'), // one lazy route per admin page, under /app/admin/*
   menu: adminMenu('/app'),               // matching nav entries
 }).mount('#app');
 ```
