@@ -53,7 +53,7 @@ import { t as wt } from "./collections-CH3HLdcd.js";
 import { t as Tt } from "./history-Cz9DDbWX.js";
 import { t as Et } from "./syncPlay-DPzJkgkK.js";
 import { n as Dt, t as Ot } from "./libraries-hKYggP3R.js";
-import { i as kt, n as At, r as jt, t as Mt } from "./plugins-B6FSu-PZ.js";
+import { i as kt, n as At, r as jt, t as Mt } from "./plugins-BtqNdCGA.js";
 import { t as Nt } from "./hubDashboard-BhOaaDD-.js";
 import { t as Pt } from "./LoginForm-CBWdIZG6.js";
 import { t as Ft } from "./SignupForm-CE6JbFOU.js";
@@ -940,7 +940,7 @@ var Br = dn("server", () => {
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-BwH2DQTw.js")
+	component: () => import("./PluginsPage-CpOraskq.js")
 }, ii = {
 	name: "admin-transcoding",
 	path: "transcoding",
@@ -952,7 +952,7 @@ var Br = dn("server", () => {
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-BD7nwPCk.js")
+	component: () => import("./SettingsPage-XV3eRC18.js")
 }, oi = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",

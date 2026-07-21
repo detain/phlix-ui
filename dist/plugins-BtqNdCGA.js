@@ -1,7 +1,19 @@
 import { l as e } from "./client-D80As4Gx.js";
 //#region src/api/admin/plugins.ts
 var t = "***";
-function n(t) {
+function n(e) {
+	return typeof e == "object" && !!e && !Array.isArray(e);
+}
+function r(e) {
+	if (!n(e)) return {};
+	let t = {};
+	for (let [r, i] of Object.entries(e)) n(i) && (t[r] = {
+		set: i.set === !0,
+		length: typeof i.length == "number" && Number.isFinite(i.length) ? i.length : 0
+	});
+	return t;
+}
+function i(t) {
 	if (!(t instanceof e)) return null;
 	let n = t.body;
 	if (n && typeof n == "object") {
@@ -10,7 +22,7 @@ function n(t) {
 	}
 	return null;
 }
-function r(t) {
+function a(t) {
 	if (!(t instanceof e)) return {};
 	let n = t.body;
 	if (n && typeof n == "object") {
@@ -23,7 +35,7 @@ function r(t) {
 	}
 	return {};
 }
-var i = class {
+var o = class {
 	client;
 	constructor(e) {
 		this.client = e;
@@ -38,7 +50,7 @@ var i = class {
 			...t,
 			settings_schema: t && typeof t.settings_schema == "object" && t.settings_schema !== null ? t.settings_schema : {},
 			settings: t && typeof t.settings == "object" && t.settings !== null ? t.settings : {},
-			secret_status: t && typeof t.secret_status == "object" && t.secret_status !== null ? t.secret_status : {}
+			secret_status: r(t?.secret_status)
 		};
 	}
 	install(e) {
@@ -109,6 +121,6 @@ var i = class {
 	}
 };
 //#endregion
-export { r as i, t as n, n as r, i as t };
+export { a as i, t as n, i as r, o as t };
 
-//# sourceMappingURL=plugins-B6FSu-PZ.js.map
+//# sourceMappingURL=plugins-BtqNdCGA.js.map

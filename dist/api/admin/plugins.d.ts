@@ -18,7 +18,9 @@ import type { ApiClient } from '../client';
  *    `settings_schema` is `{ key: { type, required, secret, label, description,
  *    default? } }` — `default` is present ONLY when the manifest declares one (so
  *    the UI can tell "no default" from "default null"). `settings` is `{ key:
- *    value }` with every `secret:true` value replaced by the mask sentinel `***`.
+ *    value }` with every `secret:true` value replaced by the mask sentinel `***`,
+ *    so it CANNOT distinguish a configured secret from an empty one —
+ *    `secret_status` is the only thing that can.
  *  - `POST /plugins/install` `{ url }` → `201` manifest, or `400`/`422` with a
  *    `{ code }` the UI surfaces (see {@link pluginErrorCode}).
  *  - `POST /plugins/{name}/enable` / `/disable` → `200`.
@@ -28,8 +30,9 @@ import type { ApiClient } from '../client';
  *    `{ errors: { key: msg } }`), MERGES the accepted keys over the stored
  *    settings, and returns the refreshed masked detail. SECRET RULE: a secret
  *    submitted as the `***` mask sentinel is treated as unchanged and is NOT
- *    overwritten — so the configure form prefills secrets with `***` and only
- *    sends a secret back when the admin actually typed a new value.
+ *    overwritten. The configure forms do not rely on that round-trip: they start
+ *    secret inputs EMPTY and omit a blank secret from the payload entirely, so
+ *    the mask never enters the DOM and the stored value survives untouched.
  */
 /** The mask sentinel the server substitutes for every `secret:true` value. */
 export declare const PLUGIN_SECRET_MASK = "***";
@@ -62,6 +65,11 @@ export type PluginSettings = Record<string, unknown>;
  * Per-secret "is it set?" status: whether a non-empty value is stored and its
  * character length (never the value itself). Lets the configure form tell a set
  * secret from an unset one and render a length-appropriate row of dots.
+ *
+ * Structurally identical to the server-settings {@link SecretStatus} — both
+ * mirror the one server-side shape (`SettingsMasker::secretStatus()`), which the
+ * plugin detail endpoint emits under the snake_case key `secret_status` and the
+ * settings endpoint under `secretStatus`.
  */
 export interface PluginSecretStatus {
     set: boolean;
@@ -163,12 +171,6 @@ export interface UpdateAllResult {
         error: string;
     }>;
 }
-/**
- * The server error `code` carried by a failed install / settings save (e.g.
- * `plugin.install_failed`, `plugin.invalid_url`, `plugin.settings.validation_failed`).
- * Returns `null` when the thrown error is not an {@link ApiError} or carries no
- * `code`. Lets the UI map a code to a helpful message instead of the generic text.
- */
 export declare function pluginErrorCode(e: unknown): string | null;
 /**
  * The per-field validation errors carried by a `400
