@@ -20,9 +20,10 @@
  * listed in an "Other installed plugins" section so they remain manageable.
  *
  * Configure opens a Modal that GETs the plugin detail and renders a form from
- * the manifest `settings_schema` (one control per key by type), with secret
- * fields prefilled with the `***` mask and only sent when the admin types a new
- * value. Per-field validation errors from a `400 plugin.settings.validation_failed`
+ * the manifest `settings_schema` (one control per key by type). Secret fields
+ * start EMPTY — never prefilled with the `***` mask — and are sent only when the
+ * admin types a new value, or explicitly clicks Remove to clear the stored one.
+ * Per-field validation errors from a `400 plugin.settings.validation_failed`
  * render under the offending field. Every mutation refetches both the catalog
  * and the installed list. Errors surface as toasts.
  */
@@ -500,6 +501,15 @@ const formValues = ref<Record<string, unknown>>({});
 const pristineValues = ref<Record<string, unknown>>({});
 /** Per-field validation errors from the last save attempt. */
 const fieldErrors = ref<Record<string, string>>({});
+/**
+ * Secret keys the admin has explicitly armed for removal.
+ *
+ * Secret inputs start blank and a blank field means "keep the stored value", so
+ * clearing the box cannot express "delete this". This map is the explicit
+ * opt-in: an armed key sends `''`, which the server persists as an empty secret
+ * (it only skips a secret whose value is the mask sentinel).
+ */
+const secretRemoval = ref<Record<string, boolean>>({});
 
 const configTitle = computed(() =>
   configuring.value ? `Configure — ${configuring.value.name}` : 'Configure plugin',
@@ -556,6 +566,38 @@ function secretDots(length: number): string {
   return '•'.repeat(Math.max(1, Math.min(length, 32)));
 }
 
+/** True while `key` is armed to have its stored secret cleared on the next save. */
+function isRemovingSecret(key: string): boolean {
+  return secretRemoval.value[key] === true;
+}
+
+/**
+ * Whether to offer a Remove control for a secret field.
+ *
+ * Offered unless the server positively reports the secret as unset — there is
+ * nothing to remove then. A server too old to send `secret_status` reports
+ * `null` (unknown), where the control MUST stay available: that admin may well
+ * have a stored value and would otherwise have no way to clear it.
+ */
+function canRemoveSecret(key: string, descriptor: PluginSettingDescriptor): boolean {
+  return descriptor.secret && secretStatusFor(key)?.set !== false;
+}
+
+/**
+ * Arm a secret for removal. Also drops any half-typed replacement, so the field
+ * cannot both "be removed" and "carry a new value" — the two intents are
+ * mutually exclusive and the last one clicked wins.
+ */
+function requestSecretRemoval(key: string): void {
+  secretRemoval.value[key] = true;
+  formValues.value[key] = '';
+}
+
+/** Disarm a pending removal, returning the field to "leave the stored value alone". */
+function cancelSecretRemoval(key: string): void {
+  delete secretRemoval.value[key];
+}
+
 /** Human hint for a field's declared default, or null when there is none / it is empty. */
 function defaultHint(descriptor: PluginSettingDescriptor): string | null {
   if (descriptor.secret) return null; // never surface a secret default
@@ -579,6 +621,7 @@ async function openConfigure(plugin: Plugin): Promise<void> {
   formValues.value = {};
   pristineValues.value = {};
   fieldErrors.value = {};
+  secretRemoval.value = {};
   detailLoading.value = true;
   try {
     const d = await api.get(plugin.name);
@@ -603,6 +646,7 @@ function closeConfigure(): void {
   formValues.value = {};
   pristineValues.value = {};
   fieldErrors.value = {};
+  secretRemoval.value = {};
 }
 
 /**
@@ -618,6 +662,11 @@ function buildChangedSettings(): Record<string, unknown> {
   for (const [key, descriptor] of Object.entries(detail.value.settings_schema)) {
     const current = formValues.value[key];
     if (descriptor.secret) {
+      // An explicit removal wins over everything: `''` is what clears it.
+      if (isRemovingSecret(key)) {
+        out[key] = '';
+        continue;
+      }
       // Blank → keep the stored secret; only a typed value is sent.
       if (current === '' || current === null || current === undefined) continue;
       out[key] = current;
@@ -1046,22 +1095,45 @@ onMounted(() => {
                 >*</span>
                 <span v-else class="admin-plugins__optional">optional</span>
               </span>
-              <input
-                v-model="formValues[key]"
-                :type="descriptor.secret ? 'password' : inputType(descriptor)"
-                class="admin-plugins__input"
-                :class="{ 'is-invalid': fieldErrors[key] }"
-                :autocomplete="descriptor.secret ? 'new-password' : 'off'"
-                :placeholder="
-                  descriptor.secret
-                    ? secretStatusFor(key)?.set
-                      ? 'Leave blank to keep the current value'
-                      : 'Not set — enter a value'
-                    : undefined
-                "
-                :aria-label="descriptor.label || key"
-                :aria-invalid="fieldErrors[key] ? 'true' : undefined"
-              />
+              <div class="admin-plugins__secret-row">
+                <input
+                  v-model="formValues[key]"
+                  :type="descriptor.secret ? 'password' : inputType(descriptor)"
+                  class="admin-plugins__input"
+                  :class="{ 'is-invalid': fieldErrors[key] }"
+                  :autocomplete="descriptor.secret ? 'new-password' : 'off'"
+                  :placeholder="
+                    descriptor.secret
+                      ? isRemovingSecret(key)
+                        ? 'Will be removed on save'
+                        : secretStatusFor(key)?.set
+                          ? 'Leave blank to keep the current value'
+                          : 'Not set — enter a value'
+                      : undefined
+                  "
+                  :disabled="descriptor.secret && isRemovingSecret(key)"
+                  :aria-label="descriptor.label || key"
+                  :aria-invalid="fieldErrors[key] ? 'true' : undefined"
+                />
+                <Button
+                  v-if="descriptor.secret && isRemovingSecret(key)"
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="`Keep the stored ${descriptor.label || key}`"
+                  @click="cancelSecretRemoval(key)"
+                >
+                  Undo
+                </Button>
+                <Button
+                  v-else-if="canRemoveSecret(key, descriptor)"
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="`Remove the stored ${descriptor.label || key}`"
+                  @click="requestSecretRemoval(key)"
+                >
+                  Remove
+                </Button>
+              </div>
               <!-- Secret status: show whether a value is stored (and a length cue)
                    so a set secret is distinguishable from an unset one. -->
               <span
@@ -1069,7 +1141,10 @@ onMounted(() => {
                 class="admin-plugins__secret-status"
                 :class="{ 'is-set': secretStatusFor(key)?.set }"
               >
-                <template v-if="secretStatusFor(key)?.set">
+                <template v-if="isRemovingSecret(key)">
+                  The stored value will be deleted when you save. Undo to keep it.
+                </template>
+                <template v-else-if="secretStatusFor(key)?.set">
                   <span class="admin-plugins__secret-dots" aria-hidden="true">{{
                     secretDots(secretStatusFor(key)?.length ?? 0)
                   }}</span>
@@ -1394,6 +1469,15 @@ onMounted(() => {
   letter-spacing: normal;
   text-transform: none;
   color: var(--text-subtle);
+}
+.admin-plugins__secret-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}
+.admin-plugins__secret-row .admin-plugins__input {
+  flex: 1;
+  min-width: 0;
 }
 .admin-plugins__secret-status {
   font-size: var(--text-xs);

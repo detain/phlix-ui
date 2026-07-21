@@ -580,6 +580,98 @@ describe('Admin PluginsPage — configure', () => {
     w.unmount();
   });
 
+  /**
+   * Explicit secret removal. Secret inputs start blank and blank means "keep",
+   * so clearing the box cannot express "delete this". Remove is the opt-in;
+   * `''` is what the server persists as an empty secret.
+   */
+  it('offers Remove for a configured secret and sends an empty string for it', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    await findBtnIn(w, panel, 'Remove')!.trigger('click');
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/anidb/settings', {
+      settings: { api_key: '' },
+    });
+    w.unmount();
+  });
+
+  it('does NOT offer Remove for a secret the server reports as unset', async () => {
+    const detail = { ...DETAIL_A, secret_status: { api_key: { set: false, length: 0 } } };
+    const { client } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    expect(findBtnIn(w, modalPanel(), 'Remove')).toBeFalsy();
+    w.unmount();
+  });
+
+  it('still offers Remove when the server sent no secret_status at all', async () => {
+    // Unknown is not the same as unset — that admin may well have a stored value.
+    const detail = { ...DETAIL_A };
+    delete (detail as { secret_status?: unknown }).secret_status;
+    const { client } = makeClient({ detail });
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    expect(findBtnIn(w, modalPanel(), 'Remove')).toBeTruthy();
+    w.unmount();
+  });
+
+  it('Undo cancels a pending removal, leaving the secret out of the payload', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    await findBtnIn(w, panel, 'Remove')!.trigger('click');
+    await findBtnIn(w, panel, 'Undo')!.trigger('click');
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    // Undo leaves NOTHING pending, so the page's "no changes" short-circuit
+    // fires and no request is made at all — the stored secret is untouched.
+    expect(put).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('announces the pending removal and disables the secret input', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    await findBtnIn(w, panel, 'Remove')!.trigger('click');
+    expect(panel.textContent).toContain('will be deleted when you save');
+    expect(panel.textContent).not.toContain('Currently set');
+    const secret = panel.querySelector<HTMLInputElement>('input[type="password"]')!;
+    expect(secret.disabled).toBe(true);
+    expect(secret.value).toBe('');
+    w.unmount();
+  });
+
+  it('drops a half-typed replacement when Remove is clicked', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    const secret = panel.querySelector<HTMLInputElement>('input[type="password"]')!;
+    secret.value = 'half-typed-new-key';
+    secret.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, panel, 'Remove')!.trigger('click');
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/anidb/settings', {
+      settings: { api_key: '' },
+    });
+    w.unmount();
+  });
+
   it('does NOT send an unchanged secret (preserves the stored value)', async () => {
     const { client, put } = makeClient();
     const w = mountPage(client);

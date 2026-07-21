@@ -187,6 +187,16 @@ const submitting = ref(false);
 const restarting = ref(false);
 const fieldErrors = ref<Record<string, string>>({});
 const showPassword = reactive<Record<string, boolean>>({});
+/**
+ * Secret keys the admin has explicitly armed for removal.
+ *
+ * Since secret inputs start blank and a blank field means "keep the stored
+ * value", clearing the box cannot express "delete this". This map is the
+ * explicit opt-in: an armed key sends `''` on the next save, which is what the
+ * server reads as "clear it" (`AdminSettingsController::update()` only skips a
+ * secret when it equals the mask sentinel).
+ */
+const secretRemoval = reactive<Record<string, boolean>>({});
 
 // ── Form state ────────────────────────────────────────────────────────────────
 const formValues = reactive<Record<string, string>>({});
@@ -194,7 +204,14 @@ const dirty = reactive<Record<string, boolean>>({});
 /** Per-key JSON parse errors for `json`-typed fields (blocks the save). */
 const jsonErrors = reactive<Record<string, string>>({});
 
-const hasAnyChanges = computed(() => Object.values(dirty).some(Boolean));
+/**
+ * Whether anything is pending. A pending secret removal counts even though it
+ * is not "dirty" — an armed field is blank, which IS its baseline — otherwise
+ * arming a removal alone would leave Save disabled and the intent unsendable.
+ */
+const hasAnyChanges = computed(
+  () => Object.values(dirty).some(Boolean) || Object.values(secretRemoval).some(Boolean),
+);
 
 /** Keys belonging to the current tab, in schema declaration order. */
 const tabKeys = computed<string[]>(() =>
@@ -341,6 +358,9 @@ function clearDirty(): void {
   // Nothing is being edited any more, so no secret is in the clear: collapse
   // every reveal toggle rather than leave one armed for the next keystroke.
   for (const key of Object.keys(showPassword)) delete showPassword[key];
+  // Pending removals are intent about the PREVIOUS state; once a save or reload
+  // has landed they must not survive to fire against the new one.
+  for (const key of Object.keys(secretRemoval)) delete secretRemoval[key];
 }
 
 /**
@@ -511,7 +531,40 @@ function toggleShowPassword(key: string): void {
  * exactly where it is useful: checking a long API key you just pasted.
  */
 function canRevealSecret(key: string): boolean {
-  return dirty[key] === true && !isDisabled(key);
+  return dirty[key] === true && !isDisabled(key) && !isRemovingSecret(key);
+}
+
+/** True while `key` is armed to have its stored secret cleared on the next save. */
+function isRemovingSecret(key: string): boolean {
+  return secretRemoval[key] === true;
+}
+
+/**
+ * Whether to offer a Remove control for a secret field.
+ *
+ * Offered unless the server positively reports the secret as unset — there is
+ * nothing to remove then. A server too old to send `secretStatus` reports
+ * `null` (unknown), where the control MUST stay available: that admin may well
+ * have a stored value and would otherwise have no way to clear it.
+ */
+function canRemoveSecret(key: string): boolean {
+  return isSecret(key) && !isDisabled(key) && secretState(key)?.set !== false;
+}
+
+/**
+ * Arm a secret for removal. Also clears any half-typed replacement, so the
+ * field cannot both "be removed" and "carry a new value" — the two intents are
+ * mutually exclusive and the last one clicked wins.
+ */
+function requestSecretRemoval(key: string): void {
+  secretRemoval[key] = true;
+  setFieldValue(key, '');
+  showPassword[key] = false;
+}
+
+/** Disarm a pending removal, returning the field to "leave the stored value alone". */
+function cancelSecretRemoval(key: string): void {
+  delete secretRemoval[key];
 }
 
 function sleep(ms: number): Promise<void> {
@@ -599,6 +652,14 @@ async function handleSubmit(): Promise<void> {
       } else {
         toSave[key] = value;
       }
+    }
+
+    // Explicit secret removals. These are NOT dirty (an armed field is blank,
+    // which is its own baseline), so they are added here on purpose: `''` is
+    // the only value the server reads as "clear this secret".
+    for (const key of Object.keys(secretRemoval)) {
+      if (!isRemovingSecret(key) || isDisabled(key)) continue;
+      toSave[key] = '';
     }
 
     const result = await api.save(toSave);
@@ -859,7 +920,13 @@ onMounted(() => {
                 />
               </label>
               <p :id="secretStatusId(key)" class="admin-settings__secret-status">
-                <template v-if="secretState(key) === null">
+                <template v-if="isRemovingSecret(key)">
+                  <Badge tone="warning" class="admin-settings__secret-badge">Will be removed</Badge>
+                  <span class="admin-settings__secret-hint">
+                    The stored value will be deleted when you save. Undo to keep it.
+                  </span>
+                </template>
+                <template v-else-if="secretState(key) === null">
                   <span class="admin-settings__secret-hint">
                     This server did not report whether a value is stored. Type a new one to
                     replace whatever is there; leave it blank to keep it.
@@ -887,9 +954,15 @@ onMounted(() => {
                   :type="showPassword[key] ? 'text' : 'password'"
                   autocomplete="off"
                   :aria-describedby="secretStatusId(key)"
-                  :placeholder="secretIsSet(key) ? 'Leave blank to keep the stored value' : `Enter ${getLabel(key)}`"
+                  :placeholder="
+                    isRemovingSecret(key)
+                      ? 'Will be removed on save'
+                      : secretIsSet(key)
+                        ? 'Leave blank to keep the stored value'
+                        : `Enter ${getLabel(key)}`
+                  "
                   :value="formValues[key]"
-                  :disabled="isDisabled(key)"
+                  :disabled="isDisabled(key) || isRemovingSecret(key)"
                   @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
                 />
                 <Button
@@ -901,6 +974,24 @@ onMounted(() => {
                   @click="toggleShowPassword(key)"
                 >
                   {{ showPassword[key] ? 'Hide' : 'Show' }}
+                </Button>
+                <Button
+                  v-if="isRemovingSecret(key)"
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="`Keep the stored ${getLabel(key)}`"
+                  @click="cancelSecretRemoval(key)"
+                >
+                  Undo
+                </Button>
+                <Button
+                  v-else-if="canRemoveSecret(key)"
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="`Remove the stored ${getLabel(key)}`"
+                  @click="requestSecretRemoval(key)"
+                >
+                  Remove
                 </Button>
               </div>
             </template>

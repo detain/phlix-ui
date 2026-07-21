@@ -1527,3 +1527,151 @@ describe('Admin SettingsPage — §11 Definition of Done', () => {
     w.unmount();
   });
 });
+
+/**
+ * Explicit secret removal.
+ *
+ * Because secret inputs start blank and a blank field means "keep the stored
+ * value", clearing the box cannot express "delete this". The Remove control is
+ * the explicit opt-in, and `''` is the only value the server reads as "clear
+ * it" (`update()` skips a secret only when it equals the mask sentinel).
+ */
+describe('Admin SettingsPage — removing a stored secret', () => {
+  /** The rendered field block for a secret key. */
+  function secretField(w: VueWrapper, key: string): HTMLElement {
+    const input = w.find(`#field-${key.replace(/\./g, '\\.')}`);
+    if (!input.exists()) throw new Error(`no field rendered for "${key}"`);
+    const block = input.element.closest('.admin-settings__field');
+    if (!block) throw new Error(`field "${key}" has no enclosing field block`);
+    return block as HTMLElement;
+  }
+
+  /** The Remove / Undo button inside a secret field block, if rendered. */
+  function fieldButton(w: VueWrapper, key: string, label: string) {
+    const block = secretField(w, key);
+    return w
+      .findAllComponents(Button)
+      .find((b) => b.text().trim() === label && block.contains(b.element));
+  }
+
+  it('offers Remove for a configured secret', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    expect(fieldButton(w, 'tmdb.api_key', 'Remove')).toBeTruthy();
+    w.unmount();
+  });
+
+  it('does NOT offer Remove for a secret the server reports as unset', async () => {
+    // Nothing to remove — the control would be a no-op that implies otherwise.
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    expect(fieldButton(w, 'trakt.client_secret', 'Remove')).toBeFalsy();
+    expect(fieldButton(w, 'trakt.client_id', 'Remove')).toBeTruthy();
+    w.unmount();
+  });
+
+  it('still offers Remove when the server reported no secretStatus at all', async () => {
+    // Unknown ≠ unset. An older server's admin may well have a stored value and
+    // must not be left without any way to clear it.
+    const { client } = makeClient({ secretStatus: null });
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    expect(fieldButton(w, 'tmdb.api_key', 'Remove')).toBeTruthy();
+    w.unmount();
+  });
+
+  it('sends an empty string for a removed secret, which is what clears it', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    await fieldButton(w, 'tmdb.api_key', 'Remove')!.trigger('click');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const body = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(body.settings['tmdb.api_key']).toBe('');
+    w.unmount();
+  });
+
+  it('enables Save on an armed removal alone, with nothing else edited', async () => {
+    // A pending removal is not "dirty" (an armed field is blank, which IS its
+    // baseline), so without explicit handling the intent would be unsendable.
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    expect(saveBtn(w).props('disabled')).toBe(true);
+    await fieldButton(w, 'tmdb.api_key', 'Remove')!.trigger('click');
+    expect(saveBtn(w).props('disabled')).toBe(false);
+    w.unmount();
+  });
+
+  it('Undo cancels a pending removal, leaving the secret out of the payload', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    await fieldButton(w, 'trakt.client_id', 'Remove')!.trigger('click');
+    await fieldButton(w, 'trakt.client_id', 'Undo')!.trigger('click');
+    // Nothing is pending any more, so make an unrelated edit to enable Save.
+    await w.find<HTMLInputElement>('#field-trakt\\.redirect_uri').setValue('https://x.test/cb');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const body = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(body.settings).not.toHaveProperty('trakt.client_id');
+    w.unmount();
+  });
+
+  it('announces the pending removal and disables the input so it cannot also carry a value', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    await fieldButton(w, 'tmdb.api_key', 'Remove')!.trigger('click');
+    const text = secretField(w, 'tmdb.api_key').textContent ?? '';
+    expect(text).toContain('Will be removed');
+    expect(text).not.toContain('Configured');
+    const input = w.find<HTMLInputElement>('#field-tmdb\\.api_key');
+    expect(input.attributes('disabled')).toBeDefined();
+    expect(input.element.value).toBe('');
+    w.unmount();
+  });
+
+  it('drops a half-typed replacement when Remove is clicked', async () => {
+    // The two intents are mutually exclusive; the last one clicked must win,
+    // and a stale keystroke must not ride along with the removal.
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    const input = w.find('#field-tmdb\\.api_key');
+    await input.setValue('half-typed-new-key');
+    await fieldButton(w, 'tmdb.api_key', 'Remove')!.trigger('click');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const body = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(body.settings['tmdb.api_key']).toBe('');
+    w.unmount();
+  });
+
+  it('does not carry a pending removal across a reload', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    await fieldButton(w, 'tmdb.api_key', 'Remove')!.trigger('click');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    // The save landed; the armed state must not survive to fire again.
+    expect(saveBtn(w).props('disabled')).toBe(true);
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledTimes(1);
+    w.unmount();
+  });
+});

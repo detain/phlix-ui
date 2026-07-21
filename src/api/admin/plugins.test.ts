@@ -100,6 +100,34 @@ describe('AdminPluginsApi — list / get', () => {
     expect(got.secret_status?.api_key).toEqual({ set: true, length: 24 });
   });
 
+  it('get() drops malformed secret_status entries rather than trusting them', async () => {
+    const detail = {
+      ...sampleDetail,
+      secret_status: {
+        good: { set: true, length: 12 },
+        // `set` must be a real `true` — a truthy stand-in degrades to "not
+        // configured" rather than claiming a secret exists when it may not.
+        truthy_not_true: { set: 1, length: 5 },
+        bad_length: { set: true, length: 'lots' },
+        not_an_object: 'nope',
+        null_entry: null,
+      },
+    };
+    const { api } = makeApi({ get: () => ({ plugin: detail }) });
+    const got = await api.get('anidb');
+    expect(got.secret_status).toEqual({
+      good: { set: true, length: 12 },
+      truthy_not_true: { set: false, length: 5 },
+      bad_length: { set: true, length: 0 },
+    });
+  });
+
+  it('get() defends a non-record secret_status to an empty map', async () => {
+    const { api } = makeApi({ get: () => ({ plugin: { ...sampleDetail, secret_status: [] } }) });
+    const detail = await api.get('anidb');
+    expect(detail.secret_status).toEqual({});
+  });
+
   it('encodes the plugin name in the URL', async () => {
     const { api, get } = makeApi({ get: () => ({ plugin: sampleDetail }) });
     await api.get('my plugin');

@@ -71,7 +71,16 @@ const SCHEMA: PluginSettingsSchema = {
 
 const PLUGIN = { name: 'acme', version: '1.2.3', type: 'metadata', enabled: true };
 
-function makeClient(over: { putImpl?: ReturnType<typeof vi.fn> } = {}) {
+function makeClient(
+  over: {
+    putImpl?: ReturnType<typeof vi.fn>;
+    /**
+     * Override `secret_status`; pass `null` to omit it entirely, standing in for
+     * a server too old to emit it.
+     */
+    secretStatus?: Record<string, { set: boolean; length: number }> | null;
+  } = {},
+) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/admin/plugins') return { plugins: [PLUGIN] };
     if (endpoint === '/api/v1/admin/plugins/acme') {
@@ -79,6 +88,9 @@ function makeClient(over: { putImpl?: ReturnType<typeof vi.fn> } = {}) {
         plugin: {
           ...PLUGIN,
           settings_schema: SCHEMA,
+          // `api_key` is `secret: true`, so the server has already replaced its
+          // real value with the mask sentinel — a configured secret and an empty
+          // one are byte-identical here. Only `secret_status` tells them apart.
           settings: {
             api_key: '***',
             endpoint: 'https://api.example.test',
@@ -86,6 +98,9 @@ function makeClient(over: { putImpl?: ReturnType<typeof vi.fn> } = {}) {
             timeout_ms: 5000,
             verbose: 'false',
           },
+          ...(over.secretStatus === null
+            ? {}
+            : { secret_status: over.secretStatus ?? { api_key: { set: true, length: 24 } } }),
         },
       };
     }
@@ -250,6 +265,257 @@ describe('PluginConfigPage — overlay help links', () => {
     const { client } = makeClient();
     const w = await openPlugin(client);
     expect(w.findAll('a').some((a) => a.attributes('href')?.includes('retries'))).toBe(false);
+    w.unmount();
+  });
+});
+
+/**
+ * Masked-secret UX (mirrors the SettingsPage treatment in 48c31b8).
+ *
+ * The server replaces every `secret: true` value with `***` before it leaves the
+ * process, so `settings.api_key` reads identically whether the secret is
+ * configured or empty. These assert the CONSEQUENCES of the fix rather than its
+ * flags: the sentinel never reaches the DOM, an untouched secret never reaches
+ * the payload (so the stored value survives), a typed one does, and the
+ * Configured/Not set cue tracks `secret_status` and nothing else.
+ */
+describe('PluginConfigPage — masked secrets + secret_status', () => {
+  const secretInput = (w: VueWrapper) => w.find('#setting-api_key');
+  const secretValue = (w: VueWrapper) =>
+    (secretInput(w).element as HTMLInputElement).value;
+
+  it('never renders the mask sentinel, in the input or anywhere else', async () => {
+    const { client } = makeClient();
+    const w = await openPlugin(client);
+    expect(secretValue(w)).toBe('');
+    expect(w.html()).not.toContain('***');
+    w.unmount();
+  });
+
+  it('keeps a real secret out of the DOM even if a server regressed and sent one', async () => {
+    // Defence in depth: the seed is unconditional for secret keys, so a plaintext
+    // value on the wire still never lands in the input.
+    const { client } = makeClient();
+    const get = client.get as unknown as ReturnType<typeof vi.fn>;
+    get.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/plugins') return { plugins: [PLUGIN] };
+      return {
+        plugin: {
+          ...PLUGIN,
+          settings_schema: SCHEMA,
+          settings: { api_key: 'sk-live-leaked-secret', endpoint: 'https://api.example.test' },
+          secret_status: { api_key: { set: true, length: 21 } },
+        },
+      };
+    });
+    const w = await openPlugin(client);
+    expect(secretValue(w)).toBe('');
+    expect(w.html()).not.toContain('sk-live-leaked-secret');
+    w.unmount();
+  });
+
+  it('renders the secret as a password field, not a plaintext one', async () => {
+    const { client } = makeClient();
+    const w = await openPlugin(client);
+    expect(secretInput(w).attributes('type')).toBe('password');
+    expect(secretInput(w).attributes('autocomplete')).toBe('new-password');
+    w.unmount();
+  });
+
+  it('omits an untouched secret from the save payload, so the stored value survives', async () => {
+    const { client, put } = makeClient();
+    const w = await openPlugin(client);
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const payload = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(payload.settings).not.toHaveProperty('api_key');
+    w.unmount();
+  });
+
+  it('includes a secret the admin actually typed', async () => {
+    const { client, put } = makeClient();
+    const w = await openPlugin(client);
+    await secretInput(w).setValue('brand-new-key');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const payload = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(payload.settings.api_key).toBe('brand-new-key');
+    w.unmount();
+  });
+
+  it('omits a secret typed and then cleared, rather than wiping the stored value', async () => {
+    const { client, put } = makeClient();
+    const w = await openPlugin(client);
+    await secretInput(w).setValue('oops');
+    await secretInput(w).setValue('');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const payload = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(payload.settings).not.toHaveProperty('api_key');
+    w.unmount();
+  });
+
+  it('shows a Configured cue with the stored length when secret_status.set is true', async () => {
+    const { client } = makeClient({ secretStatus: { api_key: { set: true, length: 24 } } });
+    const w = await openPlugin(client);
+    const cue = w.find('#secret-status-api_key');
+    expect(cue.text()).toContain('Configured');
+    expect(cue.text()).toContain('24 characters');
+    w.unmount();
+  });
+
+  it('shows a Not set cue when secret_status.set is false', async () => {
+    const { client } = makeClient({ secretStatus: { api_key: { set: false, length: 0 } } });
+    const w = await openPlugin(client);
+    const cue = w.find('#secret-status-api_key');
+    expect(cue.text()).toContain('Not set');
+    expect(cue.text()).not.toContain('Configured');
+    w.unmount();
+  });
+
+  it('flips the cue when secret_status flips, with an identical schema', async () => {
+    // Proves the indicator is driven by secret_status and nothing else — the
+    // schema and the masked `settings` map are byte-identical across both cases.
+    const set = await openPlugin(makeClient({ secretStatus: { api_key: { set: true, length: 8 } } }).client);
+    expect(set.find('#secret-status-api_key').text()).toContain('Configured');
+    set.unmount();
+
+    const unset = await openPlugin(
+      makeClient({ secretStatus: { api_key: { set: false, length: 0 } } }).client,
+    );
+    expect(unset.find('#secret-status-api_key').text()).toContain('Not set');
+    unset.unmount();
+  });
+
+  it('does not claim "Not set" when the server sent no secret_status at all', async () => {
+    // An older server omits the map entirely. Unknown must not be reported as
+    // "nothing is configured" — that would invite an admin to overwrite a good
+    // secret believing none was stored.
+    const { client } = makeClient({ secretStatus: null });
+    const w = await openPlugin(client);
+    const cue = w.find('#secret-status-api_key');
+    expect(cue.text()).not.toContain('Not set');
+    expect(cue.text()).not.toContain('Configured');
+    expect(cue.text()).toContain('did not report');
+    w.unmount();
+  });
+
+  it('describes the secret input with its status line for screen readers', async () => {
+    const { client } = makeClient();
+    const w = await openPlugin(client);
+    const describedBy = secretInput(w).attributes('aria-describedby');
+    expect(describedBy).toBe('secret-status-api_key');
+    // The referenced node must actually exist, or the association is dead.
+    expect(w.find(`#${describedBy}`).exists()).toBe(true);
+    w.unmount();
+  });
+
+  it('renders the status cue only for secret fields', async () => {
+    const { client } = makeClient();
+    const w = await openPlugin(client);
+    expect(w.findAll('.admin-plugin-config__secret-status').length).toBe(1);
+    expect(w.find('#secret-status-endpoint').exists()).toBe(false);
+    w.unmount();
+  });
+});
+
+/**
+ * Explicit secret removal.
+ *
+ * Secret inputs start blank and a blank field means "keep the stored value", so
+ * clearing the box cannot express "delete this". Remove is the explicit opt-in;
+ * `''` is what the server persists as an empty secret (it skips a secret only
+ * when the submitted value is the mask sentinel).
+ */
+describe('PluginConfigPage — removing a stored secret', () => {
+  const removeBtn = (w: VueWrapper) =>
+    w.findAllComponents(Button).find((b) => b.text().trim() === 'Remove');
+  const undoBtn = (w: VueWrapper) =>
+    w.findAllComponents(Button).find((b) => b.text().trim() === 'Undo');
+  const cue = (w: VueWrapper) => w.find('#secret-status-api_key').text();
+
+  it('offers Remove for a configured secret', async () => {
+    const { client } = makeClient();
+    const w = await openPlugin(client);
+    expect(removeBtn(w)).toBeTruthy();
+    w.unmount();
+  });
+
+  it('does NOT offer Remove for a secret the server reports as unset', async () => {
+    const { client } = makeClient({ secretStatus: { api_key: { set: false, length: 0 } } });
+    const w = await openPlugin(client);
+    expect(removeBtn(w)).toBeFalsy();
+    w.unmount();
+  });
+
+  it('still offers Remove when the server sent no secret_status at all', async () => {
+    // Unknown ≠ unset — an older server's admin must not lose the ability to clear.
+    const { client } = makeClient({ secretStatus: null });
+    const w = await openPlugin(client);
+    expect(removeBtn(w)).toBeTruthy();
+    w.unmount();
+  });
+
+  it('sends an empty string for a removed secret, which is what clears it', async () => {
+    const { client, put } = makeClient();
+    const w = await openPlugin(client);
+    await removeBtn(w)!.trigger('click');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const payload = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(payload.settings.api_key).toBe('');
+    w.unmount();
+  });
+
+  it('Undo cancels a pending removal, leaving the secret out of the payload', async () => {
+    const { client, put } = makeClient();
+    const w = await openPlugin(client);
+    await removeBtn(w)!.trigger('click');
+    await undoBtn(w)!.trigger('click');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const payload = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(payload.settings).not.toHaveProperty('api_key');
+    w.unmount();
+  });
+
+  it('announces the pending removal and disables the input', async () => {
+    const { client } = makeClient();
+    const w = await openPlugin(client);
+    await removeBtn(w)!.trigger('click');
+    expect(cue(w)).toContain('Will be removed');
+    expect(cue(w)).not.toContain('Configured');
+    expect(w.find('#setting-api_key').attributes('disabled')).toBeDefined();
+    w.unmount();
+  });
+
+  it('drops a half-typed replacement when Remove is clicked', async () => {
+    // The two intents are mutually exclusive; the last one clicked wins and a
+    // stale keystroke must not ride along with the removal.
+    const { client, put } = makeClient();
+    const w = await openPlugin(client);
+    await w.find('#setting-api_key').setValue('half-typed-new-key');
+    await removeBtn(w)!.trigger('click');
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const payload = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(payload.settings.api_key).toBe('');
+    w.unmount();
+  });
+
+  it('clears a pending removal when a different plugin is selected', async () => {
+    const { client, put } = makeClient();
+    const w = await openPlugin(client);
+    await removeBtn(w)!.trigger('click');
+    // Collapse (deselect) and reopen — the armed state must not survive.
+    await w.find('.admin-plugin-config__plugin-btn').trigger('click');
+    await flushPromises();
+    await w.find('.admin-plugin-config__plugin-btn').trigger('click');
+    await flushPromises();
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const payload = put.mock.calls[0]![1] as { settings: Record<string, unknown> };
+    expect(payload.settings).not.toHaveProperty('api_key');
     w.unmount();
   });
 });
