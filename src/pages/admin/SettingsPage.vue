@@ -32,7 +32,6 @@ import { errMessage } from '../../api/errors';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminSettingsApi,
-  SETTINGS_SECRET_MASK,
   type SecretStatus,
   type SettingMeta,
 } from '../../api/admin/settings';
@@ -86,7 +85,7 @@ const types = ref<Record<string, string>>({});
 /**
  * Per-secret `{ set, length }` from the server. The masked `settings` map cannot
  * distinguish a configured secret from an empty one — both arrive as
- * {@link SETTINGS_SECRET_MASK} — so this is the ONLY source for the
+ * `SETTINGS_SECRET_MASK` — so this is the ONLY source for the
  * configured/not-configured cue. An older server omits it, leaving `{}`.
  */
 const secretStatus = ref<Record<string, SecretStatus>>({});
@@ -326,7 +325,7 @@ function secretStatusId(key: string): string {
  * Serialise a loaded value into its editable string form.
  *
  * Secret fields deliberately start EMPTY rather than pre-filled: the server only
- * ever sends {@link SETTINGS_SECRET_MASK} for them, and rendering that sentinel
+ * ever sends `SETTINGS_SECRET_MASK` for them, and rendering that sentinel
  * in the input made a configured secret indistinguishable from an unset one
  * while giving the Show button nothing to reveal but `***`. An empty box plus
  * the adjacent Configured/Not set cue tells the truth instead. It also means an
