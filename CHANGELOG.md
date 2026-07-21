@@ -1,3 +1,14 @@
+## 0.94.0 - 2026-07-21
+
+### Fixed
+- **`LIBRARY_TYPES` offered five of the seven `libraries.type` ENUM members, so a book or audiobook library could not be created from the admin UI.** The constant carried a comment asserting `book` was "intentionally absent … because a `book` insert would 500 at the DB ENUM". That was true when written and false since **migration 035**, which added `book` AND `audiobook`. Verified against the production column — `enum('movie','series','music','photo','video','book','audiobook')` — and against `LibraryController::create()`'s `$validTypes`, which are the same seven. The server accepted both kinds the whole time; only the picker refused to offer them.
+  - The existing test asserted the five-member list **and** `expect(LIBRARY_TYPES).not.toContain('book')` explicitly, so it was a lock on the defect rather than a guard against it. It now asserts all seven, and separately asserts that the library-kind vocabulary stays distinct from `media_items.type` — the two overlap (`movie`, `series`, `music`, `photo`, `video`) and merging them is the obvious wrong turn.
+- **`WatchHistoryPage` drew a film icon for tracks, books, photos and audiobooks.** Its fallback icon used `type === 'series' ? 'tv' : 'film'`, bypassing `utils/mediaTypeIcon`, which is exhaustive over all 13 `media_items.type` members via a `Record` (so adding an ENUM member is a typecheck error there rather than a silent fallthrough). That helper exists precisely because this ternary had been copy-pasted around — and both earlier copies keyed on `image`, a value the server never emits.
+
+### Changed
+- **`@phlix/contracts` repinned `v0.3.11` → `v0.3.12`.** v0.3.11's `MediaType` was still the old six-member union *including* the bogus `image`; v0.3.12 (contracts `f5d8962`) replaced it with the full 13-member `media_items.type` ENUM and dropped `image`, which is a scanner-side label for a file-extension set rather than a type the server ever emits. This is compile-time only — nothing validates `type` at runtime — but the stale union both accepted a value the server never sends and rejected eight that it does.
+  - This release exists mainly to propagate that repin. `phlix-server/web-ui` and `phlix-hub/web-ui` consume contracts *transitively* through `@phlix/ui`, and both were resolving `0.3.11` under the `v0.93.0` tag; the repin landed on master after that tag, so it needed a release to reach them.
+
 ## 0.93.0 - 2026-07-20
 
 ### Removed

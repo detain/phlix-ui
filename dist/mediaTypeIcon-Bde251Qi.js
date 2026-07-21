@@ -1,0 +1,23 @@
+//#region src/utils/mediaTypeIcon.ts
+var e = {
+	movie: "film",
+	series: "tv",
+	season: "tv",
+	episode: "tv",
+	video: "video",
+	track: "music",
+	music: "music",
+	album: "disc",
+	artist: "mic",
+	audio: "music",
+	book: "book",
+	audiobook: "headphones",
+	photo: "image"
+};
+function t(t) {
+	return t ? e[t] ?? "film" : "film";
+}
+//#endregion
+export { t };
+
+//# sourceMappingURL=mediaTypeIcon-Bde251Qi.js.map

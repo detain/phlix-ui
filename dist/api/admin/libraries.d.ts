@@ -35,12 +35,28 @@ import type { ApiClient } from '../client';
  *    percentage. They may still be `0`/`null` briefly before the first tick.
  */
 /**
- * The library `type` values the DB actually accepts. The `libraries.type`
- * ENUM (migration 001) is exactly these five — `book` is intentionally absent
- * even though `LibraryController::create()` lists it in `$validTypes`, because
- * a `book` insert would 500 at the DB ENUM. Offer ONLY these in the UI.
+ * The library `type` values the DB actually accepts.
+ *
+ * The `libraries.type` ENUM is SEVEN members. It started as five (migration
+ * 001), and **migration 035 added `book` and `audiobook`**. Verified against
+ * the production column:
+ *
+ *     enum('movie','series','music','photo','video','book','audiobook')
+ *
+ * and `LibraryController::create()` accepts exactly the same seven
+ * (`$validTypes`, LibraryController.php:314).
+ *
+ * This list previously stopped at five, carrying a comment that `book` was
+ * "intentionally absent … because a `book` insert would 500 at the DB ENUM".
+ * That was TRUE before migration 035 and false afterwards, so the admin UI
+ * silently offered no way to create a book or audiobook library on a server
+ * that fully supported both.
+ *
+ * NOTE this is the LIBRARY-kind vocabulary, which is NOT the same as
+ * `MediaType` (the 13-member `media_items.type` ENUM). They overlap but are
+ * distinct — do not merge them.
  */
-export declare const LIBRARY_TYPES: readonly ["movie", "series", "music", "photo", "video"];
+export declare const LIBRARY_TYPES: readonly ["movie", "series", "music", "photo", "video", "book", "audiobook"];
 /** A single DB-valid library type. */
 export type LibraryType = (typeof LIBRARY_TYPES)[number];
 /**
