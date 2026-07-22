@@ -1,3 +1,8 @@
+## 0.98.6 - 2026-07-22
+
+### Fixed
+- **Browser and password-manager autofill can no longer silently overwrite admin secret fields (updates.md #6).** Every secret/credential input across the admin UI — 9 inputs over 6 pages: the schema-driven secret settings box on `SettingsPage`, the secret plugin-setting field on `PluginsPage`, the SyncPlay create/join-group passwords, the Users set-password and set-PIN inputs, the Webhooks HMAC signing secret, and the Integrations OIDC client-secret and LDAP bind-password — now carries the full anti-autofill hint set: `autocomplete="new-password"` plus `data-lpignore="true"`, `data-1p-ignore`, `data-bwignore`, and `data-form-type="other"`. Previously a browser or LastPass/1Password/Bitwarden autofill offer could inject a stored credential over an existing API key/token/secret, corrupting it on the next save. On `PluginsPage` the four `data-*` hints are applied conditionally (`descriptor.secret`) so non-secret plugin fields keep normal autofill; user-facing login/signup password fields are deliberately left autofillable. Purely additive attributes — no `v-model`, `type`, show/hide toggle, `inputmode`, `required`, or placeholder behavior changed. Regression tests assert the full hint set is present on secret inputs and absent on representative non-secret fields (username, OIDC `client_id`, Trakt `redirect_uri`).
+
 ## 0.98.5 - 2026-07-22
 
 ### Changed
