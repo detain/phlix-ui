@@ -11,6 +11,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import PluginsPage from './PluginsPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Switch from '../../components/ui/Switch.vue';
+import Select from '../../components/ui/Select.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import { ApiError } from '../../api/client';
 import type { ApiClient } from '../../api/client';
@@ -106,15 +107,26 @@ interface Overrides {
   catalog?: unknown;
   updates?: unknown;
   autoUpdate?: boolean;
+  channelInfo?: unknown;
 }
 
 /** The default (benign) update-check response: nothing to update. */
 const NO_UPDATES = { auto_update: false, available: 0, updates: [] };
 
+/** The default channel state: `stable` selected, with a clearly opt-in `dev` option. */
+const CHANNEL_INFO = {
+  channel: 'stable',
+  options: [
+    { value: 'stable', label: 'Stable (recommended)', description: 'The default and recommended channel.', advanced: false },
+    { value: 'dev', label: 'Development (advanced)', description: 'Opt-in / advanced: tracks the moving "master" branch.', advanced: true },
+  ],
+};
+
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/admin/plugins') return { plugins: over.plugins ?? [PLUGIN_A, PLUGIN_B] };
     if (endpoint === '/api/v1/admin/plugins/catalog') return over.catalog ?? EMPTY_CATALOG;
+    if (endpoint === '/api/v1/admin/plugins/catalog/channel') return over.channelInfo ?? CHANNEL_INFO;
     if (endpoint === '/api/v1/admin/plugins/updates') return over.updates ?? NO_UPDATES;
     if (endpoint === '/api/v1/admin/plugins/auto-update') return { auto_update: over.autoUpdate ?? false };
     if (/\/api\/v1\/admin\/plugins\/[^/]+$/.test(endpoint)) return { plugin: over.detail ?? DETAIL_A };
@@ -132,8 +144,13 @@ function makeClient(over: Overrides = {}) {
     }
     return { manifest: {}, sources: [DEFAULT_SOURCE] };
   });
-  const put = vi.fn(async (endpoint: string) => {
+  const put = vi.fn(async (endpoint: string, data?: unknown) => {
     if (endpoint === '/api/v1/admin/plugins/auto-update') return { auto_update: over.autoUpdate ?? true };
+    if (endpoint === '/api/v1/admin/plugins/catalog/channel') {
+      const requested = (data as { channel?: string } | undefined)?.channel ?? 'stable';
+      const channel = requested === 'dev' ? 'dev' : 'stable';
+      return { ...CHANNEL_INFO, channel };
+    }
     return { plugin: over.detail ?? DETAIL_A };
   });
   const del = vi.fn(async () => ({ sources: [DEFAULT_SOURCE] }));
@@ -190,6 +207,7 @@ describe('Admin PluginsPage — installed list', () => {
     const get = vi.fn((endpoint: string) => {
       if (endpoint === '/api/v1/admin/plugins/catalog') return Promise.resolve(EMPTY_CATALOG);
       if (endpoint === '/api/v1/admin/plugins/auto-update') return Promise.resolve({ auto_update: false });
+      if (endpoint === '/api/v1/admin/plugins/catalog/channel') return Promise.resolve(CHANNEL_INFO);
       // Only the installed-list GET stays pending so the skeleton holds.
       return new Promise((r) => {
         resolveList = r;
@@ -1674,6 +1692,118 @@ describe('Admin PluginsPage — updates', () => {
       .findAllComponents(Switch)
       .find((s) => s.attributes('aria-label') === 'Toggle automatic plugin updates');
     expect(autoSwitch!.props('modelValue')).toBe(true);
+    w.unmount();
+  });
+});
+
+describe('Admin PluginsPage — catalog channel (S27)', () => {
+  /** The channel Select is the one whose aria-label names the release channel. */
+  function channelSelect(w: VueWrapper) {
+    return w
+      .findAllComponents(Select)
+      .find((s) => s.props('label') === 'Catalog channel');
+  }
+
+  it('loads the channel on mount, defaults to Stable, and renders the Dev option', async () => {
+    const { client, get } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/plugins/catalog/channel');
+    const sel = channelSelect(w);
+    expect(sel).toBeTruthy();
+    // Stable is the default selection.
+    expect(sel!.props('modelValue')).toBe('stable');
+    // Both options are offered, with Dev present.
+    const optionValues = (sel!.props('options') as unknown as Array<{ value: string }>).map(
+      (o) => o.value,
+    );
+    expect(optionValues).toEqual(['stable', 'dev']);
+    w.unmount();
+  });
+
+  it('marks Dev opt-in/advanced with a warning once selected, and PUTs the choice', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    // Stable selected → no advanced warning badge yet.
+    expect(w.text()).not.toContain('Opt-in · advanced');
+
+    const sel = channelSelect(w);
+    await sel!.vm.$emit('update:modelValue', 'dev');
+    await flushPromises();
+
+    // Persisted to the endpoint.
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/catalog/channel', { channel: 'dev' });
+    // Bound to the confirmed value + the opt-in/advanced labelling is shown.
+    expect(sel!.props('modelValue')).toBe('dev');
+    expect(w.text()).toContain('Opt-in · advanced');
+    expect(w.text()).toContain('tracks the moving "master" branch');
+
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some((t) => t.message === 'Catalog channel set to Development (advanced).'),
+    ).toBe(true);
+    w.unmount();
+  });
+
+  it('reflects a persisted Dev channel on load with the advanced warning', async () => {
+    const { client } = makeClient({
+      channelInfo: {
+        channel: 'dev',
+        options: [
+          { value: 'stable', label: 'Stable (recommended)', description: 'The default.', advanced: false },
+          { value: 'dev', label: 'Development (advanced)', description: 'Opt-in / advanced: tracks master.', advanced: true },
+        ],
+      },
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const sel = channelSelect(w);
+    expect(sel!.props('modelValue')).toBe('dev');
+    expect(w.text()).toContain('Opt-in · advanced');
+    w.unmount();
+  });
+
+  it('reverts the optimistic selection and shows an error toast when the PUT fails', async () => {
+    const { client, put } = makeClient();
+    // Force the channel PUT to reject (e.g. the server refuses an invalid
+    // channel) while every other PUT keeps its normal behaviour.
+    (
+      put as unknown as {
+        mockImplementation: (f: (endpoint: string) => Promise<unknown>) => void;
+      }
+    ).mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/plugins/catalog/channel') {
+        throw new ApiError('Invalid catalog channel.', 400, {
+          code: 'plugin.catalog.channel.invalid',
+        });
+      }
+      return { plugin: DETAIL_A };
+    });
+
+    const w = mountPage(client);
+    await flushPromises();
+    const sel = channelSelect(w);
+    expect(sel!.props('modelValue')).toBe('stable');
+
+    await sel!.vm.$emit('update:modelValue', 'dev');
+    await flushPromises();
+
+    // The choice was attempted…
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/catalog/channel', { channel: 'dev' });
+    // …but the optimistic selection is reverted to the previous channel, and the
+    // opt-in/advanced warning never appears since the change did not take.
+    expect(sel!.props('modelValue')).toBe('stable');
+    expect(w.text()).not.toContain('Opt-in · advanced');
+
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'error' && t.message === 'Invalid catalog channel.',
+      ),
+    ).toBe(true);
+    // No success toast was emitted.
+    expect(toasts.toasts.some((t) => t.message.startsWith('Catalog channel set to'))).toBe(false);
     w.unmount();
   });
 });

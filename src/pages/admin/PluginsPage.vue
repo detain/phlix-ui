@@ -52,6 +52,7 @@ import {
   type PluginSecretStatus,
   type CatalogResponse,
   type CatalogPlugin,
+  type CatalogChannelOption,
   type PluginUpdate,
 } from '../../api/admin/plugins';
 import { useToastStore } from '../../stores/useToastStore';
@@ -63,6 +64,7 @@ import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Switch from '../../components/ui/Switch.vue';
+import Select from '../../components/ui/Select.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import HelpText from '../../components/ui/HelpText.vue';
@@ -117,6 +119,75 @@ async function loadCatalog(): Promise<void> {
 /** Refresh the catalog and the installed list together after a mutation. */
 async function refreshAll(): Promise<void> {
   await Promise.all([loadPlugins(), loadCatalog()]);
+}
+
+// ── Catalog release channel (S27) ────────────────────────────────────────────
+/**
+ * The OFFICIAL catalog release channel: `stable` (default) tracks the audited
+ * pinned catalog; `dev` is an opt-in / advanced channel that tracks the moving
+ * `master` branch. The option metadata (label / description / `advanced` flag)
+ * is server-authored so the opt-in warning stays a single source of truth.
+ */
+const channel = ref<string>('stable');
+const channelOptions = ref<CatalogChannelOption[]>([]);
+/** True while a channel change is being persisted (locks the Select). */
+const channelSaving = ref(false);
+
+/** The channel options mapped to the {@link Select} `{ value, label }` shape. */
+const channelSelectOptions = computed(() =>
+  channelOptions.value.map((o) => ({ value: o.value, label: o.label })),
+);
+
+/** Metadata for the currently-selected channel — drives the inline description/warning. */
+const selectedChannelOption = computed(
+  () => channelOptions.value.find((o) => o.value === channel.value) ?? null,
+);
+
+/**
+ * Load the current channel + its options on mount; a failure is non-fatal (an
+ * older server has no channel endpoint) — the control simply stays hidden while
+ * the rest of the page works, exactly like {@link loadAutoUpdate}.
+ */
+async function loadChannel(): Promise<void> {
+  try {
+    const info = await api.getChannel();
+    channel.value = info.channel;
+    channelOptions.value = info.options;
+  } catch {
+    // Non-fatal: the rest of the page works without the channel control.
+  }
+}
+
+/**
+ * Persist a channel change, bind to the server-confirmed value, and refetch the
+ * catalog (the channel selects which `plugins.json` is fetched). Reverts the
+ * optimistic selection on failure.
+ */
+async function onSelectChannel(value: string | number): Promise<void> {
+  const next = String(value);
+  if (next === channel.value || channelSaving.value) return;
+  const previous = channel.value;
+  channel.value = next;
+  channelSaving.value = true;
+  try {
+    const info = await api.setChannel(next);
+    channel.value = info.channel;
+    if (info.options.length > 0) channelOptions.value = info.options;
+    // Derive the toast from the server-authored option label (single source of
+    // truth) rather than hard-coding per-channel strings; fall back gracefully
+    // if the confirmed channel has no matching label.
+    const label = selectedChannelOption.value?.label;
+    toasts.success(
+      label ? `Catalog channel set to ${label}.` : 'Catalog channel updated.',
+    );
+    // The channel changes which catalog `plugins.json` is fetched → refetch.
+    await loadCatalog();
+  } catch (e) {
+    channel.value = previous;
+    toasts.error(errMessage(e, 'Failed to change the catalog channel.'));
+  } finally {
+    channelSaving.value = false;
+  }
 }
 
 /**
@@ -914,6 +985,7 @@ onMounted(() => {
   void loadPlugins();
   void loadCatalog();
   void loadAutoUpdate();
+  void loadChannel();
 });
 </script>
 
@@ -981,6 +1053,42 @@ onMounted(() => {
           ×
         </button>
       </Badge>
+    </div>
+
+    <!-- Catalog release channel (S27). `Stable` is the default; `Dev` is clearly
+         marked opt-in / advanced with the server-authored warning that it tracks
+         the moving `master` branch (discovery only — every install is still gated
+         by its pinned commit + artifact checksum). -->
+    <div
+      v-if="channelOptions.length > 0"
+      class="admin-plugins__channel"
+      role="group"
+      aria-label="Catalog release channel"
+    >
+      <div class="admin-plugins__channel-row">
+        <span class="admin-plugins__channel-label">Catalog channel</span>
+        <Select
+          :model-value="channel"
+          :options="channelSelectOptions"
+          :disabled="channelSaving"
+          label="Catalog channel"
+          class="admin-plugins__channel-select"
+          @update:model-value="onSelectChannel"
+        />
+        <Badge v-if="selectedChannelOption?.advanced" tone="warning">Opt-in · advanced</Badge>
+      </div>
+      <p
+        v-if="selectedChannelOption?.description"
+        class="admin-plugins__channel-desc"
+        :class="{ 'is-advanced': selectedChannelOption.advanced }"
+      >
+        <Icon
+          v-if="selectedChannelOption.advanced"
+          name="alert"
+          class="admin-plugins__channel-desc-icon"
+        />
+        <span>{{ selectedChannelOption.description }}</span>
+      </p>
     </div>
 
     <!-- Persistent install-failure banner (a fleeting toast is easy to miss;
@@ -1528,6 +1636,50 @@ onMounted(() => {
 .admin-plugins__source-remove:disabled {
   opacity: 0.5;
   cursor: progress;
+}
+
+/* Catalog release channel (S27) */
+.admin-plugins__channel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+.admin-plugins__channel-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.admin-plugins__channel-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.admin-plugins__channel-select {
+  min-width: 220px;
+}
+.admin-plugins__channel-desc {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: 68ch;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+/* The `dev` (advanced) description reads as a warning so the opt-in nature is
+   unmistakable — same warning tokens as the Badge. */
+.admin-plugins__channel-desc.is-advanced {
+  color: var(--warning, #e5a13a);
+}
+.admin-plugins__channel-desc-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--warning, #e5a13a);
 }
 
 /* Install-failure banner */
