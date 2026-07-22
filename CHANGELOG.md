@@ -1,4 +1,10 @@
-## 0.97.0 - 2026-07-21
+## 0.98.0 - 2026-07-22
+
+### Added
+- **On-demand subtitle search & download in the player (Wave 3 F3).** The captions menu gains an "Add subtitles…" action that opens a focus-trapped modal (`SubtitleSearch`): a multi-language picker (pre-seeded with the user's preferred subtitle/audio language, the browser/UI language, then English), a Search action, and a ranked candidate list (sorted by provider rating then download count) showing provider, release name, a language badge, an SDH badge, rating, download count and fps.
+  - New typed client methods on `ApiClient`: `searchSubtitles(mediaId, langs)` → `SubtitleCandidate[]` (`GET /api/v1/media/{id}/subtitles/search?lang=…`, empty registry/no matches ⇒ `[]`) and `downloadSubtitle(mediaId, payload)` → `{ track }` (`POST /api/v1/media/{id}/subtitles/download`). Both send the standard Bearer auth; candidate payloads are normalized from camel/snake case.
+  - Each candidate's Add action downloads + attaches the track; on `200` the returned track is parsed and merged into the player's `subtitle_tracks` (de-duped by url) so it renders as a native `<track>` and becomes selectable immediately, plus a success toast. `429` shows a quota message including `downloadsRemaining`/`resetTimeUtc` when present; `404` a "no longer available" error; other failures a friendly error toast. The Add button spins + disables while in flight (double-submit guarded) and shows a check once added.
+  - Accessible: keyboard-navigable list inside the shared Modal, aria-labelled Add buttons + language chips; all strings routed through the i18n catalog (`player.*`).
 
 ### Fixed
 - **Federation SPA status vocabulary aligned with the hub DB enums.** The federation surfaces used a status vocabulary that did not match the values the hub actually stores/returns, so states rendered incorrectly. The SPA now speaks the same status enum the hub DB persists.

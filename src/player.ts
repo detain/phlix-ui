@@ -23,6 +23,7 @@ export { default as SpeedMenu } from './components/player/SpeedMenu.vue';
 export { default as QualityMenu } from './components/player/QualityMenu.vue';
 export { default as CaptionOverlay } from './components/player/CaptionOverlay.vue';
 export { default as CaptionsMenu } from './components/player/CaptionsMenu.vue';
+export { default as SubtitleSearch } from './components/player/SubtitleSearch.vue';
 export { default as AmbientCanvas } from './components/player/AmbientCanvas.vue';
 export { default as ResumePrompt } from './components/player/ResumePrompt.vue';
 export { default as UpNext } from './components/player/UpNext.vue';

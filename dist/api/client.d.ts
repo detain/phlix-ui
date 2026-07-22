@@ -130,6 +130,47 @@ export declare const TMDB_UNCONFIGURED_CODE = "metadata.tmdb_unconfigured";
  * of a generic failure. Reads the parsed `code` off the {@link ApiError} body.
  */
 export declare function isTmdbUnconfigured(e: unknown): boolean;
+/**
+ * One subtitle search candidate from
+ * `GET /api/v1/media/{id}/subtitles/search` — mirrors the server contract's
+ * ranking signals verbatim (camelCase on the wire). `fps` is null when the
+ * provider reports no frame-rate.
+ */
+export interface SubtitleCandidate {
+    provider: string;
+    language: string;
+    /** Provider-scoped id passed back to the download endpoint. */
+    downloadId: string;
+    releaseName: string;
+    format: string;
+    /** How the provider matched (e.g. `hash`, `imdb`, `name`). */
+    matchedBy: string;
+    /** Provider rating (higher is better); 0 when unknown. */
+    rating: number;
+    /** Provider download count (popularity); 0 when unknown. */
+    downloadCount: number;
+    hearingImpaired: boolean;
+    /** Frame rate the sub is timed for, or null when unreported. */
+    fps: number | null;
+}
+/** Request body for `POST /api/v1/media/{id}/subtitles/download`. */
+export interface SubtitleDownloadPayload {
+    provider: string;
+    downloadId: string;
+    language: string;
+    format?: string;
+    releaseName?: string;
+    hearingImpaired?: boolean;
+}
+/**
+ * The downloaded-track envelope from
+ * `POST /api/v1/media/{id}/subtitles/download`. The `track` surfaces through the
+ * existing player `subtitle_tracks[]` contract (signed WebVTT url), so callers
+ * can feed it straight into `parseSubtitleTracks`.
+ */
+export interface SubtitleDownloadResult {
+    track: Record<string, unknown>;
+}
 export declare class ApiClient {
     private baseUrl;
     private readonly tokens;
@@ -396,6 +437,30 @@ export declare class ApiClient {
      * Returns the updated media item. Non-2xx throws the shared {@link ApiError}.
      */
     updateMetadata(id: string, metadata: Record<string, unknown>): Promise<MediaItem>;
+    /**
+     * Search external subtitle providers for a media item (Wave 3 F3).
+     *
+     * Calls `GET /api/v1/media/{id}/subtitles/search?lang=en[,es]`. `langs` is a
+     * list of BCP-47 codes joined into the `lang` query param; an empty list omits
+     * it (server default). The server returns `{ candidates: [...] }` (empty when
+     * the registry is empty or nothing matched) — each row is normalized to a typed
+     * {@link SubtitleCandidate}. A malformed payload degrades to an empty array.
+     * Non-2xx throws the shared {@link ApiError}.
+     */
+    searchSubtitles(id: string, langs: string[], signal?: AbortSignal): Promise<SubtitleCandidate[]>;
+    /**
+     * Download a chosen subtitle candidate and attach it as an external track
+     * (Wave 3 F3).
+     *
+     * Calls `POST /api/v1/media/{id}/subtitles/download` with the candidate's
+     * `{ provider, downloadId, language, format?, releaseName?, hearingImpaired? }`.
+     * Returns `{ track }` on `200` — the track surfaces through the existing player
+     * `subtitle_tracks[]` contract on the item's next fetch. Non-2xx throws the
+     * shared {@link ApiError}: `400` missing fields, `404` unknown item/provider,
+     * `429` quota exhausted (body carries `downloadsRemaining`/`resetTimeUtc`),
+     * `502` other provider failure. The caller inspects `ApiError.status`/`.body`.
+     */
+    downloadSubtitle(id: string, payload: SubtitleDownloadPayload): Promise<SubtitleDownloadResult>;
     /**
      * List all music artists (`GET /api/v1/music/artists`). The server groups
      * tracks by artist name across every music library and returns

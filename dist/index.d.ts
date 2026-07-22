@@ -11,7 +11,7 @@ export { default as AppLayout } from './app/AppLayout.vue';
 export { ApiClient, isTmdbUnconfigured, TMDB_UNCONFIGURED_CODE, setDefaultApiHeaders, getDefaultApiHeaders, } from './api/client';
 export { LocalStorageTokenStore } from './api/tokenStore';
 export type { TokenStore, AuthUser } from './api/client';
-export type { MatchType, MatchCandidate, MatchSearchResult, MatchSearchParams, MatchApplyInput, MatchApplyResult, FavoritesResult, MatchContext, } from './api/client';
+export type { MatchType, MatchCandidate, MatchSearchResult, MatchSearchParams, MatchApplyInput, MatchApplyResult, FavoritesResult, MatchContext, SubtitleCandidate, SubtitleDownloadPayload, SubtitleDownloadResult, } from './api/client';
 export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './api/errors';
 export type { MediaItem } from './types/media-item';
 export type { BookProgress, BookChapter, BookMetadata, BookListItem, BookDetail, BooksResponse, BookResponse, BookReaderResponse, BookProgressResponse, SaveBookProgressInput, } from './types/book';

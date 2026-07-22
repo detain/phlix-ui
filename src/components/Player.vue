@@ -40,6 +40,7 @@ import SpeedMenu from './player/SpeedMenu.vue';
 import QualityMenu from './player/QualityMenu.vue';
 import CaptionOverlay from './player/CaptionOverlay.vue';
 import CaptionsMenu from './player/CaptionsMenu.vue';
+import SubtitleSearch from './player/SubtitleSearch.vue';
 import AmbientCanvas from './player/AmbientCanvas.vue';
 import ResumePrompt from './player/ResumePrompt.vue';
 import UpNext from './player/UpNext.vue';
@@ -538,6 +539,8 @@ function evaluateForCurrentMedia(): void {
   pendingSeek = null;
   autoplayAttempted = false; // a fresh source may autoplay again (U2)
   serverDefaultApplied = false; // re-evaluate the server default for the new source (U4)
+  downloadedSubtitleTracks.value = []; // drop the previous source's on-demand subs (F3)
+  showSubtitleSearch.value = false;
   audioPrefAutoApplied = false; // re-evaluate the default audio lang for the new source (P3B-S2)
   infoAudioSelected.value = -1; // clear any direct-play audio pick for the new source
   pendingHlsAudioIndex = null; // a queued audio switch belongs to the previous source
@@ -722,9 +725,48 @@ let lastSubtitleLang: string | null = player.subtitleLang;
  *  (S4; urls already resolved against the API base by the composable). On the
  *  DIRECT-PLAY path they come from playback-info `subtitle_tracks[]`, whose
  *  `url`s are signed VTT endpoints usable without a Bearer header. */
-const serverSubtitleTracks = computed<SubtitleTrack[]>(() =>
-  transcodeNeeded.value ? tc.subtitleTracks.value : (props.playbackSubtitleTracks ?? []),
-);
+const serverSubtitleTracks = computed<SubtitleTrack[]>(() => {
+  const base = transcodeNeeded.value ? tc.subtitleTracks.value : (props.playbackSubtitleTracks ?? []);
+  if (downloadedSubtitleTracks.value.length === 0) return base;
+  // Merge on-demand-downloaded sidecars (Wave 3 F3), de-duped by url so a track
+  // that later also arrives via a playback-info refresh isn't rendered twice.
+  const seen = new Set(base.map((s) => s.url));
+  const extra = downloadedSubtitleTracks.value.filter((s) => !seen.has(s.url));
+  return extra.length === 0 ? base : [...base, ...extra];
+});
+
+// ---- on-demand subtitle search / download (Wave 3 F3) -----------------------
+/** Subtitle-search modal open state (opened from the captions menu). */
+const showSubtitleSearch = ref(false);
+/** Tracks downloaded this session via the search modal, merged into
+ *  `serverSubtitleTracks` so they render as `<track>`s and become selectable.
+ *  Reset per source in `evaluateForCurrentMedia`. */
+const downloadedSubtitleTracks = ref<SubtitleTrack[]>([]);
+
+/** Preferred subtitle languages for the picker: the user's saved default, the
+ *  browser/UI language, then English — de-duped, short BCP-47 codes. Guessed
+ *  source (no explicit UI-locale store in the library); flagged for review. */
+const preferredSubtitleLangs = computed<string[]>(() => {
+  const out: string[] = [];
+  const push = (code: string | null | undefined): void => {
+    if (!code) return;
+    const short = code.split('-')[0].toLowerCase();
+    if (short && !out.includes(short)) out.push(short);
+  };
+  push(prefs.defaultSubtitleLang);
+  push(prefs.defaultAudioLang);
+  if (typeof navigator !== 'undefined') push(navigator.language);
+  push('en');
+  return out;
+});
+
+/** A downloaded subtitle was attached — render it, and auto-select it when the
+ *  user has no active caption yet (so the reason they searched is honored). */
+function onSubtitleAdded(track: SubtitleTrack): void {
+  if (!downloadedSubtitleTracks.value.some((s) => s.url === track.url)) {
+    downloadedSubtitleTracks.value = [...downloadedSubtitleTracks.value, track];
+  }
+}
 
 /** One-shot guard so the server default is adopted at most once per source (reset
  *  per source in `evaluateForCurrentMedia`). The user-choice signal
@@ -1530,6 +1572,7 @@ onBeforeUnmount(() => {
             :audio-tracks="effectiveAudioTracks"
             :active-audio="effectiveActiveAudio"
             @select-audio="onSelectAudio"
+            @add-subtitles="showSubtitleSearch = true"
           />
 
           <ChapterList
@@ -1719,6 +1762,15 @@ onBeforeUnmount(() => {
       <SyncPlayModal v-model="showSyncPlayModal" />
 
       <ShortcutsHelp :open="showHelp" @close="showHelp = false" />
+
+      <!-- On-demand subtitle search / download (Wave 3 F3) -->
+      <SubtitleSearch
+        v-model:open="showSubtitleSearch"
+        :media-id="media.id"
+        :api-base="apiBase ?? ''"
+        :preferred-langs="preferredSubtitleLangs"
+        @added="onSubtitleAdded"
+      />
     </div>
   </div>
 </template>

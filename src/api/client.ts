@@ -299,6 +299,81 @@ export function isTmdbUnconfigured(e: unknown): boolean {
     );
 }
 
+/**
+ * One subtitle search candidate from
+ * `GET /api/v1/media/{id}/subtitles/search` — mirrors the server contract's
+ * ranking signals verbatim (camelCase on the wire). `fps` is null when the
+ * provider reports no frame-rate.
+ */
+export interface SubtitleCandidate {
+    provider: string;
+    language: string;
+    /** Provider-scoped id passed back to the download endpoint. */
+    downloadId: string;
+    releaseName: string;
+    format: string;
+    /** How the provider matched (e.g. `hash`, `imdb`, `name`). */
+    matchedBy: string;
+    /** Provider rating (higher is better); 0 when unknown. */
+    rating: number;
+    /** Provider download count (popularity); 0 when unknown. */
+    downloadCount: number;
+    hearingImpaired: boolean;
+    /** Frame rate the sub is timed for, or null when unreported. */
+    fps: number | null;
+}
+
+/** Request body for `POST /api/v1/media/{id}/subtitles/download`. */
+export interface SubtitleDownloadPayload {
+    provider: string;
+    downloadId: string;
+    language: string;
+    format?: string;
+    releaseName?: string;
+    hearingImpaired?: boolean;
+}
+
+/**
+ * The downloaded-track envelope from
+ * `POST /api/v1/media/{id}/subtitles/download`. The `track` surfaces through the
+ * existing player `subtitle_tracks[]` contract (signed WebVTT url), so callers
+ * can feed it straight into `parseSubtitleTracks`.
+ */
+export interface SubtitleDownloadResult {
+    track: Record<string, unknown>;
+}
+
+/** Coerce one raw search-candidate object into a typed {@link SubtitleCandidate}. */
+function normalizeSubtitleCandidate(raw: unknown): SubtitleCandidate {
+    const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+    const n = (v: unknown): number =>
+        typeof v === 'number' && Number.isFinite(v)
+            ? v
+            : typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))
+              ? Number(v)
+              : 0;
+    const fpsRaw = o['fps'];
+    const fps =
+        typeof fpsRaw === 'number' && Number.isFinite(fpsRaw)
+            ? fpsRaw
+            : typeof fpsRaw === 'string' && fpsRaw.trim() !== '' && Number.isFinite(Number(fpsRaw))
+              ? Number(fpsRaw)
+              : null;
+    return {
+        provider: str(o['provider']),
+        language: str(o['language'] ?? o['lang']),
+        downloadId: str(o['downloadId'] ?? o['download_id']),
+        releaseName: str(o['releaseName'] ?? o['release_name']),
+        format: str(o['format']),
+        matchedBy: str(o['matchedBy'] ?? o['matched_by']),
+        rating: n(o['rating']),
+        downloadCount: n(o['downloadCount'] ?? o['download_count']),
+        hearingImpaired: normalizeBool(o['hearingImpaired'] ?? o['hearing_impaired']),
+        fps,
+    };
+}
+
 export class ApiClient {
     private baseUrl: string;
     private readonly tokens: TokenStore;
@@ -906,6 +981,46 @@ export class ApiClient {
      */
     updateMetadata(id: string, metadata: Record<string, unknown>): Promise<MediaItem> {
         return this.patch<MediaItem>(`/api/v1/media/${encodeURIComponent(id)}/metadata`, metadata);
+    }
+
+    /**
+     * Search external subtitle providers for a media item (Wave 3 F3).
+     *
+     * Calls `GET /api/v1/media/{id}/subtitles/search?lang=en[,es]`. `langs` is a
+     * list of BCP-47 codes joined into the `lang` query param; an empty list omits
+     * it (server default). The server returns `{ candidates: [...] }` (empty when
+     * the registry is empty or nothing matched) — each row is normalized to a typed
+     * {@link SubtitleCandidate}. A malformed payload degrades to an empty array.
+     * Non-2xx throws the shared {@link ApiError}.
+     */
+    async searchSubtitles(id: string, langs: string[], signal?: AbortSignal): Promise<SubtitleCandidate[]> {
+        const lang = langs.filter((l) => l && l.trim() !== '').join(',');
+        const params = lang !== '' ? { lang } : undefined;
+        const res = await this.get<{ candidates?: unknown }>(
+            `/api/v1/media/${encodeURIComponent(id)}/subtitles/search`,
+            params,
+            signal,
+        );
+        return Array.isArray(res.candidates) ? res.candidates.map(normalizeSubtitleCandidate) : [];
+    }
+
+    /**
+     * Download a chosen subtitle candidate and attach it as an external track
+     * (Wave 3 F3).
+     *
+     * Calls `POST /api/v1/media/{id}/subtitles/download` with the candidate's
+     * `{ provider, downloadId, language, format?, releaseName?, hearingImpaired? }`.
+     * Returns `{ track }` on `200` — the track surfaces through the existing player
+     * `subtitle_tracks[]` contract on the item's next fetch. Non-2xx throws the
+     * shared {@link ApiError}: `400` missing fields, `404` unknown item/provider,
+     * `429` quota exhausted (body carries `downloadsRemaining`/`resetTimeUtc`),
+     * `502` other provider failure. The caller inspects `ApiError.status`/`.body`.
+     */
+    downloadSubtitle(id: string, payload: SubtitleDownloadPayload): Promise<SubtitleDownloadResult> {
+        return this.post<SubtitleDownloadResult>(
+            `/api/v1/media/${encodeURIComponent(id)}/subtitles/download`,
+            payload,
+        );
     }
 
     /**

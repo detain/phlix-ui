@@ -31,6 +31,9 @@ export type {
   MatchApplyResult,
   FavoritesResult,
   MatchContext,
+  SubtitleCandidate,
+  SubtitleDownloadPayload,
+  SubtitleDownloadResult,
 } from './api/client';
 export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './api/errors';
 

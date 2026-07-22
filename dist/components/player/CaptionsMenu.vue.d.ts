@@ -12,9 +12,11 @@ type __VLS_Props = {
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     "update:open": (v: boolean) => any;
     "select-audio": (index: number) => any;
+    "add-subtitles": () => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     "onUpdate:open"?: ((v: boolean) => any) | undefined;
     "onSelect-audio"?: ((index: number) => any) | undefined;
+    "onAdd-subtitles"?: (() => any) | undefined;
 }>, {
     open: boolean;
     tracks: TextTrackInfo[];

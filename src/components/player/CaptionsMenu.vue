@@ -52,6 +52,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void;
   (e: 'select-audio', index: number): void;
+  /** "Add subtitles…" pressed — the Player opens the on-demand search (Wave 3 F3). */
+  (e: 'add-subtitles'): void;
 }>();
 
 const player = usePlayerStore();
@@ -92,6 +94,11 @@ function selectSubtitle(lang: string | null): void {
 }
 function selectAudio(index: number): void {
   emit('select-audio', index);
+}
+/** Close the popover and ask the Player to open the subtitle-search modal. */
+function addSubtitles(): void {
+  emit('add-subtitles');
+  close();
 }
 
 /** Arrow/Home/End within a `radiogroup` (selection follows focus, per WAI-ARIA);
@@ -228,6 +235,11 @@ onBeforeUnmount(() => {
           <span class="capmenu__optlabel">{{ t.label }}</span>
         </button>
       </div>
+
+      <button type="button" class="capmenu__add" @click="addSubtitles">
+        <span class="capmenu__check"><Icon name="plus" /></span>
+        <span class="capmenu__optlabel">{{ translate('player.addSubtitles') }}</span>
+      </button>
 
       <template v-if="audioTracks.length > 1">
         <h3 class="capmenu__title capmenu__title--sub">{{ translate('player.audio') }}</h3>
@@ -398,6 +410,28 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.capmenu__add {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.capmenu__add:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.capmenu__add:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-ring);
 }
 .capmenu__style {
   display: grid;
