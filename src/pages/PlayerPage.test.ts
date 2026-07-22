@@ -353,44 +353,109 @@ describe('PlayerPage — up-next queue', () => {
     expect(player.queue).toHaveLength(0);
   });
 
-  it('seeds the queue with remaining series episodes (not genre-similar) when an episode ends', async () => {
-    // UI-0.7: episode-aware up-next queue
-    // loadQueue and loadEpisodeNeighbours race in parallel; whichever populates
-    // seriesEpisodeCache first "wins". Use resolved/settled pattern to ensure
-    // loadEpisodeNeighbours completes (populating the cache) before we assert.
+  // S12 (updates.md #12) — DETERMINISTIC auto-play-next. The queue used to be written by
+  // TWO unawaited racers: the genre-similar `loadQueue` and the episode-ordered
+  // `loadEpisodeNeighbours`. When the genre fetch resolved LAST it clobbered the
+  // authoritative episode order. This models the race: the episode HAS a real genre (so
+  // the old code WOULD fire a genre fetch) and that fetch is DELAYED well past the
+  // (immediate) series-tree fetches, so under the old code it would win. The
+  // episode-neighbour path must win and the slow genre response must never overwrite it.
+  const isGenreQueue = (u: string) => u.includes('/api/v1/media?') && u.includes('sort=rating');
+
+  it('deterministically seeds remaining series episodes even when the genre queue fetch is SLOW (race regression)', async () => {
     function ep(over: Partial<MediaItem> & { id: string }): MediaItem {
-      return media({ name: over.id, type: 'episode', genres: [], ...over });
-    }
-    function routedFetch(routes: { match: (url: string) => boolean; body: unknown }[]) {
-      return vi.fn((url: string) => {
-        const hit = routes.find((r) => r.match(url));
-        return Promise.resolve(jsonResponse(hit ? hit.body : { items: [], total: 0 }));
-      });
+      // Real genre so loadQueue would issue a genre-similar fetch under the old racy code.
+      return media({ name: over.id, type: 'episode', genres: ['Sci-Fi'], ...over });
     }
     const e1 = ep({ id: 'q-e1', parent_id: 'q-ser', season_number: 1, episode_number: 1 });
     const e2 = ep({ id: 'q-e2', parent_id: 'q-ser', season_number: 1, episode_number: 2 });
     const e3 = ep({ id: 'q-e3', parent_id: 'q-ser', season_number: 1, episode_number: 3 });
+    // Genre-similar rows the SLOW loadQueue fetch would return — these must NOT win.
+    const g1 = media({ id: 'q-g1', type: 'movie', genres: ['Sci-Fi'] });
+    const g2 = media({ id: 'q-g2', type: 'movie', genres: ['Sci-Fi'] });
     const isById = (u: string, id: string) =>
       u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
-    const fetchMock = routedFetch([
-      { match: (u) => isById(u, 'q-e1'), body: { item: e1 } },
-      { match: (u) => u.includes('playback-info'), body: { intro_marker: null, outro_marker: null, chapters: [] } },
-      { match: (u) => u.includes('/api/v1/media/q-ser') && !u.includes('parentId'), body: { item: media({ id: 'q-ser', type: 'series' }) } },
-      { match: (u) => u.includes('parentId=q-ser'), body: { items: [e1, e2, e3], total: 3 } },
-    ]);
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      // Genre queue (the only request with sort=rating): resolve LATE so, under the old
+      // racy code, it would land AFTER loadEpisodeNeighbours already seeded the queue.
+      if (isGenreQueue(u)) {
+        return new Promise<Response>((resolve) =>
+          setTimeout(() => resolve(jsonResponse({ items: [g1, g2], total: 2 })), 40),
+        );
+      }
+      // Series-tree + by-id + playback-info all resolve IMMEDIATELY.
+      if (isById(u, 'q-e1')) return Promise.resolve(jsonResponse({ item: e1 }));
+      if (u.includes('playback-info')) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (u.includes('/api/v1/media/q-ser') && !u.includes('parentId')) {
+        return Promise.resolve(jsonResponse({ item: media({ id: 'q-ser', type: 'series' }) }));
+      }
+      if (u.includes('parentId=q-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
     await mountAt('q-e1', fetchMock);
-    // Need multiple flushPromises: by-id resolves first, then loadEpisodeNeighbours
-    // and loadQueue race to populate the cache (loadEpisodeNeighbours populates
-    // seriesEpisodeCache; loadQueue reads it). Use settled() to wait for all in-flight
-    // requests to complete.
-    await new Promise((r) => setTimeout(r, 50)); // small settle window for async ops
     await flushPromises();
     await flushPromises();
     const player = usePlayerStore();
-    // Episode e1 playing: queue should be [e2, e3] — the remaining episodes in order.
-    // This comes from seriesEpisodeCache populated by loadEpisodeNeighbours, and
-    // loadQueue picks it up on cache hit (no extra fetch needed for the queue).
+    // The awaited episode-neighbour path seeded the authoritative queue [e2, e3].
     expect(player.queue.map((m) => m.id)).toEqual(['q-e2', 'q-e3']);
+    // Wait PAST the slow genre response — under the old racy code it would have
+    // clobbered the queue to [q-g1, q-g2] here. It must not.
+    await new Promise((r) => setTimeout(r, 80));
+    await flushPromises();
+    expect(player.queue.map((m) => m.id)).toEqual(['q-e2', 'q-e3']);
+    // The deterministic fix short-circuits the genre queue for an episode WITH a next
+    // neighbour: the slow genre fetch is never even issued.
+    expect(fetchMock.mock.calls.some(([u]) => isGenreQueue(String(u)))).toBe(false);
+  });
+
+  it('reseeds the up-next queue from the CACHED series order on binge navigation (no re-fetch, no genre queue)', async () => {
+    // Binge fast path: after the first episode fetched + cached the series tree, advancing
+    // to a sibling must reseed the queue from seriesEpisodeCache WITHOUT re-walking the
+    // tree AND without falling back to the genre queue.
+    function ep(over: Partial<MediaItem> & { id: string }): MediaItem {
+      return media({ name: over.id, type: 'episode', genres: ['Sci-Fi'], ...over });
+    }
+    const e1 = ep({ id: 'bz-e1', parent_id: 'bz-ser', season_number: 1, episode_number: 1 });
+    const e2 = ep({ id: 'bz-e2', parent_id: 'bz-ser', season_number: 1, episode_number: 2 });
+    const e3 = ep({ id: 'bz-e3', parent_id: 'bz-ser', season_number: 1, episode_number: 3 });
+    const byId: Record<string, MediaItem> = { 'bz-e1': e1, 'bz-e2': e2, 'bz-e3': e3 };
+    const isById = (u: string, id: string) =>
+      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isById(u, 'bz-e1')) return Promise.resolve(jsonResponse({ item: byId['bz-e1'] }));
+      if (isById(u, 'bz-e2')) return Promise.resolve(jsonResponse({ item: byId['bz-e2'] }));
+      if (isById(u, 'bz-e3')) return Promise.resolve(jsonResponse({ item: byId['bz-e3'] }));
+      if (u.includes('playback-info')) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (u.includes('/api/v1/media/bz-ser') && !u.includes('parentId')) {
+        return Promise.resolve(jsonResponse({ item: media({ id: 'bz-ser', type: 'series' }) }));
+      }
+      if (u.includes('parentId=bz-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
+      if (isGenreQueue(u)) return Promise.resolve(jsonResponse({ items: [media({ id: 'bz-g9' })], total: 1 }));
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    const { router } = await mountAt('bz-e1', fetchMock);
+    await flushPromises();
+    await flushPromises();
+    const player = usePlayerStore();
+    expect(player.queue.map((m) => m.id)).toEqual(['bz-e2', 'bz-e3']);
+    const childrenCalls = () =>
+      fetchMock.mock.calls.filter((c) => String(c[0]).includes('parentId=bz-ser')).length;
+    expect(childrenCalls()).toBe(1);
+
+    // Binge to the next sibling — CACHE HIT: queue reseeds to [e3] from the cached order,
+    // with no series-tree re-walk and no genre fallback.
+    await router.push('/app/player/bz-e2');
+    await flushPromises();
+    await flushPromises();
+    expect(player.queue.map((m) => m.id)).toEqual(['bz-e3']);
+    expect(childrenCalls()).toBe(1); // series tree NOT re-fetched (cache hit)
+    expect(fetchMock.mock.calls.some(([u]) => isGenreQueue(String(u)))).toBe(false); // genre queue never used
   });
 });
 
