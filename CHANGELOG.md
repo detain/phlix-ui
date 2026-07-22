@@ -1,3 +1,8 @@
+## 0.98.2 - 2026-07-22
+
+### Changed
+- **The item ⋯ menu now offers a single "Match metadata" action instead of the two duplicate entries "Refresh metadata" and "Identify from beginning" (updates.md #2).** All three admin affordances — those two ⋯-menu entries plus the detail-page hero **Match metadata** button — always opened the same metadata-match modal, so the ⋯ menu collapses to one **Match metadata** entry (`MENU_LABELS.matchMetadata`) shared by both the card and detail menus. On `MediaDetailPage` the separate `onMatch`/`onRefresh` handlers merged into one `onMatch(m?)`. No behavior is lost: the collapsed menu entry deliberately still emits `refresh` so the Library/Browse pages' existing `onRefresh` handling is unchanged, and the modal, its TMDB search/apply flow, and the admin-only gating are identical to before.
+
 ## 0.98.1 - 2026-07-22
 
 ### Fixed

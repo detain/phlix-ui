@@ -64,22 +64,34 @@ describe('buildMediaItemMenu', () => {
     );
   });
 
-  it('non-admin does NOT get the admin actions (refresh/identify/edit metadata/explore/remove)', () => {
+  it('non-admin does NOT get the admin actions (match metadata/edit metadata/explore/remove)', () => {
     const labels = buildMediaItemMenu(makeItem(), ctx({ isAdmin: false })).map((m) => m.label);
-    expect(labels).not.toContain(MENU_LABELS.refreshMetadata);
-    expect(labels).not.toContain(MENU_LABELS.identify);
+    expect(labels).not.toContain(MENU_LABELS.matchMetadata);
     expect(labels).not.toContain(MENU_LABELS.editMetadata);
     expect(labels).not.toContain(MENU_LABELS.exploreData);
     expect(labels).not.toContain(MENU_LABELS.editImages);
     expect(labels).not.toContain(MENU_LABELS.remove);
   });
 
-  it('admin gets refresh metadata, identify, edit metadata, and explore item data', () => {
+  it('admin gets a single match metadata action, edit metadata, and explore item data', () => {
     const labels = buildMediaItemMenu(makeItem(), ctx({ isAdmin: true })).map((m) => m.label);
-    expect(labels).toContain(MENU_LABELS.refreshMetadata);
-    expect(labels).toContain(MENU_LABELS.identify);
+    expect(labels).toContain(MENU_LABELS.matchMetadata);
+    // The three formerly-duplicate labels collapsed to one entry (S02).
+    expect(labels.filter((l) => l === MENU_LABELS.matchMetadata)).toHaveLength(1);
     expect(labels).toContain(MENU_LABELS.editMetadata);
     expect(labels).toContain(MENU_LABELS.exploreData);
+  });
+
+  it('no longer offers the retired "Refresh metadata"/"Identify from beginning" labels (S02 merge)', () => {
+    // Regression guard: the two duplicate affordances were folded into the single
+    // "Match metadata" entry. Assert on the string literals (the MENU_LABELS keys
+    // were deleted) so re-introducing either label fails here.
+    const labels = buildMediaItemMenu(makeItem(), ctx({ isAdmin: true })).map((m) => m.label);
+    expect(labels).not.toContain('Refresh metadata');
+    expect(labels).not.toContain('Identify from beginning');
+    // ...and the MENU_LABELS map itself no longer exposes the retired keys.
+    expect(MENU_LABELS).not.toHaveProperty('refreshMetadata');
+    expect(MENU_LABELS).not.toHaveProperty('identify');
   });
 
   it('"Edit images" is gated on canChoosePoster', () => {

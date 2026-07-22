@@ -257,8 +257,7 @@ function onMenuSelect(menuItem: { label: string }): void {
       // (NOT a dead "isn't available yet" toast).
       emit('explore-data', props.item);
       break;
-    case L.refreshMetadata:
-    case L.identify:
+    case L.matchMetadata:
       emit('refresh', props.item);
       break;
     case L.editImages:

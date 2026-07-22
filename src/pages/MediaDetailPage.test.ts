@@ -14,6 +14,7 @@ import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
 
@@ -362,6 +363,68 @@ describe('MediaDetailPage — actions & navigation', () => {
     await router.isReady();
     await flushPromises();
     expect((w.findComponent(MediaDetail).props('item') as MediaItem).name).toBe('Second');
+  });
+});
+
+describe('MediaDetailPage — merged metadata-match action (S02)', () => {
+  // S02 collapsed the hero "Match metadata" button (@match) and the ⋯-menu
+  // "Match metadata" entry (@refresh) onto a single onMatch handler that opens
+  // the MetadataMatchModal. Stub the modal so we can read its open/item props
+  // without driving its own auto-search network path.
+  const MatchModalStub = {
+    name: 'MetadataMatchModal',
+    props: ['modelValue', 'item'],
+    template:
+      '<div class="match-modal-stub" :data-open="String(modelValue)" :data-item-id="item ? item.id : \'\'" />',
+  };
+
+  async function mountAdmin(id: string, fetchMock: ReturnType<typeof vi.fn>) {
+    vi.stubGlobal('fetch', fetchMock);
+    // isAdmin is a computed over user.is_admin — v-if gates the match modal on it.
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    const router = makeRouter();
+    router.push(`/app/media/${id}`);
+    await router.isReady();
+    const w = mount(MediaDetailPage, {
+      global: { plugins: [router], stubs: { MetadataMatchModal: MatchModalStub, PosterPicker: true } },
+    });
+    return { w, router };
+  }
+
+  it('routes the hero @match to onMatch → opens the match modal with the emitted item', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune' })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAdmin('m1', fetchMock);
+    await flushPromises();
+
+    const modal = () => w.find('.match-modal-stub');
+    expect(modal().attributes('data-open')).toBe('false'); // closed on load
+
+    w.findComponent(MediaDetail).vm.$emit('match', media({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(modal().attributes('data-open')).toBe('true');
+    expect(modal().attributes('data-item-id')).toBe('m1');
+  });
+
+  it('routes the ⋯-menu @refresh to the SAME onMatch → opens the match modal with the emitted item', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1', name: 'Dune' })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAdmin('m1', fetchMock);
+    await flushPromises();
+
+    const modal = () => w.find('.match-modal-stub');
+    expect(modal().attributes('data-open')).toBe('false');
+
+    // The menu entry emits `refresh` (not `match`); after S02 it converges on onMatch.
+    w.findComponent(MediaDetail).vm.$emit('refresh', media({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(modal().attributes('data-open')).toBe('true');
+    expect(modal().attributes('data-item-id')).toBe('m1');
   });
 });
 

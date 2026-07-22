@@ -16,6 +16,8 @@ import MediaDetail from './MediaDetail.vue';
 import MediaRow from './MediaRow.vue';
 import Chip from './ui/Chip.vue';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useAuthStore } from '../stores/useAuthStore';
+import { MENU_LABELS } from './mediaItemMenu';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -40,6 +42,34 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
+});
+
+describe('MediaDetail — ⋯ menu metadata-match action (S02)', () => {
+  it('the single "Match metadata" entry emits exactly one `refresh` with the item', async () => {
+    // Admin gates the metadata-match menu item (buildMediaItemMenu reads auth.isAdmin).
+    useAuthStore().user = { id: 'admin1', is_admin: true };
+    const w = mount(MediaDetail, { props: { item: media() }, attachTo: document.body });
+
+    // Open the ⋯ menu; the Menu teleports its list to <body>.
+    await w.find('[aria-label="More actions"]').trigger('click');
+    await nextTick();
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const target = items.find((el) => el.textContent?.trim() === MENU_LABELS.matchMetadata);
+    // exactly one such entry (the S02 collapse), and no retired labels
+    expect(items.filter((el) => el.textContent?.trim() === MENU_LABELS.matchMetadata)).toHaveLength(1);
+    expect(items.map((i) => i.textContent?.trim())).not.toContain('Refresh metadata');
+    expect(items.map((i) => i.textContent?.trim())).not.toContain('Identify from beginning');
+    expect(target, `present: ${items.map((i) => i.textContent?.trim()).join(', ')}`).toBeTruthy();
+
+    target!.click();
+    await nextTick();
+
+    // The collapsed entry still emits `refresh` (host routes @match + @refresh → onMatch).
+    expect(w.emitted('refresh')).toBeTruthy();
+    expect(w.emitted('refresh')).toHaveLength(1);
+    expect(w.emitted('refresh')?.[0]).toEqual([media()]);
+    w.unmount();
+  });
 });
 
 describe('MediaDetail — rendering', () => {
