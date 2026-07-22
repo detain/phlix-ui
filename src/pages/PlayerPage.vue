@@ -190,40 +190,19 @@ function toMarker(m: ServerMarker | null | undefined): TimeMarker | null {
   return m ? { start: m.start_seconds, end: m.end_seconds } : null;
 }
 
-/** Episode-aware "up next" queue — when an episode finishes, the up-next card
- *  advances through the remaining series episodes in playback order; for movies
- *  it falls back to a genre-similar queue. Non-fatal: a missing queue just
- *  disables up-next. The pinned controller makes a superseded fetch (rapid
- *  player→player nav) a no-op. */
+/** Genre-similar "up next" fallback queue for MOVIES — and for an episode ONLY when
+ *  the awaited episode-ordered path (loadEpisodeNeighbours, run first in applyItem)
+ *  resolved NO next neighbour (last episode / cache miss / failed series-tree fetch).
+ *  The episode-ordered queue is the authoritative writer; this runs afterwards/otherwise
+ *  so the two never race. Non-fatal: a missing queue just disables up-next. The pinned
+ *  controller makes a superseded fetch (rapid player→player nav) a no-op. */
 async function loadQueue(client: ApiClient, base: MediaItem): Promise<void> {
   // Pin the controller for THIS load so a superseded queue fetch (rapid player→player
   // nav) can't clobber the newer one — mirrors MediaDetailPage.loadSimilar.
   const myController = controller;
   const stale = () => disposed || myController !== controller;
 
-  // Episode path: use the already-cached whole-series episode list populated by
-  // loadEpisodeNeighbours. Remaining episodes are those AFTER the current one.
-  const isEpisode = base.type === 'episode' || (base.episode_number ?? null) !== null;
-  if (isEpisode) {
-    for (const ordered of seriesEpisodeCache.values()) {
-      if (ordered.some((e) => e.id === base.id)) {
-        if (stale()) return;
-        const idx = ordered.findIndex((e) => e.id === base.id);
-        const remaining = ordered.slice(idx + 1);
-        if (remaining.length) {
-          player.setQueue(remaining);
-          return;
-        }
-        // Last episode in series — fall through to genre queue
-        break;
-      }
-    }
-    // Cache miss: loadEpisodeNeighbours is fetching the series tree in parallel;
-    // when it completes it will set the queue (UI-0.7). We fall through to the
-    // genre queue as a placeholder until then — non-fatal if up-next is empty.
-  }
-
-  // Movie / episode-last / episode-cache-miss path: genre-scoped fallback queue.
+  // Genre-scoped fallback queue (movies, or an episode with no resolved next neighbour).
   const genre = base.genres?.[0];
   if (!genre) {
     player.setQueue([]);
@@ -268,10 +247,20 @@ async function resolveSeriesRoot(client: ApiClient, item: MediaItem, signal?: Ab
   return node;
 }
 
-/** Set the prev/next refs from an already-ordered whole-series playback list. */
+/** Set the prev/next refs AND seed the up-next queue from an already-ordered
+ *  whole-series playback list. Seeding the queue HERE (rather than in a separate,
+ *  racing writer) makes the episode-ordered list the single authoritative source
+ *  for both the fresh-fetch and the binge cache-hit paths; the genre fallback in
+ *  loadQueue only runs when this resolves NO next episode. */
 function applyNeighbours(ordered: MediaItem[], currentEpId: string): void {
   prevEp.value = previousEpisode(ordered, currentEpId);
   nextEp.value = nextEpisode(ordered, currentEpId);
+  // UI-0.7: the up-next queue is the remaining episodes AFTER the current one, in
+  // playback order. When empty (last episode) we leave the queue untouched so the
+  // genre fallback that applyItem fires can populate it.
+  const idx = ordered.findIndex((e) => e.id === currentEpId);
+  const remaining = idx >= 0 ? ordered.slice(idx + 1) : [];
+  if (remaining.length) player.setQueue(remaining);
 }
 
 /** Find a cached ordered playback list that already contains `episodeId`, or
@@ -321,13 +310,8 @@ async function loadEpisodeNeighbours(client: ApiClient, base: MediaItem): Promis
     }
     const ordered = orderEpisodesForPlayback(children);
     if (ordered.length) seriesEpisodeCache.set(root.id, ordered);
+    // Sets prev/next AND seeds the authoritative episode-ordered up-next queue.
     applyNeighbours(ordered, base.id);
-    // UI-0.7: seed the queue with the remaining episodes in series order.
-    // When loadQueue runs in parallel it may set a genre placeholder first;
-    // this call replaces it with the authoritative episode-ordered queue.
-    const idx = ordered.findIndex((e) => e.id === base.id);
-    const remaining = ordered.slice(idx + 1);
-    if (remaining.length) player.setQueue(remaining);
   } catch (e) {
     if (stale() || isAbort(e)) return;
     prevEp.value = null;
@@ -444,11 +428,17 @@ async function load(): Promise<void> {
  * favorite/love controls from the server `user_data` (Feature 16; <Player> also hydrates
  * on mount but `hydrate` is idempotent), resolve the deterministic direct-stream URL
  * up front (synchronous, so up-next auto-advance can reuse the resolver), clear loading,
- * and kick off the best-effort up-next queue + episode-neighbour lookups.
+ * and kick off the best-effort up-next queue.
  *
- * For episodes, we MUST await loadEpisodeNeighbours before returning so the episode-ordered
- * queue is fully populated before auto-play checks player.upNext. Without this await, a race
- * condition occurs where onEnded() fires before the queue is ready, causing auto-play to fail.
+ * Up-next is populated by a SINGLE writer to kill the previous two-racer bug (S12): an
+ * unawaited genre queue and an unawaited episode-neighbour lookup both wrote the queue,
+ * so a slow genre fetch could resolve LAST and clobber the authoritative episode order.
+ * Now, for an episode we AWAIT loadEpisodeNeighbours FIRST; when it resolves a next
+ * episode it has already seeded the episode-ordered queue (via applyNeighbours), so we
+ * RETURN EARLY and never fire the genre queue. Only a non-episode — or an episode with no
+ * next neighbour (last episode / cache miss / failed series-tree fetch) — falls through
+ * to the genre-similar fallback queue. This also guarantees player.upNext is populated
+ * before auto-play checks it when onEnded() fires (Issue 8).
  */
 async function applyItem(client: ApiClient, mediaItem: MediaItem): Promise<void> {
   item.value = mediaItem;
@@ -458,18 +448,17 @@ async function applyItem(client: ApiClient, mediaItem: MediaItem): Promise<void>
 
   const isEpisode = (mediaItem.episode_number ?? null) !== null;
 
-  // Fire genre fallback queue load non-blocking (continues in background)
-  const queuePromise = loadQueue(client, mediaItem);
-
-  // For episodes, we MUST wait for episode-ordered queue before declaring ready
-  // so that player.upNext is populated when onEnded() fires (Issue 8).
+  // Episode: resolve the authoritative episode-ordered neighbours + queue FIRST, and
+  // when a next episode exists RETURN EARLY. loadEpisodeNeighbours has already seeded the
+  // episode-ordered queue, so the genre queue must NOT run — that removes the race.
   if (isEpisode) {
     await loadEpisodeNeighbours(client, mediaItem);
+    if (nextEp.value) return;
   }
 
-  // Don't await queuePromise - let it settle in background; for episodes the
-  // episode-ordered queue set by loadEpisodeNeighbours supersedes it anyway.
-  void queuePromise;
+  // Non-episode, or an episode with no next neighbour (last episode / cache miss / failed
+  // series-tree fetch): genre-similar fallback queue (background, non-fatal).
+  void loadQueue(client, mediaItem);
 }
 
 onMounted(load);
