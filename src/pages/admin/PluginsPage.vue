@@ -1062,6 +1062,7 @@ onMounted(() => {
     <div
       v-if="channelOptions.length > 0"
       class="admin-plugins__channel"
+      role="group"
       aria-label="Catalog release channel"
     >
       <div class="admin-plugins__channel-row">
