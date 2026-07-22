@@ -5,8 +5,8 @@ import { t as r } from "./IconButton-BBHxcjCo.js";
 import { t as i } from "./useFocusTrap-DZxA3ZEr.js";
 import { a, i as o, n as s, r as c, t as l } from "./usePreferencesStore-C9GLbD7G.js";
 import { i as u, n as d, r as f, t as p } from "./useMessages-DvTTvQB1.js";
-import { a as m, c as h, d as g, f as _, i as v, l as y, n as b, p as x, r as S, s as C, t as w, u as ee } from "./client-D80As4Gx.js";
-import { n as T, r as E, t as D } from "./useApiBase-CV_r-Kk4.js";
+import { a as m, c as h, d as g, f as _, i as v, l as y, n as b, p as x, r as S, s as C, t as w, u as T } from "./client-D80As4Gx.js";
+import { n as E, r as ee, t as D } from "./useApiBase-CV_r-Kk4.js";
 import { t as O } from "./useAuthStore-D2BCcJAK.js";
 import { i as te, n as ne, r as re, t as ie } from "./usePlayerStore-Dgw0JCWb.js";
 import { t as ae } from "./useToastStore-BDoKlU6N.js";
@@ -1699,10 +1699,10 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 		function w(e) {
 			e.url && window.open(e.url, "_blank", "noopener,noreferrer");
 		}
-		function ee(e) {
+		function T(e) {
 			e.relayActive && (i.setCurrent(e.id, e.name, e.url), a.push(o));
 		}
-		async function T(e) {
+		async function E(e) {
 			if (confirm(`Remove "${e.name}"? This cannot be undone.`)) {
 				u.value = e.id;
 				try {
@@ -1815,7 +1815,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 						disabled: !e.relayActive,
 						title: e.relayActive ? `Browse ${e.name} here` : C(e) ? `${e.name} is online but its relay tunnel isn't connected yet — it can't be browsed here until it reconnects.` : "This server is offline — it must be connected to browse it here",
 						"aria-label": `Browse ${e.name}`,
-						onClick: (t) => ee(e)
+						onClick: (t) => T(e)
 					}, {
 						default: X(() => [...t[9] ||= [z("Browse", -1)]]),
 						_: 1
@@ -1847,7 +1847,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 						loading: u.value === e.id,
 						disabled: u.value === e.id,
 						"aria-label": `Remove ${e.name}`,
-						onClick: (t) => T(e)
+						onClick: (t) => E(e)
 					}, {
 						default: X(() => [...t[11] ||= [z("Remove", -1)]]),
 						_: 1
@@ -2220,6 +2220,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 			switch (e) {
 				case "connected": return "Connected";
 				case "disconnected": return "Disconnected";
+				case "suspended": return "Suspended";
 				case "pending": return "Pending";
 				default: return e;
 			}
@@ -2228,6 +2229,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 			switch (e) {
 				case "connected": return "success";
 				case "disconnected": return "error";
+				case "suspended": return "warning";
 				case "pending": return "warning";
 				default: return "neutral";
 			}
@@ -2349,7 +2351,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 			]))
 		]));
 	}
-}), [["__scopeId", "data-v-ff8986fd"]]), zo = {
+}), [["__scopeId", "data-v-dcbba131"]]), zo = {
 	class: "fed-shares",
 	"aria-labelledby": "fed-shares-heading"
 }, Bo = {
@@ -2491,18 +2493,26 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 		function x(e) {
 			switch (e) {
 				case "pending": return "warning";
-				case "accepted": return "success";
-				case "rejected": return "neutral";
+				case "active": return "success";
+				case "revoked": return "neutral";
 				default: return "warning";
 			}
 		}
 		function C(e) {
 			switch (e) {
+				case "pending": return "Pending";
+				case "active": return "Active";
+				case "revoked": return "Revoked";
+				default: return e;
+			}
+		}
+		function w(e) {
+			switch (e) {
 				case "readwrite": return "success";
 				default: return "info";
 			}
 		}
-		let w = P(() => o.value && i.value.length === 0 && a.value.length === 0);
+		let T = P(() => o.value && i.value.length === 0 && a.value.length === 0);
 		return U(() => m()), (e, t) => (W(), L("section", zo, [
 			t[11] ||= R("header", { class: "fed-shares__head" }, [R("h1", {
 				id: "fed-shares-heading",
@@ -2532,7 +2542,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 				"aria-selected": r.value === "outgoing",
 				onClick: t[1] ||= (e) => r.value = "outgoing"
 			}, " Outgoing ", 10, Uo)]),
-			un(R("div", Wo, [w.value ? (W(), L("div", Go, [B(j, {
+			un(R("div", Wo, [T.value ? (W(), L("div", Go, [B(j, {
 				variant: "text",
 				lines: 6
 			})])) : c.value ? (W(), F(M, {
@@ -2567,7 +2577,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 				}, "Actions")
 			])], -1), R("tbody", null, [(W(!0), L(N, null, K(i.value, (e) => (W(), L("tr", { key: e.id }, [
 				R("td", null, [R("span", Jo, q(e.library_name), 1)]),
-				R("td", null, [B(A, { tone: C(e.permission) }, {
+				R("td", null, [B(A, { tone: w(e.permission) }, {
 					default: X(() => [z(q(e.permission), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
@@ -2604,7 +2614,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 					"onClick"
 				])])) : (W(), L("span", Zo, [z(q(e.status === "accepted" ? "Accepted" : "Rejected") + " ", 1), e.responded_at ? (W(), L("span", Qo, " · " + q(y(e.responded_at)), 1)) : I("", !0)]))])
 			]))), 128))])])]))], 512), [[cn, r.value === "incoming"]]),
-			un(R("div", $o, [w.value ? (W(), L("div", es, [B(j, {
+			un(R("div", $o, [T.value ? (W(), L("div", es, [B(j, {
 				variant: "text",
 				lines: 6
 			})])) : l.value ? (W(), F(M, {
@@ -2641,16 +2651,16 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 			])], -1), R("tbody", null, [(W(!0), L(N, null, K(a.value, (e) => (W(), L("tr", { key: e.id }, [
 				R("td", null, [R("span", rs, q(e.library_name), 1)]),
 				R("td", is, q(e.peer_id), 1),
-				R("td", null, [B(A, { tone: C(e.permission) }, {
+				R("td", null, [B(A, { tone: w(e.permission) }, {
 					default: X(() => [z(q(e.permission), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
 				R("td", null, [B(A, { tone: x(e.status) }, {
-					default: X(() => [z(q(e.status === "rejected" ? "Declined" : e.status), 1)]),
+					default: X(() => [z(q(C(e.status)), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
 				R("td", as, q(y(e.shared_at)), 1),
-				R("td", null, [e.status === "rejected" ? I("", !0) : (W(), L("div", os, [B(k, {
+				R("td", null, [e.status === "revoked" ? I("", !0) : (W(), L("div", os, [B(k, {
 					variant: "ghost",
 					size: "sm",
 					"aria-label": `Revoke share of ${e.library_name}`,
@@ -2667,7 +2677,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 			]))), 128))])])]))], 512), [[cn, r.value === "outgoing"]])
 		]));
 	}
-}), [["__scopeId", "data-v-479e6407"]]), cs = {
+}), [["__scopeId", "data-v-43d15a72"]]), cs = {
 	class: "shares",
 	"aria-labelledby": "shares-heading"
 }, ls = {
@@ -3298,14 +3308,14 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 			let e = /* @__PURE__ */ new Map();
 			for (let t of l.value) t.serverId && e.set(t.serverId, t.serverName ?? t.serverId);
 			return e;
-		}), ee = P(() => {
+		}), T = P(() => {
 			let e = /* @__PURE__ */ new Map();
 			for (let t of b.value) e.set(t.id, t.name);
 			return e;
-		}), T = P(() => l.value.filter((e) => !!e.serverId).map((e) => ({
+		}), E = P(() => l.value.filter((e) => !!e.serverId).map((e) => ({
 			value: e.serverId,
 			label: e.serverName ?? e.serverId
-		}))), E = P(() => [{
+		}))), ee = P(() => [{
 			value: "",
 			label: "All Libraries"
 		}, ...b.value.map((e) => ({
@@ -3401,7 +3411,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 			return w.value.get(e) ?? e;
 		}
 		function de(e) {
-			return e === null ? "All Libraries" : ee.value.get(e) ?? e;
+			return e === null ? "All Libraries" : T.value.get(e) ?? e;
 		}
 		function fe(e) {
 			return e === null ? "Never" : (/* @__PURE__ */ new Date(e * 1e3)).toLocaleDateString();
@@ -3536,7 +3546,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 						id: "server-select",
 						modelValue: m.value,
 						"onUpdate:modelValue": r[1] ||= (e) => m.value = e,
-						options: T.value,
+						options: E.value,
 						placeholder: "Select a server",
 						onChange: le
 					}, null, 8, ["modelValue", "options"])]),
@@ -3547,7 +3557,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 						id: "library-select",
 						modelValue: h.value,
 						"onUpdate:modelValue": r[2] ||= (e) => h.value = e,
-						options: E.value,
+						options: ee.value,
 						disabled: !m.value || x.value,
 						placeholder: x.value ? "Loading..." : "All Libraries"
 					}, null, 8, [
@@ -3700,7 +3710,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, Lc = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "SearchPage",
 	setup(e) {
-		let t = _n(), n = Q(), r = T(), i = oe(), a = G(""), o = G([]), s = G(!1), c = G(null), l = G(!1), u = null;
+		let t = _n(), n = Q(), r = E(), i = oe(), a = G(""), o = G([]), s = G(!1), c = G(null), l = G(!1), u = null;
 		function d() {
 			u !== null && clearTimeout(u), u = setTimeout(() => {
 				a.value.trim() === "" ? n.replace({ query: {} }) : n.replace({ query: { q: a.value.trim() } }), f();
@@ -3806,7 +3816,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 	__name: "MusicAlbumPage",
 	props: { name: {} },
 	setup(e) {
-		let t = e, { t: r } = p(), i = T(), a = E(), o = Bt({
+		let t = e, { t: r } = p(), i = E(), a = ee(), o = Bt({
 			apiBase: () => i.value,
 			streamBase: () => a.value || i.value
 		});
@@ -3937,7 +3947,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, hl = ["src", "alt"], gl = { class: "artist-card__info" }, _l = { class: "artist-card__name" }, vl = { class: "artist-card__meta" }, yl = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "MusicArtistsPage",
 	setup(e) {
-		let { t } = p(), r = Q(), i = T(), a = G([]), o = G(!1), s = G(null);
+		let { t } = p(), r = Q(), i = E(), a = G([]), o = G(!1), s = G(null);
 		function c() {
 			return new w({ baseUrl: i.value });
 		}
@@ -4045,7 +4055,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 	__name: "MusicArtistPage",
 	props: { name: {} },
 	setup(e) {
-		let t = e, { t: r } = p(), i = Q(), a = T(), o = G(null), s = G([]), c = G(!1), l = G(null);
+		let t = e, { t: r } = p(), i = Q(), a = E(), o = G(null), s = G([]), c = G(!1), l = G(null);
 		function u() {
 			return new w({ baseUrl: a.value });
 		}
@@ -4193,7 +4203,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 ], Cu = { class: "music-bar__time" }, wu = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "MusicTracksPage",
 	setup(e) {
-		let t = G([]), r = G(!1), i = G(""), a = G(100), o = G(0), s = G(0), { t: c } = p(), l = T(), u = E(), d = Bt({
+		let t = G([]), r = G(!1), i = G(""), a = G(100), o = G(0), s = G(0), { t: c } = p(), l = E(), u = ee(), d = Bt({
 			apiBase: () => l.value,
 			streamBase: () => u.value || l.value
 		});
@@ -4254,7 +4264,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 		async function C() {
 			x.value && (o.value = Math.max(0, o.value - a.value), await h());
 		}
-		function ee(e) {
+		function T(e) {
 			return !isFinite(e) || e < 0 ? "0:00" : `${Math.floor(e / 60)}:${Math.floor(e % 60).toString().padStart(2, "0")}`;
 		}
 		function D(e) {
@@ -4316,7 +4326,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 				R("span", iu, q(e.title), 1),
 				l[7] ||= R("span", { class: "col-artist track-row__artist" }, "—", -1),
 				l[8] ||= R("span", { class: "col-album track-row__album" }, "—", -1),
-				R("span", au, q(ee(e.durationSecs)), 1),
+				R("span", au, q(T(e.durationSecs)), 1),
 				R("button", {
 					type: "button",
 					class: "col-play track-row__play",
@@ -4419,7 +4429,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, ed = { class: "sr-only" }, td = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "MusicPlayerPage",
 	setup(e) {
-		let { t } = p(), r = T(), i = E(), a = Bt({
+		let { t } = p(), r = E(), i = ee(), a = Bt({
 			apiBase: () => r.value,
 			streamBase: () => i.value || r.value
 		});
@@ -4606,7 +4616,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, hd = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "BooksPage",
 	setup(e) {
-		let t = Q(), r = T(), i = G([]), a = G(!1), o = G(null);
+		let t = Q(), r = E(), i = G([]), a = G(!1), o = G(null);
 		function s() {
 			return new w({ baseUrl: r.value });
 		}
@@ -4692,7 +4702,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, Nd = { class: "book-progress__bar" }, Pd = { class: "book-progress__text" }, Fd = { class: "book-actions" }, Id = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "BookDetailPage",
 	setup(e) {
-		let { t } = p(), r = _n(), i = Q(), a = T(), o = P(() => String(r.params.id ?? "")), s = G(null), c = G(!0), l = G(null);
+		let { t } = p(), r = _n(), i = Q(), a = E(), o = P(() => String(r.params.id ?? "")), s = G(null), c = G(!0), l = G(null);
 		Fe(() => s.value?.name);
 		function u() {
 			return new w({ baseUrl: a.value });
@@ -4811,7 +4821,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, Kd = { class: "reader-book-info" }, qd = { class: "reader-pagination" }, Jd = { class: "reader-pagination__indicator" }, Yd = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "BookReaderPage",
 	setup(e) {
-		let { t } = p(), r = _n(), i = Q(), a = T(), o = P(() => String(r.params.id ?? "")), s = G(null), c = G([]), l = G(1), u = G(0), d = G(null), f = G(!0), m = G(null), h = G("light");
+		let { t } = p(), r = _n(), i = Q(), a = E(), o = P(() => String(r.params.id ?? "")), s = G(null), c = G([]), l = G(1), u = G(0), d = G(null), f = G(!0), m = G(null), h = G("light");
 		Fe(() => s.value?.name);
 		let g = G(16), _ = null;
 		function v() {
@@ -4862,10 +4872,10 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 		function C(e) {
 			h.value = e;
 		}
-		function ee() {
+		function T() {
 			g.value < 24 && (g.value += 2);
 		}
-		function E() {
+		function ee() {
 			g.value > 12 && (g.value -= 2);
 		}
 		function D() {
@@ -4892,13 +4902,13 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 						type: "button",
 						class: "reader-btn",
 						title: "Decrease font size",
-						onClick: E
+						onClick: ee
 					}, " A- "),
 					R("button", {
 						type: "button",
 						class: "reader-btn",
 						title: "Increase font size",
-						onClick: ee
+						onClick: T
 					}, " A+ "),
 					R("button", {
 						type: "button",
@@ -5003,7 +5013,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, df = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "AudiobooksPage",
 	setup(e) {
-		let t = Q(), r = T(), i = G([]), a = G(!1), o = G(null);
+		let t = Q(), r = E(), i = G([]), a = G(!1), o = G(null);
 		function s() {
 			return new w({ baseUrl: r.value });
 		}
@@ -5104,7 +5114,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, Lf = { class: "chapter-list" }, Rf = { class: "chapter-index" }, zf = { class: "chapter-title" }, Bf = { class: "chapter-duration" }, Vf = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "AudiobookDetailPage",
 	setup(e) {
-		let { t } = p(), r = _n(), i = Q(), a = T(), o = P(() => String(r.params.id ?? "")), s = G(null), c = G(!0), l = G(null);
+		let { t } = p(), r = _n(), i = Q(), a = E(), o = P(() => String(r.params.id ?? "")), s = G(null), c = G(!0), l = G(null);
 		Fe(() => s.value?.name);
 		function u() {
 			return new w({ baseUrl: a.value });
@@ -5232,7 +5242,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 }, ap = { class: "player-progress" }, op = { class: "progress-bar" }, sp = ["max", "value"], cp = { class: "progress-times" }, lp = { class: "player-controls" }, up = ["aria-label"], dp = { class: "player-extras" }, fp = ["aria-label"], pp = { class: "volume-control" }, mp = ["value"], hp = { class: "player-chapters" }, gp = { class: "chapter-list" }, _p = ["onClick"], vp = { class: "chapter-index" }, yp = { class: "chapter-title" }, bp = { class: "chapter-duration" }, xp = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "AudiobookPlayerPage",
 	setup(e) {
-		let t = _n(), r = Q(), i = T(), a = E(), o = P(() => String(t.params.id ?? "")), s = G(null), c = G(null), l = G(!0), u = G(null);
+		let t = _n(), r = Q(), i = E(), a = ee(), o = P(() => String(t.params.id ?? "")), s = G(null), c = G(null), l = G(!0), u = G(null);
 		Fe(() => s.value?.name);
 		let d = G(null), f = G(!1), p = G(0), m = G(0), h = G(1), g = G(1), _ = G(0), v = [
 			.5,
@@ -5281,7 +5291,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 		function C() {
 			d.value && (m.value = d.value.duration, d.value.playbackRate = g.value);
 		}
-		function ee() {
+		function T() {
 			d.value && (p.value = d.value.currentTime, O(), te());
 		}
 		function D() {
@@ -5366,7 +5376,7 @@ var na = "https://detain.github.io/phlix-docs", ra = (e, t) => ({
 				src: x(),
 				preload: "metadata",
 				onLoadedmetadata: C,
-				onTimeupdate: ee,
+				onTimeupdate: T,
 				onEnded: D
 			}, null, 40, Uf)) : I("", !0),
 			R("header", Wf, [R("button", {
@@ -5505,7 +5515,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 }, zp = { class: "album-info" }, Bp = { class: "album-title" }, Vp = { class: "album-count" }, Hp = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "PhotoAlbumsPage",
 	setup(e) {
-		let t = T(), r = Se(), i = _n(), a = Q(), o = P(() => {
+		let t = E(), r = Se(), i = _n(), a = Q(), o = P(() => {
 			let e = i.query.library_id;
 			return typeof e == "string" && e ? e : r.items.find((e) => e.type === "photo")?.id ?? null;
 		}), s = P(() => o.value ? r.byId(o.value) : null), c = G([]), l = G(!1), u = G(null), d = P(() => {
@@ -5636,7 +5646,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 	__name: "PhotoAlbumPage",
 	props: { id: {} },
 	setup(e) {
-		let t = e, r = T(), i = _n(), a = Q(), o = P(() => {
+		let t = e, r = E(), i = _n(), a = Q(), o = P(() => {
 			let e = i.query.library_id;
 			return typeof e == "string" && e ? e : null;
 		}), s = G(null), c = G(!1), l = G(null), u = G(/* @__PURE__ */ new Set());
@@ -5782,7 +5792,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 	__name: "PhotoViewPage",
 	props: { id: {} },
 	setup(e) {
-		let t = e, r = T(), i = _n(), a = Q(), o = P(() => {
+		let t = e, r = E(), i = _n(), a = Q(), o = P(() => {
 			let e = i.query.library_id;
 			return typeof e == "string" && e ? e : null;
 		}), s = P(() => {
@@ -5819,10 +5829,10 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 		function w() {
 			m.value ? (p.value = 1, m.value = !1) : (p.value = 2, m.value = !0);
 		}
-		function ee() {
+		function T() {
 			p.value = 1, m.value = !1;
 		}
-		function E() {
+		function ee() {
 			s.value ? a.push({
 				path: `/app/photo/album/${s.value}`,
 				query: o.value ? { library_id: o.value } : {}
@@ -5835,7 +5845,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 			f.value = !0;
 		}
 		function O(e) {
-			e.key === "ArrowLeft" && g.value ? S() : e.key === "ArrowRight" && _.value ? C() : e.key === "Escape" && m.value ? ee() : (e.key === "z" || e.key === "Z") && w();
+			e.key === "ArrowLeft" && g.value ? S() : e.key === "ArrowRight" && _.value ? C() : e.key === "Escape" && m.value ? T() : (e.key === "z" || e.key === "Z") && w();
 		}
 		return U(() => {
 			x(), window.addEventListener("keydown", O);
@@ -5847,7 +5857,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 			B(k, {
 				variant: "ghost",
 				class: "back-button",
-				onClick: E
+				onClick: ee
 			}, {
 				default: X(() => [B(n, { name: "arrow-left" }), t[0] ||= z(" Back ", -1)]),
 				_: 1
@@ -5937,7 +5947,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 		}, {
 			default: X(() => [t[11] ||= R("p", null, "This photo could not be found.", -1), B(k, {
 				variant: "subtle",
-				onClick: E
+				onClick: ee
 			}, {
 				default: X(() => [...t[10] ||= [z("Go Back", -1)]]),
 				_: 1
@@ -5960,7 +5970,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 }, Nm = { class: "slideshow-controls" }, Pm = { class: "progress-bar" }, Fm = { class: "controls-row" }, Im = { class: "slide-counter" }, Lm = { class: "main-controls" }, Rm = { class: "thumbnail-strip" }, zm = ["onClick"], Bm = ["src", "alt"], Vm = /*#__PURE__*/ t(/* @__PURE__ */ V({
 	__name: "PhotoSlideshowPage",
 	setup(e) {
-		let t = T(), r = _n(), i = Q(), a = P(() => {
+		let t = E(), r = _n(), i = Q(), a = P(() => {
 			let e = r.query.library_id;
 			return typeof e == "string" && e ? e : null;
 		}), o = P(() => {
@@ -6004,10 +6014,10 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 		function w() {
 			_.value && (f.value--, d.value = !1);
 		}
-		function ee() {
+		function T() {
 			v.value && (f.value++, d.value = !1);
 		}
-		function E() {
+		function ee() {
 			p.value = !p.value;
 		}
 		function D() {
@@ -6028,10 +6038,10 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 					w();
 					break;
 				case "ArrowRight":
-					ee();
+					T();
 					break;
 				case " ":
-					e.preventDefault(), E();
+					e.preventDefault(), ee();
 					break;
 				case "Escape":
 					D();
@@ -6078,7 +6088,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 			_: 1
 		})) : (W(), L("div", km, [R("div", {
 			class: "slideshow-main",
-			onClick: E
+			onClick: ee
 		}, [g.value?.url && !d.value ? (W(), L("img", {
 			key: g.value.id,
 			src: g.value.url,
@@ -6105,7 +6115,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 					B(k, {
 						variant: "solid",
 						title: p.value ? "Pause (Space)" : "Play (Space)",
-						onClick: Z(E, ["stop"])
+						onClick: Z(ee, ["stop"])
 					}, {
 						default: X(() => [B(n, { name: p.value ? "pause" : "play" }, null, 8, ["name"])]),
 						_: 1
@@ -6114,7 +6124,7 @@ var Tp = { class: "photo-albums-page" }, Ep = { class: "page-header" }, Dp = { c
 						variant: "ghost",
 						title: v.value ? "Next (→)" : "",
 						disabled: !v.value,
-						onClick: Z(ee, ["stop"])
+						onClick: Z(T, ["stop"])
 					}, {
 						default: X(() => [B(n, { name: "skip-forward" })]),
 						_: 1
@@ -6331,6 +6341,6 @@ function eh() {
 //#region src/index.ts
 var th = qt(() => import("./MediaDetail-DphvQbxh.js").then((e) => e.n)), nh = qt(() => import("./MetadataMatchModal-C_TqEv9x.js").then((e) => e.n)), rh = qt(() => import("./FilterBar-BGWom_5y.js").then((e) => e.n));
 //#endregion
-export { lt as ALL_LOGS, Nc as AcceptInvitePage, bt as AdminBackupApi, xt as AdminCastApi, Tt as AdminCollectionsApi, ut as AdminDashboardApi, St as AdminDlnaServerApi, Et as AdminHistoryApi, Pt as AdminHubDashboardApi, yt as AdminIntegrationsApi, kt as AdminLibrariesApi, wt as AdminLiveTvApi, ct as AdminLogsApi, st as AdminMetadataSourcesApi, Nt as AdminPluginsApi, Ct as AdminRemoteAccessApi, vt as AdminServicesApi, Ze as AdminSettingsApi, Dt as AdminSyncPlayApi, mt as AdminUsersApi, _t as AdminWebhooksApi, w as ApiClient, y as ApiError, e as AppBackdrop, Nn as AppLayout, Vf as AudiobookDetailPage, xp as AudiobookPlayerPage, df as AudiobooksPage, A as Badge, Id as BookDetailPage, Yd as BookReaderPage, hd as BooksPage, k as Button, Ne as CONNECTION_API_BASE_KEY, ke as CONNECTION_CONFIRMED_ORIGIN_KEY, Ir as CURRENT_SERVER_ID_KEY, Lr as CURRENT_SERVER_NAME_KEY, Ve as Chip, Ue as Combobox, l as DEFAULT_CAPTION_STYLE, d as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, M as EmptyState, Ro as FederationPage, ss as FederationSharesPage, rh as FilterBar, Xe as HelpPopover, Ye as HelpText, n as Icon, r as IconButton, Oc as InviteLinksPage, ge as Kbd, Ot as LIBRARY_TYPES, Qi as LibraryScanPage, h as LocalStorageTokenStore, Ft as LoginForm, _s as ManageSharesPage, tt as MediaCard, th as MediaDetail, nt as MediaGrid, we as MediaHomeRow, rt as MediaRow, Je as Menu, nh as MetadataMatchModal, Ge as Modal, rl as MusicAlbumPage, Rl as MusicArtistPage, yl as MusicArtistsPage, td as MusicPlayerPage, wu as MusicTracksPage, _a as MyServersPage, ee as NetworkError, jt as PLUGIN_SECRET_MASK, Ke as PageHint, Bi as PageTransition, Or as PhlixApp, rm as PhotoAlbumPage, Hp as PhotoAlbumsPage, Vm as PhotoSlideshowPage, Em as PhotoViewPage, ft as RATING_LABELS, pt as RATING_MAX, dt as RATING_OPTIONS, ie as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, rc as RequestsPage, zi as Reveal, Qe as SETTINGS_SECRET_MASK, ve as SORT_TITLE_ARTICLES, ht as SUBSCRIBABLE_EVENTS, Lc as SearchPage, Rt as SecuritySettingsPage, He as Select, To as ServerDetailPage, js as SharedWithMePage, Cn as Sheet, It as SignupForm, j as Skeleton, ze as Slider, ot as SourcePriorityEditor, fe as Spinner, Be as Switch, b as TMDB_UNCONFIGURED_CODE, qe as Tabs, se as ThumbRating, g as TimeoutError, Ri as ToastHost, ue as Tooltip, gt as WEBHOOK_EVENT_CATEGORIES, xi as adminMenu, pr as applyStoredThemeEarly, Jm as bestCandidate, Hm as bindMediaStoreToRouter, vi as buildAdminRoutes, bi as buildHubAdminRoutes, at as buildMediaQuery, it as buildMediaUrl, yi as buildServerAdminRoutes, pi as commonAdminPages, _e as compareByStrippedTitle, Ai as createPhlixApp, f as createTranslator, ur as deriveAccentVars, _ as errMessage, ye as fetchLibraries, Pr as focusable, Mr as focusableRegistry, Re as formatPageTitle, me as fuzzyScore, v as getDefaultApiHeaders, c as hasStoredPreferences, hi as hubAdminPages, Fr as installFocusable, je as isAllowedBase, x as isOffline, De as isPlaintextPublic, Te as isPrivateHost, m as isTmdbUnconfigured, he as matchCommand, u as mergeMessages, Ae as normalizeBase, Me as originOf, Mt as pluginErrorCode, At as pluginValidationErrors, Ee as probeServer, o as readStoredPreferences, Um as rectCenter, mi as serverAdminPages, Ie as setAppName, C as setDefaultApiHeaders, Le as setPageTitle, xe as sortLibraries, be as stripLeadingArticle, D as useApiBase, O as useAuthStore, hr as useCommandPaletteHotkey, pe as useCommandStore, Oe as useConnectionStore, i as useFocusTrap, Se as useLibrariesStore, T as useMediaApiBase, We as useMediaStore, p as useMessages, eh as useOnline, Fe as usePageTitle, te as usePlayerStore, br as usePreconnect, a as usePreferencesStore, et as usePrefetch, wr as useResumeReporter, Ce as useResumeSync, Vr as useServerStore, $e as useSettingsPrefsStore, $m as useSpatialNav, mr as useTheme, ae as useToastStore, oe as useUserItemDataStore, Pe as withScheme };
+export { lt as ALL_LOGS, Nc as AcceptInvitePage, bt as AdminBackupApi, xt as AdminCastApi, Tt as AdminCollectionsApi, ut as AdminDashboardApi, St as AdminDlnaServerApi, Et as AdminHistoryApi, Pt as AdminHubDashboardApi, yt as AdminIntegrationsApi, kt as AdminLibrariesApi, wt as AdminLiveTvApi, ct as AdminLogsApi, st as AdminMetadataSourcesApi, Nt as AdminPluginsApi, Ct as AdminRemoteAccessApi, vt as AdminServicesApi, Ze as AdminSettingsApi, Dt as AdminSyncPlayApi, mt as AdminUsersApi, _t as AdminWebhooksApi, w as ApiClient, y as ApiError, e as AppBackdrop, Nn as AppLayout, Vf as AudiobookDetailPage, xp as AudiobookPlayerPage, df as AudiobooksPage, A as Badge, Id as BookDetailPage, Yd as BookReaderPage, hd as BooksPage, k as Button, Ne as CONNECTION_API_BASE_KEY, ke as CONNECTION_CONFIRMED_ORIGIN_KEY, Ir as CURRENT_SERVER_ID_KEY, Lr as CURRENT_SERVER_NAME_KEY, Ve as Chip, Ue as Combobox, l as DEFAULT_CAPTION_STYLE, d as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, M as EmptyState, Ro as FederationPage, ss as FederationSharesPage, rh as FilterBar, Xe as HelpPopover, Ye as HelpText, n as Icon, r as IconButton, Oc as InviteLinksPage, ge as Kbd, Ot as LIBRARY_TYPES, Qi as LibraryScanPage, h as LocalStorageTokenStore, Ft as LoginForm, _s as ManageSharesPage, tt as MediaCard, th as MediaDetail, nt as MediaGrid, we as MediaHomeRow, rt as MediaRow, Je as Menu, nh as MetadataMatchModal, Ge as Modal, rl as MusicAlbumPage, Rl as MusicArtistPage, yl as MusicArtistsPage, td as MusicPlayerPage, wu as MusicTracksPage, _a as MyServersPage, T as NetworkError, jt as PLUGIN_SECRET_MASK, Ke as PageHint, Bi as PageTransition, Or as PhlixApp, rm as PhotoAlbumPage, Hp as PhotoAlbumsPage, Vm as PhotoSlideshowPage, Em as PhotoViewPage, ft as RATING_LABELS, pt as RATING_MAX, dt as RATING_OPTIONS, ie as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, rc as RequestsPage, zi as Reveal, Qe as SETTINGS_SECRET_MASK, ve as SORT_TITLE_ARTICLES, ht as SUBSCRIBABLE_EVENTS, Lc as SearchPage, Rt as SecuritySettingsPage, He as Select, To as ServerDetailPage, js as SharedWithMePage, Cn as Sheet, It as SignupForm, j as Skeleton, ze as Slider, ot as SourcePriorityEditor, fe as Spinner, Be as Switch, b as TMDB_UNCONFIGURED_CODE, qe as Tabs, se as ThumbRating, g as TimeoutError, Ri as ToastHost, ue as Tooltip, gt as WEBHOOK_EVENT_CATEGORIES, xi as adminMenu, pr as applyStoredThemeEarly, Jm as bestCandidate, Hm as bindMediaStoreToRouter, vi as buildAdminRoutes, bi as buildHubAdminRoutes, at as buildMediaQuery, it as buildMediaUrl, yi as buildServerAdminRoutes, pi as commonAdminPages, _e as compareByStrippedTitle, Ai as createPhlixApp, f as createTranslator, ur as deriveAccentVars, _ as errMessage, ye as fetchLibraries, Pr as focusable, Mr as focusableRegistry, Re as formatPageTitle, me as fuzzyScore, v as getDefaultApiHeaders, c as hasStoredPreferences, hi as hubAdminPages, Fr as installFocusable, je as isAllowedBase, x as isOffline, De as isPlaintextPublic, Te as isPrivateHost, m as isTmdbUnconfigured, he as matchCommand, u as mergeMessages, Ae as normalizeBase, Me as originOf, Mt as pluginErrorCode, At as pluginValidationErrors, Ee as probeServer, o as readStoredPreferences, Um as rectCenter, mi as serverAdminPages, Ie as setAppName, C as setDefaultApiHeaders, Le as setPageTitle, xe as sortLibraries, be as stripLeadingArticle, D as useApiBase, O as useAuthStore, hr as useCommandPaletteHotkey, pe as useCommandStore, Oe as useConnectionStore, i as useFocusTrap, Se as useLibrariesStore, E as useMediaApiBase, We as useMediaStore, p as useMessages, eh as useOnline, Fe as usePageTitle, te as usePlayerStore, br as usePreconnect, a as usePreferencesStore, et as usePrefetch, wr as useResumeReporter, Ce as useResumeSync, Vr as useServerStore, $e as useSettingsPrefsStore, $m as useSpatialNav, mr as useTheme, ae as useToastStore, oe as useUserItemDataStore, Pe as withScheme };
 
 //# sourceMappingURL=phlix-ui.js.map

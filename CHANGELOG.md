@@ -1,3 +1,8 @@
+## 0.97.0 - 2026-07-21
+
+### Fixed
+- **Federation SPA status vocabulary aligned with the hub DB enums.** The federation surfaces used a status vocabulary that did not match the values the hub actually stores/returns, so states rendered incorrectly. The SPA now speaks the same status enum the hub DB persists.
+
 ## 0.96.0 - 2026-07-21
 
 ### Added
