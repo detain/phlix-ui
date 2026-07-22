@@ -126,7 +126,10 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
 
 <style scoped>
 .media-row {
-  margin-block: var(--space-8);
+  /* Tightened from --space-8 → --space-6 to reduce the vertical gap between home
+     rails (updates.md #9). Margins sit OUTSIDE the contain-intrinsic-size box, so
+     this does not change the reserved height and introduces no first-paint jump. */
+  margin-block: var(--space-6);
   /* R6.2a — skip rendering + layout for off-screen home rails. The Browse home
      page stacks many rails; content-visibility lets the browser bypass the
      off-screen ones (paint/layout work scales with what's near the viewport, not

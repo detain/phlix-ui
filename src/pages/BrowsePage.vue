@@ -445,7 +445,12 @@ function onSeeAll(row: HomeRowConfig): void {
 
 <style scoped>
 .browse-page {
-  padding: var(--space-6);
+  /* No own outer padding — `.shell__main` (AppLayout) already supplies the page
+     gutter (var(--space-6) block / var(--space-5) inline). Adding padding here
+     double-counted it, holding the home rails away from the edges (updates.md #9).
+     Kept page-scoped rather than shrinking the shared `.shell__main` padding, so
+     Settings/Admin/Music/Search are unaffected. */
+  padding: 0;
   max-width: none;
   margin: 0 auto;
 }
