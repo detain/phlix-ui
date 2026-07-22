@@ -911,6 +911,67 @@ describe('Admin SettingsPage — masked secrets + secretStatus', () => {
   });
 });
 
+/**
+ * S06 — anti-autofill hints on secret inputs.
+ *
+ * A real browser/password-manager autofill offer cannot be reliably driven in
+ * jsdom, so the regression guard is the rendered DOM: every secret input must
+ * carry `autocomplete="new-password"` plus the four password-manager opt-out
+ * hints (`data-lpignore` / `data-1p-ignore` / `data-bwignore` /
+ * `data-form-type="other"`), and a NON-secret text field on the same tab must
+ * NOT carry them — guarding against blanket over-application.
+ */
+describe('Admin SettingsPage — anti-autofill hints on secret inputs (S06)', () => {
+  /** The full anti-autofill attribute set applied to every admin secret input. */
+  function expectAntiAutofill(el: HTMLInputElement): void {
+    expect(el.getAttribute('autocomplete')).toBe('new-password');
+    expect(el.getAttribute('data-lpignore')).toBe('true');
+    expect(el.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(el.hasAttribute('data-bwignore')).toBe(true);
+    expect(el.getAttribute('data-form-type')).toBe('other');
+  }
+
+  it('stamps the full anti-autofill set on a secret input', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    expectAntiAutofill(w.find<HTMLInputElement>('#field-tmdb\\.api_key').element);
+    w.unmount();
+  });
+
+  it('stamps every secret input on a multi-secret tab', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    for (const key of [
+      'lastfm.api_key',
+      'lastfm.shared_secret',
+      'trakt.client_id',
+      'trakt.client_secret',
+    ]) {
+      expectAntiAutofill(w.find<HTMLInputElement>(`#field-${key.replace(/\./g, '\\.')}`).element);
+    }
+    w.unmount();
+  });
+
+  it('does NOT stamp the hints on a non-secret text field (no over-application)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Scrobblers');
+    // trakt.redirect_uri is a public URL rendered as a plain text input.
+    const el = w.find<HTMLInputElement>('#field-trakt\\.redirect_uri').element;
+    expect(el.getAttribute('autocomplete')).toBe('off');
+    expect(el.hasAttribute('data-form-type')).toBe(false);
+    expect(el.hasAttribute('data-1p-ignore')).toBe(false);
+    expect(el.hasAttribute('data-lpignore')).toBe(false);
+    expect(el.hasAttribute('data-bwignore')).toBe(false);
+    w.unmount();
+  });
+});
+
 describe('Admin SettingsPage — json fields (schema array / object)', () => {
   it('renders an object-typed key as pretty JSON in a textarea, never [object Object]', async () => {
     const { client } = makeClient();

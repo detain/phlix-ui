@@ -352,6 +352,10 @@ onMounted(loadWebhooks);
               :type="showSecret ? 'text' : 'password'"
               class="admin-webhooks__input"
               autocomplete="new-password"
+              data-lpignore="true"
+              data-1p-ignore
+              data-bwignore
+              data-form-type="other"
               :placeholder="editing ? '(unchanged)' : 'Shared secret for HMAC signing'"
             />
             <Button

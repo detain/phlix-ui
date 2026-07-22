@@ -515,6 +515,10 @@ onBeforeUnmount(clearSyncTimer);
               class="admin-integrations__input"
               :placeholder="oidcSettings?.configured ? '(unchanged)' : 'Client secret'"
               autocomplete="new-password"
+              data-lpignore="true"
+              data-1p-ignore
+              data-bwignore
+              data-form-type="other"
             />
             <Button
               variant="ghost"
@@ -605,6 +609,10 @@ onBeforeUnmount(clearSyncTimer);
               class="admin-integrations__input"
               :placeholder="ldapSettings?.configured ? '(unchanged)' : 'Bind password'"
               autocomplete="new-password"
+              data-lpignore="true"
+              data-1p-ignore
+              data-bwignore
+              data-form-type="other"
             />
             <Button
               variant="ghost"

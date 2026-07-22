@@ -673,6 +673,10 @@ onMounted(loadUsers);
             type="password"
             class="admin-users__input"
             autocomplete="new-password"
+            data-lpignore="true"
+            data-1p-ignore
+            data-bwignore
+            data-form-type="other"
             :placeholder="editingUser ? '(unchanged)' : undefined"
             :required="!editingUser"
           />
@@ -892,7 +896,11 @@ onMounted(loadUsers);
                 type="password"
                 class="admin-users__input"
                 inputmode="numeric"
-                autocomplete="off"
+                autocomplete="new-password"
+                data-lpignore="true"
+                data-1p-ignore
+                data-bwignore
+                data-form-type="other"
                 placeholder="1234 or 123456"
                 required
               />
