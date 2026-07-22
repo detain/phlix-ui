@@ -1,3 +1,11 @@
+## 0.98.8 - 2026-07-22
+
+### Changed
+- **The Library and Browse/home pages now reach closer to the shell gutter — the duplicated page-level padding that double-counted the app shell's own gutter is removed (updates.md #8, #9).** Every routed page renders inside `AppLayout`'s `.shell__main`, which already supplies the standard page gutter (`padding: var(--space-6) var(--space-5)` = 24px block / 20px inline). `.library-page` and `.browse-page` each *additionally* set `padding: var(--space-6)`, so the visible gutter was the sum — 48px top / 44px inline on those two pages — the "too much empty space" that was reported. Both page-level paddings are now `0`, leaving `.shell__main` as the single gutter.
+  - **S08 (Library, updates.md #8):** `.library-page` padding `var(--space-6)` → `0`; `.library-header` margin-bottom `var(--space-4)` (16px) → `var(--space-3)` (12px) so the title sits nearer the `FilterBar`; and `FilterBar` gains an explicit `margin-bottom: var(--space-4, 16px)` — the single controlled gap between `<FilterBar>` and the grid (previously flush/0). The gap is placed on the bar's bottom (not the grid's top) so rows never collide with the sticky bar while it is stuck. The sticky `is-stuck` shadow is scroll-driven (`window.scrollY > 24`), not layout-derived, so the added margin cannot change when it toggles; `FilterBar` is consumed only by `LibraryPage`, so the new margin has no other blast radius.
+  - **S09 (Browse/home, updates.md #9):** `.browse-page` padding `var(--space-6)` → `0`; `.media-row` `margin-block` `var(--space-8)` (32px) → `var(--space-6)` (24px), tightening the inter-rail gap and the first rail's top offset. `MediaRow`'s `content-visibility: auto` + `contain-intrinsic-size` are left unchanged — CSS margins sit outside the contain box, so the reserved off-screen height is unchanged and no first-paint layout shift is introduced.
+  - **Scoped deliberately:** `AppLayout`'s `.shell__main` gutter is untouched, so the other shell pages that add their own root padding on top of it — Settings, Admin, Music, Search — are visually unaffected. The change is confined to `LibraryPage.vue`, `FilterBar.vue`, `BrowsePage.vue` and `MediaRow.vue`.
+
 ## 0.98.7 - 2026-07-22
 
 ### Changed
