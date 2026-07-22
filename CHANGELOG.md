@@ -1,3 +1,8 @@
+## 0.98.5 - 2026-07-22
+
+### Changed
+- **The admin plugin Configure modal is now visibly wider (updates.md #5).** `Modal` gained a fourth `size` option, `xl` (`max-width: min(90vw, 72rem)`), one step above `lg` (48rem) on the existing `sm` 24rem / `md` 32rem / `lg` 48rem scale. The plugin Configure modal on `PluginsPage` — which packs a schema-driven settings form and was cramped at `lg` — switched from `size="lg"` to `size="xl"`. Purely additive: the `size` prop default (`md`) and the `sm`/`md`/`lg` rules are unchanged, internal body scroll still derives from `.phlix-modal__body { overflow-y: auto }` + the panel `max-height`, and every other `Modal` consumer (including the other three PluginsPage modals) is untouched. A parametrized regression test asserts each size — including `xl` — maps to its exclusive `phlix-modal__panel--<size>` modifier class.
+
 ## 0.98.4 - 2026-07-22
 
 ### Changed

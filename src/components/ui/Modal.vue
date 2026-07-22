@@ -28,6 +28,10 @@ const props = withDefaults(
     dismissible?: boolean;
     /** Hide the built-in close button. */
     hideClose?: boolean;
+    /**
+     * Panel max-width. `sm` 24rem · `md` 32rem (default) · `lg` 48rem · `xl` min(90vw, 72rem).
+     * `xl` is used by the admin plugin Configure modal for its wide schema-driven form.
+     */
     size?: 'sm' | 'md' | 'lg' | 'xl';
   }>(),
   { dismissible: true, hideClose: false, size: 'md' },
