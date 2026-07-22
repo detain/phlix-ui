@@ -1763,4 +1763,47 @@ describe('Admin PluginsPage — catalog channel (S27)', () => {
     expect(w.text()).toContain('Opt-in · advanced');
     w.unmount();
   });
+
+  it('reverts the optimistic selection and shows an error toast when the PUT fails', async () => {
+    const { client, put } = makeClient();
+    // Force the channel PUT to reject (e.g. the server refuses an invalid
+    // channel) while every other PUT keeps its normal behaviour.
+    (
+      put as unknown as {
+        mockImplementation: (f: (endpoint: string) => Promise<unknown>) => void;
+      }
+    ).mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/plugins/catalog/channel') {
+        throw new ApiError('Invalid catalog channel.', 400, {
+          code: 'plugin.catalog.channel.invalid',
+        });
+      }
+      return { plugin: DETAIL_A };
+    });
+
+    const w = mountPage(client);
+    await flushPromises();
+    const sel = channelSelect(w);
+    expect(sel!.props('modelValue')).toBe('stable');
+
+    await sel!.vm.$emit('update:modelValue', 'dev');
+    await flushPromises();
+
+    // The choice was attempted…
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/catalog/channel', { channel: 'dev' });
+    // …but the optimistic selection is reverted to the previous channel, and the
+    // opt-in/advanced warning never appears since the change did not take.
+    expect(sel!.props('modelValue')).toBe('stable');
+    expect(w.text()).not.toContain('Opt-in · advanced');
+
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'error' && t.message === 'Invalid catalog channel.',
+      ),
+    ).toBe(true);
+    // No success toast was emitted.
+    expect(toasts.toasts.some((t) => t.message.startsWith('Catalog channel set to'))).toBe(false);
+    w.unmount();
+  });
 });
