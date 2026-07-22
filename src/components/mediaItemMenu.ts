@@ -30,8 +30,10 @@ export const MENU_LABELS = {
   download: 'Download',
   missingEpisodes: 'View missing episodes',
   shuffle: 'Shuffle',
-  refreshMetadata: 'Refresh metadata',
-  identify: 'Identify from beginning',
+  // S02: single metadata-match action. Previously three identically-behaving
+  // affordances (a "Match metadata" button + "Refresh metadata"/"Identify from
+  // beginning" menu items) — all opened the same MetadataMatchModal.
+  matchMetadata: 'Match metadata',
   editMetadata: 'Edit metadata',
   editImages: 'Edit images',
   exploreData: 'Explore item data',
@@ -60,8 +62,7 @@ export function buildMediaItemMenu(item: MediaItem, ctx: MediaItemMenuContext): 
   items.push({ label: L.shuffle });
 
   if (ctx.isAdmin) {
-    items.push({ label: L.refreshMetadata });
-    items.push({ label: L.identify });
+    items.push({ label: L.matchMetadata });
     items.push({ label: L.editMetadata });
     if (ctx.canChoosePoster) {
       items.push({ label: L.editImages });

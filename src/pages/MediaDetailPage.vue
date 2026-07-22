@@ -320,9 +320,14 @@ const matchOpen = ref(false);
 // Poster picker state — opened from the "Choose poster…" card/detail action.
 const posterPickerOpen = ref(false);
 
-function onMatch(): void {
-  if (item.value) {
-    matchTarget.value = item.value;
+// S02: single metadata-match handler. Both the hero "Match metadata" button
+// (emits `match` with the item) and the ⋯-menu "Match metadata" entry (emits
+// `refresh` with the item) route here — they open the same MetadataMatchModal.
+// Falls back to the page's current item when no payload is supplied.
+function onMatch(m?: MediaItem): void {
+  const target = m ?? item.value;
+  if (target) {
+    matchTarget.value = target;
     matchOpen.value = true;
   }
 }
@@ -345,11 +350,6 @@ function onMarkWatched(m: MediaItem): void {
   } else {
     toasts.info(`Marked "${m.name}" as unwatched`);
   }
-}
-
-function onRefresh(m: MediaItem): void {
-  matchTarget.value = m;
-  matchOpen.value = true;
 }
 
 function onChoosePoster(m: MediaItem): void {
@@ -427,7 +427,7 @@ async function onRemove(m: MediaItem): Promise<void> {
         @info="onInfo"
         @match="onMatch"
         @mark-watched="onMarkWatched"
-        @refresh="onRefresh"
+        @refresh="onMatch"
         @choose-poster="onChoosePoster"
         @remove="onRemove"
         @back="onBack"
@@ -449,7 +449,7 @@ async function onRemove(m: MediaItem): Promise<void> {
         @genre="onGenre"
         @company="onCompany"
         @mark-watched="onMarkWatched"
-        @refresh="onRefresh"
+        @refresh="onMatch"
         @choose-poster="onChoosePoster"
         @remove="onRemove"
         @back="onBack"
