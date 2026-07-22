@@ -171,12 +171,6 @@ function onMenuSelect(menuItem: { label: string }): void {
     case L.markUnplayed:
       onWatched();
       break;
-    case L.like:
-      void userItemData.setLike(props.item.id, 1, phlixConfig?.apiBase ?? '');
-      break;
-    case L.dislike:
-      void userItemData.setLike(props.item.id, -1, phlixConfig?.apiBase ?? '');
-      break;
     case L.addToPlaylist: {
       const name = window.prompt('Enter playlist name:');
       if (!name?.trim()) break;

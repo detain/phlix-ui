@@ -36,14 +36,24 @@ const ctx = (over: Partial<Parameters<typeof buildMediaItemMenu>[1]> = {}) => ({
 });
 
 describe('buildMediaItemMenu', () => {
-  it('everyone gets the core actions (playlist, like, dislike, played, download, shuffle)', () => {
+  it('everyone gets the core actions (playlist, played, download, shuffle)', () => {
     const labels = buildMediaItemMenu(makeItem(), ctx()).map((m) => m.label);
     expect(labels).toContain(MENU_LABELS.addToPlaylist);
-    expect(labels).toContain(MENU_LABELS.like);
-    expect(labels).toContain(MENU_LABELS.dislike);
     expect(labels).toContain(MENU_LABELS.markPlayed);
     expect(labels).toContain(MENU_LABELS.download);
     expect(labels).toContain(MENU_LABELS.shuffle);
+  });
+
+  it('does NOT offer Like/Dislike — the ThumbRating widget is the single control (S03)', () => {
+    // Regression guard: the redundant, less-capable menu aliases were removed in
+    // S03. Assert on the string literals (the MENU_LABELS keys were deleted) so
+    // re-introducing either menu entry fails here. Like/Dislike now live ONLY on
+    // the ThumbRating widget.
+    const labels = buildMediaItemMenu(makeItem(), ctx({ isAdmin: true })).map((m) => m.label);
+    expect(labels).not.toContain('Like');
+    expect(labels).not.toContain('Dislike');
+    expect(MENU_LABELS).not.toHaveProperty('like');
+    expect(MENU_LABELS).not.toHaveProperty('dislike');
   });
 
   it('shows "Mark played" when not watched and "Mark unplayed" when watched', () => {
