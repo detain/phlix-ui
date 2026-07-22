@@ -1,3 +1,8 @@
+## 0.98.10 - 2026-07-22
+
+### Fixed
+- **The in-player up-next queue now deterministically resolves to the next episode instead of racing the genre-similar fallback (updates.md #12).** When you started an episode, `PlayerPage`'s `applyItem()` fired two unawaited writers into the player queue — the episode-ordered `loadEpisodeNeighbours()` and the genre-similar `loadQueue()` — and whichever `player.setQueue()` resolved last won. A slow `/api/v1/media` genre query could therefore clobber the authoritative next-episode order, so an episode would non-deterministically fail to advance to the correct next episode. `applyItem()` now awaits `loadEpisodeNeighbours()` first for an episode and returns early once a next neighbour resolves, so the genre-similar `loadQueue()` never fires on that path and can no longer overwrite the queue. To keep the single-writer guarantee, `applyNeighbours()` is now the sole queue seeder for both the fresh series-tree fetch and the binge cache-hit path (previously the cache-hit branch set only prev/next and leaned on the racy `loadQueue` to seed the queue), and the now-redundant duplicate `seriesEpisodeCache` lookup inside `loadQueue()`'s episode branch was removed — `loadQueue()` is purely the genre fallback for movies, last episodes, and cache misses. The binge-navigation cache-hit fast path (sibling nav reseeds the queue from cache with no series-tree re-walk) is preserved. Regression tests model the race (episode with a real genre, genre fetch delayed past the immediate series-tree fetches) and prove the episode-ordered queue survives and the genre endpoint is never requested, plus binge cache-hit reseed and last-episode genre fall-through coverage.
+
 ## 0.98.9 - 2026-07-22
 
 ### Added
