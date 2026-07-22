@@ -664,6 +664,19 @@ describe('Admin LibrariesPage — operations help text', () => {
     expect(text).toContain('Destructive');
     w.unmount();
   });
+
+  // S04 (updates.md #4): the help disclosure must start expanded on first load.
+  // Regression guard — fails if the `open` attribute is ever removed from the <details>.
+  it('renders the help disclosure expanded by default (open attribute present)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const details = w.find<HTMLDetailsElement>('.admin-libraries__help');
+    expect(details.exists()).toBe(true);
+    expect(details.element.hasAttribute('open')).toBe(true);
+    expect(details.element.open).toBe(true);
+    w.unmount();
+  });
 });
 
 describe('Admin LibrariesPage — operations overflow menu', () => {
