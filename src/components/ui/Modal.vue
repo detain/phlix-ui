@@ -28,7 +28,7 @@ const props = withDefaults(
     dismissible?: boolean;
     /** Hide the built-in close button. */
     hideClose?: boolean;
-    size?: 'sm' | 'md' | 'lg';
+    size?: 'sm' | 'md' | 'lg' | 'xl';
   }>(),
   { dismissible: true, hideClose: false, size: 'md' },
 );
@@ -115,6 +115,7 @@ useFocusTrap(panelEl, open, {
 }
 .phlix-modal__panel--sm { max-width: 24rem; }
 .phlix-modal__panel--lg { max-width: 48rem; }
+.phlix-modal__panel--xl { max-width: min(90vw, 72rem); }
 .phlix-modal__header {
   display: flex;
   align-items: center;

@@ -1249,7 +1249,7 @@ onMounted(() => {
     <Modal
       :model-value="configuring !== null"
       :title="configTitle"
-      size="lg"
+      size="xl"
       @update:model-value="closeConfigure"
     >
       <div v-if="detailLoading" class="admin-plugins__skel"><Skeleton variant="text" :lines="4" /></div>
