@@ -1425,7 +1425,13 @@ onBeforeUnmount(() => {
       >
         <!-- Server-extracted WebVTT subtitle sidecars (U4). Native <track>s so the
              existing captions.ts enumeration + custom overlay pick them up. Keyed
-             on the sidecar URL so a late-arriving list updates reactively. -->
+             on the sidecar URL so a late-arriving list updates reactively.
+             NOTE (S13): deliberately NO native `default` attribute. The server
+             default is applied solely by `maybeApplyServerDefault` /
+             `applyTrackModes` (JS owns every track's `mode`). A native `default`
+             binding here would set the track to `showing` and fight the JS mode
+             management, leaving the default subtitle blank until a manual off/on
+             toggle. Do not re-add `:default`. -->
         <track
           v-for="st in serverSubtitleTracks"
           :key="st.url"
@@ -1433,7 +1439,6 @@ onBeforeUnmount(() => {
           :src="st.url"
           :srclang="st.language || undefined"
           :label="st.label || undefined"
-          :default="st.default"
         />
       </video>
 
