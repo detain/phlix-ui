@@ -1,3 +1,8 @@
+## 0.98.4 - 2026-07-22
+
+### Changed
+- **The admin Libraries "What do these operations do?" help panel now renders expanded by default (updates.md #4).** The disclosure `<details>` on `LibrariesPage` (wrapping the Scan / Match metadata / Reset / Delete-all `<dl>`) previously started collapsed, hiding the per-operation guidance behind a click. It now carries the native `open` boolean attribute, so the help text is visible on first load. Purely a default-state change: no persistence of a user collapse choice was added (out of scope), the existing `.admin-libraries__help[open] .admin-libraries__help-summary` styling applies as intended, and this is the sole `<details>` on the page so nothing else is affected. A regression test guards that the attribute stays present.
+
 ## 0.98.3 - 2026-07-22
 
 ### Changed
