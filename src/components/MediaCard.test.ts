@@ -928,6 +928,25 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     w.unmount();
   });
 
+  it('Match metadata (admin, S02) → the single collapsed entry emits exactly one `refresh` with the item', async () => {
+    asAdmin();
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const info = vi.spyOn(useToastStore(), 'info');
+
+    // S02 collapsed the former "Refresh metadata"/"Identify from beginning" pair
+    // into one "Match metadata" item; its switch case still emits `refresh` so the
+    // host (MediaDetailPage) opens the MetadataMatchModal via the merged onMatch.
+    await selectMenuItem(w, MENU_LABELS.matchMetadata);
+
+    expect(w.emitted('refresh')).toBeTruthy();
+    expect(w.emitted('refresh')).toHaveLength(1); // one entry → one emit, no duplicate dispatch
+    expect(w.emitted('refresh')?.[0]).toEqual([media()]);
+    // did NOT fall through to the default "isn't available yet" toast
+    const calls = info.mock.calls.map((c) => String(c[0]));
+    expect(calls.some((m) => m.includes("isn't available yet"))).toBe(false);
+    w.unmount();
+  });
+
   it('Explore item data (admin) → emits `explore-data` with the item, NOT a dead toast', async () => {
     asAdmin();
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });

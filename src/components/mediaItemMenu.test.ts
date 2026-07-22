@@ -82,6 +82,18 @@ describe('buildMediaItemMenu', () => {
     expect(labels).toContain(MENU_LABELS.exploreData);
   });
 
+  it('no longer offers the retired "Refresh metadata"/"Identify from beginning" labels (S02 merge)', () => {
+    // Regression guard: the two duplicate affordances were folded into the single
+    // "Match metadata" entry. Assert on the string literals (the MENU_LABELS keys
+    // were deleted) so re-introducing either label fails here.
+    const labels = buildMediaItemMenu(makeItem(), ctx({ isAdmin: true })).map((m) => m.label);
+    expect(labels).not.toContain('Refresh metadata');
+    expect(labels).not.toContain('Identify from beginning');
+    // ...and the MENU_LABELS map itself no longer exposes the retired keys.
+    expect(MENU_LABELS).not.toHaveProperty('refreshMetadata');
+    expect(MENU_LABELS).not.toHaveProperty('identify');
+  });
+
   it('"Edit images" is gated on canChoosePoster', () => {
     expect(
       buildMediaItemMenu(makeItem(), ctx({ isAdmin: true, canChoosePoster: false })).map((m) => m.label),
