@@ -995,10 +995,7 @@ var St = /*#__PURE__*/ e(/* @__PURE__ */ H({
 }, sn = {
 	key: 3,
 	class: "subsearch__list"
-}, cn = { class: "subsearch__meta" }, ln = { class: "subsearch__release" }, un = { class: "subsearch__signals" }, dn = { class: "subsearch__provider" }, fn = {
-	key: 1,
-	class: "subsearch__stat"
-}, pn = {
+}, cn = { class: "subsearch__meta" }, ln = { class: "subsearch__release" }, un = { class: "subsearch__signals" }, dn = { class: "subsearch__provider" }, fn = ["aria-label"], pn = {
 	key: 2,
 	class: "subsearch__stat"
 }, mn = {
@@ -1196,7 +1193,11 @@ var St = /*#__PURE__*/ e(/* @__PURE__ */ H({
 						_: 1
 					}, 8, ["label"])) : L("", !0),
 					z("span", dn, J(e.provider), 1),
-					e.rating > 0 ? (G(), R("span", fn, [V(t, { name: "star" }), B(" " + J(e.rating), 1)])) : L("", !0),
+					e.rating > 0 ? (G(), R("span", {
+						key: 1,
+						class: "subsearch__stat",
+						"aria-label": Y(o)("player.subtitleRating", { rating: e.rating })
+					}, [V(t, { name: "star" }), B(" " + J(e.rating), 1)], 8, fn)) : L("", !0),
 					e.downloadCount > 0 ? (G(), R("span", pn, J(Y(o)("player.subtitleDownloads", { count: e.downloadCount })), 1)) : L("", !0),
 					e.fps ? (G(), R("span", mn, J(Y(o)("player.subtitleFps", { fps: e.fps })), 1)) : L("", !0)
 				])]), V(S, {
@@ -1224,7 +1225,7 @@ var St = /*#__PURE__*/ e(/* @__PURE__ */ H({
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-815b62e0"]]), gn = (e) => e < 0 ? 0 : e > 255 ? 255 : Math.round(e);
+}), [["__scopeId", "data-v-70abcee8"]]), gn = (e) => e < 0 ? 0 : e > 255 ? 255 : Math.round(e);
 function $(e, t, n, r, i, a, o) {
 	let s = Math.max(0, Math.min(t, Math.floor(r))), c = Math.max(0, Math.min(n, Math.floor(i))), l = Math.max(s, Math.min(t, Math.ceil(a))), u = Math.max(c, Math.min(n, Math.ceil(o))), d = 0, f = 0, p = 0, m = 0;
 	for (let n = c; n < u; n++) for (let r = s; r < l; r++) {
@@ -2380,8 +2381,8 @@ var Hn = ["aria-label"], Un = ["src"], Wn = { class: "upnext__body" }, Gn = { cl
 		}), Nt = K(!1), Pt = s.subtitleLang, Ft = F(() => {
 			let e = j.value ? N.subtitleTracks.value : r.playbackSubtitleTracks ?? [];
 			if (Lt.value.length === 0) return e;
-			let t = new Set(e.map((e) => e.url)), n = Lt.value.filter((e) => !t.has(e.url));
-			return n.length === 0 ? e : [...e, ...n];
+			let t = (e) => e.url.split("?")[0], n = new Set(e.map(t)), i = Lt.value.filter((e) => !n.has(t(e)));
+			return i.length === 0 ? e : [...e, ...i];
 		}), It = K(!1), Lt = K([]), Rt = F(() => {
 			let e = [], t = (t) => {
 				if (!t) return;
@@ -3023,7 +3024,7 @@ var Hn = ["aria-label"], Un = ["src"], Wn = { class: "upnext__body" }, Gn = { cl
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-1badfe6e"]]), Yi = { class: "player-page__stage" }, Xi = {
+}), [["__scopeId", "data-v-453fbff5"]]), Yi = { class: "player-page__stage" }, Xi = {
 	key: 0,
 	class: "player-page__skeleton",
 	role: "status",
@@ -3301,4 +3302,4 @@ var Hn = ["aria-label"], Un = ["src"], Wn = { class: "upnext__body" }, Gn = { cl
 //#endregion
 export { Qi as default };
 
-//# sourceMappingURL=PlayerPage-dcC0Wh_T.js.map
+//# sourceMappingURL=PlayerPage-C-EQIC_S.js.map

@@ -728,10 +728,15 @@ let lastSubtitleLang: string | null = player.subtitleLang;
 const serverSubtitleTracks = computed<SubtitleTrack[]>(() => {
   const base = transcodeNeeded.value ? tc.subtitleTracks.value : (props.playbackSubtitleTracks ?? []);
   if (downloadedSubtitleTracks.value.length === 0) return base;
-  // Merge on-demand-downloaded sidecars (Wave 3 F3), de-duped by url so a track
-  // that later also arrives via a playback-info refresh isn't rendered twice.
-  const seen = new Set(base.map((s) => s.url));
-  const extra = downloadedSubtitleTracks.value.filter((s) => !seen.has(s.url));
+  // Merge on-demand-downloaded sidecars (Wave 3 F3), de-duped so a track that
+  // later also arrives via a playback-info refresh isn't rendered twice. The key
+  // is the URL PATH without its query string: the server mints a FRESH signed URL
+  // (new `exp`/`sig` params) on every playback-info call, so the full URL differs
+  // for the same sidecar — but the path (`/hls/<job>/sub-<index>.vtt` or the
+  // external endpoint) is stable.
+  const stableKey = (s: SubtitleTrack): string => s.url.split('?')[0];
+  const seen = new Set(base.map(stableKey));
+  const extra = downloadedSubtitleTracks.value.filter((s) => !seen.has(stableKey(s)));
   return extra.length === 0 ? base : [...base, ...extra];
 });
 

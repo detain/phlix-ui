@@ -1,3 +1,9 @@
+## 0.98.1 - 2026-07-22
+
+### Fixed
+- **Player subtitle tracks now de-dupe on a stable key (Wave 3 review follow-up).** On-demand-downloaded sidecars were merged into `serverSubtitleTracks` de-duped by the FULL signed URL. But the server re-mints a fresh signed URL (new `exp`/`sig` query params) on every playback-info refresh, so the same external subtitle arrived with two different URLs and rendered twice. Dedup now keys on the URL path with the query string stripped, so a downloaded track and its later playback-info refresh collapse to one rendered `<track>`.
+- **Dead i18n key wired in for a11y.** `player.subtitleRating` was defined but unused; it is now the `aria-label` on the candidate rating stat in `SubtitleSearch` (e.g. "Rating 8.5"), so screen readers announce the rating rather than a bare star icon + number.
+
 ## 0.98.0 - 2026-07-22
 
 ### Added

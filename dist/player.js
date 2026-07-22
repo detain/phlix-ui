@@ -5046,10 +5046,7 @@ var Ro = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 }, Gs = {
 	key: 3,
 	class: "subsearch__list"
-}, Ks = { class: "subsearch__meta" }, qs = { class: "subsearch__release" }, Js = { class: "subsearch__signals" }, Ys = { class: "subsearch__provider" }, Xs = {
-	key: 1,
-	class: "subsearch__stat"
-}, Zs = {
+}, Ks = { class: "subsearch__meta" }, qs = { class: "subsearch__release" }, Js = { class: "subsearch__signals" }, Ys = { class: "subsearch__provider" }, Xs = ["aria-label"], Zs = {
 	key: 2,
 	class: "subsearch__stat"
 }, Qs = {
@@ -5247,7 +5244,11 @@ var Ro = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 						_: 1
 					}, 8, ["label"])) : a("", !0),
 					s("span", Ys, T(e.provider), 1),
-					e.rating > 0 ? (b(), o("span", Xs, [u(J, { name: "star" }), l(" " + T(e.rating), 1)])) : a("", !0),
+					e.rating > 0 ? (b(), o("span", {
+						key: 1,
+						class: "subsearch__stat",
+						"aria-label": D(f)("player.subtitleRating", { rating: e.rating })
+					}, [u(J, { name: "star" }), l(" " + T(e.rating), 1)], 8, Xs)) : a("", !0),
 					e.downloadCount > 0 ? (b(), o("span", Zs, T(D(f)("player.subtitleDownloads", { count: e.downloadCount })), 1)) : a("", !0),
 					e.fps ? (b(), o("span", Qs, T(D(f)("player.subtitleFps", { fps: e.fps })), 1)) : a("", !0)
 				])]), u(Cs, {
@@ -5275,7 +5276,7 @@ var Ro = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-815b62e0"]]), ec = 32, tc = 18, nc = 250, rc = (e) => e < 0 ? 0 : e > 255 ? 255 : Math.round(e);
+}), [["__scopeId", "data-v-70abcee8"]]), ec = 32, tc = 18, nc = 250, rc = (e) => e < 0 ? 0 : e > 255 ? 255 : Math.round(e);
 function ic(e, t, n, r, i, a, o) {
 	let s = Math.max(0, Math.min(t, Math.floor(r))), c = Math.max(0, Math.min(n, Math.floor(i))), l = Math.max(s, Math.min(t, Math.ceil(a))), u = Math.max(c, Math.min(n, Math.ceil(o))), d = 0, f = 0, p = 0, m = 0;
 	for (let n = c; n < u; n++) for (let r = s; r < l; r++) {
@@ -7256,8 +7257,8 @@ var cu = {
 		}), pt = x(!1), mt = p.subtitleLang, ht = r(() => {
 			let e = U.value ? W.subtitleTracks.value : c.playbackSubtitleTracks ?? [];
 			if (_t.value.length === 0) return e;
-			let t = new Set(e.map((e) => e.url)), n = _t.value.filter((e) => !t.has(e.url));
-			return n.length === 0 ? e : [...e, ...n];
+			let t = (e) => e.url.split("?")[0], n = new Set(e.map(t)), r = _t.value.filter((e) => !n.has(t(e)));
+			return r.length === 0 ? e : [...e, ...r];
 		}), gt = x(!1), _t = x([]), vt = r(() => {
 			let e = [], t = (t) => {
 				if (!t) return;
@@ -7899,7 +7900,7 @@ var cu = {
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-1badfe6e"]]), zd = ["aria-label"], Bd = ["src", "poster"], Vd = { class: "mini__body" }, Hd = { class: "mini__title" }, Ud = { class: "mini__controls" }, Wd = ["aria-label"], Gd = ["aria-label", "aria-pressed"], Kd = ["aria-label"], qd = ["aria-label"], Jd = {
+}), [["__scopeId", "data-v-453fbff5"]]), zd = ["aria-label"], Bd = ["src", "poster"], Vd = { class: "mini__body" }, Hd = { class: "mini__title" }, Ud = { class: "mini__controls" }, Wd = ["aria-label"], Gd = ["aria-label", "aria-pressed"], Kd = ["aria-label"], qd = ["aria-label"], Jd = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Yd = /*#__PURE__*/ Y(/* @__PURE__ */ d({

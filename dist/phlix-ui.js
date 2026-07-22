@@ -1170,7 +1170,7 @@ function ki(e) {
 		{
 			path: `${t}/player/:id`,
 			name: "player",
-			component: () => import("./PlayerPage-dcC0Wh_T.js")
+			component: () => import("./PlayerPage-C-EQIC_S.js")
 		},
 		{
 			path: `${t}/login`,

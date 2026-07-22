@@ -101,6 +101,20 @@ describe('SubtitleSearch — search', () => {
     expect(releases).toEqual(['High', 'Low']);
   });
 
+  it('labels the rating stat for screen readers (player.subtitleRating)', async () => {
+    const { fetch } = makeFetch([{ status: 200, body: { candidates: [candidate({ rating: 8.5 })] } }]);
+    const client = new ApiClient({ baseUrl: '', tokenStore: new MemoryTokenStore({ access: 't' }), fetchImpl: fetch });
+    mountModal(client);
+
+    searchButton().dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await flushPromises();
+    await nextTick();
+
+    const rating = document.body.querySelector('.subsearch__stat[aria-label]');
+    expect(rating).not.toBeNull();
+    expect(rating!.getAttribute('aria-label')).toBe('Rating 8.5');
+  });
+
   it('shows an empty state when the search returns no candidates', async () => {
     const { fetch } = makeFetch([{ status: 200, body: { candidates: [] } }]);
     const client = new ApiClient({ baseUrl: '', tokenStore: new MemoryTokenStore({ access: 't' }), fetchImpl: fetch });

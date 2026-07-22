@@ -19,6 +19,7 @@ import SkipButton from './player/SkipButton.vue';
 import ThumbRating from './ThumbRating.vue';
 import Icon from './Icon.vue';
 import QualityMenu from './player/QualityMenu.vue';
+import SubtitleSearch from './player/SubtitleSearch.vue';
 import Select from './ui/Select.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
@@ -1121,6 +1122,35 @@ describe('Player — direct-play playback-info tracks (audio menu + signed subti
     expect(tracks[0].attributes('srclang')).toBe('eng');
     expect(tracks[0].attributes('label')).toBe('English');
     expect(tracks[1].attributes('src')).toBe('http://x/media/m1/subtitles/1.vtt?exp=1&sig=def');
+  });
+
+  it('collapses a downloaded sidecar and its playback-info refresh (same path, fresh signed url) to ONE track', async () => {
+    // FIX 1: the server re-mints a fresh signed URL (new exp/sig) on every
+    // playback-info call, so the SAME external subtitle arrives with a different
+    // full URL on refresh. Dedup keys on the URL PATH (query stripped), so it must
+    // render exactly once — not twice.
+    const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4', playbackSubtitleTracks: [] });
+    // A subtitle is downloaded on-demand (signed url #1).
+    const search = w.findComponent(SubtitleSearch);
+    search.vm.$emit('added', {
+      index: 5,
+      language: 'fre',
+      label: 'French',
+      default: false,
+      url: 'http://x/media/m1/subtitles/5.vtt?exp=1&sig=aaa',
+    });
+    await nextTick();
+    expect(w.findAll('video track')).toHaveLength(1); // just the downloaded one
+    // A playback-info refresh now advertises the SAME sidecar, freshly signed (#2).
+    await w.setProps({
+      playbackSubtitleTracks: [
+        { index: 5, language: 'fre', label: 'French', default: false, url: 'http://x/media/m1/subtitles/5.vtt?exp=2&sig=bbb' },
+      ],
+    });
+    await nextTick();
+    const tracks = w.findAll('video track');
+    expect(tracks).toHaveLength(1); // deduped on the stable path — NOT two urls
+    expect(tracks[0].attributes('src')).toBe('http://x/media/m1/subtitles/5.vtt?exp=2&sig=bbb'); // the base (refresh) copy wins
   });
 
   it('does NOT render playback-info subtitles on the transcode path (the job sidecars own it)', () => {

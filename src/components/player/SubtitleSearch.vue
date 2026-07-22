@@ -299,7 +299,7 @@ watch(
                 {{ t('player.subtitleHearingImpaired') }}
               </Badge>
               <span class="subsearch__provider">{{ c.provider }}</span>
-              <span v-if="c.rating > 0" class="subsearch__stat">
+              <span v-if="c.rating > 0" class="subsearch__stat" :aria-label="t('player.subtitleRating', { rating: c.rating })">
                 <Icon name="star" /> {{ c.rating }}
               </span>
               <span v-if="c.downloadCount > 0" class="subsearch__stat">{{ t('player.subtitleDownloads', { count: c.downloadCount }) }}</span>
