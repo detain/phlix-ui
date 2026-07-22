@@ -1,3 +1,8 @@
+## 0.98.3 - 2026-07-22
+
+### Changed
+- **The item ⋯ menu no longer offers "Like"/"Dislike" — the `ThumbRating` widget is the single like/dislike control (updates.md #3).** The ⋯ menu carried redundant "Like"/"Dislike" aliases (`MENU_LABELS.like`/`dislike`) that duplicated, less capably, what the thumbs-up/down `ThumbRating` widget already did (both routed to `useUserItemDataStore.setLike`). Those two labels and their `buildMediaItemMenu` entries are removed, along with the matching `case L.like:`/`case L.dislike:` branches in both `MediaDetail.vue` and `MediaCard.vue`. No functionality is lost: `ThumbRating`'s `@cycle`→`onLove`→`setLike` wiring is unchanged and remains the like/dislike control on both cards and the detail hero. A regression guard asserts the built menu never re-introduces Like/Dislike.
+
 ## 0.98.2 - 2026-07-22
 
 ### Changed
