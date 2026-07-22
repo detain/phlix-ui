@@ -953,7 +953,11 @@ onMounted(() => {
                   :id="`field-${key}`"
                   class="admin-settings__input"
                   :type="showPassword[key] ? 'text' : 'password'"
-                  autocomplete="off"
+                  autocomplete="new-password"
+                  data-lpignore="true"
+                  data-1p-ignore
+                  data-bwignore
+                  data-form-type="other"
                   :aria-describedby="secretStatusId(key)"
                   :placeholder="
                     isRemovingSecret(key)

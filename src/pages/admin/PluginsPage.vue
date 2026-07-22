@@ -1320,6 +1320,10 @@ onMounted(() => {
                   class="admin-plugins__input"
                   :class="{ 'is-invalid': fieldErrors[key] }"
                   :autocomplete="descriptor.secret ? 'new-password' : 'off'"
+                  :data-lpignore="descriptor.secret ? 'true' : undefined"
+                  :data-1p-ignore="descriptor.secret ? '' : undefined"
+                  :data-bwignore="descriptor.secret ? '' : undefined"
+                  :data-form-type="descriptor.secret ? 'other' : undefined"
                   :placeholder="
                     descriptor.secret
                       ? isRemovingSecret(key)

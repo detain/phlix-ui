@@ -248,6 +248,10 @@ onMounted(loadGroups);
             type="password"
             class="admin-syncplay__input"
             autocomplete="new-password"
+            data-lpignore="true"
+            data-1p-ignore
+            data-bwignore
+            data-form-type="other"
             placeholder="Leave empty for an open group"
           />
         </label>
@@ -281,6 +285,10 @@ onMounted(loadGroups);
             type="password"
             class="admin-syncplay__input"
             autocomplete="new-password"
+            data-lpignore="true"
+            data-1p-ignore
+            data-bwignore
+            data-form-type="other"
             placeholder="Leave empty if no password"
           />
         </label>
