@@ -721,7 +721,7 @@ onBeforeUnmount(() => {
       <strong>“What do these operations do?”</strong> below for when to use each.
     </PageHint>
 
-    <details class="admin-libraries__help">
+    <details class="admin-libraries__help" open>
       <summary class="admin-libraries__help-summary">What do these operations do?</summary>
       <dl class="admin-libraries__help-list">
         <dt>Scan</dt>
