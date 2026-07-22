@@ -28,7 +28,11 @@ const props = withDefaults(
     dismissible?: boolean;
     /** Hide the built-in close button. */
     hideClose?: boolean;
-    size?: 'sm' | 'md' | 'lg';
+    /**
+     * Panel max-width. `sm` 24rem · `md` 32rem (default) · `lg` 48rem · `xl` min(90vw, 72rem).
+     * `xl` is used by the admin plugin Configure modal for its wide schema-driven form.
+     */
+    size?: 'sm' | 'md' | 'lg' | 'xl';
   }>(),
   { dismissible: true, hideClose: false, size: 'md' },
 );
@@ -115,6 +119,7 @@ useFocusTrap(panelEl, open, {
 }
 .phlix-modal__panel--sm { max-width: 24rem; }
 .phlix-modal__panel--lg { max-width: 48rem; }
+.phlix-modal__panel--xl { max-width: min(90vw, 72rem); }
 .phlix-modal__header {
   display: flex;
   align-items: center;
