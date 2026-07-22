@@ -457,6 +457,45 @@ describe('PlayerPage — up-next queue', () => {
     expect(childrenCalls()).toBe(1); // series tree NOT re-fetched (cache hit)
     expect(fetchMock.mock.calls.some(([u]) => isGenreQueue(String(u)))).toBe(false); // genre queue never used
   });
+
+  it('falls through to the genre-similar queue for the LAST episode (no next neighbour), which is NOT short-circuited', async () => {
+    // S12 fall-through edge: an episode with a genre but NO next neighbour (series finale)
+    // must NOT early-return in applyItem. loadEpisodeNeighbours resolves nextEp=null and
+    // seeds no queue (remaining empty), so applyItem falls through to the genre fallback —
+    // the finale still gets an up-next queue instead of a dead one.
+    function ep(over: Partial<MediaItem> & { id: string }): MediaItem {
+      return media({ name: over.id, type: 'episode', genres: ['Sci-Fi'], ...over });
+    }
+    const e1 = ep({ id: 'fe-e1', parent_id: 'fe-ser', season_number: 1, episode_number: 1 });
+    const e2 = ep({ id: 'fe-e2', parent_id: 'fe-ser', season_number: 1, episode_number: 2 }); // finale
+    const g1 = media({ id: 'fe-g1', type: 'movie', genres: ['Sci-Fi'] });
+    const g2 = media({ id: 'fe-g2', type: 'movie', genres: ['Sci-Fi'] });
+    const isById = (u: string, id: string) =>
+      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isGenreQueue(u)) return Promise.resolve(jsonResponse({ items: [g1, g2], total: 2 }));
+      if (isById(u, 'fe-e2')) return Promise.resolve(jsonResponse({ item: e2 }));
+      if (u.includes('playback-info')) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (u.includes('/api/v1/media/fe-ser') && !u.includes('parentId')) {
+        return Promise.resolve(jsonResponse({ item: media({ id: 'fe-ser', type: 'series' }) }));
+      }
+      if (u.includes('parentId=fe-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2], total: 2 }));
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    const { w } = await mountAt('fe-e2', fetchMock);
+    await flushPromises();
+    await flushPromises();
+    await flushPromises(); // drain the fall-through genre fetch + its .then
+    const player = usePlayerStore();
+    // Finale: no next episode, so applyItem did NOT early-return.
+    expect(w.findComponent(Player).props('nextEpisode')).toBeNull();
+    // The genre fallback fired (proving the fall-through) and seeded the up-next queue.
+    expect(fetchMock.mock.calls.some(([u]) => isGenreQueue(String(u)))).toBe(true);
+    expect(player.queue.map((m) => m.id)).toEqual(['fe-g1', 'fe-g2']);
+  });
 });
 
 describe('PlayerPage — prev/next episode (U2)', () => {
