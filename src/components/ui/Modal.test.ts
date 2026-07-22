@@ -95,6 +95,26 @@ describe('Modal', () => {
     expect(document.body.querySelector('.phlix-modal__footer')?.textContent).toContain('OK');
     w.unmount();
   });
+
+  // S05 — size prop maps to the matching panel modifier class (xl added for plugin Configure).
+  it.each(['sm', 'md', 'lg', 'xl'] as const)('maps size="%s" to phlix-modal__panel--%s', (size) => {
+    const w = mount(Modal, { props: { modelValue: true, size }, attachTo: document.body });
+    const panel = document.body.querySelector('.phlix-modal__panel')!;
+    expect(panel).not.toBeNull();
+    expect(panel.classList.contains(`phlix-modal__panel--${size}`)).toBe(true);
+    // sizes are mutually exclusive — no other size modifier leaks onto the panel
+    for (const other of ['sm', 'md', 'lg', 'xl'].filter((s) => s !== size)) {
+      expect(panel.classList.contains(`phlix-modal__panel--${other}`)).toBe(false);
+    }
+    w.unmount();
+  });
+
+  it('defaults to the md panel modifier when size is omitted', () => {
+    const w = mount(Modal, { props: { modelValue: true }, attachTo: document.body });
+    const panel = document.body.querySelector('.phlix-modal__panel')!;
+    expect(panel.classList.contains('phlix-modal__panel--md')).toBe(true);
+    w.unmount();
+  });
 });
 
 describe('Sheet', () => {
