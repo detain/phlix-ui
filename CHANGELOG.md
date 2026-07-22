@@ -1,3 +1,8 @@
+## 0.98.7 - 2026-07-22
+
+### Changed
+- **The Browse/home "Favorites" rail is now titled "My List" (updates.md #7).** On `BrowsePage`, the favorites `<MediaRow>` `title` prop changed from `"Favorites"` to `"My List"`. Because `MediaRow` derives its `<h2>` heading and both the `<section>` and `<ul>` `aria-label`s from that single `title` prop, the visible heading and both screen-reader labels rename together — no separate aria edits were needed. This is a display-label rename only: the underlying favorites concept is untouched — the favorites store, the `listFavorites()` client method, the `/api/v1/users/me/favorites` endpoint, and the add/remove (`onWatchlist`) toggle logic are all unchanged, and no internal `favorites`/`favoriteItems`/`showFavorites` identifiers were renamed. The rail stays `hide-when-empty` (renders only when the user has favorites), so no empty-state string is involved. The global favorite-toggle toasts ("Added/Removed … to/from your favorites") are shared feedback bound to every rail's `@watchlist` handler, not this rail's title, and were deliberately left as-is. Regression coverage: `BrowsePage.test.ts` locates the rail by its displayed title (now `"My List"`), so the render, ordering, hide-when-empty, and in-place toggle assertions all exercise the renamed rail.
+
 ## 0.98.6 - 2026-07-22
 
 ### Fixed
