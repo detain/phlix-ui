@@ -11,6 +11,7 @@ import {
   PLUGIN_SECRET_MASK,
   pluginErrorCode,
   pluginValidationErrors,
+  normaliseChannelInfo,
 } from './plugins';
 import { ApiError } from '../client';
 import type { ApiClient } from '../client';
@@ -171,6 +172,61 @@ describe('AdminPluginsApi — updateSettings', () => {
       settings: { page_size: 50 },
     });
     expect(detail.settings.api_key).toBe(PLUGIN_SECRET_MASK);
+  });
+});
+
+const CHANNEL_INFO = {
+  channel: 'stable',
+  options: [
+    { value: 'stable', label: 'Stable (recommended)', description: 'The default.', advanced: false },
+    { value: 'dev', label: 'Development (advanced)', description: 'Opt-in: tracks master.', advanced: true },
+  ],
+};
+
+describe('AdminPluginsApi — catalog channel (S27)', () => {
+  it('GET /plugins/catalog/channel returns the channel + options', async () => {
+    const { api, get } = makeApi({
+      get: (endpoint) => (endpoint === '/api/v1/admin/plugins/catalog/channel' ? CHANNEL_INFO : {}),
+    });
+    const info = await api.getChannel();
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/plugins/catalog/channel');
+    expect(info.channel).toBe('stable');
+    expect(info.options).toHaveLength(2);
+    expect(info.options[1]).toMatchObject({ value: 'dev', advanced: true });
+  });
+
+  it('PUT /plugins/catalog/channel wraps the body in { channel } and returns the persisted info', async () => {
+    const { api, put } = makeApi({ put: () => ({ ...CHANNEL_INFO, channel: 'dev' }) });
+    const info = await api.setChannel('dev');
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/plugins/catalog/channel', { channel: 'dev' });
+    expect(info.channel).toBe('dev');
+  });
+
+  it('defends a malformed / older-server response to the safe stable default', () => {
+    expect(normaliseChannelInfo(undefined)).toEqual({ channel: 'stable', options: [] });
+    expect(normaliseChannelInfo({ channel: '', options: 'nope' })).toEqual({
+      channel: 'stable',
+      options: [],
+    });
+    // Options without a value are dropped; advanced coerces strictly to boolean.
+    const info = normaliseChannelInfo({
+      channel: 'dev',
+      options: [{ label: 'no value' }, { value: 'dev', advanced: 'yes' }],
+    });
+    expect(info.channel).toBe('dev');
+    expect(info.options).toEqual([{ value: 'dev', label: 'dev', description: '', advanced: false }]);
+  });
+
+  it('the catalog() response exposes normalised channel info when present', async () => {
+    const { api } = makeApi({
+      get: (endpoint) =>
+        endpoint === '/api/v1/admin/plugins/catalog'
+          ? { default_source: 'x', sources: [], catalogs: [], errors: [], channel: CHANNEL_INFO }
+          : {},
+    });
+    const res = await api.catalog();
+    expect(res.channel?.channel).toBe('stable');
+    expect(res.channel?.options).toHaveLength(2);
   });
 });
 
