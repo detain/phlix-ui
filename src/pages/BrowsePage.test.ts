@@ -275,7 +275,9 @@ function continueRow(w: ReturnType<typeof mountPage>) {
 }
 
 function favoritesRow(w: ReturnType<typeof mountPage>) {
-  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Favorites');
+  // S07: the favorites rail is now displayed under the title "My List" (label-only
+  // rename; the underlying favorites store/API/client are unchanged).
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'My List');
 }
 
 describe('BrowsePage — per-library sections', () => {
@@ -428,7 +430,7 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
     await flushPromises();
     const titles = w.findAllComponents(MediaRow).map((r) => r.props('title'));
     const ci = titles.indexOf('Continue Watching');
-    const fav = titles.indexOf('Favorites');
+    const fav = titles.indexOf('My List'); // S07: favorites rail now titled "My List"
     expect(ci).toBeGreaterThanOrEqual(0);
     expect(fav).toBe(ci + 1);
   });

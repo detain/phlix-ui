@@ -349,7 +349,7 @@ function onSeeAll(row: HomeRowConfig): void {
          empty; patched locally on toggle (U-N5). -->
     <MediaRow
       v-if="showFavorites"
-      title="Favorites"
+      title="My List"
       :items="favoriteItems"
       :can-match="auth.isAdmin"
       hide-when-empty
