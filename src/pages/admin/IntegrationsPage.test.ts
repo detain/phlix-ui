@@ -659,3 +659,71 @@ describe('IntegrationsPage — LDAP config modal', () => {
     w.unmount();
   });
 });
+
+/**
+ * S06 — anti-autofill hints on secret inputs.
+ *
+ * jsdom cannot drive a real browser/password-manager autofill offer, so the
+ * regression guard is the rendered DOM: the OIDC client-secret and LDAP
+ * bind-password inputs must carry `autocomplete="new-password"` + the four
+ * opt-out hints, while the non-secret OIDC client_id field must NOT — guarding
+ * against blanket over-application.
+ */
+describe('IntegrationsPage — anti-autofill hints on secret inputs (S06)', () => {
+  async function openOidc(w: VueWrapper) {
+    const btn = w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Configure OIDC')!;
+    await btn.trigger('click');
+    await flushPromises();
+  }
+  async function openLdap(w: VueWrapper) {
+    const btn = w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Configure LDAP')!;
+    await btn.trigger('click');
+    await flushPromises();
+  }
+
+  it('stamps the OIDC client secret input with the full anti-autofill set', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openOidc(w);
+    // Input order: [0] provider_url, [1] client_id, [2] client_secret, [3] scopes.
+    const secret = modalPanel().querySelectorAll<HTMLInputElement>('.admin-integrations__input')[2];
+    expect(secret.getAttribute('type')).toBe('password');
+    expect(secret.getAttribute('autocomplete')).toBe('new-password');
+    expect(secret.getAttribute('data-lpignore')).toBe('true');
+    expect(secret.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(secret.hasAttribute('data-bwignore')).toBe(true);
+    expect(secret.getAttribute('data-form-type')).toBe('other');
+    w.unmount();
+  });
+
+  it('does NOT stamp the hints on the non-secret OIDC client_id field (no over-application)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openOidc(w);
+    const clientId = modalPanel().querySelectorAll<HTMLInputElement>('.admin-integrations__input')[1];
+    expect(clientId.getAttribute('autocomplete')).toBe('off');
+    expect(clientId.hasAttribute('data-form-type')).toBe(false);
+    expect(clientId.hasAttribute('data-1p-ignore')).toBe(false);
+    expect(clientId.hasAttribute('data-lpignore')).toBe(false);
+    w.unmount();
+  });
+
+  it('stamps the LDAP bind password input with the full anti-autofill set', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openLdap(w);
+    const bindPw = modalPanel().querySelector<HTMLInputElement>(
+      '.admin-integrations__password-row .admin-integrations__input',
+    )!;
+    expect(bindPw.getAttribute('type')).toBe('password');
+    expect(bindPw.getAttribute('autocomplete')).toBe('new-password');
+    expect(bindPw.getAttribute('data-lpignore')).toBe('true');
+    expect(bindPw.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(bindPw.hasAttribute('data-bwignore')).toBe(true);
+    expect(bindPw.getAttribute('data-form-type')).toBe('other');
+    w.unmount();
+  });
+});

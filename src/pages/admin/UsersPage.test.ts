@@ -295,6 +295,47 @@ describe('Admin UsersPage — create / edit / delete', () => {
   });
 });
 
+/**
+ * S06 — anti-autofill hints on the password input.
+ *
+ * jsdom cannot simulate a real password-manager autofill offer, so the
+ * regression guard is the rendered DOM: the create/edit password input must
+ * carry `autocomplete="new-password"` + the four opt-out hints, while the
+ * non-secret username field on the same form must NOT.
+ */
+describe('Admin UsersPage — anti-autofill hints on the password input (S06)', () => {
+  it('stamps the password input with new-password + password-manager ignore hints', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add user')!.trigger('click');
+    await flushPromises();
+    // Modal input order: [0] username, [1] email, [2] password.
+    const password = document.querySelectorAll<HTMLInputElement>('.admin-users__input')[2];
+    expect(password.getAttribute('type')).toBe('password');
+    expect(password.getAttribute('autocomplete')).toBe('new-password');
+    expect(password.getAttribute('data-lpignore')).toBe('true');
+    expect(password.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(password.hasAttribute('data-bwignore')).toBe(true);
+    expect(password.getAttribute('data-form-type')).toBe('other');
+    w.unmount();
+  });
+
+  it('does NOT stamp the hints on the non-secret username field (no over-application)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add user')!.trigger('click');
+    await flushPromises();
+    const username = document.querySelectorAll<HTMLInputElement>('.admin-users__input')[0];
+    expect(username.getAttribute('autocomplete')).toBe('off');
+    expect(username.hasAttribute('data-form-type')).toBe(false);
+    expect(username.hasAttribute('data-1p-ignore')).toBe(false);
+    expect(username.hasAttribute('data-lpignore')).toBe(false);
+    w.unmount();
+  });
+});
+
 describe('Admin UsersPage — set admin + reset password', () => {
   it('toggles admin from the row action', async () => {
     const { client, post } = makeClient();
