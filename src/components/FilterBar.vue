@@ -551,6 +551,12 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: var(--space-3, 12px);
   padding: var(--space-3, 12px);
+  /* Explicit, controlled gap between the bar and the first row/grid that follows
+     it (updates.md #8). margin-bottom (not the grid's margin-top) keeps the gap
+     even while the bar is stuck — rows never collide with the sticky bar. The
+     `is-stuck` shadow is driven by `window.scrollY` (see onScroll), independent of
+     layout, so this margin cannot affect the stuck-shadow state. */
+  margin-bottom: var(--space-4, 16px);
   border-radius: var(--radius-xl, 16px);
   background: var(--surface-glass, rgba(20, 20, 28, 0.6));
   backdrop-filter: blur(16px);

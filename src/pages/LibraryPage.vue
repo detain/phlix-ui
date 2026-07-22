@@ -380,7 +380,11 @@ async function onRemove(item: MediaItem): Promise<void> {
 
 <style scoped>
 .library-page {
-  padding: var(--space-6);
+  /* No own outer padding — `.shell__main` (AppLayout) already supplies the page
+     gutter (var(--space-6) block / var(--space-5) inline). Adding padding here
+     double-counted it, pushing the title down and content away from the edges
+     (updates.md #8/#9). Rely on the shell's single gutter instead. */
+  padding: 0;
   max-width: none;
   margin: 0 auto;
 }
@@ -388,7 +392,9 @@ async function onRemove(item: MediaItem): Promise<void> {
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  /* Tightened from --space-4 → --space-3 so the FilterBar sits closer to the
+     title (updates.md #8). */
+  margin-bottom: var(--space-3);
 }
 .library-title {
   font-family: var(--font-display);
