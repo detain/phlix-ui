@@ -1701,7 +1701,7 @@ describe('Admin PluginsPage — catalog channel (S27)', () => {
   function channelSelect(w: VueWrapper) {
     return w
       .findAllComponents(Select)
-      .find((s) => s.props('label') === 'Catalog release channel');
+      .find((s) => s.props('label') === 'Catalog channel');
   }
 
   it('loads the channel on mount, defaults to Stable, and renders the Dev option', async () => {

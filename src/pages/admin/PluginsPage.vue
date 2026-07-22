@@ -173,10 +173,12 @@ async function onSelectChannel(value: string | number): Promise<void> {
     const info = await api.setChannel(next);
     channel.value = info.channel;
     if (info.options.length > 0) channelOptions.value = info.options;
+    // Derive the toast from the server-authored option label (single source of
+    // truth) rather than hard-coding per-channel strings; fall back gracefully
+    // if the confirmed channel has no matching label.
+    const label = selectedChannelOption.value?.label;
     toasts.success(
-      info.channel === 'dev'
-        ? 'Catalog channel set to Development (advanced).'
-        : 'Catalog channel set to Stable.',
+      label ? `Catalog channel set to ${label}.` : 'Catalog channel updated.',
     );
     // The channel changes which catalog `plugins.json` is fetched → refetch.
     await loadCatalog();
@@ -1068,7 +1070,7 @@ onMounted(() => {
           :model-value="channel"
           :options="channelSelectOptions"
           :disabled="channelSaving"
-          label="Catalog release channel"
+          label="Catalog channel"
           class="admin-plugins__channel-select"
           @update:model-value="onSelectChannel"
         />
