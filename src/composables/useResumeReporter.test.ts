@@ -171,10 +171,21 @@ describe('useResumeReporter', () => {
     expect(post).not.toHaveBeenCalled();
   });
 
-  it('finish() is a no-op when logged out', async () => {
-    state.loggedIn = false;
+  it('finish() is a no-op when logged out even with an active session (isolates the auth guard)', async () => {
+    // Establish a live session FIRST so `sessionId` is set — without this the
+    // `!sessionId` short-circuit would mask the logged-out guard and the test would
+    // pass even if `!auth.isLoggedIn` were deleted.
+    post.mockResolvedValueOnce({ session_id: 'sess-1' }); // POST /api/v1/sessions
     watching(120, 600);
-    await useResumeReporter().finish();
+    const reporter = useResumeReporter();
+    await reporter.report(true); // creates + holds session sess-1
+    post.mockClear();
+
+    // Now log out with that session still held. finish() must still no-op — this
+    // FAILS if the `!auth.isLoggedIn` guard is removed (sessionId + media are both set).
+    state.loggedIn = false;
+    await reporter.finish();
+
     expect(post).not.toHaveBeenCalled();
   });
 

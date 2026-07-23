@@ -1673,6 +1673,37 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     expect(finish).toHaveBeenCalledTimes(1);
   });
 
+  it('re-arms the finish latch on media change so a new item finishes again (S30)', async () => {
+    setActivePinia(createPinia());
+    usePreferencesStore().autoplay = false; // no up-next countdown timer to leak
+    const finish = vi.fn().mockResolvedValue(undefined);
+    const w = mount(Player, {
+      props: { media: media(), streamUrl: 'http://x/stream' },
+      global: { provide: { resumeReporter: { report: vi.fn(), finish } } },
+      attachTo: document.body,
+    });
+    mounted.push(w);
+    stubVideo(w.find('video').element as HTMLVideoElement);
+
+    // First item reaches its end → finish fires once, latch now set.
+    w.find('video').element.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(finish).toHaveBeenCalledTimes(1);
+
+    // Navigate to a NEW item (next episode / replay). The media watch runs
+    // evaluateForCurrentMedia(), which resets the single-fire latch.
+    await w.setProps({ media: media({ id: 'm2', name: 'Arrival' }), streamUrl: 'http://x/stream2' });
+    await nextTick();
+
+    // The <video> is reused across navigation (no :key) — re-find it and stub the
+    // fresh element state, then end the new item: finish must fire AGAIN (1 → 2).
+    const video2 = w.find('video').element as HTMLVideoElement;
+    stubVideo(video2);
+    video2.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(finish).toHaveBeenCalledTimes(2);
+  });
+
   it('does not crash on end when no resume reporter is provided (S30)', async () => {
     const { w, video } = mountPlayer(); // no reporter injected → finish is skipped
     expect(() => video.dispatchEvent(new Event('ended'))).not.toThrow();

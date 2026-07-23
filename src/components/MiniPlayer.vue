@@ -22,6 +22,7 @@ import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { PhlixAppConfig } from '../app/types';
+import type { UseResumeReporter } from '../composables/useResumeReporter';
 import Icon from './Icon.vue';
 import { useMessages } from '../composables/useMessages';
 import { attachHls } from './player/hls-playback';
@@ -33,6 +34,17 @@ const player = usePlayerStore();
 const { t } = useMessages();
 const videoRef = ref<HTMLVideoElement | null>(null);
 const hlsHandle = ref<HlsHandle | null>(null);
+
+// The shell-mounted resume reporter (provided by `PhlixApp`) — the SAME instance
+// the full Player injects, so a title watched to its end in the persistent dock
+// sends its finish signal on the live server session too (S30). The dock is a
+// child of `PhlixApp`'s template, below the `provide('resumeReporter', …)`, so this
+// resolves to the shared reporter that owns the live session id (never a second
+// instance). Absent in standalone/test mounts (no provider) → `onEnded` skips it.
+const resumeReporter = inject<UseResumeReporter | null>('resumeReporter', null);
+/** Single-fire latch for the end-of-playback finish signal; re-armed when the dock's
+ *  current item changes (below) so replay / next episode can finish again. */
+let finishSignaled = false;
 
 // Per-user favorite state (Feature 16.2). A SINGLE compact favorite toggle in the
 // dock (NOT the ThumbRating widget — the dock stays compact) bound to the current
@@ -78,6 +90,16 @@ function onPause(): void {
 function onTimeUpdate(): void {
   const v = videoRef.value;
   if (v) player.updateProgress(v.currentTime, v.duration);
+}
+/** End of playback in the dock — tell the server this item finished so it leaves
+ *  continue-watching (S30). Reuses the SAME shell reporter (and its live session)
+ *  the full Player uses. Guarded to fire once per playback-end via `finishSignaled`
+ *  (re-armed on a dock-item change); best-effort — the reporter no-ops when logged
+ *  out / no session and swallows its own failures, so this never disturbs the dock. */
+function onEnded(): void {
+  if (finishSignaled) return;
+  finishSignaled = true;
+  void resumeReporter?.finish();
 }
 function togglePlay(): void {
   const v = videoRef.value;
@@ -135,6 +157,16 @@ onMounted(async () => {
   }
 });
 
+// Re-arm the finish latch when the docked item changes (replay / next episode /
+// the user starts another title in the dock) so each item can send its own
+// end-of-playback finish signal. Mirrors Player.vue's per-source reset.
+watch(
+  () => player.current?.id,
+  () => {
+    finishSignaled = false;
+  },
+);
+
 // reflect a store play/pause (e.g. from OS media keys) onto the mini element
 watch(
   () => player.playing,
@@ -187,6 +219,7 @@ onBeforeUnmount(() => {
         @play="onPlay"
         @pause="onPause"
         @timeupdate="onTimeUpdate"
+        @ended="onEnded"
         @click="expand"
       />
 
