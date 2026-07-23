@@ -99,6 +99,20 @@ function modalPanel(): HTMLElement {
   return panels[panels.length - 1];
 }
 
+/** Open the "More actions" overflow menu for the Movies row and return its teleported item buttons. */
+async function openMoreMenu(w: VueWrapper): Promise<HTMLButtonElement[]> {
+  await w
+    .findAllComponents(Button)
+    .find((b) => b.attributes('aria-label') === 'More actions for Movies')!
+    .trigger('click');
+  await flushPromises();
+  return Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+}
+
+function menuItem(items: HTMLButtonElement[], label: string): HTMLButtonElement {
+  return items.find((el) => el.textContent?.trim() === label)!;
+}
+
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
@@ -371,12 +385,17 @@ describe('Admin LibrariesPage — create / edit / delete', () => {
     w.unmount();
   });
 
-  it('deletes a library after confirmation', async () => {
+  it('deletes a library after confirmation (via overflow menu)', async () => {
+    // S22: Delete now lives in the "More actions" overflow menu; it still opens
+    // the same delete-confirm modal before the DELETE fires.
     const { client, del, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Delete Movies')!.trigger('click');
+    menuItem(await openMoreMenu(w), 'Delete').click();
     await flushPromises();
+    // Gate: nothing deleted until the confirm modal is accepted.
+    expect(del).not.toHaveBeenCalled();
+    expect(modalPanel().textContent).toContain('cannot be undone');
     await findBtnIn(w, modalPanel(), 'Delete')!.trigger('click');
     await flushPromises();
     expect(del).toHaveBeenCalledWith('/api/v1/libraries/lib-1');
@@ -389,7 +408,7 @@ describe('Admin LibrariesPage — create / edit / delete', () => {
     del.mockRejectedValueOnce(new Error('delete boom'));
     const w = mountPage(client);
     await flushPromises();
-    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Delete Movies')!.trigger('click');
+    menuItem(await openMoreMenu(w), 'Delete').click();
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Delete')!.trigger('click');
     await flushPromises();
@@ -402,7 +421,7 @@ describe('Admin LibrariesPage — create / edit / delete', () => {
     const { client, del } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Delete Movies')!.trigger('click');
+    menuItem(await openMoreMenu(w), 'Delete').click();
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
     await flushPromises();
@@ -553,11 +572,13 @@ describe('Admin LibrariesPage — scan / rescan / metadata + polling', () => {
     w.unmount();
   });
 
-  it('rescan → POSTs the /rescan endpoint', async () => {
+  it('rescan (via overflow menu) → POSTs the /rescan endpoint', async () => {
+    // S22: Rescan now lives in the "More actions" overflow menu, not inline.
     const { client, post } = makeClient();
     const w = mountPage(client, 100000);
     await flushPromises();
-    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Rescan Movies')!.trigger('click');
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Rescan').click();
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/rescan');
     w.unmount();
@@ -680,32 +701,23 @@ describe('Admin LibrariesPage — operations help text', () => {
 });
 
 describe('Admin LibrariesPage — operations overflow menu', () => {
-  /** Open the "More actions" menu for the row and return its teleported item buttons. */
-  async function openMoreMenu(w: VueWrapper): Promise<HTMLButtonElement[]> {
-    await w
-      .findAllComponents(Button)
-      .find((b) => b.attributes('aria-label') === 'More actions for Movies')!
-      .trigger('click');
-    await flushPromises();
-    return Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
-  }
-
-  function menuItem(items: HTMLButtonElement[], label: string): HTMLButtonElement {
-    return items.find((el) => el.textContent?.trim() === label)!;
-  }
-
-  it('renders all five new ops in the More menu', async () => {
+  // S22: Rescan and Delete were relocated from the inline Actions cell into this
+  // overflow menu (Rescan at the top with the scan ops, Delete last with the
+  // destructive ones) so the Actions column no longer wraps to a second row.
+  it('renders all overflow-menu ops in order, including the relocated Rescan and Delete', async () => {
     const { client } = makeClient();
     const w = mountPage(client, 100000);
     await flushPromises();
     const items = await openMoreMenu(w);
     const labels = items.map((el) => el.textContent?.trim());
     expect(labels).toEqual([
+      'Rescan',
       'Recheck all metadata',
       'Prune removed',
       'Clear metadata',
       'Clear cached artwork',
       'Delete all items',
+      'Delete',
     ]);
     w.unmount();
   });

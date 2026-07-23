@@ -1,3 +1,8 @@
+## 0.98.19 - 2026-07-23
+
+### Changed
+- **The admin Libraries table's Actions column no longer wraps to a second row (updates.md #22).** In `pages/admin/LibrariesPage.vue` the low-frequency **Rescan** and **Delete** actions were moved out of the always-visible Actions cell and into the existing **More actions** (⋯) overflow menu, leaving only the primary controls inline (Edit, Scan, Match metadata, More, History). This is a pure relocation — the click handlers are unchanged: **Rescan** still queues the `rescan` op via `runOp(lib, 'rescan')`, and **Delete** still opens the existing delete-confirm modal (via the shared `deleting` ref) so its confirmation flow is preserved. Rescan sits at the top of the menu with the other scan/maintenance ops and Delete is last, flagged `danger`, alongside "Delete all items". To keep the remaining inline actions on one line the Actions column now reserves `min-width: 300px`, and the actions flex container uses `flex-wrap: nowrap` with `overflow-x: auto` so any residual overflow scrolls horizontally instead of wrapping. The page's overflow-menu and delete/rescan tests were updated to drive Rescan/Delete through the menu (asserting the delete-confirm gate still fires), and the menu-contents test now asserts the full seven-item ordering including the two relocated actions.
+
 ## 0.98.18 - 2026-07-23
 
 ### Added
