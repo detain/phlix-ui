@@ -376,7 +376,9 @@ watch(
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
   color: var(--text);
-  box-shadow: var(--shadow-2);
+  /* --shadow-1 (2px blur) fits inside the var(--space-1) inset, so the halo is
+     not clipped by the .media-row section's paint box (content-visibility). */
+  box-shadow: var(--shadow-1);
   cursor: pointer;
   transition:
     background-color 120ms ease,
