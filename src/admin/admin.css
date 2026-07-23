@@ -82,19 +82,6 @@
   min-width: 0;
 }
 
-/* Full-width admin pages (U2). Every admin page hard-codes its own root
-   `max-width` + `margin: 0 auto` + `padding: var(--space-6)` (LogsPage/AuditLogs
-   already opt out with `max-width: 100%`). Neutralise that centrally so all
-   pages span the content column with only a small horizontal gutter, matching
-   LogsPage. `.admin` prefix lifts specificity above each page's own scoped root
-   rule (equal-specificity source order would otherwise be unreliable); the page
-   keeps its own vertical padding + any INNER `max-width` (form fields, tables). */
-.admin .admin__content > :deep(*) {
-  max-width: none;
-  margin-inline: 0;
-  padding-inline: var(--space-4);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .admin__link {
     transition: none;

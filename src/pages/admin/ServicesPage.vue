@@ -338,9 +338,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Root spans the admin content column (AdminLayout owns the outer gutter); the
+   readable width is constrained on the INNER sections instead of a centred outer
+   box, so there is no double horizontal padding. */
 .admin-services {
-  max-width: 900px;
-  margin: 0 auto;
   padding: var(--space-6);
 }
 .admin-services__title {
@@ -352,6 +353,7 @@ onMounted(() => {
   margin-bottom: var(--space-4);
 }
 .admin-services__section {
+  max-width: 900px;
   margin-bottom: var(--space-6);
 }
 .admin-services__section-head {

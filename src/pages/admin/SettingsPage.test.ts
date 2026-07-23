@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import SettingsPage from './SettingsPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Switch from '../../components/ui/Switch.vue';
@@ -1739,5 +1742,38 @@ describe('Admin SettingsPage — removing a stored secret', () => {
     await flushPromises();
     expect(put).toHaveBeenCalledTimes(1);
     w.unmount();
+  });
+});
+
+describe('SettingsPage — admin padding + tab wrap layout (S23)', () => {
+  const sfcSource = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'SettingsPage.vue'),
+    'utf8',
+  );
+  const flat = sfcSource.replace(/\s+/g, ' ');
+  const rule = (selector: string): string => {
+    const start = flat.indexOf(`${selector} {`);
+    expect(start, `expected a "${selector}" rule in the <style> block`).toBeGreaterThanOrEqual(0);
+    return flat.slice(start, flat.indexOf('}', start) + 1);
+  };
+
+  it('the page root no longer centres a max-width box (AdminLayout owns the outer gutter)', () => {
+    const block = rule('.admin-settings');
+    expect(block).not.toContain('max-width');
+    expect(block).not.toContain('margin: 0 auto');
+    // The page keeps its own padding so content is never edge-to-edge.
+    expect(block).toContain('padding: var(--space-6)');
+  });
+
+  it('the readable width is constrained on the INNER form instead', () => {
+    expect(rule('.admin-settings__form')).toContain('max-width: 900px');
+  });
+
+  it('the header row wraps so the Advanced switch is never pushed off-screen', () => {
+    expect(rule('.admin-settings__header-row')).toContain('flex-wrap: wrap');
+  });
+
+  it('the Advanced toggle never shrinks (flex-shrink: 0)', () => {
+    expect(rule('.settings-advanced-toggle')).toContain('flex-shrink: 0');
   });
 });

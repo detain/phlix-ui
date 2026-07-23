@@ -7,6 +7,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import Tabs from './Tabs.vue';
 import Skeleton from './Skeleton.vue';
 import Spinner from './Spinner.vue';
@@ -77,6 +80,25 @@ describe('Tabs', () => {
   it('renders the default slot when no per-value panel slot exists', () => {
     const w = mount(Tabs, { props: { modelValue: 'a', tabs }, slots: { default: 'fallback panel' } });
     expect(w.find('[role="tabpanel"]').text()).toContain('fallback panel');
+  });
+});
+
+describe('Tabs — tab row wrapping (S23)', () => {
+  const sfcSource = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'Tabs.vue'),
+    'utf8',
+  );
+
+  it('the tablist wraps to a second row instead of overflowing horizontally', () => {
+    // A wide set of tabs must wrap, not push its row (and the sibling Advanced
+    // switch on the Settings page) off-screen. jsdom does not apply scoped CSS,
+    // so assert the declaration is present in the component's <style> source.
+    const flat = sfcSource.replace(/\s+/g, ' ');
+    const start = flat.indexOf('.phlix-tabs__list {');
+    expect(start).toBeGreaterThanOrEqual(0);
+    const block = flat.slice(start, flat.indexOf('}', start) + 1);
+    expect(block).toContain('display: flex');
+    expect(block).toContain('flex-wrap: wrap');
   });
 });
 
