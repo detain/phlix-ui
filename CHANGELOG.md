@@ -1,3 +1,8 @@
+## 0.98.14 - 2026-07-22
+
+### Changed
+- **Admin settings help text is now shown inline instead of hidden behind a click-to-open popover (updates.md #16).** Every settings field in `SettingsPage.vue` that previously exposed its guidance through a `(?)` `HelpPopover` trigger now renders the same help text (and any reference links) inline beneath the control via the existing `HelpText` component, mirroring the always-visible pattern already used in `PluginsPage.vue`. All six per-field-type call sites (bool switch, int/float, enum select, JSON textarea, secret, and plain string) were converted, and the now-unused `HelpPopover` import was dropped from `SettingsPage.vue`. Admins no longer have to click each `(?)` to discover what a setting does — the explanation and its "Learn more" links are visible at a glance. `HelpPopover.vue` itself is left in place (its removal, pending a check for other usages, is tracked separately). The help-affordance unit tests were updated to assert the inline `.phlix-help-text` rendering (text + external link attributes, and its absence when a key has neither help text nor links) instead of clicking the old popover trigger.
+
 ## 0.98.13 - 2026-07-22
 
 ### Added

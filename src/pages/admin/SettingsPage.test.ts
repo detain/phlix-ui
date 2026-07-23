@@ -1197,34 +1197,33 @@ describe('Admin SettingsPage — per-field restart note (§3.35)', () => {
 });
 
 describe('Admin SettingsPage — help affordances', () => {
-  it('names the field in the help trigger accessible name', async () => {
+  it('renders the field help text inline (no click needed)', async () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     await selectTab(w, 'Subtitles');
-    const trigger = w.find('.phlix-help-popover__trigger');
-    expect(trigger.attributes('aria-label')).toBe('Help for Default subtitle language');
+    const help = w.find('.phlix-help-text');
+    expect(help.exists()).toBe(true);
+    expect(help.text()).toContain('Help for Default subtitle language.');
     w.unmount();
   });
 
-  it('reveals the meta helpText + helpLinks when the popover is opened', async () => {
+  it('renders the meta helpText + helpLinks inline', async () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     await selectTab(w, 'Transcoding');
-    await w.find('.phlix-help-popover__trigger').trigger('click');
-    await flushPromises();
-    const panel = document.querySelector('.phlix-help-popover__panel');
-    expect(panel).toBeTruthy();
-    expect(panel!.textContent).toContain('Help for Enable hardware acceleration.');
-    const link = panel!.querySelector('a')!;
-    expect(link.getAttribute('href')).toBe('https://en.wikipedia.org/wiki/Nvidia_NVENC');
-    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
-    expect(link.getAttribute('target')).toBe('_blank');
+    const help = w.find('.phlix-help-text');
+    expect(help.exists()).toBe(true);
+    expect(help.text()).toContain('Help for Enable hardware acceleration.');
+    const link = help.find('a');
+    expect(link.attributes('href')).toBe('https://en.wikipedia.org/wiki/Nvidia_NVENC');
+    expect(link.attributes('rel')).toBe('noopener noreferrer');
+    expect(link.attributes('target')).toBe('_blank');
     w.unmount();
   });
 
-  it('renders no help trigger for a key with neither helpText nor helpLinks', async () => {
+  it('renders no inline help for a key with neither helpText nor helpLinks', async () => {
     const { client } = makeClient({
       getImpl: vi.fn(async () => ({
         data: {
@@ -1243,7 +1242,7 @@ describe('Admin SettingsPage — help affordances', () => {
     });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.find('.phlix-help-popover__trigger').exists()).toBe(false);
+    expect(w.find('.phlix-help-text').exists()).toBe(false);
     w.unmount();
   });
 });
