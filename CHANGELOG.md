@@ -1,3 +1,10 @@
+## 0.98.13 - 2026-07-22
+
+### Added
+- **Web playback now sends an explicit "finished" signal when a title reaches its end, so completed items leave Continue Watching (updates.md #30, UI half).** When the `<video>` fires `ended`, `Player.vue::onEnded()` now calls a new `finish()` method on the shell-mounted resume reporter, which `POST`s `{ media_item_id, reached_end: true }` to `POST /api/v1/sessions/{id}/complete` (the S30 server endpoint). The server marks the item watched (flips playback state to stopped/position 0, runs the finalize/stats path), so a movie or the last episode you watch to the end no longer lingers in the Continue Watching rail. Previously only throttled `/progress` checkpoints were sent, which could leave a fully-watched title stuck near 100% in Continue Watching.
+  - **Reuses the existing session — no new client, no re-auth.** `finish()` lives in `useResumeReporter` and reuses the SAME lazily-created session id and authenticated api client that the `/progress` reporter already holds. `PhlixApp` now `provide()`s its single reporter instance so the Player calls `finish()` on that exact instance (the one with the live session), rather than spawning a second reporter.
+  - **Safe by construction.** `finish()` is a best-effort no-op when logged out, when there is no current media, or when playback never crossed the resume threshold (so no session was ever created — a barely-watched title is left untouched), and it swallows request failures so a finish error can never crash the player. In `onEnded()` the finish signal is guarded to fire at most once per playback-end (reset per source in `evaluateForCurrentMedia`), and it is additive — the S12 auto-play-next / up-next behaviour is unchanged. Native clients (Roku/mobile/tizen/windows) are a tracked follow-up, not part of this step. Regression tests cover `finish()` (POST shape on an active session, no-op with no session / logged out, swallowed rejection) and the Player (`finish()` invoked exactly once on `ended` with the up-next surface intact, and no crash when no reporter is provided).
+
 ## 0.98.12 - 2026-07-22
 
 ### Added

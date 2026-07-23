@@ -1644,6 +1644,42 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     expect(w.find('.upnext').exists()).toBe(false);
   });
 
+  // ---- explicit finish signal (S30) -----------------------------------------
+  it('calls the resume reporter finish() once on end and still surfaces up-next (S30)', async () => {
+    setActivePinia(createPinia());
+    usePreferencesStore().autoplay = false; // static up-next card → no countdown timer to leak
+    const store = usePlayerStore();
+    store.setQueue([media({ id: 'm2', name: 'Arrival' })]);
+    const finish = vi.fn().mockResolvedValue(undefined);
+    const w = mount(Player, {
+      props: { media: media(), streamUrl: 'http://x/stream' },
+      global: { provide: { resumeReporter: { report: vi.fn(), finish } } },
+      attachTo: document.body,
+    });
+    mounted.push(w);
+    const video = w.find('video').element as HTMLVideoElement;
+    stubVideo(video);
+
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+
+    // Finish fired exactly once, and the existing S12 auto-play-next surface is intact.
+    expect(finish).toHaveBeenCalledTimes(1);
+    expect(w.find('.upnext').exists()).toBe(true);
+
+    // A re-dispatched `ended` (some browsers/HLS paths do) must NOT double-finish.
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(finish).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not crash on end when no resume reporter is provided (S30)', async () => {
+    const { w, video } = mountPlayer(); // no reporter injected → finish is skipped
+    expect(() => video.dispatchEvent(new Event('ended'))).not.toThrow();
+    await nextTick();
+    expect(w.exists()).toBe(true);
+  });
+
   // ---- transcode -> on-demand HLS -------------------------------------------
   it('starts a transcode and shows the preparing overlay (hiding center/controls) for a .mkv stream URL', () => {
     const { w } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });

@@ -34,6 +34,7 @@ import { formatTime } from './player/format-time';
 import { useMessages } from '../composables/useMessages';
 import { useHlsTranscode } from '../composables/useHlsTranscode';
 import { useTrickplay } from '../composables/useTrickplay';
+import type { UseResumeReporter } from '../composables/useResumeReporter';
 import ShortcutsHelp from './player/ShortcutsHelp.vue';
 import VolumeControl from './player/VolumeControl.vue';
 import SpeedMenu from './player/SpeedMenu.vue';
@@ -254,6 +255,16 @@ watch(
  *  per-app hls.js overrides (`playerHlsConfig`, e.g. a TV's RAM tuning) into the
  *  transcode controller. Absent in standalone/test mounts → defaults apply. */
 const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+
+/** The shell-mounted resume reporter (provided by `PhlixApp`). Used at end of
+ *  playback to send an explicit finish signal on the SAME server session the
+ *  progress reporter already owns — so a finished item leaves continue-watching.
+ *  Absent in standalone/test mounts (no provider) → `onEnded` simply skips it. */
+const resumeReporter = inject<UseResumeReporter | null>('resumeReporter', null);
+/** Guards the finish signal to at most once per playback-end. Reset per source in
+ *  `evaluateForCurrentMedia` so replaying / advancing to the next item can finish
+ *  again. */
+let finishSignaled = false;
 
 /** API base for the favorite/love writes (Feature 16). Read from the app config
  *  exactly like MediaCard (`inject('phlixConfig')?.apiBase ?? ''`) — NOT a new
@@ -545,6 +556,7 @@ function evaluateForCurrentMedia(): void {
   infoAudioSelected.value = -1; // clear any direct-play audio pick for the new source
   pendingHlsAudioIndex = null; // a queued audio switch belongs to the previous source
   qualitySeeded = false; // re-seed the default quality once the new ladder is known (R3.9)
+  finishSignaled = false; // a fresh source can send its own end-of-playback finish (S30)
   stopUpNextCountdown();
   upNextActive.value = false;
   // Tear down any previous HLS session; start a fresh one if the new item needs it.
@@ -603,6 +615,14 @@ function startUpNextCountdown(): void {
 }
 /** End of playback — surface the chrome + up-next card (and count down when autoplay is on). */
 function onEnded(): void {
+  // Tell the server this item finished so it leaves continue-watching (S30).
+  // Guarded to fire once per playback-end — some paths can re-dispatch `ended`;
+  // the flag resets per source in `evaluateForCurrentMedia`. Best-effort: the
+  // reporter swallows failures, so this never disturbs the up-next flow below.
+  if (!finishSignaled) {
+    finishSignaled = true;
+    void resumeReporter?.finish();
+  }
   // Pin the chrome open explicitly: browsers do NOT reliably fire `pause` on
   // `ended` (Safari notably does not), so the play-state watcher that normally
   // reveals the chrome on stop may never run. Without this, the end-of-video
