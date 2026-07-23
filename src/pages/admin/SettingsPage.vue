@@ -1043,9 +1043,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Root spans the admin content column (AdminLayout owns the outer gutter); the
+   readable width is constrained on the INNER form instead of a centred outer
+   box, so the tab row above can use the full width to wrap. */
 .admin-settings {
-  max-width: 900px;
-  margin: 0 auto;
   padding: var(--space-6);
 }
 .admin-settings__head {
@@ -1064,6 +1065,7 @@ onMounted(() => {
 
 .admin-settings__header-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
@@ -1081,6 +1083,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  max-width: 900px;
 }
 .admin-settings__field {
   display: flex;
@@ -1189,9 +1192,11 @@ onMounted(() => {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* Advanced toggle */
+/* Advanced toggle — never shrinks; wraps to its own line (via the header-row's
+   flex-wrap) rather than being pushed off-screen when the tab row is wide. */
 .settings-advanced-toggle {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);

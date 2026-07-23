@@ -8,6 +8,9 @@
 import { describe, it, expect } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router, type RouteRecordRaw } from 'vue-router';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import AdminLayout from './AdminLayout.vue';
 import { buildAdminRoutes, buildHubAdminRoutes, type AdminPage } from './admin';
 
@@ -166,5 +169,20 @@ describe('AdminLayout — hub set', () => {
   it('renders the hub dashboard as the bare-/admin landing page', async () => {
     const { wrapper } = await mountAdmin(buildHubAdminRoutes);
     expect(wrapper.find('.admin__content .stub-page').text()).toBe('admin-hub-dashboard');
+  });
+});
+
+describe('admin.css — no dead :deep() rule (S23)', () => {
+  const css = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '../admin/admin.css'),
+    'utf8',
+  );
+
+  it('does not contain a :deep() selector', () => {
+    // admin.css is a PLAIN stylesheet imported for its side effect (not a Vue
+    // <style scoped> block), so Vue's SFC compiler never transforms `:deep()`.
+    // In raw CSS `:deep()` is an invalid functional pseudo-class, which makes
+    // the whole selector invalid and the rule dead. It must not reappear.
+    expect(css).not.toContain(':deep(');
   });
 });

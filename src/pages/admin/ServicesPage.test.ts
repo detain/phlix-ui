@@ -9,6 +9,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import ServicesPage from './ServicesPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
@@ -396,5 +399,30 @@ describe('Admin ServicesPage — OAuth redirect result', () => {
     expect(toasts.toasts.some((t) => t.message.startsWith('Last.fm connect'))).toBe(false);
     expect(toasts.toasts.some((t) => t.message === 'Last.fm connected.')).toBe(false);
     w.unmount();
+  });
+});
+
+describe('ServicesPage — admin padding layout (S23)', () => {
+  const sfcSource = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'ServicesPage.vue'),
+    'utf8',
+  );
+  const flat = sfcSource.replace(/\s+/g, ' ');
+  const rule = (selector: string): string => {
+    const start = flat.indexOf(`${selector} {`);
+    expect(start, `expected a "${selector}" rule in the <style> block`).toBeGreaterThanOrEqual(0);
+    return flat.slice(start, flat.indexOf('}', start) + 1);
+  };
+
+  it('the page root no longer centres a max-width box (AdminLayout owns the outer gutter)', () => {
+    const block = rule('.admin-services');
+    expect(block).not.toContain('max-width');
+    expect(block).not.toContain('margin: 0 auto');
+    // The page keeps its own padding so content is never edge-to-edge.
+    expect(block).toContain('padding: var(--space-6)');
+  });
+
+  it('the readable width is constrained on the INNER sections instead', () => {
+    expect(rule('.admin-services__section')).toContain('max-width: 900px');
   });
 });

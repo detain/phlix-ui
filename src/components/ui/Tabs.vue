@@ -103,6 +103,7 @@ function onKeydown(e: KeyboardEvent) {
 <style scoped>
 .phlix-tabs__list {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
   border-bottom: 1px solid var(--border-subtle);
 }
