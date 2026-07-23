@@ -254,6 +254,13 @@ const name = ref('');
 const type = ref<LibraryType>(LIBRARY_TYPES[0]);
 const pathsText = ref('');
 const seriesPerDirectory = ref(false);
+// Per-library TMDB box-set auto-collection toggle (S33). Movie libraries only.
+// Defaults to enabled — matching the server's default-when-absent (an
+// un-migrated library keeps generating collections). `autoCollectionsDirty`
+// gates persistence so an untouched form NEVER sends the flag (leaving the
+// stored value / default intact), mirroring the image-type / priority editors.
+const autoCollections = ref(true);
+const autoCollectionsDirty = ref(false);
 const submitting = ref(false);
 
 const formTitle = computed(() => (editing.value ? 'Edit library' : 'Add library'));
@@ -399,6 +406,24 @@ function coerceBool(value: unknown): boolean {
   return false;
 }
 
+/**
+ * Seed the auto-collections toggle for the open form from the library's
+ * effective `auto_collections.enabled` block (S33). The server surfaces this on
+ * every row and defaults it to `true` for libraries that never stored the flag,
+ * so an ABSENT block is also treated as enabled (checked). Resets the dirty flag
+ * so an untouched form never persists `autoCollections`.
+ */
+function seedAutoCollections(lib: Library | null): void {
+  autoCollections.value = lib?.auto_collections ? coerceBool(lib.auto_collections.enabled) : true;
+  autoCollectionsDirty.value = false;
+}
+
+/** Flip the auto-collections toggle in the form (marks it dirty so it persists). */
+function setAutoCollections(on: boolean): void {
+  autoCollections.value = on;
+  autoCollectionsDirty.value = true;
+}
+
 /** Parse the one-path-per-line textarea into a trimmed, non-empty list. */
 function parsePaths(): string[] {
   return pathsText.value
@@ -415,6 +440,7 @@ function openAdd(): void {
   seriesPerDirectory.value = false;
   seedPriority(null);
   seedImageTypes(null);
+  seedAutoCollections(null);
   formOpen.value = true;
 }
 
@@ -430,6 +456,7 @@ function openEdit(lib: Library): void {
   seriesPerDirectory.value = coerceBool(lib.options?.series_per_directory);
   seedPriority(lib);
   seedImageTypes(lib);
+  seedAutoCollections(lib);
   formOpen.value = true;
 }
 
@@ -455,6 +482,10 @@ async function submitForm(): Promise<void> {
     // (the server drops it for other types); include it only then. On edit the
     // type is read-only, so an existing series library still persists the toggle.
     const isSeries = type.value === 'series';
+    // The auto-collections toggle is only meaningful for movie libraries (TMDB
+    // box sets are a movie concept — the scanner only syncs collections for movie
+    // items), mirroring how series_per_directory is gated to series libraries.
+    const isMovie = type.value === 'movie';
     if (existing) {
       // Edit: send only editable fields — NEVER `type`.
       const body: UpdateLibraryInput = { name: name.value, paths };
@@ -471,6 +502,12 @@ async function submitForm(): Promise<void> {
       if (imageTypesDirty.value) {
         body.image_types = { ...imageEnabled.value };
       }
+      // Persist the auto-collections toggle only when the admin flipped it, and
+      // only for movie libraries. Sent as a bare bool; the server stores the
+      // canonical {enabled: bool} and merges it (preserving other options).
+      if (isMovie && autoCollectionsDirty.value) {
+        body.autoCollections = autoCollections.value;
+      }
       await api.update(existing.id, body);
       toasts.success('Library updated.');
     } else {
@@ -483,6 +520,9 @@ async function submitForm(): Promise<void> {
       }
       if (imageTypesDirty.value) {
         body.image_types = { ...imageEnabled.value };
+      }
+      if (isMovie && autoCollectionsDirty.value) {
+        body.autoCollections = autoCollections.value;
       }
       const result = await api.create(body);
       toasts.success(result.message || 'Library created.');
@@ -947,6 +987,17 @@ onBeforeUnmount(() => {
           <Switch v-model="seriesPerDirectory" label="Each series is in its own folder" />
           <span class="admin-libraries__hint-text">
             Use each top-level folder name as the series title to improve metadata matching.
+          </span>
+        </div>
+        <div v-if="type === 'movie'" class="admin-libraries__field">
+          <Switch
+            :model-value="autoCollections"
+            label="Automatically generate collections from TMDB box sets"
+            @update:model-value="setAutoCollections"
+          />
+          <span class="admin-libraries__hint-text">
+            When on, movies that belong to a TMDB box set (e.g. a trilogy) are grouped into a
+            collection during scanning. Turn it off to skip collection generation for this library.
           </span>
         </div>
         <div class="admin-libraries__field">
