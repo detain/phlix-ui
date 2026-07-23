@@ -7963,7 +7963,7 @@ var du = {
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-11827adc"]]), Hd = ["aria-label"], Ud = ["src", "poster"], Wd = { class: "mini__body" }, Gd = { class: "mini__title" }, Kd = { class: "mini__controls" }, qd = ["aria-label"], Jd = ["aria-label", "aria-pressed"], Yd = ["aria-label"], Xd = ["aria-label"], Zd = {
+}), [["__scopeId", "data-v-c0c2782d"]]), Hd = ["aria-label"], Ud = ["src", "poster"], Wd = { class: "mini__body" }, Gd = { class: "mini__title" }, Kd = { class: "mini__controls" }, qd = ["aria-label"], Jd = ["aria-label", "aria-pressed"], Yd = ["aria-label"], Xd = ["aria-label"], Zd = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Qd = /*#__PURE__*/ J(/* @__PURE__ */ d({

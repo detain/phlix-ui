@@ -12,6 +12,7 @@ import type { LibraryQueryParams } from '../types/library-query';
 import { ApiClient } from '../api/client';
 import { ApiError, errMessage } from '../api/errors';
 import { buildMediaQuery, buildMediaUrl } from '../api/media-query';
+import { useToastStore } from './useToastStore';
 
 export type SortField = 'name' | 'year' | 'rating' | 'date_added' | 'runtime' | 'genre' | 'artist';
 export type SortOrder = 'asc' | 'desc';
@@ -47,9 +48,23 @@ const CACHE_TTL = 60_000;
 const CACHE_MAX = 100;
 /** Debounce for search-driven refetch (ms). */
 const SEARCH_DEBOUNCE = 250;
+/**
+ * ensureRange page-fetch retry policy (S35). A random-access page fetch that
+ * fails used to be swallowed silently, stranding those grid slots as skeletons
+ * forever. We now retry a small, FIXED number of times with a short backoff
+ * (bounded — never an infinite loop, never event-loop hammering) and, only if
+ * every attempt is exhausted, surface a single toast so the failure is visible.
+ */
+const ENSURE_RANGE_MAX_ATTEMPTS = 3;
+const ENSURE_RANGE_RETRY_DELAY_MS = 500;
 
 function isAbort(e: unknown): boolean {
     return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
+}
+
+/** Non-blocking delay for the bounded ensureRange retry backoff. */
+function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -182,6 +197,11 @@ export const useMediaStore = defineStore('media', () => {
     // a SUPERSEDED query (filters changed mid-flight) can't splice stale rows into
     // the new list. ensureRange() captures it and drops a result if it changed.
     let generation = 0;
+    // S35: guards the one-time ensureRange failure toast. Set when we surface a
+    // failure, cleared the moment any page loads successfully again, so a
+    // persistently-down backend shows the toast once (not once per scroll) yet a
+    // later recovery re-arms it if it ever fails again.
+    let rangeErrorNotified = false;
 
     function fresh(entry: CacheEntry | undefined): entry is CacheEntry {
         return !!entry && Date.now() - entry.ts < CACHE_TTL;
@@ -255,36 +275,71 @@ export const useMediaStore = defineStore('media', () => {
      * already present are skipped; concurrent identical fetches dedupe via the
      * in-flight map; results from a superseded query are dropped.
      */
+    /**
+     * Fetch a single page for ensureRange with a BOUNDED retry (S35). Returns
+     * true once the page is placed (or the query was superseded — nothing to do),
+     * false only after every attempt failed. A superseded generation short-
+     * circuits at every check so a stale page never splices into a newer list.
+     */
+    async function fetchPageWithRetry(
+        apiBase: string,
+        params: LibraryQueryParams,
+        key: string,
+        off: number,
+        gen: number,
+    ): Promise<boolean> {
+        for (let attempt = 1; attempt <= ENSURE_RANGE_MAX_ATTEMPTS; attempt++) {
+            if (gen !== generation) return true; // superseded — drop silently
+            try {
+                const res = await networkFetch(apiBase, params, key, false);
+                if (gen !== generation) return true; // filters changed mid-flight — drop
+                placePage(off, res.items);
+                if (!total.value) total.value = res.total;
+                rangeErrorNotified = false; // a good load re-arms the failure toast
+                return true;
+            } catch {
+                if (gen !== generation) return true; // superseded during the failed attempt
+                if (attempt < ENSURE_RANGE_MAX_ATTEMPTS) {
+                    await delay(ENSURE_RANGE_RETRY_DELAY_MS);
+                    continue;
+                }
+                return false; // attempts exhausted for this page
+            }
+        }
+        return false;
+    }
+
     async function ensureRange(apiBase: string, startIndex: number, endIndex: number): Promise<void> {
         const size = Math.max(1, limit.value);
         const cap = total.value > 0 ? total.value : Math.max(endIndex, 1);
         const first = Math.max(0, Math.floor(Math.max(0, startIndex) / size) * size);
         const lastIdx = Math.min(cap - 1, Math.max(first, endIndex - 1));
         const gen = generation;
-        const jobs: Promise<void>[] = [];
+        const jobs: Promise<boolean>[] = [];
         for (let off = first; off <= lastIdx; off += size) {
             if (items.value[off] !== undefined) continue; // page already loaded
             const params = { ...queryParams.value, offset: off };
             const key = cacheKey(params);
             const cached = cache.get(key);
             if (fresh(cached)) {
-                if (gen === generation) placePage(off, cached.items);
+                if (gen === generation) {
+                    placePage(off, cached.items);
+                    rangeErrorNotified = false; // a good load re-arms the failure toast
+                }
                 if (!total.value) total.value = cached.total;
                 continue;
             }
-            jobs.push(
-                networkFetch(apiBase, params, key, false)
-                    .then((res) => {
-                        if (gen !== generation) return; // filters changed mid-flight — drop
-                        placePage(off, res.items);
-                        if (!total.value) total.value = res.total;
-                    })
-                    .catch(() => {
-                        /* leave the slots as skeletons; a later window pass retries */
-                    }),
-            );
+            jobs.push(fetchPageWithRetry(apiBase, params, key, off, gen));
         }
-        if (jobs.length) await Promise.all(jobs);
+        if (!jobs.length) return;
+        const results = await Promise.all(jobs);
+        // Surface once (not once per page, not once per scroll) when a page could
+        // not be loaded after its bounded retries — instead of silently leaving a
+        // stranded skeleton. Only while this query is still the active one.
+        if (gen === generation && results.some((ok) => !ok) && !rangeErrorNotified) {
+            rangeErrorNotified = true;
+            useToastStore().error('Some titles failed to load. Scroll to try again.');
+        }
     }
 
     async function fetchMedia(apiBase: string, append = false): Promise<void> {

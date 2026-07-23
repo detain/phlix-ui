@@ -91,6 +91,22 @@ describe('MediaCard — rendering', () => {
     expect(w.find('.media-card__poster').exists()).toBe(true);
   });
 
+  // S35: native lazy-load is a per-host opt-out. Default true (standalone/rail
+  // hosts keep it); MediaGrid passes false because its JS windowing already gates
+  // rendering and native lazy over transform-repositioned cards stalls the fill.
+  it('drops native loading="lazy" when the `lazy` prop is false (grid opt-out)', () => {
+    const w = mount(MediaCard, { props: { item: media(), lazy: false } });
+    const img = w.find('.media-card__img');
+    expect(img.exists()).toBe(true);
+    expect(img.attributes('loading')).toBeUndefined();
+    expect(img.attributes('src')).toBe('https://img/dune.jpg');
+  });
+
+  it('keeps native loading="lazy" by default (every non-grid host)', () => {
+    const w = mount(MediaCard, { props: { item: media(), lazy: true } });
+    expect(w.find('.media-card__img').attributes('loading')).toBe('lazy');
+  });
+
   it('renders title, meta and up to three genres in the overlay', () => {
     const w = mount(MediaCard, { props: { item: media() } });
     expect(w.find('.media-card__title').text()).toBe('Dune: Part Two');

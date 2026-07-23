@@ -7,10 +7,11 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { defineComponent, nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import MediaGrid from './MediaGrid.vue';
 import MediaCard from './MediaCard.vue';
+import { useMediaStore } from '../stores/useMediaStore';
 import type { MediaItem } from '../types/media-item';
 
 function media(id: number, over: Partial<MediaItem> = {}): MediaItem {
@@ -376,6 +377,111 @@ describe('MediaGrid — random-access paging (need-range)', () => {
       expect(end).toBeGreaterThan(0);
     } finally {
       vi.useRealTimers();
+    }
+  });
+});
+
+describe('MediaGrid — S35 lazy-load stall (repro-first)', () => {
+  /**
+   * Offset-aware fetch: every page returns a full 24-item page tagged with the
+   * requested absolute offset, so a page placed at index 24 can be identified.
+   */
+  function offsetAwareFetch() {
+    return vi.fn((url: string) => {
+      const off = Number(/[?&]offset=(\d+)/.exec(url)?.[1] ?? 0);
+      const items = Array.from({ length: 24 }, (_, i) => media(off + i, { id: `srv-${off + i}` }));
+      return Promise.resolve(
+        new Response(JSON.stringify({ items, total: 5000, limit: 24, offset: off }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    });
+  }
+
+  /**
+   * A wrapper that binds `store.items`/`store.total` reactively and wires
+   * `@need-range` → `store.ensureRange` EXACTLY like LibraryPage.vue does, so the
+   * whole path is exercised end to end: virtual-grid window math → the immediate
+   * `need-range` emission → `ensureRange` → `placePage`. This is NOT a fixture
+   * that structurally avoids the race — the range is computed from a real
+   * measured (mocked) layout wider/taller than the first page of 24.
+   */
+  const Harness = defineComponent({
+    components: { MediaGrid },
+    setup() {
+      const store = useMediaStore();
+      const onNeedRange = (start: number, end: number): void => {
+        void store.ensureRange('', start, end);
+      };
+      return { store, onNeedRange };
+    },
+    template: `<MediaGrid :items="store.items" :total="store.total" @need-range="onNeedRange" />`,
+  });
+
+  it('fires need-range on mount and ensureRange fills posters past #24 WITHOUT any scroll event', async () => {
+    vi.useFakeTimers();
+    const fetchMock = offsetAwareFetch();
+    vi.stubGlobal('fetch', fetchMock);
+    // Load-bearing guard: the fill must happen with zero scroll events. If any
+    // scroll fired, this spy would be non-zero and the assertion below fails —
+    // proving the auto-fill is driven by mount-time measurement, not scrolling.
+    const scrollSpy = vi.fn();
+    window.addEventListener('scroll', scrollSpy);
+    try {
+      // Wide + tall viewport so the virtual window genuinely extends PAST the
+      // first 24 loaded items (the exact "~24" boundary from the bug report).
+      mockLayout(1400, 0);
+      window.innerHeight = 1200;
+
+      const store = useMediaStore();
+      await store.fetchMedia(''); // page 0 → items[0..23]
+      expect(store.items).toHaveLength(24);
+      expect(store.items[24]).toBeUndefined(); // page 2 is still a skeleton gap
+
+      const w = mount(Harness);
+      await nextTick();
+      // Clear MediaGrid's 120ms need-range debounce so the settled window emits.
+      await vi.advanceTimersByTimeAsync(150);
+
+      // (1) need-range fired on mount — no scroll required.
+      const grid = w.findComponent(MediaGrid);
+      const ranges = grid.emitted('need-range') as [number, number][] | undefined;
+      expect(ranges).toBeTruthy();
+      const [start, end] = ranges![ranges!.length - 1];
+      expect(start).toBe(0);
+      expect(end).toBeGreaterThan(24); // window really extends past the first page
+
+      // (2) ensureRange resolved and loaded the page covering index 24.
+      await vi.runAllTimersAsync();
+      expect(store.items[24]).toBeDefined();
+      expect(store.items[24]?.id).toBe('srv-24');
+      // the network was consulted for the past-#24 page (offset 24)
+      const offsets = fetchMock.mock.calls.map((c: [string]) =>
+        Number(/[?&]offset=(\d+)/.exec(c[0])?.[1] ?? 0),
+      );
+      expect(offsets).toContain(24);
+
+      // (3) it all happened WITHOUT a single scroll event.
+      expect(scrollSpy).not.toHaveBeenCalled();
+
+      // and the grid reactively rendered the now-loaded poster.
+      await nextTick();
+      const rendered = w.findAllComponents(MediaCard).map((c) => c.props('item').id);
+      expect(rendered).toContain('srv-24');
+    } finally {
+      window.removeEventListener('scroll', scrollSpy);
+      vi.useRealTimers();
+    }
+  });
+
+  it('grid-rendered posters do NOT use native loading="lazy" (redundant over JS windowing)', () => {
+    mockLayout(0, 0, 0); // non-virtualized fallback renders every card
+    const w = mount(MediaGrid, { props: { items: makeItems(3) } });
+    const imgs = w.findAll('.media-card__img');
+    expect(imgs.length).toBeGreaterThan(0);
+    for (const img of imgs) {
+      expect(img.attributes('loading')).toBeUndefined();
     }
   });
 });

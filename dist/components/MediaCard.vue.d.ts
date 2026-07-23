@@ -51,6 +51,15 @@ type __VLS_Props = {
      * season grid to show "N episodes" while reusing this exact card design.
      */
     subtitle?: string | null;
+    /**
+     * Apply the native `loading="lazy"` attribute to the poster `<img>`.
+     * Default `true` — every standalone/rail host keeps native lazy-loading.
+     * `MediaGrid` passes `false` (S35): its JS virtualization already guarantees
+     * only near-viewport cards exist in the DOM, so native lazy-load is redundant
+     * there and layering it over cards repositioned via `transform` in the same
+     * reactive flush is a known browser-timing stall trigger.
+     */
+    lazy?: boolean;
 };
 declare var __VLS_12: {
     item: import("../types/media-item").MediaDetail;
@@ -90,6 +99,7 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     canMatch: boolean;
     hideActions: boolean;
     playOnly: boolean;
+    lazy: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
 declare const _default: typeof __VLS_export;
