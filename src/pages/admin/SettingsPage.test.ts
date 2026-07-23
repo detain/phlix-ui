@@ -1561,6 +1561,53 @@ describe('Admin SettingsPage — tab a11y (ui/Tabs adoption, R6.5a.2)', () => {
   });
 });
 
+describe('Admin SettingsPage — muted all-advanced tab (S24)', () => {
+  /** Find a rendered tab button by its visible label. */
+  function tabByLabel(w: VueWrapper, label: string) {
+    const el = w.findAll('[role="tab"]').find((t) => t.text().trim() === label);
+    if (!el) throw new Error(`no tab labelled "${label}"`);
+    return el;
+  }
+
+  it('mutes a tab whose fields are ALL advanced-tier (Matching), not a mixed tab (Transcoding), while Advanced mode is off', async () => {
+    // Default (localStorage cleared in beforeEach) is Advanced mode OFF.
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    // `matching` = a single advanced-tier field → all-advanced → muted.
+    expect(tabByLabel(w, 'Matching').classes()).toContain('is-muted');
+    // `transcoding` mixes a standard field (hwaccel.enabled) with advanced ones → NOT muted.
+    expect(tabByLabel(w, 'Transcoding').classes()).not.toContain('is-muted');
+    w.unmount();
+  });
+
+  it('the muted tab is dimmed but NOT disabled — still selectable by click and keyboard', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const matching = tabByLabel(w, 'Matching');
+    expect(matching.classes()).toContain('is-muted');
+    expect(matching.attributes('disabled')).toBeUndefined();
+    expect(matching.attributes('aria-disabled')).toBeUndefined();
+    // Clicking the muted tab still selects it.
+    await matching.trigger('click');
+    await flushPromises();
+    expect(w.find('[role="tab"][aria-selected="true"]').text().trim()).toBe('Matching');
+    w.unmount();
+  });
+
+  it('no tab is muted once Advanced mode is on — including the all-advanced Matching tab', async () => {
+    const prefs = useSettingsPrefsStore();
+    prefs.setAdvancedMode(true);
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.findAll('[role="tab"]').some((t) => t.classes().includes('is-muted'))).toBe(false);
+    expect(tabByLabel(w, 'Matching').classes()).not.toContain('is-muted');
+    w.unmount();
+  });
+});
+
 describe('Admin SettingsPage — §11 Definition of Done', () => {
   it('auto-renders a brand-new schema key with no UI change (correct tab, label, control, tier)', async () => {
     const newKey = 'future.brand_new_toggle';

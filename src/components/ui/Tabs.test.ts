@@ -102,6 +102,56 @@ describe('Tabs — tab row wrapping (S23)', () => {
   });
 });
 
+describe('Tabs — muted (not disabled) tab (S24)', () => {
+  const mutedTabs = [
+    { value: 'a', label: 'Alpha' },
+    { value: 'm', label: 'Muted', muted: true },
+    { value: 'c', label: 'Gamma' },
+  ];
+
+  it('dims the muted tab (is-muted) with NO disabled/aria-disabled and NO extra tabindex change', () => {
+    const w = mount(Tabs, { props: { modelValue: 'a', tabs: mutedTabs } });
+    const mutedEl = w.findAll('[role="tab"]')[1];
+    expect(mutedEl.classes()).toContain('is-muted');
+    // NOT disabled — the tab stays fully interactive.
+    expect(mutedEl.attributes('disabled')).toBeUndefined();
+    expect(mutedEl.attributes('aria-disabled')).toBeUndefined();
+    // Roving tabindex ONLY: an inactive muted tab is -1, exactly like a normal
+    // inactive tab — muted introduces no tabindex change of its own.
+    expect(mutedEl.attributes('tabindex')).toBe('-1');
+  });
+
+  it('the muted tab is focusable (tabindex 0) once selected — still not disabled', () => {
+    const w = mount(Tabs, { props: { modelValue: 'm', tabs: mutedTabs } });
+    const mutedEl = w.findAll('[role="tab"]')[1];
+    expect(mutedEl.attributes('tabindex')).toBe('0');
+    expect(mutedEl.attributes('disabled')).toBeUndefined();
+  });
+
+  it('a muted tab is still selectable by click', async () => {
+    const w = mount(Tabs, { props: { modelValue: 'a', tabs: mutedTabs } });
+    await w.findAll('[role="tab"]')[1].trigger('click');
+    expect(w.emitted('update:modelValue')!.at(-1)).toEqual(['m']);
+  });
+
+  it('a muted tab is still reachable by keyboard nav (ArrowRight lands on it, not skipped like disabled)', async () => {
+    const w = mount(Tabs, { props: { modelValue: 'a', tabs: mutedTabs } });
+    await w.find('[role="tablist"]').trigger('keydown', { key: 'ArrowRight' });
+    expect(w.emitted('update:modelValue')!.at(-1)).toEqual(['m']);
+  });
+
+  it('the is-muted rule adds ONLY opacity — no pointer-events, no cursor, no disabled', () => {
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'Tabs.vue'), 'utf8');
+    const flat = src.replace(/\s+/g, ' ');
+    const start = flat.indexOf('.phlix-tabs__tab.is-muted {');
+    expect(start).toBeGreaterThanOrEqual(0);
+    const block = flat.slice(start, flat.indexOf('}', start) + 1);
+    expect(block).toContain('opacity: 0.5');
+    expect(block).not.toContain('pointer-events');
+    expect(block).not.toContain('cursor');
+  });
+});
+
 describe('Skeleton / Spinner / EmptyState / Kbd', () => {
   it('Skeleton text renders N lines and is decorative', () => {
     const w = mount(Skeleton, { props: { variant: 'text', lines: 3 } });

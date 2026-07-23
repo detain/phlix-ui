@@ -29,6 +29,18 @@ describe('listbox helpers', () => {
     expect(nextEnabledIndex(opts, 1, 1)).toBe(3); // year -> (skip rating) -> runtime
     expect(nextEnabledIndex(opts, 0, -1)).toBe(3); // name -> wrap -> runtime
   });
+  it('nextEnabledIndex keys off `disabled` ONLY — a muted-but-not-disabled option stays reachable (S24)', () => {
+    // The Tabs `muted` flag is purely visual and must NOT block nav. It is not
+    // part of SelectOption, so a muted option carries no `disabled` and must be
+    // landed on, exactly like a normal enabled option.
+    const muted = [
+      { value: 'a', label: 'A' },
+      { value: 'm', label: 'M', muted: true } as unknown as (typeof opts)[number],
+      { value: 'c', label: 'C' },
+    ];
+    expect(nextEnabledIndex(muted, 0, 1)).toBe(1); // a -> lands ON muted m (not skipped)
+    expect(nextEnabledIndex(muted, 2, -1)).toBe(1); // c -> lands ON muted m
+  });
   it('edgeEnabledIndex finds first/last enabled', () => {
     expect(edgeEnabledIndex(opts, 'first')).toBe(0);
     expect(edgeEnabledIndex(opts, 'last')).toBe(3);
