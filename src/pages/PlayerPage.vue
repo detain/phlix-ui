@@ -617,13 +617,18 @@ function onBlockingErrorOk(): void {
   margin: 0;
 }
 
-/* theater mode (driven by <Player>'s @theater) — go full-bleed + dim the surround */
+/* theater mode (driven by <Player>'s @theater) — go full-bleed + dim the surround.
+   S34: with the shell chrome gone (the player route is `fullBleed`), let the stage
+   fill the whole viewport height so <Player>'s 100dvh frame is unclipped. `dvh`
+   tracks the mobile dynamic viewport; the plain `vh` line is the fallback. */
 .player-page.is-theater {
   background: #05070b;
 }
 .player-page.is-theater .player-page__stage {
   max-width: none;
   padding: 0;
+  height: 100vh;
+  height: 100dvh;
 }
 .player-page.is-theater .player-page__ambient {
   opacity: 0.05;

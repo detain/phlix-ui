@@ -215,3 +215,23 @@ const { isHidden: headerHidden } = useHeaderHideOnScroll();
   }
 }
 </style>
+
+<!-- Full-bleed / "theater" shell (S34). NON-scoped on purpose: `.shell--flush` is a
+     fallthrough class added by PhlixApp from the active route's `meta.fullBleed`
+     (the player route), and these rules must reach the shell chrome elements. Every
+     selector is strictly anchored under `.shell.shell--flush`, so the rules are
+     INERT on every route that does not carry the flag — the default (no-flush) shell
+     is byte-identical. The `.shell.shell--flush` prefix (three classes) also outranks
+     the scoped `.shell__main[data-v]` / `.shell__bar[data-v]` selectors regardless of
+     source order, so the overrides always win. Fixed-position overlays
+     (MiniPlayer, CommandPalette) live outside this flow and are untouched. -->
+<style>
+/* Chrome-less: drop the sticky marquee bar and the main gutter so the in-window
+   player owns the whole viewport. */
+.shell.shell--flush .shell__bar {
+  display: none;
+}
+.shell.shell--flush .shell__main {
+  padding: 0;
+}
+</style>

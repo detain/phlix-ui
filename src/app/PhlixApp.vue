@@ -4,7 +4,7 @@
 -->
 
 <template>
-    <AppLayout>
+    <AppLayout :class="{ 'shell--flush': isFullBleed }">
         <template #logo>
             <RouterLink :to="homePath" class="brand">
                 <img v-if="branding.logoSrc" :src="branding.logoSrc" :alt="branding.logoAlt ?? wordmark" class="brand-logo" />
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, inject, provide, ref, watch } from 'vue';
-import { RouterLink, RouterView, useRouter } from 'vue-router';
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import AppLayout from './AppLayout.vue';
 import ThemeToggle from './ThemeToggle.vue';
 import UserMenu from './UserMenu.vue';
@@ -92,7 +92,16 @@ import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 useTheme();
 const commands = useCommandStore();
 const router = useRouter();
+const route = useRoute();
 const { t } = useMessages();
+
+// Full-bleed shell (S34): a route may opt out of the chrome via `meta.fullBleed`
+// (the player route does). When active, AppLayout renders `.shell--flush` — the
+// sticky header is hidden and the main padding zeroed — so the in-window player
+// owns the whole viewport. Every other route leaves the class off, so the normal
+// shell is byte-identical. MiniPlayer/CommandPalette are fixed-position overlays,
+// so the flush layout never hides or shifts them.
+const isFullBleed = computed(() => route.meta?.fullBleed === true);
 
 // Always-on ⌘K hotkey (stays in the main bundle); the palette UI is lazy below.
 useCommandPaletteHotkey();

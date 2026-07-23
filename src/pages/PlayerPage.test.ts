@@ -9,6 +9,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import PlayerPage from './PlayerPage.vue';
 import Player from '../components/Player.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -673,6 +676,22 @@ describe('PlayerPage — resume + theater + ambient', () => {
     w.findComponent(Player).vm.$emit('theater', true);
     await w.vm.$nextTick();
     expect(w.find('.player-page').classes()).toContain('is-theater');
+  });
+
+  it('grows the stage to 100dvh under theater, keeping the default 16:9/90vh cap (S34)', () => {
+    // jsdom does not apply an SFC's compiled <style>, so pin the sizing contract
+    // off the raw source. The DEFAULT stage carries no viewport-height cap; the
+    // theater stage fills 100dvh (with a vh fallback) once the shell chrome is gone.
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './PlayerPage.vue'), 'utf8');
+    // The loading skeleton keeps the 16:9 / 90vh footprint as the default look.
+    expect(src).toMatch(/\.player-page__skeleton\s*\{[\s\S]*?aspect-ratio:\s*16\s*\/\s*9;[\s\S]*?max-height:\s*90vh;/);
+    // The theater stage grows full-bleed.
+    const rule = src.match(/\.player-page\.is-theater\s+\.player-page__stage\s*\{([\s\S]*?)\}/);
+    expect(rule, 'a theater stage rule exists').toBeTruthy();
+    const body = rule![1];
+    expect(body).toMatch(/padding:\s*0;/); // gutter removed
+    expect(body).toMatch(/height:\s*100dvh;/); // fills the dynamic viewport
+    expect(body).toMatch(/height:\s*100vh;/); // …with a vh fallback
   });
 
   it('escapes the poster url in the ambient backdrop so it cannot break out of CSS url()', async () => {

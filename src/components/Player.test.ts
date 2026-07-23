@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { setActivePinia, createPinia } from 'pinia';
 import Player from './Player.vue';
 import Scrubber from './player/Scrubber.vue';
@@ -2381,5 +2384,31 @@ describe('Player — marker-search routes through apiBase (UI-0.6, U-P6/U-P11)',
     w.findComponent(Modal).vm.$emit('close');
     await nextTick();
     expect(capturedSignal!.aborted).toBe(true);
+  });
+});
+
+describe('Player — theater full-bleed sizing (S34)', () => {
+  // jsdom does not apply an SFC's compiled <style>, so pin the sizing CONTRACT off
+  // the raw source: the DEFAULT `.player` keeps the 16:9 / 90vh cap; the
+  // `.player.is-theater` state releases both and grows to 100dvh (with a vh
+  // fallback), while `object-fit: contain` keeps the frame letterboxed.
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './Player.vue'), 'utf8');
+
+  it('keeps the 16:9 + 90vh cap as the default (non-theater) frame', () => {
+    expect(src).toMatch(/\.player\s*\{[\s\S]*?aspect-ratio:\s*16\s*\/\s*9;[\s\S]*?max-height:\s*90vh;/);
+  });
+
+  it('grows `.player.is-theater` to 100dvh and drops the aspect/height cap', () => {
+    const rule = src.match(/\.player\.is-theater\s*\{([\s\S]*?)\}/);
+    expect(rule, 'a .player.is-theater rule exists').toBeTruthy();
+    const body = rule![1];
+    expect(body).toMatch(/aspect-ratio:\s*auto;/); // 16:9 lock released
+    expect(body).toMatch(/height:\s*100dvh;/); // fills the dynamic viewport
+    expect(body).toMatch(/height:\s*100vh;/); // …with a vh fallback
+    expect(body).toMatch(/max-height:\s*100dvh;/); // 90vh cap lifted
+  });
+
+  it('keeps `object-fit: contain` on the video (no crop/stretch in theater)', () => {
+    expect(src).toMatch(/\.player__video\s*\{[\s\S]*?object-fit:\s*contain;/);
   });
 });

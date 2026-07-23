@@ -1836,9 +1836,18 @@ onBeforeUnmount(() => {
 }
 
 /* Theater mode — widen + go edge-to-edge in-component; the host page dims and
-   widens around it (R3.9). The ambient glow also brightens (ambientIntensity). */
+   widens around it (R3.9). The ambient glow also brightens (ambientIntensity).
+   S34: release the default 16:9 lock + 90vh cap so the player fills the whole
+   viewport height (the host route is `fullBleed`, so no shell chrome eats into
+   it). `object-fit: contain` on `.player__video` keeps the frame letterboxed —
+   never cropped or stretched. `dvh` tracks the mobile dynamic viewport (URL bar
+   in/out); the plain `vh` line is the fallback for engines without `dvh`. */
 .player.is-theater {
+  aspect-ratio: auto;
+  height: 100vh;
+  height: 100dvh;
   max-height: 100vh;
+  max-height: 100dvh;
 }
 .player.is-theater .player__stage {
   border-radius: 0;
