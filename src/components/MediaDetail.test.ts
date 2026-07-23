@@ -174,6 +174,56 @@ describe('MediaDetail — sparse metadata (degrades)', () => {
   it('does not render an ambient layer without a poster', () => {
     const w = mount(MediaDetail, { props: { item: media({ poster_url: null }) } });
     expect(w.find('.media-detail__ambient').exists()).toBe(false);
+    // S19: the ambient scrim shares the poster condition — no poster, no scrim.
+    expect(w.find('.media-detail__ambient-scrim').exists()).toBe(false);
+  });
+});
+
+describe('MediaDetail — ambient scrim (S19)', () => {
+  it('pairs the poster-derived ambient with a sibling scrim for a backdrop-LESS hero', () => {
+    // A title with a poster (so an ambient wash) but genuinely no backdrop image
+    // (neither field set): the ambient scrim is what keeps the hero text readable
+    // over a bright poster, since there is no backdrop scrim to do it.
+    const w = mount(MediaDetail, {
+      props: { item: media({ poster_url: 'https://img/dune.jpg', backdrop_url: null, backdrop_url_large: null }) },
+    });
+    expect(w.find('.media-detail__ambient').exists()).toBe(true);
+    expect(w.find('.media-detail__ambient-scrim').exists()).toBe(true);
+    // decorative overlay — hidden from assistive tech, like the backdrop scrim.
+    expect(w.find('.media-detail__ambient-scrim').attributes('aria-hidden')).toBe('true');
+    // no backdrop layer here, so the ambient scrim is the ONLY darkening overlay.
+    expect(w.find('.media-detail__backdrop').exists()).toBe(false);
+  });
+
+  it('does NOT paint the ambient scrim when a backdrop (with its own scrim) is present', () => {
+    // The common TMDB case: BOTH a poster and a backdrop. The backdrop layer
+    // already carries `.media-detail__backdrop-scrim`, so also painting the
+    // ambient scrim would stack two 0.55-black scrims + compound the blur and
+    // over-darken the hero (the S19 regression). This test FAILS against the
+    // pre-fix poster-only-gated scrim, which always rendered it.
+    const w = mount(MediaDetail, {
+      props: { item: media({ poster_url: 'https://img/dune.jpg', backdrop_url: 'https://img/dune-backdrop.jpg' }) },
+    });
+    // the faint poster ambient wash still renders...
+    expect(w.find('.media-detail__ambient').exists()).toBe(true);
+    // ...but its scrim is suppressed — the backdrop's scrim already darkens the hero.
+    expect(w.find('.media-detail__ambient-scrim').exists()).toBe(false);
+    // the backdrop layer + its own scrim are the single source of hero darkening.
+    expect(w.find('.media-detail__backdrop').exists()).toBe(true);
+    expect(w.find('.media-detail__backdrop-scrim').exists()).toBe(true);
+  });
+
+  it('suppresses the ambient scrim for a large-only backdrop too (same source expression)', () => {
+    // The guard reuses the backdropSrc computed (backdrop_url_large || backdrop_url),
+    // so a title with only the full-res backdrop still suppresses the ambient scrim.
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({ poster_url: 'https://img/dune.jpg', backdrop_url: null, backdrop_url_large: 'https://img/original.jpg' }),
+      },
+    });
+    expect(w.find('.media-detail__ambient').exists()).toBe(true);
+    expect(w.find('.media-detail__ambient-scrim').exists()).toBe(false);
+    expect(w.find('.media-detail__backdrop').exists()).toBe(true);
   });
 });
 

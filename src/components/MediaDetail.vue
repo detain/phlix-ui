@@ -587,12 +587,26 @@ onBeforeUnmount(() => {
       tabindex="-1"
     />
 
-    <div
-      v-if="item.poster_url"
-      class="media-detail__ambient"
-      :style="{ backgroundImage: `url(${item.poster_url})` }"
-      aria-hidden="true"
-    />
+    <!-- S19: poster-derived ambient wash + its scrim. The ambient is a faint,
+         heavily-blurred poster background; on a title with an ambient but NO
+         backdrop image it had no darkening overlay, so a bright poster could
+         wash out the light hero text. Mirror the backdrop's scrim as a *sibling*
+         layer (a child/pseudo would inherit the ambient's opacity:0.18 +
+         blur(60px) and be crushed) to restore legibility.
+
+         The scrim is gated on `!backdropSrc` (the SAME source the backdrop layer
+         uses to decide whether to render) so it paints ONLY in the backdrop-less
+         case. When a backdrop is present its own `.media-detail__backdrop-scrim`
+         already darkens the hero, so also painting the ambient scrim would stack
+         two scrims and over-darken the hero. -->
+    <template v-if="item.poster_url">
+      <div
+        class="media-detail__ambient"
+        :style="{ backgroundImage: `url(${item.poster_url})` }"
+        aria-hidden="true"
+      />
+      <div v-if="!backdropSrc" class="media-detail__ambient-scrim" aria-hidden="true" />
+    </template>
 
     <div class="media-detail__bar">
       <Button v-if="showBack" variant="ghost" size="sm" left-icon="arrow-left" @click="emit('back')">Back</Button>
@@ -905,6 +919,27 @@ onBeforeUnmount(() => {
   mask-image: linear-gradient(to bottom, #000, transparent);
 }
 
+/* S19: mirror .media-detail__backdrop-scrim onto the poster-derived ambient so
+   the hero text stays legible when a title has an ambient wash but NO backdrop
+   image. Same dark gradient bias (top→bottom + left→right) and 2px blur as the
+   backdrop scrim; a sibling layer, sized + bottom-masked to the ambient's 60vh
+   band. It must NOT be a child/pseudo of .media-detail__ambient — that element's
+   opacity:0.18 + filter:blur(60px) would crush and blur the scrim to nothing. */
+.media-detail__ambient-scrim {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 60vh;
+  z-index: 0;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(2px) saturate(1.05);
+  backdrop-filter: blur(2px) saturate(1.05);
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
+    linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 60%);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+}
+
 /* U3: full-bleed page backdrop — a fixed layer behind the content holding a
    responsive <img> + a dim/blur scrim so title/meta/overview stay legible in
    both the dark and daylight themes. Scoped to the detail view; does not touch
@@ -1016,6 +1051,11 @@ onBeforeUnmount(() => {
   letter-spacing: var(--tracking-tight);
   color: var(--text);
   margin-bottom: var(--space-3);
+  /* S19: subtle legibility shadow — belt-and-suspenders on top of the ambient
+     scrim so light hero text stays readable over a bright poster ambient. Soft
+     blur, no visible offset ridge → not embossed; a dark halo that is a no-op
+     behind the dark text of the light (Daylight) theme. */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* Title-logo overlay — a fitted title artwork in place of the text title.
@@ -1038,6 +1078,8 @@ onBeforeUnmount(() => {
   color: var(--text-muted);
   font-size: var(--text-sm);
   margin-bottom: var(--space-4);
+  /* S19: subtle legibility shadow (see .media-detail__title). */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 .media-detail__meta-item {
   display: inline-flex;
@@ -1106,6 +1148,8 @@ onBeforeUnmount(() => {
   color: var(--text-muted);
   line-height: var(--leading-relaxed, 1.6);
   margin-bottom: var(--space-6);
+  /* S19: subtle legibility shadow (see .media-detail__title). */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .media-detail__actions {
