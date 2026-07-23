@@ -93,6 +93,17 @@ function jsonResponse(body: unknown): Response {
 
 const ONE_LIBRARY: LibrarySummary[] = [{ id: 'lib1', name: 'Movies', type: 'movie' }];
 
+/** One recommendation as GET /api/v1/me/recommendations returns it (S26). */
+interface UserRecommendation {
+  id: string;
+  title: string;
+  posterUrl: string | null;
+  year: number | null;
+  score: number;
+  reason: 'because_you_watched';
+  computedAt: string;
+}
+
 /**
  * Stub fetch, branching by URL: `/api/v1/libraries` → `{ libraries }`,
  * `/api/v1/users/me/favorites` → `{ items, limit, offset }` (the favorites rail;
@@ -109,6 +120,9 @@ function stubFetch(
     libraries?: LibrarySummary[];
     media?: { items: MediaItem[]; total: number };
     favorites?: MediaItem[] | (() => MediaItem[]);
+    /** Recommended rail payload (S26). Defaults to empty, hiding the rail unless
+     *  a test supplies items — mirrors the favorites/continue-watching defaults. */
+    recommendations?: UserRecommendation[];
     /** Continue Watching items with optional position_ticks for resume position.
      *  Defaults to empty, hiding the Continue Watching rail unless supplied.
      *  Items carry an extra `position_ticks` field (the resume payload shape,
@@ -125,8 +139,12 @@ function stubFetch(
   const favoritesOf = (): MediaItem[] =>
     typeof opts.favorites === 'function' ? opts.favorites() : (opts.favorites ?? []);
   const continueWatchingItems = opts.continueWatching ?? [];
+  const recommendations = opts.recommendations ?? [];
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
+    if (u.includes('/api/v1/me/recommendations')) {
+      return Promise.resolve(jsonResponse({ recommendations }));
+    }
     if (u.includes('/api/v1/users/me/favorites')) {
       const items = favoritesOf();
       return Promise.resolve(jsonResponse({ items, limit: 24, offset: 0 }));
@@ -279,6 +297,11 @@ function favoritesRow(w: ReturnType<typeof mountPage>) {
   // S07: the favorites rail is now displayed under the title "My List" (label-only
   // rename; the underlying favorites store/API/client are unchanged).
   return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'My List');
+}
+
+function recommendedRow(w: ReturnType<typeof mountPage>) {
+  // S26: the Recommended rail reuses the existing recommendations endpoint.
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Recommended');
 }
 
 describe('BrowsePage — per-library sections', () => {
@@ -518,6 +541,54 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
     await flushPromises();
 
     expect(favoritesRow(w)).toBeUndefined();
+  });
+});
+
+describe('BrowsePage — Recommended row (S26)', () => {
+  it('renders a "Recommended" rail with items from GET /api/v1/me/recommendations', async () => {
+    const fn = stubFetch({
+      libraries: ONE_LIBRARY,
+      recommendations: [
+        {
+          id: 'rec1',
+          title: 'Because You Watched Dune',
+          posterUrl: null,
+          year: 2024,
+          score: 0.9,
+          reason: 'because_you_watched',
+          computedAt: '2026-07-23T00:00:00Z',
+        },
+        {
+          id: 'rec2',
+          title: 'Another Pick',
+          posterUrl: 'https://img/rec2.jpg',
+          year: 2023,
+          score: 0.7,
+          reason: 'because_you_watched',
+          computedAt: '2026-07-23T00:00:00Z',
+        },
+      ],
+    });
+    const w = mountPage();
+    await flushPromises();
+    const row = recommendedRow(w);
+    expect(row).toBeTruthy();
+    const items = row!.props('items') as MediaItem[];
+    expect(items.map((i) => i.id)).toEqual(['rec1', 'rec2']);
+    expect(items[0].name).toBe('Because You Watched Dune');
+    // It reused the EXISTING recommendations endpoint (no backend change).
+    expect(
+      fn.mock.calls.some(
+        ([u]) => typeof u === 'string' && (u as string).includes('/api/v1/me/recommendations'),
+      ),
+    ).toBe(true);
+  });
+
+  it('hides the Recommended rail when there are no recommendations', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, recommendations: [] });
+    const w = mountPage();
+    await flushPromises();
+    expect(recommendedRow(w)).toBeUndefined();
   });
 });
 
