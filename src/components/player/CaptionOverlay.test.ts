@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick, markRaw } from 'vue';
 import CaptionOverlay from './CaptionOverlay.vue';
@@ -219,5 +219,83 @@ describe('CaptionOverlay', () => {
   it('survives a null video (no crash, renders nothing)', () => {
     const w = mountOverlay({ video: null, language: 'en' });
     expect(w.find('.player__captions').exists()).toBe(false);
+  });
+
+  // ---- S13: unconditional deferred mode re-check (scheduleModeRecheck) ---------
+  // Covers the readyState-2 / no-cuechange gap directly. `rebind()` schedules a
+  // single `setTimeout(0)` re-check that re-asserts `applyTrackModes` and re-reads
+  // the (now-available) active cues even when NO `<track>` load listener was
+  // attached (the guard only attaches one while `readyState !== 2`). Driven with
+  // vitest fake timers since it is a `setTimeout(0)`.
+  describe('scheduleModeRecheck (S13 deferred re-check)', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('re-asserts the default track mode and paints its cue on the deferred re-check for an already-LOADED (readyState 2) track that never fired cuechange', async () => {
+      vi.useFakeTimers();
+      // Server-default subtitle: the sidecar <track> is already LOADED (readyState
+      // 2) but its cues are not surfaced synchronously at bind (activeCues empty),
+      // and the engine never fires cuechange for the cue already active at load.
+      // The `readyState !== 2` load-listener guard is skipped for a LOADED track,
+      // so before S13 this stayed blank until a manual off/on toggle.
+      const en = fakeTrack({ language: 'en', activeCues: [] });
+      const el = fakeTrackEl(en, 2 /* LOADED */);
+      const w = mountOverlay({ video: videoWithEls([en], [el]), language: 'en' });
+      await nextTick();
+      expect(w.find('.player__captions').exists()).toBe(false); // blank at bind
+      expect(el.handlers.load ?? []).toHaveLength(0); // no load listener (readyState 2)
+      // A competing owner flips the track to `showing` (the native-default fight
+      // S13 removes) and the cue is now active — but no cuechange ever fires.
+      en.mode = 'showing';
+      en.activeCues = [{ text: 'Deferred paint' }];
+      vi.runAllTimers(); // fire the setTimeout(0) deferred re-check
+      await nextTick();
+      expect(en.mode).toBe('hidden'); // applyTrackModes re-settled the mode
+      expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['Deferred paint']);
+    });
+
+    it('does not blank an already-painted cue when the deferred re-check reads no active cues', async () => {
+      vi.useFakeTimers();
+      const en = fakeTrack({ language: 'en', activeCues: [] });
+      const el = fakeTrackEl(en, 2 /* LOADED */);
+      const w = mountOverlay({ video: videoWithEls([en], [el]), language: 'en' });
+      await nextTick();
+      // A real cuechange paints a line before the deferred re-check fires.
+      en.activeCues = [{ text: 'Painted by cuechange' }];
+      fireCue(en);
+      await nextTick();
+      expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['Painted by cuechange']);
+      // Playhead now sits between cues → activeCues empty when the re-check runs.
+      en.activeCues = [];
+      vi.runAllTimers();
+      await nextTick();
+      // The re-check overwrites `lines` only when cues are present, so it must NOT
+      // blank the line the cuechange painted.
+      expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['Painted by cuechange']);
+    });
+
+    it('cancels the pending deferred re-check on unmount (no leaked timer)', async () => {
+      vi.useFakeTimers();
+      const en = fakeTrack({ language: 'en', activeCues: [] });
+      const el = fakeTrackEl(en, 2 /* LOADED */);
+      const w = mountOverlay({ video: videoWithEls([en], [el]), language: 'en' });
+      await nextTick();
+      expect(vi.getTimerCount()).toBe(1); // exactly one deferred re-check pending
+      w.unmount(); // onBeforeUnmount → unbind → clearRecheck
+      expect(vi.getTimerCount()).toBe(0); // cancelled — no leak
+    });
+
+    it('keeps at most one deferred re-check pending across a rapid rebind (language switch)', async () => {
+      vi.useFakeTimers();
+      const en = fakeTrack({ language: 'en', activeCues: [] });
+      const es = fakeTrack({ language: 'es', activeCues: [] });
+      const w = mountOverlay({ video: videoWith([en, es]), language: 'en' });
+      await nextTick();
+      expect(vi.getTimerCount()).toBe(1);
+      await w.setProps({ language: 'es' }); // rebind → unbind clears the stale timer, reschedules
+      await nextTick();
+      expect(vi.getTimerCount()).toBe(1); // still one — the previous timer was cancelled
+    });
   });
 });
