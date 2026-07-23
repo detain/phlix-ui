@@ -33,11 +33,44 @@ const vars = computed(() => captionStyleVars(props.styleConfig));
 
 let boundTrack: TextTrack | null = null;
 let boundTrackEl: HTMLTrackElement | null = null;
+/** Handle for the one short deferred mode re-check scheduled per `rebind` (S13);
+ *  cancelled by `unbind`/rebind so at most one is ever pending. */
+let recheckTimer: ReturnType<typeof setTimeout> | null = null;
+
 function onCueChange(): void {
   lines.value = readActiveCueLines(boundTrack);
 }
 
+function clearRecheck(): void {
+  if (recheckTimer != null) {
+    clearTimeout(recheckTimer);
+    recheckTimer = null;
+  }
+}
+
+/** One short, UNCONDITIONAL deferred re-assertion of the selected track's mode +
+ *  active cues (S13). Runs regardless of `readyState`, closing the gap the
+ *  `readyState !== 2` load-listener guard above leaves open: when a server-default
+ *  track is ALREADY loaded (readyState 2) at bind but its first cue never painted
+ *  — the engine does not reliably fire `cuechange` for the cue already active at
+ *  load — no load listener is attached and captions stayed blank until a manual
+ *  off/on toggle. Re-asserting `applyTrackModes` also re-settles the `mode` should
+ *  any other owner have touched it, then we re-read the now-available cues. Only
+ *  overwrites `lines` when cues are actually present, so a genuinely empty read
+ *  (playhead between cues) never blanks a cue a `cuechange` painted in between. */
+function scheduleModeRecheck(): void {
+  clearRecheck();
+  recheckTimer = setTimeout(() => {
+    recheckTimer = null;
+    if (!boundTrack) return;
+    applyTrackModes(props.video, props.language);
+    const next = readActiveCueLines(boundTrack);
+    if (next.length) lines.value = next;
+  }, 0);
+}
+
 function unbind(): void {
+  clearRecheck();
   boundTrack?.removeEventListener('cuechange', onCueChange);
   boundTrackEl?.removeEventListener('load', onCueChange);
   boundTrack = null;
@@ -80,6 +113,12 @@ function rebind(): void {
         el.addEventListener('load', onCueChange);
       }
     }
+    // Defense-in-depth (S13): unconditionally re-assert the track mode + re-read
+    // cues on the next tick, regardless of `readyState`. The gate above skips the
+    // load-listener re-read for an already-LOADED (readyState 2) server-default
+    // track whose first cue never fired `cuechange`, which is exactly the blank
+    // state that a manual off/on toggle used to fix.
+    scheduleModeRecheck();
   } else {
     lines.value = [];
   }

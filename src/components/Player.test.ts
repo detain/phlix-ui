@@ -920,7 +920,7 @@ describe('Player — server subtitle sidecars (U4)', () => {
     return tracks;
   }
 
-  it('renders a <track> per server subtitle track with the right src/srclang/label/default', async () => {
+  it('renders a <track> per server subtitle track with the right src/srclang/label (no native default attr)', async () => {
     tc().subtitleTracks.value = [
       srvTrack({ index: 0, language: 'eng', label: 'English 1', default: true, url: 'http://x/hls/j/sub-0.vtt' }),
       srvTrack({ index: 1, language: 'jpn', label: 'Japanese', default: false, url: 'http://x/hls/j/sub-1.vtt' }),
@@ -932,7 +932,12 @@ describe('Player — server subtitle sidecars (U4)', () => {
     expect(tracks[0].attributes('src')).toBe('http://x/hls/j/sub-0.vtt');
     expect(tracks[0].attributes('srclang')).toBe('eng');
     expect(tracks[0].attributes('label')).toBe('English 1');
-    expect(tracks[0].attributes('default')).toBeDefined();
+    // S13: the native `:default` binding was removed — even a server-default track
+    // (default:true) must NOT carry the native `default` attribute, so it cannot
+    // fight the JS mode management. `maybeApplyServerDefault`/`applyTrackModes` are
+    // the sole owners of each track's mode (see the "selects the server default
+    // track…" test below for the JS path that actually applies it on load).
+    expect(tracks[0].attributes('default')).toBeUndefined();
     expect(tracks[1].attributes('src')).toBe('http://x/hls/j/sub-1.vtt');
     expect(tracks[1].attributes('default')).toBeUndefined();
   });
