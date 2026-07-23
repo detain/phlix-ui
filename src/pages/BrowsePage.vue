@@ -254,7 +254,12 @@ async function loadMostWatched(): Promise<void> {
       limit: MOST_WATCHED_LIMIT,
     });
     mostWatchedItems.value = items;
-    items.forEach((i) => userItemData.hydrate(i));
+    // NOTE: unlike loadFavorites, most-watched rows carry NO per-user `user_data`
+    // (MostWatchedController shapes rows with no user context — same as Recommended).
+    // Calling userItemData.hydrate here would REPLACE existing store entries with
+    // all-false defaults, transiently wiping favorite/watched/rating badges for items
+    // that are both a favorite AND globally most-watched (state-wipe race). So we only
+    // remember() for admin match/poster reconciliation — mirroring loadRecommendations.
     remember(items);
   } catch (e) {
     mostWatchedError.value = e instanceof Error ? e.message : 'Failed to load most watched';

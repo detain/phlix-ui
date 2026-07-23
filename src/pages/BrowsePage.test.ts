@@ -641,6 +641,39 @@ describe('BrowsePage — Most Watched row (S32)', () => {
     await flushPromises();
     expect(mostWatchedRow(w)).toBeUndefined();
   });
+
+  it('does NOT overwrite existing useUserItemDataStore entries (no state-wipe race)', async () => {
+    // Regression (Fixer): loadMostWatched must NEVER write to useUserItemDataStore.
+    // Most-watched rows carry NO per-user `user_data` (MostWatchedController shapes
+    // rows with no user context — same as Recommended), so calling `hydrate` on them
+    // would REPLACE a correct store entry with all-false defaults, transiently wiping
+    // the favorite heart / watched badge / rating for an item that is BOTH a favorite
+    // (or watched/rated) AND globally most-watched. Mirrors the Recommended sibling,
+    // which never hydrates. Pre-fix (the copied `hydrate` call) these assertions fail.
+    const userItemData = useUserItemDataStore();
+    // Seed the store as Favorites / Continue-Watching / a detail visit legitimately
+    // would: this item is a favorite, watched, and rated.
+    userItemData.hydrate(
+      media({ id: 'mw1', user_data: { favorite: true, watched: true, rating: 9 } }),
+    );
+    expect(userItemData.isFavorite('mw1')).toBe(true);
+
+    // The Most Watched endpoint returns the SAME id with NO user_data.
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      mostWatched: [media({ id: 'mw1', name: 'Most Popular' })],
+    });
+    const w = mountPage();
+    await flushPromises();
+
+    // The rail rendered the item (confirms loadMostWatched actually ran)...
+    expect(mostWatchedRow(w)).toBeTruthy();
+    // ...but the pre-seeded store entry is UNCHANGED (pre-fix: hydrate REPLACED it
+    // with all-false, so favorite/watched/rating would be wiped here).
+    expect(userItemData.isFavorite('mw1')).toBe(true);
+    expect(userItemData.isWatched('mw1')).toBe(true);
+    expect(userItemData.get('mw1').rating).toBe(9);
+  });
 });
 
 describe('BrowsePage — card actions', () => {
