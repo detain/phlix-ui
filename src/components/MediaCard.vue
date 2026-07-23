@@ -91,8 +91,17 @@ const props = withDefaults(
      * season grid to show "N episodes" while reusing this exact card design.
      */
     subtitle?: string | null;
+    /**
+     * Apply the native `loading="lazy"` attribute to the poster `<img>`.
+     * Default `true` — every standalone/rail host keeps native lazy-loading.
+     * `MediaGrid` passes `false` (S35): its JS virtualization already guarantees
+     * only near-viewport cards exist in the DOM, so native lazy-load is redundant
+     * there and layering it over cards repositioned via `transform` in the same
+     * reactive flush is a known browser-timing stall trigger.
+     */
+    lazy?: boolean;
   }>(),
-  { newWithinDays: 30, canMatch: false, hideActions: false, playOnly: false, subtitle: null },
+  { newWithinDays: 30, canMatch: false, hideActions: false, playOnly: false, subtitle: null, lazy: true },
 );
 
 const emit = defineEmits<{
@@ -423,7 +432,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         :srcset="posterSources.srcset"
         :sizes="posterSources.sizes"
         :alt="item.name"
-        loading="lazy"
+        :loading="lazy ? 'lazy' : undefined"
         decoding="async"
         :fetchpriority="fetchPriority"
         @load="onLoad"

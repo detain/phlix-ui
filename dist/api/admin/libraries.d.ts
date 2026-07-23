@@ -101,6 +101,17 @@ export interface Library {
      * selectable type, `enabled` is this library's current selection.
      */
     image_types?: LibraryImageTypes;
+    /**
+     * Effective per-library TMDB box-set auto-collection toggle (S33). Surfaced on
+     * every library row by `LibraryRow::toArray()` as `{ enabled: bool }`. The
+     * server DEFAULTS `enabled` to `true` for libraries that never stored the flag
+     * (`LibraryRow::autoCollectionsEnabled()`), so the effective value is always
+     * concrete; the UI still treats an absent block as enabled to match that
+     * default.
+     */
+    auto_collections?: {
+        enabled: boolean;
+    };
     [k: string]: unknown;
 }
 /**
@@ -154,6 +165,14 @@ export interface CreateLibraryInput {
      * default image-type set).
      */
     image_types?: Record<string, boolean> | string[] | null;
+    /**
+     * Per-library TMDB box-set auto-collection toggle (S33). Sent at the body top
+     * level as a bare boolean; `LibraryController` accepts it (or a
+     * `{ enabled: bool }` object) and persists the canonical `{ enabled: bool }`
+     * under `options.autoCollections`, MERGING it so unrelated option keys survive.
+     * Absent means "leave the stored value / default (ON) untouched".
+     */
+    autoCollections?: boolean;
 }
 /**
  * Body accepted by {@link AdminLibrariesApi.update}. NOTE the deliberate
@@ -169,6 +188,8 @@ export interface UpdateLibraryInput {
     metadata_priority?: Record<string, string[]> | null;
     /** See {@link CreateLibraryInput.image_types}. */
     image_types?: Record<string, boolean> | string[] | null;
+    /** See {@link CreateLibraryInput.autoCollections}. */
+    autoCollections?: boolean;
 }
 /** Result of {@link AdminLibrariesApi.create}. */
 export interface CreateLibraryResult {

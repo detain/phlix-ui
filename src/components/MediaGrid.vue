@@ -163,11 +163,26 @@ function scheduleMeasure(): void {
 
 // --- derived layout ---
 /**
- * Guards visibleItems recompute: only re-slice when startIndex/endIndex change.
- * Uses a plain closure variable (not reactive) to avoid vue/no-side-effects in computed.
- * Each component instance gets its own closure, so no cross-instance pollution.
+ * Guards visibleItems recompute: only re-slice when the window band or the source
+ * `items` array actually change. Uses a plain closure variable (not reactive) to
+ * avoid vue/no-side-effects in computed. Each component instance gets its own
+ * closure, so no cross-instance pollution.
+ *
+ * `source` is part of the cache key (S35): on-demand paging fills skeleton slots
+ * by REPLACING `items` with a new array (see useMediaStore.placePage), WITHOUT
+ * moving the scroll window. Keying only on start/end would then keep returning
+ * the previously-cached slice — still holding `null` for the just-loaded indices,
+ * so those posters stayed stuck as skeletons until a scroll shifted the band and
+ * incidentally busted the cache. Keying on the array identity too makes a fill
+ * re-slice immediately, while a pure scroll tick (same array, same band) still
+ * skips the work.
  */
-type WindowCache = { startIndex: number; endIndex: number; items: { item: MediaItem | null; index: number }[] };
+type WindowCache = {
+  startIndex: number;
+  endIndex: number;
+  source: readonly MediaItem[];
+  items: { item: MediaItem | null; index: number }[];
+};
 let windowCache: WindowCache | null = null;
 
 const columns = computed(() => computeColumns(containerWidth.value, cardSize.value, COL_GAP));
@@ -197,18 +212,30 @@ const visibleItems = computed(() => {
   if (!virtualized.value) {
     return props.items.map((item, index) => ({ item: item as MediaItem | null, index }));
   }
+  // Read `items` up-front so the computed ALWAYS tracks it as a reactive
+  // dependency — even on a cache hit. Without this read the cache-hit early
+  // return never touches `props.items`, so a later on-demand fill (a new array)
+  // would not invalidate the computed and the freshly-loaded posters would stay
+  // skeletons until a scroll happened to change the window band (S35).
+  const source = props.items;
   const { startIndex, endIndex } = windowResult.value;
-  // Gating on integer indices: skip recompute when the window hasn't moved.
-  // The scrollTop ref updates on every tick, but startIndex/endIndex only
-  // change when the row band actually shifts — no point re-slicing the array.
-  if (windowCache && windowCache.startIndex === startIndex && windowCache.endIndex === endIndex) {
+  // Gating: skip recompute when neither the window band NOR the source array
+  // moved. The scrollTop ref updates on every tick, but startIndex/endIndex only
+  // change when the row band actually shifts, and `source` only changes when a
+  // page is (re)placed — so a pure scroll tick still avoids re-slicing.
+  if (
+    windowCache &&
+    windowCache.startIndex === startIndex &&
+    windowCache.endIndex === endIndex &&
+    windowCache.source === source
+  ) {
     return windowCache.items;
   }
   const out: { item: MediaItem | null; index: number }[] = [];
   // Indices past the loaded set render as skeletons (pre-sized grid); they fill
   // in once on-demand paging fetches them.
-  for (let i = startIndex; i < endIndex; i++) out.push({ item: props.items[i] ?? null, index: i });
-  windowCache = { startIndex, endIndex, items: out };
+  for (let i = startIndex; i < endIndex; i++) out.push({ item: source[i] ?? null, index: i });
+  windowCache = { startIndex, endIndex, source, items: out };
   return out;
 });
 
@@ -416,6 +443,7 @@ watch(
               <MediaCard
                 :item="entry.item"
                 :can-match="canMatch"
+                :lazy="false"
                 @play="emit('play', entry.item)"
                 @watchlist="emit('watchlist', entry.item)"
                 @info="emit('info', entry.item)"

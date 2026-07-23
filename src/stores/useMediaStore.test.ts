@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useMediaStore } from './useMediaStore';
+import { useToastStore } from './useToastStore';
 import type { MediaItem } from '../types/media-item';
 
 function makeItems(prefix: string, n: number): MediaItem[] {
@@ -384,6 +385,78 @@ describe('useMediaStore — ensureRange (random-access paging / A-Z jump)', () =
     // never requested an offset >= total (30)
     const requested = fetchMock.mock.calls.map((c: [string]) => Number(/[?&]offset=(\d+)/.exec(c[0])?.[1] ?? 0));
     expect(Math.max(...requested)).toBeLessThan(30);
+  });
+
+  // S35: the old catch swallowed a failed random-access page fetch, stranding
+  // those grid slots as skeletons forever. It now retries (bounded) and, only
+  // once every attempt is exhausted, surfaces a single toast.
+  it('retries a failed page fetch (bounded) and fills the slots on a later attempt', async () => {
+    vi.useFakeTimers();
+    let attemptsAt9 = 0;
+    fetchMock = vi.fn((url: string) => {
+      const off = Number(/[?&]offset=(\d+)/.exec(url)?.[1] ?? 0);
+      if (off === 9) {
+        attemptsAt9++;
+        if (attemptsAt9 < 2) return Promise.reject(new Error('network'));
+      }
+      return Promise.resolve(jsonResponse({ items: makeItems(`o${off}`, 3), total: 30, limit: 3, offset: off }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const errSpy = vi.spyOn(useToastStore(), 'error');
+    const s = useMediaStore();
+    s.limit = 3;
+    await s.fetchMedia(''); // page 0
+    const p = s.ensureRange('', 9, 12); // page 9 fails once, then is retried
+    await vi.runAllTimersAsync();
+    await p;
+    expect(attemptsAt9).toBe(2); // exactly one retry — bounded
+    expect(s.items[9]?.id).toBe('o9-0'); // slot filled after the retry
+    expect(errSpy).not.toHaveBeenCalled(); // recovered → no failure toast
+  });
+
+  it('surfaces a single toast after a page exhausts its bounded retries', async () => {
+    vi.useFakeTimers();
+    fetchMock = vi.fn((url: string) => {
+      const off = Number(/[?&]offset=(\d+)/.exec(url)?.[1] ?? 0);
+      if (off === 9) return Promise.reject(new Error('down'));
+      return Promise.resolve(jsonResponse({ items: makeItems(`o${off}`, 3), total: 30, limit: 3, offset: off }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const errSpy = vi.spyOn(useToastStore(), 'error');
+    const s = useMediaStore();
+    s.limit = 3;
+    await s.fetchMedia('');
+    const p = s.ensureRange('', 9, 12);
+    await vi.runAllTimersAsync();
+    await p;
+    const at9 = fetchMock.mock.calls.filter((c: [string]) => /offset=9/.test(c[0])).length;
+    expect(at9).toBe(3); // ENSURE_RANGE_MAX_ATTEMPTS — bounded, never infinite
+    expect(s.items[9]).toBeUndefined(); // still a skeleton (nothing loaded)
+    expect(errSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the failure toast only once across repeated failing passes', async () => {
+    vi.useFakeTimers();
+    fetchMock = vi.fn((url: string) => {
+      const off = Number(/[?&]offset=(\d+)/.exec(url)?.[1] ?? 0);
+      if (off === 9) return Promise.reject(new Error('down'));
+      return Promise.resolve(jsonResponse({ items: makeItems(`o${off}`, 3), total: 30, limit: 3, offset: off }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const errSpy = vi.spyOn(useToastStore(), 'error');
+    const s = useMediaStore();
+    s.limit = 3;
+    await s.fetchMedia('');
+
+    const p1 = s.ensureRange('', 9, 12);
+    await vi.runAllTimersAsync();
+    await p1;
+    expect(errSpy).toHaveBeenCalledTimes(1);
+
+    const p2 = s.ensureRange('', 9, 12); // still down → must NOT toast again
+    await vi.runAllTimersAsync();
+    await p2;
+    expect(errSpy).toHaveBeenCalledTimes(1);
   });
 });
 
