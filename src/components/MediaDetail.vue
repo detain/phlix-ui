@@ -592,14 +592,20 @@ onBeforeUnmount(() => {
          backdrop image it had no darkening overlay, so a bright poster could
          wash out the light hero text. Mirror the backdrop's scrim as a *sibling*
          layer (a child/pseudo would inherit the ambient's opacity:0.18 +
-         blur(60px) and be crushed) to restore legibility. -->
+         blur(60px) and be crushed) to restore legibility.
+
+         The scrim is gated on `!backdropSrc` (the SAME source the backdrop layer
+         uses to decide whether to render) so it paints ONLY in the backdrop-less
+         case. When a backdrop is present its own `.media-detail__backdrop-scrim`
+         already darkens the hero, so also painting the ambient scrim would stack
+         two scrims and over-darken the hero. -->
     <template v-if="item.poster_url">
       <div
         class="media-detail__ambient"
         :style="{ backgroundImage: `url(${item.poster_url})` }"
         aria-hidden="true"
       />
-      <div class="media-detail__ambient-scrim" aria-hidden="true" />
+      <div v-if="!backdropSrc" class="media-detail__ambient-scrim" aria-hidden="true" />
     </template>
 
     <div class="media-detail__bar">
