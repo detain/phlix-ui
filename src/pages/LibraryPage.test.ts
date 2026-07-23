@@ -14,6 +14,8 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import { useMediaStore } from '../stores/useMediaStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useAuthStore } from '../stores/useAuthStore';
+import ItemDataInspector from '../components/ItemDataInspector.vue';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 
@@ -367,5 +369,59 @@ describe('LibraryPage', () => {
       expect(toggleFavorite).not.toHaveBeenCalled();
       expect(toasts.toasts.some((t) => t.tone === 'info' && /marked "Dune" as unwatched/i.test(t.message))).toBe(true);
     });
+  });
+});
+
+// S15 — the admin ⋯-menu "Edit metadata" / "Explore item data" actions must
+// produce visible UI on the Library grid: the match modal / the read-only
+// inspector. (The MetadataMatchModal is stubbed so its auto-search doesn't run.)
+describe('LibraryPage — Edit metadata / Explore item data (S15)', () => {
+  const MatchModalStub = {
+    name: 'MetadataMatchModal',
+    props: ['modelValue', 'item'],
+    template:
+      '<div class="match-modal-stub" :data-open="String(modelValue)" :data-item-id="item ? item.id : \'\'" />',
+  };
+
+  async function mountAdmin() {
+    stubFetch({ media: { items: [media({ id: 'm1' })], total: 1 } });
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    const r = makeRouter();
+    await r.push('/app/library/lib1');
+    await r.isReady();
+    const w = mount(LibraryPage, {
+      global: {
+        plugins: [r],
+        provide: { apiBase: '', phlixConfig: { app: 'server', apiBase: '' } },
+        stubs: { MetadataMatchModal: MatchModalStub, PosterPicker: true },
+      },
+    });
+    await flushPromises();
+    return w;
+  }
+
+  it('@edit-metadata from the grid → opens the match modal with the item', async () => {
+    const w = await mountAdmin();
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    expect(w.find('.match-modal-stub').attributes('data-open')).toBe('false');
+
+    grid.vm.$emit('edit-metadata', media({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(w.find('.match-modal-stub').attributes('data-open')).toBe('true');
+    expect(w.find('.match-modal-stub').attributes('data-item-id')).toBe('m1');
+  });
+
+  it('@explore-data from the grid → opens the read-only ItemDataInspector', async () => {
+    const w = await mountAdmin();
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    const inspector = w.findComponent(ItemDataInspector);
+    expect(inspector.exists()).toBe(true);
+    expect(inspector.props('modelValue')).toBe(false);
+
+    grid.vm.$emit('explore-data', media({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(inspector.props('modelValue')).toBe(true);
+    expect((inspector.props('item') as MediaItem).id).toBe('m1');
   });
 });

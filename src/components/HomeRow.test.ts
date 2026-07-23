@@ -190,6 +190,20 @@ describe('HomeRow — eager (no IntersectionObserver)', () => {
     expect(w.emitted('watchlist')?.[0]).toEqual([item]);
     expect(w.emitted('info')?.[0]).toEqual([item]);
   });
+
+  // S15: the admin ⋯-menu "Edit metadata" / "Explore item data" actions must
+  // bubble up through HomeRow so the Browse host can open the match modal / inspector.
+  it('forwards edit-metadata/explore-data from the inner rail (S15)', async () => {
+    const item = media({ id: 'fwd' });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [item], total: 1 })));
+    const w = mount(HomeRow, { props: { row, apiBase: '' } });
+    await flushPromises();
+    const inner = w.findComponent(MediaRow);
+    inner.vm.$emit('edit-metadata', item);
+    inner.vm.$emit('explore-data', item);
+    expect(w.emitted('edit-metadata')?.[0]).toEqual([item]);
+    expect(w.emitted('explore-data')?.[0]).toEqual([item]);
+  });
 });
 
 describe('HomeRow — lazy (IntersectionObserver present)', () => {

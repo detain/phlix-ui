@@ -178,6 +178,18 @@ describe('SeriesDetail (U3)', () => {
     expect(w.emitted('watchlist')).toBeTruthy();
     expect(w.emitted('back')).toBeTruthy();
   });
+
+  // S15: the admin ⋯-menu "Edit metadata" / "Explore item data" actions bubble
+  // through the delegated MediaDetail so the host page (MediaDetailPage) can open
+  // the match modal / data inspector for a series too — not just movies.
+  it('re-emits the S15 edit-metadata / explore-data actions to the parent', () => {
+    const w = mountIt();
+    const detail = w.findComponent(MediaDetail);
+    detail.vm.$emit('edit-metadata', media());
+    detail.vm.$emit('explore-data', media());
+    expect(w.emitted('edit-metadata')?.[0]).toEqual([media()]);
+    expect(w.emitted('explore-data')?.[0]).toEqual([media()]);
+  });
 });
 
 // Theme-music playback + the mute/stop control now live in MediaDetail (U4);

@@ -54,6 +54,7 @@ import HomeRow from '../components/HomeRow.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import MediaCard from '../components/MediaCard.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import ItemDataInspector from '../components/ItemDataInspector.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
@@ -687,6 +688,47 @@ describe('BrowsePage — match-apply refresh (U5)', () => {
     const after = w.findAllComponents(MediaCard).map((c) => (c.props('item') as MediaItem).name);
     expect(after).toContain('New Name');
     expect(after).not.toContain('Old Name');
+  });
+});
+
+// S15 — the admin ⋯-menu "Edit metadata" / "Explore item data" actions bubble
+// from a HomeRow rail up to BrowsePage, which opens the (shared) match modal /
+// the read-only inspector. Both must produce VISIBLE UI on this MediaCard host.
+describe('BrowsePage — Edit metadata / Explore item data (S15)', () => {
+  async function mountAdmin() {
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      media: { items: [media({ id: 'p1', name: 'Dune' })], total: 1 },
+    });
+    const w = mountPage();
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true };
+    await flushPromises();
+    return w;
+  }
+
+  it('@edit-metadata from a rail → opens the shared MetadataMatchModal', async () => {
+    const w = await mountAdmin();
+    const modal = w.findComponent(MetadataMatchModal);
+    expect(modal.exists()).toBe(true);
+    expect(modal.props('modelValue')).toBe(false);
+
+    w.findComponent(HomeRow).vm.$emit('edit-metadata', media({ id: 'p1', name: 'Dune' }));
+    await flushPromises();
+    expect(modal.props('modelValue')).toBe(true);
+    expect((modal.props('item') as MediaItem).id).toBe('p1');
+  });
+
+  it('@explore-data from a rail → opens the read-only ItemDataInspector', async () => {
+    const w = await mountAdmin();
+    const inspector = w.findComponent(ItemDataInspector);
+    expect(inspector.exists()).toBe(true);
+    expect(inspector.props('modelValue')).toBe(false);
+
+    w.findComponent(HomeRow).vm.$emit('explore-data', media({ id: 'p1', name: 'Dune' }));
+    await flushPromises();
+    expect(inspector.props('modelValue')).toBe(true);
+    expect((inspector.props('item') as MediaItem).id).toBe('p1');
   });
 });
 

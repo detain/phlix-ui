@@ -29,6 +29,8 @@ import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import PosterPicker from '../components/PosterPicker.vue';
+import ItemDataInspector from '../components/ItemDataInspector.vue';
+import { useItemInspector } from '../composables/useItemInspector';
 import { type SeasonGroup } from '../components/series-grouping';
 import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
 import { pickPlayableEpisode, pickSeasonPlayable } from '../composables/useResolvePlayable';
@@ -320,6 +322,11 @@ const matchOpen = ref(false);
 // Poster picker state — opened from the "Choose poster…" card/detail action.
 const posterPickerOpen = ref(false);
 
+// S15: "Explore item data" opens a read-only client-side inspector for the item
+// (no network call). "Edit metadata" routes to the SAME onMatch/MetadataMatchModal
+// as "Match metadata" — there is no separate metadata-editing API surface.
+const { inspectorItem, inspectorOpen, openInspector } = useItemInspector();
+
 // S02: single metadata-match handler. Both the hero "Match metadata" button
 // (emits `match` with the item) and the ⋯-menu "Match metadata" entry (emits
 // `refresh` with the item) route here — they open the same MetadataMatchModal.
@@ -428,6 +435,8 @@ async function onRemove(m: MediaItem): Promise<void> {
         @match="onMatch"
         @mark-watched="onMarkWatched"
         @refresh="onMatch"
+        @edit-metadata="onMatch"
+        @explore-data="openInspector"
         @choose-poster="onChoosePoster"
         @remove="onRemove"
         @back="onBack"
@@ -450,6 +459,8 @@ async function onRemove(m: MediaItem): Promise<void> {
         @company="onCompany"
         @mark-watched="onMarkWatched"
         @refresh="onMatch"
+        @edit-metadata="onMatch"
+        @explore-data="openInspector"
         @choose-poster="onChoosePoster"
         @remove="onRemove"
         @back="onBack"
@@ -469,6 +480,8 @@ async function onRemove(m: MediaItem): Promise<void> {
       :item="matchTarget"
       @applied="onPosterApplied"
     />
+
+    <ItemDataInspector v-if="auth.isAdmin" v-model="inspectorOpen" :item="inspectorItem" />
   </div>
 </template>
 

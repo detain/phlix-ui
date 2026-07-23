@@ -11,8 +11,12 @@ import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import ExplorePage from './ExplorePage.vue';
 import MediaGrid from '../components/MediaGrid.vue';
+import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import ItemDataInspector from '../components/ItemDataInspector.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
+import { useAuthStore } from '../stores/useAuthStore';
+import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 
 /** Similar item from the similar-items engine (mirrors @phlix/contracts). */
@@ -154,5 +158,42 @@ describe('ExplorePage — converts SimilarItem to MediaItem', () => {
     expect(gridItems[0].name).toBe('Test Title');
     expect(gridItems[0].poster_url).toBe('https://img.jpg');
     expect(gridItems[0].year).toBe(2024);
+  });
+});
+
+// S15 — the admin ⋯-menu "Edit metadata" / "Explore item data" actions must
+// produce visible UI here too (this page previously had NO metadata modal wired).
+describe('ExplorePage — Edit metadata / Explore item data (S15)', () => {
+  async function mountAdmin() {
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    stubFetch();
+    const w = await mountPage({ query: { item: 'm1' } });
+    await flushPromises();
+    return w;
+  }
+
+  it('@edit-metadata from the grid → opens the MetadataMatchModal', async () => {
+    const w = await mountAdmin();
+    const modal = w.findComponent(MetadataMatchModal);
+    expect(modal.exists()).toBe(true);
+    expect(modal.props('modelValue')).toBe(false);
+
+    w.findComponent(MediaGrid).vm.$emit('edit-metadata', { id: 's1', name: 'Similar Movie 1' } as MediaItem);
+    await flushPromises();
+    expect(modal.props('modelValue')).toBe(true);
+    expect((modal.props('item') as MediaItem).id).toBe('s1');
+  });
+
+  it('@explore-data from the grid → opens the read-only ItemDataInspector', async () => {
+    const w = await mountAdmin();
+    const inspector = w.findComponent(ItemDataInspector);
+    expect(inspector.exists()).toBe(true);
+    expect(inspector.props('modelValue')).toBe(false);
+
+    w.findComponent(MediaGrid).vm.$emit('explore-data', { id: 's1', name: 'Similar Movie 1' } as MediaItem);
+    await flushPromises();
+    expect(inspector.props('modelValue')).toBe(true);
+    expect((inspector.props('item') as MediaItem).id).toBe('s1');
   });
 });
