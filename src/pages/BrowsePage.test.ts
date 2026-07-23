@@ -123,6 +123,11 @@ function stubFetch(
     /** Recommended rail payload (S26). Defaults to empty, hiding the rail unless
      *  a test supplies items — mirrors the favorites/continue-watching defaults. */
     recommendations?: UserRecommendation[];
+    /** Most Watched rail payload (S32) — GET /api/v1/media/most-watched returns
+     *  `{ items, total, limit, offset }` with items already shaped as MediaItems
+     *  (server-side MediaItemShaper). Defaults to empty, hiding the rail unless a
+     *  test supplies items — mirrors the recommendations/favorites defaults. */
+    mostWatched?: MediaItem[];
     /** Continue Watching items with optional position_ticks for resume position.
      *  Defaults to empty, hiding the Continue Watching rail unless supplied.
      *  Items carry an extra `position_ticks` field (the resume payload shape,
@@ -140,8 +145,14 @@ function stubFetch(
     typeof opts.favorites === 'function' ? opts.favorites() : (opts.favorites ?? []);
   const continueWatchingItems = opts.continueWatching ?? [];
   const recommendations = opts.recommendations ?? [];
+  const mostWatched = opts.mostWatched ?? [];
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
+    if (u.includes('/api/v1/media/most-watched')) {
+      return Promise.resolve(
+        jsonResponse({ items: mostWatched, total: mostWatched.length, limit: 20, offset: 0 }),
+      );
+    }
     if (u.includes('/api/v1/me/recommendations')) {
       return Promise.resolve(jsonResponse({ recommendations }));
     }
@@ -302,6 +313,12 @@ function favoritesRow(w: ReturnType<typeof mountPage>) {
 function recommendedRow(w: ReturnType<typeof mountPage>) {
   // S26: the Recommended rail reuses the existing recommendations endpoint.
   return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Recommended');
+}
+
+function mostWatchedRow(w: ReturnType<typeof mountPage>) {
+  // S32: the Most Watched rail reuses the existing GET /api/v1/media/most-watched
+  // endpoint (S31; GLOBAL server-wide trending aggregate).
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Most Watched');
 }
 
 describe('BrowsePage — per-library sections', () => {
@@ -589,6 +606,73 @@ describe('BrowsePage — Recommended row (S26)', () => {
     const w = mountPage();
     await flushPromises();
     expect(recommendedRow(w)).toBeUndefined();
+  });
+});
+
+describe('BrowsePage — Most Watched row (S32)', () => {
+  it('renders a "Most Watched" rail with items from GET /api/v1/media/most-watched', async () => {
+    const fn = stubFetch({
+      libraries: ONE_LIBRARY,
+      // The endpoint returns items already shaped as MediaItems (server-side
+      // MediaItemShaper), so no client-side field remapping — identity mapping.
+      mostWatched: [
+        media({ id: 'mw1', name: 'Most Popular' }),
+        media({ id: 'mw2', name: 'Runner Up' }),
+      ],
+    });
+    const w = mountPage();
+    await flushPromises();
+    const row = mostWatchedRow(w);
+    expect(row).toBeTruthy();
+    const items = row!.props('items') as MediaItem[];
+    expect(items.map((i) => i.id)).toEqual(['mw1', 'mw2']);
+    expect(items[0].name).toBe('Most Popular');
+    // It reused the EXISTING most-watched endpoint (no backend change).
+    expect(
+      fn.mock.calls.some(
+        ([u]) => typeof u === 'string' && (u as string).includes('/api/v1/media/most-watched'),
+      ),
+    ).toBe(true);
+  });
+
+  it('hides the Most Watched rail when there is nothing watched yet', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, mostWatched: [] });
+    const w = mountPage();
+    await flushPromises();
+    expect(mostWatchedRow(w)).toBeUndefined();
+  });
+
+  it('does NOT overwrite existing useUserItemDataStore entries (no state-wipe race)', async () => {
+    // Regression (Fixer): loadMostWatched must NEVER write to useUserItemDataStore.
+    // Most-watched rows carry NO per-user `user_data` (MostWatchedController shapes
+    // rows with no user context — same as Recommended), so calling `hydrate` on them
+    // would REPLACE a correct store entry with all-false defaults, transiently wiping
+    // the favorite heart / watched badge / rating for an item that is BOTH a favorite
+    // (or watched/rated) AND globally most-watched. Mirrors the Recommended sibling,
+    // which never hydrates. Pre-fix (the copied `hydrate` call) these assertions fail.
+    const userItemData = useUserItemDataStore();
+    // Seed the store as Favorites / Continue-Watching / a detail visit legitimately
+    // would: this item is a favorite, watched, and rated.
+    userItemData.hydrate(
+      media({ id: 'mw1', user_data: { favorite: true, watched: true, rating: 9 } }),
+    );
+    expect(userItemData.isFavorite('mw1')).toBe(true);
+
+    // The Most Watched endpoint returns the SAME id with NO user_data.
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      mostWatched: [media({ id: 'mw1', name: 'Most Popular' })],
+    });
+    const w = mountPage();
+    await flushPromises();
+
+    // The rail rendered the item (confirms loadMostWatched actually ran)...
+    expect(mostWatchedRow(w)).toBeTruthy();
+    // ...but the pre-seeded store entry is UNCHANGED (pre-fix: hydrate REPLACED it
+    // with all-false, so favorite/watched/rating would be wiped here).
+    expect(userItemData.isFavorite('mw1')).toBe(true);
+    expect(userItemData.isWatched('mw1')).toBe(true);
+    expect(userItemData.get('mw1').rating).toBe(9);
   });
 });
 
