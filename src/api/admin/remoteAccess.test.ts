@@ -120,40 +120,81 @@ describe('AdminRemoteAccessApi — subdomain', () => {
   });
 });
 
-describe('AdminRemoteAccessApi — relay tunnel', () => {
-  it('relayStatus() issues GET', async () => {
+describe('AdminRemoteAccessApi — relay tunnel (S39 honest shapes)', () => {
+  it('relayStatus() issues GET and returns the reframed state fields', async () => {
     const { client, get } = clientWith({
-      get: vi.fn(async () => ({ connected: true, active: true })),
+      get: vi.fn(async () => ({
+        connected: true,
+        active: true,
+        enrolled: true,
+        disabled: false,
+        reconnectAttempts: 0,
+        activeSessions: 2,
+        lastConnectError: null,
+        updatedAt: '2024-01-15T10:00:00Z',
+      })),
     });
     const api = new AdminRemoteAccessApi(client);
     const res = await api.relayStatus();
     expect(get).toHaveBeenCalledWith('/api/v1/admin/remote/relay/status');
     expect(res.connected).toBe(true);
     expect(res.active).toBe(true);
+    expect(res.enrolled).toBe(true);
+    expect(res.disabled).toBe(false);
+    expect(res.activeSessions).toBe(2);
   });
 
-  it('relayEnable() POSTs', async () => {
-    const { client, post } = clientWith();
-    const api = new AdminRemoteAccessApi(client);
-    await api.relayEnable();
-    expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/enable');
-  });
-
-  it('relayDisable() POSTs', async () => {
-    const { client, post } = clientWith();
-    const api = new AdminRemoteAccessApi(client);
-    await api.relayDisable();
-    expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/disable');
-  });
-
-  it('relayPing() POSTs and returns latency', async () => {
+  it('relayEnable() POSTs and returns the control response (takes effect on reload)', async () => {
     const { client, post } = clientWith({
-      post: vi.fn(async () => ({ success: true, latencyMs: 42 })),
+      post: vi.fn(async () => ({
+        success: true,
+        disabled: false,
+        enrolled: true,
+        takesEffectOnReload: true,
+        message: 'Relay enabled; the tunnel will (re)connect on the next server reload.',
+      })),
+    });
+    const api = new AdminRemoteAccessApi(client);
+    const res = await api.relayEnable();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/enable');
+    expect(res.takesEffectOnReload).toBe(true);
+    expect(res.disabled).toBe(false);
+    expect(res.message).toContain('next server reload');
+  });
+
+  it('relayDisable() POSTs and returns the control response', async () => {
+    const { client, post } = clientWith({
+      post: vi.fn(async () => ({
+        success: true,
+        disabled: true,
+        enrolled: true,
+        takesEffectOnReload: true,
+        message: 'Relay disabled; the tunnel will disconnect on the next server reload.',
+      })),
+    });
+    const api = new AdminRemoteAccessApi(client);
+    const res = await api.relayDisable();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/disable');
+    expect(res.disabled).toBe(true);
+    expect(res.takesEffectOnReload).toBe(true);
+  });
+
+  it('relayPing() POSTs and returns the persisted latency (nullable)', async () => {
+    const { client, post } = clientWith({
+      post: vi.fn(async () => ({
+        success: true,
+        connected: true,
+        active: true,
+        latencyMs: null,
+        lastHeartbeatAt: null,
+        latencySource: 'persisted',
+      })),
     });
     const api = new AdminRemoteAccessApi(client);
     const res = await api.relayPing();
     expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/ping');
-    expect(res.latencyMs).toBe(42);
+    expect(res.latencyMs).toBeNull();
+    expect(res.latencySource).toBe('persisted');
   });
 });
 

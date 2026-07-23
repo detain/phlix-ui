@@ -925,7 +925,7 @@ var Ur = mn("server", () => {
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-B3vv7N2F.js")
+	component: () => import("./RemoteAccessPage-DnPyOXRi.js")
 }, ei = {
 	name: "admin-livetv",
 	path: "livetv",

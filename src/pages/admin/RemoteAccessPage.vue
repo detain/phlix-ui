@@ -23,12 +23,14 @@ import {
   type HubStatus,
   type SubdomainStatus,
   type RelayStatus,
+  type RelayPingResponse,
+  type RelayPingNotConnected,
   type PortForwardStatus,
   type HostnameCandidate,
 } from '../../api/admin/remoteAccess';
 import { AdminNetworkHealthApi, type RelayHealth, type NetworkHealth } from '../../api/admin/networkHealth';
 import { useToastStore } from '../../stores/useToastStore';
-import { errMessage } from '../../api/errors';
+import { ApiError, errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
 import { adminPageHelp } from './helpLinks';
@@ -249,31 +251,47 @@ async function releaseSubdomain(): Promise<void> {
   }
 }
 
-// ── Relay state ────────────────────────────────────────────────────────────────
+// ── Relay state (S39 honest reframe) ────────────────────────────────────────────
+// The tunnel runs in a separate fork with no live control channel, so the relay
+// controls are reframed around the REAL levers the server now exposes: the
+// persisted state file (connected/active/last-error), enrollment, and the
+// operator kill-switch (`disabled`) which Enable/Disable toggle — a change that
+// takes effect on the NEXT server reload, not instantly.
 const relayStatus = ref<RelayStatus | null>(null);
 const relayLoading = ref(true);
 const relayError = ref<string | null>(null);
 const relayEnabling = ref(false);
 const relayDisabling = ref(false);
 const relayPinging = ref(false);
-const relayLatency = ref<number | null>(null);
+/** Result of the most recent Ping (persisted latency snapshot), or null before any ping. */
+const relayPing = ref<RelayPingResponse | null>(null);
 
 const relaySummary = computed(() => {
   if (relayLoading.value) return 'Loading…';
-  if (relayStatus.value === null) return 'Unable to load';
-  if (relayStatus.value.connected) {
-    return `Connected${relayLatency.value !== null ? ` (${relayLatency.value}ms latency)` : ''}`;
+  const s = relayStatus.value;
+  if (s === null) return 'Unable to load';
+  if (s.connected) {
+    const latency = relayPing.value?.latencyMs;
+    return latency != null ? `Connected (${latency}ms latency)` : 'Connected';
   }
+  if (s.disabled) return 'Disabled';
+  if (s.enrolled === false) return 'Not paired';
   return 'Disconnected';
 });
 const relayActionInProgress = computed(() => relayEnabling.value || relayDisabling.value);
+/** Honest latency line after a Ping: a number, or "not measured yet" (null until S40). */
+const relayLatencyLabel = computed<string | null>(() => {
+  const p = relayPing.value;
+  if (p === null) return null;
+  return p.latencyMs != null ? `${p.latencyMs}ms` : 'Not measured yet';
+});
 
 async function loadRelayStatus(): Promise<void> {
   relayLoading.value = true;
   relayError.value = null;
   try {
     relayStatus.value = await api.relayStatus();
-    relayLatency.value = null;
+    relayPing.value = null;
   } catch (e) {
     relayError.value = errMessage(e, 'Failed to load relay status.');
     toasts.error(relayError.value);
@@ -286,8 +304,14 @@ async function enableRelay(): Promise<void> {
   if (relayEnabling.value) return;
   relayEnabling.value = true;
   try {
-    await api.relayEnable();
-    toasts.success('Relay enabled.');
+    const result = await api.relayEnable();
+    // HONEST: this clears the persisted kill-switch and takes effect on the next
+    // reload — surface the server's message (which explains the env-forced case)
+    // rather than implying the tunnel is now running.
+    toasts.success(
+      result.message || 'Relay enabled; takes effect on the next server reload.',
+      result.disabled ? { tone: 'warning' } : undefined,
+    );
     await loadRelayStatus();
   } catch (e) {
     toasts.error(errMessage(e, 'Failed to enable relay.'));
@@ -300,8 +324,10 @@ async function disableRelay(): Promise<void> {
   if (relayDisabling.value) return;
   relayDisabling.value = true;
   try {
-    await api.relayDisable();
-    toasts.success('Relay disabled.');
+    const result = await api.relayDisable();
+    // HONEST: persists the kill-switch; the running fork is not torn down
+    // in-process — it disconnects on the next reload.
+    toasts.success(result.message || 'Relay disabled; takes effect on the next server reload.');
     await loadRelayStatus();
   } catch (e) {
     toasts.error(errMessage(e, 'Failed to disable relay.'));
@@ -315,10 +341,25 @@ async function pingRelay(): Promise<void> {
   relayPinging.value = true;
   try {
     const result = await api.relayPing();
-    relayLatency.value = result.latencyMs;
-    toasts.success(`Relay latency: ${result.latencyMs}ms`);
+    relayPing.value = result;
+    if (result.latencyMs != null) {
+      toasts.success(`Relay latency: ${result.latencyMs}ms`);
+    } else {
+      // latencyMs stays null until S40's heartbeat writes land — be honest.
+      toasts.info('Relay connected; latency not measured yet.');
+    }
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to ping relay.'));
+    relayPing.value = null;
+    // 409 = tunnel not connected: surface the persisted "why it's down" reason.
+    if (e instanceof ApiError && e.status === 409) {
+      const body = (e.body ?? null) as RelayPingNotConnected | null;
+      const reason = body?.lastConnectError ? ` (${body.lastConnectError})` : '';
+      toasts.error(`${body?.message ?? 'Relay not connected.'}${reason}`);
+      // Refresh so the panel reflects the current not-connected state + reason.
+      await loadRelayStatus();
+    } else {
+      toasts.error(errMessage(e, 'Failed to ping relay.'));
+    }
   } finally {
     relayPinging.value = false;
   }
@@ -630,10 +671,41 @@ onMounted(() => {
             </dd>
             <dt>Active</dt>
             <dd>{{ relayStatus.active ? 'Yes' : 'No' }}</dd>
-            <template v-if="relayLatency !== null">
-              <dt>Latency</dt><dd>{{ relayLatency }}ms</dd>
+            <dt>Enrolled</dt>
+            <dd>
+              <Badge :tone="relayStatus.enrolled ? 'success' : 'neutral'">
+                {{ relayStatus.enrolled ? 'Yes' : 'No' }}
+              </Badge>
+            </dd>
+            <dt>Kill-switch</dt>
+            <dd>
+              <Badge :tone="relayStatus.disabled ? 'warning' : 'success'">
+                {{ relayStatus.disabled ? 'Disabled' : 'Enabled' }}
+              </Badge>
+            </dd>
+            <template v-if="relayLatencyLabel !== null">
+              <dt>Latency</dt>
+              <dd>
+                {{ relayLatencyLabel }}
+                <span v-if="relayPing && relayPing.latencyMs != null" class="admin-remote__hint">
+                  (last recorded heartbeat)
+                </span>
+              </dd>
+            </template>
+            <template v-if="relayStatus.lastConnectError">
+              <dt>Last error</dt>
+              <dd class="admin-remote__error-text">
+                {{ relayStatus.lastConnectError }}
+                <template v-if="relayStatus.lastConnectErrorAt">
+                  ({{ formatDate(relayStatus.lastConnectErrorAt) }})
+                </template>
+              </dd>
             </template>
           </dl>
+          <p class="admin-remote__notice" role="note">
+            Enable and Disable persist a setting the relay reads on start-up — the change
+            takes effect on the next server reload, not instantly.
+          </p>
           <div class="admin-remote__actions">
             <Button
               variant="outline"
@@ -645,7 +717,7 @@ onMounted(() => {
               Ping
             </Button>
             <Button
-              v-if="!relayStatus.connected"
+              v-if="relayStatus.disabled"
               variant="solid"
               size="sm"
               :loading="relayEnabling"
@@ -1063,6 +1135,19 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+.admin-remote__notice {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  line-height: var(--leading-normal, 1.5);
+}
+.admin-remote__hint {
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+}
+.admin-remote__error-text {
+  color: var(--warning);
 }
 
 /* Pairing modal form */
