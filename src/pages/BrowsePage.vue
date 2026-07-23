@@ -39,6 +39,7 @@ import ItemDataInspector from '../components/ItemDataInspector.vue';
 import { useItemInspector } from '../composables/useItemInspector';
 import { ApiClient } from '../api/client';
 import { fetchRecommendations } from '../api/recommendations';
+import { fetchMostWatched } from '../api/mostWatched';
 import { libraryLoadErrorInfo } from './browseErrors';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import type { MediaItem } from '../types/media-item';
@@ -221,16 +222,64 @@ const showRecommended = computed(
     recommendedItems.value.length > 0,
 );
 
+// --- Most Watched rail (S32) -------------------------------------------------
+// A GLOBAL "Most Watched" trending rail surfacing the existing server-wide
+// most-watched aggregate on Browse, fed by `GET /api/v1/media/most-watched`
+// (S31) and mapped via the shared `api/mostWatched` helper (the SAME endpoint,
+// reused; NO backend change). This is a cross-user "popular on this server" list
+// (StatsCollector::getTopMedia), NOT a per-user history. Modelled exactly on the
+// Recommended / Favorites rails above: its own loading/error/items refs, a
+// memoized client, and hidden when empty (no stats yet → the section renders
+// nothing, via v-if + hideWhenEmpty). The server already shapes each row like
+// `GET /api/v1/media`, so items are pushed into the shared `registry` (remember)
+// so the admin metadata-match / poster-pick reconciliation covers this rail too.
+const MOST_WATCHED_LIMIT = 20;
+const mostWatchedItems = ref<MediaItem[]>([]);
+const mostWatchedLoading = ref(false);
+const mostWatchedError = ref<string | null>(null);
+
+let mostWatchedClient: ApiClient | null = null;
+function mostWatchedClientFor(base: string): ApiClient {
+  if (!mostWatchedClient) mostWatchedClient = new ApiClient({ baseUrl: base });
+  else mostWatchedClient.setBaseUrl(base);
+  return mostWatchedClient;
+}
+
+async function loadMostWatched(): Promise<void> {
+  if (mostWatchedLoading.value) return;
+  mostWatchedLoading.value = true;
+  mostWatchedError.value = null;
+  try {
+    const items = await fetchMostWatched(mostWatchedClientFor(apiBase.value), {
+      limit: MOST_WATCHED_LIMIT,
+    });
+    mostWatchedItems.value = items;
+    items.forEach((i) => userItemData.hydrate(i));
+    remember(items);
+  } catch (e) {
+    mostWatchedError.value = e instanceof Error ? e.message : 'Failed to load most watched';
+  } finally {
+    mostWatchedLoading.value = false;
+  }
+}
+
+const showMostWatched = computed(
+  () =>
+    !mostWatchedLoading.value && !mostWatchedError.value && mostWatchedItems.value.length > 0,
+);
+
 // --- library list load -------------------------------------------------------
 function load(): void {
   void libraries.load(apiBase.value, true);
   void loadFavorites();
   void loadRecommendations();
+  void loadMostWatched();
 }
 onMounted(() => {
   void libraries.load(apiBase.value);
   void loadFavorites();
   void loadRecommendations();
+  void loadMostWatched();
   void syncResume(); // U-N8: re-sync positions when entering BrowsePage
 });
 watch(apiBase, load);
@@ -427,6 +476,29 @@ function onSeeAll(row: HomeRowConfig): void {
       v-if="showRecommended"
       title="Recommended"
       :items="recommendedItems"
+      :can-match="auth.isAdmin"
+      hide-when-empty
+      @play="onPlay"
+      @watchlist="onWatchlist"
+      @info="onInfo"
+      @match="onMatch"
+      @mark-watched="onMarkWatched"
+      @refresh="onRefresh"
+      @edit-metadata="onMatch"
+      @explore-data="openInspector"
+      @choose-poster="onChoosePoster"
+      @remove="onRemove"
+    />
+
+    <!-- Most Watched rail (S32) — surfaces the existing server-wide most-watched
+         aggregate (GET /api/v1/media/most-watched, S31; GLOBAL trending, NOT a
+         per-user history) via the shared api/mostWatched helper; hidden when
+         empty, like the rails above. May look sparse until playback stats warm
+         up — hide-when-empty handles the empty case gracefully. -->
+    <MediaRow
+      v-if="showMostWatched"
+      title="Most Watched"
+      :items="mostWatchedItems"
       :can-match="auth.isAdmin"
       hide-when-empty
       @play="onPlay"
