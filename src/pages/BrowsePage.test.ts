@@ -128,6 +128,12 @@ function stubFetch(
      *  (server-side MediaItemShaper). Defaults to empty, hiding the rail unless a
      *  test supplies items — mirrors the recommendations/favorites defaults. */
     mostWatched?: MediaItem[];
+    /** Next Up rail payload (S37) — GET /api/v1/users/me/next-up returns
+     *  `{ items }` with items already shaped as MediaItems (server-side
+     *  MediaItemShaper; a superset of the CW shape adding series_id/series_name,
+     *  position_ticks/duration_ticks = 0) and NO per-user `user_data`. Defaults to
+     *  empty, hiding the rail unless a test supplies items — mirrors the siblings. */
+    nextUp?: MediaItem[];
     /** Continue Watching items with optional position_ticks for resume position.
      *  Defaults to empty, hiding the Continue Watching rail unless supplied.
      *  Items carry an extra `position_ticks` field (the resume payload shape,
@@ -146,8 +152,12 @@ function stubFetch(
   const continueWatchingItems = opts.continueWatching ?? [];
   const recommendations = opts.recommendations ?? [];
   const mostWatched = opts.mostWatched ?? [];
+  const nextUp = opts.nextUp ?? [];
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
+    if (u.includes('/api/v1/users/me/next-up')) {
+      return Promise.resolve(jsonResponse({ items: nextUp }));
+    }
     if (u.includes('/api/v1/media/most-watched')) {
       return Promise.resolve(
         jsonResponse({ items: mostWatched, total: mostWatched.length, limit: 20, offset: 0 }),
@@ -319,6 +329,12 @@ function mostWatchedRow(w: ReturnType<typeof mountPage>) {
   // S32: the Most Watched rail reuses the existing GET /api/v1/media/most-watched
   // endpoint (S31; GLOBAL server-wide trending aggregate).
   return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Most Watched');
+}
+
+function nextUpRow(w: ReturnType<typeof mountPage>) {
+  // S37: the Next Up rail consumes GET /api/v1/users/me/next-up (S36; per-user
+  // next-unwatched-episode picks), positioned immediately after Continue Watching.
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Next Up');
 }
 
 describe('BrowsePage — per-library sections', () => {
@@ -673,6 +689,99 @@ describe('BrowsePage — Most Watched row (S32)', () => {
     expect(userItemData.isFavorite('mw1')).toBe(true);
     expect(userItemData.isWatched('mw1')).toBe(true);
     expect(userItemData.get('mw1').rating).toBe(9);
+  });
+});
+
+describe('BrowsePage — Next Up row (S37)', () => {
+  it('renders a "Next Up" rail with items from GET /api/v1/users/me/next-up', async () => {
+    const fn = stubFetch({
+      libraries: ONE_LIBRARY,
+      // The endpoint returns items already shaped as MediaItems (server-side
+      // MediaItemShaper; a superset of the CW shape), so no client-side field
+      // remapping — identity mapping via the shared api/nextUp helper.
+      nextUp: [
+        media({ id: 'nu1', name: 'Show A — S01E03', type: 'episode' }),
+        media({ id: 'nu2', name: 'Show B — S02E01', type: 'episode' }),
+      ],
+    });
+    const w = mountPage();
+    await flushPromises();
+    const row = nextUpRow(w);
+    expect(row).toBeTruthy();
+    const items = row!.props('items') as MediaItem[];
+    expect(items.map((i) => i.id)).toEqual(['nu1', 'nu2']);
+    expect(items[0].name).toBe('Show A — S01E03');
+    // It consumed the S36 next-up endpoint (backend already shipped; no change).
+    expect(
+      fn.mock.calls.some(
+        ([u]) => typeof u === 'string' && (u as string).includes('/api/v1/users/me/next-up'),
+      ),
+    ).toBe(true);
+  });
+
+  it('places Next Up immediately after Continue Watching (and before My List)', async () => {
+    // S37 AC: the rail must sit directly after Continue Watching. Seed both CW and
+    // Next Up (and a favorite) so all three rails render, then assert the order.
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      continueWatching: [
+        { ...media({ id: 'cw', name: 'Resumed', type: 'movie' }), position_ticks: 600_000_000 },
+      ],
+      nextUp: [media({ id: 'nu1', name: 'Show A — S01E03', type: 'episode' })],
+      favorites: [media({ id: 'f1', name: 'Favorited Movie' })],
+    });
+    const w = mountPage();
+    await flushPromises();
+    const titles = w.findAllComponents(MediaRow).map((r) => r.props('title'));
+    const ci = titles.indexOf('Continue Watching');
+    const nu = titles.indexOf('Next Up');
+    const fav = titles.indexOf('My List');
+    expect(ci).toBeGreaterThanOrEqual(0);
+    // Next Up is the very next rail after Continue Watching...
+    expect(nu).toBe(ci + 1);
+    // ...and it precedes My List (which used to be CW+1).
+    expect(fav).toBeGreaterThan(nu);
+  });
+
+  it('hides the Next Up rail when there is nothing to watch next', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, nextUp: [] });
+    const w = mountPage();
+    await flushPromises();
+    expect(nextUpRow(w)).toBeUndefined();
+  });
+
+  it('does NOT overwrite existing useUserItemDataStore entries (no state-wipe race)', async () => {
+    // Regression (S32 lesson): loadNextUp must NEVER write to useUserItemDataStore.
+    // Next-up rows carry NO per-user `user_data` (shapeNextEpisode passes no
+    // `user_data` key to the shaper — same as Recommended / Most Watched), so
+    // calling `hydrate` on them would REPLACE a correct store entry with all-false
+    // defaults, transiently wiping the favorite heart / watched badge / rating for
+    // an item that is BOTH a favorite (or watched/rated) AND a next-up pick.
+    // Mirrors the Most Watched / Recommended siblings, which never hydrate.
+    // Pre-fix (a copied `hydrate` call) these assertions fail.
+    const userItemData = useUserItemDataStore();
+    // Seed the store as Favorites / Continue-Watching / a detail visit legitimately
+    // would: this episode is a favorite, watched, and rated.
+    userItemData.hydrate(
+      media({ id: 'nu1', user_data: { favorite: true, watched: true, rating: 9 } }),
+    );
+    expect(userItemData.isFavorite('nu1')).toBe(true);
+
+    // The Next Up endpoint returns the SAME id with NO user_data.
+    stubFetch({
+      libraries: ONE_LIBRARY,
+      nextUp: [media({ id: 'nu1', name: 'Show A — S01E03', type: 'episode' })],
+    });
+    const w = mountPage();
+    await flushPromises();
+
+    // The rail rendered the item (confirms loadNextUp actually ran)...
+    expect(nextUpRow(w)).toBeTruthy();
+    // ...but the pre-seeded store entry is UNCHANGED (pre-fix: hydrate REPLACED it
+    // with all-false, so favorite/watched/rating would be wiped here).
+    expect(userItemData.isFavorite('nu1')).toBe(true);
+    expect(userItemData.isWatched('nu1')).toBe(true);
+    expect(userItemData.get('nu1').rating).toBe(9);
   });
 });
 
