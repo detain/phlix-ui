@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import MediaRow from './MediaRow.vue';
@@ -36,6 +36,53 @@ beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
 });
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+/** Stub `window.matchMedia` so a query matches iff `predicate(query)` is true. */
+function stubMatchMedia(predicate: (query: string) => boolean): void {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: predicate(query),
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+}
+
+/**
+ * Make a rail element report a fixed, overflowing geometry — jsdom does not lay
+ * out, so `scrollWidth`/`clientWidth` are otherwise 0. Returns a setter for the
+ * current `scrollLeft` (to simulate paging to the end).
+ */
+function simulateOverflow(
+  el: HTMLElement,
+  opts: { scrollWidth: number; clientWidth: number },
+): (scrollLeft: number) => void {
+  let scrollLeft = 0;
+  Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => opts.clientWidth });
+  Object.defineProperty(el, 'scrollWidth', { configurable: true, get: () => opts.scrollWidth });
+  Object.defineProperty(el, 'scrollLeft', { configurable: true, get: () => scrollLeft });
+  return (v: number) => {
+    scrollLeft = v;
+  };
+}
+
+/**
+ * Whether an arrow (matched by `selector`) is currently suppressed. `v-show`
+ * toggles the inline `display: none`, which is deterministic in jsdom — unlike
+ * `isVisible()`, which walks computed layout and is unreliable here.
+ */
+function arrowHidden(w: ReturnType<typeof mount>, selector: string): boolean {
+  return (w.find(selector).attributes('style') ?? '').includes('display: none');
+}
 
 describe('MediaRow', () => {
   it('renders the title and one MediaCard per item', () => {
@@ -122,5 +169,80 @@ describe('MediaRow', () => {
       slots: { action: '<a class="seeall">See all</a>' },
     });
     expect(w.find('.media-row__action .seeall').exists()).toBe(true);
+  });
+
+  // S21 — prev/next scroll arrows.
+  describe('scroll arrows (S21)', () => {
+    const many = [media({ id: 'a' }), media({ id: 'b' }), media({ id: 'c' })];
+
+    it('does not show either arrow when the rail does not overflow', () => {
+      // jsdom does not lay out, so scrollWidth == clientWidth == 0 → no overflow.
+      const w = mount(MediaRow, { props: { title: 'X', items: many } });
+      expect(arrowHidden(w, '.media-row__arrow--prev')).toBe(true);
+      expect(arrowHidden(w, '.media-row__arrow--next')).toBe(true);
+    });
+
+    it('shows the next arrow (prev hidden) at the start, and flips at the end', async () => {
+      stubMatchMedia(() => false); // fine pointer, motion allowed
+      const w = mount(MediaRow, { props: { title: 'X', items: many } });
+      const rail = w.find('.media-row__rail');
+      const setScrollLeft = simulateOverflow(rail.element as HTMLElement, {
+        scrollWidth: 1000,
+        clientWidth: 300,
+      });
+
+      // At the left extreme: prev useless (hidden), next available.
+      await rail.trigger('scroll');
+      expect(arrowHidden(w, '.media-row__arrow--prev')).toBe(true);
+      expect(arrowHidden(w, '.media-row__arrow--next')).toBe(false);
+
+      // Paged to the right extreme: next useless (hidden), prev available.
+      setScrollLeft(700);
+      await rail.trigger('scroll');
+      expect(arrowHidden(w, '.media-row__arrow--prev')).toBe(false);
+      expect(arrowHidden(w, '.media-row__arrow--next')).toBe(true);
+    });
+
+    it('calls scrollBy by ~90% of the visible width when an arrow is clicked', async () => {
+      stubMatchMedia(() => false);
+      const w = mount(MediaRow, { props: { title: 'X', items: many } });
+      const rail = w.find('.media-row__rail');
+      simulateOverflow(rail.element as HTMLElement, { scrollWidth: 1000, clientWidth: 300 });
+      const scrollBy = vi.fn();
+      (rail.element as unknown as { scrollBy: unknown }).scrollBy = scrollBy;
+
+      await rail.trigger('scroll');
+      await w.find('.media-row__arrow--next').trigger('click');
+      expect(scrollBy).toHaveBeenCalledWith({ left: 300 * 0.9, behavior: 'smooth' });
+
+      await w.find('.media-row__arrow--prev').trigger('click');
+      expect(scrollBy).toHaveBeenLastCalledWith({ left: -300 * 0.9, behavior: 'smooth' });
+    });
+
+    it('hides the arrows on a coarse-pointer / no-hover device even when overflowing', async () => {
+      stubMatchMedia((q) => q.includes('coarse') || q.includes('hover'));
+      const w = mount(MediaRow, { props: { title: 'X', items: many } });
+      const rail = w.find('.media-row__rail');
+      simulateOverflow(rail.element as HTMLElement, { scrollWidth: 1000, clientWidth: 300 });
+      await rail.trigger('scroll');
+      expect(arrowHidden(w, '.media-row__arrow--prev')).toBe(true);
+      expect(arrowHidden(w, '.media-row__arrow--next')).toBe(true);
+    });
+
+    it('hides the arrows under prefers-reduced-motion even when overflowing', async () => {
+      stubMatchMedia((q) => q.includes('reduced-motion'));
+      const w = mount(MediaRow, { props: { title: 'X', items: many } });
+      const rail = w.find('.media-row__rail');
+      simulateOverflow(rail.element as HTMLElement, { scrollWidth: 1000, clientWidth: 300 });
+      await rail.trigger('scroll');
+      expect(arrowHidden(w, '.media-row__arrow--prev')).toBe(true);
+      expect(arrowHidden(w, '.media-row__arrow--next')).toBe(true);
+    });
+
+    it('exposes accessible labels on the arrow buttons', () => {
+      const w = mount(MediaRow, { props: { title: 'X', items: many } });
+      expect(w.find('.media-row__arrow--prev').attributes('aria-label')).toBe('Scroll left');
+      expect(w.find('.media-row__arrow--next').attributes('aria-label')).toBe('Scroll right');
+    });
   });
 });

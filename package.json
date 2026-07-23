@@ -1,6 +1,6 @@
 {
   "name": "@phlix/ui",
-  "version": "0.98.17",
+  "version": "0.98.18",
   "description": "Shared Vue 3 UI components and utilities for Phlix",
   "type": "module",
   "main": "./dist/phlix-ui.umd.cjs",
