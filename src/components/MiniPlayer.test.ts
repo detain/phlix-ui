@@ -408,3 +408,49 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
     expect(destroy).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('MiniPlayer — finish signal (S30)', () => {
+  /** Activate the dock and provide the shared resume reporter via global.provide. */
+  function mountActiveWithReporter(finish = vi.fn().mockResolvedValue(undefined), over: Partial<MediaItem> = {}) {
+    const store = usePlayerStore();
+    store.setCurrent(media(over), { streamUrl: 'http://x/stream' });
+    store.showMiniPlayer();
+    const w = mount(MiniPlayer, {
+      attachTo: document.body,
+      global: { stubs: { transition: true }, provide: { resumeReporter: { report: vi.fn(), finish } } },
+    });
+    mounted.push(w);
+    const video = w.find('video').element as HTMLVideoElement;
+    stubVideo(video);
+    return { w, store, video, finish };
+  }
+
+  it('calls the resume reporter finish() once when the dock video ends', async () => {
+    const { video, finish } = mountActiveWithReporter();
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(finish).toHaveBeenCalledTimes(1);
+    // A re-dispatched `ended` on the same item must NOT double-finish.
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(finish).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-arms the finish latch when the docked item changes', async () => {
+    const { store, video, finish } = mountActiveWithReporter();
+    video.dispatchEvent(new Event('ended'));
+    await nextTick();
+    expect(finish).toHaveBeenCalledTimes(1);
+    // Swap the docked item (replay / another title) → latch re-arms so the new item finishes.
+    store.setCurrent(media({ id: 'm2', name: 'Arrival' }), { streamUrl: 'http://x/stream2' });
+    await nextTick();
+    video.dispatchEvent(new Event('ended')); // <video> is reused (no :key) — same element
+    await nextTick();
+    expect(finish).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not crash on end when no resume reporter is provided', async () => {
+    const { video } = mountActive(); // mountActive provides no resumeReporter
+    expect(() => video.dispatchEvent(new Event('ended'))).not.toThrow();
+  });
+});

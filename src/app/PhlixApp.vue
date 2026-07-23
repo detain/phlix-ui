@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, inject, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, inject, provide, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRouter } from 'vue-router';
 import AppLayout from './AppLayout.vue';
 import ThemeToggle from './ThemeToggle.vue';
@@ -151,8 +151,10 @@ watch(
 
 // Write path: report THIS device's playback position back to the server (throttled,
 // best-effort) so resume syncs cross-device. Mounted once here — it watches the
-// shared player store, covering both the full player and the mini-player.
-useResumeReporter();
+// shared player store, covering both the full player and the mini-player. Provided
+// to descendants (the Player) so end-of-playback can call `finish()` on the SAME
+// instance — reusing its live session id instead of spawning a second reporter.
+provide('resumeReporter', useResumeReporter());
 
 const branding = computed<BrandingConfig>(() => config?.branding ?? {});
 const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');

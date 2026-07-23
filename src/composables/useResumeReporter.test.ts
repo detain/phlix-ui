@@ -144,4 +144,59 @@ describe('useResumeReporter', () => {
       expect.objectContaining({ position_ticks: 135 * 10_000_000 }),
     );
   });
+
+  // ---- finish() (S30) --------------------------------------------------------
+  it('finish() marks the item watched on the active session (reached_end: true)', async () => {
+    post.mockResolvedValueOnce({ session_id: 'sess-1' }); // POST /api/v1/sessions
+    watching(120, 600);
+    const reporter = useResumeReporter();
+    await reporter.report(true); // lazily creates session sess-1 (same plumbing finish reuses)
+    post.mockClear();
+
+    await reporter.finish();
+
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledWith('/api/v1/sessions/sess-1/complete', {
+      media_item_id: 'm1',
+      reached_end: true,
+    });
+  });
+
+  it('finish() is a no-op when no session was ever created (playback never reported)', async () => {
+    watching(120, 600); // meaningful state, but nothing reported → no session id held
+    const reporter = useResumeReporter();
+
+    await reporter.finish();
+
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('finish() is a no-op when logged out even with an active session (isolates the auth guard)', async () => {
+    // Establish a live session FIRST so `sessionId` is set — without this the
+    // `!sessionId` short-circuit would mask the logged-out guard and the test would
+    // pass even if `!auth.isLoggedIn` were deleted.
+    post.mockResolvedValueOnce({ session_id: 'sess-1' }); // POST /api/v1/sessions
+    watching(120, 600);
+    const reporter = useResumeReporter();
+    await reporter.report(true); // creates + holds session sess-1
+    post.mockClear();
+
+    // Now log out with that session still held. finish() must still no-op — this
+    // FAILS if the `!auth.isLoggedIn` guard is removed (sessionId + media are both set).
+    state.loggedIn = false;
+    await reporter.finish();
+
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('finish() swallows request failures (never throws)', async () => {
+    post.mockResolvedValueOnce({ session_id: 'sess-1' });
+    watching(120, 600);
+    const reporter = useResumeReporter();
+    await reporter.report(true); // create the session first
+    post.mockReset();
+    post.mockRejectedValue(new Error('offline'));
+
+    await expect(reporter.finish()).resolves.toBeUndefined();
+  });
 });

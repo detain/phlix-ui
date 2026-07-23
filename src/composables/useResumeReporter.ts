@@ -43,6 +43,13 @@ export interface UseResumeReporter {
    * A no-op when logged out, with no current media, or below the resume threshold.
    */
   report: (force?: boolean) => Promise<void>;
+  /**
+   * Signal that playback reached the end — the server marks the item watched
+   * (finished) so it leaves continue-watching. A safe no-op when logged out, with
+   * no current media, or when no session was ever created (playback never crossed
+   * the resume threshold). Best-effort: a failed finish never throws.
+   */
+  finish: () => Promise<void>;
 }
 
 /**
@@ -108,6 +115,32 @@ export function useResumeReporter(): UseResumeReporter {
     }
   }
 
+  /**
+   * Explicit end-of-playback finish signal. POSTs to the session's `/complete`
+   * endpoint (`reached_end: true`) so the server runs its finalize/stats path and
+   * drops the item from continue-watching. Reuses the SAME session id + auth client
+   * the progress reporter already holds — never creates a session just to finish it,
+   * so a title watched below the resume threshold (no session) is left untouched.
+   * Best-effort: swallows failures exactly like `report()`.
+   */
+  async function finish(): Promise<void> {
+    const media = player.current;
+    // No session means playback never crossed the resume threshold — there is
+    // nothing on the server to finalize, so finishing is a safe no-op.
+    if (!auth.isLoggedIn || !sessionId || !media) return;
+    const sid = sessionId;
+    const mediaItemId = media.id;
+    try {
+      await auth.client.post(`/api/v1/sessions/${encodeURIComponent(sid)}/complete`, {
+        media_item_id: mediaItemId,
+        reached_end: true,
+      });
+    } catch {
+      // best-effort — a failed finish just leaves the item in continue-watching; a
+      // later report / another device reconciles. Must never crash the player.
+    }
+  }
+
   // A throttled checkpoint as the position advances, plus an immediate (forced)
   // checkpoint on each play/pause transition so a pause is captured even between
   // throttle windows.
@@ -120,5 +153,5 @@ export function useResumeReporter(): UseResumeReporter {
     () => void report(true),
   );
 
-  return { report };
+  return { report, finish };
 }
