@@ -16,6 +16,7 @@ import NetworkHealthIndicator from '../components/NetworkHealthIndicator.vue';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
+import { usePlayerUiStore } from '../stores/usePlayerUiStore';
 import type { PhlixAppConfig } from './types';
 
 function makeRouter(): Router {
@@ -26,7 +27,7 @@ function makeRouter(): Router {
       { path: '/app/settings', name: 'settings', component: { template: '<div />' } },
       { path: '/app/movies', name: 'movies', component: { template: '<div />' } },
       { path: '/app/library/:id', name: 'library', component: { template: '<div />' } },
-      { path: '/app/player/:id', name: 'player', component: { template: '<div class="player-route" />' } },
+      { path: '/app/player/:id', name: 'player', meta: { fullBleed: true }, component: { template: '<div class="player-route" />' } },
     ],
   });
 }
@@ -442,6 +443,107 @@ describe('PhlixApp — persistent mini-player', () => {
     wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
     expect(wrapper.findComponent(MiniPlayer).exists()).toBe(false);
     expect(wrapper.findComponent(NetworkHealthIndicator).exists()).toBe(false);
+  });
+});
+
+describe('PhlixApp — full-bleed theater shell (S34)', () => {
+  // The chrome-removing `shell--flush` is gated on BOTH the route (`meta.fullBleed`,
+  // the scoping guard) AND the shared theater-active state — the same trigger as the
+  // player's 100dvh growth. So it appears ONLY on the player route AND only once the
+  // user enters theater; the default (non-theater) player view keeps its header +
+  // padding exactly like master. PlayerPage mirrors the player's `@theater` toggle
+  // into usePlayerUiStore; the test router stubs the player route, so we set the
+  // shared state directly to stand in for that mirror.
+
+  it('does NOT add `shell--flush` on the player route while theater is OFF — header + padding render (regression guard)', async () => {
+    localStorage.setItem('access_token', 'tok'); // so the mini-player mounts too
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await router.push('/app/player/m1');
+    await flushPromises();
+
+    // Theater not entered → the shell keeps its chrome, exactly like master's player view.
+    const shell = wrapper.find('.shell');
+    expect(shell.exists()).toBe(true);
+    expect(shell.classes()).not.toContain('shell--flush');
+    expect(wrapper.find('.shell__bar').exists()).toBe(true);
+    expect(wrapper.find('.shell__nav').exists()).toBe(true);
+  });
+
+  it('adds `shell--flush` on the player route only once theater is ACTIVE', async () => {
+    localStorage.setItem('access_token', 'tok');
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await router.push('/app/player/m1');
+    await flushPromises();
+    // Not flushed until theater is entered…
+    expect(wrapper.find('.shell').classes()).not.toContain('shell--flush');
+
+    // Enter theater (mirrors the player's @theater toggle via the shared store).
+    usePlayerUiStore().setTheaterActive(true);
+    await nextTick();
+
+    const shell = wrapper.find('.shell');
+    expect(shell.classes()).toContain('shell--flush');
+    // The chrome elements remain in the DOM (display:none is CSS) — only the class flips.
+    expect(wrapper.find('.shell__bar').exists()).toBe(true);
+    expect(wrapper.find('.shell__main').exists()).toBe(true);
+  });
+
+  it('never adds `shell--flush` off the player route — even with theater active (no leak)', async () => {
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    // Force theater ON but stay on a normal route: the `meta.fullBleed` route guard
+    // must keep the flush impossible anywhere but the player route.
+    usePlayerUiStore().setTheaterActive(true);
+    await router.push('/app'); // browse — no fullBleed meta
+    await flushPromises();
+
+    const shell = wrapper.find('.shell');
+    expect(shell.exists()).toBe(true);
+    expect(shell.classes()).not.toContain('shell--flush');
+    // The default shell renders its bar + nav normally.
+    expect(wrapper.find('.shell__bar').exists()).toBe(true);
+    expect(wrapper.find('.shell__nav').exists()).toBe(true);
+  });
+
+  it('un-flushes on theater exit and keeps a later non-theater visit un-flushed (reset on leave)', async () => {
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const playerUi = usePlayerUiStore();
+    await router.push('/app/player/m1');
+    playerUi.setTheaterActive(true);
+    await flushPromises();
+    expect(wrapper.find('.shell').classes()).toContain('shell--flush');
+
+    // Leaving the player route unmounts PlayerPage, which resets the shared state
+    // (asserted against the real component in PlayerPage.test.ts). Emulate that reset here.
+    await router.push('/app'); // back to browse
+    playerUi.reset();
+    await flushPromises();
+    expect(wrapper.find('.shell').classes()).not.toContain('shell--flush');
+
+    // A later visit to the player route starts NON-theater → no stale flush.
+    await router.push('/app/player/m2');
+    await flushPromises();
+    expect(wrapper.find('.shell').classes()).not.toContain('shell--flush');
+  });
+
+  it('keeps the mini-player and command palette mounted under `shell--flush` (theater active)', async () => {
+    localStorage.setItem('access_token', 'tok'); // MiniPlayer is gated on isLoggedIn
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await router.push('/app/player/m1');
+    usePlayerUiStore().setTheaterActive(true);
+    await flushPromises();
+
+    expect(wrapper.find('.shell').classes()).toContain('shell--flush');
+    // MiniPlayer (fixed overlay) survives the flush layout.
+    expect(wrapper.findComponent(MiniPlayer).exists()).toBe(true);
+    // The command palette still activates + renders while flush.
+    const store = useCommandStore();
+    store.openPalette();
+    await nextTick();
+    await flushPromises();
+    await vi.dynamicImportSettled();
+    await flushPromises();
+    await nextTick();
+    expect(document.body.querySelector('.phlix-cmdk')).not.toBeNull();
   });
 });
 

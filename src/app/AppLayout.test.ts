@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import AppLayout from './AppLayout.vue';
 import AppBackdrop from '../components/AppBackdrop.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
@@ -94,5 +97,51 @@ describe('AppLayout', () => {
     expect(w.find('.shell__footer').exists()).toBe(false);
     // no nav slot -> no hamburger
     expect(w.find('.shell__hamburger').exists()).toBe(false);
+  });
+
+  it('lands a fallthrough `shell--flush` class on the root shell (S34 full-bleed)', () => {
+    const w = mount(AppLayout, { slots: { default: '<div class="M" />' }, attrs: { class: 'shell--flush' } });
+    wrappers.push(w);
+    const shell = w.find('.shell');
+    expect(shell.exists()).toBe(true);
+    expect(shell.classes()).toContain('shell'); // its own class is preserved…
+    expect(shell.classes()).toContain('shell--flush'); // …plus the flag
+  });
+});
+
+describe('AppLayout — full-bleed (`shell--flush`) CSS is gated + non-leaking (S34)', () => {
+  // Read the raw SFC source: jsdom does not apply an SFC's compiled <style>, so we
+  // pin the CSS contract by asserting the rules exist and are strictly anchored
+  // under `.shell.shell--flush` (present only on the fullBleed player route) — which
+  // is what proves the default (no-flush) layout for every other page is untouched.
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './AppLayout.vue'), 'utf8');
+
+  it('hides the sticky bar only under `.shell.shell--flush`', () => {
+    expect(src).toMatch(/\.shell\.shell--flush\s+\.shell__bar\s*\{\s*display:\s*none;\s*\}/);
+  });
+
+  it('zeroes the main gutter only under `.shell.shell--flush`', () => {
+    expect(src).toMatch(/\.shell\.shell--flush\s+\.shell__main\s*\{\s*padding:\s*0;\s*\}/);
+  });
+
+  it('anchors EVERY flush rule under `.shell--flush` (no bare selector can leak)', () => {
+    // Grab the non-scoped <style> block that carries the flush overrides…
+    const blocks = [...src.matchAll(/<style(?![^>]*scoped)[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+    const flushBlock = blocks.find((b) => b.includes('shell--flush'));
+    expect(flushBlock, 'a non-scoped style block carries the flush rules').toBeTruthy();
+    // …and assert every selector (the text before each `{`) mentions `.shell--flush`.
+    const selectors = [...flushBlock!.matchAll(/([^{}]+)\{/g)]
+      .map((m) => m[1].trim())
+      .filter((s) => s.length > 0 && !s.startsWith('@') && !s.startsWith('/*'));
+    expect(selectors.length).toBeGreaterThan(0);
+    for (const sel of selectors) {
+      expect(sel, `selector "${sel}" must be gated under .shell--flush`).toContain('.shell--flush');
+    }
+  });
+
+  it('leaves the scoped default `.shell__main` gutter intact (the normal layout)', () => {
+    // The DEFAULT main still carries its `var(--space-6) var(--space-5)` gutter in
+    // the scoped block — the flush rule only overrides it under the flag.
+    expect(src).toMatch(/\.shell__main\s*\{[\s\S]*?padding:\s*var\(--space-6\)\s+var\(--space-5\);/);
   });
 });

@@ -4,7 +4,7 @@
 -->
 
 <template>
-    <AppLayout>
+    <AppLayout :class="{ 'shell--flush': isFullBleed }">
         <template #logo>
             <RouterLink :to="homePath" class="brand">
                 <img v-if="branding.logoSrc" :src="branding.logoSrc" :alt="branding.logoAlt ?? wordmark" class="brand-logo" />
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, inject, provide, ref, watch } from 'vue';
-import { RouterLink, RouterView, useRouter } from 'vue-router';
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import AppLayout from './AppLayout.vue';
 import ThemeToggle from './ThemeToggle.vue';
 import UserMenu from './UserMenu.vue';
@@ -81,6 +81,7 @@ import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
+import { usePlayerUiStore } from '../stores/usePlayerUiStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
 import { useResumeSync } from '../composables/useResumeSync';
@@ -92,7 +93,22 @@ import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 useTheme();
 const commands = useCommandStore();
 const router = useRouter();
+const route = useRoute();
 const { t } = useMessages();
+
+// Full-bleed shell (S34): the shell drops its chrome (`.shell--flush` hides the
+// sticky header + zeroes the main padding) so the in-window player owns the whole
+// viewport — but ONLY when the player is in THEATER mode, the same trigger as the
+// 100dvh stage growth. `meta.fullBleed` (carried solely by the player route) is a
+// route-scoping guard: AND-ing it with the shared theater state keeps `shell--flush`
+// impossible on any non-player route (no leak) AND keeps the default (non-theater)
+// player view's header + normal padding intact — entering theater removes the chrome
+// and fills the viewport together, leaving theater restores them. The theater flag is
+// the player's existing `@theater` toggle, surfaced via usePlayerUiStore (PlayerPage
+// mirrors the toggle into it and clears it on unmount). MiniPlayer/CommandPalette are
+// fixed-position overlays, so the flush layout never hides or shifts them.
+const playerUi = usePlayerUiStore();
+const isFullBleed = computed(() => route.meta?.fullBleed === true && playerUi.theaterActive);
 
 // Always-on ⌘K hotkey (stays in the main bundle); the palette UI is lazy below.
 useCommandPaletteHotkey();

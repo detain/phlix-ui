@@ -244,8 +244,14 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             component: () => import('../pages/LibraryPage.vue'),
         },
         {
+            // `meta.fullBleed` opts this route out of the shell chrome (S34): the
+            // shell renders `.shell--flush` (header hidden + main padding zeroed) so
+            // the in-window player owns the whole viewport — see PhlixApp.vue +
+            // AppLayout.vue. The video still shows at 16:9/90vh until the in-player
+            // "theater" toggle grows it to 100dvh; native OS fullscreen is separate.
             path: `${base}/player/:id`,
             name: 'player',
+            meta: { fullBleed: true },
             component: () => import('../pages/PlayerPage.vue'),
         },
         {

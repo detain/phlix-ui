@@ -34,6 +34,7 @@ import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { usePlayerUiStore } from '../stores/usePlayerUiStore';
 import Player from '../components/Player.vue';
 import type { Chapter } from '../components/player/Scrubber.vue';
 import { parsePlaybackAudioTracks, type PlaybackAudioTrack, type TimeMarker } from '../components/player/playback';
@@ -111,6 +112,10 @@ const player = usePlayerStore();
 // harmless no-op. This guarantees the favorite + Love controls pre-fill from the
 // server the moment the player opens.
 const userItemData = useUserItemDataStore();
+// S34: the shared channel that surfaces the player's theater state to the app
+// shell (PhlixApp reads it to gate the chrome-removing `shell--flush`). The
+// `@theater` toggle below is the single source of truth; we just mirror it here.
+const playerUi = usePlayerUiStore();
 
 const item = ref<MediaItem | null>(null);
 const streamUrl = ref('');
@@ -475,6 +480,11 @@ onBeforeUnmount(() => {
   disposed = true;
   controller?.abort();
   controller = null;
+  // Leaving the player route (this page unmounts) clears the shared theater state
+  // so a later non-theater visit can't inherit a stale `true` and flush the shell.
+  // Binge/up-next navigation reuses this component instance (param change, not a
+  // remount), so theater persists across auto-advance — only a true route-leave resets.
+  playerUi.reset();
 });
 
 function onBack(): void {
@@ -492,6 +502,9 @@ function onPlayEpisode(ep: MediaItem): void {
 }
 function onTheater(active: boolean): void {
   theater.value = active;
+  // Surface the SAME toggle state to the shell so PhlixApp removes the chrome
+  // (`shell--flush`) in lock-step with this page's 100dvh stage growth.
+  playerUi.setTheaterActive(active);
 }
 /** P5-S5: dismiss the blocking-error modal and return to browse. */
 function onBlockingErrorOk(): void {
@@ -617,13 +630,18 @@ function onBlockingErrorOk(): void {
   margin: 0;
 }
 
-/* theater mode (driven by <Player>'s @theater) — go full-bleed + dim the surround */
+/* theater mode (driven by <Player>'s @theater) — go full-bleed + dim the surround.
+   S34: with the shell chrome gone (the player route is `fullBleed`), let the stage
+   fill the whole viewport height so <Player>'s 100dvh frame is unclipped. `dvh`
+   tracks the mobile dynamic viewport; the plain `vh` line is the fallback. */
 .player-page.is-theater {
   background: #05070b;
 }
 .player-page.is-theater .player-page__stage {
   max-width: none;
   padding: 0;
+  height: 100vh;
+  height: 100dvh;
 }
 .player-page.is-theater .player-page__ambient {
   opacity: 0.05;
