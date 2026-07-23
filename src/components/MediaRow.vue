@@ -19,8 +19,9 @@
  * component is driven purely by props so it is trivial to test and reuse (e.g.
  * the resume-map "Continue Watching" rail).
  */
-import { computed } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { MediaItem } from '../types/media-item';
+import Icon from './Icon.vue';
 import MediaCard from './MediaCard.vue';
 import EmptyState from './ui/EmptyState.vue';
 import Skeleton from './ui/Skeleton.vue';
@@ -75,6 +76,137 @@ const emit = defineEmits<{
 
 const isEmpty = computed(() => !props.loading && !props.error && props.items.length === 0);
 const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
+
+/* ---------------------------------------------------------------------------
+ * S21 — prev/next scroll arrows (pointer/hover devices only).
+ *
+ * The arrows overlay the LEFT/RIGHT edges of the item rail and page it by ~90%
+ * of the visible width. They are rendered as siblings of `.media-row__rail`
+ * inside a dedicated positioned wrapper (`.media-row__viewport`) — never nested
+ * inside the rail — because the rail is a horizontally-scrolling grid and its
+ * ancestor `.media-row` sets `content-visibility: auto` (paint/layout
+ * containment); positioning the arrows in a plain, un-contained wrapper keeps
+ * them from being scrolled with the content or clipped by containment.
+ * ------------------------------------------------------------------------- */
+
+/** The scrollable item rail (`<ul>`). Only bound in the populated branch. */
+const railEl = ref<HTMLElement | null>(null);
+
+/** Rail overflows its viewport (i.e. there is something to scroll to). */
+const hasOverflow = ref(false);
+/** Rail is scrolled to its left extreme (prev arrow not useful). */
+const atStart = ref(true);
+/** Rail is scrolled to its right extreme (next arrow not useful). */
+const atEnd = ref(false);
+/** OS "reduce motion" — arrows are a motion affordance, so we suppress them. */
+const prefersReducedMotion = ref(false);
+/** Coarse pointer / no-hover (touch): native swipe is better than tap targets. */
+const isCoarsePointer = ref(false);
+
+/**
+ * Whether the arrows are usable at all. They only make sense on a hover-capable
+ * fine pointer, when the rail actually overflows, and when the user has not
+ * asked to reduce motion.
+ */
+const canScroll = computed(
+  () => hasOverflow.value && !prefersReducedMotion.value && !isCoarsePointer.value,
+);
+const showPrev = computed(() => canScroll.value && !atStart.value);
+const showNext = computed(() => canScroll.value && !atEnd.value);
+
+/**
+ * Recompute overflow + edge flags from the rail's live geometry. Guarded so it
+ * is a harmless no-op before layout (jsdom / SSR report 0 for every metric).
+ */
+function updateScrollState(): void {
+  const el = railEl.value;
+  if (!el) {
+    hasOverflow.value = false;
+    return;
+  }
+  const { scrollLeft, scrollWidth, clientWidth } = el;
+  // 1px tolerance absorbs sub-pixel rounding so the edge flags don't flicker.
+  hasOverflow.value = scrollWidth - clientWidth > 1;
+  atStart.value = scrollLeft <= 1;
+  atEnd.value = scrollLeft >= scrollWidth - clientWidth - 1;
+}
+
+/** Page the rail by ~90% of the visible width (-1 = left, +1 = right). */
+function scrollByPage(dir: 1 | -1): void {
+  const el = railEl.value;
+  if (!el) return;
+  el.scrollBy({
+    left: dir * el.clientWidth * 0.9,
+    // Arrows are hidden under reduced-motion, but guard the edge case (e.g. the
+    // preference flips while an arrow is mid-click) with an instant jump.
+    behavior: prefersReducedMotion.value ? 'auto' : 'smooth',
+  });
+}
+
+// --- matchMedia + resize wiring (all listeners cleaned up on unmount) ---
+let reducedMotionMq: MediaQueryList | null = null;
+let coarsePointerMq: MediaQueryList | null = null;
+let resizeObserver: ResizeObserver | null = null;
+
+function onReducedMotionChange(e: MediaQueryListEvent): void {
+  prefersReducedMotion.value = e.matches;
+}
+function onCoarsePointerChange(e: MediaQueryListEvent): void {
+  isCoarsePointer.value = e.matches;
+}
+
+onMounted(() => {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    reducedMotionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefersReducedMotion.value = reducedMotionMq.matches;
+    reducedMotionMq.addEventListener('change', onReducedMotionChange);
+
+    coarsePointerMq = window.matchMedia('(pointer: coarse), (hover: none)');
+    isCoarsePointer.value = coarsePointerMq.matches;
+    coarsePointerMq.addEventListener('change', onCoarsePointerChange);
+  }
+
+  // The rail's own box rarely changes size on content changes (its width is the
+  // viewport), but a container/window resize can flip overflow — observe both.
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => updateScrollState());
+    if (railEl.value) resizeObserver.observe(railEl.value);
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateScrollState, { passive: true });
+  }
+  updateScrollState();
+});
+
+onBeforeUnmount(() => {
+  reducedMotionMq?.removeEventListener('change', onReducedMotionChange);
+  coarsePointerMq?.removeEventListener('change', onCoarsePointerChange);
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateScrollState);
+  }
+});
+
+// The rail only exists in the populated branch, so (re)observe + recompute when
+// its element appears/changes (e.g. skeleton → items).
+watch(
+  () => railEl.value,
+  (el, prev) => {
+    if (resizeObserver) {
+      if (prev) resizeObserver.unobserve(prev);
+      if (el) resizeObserver.observe(el);
+    }
+    if (el) void nextTick(updateScrollState);
+  },
+);
+
+// Appending/replacing items changes scrollWidth (not the rail's own box, so the
+// ResizeObserver won't fire) — recompute after the DOM settles.
+watch(
+  () => props.items.length,
+  () => void nextTick(updateScrollState),
+);
 </script>
 
 <template>
@@ -107,26 +239,50 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
       <slot name="empty" />
     </EmptyState>
 
-    <ul v-else class="media-row__rail" :aria-label="title">
-      <li v-for="item in items" :key="item.id" class="media-row__cell">
-        <MediaCard
-          :item="item"
-          :to="cardTo ? cardTo(item) : undefined"
-          :can-match="canMatch"
-          :fetch-priority="fetchPriority"
-          @play="emit('play', $event)"
-          @watchlist="emit('watchlist', $event)"
-          @info="emit('info', $event)"
-          @match="emit('match', $event)"
-          @mark-watched="emit('mark-watched', $event)"
-          @refresh="emit('refresh', $event)"
-          @choose-poster="emit('choose-poster', $event)"
-          @remove="emit('remove', $event)"
-          @edit-metadata="emit('edit-metadata', $event)"
-          @explore-data="emit('explore-data', $event)"
-        />
-      </li>
-    </ul>
+    <div v-else class="media-row__viewport">
+      <!-- Arrows are SIBLINGS of the rail (not children): the rail is a
+           horizontally-scrolling grid whose ancestor sets content-visibility. -->
+      <button
+        v-show="showPrev"
+        type="button"
+        class="media-row__arrow media-row__arrow--prev"
+        aria-label="Scroll left"
+        @click="scrollByPage(-1)"
+      >
+        <Icon name="chevron-left" :size="24" />
+      </button>
+
+      <ul ref="railEl" class="media-row__rail" :aria-label="title" @scroll="updateScrollState">
+        <li v-for="item in items" :key="item.id" class="media-row__cell">
+          <MediaCard
+            :item="item"
+            :to="cardTo ? cardTo(item) : undefined"
+            :can-match="canMatch"
+            :fetch-priority="fetchPriority"
+            @play="emit('play', $event)"
+            @watchlist="emit('watchlist', $event)"
+            @info="emit('info', $event)"
+            @match="emit('match', $event)"
+            @mark-watched="emit('mark-watched', $event)"
+            @refresh="emit('refresh', $event)"
+            @choose-poster="emit('choose-poster', $event)"
+            @remove="emit('remove', $event)"
+            @edit-metadata="emit('edit-metadata', $event)"
+            @explore-data="emit('explore-data', $event)"
+          />
+        </li>
+      </ul>
+
+      <button
+        v-show="showNext"
+        type="button"
+        class="media-row__arrow media-row__arrow--next"
+        aria-label="Scroll right"
+        @click="scrollByPage(1)"
+      >
+        <Icon name="chevron-right" :size="24" />
+      </button>
+    </div>
   </section>
 </template>
 
@@ -199,6 +355,49 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
   border-radius: var(--radius-full);
 }
 
+/* S21 — the positioned wrapper that overlays the prev/next arrows on the rail.
+   It carries NO containment (unlike the .media-row section), so the absolutely
+   positioned arrows are neither scrolled with the rail content nor clipped. */
+.media-row__viewport {
+  position: relative;
+}
+.media-row__arrow {
+  position: absolute;
+  /* Centre on the poster band; the extra scroll gutter below is negligible. */
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: var(--shadow-2);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+.media-row__arrow--prev {
+  left: var(--space-1);
+}
+.media-row__arrow--next {
+  right: var(--space-1);
+}
+.media-row__arrow:hover {
+  background: var(--surface);
+  border-color: var(--accent-ring);
+  color: var(--accent-text);
+}
+.media-row__arrow:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
 .media-row__error {
   display: flex;
   align-items: center;
@@ -231,6 +430,11 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
   .media-row__rail {
     scroll-behavior: auto;
     scroll-snap-type: none;
+  }
+  /* Belt-and-suspenders: the arrows are already suppressed by JS under
+     reduced-motion, but drop their hover transition too if one ever renders. */
+  .media-row__arrow {
+    transition: none;
   }
 }
 </style>
