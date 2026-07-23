@@ -81,6 +81,10 @@ const emit = defineEmits<{
   (e: 'refresh', item: MediaItem): void;
   (e: 'choose-poster', item: MediaItem): void;
   (e: 'remove', item: MediaItem): void;
+  /** Admin ⋯-menu "Edit metadata" — host opens the metadata-match modal. */
+  (e: 'edit-metadata', item: MediaItem): void;
+  /** Admin ⋯-menu "Explore item data" — host opens the read-only inspector. */
+  (e: 'explore-data', item: MediaItem): void;
 }>();
 
 defineSlots<{
@@ -420,6 +424,8 @@ watch(
                 @refresh="emit('refresh', entry.item)"
                 @choose-poster="emit('choose-poster', entry.item)"
                 @remove="emit('remove', entry.item)"
+                @edit-metadata="emit('edit-metadata', entry.item)"
+                @explore-data="emit('explore-data', entry.item)"
               />
             </slot>
             <!-- not-yet-loaded index in the pre-sized grid -->

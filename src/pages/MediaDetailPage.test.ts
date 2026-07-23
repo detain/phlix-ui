@@ -12,6 +12,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import MediaDetailPage from './MediaDetailPage.vue';
 import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
+import ItemDataInspector from '../components/ItemDataInspector.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -425,6 +426,76 @@ describe('MediaDetailPage — merged metadata-match action (S02)', () => {
     await flushPromises();
     expect(modal().attributes('data-open')).toBe('true');
     expect(modal().attributes('data-item-id')).toBe('m1');
+  });
+});
+
+describe('MediaDetailPage — Edit metadata / Explore item data (S15)', () => {
+  // S15 wired the two previously-dead ⋯-menu actions:
+  //  • "Edit metadata" (@edit-metadata) → the SAME MetadataMatchModal as Match.
+  //  • "Explore item data" (@explore-data) → a read-only ItemDataInspector modal.
+  // These assert the RESULTING UI actually appears — not merely that an event fired.
+  const MatchModalStub = {
+    name: 'MetadataMatchModal',
+    props: ['modelValue', 'item'],
+    template:
+      '<div class="match-modal-stub" :data-open="String(modelValue)" :data-item-id="item ? item.id : \'\'" />',
+  };
+
+  async function mountAdmin(id: string, type: MediaItem['type'] = 'movie') {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id, name: 'Dune', type })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    const router = makeRouter();
+    router.push(`/app/media/${id}`);
+    await router.isReady();
+    const w = mount(MediaDetailPage, {
+      global: { plugins: [router], stubs: { MetadataMatchModal: MatchModalStub, PosterPicker: true } },
+    });
+    await flushPromises();
+    return { w };
+  }
+
+  it('⋯-menu @edit-metadata → opens the SAME match modal (movie/MediaDetail)', async () => {
+    const { w } = await mountAdmin('m1');
+    const modal = () => w.find('.match-modal-stub');
+    expect(modal().attributes('data-open')).toBe('false');
+
+    w.findComponent(MediaDetail).vm.$emit('edit-metadata', media({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(modal().attributes('data-open')).toBe('true');
+    expect(modal().attributes('data-item-id')).toBe('m1');
+  });
+
+  it('⋯-menu @explore-data → the read-only ItemDataInspector opens with the item (movie)', async () => {
+    const { w } = await mountAdmin('m1');
+    const inspector = w.findComponent(ItemDataInspector);
+    expect(inspector.exists()).toBe(true);
+    expect(inspector.props('modelValue')).toBe(false);
+
+    w.findComponent(MediaDetail).vm.$emit('explore-data', media({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(inspector.props('modelValue')).toBe(true);
+    expect((inspector.props('item') as MediaItem).id).toBe('m1');
+    // Visible UI: the inspector Modal teleports its JSON <pre> to the document.
+    const pre = document.body.querySelector('[data-test="item-json"]');
+    expect(pre?.textContent).toContain('"id": "m1"');
+  });
+
+  it('a series (SeriesDetail) forwards BOTH actions to the host UI', async () => {
+    const { w } = await mountAdmin('sh1', 'series');
+    const series = w.findComponent(SeriesDetail);
+    expect(series.exists()).toBe(true);
+
+    series.vm.$emit('edit-metadata', media({ id: 'sh1', type: 'series' }));
+    series.vm.$emit('explore-data', media({ id: 'sh1', type: 'series' }));
+    await flushPromises();
+
+    expect(w.find('.match-modal-stub').attributes('data-open')).toBe('true');
+    expect(w.findComponent(ItemDataInspector).props('modelValue')).toBe(true);
   });
 });
 

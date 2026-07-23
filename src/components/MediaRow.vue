@@ -66,6 +66,10 @@ const emit = defineEmits<{
   (e: 'refresh', item: MediaItem): void;
   (e: 'choose-poster', item: MediaItem): void;
   (e: 'remove', item: MediaItem): void;
+  /** Admin ⋯-menu "Edit metadata" — host opens the metadata-match modal. */
+  (e: 'edit-metadata', item: MediaItem): void;
+  /** Admin ⋯-menu "Explore item data" — host opens the read-only inspector. */
+  (e: 'explore-data', item: MediaItem): void;
   (e: 'retry'): void;
 }>();
 
@@ -118,6 +122,8 @@ const collapsed = computed(() => props.hideWhenEmpty && isEmpty.value);
           @refresh="emit('refresh', $event)"
           @choose-poster="emit('choose-poster', $event)"
           @remove="emit('remove', $event)"
+          @edit-metadata="emit('edit-metadata', $event)"
+          @explore-data="emit('explore-data', $event)"
         />
       </li>
     </ul>

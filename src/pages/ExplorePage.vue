@@ -14,6 +14,9 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { ApiClient } from '../api/client';
 import MediaGrid from '../components/MediaGrid.vue';
+import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import ItemDataInspector from '../components/ItemDataInspector.vue';
+import { useItemInspector } from '../composables/useItemInspector';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
@@ -148,6 +151,23 @@ function onMarkWatched(item: MediaItem): void {
   }
 }
 
+// S15 — admin ⋯-menu metadata actions. "Edit metadata" opens the shared
+// MetadataMatchModal (the same surface "Match metadata" uses — there is no
+// separate editing API); "Explore item data" opens the read-only client-side
+// inspector. Both produce visible UI here just like the other MediaCard hosts.
+const matchTarget = ref<MediaItem | null>(null);
+const matchOpen = ref(false);
+const { inspectorItem, inspectorOpen, openInspector } = useItemInspector();
+
+function onMatch(item: MediaItem): void {
+  matchTarget.value = item;
+  matchOpen.value = true;
+}
+function onMatchApplied(updated: MediaItem): void {
+  items.value = items.value.map((i) => (i.id === updated.id ? updated : i));
+  toasts.success(`Updated metadata for "${updated.name}"`);
+}
+
 function retry(): void {
   void load();
 }
@@ -206,7 +226,18 @@ watch(selectedId, (id) => {
       @watchlist="onWatchlist"
       @info="onInfo"
       @mark-watched="onMarkWatched"
+      @edit-metadata="onMatch"
+      @explore-data="openInspector"
     />
+
+    <MetadataMatchModal
+      v-if="auth.isAdmin"
+      v-model="matchOpen"
+      :item="matchTarget"
+      @applied="onMatchApplied"
+    />
+
+    <ItemDataInspector v-if="auth.isAdmin" v-model="inspectorOpen" :item="inspectorItem" />
   </div>
 </template>
 

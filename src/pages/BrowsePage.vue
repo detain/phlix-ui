@@ -35,6 +35,8 @@ import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import PosterPicker from '../components/PosterPicker.vue';
+import ItemDataInspector from '../components/ItemDataInspector.vue';
+import { useItemInspector } from '../composables/useItemInspector';
 import { ApiClient } from '../api/client';
 import { libraryLoadErrorInfo } from './browseErrors';
 import { resolvePlayable } from '../composables/useResolvePlayable';
@@ -75,6 +77,10 @@ const appliedItem = ref<MediaItem | null>(null);
 // Poster picker state — opened from the "Choose poster…" card action.
 const posterPickerOpen = ref(false);
 const posterPickerTarget = ref<MediaItem | null>(null);
+
+// S15: "Explore item data" opens the read-only client-side inspector; "Edit
+// metadata" routes to the same onMatch/MetadataMatchModal as "Match metadata".
+const { inspectorItem, inspectorOpen, openInspector } = useItemInspector();
 
 function onMatch(item: MediaItem): void {
   matchTarget.value = item;
@@ -341,6 +347,8 @@ function onSeeAll(row: HomeRowConfig): void {
       @match="onMatch"
       @mark-watched="onMarkWatched"
       @refresh="onRefresh"
+      @edit-metadata="onMatch"
+      @explore-data="openInspector"
       @choose-poster="onChoosePoster"
       @remove="onRemove"
     />
@@ -359,6 +367,8 @@ function onSeeAll(row: HomeRowConfig): void {
       @match="onMatch"
       @mark-watched="onMarkWatched"
       @refresh="onRefresh"
+      @edit-metadata="onMatch"
+      @explore-data="openInspector"
       @choose-poster="onChoosePoster"
       @remove="onRemove"
     />
@@ -381,6 +391,8 @@ function onSeeAll(row: HomeRowConfig): void {
       @match="onMatch"
       @mark-watched="onMarkWatched"
       @refresh="onRefresh"
+      @edit-metadata="onMatch"
+      @explore-data="openInspector"
       @choose-poster="onChoosePoster"
       @remove="onRemove"
     />
@@ -401,6 +413,8 @@ function onSeeAll(row: HomeRowConfig): void {
       @match="onMatch"
       @mark-watched="onMarkWatched"
       @refresh="onRefresh"
+      @edit-metadata="onMatch"
+      @explore-data="openInspector"
       @choose-poster="onChoosePoster"
       @remove="onRemove"
     />
@@ -440,6 +454,8 @@ function onSeeAll(row: HomeRowConfig): void {
       :item="posterPickerTarget"
       @applied="onPosterApplied"
     />
+
+    <ItemDataInspector v-if="auth.isAdmin" v-model="inspectorOpen" :item="inspectorItem" />
   </div>
 </template>
 

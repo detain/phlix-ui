@@ -392,6 +392,19 @@ describe('MediaGrid — event forwarding', () => {
     expect(w.emitted('watchlist')).toHaveLength(1);
     expect(w.emitted('info')).toHaveLength(1);
   });
+
+  // S15: the admin ⋯-menu "Edit metadata" / "Explore item data" actions must
+  // bubble up so the host page (Library / Explore / Recommendations grids) can
+  // open the match modal / data inspector.
+  it('re-emits edit-metadata/explore-data from the card (S15)', async () => {
+    const w = mount(MediaGrid, { props: { items: makeItems(1) } });
+    const card = w.findComponent(MediaCard);
+    card.vm.$emit('edit-metadata', w.props('items')[0]);
+    card.vm.$emit('explore-data', w.props('items')[0]);
+    await nextTick();
+    expect(w.emitted('edit-metadata')?.[0]).toEqual([w.props('items')[0]]);
+    expect(w.emitted('explore-data')?.[0]).toEqual([w.props('items')[0]]);
+  });
 });
 
 describe('MediaGrid — UI-2.5 scroll perf', () => {

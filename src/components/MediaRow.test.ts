@@ -96,6 +96,18 @@ describe('MediaRow', () => {
     expect(w.emitted('info')?.[0]).toEqual([item]);
   });
 
+  // S15: the admin ⋯-menu "Edit metadata" / "Explore item data" actions must
+  // bubble up so the host page (Browse rails) can open the match modal / inspector.
+  it('forwards edit-metadata/explore-data from a card (S15)', () => {
+    const item = media({ id: 'z' });
+    const w = mount(MediaRow, { props: { title: 'X', items: [item] } });
+    const card = w.findComponent(MediaCard);
+    card.vm.$emit('edit-metadata', item);
+    card.vm.$emit('explore-data', item);
+    expect(w.emitted('edit-metadata')?.[0]).toEqual([item]);
+    expect(w.emitted('explore-data')?.[0]).toEqual([item]);
+  });
+
   it('passes a custom card link target via cardTo', () => {
     const item = media({ id: 'q' });
     const w = mount(MediaRow, {

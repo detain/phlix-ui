@@ -1,3 +1,10 @@
+## 0.98.12 - 2026-07-22
+
+### Added
+- **The admin item ⋯-menu "Edit metadata" and "Explore item data" actions are now wired end-to-end (updates.md #15).** Both entries previously rendered in the media-item ⋯ menu but did nothing when selected. They now work on the media detail page (movie **and** series) and on all four `MediaCard` hosts — Library, Browse, Explore, and Recommendations:
+  - **Edit metadata** now opens the existing `MetadataMatchModal` (via each host's `onMatch`). Post-S02 there is no separate metadata-editing API surface, so "Edit metadata" and "Match metadata" are deliberately **functionally identical** — both auto-search TMDB for the item and apply the chosen match. This known redundancy is out of scope for S15 and left as-is.
+  - **Explore item data** opens a new read-only `ItemDataInspector` modal that pretty-prints the item's in-memory `MediaItem` as indented JSON with a **Copy JSON** button. It is **purely client-side** — it makes no network call and changes nothing — so it is a safe inspector reusable by every host. The clipboard copy gracefully no-ops when `navigator.clipboard` is unavailable (insecure context / jsdom). New files: `src/components/ItemDataInspector.vue` and the shared `src/composables/useItemInspector.ts`, which centralizes the open/target state so the five hosts share identical wiring. Both actions remain admin-only. Documented in phlix-docs `admin/library-management.md` ("The item ⋯ menu metadata actions"). Regression tests cover the inspector render/copy/empty states and, per host, that selecting each menu action opens the correct modal.
+
 ## 0.98.11 - 2026-07-22
 
 ### Fixed
