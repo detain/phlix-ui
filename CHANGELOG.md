@@ -1,3 +1,8 @@
+## 0.98.21 - 2026-07-23
+
+### Changed
+- **On the admin Settings page, a tab whose fields are ALL advanced-only now looks muted (dimmed) instead of normal while Advanced mode is off — but stays fully clickable and keyboard-operable, NOT disabled (updates.md #24).** `admin/SettingsPage.vue` gains an `isAllAdvancedGroup(group)` helper that returns true only when every field in a group is advanced-tier (it reuses the existing `isAdvanced()` tier classification — no second source of truth — and treats an empty group as not-all-advanced), and each tab is now built with `muted: !advancedMode && isAllAdvancedGroup(group)` off the existing `useSettingsPrefs` advanced-mode flag. The `TabItem` type in `components/ui/Tabs.vue` gained a **purely-visual** `muted?: boolean` field: when set the tab button gets an `is-muted` class whose CSS adds **only `opacity: 0.5`** — deliberately **no** `pointer-events` change, **no** `disabled`/`aria-disabled` attribute, and **no** tabindex change — so the tab remains fully clickable and reachable by roving keyboard nav. Crucially `Tabs.vue`'s `asOpts` (fed to `listbox.ts`'s `nextEnabledIndex`) still maps only `{value,label,disabled}`, so `muted` never reaches the nav helper and a muted-but-not-disabled tab stays reachable by Arrow/Home/End. Tests assert a muted tab has the `is-muted` class + `opacity: 0.5` styling but no `disabled` attr / no `pointer-events:none` and is still selectable by click and keyboard; that `nextEnabledIndex` still lands on a muted (non-disabled) option; and that `isAllAdvancedGroup` mutes the all-advanced `Matching` tab (not the mixed `Transcoding` tab) only while Advanced mode is off.
+
 ## 0.98.20 - 2026-07-23
 
 ### Fixed

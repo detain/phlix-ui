@@ -160,7 +160,13 @@ const tabs = computed<TabItem[]>(() => {
   const groups = new Set(Object.values(effectiveMeta.value).map(m => m.group));
   return Array.from(groups)
     .sort()
-    .map(g => ({ value: g, label: groupLabel(g) }));
+    .map(g => ({
+      value: g,
+      label: groupLabel(g),
+      // Purely-visual dim (S24): an all-advanced group has no editable field
+      // while Advanced mode is off, so mute its tab. It stays fully clickable.
+      muted: !settingsPrefsStore.advancedMode && isAllAdvancedGroup(g),
+    }));
 });
 
 /**
@@ -451,6 +457,20 @@ function constraintFor(key: string): { min?: number; max?: number } {
 /** True if this key's tier is 'advanced' and advanced mode is off. */
 function isAdvanced(key: string): boolean {
   return effectiveMeta.value[key]?.tier === 'advanced';
+}
+
+/**
+ * True when EVERY field in a settings group/tab is advanced-tier (S24). Such a
+ * tab has no editable field while Advanced mode is off, so its tab is shown
+ * MUTED (dimmed) rather than made to look normal — see `muted` on the tab list.
+ * Reuses {@link isAdvanced} (the tier classification) so there is no second
+ * source of truth for what "advanced" means. An empty group is not all-advanced.
+ */
+function isAllAdvancedGroup(group: string): boolean {
+  const keys = Object.keys(effectiveMeta.value).filter(
+    key => effectiveMeta.value[key]?.group === group,
+  );
+  return keys.length > 0 && keys.every(key => isAdvanced(key));
 }
 function isDisabled(key: string): boolean {
   return isAdvanced(key) && !settingsPrefsStore.advancedMode;

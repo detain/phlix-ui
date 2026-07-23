@@ -23,6 +23,14 @@ export interface TabItem {
   label: string;
   icon?: IconName;
   disabled?: boolean;
+  /**
+   * Purely-visual dim (S24). A muted tab looks dimmed but stays FULLY
+   * interactive — it is NOT disabled: no `disabled`/`aria-disabled` attribute,
+   * no `pointer-events` change, no tabindex change. It remains clickable and
+   * keyboard-operable, and the listbox nav (`nextEnabledIndex`) ignores it
+   * because that helper keys off `disabled` only.
+   */
+  muted?: boolean;
 }
 
 const props = withDefaults(
@@ -76,7 +84,7 @@ function onKeydown(e: KeyboardEvent) {
         type="button"
         role="tab"
         class="phlix-tabs__tab"
-        :class="{ 'is-active': t.value === modelValue }"
+        :class="{ 'is-active': t.value === modelValue, 'is-muted': t.muted }"
         :aria-selected="t.value === modelValue"
         :aria-controls="panelId(t.value)"
         :tabindex="t.value === modelValue ? 0 : -1"
@@ -123,6 +131,10 @@ function onKeydown(e: KeyboardEvent) {
 }
 .phlix-tabs__tab:hover:not(:disabled) { color: var(--text); }
 .phlix-tabs__tab.is-active { color: var(--accent-text); border-bottom-color: var(--accent-text); }
+/* S24: purely-visual dim for an all-advanced tab while Advanced mode is off.
+   ONLY opacity — deliberately NO pointer-events / cursor / disabled — so the
+   tab stays fully clickable and keyboard-operable. */
+.phlix-tabs__tab.is-muted { opacity: 0.5; }
 .phlix-tabs__tab:disabled { opacity: 0.45; cursor: not-allowed; }
 .phlix-tabs__tab:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-ring); border-radius: var(--radius-sm); }
 .phlix-tabs__icon { font-size: 1.1em; }
