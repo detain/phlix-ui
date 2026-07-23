@@ -11,6 +11,7 @@ import { nextTick } from 'vue';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
 import MediaCard from './MediaCard.vue';
+import Tooltip from './ui/Tooltip.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useToastStore } from '../stores/useToastStore';
@@ -56,6 +57,22 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
 async function reveal(w: ReturnType<typeof mount>): Promise<typeof w> {
   await w.find('.media-card').trigger('pointerenter');
   return w;
+}
+
+/**
+ * S20: build a map of { action button's aria-label -> the wrapping <Tooltip>'s
+ * `text` prop } for every action that is wrapped in a <Tooltip> around a single
+ * <button>. Mirrors the AppearanceSettings idiom (findAllComponents + props()).
+ * Only entries where a Tooltip actually wraps a button are recorded, so a missing
+ * key means "that button is NOT tooltip-wrapped" — the exact regression S20 guards.
+ */
+function tooltipTextByLabel(w: ReturnType<typeof mount>): Record<string, unknown> {
+  const map: Record<string, unknown> = {};
+  for (const t of w.findAllComponents(Tooltip)) {
+    const btn = t.find('button');
+    if (btn.exists()) map[btn.attributes('aria-label') ?? ''] = t.props('text');
+  }
+  return map;
 }
 
 beforeEach(() => {
@@ -1038,5 +1055,119 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
       expect(success).toHaveBeenCalledWith('No missing episodes');
       w.unmount();
     });
+  });
+});
+
+/**
+ * S20 — every icon-only poster action is wrapped in the shared <Tooltip>, reusing
+ * the button's own `aria-label` as the tip `text` (a description, not a new name).
+ * Without these, an accidental unwrap or a wrong tip string would fail NO test.
+ * Deterministic: we assert the wrapping STRUCTURE + the `text` prop, never the
+ * 300ms-delayed hover reveal (jsdom cannot do real hover).
+ */
+describe('MediaCard — action button tooltips (S20)', () => {
+  it('wraps each icon-only action in a <Tooltip> whose text reuses the button aria-label', async () => {
+    const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(w);
+    // The map also contains the ThumbRating Like/Dislike tips (a child component);
+    // toMatchObject asserts MediaCard's own actions without over-constraining.
+    expect(tooltipTextByLabel(w)).toMatchObject({
+      Play: 'Play',
+      'Add to favorites': 'Add to favorites',
+      'Mark as watched': 'Mark as watched',
+      'More info': 'More info',
+      'More actions': 'More actions',
+      'Match metadata': 'Match metadata',
+    });
+  });
+
+  it('each wrapped action button is the direct child of the .phlix-tooltip-wrap span (no accidental unwrap)', async () => {
+    const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(w);
+    for (const label of [
+      'Play',
+      'Add to favorites',
+      'Mark as watched',
+      'More info',
+      'More actions',
+      'Match metadata',
+    ]) {
+      const btn = w.find(`[aria-label="${label}"]`);
+      expect(btn.exists()).toBe(true);
+      // The Tooltip's single-element slot root IS the button, so its parent is the
+      // tooltip wrap. If the <Tooltip> were removed the parent would be the action
+      // row / Menu instead — this fails the moment a button loses its tooltip.
+      expect(btn.element.parentElement?.classList.contains('phlix-tooltip-wrap')).toBe(true);
+    }
+  });
+
+  it('keeps the button aria-label (accessible NAME) AND adds the tooltip text (DESCRIPTION) — they coexist', async () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
+    const play = w.find('.media-card__iconbtn--play');
+    // The button keeps its own accessible name…
+    expect(play.attributes('aria-label')).toBe('Play');
+    // …and is wrapped by a Tooltip supplying the same copy as a description (not a
+    // replacement name) — matches the NetworkHealthIndicator/Gallery house pattern.
+    expect(tooltipTextByLabel(w).Play).toBe('Play');
+  });
+
+  it('the Favorite tooltip text flips with isFavorited (both states)', async () => {
+    const store = useUserItemDataStore();
+    const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
+    // Not favorited.
+    const off = tooltipTextByLabel(w);
+    expect(off['Add to favorites']).toBe('Add to favorites');
+    expect(off['Remove from favorites']).toBeUndefined();
+    // Favorited → the tip (and the aria-label it mirrors) flip together.
+    store.entries.set('m1', { favorite: true, rating: null, like_level: 0, watched: false });
+    await nextTick();
+    const on = tooltipTextByLabel(w);
+    expect(on['Remove from favorites']).toBe('Remove from favorites');
+    expect(on['Add to favorites']).toBeUndefined();
+  });
+
+  it('the Watched tooltip text flips with isWatched (both states)', async () => {
+    const store = useUserItemDataStore();
+    const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
+    // Not watched.
+    const off = tooltipTextByLabel(w);
+    expect(off['Mark as watched']).toBe('Mark as watched');
+    expect(off['Mark as unwatched']).toBeUndefined();
+    // Watched → tip flips.
+    store.entries.set('m1', { favorite: false, rating: null, like_level: 0, watched: true });
+    await nextTick();
+    const on = tooltipTextByLabel(w);
+    expect(on['Mark as unwatched']).toBe('Mark as unwatched');
+    expect(on['Mark as watched']).toBeUndefined();
+  });
+
+  it('the admin Match tooltip renders ONLY when canMatch (no empty wrapper otherwise)', async () => {
+    const off = mount(MediaCard, { props: { item: media() } });
+    await reveal(off);
+    expect(tooltipTextByLabel(off)['Match metadata']).toBeUndefined();
+    // The v-if lives on the <Tooltip> itself, so no Match tooltip wrap exists at all.
+    expect(off.find('[aria-label="Match metadata"]').exists()).toBe(false);
+
+    const on = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(on);
+    expect(tooltipTextByLabel(on)['Match metadata']).toBe('Match metadata');
+    expect(
+      on.find('[aria-label="Match metadata"]').element.parentElement?.classList.contains(
+        'phlix-tooltip-wrap',
+      ),
+    ).toBe(true);
+  });
+
+  it('the ⋯ Menu trigger button is tooltip-wrapped INSIDE the Menu slot with text "More actions"', async () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
+    const trigger = w.find('[aria-label="More actions"]');
+    expect(trigger.exists()).toBe(true);
+    // Wrapped by a Tooltip even though it is nested in the Menu's #default slot.
+    expect(trigger.element.parentElement?.classList.contains('phlix-tooltip-wrap')).toBe(true);
+    expect(tooltipTextByLabel(w)['More actions']).toBe('More actions');
   });
 });

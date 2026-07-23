@@ -40,6 +40,7 @@
  */
 import { computed } from 'vue';
 import Icon from './Icon.vue';
+import Tooltip from './ui/Tooltip.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -110,31 +111,33 @@ function onDown(): void {
 
 <template>
   <div class="thumb-rating" :data-level="current">
-    <button
-      v-if="showUp"
-      type="button"
-      class="thumb-rating__btn thumb-rating__btn--up"
-      :class="{ 'is-filled': upFilled, 'is-blue': upBlue }"
-      :disabled="disabled"
-      aria-label="Like"
-      :aria-pressed="upFilled ? 'true' : 'false'"
-      @click="onUp"
-    >
-      <Icon name="thumbs-up" class="thumb-rating__icon" />
-    </button>
+    <Tooltip v-if="showUp" text="Like">
+      <button
+        type="button"
+        class="thumb-rating__btn thumb-rating__btn--up"
+        :class="{ 'is-filled': upFilled, 'is-blue': upBlue }"
+        :disabled="disabled"
+        aria-label="Like"
+        :aria-pressed="upFilled ? 'true' : 'false'"
+        @click="onUp"
+      >
+        <Icon name="thumbs-up" class="thumb-rating__icon" />
+      </button>
+    </Tooltip>
 
-    <button
-      v-if="showDown"
-      type="button"
-      class="thumb-rating__btn thumb-rating__btn--down"
-      :class="{ 'is-filled': downFilled, 'is-blue': downBlue }"
-      :disabled="disabled"
-      aria-label="Dislike"
-      :aria-pressed="downFilled ? 'true' : 'false'"
-      @click="onDown"
-    >
-      <Icon name="thumbs-down" class="thumb-rating__icon" />
-    </button>
+    <Tooltip v-if="showDown" text="Dislike">
+      <button
+        type="button"
+        class="thumb-rating__btn thumb-rating__btn--down"
+        :class="{ 'is-filled': downFilled, 'is-blue': downBlue }"
+        :disabled="disabled"
+        aria-label="Dislike"
+        :aria-pressed="downFilled ? 'true' : 'false'"
+        @click="onDown"
+      >
+        <Icon name="thumbs-down" class="thumb-rating__icon" />
+      </button>
+    </Tooltip>
   </div>
 </template>
 
