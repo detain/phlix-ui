@@ -46,7 +46,7 @@ import Switch from '../../components/ui/Switch.vue';
 import Tabs, { type TabItem } from '../../components/ui/Tabs.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
-import HelpPopover from '../../components/ui/HelpPopover.vue';
+import HelpText from '../../components/ui/HelpText.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 
 const props = withDefaults(
@@ -800,14 +800,12 @@ onMounted(() => {
                 />
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
-                <HelpPopover
-                  v-if="hasHelp(key)"
-                  :help-text="getHelpText(key) ?? ''"
-                  :help-links="getHelpLinks(key)"
-                  :field-label="getLabel(key)"
-                  :title="getLabel(key)"
-                />
               </div>
+              <HelpText
+                v-if="hasHelp(key)"
+                :text="getHelpText(key) ?? ''"
+                :links="getHelpLinks(key)"
+              />
             </template>
 
             <!-- int / float → native number input -->
@@ -816,13 +814,6 @@ onMounted(() => {
                 {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
-                <HelpPopover
-                  v-if="hasHelp(key)"
-                  :help-text="getHelpText(key) ?? ''"
-                  :help-links="getHelpLinks(key)"
-                  :field-label="getLabel(key)"
-                  :title="getLabel(key)"
-                />
               </label>
               <input
                 :id="`field-${key}`"
@@ -836,6 +827,11 @@ onMounted(() => {
                 :disabled="isDisabled(key)"
                 @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
               />
+              <HelpText
+                v-if="hasHelp(key)"
+                :text="getHelpText(key) ?? ''"
+                :links="getHelpLinks(key)"
+              />
             </template>
 
             <!-- enumerated string → Select (driven by meta enum) -->
@@ -844,13 +840,6 @@ onMounted(() => {
                 {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
-                <HelpPopover
-                  v-if="hasHelp(key)"
-                  :help-text="getHelpText(key) ?? ''"
-                  :help-links="getHelpLinks(key)"
-                  :field-label="getLabel(key)"
-                  :title="getLabel(key)"
-                />
               </label>
               <Select
                 :model-value="formValues[key] ?? ''"
@@ -858,6 +847,11 @@ onMounted(() => {
                 :label="getLabel(key)"
                 :disabled="isDisabled(key)"
                 @update:model-value="(v) => setFieldValue(key, String(v))"
+              />
+              <HelpText
+                v-if="hasHelp(key)"
+                :text="getHelpText(key) ?? ''"
+                :links="getHelpLinks(key)"
               />
               <!-- Per-option help (schema `optionHelp`) — one line per choice. -->
               <dl v-if="optionHelpEntries(key).length" class="admin-settings__option-help">
@@ -874,13 +868,6 @@ onMounted(() => {
                 {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
-                <HelpPopover
-                  v-if="hasHelp(key)"
-                  :help-text="getHelpText(key) ?? ''"
-                  :help-links="getHelpLinks(key)"
-                  :field-label="getLabel(key)"
-                  :title="getLabel(key)"
-                />
               </label>
               <textarea
                 :id="`field-${key}`"
@@ -893,6 +880,11 @@ onMounted(() => {
                 :aria-invalid="jsonErrors[key] ? 'true' : undefined"
                 :disabled="isDisabled(key)"
                 @input="(e) => setJsonValue(key, (e.target as HTMLTextAreaElement).value)"
+              />
+              <HelpText
+                v-if="hasHelp(key)"
+                :text="getHelpText(key) ?? ''"
+                :links="getHelpLinks(key)"
               />
               <span v-if="jsonErrors[key]" class="admin-settings__error" role="alert">
                 {{ jsonErrors[key] }}
@@ -912,13 +904,6 @@ onMounted(() => {
                 {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
-                <HelpPopover
-                  v-if="hasHelp(key)"
-                  :help-text="getHelpText(key) ?? ''"
-                  :help-links="getHelpLinks(key)"
-                  :field-label="getLabel(key)"
-                  :title="getLabel(key)"
-                />
               </label>
               <p :id="secretStatusId(key)" class="admin-settings__secret-status">
                 <template v-if="isRemovingSecret(key)">
@@ -999,6 +984,11 @@ onMounted(() => {
                   Remove
                 </Button>
               </div>
+              <HelpText
+                v-if="hasHelp(key)"
+                :text="getHelpText(key) ?? ''"
+                :links="getHelpLinks(key)"
+              />
             </template>
 
             <!-- plain string → text input -->
@@ -1007,13 +997,6 @@ onMounted(() => {
                 {{ getLabel(key) }}
                 <Badge v-if="isOverridden(key)" tone="accent">custom</Badge>
                 <Badge v-if="isAdvanced(key)" tone="neutral" class="field-advanced-badge">Advanced</Badge>
-                <HelpPopover
-                  v-if="hasHelp(key)"
-                  :help-text="getHelpText(key) ?? ''"
-                  :help-links="getHelpLinks(key)"
-                  :field-label="getLabel(key)"
-                  :title="getLabel(key)"
-                />
               </label>
               <input
                 :id="`field-${key}`"
@@ -1023,6 +1006,11 @@ onMounted(() => {
                 :value="formValues[key]"
                 :disabled="isDisabled(key)"
                 @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
+              />
+              <HelpText
+                v-if="hasHelp(key)"
+                :text="getHelpText(key) ?? ''"
+                :links="getHelpLinks(key)"
               />
             </template>
 
