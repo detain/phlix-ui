@@ -12,6 +12,7 @@ import RemoteAccessPage from './RemoteAccessPage.vue';
 import Button from '../../components/ui/Button.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
+import { ApiError } from '../../api/errors';
 import type { ApiClient } from '../../api/client';
 
 interface Over {
@@ -33,7 +34,7 @@ function makeClient(over: Over = {}) {
     }
     throw new Error(`unexpected GET ${endpoint}`);
   });
-  const post = vi.fn(async () => ({ success: true, latencyMs: 42, receivedAt: 't' }));
+  const post = vi.fn(async (): Promise<unknown> => ({ success: true, latencyMs: 42, receivedAt: 't' }));
   const client = { get, post, put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
   return { client, get, post };
 }
@@ -410,30 +411,118 @@ describe('Admin RemoteAccessPage — subdomain', () => {
   });
 });
 
-describe('Admin RemoteAccessPage — relay tunnel', () => {
-  it('shows connected status with Ping and Disable buttons', async () => {
-    const { client } = makeClient({ relay: { connected: true, active: true } });
+describe('Admin RemoteAccessPage — relay tunnel (S39 honest reframe)', () => {
+  it('renders the honest status fields (enrolled + kill-switch) and the reload notice', async () => {
+    const { client } = makeClient({
+      relay: { connected: true, active: true, enrolled: true, disabled: false },
+    });
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Relay Tunnel');
-    expect(document.body.textContent).toContain('Connected');
+    const body = w.find('#remote-relay-body').text();
+    // Real state fields the server now persists, not a fake success flag.
+    expect(body).toContain('Connected');
+    expect(body).toContain('Enrolled');
+    expect(body).toContain('Kill-switch');
+    expect(body).toContain('Enabled');
+    // Honest "not instant" notice is always visible on the panel.
+    expect(body).toContain('takes effect on the next server reload');
+    // Connected + not-disabled → the Disable lever is the offered action.
     expect(findBtn(w, 'Ping')).toBeTruthy();
     expect(findBtn(w, 'Disable')).toBeTruthy();
+    expect(findBtn(w, 'Enable')).toBeFalsy();
     w.unmount();
   });
 
-  it('disables Ping while disconnected and shows an Enable button', async () => {
-    const { client } = makeClient();
+  it('shows an in-body error + retry when the relay status fails to load', async () => {
+    let relayCalls = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/remote/relay/status') {
+        relayCalls++;
+        if (relayCalls === 1) throw new Error('relay boom');
+        return { connected: false, active: false, enrolled: true, disabled: false };
+      }
+      if (endpoint === '/api/v1/admin/remote/portforward/candidates') return { candidates: [] };
+      if (endpoint === '/api/v1/admin/remote/hub/status') return { paired: false };
+      if (endpoint === '/api/v1/admin/remote/subdomain/status') return { claimed: false };
+      if (endpoint === '/api/v1/admin/remote/portforward/status') return { enabled: false };
+      return {};
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountPage(client);
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'relay boom')).toBe(true);
+    await expandSection(w, 'Relay Tunnel');
+    // Summary reflects the unable-to-load state honestly.
+    expect(w.text()).toContain('Unable to load');
+    // In-body EmptyState + Retry.
+    expect(w.find('#remote-relay-body').text()).toContain('load relay status');
+    await w.findComponent(EmptyState).find('button').trigger('click');
+    await flushPromises();
+    expect(w.find('#remote-relay-body').text()).toContain('Disconnected');
+    w.unmount();
+  });
+
+  it('surfaces the persisted last-connect error reason when the tunnel is down', async () => {
+    const { client } = makeClient({
+      relay: {
+        connected: false,
+        active: false,
+        enrolled: true,
+        disabled: false,
+        lastConnectError: 'TLS handshake to a plaintext relay port',
+        lastConnectErrorAt: '2024-01-15T10:00:00Z',
+      },
+    });
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Relay Tunnel');
-    expect(findBtn(w, 'Ping')!.attributes('disabled')).toBeDefined();
-    expect(findBtn(w, 'Enable')).toBeTruthy();
+    const body = w.find('#remote-relay-body').text();
+    expect(body).toContain('Disconnected');
+    expect(body).toContain('Last error');
+    expect(body).toContain('TLS handshake to a plaintext relay port');
+    // Summary reflects the disconnected-but-enabled state, not a fabricated one.
+    expect(w.text()).toContain('Disconnected');
     w.unmount();
   });
 
-  it('enables the relay and refetches', async () => {
-    const { client, post, get } = makeClient();
+  it('shows a Disabled summary + Enable button and disables Ping when the kill-switch is set', async () => {
+    const { client } = makeClient({
+      relay: { connected: false, active: false, enrolled: true, disabled: true },
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Relay Tunnel');
+    expect(w.text()).toContain('Disabled');
+    expect(findBtn(w, 'Enable')).toBeTruthy();
+    expect(findBtn(w, 'Disable')).toBeFalsy();
+    expect(findBtn(w, 'Ping')!.attributes('disabled')).toBeDefined();
+    w.unmount();
+  });
+
+  it('shows a Not paired summary when the server is not enrolled', async () => {
+    const { client } = makeClient({
+      relay: { connected: false, active: false, enrolled: false, disabled: false },
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Relay Tunnel');
+    expect(w.text()).toContain('Not paired');
+    w.unmount();
+  });
+
+  it('enables the relay (reload lever), surfaces the server message and refetches', async () => {
+    const { client, post, get } = makeClient({
+      relay: { connected: false, active: false, enrolled: true, disabled: true },
+    });
+    post.mockResolvedValueOnce({
+      success: true,
+      disabled: false,
+      enrolled: true,
+      takesEffectOnReload: true,
+      message: 'Relay enabled; the tunnel will (re)connect on the next server reload.',
+    });
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Relay Tunnel');
@@ -441,38 +530,154 @@ describe('Admin RemoteAccessPage — relay tunnel', () => {
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/enable');
     expect(get.mock.calls.filter((c) => c[0] === '/api/v1/admin/remote/relay/status').length).toBeGreaterThan(1);
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some(
+        (t) => t.message === 'Relay enabled; the tunnel will (re)connect on the next server reload.',
+      ),
+    ).toBe(true);
     w.unmount();
   });
 
-  it('disables the relay', async () => {
-    const { client, post } = makeClient({ relay: { connected: true, active: true } });
+  it('shows the honest env-forced message as a warning when Enable cannot clear the env kill-switch', async () => {
+    const envMsg =
+      'Relay kill-switch cleared, but PHLIX_RELAY_DISABLED is set in the environment; '
+      + 'the tunnel stays disabled until that is removed and the server reloads.';
+    const { client, post } = makeClient({
+      relay: { connected: false, active: false, enrolled: true, disabled: true },
+    });
+    post.mockResolvedValueOnce({
+      success: true,
+      disabled: true, // env still forces it disabled
+      enrolled: true,
+      takesEffectOnReload: true,
+      message: envMsg,
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Relay Tunnel');
+    await findBtn(w, 'Enable')!.trigger('click');
+    await flushPromises();
+    const toasts = useToastStore();
+    const toast = toasts.toasts.find((t) => t.message === envMsg);
+    expect(toast).toBeTruthy();
+    expect(toast!.tone).toBe('warning');
+    w.unmount();
+  });
+
+  it('disables the relay (reload lever) and surfaces the server message', async () => {
+    const { client, post } = makeClient({
+      relay: { connected: true, active: true, enrolled: true, disabled: false },
+    });
+    post.mockResolvedValueOnce({
+      success: true,
+      disabled: true,
+      enrolled: true,
+      takesEffectOnReload: true,
+      message: 'Relay disabled; the tunnel will disconnect on the next server reload.',
+    });
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Relay Tunnel');
     await findBtn(w, 'Disable')!.trigger('click');
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/disable');
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some(
+        (t) => t.message === 'Relay disabled; the tunnel will disconnect on the next server reload.',
+      ),
+    ).toBe(true);
     w.unmount();
   });
 
-  it('pings the relay and shows the latency summary', async () => {
-    const post = vi.fn(async () => ({ success: true, latencyMs: 42 }));
-    const { client } = makeClient({ relay: { connected: true, active: true } });
-    (client as unknown as { post: typeof post }).post = post;
+  it('pings the relay and shows the persisted latency', async () => {
+    const { client, post } = makeClient({
+      relay: { connected: true, active: true, enrolled: true, disabled: false },
+    });
+    post.mockResolvedValueOnce({
+      success: true,
+      connected: true,
+      active: true,
+      latencyMs: 42,
+      lastHeartbeatAt: '2024-01-15T10:00:00Z',
+      latencySource: 'persisted',
+    });
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Relay Tunnel');
     await findBtn(w, 'Ping')!.trigger('click');
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/ping');
-    expect(w.text()).toContain('42ms latency');
+    expect(w.text()).toContain('42ms latency'); // summary
+    expect(w.find('#remote-relay-body').text()).toContain('last recorded heartbeat');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'Relay latency: 42ms')).toBe(true);
     w.unmount();
   });
 
+  it('handles a null ping latency gracefully (not measured yet, until S40)', async () => {
+    const { client, post } = makeClient({
+      relay: { connected: true, active: true, enrolled: true, disabled: false },
+    });
+    post.mockResolvedValueOnce({
+      success: true,
+      connected: true,
+      active: true,
+      latencyMs: null, // no heartbeat recorded yet — honest, not fabricated
+      lastHeartbeatAt: null,
+      latencySource: 'persisted',
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Relay Tunnel');
+    await findBtn(w, 'Ping')!.trigger('click');
+    await flushPromises();
+    const body = w.find('#remote-relay-body').text();
+    expect(body).toContain('Not measured yet');
+    expect(body).not.toContain('last recorded heartbeat');
+    // Summary must NOT invent a latency number.
+    expect(w.text()).not.toContain('ms latency');
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'Relay connected; latency not measured yet.')).toBe(true);
+    w.unmount();
+  });
+
+  it('handles the 409 not-connected ping by surfacing the message + last error', async () => {
+    const { client, post } = makeClient({
+      relay: { connected: true, active: true, enrolled: true, disabled: false },
+    });
+    post.mockRejectedValueOnce(
+      new ApiError('Relay not connected.', 409, {
+        success: false,
+        connected: false,
+        active: false,
+        message: 'Relay not connected.',
+        lastConnectError: 'TLS handshake to a plaintext relay port',
+        lastConnectErrorAt: '2024-01-15T10:00:00Z',
+      }),
+    );
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Relay Tunnel');
+    await findBtn(w, 'Ping')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/remote/relay/ping');
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some(
+        (t) => t.message === 'Relay not connected. (TLS handshake to a plaintext relay port)',
+      ),
+    ).toBe(true);
+    // 409 clears any stale latency line and refetches status.
+    expect(w.find('#remote-relay-body').text()).not.toContain('Not measured yet');
+    w.unmount();
+  });
+
   it('toasts when enable fails', async () => {
-    const { client, post } = makeClient();
+    const { client, post } = makeClient({
+      relay: { connected: false, active: false, enrolled: true, disabled: true },
+    });
     post.mockRejectedValueOnce(new Error('relay enable boom'));
     const w = mountPage(client);
     await flushPromises();
@@ -485,7 +690,9 @@ describe('Admin RemoteAccessPage — relay tunnel', () => {
   });
 
   it('toasts when disable fails', async () => {
-    const { client, post } = makeClient({ relay: { connected: true, active: true } });
+    const { client, post } = makeClient({
+      relay: { connected: true, active: true, enrolled: true, disabled: false },
+    });
     post.mockRejectedValueOnce(new Error('relay disable boom'));
     const w = mountPage(client);
     await flushPromises();
@@ -497,8 +704,10 @@ describe('Admin RemoteAccessPage — relay tunnel', () => {
     w.unmount();
   });
 
-  it('toasts when ping fails', async () => {
-    const { client, post } = makeClient({ relay: { connected: true, active: true } });
+  it('toasts when ping fails with a non-409 error', async () => {
+    const { client, post } = makeClient({
+      relay: { connected: true, active: true, enrolled: true, disabled: false },
+    });
     post.mockRejectedValueOnce(new Error('ping boom'));
     const w = mountPage(client);
     await flushPromises();
