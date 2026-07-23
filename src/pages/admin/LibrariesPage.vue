@@ -644,14 +644,22 @@ async function runConfirmedOp(): Promise<void> {
   await runOp(pending.lib, pending.op);
 }
 
-/** The overflow-menu items for a library row (non-primary + destructive ops). */
+/**
+ * The overflow-menu items for a library row (non-primary + destructive ops).
+ * `Rescan` and `Delete` were relocated here from the inline Actions cell (S22) to
+ * stop that cell wrapping to multiple rows; their handlers are unchanged — Rescan
+ * queues the `rescan` op, and Delete opens the existing delete-confirm modal via
+ * the shared `deleting` ref (so its confirmation flow is preserved).
+ */
 function moreMenuItems(lib: Library): MenuItem[] {
   return [
+    { label: 'Rescan', onClick: () => void runOp(lib, 'rescan') },
     { label: 'Recheck all metadata', onClick: () => void runOp(lib, 'refresh-metadata') },
     { label: 'Prune removed', onClick: () => void runOp(lib, 'prune') },
     { label: 'Clear metadata', onClick: () => askConfirm(lib, 'clear-metadata') },
     { label: 'Clear cached artwork', onClick: () => askConfirm(lib, 'clear-artwork') },
     { label: 'Delete all items', danger: true, onClick: () => askConfirm(lib, 'delete-all') },
+    { label: 'Delete', danger: true, onClick: () => { deleting.value = lib; } },
   ];
 }
 
@@ -870,14 +878,6 @@ onBeforeUnmount(() => {
               <Button
                 variant="ghost"
                 size="sm"
-                :aria-label="`Rescan ${lib.name}`"
-                @click="runOp(lib, 'rescan')"
-              >
-                Rescan
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
                 :aria-label="`Match metadata for ${lib.name}`"
                 @click="runOp(lib, 'metadata')"
               >
@@ -900,14 +900,6 @@ onBeforeUnmount(() => {
                 @click="openHistory(lib)"
               >
                 History
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                :aria-label="`Delete ${lib.name}`"
-                @click="deleting = lib"
-              >
-                Delete
               </Button>
             </div>
           </td>
@@ -1233,11 +1225,17 @@ onBeforeUnmount(() => {
 }
 .admin-libraries__actions-col {
   width: 1%;
+  /* Reserve enough width for the inline actions so they never wrap to a second row. */
+  min-width: 300px;
 }
 .admin-libraries__actions {
   display: flex;
-  flex-wrap: wrap;
+  /* Keep the inline actions on a single row; if content still overflows the
+     reserved width, scroll horizontally instead of wrapping to a second row. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: var(--space-1);
+  min-width: 300px;
 }
 
 /* Form */
