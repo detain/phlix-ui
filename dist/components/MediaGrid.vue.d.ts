@@ -47,6 +47,8 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {
     remove: (item: import("../types/media-item").MediaDetail) => any;
     "mark-watched": (item: import("../types/media-item").MediaDetail) => any;
     "choose-poster": (item: import("../types/media-item").MediaDetail) => any;
+    "edit-metadata": (item: import("../types/media-item").MediaDetail) => any;
+    "explore-data": (item: import("../types/media-item").MediaDetail) => any;
     "load-more": () => any;
     "need-range": (startIndex: number, endIndex: number) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
@@ -58,6 +60,8 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {
     onRemove?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onEdit-metadata"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onExplore-data"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onLoad-more"?: (() => any) | undefined;
     "onNeed-range"?: ((startIndex: number, endIndex: number) => any) | undefined;
 }>, {

@@ -158,20 +158,48 @@ provide('resumeReporter', useResumeReporter());
 
 const branding = computed<BrandingConfig>(() => config?.branding ?? {});
 const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');
+
+// Shared library cache — read by the nav (dynamic `libraryLinks` and the
+// `requiresLibraryType` filter below) and the Browse page. Instantiated ahead of
+// the `menu` computed so the filter can consult it.
+const libraries = useLibrariesStore();
+
+/** A `requiresLibraryType` menu item is shown only once the library list has
+ *  RESOLVED (fail-closed: hidden while still loading / on load failure, so it
+ *  never flashes then hides) and contains at least one library whose `type`
+ *  matches the required type — a single value, or ANY of an array. */
+function hasMatchingLibrary(required: NonNullable<MenuItem['requiresLibraryType']>): boolean {
+    if (!libraries.loaded) return false;
+    const wanted = Array.isArray(required) ? required : [required];
+    return libraries.items.some((lib) => wanted.includes(lib.type));
+}
+
 // `requiresAdmin` items (e.g. the "Admin" entry) show only for an authenticated
-// admin. Best-effort progressive disclosure — the server API still authorizes.
+// admin; `requiresLibraryType` items (Books/Audiobooks/Photos/Music) show only
+// when a library of that kind exists. Best-effort progressive disclosure — the
+// server API still authorizes.
 const menu = computed<MenuItem[]>(() =>
-    (config?.menu ?? []).filter((item) => !item.requiresAdmin || auth.isAdmin),
+    (config?.menu ?? []).filter(
+        (item) =>
+            (!item.requiresAdmin || auth.isAdmin) &&
+            (!item.requiresLibraryType || hasMatchingLibrary(item.requiresLibraryType)),
+    ),
 );
 const homePath = computed(() => config?.home ?? config?.routerBase ?? '/app');
 
-// When a menu item opts into `libraryLinks` (the media server's "Browse"), load
-// the library list once authenticated so the nav can render a link per library.
-// The store dedupes/caches, so this shares the same fetch the Browse page uses.
-const libraries = useLibrariesStore();
-const hasLibraryNav = computed(() => menu.value.some((item) => item.libraryLinks));
+// Load the library list once authenticated whenever the nav needs it — to expand
+// a `libraryLinks` item into per-library links, OR to evaluate a
+// `requiresLibraryType` filter (the raw config menu is consulted, not the filtered
+// `menu`, so a `requiresLibraryType` entry — hidden until the list loads — still
+// triggers the load that reveals it, avoiding a chicken-and-egg deadlock). The
+// store dedupes/caches, so this shares the Browse page's fetch and never
+// double-loads. The hub sets neither, so it never hits the server-only
+// `/api/v1/libraries` (which 404s there).
+const needsLibraries = computed(() =>
+    (config?.menu ?? []).some((item) => item.libraryLinks || item.requiresLibraryType),
+);
 watch(
-    () => auth.isLoggedIn && hasLibraryNav.value,
+    () => auth.isLoggedIn && needsLibraries.value,
     (ready) => {
         if (ready) void libraries.load(config?.apiBase ?? '');
     },

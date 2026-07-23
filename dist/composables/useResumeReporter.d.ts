@@ -10,6 +10,13 @@ export interface UseResumeReporter {
      * A no-op when logged out, with no current media, or below the resume threshold.
      */
     report: (force?: boolean) => Promise<void>;
+    /**
+     * Signal that playback reached the end — the server marks the item watched
+     * (finished) so it leaves continue-watching. A safe no-op when logged out, with
+     * no current media, or when no session was ever created (playback never crossed
+     * the resume threshold). Best-effort: a failed finish never throws.
+     */
+    finish: () => Promise<void>;
 }
 /**
  * useResumeReporter — the cross-device resume WRITE path.

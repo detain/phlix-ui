@@ -20,15 +20,12 @@ export interface MediaItemMenuContext {
  */
 export declare const MENU_LABELS: {
     readonly addToPlaylist: "Add to playlist";
-    readonly like: "Like";
-    readonly dislike: "Dislike";
     readonly markPlayed: "Mark played";
     readonly markUnplayed: "Mark unplayed";
     readonly download: "Download";
     readonly missingEpisodes: "View missing episodes";
     readonly shuffle: "Shuffle";
-    readonly refreshMetadata: "Refresh metadata";
-    readonly identify: "Identify from beginning";
+    readonly matchMetadata: "Match metadata";
     readonly editMetadata: "Edit metadata";
     readonly editImages: "Edit images";
     readonly exploreData: "Explore item data";
@@ -36,8 +33,12 @@ export declare const MENU_LABELS: {
 };
 /**
  * Build the ⋯ action menu for a media item. Everyone gets the playback/library
- * actions (playlist, like/dislike, played, download, shuffle, and — for
- * series/season cards — missing episodes); admins additionally get the metadata
- * / image / debug / remove actions.
+ * actions (playlist, played, download, shuffle, and — for series/season cards —
+ * missing episodes); admins additionally get the metadata / image / debug /
+ * remove actions.
+ *
+ * S03: Like/Dislike are deliberately NOT in this menu — the `ThumbRating` widget
+ * is the single like/dislike control. The redundant, less-capable menu aliases
+ * were removed.
  */
 export declare function buildMediaItemMenu(item: MediaItem, ctx: MediaItemMenuContext): MenuItem[];

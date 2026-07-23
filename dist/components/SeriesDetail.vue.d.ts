@@ -25,6 +25,8 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     remove: (item: import("../types/media-item").MediaDetail) => any;
     "mark-watched": (item: import("../types/media-item").MediaDetail) => any;
     "choose-poster": (item: import("../types/media-item").MediaDetail) => any;
+    "edit-metadata": (item: import("../types/media-item").MediaDetail) => any;
+    "explore-data": (item: import("../types/media-item").MediaDetail) => any;
     "play-season": (group: SeasonGroup) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onMatch?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
@@ -37,6 +39,8 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     onRemove?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onMark-watched"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onChoose-poster"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onEdit-metadata"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onExplore-data"?: ((item: import("../types/media-item").MediaDetail) => any) | undefined;
     "onPlay-season"?: ((group: SeasonGroup) => any) | undefined;
 }>, {
     loading: boolean;

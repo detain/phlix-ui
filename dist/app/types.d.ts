@@ -9,6 +9,7 @@ import type { Command } from '../stores/useCommandStore';
 import type { ThemeName } from '../stores/usePreferencesStore';
 import type { IconName } from '../components/Icon.vue';
 import type { LibraryQueryParams } from '../types/library-query';
+import type { LibrarySummary } from '../api/libraries';
 import type { PhlixMessagesConfig } from '../i18n/messages';
 export interface MenuItem {
     id: string;
@@ -26,6 +27,15 @@ export interface MenuItem {
      *  like the "Admin" entry — the server API stays the real authorization
      *  boundary (admin endpoints are gated server-side regardless). */
     requiresAdmin?: boolean;
+    /** When set, the shell renders this item only once the viewer's library list
+     *  has RESOLVED and contains at least one library whose `type` matches — a
+     *  single type, or ANY of the given types. Fail-closed: the item stays hidden
+     *  while the list is still loading (or failed to load), so it never flashes
+     *  then disappears. Mirrors `requiresAdmin` — best-effort progressive
+     *  disclosure; the routes/API stay the real authorization boundary. Used to
+     *  hide the Books/Audiobooks/Photos/Music nav entries when no matching library
+     *  exists. */
+    requiresLibraryType?: LibrarySummary['type'] | LibrarySummary['type'][];
     /** When true, the shell expands this item with one nav link per library
      *  (fetched from `/api/v1/libraries`, linking to `/app/library/:id`), shown
      *  indented beneath it. Opt-in so it stays config-driven — only the media
