@@ -40,6 +40,7 @@ import { useItemInspector } from '../composables/useItemInspector';
 import { ApiClient } from '../api/client';
 import { fetchRecommendations } from '../api/recommendations';
 import { fetchMostWatched } from '../api/mostWatched';
+import { fetchNextUp } from '../api/nextUp';
 import { libraryLoadErrorInfo } from './browseErrors';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import type { MediaItem } from '../types/media-item';
@@ -136,6 +137,59 @@ const continueItems = computed<MediaItem[]>(() => {
     .sort((a, b) => (map[b.id] ?? 0) - (map[a.id] ?? 0))
     .slice(0, 12);
 });
+
+// --- Next Up rail (S37) ------------------------------------------------------
+// A per-user "Next Up" rail surfacing, for each series the active profile has
+// STARTED, the NEXT unwatched episode — fed by `GET /api/v1/users/me/next-up`
+// (S36) via the shared `api/nextUp` helper. It sits immediately AFTER Continue
+// Watching (its natural sibling: CW resumes the in-progress episode, Next Up
+// queues the next fresh one). Modelled exactly on the Recommended / Most Watched
+// rails: its own loading/error/items refs, a memoized client, and hidden when
+// empty (no started series → the section renders nothing, via v-if +
+// hideWhenEmpty).
+//
+// The server shapes each row like `GET /api/v1/media` (superset adds
+// `series_id` / `series_name`; `position_ticks` / `duration_ticks` = 0), so items
+// arrive already in the `MediaItem` shape. Like Recommended / Most Watched, the
+// rows carry NO per-user `user_data` (shapeNextEpisode passes no `user_data` key),
+// so we call `remember()` ONLY (registry push for admin match/poster
+// reconciliation) and NEVER `userItemData.hydrate()` — hydrate would REPLACE
+// existing store entries with all-false defaults, racing the Favorites /
+// Continue-Watching loaders and transiently wiping favorite/watched/rating badges
+// (the S32 state-wipe lesson).
+const NEXT_UP_LIMIT = 20;
+const nextUpItems = ref<MediaItem[]>([]);
+const nextUpLoading = ref(false);
+const nextUpError = ref<string | null>(null);
+
+let nextUpClient: ApiClient | null = null;
+function nextUpClientFor(base: string): ApiClient {
+  if (!nextUpClient) nextUpClient = new ApiClient({ baseUrl: base });
+  else nextUpClient.setBaseUrl(base);
+  return nextUpClient;
+}
+
+async function loadNextUp(): Promise<void> {
+  if (nextUpLoading.value) return;
+  nextUpLoading.value = true;
+  nextUpError.value = null;
+  try {
+    const items = await fetchNextUp(nextUpClientFor(apiBase.value), { limit: NEXT_UP_LIMIT });
+    nextUpItems.value = items;
+    // remember() ONLY — see the block comment above (S32 state-wipe lesson): the
+    // rows carry no per-user user_data, so hydrate would wipe favorite/watched/
+    // rating badges via an all-false REPLACE that races the other loaders.
+    remember(items);
+  } catch (e) {
+    nextUpError.value = e instanceof Error ? e.message : 'Failed to load next up';
+  } finally {
+    nextUpLoading.value = false;
+  }
+}
+
+const showNextUp = computed(
+  () => !nextUpLoading.value && !nextUpError.value && nextUpItems.value.length > 0,
+);
 
 // --- Favorites rail (Feature 17.5) -------------------------------------------
 // A dedicated "Favorites" rail fed by `GET /api/v1/users/me/favorites`
@@ -277,12 +331,14 @@ const showMostWatched = computed(
 function load(): void {
   void libraries.load(apiBase.value, true);
   void loadFavorites();
+  void loadNextUp();
   void loadRecommendations();
   void loadMostWatched();
 }
 onMounted(() => {
   void libraries.load(apiBase.value);
   void loadFavorites();
+  void loadNextUp();
   void loadRecommendations();
   void loadMostWatched();
   void syncResume(); // U-N8: re-sync positions when entering BrowsePage
@@ -441,6 +497,29 @@ function onSeeAll(row: HomeRowConfig): void {
       :can-match="auth.isAdmin"
       hide-when-empty
       fetch-priority="high"
+      @play="onPlay"
+      @watchlist="onWatchlist"
+      @info="onInfo"
+      @match="onMatch"
+      @mark-watched="onMarkWatched"
+      @refresh="onRefresh"
+      @edit-metadata="onMatch"
+      @explore-data="openInspector"
+      @choose-poster="onChoosePoster"
+      @remove="onRemove"
+    />
+
+    <!-- Next Up rail (S37) — surfaces the next unwatched episode per started
+         series (GET /api/v1/users/me/next-up, S36); positioned immediately after
+         Continue Watching (its natural sibling); hidden when empty, like the
+         rails below. Items carry no per-user user_data, so BrowsePage remember()s
+         them but never hydrates (S32 state-wipe lesson). -->
+    <MediaRow
+      v-if="showNextUp"
+      title="Next Up"
+      :items="nextUpItems"
+      :can-match="auth.isAdmin"
+      hide-when-empty
       @play="onPlay"
       @watchlist="onWatchlist"
       @info="onInfo"

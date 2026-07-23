@@ -1176,7 +1176,7 @@ function ji(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-LVJ2p1Z3.js")
+			component: () => import("./BrowsePage-CB4iaDW1.js")
 		},
 		{
 			path: `${t}/media/:id`,
