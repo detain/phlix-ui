@@ -16,6 +16,7 @@ import PlayerPage from './PlayerPage.vue';
 import Player from '../components/Player.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { usePlayerUiStore } from '../stores/usePlayerUiStore';
 import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
 
@@ -678,6 +679,47 @@ describe('PlayerPage — resume + theater + ambient', () => {
     expect(w.find('.player-page').classes()).toContain('is-theater');
   });
 
+  it('mirrors the theater toggle into the shared player-UI store (drives the shell chrome removal — S34 fix)', async () => {
+    // The shell (PhlixApp) removes its chrome (`shell--flush`) on the SAME trigger as
+    // the 100dvh growth, reading this shared flag. Default is false → the non-theater
+    // player view keeps its header; entering theater surfaces `true` up to the shell.
+    const fetchMock = okFetch(media({ id: 'm1' }));
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const playerUi = usePlayerUiStore();
+    expect(playerUi.theaterActive).toBe(false); // default: chrome stays (regression guard)
+    w.findComponent(Player).vm.$emit('theater', true);
+    await w.vm.$nextTick();
+    expect(playerUi.theaterActive).toBe(true); // entering theater flushes the shell
+    w.findComponent(Player).vm.$emit('theater', false);
+    await w.vm.$nextTick();
+    expect(playerUi.theaterActive).toBe(false); // leaving theater restores the chrome
+  });
+
+  it('keeps the shared theater state across binge (player→player) navigation — the page instance is reused, no reset', async () => {
+    const routed = vi.fn((url: string) => {
+      const u = String(url);
+      if (u.includes('playback-info')) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (u.match(/\/api\/v1\/media\/m1(\?|$)/)) return Promise.resolve(jsonResponse({ item: media({ id: 'm1' }) }));
+      if (u.match(/\/api\/v1\/media\/m2(\?|$)/)) return Promise.resolve(jsonResponse({ item: media({ id: 'm2' }) }));
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    const { w, router } = await mountAt('m1', routed);
+    await flushPromises();
+    const playerUi = usePlayerUiStore();
+    w.findComponent(Player).vm.$emit('theater', true);
+    await w.vm.$nextTick();
+    expect(playerUi.theaterActive).toBe(true);
+
+    // Binge-advance to another player route: same PlayerPage instance (param change,
+    // NOT a remount → no onBeforeUnmount), so theater persists into the next title.
+    await router.push('/app/player/m2');
+    await flushPromises();
+    expect(playerUi.theaterActive).toBe(true);
+  });
+
   it('grows the stage to 100dvh under theater, keeping the default 16:9/90vh cap (S34)', () => {
     // jsdom does not apply an SFC's compiled <style>, so pin the sizing contract
     // off the raw source. The DEFAULT stage carries no viewport-height cap; the
@@ -802,6 +844,33 @@ describe('PlayerPage — user_data hydrate (Feature 16.3)', () => {
 });
 
 describe('PlayerPage — teardown', () => {
+  it('resets the shared theater state when the page unmounts (so a later non-theater visit keeps the shell chrome — S34 fix)', async () => {
+    const fetchMock = okFetch(media({ id: 'm1' }));
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const playerUi = usePlayerUiStore();
+    w.findComponent(Player).vm.$emit('theater', true);
+    await w.vm.$nextTick();
+    expect(playerUi.theaterActive).toBe(true);
+
+    w.unmount(); // leaving the route unmounts PlayerPage → onBeforeUnmount reset
+    expect(playerUi.theaterActive).toBe(false);
+  });
+
+  it('resets the shared theater state on route-leave (no stale flush on the next non-theater visit)', async () => {
+    const fetchMock = okFetch(media({ id: 'm1' }));
+    const { w, router } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    const playerUi = usePlayerUiStore();
+    w.findComponent(Player).vm.$emit('theater', true);
+    await w.vm.$nextTick();
+    expect(playerUi.theaterActive).toBe(true);
+
+    await router.push('/app'); // leave the player route → PlayerPage unmounts
+    await flushPromises();
+    expect(playerUi.theaterActive).toBe(false);
+  });
+
   it('does not write state when unmounted mid-fetch', async () => {
     let resolveFetch!: (r: Response) => void;
     const pending = new Promise<Response>((res) => {
