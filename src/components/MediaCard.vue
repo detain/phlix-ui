@@ -25,6 +25,7 @@ import { RouterLink, routerKey } from 'vue-router';
 import Icon from './Icon.vue';
 import ThumbRating from './ThumbRating.vue';
 import Menu from './ui/Menu.vue';
+import Tooltip from './ui/Tooltip.vue';
 import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -475,14 +476,16 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
              (or on touch). CSS reveal still animates opacity/pointer-events. -->
         <div v-if="actionsVisible" class="media-card__actions">
           <!-- [ Play ] -->
-          <button
-            type="button"
-            class="media-card__iconbtn media-card__iconbtn--play"
-            aria-label="Play"
-            @click.stop.prevent="emit('play', item)"
-          >
-            <Icon name="play" />
-          </button>
+          <Tooltip text="Play">
+            <button
+              type="button"
+              class="media-card__iconbtn media-card__iconbtn--play"
+              aria-label="Play"
+              @click.stop.prevent="emit('play', item)"
+            >
+              <Icon name="play" />
+            </button>
+          </Tooltip>
 
           <!-- Everything past Play is suppressed in `playOnly` mode (season
                cards: navigational + whole-season Play, nothing else). -->
@@ -498,40 +501,46 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           />
 
           <!-- [ Favorite/Bookmark ] -->
-          <button
-            type="button"
-            class="media-card__iconbtn"
-            :class="{ 'is-active': isFavorited }"
-            :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
-            :aria-pressed="isFavorited ? 'true' : 'false'"
-            @click.stop.prevent="onFavorite"
-          >
-            <Icon :name="isFavorited ? 'bookmark' : 'bookmark-plus'" />
-          </button>
+          <Tooltip :text="isFavorited ? 'Remove from favorites' : 'Add to favorites'">
+            <button
+              type="button"
+              class="media-card__iconbtn"
+              :class="{ 'is-active': isFavorited }"
+              :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+              :aria-pressed="isFavorited ? 'true' : 'false'"
+              @click.stop.prevent="onFavorite"
+            >
+              <Icon :name="isFavorited ? 'bookmark' : 'bookmark-plus'" />
+            </button>
+          </Tooltip>
 
           <!-- [ Watched ] — eye toggle. Open eye = watched, closed (slashed) eye =
                not watched. Click flips the per-user watched flag (store optimistic
                + one write). -->
-          <button
-            type="button"
-            class="media-card__iconbtn media-card__iconbtn--watched"
-            :class="{ 'is-active': isWatched }"
-            :aria-label="isWatched ? 'Mark as unwatched' : 'Mark as watched'"
-            :aria-pressed="isWatched ? 'true' : 'false'"
-            @click.stop.prevent="onWatched"
-          >
-            <Icon :name="isWatched ? 'eye' : 'eye-off'" />
-          </button>
+          <Tooltip :text="isWatched ? 'Mark as unwatched' : 'Mark as watched'">
+            <button
+              type="button"
+              class="media-card__iconbtn media-card__iconbtn--watched"
+              :class="{ 'is-active': isWatched }"
+              :aria-label="isWatched ? 'Mark as unwatched' : 'Mark as watched'"
+              :aria-pressed="isWatched ? 'true' : 'false'"
+              @click.stop.prevent="onWatched"
+            >
+              <Icon :name="isWatched ? 'eye' : 'eye-off'" />
+            </button>
+          </Tooltip>
 
           <!-- [ Info ] -->
-          <button
-            type="button"
-            class="media-card__iconbtn"
-            aria-label="More info"
-            @click.stop.prevent="emit('info', item)"
-          >
-            <Icon name="info" />
-          </button>
+          <Tooltip text="More info">
+            <button
+              type="button"
+              class="media-card__iconbtn"
+              aria-label="More info"
+              @click.stop.prevent="emit('info', item)"
+            >
+              <Icon name="info" />
+            </button>
+          </Tooltip>
 
           <!-- [ ⋯ Menu ] — the trigger MUST call the Menu's own `toggle` (from
                the slot): `@click.stop.prevent` keeps the click off the card's
@@ -540,29 +549,32 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
                menu would never open. -->
           <Menu v-model:open="menuOpen" :items="menuItems" @select="onMenuSelect">
             <template #default="{ toggle }">
-              <button
-                type="button"
-                class="media-card__iconbtn"
-                aria-label="More actions"
-                :aria-expanded="menuOpen ? 'true' : 'false'"
-                aria-haspopup="menu"
-                @click.stop.prevent="toggle"
-              >
-                <Icon name="more" />
-              </button>
+              <Tooltip text="More actions">
+                <button
+                  type="button"
+                  class="media-card__iconbtn"
+                  aria-label="More actions"
+                  :aria-expanded="menuOpen ? 'true' : 'false'"
+                  aria-haspopup="menu"
+                  @click.stop.prevent="toggle"
+                >
+                  <Icon name="more" />
+                </button>
+              </Tooltip>
             </template>
           </Menu>
 
           <!-- [ Match(admin) ] -->
-          <button
-            v-if="canMatch"
-            type="button"
-            class="media-card__iconbtn"
-            aria-label="Match metadata"
-            @click.stop.prevent="emit('match', item)"
-          >
-            <Icon name="search" />
-          </button>
+          <Tooltip v-if="canMatch" text="Match metadata">
+            <button
+              type="button"
+              class="media-card__iconbtn"
+              aria-label="Match metadata"
+              @click.stop.prevent="emit('match', item)"
+            >
+              <Icon name="search" />
+            </button>
+          </Tooltip>
           <slot name="actions" :item="item" />
           </template>
         </div>
@@ -862,6 +874,14 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 .media-card__actions :deep(.thumb-rating) {
   flex: 0 0 auto;
   gap: var(--space-1);
+}
+/* Each icon-only action is now wrapped in <Tooltip>, whose root is a
+   `.phlix-tooltip-wrap` (display: inline-flex) that becomes the flex item in
+   place of the bare button. Pin it to the SAME `flex: 0 0 auto` the buttons
+   used so the row still lays out as four 32px items — keeping the
+   `max-width: calc(4 * 32px + 3 * var(--space-1))` 4-across math intact. */
+.media-card__actions :deep(.phlix-tooltip-wrap) {
+  flex: 0 0 auto;
 }
 .media-card__actions :deep(.thumb-rating__btn) {
   /* 2rem — matches .media-card__iconbtn so a row of four fits the rail cards. */

@@ -1,3 +1,8 @@
+## 0.98.17 - 2026-07-23
+
+### Added
+- **The icon-only quick-action buttons on poster cards now show a hover/focus tooltip naming what they do (updates.md #20).** Each glyph-only control in the `MediaCard.vue` poster action row — **Play**, **Add to / Remove from favorites**, **Mark as watched / unwatched**, **More info**, **More actions** (the ⋯ menu trigger), and the admin **Match metadata** — plus the **Like** / **Dislike** thumbs in `ThumbRating.vue`, is now wrapped in the existing `<Tooltip>` (`components/ui/Tooltip.vue`). The tooltip reuses the **exact same string** already on each button's `aria-label` (no new copy), and `:text` is bound to the dynamic label for the stateful favorite/watched toggles so the tip tracks the current state. Tooltips appear on **hover and keyboard focus** and honour `Tooltip.vue`'s built-in 300 ms open delay (not overridden). The buttons keep their own `aria-label` (the accessible name); `Tooltip` only adds an `aria-describedby` description on show, so accessibility is preserved. The default **top** placement is used because the action row sits at the bottom edge of the `overflow: hidden` poster (`.media-card__overlay` is `justify-content: flex-end`) — a top tooltip opens upward into visible poster space, whereas `placement="bottom"` would render past the bottom edge and clip. To keep the row's four-across layout exact, each `<Tooltip>` root (`.phlix-tooltip-wrap`, `display: inline-flex`) is pinned to `flex: 0 0 auto` inside `.media-card__actions` — mirroring the existing `.thumb-rating` treatment — so the `max-width: calc(4 * 32px + 3 * var(--space-1))` math is unaffected. No handler, behaviour, or button styling changed.
+
 ## 0.98.16 - 2026-07-22
 
 ### Fixed
