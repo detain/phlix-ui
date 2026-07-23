@@ -4,6 +4,14 @@ export interface TabItem {
     label: string;
     icon?: IconName;
     disabled?: boolean;
+    /**
+     * Purely-visual dim (S24). A muted tab looks dimmed but stays FULLY
+     * interactive — it is NOT disabled: no `disabled`/`aria-disabled` attribute,
+     * no `pointer-events` change, no tabindex change. It remains clickable and
+     * keyboard-operable, and the listbox nav (`nextEnabledIndex`) ignores it
+     * because that helper keys off `disabled` only.
+     */
+    muted?: boolean;
 }
 type __VLS_Props = {
     modelValue: string;

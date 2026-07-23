@@ -125,6 +125,36 @@ export interface CatalogError {
     source: string;
     error: string;
 }
+/**
+ * One selectable catalog release-channel option (S27), as emitted by the
+ * server's `channelInfo()`. `advanced:true` + the `description` flag the `dev`
+ * channel as opt-in so the admin UI can gate it clearly; the description is the
+ * server-side source of truth for WHY `dev` differs (it tracks the moving
+ * `master` branch, and per-entry pin+checksum verification still gates every
+ * install regardless of channel).
+ */
+export interface CatalogChannelOption {
+    /** The wire value to PUT back: `stable` | `dev`. */
+    value: string;
+    /** Human label, e.g. `Stable (recommended)` / `Development (advanced)`. */
+    label: string;
+    /** Server-authored explanation of what the channel does (opt-in warning for `dev`). */
+    description: string;
+    /** True for opt-in / advanced channels (`dev`) — the UI marks these prominently. */
+    advanced: boolean;
+}
+/**
+ * The catalog release-channel state: the currently-selected channel plus the
+ * option metadata to render (S27). Returned by both `GET` and `PUT
+ * /plugins/catalog/channel`, and embedded in the catalog `index()` response
+ * under `channel`.
+ */
+export interface CatalogChannelInfo {
+    /** The active channel value (`stable` default | `dev`). */
+    channel: string;
+    /** Every selectable channel with its label/description/advanced metadata. */
+    options: CatalogChannelOption[];
+}
 /** The aggregated catalog response across every configured source. */
 export interface CatalogResponse {
     /** The immutable default catalog source (cannot be removed). */
@@ -135,6 +165,8 @@ export interface CatalogResponse {
     catalogs: Catalog[];
     /** Per-source fetch/parse failures (so the UI can show them inline). */
     errors: CatalogError[];
+    /** The catalog release-channel state (S27); absent on older servers. */
+    channel?: CatalogChannelInfo;
 }
 /**
  * One plugin's update status, as returned by the updates endpoint. `latest_version`
@@ -171,6 +203,13 @@ export interface UpdateAllResult {
         error: string;
     }>;
 }
+/**
+ * Coerce the raw `channel` payload into a well-typed {@link CatalogChannelInfo},
+ * defending every field so a malformed / older-server response degrades to the
+ * safe `stable` default with no options rather than throwing. Options that lack
+ * a `value` are dropped.
+ */
+export declare function normaliseChannelInfo(raw: unknown): CatalogChannelInfo;
 export declare function pluginErrorCode(e: unknown): string | null;
 /**
  * The per-field validation errors carried by a `400
@@ -241,6 +280,20 @@ export declare class AdminPluginsApi {
      * Returns the server's `auto_update` (so the UI binds to the confirmed value).
      */
     setAutoUpdate(enabled: boolean): Promise<boolean>;
+    /**
+     * `GET /api/v1/admin/plugins/catalog/channel` (S27) → the selected catalog
+     * release channel plus its option metadata. The response is defended to the
+     * safe `stable` default so an older server (no such endpoint / no `channel`
+     * key) degrades gracefully.
+     */
+    getChannel(): Promise<CatalogChannelInfo>;
+    /**
+     * `PUT /api/v1/admin/plugins/catalog/channel` `{ channel }` (S27) → the
+     * persisted channel + options. The server normalises anything that is not
+     * `dev` back to `stable`, so the UI binds to the confirmed value it returns.
+     * A `400 plugin.catalog.channel.invalid` surfaces as an {@link ApiError}.
+     */
+    setChannel(channel: string): Promise<CatalogChannelInfo>;
     /**
      * `PUT /api/v1/admin/plugins/{name}/settings` `{ settings }` → the refreshed
      * masked {@link PluginDetail}. Pass ONLY the keys the admin changed; a secret

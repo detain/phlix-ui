@@ -15,6 +15,7 @@ import MiniPlayer from '../components/MiniPlayer.vue';
 import NetworkHealthIndicator from '../components/NetworkHealthIndicator.vue';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useLibrariesStore } from '../stores/useLibrariesStore';
 import type { PhlixAppConfig } from './types';
 
 function makeRouter(): Router {
@@ -260,6 +261,110 @@ describe('PhlixApp — dynamic library nav (libraryLinks)', () => {
 
     expect(wrapper.findAll('.nav-link').map((l) => l.text())).toEqual(['My Servers']);
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/v1/libraries'))).toBe(false);
+  });
+});
+
+describe('PhlixApp — requiresLibraryType menu gating (S25)', () => {
+  function librariesResponse(libs: Array<{ id: string; name: string; type: string }>): Response {
+    return jsonResponse({ libraries: libs });
+  }
+
+  it('hides a requiresLibraryType item when no library of that type exists', async () => {
+    localStorage.setItem('access_token', 'tok');
+    // Only movie/series libraries exist — no `book` library.
+    const fetchMock = vi.fn((url: unknown) => {
+      const u = typeof url === 'string' ? url : '';
+      if (u.includes('/api/v1/libraries')) {
+        return Promise.resolve(
+          librariesResponse([
+            { id: 'mv', name: 'Movies', type: 'movie' },
+            { id: 'tv', name: 'TV', type: 'series' },
+          ]),
+        );
+      }
+      return Promise.resolve(jsonResponse({}));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    wrapper = await mountApp({
+      app: 'server',
+      apiBase: '',
+      routerBase: '/app',
+      menu: [
+        { id: 'browse', label: 'Browse', to: '/app' },
+        { id: 'books', label: 'Books', to: '/app/books', requiresLibraryType: 'book' },
+      ],
+    });
+    await flushPromises();
+
+    expect(useLibrariesStore().loaded).toBe(true); // list resolved…
+    const labels = wrapper.findAll('.nav-link').map((l) => l.text());
+    expect(labels).toContain('Browse');
+    expect(labels).not.toContain('Books'); // …but no `book` library → hidden
+  });
+
+  it('keeps a requiresLibraryType item hidden until the library list resolves, then reveals it on a match (fail-closed)', async () => {
+    localStorage.setItem('access_token', 'tok');
+    // Hold the libraries fetch pending so we can assert the fail-closed (unresolved) state.
+    let resolveLibraries!: (r: Response) => void;
+    const pending = new Promise<Response>((res) => {
+      resolveLibraries = res;
+    });
+    const fetchMock = vi.fn((url: unknown) => {
+      const u = typeof url === 'string' ? url : '';
+      if (u.includes('/api/v1/libraries')) return pending;
+      return Promise.resolve(jsonResponse({}));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    wrapper = await mountApp({
+      app: 'server',
+      apiBase: '',
+      routerBase: '/app',
+      menu: [
+        { id: 'browse', label: 'Browse', to: '/app' },
+        { id: 'books', label: 'Books', to: '/app/books', requiresLibraryType: 'book' },
+      ],
+    });
+
+    // The list is still in-flight → fail-closed: Books must NOT be shown yet.
+    expect(useLibrariesStore().loaded).toBe(false);
+    expect(wrapper.findAll('.nav-link').map((l) => l.text())).not.toContain('Books');
+
+    // Resolve with a matching `book` library → Books appears.
+    resolveLibraries(librariesResponse([{ id: 'bk', name: 'Library', type: 'book' }]));
+    await flushPromises();
+    expect(useLibrariesStore().loaded).toBe(true);
+    expect(wrapper.findAll('.nav-link').map((l) => l.text())).toContain('Books');
+  });
+
+  it('shows a requiresLibraryType item when any of an array of types matches, and loads libraries even without a libraryLinks item', async () => {
+    localStorage.setItem('access_token', 'tok');
+    const fetchMock = vi.fn((url: unknown) => {
+      const u = typeof url === 'string' ? url : '';
+      if (u.includes('/api/v1/libraries')) {
+        return Promise.resolve(librariesResponse([{ id: 'ab', name: 'Audiobooks', type: 'audiobook' }]));
+      }
+      return Promise.resolve(jsonResponse({}));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    wrapper = await mountApp({
+      app: 'server',
+      apiBase: '',
+      routerBase: '/app',
+      // NB: no `libraryLinks` item anywhere — the load must still fire off the
+      // `requiresLibraryType` filter alone.
+      menu: [
+        { id: 'settings', label: 'Settings', to: '/app/settings' },
+        { id: 'listen', label: 'Listen', to: '/app/audiobooks', requiresLibraryType: ['book', 'audiobook'] },
+      ],
+    });
+    await flushPromises();
+
+    // The filter's need for library data triggered the fetch on its own.
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/v1/libraries'))).toBe(true);
+    expect(wrapper.findAll('.nav-link').map((l) => l.text())).toContain('Listen'); // `audiobook` matches the array
   });
 });
 

@@ -5,7 +5,11 @@ type __VLS_Props = {
     dismissible?: boolean;
     /** Hide the built-in close button. */
     hideClose?: boolean;
-    size?: 'sm' | 'md' | 'lg';
+    /**
+     * Panel max-width. `sm` 24rem · `md` 32rem (default) · `lg` 48rem · `xl` min(90vw, 72rem).
+     * `xl` is used by the admin plugin Configure modal for its wide schema-driven form.
+     */
+    size?: 'sm' | 'md' | 'lg' | 'xl';
 };
 declare var __VLS_20: {}, __VLS_22: {};
 type __VLS_Slots = {} & {
@@ -20,7 +24,7 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     onClose?: (() => any) | undefined;
     "onUpdate:modelValue"?: ((v: boolean) => any) | undefined;
 }>, {
-    size: "sm" | "md" | "lg";
+    size: "sm" | "md" | "lg" | "xl";
     dismissible: boolean;
     hideClose: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
