@@ -38,6 +38,7 @@ import PosterPicker from '../components/PosterPicker.vue';
 import ItemDataInspector from '../components/ItemDataInspector.vue';
 import { useItemInspector } from '../composables/useItemInspector';
 import { ApiClient } from '../api/client';
+import { fetchRecommendations } from '../api/recommendations';
 import { libraryLoadErrorInfo } from './browseErrors';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import type { MediaItem } from '../types/media-item';
@@ -177,14 +178,59 @@ const showFavorites = computed(
   () => !favoritesLoading.value && !favoritesError.value && favoriteItems.value.length > 0,
 );
 
+// --- Recommended rail (S26) --------------------------------------------------
+// A "Recommended" rail surfacing the existing "because you watched" engine on
+// Browse, fed by `GET /api/v1/me/recommendations` and mapped via the shared
+// `api/recommendations` helper (the SAME fetch RecommendationsPage uses — reused,
+// not duplicated; NO backend change). Modelled exactly on the Favorites rail
+// above: its own loading/error/items refs, a memoized client, and hidden when
+// empty (no recommendations → the section renders nothing, via v-if +
+// hideWhenEmpty). Items are pushed into the shared `registry` (remember) so the
+// admin metadata-match / poster-pick reconciliation covers this rail too.
+const RECOMMENDED_LIMIT = 20;
+const recommendedItems = ref<MediaItem[]>([]);
+const recommendationsLoading = ref(false);
+const recommendationsError = ref<string | null>(null);
+
+let recommendationsClient: ApiClient | null = null;
+function recClient(base: string): ApiClient {
+  if (!recommendationsClient) recommendationsClient = new ApiClient({ baseUrl: base });
+  else recommendationsClient.setBaseUrl(base);
+  return recommendationsClient;
+}
+
+async function loadRecommendations(): Promise<void> {
+  if (recommendationsLoading.value) return;
+  recommendationsLoading.value = true;
+  recommendationsError.value = null;
+  try {
+    const items = await fetchRecommendations(recClient(apiBase.value), { limit: RECOMMENDED_LIMIT });
+    recommendedItems.value = items;
+    remember(items);
+  } catch (e) {
+    recommendationsError.value = e instanceof Error ? e.message : 'Failed to load recommendations';
+  } finally {
+    recommendationsLoading.value = false;
+  }
+}
+
+const showRecommended = computed(
+  () =>
+    !recommendationsLoading.value &&
+    !recommendationsError.value &&
+    recommendedItems.value.length > 0,
+);
+
 // --- library list load -------------------------------------------------------
 function load(): void {
   void libraries.load(apiBase.value, true);
   void loadFavorites();
+  void loadRecommendations();
 }
 onMounted(() => {
   void libraries.load(apiBase.value);
   void loadFavorites();
+  void loadRecommendations();
   void syncResume(); // U-N8: re-sync positions when entering BrowsePage
 });
 watch(apiBase, load);
@@ -359,6 +405,28 @@ function onSeeAll(row: HomeRowConfig): void {
       v-if="showFavorites"
       title="My List"
       :items="favoriteItems"
+      :can-match="auth.isAdmin"
+      hide-when-empty
+      @play="onPlay"
+      @watchlist="onWatchlist"
+      @info="onInfo"
+      @match="onMatch"
+      @mark-watched="onMarkWatched"
+      @refresh="onRefresh"
+      @edit-metadata="onMatch"
+      @explore-data="openInspector"
+      @choose-poster="onChoosePoster"
+      @remove="onRemove"
+    />
+
+    <!-- Recommended rail (S26) — surfaces the existing because-you-watched engine
+         (GET /api/v1/me/recommendations, reused from RecommendationsPage via the
+         shared api/recommendations helper); hidden when empty, like the rails
+         above. -->
+    <MediaRow
+      v-if="showRecommended"
+      title="Recommended"
+      :items="recommendedItems"
       :can-match="auth.isAdmin"
       hide-when-empty
       @play="onPlay"

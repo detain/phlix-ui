@@ -25,18 +25,8 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { fetchRecommendations } from '../api/recommendations';
 import type { MediaItem } from '../types/media-item';
-
-/** User recommendation from the because-you-watched engine (P4-S2). */
-interface UserRecommendation {
-  id: string;
-  title: string;
-  posterUrl: string | null;
-  year: number | null;
-  score: number;
-  reason: 'because_you_watched';
-  computedAt: string;
-}
 
 const router = useRouter();
 const apiBase = useMediaApiBase();
@@ -52,37 +42,12 @@ const hasMore = ref(false);
 const total = ref<number | null>(null);
 const error = ref<string | null>(null);
 
-/** Convert a UserRecommendation (from @phlix/contracts) to a MediaItem for MediaCard. */
-function recommendationToMediaItem(r: UserRecommendation): MediaItem {
-  return {
-    id: r.id,
-    name: r.title,
-    type: 'movie',
-    poster_url: r.posterUrl ?? null,
-    genres: [],
-    year: r.year ?? null,
-    rating: null,
-    runtime: null,
-    overview: null,
-    actors: [],
-    director: null,
-    created_at: null,
-    updated_at: null,
-    sort_title: r.title,
-    poster_srcset: null,
-  };
-}
-
 async function load(): Promise<void> {
   loading.value = true;
   error.value = null;
   try {
     const client = new ApiClient({ baseUrl: apiBase.value });
-    const data = await client.get<{ recommendations: UserRecommendation[] }>(
-      '/api/v1/me/recommendations',
-      { limit: '20' },
-    );
-    items.value = (data.recommendations ?? []).map(recommendationToMediaItem);
+    items.value = await fetchRecommendations(client, { limit: 20 });
     total.value = items.value.length;
     hasMore.value = false;
   } catch (e) {
