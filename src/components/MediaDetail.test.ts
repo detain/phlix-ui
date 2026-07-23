@@ -174,6 +174,20 @@ describe('MediaDetail — sparse metadata (degrades)', () => {
   it('does not render an ambient layer without a poster', () => {
     const w = mount(MediaDetail, { props: { item: media({ poster_url: null }) } });
     expect(w.find('.media-detail__ambient').exists()).toBe(false);
+    // S19: the ambient scrim shares the poster condition — no poster, no scrim.
+    expect(w.find('.media-detail__ambient-scrim').exists()).toBe(false);
+  });
+});
+
+describe('MediaDetail — ambient scrim (S19)', () => {
+  it('pairs the poster-derived ambient with a sibling scrim for hero legibility', () => {
+    // A title with a poster (so an ambient wash) but no backdrop image: the
+    // ambient scrim is what keeps the hero text readable over a bright poster.
+    const w = mount(MediaDetail, { props: { item: media({ backdrop_url: null }) } });
+    expect(w.find('.media-detail__ambient').exists()).toBe(true);
+    expect(w.find('.media-detail__ambient-scrim').exists()).toBe(true);
+    // decorative overlay — hidden from assistive tech, like the backdrop scrim.
+    expect(w.find('.media-detail__ambient-scrim').attributes('aria-hidden')).toBe('true');
   });
 });
 
