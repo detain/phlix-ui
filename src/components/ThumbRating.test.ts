@@ -159,6 +159,20 @@ describe('ThumbRating — accessibility', () => {
   });
 });
 
+describe('ThumbRating — theme token (S18)', () => {
+  it('the resting wireframe glyph uses var(--text), not a hardcoded near-white rgba', () => {
+    // The base .thumb-rating__btn colour must be the theme foreground token so the
+    // wireframe thumbs invert correctly per theme (Nocturne/Daylight/Midnight)
+    // instead of always rendering near-white.
+    const flat = sfcSource.replace(/\s+/g, ' ');
+    expect(flat).not.toContain('rgba(255, 255, 255, 0.92)');
+    const start = flat.indexOf('.thumb-rating__btn {');
+    expect(start).toBeGreaterThanOrEqual(0);
+    const block = flat.slice(start, flat.indexOf('}', start) + 1);
+    expect(block).toContain('color: var(--text)');
+  });
+});
+
 describe('ThumbRating — reduced motion', () => {
   it('declares a transition by default and disables it under prefers-reduced-motion', () => {
     // The scoped <style> carries the transition + the @media (prefers-reduced-motion)

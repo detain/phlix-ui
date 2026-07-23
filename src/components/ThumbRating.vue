@@ -155,8 +155,10 @@ function onDown(): void {
   display: grid;
   place-items: center;
   border-radius: var(--radius-full);
-  /* Wireframe-on-transparent: white glyph matching player icon buttons. */
-  color: rgba(255, 255, 255, 0.92);
+  /* Wireframe-on-transparent: the resting glyph uses the theme foreground token so
+     it inverts correctly per theme (light glyph on Nocturne/Midnight, dark on
+     Daylight) instead of a hardcoded near-white. */
+  color: var(--text);
   background: transparent;
   border: none;
   font-size: 1.5rem;

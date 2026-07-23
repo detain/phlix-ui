@@ -25,6 +25,7 @@ import { useToastStore } from '../stores/useToastStore';
 import Icon from './Icon.vue';
 import ThumbRating from './ThumbRating.vue';
 import Button from './ui/Button.vue';
+import IconButton from './ui/IconButton.vue';
 import Menu from './ui/Menu.vue';
 import Modal from './ui/Modal.vue';
 import Chip from './ui/Chip.vue';
@@ -723,24 +724,21 @@ onBeforeUnmount(() => {
                hasn't stopped it this visit. Mute/unmute toggles the low-volume
                loop; the adjacent stop button tears it down + hides the control. -->
           <div v-if="themeAudioUrl && !themeStopped" class="media-detail__theme">
-            <button
-              type="button"
+            <IconButton
+              variant="ghost"
               class="media-detail__theme-btn"
-              :class="{ 'is-active': !themeMuted }"
-              :aria-label="themeToggleLabel"
-              :aria-pressed="themeMuted ? 'false' : 'true'"
+              :name="themeIcon"
+              :label="themeToggleLabel"
+              :pressed="!themeMuted"
               @click="onToggleThemeMute"
-            >
-              <Icon :name="themeIcon" />
-            </button>
-            <button
-              type="button"
-              class="media-detail__theme-btn media-detail__theme-stop"
-              aria-label="Stop theme music"
+            />
+            <IconButton
+              variant="ghost"
+              class="media-detail__theme-btn"
+              name="x"
+              label="Stop theme music"
               @click="onStopTheme"
-            >
-              <Icon name="x" />
-            </button>
+            />
           </div>
 
           <!-- [ ⋯ Menu ] — bind the trigger to the Menu's own `toggle` (from the
@@ -748,20 +746,18 @@ onBeforeUnmount(() => {
                stops it reaching the Menu wrapper, so `toggle` must open it. -->
           <Menu v-model:open="menuOpen" :items="menuItems" @select="onMenuSelect">
             <template #default="{ toggle }">
-              <button
-                type="button"
-                class="media-detail__menu-btn"
-                aria-label="More actions"
+              <IconButton
+                variant="ghost"
+                name="more"
+                label="More actions"
                 :aria-expanded="menuOpen ? 'true' : 'false'"
                 aria-haspopup="menu"
                 @click.stop.prevent="toggle"
-              >
-                <Icon name="more" />
-              </button>
+              />
             </template>
           </Menu>
 
-          <Button v-if="canMatch" variant="ghost" left-icon="search" @click="emit('match', item)">Match metadata</Button>
+          <Button v-if="canMatch" variant="outline" left-icon="search" @click="emit('match', item)">Match metadata</Button>
         </div>
 
         <div v-if="providerLinks.length" class="media-detail__links">
@@ -1132,76 +1128,19 @@ onBeforeUnmount(() => {
   fill: currentColor;
 }
 
-/* Menu ⋯ trigger button in the hero action row. Icon-only — NO background box or
-   border (the old `surface-glass-strong` fill rendered as an opaque white box on
-   the daylight theme, unlike the other ghost actions). Just the foreground glyph
-   with an amber hover tint. */
-.media-detail__menu-btn {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  color: var(--text-muted);
-  background: transparent;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring), color var(--dur-base) var(--ease-out);
-}
-.media-detail__menu-btn:hover {
-  transform: scale(1.08);
-  color: var(--text);
-}
-.media-detail__menu-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--accent-ring);
-}
-
 /* Watched state on the hero eye button reads amber like the favorite button. */
 .media-detail__watched.is-active {
   color: var(--accent);
 }
 
 /* U4: theme-music control — a small unobtrusive icon pair (mute/unmute + stop)
-   matching the ⋯ menu button's icon-only language. Unmuted → amber like the
-   other active hero controls. */
+   built from the shared <IconButton variant="ghost">, matching the ⋯ menu
+   trigger's icon-only language. The unmuted state uses IconButton's own pressed
+   affordance (via the `pressed` prop); this wrapper just lays the pair out. */
 .media-detail__theme {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-}
-.media-detail__theme-btn {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  color: var(--text-muted);
-  background: transparent;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring), color var(--dur-base) var(--ease-out);
-}
-.media-detail__theme-btn:hover {
-  transform: scale(1.08);
-  color: var(--text);
-}
-.media-detail__theme-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--accent-ring);
-}
-.media-detail__theme-btn.is-active {
-  color: var(--accent);
-}
-.media-detail__theme-stop {
-  font-size: 0.95rem;
-}
-@media (prefers-reduced-motion: reduce) {
-  .media-detail__theme-btn {
-    transition: none;
-  }
 }
 
 /* Outbound provider links (TMDB / IMDb / TVDB / AniDB …). */

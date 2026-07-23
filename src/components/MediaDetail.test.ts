@@ -15,6 +15,8 @@ import { dirname, resolve } from 'path';
 import MediaDetail from './MediaDetail.vue';
 import MediaRow from './MediaRow.vue';
 import Chip from './ui/Chip.vue';
+import Button from './ui/Button.vue';
+import IconButton from './ui/IconButton.vue';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { MENU_LABELS } from './mediaItemMenu';
@@ -357,6 +359,54 @@ describe('MediaDetail — resume', () => {
   });
 });
 
+describe('MediaDetail — hero button hierarchy (S18)', () => {
+  /** The shared <Button> whose label text matches exactly. */
+  function buttonByText(w: ReturnType<typeof mount>, text: string) {
+    return w.findAllComponents(Button).find((b) => b.text().trim() === text);
+  }
+
+  it('Play is the sole solid (primary) action', () => {
+    const w = mount(MediaDetail, { props: { item: media() } });
+    expect(buttonByText(w, 'Play')?.props('variant')).toBe('solid');
+    // no other hero Button is solid
+    const solids = w
+      .findAll('.media-detail__actions .phlix-btn--solid')
+      .map((b) => b.text().trim());
+    expect(solids).toEqual(['Play']);
+  });
+
+  it('Resume, Play Trailer and Match metadata are outline (secondary) actions', () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({ trailer_url: 'https://youtu.be/abc', trailer_site: 'YouTube', trailer_key: 'abc' }),
+        resumeSeconds: 90,
+        canMatch: true,
+      },
+    });
+    const resume = w.findAllComponents(Button).find((b) => b.text().trim().startsWith('Resume'));
+    expect(resume?.props('variant')).toBe('outline');
+    expect(buttonByText(w, 'Play Trailer')?.props('variant')).toBe('outline');
+    expect(buttonByText(w, 'Match metadata')?.props('variant')).toBe('outline');
+  });
+
+  it('Watchlist and Watched are ghost (tertiary) actions', () => {
+    const w = mount(MediaDetail, { props: { item: media() } });
+    const watchlist = w.findAllComponents(Button).find((b) => b.classes().includes('media-detail__favorite'));
+    const watched = w.findAllComponents(Button).find((b) => b.classes().includes('media-detail__watched'));
+    expect(watchlist?.props('variant')).toBe('ghost');
+    expect(watched?.props('variant')).toBe('ghost');
+  });
+
+  it('the ⋯ menu trigger is a shared ghost IconButton (not a raw <button>)', () => {
+    const w = mount(MediaDetail, { props: { item: media() } });
+    const trigger = w.findAllComponents(IconButton).find((b) => b.props('label') === 'More actions');
+    expect(trigger, 'menu trigger renders <IconButton>').toBeTruthy();
+    expect(trigger?.props('variant')).toBe('ghost');
+    // still carries the popup semantics for a11y
+    expect(trigger?.attributes('aria-haspopup')).toBe('menu');
+  });
+});
+
 describe('MediaDetail — actions & similar', () => {
   it('emits play / resume / watchlist from the hero actions', async () => {
     const item = media();
@@ -591,6 +641,18 @@ describe('MediaDetail — theme music (U4)', () => {
     // control: mute toggle has an aria-label; a stop button tears it down
     expect(w.find('[aria-label="Unmute theme music"]').exists()).toBe(true);
     expect(w.find('[aria-label="Stop theme music"]').exists()).toBe(true);
+  });
+
+  it('renders the mute + stop controls as shared ghost IconButtons (not raw <button>)', () => {
+    const w = mount(MediaDetail, { props: { item: media({ theme_audio_url: THEME_URL }) } });
+    const mute = w.findAllComponents(IconButton).find((b) => b.props('label') === 'Unmute theme music');
+    const stop = w.findAllComponents(IconButton).find((b) => b.props('label') === 'Stop theme music');
+    expect(mute, 'mute toggle renders <IconButton>').toBeTruthy();
+    expect(stop, 'stop control renders <IconButton>').toBeTruthy();
+    expect(mute?.props('variant')).toBe('ghost');
+    expect(stop?.props('variant')).toBe('ghost');
+    // the mute toggle stays a real toggle (aria-pressed via the pressed prop)
+    expect(mute?.attributes('aria-pressed')).toBe('false');
   });
 
   it('starts muted by default (autoplay policy) with an aria-pressed=false toggle', () => {
