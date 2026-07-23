@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import ThumbRating from './ThumbRating.vue';
+import Tooltip from './ui/Tooltip.vue';
 
 const sfcSource = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), 'ThumbRating.vue'),
@@ -156,6 +157,46 @@ describe('ThumbRating — accessibility', () => {
     expect(up(w).attributes('type')).toBe('button');
     expect(up(w).attributes('aria-label')).toBe('Like');
     expect(down(w).attributes('aria-label')).toBe('Dislike');
+  });
+});
+
+describe('ThumbRating — tooltips (S20)', () => {
+  /** { thumb button aria-label -> wrapping Tooltip's text prop }. */
+  const tips = (w: ReturnType<typeof mount>): Record<string, unknown> => {
+    const map: Record<string, unknown> = {};
+    for (const t of w.findAllComponents(Tooltip)) {
+      const btn = t.find('button');
+      if (btn.exists()) map[btn.attributes('aria-label') ?? ''] = t.props('text');
+    }
+    return map;
+  };
+
+  it('wraps BOTH thumbs (level 0) in a <Tooltip> with text Like / Dislike', () => {
+    const w = mount(ThumbRating, { props: { level: 0 } });
+    expect(tips(w)).toEqual({ Like: 'Like', Dislike: 'Dislike' });
+  });
+
+  it('each thumb is the direct child of its .phlix-tooltip-wrap (not accidentally unwrapped)', () => {
+    const w = mount(ThumbRating, { props: { level: 0 } });
+    expect(up(w).element.parentElement?.classList.contains('phlix-tooltip-wrap')).toBe(true);
+    expect(down(w).element.parentElement?.classList.contains('phlix-tooltip-wrap')).toBe(true);
+  });
+
+  it('keeps each thumb aria-label (NAME) alongside the tooltip text (DESCRIPTION)', () => {
+    const w = mount(ThumbRating, { props: { level: 0 } });
+    // Names stay on the buttons…
+    expect(up(w).attributes('aria-label')).toBe('Like');
+    expect(down(w).attributes('aria-label')).toBe('Dislike');
+    // …and the tooltips add the matching descriptions.
+    expect(tips(w).Like).toBe('Like');
+    expect(tips(w).Dislike).toBe('Dislike');
+  });
+
+  it('drops a hidden thumb\'s tooltip wrapper entirely (v-if hoisted onto <Tooltip>)', () => {
+    // Up axis engaged → only the Like thumb + its tooltip remain; no empty Dislike wrap.
+    const w = mount(ThumbRating, { props: { level: 1 } });
+    expect(tips(w)).toEqual({ Like: 'Like' });
+    expect(w.findAllComponents(Tooltip)).toHaveLength(1);
   });
 });
 
