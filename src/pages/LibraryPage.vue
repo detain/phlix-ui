@@ -23,6 +23,7 @@ import { useMediaStore } from '../stores/useMediaStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
 import MediaGrid from '../components/MediaGrid.vue';
 import FilterBar from '../components/FilterBar.vue';
 import IndexRail from '../components/IndexRail.vue';
@@ -52,6 +53,9 @@ const auth = useAuthStore();
 const player = usePlayerStore();
 const toasts = useToastStore();
 const userItemData = useUserItemDataStore();
+// Persisted view mode (S67). The FilterBar owns the toggle; this page only
+// reflects the chosen mode onto the single MediaGrid mount (see the template).
+const prefs = usePreferencesStore();
 
 // A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
 // a letter scrolls the pre-sized grid to that letter's first title.
@@ -346,8 +350,24 @@ async function onRemove(item: MediaItem): Promise<void> {
         </template>
       </EmptyState>
 
+      <!--
+        ONE MediaGrid mount, whatever the view mode (S67). `data-view-mode`
+        reflects the persisted preference onto the grid root so the mode is
+        observable to CSS/tests; the poster grid is still the only renderer.
+
+        S68-S70 seam: add the alternate renderers INSIDE this mount via
+        MediaGrid's `#card` slot —
+          <template #card="{ item, index }">
+            <ListRow v-if="prefs.viewMode === 'list'" … />
+            <MediaCard v-else … />
+          </template>
+        — which keeps the existing pagination / virtualization / `need-range`
+        machinery untouched. Never add a second MediaGrid (or a parallel paging
+        path) per mode.
+      -->
       <MediaGrid
         ref="gridRef"
+        :data-view-mode="prefs.viewMode"
         :items="store.items"
         :total="store.total"
         :loading="store.loading && store.items.length === 0"

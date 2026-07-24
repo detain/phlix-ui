@@ -10,21 +10,23 @@
  * Ports the locked R0 art direction (`src/dev/mockups/browse-grid.html` filter
  * bar): a glassy sticky bar with a debounced search, an expand/collapse advanced
  * panel (genres via the searchable `Combobox`, rating/type `Chip` toggles, a year
- * range, sort + order), a row of removable **active-filter pills** with a live
- * **result count** and "clear all", and **saved presets** persisted through
- * `usePreferencesStore`. Native `<select>`s are gone — everything is the a11y
- * primitive layer. Filters live in `useMediaStore`; URL-sync is handled app-side
- * by `bindMediaStoreToRouter`. Reduced-motion safe; keyboard-operable throughout.
+ * range, sort + order), a **view-mode toggle** (S67), a row of removable
+ * **active-filter pills** with a live **result count** and "clear all", and
+ * **saved presets** persisted through `usePreferencesStore`. Native `<select>`s
+ * are gone — everything is the a11y primitive layer. Filters live in
+ * `useMediaStore`; URL-sync is handled app-side by `bindMediaStoreToRouter`.
+ * Reduced-motion safe; keyboard-operable throughout.
  */
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useMediaStore, type SortField, type SortOrder } from '../stores/useMediaStore';
 import type { MediaType } from '../types/media-item';
-import { usePreferencesStore, type FilterPreset } from '../stores/usePreferencesStore';
-import Icon from './Icon.vue';
+import { usePreferencesStore, type FilterPreset, type ViewMode } from '../stores/usePreferencesStore';
+import Icon, { type IconName } from './Icon.vue';
 import Chip from './ui/Chip.vue';
 import Combobox from './ui/Combobox.vue';
 import Select from './ui/Select.vue';
 import Badge from './ui/Badge.vue';
+import IconButton from './ui/IconButton.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -167,6 +169,22 @@ function toggleOrder() {
   store.order = (store.order === 'asc' ? 'desc' : 'asc') as SortOrder;
   store.offset = 0;
   emit('change');
+}
+
+// ---- view mode (S67) ----------------------------------------------------
+/** The alternate-view toggle. `grid` is the only renderer today — `list`,
+ *  `backdrop` and `table` are the seam S68-S70 fill via `MediaGrid`'s `#card`
+ *  slot, so selecting one currently still renders the poster grid. The mode is a
+ *  persisted PREFERENCE (not a filter), so switching it never emits `change` —
+ *  it must not refetch the library. */
+const VIEW_MODES: { value: ViewMode; label: string; icon: IconName }[] = [
+  { value: 'grid', label: 'Grid view', icon: 'grid' },
+  { value: 'list', label: 'List view', icon: 'list' },
+  { value: 'backdrop', label: 'Backdrop view', icon: 'backdrop' },
+  { value: 'table', label: 'Table view', icon: 'table' },
+];
+function setViewMode(v: ViewMode) {
+  prefs.viewMode = v;
 }
 
 // ---- active-filter pills ------------------------------------------------
@@ -364,6 +382,22 @@ onBeforeUnmount(() => {
         <Badge v-if="advancedCount" class="filterbar__toggle-badge">{{ advancedCount }}</Badge>
         <Icon :name="expanded ? 'chevron-up' : 'chevron-down'" class="filterbar__toggle-caret" />
       </button>
+
+      <!-- view mode (S67): icon-only segmented toggle. Each button is a real
+           <button> from IconButton, so it carries an accessible name (aria-label
+           + title), aria-pressed for the selected mode, and native keyboard
+           operability; the wrapper groups them under one label. -->
+      <div class="filterbar__views" role="group" aria-label="View mode">
+        <IconButton
+          v-for="m in VIEW_MODES"
+          :key="m.value"
+          :name="m.icon"
+          :label="m.label"
+          size="sm"
+          :pressed="prefs.viewMode === m.value"
+          @click="setViewMode(m.value)"
+        />
+      </div>
     </div>
 
     <!-- advanced panel -->
@@ -674,6 +708,19 @@ onBeforeUnmount(() => {
 .filterbar__toggle-caret {
   width: 15px;
   height: 15px;
+}
+
+/* view mode (S67) — a segmented shell around the icon-only buttons (the pressed
+   state itself comes from IconButton's .is-pressed). Last in the primary row and
+   wraps with the rest of it on narrow screens. */
+.filterbar__views {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border, #27272a);
+  background: var(--surface, #141420);
 }
 
 /* advanced panel */

@@ -136,6 +136,77 @@ describe('FilterBar — sort + order', () => {
   });
 });
 
+describe('FilterBar — view mode (S67)', () => {
+  const LABELS = ['Grid view', 'List view', 'Backdrop view', 'Table view'];
+
+  function viewButtons(w: ReturnType<typeof mountBar>) {
+    return w.find('[aria-label="View mode"]').findAll('button');
+  }
+
+  it('renders one accessibly-named, keyboard-operable button per mode', () => {
+    const w = mountBar();
+    const group = w.find('[aria-label="View mode"]');
+    expect(group.exists()).toBe(true);
+    expect(group.attributes('role')).toBe('group');
+    const btns = viewButtons(w);
+    expect(btns).toHaveLength(4);
+    // icon-only → the accessible name must come from aria-label (title mirrors it
+    // as the tooltip); real <button type=button>s are keyboard-operable natively.
+    expect(btns.map((b) => b.attributes('aria-label'))).toEqual(LABELS);
+    expect(btns.map((b) => b.attributes('title'))).toEqual(LABELS);
+    btns.forEach((b) => expect(b.attributes('type')).toBe('button'));
+  });
+
+  it('marks the active mode pressed (grid by default) and only that one', () => {
+    const w = mountBar();
+    expect(viewButtons(w).map((b) => b.attributes('aria-pressed'))).toEqual([
+      'true',
+      'false',
+      'false',
+      'false',
+    ]);
+  });
+
+  it('clicking a mode updates the preference store and moves the pressed state', async () => {
+    const w = mountBar();
+    const prefs = usePreferencesStore();
+    await viewButtons(w)[1].trigger('click'); // List
+    expect(prefs.viewMode).toBe('list');
+    expect(viewButtons(w).map((b) => b.attributes('aria-pressed'))).toEqual([
+      'false',
+      'true',
+      'false',
+      'false',
+    ]);
+    await viewButtons(w)[3].trigger('click'); // Table
+    expect(prefs.viewMode).toBe('table');
+    await viewButtons(w)[0].trigger('click'); // back to Grid
+    expect(prefs.viewMode).toBe('grid');
+  });
+
+  it('is a preference, not a filter — switching mode emits no change (no refetch)', async () => {
+    const w = mountBar();
+    const store = useMediaStore();
+    await viewButtons(w)[2].trigger('click'); // Backdrop
+    expect(w.emitted('change')).toBeUndefined();
+    expect(store.offset).toBe(0);
+    expect(store.search).toBe('');
+  });
+
+  it('reflects a mode set outside the bar (e.g. hydrated from storage)', async () => {
+    const w = mountBar();
+    const prefs = usePreferencesStore();
+    prefs.viewMode = 'backdrop';
+    await nextTick();
+    expect(viewButtons(w).map((b) => b.attributes('aria-pressed'))).toEqual([
+      'false',
+      'false',
+      'true',
+      'false',
+    ]);
+  });
+});
+
 describe('FilterBar — active filter pills', () => {
   it('renders a removable pill per active filter and removes it on demand', async () => {
     const w = mountBar();
