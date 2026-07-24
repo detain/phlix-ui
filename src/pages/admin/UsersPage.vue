@@ -493,6 +493,17 @@ const throttleBps = ref<number>(DEFAULT_THROTTLE_BPS);
 const quotaInGiB = ref<string | number>('0');
 const quotaOutGiB = ref<string | number>('0');
 const maxStreams = ref<string | number>('0');
+// The exact input STRINGS seeded when the modal opened (see `openRelayModal`),
+// formatted with the SAME functions the bindings use. Change detection compares
+// the current input string against these seeds rather than re-parsing GiB→bytes:
+// a quota byte value set OUTSIDE this UI (e.g. via curl) that isn't an exact
+// multiple of what the GiB input can represent must NOT be flagged "changed" on a
+// no-op Save (float GiB↔bytes round-tripping would otherwise fire a spurious PUT).
+const relaySeed = ref<{ quotaInGiB: string; quotaOutGiB: string; maxStreams: string }>({
+  quotaInGiB: '0',
+  quotaOutGiB: '0',
+  maxStreams: '0',
+});
 
 const relayTitle = computed(() =>
   relayUser.value ? `Relay limits — ${relayUser.value.username}` : 'Relay limits',
@@ -546,6 +557,13 @@ async function openRelayModal(user: User): Promise<void> {
     quotaInGiB.value = bytesToGiBInput(bw.quota_bytes_in);
     quotaOutGiB.value = bytesToGiBInput(bw.quota_bytes_out);
     maxStreams.value = String(bw.max_concurrent_streams);
+    // Snapshot the seeded input strings exactly as first rendered — the change
+    // baseline (compared as strings in submitRelay, not re-parsed bytes).
+    relaySeed.value = {
+      quotaInGiB: String(quotaInGiB.value),
+      quotaOutGiB: String(quotaOutGiB.value),
+      maxStreams: String(maxStreams.value),
+    };
   } catch (e) {
     toasts.error(errMessage(e, 'Failed to load relay limits.'));
     relayUser.value = null;
@@ -576,11 +594,20 @@ async function submitRelay(): Promise<void> {
     return;
   }
 
+  // Change detection compares each input STRING against the seed captured when the
+  // modal opened — NOT the re-parsed bytes vs the loaded bytes. Re-parsing round-
+  // trips float GiB↔bytes, so a quota byte value set outside this UI (not exactly
+  // GiB-representable) would be flagged "changed" on a no-op Save and fire a
+  // spurious drifted PUT. Comparing the rendered strings only reports a change when
+  // the admin actually edits a field (including to 0/unlimited). The throttle is a
+  // discrete allow-list Select (a direct number compare, no GiB re-parse), so it
+  // keeps its numeric comparison.
+  const seed = relaySeed.value;
   const throttleChanged = throttleBps.value !== baseline.throttle_bps;
   const quotaChanged =
-    bytesIn !== baseline.quota_bytes_in ||
-    bytesOut !== baseline.quota_bytes_out ||
-    streams !== baseline.max_concurrent_streams;
+    String(quotaInGiB.value) !== seed.quotaInGiB ||
+    String(quotaOutGiB.value) !== seed.quotaOutGiB ||
+    String(maxStreams.value) !== seed.maxStreams;
 
   if (!throttleChanged && !quotaChanged) {
     toasts.error('No changes to save.');

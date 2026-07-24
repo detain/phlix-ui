@@ -877,7 +877,7 @@ var Kr = _n("server", () => {
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-cgkvdUuc.js")
+	component: () => import("./UsersPage-zhSixaJL.js")
 }, Yr = {
 	name: "admin-logs",
 	path: "logs",

@@ -1230,6 +1230,50 @@ describe('Admin UsersPage — relay limits (hub-only)', () => {
     w.unmount();
   });
 
+  // LOW review finding fix — change detection compares the input STRING against the
+  // seed captured when the modal opened (not re-parsed GiB→bytes vs the loaded
+  // bytes). A quota byte value set OUTSIDE this UI (e.g. via curl) that is NOT an
+  // exact multiple of what the GiB input round-trips (100 GiB + 500 B renders as
+  // the trimmed "100") must NOT be flagged "changed" on a no-op Save — the old
+  // byte-reparse would give 107374182400 ≠ 107374182900 and fire a spurious PUT.
+  it('does NOT fire a spurious quota PUT for a drifted byte cap set outside this UI (no-op Save)', async () => {
+    const drifted = { ...bandwidthA, quota_bytes_in: 107374182900 }; // 100 GiB + 500 B
+    const { client, put } = makeClient({ bandwidth: drifted });
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    // The drifted cap still renders as the trimmed "100" GiB input.
+    const [down] = quotaInputs();
+    expect(down.value).toBe('100');
+    // Save without touching anything.
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    // No spurious drifted PUT — neither quota nor throttle.
+    expect(put).not.toHaveBeenCalledWith('/api/v1/admin/users/1/quota', expect.anything());
+    expect(put).not.toHaveBeenCalledWith('/api/v1/admin/users/1/throttle', expect.anything());
+    expect(put).not.toHaveBeenCalled();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message.includes('No changes'))).toBe(true);
+    w.unmount();
+  });
+
+  it('changing ONLY the throttle does not drag a drifted quota into a spurious PUT', async () => {
+    const drifted = { ...bandwidthA, quota_bytes_in: 107374182900 }; // 100 GiB + 500 B
+    const { client, put } = makeClient({ bandwidth: drifted });
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    // Change the throttle only (quota inputs untouched).
+    w.findComponent(Select).vm.$emit('update:modelValue', 10000000);
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/users/1/throttle', { throttle_bps: 10000000 });
+    // The untouched, drifted quota must NOT be dragged into a spurious PUT.
+    expect(put).not.toHaveBeenCalledWith('/api/v1/admin/users/1/quota', expect.anything());
+    w.unmount();
+  });
+
   it('rejects an out-of-range quota (over 1 PiB) without PUTing', async () => {
     const { client, put } = makeClient();
     const w = mountHubPage(client);
