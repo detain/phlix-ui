@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import LibraryPage from './LibraryPage.vue';
@@ -15,6 +16,7 @@ import { useMediaStore } from '../stores/useMediaStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
 import ItemDataInspector from '../components/ItemDataInspector.vue';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
@@ -369,6 +371,64 @@ describe('LibraryPage', () => {
       expect(toggleFavorite).not.toHaveBeenCalled();
       expect(toasts.toasts.some((t) => t.tone === 'info' && /marked "Dune" as unwatched/i.test(t.message))).toBe(true);
     });
+  });
+});
+
+// S67 — the persisted `viewMode` preference reaches the page through the single
+// MediaGrid mount. The alternate renderers themselves are S68-S70; here the only
+// requirement is that switching mode is a no-op for the grid (which keeps
+// rendering) and never spawns a second grid / paging path.
+describe('LibraryPage — view mode (S67)', () => {
+  function viewButtons(w: Awaited<ReturnType<typeof mountAt>>['w']) {
+    return w.find('[aria-label="View mode"]').findAll('button');
+  }
+
+  it('reflects the persisted mode on ONE MediaGrid mount (grid by default)', async () => {
+    stubFetch();
+    const { w } = await mountAt('lib1');
+    await flushPromises();
+    const grids = w.findAllComponents({ name: 'MediaGrid' });
+    expect(grids).toHaveLength(1);
+    expect(w.find('.media-grid-root').attributes('data-view-mode')).toBe('grid');
+  });
+
+  it('starts from a mode hydrated out of storage', async () => {
+    localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: 'backdrop' }));
+    setActivePinia(createPinia());
+    stubFetch();
+    const { w } = await mountAt('lib1');
+    await flushPromises();
+    expect(w.find('.media-grid-root').attributes('data-view-mode')).toBe('backdrop');
+  });
+
+  it('the FilterBar toggle switches the mode without touching the grid or reloading', async () => {
+    stubFetch();
+    const { w } = await mountAt('lib1');
+    await flushPromises();
+    const prefs = usePreferencesStore();
+    const store = useMediaStore();
+    // Spy on the RELOAD PATH, not on `fetch`: a `fetch` call-count assertion here
+    // cannot fail, because the counterfactual (`setViewMode` emitting `change` →
+    // onFilterChange → reload) hits `fetchMedia`'s 60 s in-memory cache — which
+    // `reset()` does not clear — and `fetchIndexBuckets`' own module-level cache,
+    // so it issues ZERO requests. `reset` + `fetchMedia` are what `reload()`
+    // actually calls (see 'reloads on a FilterBar change' above), so spying on
+    // them discriminates. Complements FilterBar.test.ts's `emitted('change')`
+    // assertion, which guards the same invariant one layer up.
+    const reset = vi.spyOn(store, 'reset');
+    const fetchMedia = vi.spyOn(store, 'fetchMedia');
+
+    await viewButtons(w)[1].trigger('click'); // List
+    await nextTick();
+
+    expect(prefs.viewMode).toBe('list');
+    expect(w.find('.media-grid-root').attributes('data-view-mode')).toBe('list');
+    // still exactly one grid, still rendering poster cards (grid is the only
+    // renderer until S68), and the library was NOT reloaded.
+    expect(w.findAllComponents({ name: 'MediaGrid' })).toHaveLength(1);
+    expect(w.findComponent({ name: 'MediaCard' }).exists()).toBe(true);
+    expect(reset).not.toHaveBeenCalled();
+    expect(fetchMedia).not.toHaveBeenCalled();
   });
 });
 

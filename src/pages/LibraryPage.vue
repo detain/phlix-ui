@@ -23,6 +23,7 @@ import { useMediaStore } from '../stores/useMediaStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
 import MediaGrid from '../components/MediaGrid.vue';
 import FilterBar from '../components/FilterBar.vue';
 import IndexRail from '../components/IndexRail.vue';
@@ -52,6 +53,9 @@ const auth = useAuthStore();
 const player = usePlayerStore();
 const toasts = useToastStore();
 const userItemData = useUserItemDataStore();
+// Persisted view mode (S67). The FilterBar owns the toggle; this page only
+// reflects the chosen mode onto the single MediaGrid mount (see the template).
+const prefs = usePreferencesStore();
 
 // A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
 // a letter scrolls the pre-sized grid to that letter's first title.
@@ -346,8 +350,48 @@ async function onRemove(item: MediaItem): Promise<void> {
         </template>
       </EmptyState>
 
+      <!--
+        ONE MediaGrid mount, whatever the view mode (S67). `data-view-mode`
+        reflects the persisted preference onto the grid root as a hook for
+        NON-LAYOUT concerns only (e2e/unit selectors, per-mode colour/spacing
+        inside a card). The poster grid is still the only renderer.
+
+        S68-S70 seam: add the alternate renderers INSIDE this mount via
+        MediaGrid's `#card` slot —
+          <template #card="{ item, index }">
+            <ListRow v-if="prefs.viewMode === 'list'" … />
+            <MediaCard v-else … />
+          </template>
+        — which keeps the existing pagination / virtualization / `need-range`
+        machinery untouched. Never add a second MediaGrid (or a parallel paging
+        path) per mode. Keep a `v-else` (or otherwise unconditional) grid branch:
+        it is LOAD-BEARING, because a stale/garbage persisted `viewMode` is
+        tolerated rather than sanitized (see the `viewMode` docblock in
+        usePreferencesStore.ts) and must still render items.
+
+        DO NOT set the column count from CSS via `data-view-mode`. Once
+        MediaGrid is virtualized (`MediaGrid.vue:194`) it writes an INLINE
+        `grid-template-columns: repeat(<columns>, minmax(0, 1fr))`
+        (`MediaGrid.vue:270-274`) from `computeColumns()`, and feeds that SAME
+        `columns` value into the windowing math — `startIndex`/`endIndex`/
+        `padTop`/`totalHeight` (`virtual-grid.ts:113-145`). So a rule like
+        `[data-view-mode="list"] .media-grid { grid-template-columns: 1fr }`
+        would need `!important` to beat the inline style, and would then desync
+        the rendered layout from the windowing math: blank bands,
+        mis-positioned rows and wrong `need-range` pages while scrolling a long
+        library. Per-mode layout MUST go through MediaGrid's `cardSize` prop
+        (`MediaGrid.vue:58-59`) or an explicit parameterization of
+        `computeColumns` / `computeRowHeight` — never a CSS column override.
+
+        Row-height gotcha for the non-poster modes: `computeRowHeight()`
+        hardcodes `POSTER_RATIO = 3 / 2` (`virtual-grid.ts:16,40-47`), so a
+        list/backdrop/table row is measured as a 2:3 poster and will compute the
+        wrong height until that ratio is parameterized (or, for S70 only, that
+        mode opts out of virtualization — an explicitly allowed tradeoff there).
+      -->
       <MediaGrid
         ref="gridRef"
+        :data-view-mode="prefs.viewMode"
         :items="store.items"
         :total="store.total"
         :loading="store.loading && store.items.length === 0"

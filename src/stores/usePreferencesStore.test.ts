@@ -142,6 +142,54 @@ describe('usePreferencesStore', () => {
     });
   });
 
+  describe('viewMode (S67 — alternate section views)', () => {
+    it('defaults to the poster grid', () => {
+      expect(DEFAULT_PREFERENCES.viewMode).toBe('grid');
+      expect(usePreferencesStore().viewMode).toBe('grid');
+    });
+
+    it('persists into the prefs blob', async () => {
+      vi.useFakeTimers();
+      const s = usePreferencesStore();
+      s.viewMode = 'list';
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.runAllTimersAsync();
+      const raw = JSON.parse(localStorage.getItem('phlix.prefs')!);
+      expect(raw.viewMode).toBe('list');
+    });
+
+    it('hydrates from storage (survives a reload)', () => {
+      localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: 'table' }));
+      setActivePinia(createPinia());
+      const s = usePreferencesStore();
+      expect(s.viewMode).toBe('table');
+    });
+
+    it('hydrates a pre-S67 blob (no viewMode key) to the default, not undefined', () => {
+      // The persisted blob of an existing user predates the key entirely.
+      localStorage.setItem('phlix.prefs', JSON.stringify({ theme: 'midnight', cardSize: 240 }));
+      expect(readStoredPreferences().viewMode).toBe('grid');
+      setActivePinia(createPinia());
+      const s = usePreferencesStore();
+      expect(s.viewMode).toBe('grid');
+      expect(s.viewMode).not.toBeUndefined();
+      expect(s.snapshot().viewMode).toBe('grid');
+    });
+
+    it('is included in snapshot()', () => {
+      const s = usePreferencesStore();
+      s.viewMode = 'backdrop';
+      expect(s.snapshot().viewMode).toBe('backdrop');
+    });
+
+    it('reset() returns to the grid', () => {
+      const s = usePreferencesStore();
+      s.viewMode = 'backdrop';
+      s.reset();
+      expect(s.viewMode).toBe('grid');
+    });
+  });
+
   describe('subtitlePreferenceSet (U4 — explicit Off vs no-preference)', () => {
     it('defaults to false (no caption choice made yet)', () => {
       expect(DEFAULT_PREFERENCES.subtitlePreferenceSet).toBe(false);

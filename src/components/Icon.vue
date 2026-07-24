@@ -59,6 +59,10 @@ import IconCalendar from '~icons/lucide/calendar';
 import IconSort from '~icons/lucide/arrow-up-down';
 import IconStar from '~icons/lucide/star';
 import IconList from '~icons/lucide/list';
+// view modes (S67) — the grid/list/backdrop/table toggle in the FilterBar
+import IconGrid from '~icons/lucide/layout-grid';
+import IconBackdrop from '~icons/lucide/gallery-horizontal';
+import IconTable from '~icons/lucide/table';
 
 // Actions / misc
 import IconPlus from '~icons/lucide/plus';
@@ -144,6 +148,10 @@ const icons = {
   sort: IconSort,
   star: IconStar,
   list: IconList,
+  // view modes (S67) — `list` above doubles as the list-view icon
+  grid: IconGrid,
+  backdrop: IconBackdrop,
+  table: IconTable,
   // actions
   plus: IconPlus,
   info: IconInfo,

@@ -11,6 +11,10 @@ import { ref, computed, watch } from 'vue';
 export type ThemeName = 'nocturne' | 'daylight' | 'midnight';
 export type Density = 'comfortable' | 'compact';
 export type MotionPref = 'auto' | 'on' | 'off';
+/** How a library/section renders its items (S67). Only 'grid' has a renderer
+ *  today — 'list'/'backdrop'/'table' are the alternate views S68-S70 add via
+ *  `MediaGrid`'s `#card` slot; until then selecting one still renders the grid. */
+export type ViewMode = 'grid' | 'list' | 'backdrop' | 'table';
 
 /** A saved Browse filter set — `query` is the `useMediaStore.toQuery()` shape. */
 export interface FilterPreset {
@@ -53,6 +57,16 @@ export interface Preferences {
   cardSize: number;
   /** grid density hint — cozy = larger cards, dense = more columns. */
   gridDensity: 'cozy' | 'comfy' | 'dense';
+  /** Which renderer a library/section uses (S67); 'grid' is the poster grid.
+   *  NOT sanitized on hydration (same tolerance as `density`/`defaultQuality`
+   *  below): a persisted blob carrying `null` or a removed/renamed mode
+   *  hydrates verbatim, which leaves the FilterBar toggle with no pressed
+   *  button until the user clicks one (that click self-heals and re-persists).
+   *  Accepted deliberately, so every renderer host MUST keep an unconditional
+   *  (`v-else`) grid branch — that fallback is load-bearing for S68-S70, not
+   *  decoration: it is the only thing that renders items for an out-of-union
+   *  value. Add a sanitizer here if that ever stops being true. */
+  viewMode: ViewMode;
   reducedMotion: MotionPref;
   autoplay: boolean;
   defaultVolume: number; // 0–1
@@ -99,6 +113,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   density: 'comfortable',
   cardSize: 200,
   gridDensity: 'comfy',
+  viewMode: 'grid',
   reducedMotion: 'auto',
   autoplay: true,
   defaultVolume: 1,
@@ -177,6 +192,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   const density = ref<Density>(initial.density);
   const cardSize = ref<number>(initial.cardSize);
   const gridDensity = ref<Preferences['gridDensity']>(initial.gridDensity);
+  const viewMode = ref<ViewMode>(initial.viewMode);
   const reducedMotion = ref<MotionPref>(initial.reducedMotion);
   const autoplay = ref<boolean>(initial.autoplay);
   const defaultVolume = ref<number>(initial.defaultVolume);
@@ -217,6 +233,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       density: density.value,
       cardSize: cardSize.value,
       gridDensity: gridDensity.value,
+      viewMode: viewMode.value,
       reducedMotion: reducedMotion.value,
       autoplay: autoplay.value,
       defaultVolume: defaultVolume.value,
@@ -290,6 +307,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     density.value = d.density;
     cardSize.value = d.cardSize;
     gridDensity.value = d.gridDensity;
+    viewMode.value = d.viewMode;
     reducedMotion.value = d.reducedMotion;
     autoplay.value = d.autoplay;
     defaultVolume.value = d.defaultVolume;
@@ -315,6 +333,7 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     density,
     cardSize,
     gridDensity,
+    viewMode,
     reducedMotion,
     autoplay,
     defaultVolume,
