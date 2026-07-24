@@ -62,9 +62,21 @@ const profileNoPin = {
 };
 const profileWithPin = { ...profileNoPin, id: 8, name: 'Adults', pin_hash: 'x' as unknown as null };
 
+/** A relay bandwidth rollup for user 1 (100 GiB down cap, 3 streams, 5 Mbps throttle). */
+const bandwidthA = {
+  user_id: 'u-1',
+  bytes_in: 2048,
+  bytes_out: 512,
+  quota_bytes_in: 107374182400, // 100 GiB
+  quota_bytes_out: 0,
+  max_concurrent_streams: 3,
+  throttle_bps: 5000000,
+};
+
 interface Overrides {
   users?: unknown[];
   profiles?: unknown[];
+  bandwidth?: unknown;
 }
 
 function makeClient(over: Overrides = {}) {
@@ -72,6 +84,9 @@ function makeClient(over: Overrides = {}) {
     if (endpoint === '/api/v1/admin/users') return { users: over.users ?? [userA, userB] };
     if (/\/api\/v1\/admin\/users\/\d+\/profiles$/.test(endpoint)) {
       return { profiles: over.profiles ?? [profileNoPin, profileWithPin] };
+    }
+    if (/\/api\/v1\/admin\/users\/\d+\/bandwidth$/.test(endpoint)) {
+      return over.bandwidth ?? bandwidthA;
     }
     throw new Error(`unexpected GET ${endpoint}`);
   });
@@ -84,6 +99,15 @@ function makeClient(over: Overrides = {}) {
 
 function mountPage(client: ApiClient): VueWrapper {
   return mount(UsersPage, { props: { client }, attachTo: document.body });
+}
+
+/** Mount as the HUB app so the hub-only Relay control renders (`phlixConfig.app === 'hub'`). */
+function mountHubPage(client: ApiClient): VueWrapper {
+  return mount(UsersPage, {
+    props: { client },
+    attachTo: document.body,
+    global: { provide: { phlixConfig: { app: 'hub' } } },
+  });
 }
 
 /** Find a Button by its (trimmed) text. */
@@ -1085,6 +1109,204 @@ describe('Admin UsersPage — status badges + approval queue (S1)', () => {
       .trigger('click');
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/admin/users/4/approve');
+    w.unmount();
+  });
+});
+
+/**
+ * S41 (deferred follow-up) — the per-user relay quota + bandwidth-throttle admin
+ * control. It is HUB-ONLY (the media server does not serve the `/bandwidth`,
+ * `/quota`, `/throttle` sub-routes), so the "Relay" row action renders only when
+ * the page runs inside the hub app (`phlixConfig.app === 'hub'`).
+ */
+describe('Admin UsersPage — relay limits (hub-only)', () => {
+  const relayBtn = (w: VueWrapper, user: string) =>
+    w.findAllComponents(Button).find((b) => b.attributes('aria-label') === `Relay limits for ${user}`);
+
+  /** The number inputs in the relay modal, in order: [0] download, [1] upload, [2] streams. */
+  function quotaInputs(): HTMLInputElement[] {
+    return Array.from(modalPanel().querySelectorAll<HTMLInputElement>('.admin-users__input'));
+  }
+
+  async function openRelay(w: VueWrapper, user = 'alice') {
+    await relayBtn(w, user)!.trigger('click');
+    await flushPromises();
+  }
+
+  it('does NOT render the Relay action on the media server (no hub config)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(relayBtn(w, 'alice')).toBeUndefined();
+    w.unmount();
+  });
+
+  it('renders the Relay action in the hub and loads the current limits', async () => {
+    const { client, get } = makeClient();
+    const w = mountHubPage(client);
+    await flushPromises();
+    expect(relayBtn(w, 'alice')).toBeDefined();
+    await openRelay(w);
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/users/1/bandwidth');
+    // Throttle preselected from the loaded value (5 Mbps).
+    expect(w.findComponent(Select).props('modelValue')).toBe(5000000);
+    // Quota inputs populated: 100 GiB down, 0 up, 3 streams.
+    const [down, up, streams] = quotaInputs();
+    expect(down.value).toBe('100');
+    expect(up.value).toBe('0');
+    expect(streams.value).toBe('3');
+    // Current usage is surfaced.
+    expect(modalPanel().textContent).toContain('2 KiB');
+    w.unmount();
+  });
+
+  it('saves a changed throttle via PUT /throttle only (quota untouched)', async () => {
+    const { client, put } = makeClient();
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    // Bump the throttle to 10 Mbps.
+    w.findComponent(Select).vm.$emit('update:modelValue', 10000000);
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/users/1/throttle', { throttle_bps: 10000000 });
+    expect(put).not.toHaveBeenCalledWith('/api/v1/admin/users/1/quota', expect.anything());
+    w.unmount();
+  });
+
+  it('saves changed quota via PUT /quota only (throttle untouched)', async () => {
+    const { client, put } = makeClient();
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    // Lower the download cap from 100 GiB to 50 GiB.
+    const [down] = quotaInputs();
+    down.value = '50';
+    down.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/users/1/quota', {
+      quota_bytes_in: 53687091200, // 50 GiB
+      quota_bytes_out: 0,
+      max_concurrent_streams: 3,
+    });
+    expect(put).not.toHaveBeenCalledWith('/api/v1/admin/users/1/throttle', expect.anything());
+    w.unmount();
+  });
+
+  it('saves both endpoints when both changed', async () => {
+    const { client, put } = makeClient();
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    w.findComponent(Select).vm.$emit('update:modelValue', 0); // Unlimited
+    const [, , streams] = quotaInputs();
+    streams.value = '5';
+    streams.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/users/1/throttle', { throttle_bps: 0 });
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/users/1/quota', {
+      quota_bytes_in: 107374182400,
+      quota_bytes_out: 0,
+      max_concurrent_streams: 5,
+    });
+    w.unmount();
+  });
+
+  it('does not PUT anything when nothing changed', async () => {
+    const { client, put } = makeClient();
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).not.toHaveBeenCalled();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message.includes('No changes'))).toBe(true);
+    w.unmount();
+  });
+
+  it('rejects an out-of-range quota (over 1 PiB) without PUTing', async () => {
+    const { client, put } = makeClient();
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    const [down] = quotaInputs();
+    down.value = '2000000'; // 2,000,000 GiB > 1 PiB
+    down.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).not.toHaveBeenCalled();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message.includes('Byte caps'))).toBe(true);
+    w.unmount();
+  });
+
+  it('rejects an out-of-range concurrent-stream cap without PUTing', async () => {
+    const { client, put } = makeClient();
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    const [, , streams] = quotaInputs();
+    streams.value = '5000'; // > 1000
+    streams.dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).not.toHaveBeenCalled();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message.includes('concurrent streams'))).toBe(true);
+    w.unmount();
+  });
+
+  it('toasts and closes when the bandwidth load fails', async () => {
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/users') return { users: [userA] };
+      if (/\/bandwidth$/.test(endpoint)) throw new Error('bw boom');
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'bw boom')).toBe(true);
+    // Modal did not stay open (relayUser cleared on load failure).
+    expect(w.findComponent(Select).exists()).toBe(false);
+    w.unmount();
+  });
+
+  it('toasts when a save fails', async () => {
+    const { client, put } = makeClient();
+    put.mockRejectedValueOnce(new Error('save boom'));
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    w.findComponent(Select).vm.$emit('update:modelValue', 20000000);
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'save boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('cancels the relay modal without saving', async () => {
+    const { client, put } = makeClient();
+    const w = mountHubPage(client);
+    await flushPromises();
+    await openRelay(w);
+    w.findComponent(Select).vm.$emit('update:modelValue', 50000000);
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
+    await flushPromises();
+    expect(put).not.toHaveBeenCalled();
+    expect(w.findComponent(Select).exists()).toBe(false);
     w.unmount();
   });
 });
