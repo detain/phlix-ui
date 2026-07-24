@@ -6,7 +6,16 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { AdminUsersApi, RATING_LABELS, RATING_MAX, RATING_OPTIONS, USER_STATUSES } from './users';
+import {
+  AdminUsersApi,
+  RATING_LABELS,
+  RATING_MAX,
+  RATING_OPTIONS,
+  USER_STATUSES,
+  DEFAULT_THROTTLE_BPS,
+  THROTTLE_BPS_OPTIONS,
+  THROTTLE_BPS_LEVELS,
+} from './users';
 import type { ApiClient } from '../client';
 
 /** A mock ApiClient whose verbs are vi.fn()s the test can assert on. */
@@ -309,5 +318,87 @@ describe('rating tables', () => {
 describe('user statuses', () => {
   it('USER_STATUSES lists the three statuses, pending first', () => {
     expect(USER_STATUSES).toEqual(['pending', 'active', 'disabled']);
+  });
+});
+
+describe('AdminUsersApi — relay bandwidth (quota + throttle)', () => {
+  const rawBandwidth = {
+    user_id: 'u-1',
+    bytes_in: 1234,
+    bytes_out: 56,
+    quota_bytes_in: 107374182400, // 100 GiB
+    quota_bytes_out: 0,
+    max_concurrent_streams: 3,
+    throttle_bps: 5000000,
+  };
+
+  it('getBandwidth() GETs /api/v1/admin/users/{id}/bandwidth and normalizes', async () => {
+    const { api, get } = makeClient();
+    get.mockResolvedValue(rawBandwidth);
+    const res = await api.getBandwidth(1);
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/users/1/bandwidth');
+    expect(res).toEqual(rawBandwidth);
+  });
+
+  it('getBandwidth() coerces string / missing wire values to safe ints', async () => {
+    const { api, get } = makeClient();
+    // A driver returns some numbers as strings, and omits a field entirely.
+    get.mockResolvedValue({
+      user_id: 'u-2',
+      bytes_in: '999',
+      quota_bytes_in: '0',
+      throttle_bps: '3000000',
+    });
+    const res = await api.getBandwidth(2);
+    expect(res.bytes_in).toBe(999);
+    expect(res.quota_bytes_in).toBe(0);
+    expect(res.throttle_bps).toBe(3000000);
+    // Omitted fields degrade to 0, not NaN/undefined.
+    expect(res.bytes_out).toBe(0);
+    expect(res.max_concurrent_streams).toBe(0);
+    expect(Number.isNaN(res.max_concurrent_streams)).toBe(false);
+  });
+
+  it('setThrottle() PUTs { throttle_bps } to /throttle and returns the rollup', async () => {
+    const { api, put } = makeClient();
+    put.mockResolvedValue({ ...rawBandwidth, throttle_bps: 10000000 });
+    const res = await api.setThrottle(7, 10000000);
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/users/7/throttle', { throttle_bps: 10000000 });
+    expect(res.throttle_bps).toBe(10000000);
+  });
+
+  it('setQuota() PUTs the three caps to /quota and returns the rollup', async () => {
+    const { api, put } = makeClient();
+    put.mockResolvedValue(rawBandwidth);
+    const res = await api.setQuota(7, {
+      quota_bytes_in: 107374182400,
+      quota_bytes_out: 0,
+      max_concurrent_streams: 3,
+    });
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/users/7/quota', {
+      quota_bytes_in: 107374182400,
+      quota_bytes_out: 0,
+      max_concurrent_streams: 3,
+    });
+    expect(res.max_concurrent_streams).toBe(3);
+  });
+});
+
+describe('throttle level constants', () => {
+  it('THROTTLE_BPS_OPTIONS lists Unlimited + the 1/3/5/10/20/50 Mbps levels in order', () => {
+    expect(THROTTLE_BPS_OPTIONS.map((o) => o.value)).toEqual([
+      0, 1000000, 3000000, 5000000, 10000000, 20000000, 50000000,
+    ]);
+    expect(THROTTLE_BPS_OPTIONS[0]).toEqual({ value: 0, label: 'Unlimited' });
+    expect(THROTTLE_BPS_OPTIONS.every((o) => typeof o.value === 'number')).toBe(true);
+  });
+
+  it('DEFAULT_THROTTLE_BPS is 3 Mbps and is one of the allowed levels', () => {
+    expect(DEFAULT_THROTTLE_BPS).toBe(3000000);
+    expect(THROTTLE_BPS_LEVELS).toContain(DEFAULT_THROTTLE_BPS);
+  });
+
+  it('THROTTLE_BPS_LEVELS mirrors the option values', () => {
+    expect([...THROTTLE_BPS_LEVELS]).toEqual(THROTTLE_BPS_OPTIONS.map((o) => o.value));
   });
 });

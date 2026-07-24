@@ -53,6 +53,58 @@ export interface UpdateUserInput {
     password?: string;
 }
 /**
+ * The per-user relay bandwidth rollup returned by the hub's `UserQuotaController`
+ * (`GET /api/v1/admin/users/{id}/bandwidth`, and echoed by both the quota + the
+ * throttle PUTs). All values are byte/bps integers; `0` on a cap means
+ * "unlimited". This surface is **hub-only** — the media server does not serve the
+ * relay quota/throttle endpoints, so the admin Users page shows the Relay control
+ * only when running in the hub app (`phlixConfig.app === 'hub'`).
+ *
+ * - `bytes_in` / `bytes_out` — real streamed bytes metered this calendar month.
+ * - `quota_bytes_in` / `quota_bytes_out` — monthly download/upload byte caps
+ *   (`0` = unlimited), period-scoped in `relay_user_quotas`.
+ * - `max_concurrent_streams` — max simultaneous relay streams (`0` = unlimited).
+ * - `throttle_bps` — durable per-user relay rate cap in bits/sec (`0` = Unlimited,
+ *   default `3000000` = 3 Mbps), stored in `relay_user_settings` — NOT reset each
+ *   month, distinct from the byte-cap quota.
+ */
+export interface UserBandwidth {
+    user_id: string;
+    bytes_in: number;
+    bytes_out: number;
+    quota_bytes_in: number;
+    quota_bytes_out: number;
+    max_concurrent_streams: number;
+    throttle_bps: number;
+}
+/** Body accepted by {@link AdminUsersApi.setQuota} (`PUT …/quota`). */
+export interface SetQuotaInput {
+    /** Monthly download byte cap; `0` = unlimited; ≤ 1 PiB. */
+    quota_bytes_in: number;
+    /** Monthly upload byte cap; `0` = unlimited; ≤ 1 PiB. */
+    quota_bytes_out: number;
+    /** Max simultaneous relay streams; `0` = unlimited; ≤ 1000. */
+    max_concurrent_streams: number;
+}
+/**
+ * The relay bandwidth throttle default (3 Mbps in bps). Every user starts here
+ * until an admin changes it; `0` = Unlimited turns the throttle off entirely.
+ * Mirrors the hub's `UserQuotaController::ALLOWED_THROTTLE_BPS` default.
+ */
+export declare const DEFAULT_THROTTLE_BPS = 3000000;
+/**
+ * The fixed, allow-listed relay throttle levels in bits/sec, in dropdown order:
+ * Unlimited (`0`) then 1/3/5/10/20/50 Mbps. The hub rejects any value NOT in this
+ * set with a `400 invalid_throttle`, so the admin control is a dropdown of exactly
+ * these levels. Mirrors `UserQuotaController::ALLOWED_THROTTLE_BPS`.
+ */
+export declare const THROTTLE_BPS_OPTIONS: ReadonlyArray<{
+    value: number;
+    label: string;
+}>;
+/** The allow-listed throttle levels (bps) — the {@link THROTTLE_BPS_OPTIONS} values. */
+export declare const THROTTLE_BPS_LEVELS: readonly number[];
+/**
  * A user profile row as returned by `AdminProfileController`.
  * `pin_hash` is always `null` in GET responses — PIN is write-only from the
  * UI's perspective.
@@ -213,6 +265,27 @@ export declare class AdminUsersApi {
         message: string;
         new_password: string;
     }>;
+    /**
+     * `GET /api/v1/admin/users/{id}/bandwidth` → the user's current-period relay
+     * usage + configured caps ({@link UserBandwidth}). A user with no row yet reads
+     * back as zeroed usage + unlimited caps (a real payload, not a 404). Hub-only.
+     */
+    getBandwidth(id: number): Promise<UserBandwidth>;
+    /**
+     * `PUT /api/v1/admin/users/{id}/throttle` → set the user's durable relay
+     * bandwidth throttle. Body `{ throttle_bps }` MUST be one of
+     * {@link THROTTLE_BPS_LEVELS} (`0` = Unlimited, or 1/3/5/10/20/50 Mbps in bps) —
+     * any other value is a `400 invalid_throttle`. Returns the updated
+     * {@link UserBandwidth} rollup. Hub-only.
+     */
+    setThrottle(id: number, throttleBps: number): Promise<UserBandwidth>;
+    /**
+     * `PUT /api/v1/admin/users/{id}/quota` → set the user's monthly download/upload
+     * byte caps + concurrent-stream cap. Every value is a non-negative integer
+     * (`0` = unlimited); byte caps ≤ 1 PiB, streams ≤ 1000 — out-of-range values are
+     * a `400 invalid_quota`. Returns the updated {@link UserBandwidth}. Hub-only.
+     */
+    setQuota(id: number, input: SetQuotaInput): Promise<UserBandwidth>;
     /** `GET /api/v1/admin/users/{userId}/profiles` → unwraps `{ profiles }`. */
     listProfiles(userId: number): Promise<Profile[]>;
     /** `POST /api/v1/admin/users/{userId}/profiles` → `201 { profile_id, message }`. */

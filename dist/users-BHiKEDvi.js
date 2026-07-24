@@ -6,7 +6,51 @@ function t(t) {
 		is_admin: e(t.is_admin)
 	};
 }
-var n = {
+var n = 3e6, r = [
+	{
+		value: 0,
+		label: "Unlimited"
+	},
+	{
+		value: 1e6,
+		label: "1 Mbps"
+	},
+	{
+		value: 3e6,
+		label: "3 Mbps"
+	},
+	{
+		value: 5e6,
+		label: "5 Mbps"
+	},
+	{
+		value: 1e7,
+		label: "10 Mbps"
+	},
+	{
+		value: 2e7,
+		label: "20 Mbps"
+	},
+	{
+		value: 5e7,
+		label: "50 Mbps"
+	}
+], i = r.map((e) => e.value);
+function a(e) {
+	return typeof e == "number" && Number.isFinite(e) ? e : typeof e == "string" && e.trim() !== "" && Number.isFinite(Number(e)) ? Number(e) : 0;
+}
+function o(e) {
+	return {
+		user_id: typeof e.user_id == "string" ? e.user_id : String(e.user_id ?? ""),
+		bytes_in: a(e.bytes_in),
+		bytes_out: a(e.bytes_out),
+		quota_bytes_in: a(e.quota_bytes_in),
+		quota_bytes_out: a(e.quota_bytes_out),
+		max_concurrent_streams: a(e.max_concurrent_streams),
+		throttle_bps: a(e.throttle_bps)
+	};
+}
+var s = {
 	0: "G — General Audiences (Movies)",
 	1: "TV-Y — All Children (TV)",
 	2: "TV-G — General Audience (TV)",
@@ -20,10 +64,10 @@ var n = {
 	10: "NC-17 — No One 17 & Under (Movies)",
 	11: "X — Adult (Movies)",
 	12: "UNRATED — Unrated Content"
-}, r = 12, i = Object.entries(n).map(([e, t]) => ({
+}, c = 12, l = Object.entries(s).map(([e, t]) => ({
 	value: Number(e),
 	label: t
-})), a = class {
+})), u = class {
 	client;
 	constructor(e) {
 		this.client = e;
@@ -59,6 +103,15 @@ var n = {
 	}
 	resetPassword(e) {
 		return this.client.post(`/api/v1/admin/users/${encodeURIComponent(e)}/reset-password`);
+	}
+	async getBandwidth(e) {
+		return o(await this.client.get(`/api/v1/admin/users/${encodeURIComponent(e)}/bandwidth`) ?? {});
+	}
+	async setThrottle(e, t) {
+		return o(await this.client.put(`/api/v1/admin/users/${encodeURIComponent(e)}/throttle`, { throttle_bps: t }) ?? {});
+	}
+	async setQuota(e, t) {
+		return o(await this.client.put(`/api/v1/admin/users/${encodeURIComponent(e)}/quota`, t) ?? {});
 	}
 	async listProfiles(e) {
 		let { profiles: t } = await this.client.get(`/api/v1/admin/users/${encodeURIComponent(e)}/profiles`);
@@ -119,6 +172,6 @@ var n = {
 	}
 };
 //#endregion
-export { i, n, r, a as t };
+export { l as a, c as i, n, i as o, s as r, r as s, u as t };
 
-//# sourceMappingURL=users-CIe34Ixs.js.map
+//# sourceMappingURL=users-BHiKEDvi.js.map

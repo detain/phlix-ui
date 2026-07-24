@@ -21,14 +21,19 @@ import {
   RATING_LABELS,
   RATING_MAX,
   RATING_OPTIONS,
+  DEFAULT_THROTTLE_BPS,
+  THROTTLE_BPS_OPTIONS,
   type CreateProfileInput,
   type CreateUserInput,
   type Profile,
+  type SetQuotaInput,
   type UpdateProfileInput,
   type UpdateUserInput,
   type User,
+  type UserBandwidth,
   type UserStatus,
 } from '../../api/admin/users';
+import type { PhlixAppConfig } from '../../app/types';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Badge from '../../components/ui/Badge.vue';
@@ -57,6 +62,16 @@ const api = new AdminUsersApi(
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
 );
 const toasts = useToastStore();
+
+// ── Hub-only relay control gate ──────────────────────────────────────────────
+// The per-user relay quota/throttle endpoints (UserQuotaController) are served by
+// the HUB only — the media server serves `/api/v1/admin/users*` but NOT the
+// `/bandwidth`, `/quota`, `/throttle` sub-routes. This same UsersPage renders in
+// BOTH admin consoles (it is a `commonAdminPage`), so the Relay control is shown
+// only when running inside the hub app. `app === 'hub'` is the established
+// capability seam (see `mediaApiBaseFor`), not a branding branch.
+const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+const isHub = computed(() => phlixConfig?.app === 'hub');
 
 const ratingOptions = computed<SelectOptionInput[]>(() =>
   RATING_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
@@ -454,6 +469,175 @@ async function handleClearPin(profile: Profile): Promise<void> {
   }
 }
 
+// ── Relay limits modal (hub-only): per-user throttle + monthly quota ──────────
+// Mirrors the hub UserQuotaController bounds so the UI rejects out-of-range input
+// before it round-trips to a 400.
+const GIB = 1024 ** 3;
+/** 1 PiB — the hub's MAX_QUOTA_BYTES byte-cap ceiling. */
+const MAX_QUOTA_BYTES = 1125899906842624;
+/** The hub's MAX_CONCURRENT_STREAMS ceiling. */
+const MAX_CONCURRENT_STREAMS = 1000;
+
+const throttleOptions = computed<SelectOptionInput[]>(() =>
+  THROTTLE_BPS_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+);
+
+const relayUser = ref<User | null>(null);
+const relayLoading = ref(false);
+const relaySubmitting = ref(false);
+/** The last-loaded rollup — the baseline for change detection + usage display. */
+const relayBandwidth = ref<UserBandwidth | null>(null);
+const throttleBps = ref<number>(DEFAULT_THROTTLE_BPS);
+// A `type="number"` v-model auto-casts to a number on edit but is seeded from a
+// formatted string, so these hold `string | number`.
+const quotaInGiB = ref<string | number>('0');
+const quotaOutGiB = ref<string | number>('0');
+const maxStreams = ref<string | number>('0');
+// The exact input STRINGS seeded when the modal opened (see `openRelayModal`),
+// formatted with the SAME functions the bindings use. Change detection compares
+// the current input string against these seeds rather than re-parsing GiB→bytes:
+// a quota byte value set OUTSIDE this UI (e.g. via curl) that isn't an exact
+// multiple of what the GiB input can represent must NOT be flagged "changed" on a
+// no-op Save (float GiB↔bytes round-tripping would otherwise fire a spurious PUT).
+const relaySeed = ref<{ quotaInGiB: string; quotaOutGiB: string; maxStreams: string }>({
+  quotaInGiB: '0',
+  quotaOutGiB: '0',
+  maxStreams: '0',
+});
+
+const relayTitle = computed(() =>
+  relayUser.value ? `Relay limits — ${relayUser.value.username}` : 'Relay limits',
+);
+const relayModalOpen = computed({
+  get: () => relayUser.value !== null,
+  set: (v: boolean) => {
+    if (!v) closeRelayModal();
+  },
+});
+
+/** Bytes → a trimmed GiB string for the input (`0` stays `0`; float noise trimmed). */
+function bytesToGiBInput(bytes: number): string {
+  if (!bytes) return '0';
+  return String(Number((bytes / GIB).toFixed(6)));
+}
+
+/** Parse a GiB input to a non-negative integer byte count, or null if invalid.
+ *  Accepts the string seed or the number a `type="number"` v-model produces. */
+function parseGiBToBytes(value: string | number): number | null {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  const bytes = Math.round(n * GIB);
+  return bytes > MAX_QUOTA_BYTES ? null : bytes;
+}
+
+/** Parse a stream-count input to an integer in [0, 1000], or null if invalid. */
+function parseStreams(value: string | number): number | null {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(n) || n < 0 || n > MAX_CONCURRENT_STREAMS) return null;
+  return n;
+}
+
+/** Human-readable byte size for the read-only usage display. */
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 B';
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const value = bytes / 1024 ** i;
+  return `${i === 0 ? value : Number(value.toFixed(2))} ${units[i]}`;
+}
+
+async function openRelayModal(user: User): Promise<void> {
+  relayUser.value = user;
+  relayBandwidth.value = null;
+  relayLoading.value = true;
+  try {
+    const bw = await api.getBandwidth(user.id);
+    relayBandwidth.value = bw;
+    throttleBps.value = bw.throttle_bps;
+    quotaInGiB.value = bytesToGiBInput(bw.quota_bytes_in);
+    quotaOutGiB.value = bytesToGiBInput(bw.quota_bytes_out);
+    maxStreams.value = String(bw.max_concurrent_streams);
+    // Snapshot the seeded input strings exactly as first rendered — the change
+    // baseline (compared as strings in submitRelay, not re-parsed bytes).
+    relaySeed.value = {
+      quotaInGiB: String(quotaInGiB.value),
+      quotaOutGiB: String(quotaOutGiB.value),
+      maxStreams: String(maxStreams.value),
+    };
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to load relay limits.'));
+    relayUser.value = null;
+  } finally {
+    relayLoading.value = false;
+  }
+}
+
+function closeRelayModal(): void {
+  relayUser.value = null;
+  relayBandwidth.value = null;
+}
+
+async function submitRelay(): Promise<void> {
+  const target = relayUser.value;
+  const baseline = relayBandwidth.value;
+  if (!target || !baseline) return;
+
+  const bytesIn = parseGiBToBytes(quotaInGiB.value);
+  const bytesOut = parseGiBToBytes(quotaOutGiB.value);
+  const streams = parseStreams(maxStreams.value);
+  if (bytesIn === null || bytesOut === null) {
+    toasts.error('Byte caps must be a non-negative number of GiB (≤ 1 PiB); 0 = unlimited.');
+    return;
+  }
+  if (streams === null) {
+    toasts.error('Max concurrent streams must be a whole number 0–1000; 0 = unlimited.');
+    return;
+  }
+
+  // Change detection compares each input STRING against the seed captured when the
+  // modal opened — NOT the re-parsed bytes vs the loaded bytes. Re-parsing round-
+  // trips float GiB↔bytes, so a quota byte value set outside this UI (not exactly
+  // GiB-representable) would be flagged "changed" on a no-op Save and fire a
+  // spurious drifted PUT. Comparing the rendered strings only reports a change when
+  // the admin actually edits a field (including to 0/unlimited). The throttle is a
+  // discrete allow-list Select (a direct number compare, no GiB re-parse), so it
+  // keeps its numeric comparison.
+  const seed = relaySeed.value;
+  const throttleChanged = throttleBps.value !== baseline.throttle_bps;
+  const quotaChanged =
+    String(quotaInGiB.value) !== seed.quotaInGiB ||
+    String(quotaOutGiB.value) !== seed.quotaOutGiB ||
+    String(maxStreams.value) !== seed.maxStreams;
+
+  if (!throttleChanged && !quotaChanged) {
+    toasts.error('No changes to save.');
+    return;
+  }
+
+  relaySubmitting.value = true;
+  try {
+    // The throttle and the quota are independent hub endpoints/stores, so only
+    // PUT the one(s) that actually changed (avoids spurious audit-log entries).
+    if (throttleChanged) {
+      await api.setThrottle(target.id, throttleBps.value);
+    }
+    if (quotaChanged) {
+      const input: SetQuotaInput = {
+        quota_bytes_in: bytesIn,
+        quota_bytes_out: bytesOut,
+        max_concurrent_streams: streams,
+      };
+      await api.setQuota(target.id, input);
+    }
+    toasts.success('Relay limits saved.');
+    closeRelayModal();
+  } catch (e) {
+    toasts.error(errMessage(e, 'Failed to save relay limits.'));
+  } finally {
+    relaySubmitting.value = false;
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function ratingLabel(rating: number): string {
   return RATING_LABELS[rating] ?? RATING_LABELS[RATING_MAX];
@@ -637,6 +821,15 @@ onMounted(loadUsers);
                 @click="openProfilesModal(user)"
               >
                 Profiles
+              </Button>
+              <Button
+                v-if="isHub"
+                variant="ghost"
+                size="sm"
+                :aria-label="`Relay limits for ${user.username}`"
+                @click="openRelayModal(user)"
+              >
+                Relay
               </Button>
               <Button
                 variant="ghost"
@@ -913,6 +1106,87 @@ onMounted(loadUsers);
         </div>
       </template>
     </Modal>
+
+    <!-- Relay limits modal (hub-only): per-user bandwidth throttle + monthly quota -->
+    <Modal v-model="relayModalOpen" :title="relayTitle">
+      <div v-if="relayLoading" class="admin-users__skel"><Skeleton variant="text" :lines="4" /></div>
+      <div v-else-if="relayBandwidth" class="admin-users__relay">
+        <!-- Bandwidth throttle -->
+        <div class="admin-users__relay-section">
+          <h3 class="admin-users__subform-title">Bandwidth throttle</h3>
+          <p class="admin-users__relay-note">
+            A hard cap on the relay stream rate (not a monthly total). The default is 3 Mbps;
+            <strong>Unlimited</strong> turns the throttle off for this user.
+          </p>
+          <label class="admin-users__field">
+            <span class="admin-users__label">Throttle</span>
+            <Select
+              :model-value="throttleBps"
+              :options="throttleOptions"
+              label="Throttle"
+              @update:model-value="(v) => (throttleBps = Number(v))"
+            />
+          </label>
+        </div>
+
+        <!-- Monthly quota -->
+        <div class="admin-users__relay-section">
+          <h3 class="admin-users__subform-title">Monthly quota</h3>
+          <p class="admin-users__relay-note">
+            Per-calendar-month byte caps and a concurrent-stream cap. Enter <strong>0</strong> for
+            unlimited. Used this period:
+            <strong>{{ formatBytes(relayBandwidth.bytes_in) }}</strong> down /
+            <strong>{{ formatBytes(relayBandwidth.bytes_out) }}</strong> up.
+          </p>
+          <label class="admin-users__field">
+            <span class="admin-users__label">Download cap (GiB, 0 = unlimited)</span>
+            <input
+              v-model="quotaInGiB"
+              type="number"
+              min="0"
+              step="0.1"
+              class="admin-users__input"
+              inputmode="decimal"
+            />
+          </label>
+          <label class="admin-users__field">
+            <span class="admin-users__label">Upload cap (GiB, 0 = unlimited)</span>
+            <input
+              v-model="quotaOutGiB"
+              type="number"
+              min="0"
+              step="0.1"
+              class="admin-users__input"
+              inputmode="decimal"
+            />
+          </label>
+          <label class="admin-users__field">
+            <span class="admin-users__label">Max concurrent streams (0 = unlimited)</span>
+            <input
+              v-model="maxStreams"
+              type="number"
+              min="0"
+              max="1000"
+              step="1"
+              class="admin-users__input"
+              inputmode="numeric"
+            />
+          </label>
+        </div>
+      </div>
+      <template #footer>
+        <Button variant="ghost" size="sm" @click="closeRelayModal">Cancel</Button>
+        <Button
+          variant="solid"
+          size="sm"
+          :loading="relaySubmitting"
+          :disabled="!relayBandwidth"
+          @click="submitRelay"
+        >
+          Save
+        </Button>
+      </template>
+    </Modal>
   </section>
 </template>
 
@@ -1062,6 +1336,23 @@ onMounted(loadUsers);
   display: flex;
   justify-content: flex-end;
   gap: var(--space-3);
+}
+
+/* Relay limits modal */
+.admin-users__relay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.admin-users__relay-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.admin-users__relay-note {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: var(--leading-normal, 1.5);
 }
 @media (prefers-reduced-motion: reduce) {
   .admin-users__input {
