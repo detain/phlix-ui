@@ -57,7 +57,15 @@ export interface Preferences {
   cardSize: number;
   /** grid density hint — cozy = larger cards, dense = more columns. */
   gridDensity: 'cozy' | 'comfy' | 'dense';
-  /** which renderer a library/section uses (S67); 'grid' is the poster grid. */
+  /** Which renderer a library/section uses (S67); 'grid' is the poster grid.
+   *  NOT sanitized on hydration (same tolerance as `density`/`defaultQuality`
+   *  below): a persisted blob carrying `null` or a removed/renamed mode
+   *  hydrates verbatim, which leaves the FilterBar toggle with no pressed
+   *  button until the user clicks one (that click self-heals and re-persists).
+   *  Accepted deliberately, so every renderer host MUST keep an unconditional
+   *  (`v-else`) grid branch — that fallback is load-bearing for S68-S70, not
+   *  decoration: it is the only thing that renders items for an out-of-union
+   *  value. Add a sanitizer here if that ever stops being true. */
   viewMode: ViewMode;
   reducedMotion: MotionPref;
   autoplay: boolean;

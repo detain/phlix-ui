@@ -401,12 +401,22 @@ describe('LibraryPage — view mode (S67)', () => {
     expect(w.find('.media-grid-root').attributes('data-view-mode')).toBe('backdrop');
   });
 
-  it('the FilterBar toggle switches the mode without touching the grid or refetching', async () => {
-    const fn = stubFetch();
+  it('the FilterBar toggle switches the mode without touching the grid or reloading', async () => {
+    stubFetch();
     const { w } = await mountAt('lib1');
     await flushPromises();
     const prefs = usePreferencesStore();
-    const calls = fn.mock.calls.length;
+    const store = useMediaStore();
+    // Spy on the RELOAD PATH, not on `fetch`: a `fetch` call-count assertion here
+    // cannot fail, because the counterfactual (`setViewMode` emitting `change` →
+    // onFilterChange → reload) hits `fetchMedia`'s 60 s in-memory cache — which
+    // `reset()` does not clear — and `fetchIndexBuckets`' own module-level cache,
+    // so it issues ZERO requests. `reset` + `fetchMedia` are what `reload()`
+    // actually calls (see 'reloads on a FilterBar change' above), so spying on
+    // them discriminates. Complements FilterBar.test.ts's `emitted('change')`
+    // assertion, which guards the same invariant one layer up.
+    const reset = vi.spyOn(store, 'reset');
+    const fetchMedia = vi.spyOn(store, 'fetchMedia');
 
     await viewButtons(w)[1].trigger('click'); // List
     await nextTick();
@@ -414,10 +424,11 @@ describe('LibraryPage — view mode (S67)', () => {
     expect(prefs.viewMode).toBe('list');
     expect(w.find('.media-grid-root').attributes('data-view-mode')).toBe('list');
     // still exactly one grid, still rendering poster cards (grid is the only
-    // renderer until S68), and no new request was issued.
+    // renderer until S68), and the library was NOT reloaded.
     expect(w.findAllComponents({ name: 'MediaGrid' })).toHaveLength(1);
     expect(w.findComponent({ name: 'MediaCard' }).exists()).toBe(true);
-    expect(fn.mock.calls.length).toBe(calls);
+    expect(reset).not.toHaveBeenCalled();
+    expect(fetchMedia).not.toHaveBeenCalled();
   });
 });
 
