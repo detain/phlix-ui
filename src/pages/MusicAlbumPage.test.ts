@@ -458,6 +458,13 @@ describe('MusicAlbumPage', () => {
   it('renders a track-less album body without crashing', async () => {
     // The detail route normally embeds the whole list; a body that omits `tracks`
     // entirely must degrade to an empty list, not to `undefined.reduce`.
+    //
+    // ⚠ Where the defence actually lives: `normalizeMusicAlbum`'s
+    // `Array.isArray(r['tracks']) ? … : []` in client.ts, NOT this page's
+    // `album.value?.tracks ?? []` (MusicAlbumPage.vue:88). The normaliser always
+    // returns an array, so that `??` is dead by construction — mutating it away
+    // leaves this test green, while mutating the normaliser's guard reddens it.
+    // Recorded so nobody reads this test as a pin on the page's own fallback.
     const fn = vi.fn(() => Promise.resolve(jsonResponse({
       album: { name: 'OK Computer', artist: 'Radiohead', year: 1997, track_count: 12 },
     })));
