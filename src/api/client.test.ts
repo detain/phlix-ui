@@ -1181,6 +1181,36 @@ describe('ApiClient', () => {
             expect(calls[1]!.url).toBe('https://h/api/v1/music/albums?limit=100');
         });
 
+        it('listAlbums sends no query at all when no params are given', async () => {
+            // The sibling of the `listArtists` pin above. `get()` turns an EMPTY params
+            // object into a bare trailing `?`, so "omit the object" and "pass {}" are
+            // different URLs — the helper has to choose `undefined`, and this is the
+            // only caller shape (no limit, no offset, no artist) that reaches it.
+            const { fetch, calls } = makeFetch([{ status: 200, body: { albums: [] } }]);
+
+            await client(fetch).listAlbums();
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/albums');
+            expect(calls[0]!.url, 'not even an empty query string').not.toContain('?');
+        });
+
+        it('listAlbums degrades a malformed payload to an empty page', async () => {
+            // The docblock promises this in those words. The degraded shape has to be a
+            // whole PAGE (total/limit/offset present), not just an empty array, or a
+            // pager reading `total` off it renders against `undefined`.
+            const { fetch } = makeFetch([
+                { status: 200, body: { albums: 'nope', total: 'nope', artist: { nope: true } } },
+            ]);
+
+            const page = await client(fetch).listAlbums({ offset: 0 });
+
+            expect(page.albums).toEqual([]);
+            expect(page.total).toBe(0);
+            expect(page.limit).toBe(MUSIC_PAGE_SIZE);
+            expect(page.offset).toBe(0);
+            expect(page.artist, 'a non-string artist echo is not an artist').toBeNull();
+        });
+
         it('listAlbums reports a null artist echo when the server did not filter', async () => {
             const { fetch } = makeFetch([{ status: 200, body: { albums: [], total: 5091 } }]);
 
@@ -1276,6 +1306,30 @@ describe('ApiClient', () => {
             expect(page.tracks[0]!.streamUrl).toBe('/s');
             expect(page.total).toBe(29245);
             expect(page.offset).toBe(100);
+        });
+
+        it('listTracks sends no query at all when no params are given', async () => {
+            const { fetch, calls } = makeFetch([{ status: 200, body: { tracks: [] } }]);
+
+            await client(fetch).listTracks();
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/tracks');
+            expect(calls[0]!.url, 'not even an empty query string').not.toContain('?');
+        });
+
+        it('listTracks degrades a malformed payload to an empty page', async () => {
+            const { fetch } = makeFetch([
+                { status: 200, body: { tracks: { 0: 'not-an-array' }, total: null } },
+            ]);
+
+            const page = await client(fetch).listTracks({ limit: 100, offset: 200 });
+
+            expect(page.tracks).toEqual([]);
+            // `total` degrades to the row count, and the REQUESTED paging echoes back —
+            // so a pager fed this page hides itself rather than rendering NaN pages.
+            expect(page.total).toBe(0);
+            expect(page.limit).toBe(100);
+            expect(page.offset).toBe(200);
         });
     });
 });

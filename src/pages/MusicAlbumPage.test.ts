@@ -270,6 +270,32 @@ describe('MusicAlbumPage', () => {
     w.unmount();
   });
 
+  it('takes the FIRST value of a repeated ?artist= rather than sending an array', async () => {
+    // `?artist=Queen&artist=ABBA` is a shape vue-router hands over as an ARRAY, and a
+    // hand-edited or double-appended URL really does produce it. Without the array
+    // branch the whole disambiguator is dropped (an array is not a string), so the
+    // request goes out bare and the server's first match — ABBA — wins silently.
+    const fetchFn = stubSharedTitleFetch();
+    const router = makeRouter();
+    await router.push({
+      name: 'music-album',
+      params: { name: 'Greatest Hits' },
+      query: { artist: ['Queen', 'ABBA'] },
+    });
+    await router.isReady();
+    expect(
+      Array.isArray(router.currentRoute.value.query['artist']),
+      'the route really is carrying an array, not a joined string',
+    ).toBe(true);
+
+    const w = mountPage(router, 'Greatest Hits');
+    await flushPromises();
+
+    expect(fetchFn.calls[0]).toBe('/api/v1/music/albums/Greatest%20Hits?artist=Queen');
+    expect(w.find('.album-header__artist').text()).toBe('Queen');
+    w.unmount();
+  });
+
   it('prefers an explicit artist PROP over the route query', async () => {
     const fetchFn = stubSharedTitleFetch();
     const router = makeRouter();

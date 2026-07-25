@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ref } from 'vue';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import MusicTracksPage from './MusicTracksPage.vue';
+import MusicPager from '../components/MusicPager.vue';
 
 const holder = vi.hoisted(() => ({ player: null as unknown }));
 vi.mock('../composables/useMusicPlayer', () => ({
@@ -242,6 +243,38 @@ describe('MusicTracksPage', () => {
     over.unmount();
   });
 
+  it('renders the singular count for a one-track library, never "1 tracks"', async () => {
+    stubFetch({ tracks: [rawTrack('t1', 'Only One')], total: 1 });
+    const w = mountPage();
+    await flushPromises();
+    expect(w.findAll('.track-row'), 'the row really is on screen').toHaveLength(1);
+    expect(w.find('[data-count="tracks"]').text()).toBe('1 track');
+    expect(w.find('[data-count="tracks"]').text()).not.toBe('1 tracks');
+    w.unmount();
+  });
+
+  it('re-selecting the page already on screen refetches nothing', async () => {
+    // Same rule as the sibling listings: the pager is controlled and emits the offset
+    // for whatever page is committed, including the current one, so rejecting the
+    // no-op is the page's job. Otherwise every re-commit costs a request.
+    const fetchFn = stubFetch({ tracks: [rawTrack('t1', 'A')], total: 250 });
+    const w = mountPage();
+    await flushPromises();
+    expect(fetchFn, 'only the mount request so far').toHaveBeenCalledTimes(1);
+
+    await w.find('[data-nav="jump"]').setValue('1');
+    await flushPromises();
+
+    // PRECONDITION — the select really committed and the pager really emitted offset 0.
+    expect(
+      w.findComponent(MusicPager).emitted('go'),
+      'the select really did commit and emit',
+    ).toEqual([[0]]);
+    expect(fetchFn, 'the page on screen must not be refetched').toHaveBeenCalledTimes(1);
+    expect(w.findAll('.track-row'), 'and the row is untouched').toHaveLength(1);
+    w.unmount();
+  });
+
   it('a failed page keeps the rows, the count and the pager — the user is not stranded', async () => {
     stubFetch({ tracks: [rawTrack('t1', 'A')], total: 250 });
     const w = mountPage();
@@ -309,5 +342,129 @@ describe('MusicTracksPage', () => {
       'aria-controls must not dangle when the search matches nothing',
     ).toBe(true);
     w.unmount();
+  });
+
+  // ---- Playback surface (PRE-EXISTING code in a file S110 rewrote) -----------
+  // These close coverage gaps that predate S110 — the transport bar, Play All and
+  // the play/pause toggle had no test at all, so the whole now-playing footer could
+  // be deleted with every test still green. Recorded as such: they are not part of
+  // S110's delta, they are the rest of the file the step took ownership of.
+
+  describe('now-playing surface', () => {
+    /** A MusicTrack as the page's own normaliser would produce it. */
+    function playing(id = 't1') {
+      return { id, title: 'Airbag', durationSecs: 200, trackNumber: 1, streamUrl: `/media/${id}` };
+    }
+
+    it('renders the transport bar and drives the shared player from it', async () => {
+      holder.player = makeFakePlayer({
+        currentTrack: ref(playing()),
+        playing: ref(true),
+        position: ref(65),
+        duration: ref(200),
+        hasPrev: ref(true),
+        hasNext: ref(true),
+      });
+      stubFetch({ tracks: [rawTrack('t1', 'Airbag')], total: 1 });
+      const w = mountPage();
+      await flushPromises();
+      const player = holder.player as ReturnType<typeof makeFakePlayer>;
+
+      // PRECONDITION — the bar is on screen at all (it is gated on currentTrack).
+      expect(w.find('.music-bar').exists(), 'the transport bar must really render').toBe(true);
+      expect(w.find('.music-bar__title').text()).toBe('Airbag');
+
+      // `formatTime` on both ends: 65s → 1:05, 200s → 3:20 (zero-padded seconds).
+      expect(w.findAll('.music-bar__time').map((e) => e.text())).toEqual(['1:05', '3:20']);
+
+      const btns = w.findAll('.music-bar__btn');
+      expect(btns, 'prev / toggle / next').toHaveLength(3);
+      await btns[0]!.trigger('click');
+      await btns[1]!.trigger('click');
+      await btns[2]!.trigger('click');
+      expect(player.previous).toHaveBeenCalledTimes(1);
+      expect(player.toggle).toHaveBeenCalledTimes(1);
+      expect(player.next).toHaveBeenCalledTimes(1);
+
+      // The seek slider hands the raw numeric value to the player.
+      await w.find('.music-bar__seek').setValue('42');
+      expect(player.seek).toHaveBeenCalledWith(42);
+      w.unmount();
+    });
+
+    it('marks the playing row with the pause affordance, and only that row', async () => {
+      holder.player = makeFakePlayer({ currentTrack: ref(playing('t1')), playing: ref(true) });
+      stubFetch({ tracks: [rawTrack('t1', 'Airbag'), rawTrack('t2', 'Bodysnatchers')], total: 2 });
+      const w = mountPage();
+      await flushPromises();
+
+      const rows = w.findAll('.track-row');
+      expect(rows, 'both rows rendered, so the two branches are really compared').toHaveLength(2);
+      expect(rows[0]!.classes()).toContain('is-playing');
+      expect(rows[1]!.classes()).not.toContain('is-playing');
+      // The playing row swaps its track number for the pulsing pause glyph…
+      expect(rows[0]!.find('.track-row__playing-icon').exists()).toBe(true);
+      expect(rows[0]!.find('.col-num').text()).toBe('');
+      // …and its play button announces Pause rather than Play.
+      expect(rows[0]!.find('.track-row__play').attributes('aria-label')).toBe('Pause');
+      expect(rows[0]!.find('.track-row__play-icon').attributes('data-icon')).toBe('pause');
+      // The idle row keeps its number and its Play label.
+      expect(rows[1]!.find('.col-num').text()).toBe('1');
+      expect(rows[1]!.find('.track-row__play').attributes('aria-label')).toBe('Play');
+      expect(rows[1]!.find('.track-row__play-icon').attributes('data-icon')).toBe('play');
+      w.unmount();
+    });
+
+    it('pauses the current row instead of restarting it, and resumes without re-queuing', async () => {
+      // Three distinct outcomes from one button, and the page picks between them by
+      // reading the player rather than tracking its own state.
+      holder.player = makeFakePlayer({ currentTrack: ref(playing('t1')), playing: ref(true) });
+      stubFetch({ tracks: [rawTrack('t1', 'Airbag')], total: 1 });
+      const w = mountPage();
+      await flushPromises();
+      const player = holder.player as ReturnType<typeof makeFakePlayer>;
+
+      // Playing + same row ⇒ pause. Never play(), never re-queue.
+      await w.find('.track-row__play').trigger('click');
+      expect(player.pause).toHaveBeenCalledTimes(1);
+      expect(player.play).not.toHaveBeenCalled();
+      expect(player.loadTracks).not.toHaveBeenCalled();
+
+      // Paused + same row ⇒ resume, with NO argument (so the position is kept) and
+      // still no re-queue.
+      player.playing.value = false;
+      await w.vm.$nextTick();
+      await w.find('.track-row__play').trigger('click');
+      expect(player.play).toHaveBeenCalledTimes(1);
+      expect(player.play.mock.calls[0]).toEqual([]);
+      expect(player.loadTracks).not.toHaveBeenCalled();
+      w.unmount();
+    });
+
+    it('Play All queues the loaded page and starts at its first row', async () => {
+      stubFetch({ tracks: [rawTrack('t1', 'Airbag'), rawTrack('t2', 'Bodysnatchers')], total: 2 });
+      const w = mountPage();
+      await flushPromises();
+      const player = holder.player as ReturnType<typeof makeFakePlayer>;
+
+      const playAll = w.find('.btn--primary');
+      expect(playAll.attributes('disabled'), 'the button must really be enabled').toBeUndefined();
+      await playAll.trigger('click');
+
+      expect(player.loadTracks).toHaveBeenCalledTimes(1);
+      expect((player.loadTracks.mock.calls[0]![0] as { id: string }[]).map((t) => t.id))
+        .toEqual(['t1', 't2']);
+      expect((player.play.mock.calls[0]![0] as { id: string }).id).toBe('t1');
+      w.unmount();
+    });
+
+    it('renders 0:00 for a nonsensical duration rather than a negative clock', async () => {
+      stubFetch({ tracks: [{ ...rawTrack('t1', 'Airbag'), duration_secs: -5 }], total: 1 });
+      const w = mountPage();
+      await flushPromises();
+      expect(w.findAll('.track-row'), 'the row really rendered').toHaveLength(1);
+      expect(w.find('.track-row__duration').text()).toBe('0:00');
+      w.unmount();
+    });
   });
 });

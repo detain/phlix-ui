@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import MusicArtistPage from './MusicArtistPage.vue';
+import MusicPager from '../components/MusicPager.vue';
 
 interface ServerAlbum {
   name: string;
@@ -48,6 +49,13 @@ function stubFetch(opts: {
   trackCount?: number;
   /** Reject only the album LIST route (the artist row still resolves). */
   albumsError?: boolean;
+  /**
+   * Emit album rows WITHOUT their `artist` key. The filter still applies — the
+   * column is what `?artist=` matches on — so this models a server that selects
+   * correctly but does not echo the artist back on each row, which is the only
+   * shape in which the page's `album.artist ?? props.name` fallback is load-bearing.
+   */
+  omitAlbumArtist?: boolean;
 } = {}) {
   const library: ServerAlbum[] = opts.albums ?? [
     { name: 'OK Computer', artist: 'Radiohead', track_count: 12 },
@@ -81,8 +89,13 @@ function stubFetch(opts: {
       const rows = artist === ''
         ? library
         : library.filter((a) => a.artist.toLowerCase() === artist.toLowerCase());
+      const page = rows.slice(offset, offset + limit).map((row) => {
+        if (!opts.omitAlbumArtist) return row;
+        const { artist: _column, ...rest } = row;
+        return rest;
+      });
       return Promise.resolve(jsonResponse({
-        albums: rows.slice(offset, offset + limit),
+        albums: page,
         total: rows.length,
         limit,
         offset,
@@ -251,15 +264,72 @@ describe('MusicArtistPage', () => {
   });
 
   it('falls back to the route artist when an album row carries no artist', async () => {
-    stubFetch({ albums: [{ name: 'Untitled', artist: 'Radiohead' } as ServerAlbum] });
+    // ⚠ This used to hand the row `artist: 'Radiohead'` — the SAME name as the route —
+    // so both sides of `album.artist ?? props.name` produced the identical query and
+    // deleting the fallback left the test green. It could not fail for the reason it
+    // names. The row now genuinely carries no artist (`omitAlbumArtist`), so the query
+    // has exactly one possible source.
+    const fetchFn = stubFetch({
+      albums: [{ name: 'Untitled', artist: 'Radiohead' }],
+      omitAlbumArtist: true,
+    });
     const router = makeRouter();
     const push = vi.spyOn(router, 'push');
     const w = mountPage(router, 'Radiohead');
     await flushPromises();
+    expect(w.findAll('.album-card'), 'the row really did render').toHaveLength(1);
+
     await w.find('.album-card').trigger('click');
-    expect(push).toHaveBeenCalledWith(
-      expect.objectContaining({ query: { artist: 'Radiohead' } }),
-    );
+    expect(push).toHaveBeenCalledWith({
+      name: 'music-album',
+      params: { name: 'Untitled' },
+      query: { artist: 'Radiohead' },
+    });
+
+    // PRECONDITION, checked against the fake itself: the row really arrived with no
+    // `artist` key, so `props.name` really is the only place that value can come from.
+    const probe = await fetchFn('/api/v1/music/albums?limit=100&offset=0&artist=Radiohead');
+    const body = (await probe.json()) as { albums: Record<string, unknown>[] };
+    expect(body.albums, 'the filter still matched the row').toHaveLength(1);
+    expect(
+      Object.prototype.hasOwnProperty.call(body.albums[0]!, 'artist'),
+      'the emitted row must really omit artist',
+    ).toBe(false);
+    w.unmount();
+  });
+
+  it('reports zero albums when neither the album page nor the artist row knows a count', async () => {
+    // `albumTotal || artist.albumCount || 0` — both falsy is a real state (an artist
+    // row indexed with album_count 0 and nothing in `music_albums` yet), and without
+    // the final `|| 0` the header interpolates `undefined`.
+    stubFetch({ albums: [], albumCount: 0 });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('.artist-header__name').text(), 'the artist really loaded').toBe('Radiohead');
+    expect(w.find('[data-count="albums"]').text()).toBe('0 albums');
+    w.unmount();
+  });
+
+  it('re-selecting the album page already on screen refetches nothing', async () => {
+    // Same rule as the three sibling listings — the pager emits the offset for every
+    // committed option, including the current one, so the page rejects the no-op.
+    const fetchFn = stubFetch({ albums: albumsFor('Radiohead', 142) });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    const albumCalls = () => fetchFn.calls.filter((u) => u.startsWith('/api/v1/music/albums'));
+    expect(albumCalls(), 'only the mount page so far').toHaveLength(1);
+    expect(w.findAll('.album-card'), 'page 1 is on screen').toHaveLength(100);
+
+    await w.find('[data-nav="jump"]').setValue('1');
+    await flushPromises();
+
+    // PRECONDITION — the select really committed and the pager really emitted offset 0.
+    expect(
+      w.findComponent(MusicPager).emitted('go'),
+      'the select really did commit and emit',
+    ).toEqual([[0]]);
+    expect(albumCalls(), 'the page on screen must not be refetched').toHaveLength(1);
+    expect(w.findAll('.album-card'), 'and the cards are untouched').toHaveLength(100);
     w.unmount();
   });
 

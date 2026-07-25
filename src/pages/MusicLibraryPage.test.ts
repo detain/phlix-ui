@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import MusicLibraryPage from './MusicLibraryPage.vue';
+import MusicPager from '../components/MusicPager.vue';
 
 // ---------------------------------------------------------------------------
 // Test data helpers — these mirror the REAL server music API shapes
@@ -1240,6 +1241,241 @@ describe('MusicLibraryPage', () => {
         wrapper.findAll('.album-card'),
         'and the album list the user IS looking at came back, skeleton gone',
       ).toHaveLength(1);
+      wrapper.unmount();
+    });
+
+    it('an album page abandoned by a view change must not write its ROWS either', async () => {
+      // The resolve arm of the same guard the two tests above pin on the catch arm and
+      // on `selectAlbum`. Without it a page the user walked away from still lands in
+      // `albums`/`albumTotal`/`albumOffset`, so the albums state describes an artist
+      // nobody is looking at. Like the `tracks` case there is no DOM face — `goToArtists`
+      // has already emptied the grid and `selectArtist` re-empties it on the way back in
+      // — so the refs are the observable, via the repo's setup-binding idiom.
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      expect(wrapper.findAll('.artist-card'), 'the artists grid is loaded').toHaveLength(100);
+
+      let resolveAlbums: (value: Response) => void = () => {};
+      const holdFetch = vi.fn(() => new Promise<Response>((resolve) => {
+        resolveAlbums = resolve;
+      }));
+      vi.stubGlobal('fetch', holdFetch);
+      await wrapper.findAll('.artist-card')[0]!.trigger('click');
+      await flushPromises();
+
+      const vm = wrapper.vm as unknown as {
+        albums: unknown[]; albumTotal: number; albumOffset: number;
+      };
+      // PRECONDITION 1 — really on the album list, with its request really in flight.
+      expect(
+        wrapper.find('.music-page__crumb-nav').exists(),
+        'must really have navigated to the album list',
+      ).toBe(true);
+      expect(
+        wrapper.find('#music-albums-grid .music-page__loading').exists(),
+        'the album page must really still be loading, or nothing is abandoned below',
+      ).toBe(true);
+      expect(holdFetch.mock.calls, 'exactly one album request is in flight').toHaveLength(1);
+
+      // The user goes back before it lands.
+      await wrapper.find('.music-page__crumb').trigger('click');
+      await flushPromises();
+      // PRECONDITION 2 — really back on the artists view, with the album state cleared
+      // by `goToArtists()`, so anything found below can only have come from the
+      // abandoned request.
+      expect(
+        wrapper.find('.music-page__crumb-nav').exists(),
+        'the breadcrumb is gone ⇒ definitively the artists view',
+      ).toBe(false);
+      expect(vm.albums, 'goToArtists() emptied the album list').toHaveLength(0);
+      expect(vm.albumTotal, 'and zeroed its total').toBe(0);
+
+      // …and only now does it SUCCEED, with the real 100-row body for that artist.
+      const landed = await server.request(
+        '/api/v1/music/albums?limit=100&offset=0&artist=Artist+0001',
+      );
+      const body = (await landed.json()) as { albums: unknown[]; total: number };
+      // PRECONDITION 3 — the abandoned response really carries rows, so "nothing was
+      // written" is a real outcome and not an empty payload arriving.
+      expect(body.albums, 'the abandoned response really carried a full page').toHaveLength(100);
+      expect(body.total, 'and a real total').toBe(142);
+      resolveAlbums(landed);
+      await flushPromises();
+
+      expect(
+        vm.albums,
+        'a page the user walked away from must not become the album list',
+      ).toHaveLength(0);
+      expect(vm.albumTotal, 'nor its total').toBe(0);
+      expect(vm.albumOffset, 'nor its offset').toBe(0);
+      expect(
+        wrapper.findAll('.artist-card'),
+        'the artists grid is on screen, healthy, and its skeleton is gone',
+      ).toHaveLength(100);
+      expect(wrapper.find('.music-page__crumb-nav').exists(), 'still the artists view').toBe(false);
+      wrapper.unmount();
+    });
+
+    it('re-selecting the page already on screen refetches nothing, on BOTH listings', async () => {
+      // `MusicPager` is a controlled component: it emits the offset for whatever option
+      // is committed, including the current one (which an AT/keyboard user commits while
+      // moving through the list). Rejecting the no-op is each handler's job, or every
+      // such commit costs a request and drops a skeleton over rows already correct.
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      const artistCalls = () => server.urlsFor('/api/v1/music/artists').length;
+      const albumCalls = () => server.urlsFor('/api/v1/music/albums').length;
+      expect(artistCalls(), 'only the mount request so far').toBe(1);
+      expect(wrapper.findAll('.artist-card'), 'artists page 1 is on screen').toHaveLength(100);
+
+      // --- the artists pager
+      await wrapper.find('[data-pager="artists"] [data-nav="jump"]').setValue('1');
+      await flushPromises();
+      expect(
+        wrapper.findComponent(MusicPager).emitted('go'),
+        'the artists select really did commit and emit the current offset',
+      ).toEqual([[0]]);
+      expect(artistCalls(), 'the artists page on screen must not be refetched').toBe(1);
+      expect(wrapper.findAll('.artist-card'), 'and its rows are untouched').toHaveLength(100);
+
+      // --- the albums pager, for the 142-album artist (2 pages)
+      await wrapper.findAll('.artist-card')[0]!.trigger('click');
+      await flushPromises();
+      expect(albumCalls(), 'one album page was loaded by the drill-down').toBe(1);
+      expect(wrapper.findAll('.album-card'), 'albums page 1 is on screen').toHaveLength(100);
+      expect(wrapper.find('[data-nav="info"]').text()).toContain('Page 1 of 2');
+
+      await wrapper.find('[data-pager="albums"] [data-nav="jump"]').setValue('1');
+      await flushPromises();
+      expect(
+        wrapper.findComponent(MusicPager).emitted('go'),
+        'the albums select really did commit and emit the current offset',
+      ).toEqual([[0]]);
+      expect(albumCalls(), 'the album page on screen must not be refetched').toBe(1);
+      expect(wrapper.findAll('.album-card'), 'and its cards are untouched').toHaveLength(100);
+      wrapper.unmount();
+    });
+
+    it('says "No albums" for an artist that genuinely has none', async () => {
+      const server = stubMusicServer(makeLibrary(1, () => 0));
+      const wrapper = mountPage();
+      await flushPromises();
+      expect(wrapper.findAll('.artist-card'), 'the artist is on screen').toHaveLength(1);
+
+      await wrapper.find('.artist-card').trigger('click');
+      await flushPromises();
+
+      expect(
+        wrapper.find('.music-page__crumb-nav').exists(),
+        'must really be on the album list',
+      ).toBe(true);
+      expect(wrapper.findAll('.album-card'), 'and it really is empty').toHaveLength(0);
+      const empty = wrapper.find('#music-albums-grid .music-page__empty');
+      expect(empty.exists(), 'the empty state belongs INSIDE the grid it replaces').toBe(true);
+      expect(empty.text()).toContain('No albums');
+      void server;
+      wrapper.unmount();
+    });
+
+    it('a failed FIRST album page must not read as "No albums"', async () => {
+      // The `&& !error` half of the same v-if chain. "No albums found" is a claim about
+      // the library; a failure is a claim about the request, and rendering the first as
+      // the second is the exact lie S110 exists to stop telling.
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      expect(wrapper.findAll('.artist-card')).toHaveLength(100);
+
+      vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('albums down'))));
+      await wrapper.findAll('.artist-card')[0]!.trigger('click');
+      await flushPromises();
+
+      expect(
+        wrapper.find('.music-page__crumb-nav').exists(),
+        'must really be on the album list',
+      ).toBe(true);
+      expect(wrapper.findAll('.album-card'), 'nothing loaded').toHaveLength(0);
+      expect(wrapper.find('.music-page__error').exists(), 'the failure must be stated').toBe(true);
+      expect(
+        wrapper.find('#music-albums-grid .music-page__empty').exists(),
+        'a failure must never render as "No albums"',
+      ).toBe(false);
+      void server;
+      wrapper.unmount();
+    });
+
+    it('disambiguates the detail fetch with the SELECTED artist when the row carries none', async () => {
+      // Two things at once, both only reachable from a row with no `artist` key:
+      //   1. `album.artist ?? selectedArtist.name` — without the fallback the detail
+      //      request goes out bare and the server's first match wins, and 2,622 of
+      //      production's 5,091 titles are shared between artists.
+      //   2. a detail body with NO tracks must leave the truncated prefix on screen
+      //      rather than blanking the track list.
+      const prefix = Array.from({ length: 100 }, (_, i) => ({
+        id: `p${i + 1}`,
+        metadata: { title: `Prefix ${i + 1}`, duration_secs: 100, track_number: i + 1 },
+      }));
+      const detailCalls: string[] = [];
+      const fetchFn = vi.fn((url: unknown) => {
+        const raw = String(url);
+        const parsed = new URL(raw, 'http://server.test');
+        if (parsed.pathname === '/api/v1/music/artists') {
+          return Promise.resolve(jsonResponse({
+            artists: [{ name: 'Sigur Ros', album_count: 1, track_count: 125, image_url: null }],
+            total: 1,
+            limit: 100,
+            offset: 0,
+          }));
+        }
+        if (parsed.pathname === '/api/v1/music/albums') {
+          // The row is filtered correctly but does NOT echo its artist back.
+          return Promise.resolve(jsonResponse({
+            albums: [{
+              name: 'Untitled Album',
+              year: 2002,
+              album_art_url: null,
+              track_count: 125,
+              tracks_truncated: true,
+              tracks: prefix,
+            }],
+            total: 1,
+            limit: 100,
+            offset: 0,
+            artist: parsed.searchParams.get('artist'),
+          }));
+        }
+        if (parsed.pathname.startsWith('/api/v1/music/albums/')) {
+          detailCalls.push(raw);
+          return Promise.resolve(jsonResponse({
+            album: {
+              name: 'Untitled Album', artist: 'Sigur Ros', year: 2002, track_count: 125, tracks: [],
+            },
+          }));
+        }
+        return Promise.reject(new Error(`Unexpected fetch URL: ${raw}`));
+      });
+      vi.stubGlobal('fetch', fetchFn);
+
+      const wrapper = mountPage();
+      await flushPromises();
+      await wrapper.find('.artist-card').trigger('click');
+      await flushPromises();
+      expect(wrapper.findAll('.album-card'), 'the artist-less row rendered').toHaveLength(1);
+
+      await wrapper.find('.album-card').trigger('click');
+      await flushPromises();
+
+      // The list row was flagged truncated, so the detail route really was consulted…
+      expect(detailCalls, 'the album DETAIL request really was issued').toHaveLength(1);
+      // …carrying the only artist name left anywhere: the selected one.
+      expect(detailCalls[0]).toBe('/api/v1/music/albums/Untitled%20Album?artist=Sigur+Ros');
+      // …and a track-less detail body leaves the prefix alone instead of blanking it.
+      expect(
+        wrapper.findAll('.track-play'),
+        'an empty detail track list must not replace the prefix',
+      ).toHaveLength(100);
       wrapper.unmount();
     });
 

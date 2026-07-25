@@ -9,10 +9,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import MusicArtistsPage from './MusicArtistsPage.vue';
+import MusicPager from '../components/MusicPager.vue';
 
 interface ServerArtist {
   name: string;
-  album_count: number;
+  /** Optional here on purpose: the client defends a row that omits it entirely. */
+  album_count?: number;
   image_url?: string | null;
 }
 
@@ -124,6 +126,47 @@ describe('MusicArtistsPage', () => {
     w.unmount();
   });
 
+  it('reads an artist row that omits album_count as zero, not as a crash', async () => {
+    // `album_count: 0` and "no album_count at all" are DIFFERENT rows: the first
+    // normalizes to 0, the second to `undefined`, and this card's label is rendered
+    // unconditionally (no `v-if` gate, unlike MusicArtistCard). Without the `?? 0` the
+    // label interpolates `undefined.toLocaleString()`.
+    stubFetch({ artists: [{ name: 'Ghost Artist' }] });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+
+    const cards = w.findAll('.artist-card');
+    expect(cards, 'the row really did render — the label is not being skipped').toHaveLength(1);
+    expect(cards[0]!.text()).toContain('Ghost Artist');
+    expect(w.find('[data-count="albums"]').text()).toBe('0 albums');
+    w.unmount();
+  });
+
+  it('renders the artist image when the server sent one, and the placeholder when it did not', async () => {
+    stubFetch({
+      artists: [
+        { name: 'With Art', album_count: 3, image_url: '/artwork/with-art.jpg' },
+        { name: 'No Art', album_count: 3, image_url: null },
+      ],
+    });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+
+    const cards = w.findAll('.artist-card');
+    expect(cards, 'both rows rendered, so the two branches are really compared').toHaveLength(2);
+    const withArt = cards[0]!;
+    const noArt = cards[1]!;
+    expect(withArt.find('img.artist-card__img').attributes('src')).toBe('/artwork/with-art.jpg');
+    expect(withArt.find('img.artist-card__img').attributes('alt')).toBe('With Art');
+    expect(
+      withArt.find('svg.artist-card__placeholder').exists(),
+      'an artist WITH art must not also carry the placeholder',
+    ).toBe(false);
+    expect(noArt.find('svg.artist-card__placeholder').exists()).toBe(true);
+    expect(noArt.find('img.artist-card__img').exists()).toBe(false);
+    w.unmount();
+  });
+
   it('shows the loading skeleton while the request is in flight', async () => {
     stubFetch({ hang: true });
     const w = mountPage(makeRouter());
@@ -186,6 +229,34 @@ describe('MusicArtistsPage', () => {
       const cards = w.findAll('.artist-card');
       expect(cards).toHaveLength(97);
       expect(cards[96]!.text()).toContain('Artist 2197');
+      w.unmount();
+    });
+
+    it('re-selecting the page already on screen refetches nothing', async () => {
+      // The jump `<select>` fires `change` for whatever option is committed, including
+      // the current one (an AT/keyboard user moving through the list commits several).
+      // The pager is a controlled component — it emits the offset unconditionally — so
+      // the "same page" case is the PAGE's to reject, or every such commit costs a
+      // request and a skeleton flash over rows that were already correct.
+      const { fn, calls } = stubPagingFetch(2197);
+      const w = mountPage(makeRouter());
+      await flushPromises();
+      expect(calls, 'only the mount request so far').toHaveLength(1);
+      expect(w.findAll('.artist-card'), 'page 1 is on screen').toHaveLength(100);
+
+      await w.find('[data-nav="jump"]').setValue('1');
+      await flushPromises();
+
+      // PRECONDITION — the pager really did emit, and really with the current offset.
+      // Without this the test would pass if the change event never fired at all.
+      const emitted = w.findComponent(MusicPager).emitted('go');
+      expect(emitted, 'the select really did commit and emit').toEqual([[0]]);
+
+      expect(fn, 'the page already on screen must not be refetched').toHaveBeenCalledTimes(1);
+      expect(
+        w.findAll('.artist-card'),
+        'and the rows are untouched — no skeleton flash',
+      ).toHaveLength(100);
       w.unmount();
     });
 
