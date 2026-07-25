@@ -10,10 +10,15 @@ import {
   COL_GAP,
   computeCardWidth,
   computeColumns,
+  computeFixedRowHeight,
   computeRowHeight,
   computeWindow,
   effectiveItemCount,
+  fixedRowContentHeight,
   LABEL_HEIGHT,
+  LIST_ROW_HEIGHT,
+  LIST_ROW_POSTER_WIDTH,
+  POSTER_RATIO,
   ROW_GAP,
   shouldLoadMore,
 } from './virtual-grid';
@@ -63,6 +68,79 @@ describe('virtual-grid — computeRowHeight', () => {
 
   it('returns 0 for a zero-width card', () => {
     expect(computeRowHeight(0)).toBe(0);
+  });
+});
+
+// S68 — the list renderer's rows are a FIXED height, so the 2:3 poster ratio must
+// NOT be applied to the (full-width) row. These guard exactly that.
+describe('virtual-grid — computeFixedRowHeight (S68 non-poster rows)', () => {
+  it('is the row content height plus the row gap beneath it', () => {
+    expect(computeFixedRowHeight(180)).toBe(204);
+    expect(computeFixedRowHeight(180)).toBe(180 + ROW_GAP);
+  });
+
+  /**
+   * The gap is a single constant, added here and removed by
+   * `fixedRowContentHeight()` (which is what MediaGrid uses for BOTH its
+   * `grid-auto-rows` track height and its placeholder cells). It is deliberately
+   * NOT a parameter: `.media-grid`'s CSS gap is fixed, so a caller-supplied gap
+   * could only ever disagree with the layout — a correct row height with
+   * mis-sized cells (S68 review, LOW-5).
+   */
+  it('round-trips exactly with fixedRowContentHeight (one gap, one place)', () => {
+    for (const content of [1, 60, 180, LIST_ROW_HEIGHT, 999]) {
+      expect(fixedRowContentHeight(computeFixedRowHeight(content))).toBe(content);
+    }
+    expect(fixedRowContentHeight(204)).toBe(180);
+    expect(fixedRowContentHeight(204)).toBe(204 - ROW_GAP);
+    // never negative, so a nonsense row height can't produce a negative cell
+    expect(fixedRowContentHeight(0)).toBe(0);
+    expect(fixedRowContentHeight(10)).toBe(0);
+  });
+
+  it('returns 0 for a zero/negative content height', () => {
+    expect(computeFixedRowHeight(0)).toBe(0);
+    expect(computeFixedRowHeight(-40)).toBe(0);
+  });
+
+  it('does NOT scale with the row width, unlike computeRowHeight', () => {
+    // A one-column list row IS the container width (computeCardWidth(W, 1)).
+    const rowWidth = computeCardWidth(1400, 1, COL_GAP); // 1400
+    const posterDerived = computeRowHeight(rowWidth); // 1400 * 1.5 + 56 + 24
+    const listRow = computeFixedRowHeight(LIST_ROW_HEIGHT);
+    expect(posterDerived).toBe(1400 * POSTER_RATIO + LABEL_HEIGHT + ROW_GAP);
+    expect(listRow).toBe(LIST_ROW_HEIGHT + ROW_GAP);
+    // the whole point: the poster formula would reserve a ~10x too tall row
+    expect(posterDerived).toBeGreaterThan(listRow * 10);
+  });
+
+  it('derives LIST_ROW_HEIGHT from the FIXED poster column width, not the row width', () => {
+    expect(LIST_ROW_POSTER_WIDTH).toBeGreaterThan(0);
+    expect(LIST_ROW_HEIGHT).toBe(LIST_ROW_POSTER_WIDTH * POSTER_RATIO);
+    // stays constant however wide the viewport gets
+    expect(computeFixedRowHeight(LIST_ROW_HEIGHT)).toBe(
+      computeFixedRowHeight(LIST_ROW_POSTER_WIDTH * POSTER_RATIO),
+    );
+  });
+
+  it('windows a one-column list correctly (row index == item index)', () => {
+    const rowHeight = computeFixedRowHeight(LIST_ROW_HEIGHT); // 204
+    const r = computeWindow({
+      scrollTop: 20 * rowHeight,
+      viewportHeight: 768,
+      rowHeight,
+      columns: 1,
+      itemCount: 5000,
+      overscan: 2,
+    });
+    expect(r.rowCount).toBe(5000);
+    expect(r.totalHeight).toBe(5000 * rowHeight);
+    // firstVisible = 20 → startRow 18; visibleRows = ceil(768/204)+1 = 5
+    expect(r.startRow).toBe(18);
+    expect(r.startIndex).toBe(18); // one column → index == row
+    expect(r.endRow).toBe(20 + 5 + 2);
+    expect(r.endIndex).toBe(27);
+    expect(r.padTop).toBe(18 * rowHeight);
   });
 });
 

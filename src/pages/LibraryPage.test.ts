@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { Comment, Fragment, nextTick, type VNode } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import LibraryPage from './LibraryPage.vue';
@@ -18,6 +18,9 @@ import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import ItemDataInspector from '../components/ItemDataInspector.vue';
+import MediaCard from '../components/MediaCard.vue';
+import MediaListRow from '../components/MediaListRow.vue';
+import { computeFixedRowHeight, LIST_ROW_HEIGHT } from '../components/virtual-grid';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 
@@ -429,6 +432,235 @@ describe('LibraryPage — view mode (S67)', () => {
     expect(w.findComponent({ name: 'MediaCard' }).exists()).toBe(true);
     expect(reset).not.toHaveBeenCalled();
     expect(fetchMedia).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * S68 — the `list` view mode renders `MediaListRow` through the SINGLE MediaGrid
+ * mount's `#card` slot. The invariants under test:
+ *   1. still exactly one MediaGrid (no second grid / parallel pagination path),
+ *   2. the per-mode layout travels through the grid's `columns`/`row-height` props
+ *      (never CSS), and the row height is the list row's own — not a 2:3 poster's,
+ *   3. the `v-else` grid branch is UNCONDITIONAL, so a garbage persisted mode
+ *      still renders items,
+ *   4. BOTH branches wire every one of MediaCard's ten host events — filling the
+ *      `#card` slot bypasses MediaGrid's own wiring, so a missing listener here is
+ *      a button that silently does nothing.
+ */
+describe('LibraryPage — list view (S68)', () => {
+  /** MediaCard's complete host-emit surface (MediaCard.vue `defineEmits`). */
+  const HOST_EVENTS = [
+    'play',
+    'watchlist',
+    'info',
+    'match',
+    'mark-watched',
+    'refresh',
+    'choose-poster',
+    'remove',
+    'edit-metadata',
+    'explore-data',
+  ] as const;
+
+  /** Vue's listener prop key for an emit name: `mark-watched` → `onMarkWatched`. */
+  function handlerKey(event: string): string {
+    return `on${event.replace(/(^|-)([a-z])/g, (_m, _d, c: string) => c.toUpperCase())}`;
+  }
+
+  /**
+   * The listener prop keys the page binds on a renderer, read from the PUBLIC
+   * `VNode.props` of the vnode its `#card` slot produces (`slotRenderers()` below).
+   *
+   * Deliberately not `vm.$.vnode.props`: `$` is Vue's internal instance handle, so
+   * that shape can change in any minor and the assertions would then fail
+   * confusingly (or pass vacuously). `VNode.props` is the documented render-function
+   * contract — the same object `h()` accepts — and it is exactly what the compiled
+   * template wrote, so dropping `@play` from a branch is still caught.
+   */
+  function boundListeners(vnode: VNode): string[] {
+    return Object.keys(vnode.props ?? {}).filter((k) => k.startsWith('on'));
+  }
+
+  /**
+   * The component vnodes LibraryPage's `#card` slot produces for one item.
+   *
+   * Asserting on the DOM alone CANNOT prove the `v-else` is unconditional: Vue's
+   * `renderSlot` treats a slot that yields only a comment vnode (every `v-if` /
+   * `v-else-if` false) as empty and silently renders MediaGrid's own DEFAULT card
+   * instead — which still looks and behaves right here, because the grid-level
+   * listeners are also still bound. Invoking the slot directly is what
+   * discriminates: a `v-else-if` chain that can all be false returns a bare
+   * Comment, an unconditional `v-else` always returns a real renderer.
+   */
+  function slotRenderers(
+    w: Awaited<ReturnType<typeof mountAt>>['w'],
+    item: MediaItem,
+  ): VNode[] {
+    const slot = w.findComponent({ name: 'MediaGrid' }).vm.$slots.card as
+      | ((p: { item: MediaItem; index: number }) => VNode[])
+      | undefined;
+    expect(slot, 'LibraryPage no longer fills MediaGrid’s #card slot').toBeTypeOf('function');
+    // The compiled slot wraps its branch in a Fragment; keep only the real
+    // component vnodes (a `v-if` placeholder is a Comment).
+    const flatten = (nodes: VNode[]): VNode[] =>
+      nodes.flatMap((n) =>
+        n.type === Fragment ? flatten((n.children ?? []) as VNode[]) : n.type === Comment ? [] : [n],
+      );
+    return flatten(slot!({ item, index: 0 }) ?? []);
+  }
+
+  async function mountWithMode(mode: string) {
+    localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: mode }));
+    setActivePinia(createPinia());
+    stubFetch({ media: { items: [media({ id: 'lr1', name: 'Dune' })], total: 1 } });
+    const out = await mountAt('lib1');
+    await flushPromises();
+    return out;
+  }
+
+  it('renders MediaListRow (not the poster card) through the ONE existing grid', async () => {
+    const { w } = await mountWithMode('list');
+    expect(w.findAllComponents({ name: 'MediaGrid' })).toHaveLength(1);
+    expect(w.findComponent(MediaListRow).exists()).toBe(true);
+    expect(w.find('.media-list-row').exists()).toBe(true);
+    // the row composes a MediaCard for its poster column, with the duplicate
+    // caption suppressed — that is how we tell the two renderers apart.
+    expect(w.find('.media-card__caption').exists()).toBe(false);
+    expect(w.find('.media-grid-root').attributes('data-view-mode')).toBe('list');
+  });
+
+  it('drives the list layout through the grid props, with the list row height', async () => {
+    const { w } = await mountWithMode('list');
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    expect(grid.props('columns')).toBe(1);
+    // computeFixedRowHeight(LIST_ROW_HEIGHT) — NOT computeRowHeight()'s
+    // cardWidth * 2:3 + label, which for a full-width row is ~10x too tall.
+    expect(grid.props('rowHeight')).toBe(computeFixedRowHeight(LIST_ROW_HEIGHT));
+    expect(grid.props('rowHeight')).toBe(LIST_ROW_HEIGHT + 24);
+  });
+
+  it('leaves the grid layout props unset in grid mode (auto-fit poster grid)', async () => {
+    const { w } = await mountWithMode('grid');
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    expect(grid.props('columns')).toBeUndefined();
+    expect(grid.props('rowHeight')).toBeUndefined();
+    expect(w.findComponent(MediaListRow).exists()).toBe(false);
+    expect(w.findComponent(MediaCard).exists()).toBe(true);
+    expect(w.find('.media-card__caption').exists()).toBe(true);
+  });
+
+  // The preferences store deliberately does NOT sanitize `viewMode` on hydration,
+  // so the unconditional `v-else` is the only thing the page itself renders for a
+  // stale/garbage persisted value.
+  it('falls back to the poster grid for an out-of-union persisted mode', async () => {
+    const { w } = await mountWithMode('sideways-carousel');
+    expect(w.findAllComponents({ name: 'MediaGrid' })).toHaveLength(1);
+    expect(w.findComponent(MediaListRow).exists()).toBe(false);
+    // items still render — the fallback is load-bearing, not decoration
+    expect(w.findComponent(MediaCard).exists()).toBe(true);
+    expect(w.find('.media-card__caption-title').text()).toBe('Dune');
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    expect(grid.props('columns')).toBeUndefined();
+    expect(grid.props('rowHeight')).toBeUndefined();
+  });
+
+  // ...and the branch that renders it must be the PAGE's own `v-else`, not Vue's
+  // silent slot-fallback to MediaGrid's default card (see `slotRenderers`).
+  it('the #card slot itself yields a renderer for EVERY mode, garbage included', async () => {
+    const item = media({ id: 'lr1' });
+    for (const mode of ['list', 'grid', 'backdrop', 'table', 'sideways-carousel', '']) {
+      const { w } = await mountWithMode(mode);
+      const rendered = slotRenderers(w, item);
+      expect(rendered, `#card slot rendered nothing for viewMode="${mode}"`).toHaveLength(1);
+      expect(rendered[0].type).toBe(mode === 'list' ? MediaListRow : MediaCard);
+      w.unmount();
+    }
+  });
+
+  it('wires ALL TEN host events onto the list row', async () => {
+    const { w } = await mountWithMode('list');
+    const [row] = slotRenderers(w, media({ id: 'lr1' }));
+    expect(row.type).toBe(MediaListRow);
+    const bound = boundListeners(row);
+    for (const event of HOST_EVENTS) {
+      expect(bound, `list row is missing a \`${event}\` listener`).toContain(handlerKey(event));
+    }
+  });
+
+  it('wires ALL TEN host events onto the v-else poster card too', async () => {
+    const { w } = await mountWithMode('grid');
+    const [card] = slotRenderers(w, media({ id: 'lr1' }));
+    expect(card.type).toBe(MediaCard);
+    const bound = boundListeners(card);
+    for (const event of HOST_EVENTS) {
+      expect(bound, `poster card is missing a \`${event}\` listener`).toContain(handlerKey(event));
+    }
+  });
+
+  /**
+   * S68 review finding 1, at the page level: the two renderers must be at PARITY on
+   * heading count, or navigating a list-mode library by heading announces every
+   * title twice (the composed card's overlay `<h3>` is only `opacity: 0`, which does
+   * not remove it from the accessibility tree).
+   */
+  it('emits exactly ONE heading per item in list mode and in grid mode', async () => {
+    const HEADINGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+      .map((h) => `.media-grid ${h}`)
+      .join(', ');
+    for (const mode of ['list', 'grid'] as const) {
+      const { w } = await mountWithMode(mode);
+      const headings = w.findAll(HEADINGS);
+      expect(headings, `viewMode="${mode}" must emit ONE heading per item`).toHaveLength(1);
+      expect(headings[0].text()).toBe('Dune');
+      w.unmount();
+    }
+  });
+
+  it('a list row `play` reaches the page handler and navigates', async () => {
+    const { w, router } = await mountWithMode('list');
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaListRow).vm.$emit('play', media({ id: 'lr1' }));
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'lr1' } });
+  });
+
+  it('a list row `mark-watched` reaches the page handler and reports the state', async () => {
+    const { w } = await mountWithMode('list');
+    const userItemData = useUserItemDataStore();
+    const toasts = useToastStore();
+    userItemData.entries.set('lr1', { favorite: false, rating: null, like_level: 0, watched: true });
+    w.findComponent(MediaListRow).vm.$emit('mark-watched', media({ id: 'lr1', name: 'Dune' }));
+    await flushPromises();
+    expect(toasts.toasts.some((t) => /marked "Dune" as watched/i.test(t.message))).toBe(true);
+  });
+
+  it('a list row admin action (`explore-data`) opens the inspector', async () => {
+    localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: 'list' }));
+    setActivePinia(createPinia());
+    stubFetch({ media: { items: [media({ id: 'lr1' })], total: 1 } });
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    const r = makeRouter();
+    await r.push('/app/library/lib1');
+    await r.isReady();
+    const w = mount(LibraryPage, {
+      global: {
+        plugins: [r],
+        provide: { apiBase: '', phlixConfig: { app: 'server', apiBase: '' } },
+        stubs: { MetadataMatchModal: true, PosterPicker: true },
+      },
+    });
+    await flushPromises();
+
+    // admin ⇒ the row forwards `can-match` so the Match quick-action exists
+    expect(w.findComponent(MediaListRow).props('canMatch')).toBe(true);
+
+    const inspector = w.findComponent(ItemDataInspector);
+    expect(inspector.props('modelValue')).toBe(false);
+    w.findComponent(MediaListRow).vm.$emit('explore-data', media({ id: 'lr1' }));
+    await flushPromises();
+    expect(inspector.props('modelValue')).toBe(true);
+    expect((inspector.props('item') as MediaItem).id).toBe('lr1');
   });
 });
 

@@ -506,6 +506,55 @@ describe('MediaCard — watched (eye) toggle', () => {
     expect(w.find('.media-card__caption-sub').text()).toContain('12 episodes');
   });
 
+  // S68: MediaListRow composes this card as its poster column and renders the
+  // title/meta itself, so it needs the caption suppressed — without it the title
+  // appears twice per list row. Everything else about the card is untouched.
+  it('suppresses the caption block when hideCaption is set (S68 list row)', () => {
+    const w = mount(MediaCard, { props: { item: media(), hideCaption: true } });
+    expect(w.find('.media-card__caption').exists()).toBe(false);
+    expect(w.find('.media-card__caption-title').exists()).toBe(false);
+    expect(w.find('.media-card__caption-sub').exists()).toBe(false);
+    // poster, badges, stretched link and the hover overlay all still render
+    expect(w.find('.media-card__poster').exists()).toBe(true);
+    expect(w.find('.media-card__link').attributes('aria-label')).toBe('Dune: Part Two');
+    expect(w.find('.media-card__overlay').exists()).toBe(true);
+  });
+
+  /**
+   * The overlay half of `hideCaption` (S68 review finding 1). The overlay is only
+   * `opacity: 0` + `pointer-events: none` when idle — neither takes content out of
+   * the accessibility tree — so leaving its title/meta/genres in place gave a list
+   * row TWO `<h3>` and two meta strips for the same item. It must be a `v-if`.
+   */
+  it('also suppresses the overlay title/meta/genres when hideCaption is set', async () => {
+    const w = mount(MediaCard, { props: { item: media(), hideCaption: true } });
+    expect(w.find('.media-card__title').exists()).toBe(false);
+    expect(w.find('.media-card__meta').exists()).toBe(false);
+    expect(w.find('.media-card__genres').exists()).toBe(false);
+    // no heading at all — the composing host owns the item's heading
+    expect(w.findAll('h1, h2, h3, h4, h5, h6')).toHaveLength(0);
+    // ...and the quick-action row is NOT collateral damage
+    await reveal(w);
+    expect(w.find('.media-card__actions').exists()).toBe(true);
+    expect(w.find('[aria-label="Play"]').exists()).toBe(true);
+  });
+
+  it('keeps the caption by default (every existing host is unaffected)', () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    expect(w.find('.media-card__caption').exists()).toBe(true);
+    expect(w.find('.media-card__caption-title').text()).toBe('Dune: Part Two');
+  });
+
+  it('emits exactly ONE heading per card in the default (grid) shape', () => {
+    // The grid renderer's baseline the list row has to match: the overlay <h3>,
+    // and nothing else (the caption title is a div, by design).
+    const w = mount(MediaCard, { props: { item: media() } });
+    const headings = w.findAll('h1, h2, h3, h4, h5, h6');
+    expect(headings).toHaveLength(1);
+    expect(headings[0].classes()).toContain('media-card__title');
+    expect(headings[0].text()).toBe('Dune: Part Two');
+  });
+
   it('opens the ⋯ menu when its trigger is clicked (regression: .stop swallowed the toggle)', async () => {
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
     await reveal(w);

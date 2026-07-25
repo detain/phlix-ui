@@ -18,6 +18,43 @@ export const POSTER_RATIO = 3 / 2;
 export const LABEL_HEIGHT = 56;
 
 /**
+ * Width (px) of the `list` view mode's poster column (S68). FIXED — unlike the
+ * poster grid, a list row's thumbnail does not grow with the row width.
+ *
+ * What 120px actually does to the composed `MediaCard`'s hover overlay. This is
+ * arithmetic against `MediaCard.vue`'s stylesheet, not a rendered observation
+ * (jsdom has no layout and the visual suite is out of bounds here) — re-do the
+ * sums if either stylesheet changes:
+ *   - The overlay's content box is `120 - 2 * var(--space-4)` = 88px, which the
+ *     action row alone widens to 104px via its `margin-inline: -8px`.
+ *   - `.media-card__actions`' `max-width: calc(4 * 32px + 3 * var(--space-1))` =
+ *     140px therefore NEVER binds at this width, so the 8 quick-actions do NOT
+ *     lay out as the "2 rows of 4" that cap was written for: they pack 2-3 per
+ *     row and wrap to 3 rows = `3 * 32 + 2 * 8` = 112px, +12px `margin-top` =
+ *     ~124px.
+ *   - ~124px fits the `180 - 2 * var(--space-4)` = 148px of overlay content box,
+ *     but ONLY because a list row also passes `hide-caption`, which suppresses
+ *     the overlay's title + meta + genre chips (~124px more at this width). With
+ *     that block present the overlay wants ~248px and, being
+ *     `justify-content: flex-end`, overflows the TOP — where
+ *     `.media-card__poster { overflow: hidden }` slices it mid-glyph. (The
+ *     buttons themselves survive: they are the last flex child.)
+ * So for any new fixed-thumbnail renderer (S69/S70): pass `hide-caption`, and do
+ * not shrink this below ~120px without redoing the sums above — the WRAPPED
+ * action rows set the floor, not the (inert here) 4-per-row cap.
+ */
+export const LIST_ROW_POSTER_WIDTH = 120;
+
+/**
+ * Height (px) of one `list` view mode row, EXCLUDING the row gap beneath it
+ * (S68). A list row is exactly as tall as its fixed-width 2:3 poster, so the
+ * ratio applies to `LIST_ROW_POSTER_WIDTH` — never to the full row width.
+ * `MediaListRow.vue` writes this onto the DOM as an inline height read from this
+ * same constant, so the rendered row and the windowing math cannot drift.
+ */
+export const LIST_ROW_HEIGHT = LIST_ROW_POSTER_WIDTH * POSTER_RATIO;
+
+/**
  * Number of auto-fit columns for a container width — mirrors CSS
  * `repeat(auto-fill, minmax(cardSize, 1fr))`, which packs
  * `floor((width + gap) / (cardSize + gap))` tracks. Always ≥ 1.
@@ -44,6 +81,43 @@ export function computeRowHeight(
 ): number {
   if (cardWidth <= 0) return 0;
   return cardWidth * POSTER_RATIO + labelHeight + rowGap;
+}
+
+/**
+ * Row height (px) for a renderer whose rows are a FIXED height — the row's own
+ * content height plus the row gap beneath it. Feed the result to `MediaGrid`'s
+ * `rowHeight` prop.
+ *
+ * `computeRowHeight()` above derives its height from the CARD WIDTH because a
+ * poster grid's 2:3 posters grow with the column width. A list row (S68) is not
+ * a poster: its height is intrinsic, and applying `POSTER_RATIO` to the full row
+ * width would compute a row several times too tall — which, once virtualization
+ * is on, mis-computes `startIndex`/`endIndex`/`padTop`/`totalHeight` (blank
+ * bands, mis-positioned rows and wrong `need-range` pages). Parameterizing the
+ * height here is the sanctioned way to keep the rendered layout and the
+ * windowing math on the same numbers; a CSS override is not (`MediaGrid` writes
+ * an INLINE `grid-template-columns` from the same `columns` value it windows on).
+ *
+ * The row gap is deliberately NOT a parameter: `.media-grid`'s CSS gap is fixed
+ * at `var(--space-6)` (mirrored by `ROW_GAP` above) and `MediaGrid` has to
+ * SUBTRACT that same value again to size its row tracks and placeholder cells
+ * (`fixedRowContentHeight()` below). A caller-supplied gap could therefore only
+ * ever disagree with the CSS — it would return a plausible `rowHeight` with
+ * mis-sized cells. One gap constant, added in one place and removed in one place.
+ */
+export function computeFixedRowHeight(contentHeight: number): number {
+  if (contentHeight <= 0) return 0;
+  return contentHeight + ROW_GAP;
+}
+
+/**
+ * Exact inverse of `computeFixedRowHeight()`: the CELL height inside a pinned
+ * row, i.e. the row height minus the gap beneath it. `MediaGrid` uses this for
+ * BOTH its `grid-auto-rows` track height and its not-yet-loaded placeholder
+ * cells, so no consumer re-derives the gap and the two cannot drift.
+ */
+export function fixedRowContentHeight(rowHeight: number): number {
+  return Math.max(0, rowHeight - ROW_GAP);
 }
 
 export interface WindowInput {

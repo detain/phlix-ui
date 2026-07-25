@@ -326,6 +326,127 @@ describe('MediaGrid — virtualization', () => {
   });
 });
 
+/**
+ * S68 — per-view-mode layout parameterization. The `columns` / `rowHeight` props
+ * are the ONLY sanctioned way for a `#card`-slot renderer to change the layout,
+ * because the same values feed the inline `grid-template-columns` AND the
+ * windowing math. A CSS override would desync the two.
+ */
+describe('MediaGrid — forced columns / rowHeight (S68 alternate views)', () => {
+  it('honors a forced column count even before the container is measured', () => {
+    const w = mount(MediaGrid, { props: { items: makeItems(6), columns: 1 } });
+    const style = w.find('.media-grid').attributes('style') ?? '';
+    expect(style).toContain('repeat(1, minmax(0, 1fr))');
+    expect(style).not.toContain('auto-fill');
+  });
+
+  it('ignores a nonsensical forced column count and falls back to auto-fit', () => {
+    const w = mount(MediaGrid, { props: { items: makeItems(6), columns: 0, cardSize: 200 } });
+    expect(w.find('.media-grid').attributes('style')).toContain('auto-fill');
+  });
+
+  it('sizes the sizer + window from the forced rowHeight, NOT the 2:3 poster formula', async () => {
+    mockLayout(1000, 0); // measured → virtualized
+    window.innerHeight = 768;
+    const w = mount(MediaGrid, {
+      // 120px poster × 1.5 = 180 row + 24 row gap = 204 (computeFixedRowHeight)
+      props: { items: makeItems(200), total: 200, columns: 1, rowHeight: 204 },
+    });
+    await nextTick();
+    await nextTick();
+
+    // 200 one-column rows × 204 = 40800. The poster formula would have derived
+    // 1000 * 1.5 + 56 + 24 = 1580 per row → 316000px, and the auto-fit 4-column
+    // default → 21625px. Both are excluded.
+    const sizer = w.find('.media-grid-sizer').attributes('style') ?? '';
+    expect(sizer).toContain('height: 40800px');
+    expect(sizer).not.toContain('316000px');
+    expect(sizer).not.toContain('21625px');
+
+    // ...and the WINDOW follows the same height: ceil(768/204)+1 = 5 visible rows
+    // + 2 overscan = rows [0,7) = 7 items in a one-column grid. The un-parameterized
+    // 1580px row would only have rendered 4.
+    expect(w.findAllComponents(MediaCard)).toHaveLength(7);
+  });
+
+  /**
+   * S68 review finding 3, structural half. The grid CONTAINER pins the row track,
+   * so the fixed row height is enforced rather than merely asserted by whichever
+   * `#card` renderer happens to be mounted — the divergence class S67's seam
+   * warned about is retired before S69/S70 add two more renderers.
+   */
+  it('pins the row TRACK with grid-auto-rows so no renderer can outgrow it', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(20), total: 20, columns: 1, rowHeight: 204 },
+    });
+    await nextTick();
+    await nextTick();
+    // rowHeight includes the row gap, so the TRACK is rowHeight - ROW_GAP.
+    expect(w.find('.media-grid').attributes('style')).toContain('grid-auto-rows: 180px');
+  });
+
+  it('leaves the poster grid free-flowing (no grid-auto-rows without a rowHeight)', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(20), total: 20 } });
+    await nextTick();
+    await nextTick();
+    // A 2:3 poster row's height is content-derived; pinning it here would fight
+    // the aspect-ratio layout it is computed FROM.
+    expect(w.find('.media-grid').attributes('style')).not.toContain('grid-auto-rows');
+  });
+
+  it('pins not-yet-loaded placeholder cells to the same fixed row height', async () => {
+    mockLayout(1000, 0);
+    window.innerHeight = 768;
+    const w = mount(MediaGrid, {
+      // only 3 of 200 loaded → the rest of the window renders placeholders
+      props: { items: makeItems(3), total: 200, columns: 1, rowHeight: 204 },
+    });
+    await nextTick();
+    await nextTick();
+
+    const placeholders = w.findAll('.media-grid .skel-card');
+    expect(placeholders.length).toBeGreaterThan(0);
+    for (const cell of placeholders) {
+      // rowHeight includes the row gap, so the CELL is rowHeight - ROW_GAP tall.
+      // Without this a full-width 2:3 poster skeleton would be ~1000px tall and
+      // shove every following row out of the position padTop reserved for it.
+      expect(cell.attributes('style')).toContain('height: 180px');
+      expect(cell.find('.skel-block').exists()).toBe(true);
+      expect(cell.find('.skel-poster').exists()).toBe(false);
+    }
+  });
+
+  it('keeps the poster-shaped placeholder (and no inline height) without a forced rowHeight', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(3), total: 200 } });
+    await nextTick();
+    await nextTick();
+
+    const cell = w.find('.media-grid .skel-card');
+    expect(cell.exists()).toBe(true);
+    expect(cell.find('.skel-poster').exists()).toBe(true);
+    expect(cell.find('.skel-block').exists()).toBe(false);
+    expect(cell.attributes('style')).toBeUndefined();
+  });
+
+  it('applies the forced layout to the initial-load skeleton too (no mode flash)', () => {
+    const w = mount(MediaGrid, {
+      props: { items: [], loading: true, skeletonCount: 4, columns: 1, rowHeight: 204 },
+    });
+    const skel = w.find('.media-grid--skeleton');
+    expect(skel.attributes('style')).toContain('repeat(1, minmax(0, 1fr))');
+    // ...including the pinned row track, so the initial load reserves exactly the
+    // rows the windowing math will use once items arrive.
+    expect(skel.attributes('style')).toContain('grid-auto-rows: 180px');
+    const cells = w.findAll('.skel-card');
+    expect(cells).toHaveLength(4);
+    expect(cells[0].attributes('style')).toContain('height: 180px');
+    expect(cells[0].find('.skel-block').exists()).toBe(true);
+  });
+});
+
 describe('MediaGrid — infinite scroll', () => {
   it('emits load-more when the sentinel intersects and more remain', async () => {
     const w = mount(MediaGrid, { props: { items: makeItems(24), hasMore: true } });
