@@ -183,7 +183,7 @@ The "Nocturne" system ships three themes, applied via a `data-theme` attribute o
 | `density` | `'comfortable'` | or `'compact'` (smaller controls) |
 | `cardSize` | `180` | poster width in px (drives grid auto-fit) |
 | `gridDensity` | `'comfy'` | `'cozy' \| 'comfy' \| 'dense'` |
-| `viewMode` | `'grid'` | `ViewMode` — `'grid' \| 'list'` today (`'backdrop'`/`'table'` reserved); set by the `FilterBar` toggle, read by `LibraryPage` |
+| `viewMode` | `'grid'` | `ViewMode` — `'grid' \| 'list' \| 'backdrop'` today (`'table'` reserved); set by the `FilterBar` toggle, read by `LibraryPage` |
 | `reducedMotion` | `'auto'` | `'auto' \| 'on' \| 'off'` (auto honors the OS setting) |
 | `atmosphere` | `true` | film-grain/vignette + ambient player glow |
 | `autoplay` | `true` | up-next auto-advance |
@@ -319,7 +319,8 @@ Everything below is a named export from the package root (`import { Button } fro
 `MediaCard` · `MediaGrid` (virtualized) · `MediaRow` · `MediaHomeRow` · `MediaDetail` · `FilterBar`.
 `MediaGrid` also takes a `#card` slot plus `columns` / `rowHeight` props (they drive both the inline
 `grid-template-columns` and the windowing math), so a host can swap in a per-`viewMode` renderer —
-`src/components/MediaListRow.vue` for `'list'`. Those renderers are internals of
+`src/components/MediaListRow.vue` for `'list'` and `src/components/MediaBackdropRow.vue` (a wide
+hero strip per item) for `'backdrop'`. Those renderers are internals of
 `src/pages/LibraryPage.vue` and are deliberately **not** re-exported.
 
 ### Player surface

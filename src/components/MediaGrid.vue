@@ -33,12 +33,14 @@ import Icon from './Icon.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import {
   COL_GAP,
+  REM_BASIS_PX,
   computeCardWidth,
   computeColumns,
   computeRowHeight,
   computeWindow,
   effectiveItemCount,
   fixedRowContentHeight,
+  labelHeightForRootFontSize,
   shouldLoadMore,
 } from './virtual-grid';
 
@@ -133,6 +135,30 @@ const sentinelEl = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
 const viewportHeight = ref(0);
 const scrollTop = ref(0); // grid-top scrolled above viewport top (≥ 0)
+/**
+ * The viewer's actual root font size (px) — the second input the poster grid's row
+ * height depends on (S69 review r2, finding 2a). `.media-card__caption` is entirely
+ * rem-valued, so at a 20px root it is ~64px tall against an assumed 56 and every row
+ * under-reserves; `labelHeightForRootFontSize()` corrects for that. Read in
+ * `measure()` (mount + ResizeObserver only, never per scroll tick) and defaulted to
+ * the 16px basis so jsdom/SSR keep the documented arithmetic exactly.
+ *
+ * ⚠ HOW LIVE THIS ACTUALLY IS (S69 review r3, LOW-2): it is refreshed only when
+ * `measure()` runs, i.e. on mount, on `window.resize`, and when the OBSERVED BOX
+ * (`.media-grid-sizer`) changes size. A root font-size change is not itself a resize
+ * of that box — inside the app shell it happens to become one, because
+ * `.shell__main`'s padding is rem-valued (`AppLayout.vue`, `padding: var(--space-6)
+ * var(--space-5)`), so the grid's content width moves ~10px per 4px of root and the
+ * ResizeObserver delivers (measured in Chrome: 1 delivery for a 16→20px root change,
+ * versus 0 with the same tree px-padded). `MediaGrid` is a PUBLIC export, though, so a
+ * consumer that mounts it in a root-font-size-independent container AND offers a
+ * font-size control keeps the previous `labelHeight` until the next genuine resize.
+ * Not a regression — the pre-fix constant was wrong at every non-16px root,
+ * permanently — and a fresh load always reads the right value on mount. The durable
+ * fix is the same one the gap half already names: measure the caption (and the gap)
+ * once at mount and feed the measurement in, rather than deriving both from the root.
+ */
+const rootFontSize = ref(REM_BASIS_PX);
 
 /**
  * Cached offset of the sizer element's top edge from the document top (px).
@@ -159,6 +185,18 @@ function measure(): void {
     const rect = el.getBoundingClientRect();
     if (rect.width > 0) containerWidth.value = rect.width;
     sizerTop = typeof window !== 'undefined' ? window.scrollY + rect.top : 0;
+  }
+  // One computed-style read per measure (mount + layout change), not per scroll
+  // tick. jsdom reports `"medium"` → NaN → the 16px basis is kept. Note this is as
+  // live as the OBSERVED BOX, not as live as the root font size itself — see the
+  // `rootFontSize` docblock for the one downstream shape where that differs.
+  if (
+    typeof window !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    typeof window.getComputedStyle === 'function'
+  ) {
+    const px = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize);
+    if (Number.isFinite(px) && px > 0) rootFontSize.value = px;
   }
 }
 
@@ -235,7 +273,12 @@ const effectiveColumns = computed(
 const effectiveRowHeight = computed(
   () =>
     forcedRowHeight.value ??
-    computeRowHeight(computeCardWidth(containerWidth.value, effectiveColumns.value, COL_GAP)),
+    computeRowHeight(
+      computeCardWidth(containerWidth.value, effectiveColumns.value, COL_GAP),
+      // The caption block is rem-valued, so its height follows the root font size
+      // even though the gap above it no longer does (S69 review r2, finding 2a).
+      labelHeightForRootFontSize(rootFontSize.value),
+    ),
 );
 
 /** Virtualize only once we have real measurements; otherwise render everything. */
@@ -613,8 +656,32 @@ watch(
 
 .media-grid {
   display: grid;
-  /* ROW_GAP / COL_GAP in virtual-grid.ts mirror these tokens (24px / 20px). */
-  gap: var(--space-6, 24px) var(--space-5, 20px);
+  /* ABSOLUTE px on purpose, NOT var(--space-6)/var(--space-5) — this is the one
+     CSS value the windowing math also has to know (ROW_GAP / COL_GAP in
+     virtual-grid.ts), and it has to know it as a NUMBER before layout exists
+     (jsdom/SSR/first paint), so it cannot read a token. Those tokens are
+     1.5rem/1.25rem, so at any root font-size other than 16px the real gap used to
+     diverge from the assumed 24/20 and the error accumulated through
+     padTop/totalHeight — worst for the pinned-row renderers, whose entire row
+     height is constants (S69 review, finding 7). virtual-grid.test.ts reads EVERY
+     .media-grid gap declaration in src/ back — this one, any @media arm, any
+     :deep() override — and asserts each equals ROW_GAP/COL_GAP.
+
+     ⚠ DELIBERATE TRADE, recorded here so a future theming bug is not a mystery
+     (S69 review r2, finding 2b): because this is px, the grid gap no longer follows
+     --space-5/--space-6. It does not grow with a larger browser root font size, and
+     a host or theme overriding those tokens no longer changes it — on all three
+     view modes, the --skeleton grid, four pages (Library / Explore /
+     Recommendations / Search) and every downstream consumer of the public MediaGrid
+     export. Accepted because the arithmetic already assumed 24/20 unconditionally:
+     the token form did not give a host a working override, it gave a gap the
+     windowing math was wrong about. To change the grid gap, change ROW_GAP/COL_GAP
+     (the readback test then forces this declaration to move with them). Giving the
+     tokens back for real means measuring the gap via getComputedStyle at mount and
+     feeding the measurement into computeColumns/computeRowHeight — the same
+     treatment the rem-valued LABEL_HEIGHT already gets via
+     labelHeightForRootFontSize(). */
+  gap: 24px 20px;
   width: 100%;
 }
 

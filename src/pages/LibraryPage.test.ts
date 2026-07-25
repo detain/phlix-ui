@@ -20,16 +20,30 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
 import ItemDataInspector from '../components/ItemDataInspector.vue';
 import MediaCard from '../components/MediaCard.vue';
 import MediaListRow from '../components/MediaListRow.vue';
-import { computeFixedRowHeight, LIST_ROW_HEIGHT } from '../components/virtual-grid';
+import MediaBackdropRow from '../components/MediaBackdropRow.vue';
+import {
+  BACKDROP_ROW_HEIGHT,
+  computeFixedRowHeight,
+  LIST_ROW_HEIGHT,
+} from '../components/virtual-grid';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 
+/**
+ * The LIST shape `GET /api/v1/media` returns. `backdrop_url`/`backdrop_srcset` are
+ * present-and-`null` on purpose: that is what the shaper emits for an item with no
+ * backdrop (the seven backdrop-less types, and any unmatched title), and it keeps the
+ * backdrop-branch tests below discriminating. Do NOT populate them here — pass a
+ * backdrop-bearing item explicitly to `mountWithMode` instead.
+ */
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
     id: 'm1',
     name: 'Dune',
     type: 'movie',
     poster_url: null,
+    backdrop_url: null,
+    backdrop_srcset: null,
     genres: [],
     year: 2024,
     rating: null,
@@ -435,6 +449,85 @@ describe('LibraryPage — view mode (S67)', () => {
   });
 });
 
+// ── shared #card-slot harness (S68 + S69, and S70 when it lands) ──────────────
+
+/** MediaCard's complete host-emit surface (MediaCard.vue `defineEmits`). */
+const HOST_EVENTS = [
+  'play',
+  'watchlist',
+  'info',
+  'match',
+  'mark-watched',
+  'refresh',
+  'choose-poster',
+  'remove',
+  'edit-metadata',
+  'explore-data',
+] as const;
+
+/** Vue's listener prop key for an emit name: `mark-watched` → `onMarkWatched`. */
+function handlerKey(event: string): string {
+  return `on${event.replace(/(^|-)([a-z])/g, (_m, _d, c: string) => c.toUpperCase())}`;
+}
+
+/**
+ * The listener prop keys the page binds on a renderer, read from the PUBLIC
+ * `VNode.props` of the vnode its `#card` slot produces (`slotRenderers()` below).
+ *
+ * Deliberately not `vm.$.vnode.props`: `$` is Vue's internal instance handle, so
+ * that shape can change in any minor and the assertions would then fail
+ * confusingly (or pass vacuously). `VNode.props` is the documented render-function
+ * contract — the same object `h()` accepts — and it is exactly what the compiled
+ * template wrote, so dropping `@play` from a branch is still caught.
+ */
+function boundListeners(vnode: VNode): string[] {
+  return Object.keys(vnode.props ?? {}).filter((k) => k.startsWith('on'));
+}
+
+/**
+ * The component vnodes LibraryPage's `#card` slot produces for one item.
+ *
+ * Asserting on the DOM alone CANNOT prove the `v-else` is unconditional: Vue's
+ * `renderSlot` treats a slot that yields only a comment vnode (every `v-if` /
+ * `v-else-if` false) as empty and silently renders MediaGrid's own DEFAULT card
+ * instead — which still looks and behaves right here, because the grid-level
+ * listeners are also still bound. Invoking the slot directly is what
+ * discriminates: a `v-else-if` chain that can all be false returns a bare
+ * Comment, an unconditional `v-else` always returns a real renderer.
+ */
+function slotRenderers(w: Awaited<ReturnType<typeof mountAt>>['w'], item: MediaItem): VNode[] {
+  const slot = w.findComponent({ name: 'MediaGrid' }).vm.$slots.card as
+    | ((p: { item: MediaItem; index: number }) => VNode[])
+    | undefined;
+  expect(slot, 'LibraryPage no longer fills MediaGrid’s #card slot').toBeTypeOf('function');
+  // The compiled slot wraps its branch in a Fragment; keep only the real
+  // component vnodes (a `v-if` placeholder is a Comment).
+  const flatten = (nodes: VNode[]): VNode[] =>
+    nodes.flatMap((n) =>
+      n.type === Fragment ? flatten((n.children ?? []) as VNode[]) : n.type === Comment ? [] : [n],
+    );
+  return flatten(slot!({ item, index: 0 }) ?? []);
+}
+
+/**
+ * Mount the page with a persisted `viewMode`, optionally over a specific payload.
+ *
+ * The default payload is `media()` — the LIST shape with no backdrop (both keys null),
+ * which is what a backdrop-less type or an unmatched title really returns. Pass
+ * `items` when a test needs a backdrop-bearing row; do NOT populate the backdrop
+ * fields in the shared `media()` helper, or the backdrop-branch tests below stop
+ * discriminating (S69 review, finding 1).
+ */
+async function mountWithMode(mode: string, items?: MediaItem[]) {
+  localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: mode }));
+  setActivePinia(createPinia());
+  const payload = items ?? [media({ id: 'lr1', name: 'Dune' })];
+  stubFetch({ media: { items: payload, total: payload.length } });
+  const out = await mountAt('lib1');
+  await flushPromises();
+  return out;
+}
+
 /**
  * S68 — the `list` view mode renders `MediaListRow` through the SINGLE MediaGrid
  * mount's `#card` slot. The invariants under test:
@@ -448,76 +541,6 @@ describe('LibraryPage — view mode (S67)', () => {
  *      a button that silently does nothing.
  */
 describe('LibraryPage — list view (S68)', () => {
-  /** MediaCard's complete host-emit surface (MediaCard.vue `defineEmits`). */
-  const HOST_EVENTS = [
-    'play',
-    'watchlist',
-    'info',
-    'match',
-    'mark-watched',
-    'refresh',
-    'choose-poster',
-    'remove',
-    'edit-metadata',
-    'explore-data',
-  ] as const;
-
-  /** Vue's listener prop key for an emit name: `mark-watched` → `onMarkWatched`. */
-  function handlerKey(event: string): string {
-    return `on${event.replace(/(^|-)([a-z])/g, (_m, _d, c: string) => c.toUpperCase())}`;
-  }
-
-  /**
-   * The listener prop keys the page binds on a renderer, read from the PUBLIC
-   * `VNode.props` of the vnode its `#card` slot produces (`slotRenderers()` below).
-   *
-   * Deliberately not `vm.$.vnode.props`: `$` is Vue's internal instance handle, so
-   * that shape can change in any minor and the assertions would then fail
-   * confusingly (or pass vacuously). `VNode.props` is the documented render-function
-   * contract — the same object `h()` accepts — and it is exactly what the compiled
-   * template wrote, so dropping `@play` from a branch is still caught.
-   */
-  function boundListeners(vnode: VNode): string[] {
-    return Object.keys(vnode.props ?? {}).filter((k) => k.startsWith('on'));
-  }
-
-  /**
-   * The component vnodes LibraryPage's `#card` slot produces for one item.
-   *
-   * Asserting on the DOM alone CANNOT prove the `v-else` is unconditional: Vue's
-   * `renderSlot` treats a slot that yields only a comment vnode (every `v-if` /
-   * `v-else-if` false) as empty and silently renders MediaGrid's own DEFAULT card
-   * instead — which still looks and behaves right here, because the grid-level
-   * listeners are also still bound. Invoking the slot directly is what
-   * discriminates: a `v-else-if` chain that can all be false returns a bare
-   * Comment, an unconditional `v-else` always returns a real renderer.
-   */
-  function slotRenderers(
-    w: Awaited<ReturnType<typeof mountAt>>['w'],
-    item: MediaItem,
-  ): VNode[] {
-    const slot = w.findComponent({ name: 'MediaGrid' }).vm.$slots.card as
-      | ((p: { item: MediaItem; index: number }) => VNode[])
-      | undefined;
-    expect(slot, 'LibraryPage no longer fills MediaGrid’s #card slot').toBeTypeOf('function');
-    // The compiled slot wraps its branch in a Fragment; keep only the real
-    // component vnodes (a `v-if` placeholder is a Comment).
-    const flatten = (nodes: VNode[]): VNode[] =>
-      nodes.flatMap((n) =>
-        n.type === Fragment ? flatten((n.children ?? []) as VNode[]) : n.type === Comment ? [] : [n],
-      );
-    return flatten(slot!({ item, index: 0 }) ?? []);
-  }
-
-  async function mountWithMode(mode: string) {
-    localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: mode }));
-    setActivePinia(createPinia());
-    stubFetch({ media: { items: [media({ id: 'lr1', name: 'Dune' })], total: 1 } });
-    const out = await mountAt('lib1');
-    await flushPromises();
-    return out;
-  }
-
   it('renders MediaListRow (not the poster card) through the ONE existing grid', async () => {
     const { w } = await mountWithMode('list');
     expect(w.findAllComponents({ name: 'MediaGrid' })).toHaveLength(1);
@@ -567,12 +590,17 @@ describe('LibraryPage — list view (S68)', () => {
   // ...and the branch that renders it must be the PAGE's own `v-else`, not Vue's
   // silent slot-fallback to MediaGrid's default card (see `slotRenderers`).
   it('the #card slot itself yields a renderer for EVERY mode, garbage included', async () => {
+    // One entry per IMPLEMENTED renderer; every other mode (including S70's
+    // not-yet-built 'table' and outright garbage) must reach the `v-else` card.
+    const RENDERERS: Record<string, unknown> = { list: MediaListRow, backdrop: MediaBackdropRow };
     const item = media({ id: 'lr1' });
     for (const mode of ['list', 'grid', 'backdrop', 'table', 'sideways-carousel', '']) {
       const { w } = await mountWithMode(mode);
       const rendered = slotRenderers(w, item);
       expect(rendered, `#card slot rendered nothing for viewMode="${mode}"`).toHaveLength(1);
-      expect(rendered[0].type).toBe(mode === 'list' ? MediaListRow : MediaCard);
+      expect(rendered[0].type, `wrong renderer for viewMode="${mode}"`).toBe(
+        RENDERERS[mode] ?? MediaCard,
+      );
       w.unmount();
     }
   });
@@ -661,6 +689,252 @@ describe('LibraryPage — list view (S68)', () => {
     await flushPromises();
     expect(inspector.props('modelValue')).toBe(true);
     expect((inspector.props('item') as MediaItem).id).toBe('lr1');
+  });
+});
+
+/**
+ * S69 — the `backdrop` view mode renders `MediaBackdropRow` (one wide hero strip
+ * per item) through the SAME single MediaGrid mount. Same four invariants as S68,
+ * at a different fixed height:
+ *   1. still exactly one MediaGrid (no second grid / parallel pagination path),
+ *   2. the layout travels through the grid's `columns`/`row-height` props with the
+ *      STRIP's own height — so virtualization stays intact,
+ *   3. the `v-else` grid branch is still UNCONDITIONAL (asserted by the shared
+ *      slot-invocation test in the S68 block, which now covers 'backdrop' too),
+ *   4. the branch wires every one of MediaCard's ten host events.
+ */
+describe('LibraryPage — backdrop hero view (S69)', () => {
+  it('renders MediaBackdropRow (not the poster card, not a list row) through the ONE grid', async () => {
+    const { w } = await mountWithMode('backdrop');
+    expect(w.findAllComponents({ name: 'MediaGrid' })).toHaveLength(1);
+    expect(w.findComponent(MediaBackdropRow).exists()).toBe(true);
+    expect(w.find('.media-backdrop-row').exists()).toBe(true);
+    expect(w.findComponent(MediaListRow).exists()).toBe(false);
+    // it composes a MediaCard for its poster column with the caption suppressed
+    expect(w.find('.media-card').exists()).toBe(true);
+    expect(w.find('.media-card__caption').exists()).toBe(false);
+    expect(w.find('.media-grid-root').attributes('data-view-mode')).toBe('backdrop');
+  });
+
+  it('drives the strip layout through the grid props, with the STRIP row height', async () => {
+    const { w } = await mountWithMode('backdrop');
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    expect(grid.props('columns')).toBe(1);
+    expect(grid.props('rowHeight')).toBe(computeFixedRowHeight(BACKDROP_ROW_HEIGHT));
+    expect(grid.props('rowHeight')).toBe(BACKDROP_ROW_HEIGHT + 24);
+    // NOT the list row's height (the two renderers must not share one number) and
+    // NOT computeRowHeight()'s cardWidth * 2:3 + label, which for a full-width row
+    // reserves several times too much and desyncs padTop/totalHeight.
+    expect(grid.props('rowHeight')).not.toBe(computeFixedRowHeight(LIST_ROW_HEIGHT));
+  });
+
+  it('virtualization stays intact: the grid pins the strip row TRACK and one column', async () => {
+    // The props above are only half the contract — MediaGrid must actually apply
+    // them, or a hero strip in a pre-sized grid would push every following row out
+    // of the position padTop reserved. `grid-auto-rows` is MediaGrid ENFORCING the
+    // height the windowing math assumes; the inline `grid-template-columns` is the
+    // same `columns` value it windows on (never a CSS override).
+    const { w } = await mountWithMode('backdrop');
+    const style = w.find('.media-grid').attributes('style') ?? '';
+    expect(style).toContain('grid-template-columns: repeat(1, minmax(0, 1fr))');
+    expect(style).toContain(`grid-auto-rows: ${BACKDROP_ROW_HEIGHT}px`);
+  });
+
+  it('wires ALL TEN host events onto the backdrop strip', async () => {
+    const { w } = await mountWithMode('backdrop');
+    const [strip] = slotRenderers(w, media({ id: 'lr1' }));
+    expect(strip.type).toBe(MediaBackdropRow);
+    const bound = boundListeners(strip);
+    for (const event of HOST_EVENTS) {
+      expect(bound, `backdrop strip is missing a \`${event}\` listener`).toContain(
+        handlerKey(event),
+      );
+    }
+  });
+
+  /**
+   * Heading parity with the other two renderers (S68 review finding 1): the
+   * composed card's overlay `<h3>` is only `opacity: 0`, which does NOT remove it
+   * from the accessibility tree, so without `hide-caption` a backdrop library would
+   * announce every title twice.
+   */
+  it('emits exactly ONE heading per item, like grid and list mode', async () => {
+    const HEADINGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+      .map((h) => `.media-grid ${h}`)
+      .join(', ');
+    for (const mode of ['backdrop', 'list', 'grid'] as const) {
+      const { w } = await mountWithMode(mode);
+      const headings = w.findAll(HEADINGS);
+      expect(headings, `viewMode="${mode}" must emit ONE heading per item`).toHaveLength(1);
+      expect(headings[0].text()).toBe('Dune');
+      w.unmount();
+    }
+  });
+
+  it('a backdrop strip `play` reaches the page handler and navigates', async () => {
+    const { w, router } = await mountWithMode('backdrop');
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaBackdropRow).vm.$emit('play', media({ id: 'lr1' }));
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'lr1' } });
+  });
+
+  it('a backdrop strip admin action (`explore-data`) opens the inspector', async () => {
+    // Admin state must exist BEFORE mount (the inspector/modals are `v-if`
+    // isAdmin), so this mounts inline like the S68 counterpart above; the
+    // MetadataMatchModal is stubbed so its auto-search doesn't run.
+    localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: 'backdrop' }));
+    setActivePinia(createPinia());
+    stubFetch({ media: { items: [media({ id: 'lr1' })], total: 1 } });
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    const r = makeRouter();
+    await r.push('/app/library/lib1');
+    await r.isReady();
+    const w = mount(LibraryPage, {
+      global: {
+        plugins: [r],
+        provide: { apiBase: '', phlixConfig: { app: 'server', apiBase: '' } },
+        stubs: { MetadataMatchModal: true, PosterPicker: true },
+      },
+    });
+    await flushPromises();
+
+    // admin ⇒ the strip forwards `can-match` so the Match quick-action exists
+    expect(w.findComponent(MediaBackdropRow).props('canMatch')).toBe(true);
+
+    const inspector = w.findComponent(ItemDataInspector);
+    expect(inspector.props('modelValue')).toBe(false);
+    w.findComponent(MediaBackdropRow).vm.$emit('explore-data', media({ id: 'lr1' }));
+    await flushPromises();
+    expect(inspector.props('modelValue')).toBe(true);
+    expect((inspector.props('item') as MediaItem).id).toBe('lr1');
+  });
+
+  /**
+   * Switching mode must re-drive the geometry, not just the renderer: the
+   * `columns`/`row-height` props are computed from `viewMode`, so a live toggle
+   * swaps the strip height in the same flush that swaps the component. (A renderer
+   * that changed without its row height — or vice versa — is exactly the
+   * layout/windowing desync S67 warned about.)
+   */
+  it('swaps renderer AND row height when the mode changes at runtime', async () => {
+    const { w } = await mountWithMode('list');
+    const prefs = usePreferencesStore();
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    expect(grid.props('rowHeight')).toBe(computeFixedRowHeight(LIST_ROW_HEIGHT));
+
+    prefs.viewMode = 'backdrop';
+    await nextTick();
+    expect(w.findComponent(MediaBackdropRow).exists()).toBe(true);
+    expect(w.findComponent(MediaListRow).exists()).toBe(false);
+    expect(grid.props('rowHeight')).toBe(computeFixedRowHeight(BACKDROP_ROW_HEIGHT));
+    expect(grid.props('columns')).toBe(1);
+
+    prefs.viewMode = 'grid';
+    await nextTick();
+    expect(w.findComponent(MediaBackdropRow).exists()).toBe(false);
+    expect(grid.props('rowHeight')).toBeUndefined();
+    expect(grid.props('columns')).toBeUndefined();
+  });
+});
+
+/**
+ * S69 review, finding 1 — WHICH wash the backdrop view actually paints on THIS
+ * surface, pinned at the page level.
+ *
+ * `MediaBackdropRow` has two wash states: the wide backdrop `<img>` when the item
+ * carries backdrop data, and a poster-derived colour wash when it does not. The
+ * component suite proves both work, but it does so from a hand-built fixture — and
+ * the original eight page-level S69 tests all ran the FALLBACK branch (the page's
+ * `media()` helper has no backdrop fields) without one of them asserting which branch
+ * had been taken. Both halves of that were the defect.
+ *
+ * What the list shape carries, as of the companion server step S101, is exactly two
+ * keys: `backdrop_url` (a TMDB `/w780` URL) and `backdrop_srcset` (`w780` + `w1280`,
+ * never `/original`). Both are `null` for the seven backdrop-less types (`track`,
+ * `music`, `album`, `artist`, `photo`, `book`, `audiobook`) and for unmatched titles,
+ * and absent entirely against a pre-S101 server — so BOTH states are live traffic,
+ * not one real state plus a theoretical one.
+ *
+ * These tests pin both from the page, so that:
+ *   - the behaviour is stated rather than accidental,
+ *   - the backdrop-bearing fixture is the REAL server shape rather than an invented
+ *     one, and
+ *   - a renderer that collapsed to a single branch fails, whichever branch it picked.
+ */
+describe('LibraryPage — which backdrop wash the LIST payload renders (S69)', () => {
+  /** A real list row with no backdrop: both keys present and null. */
+  function noBackdropItem(): MediaItem {
+    const item = media({ id: 'lr1', name: 'Dune', poster_url: 'https://img/dune.jpg' });
+    expect(item.backdrop_url, 'null, not missing — guard on null').toBeNull();
+    expect(item.backdrop_srcset).toBeNull();
+    return item;
+  }
+
+  /** A real list row WITH a backdrop, in the exact shape S101 emits. */
+  function backdropBearingItem(): MediaItem {
+    return media({
+      id: 'lr1',
+      name: 'Dune',
+      poster_url: 'https://img/dune.jpg',
+      backdrop_url: 'https://img/dune-w780.jpg',
+      backdrop_srcset: 'https://img/dune-w780.jpg 780w, https://img/dune-w1280.jpg 1280w',
+    });
+  }
+
+  it('a backdrop-less row renders the AMBIENT wash, never an <img>', async () => {
+    const { w } = await mountWithMode('backdrop', [noBackdropItem()]);
+    expect(w.findComponent(MediaBackdropRow).exists()).toBe(true);
+    expect(w.find('.media-backdrop-row__ambient').exists()).toBe(true);
+    expect(
+      w.find('.media-backdrop-row__img').exists(),
+      'no backdrop on the row means no wide-backdrop <img> can render',
+    ).toBe(false);
+    expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('ambient');
+  });
+
+  it('a backdrop-bearing row renders the wide backdrop <img> and drops the ambient', async () => {
+    const { w } = await mountWithMode('backdrop', [backdropBearingItem()]);
+    const img = w.find('.media-backdrop-row__img');
+    expect(img.exists()).toBe(true);
+    // the /w780 src and the two-candidate srcset, exactly as the shaper sends them
+    expect(img.attributes('src')).toBe('https://img/dune-w780.jpg');
+    expect(img.attributes('srcset')).toContain('1280w');
+    expect(img.attributes('srcset')).not.toContain('original');
+    expect(w.find('.media-backdrop-row__ambient').exists()).toBe(false);
+    expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('backdrop');
+  });
+
+  /**
+   * The discriminator. Either branch being hard-wired fails this: "always ambient"
+   * breaks the second column, "always <img>" breaks the first. A test that only ever
+   * mounted one payload (which is what the eight original S69 page tests did) cannot
+   * fail either way.
+   */
+  it('takes DIFFERENT branches for the two payloads — neither branch is hard-wired', async () => {
+    const states: Array<{ img: boolean; ambient: boolean; wash: string | undefined }> = [];
+    for (const item of [noBackdropItem(), backdropBearingItem()]) {
+      const { w } = await mountWithMode('backdrop', [item]);
+      states.push({
+        img: w.find('.media-backdrop-row__img').exists(),
+        ambient: w.find('.media-backdrop-row__ambient').exists(),
+        wash: w.find('.media-backdrop-row__wash').attributes('data-wash'),
+      });
+      w.unmount();
+    }
+    expect(states.map((s) => s.img)).toEqual([false, true]);
+    expect(states.map((s) => s.ambient)).toEqual([true, false]);
+    expect(states.map((s) => s.wash)).toEqual(['ambient', 'backdrop']);
+  });
+
+  it('renders no wash layer at all for a row with no backdrop and no poster either', async () => {
+    const { w } = await mountWithMode('backdrop', [media({ id: 'lr1', name: 'Dune' })]);
+    expect(w.find('.media-backdrop-row').exists()).toBe(true);
+    expect(w.find('.media-backdrop-row__wash').exists()).toBe(false);
+    // the strip is still a working item: title link + the composed card's overlay
+    expect(w.find('.media-backdrop-row__title').text()).toBe('Dune');
+    expect(w.find('.media-card').exists()).toBe(true);
   });
 });
 

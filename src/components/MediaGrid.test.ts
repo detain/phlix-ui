@@ -386,6 +386,44 @@ describe('MediaGrid — forced columns / rowHeight (S68 alternate views)', () =>
     expect(w.find('.media-grid').attributes('style')).toContain('grid-auto-rows: 180px');
   });
 
+  /**
+   * S69 review r2, finding 2a — the OTHER root-font-size input to the poster grid's
+   * row height. `.media-card__caption` is entirely rem-valued (`var(--space-3)`
+   * padding, `var(--text-base)`/`var(--text-xs)` type), so at a 20px root it is
+   * ~64.6px tall against `LABEL_HEIGHT`'s 56: every row under-reserved ~8px and the
+   * error accumulated through `padTop`/`totalHeight`, exactly like the gap did before
+   * it was pinned. The gap was fixed in CSS; a caption is TEXT, so pinning its height
+   * would clip larger type and pinning its font sizes would opt captions out of font
+   * scaling — the MATH scales instead (`labelHeightForRootFontSize`).
+   */
+  it('scales the poster row height with the viewer’s root font size', async () => {
+    mockLayout(1000, 0);
+    window.innerHeight = 768;
+    const sizerAtRootFontSize = async (fontSize: string): Promise<string> => {
+      document.documentElement.style.fontSize = fontSize;
+      const w = mount(MediaGrid, {
+        props: { items: makeItems(200), total: 200, cardSize: 200 },
+      });
+      await nextTick();
+      await nextTick();
+      return w.find('.media-grid-sizer').attributes('style') ?? '';
+    };
+    try {
+      // 4 columns at cardSize 200 in 1000px → cardWidth 235 → 352.5px of poster, so
+      // 50 rows × (352.5 + LABEL_HEIGHT 56 + ROW_GAP 24) = 21625px.
+      expect(await sizerAtRootFontSize('16px')).toContain('height: 21625px');
+      // At a 20px root the caption is really (56 - 2) × 1.25 + 2 = 69.5px, so
+      // 50 × (352.5 + 69.5 + 24) = 22300px. The unscaled math still says 21625.
+      const scaled = await sizerAtRootFontSize('20px');
+      expect(scaled).toContain('height: 22300px');
+      expect(scaled, 'the row height must not stay on the 16px-root label').not.toContain(
+        'height: 21625px',
+      );
+    } finally {
+      document.documentElement.style.fontSize = '';
+    }
+  });
+
   it('leaves the poster grid free-flowing (no grid-auto-rows without a rowHeight)', async () => {
     mockLayout(1000, 0);
     const w = mount(MediaGrid, { props: { items: makeItems(20), total: 20 } });

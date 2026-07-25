@@ -113,6 +113,51 @@ export interface MediaListItem {
      * movies/series and older servers. Distinct from `poster_url`.
      */
     still_url?: string | null;
+    /**
+     * Wide backdrop image URL for the item's hero/strip treatment.
+     *
+     * ⚠ THE WIDTH DIFFERS BY ENDPOINT, and this interface is extended by
+     * {@link MediaDetail} (and therefore by the `MediaItem` alias), so read the line
+     * that matches the response you were actually handed:
+     *   - **LIST** (`GET /api/v1/media`, `MediaItemShaper::shape()`, companion server
+     *     step S101): a TMDB **`/w780`** URL — the server width-swaps it up from the
+     *     stored `/w500`, because a virtualized row list wants a row-sized image.
+     *     Non-TMDB URLs pass through as stored.
+     *   - **DETAIL** (`GET /api/v1/media/{id}`, `MediaItemShaper::shapeDetail()`): the
+     *     stored **`/w500`** URL. `shapeDetail()` deliberately OVERWRITES the list
+     *     value, because the detail hero prefers the `/original`
+     *     {@link MediaDetail.backdrop_url_large} and only falls back to this field
+     *     (`MediaDetail.vue` names it "the w500 `backdrop_url`"). Do not "align" the
+     *     two shapes — making detail emit `/w780` is exactly the hero downgrade the
+     *     server-side guard test exists to catch.
+     *
+     * Both shapes ALWAYS emit the key, `null` when the item has no backdrop — which
+     * is every one of the seven backdrop-less types (`track`, `music`, `album`,
+     * `artist`, `photo`, `book`, `audiobook`) plus any unmatched title. So guard on
+     * `null`, never on key existence. Still optional here for back-compat with a
+     * pre-S101 server and with synthetic items (local files).
+     */
+    backdrop_url?: string | null;
+    /**
+     * Responsive `srcset` for the backdrop. ⚠ Endpoint-dependent too — same rule as
+     * {@link backdrop_url} about which line applies to the item you were handed:
+     *   - **LIST**: exactly TWO candidates, `"<w780 url> 780w, <w1280 url> 1280w"`,
+     *     or `null`. `/original` is deliberately NOT a candidate here: it is a
+     *     1.5–4 MB JPEG, and a virtualized library page mounts ~100 rows.
+     *   - **DETAIL**: the THREE-step `"<w780> 780w, <w1280> 1280w, <original> 1920w"`
+     *     ladder — `/original` IS the top candidate, because a detail page paints
+     *     exactly ONE full-bleed hero. `MediaDetail.test.ts` pins both a `/w500`
+     *     `backdrop_url` and an `original`-bearing srcset as the detail fixtures.
+     *
+     * TMDB's ladder is `w300, w780, w1280, original`, so there is no step between
+     * `w1280` and `original`. A wide ROW on a 2x display therefore wants more device
+     * pixels than the list shape's `w1280` supplies, and that is an accepted,
+     * documented limitation — the durable fix is the generic image resizer (S71–S73),
+     * not putting `/original` on the list shape. Consumers should still set `sizes` to
+     * the element's real rendered width so the browser picks `w780` on narrow
+     * viewports instead of always fetching `w1280`.
+     */
+    backdrop_srcset?: string | null;
 }
 
 /**
@@ -144,17 +189,19 @@ export interface MediaDetail extends MediaListItem {
     studio?: string | null;
     /** Owning library id. Detail shape only. */
     library_id?: string | null;
-    /** Backdrop image URL (TMDB w500); detail only. Used as the fallback source
-     *  for the full-bleed page background when `backdrop_url_large` is absent. */
-    backdrop_url?: string | null;
-    /** Full-resolution (/original) backdrop for the full-bleed page background;
-     *  detail only. Preferred over `backdrop_url` when present. */
+    /**
+     * Full-resolution (`/original`) backdrop for the full-bleed page background.
+     *
+     * ⚠ DETAIL-ONLY, and correctly so — it is NOT on `MediaListItem` beside
+     * `backdrop_url`/`backdrop_srcset`, and it is deliberately not a candidate in the
+     * list `backdrop_srcset` either. `/original` is a 1.5–4 MB JPEG: right for ONE
+     * full-bleed hero per page, wrong ~100 times over for a virtualized row list. Any
+     * per-row renderer must ignore this field even if it happens to be present on the
+     * item it was handed, and must not reconstruct an `/original` URL from the others.
+     *
+     * The detail hero prefers this over `backdrop_url` when present.
+     */
     backdrop_url_large?: string | null;
-    /** Responsive `srcset` string for the backdrop, e.g.
-     *  `"url w780, url w1280, url original"`; detail only + optional. When present
-     *  the backdrop `<img>` uses it so the browser fetches an appropriately-sized
-     *  image; degrades to the single `backdrop_url_large`/`backdrop_url` src. */
-    backdrop_srcset?: string | null;
     /** Theme music audio URL (signed, short-lived, streamable MP3); detail only.
      *  When present the detail hero renders an unobtrusive mute/stop control and
      *  plays it muted+looping (autoplay), unmutable by the viewer. Absent → no
