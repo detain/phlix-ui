@@ -477,12 +477,36 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   /* Bled 3px past the strip on every side (and clipped back by the row's
      overflow/containment) so the soft-focus filter below cannot fade the image out
      at the visible edge — a blur on an `inset: 0` box makes its own outline
-     translucent. All four insets AND an explicit size, because an absolutely
-     positioned REPLACED element with `width: auto` falls back to its intrinsic
-     width and simply ignores `right`/`bottom`. */
+     translucent.
+
+     THREE things are load-bearing, and dropping any one of them does not weaken the
+     bleed, it INVERTS it (S69 review r3, MED-1):
+       - all four insets, and
+       - an explicit `width`/`height`, because an absolutely positioned REPLACED
+         element with `width: auto` falls back to its intrinsic width and simply
+         ignores `right`/`bottom`, and
+       - `max-width: none`, because the design system's global reset
+         (`@phlix/tokens`' `img, picture, video, canvas, svg { max-width: 100% }`)
+         otherwise clamps the `calc(100% + 6px)` straight back to the strip width.
+         The box is then over-constrained, so `left` wins and `right` is ignored, and
+         the image ends 3px INSIDE the strip on the right — putting the blur's
+         translucent edge exactly where it is most visible instead of clipping it
+         away, and doing it where the scrim's left→right gradient has already faded
+         to fully transparent. Measured in Chrome at a 1360×300 strip: 1366×306,
+         overhang 3/3/3/3 with the reset neutralised, versus 1360×306 and 3/−3/3/3
+         without, whose outermost visible column reads ~43/255 darker than the wash
+         it belongs to. `max-height: none` is symmetry, not cargo cult: today's reset
+         carries no `max-height`, which is the whole reason only the horizontal bleed
+         inverted, and a reset that grew one would invert the vertical bleed the same
+         way.
+     `MediaBackdropRow.test.ts` resolves this rule against the REAL reset through a
+     cascade and asserts the resulting BOX overhangs on all four sides, because the
+     presence-only guard it replaced passed happily while the bleed was clamped. */
   inset: -3px;
   width: calc(100% + 6px);
   height: calc(100% + 6px);
+  max-width: none;
+  max-height: none;
   object-fit: cover;
   object-position: center;
   /* The soft focus behind the text, moved here OFF the scrim's `backdrop-filter`

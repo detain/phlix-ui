@@ -142,6 +142,21 @@ const scrollTop = ref(0); // grid-top scrolled above viewport top (≥ 0)
  * under-reserves; `labelHeightForRootFontSize()` corrects for that. Read in
  * `measure()` (mount + ResizeObserver only, never per scroll tick) and defaulted to
  * the 16px basis so jsdom/SSR keep the documented arithmetic exactly.
+ *
+ * ⚠ HOW LIVE THIS ACTUALLY IS (S69 review r3, LOW-2): it is refreshed only when
+ * `measure()` runs, i.e. on mount, on `window.resize`, and when the OBSERVED BOX
+ * (`.media-grid-sizer`) changes size. A root font-size change is not itself a resize
+ * of that box — inside the app shell it happens to become one, because
+ * `.shell__main`'s padding is rem-valued (`AppLayout.vue`, `padding: var(--space-6)
+ * var(--space-5)`), so the grid's content width moves ~10px per 4px of root and the
+ * ResizeObserver delivers (measured in Chrome: 1 delivery for a 16→20px root change,
+ * versus 0 with the same tree px-padded). `MediaGrid` is a PUBLIC export, though, so a
+ * consumer that mounts it in a root-font-size-independent container AND offers a
+ * font-size control keeps the previous `labelHeight` until the next genuine resize.
+ * Not a regression — the pre-fix constant was wrong at every non-16px root,
+ * permanently — and a fresh load always reads the right value on mount. The durable
+ * fix is the same one the gap half already names: measure the caption (and the gap)
+ * once at mount and feed the measurement in, rather than deriving both from the root.
  */
 const rootFontSize = ref(REM_BASIS_PX);
 
@@ -172,7 +187,9 @@ function measure(): void {
     sizerTop = typeof window !== 'undefined' ? window.scrollY + rect.top : 0;
   }
   // One computed-style read per measure (mount + layout change), not per scroll
-  // tick. jsdom reports `"medium"` → NaN → the 16px basis is kept.
+  // tick. jsdom reports `"medium"` → NaN → the 16px basis is kept. Note this is as
+  // live as the OBSERVED BOX, not as live as the root font size itself — see the
+  // `rootFontSize` docblock for the one downstream shape where that differs.
   if (
     typeof window !== 'undefined' &&
     typeof document !== 'undefined' &&

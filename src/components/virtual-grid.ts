@@ -71,6 +71,20 @@ export const POSTER_RATIO = 3 / 2;
  * ⚠ Only {@link LABEL_HEIGHT_FIXED_PX} of this is real px — the rest is rem, so it
  * GROWS with the viewer's root font size. Do not consume this constant directly in
  * a rendered path; call {@link labelHeightForRootFontSize} (`MediaGrid` does).
+ *
+ * ⚠ THE ONE INPUT THIS ARITHMETIC CANNOT SEE (S69 review r3, LOW-3): a browser
+ * MINIMUM FONT SIZE setting raises `--text-xs`/`--text-base` INDEPENDENTLY of the
+ * root, so the caption is then taller than any function of the root font size can
+ * predict. Measured with `minimumFontSize=12`: at a 12px root the real caption is
+ * 45.19px against 42.5 reserved, i.e. −2.7px per row (≈540px of `padTop`/
+ * `totalHeight` drift over 200 rows), in the UNSAFE direction. The class is
+ * pre-existing and axis-independent — the flat 56 fails the same way at a 16px root
+ * with `minimumFontSize=16` (real 56.6–59.6 vs 56) — and the bound is ≤ ~3px/row,
+ * so it is recorded rather than compensated: padding the arithmetic to cover it
+ * would trade this small under-reserve for a permanent over-reserve at every normal
+ * setting. The real fix is the same one named above and in
+ * {@link labelHeightForRootFontSize} — measure the rendered caption once at mount —
+ * because a measurement sees the minimum-font-size floor and a derivation never can.
  */
 export const LABEL_HEIGHT = 56;
 
@@ -106,6 +120,17 @@ export const LABEL_HEIGHT_FIXED_PX = 2;
  *
  * Non-finite / non-positive input (jsdom reports the root font size as `"medium"`,
  * SSR has no CSSOM at all) falls back to `LABEL_HEIGHT` unchanged.
+ *
+ * ⚠ BOUND OF THE MODEL, deliberately not compensated (S69 review r3, LOW-3): the
+ * result over-reserves at every root size — measured 12→32px in Chrome, slack a
+ * constant +7.5% (+2.9px at a 12px root, +7.8px at 32px), monotonic, never clipping —
+ * EXCEPT under a browser minimum-font-size setting, which raises the caption's type
+ * without touching the root and is therefore invisible to this function (−2.7px/row
+ * at `minimumFontSize=12` + a 12px root). Do not "fix" that by inflating the
+ * arithmetic: it converts a harmless over-reserve at every ordinary setting into
+ * guaranteed slack nobody asked for, and the honest fix is to measure the caption at
+ * mount instead — see {@link LABEL_HEIGHT}'s docblock for the full derivation and the
+ * measured table.
  */
 export function labelHeightForRootFontSize(rootFontSizePx?: number | null): number {
   if (typeof rootFontSizePx !== 'number' || !Number.isFinite(rootFontSizePx) || rootFontSizePx <= 0) {

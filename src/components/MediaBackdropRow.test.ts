@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
@@ -110,6 +111,112 @@ function effectiveAmbientBlurPx(): number {
   expect(blur, 'the ambient colour field must still be blurred').not.toBeNull();
   expect(scale, 'the ambient colour field must still be mirrored + zoomed').not.toBeNull();
   return Number(blur![1]) * Math.abs(Number(scale![1]));
+}
+
+/* ------------- the image bleed, resolved rather than pattern-matched ------------- */
+
+/**
+ * The design system's global element reset, read from the EXACT stylesheet the app
+ * loads (`src/tokens/index.ts` imports `@phlix/tokens/style.css`) — because one
+ * declaration in it, `img, picture, video, canvas, svg { max-width: 100% }`, decides
+ * whether `.media-backdrop-row__img`'s bleed works or inverts. Same resolution
+ * strategy `src/tokens/contrast.test.ts` uses for `colors.css`.
+ */
+const nodeRequire = createRequire(import.meta.url);
+function resolveTokensStylesheet(): string {
+  try {
+    return nodeRequire.resolve('@phlix/tokens/style.css');
+  } catch {
+    return join(dirname(nodeRequire.resolve('@phlix/tokens/package.json')), 'dist/style.css');
+  }
+}
+
+/**
+ * `max-width`/`max-height` as they actually CASCADE onto the image — the reset and the
+ * SFC's own rule both parsed, by jsdom, from their real sources. Also returns what a
+ * bare `<img>` gets from the reset alone, which is the premise the assertion rests on.
+ *
+ * The two `<style>` elements are removed again on the way out: this is the only test in
+ * the file that reads computed styles, and a global reset left in the shared jsdom
+ * document would be a booby trap for the next one.
+ */
+function cascadeImgMaxima(): {
+  computedMaxima: { maxWidth: string; maxHeight: string };
+  resetClampsABareImg: string;
+} {
+  const reset = document.createElement('style');
+  reset.textContent = readFileSync(resolveTokensStylesheet(), 'utf8');
+  const rule = document.createElement('style');
+  rule.textContent = `${cssRule('.media-backdrop-row__img')}}`;
+  document.head.append(reset, rule);
+  const bare = document.createElement('img');
+  const bled = document.createElement('img');
+  bled.className = 'media-backdrop-row__img';
+  document.body.append(bare, bled);
+  try {
+    const cs = getComputedStyle(bled);
+    return {
+      computedMaxima: { maxWidth: cs.maxWidth, maxHeight: cs.maxHeight },
+      resetClampsABareImg: getComputedStyle(bare).maxWidth,
+    };
+  } finally {
+    reset.remove();
+    rule.remove();
+    bare.remove();
+    bled.remove();
+  }
+}
+
+/** One declaration off a rule's text. `[;{\s]`-prefixed so `width` cannot match `max-width`. */
+function imgDecl(prop: string): string {
+  const m = new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;]+)`).exec(cssRule('.media-backdrop-row__img'));
+  expect(m, `expected a \`${prop}\` declaration on .media-backdrop-row__img`).not.toBeNull();
+  return m![1].trim();
+}
+
+/** `<n>px` | `100%` | `calc(100% + <n>px)` | `none`, against a known containing-block size. */
+function usedLength(value: string, cbSize: number): number {
+  if (value === 'none') return Number.POSITIVE_INFINITY;
+  if (value === '100%') return cbSize;
+  const calc = /^calc\(\s*100%\s*\+\s*(-?[\d.]+)px\s*\)$/.exec(value);
+  if (calc) return cbSize + Number(calc[1]);
+  const px = /^(-?[\d.]+)px$/.exec(value);
+  expect(
+    px,
+    `resolveImgBox does not model the length \`${value}\` — teach it that form rather ` +
+      'than dropping the assertion, or the bleed goes unguarded again',
+  ).not.toBeNull();
+  return Number(px![1]);
+}
+
+/**
+ * The USED box of `.media-backdrop-row__img` inside a `cbWidth`×`cbHeight` strip.
+ *
+ * jsdom has no layout, so this is the one piece that is modelled: CSS 2.1 §10.4's
+ * `max-width` clamp plus §10.3.8/§10.6.5's over-constrained rule for an absolutely
+ * positioned replaced element (the `right`/`bottom` inset is the one that gets
+ * ignored). Every INPUT is real — the insets and sizes are read out of the SFC's own
+ * stylesheet and the maxima out of a real cascade — so the model cannot quietly agree
+ * with itself. Cross-checked against Chrome 150 at a 1360×300 strip:
+ *   `max-width: none` → 1366×306, overhang  3 /  3 / 3 / 3   (intended)
+ *   `max-width: 100%` → 1360×306, overhang  3 / −3 / 3 / 3   (MED-1's defect)
+ */
+function resolveImgBox(
+  cbWidth: number,
+  cbHeight: number,
+  maxima: { maxWidth: string; maxHeight: string },
+): { width: number; height: number; overhang: [number, number, number, number] } {
+  const inset = usedLength(imgDecl('inset'), 0); // single-value shorthand = all four sides
+  const width = Math.min(usedLength(imgDecl('width'), cbWidth), usedLength(maxima.maxWidth, cbWidth));
+  const height = Math.min(
+    usedLength(imgDecl('height'), cbHeight),
+    usedLength(maxima.maxHeight, cbHeight),
+  );
+  return {
+    width,
+    height,
+    overhang: [-inset, inset + width - cbWidth, -inset, inset + height - cbHeight],
+  };
 }
 
 function makeRouter(): Router {
@@ -422,9 +529,47 @@ describe('MediaBackdropRow — per-row compositing cost (S69 review r2)', () => 
     // same 2px blur + saturate the hero scrim applies, moved onto the only thing that
     // was ever behind that scrim
     expect(img).toMatch(/filter:\s*blur\(2px\)\s*saturate\(1\.05\)/);
-    // …and the image is bled past the strip so the blur's own translucent edge is
-    // clipped outside the visible box instead of fading the strip's border
-    expect(img).toMatch(/inset:\s*-\d+px/);
+    // the bleed that keeps that filter's translucent edge OUTSIDE the visible box is
+    // asserted by effect, not by presence — see the next test.
+  });
+
+  /**
+   * S69 review r3, MED-1. The bleed used to be guarded by `expect(img).toMatch(
+   * /inset:\s*-\d+px/)` — the declaration's PRESENCE — and that guard was green while
+   * the bleed did the exact opposite of what it was added for: `@phlix/tokens`' global
+   * `img { max-width: 100% }` reset clamped `calc(100% + 6px)` back to the strip width,
+   * the over-constrained box let `left: -3px` win over `right`, and the image ended 3px
+   * INSIDE the strip on the right. So this asserts the resulting BOX instead, resolved
+   * from the real cascade — a presence check cannot pin the wrong belief again.
+   */
+  it('bleeds the filtered image PAST the strip on all four sides, design-system reset included', () => {
+    const { computedMaxima, resetClampsABareImg } = cascadeImgMaxima();
+
+    // The premise, pinned so this test cannot go vacuous: without the rule's own
+    // override the reset really is what binds. If @phlix/tokens ever drops that reset
+    // this fails — at which point `max-width: none` becomes belt-and-braces rather
+    // than load-bearing, and the CSS comment explaining it needs updating, but do NOT
+    // just delete the assertion below.
+    expect(
+      resetClampsABareImg,
+      'the @phlix/tokens reset no longer clamps a bare <img> — re-read the ' +
+        '.media-backdrop-row__img comment before touching this test',
+    ).toBe('100%');
+    expect(computedMaxima.maxWidth, 'the rule must neutralize that clamp').toBe('none');
+
+    // …and the box that then lays out actually overhangs. 1360x300 is the strip at a
+    // 1400px viewport (`.shell__main`'s 20px inline padding); the expected numbers are
+    // Chrome 150 measurements, not derivations.
+    const box = resolveImgBox(1360, 300, computedMaxima);
+    expect([box.width, box.height]).toEqual([1366, 306]);
+    expect(box.overhang, 'left / right / top / bottom overhang, px').toEqual([3, 3, 3, 3]);
+
+    // The resolver is not a rubber stamp: fed the clamp the reset alone would impose,
+    // the SAME declarations invert the right edge. That is the defect, stated as the
+    // arithmetic that produces it.
+    expect(resolveImgBox(1360, 300, { maxWidth: '100%', maxHeight: 'none' }).overhang).toEqual([
+      3, -3, 3, 3,
+    ]);
   });
 
   it('blurs a SMALL source box instead of the whole strip, for the same visual result', () => {
