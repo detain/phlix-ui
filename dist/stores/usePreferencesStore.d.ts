@@ -7,6 +7,11 @@
 export type ThemeName = 'nocturne' | 'daylight' | 'midnight';
 export type Density = 'comfortable' | 'compact';
 export type MotionPref = 'auto' | 'on' | 'off';
+/** How a library/section renders its items (S67). 'grid' (poster grid), 'list'
+ *  (S68 `MediaListRow`) and 'backdrop' (S69 `MediaBackdropRow`) all have real
+ *  renderers, wired through `MediaGrid`'s `#card` slot; 'table' is S70's and until
+ *  then selecting it still renders the grid via the unconditional `v-else`. */
+export type ViewMode = 'grid' | 'list' | 'backdrop' | 'table';
 /** A saved Browse filter set — `query` is the `useMediaStore.toQuery()` shape. */
 export interface FilterPreset {
     id: string;
@@ -39,6 +44,16 @@ export interface Preferences {
     cardSize: number;
     /** grid density hint — cozy = larger cards, dense = more columns. */
     gridDensity: 'cozy' | 'comfy' | 'dense';
+    /** Which renderer a library/section uses (S67); 'grid' is the poster grid.
+     *  NOT sanitized on hydration (same tolerance as `density`/`defaultQuality`
+     *  below): a persisted blob carrying `null` or a removed/renamed mode
+     *  hydrates verbatim, which leaves the FilterBar toggle with no pressed
+     *  button until the user clicks one (that click self-heals and re-persists).
+     *  Accepted deliberately, so every renderer host MUST keep an unconditional
+     *  (`v-else`) grid branch — that fallback is load-bearing for S68-S70, not
+     *  decoration: it is the only thing that renders items for an out-of-union
+     *  value. Add a sanitizer here if that ever stops being true. */
+    viewMode: ViewMode;
     reducedMotion: MotionPref;
     autoplay: boolean;
     defaultVolume: number;
@@ -93,6 +108,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     density: import("vue").Ref<Density, Density>;
     cardSize: import("vue").Ref<number, number>;
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
+    viewMode: import("vue").Ref<ViewMode, ViewMode>;
     reducedMotion: import("vue").Ref<MotionPref, MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;
@@ -134,12 +150,13 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
+}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "viewMode" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
     cardSize: import("vue").Ref<number, number>;
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
+    viewMode: import("vue").Ref<ViewMode, ViewMode>;
     reducedMotion: import("vue").Ref<MotionPref, MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;
@@ -187,6 +204,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     density: import("vue").Ref<Density, Density>;
     cardSize: import("vue").Ref<number, number>;
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
+    viewMode: import("vue").Ref<ViewMode, ViewMode>;
     reducedMotion: import("vue").Ref<MotionPref, MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;

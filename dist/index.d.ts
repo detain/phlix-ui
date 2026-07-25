@@ -196,7 +196,7 @@ export { stripLeadingArticle, compareByStrippedTitle, SORT_TITLE_ARTICLES, } fro
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 export { usePreferencesStore, readStoredPreferences, hasStoredPreferences, DEFAULT_PREFERENCES, DEFAULT_CAPTION_STYLE } from './stores/usePreferencesStore';
-export type { Preferences, ThemeName, Density, MotionPref, FilterPreset, CaptionStyle, CaptionSize, CaptionBackground, CaptionEdge } from './stores/usePreferencesStore';
+export type { Preferences, ThemeName, Density, MotionPref, ViewMode, FilterPreset, CaptionStyle, CaptionSize, CaptionBackground, CaptionEdge } from './stores/usePreferencesStore';
 export { useSettingsPrefsStore } from './stores/useSettingsPrefs';
 export type { SettingsPrefsState } from './stores/useSettingsPrefs';
 export { usePlayerStore, RESUME_MIN_SECONDS, RESUME_MAX_RATIO } from './stores/usePlayerStore';
