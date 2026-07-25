@@ -33,12 +33,14 @@ import Icon from './Icon.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import {
   COL_GAP,
+  REM_BASIS_PX,
   computeCardWidth,
   computeColumns,
   computeRowHeight,
   computeWindow,
   effectiveItemCount,
   fixedRowContentHeight,
+  labelHeightForRootFontSize,
   shouldLoadMore,
 } from './virtual-grid';
 
@@ -133,6 +135,15 @@ const sentinelEl = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
 const viewportHeight = ref(0);
 const scrollTop = ref(0); // grid-top scrolled above viewport top (≥ 0)
+/**
+ * The viewer's actual root font size (px) — the second input the poster grid's row
+ * height depends on (S69 review r2, finding 2a). `.media-card__caption` is entirely
+ * rem-valued, so at a 20px root it is ~64px tall against an assumed 56 and every row
+ * under-reserves; `labelHeightForRootFontSize()` corrects for that. Read in
+ * `measure()` (mount + ResizeObserver only, never per scroll tick) and defaulted to
+ * the 16px basis so jsdom/SSR keep the documented arithmetic exactly.
+ */
+const rootFontSize = ref(REM_BASIS_PX);
 
 /**
  * Cached offset of the sizer element's top edge from the document top (px).
@@ -159,6 +170,16 @@ function measure(): void {
     const rect = el.getBoundingClientRect();
     if (rect.width > 0) containerWidth.value = rect.width;
     sizerTop = typeof window !== 'undefined' ? window.scrollY + rect.top : 0;
+  }
+  // One computed-style read per measure (mount + layout change), not per scroll
+  // tick. jsdom reports `"medium"` → NaN → the 16px basis is kept.
+  if (
+    typeof window !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    typeof window.getComputedStyle === 'function'
+  ) {
+    const px = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize);
+    if (Number.isFinite(px) && px > 0) rootFontSize.value = px;
   }
 }
 
@@ -235,7 +256,12 @@ const effectiveColumns = computed(
 const effectiveRowHeight = computed(
   () =>
     forcedRowHeight.value ??
-    computeRowHeight(computeCardWidth(containerWidth.value, effectiveColumns.value, COL_GAP)),
+    computeRowHeight(
+      computeCardWidth(containerWidth.value, effectiveColumns.value, COL_GAP),
+      // The caption block is rem-valued, so its height follows the root font size
+      // even though the gap above it no longer does (S69 review r2, finding 2a).
+      labelHeightForRootFontSize(rootFontSize.value),
+    ),
 );
 
 /** Virtualize only once we have real measurements; otherwise render everything. */
@@ -620,8 +646,24 @@ watch(
      1.5rem/1.25rem, so at any root font-size other than 16px the real gap used to
      diverge from the assumed 24/20 and the error accumulated through
      padTop/totalHeight — worst for the pinned-row renderers, whose entire row
-     height is constants (S69 review, finding 7). virtual-grid.test.ts reads this
-     declaration back and asserts it still equals ROW_GAP/COL_GAP. */
+     height is constants (S69 review, finding 7). virtual-grid.test.ts reads EVERY
+     .media-grid gap declaration in src/ back — this one, any @media arm, any
+     :deep() override — and asserts each equals ROW_GAP/COL_GAP.
+
+     ⚠ DELIBERATE TRADE, recorded here so a future theming bug is not a mystery
+     (S69 review r2, finding 2b): because this is px, the grid gap no longer follows
+     --space-5/--space-6. It does not grow with a larger browser root font size, and
+     a host or theme overriding those tokens no longer changes it — on all three
+     view modes, the --skeleton grid, four pages (Library / Explore /
+     Recommendations / Search) and every downstream consumer of the public MediaGrid
+     export. Accepted because the arithmetic already assumed 24/20 unconditionally:
+     the token form did not give a host a working override, it gave a gap the
+     windowing math was wrong about. To change the grid gap, change ROW_GAP/COL_GAP
+     (the readback test then forces this declaration to move with them). Giving the
+     tokens back for real means measuring the gap via getComputedStyle at mount and
+     feeding the measurement into computeColumns/computeRowHeight — the same
+     treatment the rem-valued LABEL_HEIGHT already gets via
+     labelHeightForRootFontSize(). */
   gap: 24px 20px;
   width: 100%;
 }

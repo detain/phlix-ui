@@ -24,15 +24,96 @@
  * through `padTop`/`totalHeight` (≈1200px of drift over 200 rows at a 20px root)
  * and is worst for the fixed-height renderers, whose entire row height is
  * constants. `.media-grid` therefore now writes these same px literals instead of
- * the rem tokens, and `virtual-grid.test.ts` reads `MediaGrid.vue`'s stylesheet
- * back and asserts the two still match, so the pair cannot drift again.
+ * the rem tokens, and `virtual-grid.test.ts` reads EVERY `.media-grid` gap
+ * declaration in `src/` back (base rule, `@media` arms and `:deep()` overrides
+ * alike) and asserts each one still equals these numbers, so the pair cannot drift
+ * again.
+ *
+ * ⚠ THE DELIBERATE TRADE THIS MAKES (S69 review r2, finding 2b). Pinning px means
+ * the grid gap no longer follows `--space-5`/`--space-6`, so:
+ *   - it does NOT grow with a viewer's larger browser root font size, and
+ *   - a host or theme that overrides `--space-5`/`--space-6` no longer changes it.
+ * That reaches every `MediaGrid` mount — `LibraryPage`, `ExplorePage`,
+ * `RecommendationsPage`, `SearchPage`, the `--skeleton` grid and every downstream
+ * consumer of the public `MediaGrid` export. It is accepted rather than accidental:
+ * the arithmetic already assumed 24/20 unconditionally, so the token form did not
+ * really give a host a working override — it gave a gap the windowing math was
+ * wrong about. The supported way to change the grid gap is now to change THESE
+ * constants (the stylesheet-readback test then forces the CSS to move with them),
+ * and the durable way to give the tokens back is to measure the gap once via
+ * `getComputedStyle` at mount and feed the measurement into
+ * `computeColumns`/`computeRowHeight`.
+ *
+ * The label block, which is the OTHER root-font-size input to `computeRowHeight`,
+ * is handled the other way round — it stays rem-valued and is SCALED at runtime,
+ * see {@link labelHeightForRootFontSize}.
  */
 export const COL_GAP = 20; // .media-grid column-gap (was var(--space-5) = 1.25rem)
 export const ROW_GAP = 24; // .media-grid row-gap    (was var(--space-6) = 1.5rem)
 /** Poster is 2:3, so its height is the card width × this factor. */
 export const POSTER_RATIO = 3 / 2;
-/** Title + meta block under the poster (px). */
+/**
+ * Title + meta block under the poster (px), at the default 16px root font size.
+ *
+ * DERIVED, not guessed — `MediaCard.vue`'s `.media-card__caption` block is exactly
+ * two single-line rows and its vertical metrics are all tokens:
+ *   - `.media-card__caption` `padding: var(--space-3) … 0`   → 0.75rem   = 12.0px
+ *   - `.media-card__caption-title` `var(--text-base)` × `var(--leading-snug)`
+ *                                                          → 0.9375rem × 1.3 = 19.5px
+ *   - `.media-card__caption-sub` `var(--text-xs)` × inherited `var(--leading-normal)`
+ *                                                          → 0.75rem × 1.55  = 18.6px
+ *   - `.media-card__caption-sub` `margin-top: 2px`          → {@link LABEL_HEIGHT_FIXED_PX}
+ * = 52.1px, so this constant carries ~4px of deliberate slack. Over-reserving is the
+ * safe direction (a hair of extra room under the caption); UNDER-reserving is what
+ * overlaps rows. `virtual-grid.test.ts` reads those caption rules back and fails if
+ * any of the four inputs changes, so a restyle cannot silently invalidate the number.
+ *
+ * ⚠ Only {@link LABEL_HEIGHT_FIXED_PX} of this is real px — the rest is rem, so it
+ * GROWS with the viewer's root font size. Do not consume this constant directly in
+ * a rendered path; call {@link labelHeightForRootFontSize} (`MediaGrid` does).
+ */
 export const LABEL_HEIGHT = 56;
+
+/**
+ * The px basis every rem-valued token above is quoted against — i.e. the browser
+ * default root font size that {@link LABEL_HEIGHT} was derived at.
+ */
+export const REM_BASIS_PX = 16;
+
+/**
+ * The only part of {@link LABEL_HEIGHT} that is real px and therefore does NOT
+ * scale with the root font size: `.media-card__caption-sub`'s `margin-top: 2px`.
+ */
+export const LABEL_HEIGHT_FIXED_PX = 2;
+
+/**
+ * {@link LABEL_HEIGHT} corrected for the viewer's actual root font size (S69 review
+ * r2, finding 2a).
+ *
+ * The gap constants above solved their half of the root-font-size problem by pinning
+ * px in the stylesheet. The label block cannot be solved that way: it is TEXT, and
+ * pinning its height would clip a viewer's larger type while pinning its font sizes
+ * would opt card captions out of font scaling altogether — a worse trade than a
+ * spacing value. So the caption stays rem-valued and the MATH scales instead: the
+ * rem-derived part moves with the root font size, the one px part does not.
+ *
+ * At the default 16px root this returns exactly `LABEL_HEIGHT`, so nothing about the
+ * default rendering or the existing arithmetic changes. At a 20px root it returns
+ * `54 × 1.25 + 2` = 69.5px instead of 56px, which is what stops the POSTER GRID (the
+ * default view mode, and the one renderer whose row height is not caller-pinned)
+ * under-reserving ~8px per row and accumulating that through
+ * `padTop`/`totalHeight`.
+ *
+ * Non-finite / non-positive input (jsdom reports the root font size as `"medium"`,
+ * SSR has no CSSOM at all) falls back to `LABEL_HEIGHT` unchanged.
+ */
+export function labelHeightForRootFontSize(rootFontSizePx?: number | null): number {
+  if (typeof rootFontSizePx !== 'number' || !Number.isFinite(rootFontSizePx) || rootFontSizePx <= 0) {
+    return LABEL_HEIGHT;
+  }
+  const remPart = LABEL_HEIGHT - LABEL_HEIGHT_FIXED_PX;
+  return remPart * (rootFontSizePx / REM_BASIS_PX) + LABEL_HEIGHT_FIXED_PX;
+}
 
 /**
  * Width (px) of the `list` view mode's poster column (S68). FIXED — unlike the
@@ -160,6 +241,12 @@ export function computeCardWidth(containerWidth: number, columns: number, gap = 
 /**
  * Height (px) of one grid row including the row gap beneath it: poster (2:3) +
  * label block + row gap. Used to map scroll offset → row index.
+ *
+ * `labelHeight` defaults to {@link LABEL_HEIGHT}, which is only correct at a 16px
+ * root font size — a rendered caller should pass
+ * `labelHeightForRootFontSize(<measured root font size>)` instead (`MediaGrid`
+ * does). The default is kept so pure unit tests and any non-DOM caller stay on the
+ * documented 16px-root arithmetic.
  */
 export function computeRowHeight(
   cardWidth: number,

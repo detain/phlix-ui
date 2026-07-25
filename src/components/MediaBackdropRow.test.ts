@@ -66,6 +66,52 @@ const SFC_SOURCE = readFileSync(
   'utf8',
 );
 
+/**
+ * A `height` / `min-height` / `max-height` DECLARATION — and deliberately not
+ * `line-height` (S69 review r2, finding 3).
+ *
+ * The obvious `/\bheight:/` matches `line-height:` too, because the `-` in
+ * `line-height` is a word boundary: adding a `line-height` to the narrow-viewport
+ * title arm (a natural companion to the two-line clamp already there) would have
+ * failed the "the arm must not touch the height" test spuriously. S70 copies this
+ * test, so the regex is defined once, here, and pinned by its own test below.
+ */
+const HEIGHT_DECLARATION = /(?:^|[;{\s])(?:min-|max-)?height\s*:/m;
+
+/**
+ * The SFC's scoped stylesheet with CSS comments stripped. jsdom applies no styles, so
+ * every CSS assertion here reads the source back — the same technique
+ * `AppLayout.test.ts` / `PlayerPage.test.ts` use. Comments have to go first: several
+ * rules explain themselves by quoting the exact values they no longer use.
+ */
+const STYLE_BLOCK = (/<style[^>]*>([\s\S]*?)<\/style>/.exec(SFC_SOURCE)?.[1] ?? '').replace(
+  /\/\*[\s\S]*?\*\//g,
+  '',
+);
+
+/** The declaration block of the FIRST rule for `selector` in that stylesheet. */
+function cssRule(selector: string): string {
+  const at = STYLE_BLOCK.indexOf(`${selector} {`);
+  expect(at, `expected a \`${selector}\` rule in MediaBackdropRow.vue`).toBeGreaterThan(-1);
+  return STYLE_BLOCK.slice(at, STYLE_BLOCK.indexOf('}', at));
+}
+
+const ambientRule = (): string => cssRule('.media-backdrop-row__ambient');
+
+/**
+ * What the VIEWER sees, not what the declaration says: `filter` applies in the
+ * element's own coordinate space and `transform` scales the filtered result, so the
+ * apparent blur radius is `blur × scale`.
+ */
+function effectiveAmbientBlurPx(): number {
+  const decls = ambientRule();
+  const blur = /blur\((\d+(?:\.\d+)?)px\)/.exec(decls);
+  const scale = /transform:\s*scale\(\s*-?[\d.]+\s*,\s*(-?[\d.]+)\s*\)/.exec(decls);
+  expect(blur, 'the ambient colour field must still be blurred').not.toBeNull();
+  expect(scale, 'the ambient colour field must still be mirrored + zoomed').not.toBeNull();
+  return Number(blur![1]) * Math.abs(Number(scale![1]));
+}
+
 function makeRouter(): Router {
   const stub = { template: '<div />' };
   return createRouter({
@@ -298,21 +344,25 @@ describe('MediaBackdropRow — the no-backdrop wash (S69)', () => {
    * carries an `--ambient` modifier the scrim restyles off. Reverting the layer to
    * the page-level S19 treatment (a plain `blur(40px)` at the poster's own scale and
    * orientation) fails here.
+   *
+   * The radius is asserted as the EFFECTIVE one — `filter` applies in the element's
+   * own coordinate space and `transform` scales the result, so what the viewer sees is
+   * `blur × scale` (S69 review r2, finding 4; see the cost guards below for why the
+   * local radius is deliberately small).
    */
   it('renders the fallback as a DELIBERATE colour field, not a copy of the poster beside it', () => {
     const w = mountRow(noBackdrop());
     expect(w.find('.media-backdrop-row__wash').classes()).toContain(
       'media-backdrop-row__wash--ambient',
     );
-    const ambient = SFC_SOURCE.slice(SFC_SOURCE.indexOf('.media-backdrop-row__ambient {'));
-    expect(SFC_SOURCE.indexOf('.media-backdrop-row__ambient {')).toBeGreaterThan(-1);
-    const decls = ambient.slice(0, ambient.indexOf('}'));
+    const decls = ambientRule();
     // mirrored + zoomed, so it can never read as the adjacent poster
     expect(decls).toMatch(/transform:\s*scale\(-\d/);
-    // and blurred well past the page-level ambient's 40px
-    const blur = /blur\((\d+)px\)/.exec(decls);
-    expect(blur, 'the ambient colour field must still be blurred').not.toBeNull();
-    expect(Number(blur![1])).toBeGreaterThan(40);
+    // and blurred well past the page-level ambient's 40px, once the zoom is applied
+    expect(
+      effectiveAmbientBlurPx(),
+      'the ambient must still read as an abstract colour field, not a smeared poster',
+    ).toBeGreaterThan(100);
     // the scrim has an ambient-specific arm (the panel treatment)
     expect(SFC_SOURCE).toContain(
       '.media-backdrop-row__wash--ambient .media-backdrop-row__scrim {',
@@ -342,6 +392,61 @@ describe('MediaBackdropRow — the no-backdrop wash (S69)', () => {
       expect(w.find('.media-backdrop-row__img').exists()).toBe(false);
       expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('ambient');
     }
+  });
+});
+
+/**
+ * S69 review r2, finding 4 — the wash is paid ONCE PER RENDERED ROW, and until the
+ * companion server step S101 deploys, 100% of rows are in the more expensive of the
+ * two states. The named visual reference (`MediaDetail`'s hero) pays the identical
+ * treatment once per PAGE, so "it is what the hero does" is not on its own a
+ * justification here. jsdom has no compositor and the visual suite is out of bounds,
+ * so these guards pin the cost DECISIONS rather than measuring frames: no backdrop
+ * readback, a small filtered source box, and no per-row layer promotion.
+ */
+describe('MediaBackdropRow — per-row compositing cost (S69 review r2)', () => {
+  it('never asks the compositor for a backdrop readback (no backdrop-filter per row)', () => {
+    expect(
+      STYLE_BLOCK,
+      'a `backdrop-filter` here is a snapshot + re-blur of the region behind every ' +
+        'strip on screen, re-evaluated as each one moves through the viewport',
+    ).not.toContain('backdrop-filter');
+    // the scrim still exists, and the text contrast is still carried by its two
+    // gradients — the blur was never what made the title legible
+    const scrim = cssRule('.media-backdrop-row__scrim');
+    expect((scrim.match(/linear-gradient\(/g) ?? []).length).toBe(2);
+  });
+
+  it('keeps the hero soft focus, but as an element filter on the image itself', () => {
+    const img = cssRule('.media-backdrop-row__img');
+    // same 2px blur + saturate the hero scrim applies, moved onto the only thing that
+    // was ever behind that scrim
+    expect(img).toMatch(/filter:\s*blur\(2px\)\s*saturate\(1\.05\)/);
+    // …and the image is bled past the strip so the blur's own translucent edge is
+    // clipped outside the visible box instead of fading the strip's border
+    expect(img).toMatch(/inset:\s*-\d+px/);
+  });
+
+  it('blurs a SMALL source box instead of the whole strip, for the same visual result', () => {
+    const decls = ambientRule();
+    const local = Number(/blur\((\d+(?:\.\d+)?)px\)/.exec(decls)![1]);
+    expect(
+      local,
+      'a large kernel over the full strip area, once per rendered row, is the cost this avoids',
+    ).toBeLessThanOrEqual(24);
+    const inset = /inset:\s*([\d.]+)%/.exec(decls);
+    expect(inset, 'the filtered source box must be a fraction of the strip, not inset: 0').not.toBeNull();
+    expect(Number(inset![1])).toBeGreaterThan(0);
+    // …and the rendered field is unchanged from the full-size 64px × 1.9 spelling
+    expect(effectiveAmbientBlurPx()).toBeCloseTo(121.6, 5);
+  });
+
+  it('contains each row’s paint instead of promoting every row to its own layer', () => {
+    expect(cssRule('.media-backdrop-row')).toContain('contain: layout paint');
+    // `will-change: transform` / `translateZ(0)` would buy raster time with GPU memory
+    // once per WINDOWED ROW (~15 live at a time), which is the wrong trade here.
+    expect(STYLE_BLOCK).not.toContain('will-change');
+    expect(STYLE_BLOCK).not.toContain('translateZ');
   });
 });
 
@@ -543,18 +648,64 @@ describe('MediaBackdropRow — fixed geometry (virtualization contract, S69)', (
     expect(at, 'the strip must have a narrow-viewport arm').toBeGreaterThan(-1);
     // wide default reads the wide custom property…
     expect(SFC_SOURCE).toContain(
-      'grid-template-columns: var(--backdrop-row-poster) minmax(0, 1fr);',
+      `grid-template-columns: var(--backdrop-row-poster, ${BACKDROP_ROW_POSTER_WIDTH}px) minmax(0, 1fr);`,
     );
     // …and the narrow arm swaps in the narrow one
     const narrow = SFC_SOURCE.slice(at);
     expect(narrow).toContain(
-      'grid-template-columns: var(--backdrop-row-poster-narrow) minmax(0, 1fr);',
+      `grid-template-columns: var(--backdrop-row-poster-narrow, ${BACKDROP_ROW_NARROW_POSTER_WIDTH}px) minmax(0, 1fr);`,
     );
     // the arm must NOT touch the height: a viewport-dependent row height would
     // desync MediaGrid's windowing math, which is fed a single constant
     expect(narrow.slice(0, narrow.indexOf('@media (prefers-reduced-motion'))).not.toMatch(
-      /\bheight:/,
+      HEIGHT_DECLARATION,
     );
+  });
+
+  /**
+   * S69 review r2, finding 5. `grid-template-columns: var(--x) …` with no fallback is
+   * invalid at computed-value time if the custom property is ever absent, and an
+   * invalid `grid-template-columns` computes to `none` — poster and body stack in one
+   * column and the body text is clipped by the pinned 300px `overflow: hidden` box.
+   * Unreachable today (`rowStyle` always writes both properties, asserted above), but
+   * it is the one declaration in this file whose failure mode is structural rather
+   * than cosmetic, and the file uses fallbacks everywhere else.
+   *
+   * The fallbacks are also the stylesheet's ONLY px literals, so they are pinned to
+   * the constants here — otherwise "no px literal that could drift" would have become
+   * false a second time.
+   */
+  it('gives both poster-track custom properties a fallback, pinned to the constants', () => {
+    // STYLE_BLOCK, not SFC_SOURCE: the comments explain the fix by naming the
+    // `grid-template-columns: none` failure mode, which is not a declaration.
+    const templates = [...STYLE_BLOCK.matchAll(/grid-template-columns:\s*([^;]+);/g)].map(
+      (m) => m[1],
+    );
+    expect(templates, 'expected the wide rule and the narrow arm').toHaveLength(2);
+    for (const value of templates) {
+      expect(value, `\`${value}\` must degrade to a two-track layout, not to \`none\``).toMatch(
+        /var\(--backdrop-row-poster(?:-narrow)?,\s*\d+px\)/,
+      );
+    }
+    expect(templates[0]).toContain(`, ${BACKDROP_ROW_POSTER_WIDTH}px)`);
+    expect(templates[1]).toContain(`, ${BACKDROP_ROW_NARROW_POSTER_WIDTH}px)`);
+  });
+
+  it('uses a height regex that does NOT trip over line-height (S70 copies it)', () => {
+    // the false positive: `\bheight:` treats the `-` as a word boundary
+    expect(/\bheight:/.test('  line-height: var(--leading-snug);')).toBe(true);
+    // …which this one does not
+    expect(HEIGHT_DECLARATION.test('  line-height: var(--leading-snug);')).toBe(false);
+    expect(HEIGHT_DECLARATION.test('line-height:1.3')).toBe(false);
+    // …while still catching every spelling of a real height declaration
+    expect(HEIGHT_DECLARATION.test('  height: 300px;')).toBe(true);
+    expect(HEIGHT_DECLARATION.test('{height:300px}')).toBe(true);
+    expect(HEIGHT_DECLARATION.test('width: 1px;height: 2px;')).toBe(true);
+    expect(HEIGHT_DECLARATION.test('height: 1px;')).toBe(true);
+    expect(HEIGHT_DECLARATION.test('  min-height: 10px;')).toBe(true);
+    expect(HEIGHT_DECLARATION.test('  max-height: 10px;')).toBe(true);
+    // and it is line-anchored, so a height on any line of a block is found
+    expect(HEIGHT_DECLARATION.test('.x {\n  color: red;\n height: 4px;\n}')).toBe(true);
   });
 
   it('keeps that height for a long overview, no overview, and no images at all', () => {

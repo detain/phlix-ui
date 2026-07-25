@@ -39,8 +39,11 @@
  *     of always taking `w1280`. The `src` preference is deliberately the INVERSE of
  *     the detail hero's, and `backdrop_url_large` (`/original`) is not read here at
  *     all — see `backdropSrc` below.
- *   - Same two-axis scrim (top→bottom + left→right dark bias, 2px blur) so the
- *     text stays readable over ANY image, in both themes.
+ *   - Same two-axis scrim (top→bottom + left→right dark bias) plus the same 2px of
+ *     soft focus, so the text stays readable over ANY image in both themes — but the
+ *     soft focus is a `filter` on the image rather than the hero's
+ *     `backdrop-filter` on the scrim, because a compositor readback per RENDERED ROW
+ *     is not the same purchase as one per page (S69 review r2, finding 4).
  *   - Same cross-fade on decode, reduced-motion-safe.
  * Both wash layers are decorative: `aria-hidden` + `alt=""`.
  *
@@ -77,9 +80,13 @@
  * (a `@media` rule would have needed `!important` to beat it). Both widths are
  * still handed down from `virtual-grid.ts` as the `--backdrop-row-poster` /
  * `--backdrop-row-poster-narrow` custom properties, so the stylesheet holds the
- * BREAKPOINT but no px literal that could drift from the constants. The strip
- * HEIGHT stays viewport-independent: a per-breakpoint height would have to travel
- * through `MediaGrid`'s `rowHeight` prop, never through CSS.
+ * BREAKPOINT and the constants stay the single source of the numbers. The two
+ * `var(--backdrop-row-poster*, …px)` FALLBACKS are the stylesheet's only px
+ * literals; they exist because the failure mode of a missing custom property is
+ * structural (see the `grid-template-columns` comment) and a test pins them to the
+ * same constants, so they cannot drift either. The strip HEIGHT stays
+ * viewport-independent: a per-breakpoint height would have to travel through
+ * `MediaGrid`'s `rowHeight` prop, never through CSS.
  *
  * A11y semantics: mirrors S68's pattern — a NAMED `<article>` (role `article`,
  * accessible name = the item title) so assistive tech gets an item boundary + a
@@ -245,11 +252,12 @@ watch([backdropSrc, backdropSrcset], () => {
  * The two poster-column widths ride along as custom properties for the stylesheet's
  * `grid-template-columns` (wide) and its 720px arm (narrow) to consume: the
  * BREAKPOINT belongs in CSS, but the numbers still come from `virtual-grid.ts`, so
- * there is no px literal in the stylesheet that could drift from the constants.
- * Not a computed object literal per breakpoint, and NOT an inline
- * `grid-template-columns` — an inline one cannot be media-queried without
- * `!important`, which is what left this renderer with no narrow-viewport handling
- * at all (S69 review, finding 2).
+ * the stylesheet never re-states a width the constants own. (Its two `var()`
+ * FALLBACKS do repeat them as px — deliberately, see the docblock — and
+ * `MediaBackdropRow.test.ts` asserts they equal the constants.) Not a computed
+ * object literal per breakpoint, and NOT an inline `grid-template-columns` — an
+ * inline one cannot be media-queried without `!important`, which is what left this
+ * renderer with no narrow-viewport handling at all (S69 review, finding 2).
  */
 const rowStyle = computed(() => ({
   height: `${BACKDROP_ROW_HEIGHT}px`,
@@ -282,6 +290,27 @@ const posterSizes = `${BACKDROP_ROW_POSTER_WIDTH}px`;
  * 1.5–4 MB `/original` per rendered row (×100 rows a page). The durable fix is the
  * generic image resizer (S71–S73), which does not exist yet. In the meantime a
  * truthful `sizes` at least stops a 360px phone fetching `w1280` for a 320px strip.
+ *
+ * ── AND YES, `SHELL_GUTTER_PX` IS A PX MIRROR OF A REM TOKEN ──────────────────
+ * `var(--space-5)` is 1.25rem, so this constant re-introduces exactly the pattern the
+ * `.media-grid` gap fix set out to remove — a contradiction flagged by S69 review r2
+ * (finding 2c), recorded here honestly instead of behind a claim that the file
+ * contains no such literal. It cannot be a `var()`: a `sizes` value is resolved
+ * without element context (the preload scanner reads it before any style is computed),
+ * so a custom property in it never resolves — the number has to be a literal, and
+ * `AppLayout` owns the real declaration.
+ *
+ * Why that is acceptable HERE and was not acceptable for the gap: `sizes` is a
+ * FETCH HINT. If it drifts (a viewer with a 20px root really has 25px gutters, so
+ * the hint understates the strip by 10px) the only consequence is that the browser
+ * may pick a neighbouring `srcset` candidate — the two candidates are `w780` and
+ * `w1280`, and a 10px error only matters within 10px of the switch-over width. It
+ * can never move a pixel of layout, and it can never desync the windowing math,
+ * which is exactly what the gap literal could do. The strip's own
+ * `column-gap: var(--space-5)` stays a token for the same reason: it is decoration
+ * inside a box whose height is pinned, so it has no arithmetic to agree with (the
+ * narrow-arm comment's "20 (gap)" is a worked example at the default root, not a
+ * contract).
  */
 const SHELL_GUTTER_PX = 20; // AppLayout `.shell__main` padding-inline (var(--space-5))
 const BACKDROP_SIZES = `calc(100vw - ${2 * SHELL_GUTTER_PX}px)`;
@@ -394,8 +423,16 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
      virtualization contract, and it stays viewport-independent. The two-track
      layout is decoration and lives here so the narrow arm below can change it; both
      widths are still the virtual-grid.ts constants, handed in as custom
-     properties. */
-  grid-template-columns: var(--backdrop-row-poster) minmax(0, 1fr);
+     properties.
+
+     The fallback is not decorative (S69 review r2, finding 5): if the custom
+     property is ever absent the WHOLE declaration is invalid at computed-value time,
+     which means `grid-template-columns: none` — poster and body stack in one column
+     and the body's text is clipped by the pinned 300px overflow:hidden box. Every
+     other token in this file carries a fallback for cosmetic failures; this is the
+     one whose failure is structural. MediaBackdropRow.test.ts pins the fallback to
+     BACKDROP_ROW_POSTER_WIDTH so the literal cannot drift from the constant. */
+  grid-template-columns: var(--backdrop-row-poster, 200px) minmax(0, 1fr);
   align-items: stretch;
   column-gap: var(--space-5);
   border-radius: var(--radius-lg);
@@ -413,6 +450,16 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
      most in the ambient state (see `__ambient`). `box-shadow: inset`, never
      `border`: a border would eat 2px of the pinned 300px content box. */
   box-shadow: inset 0 0 0 1px var(--border-subtle, rgba(255, 255, 255, 0.06));
+  /* Per-row cost control (S69 review r2, finding 4). Unlike the named visual
+     reference — MediaDetail's hero, ONE per page — this strip repeats per RENDERED
+     ROW, so paint containment is worth the one declaration: the row's paint is
+     isolated to its own (already clipped) box, so an off-screen or overscan row does
+     not participate in the rest of the page's paint work, and nothing inside it can
+     invalidate outside it. Same treatment `AppBackdrop.vue`'s ambient layer already
+     uses. Deliberately NOT `will-change`/`transform: translateZ(0)`: that promotes
+     EVERY windowed row to its own compositor layer, trading raster time for GPU
+     memory ~15 times over. */
+  contain: layout paint;
 }
 
 /* --- wash: the wide backdrop (or blurred poster) + its legibility scrim ------
@@ -427,11 +474,25 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 }
 .media-backdrop-row__img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  /* Bled 3px past the strip on every side (and clipped back by the row's
+     overflow/containment) so the soft-focus filter below cannot fade the image out
+     at the visible edge — a blur on an `inset: 0` box makes its own outline
+     translucent. All four insets AND an explicit size, because an absolutely
+     positioned REPLACED element with `width: auto` falls back to its intrinsic
+     width and simply ignores `right`/`bottom`. */
+  inset: -3px;
+  width: calc(100% + 6px);
+  height: calc(100% + 6px);
   object-fit: cover;
   object-position: center;
+  /* The soft focus behind the text, moved here OFF the scrim's `backdrop-filter`
+     (S69 review r2, finding 4). Visually the same thing — the only thing painted
+     behind the scrim is this image — but an element filter rasters the image once,
+     whereas a `backdrop-filter` makes the compositor snapshot and re-blur the region
+     behind the scrim, per row, again whenever that backdrop moves relative to the
+     viewport (i.e. every frame of a scroll). MediaDetail's hero can afford the
+     readback because it paints ONE per page; a virtualized strip list cannot. */
+  filter: blur(2px) saturate(1.05);
   opacity: 0;
   transition: opacity var(--dur-slow) var(--ease-out);
 }
@@ -449,33 +510,55 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
    scale and orientation. So the layer is kept (the per-item colour is the point —
    it is what makes a hero strip feel like the item rather than a grey panel) but it
    is rendered as an abstract COLOUR FIELD instead of a picture:
-     - mirrored and zoomed 1.9x (`scale(-1.9, 1.9)`) so it can never align with, or
-       be read as a copy of, the poster beside it;
-     - blurred far past recognisability (64px vs 40px), and the zoom is also what
-       removes the transparent edge-bleed a large blur on an `inset: 0` box
-       produces — that dark vignette frame was itself half of why it looked broken;
+     - mirrored and zoomed so it can never align with, or be read as a copy of, the
+       poster beside it;
+     - blurred far past recognisability — 121.6px of visual radius, 3x the S19 page
+       ambient's 40px — and the zoom is also what removes the transparent edge-bleed
+       a large blur produces, that dark vignette frame being itself half of why it
+       looked broken;
      - a touch more presence (0.34) than the page ambient, since the scrim sits on
        top and carries the text contrast anyway.
    The `--ambient` wash modifier then adds a left-anchored surface plinth under the
    poster column (see `__wash--ambient .media-backdrop-row__scrim`), so the strip
-   reads as a tinted panel with the poster mounted on it. */
+   reads as a tinted panel with the poster mounted on it.
+
+   ── AND IT IS PAID PER RENDERED ROW, so the geometry is chosen for cost (S69 review
+   r2, finding 4). Until S101 deploys this is the state 100% of rows take, and the
+   naive spelling of the same picture — `inset: 0` + `blur(64px)` + `scale(1.9)` —
+   asks the browser to blur the FULL strip area (~1360x300) with a 64px kernel once
+   per row. Filters apply in the element's own coordinate space and the transform
+   scales the RESULT, so a quarter-size source box with a quarter of the radius and 4x
+   the zoom is the identical image: 16px x 7.6 = 121.6px = the old 64px x 1.9, and
+   `background-size: cover` crops the same because the box keeps the strip's aspect
+   ratio. What changes is the work: ~1/16 of the pixels through a 1/4 radius kernel.
+   `inset: 37.5%` leaves exactly 25% x 25%, centred, so the 1.9x-of-strip coverage and
+   the off-strip position of the blur's translucent edge are both unchanged. */
 .media-backdrop-row__ambient {
   position: absolute;
-  inset: 0;
+  inset: 37.5%; /* a centred 25% x 25% source box — see the cost note above */
   background-size: cover;
   background-position: center;
   opacity: 0.34;
-  transform: scale(-1.9, 1.9);
-  filter: blur(64px) saturate(1.5);
+  transform: scale(-7.6, 7.6);
+  filter: blur(16px) saturate(1.5);
 }
-/* Scrim: the same two-axis dark bias + slight blur MediaDetail uses, so the
-   title/meta/overview stay legible over ANY image in both themes. Bottoms out
-   into the app surface rather than a fixed black. */
+/* Scrim: the same two-axis dark bias MediaDetail uses, so the title/meta/overview
+   stay legible over ANY image in both themes. Bottoms out into the app surface
+   rather than a fixed black.
+
+   GRADIENTS ONLY — no `backdrop-filter` here, by design (S69 review r2, finding 4).
+   MediaDetail's hero scrim blurs its backdrop with one `backdrop-filter` per PAGE;
+   copying that into a per-ROW renderer buys the same 2px of softness for a
+   compositor readback of every strip on screen, re-evaluated as each one moves
+   through the viewport. In the backdrop state that softness now lives on the image
+   itself (`__img`'s `filter`), which is cheaper and looks the same since the image is
+   the only thing behind this element. In the ambient state it is not needed at all:
+   the layer underneath is already a 121.6px-blurred colour field, so blurring the
+   composite by a further 2px is invisible. The contrast the text actually depends on
+   is carried entirely by the two gradients below. */
 .media-backdrop-row__scrim {
   position: absolute;
   inset: 0;
-  -webkit-backdrop-filter: blur(2px) saturate(1.05);
-  backdrop-filter: blur(2px) saturate(1.05);
   background:
     linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
     linear-gradient(to right, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 70%);
@@ -629,7 +712,10 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
    varied per breakpoint would have to be routed through the `rowHeight` prop. */
 @media (max-width: 720px) {
   .media-backdrop-row {
-    grid-template-columns: var(--backdrop-row-poster-narrow) minmax(0, 1fr);
+    /* Fallback for the same reason as the wide rule above: a missing custom property
+       invalidates the whole declaration → `none` → a one-column collapse with clipped
+       text. Pinned to BACKDROP_ROW_NARROW_POSTER_WIDTH by a test. */
+    grid-template-columns: var(--backdrop-row-poster-narrow, 120px) minmax(0, 1fr);
     column-gap: var(--space-4);
   }
   .media-backdrop-row__body {

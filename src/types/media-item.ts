@@ -114,33 +114,48 @@ export interface MediaListItem {
      */
     still_url?: string | null;
     /**
-     * Wide backdrop image URL for row/strip renderers — a TMDB **`/w780`** URL (the
-     * server width-swaps it up from the stored `/w500`; non-TMDB URLs pass through
-     * as stored).
+     * Wide backdrop image URL for the item's hero/strip treatment.
      *
-     * ON THE LIST SHAPE as of the companion server step S101: `MediaItemShaper::
-     * shape()` always emits this key, `null` when the item has no backdrop — which
+     * ⚠ THE WIDTH DIFFERS BY ENDPOINT, and this interface is extended by
+     * {@link MediaDetail} (and therefore by the `MediaItem` alias), so read the line
+     * that matches the response you were actually handed:
+     *   - **LIST** (`GET /api/v1/media`, `MediaItemShaper::shape()`, companion server
+     *     step S101): a TMDB **`/w780`** URL — the server width-swaps it up from the
+     *     stored `/w500`, because a virtualized row list wants a row-sized image.
+     *     Non-TMDB URLs pass through as stored.
+     *   - **DETAIL** (`GET /api/v1/media/{id}`, `MediaItemShaper::shapeDetail()`): the
+     *     stored **`/w500`** URL. `shapeDetail()` deliberately OVERWRITES the list
+     *     value, because the detail hero prefers the `/original`
+     *     {@link MediaDetail.backdrop_url_large} and only falls back to this field
+     *     (`MediaDetail.vue` names it "the w500 `backdrop_url`"). Do not "align" the
+     *     two shapes — making detail emit `/w780` is exactly the hero downgrade the
+     *     server-side guard test exists to catch.
+     *
+     * Both shapes ALWAYS emit the key, `null` when the item has no backdrop — which
      * is every one of the seven backdrop-less types (`track`, `music`, `album`,
      * `artist`, `photo`, `book`, `audiobook`) plus any unmatched title. So guard on
      * `null`, never on key existence. Still optional here for back-compat with a
      * pre-S101 server and with synthetic items (local files).
-     *
-     * Note the size ladder deliberately stops below `/original`: see
-     * `backdrop_srcset` and `MediaDetail.backdrop_url_large`.
      */
     backdrop_url?: string | null;
     /**
-     * Responsive `srcset` for the backdrop — on the list shape exactly TWO
-     * candidates, `"<w780 url> 780w, <w1280 url> 1280w"`, or `null` (same rule as
-     * `backdrop_url`). `/original` is deliberately NOT a candidate: it is a
-     * 1.5–4 MB JPEG, and a virtualized library page mounts ~100 rows.
+     * Responsive `srcset` for the backdrop. ⚠ Endpoint-dependent too — same rule as
+     * {@link backdrop_url} about which line applies to the item you were handed:
+     *   - **LIST**: exactly TWO candidates, `"<w780 url> 780w, <w1280 url> 1280w"`,
+     *     or `null`. `/original` is deliberately NOT a candidate here: it is a
+     *     1.5–4 MB JPEG, and a virtualized library page mounts ~100 rows.
+     *   - **DETAIL**: the THREE-step `"<w780> 780w, <w1280> 1280w, <original> 1920w"`
+     *     ladder — `/original` IS the top candidate, because a detail page paints
+     *     exactly ONE full-bleed hero. `MediaDetail.test.ts` pins both a `/w500`
+     *     `backdrop_url` and an `original`-bearing srcset as the detail fixtures.
      *
      * TMDB's ladder is `w300, w780, w1280, original`, so there is no step between
-     * `w1280` and `original`. A wide row on a 2x display therefore wants more device
-     * pixels than `w1280` supplies, and that is an accepted, documented limitation —
-     * the durable fix is the generic image resizer (S71–S73), not `/original`.
-     * Consumers should still set `sizes` to the element's real rendered width so the
-     * browser picks `w780` on narrow viewports instead of always fetching `w1280`.
+     * `w1280` and `original`. A wide ROW on a 2x display therefore wants more device
+     * pixels than the list shape's `w1280` supplies, and that is an accepted,
+     * documented limitation — the durable fix is the generic image resizer (S71–S73),
+     * not putting `/original` on the list shape. Consumers should still set `sizes` to
+     * the element's real rendered width so the browser picks `w780` on narrow
+     * viewports instead of always fetching `w1280`.
      */
     backdrop_srcset?: string | null;
 }
