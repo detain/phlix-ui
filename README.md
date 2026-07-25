@@ -28,7 +28,7 @@ Vue app.
   reduced-motion, an i18n-readiness seam.
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
-> **Status:** `v0.74.0`. Pre-1.0, so minor releases may include breaking changes. See
+> **Status:** `v0.98.30`. Pre-1.0, so minor releases may include breaking changes. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
 
 ---
@@ -58,7 +58,7 @@ Vue app.
 // package.json
 {
   "dependencies": {
-    "@phlix/ui": "github:detain/phlix-ui#v0.74.0"
+    "@phlix/ui": "github:detain/phlix-ui#v0.98.30"
   }
 }
 ```
@@ -183,6 +183,7 @@ The "Nocturne" system ships three themes, applied via a `data-theme` attribute o
 | `density` | `'comfortable'` | or `'compact'` (smaller controls) |
 | `cardSize` | `180` | poster width in px (drives grid auto-fit) |
 | `gridDensity` | `'comfy'` | `'cozy' \| 'comfy' \| 'dense'` |
+| `viewMode` | `'grid'` | `ViewMode` — `'grid' \| 'list'` today (`'backdrop'`/`'table'` reserved); set by the `FilterBar` toggle, read by `LibraryPage` |
 | `reducedMotion` | `'auto'` | `'auto' \| 'on' \| 'off'` (auto honors the OS setting) |
 | `atmosphere` | `true` | film-grain/vignette + ambient player glow |
 | `autoplay` | `true` | up-next auto-advance |
@@ -316,6 +317,10 @@ Everything below is a named export from the package root (`import { Button } fro
 ### Media surfaces
 
 `MediaCard` · `MediaGrid` (virtualized) · `MediaRow` · `MediaHomeRow` · `MediaDetail` · `FilterBar`.
+`MediaGrid` also takes a `#card` slot plus `columns` / `rowHeight` props (they drive both the inline
+`grid-template-columns` and the windowing math), so a host can swap in a per-`viewMode` renderer —
+`src/components/MediaListRow.vue` for `'list'`. Those renderers are internals of
+`src/pages/LibraryPage.vue` and are deliberately **not** re-exported.
 
 ### Player surface
 
@@ -378,6 +383,8 @@ createPhlixApp({
 ```
 
 Admin API clients (`AdminUsersApi`, `AdminLiveTvApi`, …) and their types are exported for direct use.
+The hub-only per-user relay controls live on `AdminUsersApi.getBandwidth()` / `setThrottle()` /
+`setQuota()` (with `DEFAULT_THROTTLE_BPS` / `THROTTLE_BPS_OPTIONS` / `THROTTLE_BPS_LEVELS`).
 
 ---
 
