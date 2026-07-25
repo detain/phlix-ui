@@ -403,7 +403,16 @@ async function onRemove(item: MediaItem): Promise<void> {
         for the layout. The final `v-else` grid branch must stay UNCONDITIONAL: a
         stale/garbage persisted `viewMode` is tolerated rather than sanitized (see
         the `viewMode` docblock in usePreferencesStore.ts) and it is the only thing
-        that renders items for an out-of-union value.
+        THIS PAGE renders for an out-of-union value.
+
+        Subtlety worth knowing before you "simplify" that `v-else` into another
+        `v-else-if` (S68 found this the hard way): a chain where every branch is
+        false makes the slot yield only a comment vnode, which Vue's `renderSlot`
+        treats as EMPTY — it then silently renders MediaGrid's own default card
+        instead. So the bug hides in plain sight (items still appear, and still
+        work, because the grid-level listeners above are also still bound) right up
+        until someone prunes those listeners as "dead". Keep the `v-else`; the
+        LibraryPage test that invokes the slot directly is what enforces it.
       -->
       <MediaGrid
         ref="gridRef"

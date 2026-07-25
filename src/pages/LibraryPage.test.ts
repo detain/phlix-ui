@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { Comment, Fragment, nextTick, type VNode } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import LibraryPage from './LibraryPage.vue';
@@ -472,6 +472,34 @@ describe('LibraryPage — list view (S68)', () => {
     return Object.keys(vm.$.vnode.props ?? {}).filter((k) => k.startsWith('on'));
   }
 
+  /**
+   * The component vnodes LibraryPage's `#card` slot produces for one item.
+   *
+   * Asserting on the DOM alone CANNOT prove the `v-else` is unconditional: Vue's
+   * `renderSlot` treats a slot that yields only a comment vnode (every `v-if` /
+   * `v-else-if` false) as empty and silently renders MediaGrid's own DEFAULT card
+   * instead — which still looks and behaves right here, because the grid-level
+   * listeners are also still bound. Invoking the slot directly is what
+   * discriminates: a `v-else-if` chain that can all be false returns a bare
+   * Comment, an unconditional `v-else` always returns a real renderer.
+   */
+  function slotRenderers(
+    w: Awaited<ReturnType<typeof mountAt>>['w'],
+    item: MediaItem,
+  ): VNode[] {
+    const slot = w.findComponent({ name: 'MediaGrid' }).vm.$slots.card as
+      | ((p: { item: MediaItem; index: number }) => VNode[])
+      | undefined;
+    expect(slot, 'LibraryPage no longer fills MediaGrid’s #card slot').toBeTypeOf('function');
+    // The compiled slot wraps its branch in a Fragment; keep only the real
+    // component vnodes (a `v-if` placeholder is a Comment).
+    const flatten = (nodes: VNode[]): VNode[] =>
+      nodes.flatMap((n) =>
+        n.type === Fragment ? flatten((n.children ?? []) as VNode[]) : n.type === Comment ? [] : [n],
+      );
+    return flatten(slot!({ item, index: 0 }) ?? []);
+  }
+
   async function mountWithMode(mode: string) {
     localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: mode }));
     setActivePinia(createPinia());
@@ -513,8 +541,8 @@ describe('LibraryPage — list view (S68)', () => {
   });
 
   // The preferences store deliberately does NOT sanitize `viewMode` on hydration,
-  // so the unconditional `v-else` is the only thing that renders items for a
-  // stale/garbage persisted value. A `v-else-if` chain here would render NOTHING.
+  // so the unconditional `v-else` is the only thing the page itself renders for a
+  // stale/garbage persisted value.
   it('falls back to the poster grid for an out-of-union persisted mode', async () => {
     const { w } = await mountWithMode('sideways-carousel');
     expect(w.findAllComponents({ name: 'MediaGrid' })).toHaveLength(1);
@@ -525,6 +553,19 @@ describe('LibraryPage — list view (S68)', () => {
     const grid = w.findComponent({ name: 'MediaGrid' });
     expect(grid.props('columns')).toBeUndefined();
     expect(grid.props('rowHeight')).toBeUndefined();
+  });
+
+  // ...and the branch that renders it must be the PAGE's own `v-else`, not Vue's
+  // silent slot-fallback to MediaGrid's default card (see `slotRenderers`).
+  it('the #card slot itself yields a renderer for EVERY mode, garbage included', async () => {
+    const item = media({ id: 'lr1' });
+    for (const mode of ['list', 'grid', 'backdrop', 'table', 'sideways-carousel', '']) {
+      const { w } = await mountWithMode(mode);
+      const rendered = slotRenderers(w, item);
+      expect(rendered, `#card slot rendered nothing for viewMode="${mode}"`).toHaveLength(1);
+      expect(rendered[0].type).toBe(mode === 'list' ? MediaListRow : MediaCard);
+      w.unmount();
+    }
   });
 
   it('wires ALL TEN host events onto the list row', async () => {
