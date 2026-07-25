@@ -342,13 +342,15 @@ axis.
 `ApiClient.listArtists()` / `listAlbums()` / `listTracks()` take `{ limit, offset }` (`listAlbums` also
 takes `{ artist }`) and return the page envelopes `MusicArtistsResult` / `MusicAlbumsResult` /
 `MusicTracksResult` — the rows plus the `total` and the `limit`/`offset` the server actually *applied*,
-plus an `artist` echo of the applied filter on albums. The artist drill-down filters **server-side**
-(`?artist=`, exact/case-insensitive/trimmed); do not filter an album page in the browser, because
-`/albums` is ordered globally by artist then title, so page 1 spans only a handful of artists.
-`getAlbum(title, artist?)` takes the artist for the same reason — album titles are shared between
-artists, so title alone resolves to the server's first match. An album row's embedded `tracks` may be a
-prefix: check `MusicAlbum.tracksTruncated` and fetch `getAlbum()` for the whole list. This is a
-signature change from the pre-paging helpers (which returned bare arrays) — see
+plus an `artist` echo of the applied filter on albums. Those three envelopes and the `MusicPageParams`
+argument type are exported from the package root; the row types *inside* them are **not**, so name a row
+structurally (`MusicAlbumsResult['albums'][number]`) rather than importing it. The artist drill-down
+filters **server-side** (`?artist=`, exact/case-insensitive/trimmed); do not filter an album page in the
+browser, because `/albums` is ordered globally by artist then title, so page 1 spans only a handful of
+artists. `getAlbum(title, artist?)` takes the artist for the same reason — album titles are shared
+between artists, so title alone resolves to the server's first match. An album row's embedded `tracks`
+may be a prefix: check that row's own `tracksTruncated` flag and fetch `getAlbum()` for the whole list.
+This is a signature change from the pre-paging helpers (which returned bare arrays) — see
 [`CHANGELOG.md`](./CHANGELOG.md).
 
 `src/components/MusicPager.vue` is the shared pager for all of those listings. Props: `offset` /

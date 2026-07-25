@@ -53,8 +53,9 @@ describe('Icon', () => {
   });
 
   // DERIVED from the registry, never hand-copied. The previous version iterated a
-  // literal list that had drifted 12 names behind `icons` — including the two the
-  // S110 pager added — so it "covered every registered icon" only in its title.
+  // literal list of 55 names, so 24 of the 79 registered names were never rendered
+  // — including the two the S110 pager added — and it "covered every registered
+  // icon" only in its title.
   // Deriving means a new registration is covered the moment it lands.
   // Deliberate tripwire: `icon-registry.ts`'s docblock quotes the registry size (79)
   // to justify its own existence, and prose cannot be type-checked. Pinning the count
