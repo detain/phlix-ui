@@ -144,16 +144,34 @@ export interface MediaDetail extends MediaListItem {
     studio?: string | null;
     /** Owning library id. Detail shape only. */
     library_id?: string | null;
-    /** Backdrop image URL (TMDB w500); detail only. Used as the fallback source
-     *  for the full-bleed page background when `backdrop_url_large` is absent. */
+    /**
+     * Backdrop image URL (TMDB w500).
+     *
+     * ⚠ STILL DETAIL-ONLY. The three `backdrop_*` fields are emitted by the server's
+     * `MediaItemShaper::shapeDetail()` and NOT by `shape()`, so `GET /api/v1/media`
+     * (the media grid, every alternate view mode, every row) never carries them. A
+     * companion server step (S101) is adding a row-appropriate backdrop to the list
+     * shape; until it lands, any LIST-mounted consumer must have a real fallback for
+     * all three being absent — `MediaBackdropRow` is the live example — and must not
+     * be tested against a hand-populated fixture and assumed to be exercising the
+     * backdrop path.
+     *
+     * Used as the source for the detail page's full-bleed background when
+     * `backdrop_url_large` is absent. Note the size preference is per-consumer: one
+     * full-bleed hero prefers `backdrop_url_large`, but a virtualized list of N rows
+     * prefers THIS one (or the srcset) and keeps `/original` as a last resort.
+     */
     backdrop_url?: string | null;
     /** Full-resolution (/original) backdrop for the full-bleed page background;
-     *  detail only. Preferred over `backdrop_url` when present. */
+     *  detail only (see `backdrop_url`). Preferred over `backdrop_url` by the detail
+     *  hero — deliberately NOT by per-row renderers, which would decode a ≥1920px
+     *  image once per rendered row. */
     backdrop_url_large?: string | null;
     /** Responsive `srcset` string for the backdrop, e.g.
-     *  `"url w780, url w1280, url original"`; detail only + optional. When present
-     *  the backdrop `<img>` uses it so the browser fetches an appropriately-sized
-     *  image; degrades to the single `backdrop_url_large`/`backdrop_url` src. */
+     *  `"url w780, url w1280, url original"`; detail only + optional (see
+     *  `backdrop_url`). When present the backdrop `<img>` uses it so the browser
+     *  fetches an appropriately-sized image; degrades to a single
+     *  `backdrop_url`/`backdrop_url_large` src. */
     backdrop_srcset?: string | null;
     /** Theme music audio URL (signed, short-lived, streamable MP3); detail only.
      *  When present the detail hero renders an unobtrusive mute/stop control and

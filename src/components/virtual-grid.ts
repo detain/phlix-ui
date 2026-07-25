@@ -9,9 +9,26 @@
  * @license MIT
  */
 
-/** Layout constants mirrored from `MediaGrid.vue`'s scoped CSS (px). */
-export const COL_GAP = 20; // var(--space-5)
-export const ROW_GAP = 24; // var(--space-6)
+/**
+ * Layout constants mirrored from `MediaGrid.vue`'s scoped CSS (px).
+ *
+ * These MUST be absolute px, not a token reference: the windowing math is pure
+ * arithmetic that runs before (and without) layout — jsdom has no layout, SSR has
+ * no CSSOM, and the first paint has no measured gap — so `computeWindow` needs a
+ * number at module scope. There is no way to make it read `var(--space-6)`.
+ *
+ * That means the CSS side has to agree with THESE numbers rather than the other
+ * way round (S69 review, finding 7). `--space-6`/`--space-5` are `1.5rem`/`1.25rem`,
+ * so a viewer whose browser root font-size is not 16px used to get a real gap of
+ * e.g. 30px/25px against an assumed 24/20 — a per-row error that ACCUMULATES
+ * through `padTop`/`totalHeight` (≈1200px of drift over 200 rows at a 20px root)
+ * and is worst for the fixed-height renderers, whose entire row height is
+ * constants. `.media-grid` therefore now writes these same px literals instead of
+ * the rem tokens, and `virtual-grid.test.ts` reads `MediaGrid.vue`'s stylesheet
+ * back and asserts the two still match, so the pair cannot drift again.
+ */
+export const COL_GAP = 20; // .media-grid column-gap (was var(--space-5) = 1.25rem)
+export const ROW_GAP = 24; // .media-grid row-gap    (was var(--space-6) = 1.5rem)
 /** Poster is 2:3, so its height is the card width × this factor. */
 export const POSTER_RATIO = 3 / 2;
 /** Title + meta block under the poster (px). */
@@ -82,6 +99,27 @@ export const LIST_ROW_HEIGHT = LIST_ROW_POSTER_WIDTH * POSTER_RATIO;
 export const BACKDROP_ROW_POSTER_WIDTH = 200;
 
 /**
+ * Width (px) of the `backdrop` strip's poster column on a NARROW viewport (S69
+ * review, finding 2) — below `MediaBackdropRow`'s 720px arm, which is the same
+ * breakpoint the visual reference (`MediaDetail`'s hero) collapses at.
+ *
+ * At a 360px viewport the grid content box is 320px, so a 200px poster track left
+ * the strip body `320 − 200 − gap − padding` ≈ 76px: the title ellipsised to a
+ * 2-3 character stub and the overview was unreadable. Dropping the track to the
+ * LIST row's width restores ≈168px of body.
+ *
+ * Deliberately `LIST_ROW_POSTER_WIDTH` rather than a third number: that width's
+ * effect on the composed `MediaCard`'s hover overlay is already worked out above
+ * (it needs `hide-caption`, which this renderer already passes), so the narrow
+ * arm inherits a known-good poster width instead of inventing an unaudited one.
+ * The strip HEIGHT does not change with it — see the note on
+ * `BACKDROP_ROW_HEIGHT`: a viewport-dependent row height would desync the
+ * windowing math, so the narrower poster simply renders 180px tall inside the
+ * still-pinned 300px strip.
+ */
+export const BACKDROP_ROW_NARROW_POSTER_WIDTH = LIST_ROW_POSTER_WIDTH;
+
+/**
  * Height (px) of one `backdrop` view mode hero strip, EXCLUDING the row gap
  * beneath it (S69). Derived from the FIXED poster width via the 2:3 ratio, so the
  * composed `MediaCard`'s poster fills the strip's full height and the strip never
@@ -93,6 +131,13 @@ export const BACKDROP_ROW_POSTER_WIDTH = 200;
  * NOTE the ratio is applied to the POSTER WIDTH, never to the row width: a
  * `backdrop` row is one full-width column, so `computeRowHeight()` would reserve
  * ~2100px for a 300px strip. See `computeFixedRowHeight()` below.
+ *
+ * NOTE ALSO that this height is VIEWPORT-INDEPENDENT and must stay that way. The
+ * narrow-viewport arm (`BACKDROP_ROW_NARROW_POSTER_WIDTH`) narrows the poster
+ * COLUMN from CSS only; it deliberately does not derive a second height from that
+ * width, because the height is what `MediaGrid`'s windowing math is fed. Any
+ * renderer that genuinely needs a different height per breakpoint has to route it
+ * through the `rowHeight` prop (so the math changes with it), never through CSS.
  */
 export const BACKDROP_ROW_HEIGHT = BACKDROP_ROW_POSTER_WIDTH * POSTER_RATIO;
 
@@ -133,9 +178,10 @@ export function computeRowHeight(
  * `computeRowHeight()` above derives its height from the CARD WIDTH because a
  * poster grid's 2:3 posters grow with the column width. A list row (S68) or a
  * backdrop hero strip (S69) is not a poster: its height is intrinsic, and applying
- * `POSTER_RATIO` to the full row width would compute a row several times too tall — which, once virtualization
- * is on, mis-computes `startIndex`/`endIndex`/`padTop`/`totalHeight` (blank
- * bands, mis-positioned rows and wrong `need-range` pages). Parameterizing the
+ * `POSTER_RATIO` to the full row width would compute a row several times too
+ * tall — which, once virtualization is on, mis-computes
+ * `startIndex`/`endIndex`/`padTop`/`totalHeight` (blank bands, mis-positioned rows
+ * and wrong `need-range` pages). Parameterizing the
  * height here is the sanctioned way to keep the rendered layout and the
  * windowing math on the same numbers; a CSS override is not (`MediaGrid` writes
  * an INLINE `grid-template-columns` from the same `columns` value it windows on).

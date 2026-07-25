@@ -500,10 +500,19 @@ function slotRenderers(w: Awaited<ReturnType<typeof mountAt>>['w'], item: MediaI
   return flatten(slot!({ item, index: 0 }) ?? []);
 }
 
-async function mountWithMode(mode: string) {
+/**
+ * Mount the page with a persisted `viewMode`, optionally over a specific payload.
+ *
+ * The default payload is `media()` — deliberately the LIST shape `GET /api/v1/media`
+ * really returns, i.e. no backdrop keys. Pass `items` when a test needs a different
+ * shape; do NOT add backdrop fields to the shared `media()` helper, or the
+ * backdrop-branch tests below stop discriminating (S69 review, finding 1).
+ */
+async function mountWithMode(mode: string, items?: MediaItem[]) {
   localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: mode }));
   setActivePinia(createPinia());
-  stubFetch({ media: { items: [media({ id: 'lr1', name: 'Dune' })], total: 1 } });
+  const payload = items ?? [media({ id: 'lr1', name: 'Dune' })];
+  stubFetch({ media: { items: payload, total: payload.length } });
   const out = await mountAt('lib1');
   await flushPromises();
   return out;
@@ -817,6 +826,99 @@ describe('LibraryPage — backdrop hero view (S69)', () => {
     expect(w.findComponent(MediaBackdropRow).exists()).toBe(false);
     expect(grid.props('rowHeight')).toBeUndefined();
     expect(grid.props('columns')).toBeUndefined();
+  });
+});
+
+/**
+ * S69 review, finding 1 — WHICH wash the backdrop view actually paints on THIS
+ * surface, pinned at the page level.
+ *
+ * `MediaBackdropRow` has two wash states: the wide backdrop `<img>` when the item
+ * carries backdrop data, and a poster-derived colour wash when it does not. The
+ * component suite proves both work, but it mounts a hand-built fixture carrying all
+ * three backdrop keys — which is the DETAIL shape. This page consumes
+ * `GET /api/v1/media`, whose shaper (`MediaItemShaper::shape()`) emits none of them;
+ * they exist only in `shapeDetail()` (hence "detail only" on the three fields in
+ * `types/media-item.ts`). So every strip here takes the fallback today, and the
+ * original eight page-level S69 tests all ran that branch without one of them
+ * asserting it.
+ *
+ * These tests pin BOTH states from the page, so that:
+ *   - the current behaviour is stated rather than accidental,
+ *   - the companion server step (S101) adding backdrops to the list shape is visible
+ *     as a behaviour change here rather than silently switching branches, and
+ *   - a renderer that collapsed to a single branch fails, whichever branch it picked.
+ */
+describe('LibraryPage — which backdrop wash the LIST payload renders (S69)', () => {
+  /** The list shape, spelled out: `media()` carries no backdrop keys at all. */
+  function listShapedItem(): MediaItem {
+    const item = media({ id: 'lr1', name: 'Dune', poster_url: 'https://img/dune.jpg' });
+    expect(item.backdrop_url ?? null, 'GET /api/v1/media emits no backdrop_url').toBeNull();
+    expect(item.backdrop_url_large ?? null).toBeNull();
+    expect(item.backdrop_srcset ?? null).toBeNull();
+    return item;
+  }
+
+  /** What the same row looks like once a backdrop reaches the list shape (S101). */
+  function backdropBearingItem(): MediaItem {
+    return media({
+      id: 'lr1',
+      name: 'Dune',
+      poster_url: 'https://img/dune.jpg',
+      backdrop_url: 'https://img/dune-w500.jpg',
+      backdrop_srcset: 'https://img/dune-w780.jpg 780w',
+    });
+  }
+
+  it('a LIST-shaped payload (production today) renders the AMBIENT wash, never an <img>', async () => {
+    const { w } = await mountWithMode('backdrop', [listShapedItem()]);
+    expect(w.findComponent(MediaBackdropRow).exists()).toBe(true);
+    expect(w.find('.media-backdrop-row__ambient').exists()).toBe(true);
+    expect(
+      w.find('.media-backdrop-row__img').exists(),
+      'the list shape carries no backdrop, so no wide-backdrop <img> can render',
+    ).toBe(false);
+    expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('ambient');
+  });
+
+  it('a backdrop-bearing payload renders the wide backdrop <img> and drops the ambient', async () => {
+    const { w } = await mountWithMode('backdrop', [backdropBearingItem()]);
+    const img = w.find('.media-backdrop-row__img');
+    expect(img.exists()).toBe(true);
+    expect(img.attributes('src')).toBe('https://img/dune-w500.jpg');
+    expect(w.find('.media-backdrop-row__ambient').exists()).toBe(false);
+    expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('backdrop');
+  });
+
+  /**
+   * The discriminator. Either branch being hard-wired fails this: "always ambient"
+   * breaks the second column, "always <img>" breaks the first. A test that only ever
+   * mounted one payload (which is what the eight original S69 page tests did) cannot
+   * fail either way.
+   */
+  it('takes DIFFERENT branches for the two payloads — neither branch is hard-wired', async () => {
+    const states: Array<{ img: boolean; ambient: boolean; wash: string | undefined }> = [];
+    for (const item of [listShapedItem(), backdropBearingItem()]) {
+      const { w } = await mountWithMode('backdrop', [item]);
+      states.push({
+        img: w.find('.media-backdrop-row__img').exists(),
+        ambient: w.find('.media-backdrop-row__ambient').exists(),
+        wash: w.find('.media-backdrop-row__wash').attributes('data-wash'),
+      });
+      w.unmount();
+    }
+    expect(states.map((s) => s.img)).toEqual([false, true]);
+    expect(states.map((s) => s.ambient)).toEqual([true, false]);
+    expect(states.map((s) => s.wash)).toEqual(['ambient', 'backdrop']);
+  });
+
+  it('renders no wash layer at all for a list-shaped item with no poster either', async () => {
+    const { w } = await mountWithMode('backdrop', [media({ id: 'lr1', name: 'Dune' })]);
+    expect(w.find('.media-backdrop-row').exists()).toBe(true);
+    expect(w.find('.media-backdrop-row__wash').exists()).toBe(false);
+    // the strip is still a working item: title link + the composed card's overlay
+    expect(w.find('.media-backdrop-row__title').text()).toBe('Dune');
+    expect(w.find('.media-card').exists()).toBe(true);
   });
 });
 

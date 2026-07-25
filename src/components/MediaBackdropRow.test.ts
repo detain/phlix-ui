@@ -8,13 +8,28 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
 import MediaBackdropRow from './MediaBackdropRow.vue';
 import MediaCard from './MediaCard.vue';
 import type { MediaItem } from '../types/media-item';
-import { BACKDROP_ROW_HEIGHT, BACKDROP_ROW_POSTER_WIDTH } from './virtual-grid';
+import {
+  BACKDROP_ROW_HEIGHT,
+  BACKDROP_ROW_NARROW_POSTER_WIDTH,
+  BACKDROP_ROW_POSTER_WIDTH,
+} from './virtual-grid';
 
+/**
+ * The REFERENCE payload: an item that carries backdrop data. NOTE this is the
+ * detail shape — `GET /api/v1/media` (the only surface that mounts this renderer)
+ * does not emit any of the three backdrop keys today, so a fixture like this proves
+ * the wide-backdrop branch works, NOT that it is what production renders. Use
+ * `listShaped()` below for that half, and see `LibraryPage.test.ts` for the
+ * page-level branch discrimination.
+ */
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
     id: 'm1',
@@ -36,6 +51,28 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
     ...over,
   };
 }
+
+/**
+ * The payload the LIST endpoint actually returns: no `backdrop_url`, no
+ * `backdrop_url_large`, no `backdrop_srcset` (`MediaItemShaper::shape()` emits none
+ * of them; they exist only in `shapeDetail()`). This is the shape every strip on the
+ * library surface is rendered from today, so the ambient-state tests use it rather
+ * than a hand-nulled reference fixture.
+ */
+function listShaped(over: Partial<MediaItem> = {}): MediaItem {
+  const item = media();
+  // deleted, not nulled — the list shape does not contain these keys at all, and the
+  // overrides are applied AFTER so a test can add one back (i.e. simulate S101)
+  delete item.backdrop_url;
+  delete item.backdrop_url_large;
+  delete item.backdrop_srcset;
+  return { ...item, ...over };
+}
+
+const SFC_SOURCE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), './MediaBackdropRow.vue'),
+  'utf8',
+);
 
 function makeRouter(): Router {
   const stub = { template: '<div />' };
@@ -112,25 +149,53 @@ describe('MediaBackdropRow — rendering (S69)', () => {
 });
 
 /**
- * The wide-backdrop treatment itself, ported from `MediaDetail.vue`'s hero: the
- * full-res source wins, the ready-made `srcset` is passed through, the layer is
- * decorative, and an item with no backdrop falls back to the S19 poster-derived
- * ambient wash rather than an empty layer.
+ * The wide-backdrop treatment itself, ported from `MediaDetail.vue`'s hero — but
+ * with the source preference deliberately INVERTED for a virtualized list (a hero
+ * decodes one image per page; this decodes one per rendered row), the ready-made
+ * `srcset` passed through, the layer decorative, and a `sizes` hint matching the
+ * strip's real rendered width rather than the hero's full-bleed `100vw`.
  */
 describe('MediaBackdropRow — the backdrop wash (S69)', () => {
-  it('prefers the full-res backdrop and passes the server srcset through', () => {
+  /**
+   * S69 review, finding 3. `MediaDetail.vue` prefers `backdrop_url_large` because it
+   * paints ONE full-bleed hero per page, and `BackdropSrcset::largeUrl()` is TMDB
+   * `/original` (≥1920px). Scrolling a 200-item library in backdrop mode mounts 200
+   * strips, each decoding its wash into a 300px-tall box, so this renderer takes the
+   * smallest usable candidate and keeps `/original` as a last resort. Copying the
+   * hero's order here is the mistake this test exists to catch.
+   */
+  it('prefers the ROW-SIZED backdrop over the full-res original, and passes the srcset through', () => {
     const img = mountRow().find('.media-backdrop-row__img');
     expect(img.exists()).toBe(true);
-    expect(img.attributes('src')).toBe('https://img/dune-original.jpg');
+    expect(
+      img.attributes('src'),
+      'a strip must not decode the /original backdrop once per rendered row',
+    ).toBe('https://img/dune-w500.jpg');
     expect(img.attributes('srcset')).toBe(
       'https://img/dune-w780.jpg 780w, https://img/dune-w1280.jpg 1280w',
     );
-    expect(img.attributes('sizes')).toBe('100vw');
   });
 
-  it('falls back to the w500 backdrop when there is no full-res one', () => {
-    const w = mountRow(media({ backdrop_url_large: null }));
-    expect(w.find('.media-backdrop-row__img').attributes('src')).toBe('https://img/dune-w500.jpg');
+  it('uses the full-res original ONLY when there is no row-sized url', () => {
+    // an item carrying just the /original still renders a real backdrop rather than
+    // silently dropping to the ambient wash
+    const w = mountRow(media({ backdrop_url: null }));
+    expect(w.find('.media-backdrop-row__img').attributes('src')).toBe(
+      'https://img/dune-original.jpg',
+    );
+  });
+
+  /**
+   * S69 review, finding 4. The strip is a grid cell inside `.shell__main`, which
+   * keeps a 20px inline padding at every breakpoint (`max-width: none`), and
+   * `IndexRail` is `position: fixed`. So the rendered width is the viewport minus
+   * 40px. `100vw` is right for `MediaDetail`'s hero only because that one really is
+   * `position: fixed; inset: 0`.
+   */
+  it('states the strip real rendered width in `sizes`, not the hero full-bleed 100vw', () => {
+    const sizes = mountRow().find('.media-backdrop-row__img').attributes('sizes');
+    expect(sizes).toBe('calc(100vw - 40px)');
+    expect(sizes).not.toBe('100vw');
   });
 
   it('emits no srcset attribute at all when the server supplied none', () => {
@@ -177,12 +242,34 @@ describe('MediaBackdropRow — the backdrop wash (S69)', () => {
     const w = mountRow();
     await w.find('.media-backdrop-row__img').trigger('load');
     expect(w.find('.media-backdrop-row__img').classes()).toContain('is-loaded');
-    await w.setProps({ item: media({ id: 'm2', backdrop_url_large: 'https://img/other.jpg' }) });
+    await w.setProps({ item: media({ id: 'm2', backdrop_url: 'https://img/other.jpg' }) });
     expect(w.find('.media-backdrop-row__img').classes()).not.toContain('is-loaded');
   });
 
-  it('falls back to the blurred-poster ambient wash when the item has no backdrop', () => {
-    const w = mountRow(media({ backdrop_url: null, backdrop_url_large: null }));
+  it('names its wash state on the DOM so the two branches are inspectable', () => {
+    expect(mountRow().find('.media-backdrop-row__wash').attributes('data-wash')).toBe('backdrop');
+    expect(mountRow(listShaped()).find('.media-backdrop-row__wash').attributes('data-wash')).toBe(
+      'ambient',
+    );
+  });
+});
+
+/**
+ * The second supported wash state, and — until the list endpoint carries backdrop
+ * data (companion server step S101) — the ONLY one the library surface renders.
+ * `MediaItemShaper::shape()` emits no backdrop keys; they exist only in
+ * `shapeDetail()`. So these tests deliberately mount `listShaped()`, the real list
+ * payload, not a reference fixture with the fields nulled out.
+ */
+describe('MediaBackdropRow — the no-backdrop wash, i.e. what the list payload renders (S69)', () => {
+  it('takes the ambient branch for a LIST-shaped item — no backdrop <img> anywhere', () => {
+    const item = listShaped();
+    // guard the premise: the list shape has none of the three backdrop keys
+    expect(item.backdrop_url ?? null).toBeNull();
+    expect(item.backdrop_url_large ?? null).toBeNull();
+    expect(item.backdrop_srcset ?? null).toBeNull();
+
+    const w = mountRow(item);
     expect(w.find('.media-backdrop-row__img').exists()).toBe(false);
     const ambient = w.find('.media-backdrop-row__ambient');
     expect(ambient.exists()).toBe(true);
@@ -192,13 +279,57 @@ describe('MediaBackdropRow — the backdrop wash (S69)', () => {
     expect(w.find('.media-backdrop-row__scrim').exists()).toBe(true);
   });
 
+  /**
+   * The fallback has to look DELIBERATE, not like a failed image load: it is a
+   * blurred copy of the poster sitting 20px to its left, so it is mirrored, zoomed
+   * and blurred past recognisability into an abstract colour field, and the wash
+   * carries an `--ambient` modifier the scrim restyles off. Reverting the layer to
+   * the page-level S19 treatment (a plain `blur(40px)` at the poster's own scale and
+   * orientation) fails here.
+   */
+  it('renders the fallback as a DELIBERATE colour field, not a copy of the poster beside it', () => {
+    const w = mountRow(listShaped());
+    expect(w.find('.media-backdrop-row__wash').classes()).toContain(
+      'media-backdrop-row__wash--ambient',
+    );
+    const ambient = SFC_SOURCE.slice(SFC_SOURCE.indexOf('.media-backdrop-row__ambient {'));
+    expect(SFC_SOURCE.indexOf('.media-backdrop-row__ambient {')).toBeGreaterThan(-1);
+    const decls = ambient.slice(0, ambient.indexOf('}'));
+    // mirrored + zoomed, so it can never read as the adjacent poster
+    expect(decls).toMatch(/transform:\s*scale\(-\d/);
+    // and blurred well past the page-level ambient's 40px
+    const blur = /blur\((\d+)px\)/.exec(decls);
+    expect(blur, 'the ambient colour field must still be blurred').not.toBeNull();
+    expect(Number(blur![1])).toBeGreaterThan(40);
+    // the scrim has an ambient-specific arm (the panel treatment)
+    expect(SFC_SOURCE).toContain(
+      '.media-backdrop-row__wash--ambient .media-backdrop-row__scrim {',
+    );
+  });
+
   it('renders NO wash layer at all when the item has neither image', () => {
-    const w = mountRow(media({ backdrop_url: null, backdrop_url_large: null, poster_url: null }));
+    const w = mountRow(listShaped({ poster_url: null }));
     expect(w.find('.media-backdrop-row__wash').exists()).toBe(false);
     expect(w.find('.media-backdrop-row__ambient').exists()).toBe(false);
     expect(w.find('.media-backdrop-row__scrim').exists()).toBe(false);
-    // ...and the strip still renders its content
+    // ...and the strip still renders its content on the plain surface panel
     expect(w.find('.media-backdrop-row__title').text()).toBe('Dune: Part Two');
+  });
+
+  /**
+   * The three shapes the companion server step could plausibly emit. This renderer
+   * must take the wide-backdrop branch for ALL of them without assuming which key
+   * arrives, so S101 cannot land and leave the view still on the fallback.
+   */
+  it.each([
+    ['a row-sized url only', { backdrop_url: 'https://img/row.jpg' }],
+    ['a srcset only', { backdrop_srcset: 'https://img/a.jpg 780w' }],
+    ['an /original only', { backdrop_url_large: 'https://img/orig.jpg' }],
+  ])('switches to the wide backdrop when the list payload gains %s', (_label, over) => {
+    const w = mountRow(listShaped(over as Partial<MediaItem>));
+    expect(w.find('.media-backdrop-row__ambient').exists()).toBe(false);
+    expect(w.find('.media-backdrop-row__img').exists()).toBe(true);
+    expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('backdrop');
   });
 });
 
@@ -234,6 +365,34 @@ describe('MediaBackdropRow — composed MediaCard poster column (S69)', () => {
     // ...so the meta values appear exactly once too
     expect(w.findAll('.media-backdrop-row__cert')).toHaveLength(1);
     expect(w.findAll('.media-card__cert')).toHaveLength(0);
+  });
+
+  /**
+   * S69 review, finding 6. `MediaCard`'s root is an `<article>` too, so composing it
+   * nested a second, unnamed article inside the strip and AT announced two item
+   * boundaries per strip. `role="presentation"` falls through onto the card root; the
+   * card's link/badges/overlay are unaffected (presentation is not inherited).
+   */
+  it('exposes ONE item boundary, not a nested second article from the composed card', () => {
+    const w = mountRow();
+    const articles = w.findAll('article');
+    // both elements are still <article> tags in the DOM…
+    expect(articles).toHaveLength(2);
+    // …but only the strip is one to assistive tech
+    expect(articles[0].classes()).toContain('media-backdrop-row');
+    expect(articles[0].attributes('role')).toBeUndefined();
+    expect(articles[0].attributes('aria-label')).toBe('Dune: Part Two');
+    const card = w.find('.media-card');
+    expect(card.attributes('role'), 'the composed card must not be a second article').toBe(
+      'presentation',
+    );
+    // presentation is ignored on a focusable element or one with global aria-*, so
+    // the card root must have neither
+    expect(card.attributes('tabindex')).toBeUndefined();
+    expect(
+      Object.keys(card.attributes()).filter((a) => a.startsWith('aria-')),
+      'an aria-* attribute on the card root would make role="presentation" inert',
+    ).toEqual([]);
   });
 
   it('matches the GRID renderer on heading count (one per item, both modes)', () => {
@@ -331,22 +490,66 @@ describe('MediaBackdropRow — host event forwarding (S69)', () => {
 });
 
 describe('MediaBackdropRow — fixed geometry (virtualization contract, S69)', () => {
-  it('pins the strip height and the poster column inline, from the shared constants', () => {
+  it('pins ONLY the strip height inline — that alone is the virtualization contract', () => {
     const style = mountRow().find('.media-backdrop-row').attributes('style') ?? '';
     // MediaGrid's windowing math is fed computeFixedRowHeight(BACKDROP_ROW_HEIGHT),
     // so the rendered strip MUST be exactly BACKDROP_ROW_HEIGHT tall or
     // padTop/totalHeight drift from the layout (blank bands, wrong need-range pages).
     expect(style).toContain(`height: ${BACKDROP_ROW_HEIGHT}px`);
-    expect(style).toContain(`${BACKDROP_ROW_POSTER_WIDTH}px minmax(0, 1fr)`);
+    // The two-track layout moved OUT of the inline style (S69 review, finding 2): an
+    // inline `grid-template-columns` cannot be narrowed by a media query without
+    // `!important`, which is why the strip had no narrow-viewport handling at all.
+    expect(
+      style,
+      'grid-template-columns must live in the stylesheet so the 720px arm can win',
+    ).not.toContain('grid-template-columns');
+  });
+
+  it('hands BOTH poster-column widths to the stylesheet from the shared constants', () => {
+    // the breakpoint belongs in CSS; the NUMBERS still come from virtual-grid.ts, so
+    // the stylesheet holds no px literal that could drift from the windowing math
+    const style = mountRow().find('.media-backdrop-row').attributes('style') ?? '';
+    expect(style).toContain(`--backdrop-row-poster: ${BACKDROP_ROW_POSTER_WIDTH}px`);
+    expect(style).toContain(
+      `--backdrop-row-poster-narrow: ${BACKDROP_ROW_NARROW_POSTER_WIDTH}px`,
+    );
+    expect(BACKDROP_ROW_NARROW_POSTER_WIDTH).toBeLessThan(BACKDROP_ROW_POSTER_WIDTH);
+  });
+
+  /**
+   * S69 review, finding 2. At a 360px viewport `.shell__main`'s 20px gutters leave the
+   * grid a 320px content box, so the WIDE 200px poster track left the strip body
+   * `320 − 200 − 20 − 24` = 76px: the title ellipsised to a stub, the overview
+   * unreadable. The named visual reference handles exactly this
+   * (`MediaDetail.vue`'s hero → `1fr` + a 220px poster below 720px); this renderer
+   * had no width media query at all. jsdom has no layout and the visual suite is out
+   * of bounds, so the arm is asserted against the stylesheet source — the same
+   * technique `AppLayout.test.ts` / `PlayerPage.test.ts` use.
+   */
+  it('narrows the poster column below 720px, the same breakpoint the hero reference uses', () => {
+    const at = SFC_SOURCE.indexOf('@media (max-width: 720px)');
+    expect(at, 'the strip must have a narrow-viewport arm').toBeGreaterThan(-1);
+    // wide default reads the wide custom property…
+    expect(SFC_SOURCE).toContain(
+      'grid-template-columns: var(--backdrop-row-poster) minmax(0, 1fr);',
+    );
+    // …and the narrow arm swaps in the narrow one
+    const narrow = SFC_SOURCE.slice(at);
+    expect(narrow).toContain(
+      'grid-template-columns: var(--backdrop-row-poster-narrow) minmax(0, 1fr);',
+    );
+    // the arm must NOT touch the height: a viewport-dependent row height would
+    // desync MediaGrid's windowing math, which is fed a single constant
+    expect(narrow.slice(0, narrow.indexOf('@media (prefers-reduced-motion'))).not.toMatch(
+      /\bheight:/,
+    );
   });
 
   it('keeps that height for a long overview, no overview, and no images at all', () => {
     const height = `height: ${BACKDROP_ROW_HEIGHT}px`;
     const long = mountRow(media({ overview: 'lorem ipsum '.repeat(400) }));
     const none = mountRow(media({ overview: null }));
-    const bare = mountRow(
-      media({ backdrop_url: null, backdrop_url_large: null, poster_url: null }),
-    );
+    const bare = mountRow(listShaped({ poster_url: null }));
     expect(long.find('.media-backdrop-row').attributes('style')).toContain(height);
     expect(none.find('.media-backdrop-row').attributes('style')).toContain(height);
     expect(bare.find('.media-backdrop-row').attributes('style')).toContain(height);

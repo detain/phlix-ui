@@ -438,6 +438,32 @@ async function onRemove(item: MediaItem): Promise<void> {
         work, because the grid-level listeners above are also still bound) right up
         until someone prunes those listeners as "dead". Keep the `v-else`; the
         LibraryPage test that invokes the slot directly is what enforces it.
+
+        ⚠ S70 blocker to settle BEFORE writing the table renderer — the `#card` seam
+        CANNOT carry ARIA table semantics as it stands (S69 review). MediaGrid's DOM
+        chain is `.media-grid-root` > `.media-grid-sizer` > `.media-grid` > the slot
+        cell, so a `role="table"` wrapper placed HERE (around the header +
+        <MediaGrid>) ends up with THREE generic divs between itself and its
+        `role="row"` cells. ARIA `table` must OWN its rows — directly, via a
+        `rowgroup`, or via `aria-owns` — so the relationship is broken and the whole
+        thing degrades to a pile of unrelated divs for AT. What S70 needs is
+        `role="presentation"` on the two intermediate divs and `role="rowgroup"` on
+        `.media-grid`, which means a NEW MediaGrid prop (MediaGrid owns that markup;
+        this page cannot reach it, and `aria-owns` over a virtualized, remounting
+        cell set is not maintainable). That prop is S70's to add — it is deliberately
+        NOT implemented here — but it is part of S70's scope estimate, not a detail
+        to discover mid-step. Whatever shape it takes, the header row must be
+        rendered OUTSIDE the grid, and the compact row must reuse S68's
+        semantics/accessible-name pattern rather than inventing a third one (see also
+        the nested-`<article>` note in MediaBackdropRow's docblock: any renderer that
+        composes MediaCard should pass `role="presentation"` to it).
+
+        Note on what the two implemented alternate renderers actually paint today:
+        `MediaBackdropRow` has a wide-backdrop state and a poster-derived fallback,
+        and this surface's payload (`GET /api/v1/media`) carries no backdrop fields,
+        so the fallback is what renders until the companion server step (S101) adds
+        them. Both states are pinned by `LibraryPage.test.ts`; don't "fix" the
+        renderer by deleting a branch.
       -->
       <MediaGrid
         ref="gridRef"

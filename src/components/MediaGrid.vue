@@ -613,8 +613,16 @@ watch(
 
 .media-grid {
   display: grid;
-  /* ROW_GAP / COL_GAP in virtual-grid.ts mirror these tokens (24px / 20px). */
-  gap: var(--space-6, 24px) var(--space-5, 20px);
+  /* ABSOLUTE px on purpose, NOT var(--space-6)/var(--space-5) — this is the one
+     CSS value the windowing math also has to know (ROW_GAP / COL_GAP in
+     virtual-grid.ts), and it has to know it as a NUMBER before layout exists
+     (jsdom/SSR/first paint), so it cannot read a token. Those tokens are
+     1.5rem/1.25rem, so at any root font-size other than 16px the real gap used to
+     diverge from the assumed 24/20 and the error accumulated through
+     padTop/totalHeight — worst for the pinned-row renderers, whose entire row
+     height is constants (S69 review, finding 7). virtual-grid.test.ts reads this
+     declaration back and asserts it still equals ROW_GAP/COL_GAP. */
+  gap: 24px 20px;
   width: 100%;
 }
 

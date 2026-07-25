@@ -6,7 +6,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
+  BACKDROP_ROW_NARROW_POSTER_WIDTH,
   COL_GAP,
   computeCardWidth,
   computeColumns,
@@ -24,6 +28,43 @@ import {
   ROW_GAP,
   shouldLoadMore,
 } from './virtual-grid';
+
+/**
+ * S69 review, finding 7 — the ONE input that can change a fixed renderer's row
+ * pitch. `ROW_GAP`/`COL_GAP` have to be absolute px (the windowing math runs before
+ * layout exists), so `.media-grid`'s stylesheet has to agree with them rather than
+ * the reverse. It used to declare `var(--space-6) var(--space-5)` = `1.5rem 1.25rem`,
+ * so any root font-size other than 16px gave a real gap the math did not know about —
+ * a per-row error that accumulates through `padTop`/`totalHeight` (~1200px over 200
+ * rows at a 20px root) and is worst for the pinned-row renderers, whose whole row
+ * height is constants. This reads the declaration back so the pair cannot drift again.
+ */
+describe('virtual-grid — the gap constants match MediaGrid’s stylesheet', () => {
+  const mediaGridSfc = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), './MediaGrid.vue'),
+    'utf8',
+  );
+  /**
+   * The `.media-grid { … }` rule body (not `-root` / `-sizer`, which need a space),
+   * with comments stripped — the rule carries a long explanatory comment that names
+   * the tokens it deliberately does not use.
+   */
+  const gridRule = (/\n\.media-grid \{([^}]*)\}/.exec(mediaGridSfc)?.[1] ?? '').replace(
+    /\/\*[\s\S]*?\*\//g,
+    '',
+  );
+
+  it('declares the row/column gap as the SAME px the windowing math assumes', () => {
+    expect(gridRule.trim(), 'could not find the .media-grid rule in MediaGrid.vue').not.toBe('');
+    expect(gridRule).toContain(`gap: ${ROW_GAP}px ${COL_GAP}px;`);
+  });
+
+  it('does not use a rem-valued spacing token for that gap', () => {
+    // --space-6 / --space-5 are 1.5rem / 1.25rem: correct spacing tokens, wrong tool
+    // for a value a pure arithmetic module has to know as a number.
+    expect(gridRule).not.toContain('var(--space-');
+  });
+});
 
 describe('virtual-grid — computeColumns', () => {
   it('mirrors CSS auto-fill: floor((width + gap) / (cardSize + gap))', () => {
@@ -173,6 +214,21 @@ describe('virtual-grid — backdrop hero strip geometry (S69)', () => {
     expect(fixedRowContentHeight(computeFixedRowHeight(BACKDROP_ROW_HEIGHT))).toBe(
       BACKDROP_ROW_HEIGHT,
     );
+  });
+
+  /**
+   * S69 review, finding 2. The narrow arm changes the poster TRACK only. If it ever
+   * derived a second height from that width, the rendered row pitch would become
+   * viewport-dependent while `MediaGrid` is still fed one constant — the exact
+   * layout/windowing desync the fixed-height renderers exist to avoid.
+   */
+  it('narrows the poster column for small viewports WITHOUT changing the row height', () => {
+    expect(BACKDROP_ROW_NARROW_POSTER_WIDTH).toBe(LIST_ROW_POSTER_WIDTH);
+    expect(BACKDROP_ROW_NARROW_POSTER_WIDTH).toBeLessThan(BACKDROP_ROW_POSTER_WIDTH);
+    // the strip height is NOT re-derived from the narrow width…
+    expect(BACKDROP_ROW_HEIGHT).not.toBe(BACKDROP_ROW_NARROW_POSTER_WIDTH * POSTER_RATIO);
+    // …so the number MediaGrid windows on is the same at every viewport
+    expect(computeFixedRowHeight(BACKDROP_ROW_HEIGHT)).toBe(324);
   });
 
   it('windows a one-column backdrop list correctly (row index == item index)', () => {
