@@ -367,6 +367,111 @@ describe('MusicAlbumPage', () => {
     w.unmount();
   });
 
+  // ---- Playback + header surface (PRE-EXISTING code in a file S110 changed) ---
+  // These close gaps that predate S110: the play/pause toggle, the Play All guard,
+  // the header's optional year/duration and the empty-deep-link early return had no
+  // test at all, so this file sat at 65% branch coverage while every test was green.
+
+  it('pauses the current row instead of restarting it, and resumes without re-queuing', async () => {
+    holder.player = makeFakePlayer({
+      currentTrack: ref({ id: 't1', title: 'Airbag', durationSecs: 284, trackNumber: 1, streamUrl: null }),
+      playing: ref(true),
+    });
+    stubFetch();
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    const player = holder.player as ReturnType<typeof makeFakePlayer>;
+    expect(w.findAll('.track-play'), 'the rows really rendered').toHaveLength(2);
+
+    // Playing + the same row ⇒ pause; never play(), never re-queue.
+    await w.findAll('.track-play')[0]!.trigger('click');
+    expect(player.pause).toHaveBeenCalledTimes(1);
+    expect(player.play).not.toHaveBeenCalled();
+    expect(player.loadTracks).not.toHaveBeenCalled();
+
+    // Paused + the same row ⇒ resume with NO argument (keeping the position).
+    player.playing.value = false;
+    await w.vm.$nextTick();
+    await w.findAll('.track-play')[0]!.trigger('click');
+    expect(player.play).toHaveBeenCalledTimes(1);
+    expect(player.play.mock.calls[0]).toEqual([]);
+    expect(player.loadTracks).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('Play All on an album with no tracks does nothing at all', async () => {
+    // The header Play button carries NO `:disabled`, so it really is clickable on a
+    // track-less album — the guard in `playAll` is the only thing standing between
+    // that click and `play(undefined)`.
+    stubFetch({ album: album({ tracks: [], track_count: 0 }) });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    const player = holder.player as ReturnType<typeof makeFakePlayer>;
+
+    const btn = w.find('.album-header__play-btn');
+    expect(btn.exists(), 'the button really is on screen').toBe(true);
+    expect(btn.attributes('disabled'), 'and really is NOT disabled').toBeUndefined();
+    expect(w.find('.track-play').exists(), 'and there really are no tracks').toBe(false);
+
+    await btn.trigger('click');
+    expect(player.loadTracks).not.toHaveBeenCalled();
+    expect(player.play).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('omits the year and the total duration when the album has neither', async () => {
+    stubFetch({
+      album: album({
+        name: 'Undated',
+        artist: undefined as unknown as string,
+        year: null,
+        track_count: 2,
+        tracks: [
+          { id: 'z1', metadata: { title: 'Zero A', duration_secs: 0, track_number: 1 } },
+          { id: 'z2', metadata: { title: 'Zero B', duration_secs: 0, track_number: 2 } },
+        ],
+      }),
+    });
+    const w = mountPage(makeRouter(), 'Undated');
+    await flushPromises();
+
+    const meta = w.find('.album-header__meta').text();
+    expect(w.find('.album-header__title').text(), 'the album really loaded').toBe('Undated');
+    expect(meta, 'the track count is still there').toContain('2 tracks');
+    // No year, and no "· m:ss" total-duration segment: both are optional segments,
+    // and rendering them empty leaves stray separators in the header.
+    expect(meta).toBe('2 tracks');
+    // An album row with no artist reads as Unknown Artist rather than blank.
+    expect(w.find('.album-header__artist').text()).toBe('Unknown Artist');
+    w.unmount();
+  });
+
+  it('issues no request at all for an empty album name', async () => {
+    const fetchFn = stubFetch();
+    const w = mountPage(makeRouter(), '');
+    await flushPromises();
+    expect(fetchFn, 'an empty deep link must not hit the API').not.toHaveBeenCalled();
+    expect(w.find('.album-page__loading').exists(), 'and must not sit on a skeleton').toBe(false);
+    w.unmount();
+  });
+
+  it('renders a track-less album body without crashing', async () => {
+    // The detail route normally embeds the whole list; a body that omits `tracks`
+    // entirely must degrade to an empty list, not to `undefined.reduce`.
+    const fn = vi.fn(() => Promise.resolve(jsonResponse({
+      album: { name: 'OK Computer', artist: 'Radiohead', year: 1997, track_count: 12 },
+    })));
+    vi.stubGlobal('fetch', fn);
+    const w = mountPage(makeRouter());
+    await flushPromises();
+
+    expect(w.find('.album-header__title').text(), 'the header really rendered').toBe('OK Computer');
+    expect(w.find('.track-play').exists()).toBe(false);
+    // The DB count still shows — it is `track_count`, not `tracks.length`.
+    expect(w.find('[data-count="tracks"]').text()).toBe('12 tracks');
+    w.unmount();
+  });
+
   it('still loads (ambiguously) from a bare deep link with no artist at all', async () => {
     // Backwards compatibility: an existing `/app/music/album/:name` bookmark must
     // not break. It resolves to the server's first match — documented, not fixed
