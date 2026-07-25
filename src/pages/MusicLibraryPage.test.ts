@@ -1026,6 +1026,33 @@ describe('MusicLibraryPage', () => {
       wrapper.unmount();
     });
 
+    it('mounts each pager as a SIBLING of the grid it controls, never inside it', async () => {
+      // The structural half of the geometry change, which IS assertable in jsdom (the
+      // 20px gap itself is not — see the GEOMETRY RECORD comment in the SFC and the
+      // note in the worklog: `test:visual` is banned here, so spacing has no gate).
+      // `aria-controls` pointing at its own ANCESTOR is meaningless to AT, so this is
+      // the pin that stops someone re-nesting the pager back into the grid.
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+
+      expect(wrapper.find('[data-pager="artists"]').exists(), 'the pager renders').toBe(true);
+      expect(
+        wrapper.find('#music-artists-grid [data-pager="artists"]').exists(),
+        'the pager must NOT be a descendant of the grid its aria-controls names',
+      ).toBe(false);
+
+      await wrapper.findAll('.artist-card')[0]!.trigger('click');
+      await flushPromises();
+      expect(wrapper.find('[data-pager="albums"]').exists(), 'the album pager renders').toBe(true);
+      expect(
+        wrapper.find('#music-albums-grid [data-pager="albums"]').exists(),
+        'the album pager must NOT be a descendant of the grid its aria-controls names',
+      ).toBe(false);
+      void server;
+      wrapper.unmount();
+    });
+
     it('keeps the aria-controls IDREF resolvable WHILE a page is loading', async () => {
       const server = stubMusicServer(prodLibrary());
       const wrapper = mountPage();
