@@ -113,6 +113,36 @@ export interface MediaListItem {
      * movies/series and older servers. Distinct from `poster_url`.
      */
     still_url?: string | null;
+    /**
+     * Wide backdrop image URL for row/strip renderers — a TMDB **`/w780`** URL (the
+     * server width-swaps it up from the stored `/w500`; non-TMDB URLs pass through
+     * as stored).
+     *
+     * ON THE LIST SHAPE as of the companion server step S101: `MediaItemShaper::
+     * shape()` always emits this key, `null` when the item has no backdrop — which
+     * is every one of the seven backdrop-less types (`track`, `music`, `album`,
+     * `artist`, `photo`, `book`, `audiobook`) plus any unmatched title. So guard on
+     * `null`, never on key existence. Still optional here for back-compat with a
+     * pre-S101 server and with synthetic items (local files).
+     *
+     * Note the size ladder deliberately stops below `/original`: see
+     * `backdrop_srcset` and `MediaDetail.backdrop_url_large`.
+     */
+    backdrop_url?: string | null;
+    /**
+     * Responsive `srcset` for the backdrop — on the list shape exactly TWO
+     * candidates, `"<w780 url> 780w, <w1280 url> 1280w"`, or `null` (same rule as
+     * `backdrop_url`). `/original` is deliberately NOT a candidate: it is a
+     * 1.5–4 MB JPEG, and a virtualized library page mounts ~100 rows.
+     *
+     * TMDB's ladder is `w300, w780, w1280, original`, so there is no step between
+     * `w1280` and `original`. A wide row on a 2x display therefore wants more device
+     * pixels than `w1280` supplies, and that is an accepted, documented limitation —
+     * the durable fix is the generic image resizer (S71–S73), not `/original`.
+     * Consumers should still set `sizes` to the element's real rendered width so the
+     * browser picks `w780` on narrow viewports instead of always fetching `w1280`.
+     */
+    backdrop_srcset?: string | null;
 }
 
 /**
@@ -145,34 +175,18 @@ export interface MediaDetail extends MediaListItem {
     /** Owning library id. Detail shape only. */
     library_id?: string | null;
     /**
-     * Backdrop image URL (TMDB w500).
+     * Full-resolution (`/original`) backdrop for the full-bleed page background.
      *
-     * ⚠ STILL DETAIL-ONLY. The three `backdrop_*` fields are emitted by the server's
-     * `MediaItemShaper::shapeDetail()` and NOT by `shape()`, so `GET /api/v1/media`
-     * (the media grid, every alternate view mode, every row) never carries them. A
-     * companion server step (S101) is adding a row-appropriate backdrop to the list
-     * shape; until it lands, any LIST-mounted consumer must have a real fallback for
-     * all three being absent — `MediaBackdropRow` is the live example — and must not
-     * be tested against a hand-populated fixture and assumed to be exercising the
-     * backdrop path.
+     * ⚠ DETAIL-ONLY, and correctly so — it is NOT on `MediaListItem` beside
+     * `backdrop_url`/`backdrop_srcset`, and it is deliberately not a candidate in the
+     * list `backdrop_srcset` either. `/original` is a 1.5–4 MB JPEG: right for ONE
+     * full-bleed hero per page, wrong ~100 times over for a virtualized row list. Any
+     * per-row renderer must ignore this field even if it happens to be present on the
+     * item it was handed, and must not reconstruct an `/original` URL from the others.
      *
-     * Used as the source for the detail page's full-bleed background when
-     * `backdrop_url_large` is absent. Note the size preference is per-consumer: one
-     * full-bleed hero prefers `backdrop_url_large`, but a virtualized list of N rows
-     * prefers THIS one (or the srcset) and keeps `/original` as a last resort.
+     * The detail hero prefers this over `backdrop_url` when present.
      */
-    backdrop_url?: string | null;
-    /** Full-resolution (/original) backdrop for the full-bleed page background;
-     *  detail only (see `backdrop_url`). Preferred over `backdrop_url` by the detail
-     *  hero — deliberately NOT by per-row renderers, which would decode a ≥1920px
-     *  image once per rendered row. */
     backdrop_url_large?: string | null;
-    /** Responsive `srcset` string for the backdrop, e.g.
-     *  `"url w780, url w1280, url original"`; detail only + optional (see
-     *  `backdrop_url`). When present the backdrop `<img>` uses it so the browser
-     *  fetches an appropriately-sized image; degrades to a single
-     *  `backdrop_url`/`backdrop_url_large` src. */
-    backdrop_srcset?: string | null;
     /** Theme music audio URL (signed, short-lived, streamable MP3); detail only.
      *  When present the detail hero renders an unobtrusive mute/stop control and
      *  plays it muted+looping (autoplay), unmutable by the viewer. Absent → no

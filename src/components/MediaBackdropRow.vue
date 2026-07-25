@@ -21,23 +21,24 @@
  * With neither a backdrop nor a poster, no wash layer is rendered at all and the
  * strip is a plain `--surface` panel.
  *
- * ⚠ TODAY, STATE 2 IS WHAT THE LIBRARY SURFACE RENDERS FOR EVERY ITEM. The only
- * host is `LibraryPage`, which lists `GET /api/v1/media`; that response is built by
- * the server's `MediaItemShaper::shape()`, which emits NO backdrop keys — they
- * exist only in `shapeDetail()` (hence "detail only" on the three fields in
- * `types/media-item.ts`). Adding a row-appropriate backdrop to the list shape is a
- * companion server step (S101); this renderer needs no change when it lands, it
- * just starts taking state 1. Do not "simplify" either branch away, and do not
- * hand-populate backdrop fields in a page-level fixture and conclude state 1 is
- * live — `LibraryPage.test.ts` pins which branch a LIST-shaped payload takes for
- * exactly that reason.
+ * ⚠ STATE 2 IS NOT A RARE EDGE CASE, so do not "simplify" either branch away. The
+ * only host is `LibraryPage`, which lists `GET /api/v1/media`. That response carries
+ * a backdrop only as of the companion server step S101 — and then only TWO keys,
+ * `backdrop_url` (a TMDB `/w780` URL) and `backdrop_srcset` (`w780` + `w1280`), both
+ * emitted always but `null` for the seven backdrop-less types (`track`, `music`,
+ * `album`, `artist`, `photo`, `book`, `audiobook`) and for unmatched titles. Those
+ * rows take state 2, as does EVERY row against a server older than S101. Equally, do
+ * not hand-populate backdrop fields in a page-level fixture and conclude state 1 is
+ * universal: `LibraryPage.test.ts` pins which branch each payload takes, in both
+ * directions, for exactly that reason.
  *
  * Visual reference is `MediaDetailPage`'s hero (`MediaDetail.vue`), reduced from a
  * full-bleed page background to one clipped row:
  *   - The server `srcset` is passed through as-is, and `sizes` states the strip's
- *     real rendered width so the browser picks a row-sized candidate. The `src`
- *     preference is deliberately the INVERSE of the detail hero's — see
- *     `backdropSrc` below.
+ *     real rendered width so the browser picks `w780` on a narrow viewport instead
+ *     of always taking `w1280`. The `src` preference is deliberately the INVERSE of
+ *     the detail hero's, and `backdrop_url_large` (`/original`) is not read here at
+ *     all — see `backdropSrc` below.
  *   - Same two-axis scrim (top→bottom + left→right dark bias, 2px blur) so the
  *     text stays readable over ANY image, in both themes.
  *   - Same cross-fade on decode, reduced-motion-safe.
@@ -153,43 +154,39 @@ const router = inject(routerKey, null);
 const href = computed(() => `/app/media/${props.item.id}`);
 
 /**
- * `src` for the strip's wash layer — the SMALLEST usable candidate first, which is
- * the deliberate INVERSE of `MediaDetail.vue`'s hero (S69 review, finding 3).
+ * `src` for the strip's wash layer — the LIST-shape backdrop only, which is the
+ * deliberate INVERSE of `MediaDetail.vue`'s hero (S69 review, finding 3).
  *
- * The detail hero prefers `backdrop_url_large` because it is ONE full-bleed image
- * per page and `BackdropSrcset::largeUrl()` is TMDB `/original` (≥1920px wide).
- * This renderer is a VIRTUALIZED list: scrolling a 200-item library mounts 200
- * strips, each decoding its own wash into a 300px-tall box, so preferring
- * `/original` here buys nothing visible and costs decode time and image memory per
- * row. Order is therefore:
- *   1. `backdrop_srcset` (below) when the server ships one — the browser then picks
- *      by `sizes` and ignores this `src` entirely, which is the ideal case;
- *   2. `backdrop_url`, the row-sized candidate (TMDB w500 today);
- *   3. `backdrop_url_large` only as a last resort, so an item that somehow carries
- *      ONLY the full-res URL still renders rather than silently falling back to the
- *      ambient wash.
- * Note this reads only the three fields that already exist; it does NOT assume the
- * companion server step (S101) introduces a particular new size key. Whatever it
- * emits — a srcset, a row-sized url, or only an original — one of the three arms
- * above picks it up. If it does add a better row-sized field, add it as arm 2 here
- * and leave the rest alone.
- * `null` when the item has none of them: the strip then paints the ambient wash.
+ * The detail hero prefers `backdrop_url_large` because it paints ONE full-bleed
+ * image per page and that field is TMDB `/original`. This renderer is a VIRTUALIZED
+ * list: scrolling a 200-item library mounts 200 strips, each decoding its own wash
+ * into a 300px-tall box, and `/original` is a 1.5–4 MB JPEG — so `backdrop_url_large`
+ * is NOT read here at all, not even as a last resort, and no `/original` URL is
+ * reconstructed from the others. The server enforces the same rule on its side (the
+ * list `backdrop_srcset` deliberately tops out at `w1280`).
+ *
+ * What the list shape supplies (companion server step S101) is exactly two keys:
+ *   - `backdrop_srcset` (below) — two candidates, `"<w780> 780w, <w1280> 1280w"`.
+ *     When present the browser selects from it by `sizes` and ignores this `src`
+ *     entirely, which is the normal case.
+ *   - `backdrop_url` — a `/w780` URL, used as the `src` for a browser with no
+ *     srcset support and for a pre-S101 / non-TMDB payload that has only this key.
+ * Both are `null` (present, but null) for the seven backdrop-less types
+ * (`track`, `music`, `album`, `artist`, `photo`, `book`, `audiobook`) and for
+ * unmatched titles — so this guards on null, never on key existence, and those rows
+ * take the ambient wash below.
  */
-const backdropSrc = computed<string | null>(
-  () => props.item.backdrop_url || props.item.backdrop_url_large || null,
-);
+const backdropSrc = computed<string | null>(() => props.item.backdrop_url || null);
 /** Responsive `srcset` for the backdrop `<img>`; passed through as-is (already a
- *  ready-made `url w780, url w1280, …` string from the server). When present the
- *  browser selects from it and `backdropSrc` above is only a legacy fallback. */
+ *  ready-made `url w780, url w1280` string from the server). When present the
+ *  browser selects from it and `backdropSrc` above is only the no-srcset fallback. */
 const backdropSrcset = computed<string | null>(() => props.item.backdrop_srcset || null);
 
 /**
- * Whether the item carries backdrop data AT ALL — a `srcset` on its own is enough
- * (with `w` descriptors the browser selects from it and never needs `src`). Written
- * this way rather than as `backdropSrc !== null` so that whichever subset of the
- * three fields the companion server step (S101) ends up adding to the list shape,
- * this renderer switches to its wide-backdrop branch instead of silently staying on
- * the fallback.
+ * Whether the item carries usable backdrop data AT ALL — a `srcset` on its own is
+ * enough (with `w` descriptors the browser selects from it and never needs `src`),
+ * and a `src` on its own is enough too, so the strip renders its wide backdrop for
+ * either half of the pair rather than requiring both.
  */
 const hasBackdrop = computed(() => backdropSrc.value !== null || backdropSrcset.value !== null);
 
@@ -276,6 +273,15 @@ const posterSizes = `${BACKDROP_ROW_POSTER_WIDTH}px`;
  * `MediaDetail`'s hero because that one genuinely is `position: fixed; inset: 0`
  * (S69 review, finding 4). Overstating it by 40px pushes the browser one candidate
  * up on every strip near a `srcset` boundary.
+ *
+ * Honest about the ceiling rather than papering over it: the list srcset's top
+ * candidate is `w1280`, and TMDB's ladder jumps straight from `w1280` to `original`
+ * with nothing in between. So a ~1400 CSS px strip on a 2x display wants ~2800 device
+ * px and gets 1280 — under-resolved, though only visibly so where the scrim is
+ * lightest. That is an accepted limitation, not an oversight: the alternative is a
+ * 1.5–4 MB `/original` per rendered row (×100 rows a page). The durable fix is the
+ * generic image resizer (S71–S73), which does not exist yet. In the meantime a
+ * truthful `sizes` at least stops a 360px phone fetching `w1280` for a 320px strip.
  */
 const SHELL_GUTTER_PX = 20; // AppLayout `.shell__main` padding-inline (var(--space-5))
 const BACKDROP_SIZES = `calc(100vw - ${2 * SHELL_GUTTER_PX}px)`;

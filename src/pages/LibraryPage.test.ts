@@ -29,12 +29,21 @@ import {
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 
+/**
+ * The LIST shape `GET /api/v1/media` returns. `backdrop_url`/`backdrop_srcset` are
+ * present-and-`null` on purpose: that is what the shaper emits for an item with no
+ * backdrop (the seven backdrop-less types, and any unmatched title), and it keeps the
+ * backdrop-branch tests below discriminating. Do NOT populate them here — pass a
+ * backdrop-bearing item explicitly to `mountWithMode` instead.
+ */
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
     id: 'm1',
     name: 'Dune',
     type: 'movie',
     poster_url: null,
+    backdrop_url: null,
+    backdrop_srcset: null,
     genres: [],
     year: 2024,
     rating: null,
@@ -503,10 +512,11 @@ function slotRenderers(w: Awaited<ReturnType<typeof mountAt>>['w'], item: MediaI
 /**
  * Mount the page with a persisted `viewMode`, optionally over a specific payload.
  *
- * The default payload is `media()` — deliberately the LIST shape `GET /api/v1/media`
- * really returns, i.e. no backdrop keys. Pass `items` when a test needs a different
- * shape; do NOT add backdrop fields to the shared `media()` helper, or the
- * backdrop-branch tests below stop discriminating (S69 review, finding 1).
+ * The default payload is `media()` — the LIST shape with no backdrop (both keys null),
+ * which is what a backdrop-less type or an unmatched title really returns. Pass
+ * `items` when a test needs a backdrop-bearing row; do NOT populate the backdrop
+ * fields in the shared `media()` helper, or the backdrop-branch tests below stop
+ * discriminating (S69 review, finding 1).
  */
 async function mountWithMode(mode: string, items?: MediaItem[]) {
   localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: mode }));
@@ -835,57 +845,63 @@ describe('LibraryPage — backdrop hero view (S69)', () => {
  *
  * `MediaBackdropRow` has two wash states: the wide backdrop `<img>` when the item
  * carries backdrop data, and a poster-derived colour wash when it does not. The
- * component suite proves both work, but it mounts a hand-built fixture carrying all
- * three backdrop keys — which is the DETAIL shape. This page consumes
- * `GET /api/v1/media`, whose shaper (`MediaItemShaper::shape()`) emits none of them;
- * they exist only in `shapeDetail()` (hence "detail only" on the three fields in
- * `types/media-item.ts`). So every strip here takes the fallback today, and the
- * original eight page-level S69 tests all ran that branch without one of them
- * asserting it.
+ * component suite proves both work, but it does so from a hand-built fixture — and
+ * the original eight page-level S69 tests all ran the FALLBACK branch (the page's
+ * `media()` helper has no backdrop fields) without one of them asserting which branch
+ * had been taken. Both halves of that were the defect.
  *
- * These tests pin BOTH states from the page, so that:
- *   - the current behaviour is stated rather than accidental,
- *   - the companion server step (S101) adding backdrops to the list shape is visible
- *     as a behaviour change here rather than silently switching branches, and
+ * What the list shape carries, as of the companion server step S101, is exactly two
+ * keys: `backdrop_url` (a TMDB `/w780` URL) and `backdrop_srcset` (`w780` + `w1280`,
+ * never `/original`). Both are `null` for the seven backdrop-less types (`track`,
+ * `music`, `album`, `artist`, `photo`, `book`, `audiobook`) and for unmatched titles,
+ * and absent entirely against a pre-S101 server — so BOTH states are live traffic,
+ * not one real state plus a theoretical one.
+ *
+ * These tests pin both from the page, so that:
+ *   - the behaviour is stated rather than accidental,
+ *   - the backdrop-bearing fixture is the REAL server shape rather than an invented
+ *     one, and
  *   - a renderer that collapsed to a single branch fails, whichever branch it picked.
  */
 describe('LibraryPage — which backdrop wash the LIST payload renders (S69)', () => {
-  /** The list shape, spelled out: `media()` carries no backdrop keys at all. */
-  function listShapedItem(): MediaItem {
+  /** A real list row with no backdrop: both keys present and null. */
+  function noBackdropItem(): MediaItem {
     const item = media({ id: 'lr1', name: 'Dune', poster_url: 'https://img/dune.jpg' });
-    expect(item.backdrop_url ?? null, 'GET /api/v1/media emits no backdrop_url').toBeNull();
-    expect(item.backdrop_url_large ?? null).toBeNull();
-    expect(item.backdrop_srcset ?? null).toBeNull();
+    expect(item.backdrop_url, 'null, not missing — guard on null').toBeNull();
+    expect(item.backdrop_srcset).toBeNull();
     return item;
   }
 
-  /** What the same row looks like once a backdrop reaches the list shape (S101). */
+  /** A real list row WITH a backdrop, in the exact shape S101 emits. */
   function backdropBearingItem(): MediaItem {
     return media({
       id: 'lr1',
       name: 'Dune',
       poster_url: 'https://img/dune.jpg',
-      backdrop_url: 'https://img/dune-w500.jpg',
-      backdrop_srcset: 'https://img/dune-w780.jpg 780w',
+      backdrop_url: 'https://img/dune-w780.jpg',
+      backdrop_srcset: 'https://img/dune-w780.jpg 780w, https://img/dune-w1280.jpg 1280w',
     });
   }
 
-  it('a LIST-shaped payload (production today) renders the AMBIENT wash, never an <img>', async () => {
-    const { w } = await mountWithMode('backdrop', [listShapedItem()]);
+  it('a backdrop-less row renders the AMBIENT wash, never an <img>', async () => {
+    const { w } = await mountWithMode('backdrop', [noBackdropItem()]);
     expect(w.findComponent(MediaBackdropRow).exists()).toBe(true);
     expect(w.find('.media-backdrop-row__ambient').exists()).toBe(true);
     expect(
       w.find('.media-backdrop-row__img').exists(),
-      'the list shape carries no backdrop, so no wide-backdrop <img> can render',
+      'no backdrop on the row means no wide-backdrop <img> can render',
     ).toBe(false);
     expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('ambient');
   });
 
-  it('a backdrop-bearing payload renders the wide backdrop <img> and drops the ambient', async () => {
+  it('a backdrop-bearing row renders the wide backdrop <img> and drops the ambient', async () => {
     const { w } = await mountWithMode('backdrop', [backdropBearingItem()]);
     const img = w.find('.media-backdrop-row__img');
     expect(img.exists()).toBe(true);
-    expect(img.attributes('src')).toBe('https://img/dune-w500.jpg');
+    // the /w780 src and the two-candidate srcset, exactly as the shaper sends them
+    expect(img.attributes('src')).toBe('https://img/dune-w780.jpg');
+    expect(img.attributes('srcset')).toContain('1280w');
+    expect(img.attributes('srcset')).not.toContain('original');
     expect(w.find('.media-backdrop-row__ambient').exists()).toBe(false);
     expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('backdrop');
   });
@@ -898,7 +914,7 @@ describe('LibraryPage — which backdrop wash the LIST payload renders (S69)', (
    */
   it('takes DIFFERENT branches for the two payloads — neither branch is hard-wired', async () => {
     const states: Array<{ img: boolean; ambient: boolean; wash: string | undefined }> = [];
-    for (const item of [listShapedItem(), backdropBearingItem()]) {
+    for (const item of [noBackdropItem(), backdropBearingItem()]) {
       const { w } = await mountWithMode('backdrop', [item]);
       states.push({
         img: w.find('.media-backdrop-row__img').exists(),
@@ -912,7 +928,7 @@ describe('LibraryPage — which backdrop wash the LIST payload renders (S69)', (
     expect(states.map((s) => s.wash)).toEqual(['ambient', 'backdrop']);
   });
 
-  it('renders no wash layer at all for a list-shaped item with no poster either', async () => {
+  it('renders no wash layer at all for a row with no backdrop and no poster either', async () => {
     const { w } = await mountWithMode('backdrop', [media({ id: 'lr1', name: 'Dune' })]);
     expect(w.find('.media-backdrop-row').exists()).toBe(true);
     expect(w.find('.media-backdrop-row__wash').exists()).toBe(false);

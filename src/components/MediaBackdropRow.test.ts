@@ -23,12 +23,11 @@ import {
 } from './virtual-grid';
 
 /**
- * The REFERENCE payload: an item that carries backdrop data. NOTE this is the
- * detail shape — `GET /api/v1/media` (the only surface that mounts this renderer)
- * does not emit any of the three backdrop keys today, so a fixture like this proves
- * the wide-backdrop branch works, NOT that it is what production renders. Use
- * `listShaped()` below for that half, and see `LibraryPage.test.ts` for the
- * page-level branch discrimination.
+ * A LIST-shaped item WITH a backdrop, exactly as the server sends it (S101):
+ * `backdrop_url` is a TMDB `/w780` URL and `backdrop_srcset` has exactly two
+ * candidates, `w780` + `w1280`. `/original` is deliberately absent from both — it is
+ * detail-only (`backdrop_url_large`), and the strip must not read it, so this fixture
+ * does not carry it either.
  */
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -36,8 +35,7 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
     name: 'Dune: Part Two',
     type: 'movie',
     poster_url: 'https://img/dune.jpg',
-    backdrop_url: 'https://img/dune-w500.jpg',
-    backdrop_url_large: 'https://img/dune-original.jpg',
+    backdrop_url: 'https://img/dune-w780.jpg',
     backdrop_srcset: 'https://img/dune-w780.jpg 780w, https://img/dune-w1280.jpg 1280w',
     genres: ['Sci-Fi', 'Adventure', 'Drama', 'Action'],
     year: 2024,
@@ -53,20 +51,14 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
 }
 
 /**
- * The payload the LIST endpoint actually returns: no `backdrop_url`, no
- * `backdrop_url_large`, no `backdrop_srcset` (`MediaItemShaper::shape()` emits none
- * of them; they exist only in `shapeDetail()`). This is the shape every strip on the
- * library surface is rendered from today, so the ambient-state tests use it rather
- * than a hand-nulled reference fixture.
+ * A LIST-shaped item with NO backdrop: both keys present and `null`, which is what
+ * the shaper emits for the seven backdrop-less types (`track`, `music`, `album`,
+ * `artist`, `photo`, `book`, `audiobook`) and for any unmatched title — and, key
+ * absence aside, what EVERY row looks like against a pre-S101 server. So the guard is
+ * a null check, not a key-existence check.
  */
-function listShaped(over: Partial<MediaItem> = {}): MediaItem {
-  const item = media();
-  // deleted, not nulled — the list shape does not contain these keys at all, and the
-  // overrides are applied AFTER so a test can add one back (i.e. simulate S101)
-  delete item.backdrop_url;
-  delete item.backdrop_url_large;
-  delete item.backdrop_srcset;
-  return { ...item, ...over };
+function noBackdrop(over: Partial<MediaItem> = {}): MediaItem {
+  return media({ backdrop_url: null, backdrop_srcset: null, ...over });
 }
 
 const SFC_SOURCE = readFileSync(
@@ -158,31 +150,52 @@ describe('MediaBackdropRow — rendering (S69)', () => {
 describe('MediaBackdropRow — the backdrop wash (S69)', () => {
   /**
    * S69 review, finding 3. `MediaDetail.vue` prefers `backdrop_url_large` because it
-   * paints ONE full-bleed hero per page, and `BackdropSrcset::largeUrl()` is TMDB
-   * `/original` (≥1920px). Scrolling a 200-item library in backdrop mode mounts 200
-   * strips, each decoding its wash into a 300px-tall box, so this renderer takes the
-   * smallest usable candidate and keeps `/original` as a last resort. Copying the
-   * hero's order here is the mistake this test exists to catch.
+   * paints ONE full-bleed hero per page, and that field is TMDB `/original` — a
+   * 1.5–4 MB JPEG. Scrolling a 200-item library in backdrop mode mounts 200 strips,
+   * each decoding its wash into a 300px-tall box, so this renderer uses the list
+   * shape's `/w780` + (`w780`, `w1280`) srcset and never reads `/original` at all.
+   * Copying the hero's order here is the mistake this test exists to catch.
    */
-  it('prefers the ROW-SIZED backdrop over the full-res original, and passes the srcset through', () => {
+  it('uses the row-sized list backdrop and passes the two-candidate srcset through', () => {
     const img = mountRow().find('.media-backdrop-row__img');
     expect(img.exists()).toBe(true);
-    expect(
-      img.attributes('src'),
-      'a strip must not decode the /original backdrop once per rendered row',
-    ).toBe('https://img/dune-w500.jpg');
+    expect(img.attributes('src')).toBe('https://img/dune-w780.jpg');
     expect(img.attributes('srcset')).toBe(
       'https://img/dune-w780.jpg 780w, https://img/dune-w1280.jpg 1280w',
     );
+    // the ladder stops at w1280 on purpose — /original is not a candidate
+    expect(img.attributes('srcset')).not.toContain('original');
   });
 
-  it('uses the full-res original ONLY when there is no row-sized url', () => {
-    // an item carrying just the /original still renders a real backdrop rather than
-    // silently dropping to the ambient wash
-    const w = mountRow(media({ backdrop_url: null }));
-    expect(w.find('.media-backdrop-row__img').attributes('src')).toBe(
-      'https://img/dune-original.jpg',
+  /**
+   * `backdrop_url_large` is detail-only and stays that way: the server does not put
+   * it (or an `/original` srcset candidate) on the list shape, and this renderer must
+   * not reach for it even when it happens to be present on the item it was handed —
+   * one hero can afford a 1.5–4 MB decode, ~100 rows cannot.
+   */
+  it('IGNORES the detail-only /original backdrop, even when the item carries one', () => {
+    const w = mountRow(noBackdrop({ backdrop_url_large: 'https://img/dune-original.jpg' }));
+    expect(
+      w.find('.media-backdrop-row__img').exists(),
+      'a per-row renderer must not decode /original once per rendered row',
+    ).toBe(false);
+    // …and it degrades to the designed fallback rather than to nothing
+    expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('ambient');
+  });
+
+  it('renders the wide backdrop from either half of the pair on its own', () => {
+    // srcset only: with `w` descriptors the browser selects from it and needs no src
+    const srcsetOnly = mountRow(
+      noBackdrop({ backdrop_srcset: 'https://img/a-w780.jpg 780w, https://img/a-w1280.jpg 1280w' }),
+    ).find('.media-backdrop-row__img');
+    expect(srcsetOnly.exists()).toBe(true);
+    expect(srcsetOnly.attributes('src')).toBeUndefined();
+    // src only: a non-TMDB backdrop passes through as stored, with no srcset
+    const srcOnly = mountRow(noBackdrop({ backdrop_url: 'https://cdn/local.jpg' })).find(
+      '.media-backdrop-row__img',
     );
+    expect(srcOnly.attributes('src')).toBe('https://cdn/local.jpg');
+    expect(srcOnly.attributes('srcset')).toBeUndefined();
   });
 
   /**
@@ -248,26 +261,25 @@ describe('MediaBackdropRow — the backdrop wash (S69)', () => {
 
   it('names its wash state on the DOM so the two branches are inspectable', () => {
     expect(mountRow().find('.media-backdrop-row__wash').attributes('data-wash')).toBe('backdrop');
-    expect(mountRow(listShaped()).find('.media-backdrop-row__wash').attributes('data-wash')).toBe(
+    expect(mountRow(noBackdrop()).find('.media-backdrop-row__wash').attributes('data-wash')).toBe(
       'ambient',
     );
   });
 });
 
 /**
- * The second supported wash state, and — until the list endpoint carries backdrop
- * data (companion server step S101) — the ONLY one the library surface renders.
- * `MediaItemShaper::shape()` emits no backdrop keys; they exist only in
- * `shapeDetail()`. So these tests deliberately mount `listShaped()`, the real list
- * payload, not a reference fixture with the fields nulled out.
+ * The second supported wash state: the item has no backdrop. That is every one of the
+ * seven backdrop-less types (`track`, `music`, `album`, `artist`, `photo`, `book`,
+ * `audiobook`), every unmatched title, and — before the companion server step S101
+ * reaches a deployed server — every row on the library surface. Both keys arrive
+ * present-and-`null` rather than absent, so these tests mount `noBackdrop()`.
  */
-describe('MediaBackdropRow — the no-backdrop wash, i.e. what the list payload renders (S69)', () => {
-  it('takes the ambient branch for a LIST-shaped item — no backdrop <img> anywhere', () => {
-    const item = listShaped();
-    // guard the premise: the list shape has none of the three backdrop keys
-    expect(item.backdrop_url ?? null).toBeNull();
-    expect(item.backdrop_url_large ?? null).toBeNull();
-    expect(item.backdrop_srcset ?? null).toBeNull();
+describe('MediaBackdropRow — the no-backdrop wash (S69)', () => {
+  it('takes the ambient branch for a backdrop-less item — no backdrop <img> anywhere', () => {
+    const item = noBackdrop();
+    // guard the premise: null, not missing — a null check is the right guard
+    expect(item.backdrop_url).toBeNull();
+    expect(item.backdrop_srcset).toBeNull();
 
     const w = mountRow(item);
     expect(w.find('.media-backdrop-row__img').exists()).toBe(false);
@@ -288,7 +300,7 @@ describe('MediaBackdropRow — the no-backdrop wash, i.e. what the list payload 
    * orientation) fails here.
    */
   it('renders the fallback as a DELIBERATE colour field, not a copy of the poster beside it', () => {
-    const w = mountRow(listShaped());
+    const w = mountRow(noBackdrop());
     expect(w.find('.media-backdrop-row__wash').classes()).toContain(
       'media-backdrop-row__wash--ambient',
     );
@@ -308,7 +320,7 @@ describe('MediaBackdropRow — the no-backdrop wash, i.e. what the list payload 
   });
 
   it('renders NO wash layer at all when the item has neither image', () => {
-    const w = mountRow(listShaped({ poster_url: null }));
+    const w = mountRow(noBackdrop({ poster_url: null }));
     expect(w.find('.media-backdrop-row__wash').exists()).toBe(false);
     expect(w.find('.media-backdrop-row__ambient').exists()).toBe(false);
     expect(w.find('.media-backdrop-row__scrim').exists()).toBe(false);
@@ -317,19 +329,19 @@ describe('MediaBackdropRow — the no-backdrop wash, i.e. what the list payload 
   });
 
   /**
-   * The three shapes the companion server step could plausibly emit. This renderer
-   * must take the wide-backdrop branch for ALL of them without assuming which key
-   * arrives, so S101 cannot land and leave the view still on the fallback.
+   * A pre-S101 server sends the keys not at all; a post-S101 one sends them as null.
+   * Both must reach the same fallback — otherwise the view breaks against whichever
+   * server the client happens to be talking to.
    */
-  it.each([
-    ['a row-sized url only', { backdrop_url: 'https://img/row.jpg' }],
-    ['a srcset only', { backdrop_srcset: 'https://img/a.jpg 780w' }],
-    ['an /original only', { backdrop_url_large: 'https://img/orig.jpg' }],
-  ])('switches to the wide backdrop when the list payload gains %s', (_label, over) => {
-    const w = mountRow(listShaped(over as Partial<MediaItem>));
-    expect(w.find('.media-backdrop-row__ambient').exists()).toBe(false);
-    expect(w.find('.media-backdrop-row__img').exists()).toBe(true);
-    expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('backdrop');
+  it('treats absent keys and null keys identically', () => {
+    const absent = media();
+    delete absent.backdrop_url;
+    delete absent.backdrop_srcset;
+    for (const item of [absent, noBackdrop()]) {
+      const w = mountRow(item);
+      expect(w.find('.media-backdrop-row__img').exists()).toBe(false);
+      expect(w.find('.media-backdrop-row__wash').attributes('data-wash')).toBe('ambient');
+    }
   });
 });
 
@@ -549,7 +561,7 @@ describe('MediaBackdropRow — fixed geometry (virtualization contract, S69)', (
     const height = `height: ${BACKDROP_ROW_HEIGHT}px`;
     const long = mountRow(media({ overview: 'lorem ipsum '.repeat(400) }));
     const none = mountRow(media({ overview: null }));
-    const bare = mountRow(listShaped({ poster_url: null }));
+    const bare = mountRow(noBackdrop({ poster_url: null }));
     expect(long.find('.media-backdrop-row').attributes('style')).toContain(height);
     expect(none.find('.media-backdrop-row').attributes('style')).toContain(height);
     expect(bare.find('.media-backdrop-row').attributes('style')).toContain(height);

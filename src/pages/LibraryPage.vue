@@ -458,12 +458,13 @@ async function onRemove(item: MediaItem): Promise<void> {
         the nested-`<article>` note in MediaBackdropRow's docblock: any renderer that
         composes MediaCard should pass `role="presentation"` to it).
 
-        Note on what the two implemented alternate renderers actually paint today:
-        `MediaBackdropRow` has a wide-backdrop state and a poster-derived fallback,
-        and this surface's payload (`GET /api/v1/media`) carries no backdrop fields,
-        so the fallback is what renders until the companion server step (S101) adds
-        them. Both states are pinned by `LibraryPage.test.ts`; don't "fix" the
-        renderer by deleting a branch.
+        Note on what `MediaBackdropRow` actually paints: it has a wide-backdrop state
+        and a poster-derived fallback, and BOTH are live traffic. This surface's
+        payload carries `backdrop_url` (a `/w780` URL) + `backdrop_srcset` (`w780` +
+        `w1280`) as of the companion server step S101, but both are null for the seven
+        backdrop-less types and for unmatched titles, and absent altogether against an
+        older server. Both states are pinned by `LibraryPage.test.ts` in both
+        directions; don't "fix" the renderer by deleting a branch.
       -->
       <MediaGrid
         ref="gridRef"
