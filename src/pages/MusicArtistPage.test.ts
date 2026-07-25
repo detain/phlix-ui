@@ -47,6 +47,12 @@ function stubFetch(opts: {
   albumCount?: number;
   /** `track_count` on the artist ROW — the artist's TRUE track total. */
   trackCount?: number;
+  /**
+   * `image_url` on the artist ROW. Left OFF the row entirely when undefined, which is
+   * the server's own shape for an artist with no art — and the shape every other test
+   * in this file uses, so the header's `<img v-else>` arm had never rendered here.
+   */
+  imageUrl?: string | null;
   /** Reject only the album LIST route (the artist row still resolves). */
   albumsError?: boolean;
   /**
@@ -75,6 +81,7 @@ function stubFetch(opts: {
           // Emitted by `formatArtist()` on BOTH shapes; the artist's whole-library
           // track total, which is what the header must show.
           ...(opts.trackCount === undefined ? {} : { track_count: opts.trackCount }),
+          ...(opts.imageUrl === undefined ? {} : { image_url: opts.imageUrl }),
         },
       }));
     }
@@ -332,6 +339,45 @@ describe('MusicArtistPage', () => {
     expect(pager.emitted('go'), 'the select really did commit and emit').toEqual([[0]]);
     expect(w.findAll('.album-card'), 'and the cards are untouched').toHaveLength(100);
     w.unmount();
+  });
+
+  it('renders the header art when the artist row carries an image, and the placeholder when it does not', async () => {
+    // `stubFetch` had never emitted an `image_url` key, so the `<img v-else>` arm of
+    // MusicArtistPage.vue:222-233 had never rendered in this suite — only the placeholder
+    // half was ever exercised, and by accident rather than by assertion. BOTH arms are
+    // asserted here; the image URL is a value the placeholder arm cannot produce (it
+    // renders no `<img>` at all), so neither half can pass for the other's reason.
+    stubFetch({ imageUrl: '/artwork/artist/radiohead.jpg' });
+    const withArt = mountPage(makeRouter());
+    await flushPromises();
+    expect(withArt.find('.artist-header__name').text(), 'the artist really loaded').toBe('Radiohead');
+    const img = withArt.find('img.artist-header__art-img');
+    expect(img.exists(), 'an artist WITH an image must render an <img>').toBe(true);
+    expect(img.attributes('src')).toBe('/artwork/artist/radiohead.jpg');
+    expect(img.attributes('alt')).toBe('Radiohead');
+    expect(
+      withArt.find('svg.artist-header__art-placeholder').exists(),
+      'an artist WITH an image must not ALSO carry the placeholder',
+    ).toBe(false);
+    withArt.unmount();
+
+    // The default shape — no `image_url` key at all — which is what every other test
+    // in this file sends, so this arm must keep working exactly as it always has.
+    const bare = stubFetch();
+    const noArt = mountPage(makeRouter());
+    await flushPromises();
+    expect(noArt.find('svg.artist-header__art-placeholder').exists()).toBe(true);
+    expect(noArt.find('img.artist-header__art-img').exists()).toBe(false);
+
+    // PRECONDITION, checked against the fake itself: the default artist row really does
+    // omit `image_url`, so the placeholder is chosen for the reason this test names.
+    const probe = await bare('/api/v1/music/artists/Radiohead');
+    const body = (await probe.json()) as { artist: Record<string, unknown> };
+    expect(
+      Object.prototype.hasOwnProperty.call(body.artist, 'image_url'),
+      'the default row must really omit image_url',
+    ).toBe(false);
+    noArt.unmount();
   });
 
   it('renders a back link to the artists listing', async () => {

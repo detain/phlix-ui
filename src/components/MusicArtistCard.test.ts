@@ -70,6 +70,32 @@ describe('MusicArtistCard album count', () => {
     expect(w.find('[data-count="albums"]').text()).toBe('9 Alben');
   });
 
+  // `v-if="artist.imageUrl"` / `v-else` (MusicArtistCard.vue:41-50). Same blind spot as
+  // MusicAlbumCard's cover: the fixture only ever passed `imageUrl: null`, so the `<img>`
+  // arm had never rendered in the whole suite. BOTH arms are asserted, with an image URL
+  // the falsy arm cannot produce; the default fixture stays `imageUrl: null` so every
+  // pre-existing test keeps covering the placeholder arm.
+  it('renders the artist image when the row has one, and the placeholder when it does not', () => {
+    const withArt = mountCard(artist({ imageUrl: '/artwork/artist/radiohead.jpg' }));
+    const img = withArt.find('img.artist-card__image');
+    expect(img.exists(), 'an artist WITH an image must render an <img>').toBe(true);
+    expect(img.attributes('src')).toBe('/artwork/artist/radiohead.jpg');
+    expect(img.attributes('alt')).toBe('Radiohead');
+    expect(img.attributes('loading'), 'grid images must stay lazy').toBe('lazy');
+    expect(
+      withArt.find('.artist-card__placeholder').exists(),
+      'an artist WITH an image must not ALSO carry the placeholder',
+    ).toBe(false);
+
+    const noArt = mountCard(artist({ imageUrl: null }));
+    expect(noArt.find('.artist-card__placeholder').exists()).toBe(true);
+    expect(
+      noArt.find('.artist-card__placeholder [data-icon="music"]').exists(),
+      'the placeholder really is the icon block, not an empty div',
+    ).toBe(true);
+    expect(noArt.find('img.artist-card__image').exists()).toBe(false);
+  });
+
   it('still emits click with the artist', async () => {
     const a = artist();
     const w = mountCard(a);

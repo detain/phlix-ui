@@ -84,4 +84,32 @@ describe('MusicAlbumCard track count', () => {
     const w = mountCard(album({ year: null }));
     expect(w.find('.album-card__year').text()).toBe('—');
   });
+
+  // `v-if="album.albumArtUrl"` / `v-else` (MusicAlbumCard.vue:45-54). Every fixture in
+  // this file's history passed `albumArtUrl: null`, so in 214 test files the `<img>` arm
+  // had never rendered once: the placeholder half was covered only as a side effect and
+  // the cover half not at all. BOTH arms are asserted here, and the cover URL is a value
+  // the falsy arm cannot produce (it renders no `<img>` at all), so neither assertion can
+  // pass for the other arm's reason. The default fixture stays `albumArtUrl: null`, so
+  // every pre-existing test still exercises the placeholder arm as it always did.
+  it('renders the cover when the album has art, and the placeholder when it does not', () => {
+    const withArt = mountCard(album({ albumArtUrl: '/artwork/album/ok-computer.jpg' }));
+    const cover = withArt.find('img.album-card__cover');
+    expect(cover.exists(), 'an album WITH art must render an <img>').toBe(true);
+    expect(cover.attributes('src')).toBe('/artwork/album/ok-computer.jpg');
+    expect(cover.attributes('alt')).toBe('OK Computer');
+    expect(cover.attributes('loading'), 'covers below the fold must stay lazy').toBe('lazy');
+    expect(
+      withArt.find('.album-card__placeholder').exists(),
+      'an album WITH art must not ALSO carry the placeholder',
+    ).toBe(false);
+
+    const noArt = mountCard(album({ albumArtUrl: null }));
+    expect(noArt.find('.album-card__placeholder').exists()).toBe(true);
+    expect(
+      noArt.find('.album-card__placeholder [data-icon="image"]').exists(),
+      'the placeholder really is the icon block, not an empty div',
+    ).toBe(true);
+    expect(noArt.find('img.album-card__cover').exists()).toBe(false);
+  });
 });
