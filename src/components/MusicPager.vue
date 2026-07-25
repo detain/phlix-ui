@@ -83,7 +83,18 @@ const hasPrev = computed(() => page.value > 1);
 const hasNext = computed(() => page.value < pages.value);
 const showJump = computed(() => pages.value > 1 && pages.value <= MAX_JUMP_OPTIONS);
 
-/** Inclusive 1-based row range shown by the current page (`0 – 0` when empty). */
+/**
+ * Inclusive 1-based row range shown by the current page.
+ *
+ * `rangeFrom`'s `rowTotal === 0` arm is defensive only — it does NOT describe a state
+ * this component can render. Both computeds are read in exactly one place, the readout
+ * inside `<nav v-if="pages > 1">`, and `pages > 1` implies `rowTotal > pageSize` (with
+ * `pageSize ≥ 1` by construction above), so `rowTotal` is at least 2 wherever they are
+ * evaluated; Vue computeds are lazy and there is no `defineExpose`, so nothing else can
+ * evaluate them either. Kept rather than simplified away because without it an empty
+ * listing would read `Showing 1–0 of 0` if a later change ever rendered this readout
+ * outside that gate.
+ */
 const rangeFrom = computed(() => (rowTotal.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1));
 const rangeTo = computed(() => Math.min(page.value * pageSize.value, rowTotal.value));
 
