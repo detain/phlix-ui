@@ -46,11 +46,17 @@ function getClient(): ApiClient {
 }
 
 /**
- * **Shared failure policy** (see `MusicLibraryPage.loadArtists`): a failed page keeps
- * the rows, the `total` and the `offset`, so the pager survives and the user stays
- * where they were. Discarding them removed the pager and left a false "No artists"
- * with no way back — a dead end that was new with S110's pager. A FIRST load has
- * nothing to keep, so the error state renders alone.
+ * **Shared PAGE-failure policy — identical in all four music listings** (canonical
+ * note: `MusicLibraryPage.loadArtists`): a failed page keeps the rows, the `total` and
+ * the `offset`, so the pager survives and the user stays where they were. Discarding
+ * them removed the pager and left a false "No artists" with no way back — a dead end
+ * that was new with S110's pager.
+ *
+ * FIRST-load failure is NOT uniform across the four pages (three shapes, all
+ * deliberate — see the canonical note). THIS page has its own shape: with nothing to
+ * keep it renders the error INSIDE the listing area and with a different message
+ * (`music.artistsNotFound`, not `music.pageLoadFailed`), because this page is a whole
+ * route rather than one panel of a drill-down. The empty state still yields to it.
  */
 async function loadArtists(nextOffset: number): Promise<void> {
     loading.value = true;

@@ -67,11 +67,15 @@ onMounted(async () => {
  * Load one page. `nextOffset` is passed in rather than read off the ref so a failed
  * page cannot leave the pager pointing at rows that were never rendered.
  *
- * **Shared failure policy** (see `MusicLibraryPage.loadArtists`): a failed page keeps
- * the rows, the `total` and the `offset` and sets `error`. Discarding them zeroed
- * `total`, which removed the pager, so a blip on page 7 of 293 left an empty table,
- * no pager and a false "No tracks" with no way back — a dead end new with S110's
- * pager. A FIRST load has nothing to keep, so the error renders alone.
+ * **Shared PAGE-failure policy — identical in all four music listings** (canonical
+ * note: `MusicLibraryPage.loadArtists`): a failed page keeps the rows, the `total` and
+ * the `offset` and sets `error`. Discarding them zeroed `total`, which removed the
+ * pager, so a blip on page 7 of 293 left an empty table, no pager and a false "No
+ * tracks" with no way back — a dead end new with S110's pager.
+ *
+ * FIRST-load failure is NOT uniform across the four pages (three shapes, all
+ * deliberate — see the canonical note). This page takes the same shape as
+ * `MusicLibraryPage`: the banner, with a blank listing area and no empty state.
  */
 async function loadTracks(nextOffset: number): Promise<void> {
   loading.value = true;
@@ -90,20 +94,28 @@ async function loadTracks(nextOffset: number): Promise<void> {
 }
 
 // --- search/filter ---
-// ⚠ This filters the LOADED PAGE, not the library — 100 of 29,245 rows. The count
-// line below says so, and library-wide search is `/app/search`, not this box.
+// ⚠ This filters the LOADED PAGE, not the library — 100 of 29,245 rows. Library-wide
+// search is `/app/search`, not this box. The count line below says so IN THOSE WORDS
+// while a query is active ("N tracks on this page"): it used to render "N tracks",
+// which is the same phrasing as the library total and therefore claimed the page-local
+// match count was the whole answer.
 const filteredTracks = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
   if (!q) return tracks.value;
   return tracks.value.filter((t) => t.title.toLowerCase().includes(q));
 });
 
-/** The DB total when browsing; the match count while searching this page. */
+/**
+ * The DB total when browsing; the PAGE-LOCAL match count while searching — and the
+ * searching branch says "on this page" rather than reusing the library-total wording,
+ * so a 12-match page of a library holding hundreds of matches cannot read as "12
+ * tracks" full stop.
+ */
 const countLabel = computed(() => {
   if (searchQuery.value.trim() !== '') {
     return filteredTracks.value.length === 1
-      ? t('music.tracksTotalOne')
-      : t('music.tracksTotal', { count: filteredTracks.value.length.toLocaleString() });
+      ? t('music.tracksOnPageOne')
+      : t('music.tracksOnPage', { count: filteredTracks.value.length.toLocaleString() });
   }
   return total.value === 1
     ? t('music.tracksTotalOne')
@@ -185,7 +197,8 @@ function onSeek(event: Event): void {
       </div>
     </header>
 
-    <!-- Track count: the DB total while browsing, the match count while searching -->
+    <!-- Track count: the DB total while browsing; while searching, the match count
+         explicitly qualified as page-local ("N tracks on this page") -->
     <p class="tracks-page__count" data-count="tracks" role="status" aria-live="polite">
       {{ countLabel }}
       <span v-if="searchQuery"> ({{ t('music.matching') }} "{{ searchQuery }}")</span>
@@ -228,45 +241,45 @@ function onSeek(event: Event): void {
       <!-- Track table -->
       <div v-else class="track-table" role="table" aria-label="Music tracks">
         <div class="track-table__header" role="row">
-        <span class="col-num" role="columnheader">#</span>
-        <span class="col-title" role="columnheader">{{ t('music.title') }}</span>
-        <span class="col-artist" role="columnheader">{{ t('music.artist') }}</span>
-        <span class="col-album" role="columnheader">{{ t('music.album') }}</span>
-        <span class="col-duration" role="columnheader">{{ t('music.duration') }}</span>
-        <span class="col-play" role="columnheader"><span class="sr-only">Play</span></span>
-      </div>
+          <span class="col-num" role="columnheader">#</span>
+          <span class="col-title" role="columnheader">{{ t('music.title') }}</span>
+          <span class="col-artist" role="columnheader">{{ t('music.artist') }}</span>
+          <span class="col-album" role="columnheader">{{ t('music.album') }}</span>
+          <span class="col-duration" role="columnheader">{{ t('music.duration') }}</span>
+          <span class="col-play" role="columnheader"><span class="sr-only">Play</span></span>
+        </div>
 
-      <div
-        v-for="track in filteredTracks"
-        :key="track.id"
-        class="track-row"
-        :class="{ 'is-playing': playingTrackId === track.id }"
-        role="row"
-      >
-        <span class="col-num track-row__num">
-          <template v-if="playingTrackId !== track.id && track.trackNumber !== null">
-            {{ track.trackNumber }}
-          </template>
-          <template v-else-if="playingTrackId === track.id">
-            <Icon name="pause" class="track-row__playing-icon" />
-          </template>
-        </span>
-
-        <span class="col-title track-row__title">{{ track.title }}</span>
-
-        <span class="col-artist track-row__artist">—</span>
-        <span class="col-album track-row__album">—</span>
-
-        <span class="col-duration track-row__duration">{{ formatDuration(track.durationSecs) }}</span>
-
-        <button
-          type="button"
-          class="col-play track-row__play"
-          :aria-label="playingTrackId === track.id ? t('music.pause') : t('music.play')"
-          @click="playTrack(track)"
+        <div
+          v-for="track in filteredTracks"
+          :key="track.id"
+          class="track-row"
+          :class="{ 'is-playing': playingTrackId === track.id }"
+          role="row"
         >
-          <Icon :name="playingTrackId === track.id ? 'pause' : 'play'" class="track-row__play-icon" />
-        </button>
+          <span class="col-num track-row__num">
+            <template v-if="playingTrackId !== track.id && track.trackNumber !== null">
+              {{ track.trackNumber }}
+            </template>
+            <template v-else-if="playingTrackId === track.id">
+              <Icon name="pause" class="track-row__playing-icon" />
+            </template>
+          </span>
+
+          <span class="col-title track-row__title">{{ track.title }}</span>
+
+          <span class="col-artist track-row__artist">—</span>
+          <span class="col-album track-row__album">—</span>
+
+          <span class="col-duration track-row__duration">{{ formatDuration(track.durationSecs) }}</span>
+
+          <button
+            type="button"
+            class="col-play track-row__play"
+            :aria-label="playingTrackId === track.id ? t('music.pause') : t('music.play')"
+            @click="playTrack(track)"
+          >
+            <Icon :name="playingTrackId === track.id ? 'pause' : 'play'" class="track-row__play-icon" />
+          </button>
         </div>
       </div>
     </div>

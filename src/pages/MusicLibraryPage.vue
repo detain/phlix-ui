@@ -57,7 +57,17 @@ const tracks = ref<MusicTrack[]>([]);
 const loading = ref(false);
 /**
  * Set when ONE page failed to load. Only one view is ever active, so a single ref
- * serves both listings; it is cleared on every load and on every view change.
+ * serves both listings — which is precisely why it must be dropped when the view
+ * changes: the banner is a `role="alert"`, so leaving a failed-ALBUM-page message up
+ * on the healthy artists grid asserts a failure where nothing failed, and an
+ * assertive live region contradicting the screen is worse than no message at all.
+ *
+ * Cleared in exactly two places, which together make "no stale banner" hold:
+ *   - at the top of every load (`loadArtists`/`loadAlbums`), and
+ *   - on every view change, because every navigator goes through {@link setView}.
+ * The second is not redundant: `goToArtists()` deliberately does NOT re-fetch (it
+ * keeps the artist page the user came from), so without it nothing would clear the
+ * banner until the user happened to page the artists grid.
  */
 const error = ref<string | null>(null);
 
@@ -98,14 +108,24 @@ function getClient(): ApiClient {
  * Load one page of artists. `offset` is passed explicitly (never derived inside)
  * so a failed page cannot leave the pager pointing at rows that were never shown.
  *
- * **Failure policy (shared by every music listing — see `loadAlbums`,
- * `MusicArtistsPage`, `MusicArtistPage`, `MusicTracksPage`):** on failure keep the
- * rows, the `total` AND the `offset`, and set `error`. Discarding them — which this
- * page used to do — zeroed `total`, which removed the pager, so an I/O blip on page 7
- * of 22 left an empty grid, no pager, and a false "No artists" with no way back. That
- * dead end was NEW with S110's pager; keeping state means the user stays exactly
- * where they were and can retry or page away. On a FIRST load there is nothing to
- * keep, so the error state renders alone (no false empty state).
+ * **PAGE-failure policy — identical in all four music listings** (`loadAlbums`,
+ * `MusicArtistsPage`, `MusicArtistPage`, `MusicTracksPage`): on failure keep the
+ * rows, the `total` AND the `offset`, and set the error ref. Discarding them — which
+ * this page used to do — zeroed `total`, which removed the pager, so an I/O blip on
+ * page 7 of 22 left an empty grid, no pager, and a false "No artists" with no way
+ * back. That dead end was NEW with S110's pager; keeping state means the user stays
+ * exactly where they were and can retry or page away.
+ *
+ * **FIRST-load failure is deliberately NOT uniform** — there is nothing to keep, and
+ * each surface owns a different amount of the screen, so the four pages take three
+ * shapes (this is the canonical note; the others point here):
+ *   - here and `MusicTracksPage`: the banner, with a blank listing area;
+ *   - `MusicArtistsPage`: the error INSIDE the listing area and with its own message
+ *     (`music.artistsNotFound`) — that page is a whole route, not a panel;
+ *   - `MusicArtistPage`: the whole page is replaced, via a SECOND ref (`error` for
+ *     the artist itself vs `pageError` for one album page).
+ * What every shape does share: the empty state yields to the error, so a failure
+ * never reads as "No artists"/"No tracks" — a lie about the library.
  */
 async function loadArtists(offset: number): Promise<void> {
   loading.value = true;
@@ -174,6 +194,18 @@ const albumTotalLabel = computed(() =>
     : t('music.albumsTotal', { count: albumTotal.value.toLocaleString() }),
 );
 
+/**
+ * The ONLY place `view` is assigned. Changing the view also drops the page-load
+ * banner, because {@link error} is one ref shared by both listings and the banner is
+ * a `role="alert"`: a failed album page must not still be announcing itself over the
+ * artists grid the user navigated back to. Route every navigator through here rather
+ * than assigning `view` directly, or that stale-banner bug comes straight back.
+ */
+function setView(next: View): void {
+  view.value = next;
+  error.value = null;
+}
+
 async function selectArtist(artist: MusicArtist): Promise<void> {
   selectedArtist.value = artist;
   selectedAlbum.value = null;
@@ -181,7 +213,7 @@ async function selectArtist(artist: MusicArtist): Promise<void> {
   tracks.value = [];
   albumTotal.value = 0;
   albumOffset.value = 0;
-  view.value = 'albums';
+  setView('albums');
   await loadAlbums(artist, 0);
 }
 
@@ -200,7 +232,7 @@ async function goToAlbumOffset(offset: number): Promise<void> {
 
 async function selectAlbum(album: MusicAlbum): Promise<void> {
   selectedAlbum.value = album;
-  view.value = 'tracks';
+  setView('tracks');
   // Fast-path: an album LIST row carries its embedded track list, so no extra
   // fetch is needed — unless the server flagged that list as a truncated prefix
   // (`tracks_truncated`, S99: 100 tracks max per album on a list row) or sent
@@ -255,12 +287,14 @@ function onSeek(event: Event): void {
 }
 
 /**
- * Return to the artists grid, dropping the album page state with it. The artist
- * page (offset/total) is deliberately KEPT, so coming back from an artist on page
- * 14 does not dump the user back at page 1.
+ * Return to the artists grid, dropping the album page state — and the album page's
+ * error banner with it (via {@link setView}) — but deliberately KEEPING the artist
+ * page (offset/total), so coming back from an artist on page 14 does not dump the
+ * user back at page 1. Because this does not re-fetch, `setView` is the only thing
+ * that clears the banner on this path.
  */
 function goToArtists(): void {
-  view.value = 'artists';
+  setView('artists');
   selectedArtist.value = null;
   selectedAlbum.value = null;
   albums.value = [];
@@ -270,7 +304,7 @@ function goToArtists(): void {
 
 function goBack(): void {
   if (view.value === 'tracks') {
-    view.value = 'albums';
+    setView('albums');
     selectedAlbum.value = null;
     tracks.value = [];
   } else if (view.value === 'albums') {
@@ -315,8 +349,14 @@ function goBack(): void {
     <!-- A failed page keeps its rows and its pager, so this is a BANNER above the
          listing, not a replacement for it: the user is still on the page they were
          on. It only takes over the listing area when there is nothing to show
-         (a first-load failure), so a failure never renders as "No artists". -->
-    <div v-if="error && view !== 'tracks'" class="music-page__error" role="alert">
+         (a first-load failure), so a failure never renders as "No artists".
+         There is no `view !== 'tracks'` guard here any more: that guard existed only
+         to hide a banner that had outlived its view, and now `setView` clears `error`
+         on every view change, so a set `error` always belongs to the view on screen.
+         (Nothing currently sets it on the tracks view — the album-detail catch keeps
+         the embedded prefix silently — but if that ever changes, the banner showing
+         is the CORRECT behaviour rather than something to suppress.) -->
+    <div v-if="error" class="music-page__error" role="alert">
       <Icon name="alert-circle" class="music-page__error-icon" />
       <p class="music-page__error-text">{{ error }}</p>
     </div>

@@ -359,6 +359,15 @@ export const DEFAULT_MESSAGES = {
     albumsTotalOne: '1 album',
     tracksTotal: '{count} tracks',
     tracksTotalOne: '1 track',
+    /**
+     * The count of a PAGE-LOCAL result, said out loud. `MusicTracksPage`'s search box
+     * filters the 100 loaded rows, not the 29,245-row library, so while a query is
+     * active the count must not use `tracksTotal` — that reads exactly like a library
+     * total and hides the fact that the library may hold hundreds more matches
+     * (library-wide search is `/app/search`).
+     */
+    tracksOnPage: '{count} tracks on this page',
+    tracksOnPageOne: '1 track on this page',
     showingRange: 'Showing {from}–{to} of {total}',
     pageOf: 'Page {page} of {pages}',
     firstPage: 'First page',

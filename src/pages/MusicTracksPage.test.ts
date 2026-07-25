@@ -72,10 +72,10 @@ function stubFetch(opts: { tracks?: RawTrack[]; total?: number; error?: boolean;
   return fn;
 }
 
-function mountPage(): VueWrapper {
+function mountPage(messages?: Record<string, Record<string, string>>): VueWrapper {
   return mount(MusicTracksPage, {
     global: {
-      provide: { apiBase: '' },
+      provide: messages ? { apiBase: '', phlixConfig: { messages } } : { apiBase: '' },
       stubs: { Icon: { props: ['name'], template: '<span class="icon" :data-icon="name" />' } },
     },
   });
@@ -216,6 +216,32 @@ describe('MusicTracksPage', () => {
     w.unmount();
   });
 
+  it('qualifies the search count as PAGE-LOCAL, in the same words as the code comment', async () => {
+    // The filter runs over the 100 loaded rows, so a match count phrased exactly like
+    // the library total ("2 tracks") claims a page-local answer is the whole answer —
+    // the same defect shape as showing a page length where the DB total belongs.
+    stubFetch({ tracks: [rawTrack('t1', 'Airbag'), rawTrack('t2', 'Bodysnatchers')], total: 29245 });
+    const w = mountPage();
+    await flushPromises();
+    await w.find('.search-box__input').setValue('a');
+    expect(w.findAll('.track-row'), 'both rows match, so the count is really 2').toHaveLength(2);
+    expect(w.find('[data-count="tracks"]').text()).toContain('2 tracks on this page');
+    // Singular, and never "1 tracks".
+    await w.find('.search-box__input').setValue('airbag');
+    expect(w.find('[data-count="tracks"]').text()).toContain('1 track on this page');
+    expect(w.find('[data-count="tracks"]').text()).not.toContain('1 tracks');
+    w.unmount();
+
+    // …and it resolves through the message catalog: a consumer override reaches it,
+    // which a hardcoded string could never satisfy.
+    stubFetch({ tracks: [rawTrack('t1', 'Airbag'), rawTrack('t2', 'Bodysnatchers')], total: 29245 });
+    const over = mountPage({ music: { tracksOnPage: '{count} Titel auf dieser Seite' } });
+    await flushPromises();
+    await over.find('.search-box__input').setValue('a');
+    expect(over.find('[data-count="tracks"]').text()).toContain('2 Titel auf dieser Seite');
+    over.unmount();
+  });
+
   it('a failed page keeps the rows, the count and the pager — the user is not stranded', async () => {
     stubFetch({ tracks: [rawTrack('t1', 'A')], total: 250 });
     const w = mountPage();
@@ -248,20 +274,39 @@ describe('MusicTracksPage', () => {
     w.unmount();
   });
 
-  it('keeps the aria-controls IDREF resolvable WHILE a page is loading', async () => {
-    stubFetch({ tracks: [rawTrack('t1', 'A')], total: 250 });
+  it('keeps the aria-controls IDREF resolvable when the search matches nothing', async () => {
+    // ⚠ This page has NO mid-load swap to test — its skeleton is gated on
+    // `loading && tracks.length === 0`, so once rows are loaded the table stays put
+    // and a "freeze a page in flight" pin (the shape used on `MusicArtistsPage` and
+    // `MusicLibraryPage`) cannot fail here: it passed even with the id back inside the
+    // `v-if` chain. The state that DOES swap the table out on this page is a no-match
+    // search — the pager is still on screen advertising `aria-controls`, and before the
+    // always-rendered wrapper that IDREF resolved to nothing (axe
+    // `aria-valid-attr-value`), which is exactly when an AT user is being told where
+    // the control leads.
+    stubFetch({ tracks: [rawTrack('t1', 'Airbag')], total: 250 });
     const w = mountPage();
     await flushPromises();
     const target = w.find('[data-nav="jump"]').attributes('aria-controls');
     expect(target).toBe('music-tracks-table');
 
-    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
-    await w.find('[data-nav="next"]').trigger('click');
-    await Promise.resolve();
+    await w.find('.search-box__input').setValue('no such track anywhere');
+
+    // Preconditions, so this cannot pass for the wrong reason: the table really is
+    // gone, the empty state really is up, and the pager really is still there.
+    expect(w.find('.track-table').exists(), 'the table must really be swapped out').toBe(false);
+    expect(
+      w.find('.tracks-page__empty').exists(),
+      'must really be showing the no-match empty state',
+    ).toBe(true);
+    expect(
+      w.find('.music-pager').exists(),
+      'the pager must still be on screen, still advertising the IDREF',
+    ).toBe(true);
 
     expect(
       w.find(`#${target}`).exists(),
-      'aria-controls must not dangle mid-load',
+      'aria-controls must not dangle when the search matches nothing',
     ).toBe(true);
     w.unmount();
   });

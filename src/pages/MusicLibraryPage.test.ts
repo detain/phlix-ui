@@ -1026,6 +1026,85 @@ describe('MusicLibraryPage', () => {
       wrapper.unmount();
     });
 
+    it('drops the banner when the view changes — an alert must not outlive its view', async () => {
+      // `error` is ONE ref shared by both listings and the banner is a `role="alert"`,
+      // so a failed ALBUM page whose banner survives a Back click asserts a failure on
+      // the healthy artists grid. `goToArtists()` deliberately does not re-fetch, so
+      // clearing on view change (`setView`) is the ONLY thing that can dismiss it.
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      // Artist 0001 has 142 albums → 2 pages, so page 2 is reachable and can fail.
+      await wrapper.findAll('.artist-card')[0]!.trigger('click');
+      await flushPromises();
+
+      vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('page down'))));
+      await wrapper.find('[data-pager="albums"] [data-nav="next"]').trigger('click');
+      await flushPromises();
+      expect(
+        wrapper.find('.music-page__error').exists(),
+        'the album page must really have failed, or this test proves nothing',
+      ).toBe(true);
+
+      vi.stubGlobal('fetch', server.fetchImpl);
+      const requestsBefore = server.urls().length;
+      await wrapper.find('.music-page__back').trigger('click');
+      await flushPromises();
+
+      expect(
+        wrapper.findAll('.artist-card'),
+        'the artists grid is healthy and still loaded',
+      ).toHaveLength(100);
+      expect(
+        server.urls().length,
+        'going back must NOT re-fetch — which is exactly why the view change has to clear it',
+      ).toBe(requestsBefore);
+      expect(
+        wrapper.find('.music-page__error').exists(),
+        'an alert about a failed ALBUM page must not be announced on the artists grid',
+      ).toBe(false);
+      wrapper.unmount();
+    });
+
+    it('does not resurrect the album banner when coming back from the track list', async () => {
+      // The tracks view used to hide the banner with a `view !== 'tracks'` template
+      // guard while `error` stayed set underneath, so stepping into an album and back
+      // out re-announced a failure for a page that was never on screen.
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      await wrapper.findAll('.artist-card')[0]!.trigger('click');
+      await flushPromises();
+
+      vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('page down'))));
+      await wrapper.find('[data-pager="albums"] [data-nav="next"]').trigger('click');
+      await flushPromises();
+      expect(wrapper.find('.music-page__error').exists(), 'the album page really failed').toBe(true);
+
+      // Into the track list (the album row embeds its tracks, so nothing is fetched)…
+      vi.stubGlobal('fetch', server.fetchImpl);
+      await wrapper.findAll('.album-card')[0]!.trigger('click');
+      await flushPromises();
+      expect(wrapper.find('.track-list').exists(), 'must really be on the tracks view').toBe(true);
+      expect(
+        wrapper.find('.music-page__error').exists(),
+        'the tracks view has nothing to report',
+      ).toBe(false);
+
+      // …and back out to the album list the user actually has on screen.
+      await wrapper.find('.music-page__back').trigger('click');
+      await flushPromises();
+      expect(
+        wrapper.findAll('.album-card'),
+        'back on the album page the user came from',
+      ).toHaveLength(100);
+      expect(
+        wrapper.find('.music-page__error').exists(),
+        'the banner must not come back from the dead — the page it described was never shown',
+      ).toBe(false);
+      wrapper.unmount();
+    });
+
     it('mounts each pager as a SIBLING of the grid it controls, never inside it', async () => {
       // The structural half of the geometry change, which IS assertable in jsdom (the
       // 20px gap itself is not — see the GEOMETRY RECORD comment in the SFC and the

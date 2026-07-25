@@ -106,11 +106,17 @@ async function loadArtist(): Promise<void> {
 /**
  * Load another album page for the same artist (no need to re-read artist info).
  *
- * **Shared failure policy** (see `MusicLibraryPage.loadArtists`): a failed page keeps
- * the rows, the `total` and the `offset` and sets `pageError`. Zeroing `total` — which
- * this did — removed the pager, so a blip on page 2 of a 142-album artist left an
- * empty grid, no pager and a false "No albums" with no way back. That dead end was new
- * with S110's pager.
+ * **Shared PAGE-failure policy — identical in all four music listings** (canonical
+ * note: `MusicLibraryPage.loadArtists`): a failed page keeps the rows, the `total` and
+ * the `offset` and sets `pageError`. Zeroing `total` — which this did — removed the
+ * pager, so a blip on page 2 of a 142-album artist left an empty grid, no pager and a
+ * false "No albums" with no way back. That dead end was new with S110's pager.
+ *
+ * FIRST-load failure is NOT uniform across the four pages (three shapes, all
+ * deliberate — see the canonical note). THIS page has its own shape: a failed
+ * `loadArtist()` replaces the WHOLE page, which is why there are two refs — `error`
+ * for the artist itself, `pageError` for one album page of an artist already on
+ * screen. Keeping them separate is what lets an album-page blip stay a banner.
  */
 async function goToAlbumOffset(offset: number): Promise<void> {
     if (offset === albumOffset.value) return;
