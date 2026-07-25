@@ -49,6 +49,29 @@ type View = 'artists' | 'albums' | 'tracks';
 const view = ref<View>('artists');
 const selectedArtist = ref<MusicArtist | null>(null);
 const selectedAlbum = ref<MusicAlbum | null>(null);
+/**
+ * Navigation generation, bumped by {@link setView} on every view change. Every async
+ * body captures it before it awaits and re-checks it before it writes, so a request
+ * the user navigated away from settles into the void instead of writing state that
+ * belongs to a view nobody is looking at any more.
+ *
+ * The synchronous clears in `setView` cannot achieve this on their own, which is the
+ * whole reason this exists: `setView` runs at click time, while a rejected request's
+ * `catch` and a slow response's `then` run LATER. Two concrete stale writes it closes:
+ *   - an abandoned album page re-arming the `role="alert"` banner over the healthy
+ *     artists grid the user had already gone back to (observed: the banner was cleared
+ *     by `setView`, then set again by the `catch` a moment later), and
+ *   - a late `getAlbum` resolve repopulating {@link tracks} for an album the user has
+ *     already left.
+ * Deliberately a plain `let`, not a `ref`: nothing renders it and it must never
+ * trigger a re-render. Like every `<script setup>` local it is per component instance.
+ */
+let navGen = 0;
+
+/** True while `gen` is still the navigation the user is looking at. */
+function isCurrent(gen: number): boolean {
+  return gen === navGen;
+}
 
 // --- library data (loaded from the server music API) ---
 const artists = ref<MusicArtist[]>([]);
@@ -62,12 +85,22 @@ const loading = ref(false);
  * on the healthy artists grid asserts a failure where nothing failed, and an
  * assertive live region contradicting the screen is worse than no message at all.
  *
- * Cleared in exactly two places, which together make "no stale banner" hold:
+ * THREE points, not two, are what make "the banner always belongs to the view on
+ * screen" hold. It is cleared
  *   - at the top of every load (`loadArtists`/`loadAlbums`), and
- *   - on every view change, because every navigator goes through {@link setView}.
- * The second is not redundant: `goToArtists()` deliberately does NOT re-fetch (it
- * keeps the artist page the user came from), so without it nothing would clear the
- * banner until the user happened to page the artists grid.
+ *   - on every view change, because every navigator goes through {@link setView}
+ *     (not redundant with the first: `goToArtists()` deliberately does NOT re-fetch,
+ *     since it keeps the artist page the user came from, so without this nothing would
+ *     clear the banner until the user happened to page the artists grid);
+ * and — the point the first two cannot cover —
+ *   - it is never WRITTEN by a load the user has already navigated away from: both
+ *     `catch`es are generation-guarded ({@link navGen}). The clears are synchronous
+ *     and a `catch` runs later, so an album page still in flight when the user clicked
+ *     Back used to re-arm the banner AFTER `setView` had cleared it.
+ * One deliberate conservatism: leaving a view and returning to it while a load is in
+ * flight would also discard that load's error. That is the safe direction — a silent
+ * retry beats a false alarm — and it costs nothing today, because re-entering a
+ * listing means clicking a card and the skeleton hides every card while a load runs.
  */
 const error = ref<string | null>(null);
 
@@ -126,17 +159,33 @@ function getClient(): ApiClient {
  *     the artist itself vs `pageError` for one album page).
  * What every shape does share: the empty state yields to the error, so a failure
  * never reads as "No artists"/"No tracks" — a lie about the library.
+ *
+ * **An ABANDONED load writes nothing** ({@link navGen}): `gen` is captured before the
+ * await and re-checked after it, so if the view changed in the meantime this request
+ * drops both its page and its error on the floor. `loading` is the one thing still
+ * reset unconditionally in `finally` — it is what takes the skeleton down, and
+ * `goToArtists()` does not re-fetch, so a guarded reset would strand the skeleton on
+ * the artists grid forever. Unconditional is safe because at most one load is ever in
+ * flight: every starter is gated on `loading` (cards sit behind the skeleton, and
+ * {@link MusicPager} hard-returns on `disabled` in JS, not merely via the attribute).
+ * On the artists grid there is in fact no navigator to press mid-load — Back and the
+ * breadcrumb render only OFF the artists view — so here the guard is the same rule
+ * applied uniformly rather than a reachable bug; on the album list the breadcrumb IS
+ * on screen mid-load, which is where the stale banner was observed.
  */
 async function loadArtists(offset: number): Promise<void> {
+  const gen = navGen;
   loading.value = true;
   error.value = null;
   try {
     const page = await getClient().listArtists({ limit: MUSIC_PAGE_SIZE, offset });
+    if (!isCurrent(gen)) return;
     artists.value = page.artists;
     artistTotal.value = page.total;
     artistLimit.value = page.limit;
     artistOffset.value = page.offset;
   } catch {
+    if (!isCurrent(gen)) return;
     error.value = t('music.pageLoadFailed');
   } finally {
     loading.value = false;
@@ -147,9 +196,13 @@ async function loadArtists(offset: number): Promise<void> {
  * Load one page of ONE artist's albums, filtered SERVER-side. Three artists on the
  * production library hold more than a full page of albums (142 / 109 / 104), so
  * this listing needs its own pager for those albums to be reachable at all.
- * Same failure policy as `loadArtists` above.
+ * Same failure policy as `loadArtists` above, and the same abandonment rule — this is
+ * the listing where it matters: Back and the breadcrumb are on screen while an album
+ * page loads and neither is gated on `loading`, so this request really can outlive the
+ * view that asked for it.
  */
 async function loadAlbums(artist: MusicArtist, offset: number): Promise<void> {
+  const gen = navGen;
   loading.value = true;
   error.value = null;
   try {
@@ -158,11 +211,13 @@ async function loadAlbums(artist: MusicArtist, offset: number): Promise<void> {
       limit: MUSIC_PAGE_SIZE,
       offset,
     });
+    if (!isCurrent(gen)) return;
     albums.value = page.albums;
     albumTotal.value = page.total;
     albumLimit.value = page.limit;
     albumOffset.value = page.offset;
   } catch {
+    if (!isCurrent(gen)) return;
     error.value = t('music.pageLoadFailed');
   } finally {
     loading.value = false;
@@ -200,9 +255,16 @@ const albumTotalLabel = computed(() =>
  * a `role="alert"`: a failed album page must not still be announcing itself over the
  * artists grid the user navigated back to. Route every navigator through here rather
  * than assigning `view` directly, or that stale-banner bug comes straight back.
+ *
+ * Clearing here is necessary but NOT sufficient, because it happens at click time: it
+ * is the {@link navGen} bump that stops a request already in flight from writing into
+ * the view the user just moved to (a banner for an album page nobody is looking at, a
+ * track list for an album they left). Both halves are needed — hence both live here,
+ * in the one function every navigator goes through.
  */
 function setView(next: View): void {
   view.value = next;
+  navGen += 1;
   error.value = null;
 }
 
@@ -247,9 +309,18 @@ async function selectAlbum(album: MusicAlbum): Promise<void> {
     return;
   }
   tracks.value = embedded;
+  // Captured AFTER `setView('tracks')` above, so this reads the generation this track
+  // list belongs to. `goBack()` is one click away while the detail request is in
+  // flight, and a resolve landing afterwards would repopulate `tracks` for an album
+  // the user has already left. That is not visible on screen today — every entry to
+  // the tracks view reassigns `tracks` first, and `loading` keeps the album cards
+  // hidden until this settles — so this is state hygiene rather than a fixed rendering
+  // bug: it keeps `tracks` meaning "the tracks of the album on screen", full stop.
+  const gen = navGen;
   loading.value = true;
   try {
     const full = await getClient().getAlbum(album.title, album.artist ?? selectedArtist.value?.name);
+    if (!isCurrent(gen)) return;
     if (full.tracks && full.tracks.length > 0) tracks.value = full.tracks;
   } catch {
     // Keep whatever prefix the list row gave us rather than blanking the view.
@@ -351,8 +422,10 @@ function goBack(): void {
          on. It only takes over the listing area when there is nothing to show
          (a first-load failure), so a failure never renders as "No artists".
          There is no `view !== 'tracks'` guard here any more: that guard existed only
-         to hide a banner that had outlived its view, and now `setView` clears `error`
-         on every view change, so a set `error` always belongs to the view on screen.
+         to hide a banner that had outlived its view. A set `error` now always belongs
+         to the view on screen, and it takes BOTH halves of `setView` to say that —
+         it clears `error` on every view change AND bumps the generation, so a load
+         that was already in flight cannot re-arm the banner after the fact.
          (Nothing currently sets it on the tracks view — the album-detail catch keeps
          the embedded prefix silently — but if that ever changes, the banner showing
          is the CORRECT behaviour rather than something to suppress.) -->

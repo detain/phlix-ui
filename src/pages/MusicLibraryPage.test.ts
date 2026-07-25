@@ -1105,6 +1105,144 @@ describe('MusicLibraryPage', () => {
       wrapper.unmount();
     });
 
+    it('an album request abandoned by a view change must not re-arm the banner', async () => {
+      // `setView` clears `error` SYNCHRONOUSLY, at click time; a rejected request's
+      // `catch` runs LATER — so the clear alone cannot stop a request the user walked
+      // away from re-arming the `role="alert"` banner over the artists grid it does not
+      // describe. Only the generation guard closes that window.
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      expect(wrapper.findAll('.artist-card'), 'the artists grid is loaded').toHaveLength(100);
+
+      // Hold the album page open: a hand-held promise, so the request is still in
+      // flight while the user navigates, instead of settling inside the same flush.
+      let rejectAlbums: (reason: Error) => void = () => {};
+      const holdFetch = vi.fn(() => new Promise<Response>((_resolve, reject) => {
+        rejectAlbums = reject;
+      }));
+      vi.stubGlobal('fetch', holdFetch);
+      await wrapper.findAll('.artist-card')[0]!.trigger('click');
+      await flushPromises();
+
+      // PRECONDITION 1 — the view really did change: the breadcrumb only renders OFF
+      // the artists view.
+      expect(
+        wrapper.find('.music-page__crumb-nav').exists(),
+        'must really have navigated to the album list',
+      ).toBe(true);
+      // PRECONDITION 2 — the album request really is still in flight: the albums grid
+      // holds its skeleton, and exactly one request was issued and has not settled.
+      expect(
+        wrapper.find('#music-albums-grid .music-page__loading').exists(),
+        'the album page must really still be loading, or nothing is abandoned below',
+      ).toBe(true);
+      expect(holdFetch.mock.calls, 'exactly one album request is in flight').toHaveLength(1);
+      expect(wrapper.find('.music-page__error').exists(), 'nothing has failed yet').toBe(false);
+
+      // Back to the artists grid via the breadcrumb (`goToArtists`, which deliberately
+      // does not re-fetch — so no later success can overwrite the stale banner either).
+      await wrapper.find('.music-page__crumb').trigger('click');
+      await flushPromises();
+      // PRECONDITION 3 — really back on the artists view, and really without a re-fetch.
+      expect(
+        wrapper.find('.music-page__crumb-nav').exists(),
+        'the breadcrumb is gone ⇒ definitively the artists view',
+      ).toBe(false);
+      expect(
+        holdFetch.mock.calls,
+        'coming back must NOT re-fetch, which is why nothing later clears the banner',
+      ).toHaveLength(1);
+      expect(
+        wrapper.find('.music-page__error').exists(),
+        'setView cleared the banner at click time',
+      ).toBe(false);
+
+      // …and only NOW does the abandoned request fail.
+      rejectAlbums(new Error('album page down'));
+      await flushPromises();
+
+      // The 100 cards are back, which also pins the deliberate asymmetry: `loading` IS
+      // reset unconditionally in `finally`, because nothing else takes the skeleton
+      // down on a path that does not re-fetch.
+      expect(
+        wrapper.findAll('.artist-card'),
+        'the artists grid is on screen, healthy, and its skeleton is gone',
+      ).toHaveLength(100);
+      expect(wrapper.find('.music-page__crumb-nav').exists(), 'still the artists view').toBe(false);
+      expect(
+        wrapper.find('.music-page__error').exists(),
+        'a request the user walked away from must not announce its failure over a healthy grid',
+      ).toBe(false);
+      void server;
+      wrapper.unmount();
+    });
+
+    it('a late album-detail resolve must not repopulate the tracks of an album the user left', async () => {
+      // The same root cause on the other loader. There is no DOM face for this one:
+      // every entry to the tracks view reassigns `tracks` first, and `loading` keeps the
+      // album cards hidden until the detail request settles, so `tracks` itself is the
+      // observable — hence the setup-binding assertions (the repo idiom, cf.
+      // Player.test.ts / AmbientCanvas.test.ts).
+      const lib = makeLibrary(1, () => 1);
+      lib.albums[0]!.trackCount = 125; // truncated LIST row ⇒ the DETAIL fetch happens
+      const server = stubMusicServer(lib);
+      const wrapper = mountPage();
+      await flushPromises();
+      await wrapper.find('.artist-card').trigger('click');
+      await flushPromises();
+
+      // Hold the album DETAIL request open across the navigation.
+      let resolveDetail: (value: Response) => void = () => {};
+      const holdFetch = vi.fn((_url: unknown) => new Promise<Response>((resolve) => {
+        resolveDetail = resolve;
+      }));
+      vi.stubGlobal('fetch', holdFetch);
+      await wrapper.find('.album-card').trigger('click');
+      await flushPromises();
+
+      const vm = wrapper.vm as unknown as { tracks: { id: string }[] };
+      // PRECONDITION 1 — on the tracks view, showing the truncated 100-track prefix.
+      expect(wrapper.find('.track-list').exists(), 'must really be on the tracks view').toBe(true);
+      expect(
+        wrapper.findAll('.track-play'),
+        'the truncated prefix is what is on screen',
+      ).toHaveLength(100);
+      // PRECONDITION 2 — the detail request really was sent and really has not landed
+      // (the whole 125-track list is not here yet).
+      expect(
+        holdFetch.mock.calls.map((c) => String(c[0])).filter((u) => /\/music\/albums\/.+/.test(u)),
+        'the album DETAIL request must really have been issued',
+      ).toHaveLength(1);
+      expect(vm.tracks, 'and must really still be pending').toHaveLength(100);
+
+      // The user leaves before it lands.
+      await wrapper.find('.music-page__back').trigger('click');
+      await flushPromises();
+      // PRECONDITION 3 — really off the tracks view, with `tracks` emptied by goBack().
+      expect(
+        wrapper.find('.track-list').exists(),
+        'must really have left the tracks view',
+      ).toBe(false);
+      expect(vm.tracks, 'goBack() empties the list it was showing').toHaveLength(0);
+
+      // …and only now does the abandoned request resolve, with the real 125-track body.
+      resolveDetail(await server.request(
+        `/api/v1/music/albums/${encodeURIComponent(lib.albums[0]!.name)}?artist=Artist+0001`,
+      ));
+      await flushPromises();
+
+      expect(
+        vm.tracks,
+        'a resolve the user walked away from must not repopulate the track list',
+      ).toHaveLength(0);
+      expect(
+        wrapper.findAll('.album-card'),
+        'and the album list the user IS looking at came back, skeleton gone',
+      ).toHaveLength(1);
+      wrapper.unmount();
+    });
+
     it('mounts each pager as a SIBLING of the grid it controls, never inside it', async () => {
       // The structural half of the geometry change, which IS assertable in jsdom (the
       // 20px gap itself is not — see the GEOMETRY RECORD comment in the SFC and the
