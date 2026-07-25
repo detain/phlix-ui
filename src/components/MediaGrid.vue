@@ -33,12 +33,12 @@ import Icon from './Icon.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import {
   COL_GAP,
-  ROW_GAP,
   computeCardWidth,
   computeColumns,
   computeRowHeight,
   computeWindow,
   effectiveItemCount,
+  fixedRowContentHeight,
   shouldLoadMore,
 } from './virtual-grid';
 
@@ -76,9 +76,14 @@ const props = withDefaults(
      *
      * Required by any `#card`-slot renderer whose rows are not 2:3 posters:
      * `computeRowHeight()` scales `POSTER_RATIO` with the card width, which for a
-     * single full-width list row computes a row several times too tall. Pinning
-     * the height here also pins the not-yet-loaded placeholder cells to the same
-     * height, so a skeleton can never push its row past `rowHeight`.
+     * single full-width list row computes a row several times too tall.
+     *
+     * Setting this also makes the GRID ENFORCE the contract rather than trusting
+     * each renderer to honour it: the row tracks get `grid-auto-rows` at exactly
+     * `rowHeight - ROW_GAP`, and the not-yet-loaded placeholder cells get the same
+     * height. So a renderer (or a later MediaCard restyle) whose content outgrows
+     * the row is clipped by its own `overflow`, never allowed to push the next row
+     * out of the position `padTop` reserved for it.
      */
     rowHeight?: number;
     /** Skeleton cards shown during the initial load. */
@@ -310,6 +315,28 @@ watch(
   { immediate: true },
 );
 
+/**
+ * Cell height (px) inside a pinned row — the row height minus the gap the prop
+ * includes — or `null` when the rows are poster-derived. `null` (not 0) so every
+ * consumer below spreads an EMPTY style object for the poster grid and its markup
+ * stays byte-identical.
+ */
+const fixedCellHeight = computed(() =>
+  fixedRows.value ? fixedRowContentHeight(forcedRowHeight.value ?? 0) : null,
+);
+
+/**
+ * `grid-auto-rows` for a pinned-row renderer: the grid CONTAINER enforces the row
+ * height that the windowing math assumes, instead of trusting each `#card`
+ * renderer to pin itself (S68 review, finding 3). Every row here is implicit (no
+ * `grid-template-rows`), so this applies to all of them. Renderers should still
+ * clip their own content (`overflow: hidden`), but they can no longer desync
+ * `padTop`/`totalHeight` from the layout by growing taller than their track.
+ */
+const fixedRowsStyle = computed(() =>
+  fixedCellHeight.value === null ? {} : { gridAutoRows: `${fixedCellHeight.value}px` },
+);
+
 // A forced column count is a LAYOUT decision, so it applies even before the
 // container is measured (jsdom / SSR / first paint) — otherwise a list view would
 // flash as an auto-fit poster grid, and its rows would be laid out at a different
@@ -319,6 +346,7 @@ const gridStyle = computed(() => ({
     virtualized.value || forcedColumns.value !== null
       ? `repeat(${effectiveColumns.value}, minmax(0, 1fr))`
       : `repeat(auto-fill, minmax(${cardSize.value}px, 1fr))`,
+  ...fixedRowsStyle.value,
 }));
 
 const sizerStyle = computed(() =>
@@ -336,17 +364,20 @@ const skeletonStyle = computed(() => ({
     forcedColumns.value !== null
       ? `repeat(${effectiveColumns.value}, minmax(0, 1fr))`
       : `repeat(auto-fill, minmax(${cardSize.value}px, 1fr))`,
+  ...fixedRowsStyle.value,
 }));
 
 /**
- * Placeholder-cell sizing. With a pinned `rowHeight` the cell is given that exact
- * height (minus the row gap the prop includes) so a not-yet-loaded index in the
- * pre-sized grid can never render taller than the row the windowing math reserved
- * for it — a full-width 2:3 poster skeleton in a one-column list view would
- * otherwise be ~1000px tall and shove every following row out of position.
+ * Placeholder-cell sizing. With a pinned `rowHeight` the cell is given the exact
+ * cell height (`fixedCellHeight`) so a not-yet-loaded index in the pre-sized grid
+ * can never render taller than the row the windowing math reserved for it — a
+ * full-width 2:3 poster skeleton in a one-column list view would otherwise be
+ * ~1000px tall and shove every following row out of position. Belt to
+ * `grid-auto-rows`' braces: this keeps working if the cell is ever taken out of
+ * the grid's own row flow.
  */
 const skeletonCellStyle = computed(() =>
-  fixedRows.value ? { height: `${Math.max(0, (forcedRowHeight.value ?? 0) - ROW_GAP)}px` } : {},
+  fixedCellHeight.value === null ? {} : { height: `${fixedCellHeight.value}px` },
 );
 
 // --- back to top ---

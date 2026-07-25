@@ -369,6 +369,33 @@ describe('MediaGrid — forced columns / rowHeight (S68 alternate views)', () =>
     expect(w.findAllComponents(MediaCard)).toHaveLength(7);
   });
 
+  /**
+   * S68 review finding 3, structural half. The grid CONTAINER pins the row track,
+   * so the fixed row height is enforced rather than merely asserted by whichever
+   * `#card` renderer happens to be mounted — the divergence class S67's seam
+   * warned about is retired before S69/S70 add two more renderers.
+   */
+  it('pins the row TRACK with grid-auto-rows so no renderer can outgrow it', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(20), total: 20, columns: 1, rowHeight: 204 },
+    });
+    await nextTick();
+    await nextTick();
+    // rowHeight includes the row gap, so the TRACK is rowHeight - ROW_GAP.
+    expect(w.find('.media-grid').attributes('style')).toContain('grid-auto-rows: 180px');
+  });
+
+  it('leaves the poster grid free-flowing (no grid-auto-rows without a rowHeight)', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(20), total: 20 } });
+    await nextTick();
+    await nextTick();
+    // A 2:3 poster row's height is content-derived; pinning it here would fight
+    // the aspect-ratio layout it is computed FROM.
+    expect(w.find('.media-grid').attributes('style')).not.toContain('grid-auto-rows');
+  });
+
   it('pins not-yet-loaded placeholder cells to the same fixed row height', async () => {
     mockLayout(1000, 0);
     window.innerHeight = 768;
@@ -410,6 +437,9 @@ describe('MediaGrid — forced columns / rowHeight (S68 alternate views)', () =>
     });
     const skel = w.find('.media-grid--skeleton');
     expect(skel.attributes('style')).toContain('repeat(1, minmax(0, 1fr))');
+    // ...including the pinned row track, so the initial load reserves exactly the
+    // rows the windowing math will use once items arrive.
+    expect(skel.attributes('style')).toContain('grid-auto-rows: 180px');
     const cells = w.findAll('.skel-card');
     expect(cells).toHaveLength(4);
     expect(cells[0].attributes('style')).toContain('height: 180px');

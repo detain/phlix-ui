@@ -27,6 +27,24 @@
  * rendered layout and the windowing arithmetic cannot drift. Never restyle the
  * row height — or the grid's column count — from CSS: `MediaGrid` writes an
  * INLINE `grid-template-columns` from the same `columns` value it windows on.
+ * The grid ALSO pins the row track with `grid-auto-rows` whenever `rowHeight` is
+ * set, and this row is `overflow: hidden`, so growing content is clipped instead
+ * of silently desyncing `padTop`/`totalHeight` (S68 review, finding 3).
+ *
+ * A11y semantics: the row is a NAMED `<article>` (role `article`, accessible name
+ * = the item title) so assistive tech gets an item boundary + a name instead of a
+ * flat run of links and buttons. It is deliberately NOT `role="listitem"`:
+ * `listitem` requires a `list`/`group` ancestor, and the only candidate is
+ * `MediaGrid`'s `.media-grid` container, which is shared with the poster grid
+ * whose cells are `<article>` MediaCards (also mounted outside any list) — a
+ * `role="list"` there would have non-`listitem` children, i.e. invalid ARIA. The
+ * complete fix, if a later step wants "item 12 of 200", is grid-level: give
+ * `.media-grid` `role="list"` (or `role="feed"`, which is the pattern for a
+ * virtualized incrementally-loaded set) AND have EVERY renderer emit
+ * `aria-posinset`/`aria-setsize` from the slot's `index` plus the grid's item
+ * count — because a virtualized container only ever holds a window, so an AT
+ * would otherwise announce 7 items in a 200-item library. S69/S70 should mirror
+ * the named-`<article>` pattern until that grid-level change is made.
  */
 import { computed, inject } from 'vue';
 import { RouterLink, routerKey } from 'vue-router';
@@ -83,7 +101,9 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
 </script>
 
 <template>
-  <div class="media-list-row" :style="rowStyle">
+  <!-- `<article>` + aria-label: one named item boundary per row for assistive
+       tech (see the a11y note in the docblock for why not `role="listitem"`). -->
+  <article class="media-list-row" :style="rowStyle" :aria-label="item.name">
     <div class="media-list-row__poster">
       <MediaCard
         :item="item"
@@ -131,7 +151,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         No description yet.
       </p>
     </div>
-  </div>
+  </article>
 </template>
 
 <style scoped>
@@ -141,6 +161,12 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
      they are the virtualization contract, not decoration. */
   align-items: stretch;
   column-gap: var(--space-5);
+  /* ENFORCES that height instead of merely asserting it: without this, anything
+     that made the content taller (vertical chrome on MediaCard, a different
+     poster ratio) would overflow the pinned box and overlap the next row while
+     the windowing math stayed on LIST_ROW_HEIGHT + gap. MediaGrid pins the row
+     TRACK too (`grid-auto-rows`), so the clip happens on both sides. */
+  overflow: hidden;
 }
 
 .media-list-row__poster {

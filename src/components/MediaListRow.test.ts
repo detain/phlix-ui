@@ -119,6 +119,41 @@ describe('MediaListRow — composed MediaCard poster column (S68)', () => {
     expect(w.findAll('.media-list-row__title')).toHaveLength(1);
   });
 
+  /**
+   * S68 review finding 1. `hideCaption` used to drop only the caption UNDER the
+   * poster, leaving the hover overlay's own `<h3>` + meta strip in the DOM — and
+   * the overlay is hidden by `opacity: 0` / `pointer-events: none`, neither of
+   * which removes content from the accessibility tree. A list row therefore
+   * emitted TWO headings per item: on a 200-item library a screen-reader user
+   * navigating by heading got 400 headings, every title announced twice.
+   */
+  it('emits exactly ONE heading for the item — the card must not duplicate it', () => {
+    const w = mountRow();
+    const headings = w.findAll('h1, h2, h3, h4, h5, h6');
+    expect(headings, 'a list row must expose exactly one heading per item').toHaveLength(1);
+    expect(headings[0].classes()).toContain('media-list-row__title');
+    expect(headings[0].text()).toBe('Dune: Part Two');
+    // the card's overlay text block is gone, not merely invisible
+    expect(w.find('.media-card__title').exists()).toBe(false);
+    expect(w.find('.media-card__meta').exists()).toBe(false);
+    expect(w.find('.media-card__genres').exists()).toBe(false);
+    // ...so the meta values appear exactly once too
+    expect(w.findAll('.media-list-row__cert')).toHaveLength(1);
+    expect(w.findAll('.media-card__cert')).toHaveLength(0);
+  });
+
+  it('matches the GRID renderer on heading count (one per item, both modes)', () => {
+    // The parity that makes list mode navigable by heading: the poster grid's
+    // renderer (a bare MediaCard, hideCaption default false) emits one <h3>, and
+    // so does a list row — the composed card inside it adds none.
+    const grid = mount(MediaCard, {
+      props: { item: media() },
+      global: { plugins: [makeRouter()], provide: { phlixConfig: { app: 'server', apiBase: '' } } },
+    });
+    expect(grid.findAll('h1, h2, h3, h4, h5, h6')).toHaveLength(1);
+    expect(mountRow().findAll('h1, h2, h3, h4, h5, h6')).toHaveLength(1);
+  });
+
   it('keeps the card action overlay (the row inherits every quick-action)', async () => {
     const w = mountRow();
     // the overlay row is lazy-mounted on hover, exactly as in the poster grid
@@ -211,5 +246,26 @@ describe('MediaListRow — fixed geometry (virtualization contract, S68)', () =>
     const height = `height: ${LIST_ROW_HEIGHT}px`;
     expect(long.find('.media-list-row').attributes('style')).toContain(height);
     expect(none.find('.media-list-row').attributes('style')).toContain(height);
+  });
+});
+
+/**
+ * S68 review finding LOW-8. The row is a NAMED `<article>` so assistive tech gets
+ * an item boundary + an accessible name instead of a flat run of links, buttons and
+ * text. `role="listitem"` is deliberately not used (it requires a `list`/`group`
+ * ancestor, and `MediaGrid`'s container is shared with the poster grid whose cells
+ * are `<article>` MediaCards) — see the component docblock for the grid-level fix a
+ * later step would need for "item 12 of 200". S69/S70 mirror this pattern.
+ */
+describe('MediaListRow — item semantics (a11y, S68)', () => {
+  it('is a named article, so AT announces an item boundary with the title', () => {
+    const row = mountRow().find('.media-list-row');
+    expect(row.element.tagName).toBe('ARTICLE');
+    expect(row.attributes('aria-label')).toBe('Dune: Part Two');
+  });
+
+  it('does not claim list-item semantics it has no list ancestor for', () => {
+    const row = mountRow().find('.media-list-row');
+    expect(row.attributes('role')).toBeUndefined();
   });
 });

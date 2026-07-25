@@ -92,12 +92,22 @@ const props = withDefaults(
      */
     subtitle?: string | null;
     /**
-     * Suppress the caption block under the poster (title + sub-line) entirely,
-     * leaving the poster, badges, resume bar, stretched link and hover overlay
-     * untouched. Used by `MediaListRow` (S68), which composes this card as its
-     * poster column and renders the title/meta itself in the row body — without
-     * this the title would appear twice per row (truncated under the thumbnail
-     * and again as the row heading). Sibling of `hideActions`/`playOnly`.
+     * Suppress the title/meta this card would print for a host that already
+     * renders them itself: BOTH the caption block under the poster (title +
+     * sub-line) AND the hover overlay's title / year·cert·runtime / genre chips.
+     * The poster, badges, resume bar, stretched link and the overlay's ACTION
+     * row are untouched.
+     *
+     * Used by `MediaListRow` (S68), which composes this card as its poster column
+     * and owns the title/meta in the row body. The overlay half matters for more
+     * than tidiness: the overlay is hidden only by `opacity: 0` +
+     * `pointer-events: none`, and NEITHER removes content from the accessibility
+     * tree — so leaving it in place emitted a second `<h3>` (plus a duplicate
+     * meta strip) per row, and a screen-reader user navigating a 200-item list by
+     * heading heard every title twice. Dropping it also frees the whole overlay
+     * content box for the wrapped action rows at a narrow fixed poster width (see
+     * `LIST_ROW_POSTER_WIDTH` in `virtual-grid.ts` for that arithmetic).
+     * Sibling of `hideActions`/`playOnly`.
      */
     hideCaption?: boolean;
     /**
@@ -477,17 +487,27 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
       </div>
 
       <div class="media-card__overlay">
-        <h3 class="media-card__title">{{ item.name }}</h3>
-        <div class="media-card__meta">
-          <span v-if="item.year" class="numeric">{{ item.year }}</span>
-          <span v-if="item.year && (item.rating || item.runtime)" class="media-card__dot" />
-          <span v-if="item.rating" class="media-card__cert">{{ item.rating }}</span>
-          <span v-if="item.rating && item.runtime" class="media-card__dot" />
-          <span v-if="item.runtime" class="numeric">{{ item.runtime }}m</span>
-        </div>
-        <div v-if="genres.length" class="media-card__genres">
-          <span v-for="g in genres" :key="g">{{ g }}</span>
-        </div>
+        <!-- The overlay's title/meta/genres are the caption's twin, so
+             `hideCaption` drops them too. This is a `v-if`, NOT a visual hide, on
+             purpose: the overlay is idle-hidden with `opacity: 0` +
+             `pointer-events: none`, neither of which takes content out of the
+             accessibility tree, so a host that renders its own heading
+             (`MediaListRow`, S68) would otherwise ship TWO `<h3>` per item — 400
+             headings on a 200-item list, every title announced twice. The action
+             row below is never suppressed by `hideCaption`. -->
+        <template v-if="!hideCaption">
+          <h3 class="media-card__title">{{ item.name }}</h3>
+          <div class="media-card__meta">
+            <span v-if="item.year" class="numeric">{{ item.year }}</span>
+            <span v-if="item.year && (item.rating || item.runtime)" class="media-card__dot" />
+            <span v-if="item.rating" class="media-card__cert">{{ item.rating }}</span>
+            <span v-if="item.rating && item.runtime" class="media-card__dot" />
+            <span v-if="item.runtime" class="numeric">{{ item.runtime }}m</span>
+          </div>
+          <div v-if="genres.length" class="media-card__genres">
+            <span v-for="g in genres" :key="g">{{ g }}</span>
+          </div>
+        </template>
         <!--
           CANONICAL action-row order (locked cross-wave per plan_missing.md §2 —
           every later W1/W2 card edit must PRESERVE this sequence):

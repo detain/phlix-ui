@@ -395,6 +395,10 @@ async function onRemove(item: MediaItem): Promise<void> {
         `computeRowHeight()` applies `POSTER_RATIO` to the card width, so a
         list/backdrop/table row must pin its own height via `row-height`
         (`computeFixedRowHeight`) instead of being measured as a 2:3 poster.
+        Passing `row-height` also makes MediaGrid ENFORCE it — the row tracks get
+        `grid-auto-rows: <row-height − ROW_GAP>` — so a renderer only has to clip
+        its own content (`overflow: hidden`); it cannot silently grow taller than
+        the row the windowing math reserved.
 
         S69/S70 seam: add `v-else-if` branches for 'backdrop' / 'table' in the
         `#card` slot, each wiring the SAME ten host events (MediaGrid only wires

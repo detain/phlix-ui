@@ -100,6 +100,15 @@ export { default as SourcePriorityEditor } from './components/SourcePriorityEdit
 // The reusable *building blocks* (MediaCard/MediaGrid/MediaRow/MediaHomeRow/MediaDetail/
 // FilterBar above; Player + player/* parts and LoginForm/SignupForm below) ARE
 // exported — consumers compose pages from those, not from the page shells.
+//
+// NOTE (S68): the per-view-mode `#card`-slot renderers — `MediaListRow`, and the
+// backdrop/table renderers S69/S70 add — are also intentionally NOT re-exported,
+// but NOT for bundle-size reasons: `MediaCard` (which they compose) is already an
+// eager static export above, so exporting a renderer would add only its own few KB.
+// They are omitted because they are internals of `LibraryPage`'s view-mode seam
+// with no meaning outside it (they only make sense inside a `MediaGrid` whose
+// `columns`/`rowHeight` match them), exactly like the `Music*` internals. Keep new
+// renderers out of this file.
 
 // Admin port (RA) — server admin surfaces + their mount seam. NOTE: the admin
 // PAGE components are intentionally NOT re-exported here — they are lazy-loaded

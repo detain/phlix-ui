@@ -467,9 +467,18 @@ describe('LibraryPage — list view (S68)', () => {
     return `on${event.replace(/(^|-)([a-z])/g, (_m, _d, c: string) => c.toUpperCase())}`;
   }
 
-  /** The listener prop keys actually bound on a rendered component instance. */
-  function boundListeners(vm: { $: { vnode: { props: Record<string, unknown> | null } } }): string[] {
-    return Object.keys(vm.$.vnode.props ?? {}).filter((k) => k.startsWith('on'));
+  /**
+   * The listener prop keys the page binds on a renderer, read from the PUBLIC
+   * `VNode.props` of the vnode its `#card` slot produces (`slotRenderers()` below).
+   *
+   * Deliberately not `vm.$.vnode.props`: `$` is Vue's internal instance handle, so
+   * that shape can change in any minor and the assertions would then fail
+   * confusingly (or pass vacuously). `VNode.props` is the documented render-function
+   * contract — the same object `h()` accepts — and it is exactly what the compiled
+   * template wrote, so dropping `@play` from a branch is still caught.
+   */
+  function boundListeners(vnode: VNode): string[] {
+    return Object.keys(vnode.props ?? {}).filter((k) => k.startsWith('on'));
   }
 
   /**
@@ -570,7 +579,9 @@ describe('LibraryPage — list view (S68)', () => {
 
   it('wires ALL TEN host events onto the list row', async () => {
     const { w } = await mountWithMode('list');
-    const bound = boundListeners(w.findComponent(MediaListRow).vm);
+    const [row] = slotRenderers(w, media({ id: 'lr1' }));
+    expect(row.type).toBe(MediaListRow);
+    const bound = boundListeners(row);
     for (const event of HOST_EVENTS) {
       expect(bound, `list row is missing a \`${event}\` listener`).toContain(handlerKey(event));
     }
@@ -578,9 +589,30 @@ describe('LibraryPage — list view (S68)', () => {
 
   it('wires ALL TEN host events onto the v-else poster card too', async () => {
     const { w } = await mountWithMode('grid');
-    const bound = boundListeners(w.findComponent(MediaCard).vm);
+    const [card] = slotRenderers(w, media({ id: 'lr1' }));
+    expect(card.type).toBe(MediaCard);
+    const bound = boundListeners(card);
     for (const event of HOST_EVENTS) {
       expect(bound, `poster card is missing a \`${event}\` listener`).toContain(handlerKey(event));
+    }
+  });
+
+  /**
+   * S68 review finding 1, at the page level: the two renderers must be at PARITY on
+   * heading count, or navigating a list-mode library by heading announces every
+   * title twice (the composed card's overlay `<h3>` is only `opacity: 0`, which does
+   * not remove it from the accessibility tree).
+   */
+  it('emits exactly ONE heading per item in list mode and in grid mode', async () => {
+    const HEADINGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+      .map((h) => `.media-grid ${h}`)
+      .join(', ');
+    for (const mode of ['list', 'grid'] as const) {
+      const { w } = await mountWithMode(mode);
+      const headings = w.findAll(HEADINGS);
+      expect(headings, `viewMode="${mode}" must emit ONE heading per item`).toHaveLength(1);
+      expect(headings[0].text()).toBe('Dune');
+      w.unmount();
     }
   });
 

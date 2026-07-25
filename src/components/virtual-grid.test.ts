@@ -14,6 +14,7 @@ import {
   computeRowHeight,
   computeWindow,
   effectiveItemCount,
+  fixedRowContentHeight,
   LABEL_HEIGHT,
   LIST_ROW_HEIGHT,
   LIST_ROW_POSTER_WIDTH,
@@ -74,8 +75,27 @@ describe('virtual-grid — computeRowHeight', () => {
 // NOT be applied to the (full-width) row. These guard exactly that.
 describe('virtual-grid — computeFixedRowHeight (S68 non-poster rows)', () => {
   it('is the row content height plus the row gap beneath it', () => {
-    expect(computeFixedRowHeight(180, 24)).toBe(204);
+    expect(computeFixedRowHeight(180)).toBe(204);
     expect(computeFixedRowHeight(180)).toBe(180 + ROW_GAP);
+  });
+
+  /**
+   * The gap is a single constant, added here and removed by
+   * `fixedRowContentHeight()` (which is what MediaGrid uses for BOTH its
+   * `grid-auto-rows` track height and its placeholder cells). It is deliberately
+   * NOT a parameter: `.media-grid`'s CSS gap is fixed, so a caller-supplied gap
+   * could only ever disagree with the layout — a correct row height with
+   * mis-sized cells (S68 review, LOW-5).
+   */
+  it('round-trips exactly with fixedRowContentHeight (one gap, one place)', () => {
+    for (const content of [1, 60, 180, LIST_ROW_HEIGHT, 999]) {
+      expect(fixedRowContentHeight(computeFixedRowHeight(content))).toBe(content);
+    }
+    expect(fixedRowContentHeight(204)).toBe(180);
+    expect(fixedRowContentHeight(204)).toBe(204 - ROW_GAP);
+    // never negative, so a nonsense row height can't produce a negative cell
+    expect(fixedRowContentHeight(0)).toBe(0);
+    expect(fixedRowContentHeight(10)).toBe(0);
   });
 
   it('returns 0 for a zero/negative content height', () => {
