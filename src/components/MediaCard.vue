@@ -92,6 +92,15 @@ const props = withDefaults(
      */
     subtitle?: string | null;
     /**
+     * Suppress the caption block under the poster (title + sub-line) entirely,
+     * leaving the poster, badges, resume bar, stretched link and hover overlay
+     * untouched. Used by `MediaListRow` (S68), which composes this card as its
+     * poster column and renders the title/meta itself in the row body — without
+     * this the title would appear twice per row (truncated under the thumbnail
+     * and again as the row heading). Sibling of `hideActions`/`playOnly`.
+     */
+    hideCaption?: boolean;
+    /**
      * Apply the native `loading="lazy"` attribute to the poster `<img>`.
      * Default `true` — every standalone/rail host keeps native lazy-loading.
      * `MediaGrid` passes `false` (S35): its JS virtualization already guarantees
@@ -101,7 +110,15 @@ const props = withDefaults(
      */
     lazy?: boolean;
   }>(),
-  { newWithinDays: 30, canMatch: false, hideActions: false, playOnly: false, subtitle: null, lazy: true },
+  {
+    newWithinDays: 30,
+    canMatch: false,
+    hideActions: false,
+    playOnly: false,
+    subtitle: null,
+    hideCaption: false,
+    lazy: true,
+  },
 );
 
 const emit = defineEmits<{
@@ -590,7 +607,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
       </div>
     </div>
 
-    <div class="media-card__caption">
+    <div v-if="!hideCaption" class="media-card__caption">
       <div class="media-card__caption-title" :title="item.name">{{ item.name }}</div>
       <div class="media-card__caption-sub numeric">
         <template v-if="subtitle != null">{{ subtitle }}</template>

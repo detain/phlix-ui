@@ -33,6 +33,7 @@ import Icon from './Icon.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import {
   COL_GAP,
+  ROW_GAP,
   computeCardWidth,
   computeColumns,
   computeRowHeight,
@@ -57,6 +58,29 @@ const props = withDefaults(
     hasMore?: boolean;
     /** Min card width (px). Overrides the `cardSize` preference when set. */
     cardSize?: number;
+    /**
+     * Force the column count, overriding the `cardSize`-derived auto-fit count.
+     *
+     * This is the ONLY correct way for a `#card`-slot renderer to change the
+     * column count (S68's list view pins it to 1): the same value feeds BOTH the
+     * inline `grid-template-columns` and the windowing arithmetic, so layout and
+     * virtualization stay on the same numbers. A CSS `grid-template-columns`
+     * override would need `!important` to beat that inline style and would then
+     * desync the two — blank bands, mis-positioned rows and wrong `need-range`
+     * pages. Values < 1 (or non-finite) are ignored.
+     */
+    columns?: number;
+    /**
+     * Force the row height in px, INCLUDING the row gap beneath it — build it
+     * with `computeFixedRowHeight()`.
+     *
+     * Required by any `#card`-slot renderer whose rows are not 2:3 posters:
+     * `computeRowHeight()` scales `POSTER_RATIO` with the card width, which for a
+     * single full-width list row computes a row several times too tall. Pinning
+     * the height here also pins the not-yet-loaded placeholder cells to the same
+     * height, so a skeleton can never push its row past `rowHeight`.
+     */
+    rowHeight?: number;
     /** Skeleton cards shown during the initial load. */
     skeletonCount?: number;
     /** Extra rows rendered above/below the visible band. */
@@ -185,13 +209,32 @@ type WindowCache = {
 };
 let windowCache: WindowCache | null = null;
 
-const columns = computed(() => computeColumns(containerWidth.value, cardSize.value, COL_GAP));
-const rowHeight = computed(() =>
-  computeRowHeight(computeCardWidth(containerWidth.value, columns.value, COL_GAP)),
+/** A caller-forced count wins over the measured auto-fit one (see the prop). */
+const forcedColumns = computed(() => {
+  const n = props.columns;
+  return typeof n === 'number' && Number.isFinite(n) && n >= 1 ? Math.trunc(n) : null;
+});
+/** A caller-forced row height wins over the poster-derived one (see the prop). */
+const forcedRowHeight = computed(() => {
+  const h = props.rowHeight;
+  return typeof h === 'number' && Number.isFinite(h) && h > 0 ? h : null;
+});
+/** True while the rows are a caller-pinned fixed height (non-poster renderer). */
+const fixedRows = computed(() => forcedRowHeight.value !== null);
+
+// Named `effective*` (like `effectiveCount` below) rather than `columns`/`rowHeight`
+// so they never shadow the same-named props above.
+const effectiveColumns = computed(
+  () => forcedColumns.value ?? computeColumns(containerWidth.value, cardSize.value, COL_GAP),
+);
+const effectiveRowHeight = computed(
+  () =>
+    forcedRowHeight.value ??
+    computeRowHeight(computeCardWidth(containerWidth.value, effectiveColumns.value, COL_GAP)),
 );
 
 /** Virtualize only once we have real measurements; otherwise render everything. */
-const virtualized = computed(() => containerWidth.value > 0 && rowHeight.value > 0);
+const virtualized = computed(() => containerWidth.value > 0 && effectiveRowHeight.value > 0);
 
 /** Sizing count: the server `total` when known (so the page is its final length
  *  up front), else the loaded count. */
@@ -201,8 +244,8 @@ const windowResult = computed(() =>
   computeWindow({
     scrollTop: scrollTop.value,
     viewportHeight: viewportHeight.value,
-    rowHeight: rowHeight.value,
-    columns: columns.value,
+    rowHeight: effectiveRowHeight.value,
+    columns: effectiveColumns.value,
     itemCount: effectiveCount.value,
     overscan: props.overscan,
   }),
@@ -267,10 +310,15 @@ watch(
   { immediate: true },
 );
 
+// A forced column count is a LAYOUT decision, so it applies even before the
+// container is measured (jsdom / SSR / first paint) — otherwise a list view would
+// flash as an auto-fit poster grid, and its rows would be laid out at a different
+// column count than the windowing math assumes.
 const gridStyle = computed(() => ({
-  gridTemplateColumns: virtualized.value
-    ? `repeat(${columns.value}, minmax(0, 1fr))`
-    : `repeat(auto-fill, minmax(${cardSize.value}px, 1fr))`,
+  gridTemplateColumns:
+    virtualized.value || forcedColumns.value !== null
+      ? `repeat(${effectiveColumns.value}, minmax(0, 1fr))`
+      : `repeat(auto-fill, minmax(${cardSize.value}px, 1fr))`,
 }));
 
 const sizerStyle = computed(() =>
@@ -284,8 +332,22 @@ const innerStyle = computed(() =>
 );
 
 const skeletonStyle = computed(() => ({
-  gridTemplateColumns: `repeat(auto-fill, minmax(${cardSize.value}px, 1fr))`,
+  gridTemplateColumns:
+    forcedColumns.value !== null
+      ? `repeat(${effectiveColumns.value}, minmax(0, 1fr))`
+      : `repeat(auto-fill, minmax(${cardSize.value}px, 1fr))`,
 }));
+
+/**
+ * Placeholder-cell sizing. With a pinned `rowHeight` the cell is given that exact
+ * height (minus the row gap the prop includes) so a not-yet-loaded index in the
+ * pre-sized grid can never render taller than the row the windowing math reserved
+ * for it — a full-width 2:3 poster skeleton in a one-column list view would
+ * otherwise be ~1000px tall and shove every following row out of position.
+ */
+const skeletonCellStyle = computed(() =>
+  fixedRows.value ? { height: `${Math.max(0, (forcedRowHeight.value ?? 0) - ROW_GAP)}px` } : {},
+);
 
 // --- back to top ---
 const showBackToTop = computed(() => virtualized.value && scrollTop.value > viewportHeight.value * 1.5);
@@ -304,8 +366,8 @@ function backToTop(): void {
  */
 function scrollToIndex(index: number): void {
   if (typeof window === 'undefined') return;
-  const cols = Math.max(1, columns.value);
-  const rowY = Math.floor(Math.max(0, index) / cols) * rowHeight.value;
+  const cols = Math.max(1, effectiveColumns.value);
+  const rowY = Math.floor(Math.max(0, index) / cols) * effectiveRowHeight.value;
   // Instant, not smooth: an A-Z jump can span thousands of rows — animating
   // through them is janky and would fetch every page flown past. Jump straight
   // to the target so a single settled-window `need-range` loads that letter.
@@ -418,10 +480,21 @@ watch(
       aria-busy="true"
       aria-label="Loading media"
     >
-      <div v-for="n in skeletonCount" :key="n" class="skel-card" aria-hidden="true">
-        <div class="skel-poster" />
-        <div class="skel-title" />
-        <div class="skel-sub" />
+      <div
+        v-for="n in skeletonCount"
+        :key="n"
+        class="skel-card"
+        :style="skeletonCellStyle"
+        aria-hidden="true"
+      >
+        <!-- Pinned-row renderers get one block at the exact row height; the poster
+             grid keeps the poster/title/sub rhythm so there is no layout shift. -->
+        <div v-if="fixedRows" class="skel-block" />
+        <template v-else>
+          <div class="skel-poster" />
+          <div class="skel-title" />
+          <div class="skel-sub" />
+        </template>
       </div>
     </div>
 
@@ -457,10 +530,13 @@ watch(
               />
             </slot>
             <!-- not-yet-loaded index in the pre-sized grid -->
-            <div v-else class="skel-card" aria-hidden="true">
-              <div class="skel-poster" />
-              <div class="skel-title" />
-              <div class="skel-sub" />
+            <div v-else class="skel-card" :style="skeletonCellStyle" aria-hidden="true">
+              <div v-if="fixedRows" class="skel-block" />
+              <template v-else>
+                <div class="skel-poster" />
+                <div class="skel-title" />
+                <div class="skel-sub" />
+              </template>
             </div>
           </template>
         </div>
@@ -553,6 +629,25 @@ watch(
 .skel-title { width: 75%; }
 .skel-sub { width: 45%; margin-top: var(--space-2, 8px); height: 0.7em; }
 
+/* Pinned-row placeholder (a `rowHeight` prop is set — S68 list view and any later
+   fixed-height renderer): one block filling the cell's inline height, so the
+   placeholder occupies EXACTLY the row the windowing math reserved. */
+.skel-block {
+  position: relative;
+  height: 100%;
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.skel-block::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--surface-3), transparent);
+  transform: translateX(-100%);
+  animation: media-grid-shimmer 1.4s ease-in-out infinite;
+}
+
 @keyframes media-grid-shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(200%); }
@@ -563,7 +658,8 @@ watch(
    via a class binding on the grid root when appropriate. */
 .media-grid--skeleton.paused .skel-poster::before,
 .media-grid--skeleton.paused .skel-title::before,
-.media-grid--skeleton.paused .skel-sub::before {
+.media-grid--skeleton.paused .skel-sub::before,
+.media-grid--skeleton.paused .skel-block::before {
   animation-play-state: paused;
 }
 
@@ -669,6 +765,7 @@ watch(
   .skel-poster,
   .skel-title,
   .skel-sub,
+  .skel-block,
   .media-grid-more__spinner {
     animation: none;
   }

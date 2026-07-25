@@ -506,6 +506,26 @@ describe('MediaCard — watched (eye) toggle', () => {
     expect(w.find('.media-card__caption-sub').text()).toContain('12 episodes');
   });
 
+  // S68: MediaListRow composes this card as its poster column and renders the
+  // title/meta itself, so it needs the caption suppressed — without it the title
+  // appears twice per list row. Everything else about the card is untouched.
+  it('suppresses the caption block when hideCaption is set (S68 list row)', () => {
+    const w = mount(MediaCard, { props: { item: media(), hideCaption: true } });
+    expect(w.find('.media-card__caption').exists()).toBe(false);
+    expect(w.find('.media-card__caption-title').exists()).toBe(false);
+    expect(w.find('.media-card__caption-sub').exists()).toBe(false);
+    // poster, badges, stretched link and the hover overlay all still render
+    expect(w.find('.media-card__poster').exists()).toBe(true);
+    expect(w.find('.media-card__link').attributes('aria-label')).toBe('Dune: Part Two');
+    expect(w.find('.media-card__overlay').exists()).toBe(true);
+  });
+
+  it('keeps the caption by default (every existing host is unaffected)', () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    expect(w.find('.media-card__caption').exists()).toBe(true);
+    expect(w.find('.media-card__caption-title').text()).toBe('Dune: Part Two');
+  });
+
   it('opens the ⋯ menu when its trigger is clicked (regression: .stop swallowed the toggle)', async () => {
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
     await reveal(w);

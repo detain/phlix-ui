@@ -25,6 +25,9 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import MediaGrid from '../components/MediaGrid.vue';
+import MediaCard from '../components/MediaCard.vue';
+import MediaListRow from '../components/MediaListRow.vue';
+import { computeFixedRowHeight, LIST_ROW_HEIGHT } from '../components/virtual-grid';
 import FilterBar from '../components/FilterBar.vue';
 import IndexRail from '../components/IndexRail.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -56,6 +59,25 @@ const userItemData = useUserItemDataStore();
 // Persisted view mode (S67). The FilterBar owns the toggle; this page only
 // reflects the chosen mode onto the single MediaGrid mount (see the template).
 const prefs = usePreferencesStore();
+
+/**
+ * True while the persisted view mode selects the S68 list renderer. EVERY other
+ * value — including an out-of-union/stale persisted one, which the preferences
+ * store deliberately does not sanitize — falls through to the poster grid via the
+ * `v-else` in the `#card` slot. That fallback is load-bearing, not decoration.
+ */
+const listMode = computed(() => prefs.viewMode === 'list');
+
+/**
+ * Row geometry handed to the SINGLE MediaGrid mount while list mode is active: one
+ * full-width row per item, pinned to the list row's own fixed height. Both numbers
+ * MUST come through MediaGrid's props (never CSS) because the grid feeds the same
+ * values to its inline `grid-template-columns` AND to the windowing math; and the
+ * height must NOT be `computeRowHeight()`'s, which would apply the poster's 2:3
+ * ratio to the full row width and reserve a row several times too tall.
+ */
+const LIST_MODE_COLUMNS = 1;
+const listModeRowHeight = computeFixedRowHeight(LIST_ROW_HEIGHT);
 
 // A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
 // a letter scrolls the pre-sized grid to that letter's first title.
@@ -351,43 +373,37 @@ async function onRemove(item: MediaItem): Promise<void> {
       </EmptyState>
 
       <!--
-        ONE MediaGrid mount, whatever the view mode (S67). `data-view-mode`
+        ONE MediaGrid mount, whatever the view mode (S67/S68). `data-view-mode`
         reflects the persisted preference onto the grid root as a hook for
         NON-LAYOUT concerns only (e2e/unit selectors, per-mode colour/spacing
-        inside a card). The poster grid is still the only renderer.
+        inside a card).
 
-        S68-S70 seam: add the alternate renderers INSIDE this mount via
-        MediaGrid's `#card` slot —
-          <template #card="{ item, index }">
-            <ListRow v-if="prefs.viewMode === 'list'" … />
-            <MediaCard v-else … />
-          </template>
-        — which keeps the existing pagination / virtualization / `need-range`
+        The alternate renderers live INSIDE this mount, in the `#card` slot below,
+        which keeps the existing pagination / virtualization / `need-range`
         machinery untouched. Never add a second MediaGrid (or a parallel paging
-        path) per mode. Keep a `v-else` (or otherwise unconditional) grid branch:
-        it is LOAD-BEARING, because a stale/garbage persisted `viewMode` is
-        tolerated rather than sanitized (see the `viewMode` docblock in
-        usePreferencesStore.ts) and must still render items.
+        path) per mode.
 
-        DO NOT set the column count from CSS via `data-view-mode`. Once
-        MediaGrid is virtualized (`MediaGrid.vue:194`) it writes an INLINE
-        `grid-template-columns: repeat(<columns>, minmax(0, 1fr))`
-        (`MediaGrid.vue:270-274`) from `computeColumns()`, and feeds that SAME
-        `columns` value into the windowing math — `startIndex`/`endIndex`/
-        `padTop`/`totalHeight` (`virtual-grid.ts:113-145`). So a rule like
-        `[data-view-mode="list"] .media-grid { grid-template-columns: 1fr }`
-        would need `!important` to beat the inline style, and would then desync
-        the rendered layout from the windowing math: blank bands,
-        mis-positioned rows and wrong `need-range` pages while scrolling a long
-        library. Per-mode layout MUST go through MediaGrid's `cardSize` prop
-        (`MediaGrid.vue:58-59`) or an explicit parameterization of
-        `computeColumns` / `computeRowHeight` — never a CSS column override.
+        Per-mode LAYOUT goes through the `columns` / `row-height` props — never
+        through CSS. Once MediaGrid is virtualized it writes an INLINE
+        `grid-template-columns: repeat(<columns>, minmax(0, 1fr))` from the SAME
+        `columns` value it feeds the windowing math (`startIndex`/`endIndex`/
+        `padTop`/`totalHeight`), so a rule like
+        `[data-view-mode="list"] .media-grid { grid-template-columns: 1fr }` would
+        need `!important` to beat the inline style and would then desync the
+        rendered layout from that math: blank bands, mis-positioned rows and wrong
+        `need-range` pages while scrolling a long library. Likewise the row height:
+        `computeRowHeight()` applies `POSTER_RATIO` to the card width, so a
+        list/backdrop/table row must pin its own height via `row-height`
+        (`computeFixedRowHeight`) instead of being measured as a 2:3 poster.
 
-        Row-height gotcha for the non-poster modes: `computeRowHeight()`
-        hardcodes `POSTER_RATIO = 3 / 2` (`virtual-grid.ts:16,40-47`), so a
-        list/backdrop/table row is measured as a 2:3 poster and will compute the
-        wrong height until that ratio is parameterized (or, for S70 only, that
-        mode opts out of virtualization — an explicitly allowed tradeoff there).
+        S69/S70 seam: add `v-else-if` branches for 'backdrop' / 'table' in the
+        `#card` slot, each wiring the SAME ten host events (MediaGrid only wires
+        its own default card — filling `#card` moves that responsibility here, so a
+        missing listener is a dead button), plus their own `columns`/`row-height`
+        for the layout. The final `v-else` grid branch must stay UNCONDITIONAL: a
+        stale/garbage persisted `viewMode` is tolerated rather than sanitized (see
+        the `viewMode` docblock in usePreferencesStore.ts) and it is the only thing
+        that renders items for an out-of-union value.
       -->
       <MediaGrid
         ref="gridRef"
@@ -398,6 +414,8 @@ async function onRemove(item: MediaItem): Promise<void> {
         :loading-more="store.loading && store.items.length > 0"
         :has-more="store.hasMore"
         :can-match="auth.isAdmin"
+        :columns="listMode ? LIST_MODE_COLUMNS : undefined"
+        :row-height="listMode ? listModeRowHeight : undefined"
         @need-range="onNeedRange"
         @play="onPlay"
         @watchlist="onWatchlist"
@@ -409,7 +427,49 @@ async function onRemove(item: MediaItem): Promise<void> {
         @explore-data="openInspector"
         @choose-poster="onChoosePoster"
         @remove="onRemove"
-      />
+      >
+        <!-- Both branches wire the identical ten host events. The listeners on
+             MediaGrid above stay in place for its own default-card path (the grid
+             is also used without a `#card` slot elsewhere), but real user clicks
+             now travel through these. -->
+        <template #card="{ item }">
+          <MediaListRow
+            v-if="listMode"
+            :item="item"
+            :can-match="auth.isAdmin"
+            @play="onPlay"
+            @watchlist="onWatchlist"
+            @info="onInfo"
+            @match="onMatch"
+            @mark-watched="onMarkWatched"
+            @refresh="onRefresh"
+            @choose-poster="onChoosePoster"
+            @remove="onRemove"
+            @edit-metadata="onMatch"
+            @explore-data="openInspector"
+          />
+          <!-- UNCONDITIONAL fallback — see the note above; never make this a
+               `v-else-if`. `lazy=false` mirrors MediaGrid's own default card (S35:
+               JS windowing already keeps the DOM near-viewport, and native
+               lazy-load over transform-repositioned cards stalls). -->
+          <MediaCard
+            v-else
+            :item="item"
+            :can-match="auth.isAdmin"
+            :lazy="false"
+            @play="onPlay"
+            @watchlist="onWatchlist"
+            @info="onInfo"
+            @match="onMatch"
+            @mark-watched="onMarkWatched"
+            @refresh="onRefresh"
+            @choose-poster="onChoosePoster"
+            @remove="onRemove"
+            @edit-metadata="onMatch"
+            @explore-data="openInspector"
+          />
+        </template>
+      </MediaGrid>
 
       <IndexRail v-if="showRail" :buckets="buckets" @jump="onJump" />
     </section>

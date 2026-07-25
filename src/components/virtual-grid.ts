@@ -18,6 +18,23 @@ export const POSTER_RATIO = 3 / 2;
 export const LABEL_HEIGHT = 56;
 
 /**
+ * Width (px) of the `list` view mode's poster column (S68). FIXED — unlike the
+ * poster grid, a list row's thumbnail does not grow with the row width. Sized so
+ * `MediaCard`'s hover action row still lays out inside the poster instead of
+ * being clipped (its buttons are 32px on a 4px/8px gap rhythm).
+ */
+export const LIST_ROW_POSTER_WIDTH = 120;
+
+/**
+ * Height (px) of one `list` view mode row, EXCLUDING the row gap beneath it
+ * (S68). A list row is exactly as tall as its fixed-width 2:3 poster, so the
+ * ratio applies to `LIST_ROW_POSTER_WIDTH` — never to the full row width.
+ * `MediaListRow.vue` writes this onto the DOM as an inline height read from this
+ * same constant, so the rendered row and the windowing math cannot drift.
+ */
+export const LIST_ROW_HEIGHT = LIST_ROW_POSTER_WIDTH * POSTER_RATIO;
+
+/**
  * Number of auto-fit columns for a container width — mirrors CSS
  * `repeat(auto-fill, minmax(cardSize, 1fr))`, which packs
  * `floor((width + gap) / (cardSize + gap))` tracks. Always ≥ 1.
@@ -44,6 +61,26 @@ export function computeRowHeight(
 ): number {
   if (cardWidth <= 0) return 0;
   return cardWidth * POSTER_RATIO + labelHeight + rowGap;
+}
+
+/**
+ * Row height (px) for a renderer whose rows are a FIXED height — the row's own
+ * content height plus the row gap beneath it. Feed the result to `MediaGrid`'s
+ * `rowHeight` prop.
+ *
+ * `computeRowHeight()` above derives its height from the CARD WIDTH because a
+ * poster grid's 2:3 posters grow with the column width. A list row (S68) is not
+ * a poster: its height is intrinsic, and applying `POSTER_RATIO` to the full row
+ * width would compute a row several times too tall — which, once virtualization
+ * is on, mis-computes `startIndex`/`endIndex`/`padTop`/`totalHeight` (blank
+ * bands, mis-positioned rows and wrong `need-range` pages). Parameterizing the
+ * height here is the sanctioned way to keep the rendered layout and the
+ * windowing math on the same numbers; a CSS override is not (`MediaGrid` writes
+ * an INLINE `grid-template-columns` from the same `columns` value it windows on).
+ */
+export function computeFixedRowHeight(contentHeight: number, rowGap = ROW_GAP): number {
+  if (contentHeight <= 0) return 0;
+  return contentHeight + rowGap;
 }
 
 export interface WindowInput {
