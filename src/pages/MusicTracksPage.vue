@@ -32,6 +32,8 @@ import type { MusicTrack } from '../types/music';
 // --- state ---
 const tracks = ref<MusicTrack[]>([]);
 const loading = ref(false);
+/** Set when ONE page failed; the rows and pager it did not touch stay on screen. */
+const error = ref<string | null>(null);
 const searchQuery = ref('');
 const limit = ref(MUSIC_PAGE_SIZE);
 const offset = ref(0);
@@ -64,9 +66,16 @@ onMounted(async () => {
 /**
  * Load one page. `nextOffset` is passed in rather than read off the ref so a failed
  * page cannot leave the pager pointing at rows that were never rendered.
+ *
+ * **Shared failure policy** (see `MusicLibraryPage.loadArtists`): a failed page keeps
+ * the rows, the `total` and the `offset` and sets `error`. Discarding them zeroed
+ * `total`, which removed the pager, so a blip on page 7 of 293 left an empty table,
+ * no pager and a false "No tracks" with no way back — a dead end new with S110's
+ * pager. A FIRST load has nothing to keep, so the error renders alone.
  */
 async function loadTracks(nextOffset: number): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     const page = await getClient().listTracks({ limit: MUSIC_PAGE_SIZE, offset: nextOffset });
     tracks.value = page.tracks;
@@ -74,9 +83,7 @@ async function loadTracks(nextOffset: number): Promise<void> {
     limit.value = page.limit;
     offset.value = page.offset;
   } catch {
-    tracks.value = [];
-    total.value = 0;
-    offset.value = nextOffset;
+    error.value = t('music.pageLoadFailed');
   } finally {
     loading.value = false;
   }
@@ -184,28 +191,43 @@ function onSeek(event: Event): void {
       <span v-if="searchQuery"> ({{ t('music.matching') }} "{{ searchQuery }}")</span>
     </p>
 
-    <!-- Loading skeleton -->
-    <div v-if="loading && tracks.length === 0" class="tracks-page__loading" role="status" aria-busy="true">
-      <div v-for="n in 8" :key="n" class="track-skel">
-        <div class="track-skel__num" />
-        <div class="track-skel__title" />
-        <div class="track-skel__artist" />
-        <div class="track-skel__album" />
-        <div class="track-skel__duration" />
+    <!-- A failed page keeps its rows and its pager, so this is a banner above the
+         table rather than a replacement for it. It only takes over the listing area
+         when there is nothing left to show, so a failure never reads as "No tracks". -->
+    <div v-if="error" class="tracks-page__error" role="alert">
+      <Icon name="alert-circle" class="tracks-page__error-icon" />
+      <p class="tracks-page__error-text">{{ error }}</p>
+    </div>
+
+    <!-- The pager's `aria-controls` IDREF is on THIS always-rendered wrapper, not on
+         the table inside the v-if chain, so it never dangles mid-load. -->
+    <div id="music-tracks-table">
+      <!-- Loading skeleton -->
+      <div v-if="loading && tracks.length === 0" class="tracks-page__loading" role="status" aria-busy="true">
+        <div v-for="n in 8" :key="n" class="track-skel">
+          <div class="track-skel__num" />
+          <div class="track-skel__title" />
+          <div class="track-skel__artist" />
+          <div class="track-skel__album" />
+          <div class="track-skel__duration" />
+        </div>
       </div>
-    </div>
 
-    <!-- Empty state -->
-    <div v-else-if="filteredTracks.length === 0" class="tracks-page__empty" role="status">
-      <Icon name="music" class="tracks-page__empty-icon" />
-      <p class="tracks-page__empty-text">
-        {{ searchQuery ? t('music.noTracksMatch') : t('music.noTracks') }}
-      </p>
-    </div>
+      <!-- Empty state -->
+      <div
+        v-else-if="filteredTracks.length === 0 && !error"
+        class="tracks-page__empty"
+        role="status"
+      >
+        <Icon name="music" class="tracks-page__empty-icon" />
+        <p class="tracks-page__empty-text">
+          {{ searchQuery ? t('music.noTracksMatch') : t('music.noTracks') }}
+        </p>
+      </div>
 
-    <!-- Track table -->
-    <div v-else id="music-tracks-table" class="track-table" role="table" aria-label="Music tracks">
-      <div class="track-table__header" role="row">
+      <!-- Track table -->
+      <div v-else class="track-table" role="table" aria-label="Music tracks">
+        <div class="track-table__header" role="row">
         <span class="col-num" role="columnheader">#</span>
         <span class="col-title" role="columnheader">{{ t('music.title') }}</span>
         <span class="col-artist" role="columnheader">{{ t('music.artist') }}</span>
@@ -245,6 +267,7 @@ function onSeek(event: Event): void {
         >
           <Icon :name="playingTrackId === track.id ? 'pause' : 'play'" class="track-row__play-icon" />
         </button>
+        </div>
       </div>
     </div>
 
@@ -548,6 +571,28 @@ function onSeek(event: Event): void {
   background: linear-gradient(90deg, var(--surface-2, #27272a) 25%, var(--surface-3, #3f3f46) 37%, var(--surface-2, #27272a) 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
+}
+
+/* Page-load error banner — sits ABOVE the table, which keeps its rows */
+.tracks-page__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-4, 16px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-2, #27272a);
+  border: 1px solid var(--danger, #f87171);
+  color: var(--danger, #f87171);
+  font-size: var(--text-sm, 0.875rem);
+}
+.tracks-page__error-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.tracks-page__error-text {
+  margin: 0;
 }
 
 /* Empty state */

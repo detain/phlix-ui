@@ -295,8 +295,49 @@ describe('MusicAlbumPage', () => {
     });
     await flushPromises();
 
-    expect(fetchFn.calls[0]).toContain('artist=Queen');
+    // Exact, like its three sibling MED-3 tests: `toContain` would also accept a
+    // malformed `?artist=Queen&artist=ABBA`.
+    expect(fetchFn.calls[0]).toBe('/api/v1/music/albums/Greatest%20Hits?artist=Queen');
     expect(w.find('.album-header__artist').text()).toBe('Queen');
+    w.unmount();
+  });
+
+  it('renders the track count through i18n with separators, not a hardcoded plural', async () => {
+    stubFetch({ album: album({ track_count: 1234 }) });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('[data-count="tracks"]').text()).toBe('1,234 tracks');
+    w.unmount();
+  });
+
+  it('uses the singular track form for a one-track album', async () => {
+    stubFetch({ album: album({ track_count: 1 }) });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('[data-count="tracks"]').text()).toBe('1 track');
+    w.unmount();
+  });
+
+  it('honours a consumer override of the track-count string', async () => {
+    // Proof it really goes through the catalog: the old hardcoded ternary could not
+    // be overridden at all.
+    stubFetch({ album: album({ track_count: 5 }) });
+    const w = mount(MusicAlbumPage, {
+      props: { name: 'OK Computer' },
+      global: {
+        plugins: [makeRouter()],
+        provide: {
+          apiBase: '',
+          phlixConfig: { messages: { music: { tracksTotal: '{count} Titel' } } },
+        },
+        stubs: {
+          Icon: { props: ['name'], template: '<span class="icon" :data-icon="name" />' },
+          MusicTrackList: { props: ['tracks'], template: '<div class="track-list" />' },
+        },
+      },
+    });
+    await flushPromises();
+    expect(w.find('[data-count="tracks"]').text()).toBe('5 Titel');
     w.unmount();
   });
 

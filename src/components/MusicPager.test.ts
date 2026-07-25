@@ -173,14 +173,36 @@ describe('MusicPager', () => {
 
   // ---- a11y: a page change must be announced, not silent --------------------
 
-  it('announces the page readout as a live region and marks it current', () => {
+  it('announces the page readout as a live region', () => {
     const w = mountPager({ offset: 100, limit: 100, total: 2197 });
     const info = w.find('[data-nav="info"]');
     // Without a live region, pressing Next replaces the grid and says nothing.
     expect(info.attributes('role')).toBe('status');
     expect(info.attributes('aria-live')).toBe('polite');
     expect(info.attributes('aria-atomic')).toBe('true');
-    expect(info.attributes('aria-current')).toBe('page');
+    // NOT aria-current: that state marks the current item within a SET of navigable
+    // items, and this is a status string. See the single-owner test below.
+    expect(info.attributes('aria-current')).toBeUndefined();
+  });
+
+  it('has exactly ONE aria-current in the whole nav, on the selected option', () => {
+    // Two of them (the readout AND the option) is the kind of drift that a test
+    // pinning only "one aria-current OPTION" would not catch, so this counts every
+    // node in the landmark.
+    const w = mountPager({ offset: 200, limit: 100, total: 2197 });
+    const all = w.findAll('[aria-current]');
+    expect(all).toHaveLength(1);
+    expect(all[0]!.element.tagName).toBe('OPTION');
+    expect(all[0]!.text()).toBe('3');
+    expect(all[0]!.attributes('aria-current')).toBe('page');
+  });
+
+  it('still has exactly one aria-current when the jump select is dropped', () => {
+    // Above MAX_JUMP_OPTIONS there is no option list, so there is no set of page
+    // items and therefore nothing may claim `aria-current`.
+    const w = mountPager({ offset: 0, limit: 1, total: 1000000 });
+    expect(w.find('[data-nav="jump"]').exists()).toBe(false);
+    expect(w.findAll('[aria-current]')).toHaveLength(0);
   });
 
   it('points the jump select at the listing it drives, and marks the current option', () => {

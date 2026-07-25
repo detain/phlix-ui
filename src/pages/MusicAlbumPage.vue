@@ -98,6 +98,19 @@ async function loadAlbum(): Promise<void> {
 // Initial load
 void loadAlbum();
 
+/**
+ * "17 tracks" / "1 track" through the i18n catalog with thousands separators. Was a
+ * hardcoded `=== 1 ? 'track' : 'tracks'` ternary — untranslatable and unformatted —
+ * and the album's TRUE `track_count`, not `tracks.length` (the detail route returns
+ * the whole list, but the count is the DB's either way).
+ */
+const trackCountLabel = computed(() => {
+    const count = album.value?.totalTracks ?? 0;
+    return count === 1
+        ? t('music.tracksTotalOne')
+        : t('music.tracksTotal', { count: count.toLocaleString() });
+});
+
 // --- total duration ---
 const totalDurationSecs = computed(() => {
     return tracks.value.reduce((sum, t) => sum + (t.durationSecs ?? 0), 0);
@@ -188,7 +201,7 @@ function playAll(): void {
                     <p class="album-header__meta">
                         <span v-if="album.year">{{ album.year }}</span>
                         <span v-if="album.year"> · </span>
-                        <span>{{ album.totalTracks }} {{ album.totalTracks === 1 ? 'track' : 'tracks' }}</span>
+                        <span data-count="tracks">{{ trackCountLabel }}</span>
                         <span v-if="totalDurationSecs > 0"> · {{ formatDuration(totalDurationSecs) }}</span>
                     </p>
                     <button

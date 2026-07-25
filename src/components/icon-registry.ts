@@ -9,11 +9,26 @@
  * The Lucide icon registry behind {@link Icon} — the SINGLE source of truth for
  * every icon name the package ships.
  *
- * Extracted from `Icon.vue` so it is importable from a test: `Icon.test.ts`'s
- * "renders every registered icon" check used to iterate a HAND-COPIED list, which
- * silently stopped covering new registrations (it was missing 12 names, including
- * two added the same day). It now derives the list from {@link ICON_NAMES}, so a new
- * icon is covered the moment it is registered here.
+ * Extracted from `Icon.vue` so it is importable from a test. `Icon.test.ts`'s
+ * "renders every registered icon" check used to iterate a HAND-COPIED list, and it
+ * had drifted badly: **24 of the 79 registered names were uncovered (30%)**, so the
+ * test's title had been false long before anything in S110 touched it. It now
+ * derives the list from {@link ICON_NAMES}, which is why this file exists — a new
+ * icon is covered the moment it is registered here, with no second list to update.
+ *
+ * The 24 that were uncovered, for the record: `shuffle`, `repeat`, `repeat-1`,
+ * `list-music`, `captions-off`, `book`, `headphones`, `disc`, `mic`, `video`,
+ * `grid`, `backdrop`, `table`, `lock`, `thumbs-up`, `thumbs-down`, `refresh`,
+ * `key`, `trash`, `arrow-right`, `chevrons-left`, `chevrons-right`, `alert-circle`,
+ * `external-link`. (The old list held 55 names and contained no name that was
+ * *absent* from the registry, so the drift was one-directional.)
+ *
+ * ⚠ Provenance note, because getting this wrong is a repeatable trap: an earlier
+ * revision of this docblock said "12", and the S110 Fix r1 worklog said "77-entry
+ * registry, 22 short". Both were wrong — **79 / 55 / 24** is the measured truth. The
+ * 77 was read off a MUTATION's failure output (`…(74)` while R6 had temporarily
+ * removed the two `chevrons-*` entries), i.e. a number taken from a tree that was
+ * deliberately broken at the time. Never source a fact from a mutated tree.
  *
  * Icons resolve via unplugin-icons' `~icons/lucide/*` virtual modules — each
  * compiles to an inline SVG and only the names imported below are bundled.

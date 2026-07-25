@@ -107,6 +107,23 @@ describe('MusicArtistsPage', () => {
     w.unmount();
   });
 
+  it('renders the per-card album count through i18n, singular and with separators', async () => {
+    // Was `{{ n }} {{ n === 1 ? 'album' : 'albums' }}` inlined in the template —
+    // untranslatable and unformatted, on a file this very step had already edited.
+    stubFetch({
+      artists: [
+        { name: 'One', album_count: 1 },
+        { name: 'Many', album_count: 2197 },
+        { name: 'None', album_count: 0 },
+      ],
+    });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    const counts = w.findAll('[data-count="albums"]').map((c) => c.text());
+    expect(counts).toEqual(['1 album', '2,197 albums', '0 albums']);
+    w.unmount();
+  });
+
   it('shows the loading skeleton while the request is in flight', async () => {
     stubFetch({ hang: true });
     const w = mountPage(makeRouter());
@@ -181,23 +198,79 @@ describe('MusicArtistsPage', () => {
       w.unmount();
     });
 
-    it('surfaces the error and stops claiming a count when a page fails', async () => {
+    it('a failed page keeps the user where they were, and navigable', async () => {
       stubPagingFetch(2197);
       const w = mountPage(makeRouter());
       await flushPromises();
       expect(w.find('[data-count="artists"]').text()).toBe('2,197 artists');
+      expect(w.findAll('.artist-card')).toHaveLength(100);
 
       // Page 2 fails.
       vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('down'))));
       await w.find('[data-nav="next"]').trigger('click');
       await flushPromises();
 
+      expect(w.find('.artists-page__error').exists(), 'the failure must be stated').toBe(true);
+      expect(
+        w.findAll('.artist-card'),
+        'page 1 must still be on screen — a blip must not discard it',
+      ).toHaveLength(100);
+      expect(
+        w.find('.music-pager').exists(),
+        'the pager must survive so the user is not stranded',
+      ).toBe(true);
+      expect(
+        w.find('[data-count="artists"]').text(),
+        'the library size is still known, so keep showing it',
+      ).toBe('2,197 artists');
+      expect(
+        w.find('.artists-page__empty').exists(),
+        'a failure must never render as "No artists"',
+      ).toBe(false);
+
+      // And navigation genuinely works from the failed state.
+      const { calls } = stubPagingFetch(2197);
+      await w.find('[data-nav="next"]').trigger('click');
+      await flushPromises();
+      expect(calls[0]).toBe('/api/v1/music/artists?limit=100&offset=100');
+      expect(w.find('.artists-page__error').exists(), 'the banner clears on success').toBe(false);
+      w.unmount();
+    });
+
+    it('a FIRST-load failure shows the error alone, with no pager and no empty state', async () => {
+      // Nothing to preserve here, so the error legitimately takes the whole area —
+      // and `total` is still 0, so `MusicPager` hides itself without special-casing.
+      vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('down'))));
+      const w = mountPage(makeRouter());
+      await flushPromises();
+
       expect(w.find('.artists-page__error').exists()).toBe(true);
-      // No pager and no count: both would be claims about a listing we no longer
-      // have. (The alternative — keeping the old total beside an error — would
-      // page a grid that is not on screen.)
+      expect(w.find('.artists-page__empty').exists()).toBe(false);
       expect(w.find('.music-pager').exists()).toBe(false);
-      expect(w.find('[data-count="artists"]').exists()).toBe(false);
+      w.unmount();
+    });
+
+    it('keeps the aria-controls IDREF resolvable WHILE a page is loading', async () => {
+      // The id used to live on the grid inside the v-if chain, so during every page
+      // change the pager advertised an IDREF that resolved to nothing (axe
+      // `aria-valid-attr-value`) — precisely when an AT user is listening.
+      stubPagingFetch(2197);
+      const w = mountPage(makeRouter());
+      await flushPromises();
+
+      const target = w.find('[data-nav="jump"]').attributes('aria-controls');
+      expect(target).toBe('music-artists-list');
+
+      // Freeze the next page in flight and assert the IDREF still resolves.
+      vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+      await w.find('[data-nav="next"]').trigger('click');
+      await Promise.resolve();
+
+      expect(w.find('.artists-page__loading').exists(), 'must really be mid-load').toBe(true);
+      expect(
+        w.find(`#${target}`).exists(),
+        'aria-controls must not dangle mid-load',
+      ).toBe(true);
       w.unmount();
     });
   });

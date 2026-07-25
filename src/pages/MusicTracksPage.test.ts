@@ -120,12 +120,16 @@ describe('MusicTracksPage', () => {
     w.unmount();
   });
 
-  it('shows an empty state (no rows) when the load errors', async () => {
+  it('states the error (never a false empty state) when the FIRST load fails', async () => {
     stubFetch({ error: true });
     const w = mountPage();
     await flushPromises();
     expect(w.find('.track-row').exists()).toBe(false);
-    expect(w.find('.tracks-page__empty').exists()).toBe(true);
+    expect(w.find('.tracks-page__error').exists(), 'the failure must be stated').toBe(true);
+    expect(
+      w.find('.tracks-page__empty').exists(),
+      'a failure must never read as "No tracks" — that is a lie about the library',
+    ).toBe(false);
     w.unmount();
   });
 
@@ -212,18 +216,53 @@ describe('MusicTracksPage', () => {
     w.unmount();
   });
 
-  it('drops the pager and the total when a page fails', async () => {
+  it('a failed page keeps the rows, the count and the pager — the user is not stranded', async () => {
     stubFetch({ tracks: [rawTrack('t1', 'A')], total: 250 });
     const w = mountPage();
     await flushPromises();
     expect(w.find('.music-pager').exists()).toBe(true);
+    expect(w.findAll('.track-row')).toHaveLength(1);
 
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('down'))));
     await w.find('[data-nav="next"]').trigger('click');
     await flushPromises();
 
-    expect(w.find('.music-pager').exists()).toBe(false);
-    expect(w.find('.tracks-page__empty').exists()).toBe(true);
+    expect(w.find('.tracks-page__error').exists(), 'the failure must be stated').toBe(true);
+    expect(w.findAll('.track-row'), 'the loaded page must stay on screen').toHaveLength(1);
+    expect(
+      w.find('.music-pager').exists(),
+      'the pager must survive: zeroing total removed it and left no way back',
+    ).toBe(true);
+    expect(
+      w.find('.tracks-page__empty').exists(),
+      'a failure must never render as the "No tracks" empty state',
+    ).toBe(false);
+    expect(w.find('[data-count="tracks"]').text()).toContain('250 tracks');
+
+    // Navigation still works from the failed state.
+    const good = stubFetch({ tracks: [rawTrack('t9', 'Z')], total: 250 });
+    await w.find('[data-nav="last"]').trigger('click');
+    await flushPromises();
+    expect(String(good.mock.calls[0][0])).toContain('offset=200');
+    expect(w.find('.tracks-page__error').exists(), 'the banner clears on success').toBe(false);
+    w.unmount();
+  });
+
+  it('keeps the aria-controls IDREF resolvable WHILE a page is loading', async () => {
+    stubFetch({ tracks: [rawTrack('t1', 'A')], total: 250 });
+    const w = mountPage();
+    await flushPromises();
+    const target = w.find('[data-nav="jump"]').attributes('aria-controls');
+    expect(target).toBe('music-tracks-table');
+
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+    await w.find('[data-nav="next"]').trigger('click');
+    await Promise.resolve();
+
+    expect(
+      w.find(`#${target}`).exists(),
+      'aria-controls must not dangle mid-load',
+    ).toBe(true);
     w.unmount();
   });
 });

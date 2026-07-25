@@ -6,17 +6,33 @@
 <script setup lang="ts">
 /**
  * MusicArtistCard — card displaying an artist with their image, name, and album count.
+ *
+ * The album count goes through the i18n catalog (`music.albumsTotal[One]`) with
+ * thousands separators. It used to inline `album{{ n !== 1 ? 's' : '' }}`, which is
+ * both untranslatable and unformatted — the same defect as the three other music
+ * surfaces that carried it in a slightly different syntactic shape.
  */
+import { computed } from 'vue';
+import { useMessages } from '../composables/useMessages';
 import type { MusicArtist } from '../types/music';
 import Icon from './Icon.vue';
 
-defineProps<{
+const props = defineProps<{
   artist: MusicArtist;
 }>();
 
 defineEmits<{
   (e: 'click', artist: MusicArtist): void;
 }>();
+
+const { t } = useMessages();
+
+const albumCountLabel = computed(() => {
+  const count = props.artist.albumCount ?? 0;
+  return count === 1
+    ? t('music.albumsTotalOne')
+    : t('music.albumsTotal', { count: count.toLocaleString() });
+});
 </script>
 
 <template>
@@ -35,8 +51,8 @@ defineEmits<{
     </div>
     <div class="artist-card__info">
       <span class="artist-card__name">{{ artist.name }}</span>
-      <span v-if="artist.albumCount !== undefined" class="artist-card__albums">
-        {{ artist.albumCount }} album{{ artist.albumCount !== 1 ? 's' : '' }}
+      <span v-if="artist.albumCount !== undefined" class="artist-card__albums" data-count="albums">
+        {{ albumCountLabel }}
       </span>
     </div>
   </button>

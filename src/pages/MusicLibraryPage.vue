@@ -55,6 +55,11 @@ const artists = ref<MusicArtist[]>([]);
 const albums = ref<MusicAlbum[]>([]);
 const tracks = ref<MusicTrack[]>([]);
 const loading = ref(false);
+/**
+ * Set when ONE page failed to load. Only one view is ever active, so a single ref
+ * serves both listings; it is cleared on every load and on every view change.
+ */
+const error = ref<string | null>(null);
 
 // --- paging state: one page of artists, one page of the selected artist's albums.
 // `total`/`limit` come back from the server (it clamps `limit`), so the pager and
@@ -92,9 +97,19 @@ function getClient(): ApiClient {
 /**
  * Load one page of artists. `offset` is passed explicitly (never derived inside)
  * so a failed page cannot leave the pager pointing at rows that were never shown.
+ *
+ * **Failure policy (shared by every music listing — see `loadAlbums`,
+ * `MusicArtistsPage`, `MusicArtistPage`, `MusicTracksPage`):** on failure keep the
+ * rows, the `total` AND the `offset`, and set `error`. Discarding them — which this
+ * page used to do — zeroed `total`, which removed the pager, so an I/O blip on page 7
+ * of 22 left an empty grid, no pager, and a false "No artists" with no way back. That
+ * dead end was NEW with S110's pager; keeping state means the user stays exactly
+ * where they were and can retry or page away. On a FIRST load there is nothing to
+ * keep, so the error state renders alone (no false empty state).
  */
 async function loadArtists(offset: number): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     const page = await getClient().listArtists({ limit: MUSIC_PAGE_SIZE, offset });
     artists.value = page.artists;
@@ -102,9 +117,7 @@ async function loadArtists(offset: number): Promise<void> {
     artistLimit.value = page.limit;
     artistOffset.value = page.offset;
   } catch {
-    artists.value = [];
-    artistTotal.value = 0;
-    artistOffset.value = offset;
+    error.value = t('music.pageLoadFailed');
   } finally {
     loading.value = false;
   }
@@ -114,9 +127,11 @@ async function loadArtists(offset: number): Promise<void> {
  * Load one page of ONE artist's albums, filtered SERVER-side. Three artists on the
  * production library hold more than a full page of albums (142 / 109 / 104), so
  * this listing needs its own pager for those albums to be reachable at all.
+ * Same failure policy as `loadArtists` above.
  */
 async function loadAlbums(artist: MusicArtist, offset: number): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
     const page = await getClient().listAlbums({
       artist: artist.name,
@@ -128,9 +143,7 @@ async function loadAlbums(artist: MusicArtist, offset: number): Promise<void> {
     albumLimit.value = page.limit;
     albumOffset.value = page.offset;
   } catch {
-    albums.value = [];
-    albumTotal.value = 0;
-    albumOffset.value = offset;
+    error.value = t('music.pageLoadFailed');
   } finally {
     loading.value = false;
   }
@@ -299,6 +312,15 @@ function goBack(): void {
       </p>
     </header>
 
+    <!-- A failed page keeps its rows and its pager, so this is a BANNER above the
+         listing, not a replacement for it: the user is still on the page they were
+         on. It only takes over the listing area when there is nothing to show
+         (a first-load failure), so a failure never renders as "No artists". -->
+    <div v-if="error && view !== 'tracks'" class="music-page__error" role="alert">
+      <Icon name="alert-circle" class="music-page__error-icon" />
+      <p class="music-page__error-text">{{ error }}</p>
+    </div>
+
     <!-- Artists grid. The pager sits OUTSIDE the grid so its `aria-controls` can
          name the grid it drives rather than point at its own ancestor. -->
     <template v-if="view === 'artists'">
@@ -310,7 +332,11 @@ function goBack(): void {
             <div class="artist-skel__albums" />
           </div>
         </div>
-        <div v-else-if="artists.length === 0" class="music-page__empty" role="status">
+        <div
+          v-else-if="artists.length === 0 && !error"
+          class="music-page__empty"
+          role="status"
+        >
           <Icon name="music" class="music-page__empty-icon" />
           <p class="music-page__empty-text">{{ t('music.noArtists') }}</p>
         </div>
@@ -324,7 +350,6 @@ function goBack(): void {
         </template>
       </div>
       <MusicPager
-        class="music-page__pager"
         data-pager="artists"
         :offset="artistOffset"
         :limit="artistLimit"
@@ -346,7 +371,11 @@ function goBack(): void {
             <div class="album-skel__meta" />
           </div>
         </div>
-        <div v-else-if="albums.length === 0" class="music-page__empty" role="status">
+        <div
+          v-else-if="albums.length === 0 && !error"
+          class="music-page__empty"
+          role="status"
+        >
           <Icon name="image" class="music-page__empty-icon" />
           <p class="music-page__empty-text">{{ t('music.noAlbums') }}</p>
         </div>
@@ -360,7 +389,6 @@ function goBack(): void {
         </template>
       </div>
       <MusicPager
-        class="music-page__pager"
         data-pager="albums"
         :offset="albumOffset"
         :limit="albumLimit"
@@ -523,11 +551,22 @@ function goBack(): void {
   gap: var(--space-5, 20px);
 }
 
-/* The pager is a SIBLING of the grid (so its `aria-controls` can name the grid),
-   so it needs no column span — just the same top gap the grid child had. */
-.music-page__pager {
-  margin-top: var(--space-6, 24px);
-}
+/* ⚠ GEOMETRY RECORD — `npm run test:visual` is banned in this repo and `ui-ci`'s
+   `visual` job must not be dispatched, so this comment is the ONLY record of the
+   change and must therefore be true rather than reassuring.
+   Moving the pager OUT of `.music-page__grid` (so its `aria-controls` can name the
+   grid instead of pointing at its own ancestor) DID change the spacing on the
+   artists and albums views:
+     - as a grid child: `row-gap` 20px + `.music-pager`'s `margin-top` 24px = 44px
+     - as a sibling:    `margin-top` 24px only                              = 24px
+   That 20px (~45%) reduction is now DELIBERATE, not accidental. 24px is what the
+   other three music pagers (`MusicArtistsPage`, `MusicArtistPage`,
+   `MusicTracksPage`) have always used — they were already siblings — so keeping
+   24px makes all four consistent instead of leaving this one page bespoke.
+   There is deliberately NO page-level `margin-top` override: it would land on the
+   same element as `.music-pager`'s (a class passed to a child component's root), so
+   the two would not add — they would fight at equal specificity and be resolved by
+   stylesheet order. The component owns this margin. */
 
 /* Loading skeletons */
 .music-page__loading {
@@ -568,6 +607,28 @@ function goBack(): void {
   background: linear-gradient(90deg, var(--surface-2, #27272a) 25%, var(--surface-3, #3f3f46) 37%, var(--surface-2, #27272a) 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
+}
+
+/* Page-load error banner — sits ABOVE the listing, which keeps its rows */
+.music-page__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-4, 16px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-2, #27272a);
+  border: 1px solid var(--danger, #f87171);
+  color: var(--danger, #f87171);
+  font-size: var(--text-sm, 0.875rem);
+}
+.music-page__error-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.music-page__error-text {
+  margin: 0;
 }
 
 /* Empty state */

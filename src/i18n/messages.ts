@@ -366,6 +366,12 @@ export const DEFAULT_MESSAGES = {
     nextPage: 'Next page',
     lastPage: 'Last page',
     jumpToPage: 'Jump to page',
+    /**
+     * Shown when ONE page of a listing fails to load. Deliberately says the user's
+     * place is intact, because it is: a failed page leaves the previously loaded rows
+     * and the pager untouched, so the failure is a blip and not a dead end.
+     */
+    pageLoadFailed: 'Could not load that page. Your place is unchanged — try again.',
     /** Accessible name of a pager landmark when it has no listing name. */
     pagination: 'Pagination',
     /**

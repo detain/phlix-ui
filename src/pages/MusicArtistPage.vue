@@ -46,7 +46,13 @@ const apiBase = useMediaApiBase();
 const artist = ref<MusicArtist | null>(null);
 const albums = ref<MusicAlbum[]>([]);
 const loading = ref(false);
+/** Whole-page failure (the artist itself could not be read) — replaces the page. */
 const error = ref<string | null>(null);
+/**
+ * ONE album page failed. Distinct from `error`: the artist and the previously loaded
+ * albums are still on screen, so this renders as a banner and the pager stays usable.
+ */
+const pageError = ref<string | null>(null);
 
 // --- album paging (three production artists hold more than one page: 142/109/104) ---
 const albumTotal = ref(0);
@@ -60,8 +66,7 @@ function getClient(): ApiClient {
 /**
  * Load ONE album page for this artist. The single loader for both entry points —
  * `loadArtist` (mount) and `goToAlbumOffset` (pager) — because when they were two
- * copies they immediately drifted: the pager's copy forgot to zero `albumTotal` on
- * failure, so a failed page kept paging a listing that was no longer on screen.
+ * copies they immediately drifted in their failure handling.
  */
 async function loadAlbumPage(offset: number): Promise<void> {
     const page = await getClient().listAlbums({
@@ -73,13 +78,6 @@ async function loadAlbumPage(offset: number): Promise<void> {
     albumTotal.value = page.total;
     albumLimit.value = page.limit;
     albumOffset.value = page.offset;
-}
-
-/** The ONE failure policy: drop the page AND the total, keep the attempted offset. */
-function clearAlbumPage(offset: number): void {
-    albums.value = [];
-    albumTotal.value = 0;
-    albumOffset.value = offset;
 }
 
 async function loadArtist(): Promise<void> {
@@ -94,22 +92,34 @@ async function loadArtist(): Promise<void> {
         ]);
         artist.value = artistData;
     } catch {
+        // A FIRST load has nothing to preserve, so this is the whole-page error.
         error.value = t('music.artistNotFound') ?? 'Artist not found';
         artist.value = null;
-        clearAlbumPage(0);
+        albums.value = [];
+        albumTotal.value = 0;
+        albumOffset.value = 0;
     } finally {
         loading.value = false;
     }
 }
 
-/** Load another album page for the same artist (no need to re-read artist info). */
+/**
+ * Load another album page for the same artist (no need to re-read artist info).
+ *
+ * **Shared failure policy** (see `MusicLibraryPage.loadArtists`): a failed page keeps
+ * the rows, the `total` and the `offset` and sets `pageError`. Zeroing `total` — which
+ * this did — removed the pager, so a blip on page 2 of a 142-album artist left an
+ * empty grid, no pager and a false "No albums" with no way back. That dead end was new
+ * with S110's pager.
+ */
 async function goToAlbumOffset(offset: number): Promise<void> {
     if (offset === albumOffset.value) return;
     loading.value = true;
+    pageError.value = null;
     try {
         await loadAlbumPage(offset);
     } catch {
-        clearAlbumPage(offset);
+        pageError.value = t('music.pageLoadFailed');
     } finally {
         loading.value = false;
     }
@@ -228,17 +238,27 @@ const trackCountLabel = computed(() =>
             <!-- Albums section -->
             <section class="artist-albums" aria-label="Albums">
                 <h2 class="artist-albums__title">{{ t('music.albums') }}</h2>
-                <div v-if="albums.length === 0" class="artist-albums__empty">
-                    <Icon name="image" class="artist-albums__empty-icon" />
-                    <p>{{ t('music.noAlbums') }}</p>
+                <!-- One page failed: banner, not a replacement — the albums the user
+                     was looking at are still below, and the pager still works. -->
+                <div v-if="pageError" class="artist-albums__page-error" role="alert">
+                    <Icon name="alert-circle" class="artist-albums__empty-icon" />
+                    <p>{{ pageError }}</p>
                 </div>
-                <div v-else id="music-artist-albums" class="artist-albums__grid">
-                    <MusicAlbumCard
-                        v-for="album in albums"
-                        :key="album.id"
-                        :album="album"
-                        @click="goToAlbum"
-                    />
+                <!-- The `aria-controls` IDREF is on this always-rendered wrapper, not
+                     on the grid inside the v-if, so it never dangles mid-load. -->
+                <div id="music-artist-albums">
+                    <div v-if="albums.length === 0 && !pageError" class="artist-albums__empty">
+                        <Icon name="image" class="artist-albums__empty-icon" />
+                        <p>{{ t('music.noAlbums') }}</p>
+                    </div>
+                    <div v-else class="artist-albums__grid">
+                        <MusicAlbumCard
+                            v-for="album in albums"
+                            :key="album.id"
+                            :album="album"
+                            @click="goToAlbum"
+                        />
+                    </div>
                 </div>
                 <MusicPager
                     :offset="albumOffset"
@@ -347,6 +367,21 @@ const trackCountLabel = computed(() =>
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: var(--space-5, 20px);
+}
+.artist-albums__page-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    margin-bottom: var(--space-4, 16px);
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+    border-radius: var(--radius-md, 8px);
+    background: var(--surface-2, #27272a);
+    border: 1px solid var(--danger, #f87171);
+    color: var(--danger, #f87171);
+    font-size: var(--text-sm, 0.875rem);
+}
+.artist-albums__page-error p {
+    margin: 0;
 }
 .artist-albums__empty {
     display: flex;

@@ -332,24 +332,47 @@ describe('MusicArtistPage', () => {
 
   // ---- LOW-8: one loader, one failure policy ---------------------------------
 
-  it('zeroes the album total when a LATER album page fails, like its sibling pages', async () => {
+  it('a failed LATER album page is a blip, not a dead end: rows and pager survive', async () => {
     stubFetch({ albums: albumsFor('Radiohead', 142), albumCount: 142, trackCount: 710 });
     const w = mountPage(makeRouter());
     await flushPromises();
     expect(w.find('[data-nav="info"]').text()).toContain('Page 1 of 2');
+    expect(w.findAll('.album-card')).toHaveLength(100);
 
-    // Page 2 fails. The duplicated loader used to clear `albums` but keep
-    // `albumTotal`, so the pager went on paging a listing that was not on screen.
+    // Page 2 fails.
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('page down'))));
     await w.find('[data-nav="next"]').trigger('click');
     await flushPromises();
 
-    expect(w.find('.album-card').exists(), 'the failed page must not leave stale cards').toBe(false);
+    expect(
+        w.find('.artist-albums__page-error').exists(),
+        'a failed page must SAY so, not silently show an empty list',
+    ).toBe(true);
+    expect(
+        w.findAll('.album-card'),
+        'the page the user was on must stay on screen — nothing was lost',
+    ).toHaveLength(100);
     expect(
         w.find('.music-pager').exists(),
-        'albumTotal must be zeroed: a pager here would page a listing that is no longer on screen',
+        'the pager must survive: zeroing total removed it and stranded the user with no way back',
+    ).toBe(true);
+    expect(
+        w.find('.artist-albums__empty').exists(),
+        'a failure must never render as the "No albums" empty state',
     ).toBe(false);
-    expect(w.find('.artist-albums__empty').exists(), 'the empty state must take over').toBe(true);
+
+    // …and the user can actually navigate out of the failure. Note the displayed
+    // offset is still page 1's (the failed load did not move it), which is why the
+    // retry is `next` and not `first` — `first` would be a legitimate no-op.
+    const good = stubFetch({ albums: albumsFor('Radiohead', 142), albumCount: 142, trackCount: 710 });
+    await w.find('[data-nav="next"]').trigger('click');
+    await flushPromises();
+    expect(
+        good.calls.some((u) => u.includes('offset=100')),
+        'retrying the failed page must actually re-request it',
+    ).toBe(true);
+    expect(w.findAll('.album-card'), 'the retry lands on page 2').toHaveLength(42);
+    expect(w.find('.artist-albums__page-error').exists(), 'the banner clears on success').toBe(false);
     w.unmount();
   });
 

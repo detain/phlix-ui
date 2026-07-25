@@ -139,14 +139,17 @@ function onJump(event: Event): void {
 
     <!-- role=status + aria-live: pressing Next replaces the grid silently otherwise,
          so this readout is the ONLY thing that tells an AT user the page changed.
-         aria-current marks it as the current position in the page set. -->
+         It deliberately carries NO `aria-current`: that state marks the current item
+         WITHIN A SET of navigable items, and this is a status string, not an item.
+         The single `aria-current="page"` in this nav is on the selected <option> of
+         the jump control below — the only actual set of page items here. Keeping
+         exactly one is pinned by a test. -->
     <span
       class="music-pager__info"
       data-nav="info"
       role="status"
       aria-live="polite"
       aria-atomic="true"
-      aria-current="page"
     >
       {{ t('music.pageOf', { page, pages }) }}
       <span class="music-pager__range">
@@ -201,8 +204,13 @@ function onJump(event: Event): void {
 </template>
 
 <style scoped>
+/* ⚠ Do NOT add `grid-column: 1 / -1` back. It was here while the pager lived INSIDE
+   `.music-page__grid`; every call site now mounts it as a SIBLING of the grid it
+   pages, precisely so its `aria-controls` can reference that grid instead of its own
+   ancestor. Re-adding a grid-item declaration is an invitation to re-nest the pager,
+   which would silently undo that. A pager that must span a grid should be given the
+   span by the page, not assume one. */
 .music-pager {
-  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

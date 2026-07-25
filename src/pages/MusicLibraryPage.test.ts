@@ -256,6 +256,8 @@ function notFoundResponse(message: string): Response {
 interface FakeServer {
   /** Call the fake endpoint directly — used to show what the OLD code fetched. */
   request: (url: string) => Promise<Response>;
+  /** The stub itself, to re-install after a test temporarily breaks `fetch`. */
+  fetchImpl: typeof fetch;
   /** Every requested URL, in order. */
   urls: () => string[];
   /** URLs for one endpoint prefix. */
@@ -348,6 +350,7 @@ function stubMusicServer(library: FakeLibrary): FakeServer {
   vi.stubGlobal('fetch', fetchFn);
   return {
     request: fetchFn as unknown as (url: string) => Promise<Response>,
+    fetchImpl: fetchFn as unknown as typeof fetch,
     urls: () => [...calls],
     urlsFor: (prefix: string) => calls.filter((u) => u.startsWith(prefix)),
     library,
@@ -871,7 +874,10 @@ describe('MusicLibraryPage', () => {
       await flushPromises();
 
       expect(wrapper.findAll('.album-card')).toHaveLength(2);
-      expect(wrapper.find('[data-pager="albums"] .music-pager').exists()).toBe(false);
+      // `data-pager` lands on the pager's ROOT <nav class="music-pager">, so assert on
+      // the nav ITSELF — `[data-pager] .music-pager` would ask for a descendant that
+      // cannot exist and would pass vacuously for any `toBe(false)`.
+      expect(wrapper.find('[data-pager="albums"]').exists()).toBe(false);
       wrapper.unmount();
     });
 
@@ -935,15 +941,109 @@ describe('MusicLibraryPage', () => {
       wrapper.unmount();
     });
 
-    it('shows an empty grid and no pager when the artists request fails', async () => {
+    it('states the error and shows no pager when the FIRST artists request fails', async () => {
       stubMusicServer(prodLibrary());
       vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('artists down'))));
       const wrapper = mountPage();
       await flushPromises();
 
-      expect(wrapper.find('.music-page__empty').exists()).toBe(true);
-      expect(wrapper.find('[data-count="artists"]').text()).toBe('0 artists');
-      expect(wrapper.find('[data-pager="artists"] .music-pager').exists()).toBe(false);
+      expect(wrapper.find('.music-page__error').exists(), 'the failure must be stated').toBe(true);
+      expect(
+        wrapper.find('.music-page__empty').exists(),
+        'a failure must never render as the "No artists" empty state',
+      ).toBe(false);
+      // Nothing was ever loaded, so `total` is genuinely 0 and the pager correctly
+      // hides itself — no special case needed.
+      expect(wrapper.find('[data-pager="artists"]').exists()).toBe(false);
+      wrapper.unmount();
+    });
+
+    it('a failed artist page keeps the grid, the count and the pager navigable', async () => {
+      // The dead end this closes was NEW with S110's pager: zeroing `total` on
+      // failure removed the pager, so a blip on page 7 of 22 left an empty grid, no
+      // pager, and a false "No artists".
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      await wrapper.find('[data-pager="artists"] [data-nav="jump"]').setValue('7');
+      await flushPromises();
+      expect(wrapper.findAll('.artist-card')).toHaveLength(100);
+      expect(wrapper.find('[data-pager="artists"] [data-nav="info"]').text())
+        .toContain('Page 7 of 22');
+
+      vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('page down'))));
+      await wrapper.find('[data-pager="artists"] [data-nav="next"]').trigger('click');
+      await flushPromises();
+
+      expect(wrapper.find('.music-page__error').exists(), 'the failure must be stated').toBe(true);
+      expect(
+        wrapper.findAll('.artist-card'),
+        'page 7 must still be on screen — a blip must not discard it',
+      ).toHaveLength(100);
+      expect(
+        wrapper.find('[data-pager="artists"]').exists(),
+        'the pager must survive so the user is not stranded on a failed page',
+      ).toBe(true);
+      expect(
+        wrapper.find('[data-count="artists"]').text(),
+        'the library size is still known',
+      ).toBe('2,197 artists');
+      expect(
+        wrapper.find('.music-page__empty').exists(),
+        'a failure must never render as "No artists"',
+      ).toBe(false);
+
+      // And the user can navigate out of it.
+      vi.stubGlobal('fetch', server.fetchImpl);
+      await wrapper.find('[data-pager="artists"] [data-nav="first"]').trigger('click');
+      await flushPromises();
+      expect(wrapper.findAll('.artist-card')[0]!.text()).toContain(artistName(1));
+      expect(wrapper.find('.music-page__error').exists(), 'the banner clears on success').toBe(false);
+      wrapper.unmount();
+    });
+
+    it('a failed ALBUM page keeps that artist\'s albums and pager', async () => {
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      // Artist 0001 has 142 albums → 2 pages.
+      await wrapper.findAll('.artist-card')[0]!.trigger('click');
+      await flushPromises();
+      expect(wrapper.findAll('.album-card')).toHaveLength(100);
+
+      vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('page down'))));
+      await wrapper.find('[data-pager="albums"] [data-nav="next"]').trigger('click');
+      await flushPromises();
+
+      expect(wrapper.find('.music-page__error').exists()).toBe(true);
+      expect(wrapper.findAll('.album-card'), 'the albums stay on screen').toHaveLength(100);
+      expect(
+        wrapper.find('[data-pager="albums"]').exists(),
+        'the album pager must survive too',
+      ).toBe(true);
+      expect(wrapper.find('.music-page__empty').exists()).toBe(false);
+      void server;
+      wrapper.unmount();
+    });
+
+    it('keeps the aria-controls IDREF resolvable WHILE a page is loading', async () => {
+      const server = stubMusicServer(prodLibrary());
+      const wrapper = mountPage();
+      await flushPromises();
+      const target = wrapper.find('[data-pager="artists"] [data-nav="jump"]')
+        .attributes('aria-controls');
+      expect(target).toBe('music-artists-grid');
+
+      vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+      await wrapper.find('[data-pager="artists"] [data-nav="next"]').trigger('click');
+      await Promise.resolve();
+
+      expect(wrapper.find('.music-page__loading').exists(), 'must really be mid-load').toBe(true);
+      expect(
+        wrapper.find(`#${target}`).exists(),
+        'aria-controls must not dangle mid-load',
+      ).toBe(true);
+      void server;
       wrapper.unmount();
     });
 
