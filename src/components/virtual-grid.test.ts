@@ -15,6 +15,8 @@ import {
   computeWindow,
   effectiveItemCount,
   fixedRowContentHeight,
+  BACKDROP_ROW_HEIGHT,
+  BACKDROP_ROW_POSTER_WIDTH,
   LABEL_HEIGHT,
   LIST_ROW_HEIGHT,
   LIST_ROW_POSTER_WIDTH,
@@ -141,6 +143,56 @@ describe('virtual-grid — computeFixedRowHeight (S68 non-poster rows)', () => {
     expect(r.endRow).toBe(20 + 5 + 2);
     expect(r.endIndex).toBe(27);
     expect(r.padTop).toBe(18 * rowHeight);
+  });
+});
+
+// S69 — the backdrop hero strip is the SECOND fixed-height renderer. Same
+// constraint as the list row, at a different size: the 2:3 ratio applies to the
+// strip's FIXED poster column, never to the full-width row.
+describe('virtual-grid — backdrop hero strip geometry (S69)', () => {
+  it('derives BACKDROP_ROW_HEIGHT from the FIXED poster column width', () => {
+    expect(BACKDROP_ROW_POSTER_WIDTH).toBe(200);
+    expect(BACKDROP_ROW_HEIGHT).toBe(BACKDROP_ROW_POSTER_WIDTH * POSTER_RATIO);
+    expect(BACKDROP_ROW_HEIGHT).toBe(300);
+  });
+
+  it('is a taller strip than a list row, but still nowhere near a full-width poster', () => {
+    // The two fixed-height renderers must not accidentally collapse to one size…
+    expect(BACKDROP_ROW_HEIGHT).toBeGreaterThan(LIST_ROW_HEIGHT);
+    // …and the strip height must NOT be the poster formula applied to the row: at
+    // a 1400px-wide one-column row that reserves ~2100px per item, so a 5000-item
+    // library would size its sizer ~7x too tall and every padTop would be wrong.
+    const posterDerived = computeRowHeight(computeCardWidth(1400, 1, COL_GAP));
+    expect(posterDerived).toBeGreaterThan(computeFixedRowHeight(BACKDROP_ROW_HEIGHT) * 6);
+  });
+
+  it('feeds MediaGrid a row height of exactly the strip plus one row gap', () => {
+    expect(computeFixedRowHeight(BACKDROP_ROW_HEIGHT)).toBe(BACKDROP_ROW_HEIGHT + ROW_GAP);
+    expect(computeFixedRowHeight(BACKDROP_ROW_HEIGHT)).toBe(324);
+    // the cell inside the pinned row track is the strip height again (no drift)
+    expect(fixedRowContentHeight(computeFixedRowHeight(BACKDROP_ROW_HEIGHT))).toBe(
+      BACKDROP_ROW_HEIGHT,
+    );
+  });
+
+  it('windows a one-column backdrop list correctly (row index == item index)', () => {
+    const rowHeight = computeFixedRowHeight(BACKDROP_ROW_HEIGHT); // 324
+    const r = computeWindow({
+      scrollTop: 10 * rowHeight,
+      viewportHeight: 900,
+      rowHeight,
+      columns: 1,
+      itemCount: 2000,
+      overscan: 2,
+    });
+    expect(r.rowCount).toBe(2000);
+    expect(r.totalHeight).toBe(2000 * 324); // 648000, NOT the poster-derived height
+    // firstVisible = 10 → startRow 8; visibleRows = ceil(900/324)+1 = 4
+    expect(r.startRow).toBe(8);
+    expect(r.startIndex).toBe(8); // one column → index == row
+    expect(r.endRow).toBe(10 + 4 + 2);
+    expect(r.endIndex).toBe(16);
+    expect(r.padTop).toBe(8 * 324);
   });
 });
 

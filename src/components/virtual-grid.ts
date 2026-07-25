@@ -55,6 +55,48 @@ export const LIST_ROW_POSTER_WIDTH = 120;
 export const LIST_ROW_HEIGHT = LIST_ROW_POSTER_WIDTH * POSTER_RATIO;
 
 /**
+ * Width (px) of the `backdrop` view mode's poster column (S69). FIXED, exactly
+ * like `LIST_ROW_POSTER_WIDTH` — a hero strip's poster does not grow with the row
+ * width either; the WIDE part of the strip is the backdrop image behind it.
+ *
+ * 200px, i.e. the poster-grid `cardSize` default. Two things fall out of that
+ * choice, and both are the reason it is not simply "bigger than the list row":
+ *   - It re-does the `LIST_ROW_POSTER_WIDTH` arithmetic in the composed
+ *     `MediaCard`'s favour instead of merely inheriting it. The overlay content
+ *     box is `200 - 2 * var(--space-4)` = 168px, which the action row widens to
+ *     184px via its `margin-inline: calc(-1 * var(--space-2))`. So
+ *     `.media-card__actions`' `max-width: calc(4 * 32px + 3 * var(--space-1))` =
+ *     140px DOES bind here (unlike at 120px), and the 8 quick-actions lay out as
+ *     the designed 2 rows of 4: `2 * 32 + var(--space-2)` = 72px, +12px
+ *     `margin-top` = 84px — comfortably inside the `300 - 2 * var(--space-4)` =
+ *     268px of overlay content box. A hero strip still passes `hide-caption`
+ *     (the strip body owns the title), so nothing competes for that room.
+ *   - It matches `DEFAULT_POSTER_SIZES`' desktop hint (`200px`) exactly, so the
+ *     composed card's responsive `srcset` picks the right candidate rather than
+ *     over-fetching. `MediaBackdropRow` still passes `poster-sizes` explicitly
+ *     so the two cannot drift.
+ * As with the list row: this is stylesheet arithmetic, not a rendered
+ * observation (jsdom has no layout and the visual suite is out of bounds) —
+ * re-do the sums if `MediaCard.vue`'s overlay CSS changes.
+ */
+export const BACKDROP_ROW_POSTER_WIDTH = 200;
+
+/**
+ * Height (px) of one `backdrop` view mode hero strip, EXCLUDING the row gap
+ * beneath it (S69). Derived from the FIXED poster width via the 2:3 ratio, so the
+ * composed `MediaCard`'s poster fills the strip's full height and the strip never
+ * scales with the viewport. `MediaBackdropRow.vue` writes this onto the DOM as an
+ * inline height read from this same constant, and `LibraryPage` feeds
+ * `computeFixedRowHeight(BACKDROP_ROW_HEIGHT)` to `MediaGrid`'s `rowHeight` prop,
+ * so the rendered strip and the windowing arithmetic cannot drift.
+ *
+ * NOTE the ratio is applied to the POSTER WIDTH, never to the row width: a
+ * `backdrop` row is one full-width column, so `computeRowHeight()` would reserve
+ * ~2100px for a 300px strip. See `computeFixedRowHeight()` below.
+ */
+export const BACKDROP_ROW_HEIGHT = BACKDROP_ROW_POSTER_WIDTH * POSTER_RATIO;
+
+/**
  * Number of auto-fit columns for a container width — mirrors CSS
  * `repeat(auto-fill, minmax(cardSize, 1fr))`, which packs
  * `floor((width + gap) / (cardSize + gap))` tracks. Always ≥ 1.
@@ -89,9 +131,9 @@ export function computeRowHeight(
  * `rowHeight` prop.
  *
  * `computeRowHeight()` above derives its height from the CARD WIDTH because a
- * poster grid's 2:3 posters grow with the column width. A list row (S68) is not
- * a poster: its height is intrinsic, and applying `POSTER_RATIO` to the full row
- * width would compute a row several times too tall — which, once virtualization
+ * poster grid's 2:3 posters grow with the column width. A list row (S68) or a
+ * backdrop hero strip (S69) is not a poster: its height is intrinsic, and applying
+ * `POSTER_RATIO` to the full row width would compute a row several times too tall — which, once virtualization
  * is on, mis-computes `startIndex`/`endIndex`/`padTop`/`totalHeight` (blank
  * bands, mis-positioned rows and wrong `need-range` pages). Parameterizing the
  * height here is the sanctioned way to keep the rendered layout and the

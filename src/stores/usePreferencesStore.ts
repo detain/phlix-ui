@@ -6,14 +6,15 @@
  */
 
 import { defineStore } from 'pinia';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, onScopeDispose, watch } from 'vue';
 
 export type ThemeName = 'nocturne' | 'daylight' | 'midnight';
 export type Density = 'comfortable' | 'compact';
 export type MotionPref = 'auto' | 'on' | 'off';
-/** How a library/section renders its items (S67). Only 'grid' has a renderer
- *  today — 'list'/'backdrop'/'table' are the alternate views S68-S70 add via
- *  `MediaGrid`'s `#card` slot; until then selecting one still renders the grid. */
+/** How a library/section renders its items (S67). 'grid' (poster grid), 'list'
+ *  (S68 `MediaListRow`) and 'backdrop' (S69 `MediaBackdropRow`) all have real
+ *  renderers, wired through `MediaGrid`'s `#card` slot; 'table' is S70's and until
+ *  then selecting it still renders the grid via the unconditional `v-else`. */
 export type ViewMode = 'grid' | 'list' | 'backdrop' | 'table';
 
 /** A saved Browse filter set — `query` is the `useMediaStore.toQuery()` shape. */
@@ -299,6 +300,36 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   if (typeof window !== 'undefined') {
     window.addEventListener('pagehide', flushPersist);
   }
+
+  /**
+   * Tear down everything that outlives the store's effect scope.
+   *
+   * In the app this fires only on teardown/HMR (the store is a singleton that
+   * lives as long as the page), but it is load-bearing for TEST ISOLATION, and
+   * that is the reason it exists. `watch(snapshot, …)` above is owned by the
+   * store's scope, so `disposePinia()` / `store.$dispose()` stops it — but neither
+   * of those can reach these two, and a suite that replaces its pinia between
+   * tests leaks them:
+   *   - a PENDING 250 ms debounce timer still fires afterwards and writes the OLD
+   *     store's snapshot into `localStorage`, landing in whichever test happens to
+   *     be running at that moment (`vi.useRealTimers()` discards fake timers, not
+   *     a real one already scheduled). That late flush is a genuine cross-test
+   *     flake: a test asserting the blob is absent, or asserting a value it just
+   *     wrote, sees the stale write instead;
+   *   - every discarded store leaves a `pagehide` listener on `window`, so one
+   *     dispatched `pagehide` makes N stale stores all write their own snapshots
+   *     and the winner is registration order.
+   * Clearing the timer here also means a disposed store can never write again.
+   */
+  onScopeDispose(() => {
+    if (persistTimer !== null) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pagehide', flushPersist);
+    }
+  });
 
   function reset() {
     const d = DEFAULT_PREFERENCES;

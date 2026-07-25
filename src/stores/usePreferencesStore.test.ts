@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { setActivePinia, createPinia } from 'pinia';
+import { setActivePinia, createPinia, disposePinia, type Pinia } from 'pinia';
 import { usePreferencesStore, readStoredPreferences, DEFAULT_PREFERENCES, DEFAULT_CAPTION_STYLE } from './usePreferencesStore';
 
 function mockMatchMedia(reduce: boolean) {
@@ -21,13 +21,44 @@ function mockMatchMedia(reduce: boolean) {
   }));
 }
 
+/**
+ * Every pinia this file has activated, so it can be torn down again.
+ *
+ * This store PERSISTS: a deep `watch(snapshot, …)` on a 250 ms debounce, plus a
+ * `pagehide` flush listener. `setActivePinia(createPinia())` only swaps which
+ * instance is *active* — it does not stop the previous one, so a bare
+ * `beforeEach` left every earlier store's watcher live and its pending debounce
+ * scheduled. Those late-flushed a STALE snapshot into `localStorage` during a
+ * LATER test (real timers survive `vi.useRealTimers()`, which only discards a
+ * fake clock — that is why the obvious "reset timers" fix never worked), and a
+ * dispatched `pagehide` reached N accumulated listeners at once. Symptom: the
+ * debounce suite's `expect(midStored).toBeNull()` failing intermittently
+ * depending on test order/timing.
+ *
+ * `disposePinia()` stops `pinia._e`, which stops each store's effect scope; the
+ * store's `onScopeDispose` then clears its pending timer and removes its
+ * `pagehide` listener. Tests that need a second pinia mid-test (to re-hydrate
+ * from a seeded blob) call `freshPinia()` so that one is tracked too.
+ */
+let activePinia: Pinia | null = null;
+function freshPinia(): Pinia {
+  if (activePinia) disposePinia(activePinia);
+  activePinia = createPinia();
+  setActivePinia(activePinia);
+  return activePinia;
+}
+
 beforeEach(() => {
   localStorage.clear();
   mockMatchMedia(false);
-  setActivePinia(createPinia());
+  freshPinia();
 });
 
 afterEach(() => {
+  // Dispose BEFORE restoring timers/mocks so no watcher can schedule anything
+  // during teardown, and so the last test's store cannot outlive this file.
+  if (activePinia) disposePinia(activePinia);
+  activePinia = null;
   vi.restoreAllMocks();
   vi.useRealTimers();
 });
@@ -64,7 +95,7 @@ describe('usePreferencesStore', () => {
 
   it('hydrates from existing storage on init', () => {
     localStorage.setItem('phlix.prefs', JSON.stringify({ theme: 'midnight', density: 'compact' }));
-    setActivePinia(createPinia());
+    freshPinia();
     const s = usePreferencesStore();
     expect(s.theme).toBe('midnight');
     expect(s.density).toBe('compact');
@@ -72,7 +103,7 @@ describe('usePreferencesStore', () => {
 
   it('effectiveReducedMotion resolves auto against the OS and respects on/off override', () => {
     mockMatchMedia(true);
-    setActivePinia(createPinia());
+    freshPinia();
     const s = usePreferencesStore();
     expect(s.reducedMotion).toBe('auto');
     expect(s.effectiveReducedMotion).toBe(true); // auto + OS reduce
@@ -101,7 +132,7 @@ describe('usePreferencesStore', () => {
     expect((s as unknown as Record<string, unknown>).seriesThemeAutoplay).toBeUndefined();
     // A legacy persisted value must NOT resurrect into the snapshot the store saves.
     localStorage.setItem('phlix.prefs', JSON.stringify({ seriesThemeAutoplay: true }));
-    setActivePinia(createPinia());
+    freshPinia();
     expect('seriesThemeAutoplay' in usePreferencesStore().snapshot()).toBe(false);
   });
 
@@ -123,7 +154,7 @@ describe('usePreferencesStore', () => {
 
     it('hydrates from storage', () => {
       localStorage.setItem('phlix.prefs', JSON.stringify({ tv: true }));
-      setActivePinia(createPinia());
+      freshPinia();
       const s = usePreferencesStore();
       expect(s.tv).toBe(true);
     });
@@ -160,7 +191,7 @@ describe('usePreferencesStore', () => {
 
     it('hydrates from storage (survives a reload)', () => {
       localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: 'table' }));
-      setActivePinia(createPinia());
+      freshPinia();
       const s = usePreferencesStore();
       expect(s.viewMode).toBe('table');
     });
@@ -169,7 +200,7 @@ describe('usePreferencesStore', () => {
       // The persisted blob of an existing user predates the key entirely.
       localStorage.setItem('phlix.prefs', JSON.stringify({ theme: 'midnight', cardSize: 240 }));
       expect(readStoredPreferences().viewMode).toBe('grid');
-      setActivePinia(createPinia());
+      freshPinia();
       const s = usePreferencesStore();
       expect(s.viewMode).toBe('grid');
       expect(s.viewMode).not.toBeUndefined();
@@ -212,7 +243,7 @@ describe('usePreferencesStore', () => {
         'phlix.prefs',
         JSON.stringify({ defaultSubtitleLang: null, subtitlePreferenceSet: true }),
       );
-      setActivePinia(createPinia());
+      freshPinia();
       const s = usePreferencesStore();
       expect(s.defaultSubtitleLang).toBeNull();
       expect(s.subtitlePreferenceSet).toBe(true);
@@ -270,7 +301,7 @@ describe('usePreferencesStore', () => {
       );
       const fresh = readStoredPreferences();
       expect(fresh.filterPresets).toHaveLength(1);
-      setActivePinia(createPinia());
+      freshPinia();
       const s = usePreferencesStore();
       expect(s.filterPresets[0].name).toBe('X');
     });
@@ -295,7 +326,7 @@ describe('usePreferencesStore', () => {
 
     it('merges a stored PARTIAL caption style over the defaults (no dropped keys)', () => {
       localStorage.setItem('phlix.prefs', JSON.stringify({ captionStyle: { size: 'lg' } }));
-      setActivePinia(createPinia());
+      freshPinia();
       const s = usePreferencesStore();
       expect(s.captionStyle.size).toBe('lg'); // stored wins
       expect(s.captionStyle.textColor).toBe(DEFAULT_CAPTION_STYLE.textColor); // default kept
@@ -376,6 +407,46 @@ describe('usePreferencesStore', () => {
       // Value written immediately despite pending debounce
       const stored = JSON.parse(localStorage.getItem('phlix.prefs')!);
       expect(stored.cardSize).toBe(400);
+    });
+  });
+
+  /**
+   * Regression guard for the cross-test flake this suite used to have (program
+   * follow-up 8). The store's two long-lived pieces — the 250 ms debounce timer and
+   * the `pagehide` listener — must both die with the store, or a pinia that is
+   * merely REPLACED (what `setActivePinia(createPinia())` does) leaves them running
+   * and a stale snapshot lands in `localStorage` in the middle of a later test.
+   *
+   * Deliberately driven by fake timers, so it asserts the mechanism rather than
+   * racing it: `advanceTimersByTimeAsync` past the debounce window is exactly the
+   * real-timer late flush, made deterministic. It fails if either half of the fix
+   * is removed — the store's `onScopeDispose`, or `freshPinia()`'s `disposePinia`.
+   */
+  describe('disposal (test isolation)', () => {
+    it('a replaced pinia’s store neither late-flushes nor answers pagehide', async () => {
+      vi.useFakeTimers();
+      const stale = usePreferencesStore();
+      stale.cardSize = 321; // arms the 250 ms debounce
+      await vi.advanceTimersByTimeAsync(0); // let the deep watcher run
+      expect(localStorage.getItem('phlix.prefs')).toBeNull(); // still only pending
+
+      freshPinia(); // exactly what beforeEach does between tests
+      localStorage.clear();
+
+      // The stale debounce window passes with nobody left to service it.
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(
+        localStorage.getItem('phlix.prefs'),
+        'a disposed store late-flushed a stale snapshot into a later test',
+      ).toBeNull();
+
+      // ...and its pagehide listener was removed, so one dispatched event no
+      // longer makes every store this file ever created write its own snapshot.
+      window.dispatchEvent(new Event('pagehide'));
+      expect(
+        localStorage.getItem('phlix.prefs'),
+        'a disposed store still answers pagehide',
+      ).toBeNull();
     });
   });
 });

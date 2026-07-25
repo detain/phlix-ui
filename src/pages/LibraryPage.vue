@@ -27,7 +27,8 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
 import MediaGrid from '../components/MediaGrid.vue';
 import MediaCard from '../components/MediaCard.vue';
 import MediaListRow from '../components/MediaListRow.vue';
-import { computeFixedRowHeight, LIST_ROW_HEIGHT } from '../components/virtual-grid';
+import MediaBackdropRow from '../components/MediaBackdropRow.vue';
+import { BACKDROP_ROW_HEIGHT, computeFixedRowHeight, LIST_ROW_HEIGHT } from '../components/virtual-grid';
 import FilterBar from '../components/FilterBar.vue';
 import IndexRail from '../components/IndexRail.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -61,23 +62,38 @@ const userItemData = useUserItemDataStore();
 const prefs = usePreferencesStore();
 
 /**
- * True while the persisted view mode selects the S68 list renderer. EVERY other
- * value — including an out-of-union/stale persisted one, which the preferences
- * store deliberately does not sanitize — falls through to the poster grid via the
- * `v-else` in the `#card` slot. That fallback is load-bearing, not decoration.
+ * True while the persisted view mode selects the S68 list renderer / the S69
+ * backdrop hero-strip renderer. EVERY other value — including an out-of-union/
+ * stale persisted one, which the preferences store deliberately does not sanitize
+ * — falls through to the poster grid via the `v-else` in the `#card` slot. That
+ * fallback is load-bearing, not decoration.
  */
 const listMode = computed(() => prefs.viewMode === 'list');
+const backdropMode = computed(() => prefs.viewMode === 'backdrop');
 
 /**
- * Row geometry handed to the SINGLE MediaGrid mount while list mode is active: one
- * full-width row per item, pinned to the list row's own fixed height. Both numbers
+ * Row geometry handed to the SINGLE MediaGrid mount. Both alternate renderers are
+ * one full-width row per item, each pinned to its OWN fixed height. Both numbers
  * MUST come through MediaGrid's props (never CSS) because the grid feeds the same
  * values to its inline `grid-template-columns` AND to the windowing math; and the
  * height must NOT be `computeRowHeight()`'s, which would apply the poster's 2:3
  * ratio to the full row width and reserve a row several times too tall.
+ *
+ * S70 adds its compact/table height here the same way (a constant beside
+ * `LIST_ROW_HEIGHT`/`BACKDROP_ROW_HEIGHT` in `virtual-grid.ts`, wrapped in
+ * `computeFixedRowHeight`) plus one more arm in `gridRowHeight` below.
  */
-const LIST_MODE_COLUMNS = 1;
+const FULL_WIDTH_COLUMNS = 1;
 const listModeRowHeight = computeFixedRowHeight(LIST_ROW_HEIGHT);
+const backdropModeRowHeight = computeFixedRowHeight(BACKDROP_ROW_HEIGHT);
+
+/** `undefined` in poster-grid mode, so the grid keeps its measured auto-fit layout. */
+const gridColumns = computed(() =>
+  listMode.value || backdropMode.value ? FULL_WIDTH_COLUMNS : undefined,
+);
+const gridRowHeight = computed(() =>
+  listMode.value ? listModeRowHeight : backdropMode.value ? backdropModeRowHeight : undefined,
+);
 
 // A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
 // a letter scrolls the pre-sized grid to that letter's first title.
@@ -400,11 +416,16 @@ async function onRemove(item: MediaItem): Promise<void> {
         its own content (`overflow: hidden`); it cannot silently grow taller than
         the row the windowing math reserved.
 
-        S69/S70 seam: add `v-else-if` branches for 'backdrop' / 'table' in the
-        `#card` slot, each wiring the SAME ten host events (MediaGrid only wires
-        its own default card — filling `#card` moves that responsibility here, so a
-        missing listener is a dead button), plus their own `columns`/`row-height`
-        for the layout. The final `v-else` grid branch must stay UNCONDITIONAL: a
+        S70 seam: add a `v-else-if` branch for 'table' in the `#card` slot (S68's
+        'list' and S69's 'backdrop' are already there), wiring the SAME ten host
+        events (MediaGrid only wires its own default card — filling `#card` moves
+        that responsibility here, so a missing listener is a dead button), plus its
+        own `columns`/`row-height` via the `gridColumns`/`gridRowHeight` computeds
+        above. Both existing alternate renderers COMPOSE `MediaCard` for their
+        poster column rather than re-implementing its ⋯ action menu — that ~90-line
+        dispatcher already exists verbatim in `MediaCard` AND `MediaDetail`, so a
+        renderer that copies it a third time is a defect, not a shortcut.
+        The final `v-else` grid branch must stay UNCONDITIONAL: a
         stale/garbage persisted `viewMode` is tolerated rather than sanitized (see
         the `viewMode` docblock in usePreferencesStore.ts) and it is the only thing
         THIS PAGE renders for an out-of-union value.
@@ -427,8 +448,8 @@ async function onRemove(item: MediaItem): Promise<void> {
         :loading-more="store.loading && store.items.length > 0"
         :has-more="store.hasMore"
         :can-match="auth.isAdmin"
-        :columns="listMode ? LIST_MODE_COLUMNS : undefined"
-        :row-height="listMode ? listModeRowHeight : undefined"
+        :columns="gridColumns"
+        :row-height="gridRowHeight"
         @need-range="onNeedRange"
         @play="onPlay"
         @watchlist="onWatchlist"
@@ -441,13 +462,28 @@ async function onRemove(item: MediaItem): Promise<void> {
         @choose-poster="onChoosePoster"
         @remove="onRemove"
       >
-        <!-- Both branches wire the identical ten host events. The listeners on
+        <!-- EVERY branch wires the identical ten host events. The listeners on
              MediaGrid above stay in place for its own default-card path (the grid
              is also used without a `#card` slot elsewhere), but real user clicks
              now travel through these. -->
         <template #card="{ item }">
           <MediaListRow
             v-if="listMode"
+            :item="item"
+            :can-match="auth.isAdmin"
+            @play="onPlay"
+            @watchlist="onWatchlist"
+            @info="onInfo"
+            @match="onMatch"
+            @mark-watched="onMarkWatched"
+            @refresh="onRefresh"
+            @choose-poster="onChoosePoster"
+            @remove="onRemove"
+            @edit-metadata="onMatch"
+            @explore-data="openInspector"
+          />
+          <MediaBackdropRow
+            v-else-if="backdropMode"
             :item="item"
             :can-match="auth.isAdmin"
             @play="onPlay"
