@@ -134,7 +134,8 @@ function resolveTokensStylesheet(): string {
 /**
  * `max-width`/`max-height` as they actually CASCADE onto the image — the reset and the
  * SFC's own rule both parsed, by jsdom, from their real sources. Also returns what a
- * bare `<img>` gets from the reset alone, which is the premise the assertion rests on.
+ * bare `<img>` gets from the reset alone, on BOTH axes, which is the premise the
+ * assertions rest on.
  *
  * The two `<style>` elements are removed again on the way out: this is the only test in
  * the file that reads computed styles, and a global reset left in the shared jsdom
@@ -142,7 +143,7 @@ function resolveTokensStylesheet(): string {
  */
 function cascadeImgMaxima(): {
   computedMaxima: { maxWidth: string; maxHeight: string };
-  resetClampsABareImg: string;
+  bareMaxima: { maxWidth: string; maxHeight: string };
 } {
   const reset = document.createElement('style');
   reset.textContent = readFileSync(resolveTokensStylesheet(), 'utf8');
@@ -155,9 +156,10 @@ function cascadeImgMaxima(): {
   document.body.append(bare, bled);
   try {
     const cs = getComputedStyle(bled);
+    const bareCs = getComputedStyle(bare);
     return {
       computedMaxima: { maxWidth: cs.maxWidth, maxHeight: cs.maxHeight },
-      resetClampsABareImg: getComputedStyle(bare).maxWidth,
+      bareMaxima: { maxWidth: bareCs.maxWidth, maxHeight: bareCs.maxHeight },
     };
   } finally {
     reset.remove();
@@ -174,9 +176,19 @@ function imgDecl(prop: string): string {
   return m![1].trim();
 }
 
-/** `<n>px` | `100%` | `calc(100% + <n>px)` | `none`, against a known containing-block size. */
+/**
+ * `<n>px` | unitless `0` | `100%` | `calc(100% + <n>px)` | `none`, against a known
+ * containing-block size.
+ *
+ * The unitless `0` form is modelled deliberately (S69 review r4, finding 3): `inset: 0`
+ * is the single most natural way to write the bleed away, so without it the most likely
+ * regression reddens this test through "does not model the length `0`" instead of naming
+ * the overhang it lost — failing closed, but sending the reader to edit the harness's
+ * arithmetic when the SFC is what changed.
+ */
 function usedLength(value: string, cbSize: number): number {
   if (value === 'none') return Number.POSITIVE_INFINITY;
+  if (/^-?0$/.test(value)) return 0;
   if (value === '100%') return cbSize;
   const calc = /^calc\(\s*100%\s*\+\s*(-?[\d.]+)px\s*\)$/.exec(value);
   if (calc) return cbSize + Number(calc[1]);
@@ -194,10 +206,15 @@ function usedLength(value: string, cbSize: number): number {
  *
  * jsdom has no layout, so this is the one piece that is modelled: CSS 2.1 §10.4's
  * `max-width` clamp plus §10.3.8/§10.6.5's over-constrained rule for an absolutely
- * positioned replaced element (the `right`/`bottom` inset is the one that gets
- * ignored). Every INPUT is real — the insets and sizes are read out of the SFC's own
- * stylesheet and the maxima out of a real cascade — so the model cannot quietly agree
- * with itself. Cross-checked against Chrome 150 at a 1360×300 strip:
+ * positioned replaced element — under `direction: ltr` (which the app is: `src/` and
+ * `@phlix/tokens` declare no `rtl` anywhere) the `right`/`bottom` inset is the one that
+ * gets ignored, whereas §10.3.7 ignores `left` instead under `rtl`, which would flip the
+ * defect below onto the LEFT edge (S69 review r4, finding 4). Every INPUT is real — the
+ * insets and sizes are read out of the SFC's own stylesheet and the maxima out of a real
+ * cascade — so the model cannot quietly agree with itself. Note that the FIXED box is not
+ * over-constrained at all (−3 + 1366 + −3 == 1360 is exactly satisfied), so the rule is
+ * consulted only by the discriminator branch that reproduces the old defect.
+ * Cross-checked against Chrome 150 at a 1360×300 strip:
  *   `max-width: none` → 1366×306, overhang  3 /  3 / 3 / 3   (intended)
  *   `max-width: 100%` → 1360×306, overhang  3 / −3 / 3 / 3   (MED-1's defect)
  */
@@ -543,7 +560,7 @@ describe('MediaBackdropRow — per-row compositing cost (S69 review r2)', () => 
    * from the real cascade — a presence check cannot pin the wrong belief again.
    */
   it('bleeds the filtered image PAST the strip on all four sides, design-system reset included', () => {
-    const { computedMaxima, resetClampsABareImg } = cascadeImgMaxima();
+    const { computedMaxima, bareMaxima } = cascadeImgMaxima();
 
     // The premise, pinned so this test cannot go vacuous: without the rule's own
     // override the reset really is what binds. If @phlix/tokens ever drops that reset
@@ -551,11 +568,43 @@ describe('MediaBackdropRow — per-row compositing cost (S69 review r2)', () => 
     // than load-bearing, and the CSS comment explaining it needs updating, but do NOT
     // just delete the assertion below.
     expect(
-      resetClampsABareImg,
+      bareMaxima.maxWidth,
       'the @phlix/tokens reset no longer clamps a bare <img> — re-read the ' +
         '.media-backdrop-row__img comment before touching this test',
     ).toBe('100%');
     expect(computedMaxima.maxWidth, 'the rule must neutralize that clamp').toBe('none');
+
+    /* The VERTICAL half of the premise, and the only guard on `max-height: none`
+       (S69 review r4, finding 1). Today's reset declares no `max-height`, so the
+       vertical bleed works whether or not the rule overrides it — which means an
+       EFFECT assertion is structurally incapable of seeing that declaration
+       disappear: an unset `max-height` computes to exactly the same `none` as a
+       declared one. Deleting it therefore left all 3832 tests green.
+
+       So this pair is deliberately shaped differently from everything else in this
+       test:
+         - the computed-style read is an ALARM on the reset, not on our rule. It goes
+           red the day @phlix/tokens starts clamping height, which is the day
+           `max-height: none` stops being future-proofing and becomes load-bearing on
+           the bottom edge exactly as `max-width: none` already is on the right one.
+         - the declaration read is a PRESENCE assertion. That is the anti-pattern the
+           rest of this test exists to replace — and it is nevertheless the correct
+           tool HERE, and only here, precisely BECAUSE the declaration is inert by
+           design: there is no effect to measure until the reset changes, and by then
+           the declaration must already be in place. Do not "modernise" it into an
+           effect assertion, and do not delete it as redundant: without it the pair
+           above is an alarm with nothing left to protect. */
+    expect(
+      bareMaxima.maxHeight,
+      'the @phlix/tokens reset has GROWN a max-height — the vertical bleed is now ' +
+        'clamped too, so `max-height: none` just became load-bearing; re-read the ' +
+        '.media-backdrop-row__img comment',
+    ).toBe('none');
+    expect(
+      imgDecl('max-height'),
+      'presence, on purpose — see the comment above: this declaration has no ' +
+        'observable effect until the reset clamps height, so nothing else can guard it',
+    ).toBe('none');
 
     // …and the box that then lays out actually overhangs. 1360x300 is the strip at a
     // 1400px viewport (`.shell__main`'s 20px inline padding); the expected numbers are

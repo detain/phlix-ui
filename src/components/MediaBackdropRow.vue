@@ -492,16 +492,30 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
          the image ends 3px INSIDE the strip on the right — putting the blur's
          translucent edge exactly where it is most visible instead of clipping it
          away, and doing it where the scrim's left→right gradient has already faded
-         to fully transparent. Measured in Chrome at a 1360×300 strip: 1366×306,
-         overhang 3/3/3/3 with the reset neutralised, versus 1360×306 and 3/−3/3/3
-         without, whose outermost visible column reads ~43/255 darker than the wash
-         it belongs to. `max-height: none` is symmetry, not cargo cult: today's reset
+         to fully transparent.
+         GEOMETRY, in Chrome 150 at a 1360×300 strip — measured twice, independently,
+         by the r3 and r4 reviewers, agreeing to the pixel: 1366×306, overhang
+         3/3/3/3 with the reset neutralised, versus 1360×306 and 3/−3/3/3 without.
+         WHAT THAT COSTS, and the quantity to compare is the DEFICIT at the outermost
+         visible column — how much darker it reads than the far-field wash it belongs
+         to, in the same screenshot: ~52/255 for the defective variant (52.1 in r3's
+         harness, 52.6 in r4's), over a ramp ~8px wide, against ~3 for this one (3.0
+         and 2.8). Do NOT compare the absolute luminances between write-ups: those are
+         harness-relative — the identical far-field wash read 74.8 in r3's harness and
+         63.4 in r4's, differing in `--bg` resolution and whether the poster column
+         was in frame — whereas the deficit reproduces to within 0.5/255.
+         `max-height: none` is symmetry, not cargo cult: today's reset
          carries no `max-height`, which is the whole reason only the horizontal bleed
          inverted, and a reset that grew one would invert the vertical bleed the same
          way.
      `MediaBackdropRow.test.ts` resolves this rule against the REAL reset through a
      cascade and asserts the resulting BOX overhangs on all four sides, because the
-     presence-only guard it replaced passed happily while the bleed was clamped. */
+     presence-only guard it replaced passed happily while the bleed was clamped. The
+     one exception there is `max-height: none` itself, which no effect assertion can
+     guard while the reset declares no `max-height` (an unset one computes to the same
+     `none`) — so it is guarded by a deliberate presence assertion plus an alarm on the
+     reset. That test comment explains why that is right rather than lazy; read it
+     before touching either declaration. */
   inset: -3px;
   width: calc(100% + 6px);
   height: calc(100% + 6px);
