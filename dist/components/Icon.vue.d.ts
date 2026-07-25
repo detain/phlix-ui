@@ -37,6 +37,9 @@ declare const icons: {
     readonly sort: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly star: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly list: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly grid: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly backdrop: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly table: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly plus: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly info: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly x: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;

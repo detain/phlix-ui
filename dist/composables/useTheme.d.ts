@@ -25,6 +25,7 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     density: import("vue").Ref<import("..").Density, import("..").Density>;
     cardSize: import("vue").Ref<number, number>;
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
+    viewMode: import("vue").Ref<import("..").ViewMode, import("..").ViewMode>;
     reducedMotion: import("vue").Ref<import("..").MotionPref, import("..").MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;
@@ -66,12 +67,13 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => import("..").FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
+}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "viewMode" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
     theme: import("vue").Ref<ThemeName, ThemeName>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<import("..").Density, import("..").Density>;
     cardSize: import("vue").Ref<number, number>;
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
+    viewMode: import("vue").Ref<import("..").ViewMode, import("..").ViewMode>;
     reducedMotion: import("vue").Ref<import("..").MotionPref, import("..").MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;
@@ -119,6 +121,7 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     density: import("vue").Ref<import("..").Density, import("..").Density>;
     cardSize: import("vue").Ref<number, number>;
     gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
+    viewMode: import("vue").Ref<import("..").ViewMode, import("..").ViewMode>;
     reducedMotion: import("vue").Ref<import("..").MotionPref, import("..").MotionPref>;
     autoplay: import("vue").Ref<boolean, boolean>;
     defaultVolume: import("vue").Ref<number, number>;

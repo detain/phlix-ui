@@ -14,6 +14,34 @@ type __VLS_Props = {
     hasMore?: boolean;
     /** Min card width (px). Overrides the `cardSize` preference when set. */
     cardSize?: number;
+    /**
+     * Force the column count, overriding the `cardSize`-derived auto-fit count.
+     *
+     * This is the ONLY correct way for a `#card`-slot renderer to change the
+     * column count (S68's list view pins it to 1): the same value feeds BOTH the
+     * inline `grid-template-columns` and the windowing arithmetic, so layout and
+     * virtualization stay on the same numbers. A CSS `grid-template-columns`
+     * override would need `!important` to beat that inline style and would then
+     * desync the two — blank bands, mis-positioned rows and wrong `need-range`
+     * pages. Values < 1 (or non-finite) are ignored.
+     */
+    columns?: number;
+    /**
+     * Force the row height in px, INCLUDING the row gap beneath it — build it
+     * with `computeFixedRowHeight()`.
+     *
+     * Required by any `#card`-slot renderer whose rows are not 2:3 posters:
+     * `computeRowHeight()` scales `POSTER_RATIO` with the card width, which for a
+     * single full-width list row computes a row several times too tall.
+     *
+     * Setting this also makes the GRID ENFORCE the contract rather than trusting
+     * each renderer to honour it: the row tracks get `grid-auto-rows` at exactly
+     * `rowHeight - ROW_GAP`, and the not-yet-loaded placeholder cells get the same
+     * height. So a renderer (or a later MediaCard restyle) whose content outgrows
+     * the row is clipped by its own `overflow`, never allowed to push the next row
+     * out of the position `padTop` reserved for it.
+     */
+    rowHeight?: number;
     /** Skeleton cards shown during the initial load. */
     skeletonCount?: number;
     /** Extra rows rendered above/below the visible band. */
