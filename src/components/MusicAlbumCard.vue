@@ -6,17 +6,33 @@
 <script setup lang="ts">
 /**
  * MusicAlbumCard — card displaying an album with its cover, title, year, and track count.
+ *
+ * The track count goes through the i18n catalog (`music.tracksTotal[One]`) with
+ * thousands separators. It used to inline `track{{ n !== 1 ? 's' : '' }}`, which is
+ * both untranslatable and unformatted — the same defect as the three other music
+ * surfaces that carried it in a slightly different syntactic shape.
  */
+import { computed } from 'vue';
+import { useMessages } from '../composables/useMessages';
 import type { MusicAlbum } from '../types/music';
 import Icon from './Icon.vue';
 
-defineProps<{
+const props = defineProps<{
   album: MusicAlbum;
 }>();
 
 defineEmits<{
   (e: 'click', album: MusicAlbum): void;
 }>();
+
+const { t } = useMessages();
+
+const trackCountLabel = computed(() => {
+  const count = props.album.totalTracks ?? 0;
+  return count === 1
+    ? t('music.tracksTotalOne')
+    : t('music.tracksTotal', { count: count.toLocaleString() });
+});
 
 function formatYear(year: number | null): string {
   return year ? String(year) : '—';
@@ -42,8 +58,8 @@ function formatYear(year: number | null): string {
       <span class="album-card__meta">
         <span class="album-card__year">{{ formatYear(album.year) }}</span>
         <span class="album-card__dot" aria-hidden="true">·</span>
-        <span class="album-card__tracks">
-          {{ album.totalTracks }} track{{ album.totalTracks !== 1 ? 's' : '' }}
+        <span class="album-card__tracks" data-count="tracks">
+          {{ trackCountLabel }}
         </span>
       </span>
     </div>

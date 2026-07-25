@@ -7,10 +7,16 @@
 /**
  * MusicTracksPage — full track listing with search, play controls, and pagination.
  *
- * Fetches all tracks from `GET /api/v1/music/tracks` and provides:
- *   - Client-side search/filter by track name
+ * Fetches ONE PAGE of `GET /api/v1/music/tracks?limit&offset` through
+ * {@link ApiClient#listTracks} and provides:
+ *   - Client-side search/filter over the LOADED page (never the library)
  *   - Play All / Play button per track
- *   - Pagination via limit/offset query params
+ *   - Offset paging via the shared {@link MusicPager}
+ *
+ * S110: this page previously hand-rolled both the request (raw `client.get`, with
+ * its own duplicate track normaliser) and a bare prev/next pager, which left the
+ * repo with two pager idioms and no way to random-access the 293 pages of the
+ * production library. Both now go through the shared client + pager.
  *
  * Playback is driven by the shared {@link useMusicPlayer} composable.
  */
@@ -18,15 +24,18 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useMusicPlayer } from '../composables/useMusicPlayer';
-import { ApiClient } from '../api/client';
+import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import Icon from '../components/Icon.vue';
+import MusicPager from '../components/MusicPager.vue';
 import type { MusicTrack } from '../types/music';
 
 // --- state ---
 const tracks = ref<MusicTrack[]>([]);
 const loading = ref(false);
+/** Set when ONE page failed; the rows and pager it did not touch stay on screen. */
+const error = ref<string | null>(null);
 const searchQuery = ref('');
-const limit = ref(100);
+const limit = ref(MUSIC_PAGE_SIZE);
 const offset = ref(0);
 const total = ref(0);
 
@@ -51,47 +60,66 @@ function getClient(): ApiClient {
 }
 
 onMounted(async () => {
-  await loadTracks();
+  await loadTracks(0);
 });
 
-async function loadTracks(): Promise<void> {
+/**
+ * Load one page. `nextOffset` is passed in rather than read off the ref so a failed
+ * page cannot leave the pager pointing at rows that were never rendered.
+ *
+ * **Shared PAGE-failure policy — identical in all four music listings** (canonical
+ * note: `MusicLibraryPage.loadArtists`): a failed page keeps the rows, the `total` and
+ * the `offset` and sets `error`. Discarding them zeroed `total`, which removed the
+ * pager, so a blip on page 7 of 293 left an empty table, no pager and a false "No
+ * tracks" with no way back — a dead end new with S110's pager.
+ *
+ * FIRST-load failure is NOT uniform across the four pages (three shapes, all
+ * deliberate — see the canonical note). This page takes the same shape as
+ * `MusicLibraryPage`: the banner, with a blank listing area and no empty state.
+ */
+async function loadTracks(nextOffset: number): Promise<void> {
   loading.value = true;
+  error.value = null;
   try {
-    const client = getClient();
-    const res = await client.get<{ tracks?: unknown[]; total?: number }>(
-      '/api/v1/music/tracks',
-      { limit: String(limit.value), offset: String(offset.value) }
-    );
-    const raw = Array.isArray(res.tracks) ? res.tracks : [];
-    tracks.value = raw.map(normalizeTrack);
-    total.value = typeof res.total === 'number' ? res.total : raw.length;
+    const page = await getClient().listTracks({ limit: MUSIC_PAGE_SIZE, offset: nextOffset });
+    tracks.value = page.tracks;
+    total.value = page.total;
+    limit.value = page.limit;
+    offset.value = page.offset;
   } catch {
-    tracks.value = [];
-    total.value = 0;
+    error.value = t('music.pageLoadFailed');
   } finally {
     loading.value = false;
   }
 }
 
-/** Normalize a raw track object to MusicTrack shape. */
-function normalizeTrack(raw: unknown): MusicTrack {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const title = String(r['title'] ?? r['name'] ?? 'Unknown Track');
-  const id = String(r['id'] ?? '');
-  return {
-    id,
-    title,
-    durationSecs: Number(r['duration_secs'] ?? 0) || 0,
-    trackNumber: r['track_number'] != null ? Number(r['track_number']) : null,
-    streamUrl: r['stream_url'] != null ? String(r['stream_url']) : null,
-  };
-}
-
 // --- search/filter ---
+// ⚠ This filters the LOADED PAGE, not the library — 100 of 29,245 rows. Library-wide
+// search is `/app/search`, not this box. The count line below says so IN THOSE WORDS
+// while a query is active ("N tracks on this page"): it used to render "N tracks",
+// which is the same phrasing as the library total and therefore claimed the page-local
+// match count was the whole answer.
 const filteredTracks = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
   if (!q) return tracks.value;
   return tracks.value.filter((t) => t.title.toLowerCase().includes(q));
+});
+
+/**
+ * The DB total when browsing; the PAGE-LOCAL match count while searching — and the
+ * searching branch says "on this page" rather than reusing the library-total wording,
+ * so a 12-match page of a library holding hundreds of matches cannot read as "12
+ * tracks" full stop.
+ */
+const countLabel = computed(() => {
+  if (searchQuery.value.trim() !== '') {
+    return filteredTracks.value.length === 1
+      ? t('music.tracksOnPageOne')
+      : t('music.tracksOnPage', { count: filteredTracks.value.length.toLocaleString() });
+  }
+  return total.value === 1
+    ? t('music.tracksTotalOne')
+    : t('music.tracksTotal', { count: total.value.toLocaleString() });
 });
 
 // --- playback ---
@@ -114,20 +142,10 @@ function playAll(): void {
   void player.play(tracks.value[0]);
 }
 
-// --- pagination ---
-const hasNext = computed(() => offset.value + limit.value < total.value);
-const hasPrev = computed(() => offset.value > 0);
-
-async function nextPage(): Promise<void> {
-  if (!hasNext.value) return;
-  offset.value += limit.value;
-  await loadTracks();
-}
-
-async function prevPage(): Promise<void> {
-  if (!hasPrev.value) return;
-  offset.value = Math.max(0, offset.value - limit.value);
-  await loadTracks();
+// --- pagination (shared MusicPager: first/prev/jump/next/last) ---
+async function goToOffset(next: number): Promise<void> {
+  if (next === offset.value) return;
+  await loadTracks(next);
 }
 
 // --- formatting ---
@@ -179,98 +197,103 @@ function onSeek(event: Event): void {
       </div>
     </header>
 
-    <!-- Track count -->
-    <p class="tracks-page__count" role="status" aria-live="polite">
-      {{ filteredTracks.length }} {{ filteredTracks.length === 1 ? 'track' : 'tracks' }}
+    <!-- Track count: the DB total while browsing; while searching, the match count
+         explicitly qualified as page-local ("N tracks on this page") -->
+    <p class="tracks-page__count" data-count="tracks" role="status" aria-live="polite">
+      {{ countLabel }}
       <span v-if="searchQuery"> ({{ t('music.matching') }} "{{ searchQuery }}")</span>
     </p>
 
-    <!-- Loading skeleton -->
-    <div v-if="loading && tracks.length === 0" class="tracks-page__loading" role="status" aria-busy="true">
-      <div v-for="n in 8" :key="n" class="track-skel">
-        <div class="track-skel__num" />
-        <div class="track-skel__title" />
-        <div class="track-skel__artist" />
-        <div class="track-skel__album" />
-        <div class="track-skel__duration" />
-      </div>
+    <!-- A failed page keeps its rows and its pager, so this is a banner above the
+         table rather than a replacement for it. It only takes over the listing area
+         when there is nothing left to show, so a failure never reads as "No tracks". -->
+    <div v-if="error" class="tracks-page__error" role="alert">
+      <Icon name="alert-circle" class="tracks-page__error-icon" />
+      <p class="tracks-page__error-text">{{ error }}</p>
     </div>
 
-    <!-- Empty state -->
-    <div v-else-if="filteredTracks.length === 0" class="tracks-page__empty" role="status">
-      <Icon name="music" class="tracks-page__empty-icon" />
-      <p class="tracks-page__empty-text">
-        {{ searchQuery ? t('music.noTracksMatch') : t('music.noTracks') }}
-      </p>
-    </div>
-
-    <!-- Track table -->
-    <div v-else class="track-table" role="table" aria-label="Music tracks">
-      <div class="track-table__header" role="row">
-        <span class="col-num" role="columnheader">#</span>
-        <span class="col-title" role="columnheader">{{ t('music.title') }}</span>
-        <span class="col-artist" role="columnheader">{{ t('music.artist') }}</span>
-        <span class="col-album" role="columnheader">{{ t('music.album') }}</span>
-        <span class="col-duration" role="columnheader">{{ t('music.duration') }}</span>
-        <span class="col-play" role="columnheader"><span class="sr-only">Play</span></span>
+    <!-- The pager's `aria-controls` IDREF is on THIS always-rendered wrapper, not on
+         the table inside the v-if chain, so it never dangles mid-load. -->
+    <div id="music-tracks-table">
+      <!-- Loading skeleton -->
+      <div v-if="loading && tracks.length === 0" class="tracks-page__loading" role="status" aria-busy="true">
+        <div v-for="n in 8" :key="n" class="track-skel">
+          <div class="track-skel__num" />
+          <div class="track-skel__title" />
+          <div class="track-skel__artist" />
+          <div class="track-skel__album" />
+          <div class="track-skel__duration" />
+        </div>
       </div>
 
+      <!-- Empty state -->
       <div
-        v-for="track in filteredTracks"
-        :key="track.id"
-        class="track-row"
-        :class="{ 'is-playing': playingTrackId === track.id }"
-        role="row"
+        v-else-if="filteredTracks.length === 0 && !error"
+        class="tracks-page__empty"
+        role="status"
       >
-        <span class="col-num track-row__num">
-          <template v-if="playingTrackId !== track.id && track.trackNumber !== null">
-            {{ track.trackNumber }}
-          </template>
-          <template v-else-if="playingTrackId === track.id">
-            <Icon name="pause" class="track-row__playing-icon" />
-          </template>
-        </span>
+        <Icon name="music" class="tracks-page__empty-icon" />
+        <p class="tracks-page__empty-text">
+          {{ searchQuery ? t('music.noTracksMatch') : t('music.noTracks') }}
+        </p>
+      </div>
 
-        <span class="col-title track-row__title">{{ track.title }}</span>
+      <!-- Track table -->
+      <div v-else class="track-table" role="table" aria-label="Music tracks">
+        <div class="track-table__header" role="row">
+          <span class="col-num" role="columnheader">#</span>
+          <span class="col-title" role="columnheader">{{ t('music.title') }}</span>
+          <span class="col-artist" role="columnheader">{{ t('music.artist') }}</span>
+          <span class="col-album" role="columnheader">{{ t('music.album') }}</span>
+          <span class="col-duration" role="columnheader">{{ t('music.duration') }}</span>
+          <span class="col-play" role="columnheader"><span class="sr-only">Play</span></span>
+        </div>
 
-        <span class="col-artist track-row__artist">—</span>
-        <span class="col-album track-row__album">—</span>
-
-        <span class="col-duration track-row__duration">{{ formatDuration(track.durationSecs) }}</span>
-
-        <button
-          type="button"
-          class="col-play track-row__play"
-          :aria-label="playingTrackId === track.id ? t('music.pause') : t('music.play')"
-          @click="playTrack(track)"
+        <div
+          v-for="track in filteredTracks"
+          :key="track.id"
+          class="track-row"
+          :class="{ 'is-playing': playingTrackId === track.id }"
+          role="row"
         >
-          <Icon :name="playingTrackId === track.id ? 'pause' : 'play'" class="track-row__play-icon" />
-        </button>
+          <span class="col-num track-row__num">
+            <template v-if="playingTrackId !== track.id && track.trackNumber !== null">
+              {{ track.trackNumber }}
+            </template>
+            <template v-else-if="playingTrackId === track.id">
+              <Icon name="pause" class="track-row__playing-icon" />
+            </template>
+          </span>
+
+          <span class="col-title track-row__title">{{ track.title }}</span>
+
+          <span class="col-artist track-row__artist">—</span>
+          <span class="col-album track-row__album">—</span>
+
+          <span class="col-duration track-row__duration">{{ formatDuration(track.durationSecs) }}</span>
+
+          <button
+            type="button"
+            class="col-play track-row__play"
+            :aria-label="playingTrackId === track.id ? t('music.pause') : t('music.play')"
+            @click="playTrack(track)"
+          >
+            <Icon :name="playingTrackId === track.id ? 'pause' : 'play'" class="track-row__play-icon" />
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="total > limit" class="pagination">
-      <button
-        type="button"
-        class="pagination__btn"
-        :disabled="!hasPrev"
-        @click="prevPage"
-      >
-        {{ t('music.previous') }}
-      </button>
-      <span class="pagination__info">
-        {{ offset + 1 }} – {{ Math.min(offset + limit, total) }} {{ t('music.of') }} {{ total }}
-      </span>
-      <button
-        type="button"
-        class="pagination__btn"
-        :disabled="!hasNext"
-        @click="nextPage"
-      >
-        {{ t('music.next') }}
-      </button>
-    </div>
+    <!-- Pagination: the shared pager, so 29,245 tracks are random-accessible -->
+    <MusicPager
+      :offset="offset"
+      :limit="limit"
+      :total="total"
+      :disabled="loading"
+      :label="t('music.tracks')"
+      controls="music-tracks-table"
+      @go="goToOffset"
+    />
 
     <!-- Now-playing transport bar -->
     <footer v-if="player.currentTrack.value" class="music-bar" role="region" :aria-label="t('music.nowPlaying')">
@@ -563,6 +586,28 @@ function onSeek(event: Event): void {
   animation: shimmer 1.4s ease infinite;
 }
 
+/* Page-load error banner — sits ABOVE the table, which keeps its rows */
+.tracks-page__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-4, 16px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-2, #27272a);
+  border: 1px solid var(--danger, #f87171);
+  color: var(--danger, #f87171);
+  font-size: var(--text-sm, 0.875rem);
+}
+.tracks-page__error-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.tracks-page__error-text {
+  margin: 0;
+}
+
 /* Empty state */
 .tracks-page__empty {
   display: flex;
@@ -585,36 +630,6 @@ function onSeek(event: Event): void {
 .tracks-page__empty-text {
   font-size: var(--text-sm, 0.875rem);
   margin: 0;
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4, 16px);
-  margin-top: var(--space-6, 24px);
-}
-.pagination__btn {
-  padding: var(--space-2, 8px) var(--space-4, 16px);
-  border-radius: var(--radius-md, 8px);
-  background: var(--surface-2, #27272a);
-  border: 1px solid var(--border, #3f3f46);
-  color: var(--text, #e4e4e7);
-  font-size: var(--text-sm, 0.875rem);
-  cursor: pointer;
-  transition: background var(--dur-fast, 0.18s);
-}
-.pagination__btn:hover:not(:disabled) {
-  background: var(--surface-3, #3f3f46);
-}
-.pagination__btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.pagination__info {
-  font-size: var(--text-sm, 0.875rem);
-  color: var(--text-muted, #a1a1aa);
 }
 
 /* Now-playing transport bar */

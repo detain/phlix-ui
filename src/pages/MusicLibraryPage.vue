@@ -9,9 +9,22 @@
  *
  * The three-panel drill-down (artist grid → album list → track list) loads real
  * data from the server music API via {@link ApiClient}:
- *   - artists  → `GET /api/v1/music/artists`   (on mount)
- *   - albums   → `GET /api/v1/music/albums`    (on artist select, filtered by artist)
- *   - tracks   → embedded in the album (fast-path), else `GET /api/v1/music/tracks`
+ *   - artists  → `GET /api/v1/music/artists?limit&offset`
+ *   - albums   → `GET /api/v1/music/albums?artist&limit&offset` (SERVER-side filter)
+ *   - tracks   → embedded in the album row, else/also `GET /api/v1/music/albums/{title}?artist=`
+ *
+ * **Paging (S110) is not cosmetic — it is the only way to see the library.** The
+ * music endpoints serve bounded pages (`?limit=` clamped to `MUSIC_PAGE_SIZE`) and
+ * return the TRUE `total`. This page previously fired one unparameterised
+ * `listArtists()` and rendered a bare `v-for`, so on a 2,197-artist library the
+ * user reached exactly 100 artists with nothing on screen suggesting the other
+ * 2,097 existed. Both listings are now offset-paged with a {@link MusicPager} and
+ * both show the server's `total`.
+ *
+ * The album drill-down asks the SERVER to filter by artist. It used to fetch page 1
+ * of `/albums` and filter client-side — and because `/albums` is ordered globally
+ * by artist then title, page 1 spans only ~23 artists, so 77 of the 100 visible
+ * artists drilled down to an EMPTY album list.
  *
  * Playback (crossfade / gapless via {@link useMusicPlayer}) is wired here: the
  * track objects from the server carry a signed `stream_url` (UI-3.6 / X8), which
@@ -23,10 +36,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useMusicPlayer } from '../composables/useMusicPlayer';
-import { ApiClient } from '../api/client';
+import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import MusicArtistCard from '../components/MusicArtistCard.vue';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
 import MusicTrackList from '../components/MusicTrackList.vue';
+import MusicPager from '../components/MusicPager.vue';
 import Icon from '../components/Icon.vue';
 import type { MusicArtist, MusicAlbum, MusicTrack } from '../types/music';
 
@@ -35,12 +49,70 @@ type View = 'artists' | 'albums' | 'tracks';
 const view = ref<View>('artists');
 const selectedArtist = ref<MusicArtist | null>(null);
 const selectedAlbum = ref<MusicAlbum | null>(null);
+/**
+ * Navigation generation, bumped by {@link setView} on every view change. Every async
+ * body captures it before it awaits and re-checks it before it writes, so a request
+ * the user navigated away from settles into the void instead of writing state that
+ * belongs to a view nobody is looking at any more.
+ *
+ * The synchronous clears in `setView` cannot achieve this on their own, which is the
+ * whole reason this exists: `setView` runs at click time, while a rejected request's
+ * `catch` and a slow response's `then` run LATER. Two concrete stale writes it closes:
+ *   - an abandoned album page re-arming the `role="alert"` banner over the healthy
+ *     artists grid the user had already gone back to (observed: the banner was cleared
+ *     by `setView`, then set again by the `catch` a moment later), and
+ *   - a late `getAlbum` resolve repopulating {@link tracks} for an album the user has
+ *     already left.
+ * Deliberately a plain `let`, not a `ref`: nothing renders it and it must never
+ * trigger a re-render. Like every `<script setup>` local it is per component instance.
+ */
+let navGen = 0;
+
+/** True while `gen` is still the navigation the user is looking at. */
+function isCurrent(gen: number): boolean {
+  return gen === navGen;
+}
 
 // --- library data (loaded from the server music API) ---
 const artists = ref<MusicArtist[]>([]);
 const albums = ref<MusicAlbum[]>([]);
 const tracks = ref<MusicTrack[]>([]);
 const loading = ref(false);
+/**
+ * Set when ONE page failed to load. Only one view is ever active, so a single ref
+ * serves both listings — which is precisely why it must be dropped when the view
+ * changes: the banner is a `role="alert"`, so leaving a failed-ALBUM-page message up
+ * on the healthy artists grid asserts a failure where nothing failed, and an
+ * assertive live region contradicting the screen is worse than no message at all.
+ *
+ * THREE points, not two, are what make "the banner always belongs to the view on
+ * screen" hold. It is cleared
+ *   - at the top of every load (`loadArtists`/`loadAlbums`), and
+ *   - on every view change, because every navigator goes through {@link setView}
+ *     (not redundant with the first: `goToArtists()` deliberately does NOT re-fetch,
+ *     since it keeps the artist page the user came from, so without this nothing would
+ *     clear the banner until the user happened to page the artists grid);
+ * and — the point the first two cannot cover —
+ *   - it is never WRITTEN by a load the user has already navigated away from: both
+ *     `catch`es are generation-guarded ({@link navGen}). The clears are synchronous
+ *     and a `catch` runs later, so an album page still in flight when the user clicked
+ *     Back used to re-arm the banner AFTER `setView` had cleared it.
+ * One deliberate conservatism: leaving a view and returning to it while a load is in
+ * flight would also discard that load's error. That is the safe direction — a silent
+ * retry beats a false alarm — and it costs nothing today, because re-entering a
+ * listing means clicking a card and the skeleton hides every card while a load runs.
+ */
+const error = ref<string | null>(null);
+
+// --- paging state: one page of artists, one page of the selected artist's albums.
+// `total`/`limit` come back from the server (it clamps `limit`), so the pager and
+// the header count reflect the DB rather than what this page happens to hold.
+const artistTotal = ref(0);
+const artistLimit = ref(MUSIC_PAGE_SIZE);
+const artistOffset = ref(0);
+const albumTotal = ref(0);
+const albumLimit = ref(MUSIC_PAGE_SIZE);
+const albumOffset = ref(0);
 
 const { t } = useMessages();
 const apiBase = useMediaApiBase();
@@ -65,15 +137,95 @@ function getClient(): ApiClient {
   return new ApiClient({ baseUrl: apiBase.value });
 }
 
-onMounted(async () => {
+/**
+ * Load one page of artists. `offset` is passed explicitly (never derived inside)
+ * so a failed page cannot leave the pager pointing at rows that were never shown.
+ *
+ * **PAGE-failure policy — identical in all four music listings** (`loadAlbums`,
+ * `MusicArtistsPage`, `MusicArtistPage`, `MusicTracksPage`): on failure keep the
+ * rows, the `total` AND the `offset`, and set the error ref. Discarding them — which
+ * this page used to do — zeroed `total`, which removed the pager, so an I/O blip on
+ * page 7 of 22 left an empty grid, no pager, and a false "No artists" with no way
+ * back. That dead end was NEW with S110's pager; keeping state means the user stays
+ * exactly where they were and can retry or page away.
+ *
+ * **FIRST-load failure is deliberately NOT uniform** — there is nothing to keep, and
+ * each surface owns a different amount of the screen, so the four pages take three
+ * shapes (this is the canonical note; the others point here):
+ *   - here and `MusicTracksPage`: the banner, with a blank listing area;
+ *   - `MusicArtistsPage`: the error INSIDE the listing area and with its own message
+ *     (`music.artistsNotFound`) — that page is a whole route, not a panel;
+ *   - `MusicArtistPage`: the whole page is replaced, via a SECOND ref (`error` for
+ *     the artist itself vs `pageError` for one album page).
+ * What every shape does share: the empty state yields to the error, so a failure
+ * never reads as "No artists"/"No tracks" — a lie about the library.
+ *
+ * **An ABANDONED load writes nothing** ({@link navGen}): `gen` is captured before the
+ * await and re-checked after it, so if the view changed in the meantime this request
+ * drops both its page and its error on the floor. `loading` is the one thing still
+ * reset unconditionally in `finally` — it is what takes the skeleton down, and
+ * `goToArtists()` does not re-fetch, so a guarded reset would strand the skeleton on
+ * the artists grid forever. Unconditional is safe because at most one load is ever in
+ * flight: every starter is gated on `loading` (cards sit behind the skeleton, and
+ * {@link MusicPager} hard-returns on `disabled` in JS, not merely via the attribute).
+ * On the artists grid there is in fact no navigator to press mid-load — Back and the
+ * breadcrumb render only OFF the artists view — so here the guard is the same rule
+ * applied uniformly rather than a reachable bug; on the album list the breadcrumb IS
+ * on screen mid-load, which is where the stale banner was observed.
+ */
+async function loadArtists(offset: number): Promise<void> {
+  const gen = navGen;
   loading.value = true;
+  error.value = null;
   try {
-    artists.value = await getClient().listArtists();
+    const page = await getClient().listArtists({ limit: MUSIC_PAGE_SIZE, offset });
+    if (!isCurrent(gen)) return;
+    artists.value = page.artists;
+    artistTotal.value = page.total;
+    artistLimit.value = page.limit;
+    artistOffset.value = page.offset;
   } catch {
-    artists.value = [];
+    if (!isCurrent(gen)) return;
+    error.value = t('music.pageLoadFailed');
   } finally {
     loading.value = false;
   }
+}
+
+/**
+ * Load one page of ONE artist's albums, filtered SERVER-side. Three artists on the
+ * production library hold more than a full page of albums (142 / 109 / 104), so
+ * this listing needs its own pager for those albums to be reachable at all.
+ * Same failure policy as `loadArtists` above, and the same abandonment rule — this is
+ * the listing where it matters: Back and the breadcrumb are on screen while an album
+ * page loads and neither is gated on `loading`, so this request really can outlive the
+ * view that asked for it.
+ */
+async function loadAlbums(artist: MusicArtist, offset: number): Promise<void> {
+  const gen = navGen;
+  loading.value = true;
+  error.value = null;
+  try {
+    const page = await getClient().listAlbums({
+      artist: artist.name,
+      limit: MUSIC_PAGE_SIZE,
+      offset,
+    });
+    if (!isCurrent(gen)) return;
+    albums.value = page.albums;
+    albumTotal.value = page.total;
+    albumLimit.value = page.limit;
+    albumOffset.value = page.offset;
+  } catch {
+    if (!isCurrent(gen)) return;
+    error.value = t('music.pageLoadFailed');
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(async () => {
+  await loadArtists(0);
 });
 
 const viewTitle = computed(() => {
@@ -83,40 +235,95 @@ const viewTitle = computed(() => {
   return t('music.title');
 });
 
+/** "2,197 artists" / "1 artist" — the DB count, not `artists.length`. */
+const artistTotalLabel = computed(() =>
+  artistTotal.value === 1
+    ? t('music.artistsTotalOne')
+    : t('music.artistsTotal', { count: artistTotal.value.toLocaleString() }),
+);
+
+/** "142 albums" for the selected artist — again the server's filtered `total`. */
+const albumTotalLabel = computed(() =>
+  albumTotal.value === 1
+    ? t('music.albumsTotalOne')
+    : t('music.albumsTotal', { count: albumTotal.value.toLocaleString() }),
+);
+
+/**
+ * The ONLY place `view` is assigned. Changing the view also drops the page-load
+ * banner, because {@link error} is one ref shared by both listings and the banner is
+ * a `role="alert"`: a failed album page must not still be announcing itself over the
+ * artists grid the user navigated back to. Route every navigator through here rather
+ * than assigning `view` directly, or that stale-banner bug comes straight back.
+ *
+ * Clearing here is necessary but NOT sufficient, because it happens at click time: it
+ * is the {@link navGen} bump that stops a request already in flight from writing into
+ * the view the user just moved to (a banner for an album page nobody is looking at, a
+ * track list for an album they left). Both halves are needed — hence both live here,
+ * in the one function every navigator goes through.
+ */
+function setView(next: View): void {
+  view.value = next;
+  navGen += 1;
+  error.value = null;
+}
+
 async function selectArtist(artist: MusicArtist): Promise<void> {
   selectedArtist.value = artist;
   selectedAlbum.value = null;
   albums.value = [];
   tracks.value = [];
-  view.value = 'albums';
-  loading.value = true;
-  try {
-    // Server has no per-artist albums route; listAlbums filters client-side by
-    // artist name (the artist has no PK — `name` is the identity).
-    albums.value = await getClient().listAlbums(artist.name);
-  } catch {
-    albums.value = [];
-  } finally {
-    loading.value = false;
-  }
+  albumTotal.value = 0;
+  albumOffset.value = 0;
+  setView('albums');
+  await loadAlbums(artist, 0);
+}
+
+/** Pager handler for the artists grid. */
+async function goToArtistOffset(offset: number): Promise<void> {
+  if (offset === artistOffset.value) return;
+  await loadArtists(offset);
+}
+
+/** Pager handler for the selected artist's album list. */
+async function goToAlbumOffset(offset: number): Promise<void> {
+  const artist = selectedArtist.value;
+  if (!artist || offset === albumOffset.value) return;
+  await loadAlbums(artist, offset);
 }
 
 async function selectAlbum(album: MusicAlbum): Promise<void> {
   selectedAlbum.value = album;
-  view.value = 'tracks';
-  // Fast-path: albums from listAlbums carry their embedded track list, so no
-  // extra fetch is needed. Fall back to the tracks endpoint only if empty.
+  setView('tracks');
+  // Fast-path: an album LIST row carries its embedded track list, so no extra
+  // fetch is needed — unless the server flagged that list as a truncated prefix
+  // (`tracks_truncated`, S99: 100 tracks max per album on a list row) or sent
+  // none at all. The album DETAIL route is exempt from that cap and returns the
+  // whole thing; `artist` disambiguates a title shared by several artists (2,622
+  // of production's 5,091 album titles are). Note what is NOT used here: the
+  // `/tracks` listing, which has no album filter and would return nothing for any
+  // album outside its own first page.
   const embedded = album.tracks ?? [];
-  if (embedded.length > 0) {
+  if (embedded.length > 0 && album.tracksTruncated !== true) {
     tracks.value = embedded;
     return;
   }
-  tracks.value = [];
+  tracks.value = embedded;
+  // Captured AFTER `setView('tracks')` above, so this reads the generation this track
+  // list belongs to. `goBack()` is one click away while the detail request is in
+  // flight, and a resolve landing afterwards would repopulate `tracks` for an album
+  // the user has already left. That is not visible on screen today — every entry to
+  // the tracks view reassigns `tracks` first, and `loading` keeps the album cards
+  // hidden until this settles — so this is state hygiene rather than a fixed rendering
+  // bug: it keeps `tracks` meaning "the tracks of the album on screen", full stop.
+  const gen = navGen;
   loading.value = true;
   try {
-    tracks.value = await getClient().listTracks(album.title);
+    const full = await getClient().getAlbum(album.title, album.artist ?? selectedArtist.value?.name);
+    if (!isCurrent(gen)) return;
+    if (full.tracks && full.tracks.length > 0) tracks.value = full.tracks;
   } catch {
-    tracks.value = [];
+    // Keep whatever prefix the list row gave us rather than blanking the view.
   } finally {
     loading.value = false;
   }
@@ -150,15 +357,29 @@ function onSeek(event: Event): void {
   player.seek(value);
 }
 
+/**
+ * Return to the artists grid, dropping the album page state — and the album page's
+ * error banner with it (via {@link setView}) — but deliberately KEEPING the artist
+ * page (offset/total), so coming back from an artist on page 14 does not dump the
+ * user back at page 1. Because this does not re-fetch, `setView` is the only thing
+ * that clears the banner on this path.
+ */
+function goToArtists(): void {
+  setView('artists');
+  selectedArtist.value = null;
+  selectedAlbum.value = null;
+  albums.value = [];
+  albumTotal.value = 0;
+  albumOffset.value = 0;
+}
+
 function goBack(): void {
   if (view.value === 'tracks') {
-    view.value = 'albums';
+    setView('albums');
     selectedAlbum.value = null;
     tracks.value = [];
   } else if (view.value === 'albums') {
-    view.value = 'artists';
-    selectedArtist.value = null;
-    albums.value = [];
+    goToArtists();
   }
 }
 </script>
@@ -178,7 +399,7 @@ function goBack(): void {
           <Icon name="arrow-left" class="music-page__back-icon" />
         </button>
         <nav v-if="view !== 'artists'" class="music-page__crumb-nav" aria-label="Breadcrumb">
-          <button type="button" class="music-page__crumb" @click="view = 'artists'; selectedArtist = null; albums = []">
+          <button type="button" class="music-page__crumb" @click="goToArtists">
             {{ t('music.artists') }}
           </button>
           <Icon name="chevron-right" class="music-page__crumb-sep" />
@@ -186,53 +407,111 @@ function goBack(): void {
         </nav>
       </div>
       <h1 class="music-page__title">{{ viewTitle }}</h1>
+      <!-- The TRUE library size, straight from the endpoint's `total`. Without it
+           a 100-row page is indistinguishable from a 100-artist library. -->
+      <p v-if="view === 'artists'" class="music-page__count" data-count="artists" role="status">
+        {{ artistTotalLabel }}
+      </p>
+      <p v-else-if="view === 'albums'" class="music-page__count" data-count="albums" role="status">
+        {{ albumTotalLabel }}
+      </p>
     </header>
 
-    <!-- Artists grid -->
-    <div v-if="view === 'artists'" class="music-page__grid">
-      <div v-if="loading" class="music-page__loading" role="status" aria-busy="true">
-        <div v-for="n in 12" :key="n" class="artist-skel">
-          <div class="artist-skel__img" />
-          <div class="artist-skel__name" />
-          <div class="artist-skel__albums" />
-        </div>
-      </div>
-      <div v-else-if="artists.length === 0" class="music-page__empty" role="status">
-        <Icon name="music" class="music-page__empty-icon" />
-        <p class="music-page__empty-text">{{ t('music.noArtists') }}</p>
-      </div>
-      <template v-else>
-        <MusicArtistCard
-          v-for="artist in artists"
-          :key="artist.id"
-          :artist="artist"
-          @click="selectArtist"
-        />
-      </template>
+    <!-- A failed page keeps its rows and its pager, so this is a BANNER above the
+         listing, not a replacement for it: the user is still on the page they were
+         on. It only takes over the listing area when there is nothing to show
+         (a first-load failure), so a failure never renders as "No artists".
+         There is no `view !== 'tracks'` guard here any more: that guard existed only
+         to hide a banner that had outlived its view. A set `error` now always belongs
+         to the view on screen, and it takes BOTH halves of `setView` to say that —
+         it clears `error` on every view change AND bumps the generation, so a load
+         that was already in flight cannot re-arm the banner after the fact.
+         (Nothing currently sets it on the tracks view — the album-detail catch keeps
+         the embedded prefix silently — but if that ever changes, the banner showing
+         is the CORRECT behaviour rather than something to suppress.) -->
+    <div v-if="error" class="music-page__error" role="alert">
+      <Icon name="alert-circle" class="music-page__error-icon" />
+      <p class="music-page__error-text">{{ error }}</p>
     </div>
 
-    <!-- Albums list -->
-    <div v-else-if="view === 'albums'" class="music-page__grid">
-      <div v-if="loading" class="music-page__loading" role="status" aria-busy="true">
-        <div v-for="n in 8" :key="n" class="album-skel">
-          <div class="album-skel__cover" />
-          <div class="album-skel__title" />
-          <div class="album-skel__meta" />
+    <!-- Artists grid. The pager sits OUTSIDE the grid so its `aria-controls` can
+         name the grid it drives rather than point at its own ancestor. -->
+    <template v-if="view === 'artists'">
+      <div id="music-artists-grid" class="music-page__grid">
+        <div v-if="loading" class="music-page__loading" role="status" aria-busy="true">
+          <div v-for="n in 12" :key="n" class="artist-skel">
+            <div class="artist-skel__img" />
+            <div class="artist-skel__name" />
+            <div class="artist-skel__albums" />
+          </div>
         </div>
+        <div
+          v-else-if="artists.length === 0 && !error"
+          class="music-page__empty"
+          role="status"
+        >
+          <Icon name="music" class="music-page__empty-icon" />
+          <p class="music-page__empty-text">{{ t('music.noArtists') }}</p>
+        </div>
+        <template v-else>
+          <MusicArtistCard
+            v-for="artist in artists"
+            :key="artist.id"
+            :artist="artist"
+            @click="selectArtist"
+          />
+        </template>
       </div>
-      <div v-else-if="albums.length === 0" class="music-page__empty" role="status">
-        <Icon name="image" class="music-page__empty-icon" />
-        <p class="music-page__empty-text">{{ t('music.noAlbums') }}</p>
+      <MusicPager
+        data-pager="artists"
+        :offset="artistOffset"
+        :limit="artistLimit"
+        :total="artistTotal"
+        :disabled="loading"
+        :label="t('music.artists')"
+        controls="music-artists-grid"
+        @go="goToArtistOffset"
+      />
+    </template>
+
+    <!-- Albums list -->
+    <template v-else-if="view === 'albums'">
+      <div id="music-albums-grid" class="music-page__grid">
+        <div v-if="loading" class="music-page__loading" role="status" aria-busy="true">
+          <div v-for="n in 8" :key="n" class="album-skel">
+            <div class="album-skel__cover" />
+            <div class="album-skel__title" />
+            <div class="album-skel__meta" />
+          </div>
+        </div>
+        <div
+          v-else-if="albums.length === 0 && !error"
+          class="music-page__empty"
+          role="status"
+        >
+          <Icon name="image" class="music-page__empty-icon" />
+          <p class="music-page__empty-text">{{ t('music.noAlbums') }}</p>
+        </div>
+        <template v-else>
+          <MusicAlbumCard
+            v-for="album in albums"
+            :key="album.id"
+            :album="album"
+            @click="selectAlbum"
+          />
+        </template>
       </div>
-      <template v-else>
-        <MusicAlbumCard
-          v-for="album in albums"
-          :key="album.id"
-          :album="album"
-          @click="selectAlbum"
-        />
-      </template>
-    </div>
+      <MusicPager
+        data-pager="albums"
+        :offset="albumOffset"
+        :limit="albumLimit"
+        :total="albumTotal"
+        :disabled="loading"
+        :label="t('music.albums')"
+        controls="music-albums-grid"
+        @go="goToAlbumOffset"
+      />
+    </template>
 
     <!-- Tracks list -->
     <div v-else-if="view === 'tracks'">
@@ -371,6 +650,12 @@ function goBack(): void {
   letter-spacing: var(--tracking-tight, -0.02em);
   color: var(--text, #e4e4e7);
 }
+.music-page__count {
+  margin-top: var(--space-1, 4px);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-muted, #a1a1aa);
+  font-variant-numeric: tabular-nums;
+}
 
 /* Grid */
 .music-page__grid {
@@ -378,6 +663,23 @@ function goBack(): void {
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--space-5, 20px);
 }
+
+/* ⚠ GEOMETRY RECORD — `npm run test:visual` is banned in this repo and `ui-ci`'s
+   `visual` job must not be dispatched, so this comment is the ONLY record of the
+   change and must therefore be true rather than reassuring.
+   Moving the pager OUT of `.music-page__grid` (so its `aria-controls` can name the
+   grid instead of pointing at its own ancestor) DID change the spacing on the
+   artists and albums views:
+     - as a grid child: `row-gap` 20px + `.music-pager`'s `margin-top` 24px = 44px
+     - as a sibling:    `margin-top` 24px only                              = 24px
+   That 20px (~45%) reduction is now DELIBERATE, not accidental. 24px is what the
+   other three music pagers (`MusicArtistsPage`, `MusicArtistPage`,
+   `MusicTracksPage`) have always used — they were already siblings — so keeping
+   24px makes all four consistent instead of leaving this one page bespoke.
+   There is deliberately NO page-level `margin-top` override: it would land on the
+   same element as `.music-pager`'s (a class passed to a child component's root), so
+   the two would not add — they would fight at equal specificity and be resolved by
+   stylesheet order. The component owns this margin. */
 
 /* Loading skeletons */
 .music-page__loading {
@@ -418,6 +720,28 @@ function goBack(): void {
   background: linear-gradient(90deg, var(--surface-2, #27272a) 25%, var(--surface-3, #3f3f46) 37%, var(--surface-2, #27272a) 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
+}
+
+/* Page-load error banner — sits ABOVE the listing, which keeps its rows */
+.music-page__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-4, 16px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-2, #27272a);
+  border: 1px solid var(--danger, #f87171);
+  color: var(--danger, #f87171);
+  font-size: var(--text-sm, 0.875rem);
+}
+.music-page__error-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.music-page__error-text {
+  margin: 0;
 }
 
 /* Empty state */

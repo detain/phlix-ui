@@ -323,6 +323,45 @@ Everything below is a named export from the package root (`import { Button } fro
 hero strip per item) for `'backdrop'`. Those renderers are internals of
 `src/pages/LibraryPage.vue` and are deliberately **not** re-exported.
 
+### Music surfaces
+
+`MusicArtistsPage` · `MusicArtistPage` · `MusicAlbumPage` · `MusicTracksPage` · `MusicPlayerPage` are
+exported page components — mount them yourself under `/app/music/*` via `extraRoutes` (that is what
+`phlix-server/web-ui` does). The drill-down page behind the **built-in `/app/music` route**
+(`MusicLibraryPage`: artists → albums → tracks) is a lazy chunk mounted by `createPhlixApp` and, like
+the other built-in route pages, is **not** re-exported.
+
+**Every music listing is offset-paged, and paging is the only way to see the whole library.** The
+endpoints serve bounded pages — `?limit=` is clamped server-side to **`MUSIC_PAGE_SIZE`** (100,
+exported so a consumer can size its own pager identically) — and return the *true* row `total`. So each
+listing renders one page plus a `MusicPager`, and its count line ("2,197 artists") comes from `total`,
+never from the rows on screen. Asking for a bigger `limit` is not the lever: an album list row embeds
+its tracks and the server mints one signed stream URL per embedded track, so `offset` is the cheap
+axis.
+
+`ApiClient.listArtists()` / `listAlbums()` / `listTracks()` take `{ limit, offset }` (`listAlbums` also
+takes `{ artist }`) and return the page envelopes `MusicArtistsResult` / `MusicAlbumsResult` /
+`MusicTracksResult` — the rows plus the `total` and the `limit`/`offset` the server actually *applied*,
+plus an `artist` echo of the applied filter on albums. Those three envelopes and the `MusicPageParams`
+argument type are exported from the package root; the row types *inside* them are **not**, so name a row
+structurally (`MusicAlbumsResult['albums'][number]`) rather than importing it. The artist drill-down
+filters **server-side** (`?artist=`, exact/case-insensitive/trimmed); do not filter an album page in the
+browser, because `/albums` is ordered globally by artist then title, so page 1 spans only a handful of
+artists. `getAlbum(title, artist?)` takes the artist for the same reason — album titles are shared
+between artists, so title alone resolves to the server's first match. An album row's embedded `tracks`
+may be a prefix: check that row's own `tracksTruncated` flag and fetch `getAlbum()` for the whole list.
+This is a signature change from the pre-paging helpers (which returned bare arrays) — see
+[`CHANGELOG.md`](./CHANGELOG.md).
+
+`src/components/MusicPager.vue` is the shared pager for all of those listings. Props: `offset` /
+`limit` / `total` (required), plus `label` (names the `<nav>` landmark — "Artists pagination"),
+`controls` (the `id` of the grid its page-jump `<select>` drives, for `aria-controls`) and `disabled`
+(set while a page is in flight). It emits a single `go(offset)` and owns no offset itself. It renders
+first / prev / a `Page N of M · Showing A–B of TOTAL` live readout / a page-jump `<select>` / next /
+last, hides itself entirely when there is only one page, and drops the jump `<select>` above 1,000
+pages rather than mint that many `<option>` nodes from a server-supplied `total`. Like the `MediaGrid`
+view-mode renderers it is an internal of these pages and deliberately **not** re-exported.
+
 ### Player surface
 
 `Player` · `MiniPlayer` · `Scrubber` · `VolumeControl` · `SpeedMenu` · `QualityMenu` ·

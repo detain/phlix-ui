@@ -13,16 +13,23 @@
  *
  * Data:
  *   - Artist info: `GET /api/v1/music/artists/{name}` via {@link ApiClient#getArtist}
- *   - Albums: `GET /api/v1/music/albums` filtered client-side by artist name
- *     (no server-side per-artist albums endpoint — mirrors {@link MusicLibraryPage})
+ *   - Albums: `GET /api/v1/music/albums?artist={name}&limit&offset` — filtered
+ *     SERVER-side (S99) and offset-paged (S110)
  * Clicking an album navigates to `/app/music/album/:name`.
+ *
+ * ⚠ This used to fetch page 1 of `/albums` and filter it client-side. `/albums` is
+ * ordered globally by artist then title and clamped to `MUSIC_PAGE_SIZE`, so page 1
+ * spans only ~23 of the library's 2,197 artists: any artist outside that window
+ * rendered an EMPTY album list. The `?artist=` filter is both correct and ~140×
+ * cheaper server-side (0.95 ms vs 134 ms, measured on production).
  */
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
-import { ApiClient } from '../api/client';
+import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
+import MusicPager from '../components/MusicPager.vue';
 import Icon from '../components/Icon.vue';
 import type { MusicArtist, MusicAlbum } from '../types/music';
 
@@ -39,10 +46,38 @@ const apiBase = useMediaApiBase();
 const artist = ref<MusicArtist | null>(null);
 const albums = ref<MusicAlbum[]>([]);
 const loading = ref(false);
+/** Whole-page failure (the artist itself could not be read) — replaces the page. */
 const error = ref<string | null>(null);
+/**
+ * ONE album page failed. Distinct from `error`: the artist and the previously loaded
+ * albums are still on screen, so this renders as a banner and the pager stays usable.
+ */
+const pageError = ref<string | null>(null);
+
+// --- album paging (three production artists hold more than one page: 142/109/104) ---
+const albumTotal = ref(0);
+const albumLimit = ref(MUSIC_PAGE_SIZE);
+const albumOffset = ref(0);
 
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: apiBase.value });
+}
+
+/**
+ * Load ONE album page for this artist. The single loader for both entry points —
+ * `loadArtist` (mount) and `goToAlbumOffset` (pager) — because when they were two
+ * copies they immediately drifted in their failure handling.
+ */
+async function loadAlbumPage(offset: number): Promise<void> {
+    const page = await getClient().listAlbums({
+        artist: props.name,
+        limit: MUSIC_PAGE_SIZE,
+        offset,
+    });
+    albums.value = page.albums;
+    albumTotal.value = page.total;
+    albumLimit.value = page.limit;
+    albumOffset.value = page.offset;
 }
 
 async function loadArtist(): Promise<void> {
@@ -50,20 +85,47 @@ async function loadArtist(): Promise<void> {
     loading.value = true;
     error.value = null;
     try {
-        // Fetch artist info and albums in parallel
-        const [artistData, allAlbums] = await Promise.all([
+        // Artist info and the artist's first album page, in parallel.
+        const [artistData] = await Promise.all([
             getClient().getArtist(props.name),
-            getClient().listAlbums(),
+            loadAlbumPage(0),
         ]);
         artist.value = artistData;
-        // Filter albums client-side by artist name (mirrors MusicLibraryPage pattern)
-        albums.value = allAlbums.filter(
-            (a) => a.artist && a.artist.toLowerCase() === props.name.toLowerCase(),
-        );
     } catch {
+        // A FIRST load has nothing to preserve, so this is the whole-page error.
         error.value = t('music.artistNotFound') ?? 'Artist not found';
         artist.value = null;
         albums.value = [];
+        albumTotal.value = 0;
+        albumOffset.value = 0;
+    } finally {
+        loading.value = false;
+    }
+}
+
+/**
+ * Load another album page for the same artist (no need to re-read artist info).
+ *
+ * **Shared PAGE-failure policy — identical in all four music listings** (canonical
+ * note: `MusicLibraryPage.loadArtists`): a failed page keeps the rows, the `total` and
+ * the `offset` and sets `pageError`. Zeroing `total` — which this did — removed the
+ * pager, so a blip on page 2 of a 142-album artist left an empty grid, no pager and a
+ * false "No albums" with no way back. That dead end was new with S110's pager.
+ *
+ * FIRST-load failure is NOT uniform across the four pages (three shapes, all
+ * deliberate — see the canonical note). THIS page has its own shape: a failed
+ * `loadArtist()` replaces the WHOLE page, which is why there are two refs — `error`
+ * for the artist itself, `pageError` for one album page of an artist already on
+ * screen. Keeping them separate is what lets an album-page blip stay a banner.
+ */
+async function goToAlbumOffset(offset: number): Promise<void> {
+    if (offset === albumOffset.value) return;
+    loading.value = true;
+    pageError.value = null;
+    try {
+        await loadAlbumPage(offset);
+    } catch {
+        pageError.value = t('music.pageLoadFailed');
     } finally {
         loading.value = false;
     }
@@ -73,14 +135,49 @@ onMounted(() => {
     void loadArtist();
 });
 
+/**
+ * Navigate to the album, carrying the ARTIST as a query param. Without it the album
+ * detail route resolves a shared title to the server's deterministic first match,
+ * and 2,622 of production's 5,091 album titles are shared between artists (zero
+ * repeat WITHIN an artist, so artist+title is exact). A query param rather than a
+ * second route param, so a consumer's existing `/music/album/:name` route keeps
+ * working unchanged.
+ */
 function goToAlbum(album: MusicAlbum): void {
-    void router.push({ name: 'music-album', params: { name: album.title } });
+    void router.push({
+        name: 'music-album',
+        params: { name: album.title },
+        query: { artist: album.artist ?? props.name },
+    });
 }
 
-// Total track count across all albums
-const totalTracks = computed(() => {
-    return albums.value.reduce((sum, a) => sum + (a.totalTracks ?? 0), 0);
-});
+/**
+ * Album count for the header — the server's filtered `total`, falling back to the
+ * artist row's own `album_count`. Never `albums.length`, which is one page.
+ */
+const albumCount = computed(() => albumTotal.value || artist.value?.albumCount || 0);
+const albumCountLabel = computed(() =>
+    albumCount.value === 1
+        ? t('music.albumsTotalOne')
+        : t('music.albumsTotal', { count: albumCount.value.toLocaleString() }),
+);
+
+/**
+ * The artist's TRUE track total, from the server's `track_count` — NOT a sum over
+ * the loaded album page. Summing the page made the header report the tracks of
+ * whichever 100 albums were loaded, so the 142-album artist showed one number on
+ * page 1 and a smaller one on page 2. Falls back to the page sum only when the
+ * server sent no `track_count` at all.
+ */
+const trackCount = computed(
+    () => artist.value?.trackCount
+        ?? albums.value.reduce((sum, a) => sum + (a.totalTracks ?? 0), 0),
+);
+const trackCountLabel = computed(() =>
+    trackCount.value === 1
+        ? t('music.tracksTotalOne')
+        : t('music.tracksTotal', { count: trackCount.value.toLocaleString() }),
+);
 </script>
 
 <template>
@@ -138,8 +235,8 @@ const totalTracks = computed(() => {
                 <div class="artist-header__info">
                     <h1 class="artist-header__name">{{ artist.name }}</h1>
                     <p class="artist-header__meta">
-                        <span>{{ albums.length }} {{ albums.length === 1 ? 'album' : 'albums' }}</span>
-                        <span v-if="totalTracks > 0"> · {{ totalTracks }} tracks</span>
+                        <span data-count="albums">{{ albumCountLabel }}</span>
+                        <span v-if="trackCount > 0" data-count="tracks"> · {{ trackCountLabel }}</span>
                     </p>
                 </div>
             </header>
@@ -147,18 +244,37 @@ const totalTracks = computed(() => {
             <!-- Albums section -->
             <section class="artist-albums" aria-label="Albums">
                 <h2 class="artist-albums__title">{{ t('music.albums') }}</h2>
-                <div v-if="albums.length === 0" class="artist-albums__empty">
-                    <Icon name="image" class="artist-albums__empty-icon" />
-                    <p>{{ t('music.noAlbums') }}</p>
+                <!-- One page failed: banner, not a replacement — the albums the user
+                     was looking at are still below, and the pager still works. -->
+                <div v-if="pageError" class="artist-albums__page-error" role="alert">
+                    <Icon name="alert-circle" class="artist-albums__empty-icon" />
+                    <p>{{ pageError }}</p>
                 </div>
-                <div v-else class="artist-albums__grid">
-                    <MusicAlbumCard
-                        v-for="album in albums"
-                        :key="album.id"
-                        :album="album"
-                        @click="goToAlbum"
-                    />
+                <!-- The `aria-controls` IDREF is on this always-rendered wrapper, not
+                     on the grid inside the v-if, so it never dangles mid-load. -->
+                <div id="music-artist-albums">
+                    <div v-if="albums.length === 0 && !pageError" class="artist-albums__empty">
+                        <Icon name="image" class="artist-albums__empty-icon" />
+                        <p>{{ t('music.noAlbums') }}</p>
+                    </div>
+                    <div v-else class="artist-albums__grid">
+                        <MusicAlbumCard
+                            v-for="album in albums"
+                            :key="album.id"
+                            :album="album"
+                            @click="goToAlbum"
+                        />
+                    </div>
                 </div>
+                <MusicPager
+                    :offset="albumOffset"
+                    :limit="albumLimit"
+                    :total="albumTotal"
+                    :disabled="loading"
+                    :label="t('music.albums')"
+                    controls="music-artist-albums"
+                    @go="goToAlbumOffset"
+                />
             </section>
         </template>
 
@@ -257,6 +373,21 @@ const totalTracks = computed(() => {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: var(--space-5, 20px);
+}
+.artist-albums__page-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    margin-bottom: var(--space-4, 16px);
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+    border-radius: var(--radius-md, 8px);
+    background: var(--surface-2, #27272a);
+    border: 1px solid var(--danger, #f87171);
+    color: var(--danger, #f87171);
+    font-size: var(--text-sm, 0.875rem);
+}
+.artist-albums__page-error p {
+    margin: 0;
 }
 .artist-albums__empty {
     display: flex;

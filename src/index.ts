@@ -19,6 +19,9 @@ export {
   TMDB_UNCONFIGURED_CODE,
   setDefaultApiHeaders,
   getDefaultApiHeaders,
+  // The music page size this client requests and the server clamps to
+  // (`PageLimit::MAX`). Exported so a consumer can size its own pager identically.
+  MUSIC_PAGE_SIZE,
 } from './api/client';
 export { LocalStorageTokenStore } from './api/tokenStore';
 export type { TokenStore, AuthUser } from './api/client';
@@ -34,6 +37,14 @@ export type {
   SubtitleCandidate,
   SubtitleDownloadPayload,
   SubtitleDownloadResult,
+  // Music listing page envelopes (S110). Named `…Result` rather than `…Page`
+  // because `MusicArtistsPage`/`MusicTracksPage` below are page COMPONENTS this
+  // barrel already exports; those are established public API, so the new types
+  // took the suffix instead (matching `FavoritesResult`, the same shape).
+  MusicPageParams,
+  MusicArtistsResult,
+  MusicAlbumsResult,
+  MusicTracksResult,
 } from './api/client';
 export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './api/errors';
 

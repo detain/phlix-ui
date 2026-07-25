@@ -11,15 +11,20 @@
  * which is reached either from the music library drill-down or by redirecting
  * the legacy server-rendered `/music/artists` route to the SPA.
  *
- * Data: `GET /api/v1/music/artists` via {@link ApiClient#listArtists}.
+ * Data: `GET /api/v1/music/artists?limit&offset` via {@link ApiClient#listArtists}.
  * Clicking an artist navigates to `/app/music/artist/{name}`.
+ *
+ * The endpoint serves a bounded page (`?limit=` clamped to `MUSIC_PAGE_SIZE`), so
+ * this listing is offset-paged and shows the server's TRUE `total` (S110). Without
+ * that, a 2,197-artist library looked like a 100-artist library.
  */
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
-import { ApiClient } from '../api/client';
+import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import Icon from '../components/Icon.vue';
+import MusicPager from '../components/MusicPager.vue';
 import type { MusicArtist } from '../types/music';
 
 const { t } = useMessages();
@@ -31,26 +36,74 @@ const artists = ref<MusicArtist[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
+// --- paging (server-reported; it clamps `limit`) ---
+const total = ref(0);
+const limit = ref(MUSIC_PAGE_SIZE);
+const offset = ref(0);
+
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: apiBase.value });
 }
 
-async function loadArtists(): Promise<void> {
+/**
+ * **Shared PAGE-failure policy — identical in all four music listings** (canonical
+ * note: `MusicLibraryPage.loadArtists`): a failed page keeps the rows, the `total` and
+ * the `offset`, so the pager survives and the user stays where they were. Discarding
+ * them removed the pager and left a false "No artists" with no way back — a dead end
+ * that was new with S110's pager.
+ *
+ * FIRST-load failure is NOT uniform across the four pages (three shapes, all
+ * deliberate — see the canonical note). THIS page has its own shape: with nothing to
+ * keep it renders the error INSIDE the listing area and with a different message
+ * (`music.artistsNotFound`, not `music.pageLoadFailed`), because this page is a whole
+ * route rather than one panel of a drill-down. The empty state still yields to it.
+ */
+async function loadArtists(nextOffset: number): Promise<void> {
     loading.value = true;
     error.value = null;
     try {
-        artists.value = await getClient().listArtists();
+        const page = await getClient().listArtists({ limit: MUSIC_PAGE_SIZE, offset: nextOffset });
+        artists.value = page.artists;
+        total.value = page.total;
+        limit.value = page.limit;
+        offset.value = page.offset;
     } catch {
-        error.value = t('music.artistsNotFound') ?? 'Could not load artists';
-        artists.value = [];
+        error.value = artists.value.length > 0
+            ? t('music.pageLoadFailed')
+            : (t('music.artistsNotFound') ?? 'Could not load artists');
     } finally {
         loading.value = false;
     }
 }
 
 onMounted(() => {
-    void loadArtists();
+    void loadArtists(0);
 });
+
+/** "2,197 artists" — the DB count, not the length of this page. */
+const totalLabel = computed(() =>
+    total.value === 1
+        ? t('music.artistsTotalOne')
+        : t('music.artistsTotal', { count: total.value.toLocaleString() }),
+);
+
+/**
+ * Per-card album count, through the i18n catalog with thousands separators — NOT the
+ * hardcoded `count === 1 ? 'album' : 'albums'` this card used to inline. Four music
+ * surfaces carried that same untranslatable, unformatted pattern; all four now share
+ * these keys.
+ */
+function artistAlbumLabel(artist: MusicArtist): string {
+    const count = artist.albumCount ?? 0;
+    return count === 1
+        ? t('music.albumsTotalOne')
+        : t('music.albumsTotal', { count: count.toLocaleString() });
+}
+
+async function goToOffset(next: number): Promise<void> {
+    if (next === offset.value) return;
+    await loadArtists(next);
+}
 
 function goToArtist(artist: MusicArtist): void {
     void router.push({ name: 'music-artist', params: { name: artist.name } });
@@ -65,60 +118,93 @@ function goToArtist(artist: MusicArtist): void {
             <p class="artists-page__description">
                 {{ t('music.artistsDescription') ?? 'Browse your music collection by artist' }}
             </p>
+            <p v-if="total > 0" class="artists-page__count" data-count="artists" role="status">
+                {{ totalLabel }}
+            </p>
         </header>
 
-        <!-- Loading skeleton -->
-        <div v-if="loading" class="artists-page__loading" role="status" aria-busy="true">
-            <div v-for="n in 12" :key="n" class="artist-skel">
-                <div class="artist-skel__art" />
-                <div class="artist-skel__name" />
-                <div class="artist-skel__meta" />
-            </div>
-        </div>
-
-        <!-- Error state -->
-        <div v-else-if="error" class="artists-page__error" role="alert">
+        <!-- A failed page keeps its rows and its pager, so this is a banner above the
+             listing. It only appears when rows ARE loaded; with none, the error takes
+             the listing area instead (see the chain below). -->
+        <div v-if="error && artists.length > 0" class="artists-page__error" role="alert">
             <Icon name="alert-circle" class="artists-page__error-icon" />
             <p>{{ error }}</p>
         </div>
 
-        <!-- Empty state -->
-        <div v-else-if="artists.length === 0" class="artists-page__empty" role="status">
-            <Icon name="music" class="artists-page__empty-icon" />
-            <p>{{ t('music.noArtists') }}</p>
+        <!-- The pager's `aria-controls` IDREF lives on THIS wrapper, which is always
+             rendered, not on the grid inside the v-if chain. Otherwise the IDREF
+             dangles during every `loading` transition — i.e. on every page change,
+             exactly when an AT user is listening (axe `aria-valid-attr-value`). -->
+        <div id="music-artists-list">
+            <!-- Loading skeleton -->
+            <div v-if="loading" class="artists-page__loading" role="status" aria-busy="true">
+                <div v-for="n in 12" :key="n" class="artist-skel">
+                    <div class="artist-skel__art" />
+                    <div class="artist-skel__name" />
+                    <div class="artist-skel__meta" />
+                </div>
+            </div>
+
+            <!-- Error state. Takes over the listing area ONLY when there is nothing
+                 left to show; with rows loaded it is the banner above (see below), so
+                 a failed page never renders as "No artists". -->
+            <div v-else-if="error && artists.length === 0" class="artists-page__error" role="alert">
+                <Icon name="alert-circle" class="artists-page__error-icon" />
+                <p>{{ error }}</p>
+            </div>
+
+            <!-- Empty state -->
+            <div v-else-if="artists.length === 0" class="artists-page__empty" role="status">
+                <Icon name="music" class="artists-page__empty-icon" />
+                <p>{{ t('music.noArtists') }}</p>
+            </div>
+
+            <!-- Artists grid -->
+            <div v-else class="artists-page__grid">
+                <button
+                    v-for="artist in artists"
+                    :key="artist.id"
+                    type="button"
+                    class="artist-card"
+                    @click="goToArtist(artist)"
+                >
+                    <div class="artist-card__art">
+                        <svg v-if="!artist.imageUrl" viewBox="0 0 100 100" class="artist-card__placeholder">
+                            <rect x="10" y="10" width="80" height="80" rx="40" fill="#3b2d5c"/>
+                            <rect x="25" y="25" width="50" height="50" rx="25" fill="#6b4d8a"/>
+                            <circle cx="50" cy="42" r="15" fill="#9b6dcc"/>
+                            <path d="M30 70 Q50 55 70 70" stroke="#9b6dcc" stroke-width="4" fill="none" stroke-linecap="round"/>
+                        </svg>
+                        <img
+                            v-else
+                            :src="artist.imageUrl"
+                            :alt="artist.name"
+                            class="artist-card__img"
+                        >
+                    </div>
+                    <div class="artist-card__info">
+                        <h3 class="artist-card__name">{{ artist.name }}</h3>
+                        <span class="artist-card__meta" data-count="albums">{{ artistAlbumLabel(artist) }}</span>
+                    </div>
+                </button>
+            </div>
         </div>
 
-        <!-- Artists grid -->
-        <div v-else class="artists-page__grid">
-            <button
-                v-for="artist in artists"
-                :key="artist.id"
-                type="button"
-                class="artist-card"
-                @click="goToArtist(artist)"
-            >
-                <div class="artist-card__art">
-                    <svg v-if="!artist.imageUrl" viewBox="0 0 100 100" class="artist-card__placeholder">
-                        <rect x="10" y="10" width="80" height="80" rx="40" fill="#3b2d5c"/>
-                        <rect x="25" y="25" width="50" height="50" rx="25" fill="#6b4d8a"/>
-                        <circle cx="50" cy="42" r="15" fill="#9b6dcc"/>
-                        <path d="M30 70 Q50 55 70 70" stroke="#9b6dcc" stroke-width="4" fill="none" stroke-linecap="round"/>
-                    </svg>
-                    <img
-                        v-else
-                        :src="artist.imageUrl"
-                        :alt="artist.name"
-                        class="artist-card__img"
-                    >
-                </div>
-                <div class="artist-card__info">
-                    <h3 class="artist-card__name">{{ artist.name }}</h3>
-                    <span class="artist-card__meta">
-                        {{ artist.albumCount ?? 0 }} {{ artist.albumCount === 1 ? 'album' : 'albums' }}
-                    </span>
-                </div>
-            </button>
-        </div>
+        <!-- Pager: OUTSIDE the grid's v-if chain, so a page that legitimately comes
+             back empty (an offset past the end) is still navigable — and NOT gated on
+             `error` any more, because a failed page must stay navigable too. `total`
+             is preserved on failure, and the pager's own `v-if="pages > 1"` already
+             hides it when there is genuinely nothing to page (e.g. a first-load
+             failure, where `total` is still 0). -->
+        <MusicPager
+            :offset="offset"
+            :limit="limit"
+            :total="total"
+            :disabled="loading"
+            :label="t('music.artists')"
+            controls="music-artists-list"
+            @go="goToOffset"
+        />
     </div>
 </template>
 
@@ -127,6 +213,13 @@ function goToArtist(artist: MusicArtist): void {
     padding: var(--space-6, 24px) var(--space-4, 16px) var(--space-16, 64px);
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.artists-page__count {
+    margin-top: var(--space-2, 8px);
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--text-muted, #a1a1aa);
+    font-variant-numeric: tabular-nums;
 }
 
 /* Header */

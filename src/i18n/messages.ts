@@ -343,7 +343,52 @@ export const DEFAULT_MESSAGES = {
     selectTrack: 'Select a track to play',
     artist: 'Artist',
     album: 'Album',
+    /**
+     * @deprecated Unused since S110 replaced `MusicTracksPage`'s hand-rolled
+     * `N – M of TOTAL` pager text with the shared `MusicPager`, whose readout is
+     * `music.showingRange` / `music.pageOf`. Kept so an existing consumer override
+     * does not become a typecheck error; overriding it now changes nothing.
+     */
     of: 'of',
+    // Paging (S110) — the library is served one page at a time, so these carry the
+    // TRUE library size and the position within it. Singular/plural are separate
+    // keys because the resolver interpolates but does not pluralize.
+    artistsTotal: '{count} artists',
+    artistsTotalOne: '1 artist',
+    albumsTotal: '{count} albums',
+    albumsTotalOne: '1 album',
+    tracksTotal: '{count} tracks',
+    tracksTotalOne: '1 track',
+    /**
+     * The count of a PAGE-LOCAL result, said out loud. `MusicTracksPage`'s search box
+     * filters the 100 loaded rows, not the 29,245-row library, so while a query is
+     * active the count must not use `tracksTotal` — that reads exactly like a library
+     * total and hides the fact that the library may hold hundreds more matches
+     * (library-wide search is `/app/search`).
+     */
+    tracksOnPage: '{count} tracks on this page',
+    tracksOnPageOne: '1 track on this page',
+    showingRange: 'Showing {from}–{to} of {total}',
+    pageOf: 'Page {page} of {pages}',
+    firstPage: 'First page',
+    prevPage: 'Previous page',
+    nextPage: 'Next page',
+    lastPage: 'Last page',
+    jumpToPage: 'Jump to page',
+    /**
+     * Shown when ONE page of a listing fails to load. Deliberately says the user's
+     * place is intact, because it is: a failed page leaves the previously loaded rows
+     * and the pager untouched, so the failure is a blip and not a dead end.
+     */
+    pageLoadFailed: 'Could not load that page. Your place is unchanged — try again.',
+    /** Accessible name of a pager landmark when it has no listing name. */
+    pagination: 'Pagination',
+    /**
+     * Accessible name of a pager landmark, composed with the name of the listing it
+     * pages — "Artists pagination". Passing the bare listing name would announce the
+     * landmark identically to the grid it sits under.
+     */
+    paginationOf: '{label} pagination',
     // Player page
     shuffle: 'Shuffle',
     queue: 'Queue',
