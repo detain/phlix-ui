@@ -309,7 +309,49 @@ export declare const DEFAULT_MESSAGES: {
         selectTrack: string;
         artist: string;
         album: string;
+        /**
+         * @deprecated Unused since S110 replaced `MusicTracksPage`'s hand-rolled
+         * `N – M of TOTAL` pager text with the shared `MusicPager`, whose readout is
+         * `music.showingRange` / `music.pageOf`. Kept so an existing consumer override
+         * does not become a typecheck error; overriding it now changes nothing.
+         */
         of: string;
+        artistsTotal: string;
+        artistsTotalOne: string;
+        albumsTotal: string;
+        albumsTotalOne: string;
+        tracksTotal: string;
+        tracksTotalOne: string;
+        /**
+         * The count of a PAGE-LOCAL result, said out loud. `MusicTracksPage`'s search box
+         * filters the 100 loaded rows, not the 29,245-row library, so while a query is
+         * active the count must not use `tracksTotal` — that reads exactly like a library
+         * total and hides the fact that the library may hold hundreds more matches
+         * (library-wide search is `/app/search`).
+         */
+        tracksOnPage: string;
+        tracksOnPageOne: string;
+        showingRange: string;
+        pageOf: string;
+        firstPage: string;
+        prevPage: string;
+        nextPage: string;
+        lastPage: string;
+        jumpToPage: string;
+        /**
+         * Shown when ONE page of a listing fails to load. Deliberately says the user's
+         * place is intact, because it is: a failed page leaves the previously loaded rows
+         * and the pager untouched, so the failure is a blip and not a dead end.
+         */
+        pageLoadFailed: string;
+        /** Accessible name of a pager landmark when it has no listing name. */
+        pagination: string;
+        /**
+         * Accessible name of a pager landmark, composed with the name of the listing it
+         * pages — "Artists pagination". Passing the bare listing name would announce the
+         * landmark identically to the grid it sits under.
+         */
+        paginationOf: string;
         shuffle: string;
         queue: string;
         queueEmpty: string;

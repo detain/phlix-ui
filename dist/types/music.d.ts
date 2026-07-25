@@ -11,7 +11,14 @@ export interface MusicArtist {
     id: string;
     name: string;
     imageUrl: string | null;
+    /** TRUE album count for this artist (not the length of any embedded list). */
     albumCount?: number;
+    /**
+     * TRUE indexed track count for this artist, across ALL of its albums — from the
+     * server's `track_count`. Never sum an album page to get this: an artist with
+     * more albums than one page would report a different number per page.
+     */
+    trackCount?: number;
 }
 /**
  * A music album from the library.
@@ -23,8 +30,17 @@ export interface MusicAlbum {
     artist?: string | null;
     albumArtUrl: string | null;
     year: number | null;
+    /** TRUE indexed track count — may exceed `tracks.length`, see `tracksTruncated`. */
     totalTracks: number;
     tracks?: MusicTrack[];
+    /**
+     * True when `tracks` is only a PREFIX of the album (the server caps the tracks
+     * it embeds in a LIST row at 100 per album / 2,000 per page and flags the cap).
+     * A consumer that wants the whole list must fetch the album detail route
+     * (`ApiClient.getAlbum(title, artist)`), which is exempt from that cap.
+     * Absent/false on the detail route itself.
+     */
+    tracksTruncated?: boolean;
 }
 /**
  * A music track within an album.
