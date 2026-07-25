@@ -33,12 +33,22 @@ const props = withDefaults(
     limit: number;
     /** TRUE total row count for the (possibly filtered) listing. */
     total: number;
-    /** Accessible name for the `<nav>` — e.g. "Artists pagination". */
+    /**
+     * Name of the LISTING this pages — e.g. `"Artists"`. The `<nav>` landmark is
+     * named `"{label} pagination"` (`music.paginationOf`), so it does not announce
+     * itself identically to the grid it sits under; omit it and the landmark falls
+     * back to `music.pagination`.
+     */
     label?: string;
+    /**
+     * `id` of the element this pager drives, for `aria-controls` on the page-jump
+     * `<select>` — so an AT user can tell that changing it replaces that grid.
+     */
+    controls?: string;
     /** Disable every control (while a page is in flight). */
     disabled?: boolean;
   }>(),
-  { label: undefined, disabled: false },
+  { label: undefined, controls: undefined, disabled: false },
 );
 
 const emit = defineEmits<{
@@ -52,6 +62,12 @@ const { t } = useMessages();
  * Upper bound on the jump `<select>`'s options. `total` is server data; a garbage
  * or hostile value must not be allowed to mint unbounded DOM nodes. Music's real
  * worst case is 29,245 tracks / 100 = 293 pages, well inside this.
+ *
+ * ⚠ Known ceiling, stated so it is a decision and not a surprise: above
+ * `MAX_JUMP_OPTIONS × limit` rows (100,000 at the default page size) the select is
+ * dropped and the listing keeps only sequential access through the arrows. Raising
+ * the cap is the wrong fix if that ever bites — a page-number `<input type=number>`
+ * or a letter rail scales, a `<select>` does not.
  */
 const MAX_JUMP_OPTIONS = 1000;
 
@@ -71,6 +87,16 @@ const showJump = computed(() => pages.value > 1 && pages.value <= MAX_JUMP_OPTIO
 const rangeFrom = computed(() => (rowTotal.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1));
 const rangeTo = computed(() => Math.min(page.value * pageSize.value, rowTotal.value));
 
+/**
+ * "Artists pagination" — the landmark must not be announced identically to the grid
+ * it pages, which is what passing the bare listing name did.
+ */
+const navLabel = computed(() =>
+  props.label === undefined || props.label === ''
+    ? t('music.pagination')
+    : t('music.paginationOf', { label: props.label }),
+);
+
 /** Emit the offset for a 1-based page number, clamped into range. */
 function goToPage(target: number): void {
   if (props.disabled) return;
@@ -88,7 +114,7 @@ function onJump(event: Event): void {
   <nav
     v-if="pages > 1"
     class="music-pager"
-    :aria-label="label ?? t('music.pagination')"
+    :aria-label="navLabel"
   >
     <button
       type="button"
@@ -111,7 +137,17 @@ function onJump(event: Event): void {
       <Icon name="chevron-left" class="music-pager__icon" />
     </button>
 
-    <span class="music-pager__info" data-nav="info">
+    <!-- role=status + aria-live: pressing Next replaces the grid silently otherwise,
+         so this readout is the ONLY thing that tells an AT user the page changed.
+         aria-current marks it as the current position in the page set. -->
+    <span
+      class="music-pager__info"
+      data-nav="info"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      aria-current="page"
+    >
       {{ t('music.pageOf', { page, pages }) }}
       <span class="music-pager__range">
         · {{ t('music.showingRange', {
@@ -128,10 +164,16 @@ function onJump(event: Event): void {
         class="music-pager__select"
         :value="page"
         :disabled="disabled"
+        :aria-controls="controls"
         data-nav="jump"
         @change="onJump"
       >
-        <option v-for="p in pages" :key="p" :value="p">{{ p }}</option>
+        <option
+          v-for="p in pages"
+          :key="p"
+          :value="p"
+          :aria-current="p === page ? 'page' : undefined"
+        >{{ p }}</option>
       </select>
     </label>
 

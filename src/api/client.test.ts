@@ -1076,6 +1076,50 @@ describe('ApiClient', () => {
             expect(page.offset).toBe(0);
         });
 
+        it('carries the artist track_count through the normaliser', async () => {
+            // Dropping it forced the artist page to sum whichever album page was
+            // loaded, so its header contradicted the DB and changed while paging.
+            const { fetch } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        artist: {
+                            name: 'Michael Jackson',
+                            album_count: 142,
+                            track_count: 710,
+                            image_url: null,
+                        },
+                    },
+                },
+            ]);
+
+            const artist = await client(fetch).getArtist('Michael Jackson');
+
+            expect(artist.albumCount).toBe(142);
+            expect(artist.trackCount).toBe(710);
+        });
+
+        it('leaves trackCount undefined when the server omits it', async () => {
+            const { fetch } = makeFetch([
+                { status: 200, body: { artists: [{ name: 'A', album_count: 1 }] } },
+            ]);
+
+            const page = await client(fetch).listArtists();
+
+            expect(page.artists[0]!.trackCount).toBeUndefined();
+        });
+
+        it('accepts a numeric-string track_count (the JSON the daemon can emit)', async () => {
+            const { fetch } = makeFetch([
+                { status: 200, body: { artist: { name: 'A', album_count: '3', track_count: '17' } } },
+            ]);
+
+            const artist = await client(fetch).getArtist('A');
+
+            expect(artist.albumCount).toBe(3);
+            expect(artist.trackCount).toBe(17);
+        });
+
         it('listArtists falls back to the page length when a server omits total', async () => {
             const { fetch } = makeFetch([{ status: 200, body: { artists: [{ name: 'A' }, { name: 'B' }] } }]);
 

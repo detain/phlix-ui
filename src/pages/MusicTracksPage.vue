@@ -7,10 +7,16 @@
 /**
  * MusicTracksPage — full track listing with search, play controls, and pagination.
  *
- * Fetches all tracks from `GET /api/v1/music/tracks` and provides:
- *   - Client-side search/filter by track name
+ * Fetches ONE PAGE of `GET /api/v1/music/tracks?limit&offset` through
+ * {@link ApiClient#listTracks} and provides:
+ *   - Client-side search/filter over the LOADED page (never the library)
  *   - Play All / Play button per track
- *   - Pagination via limit/offset query params
+ *   - Offset paging via the shared {@link MusicPager}
+ *
+ * S110: this page previously hand-rolled both the request (raw `client.get`, with
+ * its own duplicate track normaliser) and a bare prev/next pager, which left the
+ * repo with two pager idioms and no way to random-access the 293 pages of the
+ * production library. Both now go through the shared client + pager.
  *
  * Playback is driven by the shared {@link useMusicPlayer} composable.
  */
@@ -18,15 +24,16 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useMusicPlayer } from '../composables/useMusicPlayer';
-import { ApiClient } from '../api/client';
+import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import Icon from '../components/Icon.vue';
+import MusicPager from '../components/MusicPager.vue';
 import type { MusicTrack } from '../types/music';
 
 // --- state ---
 const tracks = ref<MusicTrack[]>([]);
 const loading = ref(false);
 const searchQuery = ref('');
-const limit = ref(100);
+const limit = ref(MUSIC_PAGE_SIZE);
 const offset = ref(0);
 const total = ref(0);
 
@@ -51,47 +58,49 @@ function getClient(): ApiClient {
 }
 
 onMounted(async () => {
-  await loadTracks();
+  await loadTracks(0);
 });
 
-async function loadTracks(): Promise<void> {
+/**
+ * Load one page. `nextOffset` is passed in rather than read off the ref so a failed
+ * page cannot leave the pager pointing at rows that were never rendered.
+ */
+async function loadTracks(nextOffset: number): Promise<void> {
   loading.value = true;
   try {
-    const client = getClient();
-    const res = await client.get<{ tracks?: unknown[]; total?: number }>(
-      '/api/v1/music/tracks',
-      { limit: String(limit.value), offset: String(offset.value) }
-    );
-    const raw = Array.isArray(res.tracks) ? res.tracks : [];
-    tracks.value = raw.map(normalizeTrack);
-    total.value = typeof res.total === 'number' ? res.total : raw.length;
+    const page = await getClient().listTracks({ limit: MUSIC_PAGE_SIZE, offset: nextOffset });
+    tracks.value = page.tracks;
+    total.value = page.total;
+    limit.value = page.limit;
+    offset.value = page.offset;
   } catch {
     tracks.value = [];
     total.value = 0;
+    offset.value = nextOffset;
   } finally {
     loading.value = false;
   }
 }
 
-/** Normalize a raw track object to MusicTrack shape. */
-function normalizeTrack(raw: unknown): MusicTrack {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const title = String(r['title'] ?? r['name'] ?? 'Unknown Track');
-  const id = String(r['id'] ?? '');
-  return {
-    id,
-    title,
-    durationSecs: Number(r['duration_secs'] ?? 0) || 0,
-    trackNumber: r['track_number'] != null ? Number(r['track_number']) : null,
-    streamUrl: r['stream_url'] != null ? String(r['stream_url']) : null,
-  };
-}
-
 // --- search/filter ---
+// ⚠ This filters the LOADED PAGE, not the library — 100 of 29,245 rows. The count
+// line below says so, and library-wide search is `/app/search`, not this box.
 const filteredTracks = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
   if (!q) return tracks.value;
   return tracks.value.filter((t) => t.title.toLowerCase().includes(q));
+});
+
+/** The DB total when browsing; the match count while searching this page. */
+const countLabel = computed(() => {
+  if (searchQuery.value.trim() !== '') {
+    return filteredTracks.value.length === 1
+      ? t('music.tracksTotalOne')
+      : t('music.tracksTotal', { count: filteredTracks.value.length.toLocaleString() });
+  }
+  return total.value === 1
+    ? t('music.tracksTotalOne')
+    : t('music.tracksTotal', { count: total.value.toLocaleString() });
 });
 
 // --- playback ---
@@ -114,20 +123,10 @@ function playAll(): void {
   void player.play(tracks.value[0]);
 }
 
-// --- pagination ---
-const hasNext = computed(() => offset.value + limit.value < total.value);
-const hasPrev = computed(() => offset.value > 0);
-
-async function nextPage(): Promise<void> {
-  if (!hasNext.value) return;
-  offset.value += limit.value;
-  await loadTracks();
-}
-
-async function prevPage(): Promise<void> {
-  if (!hasPrev.value) return;
-  offset.value = Math.max(0, offset.value - limit.value);
-  await loadTracks();
+// --- pagination (shared MusicPager: first/prev/jump/next/last) ---
+async function goToOffset(next: number): Promise<void> {
+  if (next === offset.value) return;
+  await loadTracks(next);
 }
 
 // --- formatting ---
@@ -179,9 +178,9 @@ function onSeek(event: Event): void {
       </div>
     </header>
 
-    <!-- Track count -->
-    <p class="tracks-page__count" role="status" aria-live="polite">
-      {{ filteredTracks.length }} {{ filteredTracks.length === 1 ? 'track' : 'tracks' }}
+    <!-- Track count: the DB total while browsing, the match count while searching -->
+    <p class="tracks-page__count" data-count="tracks" role="status" aria-live="polite">
+      {{ countLabel }}
       <span v-if="searchQuery"> ({{ t('music.matching') }} "{{ searchQuery }}")</span>
     </p>
 
@@ -205,7 +204,7 @@ function onSeek(event: Event): void {
     </div>
 
     <!-- Track table -->
-    <div v-else class="track-table" role="table" aria-label="Music tracks">
+    <div v-else id="music-tracks-table" class="track-table" role="table" aria-label="Music tracks">
       <div class="track-table__header" role="row">
         <span class="col-num" role="columnheader">#</span>
         <span class="col-title" role="columnheader">{{ t('music.title') }}</span>
@@ -249,28 +248,16 @@ function onSeek(event: Event): void {
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="total > limit" class="pagination">
-      <button
-        type="button"
-        class="pagination__btn"
-        :disabled="!hasPrev"
-        @click="prevPage"
-      >
-        {{ t('music.previous') }}
-      </button>
-      <span class="pagination__info">
-        {{ offset + 1 }} – {{ Math.min(offset + limit, total) }} {{ t('music.of') }} {{ total }}
-      </span>
-      <button
-        type="button"
-        class="pagination__btn"
-        :disabled="!hasNext"
-        @click="nextPage"
-      >
-        {{ t('music.next') }}
-      </button>
-    </div>
+    <!-- Pagination: the shared pager, so 29,245 tracks are random-accessible -->
+    <MusicPager
+      :offset="offset"
+      :limit="limit"
+      :total="total"
+      :disabled="loading"
+      :label="t('music.tracks')"
+      controls="music-tracks-table"
+      @go="goToOffset"
+    />
 
     <!-- Now-playing transport bar -->
     <footer v-if="player.currentTrack.value" class="music-bar" role="region" :aria-label="t('music.nowPlaying')">
@@ -585,36 +572,6 @@ function onSeek(event: Event): void {
 .tracks-page__empty-text {
   font-size: var(--text-sm, 0.875rem);
   margin: 0;
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4, 16px);
-  margin-top: var(--space-6, 24px);
-}
-.pagination__btn {
-  padding: var(--space-2, 8px) var(--space-4, 16px);
-  border-radius: var(--radius-md, 8px);
-  background: var(--surface-2, #27272a);
-  border: 1px solid var(--border, #3f3f46);
-  color: var(--text, #e4e4e7);
-  font-size: var(--text-sm, 0.875rem);
-  cursor: pointer;
-  transition: background var(--dur-fast, 0.18s);
-}
-.pagination__btn:hover:not(:disabled) {
-  background: var(--surface-3, #3f3f46);
-}
-.pagination__btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.pagination__info {
-  font-size: var(--text-sm, 0.875rem);
-  color: var(--text-muted, #a1a1aa);
 }
 
 /* Now-playing transport bar */

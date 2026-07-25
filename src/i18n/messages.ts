@@ -343,6 +343,12 @@ export const DEFAULT_MESSAGES = {
     selectTrack: 'Select a track to play',
     artist: 'Artist',
     album: 'Album',
+    /**
+     * @deprecated Unused since S110 replaced `MusicTracksPage`'s hand-rolled
+     * `N – M of TOTAL` pager text with the shared `MusicPager`, whose readout is
+     * `music.showingRange` / `music.pageOf`. Kept so an existing consumer override
+     * does not become a typecheck error; overriding it now changes nothing.
+     */
     of: 'of',
     // Paging (S110) — the library is served one page at a time, so these carry the
     // TRUE library size and the position within it. Singular/plural are separate
@@ -351,6 +357,8 @@ export const DEFAULT_MESSAGES = {
     artistsTotalOne: '1 artist',
     albumsTotal: '{count} albums',
     albumsTotalOne: '1 album',
+    tracksTotal: '{count} tracks',
+    tracksTotalOne: '1 track',
     showingRange: 'Showing {from}–{to} of {total}',
     pageOf: 'Page {page} of {pages}',
     firstPage: 'First page',
@@ -358,7 +366,14 @@ export const DEFAULT_MESSAGES = {
     nextPage: 'Next page',
     lastPage: 'Last page',
     jumpToPage: 'Jump to page',
+    /** Accessible name of a pager landmark when it has no listing name. */
     pagination: 'Pagination',
+    /**
+     * Accessible name of a pager landmark, composed with the name of the listing it
+     * pages — "Artists pagination". Passing the bare listing name would announce the
+     * landmark identically to the grid it sits under.
+     */
+    paginationOf: '{label} pagination',
     // Player page
     shuffle: 'Shuffle',
     queue: 'Queue',

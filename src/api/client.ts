@@ -143,11 +143,17 @@ function normalizeMusicArtist(raw: unknown): MusicArtist {
     const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
     const name = musicStr(r['name']) ?? 'Unknown Artist';
     const albumCount = musicNum(r['album_count']);
+    // `track_count` is emitted by BOTH the list and detail shapes (`formatArtist()`)
+    // and is the artist's TRUE indexed track total. Dropping it forced the artist
+    // page to sum the tracks of whichever album page happened to be loaded, which
+    // both contradicted the DB and changed as the user paged.
+    const trackCount = musicNum(r['track_count']);
     return {
         id: name,
         name,
         imageUrl: musicStr(r['image_url']),
         albumCount: albumCount ?? undefined,
+        trackCount: trackCount ?? undefined,
     };
 }
 
@@ -230,8 +236,13 @@ export interface MusicPageParams {
  * how many rows this page carries — so a UI can both size a pager and show the
  * real count. `limit`/`offset` are the values the server actually APPLIED (it
  * clamps), not the ones requested.
+ *
+ * Named `…Result`, not `…Page`, for two reasons: it matches the existing
+ * {@link FavoritesResult} (the same shape from the same client), and `…Page` would
+ * collide with the `MusicArtistsPage` / `MusicTracksPage` *components* the package
+ * index already exports — those are public API, so the new types yield the name.
  */
-export interface MusicArtistsPage {
+export interface MusicArtistsResult {
     artists: MusicArtist[];
     total: number;
     limit: number;
@@ -244,7 +255,7 @@ export interface MusicArtistsPage {
  * filtering server from one that silently ignored the parameter; `total` honours
  * the filter.
  */
-export interface MusicAlbumsPage {
+export interface MusicAlbumsResult {
     albums: MusicAlbum[];
     total: number;
     limit: number;
@@ -253,7 +264,7 @@ export interface MusicAlbumsPage {
 }
 
 /** One page of `GET /api/v1/music/tracks`. `total` is the whole-library count. */
-export interface MusicTracksPage {
+export interface MusicTracksResult {
     tracks: MusicTrack[];
     total: number;
     limit: number;
@@ -1126,7 +1137,7 @@ export class ApiClient {
     async listArtists(
         params: MusicPageParams = {},
         signal?: AbortSignal,
-    ): Promise<MusicArtistsPage> {
+    ): Promise<MusicArtistsResult> {
         const query = musicPageQuery(params);
         const res = await this.get<{ artists?: unknown; total?: unknown; limit?: unknown; offset?: unknown }>(
             '/api/v1/music/artists',
@@ -1170,7 +1181,7 @@ export class ApiClient {
     async listAlbums(
         params: MusicPageParams & { artist?: string } = {},
         signal?: AbortSignal,
-    ): Promise<MusicAlbumsPage> {
+    ): Promise<MusicAlbumsResult> {
         const query = musicPageQuery(params);
         if (params.artist !== undefined && params.artist !== '') {
             query['artist'] = params.artist;
@@ -1223,7 +1234,7 @@ export class ApiClient {
     async listTracks(
         params: MusicPageParams = {},
         signal?: AbortSignal,
-    ): Promise<MusicTracksPage> {
+    ): Promise<MusicTracksResult> {
         const query = musicPageQuery(params);
         const res = await this.get<{ tracks?: unknown; total?: unknown; limit?: unknown; offset?: unknown }>(
             '/api/v1/music/tracks',

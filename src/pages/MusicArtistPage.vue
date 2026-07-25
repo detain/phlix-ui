@@ -57,27 +57,46 @@ function getClient(): ApiClient {
     return new ApiClient({ baseUrl: apiBase.value });
 }
 
-async function loadArtist(offset = 0): Promise<void> {
+/**
+ * Load ONE album page for this artist. The single loader for both entry points —
+ * `loadArtist` (mount) and `goToAlbumOffset` (pager) — because when they were two
+ * copies they immediately drifted: the pager's copy forgot to zero `albumTotal` on
+ * failure, so a failed page kept paging a listing that was no longer on screen.
+ */
+async function loadAlbumPage(offset: number): Promise<void> {
+    const page = await getClient().listAlbums({
+        artist: props.name,
+        limit: MUSIC_PAGE_SIZE,
+        offset,
+    });
+    albums.value = page.albums;
+    albumTotal.value = page.total;
+    albumLimit.value = page.limit;
+    albumOffset.value = page.offset;
+}
+
+/** The ONE failure policy: drop the page AND the total, keep the attempted offset. */
+function clearAlbumPage(offset: number): void {
+    albums.value = [];
+    albumTotal.value = 0;
+    albumOffset.value = offset;
+}
+
+async function loadArtist(): Promise<void> {
     if (!props.name) return;
     loading.value = true;
     error.value = null;
     try {
-        // Artist info and the artist's own album page, in parallel.
-        const [artistData, albumPage] = await Promise.all([
+        // Artist info and the artist's first album page, in parallel.
+        const [artistData] = await Promise.all([
             getClient().getArtist(props.name),
-            getClient().listAlbums({ artist: props.name, limit: MUSIC_PAGE_SIZE, offset }),
+            loadAlbumPage(0),
         ]);
         artist.value = artistData;
-        albums.value = albumPage.albums;
-        albumTotal.value = albumPage.total;
-        albumLimit.value = albumPage.limit;
-        albumOffset.value = albumPage.offset;
     } catch {
         error.value = t('music.artistNotFound') ?? 'Artist not found';
         artist.value = null;
-        albums.value = [];
-        albumTotal.value = 0;
-        albumOffset.value = offset;
+        clearAlbumPage(0);
     } finally {
         loading.value = false;
     }
@@ -88,18 +107,9 @@ async function goToAlbumOffset(offset: number): Promise<void> {
     if (offset === albumOffset.value) return;
     loading.value = true;
     try {
-        const page = await getClient().listAlbums({
-            artist: props.name,
-            limit: MUSIC_PAGE_SIZE,
-            offset,
-        });
-        albums.value = page.albums;
-        albumTotal.value = page.total;
-        albumLimit.value = page.limit;
-        albumOffset.value = page.offset;
+        await loadAlbumPage(offset);
     } catch {
-        albums.value = [];
-        albumOffset.value = offset;
+        clearAlbumPage(offset);
     } finally {
         loading.value = false;
     }
@@ -109,8 +119,20 @@ onMounted(() => {
     void loadArtist();
 });
 
+/**
+ * Navigate to the album, carrying the ARTIST as a query param. Without it the album
+ * detail route resolves a shared title to the server's deterministic first match,
+ * and 2,622 of production's 5,091 album titles are shared between artists (zero
+ * repeat WITHIN an artist, so artist+title is exact). A query param rather than a
+ * second route param, so a consumer's existing `/music/album/:name` route keeps
+ * working unchanged.
+ */
 function goToAlbum(album: MusicAlbum): void {
-    void router.push({ name: 'music-album', params: { name: album.title } });
+    void router.push({
+        name: 'music-album',
+        params: { name: album.title },
+        query: { artist: album.artist ?? props.name },
+    });
 }
 
 /**
@@ -118,14 +140,28 @@ function goToAlbum(album: MusicAlbum): void {
  * artist row's own `album_count`. Never `albums.length`, which is one page.
  */
 const albumCount = computed(() => albumTotal.value || artist.value?.albumCount || 0);
+const albumCountLabel = computed(() =>
+    albumCount.value === 1
+        ? t('music.albumsTotalOne')
+        : t('music.albumsTotal', { count: albumCount.value.toLocaleString() }),
+);
 
 /**
- * Track count across the albums on THIS page. Labelled as such in the template,
- * because an artist with more than one page of albums has more tracks than this.
+ * The artist's TRUE track total, from the server's `track_count` — NOT a sum over
+ * the loaded album page. Summing the page made the header report the tracks of
+ * whichever 100 albums were loaded, so the 142-album artist showed one number on
+ * page 1 and a smaller one on page 2. Falls back to the page sum only when the
+ * server sent no `track_count` at all.
  */
-const totalTracks = computed(() => {
-    return albums.value.reduce((sum, a) => sum + (a.totalTracks ?? 0), 0);
-});
+const trackCount = computed(
+    () => artist.value?.trackCount
+        ?? albums.value.reduce((sum, a) => sum + (a.totalTracks ?? 0), 0),
+);
+const trackCountLabel = computed(() =>
+    trackCount.value === 1
+        ? t('music.tracksTotalOne')
+        : t('music.tracksTotal', { count: trackCount.value.toLocaleString() }),
+);
 </script>
 
 <template>
@@ -183,8 +219,8 @@ const totalTracks = computed(() => {
                 <div class="artist-header__info">
                     <h1 class="artist-header__name">{{ artist.name }}</h1>
                     <p class="artist-header__meta">
-                        <span data-count="albums">{{ albumCount }} {{ albumCount === 1 ? 'album' : 'albums' }}</span>
-                        <span v-if="totalTracks > 0"> · {{ totalTracks }} tracks</span>
+                        <span data-count="albums">{{ albumCountLabel }}</span>
+                        <span v-if="trackCount > 0" data-count="tracks"> · {{ trackCountLabel }}</span>
                     </p>
                 </div>
             </header>
@@ -196,7 +232,7 @@ const totalTracks = computed(() => {
                     <Icon name="image" class="artist-albums__empty-icon" />
                     <p>{{ t('music.noAlbums') }}</p>
                 </div>
-                <div v-else class="artist-albums__grid">
+                <div v-else id="music-artist-albums" class="artist-albums__grid">
                     <MusicAlbumCard
                         v-for="album in albums"
                         :key="album.id"
@@ -210,6 +246,7 @@ const totalTracks = computed(() => {
                     :total="albumTotal"
                     :disabled="loading"
                     :label="t('music.albums')"
+                    controls="music-artist-albums"
                     @go="goToAlbumOffset"
                 />
             </section>

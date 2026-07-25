@@ -299,27 +299,30 @@ function goBack(): void {
       </p>
     </header>
 
-    <!-- Artists grid -->
-    <div v-if="view === 'artists'" class="music-page__grid">
-      <div v-if="loading" class="music-page__loading" role="status" aria-busy="true">
-        <div v-for="n in 12" :key="n" class="artist-skel">
-          <div class="artist-skel__img" />
-          <div class="artist-skel__name" />
-          <div class="artist-skel__albums" />
+    <!-- Artists grid. The pager sits OUTSIDE the grid so its `aria-controls` can
+         name the grid it drives rather than point at its own ancestor. -->
+    <template v-if="view === 'artists'">
+      <div id="music-artists-grid" class="music-page__grid">
+        <div v-if="loading" class="music-page__loading" role="status" aria-busy="true">
+          <div v-for="n in 12" :key="n" class="artist-skel">
+            <div class="artist-skel__img" />
+            <div class="artist-skel__name" />
+            <div class="artist-skel__albums" />
+          </div>
         </div>
+        <div v-else-if="artists.length === 0" class="music-page__empty" role="status">
+          <Icon name="music" class="music-page__empty-icon" />
+          <p class="music-page__empty-text">{{ t('music.noArtists') }}</p>
+        </div>
+        <template v-else>
+          <MusicArtistCard
+            v-for="artist in artists"
+            :key="artist.id"
+            :artist="artist"
+            @click="selectArtist"
+          />
+        </template>
       </div>
-      <div v-else-if="artists.length === 0" class="music-page__empty" role="status">
-        <Icon name="music" class="music-page__empty-icon" />
-        <p class="music-page__empty-text">{{ t('music.noArtists') }}</p>
-      </div>
-      <template v-else>
-        <MusicArtistCard
-          v-for="artist in artists"
-          :key="artist.id"
-          :artist="artist"
-          @click="selectArtist"
-        />
-      </template>
       <MusicPager
         class="music-page__pager"
         data-pager="artists"
@@ -328,31 +331,34 @@ function goBack(): void {
         :total="artistTotal"
         :disabled="loading"
         :label="t('music.artists')"
+        controls="music-artists-grid"
         @go="goToArtistOffset"
       />
-    </div>
+    </template>
 
     <!-- Albums list -->
-    <div v-else-if="view === 'albums'" class="music-page__grid">
-      <div v-if="loading" class="music-page__loading" role="status" aria-busy="true">
-        <div v-for="n in 8" :key="n" class="album-skel">
-          <div class="album-skel__cover" />
-          <div class="album-skel__title" />
-          <div class="album-skel__meta" />
+    <template v-else-if="view === 'albums'">
+      <div id="music-albums-grid" class="music-page__grid">
+        <div v-if="loading" class="music-page__loading" role="status" aria-busy="true">
+          <div v-for="n in 8" :key="n" class="album-skel">
+            <div class="album-skel__cover" />
+            <div class="album-skel__title" />
+            <div class="album-skel__meta" />
+          </div>
         </div>
+        <div v-else-if="albums.length === 0" class="music-page__empty" role="status">
+          <Icon name="image" class="music-page__empty-icon" />
+          <p class="music-page__empty-text">{{ t('music.noAlbums') }}</p>
+        </div>
+        <template v-else>
+          <MusicAlbumCard
+            v-for="album in albums"
+            :key="album.id"
+            :album="album"
+            @click="selectAlbum"
+          />
+        </template>
       </div>
-      <div v-else-if="albums.length === 0" class="music-page__empty" role="status">
-        <Icon name="image" class="music-page__empty-icon" />
-        <p class="music-page__empty-text">{{ t('music.noAlbums') }}</p>
-      </div>
-      <template v-else>
-        <MusicAlbumCard
-          v-for="album in albums"
-          :key="album.id"
-          :album="album"
-          @click="selectAlbum"
-        />
-      </template>
       <MusicPager
         class="music-page__pager"
         data-pager="albums"
@@ -361,9 +367,10 @@ function goBack(): void {
         :total="albumTotal"
         :disabled="loading"
         :label="t('music.albums')"
+        controls="music-albums-grid"
         @go="goToAlbumOffset"
       />
-    </div>
+    </template>
 
     <!-- Tracks list -->
     <div v-else-if="view === 'tracks'">
@@ -516,10 +523,10 @@ function goBack(): void {
   gap: var(--space-5, 20px);
 }
 
-/* The pager is a grid child, so it must span every column (it also sets this
-   itself — kept here so the page's own grid cannot squash it into one cell). */
+/* The pager is a SIBLING of the grid (so its `aria-controls` can name the grid),
+   so it needs no column span — just the same top gap the grid child had. */
 .music-page__pager {
-  grid-column: 1 / -1;
+  margin-top: var(--space-6, 24px);
 }
 
 /* Loading skeletons */

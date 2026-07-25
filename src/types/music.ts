@@ -14,6 +14,12 @@ export interface MusicArtist {
   imageUrl: string | null;
   /** TRUE album count for this artist (not the length of any embedded list). */
   albumCount?: number;
+  /**
+   * TRUE indexed track count for this artist, across ALL of its albums — from the
+   * server's `track_count`. Never sum an album page to get this: an artist with
+   * more albums than one page would report a different number per page.
+   */
+  trackCount?: number;
 }
 
 /**

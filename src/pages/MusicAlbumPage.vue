@@ -11,10 +11,19 @@
  * which is reached either from the music library drill-down or by redirecting
  * the legacy server-rendered `/music/albums/{name}` route to the SPA.
  *
- * Data: `GET /api/v1/music/albums/{name}` via {@link ApiClient#getAlbum}.
+ * Data: `GET /api/v1/music/albums/{name}?artist=` via {@link ApiClient#getAlbum}.
  * Playback: {@link useMusicPlayer} (signed stream URLs, client-side crossfade).
+ *
+ * ⚠ **The `?artist=` query param is load-bearing, not decoration.** The server keys
+ * albums by TITLE, and 2,622 of production's 5,091 titles are shared by more than
+ * one artist — so without the artist this page resolves a shared title to the
+ * server's deterministic first match (first by artist name, then lowest album id)
+ * and silently shows a DIFFERENT artist's album. Zero titles repeat *within* an
+ * artist, so artist+title is exact. It is optional so a bare
+ * `/app/music/album/:name` deep link still works (with the old ambiguity).
  */
 import { ref, computed, onUnmounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useMusicPlayer } from '../composables/useMusicPlayer';
@@ -26,11 +35,26 @@ import type { MusicAlbum, MusicTrack } from '../types/music';
 const props = defineProps<{
     /** Album name — router `props: true` passes `:name` as a prop. */
     name: string;
+    /**
+     * Album artist, to disambiguate a shared title. Accepted as a prop for a
+     * consumer that maps it from its own route, and otherwise read off the
+     * `?artist=` query (which is how `MusicArtistPage` navigates here).
+     */
+    artist?: string;
 }>();
 
 const { t } = useMessages();
+const route = useRoute();
 const apiBase = useMediaApiBase();
 const directBase = useMediaDirectBase();
+
+/** Prop first, then `?artist=`; `''`/absent means "no disambiguation available". */
+const artistKey = computed(() => {
+    if (props.artist !== undefined && props.artist !== '') return props.artist;
+    const q = route.query['artist'];
+    const value = Array.isArray(q) ? q[0] : q;
+    return typeof value === 'string' && value !== '' ? value : undefined;
+});
 
 // --- audio playback ---
 const player = useMusicPlayer({
@@ -53,13 +77,14 @@ function getClient(): ApiClient {
     return new ApiClient({ baseUrl: apiBase.value });
 }
 
-// Load album by name (the server keys albums by name, so `name` IS the identity)
+// Load album by title + artist (the server keys albums by title, which is NOT
+// unique — see the ⚠ above; `artistKey` is what makes the lookup exact).
 async function loadAlbum(): Promise<void> {
     if (!props.name) return;
     loading.value = true;
     error.value = null;
     try {
-        album.value = await getClient().getAlbum(props.name);
+        album.value = await getClient().getAlbum(props.name, artistKey.value);
         tracks.value = album.value?.tracks ?? [];
     } catch {
         error.value = t('music.albumNotFound') ?? 'Album not found';

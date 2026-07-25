@@ -120,7 +120,7 @@ function goToArtist(artist: MusicArtist): void {
         </div>
 
         <!-- Artists grid -->
-        <div v-else class="artists-page__grid">
+        <div v-else id="music-artists-list" class="artists-page__grid">
             <button
                 v-for="artist in artists"
                 :key="artist.id"
@@ -162,6 +162,7 @@ function goToArtist(artist: MusicArtist): void {
             :total="total"
             :disabled="loading"
             :label="t('music.artists')"
+            controls="music-artists-list"
             @go="goToOffset"
         />
     </div>

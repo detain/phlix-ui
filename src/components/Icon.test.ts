@@ -8,6 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import Icon from './Icon.vue';
+import { ICON_NAMES, icons } from './icon-registry';
 
 describe('Icon', () => {
   it('renders an inline svg for a known name', () => {
@@ -51,20 +52,33 @@ describe('Icon', () => {
     expect(w.find('svg').attributes('stroke-width')).toBe('1.5');
   });
 
+  // DERIVED from the registry, never hand-copied. The previous version iterated a
+  // literal list that had drifted 12 names behind `icons` — including the two the
+  // S110 pager added — so it "covered every registered icon" only in its title.
+  // Deriving means a new registration is covered the moment it lands.
   it('renders every registered icon without error', () => {
-    const names = [
-      'play', 'pause', 'skip-back', 'skip-forward', 'rewind', 'forward', 'volume',
-      'volume-low', 'mute', 'captions', 'pip', 'theater', 'fullscreen', 'fullscreen-exit',
-      'expand', 'cast', 'settings', 'speed', 'film', 'image', 'music', 'tv', 'search',
-      'filter', 'calendar', 'sort', 'star', 'list', 'plus', 'info', 'x', 'check',
-      'bookmark', 'bookmark-plus', 'heart', 'user', 'log-out', 'menu', 'more', 'eye',
-      'eye-off', 'arrow-left', 'arrow-up', 'arrow-down', 'chevron-down', 'chevron-up',
-      'chevron-left', 'chevron-right', 'spinner', 'alert', 'success', 'error', 'sun',
-      'moon', 'monitor',
-    ] as const;
-    for (const name of names) {
+    expect(ICON_NAMES.length).toBeGreaterThan(60);
+    expect(ICON_NAMES).toEqual(Object.keys(icons));
+
+    const rendered: string[] = [];
+    for (const name of ICON_NAMES) {
       const w = mount(Icon, { props: { name } });
       expect(w.find('svg').exists(), `icon "${name}" should render`).toBe(true);
+      rendered.push(name);
+      w.unmount();
+    }
+    // Cardinality pin: an empty/short registry cannot make this test vacuous.
+    expect(rendered).toHaveLength(ICON_NAMES.length);
+  });
+
+  it('registers the pager chevrons the S110 pager needs', () => {
+    // Named explicitly because the derived loop above would still pass if BOTH the
+    // registry entry and the pager's usage were removed together.
+    for (const name of ['chevrons-left', 'chevrons-right'] as const) {
+      expect(ICON_NAMES, `${name} must be registered`).toContain(name);
+      const w = mount(Icon, { props: { name } });
+      expect(w.find('svg').exists()).toBe(true);
+      w.unmount();
     }
   });
 });

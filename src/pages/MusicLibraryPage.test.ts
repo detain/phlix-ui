@@ -143,11 +143,35 @@ function stubFetch(artistsList: ServerArtist[], albumsList: ServerAlbum[], track
 // Because the album list is ordered globally by artist, its first page spans only
 // a handful of artists — which is what made a client-side filter return nothing for
 // everyone else. A page that filters client-side therefore FAILS these tests.
+//
+// KNOWN, DELIBERATE APPROXIMATIONS vs `phlix-server` (verified in S110 review r1 —
+// recorded here so the next reader does not mistake the fake for authoritative):
+//   1. The real server ALSO applies a 2,000-row PER-PAGE ceiling to embedded tracks
+//      that degrades round-robin (`MusicLibraryService::MAX_EMBEDDED_ROWS`), so a
+//      full 100-album page embeds ~20 tracks/album and `tracks_truncated` fires far
+//      more often in production than here. The fake is strictly MORE generous and
+//      the client is flag-driven, so no client behaviour is masked; modelling it
+//      would be dead code at this fixture's 5 tracks/album.
+//   2. `?artist=` here folds case AND accents via `localeCompare(sensitivity:'base')`
+//      to approximate `utf8mb4_unicode_ci` (so `bjork` matches `Björk`). It is an
+//      approximation of a MySQL collation, not a reimplementation of it.
+// Everything else the client reads was verified field-identical: no `{success,data}`
+// envelope, `{artists|albums|tracks, total, limit, offset[, artist]}`, `?limit=`
+// clamped to [1,100], `ORDER BY ar.name, al.title`, snake_case `tracks_truncated`,
+// `albums_truncated`, `album_art_url`, 404 + `{error}` for a missing album, and a
+// detail route exempt from the per-album embed cap.
 // ---------------------------------------------------------------------------
 
 const PAGE_SIZE = 100;
+/** `PageLimit::MIN` — the real server clamps `?limit=` up to 1, never to 0. */
+const PAGE_SIZE_MIN = 1;
 /** Above this the server caps the tracks it embeds in a LIST row and flags it. */
 const EMBED_CAP = 100;
+
+/** `utf8mb4_unicode_ci`-ish: case- AND accent-insensitive equality. */
+function collationEquals(a: string, b: string): boolean {
+  return a.localeCompare(b, undefined, { sensitivity: 'base' }) === 0;
+}
 
 interface FakeAlbum {
   name: string;
@@ -209,10 +233,24 @@ function albumListRow(album: FakeAlbum): Record<string, unknown> {
     name: album.name,
     artist: album.artist,
     year: album.year,
+    // Real emitted field the client currently ignores — present so the fake is not
+    // quietly narrower than the wire.
+    album_art_url: null,
     track_count: album.trackCount,
     tracks_truncated: embedded < album.trackCount,
     tracks: fakeTracks(album, embedded),
   };
+}
+
+/** A 404 + `{error}`, which is what the real album-detail route returns. */
+function notFoundResponse(message: string): Response {
+  return {
+    ok: false,
+    status: 404,
+    headers: { get: () => 'application/json' } as unknown as Headers,
+    json: async () => ({ error: message }),
+    text: async () => JSON.stringify({ error: message }),
+  } as unknown as Response;
 }
 
 interface FakeServer {
@@ -232,7 +270,11 @@ function stubMusicServer(library: FakeLibrary): FakeServer {
     calls.push(raw);
     const parsed = new URL(raw, 'http://server.test');
     const path = parsed.pathname;
-    const limit = Math.min(PAGE_SIZE, Number(parsed.searchParams.get('limit') ?? PAGE_SIZE));
+    // `PageLimit::clamp` — [MIN, MAX], not just "at most MAX".
+    const limit = Math.max(
+      PAGE_SIZE_MIN,
+      Math.min(PAGE_SIZE, Number(parsed.searchParams.get('limit') ?? PAGE_SIZE)),
+    );
     const offset = Math.max(0, Number(parsed.searchParams.get('offset') ?? 0));
     const artistParam = (parsed.searchParams.get('artist') ?? '').trim();
 
@@ -242,9 +284,11 @@ function stubMusicServer(library: FakeLibrary): FakeServer {
       const title = decodeURIComponent(albumDetail[1]!);
       const found = library.albums.find(
         (a) => a.name === title
-          && (artistParam === '' || a.artist.toLowerCase() === artistParam.toLowerCase()),
+          && (artistParam === '' || collationEquals(a.artist, artistParam)),
       );
-      if (!found) return Promise.resolve(jsonResponse({ album: null }));
+      // The real route 404s (it does NOT answer 200 with `album: null`), so the
+      // client's ApiError path is the one exercised here too.
+      if (!found) return Promise.resolve(notFoundResponse('Album not found'));
       return Promise.resolve(jsonResponse({
         album: {
           name: found.name,
@@ -261,7 +305,7 @@ function stubMusicServer(library: FakeLibrary): FakeServer {
     if (path === '/api/v1/music/albums') {
       const rows = artistParam === ''
         ? library.albums
-        : library.albums.filter((a) => a.artist.toLowerCase() === artistParam.toLowerCase());
+        : library.albums.filter((a) => collationEquals(a.artist, artistParam));
       return Promise.resolve(jsonResponse({
         albums: rows.slice(offset, offset + limit).map(albumListRow),
         total: rows.length,
@@ -288,6 +332,8 @@ function stubMusicServer(library: FakeLibrary): FakeServer {
           name: a.name,
           album_count: a.albumCount,
           track_count: a.albumCount * 5,
+          // Real emitted field the client currently ignores — see the header note.
+          albums_truncated: false,
           albums: [],
           image_url: null,
         })),
@@ -695,10 +741,15 @@ describe('MusicLibraryPage', () => {
       // What the old code fetched: the first unfiltered album page.
       const res = await server.request('/api/v1/music/albums?limit=100&offset=0');
       const body = (await res.json()) as { albums: { artist: string }[] };
+      // Cardinality pin FIRST: an empty album page would otherwise satisfy every
+      // `toBeLessThan` below and let this test pass for the wrong reason.
+      expect(body.albums).toHaveLength(100);
       const spanned = new Set(body.albums.map((a) => a.artist));
 
-      // 142 albums for Artist 0001 alone → page 1 is ONE artist here, 23 on
-      // production. Either way it is a tiny fraction of the 100 on screen.
+      // 142 albums for Artist 0001 alone → page 1 is exactly ONE artist here, 23 on
+      // production. Either way it is a tiny fraction of the 100 on screen. Bounded on
+      // BOTH sides: `>= 1` because a real page always spans at least one artist.
+      expect(spanned.size).toBeGreaterThanOrEqual(1);
       expect(spanned.size).toBeLessThan(5);
       const visible = wrapper.findAll('.artist-card').map((c) => c.text());
       expect(visible).toHaveLength(100);
@@ -706,8 +757,11 @@ describe('MusicLibraryPage', () => {
         [...spanned].some((a) => name.includes(a)),
       );
       // ⇒ 99 of the 100 visible artists would drill down EMPTY with the old
-      // client-side filter. That is the defect, reproduced.
+      // client-side filter. That is the defect, reproduced. Again two-sided: the one
+      // artist that page 1 DOES span is on screen, so this is never 0 either.
+      expect(resolvableByClientFilter.length).toBeGreaterThanOrEqual(1);
       expect(resolvableByClientFilter.length).toBeLessThan(5);
+      expect(visible.length - resolvableByClientFilter.length).toBeGreaterThanOrEqual(96);
       wrapper.unmount();
     });
 
@@ -899,6 +953,68 @@ describe('MusicLibraryPage', () => {
       await flushPromises();
       expect(wrapper.find('[data-count="artists"]').text()).toBe('1 artist');
       wrapper.unmount();
+    });
+
+    it('keeps the truncated prefix playable when the album detail 404s', async () => {
+      // The 404 path, distinct from a rejected fetch: the real detail route answers
+      // 404 + {error} for an unknown title/artist pair, which the client surfaces as
+      // an ApiError. Pinned because error handling is exactly where a fake that
+      // diverges from the real server hides bugs.
+      const lib = makeLibrary(1, () => 1);
+      lib.albums[0]!.trackCount = 125;
+      const server = stubMusicServer(lib);
+      const wrapper = mountPage();
+      await flushPromises();
+      await wrapper.find('.artist-card').trigger('click');
+      await flushPromises();
+
+      // Confirm the fake really 404s an unknown album rather than 200-ing a null.
+      const probe = await server.request('/api/v1/music/albums/Nope?artist=Nobody');
+      expect(probe.status).toBe(404);
+
+      // Now rename the album out from under the page so its detail lookup 404s.
+      lib.albums[0]!.name = 'Renamed Out From Under It';
+      await wrapper.find('.album-card').trigger('click');
+      await flushPromises();
+
+      expect(wrapper.findAll('.track-play')).toHaveLength(100);
+      wrapper.unmount();
+    });
+
+    it('the fake applies the same [MIN,MAX] limit clamp the server does', async () => {
+      // PageLimit clamps to [1,100]: a 0/negative limit becomes 1, an absurd one 100.
+      const server = stubMusicServer(makeLibrary(3, () => 1));
+      const cases: [string, number][] = [
+        ['/api/v1/music/artists?limit=0&offset=0', 1],
+        ['/api/v1/music/artists?limit=-5&offset=0', 1],
+        ['/api/v1/music/artists?limit=5000000&offset=0', 100],
+      ];
+      const applied: number[] = [];
+      for (const [url] of cases) {
+        const res = await server.request(url);
+        const body = (await res.json()) as { limit: number };
+        applied.push(body.limit);
+      }
+      expect(applied).toEqual(cases.map(([, expected]) => expected));
+    });
+
+    it('the fake folds case AND accents on ?artist=, like utf8mb4_unicode_ci', async () => {
+      const lib = makeLibrary(0, () => 0);
+      lib.artists.push({ name: 'Björk', albumCount: 1 });
+      lib.albums.push({ name: 'Homogenic', artist: 'Björk', year: 1997, trackCount: 5 });
+      const server = stubMusicServer(lib);
+
+      for (const probe of ['Björk', 'björk', 'BJORK', 'bjork']) {
+        const res = await server.request(
+          `/api/v1/music/albums?limit=100&offset=0&artist=${encodeURIComponent(probe)}`,
+        );
+        const body = (await res.json()) as { albums: unknown[]; total: number };
+        expect(body.albums, `?artist=${probe} should match Björk`).toHaveLength(1);
+        expect(body.total).toBe(1);
+      }
+      // …and still does not match a different artist.
+      const miss = await server.request('/api/v1/music/albums?limit=100&offset=0&artist=Sigur+Ros');
+      expect(((await miss.json()) as { albums: unknown[] }).albums).toHaveLength(0);
     });
   });
 });

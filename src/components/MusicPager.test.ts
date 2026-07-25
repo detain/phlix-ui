@@ -16,6 +16,8 @@ function mountPager(props: {
   limit: number;
   total: number;
   label?: string;
+  /** `id` of the listing the pager drives (`aria-controls` on the jump select). */
+  controls?: string;
   disabled?: boolean;
 }): VueWrapper {
   const w = mount(MusicPager, {
@@ -154,12 +156,61 @@ describe('MusicPager', () => {
     expect(w.find('[data-nav="next"]').exists()).toBe(true);
   });
 
-  it('labels the nav with the caller-supplied label and falls back to a default', () => {
+  it('names the landmark for the listing it pages, never identically to it', () => {
+    // Passing the bare listing name made the nav announce itself as "Artists" —
+    // indistinguishable from the grid above it — and left `music.pagination`
+    // unreachable in the product.
     const labelled = mountPager({ offset: 0, limit: 100, total: 200, label: 'Artists' });
-    expect(labelled.find('nav').attributes('aria-label')).toBe('Artists');
+    expect(labelled.find('nav').attributes('aria-label')).toBe('Artists pagination');
+    expect(labelled.find('nav').attributes('aria-label')).not.toBe('Artists');
 
     const bare = mountPager({ offset: 0, limit: 100, total: 200 });
     expect(bare.find('nav').attributes('aria-label')).toBe('Pagination');
+
+    const blank = mountPager({ offset: 0, limit: 100, total: 200, label: '' });
+    expect(blank.find('nav').attributes('aria-label')).toBe('Pagination');
+  });
+
+  // ---- a11y: a page change must be announced, not silent --------------------
+
+  it('announces the page readout as a live region and marks it current', () => {
+    const w = mountPager({ offset: 100, limit: 100, total: 2197 });
+    const info = w.find('[data-nav="info"]');
+    // Without a live region, pressing Next replaces the grid and says nothing.
+    expect(info.attributes('role')).toBe('status');
+    expect(info.attributes('aria-live')).toBe('polite');
+    expect(info.attributes('aria-atomic')).toBe('true');
+    expect(info.attributes('aria-current')).toBe('page');
+  });
+
+  it('points the jump select at the listing it drives, and marks the current option', () => {
+    const w = mountPager({ offset: 200, limit: 100, total: 2197, controls: 'the-grid' });
+    expect(w.find('[data-nav="jump"]').attributes('aria-controls')).toBe('the-grid');
+
+    const current = w.findAll('option').filter((o) => o.attributes('aria-current') === 'page');
+    expect(current).toHaveLength(1);
+    expect(current[0]!.text()).toBe('3');
+  });
+
+  it('omits aria-controls when no listing id is supplied', () => {
+    const w = mountPager({ offset: 0, limit: 100, total: 2197 });
+    expect(w.find('[data-nav="jump"]').attributes('aria-controls')).toBeUndefined();
+  });
+
+  // INFO-13: `:value="page"` is a plain binding, not `v-model` — pin that the select
+  // actually re-reflects the current page after the parent navigates.
+  it('reflects the current page in the jump select after a prop-driven navigation', async () => {
+    const w = mountPager({ offset: 0, limit: 100, total: 2197 });
+    const select = w.find<HTMLSelectElement>('[data-nav="jump"]');
+    expect(select.element.value).toBe('1');
+
+    await w.setProps({ offset: 1300 });
+
+    expect(select.element.value).toBe('14');
+    expect(w.find('[data-nav="info"]').text()).toContain('Page 14 of 22');
+    const current = w.findAll('option').filter((o) => o.attributes('aria-current') === 'page');
+    expect(current).toHaveLength(1);
+    expect(current[0]!.text()).toBe('14');
   });
 
   it('gives every control an accessible name', () => {

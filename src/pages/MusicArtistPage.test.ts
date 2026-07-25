@@ -38,7 +38,17 @@ function jsonResponse(body: unknown): Response {
  * filters for the client (the old one here did, by only ever returning two rows)
  * cannot tell the two strategies apart.
  */
-function stubFetch(opts: { artistName?: string; albums?: ServerAlbum[]; error?: boolean } = {}) {
+function stubFetch(opts: {
+  artistName?: string;
+  albums?: ServerAlbum[];
+  error?: boolean;
+  /** `album_count` on the artist ROW (the DB truth, independent of any page). */
+  albumCount?: number;
+  /** `track_count` on the artist ROW — the artist's TRUE track total. */
+  trackCount?: number;
+  /** Reject only the album LIST route (the artist row still resolves). */
+  albumsError?: boolean;
+} = {}) {
   const library: ServerAlbum[] = opts.albums ?? [
     { name: 'OK Computer', artist: 'Radiohead', track_count: 12 },
     { name: 'Homework', artist: 'Daft Punk', track_count: 16 },
@@ -51,8 +61,17 @@ function stubFetch(opts: { artistName?: string; albums?: ServerAlbum[]; error?: 
     if (u.includes('/api/v1/music/artists/')) {
       if (opts.error) return Promise.reject(new Error('artist down'));
       return Promise.resolve(jsonResponse({
-        artist: { name: opts.artistName ?? 'Radiohead', album_count: 2 },
+        artist: {
+          name: opts.artistName ?? 'Radiohead',
+          album_count: opts.albumCount ?? 2,
+          // Emitted by `formatArtist()` on BOTH shapes; the artist's whole-library
+          // track total, which is what the header must show.
+          ...(opts.trackCount === undefined ? {} : { track_count: opts.trackCount }),
+        },
       }));
+    }
+    if (opts.albumsError && u.includes('/api/v1/music/albums')) {
+      return Promise.reject(new Error('albums down'));
     }
     if (u.includes('/api/v1/music/albums')) {
       const parsed = new URL(u, 'http://server.test');
@@ -213,14 +232,34 @@ describe('MusicArtistPage', () => {
     w.unmount();
   });
 
-  it('navigates to the music-album route with the album title on click', async () => {
+  it('navigates to the music-album route carrying BOTH the title and the artist', async () => {
     stubFetch();
     const router = makeRouter();
     const push = vi.spyOn(router, 'push');
     const w = mountPage(router);
     await flushPromises();
     await w.find('.album-card').trigger('click');
-    expect(push).toHaveBeenCalledWith({ name: 'music-album', params: { name: 'OK Computer' } });
+    // The artist is the disambiguator: 2,622 of 5,091 production album titles are
+    // shared between artists, so a title-only push resolves to the server's first
+    // match and can open a DIFFERENT artist's album.
+    expect(push).toHaveBeenCalledWith({
+      name: 'music-album',
+      params: { name: 'OK Computer' },
+      query: { artist: 'Radiohead' },
+    });
+    w.unmount();
+  });
+
+  it('falls back to the route artist when an album row carries no artist', async () => {
+    stubFetch({ albums: [{ name: 'Untitled', artist: 'Radiohead' } as ServerAlbum] });
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = mountPage(router, 'Radiohead');
+    await flushPromises();
+    await w.find('.album-card').trigger('click');
+    expect(push).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { artist: 'Radiohead' } }),
+    );
     w.unmount();
   });
 
@@ -231,6 +270,92 @@ describe('MusicArtistPage', () => {
     const back = w.find('a.artist-page__back-link');
     expect(back.exists()).toBe(true);
     expect(back.attributes('href')).toContain('/app/music/artists');
+    w.unmount();
+  });
+
+  // ---- MED-1: the header counts must come from the DB, not from a page --------
+
+  it('shows the artist track total from the server and keeps it STABLE across album pages', async () => {
+    // 142 albums × 5 tracks = 710 for the artist; page 1 holds 100 albums (500
+    // tracks' worth) and page 2 holds 42 (210). Summing the loaded page therefore
+    // showed 500, then 210 — a count that both contradicted the DB and shrank as the
+    // user paged. The server's `track_count` is the only stable, correct value.
+    const albums = albumsFor('Radiohead', 142);
+    stubFetch({ albums, albumCount: 142, trackCount: 710 });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+
+    expect(w.findAll('.album-card')).toHaveLength(100);
+    expect(w.find('[data-count="albums"]').text()).toBe('142 albums');
+    expect(w.find('[data-count="tracks"]').text()).toContain('710 tracks');
+    // The page sum, which the old code showed. Pinned so a regression to it is
+    // named rather than just "some other number".
+    expect(w.find('[data-count="tracks"]').text()).not.toContain('500');
+
+    await w.find('[data-nav="next"]').trigger('click');
+    await flushPromises();
+
+    expect(w.findAll('.album-card')).toHaveLength(42);
+    expect(w.find('[data-count="albums"]').text()).toBe('142 albums');
+    // SAME number on page 2 — the whole point.
+    expect(w.find('[data-count="tracks"]').text()).toContain('710 tracks');
+    expect(w.find('[data-count="tracks"]').text()).not.toContain('210');
+    w.unmount();
+  });
+
+  it('formats the counts through the i18n catalog with thousands separators', async () => {
+    stubFetch({ albums: albumsFor('Radiohead', 4), albumCount: 4, trackCount: 12345 });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('[data-count="tracks"]').text()).toContain('12,345 tracks');
+    w.unmount();
+  });
+
+  it('uses the singular form for a one-album, one-track artist', async () => {
+    stubFetch({ albums: albumsFor('Radiohead', 1), albumCount: 1, trackCount: 1 });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('[data-count="albums"]').text()).toBe('1 album');
+    expect(w.find('[data-count="tracks"]').text()).toContain('1 track');
+    expect(w.find('[data-count="tracks"]').text()).not.toContain('1 tracks');
+    w.unmount();
+  });
+
+  it('falls back to summing the loaded page when the server sends no track_count', async () => {
+    // Pre-S99 servers omit it; degrade rather than show nothing.
+    stubFetch({ albums: albumsFor('Radiohead', 3), albumCount: 3 });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('[data-count="tracks"]').text()).toContain('15 tracks'); // 3 × 5
+    w.unmount();
+  });
+
+  // ---- LOW-8: one loader, one failure policy ---------------------------------
+
+  it('zeroes the album total when a LATER album page fails, like its sibling pages', async () => {
+    stubFetch({ albums: albumsFor('Radiohead', 142), albumCount: 142, trackCount: 710 });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('[data-nav="info"]').text()).toContain('Page 1 of 2');
+
+    // Page 2 fails. The duplicated loader used to clear `albums` but keep
+    // `albumTotal`, so the pager went on paging a listing that was not on screen.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('page down'))));
+    await w.find('[data-nav="next"]').trigger('click');
+    await flushPromises();
+
+    expect(w.find('.album-card').exists()).toBe(false);
+    expect(w.find('.music-pager').exists()).toBe(false);
+    expect(w.find('.artist-albums__empty').exists()).toBe(true);
+    w.unmount();
+  });
+
+  it('shows the error state when the album page fails on FIRST load', async () => {
+    stubFetch({ albumsError: true });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('.artist-page__error').exists()).toBe(true);
+    expect(w.find('.music-pager').exists()).toBe(false);
     w.unmount();
   });
 });
