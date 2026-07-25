@@ -344,9 +344,12 @@ describe('MusicArtistPage', () => {
     await w.find('[data-nav="next"]').trigger('click');
     await flushPromises();
 
-    expect(w.find('.album-card').exists()).toBe(false);
-    expect(w.find('.music-pager').exists()).toBe(false);
-    expect(w.find('.artist-albums__empty').exists()).toBe(true);
+    expect(w.find('.album-card').exists(), 'the failed page must not leave stale cards').toBe(false);
+    expect(
+        w.find('.music-pager').exists(),
+        'albumTotal must be zeroed: a pager here would page a listing that is no longer on screen',
+    ).toBe(false);
+    expect(w.find('.artist-albums__empty').exists(), 'the empty state must take over').toBe(true);
     w.unmount();
   });
 
