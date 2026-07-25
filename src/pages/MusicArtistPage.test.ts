@@ -320,15 +320,16 @@ describe('MusicArtistPage', () => {
     expect(albumCalls(), 'only the mount page so far').toHaveLength(1);
     expect(w.findAll('.album-card'), 'page 1 is on screen').toHaveLength(100);
 
+    // Captured BEFORE the commit: this page swaps the whole album section for its
+    // skeleton while `loading`, so a refetch UNMOUNTS the pager and a wrapper looked
+    // up afterwards would be a different instance with an empty emit log.
+    const pager = w.findComponent(MusicPager);
     await w.find('[data-nav="jump"]').setValue('1');
     await flushPromises();
 
-    // PRECONDITION — the select really committed and the pager really emitted offset 0.
-    expect(
-      w.findComponent(MusicPager).emitted('go'),
-      'the select really did commit and emit',
-    ).toEqual([[0]]);
     expect(albumCalls(), 'the page on screen must not be refetched').toHaveLength(1);
+    // PRECONDITION — the select really committed and the pager really emitted offset 0.
+    expect(pager.emitted('go'), 'the select really did commit and emit').toEqual([[0]]);
     expect(w.findAll('.album-card'), 'and the cards are untouched').toHaveLength(100);
     w.unmount();
   });
