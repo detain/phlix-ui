@@ -12,6 +12,7 @@ import {
     isTmdbUnconfigured,
     setDefaultApiHeaders,
     getDefaultApiHeaders,
+    MUSIC_PAGE_SIZE,
 } from './client';
 import { NetworkError, TimeoutError } from './errors';
 import { MemoryTokenStore, makeFetch } from './test/memoryTokenStore';
@@ -1008,6 +1009,229 @@ describe('ApiClient', () => {
             await client.setPoster('m1', '');
 
             expect(calls[0]!.init!.body).toBe(JSON.stringify({ poster_url: '' }));
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // Music listings (S110). These endpoints serve BOUNDED pages — `?limit=` is
+    // clamped to MUSIC_PAGE_SIZE server-side — and return the true `total`, so the
+    // client's job is to (a) send limit/offset, (b) hand `total` back, and (c) let
+    // the SERVER filter albums by artist. Filtering client-side over one page is
+    // the S110 bug: `/albums` is ordered globally by artist then title, so its
+    // first 100 rows span ~23 of 2,197 artists.
+    // -----------------------------------------------------------------------
+    describe('music listings (S110 paging)', () => {
+        function client(fetchImpl: typeof fetch): ApiClient {
+            return new ApiClient({
+                baseUrl: 'https://h',
+                tokenStore: new MemoryTokenStore({ access: 't' }),
+                fetchImpl,
+            });
+        }
+
+        it('MUSIC_PAGE_SIZE mirrors the server clamp (PageLimit::MAX)', () => {
+            expect(MUSIC_PAGE_SIZE).toBe(100);
+        });
+
+        it('listArtists sends limit + offset and returns the server total, not the page length', async () => {
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        artists: [{ name: 'Radiohead', album_count: 9, image_url: null }],
+                        total: 2197,
+                        limit: 100,
+                        offset: 2100,
+                    },
+                },
+            ]);
+
+            const page = await client(fetch).listArtists({ limit: 100, offset: 2100 });
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/artists?limit=100&offset=2100');
+            expect(page.artists).toHaveLength(1);
+            expect(page.artists[0]!.name).toBe('Radiohead');
+            // The point of the whole step: 1 row on the page, 2,197 in the library.
+            expect(page.total).toBe(2197);
+            expect(page.limit).toBe(100);
+            expect(page.offset).toBe(2100);
+        });
+
+        it('listArtists sends no query at all when no paging params are given', async () => {
+            const { fetch, calls } = makeFetch([{ status: 200, body: { artists: [] } }]);
+
+            await client(fetch).listArtists();
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/artists');
+        });
+
+        it('listArtists degrades a malformed payload to an empty page', async () => {
+            const { fetch } = makeFetch([{ status: 200, body: { artists: 'nope', total: 'nope' } }]);
+
+            const page = await client(fetch).listArtists({ offset: 0 });
+
+            expect(page.artists).toEqual([]);
+            expect(page.total).toBe(0);
+            expect(page.limit).toBe(MUSIC_PAGE_SIZE);
+            expect(page.offset).toBe(0);
+        });
+
+        it('listArtists falls back to the page length when a server omits total', async () => {
+            const { fetch } = makeFetch([{ status: 200, body: { artists: [{ name: 'A' }, { name: 'B' }] } }]);
+
+            const page = await client(fetch).listArtists({ limit: 100, offset: 0 });
+
+            expect(page.total).toBe(2);
+        });
+
+        it('listAlbums asks the SERVER to filter by artist and never filters client-side', async () => {
+            // The server honours ?artist=; the payload here deliberately contains a
+            // row for a DIFFERENT artist. A client-side filter would drop it — and
+            // that filter is exactly what made 77 of 100 artists drill down empty,
+            // so its absence is the property under test.
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        albums: [
+                            { name: 'OK Computer', artist: 'Radiohead', track_count: 12, tracks: [] },
+                            { name: 'Homework', artist: 'Daft Punk', track_count: 16, tracks: [] },
+                        ],
+                        total: 2,
+                        limit: 100,
+                        offset: 0,
+                        artist: 'Radiohead',
+                    },
+                },
+            ]);
+
+            const page = await client(fetch).listAlbums({ artist: 'Radiohead', limit: 100, offset: 0 });
+
+            expect(calls[0]!.url).toBe(
+                'https://h/api/v1/music/albums?limit=100&offset=0&artist=Radiohead',
+            );
+            expect(page.albums.map((a) => a.title)).toEqual(['OK Computer', 'Homework']);
+            expect(page.artist).toBe('Radiohead');
+            expect(page.total).toBe(2);
+        });
+
+        it('listAlbums url-encodes an artist name with spaces and symbols', async () => {
+            const { fetch, calls } = makeFetch([{ status: 200, body: { albums: [] } }]);
+
+            await client(fetch).listAlbums({ artist: 'Simon & Garfunkel' });
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/albums?artist=Simon+%26+Garfunkel');
+        });
+
+        it('listAlbums omits ?artist= for an empty or absent artist', async () => {
+            const { fetch, calls } = makeFetch([
+                { status: 200, body: { albums: [] } },
+                { status: 200, body: { albums: [] } },
+            ]);
+            const c = client(fetch);
+
+            await c.listAlbums({ artist: '', limit: 100 });
+            await c.listAlbums({ limit: 100 });
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/albums?limit=100');
+            expect(calls[1]!.url).toBe('https://h/api/v1/music/albums?limit=100');
+        });
+
+        it('listAlbums reports a null artist echo when the server did not filter', async () => {
+            const { fetch } = makeFetch([{ status: 200, body: { albums: [], total: 5091 } }]);
+
+            const page = await client(fetch).listAlbums({ limit: 100, offset: 0 });
+
+            expect(page.artist).toBeNull();
+            expect(page.total).toBe(5091);
+        });
+
+        it('normalizes an album row: tracks_truncated flags a partial embedded list', async () => {
+            const { fetch } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        albums: [
+                            {
+                                name: 'Long One',
+                                artist: 'A',
+                                year: 1999,
+                                track_count: 125,
+                                tracks_truncated: true,
+                                tracks: [{ id: 't1', name: 'One', duration_secs: 10, track_number: 1 }],
+                            },
+                            {
+                                name: 'Short One',
+                                artist: 'A',
+                                year: 2001,
+                                track_count: 1,
+                                tracks: [{ id: 't2', name: 'Two', duration_secs: 20, track_number: 1 }],
+                            },
+                        ],
+                    },
+                },
+            ]);
+
+            const page = await client(fetch).listAlbums({ artist: 'A' });
+
+            expect(page.albums[0]!.tracksTruncated).toBe(true);
+            // `totalTracks` stays the TRUE count even though one track is embedded.
+            expect(page.albums[0]!.totalTracks).toBe(125);
+            expect(page.albums[0]!.tracks).toHaveLength(1);
+            expect(page.albums[1]!.tracksTruncated).toBe(false);
+        });
+
+        it('getAlbum appends ?artist= to disambiguate a shared album title', async () => {
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        album: {
+                            name: 'Greatest Hits',
+                            artist: 'Queen',
+                            track_count: 17,
+                            tracks: [{ id: 't1', name: 'Bohemian Rhapsody', duration_secs: 355 }],
+                        },
+                    },
+                },
+            ]);
+
+            const album = await client(fetch).getAlbum('Greatest Hits', 'Queen');
+
+            expect(calls[0]!.url).toBe(
+                'https://h/api/v1/music/albums/Greatest%20Hits?artist=Queen',
+            );
+            expect(album.artist).toBe('Queen');
+            expect(album.tracks).toHaveLength(1);
+        });
+
+        it('getAlbum omits the query when no artist is given', async () => {
+            const { fetch, calls } = makeFetch([{ status: 200, body: { album: { name: 'X' } } }]);
+
+            await client(fetch).getAlbum('X');
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/albums/X');
+        });
+
+        it('listTracks sends limit + offset and returns the whole-library total', async () => {
+            const { fetch, calls } = makeFetch([
+                {
+                    status: 200,
+                    body: {
+                        tracks: [{ id: 'u1', name: 'Track', duration_secs: 30, track_number: 1, stream_url: '/s' }],
+                        total: 29245,
+                        limit: 100,
+                        offset: 100,
+                    },
+                },
+            ]);
+
+            const page = await client(fetch).listTracks({ limit: 100, offset: 100 });
+
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/tracks?limit=100&offset=100');
+            expect(page.tracks[0]!.streamUrl).toBe('/s');
+            expect(page.total).toBe(29245);
+            expect(page.offset).toBe(100);
         });
     });
 });

@@ -93,6 +93,9 @@ import IconChevronDown from '~icons/lucide/chevron-down';
 import IconChevronUp from '~icons/lucide/chevron-up';
 import IconChevronLeft from '~icons/lucide/chevron-left';
 import IconChevronRight from '~icons/lucide/chevron-right';
+// double chevrons = first/last page in a pager (S110's MusicPager)
+import IconChevronsLeft from '~icons/lucide/chevrons-left';
+import IconChevronsRight from '~icons/lucide/chevrons-right';
 
 // Status / theme
 import IconSpinner from '~icons/lucide/loader-circle';
@@ -181,6 +184,8 @@ const icons = {
   'chevron-up': IconChevronUp,
   'chevron-left': IconChevronLeft,
   'chevron-right': IconChevronRight,
+  'chevrons-left': IconChevronsLeft,
+  'chevrons-right': IconChevronsRight,
   // status / theme
   spinner: IconSpinner,
   alert: IconAlert,

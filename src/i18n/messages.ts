@@ -344,6 +344,21 @@ export const DEFAULT_MESSAGES = {
     artist: 'Artist',
     album: 'Album',
     of: 'of',
+    // Paging (S110) — the library is served one page at a time, so these carry the
+    // TRUE library size and the position within it. Singular/plural are separate
+    // keys because the resolver interpolates but does not pluralize.
+    artistsTotal: '{count} artists',
+    artistsTotalOne: '1 artist',
+    albumsTotal: '{count} albums',
+    albumsTotalOne: '1 album',
+    showingRange: 'Showing {from}–{to} of {total}',
+    pageOf: 'Page {page} of {pages}',
+    firstPage: 'First page',
+    prevPage: 'Previous page',
+    nextPage: 'Next page',
+    lastPage: 'Last page',
+    jumpToPage: 'Jump to page',
+    pagination: 'Pagination',
     // Player page
     shuffle: 'Shuffle',
     queue: 'Queue',

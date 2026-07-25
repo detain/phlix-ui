@@ -186,15 +186,104 @@ function normalizeMusicAlbum(raw: unknown): MusicAlbum {
     const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
     const title = musicStr(r['name']) ?? musicStr(r['title']) ?? 'Unknown Album';
     const rawTracks = Array.isArray(r['tracks']) ? r['tracks'] : [];
+    const totalTracks = musicNum(r['track_count']) ?? rawTracks.length;
     return {
         id: title,
         title,
         artist: musicStr(r['artist']),
         albumArtUrl: musicStr(r['album_art_url']),
         year: musicNum(r['year']),
-        totalTracks: musicNum(r['track_count']) ?? rawTracks.length,
+        totalTracks,
         tracks: rawTracks.map(normalizeMusicTrack),
+        // S99 caps the tracks embedded in a LIST row (100 per album, and 2,000 per
+        // page shared round-robin) and sets `tracks_truncated` for every album whose
+        // embedded count is below its true `track_count`. So this flag — not
+        // `tracks.length` — decides whether the embedded list may be played as-is
+        // or the album detail route has to be fetched for the whole thing.
+        tracksTruncated: normalizeBool(r['tracks_truncated']),
     };
+}
+
+/**
+ * The page size this client asks for on every music listing, and the largest the
+ * server will honour: `PageLimit::MAX` on `phlix-server`
+ * (`MusicController::listArtists/listAlbums/listTracks` clamp `?limit=` to it).
+ *
+ * ⚠ Raising this is NOT how you reach the rest of the library — page instead. The
+ * server embeds each album's tracks in its list row and mints ONE HMAC-signed
+ * `stream_url` per embedded track on the event loop, so a whole-library album page
+ * would carry 29,245 embedded tracks (S99 HIGH-1 at full scale). `offset` is the
+ * cheap axis: an artist-filtered album page measured 0.95 ms on production against
+ * 134 ms unfiltered.
+ */
+export const MUSIC_PAGE_SIZE = 100;
+
+/** `?limit=`/`?offset=` accepted by every music listing endpoint. */
+export interface MusicPageParams {
+    limit?: number;
+    offset?: number;
+}
+
+/**
+ * One page of `GET /api/v1/music/artists`. `total` is the server's
+ * `SELECT COUNT(*)` over `music_artists` — the TRUE library size, independent of
+ * how many rows this page carries — so a UI can both size a pager and show the
+ * real count. `limit`/`offset` are the values the server actually APPLIED (it
+ * clamps), not the ones requested.
+ */
+export interface MusicArtistsPage {
+    artists: MusicArtist[];
+    total: number;
+    limit: number;
+    offset: number;
+}
+
+/**
+ * One page of `GET /api/v1/music/albums`. `artist` echoes the server-applied
+ * `?artist=` filter (`null` when unfiltered), which is how a client can tell a
+ * filtering server from one that silently ignored the parameter; `total` honours
+ * the filter.
+ */
+export interface MusicAlbumsPage {
+    albums: MusicAlbum[];
+    total: number;
+    limit: number;
+    offset: number;
+    artist: string | null;
+}
+
+/** One page of `GET /api/v1/music/tracks`. `total` is the whole-library count. */
+export interface MusicTracksPage {
+    tracks: MusicTrack[];
+    total: number;
+    limit: number;
+    offset: number;
+}
+
+/**
+ * Shared page-envelope reader for the three music listings: defends the row array
+ * and echoes back the effective `limit`/`offset`/`total`. A server that omits
+ * `total` (pre-S99) degrades to "this page is everything", which is what the
+ * pre-paging UI assumed anyway.
+ */
+function musicPageMeta(
+    res: { total?: unknown; limit?: unknown; offset?: unknown },
+    rows: number,
+    requested: MusicPageParams,
+): { total: number; limit: number; offset: number } {
+    return {
+        total: musicNum(res.total) ?? rows,
+        limit: musicNum(res.limit) ?? requested.limit ?? MUSIC_PAGE_SIZE,
+        offset: musicNum(res.offset) ?? requested.offset ?? 0,
+    };
+}
+
+/** Build the `?limit=&offset=` query for a music listing, omitting unset values. */
+function musicPageQuery(params: MusicPageParams): Record<string, string> {
+    const query: Record<string, string> = {};
+    if (params.limit !== undefined) query['limit'] = String(params.limit);
+    if (params.offset !== undefined) query['offset'] = String(params.offset);
+    return query;
 }
 
 /** TMDB match type — series/season/episode resolve as `tv`, everything else `movie`. */
@@ -1024,16 +1113,28 @@ export class ApiClient {
     }
 
     /**
-     * List all music artists (`GET /api/v1/music/artists`). The server groups
-     * tracks by artist name across every music library and returns
-     * `{ artists: [...] }` in snake_case; each row is normalized to a camelCase
-     * {@link MusicArtist} (the display `name` doubles as the drill-down key).
-     * A malformed payload degrades to an empty array.
+     * List ONE PAGE of music artists (`GET /api/v1/music/artists`), newest server
+     * contract: `{ artists, total, limit, offset }` in snake_case, each row
+     * normalized to a camelCase {@link MusicArtist} (the display `name` doubles as
+     * the drill-down key). A malformed payload degrades to an empty page.
+     *
+     * ⚠ This is a PAGE, not the library. The endpoint clamps `?limit=` to
+     * {@link MUSIC_PAGE_SIZE}, so a caller that ignores `total` shows the first 100
+     * of 2,197 artists with no hint the rest exist — which is exactly the S110 bug
+     * this signature exists to make impossible to write by accident.
      */
-    async listArtists(signal?: AbortSignal): Promise<MusicArtist[]> {
-        const res = await this.get<{ artists?: unknown }>('/api/v1/music/artists', undefined, signal);
+    async listArtists(
+        params: MusicPageParams = {},
+        signal?: AbortSignal,
+    ): Promise<MusicArtistsPage> {
+        const query = musicPageQuery(params);
+        const res = await this.get<{ artists?: unknown; total?: unknown; limit?: unknown; offset?: unknown }>(
+            '/api/v1/music/artists',
+            Object.keys(query).length ? query : undefined,
+            signal,
+        );
         const raw = Array.isArray(res.artists) ? res.artists : [];
-        return raw.map(normalizeMusicArtist);
+        return { artists: raw.map(normalizeMusicArtist), ...musicPageMeta(res, raw.length, params) };
     }
 
     /**
@@ -1052,54 +1153,85 @@ export class ApiClient {
     }
 
     /**
-     * List albums (`GET /api/v1/music/albums`). The server returns every album
-     * across music libraries (no server-side artist filter), so when `artist`
-     * is supplied the list is filtered client-side by the album's `artist` name
-     * before normalizing. Each album carries its embedded (normalized) track
-     * list. A malformed payload degrades to an empty array.
+     * List ONE PAGE of albums (`GET /api/v1/music/albums`), optionally filtered to
+     * one artist SERVER-SIDE via `?artist=` (exact, case-insensitive, trimmed —
+     * S99). Returns `{ albums, total, limit, offset, artist }`; `total` and the
+     * `artist` echo both honour the filter. Each album carries its embedded
+     * (normalized) track list, capped and flagged — see
+     * {@link MusicAlbum.tracksTruncated}.
+     *
+     * ⚠ Do NOT filter by artist client-side over this page. `/albums` is ordered
+     * globally by artist then title, so its first 100 rows span only ~23 of the
+     * library's 2,197 artists: filtering page 1 in the browser made 77 of the 100
+     * visible artists drill down to an EMPTY album list (the S110 bug). The
+     * server-side filter is also ~140× cheaper (0.95 ms vs 134 ms, measured on
+     * production) because it resolves through `music_albums.idx_artist`.
      */
-    async listAlbums(artist?: string, signal?: AbortSignal): Promise<MusicAlbum[]> {
-        const res = await this.get<{ albums?: unknown }>('/api/v1/music/albums', undefined, signal);
+    async listAlbums(
+        params: MusicPageParams & { artist?: string } = {},
+        signal?: AbortSignal,
+    ): Promise<MusicAlbumsPage> {
+        const query = musicPageQuery(params);
+        if (params.artist !== undefined && params.artist !== '') {
+            query['artist'] = params.artist;
+        }
+        const res = await this.get<{
+            albums?: unknown; total?: unknown; limit?: unknown; offset?: unknown; artist?: unknown;
+        }>(
+            '/api/v1/music/albums',
+            Object.keys(query).length ? query : undefined,
+            signal,
+        );
         const raw = Array.isArray(res.albums) ? res.albums : [];
-        const filtered = artist === undefined || artist === ''
-            ? raw
-            : raw.filter(
-                (a) => musicStr((a && typeof a === 'object' ? a : {} as Record<string, unknown>)['artist']) === artist,
-            );
-        return filtered.map(normalizeMusicAlbum);
+        return {
+            albums: raw.map(normalizeMusicAlbum),
+            ...musicPageMeta(res, raw.length, params),
+            artist: musicStr(res.artist),
+        };
     }
 
     /**
-     * Fetch one album by name (`GET /api/v1/music/albums/{mbid}` — the server
-     * keys albums by name, so `mbid` here is the album name). Returns a
-     * normalized {@link MusicAlbum} with its embedded track list. A non-2xx
-     * (404 unknown album) throws the shared {@link ApiError}.
+     * Fetch one album by name (`GET /api/v1/music/albums/{mbid}` — the server keys
+     * albums by name, so `mbid` here is the album name), with the whole track list
+     * embedded (the detail route exempts itself from the list route's per-album
+     * track cap). Pass `artist` to disambiguate: 2,622 of production's 5,091 album
+     * titles are shared by more than one artist, while ZERO titles repeat WITHIN an
+     * artist — so `?artist=` makes this lookup exact instead of "first by artist
+     * name, then lowest id". A non-2xx (404 unknown album) throws {@link ApiError}.
      */
-    async getAlbum(mbid: string, signal?: AbortSignal): Promise<MusicAlbum> {
+    async getAlbum(mbid: string, artist?: string, signal?: AbortSignal): Promise<MusicAlbum> {
+        const params = artist !== undefined && artist !== '' ? { artist } : undefined;
         const res = await this.get<{ album?: unknown }>(
             `/api/v1/music/albums/${encodeURIComponent(mbid)}`,
-            undefined,
+            params,
             signal,
         );
         return normalizeMusicAlbum(res.album);
     }
 
     /**
-     * List tracks (`GET /api/v1/music/tracks`). The server returns formatted
-     * tracks across music libraries (no server-side album filter), so when
-     * `album` is supplied the list is filtered client-side by the track's
-     * `album` name before normalizing. Used as the fallback when an album has no
-     * embedded tracks. A malformed payload degrades to an empty array.
+     * List ONE PAGE of tracks (`GET /api/v1/music/tracks`) → `{ tracks, total,
+     * limit, offset }`, each row a formatted {@link MusicTrack} carrying a signed
+     * `stream_url`. A malformed payload degrades to an empty page.
+     *
+     * ⚠ There is deliberately no `album` argument. The endpoint has NO server-side
+     * album filter, and filtering a 100-row page of 29,245 tracks in the browser
+     * returns nothing for any album outside page 1 — the same defect as the album
+     * drill-down. Use {@link getAlbum} (which embeds the album's whole track list)
+     * to get one album's tracks.
      */
-    async listTracks(album?: string, signal?: AbortSignal): Promise<MusicTrack[]> {
-        const res = await this.get<{ tracks?: unknown }>('/api/v1/music/tracks', undefined, signal);
+    async listTracks(
+        params: MusicPageParams = {},
+        signal?: AbortSignal,
+    ): Promise<MusicTracksPage> {
+        const query = musicPageQuery(params);
+        const res = await this.get<{ tracks?: unknown; total?: unknown; limit?: unknown; offset?: unknown }>(
+            '/api/v1/music/tracks',
+            Object.keys(query).length ? query : undefined,
+            signal,
+        );
         const raw = Array.isArray(res.tracks) ? res.tracks : [];
-        const filtered = album === undefined || album === ''
-            ? raw
-            : raw.filter(
-                (t) => musicStr((t && typeof t === 'object' ? t : {} as Record<string, unknown>)['album']) === album,
-            );
-        return filtered.map(normalizeMusicTrack);
+        return { tracks: raw.map(normalizeMusicTrack), ...musicPageMeta(res, raw.length, params) };
     }
 
     /**

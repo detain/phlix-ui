@@ -13,16 +13,23 @@
  *
  * Data:
  *   - Artist info: `GET /api/v1/music/artists/{name}` via {@link ApiClient#getArtist}
- *   - Albums: `GET /api/v1/music/albums` filtered client-side by artist name
- *     (no server-side per-artist albums endpoint — mirrors {@link MusicLibraryPage})
+ *   - Albums: `GET /api/v1/music/albums?artist={name}&limit&offset` — filtered
+ *     SERVER-side (S99) and offset-paged (S110)
  * Clicking an album navigates to `/app/music/album/:name`.
+ *
+ * ⚠ This used to fetch page 1 of `/albums` and filter it client-side. `/albums` is
+ * ordered globally by artist then title and clamped to `MUSIC_PAGE_SIZE`, so page 1
+ * spans only ~23 of the library's 2,197 artists: any artist outside that window
+ * rendered an EMPTY album list. The `?artist=` filter is both correct and ~140×
+ * cheaper server-side (0.95 ms vs 134 ms, measured on production).
  */
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
-import { ApiClient } from '../api/client';
+import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
+import MusicPager from '../components/MusicPager.vue';
 import Icon from '../components/Icon.vue';
 import type { MusicArtist, MusicAlbum } from '../types/music';
 
@@ -41,29 +48,58 @@ const albums = ref<MusicAlbum[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
+// --- album paging (three production artists hold more than one page: 142/109/104) ---
+const albumTotal = ref(0);
+const albumLimit = ref(MUSIC_PAGE_SIZE);
+const albumOffset = ref(0);
+
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: apiBase.value });
 }
 
-async function loadArtist(): Promise<void> {
+async function loadArtist(offset = 0): Promise<void> {
     if (!props.name) return;
     loading.value = true;
     error.value = null;
     try {
-        // Fetch artist info and albums in parallel
-        const [artistData, allAlbums] = await Promise.all([
+        // Artist info and the artist's own album page, in parallel.
+        const [artistData, albumPage] = await Promise.all([
             getClient().getArtist(props.name),
-            getClient().listAlbums(),
+            getClient().listAlbums({ artist: props.name, limit: MUSIC_PAGE_SIZE, offset }),
         ]);
         artist.value = artistData;
-        // Filter albums client-side by artist name (mirrors MusicLibraryPage pattern)
-        albums.value = allAlbums.filter(
-            (a) => a.artist && a.artist.toLowerCase() === props.name.toLowerCase(),
-        );
+        albums.value = albumPage.albums;
+        albumTotal.value = albumPage.total;
+        albumLimit.value = albumPage.limit;
+        albumOffset.value = albumPage.offset;
     } catch {
         error.value = t('music.artistNotFound') ?? 'Artist not found';
         artist.value = null;
         albums.value = [];
+        albumTotal.value = 0;
+        albumOffset.value = offset;
+    } finally {
+        loading.value = false;
+    }
+}
+
+/** Load another album page for the same artist (no need to re-read artist info). */
+async function goToAlbumOffset(offset: number): Promise<void> {
+    if (offset === albumOffset.value) return;
+    loading.value = true;
+    try {
+        const page = await getClient().listAlbums({
+            artist: props.name,
+            limit: MUSIC_PAGE_SIZE,
+            offset,
+        });
+        albums.value = page.albums;
+        albumTotal.value = page.total;
+        albumLimit.value = page.limit;
+        albumOffset.value = page.offset;
+    } catch {
+        albums.value = [];
+        albumOffset.value = offset;
     } finally {
         loading.value = false;
     }
@@ -77,7 +113,16 @@ function goToAlbum(album: MusicAlbum): void {
     void router.push({ name: 'music-album', params: { name: album.title } });
 }
 
-// Total track count across all albums
+/**
+ * Album count for the header — the server's filtered `total`, falling back to the
+ * artist row's own `album_count`. Never `albums.length`, which is one page.
+ */
+const albumCount = computed(() => albumTotal.value || artist.value?.albumCount || 0);
+
+/**
+ * Track count across the albums on THIS page. Labelled as such in the template,
+ * because an artist with more than one page of albums has more tracks than this.
+ */
 const totalTracks = computed(() => {
     return albums.value.reduce((sum, a) => sum + (a.totalTracks ?? 0), 0);
 });
@@ -138,7 +183,7 @@ const totalTracks = computed(() => {
                 <div class="artist-header__info">
                     <h1 class="artist-header__name">{{ artist.name }}</h1>
                     <p class="artist-header__meta">
-                        <span>{{ albums.length }} {{ albums.length === 1 ? 'album' : 'albums' }}</span>
+                        <span data-count="albums">{{ albumCount }} {{ albumCount === 1 ? 'album' : 'albums' }}</span>
                         <span v-if="totalTracks > 0"> · {{ totalTracks }} tracks</span>
                     </p>
                 </div>
@@ -159,6 +204,14 @@ const totalTracks = computed(() => {
                         @click="goToAlbum"
                     />
                 </div>
+                <MusicPager
+                    :offset="albumOffset"
+                    :limit="albumLimit"
+                    :total="albumTotal"
+                    :disabled="loading"
+                    :label="t('music.albums')"
+                    @go="goToAlbumOffset"
+                />
             </section>
         </template>
 

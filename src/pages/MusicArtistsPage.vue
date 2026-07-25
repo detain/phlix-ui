@@ -11,15 +11,20 @@
  * which is reached either from the music library drill-down or by redirecting
  * the legacy server-rendered `/music/artists` route to the SPA.
  *
- * Data: `GET /api/v1/music/artists` via {@link ApiClient#listArtists}.
+ * Data: `GET /api/v1/music/artists?limit&offset` via {@link ApiClient#listArtists}.
  * Clicking an artist navigates to `/app/music/artist/{name}`.
+ *
+ * The endpoint serves a bounded page (`?limit=` clamped to `MUSIC_PAGE_SIZE`), so
+ * this listing is offset-paged and shows the server's TRUE `total` (S110). Without
+ * that, a 2,197-artist library looked like a 100-artist library.
  */
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
-import { ApiClient } from '../api/client';
+import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import Icon from '../components/Icon.vue';
+import MusicPager from '../components/MusicPager.vue';
 import type { MusicArtist } from '../types/music';
 
 const { t } = useMessages();
@@ -31,26 +36,49 @@ const artists = ref<MusicArtist[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
+// --- paging (server-reported; it clamps `limit`) ---
+const total = ref(0);
+const limit = ref(MUSIC_PAGE_SIZE);
+const offset = ref(0);
+
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: apiBase.value });
 }
 
-async function loadArtists(): Promise<void> {
+async function loadArtists(nextOffset: number): Promise<void> {
     loading.value = true;
     error.value = null;
     try {
-        artists.value = await getClient().listArtists();
+        const page = await getClient().listArtists({ limit: MUSIC_PAGE_SIZE, offset: nextOffset });
+        artists.value = page.artists;
+        total.value = page.total;
+        limit.value = page.limit;
+        offset.value = page.offset;
     } catch {
         error.value = t('music.artistsNotFound') ?? 'Could not load artists';
         artists.value = [];
+        total.value = 0;
+        offset.value = nextOffset;
     } finally {
         loading.value = false;
     }
 }
 
 onMounted(() => {
-    void loadArtists();
+    void loadArtists(0);
 });
+
+/** "2,197 artists" — the DB count, not the length of this page. */
+const totalLabel = computed(() =>
+    total.value === 1
+        ? t('music.artistsTotalOne')
+        : t('music.artistsTotal', { count: total.value.toLocaleString() }),
+);
+
+async function goToOffset(next: number): Promise<void> {
+    if (next === offset.value) return;
+    await loadArtists(next);
+}
 
 function goToArtist(artist: MusicArtist): void {
     void router.push({ name: 'music-artist', params: { name: artist.name } });
@@ -64,6 +92,9 @@ function goToArtist(artist: MusicArtist): void {
             <h1 class="artists-page__title">{{ t('music.artists') }}</h1>
             <p class="artists-page__description">
                 {{ t('music.artistsDescription') ?? 'Browse your music collection by artist' }}
+            </p>
+            <p v-if="total > 0" class="artists-page__count" data-count="artists" role="status">
+                {{ totalLabel }}
             </p>
         </header>
 
@@ -119,6 +150,18 @@ function goToArtist(artist: MusicArtist): void {
                 </div>
             </button>
         </div>
+
+        <!-- Pager: sits OUTSIDE the grid's v-if chain so it survives a page that
+             comes back empty (e.g. an offset past the end) and can still go back. -->
+        <MusicPager
+            v-if="!error"
+            :offset="offset"
+            :limit="limit"
+            :total="total"
+            :disabled="loading"
+            :label="t('music.artists')"
+            @go="goToOffset"
+        />
     </div>
 </template>
 
@@ -127,6 +170,13 @@ function goToArtist(artist: MusicArtist): void {
     padding: var(--space-6, 24px) var(--space-4, 16px) var(--space-16, 64px);
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.artists-page__count {
+    margin-top: var(--space-2, 8px);
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--text-muted, #a1a1aa);
+    font-variant-numeric: tabular-nums;
 }
 
 /* Header */

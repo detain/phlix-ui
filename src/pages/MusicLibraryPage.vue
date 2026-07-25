@@ -9,9 +9,22 @@
  *
  * The three-panel drill-down (artist grid → album list → track list) loads real
  * data from the server music API via {@link ApiClient}:
- *   - artists  → `GET /api/v1/music/artists`   (on mount)
- *   - albums   → `GET /api/v1/music/albums`    (on artist select, filtered by artist)
- *   - tracks   → embedded in the album (fast-path), else `GET /api/v1/music/tracks`
+ *   - artists  → `GET /api/v1/music/artists?limit&offset`
+ *   - albums   → `GET /api/v1/music/albums?artist&limit&offset` (SERVER-side filter)
+ *   - tracks   → embedded in the album row, else/also `GET /api/v1/music/albums/{title}?artist=`
+ *
+ * **Paging (S110) is not cosmetic — it is the only way to see the library.** The
+ * music endpoints serve bounded pages (`?limit=` clamped to `MUSIC_PAGE_SIZE`) and
+ * return the TRUE `total`. This page previously fired one unparameterised
+ * `listArtists()` and rendered a bare `v-for`, so on a 2,197-artist library the
+ * user reached exactly 100 artists with nothing on screen suggesting the other
+ * 2,097 existed. Both listings are now offset-paged with a {@link MusicPager} and
+ * both show the server's `total`.
+ *
+ * The album drill-down asks the SERVER to filter by artist. It used to fetch page 1
+ * of `/albums` and filter client-side — and because `/albums` is ordered globally
+ * by artist then title, page 1 spans only ~23 artists, so 77 of the 100 visible
+ * artists drilled down to an EMPTY album list.
  *
  * Playback (crossfade / gapless via {@link useMusicPlayer}) is wired here: the
  * track objects from the server carry a signed `stream_url` (UI-3.6 / X8), which
@@ -23,10 +36,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useMusicPlayer } from '../composables/useMusicPlayer';
-import { ApiClient } from '../api/client';
+import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import MusicArtistCard from '../components/MusicArtistCard.vue';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
 import MusicTrackList from '../components/MusicTrackList.vue';
+import MusicPager from '../components/MusicPager.vue';
 import Icon from '../components/Icon.vue';
 import type { MusicArtist, MusicAlbum, MusicTrack } from '../types/music';
 
@@ -41,6 +55,16 @@ const artists = ref<MusicArtist[]>([]);
 const albums = ref<MusicAlbum[]>([]);
 const tracks = ref<MusicTrack[]>([]);
 const loading = ref(false);
+
+// --- paging state: one page of artists, one page of the selected artist's albums.
+// `total`/`limit` come back from the server (it clamps `limit`), so the pager and
+// the header count reflect the DB rather than what this page happens to hold.
+const artistTotal = ref(0);
+const artistLimit = ref(MUSIC_PAGE_SIZE);
+const artistOffset = ref(0);
+const albumTotal = ref(0);
+const albumLimit = ref(MUSIC_PAGE_SIZE);
+const albumOffset = ref(0);
 
 const { t } = useMessages();
 const apiBase = useMediaApiBase();
@@ -65,15 +89,55 @@ function getClient(): ApiClient {
   return new ApiClient({ baseUrl: apiBase.value });
 }
 
-onMounted(async () => {
+/**
+ * Load one page of artists. `offset` is passed explicitly (never derived inside)
+ * so a failed page cannot leave the pager pointing at rows that were never shown.
+ */
+async function loadArtists(offset: number): Promise<void> {
   loading.value = true;
   try {
-    artists.value = await getClient().listArtists();
+    const page = await getClient().listArtists({ limit: MUSIC_PAGE_SIZE, offset });
+    artists.value = page.artists;
+    artistTotal.value = page.total;
+    artistLimit.value = page.limit;
+    artistOffset.value = page.offset;
   } catch {
     artists.value = [];
+    artistTotal.value = 0;
+    artistOffset.value = offset;
   } finally {
     loading.value = false;
   }
+}
+
+/**
+ * Load one page of ONE artist's albums, filtered SERVER-side. Three artists on the
+ * production library hold more than a full page of albums (142 / 109 / 104), so
+ * this listing needs its own pager for those albums to be reachable at all.
+ */
+async function loadAlbums(artist: MusicArtist, offset: number): Promise<void> {
+  loading.value = true;
+  try {
+    const page = await getClient().listAlbums({
+      artist: artist.name,
+      limit: MUSIC_PAGE_SIZE,
+      offset,
+    });
+    albums.value = page.albums;
+    albumTotal.value = page.total;
+    albumLimit.value = page.limit;
+    albumOffset.value = page.offset;
+  } catch {
+    albums.value = [];
+    albumTotal.value = 0;
+    albumOffset.value = offset;
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(async () => {
+  await loadArtists(0);
 });
 
 const viewTitle = computed(() => {
@@ -83,40 +147,67 @@ const viewTitle = computed(() => {
   return t('music.title');
 });
 
+/** "2,197 artists" / "1 artist" — the DB count, not `artists.length`. */
+const artistTotalLabel = computed(() =>
+  artistTotal.value === 1
+    ? t('music.artistsTotalOne')
+    : t('music.artistsTotal', { count: artistTotal.value.toLocaleString() }),
+);
+
+/** "142 albums" for the selected artist — again the server's filtered `total`. */
+const albumTotalLabel = computed(() =>
+  albumTotal.value === 1
+    ? t('music.albumsTotalOne')
+    : t('music.albumsTotal', { count: albumTotal.value.toLocaleString() }),
+);
+
 async function selectArtist(artist: MusicArtist): Promise<void> {
   selectedArtist.value = artist;
   selectedAlbum.value = null;
   albums.value = [];
   tracks.value = [];
+  albumTotal.value = 0;
+  albumOffset.value = 0;
   view.value = 'albums';
-  loading.value = true;
-  try {
-    // Server has no per-artist albums route; listAlbums filters client-side by
-    // artist name (the artist has no PK — `name` is the identity).
-    albums.value = await getClient().listAlbums(artist.name);
-  } catch {
-    albums.value = [];
-  } finally {
-    loading.value = false;
-  }
+  await loadAlbums(artist, 0);
+}
+
+/** Pager handler for the artists grid. */
+async function goToArtistOffset(offset: number): Promise<void> {
+  if (offset === artistOffset.value) return;
+  await loadArtists(offset);
+}
+
+/** Pager handler for the selected artist's album list. */
+async function goToAlbumOffset(offset: number): Promise<void> {
+  const artist = selectedArtist.value;
+  if (!artist || offset === albumOffset.value) return;
+  await loadAlbums(artist, offset);
 }
 
 async function selectAlbum(album: MusicAlbum): Promise<void> {
   selectedAlbum.value = album;
   view.value = 'tracks';
-  // Fast-path: albums from listAlbums carry their embedded track list, so no
-  // extra fetch is needed. Fall back to the tracks endpoint only if empty.
+  // Fast-path: an album LIST row carries its embedded track list, so no extra
+  // fetch is needed — unless the server flagged that list as a truncated prefix
+  // (`tracks_truncated`, S99: 100 tracks max per album on a list row) or sent
+  // none at all. The album DETAIL route is exempt from that cap and returns the
+  // whole thing; `artist` disambiguates a title shared by several artists (2,622
+  // of production's 5,091 album titles are). Note what is NOT used here: the
+  // `/tracks` listing, which has no album filter and would return nothing for any
+  // album outside its own first page.
   const embedded = album.tracks ?? [];
-  if (embedded.length > 0) {
+  if (embedded.length > 0 && album.tracksTruncated !== true) {
     tracks.value = embedded;
     return;
   }
-  tracks.value = [];
+  tracks.value = embedded;
   loading.value = true;
   try {
-    tracks.value = await getClient().listTracks(album.title);
+    const full = await getClient().getAlbum(album.title, album.artist ?? selectedArtist.value?.name);
+    if (full.tracks && full.tracks.length > 0) tracks.value = full.tracks;
   } catch {
-    tracks.value = [];
+    // Keep whatever prefix the list row gave us rather than blanking the view.
   } finally {
     loading.value = false;
   }
@@ -150,15 +241,27 @@ function onSeek(event: Event): void {
   player.seek(value);
 }
 
+/**
+ * Return to the artists grid, dropping the album page state with it. The artist
+ * page (offset/total) is deliberately KEPT, so coming back from an artist on page
+ * 14 does not dump the user back at page 1.
+ */
+function goToArtists(): void {
+  view.value = 'artists';
+  selectedArtist.value = null;
+  selectedAlbum.value = null;
+  albums.value = [];
+  albumTotal.value = 0;
+  albumOffset.value = 0;
+}
+
 function goBack(): void {
   if (view.value === 'tracks') {
     view.value = 'albums';
     selectedAlbum.value = null;
     tracks.value = [];
   } else if (view.value === 'albums') {
-    view.value = 'artists';
-    selectedArtist.value = null;
-    albums.value = [];
+    goToArtists();
   }
 }
 </script>
@@ -178,7 +281,7 @@ function goBack(): void {
           <Icon name="arrow-left" class="music-page__back-icon" />
         </button>
         <nav v-if="view !== 'artists'" class="music-page__crumb-nav" aria-label="Breadcrumb">
-          <button type="button" class="music-page__crumb" @click="view = 'artists'; selectedArtist = null; albums = []">
+          <button type="button" class="music-page__crumb" @click="goToArtists">
             {{ t('music.artists') }}
           </button>
           <Icon name="chevron-right" class="music-page__crumb-sep" />
@@ -186,6 +289,14 @@ function goBack(): void {
         </nav>
       </div>
       <h1 class="music-page__title">{{ viewTitle }}</h1>
+      <!-- The TRUE library size, straight from the endpoint's `total`. Without it
+           a 100-row page is indistinguishable from a 100-artist library. -->
+      <p v-if="view === 'artists'" class="music-page__count" data-count="artists" role="status">
+        {{ artistTotalLabel }}
+      </p>
+      <p v-else-if="view === 'albums'" class="music-page__count" data-count="albums" role="status">
+        {{ albumTotalLabel }}
+      </p>
     </header>
 
     <!-- Artists grid -->
@@ -209,6 +320,16 @@ function goBack(): void {
           @click="selectArtist"
         />
       </template>
+      <MusicPager
+        class="music-page__pager"
+        data-pager="artists"
+        :offset="artistOffset"
+        :limit="artistLimit"
+        :total="artistTotal"
+        :disabled="loading"
+        :label="t('music.artists')"
+        @go="goToArtistOffset"
+      />
     </div>
 
     <!-- Albums list -->
@@ -232,6 +353,16 @@ function goBack(): void {
           @click="selectAlbum"
         />
       </template>
+      <MusicPager
+        class="music-page__pager"
+        data-pager="albums"
+        :offset="albumOffset"
+        :limit="albumLimit"
+        :total="albumTotal"
+        :disabled="loading"
+        :label="t('music.albums')"
+        @go="goToAlbumOffset"
+      />
     </div>
 
     <!-- Tracks list -->
@@ -371,12 +502,24 @@ function goBack(): void {
   letter-spacing: var(--tracking-tight, -0.02em);
   color: var(--text, #e4e4e7);
 }
+.music-page__count {
+  margin-top: var(--space-1, 4px);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-muted, #a1a1aa);
+  font-variant-numeric: tabular-nums;
+}
 
 /* Grid */
 .music-page__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--space-5, 20px);
+}
+
+/* The pager is a grid child, so it must span every column (it also sets this
+   itself — kept here so the page's own grid cannot squash it into one cell). */
+.music-page__pager {
+  grid-column: 1 / -1;
 }
 
 /* Loading skeletons */

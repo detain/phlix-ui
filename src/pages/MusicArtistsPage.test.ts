@@ -42,6 +42,29 @@ function stubFetch(opts: { artists?: ServerArtist[]; error?: boolean; hang?: boo
   return fn;
 }
 
+/**
+ * A paging server (S110): `/artists` is a BOUNDED page — it honours `?limit=`/
+ * `?offset=` and reports the true `total`, exactly like the real endpoint. Against
+ * this, a page that sends no paging params can only ever show its first slice.
+ */
+function stubPagingFetch(totalArtists: number) {
+  const calls: string[] = [];
+  const fn = vi.fn((url: unknown) => {
+    const u = typeof url === 'string' ? url : '';
+    calls.push(u);
+    const parsed = new URL(u, 'http://server.test');
+    const limit = Math.min(100, Number(parsed.searchParams.get('limit') ?? 100));
+    const offset = Math.max(0, Number(parsed.searchParams.get('offset') ?? 0));
+    const artists: ServerArtist[] = [];
+    for (let i = offset + 1; i <= Math.min(totalArtists, offset + limit); i += 1) {
+      artists.push({ name: `Artist ${String(i).padStart(4, '0')}`, album_count: 2 });
+    }
+    return Promise.resolve(jsonResponse({ artists, total: totalArtists, limit, offset }));
+  });
+  vi.stubGlobal('fetch', fn);
+  return { fn, calls };
+}
+
 const stub = { template: '<div />' };
 function makeRouter(): Router {
   return createRouter({
@@ -58,6 +81,8 @@ function mountPage(router: Router): VueWrapper {
     global: {
       plugins: [router],
       provide: { apiBase: '' },
+      // MusicPager is deliberately NOT stubbed: the paging tests below exercise
+      // the real control, which is the thing that makes the library reachable.
       stubs: { Icon: { props: ['name'], template: '<span class="icon" :data-icon="name" />' } },
     },
   });
@@ -116,5 +141,60 @@ describe('MusicArtistsPage', () => {
     await w.find('.artist-card').trigger('click');
     expect(push).toHaveBeenCalledWith({ name: 'music-artist', params: { name: 'Aphex Twin' } });
     w.unmount();
+  });
+
+  // ---- S110: paging + the true count -------------------------------------
+  describe('paging (S110)', () => {
+    it('requests a bounded page and shows the DB total, not the page length', async () => {
+      const { calls } = stubPagingFetch(2197);
+      const w = mountPage(makeRouter());
+      await flushPromises();
+
+      expect(calls[0]).toBe('/api/v1/music/artists?limit=100&offset=0');
+      expect(w.findAll('.artist-card')).toHaveLength(100);
+      expect(w.find('[data-count="artists"]').text()).toBe('2,197 artists');
+      expect(w.find('[data-nav="info"]').text()).toContain('Page 1 of 22');
+      w.unmount();
+    });
+
+    it('reaches the last artist of a 2,197-artist library', async () => {
+      const { calls } = stubPagingFetch(2197);
+      const w = mountPage(makeRouter());
+      await flushPromises();
+
+      await w.find('[data-nav="last"]').trigger('click');
+      await flushPromises();
+
+      expect(calls).toContain('/api/v1/music/artists?limit=100&offset=2100');
+      const cards = w.findAll('.artist-card');
+      expect(cards).toHaveLength(97);
+      expect(cards[96]!.text()).toContain('Artist 2197');
+      w.unmount();
+    });
+
+    it('renders no pager when the whole library fits on one page', async () => {
+      stubPagingFetch(9);
+      const w = mountPage(makeRouter());
+      await flushPromises();
+      expect(w.find('.music-pager').exists()).toBe(false);
+      expect(w.find('[data-count="artists"]').text()).toBe('9 artists');
+      w.unmount();
+    });
+
+    it('keeps the pager reachable after a failed page so the user is not stranded', async () => {
+      stubPagingFetch(2197);
+      const w = mountPage(makeRouter());
+      await flushPromises();
+      // Page 2 fails.
+      vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('down'))));
+      await w.find('[data-nav="next"]').trigger('click');
+      await flushPromises();
+
+      expect(w.find('.artists-page__error').exists()).toBe(true);
+      // The error state hides the pager (it is the whole listing that failed), and
+      // the count resets rather than lying about a library we no longer have.
+      expect(w.find('.music-pager').exists()).toBe(false);
+      w.unmount();
+    });
   });
 });
