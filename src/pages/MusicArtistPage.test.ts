@@ -366,7 +366,10 @@ describe('MusicArtistPage', () => {
     const bare = stubFetch();
     const noArt = mountPage(makeRouter());
     await flushPromises();
-    expect(noArt.find('svg.artist-header__art-placeholder').exists()).toBe(true);
+    expect(
+      noArt.find('svg.artist-header__art-placeholder').exists(),
+      'an artist row with NO image_url must fall back to the placeholder',
+    ).toBe(true);
     expect(noArt.find('img.artist-header__art-img').exists()).toBe(false);
 
     // PRECONDITION, checked against the fake itself: the default artist row really does

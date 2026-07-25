@@ -105,7 +105,10 @@ describe('MusicAlbumCard track count', () => {
     ).toBe(false);
 
     const noArt = mountCard(album({ albumArtUrl: null }));
-    expect(noArt.find('.album-card__placeholder').exists()).toBe(true);
+    expect(
+      noArt.find('.album-card__placeholder').exists(),
+      'an album with NO art must fall back to the placeholder',
+    ).toBe(true);
     expect(
       noArt.find('.album-card__placeholder [data-icon="image"]').exists(),
       'the placeholder really is the icon block, not an empty div',
