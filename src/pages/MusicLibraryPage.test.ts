@@ -216,7 +216,8 @@ function albumListRow(album: FakeAlbum): Record<string, unknown> {
 }
 
 interface FakeServer {
-  fetch: ReturnType<typeof vi.fn>;
+  /** Call the fake endpoint directly — used to show what the OLD code fetched. */
+  request: (url: string) => Promise<Response>;
   /** Every requested URL, in order. */
   urls: () => string[];
   /** URLs for one endpoint prefix. */
@@ -300,7 +301,7 @@ function stubMusicServer(library: FakeLibrary): FakeServer {
   });
   vi.stubGlobal('fetch', fetchFn);
   return {
-    fetch: fetchFn,
+    request: fetchFn as unknown as (url: string) => Promise<Response>,
     urls: () => [...calls],
     urlsFor: (prefix: string) => calls.filter((u) => u.startsWith(prefix)),
     library,
@@ -692,9 +693,7 @@ describe('MusicLibraryPage', () => {
       await flushPromises();
 
       // What the old code fetched: the first unfiltered album page.
-      const res = await (globalThis.fetch as unknown as (u: string) => Promise<Response>)(
-        '/api/v1/music/albums?limit=100&offset=0',
-      );
+      const res = await server.request('/api/v1/music/albums?limit=100&offset=0');
       const body = (await res.json()) as { albums: { artist: string }[] };
       const spanned = new Set(body.albums.map((a) => a.artist));
 
@@ -709,7 +708,6 @@ describe('MusicLibraryPage', () => {
       // ⇒ 99 of the 100 visible artists would drill down EMPTY with the old
       // client-side filter. That is the defect, reproduced.
       expect(resolvableByClientFilter.length).toBeLessThan(5);
-      void server;
       wrapper.unmount();
     });
 
@@ -726,25 +724,33 @@ describe('MusicLibraryPage', () => {
       const count = wrapper.findAll('.artist-card').length;
       expect(count).toBe(97);
 
-      let emptyDrillDowns = 0;
+      // Collected, then asserted in aggregate: a per-iteration expect would report
+      // "expected 0 to be 2" for artist #2101 and say nothing about the other 96.
+      const results: { name: string; albums: string[]; countText: string }[] = [];
       for (let i = 0; i < count; i += 1) {
         const cards = wrapper.findAll('.artist-card');
         const name = cards[i]!.text();
         await cards[i]!.trigger('click');
         await flushPromises();
-
-        const albums = wrapper.findAll('.album-card').map((c) => c.text());
-        if (albums.length === 0) emptyDrillDowns += 1;
-        // Right albums, not just some albums: every title belongs to this artist.
-        expect(albums.every((title) => title.startsWith(name))).toBe(true);
-        expect(wrapper.find('[data-count="albums"]').text()).toBe('2 albums');
-
+        results.push({
+          name,
+          albums: wrapper.findAll('.album-card').map((c) => c.text()),
+          countText: wrapper.find('[data-count="albums"]').text(),
+        });
         await wrapper.find('.music-page__crumb').trigger('click');
         await flushPromises();
       }
 
-      // 0 empty, where the old client-side filter gave 97 empty.
-      expect(emptyDrillDowns).toBe(0);
+      // THE defect: with the old client-side filter every one of these 97 came
+      // back empty. The failure diff names them, so a regression is unmistakable.
+      expect(results.filter((r) => r.albums.length === 0).map((r) => r.name)).toEqual([]);
+      // Right albums, not just some albums: each artist has exactly its own two.
+      expect(results.filter((r) => r.albums.length !== 2).map((r) => r.name)).toEqual([]);
+      expect(
+        results.filter((r) => !r.albums.every((t) => t.startsWith(r.name))).map((r) => r.name),
+      ).toEqual([]);
+      // And the count shown is the artist's, not the whole library's.
+      expect([...new Set(results.map((r) => r.countText))]).toEqual(['2 albums']);
       // One filtered album request per artist, each naming that artist.
       expect(server.urlsFor('/api/v1/music/albums')).toHaveLength(97);
       expect(server.urlsFor('/api/v1/music/albums').every((u) => u.includes('artist='))).toBe(true);

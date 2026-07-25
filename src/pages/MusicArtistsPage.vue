@@ -151,8 +151,10 @@ function goToArtist(artist: MusicArtist): void {
             </button>
         </div>
 
-        <!-- Pager: sits OUTSIDE the grid's v-if chain so it survives a page that
-             comes back empty (e.g. an offset past the end) and can still go back. -->
+        <!-- Pager: OUTSIDE the grid's v-if chain, so a page that legitimately comes
+             back empty (an offset past the end) is still navigable. A FAILED page is
+             different — `loadArtists` clears `total` there, so this renders nothing
+             rather than paging a listing we no longer have. -->
         <MusicPager
             v-if="!error"
             :offset="offset"

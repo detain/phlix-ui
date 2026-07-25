@@ -181,19 +181,23 @@ describe('MusicArtistsPage', () => {
       w.unmount();
     });
 
-    it('keeps the pager reachable after a failed page so the user is not stranded', async () => {
+    it('surfaces the error and stops claiming a count when a page fails', async () => {
       stubPagingFetch(2197);
       const w = mountPage(makeRouter());
       await flushPromises();
+      expect(w.find('[data-count="artists"]').text()).toBe('2,197 artists');
+
       // Page 2 fails.
       vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('down'))));
       await w.find('[data-nav="next"]').trigger('click');
       await flushPromises();
 
       expect(w.find('.artists-page__error').exists()).toBe(true);
-      // The error state hides the pager (it is the whole listing that failed), and
-      // the count resets rather than lying about a library we no longer have.
+      // No pager and no count: both would be claims about a listing we no longer
+      // have. (The alternative — keeping the old total beside an error — would
+      // page a grid that is not on screen.)
       expect(w.find('.music-pager').exists()).toBe(false);
+      expect(w.find('[data-count="artists"]').exists()).toBe(false);
       w.unmount();
     });
   });
