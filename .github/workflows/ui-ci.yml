@@ -1,25 +1,29 @@
-# @phlix/ui — CI (READY-TO-ENABLE ARTIFACT, currently dormant)
+# @phlix/ui — CI
 #
-# R6.4 ships this workflow as an artifact rather than a live gate because there is no
-# CI runner wired to this repo today. It runs only on manual dispatch. To make it a
-# live PR gate:
-#   1. Uncomment the `pull_request` / `push` triggers below.
-#   2. In branch protection, mark the `test` job a required check (it is deterministic).
-#   3. For the `visual` job, first run it once on the runner and commit the regenerated
-#      `-linux` baselines (`npm run test:visual:update`) — GitHub's hosted Ubuntu image
-#      may rasterize fonts slightly differently from a dev box — THEN mark it required.
-#      Until then it is informational (uploads a diff report artifact, never blocks).
+# The `test` job is a LIVE gate: it runs on every push to master and on pull requests.
+# Enabled 2026-07-26 after verifying the whole deterministic gate green on
+# master @ eca7a725 — typecheck exit 0, lint exit 0, and test:run
+# `Test Files 214 passed (214) / Tests 3975 passed | 9 skipped (3984)`.
+#
+# The `visual` job stays MANUAL-ONLY (`if: github.event_name == 'workflow_dispatch'`).
+# It must not run on push/PR until its `-linux` baselines have been regenerated on the
+# runner and committed (`npm run test:visual:update`) — GitHub's hosted Ubuntu image
+# rasterizes fonts differently from a dev box, so on-push it would produce nothing but
+# font-drift noise. To promote it: regenerate + commit the baselines, drop the `if:`
+# guard, then drop `continue-on-error`.
+#
+# In branch protection, mark `test` a required check — it is deterministic.
 name: ui-ci
 
 on:
   workflow_dispatch:
-  # pull_request:
-  #   branches: [master]
-  # push:
-  #   branches: [master]
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
 
 jobs:
-  # Deterministic gate: build + typecheck + the full vitest suite. Safe to mark required.
+  # Deterministic gate: typecheck + lint + build + the full vitest suite. Safe to mark required.
   test:
     runs-on: ubuntu-latest
     steps:
@@ -30,6 +34,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm run build
       - run: npm run test:run
 
@@ -37,8 +42,12 @@ jobs:
   # bundles, so it matches the committed baselines when they are regenerated on-runner.
   visual:
     runs-on: ubuntu-latest
-    # Informational until on-runner baselines are regenerated + committed (see header):
-    # a font-rasterization drift on the hosted Ubuntu image must not fail the workflow.
+    # MANUAL ONLY. The `-linux` baselines have not been regenerated on the runner yet, so
+    # on push/PR this job would report font-rasterization drift rather than real regressions.
+    # Removing this guard without first committing on-runner baselines will flood every PR.
+    if: github.event_name == 'workflow_dispatch'
+    # Informational even on dispatch (see header): a font-rasterization drift on the hosted
+    # Ubuntu image must not fail the workflow.
     # Flip this off once the visual job is a stable required check.
     continue-on-error: true
     steps:
