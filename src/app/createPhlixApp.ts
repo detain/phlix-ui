@@ -29,6 +29,7 @@ import { applyStoredThemeEarly } from '../composables/useTheme';
 import { installFocusable } from '../directives/focusable';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { useServerStore } from '../stores/useServerStore';
 import { useConnectionStore } from '../stores/useConnectionStore';
 import { setAppName, setPageTitle } from '../composables/usePageTitle';
@@ -107,6 +108,63 @@ export function connectGuard(
         return true;
     }
     return { name: 'connect', query: to.fullPath ? { redirect: to.fullPath } : {} };
+}
+
+/** Route name of the generic per-library grid (`/app/library/:id`). */
+const LIBRARY_ROUTE_NAME = 'library';
+/** Route name of the dedicated music surface (`/app/music`). */
+const MUSIC_ROUTE_NAME = 'music';
+/** The `libraries.type` ENUM member the server uses for a music library. */
+const MUSIC_LIBRARY_TYPE = 'music';
+
+/**
+ * S97 — a library whose `type` is `music` must NOT render the generic
+ * per-library grid; it belongs on the dedicated music surface (`/app/music`).
+ *
+ * Why: `/app/library/:id` lists `media_items` flat, so a music library dumps
+ * `artist` + `album` + `track` rows into one grid, sorted by a JSON path that is
+ * NULL for all of them. `/app/music` reads the `music_*` tables directly (the
+ * authoritative hierarchy per S97's option-B verdict) and already pages
+ * artists/albums/tracks, so sending music libraries there leaves exactly ONE
+ * music browse surface to keep in sync rather than two.
+ *
+ * Pure (the resolved type and the route-table fact are passed in) so it unit
+ * tests without a live router/store. Returns the redirect location, or `null`
+ * meaning "fall through to the EXISTING behaviour" — which is what an unknown,
+ * not-yet-loaded or failed type lookup must do, so a lookup failure can never
+ * produce a blank page.
+ *
+ * Loop safety is asserted here rather than left to construction: the guard fires
+ * ONLY on the `library` route and never on its own destination (`music`), so the
+ * redirect cannot re-enter itself. Both halves are pinned by tests.
+ *
+ * `hasMusicRoute` lets the caller pass `router.hasRoute('music')`: a consumer
+ * that rebuilt/pruned the route table without the music page keeps the generic
+ * grid instead of being pushed at a route that does not exist.
+ *
+ * Scope: today the server has a single music library, so the global `/app/music`
+ * loses no scoping in practice. If a second one is ever added, this is where a
+ * per-library music surface would be selected.
+ */
+export function musicLibraryRedirect(
+    to: RouteLocationNormalized,
+    libraryType: string | null | undefined,
+    hasMusicRoute = true,
+): RouteLocationRaw | null {
+    // Loop guard: never bounce the destination of this very redirect.
+    if (to.name === MUSIC_ROUTE_NAME) {
+        return null;
+    }
+    if (to.name !== LIBRARY_ROUTE_NAME) {
+        return null;
+    }
+    if (!hasMusicRoute) {
+        return null;
+    }
+    if (libraryType !== MUSIC_LIBRARY_TYPE) {
+        return null;
+    }
+    return { name: MUSIC_ROUTE_NAME };
 }
 
 /**
@@ -412,6 +470,77 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     /** The app's own API base: the runtime connection if set, else the seeded config base. */
     const effectiveBase = (): string => connection.apiBase || fullConfig.apiBase;
 
+    // The base for MEDIA browsing (libraries/media/detail/player). On the media
+    // server it is just the app's own base. On the hub it is the relay-proxy base
+    // for the currently selected server — `/api/v1/servers/{id}/proxy` — so the
+    // shared Browse/library/detail pages fetch that paired server's API over the
+    // reverse tunnel (the proxy validates the user's Bearer + ownership, strips it,
+    // and the server trusts the tunnel). It is a COMPUTED tracking useServerStore,
+    // so picking a different server on My Servers re-points every media fetch
+    // reactively. The host's own endpoints (auth/`/me`/admin) stay on `apiBase`.
+    // Declared BEFORE `beforeEach` because the music-library gate below resolves
+    // the library list against this same media base (a hub must ask the paired
+    // server, not itself, what type a library is).
+    const serverStore = useServerStore(pinia);
+    const mediaApiBase = computed(() =>
+        mediaApiBaseFor(fullConfig.app, effectiveBase(), serverStore.currentServerId),
+    );
+
+    // The base the player streams media BYTES from directly (bypassing the proxy):
+    // on the hub it is the selected server's own public origin, so a `<video>` plays
+    // the paired server's stream straight from the server with native Range; '' on
+    // the media server (the page origin serves the bytes) or with no server selected.
+    const mediaDirectBase = computed(() =>
+        mediaDirectBaseFor(fullConfig.app, serverStore.currentServerUrl),
+    );
+
+    /**
+     * S97 — route a MUSIC library to `/app/music` instead of the generic grid.
+     * Runs INSIDE `beforeEach` (never on the page), so the wrong grid is never
+     * painted and bounced; a visible flash of a flat artist+album+track dump is
+     * the outcome this exists to prevent.
+     *
+     * The library `type` is not known synchronously on a deep link, so the list
+     * is loaded first. `useLibrariesStore.load()` is idempotent and dedupes an
+     * in-flight call, and `LibraryPage` loads the very same list on mount, so on
+     * the SUCCESS path this adds at most ONE round trip per session, not one per
+     * navigation: `loaded` latches true and every later gate run is a no-op.
+     *
+     * ⚠ On the FAILURE path the cost claim above does NOT hold. `load()` records
+     * `error` and leaves `loaded` false, so while `/api/v1/libraries` is erroring
+     * the gate retries: ONE failing request per `library` navigation (and
+     * `LibraryPage` then issues its own, the in-flight dedupe having already
+     * settled). That is the price of not caching a failure — one blip must not
+     * leave a music library stuck on the generic grid for the rest of the session.
+     *
+     * `load()` never rejects (it records `error` internally) — the try/catch is
+     * belt-and-braces, and every failure path falls through to the existing
+     * behaviour via {@link musicLibraryRedirect} returning `null`.
+     */
+    async function musicLibraryGate(to: RouteLocationNormalized): Promise<true | RouteLocationRaw> {
+        // Cheap exit for every other route: no store touch, no fetch.
+        if (to.name !== LIBRARY_ROUTE_NAME) {
+            return true;
+        }
+        const rawId = to.params.id;
+        const id = Array.isArray(rawId) ? rawId[0] : rawId;
+        if (!id) {
+            return true; // no id → LibraryPage renders its own "Library not found".
+        }
+        const libraries = useLibrariesStore(pinia);
+        if (!libraries.loaded) {
+            try {
+                await libraries.load(mediaApiBase.value);
+            } catch {
+                return true; // unknown type → existing behaviour, never a blank page.
+            }
+        }
+        return (
+            musicLibraryRedirect(to, libraries.byId(id)?.type, router.hasRoute(MUSIC_ROUTE_NAME)) ??
+            true
+        );
+    }
+
     router.beforeEach(async (to) => {
         // Connect-gate (native clients only): until a base is resolved, force the
         // Connect screen and DON'T run auth.init() — there's no server to validate
@@ -426,23 +555,33 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
         // isAdmin before rendering. Non-admin routes resolve optimistically on
         // token presence and validate /auth/me in the background — if the token
         // is invalid, fetchUser clears it and the next navigation redirects.
+        let allowed: true | RouteLocationRaw;
         if (to.meta?.requiresAdmin === true) {
             await auth.init();
-            return authGuard(to, auth.isLoggedIn, auth.isAdmin, home);
-        }
-
-        // Non-admin route: token presence is sufficient to render immediately.
-        // Start background validation (fire-and-forget); fetchUser() clears tokens
-        // on failure, so the next navigation will see isLoggedIn=false and redirect.
-        if (auth.isLoggedIn === true) {
+            allowed = authGuard(to, auth.isLoggedIn, auth.isAdmin, home);
+        } else if (auth.isLoggedIn === true) {
+            // Non-admin route: token presence is sufficient to render immediately.
+            // Start background validation (fire-and-forget); fetchUser() clears
+            // tokens on failure, so the next navigation will see isLoggedIn=false
+            // and redirect.
             auth.init(); // fire-and-forget background validation
-            return authGuard(to, true, false, home);
+            allowed = authGuard(to, true, false, home);
+        } else {
+            // No token — must validate to confirm (handles edge case where a
+            // cleared token hasn't propagated to isLoggedIn yet via the reactive
+            // update).
+            await auth.init();
+            allowed = authGuard(to, auth.isLoggedIn, auth.isAdmin, home);
+        }
+        if (allowed !== true) {
+            return allowed;
         }
 
-        // No token — must validate to confirm (handles edge case where a cleared
-        // token hasn't propagated to isLoggedIn yet via the reactive update).
-        await auth.init();
-        return authGuard(to, auth.isLoggedIn, auth.isAdmin, home);
+        // Only once the route is allowed: send a MUSIC library to `/app/music`
+        // (S97). Ordering matters — an unauthenticated visitor must still be
+        // bounced to login with the ORIGINAL destination preserved, and the
+        // library list this needs is itself an authenticated fetch.
+        return musicLibraryGate(to);
     });
 
     // Set the DEFAULT document title for every navigation from the route's static
@@ -455,27 +594,6 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     router.afterEach((to) => {
         setPageTitle(resolveRouteTitle(to, translate));
     });
-
-    // The base for MEDIA browsing (libraries/media/detail/player). On the media
-    // server it is just the app's own base. On the hub it is the relay-proxy base
-    // for the currently selected server — `/api/v1/servers/{id}/proxy` — so the
-    // shared Browse/library/detail pages fetch that paired server's API over the
-    // reverse tunnel (the proxy validates the user's Bearer + ownership, strips it,
-    // and the server trusts the tunnel). It is a COMPUTED tracking useServerStore,
-    // so picking a different server on My Servers re-points every media fetch
-    // reactively. The host's own endpoints (auth/`/me`/admin) stay on `apiBase`.
-    const serverStore = useServerStore(pinia);
-    const mediaApiBase = computed(() =>
-        mediaApiBaseFor(fullConfig.app, effectiveBase(), serverStore.currentServerId),
-    );
-
-    // The base the player streams media BYTES from directly (bypassing the proxy):
-    // on the hub it is the selected server's own public origin, so a `<video>` plays
-    // the paired server's stream straight from the server with native Range; '' on
-    // the media server (the page origin serves the bytes) or with no server selected.
-    const mediaDirectBase = computed(() =>
-        mediaDirectBaseFor(fullConfig.app, serverStore.currentServerUrl),
-    );
 
     const app: VueApp = createApp(PhlixApp);
     // Provide `apiBase` as a COMPUTED (not the static config string) so a native

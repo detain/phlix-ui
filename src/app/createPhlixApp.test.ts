@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
 import { createRouter, createWebHistory, type RouteLocationNormalized, type Router, type RouteRecordRaw } from 'vue-router';
-import { createPhlixApp, buildRoutes, authGuard, connectGuard, mediaApiBaseFor, mediaDirectBaseFor, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
+import { createPhlixApp, buildRoutes, authGuard, connectGuard, mediaApiBaseFor, mediaDirectBaseFor, musicLibraryRedirect, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
 
 beforeEach(() => {
   localStorage.clear();
@@ -589,5 +589,184 @@ describe('connectGuard', () => {
 
   it('is a public route name (reachable unauthenticated)', () => {
     expect(PUBLIC_ROUTE_NAMES).toContain('connect');
+  });
+});
+
+/**
+ * S97 — the pure half of the music-library redirect. `/app/library/:id` renders a
+ * flat `media_items` dump for a music library (artist + album + track rows sorted
+ * by a JSON path that is NULL for all of them), so a music library belongs on the
+ * dedicated `/app/music` surface, which reads the `music_*` hierarchy.
+ *
+ * Every "fall through" case below is load-bearing: returning `null` means the
+ * EXISTING behaviour (the generic grid) renders, which is what an unknown or
+ * failed type lookup must do — never a blank page and never a bounce loop.
+ */
+describe('musicLibraryRedirect (S97)', () => {
+  function route(name: string, id = 'lib-1'): RouteLocationNormalized {
+    return {
+      name,
+      meta: {},
+      params: { id },
+      fullPath: `/app/library/${id}`,
+    } as unknown as RouteLocationNormalized;
+  }
+
+  it('sends a music library to the dedicated music page', () => {
+    expect(musicLibraryRedirect(route('library'), 'music')).toEqual({ name: 'music' });
+  });
+
+  it('leaves every NON-music library type on the generic grid', () => {
+    for (const type of ['movie', 'series', 'photo', 'video', 'book', 'audiobook']) {
+      expect(musicLibraryRedirect(route('library'), type)).toBeNull();
+    }
+  });
+
+  it('falls through when the type is unknown (list not loaded, or the lookup failed)', () => {
+    expect(musicLibraryRedirect(route('library'), undefined)).toBeNull();
+    expect(musicLibraryRedirect(route('library'), null)).toBeNull();
+    expect(musicLibraryRedirect(route('library'), '')).toBeNull();
+  });
+
+  it('never redirects its own destination — explicit loop guard', () => {
+    expect(musicLibraryRedirect(route('music'), 'music')).toBeNull();
+  });
+
+  it('fires on the library route ONLY', () => {
+    for (const name of ['browse', 'media', 'season', 'player', 'settings', 'catchall']) {
+      expect(musicLibraryRedirect(route(name), 'music')).toBeNull();
+    }
+  });
+
+  it('keeps the generic grid when the consumer registered no music route', () => {
+    expect(musicLibraryRedirect(route('library'), 'music', false)).toBeNull();
+  });
+});
+
+/**
+ * S97 — the same redirect through the REAL router, which is what proves it is a
+ * router-level guard: the decision happens during `beforeEach`, so `LibraryPage`
+ * never mounts and the wrong grid is never painted-then-bounced.
+ */
+describe('router.beforeEach — music library redirect (S97, wired)', () => {
+  const MUSIC_LIB = { id: 'edb235ae-197f-4d68-9d95-8362e23cd18e', name: 'Music', type: 'music' };
+  const MOVIE_LIB = { id: 'c374163e-0000-4000-8000-000000000001', name: 'Movies', type: 'movie' };
+
+  /** A minimal fetch `Response` stand-in the ApiClient can parse. */
+  function jsonResponse(status: number, body: unknown): Response {
+    return {
+      status,
+      ok: status >= 200 && status < 300,
+      headers: { get: (k: string) => (k.toLowerCase() === 'content-type' ? 'application/json' : null) },
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    } as unknown as Response;
+  }
+
+  function routerOf(app: ReturnType<typeof createPhlixApp>): Router {
+    const r = (app.config.globalProperties as { $router?: Router }).$router;
+    if (!r) throw new Error('vue-router did not install $router on the app');
+    return r;
+  }
+
+  /** `librariesStatus` drives the `/api/v1/libraries` reply so the failure path is testable. */
+  function stubFetch(librariesStatus = 200): ReturnType<typeof vi.fn> {
+    const spy = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/v1/auth/me')) {
+        return Promise.resolve(jsonResponse(200, { user: { id: 'u1', is_admin: false } }));
+      }
+      if (url.includes('/api/v1/libraries')) {
+        return Promise.resolve(
+          librariesStatus === 200
+            ? jsonResponse(200, { libraries: [MUSIC_LIB, MOVIE_LIB] })
+            : jsonResponse(librariesStatus, { error: 'boom' }),
+        );
+      }
+      return Promise.resolve(jsonResponse(200, {}));
+    });
+    vi.stubGlobal('fetch', spy);
+    return spy;
+  }
+
+  const libraryCalls = (spy: ReturnType<typeof vi.fn>): number =>
+    spy.mock.calls.filter(([u]) => String(u).includes('/api/v1/libraries')).length;
+
+  beforeEach(() => {
+    window.history.replaceState({}, '', '/app');
+    // A token must exist BEFORE the app (and its auth store) are created, or the
+    // auth guard bounces to login before the music gate is ever consulted.
+    localStorage.setItem('access_token', 'present-token');
+  });
+
+  it('lands a MUSIC library on /app/music instead of the flat generic grid', async () => {
+    stubFetch();
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const router = routerOf(app);
+
+    await router.push(`/app/library/${MUSIC_LIB.id}`);
+
+    expect(router.currentRoute.value.name).toBe('music');
+    expect(router.currentRoute.value.path).toBe('/app/music');
+  });
+
+  // This one holds BOTH before and after the change — it is the no-regression
+  // pin for the generic grid, not evidence of the new behaviour.
+  it('still renders the generic grid for a NON-music library', async () => {
+    stubFetch();
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const router = routerOf(app);
+
+    await router.push(`/app/library/${MOVIE_LIB.id}`);
+
+    expect(router.currentRoute.value.name).toBe('library');
+    expect(router.currentRoute.value.params.id).toBe(MOVIE_LIB.id);
+  });
+
+  it('loads the library list at most once per session, not once per navigation', async () => {
+    const spy = stubFetch();
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const router = routerOf(app);
+
+    await router.push(`/app/library/${MOVIE_LIB.id}`);
+    await router.push('/app/settings');
+    await router.push(`/app/library/${MOVIE_LIB.id}`);
+
+    expect(router.currentRoute.value.name).toBe('library');
+    expect(libraryCalls(spy)).toBe(1);
+  });
+
+  it('falls through to the generic grid when the library list fails to load', async () => {
+    stubFetch(500);
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const router = routerOf(app);
+
+    await router.push(`/app/library/${MUSIC_LIB.id}`);
+
+    // Degrades to the EXISTING behaviour — not a blank page, not a bounce.
+    expect(router.currentRoute.value.name).toBe('library');
+    expect(router.currentRoute.value.params.id).toBe(MUSIC_LIB.id);
+  });
+
+  it('does not consult the library list for routes other than the grid', async () => {
+    const spy = stubFetch();
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const router = routerOf(app);
+
+    await router.push('/app/settings');
+
+    expect(router.currentRoute.value.name).toBe('settings');
+    expect(libraryCalls(spy)).toBe(0);
+  });
+
+  it('resolves /app/music itself without redirecting (no loop)', async () => {
+    stubFetch();
+    const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    const router = routerOf(app);
+
+    await router.push('/app/music');
+
+    expect(router.currentRoute.value.name).toBe('music');
+    expect(router.currentRoute.value.redirectedFrom).toBeUndefined();
   });
 });
