@@ -349,28 +349,55 @@ describe('usePreferencesStore', () => {
   });
 
   describe('debounced persistence', () => {
+    // This test COUNTS writes, and spaces its changes across ticks, because the
+    // obvious way to write it does neither and passes on a store with no debounce
+    // at all (S118). Two facts make the naive version vacuous:
+    //
+    //  1. `watch(snapshot, debouncedPersist, { deep: true })`
+    //     (usePreferencesStore.ts:294) does NOT pass `flush: 'sync'`, so it uses
+    //     Vue's default 'pre' flush — a microtask. Ten assignments made in one
+    //     synchronous loop therefore produce ZERO watcher calls before the next
+    //     `await`, so reading localStorage straight after the loop returns null
+    //     whether or not persistence is debounced.
+    //  2. Vue then COALESCES those ten same-tick mutations into ONE watcher call,
+    //     so `debouncedPersist` runs once and the `clearTimeout` on
+    //     usePreferencesStore.ts:287 — the line that does the actual coalescing —
+    //     is never exercised.
+    //
+    // Verified by mutation: with the loop unspaced and the assertions reading
+    // localStorage, this test still PASSED after (a) deleting the debounce and
+    // persisting synchronously, and (b) deleting the `clearTimeout`. As written
+    // below, both of those mutants fail it.
     it('debounces rapid changes — N rapid ticks results in a single localStorage write', async () => {
       vi.useFakeTimers();
 
       const s = usePreferencesStore();
+      const setItem = vi.spyOn(Storage.prototype, 'setItem');
 
-      // Make 10 rapid changes in quick succession (simulating slider drags)
-      for (let i = 0; i < 10; i++) {
-        s.cardSize = 100 + i;
-        // Each call resets the 250 ms debounce timer
+      try {
+        // Ten changes spread across the drag rather than within one tick, so the
+        // store's watcher actually fires for each. 10 ms apart keeps all ten
+        // inside the single 250 ms debounce window.
+        for (let i = 0; i < 10; i++) {
+          s.cardSize = 100 + i;
+          await vi.advanceTimersByTimeAsync(10);
+        }
+
+        // Still inside the window: the debounce must be holding every one of them.
+        expect(setItem).not.toHaveBeenCalled();
+        expect(localStorage.getItem('phlix.prefs')).toBeNull();
+
+        // Advance past 250 ms — the ten changes coalesce into exactly ONE write.
+        await vi.advanceTimersByTimeAsync(300);
+        await vi.runAllTimersAsync();
+
+        expect(setItem).toHaveBeenCalledTimes(1);
+        const stored = JSON.parse(localStorage.getItem('phlix.prefs')!);
+        // ...and it carries the LAST value, not an intermediate one.
+        expect(stored.cardSize).toBe(109);
+      } finally {
+        setItem.mockRestore();
       }
-
-      // Before debounce window closes, nothing should be written yet
-      const midStored = localStorage.getItem('phlix.prefs');
-      expect(midStored).toBeNull();
-
-      // Advance past 250 ms — only the final debounce fires, writing once
-      await vi.advanceTimersByTimeAsync(300);
-      await vi.runAllTimersAsync();
-
-      const stored = JSON.parse(localStorage.getItem('phlix.prefs')!);
-      // Only the last value (cardSize = 109) is persisted — proves 1 write
-      expect(stored.cardSize).toBe(109);
     });
 
     it('each debounce window persists its own change independently', async () => {

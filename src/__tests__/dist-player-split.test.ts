@@ -99,9 +99,18 @@ describe('UI-3.1 code-split boot graph (dist/phlix-ui.js)', () => {
     });
   }, 300_000);
 
+  // Explicit budget, for the same reason the beforeAll above carries one (S118).
+  // This deletes a whole Vite build output — the committed dist/ is 28 MB over
+  // 782 files, and vite.config.ts sets `sourcemap: true`, so most of that bulk is
+  // .map files. A recursive rmSync of that tree is real I/O, and it runs while the
+  // other 213 test files are still competing for the disk. Left on Vitest's default
+  // 10000 ms `hookTimeout` it was observed failing with "Hook timed out in 10000ms"
+  // on 1 of 20 consecutive `npm run test:run` invocations — a red run in which all
+  // 3987 tests passed and only the teardown blew its budget, which is exactly the
+  // unrelated intermittent failure S118 exists to remove.
   afterAll(() => {
     rmSync(outDir, { recursive: true, force: true });
-  });
+  }, 120_000);
 
   it('builds the main entry and the Player secondary entry', () => {
     expect(existsSync(join(outDir, 'phlix-ui.js')), 'missing main entry phlix-ui.js').toBe(true);

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, enableAutoUnmount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import FilterBar from './FilterBar.vue';
@@ -18,6 +18,27 @@ beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
 });
+// Destroy every wrapper this file mounts as soon as its test ends (S118).
+//
+// Why this is required and not just tidy: FilterBar.vue:322 adds a `scroll`
+// listener to `window` in onMounted and only removes it in onBeforeUnmount
+// (FilterBar.vue:328). This file called `mount` 26 times against only 2
+// explicit `unmount()` calls, so by the time the last describe ran, ~24 live
+// FilterBar instances were still subscribed to window `scroll`.
+//
+// The single `window.dispatchEvent(new Event('scroll'))` in the sticky test
+// below therefore woke all of them at once, and awaiting the flush re-rendered
+// every leaked instance. Measured on this box: that one await cost 1506 ms of
+// the sticky test's 1585 ms in a solo run of this file, and the test reached
+// 4174 ms against Vitest's 5000 ms default `testTimeout` when the full 214-file
+// suite ran in parallel — which is the intermittent failure S118 exists to stop.
+// The cost was NOT timer-related: `vi.getTimerCount()` returned 0 both before
+// and after the drain, and moving the await from `vi.runAllTimersAsync()` to a
+// bare `nextTick()` simply moved the same ~1.3 s with it.
+//
+// With auto-unmount only the test's own instance is subscribed, so the sticky
+// test measures 71 ms solo / ~150 ms under the full parallel suite.
+enableAutoUnmount(afterEach);
 afterEach(() => {
   vi.useRealTimers();
 });
