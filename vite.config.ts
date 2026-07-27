@@ -67,7 +67,13 @@ export default defineConfig({
         exclude: [...configDefaults.exclude, 'e2e/**'],
         coverage: {
             provider: 'v8',
-            reporter: ['text-summary', 'text', 'html'],
+            // `lcov` is REQUIRED, not decorative: it is the only reporter here
+            // that writes coverage/lcov.info, which is the file the Codacy
+            // upload step in .github/workflows/ui-ci.yml sends. Dropping it
+            // does not fail anything locally — the upload just silently
+            // becomes a no-op, which is exactly how phlix-windows-client
+            // reported coverage to nobody for months.
+            reporter: ['text-summary', 'text', 'html', 'lcov'],
             // Cover the redo surface (tokens/primitives/stores/composables/app shell)
             // plus each pre-redo surface AS it is rebuilt + tested in R2–R5 (the
             // Browse surface is done; the Player shell — Player.vue — lands in R3;
