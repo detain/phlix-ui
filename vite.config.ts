@@ -82,9 +82,9 @@ export default defineConfig({
             // src/pages/, matched only *.vue under src/pages/admin/ (missing
             // helpLinks.ts), and had no entry at all for src/utils/,
             // src/directives/ or src/tokens/ — so 38 source files that DO have
-            // a colocated *.test.ts were being
-            // executed by the suite and then dropped from the report — including
-            // all six src/pages/Music*.vue rebuilt by S110. Absent files read as
+            // a colocated *.test.ts were being executed by the suite and then
+            // dropped from the report, including all six src/pages/Music*.vue
+            // (each has its own Music*.test.ts). Absent files read as
             // "not measured" but are trivially misread as "covered"; an
             // allow-list makes that the DEFAULT outcome for every new file.
             //
@@ -96,9 +96,15 @@ export default defineConfig({
                 '**/*.test.ts',
                 'src/test/**',
                 'src/__tests__/**',
-                // Dev-only playground / not shipped.
+                // Dev-only playground: standalone HTML entry points (component
+                // gallery, token swatches, perf-grid, and the visual harnesses
+                // e2e/visual.spec.ts navigates to) plus static mockups. Nothing
+                // outside src/dev/ imports any of it, so none of it reaches
+                // the library entry (src/index.ts) or the published bundle.
+                // NOTE: src/app/placeholder/Placeholder.vue used to be listed
+                // here under the same "not shipped" heading — it IS shipped
+                // (src/app/createPhlixApp.ts imports it), so it is measured.
                 'src/dev/**',
-                'src/app/placeholder/**',
                 // Ambient declarations: no emitted runtime, nothing to cover.
                 'src/**/*.d.ts',
             ],
