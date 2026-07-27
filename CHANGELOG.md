@@ -1,3 +1,14 @@
+## Unreleased
+
+### Fixed
+- **Two tests no longer fail intermittently against Vitest's 5 s default `testTimeout` (plan_updates.md — S118).** Test-only change; no shipped code is touched. Both had been observed within a few hundred ms of the limit under the full 214-file parallel run, and `npm run test:run` has gated every push and PR since the `test` job was enabled on 2026-07-26 (`.github/workflows/ui-ci.yml:20-23`, `:44`), so an intermittent red there trains reviewers to re-run until green.
+
+  **`FilterBar.test.ts` — fixed at the cause, not with a bigger budget.** `FilterBar.vue:322` subscribes to `window`'s `scroll` in `onMounted` and unsubscribes only in `onBeforeUnmount` (`FilterBar.vue:328`), and the file called `mount` 26 times against 2 `unmount()` calls — so by the last describe roughly 24 abandoned FilterBar instances were still subscribed. The single `window.dispatchEvent(new Event('scroll'))` in *"adds is-stuck once the window scrolls past the threshold"* woke all of them, and awaiting the flush re-rendered every one: 1506 ms of that test's 1585 ms in a solo run, and **4174 ms of the 5000 ms budget** under the full suite. The cost was **not** timer-related, which is worth recording because the obvious reading of the code says otherwise — `vi.getTimerCount()` returned **0** both before and after `vi.runAllTimersAsync()`, and replacing that call with a bare `nextTick()` moved the same ~1.3 s along with it. `enableAutoUnmount(afterEach)` leaves only the test's own instance subscribed: **3259 ms → 119 ms** under the full parallel suite, with all 25 tests in the file still passing.
+
+  **`admin.test.ts` — a longer, explicit budget, because the work is real.** `router.push` makes vue-router resolve the matched records' lazy components, and `admin.ts:63` is a genuine `() => import('../pages/admin/DashboardPage.vue')` (733 lines) beneath `AdminLayout.vue`, transformed on first use. Measured: the first navigating test spent **1223 ms of its 1245 ms inside `push`**, while a second `push` through a freshly built router took **2 ms** — the entire cost is the one-time module load, so there is no timer to fake and no wall-clock wait to shorten. Under the full suite that first push was seen at **4558 ms**, leaving 442 ms of headroom. The two describes containing real navigations now carry `{ timeout: 30_000 }` (per-describe, so a newly added navigating test inherits it), matching the existing precedent at `MusicLibraryPage.test.ts:819`, which already sets `30000` for the same reason.
+
+  A third test named in S118, `usePreferencesStore > debounces rapid changes`, was **measured and left alone**: it already drives the store's real 250 ms debounce (`usePreferencesStore.ts:288-295`) under fake timers and came in at 3–29 ms across full-suite runs, so it is not in this family today. All three were mutation-tested to confirm they still fail on a broken subject rather than passing vacuously.
+
 ## 0.98.33 - 2026-07-27
 
 ### Fixed

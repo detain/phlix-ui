@@ -114,7 +114,24 @@ describe('buildAdminRoutes — nested AdminLayout shape (default = legacy server
   });
 });
 
-describe('buildAdminRoutes — resolved URLs + redirect (real router)', () => {
+// Real navigations here are legitimately slow, so they get an explicit timeout
+// rather than being made "fast" (S118).
+//
+// `router.push` makes vue-router resolve the matched records' components, and
+// those are real lazy loaders — admin.ts:63 is
+// `() => import('../pages/admin/DashboardPage.vue')` (733 lines) under
+// AdminLayout.vue. Vitest transforms that chain on first use, inside a suite
+// that runs 214 files in parallel. Measured on this box: the first navigating
+// test spent 1223 ms of its 1245 ms inside `push`, while a second `push` through
+// a freshly built router took 2 ms — i.e. the whole cost is the one-time module
+// load, not the assertion. Under the full parallel suite that first push was
+// observed at 4558 ms against Vitest's 5000 ms default `testTimeout`: 442 ms of
+// headroom, which is the intermittent failure S118 exists to stop.
+//
+// There is no timer to fake and no wall-clock wait to shorten here, so raising
+// the budget is the honest fix; 30 s still fails fast on a genuinely hung
+// navigation. Applied per-describe so a newly added navigating test inherits it.
+describe('buildAdminRoutes — resolved URLs + redirect (real router)', { timeout: 30_000 }, () => {
   function routerFor(base?: string) {
     return createRouter({ history: createMemoryHistory(), routes: buildAdminRoutes(base) });
   }
@@ -140,7 +157,11 @@ describe('buildAdminRoutes — resolved URLs + redirect (real router)', () => {
   });
 });
 
-describe('buildHubAdminRoutes — the hub admin set', () => {
+// Same reason as the describe above: the test at "redirects the bare /app/admin
+// to the hub dashboard" performs a real `router.push`, so it pays the lazy-import
+// cost for whichever hub page loads first. Measured at 550 ms under the full
+// parallel suite — lower than the server set, but the same failure mode.
+describe('buildHubAdminRoutes — the hub admin set', { timeout: 30_000 }, () => {
   it('mounts exactly Hub Dashboard, Metrics, Users, Logs, Settings, Audit Logs, Request Queue', () => {
     const named = namedChildren(buildHubAdminRoutes());
     expect(named.map((c) => [c.name, c.path])).toEqual(HUB_PAGES.map(([n, s]) => [n, s]));
