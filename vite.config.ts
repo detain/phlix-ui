@@ -74,35 +74,33 @@ export default defineConfig({
             // becomes a no-op, which is exactly how phlix-windows-client
             // reported coverage to nobody for months.
             reporter: ['text-summary', 'text', 'html', 'lcov'],
-            // Cover the redo surface (tokens/primitives/stores/composables/app shell)
-            // plus each pre-redo surface AS it is rebuilt + tested in R2–R5 (the
-            // Browse surface is done; the Player shell — Player.vue — lands in R3;
-            // the auth/settings/app pages land in R4/R5).
-            include: [
-                'src/components/**/*.{ts,vue}',
-                'src/stores/**/*.ts',
-                'src/composables/**/*.ts',
-                'src/i18n/**/*.ts',
-                'src/api/**/*.ts',
-                'src/app/**/*.{ts,vue}',
-                'src/pages/BrowsePage.vue',
-                'src/pages/MediaDetailPage.vue',
-                'src/pages/PlayerPage.vue',
-                'src/pages/LoginPage.vue',
-                'src/pages/SignupPage.vue',
-                'src/pages/SettingsPage.vue',
-                'src/pages/LibraryScanPage.vue',
-                'src/pages/MyServersPage.vue',
-                'src/pages/FederationPage.vue',
-                'src/pages/ManageSharesPage.vue',
-                'src/pages/AuditLogsPage.vue',
-                'src/pages/admin/**/*.vue',
-            ],
+            // Measure the WHOLE src/ surface — never an allow-list.
+            //
+            // This used to be a hand-maintained allow-list that grew one entry
+            // per surface as the R2–R5 redo rebuilt it. The list stopped being
+            // maintained: by S139 it named 11 of the 45 files directly under
+            // src/pages/, matched only *.vue under src/pages/admin/ (missing
+            // helpLinks.ts), and had no entry at all for src/utils/,
+            // src/directives/ or src/tokens/ — so 38 source files that DO have
+            // a colocated *.test.ts were being
+            // executed by the suite and then dropped from the report — including
+            // all six src/pages/Music*.vue rebuilt by S110. Absent files read as
+            // "not measured" but are trivially misread as "covered"; an
+            // allow-list makes that the DEFAULT outcome for every new file.
+            //
+            // A whole-tree glob cannot rot: a new file is measured the moment it
+            // is added, and a file with no tests shows up honestly as 0%.
+            include: ['src/**/*.{ts,vue}'],
             exclude: [
+                // Test code and its harness — never the subject of measurement.
                 '**/*.test.ts',
                 'src/test/**',
+                'src/__tests__/**',
+                // Dev-only playground / not shipped.
                 'src/dev/**',
                 'src/app/placeholder/**',
+                // Ambient declarations: no emitted runtime, nothing to cover.
+                'src/**/*.d.ts',
             ],
         },
     },
