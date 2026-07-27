@@ -502,9 +502,18 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
      *
      * The library `type` is not known synchronously on a deep link, so the list
      * is loaded first. `useLibrariesStore.load()` is idempotent and dedupes an
-     * in-flight call, and `LibraryPage` loads the very same list on mount, so
-     * this adds at most ONE round trip per session, not one per navigation. It
-     * also never rejects (it records `error` internally) — the try/catch is
+     * in-flight call, and `LibraryPage` loads the very same list on mount, so on
+     * the SUCCESS path this adds at most ONE round trip per session, not one per
+     * navigation: `loaded` latches true and every later gate run is a no-op.
+     *
+     * ⚠ On the FAILURE path the cost claim above does NOT hold. `load()` records
+     * `error` and leaves `loaded` false, so while `/api/v1/libraries` is erroring
+     * the gate retries: ONE failing request per `library` navigation (and
+     * `LibraryPage` then issues its own, the in-flight dedupe having already
+     * settled). That is the price of not caching a failure — one blip must not
+     * leave a music library stuck on the generic grid for the rest of the session.
+     *
+     * `load()` never rejects (it records `error` internally) — the try/catch is
      * belt-and-braces, and every failure path falls through to the existing
      * behaviour via {@link musicLibraryRedirect} returning `null`.
      */
