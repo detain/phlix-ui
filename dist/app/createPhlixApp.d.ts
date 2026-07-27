@@ -48,6 +48,36 @@ export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boole
  */
 export declare function connectGuard(to: RouteLocationNormalized, requireConnection: boolean, hasBase: boolean): true | RouteLocationRaw | null;
 /**
+ * S97 — a library whose `type` is `music` must NOT render the generic
+ * per-library grid; it belongs on the dedicated music surface (`/app/music`).
+ *
+ * Why: `/app/library/:id` lists `media_items` flat, so a music library dumps
+ * `artist` + `album` + `track` rows into one grid, sorted by a JSON path that is
+ * NULL for all of them. `/app/music` reads the `music_*` tables directly (the
+ * authoritative hierarchy per S97's option-B verdict) and already pages
+ * artists/albums/tracks, so sending music libraries there leaves exactly ONE
+ * music browse surface to keep in sync rather than two.
+ *
+ * Pure (the resolved type and the route-table fact are passed in) so it unit
+ * tests without a live router/store. Returns the redirect location, or `null`
+ * meaning "fall through to the EXISTING behaviour" — which is what an unknown,
+ * not-yet-loaded or failed type lookup must do, so a lookup failure can never
+ * produce a blank page.
+ *
+ * Loop safety is asserted here rather than left to construction: the guard fires
+ * ONLY on the `library` route and never on its own destination (`music`), so the
+ * redirect cannot re-enter itself. Both halves are pinned by tests.
+ *
+ * `hasMusicRoute` lets the caller pass `router.hasRoute('music')`: a consumer
+ * that rebuilt/pruned the route table without the music page keeps the generic
+ * grid instead of being pushed at a route that does not exist.
+ *
+ * Scope: today the server has a single music library, so the global `/app/music`
+ * loses no scoping in practice. If a second one is ever added, this is where a
+ * per-library music surface would be selected.
+ */
+export declare function musicLibraryRedirect(to: RouteLocationNormalized, libraryType: string | null | undefined, hasMusicRoute?: boolean): RouteLocationRaw | null;
+/**
  * Resolve the STATIC page title for a route (the page-specific part, WITHOUT the
  * ` · Phlix` suffix — {@link setPageTitle} adds that). Pure (translator passed
  * in) so it unit-tests without a live router.

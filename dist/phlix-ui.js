@@ -1148,19 +1148,23 @@ function ji(e, t, n) {
 		query: e.fullPath ? { redirect: e.fullPath } : {}
 	};
 }
-function Mi(e, t) {
+var Mi = "library", Ni = "music", Pi = "music";
+function Fi(e, t, n = !0) {
+	return e.name === Ni || e.name !== Mi || !n || t !== Pi ? null : { name: Ni };
+}
+function Ii(e, t) {
 	let n = e.meta?.title;
 	if (typeof n == "string" && n) return t(n);
 	let r = yi(typeof e.name == "string" ? e.name : "");
 	return r ? `Admin · ${r}` : null;
 }
-function Ni(e, t, n) {
+function Li(e, t, n) {
 	return e === "hub" && n ? `${t}/api/v1/servers/${n}/proxy` : t;
 }
-function Pi(e, t) {
+function Ri(e, t) {
 	return e !== "hub" || t === null || t === "" ? "" : t.replace(/\/+$/, "");
 }
-function Fi() {
+function zi() {
 	return typeof window < "u" && window.__PHLIX__ ? window.__PHLIX__ : {
 		app: "server",
 		apiBase: "",
@@ -1171,7 +1175,7 @@ function Fi() {
 		deviceHeaders: {}
 	};
 }
-function Ii(e) {
+function Bi(e) {
 	let t = e.routerBase || "/app", n = [
 		{
 			path: t,
@@ -1268,9 +1272,9 @@ function Ii(e) {
 		props: { appName: e.app }
 	}), n;
 }
-function Li(e) {
+function Vi(e) {
 	let t = {
-		...Fi(),
+		...zi(),
 		...e
 	};
 	h(t.deviceHeaders ?? {}), br(t.defaultTheme, t.defaultTv), Le(t.branding?.wordmark);
@@ -1281,27 +1285,39 @@ function Li(e) {
 	}
 	let i = Sn({
 		history: Cn(),
-		routes: Ii(t)
+		routes: Bi(t)
 	}), o = t.home ? { path: t.home } : { name: "browse" }, s = ke(r);
 	s.configure(t.onConnectionChange ?? null);
-	let l = () => s.apiBase || t.apiBase;
+	let l = () => s.apiBase || t.apiBase, u = Jr(r), d = F(() => Li(t.app, l(), u.currentServerId)), p = F(() => Ri(t.app, u.currentServerUrl));
+	async function m(e) {
+		if (e.name !== Mi) return !0;
+		let t = e.params.id, n = Array.isArray(t) ? t[0] : t;
+		if (!n) return !0;
+		let a = Ce(r);
+		if (!a.loaded) try {
+			await a.load(d.value);
+		} catch {
+			return !0;
+		}
+		return Fi(e, a.byId(n)?.type, i.hasRoute(Ni)) ?? !0;
+	}
 	i.beforeEach(async (e) => {
 		let n = ji(e, t.requireConnection === !0, l() !== "");
 		if (n !== null) return n;
-		let i = k(r);
-		return e.meta?.requiresAdmin === !0 ? (await i.init(), Ai(e, i.isLoggedIn, i.isAdmin, o)) : i.isLoggedIn === !0 ? (i.init(), Ai(e, !0, !1, o)) : (await i.init(), Ai(e, i.isLoggedIn, i.isAdmin, o));
+		let i = k(r), a;
+		return e.meta?.requiresAdmin === !0 ? (await i.init(), a = Ai(e, i.isLoggedIn, i.isAdmin, o)) : i.isLoggedIn === !0 ? (i.init(), a = Ai(e, !0, !1, o)) : (await i.init(), a = Ai(e, i.isLoggedIn, i.isAdmin, o)), a === !0 ? m(e) : a;
 	}), i.afterEach((e) => {
-		Re(Mi(e, n));
+		Re(Ii(e, n));
 	});
-	let u = Jr(r), d = F(() => Ni(t.app, l(), u.currentServerId)), p = F(() => Pi(t.app, u.currentServerUrl)), m = Yt(Fr);
-	return m.provide("apiBase", F(() => l())), m.provide("mediaApiBase", d), m.provide("mediaDirectBase", p), m.provide("loginPath", F(() => `${t.routerBase ?? "/app"}/login`)), m.provide("phlixCommands", t.commands ?? []), m.provide("phlixConfig", t), m.use(r), m.provide("auth", k(r)), m.use(i), Hr(m), m;
+	let g = Yt(Fr);
+	return g.provide("apiBase", F(() => l())), g.provide("mediaApiBase", d), g.provide("mediaDirectBase", p), g.provide("loginPath", F(() => `${t.routerBase ?? "/app"}/login`)), g.provide("phlixCommands", t.commands ?? []), g.provide("phlixConfig", t), g.use(r), g.provide("auth", k(r)), g.use(i), Hr(g), g;
 }
 //#endregion
 //#region src/components/ui/ToastHost.vue?vue&type=script&setup=true&lang.ts
-var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, Vi = {
+var Hi = ["aria-label"], Ui = ["role"], Wi = { class: "phlix-toast__content" }, Gi = {
 	key: 0,
 	class: "phlix-toast__title"
-}, Hi = { class: "phlix-toast__message" }, Ui = ["onClick"], Wi = 0, Gi = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Ki = { class: "phlix-toast__message" }, qi = ["onClick"], Ji = 0, Yi = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "ToastHost",
 	props: { position: { default: "bottom" } },
 	setup(e) {
@@ -1313,9 +1329,9 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 			info: "info"
 		}, o = (e) => e.icon ?? a[e.tone];
 		return W(() => {
-			Wi++;
+			Ji++;
 		}), tn(() => {
-			Wi--;
+			Ji--;
 		}), (a, s) => (G(), I(Kt, { to: "body" }, [z("div", {
 			class: U(["phlix-toasts", `phlix-toasts--${e.position}`]),
 			role: "region",
@@ -1330,7 +1346,7 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 					name: o(e),
 					class: "phlix-toast__icon"
 				}, null, 8, ["name"]),
-				z("div", Bi, [e.title ? (G(), R("p", Vi, J(e.title), 1)) : L("", !0), z("p", Hi, J(e.message), 1)]),
+				z("div", Wi, [e.title ? (G(), R("p", Gi, J(e.title), 1)) : L("", !0), z("p", Ki, J(e.message), 1)]),
 				e.action ? (G(), R("button", {
 					key: 0,
 					type: "button",
@@ -1338,7 +1354,7 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 					onClick: (t) => {
 						e.action.onClick(), Y(i).dismiss(e.id);
 					}
-				}, J(e.action.label), 9, Ui)) : L("", !0),
+				}, J(e.action.label), 9, qi)) : L("", !0),
 				V(r, {
 					name: "x",
 					label: Y(t)("common.dismiss"),
@@ -1346,11 +1362,11 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 					class: "phlix-toast__close",
 					onClick: (t) => Y(i).dismiss(e.id)
 				}, null, 8, ["label", "onClick"])
-			], 10, zi))), 128))]),
+			], 10, Ui))), 128))]),
 			_: 1
-		})], 10, Ri)]));
+		})], 10, Hi)]));
 	}
-}), [["__scopeId", "data-v-0127c07a"]]), Ki = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}), [["__scopeId", "data-v-0127c07a"]]), Xi = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "Reveal",
 	props: {
 		tag: { default: "div" },
@@ -1390,7 +1406,7 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 			_: 3
 		}, 40, ["class", "style"]));
 	}
-}), [["__scopeId", "data-v-4838d241"]]), qi = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}), [["__scopeId", "data-v-4838d241"]]), Zi = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "PageTransition",
 	props: { mode: { default: "fade" } },
 	setup(e) {
@@ -1402,11 +1418,11 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 			_: 3
 		}, 8, ["name"]));
 	}
-}), [["__scopeId", "data-v-06639673"]]), Ji = { class: "phlix-help-popover" }, Yi = [
+}), [["__scopeId", "data-v-06639673"]]), Qi = { class: "phlix-help-popover" }, $i = [
 	"aria-expanded",
 	"aria-controls",
 	"aria-label"
-], Xi = { class: "phlix-help-popover__header" }, Zi = { class: "phlix-help-popover__title" }, Qi = { class: "phlix-help-popover__body" }, $i = /*#__PURE__*/ t(/* @__PURE__ */ H({
+], ea = { class: "phlix-help-popover__header" }, ta = { class: "phlix-help-popover__title" }, na = { class: "phlix-help-popover__body" }, ra = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "HelpPopover",
 	props: {
 		helpText: {},
@@ -1444,7 +1460,7 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 			e ? document.addEventListener("pointerdown", _, !0) : document.removeEventListener("pointerdown", _, !0);
 		}), tn(() => {
 			document.removeEventListener("pointerdown", _, !0);
-		}), i(u, c, { onEscape: () => (m(), !0) }), (i, a) => (G(), R("span", Ji, [z("button", {
+		}), i(u, c, { onEscape: () => (m(), !0) }), (i, a) => (G(), R("span", Qi, [z("button", {
 			ref_key: "triggerEl",
 			ref: l,
 			type: "button",
@@ -1456,7 +1472,7 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 		}, [V(n, {
 			name: "info",
 			size: .9
-		}), a[0] ||= z("span", { class: "phlix-help-popover__badge" }, "?", -1)], 8, Yi), (G(), I(Kt, { to: "body" }, [V(qt, { name: "phlix-help-popover" }, {
+		}), a[0] ||= z("span", { class: "phlix-help-popover__badge" }, "?", -1)], 8, $i), (G(), I(Kt, { to: "body" }, [V(qt, { name: "phlix-help-popover" }, {
 			default: Z(() => [c.value ? (G(), R("div", {
 				key: 0,
 				id: o,
@@ -1466,38 +1482,38 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 				style: en(d.value),
 				role: "dialog",
 				"aria-modal": "false"
-			}, [z("header", Xi, [z("span", Zi, J(e.title ?? "Help"), 1), V(r, {
+			}, [z("header", ea, [z("span", ta, J(e.title ?? "Help"), 1), V(r, {
 				name: "x",
 				label: Y(t)("common.close"),
 				size: "sm",
 				class: "phlix-help-popover__close",
 				onClick: m
-			}, null, 8, ["label"])]), z("div", Qi, [V(Xe, {
+			}, null, 8, ["label"])]), z("div", na, [V(Xe, {
 				text: e.helpText,
 				links: e.helpLinks
 			}, null, 8, ["text", "links"])])], 4)) : L("", !0)]),
 			_: 1
 		})]))]));
 	}
-}), [["__scopeId", "data-v-d48e7fa2"]]), ea = {
+}), [["__scopeId", "data-v-d48e7fa2"]]), ia = {
 	class: "library-scan",
 	"aria-labelledby": "library-scan-heading"
-}, ta = {
+}, aa = {
 	key: 0,
 	class: "library-scan__skel"
-}, na = {
+}, oa = {
 	key: 3,
 	class: "library-scan__table-wrap"
-}, ra = {
+}, sa = {
 	class: "library-scan__table",
 	"aria-label": "Libraries"
-}, ia = { class: "library-scan__name" }, aa = {
+}, ca = { class: "library-scan__name" }, la = {
 	key: 0,
 	class: "library-scan__paths"
-}, oa = { class: "library-scan__num" }, sa = { class: "library-scan__date" }, ca = ["data-testid"], la = {
+}, ua = { class: "library-scan__num" }, da = { class: "library-scan__date" }, fa = ["data-testid"], pa = {
 	key: 0,
 	class: "library-scan__error"
-}, ua = { class: "library-scan__actions" }, da = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, ma = { class: "library-scan__actions" }, ha = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "LibraryScanPage",
 	props: { client: {} },
 	setup(e) {
@@ -1563,10 +1579,10 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 				default: return "neutral";
 			}
 		}
-		return W(s), (e, t) => (G(), R("section", ea, [t[4] ||= z("header", { class: "library-scan__head" }, [z("h1", {
+		return W(s), (e, t) => (G(), R("section", ia, [t[4] ||= z("header", { class: "library-scan__head" }, [z("h1", {
 			id: "library-scan-heading",
 			class: "library-scan__title"
-		}, "Library Scanner"), z("p", { class: "library-scan__subtitle" }, "Scan your media libraries to discover new content.")], -1), a.value ? (G(), R("div", ta, [V(M, {
+		}, "Library Scanner"), z("p", { class: "library-scan__subtitle" }, "Scan your media libraries to discover new content.")], -1), a.value ? (G(), R("div", aa, [V(M, {
 			variant: "text",
 			lines: 6
 		})])) : o.value ? (G(), I(N, {
@@ -1590,7 +1606,7 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 			icon: "film",
 			title: "No libraries configured",
 			description: "Add a library to get started."
-		})) : (G(), R("div", na, [z("table", ra, [t[3] ||= z("thead", null, [z("tr", null, [
+		})) : (G(), R("div", oa, [z("table", sa, [t[3] ||= z("thead", null, [z("tr", null, [
 			z("th", { scope: "col" }, "Library"),
 			z("th", { scope: "col" }, "Type"),
 			z("th", { scope: "col" }, "Items"),
@@ -1601,18 +1617,18 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 				class: "library-scan__actions-col"
 			}, "Actions")
 		])], -1), z("tbody", null, [(G(!0), R(P, null, q(r.value, (e) => (G(), R("tr", { key: e.id }, [
-			z("td", null, [z("div", ia, J(e.name), 1), e.paths.length ? (G(), R("div", aa, J(e.paths.join(", ")), 1)) : L("", !0)]),
+			z("td", null, [z("div", ca, J(e.name), 1), e.paths.length ? (G(), R("div", la, J(e.paths.join(", ")), 1)) : L("", !0)]),
 			z("td", null, J(e.type), 1),
-			z("td", oa, J(e.item_count === void 0 ? "—" : e.item_count), 1),
-			z("td", sa, J(d(e.last_scan_at)), 1),
+			z("td", ua, J(e.item_count === void 0 ? "—" : e.item_count), 1),
+			z("td", da, J(d(e.last_scan_at)), 1),
 			z("td", null, [z("span", {
 				class: "library-scan__status",
 				"data-testid": `status-${e.id}`
 			}, [V(j, { tone: m(i.value[e.id]) }, {
 				default: Z(() => [B(J(p(i.value[e.id])), 1)]),
 				_: 2
-			}, 1032, ["tone"]), i.value[e.id]?.status === "failed" && i.value[e.id]?.error ? (G(), R("span", la, J(i.value[e.id]?.error), 1)) : L("", !0)], 8, ca)]),
-			z("td", null, [z("div", ua, [V(A, {
+			}, 1032, ["tone"]), i.value[e.id]?.status === "failed" && i.value[e.id]?.error ? (G(), R("span", pa, J(i.value[e.id]?.error), 1)) : L("", !0)], 8, fa)]),
+			z("td", null, [z("div", ma, [V(A, {
 				variant: "solid",
 				size: "sm",
 				"aria-label": `Scan ${e.name}`,
@@ -1641,15 +1657,15 @@ var Ri = ["aria-label"], zi = ["role"], Bi = { class: "phlix-toast__content" }, 
 			])])])
 		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-f8574c77"]]), fa = class extends Error {
+}), [["__scopeId", "data-v-f8574c77"]]), ga = class extends Error {
 	kind;
 	constructor(e, t) {
 		super(t), this.kind = e, this.name = "ClaimError";
 	}
 };
-async function pa(e, t, n) {
+async function _a(e, t, n) {
 	let r = t.trim();
-	if (r === "") throw new fa("empty", "Enter the claim code shown on your server.");
+	if (r === "") throw new ga("empty", "Enter the claim code shown on your server.");
 	let i = typeof window < "u" ? new y().getAccessToken() : null, a;
 	try {
 		a = await fetch(`${e}/api/v1/server-claims/claim`, {
@@ -1664,7 +1680,7 @@ async function pa(e, t, n) {
 			signal: n
 		});
 	} catch {
-		throw new fa("network", "Network error — check your connection and try again.");
+		throw new ga("network", "Network error — check your connection and try again.");
 	}
 	if (a.ok) {
 		let e = await a.json().catch(() => ({}));
@@ -1672,16 +1688,16 @@ async function pa(e, t, n) {
 	}
 	let o = await a.json().catch(() => ({})), s = typeof o.message == "string" ? o.message : "";
 	switch (a.status) {
-		case 401: throw new fa("unauthorized", "Your session expired — please sign in again.");
-		case 404: throw new fa("not_found", "That claim code was not found. Double-check it and try again.");
-		case 410: throw new fa("expired", "That claim code has expired. Generate a new one on your server.");
-		case 409: throw new fa("already_claimed", "That server has already been claimed.");
-		default: throw new fa("invalid", s || "Could not add the server. Check the claim code and try again.");
+		case 401: throw new ga("unauthorized", "Your session expired — please sign in again.");
+		case 404: throw new ga("not_found", "That claim code was not found. Double-check it and try again.");
+		case 410: throw new ga("expired", "That claim code has expired. Generate a new one on your server.");
+		case 409: throw new ga("already_claimed", "That server has already been claimed.");
+		default: throw new ga("invalid", s || "Could not add the server. Check the claim code and try again.");
 	}
 }
 //#endregion
 //#region src/api/normalize.ts
-function ma(e) {
+function va(e) {
 	if (!(e == null || e === "")) {
 		if (typeof e == "string") return /^\d+$/.test(e) ? (/* @__PURE__ */ new Date(Number(e) * 1e3)).toISOString() : e;
 		if (typeof e == "number" && Number.isFinite(e)) return (/* @__PURE__ */ new Date(e * 1e3)).toISOString();
@@ -1689,16 +1705,16 @@ function ma(e) {
 }
 //#endregion
 //#region src/pages/hubHelpLinks.ts
-var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
+var ya = "https://detain.github.io/phlix-docs", ba = (e, t) => ({
 	text: t,
-	url: `${ha}/${e}.html`
+	url: `${ya}/${e}.html`
 }), $ = {
 	"my-servers": {
-		links: [ga("hub/what-is-the-hub", "What is the hub?"), ga("hub/claim-server", "Claiming a server")],
+		links: [ba("hub/what-is-the-hub", "What is the hub?"), ba("hub/claim-server", "Claiming a server")],
 		details: "These are the Phlix servers you have claimed to your hub account. Claiming a server links it to you so you can reach it from anywhere without knowing its address. A server shows Online when the hub has heard from it recently, Connecting while a relay tunnel is still being set up, and Offline when it has gone quiet. Browse opens the library and is only available once the relay is active; Manage opens the server’s own admin page directly; Remove unlinks the server from your account without deleting anything on the server itself."
 	},
 	"server-detail": {
-		links: [ga("hub/server-detail", "Server details")],
+		links: [ba("hub/server-detail", "Server details")],
 		details: "A single server’s status in detail. Server Info shows its version, whether it is currently reachable, its last heartbeat, and the hostnames and subdomain the hub knows it by. Relay Session appears when a tunnel is open and reports the worker node handling it and the bytes carried. TLS Status appears once the server has a fully-qualified name with a certificate. Heartbeat History is the recent record of check-ins the hub uses to decide whether the server is online."
 	},
 	federation: {
@@ -1710,38 +1726,38 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		details: "The library shares that flow between federated servers. The Incoming tab lists libraries other peers have offered to this server, which you can Accept or Reject while they are pending. The Outgoing tab lists libraries this server has offered to its peers. Like the Federation page, this is an administrator feature and non-administrators will see only a load error. Federation shares are distinct from the personal library shares on the Manage Shares page, which are between people rather than between servers."
 	},
 	"manage-shares": {
-		links: [ga("hub/library-sharing", "Library sharing"), ga("hub/share-with-friends", "Sharing with friends")],
+		links: [ba("hub/library-sharing", "Library sharing"), ba("hub/share-with-friends", "Sharing with friends")],
 		details: "The libraries you have shared with other people. Each row shows who you shared with, the permission level they were granted, and an expiry date if you set one — an expired share is marked and no longer grants access. Revoke ends a share immediately. This is the granting side of sharing; the libraries other people have shared with you appear under Shared With Me."
 	},
 	"shared-with-me": {
-		links: [ga("hub/library-sharing", "Library sharing"), ga("hub/share-with-friends", "Sharing with friends")],
+		links: [ba("hub/library-sharing", "Library sharing"), ba("hub/share-with-friends", "Sharing with friends")],
 		details: "The libraries other people have shared with you. Each card shows the owner, the server the library lives on, and the permission level you were given — read-only, or read and write. Only shares that are currently active are listed; if an owner revokes a share it simply stops appearing here. This is the receiving side of sharing; the libraries you have shared with others appear under Manage Shares."
 	},
 	"invite-links": {
-		links: [ga("hub/invite-links", "Invite links")],
+		links: [ba("hub/invite-links", "Invite links")],
 		details: "Invite links let you give someone access to a library on one of your servers by sending them a URL, without them needing an account beforehand. New Invite creates a link scoped to a server and optionally a single library and permission level; you can cap how many times it may be used and when it expires. The list shows each link’s usage against its limit; Copy URL copies it to send, and Revoke disables it. A revoked or fully-used link stops working immediately."
 	},
 	requests: {
-		links: [ga("hub/requests", "Media requests"), ga("reference/api/hub-media-requests", "Requests API reference")],
+		links: [ba("hub/requests", "Media requests"), ba("reference/api/hub-media-requests", "Requests API reference")],
 		details: "Requests let you ask a server owner to add a specific movie or show. New Request takes the title and its TMDB id — and, for a series, an optional season and episode. A request moves from Pending to Approved or Rejected as the owner acts on it; a rejected request shows the reason. Delete withdraws a request you no longer want. Requesting something does not download it — it flags it for the owner to decide."
 	}
-}, _a = {
+}, xa = {
 	class: "my-servers",
 	"aria-labelledby": "my-servers-heading"
-}, va = { class: "my-servers__head" }, ya = {
+}, Sa = { class: "my-servers__head" }, Ca = {
 	key: 0,
 	class: "my-servers__skel"
-}, ba = {
+}, wa = {
 	key: 3,
 	class: "my-servers__table-wrap"
-}, xa = {
+}, Ta = {
 	class: "my-servers__table",
 	"aria-label": "Connected servers"
-}, Sa = { class: "my-servers__name" }, Ca = { class: "my-servers__url" }, wa = { class: "my-servers__num" }, Ta = { class: "my-servers__date" }, Ea = ["data-testid"], Da = { class: "my-servers__actions" }, Oa = ["disabled"], ka = {
+}, Ea = { class: "my-servers__name" }, Da = { class: "my-servers__url" }, Oa = { class: "my-servers__num" }, ka = { class: "my-servers__date" }, Aa = ["data-testid"], ja = { class: "my-servers__actions" }, Ma = ["disabled"], Na = {
 	key: 0,
 	class: "my-servers__add-error",
 	role: "alert"
-}, Aa = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Pa = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "MyServersPage",
 	props: { client: {} },
 	setup(e) {
@@ -1752,9 +1768,9 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		async function g() {
 			p.value = !0, m.value = null;
 			try {
-				await pa("", f.value), d.value = !1, n.success("Server added."), await _();
+				await _a("", f.value), d.value = !1, n.success("Server added."), await _();
 			} catch (e) {
-				m.value = e instanceof fa ? e.message : C(e, "Could not add the server.");
+				m.value = e instanceof ga ? e.message : C(e, "Could not add the server.");
 			} finally {
 				p.value = !1;
 			}
@@ -1770,7 +1786,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					status: e.status ?? "offline",
 					relayActive: e.relayActive === !0,
 					owner: n,
-					last_seen: ma(e.lastSeenAt),
+					last_seen: va(e.lastSeenAt),
 					library_count: typeof e.libraryCount == "number" ? e.libraryCount : void 0
 				}));
 			} catch (e) {
@@ -1819,8 +1835,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}
 			}
 		}
-		return W(_), (e, t) => (G(), R("section", _a, [
-			z("header", va, [t[4] ||= z("div", null, [z("h1", {
+		return W(_), (e, t) => (G(), R("section", xa, [
+			z("header", Sa, [t[4] ||= z("div", null, [z("h1", {
 				id: "my-servers-heading",
 				class: "my-servers__title"
 			}, "My Servers"), z("p", { class: "my-servers__subtitle" }, "Manage your connected media servers.")], -1), V(A, {
@@ -1849,7 +1865,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			c.value ? (G(), R("div", ya, [V(M, {
+			c.value ? (G(), R("div", Ca, [V(M, {
 				variant: "text",
 				lines: 6
 			})])) : l.value ? (G(), I(N, {
@@ -1884,7 +1900,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					_: 1
 				})]),
 				_: 1
-			})) : (G(), R("div", ba, [z("table", xa, [t[12] ||= z("thead", null, [z("tr", null, [
+			})) : (G(), R("div", wa, [z("table", Ta, [t[12] ||= z("thead", null, [z("tr", null, [
 				z("th", { scope: "col" }, "Server"),
 				z("th", { scope: "col" }, "Owner"),
 				z("th", { scope: "col" }, "Libraries"),
@@ -1895,10 +1911,10 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					class: "my-servers__actions-col"
 				}, "Actions")
 			])], -1), z("tbody", null, [(G(!0), R(P, null, q(s.value, (e) => (G(), R("tr", { key: e.id }, [
-				z("td", null, [z("div", Sa, J(e.name), 1), z("div", Ca, J(e.url), 1)]),
+				z("td", null, [z("div", Ea, J(e.name), 1), z("div", Da, J(e.url), 1)]),
 				z("td", null, J(e.owner), 1),
-				z("td", wa, J(e.library_count === void 0 ? "—" : e.library_count), 1),
-				z("td", Ta, J(y(e.last_seen)), 1),
+				z("td", Oa, J(e.library_count === void 0 ? "—" : e.library_count), 1),
+				z("td", ka, J(y(e.last_seen)), 1),
 				z("td", null, [z("span", {
 					class: "my-servers__status",
 					"data-testid": `status-${e.id}`
@@ -1911,8 +1927,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, {
 					default: Z(() => [...t[8] ||= [B("Relay connecting", -1)]]),
 					_: 1
-				})) : L("", !0)], 8, Ea)]),
-				z("td", null, [z("div", Da, [
+				})) : L("", !0)], 8, Aa)]),
+				z("td", null, [z("div", ja, [
 					V(A, {
 						variant: "solid",
 						size: "sm",
@@ -2010,62 +2026,62 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						spellcheck: "false",
 						placeholder: "e.g. ABCD-1234",
 						disabled: p.value
-					}, null, 8, Oa), [[pn, f.value]]),
-					m.value ? (G(), R("p", ka, J(m.value), 1)) : L("", !0)
+					}, null, 8, Ma), [[pn, f.value]]),
+					m.value ? (G(), R("p", Na, J(m.value), 1)) : L("", !0)
 				], 32)]),
 				_: 1
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-000a9774"]]), ja = {
+}), [["__scopeId", "data-v-000a9774"]]), Fa = {
 	class: "server-detail",
 	"aria-labelledby": "server-detail-heading"
-}, Ma = { class: "server-detail__back" }, Na = {
+}, Ia = { class: "server-detail__back" }, La = {
 	key: 0,
 	class: "server-detail__skeleton"
-}, Pa = { class: "server-detail__skeleton-card" }, Fa = { class: "server-detail__skeleton-card" }, Ia = { class: "server-detail__skeleton-card" }, La = { class: "server-detail__skeleton-card" }, Ra = {
+}, Ra = { class: "server-detail__skeleton-card" }, za = { class: "server-detail__skeleton-card" }, Ba = { class: "server-detail__skeleton-card" }, Va = { class: "server-detail__skeleton-card" }, Ha = {
 	key: 2,
 	class: "server-detail__content"
-}, za = {
+}, Ua = {
 	class: "server-detail__card",
 	"aria-labelledby": "server-info-heading"
-}, Ba = { class: "server-detail__card-header" }, Va = { class: "server-detail__card-title-row" }, Ha = {
+}, Wa = { class: "server-detail__card-header" }, Ga = { class: "server-detail__card-title-row" }, Ka = {
 	id: "server-info-heading",
 	class: "server-detail__card-title"
-}, Ua = { class: "server-detail__badges" }, Wa = ["title"], Ga = { class: "server-detail__info-list" }, Ka = { class: "server-detail__info-row" }, qa = { class: "server-detail__info-value" }, Ja = {
+}, qa = { class: "server-detail__badges" }, Ja = ["title"], Ya = { class: "server-detail__info-list" }, Xa = { class: "server-detail__info-row" }, Za = { class: "server-detail__info-value" }, Qa = {
 	key: 0,
 	class: "server-detail__info-row"
-}, Ya = { class: "server-detail__info-value" }, Xa = { class: "server-detail__hostnames" }, Za = {
+}, $a = { class: "server-detail__info-value" }, eo = { class: "server-detail__hostnames" }, to = {
 	key: 1,
 	class: "server-detail__info-row"
-}, Qa = { class: "server-detail__info-value server-detail__mono" }, $a = {
+}, no = { class: "server-detail__info-value server-detail__mono" }, ro = {
 	key: 2,
 	class: "server-detail__info-row"
-}, eo = { class: "server-detail__info-value server-detail__mono" }, to = {
+}, io = { class: "server-detail__info-value server-detail__mono" }, ao = {
 	key: 0,
 	class: "server-detail__card",
 	"aria-labelledby": "relay-session-heading"
-}, no = { class: "server-detail__card-header" }, ro = { class: "server-detail__info-list" }, io = { class: "server-detail__info-row" }, ao = { class: "server-detail__info-value server-detail__mono" }, oo = { class: "server-detail__info-row" }, so = { class: "server-detail__info-value" }, co = { class: "server-detail__info-row" }, lo = { class: "server-detail__info-value" }, uo = { class: "server-detail__info-row" }, fo = { class: "server-detail__info-value" }, po = { class: "server-detail__info-row" }, mo = { class: "server-detail__info-value" }, ho = {
+}, oo = { class: "server-detail__card-header" }, so = { class: "server-detail__info-list" }, co = { class: "server-detail__info-row" }, lo = { class: "server-detail__info-value server-detail__mono" }, uo = { class: "server-detail__info-row" }, fo = { class: "server-detail__info-value" }, po = { class: "server-detail__info-row" }, mo = { class: "server-detail__info-value" }, ho = { class: "server-detail__info-row" }, go = { class: "server-detail__info-value" }, _o = { class: "server-detail__info-row" }, vo = { class: "server-detail__info-value" }, yo = {
 	key: 1,
 	class: "server-detail__card server-detail__card--muted",
 	"aria-labelledby": "relay-session-heading"
-}, go = {
+}, bo = {
 	key: 2,
 	class: "server-detail__card",
 	"aria-labelledby": "tls-status-heading"
-}, _o = { class: "server-detail__card-header" }, vo = { class: "server-detail__badges" }, yo = { class: "server-detail__info-list" }, bo = { class: "server-detail__info-row" }, xo = { class: "server-detail__info-value server-detail__mono" }, So = { class: "server-detail__info-row" }, Co = { class: "server-detail__info-value" }, wo = { class: "server-detail__info-row" }, To = { class: "server-detail__info-value server-detail__mono server-detail__path" }, Eo = { class: "server-detail__info-row" }, Do = { class: "server-detail__info-value server-detail__mono server-detail__path" }, Oo = {
+}, xo = { class: "server-detail__card-header" }, So = { class: "server-detail__badges" }, Co = { class: "server-detail__info-list" }, wo = { class: "server-detail__info-row" }, To = { class: "server-detail__info-value server-detail__mono" }, Eo = { class: "server-detail__info-row" }, Do = { class: "server-detail__info-value" }, Oo = { class: "server-detail__info-row" }, ko = { class: "server-detail__info-value server-detail__mono server-detail__path" }, Ao = { class: "server-detail__info-row" }, jo = { class: "server-detail__info-value server-detail__mono server-detail__path" }, Mo = {
 	class: "server-detail__card",
 	"aria-labelledby": "heartbeat-heading"
-}, ko = { class: "server-detail__card-header" }, Ao = { class: "server-detail__card-title-row" }, jo = {
+}, No = { class: "server-detail__card-header" }, Po = { class: "server-detail__card-title-row" }, Fo = {
 	key: 0,
 	class: "server-detail__empty-message"
-}, Mo = {
+}, Io = {
 	key: 1,
 	class: "server-detail__table-wrap"
-}, No = {
+}, Lo = {
 	class: "server-detail__table",
 	"aria-label": "Heartbeat history"
-}, Po = { class: "server-detail__date" }, Fo = { class: "server-detail__uptime" }, Io = { class: "server-detail__num" }, Lo = { class: "server-detail__num" }, Ro = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Ro = { class: "server-detail__date" }, zo = { class: "server-detail__uptime" }, Bo = { class: "server-detail__num" }, Vo = { class: "server-detail__num" }, Ho = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "ServerDetailPage",
 	props: {
 		client: {},
@@ -2113,8 +2129,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			}
 		}
 		let _ = F(() => l.value ? a.value : a.value.slice(0, 5));
-		return W(() => g(!0)), (e, t) => (G(), R("section", ja, [
-			z("div", Ma, [V(A, {
+		return W(() => g(!0)), (e, t) => (G(), R("section", Fa, [
+			z("div", Ia, [V(A, {
 				variant: "ghost",
 				size: "sm",
 				"left-icon": "chevron-left",
@@ -2136,20 +2152,20 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			s.value ? (G(), R("div", Na, [
-				z("div", Pa, [V(M, {
+			s.value ? (G(), R("div", La, [
+				z("div", Ra, [V(M, {
 					variant: "text",
 					lines: 4
 				})]),
-				z("div", Fa, [V(M, {
+				z("div", za, [V(M, {
 					variant: "text",
 					lines: 4
 				})]),
-				z("div", Ia, [V(M, {
+				z("div", Ba, [V(M, {
 					variant: "text",
 					lines: 4
 				})]),
-				z("div", La, [V(M, {
+				z("div", Va, [V(M, {
 					variant: "text",
 					lines: 4
 				})])
@@ -2169,8 +2185,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					_: 1
 				})]),
 				_: 1
-			}, 8, ["description"])) : r.value ? (G(), R("div", Ra, [
-				z("article", za, [z("header", Ba, [z("div", Va, [z("h1", Ha, J(r.value.server_name), 1), z("div", Ua, [
+			}, 8, ["description"])) : r.value ? (G(), R("div", Ha, [
+				z("article", Ua, [z("header", Wa, [z("div", Ga, [z("h1", Ka, J(r.value.server_name), 1), z("div", qa, [
 					V(j, { tone: "neutral" }, {
 						default: Z(() => [B(J(r.value.version), 1)]),
 						_: 1
@@ -2182,33 +2198,33 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					z("span", {
 						class: U(["server-detail__relay-indicator", { "server-detail__relay-indicator--active": r.value.relay_active }]),
 						title: r.value.relay_active ? "Relay active" : "Relay inactive"
-					}, [...t[6] ||= [z("span", { class: "server-detail__relay-dot" }, null, -1), B(" Relay ", -1)]], 10, Wa)
-				])])]), z("dl", Ga, [
-					z("div", Ka, [t[7] ||= z("dt", { class: "server-detail__info-label" }, "Last seen", -1), z("dd", qa, J(u(r.value.last_seen_at)), 1)]),
-					r.value.hostname_candidates.length > 0 ? (G(), R("div", Ja, [t[8] ||= z("dt", { class: "server-detail__info-label" }, "Hostname candidates", -1), z("dd", Ya, [z("ul", Xa, [(G(!0), R(P, null, q(r.value.hostname_candidates, (e) => (G(), R("li", { key: e }, J(e), 1))), 128))])])])) : L("", !0),
-					r.value.subdomain ? (G(), R("div", Za, [t[9] ||= z("dt", { class: "server-detail__info-label" }, "Subdomain", -1), z("dd", Qa, J(r.value.subdomain), 1)])) : L("", !0),
-					r.value.fqdn ? (G(), R("div", $a, [t[10] ||= z("dt", { class: "server-detail__info-label" }, "FQDN", -1), z("dd", eo, J(r.value.fqdn), 1)])) : L("", !0)
+					}, [...t[6] ||= [z("span", { class: "server-detail__relay-dot" }, null, -1), B(" Relay ", -1)]], 10, Ja)
+				])])]), z("dl", Ya, [
+					z("div", Xa, [t[7] ||= z("dt", { class: "server-detail__info-label" }, "Last seen", -1), z("dd", Za, J(u(r.value.last_seen_at)), 1)]),
+					r.value.hostname_candidates.length > 0 ? (G(), R("div", Qa, [t[8] ||= z("dt", { class: "server-detail__info-label" }, "Hostname candidates", -1), z("dd", $a, [z("ul", eo, [(G(!0), R(P, null, q(r.value.hostname_candidates, (e) => (G(), R("li", { key: e }, J(e), 1))), 128))])])])) : L("", !0),
+					r.value.subdomain ? (G(), R("div", to, [t[9] ||= z("dt", { class: "server-detail__info-label" }, "Subdomain", -1), z("dd", no, J(r.value.subdomain), 1)])) : L("", !0),
+					r.value.fqdn ? (G(), R("div", ro, [t[10] ||= z("dt", { class: "server-detail__info-label" }, "FQDN", -1), z("dd", io, J(r.value.fqdn), 1)])) : L("", !0)
 				])]),
-				i.value ? (G(), R("article", to, [z("header", no, [t[12] ||= z("h2", {
+				i.value ? (G(), R("article", ao, [z("header", oo, [t[12] ||= z("h2", {
 					id: "relay-session-heading",
 					class: "server-detail__card-title"
 				}, "Relay Session", -1), V(j, { tone: "success" }, {
 					default: Z(() => [...t[11] ||= [B("Active", -1)]]),
 					_: 1
-				})]), z("dl", ro, [
-					z("div", io, [t[13] ||= z("dt", { class: "server-detail__info-label" }, "Worker node", -1), z("dd", ao, J(i.value.worker_node), 1)]),
-					z("div", oo, [t[14] ||= z("dt", { class: "server-detail__info-label" }, "Session opened", -1), z("dd", so, J(m(i.value.opened_at)), 1)]),
-					z("div", co, [t[15] ||= z("dt", { class: "server-detail__info-label" }, "Data in", -1), z("dd", lo, J(f(i.value.bytes_in)), 1)]),
-					z("div", uo, [t[16] ||= z("dt", { class: "server-detail__info-label" }, "Data out", -1), z("dd", fo, J(f(i.value.bytes_out)), 1)]),
-					z("div", po, [t[17] ||= z("dt", { class: "server-detail__info-label" }, "Last frame", -1), z("dd", mo, J(d(i.value.last_frame_at)), 1)])
-				])])) : (G(), R("article", ho, [...t[18] ||= [z("header", { class: "server-detail__card-header" }, [z("h2", {
+				})]), z("dl", so, [
+					z("div", co, [t[13] ||= z("dt", { class: "server-detail__info-label" }, "Worker node", -1), z("dd", lo, J(i.value.worker_node), 1)]),
+					z("div", uo, [t[14] ||= z("dt", { class: "server-detail__info-label" }, "Session opened", -1), z("dd", fo, J(m(i.value.opened_at)), 1)]),
+					z("div", po, [t[15] ||= z("dt", { class: "server-detail__info-label" }, "Data in", -1), z("dd", mo, J(f(i.value.bytes_in)), 1)]),
+					z("div", ho, [t[16] ||= z("dt", { class: "server-detail__info-label" }, "Data out", -1), z("dd", go, J(f(i.value.bytes_out)), 1)]),
+					z("div", _o, [t[17] ||= z("dt", { class: "server-detail__info-label" }, "Last frame", -1), z("dd", vo, J(d(i.value.last_frame_at)), 1)])
+				])])) : (G(), R("article", yo, [...t[18] ||= [z("header", { class: "server-detail__card-header" }, [z("h2", {
 					id: "relay-session-heading",
 					class: "server-detail__card-title"
 				}, "Relay Session")], -1), z("p", { class: "server-detail__empty-message" }, "No active relay session.", -1)]])),
-				o.value && r.value.fqdn ? (G(), R("article", go, [z("header", _o, [t[20] ||= z("h2", {
+				o.value && r.value.fqdn ? (G(), R("article", bo, [z("header", xo, [t[20] ||= z("h2", {
 					id: "tls-status-heading",
 					class: "server-detail__card-title"
-				}, "TLS Status", -1), z("div", vo, [V(j, { tone: o.value.provisioned ? "success" : "error" }, {
+				}, "TLS Status", -1), z("div", So, [V(j, { tone: o.value.provisioned ? "success" : "error" }, {
 					default: Z(() => [B(J(o.value.provisioned ? "Provisioned" : "Not provisioned"), 1)]),
 					_: 1
 				}, 8, ["tone"]), o.value.needs_renewal ? (G(), I(j, {
@@ -2217,13 +2233,13 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, {
 					default: Z(() => [...t[19] ||= [B("Needs renewal", -1)]]),
 					_: 1
-				})) : L("", !0)])]), z("dl", yo, [
-					z("div", bo, [t[21] ||= z("dt", { class: "server-detail__info-label" }, "Domain", -1), z("dd", xo, J(o.value.fqdn), 1)]),
-					z("div", So, [t[22] ||= z("dt", { class: "server-detail__info-label" }, "Expiry", -1), z("dd", Co, [z("span", { class: U({ "server-detail__expired": o.value.expiry_days_remaining <= 0 }) }, J(o.value.expiry_days_remaining > 0 ? `${o.value.expiry_days_remaining} days remaining` : "Expired!"), 3)])]),
-					z("div", wo, [t[23] ||= z("dt", { class: "server-detail__info-label" }, "Certificate", -1), z("dd", To, J(o.value.cert_path), 1)]),
-					z("div", Eo, [t[24] ||= z("dt", { class: "server-detail__info-label" }, "Key", -1), z("dd", Do, J(o.value.key_path), 1)])
+				})) : L("", !0)])]), z("dl", Co, [
+					z("div", wo, [t[21] ||= z("dt", { class: "server-detail__info-label" }, "Domain", -1), z("dd", To, J(o.value.fqdn), 1)]),
+					z("div", Eo, [t[22] ||= z("dt", { class: "server-detail__info-label" }, "Expiry", -1), z("dd", Do, [z("span", { class: U({ "server-detail__expired": o.value.expiry_days_remaining <= 0 }) }, J(o.value.expiry_days_remaining > 0 ? `${o.value.expiry_days_remaining} days remaining` : "Expired!"), 3)])]),
+					z("div", Oo, [t[23] ||= z("dt", { class: "server-detail__info-label" }, "Certificate", -1), z("dd", ko, J(o.value.cert_path), 1)]),
+					z("div", Ao, [t[24] ||= z("dt", { class: "server-detail__info-label" }, "Key", -1), z("dd", jo, J(o.value.key_path), 1)])
 				])])) : L("", !0),
-				z("article", Oo, [z("header", ko, [z("div", Ao, [t[25] ||= z("h2", {
+				z("article", Mo, [z("header", No, [z("div", Po, [t[25] ||= z("h2", {
 					id: "heartbeat-heading",
 					class: "server-detail__card-title"
 				}, "Heartbeat History", -1), a.value.length > 5 ? (G(), I(A, {
@@ -2234,44 +2250,44 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, {
 					default: Z(() => [B(J(l.value ? "Show less" : `Show all (${a.value.length})`), 1)]),
 					_: 1
-				})) : L("", !0)])]), a.value.length === 0 ? (G(), R("div", jo, " No heartbeat history available. ")) : (G(), R("div", Mo, [z("table", No, [t[26] ||= z("thead", null, [z("tr", null, [
+				})) : L("", !0)])]), a.value.length === 0 ? (G(), R("div", Fo, " No heartbeat history available. ")) : (G(), R("div", Io, [z("table", Lo, [t[26] ||= z("thead", null, [z("tr", null, [
 					z("th", { scope: "col" }, "Time"),
 					z("th", { scope: "col" }, "Version"),
 					z("th", { scope: "col" }, "Uptime"),
 					z("th", { scope: "col" }, "Sessions"),
 					z("th", { scope: "col" }, "Transcodes")
 				])], -1), z("tbody", null, [(G(!0), R(P, null, q(_.value, (e) => (G(), R("tr", { key: e.id }, [
-					z("td", Po, J(u(e.received_at)), 1),
+					z("td", Ro, J(u(e.received_at)), 1),
 					z("td", null, [V(j, { tone: "neutral" }, {
 						default: Z(() => [B(J(e.version), 1)]),
 						_: 2
 					}, 1024)]),
-					z("td", Fo, J(p(e.uptime_seconds)), 1),
-					z("td", Io, J(e.active_sessions), 1),
-					z("td", Lo, J(e.active_transcodes), 1)
+					z("td", zo, J(p(e.uptime_seconds)), 1),
+					z("td", Bo, J(e.active_sessions), 1),
+					z("td", Vo, J(e.active_transcodes), 1)
 				]))), 128))])])]))])
 			])) : L("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-ba4a2b34"]]), zo = {
+}), [["__scopeId", "data-v-ba4a2b34"]]), Uo = {
 	class: "federation",
 	"aria-labelledby": "federation-heading"
-}, Bo = {
+}, Wo = {
 	key: 0,
 	class: "federation__skel"
-}, Vo = {
+}, Go = {
 	key: 2,
 	class: "federation__content"
-}, Ho = {
+}, Ko = {
 	key: 1,
 	class: "federation__table-wrap"
-}, Uo = {
+}, qo = {
 	class: "federation__table",
 	"aria-label": "Federation peers"
-}, Wo = { class: "federation__name" }, Go = { class: "federation__url" }, Ko = { class: "federation__num" }, qo = { class: "federation__date" }, Jo = ["data-testid"], Yo = { class: "federation__actions" }, Xo = {
+}, Jo = { class: "federation__name" }, Yo = { class: "federation__url" }, Xo = { class: "federation__num" }, Zo = { class: "federation__date" }, Qo = ["data-testid"], $o = { class: "federation__actions" }, es = {
 	class: "federation__add",
 	"aria-labelledby": "federation-add-heading"
-}, Zo = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, ts = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "FederationPage",
 	props: { client: {} },
 	setup(e) {
@@ -2339,7 +2355,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				default: return "neutral";
 			}
 		}
-		return W(() => u(!0)), (e, t) => (G(), R("section", zo, [
+		return W(() => u(!0)), (e, t) => (G(), R("section", Uo, [
 			t[11] ||= z("header", { class: "federation__head" }, [z("h1", {
 				id: "federation-heading",
 				class: "federation__title"
@@ -2355,7 +2371,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			i.value ? (G(), R("div", Bo, [V(M, {
+			i.value ? (G(), R("div", Wo, [V(M, {
 				variant: "text",
 				lines: 6
 			})])) : a.value ? (G(), I(N, {
@@ -2374,14 +2390,14 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					_: 1
 				})]),
 				_: 1
-			}, 8, ["description"])) : (G(), R("div", Vo, [
+			}, 8, ["description"])) : (G(), R("div", Go, [
 				t[10] ||= z("h2", { class: "federation__section-title" }, "Connected peers", -1),
 				r.value.length === 0 ? (G(), I(N, {
 					key: 0,
 					icon: "cast",
 					title: "No federation peers connected",
 					description: "Add a peer below to start sharing libraries."
-				})) : (G(), R("div", Ho, [z("table", Uo, [t[7] ||= z("thead", null, [z("tr", null, [
+				})) : (G(), R("div", Ko, [z("table", qo, [t[7] ||= z("thead", null, [z("tr", null, [
 					z("th", { scope: "col" }, "Peer"),
 					z("th", { scope: "col" }, "Shared libraries"),
 					z("th", { scope: "col" }, "Last sync"),
@@ -2391,17 +2407,17 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						class: "federation__actions-col"
 					}, "Actions")
 				])], -1), z("tbody", null, [(G(!0), R(P, null, q(r.value, (e) => (G(), R("tr", { key: e.id }, [
-					z("td", null, [z("div", Wo, J(e.name), 1), z("div", Go, J(e.url), 1)]),
-					z("td", Ko, J(e.shared_libraries_count === void 0 ? "—" : e.shared_libraries_count), 1),
-					z("td", qo, J(p(e.last_sync)), 1),
+					z("td", null, [z("div", Jo, J(e.name), 1), z("div", Yo, J(e.url), 1)]),
+					z("td", Xo, J(e.shared_libraries_count === void 0 ? "—" : e.shared_libraries_count), 1),
+					z("td", Zo, J(p(e.last_sync)), 1),
 					z("td", null, [z("span", {
 						class: "federation__status",
 						"data-testid": `status-${e.id}`
 					}, [V(j, { tone: h(e.status) }, {
 						default: Z(() => [B(J(m(e.status)), 1)]),
 						_: 2
-					}, 1032, ["tone"])], 8, Jo)]),
-					z("td", null, [z("div", Yo, [V(A, {
+					}, 1032, ["tone"])], 8, Qo)]),
+					z("td", null, [z("div", $o, [V(A, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Remove ${e.name}`,
@@ -2411,7 +2427,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						_: 1
 					}, 8, ["aria-label", "onClick"])])])
 				]))), 128))])])])),
-				z("section", Xo, [t[9] ||= z("h2", {
+				z("section", es, [t[9] ||= z("h2", {
 					id: "federation-add-heading",
 					class: "federation__section-title"
 				}, "Add peer", -1), z("form", {
@@ -2456,50 +2472,50 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			]))
 		]));
 	}
-}), [["__scopeId", "data-v-dcbba131"]]), Qo = {
+}), [["__scopeId", "data-v-dcbba131"]]), ns = {
 	class: "fed-shares",
 	"aria-labelledby": "fed-shares-heading"
-}, $o = {
+}, rs = {
 	class: "fed-shares__tabs",
 	role: "tablist",
 	"aria-label": "Share offers"
-}, es = ["aria-selected"], ts = {
+}, is = ["aria-selected"], as = {
 	key: 0,
 	class: "fed-shares__tab-badge"
-}, ns = ["aria-selected"], rs = {
+}, os = ["aria-selected"], ss = {
 	role: "tabpanel",
 	"aria-labelledby": "tab-incoming"
-}, is = {
+}, cs = {
 	key: 0,
 	class: "fed-shares__skel"
-}, as = {
+}, ls = {
 	key: 3,
 	class: "fed-shares__table-wrap"
-}, os = {
+}, us = {
 	class: "fed-shares__table",
 	"aria-label": "Incoming library share offers"
-}, ss = { class: "fed-shares__library" }, cs = { class: "fed-shares__date" }, ls = {
+}, ds = { class: "fed-shares__library" }, fs = { class: "fed-shares__date" }, ps = {
 	key: 0,
 	class: "fed-shares__actions"
-}, us = {
+}, ms = {
 	key: 1,
 	class: "fed-shares__responded"
-}, ds = { key: 0 }, fs = {
+}, hs = { key: 0 }, gs = {
 	role: "tabpanel",
 	"aria-labelledby": "tab-outgoing"
-}, ps = {
+}, _s = {
 	key: 0,
 	class: "fed-shares__skel"
-}, ms = {
+}, vs = {
 	key: 3,
 	class: "fed-shares__table-wrap"
-}, hs = {
+}, ys = {
 	class: "fed-shares__table",
 	"aria-label": "Outgoing library shares"
-}, gs = { class: "fed-shares__library" }, _s = { class: "fed-shares__peer" }, vs = { class: "fed-shares__date" }, ys = {
+}, bs = { class: "fed-shares__library" }, xs = { class: "fed-shares__peer" }, Ss = { class: "fed-shares__date" }, Cs = {
 	key: 0,
 	class: "fed-shares__actions"
-}, bs = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, ws = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "FederationSharesPage",
 	props: { client: {} },
 	setup(e) {
@@ -2515,7 +2531,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					library_name: e.library_name ?? "",
 					permission: e.permission === "readwrite" ? "readwrite" : "read",
 					status: e.status ?? "pending",
-					offered_at: ma(e.offered_at) ?? "",
+					offered_at: va(e.offered_at) ?? "",
 					responded_at: e.responded_at ?? null,
 					accepted_by: e.accepted_by ?? null
 				}));
@@ -2536,7 +2552,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					peer_id: e.peer_id ?? "",
 					permission: e.permission === "readwrite" ? "readwrite" : "read",
 					status: e.status ?? "pending",
-					shared_at: ma(e.shared_at) ?? "",
+					shared_at: va(e.shared_at) ?? "",
 					revoked_at: e.revoked_at ?? null
 				}));
 			} catch (e) {
@@ -2618,7 +2634,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			}
 		}
 		let T = F(() => o.value && i.value.length === 0 && a.value.length === 0);
-		return W(() => m()), (e, t) => (G(), R("section", Qo, [
+		return W(() => m()), (e, t) => (G(), R("section", ns, [
 			t[11] ||= z("header", { class: "fed-shares__head" }, [z("h1", {
 				id: "fed-shares-heading",
 				class: "fed-shares__title"
@@ -2636,18 +2652,18 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			z("div", $o, [z("button", {
+			z("div", rs, [z("button", {
 				role: "tab",
 				class: U(["fed-shares__tab", { "is-active": r.value === "incoming" }]),
 				"aria-selected": r.value === "incoming",
 				onClick: t[0] ||= (e) => r.value = "incoming"
-			}, [t[3] ||= B(" Incoming ", -1), i.value.filter((e) => e.status === "pending").length > 0 ? (G(), R("span", ts, J(i.value.filter((e) => e.status === "pending").length), 1)) : L("", !0)], 10, es), z("button", {
+			}, [t[3] ||= B(" Incoming ", -1), i.value.filter((e) => e.status === "pending").length > 0 ? (G(), R("span", as, J(i.value.filter((e) => e.status === "pending").length), 1)) : L("", !0)], 10, is), z("button", {
 				role: "tab",
 				class: U(["fed-shares__tab", { "is-active": r.value === "outgoing" }]),
 				"aria-selected": r.value === "outgoing",
 				onClick: t[1] ||= (e) => r.value = "outgoing"
-			}, " Outgoing ", 10, ns)]),
-			gn(z("div", rs, [T.value ? (G(), R("div", is, [V(M, {
+			}, " Outgoing ", 10, os)]),
+			gn(z("div", ss, [T.value ? (G(), R("div", cs, [V(M, {
 				variant: "text",
 				lines: 6
 			})])) : c.value ? (G(), I(N, {
@@ -2671,7 +2687,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				icon: "bookmark",
 				title: "No incoming library share offers",
 				description: "Library share offers from other federation peers will appear here."
-			})) : (G(), R("div", as, [z("table", os, [t[7] ||= z("thead", null, [z("tr", null, [
+			})) : (G(), R("div", ls, [z("table", us, [t[7] ||= z("thead", null, [z("tr", null, [
 				z("th", { scope: "col" }, "Library"),
 				z("th", { scope: "col" }, "Permission"),
 				z("th", { scope: "col" }, "Status"),
@@ -2681,7 +2697,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					class: "fed-shares__actions-col"
 				}, "Actions")
 			])], -1), z("tbody", null, [(G(!0), R(P, null, q(i.value, (e) => (G(), R("tr", { key: e.id }, [
-				z("td", null, [z("span", ss, J(e.library_name), 1)]),
+				z("td", null, [z("span", ds, J(e.library_name), 1)]),
 				z("td", null, [V(j, { tone: w(e.permission) }, {
 					default: Z(() => [B(J(e.permission), 1)]),
 					_: 2
@@ -2690,8 +2706,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					default: Z(() => [B(J(e.status), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
-				z("td", cs, J(y(e.offered_at)), 1),
-				z("td", null, [e.status === "pending" ? (G(), R("div", ls, [V(A, {
+				z("td", fs, J(y(e.offered_at)), 1),
+				z("td", null, [e.status === "pending" ? (G(), R("div", ps, [V(A, {
 					variant: "solid",
 					size: "sm",
 					"aria-label": `Accept share of ${e.library_name}`,
@@ -2717,9 +2733,9 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					"aria-label",
 					"disabled",
 					"onClick"
-				])])) : (G(), R("span", us, [B(J(e.status === "accepted" ? "Accepted" : "Rejected") + " ", 1), e.responded_at ? (G(), R("span", ds, " · " + J(y(e.responded_at)), 1)) : L("", !0)]))])
+				])])) : (G(), R("span", ms, [B(J(e.status === "accepted" ? "Accepted" : "Rejected") + " ", 1), e.responded_at ? (G(), R("span", hs, " · " + J(y(e.responded_at)), 1)) : L("", !0)]))])
 			]))), 128))])])]))], 512), [[mn, r.value === "incoming"]]),
-			gn(z("div", fs, [T.value ? (G(), R("div", ps, [V(M, {
+			gn(z("div", gs, [T.value ? (G(), R("div", _s, [V(M, {
 				variant: "text",
 				lines: 6
 			})])) : l.value ? (G(), I(N, {
@@ -2743,7 +2759,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				icon: "bookmark",
 				title: "No outgoing library shares",
 				description: "Libraries you share with federation peers will appear here."
-			})) : (G(), R("div", ms, [z("table", hs, [t[10] ||= z("thead", null, [z("tr", null, [
+			})) : (G(), R("div", vs, [z("table", ys, [t[10] ||= z("thead", null, [z("tr", null, [
 				z("th", { scope: "col" }, "Library"),
 				z("th", { scope: "col" }, "Peer"),
 				z("th", { scope: "col" }, "Permission"),
@@ -2754,8 +2770,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					class: "fed-shares__actions-col"
 				}, "Actions")
 			])], -1), z("tbody", null, [(G(!0), R(P, null, q(a.value, (e) => (G(), R("tr", { key: e.id }, [
-				z("td", null, [z("span", gs, J(e.library_name), 1)]),
-				z("td", _s, J(e.peer_id), 1),
+				z("td", null, [z("span", bs, J(e.library_name), 1)]),
+				z("td", xs, J(e.peer_id), 1),
 				z("td", null, [V(j, { tone: w(e.permission) }, {
 					default: Z(() => [B(J(e.permission), 1)]),
 					_: 2
@@ -2764,8 +2780,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					default: Z(() => [B(J(S(e.status)), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
-				z("td", vs, J(y(e.shared_at)), 1),
-				z("td", null, [e.status === "revoked" ? L("", !0) : (G(), R("div", ys, [V(A, {
+				z("td", Ss, J(y(e.shared_at)), 1),
+				z("td", null, [e.status === "revoked" ? L("", !0) : (G(), R("div", Cs, [V(A, {
 					variant: "ghost",
 					size: "sm",
 					"aria-label": `Revoke share of ${e.library_name}`,
@@ -2782,19 +2798,19 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			]))), 128))])])]))], 512), [[mn, r.value === "outgoing"]])
 		]));
 	}
-}), [["__scopeId", "data-v-43d15a72"]]), xs = {
+}), [["__scopeId", "data-v-43d15a72"]]), Ts = {
 	class: "shares",
 	"aria-labelledby": "shares-heading"
-}, Ss = {
+}, Es = {
 	key: 0,
 	class: "shares__skel"
-}, Cs = {
+}, Ds = {
 	key: 3,
 	class: "shares__table-wrap"
-}, ws = {
+}, Os = {
 	class: "shares__table",
 	"aria-label": "Library shares"
-}, Ts = { class: "shares__library" }, Es = { class: "shares__date" }, Ds = { class: "shares__date" }, Os = ["data-testid"], ks = { class: "shares__actions" }, As = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, ks = { class: "shares__library" }, As = { class: "shares__date" }, js = { class: "shares__date" }, Ms = ["data-testid"], Ns = { class: "shares__actions" }, Ps = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "ManageSharesPage",
 	props: { client: {} },
 	setup(e) {
@@ -2809,8 +2825,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					library_name: e.library_name ?? "",
 					shared_with: e.collaborator_name ?? e.collaborator_user_id ?? "",
 					permissions: e.permission_level === "readwrite" ? "write" : "read",
-					created_at: ma(e.created_at) ?? "",
-					expires_at: ma(e.expires_at)
+					created_at: va(e.created_at) ?? "",
+					expires_at: va(e.expires_at)
 				}));
 			} catch (e) {
 				a.value = C(e, "Failed to load shares."), n.error(a.value);
@@ -2838,7 +2854,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				default: return "neutral";
 			}
 		}
-		return W(() => o(!0)), (e, t) => (G(), R("section", xs, [
+		return W(() => o(!0)), (e, t) => (G(), R("section", Ts, [
 			t[6] ||= z("header", { class: "shares__head" }, [z("h1", {
 				id: "shares-heading",
 				class: "shares__title"
@@ -2856,7 +2872,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			i.value ? (G(), R("div", Ss, [V(M, {
+			i.value ? (G(), R("div", Es, [V(M, {
 				variant: "text",
 				lines: 6
 			})])) : a.value ? (G(), I(N, {
@@ -2880,7 +2896,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				icon: "bookmark",
 				title: "No library shares",
 				description: "Libraries you share with others will appear here."
-			})) : (G(), R("div", Cs, [z("table", ws, [t[5] ||= z("thead", null, [z("tr", null, [
+			})) : (G(), R("div", Ds, [z("table", Os, [t[5] ||= z("thead", null, [z("tr", null, [
 				z("th", { scope: "col" }, "Library"),
 				z("th", { scope: "col" }, "Shared with"),
 				z("th", { scope: "col" }, "Permissions"),
@@ -2891,14 +2907,14 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					class: "shares__actions-col"
 				}, "Actions")
 			])], -1), z("tbody", null, [(G(!0), R(P, null, q(r.value, (e) => (G(), R("tr", { key: e.id }, [
-				z("td", null, [z("span", Ts, J(e.library_name), 1)]),
+				z("td", null, [z("span", ks, J(e.library_name), 1)]),
 				z("td", null, J(e.shared_with), 1),
 				z("td", null, [V(j, { tone: u(e.permissions) }, {
 					default: Z(() => [B(J(e.permissions), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
-				z("td", Es, J(c(e.created_at)), 1),
-				z("td", Ds, [z("span", {
+				z("td", As, J(c(e.created_at)), 1),
+				z("td", js, [z("span", {
 					class: "shares__expires",
 					"data-testid": `expires-${e.id}`
 				}, [B(J(c(e.expires_at)) + " ", 1), l(e.expires_at) ? (G(), I(j, {
@@ -2907,8 +2923,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, {
 					default: Z(() => [...t[3] ||= [B("Expired", -1)]]),
 					_: 1
-				})) : L("", !0)], 8, Os)]),
-				z("td", null, [z("div", ks, [V(A, {
+				})) : L("", !0)], 8, Ms)]),
+				z("td", null, [z("div", Ns, [V(A, {
 					variant: "ghost",
 					size: "sm",
 					"aria-label": `Revoke share of ${e.library_name} with ${e.shared_with}`,
@@ -2920,16 +2936,16 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			]))), 128))])])]))
 		]));
 	}
-}), [["__scopeId", "data-v-1ddc3ba7"]]), js = {
+}), [["__scopeId", "data-v-1ddc3ba7"]]), Fs = {
 	class: "shared-with-me",
 	"aria-labelledby": "shared-with-me-heading"
-}, Ms = {
+}, Is = {
 	key: 0,
 	class: "shared-with-me__skel"
-}, Ns = {
+}, Ls = {
 	key: 3,
 	class: "shared-with-me__grid"
-}, Ps = { class: "share-card__header" }, Fs = { class: "share-card__library" }, Is = { class: "share-card__badges" }, Ls = { class: "share-card__body" }, Rs = { class: "share-card__details" }, zs = { class: "share-card__detail" }, Bs = { class: "share-card__detail" }, Vs = { class: "share-card__detail" }, Hs = { class: "share-card__detail" }, Us = { class: "share-card__footer" }, Ws = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Rs = { class: "share-card__header" }, zs = { class: "share-card__library" }, Bs = { class: "share-card__badges" }, Vs = { class: "share-card__body" }, Hs = { class: "share-card__details" }, Us = { class: "share-card__detail" }, Ws = { class: "share-card__detail" }, Gs = { class: "share-card__detail" }, Ks = { class: "share-card__detail" }, qs = { class: "share-card__footer" }, Js = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "SharedWithMePage",
 	props: { client: {} },
 	setup(e) {
@@ -2956,18 +2972,18 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			return e === "readwrite" ? "Read / Write" : "Read only";
 		}
 		function c(e) {
-			let t = ma(e);
+			let t = va(e);
 			return t ? new Date(t).toLocaleDateString() : "—";
 		}
 		function l(e) {
-			let t = ma(e);
+			let t = va(e);
 			return t ? new Date(t) < /* @__PURE__ */ new Date() : !1;
 		}
 		function u(e) {
 			let t = e.access_urls?.[0];
 			t && window.open(t, "_blank", "noopener,noreferrer");
 		}
-		return W(() => a(!0)), (e, t) => (G(), R("section", js, [
+		return W(() => a(!0)), (e, t) => (G(), R("section", Fs, [
 			t[9] ||= z("header", { class: "shared-with-me__head" }, [z("h1", {
 				id: "shared-with-me-heading",
 				class: "shared-with-me__title"
@@ -2985,7 +3001,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			r.value ? (G(), R("div", Ms, [V(M, {
+			r.value ? (G(), R("div", Is, [V(M, {
 				variant: "text",
 				lines: 6
 			})])) : i.value ? (G(), I(N, {
@@ -3009,11 +3025,11 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				icon: "bookmark",
 				title: "No shared libraries",
 				description: "Libraries shared with you will appear here."
-			})) : (G(), R("div", Ns, [(G(!0), R(P, null, q(n.value, (e) => (G(), R("article", {
+			})) : (G(), R("div", Ls, [(G(!0), R(P, null, q(n.value, (e) => (G(), R("article", {
 				key: e.share_id,
 				class: U(["share-card", { "share-card--expired": l(e.expires_at) }])
 			}, [
-				z("div", Ps, [z("h2", Fs, J(e.library_name), 1), z("div", Is, [V(j, { tone: o(e.permission_level) }, {
+				z("div", Rs, [z("h2", zs, J(e.library_name), 1), z("div", Bs, [V(j, { tone: o(e.permission_level) }, {
 					default: Z(() => [B(J(s(e.permission_level)), 1)]),
 					_: 2
 				}, 1032, ["tone"]), l(e.expires_at) ? (G(), I(j, {
@@ -3023,13 +3039,13 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					default: Z(() => [...t[3] ||= [B("Expired", -1)]]),
 					_: 1
 				})) : L("", !0)])]),
-				z("div", Ls, [z("dl", Rs, [
-					z("div", zs, [t[4] ||= z("dt", null, "Server", -1), z("dd", null, J(e.server_name), 1)]),
-					z("div", Bs, [t[5] ||= z("dt", null, "Shared by", -1), z("dd", null, J(e.owner_name), 1)]),
-					z("div", Vs, [t[6] ||= z("dt", null, "Received", -1), z("dd", null, J(c(e.created_at)), 1)]),
-					z("div", Hs, [t[7] ||= z("dt", null, "Expires", -1), z("dd", null, J(e.expires_at === null ? "Never" : c(e.expires_at)), 1)])
+				z("div", Vs, [z("dl", Hs, [
+					z("div", Us, [t[4] ||= z("dt", null, "Server", -1), z("dd", null, J(e.server_name), 1)]),
+					z("div", Ws, [t[5] ||= z("dt", null, "Shared by", -1), z("dd", null, J(e.owner_name), 1)]),
+					z("div", Gs, [t[6] ||= z("dt", null, "Received", -1), z("dd", null, J(c(e.created_at)), 1)]),
+					z("div", Ks, [t[7] ||= z("dt", null, "Expires", -1), z("dd", null, J(e.expires_at === null ? "Never" : c(e.expires_at)), 1)])
 				])]),
-				z("div", Us, [V(A, {
+				z("div", qs, [V(A, {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "list",
@@ -3049,31 +3065,31 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			], 2))), 128))]))
 		]));
 	}
-}), [["__scopeId", "data-v-a3b14c3c"]]), Gs = {
+}), [["__scopeId", "data-v-a3b14c3c"]]), Ys = {
 	class: "requests",
 	"aria-labelledby": "requests-heading"
-}, Ks = { class: "requests__head" }, qs = {
+}, Xs = { class: "requests__head" }, Zs = {
 	key: 0,
 	class: "requests__skel"
-}, Js = {
+}, Qs = {
 	key: 3,
 	class: "requests__list"
-}, Ys = {
+}, $s = {
 	class: "request-card__poster",
 	"aria-hidden": "true"
-}, Xs = ["src", "alt"], Zs = {
+}, ec = ["src", "alt"], tc = {
 	key: 1,
 	class: "request-card__poster-placeholder"
-}, Qs = { class: "request-card__body" }, $s = { class: "request-card__title-row" }, ec = { class: "request-card__title" }, tc = { class: "request-card__badges" }, nc = { class: "request-card__meta" }, rc = { class: "request-card__tmdb" }, ic = {
+}, nc = { class: "request-card__body" }, rc = { class: "request-card__title-row" }, ic = { class: "request-card__title" }, ac = { class: "request-card__badges" }, oc = { class: "request-card__meta" }, sc = { class: "request-card__tmdb" }, cc = {
 	key: 0,
 	class: "request-card__episode"
-}, ac = { class: "request-card__date" }, oc = {
+}, lc = { class: "request-card__date" }, uc = {
 	key: 0,
 	class: "request-card__rejection"
-}, sc = { class: "request-card__actions" }, cc = { class: "request-form__row" }, lc = { class: "request-form__field" }, uc = { class: "request-form__field" }, dc = { class: "request-form__field" }, fc = { class: "request-form__field" }, pc = {
+}, dc = { class: "request-card__actions" }, fc = { class: "request-form__row" }, pc = { class: "request-form__field" }, mc = { class: "request-form__field" }, hc = { class: "request-form__field" }, gc = { class: "request-form__field" }, _c = {
 	key: 0,
 	class: "request-form__row"
-}, mc = { class: "request-form__field" }, hc = { class: "request-form__field" }, gc = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, vc = { class: "request-form__field" }, yc = { class: "request-form__field" }, bc = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "RequestsPage",
 	props: { client: {} },
 	setup(e) {
@@ -3152,8 +3168,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		function S(e) {
 			return new Date(e).toLocaleString();
 		}
-		return W(() => h(!0)), (e, t) => (G(), R("section", Gs, [
-			z("header", Ks, [t[11] ||= z("div", { class: "requests__head-text" }, [z("h1", {
+		return W(() => h(!0)), (e, t) => (G(), R("section", Ys, [
+			z("header", Xs, [t[11] ||= z("div", { class: "requests__head-text" }, [z("h1", {
 				id: "requests-heading",
 				class: "requests__title"
 			}, "Media Requests"), z("p", { class: "requests__subtitle" }, "Request movies or TV series to be added to your library.")], -1), V(A, {
@@ -3175,7 +3191,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			i.value ? (G(), R("div", qs, [V(M, {
+			i.value ? (G(), R("div", Zs, [V(M, {
 				variant: "text",
 				lines: 6
 			})])) : a.value ? (G(), I(N, {
@@ -3199,17 +3215,17 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				icon: "film",
 				title: "No requests yet",
 				description: "Movies or series you request will appear here."
-			})) : (G(), R("div", Js, [(G(!0), R(P, null, q(m.value, (e) => (G(), R("article", {
+			})) : (G(), R("div", Qs, [(G(!0), R(P, null, q(m.value, (e) => (G(), R("article", {
 				key: e.id,
 				class: "request-card"
 			}, [
-				z("div", Ys, [e.poster_url ? (G(), R("img", {
+				z("div", $s, [e.poster_url ? (G(), R("img", {
 					key: 0,
 					src: e.poster_url,
 					alt: e.title,
 					class: "request-card__poster-img",
 					loading: "lazy"
-				}, null, 8, Xs)) : (G(), R("div", Zs, [...t[14] ||= [z("svg", {
+				}, null, 8, ec)) : (G(), R("div", tc, [...t[14] ||= [z("svg", {
 					viewBox: "0 0 24 24",
 					fill: "none",
 					stroke: "currentColor",
@@ -3230,22 +3246,22 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					}),
 					z("path", { d: "M21 15l-5-5L5 21" })
 				], -1)]]))]),
-				z("div", Qs, [
-					z("div", $s, [z("h2", ec, J(e.title), 1), z("div", tc, [V(j, { tone: b(e.type).tone }, {
+				z("div", nc, [
+					z("div", rc, [z("h2", ic, J(e.title), 1), z("div", ac, [V(j, { tone: b(e.type).tone }, {
 						default: Z(() => [B(J(b(e.type).label), 1)]),
 						_: 2
 					}, 1032, ["tone"]), V(j, { tone: x(e.status).tone }, {
 						default: Z(() => [B(J(x(e.status).label), 1)]),
 						_: 2
 					}, 1032, ["tone"])])]),
-					z("div", nc, [
-						z("span", rc, "TMDB " + J(e.tmdb_id), 1),
-						e.type === "series" ? (G(), R("span", ic, " S" + J(String(e.season).padStart(2, "0")) + "E" + J(String(e.episode).padStart(2, "0")), 1)) : L("", !0),
-						z("span", ac, "Submitted " + J(S(e.created_at)), 1)
+					z("div", oc, [
+						z("span", sc, "TMDB " + J(e.tmdb_id), 1),
+						e.type === "series" ? (G(), R("span", cc, " S" + J(String(e.season).padStart(2, "0")) + "E" + J(String(e.episode).padStart(2, "0")), 1)) : L("", !0),
+						z("span", lc, "Submitted " + J(S(e.created_at)), 1)
 					]),
-					e.status === "rejected" && e.rejection_reason ? (G(), R("p", oc, J(e.rejection_reason), 1)) : L("", !0)
+					e.status === "rejected" && e.rejection_reason ? (G(), R("p", uc, J(e.rejection_reason), 1)) : L("", !0)
 				]),
-				z("div", sc, [V(A, {
+				z("div", dc, [V(A, {
 					variant: "ghost",
 					size: "sm",
 					"aria-label": `Delete request for ${e.title}`,
@@ -3285,14 +3301,14 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					class: "request-form",
 					onSubmit: _n(g, ["prevent"])
 				}, [
-					z("div", cc, [z("div", lc, [t[17] ||= z("label", {
+					z("div", fc, [z("div", pc, [t[17] ||= z("label", {
 						class: "request-form__label",
 						for: "req-type"
 					}, "Type", -1), gn(z("select", {
 						id: "req-type",
 						"onUpdate:modelValue": t[2] ||= (e) => s.value = e,
 						class: "request-form__select"
-					}, [...t[16] ||= [z("option", { value: "movie" }, "Movie", -1), z("option", { value: "series" }, "TV Series", -1)]], 512), [[fn, s.value]])]), z("div", uc, [V(Bt, {
+					}, [...t[16] ||= [z("option", { value: "movie" }, "Movie", -1), z("option", { value: "series" }, "TV Series", -1)]], 512), [[fn, s.value]])]), z("div", mc, [V(Bt, {
 						modelValue: c.value,
 						"onUpdate:modelValue": t[3] ||= (e) => c.value = e,
 						label: "TMDB ID",
@@ -3300,28 +3316,28 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						placeholder: "e.g. 550",
 						min: 1
 					}, null, 8, ["modelValue"])])]),
-					z("div", dc, [V(Bt, {
+					z("div", hc, [V(Bt, {
 						modelValue: l.value,
 						"onUpdate:modelValue": t[4] ||= (e) => l.value = e,
 						label: "Title",
 						type: "text",
 						placeholder: "e.g. The Matrix"
 					}, null, 8, ["modelValue"])]),
-					z("div", fc, [V(Bt, {
+					z("div", gc, [V(Bt, {
 						modelValue: u.value,
 						"onUpdate:modelValue": t[5] ||= (e) => u.value = e,
 						label: "Poster URL (optional)",
 						type: "text",
 						placeholder: "https://image.tmdb.org/t/p/w500/..."
 					}, null, 8, ["modelValue"])]),
-					s.value === "series" ? (G(), R("div", pc, [z("div", mc, [V(Bt, {
+					s.value === "series" ? (G(), R("div", _c, [z("div", vc, [V(Bt, {
 						modelValue: d.value,
 						"onUpdate:modelValue": t[6] ||= (e) => d.value = e,
 						label: "Season",
 						type: "number",
 						placeholder: "e.g. 1",
 						min: 1
-					}, null, 8, ["modelValue"])]), z("div", hc, [V(Bt, {
+					}, null, 8, ["modelValue"])]), z("div", yc, [V(Bt, {
 						modelValue: f.value,
 						"onUpdate:modelValue": t[7] ||= (e) => f.value = e,
 						label: "Episode",
@@ -3334,7 +3350,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-cb533dc5"]]), _c = class {
+}), [["__scopeId", "data-v-cb533dc5"]]), xc = class {
 	client;
 	constructor(e) {
 		this.client = e;
@@ -3348,7 +3364,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 	revoke(e) {
 		return this.client.delete(`/api/v1/me/invite-links/${e}`);
 	}
-}, vc = class {
+}, Sc = class {
 	client;
 	constructor(e) {
 		this.client = e;
@@ -3356,7 +3372,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 	list() {
 		return this.client.get("/api/v1/me/servers");
 	}
-}, yc = class {
+}, Cc = class {
 	client;
 	constructor(e) {
 		this.client = e;
@@ -3364,21 +3380,21 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 	listByServer(e) {
 		return this.client.get(`/api/v1/me/libraries?server_id=${encodeURIComponent(e)}`);
 	}
-}, bc = {
+}, wc = {
 	class: "invite-links",
 	"aria-labelledby": "invite-links-heading"
-}, xc = { class: "invite-links__head" }, Sc = {
+}, Tc = { class: "invite-links__head" }, Ec = {
 	key: 0,
 	class: "invite-links__skel"
-}, Cc = {
+}, Dc = {
 	key: 3,
 	class: "invite-links__list"
-}, wc = { class: "invite-link-card__main" }, Tc = { class: "invite-link-card__names" }, Ec = { class: "invite-link-card__server" }, Dc = { class: "invite-link-card__library" }, Oc = { class: "invite-link-card__meta" }, kc = { class: "invite-link-card__uses" }, Ac = { class: "invite-link-card__expires" }, jc = { class: "invite-link-card__actions" }, Mc = {
+}, Oc = { class: "invite-link-card__main" }, kc = { class: "invite-link-card__names" }, Ac = { class: "invite-link-card__server" }, jc = { class: "invite-link-card__library" }, Mc = { class: "invite-link-card__meta" }, Nc = { class: "invite-link-card__uses" }, Pc = { class: "invite-link-card__expires" }, Fc = { class: "invite-link-card__actions" }, Ic = {
 	class: "modal",
 	role: "dialog",
 	"aria-modal": "true",
 	"aria-labelledby": "create-modal-title"
-}, Nc = { class: "modal__body" }, Pc = { class: "form-grid" }, Fc = { class: "form-field" }, Ic = { class: "form-field" }, Lc = { class: "form-field" }, Rc = { class: "form-field" }, zc = { class: "form-field form-field--full" }, Bc = { class: "modal__footer" }, Vc = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Lc = { class: "modal__body" }, Rc = { class: "form-grid" }, zc = { class: "form-field" }, Bc = { class: "form-field" }, Vc = { class: "form-field" }, Hc = { class: "form-field" }, Uc = { class: "form-field form-field--full" }, Wc = { class: "modal__footer" }, Gc = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "InviteLinksPage",
 	props: { client: {} },
 	setup(e) {
@@ -3409,7 +3425,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		}, {
 			value: "readwrite",
 			label: "Read/Write"
-		}], r = e.client ?? v, i = new _c(r), a = new vc(r), o = new yc(r), s = ae(), c = K([]), l = K([]), u = K(!0), d = K(null), f = K(!1), p = K(!1), m = K(null), h = K(null), g = K("read"), _ = K(1), y = K(604800), b = K([]), x = K(!1), S = K(null), w = F(() => {
+		}], r = e.client ?? v, i = new xc(r), a = new Sc(r), o = new Cc(r), s = ae(), c = K([]), l = K([]), u = K(!0), d = K(null), f = K(!1), p = K(!1), m = K(null), h = K(null), g = K("read"), _ = K(1), y = K(604800), b = K([]), x = K(!1), S = K(null), w = F(() => {
 			let e = /* @__PURE__ */ new Map();
 			for (let t of l.value) t.serverId && e.set(t.serverId, t.serverName ?? t.serverId);
 			return e;
@@ -3531,8 +3547,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				default: return "neutral";
 			}
 		}
-		return W(() => O(!0)), (e, r) => (G(), R("section", bc, [
-			z("header", xc, [r[7] ||= z("div", { class: "invite-links__head-text" }, [z("h1", {
+		return W(() => O(!0)), (e, r) => (G(), R("section", wc, [
+			z("header", Tc, [r[7] ||= z("div", { class: "invite-links__head-text" }, [z("h1", {
 				id: "invite-links-heading",
 				class: "invite-links__title"
 			}, "Invite Links"), z("p", { class: "invite-links__subtitle" }, "Create and manage invite links for sharing access to your servers.")], -1), V(A, {
@@ -3557,7 +3573,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			u.value ? (G(), R("div", Sc, [
+			u.value ? (G(), R("div", Ec, [
 				V(M, {
 					variant: "rect",
 					height: "120px"
@@ -3591,22 +3607,22 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				icon: "bookmark-plus",
 				title: "No invite links",
 				description: "Create an invite link to share access to your servers and libraries."
-			})) : (G(), R("div", Cc, [(G(!0), R(P, null, q(c.value, (e) => (G(), R("article", {
+			})) : (G(), R("div", Dc, [(G(!0), R(P, null, q(c.value, (e) => (G(), R("article", {
 				key: e.id,
 				class: "invite-link-card"
-			}, [z("div", wc, [z("div", Tc, [
-				z("span", Ec, J(le(e.server_id)), 1),
+			}, [z("div", Oc, [z("div", kc, [
+				z("span", Ac, J(le(e.server_id)), 1),
 				r[10] ||= z("span", { class: "invite-link-card__separator" }, "›", -1),
-				z("span", Dc, J(ue(e.library_id)), 1)
-			]), z("div", Oc, [
+				z("span", jc, J(ue(e.library_id)), 1)
+			]), z("div", Mc, [
 				V(j, { tone: pe(e.permission) }, {
 					default: Z(() => [B(J(e.permission), 1)]),
 					_: 2
 				}, 1032, ["tone"]),
-				z("span", kc, J(fe(e.use_count, e.max_uses)) + " uses", 1),
+				z("span", Nc, J(fe(e.use_count, e.max_uses)) + " uses", 1),
 				r[11] ||= z("span", { class: "invite-link-card__divider" }, "·", -1),
-				z("span", Ac, " Expires " + J(de(e.expires_at)), 1)
-			])]), z("div", jc, [V(A, {
+				z("span", Pc, " Expires " + J(de(e.expires_at)), 1)
+			])]), z("div", Fc, [V(A, {
 				variant: "ghost",
 				size: "sm",
 				loading: S.value === e.id,
@@ -3626,7 +3642,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				key: 0,
 				class: "modal-backdrop",
 				onClick: _n(oe, ["self"])
-			}, [z("div", Mc, [
+			}, [z("div", Ic, [
 				z("header", { class: "modal__header" }, [r[15] ||= z("h2", {
 					id: "create-modal-title",
 					class: "modal__title"
@@ -3643,8 +3659,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					stroke: "currentColor",
 					"stroke-width": "2"
 				}, [z("path", { d: "M18 6L6 18M6 6l12 12" })], -1)]])]),
-				z("div", Nc, [z("div", Pc, [
-					z("div", Fc, [r[16] ||= z("label", {
+				z("div", Lc, [z("div", Rc, [
+					z("div", zc, [r[16] ||= z("label", {
 						class: "form-label",
 						for: "server-select"
 					}, [B("Server "), z("span", { class: "form-required" }, "*")], -1), V(Ue, {
@@ -3655,7 +3671,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						placeholder: "Select a server",
 						onChange: ce
 					}, null, 8, ["modelValue", "options"])]),
-					z("div", Ic, [r[17] ||= z("label", {
+					z("div", Bc, [r[17] ||= z("label", {
 						class: "form-label",
 						for: "library-select"
 					}, "Library", -1), V(Ue, {
@@ -3671,7 +3687,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						"disabled",
 						"placeholder"
 					])]),
-					z("div", Lc, [r[18] ||= z("label", {
+					z("div", Vc, [r[18] ||= z("label", {
 						class: "form-label",
 						for: "permission-select"
 					}, "Permission", -1), V(Ue, {
@@ -3680,7 +3696,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						"onUpdate:modelValue": r[3] ||= (e) => g.value = e,
 						options: n
 					}, null, 8, ["modelValue"])]),
-					z("div", Rc, [r[19] ||= z("label", {
+					z("div", Hc, [r[19] ||= z("label", {
 						class: "form-label",
 						for: "max-uses"
 					}, "Max Uses", -1), gn(z("input", {
@@ -3695,7 +3711,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						void 0,
 						{ number: !0 }
 					]])]),
-					z("div", zc, [r[20] ||= z("label", {
+					z("div", Uc, [r[20] ||= z("label", {
 						class: "form-label",
 						for: "expires-select"
 					}, "Expires In", -1), V(Ue, {
@@ -3705,7 +3721,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						options: t
 					}, null, 8, ["modelValue"])])
 				])]),
-				z("footer", Bc, [V(A, {
+				z("footer", Wc, [V(A, {
 					variant: "ghost",
 					size: "md",
 					onClick: oe
@@ -3725,14 +3741,14 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			])])) : L("", !0)]))
 		]));
 	}
-}), [["__scopeId", "data-v-a69f26c3"]]), Hc = {
+}), [["__scopeId", "data-v-a69f26c3"]]), Kc = {
 	class: "accept-invite",
 	"aria-labelledby": "accept-invite-heading"
-}, Uc = { class: "accept-invite__card" }, Wc = {
+}, qc = { class: "accept-invite__card" }, Jc = {
 	key: 0,
 	class: "accept-invite__error",
 	role: "alert"
-}, Gc = { class: "accept-invite__actions" }, Kc = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Yc = { class: "accept-invite__actions" }, Xc = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "AcceptInvitePage",
 	props: {
 		token: {},
@@ -3764,7 +3780,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		function f() {
 			i.push("/app/shared-with-me");
 		}
-		return (e, t) => (G(), R("section", Hc, [z("div", Uc, [t[8] ||= z("h1", {
+		return (e, t) => (G(), R("section", Kc, [z("div", qc, [t[8] ||= z("h1", {
 			id: "accept-invite-heading",
 			class: "accept-invite__title"
 		}, "Accept Invite", -1), a.value ? (G(), R(P, { key: 0 }, [s.value ? (G(), R(P, { key: 0 }, [t[3] ||= z("div", {
@@ -3780,7 +3796,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			_: 1
 		})], 64)) : (G(), R(P, { key: 1 }, [
 			t[4] ||= z("p", { class: "accept-invite__lead" }, "You've been invited to access a library.", -1),
-			c.value ? (G(), R("p", Wc, J(c.value), 1)) : L("", !0),
+			c.value ? (G(), R("p", Jc, J(c.value), 1)) : L("", !0),
 			V(A, {
 				variant: "solid",
 				size: "lg",
@@ -3791,7 +3807,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				default: Z(() => [B(J(o.value ? "Accepting…" : "Accept Invite"), 1)]),
 				_: 1
 			}, 8, ["loading"])
-		], 64))], 64)) : (G(), R(P, { key: 1 }, [t[7] ||= z("p", { class: "accept-invite__lead" }, " You've been invited to access a library. Log in or create an account to accept. ", -1), z("div", Gc, [V(A, {
+		], 64))], 64)) : (G(), R(P, { key: 1 }, [t[7] ||= z("p", { class: "accept-invite__lead" }, " You've been invited to access a library. Log in or create an account to accept. ", -1), z("div", Yc, [V(A, {
 			variant: "solid",
 			size: "lg",
 			block: "",
@@ -3809,10 +3825,10 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			_: 1
 		})])], 64))])]));
 	}
-}), [["__scopeId", "data-v-da79f6f6"]]), qc = { class: "search-page" }, Jc = { class: "search-header" }, Yc = {
+}), [["__scopeId", "data-v-da79f6f6"]]), Zc = { class: "search-page" }, Qc = { class: "search-header" }, $c = {
 	key: 0,
 	class: "search-loading"
-}, Xc = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, el = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "SearchPage",
 	setup(e) {
 		let t = wn(), n = Q(), r = D(), i = oe(), a = K(""), o = K([]), s = K(!1), c = K(null), l = K(!1), u = null;
@@ -3846,7 +3862,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			t !== a.value && (a.value = t, t.trim() === "" ? (o.value = [], l.value = !1) : f());
 		});
 		let m = F(() => l.value && !s.value && o.value.length === 0 && c.value === null), h = F(() => l.value && !s.value && o.value.length > 0), g = F(() => !l.value && a.value.trim() === ""), _ = F(() => l.value && c.value !== null);
-		return (e, t) => (G(), R("div", qc, [z("header", Jc, [t[2] ||= z("h1", { class: "search-title" }, "Search", -1), z("form", {
+		return (e, t) => (G(), R("div", Zc, [z("header", Qc, [t[2] ||= z("h1", { class: "search-title" }, "Search", -1), z("form", {
 			class: "search-form",
 			onSubmit: _n(d, ["prevent"])
 		}, [gn(z("input", {
@@ -3866,7 +3882,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		}, {
 			default: Z(() => [...t[1] ||= [B(" Search ", -1)]]),
 			_: 1
-		})], 32)]), s.value ? (G(), R("div", Yc, [V(fe, { label: "Searching…" })])) : _.value ? (G(), I(N, {
+		})], 32)]), s.value ? (G(), R("div", $c, [V(fe, { label: "Searching…" })])) : _.value ? (G(), I(N, {
 			key: 1,
 			icon: "alert",
 			title: "Search failed",
@@ -3897,27 +3913,27 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			total: o.value.length
 		}, null, 8, ["items", "total"])) : L("", !0)]));
 	}
-}), [["__scopeId", "data-v-f8db2fc3"]]), Zc = { class: "album-page" }, Qc = { class: "album-page__back-nav" }, $c = {
+}), [["__scopeId", "data-v-f8db2fc3"]]), tl = { class: "album-page" }, nl = { class: "album-page__back-nav" }, rl = {
 	key: 0,
 	class: "album-page__loading",
 	role: "status",
 	"aria-busy": "true"
-}, el = { class: "album-page__skel-tracks" }, tl = {
+}, il = { class: "album-page__skel-tracks" }, al = {
 	key: 1,
 	class: "album-page__error",
 	role: "alert"
-}, nl = { class: "album-header" }, rl = { class: "album-header__art" }, il = {
+}, ol = { class: "album-header" }, sl = { class: "album-header__art" }, cl = {
 	key: 0,
 	viewBox: "0 0 100 100",
 	class: "album-header__art-placeholder"
-}, al = ["src", "alt"], ol = { class: "album-header__info" }, sl = { class: "album-header__title" }, cl = { class: "album-header__artist" }, ll = { class: "album-header__meta" }, ul = { key: 0 }, dl = { key: 1 }, fl = { "data-count": "tracks" }, pl = { key: 2 }, ml = ["aria-label"], hl = {
+}, ll = ["src", "alt"], ul = { class: "album-header__info" }, dl = { class: "album-header__title" }, fl = { class: "album-header__artist" }, pl = { class: "album-header__meta" }, ml = { key: 0 }, hl = { key: 1 }, gl = { "data-count": "tracks" }, _l = { key: 2 }, vl = ["aria-label"], yl = {
 	class: "album-tracks",
 	"aria-label": "Track listing"
-}, gl = {
+}, bl = {
 	key: 3,
 	class: "album-page__empty",
 	role: "status"
-}, _l = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, xl = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "MusicAlbumPage",
 	props: {
 		name: {},
@@ -3973,7 +3989,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		}
 		return (e, t) => {
 			let i = cn("router-link");
-			return G(), R("div", Zc, [z("nav", Qc, [V(i, {
+			return G(), R("div", tl, [z("nav", nl, [V(i, {
 				to: "/app/music",
 				class: "album-page__back-link"
 			}, {
@@ -3982,22 +3998,22 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					class: "album-page__back-icon"
 				}), z("span", null, J(Y(r)("player.back")), 1)]),
 				_: 1
-			})]), d.value ? (G(), R("div", $c, [t[1] ||= Xt("<div class=\"album-skel\" data-v-9a6ed373><div class=\"album-skel__art\" data-v-9a6ed373></div><div class=\"album-skel__info\" data-v-9a6ed373><div class=\"album-skel__title\" data-v-9a6ed373></div><div class=\"album-skel__artist\" data-v-9a6ed373></div><div class=\"album-skel__meta\" data-v-9a6ed373></div></div></div>", 1), z("div", el, [(G(), R(P, null, q(8, (e) => z("div", {
+			})]), d.value ? (G(), R("div", rl, [t[1] ||= Xt("<div class=\"album-skel\" data-v-9a6ed373><div class=\"album-skel__art\" data-v-9a6ed373></div><div class=\"album-skel__info\" data-v-9a6ed373><div class=\"album-skel__title\" data-v-9a6ed373></div><div class=\"album-skel__artist\" data-v-9a6ed373></div><div class=\"album-skel__meta\" data-v-9a6ed373></div></div></div>", 1), z("div", il, [(G(), R(P, null, q(8, (e) => z("div", {
 				key: e,
 				class: "track-skel"
 			}, [...t[0] ||= [
 				z("div", { class: "track-skel__num" }, null, -1),
 				z("div", { class: "track-skel__title" }, null, -1),
 				z("div", { class: "track-skel__duration" }, null, -1)
-			]])), 64))])])) : f.value ? (G(), R("div", tl, [V(n, {
+			]])), 64))])])) : f.value ? (G(), R("div", al, [V(n, {
 				name: "alert-circle",
 				class: "album-page__error-icon"
-			}), z("p", null, J(f.value), 1)])) : l.value ? (G(), R(P, { key: 2 }, [z("header", nl, [z("div", rl, [l.value.albumArtUrl ? (G(), R("img", {
+			}), z("p", null, J(f.value), 1)])) : l.value ? (G(), R(P, { key: 2 }, [z("header", ol, [z("div", sl, [l.value.albumArtUrl ? (G(), R("img", {
 				key: 1,
 				src: l.value.albumArtUrl,
 				alt: l.value.title,
 				class: "album-header__art-img"
-			}, null, 8, al)) : (G(), R("svg", il, [...t[2] ||= [z("rect", {
+			}, null, 8, ll)) : (G(), R("svg", cl, [...t[2] ||= [z("rect", {
 				x: "10",
 				y: "10",
 				width: "80",
@@ -4011,14 +4027,14 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				height: "50",
 				rx: "3",
 				fill: "#6b4d8a"
-			}, null, -1)]]))]), z("div", ol, [
-				z("h1", sl, J(l.value.title), 1),
-				z("p", cl, J(l.value.artist ?? "Unknown Artist"), 1),
-				z("p", ll, [
-					l.value.year ? (G(), R("span", ul, J(l.value.year), 1)) : L("", !0),
-					l.value.year ? (G(), R("span", dl, " · ")) : L("", !0),
-					z("span", fl, J(_.value), 1),
-					v.value > 0 ? (G(), R("span", pl, " · " + J(y(v.value)), 1)) : L("", !0)
+			}, null, -1)]]))]), z("div", ul, [
+				z("h1", dl, J(l.value.title), 1),
+				z("p", fl, J(l.value.artist ?? "Unknown Artist"), 1),
+				z("p", pl, [
+					l.value.year ? (G(), R("span", ml, J(l.value.year), 1)) : L("", !0),
+					l.value.year ? (G(), R("span", hl, " · ")) : L("", !0),
+					z("span", gl, J(_.value), 1),
+					v.value > 0 ? (G(), R("span", _l, " · " + J(y(v.value)), 1)) : L("", !0)
 				]),
 				z("button", {
 					type: "button",
@@ -4028,50 +4044,50 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, [V(n, {
 					name: "play",
 					class: "album-header__play-icon"
-				}), B(" " + J(Y(r)("music.play")), 1)], 8, ml)
-			])]), z("section", hl, [V(Wt, {
+				}), B(" " + J(Y(r)("music.play")), 1)], 8, vl)
+			])]), z("section", yl, [V(Wt, {
 				tracks: u.value,
 				"playing-track-id": m.value,
 				onPlay: b
-			}, null, 8, ["tracks", "playing-track-id"])])], 64)) : (G(), R("div", gl, [V(n, {
+			}, null, 8, ["tracks", "playing-track-id"])])], 64)) : (G(), R("div", bl, [V(n, {
 				name: "music",
 				class: "album-page__empty-icon"
 			}), z("p", null, J(Y(r)("music.noTracks")), 1)]))]);
 		};
 	}
-}), [["__scopeId", "data-v-9a6ed373"]]), vl = { class: "artists-page" }, yl = { class: "artists-page__header" }, bl = { class: "artists-page__title" }, xl = { class: "artists-page__description" }, Sl = {
+}), [["__scopeId", "data-v-9a6ed373"]]), Sl = { class: "artists-page" }, Cl = { class: "artists-page__header" }, wl = { class: "artists-page__title" }, Tl = { class: "artists-page__description" }, El = {
 	key: 0,
 	class: "artists-page__count",
 	"data-count": "artists",
 	role: "status"
-}, Cl = {
+}, Dl = {
 	key: 0,
 	class: "artists-page__error",
 	role: "alert"
-}, wl = { id: "music-artists-list" }, Tl = {
+}, Ol = { id: "music-artists-list" }, kl = {
 	key: 0,
 	class: "artists-page__loading",
 	role: "status",
 	"aria-busy": "true"
-}, El = {
+}, Al = {
 	key: 1,
 	class: "artists-page__error",
 	role: "alert"
-}, Dl = {
+}, jl = {
 	key: 2,
 	class: "artists-page__empty",
 	role: "status"
-}, Ol = {
+}, Ml = {
 	key: 3,
 	class: "artists-page__grid"
-}, kl = ["onClick"], Al = { class: "artist-card__art" }, jl = {
+}, Nl = ["onClick"], Pl = { class: "artist-card__art" }, Fl = {
 	key: 0,
 	viewBox: "0 0 100 100",
 	class: "artist-card__placeholder"
-}, Ml = ["src", "alt"], Nl = { class: "artist-card__info" }, Pl = { class: "artist-card__name" }, Fl = {
+}, Il = ["src", "alt"], Ll = { class: "artist-card__info" }, Rl = { class: "artist-card__name" }, zl = {
 	class: "artist-card__meta",
 	"data-count": "albums"
-}, Il = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Bl = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "MusicArtistsPage",
 	setup(e) {
 		let { t } = p(), r = Q(), i = D(), a = K([]), o = K(!1), s = K(null), c = K(0), l = K(100), u = K(0);
@@ -4109,40 +4125,40 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				params: { name: e.name }
 			});
 		}
-		return (e, r) => (G(), R("div", vl, [
-			z("header", yl, [
-				z("h1", bl, J(Y(t)("music.artists")), 1),
-				z("p", xl, J(Y(t)("music.artistsDescription") ?? "Browse your music collection by artist"), 1),
-				c.value > 0 ? (G(), R("p", Sl, J(m.value), 1)) : L("", !0)
+		return (e, r) => (G(), R("div", Sl, [
+			z("header", Cl, [
+				z("h1", wl, J(Y(t)("music.artists")), 1),
+				z("p", Tl, J(Y(t)("music.artistsDescription") ?? "Browse your music collection by artist"), 1),
+				c.value > 0 ? (G(), R("p", El, J(m.value), 1)) : L("", !0)
 			]),
-			s.value && a.value.length > 0 ? (G(), R("div", Cl, [V(n, {
+			s.value && a.value.length > 0 ? (G(), R("div", Dl, [V(n, {
 				name: "alert-circle",
 				class: "artists-page__error-icon"
 			}), z("p", null, J(s.value), 1)])) : L("", !0),
-			z("div", wl, [o.value ? (G(), R("div", Tl, [(G(), R(P, null, q(12, (e) => z("div", {
+			z("div", Ol, [o.value ? (G(), R("div", kl, [(G(), R(P, null, q(12, (e) => z("div", {
 				key: e,
 				class: "artist-skel"
 			}, [...r[0] ||= [
 				z("div", { class: "artist-skel__art" }, null, -1),
 				z("div", { class: "artist-skel__name" }, null, -1),
 				z("div", { class: "artist-skel__meta" }, null, -1)
-			]])), 64))])) : s.value && a.value.length === 0 ? (G(), R("div", El, [V(n, {
+			]])), 64))])) : s.value && a.value.length === 0 ? (G(), R("div", Al, [V(n, {
 				name: "alert-circle",
 				class: "artists-page__error-icon"
-			}), z("p", null, J(s.value), 1)])) : a.value.length === 0 ? (G(), R("div", Dl, [V(n, {
+			}), z("p", null, J(s.value), 1)])) : a.value.length === 0 ? (G(), R("div", jl, [V(n, {
 				name: "music",
 				class: "artists-page__empty-icon"
-			}), z("p", null, J(Y(t)("music.noArtists")), 1)])) : (G(), R("div", Ol, [(G(!0), R(P, null, q(a.value, (e) => (G(), R("button", {
+			}), z("p", null, J(Y(t)("music.noArtists")), 1)])) : (G(), R("div", Ml, [(G(!0), R(P, null, q(a.value, (e) => (G(), R("button", {
 				key: e.id,
 				type: "button",
 				class: "artist-card",
 				onClick: (t) => _(e)
-			}, [z("div", Al, [e.imageUrl ? (G(), R("img", {
+			}, [z("div", Pl, [e.imageUrl ? (G(), R("img", {
 				key: 1,
 				src: e.imageUrl,
 				alt: e.name,
 				class: "artist-card__img"
-			}, null, 8, Ml)) : (G(), R("svg", jl, [...r[1] ||= [
+			}, null, 8, Il)) : (G(), R("svg", Fl, [...r[1] ||= [
 				z("rect", {
 					x: "10",
 					y: "10",
@@ -4172,7 +4188,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					fill: "none",
 					"stroke-linecap": "round"
 				}, null, -1)
-			]]))]), z("div", Nl, [z("h3", Pl, J(e.name), 1), z("span", Fl, J(h(e)), 1)])], 8, kl))), 128))]))]),
+			]]))]), z("div", Ll, [z("h3", Rl, J(e.name), 1), z("span", zl, J(h(e)), 1)])], 8, Nl))), 128))]))]),
 			V(Ut, {
 				offset: u.value,
 				limit: l.value,
@@ -4190,40 +4206,40 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			])
 		]));
 	}
-}), [["__scopeId", "data-v-151f5c7f"]]), Ll = { class: "artist-page" }, Rl = { class: "artist-page__back-nav" }, zl = {
+}), [["__scopeId", "data-v-151f5c7f"]]), Vl = { class: "artist-page" }, Hl = { class: "artist-page__back-nav" }, Ul = {
 	key: 0,
 	class: "artist-page__loading",
 	role: "status",
 	"aria-busy": "true"
-}, Bl = { class: "artist-page__skel-albums" }, Vl = {
+}, Wl = { class: "artist-page__skel-albums" }, Gl = {
 	key: 1,
 	class: "artist-page__error",
 	role: "alert"
-}, Hl = { class: "artist-header" }, Ul = { class: "artist-header__art" }, Wl = {
+}, Kl = { class: "artist-header" }, ql = { class: "artist-header__art" }, Jl = {
 	key: 0,
 	viewBox: "0 0 100 100",
 	class: "artist-header__art-placeholder"
-}, Gl = ["src", "alt"], Kl = { class: "artist-header__info" }, ql = { class: "artist-header__name" }, Jl = { class: "artist-header__meta" }, Yl = { "data-count": "albums" }, Xl = {
+}, Yl = ["src", "alt"], Xl = { class: "artist-header__info" }, Zl = { class: "artist-header__name" }, Ql = { class: "artist-header__meta" }, $l = { "data-count": "albums" }, eu = {
 	key: 0,
 	"data-count": "tracks"
-}, Zl = {
+}, tu = {
 	class: "artist-albums",
 	"aria-label": "Albums"
-}, Ql = { class: "artist-albums__title" }, $l = {
+}, nu = { class: "artist-albums__title" }, ru = {
 	key: 0,
 	class: "artist-albums__page-error",
 	role: "alert"
-}, eu = { id: "music-artist-albums" }, tu = {
+}, iu = { id: "music-artist-albums" }, au = {
 	key: 0,
 	class: "artist-albums__empty"
-}, nu = {
+}, ou = {
 	key: 1,
 	class: "artist-albums__grid"
-}, ru = {
+}, su = {
 	key: 3,
 	class: "artist-page__empty",
 	role: "status"
-}, iu = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, cu = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "MusicArtistPage",
 	props: { name: {} },
 	setup(e) {
@@ -4277,7 +4293,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		let b = F(() => d.value || o.value?.albumCount || 0), x = F(() => b.value === 1 ? r("music.albumsTotalOne") : r("music.albumsTotal", { count: b.value.toLocaleString() })), S = F(() => o.value?.trackCount ?? s.value.reduce((e, t) => e + (t.totalTracks ?? 0), 0)), C = F(() => S.value === 1 ? r("music.tracksTotalOne") : r("music.tracksTotal", { count: S.value.toLocaleString() }));
 		return (e, t) => {
 			let i = cn("router-link");
-			return G(), R("div", Ll, [z("nav", Rl, [V(i, {
+			return G(), R("div", Vl, [z("nav", Hl, [V(i, {
 				to: "/app/music/artists",
 				class: "artist-page__back-link"
 			}, {
@@ -4286,22 +4302,22 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					class: "artist-page__back-icon"
 				}), z("span", null, J(Y(r)("music.artists")), 1)]),
 				_: 1
-			})]), c.value ? (G(), R("div", zl, [t[1] ||= Xt("<div class=\"artist-skel\" data-v-65d72c8b><div class=\"artist-skel__art\" data-v-65d72c8b></div><div class=\"artist-skel__info\" data-v-65d72c8b><div class=\"artist-skel__name\" data-v-65d72c8b></div><div class=\"artist-skel__meta\" data-v-65d72c8b></div></div></div>", 1), z("div", Bl, [(G(), R(P, null, q(6, (e) => z("div", {
+			})]), c.value ? (G(), R("div", Ul, [t[1] ||= Xt("<div class=\"artist-skel\" data-v-65d72c8b><div class=\"artist-skel__art\" data-v-65d72c8b></div><div class=\"artist-skel__info\" data-v-65d72c8b><div class=\"artist-skel__name\" data-v-65d72c8b></div><div class=\"artist-skel__meta\" data-v-65d72c8b></div></div></div>", 1), z("div", Wl, [(G(), R(P, null, q(6, (e) => z("div", {
 				key: e,
 				class: "album-skel"
 			}, [...t[0] ||= [
 				z("div", { class: "album-skel__cover" }, null, -1),
 				z("div", { class: "album-skel__title" }, null, -1),
 				z("div", { class: "album-skel__meta" }, null, -1)
-			]])), 64))])])) : l.value ? (G(), R("div", Vl, [V(n, {
+			]])), 64))])])) : l.value ? (G(), R("div", Gl, [V(n, {
 				name: "alert-circle",
 				class: "artist-page__error-icon"
-			}), z("p", null, J(l.value), 1)])) : o.value ? (G(), R(P, { key: 2 }, [z("header", Hl, [z("div", Ul, [o.value.imageUrl ? (G(), R("img", {
+			}), z("p", null, J(l.value), 1)])) : o.value ? (G(), R(P, { key: 2 }, [z("header", Kl, [z("div", ql, [o.value.imageUrl ? (G(), R("img", {
 				key: 1,
 				src: o.value.imageUrl,
 				alt: o.value.name,
 				class: "artist-header__art-img"
-			}, null, 8, Gl)) : (G(), R("svg", Wl, [...t[2] ||= [
+			}, null, 8, Yl)) : (G(), R("svg", Jl, [...t[2] ||= [
 				z("rect", {
 					x: "10",
 					y: "10",
@@ -4331,16 +4347,16 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					fill: "none",
 					"stroke-linecap": "round"
 				}, null, -1)
-			]]))]), z("div", Kl, [z("h1", ql, J(o.value.name), 1), z("p", Jl, [z("span", Yl, J(x.value), 1), S.value > 0 ? (G(), R("span", Xl, " · " + J(C.value), 1)) : L("", !0)])])]), z("section", Zl, [
-				z("h2", Ql, J(Y(r)("music.albums")), 1),
-				u.value ? (G(), R("div", $l, [V(n, {
+			]]))]), z("div", Xl, [z("h1", Zl, J(o.value.name), 1), z("p", Ql, [z("span", $l, J(x.value), 1), S.value > 0 ? (G(), R("span", eu, " · " + J(C.value), 1)) : L("", !0)])])]), z("section", tu, [
+				z("h2", nu, J(Y(r)("music.albums")), 1),
+				u.value ? (G(), R("div", ru, [V(n, {
 					name: "alert-circle",
 					class: "artist-albums__empty-icon"
 				}), z("p", null, J(u.value), 1)])) : L("", !0),
-				z("div", eu, [s.value.length === 0 && !u.value ? (G(), R("div", tu, [V(n, {
+				z("div", iu, [s.value.length === 0 && !u.value ? (G(), R("div", au, [V(n, {
 					name: "image",
 					class: "artist-albums__empty-icon"
-				}), z("p", null, J(Y(r)("music.noAlbums")), 1)])) : (G(), R("div", nu, [(G(!0), R(P, null, q(s.value, (e) => (G(), I(Gt, {
+				}), z("p", null, J(Y(r)("music.noAlbums")), 1)])) : (G(), R("div", ou, [(G(!0), R(P, null, q(s.value, (e) => (G(), I(Gt, {
 					key: e.id,
 					album: e,
 					onClick: y
@@ -4360,64 +4376,64 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					"disabled",
 					"label"
 				])
-			])], 64)) : (G(), R("div", ru, [V(n, {
+			])], 64)) : (G(), R("div", su, [V(n, {
 				name: "music",
 				class: "artist-page__empty-icon"
 			}), z("p", null, J(Y(r)("music.artistNotFound")), 1)]))]);
 		};
 	}
-}), [["__scopeId", "data-v-65d72c8b"]]), au = { class: "tracks-page" }, ou = { class: "tracks-page__head" }, su = { class: "tracks-page__title" }, cu = { class: "tracks-page__controls" }, lu = { class: "search-box" }, uu = ["placeholder"], du = ["disabled"], fu = {
+}), [["__scopeId", "data-v-65d72c8b"]]), lu = { class: "tracks-page" }, uu = { class: "tracks-page__head" }, du = { class: "tracks-page__title" }, fu = { class: "tracks-page__controls" }, pu = { class: "search-box" }, mu = ["placeholder"], hu = ["disabled"], gu = {
 	class: "tracks-page__count",
 	"data-count": "tracks",
 	role: "status",
 	"aria-live": "polite"
-}, pu = { key: 0 }, mu = {
+}, _u = { key: 0 }, vu = {
 	key: 0,
 	class: "tracks-page__error",
 	role: "alert"
-}, hu = { class: "tracks-page__error-text" }, gu = { id: "music-tracks-table" }, _u = {
+}, yu = { class: "tracks-page__error-text" }, bu = { id: "music-tracks-table" }, xu = {
 	key: 0,
 	class: "tracks-page__loading",
 	role: "status",
 	"aria-busy": "true"
-}, vu = {
+}, Su = {
 	key: 1,
 	class: "tracks-page__empty",
 	role: "status"
-}, yu = { class: "tracks-page__empty-text" }, bu = {
+}, Cu = { class: "tracks-page__empty-text" }, wu = {
 	key: 2,
 	class: "track-table",
 	role: "table",
 	"aria-label": "Music tracks"
-}, xu = {
+}, Tu = {
 	class: "track-table__header",
 	role: "row"
-}, Su = {
+}, Eu = {
 	class: "col-title",
 	role: "columnheader"
-}, Cu = {
+}, Du = {
 	class: "col-artist",
 	role: "columnheader"
-}, wu = {
+}, Ou = {
 	class: "col-album",
 	role: "columnheader"
-}, Tu = {
+}, ku = {
 	class: "col-duration",
 	role: "columnheader"
-}, Eu = { class: "col-num track-row__num" }, Du = { class: "col-title track-row__title" }, Ou = { class: "col-duration track-row__duration" }, ku = ["aria-label", "onClick"], Au = ["aria-label"], ju = { class: "music-bar__meta" }, Mu = { class: "music-bar__title" }, Nu = {
+}, Au = { class: "col-num track-row__num" }, ju = { class: "col-title track-row__title" }, Mu = { class: "col-duration track-row__duration" }, Nu = ["aria-label", "onClick"], Pu = ["aria-label"], Fu = { class: "music-bar__meta" }, Iu = { class: "music-bar__title" }, Lu = {
 	key: 0,
 	class: "music-bar__error",
 	role: "alert"
-}, Pu = {
+}, Ru = {
 	key: 1,
 	class: "music-bar__status",
 	role: "status",
 	"aria-live": "polite"
-}, Fu = { class: "music-bar__controls" }, Iu = ["disabled", "aria-label"], Lu = ["aria-label"], Ru = ["disabled", "aria-label"], zu = { class: "music-bar__progress" }, Bu = { class: "music-bar__time" }, Vu = [
+}, zu = { class: "music-bar__controls" }, Bu = ["disabled", "aria-label"], Vu = ["aria-label"], Hu = ["disabled", "aria-label"], Uu = { class: "music-bar__progress" }, Wu = { class: "music-bar__time" }, Gu = [
 	"max",
 	"value",
 	"aria-label"
-], Hu = { class: "music-bar__time" }, Uu = /*#__PURE__*/ t(/* @__PURE__ */ H({
+], Ku = { class: "music-bar__time" }, qu = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "MusicTracksPage",
 	setup(e) {
 		let t = K([]), r = K(!1), i = K(null), a = K(""), o = K(100), s = K(0), c = K(0), { t: l } = p(), u = D(), d = O(), f = Ht({
@@ -4477,8 +4493,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			let t = Number(e.target.value);
 			f.seek(t);
 		}
-		return (e, u) => (G(), R("div", au, [
-			z("header", ou, [z("h1", su, J(Y(l)("music.allTracks")), 1), z("div", cu, [z("div", lu, [V(n, {
+		return (e, u) => (G(), R("div", lu, [
+			z("header", uu, [z("h1", du, J(Y(l)("music.allTracks")), 1), z("div", fu, [z("div", pu, [V(n, {
 				name: "search",
 				class: "search-box__icon"
 			}), gn(z("input", {
@@ -4487,7 +4503,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				class: "search-box__input",
 				placeholder: Y(l)("music.searchTracks"),
 				"aria-label": "Search tracks"
-			}, null, 8, uu), [[pn, a.value]])]), z("button", {
+			}, null, 8, mu), [[pn, a.value]])]), z("button", {
 				type: "button",
 				class: "btn btn--primary",
 				disabled: _.value.length === 0,
@@ -4495,27 +4511,27 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			}, [V(n, {
 				name: "play",
 				class: "btn__icon"
-			}), B(" " + J(Y(l)("music.playAll")), 1)], 8, du)])]),
-			z("p", fu, [B(J(v.value) + " ", 1), a.value ? (G(), R("span", pu, " (" + J(Y(l)("music.matching")) + " \"" + J(a.value) + "\")", 1)) : L("", !0)]),
-			i.value ? (G(), R("div", mu, [V(n, {
+			}), B(" " + J(Y(l)("music.playAll")), 1)], 8, hu)])]),
+			z("p", gu, [B(J(v.value) + " ", 1), a.value ? (G(), R("span", _u, " (" + J(Y(l)("music.matching")) + " \"" + J(a.value) + "\")", 1)) : L("", !0)]),
+			i.value ? (G(), R("div", vu, [V(n, {
 				name: "alert-circle",
 				class: "tracks-page__error-icon"
-			}), z("p", hu, J(i.value), 1)])) : L("", !0),
-			z("div", gu, [r.value && t.value.length === 0 ? (G(), R("div", _u, [(G(), R(P, null, q(8, (e) => z("div", {
+			}), z("p", yu, J(i.value), 1)])) : L("", !0),
+			z("div", bu, [r.value && t.value.length === 0 ? (G(), R("div", xu, [(G(), R(P, null, q(8, (e) => z("div", {
 				key: e,
 				class: "track-skel"
-			}, [...u[4] ||= [Xt("<div class=\"track-skel__num\" data-v-2faa69ca></div><div class=\"track-skel__title\" data-v-2faa69ca></div><div class=\"track-skel__artist\" data-v-2faa69ca></div><div class=\"track-skel__album\" data-v-2faa69ca></div><div class=\"track-skel__duration\" data-v-2faa69ca></div>", 5)]])), 64))])) : _.value.length === 0 && !i.value ? (G(), R("div", vu, [V(n, {
+			}, [...u[4] ||= [Xt("<div class=\"track-skel__num\" data-v-2faa69ca></div><div class=\"track-skel__title\" data-v-2faa69ca></div><div class=\"track-skel__artist\" data-v-2faa69ca></div><div class=\"track-skel__album\" data-v-2faa69ca></div><div class=\"track-skel__duration\" data-v-2faa69ca></div>", 5)]])), 64))])) : _.value.length === 0 && !i.value ? (G(), R("div", Su, [V(n, {
 				name: "music",
 				class: "tracks-page__empty-icon"
-			}), z("p", yu, J(a.value ? Y(l)("music.noTracksMatch") : Y(l)("music.noTracks")), 1)])) : (G(), R("div", bu, [z("div", xu, [
+			}), z("p", Cu, J(a.value ? Y(l)("music.noTracksMatch") : Y(l)("music.noTracks")), 1)])) : (G(), R("div", wu, [z("div", Tu, [
 				u[5] ||= z("span", {
 					class: "col-num",
 					role: "columnheader"
 				}, "#", -1),
-				z("span", Su, J(Y(l)("music.title")), 1),
-				z("span", Cu, J(Y(l)("music.artist")), 1),
-				z("span", wu, J(Y(l)("music.album")), 1),
-				z("span", Tu, J(Y(l)("music.duration")), 1),
+				z("span", Eu, J(Y(l)("music.title")), 1),
+				z("span", Du, J(Y(l)("music.artist")), 1),
+				z("span", Ou, J(Y(l)("music.album")), 1),
+				z("span", ku, J(Y(l)("music.duration")), 1),
 				u[6] ||= z("span", {
 					class: "col-play",
 					role: "columnheader"
@@ -4525,15 +4541,15 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				class: U(["track-row", { "is-playing": m.value === e.id }]),
 				role: "row"
 			}, [
-				z("span", Eu, [m.value !== e.id && e.trackNumber !== null ? (G(), R(P, { key: 0 }, [B(J(e.trackNumber), 1)], 64)) : m.value === e.id ? (G(), I(n, {
+				z("span", Au, [m.value !== e.id && e.trackNumber !== null ? (G(), R(P, { key: 0 }, [B(J(e.trackNumber), 1)], 64)) : m.value === e.id ? (G(), I(n, {
 					key: 1,
 					name: "pause",
 					class: "track-row__playing-icon"
 				})) : L("", !0)]),
-				z("span", Du, J(e.title), 1),
+				z("span", ju, J(e.title), 1),
 				u[7] ||= z("span", { class: "col-artist track-row__artist" }, "—", -1),
 				u[8] ||= z("span", { class: "col-album track-row__album" }, "—", -1),
-				z("span", Ou, J(S(e.durationSecs)), 1),
+				z("span", Mu, J(S(e.durationSecs)), 1),
 				z("button", {
 					type: "button",
 					class: "col-play track-row__play",
@@ -4542,7 +4558,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, [V(n, {
 					name: m.value === e.id ? "pause" : "play",
 					class: "track-row__play-icon"
-				}, null, 8, ["name"])], 8, ku)
+				}, null, 8, ["name"])], 8, Nu)
 			], 2))), 128))]))]),
 			V(Ut, {
 				offset: s.value,
@@ -4565,8 +4581,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				role: "region",
 				"aria-label": Y(l)("music.nowPlaying")
 			}, [
-				z("div", ju, [z("span", Mu, J(Y(f).currentTrack.value.title), 1), Y(f).error.value ? (G(), R("span", Nu, J(Y(l)("music.streamError")), 1)) : Y(f).loading.value ? (G(), R("span", Pu, J(Y(l)("music.loading")), 1)) : L("", !0)]),
-				z("div", Fu, [
+				z("div", Fu, [z("span", Iu, J(Y(f).currentTrack.value.title), 1), Y(f).error.value ? (G(), R("span", Lu, J(Y(l)("music.streamError")), 1)) : Y(f).loading.value ? (G(), R("span", Ru, J(Y(l)("music.loading")), 1)) : L("", !0)]),
+				z("div", zu, [
 					z("button", {
 						type: "button",
 						class: "music-bar__btn",
@@ -4576,7 +4592,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					}, [V(n, {
 						name: "skip-back",
 						class: "music-bar__icon"
-					})], 8, Iu),
+					})], 8, Bu),
 					z("button", {
 						type: "button",
 						class: "music-bar__btn music-bar__btn--primary",
@@ -4585,7 +4601,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					}, [V(n, {
 						name: Y(f).playing.value ? "pause" : "play",
 						class: "music-bar__icon"
-					}, null, 8, ["name"])], 8, Lu),
+					}, null, 8, ["name"])], 8, Vu),
 					z("button", {
 						type: "button",
 						class: "music-bar__btn",
@@ -4595,10 +4611,10 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					}, [V(n, {
 						name: "skip-forward",
 						class: "music-bar__icon"
-					})], 8, Ru)
+					})], 8, Hu)
 				]),
-				z("div", zu, [
-					z("span", Bu, J(C(Y(f).position.value)), 1),
+				z("div", Uu, [
+					z("span", Wu, J(C(Y(f).position.value)), 1),
 					z("input", {
 						type: "range",
 						class: "music-bar__seek",
@@ -4607,33 +4623,33 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						value: Y(f).position.value,
 						"aria-label": Y(l)("music.seek"),
 						onInput: w
-					}, null, 40, Vu),
-					z("span", Hu, J(C(Y(f).duration.value)), 1)
+					}, null, 40, Gu),
+					z("span", Ku, J(C(Y(f).duration.value)), 1)
 				])
-			], 8, Au)) : L("", !0)
+			], 8, Pu)) : L("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-2faa69ca"]]), Wu = { class: "player-page" }, Gu = { class: "player-layout" }, Ku = { class: "player-main" }, qu = { class: "player-info" }, Ju = { class: "player-track-name" }, Yu = {
+}), [["__scopeId", "data-v-2faa69ca"]]), Ju = { class: "player-page" }, Yu = { class: "player-layout" }, Xu = { class: "player-main" }, Zu = { class: "player-info" }, Qu = { class: "player-track-name" }, $u = {
 	key: 0,
 	class: "player-error",
 	role: "alert"
-}, Xu = { class: "player-progress" }, Zu = { class: "progress-time" }, Qu = { class: "progress-bar" }, $u = [
+}, ed = { class: "player-progress" }, td = { class: "progress-time" }, nd = { class: "progress-bar" }, rd = [
 	"max",
 	"value",
 	"aria-label"
-], ed = { class: "progress-time" }, td = { class: "player-controls" }, nd = ["aria-label", "title"], rd = ["disabled", "aria-label"], id = ["aria-label"], ad = ["disabled", "aria-label"], od = ["aria-label", "title"], sd = { class: "player-volume" }, cd = ["aria-label"], ld = ["aria-label"], ud = { class: "player-queue" }, dd = { class: "player-queue__title" }, fd = {
+], id = { class: "progress-time" }, ad = { class: "player-controls" }, od = ["aria-label", "title"], sd = ["disabled", "aria-label"], cd = ["aria-label"], ld = ["disabled", "aria-label"], ud = ["aria-label", "title"], dd = { class: "player-volume" }, fd = ["aria-label"], pd = ["aria-label"], md = { class: "player-queue" }, hd = { class: "player-queue__title" }, gd = {
 	key: 0,
 	class: "player-queue__empty"
-}, pd = {
+}, _d = {
 	key: 1,
 	class: "queue-list",
 	role: "list"
-}, md = { class: "queue-item__num" }, hd = { class: "queue-item__title" }, gd = { class: "queue-item__duration" }, _d = ["aria-label"], vd = {
+}, vd = { class: "queue-item__num" }, yd = { class: "queue-item__title" }, bd = { class: "queue-item__duration" }, xd = ["aria-label"], Sd = {
 	key: 0,
 	class: "player-loading",
 	role: "status",
 	"aria-live": "polite"
-}, yd = { class: "sr-only" }, bd = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Cd = { class: "sr-only" }, wd = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "MusicPlayerPage",
 	setup(e) {
 		let { t } = p(), r = D(), i = O(), a = Ht({
@@ -4667,20 +4683,20 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			n && (n.volume = Math.max(0, Math.min(1, t)));
 		}
 		let m = F(() => s.value === "one" ? "repeat-1" : (s.value, "repeat")), h = F(() => "volume");
-		return (e, r) => (G(), R("div", Wu, [z("div", Gu, [z("main", Ku, [
+		return (e, r) => (G(), R("div", Ju, [z("div", Yu, [z("main", Xu, [
 			r[5] ||= Xt("<div class=\"player-artwork\" data-v-d932b3da><svg viewBox=\"0 0 100 100\" class=\"album-icon\" data-v-d932b3da><rect x=\"10\" y=\"10\" width=\"80\" height=\"80\" rx=\"5\" fill=\"#3b2d5c\" data-v-d932b3da></rect><rect x=\"25\" y=\"25\" width=\"50\" height=\"50\" rx=\"3\" fill=\"#6b4d8a\" data-v-d932b3da></rect><circle cx=\"50\" cy=\"50\" r=\"12\" fill=\"#3b2d5c\" data-v-d932b3da></circle><circle cx=\"50\" cy=\"50\" r=\"4\" fill=\"#6b4d8a\" data-v-d932b3da></circle></svg></div>", 1),
-			z("div", qu, [
-				z("h2", Ju, J(Y(a).currentTrack.value?.title ?? Y(t)("player.selectTrack")), 1),
+			z("div", Zu, [
+				z("h2", Qu, J(Y(a).currentTrack.value?.title ?? Y(t)("player.selectTrack")), 1),
 				r[3] ||= z("p", { class: "player-artist-name" }, "—", -1),
 				r[4] ||= z("p", { class: "player-album-name" }, "—", -1)
 			]),
-			Y(a).error.value ? (G(), R("div", Yu, [V(n, {
+			Y(a).error.value ? (G(), R("div", $u, [V(n, {
 				name: "alert-circle",
 				class: "player-error__icon"
 			}), z("span", null, J(Y(t)("music.streamError")), 1)])) : L("", !0),
-			z("div", Xu, [
-				z("span", Zu, J(u(Y(a).position.value)), 1),
-				z("div", Qu, [z("div", {
+			z("div", ed, [
+				z("span", td, J(u(Y(a).position.value)), 1),
+				z("div", nd, [z("div", {
 					class: "progress-fill",
 					style: en({ width: Y(a).duration.value > 0 ? `${Y(a).position.value / Y(a).duration.value * 100}%` : "0%" })
 				}, null, 4), z("input", {
@@ -4691,10 +4707,10 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					value: Y(a).position.value,
 					"aria-label": Y(t)("music.seek"),
 					onInput: d
-				}, null, 40, $u)]),
-				z("span", ed, J(u(Y(a).duration.value)), 1)
+				}, null, 40, rd)]),
+				z("span", id, J(u(Y(a).duration.value)), 1)
 			]),
-			z("div", td, [
+			z("div", ad, [
 				z("button", {
 					type: "button",
 					class: U(["control-btn", { "is-active": o.value }]),
@@ -4704,7 +4720,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, [V(n, {
 					name: "shuffle",
 					class: "control-btn__icon"
-				})], 10, nd),
+				})], 10, od),
 				z("button", {
 					type: "button",
 					class: "control-btn",
@@ -4714,7 +4730,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, [V(n, {
 					name: "skip-back",
 					class: "control-btn__icon"
-				})], 8, rd),
+				})], 8, sd),
 				z("button", {
 					type: "button",
 					class: "control-btn control-btn--play",
@@ -4723,7 +4739,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, [V(n, {
 					name: Y(a).playing.value ? "pause" : "play",
 					class: "control-btn__icon control-btn__icon--lg"
-				}, null, 8, ["name"])], 8, id),
+				}, null, 8, ["name"])], 8, cd),
 				z("button", {
 					type: "button",
 					class: "control-btn",
@@ -4733,7 +4749,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, [V(n, {
 					name: "skip-forward",
 					class: "control-btn__icon"
-				})], 8, ad),
+				})], 8, ld),
 				z("button", {
 					type: "button",
 					class: U(["control-btn", { "is-active": s.value !== "off" }]),
@@ -4743,9 +4759,9 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				}, [V(n, {
 					name: m.value,
 					class: "control-btn__icon"
-				}, null, 8, ["name"])], 10, od)
+				}, null, 8, ["name"])], 10, ud)
 			]),
-			z("div", sd, [z("button", {
+			z("div", dd, [z("button", {
 				type: "button",
 				class: "volume-btn",
 				"aria-label": Y(t)("player.volume"),
@@ -4753,7 +4769,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			}, [V(n, {
 				name: h.value,
 				class: "volume-btn__icon"
-			}, null, 8, ["name"])], 8, cd), z("input", {
+			}, null, 8, ["name"])], 8, fd), z("input", {
 				type: "range",
 				class: "volume-slider",
 				min: "0",
@@ -4761,11 +4777,11 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				value: "80",
 				"aria-label": Y(t)("player.volume"),
 				onInput: f
-			}, null, 40, ld)])
-		]), z("aside", ud, [z("h3", dd, J(Y(t)("player.queue")), 1), Y(a).queue.value.length === 0 ? (G(), R("div", fd, [V(n, {
+			}, null, 40, pd)])
+		]), z("aside", md, [z("h3", hd, J(Y(t)("player.queue")), 1), Y(a).queue.value.length === 0 ? (G(), R("div", gd, [V(n, {
 			name: "list-music",
 			class: "player-queue__empty-icon"
-		}), z("p", null, J(Y(t)("player.queueEmpty")), 1)])) : (G(), R("ul", pd, [(G(!0), R(P, null, q(Y(a).queue.value, (e, r) => (G(), R("li", {
+		}), z("p", null, J(Y(t)("player.queueEmpty")), 1)])) : (G(), R("ul", _d, [(G(!0), R(P, null, q(Y(a).queue.value, (e, r) => (G(), R("li", {
 			key: e.id,
 			class: U(["queue-item", {
 				"is-current": Y(a).currentIndex.value === r,
@@ -4773,7 +4789,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			}]),
 			role: "listitem"
 		}, [
-			z("span", md, [Y(a).currentIndex.value === r ? Y(a).playing.value ? (G(), I(n, {
+			z("span", vd, [Y(a).currentIndex.value === r ? Y(a).playing.value ? (G(), I(n, {
 				key: 1,
 				name: "play",
 				class: "queue-item__playing-icon"
@@ -4782,8 +4798,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				name: "pause",
 				class: "queue-item__playing-icon"
 			})) : (G(), R(P, { key: 0 }, [B(J(r + 1), 1)], 64))]),
-			z("span", hd, J(e.title), 1),
-			z("span", gd, J(u(e.durationSecs)), 1),
+			z("span", yd, J(e.title), 1),
+			z("span", bd, J(u(e.durationSecs)), 1),
 			z("button", {
 				type: "button",
 				class: "queue-item__remove",
@@ -4792,35 +4808,35 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			}, [V(n, {
 				name: "x",
 				class: "queue-item__remove-icon"
-			})], 8, _d)
-		], 2))), 128))]))])]), Y(a).loading.value ? (G(), R("div", vd, [r[6] ||= z("div", { class: "player-loading__spinner" }, null, -1), z("span", yd, J(Y(t)("music.loading")), 1)])) : L("", !0)]));
+			})], 8, xd)
+		], 2))), 128))]))])]), Y(a).loading.value ? (G(), R("div", Sd, [r[6] ||= z("div", { class: "player-loading__spinner" }, null, -1), z("span", Cd, J(Y(t)("music.loading")), 1)])) : L("", !0)]));
 	}
-}), [["__scopeId", "data-v-d932b3da"]]), xd = { class: "books-page" }, Sd = {
+}), [["__scopeId", "data-v-d932b3da"]]), Td = { class: "books-page" }, Ed = {
 	key: 0,
 	class: "books-page__loading",
 	role: "status",
 	"aria-busy": "true"
-}, Cd = {
+}, Dd = {
 	key: 1,
 	class: "books-page__error",
 	role: "alert"
-}, wd = {
+}, Od = {
 	key: 2,
 	class: "books-page__empty",
 	role: "status"
-}, Td = {
+}, kd = {
 	key: 3,
 	class: "books-page__grid"
-}, Ed = ["onClick"], Dd = { class: "book-card__cover" }, Od = ["src", "alt"], kd = {
+}, Ad = ["onClick"], jd = { class: "book-card__cover" }, Md = ["src", "alt"], Nd = {
 	key: 1,
 	class: "book-card__placeholder"
-}, Ad = { class: "book-card__info" }, jd = { class: "book-card__title" }, Md = {
+}, Pd = { class: "book-card__info" }, Fd = { class: "book-card__title" }, Id = {
 	key: 0,
 	class: "book-card__author"
-}, Nd = {
+}, Ld = {
 	key: 1,
 	class: "book-card__pages"
-}, Pd = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Rd = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "BooksPage",
 	setup(e) {
 		let t = Q(), r = D(), i = K([]), a = K(!1), o = K(null);
@@ -4847,66 +4863,66 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				params: { id: e.id }
 			});
 		}
-		return (e, t) => (G(), R("div", xd, [t[3] ||= z("header", { class: "books-page__header" }, [z("h1", { class: "books-page__title" }, "Books"), z("p", { class: "books-page__description" }, "Your book library")], -1), a.value ? (G(), R("div", Sd, [(G(), R(P, null, q(12, (e) => z("div", {
+		return (e, t) => (G(), R("div", Td, [t[3] ||= z("header", { class: "books-page__header" }, [z("h1", { class: "books-page__title" }, "Books"), z("p", { class: "books-page__description" }, "Your book library")], -1), a.value ? (G(), R("div", Ed, [(G(), R(P, null, q(12, (e) => z("div", {
 			key: e,
 			class: "book-skel"
 		}, [...t[0] ||= [
 			z("div", { class: "book-skel__cover" }, null, -1),
 			z("div", { class: "book-skel__title" }, null, -1),
 			z("div", { class: "book-skel__author" }, null, -1)
-		]])), 64))])) : o.value ? (G(), R("div", Cd, [V(n, {
+		]])), 64))])) : o.value ? (G(), R("div", Dd, [V(n, {
 			name: "alert-circle",
 			class: "books-page__error-icon"
-		}), z("p", null, J(o.value), 1)])) : i.value.length === 0 ? (G(), R("div", wd, [
+		}), z("p", null, J(o.value), 1)])) : i.value.length === 0 ? (G(), R("div", Od, [
 			V(n, {
 				name: "bookmark",
 				class: "books-page__empty-icon"
 			}),
 			t[1] ||= z("p", null, "No books found in your library.", -1),
 			t[2] ||= z("p", { class: "books-page__empty-hint" }, " Add a book library to start browsing your collection. ", -1)
-		])) : (G(), R("div", Td, [(G(!0), R(P, null, q(i.value, (e) => (G(), R("button", {
+		])) : (G(), R("div", kd, [(G(!0), R(P, null, q(i.value, (e) => (G(), R("button", {
 			key: e.id,
 			type: "button",
 			class: "book-card",
 			onClick: (t) => l(e)
-		}, [z("div", Dd, [e.cover_url ? (G(), R("img", {
+		}, [z("div", jd, [e.cover_url ? (G(), R("img", {
 			key: 0,
 			src: e.cover_url,
 			alt: e.name,
 			class: "book-card__img",
 			loading: "lazy"
-		}, null, 8, Od)) : (G(), R("div", kd, [V(n, {
+		}, null, 8, Md)) : (G(), R("div", Nd, [V(n, {
 			name: "bookmark",
 			class: "book-card__placeholder-icon"
-		})]))]), z("div", Ad, [
-			z("h3", jd, J(e.name), 1),
-			e.metadata?.author ? (G(), R("span", Md, J(e.metadata.author), 1)) : L("", !0),
-			e.metadata?.page_count ? (G(), R("span", Nd, J(e.metadata.page_count) + " pages ", 1)) : L("", !0)
-		])], 8, Ed))), 128))]))]));
+		})]))]), z("div", Pd, [
+			z("h3", Fd, J(e.name), 1),
+			e.metadata?.author ? (G(), R("span", Id, J(e.metadata.author), 1)) : L("", !0),
+			e.metadata?.page_count ? (G(), R("span", Ld, J(e.metadata.page_count) + " pages ", 1)) : L("", !0)
+		])], 8, Ad))), 128))]))]));
 	}
-}), [["__scopeId", "data-v-21a9cde5"]]), Fd = { class: "book-detail-page" }, Id = {
+}), [["__scopeId", "data-v-21a9cde5"]]), zd = { class: "book-detail-page" }, Bd = {
 	key: 0,
 	class: "book-detail-page__loading"
-}, Ld = { class: "book-detail-loading" }, Rd = { class: "book-detail-loading__info" }, zd = {
+}, Vd = { class: "book-detail-loading" }, Hd = { class: "book-detail-loading__info" }, Ud = {
 	key: 1,
 	class: "book-detail-page__error",
 	role: "alert"
-}, Bd = {
+}, Wd = {
 	key: 2,
 	class: "book-detail"
-}, Vd = { class: "book-detail__container" }, Hd = { class: "book-detail__cover-section" }, Ud = { class: "book-cover-large" }, Wd = ["src", "alt"], Gd = {
+}, Gd = { class: "book-detail__container" }, Kd = { class: "book-detail__cover-section" }, qd = { class: "book-cover-large" }, Jd = ["src", "alt"], Yd = {
 	key: 1,
 	class: "book-cover-large__placeholder"
-}, Kd = { class: "book-detail__info-section" }, qd = { class: "book-title" }, Jd = {
+}, Xd = { class: "book-detail__info-section" }, Zd = { class: "book-title" }, Qd = {
 	key: 0,
 	class: "book-author"
-}, Yd = { class: "book-metadata" }, Xd = {
+}, $d = { class: "book-metadata" }, ef = {
 	key: 1,
 	class: "book-description"
-}, Zd = {
+}, tf = {
 	key: 2,
 	class: "book-progress"
-}, Qd = { class: "book-progress__bar" }, $d = { class: "book-progress__text" }, ef = { class: "book-actions" }, tf = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, nf = { class: "book-progress__bar" }, rf = { class: "book-progress__text" }, af = { class: "book-actions" }, of = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "BookDetailPage",
 	setup(e) {
 		let { t } = p(), r = wn(), i = Q(), a = D(), o = F(() => String(r.params.id ?? "")), s = K(null), c = K(!0), l = K(null);
@@ -4944,17 +4960,17 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		function h() {
 			i.push({ name: "books" });
 		}
-		return (e, r) => (G(), R("div", Fd, [z("button", {
+		return (e, r) => (G(), R("div", zd, [z("button", {
 			type: "button",
 			class: "book-detail-page__back",
 			onClick: h
-		}, [V(n, { name: "arrow-left" }), r[0] ||= z("span", null, "Back to Library", -1)]), c.value ? (G(), R("div", Id, [z("div", Ld, [V(M, { class: "book-detail-loading__cover" }), z("div", Rd, [
+		}, [V(n, { name: "arrow-left" }), r[0] ||= z("span", null, "Back to Library", -1)]), c.value ? (G(), R("div", Bd, [z("div", Vd, [V(M, { class: "book-detail-loading__cover" }), z("div", Hd, [
 			V(M, { class: "book-detail-loading__title" }),
 			V(M, { class: "book-detail-loading__author" }),
 			V(M, { class: "book-detail-loading__meta" }),
 			V(M, { class: "book-detail-loading__desc" }),
 			V(M, { class: "book-detail-loading__desc" })
-		])])])) : l.value ? (G(), R("div", zd, [
+		])])])) : l.value ? (G(), R("div", Ud, [
 			V(n, {
 				name: "alert-circle",
 				class: "book-detail-page__error-icon"
@@ -4967,34 +4983,34 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				default: Z(() => [B(J(Y(t)("common.retry") ?? "Retry"), 1)]),
 				_: 1
 			})
-		])) : s.value ? (G(), R("div", Bd, [z("div", Vd, [z("div", Hd, [z("div", Ud, [s.value.cover_url ? (G(), R("img", {
+		])) : s.value ? (G(), R("div", Wd, [z("div", Gd, [z("div", Kd, [z("div", qd, [s.value.cover_url ? (G(), R("img", {
 			key: 0,
 			src: s.value.cover_url,
 			alt: s.value.name,
 			class: "book-cover-large__img"
-		}, null, 8, Wd)) : (G(), R("div", Gd, [V(n, {
+		}, null, 8, Jd)) : (G(), R("div", Yd, [V(n, {
 			name: "bookmark",
 			class: "book-cover-large__placeholder-icon"
-		})]))])]), z("div", Kd, [
-			z("h1", qd, J(s.value.name), 1),
-			s.value.metadata?.author ? (G(), R("p", Jd, " by " + J(s.value.metadata.author), 1)) : L("", !0),
-			z("dl", Yd, [
+		})]))])]), z("div", Xd, [
+			z("h1", Zd, J(s.value.name), 1),
+			s.value.metadata?.author ? (G(), R("p", Qd, " by " + J(s.value.metadata.author), 1)) : L("", !0),
+			z("dl", $d, [
 				s.value.metadata?.publisher ? (G(), R(P, { key: 0 }, [r[1] ||= z("dt", null, "Publisher", -1), z("dd", null, J(s.value.metadata.publisher), 1)], 64)) : L("", !0),
 				s.value.metadata?.language ? (G(), R(P, { key: 1 }, [r[2] ||= z("dt", null, "Language", -1), z("dd", null, J(s.value.metadata.language), 1)], 64)) : L("", !0),
 				s.value.metadata?.pub_date ? (G(), R(P, { key: 2 }, [r[3] ||= z("dt", null, "Published", -1), z("dd", null, J(s.value.metadata.pub_date), 1)], 64)) : L("", !0),
 				s.value.metadata?.page_count ? (G(), R(P, { key: 3 }, [r[4] ||= z("dt", null, "Pages", -1), z("dd", null, J(s.value.metadata.page_count), 1)], 64)) : L("", !0),
 				s.value.metadata?.isbn ? (G(), R(P, { key: 4 }, [r[5] ||= z("dt", null, "ISBN", -1), z("dd", null, J(s.value.metadata.isbn), 1)], 64)) : L("", !0)
 			]),
-			s.value.metadata?.description ? (G(), R("div", Xd, [r[6] ||= z("h3", null, "Description", -1), z("p", null, J(s.value.metadata.description), 1)])) : L("", !0),
-			s.value.progress ? (G(), R("div", Zd, [
+			s.value.metadata?.description ? (G(), R("div", ef, [r[6] ||= z("h3", null, "Description", -1), z("p", null, J(s.value.metadata.description), 1)])) : L("", !0),
+			s.value.progress ? (G(), R("div", tf, [
 				r[7] ||= z("h3", null, "Reading Progress", -1),
-				z("div", Qd, [z("div", {
+				z("div", nf, [z("div", {
 					class: "book-progress__fill",
 					style: en({ width: `${s.value.progress.percent_complete}%` })
 				}, null, 4)]),
-				z("p", $d, J(s.value.progress.percent_complete.toFixed(0)) + "% complete (" + J(s.value.progress.current_page) + " / " + J(s.value.progress.total_pages) + " pages) ", 1)
+				z("p", rf, J(s.value.progress.percent_complete.toFixed(0)) + "% complete (" + J(s.value.progress.current_page) + " / " + J(s.value.progress.total_pages) + " pages) ", 1)
 			])) : L("", !0),
-			z("div", ef, [V(A, {
+			z("div", af, [V(A, {
 				variant: "solid",
 				onClick: f
 			}, {
@@ -5009,23 +5025,23 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			})])
 		])])])) : L("", !0)]));
 	}
-}), [["__scopeId", "data-v-a8267080"]]), nf = { class: "reader-toolbar" }, rf = { class: "reader-toolbar__title" }, af = { class: "reader-toolbar__controls" }, of = {
+}), [["__scopeId", "data-v-a8267080"]]), sf = { class: "reader-toolbar" }, cf = { class: "reader-toolbar__title" }, lf = { class: "reader-toolbar__controls" }, uf = {
 	key: 0,
 	class: "reader-loading"
-}, sf = {
+}, df = {
 	key: 1,
 	class: "reader-error",
 	role: "alert"
-}, cf = {
+}, ff = {
 	key: 2,
 	class: "reader-content"
-}, lf = {
+}, pf = {
 	key: 0,
 	class: "reader-chapter-info"
-}, uf = { class: "reader-chapter-label" }, df = {
+}, mf = { class: "reader-chapter-label" }, hf = {
 	key: 1,
 	class: "reader-description"
-}, ff = { class: "reader-book-info" }, pf = { class: "reader-pagination" }, mf = { class: "reader-pagination__indicator" }, hf = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, gf = { class: "reader-book-info" }, _f = { class: "reader-pagination" }, vf = { class: "reader-pagination__indicator" }, yf = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "BookReaderPage",
 	setup(e) {
 		let { t } = p(), r = wn(), i = Q(), a = D(), o = F(() => String(r.params.id ?? "")), s = K(null), c = K([]), l = K(1), u = K(0), d = K(null), f = K(!0), m = K(null), h = K("light");
@@ -5097,14 +5113,14 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			return c.value[e] ?? null;
 		});
 		return (e, r) => (G(), R("div", { class: U(["reader-page", `reader-page--theme-${h.value}`]) }, [
-			z("header", nf, [
+			z("header", sf, [
 				z("button", {
 					type: "button",
 					class: "reader-toolbar__back",
 					onClick: O
 				}, [V(n, { name: "arrow-left" }), r[3] ||= z("span", null, "Back to Book", -1)]),
-				z("div", rf, J(s.value?.name ?? ""), 1),
-				z("div", af, [
+				z("div", cf, J(s.value?.name ?? ""), 1),
+				z("div", lf, [
 					z("button", {
 						type: "button",
 						class: "reader-btn",
@@ -5137,7 +5153,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					}, " 🌙 ", 2)
 				])
 			]),
-			f.value ? (G(), R("div", of, [V(M, { class: "reader-loading__content" })])) : m.value ? (G(), R("div", sf, [
+			f.value ? (G(), R("div", uf, [V(M, { class: "reader-loading__content" })])) : m.value ? (G(), R("div", df, [
 				V(n, {
 					name: "alert-circle",
 					class: "reader-error__icon"
@@ -5150,15 +5166,15 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					default: Z(() => [B(J(Y(t)("common.retry") ?? "Retry"), 1)]),
 					_: 1
 				})
-			])) : s.value ? (G(), R("div", cf, [z("div", {
+			])) : s.value ? (G(), R("div", ff, [z("div", {
 				class: "reader-page-content",
 				style: en({ fontSize: `${g.value}px` })
 			}, [
-				ee.value ? (G(), R("div", lf, [z("span", uf, J(ee.value.title), 1)])) : L("", !0),
+				ee.value ? (G(), R("div", pf, [z("span", mf, J(ee.value.title), 1)])) : L("", !0),
 				r[9] ||= z("h2", null, "About this Book", -1),
-				s.value.metadata?.description ? (G(), R("p", df, J(s.value.metadata.description), 1)) : L("", !0),
+				s.value.metadata?.description ? (G(), R("p", hf, J(s.value.metadata.description), 1)) : L("", !0),
 				r[10] ||= z("h3", null, "Book Information", -1),
-				z("dl", ff, [
+				z("dl", gf, [
 					r[8] ||= z("dt", null, "Title", -1),
 					z("dd", null, J(s.value.name), 1),
 					s.value.metadata?.author ? (G(), R(P, { key: 0 }, [r[4] ||= z("dt", null, "Author", -1), z("dd", null, J(s.value.metadata.author), 1)], 64)) : L("", !0),
@@ -5168,7 +5184,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				]),
 				r[11] ||= z("div", { class: "reader-notice" }, [z("p", null, [z("strong", null, "Reader Notice:"), B(" This is a basic reader that displays book metadata. Full paginated EPUB rendering with text flow is planned for a future release.")]), z("p", null, "You can download the book to read it in your preferred reader application.")], -1)
 			], 4)])) : L("", !0),
-			z("footer", pf, [
+			z("footer", _f, [
 				V(A, {
 					variant: "outline",
 					disabled: l.value <= 1,
@@ -5177,7 +5193,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					default: Z(() => [...r[12] ||= [B(" Previous ", -1)]]),
 					_: 1
 				}, 8, ["disabled"]),
-				z("span", mf, [B(" Page " + J(l.value) + " ", 1), u.value > 0 ? (G(), R(P, { key: 0 }, [B(" / " + J(u.value), 1)], 64)) : L("", !0)]),
+				z("span", vf, [B(" Page " + J(l.value) + " ", 1), u.value > 0 ? (G(), R(P, { key: 0 }, [B(" / " + J(u.value), 1)], 64)) : L("", !0)]),
 				V(A, {
 					variant: "outline",
 					disabled: l.value >= u.value,
@@ -5189,35 +5205,35 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			])
 		], 2));
 	}
-}), [["__scopeId", "data-v-30cd1c8f"]]), gf = { class: "audiobooks-page" }, _f = {
+}), [["__scopeId", "data-v-30cd1c8f"]]), bf = { class: "audiobooks-page" }, xf = {
 	key: 0,
 	class: "audiobooks-page__loading",
 	role: "status",
 	"aria-busy": "true"
-}, vf = {
+}, Sf = {
 	key: 1,
 	class: "audiobooks-page__error",
 	role: "alert"
-}, yf = {
+}, Cf = {
 	key: 2,
 	class: "audiobooks-page__empty",
 	role: "status"
-}, bf = {
+}, wf = {
 	key: 3,
 	class: "audiobooks-page__grid"
-}, xf = ["onClick"], Sf = { class: "audiobook-card__cover" }, Cf = ["src", "alt"], wf = {
+}, Tf = ["onClick"], Ef = { class: "audiobook-card__cover" }, Df = ["src", "alt"], Of = {
 	key: 1,
 	class: "audiobook-card__placeholder"
-}, Tf = { class: "audiobook-card__info" }, Ef = { class: "audiobook-card__title" }, Df = {
+}, kf = { class: "audiobook-card__info" }, Af = { class: "audiobook-card__title" }, jf = {
 	key: 0,
 	class: "audiobook-card__author"
-}, Of = {
+}, Mf = {
 	key: 1,
 	class: "audiobook-card__narrator"
-}, kf = {
+}, Nf = {
 	key: 2,
 	class: "audiobook-card__duration"
-}, Af = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Pf = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "AudiobooksPage",
 	setup(e) {
 		let t = Q(), r = D(), i = K([]), a = K(!1), o = K(null);
@@ -5249,76 +5265,76 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			let t = Math.floor(e / 1e3), n = Math.floor(t / 3600), r = Math.floor(t % 3600 / 60);
 			return n > 0 ? `${n}h ${r}m` : `${r}m`;
 		}
-		return (e, t) => (G(), R("div", gf, [t[3] ||= z("header", { class: "audiobooks-page__header" }, [z("h1", { class: "audiobooks-page__title" }, "Audiobooks"), z("p", { class: "audiobooks-page__description" }, "Your audiobook library")], -1), a.value ? (G(), R("div", _f, [(G(), R(P, null, q(12, (e) => z("div", {
+		return (e, t) => (G(), R("div", bf, [t[3] ||= z("header", { class: "audiobooks-page__header" }, [z("h1", { class: "audiobooks-page__title" }, "Audiobooks"), z("p", { class: "audiobooks-page__description" }, "Your audiobook library")], -1), a.value ? (G(), R("div", xf, [(G(), R(P, null, q(12, (e) => z("div", {
 			key: e,
 			class: "audiobook-skel"
 		}, [...t[0] ||= [
 			z("div", { class: "audiobook-skel__cover" }, null, -1),
 			z("div", { class: "audiobook-skel__title" }, null, -1),
 			z("div", { class: "audiobook-skel__author" }, null, -1)
-		]])), 64))])) : o.value ? (G(), R("div", vf, [V(n, {
+		]])), 64))])) : o.value ? (G(), R("div", Sf, [V(n, {
 			name: "alert-circle",
 			class: "audiobooks-page__error-icon"
-		}), z("p", null, J(o.value), 1)])) : i.value.length === 0 ? (G(), R("div", yf, [
+		}), z("p", null, J(o.value), 1)])) : i.value.length === 0 ? (G(), R("div", Cf, [
 			V(n, {
 				name: "bookmark",
 				class: "audiobooks-page__empty-icon"
 			}),
 			t[1] ||= z("p", null, "No audiobooks found in your library.", -1),
 			t[2] ||= z("p", { class: "audiobooks-page__empty-hint" }, " Add an audiobook library to start browsing your collection. ", -1)
-		])) : (G(), R("div", bf, [(G(!0), R(P, null, q(i.value, (e) => (G(), R("button", {
+		])) : (G(), R("div", wf, [(G(!0), R(P, null, q(i.value, (e) => (G(), R("button", {
 			key: e.id,
 			type: "button",
 			class: "audiobook-card",
 			onClick: (t) => l(e)
-		}, [z("div", Sf, [e.cover_url ? (G(), R("img", {
+		}, [z("div", Ef, [e.cover_url ? (G(), R("img", {
 			key: 0,
 			src: e.cover_url,
 			alt: e.name,
 			class: "audiobook-card__img",
 			loading: "lazy"
-		}, null, 8, Cf)) : (G(), R("div", wf, [V(n, {
+		}, null, 8, Df)) : (G(), R("div", Of, [V(n, {
 			name: "bookmark",
 			class: "audiobook-card__placeholder-icon"
-		})]))]), z("div", Tf, [
-			z("h3", Ef, J(e.name), 1),
-			e.metadata?.author ? (G(), R("span", Df, J(e.metadata.author), 1)) : L("", !0),
-			e.metadata?.narrator ? (G(), R("span", Of, " Narrated by " + J(e.metadata.narrator), 1)) : L("", !0),
-			e.metadata?.duration_ms ? (G(), R("span", kf, J(u(e.metadata.duration_ms)), 1)) : L("", !0)
-		])], 8, xf))), 128))]))]));
+		})]))]), z("div", kf, [
+			z("h3", Af, J(e.name), 1),
+			e.metadata?.author ? (G(), R("span", jf, J(e.metadata.author), 1)) : L("", !0),
+			e.metadata?.narrator ? (G(), R("span", Mf, " Narrated by " + J(e.metadata.narrator), 1)) : L("", !0),
+			e.metadata?.duration_ms ? (G(), R("span", Nf, J(u(e.metadata.duration_ms)), 1)) : L("", !0)
+		])], 8, Tf))), 128))]))]));
 	}
-}), [["__scopeId", "data-v-d41fcaea"]]), jf = { class: "audiobook-detail-page" }, Mf = {
+}), [["__scopeId", "data-v-d41fcaea"]]), Ff = { class: "audiobook-detail-page" }, If = {
 	key: 0,
 	class: "audiobook-detail-page__loading"
-}, Nf = { class: "audiobook-detail-loading" }, Pf = { class: "audiobook-detail-loading__info" }, Ff = {
+}, Lf = { class: "audiobook-detail-loading" }, Rf = { class: "audiobook-detail-loading__info" }, zf = {
 	key: 1,
 	class: "audiobook-detail-page__error",
 	role: "alert"
-}, If = {
+}, Bf = {
 	key: 2,
 	class: "audiobook-detail"
-}, Lf = { class: "audiobook-detail__container" }, Rf = { class: "audiobook-detail__cover-section" }, zf = { class: "audiobook-cover-large" }, Bf = ["src", "alt"], Vf = {
+}, Vf = { class: "audiobook-detail__container" }, Hf = { class: "audiobook-detail__cover-section" }, Uf = { class: "audiobook-cover-large" }, Wf = ["src", "alt"], Gf = {
 	key: 1,
 	class: "audiobook-cover-large__placeholder"
-}, Hf = { class: "audiobook-detail__info-section" }, Uf = { class: "audiobook-title" }, Wf = {
+}, Kf = { class: "audiobook-detail__info-section" }, qf = { class: "audiobook-title" }, Jf = {
 	key: 0,
 	class: "audiobook-author"
-}, Gf = {
+}, Yf = {
 	key: 1,
 	class: "audiobook-narrator"
-}, Kf = {
+}, Xf = {
 	key: 2,
 	class: "audiobook-series"
-}, qf = { key: 0 }, Jf = { class: "audiobook-metadata" }, Yf = {
+}, Zf = { key: 0 }, Qf = { class: "audiobook-metadata" }, $f = {
 	key: 3,
 	class: "audiobook-description"
-}, Xf = {
+}, ep = {
 	key: 4,
 	class: "audiobook-progress"
-}, Zf = { class: "audiobook-progress__bar" }, Qf = { class: "audiobook-progress__text" }, $f = { key: 0 }, ep = { class: "audiobook-actions" }, tp = {
+}, tp = { class: "audiobook-progress__bar" }, np = { class: "audiobook-progress__text" }, rp = { key: 0 }, ip = { class: "audiobook-actions" }, ap = {
 	key: 0,
 	class: "audiobook-chapters-section"
-}, np = { class: "chapter-list" }, rp = { class: "chapter-index" }, ip = { class: "chapter-title" }, ap = { class: "chapter-duration" }, op = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, op = { class: "chapter-list" }, sp = { class: "chapter-index" }, cp = { class: "chapter-title" }, lp = { class: "chapter-duration" }, up = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "AudiobookDetailPage",
 	setup(e) {
 		let { t } = p(), r = wn(), i = Q(), a = D(), o = F(() => String(r.params.id ?? "")), s = K(null), c = K(!0), l = K(null);
@@ -5361,17 +5377,17 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		function g(e) {
 			return !e.start_ms || !e.end_ms ? "" : h(e.end_ms - e.start_ms);
 		}
-		return (e, r) => (G(), R("div", jf, [z("button", {
+		return (e, r) => (G(), R("div", Ff, [z("button", {
 			type: "button",
 			class: "audiobook-detail-page__back",
 			onClick: m
-		}, [V(n, { name: "arrow-left" }), r[0] ||= z("span", null, "Back to Library", -1)]), c.value ? (G(), R("div", Mf, [z("div", Nf, [V(M, { class: "audiobook-detail-loading__cover" }), z("div", Pf, [
+		}, [V(n, { name: "arrow-left" }), r[0] ||= z("span", null, "Back to Library", -1)]), c.value ? (G(), R("div", If, [z("div", Lf, [V(M, { class: "audiobook-detail-loading__cover" }), z("div", Rf, [
 			V(M, { class: "audiobook-detail-loading__title" }),
 			V(M, { class: "audiobook-detail-loading__author" }),
 			V(M, { class: "audiobook-detail-loading__meta" }),
 			V(M, { class: "audiobook-detail-loading__desc" }),
 			V(M, { class: "audiobook-detail-loading__desc" })
-		])])])) : l.value ? (G(), R("div", Ff, [
+		])])])) : l.value ? (G(), R("div", zf, [
 			V(n, {
 				name: "alert-circle",
 				class: "audiobook-detail-page__error-icon"
@@ -5384,69 +5400,69 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				default: Z(() => [B(J(Y(t)("common.retry") ?? "Retry"), 1)]),
 				_: 1
 			})
-		])) : s.value ? (G(), R("div", If, [z("div", Lf, [z("div", Rf, [z("div", zf, [s.value.cover_url ? (G(), R("img", {
+		])) : s.value ? (G(), R("div", Bf, [z("div", Vf, [z("div", Hf, [z("div", Uf, [s.value.cover_url ? (G(), R("img", {
 			key: 0,
 			src: s.value.cover_url,
 			alt: s.value.name,
 			class: "audiobook-cover-large__img"
-		}, null, 8, Bf)) : (G(), R("div", Vf, [V(n, {
+		}, null, 8, Wf)) : (G(), R("div", Gf, [V(n, {
 			name: "bookmark",
 			class: "audiobook-cover-large__placeholder-icon"
-		})]))])]), z("div", Hf, [
-			z("h1", Uf, J(s.value.name), 1),
-			s.value.metadata?.author ? (G(), R("p", Wf, " by " + J(s.value.metadata.author), 1)) : L("", !0),
-			s.value.metadata?.narrator ? (G(), R("p", Gf, " Narrated by " + J(s.value.metadata.narrator), 1)) : L("", !0),
-			s.value.metadata?.series ? (G(), R("p", Kf, [B(" Part of: " + J(s.value.metadata.series) + " ", 1), s.value.metadata?.series_position ? (G(), R("span", qf, " (#" + J(s.value.metadata.series_position) + ") ", 1)) : L("", !0)])) : L("", !0),
-			z("dl", Jf, [
+		})]))])]), z("div", Kf, [
+			z("h1", qf, J(s.value.name), 1),
+			s.value.metadata?.author ? (G(), R("p", Jf, " by " + J(s.value.metadata.author), 1)) : L("", !0),
+			s.value.metadata?.narrator ? (G(), R("p", Yf, " Narrated by " + J(s.value.metadata.narrator), 1)) : L("", !0),
+			s.value.metadata?.series ? (G(), R("p", Xf, [B(" Part of: " + J(s.value.metadata.series) + " ", 1), s.value.metadata?.series_position ? (G(), R("span", Zf, " (#" + J(s.value.metadata.series_position) + ") ", 1)) : L("", !0)])) : L("", !0),
+			z("dl", Qf, [
 				s.value.metadata?.duration_ms ? (G(), R(P, { key: 0 }, [r[1] ||= z("dt", null, "Duration", -1), z("dd", null, J(h(s.value.metadata.duration_ms)), 1)], 64)) : L("", !0),
 				s.value.metadata?.language ? (G(), R(P, { key: 1 }, [r[2] ||= z("dt", null, "Language", -1), z("dd", null, J(s.value.metadata.language), 1)], 64)) : L("", !0),
 				s.value.chapters?.length ? (G(), R(P, { key: 2 }, [r[3] ||= z("dt", null, "Chapters", -1), z("dd", null, J(s.value.chapters.length), 1)], 64)) : L("", !0)
 			]),
-			s.value.metadata?.description ? (G(), R("div", Yf, [r[4] ||= z("h3", null, "Description", -1), z("p", null, J(s.value.metadata.description), 1)])) : L("", !0),
-			s.value.progress ? (G(), R("div", Xf, [
+			s.value.metadata?.description ? (G(), R("div", $f, [r[4] ||= z("h3", null, "Description", -1), z("p", null, J(s.value.metadata.description), 1)])) : L("", !0),
+			s.value.progress ? (G(), R("div", ep, [
 				r[5] ||= z("h3", null, "Listening Progress", -1),
-				z("div", Zf, [z("div", {
+				z("div", tp, [z("div", {
 					class: "audiobook-progress__fill",
 					style: en({ width: `${s.value.progress.percent_complete}%` })
 				}, null, 4)]),
-				z("p", Qf, [B(J(s.value.progress.percent_complete.toFixed(0)) + "% complete ", 1), s.value.progress.current_chapter_index > 0 ? (G(), R("span", $f, " (Chapter " + J(s.value.progress.current_chapter_index + 1) + ") ", 1)) : L("", !0)])
+				z("p", np, [B(J(s.value.progress.percent_complete.toFixed(0)) + "% complete ", 1), s.value.progress.current_chapter_index > 0 ? (G(), R("span", rp, " (Chapter " + J(s.value.progress.current_chapter_index + 1) + ") ", 1)) : L("", !0)])
 			])) : L("", !0),
-			z("div", ep, [V(A, {
+			z("div", ip, [V(A, {
 				variant: "solid",
 				onClick: f
 			}, {
 				default: Z(() => [V(n, { name: "play" }), B(" " + J(s.value.progress?.percent_complete && s.value.progress.percent_complete > 0 ? "Continue Listening" : "Play"), 1)]),
 				_: 1
 			})])
-		])]), s.value.chapters?.length ? (G(), R("div", tp, [r[6] ||= z("h2", null, "Chapters", -1), z("div", np, [(G(!0), R(P, null, q(s.value.chapters, (e, t) => (G(), R("div", {
+		])]), s.value.chapters?.length ? (G(), R("div", ap, [r[6] ||= z("h2", null, "Chapters", -1), z("div", op, [(G(!0), R(P, null, q(s.value.chapters, (e, t) => (G(), R("div", {
 			key: e.index,
 			class: "chapter-item"
 		}, [
-			z("span", rp, J(t + 1), 1),
-			z("span", ip, J(e.title || `Chapter ${t + 1}`), 1),
-			z("span", ap, J(g(e)), 1)
+			z("span", sp, J(t + 1), 1),
+			z("span", cp, J(e.title || `Chapter ${t + 1}`), 1),
+			z("span", lp, J(g(e)), 1)
 		]))), 128))])])) : L("", !0)])) : L("", !0)]));
 	}
-}), [["__scopeId", "data-v-0ca4ecbb"]]), sp = { class: "player-page" }, cp = ["src"], lp = { class: "player-header" }, up = { class: "player-header__title" }, dp = {
+}), [["__scopeId", "data-v-0ca4ecbb"]]), dp = { class: "player-page" }, fp = ["src"], pp = { class: "player-header" }, mp = { class: "player-header__title" }, hp = {
 	key: 1,
 	class: "player-loading"
-}, fp = { class: "player-loading__info" }, pp = {
+}, gp = { class: "player-loading__info" }, _p = {
 	key: 2,
 	class: "player-error",
 	role: "alert"
-}, mp = {
+}, vp = {
 	key: 3,
 	class: "player-content"
-}, hp = { class: "player-layout" }, gp = { class: "player-main" }, _p = { class: "player-artwork" }, vp = ["src", "alt"], yp = {
+}, yp = { class: "player-layout" }, bp = { class: "player-main" }, xp = { class: "player-artwork" }, Sp = ["src", "alt"], Cp = {
 	key: 1,
 	class: "player-artwork__placeholder"
-}, bp = { class: "player-info" }, xp = { class: "player-title" }, Sp = {
+}, wp = { class: "player-info" }, Tp = { class: "player-title" }, Ep = {
 	key: 0,
 	class: "player-author"
-}, Cp = {
+}, Dp = {
 	key: 1,
 	class: "player-chapter"
-}, wp = { class: "player-progress" }, Tp = { class: "progress-bar" }, Ep = ["max", "value"], Dp = { class: "progress-times" }, Op = { class: "player-controls" }, kp = ["aria-label"], Ap = { class: "player-extras" }, jp = ["aria-label"], Mp = { class: "volume-control" }, Np = ["value"], Pp = { class: "player-chapters" }, Fp = { class: "chapter-list" }, Ip = ["onClick"], Lp = { class: "chapter-index" }, Rp = { class: "chapter-title" }, zp = { class: "chapter-duration" }, Bp = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Op = { class: "player-progress" }, kp = { class: "progress-bar" }, Ap = ["max", "value"], jp = { class: "progress-times" }, Mp = { class: "player-controls" }, Np = ["aria-label"], Pp = { class: "player-extras" }, Fp = ["aria-label"], Ip = { class: "volume-control" }, Lp = ["value"], Rp = { class: "player-chapters" }, zp = { class: "chapter-list" }, Bp = ["onClick"], Vp = { class: "chapter-index" }, Hp = { class: "chapter-title" }, Up = { class: "chapter-duration" }, Wp = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "AudiobookPlayerPage",
 	setup(e) {
 		let t = wn(), r = Q(), i = D(), a = O(), o = F(() => String(t.params.id ?? "")), s = K(null), c = K(null), l = K(!0), u = K(null);
@@ -5575,7 +5591,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 			return t > 0 ? `${t}:${n.toString().padStart(2, "0")}:${r.toString().padStart(2, "0")}` : `${n}:${r.toString().padStart(2, "0")}`;
 		}
 		let ue = F(() => s.value?.chapters?.length ? s.value.chapters[_.value] ?? null : null), de = F(() => m.value <= 0 ? 0 : p.value / m.value * 100);
-		return (e, t) => (G(), R("div", sp, [
+		return (e, t) => (G(), R("div", dp, [
 			s.value?.stream_url ? (G(), R("audio", {
 				key: 0,
 				ref_key: "audioRef",
@@ -5585,31 +5601,31 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 				onLoadedmetadata: C,
 				onTimeupdate: w,
 				onEnded: E
-			}, null, 40, cp)) : L("", !0),
-			z("header", lp, [z("button", {
+			}, null, 40, fp)) : L("", !0),
+			z("header", pp, [z("button", {
 				type: "button",
 				class: "player-header__back",
 				onClick: ce
-			}, [V(n, { name: "arrow-left" }), t[2] ||= z("span", null, "Back to Audiobook", -1)]), z("div", up, J(s.value?.name ?? ""), 1)]),
-			l.value ? (G(), R("div", dp, [V(M, { class: "player-loading__cover" }), z("div", fp, [V(M, { class: "player-loading__title" }), V(M, { class: "player-loading__author" })])])) : u.value ? (G(), R("div", pp, [V(n, {
+			}, [V(n, { name: "arrow-left" }), t[2] ||= z("span", null, "Back to Audiobook", -1)]), z("div", mp, J(s.value?.name ?? ""), 1)]),
+			l.value ? (G(), R("div", hp, [V(M, { class: "player-loading__cover" }), z("div", gp, [V(M, { class: "player-loading__title" }), V(M, { class: "player-loading__author" })])])) : u.value ? (G(), R("div", _p, [V(n, {
 				name: "alert-circle",
 				class: "player-error__icon"
-			}), z("p", null, J(u.value), 1)])) : s.value ? (G(), R("div", mp, [z("div", hp, [z("main", gp, [
-				z("div", _p, [s.value.cover_url ? (G(), R("img", {
+			}), z("p", null, J(u.value), 1)])) : s.value ? (G(), R("div", vp, [z("div", yp, [z("main", bp, [
+				z("div", xp, [s.value.cover_url ? (G(), R("img", {
 					key: 0,
 					src: s.value.cover_url,
 					alt: s.value.name,
 					class: "player-artwork__img"
-				}, null, 8, vp)) : (G(), R("div", yp, [V(n, {
+				}, null, 8, Sp)) : (G(), R("div", Cp, [V(n, {
 					name: "bookmark",
 					class: "player-artwork__placeholder-icon"
 				})]))]),
-				z("div", bp, [
-					z("h1", xp, J(s.value.name), 1),
-					s.value.metadata?.author ? (G(), R("p", Sp, " by " + J(s.value.metadata.author), 1)) : L("", !0),
-					ue.value ? (G(), R("p", Cp, J(ue.value.title || `Chapter ${_.value + 1}`), 1)) : L("", !0)
+				z("div", wp, [
+					z("h1", Tp, J(s.value.name), 1),
+					s.value.metadata?.author ? (G(), R("p", Ep, " by " + J(s.value.metadata.author), 1)) : L("", !0),
+					ue.value ? (G(), R("p", Dp, J(ue.value.title || `Chapter ${_.value + 1}`), 1)) : L("", !0)
 				]),
-				z("div", wp, [z("div", Tp, [z("div", {
+				z("div", Op, [z("div", kp, [z("div", {
 					class: "progress-fill",
 					style: en({ width: `${de.value}%` })
 				}, null, 4), z("input", {
@@ -5620,8 +5636,8 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					value: p.value,
 					"aria-label": "Seek",
 					onInput: ie
-				}, null, 40, Ep)]), z("div", Dp, [z("span", null, J(le(p.value)), 1), z("span", null, J(le(m.value)), 1)])]),
-				z("div", Op, [
+				}, null, 40, Ap)]), z("div", jp, [z("span", null, J(le(p.value)), 1), z("span", null, J(le(m.value)), 1)])]),
+				z("div", Mp, [
 					z("button", {
 						type: "button",
 						class: "control-btn",
@@ -5639,7 +5655,7 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					}, [V(n, {
 						name: f.value ? "pause" : "play",
 						class: "control-btn__icon control-btn__icon--lg"
-					}, null, 8, ["name"])], 8, kp),
+					}, null, 8, ["name"])], 8, Np),
 					z("button", {
 						type: "button",
 						class: "control-btn",
@@ -5650,12 +5666,12 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 						class: "control-btn__icon"
 					}), t[4] ||= z("span", { class: "control-btn__label" }, "+30", -1)])
 				]),
-				z("div", Ap, [z("button", {
+				z("div", Pp, [z("button", {
 					type: "button",
 					class: "extra-btn",
 					"aria-label": `Playback speed: ${g.value}x`,
 					onClick: oe
-				}, J(g.value) + "x ", 9, jp), z("div", Mp, [V(n, {
+				}, J(g.value) + "x ", 9, Fp), z("div", Ip, [V(n, {
 					name: "volume",
 					class: "volume-icon"
 				}), z("input", {
@@ -5666,20 +5682,20 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 					value: h.value * 100,
 					"aria-label": "Volume",
 					onInput: ae
-				}, null, 40, Np)])])
-			]), z("aside", Pp, [t[5] ||= z("h3", { class: "player-chapters__title" }, "Chapters", -1), z("div", Fp, [(G(!0), R(P, null, q(s.value.chapters, (e, t) => (G(), R("button", {
+				}, null, 40, Lp)])])
+			]), z("aside", Rp, [t[5] ||= z("h3", { class: "player-chapters__title" }, "Chapters", -1), z("div", zp, [(G(!0), R(P, null, q(s.value.chapters, (e, t) => (G(), R("button", {
 				key: e.index,
 				type: "button",
 				class: U(["chapter-item", { "is-active": t === _.value }]),
 				onClick: (e) => se(t)
 			}, [
-				z("span", Lp, J(t + 1), 1),
-				z("span", Rp, J(e.title || `Chapter ${t + 1}`), 1),
-				z("span", zp, J(le((e.end_ms - e.start_ms) / 1e3)), 1)
-			], 10, Ip))), 128))])])])])) : L("", !0)
+				z("span", Vp, J(t + 1), 1),
+				z("span", Hp, J(e.title || `Chapter ${t + 1}`), 1),
+				z("span", Up, J(le((e.end_ms - e.start_ms) / 1e3)), 1)
+			], 10, Bp))), 128))])])])])) : L("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-62d132cb"]]), Vp = new class {
+}), [["__scopeId", "data-v-62d132cb"]]), Gp = new class {
 	client(e) {
 		return new T({ baseUrl: e });
 	}
@@ -5700,26 +5716,26 @@ var ha = "https://detain.github.io/phlix-docs", ga = (e, t) => ({
 		let r = { library_id: t };
 		return n.albumId !== void 0 && (r.album_id = n.albumId), n.interval !== void 0 && (r.interval = String(n.interval)), this.client(e).get("/api/v1/photo/slideshow", r);
 	}
-}(), Hp = (e) => e.date === "Unknown" || e.date.trim() === "" ? "Undated" : e.date;
-function Up(e) {
+}(), Kp = (e) => e.date === "Unknown" || e.date.trim() === "" ? "Undated" : e.date;
+function qp(e) {
 	let t = [], n = [e.camera_make, e.camera_model].filter((e) => typeof e == "string" && e.trim() !== "").join(" ").trim();
 	return n !== "" && t.push(n), typeof e.lens == "string" && e.lens.trim() !== "" && t.push(e.lens), typeof e.width == "number" && typeof e.height == "number" && e.width > 0 && e.height > 0 && t.push(`${e.width}×${e.height}`), typeof e.aperture == "string" && e.aperture.trim() !== "" && t.push(e.aperture), typeof e.iso == "number" && Number.isFinite(e.iso) && t.push(`ISO ${e.iso}`), typeof e.shutter_speed == "string" && e.shutter_speed.trim() !== "" && t.push(e.shutter_speed), typeof e.focal_length == "string" && e.focal_length.trim() !== "" && t.push(e.focal_length), typeof e.date_taken_formatted == "string" && e.date_taken_formatted.trim() !== "" && t.push(e.date_taken_formatted), typeof e.gps_display == "string" && e.gps_display.trim() !== "" && t.push(e.gps_display), t;
 }
 //#endregion
 //#region src/pages/PhotoAlbumsPage.vue?vue&type=script&setup=true&lang.ts
-var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { class: "header-content" }, qp = { class: "page-title" }, Jp = {
+var Jp = { class: "photo-albums-page" }, Yp = { class: "page-header" }, Xp = { class: "header-content" }, Zp = { class: "page-title" }, Qp = {
 	key: 0,
 	class: "library-name"
-}, Yp = {
+}, $p = {
 	key: 0,
 	class: "loading-state"
-}, Xp = { class: "library-picker" }, Zp = {
+}, em = { class: "library-picker" }, tm = {
 	key: 5,
 	class: "albums-content"
-}, Qp = { class: "group-label" }, $p = { class: "albums-grid" }, em = ["onClick"], tm = { class: "album-cover" }, nm = ["src", "alt"], rm = {
+}, nm = { class: "group-label" }, rm = { class: "albums-grid" }, im = ["onClick"], am = { class: "album-cover" }, om = ["src", "alt"], sm = {
 	key: 1,
 	class: "album-cover-placeholder"
-}, im = { class: "album-info" }, am = { class: "album-title" }, om = { class: "album-count" }, sm = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, cm = { class: "album-info" }, lm = { class: "album-title" }, um = { class: "album-count" }, dm = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "PhotoAlbumsPage",
 	setup(e) {
 		let t = D(), r = Ce(), i = wn(), a = Q(), o = F(() => {
@@ -5749,7 +5765,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			if (o.value) {
 				l.value = !0, u.value = null;
 				try {
-					c.value = await Vp.getAlbums(t.value, o.value);
+					c.value = await Gp.getAlbums(t.value, o.value);
 				} catch (e) {
 					u.value = e instanceof Error ? e.message : "Failed to load albums", c.value = [];
 				} finally {
@@ -5775,10 +5791,10 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 		function _(e) {
 			a.replace({ query: { library_id: e } });
 		}
-		return (e, t) => (G(), R("div", Wp, [z("header", Gp, [z("div", Kp, [z("h1", qp, [V(n, {
+		return (e, t) => (G(), R("div", Jp, [z("header", Yp, [z("div", Xp, [z("h1", Zp, [V(n, {
 			name: "image",
 			class: "title-icon"
-		}), t[0] ||= B(" Photo Albums ", -1)]), s.value ? (G(), R("p", Jp, J(s.value.name), 1)) : L("", !0)])]), l.value ? (G(), R("div", Yp, [V(fe, { size: "large" }), t[1] ||= z("p", null, "Loading albums...", -1)])) : u.value ? (G(), I(N, {
+		}), t[0] ||= B(" Photo Albums ", -1)]), s.value ? (G(), R("p", Qp, J(s.value.name), 1)) : L("", !0)])]), l.value ? (G(), R("div", $p, [V(fe, { size: "large" }), t[1] ||= z("p", null, "Loading albums...", -1)])) : u.value ? (G(), I(N, {
 			key: 1,
 			icon: "alert-circle",
 			title: u.value
@@ -5796,7 +5812,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			icon: "image",
 			title: "Select a Photo Library"
 		}, {
-			default: Z(() => [t[3] ||= z("p", null, "Choose a photo library to browse:", -1), z("div", Xp, [(G(!0), R(P, null, q(g.value, (e) => (G(), I(A, {
+			default: Z(() => [t[3] ||= z("p", null, "Choose a photo library to browse:", -1), z("div", em, [(G(!0), R(P, null, q(g.value, (e) => (G(), I(A, {
 				key: e.id,
 				variant: "subtle",
 				onClick: (t) => _(e.id)
@@ -5819,37 +5835,37 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 		}, {
 			default: Z(() => [...t[5] ||= [z("p", null, "This library has no photos.", -1)]]),
 			_: 1
-		})) : (G(), R("div", Zp, [(G(!0), R(P, null, q(d.value, (e) => (G(), R("section", {
+		})) : (G(), R("div", tm, [(G(!0), R(P, null, q(d.value, (e) => (G(), R("section", {
 			key: e.label,
 			class: "album-group"
-		}, [z("h2", Qp, J(e.label), 1), z("div", $p, [(G(!0), R(P, null, q(e.albums, (e) => (G(), R("article", {
+		}, [z("h2", nm, J(e.label), 1), z("div", rm, [(G(!0), R(P, null, q(e.albums, (e) => (G(), R("article", {
 			key: e.id,
 			class: "album-card",
 			onClick: (t) => p(e)
-		}, [z("div", tm, [e.cover_photo?.thumbnail_url ? (G(), R("img", {
+		}, [z("div", am, [e.cover_photo?.thumbnail_url ? (G(), R("img", {
 			key: 0,
 			src: e.cover_photo.thumbnail_url,
-			alt: Y(Hp)(e),
+			alt: Y(Kp)(e),
 			loading: "lazy"
-		}, null, 8, nm)) : (G(), R("div", rm, [V(n, { name: "image" })]))]), z("div", im, [z("h3", am, J(Y(Hp)(e)), 1), z("p", om, J(m(e.photo_count)), 1)])], 8, em))), 128))])]))), 128))]))]));
+		}, null, 8, om)) : (G(), R("div", sm, [V(n, { name: "image" })]))]), z("div", cm, [z("h3", lm, J(Y(Kp)(e)), 1), z("p", um, J(m(e.photo_count)), 1)])], 8, im))), 128))])]))), 128))]))]));
 	}
-}), [["__scopeId", "data-v-bfe2075b"]]), cm = { class: "photo-album-page" }, lm = { class: "page-header" }, um = { class: "header-content" }, dm = { class: "title-section" }, fm = { class: "page-title" }, pm = {
+}), [["__scopeId", "data-v-bfe2075b"]]), fm = { class: "photo-album-page" }, pm = { class: "page-header" }, mm = { class: "header-content" }, hm = { class: "title-section" }, gm = { class: "page-title" }, _m = {
 	key: 0,
 	class: "photo-count"
-}, mm = {
+}, vm = {
 	key: 0,
 	class: "loading-state"
-}, hm = {
+}, ym = {
 	key: 5,
 	class: "photo-grid"
-}, gm = ["onClick"], _m = { class: "photo-thumbnail" }, vm = [
+}, bm = ["onClick"], xm = { class: "photo-thumbnail" }, Sm = [
 	"src",
 	"alt",
 	"onError"
-], ym = {
+], Cm = {
 	key: 1,
 	class: "photo-placeholder"
-}, bm = { class: "photo-info" }, xm = ["title"], Sm = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, wm = { class: "photo-info" }, Tm = ["title"], Em = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "PhotoAlbumPage",
 	props: { id: {} },
 	setup(e) {
@@ -5861,7 +5877,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			if (!(!t.id || !o.value)) {
 				c.value = !0, l.value = null;
 				try {
-					s.value = await Vp.getAlbum(r.value, t.id, o.value);
+					s.value = await Gp.getAlbum(r.value, t.id, o.value);
 				} catch (e) {
 					l.value = e instanceof Error ? e.message : "Failed to load album", s.value = null;
 				} finally {
@@ -5900,7 +5916,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			o.value && d();
 		}), X([() => t.id, o], () => {
 			t.id && o.value && d();
-		}), (e, t) => (G(), R("div", cm, [z("header", lm, [z("div", um, [
+		}), (e, t) => (G(), R("div", fm, [z("header", pm, [z("div", mm, [
 			V(A, {
 				variant: "ghost",
 				class: "back-button",
@@ -5909,7 +5925,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 				default: Z(() => [V(n, { name: "arrow-left" }), t[0] ||= B(" Back to Albums ", -1)]),
 				_: 1
 			}),
-			z("div", dm, [z("h1", fm, J(s.value ? Y(Hp)(s.value) : "Album"), 1), s.value ? (G(), R("p", pm, J(s.value.photo_count) + " " + J(s.value.photo_count === 1 ? "photo" : "photos"), 1)) : L("", !0)]),
+			z("div", hm, [z("h1", gm, J(s.value ? Y(Kp)(s.value) : "Album"), 1), s.value ? (G(), R("p", _m, J(s.value.photo_count) + " " + J(s.value.photo_count === 1 ? "photo" : "photos"), 1)) : L("", !0)]),
 			s.value && s.value.photos.length > 0 ? (G(), I(A, {
 				key: 0,
 				variant: "subtle",
@@ -5919,7 +5935,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 				default: Z(() => [V(n, { name: "play" }), t[1] ||= B(" Slideshow ", -1)]),
 				_: 1
 			})) : L("", !0)
-		])]), c.value ? (G(), R("div", mm, [V(fe, { size: "large" }), t[2] ||= z("p", null, "Loading album...", -1)])) : l.value ? (G(), I(N, {
+		])]), c.value ? (G(), R("div", vm, [V(fe, { size: "large" }), t[2] ||= z("p", null, "Loading album...", -1)])) : l.value ? (G(), I(N, {
 			key: 1,
 			icon: "alert-circle",
 			title: l.value
@@ -5939,20 +5955,20 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 		}, {
 			default: Z(() => [...t[8] ||= [z("p", null, "This album is empty.", -1)]]),
 			_: 1
-		})) : (G(), R("div", hm, [(G(!0), R(P, null, q(s.value.photos, (e) => (G(), R("article", {
+		})) : (G(), R("div", ym, [(G(!0), R(P, null, q(s.value.photos, (e) => (G(), R("article", {
 			key: e.id,
 			class: "photo-card",
 			onClick: (t) => f(e.id)
-		}, [z("div", _m, [e.thumbnail_url && !u.value.has(e.id) ? (G(), R("img", {
+		}, [z("div", xm, [e.thumbnail_url && !u.value.has(e.id) ? (G(), R("img", {
 			key: 0,
 			src: e.thumbnail_url,
 			alt: e.name,
 			loading: "lazy",
 			onError: (t) => p(e.id)
-		}, null, 40, vm)) : (G(), R("div", ym, [V(n, { name: "image" })]))]), z("div", bm, [z("p", {
+		}, null, 40, Sm)) : (G(), R("div", Cm, [V(n, { name: "image" })]))]), z("div", wm, [z("p", {
 			class: "photo-name",
 			title: e.name
-		}, J(e.name), 9, xm)])], 8, gm))), 128))])) : (G(), I(N, {
+		}, J(e.name), 9, Tm)])], 8, bm))), 128))])) : (G(), I(N, {
 			key: 3,
 			icon: "image",
 			title: "Album Not Found"
@@ -5980,22 +5996,22 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-978fca4d"]]), Cm = { class: "photo-view-page" }, wm = { class: "page-header" }, Tm = { class: "header-content" }, Em = {
+}), [["__scopeId", "data-v-978fca4d"]]), Dm = { class: "photo-view-page" }, Om = { class: "page-header" }, km = { class: "header-content" }, Am = {
 	key: 0,
 	class: "photo-name"
-}, Dm = { class: "header-actions" }, Om = ["href"], km = {
+}, jm = { class: "header-actions" }, Mm = ["href"], Nm = {
 	key: 0,
 	class: "loading-state"
-}, Am = {
+}, Pm = {
 	key: 2,
 	class: "photo-view"
-}, jm = ["src", "alt"], Mm = {
+}, Fm = ["src", "alt"], Im = {
 	key: 1,
 	class: "image-placeholder"
-}, Nm = { class: "metadata-sidebar" }, Pm = { class: "sidebar-section" }, Fm = { class: "metadata-list" }, Im = { class: "metadata-item" }, Lm = { class: "metadata-item" }, Rm = { key: 0 }, zm = { key: 1 }, Bm = {
+}, Lm = { class: "metadata-sidebar" }, Rm = { class: "sidebar-section" }, zm = { class: "metadata-list" }, Bm = { class: "metadata-item" }, Vm = { class: "metadata-item" }, Hm = { key: 0 }, Um = { key: 1 }, Wm = {
 	key: 0,
 	class: "sidebar-section"
-}, Vm = { class: "exif-list" }, Hm = { class: "sidebar-section" }, Um = { class: "nav-info" }, Wm = { key: 0 }, Gm = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, Gm = { class: "exif-list" }, Km = { class: "sidebar-section" }, qm = { class: "nav-info" }, Jm = { key: 0 }, Ym = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "PhotoViewPage",
 	props: { id: {} },
 	setup(e) {
@@ -6005,13 +6021,13 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 		}), s = F(() => {
 			let e = i.query.album_id;
 			return typeof e == "string" && e ? e : null;
-		}), c = K(null), l = K([]), u = K(!1), d = K(null), f = K(!1), p = K(1), m = K(!1), h = F(() => c.value ? l.value.findIndex((e) => e.id === c.value.id) : -1), g = F(() => h.value > 0), _ = F(() => h.value < l.value.length - 1), v = F(() => g.value ? l.value[h.value - 1] : null), y = F(() => _.value ? l.value[h.value + 1] : null), b = F(() => c.value?.exif ? Up(c.value.exif) : []);
+		}), c = K(null), l = K([]), u = K(!1), d = K(null), f = K(!1), p = K(1), m = K(!1), h = F(() => c.value ? l.value.findIndex((e) => e.id === c.value.id) : -1), g = F(() => h.value > 0), _ = F(() => h.value < l.value.length - 1), v = F(() => g.value ? l.value[h.value - 1] : null), y = F(() => _.value ? l.value[h.value + 1] : null), b = F(() => c.value?.exif ? qp(c.value.exif) : []);
 		async function x() {
 			if (t.id) {
 				u.value = !0, d.value = null, f.value = !1;
 				try {
-					if (c.value = await Vp.getPhoto(r.value, t.id), s.value && o.value) {
-						let e = await Vp.getAlbum(r.value, s.value, o.value);
+					if (c.value = await Gp.getPhoto(r.value, t.id), s.value && o.value) {
+						let e = await Gp.getAlbum(r.value, s.value, o.value);
 						l.value = e.photos;
 					} else l.value = [];
 				} catch (e) {
@@ -6060,7 +6076,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			window.removeEventListener("keydown", ee);
 		}), X(() => t.id, () => {
 			x();
-		}), (e, t) => (G(), R("div", Cm, [z("header", wm, [z("div", Tm, [
+		}), (e, t) => (G(), R("div", Dm, [z("header", Om, [z("div", km, [
 			V(A, {
 				variant: "ghost",
 				class: "back-button",
@@ -6069,8 +6085,8 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 				default: Z(() => [V(n, { name: "arrow-left" }), t[0] ||= B(" Back ", -1)]),
 				_: 1
 			}),
-			c.value ? (G(), R("h1", Em, J(c.value.name), 1)) : L("", !0),
-			z("div", Dm, [c.value ? (G(), I(A, {
+			c.value ? (G(), R("h1", Am, J(c.value.name), 1)) : L("", !0),
+			z("div", jm, [c.value ? (G(), I(A, {
 				key: 0,
 				variant: "subtle",
 				title: "Toggle zoom (Z)",
@@ -6091,8 +6107,8 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			}, {
 				default: Z(() => [V(n, { name: "arrow-down" })]),
 				_: 1
-			})], 8, Om)) : L("", !0)])
-		])]), u.value ? (G(), R("div", km, [V(fe, { size: "large" }), t[1] ||= z("p", null, "Loading photo...", -1)])) : d.value ? (G(), I(N, {
+			})], 8, Mm)) : L("", !0)])
+		])]), u.value ? (G(), R("div", Nm, [V(fe, { size: "large" }), t[1] ||= z("p", null, "Loading photo...", -1)])) : d.value ? (G(), I(N, {
 			key: 1,
 			icon: "alert-circle",
 			title: d.value
@@ -6105,7 +6121,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["title"])) : c.value ? (G(), R("div", Am, [z("div", { class: U(["image-container", { zoomed: m.value }]) }, [
+		}, 8, ["title"])) : c.value ? (G(), R("div", Pm, [z("div", { class: U(["image-container", { zoomed: m.value }]) }, [
 			z("div", {
 				class: "image-wrapper",
 				style: en({ transform: `scale(${p.value})` })
@@ -6115,7 +6131,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 				alt: c.value.name,
 				onError: O,
 				onClick: w
-			}, null, 40, jm)) : (G(), R("div", Mm, [V(n, { name: "image" }), t[3] ||= z("p", null, "Failed to load image", -1)]))], 4),
+			}, null, 40, Fm)) : (G(), R("div", Im, [V(n, { name: "image" }), t[3] ||= z("p", null, "Failed to load image", -1)]))], 4),
 			g.value ? (G(), I(A, {
 				key: 0,
 				variant: "ghost",
@@ -6134,10 +6150,10 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 				default: Z(() => [V(n, { name: "chevron-right" })]),
 				_: 1
 			})) : L("", !0)
-		], 2), z("aside", Nm, [
-			z("div", Pm, [t[6] ||= z("h3", { class: "section-title" }, "File Info", -1), z("dl", Fm, [z("div", Im, [t[4] ||= z("dt", null, "Filename", -1), z("dd", null, J(c.value.name), 1)]), z("div", Lm, [t[5] ||= z("dt", null, "Resolution", -1), c.value.exif.width && c.value.exif.height ? (G(), R("dd", Rm, J(c.value.exif.width) + " × " + J(c.value.exif.height), 1)) : (G(), R("dd", zm, "Unknown"))])])]),
-			b.value.length > 0 ? (G(), R("div", Bm, [t[7] ||= z("h3", { class: "section-title" }, "Camera Info", -1), z("ul", Vm, [(G(!0), R(P, null, q(b.value, (e, t) => (G(), R("li", { key: t }, J(e), 1))), 128))])])) : L("", !0),
-			z("div", Hm, [t[9] ||= z("h3", { class: "section-title" }, "Navigation", -1), z("div", Um, [l.value.length > 0 ? (G(), R("p", Wm, " Photo " + J(h.value + 1) + " of " + J(l.value.length), 1)) : L("", !0), t[8] ||= z("div", { class: "nav-hints" }, [
+		], 2), z("aside", Lm, [
+			z("div", Rm, [t[6] ||= z("h3", { class: "section-title" }, "File Info", -1), z("dl", zm, [z("div", Bm, [t[4] ||= z("dt", null, "Filename", -1), z("dd", null, J(c.value.name), 1)]), z("div", Vm, [t[5] ||= z("dt", null, "Resolution", -1), c.value.exif.width && c.value.exif.height ? (G(), R("dd", Hm, J(c.value.exif.width) + " × " + J(c.value.exif.height), 1)) : (G(), R("dd", Um, "Unknown"))])])]),
+			b.value.length > 0 ? (G(), R("div", Wm, [t[7] ||= z("h3", { class: "section-title" }, "Camera Info", -1), z("ul", Gm, [(G(!0), R(P, null, q(b.value, (e, t) => (G(), R("li", { key: t }, J(e), 1))), 128))])])) : L("", !0),
+			z("div", Km, [t[9] ||= z("h3", { class: "section-title" }, "Navigation", -1), z("div", qm, [l.value.length > 0 ? (G(), R("p", Jm, " Photo " + J(h.value + 1) + " of " + J(l.value.length), 1)) : L("", !0), t[8] ||= z("div", { class: "nav-hints" }, [
 				z("kbd", null, "←"),
 				B(" Previous "),
 				z("kbd", null, "→"),
@@ -6162,19 +6178,19 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-4fcd9d94"]]), Km = { class: "photo-slideshow-page" }, qm = {
+}), [["__scopeId", "data-v-4fcd9d94"]]), Xm = { class: "photo-slideshow-page" }, Zm = {
 	key: 0,
 	class: "loading-state"
-}, Jm = {
+}, Qm = {
 	key: 4,
 	class: "slideshow-container"
-}, Ym = ["src", "alt"], Xm = {
+}, $m = ["src", "alt"], eh = {
 	key: 1,
 	class: "slide-placeholder"
-}, Zm = {
+}, th = {
 	key: 2,
 	class: "caption-overlay"
-}, Qm = { class: "slideshow-controls" }, $m = { class: "progress-bar" }, eh = { class: "controls-row" }, th = { class: "slide-counter" }, nh = { class: "main-controls" }, rh = { class: "thumbnail-strip" }, ih = ["onClick"], ah = ["src", "alt"], oh = /*#__PURE__*/ t(/* @__PURE__ */ H({
+}, nh = { class: "slideshow-controls" }, rh = { class: "progress-bar" }, ih = { class: "controls-row" }, ah = { class: "slide-counter" }, oh = { class: "main-controls" }, sh = { class: "thumbnail-strip" }, ch = ["onClick"], lh = ["src", "alt"], uh = /*#__PURE__*/ t(/* @__PURE__ */ H({
 	__name: "PhotoSlideshowPage",
 	setup(e) {
 		let t = D(), r = wn(), i = Q(), a = F(() => {
@@ -6195,7 +6211,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			if (a.value) {
 				l.value = !0, u.value = null, d.value = !1;
 				try {
-					let e = await Vp.getSlideshow(t.value, a.value, {
+					let e = await Gp.getSlideshow(t.value, a.value, {
 						albumId: o.value ?? void 0,
 						interval: s.value
 					});
@@ -6261,7 +6277,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			S(), window.removeEventListener("keydown", k);
 		}), X([a, o], () => {
 			b();
-		}), (e, t) => (G(), R("div", Km, [l.value ? (G(), R("div", qm, [V(fe, { size: "large" }), t[0] ||= z("p", null, "Loading slideshow...", -1)])) : u.value ? (G(), I(N, {
+		}), (e, t) => (G(), R("div", Xm, [l.value ? (G(), R("div", Zm, [V(fe, { size: "large" }), t[0] ||= z("p", null, "Loading slideshow...", -1)])) : u.value ? (G(), I(N, {
 			key: 1,
 			icon: "alert-circle",
 			title: u.value
@@ -6293,7 +6309,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 				_: 1
 			})]),
 			_: 1
-		})) : (G(), R("div", Jm, [z("div", {
+		})) : (G(), R("div", Qm, [z("div", {
 			class: "slideshow-main",
 			onClick: E
 		}, [g.value?.url && !d.value ? (G(), R("img", {
@@ -6302,14 +6318,14 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 			alt: g.value.caption || `Slide ${f.value + 1}`,
 			class: "slide-image",
 			onError: ee
-		}, null, 40, Ym)) : (G(), R("div", Xm, [V(n, { name: "image" }), t[7] ||= z("p", null, "Failed to load image", -1)])), g.value?.caption ? (G(), R("div", Zm, J(g.value.caption), 1)) : L("", !0)]), z("div", Qm, [
-			z("div", $m, [z("div", {
+		}, null, 40, $m)) : (G(), R("div", eh, [V(n, { name: "image" }), t[7] ||= z("p", null, "Failed to load image", -1)])), g.value?.caption ? (G(), R("div", th, J(g.value.caption), 1)) : L("", !0)]), z("div", nh, [
+			z("div", rh, [z("div", {
 				class: "progress-fill",
 				style: en({ width: `${y.value}%` })
 			}, null, 4)]),
-			z("div", eh, [
-				z("div", th, J(f.value + 1) + " / " + J(c.value.length), 1),
-				z("div", nh, [
+			z("div", ih, [
+				z("div", ah, J(f.value + 1) + " / " + J(c.value.length), 1),
+				z("div", oh, [
 					V(A, {
 						variant: "ghost",
 						title: _.value ? "Previous (←)" : "",
@@ -6346,7 +6362,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 					_: 1
 				})
 			]),
-			z("div", rh, [(G(!0), R(P, null, q(c.value, (e, t) => (G(), R("div", {
+			z("div", sh, [(G(!0), R(P, null, q(c.value, (e, t) => (G(), R("div", {
 				key: e.id,
 				class: U(["thumbnail", { active: t === f.value }]),
 				onClick: _n((e) => f.value = t, ["stop"])
@@ -6354,7 +6370,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 				src: e.thumbnail_url,
 				alt: `Thumbnail ${t + 1}`,
 				loading: "lazy"
-			}, null, 8, ah)], 10, ih))), 128))])
+			}, null, 8, lh)], 10, ch))), 128))])
 		])])) : (G(), I(N, {
 			key: 2,
 			icon: "image",
@@ -6373,7 +6389,7 @@ var Wp = { class: "photo-albums-page" }, Gp = { class: "page-header" }, Kp = { c
 }), [["__scopeId", "data-v-ff006b40"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
-function sh(e, t) {
+function dh(e, t) {
 	let n = Ge(), r = !1;
 	n.setLibraryId(void 0), n.applyQuery(e.currentRoute.value.query), n.fetchMedia(t);
 	let i = X(() => JSON.stringify(n.toQuery()), () => {
@@ -6389,52 +6405,52 @@ function sh(e, t) {
 }
 //#endregion
 //#region src/composables/spatial-nav.ts
-function ch(e) {
+function fh(e) {
 	return {
 		x: (e.left + e.right) / 2,
 		y: (e.top + e.bottom) / 2
 	};
 }
-var lh = .5, uh = 2, dh = 1e6;
-function fh(e, t, n, r) {
+var ph = .5, mh = 2, hh = 1e6;
+function gh(e, t, n, r) {
 	return e < r && n < t;
 }
-function ph(e, t, n) {
-	let r = ch(e), i = null, a = Infinity;
+function _h(e, t, n) {
+	let r = fh(e), i = null, a = Infinity;
 	for (let o of n) {
-		let n = ch(o.rect), s, c, l;
+		let n = fh(o.rect), s, c, l;
 		switch (t) {
 			case "right":
-				if (n.x <= r.x + lh) continue;
-				s = n.x - r.x, c = Math.abs(n.y - r.y), l = fh(e.top, e.bottom, o.rect.top, o.rect.bottom);
+				if (n.x <= r.x + ph) continue;
+				s = n.x - r.x, c = Math.abs(n.y - r.y), l = gh(e.top, e.bottom, o.rect.top, o.rect.bottom);
 				break;
 			case "left":
-				if (n.x >= r.x - lh) continue;
-				s = r.x - n.x, c = Math.abs(n.y - r.y), l = fh(e.top, e.bottom, o.rect.top, o.rect.bottom);
+				if (n.x >= r.x - ph) continue;
+				s = r.x - n.x, c = Math.abs(n.y - r.y), l = gh(e.top, e.bottom, o.rect.top, o.rect.bottom);
 				break;
 			case "down":
-				if (n.y <= r.y + lh) continue;
-				s = n.y - r.y, c = Math.abs(n.x - r.x), l = fh(e.left, e.right, o.rect.left, o.rect.right);
+				if (n.y <= r.y + ph) continue;
+				s = n.y - r.y, c = Math.abs(n.x - r.x), l = gh(e.left, e.right, o.rect.left, o.rect.right);
 				break;
 			case "up":
-				if (n.y >= r.y - lh) continue;
-				s = r.y - n.y, c = Math.abs(n.x - r.x), l = fh(e.left, e.right, o.rect.left, o.rect.right);
+				if (n.y >= r.y - ph) continue;
+				s = r.y - n.y, c = Math.abs(n.x - r.x), l = gh(e.left, e.right, o.rect.left, o.rect.right);
 				break;
 		}
-		let u = s + uh * c;
-		l && (u -= dh), (u < a || u === a && (i === null || o.id < i.id)) && (a = u, i = o);
+		let u = s + mh * c;
+		l && (u -= hh), (u < a || u === a && (i === null || o.id < i.id)) && (a = u, i = o);
 	}
 	return i;
 }
 //#endregion
 //#region src/composables/useSpatialNav.ts
-var mh = {
+var vh = {
 	up: ["ArrowUp"],
 	down: ["ArrowDown"],
 	left: ["ArrowLeft"],
 	right: ["ArrowRight"]
 };
-function hh(e) {
+function yh(e) {
 	return {
 		left: e.left,
 		top: e.top,
@@ -6442,10 +6458,10 @@ function hh(e) {
 		bottom: e.bottom
 	};
 }
-function gh(e) {
+function bh(e) {
 	return e.width <= 0 && e.height <= 0;
 }
-function _h() {
+function xh() {
 	let e = Array.from(zr), t = (e) => {
 		let t = e.getAttribute("data-focus-order");
 		if (t === null || t === "") return Infinity;
@@ -6458,20 +6474,20 @@ function _h() {
 		order: t(e)
 	})).sort((e, t) => e.order - t.order || e.i - t.i).map((e) => e.el);
 }
-function vh(e = {}) {
+function Sh(e = {}) {
 	let t = {
-		...mh,
+		...vh,
 		...e.keymap
 	};
 	function n() {
 		let e = [], t = /* @__PURE__ */ new Map(), n = 0;
 		for (let r of zr) {
 			let i = r.getBoundingClientRect();
-			if (gh(i)) continue;
+			if (bh(i)) continue;
 			let a = String(n++);
 			e.push({
 				id: a,
-				rect: hh(i)
+				rect: yh(i)
 			}), t.set(a, r);
 		}
 		return {
@@ -6483,7 +6499,7 @@ function vh(e = {}) {
 		let n = typeof document < "u" ? document.activeElement : null;
 		if (n && zr.has(n)) {
 			let e = n.getBoundingClientRect();
-			if (!gh(e)) return hh(e);
+			if (!bh(e)) return yh(e);
 		}
 		let r = t[0];
 		return r && e.has(r.id) ? r.rect : null;
@@ -6493,7 +6509,7 @@ function vh(e = {}) {
 		if (i.length === 0) return e.onEdge?.(t), !1;
 		let o = r(a, i);
 		if (!o) return e.onEdge?.(t), !1;
-		let s = typeof document < "u" ? document.activeElement : null, c = ph(o, t, s ? i.filter((e) => a.get(e.id) !== s) : i);
+		let s = typeof document < "u" ? document.activeElement : null, c = _h(o, t, s ? i.filter((e) => a.get(e.id) !== s) : i);
 		return c ? (a.get(c.id)?.focus(), !0) : (e.onEdge?.(t), !1);
 	}
 	function a(e) {
@@ -6521,7 +6537,7 @@ function vh(e = {}) {
 		}
 	}
 	function c() {
-		_h()[0]?.focus();
+		xh()[0]?.focus();
 	}
 	return W(() => {
 		typeof document < "u" && document.addEventListener("keydown", o);
@@ -6536,7 +6552,7 @@ function vh(e = {}) {
 }
 //#endregion
 //#region src/composables/useOnline.ts
-function yh() {
+function Ch() {
 	let e = () => typeof navigator > "u" || navigator.onLine, t = K(e()), n = () => {
 		t.value = e();
 	};
@@ -6546,8 +6562,8 @@ function yh() {
 }
 //#endregion
 //#region src/index.ts
-var bh = Zt(() => import("./MediaDetail-BwGpwfbP.js").then((e) => e.n)), xh = Zt(() => import("./MetadataMatchModal-D0v9g5dI.js").then((e) => e.n)), Sh = Zt(() => import("./FilterBar-CLV6bVnm.js").then((e) => e.n));
+var wh = Zt(() => import("./MediaDetail-BwGpwfbP.js").then((e) => e.n)), Th = Zt(() => import("./MetadataMatchModal-D0v9g5dI.js").then((e) => e.n)), Eh = Zt(() => import("./FilterBar-CLV6bVnm.js").then((e) => e.n));
 //#endregion
-export { ot as ALL_LOGS, Kc as AcceptInvitePage, bt as AdminBackupApi, xt as AdminCastApi, Tt as AdminCollectionsApi, st as AdminDashboardApi, St as AdminDlnaServerApi, Et as AdminHistoryApi, Lt as AdminHubDashboardApi, yt as AdminIntegrationsApi, kt as AdminLibrariesApi, wt as AdminLiveTvApi, at as AdminLogsApi, it as AdminMetadataSourcesApi, It as AdminPluginsApi, Ct as AdminRemoteAccessApi, vt as AdminServicesApi, At as AdminSettingsApi, Dt as AdminSyncPlayApi, mt as AdminUsersApi, _t as AdminWebhooksApi, T as ApiClient, E as ApiError, e as AppBackdrop, Bn as AppLayout, op as AudiobookDetailPage, Bp as AudiobookPlayerPage, Af as AudiobooksPage, j as Badge, tf as BookDetailPage, hf as BookReaderPage, Pd as BooksPage, A as Button, Pe as CONNECTION_API_BASE_KEY, Ae as CONNECTION_CONFIRMED_ORIGIN_KEY, Ur as CURRENT_SERVER_ID_KEY, Wr as CURRENT_SERVER_NAME_KEY, He as Chip, We as Combobox, l as DEFAULT_CAPTION_STYLE, d as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, ut as DEFAULT_THROTTLE_BPS, N as EmptyState, Zo as FederationPage, bs as FederationSharesPage, Sh as FilterBar, $i as HelpPopover, Xe as HelpText, n as Icon, r as IconButton, Vc as InviteLinksPage, _e as Kbd, Ot as LIBRARY_TYPES, da as LibraryScanPage, y as LocalStorageTokenStore, Rt as LoginForm, x as MUSIC_PAGE_SIZE, As as ManageSharesPage, Qe as MediaCard, bh as MediaDetail, $e as MediaGrid, Te as MediaHomeRow, et as MediaRow, Ye as Menu, xh as MetadataMatchModal, Ke as Modal, _l as MusicAlbumPage, iu as MusicArtistPage, Il as MusicArtistsPage, bd as MusicPlayerPage, Uu as MusicTracksPage, Aa as MyServersPage, g as NetworkError, Pt as PLUGIN_SECRET_MASK, qe as PageHint, qi as PageTransition, Fr as PhlixApp, Sm as PhotoAlbumPage, sm as PhotoAlbumsPage, oh as PhotoSlideshowPage, Gm as PhotoViewPage, ft as RATING_LABELS, lt as RATING_MAX, ct as RATING_OPTIONS, ie as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, gc as RequestsPage, Ki as Reveal, jt as SETTINGS_SECRET_MASK, ye as SORT_TITLE_ARTICLES, ht as SUBSCRIBABLE_EVENTS, Xc as SearchPage, Vt as SecuritySettingsPage, Ue as Select, Ro as ServerDetailPage, Ws as SharedWithMePage, An as Sheet, zt as SignupForm, M as Skeleton, Be as Slider, rt as SourcePriorityEditor, fe as Spinner, Ve as Switch, dt as THROTTLE_BPS_LEVELS, pt as THROTTLE_BPS_OPTIONS, w as TMDB_UNCONFIGURED_CODE, Je as Tabs, se as ThumbRating, _ as TimeoutError, Gi as ToastHost, de as Tooltip, gt as WEBHOOK_EVENT_CATEGORIES, Oi as adminMenu, br as applyStoredThemeEarly, ph as bestCandidate, sh as bindMediaStoreToRouter, Ti as buildAdminRoutes, Di as buildHubAdminRoutes, nt as buildMediaQuery, tt as buildMediaUrl, Ei as buildServerAdminRoutes, bi as commonAdminPages, ve as compareByStrippedTitle, Li as createPhlixApp, f as createTranslator, _r as deriveAccentVars, C as errMessage, be as fetchLibraries, Vr as focusable, zr as focusableRegistry, ze as formatPageTitle, he as fuzzyScore, m as getDefaultApiHeaders, c as hasStoredPreferences, Si as hubAdminPages, Hr as installFocusable, Me as isAllowedBase, b as isOffline, Oe as isPlaintextPublic, Ee as isPrivateHost, S as isTmdbUnconfigured, ge as matchCommand, u as mergeMessages, je as normalizeBase, Ne as originOf, Ft as pluginErrorCode, Nt as pluginValidationErrors, De as probeServer, o as readStoredPreferences, ch as rectCenter, xi as serverAdminPages, Le as setAppName, h as setDefaultApiHeaders, Re as setPageTitle, Se as sortLibraries, xe as stripLeadingArticle, ee as useApiBase, k as useAuthStore, Sr as useCommandPaletteHotkey, me as useCommandStore, ke as useConnectionStore, i as useFocusTrap, Ce as useLibrariesStore, D as useMediaApiBase, Ge as useMediaStore, p as useMessages, yh as useOnline, Ie as usePageTitle, te as usePlayerStore, Dr as usePreconnect, a as usePreferencesStore, Ze as usePrefetch, jr as useResumeReporter, we as useResumeSync, Jr as useServerStore, Mt as useSettingsPrefsStore, vh as useSpatialNav, xr as useTheme, ae as useToastStore, oe as useUserItemDataStore, Fe as withScheme };
+export { ot as ALL_LOGS, Xc as AcceptInvitePage, bt as AdminBackupApi, xt as AdminCastApi, Tt as AdminCollectionsApi, st as AdminDashboardApi, St as AdminDlnaServerApi, Et as AdminHistoryApi, Lt as AdminHubDashboardApi, yt as AdminIntegrationsApi, kt as AdminLibrariesApi, wt as AdminLiveTvApi, at as AdminLogsApi, it as AdminMetadataSourcesApi, It as AdminPluginsApi, Ct as AdminRemoteAccessApi, vt as AdminServicesApi, At as AdminSettingsApi, Dt as AdminSyncPlayApi, mt as AdminUsersApi, _t as AdminWebhooksApi, T as ApiClient, E as ApiError, e as AppBackdrop, Bn as AppLayout, up as AudiobookDetailPage, Wp as AudiobookPlayerPage, Pf as AudiobooksPage, j as Badge, of as BookDetailPage, yf as BookReaderPage, Rd as BooksPage, A as Button, Pe as CONNECTION_API_BASE_KEY, Ae as CONNECTION_CONFIRMED_ORIGIN_KEY, Ur as CURRENT_SERVER_ID_KEY, Wr as CURRENT_SERVER_NAME_KEY, He as Chip, We as Combobox, l as DEFAULT_CAPTION_STYLE, d as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, ut as DEFAULT_THROTTLE_BPS, N as EmptyState, ts as FederationPage, ws as FederationSharesPage, Eh as FilterBar, ra as HelpPopover, Xe as HelpText, n as Icon, r as IconButton, Gc as InviteLinksPage, _e as Kbd, Ot as LIBRARY_TYPES, ha as LibraryScanPage, y as LocalStorageTokenStore, Rt as LoginForm, x as MUSIC_PAGE_SIZE, Ps as ManageSharesPage, Qe as MediaCard, wh as MediaDetail, $e as MediaGrid, Te as MediaHomeRow, et as MediaRow, Ye as Menu, Th as MetadataMatchModal, Ke as Modal, xl as MusicAlbumPage, cu as MusicArtistPage, Bl as MusicArtistsPage, wd as MusicPlayerPage, qu as MusicTracksPage, Pa as MyServersPage, g as NetworkError, Pt as PLUGIN_SECRET_MASK, qe as PageHint, Zi as PageTransition, Fr as PhlixApp, Em as PhotoAlbumPage, dm as PhotoAlbumsPage, uh as PhotoSlideshowPage, Ym as PhotoViewPage, ft as RATING_LABELS, lt as RATING_MAX, ct as RATING_OPTIONS, ie as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, bc as RequestsPage, Xi as Reveal, jt as SETTINGS_SECRET_MASK, ye as SORT_TITLE_ARTICLES, ht as SUBSCRIBABLE_EVENTS, el as SearchPage, Vt as SecuritySettingsPage, Ue as Select, Ho as ServerDetailPage, Js as SharedWithMePage, An as Sheet, zt as SignupForm, M as Skeleton, Be as Slider, rt as SourcePriorityEditor, fe as Spinner, Ve as Switch, dt as THROTTLE_BPS_LEVELS, pt as THROTTLE_BPS_OPTIONS, w as TMDB_UNCONFIGURED_CODE, Je as Tabs, se as ThumbRating, _ as TimeoutError, Yi as ToastHost, de as Tooltip, gt as WEBHOOK_EVENT_CATEGORIES, Oi as adminMenu, br as applyStoredThemeEarly, _h as bestCandidate, dh as bindMediaStoreToRouter, Ti as buildAdminRoutes, Di as buildHubAdminRoutes, nt as buildMediaQuery, tt as buildMediaUrl, Ei as buildServerAdminRoutes, bi as commonAdminPages, ve as compareByStrippedTitle, Vi as createPhlixApp, f as createTranslator, _r as deriveAccentVars, C as errMessage, be as fetchLibraries, Vr as focusable, zr as focusableRegistry, ze as formatPageTitle, he as fuzzyScore, m as getDefaultApiHeaders, c as hasStoredPreferences, Si as hubAdminPages, Hr as installFocusable, Me as isAllowedBase, b as isOffline, Oe as isPlaintextPublic, Ee as isPrivateHost, S as isTmdbUnconfigured, ge as matchCommand, u as mergeMessages, je as normalizeBase, Ne as originOf, Ft as pluginErrorCode, Nt as pluginValidationErrors, De as probeServer, o as readStoredPreferences, fh as rectCenter, xi as serverAdminPages, Le as setAppName, h as setDefaultApiHeaders, Re as setPageTitle, Se as sortLibraries, xe as stripLeadingArticle, ee as useApiBase, k as useAuthStore, Sr as useCommandPaletteHotkey, me as useCommandStore, ke as useConnectionStore, i as useFocusTrap, Ce as useLibrariesStore, D as useMediaApiBase, Ge as useMediaStore, p as useMessages, Ch as useOnline, Ie as usePageTitle, te as usePlayerStore, Dr as usePreconnect, a as usePreferencesStore, Ze as usePrefetch, jr as useResumeReporter, we as useResumeSync, Jr as useServerStore, Mt as useSettingsPrefsStore, Sh as useSpatialNav, xr as useTheme, ae as useToastStore, oe as useUserItemDataStore, Fe as withScheme };
 
 //# sourceMappingURL=phlix-ui.js.map

@@ -1,3 +1,12 @@
+## 0.98.33 - 2026-07-27
+
+### Fixed
+- **A music library's `/app/library/{id}` no longer renders the generic grid — it goes to `/app/music` (plan_updates.md — S97).** The generic library grid was the wrong surface for music: it rendered a flat dump of `artist` + `album` + `track` rows sorted by a `metadata_json` path that is **NULL on every one of them**, because the music hierarchy lives in the server's `music_*` tables and not in `media_items`. S97 settled that those tables are authoritative (`media_items.parent_id` is never written for music), which makes `/app/music` — the paged UI shipped in 0.98.32 — the only surface that reads the real hierarchy. Sending music libraries there was chosen over teaching the library grid to list artists precisely because the alternative would leave **two music browse surfaces to keep in sync**, which is the duplication S97 exists to remove.
+
+  The redirect is a `router.beforeEach` gate, not an in-page bounce, so `LibraryPage` never mounts for a music library and the wrong grid is never painted. It runs **after** the auth decision, so it can never bypass a login bounce or a `requiresAdmin` denial — an unauthenticated deep link still lands on login with the original `/app/library/{id}` preserved. Because a library's `type` is not known synchronously on a deep link, the gate awaits the (idempotent, in-flight-deduped) libraries store: **one** round trip per session on the success path, and every failure path — no id, failed load, unknown library, no registered music route — falls through to the existing generic grid rather than to a blank page. Loop safety is explicit rather than incidental: the redirect returns `null` both for its own destination and for any route that is not `library`.
+
+  Scoping note: there is exactly **one** music library on the reference deployment, so redirecting to the global `/app/music` loses no scoping today; per-library music scoping is deliberately not built, and the code says so rather than claiming a second library is impossible.
+
 ## 0.98.32 - 2026-07-25
 
 ### Fixed
