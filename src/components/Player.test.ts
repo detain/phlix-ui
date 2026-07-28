@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { mount, flushPromises } from '@vue/test-utils';
+import { nextTick, reactive } from 'vue';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -168,7 +168,7 @@ function mountPlayer(
     prevEpisode: MediaItem | null;
     nextEpisode: MediaItem | null;
     autoplay: boolean;
-    playbackAudioTracks: Array<{ index: number; streamIndex: number; language: string; label: string; default: boolean }>;
+    playbackAudioTracks: Array<{ index: number; streamIndex: number; language: string; label: string; default: boolean; codec?: string }>;
     playbackSubtitleTracks: Array<{ index: number; language: string; label: string; default: boolean; url: string }>;
     apiBase: string;
     markers: Array<{ id: string; type: 'intro' | 'outro' | 'credits' | 'ad'; startMs: number; endMs: number; label: string }>;
@@ -1869,6 +1869,334 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     await nextTick();
     await w.find('.transcode__back').trigger('click');
     expect(w.emitted('back')).toHaveLength(1);
+  });
+
+  // ---- the HEVC capability guard reads the item's REAL video codec -------------
+  // jsdom has no navigator.mediaCapabilities and its canPlayType() returns '', so
+  // this environment IS a "browser that cannot decode HEVC" — exactly the Chromium/
+  // Linux case measured live. Playback-info carries no video stream info, so the
+  // codec comes from the media DETAIL response's `streams[]` (stream_type 'video').
+  /** One playback-info audio track, codec-less like the real parser's output when
+   *  the server sends no codec — so the AUDIO probe is skipped and the assertions
+   *  isolate the HEVC/video-codec branch. */
+  const infoAudio = [{ index: 0, streamIndex: 1, language: 'eng', label: 'English', default: true }];
+
+  /**
+   * Applies Chrome 150's MEASURED `canPlayType` to jsdom's `<video>` prototype.
+   * Needed by any assertion that has to tell a REAL container MIME from a bogus
+   * one: jsdom's own implementation answers `''` for absolutely everything, so
+   * `video/mp4` and `video/m4v` look identical to it and a `.m4v` regression could
+   * not be detected. Decodable pairs below are the probed cross product; the
+   * global afterEach's `vi.restoreAllMocks()` puts jsdom's version back.
+   */
+  function stubMeasuredCanPlayType(): void {
+    const decodable: Record<string, ReadonlySet<string>> = {
+      'video/mp4': new Set(['mp4a.40.2', 'opus', 'flac', 'av01.0.08M.08', 'av01.0.05M.08', 'vp09.00.10.08']),
+      'video/webm': new Set(['opus', 'vorbis', 'av01.0.08M.08', 'av01.0.05M.08', 'vp09.00.10.08', 'vp9', 'vp8']),
+      'video/ogg': new Set(['opus', 'vorbis', 'flac', 'vp8']),
+    };
+    vi.spyOn(window.HTMLMediaElement.prototype, 'canPlayType').mockImplementation((mime: string) => {
+      const parsed = /^\s*([^;]+?)\s*(?:;\s*codecs="([^"]*)")?\s*$/.exec(mime);
+      if (!parsed) return '';
+      const set = decodable[parsed[1].toLowerCase()];
+      if (!set) return ''; // video/m4v, video/mov, video/ogv, video/quicktime, …
+      if (parsed[2] === undefined) return 'maybe';
+      return set.has(parsed[2]) ? 'probably' : '';
+    });
+  }
+
+  /** An mp4 item whose video stream is `codec`, plus one AAC audio stream. */
+  function mp4With(codec: string): MediaItem {
+    return media({
+      path: '/lib/movie.mp4',
+      streams: [
+        { stream_index: '0', stream_type: 'video', codec, width: '1920', height: '1080' },
+        { stream_index: '1', stream_type: 'audio', codec: 'aac' },
+      ],
+    });
+  }
+
+  it('keeps direct play for an H.264 mp4 when playback-info arrives (no HEVC in the file)', async () => {
+    const { w } = mountPlayer({ media: mp4With('h264'), streamUrl: 'http://x/movie.mp4' });
+    // playback-info resolves AFTER mount — this is what triggers the codec probe.
+    await w.setProps({ playbackAudioTracks: infoAudio });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(false);      // no "Preparing your stream…"
+    expect(tc().start).not.toHaveBeenCalled();          // no transcode job
+    expect(w.find('video').attributes('src')).toBe('http://x/movie.mp4');
+  });
+
+  it('flips to the transcode path for an HEVC mp4 the browser cannot decode', async () => {
+    const { w } = mountPlayer({ media: mp4With('hevc'), streamUrl: 'http://x/movie.mp4' });
+    await w.setProps({ playbackAudioTracks: infoAudio });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(true);
+    // …and the job is actually STARTED. Flipping the flag without starting the
+    // transcode parks the viewer on the "preparing" overlay forever, because the
+    // synchronous starts in onMounted / evaluateForCurrentMedia have already run by
+    // the time this async probe resolves.
+    expect(tc().start).toHaveBeenCalled();
+  });
+
+  it('flips to the transcode path for an mp4 whose codec is undecodable but NOT HEVC', async () => {
+    // MPEG-4 Part 2 in an mp4 (1 such item on prod): Chromium plays the audio and
+    // renders nothing, with no `error` event — an HEVC-only guard let it through.
+    const { w } = mountPlayer({ media: mp4With('mpeg4'), streamUrl: 'http://x/movie.mp4' });
+    await w.setProps({ playbackAudioTracks: infoAudio });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(true);
+    expect(tc().start).toHaveBeenCalled();
+  });
+
+  it('keeps direct play for an H.264 .m4v (the container MIME must not be video/m4v)', async () => {
+    // 112 of prod's 117 `.m4v` items are plain h264.
+    stubMeasuredCanPlayType(); // AAC decodes under video/mp4, nothing under video/m4v
+    const item = media({
+      path: '/lib/movie.m4v',
+      streams: [
+        { stream_index: '0', stream_type: 'video', codec: 'h264' },
+        { stream_index: '1', stream_type: 'audio', codec: 'aac' },
+      ],
+    });
+    const { w } = mountPlayer({ media: item, streamUrl: 'http://x/movie.m4v' });
+    await w.setProps({
+      playbackAudioTracks: [
+        { index: 0, streamIndex: 1, language: 'eng', label: 'English', default: true, codec: 'aac' },
+      ],
+    });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(false);
+    expect(tc().start).not.toHaveBeenCalled();
+  });
+
+  it('keeps direct play when the item carries no stream rows (codec unknown)', async () => {
+    // Unknown codec must NOT force a transcode: that was the original regression.
+    // NOT because anything downstream would rescue a bad source — measured, an
+    // undecodable video stream with a decodable audio stream fires no `error`
+    // event at all, so `onVideoError` never runs.
+    const { w } = mountPlayer({ media: media({ path: '/lib/movie.mp4' }), streamUrl: 'http://x/movie.mp4' });
+    await w.setProps({ playbackAudioTracks: infoAudio });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(false);
+    expect(tc().start).not.toHaveBeenCalled();
+  });
+
+  // ---- the probe must actually RUN, on whatever data has arrived --------------
+
+  it('runs the capability probe on MOUNT when playback-info won the race', async () => {
+    // PlayerPage dispatches the item and playback-info requests concurrently, so
+    // `playbackAudioTracks` is often already populated when <Player> mounts. A
+    // non-immediate watch never fires in that ordering and the guard never runs.
+    const { w } = mountPlayer({
+      media: mp4With('hevc'),
+      streamUrl: 'http://x/movie.mp4',
+      playbackAudioTracks: infoAudio,
+    });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(true);
+    expect(tc().start).toHaveBeenCalled();
+  });
+
+  it('runs the capability probe on MOUNT with no playback-info at all', async () => {
+    // The video decision needs only the detail response's `streams[]`, so it must
+    // not wait on playback-info — which may be slow, or fail outright.
+    const { w } = mountPlayer({ media: mp4With('hevc'), streamUrl: 'http://x/movie.mp4' });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(true);
+    expect(tc().start).toHaveBeenCalled();
+  });
+
+  it('re-evaluates when the stream rows arrive LATE on the same item', async () => {
+    // `playback-info` runs StreamProbeBackfill::ensureFor(), which ffprobes and
+    // WRITES the media_streams rows, while the concurrently dispatched detail
+    // request reads them as they stand — so `streams: []` can arrive alongside a
+    // populated `audio_tracks`, and the codec only becomes known later. Deciding
+    // once on the empty array would leave an HEVC file black-screening.
+    const item = reactive(media({ path: '/lib/movie.mp4', streams: [] })) as MediaItem;
+    const { w } = mountPlayer({ media: item, streamUrl: 'http://x/movie.mp4', playbackAudioTracks: infoAudio });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(false); // unknown codec → direct play so far
+
+    item.streams = [{ stream_index: '0', stream_type: 'video', codec: 'hevc' }];
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(true);
+    expect(tc().start).toHaveBeenCalled();
+  });
+
+  it('re-evaluates when a LATER item object carries the stream rows', async () => {
+    // The stale-while-revalidate path: PlayerPage mounts the cached item, then
+    // replaces it with the freshly fetched one (`applyItem` assigns `item.value`).
+    const { w } = mountPlayer({
+      media: media({ path: '/lib/movie.mp4' }),
+      streamUrl: 'http://x/movie.mp4',
+      playbackAudioTracks: infoAudio,
+    });
+    await flushPromises();
+    await nextTick();
+    expect(tc().start).not.toHaveBeenCalled();
+
+    await w.setProps({ media: mp4With('hevc') });
+    await flushPromises();
+    await nextTick();
+    expect(w.find('.prep').exists()).toBe(true);
+    expect(tc().start).toHaveBeenCalled();
+  });
+
+  it('still forces a transcode for undecodable audio (E-AC-3 / AC-3 / DTS)', async () => {
+    // Under the MEASURED browser — so this is a real veto, not jsdom saying no to
+    // everything. The control case first: the same mount with AAC direct-plays.
+    stubMeasuredCanPlayType();
+    const aac = [{ index: 0, streamIndex: 1, language: 'eng', label: 'English', default: true, codec: 'aac' }];
+    const control = mountPlayer({ media: mp4With('h264'), streamUrl: 'http://x/movie.mp4' });
+    await control.w.setProps({ playbackAudioTracks: aac });
+    await flushPromises();
+    await nextTick();
+    expect(control.w.find('.prep').exists()).toBe(false);
+    expect(tc().start).not.toHaveBeenCalled();
+
+    for (const codec of ['eac3', 'ac3', 'dts']) {
+      const { w } = mountPlayer({ media: mp4With('h264'), streamUrl: 'http://x/movie.mp4' });
+      await w.setProps({
+        playbackAudioTracks: [
+          { index: 0, streamIndex: 1, language: 'eng', label: 'English', default: true, codec },
+        ],
+      });
+      await flushPromises();
+      await nextTick();
+      expect(w.find('.prep').exists()).toBe(true);
+      expect(tc().start).toHaveBeenCalled();
+      tc().start.mockClear();
+    }
+  });
+
+  // ---- the transcode job must start EXACTLY ONCE ------------------------------
+  //
+  // Two guards in `evaluateTranscodeWithCapabilities` hold that line:
+  //
+  //   (A) `if (token !== capabilityProbeToken) return;`   — a superseded probe never
+  //       applies its verdict to the source that replaced the one it measured.
+  //   (B) `|| transcodeNeeded.value` in the post-await re-check — something else may
+  //       have flipped the flag AND started the job while we were awaiting.
+  //
+  // Under a plain item change each guard MASKS the other (remove either alone and the
+  // suite stays green; remove both and `tc.start` fires twice), so a test that only
+  // swaps the item cannot pin either one. Both tests below therefore hold a capability
+  // probe IN FLIGHT across another state change, which means owning when
+  // `decodingInfo` resolves. Every other transcode assertion in this file is
+  // `toHaveBeenCalled()`, which a double start satisfies — hence the COUNTS here.
+
+  /** A `navigator.mediaCapabilities` whose `decodingInfo` never settles by itself:
+   *  the test resolves the queued calls by hand, so a probe can be suspended across a
+   *  prop change or a `<video>` error. `language` is stubbed because Player reads
+   *  `navigator.language` for the subtitle-language preference; `mediaSession` is
+   *  deliberately ABSENT so `bindMediaSession` no-ops (it guards on `in navigator`). */
+  function deferredMediaCapabilities(): {
+    pending: () => number;
+    settle: (supported: boolean) => Promise<void>;
+  } {
+    const resolvers: Array<(value: { supported: boolean }) => void> = [];
+    const decodingInfo = vi.fn(
+      () =>
+        new Promise<{ supported: boolean }>((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+    vi.stubGlobal('navigator', { language: 'en-US', mediaCapabilities: { decodingInfo } });
+    return {
+      pending: () => resolvers.length,
+      settle: async (supported: boolean) => {
+        for (const resolve of resolvers.splice(0)) resolve({ supported });
+        await flushPromises();
+        await nextTick();
+      },
+    };
+  }
+
+  it('does not start a transcode when a STALE probe verdict lands after the item changed (guard A)', async () => {
+    const mc = deferredMediaCapabilities();
+    // HEVC → policy `probe` → exactly one decodingInfo call, held in flight.
+    const { w } = mountPlayer({
+      media: mp4With('hevc'),
+      streamUrl: 'http://x/movie.mp4',
+      playbackAudioTracks: infoAudio,
+    });
+    await nextTick();
+    expect(mc.pending()).toBe(1);
+
+    // The item is replaced by a plain H.264 mp4 while that probe is still open. h264
+    // is on the direct-play allowlist, so its own evaluation needs no probe at all.
+    await w.setProps({ media: mp4With('h264') });
+    await flushPromises();
+    await nextTick();
+
+    // Only now does the HEVC probe answer "cannot decode" — a true verdict, but about
+    // the PREVIOUS source. Applying it would transcode a plain H.264 file, i.e. exactly
+    // the bug this branch fixes, arrived at from the other direction.
+    await mc.settle(false);
+
+    expect(tc().start).not.toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(false);
+    expect(w.find('video').attributes('src')).toBe('http://x/movie.mp4');
+  });
+
+  it('does not start a SECOND transcode when a fatal <video> error beats the probe to it (guard B)', async () => {
+    const mc = deferredMediaCapabilities();
+    const { w, video } = mountPlayer({
+      media: mp4With('hevc'),
+      streamUrl: 'http://x/movie.mp4',
+      playbackAudioTracks: infoAudio,
+    });
+    await nextTick();
+    expect(mc.pending()).toBe(1); // the HEVC probe is open
+
+    // A fatal decode error on the direct source gets there first: `onVideoError`
+    // flips `transcodeNeeded` and starts the job. It does NOT bump the probe token,
+    // so guard A cannot help here — only the post-await `transcodeNeeded` re-check can.
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 3 }) });
+    video.dispatchEvent(new Event('error'));
+    await nextTick();
+    expect(tc().start).toHaveBeenCalledTimes(1);
+
+    // The probe now returns the same verdict that has already been acted on.
+    await mc.settle(false);
+
+    expect(tc().start).toHaveBeenCalledTimes(1);
+    expect(w.find('.prep').exists()).toBe(true);
+  });
+
+  it('starts the transcode exactly once across mount + late streams[] + an item change', async () => {
+    const item = reactive(media({ path: '/lib/movie.mp4', streams: [] })) as MediaItem;
+    const { w } = mountPlayer({
+      media: item,
+      streamUrl: 'http://x/movie.mp4',
+      playbackAudioTracks: infoAudio,
+    });
+    await flushPromises();
+    await nextTick();
+    expect(tc().start).not.toHaveBeenCalled(); // unknown codec → direct play
+
+    // The rows land late and say HEVC: ONE job, not one per watcher that fired.
+    item.streams = [{ stream_index: '0', stream_type: 'video', codec: 'hevc' }];
+    await flushPromises();
+    await nextTick();
+    expect(tc().start).toHaveBeenCalledTimes(1);
+
+    // A replacement item that does NOT need transcoding must not add a second start —
+    // the capability watch and the `props.media` watch both fire in this flush.
+    await w.setProps({ media: mp4With('h264') });
+    await flushPromises();
+    await nextTick();
+    expect(tc().start).toHaveBeenCalledTimes(1);
+    expect(w.find('.prep').exists()).toBe(false);
   });
 });
 
