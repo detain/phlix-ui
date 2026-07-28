@@ -301,7 +301,7 @@ export async function attachHls(
       // time-to-first-byte equals its encode time. hls.js's stock 10s TTFB budget
       // abandons any segment that's merely slow under load and re-requests it,
       // which (before the server-side dedup/cap) piled on duplicate encodes and
-      // cascaded into the "can't prepare a playable version" overlay. Give segments
+      // cascaded into the "can't start playback right now" overlay. Give segments
       // a generous first-byte budget so a legitimately slow encode completes instead
       // of being abandoned. Retry counts match hls.js defaults. Consumers can still
       // override via opts.hlsConfig (spread below).
