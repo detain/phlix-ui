@@ -5,8 +5,13 @@
  * Browsers can only direct-play a handful of containers (mp4/webm/…). Files in a
  * non-web container (MKV, AVI, …) or an undecodable codec (HEVC in an otherwise
  * playable container) would otherwise render as a silent black screen — these
- * helpers let the player detect that case (proactively by extension, reactively
- * by the <video> error code) and show a clear notice instead.
+ * helpers let the player detect that case and transcode instead.
+ *
+ * Detection is PROACTIVE: by extension ({@link needsTranscode}) and by codec
+ * ({@link needsTranscodeWithCapabilities}). The reactive `<video>`-error path
+ * ({@link isFatalMediaError}) is a partial extra, NOT a backstop — measured, a
+ * source whose video is undecodable but whose audio is fine fires no error event
+ * at all, so nothing reactive ever sees it.
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
@@ -51,8 +56,12 @@ export function extensionOf(url: string | null | undefined): string {
 /**
  * True when ANY of the given sources (stream URL, library path, …) is a container
  * we know the browser cannot direct-play. Unknown / extensionless sources return
- * false on purpose — we do not guess; the runtime <video> error (see
- * {@link isFatalMediaError}) is the backstop for those (e.g. HEVC inside an mp4).
+ * false on purpose — we do not guess.
+ *
+ * This is the cheap synchronous gate only. Codec-level cases (HEVC inside an mp4,
+ * E-AC-3 audio, …) are decided by {@link needsTranscodeWithCapabilities}, NOT by
+ * the runtime `<video>` error: measured, an undecodable video stream alongside a
+ * decodable audio stream fires no error at all.
  */
 export function needsTranscode(...sources: (string | null | undefined)[]): boolean {
   return sources.some((s) => TRANSCODE_SET.has(extensionOf(s)));
@@ -186,16 +195,215 @@ const AUDIO_CODEC_MAP: ReadonlyMap<string, string> = new Map([
   ['truehd', 'mlp'],
 ]);
 
-/** Known HEVC profile/level strings to probe for HEVC-in-MP4 support.
- *  These are broad enough to detect HEVC-capable browsers without needing
- *  the exact server-sent profile/level. Probing fails gracefully in browsers
- *  that don't support HEVC at all. */
-const HEVC_CODEC_STRINGS = [
-  'video/mp4; codecs="hvc1.1.4.L120.90"',   // HEVC Main 4.1 L120 (common)
-  'video/mp4; codecs="hev1.1.4.L120.90"',   // HEVC alternate hvc1/hev1 branding
-  'video/mp4; codecs="hvc1.1.6.L93.B0"',   // HEVC Main 4.1 L93
-  'video/mp4; codecs="hvc1.1.4.L120"',     // without tier
-] as const;
+// ---- video codec allowlist --------------------------------------------------
+//
+// ⚠ There is NO runtime safety net for a video codec the browser cannot decode.
+// Measured (Chrome 150 / Linux, real files over HTTP): an mp4 whose VIDEO stream
+// is undecodable but whose AUDIO stream is fine fires NO `error` event at all —
+// `video.error` stays `null`, `readyState` reaches 4, `canplay`/`playing` fire and
+// the audio plays, while `videoWidth` is 0 and `decodedFrames` never leaves 0. So
+// {@link isFatalMediaError} / `onVideoError` never sees anything and the viewer
+// gets a PERMANENT BLACK SCREEN WITH AUDIO and no recovery path:
+//
+//   H.264 + AAC mp4        → no error, readyState 4, videoWidth 320, 101 frames  ✅
+//   HEVC (hvc1) + AAC mp4  → NO error, readyState 4, videoWidth 0, 0 frames, audio plays
+//   HEVC, no audio track   → error code 4 DEMUXER_ERROR_NO_SUPPORTED_STREAMS
+//   MPEG-4 Part 2 + AAC    → NO error, readyState 4, videoWidth 0, 0 frames, audio plays
+//
+// Only the video-only row produces an error. That is why the guard below is an
+// ALLOWLIST of codecs known to decode rather than a denylist of known-bad ones:
+// anything we have not positively cleared must be transcoded up front, because
+// nothing downstream will catch it.
+
+/**
+ * Canonical codec family for every video-codec spelling that can reach us.
+ *
+ * The server stores ffprobe's `codec_name` verbatim in `media_streams.codec`, so
+ * the spellings that actually occur are ffprobe's. Measured on prod (video stream
+ * rows, whole library): `h264` 25 462 · `hevc` 11 253 · `mpeg4` 949 ·
+ * `msmpeg4v3` 195 · `av1` 41 · NULL 18 · `msmpeg4v2` 3 · `msmpeg4v1` 2 ·
+ * `mpeg1video` 1 · `mjpeg` 1 — HEVC is only ever spelled `hevc`. The `hvc1`/`hev1`
+ * sample-entry brandings, `h265`, `avc1` and the `vp09`/`av01` RFC 6381 prefixes
+ * are accepted too because other producers' metadata uses them and a codec we fail
+ * to recognise is treated as undecodable (see {@link videoCodecPolicy}).
+ * Compared case-insensitively.
+ */
+const VIDEO_CODEC_FAMILY: ReadonlyMap<string, string> = new Map([
+  ['h264', 'h264'], ['avc', 'h264'], ['avc1', 'h264'], ['x264', 'h264'],
+  ['hevc', 'hevc'], ['h265', 'hevc'], ['hvc1', 'hevc'], ['hev1', 'hevc'], ['x265', 'hevc'],
+  ['av1', 'av1'], ['av01', 'av1'],
+  ['vp9', 'vp9'], ['vp09', 'vp9'],
+  ['vp8', 'vp8'], ['vp08', 'vp8'],
+  ['theora', 'theora'],
+]);
+
+/**
+ * Codec families decodable by every browser that can run this SPA, so no runtime
+ * probe is worth its latency. H.264 only: it is the one video codec in the HTML5
+ * baseline that every shipping browser decodes, and it is 25 462 of prod's ~37 900
+ * video streams. Everything else in {@link VIDEO_CODEC_FAMILY} gets probed.
+ */
+const DIRECT_PLAY_VIDEO_FAMILIES: ReadonlySet<string> = new Set(['h264']);
+
+/**
+ * RFC 6381 codec parameters probed per family, most representative first. The
+ * first entry is the one `decodingInfo()` is asked about (kept to ONE call so the
+ * guard costs a single await); the whole ladder is then tried through
+ * `canPlayType`. Combined with the source's real container MIME by
+ * {@link canDecodeVideoCodec}, so the same family answers differently per
+ * container — measured: `video/mp4; codecs="vp09.00.10.08"` → `'probably'` in
+ * Chrome, `video/quicktime; codecs="avc1.640028"` → `''`.
+ *
+ * A `VideoConfiguration.contentType` MUST carry a codecs parameter naming exactly
+ * one codec: a bare `video/mp4` is not a decodable configuration, so probing with
+ * one reports `supported: false` on every browser (measured) and tells us nothing.
+ */
+const VIDEO_CODEC_PROBE_PARAMS: ReadonlyMap<string, readonly string[]> = new Map([
+  // HEVC Main L93 / Main 4.1 L120, both hvc1 and hev1 brandings, with and without tier.
+  ['hevc', ['hvc1.1.6.L93.B0', 'hvc1.1.4.L120.90', 'hev1.1.4.L120.90', 'hvc1.1.4.L120']],
+  ['av1', ['av01.0.08M.08', 'av01.0.05M.08']],
+  ['vp9', ['vp09.00.10.08', 'vp9']],
+  ['vp8', ['vp8']],
+  // Chrome dropped Theora in 123 — measured: canPlayType('video/ogg; codecs="theora"') → ''.
+  ['theora', ['theora']],
+]);
+
+/**
+ * What the direct-play guard should do about a given video codec.
+ *
+ * - `direct`   — play the file as-is, no probe.
+ * - `probe`    — ask the browser (MediaCapabilities / `canPlayType`) and transcode
+ *                only when it says no.
+ * - `transcode` — do not attempt direct play.
+ */
+export type VideoCodecPolicy = 'direct' | 'probe' | 'transcode';
+
+/**
+ * Classifies a server-reported video codec for the direct-play guard.
+ *
+ *   `''` / null / undefined  → `direct`  (UNKNOWN — see the caveat below)
+ *   `h264` and its aliases   → `direct`
+ *   `hevc` / `av1` / `vp9` / `vp8` / `theora` → `probe`
+ *   anything else non-empty  → `transcode`
+ *
+ * The last rule is the important one: an mp4 carrying MPEG-4 Part 2, MS-MPEG4,
+ * MPEG-1 or MJPEG decodes NOTHING and reports NO error (see the block comment
+ * above), so a codec we cannot positively clear must never reach direct play.
+ * Prod's entire distinct set is covered: every spelling not in
+ * {@link VIDEO_CODEC_FAMILY} (`mpeg4`, `msmpeg4v1/2/3`, `mpeg1video`, `mjpeg`) is
+ * genuinely browser-undecodable.
+ *
+ * ⚠ UNKNOWN → `direct` is a deliberate, imperfect choice, not a safe one. It
+ * preserves direct play for an item whose `streams[]` arrived empty, at the cost of
+ * a black-screen-with-audio if that item really is HEVC. Do NOT re-describe this as
+ * "the `<video>`-error backstop will catch it": measured, it does not (see the
+ * block comment above {@link VIDEO_CODEC_FAMILY}).
+ *
+ * WHERE THE UNKNOWN ACTUALLY COMES FROM — a concurrency window, not missing codecs:
+ * `GET /api/v1/media/{id}/playback-info` runs `StreamProbeBackfill::ensureFor()`,
+ * which REPLACES the item's rows — `deleteStreamsByItem($itemId)` followed by a
+ * row-at-a-time `addStream()` loop — while `PlayerPage.load()` dispatches
+ * playback-info and the detail request CONCURRENTLY. A detail read that lands inside
+ * that delete-then-reinsert window returns `streams: []`, or a partial set whose
+ * video row is not back yet, and this function is then asked about `''`. Live for the
+ * 79 218 of 116 325 prod items whose `streams_probed_at IS NULL`, once each on first
+ * playback. Closing it belongs on the server (backfill idempotently / before the read
+ * on the same request); a SECOND delete+insert on the detail path would widen it.
+ *
+ * ⚠ It is NOT "18 prod items have a NULL codec" — that claim has now been made and
+ * withdrawn twice, so do not restate it a third time. Counted directly against prod
+ * (2026-07-28): the 18 NULL-codec video rows sit on 14 items, at `stream_index` 2/3
+ * with nonsense dimensions (1920×0, or 4×3841 / 4×5634) — non-video payload mis-typed
+ * as `video`. Every one of those 14 items ALSO carries a codec-bearing video row at
+ * `stream_index 0`: `hevc` 10, `h264` 3, `mpeg4` 1. `ItemRepository::getItemStreams()`
+ * is `ORDER BY stream_index` and {@link videoCodecFromStreams} skips a codec-less row
+ * and keeps looking, so all 14 resolve to a REAL codec. mp4/m4v items with NO
+ * codec-bearing video row: 0 (of 16 731). So no prod item reaches this function with
+ * `''` from stored data — the exposure is the race above, and only that.
+ */
+export function videoCodecPolicy(codec: string | null | undefined): VideoCodecPolicy {
+  const name = typeof codec === 'string' ? codec.trim().toLowerCase() : '';
+  if (name === '') return 'direct'; // unknown — no codec reported at all
+  const family = VIDEO_CODEC_FAMILY.get(name);
+  if (family === undefined) return 'transcode'; // reported, but not on the allowlist
+  return DIRECT_PLAY_VIDEO_FAMILIES.has(family) ? 'direct' : 'probe';
+}
+
+/**
+ * Pulls the source's VIDEO codec out of the `streams[]` array on the media
+ * DETAIL response (`GET /api/v1/media/{id}`) — the only endpoint that carries
+ * video stream info (`playback-info` emits audio/subtitle tracks only).
+ *
+ * Entries are the raw `media_streams` rows, so `stream_type` is one of the
+ * lowercase ENUM values `video` / `audio` / `subtitle` and `codec` is ffprobe's
+ * `codec_name` (`h264`, `hevc`, `av1`, …). Numeric columns arrive JSON-encoded as
+ * strings, hence nothing here relies on a numeric type. Returns `''` when the
+ * value is absent / not an array / has no video row with a codec — i.e. UNKNOWN,
+ * never a guess. Lenient like {@link parsePlaybackAudioTracks}: junk entries are
+ * skipped and a camelCase `streamType` is tolerated.
+ */
+export function videoCodecFromStreams(value: unknown): string {
+  if (!Array.isArray(value)) return '';
+  for (const entry of value) {
+    if (entry == null || typeof entry !== 'object') continue;
+    const o = entry as Record<string, unknown>;
+    const rawType = o.stream_type ?? o.streamType;
+    if (typeof rawType !== 'string' || rawType.trim().toLowerCase() !== 'video') continue;
+    const codec = typeof o.codec === 'string' ? o.codec.trim() : '';
+    if (codec !== '') return codec;
+  }
+  return '';
+}
+
+/**
+ * REAL container MIME type for each direct-play extension.
+ *
+ * ⚠ Never build this by concatenation (`video/${ext}`). `video/m4v`, `video/mov`
+ * and `video/ogv` are not MIME types any browser knows, and a `canPlayType` /
+ * `decodingInfo` probe against a MIME the browser does not recognise answers `''`
+ * / `supported: false` for EVERY codec — which the guard reads as "undecodable"
+ * and force-transcodes. Measured (Chrome 150 / Linux):
+ *
+ *   `video/m4v; codecs="mp4a.40.2"`       → `''`          ← the bug
+ *   `video/mp4; codecs="mp4a.40.2"`       → `'probably'`
+ *   `video/ogv; codecs="vorbis"`          → `''`          ← the bug
+ *   `video/ogg; codecs="vorbis"`          → `'probably'`
+ *   `video/quicktime; codecs="mp4a.40.2"` → `''`   (Chrome advertises no QuickTime
+ *                                                   support; Safari answers yes)
+ *
+ * `.mov` maps to its true type `video/quicktime` rather than being laundered
+ * through `video/mp4`: Chrome then still declines it (so `.mov` does not newly
+ * start direct-playing there) while Safari, which really does play QuickTime,
+ * accepts it.
+ *
+ * ⚠ But that is the CONSERVATIVE choice, not one the server corroborates. Our own
+ * server labels `.mov` bytes `video/mp4` on the wire — `HttpHandler::streamMimeFor()`
+ * in phlix-server maps `'mov' => 'video/mp4'` in its extension→MIME table
+ * — so `video/quicktime` is a MIME this player never actually receives, and probing it
+ * asks a question about a labelling that does not happen. A `.mov` whose bytes Chrome
+ * gets as `video/mp4` (same ISO-BMFF demuxer) would very likely play, yet we transcode
+ * it. No regression: prod has 0 `.mov` items, and `.mov` transcoded before this change
+ * too (via the bogus `video/mov`); Safari is strictly improved. If `.mov` ever matters,
+ * align the two ends deliberately — do not assume the server agrees with this map.
+ */
+const CONTAINER_MIME_BY_EXTENSION: ReadonlyMap<string, string> = new Map([
+  ['mp4', 'video/mp4'],
+  ['m4v', 'video/mp4'],
+  ['mov', 'video/quicktime'],
+  ['webm', 'video/webm'],
+  ['ogg', 'video/ogg'],
+  ['ogv', 'video/ogg'],
+]);
+
+/**
+ * Container MIME type for a file extension (see {@link CONTAINER_MIME_BY_EXTENSION}).
+ * Falls back to `video/mp4` for an unknown/absent extension — the guard only
+ * reaches here for {@link DIRECT_PLAY_EXTENSIONS}, all of which are mapped.
+ */
+export function containerMimeForExtension(ext: string | null | undefined): string {
+  const key = typeof ext === 'string' ? ext.trim().toLowerCase() : '';
+  return CONTAINER_MIME_BY_EXTENSION.get(key) ?? 'video/mp4';
+}
 
 /**
  * Builds a `video/mp4; codecs="..."` string for the given audio codec, or null
@@ -219,6 +427,15 @@ export function buildAudioCodecString(
  * Returns `true` for supported, `false` for unsupported, and `false` for any
  * error (we do not throw on capability-probing failures — safe fallback is
  * transcode).
+ *
+ * ⚠ In practice the `canPlayType` fallback is what answers, and that is FINE —
+ * do not "tidy" it away. Measured (Chrome 150 / Linux): an `AudioConfiguration`
+ * whose `contentType` is a `video/*` MIME — which is exactly what
+ * {@link buildAudioCodecString} produces here — makes `decodingInfo()` throw
+ * `TypeError: The audio configuration dictionary is not valid.`, so the catch
+ * below fires and `canPlayType('video/mp4; codecs="…"')` decides. That still
+ * yields the RIGHT verdict (`'probably'` for AAC, `''` for E-AC-3 / AC-3 / DTS),
+ * so the E-AC-3-forces-a-transcode behaviour is real and load-bearing.
  */
 export async function canDecodeAudioCodec(
   audioCodec: string,
@@ -259,23 +476,47 @@ export async function canDecodeAudioCodec(
 }
 
 /**
- * Probes HEVC-in-MP4 support by attempting to decode a known HEVC codec string.
- * Returns `true` if HEVC appears to be decodable, `false` otherwise.
- * Uses the same MediaCapabilities → canPlayType fallback chain.
+ * Probes whether the browser can decode `videoCodec` inside `containerMime`,
+ * using `navigator.mediaCapabilities.decodingInfo()` where available and falling
+ * back to `HTMLVideoElement.prototype.canPlayType()`.
+ *
+ * Only the `probe`-policy families of {@link videoCodecPolicy} have probe strings;
+ * anything else (including an unknown codec) returns `false`, so callers must
+ * consult the policy first rather than reading a `false` here as "undecodable".
+ * Any probing failure is `false` — the safe fallback is to transcode.
+ *
+ * Probes with a REAL RFC 6381 codec string. An earlier version passed a bare
+ * `video/mp4`, on the (wrong) assumption that a full `hvc1…`/`hev1…` string is
+ * invalid for `VideoConfiguration.contentType` and always throws. It does not
+ * throw — but a codec-less contentType is not a decodable configuration, so
+ * Chromium answered `supported: false` for EVERY mp4, which made this report
+ * "no HEVC" on browsers that in fact decode it and (worse) made the caller force
+ * a transcode for every mp4.
  */
-export async function canDecodeHevcInMp4(): Promise<boolean> {
+export async function canDecodeVideoCodec(
+  videoCodec: string | null | undefined,
+  containerMime = 'video/mp4',
+): Promise<boolean> {
+  const name = typeof videoCodec === 'string' ? videoCodec.trim().toLowerCase() : '';
+  const family = VIDEO_CODEC_FAMILY.get(name);
+  const params = family !== undefined ? VIDEO_CODEC_PROBE_PARAMS.get(family) : undefined;
+  if (!params || params.length === 0) return false;
+
   if (typeof navigator === 'undefined') return false;
 
   const mc = (navigator as Navigator & { mediaCapabilities?: MediaCapabilities }).mediaCapabilities;
 
   if (mc && typeof mc.decodingInfo === 'function') {
-    // Probe with the base video/mp4 MIME type — the browser resolves codec support
-    // from its own internal tables; passing the full RFC 6381 string (hvc1…/hev1…)
-    // is invalid for VideoConfiguration.contentType and always throws.
     try {
       const result = await mc.decodingInfo({
         type: 'media-source',
-        video: { contentType: 'video/mp4', width: 3840, height: 2160, bitrate: 50_000_000, framerate: 60 },
+        video: {
+          contentType: `${containerMime}; codecs="${params[0]}"`,
+          width: 3840,
+          height: 2160,
+          bitrate: 50_000_000,
+          framerate: 60,
+        },
       } as MediaDecodingConfiguration);
       if (result.supported) return true;
     } catch {
@@ -283,11 +524,11 @@ export async function canDecodeHevcInMp4(): Promise<boolean> {
     }
   }
 
-  // Fallback canPlayType
+  // Fallback canPlayType — try the whole ladder of profile/level spellings.
   if (typeof document !== 'undefined') {
     const v = document.createElement('video');
-    for (const codecString of HEVC_CODEC_STRINGS) {
-      const result = v.canPlayType(codecString);
+    for (const param of params) {
+      const result = v.canPlayType(`${containerMime}; codecs="${param}"`);
       if (result === 'probably' || result === 'maybe') return true;
     }
   }
@@ -296,43 +537,66 @@ export async function canDecodeHevcInMp4(): Promise<boolean> {
 }
 
 /**
- * Combines the extension-based `needsTranscode` check with a runtime
- * MediaCapabilities probe of the audio codecs listed in `playback-info`.
+ * Combines the extension-based `needsTranscode` check with runtime capability
+ * probes of the source's VIDEO codec (media detail `streams[]`) and its primary
+ * AUDIO codec (playback-info `audio_tracks`).
  *
  * Returns `true` (transcode recommended) if:
  *   - the extension is a known non-web container, OR
- *   - the browser cannot decode the primary audio codec (E-AC-3 / AC-3 / DTS, …), OR
- *   - the source is an mp4 but HEVC is unsupported (black-flash guard).
+ *   - the video codec is not on the decodable allowlist, or is on it only
+ *     conditionally and the browser says it cannot decode it, OR
+ *   - the browser cannot decode the primary audio codec (E-AC-3 / AC-3 / DTS, …).
  *
- * When `playbackAudioTracks` is empty the probe is skipped (no server data yet —
- * the caller should watch for late audio-track arrival and re-evaluate).
+ * The two probes are INDEPENDENT. The video decision uses only `videoCodec`, so it
+ * runs on mount from the detail response without waiting for playback-info; the
+ * audio probe is skipped while `playbackAudioTracks` is empty (no server data yet
+ * — the caller re-evaluates when tracks arrive). Neither is a black-flash guard
+ * any more: an undecodable video stream produces no error event at all, so this is
+ * the ONLY thing standing between the viewer and a permanent black screen.
  *
- * @param sources              - URL / path strings to check by extension.
+ * ⚠ This used to fire the HEVC probe for EVERY mp4 with no check that the file
+ * contained HEVC at all, which killed direct play for plain H.264 mp4s on every
+ * browser without HEVC support (Chrome/Chromium/Firefox on Linux, Windows without
+ * the HEVC extension) — measured live. It was then narrowed to an HEVC-only
+ * denylist, which silently black-screened every OTHER undecodable codec. Hence the
+ * allowlist in {@link videoCodecPolicy}. An UNKNOWN / absent video codec still
+ * prefers direct play; see that function for why that is a tradeoff, not a net.
+ *
+ * @param sources             - URL / path strings to check by extension.
  * @param playbackAudioTracks - Parsed audio tracks from playback-info `audio_tracks`.
+ * @param videoCodec          - The source's video codec as the media DETAIL response
+ *                              reports it (`streams[]` where `stream_type === 'video'`;
+ *                              see {@link videoCodecFromStreams}). `''`/absent = unknown.
  */
 export async function needsTranscodeWithCapabilities(
   sources: (string | null | undefined)[],
   playbackAudioTracks: PlaybackAudioTrack[],
+  videoCodec: string | null | undefined = '',
 ): Promise<boolean> {
   // Extension check first — the cheap synchronous gate.
   if (needsTranscode(...sources)) return true;
 
   const ext = sources.map((s) => extensionOf(s)).find((e) => (DIRECT_PLAY_EXTENSIONS as readonly string[]).includes(e)) ?? '';
-  const containerMime = ext ? (`video/${ext}` as const) : 'video/mp4';
+  // Not a container we recognise as direct-playable — nothing further to decide.
+  if (!(DIRECT_PLAY_EXTENSIONS as readonly string[]).includes(ext)) return false;
 
-  // If the file extension is a known direct-play container, probe the audio codecs.
-  if ((DIRECT_PLAY_EXTENSIONS as readonly string[]).includes(ext) && playbackAudioTracks.length > 0) {
+  // A REAL container MIME, never `video/${ext}` — see CONTAINER_MIME_BY_EXTENSION.
+  const containerMime = containerMimeForExtension(ext);
+
+  // VIDEO codec allowlist. Deliberately BEFORE the audio probe and independent of
+  // it: `videoCodec` comes from the detail response, which is available at mount,
+  // whereas playback-info may never arrive.
+  const policy = videoCodecPolicy(videoCodec);
+  if (policy === 'transcode') return true;
+  if (policy === 'probe' && !(await canDecodeVideoCodec(videoCodec, containerMime))) return true;
+
+  // AUDIO codec probe — needs playback-info, so only once tracks are known.
+  if (playbackAudioTracks.length > 0) {
     // Check the primary (default) audio track's codec.
     const primaryTrack = playbackAudioTracks.find((t) => t.default) ?? playbackAudioTracks[0];
     if (primaryTrack?.codec) {
       const canAudio = await canDecodeAudioCodec(primaryTrack.codec, containerMime);
       if (!canAudio) return true;
-    }
-
-    // HEVC-in-MP4 black-flash guard.
-    if (ext === 'mp4' || ext === 'm4v') {
-      const canHevc = await canDecodeHevcInMp4();
-      if (!canHevc) return true;
     }
   }
 
