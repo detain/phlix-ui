@@ -155,6 +155,35 @@ export type MediaFile = {
     codec?: string | null;
     resolution?: string | null;
 };
+/**
+ * One elementary stream of the source file, as the media DETAIL response
+ * (`GET /api/v1/media/{id}`) reports it in `streams[]`.
+ *
+ * These are the raw `media_streams` rows — the server passes them through
+ * unshaped — so read them defensively:
+ *   - `stream_type` is the lowercase DB ENUM: `video` | `audio` | `subtitle`.
+ *   - `codec` is ffprobe's `codec_name`, stored verbatim with no normalisation:
+ *     `h264`, `hevc` (NOT `h265`), `av1`, `vp9`, `aac`, `eac3`, `subrip`, …
+ *   - numeric columns are JSON-encoded from PDO strings, so `stream_index` /
+ *     `width` / `height` arrive as STRINGS (`"0"`, `"1920"`) — never `===` them
+ *     against a number.
+ *
+ * `playback-info` deliberately carries no video stream info (it filters to audio +
+ * subtitle rows), so this array is the only place a client can learn the source's
+ * VIDEO codec. Optional/nullable throughout: absent on list rows, on synthetic
+ * items, and on older servers.
+ */
+export interface MediaStreamInfo {
+    stream_index?: number | string | null;
+    /** `video` | `audio` | `subtitle` (lowercase DB ENUM). */
+    stream_type?: string | null;
+    /** ffprobe `codec_name`, verbatim (`h264`, `hevc`, `aac`, …). */
+    codec?: string | null;
+    language?: string | null;
+    width?: number | string | null;
+    height?: number | string | null;
+    [key: string]: unknown;
+}
 export interface MediaDetail extends MediaListItem {
     /** Short-lived signed direct-play URL; list rows / local files omit this. */
     stream_url?: string | null;
@@ -257,8 +286,19 @@ export interface MediaDetail extends MediaListItem {
      * Per-file metadata (container, codec, resolution, size) for each physical
      * file backing this item. Only populated on the detail response; absent on
      * list rows. Full `path` is admin-gated (non-admin sees basename only).
+     *
+     * ⚠ Do NOT read a codec from here: the block is admin-gated AND derived from
+     * `metadata_json.files`, which nothing on the server currently writes — so in
+     * practice it is `[]`. Use {@link streams} for stream/codec facts.
      */
     files?: MediaFile[];
+    /**
+     * The source file's elementary streams (video / audio / subtitle) — the ONLY
+     * place the API exposes the source's VIDEO codec (see {@link MediaStreamInfo}).
+     * Detail-only + optional: absent on list rows, synthetic items and older
+     * servers, so treat an absent array as "codec unknown", not as "no video".
+     */
+    streams?: MediaStreamInfo[] | null;
 }
 /**
  * Back-compat alias — all existing code uses `MediaItem`. Retained so native

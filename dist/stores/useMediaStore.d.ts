@@ -67,6 +67,15 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             codec?: string | null | undefined;
             resolution?: string | null | undefined;
         }[] | undefined;
+        streams?: {
+            [x: string]: unknown;
+            stream_index?: number | string | null | undefined;
+            stream_type?: string | null | undefined;
+            codec?: string | null | undefined;
+            language?: string | null | undefined;
+            width?: number | string | null | undefined;
+            height?: number | string | null | undefined;
+        }[] | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -135,6 +144,15 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             codec?: string | null | undefined;
             resolution?: string | null | undefined;
         }[] | undefined;
+        streams?: {
+            [x: string]: unknown;
+            stream_index?: number | string | null | undefined;
+            stream_type?: string | null | undefined;
+            codec?: string | null | undefined;
+            language?: string | null | undefined;
+            width?: number | string | null | undefined;
+            height?: number | string | null | undefined;
+        }[] | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -264,6 +282,15 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             codec?: string | null | undefined;
             resolution?: string | null | undefined;
         }[] | undefined;
+        streams?: {
+            [x: string]: unknown;
+            stream_index?: number | string | null | undefined;
+            stream_type?: string | null | undefined;
+            codec?: string | null | undefined;
+            language?: string | null | undefined;
+            width?: number | string | null | undefined;
+            height?: number | string | null | undefined;
+        }[] | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -332,6 +359,15 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             codec?: string | null | undefined;
             resolution?: string | null | undefined;
         }[] | undefined;
+        streams?: {
+            [x: string]: unknown;
+            stream_index?: number | string | null | undefined;
+            stream_type?: string | null | undefined;
+            codec?: string | null | undefined;
+            language?: string | null | undefined;
+            width?: number | string | null | undefined;
+            height?: number | string | null | undefined;
+        }[] | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -461,6 +497,15 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             codec?: string | null | undefined;
             resolution?: string | null | undefined;
         }[] | undefined;
+        streams?: {
+            [x: string]: unknown;
+            stream_index?: number | string | null | undefined;
+            stream_type?: string | null | undefined;
+            codec?: string | null | undefined;
+            language?: string | null | undefined;
+            width?: number | string | null | undefined;
+            height?: number | string | null | undefined;
+        }[] | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
@@ -529,6 +574,15 @@ export declare const useMediaStore: import("pinia").StoreDefinition<"media", Pic
             codec?: string | null | undefined;
             resolution?: string | null | undefined;
         }[] | undefined;
+        streams?: {
+            [x: string]: unknown;
+            stream_index?: number | string | null | undefined;
+            stream_type?: string | null | undefined;
+            codec?: string | null | undefined;
+            language?: string | null | undefined;
+            width?: number | string | null | undefined;
+            height?: number | string | null | undefined;
+        }[] | null | undefined;
         id: string;
         name: string;
         sort_title?: string | null | undefined;
