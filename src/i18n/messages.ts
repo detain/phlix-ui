@@ -258,12 +258,15 @@ export const DEFAULT_MESSAGES = {
       '“{title}” is being converted to a format your browser can play. This starts in a moment.',
     transcodePreparingUntitled:
       'This title is being converted to a format your browser can play. This starts in a moment.',
-    // Transcode failure notice (shown only when the on-demand transcode failed)
-    transcodeHeading: 'Can’t play this file here',
+    // Playback-start failure notice (shown when the on-demand transcode request
+    // failed). This must NOT blame the file or its format: the same notice appears
+    // when the server simply REFUSED the request — e.g. a parental-control block
+    // answering 404 — which says nothing about the container or codecs.
+    transcodeHeading: 'Can’t start playback right now',
     transcodeBodyTitled:
-      'We couldn’t prepare a playable version of “{title}” right now. Please try again later.',
+      'We couldn’t start playback for “{title}” right now. Please try again later.',
     transcodeBodyUntitled:
-      'We couldn’t prepare a playable version of this title right now. Please try again later.',
+      'We couldn’t start playback for this title right now. Please try again later.',
     goBack: 'Go back',
   },
   syncplay: {
