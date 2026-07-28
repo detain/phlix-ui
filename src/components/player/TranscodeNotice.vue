@@ -7,11 +7,16 @@
 /**
  * TranscodeNotice (R3.8) — the direct-play guard's visible fallback.
  *
- * Shown by <Player> when the current file can't be played in the browser
- * (a non-web container like MKV by extension, or a fatal <video> decode/format
- * error such as HEVC). It's an OPAQUE overlay so the user sees a clear
- * explanation instead of a silent black frame. Server-side transcoding is not
- * wired yet (per project memory), so the only action offered is to go back.
+ * Shown by <Player> when playback could not be STARTED: the file needed an
+ * on-demand transcode (non-web container by extension, or a fatal <video>
+ * decode/format error) and that transcode request itself failed. It's an OPAQUE
+ * overlay so the user sees a clear explanation instead of a silent black frame;
+ * the only action offered is to go back.
+ *
+ * ⚠ The copy deliberately does NOT blame the file or its format. The transcode
+ * request also fails when the SERVER refused it for a reason unrelated to the
+ * media — a parental-control block answering 404, for instance — so a heading
+ * like "Can't play this file here" actively misled the viewer.
  */
 import Icon from '../Icon.vue';
 import { useMessages } from '../../composables/useMessages';

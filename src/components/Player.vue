@@ -58,6 +58,7 @@ import { ApiClient } from '../api/client';
 import {
   needsTranscode,
   needsTranscodeWithCapabilities,
+  videoCodecFromStreams,
   isFatalMediaError,
   isNetworkMediaError,
   UPNEXT_COUNTDOWN_SECONDS,
@@ -218,37 +219,92 @@ const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
  *  on-demand server transcode and plays the resulting HLS stream (see `tc`); the
  *  notice now only appears if that transcode itself fails. The extension check is
  *  synchronous so the preparing overlay paints on the first frame (no black
- *  flash); a fatal <video> error flips it at runtime. */
+ *  flash); the async codec probe below and a fatal <video> error can flip it later. */
 const transcodeNeeded = ref(needsTranscode(props.streamUrl, props.media.path));
 
-/** Re-evaluates `transcodeNeeded` using MediaCapabilities codec probing once
- *  playback-info audio tracks arrive from the server. The synchronous
- *  extension-based `needsTranscode` already handles the common container cases;
- *  this augments it with runtime codec support checks (E-AC-3 / AC-3 / DTS audio,
- *  HEVC video) so the transcode path is chosen proactively instead of producing
- *  a silent black frame that only errors after playback begins. */
+/** The source's VIDEO codec (`h264`, `hevc`, …) as the media DETAIL response
+ *  reports it: the `streams[]` row whose `stream_type` is `video`. `''` when the
+ *  item carries no stream rows (list row / synthetic item / older server, or the
+ *  detail request lost the race against playback-info's stream backfill) — i.e.
+ *  UNKNOWN, which the capability guard treats as "no reason to transcode".
+ *  `playback-info` cannot supply this (it emits audio + subtitle tracks only), so
+ *  `props.media` is the only source. The watch below lists this alongside the audio
+ *  tracks so a host that DOES hand over a newer item revises the decision — but see
+ *  that comment: on `PlayerPage` the detail response is assigned once per route load
+ *  and is authoritative for the whole session, so an UNKNOWN stays unknown. */
+const sourceVideoCodec = computed(() => videoCodecFromStreams(props.media.streams));
+
+/** Invalidation token for the async capability probe. Bumped on every entry (and
+ *  by `evaluateForCurrentMedia` via this function) so a probe that resolves after
+ *  the inputs changed — a newer `streams[]`, a newer item — cannot apply a stale
+ *  verdict to the current source. */
+let capabilityProbeToken = 0;
+
+/** Re-evaluates `transcodeNeeded` using runtime codec probing.
+ *
+ *  The synchronous extension-based `needsTranscode` handles the container cases;
+ *  this augments it with codec support checks — undecodable audio (E-AC-3 / AC-3 /
+ *  DTS) and any video codec not on the decodable allowlist (see
+ *  `videoCodecPolicy`). Both matter because there is NO runtime recovery for a
+ *  codec the browser can't decode: measured, an mp4 whose video is undecodable but
+ *  whose audio is fine fires no `error` event, so `onVideoError` never runs and the
+ *  viewer would sit on a permanent black screen with sound. Choosing the transcode
+ *  path up front is the only thing that prevents it.
+ *
+ *  Runs with whatever data is available: the video decision needs only the detail
+ *  response's `streams[]` (present at mount), while the audio probe is skipped
+ *  until playback-info lands. Flipping the flag also STARTS the transcode — the
+ *  synchronous starts in `onMounted` / `evaluateForCurrentMedia` have already run
+ *  by the time this resolves, so without it the player would sit on the
+ *  "preparing" overlay forever. */
 async function evaluateTranscodeWithCapabilities(): Promise<void> {
+  const token = ++capabilityProbeToken;
   if (transcodeNeeded.value) return; // already flagged — no need to probe
-  const tracks = props.playbackAudioTracks ?? [];
-  if (tracks.length === 0) return;   // no audio track data yet
   const needsTc = await needsTranscodeWithCapabilities(
     [props.streamUrl, props.media.path],
-    tracks,
+    props.playbackAudioTracks ?? [],
+    sourceVideoCodec.value,
   );
-  if (needsTc) transcodeNeeded.value = true;
+  // Superseded by a newer probe (late `streams[]`, item change) — that one decides.
+  if (token !== capabilityProbeToken) return;
+  // Re-check after the await: a <video> error or the extension gate may have
+  // flipped it meanwhile, and the transcode must be started exactly once.
+  if (!needsTc || transcodeNeeded.value) return;
+  transcodeNeeded.value = true;
+  beginTranscode(videoRef.value?.currentTime ?? 0);
 }
 
-// When playback-info audio tracks arrive, probe codec support and flip
-// transcodeNeeded if the browser can't decode the primary audio or video.
-// Tracks arrive asynchronously after the initial synchronous needsTranscode
-// check, so this catches late-arriving codec info that rules out direct play.
+// Probe codec support and flip transcodeNeeded if the browser can't decode the
+// primary audio or the video stream.
+//
+// `immediate: true` because BOTH inputs can already be present at mount and
+// neither is guaranteed to change afterwards: `PlayerPage` dispatches the item and
+// playback-info requests concurrently, so whenever playback-info wins the race
+// `playbackAudioTracks` is already populated when <Player> mounts and a
+// non-immediate watch would never fire — the guard would never run at all.
+//
+// `sourceVideoCodec` is watched alongside it, but ⚠ that half is DEFENSIVE ONLY —
+// `{ immediate: true }` is the load-bearing one. On the only production mount site
+// the codec cannot change within a session: `PlayerPage.load()` assigns `item.value`
+// exactly once per route load on every branch (fresh cache, fetch, and both SWR
+// fallbacks) and never re-fetches the detail after playback-info resolves, so
+// `props.media.streams` never gains rows in place. The watch source therefore covers
+// other/future hosts and the up-next path (which re-enters `load()`), not the race
+// below.
+//
+// So do NOT read this watch as making that race self-healing: `playback-info` runs
+// `StreamProbeBackfill::ensureFor()`, which REPLACES the rows (delete-then-reinsert)
+// while the concurrently dispatched `GET /api/v1/media/{id}` reads them as they
+// stand. A detail response that lands mid-window carries `streams: []`, the codec is
+// UNKNOWN for the rest of the session, and nothing here revises it. That has to be
+// closed on the server — see `videoCodecPolicy` in ./player/playback for the window
+// and the measured prod exposure.
 watch(
-  () => props.playbackAudioTracks,
-  (tracks) => {
-    if (!tracks || tracks.length === 0) return;
+  [() => props.playbackAudioTracks, sourceVideoCodec],
+  () => {
     void evaluateTranscodeWithCapabilities();
   },
-  { immediate: false },
+  { immediate: true },
 );
 
 /** App config (provided by `createPhlixApp`). Read so the Player can thread the
