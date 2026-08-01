@@ -61,6 +61,11 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['./src/test/setup.ts'],
+        // Increase timeout for full-suite runs where accumulated jsdom state can
+        // slow individual tests. 5 s default is too short when 2 000+ component
+        // instances with scroll/ResizeObserver/intersection observers are active.
+        testTimeout: 30000,
+        hookTimeout: 30000,
         // Keep the Playwright visual specs out of the Vitest run — `e2e/visual.spec.ts`
         // matches Vitest's default `**/*.spec.ts` glob and would throw if executed
         // outside the Playwright runner. (Run them with `npm run test:visual`.)
