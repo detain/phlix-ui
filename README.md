@@ -106,7 +106,11 @@ when first reached.
 **Browse is organized per library.** The Browse home renders a "Continue Watching" rail, any configured
 `homeRows`, then **one rail per library** ("Movies", "TV", "Anime", …) read from `GET /api/v1/libraries`.
 Each rail's "See all" opens that library's dedicated `/app/library/:id` page (the full filterable grid).
-Set `libraryLinks: true` on a `MenuItem` to also surface one nav link per library.
+Set `libraryLinks: true` on a `MenuItem` to also surface one nav link per library. A library whose
+`type` is `music` never renders that generic grid: `createPhlixApp`'s router guard
+(`musicLibraryRedirect`, exported for tests) redirects `/app/library/:id` → `/app/music` inside
+`beforeEach`, and falls through to the generic grid when the type can't be resolved or the host's
+route table has no `music` route.
 
 > **CSS is not auto-injected.** The two `import '...css'` lines above are required — without
 > `style.css` nothing is styled; without `fonts.css` the type falls back to metric-matched system
@@ -299,7 +303,7 @@ The media-detail and player pages share a module-level singleton item cache (`us
 
 **Debounced Preference Persistence:**
 
-Deep-watched preference writes to `localStorage` are debounced (250 ms trailing edge) so rapid slider/toggle changes don't thrash storage; a `pagehide` listener flushes immediately so no write is lost on tab close.
+Deep-watched preference writes to `localStorage` are debounced (250 ms trailing edge) so rapid slider/toggle changes don't thrash storage; a `pagehide` listener flushes immediately so no write is lost on tab close. `usePreferencesStore` clears both on `onScopeDispose`, so a disposed store can never write again (this is what keeps a suite that swaps its pinia between tests isolated).
 
 ---
 
@@ -312,7 +316,9 @@ Everything below is a named export from the package root (`import { Button } fro
 `Button` · `IconButton` · `Badge` · `Slider` · `Switch` · `Chip` · `Select` · `Combobox` · `Modal` ·
 `Sheet` · `Tooltip` · `ToastHost` · `Skeleton` · `Spinner` · `EmptyState` · `Tabs` · `Kbd` ·
 `Reveal` · `PageTransition` — all token-driven, theme-aware, keyboard-accessible. Plus `Icon`
-(Lucide via `unplugin-icons`; type-checked `IconName`) and `AppBackdrop` (the atmosphere layer).
+(Lucide via `unplugin-icons`; type-checked `IconName`, with every registered name in
+`src/components/icon-registry.ts` — the single source of truth `Icon.test.ts` iterates) and
+`AppBackdrop` (the atmosphere layer).
 
 ### Media surfaces
 
@@ -329,7 +335,8 @@ hero strip per item) for `'backdrop'`. Those renderers are internals of
 exported page components — mount them yourself under `/app/music/*` via `extraRoutes` (that is what
 `phlix-server/web-ui` does). The drill-down page behind the **built-in `/app/music` route**
 (`MusicLibraryPage`: artists → albums → tracks) is a lazy chunk mounted by `createPhlixApp` and, like
-the other built-in route pages, is **not** re-exported.
+the other built-in route pages, is **not** re-exported. It is also where a `type: 'music'` library is
+redirected from `/app/library/:id`.
 
 **Every music listing is offset-paged, and paging is the only way to see the whole library.** The
 endpoints serve bounded pages — `?limit=` is clamped server-side to **`MUSIC_PAGE_SIZE`** (100,
@@ -367,7 +374,11 @@ view-mode renderers it is an internal of these pages and deliberately **not** re
 `Player` · `MiniPlayer` · `Scrubber` · `VolumeControl` · `SpeedMenu` · `QualityMenu` ·
 `CaptionsMenu` · `CaptionOverlay` · `AmbientCanvas` · `ResumePrompt` · `UpNext` · `TranscodeNotice` ·
 `ShortcutsHelp`. Pure helpers live alongside (`playback.ts`, `captions.ts`, `ambient.ts`,
-`shortcuts.ts`, `format-time.ts`, `quality.ts`).
+`shortcuts.ts`, `format-time.ts`, `quality.ts`). Direct play vs. server transcode is decided in
+`playback.ts`: `videoCodecFromStreams()` reads the source's video codec off the detail response's
+`streams[]`, `videoCodecPolicy()` classifies it against a decodable **allowlist**
+(`direct` / `probe` / `transcode`), and `needsTranscodeWithCapabilities()` combines that verdict with
+the real container MIME (`containerMimeForExtension()`) and the primary audio-track probe.
 
 ### Forms & long-tail pages
 
@@ -454,7 +465,9 @@ npm run dev          # Vite dev server (open src/dev/gallery.html for the primit
 npm run build        # vue-tsc typecheck + vite lib build + d.ts emit + copy fonts
 npm run test         # vitest (watch)
 npm run test:run     # vitest run (CI)
+npm run test:run -- --coverage  # same suite + coverage/lcov.info (what CI uploads)
 npm run typecheck    # vue-tsc --noEmit
+npm run lint         # eslint (part of the CI gate)
 npm run test:visual  # Playwright visual-regression suite (on-demand; not in the default gate)
 npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations across surfaces × themes
 ```
@@ -463,7 +476,10 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
   theme switcher and density toggle. The source of truth for visual QA.
 - **Visual + a11y harnesses** (`src/dev/visual/*`) mount the real surfaces (Browse, Detail, Player,
   Auth, Settings, shell) with deterministic offline data for Playwright. These suites are **on-demand**
-  — they're not part of the blocking `build`/`vitest` gate (PNG baselines are environment-fragile).
+  — they're not part of the blocking `typecheck`/`lint`/`build`/`vitest` gate that
+  `.github/workflows/ui-ci.yml` runs on every push to `master` and every PR (its `visual` job stays
+  `workflow_dispatch`-only until the `-linux` baselines are regenerated on the runner, because PNG
+  baselines are environment-fragile).
   One surface, **`quality-menu`**, mounts `QualityMenu` on its own (rather than inside the `Player`
   chrome) with a deterministic offline ladder and the listbox forced open — the control only renders
   with ≥2 real hls.js levels, which the offline `Player` harness's direct-play sample can never
