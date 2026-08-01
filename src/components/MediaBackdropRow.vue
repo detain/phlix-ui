@@ -183,11 +183,11 @@ const href = computed(() => `/app/media/${props.item.id}`);
  * unmatched titles — so this guards on null, never on key existence, and those rows
  * take the ambient wash below.
  */
-const backdropSrc = computed<string | null>(() => props.item.backdrop_url || null);
+const backdropSrc = computed<string | null>(() => props.item.backdrop_url ?? null);
 /** Responsive `srcset` for the backdrop `<img>`; passed through as-is (already a
  *  ready-made `url w780, url w1280` string from the server). When present the
  *  browser selects from it and `backdropSrc` above is only the no-srcset fallback. */
-const backdropSrcset = computed<string | null>(() => props.item.backdrop_srcset || null);
+const backdropSrcset = computed<string | null>(() => props.item.backdrop_srcset ?? null);
 
 /**
  * Whether the item carries usable backdrop data AT ALL — a `srcset` on its own is
@@ -203,7 +203,7 @@ const hasBackdrop = computed(() => backdropSrc.value !== null || backdropSrcset.
  * library surface actually renders today).
  */
 const ambientSrc = computed<string | null>(() =>
-  hasBackdrop.value ? null : props.item.poster_url || null,
+  hasBackdrop.value ? null : props.item.poster_url ?? null,
 );
 /**
  * Bound via `:style` (a real `style.backgroundImage` assignment), never
