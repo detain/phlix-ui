@@ -1248,6 +1248,52 @@ describe('Admin SettingsPage — help affordances', () => {
     expect(w.find('.phlix-help-text').exists()).toBe(false);
     w.unmount();
   });
+
+  /**
+   * The `.admin-settings__field` wrapper for one key, located by its rendered
+   * label. Scoping is the whole point: an unscoped `w.find('.phlix-help-text')`
+   * returns the FIRST help block on the tab, so it passes even when the field
+   * actually under test renders no help at all.
+   */
+  function fieldBlock(w: VueWrapper, label: string) {
+    const block = w.findAll('.admin-settings__field').find((f) => f.text().includes(label));
+    if (!block) {
+      throw new Error(
+        `no .admin-settings__field containing "${label}" (have: ${w
+          .findAll('.admin-settings__field')
+          .map((f) => f.text().slice(0, 40))
+          .join(' | ')})`,
+      );
+    }
+    return block;
+  }
+
+  /**
+   * S16 converted SIX per-field-type `<HelpPopover>` call sites to `<HelpText>`,
+   * but only two of them were pinned. Measured on this file 2026-08-02 during the
+   * S15/S16/S17 audit: deleting the `<HelpText>` element outright from the
+   * int/float, enum, json AND secret branches left all 93 tests here GREEN. Only
+   * the `bool` branch (covered by "renders the meta helpText + helpLinks inline")
+   * and the plain-`string` branch (covered by "renders the field help text
+   * inline") were guarded. These cases pin the other four so the conversion
+   * cannot be silently reverted one branch at a time.
+   */
+  it.each([
+    ['int', 'Transcoding', 'Transcode job timeout'],
+    ['float', 'Markers', 'Marker similarity threshold'],
+    ['enum', 'Transcoding', 'Preferred hardware accelerator'],
+    ['json', 'Metadata', 'Metadata provider priority'],
+    ['secret', 'Metadata', 'TMDb API key'],
+  ])('renders inline help for a %s field (no click needed)', async (_type, tab, label) => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, tab);
+    const help = fieldBlock(w, label).find('.phlix-help-text');
+    expect(help.exists()).toBe(true);
+    expect(help.text()).toContain(`Help for ${label}.`);
+    w.unmount();
+  });
 });
 
 describe('Admin SettingsPage — dirty state', () => {
