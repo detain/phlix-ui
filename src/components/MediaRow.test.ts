@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import MediaRow from './MediaRow.vue';
 import MediaCard from './MediaCard.vue';
 import EmptyState from './ui/EmptyState.vue';
@@ -244,5 +247,47 @@ describe('MediaRow', () => {
       expect(w.find('.media-row__arrow--prev').attributes('aria-label')).toBe('Scroll left');
       expect(w.find('.media-row__arrow--next').attributes('aria-label')).toBe('Scroll right');
     });
+  });
+});
+
+/**
+ * S09 — the inter-rail gap, and the containment claim its AC asks to be
+ * re-checked.
+ *
+ * jsdom does not apply an SFC's compiled `<style>`. Measured 2026-08-01, putting
+ * `.media-row`'s `margin-block` back to the pre-S09 `var(--space-8)` left the
+ * full 4,207-test suite GREEN.
+ *
+ * The AC's second half — "`content-visibility` / `contain-intrinsic-size` on
+ * `.media-row` re-checked for first-paint jump" — rests on a specific structural
+ * claim written into the SFC: the tightened spacing is a MARGIN, and margins sit
+ * outside the `contain-intrinsic-size` box, so the reserved height is unchanged
+ * and there is no first-paint jump. Convert that margin to padding (a plausible
+ * later "tidy-up") and the claim silently becomes false, because padding is
+ * inside the containment box. These assertions pin the claim, not just the number.
+ */
+describe('MediaRow — rail spacing + containment CSS contract (S09)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './MediaRow.vue'), 'utf8');
+  const rowBlock = /(?<![\w.-])\.media-row\s*\{([^}]*)\}/.exec(src);
+
+  it('keeps the tightened inter-rail gap', () => {
+    expect(rowBlock).not.toBeNull();
+    expect(rowBlock![1]).toMatch(/margin-block:\s*var\(--space-6\);/);
+  });
+
+  it('keeps the spacing OUTSIDE the containment box (margin, never padding)', () => {
+    // Padding is inside `contain-intrinsic-size`; margin is not. Swapping them
+    // would change the reserved height and reintroduce the first-paint jump the
+    // AC asks to be re-checked.
+    expect(rowBlock![1]).not.toMatch(/padding(-block|-top|-bottom)?:/);
+  });
+
+  it('still declares the content-visibility / contain-intrinsic-size pair', () => {
+    // Both, together: `content-visibility: auto` without a reserved box is the
+    // CLS bug, and a reserved box without `content-visibility` does nothing.
+    expect(rowBlock![1]).toMatch(/content-visibility:\s*auto;/);
+    expect(rowBlock![1]).toMatch(
+      /contain-intrinsic-size:\s*auto\s+var\(--media-row-intrinsic-h,\s*380px\);/,
+    );
   });
 });

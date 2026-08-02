@@ -9,6 +9,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, enableAutoUnmount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import FilterBar from './FilterBar.vue';
 import Combobox from './ui/Combobox.vue';
 import { useMediaStore } from '../stores/useMediaStore';
@@ -385,5 +388,51 @@ describe('FilterBar — sticky', () => {
   it('does not stick when sticky=false', () => {
     const w = mount(FilterBar, { props: { sticky: false } });
     expect(w.find('.filterbar').classes()).not.toContain('is-sticky');
+  });
+});
+
+/**
+ * S08 — the explicit gap below the FilterBar, and the sticky-shadow contract
+ * the acceptance criterion asks to be re-checked.
+ *
+ * S08's third in-scope item was "add one explicit gap element between
+ * <FilterBar> and <MediaGrid>" instead of leaning on the bar's own internal
+ * padding as an implicit spacer. It shipped as a `margin-bottom` on `.filterbar`
+ * itself. jsdom does not apply an SFC's compiled `<style>`, so nothing saw it:
+ * measured 2026-08-01, deleting the declaration left the full 4,207-test suite
+ * GREEN.
+ *
+ * The is-stuck half of the AC — "FilterBar's sticky `is-stuck` shadow state
+ * still renders correctly" — has two halves too. The class toggle is already
+ * covered above ("adds is-stuck once the window scrolls past the threshold");
+ * what the toggle is FOR (a heavier shadow than the resting bar) is CSS and was
+ * likewise unpinned.
+ */
+describe('FilterBar — spacing + sticky-shadow CSS contract (S08)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './FilterBar.vue'), 'utf8');
+
+  /** The base `.filterbar { … }` block (not `.filterbar.is-sticky` / `.is-stuck`). */
+  const base = /(?<![\w.-])\.filterbar\s*\{([^}]*)\}/.exec(src);
+
+  it('declares the explicit gap below the bar', () => {
+    expect(base).not.toBeNull();
+    expect(base![1]).toMatch(/margin-bottom:\s*var\(--space-4,\s*16px\);/);
+  });
+
+  it('uses margin-BOTTOM, not the grid\'s margin-top, so the gap survives while stuck', () => {
+    // A sticky element keeps its own margins; a following sibling's margin-top
+    // would collapse under it and let rows touch the bar. This is the reason the
+    // shipped fix put the gap here rather than on MediaGrid.
+    expect(base![1]).not.toMatch(/margin-top:/);
+  });
+
+  it('keeps `is-stuck` a strictly heavier shadow than the resting bar', () => {
+    const stuck = /\.filterbar\.is-stuck\s*\{([^}]*)\}/.exec(src);
+    expect(stuck).not.toBeNull();
+    expect(stuck![1]).toMatch(/box-shadow:\s*var\(--shadow-3/);
+    // …and the resting bar must use a DIFFERENT (lighter) shadow, or the stuck
+    // state would be indistinguishable and the toggle test above would be
+    // pinning a class that changes nothing.
+    expect(base![1]).toMatch(/box-shadow:\s*var\(--shadow-2/);
   });
 });

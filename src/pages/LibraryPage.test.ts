@@ -10,6 +10,9 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { Comment, Fragment, nextTick, type VNode } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import LibraryPage from './LibraryPage.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import { useMediaStore } from '../stores/useMediaStore';
@@ -989,5 +992,59 @@ describe('LibraryPage — Edit metadata / Explore item data (S15)', () => {
     await flushPromises();
     expect(inspector.props('modelValue')).toBe(true);
     expect((inspector.props('item') as MediaItem).id).toBe('m1');
+  });
+});
+
+/**
+ * S08 — the Library page's top-spacing CSS contract.
+ *
+ * jsdom does not apply an SFC's compiled `<style>`, so none of S08's three
+ * spacing decisions is visible to a mounted-component test. Measured 2026-08-01:
+ * reverting all of them at once — `.library-page` back to `padding: var(--space-6)`,
+ * `.library-header` back to `margin-bottom: var(--space-4)`, and deleting the
+ * FilterBar gap — left the full 4,207-test suite GREEN. The step's only
+ * user-visible effect was completely unpinned.
+ *
+ * Follows the `AppLayout.test.ts` CSS-contract convention: read the raw SFC and
+ * assert the declarations. The FilterBar half lives in `FilterBar.test.ts`
+ * (the margin is declared there, on the shared component).
+ */
+describe('LibraryPage — top-spacing CSS contract (S08/S09)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './LibraryPage.vue'), 'utf8');
+
+  /** The `.library-page { … }` declaration body. */
+  const pageBlock = /(?<![\w.-])\.library-page\s*\{([^}]*)\}/.exec(src);
+
+  it('gives `.library-page` no outer padding of its own (no double-count with .shell__main)', () => {
+    // `.shell__main` already supplies `var(--space-6) var(--space-5)` — pinned in
+    // AppLayout.test.ts. Stacking a second gutter here is exactly the bug S08/S09
+    // fixed, so the page must declare a literal zero, not merely omit the property
+    // (an omission would let a later shorthand reintroduce one unnoticed).
+    expect(pageBlock).not.toBeNull();
+    expect(pageBlock![1]).toMatch(/padding:\s*0;/);
+  });
+
+  it('does not smuggle the gutter back in as a margin or inset', () => {
+    expect(pageBlock![1]).not.toMatch(/margin:\s*var\(--space/);
+    expect(pageBlock![1]).not.toMatch(/padding-(top|block|block-start):/);
+  });
+
+  it('keeps `.library-header` on the tightened --space-3 bottom margin', () => {
+    const header = /(?<![\w.-])\.library-header\s*\{([^}]*)\}/.exec(src);
+    expect(header).not.toBeNull();
+    expect(header![1]).toMatch(/margin-bottom:\s*var\(--space-3\);/);
+  });
+
+  it('fixes it PAGE-SCOPED, never by shrinking the shared shell gutter', () => {
+    // S09's out-of-scope line: Settings/Admin/Music/Search must not move. The
+    // complement — `.shell__main` still declaring its own gutter — is pinned in
+    // AppLayout.test.ts. Comments are stripped because the SFC legitimately
+    // NAMES `.shell__main` in prose to explain why the page zeroes its padding.
+    const selectors = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+      .map((m) => m[1].replace(/\/\*[\s\S]*?\*\//g, ''))
+      .flatMap((block) => [...block.matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim()))
+      .filter((s) => s.length > 0 && !s.startsWith('@'));
+    expect(selectors.length).toBeGreaterThan(0);
+    expect(selectors.filter((s) => s.includes('shell__main'))).toEqual([]);
   });
 });
