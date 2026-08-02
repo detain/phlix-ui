@@ -360,13 +360,26 @@ describe('PlayerPage — up-next queue', () => {
   // S12 (updates.md #12) — DETERMINISTIC auto-play-next. The queue used to be written by
   // TWO unawaited racers: the genre-similar `loadQueue` and the episode-ordered
   // `loadEpisodeNeighbours`. When the genre fetch resolved LAST it clobbered the
-  // authoritative episode order. This models the race: the episode HAS a real genre (so
-  // the old code WOULD fire a genre fetch) and that fetch is DELAYED well past the
-  // (immediate) series-tree fetches, so under the old code it would win. The
-  // episode-neighbour path must win and the slow genre response must never overwrite it.
+  // authoritative episode order.
+  //
+  // These tests do NOT sample the race with a timer (a 40ms/80ms window is a coin flip
+  // dressed as evidence, and repeating it N times proves nothing). Instead the genre
+  // response is held behind a DEFERRED promise the test itself resolves: the "slow genre
+  // fetch lands LAST" interleaving — the exact one the old code lost to — is FORCED, not
+  // hoped for. If the genre fetch is issued at all, its response is guaranteed to arrive
+  // after the episode-ordered path has already written the queue.
   const isGenreQueue = (u: string) => u.includes('/api/v1/media?') && u.includes('sort=rating');
 
-  it('deterministically seeds remaining series episodes even when the genre queue fetch is SLOW (race regression)', async () => {
+  /** A promise whose settlement the TEST controls — no timers, no sampling, no retries. */
+  function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => {
+      resolve = r;
+    });
+    return { promise, resolve };
+  }
+
+  it('deterministically seeds remaining series episodes even when the genre queue fetch resolves LAST (race regression)', async () => {
     function ep(over: Partial<MediaItem> & { id: string }): MediaItem {
       // Real genre so loadQueue would issue a genre-similar fetch under the old racy code.
       return media({ name: over.id, type: 'episode', genres: ['Sci-Fi'], ...over });
@@ -374,19 +387,19 @@ describe('PlayerPage — up-next queue', () => {
     const e1 = ep({ id: 'q-e1', parent_id: 'q-ser', season_number: 1, episode_number: 1 });
     const e2 = ep({ id: 'q-e2', parent_id: 'q-ser', season_number: 1, episode_number: 2 });
     const e3 = ep({ id: 'q-e3', parent_id: 'q-ser', season_number: 1, episode_number: 3 });
-    // Genre-similar rows the SLOW loadQueue fetch would return — these must NOT win.
+    // Genre-similar rows the held-open loadQueue fetch would return — these must NOT win.
     const g1 = media({ id: 'q-g1', type: 'movie', genres: ['Sci-Fi'] });
     const g2 = media({ id: 'q-g2', type: 'movie', genres: ['Sci-Fi'] });
     const isById = (u: string, id: string) =>
       u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
+    // The genre response is HELD until the test releases it — see the note above.
+    const genreGate = deferred<Response>();
+    let genreRequests = 0;
     const fetchMock = vi.fn((url: string) => {
       const u = String(url);
-      // Genre queue (the only request with sort=rating): resolve LATE so, under the old
-      // racy code, it would land AFTER loadEpisodeNeighbours already seeded the queue.
       if (isGenreQueue(u)) {
-        return new Promise<Response>((resolve) =>
-          setTimeout(() => resolve(jsonResponse({ items: [g1, g2], total: 2 })), 40),
-        );
+        genreRequests += 1;
+        return genreGate.promise;
       }
       // Series-tree + by-id + playback-info all resolve IMMEDIATELY.
       if (isById(u, 'q-e1')) return Promise.resolve(jsonResponse({ item: e1 }));
@@ -405,14 +418,113 @@ describe('PlayerPage — up-next queue', () => {
     const player = usePlayerStore();
     // The awaited episode-neighbour path seeded the authoritative queue [e2, e3].
     expect(player.queue.map((m) => m.id)).toEqual(['q-e2', 'q-e3']);
-    // Wait PAST the slow genre response — under the old racy code it would have
-    // clobbered the queue to [q-g1, q-g2] here. It must not.
-    await new Promise((r) => setTimeout(r, 80));
+
+    // Release the genre response NOW — strictly after the episode-ordered write. Under the
+    // old two-writer code the genre fetch IS in flight here and this resolve() deterministically
+    // clobbers the queue to [q-g1, q-g2]. Under the fix the fetch was never issued, so the
+    // resolve is inert. (The `CONTROL` test below proves this gate is not inert by construction.)
+    genreGate.resolve(jsonResponse({ items: [g1, g2], total: 2 }));
+    await flushPromises();
     await flushPromises();
     expect(player.queue.map((m) => m.id)).toEqual(['q-e2', 'q-e3']);
     // The deterministic fix short-circuits the genre queue for an episode WITH a next
-    // neighbour: the slow genre fetch is never even issued.
-    expect(fetchMock.mock.calls.some(([u]) => isGenreQueue(String(u)))).toBe(false);
+    // neighbour: the genre fetch is never even issued.
+    expect(genreRequests).toBe(0);
+  });
+
+  it('CONTROL: the identical deferred genre gate DOES reach player.setQueue when loadQueue is the legitimate writer', async () => {
+    // Non-inertness control for the race test above. That test asserts a NEGATIVE ("the
+    // released genre response did not overwrite the queue"), which a mis-routed fetch mock
+    // or a dead gate would satisfy vacuously. Here the SAME gate + the SAME `sort=rating`
+    // URL matcher is used on a MOVIE, where loadQueue is the rightful writer: the request IS
+    // issued, the queue stays empty while the gate is held, and releasing the gate writes
+    // the genre rows through. So a vacuous pass in the race test is ruled out.
+    const base = media({ id: 'ctl-m1', type: 'movie', genres: ['Sci-Fi'] });
+    const g1 = media({ id: 'ctl-g1', type: 'movie', genres: ['Sci-Fi'] });
+    const g2 = media({ id: 'ctl-g2', type: 'movie', genres: ['Sci-Fi'] });
+    const genreGate = deferred<Response>();
+    let genreRequests = 0;
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isGenreQueue(u)) {
+        genreRequests += 1;
+        return genreGate.promise;
+      }
+      if (u.includes('playback-info')) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (u.includes('/api/v1/media/ctl-m1')) return Promise.resolve(jsonResponse({ item: base }));
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    await mountAt('ctl-m1', fetchMock);
+    await flushPromises();
+    await flushPromises();
+    const player = usePlayerStore();
+    // The gate really is wired to the production genre URL...
+    expect(genreRequests).toBe(1);
+    // ...and it really is holding the response open (nothing written yet).
+    expect(player.queue).toHaveLength(0);
+    // ...and releasing it really does propagate all the way to player.setQueue.
+    genreGate.resolve(jsonResponse({ items: [g1, g2], total: 2 }));
+    await flushPromises();
+    await flushPromises();
+    expect(player.queue.map((m) => m.id)).toEqual(['ctl-g1', 'ctl-g2']);
+  });
+
+  it('treats a type:"episode" row with NO parsed episode_number as an episode (up-next = next episode, not genre rows)', async () => {
+    // S12 residual. `loadEpisodeNeighbours` calls an item an episode when
+    // `type === 'episode' || episode_number != null`, and `series-grouping.episodesOf()`
+    // uses the same union — so a `type:'episode'` row with a NULL episode_number IS in the
+    // ordered playback list. `applyItem` used to test `episode_number` ALONE, so for such a
+    // row it skipped the episode path entirely and went straight to loadQueue. Before S12
+    // that was survivable (loadQueue had its own `type === 'episode'` cache lookup); S12
+    // deleted that lookup, so the narrower predicate silently stranded these rows on the
+    // genre queue with no prev/next. The server produces this shape whenever the scanner
+    // parsed no episode number (phlix-server MediaItemShaper.php:279 → episode_number null).
+    function ep(over: Partial<MediaItem> & { id: string }): MediaItem {
+      return media({ name: over.id, type: 'episode', genres: ['Sci-Fi'], ...over });
+    }
+    const e1 = ep({ id: 'nx-e1', parent_id: 'nx-ser', season_number: 1, episode_number: 1 });
+    // The row under test: typed as an episode, but the scanner parsed no episode number.
+    const e2 = ep({ id: 'nx-e2', parent_id: 'nx-ser', season_number: 1, episode_number: null });
+    const e3 = ep({ id: 'nx-e3', parent_id: 'nx-ser', season_number: 2, episode_number: 1 });
+    const g1 = media({ id: 'nx-g1', type: 'movie', genres: ['Sci-Fi'] });
+    const isById = (u: string, id: string) =>
+      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
+    const genreGate = deferred<Response>();
+    let genreRequests = 0;
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isGenreQueue(u)) {
+        genreRequests += 1;
+        return genreGate.promise;
+      }
+      if (isById(u, 'nx-e2')) return Promise.resolve(jsonResponse({ item: e2 }));
+      if (u.includes('playback-info')) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (u.includes('/api/v1/media/nx-ser') && !u.includes('parentId')) {
+        return Promise.resolve(jsonResponse({ item: media({ id: 'nx-ser', type: 'series' }) }));
+      }
+      if (u.includes('parentId=nx-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    const { w } = await mountAt('nx-e2', fetchMock);
+    await flushPromises();
+    await flushPromises();
+    const player = usePlayerStore();
+    // Playback order is [nx-e1, nx-e2 (no number → last in S1), nx-e3 (S2E1)].
+    expect((w.findComponent(Player).props('nextEpisode') as MediaItem | null)?.id).toBe('nx-e3');
+    expect((w.findComponent(Player).props('prevEpisode') as MediaItem | null)?.id).toBe('nx-e1');
+    expect(player.queue.map((m) => m.id)).toEqual(['nx-e3']);
+    // The genre fallback must never have been reached for a row that HAS a next episode.
+    expect(genreRequests).toBe(0);
+    // Release the gate anyway: even if a future change re-issues the fetch, the episode
+    // order must survive it.
+    genreGate.resolve(jsonResponse({ items: [g1], total: 1 }));
+    await flushPromises();
+    await flushPromises();
+    expect(player.queue.map((m) => m.id)).toEqual(['nx-e3']);
   });
 
   it('reseeds the up-next queue from the CACHED series order on binge navigation (no re-fetch, no genre queue)', async () => {
@@ -428,8 +540,16 @@ describe('PlayerPage — up-next queue', () => {
     const byId: Record<string, MediaItem> = { 'bz-e1': e1, 'bz-e2': e2, 'bz-e3': e3 };
     const isById = (u: string, id: string) =>
       u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
+    // Same deferred gate as the race test: if anything DID fire the genre queue during the
+    // binge, its response is forced to land after both navigations have settled.
+    const genreGate = deferred<Response>();
+    let genreRequests = 0;
     const fetchMock = vi.fn((url: string) => {
       const u = String(url);
+      if (isGenreQueue(u)) {
+        genreRequests += 1;
+        return genreGate.promise;
+      }
       if (isById(u, 'bz-e1')) return Promise.resolve(jsonResponse({ item: byId['bz-e1'] }));
       if (isById(u, 'bz-e2')) return Promise.resolve(jsonResponse({ item: byId['bz-e2'] }));
       if (isById(u, 'bz-e3')) return Promise.resolve(jsonResponse({ item: byId['bz-e3'] }));
@@ -440,7 +560,6 @@ describe('PlayerPage — up-next queue', () => {
         return Promise.resolve(jsonResponse({ item: media({ id: 'bz-ser', type: 'series' }) }));
       }
       if (u.includes('parentId=bz-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
-      if (isGenreQueue(u)) return Promise.resolve(jsonResponse({ items: [media({ id: 'bz-g9' })], total: 1 }));
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });
     const { router } = await mountAt('bz-e1', fetchMock);
@@ -459,7 +578,12 @@ describe('PlayerPage — up-next queue', () => {
     await flushPromises();
     expect(player.queue.map((m) => m.id)).toEqual(['bz-e3']);
     expect(childrenCalls()).toBe(1); // series tree NOT re-fetched (cache hit)
-    expect(fetchMock.mock.calls.some(([u]) => isGenreQueue(String(u)))).toBe(false); // genre queue never used
+    expect(genreRequests).toBe(0); // genre queue never used across the whole binge
+    // Release the (never-issued) genre gate last: the cache-seeded queue must survive it.
+    genreGate.resolve(jsonResponse({ items: [media({ id: 'bz-g9' })], total: 1 }));
+    await flushPromises();
+    await flushPromises();
+    expect(player.queue.map((m) => m.id)).toEqual(['bz-e3']);
   });
 
   it('falls through to the genre-similar queue for the LAST episode (no next neighbour), which is NOT short-circuited', async () => {

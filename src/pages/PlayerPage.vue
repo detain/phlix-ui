@@ -195,6 +195,23 @@ function toMarker(m: ServerMarker | null | undefined): TimeMarker | null {
   return m ? { start: m.start_seconds, end: m.end_seconds } : null;
 }
 
+/** The ONE definition of "this item is an episode", shared by `applyItem` (which decides
+ *  whether to await the authoritative episode-ordered path) and `loadEpisodeNeighbours`
+ *  (which decides whether to resolve neighbours at all). These two MUST agree: if
+ *  `applyItem` used a narrower test it would skip the episode path for an item
+ *  `loadEpisodeNeighbours` would happily have handled, and — since S12 removed the
+ *  duplicate cache lookup from `loadQueue` — such an item would silently fall through to
+ *  the genre-similar queue instead of the next episode.
+ *
+ *  `episode_number` alone is NOT sufficient: the server shapes it from `metadata.episode`
+ *  and emits null whenever the scanner/provider parsed no episode number
+ *  (phlix-server `MediaItemShaper.php:279`), while `type` comes from the DB enum
+ *  independently. `series-grouping.episodesOf()` uses this same union, so such rows DO
+ *  appear in the ordered playback list. */
+function isEpisodeItem(m: MediaItem): boolean {
+  return m.type === 'episode' || (m.episode_number ?? null) !== null;
+}
+
 /** Genre-similar "up next" fallback queue for MOVIES — and for an episode ONLY when
  *  the awaited episode-ordered path (loadEpisodeNeighbours, run first in applyItem)
  *  resolved NO next neighbour (last episode / cache miss / failed series-tree fetch).
@@ -288,8 +305,7 @@ function cachedOrderedFor(episodeId: string): MediaItem[] | null {
 async function loadEpisodeNeighbours(client: ApiClient, base: MediaItem): Promise<void> {
   prevEp.value = null;
   nextEp.value = null;
-  const isEpisode = base.type === 'episode' || (base.episode_number ?? null) !== null;
-  if (!isEpisode) return;
+  if (!isEpisodeItem(base)) return;
   // Cache hit: this episode is already in a fetched series order — just recompute
   // prev/next, no fetches.
   const cached = cachedOrderedFor(base.id);
@@ -451,12 +467,13 @@ async function applyItem(client: ApiClient, mediaItem: MediaItem): Promise<void>
   streamUrl.value = streamUrlFor(mediaItem);
   loading.value = false;
 
-  const isEpisode = (mediaItem.episode_number ?? null) !== null;
-
   // Episode: resolve the authoritative episode-ordered neighbours + queue FIRST, and
   // when a next episode exists RETURN EARLY. loadEpisodeNeighbours has already seeded the
   // episode-ordered queue, so the genre queue must NOT run — that removes the race.
-  if (isEpisode) {
+  // The predicate is shared with loadEpisodeNeighbours (isEpisodeItem) — see the note
+  // there: a narrower test here would strand `type:'episode'` rows that carry no parsed
+  // episode_number on the genre queue.
+  if (isEpisodeItem(mediaItem)) {
     await loadEpisodeNeighbours(client, mediaItem);
     if (nextEp.value) return;
   }
