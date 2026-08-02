@@ -7,6 +7,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import MusicPager from './MusicPager.vue';
 
 const wrappers: VueWrapper[] = [];
@@ -93,10 +94,98 @@ describe('MusicPager', () => {
     expect(last.find('[data-nav="last"]').attributes('disabled')).toBeDefined();
   });
 
-  it('emits nothing while disabled, even if a control is clicked directly', async () => {
-    const w = mountPager({ offset: 500, limit: 100, total: 2197, disabled: true });
-    await w.find('[data-nav="next"]').trigger('click');
-    expect(w.emitted('go')).toBeUndefined();
+  /**
+   * S138 — the in-flight gate, pinned on BOTH of its halves.
+   *
+   * **Why this gate is load-bearing for a DIFFERENT component.** `MusicLibraryPage`
+   * deliberately leaves `loading` UNGUARDED in its generation-guard work: its
+   * `finally { loading.value = false; }` runs even for an abandoned request, because a
+   * generation-guarded reset would strand the skeleton on the artists grid forever
+   * (see the `loadArtists` doc block in `MusicLibraryPage.vue`). That is only safe
+   * because at most one page load is ever in flight — and it is THIS gate that makes
+   * it true, since the pager is the one control that can start a second load.
+   *
+   * ⚠️ **The obvious test cannot see the JS half, and passes anyway.** Vue Test Utils'
+   * `trigger()` opens with `if (this.element && !this.isDisabled())`, and `isDisabled()`
+   * is true for a BUTTON/SELECT carrying a `disabled` attribute
+   * (`@vue/test-utils/dist/vue-test-utils.esm-bundler.mjs`, `BaseWrapper`). So
+   * `trigger('click')` on a disabled control dispatches NOTHING: the assertion that
+   * followed it passed because no event was ever delivered, not because the guard
+   * rejected one. Measured 2026-08-02 — deleting `if (props.disabled) return;` from
+   * `MusicPager.vue` left the WHOLE suite green at 229 files / 4223 passed. Same
+   * "passes for the wrong reason" class as an impossible-selector negative.
+   *
+   * The JS half is therefore driven by a RAW `dispatchEvent`, which VTU never sees and
+   * so cannot short-circuit; Vue's own DOM invoker stamps `_vts` on an event that has
+   * none and runs the handler, so the listener really is reached. The
+   * `still delivers` test below is the control that proves that route is not inert —
+   * without it, a silently-swallowed dispatch would fake exactly the green this
+   * describe exists to stop.
+   *
+   * **This pager is NOT the only one (measured 2026-08-02, S138 AC bullet 3).** A scan
+   * for `<button|select|input>` carrying BOTH a `:disabled` binding and an event
+   * handler found 31 sites in 18 files; seven of them hold a `disabled` early-return
+   * that `trigger()` likewise cannot reach, and deleting ALL SEVEN at once still left
+   * the full suite at 229 files / 4223 passed:
+   *
+   *   `ThumbRating.vue` `onUp` + `onDown` · `ui/Switch.vue` `toggle` ·
+   *   `ui/Chip.vue` `onMain` · `ui/Select.vue` `onTriggerKeydown` ·
+   *   `ui/Combobox.vue` `onKeydown` · `ui/Tabs.vue` `select` (`!t || t.disabled`)
+   *
+   * Near-siblings guarded on an equivalent non-`disabled` condition, same blind spot:
+   * `SourcePriorityEditor.vue` `moveUp`/`moveDown`, `MusicTracksPage.vue` `playAll`,
+   * `admin/PluginsPage.vue` `removeCatalogSource`, `admin/SettingsPage.vue`
+   * `restartServer`. Left as a follow-up rather than fixed here (S138's scope is the
+   * pager); the two helpers below are the whole technique needed to close them.
+   */
+  describe('disabled — the in-flight gate MusicLibraryPage depends on', () => {
+    /** A click VTU's `trigger()` refuses to deliver to a disabled control. */
+    async function rawClick(el: Element): Promise<void> {
+      el.dispatchEvent(new Event('click'));
+      await nextTick();
+    }
+
+    /** A `change` VTU's `trigger()` refuses to deliver to a disabled `<select>`. */
+    async function rawChange(el: HTMLSelectElement, value: string): Promise<void> {
+      el.value = value;
+      el.dispatchEvent(new Event('change'));
+      await nextTick();
+    }
+
+    it('still delivers when NOT disabled — the raw-dispatch route is not inert', async () => {
+      const w = mountPager({ offset: 500, limit: 100, total: 2197 });
+      await rawClick(w.find('[data-nav="next"]').element);
+      await rawChange(w.find('[data-nav="jump"]').element as HTMLSelectElement, '3');
+      // 500/100 → page 6; next → offset 600, jump to page 3 → offset 200. If this is
+      // ever `[]` the dispatch below proves nothing and the next test is vacuous.
+      expect(emitted(w)).toEqual([600, 200]);
+    });
+
+    it('emits nothing when a disabled control is driven anyway (the JS guard)', async () => {
+      const w = mountPager({ offset: 500, limit: 100, total: 2197, disabled: true });
+      for (const nav of ['first', 'prev', 'next', 'last']) {
+        await rawClick(w.find(`[data-nav="${nav}"]`).element);
+      }
+      // Second entry point into the same guard: `onJump` has no `disabled` check of
+      // its own, it relies entirely on `goToPage`'s.
+      await rawChange(w.find('[data-nav="jump"]').element as HTMLSelectElement, '3');
+      expect(w.emitted('go')).toBeUndefined();
+    });
+
+    it('marks every control disabled, so the browser gate holds too', () => {
+      // In a real browser the primary barrier is the HTML attribute, not the JS
+      // guard — so pin it. Asserted on ALL FIVE controls, not one: `first`/`prev`
+      // and `next`/`last` are each already disabled by an edge condition on some
+      // page, so testing only one arm would pass for `!hasPrev`'s reason. Offset 500
+      // of 2,197 is a middle page where every arrow is otherwise enabled.
+      const w = mountPager({ offset: 500, limit: 100, total: 2197, disabled: true });
+      for (const nav of ['first', 'prev', 'next', 'last', 'jump']) {
+        expect(
+          w.find(`[data-nav="${nav}"]`).attributes('disabled'),
+          `[data-nav="${nav}"] must carry the disabled attribute while a page is in flight`,
+        ).toBeDefined();
+      }
+    });
   });
 
   it('jumps to an arbitrary page through the select (random access, not 21 clicks)', async () => {

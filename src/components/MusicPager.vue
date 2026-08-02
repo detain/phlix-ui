@@ -108,7 +108,26 @@ const navLabel = computed(() =>
     : t('music.paginationOf', { label: props.label }),
 );
 
-/** Emit the offset for a 1-based page number, clamped into range. */
+/**
+ * Emit the offset for a 1-based page number, clamped into range.
+ *
+ * ⚠️ **`if (props.disabled) return;` is a cross-component invariant, not local
+ * defensiveness (S138).** {@link MusicLibraryPage} deliberately leaves `loading`
+ * UNGUARDED by its navigation generation — its `finally { loading.value = false; }`
+ * runs even for an abandoned request, because a generation-guarded reset would
+ * strand the skeleton on the artists grid forever. That is safe ONLY because at
+ * most one page load is ever in flight, and this pager is the only control that
+ * can start a second one. Remove this line and that page's correctness argument
+ * (see the `loadArtists` doc block there, which names this gate) stops holding.
+ *
+ * In a real browser the `disabled` attribute on each control is the primary
+ * barrier and this is defence in depth — so BOTH are pinned, in
+ * `MusicPager.test.ts` → "disabled — the in-flight gate MusicLibraryPage depends
+ * on". That describe drives the controls with a RAW `dispatchEvent` because Vue
+ * Test Utils' `trigger()` short-circuits on a disabled element and therefore
+ * cannot reach this line at all; with `trigger()` the guard was unpinned and
+ * deleting it left the whole suite green.
+ */
 function goToPage(target: number): void {
   if (props.disabled) return;
   const clamped = Math.min(pages.value, Math.max(1, Math.floor(target)));

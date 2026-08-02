@@ -1459,7 +1459,12 @@ describe('Admin SettingsPage — restart banner (§3.35)', () => {
     await saveBtn(w).trigger('click');
     await flushPromises();
     await w.find('.settings-restart-banner__btn').trigger('click');
-    await vi.waitFor(() => expect(restartBanner(w).exists()).toBe(false));
+    // S136 — an explicit poller ceiling. `vi.waitFor` defaults to 1 000 ms and
+    // `testTimeout` does not govern it, so this was the thinnest budget in the
+    // suite: thinner than the 3 000 ms one that actually went red under three
+    // concurrent full suites. Floor enforced by
+    // `src/__tests__/vitest-timeout-budgets.test.ts`.
+    await vi.waitFor(() => expect(restartBanner(w).exists()).toBe(false), { timeout: 15_000 });
     expect(post).toHaveBeenCalledWith('/api/v1/admin/restart', {});
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'Server is back online.')).toBe(true);
@@ -1494,8 +1499,10 @@ describe('Admin SettingsPage — restart banner (§3.35)', () => {
     await w.find('.settings-restart-banner__btn').trigger('click');
 
     const toasts = useToastStore();
-    await vi.waitFor(() =>
-      expect(toasts.toasts.some((t) => t.message.includes('did not respond within'))).toBe(true),
+    // S136 — explicit poller ceiling, same reason as the sibling above.
+    await vi.waitFor(
+      () => expect(toasts.toasts.some((t) => t.message.includes('did not respond within'))).toBe(true),
+      { timeout: 15_000 },
     );
     // The page never blanked into its error state, and the banner is still there.
     expect(w.findComponent(EmptyState).exists()).toBe(false);

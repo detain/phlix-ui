@@ -168,6 +168,13 @@ function getClient(): ApiClient {
  * the artists grid forever. Unconditional is safe because at most one load is ever in
  * flight: every starter is gated on `loading` (cards sit behind the skeleton, and
  * {@link MusicPager} hard-returns on `disabled` in JS, not merely via the attribute).
+ * ⚠️ S138 — that hard return is a DEPENDENCY OF THIS BLOCK, and it used to be pinned
+ * by nothing: deleting `if (props.disabled) return;` from `MusicPager.vue` left the
+ * whole suite green, because Vue Test Utils' `trigger()` refuses to dispatch to a
+ * disabled element and so could never reach it. It is now pinned by
+ * `MusicPager.test.ts` → "disabled — the in-flight gate MusicLibraryPage depends on",
+ * which drives the controls with a raw `dispatchEvent`. If that describe is ever
+ * weakened, the unconditional `finally` below silently becomes unsafe.
  * On the artists grid there is in fact no navigator to press mid-load — Back and the
  * breadcrumb render only OFF the artists view — so here the guard is the same rule
  * applied uniformly rather than a reachable bug; on the album list the breadcrumb IS
