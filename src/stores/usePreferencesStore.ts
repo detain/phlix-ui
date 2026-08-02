@@ -8,7 +8,30 @@
 import { defineStore } from 'pinia';
 import { ref, computed, onScopeDispose, watch } from 'vue';
 
-export type ThemeName = 'nocturne' | 'daylight' | 'midnight';
+/**
+ * The id of the active theme.
+ *
+ * **Deliberately `string`, not a closed union** (S86). It used to be
+ * `'nocturne' | 'daylight' | 'midnight'`, which made the three themes the SPA
+ * ships the only themes that could ever exist: a theme registered by a server
+ * plugin (`GET /api/v1/themes`) has an id nobody can enumerate at SPA build
+ * time, and assigning it here was a compile error. Widening is what lets a
+ * plugin theme be *selected* at all.
+ *
+ * The three shipped ids are still first-class — see `BUILT_IN_THEME_IDS` in
+ * `composables/themeTokens`, which is the runtime membership test (`data-theme`
+ * alone renders those; anything else additionally needs a token map applied).
+ * The safety that the union used to provide has NOT been dropped, it has moved
+ * to where it can actually cover server data: an unknown id is validated
+ * against the same slug pattern the server uses, and its tokens against the
+ * same allowlist + value grammar, before either reaches the DOM.
+ *
+ * Same tolerance as `viewMode`/`defaultQuality` on hydration: a persisted id
+ * for a theme that has since been uninstalled hydrates verbatim and degrades to
+ * the built-in default at apply time (`resolveThemeBase`), rather than being
+ * silently rewritten.
+ */
+export type ThemeName = string;
 export type Density = 'comfortable' | 'compact';
 export type MotionPref = 'auto' | 'on' | 'off';
 /** How a library/section renders its items (S67). 'grid' (poster grid), 'list'
