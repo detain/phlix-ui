@@ -591,6 +591,28 @@ describe('Admin PluginsPage — configure', () => {
     w.unmount();
   });
 
+  /**
+   * S05 — the Configure modal is the reason the `xl` size exists. Measured
+   * 2026-08-01: downgrading this modal to `size="lg"` left the whole 4,181-test
+   * suite GREEN, so the step's user-visible outcome (a wider, less cramped plugin
+   * Configure dialog) had nothing holding it in place. `Modal.test.ts` pins that
+   * `--xl` is a real widening; this pins that Configure is the consumer of it.
+   */
+  it('opens the Configure modal at the xl size (S05)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    expect(panel).toBeTruthy();
+    expect(panel.classList.contains('phlix-modal__panel--xl')).toBe(true);
+    // …and no narrower modifier leaks onto it alongside.
+    for (const smaller of ['sm', 'md', 'lg']) {
+      expect(panel.classList.contains(`phlix-modal__panel--${smaller}`)).toBe(false);
+    }
+    w.unmount();
+  });
+
   it('shows "Not set" for an unstored secret', async () => {
     const detail = {
       ...DETAIL_A,
