@@ -340,3 +340,56 @@ describe('Admin SyncPlayPage — join group', () => {
     w.unmount();
   });
 });
+
+/**
+ * S06 — anti-autofill hints on the group password inputs.
+ *
+ * BOTH modals take a group password, and a saved site credential auto-filled
+ * into either one silently changes what gets POSTed. jsdom cannot drive a real
+ * password-manager offer, so the guard is the rendered DOM: each password input
+ * carries `autocomplete="new-password"` + the four opt-out hints, and the
+ * non-secret name / group-id field beside it does NOT.
+ */
+describe('Admin SyncPlayPage — anti-autofill hints on the password inputs (S06)', () => {
+  /** The full anti-autofill attribute set applied to every admin secret input. */
+  function expectAntiAutofill(el: HTMLInputElement): void {
+    expect(el.getAttribute('type')).toBe('password');
+    expect(el.getAttribute('autocomplete')).toBe('new-password');
+    expect(el.getAttribute('data-lpignore')).toBe('true');
+    expect(el.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(el.hasAttribute('data-bwignore')).toBe(true);
+    expect(el.getAttribute('data-form-type')).toBe('other');
+  }
+
+  function expectNoHints(el: HTMLInputElement): void {
+    expect(el.getAttribute('autocomplete')).toBe('off');
+    expect(el.hasAttribute('data-lpignore')).toBe(false);
+    expect(el.hasAttribute('data-1p-ignore')).toBe(false);
+    expect(el.hasAttribute('data-bwignore')).toBe(false);
+    expect(el.hasAttribute('data-form-type')).toBe(false);
+  }
+
+  it('stamps the CREATE-group password input (inputs: [0] name, [1] password)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Create group')!.trigger('click');
+    await flushPromises();
+    const inputs = modalPanel().querySelectorAll<HTMLInputElement>('.admin-syncplay__input');
+    expectAntiAutofill(inputs[1]!);
+    expectNoHints(inputs[0]!);
+    w.unmount();
+  });
+
+  it('stamps the JOIN-group password input (inputs: [0] group id, [1] password)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Join Movie Night')!.trigger('click');
+    await flushPromises();
+    const inputs = modalPanel().querySelectorAll<HTMLInputElement>('.admin-syncplay__input');
+    expectAntiAutofill(inputs[1]!);
+    expectNoHints(inputs[0]!);
+    w.unmount();
+  });
+});

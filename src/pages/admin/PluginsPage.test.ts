@@ -709,6 +709,44 @@ describe('Admin PluginsPage — configure', () => {
     w.unmount();
   });
 
+  /**
+   * S06 — the four password-manager opt-out hints, not just `autocomplete`.
+   *
+   * Chrome/Firefox honour `autocomplete="new-password"`; LastPass/1Password/
+   * Bitwarden routinely do not and offer a saved site credential anyway — which
+   * is the actual reported symptom (a saved password overwrote an API key).
+   * Every hint here is conditionally bound on `descriptor.secret`, so this also
+   * pins that the condition still evaluates for a secret descriptor.
+   */
+  it('stamps the secret input with all four password-manager ignore hints (S06)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const secret = modalPanel().querySelector<HTMLInputElement>('#plugin-setting-api_key')!;
+    expect(secret.getAttribute('data-lpignore')).toBe('true');
+    expect(secret.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(secret.hasAttribute('data-bwignore')).toBe(true);
+    expect(secret.getAttribute('data-form-type')).toBe('other');
+    w.unmount();
+  });
+
+  it('does NOT stamp the hints on a non-secret descriptor (S06, no over-application)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    // page_size is `secret: false` — every hint is bound to `undefined` there,
+    // which Vue drops from the DOM entirely.
+    const plain = modalPanel().querySelector<HTMLInputElement>('#plugin-setting-page_size')!;
+    expect(plain.getAttribute('autocomplete')).toBe('off');
+    expect(plain.hasAttribute('data-lpignore')).toBe(false);
+    expect(plain.hasAttribute('data-1p-ignore')).toBe(false);
+    expect(plain.hasAttribute('data-bwignore')).toBe(false);
+    expect(plain.hasAttribute('data-form-type')).toBe(false);
+    w.unmount();
+  });
+
   it('describes the secret input with its status line for screen readers', async () => {
     const { client } = makeClient();
     const w = mountPage(client);
