@@ -17,15 +17,18 @@
  * (via `useTheme` at the app root) reflects theme/accent/density onto <html>
  * instantly — there is no Save button; changes apply live.
  */
-import { computed, ref, onBeforeUnmount } from 'vue';
+import { computed, ref, onBeforeUnmount, onMounted } from 'vue';
 import Switch from './ui/Switch.vue';
 import Slider from './ui/Slider.vue';
 import Select from './ui/Select.vue';
 import Button from './ui/Button.vue';
 import Icon from './Icon.vue';
 import { usePreferencesStore, type ThemeName } from '../stores/usePreferencesStore';
+import { useThemesStore } from '../stores/useThemesStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
+import { useApiBase } from '../composables/useApiBase';
+import { resolveThemeBase, resolveThemeTokens, type BuiltInThemeId } from '../composables/themeTokens';
 import {
   CAPTION_SIZE_OPTIONS,
   CAPTION_COLOR_OPTIONS,
@@ -37,14 +40,47 @@ import type { CaptionSize, CaptionBackground, CaptionEdge } from '../stores/useP
 withDefaults(defineProps<{ panel?: 'appearance' | 'playback' }>(), { panel: 'appearance' });
 
 const prefs = usePreferencesStore();
+const themesStore = useThemesStore();
 const toasts = useToastStore();
 const { t } = useMessages();
+const apiBase = useApiBase();
 
-const THEMES: { value: ThemeName; label: string }[] = [
-  { value: 'nocturne', label: 'Nocturne' },
-  { value: 'daylight', label: 'Daylight' },
-  { value: 'midnight', label: 'Midnight' },
+/** One entry of the theme gallery. */
+interface ThemeChoice {
+  value: ThemeName;
+  label: string;
+  /** The built-in stylesheet block the swatch previews against. */
+  base: BuiltInThemeId;
+  /** Custom properties the swatch overrides on top of `base` (empty for a built-in). */
+  tokens: Record<string, string>;
+}
+
+/** The three themes whose palettes ship in the SPA's own stylesheet. */
+const BUILT_IN_THEMES: ThemeChoice[] = [
+  { value: 'nocturne', label: 'Nocturne', base: 'nocturne', tokens: {} },
+  { value: 'daylight', label: 'Daylight', base: 'daylight', tokens: {} },
+  { value: 'midnight', label: 'Midnight', base: 'midnight', tokens: {} },
 ];
+
+// Pull the catalogue in so plugin themes show up here even in a host app whose
+// root does not call `useTheme()`. Idempotent, and a no-op without an apiBase.
+onMounted(() => void themesStore.load(apiBase.value));
+
+/**
+ * Built-ins first (stable, always present), then whatever theme plugins the
+ * server registered — already sorted by id by the endpoint. Each plugin entry
+ * carries its resolved base + flattened tokens so its swatch previews the real
+ * palette, the same way the built-in swatches re-scope `[data-theme]`.
+ */
+const THEMES = computed<ThemeChoice[]>(() => [
+  ...BUILT_IN_THEMES,
+  ...themesStore.pluginThemes.map((theme) => ({
+    value: theme.id,
+    label: theme.name,
+    base: resolveThemeBase(theme.id, themesStore.items),
+    tokens: resolveThemeTokens(theme.id, themesStore.items),
+  })),
+]);
 
 /** Accent presets — `null` keeps the theme's amber; otherwise a hex override fed
  *  through `deriveAccentVars` by `useTheme`. */
@@ -118,7 +154,7 @@ function setCaption(key: 'size' | 'textColor' | 'background' | 'edge', v: string
 
 // Roving-tabindex radiogroups (theme + accent) — one Tab stop; Arrow/Home/End
 // move focus + selection (WAI-ARIA APG), mirroring the player's CaptionsMenu.
-const themeRovingIndex = computed(() => Math.max(0, THEMES.findIndex((t) => t.value === prefs.theme)));
+const themeRovingIndex = computed(() => Math.max(0, THEMES.value.findIndex((t) => t.value === prefs.theme)));
 const accentRovingIndex = computed(() => Math.max(0, ACCENTS.findIndex((a) => a.value === prefs.accent)));
 
 function moveRadio(e: KeyboardEvent, count: number, current: number): number | null {
@@ -139,8 +175,8 @@ function moveRadio(e: KeyboardEvent, count: number, current: number): number | n
   return next;
 }
 function onThemeKeydown(e: KeyboardEvent): void {
-  const next = moveRadio(e, THEMES.length, themeRovingIndex.value);
-  if (next !== null) prefs.theme = THEMES[next].value;
+  const next = moveRadio(e, THEMES.value.length, themeRovingIndex.value);
+  if (next !== null) prefs.theme = THEMES.value[next].value;
 }
 function onAccentKeydown(e: KeyboardEvent): void {
   const next = moveRadio(e, ACCENTS.length, accentRovingIndex.value);
@@ -171,6 +207,11 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
   <div v-if="panel === 'appearance'" class="aps">
     <section class="aps__group">
       <h3 class="aps__title">{{ t('settings.theme') }}</h3>
+      <!-- Each swatch re-scopes [data-theme] to its BASE built-in and, for a
+           plugin theme, layers that theme's own tokens on top — so the preview
+           is the real palette. Vue's `:style` with `--*` keys compiles to
+           `el.style.setProperty()`, i.e. the same CSSOM path `useTheme` uses;
+           it is not a `<style>` tag and needs no CSP relaxation. -->
       <div class="aps__themes" role="radiogroup" :aria-label="t('settings.theme')" @keydown="onThemeKeydown">
         <button
           v-for="(t, i) in THEMES"
@@ -181,7 +222,8 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
           :class="{ 'is-active': prefs.theme === t.value }"
           :aria-checked="prefs.theme === t.value"
           :tabindex="themeRovingIndex === i ? 0 : -1"
-          :data-theme="t.value"
+          :data-theme="t.base"
+          :style="t.tokens"
           @click="prefs.theme = t.value"
         >
           <span class="aps__preview">

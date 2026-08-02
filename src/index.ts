@@ -401,6 +401,30 @@ export type { Command } from './stores/useCommandStore';
 // The always-on ⌘K hotkey that opens it is the exported `useCommandPaletteHotkey`.
 export { useCommandPaletteHotkey } from './composables/useCommandPaletteHotkey';
 export { useTheme, applyStoredThemeEarly } from './composables/useTheme';
+// Server/plugin themes (S86). The allowlist + value grammar are exported so a
+// host app (or a native client) can apply a theme through the SAME checks the
+// SPA uses, rather than reimplementing them looser.
+export {
+  BUILT_IN_THEME_IDS,
+  THEME_TOKEN_ALLOWLIST,
+  THEME_CACHE_KEY,
+  MAX_EXTENDS_DEPTH,
+  isBuiltInThemeId,
+  isAllowedThemeToken,
+  isSafeThemeTokenValue,
+  sanitizeThemeTokens,
+  normalizeServerTheme,
+  resolveThemeTokens,
+  resolveThemeBase,
+  activeThemeStyle,
+  applyThemeTokens,
+  clearThemeTokens,
+  readCachedTheme,
+  writeCachedTheme,
+} from './composables/themeTokens';
+export type { BuiltInThemeId, ServerTheme, ActiveThemeStyle } from './composables/themeTokens';
+export { useThemesStore } from './stores/useThemesStore';
+export { fetchThemes } from './api/themes';
 export { useOnline } from './composables/useOnline';
 export { usePrefetch } from './composables/usePrefetch';
 export { usePreconnect } from './composables/usePreconnect';
