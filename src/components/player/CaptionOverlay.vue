@@ -79,18 +79,7 @@ function unbind(): void {
 
 /** The `<track>` element backing a resolved TextTrack (matched by identity), or
  *  null when the video isn't a real DOM element (jsdom/tests) or has no `<track>`
- *  children. Used by `rebind` to re-read the cues once the sidecar VTT loads.
- *
- *  ⚠️ NOT REACHABLE FROM A REAL jsdom `<video>` (measured 2026-08-02, jsdom
- *  29.1.1): a real `HTMLTrackElement` there exposes `track === undefined` and
- *  `readyState === 0` forever (media never loads), and a real `<video>` reports
- *  `textTracks.length === 0` even with `<track>` children. So this identity match
- *  can only ever succeed against a test double, and the `load`-listener branch in
- *  `rebind` below — including its `readyState !== 2` guard — is covered ONLY by
- *  the hand-rolled `fakeTrackEl` in CaptionOverlay.test.ts, never by the DOM. A
- *  green suite here is NOT evidence about a browser; verify the sidecar load path
- *  by hand. The S13 `scheduleModeRecheck` below runs regardless and IS reachable
- *  from a full Player mount. */
+ *  children. Used by `rebind` to re-read the cues once the sidecar VTT loads. */
 function trackElementFor(video: HTMLVideoElement | null, track: TextTrack): HTMLTrackElement | null {
   const els = video?.querySelectorAll?.('track');
   if (!els) return null;

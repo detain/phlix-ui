@@ -49,7 +49,19 @@ function videoWith(tracks: FakeTrack[]): HTMLVideoElement {
 
 /** A fake `<track>` element backing a FakeTrack, mirroring the identity link
  *  (`el.track === track`) + `readyState` + `load` event a real HTMLTrackElement
- *  exposes, so the overlay's load-time re-read can be exercised. */
+ *  exposes, so the overlay's load-time re-read can be exercised.
+ *
+ *  ⚠️ THIS DOUBLE IS THE ONLY WAY THAT BRANCH IS EVER REACHED. Measured on jsdom
+ *  29.1.1 (pinned in `captions-jsdom-reachability.test.ts`): a real
+ *  `HTMLTrackElement` reports `track === undefined` and `readyState === 0`
+ *  forever, and a real `<video>` reports `textTracks.length === 0` even with
+ *  `<track>` children. So `trackElementFor`'s `el.track === track` match cannot
+ *  succeed against the DOM, and the whole `load`-listener block in `rebind()` —
+ *  its `readyState !== 2` guard included — is unreachable from any real-DOM
+ *  mount. A green run here is evidence about THIS FIXTURE, not about a browser;
+ *  the sidecar load path still has to be checked by hand. (The S13
+ *  `scheduleModeRecheck` is different: it runs unconditionally and IS exercised
+ *  through a full Player mount in `Player.test.ts`.) */
 interface FakeTrackEl {
   track: FakeTrack;
   readyState: number;
