@@ -91,7 +91,15 @@ describe('SeriesSeasons', () => {
 
   it('opens every season when openFirstOnly is false', () => {
     const w = mount(SeriesSeasons, { props: { seasons, openFirstOnly: false } });
-    w.findAll('details').forEach((d) => expect(d.attributes('open')).toBeDefined());
+    const details = w.findAll('details');
+    // S135: pin the cardinality BEFORE the aggregate. A bare
+    // `findAll(...).forEach((d) => expect(...))` asserts nothing when the collection is
+    // empty — mounted with `seasons: []` this file still reported 17/17 pass, so the
+    // loop below was decorative. The literal 3 (Season 1 / Season 2 / Specials, as
+    // pinned by the first test in this file) is deliberate: comparing against
+    // `seasons.length` would go vacuous again in lockstep if the fixture ever emptied.
+    expect(details).toHaveLength(3);
+    details.forEach((d) => expect(d.attributes('open')).toBeDefined());
   });
 
   it('emits play with the episode when an episode play button is clicked', async () => {
