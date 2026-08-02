@@ -427,6 +427,41 @@ describe('MediaDetailPage — merged metadata-match action (S02)', () => {
     expect(modal().attributes('data-open')).toBe('true');
     expect(modal().attributes('data-item-id')).toBe('m1');
   });
+
+  // A series renders SeriesDetail, NOT MediaDetail, so it has its own pair of
+  // @match / @refresh bindings on this page — a second, independent copy of the
+  // merged action. Both were unpinned: replacing either with a no-op left the
+  // full 4,203-test suite green, so a series ⋯-menu "Match metadata" could stop
+  // opening the modal without a single red test.
+  it('routes a SERIES hero @match and ⋯-menu @refresh to the SAME onMatch', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'sh1', name: 'Dune: Prophecy', type: 'series' })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    const { w } = await mountAdmin('sh1', fetchMock);
+    await flushPromises();
+
+    const series = w.findComponent(SeriesDetail);
+    expect(series.exists()).toBe(true);
+    const modal = () => w.find('.match-modal-stub');
+    expect(modal().attributes('data-open')).toBe('false');
+
+    // Hero button path.
+    series.vm.$emit('match', media({ id: 'sh1', type: 'series' }));
+    await flushPromises();
+    expect(modal().attributes('data-open')).toBe('true');
+    expect(modal().attributes('data-item-id')).toBe('sh1');
+
+    // Close, then drive the ⋯-menu path — it must converge on the same handler.
+    w.findComponent({ name: 'MetadataMatchModal' }).vm.$emit('update:modelValue', false);
+    await flushPromises();
+    expect(modal().attributes('data-open')).toBe('false');
+
+    series.vm.$emit('refresh', media({ id: 'sh1', type: 'series' }));
+    await flushPromises();
+    expect(modal().attributes('data-open')).toBe('true');
+    expect(modal().attributes('data-item-id')).toBe('sh1');
+  });
 });
 
 describe('MediaDetailPage — Edit metadata / Explore item data (S15)', () => {
