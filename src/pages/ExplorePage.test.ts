@@ -191,9 +191,19 @@ describe('ExplorePage — Edit metadata / Explore item data (S15)', () => {
     expect(inspector.exists()).toBe(true);
     expect(inspector.props('modelValue')).toBe(false);
 
+    // Non-inertness control: nothing is teleported before the action, so the
+    // post-action DOM assertion below cannot be satisfied by a leftover mount.
+    expect(document.body.querySelectorAll('[data-test="item-json"]').length).toBe(0);
+
     w.findComponent(MediaGrid).vm.$emit('explore-data', { id: 's1', name: 'Similar Movie 1' } as MediaItem);
     await flushPromises();
     expect(inspector.props('modelValue')).toBe(true);
     expect((inspector.props('item') as MediaItem).id).toBe('s1');
+    // The AC is "produces VISIBLE UI", not "sets a prop": assert the inspector's
+    // teleported JSON pane actually rendered the item. Measured 2026-08-02 —
+    // emptying that <pre> left this host's prop-only assertions GREEN.
+    const panes = document.body.querySelectorAll('[data-test="item-json"]');
+    expect(panes.length).toBe(1);
+    expect(panes[0].textContent).toContain('"id": "s1"');
   });
 });

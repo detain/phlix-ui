@@ -692,6 +692,10 @@ describe('LibraryPage — list view (S68)', () => {
     await flushPromises();
     expect(inspector.props('modelValue')).toBe(true);
     expect((inspector.props('item') as MediaItem).id).toBe('lr1');
+    // The inspector TELEPORTS to document.body, and there is no global auto-unmount
+    // (`src/test/setup.ts` only restores timers). Leaving this wrapper mounted would
+    // leak an open JSON pane into every later test in this file.
+    w.unmount();
   });
 });
 
@@ -812,6 +816,8 @@ describe('LibraryPage — backdrop hero view (S69)', () => {
     await flushPromises();
     expect(inspector.props('modelValue')).toBe(true);
     expect((inspector.props('item') as MediaItem).id).toBe('lr1');
+    // See the list-row twin above: unmount so the teleported pane does not leak.
+    w.unmount();
   });
 
   /**
@@ -988,10 +994,20 @@ describe('LibraryPage — Edit metadata / Explore item data (S15)', () => {
     expect(inspector.exists()).toBe(true);
     expect(inspector.props('modelValue')).toBe(false);
 
+    // Non-inertness control: nothing is teleported before the action, so the
+    // post-action DOM assertion below cannot be satisfied by a leftover mount.
+    expect(document.body.querySelectorAll('[data-test="item-json"]').length).toBe(0);
+
     grid.vm.$emit('explore-data', media({ id: 'm1', name: 'Dune' }));
     await flushPromises();
     expect(inspector.props('modelValue')).toBe(true);
     expect((inspector.props('item') as MediaItem).id).toBe('m1');
+    // The AC is "produces VISIBLE UI", not "sets a prop": assert the inspector's
+    // teleported JSON pane actually rendered the item. Measured 2026-08-02 —
+    // emptying that <pre> left this host's prop-only assertions GREEN.
+    const panes = document.body.querySelectorAll('[data-test="item-json"]');
+    expect(panes.length).toBe(1);
+    expect(panes[0].textContent).toContain('"id": "m1"');
   });
 });
 
