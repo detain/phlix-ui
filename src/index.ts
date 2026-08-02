@@ -73,6 +73,17 @@ export type {
     AudiobookProgressResponse,
     SaveAudiobookProgressInput,
 } from './types/audiobook';
+// S144 — music row types, at parity with book and audiobook above. The four
+// music PAGE ENVELOPES (`MusicPageParams` / `Music*Result`) come from
+// `./api/client` further up; these are the ROW types inside them. Without the
+// line below, `import type { MusicAlbum } from '@phlix/ui'` failed for a
+// consumer while the book/audiobook equivalents worked, and the only way to
+// name a music row was structurally (`MusicAlbumsResult['albums'][number]`).
+// ⚠️ Adding a name here is not enough to ship it: `dist/index.d.ts` is TRACKED
+// and is what a consumer resolves against, so `dist/` must be rebuilt before
+// the tag that ships this. `src/__tests__/dist-music-type-exports.test.ts`
+// enforces that.
+export type { MusicArtist, MusicAlbum, MusicTrack } from './types/music';
 export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
 export type { ProviderPriority, GenresMode } from './types/server-settings';
 

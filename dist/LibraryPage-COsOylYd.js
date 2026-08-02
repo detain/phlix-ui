@@ -161,7 +161,7 @@ var _e = ["aria-label"], j = { class: "media-list-row__poster" }, M = { class: "
 		"explore-data"
 	],
 	setup(e, { emit: t }) {
-		let n = e, r = t, i = b(A, null), a = p(() => `/app/media/${n.item.id}`), o = p(() => n.item.backdrop_url || null), s = p(() => n.item.backdrop_srcset || null), c = p(() => o.value !== null || s.value !== null), l = p(() => c.value ? null : n.item.poster_url || null), ee = p(() => l.value ? { backgroundImage: `url(${l.value})` } : {}), te = p(() => c.value || l.value !== null), u = p(() => c.value ? "backdrop" : l.value ? "ambient" : null), d = w(!1), re = w(null);
+		let n = e, r = t, i = b(A, null), a = p(() => `/app/media/${n.item.id}`), o = p(() => n.item.backdrop_url ?? null), s = p(() => n.item.backdrop_srcset ?? null), c = p(() => o.value !== null || s.value !== null), l = p(() => c.value ? null : n.item.poster_url ?? null), ee = p(() => l.value ? { backgroundImage: `url(${l.value})` } : {}), te = p(() => c.value || l.value !== null), u = p(() => c.value ? "backdrop" : l.value ? "ambient" : null), d = w(!1), re = w(null);
 		function ie() {
 			d.value = !0;
 		}
@@ -251,7 +251,7 @@ var _e = ["aria-label"], j = { class: "media-list-row__poster" }, M = { class: "
 			])
 		], 12, I));
 	}
-}), [["__scopeId", "data-v-1cd4d615"]]), Fe = ["aria-label"], Ie = [
+}), [["__scopeId", "data-v-d60cebf8"]]), Fe = ["aria-label"], Ie = [
 	"disabled",
 	"aria-label",
 	"onClick"
@@ -614,4 +614,4 @@ var Be = { class: "library-page" }, Ve = {
 //#endregion
 export { Y as default };
 
-//# sourceMappingURL=LibraryPage-BAZHzkdn.js.map
+//# sourceMappingURL=LibraryPage-COsOylYd.js.map

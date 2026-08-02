@@ -1196,7 +1196,7 @@ function Bi(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-BAZHzkdn.js")
+			component: () => import("./LibraryPage-COsOylYd.js")
 		},
 		{
 			path: `${t}/player/:id`,
