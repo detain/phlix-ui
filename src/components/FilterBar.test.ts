@@ -17,6 +17,52 @@ import Combobox from './ui/Combobox.vue';
 import { useMediaStore } from '../stores/useMediaStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 
+/**
+ * S118 — the leak `enableAutoUnmount(afterEach)` below exists to stop, made
+ * OBSERVABLE.
+ *
+ * The shipped S118 fix is a single line of test scaffolding, and nothing failed
+ * when it was deleted: the suite stayed green (228 files / 4 210 passed) because
+ * a leak costs TIME, not correctness. That makes it exactly the kind of fix that
+ * survives until the next person tidies an "unused" import — at which point the
+ * intermittent 5 s / 30 s timeout comes back and looks like a new bug.
+ *
+ * `FilterBar.vue:322` subscribes to window `scroll` in `onMounted` and only
+ * unsubscribes in `onBeforeUnmount`, so every wrapper this file mounts and never
+ * destroys stays subscribed. The one `window.dispatchEvent(new Event('scroll'))`
+ * in the sticky test then wakes ALL of them and awaiting the flush re-renders
+ * every one.
+ *
+ * A Set keyed by the handler is used rather than a counter on purpose:
+ * `onBeforeUnmount` calls `removeEventListener` UNCONDITIONALLY, including for a
+ * `sticky: false` instance that never subscribed, so a naive +1/-1 counter goes
+ * negative and masks the leak it is supposed to catch.
+ */
+type ScrollListener = Parameters<Window['addEventListener']>[1];
+const liveScrollHandlers = new Set<ScrollListener>();
+let scrollSubscriptionsEverSeen = 0;
+const realAddEventListener = window.addEventListener.bind(window);
+const realRemoveEventListener = window.removeEventListener.bind(window);
+window.addEventListener = ((
+  type: string,
+  listener: ScrollListener,
+  options?: boolean | AddEventListenerOptions,
+) => {
+  if (type === 'scroll') {
+    liveScrollHandlers.add(listener);
+    scrollSubscriptionsEverSeen += 1;
+  }
+  realAddEventListener(type, listener, options);
+}) as typeof window.addEventListener;
+window.removeEventListener = ((
+  type: string,
+  listener: ScrollListener,
+  options?: boolean | EventListenerOptions,
+) => {
+  if (type === 'scroll') liveScrollHandlers.delete(listener);
+  realRemoveEventListener(type, listener, options);
+}) as typeof window.removeEventListener;
+
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
@@ -434,5 +480,26 @@ describe('FilterBar — spacing + sticky-shadow CSS contract (S08)', () => {
     // state would be indistinguishable and the toggle test above would be
     // pinning a class that changes nothing.
     expect(base![1]).toMatch(/box-shadow:\s*var\(--shadow-2/);
+  });
+});
+
+/**
+ * S118 — the recurrence guard for this file's own fix. Declared LAST because it
+ * reads the state every describe above it leaves behind; Vitest runs a file's
+ * tests in source order, so by the time this runs every earlier wrapper has been
+ * through `enableAutoUnmount`'s `afterEach`.
+ */
+describe('FilterBar — leaks no mounted instance onto window scroll (S118)', () => {
+  it('has actually observed subscriptions, so the check below is not vacuous', () => {
+    // Two-sided. If FilterBar ever stops subscribing, the assertion in the next
+    // test becomes trivially true and would keep passing forever.
+    expect(scrollSubscriptionsEverSeen).toBeGreaterThan(1);
+  });
+
+  it('leaves nothing subscribed once every test in this file has finished', () => {
+    // Deleting `enableAutoUnmount(afterEach)` makes this the count of abandoned
+    // FilterBar instances — each one re-rendered by the single scroll event the
+    // sticky test dispatches, which is the 1 506 ms S118 measured and removed.
+    expect([...liveScrollHandlers]).toHaveLength(0);
   });
 });

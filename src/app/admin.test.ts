@@ -129,9 +129,20 @@ describe('buildAdminRoutes — nested AdminLayout shape (default = legacy server
 // headroom, which is the intermittent failure S118 exists to stop.
 //
 // There is no timer to fake and no wall-clock wait to shorten here, so raising
-// the budget is the honest fix; 30 s still fails fast on a genuinely hung
+// the budget is the honest fix; it still fails fast on a genuinely hung
 // navigation. Applied per-describe so a newly added navigating test inherits it.
-describe('buildAdminRoutes — resolved URLs + redirect (real router)', { timeout: 30_000 }, () => {
+//
+// S118 (audit 2026-08-02) — the literal was `30_000`, and 39092c5d had since
+// raised `vite.config.ts`'s GLOBAL `testTimeout` to exactly 30 000 ms. A global
+// default raised to an override's own value silently DELETES that override: the
+// literal still reads as deliberate and grants nothing at all. Verified live
+// rather than assumed — dropping this same describe option to `{ timeout: 1 }`
+// times out all three of its tests, so the option IS honoured and a value equal
+// to the global therefore buys exactly zero. Restored to a real budget at twice
+// the global, which is 27x the 2 227 ms this describe's slowest test measured
+// under the full parallel suite. `src/__tests__/vitest-timeout-budgets.test.ts`
+// now fails if any override is ever swallowed this way again.
+describe('buildAdminRoutes — resolved URLs + redirect (real router)', { timeout: 60_000 }, () => {
   function routerFor(base?: string) {
     return createRouter({ history: createMemoryHistory(), routes: buildAdminRoutes(base) });
   }
@@ -159,9 +170,10 @@ describe('buildAdminRoutes — resolved URLs + redirect (real router)', { timeou
 
 // Same reason as the describe above: the test at "redirects the bare /app/admin
 // to the hub dashboard" performs a real `router.push`, so it pays the lazy-import
-// cost for whichever hub page loads first. Measured at 550 ms under the full
-// parallel suite — lower than the server set, but the same failure mode.
-describe('buildHubAdminRoutes — the hub admin set', { timeout: 30_000 }, () => {
+// cost for whichever hub page loads first. Measured at 550 ms when S118 landed and
+// at 527 ms on the 2026-08-02 audit run — lower than the server set, but the same
+// failure mode, and it carried the same neutralised `30_000` for the same reason.
+describe('buildHubAdminRoutes — the hub admin set', { timeout: 60_000 }, () => {
   it('mounts exactly Hub Dashboard, Metrics, Users, Logs, Settings, Audit Logs, Request Queue', () => {
     const named = namedChildren(buildHubAdminRoutes());
     expect(named.map((c) => [c.name, c.path])).toEqual(HUB_PAGES.map(([n, s]) => [n, s]));
