@@ -190,6 +190,20 @@ describe('SeriesDetail (U3)', () => {
     expect(w.emitted('edit-metadata')?.[0]).toEqual([media()]);
     expect(w.emitted('explore-data')?.[0]).toEqual([media()]);
   });
+
+  // S02: the merged metadata-match action has to survive the series delegation
+  // too. The hero button emits `match`; the ⋯-menu's single "Match metadata"
+  // entry emits `refresh`. BOTH must bubble, or the series ⋯-menu entry silently
+  // stops opening the match modal. Its sibling re-emits above were pinned and
+  // these two were not — deleting either binding left the whole suite green.
+  it('re-emits the S02 match / refresh metadata actions to the parent', () => {
+    const w = mountIt();
+    const detail = w.findComponent(MediaDetail);
+    detail.vm.$emit('match', media());
+    detail.vm.$emit('refresh', media());
+    expect(w.emitted('match')?.[0]).toEqual([media()]);
+    expect(w.emitted('refresh')?.[0]).toEqual([media()]);
+  });
 });
 
 // Theme-music playback + the mute/stop control now live in MediaDetail (U4);

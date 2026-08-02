@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import LibrariesPage from './LibrariesPage.vue';
 import Button from '../../components/ui/Button.vue';
 import Select from '../../components/ui/Select.vue';
@@ -703,6 +706,39 @@ describe('Admin LibrariesPage — operations help text', () => {
     expect(details.element.hasAttribute('open')).toBe(true);
     expect(details.element.open).toBe(true);
     w.unmount();
+  });
+});
+
+/**
+ * S04, second acceptance criterion — "existing `[open]` CSS applies correctly".
+ *
+ * jsdom never applies an SFC's compiled `<style>`, so the rendered-DOM guard
+ * above cannot see this half at all: measured 2026-08-01, deleting the whole
+ * `.admin-libraries__help[open] .admin-libraries__help-summary` rule left the
+ * full 4,205-test suite GREEN. That rule is what S04 made load-bearing — before
+ * S04 the panel shipped collapsed, so the `[open]` state was the exception;
+ * now it is the DEFAULT rendering of the panel on every page load, and losing
+ * it collapses the summary flush against the definition list.
+ *
+ * Follows the `AppLayout.test.ts` / `Modal.test.ts` CSS-contract convention:
+ * read the raw SFC and assert the declaration.
+ */
+describe('Admin LibrariesPage — the [open] help-panel CSS contract (S04)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './LibrariesPage.vue'), 'utf8');
+
+  it('declares the open-state summary spacing rule', () => {
+    expect(src).toMatch(
+      /\.admin-libraries__help\[open\]\s+\.admin-libraries__help-summary\s*\{\s*margin-bottom:\s*var\(--space-3\);\s*\}/,
+    );
+  });
+
+  it('does NOT put that spacing on the base summary rule, so `[open]` genuinely changes something', () => {
+    // A "widening" that is already the default is not a widening. Isolate the
+    // base `.admin-libraries__help-summary { … }` block (the one NOT preceded by
+    // an attribute selector) and assert it carries no margin-bottom.
+    const base = /(?<![\]\w-])\.admin-libraries__help-summary\s*\{([^}]*)\}/.exec(src);
+    expect(base).not.toBeNull();
+    expect(base![1]).not.toContain('margin-bottom');
   });
 });
 

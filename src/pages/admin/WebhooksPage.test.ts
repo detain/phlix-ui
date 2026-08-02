@@ -495,3 +495,64 @@ describe('Admin WebhooksPage — test delivery', () => {
     w.unmount();
   });
 });
+
+/**
+ * S06 — anti-autofill hints on the HMAC signing-secret input.
+ *
+ * jsdom cannot drive a real password-manager autofill offer, so the regression
+ * guard is the rendered DOM: the secret input must carry
+ * `autocomplete="new-password"` + the four opt-out hints, and the non-secret
+ * name/url fields on the same form must NOT (no blanket over-application).
+ */
+describe('Admin WebhooksPage — anti-autofill hints on the secret input (S06)', () => {
+  /** Form input order: [0] name, [1] url, [2] secret. */
+  async function openForm(w: VueWrapper) {
+    await findBtn(w, 'Add webhook')!.trigger('click');
+    await flushPromises();
+    return modalPanel().querySelectorAll<HTMLInputElement>('.admin-webhooks__input');
+  }
+
+  it('stamps the signing secret with new-password + all four ignore hints', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const secret = (await openForm(w))[2]!;
+    expect(secret.getAttribute('type')).toBe('password');
+    expect(secret.getAttribute('autocomplete')).toBe('new-password');
+    expect(secret.getAttribute('data-lpignore')).toBe('true');
+    expect(secret.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(secret.hasAttribute('data-bwignore')).toBe(true);
+    expect(secret.getAttribute('data-form-type')).toBe('other');
+    w.unmount();
+  });
+
+  it('keeps the hints on the secret after the reveal toggle flips it to type=text', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openForm(w);
+    await findBtnIn(w, modalPanel(), 'Show')!.trigger('click');
+    await flushPromises();
+    const secret = modalPanel().querySelectorAll<HTMLInputElement>('.admin-webhooks__input')[2]!;
+    expect(secret.getAttribute('type')).toBe('text');
+    expect(secret.getAttribute('autocomplete')).toBe('new-password');
+    expect(secret.getAttribute('data-lpignore')).toBe('true');
+    expect(secret.getAttribute('data-form-type')).toBe('other');
+    w.unmount();
+  });
+
+  it('does NOT stamp the hints on the non-secret name/url fields', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const inputs = await openForm(w);
+    for (const el of [inputs[0]!, inputs[1]!]) {
+      expect(el.getAttribute('autocomplete')).toBe('off');
+      expect(el.hasAttribute('data-lpignore')).toBe(false);
+      expect(el.hasAttribute('data-1p-ignore')).toBe(false);
+      expect(el.hasAttribute('data-bwignore')).toBe(false);
+      expect(el.hasAttribute('data-form-type')).toBe(false);
+    }
+    w.unmount();
+  });
+});

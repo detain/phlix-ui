@@ -349,9 +349,10 @@ axis.
 `ApiClient.listArtists()` / `listAlbums()` / `listTracks()` take `{ limit, offset }` (`listAlbums` also
 takes `{ artist }`) and return the page envelopes `MusicArtistsResult` / `MusicAlbumsResult` /
 `MusicTracksResult` — the rows plus the `total` and the `limit`/`offset` the server actually *applied*,
-plus an `artist` echo of the applied filter on albums. Those three envelopes and the `MusicPageParams`
-argument type are exported from the package root; the row types *inside* them are **not**, so name a row
-structurally (`MusicAlbumsResult['albums'][number]`) rather than importing it. The artist drill-down
+plus an `artist` echo of the applied filter on albums. Those three envelopes, the `MusicPageParams`
+argument type **and the row types inside them** — `MusicArtist` / `MusicAlbum` / `MusicTrack` — are all
+exported from the package root, at parity with the book and audiobook families (S144); import a row by
+name rather than reaching for `MusicAlbumsResult['albums'][number]`. The artist drill-down
 filters **server-side** (`?artist=`, exact/case-insensitive/trimmed); do not filter an album page in the
 browser, because `/albums` is ordered globally by artist then title, so page 1 spans only a handful of
 artists. `getAlbum(title, artist?)` takes the artist for the same reason — album titles are shared

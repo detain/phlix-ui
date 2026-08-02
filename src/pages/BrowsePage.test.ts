@@ -9,6 +9,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // Mock useAuthStore before importing BrowsePage (which uses it).
 // This is needed because useResumeSync calls auth.client.get() for continue-watching,
@@ -1029,3 +1032,50 @@ describe('BrowsePage — see-all', () => {
     expect(push).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * S09 — the Browse page's double-padding fix.
+ *
+ * jsdom does not apply an SFC's compiled `<style>`. Measured 2026-08-01, putting
+ * `.browse-page`'s own `padding: var(--space-6)` back — the exact pre-S09 state —
+ * left the full 4,207-test suite GREEN, so the step's only user-visible effect
+ * was unpinned. Follows the `AppLayout.test.ts` CSS-contract convention.
+ */
+describe('BrowsePage — double-padding CSS contract (S09)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './BrowsePage.vue'), 'utf8');
+  const pageBlock = /(?<![\w.-])\.browse-page\s*\{([^}]*)\}/.exec(src);
+
+  it('gives `.browse-page` no outer padding of its own', () => {
+    expect(pageBlock).not.toBeNull();
+    expect(pageBlock![1]).toMatch(/padding:\s*0;/);
+  });
+
+  it('does not smuggle the gutter back in as a margin or a one-sided padding', () => {
+    expect(pageBlock![1]).not.toMatch(/margin:\s*var\(--space/);
+    expect(pageBlock![1]).not.toMatch(/padding-(top|block|block-start|inline):/);
+  });
+
+  it('fixes it PAGE-SCOPED, never by shrinking the shared shell gutter', () => {
+    // S09's out-of-scope line is explicit: Settings/Admin/Music/Search must not
+    // move. The complement of this assertion — `.shell__main` still declaring
+    // `padding: var(--space-6) var(--space-5)` — is pinned in AppLayout.test.ts;
+    // here we pin that BrowsePage did not reach across and override it.
+    // Comments are stripped first: the SFC legitimately NAMES `.shell__main` in
+    // prose to explain why the page zeroes its own padding, and matching that
+    // would make this assertion fail for the right code.
+    const selectors = cssSelectors(src);
+    expect(selectors.length).toBeGreaterThan(0);
+    expect(selectors.filter((s) => s.includes('shell__main'))).toEqual([]);
+  });
+});
+
+/**
+ * Every CSS selector declared in an SFC's `<style>` blocks, with `/* … *␘/`
+ * comments removed and at-rule/nested-block noise filtered out.
+ */
+function cssSelectors(sfc: string): string[] {
+  return [...sfc.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+    .map((m) => m[1].replace(/\/\*[\s\S]*?\*\//g, ''))
+    .flatMap((block) => [...block.matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim()))
+    .filter((s) => s.length > 0 && !s.startsWith('@'));
+}

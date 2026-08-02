@@ -16,6 +16,7 @@ export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './a
 export type { MediaItem } from './types/media-item';
 export type { BookProgress, BookChapter, BookMetadata, BookListItem, BookDetail, BooksResponse, BookResponse, BookReaderResponse, BookProgressResponse, SaveBookProgressInput, } from './types/book';
 export type { AudiobookChapter, AudiobookMetadata, AudiobookListItem, AudiobookDetail, AudiobookProgress, AudiobooksResponse, AudiobookResponse, AudiobookReaderResponse, AudiobookProgressResponse, SaveAudiobookProgressInput, } from './types/audiobook';
+export type { MusicArtist, MusicAlbum, MusicTrack } from './types/music';
 export type { LibraryQuery, LibraryQueryParams } from './types/library-query';
 export type { ProviderPriority, GenresMode } from './types/server-settings';
 export { default as Icon } from './components/Icon.vue';

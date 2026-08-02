@@ -7,6 +7,9 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Modal from './Modal.vue';
 import Sheet from './Sheet.vue';
 import Tooltip from './Tooltip.vue';
@@ -114,6 +117,31 @@ describe('Modal', () => {
     const panel = document.body.querySelector('.phlix-modal__panel')!;
     expect(panel.classList.contains('phlix-modal__panel--md')).toBe(true);
     w.unmount();
+  });
+});
+
+/**
+ * S05 — the `xl` size must actually WIDEN the panel, not merely land a class.
+ *
+ * The `it.each` mapping test above proves `size="xl"` puts `phlix-modal__panel--xl`
+ * on the panel, but jsdom never applies an SFC's compiled `<style>`, so that class
+ * can be present while the rule that widens it has been deleted. Measured 2026-08-01:
+ * replacing the `--xl` declaration with the base `max-width: 32rem` left the whole
+ * 4,181-test suite GREEN — S05's only user-visible effect (a wider plugin Configure
+ * modal) was completely unpinned. Follows the `AppLayout.test.ts` CSS-contract
+ * convention: read the raw SFC and assert the declaration.
+ */
+describe('Modal — the `xl` size is a real widening, not just a class (S05)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './Modal.vue'), 'utf8');
+
+  it('declares the `--xl` panel max-width', () => {
+    expect(src).toMatch(/\.phlix-modal__panel--xl\s*\{\s*max-width:\s*min\(90vw,\s*72rem\);\s*\}/);
+  });
+
+  it('keeps the base panel narrower, so `--xl` genuinely widens it', () => {
+    // 32rem base vs 72rem cap — asserted together so a "widening" that silently
+    // matched the base (or a base that grew to meet it) still fails here.
+    expect(src).toMatch(/\.phlix-modal__panel\s*\{[\s\S]*?max-width:\s*32rem;/);
   });
 });
 

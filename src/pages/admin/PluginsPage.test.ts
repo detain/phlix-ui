@@ -591,6 +591,28 @@ describe('Admin PluginsPage — configure', () => {
     w.unmount();
   });
 
+  /**
+   * S05 — the Configure modal is the reason the `xl` size exists. Measured
+   * 2026-08-01: downgrading this modal to `size="lg"` left the whole 4,181-test
+   * suite GREEN, so the step's user-visible outcome (a wider, less cramped plugin
+   * Configure dialog) had nothing holding it in place. `Modal.test.ts` pins that
+   * `--xl` is a real widening; this pins that Configure is the consumer of it.
+   */
+  it('opens the Configure modal at the xl size (S05)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const panel = modalPanel();
+    expect(panel).toBeTruthy();
+    expect(panel.classList.contains('phlix-modal__panel--xl')).toBe(true);
+    // …and no narrower modifier leaks onto it alongside.
+    for (const smaller of ['sm', 'md', 'lg']) {
+      expect(panel.classList.contains(`phlix-modal__panel--${smaller}`)).toBe(false);
+    }
+    w.unmount();
+  });
+
   it('shows "Not set" for an unstored secret', async () => {
     const detail = {
       ...DETAIL_A,
@@ -684,6 +706,44 @@ describe('Admin PluginsPage — configure', () => {
     const secret = modalPanel().querySelector<HTMLInputElement>('#plugin-setting-api_key')!;
     expect(secret.getAttribute('type')).toBe('password');
     expect(secret.getAttribute('autocomplete')).toBe('new-password');
+    w.unmount();
+  });
+
+  /**
+   * S06 — the four password-manager opt-out hints, not just `autocomplete`.
+   *
+   * Chrome/Firefox honour `autocomplete="new-password"`; LastPass/1Password/
+   * Bitwarden routinely do not and offer a saved site credential anyway — which
+   * is the actual reported symptom (a saved password overwrote an API key).
+   * Every hint here is conditionally bound on `descriptor.secret`, so this also
+   * pins that the condition still evaluates for a secret descriptor.
+   */
+  it('stamps the secret input with all four password-manager ignore hints (S06)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    const secret = modalPanel().querySelector<HTMLInputElement>('#plugin-setting-api_key')!;
+    expect(secret.getAttribute('data-lpignore')).toBe('true');
+    expect(secret.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(secret.hasAttribute('data-bwignore')).toBe(true);
+    expect(secret.getAttribute('data-form-type')).toBe('other');
+    w.unmount();
+  });
+
+  it('does NOT stamp the hints on a non-secret descriptor (S06, no over-application)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openConfigure(w);
+    // page_size is `secret: false` — every hint is bound to `undefined` there,
+    // which Vue drops from the DOM entirely.
+    const plain = modalPanel().querySelector<HTMLInputElement>('#plugin-setting-page_size')!;
+    expect(plain.getAttribute('autocomplete')).toBe('off');
+    expect(plain.hasAttribute('data-lpignore')).toBe(false);
+    expect(plain.hasAttribute('data-1p-ignore')).toBe(false);
+    expect(plain.hasAttribute('data-bwignore')).toBe(false);
+    expect(plain.hasAttribute('data-form-type')).toBe(false);
     w.unmount();
   });
 

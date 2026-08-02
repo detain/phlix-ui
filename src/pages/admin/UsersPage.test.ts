@@ -358,6 +358,34 @@ describe('Admin UsersPage — anti-autofill hints on the password input (S06)', 
     expect(username.hasAttribute('data-lpignore')).toBe(false);
     w.unmount();
   });
+
+  // The profile PIN is the page's SECOND secret input and lives behind two
+  // clicks (Manage profiles → Set PIN), so the create-user test above never
+  // reaches it — it needs its own guard.
+  it('stamps the profile Set-PIN input too (the page has two secret inputs)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Manage profiles for alice')!
+      .trigger('click');
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Set PIN for Kids')!
+      .trigger('click');
+    await flushPromises();
+    const subform = modalPanel().querySelector<HTMLElement>('.admin-users__subform')!;
+    const pin = subform.querySelector<HTMLInputElement>('.admin-users__input')!;
+    expect(pin.getAttribute('type')).toBe('password');
+    expect(pin.getAttribute('autocomplete')).toBe('new-password');
+    expect(pin.getAttribute('data-lpignore')).toBe('true');
+    expect(pin.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(pin.hasAttribute('data-bwignore')).toBe(true);
+    expect(pin.getAttribute('data-form-type')).toBe('other');
+    w.unmount();
+  });
 });
 
 describe('Admin UsersPage — set admin + reset password', () => {
