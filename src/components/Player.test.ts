@@ -913,7 +913,7 @@ describe('Player — server subtitle sidecars (U4)', () => {
       language: d.lang,
       label: d.label,
       mode: 'disabled',
-      activeCues: null,
+      activeCues: null as { text: string }[] | null,
       addEventListener() {},
       removeEventListener() {},
     }));
@@ -921,6 +921,15 @@ describe('Player — server subtitle sidecars (U4)', () => {
     tracks.forEach((t, i) => (list[i] = t));
     Object.defineProperty(video, 'textTracks', { configurable: true, get: () => list });
     return tracks;
+  }
+
+  /** Flush ONE macrotask so `CaptionOverlay`'s `setTimeout(0)` deferred mode
+   *  re-check (S13) actually runs — under REAL timers, exactly as it does in a
+   *  browser. `nextTick()` only drains the microtask/render queue and will never
+   *  fire it, so a test that omits this asserts on the pre-re-check state. */
+  async function flushDeferredRecheck(): Promise<void> {
+    await new Promise((r) => setTimeout(r, 0));
+    await nextTick();
   }
 
   it('renders a <track> per server subtitle track with the right src/srclang/label (no native default attr)', async () => {
@@ -972,6 +981,66 @@ describe('Player — server subtitle sidecars (U4)', () => {
     await nextTick();
     expect(usePlayerStore().subtitleLang).toBe('jpn'); // honoured the server default
     expect(w.find('.capmenu__btn').attributes('aria-label')).toBe('Captions (on)');
+  });
+
+  // ---- S13 acceptance: the server default must PAINT, not merely be selected ----
+  // The test above proves the SELECTION half (store + menu label) and the
+  // CaptionOverlay unit tests prove the PAINT half in isolation; neither joins
+  // them, so nothing asserted the step's actual sentence — "a title with a
+  // server-flagged default subtitle shows captions without a manual toggle".
+  // These two do, end-to-end through the real Player → CaptionOverlay tree with
+  // ZERO user interaction (no click, no keypress, no store.setSubtitle()).
+  //
+  // ⚠️ MEASURED LIMIT (2026-08-02, jsdom 29.1.1): jsdom never loads media, so on a
+  // REAL <video>/<track> in this environment `video.readyState === 0`,
+  // `trackEl.readyState === 0` (never 1/2), `video.textTracks.length === 0` even
+  // with <track> children, and `trackEl.track` is `undefined` (unimplemented).
+  // That is why every caption test here shadows `textTracks` with a double: the
+  // overlay's `trackElementFor` identity match (`el.track === track`) can never
+  // succeed against a real jsdom <track>, so the `<track>` `load`-listener branch
+  // is unreachable from a Player mount and only the S13 deferred re-check runs.
+  // The browser half of the AC is therefore NOT provable here — see the worklog.
+
+  it('paints the server-default subtitle in the overlay on load, with no user interaction (S13)', async () => {
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'eng', label: 'English', default: false }),
+      srvTrack({ index: 1, language: 'jpn', label: 'Japanese', default: true, url: 'http://x/hls/j/sub-1.vtt' }),
+    ];
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    const tracks = injectSubtitleTracks(video, [{ lang: 'eng', label: 'English' }, { lang: 'jpn', label: 'Japanese' }]);
+    // The server default already has a cue active at t=0 — the case that used to
+    // stay blank because the engine fires no `cuechange` for it.
+    tracks[1].activeCues = [{ text: 'The sleeper must awaken' }];
+    video.dispatchEvent(new Event('loadedmetadata')); // the ONLY input
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBe('jpn'); // selection half
+    expect(w.find('.player__captions').exists()).toBe(true); // …and it actually paints
+    expect(w.find('.player__caption-line').text()).toBe('The sleeper must awaken');
+    expect(tracks[1].mode).toBe('hidden'); // parsed for our overlay, not painted natively
+    expect(tracks[0].mode).toBe('disabled');
+  });
+
+  it('re-settles the server-default track and paints after a competing owner stamps on its mode (S13 deferred re-check, real timers)', async () => {
+    tc().subtitleTracks.value = [
+      srvTrack({ index: 0, language: 'jpn', label: 'Japanese', default: true, url: 'http://x/hls/j/sub-0.vtt' }),
+    ];
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    const tracks = injectSubtitleTracks(video, [{ lang: 'jpn', label: 'Japanese' }]);
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    expect(usePlayerStore().subtitleLang).toBe('jpn');
+    expect(tracks[0].mode).toBe('hidden'); // the overlay bound and set the mode
+    expect(w.find('.player__captions').exists()).toBe(false); // cues not surfaced yet → blank
+    // A THIRD owner stamps on the mode after the overlay bound. In a browser this
+    // is either the native `default` attribute (→ 'showing', the binding S13
+    // removed) or hls.js's subtitle-track controller (→ 'disabled', which is why
+    // hls-playback.ts pins `renderTextTracksNatively: false`). The sidecar's cue
+    // becomes active with no `cuechange` — the blank-until-toggle state.
+    tracks[0].mode = 'disabled';
+    tracks[0].activeCues = [{ text: 'Fear is the mind-killer' }];
+    await flushDeferredRecheck();
+    expect(tracks[0].mode).toBe('hidden'); // re-asserted by the deferred applyTrackModes
+    expect(w.find('.player__caption-line').text()).toBe('Fear is the mind-killer');
   });
 
   it('does NOT override an explicit persisted user caption choice with the server default', async () => {
