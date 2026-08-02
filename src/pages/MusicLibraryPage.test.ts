@@ -622,7 +622,24 @@ describe('MusicLibraryPage', () => {
   // S110 — paging + server-side artist filter, against the prod-shaped fake
   // server. The numbers below are production's: 2,197 artists / 5,091 albums.
   // =========================================================================
-  describe('paging the library (S110)', () => {
+  // S118 (completion) — an explicit budget for this whole describe, above the
+  // GLOBAL `testTimeout`, not equal to it.
+  //
+  // `vite.config.ts`'s global default was raised 5 000 → 30 000 ms by 39092c5d
+  // (2026-08-01), which is AFTER S118 granted three specific sites an explicit
+  // 30 000. A global raised to an override's own value silently DELETES that
+  // override: the literal still reads as deliberate but grants nothing. The
+  // per-test `30000` at the end of "every artist on the LAST page…" below was
+  // exactly that, and it is the one that was measured to be in trouble —
+  // 19 960 ms of its 30 000 ms budget in a PASSING full-suite verbose run, i.e.
+  // 1.50x headroom. Two of twenty consecutive `npm run test:run` invocations
+  // then went red here, both on the two slowest runs of the twenty (77 s and
+  // 82 s against a 37 s median). The second casualty on one of those runs —
+  // "an album request abandoned by a view change…", which measures 117 ms —
+  // was collateral: vitest runs a file's tests serially in one worker, so the
+  // 20 s sibling starves whatever else is executing when the clock expires.
+  // Hence a floor on the describe as well as a raise on the one heavy test.
+  describe('paging the library (S110)', { timeout: 60_000 }, () => {
     /**
      * 2,197 artists and EXACTLY 5,091 albums: two each, one artist with 142 (the
      * production maximum) and 557 others with three.
@@ -814,9 +831,19 @@ describe('MusicLibraryPage', () => {
       expect(server.urlsFor('/api/v1/music/albums').every((u) => u.includes('artist='))).toBe(true);
       wrapper.unmount();
       // 97 real drill-downs, each re-rendering the 97-card grid: this one earns a
-      // longer budget than the 5 s default (it runs in ~2 s alone, but the suite
-      // runs 200+ files in parallel).
-    }, 30000);
+      // longer budget than the global default (it runs in ~2 s alone, but the
+      // suite runs 200+ files in parallel).
+      //
+      // S118 (completion): this was `30000`, which stopped meaning anything the
+      // moment 39092c5d raised the GLOBAL default to the same 30 000 ms.
+      // Measured at 19 960 ms under the full parallel suite on a run that
+      // PASSED — 1.50x headroom, thinner than anything S118 originally fixed —
+      // and it duly went red twice in twenty runs. 120 000 ms is 6.0x the
+      // measured cost and matches the budget S118 itself chose for the same
+      // class of "the work is genuinely this expensive" case at
+      // `src/__tests__/dist-player-split.test.ts:113`. Underscored so a future
+      // global raise cannot quietly equal it without someone reading this.
+    }, 120_000);
 
     it('keeps the artist page when returning from an album list', async () => {
       stubMusicServer(prodLibrary());
