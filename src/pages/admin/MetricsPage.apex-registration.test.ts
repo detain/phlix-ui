@@ -138,6 +138,19 @@ describe('UI-3.4 MetricsPage ApexCharts chart-type registration', () => {
     // the canvas is present, succeeding the instant it renders and failing only if
     // it never renders within a generous ceiling. This is a correct async wait, NOT
     // a retry/skip of the assertion.
+    //
+    // S136 — the ceiling was 3 000 ms and that was NOT generous enough. `testTimeout`
+    // does not govern a poller, so raising the global to 30 000 ms did nothing here:
+    // this test measures 578 ms solo (~5x headroom, the same ratio that made
+    // `admin.test.ts` flaky) and it went RED — "expected … to contain
+    // 'apexcharts-canvas'", not a timeout — under three concurrent full suites on
+    // 2026-08-02. 15 000 ms is 26x the measured cost and stays BELOW the 30 000 ms
+    // test budget so this assertion, not an anonymous timeout, is what reports.
+    // ⚠ What that no longer catches: a chart that regresses from 0.6 s to 10 s now
+    // passes. Accepted — the poller succeeds the instant the canvas appears, so the
+    // regression shows up in vitest's per-test duration, whereas the flake it
+    // replaces was indistinguishable from a real apex registration break.
+    // The floor is enforced by `src/__tests__/vitest-timeout-budgets.test.ts`.
     await flushPromises();
     await vi.waitFor(
       async () => {
@@ -147,7 +160,7 @@ describe('UI-3.4 MetricsPage ApexCharts chart-type registration', () => {
         // un-stubbed wrapper mounted and area/line resolved.
         expect(w.html()).toContain('apexcharts-canvas');
       },
-      { timeout: 3000, interval: 25 },
+      { timeout: 15_000, interval: 25 },
     );
 
     // No chart-type registration error reached the app error handler.
