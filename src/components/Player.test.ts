@@ -29,6 +29,7 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useSyncPlayStore } from '../stores/useSyncPlayStore';
 import type { MediaItem } from '../types/media-item';
+import { isRoute } from '../test/route-match';
 import type { SyncPlaySession, SyncPlayPlaybackCommand } from '../types/syncplay';
 import * as hlsTranscodeMod from '../composables/useHlsTranscode';
 
@@ -2449,7 +2450,9 @@ describe('Player — favorite + rating controls (Feature 16.1)', () => {
     await nextTick();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(String(url)).toContain('/api/v1/media/m1/favorite');
+    // S193: suffix-exact on the PATHNAME, so `/api/v1/media/m1/favorite-MUTATED` no
+    // longer satisfies it. `endsWith`, not `===`: the media base may prefix the path.
+    expect(isRoute(url, '/api/v1/media/m1/favorite')).toBe(true);
     expect(init?.method).toBe('POST');
     // optimistic flip already reflected in the control
     expect(favBtn(w).attributes('aria-pressed')).toBe('true');
@@ -2468,7 +2471,7 @@ describe('Player — favorite + rating controls (Feature 16.1)', () => {
     // If @update:level were ALSO bound this would be 2 (double-PUT) — assert ONE.
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(String(url)).toContain('/api/v1/media/m1/like'); // setLikeLevel endpoint
+    expect(isRoute(url, '/api/v1/media/m1/like')).toBe(true); // setLikeLevel endpoint (S193: suffix-exact)
     expect(init?.method).toBe('PUT');
     expect(love(w).props('level')).toBe(1); // optimistic 0→1
     vi.unstubAllGlobals();
@@ -2759,7 +2762,9 @@ describe('Player — marker-search routes through apiBase (UI-0.6, U-P6/U-P11)',
     const url = String(markerCalls[0][0]);
     expect(url.startsWith(HUB_BASE)).toBe(true); // hits the relay proxy base, not page origin
     expect(url).not.toContain(window.location.origin + '/api/v1/media/search/by-marker');
-    expect(url).toContain('/api/v1/media/search/by-marker');
+    // S193: suffix-exact on the PATHNAME — and note this url IS base-prefixed
+    // (`HUB_BASE` above), which is exactly why the rule is `endsWith` and not `===`.
+    expect(isRoute(url, '/api/v1/media/search/by-marker')).toBe(true);
   });
 
   it('aborts the in-flight marker-search when the similar modal closes', async () => {

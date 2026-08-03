@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import MusicLibraryPage from './MusicLibraryPage.vue';
+import { isRoute } from '../test/route-match';
 import MusicPager from '../components/MusicPager.vue';
 
 // ---------------------------------------------------------------------------
@@ -37,6 +38,23 @@ interface ServerAlbum {
   track_count: number;
   tracks: ServerTrackItem[];
 }
+
+/**
+ * The exact FLAT routes this page reads (`api/client.ts` `listArtists`/`listAlbums`
+ * `:1143`/`:1192`), plus the per-album DETAIL route `getAlbum` builds (`:1216`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * the route — rather than substring. `u.includes('/api/v1/music/albums')` matched
+ * `/api/v1/music/albums-MUTATED` AND the detail route `/api/v1/music/albums/{title}`,
+ * so the detail request (`MusicLibraryPage.vue:329`) was answered with the LIST
+ * envelope `{ albums: [...] }` instead of `{ album }` — a wrong-shape reply the
+ * looseness hid. The detail route now has its own branch. `endsWith`, not `===`:
+ * the media base legitimately prefixes the path on the hub.
+ */
+const ARTISTS_PATH = '/api/v1/music/artists';
+const ALBUMS_PATH = '/api/v1/music/albums';
+const TRACKS_PATH = '/api/v1/music/tracks';
+const albumDetailPath = (title: string): string => `${ALBUMS_PATH}/${encodeURIComponent(title)}`;
 
 function artist(over: Partial<ServerArtist> = {}): ServerArtist {
   return { name: 'The Flaming Lips', album_count: 2, track_count: 0, albums: [], ...over };
@@ -115,15 +133,20 @@ function stubFetch(artistsList: ServerArtist[], albumsList: ServerAlbum[], track
   // embedded tracks, falling back to /tracks only when an album has none.
   fetchStub = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/music/albums')) {
+    if (isRoute(u, ALBUMS_PATH)) {
       return Promise.resolve(jsonResponse({ albums: albumsList }));
     }
-    if (u.includes('/api/v1/music/tracks')) {
+    if (isRoute(u, TRACKS_PATH)) {
       return Promise.resolve(jsonResponse({ tracks: tracksList }));
     }
-    if (u.includes('/api/v1/music/artists')) {
+    if (isRoute(u, ARTISTS_PATH)) {
       return Promise.resolve(jsonResponse({ artists: artistsList }));
     }
+    // The album DETAIL route (`getAlbum`, used when an album row carries no
+    // embedded tracks) — a DIFFERENT route from the list above, and one the old
+    // substring matcher silently answered with the list envelope.
+    const detail = albumsList.find((a) => isRoute(u, albumDetailPath(a.name)));
+    if (detail) return Promise.resolve(jsonResponse({ album: detail }));
     return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
   });
   vi.stubGlobal('fetch', fetchStub);
@@ -442,7 +465,8 @@ describe('MusicLibraryPage', () => {
 
     expect(fetchStub).toHaveBeenCalled();
     const calledUrl = fetchStub.mock.calls[0][0] as string;
-    expect(calledUrl).toContain('/api/v1/music/artists');
+    // S193: suffix-exact on the PATHNAME (query stripped) — see ARTISTS_PATH above.
+    expect(isRoute(calledUrl, ARTISTS_PATH)).toBe(true);
   });
 
   // ---- Artist → Album navigation -------------------------------------------
@@ -465,9 +489,7 @@ describe('MusicLibraryPage', () => {
     expect(albumCards[0].text()).toContain('OK Computer');
 
     // Should have fetched albums from the FLAT albums route.
-    const albumFetchCalls = fetchStub.mock.calls.filter(
-      (c: unknown[]) => (c[0] as string).includes('/api/v1/music/albums'),
-    );
+    const albumFetchCalls = fetchStub.mock.calls.filter((c: unknown[]) => isRoute(c[0], ALBUMS_PATH));
     expect(albumFetchCalls).toHaveLength(1);
   });
 
@@ -494,8 +516,12 @@ describe('MusicLibraryPage', () => {
     expect(wrapper.find('.track-list').exists()).toBe(true);
 
     // No tracks fetch since the album carries its embedded (normalized) tracks.
+    // NB: substring, NOT `isRoute`, on purpose. This is a NEGATIVE assertion, and
+    // for a negative the LOOSER test is the STRONGER one: `.includes` also fails if
+    // the page fetched `/api/v1/music/tracks-typo`, whereas a suffix-exact matcher
+    // would quietly count that as "no tracks fetch". Deliberately left loose (S193).
     const tracksFetchCalls = fetchStub.mock.calls.filter(
-      (c: unknown[]) => (c[0] as string).includes('/api/v1/music/tracks'),
+      (c: unknown[]) => (c[0] as string).includes(TRACKS_PATH),
     );
     expect(tracksFetchCalls).toHaveLength(0);
   });

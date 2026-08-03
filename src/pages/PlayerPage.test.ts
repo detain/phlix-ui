@@ -19,6 +19,7 @@ import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { usePlayerUiStore } from '../stores/usePlayerUiStore';
 import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
+import { isRoute, hasQuery, pathnameOf } from '../test/route-match';
 
 /** Server playback-info shape (markers + chapters; NO stream url). */
 interface PlaybackInfo {
@@ -73,21 +74,64 @@ function errorResponse(status = 500, body: unknown = { error: 'boom' }): Respons
  *
  *  Uses mockImplementation to route by URL so retry calls (which re-use the same
  *  mock) still get the correct response per endpoint, not the fallback queue response.
- *  Routing order: queue (/similar) → by-id (exact /media/:id) → playback-info. */
+ *  Routing order: by-id (exact /media/:id) → playback-info → the up-next queue
+ *  fall-through (the genre-similar list fetch, and the series-children ?parentId=). */
+/**
+ * The exact routes this page reads, as PATH builders + shape predicates.
+ *
+ * S193: every fetch double here now decides by PATHNAME (query stripped), suffix-
+ * exact and prefix-tolerant, instead of by substring. Substring matching could not
+ * tell the real route from a suffix-appended one — `'/api/v1/media/m1'.includes(…)`
+ * is also true of `/api/v1/media/m1-MUTATED` — and it conflated routes that are NOT
+ * the same: `u.includes('/api/v1/media/e2')` matched the by-id route, the
+ * `/playback-info` sub-route and any id merely PREFIXED by `e2`, which is why every
+ * stub in this file carried hand-written `&& !u.includes('playback-info')` /
+ * `&& !u.includes('parentId')` exclusions. `isRoute` makes those exclusions
+ * unnecessary: `/api/v1/media/e2/playback-info` simply does not END WITH
+ * `/api/v1/media/e2`.
+ *
+ * `endsWith`, not `===`: the media base legitimately PREFIXES these paths on the hub
+ * (`/api/v1/servers/{id}/proxy/api/v1/media/e2`), and `mountAt` can set a
+ * `mediaApiBase`, so an exact-equality matcher would stop matching.
+ */
+const MEDIA_LIST_PATH = '/api/v1/media';
+const byIdPath = (id: string): string => `${MEDIA_LIST_PATH}/${encodeURIComponent(id)}`;
+const playbackInfoPath = (id: string): string => `${byIdPath(id)}/playback-info`;
+
+/** The by-id detail route for `id` — NOT its `/playback-info` sub-route. */
+const isById = (url: unknown, id: string): boolean => isRoute(url, byIdPath(id));
+
+/**
+ * ANY per-item playback-info route, for stubs that serve several ids (binge
+ * navigation). A pathname SHAPE anchored at the end, so — unlike
+ * `.includes('/playback-info')` — `/playback-info-MUTATED` and
+ * `/api/v1/media-MUTATED/m1/playback-info` do not match.
+ */
+const isAnyPlaybackInfo = (url: unknown): boolean =>
+  /\/api\/v1\/media\/[^/]+\/playback-info$/.test(pathnameOf(url));
+
+/**
+ * The series-children fetch: `GET /api/v1/media?parentId=<id>` — the SAME route as
+ * the list/genre-queue fetch, so only the QUERY distinguishes it. Read as a parsed
+ * parameter rather than the substring `'parentId=<id>'`, which would also fire on
+ * `?notParentId=x` and on `?parentId=<id>-other`.
+ */
+const isChildrenOf = (url: unknown, parentId: string): boolean =>
+  isRoute(url, MEDIA_LIST_PATH) && hasQuery(url, 'parentId', parentId);
+
 function okFetch(item: MediaItem, playback: Partial<PlaybackInfo> | null = {}, items: MediaItem[] = []) {
   const fn = vi.fn().mockImplementation((url: string) => {
     const urlStr = String(url);
-    // Queue endpoint: /api/v1/media/{id}/similar?genres[]=...
-    if (urlStr.includes('/similar')) {
-      return Promise.resolve(jsonResponse({ items, total: items.length }));
-    }
-    // by-id endpoint: /api/v1/media/{id} (NOT /media/{id}/playback-info or /media/{id}/...)
-    // Use a regex to match /media/{id} exactly (no trailing path segments beyond the id)
-    if (urlStr.match(/\/api\/v1\/media\/[^/?]+(\?|$)/) && !urlStr.includes('playback-info') && !urlStr.includes('parentId')) {
+    // by-id endpoint: /api/v1/media/{id}. Suffix-exact, so it can no longer swallow
+    // /playback-info or the ?parentId= children fetch — the two exclusions this
+    // branch used to need are now structural. (The `/similar` branch that used to sit
+    // above it was DEAD: PlayerPage has no `/similar` call — its queue is the
+    // genre-similar LIST fetch, which the fall-through below already serves.)
+    if (isById(urlStr, item.id)) {
       return Promise.resolve(jsonResponse({ item }));
     }
     // playback-info endpoint: /api/v1/media/{id}/playback-info
-    if (urlStr.includes('/playback-info')) {
+    if (isAnyPlaybackInfo(urlStr)) {
       if (playback === null) return Promise.resolve(errorResponse(404));
       return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [], ...playback }));
     }
@@ -157,8 +201,18 @@ describe('PlayerPage — load + stream resolution', () => {
     expect(player.exists()).toBe(true);
     expect((player.props('media') as MediaItem).name).toBe('Dune: Part Two');
     expect(player.props('streamUrl')).toBe('/media/m1/stream');
-    // first call hit the by-id endpoint
-    expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/media/m1');
+    // It hit the by-id endpoint — suffix-exact, so `/api/v1/media/m1-MUTATED` and
+    // `/api/v1/media/m1/playback-info` no longer satisfy it (S193).
+    //
+    // ⚠ This used to read `expect(calls[0][0]).toContain('/api/v1/media/m1')` under the
+    // comment "first call hit the by-id endpoint". That claim is FALSE and the substring
+    // hid it: item and playback-info are dispatched CONCURRENTLY (UI-0.4), and
+    // `/api/v1/media/m1/playback-info` CONTAINS `/api/v1/media/m1`, so whichever of the
+    // two landed first satisfied it. Asserting the by-id call happened at all is the
+    // claim this test can actually make; the order is asserted nowhere because the page
+    // deliberately does not define one.
+    expect(fetchMock.mock.calls.some(([u]) => isById(u, 'm1'))).toBe(true);
+    expect(fetchMock.mock.calls.some(([u]) => isRoute(u, playbackInfoPath('m1')))).toBe(true);
   });
 
   it('still streams from /media/:id/stream when playback-info is absent (404)', async () => {
@@ -242,10 +296,10 @@ describe('PlayerPage — load + stream resolution', () => {
     let byIdCalls = 0;
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       const u = String(url);
-      if (u.includes('/playback-info')) {
+      if (isAnyPlaybackInfo(u)) {
         return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
       }
-      if (u.match(/\/api\/v1\/media\/[^/?]+(\?|$)/) && !u.includes('parentId')) {
+      if (isById(u, 'm1')) {
         byIdCalls += 1;
         return byIdCalls === 1
           ? Promise.resolve(errorResponse(500)) // initial by-id fails
@@ -312,8 +366,8 @@ describe('PlayerPage — playback-info (chapters + skip markers)', () => {
     const item = media({ id: 'm1' });
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       const u = String(url);
-      if (u.includes('/playback-info')) return new Promise<Response>(() => {}); // NEVER resolves
-      if (u.match(/\/api\/v1\/media\/[^/?]+(\?|$)/) && !u.includes('parentId')) {
+      if (isAnyPlaybackInfo(u)) return new Promise<Response>(() => {}); // NEVER resolves
+      if (isById(u, 'm1')) {
         return Promise.resolve(jsonResponse({ item }));
       }
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
@@ -328,7 +382,7 @@ describe('PlayerPage — playback-info (chapters + skip markers)', () => {
     expect(player.props('chapters')).toEqual([]);
     expect(player.props('introMarker')).toBeNull();
     // playback-info WAS dispatched (concurrent), not skipped.
-    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/playback-info'))).toBe(true);
+    expect(fetchMock.mock.calls.some(([u]) => isRoute(u, playbackInfoPath('m1')))).toBe(true);
   });
 });
 
@@ -368,7 +422,12 @@ describe('PlayerPage — up-next queue', () => {
   // fetch lands LAST" interleaving — the exact one the old code lost to — is FORCED, not
   // hoped for. If the genre fetch is issued at all, its response is guaranteed to arrive
   // after the episode-ordered path has already written the queue.
-  const isGenreQueue = (u: string) => u.includes('/api/v1/media?') && u.includes('sort=rating');
+  // The genre-similar queue: `GET /api/v1/media?…&sort=rating&…` (buildMediaUrl, in
+  // PlayerPage.vue:234). Path + PARSED query, not two substrings: `'sort=rating'`
+  // also matches `?sort=ratingX`, and `'/api/v1/media?'` misses a base-prefixed url
+  // with no query at all.
+  const isGenreQueue = (u: string): boolean =>
+    isRoute(u, MEDIA_LIST_PATH) && hasQuery(u, 'sort', 'rating');
 
   /** A promise whose settlement the TEST controls — no timers, no sampling, no retries. */
   function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
@@ -390,8 +449,6 @@ describe('PlayerPage — up-next queue', () => {
     // Genre-similar rows the held-open loadQueue fetch would return — these must NOT win.
     const g1 = media({ id: 'q-g1', type: 'movie', genres: ['Sci-Fi'] });
     const g2 = media({ id: 'q-g2', type: 'movie', genres: ['Sci-Fi'] });
-    const isById = (u: string, id: string) =>
-      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
     // The genre response is HELD until the test releases it — see the note above.
     const genreGate = deferred<Response>();
     let genreRequests = 0;
@@ -403,13 +460,13 @@ describe('PlayerPage — up-next queue', () => {
       }
       // Series-tree + by-id + playback-info all resolve IMMEDIATELY.
       if (isById(u, 'q-e1')) return Promise.resolve(jsonResponse({ item: e1 }));
-      if (u.includes('playback-info')) {
+      if (isAnyPlaybackInfo(u)) {
         return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
       }
-      if (u.includes('/api/v1/media/q-ser') && !u.includes('parentId')) {
+      if (isById(u, 'q-ser')) {
         return Promise.resolve(jsonResponse({ item: media({ id: 'q-ser', type: 'series' }) }));
       }
-      if (u.includes('parentId=q-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
+      if (isChildrenOf(u, 'q-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });
     await mountAt('q-e1', fetchMock);
@@ -450,10 +507,10 @@ describe('PlayerPage — up-next queue', () => {
         genreRequests += 1;
         return genreGate.promise;
       }
-      if (u.includes('playback-info')) {
+      if (isAnyPlaybackInfo(u)) {
         return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
       }
-      if (u.includes('/api/v1/media/ctl-m1')) return Promise.resolve(jsonResponse({ item: base }));
+      if (isById(u, 'ctl-m1')) return Promise.resolve(jsonResponse({ item: base }));
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });
     await mountAt('ctl-m1', fetchMock);
@@ -489,8 +546,6 @@ describe('PlayerPage — up-next queue', () => {
     const e2 = ep({ id: 'nx-e2', parent_id: 'nx-ser', season_number: 1, episode_number: null });
     const e3 = ep({ id: 'nx-e3', parent_id: 'nx-ser', season_number: 2, episode_number: 1 });
     const g1 = media({ id: 'nx-g1', type: 'movie', genres: ['Sci-Fi'] });
-    const isById = (u: string, id: string) =>
-      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
     const genreGate = deferred<Response>();
     let genreRequests = 0;
     const fetchMock = vi.fn((url: string) => {
@@ -500,13 +555,13 @@ describe('PlayerPage — up-next queue', () => {
         return genreGate.promise;
       }
       if (isById(u, 'nx-e2')) return Promise.resolve(jsonResponse({ item: e2 }));
-      if (u.includes('playback-info')) {
+      if (isAnyPlaybackInfo(u)) {
         return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
       }
-      if (u.includes('/api/v1/media/nx-ser') && !u.includes('parentId')) {
+      if (isById(u, 'nx-ser')) {
         return Promise.resolve(jsonResponse({ item: media({ id: 'nx-ser', type: 'series' }) }));
       }
-      if (u.includes('parentId=nx-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
+      if (isChildrenOf(u, 'nx-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });
     const { w } = await mountAt('nx-e2', fetchMock);
@@ -538,8 +593,6 @@ describe('PlayerPage — up-next queue', () => {
     const e2 = ep({ id: 'bz-e2', parent_id: 'bz-ser', season_number: 1, episode_number: 2 });
     const e3 = ep({ id: 'bz-e3', parent_id: 'bz-ser', season_number: 1, episode_number: 3 });
     const byId: Record<string, MediaItem> = { 'bz-e1': e1, 'bz-e2': e2, 'bz-e3': e3 };
-    const isById = (u: string, id: string) =>
-      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
     // Same deferred gate as the race test: if anything DID fire the genre queue during the
     // binge, its response is forced to land after both navigations have settled.
     const genreGate = deferred<Response>();
@@ -553,13 +606,13 @@ describe('PlayerPage — up-next queue', () => {
       if (isById(u, 'bz-e1')) return Promise.resolve(jsonResponse({ item: byId['bz-e1'] }));
       if (isById(u, 'bz-e2')) return Promise.resolve(jsonResponse({ item: byId['bz-e2'] }));
       if (isById(u, 'bz-e3')) return Promise.resolve(jsonResponse({ item: byId['bz-e3'] }));
-      if (u.includes('playback-info')) {
+      if (isAnyPlaybackInfo(u)) {
         return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
       }
-      if (u.includes('/api/v1/media/bz-ser') && !u.includes('parentId')) {
+      if (isById(u, 'bz-ser')) {
         return Promise.resolve(jsonResponse({ item: media({ id: 'bz-ser', type: 'series' }) }));
       }
-      if (u.includes('parentId=bz-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
+      if (isChildrenOf(u, 'bz-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2, e3], total: 3 }));
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });
     const { router } = await mountAt('bz-e1', fetchMock);
@@ -568,7 +621,7 @@ describe('PlayerPage — up-next queue', () => {
     const player = usePlayerStore();
     expect(player.queue.map((m) => m.id)).toEqual(['bz-e2', 'bz-e3']);
     const childrenCalls = () =>
-      fetchMock.mock.calls.filter((c) => String(c[0]).includes('parentId=bz-ser')).length;
+      fetchMock.mock.calls.filter((c) => isChildrenOf(c[0], 'bz-ser')).length;
     expect(childrenCalls()).toBe(1);
 
     // Binge to the next sibling — CACHE HIT: queue reseeds to [e3] from the cached order,
@@ -598,19 +651,17 @@ describe('PlayerPage — up-next queue', () => {
     const e2 = ep({ id: 'fe-e2', parent_id: 'fe-ser', season_number: 1, episode_number: 2 }); // finale
     const g1 = media({ id: 'fe-g1', type: 'movie', genres: ['Sci-Fi'] });
     const g2 = media({ id: 'fe-g2', type: 'movie', genres: ['Sci-Fi'] });
-    const isById = (u: string, id: string) =>
-      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
     const fetchMock = vi.fn((url: string) => {
       const u = String(url);
       if (isGenreQueue(u)) return Promise.resolve(jsonResponse({ items: [g1, g2], total: 2 }));
       if (isById(u, 'fe-e2')) return Promise.resolve(jsonResponse({ item: e2 }));
-      if (u.includes('playback-info')) {
+      if (isAnyPlaybackInfo(u)) {
         return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
       }
-      if (u.includes('/api/v1/media/fe-ser') && !u.includes('parentId')) {
+      if (isById(u, 'fe-ser')) {
         return Promise.resolve(jsonResponse({ item: media({ id: 'fe-ser', type: 'series' }) }));
       }
-      if (u.includes('parentId=fe-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2], total: 2 }));
+      if (isChildrenOf(u, 'fe-ser')) return Promise.resolve(jsonResponse({ items: [e1, e2], total: 2 }));
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });
     const { w } = await mountAt('fe-e2', fetchMock);
@@ -645,10 +696,10 @@ describe('PlayerPage — prev/next episode (U2)', () => {
     const e2 = ep({ id: 'e2', parent_id: 'ser1', season_number: 1, episode_number: 2 });
     const e3 = ep({ id: 'e3', parent_id: 'ser1', season_number: 2, episode_number: 1 }); // cross-season
     const fetchMock = routedFetch([
-      { match: (u) => u.includes('/api/v1/media/e2') && !u.includes('parentId') && !u.includes('playback-info'), body: { item: e2 } },
-      { match: (u) => u.includes('playback-info'), body: { intro_marker: null, outro_marker: null, chapters: [] } },
-      { match: (u) => u.includes('/api/v1/media/ser1') && !u.includes('parentId'), body: { item: media({ id: 'ser1', type: 'series' }) } },
-      { match: (u) => u.includes('parentId=ser1'), body: { items: [e1, e2, e3], total: 3 } },
+      { match: (u) => isById(u, 'e2'), body: { item: e2 } },
+      { match: (u) => isAnyPlaybackInfo(u), body: { intro_marker: null, outro_marker: null, chapters: [] } },
+      { match: (u) => isById(u, 'ser1'), body: { item: media({ id: 'ser1', type: 'series' }) } },
+      { match: (u) => isChildrenOf(u, 'ser1'), body: { items: [e1, e2, e3], total: 3 } },
     ]);
     const { w } = await mountAt('e2', fetchMock);
     await flushPromises();
@@ -682,10 +733,10 @@ describe('PlayerPage — prev/next episode (U2)', () => {
     const e2 = ep({ id: 'sp-e2', parent_id: 'sp-ser', season_number: 1, episode_number: 2 }); // finale
     const sp = ep({ id: 'sp-x', parent_id: 'sp-ser', season_number: 0, episode_number: 1 }); // Special
     const fetchMock = routedFetch([
-      { match: (u) => u.includes('/api/v1/media/sp-e2') && !u.includes('parentId') && !u.includes('playback-info'), body: { item: e2 } },
-      { match: (u) => u.includes('playback-info'), body: { intro_marker: null, outro_marker: null, chapters: [] } },
-      { match: (u) => u.includes('/api/v1/media/sp-ser') && !u.includes('parentId'), body: { item: media({ id: 'sp-ser', type: 'series' }) } },
-      { match: (u) => u.includes('parentId=sp-ser'), body: { items: [e1, e2, sp], total: 3 } },
+      { match: (u) => isById(u, 'sp-e2'), body: { item: e2 } },
+      { match: (u) => isAnyPlaybackInfo(u), body: { intro_marker: null, outro_marker: null, chapters: [] } },
+      { match: (u) => isById(u, 'sp-ser'), body: { item: media({ id: 'sp-ser', type: 'series' }) } },
+      { match: (u) => isChildrenOf(u, 'sp-ser'), body: { items: [e1, e2, sp], total: 3 } },
     ]);
     const { w } = await mountAt('sp-e2', fetchMock);
     await flushPromises();
@@ -701,23 +752,21 @@ describe('PlayerPage — prev/next episode (U2)', () => {
     const e2 = ep({ id: 'cache-e2', parent_id: 'cache-ser', season_number: 1, episode_number: 2 });
     const e3 = ep({ id: 'cache-e3', parent_id: 'cache-ser', season_number: 1, episode_number: 3 });
     const byId: Record<string, MediaItem> = { 'cache-e1': e1, 'cache-e2': e2, 'cache-e3': e3 };
-    const isById = (u: string, id: string) =>
-      u.includes(`/api/v1/media/${id}`) && !u.includes('parentId') && !u.includes('playback-info');
     const fetchMock = routedFetch([
       { match: (u) => isById(u, 'cache-e1'), body: { item: byId['cache-e1'] } },
       { match: (u) => isById(u, 'cache-e2'), body: { item: byId['cache-e2'] } },
       { match: (u) => isById(u, 'cache-e3'), body: { item: byId['cache-e3'] } },
-      { match: (u) => u.includes('playback-info'), body: { intro_marker: null, outro_marker: null, chapters: [] } },
-      { match: (u) => u.includes('/api/v1/media/cache-ser') && !u.includes('parentId'), body: { item: media({ id: 'cache-ser', type: 'series' }) } },
-      { match: (u) => u.includes('parentId=cache-ser'), body: { items: [e1, e2, e3], total: 3 } },
+      { match: (u) => isAnyPlaybackInfo(u), body: { intro_marker: null, outro_marker: null, chapters: [] } },
+      { match: (u) => isById(u, 'cache-ser'), body: { item: media({ id: 'cache-ser', type: 'series' }) } },
+      { match: (u) => isChildrenOf(u, 'cache-ser'), body: { items: [e1, e2, e3], total: 3 } },
     ]);
 
     const { w, router } = await mountAt('cache-e2', fetchMock);
     await flushPromises();
     await flushPromises();
     // First load fetched the series tree exactly once: parent-hop + root children.
-    const rootHopCalls = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/v1/media/cache-ser') && !String(c[0]).includes('parentId')).length;
-    const childrenCalls = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes('parentId=cache-ser')).length;
+    const rootHopCalls = () => fetchMock.mock.calls.filter((c) => isById(c[0], 'cache-ser')).length;
+    const childrenCalls = () => fetchMock.mock.calls.filter((c) => isChildrenOf(c[0], 'cache-ser')).length;
     expect(rootHopCalls()).toBe(1);
     expect(childrenCalls()).toBe(1);
     expect((w.findComponent(Player).props('nextEpisode') as MediaItem | null)?.id).toBe('cache-e3');
@@ -823,11 +872,11 @@ describe('PlayerPage — resume + theater + ambient', () => {
   it('keeps the shared theater state across binge (player→player) navigation — the page instance is reused, no reset', async () => {
     const routed = vi.fn((url: string) => {
       const u = String(url);
-      if (u.includes('playback-info')) {
+      if (isAnyPlaybackInfo(u)) {
         return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
       }
-      if (u.match(/\/api\/v1\/media\/m1(\?|$)/)) return Promise.resolve(jsonResponse({ item: media({ id: 'm1' }) }));
-      if (u.match(/\/api\/v1\/media\/m2(\?|$)/)) return Promise.resolve(jsonResponse({ item: media({ id: 'm2' }) }));
+      if (isById(u, 'm1')) return Promise.resolve(jsonResponse({ item: media({ id: 'm1' }) }));
+      if (isById(u, 'm2')) return Promise.resolve(jsonResponse({ item: media({ id: 'm2' }) }));
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });
     const { w, router } = await mountAt('m1', routed);
@@ -891,11 +940,17 @@ describe('PlayerPage — edge cases', () => {
     // UI-0.4: item + playback-info fire concurrently → route by URL, not call order.
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       const u = String(url);
-      if (u.includes('/similar')) return Promise.reject(new Error('queue down')); // up-next list rejects
-      if (u.includes('/playback-info')) {
+      // The up-next queue is the genre-similar LIST fetch (`/api/v1/media?…sort=rating`),
+      // NOT a `/similar` route — PlayerPage.vue has no `/similar` call at all, so the
+      // `.includes('/similar')` branch this replaces never fired and the trailing
+      // rejection was doing the work. Named explicitly now (S193).
+      if (isRoute(u, MEDIA_LIST_PATH) && hasQuery(u, 'sort', 'rating')) {
+        return Promise.reject(new Error('queue down')); // up-next list rejects
+      }
+      if (isAnyPlaybackInfo(u)) {
         return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
       }
-      if (u.match(/\/api\/v1\/media\/[^/?]+(\?|$)/) && !u.includes('parentId')) {
+      if (isById(u, 'm1')) {
         return Promise.resolve(jsonResponse({ item: media({ id: 'm1', genres: ['Sci-Fi'] }) }));
       }
       return Promise.reject(new Error('queue down'));

@@ -16,6 +16,7 @@ import {
 } from './client';
 import { NetworkError, TimeoutError } from './errors';
 import { MemoryTokenStore, makeFetch } from './test/memoryTokenStore';
+import { isRoute } from '../test/route-match';
 
 describe('ApiClient', () => {
     it('attaches the bearer header when an access token is present', async () => {
@@ -411,7 +412,9 @@ describe('ApiClient', () => {
             const { fetch, calls } = makeFetch([{ status: 200, body: [] }]);
             const client = new ApiClient({ baseUrl: '', tokenStore: new MemoryTokenStore(), fetchImpl: fetch });
             await client.get('/api/v1/search', { q: 'star wars', page: '2' });
-            expect(calls[0]!.url).toContain('/api/v1/search?');
+            // S193: suffix-exact on the PATHNAME, so `/api/v1/search-MUTATED?…` no longer
+            // satisfies it; the query is asserted separately below.
+            expect(isRoute(calls[0]!.url, '/api/v1/search')).toBe(true);
             expect(calls[0]!.url).toContain('q=star+wars');
             expect(calls[0]!.url).toContain('page=2');
         });

@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchChildren, loadSeriesSeasons } from './useSeriesSeasons';
 import type { ApiClient } from '../api/client';
 import type { MediaItem } from '../types/media-item';
+import { isRoute } from '../test/route-match';
 
 function makeItem(over: Partial<MediaItem> = {}): MediaItem {
     return {
@@ -50,7 +51,9 @@ describe('fetchChildren', () => {
 
         expect(getMock).toHaveBeenCalledTimes(1);
         const url = getMock.mock.calls[0][0] as string;
-        expect(url).toContain('/api/v1/media');
+        // S193: suffix-exact on the PATHNAME (query stripped) — `toContain` was also
+        // satisfied by `/api/v1/media/anything` and by `/api/v1/media-MUTATED`.
+        expect(isRoute(url, '/api/v1/media')).toBe(true);
         expect(url).toContain('parentId=series-1');
         expect(url).toContain('limit=100');
         expect(url).toContain('sort=name');

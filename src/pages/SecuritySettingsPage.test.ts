@@ -10,6 +10,23 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import SecuritySettingsPage from './SecuritySettingsPage.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The three exact routes this page reads (`SecuritySettingsPage.vue:64`, `:81`,
+ * `:101`, `:153`), plus the per-credential DELETE route.
+ *
+ * S193: matched with {@link isRoute} — the pathname must END WITH the route —
+ * rather than substring. `u.includes('/api/v1/me/webauthn/credentials')` matched the
+ * collection AND every per-credential DELETE url AND `…/credentials-MUTATED`, so one
+ * branch answered three different routes and the endpoint assertions agreed with a
+ * mutated path. The DELETE now matches the credential id the stub actually seeded.
+ * `endsWith`, not `===`: a base legitimately prefixes the path on the hub.
+ */
+const CREDENTIALS_PATH = '/api/v1/me/webauthn/credentials';
+const credentialPath = (id: string): string => `${CREDENTIALS_PATH}/${encodeURIComponent(id)}`;
+const REGISTER_OPTIONS_PATH = '/api/v1/auth/webauthn/register/options';
+const REGISTER_VERIFY_PATH = '/api/v1/auth/webauthn/register/verify';
 
 interface Credential {
   credential_id: string;
@@ -49,19 +66,23 @@ function stubFetch(opts: {
   const fn = vi.fn((url: unknown, init?: RequestInit) => {
     const u = typeof url === 'string' ? url : '';
     const method = (init?.method ?? 'GET').toUpperCase();
-    if (u.includes('/api/v1/me/webauthn/credentials')) {
-      if (method === 'DELETE') return Promise.resolve(jsonResponse({ success: true }));
+    // DELETE addresses ONE credential — a different route from the collection, and
+    // matched against the ids this stub actually seeded so a mutated path cannot
+    // self-match.
+    const target = (opts.credentials ?? []).find((c) => isRoute(u, credentialPath(c.credential_id)));
+    if (method === 'DELETE' && target) return Promise.resolve(jsonResponse({ success: true }));
+    if (isRoute(u, CREDENTIALS_PATH)) {
       if (opts.listError) return Promise.reject(new Error('creds down'));
       return Promise.resolve(jsonResponse({ credentials: opts.credentials ?? [] }));
     }
-    if (u.includes('/api/v1/auth/webauthn/register/options')) {
+    if (isRoute(u, REGISTER_OPTIONS_PATH)) {
       return Promise.resolve(jsonResponse({
         challenge: btoa('challenge-bytes'),
         user: { id: btoa('user-id') },
         excludeCredentials: [],
       }));
     }
-    if (u.includes('/api/v1/auth/webauthn/register/verify')) {
+    if (isRoute(u, REGISTER_VERIFY_PATH)) {
       return Promise.resolve(jsonResponse({ success: true }));
     }
     return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
@@ -109,7 +130,7 @@ describe('SecuritySettingsPage', () => {
     const w = mountPage();
     await flushPromises();
 
-    expect(fetchFn.mock.calls[0][0]).toContain('/api/v1/me/webauthn/credentials');
+    expect(isRoute(fetchFn.mock.calls[0][0], CREDENTIALS_PATH)).toBe(true);
     const items = w.findAll('.credential-item');
     expect(items).toHaveLength(1);
     // Platform authenticator → 'monitor' icon + "Platform authenticator" label.
@@ -159,7 +180,7 @@ describe('SecuritySettingsPage', () => {
       (c) => (c[1] as RequestInit | undefined)?.method === 'DELETE',
     );
     expect(deleteCall).toBeTruthy();
-    expect(String(deleteCall![0])).toContain('/api/v1/me/webauthn/credentials/toDelete-abcdefghijklmnop');
+    expect(isRoute(deleteCall![0], credentialPath('toDelete-abcdefghijklmnop'))).toBe(true);
     expect(successSpy).toHaveBeenCalledWith('Passkey deleted successfully');
     w.unmount();
   });
@@ -193,9 +214,9 @@ describe('SecuritySettingsPage', () => {
     await flushPromises();
 
     const urls = fetchFn.mock.calls.map((c) => String(c[0]));
-    expect(urls.some((u) => u.includes('/api/v1/auth/webauthn/register/options'))).toBe(true);
+    expect(urls.some((u) => isRoute(u, REGISTER_OPTIONS_PATH))).toBe(true);
     expect(createMock).toHaveBeenCalledTimes(1);
-    expect(urls.some((u) => u.includes('/api/v1/auth/webauthn/register/verify'))).toBe(true);
+    expect(urls.some((u) => isRoute(u, REGISTER_VERIFY_PATH))).toBe(true);
     expect(successSpy).toHaveBeenCalledWith('Passkey registered successfully');
     w.unmount();
   });

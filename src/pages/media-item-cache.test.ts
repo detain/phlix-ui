@@ -23,6 +23,7 @@ import PlayerPage from './PlayerPage.vue';
 import MediaDetail from '../components/MediaDetail.vue';
 import Player from '../components/Player.vue';
 import type { MediaItem } from '../types/media-item';
+import { isRoute } from '../test/route-match';
 import {
   MEDIA_CACHE_TTL_MS,
   getMediaItemCacheEntry,
@@ -76,6 +77,22 @@ function byId(item: MediaItem): Response {
 }
 
 /** True when a call URL is the exact by-id item endpoint `/api/v1/media/:id` (no suffix). */
+/**
+ * The per-item playback-info route (`PlayerPage.vue:371`).
+ *
+ * S193: matched with {@link isRoute} — the pathname must END WITH this — rather than
+ * `s.includes('/playback-info')`, which also matches
+ * `/api/v1/media/m1/playback-info-MUTATED` and, being a bare fragment, would equally
+ * have answered any unrelated `/playback-info` route. `endsWith`, not `===`: a base
+ * legitimately prefixes the path on the hub.
+ *
+ * NOTE: {@link isByIdCall} below is deliberately left as a SHAPE regex. It is not a
+ * substring test — it requires exactly one path segment after `/api/v1/media/`, so a
+ * mutated route prefix (`/api/v1/media-MUTATED/m1`) already fails it — and it is what
+ * distinguishes the by-id route from the list route in the same stub.
+ */
+const playbackInfoPath = (id: string): string => `/api/v1/media/${encodeURIComponent(id)}/playback-info`;
+
 function isByIdCall(url: unknown): boolean {
   const s = String(url);
   return /\/api\/v1\/media\/[^/?]+(\?|$)/.test(s) && !s.includes('playback-info');
@@ -114,7 +131,7 @@ async function mountDetail(id: string, fetchMock: ReturnType<typeof vi.fn>) {
 function okPlayerFetch(item: MediaItem, playbackOk = true) {
   return vi.fn().mockImplementation((url: string) => {
     const s = String(url);
-    if (s.includes('/playback-info')) {
+    if (isRoute(s, playbackInfoPath(item.id))) {
       return playbackOk
         ? Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }))
         : Promise.resolve(errorResponse(404));
@@ -265,7 +282,7 @@ describe('PlayerPage — SWR item cache (UI-2.1)', () => {
     cacheMediaItem('m1', media({ id: 'm1', name: 'STALE-BUT-USABLE' }), Date.now() - MEDIA_CACHE_TTL_MS - 5_000);
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       const s = String(url);
-      if (s.includes('/playback-info')) return Promise.resolve(errorResponse(404));
+      if (isRoute(s, playbackInfoPath('m1'))) return Promise.resolve(errorResponse(404));
       if (isByIdCall(s)) return Promise.resolve(errorResponse(500)); // refresh fails
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });
@@ -281,7 +298,7 @@ describe('PlayerPage — SWR item cache (UI-2.1)', () => {
     cacheMediaItem('m1', media({ id: 'm1', name: 'STALE' }), Date.now() - MEDIA_CACHE_TTL_MS - 5_000);
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       const s = String(url);
-      if (s.includes('/playback-info')) return Promise.resolve(errorResponse(404));
+      if (isRoute(s, playbackInfoPath('m1'))) return Promise.resolve(errorResponse(404));
       if (isByIdCall(s)) return Promise.resolve(errorResponse(429, { error: 'StreamLimitExceeded' }));
       return Promise.resolve(jsonResponse({ items: [], total: 0 }));
     });

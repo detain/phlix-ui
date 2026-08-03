@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import LibraryPage from './LibraryPage.vue';
+import { isRoute, hasQuery } from '../test/route-match';
 import EmptyState from '../components/ui/EmptyState.vue';
 import { useMediaStore } from '../stores/useMediaStore';
 import { useToastStore } from '../stores/useToastStore';
@@ -70,6 +71,22 @@ function jsonResponse(body: unknown): Response {
   } as unknown as Response;
 }
 
+/**
+ * The two exact routes this page reads: the library list (`api/libraries.ts:69`)
+ * and the media list (`stores/useMediaStore` → `GET /api/v1/media?...`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * the route — because `u.includes('/api/v1/libraries')` also matches
+ * `/api/v1/libraries-MUTATED`, so the stub served a library list to a route that
+ * would 404. It is also strictly more precise for the media list: a substring
+ * `'/api/v1/media'` search finds `/api/v1/media/facets` and `/api/v1/media/index`
+ * too, so `find(...)` could return a DIFFERENT call than the one the
+ * `libraryId=`/`topLevel=` assertions are about. `endsWith`, not `===`: a base
+ * legitimately prefixes the path on the hub.
+ */
+const LIBRARIES_PATH = '/api/v1/libraries';
+const MEDIA_PATH = '/api/v1/media';
+
 const LIBS: LibrarySummary[] = [
   { id: 'lib1', name: 'Movies', type: 'movie' },
   { id: 'lib2', name: 'Anime', type: 'series' },
@@ -79,7 +96,7 @@ function stubFetch(opts: { media?: { items: MediaItem[]; total: number }; mediaE
   const mediaBody = opts.media ?? { items: [media()], total: 3 };
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/libraries')) {
+    if (isRoute(u, LIBRARIES_PATH)) {
       return Promise.resolve(jsonResponse({ libraries: LIBS }));
     }
     if (opts.mediaError) return Promise.reject(new Error('library offline'));
@@ -98,10 +115,13 @@ function stubFetch(opts: { media?: { items: MediaItem[]; total: number }; mediaE
 function stubSeriesFetch(episodes: MediaItem[]) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/libraries')) {
+    if (isRoute(u, LIBRARIES_PATH)) {
       return Promise.resolve(jsonResponse({ libraries: LIBS }));
     }
-    if (u.includes('parentId=')) {
+    // A QUERY key, not a path suffix: the series-children fetch is
+    // `GET /api/v1/media?parentId=<id>` — the SAME route as the grid's own media
+    // fetch — so only the parameter distinguishes it (S193).
+    if (hasQuery(u, 'parentId')) {
       return Promise.resolve(jsonResponse({ items: episodes, total: episodes.length }));
     }
     return Promise.resolve(jsonResponse({ items: [media({ id: 's1', type: 'series' })], total: 1 }));
@@ -122,10 +142,13 @@ function deferredSeriesFetch() {
   });
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/libraries')) {
+    if (isRoute(u, LIBRARIES_PATH)) {
       return Promise.resolve(jsonResponse({ libraries: LIBS }));
     }
-    if (u.includes('parentId=')) {
+    // A QUERY key, not a path suffix: the series-children fetch is
+    // `GET /api/v1/media?parentId=<id>` — the SAME route as the grid's own media
+    // fetch — so only the parameter distinguishes it (S193).
+    if (hasQuery(u, 'parentId')) {
       return gate.then((eps) => jsonResponse({ items: eps, total: eps.length }));
     }
     return Promise.resolve(jsonResponse({ items: [media({ id: 's1', type: 'series' })], total: 1 }));
@@ -175,7 +198,7 @@ describe('LibraryPage', () => {
     const store = useMediaStore();
     expect(store.libraryId).toBe('lib1');
     // the media request carried the scoping param
-    const mediaCall = fn.mock.calls.find(([u]) => typeof u === 'string' && (u as string).includes('/api/v1/media'));
+    const mediaCall = fn.mock.calls.find(([u]) => isRoute(u, MEDIA_PATH));
     expect(mediaCall).toBeTruthy();
     expect(mediaCall![0]).toContain('libraryId=lib1');
   });
@@ -186,7 +209,7 @@ describe('LibraryPage', () => {
     await flushPromises();
     const store = useMediaStore();
     expect(store.topLevel).toBe(true);
-    const mediaCall = fn.mock.calls.find(([u]) => typeof u === 'string' && (u as string).includes('/api/v1/media'));
+    const mediaCall = fn.mock.calls.find(([u]) => isRoute(u, MEDIA_PATH));
     expect(mediaCall![0]).toContain('topLevel=1');
   });
 
@@ -239,7 +262,7 @@ describe('LibraryPage', () => {
     await router.push('/app/library/lib2');
     await flushPromises();
     expect(store.libraryId).toBe('lib2');
-    const mediaCall = fn.mock.calls.find(([u]) => typeof u === 'string' && (u as string).includes('/api/v1/media'));
+    const mediaCall = fn.mock.calls.find(([u]) => isRoute(u, MEDIA_PATH));
     expect(mediaCall![0]).toContain('libraryId=lib2');
   });
 

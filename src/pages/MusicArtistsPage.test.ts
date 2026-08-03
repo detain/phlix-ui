@@ -9,6 +9,18 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import MusicArtistsPage from './MusicArtistsPage.vue';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The exact list route `ApiClient#listArtists` builds (`api/client.ts:1143`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * this — because `u.includes('/api/v1/music/artists')` also matches
+ * `/api/v1/music/artists-MUTATED` (and the per-artist detail route), so the stub
+ * answered a route that would 404 and the endpoint assertion agreed. `endsWith`,
+ * not `===`: the media base legitimately prefixes the path on the hub.
+ */
+const ARTISTS_PATH = '/api/v1/music/artists';
 import MusicPager from '../components/MusicPager.vue';
 
 interface ServerArtist {
@@ -31,7 +43,7 @@ function jsonResponse(body: unknown): Response {
 function stubFetch(opts: { artists?: ServerArtist[]; error?: boolean; hang?: boolean } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/music/artists')) {
+    if (isRoute(u, ARTISTS_PATH)) {
       if (opts.hang) return new Promise<Response>(() => {});
       if (opts.error) return Promise.reject(new Error('artists down'));
       return Promise.resolve(jsonResponse({
@@ -101,7 +113,7 @@ describe('MusicArtistsPage', () => {
     const fetchFn = stubFetch({ artists: [{ name: 'Radiohead', album_count: 9 }, { name: 'Bjork', album_count: 10 }] });
     const w = mountPage(makeRouter());
     await flushPromises();
-    expect(fetchFn.mock.calls[0][0]).toContain('/api/v1/music/artists');
+    expect(isRoute(fetchFn.mock.calls[0][0], ARTISTS_PATH)).toBe(true);
     const cards = w.findAll('.artist-card');
     expect(cards).toHaveLength(2);
     expect(cards[0].text()).toContain('Radiohead');

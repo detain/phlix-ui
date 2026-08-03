@@ -10,6 +10,20 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
 import PhotoAlbumsPage from './PhotoAlbumsPage.vue';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The two exact routes this page reads: the library list (`api/libraries.ts:69`)
+ * and the album list (`api/photos.ts:41`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * the route — because `u.includes('/api/v1/photo/albums')` also matches
+ * `/api/v1/photo/albums-MUTATED` AND the per-album detail route, so the stub
+ * answered routes it does not model and both endpoint assertions agreed with it.
+ * `endsWith`, not `===`: the media base legitimately prefixes the path on the hub.
+ */
+const LIBRARIES_PATH = '/api/v1/libraries';
+const ALBUMS_PATH = '/api/v1/photo/albums';
 import type { PhotoAlbum } from '../types/photo';
 
 // ---------------------------------------------------------------------------
@@ -55,12 +69,12 @@ function stubFetch(opts: {
 } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/libraries')) {
+    if (isRoute(u, LIBRARIES_PATH)) {
       return Promise.resolve(jsonResponse({
         libraries: opts.libraries ?? [{ id: 'lib1', name: 'My Photos', type: 'photo' }],
       }));
     }
-    if (u.includes('/api/v1/photo/albums')) {
+    if (isRoute(u, ALBUMS_PATH)) {
       if (opts.hang) return new Promise<Response>(() => {});
       if (opts.error) return Promise.reject(new Error('albums down'));
       return Promise.resolve(jsonResponse({ albums: opts.albums ?? [album()] }));
@@ -107,8 +121,8 @@ describe('PhotoAlbumsPage', () => {
     const w = mountPage(makeRouter());
     await flushPromises();
 
-    expect(fetchFn.mock.calls.some((c) => String(c[0]).includes('/api/v1/libraries'))).toBe(true);
-    expect(fetchFn.mock.calls.some((c) => String(c[0]).includes('/api/v1/photo/albums'))).toBe(true);
+    expect(fetchFn.mock.calls.some((c) => isRoute(c[0], LIBRARIES_PATH))).toBe(true);
+    expect(fetchFn.mock.calls.some((c) => isRoute(c[0], ALBUMS_PATH))).toBe(true);
     const cards = w.findAll('.album-card');
     expect(cards).toHaveLength(1);
     expect(cards[0].text()).toContain('2024-03-15');

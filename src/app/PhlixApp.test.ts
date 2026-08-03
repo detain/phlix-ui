@@ -17,7 +17,22 @@ import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerUiStore } from '../stores/usePlayerUiStore';
+import { isRoute } from '../test/route-match';
 import type { PhlixAppConfig } from './types';
+
+/**
+ * The exact routes the app shell reads: the library list
+ * (`stores/useLibrariesStore` → `api/libraries.ts:69`) and the resume sync
+ * (`composables/useResumeSync.ts:104`).
+ *
+ * S193: POSITIVE matchers and assertions use {@link isRoute} — the pathname must
+ * END WITH the route — because `u.includes('/api/v1/libraries')` also matches
+ * `/api/v1/libraries-MUTATED`, so a stub answered a route that would 404.
+ * `endsWith`, not `===`: a base legitimately prefixes the path on the hub.
+ * NEGATIVE assertions deliberately keep substring matching — see the note at each.
+ */
+const LIBRARIES_PATH = '/api/v1/libraries';
+const CONTINUE_WATCHING_PATH = '/api/v1/users/me/continue-watching';
 
 function makeRouter(): Router {
   return createRouter({
@@ -215,7 +230,7 @@ describe('PhlixApp — dynamic library nav (libraryLinks)', () => {
     localStorage.setItem('access_token', 'tok'); // isLoggedIn = token presence
     const fetchMock = vi.fn((url: unknown) => {
       const u = typeof url === 'string' ? url : '';
-      if (u.includes('/api/v1/libraries')) {
+      if (isRoute(u, LIBRARIES_PATH)) {
         return Promise.resolve(
           jsonResponse({
             libraries: [
@@ -261,7 +276,11 @@ describe('PhlixApp — dynamic library nav (libraryLinks)', () => {
     await flushPromises();
 
     expect(wrapper.findAll('.nav-link').map((l) => l.text())).toEqual(['My Servers']);
-    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/v1/libraries'))).toBe(false);
+    // NB: substring, NOT `isRoute`, on purpose. For a NEGATIVE assertion the
+    // LOOSER test is the STRONGER one: `.includes` also fails if the shell fetched
+    // `/api/v1/libraries-typo`, whereas a suffix-exact matcher would quietly accept
+    // that as "no library fetch". Deliberately left as substring (S193).
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes(LIBRARIES_PATH))).toBe(false);
   });
 });
 
@@ -275,7 +294,7 @@ describe('PhlixApp — requiresLibraryType menu gating (S25)', () => {
     // Only movie/series libraries exist — no `book` library.
     const fetchMock = vi.fn((url: unknown) => {
       const u = typeof url === 'string' ? url : '';
-      if (u.includes('/api/v1/libraries')) {
+      if (isRoute(u, LIBRARIES_PATH)) {
         return Promise.resolve(
           librariesResponse([
             { id: 'mv', name: 'Movies', type: 'movie' },
@@ -313,7 +332,7 @@ describe('PhlixApp — requiresLibraryType menu gating (S25)', () => {
     });
     const fetchMock = vi.fn((url: unknown) => {
       const u = typeof url === 'string' ? url : '';
-      if (u.includes('/api/v1/libraries')) return pending;
+      if (isRoute(u, LIBRARIES_PATH)) return pending;
       return Promise.resolve(jsonResponse({}));
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -343,7 +362,7 @@ describe('PhlixApp — requiresLibraryType menu gating (S25)', () => {
     localStorage.setItem('access_token', 'tok');
     const fetchMock = vi.fn((url: unknown) => {
       const u = typeof url === 'string' ? url : '';
-      if (u.includes('/api/v1/libraries')) {
+      if (isRoute(u, LIBRARIES_PATH)) {
         return Promise.resolve(librariesResponse([{ id: 'ab', name: 'Audiobooks', type: 'audiobook' }]));
       }
       return Promise.resolve(jsonResponse({}));
@@ -364,7 +383,7 @@ describe('PhlixApp — requiresLibraryType menu gating (S25)', () => {
     await flushPromises();
 
     // The filter's need for library data triggered the fetch on its own.
-    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/v1/libraries'))).toBe(true);
+    expect(fetchMock.mock.calls.some(([u]) => isRoute(u, LIBRARIES_PATH))).toBe(true);
     expect(wrapper.findAll('.nav-link').map((l) => l.text())).toContain('Listen'); // `audiobook` matches the array
   });
 });
@@ -378,8 +397,9 @@ describe('PhlixApp — resume sync gating', () => {
     wrapper = await mountApp({ app: 'hub', apiBase: '', routerBase: '/app', home: '/app/servers' });
     await flushPromises();
 
+    // Substring, NOT `isRoute` — see the negative-assertion note above.
     expect(
-      fetchMock.mock.calls.some(([u]) => String(u).includes('/users/me/continue-watching')),
+      fetchMock.mock.calls.some(([u]) => String(u).includes(CONTINUE_WATCHING_PATH)),
     ).toBe(false);
   });
 
@@ -391,9 +411,7 @@ describe('PhlixApp — resume sync gating', () => {
     wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
     await flushPromises();
 
-    expect(
-      fetchMock.mock.calls.some(([u]) => String(u).includes('/users/me/continue-watching')),
-    ).toBe(true);
+    expect(fetchMock.mock.calls.some(([u]) => isRoute(u, CONTINUE_WATCHING_PATH))).toBe(true);
   });
 });
 

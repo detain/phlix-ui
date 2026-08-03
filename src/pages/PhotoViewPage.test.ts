@@ -9,6 +9,22 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PhotoViewPage from './PhotoViewPage.vue';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The photo and album every test here deep-links to, and the exact routes
+ * `photoApi.getPhoto` / `getAlbum` build for them (`api/photos.ts:82`/`:52`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * the route — rather than the bare prefixes `'/api/v1/photo/photos/'` and
+ * `'/api/v1/photo/albums/'`, which cannot tell the real route from a
+ * suffix-appended one. `endsWith`, not `===`: the media base legitimately prefixes
+ * the path on the hub.
+ */
+const PHOTO_ID = 'p2';
+const ALBUM_ID = 'alb1';
+const PHOTO_PATH = `/api/v1/photo/photos/${PHOTO_ID}`;
+const ALBUM_PATH = `/api/v1/photo/albums/${ALBUM_ID}`;
 import type { PhotoDetail, PhotoExif, Photo, PhotoAlbum } from '../types/photo';
 
 function jsonResponse(body: unknown): Response {
@@ -76,11 +92,11 @@ function albumWith(ids: string[]): PhotoAlbum {
 function stubFetch(opts: { photo?: PhotoDetail; album?: PhotoAlbum; error?: boolean } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/photo/photos/')) {
+    if (isRoute(u, PHOTO_PATH)) {
       if (opts.error) return Promise.reject(new Error('photo down'));
       return Promise.resolve(jsonResponse({ photo: opts.photo ?? photoDetail() }));
     }
-    if (u.includes('/api/v1/photo/albums/')) {
+    if (isRoute(u, ALBUM_PATH)) {
       return Promise.resolve(jsonResponse({ album: opts.album ?? albumWith(['p1', 'p2', 'p3']) }));
     }
     return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));

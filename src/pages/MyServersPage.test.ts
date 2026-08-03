@@ -15,6 +15,7 @@ import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useServerStore } from '../stores/useServerStore';
 import { api, type ApiClient } from '../api/client';
+import { isRoute } from '../test/route-match';
 
 // Raw hub shape from GET /api/v1/me/servers (camelCase ServerInfoDto). lastSeenAt
 // is UNIX seconds; the hub has no owner name / url / library count.
@@ -380,7 +381,8 @@ describe('MyServersPage — add server', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/api/v1/server-claims/claim');
+    // S193: suffix-exact on the PATHNAME, so `/api/v1/server-claims/claim-MUTATED` fails.
+    expect(isRoute(url, '/api/v1/server-claims/claim')).toBe(true);
     expect((init.headers as Record<string, string>)['Accept-Phlix-Protocol']).toBe('v1');
     expect(JSON.parse(init.body as string)).toEqual({ claim_code: 'ABC-123' });
     expect(get).toHaveBeenCalledTimes(2); // list refreshed after claim

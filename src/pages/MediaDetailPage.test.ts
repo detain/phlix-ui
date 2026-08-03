@@ -18,6 +18,20 @@ import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The two exact routes this page uses per item: the by-id detail
+ * (`MediaDetailPage.vue:184`) and the favorite toggle.
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * the route — rather than `toContain('/api/v1/media/m1')`, which is satisfied by
+ * `/api/v1/media/m1/favorite`, by `/api/v1/media/m1-MUTATED`, and by
+ * `/api/v1/media/m10`. `endsWith`, not `===`: the media base legitimately prefixes
+ * the path on the hub.
+ */
+const byIdPath = (id: string): string => `/api/v1/media/${encodeURIComponent(id)}`;
+const favoritePath = (id: string): string => `${byIdPath(id)}/favorite`;
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -114,7 +128,7 @@ describe('MediaDetailPage — load', () => {
     expect(detail.exists()).toBe(true);
     expect((detail.props('item') as MediaItem).name).toBe('Dune');
     // first call hit the by-id endpoint
-    expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/media/m1');
+    expect(isRoute(fetchMock.mock.calls[0][0], byIdPath('m1'))).toBe(true);
   });
 
   it('shows an error state with retry when the fetch fails', async () => {
@@ -286,7 +300,7 @@ describe('MediaDetailPage — actions & navigation', () => {
     expect(toggleSpy).toHaveBeenCalledTimes(1);
     expect(toggleSpy).toHaveBeenCalledWith('m1', expect.any(String));
     expect(userItemData.isFavorite('m1')).toBe(true);
-    const favCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/v1/media/m1/favorite'));
+    const favCall = fetchMock.mock.calls.find((c) => isRoute(c[0], favoritePath('m1')));
     expect(favCall).toBeTruthy();
     expect((favCall?.[1] as RequestInit | undefined)?.method).toBe('POST');
     // the page toast reads the CORRECT post-toggle state → "Added" (success)
@@ -314,7 +328,7 @@ describe('MediaDetailPage — actions & navigation', () => {
 
     expect(toggleSpy).toHaveBeenCalledTimes(1);
     expect(userItemData.isFavorite('m1')).toBe(false);
-    const favCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/v1/media/m1/favorite'));
+    const favCall = fetchMock.mock.calls.find((c) => isRoute(c[0], favoritePath('m1')));
     expect(favCall).toBeTruthy();
     expect((favCall?.[1] as RequestInit | undefined)?.method).toBe('DELETE');
     // the page toast reads the CORRECT post-toggle state → "Removed" (info)

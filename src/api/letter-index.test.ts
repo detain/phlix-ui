@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { fetchLetterIndex } from './letter-index';
 import { ACCESS_TOKEN_KEY } from './tokenStore';
+import { isRoute } from '../test/route-match';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -43,7 +44,9 @@ describe('fetchLetterIndex', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const url = fetchMock.mock.calls[0][0] as string;
-    expect(url).toContain('/api/v1/media/letter-index?');
+    // S193: suffix-exact on the PATHNAME (query stripped), so
+    // `/api/v1/media/letter-index-MUTATED?…` no longer satisfies it.
+    expect(isRoute(url, '/api/v1/media/letter-index')).toBe(true);
     expect(url).toContain('match=unmatched');
     expect(url).toContain('libraryId=lib-1');
     expect(result).toEqual([

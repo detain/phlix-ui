@@ -65,6 +65,7 @@ import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 import type { PhlixAppConfig } from '../app/types';
+import { isRoute, hasQuery } from '../test/route-match';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -96,39 +97,40 @@ function jsonResponse(body: unknown): Response {
 }
 
 /**
- * The exact Next Up endpoint path (S36 server route, consumed by the S37 rail).
+ * The exact server routes this page's rails read, one constant per rail.
  *
- * Every other route in {@link stubFetch} is matched by substring, which CANNOT
- * distinguish the real path from a suffix-appended one:
- * `'…/next-up-typo'.includes('…/next-up')` is `true`. Measured 2026-08-03 —
+ * Every one of them is matched through the shared {@link isRoute}: the request's
+ * pathname (query stripped) must END WITH the route. Substring matching CANNOT
+ * distinguish the real path from a suffix-appended one —
+ * `'…/next-up-typo'.includes('…/next-up')` is `true`. Measured 2026-08-03 (#291):
  * changing the production path in `api/nextUp.ts` to
  * `/api/v1/users/me/next-up-MUTATED` left all four S37 tests GREEN, because both
  * the stub matcher and the "it hit the endpoint" assertion self-matched the
- * mutated path.
+ * mutated path. #291 fixed Next Up; S193 fixed the other five here, which had the
+ * identical shape.
  *
- * The Next Up route is therefore matched with {@link isNextUpUrl}: the pathname
- * (query stripped) must END WITH this exact path. `endsWith` — not `===` — is
- * required because the media base legitimately PREFIXES it on the hub, where
- * `useMediaApiBase` resolves to the relay-proxy base and the real request is
+ * `endsWith` — not `===` — is required because the media base legitimately
+ * PREFIXES these paths on the hub, where `useMediaApiBase` resolves to the
+ * relay-proxy base and the real request is
  * `/api/v1/servers/{id}/proxy/api/v1/users/me/next-up`. An exact-equality matcher
  * was tried first and is WRONG: it silently stops matching as soon as a base is
  * set, so the request falls through to the empty default payload and the rail
  * hides for the wrong reason. Every pre-existing test mounts with base `''`, so
- * none of them would have caught that; the reload test below does.
+ * none of them would have caught that; the base-prefixed test below does.
  */
 const NEXT_UP_PATH = '/api/v1/users/me/next-up';
-
-/** The pathname of a stubbed fetch URL, ignoring base origin and query string. */
-function pathnameOf(url: string): string {
-  return new URL(url, 'http://localhost').pathname;
-}
+const MOST_WATCHED_PATH = '/api/v1/media/most-watched';
+const RECOMMENDATIONS_PATH = '/api/v1/me/recommendations';
+const FAVORITES_PATH = '/api/v1/users/me/favorites';
+const CONTINUE_WATCHING_PATH = '/api/v1/users/me/continue-watching';
+const LIBRARIES_PATH = '/api/v1/libraries';
 
 /**
  * Whether a fetch URL addresses the Next Up endpoint — base-prefix tolerant but
  * suffix-exact. See {@link NEXT_UP_PATH}.
  */
 function isNextUpUrl(url: unknown): boolean {
-  return typeof url === 'string' && pathnameOf(url).endsWith(NEXT_UP_PATH);
+  return isRoute(url, NEXT_UP_PATH);
 }
 
 const ONE_LIBRARY: LibrarySummary[] = [{ id: 'lib1', name: 'Movies', type: 'movie' }];
@@ -216,19 +218,19 @@ function stubFetch(
       if (fails) return Promise.reject(new Error('next-up offline'));
       return Promise.resolve(jsonResponse({ items: nextUp }));
     }
-    if (u.includes('/api/v1/media/most-watched')) {
+    if (isRoute(u, MOST_WATCHED_PATH)) {
       return Promise.resolve(
         jsonResponse({ items: mostWatched, total: mostWatched.length, limit: 20, offset: 0 }),
       );
     }
-    if (u.includes('/api/v1/me/recommendations')) {
+    if (isRoute(u, RECOMMENDATIONS_PATH)) {
       return Promise.resolve(jsonResponse({ recommendations }));
     }
-    if (u.includes('/api/v1/users/me/favorites')) {
+    if (isRoute(u, FAVORITES_PATH)) {
       const items = favoritesOf();
       return Promise.resolve(jsonResponse({ items, limit: 24, offset: 0 }));
     }
-    if (u.includes('/api/v1/users/me/continue-watching')) {
+    if (isRoute(u, CONTINUE_WATCHING_PATH)) {
       // Return items with position_ticks for resume position
       const items = continueWatchingItems.map((item) => ({
         ...item,
@@ -236,7 +238,7 @@ function stubFetch(
       }));
       return Promise.resolve(jsonResponse({ items }));
     }
-    if (u.includes('/api/v1/libraries')) {
+    if (isRoute(u, LIBRARIES_PATH)) {
       if (opts.libraryError) return Promise.reject(new Error('library list offline'));
       if (opts.library503) return Promise.resolve(errorResponse(503, opts.library503));
       return Promise.resolve(jsonResponse({ libraries }));
@@ -251,7 +253,7 @@ function stubFetch(
   // their position_ticks) and everything else to an empty payload.
   authGet.mockImplementation((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/users/me/continue-watching')) {
+    if (isRoute(u, CONTINUE_WATCHING_PATH)) {
       return Promise.resolve({
         items: continueWatchingItems.map((item) => ({
           ...item,
@@ -286,13 +288,17 @@ function errorResponse(status: number, body: unknown): Response {
 function stubSeriesFetch(episodes: MediaItem[]) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/users/me/favorites')) {
+    if (isRoute(u, FAVORITES_PATH)) {
       return Promise.resolve(jsonResponse({ items: [], limit: 24, offset: 0 }));
     }
-    if (u.includes('/api/v1/libraries')) {
+    if (isRoute(u, LIBRARIES_PATH)) {
       return Promise.resolve(jsonResponse({ libraries: ONE_LIBRARY }));
     }
-    if (u.includes('parentId=')) {
+    // A QUERY key, not a path suffix — see `hasQuery`. The series-children fetch
+    // is `GET /api/v1/media?parentId=<id>` (useSeriesSeasons), i.e. the SAME route
+    // as the plain rail fetch, so only the parameter distinguishes it and forcing
+    // it through `isRoute` would be wrong.
+    if (hasQuery(u, 'parentId')) {
       return Promise.resolve(jsonResponse({ items: episodes, total: episodes.length }));
     }
     return Promise.resolve(jsonResponse({ items: [], total: 0 }));
@@ -314,13 +320,14 @@ function deferredSeriesFetch() {
   });
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/users/me/favorites')) {
+    if (isRoute(u, FAVORITES_PATH)) {
       return Promise.resolve(jsonResponse({ items: [], limit: 24, offset: 0 }));
     }
-    if (u.includes('/api/v1/libraries')) {
+    if (isRoute(u, LIBRARIES_PATH)) {
       return Promise.resolve(jsonResponse({ libraries: ONE_LIBRARY }));
     }
-    if (u.includes('parentId=')) {
+    // A QUERY key, not a path suffix — see `stubSeriesFetch`.
+    if (hasQuery(u, 'parentId')) {
       return gate.then((eps) => jsonResponse({ items: eps, total: eps.length }));
     }
     return Promise.resolve(jsonResponse({ items: [], total: 0 }));
@@ -679,9 +686,7 @@ describe('BrowsePage — Recommended row (S26)', () => {
     expect(items[0].name).toBe('Because You Watched Dune');
     // It reused the EXISTING recommendations endpoint (no backend change).
     expect(
-      fn.mock.calls.some(
-        ([u]) => typeof u === 'string' && (u as string).includes('/api/v1/me/recommendations'),
-      ),
+      fn.mock.calls.some(([u]) => isRoute(u, RECOMMENDATIONS_PATH)),
     ).toBe(true);
   });
 
@@ -713,9 +718,7 @@ describe('BrowsePage — Most Watched row (S32)', () => {
     expect(items[0].name).toBe('Most Popular');
     // It reused the EXISTING most-watched endpoint (no backend change).
     expect(
-      fn.mock.calls.some(
-        ([u]) => typeof u === 'string' && (u as string).includes('/api/v1/media/most-watched'),
-      ),
+      fn.mock.calls.some(([u]) => isRoute(u, MOST_WATCHED_PATH)),
     ).toBe(true);
   });
 
@@ -906,6 +909,68 @@ describe('BrowsePage — Next Up row (S37)', () => {
     expect(userItemData.isFavorite('nu1')).toBe(true);
     expect(userItemData.isWatched('nu1')).toBe(true);
     expect(userItemData.get('nu1').rating).toBe(9);
+  });
+});
+
+describe('BrowsePage — every rail still resolves behind a hub relay-proxy base (S193)', () => {
+  it('renders all five fetch-driven rails when the media base PREFIXES each path', async () => {
+    // The S193 landmine, made observable. Tightening the stub's route matching is
+    // only safe if the rule tolerates a base prefix: on the hub `useMediaApiBase`
+    // resolves to `/api/v1/servers/{id}/proxy`, so the real request is
+    // `/api/v1/servers/srv-7/proxy/api/v1/users/me/favorites`, and an
+    // exact-equality matcher (`pathname === path`) stops matching every one of
+    // these — the request falls through to the stub's DEFAULT `{ items: [], total }`
+    // payload and each rail hides FOR THE WRONG REASON, with nothing red.
+    //
+    // Every other test in this file mounts with base `''`, so none of them can see
+    // that; this one can. It is deliberately a POSITIVE test — all rails present —
+    // because the failure mode of the wrong fix is silent absence.
+    const HUB_BASE = '/api/v1/servers/srv-7/proxy';
+    const fn = stubFetch({
+      libraries: ONE_LIBRARY,
+      favorites: [media({ id: 'f1', name: 'Favorited Movie' })],
+      recommendations: [
+        {
+          id: 'rec1',
+          title: 'Because You Watched Dune',
+          posterUrl: null,
+          year: 2024,
+          score: 0.9,
+          reason: 'because_you_watched',
+          computedAt: '2026-08-03T00:00:00Z',
+        },
+      ],
+      mostWatched: [media({ id: 'mw1', name: 'Most Popular' })],
+      nextUp: [media({ id: 'nu1', name: 'Show A — S01E03', type: 'episode' })],
+      continueWatching: [
+        { ...media({ id: 'cw1', name: 'Resumed', type: 'movie' }), position_ticks: 600_000_000 },
+      ],
+    });
+    const w = mountPage({ apiBase: HUB_BASE, config: { app: 'hub', apiBase: HUB_BASE } });
+    await flushPromises();
+
+    // Non-inertness FIRST: the base really did prefix the requests. Without this
+    // the rail assertions below would also pass on a plain `''` mount, i.e. the
+    // test would claim to exercise the hub shape while exercising the server shape.
+    const urls = fn.mock.calls.map(([u]) => String(u));
+    expect(urls.length).toBeGreaterThan(0);
+    expect(urls.every((u) => u.startsWith(HUB_BASE))).toBe(true);
+    for (const path of [FAVORITES_PATH, RECOMMENDATIONS_PATH, MOST_WATCHED_PATH, NEXT_UP_PATH, LIBRARIES_PATH]) {
+      // The matcher's contract, asserted on the REAL urls: prefixed, still matched.
+      expect(urls.some((u) => isRoute(u, path))).toBe(true);
+    }
+
+    // …and each rail actually got its payload rather than the empty default.
+    expect(favoritesRow(w)!.props('items')).toHaveLength(1);
+    expect(recommendedRow(w)!.props('items')).toHaveLength(1);
+    expect(mostWatchedRow(w)!.props('items')).toHaveLength(1);
+    expect(nextUpRow(w)!.props('items')).toHaveLength(1);
+    // Continue Watching is fed by `auth.client.get` (useResumeSync), NOT the global
+    // fetch, so its url is NOT base-prefixed — it is asserted here only to show the
+    // hub mount does not break the rail that takes the other seam.
+    expect(continueRow(w)!.props('items')).toHaveLength(1);
+    // The library list resolved too (HomeRow is the per-library rail).
+    expect(w.findAllComponents(HomeRow).length).toBeGreaterThan(0);
   });
 });
 

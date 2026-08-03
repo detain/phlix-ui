@@ -8,6 +8,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useAuthStore } from './useAuthStore';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The two auth routes the store posts to / reads (`useAuthStore` → `api/client.ts`).
+ *
+ * S193: matched with {@link isRoute} — the pathname must END WITH the route — rather
+ * than `path.includes('/api/v1/auth/login')`, which also matches
+ * `/api/v1/auth/login-MUTATED`, so the stub minted tokens for a route that would 404.
+ * `endsWith`, not `===`: a base legitimately prefixes the path on the hub.
+ */
+const LOGIN_PATH = '/api/v1/auth/login';
+const AUTH_ME_PATH = '/api/v1/auth/me';
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -20,11 +32,11 @@ async function captureLoginBody(identifier: string, password: string): Promise<u
     'fetch',
     vi.fn((url: string, init?: RequestInit) => {
       const path = String(url);
-      if (path.includes('/api/v1/auth/login')) {
+      if (isRoute(path, LOGIN_PATH)) {
         captured = init?.body != null ? JSON.parse(String(init.body)) : null;
         return Promise.resolve(jsonResponse({ access_token: 'AT', refresh_token: 'RT' }));
       }
-      if (path.includes('/api/v1/auth/me')) {
+      if (isRoute(path, AUTH_ME_PATH)) {
         return Promise.resolve(jsonResponse({ user: { id: 1, email: 'a@b.c', is_admin: false } }));
       }
       return Promise.resolve(jsonResponse({ message: 'not found' }, 404));
