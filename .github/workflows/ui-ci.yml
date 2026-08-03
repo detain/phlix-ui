@@ -47,10 +47,17 @@ jobs:
       # `continue-on-error` or a `|| true`: either would restore the exact silent
       # drift this exists to stop. src/test/dist-build-gate.test.ts asserts both.
       #
-      # ⚠ Expect a comment-only edit to a scoped SFC to trip this. Adding a
-      # docblock rehashes the file's `data-v-` scope id and changes the bundles
-      # (measured in S13: +3 artefacts). That is a real change, not a false red —
-      # rebuild and commit dist/.
+      # ⚠ Expect a comment-only edit to a scoped SFC to trip this, and do NOT
+      # treat that as a false red. Adding a docblock to a function in
+      # CaptionOverlay.vue rehashes that file's `data-v-` scope id, which
+      # cascades into the bundles. Measured 2026-08-03 from a CLEAN tree: one
+      # comment produced 16 dist entries (4 new / 4 deleted / 8 modified) —
+      # phlix-ui.js, phlix-ui.umd.cjs, player.js, player.umd.cjs, style.css,
+      # ui.css and a rehashed PlayerPage chunk in both formats. Mechanism
+      # confirmed, not just the symptom: exactly ONE of the 147 `data-v-` ids in
+      # style.css changed (b9f35f44 → f01bcb32). S13 recorded the same effect as
+      # a +3 delta on an already-dirty tree; 16 is the clean-tree figure, which
+      # is what CI sees. Rebuild and commit dist/.
       - name: Verify committed dist/ matches source
         run: npm run dist:check
 
