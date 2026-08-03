@@ -94,6 +94,25 @@ function jsonResponse(body: unknown): Response {
   } as unknown as Response;
 }
 
+/**
+ * The exact Next Up endpoint path (S36 server route, consumed by the S37 rail).
+ *
+ * Every other route in {@link stubFetch} is matched by substring, which CANNOT
+ * distinguish the real path from a suffix-appended one:
+ * `'…/next-up-typo'.includes('…/next-up')` is `true`. Measured 2026-08-03 —
+ * changing the production path in `api/nextUp.ts` to
+ * `/api/v1/users/me/next-up-MUTATED` left all four S37 tests GREEN, because both
+ * the stub matcher and the "it hit the endpoint" assertion self-matched the
+ * mutated path. The Next Up route is therefore matched on the EXACT pathname so
+ * S37's endpoint contract is genuinely pinned.
+ */
+const NEXT_UP_PATH = '/api/v1/users/me/next-up';
+
+/** The pathname of a stubbed fetch URL, ignoring base and query string. */
+function pathnameOf(url: string): string {
+  return new URL(url, 'http://localhost').pathname;
+}
+
 const ONE_LIBRARY: LibrarySummary[] = [{ id: 'lib1', name: 'Movies', type: 'movie' }];
 
 /** One recommendation as GET /api/v1/me/recommendations returns it (S26). */
@@ -137,6 +156,10 @@ function stubFetch(
      *  position_ticks/duration_ticks = 0) and NO per-user `user_data`. Defaults to
      *  empty, hiding the rail unless a test supplies items — mirrors the siblings. */
     nextUp?: MediaItem[];
+    /** Reject the Next Up request (network failure), driving BrowsePage's
+     *  `nextUpError` branch so the rail must stay hidden rather than render an
+     *  empty shell. */
+    nextUpError?: boolean;
     /** Continue Watching items with optional position_ticks for resume position.
      *  Defaults to empty, hiding the Continue Watching rail unless supplied.
      *  Items carry an extra `position_ticks` field (the resume payload shape,
@@ -158,7 +181,10 @@ function stubFetch(
   const nextUp = opts.nextUp ?? [];
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/users/me/next-up')) {
+    // EXACT pathname (not substring) — see NEXT_UP_PATH: a substring match makes a
+    // suffix-appended production path indistinguishable from the real one.
+    if (pathnameOf(u) === NEXT_UP_PATH) {
+      if (opts.nextUpError) return Promise.reject(new Error('next-up offline'));
       return Promise.resolve(jsonResponse({ items: nextUp }));
     }
     if (u.includes('/api/v1/media/most-watched')) {
@@ -715,10 +741,10 @@ describe('BrowsePage — Next Up row (S37)', () => {
     expect(items.map((i) => i.id)).toEqual(['nu1', 'nu2']);
     expect(items[0].name).toBe('Show A — S01E03');
     // It consumed the S36 next-up endpoint (backend already shipped; no change).
+    // EXACT pathname, not `includes` — see NEXT_UP_PATH: a substring assertion is
+    // satisfied by a suffix-appended path, so it pinned nothing about the route.
     expect(
-      fn.mock.calls.some(
-        ([u]) => typeof u === 'string' && (u as string).includes('/api/v1/users/me/next-up'),
-      ),
+      fn.mock.calls.some(([u]) => typeof u === 'string' && pathnameOf(u as string) === NEXT_UP_PATH),
     ).toBe(true);
   });
 
@@ -751,6 +777,19 @@ describe('BrowsePage — Next Up row (S37)', () => {
     const w = mountPage();
     await flushPromises();
     expect(nextUpRow(w)).toBeUndefined();
+  });
+
+  it('hides the Next Up rail when the endpoint fails (no empty shell, no crash)', async () => {
+    // The `!nextUpError.value` half of `showNextUp` was previously unpinned:
+    // measured 2026-08-03, deleting it from BrowsePage.vue left the whole suite
+    // GREEN. A failed next-up fetch must leave the rail ABSENT (the rest of the
+    // page still renders) rather than surface a titled, empty rail.
+    stubFetch({ libraries: ONE_LIBRARY, nextUpError: true });
+    const w = mountPage();
+    await flushPromises();
+    expect(nextUpRow(w)).toBeUndefined();
+    // The failure is contained to the rail — the library list still rendered.
+    expect(w.findAllComponents(HomeRow).length).toBeGreaterThan(0);
   });
 
   it('does NOT overwrite existing useUserItemDataStore entries (no state-wipe race)', async () => {
