@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, enableAutoUnmount } from '@vue/test-utils';
+import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import { readFileSync } from 'node:fs';
@@ -18,8 +18,9 @@ import { useMediaStore } from '../stores/useMediaStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 
 /**
- * S118 — the leak `enableAutoUnmount(afterEach)` below exists to stop, made
- * OBSERVABLE.
+ * S118 — the leak `enableAutoUnmount(afterEach)` exists to stop, made
+ * OBSERVABLE. (S178: that call now lives in the shared `src/test/setup.ts`
+ * rather than in this file — see the note above `afterEach` below.)
  *
  * The shipped S118 fix is a single line of test scaffolding, and nothing failed
  * when it was deleted: the suite stayed green (228 files / 4 210 passed) because
@@ -69,11 +70,20 @@ beforeEach(() => {
 });
 // Destroy every wrapper this file mounts as soon as its test ends (S118).
 //
-// Why this is required and not just tidy: FilterBar.vue:322 adds a `scroll`
-// listener to `window` in onMounted and only removes it in onBeforeUnmount
-// (FilterBar.vue:328). This file called `mount` 26 times against only 2
-// explicit `unmount()` calls, so by the time the last describe ran, ~24 live
-// FilterBar instances were still subscribed to window `scroll`.
+// 🔴 S178 — the `enableAutoUnmount(afterEach)` call that used to live HERE has
+// moved to the shared `src/test/setup.ts`, where it now covers every test file
+// in the repo. It is NOT gone, and it must NOT be re-added here:
+// `enableAutoUnmount` throws `cannot be called more than once`, so a second call
+// makes this whole file fail at COLLECTION time (0 tests run, which is how the
+// S178 fallout presented). The recurrence guard for the shared line is
+// `src/test/auto-unmount.test.ts`; the guard for THIS file's leak is the last
+// describe block below, which still works unchanged.
+//
+// Why the teardown is required and not just tidy: FilterBar.vue:322 adds a
+// `scroll` listener to `window` in onMounted and only removes it in
+// onBeforeUnmount (FilterBar.vue:328). This file called `mount` 26 times against
+// only 2 explicit `unmount()` calls, so by the time the last describe ran, ~24
+// live FilterBar instances were still subscribed to window `scroll`.
 //
 // The single `window.dispatchEvent(new Event('scroll'))` in the sticky test
 // below therefore woke all of them at once, and awaiting the flush re-rendered
@@ -87,7 +97,6 @@ beforeEach(() => {
 //
 // With auto-unmount only the test's own instance is subscribed, so the sticky
 // test measures 71 ms solo / ~150 ms under the full parallel suite.
-enableAutoUnmount(afterEach);
 afterEach(() => {
   vi.useRealTimers();
 });
