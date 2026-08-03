@@ -44,6 +44,42 @@ import HelpPopover from './HelpPopover.vue';
  *   unreachable.
  */
 
+/**
+ * Live `pointerdown` subscriptions on `document`, tracked so the unmount cleanup
+ * is OBSERVABLE.
+ *
+ * Needed because deleting `onBeforeUnmount`'s `removeEventListener` is otherwise
+ * invisible (measured — all 18 tests stayed green): Vue nulls template refs on
+ * unmount, so the stale `onDocPointer` still fires but bails at
+ * `triggerEl.value &&` and changes nothing observable. The handler is neverthless
+ * still attached to `document` for the life of the process, which is exactly the
+ * S178 leak class.
+ *
+ * A Set keyed by handler, not a counter, following `FilterBar.test.ts`: the
+ * `watch(open)` teardown also calls `removeEventListener`, so a naive ±1 counter
+ * can be driven negative and mask the leak it is meant to catch.
+ */
+type Listener = Parameters<Document['addEventListener']>[1];
+const livePointerDownHandlers = new Set<Listener>();
+let pointerDownSubscriptionsEverSeen = 0;
+const realDocAdd = document.addEventListener.bind(document);
+const realDocRemove = document.removeEventListener.bind(document);
+document.addEventListener = ((type: string, l: Listener, o?: boolean | AddEventListenerOptions) => {
+  if (type === 'pointerdown') {
+    livePointerDownHandlers.add(l);
+    pointerDownSubscriptionsEverSeen += 1;
+  }
+  realDocAdd(type, l, o);
+}) as typeof document.addEventListener;
+document.removeEventListener = ((
+  type: string,
+  l: Listener,
+  o?: boolean | EventListenerOptions,
+) => {
+  if (type === 'pointerdown') livePointerDownHandlers.delete(l);
+  realDocRemove(type, l, o);
+}) as typeof document.removeEventListener;
+
 /** Restorers registered by the metric stubs, drained after every test. */
 const restore: Array<() => void> = [];
 
@@ -187,19 +223,35 @@ describe('HelpPopover — open / close', () => {
     expect(trigger(w).getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('is idempotent when opened twice without closing', async () => {
-    // Guards `openPopover`'s `if (open.value) return;` early exit: a second open
-    // must not stack a second panel in <body>.
-    const w = mountPopover();
+  it('is idempotent when opened twice without closing, and does not steal focus back', async () => {
+    // `openPopover`'s `if (open.value) return;` early exit is NOT observable as a
+    // duplicate panel — `open.value = true` is idempotent by itself, so a
+    // panel-count assertion leaves the guard UNKILLABLE (measured: deleting the
+    // guard kept all 17 tests green). What the guard really protects is the
+    // `nextTick` block it skips, which re-runs `updatePosition()` and re-focuses
+    // the FIRST button in the panel. So assert focus is preserved instead.
+    const w = mountPopover({ helpLinks: [{ text: 'Docs', url: 'https://example.test/d' }] });
     await open(w);
+    await nextTick();
+
     // Non-inertness control: an optional call (`openPopover?.()`) on a binding
     // that script-setup did not expose is a silent no-op, and this test would
     // then pass without ever re-entering `openPopover`. Assert it is reachable.
     const vm = w.vm as unknown as { openPopover: () => void };
     expect(typeof vm.openPopover).toBe('function');
+
+    // Move focus off the close button, as a user pressing Tab would. A link is
+    // NOT matched by the component's `querySelector('button,[contenteditable]')`,
+    // so an unguarded re-open visibly yanks focus back to the close button.
+    const link = document.body.querySelector('.phlix-help-text__link') as HTMLAnchorElement;
+    link.focus();
+    expect(document.activeElement).toBe(link);
+
     vm.openPopover();
     await nextTick();
+
     expect(document.body.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+    expect(document.activeElement).toBe(link);
   });
 
   it('closes on the close button and returns focus to the trigger', async () => {
@@ -218,6 +270,45 @@ describe('HelpPopover — open / close', () => {
     close.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await nextTick();
     expect(panel()).toBeNull();
+    expect(document.activeElement).toBe(trigger(w));
+  });
+
+  it('falls back to focusing the trigger when the previously-focused element has left the DOM', async () => {
+    // 🔴 Isolation test, written because of TWO measured survivors. In the normal
+    // path two mechanisms deliver "focus returns to the trigger":
+    // `closePopover()`'s own `triggerEl.value?.focus()`, and
+    // `useFocusTrap.deactivate()`'s `prevFocus.focus()`. A user clicks the (?)
+    // button, so `prevFocus` IS the trigger and the two are indistinguishable —
+    // deleting the component's own call left all 17 tests green.
+    //
+    // Opening programmatically with focus elsewhere does NOT separate them
+    // either: `closePopover` focuses the trigger synchronously, then the watcher
+    // flush runs `deactivate()`, which focuses `prevFocus` LAST and wins. So on
+    // that path the component's call is genuinely unobservable.
+    //
+    // The one state where it decides is `deactivate()`'s own guard:
+    // `if (prevFocus && document.contains(prevFocus))`. Remove the opener from the
+    // document while the popover is open — a list re-render does this — and the
+    // restore is skipped, leaving `closePopover()`'s call as the only mechanism.
+    // Without it, focus is left orphaned on a detached node.
+    const w = mountPopover();
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    outside.focus();
+    expect(document.activeElement).toBe(outside);
+
+    (w.vm as unknown as { openPopover: () => void }).openPopover();
+    await nextTick();
+    await nextTick();
+    expect(panel()).not.toBeNull();
+
+    outside.remove();
+    expect(document.contains(outside)).toBe(false);
+
+    (document.body.querySelector('.phlix-help-popover__close') as HTMLButtonElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    await nextTick();
     expect(document.activeElement).toBe(trigger(w));
   });
 
@@ -268,19 +359,31 @@ describe('HelpPopover — outside dismissal', () => {
     expect(panel()).not.toBeNull();
   });
 
-  it('unsubscribes its document listener on unmount (S178 leak class)', async () => {
+  it('unsubscribes its document listener when unmounted while still OPEN (S178 leak class)', async () => {
     const w = mountPopover();
     await open(w);
     expect(panel()).not.toBeNull();
+    // The subscription must exist right now, or the post-condition below is
+    // satisfied before the action and proves nothing.
+    expect(livePointerDownHandlers.size).toBe(1);
+
+    // Unmount while OPEN: `watch(open)` never fires, so `onBeforeUnmount` is the
+    // ONLY thing that can detach the handler.
     w.unmount();
 
-    // Two-sided: prove the listener is really gone by firing the event that would
-    // have run it. A stale `onDocPointer` closing over an unmounted instance is
-    // exactly the leak `enableAutoUnmount` was added to stop being invisible.
+    expect([...livePointerDownHandlers]).toHaveLength(0);
     expect(() =>
       document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })),
     ).not.toThrow();
     expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('unsubscribes on a normal close too, and has really observed subscriptions', () => {
+    // Two-sided companion for the check above: if HelpPopover ever stops
+    // subscribing at all, the emptiness assertions become trivially true and
+    // would keep passing forever.
+    expect(pointerDownSubscriptionsEverSeen).toBeGreaterThan(1);
+    expect([...livePointerDownHandlers]).toHaveLength(0);
   });
 });
 
