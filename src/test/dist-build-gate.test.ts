@@ -122,7 +122,11 @@ describe('S176 dist build gate — cannot be hollowed out', () => {
         // `git status -- dist` return EMPTY, so a naive gate would pass green
         // forever while shipping stale output. The script must check for it.
         const script = readFileSync(scriptPath, 'utf8');
-        expect(script).toContain("git(['check-ignore', '-q', 'dist'])");
+        // `--no-index` is load-bearing: without it `check-ignore` will not report
+        // a TRACKED path as ignored, so the check would answer "not ignored" even
+        // with `dist/` in .gitignore and do nothing at all. Asserted explicitly
+        // so the flag cannot be "tidied away".
+        expect(script).toContain("git(['check-ignore', '--no-index', '-q', 'dist'])");
 
         // And the vector must not be live right now.
         const gitignore = readFileSync(resolve(root, '.gitignore'), 'utf8');

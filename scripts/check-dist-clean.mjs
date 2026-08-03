@@ -55,11 +55,14 @@
  * A gate that cannot fail is the original defect one level up, so this script
  * refuses to exit 0 unless it can prove it actually checked something:
  *
- *   1. `dist/` must be TRACKED by git. `.gitignore` ships a commented-out
- *      `# dist/` line — uncommenting it makes `git status -- dist` return
- *      EMPTY, so a naive gate would pass green forever while shipping stale
- *      output. Both halves are checked: `git check-ignore` (ignored but still
- *      tracked) and a non-zero `git ls-files dist` count (untracked entirely).
+ *   1. `dist/` must be TRACKED by git and NOT gitignored. `.gitignore` ships a
+ *      commented-out `# dist/` line; uncommenting it hides every NEW/renamed
+ *      dist file from `git status` (measured: 0 entries even with
+ *      --untracked-files=all), which is 23 of the 55 entries seen on master.
+ *      Modified tracked files DO still show, so that vector alone is a PARTIAL
+ *      blinding — total only when paired with `git rm -r --cached dist`. Both
+ *      halves are checked: `git check-ignore --no-index` (ignore rules) and a
+ *      non-zero `git ls-files dist` count (untracked entirely).
  *   2. Every entry point published via package.json (`main`, `module`, `types`
  *      and each `exports` target) must exist on disk, so the gate cannot pass
  *      because the build silently produced nothing.
@@ -113,17 +116,33 @@ ran('dist-tracked');
 // ── 3. dist/ must not be gitignored (catches uncommenting `# dist/`) ─────────
 let distIgnored = false;
 try {
+    // `--no-index` is MANDATORY here, not a stylistic flag. By default
+    // `git check-ignore` refuses to report a TRACKED path as ignored, and every
+    // file in dist/ is tracked — so plain `check-ignore -q dist` answers "not
+    // ignored" even when .gitignore literally says `dist/`, and this whole check
+    // silently does nothing. Measured 2026-08-03: with `dist/` uncommented in
+    // .gitignore, `-q dist` exits 1 ("not ignored") while `--no-index -q dist`
+    // exits 0 ("ignored"). --no-index evaluates the ignore RULES, which is the
+    // question being asked. It does not false-positive: with `# dist/` commented
+    // it correctly reports not-ignored.
     // Exit 0 = the path IS ignored. execFileSync throws on the exit-1 "not ignored" case.
-    git(['check-ignore', '-q', 'dist']);
+    git(['check-ignore', '--no-index', '-q', 'dist']);
     distIgnored = true;
 } catch {
     distIgnored = false;
 }
 if (distIgnored) {
     fail(
-        'dist/ is gitignored, which would make `git status -- dist` silently EMPTY.',
-        'A .gitignore entry for dist/ neuters this gate without touching it. Remove that entry —\n' +
-            'this package publishes its committed dist/, so dist/ must stay tracked and visible.',
+        'dist/ is gitignored, which hides part of the drift this gate exists to catch.',
+        'Measured 2026-08-03, so the scope of the blinding is stated exactly rather than guessed:\n' +
+            '  • a NEW/renamed dist file becomes INVISIBLE — `git status --porcelain -- dist` returns 0\n' +
+            '    entries even with --untracked-files=all. That is the dominant drift shape here: 23 of\n' +
+            "    the 55 entries on master @ 2b636e71 were untracked content-hash renames ('??').\n" +
+            '  • a MODIFIED tracked file DOES still show (gitignore never hides tracked-file changes),\n' +
+            '    so the blinding is PARTIAL, not total. Combined with `git rm -r --cached dist` it\n' +
+            '    becomes total — which the dist-tracked check above covers.\n' +
+            'A .gitignore entry for dist/ therefore degrades this gate without touching it. Remove that\n' +
+            'entry — this package publishes its committed dist/, so dist/ must stay tracked and visible.',
     );
 }
 ran('dist-not-ignored');
