@@ -338,7 +338,7 @@ var x = {
 			})], 8, B)
 		], 8, A)) : s("", !0);
 	}
-}), [["__scopeId", "data-v-9e247285"]]), U = { class: "album-card__cover-wrap" }, W = ["src", "alt"], G = {
+}), [["__scopeId", "data-v-7bd54de3"]]), U = { class: "album-card__cover-wrap" }, W = ["src", "alt"], G = {
 	key: 1,
 	class: "album-card__placeholder"
 }, K = { class: "album-card__info" }, q = { class: "album-card__title" }, J = { class: "album-card__meta" }, Y = { class: "album-card__year" }, X = {
@@ -382,4 +382,4 @@ var x = {
 //#endregion
 export { b as i, H as n, k as r, Z as t };
 
-//# sourceMappingURL=MusicAlbumCard-CqPDAYMl.js.map
+//# sourceMappingURL=MusicAlbumCard-CHUyzXrO.js.map

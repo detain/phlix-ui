@@ -3,7 +3,7 @@ import { t } from "./Icon-CfPSBsz2.js";
 import { t as n } from "./useMessages-BinKgH9r.js";
 import { t as r } from "./client-COHWZ2KC.js";
 import { n as i, r as a } from "./useApiBase-CV_r-Kk4.js";
-import { i as ee, n as o, r as te, t as ne } from "./MusicAlbumCard-CqPDAYMl.js";
+import { i as ee, n as o, r as te, t as ne } from "./MusicAlbumCard-CHUyzXrO.js";
 import { Fragment as s, computed as c, createBlock as l, createCommentVNode as u, createElementBlock as d, createElementVNode as f, createVNode as p, defineComponent as m, onMounted as re, onUnmounted as ie, openBlock as h, ref as g, renderList as _, toDisplayString as v, unref as y } from "vue";
 //#region src/components/MusicArtistCard.vue?vue&type=script&setup=true&lang.ts
 var b = { class: "artist-card__image-wrap" }, x = ["src", "alt"], S = {
@@ -354,8 +354,8 @@ var b = { class: "artist-card__image-wrap" }, x = ["src", "alt"], S = {
 			], 8, j)) : u("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-66ae9c40"]]);
+}), [["__scopeId", "data-v-18c4a029"]]);
 //#endregion
 export { F as default };
 
-//# sourceMappingURL=MusicLibraryPage-DPC0oYfi.js.map
+//# sourceMappingURL=MusicLibraryPage-BS_DFZCZ.js.map
