@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { ref, computed, type ComputedRef } from 'vue';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
@@ -103,14 +104,31 @@ function jsonResponse(body: unknown): Response {
  * changing the production path in `api/nextUp.ts` to
  * `/api/v1/users/me/next-up-MUTATED` left all four S37 tests GREEN, because both
  * the stub matcher and the "it hit the endpoint" assertion self-matched the
- * mutated path. The Next Up route is therefore matched on the EXACT pathname so
- * S37's endpoint contract is genuinely pinned.
+ * mutated path.
+ *
+ * The Next Up route is therefore matched with {@link isNextUpUrl}: the pathname
+ * (query stripped) must END WITH this exact path. `endsWith` — not `===` — is
+ * required because the media base legitimately PREFIXES it on the hub, where
+ * `useMediaApiBase` resolves to the relay-proxy base and the real request is
+ * `/api/v1/servers/{id}/proxy/api/v1/users/me/next-up`. An exact-equality matcher
+ * was tried first and is WRONG: it silently stops matching as soon as a base is
+ * set, so the request falls through to the empty default payload and the rail
+ * hides for the wrong reason. Every pre-existing test mounts with base `''`, so
+ * none of them would have caught that; the reload test below does.
  */
 const NEXT_UP_PATH = '/api/v1/users/me/next-up';
 
-/** The pathname of a stubbed fetch URL, ignoring base and query string. */
+/** The pathname of a stubbed fetch URL, ignoring base origin and query string. */
 function pathnameOf(url: string): string {
   return new URL(url, 'http://localhost').pathname;
+}
+
+/**
+ * Whether a fetch URL addresses the Next Up endpoint — base-prefix tolerant but
+ * suffix-exact. See {@link NEXT_UP_PATH}.
+ */
+function isNextUpUrl(url: unknown): boolean {
+  return typeof url === 'string' && pathnameOf(url).endsWith(NEXT_UP_PATH);
 }
 
 const ONE_LIBRARY: LibrarySummary[] = [{ id: 'lib1', name: 'Movies', type: 'movie' }];
@@ -158,8 +176,16 @@ function stubFetch(
     nextUp?: MediaItem[];
     /** Reject the Next Up request (network failure), driving BrowsePage's
      *  `nextUpError` branch so the rail must stay hidden rather than render an
-     *  empty shell. */
-    nextUpError?: boolean;
+     *  empty shell.
+     *
+     *  Accepts a THUNK, evaluated per request (like `favorites`), so one stub can
+     *  succeed and then fail. That matters because `ApiClient` binds
+     *  `globalThis.fetch` once in its constructor (`client.ts:499`,
+     *  `options.fetchImpl ?? globalThis.fetch.bind(globalThis)`) and BrowsePage
+     *  MEMOIZES `nextUpClient`: re-calling `stubFetch` mid-test installs a new
+     *  global fetch that the already-constructed client will never call, so a
+     *  reload would silently keep hitting the FIRST stub. */
+    nextUpError?: boolean | (() => boolean);
     /** Continue Watching items with optional position_ticks for resume position.
      *  Defaults to empty, hiding the Continue Watching rail unless supplied.
      *  Items carry an extra `position_ticks` field (the resume payload shape,
@@ -181,10 +207,13 @@ function stubFetch(
   const nextUp = opts.nextUp ?? [];
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    // EXACT pathname (not substring) — see NEXT_UP_PATH: a substring match makes a
-    // suffix-appended production path indistinguishable from the real one.
-    if (pathnameOf(u) === NEXT_UP_PATH) {
-      if (opts.nextUpError) return Promise.reject(new Error('next-up offline'));
+    // Suffix-exact, base-tolerant (not substring) — see NEXT_UP_PATH: a substring
+    // match makes a suffix-appended production path indistinguishable from the real
+    // one, while `===` would break under a non-empty media base.
+    if (isNextUpUrl(u)) {
+      const fails =
+        typeof opts.nextUpError === 'function' ? opts.nextUpError() : opts.nextUpError === true;
+      if (fails) return Promise.reject(new Error('next-up offline'));
       return Promise.resolve(jsonResponse({ items: nextUp }));
     }
     if (u.includes('/api/v1/media/most-watched')) {
@@ -311,13 +340,23 @@ function makeRouter(withMedia = false): Router {
   return createRouter({ history: createMemoryHistory(), routes });
 }
 
-function mountPage(opts: { config?: Partial<PhlixAppConfig>; router?: Router } = {}) {
+function mountPage(
+  opts: {
+    config?: Partial<PhlixAppConfig>;
+    router?: Router;
+    /** Override the provided `apiBase`. `useMediaApiBase` accepts a plain string
+     *  OR a `ComputedRef<string>` (the hub's relay-proxy base, which changes when
+     *  the selected server changes); passing a ref-backed computed here is what
+     *  lets a test drive BrowsePage's `watch(apiBase, load)` RELOAD path. */
+    apiBase?: string | ComputedRef<string>;
+  } = {},
+) {
   const router = opts.router ?? makeRouter();
   const config: PhlixAppConfig = { app: 'server', apiBase: '', ...opts.config };
   return mount(BrowsePage, {
     global: {
       plugins: [router],
-      provide: { apiBase: config.apiBase, phlixConfig: config },
+      provide: { apiBase: opts.apiBase ?? config.apiBase, phlixConfig: config },
     },
   });
 }
@@ -741,11 +780,9 @@ describe('BrowsePage — Next Up row (S37)', () => {
     expect(items.map((i) => i.id)).toEqual(['nu1', 'nu2']);
     expect(items[0].name).toBe('Show A — S01E03');
     // It consumed the S36 next-up endpoint (backend already shipped; no change).
-    // EXACT pathname, not `includes` — see NEXT_UP_PATH: a substring assertion is
+    // Suffix-exact, not `includes` — see NEXT_UP_PATH: a substring assertion is
     // satisfied by a suffix-appended path, so it pinned nothing about the route.
-    expect(
-      fn.mock.calls.some(([u]) => typeof u === 'string' && pathnameOf(u as string) === NEXT_UP_PATH),
-    ).toBe(true);
+    expect(fn.mock.calls.some(([u]) => isNextUpUrl(u))).toBe(true);
   });
 
   it('places Next Up immediately after Continue Watching (and before My List)', async () => {
@@ -779,17 +816,62 @@ describe('BrowsePage — Next Up row (S37)', () => {
     expect(nextUpRow(w)).toBeUndefined();
   });
 
-  it('hides the Next Up rail when the endpoint fails (no empty shell, no crash)', async () => {
-    // The `!nextUpError.value` half of `showNextUp` was previously unpinned:
-    // measured 2026-08-03, deleting it from BrowsePage.vue left the whole suite
-    // GREEN. A failed next-up fetch must leave the rail ABSENT (the rest of the
-    // page still renders) rather than surface a titled, empty rail.
+  it('hides the Next Up rail when the endpoint fails, and contains the failure', async () => {
+    // A failed next-up fetch must leave the rail ABSENT rather than surface a
+    // titled, empty rail, and must not take the rest of the page down with it.
+    // NOTE: on a FIRST-load failure this is enforced by the `length > 0` term
+    // alone (nextUpItems is still []), so this test does NOT pin
+    // `!nextUpError.value` — the reload test below does that.
     stubFetch({ libraries: ONE_LIBRARY, nextUpError: true });
     const w = mountPage();
     await flushPromises();
     expect(nextUpRow(w)).toBeUndefined();
     // The failure is contained to the rail — the library list still rendered.
     expect(w.findAllComponents(HomeRow).length).toBeGreaterThan(0);
+  });
+
+  it('keeps Next Up hidden when a RELOAD fails, instead of showing stale picks', async () => {
+    // Pins the `!nextUpError.value` half of `showNextUp` SPECIFICALLY, which
+    // nothing guarded: measured 2026-08-03, deleting that term left all 239 files
+    // / 4478 tests GREEN, and it still passes the first-load error test above.
+    // The reason is that on a first-load failure the term is REDUNDANT —
+    // nextUpItems is still `[]`, so `length > 0` hides the rail on its own.
+    // The two terms only diverge on a RELOAD: loadNextUp never clears nextUpItems
+    // on failure, so after a successful load followed by a failed one the items
+    // are NON-EMPTY and the error is set, and the error term is the ONLY thing
+    // keeping the rail hidden.
+    // ONE stub, flipped by this flag — a second stubFetch() could not reach the
+    // memoized nextUpClient (see the `nextUpError` docs: ApiClient binds fetch in
+    // its constructor).
+    let failNextUp = false;
+    const base = ref('');
+    const fn = stubFetch({
+      libraries: ONE_LIBRARY,
+      nextUp: [media({ id: 'nu1', name: 'Show A — S01E03', type: 'episode' })],
+      nextUpError: () => failNextUp,
+    });
+    const w = mountPage({ apiBase: computed(() => base.value) });
+    await flushPromises();
+    // First load succeeded: the rail is on screen with its pick.
+    expect(nextUpRow(w)).toBeTruthy();
+    const callsAfterFirstLoad = fn.mock.calls.filter(([u]) => isNextUpUrl(u)).length;
+    expect(callsAfterFirstLoad).toBeGreaterThan(0);
+
+    // Now the endpoint fails and a base change (the hub's server switch) reloads
+    // via BrowsePage's `watch(apiBase, load)`.
+    failNextUp = true;
+    base.value = '/api/v1/servers/s2/proxy';
+    await flushPromises();
+
+    // The reload really did re-hit the endpoint (through the new, BASE-PREFIXED
+    // url) — without this the assertion below could pass because nothing reloaded
+    // at all, which is exactly how an earlier version of this test fooled itself.
+    expect(fn.mock.calls.filter(([u]) => isNextUpUrl(u)).length).toBeGreaterThan(
+      callsAfterFirstLoad,
+    );
+
+    // Stale picks must NOT keep the rail on screen after a failed refresh.
+    expect(nextUpRow(w)).toBeUndefined();
   });
 
   it('does NOT overwrite existing useUserItemDataStore entries (no state-wipe race)', async () => {
