@@ -6,7 +6,7 @@
  */
 
 /// <reference types="node" />
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { readFileSync } from 'node:fs';
@@ -197,6 +197,61 @@ describe('ThumbRating — tooltips (S20)', () => {
     const w = mount(ThumbRating, { props: { level: 1 } });
     expect(tips(w)).toEqual({ Like: 'Like' });
     expect(w.findAllComponents(Tooltip)).toHaveLength(1);
+  });
+});
+
+/**
+ * S20 AC — "tooltips appear on hover/focus with the existing 300ms delay". The
+ * tests above only assert the wrapping + the tip text, which a `delay="0"` or a
+ * tip that never opens would both survive. These drive Tooltip's real timer path
+ * on the thumbs (the two icon-only actions this component owns) — the 300ms
+ * DEFAULT is asserted nowhere else in the suite: Tooltip's own two tests
+ * (`describe('Tooltip')` in src/components/ui/Modal.test.ts) pass an explicit
+ * `delay: 200` / `delay: 0` on a synthetic trigger.
+ */
+describe('ThumbRating — tooltip reveal + shared 300ms delay (S20 AC)', () => {
+  it('opens the Like tip on hover only after 300ms, and closes it on leave', async () => {
+    const w = mount(ThumbRating, { props: { level: 0 } });
+    vi.useFakeTimers();
+    const tip = w.findAllComponents(Tooltip).find((t) => t.find('.thumb-rating__btn--up').exists());
+    expect(tip, 'the Like thumb is tooltip-wrapped').toBeTruthy();
+
+    // mouseenter does not bubble — it fires on the wrap, where Tooltip binds it.
+    await tip!.trigger('mouseenter');
+    vi.advanceTimersByTime(299);
+    await nextTick();
+    expect(w.find('[role="tooltip"]').exists(), 'no tip before the delay elapses').toBe(false);
+
+    vi.advanceTimersByTime(1);
+    await nextTick();
+    const shown = w.find('[role="tooltip"]');
+    expect(shown.exists()).toBe(true);
+    expect(shown.text()).toBe('Like');
+    expect(up(w).attributes('aria-describedby')).toBe(shown.attributes('id'));
+
+    await tip!.trigger('mouseleave');
+    await nextTick();
+    expect(w.find('[role="tooltip"]').exists()).toBe(false);
+    expect(up(w).attributes('aria-describedby')).toBeUndefined();
+  });
+
+  it('opens the Dislike tip on keyboard focus of the thumb (focusin bubbles)', async () => {
+    const w = mount(ThumbRating, { props: { level: 0 } });
+    vi.useFakeTimers();
+    await down(w).trigger('focusin');
+    vi.advanceTimersByTime(299);
+    await nextTick();
+    expect(w.find('[role="tooltip"]').exists()).toBe(false);
+    vi.advanceTimersByTime(1);
+    await nextTick();
+    expect(w.find('[role="tooltip"]').text()).toBe('Dislike');
+  });
+
+  it('does not override the shared 300ms delay on either thumb', () => {
+    const w = mount(ThumbRating, { props: { level: 0 } });
+    const tips = w.findAllComponents(Tooltip);
+    expect(tips).toHaveLength(2);
+    for (const t of tips) expect(t.props('delay')).toBe(300);
   });
 });
 

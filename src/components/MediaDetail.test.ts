@@ -46,6 +46,78 @@ beforeEach(() => {
   setActivePinia(createPinia());
 });
 
+/*
+ * ---------------------------------------------------------------------------
+ * SFC-source CSS assertions (S18/S19).
+ *
+ * S18's and S19's acceptance criteria were both written as a MANUAL per-theme
+ * visual check. That is not executable here: `npm run test:visual` is not part of
+ * the deterministic gate, and vitest runs with `css` disabled (see
+ * vite.config.ts), so a scoped `<style>` block is NEVER injected into jsdom —
+ * `getComputedStyle('.media-detail__title').textShadow` reads '' for every rule
+ * below no matter what the SFC says. Asserting on the SFC source is therefore the
+ * only executable proof available, and it is what pins the CSS half of both
+ * steps: before these, deleting the whole `.media-detail__ambient-scrim` rule or
+ * every hero `text-shadow` failed NO test (the DOM-level S19 tests only check
+ * that the scrim ELEMENT renders).
+ *
+ * `topLevelCss()` strips comments and every at-rule block, so a declaration that
+ * exists only inside `@media (...)` can never satisfy an assertion about the
+ * unconditional rule.
+ * ---------------------------------------------------------------------------
+ */
+const sfcCss: string = (() => {
+  const src = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), './MediaDetail.vue'), 'utf8');
+  return [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
+})();
+
+/** CSS with comments and all at-rule (@media/@supports/@keyframes) blocks removed. */
+function topLevelCss(raw: string): string {
+  const s = raw.replace(/\/\*[\s\S]*?\*\//g, '');
+  let out = '';
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === '@') {
+      let j = i;
+      while (j < s.length && s[j] !== '{' && s[j] !== ';') j++;
+      if (s[j] === ';') {
+        i = j + 1;
+        continue;
+      }
+      let depth = 0;
+      for (; j < s.length; j++) {
+        if (s[j] === '{') depth++;
+        else if (s[j] === '}') {
+          depth--;
+          if (depth === 0) {
+            j++;
+            break;
+          }
+        }
+      }
+      i = j;
+      continue;
+    }
+    out += s[i++];
+  }
+  return out;
+}
+
+/** The declaration body of the top-level rule whose selector list matches exactly ('' if none). */
+function sfcRule(selector: string): string {
+  for (const m of topLevelCss(sfcCss).matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (m[1].trim().replace(/\s+/g, ' ') === selector) return m[2].replace(/\s+/g, ' ').trim();
+  }
+  return '';
+}
+
+/** One declaration's value from that rule ('' when the rule or the property is absent). */
+function sfcDecl(selector: string, property: string): string {
+  const body = sfcRule(selector);
+  const m = new RegExp(`(?:^|;)\\s*${property.replace(/[-]/g, '\\-')}\\s*:\\s*([^;]+)`).exec(body);
+  return m ? m[1].trim() : '';
+}
+
 describe('MediaDetail — ⋯ menu metadata-match action (S02)', () => {
   it('the single "Match metadata" entry emits exactly one `refresh` with the item', async () => {
     // Admin gates the metadata-match menu item (buildMediaItemMenu reads auth.isAdmin).
@@ -224,6 +296,71 @@ describe('MediaDetail — ambient scrim (S19)', () => {
     expect(w.find('.media-detail__ambient').exists()).toBe(true);
     expect(w.find('.media-detail__ambient-scrim').exists()).toBe(false);
     expect(w.find('.media-detail__backdrop').exists()).toBe(true);
+  });
+});
+
+/**
+ * S19 acceptance criterion — "legible text with no backdrop, on a light-poster and
+ * a dark-poster title, in all 3 themes". The per-theme LOOK is not assertable here
+ * (no visual gate, and scoped CSS is never injected into jsdom), so what is pinned
+ * instead is the two mechanisms the criterion depends on:
+ *
+ *   1. the ambient scrim paints the SAME darkening treatment the backdrop scrim
+ *      already had — the step's actual in-scope wording; and
+ *   2. title/meta/overview each carry a real (non-`none`) dark-halo text-shadow,
+ *      the theme-agnostic belt-and-suspenders half.
+ *
+ * The existing S19 tests above only prove the scrim ELEMENT renders; every rule
+ * below could be deleted with the whole suite still green.
+ */
+describe('MediaDetail — ambient scrim paint + hero text-shadow (S19 CSS)', () => {
+  it('gives .media-detail__ambient-scrim the same paint .media-detail__backdrop-scrim already has', () => {
+    for (const prop of ['background', 'backdrop-filter', '-webkit-backdrop-filter']) {
+      const backdrop = sfcDecl('.media-detail__backdrop-scrim', prop);
+      expect(backdrop, `the backdrop scrim declares ${prop} (the treatment being mirrored)`).not.toBe('');
+      expect(
+        sfcDecl('.media-detail__ambient-scrim', prop),
+        `the ambient scrim mirrors the backdrop scrim's ${prop}`,
+      ).toBe(backdrop);
+    }
+    // Both scrims bottom out into the app surface rather than a fixed black, so the
+    // gradient is theme-following on Nocturne/Daylight/Midnight alike.
+    expect(sfcDecl('.media-detail__ambient-scrim', 'background')).toContain('var(--bg,');
+  });
+
+  it('sizes the ambient scrim to the ambient wash band, click-through, and paints it after the wash', () => {
+    // A SIBLING layer, not a child/pseudo: the ambient's own opacity 0.18 +
+    // blur(60px) would crush a nested scrim to nothing.
+    for (const prop of ['inset', 'height', 'z-index', 'mask-image']) {
+      const wash = sfcDecl('.media-detail__ambient', prop);
+      expect(wash, `the ambient wash declares ${prop}`).not.toBe('');
+      expect(sfcDecl('.media-detail__ambient-scrim', prop), `the scrim matches the wash's ${prop}`).toBe(wash);
+    }
+    expect(sfcDecl('.media-detail__ambient-scrim', 'pointer-events')).toBe('none');
+    // Same stacking level (z-index above) ⇒ DOM order decides: the scrim must come
+    // AFTER the wash or it would paint underneath it and darken nothing.
+    const w = mount(MediaDetail, {
+      props: { item: media({ poster_url: 'https://img/dune.jpg', backdrop_url: null, backdrop_url_large: null }) },
+    });
+    const wash = w.find('.media-detail__ambient').element;
+    expect(wash.nextElementSibling?.classList.contains('media-detail__ambient-scrim')).toBe(true);
+  });
+
+  it('carries a real dark-halo text-shadow on the title, meta and overview', () => {
+    for (const sel of ['.media-detail__title', '.media-detail__meta', '.media-detail__overview']) {
+      const shadow = sfcDecl(sel, 'text-shadow');
+      expect(shadow, `${sel} declares a text-shadow`).not.toBe('');
+      expect(shadow, `${sel}'s text-shadow is not neutralised`).not.toBe('none');
+      // Dark halo with a visible alpha…
+      expect(shadow, `${sel}'s text-shadow is a black halo with real alpha`).toMatch(
+        /rgba\(0, 0, 0, 0\.[1-9]\d*\)$/,
+      );
+      // …and a real blur radius with no vertical ridge beyond 1px (soft, not embossed).
+      const geom = /^0 (\d+)px (\d+)px /.exec(shadow);
+      expect(geom, `${sel}'s text-shadow has an "0 <offset> <blur>" geometry`).not.toBeNull();
+      expect(Number(geom![2]), `${sel}'s text-shadow has a non-zero blur radius`).toBeGreaterThan(0);
+      expect(Number(geom![1])).toBeLessThanOrEqual(1);
+    }
   });
 });
 
@@ -454,6 +591,78 @@ describe('MediaDetail — hero button hierarchy (S18)', () => {
     expect(trigger?.props('variant')).toBe('ghost');
     // still carries the popup semantics for a11y
     expect(trigger?.attributes('aria-haspopup')).toBe('menu');
+  });
+
+  it('the Back control is ghost, so Play is the hero\'s only solid button anywhere', () => {
+    const w = mount(MediaDetail, { props: { item: media(), showBack: true } });
+    const back = w.findAllComponents(Button).find((b) => b.text().trim() === 'Back');
+    expect(back, 'Back renders a shared <Button>').toBeTruthy();
+    expect(back?.props('variant')).toBe('ghost');
+    // Whole-component sweep (not just the action row): exactly one solid skin.
+    expect(w.findAll('.phlix-btn--solid').map((b) => b.text().trim())).toEqual(['Play']);
+  });
+
+  /**
+   * The step's "replace the raw <button>s with the shared components" bullet, pinned
+   * structurally: no matter which control is added later, a hand-rolled <button> in
+   * the hero action row (the thing that produced the inconsistent look reported in
+   * updates.md #18) fails this. Renders EVERY optional control at once.
+   */
+  it('leaves no raw <button> in the hero action row — every one comes from a shared component', () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined as unknown as void);
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({
+          trailer_url: 'https://youtu.be/abc',
+          trailer_site: 'YouTube',
+          trailer_key: 'abc',
+          theme_audio_url: 'https://media.example.com/api/v1/media/m1/theme-audio?sig=abc',
+        }),
+        resumeSeconds: 90,
+        canMatch: true,
+      },
+    });
+    const shared = ['phlix-btn', 'phlix-iconbtn', 'thumb-rating__btn'];
+    const buttons = w.findAll('.media-detail__actions button');
+    for (const b of buttons) {
+      expect(
+        b.classes().some((c) => shared.includes(c)),
+        `raw <button class="${b.classes().join(' ')}"> in the hero action row`,
+      ).toBe(true);
+    }
+    // Composition of the fully-populated row: 6 labelled <Button>s (Play, Resume,
+    // Play Trailer, Watchlist, Mark watched, Match metadata), 3 icon-only
+    // <IconButton>s (theme mute, theme stop, ⋯ menu) and the 2 thumbs.
+    const count = (cls: string) => buttons.filter((b) => b.classes().includes(cls)).length;
+    expect(count('phlix-btn')).toBe(6);
+    expect(count('phlix-iconbtn')).toBe(3);
+    expect(count('thumb-rating__btn')).toBe(2);
+  });
+
+  it('keeps every icon-only hero control on the ghost (tertiary) tier', () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined as unknown as void);
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({ theme_audio_url: 'https://media.example.com/api/v1/media/m1/theme-audio?sig=abc' }),
+      },
+    });
+    const icons = w
+      .findAllComponents(IconButton)
+      .filter((b) => b.element.closest('.media-detail__actions') !== null);
+    expect(icons.map((b) => b.props('label')).sort()).toEqual([
+      'More actions',
+      'Stop theme music',
+      'Unmute theme music',
+    ]);
+    for (const b of icons) {
+      expect(b.props('variant'), `${b.props('label')} is ghost`).toBe('ghost');
+    }
+    // No icon-only control may render the primary (solid) skin — Play owns that tier.
+    expect(w.findAll('.media-detail__actions .phlix-iconbtn--solid')).toHaveLength(0);
   });
 });
 

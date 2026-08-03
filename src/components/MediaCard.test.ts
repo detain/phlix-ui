@@ -5,11 +5,15 @@
  * @license MIT
  */
 
+/// <reference types="node" />
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import MediaCard from './MediaCard.vue';
 import Tooltip from './ui/Tooltip.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -1234,5 +1238,186 @@ describe('MediaCard — action button tooltips (S20)', () => {
     // Wrapped by a Tooltip even though it is nested in the Menu's #default slot.
     expect(trigger.element.parentElement?.classList.contains('phlix-tooltip-wrap')).toBe(true);
     expect(tooltipTextByLabel(w)['More actions']).toBe('More actions');
+  });
+});
+
+/**
+ * S20 acceptance criteria, the two halves the structural tests above do NOT reach:
+ *
+ *   AC1 "tooltips appear on hover/focus with the existing 300ms delay" — Tooltip
+ *       itself is tested in exactly two places (`describe('Tooltip')` inside
+ *       src/components/ui/Modal.test.ts), and both are blind to this criterion:
+ *       one shows on FOCUS with an explicit `delay: 200` on a synthetic trigger,
+ *       the other asserts a DISABLED tip never opens. So the 300ms default was
+ *       asserted nowhere, no test connected a poster action button to a tip that
+ *       actually opens, and the hover path was pinned by nothing at all —
+ *       measured: deleting `@mouseenter="show"` from Tooltip.vue left all 239
+ *       files / 4464 tests green before this change, and now fails exactly the
+ *       two hover tests below.
+ *   AC2 "the card action-row width math is unaffected" — the pixel result is NOT
+ *       assertable in jsdom (getBoundingClientRect/offsetWidth report 0 for
+ *       everything, and scoped CSS is never injected), so what is pinned is the
+ *       two things the math depends on: the `max-width` declaration itself, and
+ *       that the tooltip wrap became the flex ITEM (pinned `flex: 0 0 auto`)
+ *       rather than adding a layout layer around one.
+ */
+describe('MediaCard — tooltip reveal, 300ms delay and row width math (S20 AC)', () => {
+  const cardCss: string = (() => {
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'MediaCard.vue'), 'utf8');
+    return [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
+  })();
+
+  /** CSS with comments and every at-rule (@media/@supports/@keyframes) block removed. */
+  function topLevelCss(raw: string): string {
+    const s = raw.replace(/\/\*[\s\S]*?\*\//g, '');
+    let out = '';
+    let i = 0;
+    while (i < s.length) {
+      if (s[i] === '@') {
+        let j = i;
+        while (j < s.length && s[j] !== '{' && s[j] !== ';') j++;
+        if (s[j] === ';') {
+          i = j + 1;
+          continue;
+        }
+        let depth = 0;
+        for (; j < s.length; j++) {
+          if (s[j] === '{') depth++;
+          else if (s[j] === '}') {
+            depth--;
+            if (depth === 0) {
+              j++;
+              break;
+            }
+          }
+        }
+        i = j;
+        continue;
+      }
+      out += s[i++];
+    }
+    return out;
+  }
+
+  /** One declaration from the top-level rule whose selector matches exactly ('' if absent). */
+  function cardDecl(selector: string, property: string): string {
+    for (const m of topLevelCss(cardCss).matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (m[1].trim().replace(/\s+/g, ' ') !== selector) continue;
+      const body = m[2].replace(/\s+/g, ' ').trim();
+      const d = new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*([^;]+)`).exec(body);
+      return d ? d[1].trim() : '';
+    }
+    return '';
+  }
+
+  /** The <Tooltip> wrapping the action button with this aria-label. */
+  function tipFor(w: ReturnType<typeof mount>, label: string) {
+    return w.findAllComponents(Tooltip).find((t) => t.find(`[aria-label="${label}"]`).exists());
+  }
+
+  it('opens the Play tip on hover only AFTER the shared 300ms delay, and wires it as a description', async () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
+    // Fake timers only from here: the row reveal above is timer-free (a ref flip),
+    // and Tooltip's open timer is the only thing being measured.
+    vi.useFakeTimers();
+    const tip = tipFor(w, 'Play');
+    expect(tip, 'Play is tooltip-wrapped').toBeTruthy();
+    expect(w.find('[role="tooltip"]').exists()).toBe(false);
+
+    // mouseenter does not bubble, so it fires on the wrap itself — exactly where
+    // Tooltip binds it.
+    await tip!.trigger('mouseenter');
+    vi.advanceTimersByTime(299);
+    await nextTick();
+    expect(w.find('[role="tooltip"]').exists(), 'no tip before the 300ms delay elapses').toBe(false);
+
+    vi.advanceTimersByTime(1);
+    await nextTick();
+    const shown = w.find('[role="tooltip"]');
+    expect(shown.exists(), 'tip is shown at 300ms').toBe(true);
+    expect(shown.text()).toBe('Play');
+    // Description, not a name: the button keeps its aria-label and gains describedby.
+    const btn = w.find('[aria-label="Play"]');
+    expect(btn.attributes('aria-describedby')).toBe(shown.attributes('id'));
+
+    // …and it closes again on pointer-out, releasing the description.
+    await tip!.trigger('mouseleave');
+    await nextTick();
+    expect(w.find('[role="tooltip"]').exists()).toBe(false);
+    expect(w.find('[aria-label="Play"]').attributes('aria-describedby')).toBeUndefined();
+  });
+
+  it('opens a tip on keyboard focus of the action button too (focusin bubbles to the wrap)', async () => {
+    const w = mount(MediaCard, { props: { item: media() } });
+    await reveal(w);
+    vi.useFakeTimers();
+    // Focus the BUTTON (what a Tab press hits) — the wrap sees it because focusin bubbles.
+    await w.find('[aria-label="More info"]').trigger('focusin');
+    vi.advanceTimersByTime(299);
+    await nextTick();
+    expect(w.find('[role="tooltip"]').exists(), 'focus honours the same delay').toBe(false);
+    vi.advanceTimersByTime(1);
+    await nextTick();
+    expect(w.find('[role="tooltip"]').text()).toBe('More info');
+    // blur closes it (focusout also bubbles)
+    await w.find('[aria-label="More info"]').trigger('focusout');
+    await nextTick();
+    expect(w.find('[role="tooltip"]').exists()).toBe(false);
+  });
+
+  it('never overrides the shared 300ms delay on any poster action', async () => {
+    const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(w);
+    const tips = w.findAllComponents(Tooltip);
+    // 6 MediaCard actions + the 2 ThumbRating thumbs.
+    expect(tips).toHaveLength(8);
+    for (const t of tips) {
+      expect(t.props('delay'), `tip "${String(t.props('text'))}" keeps the 300ms default`).toBe(300);
+      expect(t.props('disabled')).toBe(false);
+    }
+  });
+
+  /**
+   * The step offered `placement="bottom"` *conditionally* — "if clipping occurs near
+   * the poster edge". It resolves to the DEFAULT top: the tip is
+   * `position: absolute` inside the wrap (Tooltip does not teleport), the wrap sits
+   * in an action row that the overlay anchors to the BOTTOM of a poster that clips
+   * (`overflow: hidden`), so a bottom tip (`top: calc(100% + 8px)`) would open into
+   * the clipped strip while a top tip (`bottom: calc(100% + 8px)`) opens upward into
+   * visible poster. This pins both the choice and the two CSS facts behind it, so
+   * flipping one without the other cannot pass silently.
+   */
+  it('keeps the default top placement — the poster clips at the BOTTOM, where the row sits', async () => {
+    const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(w);
+    for (const t of w.findAllComponents(Tooltip)) {
+      expect(t.props('placement'), `tip "${String(t.props('text'))}" opens upward`).toBe('top');
+    }
+    expect(cardDecl('.media-card__poster', 'overflow')).toBe('hidden');
+    expect(cardDecl('.media-card__overlay', 'justify-content')).toBe('flex-end');
+  });
+
+  it('keeps the 4-across row math: each tooltip wrap IS the flex item, and the max-width survives', async () => {
+    const w = mount(MediaCard, { props: { item: media(), canMatch: true } });
+    await reveal(w);
+    const row = w.find('.media-card__actions').element;
+    // The row's direct children ARE the flex items. Play/Favorite/Watched/Info/Match
+    // are tooltip wraps; the thumbs widget and the ⋯ Menu keep their own roots (the
+    // Menu's tooltip is nested INSIDE it, so the outer flex item is unchanged).
+    for (const el of Array.from(row.children)) {
+      expect(
+        ['phlix-tooltip-wrap', 'thumb-rating', 'phlix-menu'].some((c) => el.classList.contains(c)),
+        `unexpected flex item <${el.tagName.toLowerCase()} class="${el.className}"> in the action row`,
+      ).toBe(true);
+    }
+    expect(row.children.length, '7 flex items: Play, thumbs, Favorite, Watched, Info, ⋯, Match').toBe(7);
+
+    // jsdom cannot measure this (offsetWidth/getBoundingClientRect are 0 for every
+    // element and no scoped CSS is injected), so assert the declarations instead.
+    expect(cardDecl('.media-card__actions', 'max-width')).toBe('calc(4 * 32px + 3 * var(--space-1))');
+    expect(cardDecl('.media-card__actions :deep(.phlix-tooltip-wrap)', 'flex')).toBe('0 0 auto');
+    // The wrap must not introduce box of its own around the 32px button.
+    expect(cardDecl('.media-card__iconbtn', 'width')).toBe('32px');
   });
 });
