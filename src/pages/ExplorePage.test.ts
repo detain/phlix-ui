@@ -10,6 +10,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import ExplorePage from './ExplorePage.vue';
+import { isRoute } from '../test/route-match';
 import MediaGrid from '../components/MediaGrid.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import ItemDataInspector from '../components/ItemDataInspector.vue';
@@ -18,6 +19,19 @@ import Spinner from '../components/ui/Spinner.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
+
+/**
+ * The seed item every test here explores from (`?item=`), and the exact
+ * similar-items route `ExplorePage.vue:91` builds for it.
+ *
+ * S193: matched with {@link isRoute} (pathname must END WITH this) rather than
+ * `u.includes('/similar')`, which also matches `/api/v1/media/m1/similar-MUTATED`
+ * — and, being only a fragment, would equally have matched any unrelated
+ * `/similar` route. `endsWith`, not `===`, because the media base legitimately
+ * prefixes the path on the hub.
+ */
+const SEED_ID = 'm1';
+const SIMILAR_PATH = `/api/v1/media/${SEED_ID}/similar`;
 
 /** Similar item from the similar-items engine (mirrors @phlix/contracts). */
 interface SimilarItem {
@@ -46,7 +60,7 @@ function stubFetch(opts: { items?: SimilarItem[]; error?: boolean } = {}) {
   ];
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/similar')) {
+    if (isRoute(u, SIMILAR_PATH)) {
       if (opts.error) return Promise.reject(new Error('server error'));
       return Promise.resolve(jsonResponse({ items }));
     }

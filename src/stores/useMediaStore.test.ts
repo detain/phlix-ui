@@ -10,6 +10,17 @@ import { setActivePinia, createPinia } from 'pinia';
 import { useMediaStore } from './useMediaStore';
 import { useToastStore } from './useToastStore';
 import type { MediaItem } from '../types/media-item';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The facets route the store reads (`useMediaStore.ts:416`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * this — rather than `url.includes('/media/facets')`, which also matches
+ * `/api/v1/media/facets-MUTATED`, so the counter below would keep counting a route
+ * that would 404. `endsWith`, not `===`: a base legitimately prefixes the path.
+ */
+const FACETS_PATH = '/api/v1/media/facets';
 
 function makeItems(prefix: string, n: number): MediaItem[] {
   return Array.from({ length: n }, (_, i) => ({
@@ -505,7 +516,7 @@ describe('useMediaStore — facets', () => {
   it('loadFacets caches results and does not re-fetch within TTL', async () => {
     let facetsCalls = 0;
     fetchMock.mockImplementation((url: string) => {
-      if (url.includes('/media/facets')) facetsCalls++;
+      if (isRoute(url, FACETS_PATH)) facetsCalls++;
       return Promise.resolve(jsonResponse({ genres: ['Sci-Fi'] }));
     });
     const s = useMediaStore();
@@ -519,7 +530,7 @@ describe('useMediaStore — facets', () => {
   it('loadFacets includes libraryId in the request when set', async () => {
     let capturedUrl: string | undefined;
     fetchMock.mockImplementation((url: string) => {
-      if (url.includes('/media/facets')) capturedUrl = url;
+      if (isRoute(url, FACETS_PATH)) capturedUrl = url;
       return Promise.resolve(jsonResponse({ genres: ['Sci-Fi'] }));
     });
     const s = useMediaStore();

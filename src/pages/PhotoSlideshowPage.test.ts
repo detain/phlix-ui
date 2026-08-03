@@ -9,6 +9,18 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PhotoSlideshowPage from './PhotoSlideshowPage.vue';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The exact slideshow route `photoApi.getSlideshow` builds (`api/photos.ts:102`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * this — because `u.includes('/api/v1/photo/slideshow')` also matches
+ * `/api/v1/photo/slideshow-MUTATED`, so the stub answered a route that would 404
+ * and the endpoint assertion agreed. `endsWith`, not `===`: the media base
+ * legitimately prefixes the path on the hub.
+ */
+const SLIDESHOW_PATH = '/api/v1/photo/slideshow';
 import type { SlideshowItem } from '../types/photo';
 
 function jsonResponse(body: unknown): Response {
@@ -35,7 +47,7 @@ function slide(id: string, over: Partial<SlideshowItem> = {}): SlideshowItem {
 function stubFetch(opts: { slides?: SlideshowItem[]; interval?: number; error?: boolean } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/photo/slideshow')) {
+    if (isRoute(u, SLIDESHOW_PATH)) {
       if (opts.error) return Promise.reject(new Error('slideshow down'));
       return Promise.resolve(jsonResponse({
         slideshow: opts.slides ?? [slide('s1'), slide('s2'), slide('s3')],
@@ -89,7 +101,7 @@ describe('PhotoSlideshowPage', () => {
     const w = await mountPage(makeRouter());
     await flushPromises();
     const url = String(fetchFn.mock.calls[0][0]);
-    expect(url).toContain('/api/v1/photo/slideshow');
+    expect(isRoute(url, SLIDESHOW_PATH)).toBe(true);
     expect(url).toContain('library_id=lib1');
     expect(url).toContain('album_id=alb1');
     expect(url).toContain('interval=5');

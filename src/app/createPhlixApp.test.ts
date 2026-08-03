@@ -9,6 +9,20 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
 import { createRouter, createWebHistory, type RouteLocationNormalized, type Router, type RouteRecordRaw } from 'vue-router';
 import { createPhlixApp, buildRoutes, authGuard, connectGuard, mediaApiBaseFor, mediaDirectBaseFor, musicLibraryRedirect, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The exact routes the bootstrap reads: the session probe
+ * (`api/client.ts:964`) and the library list (`api/libraries.ts:69`).
+ *
+ * S193: matched with {@link isRoute} — the pathname must END WITH the route —
+ * because `url.includes('/api/v1/auth/me')` also matches
+ * `/api/v1/auth/me-MUTATED`, so the stub answered a route that would 404 and the
+ * "background validation was kicked off" assertion agreed with it. `endsWith`, not
+ * `===`: a base legitimately prefixes the path on the hub.
+ */
+const AUTH_ME_PATH = '/api/v1/auth/me';
+const LIBRARIES_PATH = '/api/v1/libraries';
 
 beforeEach(() => {
   localStorage.clear();
@@ -430,7 +444,7 @@ describe('router.beforeEach — optimistic auth guard (UI-3.2 / U-B1)', () => {
     );
     const fetchSpy = vi.fn((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.includes('/api/v1/auth/me')) return me.promise;
+      if (isRoute(url, AUTH_ME_PATH)) return me.promise;
       return Promise.resolve(jsonResponse(200, {}));
     });
     vi.stubGlobal('fetch', fetchSpy);
@@ -448,7 +462,7 @@ describe('router.beforeEach — optimistic auth guard (UI-3.2 / U-B1)', () => {
 
     expect(router.currentRoute.value.name).toBe('settings');
     // Background validation WAS kicked off (fire-and-forget) …
-    expect(fetchSpy.mock.calls.some(([u]) => String(u).includes('/api/v1/auth/me'))).toBe(true);
+    expect(fetchSpy.mock.calls.some(([u]) => isRoute(u, AUTH_ME_PATH))).toBe(true);
     // … but the route resolved BEFORE /auth/me settled — the guard did not block
     // first paint on the round trip.
     expect(meSettled).toBe(false);
@@ -464,7 +478,7 @@ describe('router.beforeEach — optimistic auth guard (UI-3.2 / U-B1)', () => {
       'fetch',
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        if (url.includes('/api/v1/auth/me')) return me.promise;
+        if (isRoute(url, AUTH_ME_PATH)) return me.promise;
         return Promise.resolve(jsonResponse(200, {}));
       }),
     );
@@ -497,7 +511,7 @@ describe('router.beforeEach — optimistic auth guard (UI-3.2 / U-B1)', () => {
       'fetch',
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        if (url.includes('/api/v1/auth/me')) return me.promise;
+        if (isRoute(url, AUTH_ME_PATH)) return me.promise;
         return Promise.resolve(jsonResponse(200, {}));
       }),
     );
@@ -528,7 +542,7 @@ describe('router.beforeEach — optimistic auth guard (UI-3.2 / U-B1)', () => {
       'fetch',
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        if (url.includes('/api/v1/auth/me')) return me.promise;
+        if (isRoute(url, AUTH_ME_PATH)) return me.promise;
         return Promise.resolve(jsonResponse(200, {}));
       }),
     );
@@ -673,10 +687,10 @@ describe('router.beforeEach — music library redirect (S97, wired)', () => {
   function stubFetch(librariesStatus = 200): ReturnType<typeof vi.fn> {
     const spy = vi.fn((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.includes('/api/v1/auth/me')) {
+      if (isRoute(url, AUTH_ME_PATH)) {
         return Promise.resolve(jsonResponse(200, { user: { id: 'u1', is_admin: false } }));
       }
-      if (url.includes('/api/v1/libraries')) {
+      if (isRoute(url, LIBRARIES_PATH)) {
         return Promise.resolve(
           librariesStatus === 200
             ? jsonResponse(200, { libraries: [MUSIC_LIB, MOVIE_LIB] })
@@ -690,7 +704,7 @@ describe('router.beforeEach — music library redirect (S97, wired)', () => {
   }
 
   const libraryCalls = (spy: ReturnType<typeof vi.fn>): number =>
-    spy.mock.calls.filter(([u]) => String(u).includes('/api/v1/libraries')).length;
+    spy.mock.calls.filter(([u]) => isRoute(u, LIBRARIES_PATH)).length;
 
   beforeEach(() => {
     window.history.replaceState({}, '', '/app');

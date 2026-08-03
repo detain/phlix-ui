@@ -10,6 +10,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import RecommendationsPage from './RecommendationsPage.vue';
+import { isRoute } from '../test/route-match';
 import MediaGrid from '../components/MediaGrid.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import ItemDataInspector from '../components/ItemDataInspector.vue';
@@ -18,6 +19,19 @@ import Spinner from '../components/ui/Spinner.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
+
+/**
+ * The exact route the because-you-watched engine is read through
+ * (`api/recommendations.ts:69`).
+ *
+ * S193: matched with {@link isRoute} (pathname must END WITH this) rather than
+ * `u.includes('/recommendations')`, which also matches
+ * `/api/v1/me/recommendations-MUTATED` — and, being only a fragment, would
+ * equally have matched an unrelated `/recommendations` route on any prefix.
+ * `endsWith`, not `===`, because the media base legitimately prefixes the path on
+ * the hub.
+ */
+const RECOMMENDATIONS_PATH = '/api/v1/me/recommendations';
 
 /** User recommendation from the because-you-watched engine (mirrors @phlix/contracts). */
 interface UserRecommendation {
@@ -47,7 +61,7 @@ function stubFetch(opts: { recommendations?: UserRecommendation[]; error?: boole
   ];
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/recommendations')) {
+    if (isRoute(u, RECOMMENDATIONS_PATH)) {
       if (opts.error) return Promise.reject(new Error('server error'));
       return Promise.resolve(jsonResponse({ recommendations }));
     }

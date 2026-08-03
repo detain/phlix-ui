@@ -9,6 +9,20 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PhotoAlbumPage from './PhotoAlbumPage.vue';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The album every test here deep-links to, and the exact detail route
+ * `photoApi.getAlbum` builds for it (`api/photos.ts:52`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * this — rather than `u.includes('/api/v1/photo/albums/')`, which cannot tell the
+ * real route from a suffix-appended one and, being a bare prefix, would equally
+ * have answered `/api/v1/photo/albums/alb1/anything`. `endsWith`, not `===`: the
+ * media base legitimately prefixes the path on the hub.
+ */
+const ALBUM_ID = 'alb1';
+const ALBUM_PATH = `/api/v1/photo/albums/${ALBUM_ID}`;
 import type { PhotoAlbum, Photo } from '../types/photo';
 
 function jsonResponse(body: unknown): Response {
@@ -45,7 +59,7 @@ function album(over: Partial<PhotoAlbum> = {}): PhotoAlbum {
 function stubFetch(opts: { album?: PhotoAlbum; error?: boolean; hang?: boolean } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/photo/albums/')) {
+    if (isRoute(u, ALBUM_PATH)) {
       if (opts.hang) return new Promise<Response>(() => {});
       if (opts.error) return Promise.reject(new Error('album down'));
       return Promise.resolve(jsonResponse({ album: opts.album ?? album() }));
@@ -94,7 +108,7 @@ describe('PhotoAlbumPage', () => {
     await flushPromises();
 
     const url = String(fetchFn.mock.calls[0][0]);
-    expect(url).toContain('/api/v1/photo/albums/alb1');
+    expect(isRoute(url, ALBUM_PATH)).toBe(true);
     expect(url).toContain('library_id=lib1');
     expect(w.findAll('.photo-card')).toHaveLength(2);
     w.unmount();

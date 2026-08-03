@@ -10,7 +10,21 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import BookDetailPage from './BookDetailPage.vue';
 import Button from '../components/ui/Button.vue';
+import { isRoute } from '../test/route-match';
 import type { BookDetail } from '../types/book';
+
+/**
+ * The book every test here mounts against, and the exact detail route
+ * `BookDetailPage.vue:55` builds for it.
+ *
+ * S193: matched with {@link isRoute} (pathname must END WITH this) rather than
+ * `u.includes('/api/v1/books/')`, which cannot tell the real route from a
+ * suffix-appended one — `'/api/v1/books/b1-MUTATED'` contains `'/api/v1/books/'`,
+ * so the stub served a detail payload to a route that would 404. `endsWith`, not
+ * `===`, because the media base legitimately prefixes the path on the hub.
+ */
+const BOOK_ID = 'b1';
+const DETAIL_PATH = `/api/v1/books/${BOOK_ID}`;
 
 function jsonResponse(body: unknown): Response {
   return {
@@ -46,7 +60,7 @@ function stubFetch(opts: { book?: BookDetail | null; error?: boolean; hang?: boo
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
     if (opts.hang) return new Promise<Response>(() => {});
-    if (u.includes('/api/v1/books/')) {
+    if (isRoute(u, DETAIL_PATH)) {
       if (opts.error) return Promise.reject(new Error('detail down'));
       return Promise.resolve(jsonResponse({ book: opts.book === undefined ? bookDetail() : opts.book }));
     }
@@ -100,7 +114,7 @@ describe('BookDetailPage — load + render', () => {
     const fetchFn = stubFetch();
     const w = await mountAt(makeRouter());
     await flushPromises();
-    expect(fetchFn.mock.calls[0][0]).toContain('/api/v1/books/b1');
+    expect(isRoute(fetchFn.mock.calls[0][0], DETAIL_PATH)).toBe(true);
     expect(w.find('.book-title').text()).toBe('Snow Crash');
     expect(w.text()).toContain('Neal Stephenson');
     expect(w.text()).toContain('Bantam Books');

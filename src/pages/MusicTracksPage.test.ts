@@ -9,6 +9,18 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ref } from 'vue';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import MusicTracksPage from './MusicTracksPage.vue';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The exact list route `ApiClient#listTracks` builds (`api/client.ts:1240`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * this — because `u.includes('/api/v1/music/tracks')` also matches
+ * `/api/v1/music/tracks-MUTATED`, so the stub answered a route that would 404 and
+ * the endpoint assertion agreed. `endsWith`, not `===`: the media base legitimately
+ * prefixes the path on the hub.
+ */
+const TRACKS_PATH = '/api/v1/music/tracks';
 import MusicPager from '../components/MusicPager.vue';
 
 const holder = vi.hoisted(() => ({ player: null as unknown }));
@@ -61,7 +73,7 @@ function rawTrack(id: string, name: string): RawTrack {
 function stubFetch(opts: { tracks?: RawTrack[]; total?: number; error?: boolean; hang?: boolean } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/music/tracks')) {
+    if (isRoute(u, TRACKS_PATH)) {
       if (opts.hang) return new Promise<Response>(() => {});
       if (opts.error) return Promise.reject(new Error('tracks down'));
       const tracks = opts.tracks ?? [rawTrack('t1', 'Airbag'), rawTrack('t2', 'Paranoid Android')];
@@ -97,7 +109,7 @@ describe('MusicTracksPage', () => {
     const w = mountPage();
     await flushPromises();
     const url = String(fetchFn.mock.calls[0][0]);
-    expect(url).toContain('/api/v1/music/tracks');
+    expect(isRoute(url, TRACKS_PATH)).toBe(true);
     expect(url).toContain('limit=100');
     expect(url).toContain('offset=0');
     expect(w.findAll('.track-row')).toHaveLength(2);

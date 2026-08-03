@@ -15,6 +15,7 @@ import Switch from '../../components/ui/Switch.vue';
 import Modal from '../../components/ui/Modal.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
+import { isRoute } from '../../test/route-match';
 
 const tunerA = {
   tuner_id: 'tuner-1',
@@ -658,7 +659,9 @@ describe('LiveTvPage — apiBase injection fallback', () => {
     expect(fetchSpy).toHaveBeenCalled();
     const url = String(fetchSpy.mock.calls[0]?.[0] ?? '');
     expect(url).toContain('https://api.example.test');
-    expect(url).toContain('/api/v1/admin/livetv/tuners');
+    // S193: suffix-exact on the PATHNAME. The base assertion above is what makes
+    // `endsWith` (not `===`) the required rule here — this url IS base-prefixed.
+    expect(isRoute(url, '/api/v1/admin/livetv/tuners')).toBe(true);
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
     w.unmount();

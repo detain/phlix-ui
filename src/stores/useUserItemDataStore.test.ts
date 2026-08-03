@@ -10,6 +10,20 @@ import { setActivePinia, createPinia } from 'pinia';
 import { useUserItemDataStore } from './useUserItemDataStore';
 import { useToastStore } from './useToastStore';
 import type { MediaDetail } from '../types/media-item';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The four per-item write routes this store posts to.
+ *
+ * S193: asserted with {@link isRoute} — the pathname must END WITH the route — rather
+ * than `toContain('/api/v1/media/m1/favorite')`, which is also satisfied by
+ * `/api/v1/media/m1/favorite-MUTATED`. `endsWith`, not `===`: the media base
+ * legitimately prefixes the path on the hub.
+ */
+const favoritePath = (id: string): string => `/api/v1/media/${encodeURIComponent(id)}/favorite`;
+const watchedPath = (id: string): string => `/api/v1/media/${encodeURIComponent(id)}/watched`;
+const unwatchedPath = (id: string): string => `/api/v1/media/${encodeURIComponent(id)}/unwatched`;
+const likePath = (id: string): string => `/api/v1/media/${encodeURIComponent(id)}/like`;
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -106,7 +120,7 @@ describe('useUserItemDataStore', () => {
 
       expect(store.isFavorite('m1')).toBe(true);
       const [url, init] = fetchMock.mock.calls[0]!;
-      expect(url).toContain('/api/v1/media/m1/favorite');
+      expect(isRoute(url, favoritePath('m1'))).toBe(true);
       expect((init as RequestInit).method).toBe('POST');
     });
 
@@ -120,7 +134,7 @@ describe('useUserItemDataStore', () => {
 
       expect(store.isFavorite('m1')).toBe(false);
       const [url, init] = fetchMock.mock.calls[0]!;
-      expect(url).toContain('/api/v1/media/m1/favorite');
+      expect(isRoute(url, favoritePath('m1'))).toBe(true);
       expect((init as RequestInit).method).toBe('DELETE');
     });
 
@@ -211,7 +225,7 @@ describe('useUserItemDataStore', () => {
 
       expect(store.isWatched('m1')).toBe(true);
       const [url, init] = fetchMock.mock.calls[0]!;
-      expect(url).toContain('/api/v1/media/m1/watched');
+      expect(isRoute(url, watchedPath('m1'))).toBe(true);
       expect((init as RequestInit).method).toBe('POST');
     });
 
@@ -225,7 +239,7 @@ describe('useUserItemDataStore', () => {
 
       expect(store.isWatched('m1')).toBe(false);
       const [url, init] = fetchMock.mock.calls[0]!;
-      expect(url).toContain('/api/v1/media/m1/unwatched');
+      expect(isRoute(url, unwatchedPath('m1'))).toBe(true);
       expect((init as RequestInit).method).toBe('POST');
     });
 
@@ -293,7 +307,7 @@ describe('useUserItemDataStore', () => {
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const [url, init] = fetchMock.mock.calls[0]!;
-      expect(url).toContain('/api/v1/media/m1/like');
+      expect(isRoute(url, likePath('m1'))).toBe(true);
       expect((init as RequestInit).method).toBe('PUT');
       expect((init as RequestInit).body).toBe(JSON.stringify({ level: 2 }));
       expect(store.likeLevel('m1')).toBe(2);

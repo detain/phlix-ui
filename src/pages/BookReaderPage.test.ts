@@ -10,7 +10,22 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import BookReaderPage from './BookReaderPage.vue';
 import Button from '../components/ui/Button.vue';
+import { isRoute } from '../test/route-match';
 import type { BookDetail, BookProgress } from '../types/book';
+
+/**
+ * The book every test here mounts against, and the two exact routes the page
+ * builds for it: `BookReaderPage.vue:77` (read) and `:128` (progress).
+ *
+ * S193: matched with {@link isRoute} (pathname must END WITH the route) rather
+ * than `u.includes('/read')`, which also matches `/api/v1/books/b1/read-MUTATED`
+ * — and, being only a fragment, would equally have matched a request to an
+ * unrelated `/read` route. `endsWith`, not `===`, because the media base
+ * legitimately prefixes the path on the hub.
+ */
+const BOOK_ID = 'b1';
+const READ_PATH = `/api/v1/books/${BOOK_ID}/read`;
+const PROGRESS_PATH = `/api/v1/books/${BOOK_ID}/progress`;
 
 function jsonResponse(body: unknown): Response {
   return {
@@ -56,7 +71,7 @@ function stubFetch(opts: ReadOpts = {}) {
   const fn = vi.fn((url: unknown, init?: RequestInit) => {
     const u = typeof url === 'string' ? url : '';
     if (init && init.method === 'POST') return post(url, init);
-    if (u.includes('/read')) {
+    if (isRoute(u, READ_PATH)) {
       if (opts.error) return Promise.reject(new Error('reader down'));
       return Promise.resolve(jsonResponse({
         book: bookDetail(),
@@ -123,7 +138,7 @@ describe('BookReaderPage — load', () => {
     const { fn } = stubFetch();
     const w = await mountAt(makeRouter());
     await flushPromises();
-    expect(fn.mock.calls[0][0]).toContain('/api/v1/books/b1/read');
+    expect(isRoute(fn.mock.calls[0][0], READ_PATH)).toBe(true);
     expect(w.find('.reader-toolbar__title').text()).toBe('Hyperion');
     expect(w.text()).toContain('About this Book');
     w.unmount();
@@ -210,7 +225,7 @@ describe('BookReaderPage — progress persistence', () => {
 
     expect(post).toHaveBeenCalledTimes(1);
     const [url, init] = post.mock.calls[0];
-    expect(String(url)).toContain('/api/v1/books/b1/progress');
+    expect(isRoute(String(url), PROGRESS_PATH)).toBe(true);
     const body = JSON.parse(init.body as string);
     expect(body.current_page).toBe(2);
     expect(body.total_pages).toBe(5);

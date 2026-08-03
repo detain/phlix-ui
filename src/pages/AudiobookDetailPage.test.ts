@@ -10,7 +10,22 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import AudiobookDetailPage from './AudiobookDetailPage.vue';
 import Button from '../components/ui/Button.vue';
+import { isRoute } from '../test/route-match';
 import type { AudiobookDetail } from '../types/audiobook';
+
+/**
+ * The audiobook every test here mounts against, and the exact detail route
+ * `AudiobookDetailPage.vue:56` builds for it.
+ *
+ * S193: matched with {@link isRoute} (pathname must END WITH this) rather than
+ * `u.includes('/api/v1/audiobooks/')`, which cannot tell the real route from a
+ * suffix-appended one — `'/api/v1/audiobooks/a1-MUTATED'` contains
+ * `'/api/v1/audiobooks/'`, so the stub served a detail payload to a route that
+ * would 404. `endsWith`, not `===`, because the media base legitimately prefixes
+ * the path on the hub.
+ */
+const AUDIOBOOK_ID = 'a1';
+const DETAIL_PATH = `/api/v1/audiobooks/${AUDIOBOOK_ID}`;
 
 function jsonResponse(body: unknown): Response {
   return {
@@ -47,7 +62,7 @@ function detail(over: Partial<AudiobookDetail> = {}): AudiobookDetail {
 function stubFetch(opts: { audiobook?: AudiobookDetail | null; error?: boolean } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/audiobooks/')) {
+    if (isRoute(u, DETAIL_PATH)) {
       if (opts.error) return Promise.reject(new Error('detail down'));
       return Promise.resolve(jsonResponse({ audiobook: opts.audiobook === undefined ? detail() : opts.audiobook }));
     }
@@ -101,7 +116,7 @@ describe('AudiobookDetailPage — load + render', () => {
     const fetchFn = stubFetch();
     const w = await mountAt(makeRouter());
     await flushPromises();
-    expect(fetchFn.mock.calls[0][0]).toContain('/api/v1/audiobooks/a1');
+    expect(isRoute(fetchFn.mock.calls[0][0], DETAIL_PATH)).toBe(true);
     expect(w.find('.audiobook-title').text()).toBe('The Three-Body Problem');
     expect(w.text()).toContain('Liu Cixin');
     expect(w.text()).toContain('Luke Daniels');

@@ -13,6 +13,18 @@ import SearchPage from './SearchPage.vue';
 import MediaGrid from '../components/MediaGrid.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import type { MediaItem } from '../types/media-item';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The exact search route `SearchPage.vue:70` requests.
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * this — because `u.includes('/api/v1/media/search')` also matches
+ * `/api/v1/media/search-MUTATED` (and `/api/v1/media/search/by-marker`), so the stub
+ * answered routes it does not model and the endpoint assertion agreed. `endsWith`,
+ * not `===`: the media base legitimately prefixes the path on the hub.
+ */
+const SEARCH_PATH = '/api/v1/media/search';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -46,7 +58,7 @@ function jsonResponse(body: unknown): Response {
 function stubFetch(opts: { items?: MediaItem[]; error?: boolean } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (u.includes('/api/v1/media/search')) {
+    if (isRoute(u, SEARCH_PATH)) {
       if (opts.error) return Promise.reject(new Error('search boom'));
       const items = opts.items ?? [media()];
       return Promise.resolve(jsonResponse({ items, query: 'q', total: items.length }));
@@ -110,7 +122,7 @@ describe('SearchPage — states', () => {
     const w = await mountAt({ query: { q: 'arrival' } });
     await flushPromises();
     const calledUrl = String(fetchFn.mock.calls[0][0]);
-    expect(calledUrl).toContain('/api/v1/media/search');
+    expect(isRoute(calledUrl, SEARCH_PATH)).toBe(true);
     expect(calledUrl).toContain('q=arrival');
     const grid = w.findComponent(MediaGrid);
     expect(grid.exists()).toBe(true);

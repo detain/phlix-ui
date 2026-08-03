@@ -9,6 +9,25 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import MusicArtistPage from './MusicArtistPage.vue';
+import { isRoute } from '../test/route-match';
+
+/**
+ * The two exact routes this page reads: the artist row
+ * (`GET /api/v1/music/artists/{name}`, URL-encoded as production encodes it) and
+ * the SERVER-filtered album page (`GET /api/v1/music/albums?artist=…`,
+ * `api/client.ts:1192`).
+ *
+ * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
+ * the route — rather than substring. `u.includes('/api/v1/music/albums')` matched
+ * the artist row's own URL prefix family and, worse, could not tell either route
+ * from a suffix-appended one. `endsWith`, not `===`: the media base legitimately
+ * prefixes the path on the hub.
+ *
+ * Every test here mounts the default artist, so one constant covers the file.
+ */
+const ARTIST_NAME = 'Radiohead';
+const ARTIST_PATH = `/api/v1/music/artists/${encodeURIComponent(ARTIST_NAME)}`;
+const ALBUMS_PATH = '/api/v1/music/albums';
 import MusicPager from '../components/MusicPager.vue';
 
 interface ServerAlbum {
@@ -72,7 +91,7 @@ function stubFetch(opts: {
     const u = typeof url === 'string' ? url : '';
     calls.push(u);
     // Order matters: the more specific /artists/{name} check first.
-    if (u.includes('/api/v1/music/artists/')) {
+    if (isRoute(u, ARTIST_PATH)) {
       if (opts.error) return Promise.reject(new Error('artist down'));
       return Promise.resolve(jsonResponse({
         artist: {
@@ -85,10 +104,10 @@ function stubFetch(opts: {
         },
       }));
     }
-    if (opts.albumsError && u.includes('/api/v1/music/albums')) {
+    if (opts.albumsError && isRoute(u, ALBUMS_PATH)) {
       return Promise.reject(new Error('albums down'));
     }
-    if (u.includes('/api/v1/music/albums')) {
+    if (isRoute(u, ALBUMS_PATH)) {
       const parsed = new URL(u, 'http://server.test');
       const artist = (parsed.searchParams.get('artist') ?? '').trim();
       const limit = Math.min(100, Number(parsed.searchParams.get('limit') ?? 100));
@@ -166,7 +185,7 @@ describe('MusicArtistPage', () => {
     const w = mountPage(makeRouter());
     await flushPromises();
 
-    expect(fetchFn.mock.calls.some((c) => String(c[0]).includes('/api/v1/music/artists/'))).toBe(true);
+    expect(fetchFn.mock.calls.some((c) => isRoute(c[0], ARTIST_PATH))).toBe(true);
     // Paged AND filtered server-side — not "fetch everything, filter here".
     expect(fetchFn.calls).toContain('/api/v1/music/albums?limit=100&offset=0&artist=Radiohead');
     expect(w.find('.artist-header__name').text()).toBe('Radiohead');
@@ -229,7 +248,7 @@ describe('MusicArtistPage', () => {
     expect(second).toHaveLength(42);
     expect(second[41].text()).toContain('Radiohead Album 142');
     // The second page re-reads only the album list, not the artist row.
-    expect(fetchFn.calls.filter((u) => u.includes('/api/v1/music/artists/'))).toHaveLength(1);
+    expect(fetchFn.calls.filter((u) => isRoute(u, ARTIST_PATH))).toHaveLength(1);
     w.unmount();
   });
 

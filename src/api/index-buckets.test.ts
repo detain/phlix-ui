@@ -7,6 +7,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchIndexBuckets, cache, CACHE_TTL } from './index-buckets';
+import { isRoute } from '../test/route-match';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -57,7 +58,9 @@ describe('fetchIndexBuckets', () => {
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const url = fetchMock.mock.calls[0][0] as string;
-    expect(url).toContain('/api/v1/media/index');
+    // S193: suffix-exact on the PATHNAME (query stripped), so `/api/v1/media/index-MUTATED`
+    // no longer satisfies it; the query params are asserted separately below.
+    expect(isRoute(url, '/api/v1/media/index')).toBe(true);
     expect(url).toContain('field=name');
     expect(url).toContain('libraryId=lib-1');
     expect(CACHE_TTL).toBe(300_000);

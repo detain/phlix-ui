@@ -13,6 +13,7 @@ import SeasonPage from './SeasonPage.vue';
 import SeriesSeasons from '../components/SeriesSeasons.vue';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
+import { isRoute, hasQuery } from '../test/route-match';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -120,8 +121,11 @@ describe('SeasonPage (U3)', () => {
     await flushPromises();
 
     // by-id then a parentId children fetch
-    expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/media/sh1');
-    expect(fetchMock.mock.calls[1][0]).toContain('parentId=sh1');
+    // S193: suffix-exact on the PATHNAME (so `/api/v1/media/sh1-MUTATED` and the
+    // `/api/v1/media/sh1/...` sub-routes no longer satisfy it), and the children fetch
+    // matched on its PARSED query parameter rather than the substring `parentId=sh1`.
+    expect(isRoute(fetchMock.mock.calls[0][0], '/api/v1/media/sh1')).toBe(true);
+    expect(hasQuery(fetchMock.mock.calls[1][0], 'parentId', 'sh1')).toBe(true);
 
     expect(w.text()).toContain('Season 1');
     const titles = w.findAll('.series-seasons__episode-title').map((n) => n.text());

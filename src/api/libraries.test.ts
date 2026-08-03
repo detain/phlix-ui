@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { fetchLibraries, sortLibraries, type LibrarySummary } from './libraries';
+import { isRoute } from '../test/route-match';
 
 function jsonResponse(body: unknown): Response {
   return {
@@ -82,7 +83,8 @@ describe('fetchLibraries', () => {
     const result = await fetchLibraries('');
     expect(result.map((l) => l.id)).toEqual(['mv', 'tv']);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(String(fetchMock.mock.calls[0][0])).toContain('/api/v1/libraries');
+    // S193: suffix-exact on the PATHNAME, so `/api/v1/libraries-MUTATED` no longer passes.
+    expect(isRoute(fetchMock.mock.calls[0][0], '/api/v1/libraries')).toBe(true);
   });
 
   it('degrades a malformed payload to an empty list', async () => {

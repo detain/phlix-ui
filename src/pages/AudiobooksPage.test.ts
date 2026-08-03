@@ -9,7 +9,19 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import AudiobooksPage from './AudiobooksPage.vue';
+import { isRoute } from '../test/route-match';
 import type { AudiobookListItem } from '../types/audiobook';
+
+/**
+ * The exact list route `AudiobooksPage.vue:38` requests.
+ *
+ * S193: matched with {@link isRoute} — pathname (query stripped) must END WITH
+ * this — because `u.includes('/api/v1/audiobooks')` also matches
+ * `/api/v1/audiobooks-MUTATED`, so the stub answered a route that would 404 and
+ * the endpoint assertion agreed. `endsWith`, not `===`: the media base
+ * legitimately prefixes the path on the hub.
+ */
+const LIST_PATH = '/api/v1/audiobooks';
 
 function jsonResponse(body: unknown): Response {
   return {
@@ -36,7 +48,7 @@ function stubFetch(opts: { audiobooks?: AudiobookListItem[]; error?: boolean; ha
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
     if (opts.hang) return new Promise<Response>(() => {});
-    if (u.includes('/api/v1/audiobooks')) {
+    if (isRoute(u, LIST_PATH)) {
       if (opts.error) return Promise.reject(new Error('audiobooks down'));
       return Promise.resolve(jsonResponse({ audiobooks: opts.audiobooks ?? [audiobook()] }));
     }
@@ -80,7 +92,7 @@ describe('AudiobooksPage — states', () => {
     const fetchFn = stubFetch({ audiobooks: [audiobook({ name: 'The Martian' })] });
     const w = mountPage(makeRouter());
     await flushPromises();
-    expect(fetchFn.mock.calls[0][0]).toContain('/api/v1/audiobooks');
+    expect(isRoute(fetchFn.mock.calls[0][0], LIST_PATH)).toBe(true);
     const cards = w.findAll('.audiobook-card');
     expect(cards).toHaveLength(1);
     expect(cards[0].text()).toContain('The Martian');

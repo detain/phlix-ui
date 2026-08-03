@@ -9,7 +9,22 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import AudiobookPlayerPage from './AudiobookPlayerPage.vue';
+import { isRoute } from '../test/route-match';
 import type { AudiobookDetail, AudiobookProgress } from '../types/audiobook';
+
+/**
+ * The audiobook every test here mounts against, and the two exact routes the page
+ * builds for it: `AudiobookPlayerPage.vue:83` (read) and `:195` (progress).
+ *
+ * S193: matched with {@link isRoute} (pathname must END WITH the route) rather
+ * than `u.includes('/read')`, which also matches `/api/v1/audiobooks/a1/read-MUTATED`
+ * — and, being only a fragment, would equally have matched a request to an
+ * unrelated `/read` route. `endsWith`, not `===`, because the media base
+ * legitimately prefixes the path on the hub.
+ */
+const AUDIOBOOK_ID = 'a1';
+const READ_PATH = `/api/v1/audiobooks/${AUDIOBOOK_ID}/read`;
+const PROGRESS_PATH = `/api/v1/audiobooks/${AUDIOBOOK_ID}/progress`;
 
 function jsonResponse(body: unknown): Response {
   return {
@@ -42,7 +57,7 @@ function stubFetch(opts: { audiobook?: AudiobookDetail | null; progress?: Audiob
   const fn = vi.fn((url: unknown, init?: RequestInit) => {
     const u = typeof url === 'string' ? url : '';
     if (init && init.method === 'POST') return post(url, init);
-    if (u.includes('/read')) {
+    if (isRoute(u, READ_PATH)) {
       if (opts.error) return Promise.reject(new Error('read down'));
       return Promise.resolve(jsonResponse({
         audiobook: opts.audiobook === undefined ? detail() : opts.audiobook,
@@ -110,7 +125,7 @@ describe('AudiobookPlayerPage — load', () => {
     const { fn } = stubFetch();
     const w = await mountAt(makeRouter());
     await flushPromises();
-    expect(fn.mock.calls[0][0]).toContain('/api/v1/audiobooks/a1/read');
+    expect(isRoute(fn.mock.calls[0][0], READ_PATH)).toBe(true);
     expect(w.find('.player-title').text()).toBe('Children of Time');
     expect(w.find('audio').exists()).toBe(true);
     w.unmount();
@@ -196,7 +211,7 @@ describe('AudiobookPlayerPage — progress save', () => {
 
     expect(post).toHaveBeenCalled();
     const [url, init] = post.mock.calls[0];
-    expect(String(url)).toContain('/api/v1/audiobooks/a1/progress');
+    expect(isRoute(String(url), PROGRESS_PATH)).toBe(true);
     const body = JSON.parse(init.body as string);
     expect(body).toHaveProperty('position_ms');
     expect(body).toHaveProperty('current_chapter_index');
