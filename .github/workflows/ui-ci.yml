@@ -36,6 +36,31 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
+
+      # S176: the committed dist/ IS the published package. phlix-ui ships by
+      # GitHub tag with `files: ["dist"]` and no `prepare` script, so npm never
+      # builds on install and consumers get whatever dist/ is committed. This
+      # step fails the PR if `npm run build` above changed anything — i.e. if a
+      # src/ change landed without a rebuilt dist/.
+      #
+      # Must stay directly after `npm run build` and must NOT gain
+      # `continue-on-error` or a `|| true`: either would restore the exact silent
+      # drift this exists to stop. src/test/dist-build-gate.test.ts asserts both.
+      #
+      # ⚠ Expect a comment-only edit to a scoped SFC to trip this, and do NOT
+      # treat that as a false red. Adding a docblock to a function in
+      # CaptionOverlay.vue rehashes that file's `data-v-` scope id, which
+      # cascades into the bundles. Measured 2026-08-03 from a CLEAN tree: one
+      # comment produced 16 dist entries (4 new / 4 deleted / 8 modified) —
+      # phlix-ui.js, phlix-ui.umd.cjs, player.js, player.umd.cjs, style.css,
+      # ui.css and a rehashed PlayerPage chunk in both formats. Mechanism
+      # confirmed, not just the symptom: exactly ONE of the 147 `data-v-` ids in
+      # style.css changed (b9f35f44 → f01bcb32). S13 recorded the same effect as
+      # a +3 delta on an already-dirty tree; 16 is the clean-tree figure, which
+      # is what CI sees. Rebuild and commit dist/.
+      - name: Verify committed dist/ matches source
+        run: npm run dist:check
+
       # `--coverage` is what makes coverage/lcov.info exist at all — plain
       # `test:run` writes no report despite vite.config.ts carrying a full
       # `coverage` block, so the upload below would have nothing to send.

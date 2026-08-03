@@ -4,7 +4,30 @@
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
-export type ThemeName = 'nocturne' | 'daylight' | 'midnight';
+/**
+ * The id of the active theme.
+ *
+ * **Deliberately `string`, not a closed union** (S86). It used to be
+ * `'nocturne' | 'daylight' | 'midnight'`, which made the three themes the SPA
+ * ships the only themes that could ever exist: a theme registered by a server
+ * plugin (`GET /api/v1/themes`) has an id nobody can enumerate at SPA build
+ * time, and assigning it here was a compile error. Widening is what lets a
+ * plugin theme be *selected* at all.
+ *
+ * The three shipped ids are still first-class — see `BUILT_IN_THEME_IDS` in
+ * `composables/themeTokens`, which is the runtime membership test (`data-theme`
+ * alone renders those; anything else additionally needs a token map applied).
+ * The safety that the union used to provide has NOT been dropped, it has moved
+ * to where it can actually cover server data: an unknown id is validated
+ * against the same slug pattern the server uses, and its tokens against the
+ * same allowlist + value grammar, before either reaches the DOM.
+ *
+ * Same tolerance as `viewMode`/`defaultQuality` on hydration: a persisted id
+ * for a theme that has since been uninstalled hydrates verbatim and degrades to
+ * the built-in default at apply time (`resolveThemeBase`), rather than being
+ * silently rewritten.
+ */
+export type ThemeName = string;
 export type Density = 'comfortable' | 'compact';
 export type MotionPref = 'auto' | 'on' | 'off';
 /** How a library/section renders its items (S67). 'grid' (poster grid), 'list'
@@ -103,7 +126,7 @@ export declare function hasStoredPreferences(): boolean;
  * <html> live. `effectiveReducedMotion` resolves the 'auto' setting against the OS.
  */
 export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix-prefs", Pick<{
-    theme: import("vue").Ref<ThemeName, ThemeName>;
+    theme: import("vue").Ref<string, string>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
     cardSize: import("vue").Ref<number, number>;
@@ -151,7 +174,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     removeFilterPreset: (id: string) => void;
     reset: () => void;
 }, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "viewMode" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
-    theme: import("vue").Ref<ThemeName, ThemeName>;
+    theme: import("vue").Ref<string, string>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
     cardSize: import("vue").Ref<number, number>;
@@ -199,7 +222,7 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     removeFilterPreset: (id: string) => void;
     reset: () => void;
 }, "effectiveReducedMotion">, Pick<{
-    theme: import("vue").Ref<ThemeName, ThemeName>;
+    theme: import("vue").Ref<string, string>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
     cardSize: import("vue").Ref<number, number>;

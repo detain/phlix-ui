@@ -3119,7 +3119,10 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 				end: e.end_seconds
 			} : null;
 		}
-		async function ge(e, t) {
+		function ge(e) {
+			return e.type === "episode" || (e.episode_number ?? null) !== null;
+		}
+		async function _e(e, t) {
 			let r = N, i = () => fe || r !== N, a = t.genres?.[0];
 			if (!a) {
 				o.setQueue([]);
@@ -3139,7 +3142,7 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 				o.setQueue([]);
 			}
 		}
-		async function _e(e, t, r) {
+		async function ve(e, t, r) {
 			let i = A(n.value, {
 				parentId: t,
 				limit: 100,
@@ -3148,7 +3151,7 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			});
 			return (await e.get(i, void 0, r)).items ?? [];
 		}
-		async function ve(e, t, n) {
+		async function P(e, t, n) {
 			let r = t;
 			for (let t = 0; t < 4 && r.parent_id; t += 1) {
 				let t = (await e.get(`/api/v1/media/${encodeURIComponent(r.parent_id)}`, void 0, n)).item;
@@ -3156,41 +3159,41 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			}
 			return r;
 		}
-		function P(e, t) {
+		function ye(e, t) {
 			M.value = ne(e, t), le.value = re(e, t);
 			let n = e.findIndex((e) => e.id === t), r = n >= 0 ? e.slice(n + 1) : [];
 			r.length && o.setQueue(r);
 		}
-		function ye(e) {
+		function H(e) {
 			for (let n of t.values()) if (n.some((t) => t.id === e)) return n;
 			return null;
 		}
-		async function H(e, n) {
-			if (M.value = null, le.value = null, n.type !== "episode" && (n.episode_number ?? null) === null) return;
-			let r = ye(n.id);
+		async function be(e, n) {
+			if (M.value = null, le.value = null, !ge(n)) return;
+			let r = H(n.id);
 			if (r) {
-				P(r, n.id);
+				ye(r, n.id);
 				return;
 			}
 			let i = N, a = () => fe || i !== N;
 			try {
-				let r = await ve(e, n, i?.signal);
+				let r = await P(e, n, i?.signal);
 				if (a()) return;
-				let o = await _e(e, r.id, i?.signal);
+				let o = await ve(e, r.id, i?.signal);
 				if (a()) return;
 				if (te(o)) {
-					let t = o.filter((e) => e.type === "season"), n = await Promise.all(t.map((t) => _e(e, t.id, i?.signal).catch(() => [])));
+					let t = o.filter((e) => e.type === "season"), n = await Promise.all(t.map((t) => ve(e, t.id, i?.signal).catch(() => [])));
 					if (a()) return;
 					o = [...o.filter((e) => e.type !== "season"), ...n.flat()];
 				}
 				let s = j(o);
-				s.length && t.set(r.id, s), P(s, n.id);
+				s.length && t.set(r.id, s), ye(s, n.id);
 			} catch (e) {
 				if (a() || pe(e)) return;
 				M.value = null, le.value = null;
 			}
 		}
-		async function be() {
+		async function xe() {
 			let e = ue.value;
 			if (N?.abort(), N = typeof AbortController < "u" ? new AbortController() : null, T.value = !0, E.value = null, v.value = [], y.value = null, b.value = null, x.value = [], w.value = [], M.value = null, le.value = null, o.hideMiniPlayer(), !e) {
 				E.value = "No media id provided", T.value = !1;
@@ -3206,7 +3209,7 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			}).catch(() => null);
 			let r = ie(e), i = Date.now();
 			if (r && ae(r, i)) {
-				xe(t, r.item);
+				Se(t, r.item);
 				return;
 			}
 			let a = null;
@@ -3222,7 +3225,7 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 					}
 				}
 				if (r) {
-					xe(t, r.item);
+					Se(t, r.item);
 					return;
 				}
 				E.value = e instanceof Error ? e.message : "Failed to load media", T.value = !1;
@@ -3231,31 +3234,25 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			if (!fe) {
 				if (!a) {
 					if (r) {
-						xe(t, r.item);
+						Se(t, r.item);
 						return;
 					}
 					E.value = "Failed to load media item", T.value = !1;
 					return;
 				}
-				oe(e, a, i), xe(t, a);
+				oe(e, a, i), Se(t, a);
 			}
 		}
-		async function xe(e, t) {
-			h.value = t, f.hydrate(t), g.value = me(t), T.value = !1, !((t.episode_number ?? null) !== null && (await H(e, t), le.value)) && ge(e, t);
+		async function Se(e, t) {
+			h.value = t, f.hydrate(t), g.value = me(t), T.value = !1, !(ge(t) && (await be(e, t), le.value)) && _e(e, t);
 		}
-		we(be), X(ue, be), Oe(() => {
+		we(xe), X(ue, xe), Oe(() => {
 			o.current && o.streamUrl && o.showMiniPlayer();
 		}), Ce(() => {
 			fe = !0, N?.abort(), N = null, m.reset();
 		});
-		function Se() {
+		function q() {
 			a?.back();
-		}
-		function q(e) {
-			a?.push({
-				name: "player",
-				params: { id: e.id }
-			}).catch(() => {});
 		}
 		function Te(e) {
 			a?.push({
@@ -3264,10 +3261,16 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			}).catch(() => {});
 		}
 		function Ee(e) {
+			a?.push({
+				name: "player",
+				params: { id: e.id }
+			}).catch(() => {});
+		}
+		function De(e) {
 			D.value = e, m.setTheaterActive(e);
 		}
-		function De() {
-			ce.value = !1, Se();
+		function je() {
+			ce.value = !1, q();
 		}
 		return (e, t) => (G(), R("div", { class: U(["player-page", { "is-theater": D.value }]) }, [
 			de.value && !T.value && !E.value ? (G(), R("div", {
@@ -3289,13 +3292,13 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			}, {
 				actions: Z(() => [V(C, {
 					variant: "solid",
-					onClick: be
+					onClick: xe
 				}, {
 					default: Z(() => [...t[1] ||= [B("Retry", -1)]]),
 					_: 1
 				}), V(C, {
 					variant: "ghost",
-					onClick: Se
+					onClick: q
 				}, {
 					default: Z(() => [...t[2] ||= [B("Back", -1)]]),
 					_: 1
@@ -3315,10 +3318,10 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 				"prev-episode": M.value,
 				"next-episode": le.value,
 				autoplay: !0,
-				onBack: Se,
-				onPlayNext: q,
-				onPlayEpisode: Te,
-				onTheater: Ee
+				onBack: q,
+				onPlayNext: Te,
+				onPlayEpisode: Ee,
+				onTheater: De
 			}, null, 8, [
 				"media",
 				"stream-url",
@@ -3341,7 +3344,7 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			}, {
 				footer: Z(() => [V(C, {
 					variant: "solid",
-					onClick: De
+					onClick: je
 				}, {
 					default: Z(() => [...t[3] ||= [B("OK", -1)]]),
 					_: 1
@@ -3351,8 +3354,8 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			}, 8, ["modelValue"])
 		], 2));
 	}
-}), [["__scopeId", "data-v-3153e8a3"]]);
+}), [["__scopeId", "data-v-053fa543"]]);
 //#endregion
 export { ia as default };
 
-//# sourceMappingURL=PlayerPage-Bgr8KKn5.js.map
+//# sourceMappingURL=PlayerPage-tvlBwUlZ.js.map
