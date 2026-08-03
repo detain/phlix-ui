@@ -36,6 +36,24 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
+
+      # S176: the committed dist/ IS the published package. phlix-ui ships by
+      # GitHub tag with `files: ["dist"]` and no `prepare` script, so npm never
+      # builds on install and consumers get whatever dist/ is committed. This
+      # step fails the PR if `npm run build` above changed anything — i.e. if a
+      # src/ change landed without a rebuilt dist/.
+      #
+      # Must stay directly after `npm run build` and must NOT gain
+      # `continue-on-error` or a `|| true`: either would restore the exact silent
+      # drift this exists to stop. src/test/dist-build-gate.test.ts asserts both.
+      #
+      # ⚠ Expect a comment-only edit to a scoped SFC to trip this. Adding a
+      # docblock rehashes the file's `data-v-` scope id and changes the bundles
+      # (measured in S13: +3 artefacts). That is a real change, not a false red —
+      # rebuild and commit dist/.
+      - name: Verify committed dist/ matches source
+        run: npm run dist:check
+
       # `--coverage` is what makes coverage/lcov.info exist at all — plain
       # `test:run` writes no report despite vite.config.ts carrying a full
       # `coverage` block, so the upload below would have nothing to send.
