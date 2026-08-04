@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.98.35 - 2026-08-04
+
 ### Added
 - **The Next Up home rail's endpoint contract and error state: the two halves its tests never pinned (plan_updates.md — S37, AC audit 2026-08-03).** **S37 SHIPPED on 2026-07-23** as `9d0e883b` (#268) and is an ancestor of `master`; the rail is live in `BrowsePage.vue` (Continue Watching → **Next Up** → My List → Recommended → Most Watched), fed by `src/api/nextUp.ts`. This entry adds **no behaviour**: it is test-only, **not one byte of bundled source changes**, so `dist/` is untouched and `npm run dist:check` passes on the committed output (785 tracked files, 8 published entry points, 5/5 checks ran). The rail was re-verified against the **actual** S36 server route (`WebPortalRouter::getNextUp` + `WatchHistory::shapeNextEpisode`, `phlix-server` `3e3fe1fb` #544) and the client matches it exactly: path `GET /api/v1/users/me/next-up`, auth-required (401 without a userId), a **bare `{ items: [...] }` envelope — not `{success, data}`** — `limit` defaulting to 20, snake_case `MediaItemShaper` rows carrying `series_id`/`series_name` and `position_ticks`/`duration_ticks` = 0, and **no `user_data` key**, which is what makes the rail's `remember()`-not-`hydrate()` choice correct rather than incidental.
 
