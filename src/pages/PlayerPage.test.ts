@@ -1374,4 +1374,195 @@ describe('PlayerPage — a superseded applyItem() must not write the new item’
     expect((w.findComponent(Player).props('nextEpisode') as MediaItem | null)?.id).toBe(a2.id);
     expect(player.queue.map((m) => m.id)).toEqual([a2.id]);
   });
+
+  it('does not write a queue that was superseded DURING its own genre fetch', async () => {
+    // The other half of `loadQueue`'s exposure, and — measured — a check that NO test in
+    // this file pinned before S172: here `loadQueue` is entered while its run is still
+    // current and is superseded inside its OWN await, rather than being called by an
+    // already-superseded run. Deleting its `stale()` return reds this test.
+    //
+    // ⚠ This test does NOT distinguish the run-scoped token from the controller identity it
+    // replaced: for THIS interleaving the old `myController` was captured while the run was
+    // current, so it was already correct. The reason for the change is the other
+    // interleaving (above) plus the null-`AbortController` case, neither of which a
+    // same-shape test can separate here.
+    const p = 's172q';
+    const a1 = media({ id: `${p}-a1`, type: 'movie', genres: ['Horror'] });
+    const b1 = media({ id: `${p}-b1`, type: 'movie', genres: ['Comedy'] });
+    const horrorRow = media({ id: `${p}-horror-row`, genres: ['Horror'] });
+    const comedyRow = media({ id: `${p}-comedy-row`, genres: ['Comedy'] });
+    const genreGate = deferred<Response>();
+    const counts = { horror: 0, comedy: 0 };
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isGenreQueueFor(u, 'Horror')) {
+        counts.horror += 1;
+        return genreGate.promise; // run A parks inside loadQueue itself
+      }
+      if (isGenreQueueFor(u, 'Comedy')) {
+        counts.comedy += 1;
+        return Promise.resolve(jsonResponse({ items: [comedyRow], total: 1 }));
+      }
+      if (isById(u, a1.id)) return Promise.resolve(jsonResponse({ item: a1 }));
+      if (isById(u, b1.id)) return Promise.resolve(jsonResponse({ item: b1 }));
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+
+    const { router } = await mountAt(a1.id, fetchMock);
+    await flushPromises();
+    await flushPromises();
+    const player = usePlayerStore();
+    // BRANCH: A is a movie, so its genre fallback IS the writer, and it is in flight.
+    expect(counts.horror).toBe(1);
+    expect(player.queue).toHaveLength(0); // the gate is genuinely holding
+
+    await router.push(`/app/player/${b1.id}`);
+    await flushPromises();
+    await flushPromises();
+    expect(counts.comedy).toBe(1);
+    expect(player.queue.map((m) => m.id)).toEqual([comedyRow.id]);
+
+    genreGate.resolve(jsonResponse({ items: [horrorRow], total: 1 }));
+    await flushPromises();
+    await flushPromises();
+    expect(player.queue.map((m) => m.id)).toEqual([comedyRow.id]);
+  });
+
+  /**
+   * The other three writes in `load()` that outlive their own run, each pinned so the guard
+   * on it is falsifiable rather than decoration: the playback-info `.then` (markers,
+   * chapters, audio/subtitle tracks) and the two error assignments the by-id await can
+   * reach. Same technique — one gated response, released strictly after the newer item is
+   * on screen — and each has a CONTROL proving the gate is live.
+   *
+   * These share the queue tests' reachability caveat (a signal-honouring `fetch` usually
+   * rejects the superseded request instead), and the same answer: where `AbortController`
+   * is undefined nothing is aborted at all, and a response already delivered cannot be
+   * un-delivered by a later `abort()`.
+   */
+  function twoMovieFetch(p: string, gate: Promise<Response>, gateOn: 'playback-info' | 'by-id') {
+    // No genres on either movie ⇒ `loadQueue` writes an empty queue without a request, so
+    // playback-info / the by-id error are the only moving parts.
+    const a1 = media({ id: `${p}-a1`, name: 'Item A', type: 'movie', genres: [] });
+    const b1 = media({ id: `${p}-b1`, name: 'Item B', type: 'movie', genres: [] });
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isRoute(u, playbackInfoPath(a1.id))) return gateOn === 'playback-info' ? gate : Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      if (isById(u, a1.id)) return gateOn === 'by-id' ? gate : Promise.resolve(jsonResponse({ item: a1 }));
+      if (isRoute(u, playbackInfoPath(b1.id))) {
+        return Promise.resolve(jsonResponse({ intro_marker: { start_seconds: 100, end_seconds: 130 }, outro_marker: null, chapters: [] }));
+      }
+      if (isById(u, b1.id)) return Promise.resolve(jsonResponse({ item: b1 }));
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    return { a1, b1, fetchMock };
+  }
+
+  it('a superseded run’s playback-info does not paint its markers over the new item', async () => {
+    const gate = deferred<Response>();
+    const { a1, b1, fetchMock } = twoMovieFetch('s172p', gate.promise, 'playback-info');
+    const { w, router } = await mountAt(a1.id, fetchMock);
+    await flushPromises();
+    await flushPromises();
+    expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(a1.id); // A is on screen
+    expect(w.findComponent(Player).props('introMarker')).toBeNull(); // gate is holding
+
+    await router.push(`/app/player/${b1.id}`);
+    await flushPromises();
+    await flushPromises();
+    expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(b1.id);
+    expect(w.findComponent(Player).props('introMarker')).toEqual({ start: 100, end: 130 }); // B's own
+
+    // A's playback-info arrives late. Its intro marker belongs to the title the user left.
+    gate.resolve(jsonResponse({ intro_marker: { start_seconds: 5, end_seconds: 35 }, outro_marker: null, chapters: [{ start_seconds: 0, title: 'A cold open' }] }));
+    await flushPromises();
+    await flushPromises();
+    expect(w.findComponent(Player).props('introMarker')).toEqual({ start: 100, end: 130 });
+    expect(w.findComponent(Player).props('chapters')).toEqual([]);
+  });
+
+  it('CONTROL: the identical playback-info gate DOES paint markers when that run is still current', async () => {
+    const gate = deferred<Response>();
+    const { a1, fetchMock } = twoMovieFetch('s172pc', gate.promise, 'playback-info');
+    const { w } = await mountAt(a1.id, fetchMock);
+    await flushPromises();
+    await flushPromises();
+    expect(w.findComponent(Player).props('introMarker')).toBeNull();
+
+    gate.resolve(jsonResponse({ intro_marker: { start_seconds: 5, end_seconds: 35 }, outro_marker: null, chapters: [{ start_seconds: 0, title: 'A cold open' }] }));
+    await flushPromises();
+    await flushPromises();
+    expect(w.findComponent(Player).props('introMarker')).toEqual({ start: 5, end: 35 });
+    expect(w.findComponent(Player).props('chapters')).toHaveLength(1);
+  });
+
+  it('a superseded run’s failed by-id does not replace the new item with an error state', async () => {
+    const gate = deferred<Response>();
+    const { a1, b1, fetchMock } = twoMovieFetch('s172e', gate.promise, 'by-id');
+    const { w, router } = await mountAt(a1.id, fetchMock);
+    await flushPromises();
+
+    await router.push(`/app/player/${b1.id}`);
+    await flushPromises();
+    await flushPromises();
+    expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(b1.id);
+
+    // A's request fails with a 500 — NOT an abort, so `isAbort` does not cover it, and A
+    // was never cached, so there is no SWR fallback either: the unguarded path writes
+    // `error.value`, and the template's `v-else-if="error"` outranks `v-else-if="item"`,
+    // so B's <Player> is torn down and replaced by A's failure.
+    gate.resolve(errorResponse(500, { error: 'A exploded' }));
+    await flushPromises();
+    await flushPromises();
+    expect(w.text()).not.toContain('A exploded');
+    expect(w.findComponent(Player).exists()).toBe(true);
+    expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(b1.id);
+  });
+
+  it('a superseded run’s empty by-id response does not replace the new item with an error state', async () => {
+    // The `!mediaItem` degenerate branch (a resolved response carrying no `item`) reaches a
+    // SECOND error assignment, on a different line from the catch above.
+    const gate = deferred<Response>();
+    const { a1, b1, fetchMock } = twoMovieFetch('s172z', gate.promise, 'by-id');
+    const { w, router } = await mountAt(a1.id, fetchMock);
+    await flushPromises();
+
+    await router.push(`/app/player/${b1.id}`);
+    await flushPromises();
+    await flushPromises();
+    expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(b1.id);
+
+    gate.resolve(jsonResponse({})); // 200 with no `item`
+    await flushPromises();
+    await flushPromises();
+    expect(w.text()).not.toContain('Failed to load media item');
+    expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(b1.id);
+  });
+
+  it('CONTROL: the identical by-id gate DOES surface both error states when that run is still current', async () => {
+    // Non-inertness for the two tests above: with no navigation the SAME held responses
+    // must produce the very messages they assert the absence of.
+    const failGate = deferred<Response>();
+    const fail = twoMovieFetch('s172ec', failGate.promise, 'by-id');
+    const { w: w1 } = await mountAt(fail.a1.id, fail.fetchMock);
+    await flushPromises();
+    failGate.resolve(errorResponse(500, { error: 'A exploded' }));
+    await flushPromises();
+    await flushPromises();
+    expect(w1.text()).toContain('A exploded');
+    expect(w1.findComponent(Player).exists()).toBe(false);
+
+    const emptyGate = deferred<Response>();
+    const empty = twoMovieFetch('s172zc', emptyGate.promise, 'by-id');
+    const { w: w2 } = await mountAt(empty.a1.id, empty.fetchMock);
+    await flushPromises();
+    emptyGate.resolve(jsonResponse({}));
+    await flushPromises();
+    await flushPromises();
+    expect(w2.text()).toContain('Failed to load media item');
+    expect(w2.findComponent(Player).exists()).toBe(false);
+  });
 });
