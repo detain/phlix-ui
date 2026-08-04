@@ -249,6 +249,28 @@ describe('AdminUsersApi — profiles', () => {
     expect(res).toEqual({ profile_id: 12, message: 'Profile created.' });
   });
 
+  it('getProfile() GETs /profiles/{id} and unwraps { profile }', async () => {
+    const { api, get } = makeClient();
+    get.mockResolvedValue({ profile: sampleProfile });
+    const res = await api.getProfile(7);
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/profiles/7');
+    expect(res).toEqual(sampleProfile);
+  });
+
+  it('getProfile() URL-encodes a string id', async () => {
+    // `user_profiles.id` is CHAR(36) server-side, so a real id is a UUID string.
+    const { api, get } = makeClient();
+    get.mockResolvedValue({ profile: sampleProfile });
+    await api.getProfile('a b/c');
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/profiles/a%20b%2Fc');
+  });
+
+  it('getProfile() propagates the failure rather than returning a blank profile', async () => {
+    const { api, get } = makeClient();
+    get.mockRejectedValue(new Error('Profile not found'));
+    await expect(api.getProfile(7)).rejects.toThrow('Profile not found');
+  });
+
   it('updateProfile() PUTs /profiles/{id}', async () => {
     const { api, put } = makeClient();
     put.mockResolvedValue({ message: 'updated' });
