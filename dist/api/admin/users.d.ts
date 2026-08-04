@@ -27,9 +27,25 @@ export declare const USER_STATUSES: readonly UserStatus[];
  * `status` (S1) is the account-approval state. It is optional here so older
  * payloads (and pre-migration rows) degrade gracefully — the UI treats a missing
  * status as `active`.
+ *
+ * `id` is a **UUID**, not an integer — `users.id CHAR(36) PRIMARY KEY` in BOTH
+ * apps this client serves (`phlix-server/migrations/001_initial_schema.sql:5`
+ * and `phlix-hub/migrations/001_users.sql:8`). It was declared `number` until
+ * S209. That was already contradicted inside this very file by
+ * {@link UserBandwidth.user_id}, which has always been `string`, and by
+ * {@link Profile.user_id}, which is the same column by foreign key
+ * (`migrations/002_user_profiles_and_parental_controls.sql:14`).
+ *
+ * Unlike the profile id this one caused no *runtime* defect: every user id is
+ * passed straight into a URL and never coerced, compared numerically or sorted,
+ * so nothing arithmetically mangled it. It is corrected because it feeds
+ * {@link AdminUsersApi.createProfile} and {@link AdminUsersApi.listProfiles},
+ * and leaving the owner id typed `number` while `Profile.user_id` is `string`
+ * would leave the next reader the same false clue that produced S209's gate.
  */
 export interface User {
-    id: number;
+    /** `users.id CHAR(36)` — a UUID (server migration 001:5, hub migration 001:8). */
+    id: string;
     username: string;
     email: string;
     is_admin: boolean;
@@ -108,10 +124,32 @@ export declare const THROTTLE_BPS_LEVELS: readonly number[];
  * A user profile row as returned by `AdminProfileController`.
  * `pin_hash` is always `null` in GET responses — PIN is write-only from the
  * UI's perspective.
+ *
+ * ## Why `id` and `user_id` are strings (S209)
+ *
+ * Both are **UUIDs**, not integers — checked against the schema rather than
+ * inferred from a sample payload:
+ *
+ *   - `migrations/002_user_profiles_and_parental_controls.sql:6` —
+ *     `user_profiles.id CHAR(36) PRIMARY KEY`
+ *   - `migrations/002_user_profiles_and_parental_controls.sql:7` —
+ *     `user_profiles.user_id CHAR(36) NOT NULL`
+ *
+ * They were declared `number` here until S209, and that lie had teeth: the
+ * parental-controls page gated itself on `!isNaN(Number(id))`, which is `false`
+ * for every genuine UUID, so the page never opened for a real profile. The
+ * declared type is the thing that made that gate look reasonable, so it is
+ * corrected here and not only at the call site.
+ *
+ * Note the id shapes in this file are **mixed** and must stay that way — the
+ * sub-resource ids ({@link AccessSchedule.id}, {@link ProfileTag.id}) really are
+ * `INT UNSIGNED AUTO_INCREMENT`. See each field's own note.
  */
 export interface Profile {
-    id: number;
-    user_id: number;
+    /** `user_profiles.id CHAR(36)` — a UUID (migration 002:6), never an integer. */
+    id: string;
+    /** `user_profiles.user_id CHAR(36)` — the owning user's UUID (migration 002:7). */
+    user_id: string;
     name: string;
     /** Always null in GET responses — PIN is write-only. */
     pin_hash: null;
@@ -157,24 +195,48 @@ export interface UpdateProfileInput {
 /**
  * Access schedule entry for a profile.
  * Days of week are mon|tue|wed|thu|fri|sat|sun.
+ *
+ * ⚠ The two ids here are **different shapes**, and that is deliberate rather
+ * than an oversight — `migrations/061_access_schedules.sql` declares
+ * `id INT UNSIGNED AUTO_INCREMENT` at `:8` but `profile_id CHAR(36)` at `:9`,
+ * and carries the standing note at `:5` that `profile_id` was *changed* from
+ * `INT UNSIGNED` to `CHAR(36)` to match `user_profiles.id`. Do not "tidy" the
+ * two into agreement in either direction.
  */
 export interface AccessSchedule {
+    /** `access_schedules.id INT UNSIGNED AUTO_INCREMENT` (migration 061:8) — a real integer. */
     id: number;
-    profile_id: number;
+    /** `access_schedules.profile_id CHAR(36)` (migration 061:9) — a UUID. */
+    profile_id: string;
     name: string;
     start_time: string;
     end_time: string;
     days_of_week: string[];
     is_active: boolean;
 }
-/** Profile content tag (block or allow). */
+/**
+ * Profile content tag (block or allow).
+ *
+ * Same mixed shape as {@link AccessSchedule}: `migrations/062_profile_tags.sql`
+ * declares `id INT UNSIGNED AUTO_INCREMENT` at `:9` and `profile_id CHAR(36)` at
+ * `:10`, with the same "changed from INT UNSIGNED to CHAR(36)" note at `:6`.
+ */
 export interface ProfileTag {
+    /** `profile_tags.id INT UNSIGNED AUTO_INCREMENT` (migration 062:9) — a real integer. */
     id: number;
-    profile_id: number;
+    /** `profile_tags.profile_id CHAR(36)` (migration 062:10) — a UUID. */
+    profile_id: string;
     tag: string;
     tag_type: 'blocked' | 'allowed';
 }
-/** Stream limit settings for a profile. */
+/**
+ * Stream limit settings for a profile.
+ *
+ * Carries no id of its own on the wire — `profile_stream_limits` is keyed by
+ * `profile_id CHAR(36) PRIMARY KEY` (`migrations/063_device_stream_limits.sql:7`),
+ * which the client supplies in the URL rather than reading back. Both remaining
+ * fields are `INT UNSIGNED` (`:8`, `:9`) and correctly stay numbers.
+ */
 export interface ProfileStreamLimit {
     max_concurrent_streams: number;
     max_total_bandwidth_kbps: number | null;
@@ -218,50 +280,60 @@ export declare class AdminUsersApi {
      * `POST /api/v1/admin/users/{id}/approve` → `{ message }`. Sets the account
      * status to `active` (approves a pending user / re-enables a disabled one).
      */
-    approve(id: number): Promise<{
+    approve(id: string | number): Promise<{
         message: string;
     }>;
     /**
      * `POST /api/v1/admin/users/{id}/disable` → `{ message }`. Sets the account
      * status to `disabled` (server refuses self + last-admin).
      */
-    disable(id: number): Promise<{
+    disable(id: string | number): Promise<{
         message: string;
     }>;
     /**
      * `POST /api/v1/admin/users/{id}/reject` → `{ message }`. Removes / disables a
      * still-pending signup (declines the approval request).
      */
-    reject(id: number): Promise<{
+    reject(id: string | number): Promise<{
         message: string;
     }>;
     /** `GET /api/v1/admin/users/{id}` → unwraps `{ user }`. */
-    get(id: number): Promise<User>;
+    get(id: string | number): Promise<User>;
     /** `POST /api/v1/admin/users` → `201 { user_id, message }`. */
+    /**
+     * `POST /api/v1/admin/users` → `201 { user_id, message }`.
+     *
+     * `user_id` is the new user's UUID: `UserRepository::create()` is typed
+     * `: string` and returns `generateUuid()`, and `AdminUserController::create()`
+     * passes it through uncast. (Its docblock still claims `int` — the docblock is
+     * wrong, the code is right.) Contrast {@link createProfile}, whose controller
+     * *does* apply a `(int)` cast to the same kind of value; that asymmetry is what
+     * makes the profile one a defect rather than a convention.
+     */
     create(input: CreateUserInput): Promise<{
-        user_id: number;
+        user_id: string;
         message: string;
     }>;
     /** `PUT /api/v1/admin/users/{id}` → `{ message }`. */
-    update(id: number, input: UpdateUserInput): Promise<{
+    update(id: string | number, input: UpdateUserInput): Promise<{
         message: string;
     }>;
     /** `DELETE /api/v1/admin/users/{id}` → `{ message }`. */
-    remove(id: number): Promise<{
+    remove(id: string | number): Promise<{
         message: string;
     }>;
     /**
      * `POST /api/v1/admin/users/{id}/set-admin` → `{ message }`.
      * Sends `{ is_admin: boolean }` (real boolean, not 0/1).
      */
-    setAdmin(id: number, isAdmin: boolean): Promise<{
+    setAdmin(id: string | number, isAdmin: boolean): Promise<{
         message: string;
     }>;
     /**
      * `POST /api/v1/admin/users/{id}/reset-password` → `{ message, new_password }`.
      * The plaintext password is only available in this response.
      */
-    resetPassword(id: number): Promise<{
+    resetPassword(id: string | number): Promise<{
         message: string;
         new_password: string;
     }>;
@@ -270,7 +342,7 @@ export declare class AdminUsersApi {
      * usage + configured caps ({@link UserBandwidth}). A user with no row yet reads
      * back as zeroed usage + unlimited caps (a real payload, not a 404). Hub-only.
      */
-    getBandwidth(id: number): Promise<UserBandwidth>;
+    getBandwidth(id: string | number): Promise<UserBandwidth>;
     /**
      * `PUT /api/v1/admin/users/{id}/throttle` → set the user's durable relay
      * bandwidth throttle. Body `{ throttle_bps }` MUST be one of
@@ -278,19 +350,32 @@ export declare class AdminUsersApi {
      * any other value is a `400 invalid_throttle`. Returns the updated
      * {@link UserBandwidth} rollup. Hub-only.
      */
-    setThrottle(id: number, throttleBps: number): Promise<UserBandwidth>;
+    setThrottle(id: string | number, throttleBps: number): Promise<UserBandwidth>;
     /**
      * `PUT /api/v1/admin/users/{id}/quota` → set the user's monthly download/upload
      * byte caps + concurrent-stream cap. Every value is a non-negative integer
      * (`0` = unlimited); byte caps ≤ 1 PiB, streams ≤ 1000 — out-of-range values are
      * a `400 invalid_quota`. Returns the updated {@link UserBandwidth}. Hub-only.
      */
-    setQuota(id: number, input: SetQuotaInput): Promise<UserBandwidth>;
+    setQuota(id: string | number, input: SetQuotaInput): Promise<UserBandwidth>;
     /** `GET /api/v1/admin/users/{userId}/profiles` → unwraps `{ profiles }`. */
-    listProfiles(userId: number): Promise<Profile[]>;
-    /** `POST /api/v1/admin/users/{userId}/profiles` → `201 { profile_id, message }`. */
-    createProfile(userId: number, input: CreateProfileInput): Promise<{
-        profile_id: number;
+    listProfiles(userId: string | number): Promise<Profile[]>;
+    /**
+     * `POST /api/v1/admin/users/{userId}/profiles` → `201 { profile_id, message }`.
+     *
+     * ⚠ `profile_id` is declared `string | number` because the server is currently
+     * inconsistent with itself, not because the id is genuinely either shape.
+     * `UserProfileManager::create()` is typed `: string` and returns a generated
+     * UUID, but `AdminProfileController::createForUser()` serialises it as
+     * `'profile_id' => (int) $newId`, and `(int)` of a UUID is `0` (or the leading
+     * digits, if the UUID happens to start with one). So the wire value today is a
+     * meaningless integer while the contract calls for a UUID string. No caller
+     * reads this field — `UsersPage.vue` discards the result and re-lists — so it
+     * is inert, but narrowing it to `string` here would declare a value the server
+     * does not yet send. Tracked separately; fixing it belongs in phlix-server.
+     */
+    createProfile(userId: string | number, input: CreateProfileInput): Promise<{
+        profile_id: string | number;
         message: string;
     }>;
     /**
@@ -306,66 +391,66 @@ export declare class AdminUsersApi {
      */
     getProfile(id: number | string): Promise<Profile>;
     /** `PUT /api/v1/admin/profiles/{id}` → `{ message }`. */
-    updateProfile(id: number, input: UpdateProfileInput): Promise<{
+    updateProfile(id: string | number, input: UpdateProfileInput): Promise<{
         message: string;
     }>;
     /** `DELETE /api/v1/admin/profiles/{id}` → `{ message }`. */
-    removeProfile(id: number): Promise<{
+    removeProfile(id: string | number): Promise<{
         message: string;
     }>;
     /**
      * `POST /api/v1/admin/profiles/{id}/pin` → `{ message }`.
      * Body: `{ pin: "1234" }` — a 4 or 6 digit PIN.
      */
-    setPin(id: number, pin: string): Promise<{
+    setPin(id: string | number, pin: string): Promise<{
         message: string;
     }>;
     /** `DELETE /api/v1/admin/profiles/{id}/pin` → `{ message }`. */
-    clearPin(id: number): Promise<{
+    clearPin(id: string | number): Promise<{
         message: string;
     }>;
     /**
      * `GET /api/v1/admin/profiles/{id}/schedules` → list of access schedules.
      */
-    profileSchedules(profileId: number): Promise<AccessSchedule[]>;
+    profileSchedules(profileId: string | number): Promise<AccessSchedule[]>;
     /**
      * `POST /api/v1/admin/profiles/{id}/schedules` → `{ id, message }`.
      */
-    createProfileSchedule(profileId: number, name: string, startTime: string, endTime: string, daysOfWeek: string[], isActive: boolean): Promise<{
+    createProfileSchedule(profileId: string | number, name: string, startTime: string, endTime: string, daysOfWeek: string[], isActive: boolean): Promise<{
         id: number;
         message: string;
     }>;
     /**
      * `DELETE /api/v1/admin/profiles/{id}/schedules/{scheduleId}` → `{ message }`.
      */
-    deleteProfileSchedule(profileId: number, scheduleId: number): Promise<{
+    deleteProfileSchedule(profileId: string | number, scheduleId: number): Promise<{
         message: string;
     }>;
     /**
      * `GET /api/v1/admin/profiles/{id}/tags` → list of profile tags.
      */
-    profileTags(profileId: number): Promise<ProfileTag[]>;
+    profileTags(profileId: string | number): Promise<ProfileTag[]>;
     /**
      * `POST /api/v1/admin/profiles/{id}/tags` → `{ id, message }`.
      */
-    addProfileTag(profileId: number, tag: string, tagType: 'blocked' | 'allowed'): Promise<{
+    addProfileTag(profileId: string | number, tag: string, tagType: 'blocked' | 'allowed'): Promise<{
         id: number;
         message: string;
     }>;
     /**
      * `DELETE /api/v1/admin/profiles/{id}/tags/{tagId}` → `{ message }`.
      */
-    deleteProfileTag(profileId: number, tagId: number): Promise<{
+    deleteProfileTag(profileId: string | number, tagId: number): Promise<{
         message: string;
     }>;
     /**
      * `GET /api/v1/admin/profiles/{id}/stream-limits` → stream limit settings.
      */
-    profileStreamLimits(profileId: number): Promise<ProfileStreamLimit>;
+    profileStreamLimits(profileId: string | number): Promise<ProfileStreamLimit>;
     /**
      * `PUT /api/v1/admin/profiles/{id}/stream-limits` → `{ message }`.
      */
-    updateProfileStreamLimits(profileId: number, maxConcurrentStreams: number, maxTotalBandwidthKbps: number | null): Promise<{
+    updateProfileStreamLimits(profileId: string | number, maxConcurrentStreams: number, maxTotalBandwidthKbps: number | null): Promise<{
         message: string;
     }>;
 }
