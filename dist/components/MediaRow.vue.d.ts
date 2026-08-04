@@ -60,8 +60,8 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
 }>, {
     error: string | null;
     loading: boolean;
-    canMatch: boolean;
     count: number | null;
+    canMatch: boolean;
     skeletonCount: number;
     hideWhenEmpty: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;

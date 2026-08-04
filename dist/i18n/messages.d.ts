@@ -496,6 +496,13 @@ export type TranslateParams = Record<string, string | number>;
 /** The resolver returned by `createTranslator` / `useMessages().t`. */
 export type Translate = (key: MessageKey, params?: TranslateParams) => string;
 /**
+ * Every plural message in this catalogue, derived from the catalogue itself
+ * rather than listed by hand — a hand-maintained list would drift the moment a
+ * plural message was added, and the drift would be silent. `messages.test.ts`
+ * asserts this set is non-empty and that every member really does contain a `|`.
+ */
+export declare function pluralMessageKeys(): string[];
+/**
  * Merge a consumer override onto the English defaults, per-group. Always returns a
  * fresh object (never the `DEFAULT_MESSAGES` reference, and never mutates it). A
  * non-object group override (e.g. `null` slipping past the types) is ignored so a
@@ -506,5 +513,19 @@ export declare function mergeMessages(overrides?: PhlixMessagesConfig): PhlixMes
  * Build a `t(key, params?)` resolver bound to the English defaults overlaid with
  * `overrides`. An unknown key (typo, or a not-yet-adopted string) echoes the key
  * itself, so `t()` never returns `undefined`/empty.
+ *
+ * **Plural selection (S134).** Messages may be authored in the pipe form
+ * (`'{count} member | {count} members'`). Until S134 this function only
+ * interpolated, so those messages reached the screen with the separator and BOTH
+ * forms intact — users literally read `2 member | 2 members`. Selection now runs
+ * BEFORE interpolation, via `Intl.PluralRules` (see `utils/plural.ts`), driven by
+ * the `count` parameter.
+ *
+ * A pipe message called without `count` cannot be selected. Rather than fall back
+ * to emitting the raw template (the old defect), it degrades to the LAST form —
+ * the plural in English, and the `other` slot in every locale — so the worst case
+ * is a wrong number agreement rather than punctuation leaking into the UI. The
+ * `plural/plural-message-needs-count` ESLint rule flags such call sites, so the
+ * degradation is a safety net and not the intended path.
  */
 export declare function createTranslator(overrides?: PhlixMessagesConfig): Translate;
