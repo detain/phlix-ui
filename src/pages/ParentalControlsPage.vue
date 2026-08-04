@@ -59,7 +59,14 @@ const api = new AdminUsersApi(
 
 // ── Profile selection ─────────────────────────────────────────────────────────
 const profiles = ref<Profile[]>([]);
-const selectedProfileId = ref<number | null>(null);
+/**
+ * The profile id from `?profile=`, held as an opaque STRING (S209).
+ *
+ * `user_profiles.id` is `CHAR(36)` — a UUID — so there is no number to parse it
+ * into. It was held as `number | null` until S209, which is what made the old
+ * `!isNaN(Number(...))` gate look coherent while rejecting every genuine id.
+ */
+const selectedProfileId = ref<string | null>(null);
 const loadingProfiles = ref(true);
 /** Why the profile could not be identified, when it could not be (S203). */
 const profilesError = ref<string | null>(null);
@@ -67,12 +74,12 @@ const profilesError = ref<string | null>(null);
 /**
  * The profile whose restrictions are on screen.
  *
- * Matched by STRING identity rather than `===`. The wire id is not reliably the
- * same JS type as `selectedProfileId` (which is parsed out of the query string):
- * `user_profiles.id` is `CHAR(36)` server-side, so a driver may hand back `'7'`
- * where the local id is `7`, and a strict compare would then silently fail to
- * match the very profile that was just fetched by that id — reproducing exactly
- * the "no name on screen" symptom this step exists to remove.
+ * Matched by STRING identity rather than `===`. `selectedProfileId` is a string
+ * off the query, but the WIRE id is only as trustworthy as the driver: a numeric
+ * `7` arriving where the local id is `'7'` would fail a strict compare and
+ * silently drop the very profile that was just fetched by that id — reproducing
+ * the "no name on screen" symptom S203 removed. `String()` on BOTH sides is what
+ * makes the comparison indifferent to that, so neither call is redundant.
  */
 const selectedProfile = computed(
   () => profiles.value.find((p) => String(p.id) === String(selectedProfileId.value)) ?? null,
@@ -118,11 +125,41 @@ async function loadProfiles(): Promise<void> {
   }
 }
 
-// Parse profile ID from route query
+/**
+ * Read the profile id out of `?profile=` (S209).
+ *
+ * A profile id is a `CHAR(36)` UUID — `user_profiles.id` in
+ * `migrations/002_user_profiles_and_parental_controls.sql:6` — so the ONLY thing
+ * this can check is that exactly one non-empty value was supplied. It must not
+ * check the id's shape:
+ *
+ *  - It previously required `!isNaN(Number(id))`, and `Number()` of any UUID is
+ *    `NaN`. The gate therefore rejected every real id and admitted only bare
+ *    integers, which no profile has ever had — the page could not be opened at
+ *    all. That is the defect S209 exists to remove, so re-deriving any *format*
+ *    rule here would be the same mistake in a new spelling.
+ *  - The server itself does not agree on a format: `AdminProfileController::get`
+ *    accepts any string and 404s an unknown one, `ProfileTagController` requires
+ *    only a non-empty string, while `AccessScheduleController::parseProfileId`
+ *    and `StreamLimitController::parseProfileId` demand a canonical UUID. A
+ *    client stricter than the LOOSEST of those would refuse ids the server would
+ *    happily serve. Validation belongs at the authority; the client routes.
+ *
+ * A wrong id is therefore no longer silent: it reaches the server and comes back
+ * 404/400, which S203's "Unidentified profile #<id>" badge renders with the
+ * reason. That is strictly more informative than the blank "No profile selected"
+ * empty state the numeric gate produced, and it still fails CLOSED — every write
+ * path re-validates server-side, so nothing can be persisted against a bogus id.
+ *
+ * The one shape that must still be refused is a REPEATED `?profile=a&profile=b`,
+ * which vue-router hands over as an array. There is no defensible way to choose
+ * between two ids on an access-control screen, so an array is treated as "no id
+ * given" rather than silently taking the first.
+ */
 onMounted(() => {
   const queryProfileId = route.query.profile;
-  if (queryProfileId && !isNaN(Number(queryProfileId))) {
-    selectedProfileId.value = Number(queryProfileId);
+  if (typeof queryProfileId === 'string' && queryProfileId.trim() !== '') {
+    selectedProfileId.value = queryProfileId.trim();
   }
   void loadProfiles();
   if (selectedProfileId.value) {

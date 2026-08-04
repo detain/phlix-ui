@@ -320,7 +320,12 @@ const profilesModalOpen = computed({
 });
 const atProfileLimit = computed(() => profiles.value.length >= MAX_PROFILES);
 
-async function loadProfiles(userId: number): Promise<void> {
+/**
+ * `userId` is a `users.id CHAR(36)` UUID, not an integer (S209) — it is only ever
+ * interpolated into a URL, never compared or coerced, so this is a type
+ * correction rather than a behaviour change.
+ */
+async function loadProfiles(userId: string): Promise<void> {
   profilesLoading.value = true;
   try {
     profiles.value = await api.listProfiles(userId);
