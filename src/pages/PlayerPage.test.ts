@@ -1066,3 +1066,312 @@ describe('PlayerPage — teardown', () => {
     expect(w.findComponent(Player).exists()).toBe(false);
   });
 });
+
+/**
+ * S172 — a SUPERSEDED `applyItem()` run must not commit anything for the item the user
+ * navigated AWAY from.
+ *
+ * The mechanism, and why S12's fix does not cover it. `load()` does not await
+ * `applyItem()`, and `applyItem` itself awaits (`loadEpisodeNeighbours`) before it fires
+ * the genre fallback. So a second `load()` can complete ENTIRELY inside that await. When
+ * the first run resumes it calls `loadQueue(client, itemA)` — and `loadQueue` reads the
+ * module-level `controller` at CALL time, which by then is the NEW run's controller. Its
+ * own staleness predicate (`myController !== controller`) therefore compares the new
+ * controller with itself and can never trip: the superseded run writes item A's
+ * genre rows into item B's up-next queue. S12's early return is inside a run that is
+ * already superseded, so it cannot help.
+ *
+ * Two things make the reproduction deterministic rather than a sampled timing window
+ * (this estate has a recorded race test that went 15/15 green on known-broken code):
+ *  - the response run A is parked on is a DEFERRED promise this test settles by hand, so
+ *    "A resumes strictly after B has fully settled" is FORCED, not hoped for;
+ *  - A and B carry DIFFERENT genres (Horror vs Comedy), so the up-next rows and the
+ *    queue REQUEST identify which run wrote — an `A || B` outcome cannot be misread.
+ *
+ * Branch observation, not inference: `applyItem` has three shapes (episode-ordered
+ * awaited path, cached-order fast path, genre fallback). Each test asserts on request
+ * counters that only ONE of them produces — A's series-root lookup (`{p}-ser` by-id)
+ * proves the awaited episode path was entered, `genres[]=Horror` proves A's genre
+ * fallback fired, `genres[]=Comedy` proves B's did.
+ */
+describe('PlayerPage — a superseded applyItem() must not write the new item’s up-next (S172)', () => {
+  function ep(over: Partial<MediaItem> & { id: string }): MediaItem {
+    return media({ name: over.id, type: 'episode', ...over });
+  }
+
+  /** A promise whose settlement the TEST controls — no timers, no sampling, no retries. */
+  function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void; reject: (e: unknown) => void } {
+    let resolve!: (value: T) => void;
+    let reject!: (e: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  /** What a signal-honouring `fetch` rejects with when its caller aborts it. */
+  const abortError = (): Error => Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' });
+
+  /**
+   * The genre-similar fallback queue FOR ONE GENRE:
+   * `GET /api/v1/media?genres[]=<g>&limit=13&sort=rating&order=desc` (PlayerPage.vue:234).
+   * Path + two PARSED query params — `buildMediaUrl` appends the repeated-array form
+   * `genres[]`, so reading it as a parameter also pins the wire shape the server needs.
+   */
+  const isGenreQueueFor = (url: unknown, genre: string): boolean =>
+    isRoute(url, MEDIA_LIST_PATH) && hasQuery(url, 'sort', 'rating') && hasQuery(url, 'genres[]', genre);
+
+  /**
+   * The A→B fixture. Episode A (`{p}-a1`, **Horror**) is episode 1 of series `{p}-ser`
+   * and HAS a next episode, so run A necessarily takes the awaited episode-ordered path.
+   * Movie B (`{p}-b1`, **Comedy**) is what the user navigates to. A's series-root lookup
+   * — the FIRST await inside `loadEpisodeNeighbours`, which `applyItem` awaits — is held
+   * open by `rootGate`, so the test decides exactly when run A regains control.
+   *
+   * `{p}` prefixes every id because `seriesEpisodeCache` is a module-level singleton with
+   * no test hook: ids must not collide across tests in this file.
+   */
+  function fixture(p: string) {
+    const a1 = ep({ id: `${p}-a1`, parent_id: `${p}-ser`, season_number: 1, episode_number: 1, genres: ['Horror'] });
+    const a2 = ep({ id: `${p}-a2`, parent_id: `${p}-ser`, season_number: 1, episode_number: 2, genres: ['Horror'] });
+    const b1 = media({ id: `${p}-b1`, type: 'movie', genres: ['Comedy'] });
+    const horrorRow = media({ id: `${p}-horror-row`, genres: ['Horror'] });
+    const comedyRow = media({ id: `${p}-comedy-row`, genres: ['Comedy'] });
+    const rootGate = deferred<Response>();
+    const counts = { root: 0, children: 0, horror: 0, comedy: 0 };
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isById(u, `${p}-ser`)) {
+        counts.root += 1;
+        return rootGate.promise; // run A parks HERE
+      }
+      if (isChildrenOf(u, `${p}-ser`)) {
+        counts.children += 1;
+        return Promise.resolve(jsonResponse({ items: [a1, a2], total: 2 }));
+      }
+      if (isGenreQueueFor(u, 'Horror')) {
+        counts.horror += 1;
+        return Promise.resolve(jsonResponse({ items: [horrorRow], total: 1 }));
+      }
+      if (isGenreQueueFor(u, 'Comedy')) {
+        counts.comedy += 1;
+        return Promise.resolve(jsonResponse({ items: [comedyRow], total: 1 }));
+      }
+      if (isById(u, a1.id)) return Promise.resolve(jsonResponse({ item: a1 }));
+      if (isById(u, a2.id)) return Promise.resolve(jsonResponse({ item: a2 }));
+      if (isById(u, b1.id)) return Promise.resolve(jsonResponse({ item: b1 }));
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    return { a1, a2, b1, horrorRow, comedyRow, rootGate, counts, fetchMock };
+  }
+
+  /**
+   * Drive the shared interleaving up to the point where run A is about to regain control,
+   * asserting at each step WHICH branch ran. Returns the fixture + the store.
+   */
+  async function parkAThenApplyB(p: string) {
+    const f = fixture(p);
+    const { router } = await mountAt(f.a1.id, f.fetchMock);
+    await flushPromises();
+    await flushPromises();
+    // BRANCH: run A took the awaited episode-ordered path and is parked in
+    // resolveSeriesRoot — not the cached-order fast path, not the genre fallback.
+    expect(f.counts.root).toBe(1);
+    expect(f.counts.children).toBe(0);
+    expect(f.counts.horror).toBe(0);
+    const player = usePlayerStore();
+    expect(player.queue).toHaveLength(0); // nothing written yet, by anyone
+
+    // Navigate to movie B while run A is parked. Same route name + a new param, so the
+    // page is NOT remounted (`disposed` stays false) — the production binge/nav path.
+    await router.push(`/app/player/${f.b1.id}`);
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+    // BRANCH: B is a movie, so ITS applyItem fired the genre fallback and wrote the queue.
+    expect(f.counts.comedy).toBe(1);
+    expect(player.queue.map((m) => m.id)).toEqual([f.comedyRow.id]);
+    return { f, player };
+  }
+
+  it('does not overwrite movie B’s queue when episode A’s held series-root lookup resolves late', async () => {
+    const { f, player } = await parkAThenApplyB('s172r');
+
+    // Release A's series-root response NOW — strictly after B has been fully applied.
+    // Run A regains control here. Under the unfixed code it walks on to
+    // `void loadQueue(client, A)`, whose `myController` is B's live controller, so its
+    // staleness check cannot trip and A's Horror row lands in B's queue.
+    f.rootGate.resolve(jsonResponse({ item: media({ id: 's172r-ser', type: 'series' }) }));
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    // The harm, stated first: B's up-next is still B's.
+    expect(player.queue.map((m) => m.id)).toEqual([f.comedyRow.id]);
+    // And the superseded run must not even ASK for its queue — a request counter, so this
+    // is not the vacuous negative the queue assertion alone would be.
+    expect(f.counts.horror).toBe(0);
+    expect(f.counts.children).toBe(0); // nor resume the series-tree walk it abandoned
+  });
+
+  it('does not overwrite movie B’s queue when episode A’s series-root lookup REJECTS with the abort it was given (production shape)', async () => {
+    // The same interleaving as above, reached the way a real browser reaches it: `load()`
+    // for B aborts A's controller, so A's in-flight series-root fetch REJECTS with an
+    // AbortError. `loadEpisodeNeighbours` swallows that (`isAbort`) and returns — and
+    // `applyItem` then runs the genre fallback anyway, with B's un-aborted controller.
+    // This variant does not depend on the fetch double ignoring `signal`.
+    const { f, player } = await parkAThenApplyB('s172a');
+
+    f.rootGate.reject(abortError());
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    expect(player.queue.map((m) => m.id)).toEqual([f.comedyRow.id]);
+    expect(f.counts.horror).toBe(0);
+  });
+
+  it('CONTROL: the identical Horror gate DOES reach player.setQueue when that run is still current', async () => {
+    // Non-inertness control for both tests above, which assert a NEGATIVE ("A's rows did
+    // not land") that a mis-routed double or a dead branch satisfies vacuously. Same
+    // fixture, same `genres[]=Horror` matcher, same row payload — but NO navigation, and
+    // the item is the LAST episode, so `applyItem` legitimately falls through to the genre
+    // fallback. Every link in the chain is therefore proven live: the gate really holds
+    // the series-root response, releasing it really completes the episode-ordered path,
+    // and the Horror request really does write `{p}-horror-row` into the queue.
+    const f = fixture('s172c');
+    await mountAt(f.a2.id, f.fetchMock); // a2 = the finale ⇒ no next neighbour
+    await flushPromises();
+    await flushPromises();
+    const player = usePlayerStore();
+    expect(f.counts.root).toBe(1); // parked in the same place
+    expect(f.counts.horror).toBe(0); // gate is genuinely holding: nothing issued yet
+    expect(player.queue).toHaveLength(0);
+
+    f.rootGate.resolve(jsonResponse({ item: media({ id: 's172c-ser', type: 'series' }) }));
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    expect(f.counts.children).toBe(1); // the episode path completed this time
+    expect(f.counts.horror).toBe(1); // …and fell through to the genre fallback
+    expect(player.queue.map((m) => m.id)).toEqual([f.horrorRow.id]);
+  });
+
+  /**
+   * The prev/next-episode half of the acceptance criteria (`nextEp`, `prevEp`).
+   *
+   * Reachability, stated honestly: this interleaving needs `applyItem` to be ENTERED
+   * while already superseded, i.e. `load()`'s own by-id await to resume after a newer
+   * `load()` finished. A signal-honouring `fetch` normally rejects that request instead
+   * (leaving only the queue-write path above, which the abort cannot stop). It is
+   * reachable when the abort cannot help: `load()` sets `controller = null` where
+   * `AbortController` is undefined (PlayerPage.vue:346), and in that configuration EVERY
+   * `myController !== controller` guard in the file degrades to `null !== null` — false —
+   * so nothing is superseded and nothing is aborted. A monotonic generation is immune to
+   * that, which is why the guard is a counter rather than the controller identity.
+   */
+  it('a superseded run does not replace the new episode’s prev/next or its item', async () => {
+    const p = 's172n';
+    // Series A — the episode being left. Its BY-ID response is held, so run A parks
+    // inside `load()` itself.
+    const a1 = ep({ id: `${p}-a1`, parent_id: `${p}-serA`, season_number: 1, episode_number: 1, genres: ['Horror'] });
+    const a2 = ep({ id: `${p}-a2`, parent_id: `${p}-serA`, season_number: 1, episode_number: 2, genres: ['Horror'] });
+    // Series B — the episode navigated TO. Everything for B resolves immediately.
+    const b1 = ep({ id: `${p}-b1`, parent_id: `${p}-serB`, season_number: 1, episode_number: 1, genres: ['Comedy'] });
+    const b2 = ep({ id: `${p}-b2`, parent_id: `${p}-serB`, season_number: 1, episode_number: 2, genres: ['Comedy'] });
+    const itemGate = deferred<Response>();
+    const counts = { aChildren: 0, bChildren: 0 };
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isById(u, a1.id)) return itemGate.promise; // run A parks HERE
+      if (isById(u, b1.id)) return Promise.resolve(jsonResponse({ item: b1 }));
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (isById(u, `${p}-serA`)) return Promise.resolve(jsonResponse({ item: media({ id: `${p}-serA`, type: 'series' }) }));
+      if (isById(u, `${p}-serB`)) return Promise.resolve(jsonResponse({ item: media({ id: `${p}-serB`, type: 'series' }) }));
+      if (isChildrenOf(u, `${p}-serA`)) {
+        counts.aChildren += 1;
+        return Promise.resolve(jsonResponse({ items: [a1, a2], total: 2 }));
+      }
+      if (isChildrenOf(u, `${p}-serB`)) {
+        counts.bChildren += 1;
+        return Promise.resolve(jsonResponse({ items: [b1, b2], total: 2 }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+
+    const { w, router } = await mountAt(a1.id, fetchMock);
+    await flushPromises();
+    expect(w.find('[role="status"][aria-busy="true"]').exists()).toBe(true); // A still loading
+
+    await router.push(`/app/player/${b1.id}`);
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+    const player = usePlayerStore();
+    // BRANCH: B walked its OWN series tree and seeded the episode-ordered queue.
+    expect(counts.bChildren).toBe(1);
+    expect(counts.aChildren).toBe(0);
+    expect((w.findComponent(Player).props('nextEpisode') as MediaItem | null)?.id).toBe(b2.id);
+    expect(player.queue.map((m) => m.id)).toEqual([b2.id]);
+
+    // Release A's item — run A resumes with a stale item after B is fully applied.
+    itemGate.resolve(jsonResponse({ item: a1 }));
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    // Nothing of A's may commit: not the item the page is showing, not prev/next, not the
+    // queue, and not the series walk that produces them.
+    expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(b1.id);
+    expect((w.findComponent(Player).props('nextEpisode') as MediaItem | null)?.id).toBe(b2.id);
+    expect((w.findComponent(Player).props('prevEpisode') as MediaItem | null)?.id).toBeUndefined();
+    expect(player.queue.map((m) => m.id)).toEqual([b2.id]);
+    expect(counts.aChildren).toBe(0);
+  });
+
+  it('CONTROL: the identical item gate DOES apply A (item, prev/next, queue) when that run is still current', async () => {
+    // Non-inertness control for the test above: with no navigation, releasing the SAME
+    // held by-id response must apply A end-to-end. So the negatives above are the guard
+    // firing, not a mis-routed double.
+    const p = 's172nc';
+    const a1 = ep({ id: `${p}-a1`, parent_id: `${p}-serA`, season_number: 1, episode_number: 1, genres: ['Horror'] });
+    const a2 = ep({ id: `${p}-a2`, parent_id: `${p}-serA`, season_number: 1, episode_number: 2, genres: ['Horror'] });
+    const itemGate = deferred<Response>();
+    const counts = { aChildren: 0 };
+    const fetchMock = vi.fn((url: string) => {
+      const u = String(url);
+      if (isById(u, a1.id)) return itemGate.promise;
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (isById(u, `${p}-serA`)) return Promise.resolve(jsonResponse({ item: media({ id: `${p}-serA`, type: 'series' }) }));
+      if (isChildrenOf(u, `${p}-serA`)) {
+        counts.aChildren += 1;
+        return Promise.resolve(jsonResponse({ items: [a1, a2], total: 2 }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+
+    const { w } = await mountAt(a1.id, fetchMock);
+    await flushPromises();
+    expect(w.find('[role="status"][aria-busy="true"]').exists()).toBe(true);
+
+    itemGate.resolve(jsonResponse({ item: a1 }));
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    const player = usePlayerStore();
+    expect(counts.aChildren).toBe(1);
+    expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(a1.id);
+    expect((w.findComponent(Player).props('nextEpisode') as MediaItem | null)?.id).toBe(a2.id);
+    expect(player.queue.map((m) => m.id)).toEqual([a2.id]);
+  });
+});
