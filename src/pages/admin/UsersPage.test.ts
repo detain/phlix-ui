@@ -82,10 +82,13 @@ interface Overrides {
 function makeClient(over: Overrides = {}) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/admin/users') return { users: over.users ?? [userA, userB] };
-    if (/\/api\/v1\/admin\/users\/\d+\/profiles$/.test(endpoint)) {
+    // `[^/]+`, not `\d+` (S209): `users.id` is `CHAR(36)`, so a mock that only
+    // matches digits would throw `unexpected GET` for a real id — the harness
+    // itself would then be asserting the numeric assumption this step removed.
+    if (/\/api\/v1\/admin\/users\/[^/]+\/profiles$/.test(endpoint)) {
       return { profiles: over.profiles ?? [profileNoPin, profileWithPin] };
     }
-    if (/\/api\/v1\/admin\/users\/\d+\/bandwidth$/.test(endpoint)) {
+    if (/\/api\/v1\/admin\/users\/[^/]+\/bandwidth$/.test(endpoint)) {
       return over.bandwidth ?? bandwidthA;
     }
     throw new Error(`unexpected GET ${endpoint}`);
@@ -508,6 +511,58 @@ describe('Admin UsersPage — profiles modal', () => {
     expect(document.body.textContent).toContain('Kids');
     expect(document.body.textContent).toContain('Has PIN');
     expect(document.body.textContent).toContain('No PIN');
+    w.unmount();
+  });
+
+  /**
+   * S209 — the profiles modal carries UUID ids end to end.
+   *
+   * S209 corrected `User.id` and `Profile.id` from `number` to `string`, and the
+   * claim attached to that change was that this page has no numeric assumption:
+   * it only ever interpolates an id into a URL, never compares, coerces or sorts
+   * one. That claim is checked here rather than asserted, because the rest of
+   * this file uses `id: 1` / `id: 7` fixtures and so cannot distinguish a page
+   * that handles UUIDs from one that happens to work on small integers.
+   *
+   * The mock is bespoke rather than {@link makeClient} so the ids under test are
+   * genuine 36-character UUIDs on BOTH the user and the profile, and every URL is
+   * asserted whole — a page that mangled an id (e.g. through a `Number()` round
+   * trip, which would yield `/profiles/NaN`) fails here and nowhere else.
+   */
+  it('S209: routes real UUID user and profile ids through unchanged', async () => {
+    const USER_UUID = 'c4d5e6f7-a8b9-4c0d-8e1f-2a3b4c5d6e7f';
+    const PROFILE_UUID = 'f1e2d3c4-b5a6-4978-8b6c-5d4e3f2a1b0c';
+    const uuidUser = { ...userA, id: USER_UUID };
+    // Based on the WITH-pin fixture so the per-profile "Clear PIN" action exists.
+    const uuidProfile = { ...profileWithPin, id: PROFILE_UUID, user_id: USER_UUID };
+
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/users') return { users: [uuidUser] };
+      if (endpoint === `/api/v1/admin/users/${USER_UUID}/profiles`) {
+        return { profiles: [uuidProfile] };
+      }
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const del = vi.fn(async () => ({ message: 'ok' }));
+    const client = {
+      get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: del,
+    } as unknown as ApiClient;
+
+    const w = mountPage(client);
+    await flushPromises();
+    await openProfiles(w);
+
+    // The owner id reached the list URL intact.
+    expect(get).toHaveBeenCalledWith(`/api/v1/admin/users/${USER_UUID}/profiles`);
+    expect(document.body.textContent).toContain('Adults');
+
+    // And the PROFILE id reaches a per-profile sub-resource intact.
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Clear PIN for Adults')!
+      .trigger('click');
+    await flushPromises();
+    expect(del).toHaveBeenCalledWith(`/api/v1/admin/profiles/${PROFILE_UUID}/pin`);
     w.unmount();
   });
 

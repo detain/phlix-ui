@@ -16,9 +16,23 @@
  * A parental-controls editor that silently fails OPEN is a different severity from
  * an untested list view, so the emphasis here is the DECISIONS, not the render:
  *
- *   1. The profile gate. Nothing is loaded, shown or mutated without a valid
- *      numeric `?profile=<id>`. `?profile=abc`, `?profile=0` and a repeated
- *      `?profile=` (which arrives as an ARRAY) must all fail closed.
+ *   1. The profile gate. Nothing is loaded, shown or mutated without a
+ *      `?profile=<id>`. An absent, empty, whitespace-only or REPEATED param
+ *      (which arrives as an ARRAY) must all fail closed.
+ *
+ *      ⚠ S209 rewrote this clause. It read "without a valid NUMERIC
+ *      `?profile=<id>`", and listed `?profile=abc` and `?profile=0` among the
+ *      inputs that must fail closed. That was wrong in the most expensive way an
+ *      assertion can be: `user_profiles.id` is `CHAR(36)`, so "numeric" excluded
+ *      every id that exists, and the suite was green while the page could not be
+ *      opened by anybody. The gate now checks PRESENCE only — a malformed id is
+ *      carried to the server, which is the authority on shape, and comes back as
+ *      a named 404/400 rather than a blank empty state.
+ *
+ *      The lesson generalised: the fixture is what made this survivable. A single
+ *      `PROFILE = 7` satisfied the only shape the broken gate accepted, so no
+ *      assertion in 1,600 lines could see the defect. `PROFILE` is now a real
+ *      36-character UUID, so the whole file exercises the real shape.
  *   2. Every mutation is scoped to that id. A restriction must never be written
  *      against a different profile than the one on screen.
  *   3. Validation refuses to persist a meaningless restriction — an unnamed
@@ -55,7 +69,22 @@ import { useToastStore } from '../stores/useToastStore';
 import type { ApiClient } from '../api/client';
 import type { AccessSchedule, Profile, ProfileTag, ProfileStreamLimit } from '../api/admin/users';
 
-const PROFILE = 7;
+/**
+ * A REAL 36-character profile id (S209).
+ *
+ * This was the integer `7` until S209, and that single fixture is what let the
+ * whole suite pass against a page that could not be opened by any actual user:
+ * `7` is the one shape `!isNaN(Number(id))` admitted, and no `user_profiles` row
+ * has ever had it. `user_profiles.id` is `CHAR(36)`
+ * (`phlix-server/migrations/002_user_profiles_and_parental_controls.sql:6`).
+ *
+ * Because every URL constant and fixture below derives from this one binding,
+ * making it a genuine UUID re-points the ENTIRE file at the real shape rather
+ * than adding one UUID test beside 40 numeric ones. Reinstating the numeric gate
+ * now fails the suite broadly instead of not at all — which is the property the
+ * old fixture silently lacked.
+ */
+const PROFILE = 'a3f2c1d4-5e6b-4a7c-8d9e-0f1a2b3c4d5e';
 const PROFILE_URL = `/api/v1/admin/profiles/${PROFILE}`;
 const SCHEDULES_URL = `/api/v1/admin/profiles/${PROFILE}/schedules`;
 const TAGS_URL = `/api/v1/admin/profiles/${PROFILE}/tags`;
@@ -87,7 +116,8 @@ const limits: ProfileStreamLimit = { max_concurrent_streams: 2, max_total_bandwi
 
 const profileRow: Profile = {
   id: PROFILE,
-  user_id: 3,
+  // `user_profiles.user_id CHAR(36)` (migration 002:7) — a UUID, not `3`.
+  user_id: '6b1e0f2a-7c3d-4e5f-9a0b-1c2d3e4f5a6b',
   name: 'Robin',
   pin_hash: null,
   rating: 5,
@@ -268,10 +298,24 @@ describe('ParentalControlsPage — the profile gate (fail closed)', () => {
     expect(del).not.toHaveBeenCalled();
   });
 
+  /**
+   * S209 — "no id was given" is the ONLY thing this gate may refuse.
+   *
+   * `?profile=` and a whitespace-only value carry no id at all. A REPEATED
+   * `?profile=a&profile=b` arrives from vue-router as an array, and there is no
+   * defensible way to pick one of two ids on an access-control screen, so it is
+   * treated as absent rather than silently resolved to the first.
+   *
+   * ⚠ This list is deliberately SHORTER than it was. It used to include
+   * `?profile=abc` and `?profile=7abc` under the labels "a non-numeric id" and
+   * "a partly-numeric id" — see the `passes a malformed id through` test below
+   * for why both were wrong, and note that a UUID *is* "a non-numeric id", so
+   * that row was asserting the exact rejection that broke the page.
+   */
   it.each([
-    ['a non-numeric id', '?profile=abc'],
-    ['a partly-numeric id', '?profile=7abc'],
-    ['a repeated param, which arrives as an array', '?profile=7&profile=9'],
+    ['an empty value', '?profile='],
+    ['a whitespace-only value', '?profile=%20%20'],
+    ['a repeated param, which arrives as an array', `?profile=${PROFILE}&profile=b0a1`],
   ])('fails closed for %s', async (_label, query) => {
     const { client, get, post, put, del } = makeClient();
     const w = await mountPage(client, query);
@@ -283,15 +327,73 @@ describe('ParentalControlsPage — the profile gate (fail closed)', () => {
     expect(del).not.toHaveBeenCalled();
   });
 
-  it('fails closed for ?profile=0 — a falsy id is never a real profile', async () => {
-    const { client, get } = makeClient();
-    const w = await mountPage(client, '?profile=0');
-    expect(w.findComponent(EmptyState).text()).toContain('No profile selected');
-    expect(w.findAll('[role="tab"]').length).toBe(0);
-    expect(get).not.toHaveBeenCalled();
+  /**
+   * The emptiness half of the gate, pinned on the STATE rather than the DOM.
+   *
+   * Found by mutation: deleting `&& queryProfileId.trim() !== ''` left all 111
+   * tests green. `?profile=` sets the id to `''`, and `''` is falsy, so every
+   * downstream `if (!profileId)` / `v-if="!selectedProfileId"` behaves exactly as
+   * if it were `null` and nothing on screen differs. The check is invisible, not
+   * useless — it holds the invariant that `selectedProfileId` is `null` or a
+   * non-empty trimmed id, never `''`.
+   *
+   * That invariant is worth a test because the value's job is to be interpolated
+   * into a URL: `api.getProfile('')` would request `/api/v1/admin/profiles/` —
+   * the COLLECTION, not a member. Today `loadProfiles()`'s falsy check stops
+   * that, so the two guards agree; the moment one is tightened to
+   * `profileId === null` they would not, and the failure would be a request for
+   * the wrong resource rather than a visible error. Asserting the state directly
+   * is the only way to reach a guard that has no rendered consequence.
+   */
+  it.each([
+    ['an empty value', '?profile='],
+    ['a whitespace-only value', '?profile=%20%20'],
+  ])('leaves the id null, not an empty string, for %s', async (_label, query) => {
+    const { client } = makeClient();
+    const w = await mountPage(client, query);
+    const vm = w.vm as unknown as { selectedProfileId: string | null };
+    expect(vm.selectedProfileId).toBeNull();
   });
 
-  it('opens the control surface for a valid numeric id and loads THAT profile', async () => {
+  /**
+   * S209 — a malformed id is the SERVER's to reject, and the page must carry it
+   * there rather than swallowing it.
+   *
+   * This inverts `fails closed for ?profile=0 — a falsy id is never a real
+   * profile`. That test passed for a reason that has nothing to do with `0` being
+   * unreal: `Number('0')` is `0`, which is falsy, so the id fell out of a
+   * truthiness check. The same accident rejected every UUID. Once ids are opaque
+   * strings there is no "falsy id" left to key on, and inventing a special case
+   * for `'0'` would re-introduce a client-side format rule — precisely the class
+   * of thing that caused this bug.
+   *
+   * Letting it through is also the better failure: `AdminProfileController::get`
+   * 404s an unknown id and the parental sub-resource controllers 400 a malformed
+   * one, so S203's "Unidentified profile #<id>" badge names what went wrong,
+   * where the numeric gate rendered a blank "No profile selected". Nothing can be
+   * written against the id either way — every mutation re-validates server-side.
+   */
+  it.each([['0'], ['abc'], ['7abc']])(
+    'passes a malformed id %s through to the server instead of hiding it',
+    async (raw) => {
+      const get = vi.fn(async () => {
+        throw new Error('Profile not found');
+      });
+      const client = {
+        get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(),
+      } as unknown as ApiClient;
+      const w = await mountPage(client, `?profile=${raw}`);
+      // It reached the network — the gate did not silently absorb it.
+      expect(get).toHaveBeenCalledWith(`/api/v1/admin/profiles/${raw}`);
+      // And the failure is NAMED, not rendered as "nothing was selected".
+      expect(w.find('.parental-page__no-profile').exists()).toBe(false);
+      const badge = w.find('.parental-page__profile-badge');
+      expect(badge.classes()).toContain('parental-page__profile-badge--unknown');
+      expect(badge.text()).toContain(`Unidentified profile #${raw}`);
+    },
+  );
+
+  it('opens the control surface for a real UUID id and loads THAT profile', async () => {
     const { client, get } = makeClient();
     const w = await mountPage(client);
     expect(w.find('.parental-page__no-profile').exists()).toBe(false);
@@ -300,15 +402,43 @@ describe('ParentalControlsPage — the profile gate (fail closed)', () => {
       'Tags',
       'Stream Limits',
     ]);
-    // Scoped to profile 7 — and to nothing else.
+    // Scoped to THIS profile — and to nothing else.
     expect(get).toHaveBeenCalledWith(SCHEDULES_URL);
-    // Every call is either the profile itself or a sub-resource OF that profile —
-    // `/profiles/77/...` must not satisfy this.
+    // Every call is either the profile itself or a sub-resource OF that profile.
     expect(
       get.mock.calls.every(
         (c) => String(c[0]) === PROFILE_URL || String(c[0]).startsWith(`${PROFILE_URL}/`),
       ),
     ).toBe(true);
+  });
+
+  /**
+   * S209 acceptance criterion, stated so it cannot be satisfied by accident.
+   *
+   * The two halves are both load-bearing. The first pins the FIXTURE: a suite
+   * that proves "the page opens" using `?profile=7` proves nothing, because `7`
+   * is the one shape the broken gate already accepted — so this asserts the id
+   * really is 36 characters and really is not numeric, and fails if anyone
+   * narrows `PROFILE` back to an integer. The second pins the BEHAVIOUR through
+   * the full path: query → gate → fetch → rendered name.
+   *
+   * Reinstating `!isNaN(Number(queryProfileId))` makes the second half red, since
+   * `Number()` of this id is `NaN` and no request is issued at all.
+   */
+  it('AC: a real 36-char UUID opens the page and renders the profile name', async () => {
+    expect(PROFILE).toHaveLength(36);
+    expect(Number.isNaN(Number(PROFILE))).toBe(true);
+    expect(PROFILE).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+
+    const { client, get } = makeClient();
+    const w = await mountPage(client, `?profile=${PROFILE}`);
+
+    expect(get).toHaveBeenCalledWith(PROFILE_URL);
+    expect(w.find('.parental-page__no-profile').exists()).toBe(false);
+    const badge = w.find('.parental-page__profile-badge');
+    expect(badge.exists()).toBe(true);
+    expect(badge.text()).toContain('Robin');
+    expect(badge.classes()).not.toContain('parental-page__profile-badge--unknown');
   });
 });
 
@@ -1575,16 +1705,28 @@ describe('ParentalControlsPage — profile identity badge', () => {
   });
 
   /**
-   * `user_profiles.id` is `CHAR(36)` server-side, so the wire id can arrive as a
-   * STRING where the query-param id was parsed to a number. A strict `===` match
-   * would then drop the profile that was just fetched by that very id and silently
-   * reproduce the blank header.
+   * The `String()` on BOTH sides of the identity match must stay live.
+   *
+   * This test used to seed a STRING wire id against a number parsed from the
+   * query. S209 inverted the two: the local id is now the query string itself, so
+   * a string wire id no longer exercises anything — it would compare equal even
+   * with both `String()` calls deleted. The remaining way the compare can break is
+   * a driver handing back a NUMBER, so that is what is seeded here. Without this
+   * the mutation `String(p.id) === selectedProfileId.value` would go unnoticed.
    */
-  it('matches a profile whose wire id is a string, not a number', async () => {
-    const { client } = makeClient({
-      profile: { ...profileRow, id: String(PROFILE) as unknown as number },
+  it('matches a profile whose wire id arrives as a number, not a string', async () => {
+    const get = vi.fn(async (url: string): Promise<unknown> => {
+      if (url === '/api/v1/admin/profiles/7') {
+        // Same VALUE as the `?profile=7` query, different JS type.
+        return { profile: { ...profileRow, id: 7 as unknown as string } };
+      }
+      if (url === '/api/v1/admin/profiles/7/schedules') return { schedules: [] };
+      throw new Error(`unexpected GET ${url}`);
     });
-    const w = await mountPage(client);
+    const client = {
+      get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(),
+    } as unknown as ApiClient;
+    const w = await mountPage(client, '?profile=7');
     expect(w.find('.parental-page__profile-badge').text()).toContain('Robin');
   });
 
@@ -1645,9 +1787,19 @@ describe('ParentalControlsPage — profile identity badge', () => {
     expect(get).not.toHaveBeenCalled();
   });
 
-  it('fetches no profile for an id that fails the numeric gate', async () => {
+  /**
+   * S209 — the "no id" case is the only one that fetches nothing.
+   *
+   * This test read `?profile=abc` and was named "fetches no profile for an id
+   * that fails the numeric gate". It was testing the bug: the numeric gate is
+   * exactly what a UUID fails, so the behaviour it pinned as correct is the
+   * behaviour that made the page unreachable. A REPEATED param is the honest
+   * subject — it genuinely carries no single id — so the assertion is kept and
+   * re-pointed at it rather than deleted.
+   */
+  it('fetches no profile when the query carries no single id', async () => {
     const { client, get } = makeClient();
-    const w = await mountPage(client, '?profile=abc');
+    const w = await mountPage(client, `?profile=${PROFILE}&profile=${PROFILE}`);
     expect(get).not.toHaveBeenCalled();
     expect(w.find('.parental-page__profile-badge').exists()).toBe(false);
   });

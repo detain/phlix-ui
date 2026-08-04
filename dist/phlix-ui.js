@@ -885,7 +885,7 @@ var yi = Wn("server", () => {
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-C8Mo2P_M.js")
+	component: () => import("./UsersPage-BuApIVaM.js")
 }, Si = {
 	name: "admin-logs",
 	path: "logs",
@@ -1269,7 +1269,7 @@ function da(e) {
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-B_NnyNry.js")
+			component: () => import("./ParentalControlsPage-CoYaDmO4.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({

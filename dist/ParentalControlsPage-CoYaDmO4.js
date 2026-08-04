@@ -75,7 +75,7 @@ var me = { class: "parental-page" }, he = { class: "parental-page__head" }, ge =
 		}
 		de(() => {
 			let e = ce.query.profile;
-			e && !isNaN(Number(e)) && (D.value = Number(e)), ot(), D.value && Ot(A.value);
+			typeof e == "string" && e.trim() !== "" && (D.value = e.trim()), ot(), D.value && Ot(A.value);
 		});
 		let st = [
 			{
@@ -702,8 +702,8 @@ var me = { class: "parental-page" }, he = { class: "parental-page__head" }, ge =
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-e6ca8549"]]);
+}), [["__scopeId", "data-v-07f81591"]]);
 //#endregion
 export { w as default };
 
-//# sourceMappingURL=ParentalControlsPage-B_NnyNry.js.map
+//# sourceMappingURL=ParentalControlsPage-CoYaDmO4.js.map

@@ -1058,8 +1058,8 @@ var _e = {
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-5d9cf6a3"]]);
+}), [["__scopeId", "data-v-2e41bfa2"]]);
 //#endregion
 export { S as default };
 
-//# sourceMappingURL=UsersPage-C8Mo2P_M.js.map
+//# sourceMappingURL=UsersPage-BuApIVaM.js.map
