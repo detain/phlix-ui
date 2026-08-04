@@ -1266,10 +1266,12 @@ describe('ParentalControlsPage — stream limits', () => {
     await setInput(1, bwValue);
     await submitForm();
 
+    // Asserted FIRST: an escaped throw is the root cause, and reporting it before
+    // the outcome check keeps the failure message pointing at the real problem.
+    expect(componentErrors).toEqual([]);
     const wrote = put.mock.calls.length > 0;
     const complained = !anyModalOpen() || formError() !== '';
     expect(wrote || complained).toBe(true);
-    expect(componentErrors).toEqual([]);
   });
 
   it('truncates a fractional bandwidth rather than sending a float', async () => {
