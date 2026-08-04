@@ -1208,7 +1208,7 @@ function ia(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-tvlBwUlZ.js")
+			component: () => import("./PlayerPage-DrWr7n-c.js")
 		},
 		{
 			path: `${t}/login`,

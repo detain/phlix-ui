@@ -157,6 +157,43 @@ const ambientStyle = computed(() => {
 let controller: AbortController | null = null;
 let disposed = false;
 
+/**
+ * Monotonic id of the newest `load()` run (S172).
+ *
+ * `load()` does NOT await `applyItem()`, and `applyItem` itself awaits
+ * (`loadEpisodeNeighbours`) before it fires the genre fallback — so a whole second
+ * `load()` can complete inside that await. The staleness token therefore has to belong to
+ * the RUN, captured once when the run starts and carried down (see {@link LoadRun}), not
+ * re-read from module scope by each writer: `loadQueue` used to read `controller` at CALL
+ * time, which for a resuming superseded run is already the NEW run's controller, so
+ * `myController !== controller` compared the new controller with itself and could never
+ * trip. Item A's genre rows then landed in item B's up-next queue.
+ *
+ * Why a counter and not just the controller identity: `load()` sets `controller = null`
+ * where `AbortController` is undefined (see below), and in that configuration every
+ * `myController !== controller` test degrades to `null !== null` — false — so no run is
+ * ever considered superseded AND no request is ever aborted. An integer is immune to that.
+ */
+let generation = 0;
+
+/**
+ * The identity of ONE `load()` run: its generation and its abort controller.
+ *
+ * Both must travel together. The generation decides whether a write may still commit; the
+ * controller is the signal the run's own requests were issued with, so a superseded run
+ * keeps cancelling ITS OWN fetches rather than picking up whatever controller happens to
+ * be current when it resumes.
+ */
+interface LoadRun {
+  readonly generation: number;
+  readonly controller: AbortController | null;
+}
+
+/** Whether `run` has been superseded by a newer `load()` — or the page is gone. */
+function isStale(run: LoadRun): boolean {
+  return disposed || run.generation !== generation;
+}
+
 function isAbort(e: unknown): boolean {
   return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
 }
@@ -216,13 +253,15 @@ function isEpisodeItem(m: MediaItem): boolean {
  *  the awaited episode-ordered path (loadEpisodeNeighbours, run first in applyItem)
  *  resolved NO next neighbour (last episode / cache miss / failed series-tree fetch).
  *  The episode-ordered queue is the authoritative writer; this runs afterwards/otherwise
- *  so the two never race. Non-fatal: a missing queue just disables up-next. The pinned
- *  controller makes a superseded fetch (rapid player→player nav) a no-op. */
-async function loadQueue(client: ApiClient, base: MediaItem): Promise<void> {
-  // Pin the controller for THIS load so a superseded queue fetch (rapid player→player
-  // nav) can't clobber the newer one — mirrors MediaDetailPage.loadSimilar.
-  const myController = controller;
-  const stale = () => disposed || myController !== controller;
+ *  so the two never race. Non-fatal: a missing queue just disables up-next.
+ *
+ *  `run` is the identity of the `applyItem` run that asked for this queue — NOT whatever
+ *  is current when this function is entered (S172). Reading the controller at call time
+ *  was the bug: a superseded run resuming from `await loadEpisodeNeighbours` picked up the
+ *  NEW run's controller and so compared it with itself, never tripping, and wrote the old
+ *  item's rows into the new item's queue. */
+async function loadQueue(client: ApiClient, base: MediaItem, run: LoadRun): Promise<void> {
+  const stale = () => isStale(run);
 
   // Genre-scoped fallback queue (movies, or an episode with no resolved next neighbour).
   const genre = base.genres?.[0];
@@ -232,7 +271,7 @@ async function loadQueue(client: ApiClient, base: MediaItem): Promise<void> {
   }
   try {
     const url = buildMediaUrl(apiBase.value, { genres: [genre], limit: 13, sort: 'rating', order: 'desc' });
-    const res = await client.get<MediaListResponse>(url, undefined, myController?.signal);
+    const res = await client.get<MediaListResponse>(url, undefined, run.controller?.signal);
     if (stale()) return;
     player.setQueue((res.items ?? []).filter((m) => m.id !== base.id).slice(0, 12));
   } catch (e) {
@@ -302,7 +341,7 @@ function cachedOrderedFor(episodeId: string): MediaItem[] | null {
  *  within the same series reuses it and skips the parent-hop walk + children
  *  fetches entirely (Finding 1). Uses the PLAYBACK ordering (numbered seasons
  *  only; Specials excluded from the auto-advance chain — Finding 2). */
-async function loadEpisodeNeighbours(client: ApiClient, base: MediaItem): Promise<void> {
+async function loadEpisodeNeighbours(client: ApiClient, base: MediaItem, run: LoadRun): Promise<void> {
   prevEp.value = null;
   nextEp.value = null;
   if (!isEpisodeItem(base)) return;
@@ -313,18 +352,18 @@ async function loadEpisodeNeighbours(client: ApiClient, base: MediaItem): Promis
     applyNeighbours(cached, base.id);
     return;
   }
-  const myController = controller;
-  const stale = () => disposed || myController !== controller;
+  // S172: the run's own token, not the current one — see loadQueue.
+  const stale = () => isStale(run);
   try {
-    const root = await resolveSeriesRoot(client, base, myController?.signal);
+    const root = await resolveSeriesRoot(client, base, run.controller?.signal);
     if (stale()) return;
-    let children = await fetchChildren(client, root.id, myController?.signal);
+    let children = await fetchChildren(client, root.id, run.controller?.signal);
     if (stale()) return;
     // Flatten season-container rows to their episodes (uniform season grouping).
     if (hasSeasonRows(children)) {
       const seasonRows = children.filter((c) => c.type === 'season');
       const lists = await Promise.all(
-        seasonRows.map((s) => fetchChildren(client, s.id, myController?.signal).catch(() => [] as MediaItem[])),
+        seasonRows.map((s) => fetchChildren(client, s.id, run.controller?.signal).catch(() => [] as MediaItem[])),
       );
       if (stale()) return;
       children = [...children.filter((c) => c.type !== 'season'), ...lists.flat()];
@@ -344,6 +383,11 @@ async function load(): Promise<void> {
   const id = currentId.value;
   controller?.abort();
   controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  // S172: claim a new generation and carry THIS run's identity into every async writer, so
+  // a run that is superseded while awaiting cannot commit an item, its neighbours or its
+  // up-next queue over the newer item's.
+  generation += 1;
+  const run: LoadRun = { generation, controller };
   loading.value = true;
   error.value = null;
   chapters.value = [];
@@ -368,9 +412,11 @@ async function load(): Promise<void> {
   // serverSubtitleTracks the same way. Errors degrade to empty markers (no skip buttons,
   // no chapter ticks).
   client
-    .get<PlaybackInfo>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, controller?.signal)
+    .get<PlaybackInfo>(`/api/v1/media/${encodeURIComponent(id)}/playback-info`, undefined, run.controller?.signal)
     .then((info) => {
-      if (disposed) return;
+      // S172: a superseded run's markers/chapters/tracks belong to the item the user left,
+      // and this `.then` outlives its run exactly like the queue writers do.
+      if (isStale(run)) return;
       chapters.value = (info?.chapters ?? []).map((c) => ({ start: c.start_seconds, end: c.end_seconds, title: c.title ?? undefined }));
       introMarker.value = toMarker(info?.intro_marker);
       outroMarker.value = toMarker(info?.outro_marker);
@@ -386,7 +432,7 @@ async function load(): Promise<void> {
   const cached = getMediaItemCacheEntry(id);
   const now = Date.now();
   if (cached && isMediaItemCacheFresh(cached, now)) {
-    applyItem(client, cached.item);
+    applyItem(client, cached.item, run);
     return;
   }
 
@@ -397,11 +443,13 @@ async function load(): Promise<void> {
     const itemResponse = await client.get<{ item: MediaItem }>(
       `/api/v1/media/${encodeURIComponent(id)}`,
       undefined,
-      controller?.signal,
+      run.controller?.signal,
     );
     mediaItem = itemResponse.item;
   } catch (e) {
-    if (disposed || isAbort(e)) return;
+    // S172: `isStale` rather than `disposed` — a newer load() has already taken over the
+    // page, so neither this run's error state nor its SWR fallback may be applied.
+    if (isStale(run) || isAbort(e)) return;
     if (e instanceof ApiError && (e.status === 403 || e.status === 429)) {
       const body = e.body as { error?: string } | null;
       const errorCode = body?.error;
@@ -419,20 +467,20 @@ async function load(): Promise<void> {
     // SWR fallback: a transient refresh failure (network blip / 5xx) still lets a
     // previously-cached title play. Mirrors MediaDetailPage's stale-on-failure behavior.
     if (cached) {
-      applyItem(client, cached.item);
+      applyItem(client, cached.item, run);
       return;
     }
     error.value = e instanceof Error ? e.message : 'Failed to load media';
     loading.value = false;
     return;
   }
-  if (disposed) return;
+  if (isStale(run)) return;
   // Guard: if mediaItem is falsy despite a resolved promise, treat as a load failure
   // rather than propagating undefined into streamUrlFor (Fail Fast). A stale cache, if
   // present, still beats erroring out.
   if (!mediaItem) {
     if (cached) {
-      applyItem(client, cached.item);
+      applyItem(client, cached.item, run);
       return;
     }
     error.value = 'Failed to load media item';
@@ -441,7 +489,7 @@ async function load(): Promise<void> {
   }
   // Refresh the shared cache for the next visit (browse→detail→player→back reuse).
   cacheMediaItem(id, mediaItem, now);
-  applyItem(client, mediaItem);
+  applyItem(client, mediaItem, run);
 }
 
 /**
@@ -460,8 +508,25 @@ async function load(): Promise<void> {
  * next neighbour (last episode / cache miss / failed series-tree fetch) — falls through
  * to the genre-similar fallback queue. This also guarantees player.upNext is populated
  * before auto-play checks it when onEnded() fires (Issue 8).
+ *
+ * `run` is the identity of the `load()` that produced `mediaItem`. This function is NOT
+ * awaited by its caller, and it awaits internally, so `run` is what keeps a superseded run
+ * from committing (S172).
+ *
+ * There is deliberately NO staleness check on ENTRY, because `run` is current at every
+ * call site and a check here could therefore never fire — an unfalsifiable guard, which
+ * this repo treats as a defect in its own right. The four call sites, all in `load()`:
+ * the fresh-cache fast path runs in the same synchronous turn as `generation += 1` (the
+ * first `await` in `load()` comes after it), and the other three are each preceded by an
+ * `isStale(run)` return with no `await` in between. Add a call site behind a new `await`
+ * and that invariant breaks — guard it there, or restore the entry check.
+ *
+ * The check that IS needed is after `await loadEpisodeNeighbours`, because a whole newer
+ * `load()` can start AND finish inside that await. It is what stops the genre fallback:
+ * the fetch it fires would otherwise be issued under the new run's controller and its rows
+ * written over the new item's up-next queue.
  */
-async function applyItem(client: ApiClient, mediaItem: MediaItem): Promise<void> {
+async function applyItem(client: ApiClient, mediaItem: MediaItem, run: LoadRun): Promise<void> {
   item.value = mediaItem;
   userItemData.hydrate(mediaItem);
   streamUrl.value = streamUrlFor(mediaItem);
@@ -474,13 +539,17 @@ async function applyItem(client: ApiClient, mediaItem: MediaItem): Promise<void>
   // there: a narrower test here would strand `type:'episode'` rows that carry no parsed
   // episode_number on the genre queue.
   if (isEpisodeItem(mediaItem)) {
-    await loadEpisodeNeighbours(client, mediaItem);
+    await loadEpisodeNeighbours(client, mediaItem, run);
+    // A newer load() may have completed entirely inside that await. `nextEp` then belongs
+    // to the NEW item, so neither the early return nor the fallback below may be decided
+    // from it — this run is finished (S172).
+    if (isStale(run)) return;
     if (nextEp.value) return;
   }
 
   // Non-episode, or an episode with no next neighbour (last episode / cache miss / failed
   // series-tree fetch): genre-similar fallback queue (background, non-fatal).
-  void loadQueue(client, mediaItem);
+  void loadQueue(client, mediaItem, run);
 }
 
 onMounted(load);
