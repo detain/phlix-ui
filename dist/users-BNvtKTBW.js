@@ -120,6 +120,10 @@ var s = {
 	createProfile(e, t) {
 		return this.client.post(`/api/v1/admin/users/${encodeURIComponent(e)}/profiles`, t);
 	}
+	async getProfile(e) {
+		let { profile: t } = await this.client.get(`/api/v1/admin/profiles/${encodeURIComponent(e)}`);
+		return t;
+	}
 	updateProfile(e, t) {
 		return this.client.put(`/api/v1/admin/profiles/${encodeURIComponent(e)}`, t);
 	}
@@ -174,4 +178,4 @@ var s = {
 //#endregion
 export { l as a, c as i, n, i as o, s as r, r as s, u as t };
 
-//# sourceMappingURL=users-DkcwhOlS.js.map
+//# sourceMappingURL=users-BNvtKTBW.js.map

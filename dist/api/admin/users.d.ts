@@ -293,6 +293,18 @@ export declare class AdminUsersApi {
         profile_id: number;
         message: string;
     }>;
+    /**
+     * `GET /api/v1/admin/profiles/{id}` → unwraps `{ profile }`.
+     *
+     * Fetches ONE profile by id, which is what an id-keyed screen needs — the
+     * per-user {@link listProfiles} is keyed by `userId` and is unusable when all
+     * you hold is the profile id itself (as on the parental-controls page, which is
+     * routed by `?profile=<id>`).
+     *
+     * Served by `AdminProfileController::get` (`AdminRoutes.php:264`), which 404s
+     * with `{ error: 'Profile not found' }` for an unknown id.
+     */
+    getProfile(id: number | string): Promise<Profile>;
     /** `PUT /api/v1/admin/profiles/{id}` → `{ message }`. */
     updateProfile(id: number, input: UpdateProfileInput): Promise<{
         message: string;
