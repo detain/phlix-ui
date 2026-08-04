@@ -441,33 +441,51 @@ describe('SyncPlayPage — active room', () => {
   });
 
   /**
-   * 🔴 KNOWN DEFECT, pinned as-is — reported under S160, NOT fixed here.
+   * ✅ FIXED in S134 — this was S160's deliberate tripwire, now flipped.
    *
-   * `syncplay.members` is `'{count} member | {count} members'`, but
-   * `createTranslator` (src/i18n/messages.ts:597) only interpolates — it has no
-   * plural selection and no knowledge of the `|` separator. So both call sites in
-   * this page render the SEPARATOR AND BOTH FORMS to the user, e.g. the literal
-   * text `2 member | 2 members`.
+   * `syncplay.members` is authored as `'{count} member | {count} members'`.
+   * `createTranslator` used to ONLY interpolate, with no knowledge of the `|`
+   * separator, so both call sites on this page rendered the separator and BOTH
+   * forms to the user — the literal on-screen text `2 member | 2 members`. S160
+   * pinned that with `.toContain('|')` precisely so the fix could not land
+   * silently, and it duly went red the moment plural selection was implemented.
    *
-   * These assertions therefore describe what ships today. They are deliberately
-   * written to FAIL once plural selection is implemented, so the fix cannot land
-   * silently: the `.toContain('|')` line is the tripwire.
+   * The tripwire is KEPT, inverted rather than removed: `.not.toContain('|')` is
+   * still a real assertion (a regression that reinstates raw-template output goes
+   * straight back to red), and the exact-text `toBe` assertions below still pin
+   * which form was chosen — `.not.toContain('|')` alone would pass on an empty
+   * string or on the wrong number form.
+   *
+   * Selection runs through `Intl.PluralRules` (src/utils/plural.ts), not `=== 1`.
    */
-  it('renders the raw plural template for the member count (known defect)', async () => {
+  it('selects the plural form for the member count and emits no separator', async () => {
     const { w } = await mountPage({
       session: makeSession(),
       room,
       members: [makeUser(), makeUser({ id: 'u2', name: 'Grace', role: 'contributor' })],
     });
-    expect(w.find('.syncplay-page__room-meta').text()).toBe('2 member | 2 members');
-    expect(w.find('.syncplay-page__members-title').text()).toBe('2 member | 2 members');
-    // Tripwire: no correctly-pluralised string can contain the separator.
-    expect(w.find('.syncplay-page__room-meta').text()).toContain('|');
+    expect(w.find('.syncplay-page__room-meta').text()).toBe('2 members');
+    expect(w.find('.syncplay-page__members-title').text()).toBe('2 members');
+    // Inverted tripwire: a correctly-pluralised string can never contain the
+    // separator, so this fails again if raw-template output ever comes back.
+    expect(w.find('.syncplay-page__room-meta').text()).not.toContain('|');
+    expect(w.find('.syncplay-page__members-title').text()).not.toContain('|');
   });
 
-  it('still emits both plural forms for exactly one member (known defect)', async () => {
+  it('selects the singular form for exactly one member', async () => {
     const { w } = await mountPage({ session: makeSession(), room, members: [makeUser()] });
-    expect(w.find('.syncplay-page__room-meta').text()).toBe('1 member | 1 members');
+    expect(w.find('.syncplay-page__room-meta').text()).toBe('1 member');
+    expect(w.find('.syncplay-page__room-meta').text()).not.toContain('|');
+  });
+
+  /**
+   * Zero is the `other` category in English, so it takes the PLURAL form. This is
+   * the case a `count === 1 ? …` hand-roll also happens to get right, and it is
+   * here so the helper's behaviour is pinned at the boundary rather than assumed.
+   */
+  it('selects the plural form for zero members', async () => {
+    const { w } = await mountPage({ session: makeSession(), room, members: [] });
+    expect(w.find('.syncplay-page__members-title').text()).toBe('0 members');
   });
 
   it('renders one row per member with an uppercased initial avatar', async () => {

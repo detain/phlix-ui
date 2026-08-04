@@ -24,6 +24,7 @@ import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import PageHint from '../components/ui/PageHint.vue';
 import { hubPageHelp } from './hubHelpLinks';
+import { pluralCount } from '../utils/plural';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -353,7 +354,7 @@ onMounted(() => loadServer(true));
             <dd class="server-detail__info-value">
               <span :class="{ 'server-detail__expired': tlsStatus.expiry_days_remaining <= 0 }">
                 {{ tlsStatus.expiry_days_remaining > 0
-                  ? `${tlsStatus.expiry_days_remaining} days remaining`
+                  ? `${pluralCount(tlsStatus.expiry_days_remaining, 'day', 'days')} remaining`
                   : 'Expired!' }}
               </span>
             </dd>

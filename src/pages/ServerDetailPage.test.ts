@@ -193,6 +193,50 @@ describe('ServerDetailPage — heartbeat collapse', () => {
   });
 });
 
+/**
+ * S134 — the TLS expiry line goes through the shared plural helper.
+ *
+ * This was one of the shapes the plan's four-form inventory could not see: the
+ * template hard-coded `days` with no singular branch at all, so a certificate one
+ * day from expiry rendered "1 days remaining". Pinned by mutation — swapping the
+ * helper's arguments left the whole suite green before this block existed.
+ */
+describe('ServerDetailPage — TLS expiry pluralisation (S134)', () => {
+  const expiryText = (w: VueWrapper) =>
+    w.findAll('.server-detail__info-row')
+      .map((n) => n.text())
+      .find((t) => t.startsWith('Expiry'));
+
+  it('renders the PLURAL noun for a normal expiry window', async () => {
+    const { client } = makeClient(makeDetail());
+    const { w } = await mountPage(client);
+    await flushPromises();
+    expect(expiryText(w)).toContain('60 days remaining');
+    w.unmount();
+  });
+
+  it('renders the SINGULAR noun with exactly one day left', async () => {
+    const detail = makeDetail() as Record<string, unknown>;
+    (detail['tls_status'] as Record<string, unknown>)['expiry_days_remaining'] = 1;
+    const { client } = makeClient(detail);
+    const { w } = await mountPage(client);
+    await flushPromises();
+    expect(expiryText(w)).toContain('1 day remaining');
+    expect(expiryText(w)).not.toContain('1 days');
+    w.unmount();
+  });
+
+  it('still shows the expired state rather than a pluralised zero', async () => {
+    const detail = makeDetail() as Record<string, unknown>;
+    (detail['tls_status'] as Record<string, unknown>)['expiry_days_remaining'] = 0;
+    const { client } = makeClient(detail);
+    const { w } = await mountPage(client);
+    await flushPromises();
+    expect(expiryText(w)).toContain('Expired!');
+    w.unmount();
+  });
+});
+
 describe('ServerDetailPage — navigation', () => {
   it('Back to My Servers navigates to /app/servers', async () => {
     const { client } = makeClient();

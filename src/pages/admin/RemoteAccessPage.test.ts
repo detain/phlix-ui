@@ -32,6 +32,20 @@ function makeClient(over: Over = {}) {
     if (endpoint === '/api/v1/admin/remote/portforward/candidates') {
       return { candidates: over.candidates ?? [] };
     }
+    // S134: the Network Health section (and therefore the latency graph, which
+    // carries a pluralised measurement count) had NO stub at all before this, so
+    // the whole section was unreachable from this suite.
+    if (endpoint === '/api/v1/health/relay') {
+      return {
+        data: {
+          relay: { connected: true, active: true, enrolled: true, disabled: false },
+          hub: { reachable: true, consecutiveFailures: 0 },
+        },
+      };
+    }
+    if (endpoint === '/api/v1/health/network') {
+      return { data: { latencyMs: 42, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' } };
+    }
     throw new Error(`unexpected GET ${endpoint}`);
   });
   const post = vi.fn(async (): Promise<unknown> => ({ success: true, latencyMs: 42, receivedAt: 't' }));
@@ -834,6 +848,57 @@ describe('Admin RemoteAccessPage — section expand/collapse', () => {
     await flushPromises();
     await expandSection(w, 'Hub Pairing');
     expect(w.find('#remote-hub-body').exists()).toBe(false);
+    w.unmount();
+  });
+});
+
+
+/**
+ * S134 — the latency-graph heading and its aria-label go through the shared
+ * plural helper.
+ *
+ * This was the LAST unpinned migrated site: `getHealthSnapshot` was never stubbed
+ * anywhere in this 839-line file, so the entire Network Health section — heading,
+ * graph, legend and all — was unreachable from the suite, and swapping the plural
+ * helper's arguments left everything green. The site is another instance of the
+ * shape the plan's four-form inventory could not see: a hard-coded `measurements`
+ * with no singular branch, which rendered "last 1 measurements".
+ */
+describe('RemoteAccessPage — latency-graph pluralisation (S134)', () => {
+  async function openHealth(w: VueWrapper): Promise<void> {
+    await expandSection(w, 'Network Health');
+    await flushPromises();
+  }
+
+  it('renders the SINGULAR noun after a single measurement', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openHealth(w);
+    const title = w.find('.admin-remote__latency-graph-title');
+    expect(title.exists()).toBe(true);
+    expect(title.text()).toBe('Latency History (last 1 measurement)');
+    expect(w.find('.admin-remote__latency-bars').attributes('aria-label')).toBe(
+      'Latency graph showing 1 measurement',
+    );
+    w.unmount();
+  });
+
+  it('renders the PLURAL noun once a second measurement is recorded', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await openHealth(w);
+    // A second Refresh pushes another point onto the history.
+    const body = w.find('#remote-networkhealth-body');
+    await findBtnIn(w, body.element, 'Refresh')!.trigger('click');
+    await flushPromises();
+    expect(w.find('.admin-remote__latency-graph-title').text()).toBe(
+      'Latency History (last 2 measurements)',
+    );
+    expect(w.find('.admin-remote__latency-bars').attributes('aria-label')).toBe(
+      'Latency graph showing 2 measurements',
+    );
     w.unmount();
   });
 });

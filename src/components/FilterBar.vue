@@ -27,6 +27,7 @@ import Combobox from './ui/Combobox.vue';
 import Select from './ui/Select.vue';
 import Badge from './ui/Badge.vue';
 import IconButton from './ui/IconButton.vue';
+import { pluralize } from '../utils/plural';
 
 const props = withDefaults(
   defineProps<{
@@ -559,7 +560,7 @@ onBeforeUnmount(() => {
     <div class="filterbar__active">
       <span class="filterbar__count" aria-live="polite">
         <b>{{ store.total.toLocaleString() }}</b>
-        {{ store.total === 1 ? 'title' : 'titles' }}
+        {{ pluralize(store.total, 'title', 'titles') }}
       </span>
       <template v-if="hasActiveFilters">
         <div class="filterbar__pills">

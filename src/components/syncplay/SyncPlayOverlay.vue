@@ -82,7 +82,10 @@ async function leaveRoom(): Promise<void> {
     <div class="syncplay-overlay__members">
       <span class="syncplay-overlay__member-count">
         <Icon name="user" />
-        {{ memberCount }} {{ t('syncplay.members', { count: memberCount }) }}
+        <!-- `syncplay.members` already renders the number ('{count} member |
+             {count} members'), so the separate `{{ memberCount }}` that used to
+             sit here printed it twice ("2 2 member | 2 members"). -->
+        {{ t('syncplay.members', { count: memberCount }) }}
       </span>
       <ul class="syncplay-overlay__member-list">
         <li

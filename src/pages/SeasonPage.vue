@@ -34,6 +34,7 @@ import { useMessages } from '../composables/useMessages';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { pluralize } from '../utils/plural';
 
 // On the hub this is the relay-proxy base for the selected server; on the media
 // server it is the app's own base.
@@ -213,7 +214,7 @@ function onLove(next: number): void {
                         <h1 class="season-page__title">{{ season.label }}</h1>
                         <p class="season-page__count numeric">
                             {{ season.episodes.length }}
-                            {{ season.episodes.length === 1 ? 'episode' : 'episodes' }}
+                            {{ pluralize(season.episodes.length, 'episode', 'episodes') }}
                         </p>
                         <!-- Top action row: prominent whole-season Play, plus the
                              per-season-row user-data actions (favorite / watched /

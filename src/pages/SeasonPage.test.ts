@@ -339,4 +339,25 @@ describe('SeasonPage (U3)', () => {
     await flushPromises();
     expect(w.find('.season-page__title').text()).toBe('Season 2');
   });
+
+  /**
+   * S134 — the episode count goes through the shared plural helper.
+   *
+   * Pinned by mutation: swapping the helper's singular/plural arguments left the
+   * whole 244-file suite GREEN before these two tests existed.
+   */
+  describe('episode count pluralisation (S134)', () => {
+    it('renders the PLURAL noun for a season with two episodes', async () => {
+      const { w } = await mountAt('sh1', '1', seriesFetch());
+      await flushPromises();
+      expect(w.find('.season-page__count').text()).toBe('2 episodes');
+    });
+
+    it('renders the SINGULAR noun for a season with exactly one episode', async () => {
+      // Season 2 in the shared fixture has a single episode.
+      const { w } = await mountAt('sh1', '2', seriesFetch());
+      await flushPromises();
+      expect(w.find('.season-page__count').text()).toBe('1 episode');
+    });
+  });
 });

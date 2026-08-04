@@ -194,6 +194,8 @@ export { useServerStore, CURRENT_SERVER_ID_KEY, CURRENT_SERVER_NAME_KEY } from '
 export { useConnectionStore, CONNECTION_API_BASE_KEY, CONNECTION_CONFIRMED_ORIGIN_KEY, normalizeBase, withScheme, isAllowedBase, isPrivateHost, isPlaintextPublic, originOf, probeServer, } from './stores/useConnectionStore';
 export { useApiBase, useMediaApiBase } from './composables/useApiBase';
 export { stripLeadingArticle, compareByStrippedTitle, SORT_TITLE_ARTICLES, } from './utils/sortTitle';
+export { plural, pluralize, pluralCount, pluralCategory, selectPluralTemplate, isPluralTemplate, PLURAL_CATEGORIES, } from './utils/plural';
+export type { PluralCategory, PluralForms, PluralOptions } from './utils/plural';
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 export { usePreferencesStore, readStoredPreferences, hasStoredPreferences, DEFAULT_PREFERENCES, DEFAULT_CAPTION_STYLE } from './stores/usePreferencesStore';

@@ -26,6 +26,7 @@ import Icon from '../components/Icon.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
+import { pluralCount } from '../utils/plural';
 
 const apiBase = useMediaApiBase();
 const libraries = useLibrariesStore();
@@ -104,7 +105,7 @@ function openAlbum(album: PhotoAlbum): void {
 }
 
 function formatPhotoCount(count: number): string {
-    return count === 1 ? '1 photo' : `${count} photos`;
+    return pluralCount(count, 'photo', 'photos');
 }
 
 // Load libraries first, then albums

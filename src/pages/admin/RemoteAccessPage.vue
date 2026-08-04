@@ -39,6 +39,7 @@ import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Icon from '../../components/Icon.vue';
+import { pluralCount } from '../../utils/plural';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -915,8 +916,8 @@ onMounted(() => {
           </div>
           <!-- Latency graph -->
           <div v-if="latencyHistory.length > 0" class="admin-remote__latency-graph">
-            <h3 class="admin-remote__latency-graph-title">Latency History (last {{ latencyHistory.length }} measurements)</h3>
-            <div class="admin-remote__latency-bars" role="img" :aria-label="`Latency graph showing ${latencyHistory.length} measurements`">
+            <h3 class="admin-remote__latency-graph-title">Latency History (last {{ pluralCount(latencyHistory.length, 'measurement', 'measurements') }})</h3>
+            <div class="admin-remote__latency-bars" role="img" :aria-label="`Latency graph showing ${pluralCount(latencyHistory.length, 'measurement', 'measurements')}`">
               <div
                 v-for="(point, index) in latencyHistory"
                 :key="index"

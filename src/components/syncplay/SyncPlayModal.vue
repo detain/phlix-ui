@@ -213,7 +213,12 @@ function close(): void {
             >
               <Icon name="user" class="syncplay-modal__room-icon" />
               <span class="syncplay-modal__room-name">{{ room.name }}</span>
-              <span class="syncplay-modal__room-count">{{ room.memberCount }} {{ t('syncplay.members') }}</span>
+              <!-- `t('syncplay.members')` was called with NO count, so `{count}`
+                   was never substituted and this read "5 {count} member |
+                   {count} members". The message renders the number itself. -->
+              <span class="syncplay-modal__room-count">{{
+                t('syncplay.members', { count: room.memberCount })
+              }}</span>
             </button>
           </li>
         </ul>

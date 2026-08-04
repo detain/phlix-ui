@@ -42,6 +42,7 @@ import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Icon from '../../components/Icon.vue';
 import { nextEnabledIndex, type SelectOptionInput } from '../../components/ui/listbox';
+import { pluralCount } from '../../utils/plural';
 
 type RecordingTab = 'all' | 'upcoming' | 'by-series';
 
@@ -142,7 +143,7 @@ async function handleScanTuners(): Promise<void> {
     const discovered = await api.scanTuners();
     tuners.value = discovered;
     tunersLoaded.value = true;
-    toasts.success(`Scan complete. Found ${discovered.length} tuner(s).`);
+    toasts.success(`Scan complete. Found ${pluralCount(discovered.length, 'tuner', 'tuners')}.`);
   } catch (e) {
     toasts.error(errMessage(e, 'Tuner scan failed.'));
   } finally {
@@ -182,7 +183,7 @@ async function confirmDeleteTuner(): Promise<void> {
 const tunerSummary = computed(() => {
   if (tunersLoading.value) return 'Loading…';
   if (tuners.value.length === 0) return 'No tuners found';
-  return `${tuners.value.length} tuner${tuners.value.length !== 1 ? 's' : ''} configured`;
+  return `${pluralCount(tuners.value.length, 'tuner', 'tuners')} configured`;
 });
 
 // ── Guide section ───────────────────────────────────────────────────────────────
@@ -228,7 +229,7 @@ async function handleRefreshGuide(): Promise<void> {
   refreshing.value = true;
   try {
     const count = await api.refreshGuide();
-    toasts.success(`Guide refreshed. ${count} programmes imported.`);
+    toasts.success(`Guide refreshed. ${pluralCount(count, 'programme', 'programmes')} imported.`);
     await loadGuide(guideOffset.value);
   } catch (e) {
     toasts.error(errMessage(e, 'Guide refresh failed.'));
@@ -239,7 +240,8 @@ async function handleRefreshGuide(): Promise<void> {
 
 const guideSummary = computed(() => {
   if (programsLoading.value) return 'Loading…';
-  return programs.value.length > 0 ? `${programs.value.length} programmes` : 'No programmes';
+  if (programs.value.length === 0) return 'No programmes';
+  return pluralCount(programs.value.length, 'programme', 'programmes');
 });
 
 // ── Recordings section ─────────────────────────────────────────────────────────
@@ -330,7 +332,7 @@ function recordingTone(status?: string): 'success' | 'warning' | 'neutral' {
 
 const recordingsSummary = computed(() => {
   if (recordingsLoading.value) return 'Loading…';
-  return `${recordings.value.length} recording${recordings.value.length !== 1 ? 's' : ''}`;
+  return pluralCount(recordings.value.length, 'recording', 'recordings');
 });
 
 const recordingsEmptyText = computed(() => {
@@ -440,7 +442,7 @@ async function confirmDeleteRule(): Promise<void> {
 
 const rulesSummary = computed(() => {
   if (rulesLoading.value) return 'Loading…';
-  return `${rules.value.length} rule${rules.value.length !== 1 ? 's' : ''}`;
+  return pluralCount(rules.value.length, 'rule', 'rules');
 });
 
 // ── Add Rule modal ──────────────────────────────────────────────────────────────

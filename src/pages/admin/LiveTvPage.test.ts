@@ -1149,3 +1149,111 @@ describe('Admin LiveTvPage — a11y semantics (R6.5a.2)', () => {
     w.unmount();
   });
 });
+
+/**
+ * S134 — every count on this page goes through the shared plural helper.
+ *
+ * This page held SIX of the migrated sites and, before this block, not one of
+ * them was pinned: swapping the helper's singular/plural arguments in all six
+ * left the entire 244-file suite GREEN. The existing toast tests asserted only
+ * `tone === 'success'`, never the text, and the four section summaries were
+ * never read at all.
+ *
+ * Two of the six were not ternaries in the first place and so were invisible to
+ * every grep this program ran: the guide summary hard-coded `programmes` with no
+ * singular branch (it rendered "1 programmes"), and the tuner-scan toast used the
+ * `tuner(s)` parenthetical dodge.
+ */
+describe('LiveTvPage — count pluralisation (S134)', () => {
+  const summaries = (w: VueWrapper) =>
+    w.findAll('.admin-livetv__section-summary').map((n) => n.text());
+
+  it('pluralises the tuner summary on both sides of one', async () => {
+    const two = mountPage(makeClient().client);
+    await flushPromises();
+    expect(summaries(two)[0]).toBe('2 tuners configured');
+    two.unmount();
+
+    const one = mountPage(makeClient({ tuners: [tunerA] }).client);
+    await flushPromises();
+    expect(summaries(one)[0]).toBe('1 tuner configured');
+    one.unmount();
+  });
+
+  it('pluralises the guide summary — "1 programme", not "1 programmes"', async () => {
+    const one = mountPage(makeClient().client);
+    await flushPromises();
+    await expandSection(one, 'Guide / EPG');
+    expect(summaries(one)[1]).toBe('1 programme');
+    one.unmount();
+
+    const many = mountPage(
+      makeClient({ programs: [programA, { ...programA, id: 'prog-2' }] }).client,
+    );
+    await flushPromises();
+    await expandSection(many, 'Guide / EPG');
+    expect(summaries(many)[1]).toBe('2 programmes');
+    many.unmount();
+  });
+
+  it('keeps the empty guide summary as a distinct string, not "0 programmes"', async () => {
+    const w = mountPage(makeClient({ programs: [] }).client);
+    await flushPromises();
+    await expandSection(w, 'Guide / EPG');
+    expect(summaries(w)[1]).toBe('No programmes');
+    w.unmount();
+  });
+
+  it('pluralises the recordings summary on both sides of one', async () => {
+    const one = mountPage(makeClient().client);
+    await flushPromises();
+    await expandSection(one, 'Recordings');
+    expect(summaries(one)[2]).toBe('1 recording');
+    one.unmount();
+
+    const many = mountPage(
+      makeClient({ recordings: [recordingA, { ...recordingA, id: 'rec-2' }] }).client,
+    );
+    await flushPromises();
+    await expandSection(many, 'Recordings');
+    expect(summaries(many)[2]).toBe('2 recordings');
+    many.unmount();
+  });
+
+  it('pluralises the series-rules summary on both sides of one', async () => {
+    const one = mountPage(makeClient().client);
+    await flushPromises();
+    await expandSection(one, 'Series Rules');
+    expect(summaries(one)[3]).toBe('1 rule');
+    one.unmount();
+
+    const many = mountPage(makeClient({ rules: [ruleA, { ...ruleA, id: 'rule-2' }] }).client);
+    await flushPromises();
+    await expandSection(many, 'Series Rules');
+    expect(summaries(many)[3]).toBe('2 rules');
+    many.unmount();
+  });
+
+  it('the tuner-scan toast says "1 tuner", replacing the old parenthetical dodge', async () => {
+    const { client } = makeClient({ tuners: [] });
+    const w = mountPage(client);
+    await flushPromises();
+    const success = vi.spyOn(useToastStore(), 'success');
+    await findBtn(w, 'Scan for Tuners')!.trigger('click');
+    await flushPromises();
+    expect(success).toHaveBeenCalledWith('Scan complete. Found 1 tuner.');
+    w.unmount();
+  });
+
+  it('the guide-refresh toast pluralises the imported count', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await expandSection(w, 'Guide / EPG');
+    const success = vi.spyOn(useToastStore(), 'success');
+    await findBtn(w, 'Refresh Guide')!.trigger('click');
+    await flushPromises();
+    expect(success).toHaveBeenCalledWith('Guide refreshed. 7 programmes imported.');
+    w.unmount();
+  });
+});
