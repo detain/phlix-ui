@@ -61,21 +61,58 @@ const api = new AdminUsersApi(
 const profiles = ref<Profile[]>([]);
 const selectedProfileId = ref<number | null>(null);
 const loadingProfiles = ref(true);
+/** Why the profile could not be identified, when it could not be (S203). */
+const profilesError = ref<string | null>(null);
 
-const selectedProfile = computed(() =>
-  profiles.value.find((p) => p.id === selectedProfileId.value) ?? null,
+/**
+ * The profile whose restrictions are on screen.
+ *
+ * Matched by STRING identity rather than `===`. The wire id is not reliably the
+ * same JS type as `selectedProfileId` (which is parsed out of the query string):
+ * `user_profiles.id` is `CHAR(36)` server-side, so a driver may hand back `'7'`
+ * where the local id is `7`, and a strict compare would then silently fail to
+ * match the very profile that was just fetched by that id — reproducing exactly
+ * the "no name on screen" symptom this step exists to remove.
+ */
+const selectedProfile = computed(
+  () => profiles.value.find((p) => String(p.id) === String(selectedProfileId.value)) ?? null,
 );
 
+/**
+ * Load the profile named by `?profile=<id>` so the header can say WHOSE
+ * restrictions are being edited (S203).
+ *
+ * Only the one profile is fetched, not the whole estate: the page is keyed by a
+ * profile id, and `listProfiles` is keyed by `userId`, which this screen never
+ * has.
+ *
+ * On failure this deliberately does NOT stay silent (the previous stub swallowed
+ * everything with a `// Silently fail`). An access-control editor that cannot say
+ * which child it is editing looks *identical* to one that can, so a silent failure
+ * is indistinguishable from success — the admin has no way to notice they may be
+ * editing the wrong child. Instead the header renders an explicit "unidentified"
+ * warning carrying the id and the reason.
+ *
+ * It equally does NOT gate the editor. Blocking the restriction controls on a
+ * cosmetic name lookup would turn a metadata outage into "nobody can tighten a
+ * child's limits", which is the worse direction on this surface. Warn loudly,
+ * keep working.
+ */
 async function loadProfiles(): Promise<void> {
+  const profileId = selectedProfileId.value;
+  if (!profileId) {
+    profiles.value = [];
+    profilesError.value = null;
+    loadingProfiles.value = false;
+    return;
+  }
   loadingProfiles.value = true;
+  profilesError.value = null;
   try {
-    // Load all users and their profiles - for now we fetch all users and their profiles
-    // A more efficient approach would be a dedicated endpoint, but this matches the console client
-    const allProfiles: Profile[] = [];
-    // For simplicity, we'll rely on the profile being pre-selected via query param
-    profiles.value = allProfiles;
-  } catch {
-    // Silently fail for profile list - profile may be passed via query
+    profiles.value = [await api.getProfile(profileId)];
+  } catch (e) {
+    profiles.value = [];
+    profilesError.value = errMessage(e, 'Could not load this profile.');
   } finally {
     loadingProfiles.value = false;
   }
@@ -329,8 +366,36 @@ const streamLimits = ref<ProfileStreamLimit | null>(null);
 const loadingStreamLimits = ref(false);
 const streamLimitsError = ref<string | null>(null);
 const showStreamLimitsForm = ref(false);
-const streamLimitsForm = ref({ maxConcurrentStreams: 1, maxTotalBandwidthKbps: '' });
+/**
+ * Both fields are bound to `<Input type="number">`, and `Input.vue` emits
+ * `Number(target.value)` for that type — so whatever type these are SEEDED with,
+ * they become NUMBERS the instant the user types. They are seeded as a string
+ * (`openStreamLimitsEdit` formats the bandwidth with `.toString()`) and as a
+ * number, so `string | number` is the honest type for both.
+ *
+ * This declaration is the S201 defect made visible: the type was previously
+ * written as if the seed were the only shape, which is why `.trim()` type-checked
+ * and still threw at runtime.
+ */
+const streamLimitsForm = ref<{
+  maxConcurrentStreams: string | number;
+  maxTotalBandwidthKbps: string | number;
+}>({ maxConcurrentStreams: 1, maxTotalBandwidthKbps: '' });
 const streamLimitsFormError = ref<string | null>(null);
+
+/**
+ * Parse a `<Input type="number">` model to a whole number, tolerating BOTH shapes
+ * it legitimately arrives in: the string it was seeded with, and the number
+ * `Input.vue` emits once the field is touched.
+ *
+ * Returns `null` for "no usable value" — blank, non-numeric, or below `min`.
+ * Fractions are truncated, matching the `parseInt` this replaces.
+ */
+function parseNumericInput(value: string | number, min: number): number | null {
+  const n = typeof value === 'number' ? value : parseInt(value.trim(), 10);
+  if (!Number.isFinite(n) || n < min) return null;
+  return Math.trunc(n);
+}
 
 async function loadStreamLimits(): Promise<void> {
   if (!selectedProfileId.value) return;
@@ -354,22 +419,27 @@ function openStreamLimitsEdit(): void {
   showStreamLimitsForm.value = true;
 }
 
+/**
+ * Persist the stream limits.
+ *
+ * ⚠ The parse and the validation both live INSIDE the `try` on purpose (S201).
+ * They used to sit above it, so when the bandwidth parse threw — which it did on
+ * every edit, see {@link parseNumericInput} — the TypeError escaped the handler
+ * entirely: no PUT, no `streamLimitsFormError`, no toast, nothing on screen at
+ * all. A silent no-op on an access-control form is worse than a visible failure,
+ * so anything that can throw here must be inside the guarded region and surface
+ * through the same `catch` the network errors use.
+ */
 async function submitStreamLimitsForm(): Promise<void> {
   if (!selectedProfileId.value) return;
-  const maxStreams = streamLimitsForm.value.maxConcurrentStreams;
-  if (maxStreams < 1) {
-    streamLimitsFormError.value = 'Max concurrent streams must be at least 1.';
-    return;
-  }
-  let maxBandwidth: number | null = null;
-  const bwRaw = streamLimitsForm.value.maxTotalBandwidthKbps.trim();
-  if (bwRaw !== '') {
-    maxBandwidth = parseInt(bwRaw, 10);
-    if (isNaN(maxBandwidth) || maxBandwidth < 1) {
-      maxBandwidth = null;
-    }
-  }
   try {
+    const maxStreams = parseNumericInput(streamLimitsForm.value.maxConcurrentStreams, 1);
+    if (maxStreams === null) {
+      streamLimitsFormError.value = 'Max concurrent streams must be at least 1.';
+      return;
+    }
+    // A blank / sub-1 bandwidth is "no cap", not an error — the field is optional.
+    const maxBandwidth = parseNumericInput(streamLimitsForm.value.maxTotalBandwidthKbps, 1);
     await api.updateProfileStreamLimits(selectedProfileId.value, maxStreams, maxBandwidth);
     toasts.success('Stream limits updated.');
     showStreamLimitsForm.value = false;
@@ -420,6 +490,20 @@ function askDeleteTag(tag: ProfileTag): void {
         <Icon name="user" size="sm" />
         {{ selectedProfile.name }}
         <Badge tone="neutral">{{ RATING_LABELS[selectedProfile.rating] ?? 'Unknown' }}</Badge>
+      </div>
+      <!--
+        The identity could not be established (S203). Never render nothing here:
+        an absent badge is indistinguishable from a page that simply has no badge,
+        and the admin would go on editing without knowing whose limits these are.
+      -->
+      <div
+        v-else-if="selectedProfileId && !loadingProfiles"
+        class="parental-page__profile-badge parental-page__profile-badge--unknown"
+        role="status"
+      >
+        <Icon name="alert" size="sm" />
+        Unidentified profile #{{ selectedProfileId }}
+        <Badge tone="error">{{ profilesError ?? 'Not found' }}</Badge>
       </div>
     </header>
 
@@ -763,6 +847,11 @@ function askDeleteTag(tag: ProfileTag): void {
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text);
+}
+
+.parental-page__profile-badge--unknown {
+  background: var(--color-error-subtle);
+  color: var(--color-error);
 }
 
 .parental-page__no-profile {

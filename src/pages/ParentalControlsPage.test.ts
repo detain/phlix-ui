@@ -53,9 +53,10 @@ import Button from '../components/ui/Button.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import { useToastStore } from '../stores/useToastStore';
 import type { ApiClient } from '../api/client';
-import type { AccessSchedule, ProfileTag, ProfileStreamLimit } from '../api/admin/users';
+import type { AccessSchedule, Profile, ProfileTag, ProfileStreamLimit } from '../api/admin/users';
 
 const PROFILE = 7;
+const PROFILE_URL = `/api/v1/admin/profiles/${PROFILE}`;
 const SCHEDULES_URL = `/api/v1/admin/profiles/${PROFILE}/schedules`;
 const TAGS_URL = `/api/v1/admin/profiles/${PROFILE}/tags`;
 const LIMITS_URL = `/api/v1/admin/profiles/${PROFILE}/stream-limits`;
@@ -84,14 +85,29 @@ const tagAllowed: ProfileTag = { id: 22, profile_id: PROFILE, tag: 'kids', tag_t
 
 const limits: ProfileStreamLimit = { max_concurrent_streams: 2, max_total_bandwidth_kbps: 8000 };
 
+const profileRow: Profile = {
+  id: PROFILE,
+  user_id: 3,
+  name: 'Robin',
+  pin_hash: null,
+  rating: 5,
+  created_at: '2026-01-02 03:04:05',
+};
+
 interface Seed {
   schedules?: AccessSchedule[];
   tags?: ProfileTag[];
   limits?: ProfileStreamLimit;
+  /** The `{ profile }` payload; pass `null` to make the profile GET reject. */
+  profile?: Profile | null;
 }
 
 function makeClient(seed: Seed = {}) {
   const get = vi.fn(async (url: string): Promise<unknown> => {
+    if (url === PROFILE_URL) {
+      if (seed.profile === null) throw new Error('profile boom');
+      return { profile: seed.profile ?? profileRow };
+    }
     if (url === SCHEDULES_URL) return { schedules: seed.schedules ?? [schedule1, schedule2] };
     if (url === TAGS_URL) return { tags: seed.tags ?? [tagBlocked, tagAllowed] };
     if (url === LIMITS_URL) return seed.limits ?? limits;
@@ -102,6 +118,22 @@ function makeClient(seed: Seed = {}) {
   const del = vi.fn(async () => ({ message: 'ok' }));
   const client = { get, post, put, patch: vi.fn(), delete: del } as unknown as ApiClient;
   return { client, get, post, put, del };
+}
+
+/**
+ * A `get` mock that always satisfies the S203 profile fetch and delegates every
+ * other URL to `rest`.
+ *
+ * Routing by URL rather than by call ORDER matters here: the page issues the
+ * profile fetch and the section fetch from the same `onMounted`, so an
+ * order-based `mockRejectedValueOnce` would attach the rejection to whichever
+ * request happened to go first and silently stop testing what it names.
+ */
+function getWithProfile(rest: (url: string) => Promise<unknown>) {
+  return vi.fn(async (url: string): Promise<unknown> => {
+    if (url === PROFILE_URL) return { profile: profileRow };
+    return rest(url);
+  });
 }
 
 function makeRouter(): Router {
@@ -270,7 +302,13 @@ describe('ParentalControlsPage — the profile gate (fail closed)', () => {
     ]);
     // Scoped to profile 7 — and to nothing else.
     expect(get).toHaveBeenCalledWith(SCHEDULES_URL);
-    expect(get.mock.calls.every((c) => String(c[0]).includes(`/profiles/${PROFILE}/`))).toBe(true);
+    // Every call is either the profile itself or a sub-resource OF that profile —
+    // `/profiles/77/...` must not satisfy this.
+    expect(
+      get.mock.calls.every(
+        (c) => String(c[0]) === PROFILE_URL || String(c[0]).startsWith(`${PROFILE_URL}/`),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -322,7 +360,7 @@ describe('ParentalControlsPage — schedules list', () => {
 
   it('shows a skeleton while schedules are loading', async () => {
     let resolve: (v: unknown) => void = () => {};
-    const get = vi.fn((url: string) =>
+    const get = getWithProfile((url: string) =>
       url === SCHEDULES_URL ? new Promise((r) => { resolve = r; }) : Promise.resolve({}),
     );
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
@@ -350,10 +388,14 @@ describe('ParentalControlsPage — schedules list', () => {
   });
 
   it('shows an error state carrying the server message, and retries', async () => {
-    const get = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('schedules boom'))
-      .mockResolvedValue({ schedules: [schedule1] });
+    let firstSchedulesCall = true;
+    const get = getWithProfile(async () => {
+      if (firstSchedulesCall) {
+        firstSchedulesCall = false;
+        throw new Error('schedules boom');
+      }
+      return { schedules: [schedule1] };
+    });
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
     expect(w.text()).toContain("Couldn't load schedules");
@@ -368,7 +410,7 @@ describe('ParentalControlsPage — schedules list', () => {
   });
 
   it('falls back to a generic message when the failure carries none', async () => {
-    const get = vi.fn().mockRejectedValue({});
+    const get = getWithProfile(async () => { throw {}; });
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
     expect(w.text()).toContain('Failed to load schedules.');
@@ -774,7 +816,7 @@ describe('ParentalControlsPage — tags', () => {
   });
 
   it('shows an error state and retries', async () => {
-    const get = vi.fn(async (url: string): Promise<unknown> => {
+    const get = getWithProfile(async (url: string) => {
       if (url === SCHEDULES_URL) return { schedules: [] };
       throw new Error('tags boom');
     });
@@ -792,7 +834,7 @@ describe('ParentalControlsPage — tags', () => {
   });
 
   it('falls back to a generic tag-load message', async () => {
-    const get = vi.fn(async (url: string): Promise<unknown> => {
+    const get = getWithProfile(async (url: string) => {
       if (url === SCHEDULES_URL) return { schedules: [] };
       throw {};
     });
@@ -993,7 +1035,7 @@ describe('ParentalControlsPage — stream limits', () => {
   });
 
   it('shows an error state and retries', async () => {
-    const get = vi.fn(async (url: string): Promise<unknown> => {
+    const get = getWithProfile(async (url: string) => {
       if (url === SCHEDULES_URL) return { schedules: [] };
       throw new Error('limits boom');
     });
@@ -1010,7 +1052,7 @@ describe('ParentalControlsPage — stream limits', () => {
   });
 
   it('falls back to a generic limits-load message', async () => {
-    const get = vi.fn(async (url: string): Promise<unknown> => {
+    const get = getWithProfile(async (url: string) => {
       if (url === SCHEDULES_URL) return { schedules: [] };
       throw {};
     });
@@ -1032,7 +1074,7 @@ describe('ParentalControlsPage — stream limits', () => {
   });
 
   it('defaults to 1 stream and a blank cap when limits failed to load', async () => {
-    const get = vi.fn(async (url: string): Promise<unknown> => {
+    const get = getWithProfile(async (url: string) => {
       if (url === SCHEDULES_URL) return { schedules: [] };
       throw new Error('nope');
     });
@@ -1102,46 +1144,161 @@ describe('ParentalControlsPage — stream limits', () => {
     expect(componentErrors).toEqual([]);
   });
 
+  /* ────────────────────────────────────────────────────────────────────────── */
+  /* S201 — the bandwidth cap is settable, and nothing here can fail silently    */
+  /* ────────────────────────────────────────────────────────────────────────── */
+
   /**
-   * 🔴 KNOWN DEFECT, pinned as-is — reported under S160, NOT fixed here.
+   * These drive the REAL `Input` emit — `setInput` writes the DOM value and
+   * dispatches a genuine `input` event, so `Input.vue`'s
+   * `props.type === 'number' ? Number(target.value) : target.value` runs and the
+   * model becomes a NUMBER, exactly as it does in a browser.
    *
-   * The bandwidth field is `<Input type="number" v-model="…maxTotalBandwidthKbps">`,
-   * and `Input.vue:33` emits `Number(target.value)` for `type="number"`. So the
-   * moment the user types, `maxTotalBandwidthKbps` stops being the string the form
-   * seeded it with and becomes a NUMBER — while
-   * `submitStreamLimitsForm` (ParentalControlsPage.vue:365) still calls
-   * `.trim()` on it. That line sits BEFORE the `try`, so the TypeError escapes the
-   * handler entirely: no PUT is issued, `streamLimitsFormError` is never set, and
-   * the modal just sits there with no feedback at all.
-   *
-   * Net effect: the bandwidth cap cannot be changed through this UI. Any edit that
-   * touches the field silently does nothing — and from the outside it is
-   * indistinguishable from a validation refusal, which is why `componentErrors` is
-   * asserted here rather than only "put was not called".
+   * ⚠ That is the whole point of the shape. Assigning a string straight to
+   * `streamLimitsForm.maxTotalBandwidthKbps` would leave it a string, `.trim()`
+   * would work, and the test would pass against the BROKEN code — the S201 defect
+   * is only reachable through the component's own emit. Verified by mutation: with
+   * `parseNumericInput` reverted to the original
+   * `streamLimitsForm.value.maxTotalBandwidthKbps.trim()` above the `try`, every
+   * test in this block fails.
    */
   it.each([
-    ['a plausible value', '12000'],
-    ['zero', '0'],
-    ['a cleared field', ''],
-  ])('crashes and writes NOTHING when the bandwidth field is typed into — %s (known defect)',
-    async (_label, value) => {
-      const { client, put } = makeClient();
-      const w = await mountPage(client);
-      await goToLimits(w);
-      await findBtn(w, 'Update Limits')!.trigger('click');
-      await flushPromises();
-      await setInput(1, value);
-      await submitForm();
+    ['a plausible value', '12000', 12000],
+    ['a larger value', '250000', 250000],
+    ['zero — the field is optional, so no cap', '0', null],
+    ['a cleared field', '', null],
+  ])('PUTs the bandwidth cap typed into the real number input — %s', async (_label, typed, sent) => {
+    const { client, put } = makeClient();
+    const w = await mountPage(client);
+    await goToLimits(w);
+    await findBtn(w, 'Update Limits')!.trigger('click');
+    await flushPromises();
+    await setInput(1, typed);
+    await submitForm();
 
-      expect(put).not.toHaveBeenCalled();
-      // No feedback whatsoever — the crash pre-empts the error path too.
-      expect(formError()).toBe('');
-      expect(anyModalOpen()).toBe(true);
-      expect(useToastStore().toasts).toEqual([]);
-      // …and it really is a crash, not a guard.
-      expect(componentErrors.length).toBe(1);
-      expect(String(componentErrors[0])).toContain('trim is not a function');
+    expect(put).toHaveBeenCalledWith(LIMITS_URL, {
+      max_concurrent_streams: 2,
+      max_total_bandwidth_kbps: sent,
     });
+    expect(useToastStore().toasts.some((t) => t.message === 'Stream limits updated.')).toBe(true);
+    expect(anyModalOpen()).toBe(false);
+    // No throw escaped the handler — the crash this step removed showed up here.
+    expect(componentErrors).toEqual([]);
+  });
+
+  it('confirms the model really is a NUMBER after typing (the shape the defect needed)', async () => {
+    const { client, put } = makeClient();
+    const w = await mountPage(client);
+    await goToLimits(w);
+    await findBtn(w, 'Update Limits')!.trigger('click');
+    await flushPromises();
+    await setInput(1, '4096');
+    // Read the live model, not the DOM: `Input.vue` coerces for `type="number"`,
+    // so anything downstream that assumes a string is broken.
+    const vm = w.vm as unknown as {
+      streamLimitsForm: { maxTotalBandwidthKbps: string | number };
+    };
+    expect(typeof vm.streamLimitsForm.maxTotalBandwidthKbps).toBe('number');
+    await submitForm();
+    expect(put).toHaveBeenCalledWith(LIMITS_URL, {
+      max_concurrent_streams: 2,
+      max_total_bandwidth_kbps: 4096,
+    });
+  });
+
+  it('edits BOTH numeric fields in one submit', async () => {
+    const { client, put } = makeClient();
+    const w = await mountPage(client);
+    await goToLimits(w);
+    await findBtn(w, 'Update Limits')!.trigger('click');
+    await flushPromises();
+    await setInput(0, '5');
+    await setInput(1, '900');
+    await submitForm();
+    expect(put).toHaveBeenCalledWith(LIMITS_URL, {
+      max_concurrent_streams: 5,
+      max_total_bandwidth_kbps: 900,
+    });
+    expect(componentErrors).toEqual([]);
+  });
+
+  it('carries the untouched string seed through unchanged', async () => {
+    // The bandwidth model is seeded via `.toString()` and stays a STRING until the
+    // field is touched, so the parse has to accept both shapes — not just the
+    // number the emit produces.
+    const { client, put } = makeClient();
+    const w = await mountPage(client);
+    await goToLimits(w);
+    await findBtn(w, 'Update Limits')!.trigger('click');
+    await flushPromises();
+    const vm = w.vm as unknown as {
+      streamLimitsForm: { maxTotalBandwidthKbps: string | number };
+    };
+    expect(typeof vm.streamLimitsForm.maxTotalBandwidthKbps).toBe('string');
+    await submitForm();
+    expect(put).toHaveBeenCalledWith(LIMITS_URL, {
+      max_concurrent_streams: 2,
+      max_total_bandwidth_kbps: 8000,
+    });
+  });
+
+  /**
+   * The invariant the S201 defect broke was not "the cap is wrong" — it was that
+   * submitting produced NO observable outcome at all. Whatever is in the two
+   * fields, exactly one of {a PUT went out, an error is on screen} must hold, and
+   * nothing may escape to the error handler.
+   */
+  it.each([
+    ['both blank', '', ''],
+    ['a blank cap, a valid stream count', '3', ''],
+    ['a zero stream count', '0', '12000'],
+    ['a negative stream count', '-2', '12000'],
+    ['a negative bandwidth', '2', '-500'],
+    ['a fractional bandwidth', '2', '1500.75'],
+    ['a huge bandwidth', '2', '999999999'],
+  ])('submitting is never silent — %s', async (_label, streamsValue, bwValue) => {
+    const { client, put } = makeClient();
+    const w = await mountPage(client);
+    await goToLimits(w);
+    await findBtn(w, 'Update Limits')!.trigger('click');
+    await flushPromises();
+    await setInput(0, streamsValue);
+    await setInput(1, bwValue);
+    await submitForm();
+
+    const wrote = put.mock.calls.length > 0;
+    const complained = !anyModalOpen() || formError() !== '';
+    expect(wrote || complained).toBe(true);
+    expect(componentErrors).toEqual([]);
+  });
+
+  it('truncates a fractional bandwidth rather than sending a float', async () => {
+    const { client, put } = makeClient();
+    const w = await mountPage(client);
+    await goToLimits(w);
+    await findBtn(w, 'Update Limits')!.trigger('click');
+    await flushPromises();
+    await setInput(1, '1500.75');
+    await submitForm();
+    expect(put).toHaveBeenCalledWith(LIMITS_URL, {
+      max_concurrent_streams: 2,
+      max_total_bandwidth_kbps: 1500,
+    });
+  });
+
+  it('treats a negative bandwidth as no cap, not as a negative cap', async () => {
+    const { client, put } = makeClient();
+    const w = await mountPage(client);
+    await goToLimits(w);
+    await findBtn(w, 'Update Limits')!.trigger('click');
+    await flushPromises();
+    await setInput(1, '-500');
+    await submitForm();
+    expect(put).toHaveBeenCalledWith(LIMITS_URL, {
+      max_concurrent_streams: 2,
+      max_total_bandwidth_kbps: null,
+    });
+  });
 
   it('keeps the modal open and shows the message when the update fails', async () => {
     const { client, put } = makeClient();
@@ -1189,13 +1346,14 @@ describe('ParentalControlsPage — tab switching loads the matching section', ()
     const w = await mountPage(client);
     const urls = () => get.mock.calls.map((c) => c[0]);
 
-    expect(urls()).toEqual([SCHEDULES_URL]);
+    // The profile identity is fetched once, on mount, and never re-fetched per tab.
+    expect(urls()).toEqual([PROFILE_URL, SCHEDULES_URL]);
     await clickTab(w, 'Tags');
-    expect(urls()).toEqual([SCHEDULES_URL, TAGS_URL]);
+    expect(urls()).toEqual([PROFILE_URL, SCHEDULES_URL, TAGS_URL]);
     await clickTab(w, 'Stream Limits');
-    expect(urls()).toEqual([SCHEDULES_URL, TAGS_URL, LIMITS_URL]);
+    expect(urls()).toEqual([PROFILE_URL, SCHEDULES_URL, TAGS_URL, LIMITS_URL]);
     await clickTab(w, 'Schedules');
-    expect(urls()).toEqual([SCHEDULES_URL, TAGS_URL, LIMITS_URL, SCHEDULES_URL]);
+    expect(urls()).toEqual([PROFILE_URL, SCHEDULES_URL, TAGS_URL, LIMITS_URL, SCHEDULES_URL]);
   });
 
   it('renders only the active tab panel', async () => {
@@ -1369,28 +1527,126 @@ describe('ParentalControlsPage — builds its own client when no client prop is 
 /* ══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * 🔴 KNOWN DEFECT, pinned as-is — reported under S160, NOT fixed here.
+ * S203 — the page must say WHOSE restrictions are on screen.
  *
- * `loadProfiles()` (ParentalControlsPage.vue:69-82) is a stub: it builds
- * `const allProfiles: Profile[] = []` and assigns that empty array, never calling
- * the API. `selectedProfile` is therefore ALWAYS null, so the header badge that
- * would name the profile and show its rating cap NEVER renders, and the
- * `RATING_LABELS` import is dead in practice.
+ * `loadProfiles()` used to be a stub that built `const allProfiles: Profile[] = []`
+ * and assigned it, never calling the API, so `selectedProfile` was always null and
+ * the header badge never rendered. The profile is chosen by an opaque `?profile=`
+ * query param, so with no name rendered there was no on-screen confirmation of
+ * which child was being edited — a wrong id was silently unnoticeable.
  *
- * The consequence is specific to this surface: the profile is chosen by an opaque
- * numeric query param and there is no on-screen confirmation of WHICH child's
- * restrictions are being edited, so a wrong `?profile=` is silently unnoticeable.
- * `loadingProfiles` is likewise written but never read by the template.
+ * The failure path is deliberate rather than inherited: the old `catch` was a bare
+ * `// Silently fail`, which is the one thing this surface cannot afford, because a
+ * page that cannot name the profile looks EXACTLY like one that can. So a load
+ * failure renders an explicit "Unidentified profile" warning carrying the id and
+ * the reason — and does NOT gate the editor, since blocking restriction changes on
+ * a name lookup would fail in the more dangerous direction.
  */
-describe('ParentalControlsPage — profile identity badge (known defect)', () => {
-  it('never renders the profile name/rating badge, even for a valid profile', async () => {
+describe('ParentalControlsPage — profile identity badge', () => {
+  it('fetches the profile named by ?profile= and renders its name and rating', async () => {
     const { client, get } = makeClient();
     const w = await mountPage(client);
-    expect(w.find('.parental-page__profile-badge').exists()).toBe(false);
-    // …and it is a stub, not a failed fetch: no profile endpoint is ever called.
-    expect(get.mock.calls.every((c) => !String(c[0]).includes('/profiles/7/profile'))).toBe(true);
-    expect(get.mock.calls.some((c) => String(c[0]).endsWith(`/profiles/${PROFILE}`))).toBe(false);
-    // The control surface still works — the badge is the only casualty.
+    expect(get).toHaveBeenCalledWith(PROFILE_URL);
+    const badge = w.find('.parental-page__profile-badge');
+    expect(badge.exists()).toBe(true);
+    expect(badge.text()).toContain('Robin');
+    // rating 5 → the TV-PG label, not the raw index.
+    expect(badge.text()).toContain('TV-PG');
+    expect(badge.classes()).not.toContain('parental-page__profile-badge--unknown');
+  });
+
+  /**
+   * The acceptance criterion stated as a test: `profiles` IS populated, so if the
+   * badge does not appear the wiring between the loaded row and the header is
+   * broken — which is precisely the state master shipped in.
+   */
+  it('fails if profiles is populated but no badge appears', async () => {
+    const { client } = makeClient({
+      profile: { ...profileRow, name: 'Sam', rating: 0 },
+    });
+    const w = await mountPage(client);
+    const vm = w.vm as unknown as { profiles: Profile[] };
+    expect(vm.profiles.length).toBe(1);
+    expect(w.find('.parental-page__profile-badge').exists()).toBe(true);
+    expect(w.find('.parental-page__profile-badge').text()).toContain('Sam');
+    expect(w.find('.parental-page__profile-badge').text()).toContain('G —');
+  });
+
+  /**
+   * `user_profiles.id` is `CHAR(36)` server-side, so the wire id can arrive as a
+   * STRING where the query-param id was parsed to a number. A strict `===` match
+   * would then drop the profile that was just fetched by that very id and silently
+   * reproduce the blank header.
+   */
+  it('matches a profile whose wire id is a string, not a number', async () => {
+    const { client } = makeClient({
+      profile: { ...profileRow, id: String(PROFILE) as unknown as number },
+    });
+    const w = await mountPage(client);
+    expect(w.find('.parental-page__profile-badge').text()).toContain('Robin');
+  });
+
+  it('labels an out-of-range rating Unknown rather than rendering a bare number', async () => {
+    const { client } = makeClient({ profile: { ...profileRow, rating: 99 } });
+    const w = await mountPage(client);
+    expect(w.find('.parental-page__profile-badge').text()).toContain('Unknown');
+  });
+
+  it('says the profile is UNIDENTIFIED, with the reason, when the load fails', async () => {
+    const { client } = makeClient({ profile: null });
+    const w = await mountPage(client);
+    const badge = w.find('.parental-page__profile-badge');
+    expect(badge.exists()).toBe(true);
+    expect(badge.classes()).toContain('parental-page__profile-badge--unknown');
+    expect(badge.text()).toContain(`Unidentified profile #${PROFILE}`);
+    // The reason is shown, not swallowed — the old catch was a bare "silently fail".
+    expect(badge.text()).toContain('profile boom');
+    expect(componentErrors).toEqual([]);
+  });
+
+  it('falls back to a generic reason when the failure carries no message', async () => {
+    const get = vi.fn(async (url: string): Promise<unknown> => {
+      if (url === PROFILE_URL) throw {};
+      if (url === SCHEDULES_URL) return { schedules: [] };
+      throw new Error(`unexpected GET ${url}`);
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = await mountPage(client);
+    expect(w.find('.parental-page__profile-badge').text()).toContain('Could not load this profile.');
+  });
+
+  /**
+   * The identity lookup is informational; it must never become a gate. If a failed
+   * name fetch disabled the editor, an outage in profile metadata would stop an
+   * admin TIGHTENING a child's restrictions — the wrong direction to fail on an
+   * access-control surface.
+   */
+  it('does not gate the editor when the identity is unknown', async () => {
+    const { client, put } = makeClient({ profile: null });
+    const w = await mountPage(client);
     expect(w.findAll('[role="tab"]').length).toBe(3);
+    await clickTab(w, 'Stream Limits');
+    await findBtn(w, 'Update Limits')!.trigger('click');
+    await flushPromises();
+    await setInput(0, '3');
+    await submitForm();
+    expect(put).toHaveBeenCalledWith(LIMITS_URL, {
+      max_concurrent_streams: 3,
+      max_total_bandwidth_kbps: 8000,
+    });
+  });
+
+  it('renders no badge at all — not even the unknown one — with no ?profile=', async () => {
+    const { client, get } = makeClient();
+    const w = await mountPage(client, '');
+    expect(w.find('.parental-page__profile-badge').exists()).toBe(false);
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it('fetches no profile for an id that fails the numeric gate', async () => {
+    const { client, get } = makeClient();
+    const w = await mountPage(client, '?profile=abc');
+    expect(get).not.toHaveBeenCalled();
+    expect(w.find('.parental-page__profile-badge').exists()).toBe(false);
   });
 });
