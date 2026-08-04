@@ -111,6 +111,13 @@ async function mountPage(
     members?: SyncPlayUser[];
     error?: string | null;
     isLoading?: boolean;
+    /**
+     * Runs after the store is seeded but BEFORE `mount()`. `refresh()` fires from
+     * `onMounted`, so a spy installed after mounting would always observe zero
+     * calls and pass vacuously — anything asserting on the mount-time refresh must
+     * hook in here.
+     */
+    beforeMount?: (store: ReturnType<typeof useSyncPlayStore>) => void;
   } = {},
 ): Promise<{ w: VueWrapper; store: ReturnType<typeof useSyncPlayStore> }> {
   setActivePinia(createPinia());
@@ -135,6 +142,8 @@ async function mountPage(
   // evaluation, when the anchor was still 0.
   if (opts.session) getState.mockResolvedValue({ ...opts.session });
   if (opts.members) getMembers.mockResolvedValue([...opts.members]);
+
+  opts.beforeMount?.(store);
 
   const router = makeRouter();
   await router.push(`/app/syncplay${opts.query ?? ''}`);
@@ -326,6 +335,98 @@ describe('SyncPlayPage — active room', () => {
     await mountPage({ session: makeSession(), room, members: [] });
     expect(getState).toHaveBeenCalledWith('sess-1');
     expect(getMembers).toHaveBeenCalledWith('room-1');
+  });
+
+  /**
+   * `refresh()` is guarded on `syncPlay.isInRoom && syncPlay.currentRoom` — and the
+   * two halves read DIFFERENT refs. `isInRoom` is
+   * `computed(() => currentSession.value !== null)` (useSyncPlayStore.ts:34), while
+   * `currentRoom` is its own ref (`:21`). So `isInRoom === true` with
+   * `currentRoom === null` is a real, expressible state.
+   *
+   * It is also the NORMAL state after a join-by-link, which is this page's own
+   * feature: `?room=<id>` opens SyncPlayModal in join mode, the modal calls
+   * `syncPlay.joinRoom()` (SyncPlayModal.vue:113), and `joinRoom` assigns
+   * `currentSession` unconditionally (`:111`) but only touches `currentRoom` INSIDE
+   * `if (currentRoom.value)` (`:114`). Joining a room you were not already in
+   * therefore leaves `currentRoom` null with a live session. (`createAndJoinRoom`
+   * is the other path and DOES set both, at `:85`/`:87`.)
+   *
+   * The two tests below pin each half of the `&&` separately, and they spy on the
+   * STORE ACTIONS rather than on the HTTP mocks on purpose: `refreshMembers` opens
+   * with its own `if (!currentRoom.value) return`, so asserting "the network was
+   * not touched" would be satisfied by the store's guard and would survive deleting
+   * the page's. Spying the action makes the PAGE the subject.
+   */
+  it('does NOT refresh when a session exists but currentRoom is null', async () => {
+    let stateSpy!: ReturnType<typeof vi.spyOn>;
+    let membersSpy!: ReturnType<typeof vi.spyOn>;
+    const { w } = await mountPage({
+      session: makeSession(),
+      room: null,
+      beforeMount: (store) => {
+        stateSpy = vi.spyOn(store, 'refreshState');
+        membersSpy = vi.spyOn(store, 'refreshMembers');
+      },
+    });
+
+    // Precondition: this really IS the isInRoom=true / currentRoom=null state, so
+    // the assertions below cannot pass merely because the page never got a session.
+    const store = useSyncPlayStore();
+    expect(store.isInRoom).toBe(true);
+    expect(store.currentRoom).toBeNull();
+    expect(w.find('.syncplay-page__section').exists()).toBe(true);
+
+    expect(stateSpy).not.toHaveBeenCalled();
+    expect(membersSpy).not.toHaveBeenCalled();
+    expect(getState).not.toHaveBeenCalled();
+    expect(getMembers).not.toHaveBeenCalled();
+  });
+
+  it('DOES refresh when both a session and a currentRoom are present', async () => {
+    // Non-inertness control for the test above: the same two spies must FIRE on the
+    // happy path, or "not called" would pass for the wrong reason.
+    let stateSpy!: ReturnType<typeof vi.spyOn>;
+    let membersSpy!: ReturnType<typeof vi.spyOn>;
+    await mountPage({
+      session: makeSession(),
+      room,
+      beforeMount: (store) => {
+        stateSpy = vi.spyOn(store, 'refreshState');
+        membersSpy = vi.spyOn(store, 'refreshMembers');
+      },
+    });
+    expect(stateSpy).toHaveBeenCalledTimes(1);
+    expect(stateSpy).toHaveBeenCalledWith(API_BASE);
+    expect(membersSpy).toHaveBeenCalledTimes(1);
+    expect(membersSpy).toHaveBeenCalledWith(API_BASE);
+  });
+
+  it('does NOT refresh when currentRoom is present but there is no session', async () => {
+    // The OTHER half of the `&&`. This state is reachable in the store too:
+    // `createAndJoinRoom` assigns `currentRoom` at :85 and only then awaits
+    // `api.joinRoom()` before assigning `currentSession` at :87, so a failure in
+    // between leaves a room with no session.
+    let stateSpy!: ReturnType<typeof vi.spyOn>;
+    let membersSpy!: ReturnType<typeof vi.spyOn>;
+    const { w } = await mountPage({
+      session: null,
+      room,
+      beforeMount: (store) => {
+        stateSpy = vi.spyOn(store, 'refreshState');
+        membersSpy = vi.spyOn(store, 'refreshMembers');
+      },
+    });
+    const store = useSyncPlayStore();
+    expect(store.isInRoom).toBe(false);
+    expect(store.currentRoom).not.toBeNull();
+    // …and with no session the page shows the empty state, not the room card.
+    expect(w.find('.syncplay-page__empty').exists()).toBe(true);
+
+    expect(stateSpy).not.toHaveBeenCalled();
+    expect(membersSpy).not.toHaveBeenCalled();
+    expect(getState).not.toHaveBeenCalled();
+    expect(getMembers).not.toHaveBeenCalled();
   });
 
   it('renders the room card and name', async () => {
