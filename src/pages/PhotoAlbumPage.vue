@@ -22,6 +22,7 @@ import Icon from '../components/Icon.vue';
 import Button from '../components/ui/Button.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
+import { pluralize } from '../utils/plural';
 
 const props = defineProps<{
     /** Album id (md5 hash of date) */
@@ -105,7 +106,7 @@ watch([() => props.id, libraryId], () => {
                 <div class="title-section">
                     <h1 class="page-title">{{ album ? albumTitle(album) : 'Album' }}</h1>
                     <p v-if="album" class="photo-count">
-                        {{ album.photo_count }} {{ album.photo_count === 1 ? 'photo' : 'photos' }}
+                        {{ album.photo_count }} {{ pluralize(album.photo_count, 'photo', 'photos') }}
                     </p>
                 </div>
                 <Button

@@ -24,6 +24,7 @@ import { seasonRouteParam } from './series-grouping';
 import MediaDetail from './MediaDetail.vue';
 import MediaCard from './MediaCard.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { pluralCount } from '../utils/plural';
 
 const props = withDefaults(
     defineProps<{
@@ -76,7 +77,7 @@ function seasonPoster(group: SeasonGroup): string | null {
 
 function episodeCountLabel(group: SeasonGroup): string {
     const n = group.episodes.length;
-    return `${n} ${n === 1 ? 'episode' : 'episodes'}`;
+    return pluralCount(n, 'episode', 'episodes');
 }
 
 /**

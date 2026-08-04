@@ -15,6 +15,8 @@
  * @license MIT
  */
 
+import { isPluralTemplate, selectPluralTemplate } from '../utils/plural';
+
 /**
  * English defaults for the adopted ("cut-line") end-user chrome: shared primitive
  * fallbacks, the app shell, the command palette + built-ins, auth (incl.
@@ -564,6 +566,22 @@ export type Translate = (key: MessageKey, params?: TranslateParams) => string;
 const PARAM_PATTERN = /\{(\w+)\}/g;
 
 /**
+ * Every plural message in this catalogue, derived from the catalogue itself
+ * rather than listed by hand — a hand-maintained list would drift the moment a
+ * plural message was added, and the drift would be silent. `messages.test.ts`
+ * asserts this set is non-empty and that every member really does contain a `|`.
+ */
+export function pluralMessageKeys(): string[] {
+  const out: string[] = [];
+  for (const [group, entries] of Object.entries(DEFAULT_MESSAGES)) {
+    for (const [leaf, value] of Object.entries(entries as Record<string, string>)) {
+      if (typeof value === 'string' && isPluralTemplate(value)) out.push(`${group}.${leaf}`);
+    }
+  }
+  return out;
+}
+
+/**
  * Merge a consumer override onto the English defaults, per-group. Always returns a
  * fresh object (never the `DEFAULT_MESSAGES` reference, and never mutates it). A
  * non-object group override (e.g. `null` slipping past the types) is ignored so a
@@ -593,6 +611,20 @@ function interpolate(template: string, params?: TranslateParams): string {
  * Build a `t(key, params?)` resolver bound to the English defaults overlaid with
  * `overrides`. An unknown key (typo, or a not-yet-adopted string) echoes the key
  * itself, so `t()` never returns `undefined`/empty.
+ *
+ * **Plural selection (S134).** Messages may be authored in the pipe form
+ * (`'{count} member | {count} members'`). Until S134 this function only
+ * interpolated, so those messages reached the screen with the separator and BOTH
+ * forms intact — users literally read `2 member | 2 members`. Selection now runs
+ * BEFORE interpolation, via `Intl.PluralRules` (see `utils/plural.ts`), driven by
+ * the `count` parameter.
+ *
+ * A pipe message called without `count` cannot be selected. Rather than fall back
+ * to emitting the raw template (the old defect), it degrades to the LAST form —
+ * the plural in English, and the `other` slot in every locale — so the worst case
+ * is a wrong number agreement rather than punctuation leaking into the UI. The
+ * `plural/plural-message-needs-count` ESLint rule flags such call sites, so the
+ * degradation is a safety net and not the intended path.
  */
 export function createTranslator(overrides?: PhlixMessagesConfig): Translate {
   const messages = mergeMessages(overrides) as Record<string, Record<string, string>>;
@@ -602,6 +634,23 @@ export function createTranslator(overrides?: PhlixMessagesConfig): Translate {
     const leaf = dot === -1 ? '' : key.slice(dot + 1);
     const groupObj = messages[group];
     const template = groupObj ? groupObj[leaf] : undefined;
-    return typeof template === 'string' ? interpolate(template, params) : key;
+    if (typeof template !== 'string') return key;
+    return interpolate(selectPlural(template, params), params);
   };
+}
+
+/**
+ * Resolve a pipe-form template down to the single form matching `params.count`.
+ * A template with no `|` is returned untouched, so non-plural messages pay only a
+ * string scan.
+ */
+function selectPlural(template: string, params?: TranslateParams): string {
+  if (!isPluralTemplate(template)) return template;
+  const raw = params?.['count'];
+  const count = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(count)) {
+    const parts = template.split('|');
+    return parts[parts.length - 1]!.trim();
+  }
+  return selectPluralTemplate(template, count);
 }

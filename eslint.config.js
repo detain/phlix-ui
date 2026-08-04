@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import vue from 'eslint-plugin-vue';
 import globals from 'globals';
+import phlixPlural from './eslint-rules/index.js';
 
 // Flat config for phlix-ui (Vue 3 + TS). Pragmatic baseline: catch real bugs
 // (js + ts recommended, vue essential) without enforcing stylistic churn across
@@ -60,6 +61,20 @@ export default tseslint.config(
       // This is a component LIBRARY — single-word names (Button, Modal, Tabs,
       // Switch, Spinner…) are intentional and the public API.
       'vue/multi-word-component-names': 'off',
+    },
+  },
+  {
+    // S134 — pluralisation must go through ONE mechanism (src/utils/plural.ts),
+    // enforced semantically from the AST. Scoped to `src/**` because that is where
+    // the helper is importable: `scripts/**` is a plain-.mjs build tool that emits
+    // developer console output and cannot import the SPA's TypeScript helper.
+    // `scripts/check-dist-clean.mjs` therefore still hand-rolls `entr(y|ies)` and
+    // `file(s)`; that is a KNOWN, deliberate exclusion, not an oversight.
+    files: ['src/**/*.{ts,vue}'],
+    plugins: { plural: phlixPlural },
+    rules: {
+      'plural/no-hand-rolled-plural': 'error',
+      'plural/plural-message-needs-count': 'error',
     },
   },
   {

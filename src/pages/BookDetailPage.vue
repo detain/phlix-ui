@@ -192,9 +192,14 @@ function goBack(): void {
                     <div class="book-actions">
                         <Button variant="solid" @click="goToReader">
                             <Icon name="film" />
+                            <!-- eslint-disable plural/no-hand-rolled-plural -- `current_page > 1`
+                                 asks "has the reader moved past page one", i.e. resume-vs-start.
+                                 The two labels are different verbs, not two number forms of one
+                                 noun, so there is no plural to route through the helper. -->
                             {{ book.progress?.current_page && book.progress.current_page > 1
                                 ? 'Continue Reading'
                                 : 'Start Reading' }}
+                            <!-- eslint-enable plural/no-hand-rolled-plural -->
                         </Button>
                         <Button variant="outline" @click="downloadBook">
                             <Icon name="arrow-down" />

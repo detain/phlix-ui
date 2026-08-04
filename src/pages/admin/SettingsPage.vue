@@ -48,6 +48,7 @@ import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import HelpText from '../../components/ui/HelpText.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
+import { pluralize } from '../../utils/plural';
 
 const props = withDefaults(
   defineProps<{
@@ -942,7 +943,7 @@ onMounted(() => {
                   <Badge tone="accent" class="admin-settings__secret-badge">Configured</Badge>
                   <span class="admin-settings__secret-hint">
                     A value is stored ({{ secretLength(key) }}
-                    {{ secretLength(key) === 1 ? 'character' : 'characters' }}). It is never sent
+                    {{ pluralize(secretLength(key), 'character', 'characters') }}). It is never sent
                     to your browser. Leave this blank to keep it, or type a new one to replace it.
                   </span>
                 </template>

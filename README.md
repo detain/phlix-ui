@@ -40,6 +40,7 @@ Vue app.
 - [Configuration — `PhlixAppConfig`](#configuration--phlixappconfig)
 - [Theming & user preferences](#theming--user-preferences)
 - [Stores & composables](#stores--composables)
+- [Pluralisation (`src/utils/plural.ts`)](#pluralisation-srcutilspluralts)
 - [Component catalog](#component-catalog)
 - [Command palette (⌘K)](#command-palette-k)
 - [Admin surface](#admin-surface)
@@ -237,6 +238,43 @@ run inside an app created by `createPhlixApp` (which provides `apiBase`).
 | `bindMediaStoreToRouter(router, apiBase)` | Two-way sync of `useMediaStore` filters ↔ URL query (returns teardown). |
 | `useFocusTrap(container, active, opts?)` | Focus-trap + scroll-lock + Escape for overlays (powers `Modal`/`Sheet`). |
 | `deriveAccentVars(hex)` | Pure: a hex → the full `--accent*` custom-property ramp. |
+
+### Pluralisation (`src/utils/plural.ts`)
+
+Every plural noun in the SPA goes through one `Intl.PluralRules`-backed helper. Do
+not write `n === 1 ? 'album' : 'albums'`: `n === 1` is not the singular test in
+most languages (Russian uses `one` for 21 and 101 and `few` for 2–4), so a
+hardcoded comparison bakes English into the call site and no consumer override
+can fix it.
+
+| Export | Purpose |
+| --- | --- |
+| `plural(count, forms, opts?)` | Core. `forms` is `{ one?, two?, few?, many?, zero?, other }`; an unsupplied category degrades to `other`. |
+| `pluralize(count, one, other, opts?)` | Two-form English shortcut. `other` is required — `entry`/`entries` and `person`/`people` are not suffix rules. |
+| `pluralCount(count, one, other, opts?)` | `` `${count} ${form}` ``. Pass `formatNumber: true` for digit grouping. |
+| `selectPluralTemplate(tpl, count, opts?)` | Resolves the catalogue's pipe form, `'{count} member \| {count} members'`. Used by `createTranslator`. |
+| `pluralCategory(count, opts?)` | The raw LDML category. |
+
+Message-catalogue plurals are authored in the pipe form and **must** be
+translated with a `count` param — `t('syncplay.members', { count: n })`. The parts
+map onto the *locale's own* plural categories, so a Russian override may supply
+four parts and have each land on the right rule.
+
+Both rules are enforced at lint time by the local plugin in `eslint-rules/`:
+
+- **`plural/no-hand-rolled-plural`** — reports hand-rolled pluralisation
+  *semantically*, from the AST, not by matching source text. It flags any
+  conditional that compares a quantity against `1` to pick between strings
+  (whatever the operator or spelling, in `<script>` **and** in the Vue template),
+  a quantity-driven conditional whose branches differ by a plural ending, an
+  interpolated count followed by a hard-coded plural noun, and the `photo(s)`
+  dodge. Two sites in the repo compare to `1` without being plurals
+  (`ui/Skeleton.vue`, `BookDetailPage.vue`); both carry an `eslint-disable` with a
+  reason, which is the intended way to record a non-plural cardinality test.
+- **`plural/plural-message-needs-count`** — reports a `t()` call on a pipe-form
+  message that passes no `count`. The key list is parsed out of
+  `src/i18n/messages.ts` at lint time, so adding a plural message automatically
+  extends the check.
 
 ### Performance Patterns
 

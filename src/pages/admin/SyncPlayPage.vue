@@ -30,6 +30,7 @@ import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
+import { pluralCount } from '../../utils/plural';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -140,7 +141,7 @@ async function submitJoinForm(): Promise<void> {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function memberLabel(count: number): string {
-  return `${count} member${count !== 1 ? 's' : ''}`;
+  return pluralCount(count, 'member', 'members');
 }
 
 onMounted(loadGroups);

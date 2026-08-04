@@ -35,6 +35,7 @@ import PageHint from '../../components/ui/PageHint.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Select from '../../components/ui/Select.vue';
+import { pluralize } from '../../utils/plural';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -234,7 +235,7 @@ onMounted(async () => {
 
       <div class="admin-webhook-logs__filter admin-webhook-logs__filter--right">
         <span class="admin-webhook-logs__count">
-          {{ total }} {{ total === 1 ? 'entry' : 'entries' }}
+          {{ total }} {{ pluralize(total, 'entry', 'entries') }}
         </span>
       </div>
     </div>
@@ -289,7 +290,7 @@ onMounted(async () => {
                     {{ log.status }}
                   </Badge>
                   <span v-if="log.retry_count > 0" class="admin-webhook-logs__retry-badge">
-                    {{ log.retry_count }} {{ log.retry_count === 1 ? 'retry' : 'retries' }}
+                    {{ log.retry_count }} {{ pluralize(log.retry_count, 'retry', 'retries') }}
                   </span>
                 </td>
                 <td class="admin-webhook-logs__cell admin-webhook-logs__cell--time">

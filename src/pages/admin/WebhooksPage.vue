@@ -33,6 +33,7 @@ import Modal from '../../components/ui/Modal.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Icon from '../../components/Icon.vue';
+import { pluralCount, pluralize } from '../../utils/plural';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -223,8 +224,8 @@ async function triggerTest(wh: Webhook): Promise<void> {
     const total = result.success_count + result.failure_count;
     const message =
       result.failure_count === 0
-        ? `Delivered successfully (${result.success_count}/${result.success_count} webhooks)`
-        : `Delivery failed — ${result.failure_count} of ${total} webhook(s) failed`;
+        ? `Delivered successfully (${result.success_count}/${result.success_count} ${pluralize(result.success_count, 'webhook', 'webhooks')})`
+        : `Delivery failed — ${result.failure_count} of ${pluralCount(total, 'webhook', 'webhooks')} failed`;
     testResult.value = { success: result.success, message };
   } catch (e) {
     testResult.value = { success: false, message: errMessage(e, 'Failed to test webhook.') };

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick, computed } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import { readFileSync } from 'fs';
@@ -19,6 +19,8 @@ import Button from './ui/Button.vue';
 import IconButton from './ui/IconButton.vue';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useToastStore } from '../stores/useToastStore';
+import { api } from '../api/client';
 import { MENU_LABELS } from './mediaItemMenu';
 import type { MediaItem } from '../types/media-item';
 
@@ -117,6 +119,57 @@ function sfcDecl(selector: string, property: string): string {
   const m = new RegExp(`(?:^|;)\\s*${property.replace(/[-]/g, '\\-')}\\s*:\\s*([^;]+)`).exec(body);
   return m ? m[1].trim() : '';
 }
+
+/**
+ * S134 — the missing-episodes toast goes through the shared plural helper.
+ *
+ * `MediaCard` has had this pinned since UI-3.8; the identical code in
+ * `MediaDetail` never did, so swapping the helper's singular/plural arguments here
+ * left the whole 244-file suite GREEN. Same defect class the plan records for this
+ * site: the count used to be read from the wrong field, so the toast said
+ * "undefined episodes missing".
+ */
+describe('MediaDetail — missing-episodes toast pluralisation (S134)', () => {
+  async function runMissingEpisodes(count: number): Promise<ReturnType<typeof vi.spyOn>> {
+    useAuthStore().user = { id: 'admin1', is_admin: true };
+    vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({
+      total_expected: 10,
+      total_existing: 10 - count,
+      missing_episodes: Array.from({ length: count }, (_, i) => ({ episode_number: i + 1 })),
+    });
+    const w = mount(MediaDetail, {
+      props: { item: media({ id: 's1', type: 'series' }) },
+      attachTo: document.body,
+    });
+    const warning = vi.spyOn(useToastStore(), 'warning');
+    const success = vi.spyOn(useToastStore(), 'success');
+
+    await w.find('[aria-label="More actions"]').trigger('click');
+    await nextTick();
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const target = items.find((el) => el.textContent?.trim() === MENU_LABELS.missingEpisodes);
+    expect(target, `present: ${items.map((i) => i.textContent?.trim()).join(', ')}`).toBeTruthy();
+    target!.click();
+    await flushPromises();
+    w.unmount();
+    return count === 0 ? success : warning;
+  }
+
+  it('says "1 episode missing" for exactly one', async () => {
+    const warning = await runMissingEpisodes(1);
+    expect(warning).toHaveBeenCalledWith('1 episode missing');
+  });
+
+  it('says "3 episodes missing" for more than one', async () => {
+    const warning = await runMissingEpisodes(3);
+    expect(warning).toHaveBeenCalledWith('3 episodes missing');
+  });
+
+  it('keeps the zero case as its own message, not "0 episodes missing"', async () => {
+    const success = await runMissingEpisodes(0);
+    expect(success).toHaveBeenCalledWith('No missing episodes');
+  });
+});
 
 describe('MediaDetail — ⋯ menu metadata-match action (S02)', () => {
   it('the single "Match metadata" entry emits exactly one `refresh` with the item', async () => {

@@ -179,4 +179,35 @@ describe('PhotoAlbumPage', () => {
     );
     w.unmount();
   });
+
+  /**
+   * S134 — the photo count goes through the shared plural helper.
+   *
+   * Pinned by mutation: swapping the helper's singular/plural arguments left the
+   * whole 244-file suite GREEN before these two tests existed, so this site was
+   * migrated but unproven.
+   */
+  describe('photo count pluralisation (S134)', () => {
+    it('renders the SINGULAR noun for exactly one photo', async () => {
+      stubFetch({ album: album({ photo_count: 1, photos: [photo({ id: 'p1' })] }) });
+      const w = await mountPage(makeRouter());
+      await flushPromises();
+      expect(w.find('.photo-count').text()).toBe('1 photo');
+      w.unmount();
+    });
+
+    it('renders the PLURAL noun for two photos and for zero', async () => {
+      stubFetch({ album: album({ photo_count: 2 }) });
+      const w = await mountPage(makeRouter());
+      await flushPromises();
+      expect(w.find('.photo-count').text()).toBe('2 photos');
+      w.unmount();
+
+      stubFetch({ album: album({ photo_count: 0, photos: [] }) });
+      const w2 = await mountPage(makeRouter());
+      await flushPromises();
+      expect(w2.find('.photo-count').text()).toBe('0 photos');
+      w2.unmount();
+    });
+  });
 });

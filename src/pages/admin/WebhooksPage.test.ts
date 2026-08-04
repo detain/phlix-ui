@@ -463,7 +463,9 @@ describe('Admin WebhooksPage — test delivery', () => {
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/admin/webhooks/wh-1/test');
     expect(modalPanel().textContent).toContain('Delivery succeeded');
-    expect(modalPanel().textContent).toContain('Delivered successfully (1/1 webhooks)');
+    // S134: `success_count` is 1, so the noun is now SINGULAR. Before the plural
+    // helper this read "(1/1 webhooks)" regardless of the count.
+    expect(modalPanel().textContent).toContain('Delivered successfully (1/1 webhook)');
     await findBtnIn(w, modalPanel(), 'Close')!.trigger('click');
     await flushPromises();
     expect(findBtn(w, 'Close')).toBeUndefined();
@@ -479,7 +481,9 @@ describe('Admin WebhooksPage — test delivery', () => {
     await w.findAllComponents(Button).find((b) => b.attributes('aria-label') === 'Test Alert Hook')!.trigger('click');
     await flushPromises();
     expect(modalPanel().textContent).toContain('Delivery failed');
-    expect(modalPanel().textContent).toContain('1 of 1 webhook(s) failed');
+    // S134: was `1 of 1 webhook(s) failed` — the "(s)" dodge left the plural for
+    // the reader. The noun agrees with the TOTAL (success + failure), here 1.
+    expect(modalPanel().textContent).toContain('1 of 1 webhook failed');
     w.unmount();
   });
 

@@ -68,6 +68,7 @@ import Select from '../../components/ui/Select.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import HelpText from '../../components/ui/HelpText.vue';
+import { pluralCount } from '../../utils/plural';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -425,7 +426,7 @@ async function checkForUpdates(): Promise<void> {
     const n = updateCount.value;
     toasts.success(
       n > 0
-        ? `${n} update${n === 1 ? '' : 's'} available.`
+        ? `${pluralCount(n, 'update', 'updates')} available.`
         : 'All plugins are up to date.',
     );
   } catch (e) {
@@ -481,7 +482,7 @@ async function updateAll(): Promise<void> {
         `${res.updated.length} updated, ${res.failed.length} failed.`,
       );
     } else {
-      toasts.success(`${res.updated.length} plugin${res.updated.length === 1 ? '' : 's'} updated.`);
+      toasts.success(`${pluralCount(res.updated.length, 'plugin', 'plugins')} updated.`);
     }
     await refreshAll();
     const check = await api.checkUpdates();

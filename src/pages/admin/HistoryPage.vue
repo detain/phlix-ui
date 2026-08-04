@@ -28,6 +28,7 @@ import Button from '../../components/ui/Button.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import Icon from '../../components/Icon.vue';
+import { pluralCount } from '../../utils/plural';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -67,13 +68,13 @@ function formatTimeAgo(isoString: string): string {
   const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);
   if (diffSec < 60) return 'just now';
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
+  if (diffMin < 60) return `${pluralCount(diffMin, 'minute', 'minutes')} ago`;
   const diffHour = Math.floor(diffMin / 60);
-  if (diffHour < 24) return `${diffHour} hour${diffHour === 1 ? '' : 's'} ago`;
+  if (diffHour < 24) return `${pluralCount(diffHour, 'hour', 'hours')} ago`;
   const diffDay = Math.floor(diffHour / 24);
-  if (diffDay < 30) return `${diffDay} day${diffDay === 1 ? '' : 's'} ago`;
+  if (diffDay < 30) return `${pluralCount(diffDay, 'day', 'days')} ago`;
   const diffMonth = Math.floor(diffDay / 30);
-  return `${diffMonth} month${diffMonth === 1 ? '' : 's'} ago`;
+  return `${pluralCount(diffMonth, 'month', 'months')} ago`;
 }
 
 /** The media detail route for a row. Admin pages are always mounted under `/app`. */

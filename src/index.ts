@@ -376,6 +376,21 @@ export {
   SORT_TITLE_ARTICLES,
 } from './utils/sortTitle';
 
+// Pluralisation (S134). ONE Intl.PluralRules-backed mechanism for every plural
+// noun; exposed so a host app pluralises the same way the components do, and so a
+// consumer supplying `PhlixAppConfig.messages` in another language can reuse the
+// same category model rather than re-deriving it.
+export {
+  plural,
+  pluralize,
+  pluralCount,
+  pluralCategory,
+  selectPluralTemplate,
+  isPluralTemplate,
+  PLURAL_CATEGORIES,
+} from './utils/plural';
+export type { PluralCategory, PluralForms, PluralOptions } from './utils/plural';
+
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 

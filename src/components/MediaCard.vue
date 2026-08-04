@@ -37,6 +37,7 @@ import { resolvePosterSources } from './media-poster';
 import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import { api } from '../api/client';
+import { pluralCount } from '../utils/plural';
 
 const props = withDefaults(
   defineProps<{
@@ -253,7 +254,7 @@ function onMenuSelect(menuItem: { label: string }): void {
           if (count === 0) {
             toasts.success('No missing episodes');
           } else {
-            toasts.warning(`${count} episode${count === 1 ? '' : 's'} missing`);
+            toasts.warning(`${pluralCount(count, 'episode', 'episodes')} missing`);
           }
         })
         .catch((err) => {

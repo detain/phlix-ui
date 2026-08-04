@@ -17,6 +17,7 @@ import type { MediaItem, MediaFile } from '../types/media-item';
 import type { SeasonGroup } from './series-grouping';
 import { api } from '../api/client';
 import Icon from './Icon.vue';
+import { pluralize } from '../utils/plural';
 
 const props = withDefaults(
     defineProps<{
@@ -136,7 +137,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
                 <span class="series-seasons__season-label">{{ season.label }}</span>
                 <span class="series-seasons__season-count numeric"
                     >{{ season.episodes.length }}
-                    {{ season.episodes.length === 1 ? 'episode' : 'episodes' }}</span
+                    {{ pluralize(season.episodes.length, 'episode', 'episodes') }}</span
                 >
             </summary>
 

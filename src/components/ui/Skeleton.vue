@@ -22,12 +22,20 @@ withDefaults(
 
 <template>
   <div v-if="variant === 'text'" class="phlix-skel-text" aria-hidden="true">
+    <!-- eslint-disable plural/no-hand-rolled-plural -- `lines > 1` is a LAYOUT
+         threshold, not a cardinality: the last line of a multi-line text skeleton
+         is drawn short to imitate a ragged paragraph edge. '60%' is a CSS length
+         and `width` is a prop; neither is a noun, so there is nothing to
+         pluralise. The rule flags every `vs 1` comparison that picks a string, by
+         design — that is what gives it recall over irregular plurals like
+         entry/entries — so the two non-plural sites in this repo carry a reason. -->
     <span
       v-for="n in lines"
       :key="n"
       class="phlix-skel phlix-skel--text"
       :style="{ width: n === lines && lines > 1 ? '60%' : width }"
     />
+    <!-- eslint-enable plural/no-hand-rolled-plural -->
   </div>
   <span
     v-else
