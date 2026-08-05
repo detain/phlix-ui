@@ -11,9 +11,18 @@ playwright-report/
 blob-report/
 playwright/.cache/
 .caliber/
-# Ignore all Claude CLI personal files and state
-.claude/
-!.claude/settings.json
+# Ignore all Claude CLI personal files and state.
+# NB `.claude/*` not `.claude/` — git never descends into an EXCLUDED DIRECTORY,
+# so with `.claude/` the four `!` negations below are silently INERT and none of
+# these files can be staged. Excluding the directory's CONTENTS instead lets the
+# negations work. Verified: `git check-ignore -v .claude/rules/` used to report
+# the `.claude/` line as the match.
+.claude/*
+# NOT `!.claude/settings.json`: the local file hardcodes an absolute, machine- and
+# node-version-specific interpreter path (`/home/<user>/.nvm/versions/node/vX/bin/caliber`,
+# 4x), so committing it would bake one developer's layout into the repo and break the
+# hooks for everyone else. Make those commands portable before tracking it.
+.claude/settings.json
 !.claude/rules/
 !.claude/skills/
 !.claude/hooks/
