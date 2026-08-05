@@ -7,7 +7,33 @@ var b = 3 / 2;
 function re(e) {
 	return typeof e != "number" || !Number.isFinite(e) || e <= 0 ? 56 : e / 16 * 54 + 2;
 }
-120 * b, 200 * b;
+120 * b, 200 * b, 120 * b;
+var x = [
+	{
+		label: "Poster",
+		track: "120px"
+	},
+	{
+		label: "Title",
+		track: "minmax(0, 3fr)"
+	},
+	{
+		label: "Year",
+		track: "80px"
+	},
+	{
+		label: "Rating",
+		track: "88px"
+	},
+	{
+		label: "Runtime",
+		track: "88px"
+	},
+	{
+		label: "Genres",
+		track: "minmax(0, 2fr)"
+	}
+], S = x.map((e) => e.track).join(" ");
 function ie(e, t, n = 20) {
 	return e <= 0 || t <= 0 ? 1 : Math.max(1, Math.floor((e + n) / (t + n)));
 }
@@ -17,7 +43,7 @@ function ae(e, t, n = 20) {
 function oe(e, t = 56, n = 24) {
 	return e <= 0 ? 0 : e * b + t + n;
 }
-function x(e) {
+function C(e) {
 	return e <= 0 ? 0 : e + 24;
 }
 function se(e) {
@@ -53,22 +79,22 @@ function ue(e) {
 }
 //#endregion
 //#region src/components/MediaGrid.vue?vue&type=script&setup=true&lang.ts
-var de = { class: "media-grid-root" }, fe = {
+var de = ["role"], fe = {
 	key: 0,
 	class: "skel-block"
 }, pe = {
 	key: 1,
 	class: "media-grid-empty",
 	role: "status"
-}, me = {
+}, me = ["role"], he = ["role"], ge = {
 	key: 0,
 	class: "skel-block"
-}, he = {
+}, _e = {
 	key: 0,
 	class: "media-grid-more",
 	role: "status",
 	"aria-live": "polite"
-}, ge = 16, S = /*#__PURE__*/ e(/* @__PURE__ */ f({
+}, ve = 16, w = /*#__PURE__*/ e(/* @__PURE__ */ f({
 	__name: "MediaGrid",
 	props: {
 		items: {},
@@ -88,6 +114,7 @@ var de = { class: "media-grid-root" }, fe = {
 		cardSize: {},
 		columns: {},
 		rowHeight: {},
+		gridRole: {},
 		skeletonCount: { default: 18 },
 		overscan: { default: 2 },
 		canMatch: {
@@ -110,54 +137,54 @@ var de = { class: "media-grid-root" }, fe = {
 		"explore-data"
 	],
 	setup(e, { expose: f, emit: b }) {
-		let x = e, S = b, _e = n(), C = o(() => x.cardSize ?? _e.cardSize ?? 200), w = g(null), T = g(null), E = g(0), D = g(0), O = g(0), k = g(16), A = 0, j = 0;
-		function M() {
-			let e = w.value, t = typeof window < "u" ? window.innerHeight : 0;
-			if (t > 0 && (D.value = t), e && typeof e.getBoundingClientRect == "function") {
+		let x = e, S = b, C = n(), w = o(() => x.cardSize ?? C.cardSize ?? 200), T = g(null), E = g(null), D = g(0), O = g(0), k = g(0), A = g(16), j = 0, M = 0;
+		function N() {
+			let e = T.value, t = typeof window < "u" ? window.innerHeight : 0;
+			if (t > 0 && (O.value = t), e && typeof e.getBoundingClientRect == "function") {
 				let t = e.getBoundingClientRect();
-				t.width > 0 && (E.value = t.width), A = typeof window < "u" ? window.scrollY + t.top : 0;
+				t.width > 0 && (D.value = t.width), j = typeof window < "u" ? window.scrollY + t.top : 0;
 			}
 			if (typeof window < "u" && typeof document < "u" && typeof window.getComputedStyle == "function") {
 				let e = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize);
-				Number.isFinite(e) && e > 0 && (k.value = e);
+				Number.isFinite(e) && e > 0 && (A.value = e);
 			}
 		}
-		function N() {
+		function P() {
 			let e = performance.now();
-			e - j >= ge && (j = e, O.value = typeof window < "u" ? Math.max(0, window.scrollY - A) : 0);
+			e - M >= ve && (M = e, k.value = typeof window < "u" ? Math.max(0, window.scrollY - j) : 0);
 		}
-		let P = 0;
-		function F() {
-			P ||= (typeof requestAnimationFrame == "function" ? requestAnimationFrame : (e) => setTimeout(() => e(0), 16))(() => {
-				P = 0, M();
+		let F = 0;
+		function I() {
+			F ||= (typeof requestAnimationFrame == "function" ? requestAnimationFrame : (e) => setTimeout(() => e(0), 16))(() => {
+				F = 0, N();
 			});
 		}
-		let I = null, L = o(() => {
+		let L = null, R = o(() => {
 			let e = x.columns;
 			return typeof e == "number" && Number.isFinite(e) && e >= 1 ? Math.trunc(e) : null;
-		}), R = o(() => {
+		}), z = o(() => {
 			let e = x.rowHeight;
 			return typeof e == "number" && Number.isFinite(e) && e > 0 ? e : null;
-		}), z = o(() => R.value !== null), B = o(() => L.value ?? ie(E.value, C.value, 20)), V = o(() => R.value ?? oe(ae(E.value, B.value, 20), re(k.value))), H = o(() => E.value > 0 && V.value > 0), ve = o(() => ce(x.items.length, x.total)), U = o(() => ue({
-			scrollTop: O.value,
-			viewportHeight: D.value,
-			rowHeight: V.value,
-			columns: B.value,
-			itemCount: ve.value,
+		}), B = o(() => z.value !== null), V = o(() => R.value ?? ie(D.value, w.value, 20)), H = o(() => z.value ?? oe(ae(D.value, V.value, 20), re(A.value))), U = o(() => D.value > 0 && H.value > 0), ye = o(() => ce(x.items.length, x.total)), W = o(() => ue({
+			scrollTop: k.value,
+			viewportHeight: O.value,
+			rowHeight: H.value,
+			columns: V.value,
+			itemCount: ye.value,
 			overscan: x.overscan
-		})), ye = o(() => {
-			if (!H.value) return x.items.map((e, t) => ({
+		})), be = o(() => {
+			if (!U.value) return x.items.map((e, t) => ({
 				item: e,
 				index: t
 			}));
-			let e = x.items, { startIndex: t, endIndex: n } = U.value;
-			if (I && I.startIndex === t && I.endIndex === n && I.source === e) return I.items;
+			let e = x.items, { startIndex: t, endIndex: n } = W.value;
+			if (L && L.startIndex === t && L.endIndex === n && L.source === e) return L.items;
 			let r = [];
 			for (let i = t; i < n; i++) r.push({
 				item: e[i] ?? null,
 				index: i
 			});
-			return I = {
+			return L = {
 				startIndex: t,
 				endIndex: n,
 				source: e,
@@ -165,40 +192,40 @@ var de = { class: "media-grid-root" }, fe = {
 			}, r;
 		});
 		y(() => [
-			U.value.endIndex,
+			W.value.endIndex,
 			x.items.length,
 			x.hasMore,
 			x.loading,
 			x.loadingMore
 		], ([e, t, n, r, i]) => {
-			H.value && le(e, t, {
+			U.value && le(e, t, {
 				hasMore: n,
 				loading: r,
 				loadingMore: i
 			}) && S("load-more");
 		});
-		let W;
+		let G;
 		y(() => [
-			H.value,
-			U.value.startIndex,
-			U.value.endIndex
+			U.value,
+			W.value.startIndex,
+			W.value.endIndex
 		], ([e, t, n]) => {
-			!e || n <= t || (clearTimeout(W), W = setTimeout(() => S("need-range", t, n), 120));
+			!e || n <= t || (clearTimeout(G), G = setTimeout(() => S("need-range", t, n), 120));
 		}, { immediate: !0 });
-		let G = o(() => z.value ? se(R.value ?? 0) : null), K = o(() => G.value === null ? {} : { gridAutoRows: `${G.value}px` }), be = o(() => ({
-			gridTemplateColumns: H.value || L.value !== null ? `repeat(${B.value}, minmax(0, 1fr))` : `repeat(auto-fill, minmax(${C.value}px, 1fr))`,
-			...K.value
-		})), xe = o(() => H.value ? { height: `${U.value.totalHeight}px` } : {}), Se = o(() => H.value ? {
+		let K = o(() => B.value ? se(z.value ?? 0) : null), q = o(() => K.value === null ? {} : { gridAutoRows: `${K.value}px` }), xe = o(() => ({
+			gridTemplateColumns: U.value || R.value !== null ? `repeat(${V.value}, minmax(0, 1fr))` : `repeat(auto-fill, minmax(${w.value}px, 1fr))`,
+			...q.value
+		})), Se = o(() => U.value ? { height: `${W.value.totalHeight}px` } : {}), Ce = o(() => U.value ? {
 			position: "absolute",
 			top: "0",
 			left: "0",
 			right: "0",
-			transform: `translateY(${U.value.padTop}px)`
-		} : {}), Ce = o(() => ({
-			gridTemplateColumns: L.value === null ? `repeat(auto-fill, minmax(${C.value}px, 1fr))` : `repeat(${B.value}, minmax(0, 1fr))`,
-			...K.value
-		})), q = o(() => G.value === null ? {} : { height: `${G.value}px` }), we = o(() => H.value && O.value > D.value * 1.5);
-		function Te() {
+			transform: `translateY(${W.value.padTop}px)`
+		} : {}), we = o(() => ({
+			gridTemplateColumns: R.value === null ? `repeat(auto-fill, minmax(${w.value}px, 1fr))` : `repeat(${V.value}, minmax(0, 1fr))`,
+			...q.value
+		})), J = o(() => K.value === null ? {} : { height: `${K.value}px` }), Y = o(() => x.gridRole ? "presentation" : void 0), Te = o(() => U.value && k.value > O.value * 1.5);
+		function Ee() {
 			if (typeof window > "u") return;
 			let e = typeof window.matchMedia == "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 			window.scrollTo?.({
@@ -206,53 +233,56 @@ var de = { class: "media-grid-root" }, fe = {
 				behavior: e ? "auto" : "smooth"
 			});
 		}
-		function Ee(e) {
+		function De(e) {
 			if (typeof window > "u") return;
-			let t = Math.max(1, B.value), n = Math.floor(Math.max(0, e) / t) * V.value;
+			let t = Math.max(1, V.value), n = Math.floor(Math.max(0, e) / t) * H.value;
 			window.scrollTo?.({
-				top: Math.max(0, A + n),
+				top: Math.max(0, j + n),
 				behavior: "auto"
 			});
 		}
-		f({ scrollToIndex: Ee });
-		let J = null;
-		function Y() {
-			J || typeof IntersectionObserver > "u" || (J = new IntersectionObserver((e) => {
+		f({ scrollToIndex: De });
+		let X = null;
+		function Z() {
+			X || typeof IntersectionObserver > "u" || (X = new IntersectionObserver((e) => {
 				e.some((e) => e.isIntersecting) && x.hasMore && !x.loading && !x.loadingMore && S("load-more");
-			}, { rootMargin: "400px 0px" }), T.value && J.observe(T.value));
+			}, { rootMargin: "400px 0px" }), E.value && X.observe(E.value));
 		}
-		function X() {
-			J?.disconnect(), J = null;
+		function Oe() {
+			X?.disconnect(), X = null;
 		}
-		y(() => T.value, (e) => {
-			X(), e && (Y(), F());
+		y(() => E.value, (e) => {
+			Oe(), e && (Z(), I());
 		});
-		let Z = null;
-		function Q() {
-			Z || typeof ResizeObserver > "u" || !w.value || (Z = new ResizeObserver(F), Z.observe(w.value));
+		let Q = null;
+		function ke() {
+			Q || typeof ResizeObserver > "u" || !T.value || (Q = new ResizeObserver(I), Q.observe(T.value));
 		}
 		function $() {
-			Z?.disconnect(), Z = null;
+			Q?.disconnect(), Q = null;
 		}
-		return y(() => w.value, (e) => {
-			$(), e && (Q(), F());
+		return y(() => T.value, (e) => {
+			$(), e && (ke(), I());
 		}), te(() => {
-			M(), typeof window < "u" && (window.addEventListener("scroll", N, { passive: !0 }), window.addEventListener("resize", F, { passive: !0 })), Q(), Y();
+			N(), typeof window < "u" && (window.addEventListener("scroll", P, { passive: !0 }), window.addEventListener("resize", I, { passive: !0 })), ke(), Z();
 		}), ee(() => {
-			typeof window < "u" && (window.removeEventListener("scroll", N), window.removeEventListener("resize", F)), P &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(P) : clearTimeout(P), 0), clearTimeout(W), $(), X();
-		}), y(() => x.items.length, () => p(F)), (n, o) => (h(), c("div", de, [e.loading && e.items.length === 0 ? (h(), c("div", {
+			typeof window < "u" && (window.removeEventListener("scroll", P), window.removeEventListener("resize", I)), F &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(F) : clearTimeout(F), 0), clearTimeout(G), $(), Oe();
+		}), y(() => x.items.length, () => p(I)), (n, o) => (h(), c("div", {
+			class: "media-grid-root",
+			role: Y.value
+		}, [e.loading && e.items.length === 0 ? (h(), c("div", {
 			key: 0,
 			class: "media-grid media-grid--skeleton",
-			style: m(Ce.value),
+			style: m(we.value),
 			role: "status",
 			"aria-busy": "true",
 			"aria-label": "Loading media"
 		}, [(h(!0), c(i, null, _(e.skeletonCount, (e) => (h(), c("div", {
 			key: e,
 			class: "skel-card",
-			style: m(q.value),
+			style: m(J.value),
 			"aria-hidden": "true"
-		}, [z.value ? (h(), c("div", fe)) : (h(), c(i, { key: 1 }, [
+		}, [B.value ? (h(), c("div", fe)) : (h(), c(i, { key: 1 }, [
 			o[0] ||= l("div", { class: "skel-poster" }, null, -1),
 			o[1] ||= l("div", { class: "skel-title" }, null, -1),
 			o[2] ||= l("div", { class: "skel-sub" }, null, -1)
@@ -266,13 +296,15 @@ var de = { class: "media-grid-root" }, fe = {
 		], !0)])) : (h(), c(i, { key: 2 }, [
 			l("div", {
 				ref_key: "sizerEl",
-				ref: w,
+				ref: T,
 				class: "media-grid-sizer",
-				style: m(xe.value)
+				style: m(Se.value),
+				role: Y.value
 			}, [l("div", {
 				class: "media-grid",
-				style: m([be.value, Se.value])
-			}, [(h(!0), c(i, null, _(ye.value, (t) => (h(), c(i, { key: t.item?.id ?? `skel-${t.index}` }, [t.item ? v(n.$slots, "card", {
+				style: m([xe.value, Ce.value]),
+				role: e.gridRole
+			}, [(h(!0), c(i, null, _(be.value, (t) => (h(), c(i, { key: t.item?.id ?? `skel-${t.index}` }, [t.item ? v(n.$slots, "card", {
 				item: t.item,
 				index: t.index
 			}, () => [d(r, {
@@ -305,37 +337,37 @@ var de = { class: "media-grid-root" }, fe = {
 			])], !0, 0) : (h(), c("div", {
 				key: 1,
 				class: "skel-card",
-				style: m(q.value),
+				style: m(J.value),
 				"aria-hidden": "true"
-			}, [z.value ? (h(), c("div", me)) : (h(), c(i, { key: 1 }, [
+			}, [B.value ? (h(), c("div", ge)) : (h(), c(i, { key: 1 }, [
 				o[5] ||= l("div", { class: "skel-poster" }, null, -1),
 				o[6] ||= l("div", { class: "skel-title" }, null, -1),
 				o[7] ||= l("div", { class: "skel-sub" }, null, -1)
-			], 64))], 4))], 64))), 128))], 4)], 4),
-			e.loadingMore ? (h(), c("div", he, [...o[8] ||= [l("span", {
+			], 64))], 4))], 64))), 128))], 12, he)], 12, me),
+			e.loadingMore ? (h(), c("div", _e, [...o[8] ||= [l("span", {
 				class: "media-grid-more__spinner",
 				"aria-hidden": "true"
 			}, null, -1), u(" Loading more… ", -1)]])) : s("", !0),
 			e.hasMore && !e.loadingMore ? (h(), c("div", {
 				key: 1,
 				ref_key: "sentinelEl",
-				ref: T,
+				ref: E,
 				class: "media-grid-sentinel",
 				"aria-hidden": "true"
 			}, null, 512)) : s("", !0)
 		], 64)), d(a, { name: "media-grid-fade" }, {
-			default: ne(() => [we.value ? (h(), c("button", {
+			default: ne(() => [Te.value ? (h(), c("button", {
 				key: 0,
 				type: "button",
 				class: "media-grid-top",
 				"aria-label": "Back to top",
-				onClick: Te
+				onClick: Ee
 			}, [d(t, { name: "arrow-up" })])) : s("", !0)]),
 			_: 1
-		})]));
+		})], 8, de));
 	}
-}), [["__scopeId", "data-v-9ab1c553"]]);
+}), [["__scopeId", "data-v-a905ef14"]]);
 //#endregion
-export { x as n, S as t };
+export { C as i, x as n, S as r, w as t };
 
-//# sourceMappingURL=MediaGrid-D03m1X1k.js.map
+//# sourceMappingURL=MediaGrid-96DOVpvh.js.map
