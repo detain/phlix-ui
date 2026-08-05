@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router, type RouteRecordRaw } from 'vue-router';
 import { readFileSync } from 'node:fs';
@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import AdminLayout from './AdminLayout.vue';
 import { buildAdminRoutes, buildHubAdminRoutes, type AdminPage } from './admin';
+import { AdminUpdatesApi, parseCoreUpdateStatus } from '../api/admin/updates';
 
 /**
  * Mount the REAL AdminLayout as the parent route of a stub-children router (the
@@ -169,6 +170,98 @@ describe('AdminLayout — hub set', () => {
   it('renders the hub dashboard as the bare-/admin landing page', async () => {
     const { wrapper } = await mountAdmin(buildHubAdminRoutes);
     expect(wrapper.find('.admin__content .stub-page').text()).toBe('admin-hub-dashboard');
+  });
+});
+
+describe('AdminLayout — UpdateAvailableBanner is mounted ONCE (S76)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** A status with an update available, built through the production parser. */
+  function updateAvailableStatus(currentVersion: string, latestVersion: string) {
+    return parseCoreUpdateStatus({
+      success: true,
+      data: {
+        currentVersion,
+        latestVersion,
+        updateAvailable: true,
+        checkEnabled: true,
+        lastCheckedAt: 1770000000,
+        lastError: null,
+        updateCommand: 'the-command-the-service-supplied',
+      },
+    });
+  }
+
+  it('renders exactly one banner, inside the content column, for the server set', async () => {
+    vi.spyOn(AdminUpdatesApi.prototype, 'getStatus').mockResolvedValue(
+      updateAvailableStatus('1.2.2', '1.3.0'),
+    );
+
+    const { wrapper } = await mountAdmin();
+
+    expect(wrapper.findAll('.update-banner')).toHaveLength(1);
+    expect(wrapper.findAll('.admin__content .update-banner')).toHaveLength(1);
+    expect(wrapper.find('.update-banner__versions').text()).toBe(
+      'Running 1.2.2 — 1.3.0 is available.',
+    );
+  });
+
+  it('renders exactly one banner for the hub set too — one component, both consoles', async () => {
+    vi.spyOn(AdminUpdatesApi.prototype, 'getStatus').mockResolvedValue(
+      updateAvailableStatus('0.5.0', '0.6.0'),
+    );
+
+    const { wrapper } = await mountAdmin(buildHubAdminRoutes);
+
+    expect(wrapper.findAll('.update-banner')).toHaveLength(1);
+    expect(wrapper.find('.update-banner__versions').text()).toBe(
+      'Running 0.5.0 — 0.6.0 is available.',
+    );
+  });
+
+  it('stays out of the way entirely when the service reports no update', async () => {
+    vi.spyOn(AdminUpdatesApi.prototype, 'getStatus').mockResolvedValue(
+      parseCoreUpdateStatus({
+        success: true,
+        data: {
+          currentVersion: '1.2.2',
+          latestVersion: '1.2.2',
+          updateAvailable: false,
+          checkEnabled: true,
+          lastCheckedAt: 1770000000,
+          lastError: null,
+          updateCommand: 'the-command-the-service-supplied',
+        },
+      }),
+    );
+
+    const { wrapper } = await mountAdmin();
+
+    expect(wrapper.find('.update-banner').exists()).toBe(false);
+    // The sidebar and page content are unaffected either way. The 20 is a
+    // literal on purpose — deriving it from the page list the layout itself
+    // reads would self-adjust and assert nothing.
+    expect(wrapper.findAll('.admin__link')).toHaveLength(20);
+    expect(wrapper.find('.admin__content .stub-page').exists()).toBe(true);
+  });
+
+  it('keeps the banner ahead of the page content in the DOM order', async () => {
+    vi.spyOn(AdminUpdatesApi.prototype, 'getStatus').mockResolvedValue(
+      updateAvailableStatus('1.2.2', '1.3.0'),
+    );
+
+    const { wrapper } = await mountAdmin();
+
+    const html = wrapper.find('.admin__content').html();
+    const bannerAt = html.indexOf('update-banner');
+    const pageAt = html.indexOf('stub-page');
+    // Both must be PRESENT first: a bare `indexOf(a) < indexOf(b)` is satisfied
+    // by `-1 < n`, so deleting the banner outright would leave this green.
+    expect(bannerAt).toBeGreaterThan(-1);
+    expect(pageAt).toBeGreaterThan(-1);
+    expect(bannerAt).toBeLessThan(pageAt);
   });
 });
 

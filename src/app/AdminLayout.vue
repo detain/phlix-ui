@@ -16,6 +16,11 @@
  * groups with no shared-code branching. Admin strings stay English, matching the
  * admin pages and the R6.5c i18n cut-line.
  *
+ * The one non-presentational child is {@link UpdateAvailableBanner} (S76),
+ * mounted at the top of the content column so both consoles surface their own
+ * service's update-check status on every admin page. It renders nothing at all
+ * unless that service reports an update or a broken check.
+ *
  * Admin styles live in `../admin/admin.css` and are pulled in via a side-effect
  * import. With CSS code-splitting disabled (the lib-mode default — see
  * vite.config.ts), this CSS aggregates into the single published `style.css`
@@ -27,6 +32,7 @@
 import { computed } from 'vue';
 import { RouterView, RouterLink } from 'vue-router';
 import Icon from '../components/Icon.vue';
+import UpdateAvailableBanner from '../components/admin/UpdateAvailableBanner.vue';
 import type { AdminPage } from './admin';
 // Side-effect import — aggregated into the single style.css the consumers load
 // (cssCodeSplit is off in lib mode; async-chunk CSS isn't injected at runtime).
@@ -74,7 +80,12 @@ const items = computed<SidebarLink[]>(() =>
       </nav>
     </aside>
 
-    <div class="admin__content"><RouterView /></div>
+    <div class="admin__content">
+      <!-- S76: mounted ONCE here so every /app/admin/* page carries it, in both
+           the server console and the hub console (both mount this layout). -->
+      <UpdateAvailableBanner />
+      <RouterView />
+    </div>
   </div>
 </template>
 
