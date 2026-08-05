@@ -149,6 +149,15 @@ var s = {
 			is_active: a
 		});
 	}
+	updateProfileSchedule(e, t, n, r, i, a, o) {
+		return this.client.put(`/api/v1/admin/profiles/${encodeURIComponent(e)}/schedules/${encodeURIComponent(t)}`, {
+			name: n,
+			start_time: r,
+			end_time: i,
+			days_of_week: a,
+			is_active: o
+		});
+	}
 	deleteProfileSchedule(e, t) {
 		return this.client.delete(`/api/v1/admin/profiles/${encodeURIComponent(e)}/schedules/${encodeURIComponent(t)}`);
 	}
@@ -178,4 +187,4 @@ var s = {
 //#endregion
 export { l as a, c as i, n, i as o, s as r, r as s, u as t };
 
-//# sourceMappingURL=users-BNvtKTBW.js.map
+//# sourceMappingURL=users-CfimGM9x.js.map

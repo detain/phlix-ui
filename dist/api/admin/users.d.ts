@@ -421,6 +421,45 @@ export declare class AdminUsersApi {
         message: string;
     }>;
     /**
+     * `PUT /api/v1/admin/profiles/{id}/schedules/{scheduleId}` → `{ schedule, message }`.
+     *
+     * Edits ONE schedule in place (S202). Before this existed the page implemented
+     * "edit" as DELETE-then-CREATE, so a create that failed after the delete had
+     * already committed left the profile with **no time restriction at all** — an
+     * access-control surface failing in the OPEN direction. There was never a need
+     * for that: `PUT /profiles/{profileId}/schedules/{scheduleId}` has been
+     * registered all along (`phlix-server/src/Server/Http/Routes/AdminRoutes.php:308`
+     * for this admin-prefixed form, and `Application.php:1346` for the un-prefixed
+     * one the mobile/Roku clients use), handled by
+     * `AccessScheduleController::updateSchedule` (`:217`).
+     *
+     * ── The wire contract, read off the handler rather than assumed ──────────────
+     *
+     * Every key is **snake_case**, exactly as the create path takes them: the
+     * handler reads `name`, `start_time`, `end_time`, `days_of_week` and
+     * `is_active` (`AccessScheduleController.php:243-269`). It reads NOTHING in
+     * camelCase, so a camelCase body would be silently discarded and — because
+     * every field is individually optional — collapse to `No valid fields to
+     * update` / **400** with no clue as to why. That is S234, live today in the
+     * mobile and Roku clients; it is not repeated here.
+     *
+     * All five fields are sent on every call even though the handler treats each as
+     * optional. The form is a whole-object editor with every field populated, so a
+     * partial body could only ever be produced by omitting a field the user CAN
+     * see, and a field the user cleared must be able to travel as its new value.
+     *
+     * ⚠ `schedule` is not guaranteed to be a schedule OBJECT. The handler
+     * serialises `$updated?->toArray() ?? []` (`:282`), and PHP encodes an empty
+     * array as a JSON `[]`, so a row that disappeared between the UPDATE and the
+     * re-read arrives as an empty ARRAY. It is typed as such deliberately, so no
+     * caller can read a field off it without narrowing first. The page ignores this
+     * payload entirely and re-lists.
+     */
+    updateProfileSchedule(profileId: string | number, scheduleId: number, name: string, startTime: string, endTime: string, daysOfWeek: string[], isActive: boolean): Promise<{
+        schedule: AccessSchedule | never[];
+        message: string;
+    }>;
+    /**
      * `DELETE /api/v1/admin/profiles/{id}/schedules/{scheduleId}` → `{ message }`.
      */
     deleteProfileSchedule(profileId: string | number, scheduleId: number): Promise<{

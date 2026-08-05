@@ -42,7 +42,7 @@ import { n as Dt, t as Ot } from "./media-query-DKjhlX8r.js";
 import { n as kt, t as At } from "./metadata-sources-KPXiaoRg.js";
 import { n as jt, t as Mt } from "./logs-DadTfaTq.js";
 import { t as Nt } from "./dashboard-BTCOCTHQ.js";
-import { a as Pt, i as Ft, n as It, o as Lt, r as Rt, s as zt, t as Bt } from "./users-BNvtKTBW.js";
+import { a as Pt, i as Ft, n as It, o as Lt, r as Rt, s as zt, t as Bt } from "./users-CfimGM9x.js";
 import { n as Vt, r as Ht, t as Ut } from "./webhooks-BBTLnFKm.js";
 import { t as Wt } from "./services-C907MGdw.js";
 import { t as Gt } from "./integrations-DLAG9ISY.js";
@@ -884,7 +884,7 @@ var yi = Wn("server", () => {
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-BTyUbjZ0.js")
+	component: () => import("./UsersPage-DT2e-Pqj.js")
 }, Si = {
 	name: "admin-logs",
 	path: "logs",
@@ -1268,7 +1268,7 @@ function da(e) {
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-BpAoJt2Z.js")
+			component: () => import("./ParentalControlsPage-DvNtMzGS.js")
 		}
 	];
 	return e.extraRoutes && n.push(...e.extraRoutes), n.push({

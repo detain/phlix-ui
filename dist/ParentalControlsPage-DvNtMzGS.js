@@ -9,7 +9,7 @@ import { t as o } from "./Modal-Nn1mtFl3.js";
 import { t as s } from "./Skeleton-C3OpJbf1.js";
 import { t as c } from "./EmptyState-CwWtkhEJ.js";
 import { t as ie } from "./Tabs-CCN6j5WY.js";
-import { r as ae, t as oe } from "./users-BNvtKTBW.js";
+import { r as ae, t as oe } from "./users-CfimGM9x.js";
 import { t as l } from "./Input-D87-h7X1.js";
 import { t as se } from "./Card-CwUrlHI3.js";
 import { Fragment as u, computed as d, createBlock as f, createCommentVNode as p, createElementBlock as m, createElementVNode as h, createTextVNode as g, createVNode as _, defineComponent as ce, inject as le, normalizeClass as ue, onMounted as de, openBlock as v, ref as y, renderList as b, toDisplayString as x, unref as fe, withCtx as S, withModifiers as C } from "vue";
@@ -165,7 +165,7 @@ var me = { class: "parental-page" }, he = { class: "parental-page__head" }, ge =
 				return;
 			}
 			try {
-				F.value && await T.deleteProfileSchedule(D.value, F.value.id), await T.createProfileSchedule(D.value, I.value.name.trim(), I.value.startTime + ":00", I.value.endTime + ":00", I.value.daysOfWeek, I.value.isActive), w.success(F.value ? "Schedule updated." : "Schedule created."), P.value = !1, await z();
+				F.value ? await T.updateProfileSchedule(D.value, F.value.id, I.value.name.trim(), I.value.startTime + ":00", I.value.endTime + ":00", I.value.daysOfWeek, I.value.isActive) : await T.createProfileSchedule(D.value, I.value.name.trim(), I.value.startTime + ":00", I.value.endTime + ":00", I.value.daysOfWeek, I.value.isActive), w.success(F.value ? "Schedule updated." : "Schedule created."), P.value = !1, await z();
 			} catch (e) {
 				L.value = r(e, "Failed to save schedule.");
 			}
@@ -701,8 +701,8 @@ var me = { class: "parental-page" }, he = { class: "parental-page__head" }, ge =
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-07f81591"]]);
+}), [["__scopeId", "data-v-0669a2d0"]]);
 //#endregion
 export { w as default };
 
-//# sourceMappingURL=ParentalControlsPage-BpAoJt2Z.js.map
+//# sourceMappingURL=ParentalControlsPage-DvNtMzGS.js.map
