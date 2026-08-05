@@ -1,5 +1,28 @@
 ## Unreleased
 
+## 0.98.36 - 2026-08-05
+
+### Added
+- **The `table` view mode now has a renderer, and it is virtualized (plan_updates.md — S70).** `ViewMode` has declared `'table'` since S67 and `FilterBar` has offered the button ever since, but no renderer existed: `LibraryPage`'s `#card` chain was three arms (`MediaListRow` / `MediaBackdropRow` / `MediaCard v-else`), so selecting `table` persisted the preference and changed nothing on screen. Confirmed live by the product owner — *"clicking it does nothing"*. The option was **not** normalised back to `'grid'`; it was written, persisted and hydrated verbatim, and the control was simply inert.
+
+  New `MediaTableRow.vue` is the fourth arm. The `#card` slot renders one **detached cell per item** inside `MediaGrid`'s `display: grid` container, so it structurally cannot emit a semantic `<table>/<thead>/<tr>` hierarchy — this is therefore a compact ROW variant using `role="table"`/`row`/`cell` on divs, with the header rendered **outside** the grid. Header and body both derive `grid-template-columns` from the single `TABLE_COLUMNS` constant, so the two cannot be edited apart. `MediaGrid` gains a `gridRole` prop: it carried no ARIA-role prop at all, so the `role="rowgroup"` these semantics need did not exist, and its wrapper divs had to be flattened out from between the table and its rows.
+
+  **Virtualized, per the acceptance criterion** — the arm feeds `columns: 1` + `computeFixedRowHeight(TABLE_ROW_HEIGHT)`, the same numbers the windowing math consumes; 4,000 items at `rowHeight: 204` in an 800px viewport put 9 rows in the DOM. The non-virtualized fallback the spec once offered was withdrawn and not taken.
+
+  ⚠ **`TABLE_ROW_HEIGHT === LIST_ROW_HEIGHT` (both 180) is deliberate, not copy-paste.** Composing a full-action `MediaCard` pins a 120px poster floor, so this view's density comes from aligned columns, not a shorter row. A test names this so it is not "corrected" later.
+
+  **Two test holes were found by mutation and closed rather than papered over.** (1) Nothing pinned that the mode comparison stays `===` — replacing it with `.includes()` was a **silent no-op across all 4,835 tests**, because no test had ever mounted a mode that is a *superstring* of a real one; both existing garbage modes were disjoint from the real values, and disjointness is precisely what makes the two operators indistinguishable. Closed with `'listicle'`/`'backdrop-hero'`/`'not-a-table'` arms asserted at **four** consumers of `tableMode`, not just the renderer. (2) Every geometry assertion was exact but **derived from the constant under test**, so changing `TABLE_ROW_HEIGHT` itself produced only one red. Closed with literal pins.
+
+  A recorded and accepted ARIA wart: `MediaGrid`'s `loadingMore` `role="status"` and the back-to-top button transiently re-parent onto the `role="table"`. This is an `aria-required-children` validator violation, not an AT breakage — nothing becomes unreachable, and `aria-rowindex`/`aria-rowcount` are published explicitly so row navigation does not depend on DOM child counting. The permanent no-items case is gated, and unloaded placeholder cells inside the rowgroup during paging are `aria-hidden="true"`.
+
+### Fixed
+- **An A-Z jump landed ~25px off after switching between list and table view (S70 review, finding 1).** `MediaGrid` caches the sizer's **position** but its ResizeObserver only ever observes a **size**. Every transition that moves the sizer had always also resized it, so the observer was sufficient by accident — until this release introduced the first mode pair where it isn't. List and table both pass `columns: 1` and the same row height, so `totalHeight` and the sizer's own box are byte-identical across the flip and the element never remounts; nothing fires, yet the table's column-header row has just appeared above the sizer and pushed it down by its height. `throttledMeasure` then overstates `scrollTop` (sub-visual — overscan absorbs it and `padTop` stays consistent with `startIndex`, so there is no shear) and `scrollToIndex` lands the A-Z jump short.
+
+  Fixed with one watcher keyed on `gridRole` **alone** — `columns`/`rowHeight` are inert across exactly this transition by construction, and a mutation re-keying the watcher to them leaves the new tests red, which is what pins the fix to the correct dependency rather than to the mere existence of a watcher. This was a latent `MediaGrid` limitation, not a regression: S70 was simply the first thing to reach it.
+
+### Changed
+- **The table view's `Rating` column is now labelled `Cert` (S70 review, finding 2).** It renders `item.rating`, typed `'G'|'PG'|'PG-13'|…|'TV-MA'` — the parental certificate, not a score. `src/types/media-item.ts` warns twice never to conflate `rating` with `user_data.rating`, and `Cert` is what every sibling already calls it (`.media-card__cert`, `.media-list-row__cert`, `.media-backdrop-row__cert`). A discriminating test now carries **both** `rating: 'PG-13'` and `user_data.rating: 9`; no fixture previously carried both, so a renderer that silently switched to the score would have rendered an em-dash and stayed green.
+
 ## 0.98.35 - 2026-08-04
 
 ### Added
