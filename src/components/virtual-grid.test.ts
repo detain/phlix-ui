@@ -508,7 +508,9 @@ describe('virtual-grid — table/compact row geometry (S70)', () => {
       'Poster',
       'Title',
       'Year',
-      'Rating',
+      // 'Cert', not 'Rating': the column renders the parental certificate
+      // (`item.rating`), never the per-user 1-10 `user_data.rating` score.
+      'Cert',
       'Runtime',
       'Genres',
     ]);

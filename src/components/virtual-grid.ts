@@ -319,7 +319,14 @@ export const TABLE_COLUMNS: readonly TableColumn[] = [
   { label: 'Poster', track: `${TABLE_ROW_POSTER_WIDTH}px` },
   { label: 'Title', track: 'minmax(0, 3fr)' },
   { label: 'Year', track: '80px' },
-  { label: 'Rating', track: '88px' },
+  // 'Cert', NOT 'Rating' (S70 review). This column renders `item.rating`, which is
+  // the CONTENT/PARENTAL certificate ('PG-13', 'TV-MA'), not a score — and
+  // `types/media-item.ts` warns twice, on both fields, never to conflate it with the
+  // per-user 1-10 `user_data.rating`. A header reading "Rating" over "PG-13" invites
+  // exactly that conflation from the one audience the type file cannot reach. 'Cert'
+  // is also what the rest of the codebase already calls it (`.media-card__cert`,
+  // `.media-list-row__cert`, `.media-backdrop-row__cert`, `.media-table-row__cert`).
+  { label: 'Cert', track: '88px' },
   { label: 'Runtime', track: '88px' },
   { label: 'Genres', track: 'minmax(0, 2fr)' },
 ];

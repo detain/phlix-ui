@@ -22,7 +22,7 @@ var x = [
 		track: "80px"
 	},
 	{
-		label: "Rating",
+		label: "Cert",
 		track: "88px"
 	},
 	{
@@ -267,7 +267,7 @@ var de = ["role"], fe = {
 			N(), typeof window < "u" && (window.addEventListener("scroll", P, { passive: !0 }), window.addEventListener("resize", I, { passive: !0 })), ke(), Z();
 		}), ee(() => {
 			typeof window < "u" && (window.removeEventListener("scroll", P), window.removeEventListener("resize", I)), F &&= (typeof cancelAnimationFrame == "function" ? cancelAnimationFrame(F) : clearTimeout(F), 0), clearTimeout(G), $(), Oe();
-		}), y(() => x.items.length, () => p(I)), (n, o) => (h(), c("div", {
+		}), y(() => x.items.length, () => p(I)), y(() => x.gridRole, () => p(I)), (n, o) => (h(), c("div", {
 			class: "media-grid-root",
 			role: Y.value
 		}, [e.loading && e.items.length === 0 ? (h(), c("div", {
@@ -366,8 +366,8 @@ var de = ["role"], fe = {
 			_: 1
 		})], 8, de));
 	}
-}), [["__scopeId", "data-v-a905ef14"]]);
+}), [["__scopeId", "data-v-3c70129d"]]);
 //#endregion
 export { C as i, x as n, S as r, w as t };
 
-//# sourceMappingURL=MediaGrid-96DOVpvh.js.map
+//# sourceMappingURL=MediaGrid-BwMjS5qu.js.map

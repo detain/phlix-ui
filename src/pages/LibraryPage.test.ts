@@ -1016,7 +1016,9 @@ describe('LibraryPage — table view (S70)', () => {
       'Poster',
       'Title',
       'Year',
-      'Rating',
+      // 'Cert', not 'Rating': the column renders the parental certificate
+      // (`item.rating`), never the per-user 1-10 `user_data.rating` score.
+      'Cert',
       'Runtime',
       'Genres',
     ]);
@@ -1176,6 +1178,70 @@ describe('LibraryPage — table view (S70)', () => {
     expect(grid.props('columns')).toBeUndefined();
     expect(grid.props('gridRole')).toBeUndefined();
     expect(w.find('[role="table"]').exists()).toBe(false);
+  });
+
+  /**
+   * S70 review, finding 1 — the list→table swap moves the grid WITHOUT resizing it.
+   *
+   * This is the transition no other test could see, and the reason is the deliberate
+   * `TABLE_ROW_HEIGHT === LIST_ROW_HEIGHT`: `columns` (1) and `rowHeight` (204) are
+   * byte-identical in both modes, so `MediaGrid`'s sizer keeps its exact box size,
+   * its ResizeObserver never fires, `items` is the same array and the sizer element
+   * does not remount — yet the header rowgroup has just appeared ABOVE the grid and
+   * pushed it down. `gridRole` is therefore the ONLY prop that changes, which is why
+   * it (and not `columns`/`rowHeight`) is what has to force the re-measure.
+   *
+   * Asserted black-box through `scrollToIndex` — the A-Z rail's jump target is the
+   * one place the stale offset is user-visible.
+   */
+  it('re-measures after the header appears, so an A-Z jump is not off by the header', async () => {
+    const HEADER_H = 25;
+    // jsdom has no layout: report a real width (so the grid measures at all) and a
+    // top that DEPENDS on whether the header row is currently rendered — which is
+    // exactly what the browser would report. Resolved through a closure because the
+    // wrapper does not exist yet, and VTU's tree is not necessarily in `document`.
+    let headerRendered = () => false;
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => {
+      const top = headerRendered() ? HEADER_H : 0;
+      return { width: 1000, height: 204, top, left: 0, right: 1000, bottom: top + 204, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+    });
+    // Run rAF synchronously so the re-measure is deterministic; return 0 so the
+    // component's `if (frame) return` coalescing guard is clear again afterwards.
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+    const scrollTo = vi.fn();
+    vi.stubGlobal('scrollTo', scrollTo);
+
+    const { w } = await mountWithMode('list');
+    headerRendered = () => w.find('.library-table__head').exists();
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    const jump = () =>
+      (grid.vm as unknown as { scrollToIndex: (i: number) => void }).scrollToIndex(0);
+
+    // Baseline: no header yet, so row 0 sits at the document top. A failure below is
+    // then the staleness, not a broken harness.
+    expect(w.find('.library-table__head').exists()).toBe(false);
+    jump();
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: 'auto' });
+    const beforeColumns = grid.props('columns');
+    const beforeRowHeight = grid.props('rowHeight');
+
+    usePreferencesStore().viewMode = 'table';
+    await nextTick();
+    await nextTick();
+    expect(w.find('.library-table__head').exists()).toBe(true);
+    // The layout props did NOT move — so a watcher keyed on them alone would never
+    // fire here — and `gridRole` is the only thing that did.
+    expect(grid.props('columns')).toBe(beforeColumns);
+    expect(grid.props('rowHeight')).toBe(beforeRowHeight);
+    expect(grid.props('rowHeight')).toBe(computeFixedRowHeight(TABLE_ROW_HEIGHT));
+    expect(grid.props('gridRole')).toBe('rowgroup');
+
+    jump();
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: HEADER_H, behavior: 'auto' });
+    w.unmount();
   });
 });
 
