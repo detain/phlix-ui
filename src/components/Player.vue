@@ -1897,13 +1897,26 @@ onBeforeUnmount(() => {
    viewport height (the host route is `fullBleed`, so no shell chrome eats into
    it). `object-fit: contain` on `.player__video` keeps the frame letterboxed —
    never cropped or stretched. `dvh` tracks the mobile dynamic viewport (URL bar
-   in/out); the plain `vh` line is the fallback for engines without `dvh`. */
+   in/out); the `@supports` block below is the fallback for engines without `dvh`.
+
+   S232: the fallback used to be written as a duplicate-property pair
+   (`height: 100vh; height: 100dvh;`). That is correct CSS and correctly ordered,
+   but the production minifier (lightningcss, via Vite) COLLAPSES duplicate
+   declarations, so `100vh` was deleted from `dist/style.css` and never shipped —
+   leaving a dvh-less engine with `aspect-ratio: auto` and NO height at all.
+   `@supports not (height: 100dvh)` survives minification, so DO NOT "tidy" it
+   back into a duplicate pair. Pinned by `Player.test.ts` against BOTH the SFC
+   source and the built `dist/style.css`. */
 .player.is-theater {
   aspect-ratio: auto;
-  height: 100vh;
   height: 100dvh;
-  max-height: 100vh;
   max-height: 100dvh;
+}
+@supports not (height: 100dvh) {
+  .player.is-theater {
+    height: 100vh;
+    max-height: 100vh;
+  }
 }
 .player.is-theater .player__stage {
   border-radius: 0;

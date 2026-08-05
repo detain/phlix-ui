@@ -12,6 +12,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { readBuiltCss, supportsBlockBodies } from '../test/builtCss';
 import PlayerPage from './PlayerPage.vue';
 import Player from '../components/Player.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -896,7 +897,7 @@ describe('PlayerPage — resume + theater + ambient', () => {
   it('grows the stage to 100dvh under theater, keeping the default 16:9/90vh cap (S34)', () => {
     // jsdom does not apply an SFC's compiled <style>, so pin the sizing contract
     // off the raw source. The DEFAULT stage carries no viewport-height cap; the
-    // theater stage fills 100dvh (with a vh fallback) once the shell chrome is gone.
+    // theater stage fills 100dvh once the shell chrome is gone.
     const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './PlayerPage.vue'), 'utf8');
     // The loading skeleton keeps the 16:9 / 90vh footprint as the default look.
     expect(src).toMatch(/\.player-page__skeleton\s*\{[\s\S]*?aspect-ratio:\s*16\s*\/\s*9;[\s\S]*?max-height:\s*90vh;/);
@@ -906,7 +907,30 @@ describe('PlayerPage — resume + theater + ambient', () => {
     const body = rule![1];
     expect(body).toMatch(/padding:\s*0;/); // gutter removed
     expect(body).toMatch(/height:\s*100dvh;/); // fills the dynamic viewport
-    expect(body).toMatch(/height:\s*100vh;/); // …with a vh fallback
+    // S232: NOT a duplicate `height: 100vh` line — lightningcss collapses those,
+    // so the fallback would be deleted from dist/ and ship as nothing.
+    expect(body, 'the vh fallback belongs in @supports, not a duplicate pair').not.toMatch(/100vh/);
+  });
+
+  it('declares the no-`dvh` stage fallback in an @supports block (S232)', () => {
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './PlayerPage.vue'), 'utf8');
+    const block = src.match(
+      /@supports not \(height: 100dvh\)\s*\{\s*\.player-page\.is-theater\s+\.player-page__stage\s*\{([\s\S]*?)\}/,
+    );
+    expect(block, 'an @supports not (height: 100dvh) block wraps the theater stage').toBeTruthy();
+    expect(block![1]).toMatch(/height:\s*100vh;/);
+  });
+
+  it('SHIPS that stage fallback in the built dist/style.css (S232)', () => {
+    // The bug this replaces: `100vh` was absent from the built artifact while a
+    // source-text assertion claimed the fallback existed.
+    const bodies = supportsBlockBodies(
+      readBuiltCss('style.css'),
+      'not (height:100dvh)',
+      '.player-page.is-theater .player-page__stage[data-v-',
+    );
+    expect(bodies.length, 'dist/style.css carries the theater stage dvh fallback').toBe(1);
+    expect(bodies[0]).toContain('height:100vh');
   });
 
   it('escapes the poster url in the ambient backdrop so it cannot break out of CSS url()', async () => {

@@ -11,6 +11,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { readBuiltCss } from '../test/builtCss';
 import AppLayout from './AppLayout.vue';
 import AppBackdrop from '../components/AppBackdrop.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
@@ -137,6 +138,27 @@ describe('AppLayout — full-bleed (`shell--flush`) CSS is gated + non-leaking (
     for (const sel of selectors) {
       expect(sel, `selector "${sel}" must be gated under .shell--flush`).toContain('.shell--flush');
     }
+  });
+
+  it('SHIPS both flush rules in the built dist/style.css (S232)', () => {
+    // S34's CSS assertions are all regexes over this SFC's raw text, which is
+    // blind by construction: commenting out the whole non-scoped <style> block
+    // — verified genuinely inert by @vue/compiler-sfc (non-scoped blocks 1 → 0)
+    // — left 11/11 of them GREEN. The suite could not detect the chrome-removal
+    // stylesheet ceasing to reach the browser at all.
+    //
+    // These are the exact minified bytes lightningcss emits for the two rules, so
+    // the assertion fails if the block is removed, if it stops being emitted into
+    // the single aggregated stylesheet (cssCodeSplit), or if minification mangles
+    // the selector. `dist/` is committed and `npm run dist:check` fails any PR
+    // whose src/ changed without a rebuild, so this reads shipped bytes.
+    const css = readBuiltCss('style.css');
+    expect(css, 'the flush bar rule must reach the built stylesheet').toContain(
+      '.shell.shell--flush .shell__bar{display:none}',
+    );
+    expect(css, 'the flush gutter rule must reach the built stylesheet').toContain(
+      '.shell.shell--flush .shell__main{padding:0}',
+    );
   });
 
   it('leaves the scoped default `.shell__main` gutter intact (the normal layout)', () => {

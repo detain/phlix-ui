@@ -719,15 +719,25 @@ function onBlockingErrorOk(): void {
 /* theater mode (driven by <Player>'s @theater) — go full-bleed + dim the surround.
    S34: with the shell chrome gone (the player route is `fullBleed`), let the stage
    fill the whole viewport height so <Player>'s 100dvh frame is unclipped. `dvh`
-   tracks the mobile dynamic viewport; the plain `vh` line is the fallback. */
+   tracks the mobile dynamic viewport; the `@supports` block is the fallback.
+
+   S232: written as `@supports not (height: 100dvh)` and NOT as a duplicate
+   `height: 100vh; height: 100dvh;` pair, because the production minifier
+   (lightningcss, via Vite) collapses duplicate declarations and deleted the vh
+   line from `dist/style.css` entirely. Pinned by `PlayerPage.test.ts` against
+   both the SFC source and the built `dist/style.css`. */
 .player-page.is-theater {
   background: #05070b;
 }
 .player-page.is-theater .player-page__stage {
   max-width: none;
   padding: 0;
-  height: 100vh;
   height: 100dvh;
+}
+@supports not (height: 100dvh) {
+  .player-page.is-theater .player-page__stage {
+    height: 100vh;
+  }
 }
 .player-page.is-theater .player-page__ambient {
   opacity: 0.05;

@@ -8222,7 +8222,7 @@ var Uu = {
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-c8efba03"]]), xf = ["aria-label"], Sf = ["src", "poster"], Cf = { class: "mini__body" }, wf = { class: "mini__title" }, Tf = { class: "mini__controls" }, Ef = ["aria-label"], Df = ["aria-label", "aria-pressed"], Of = ["aria-label"], kf = ["aria-label"], Af = {
+}), [["__scopeId", "data-v-4bb58984"]]), xf = ["aria-label"], Sf = ["src", "poster"], Cf = { class: "mini__body" }, wf = { class: "mini__title" }, Tf = { class: "mini__controls" }, Ef = ["aria-label"], Df = ["aria-label", "aria-pressed"], Of = ["aria-label"], kf = ["aria-label"], Af = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, jf = /*#__PURE__*/ Y(/* @__PURE__ */ d({
