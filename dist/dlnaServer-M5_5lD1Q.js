@@ -9,6 +9,7 @@ var e = class {
 		return {
 			enabled: e.enabled === !0,
 			running: e.running === !0,
+			reloadPending: e.reloadPending === !0,
 			serverId: typeof e.serverId == "string" ? e.serverId : null,
 			friendlyName: typeof e.friendlyName == "string" ? e.friendlyName : null,
 			port: typeof e.port == "number" ? e.port : null,
@@ -18,15 +19,17 @@ var e = class {
 	}
 	async start() {
 		let e = await this.client.post("/api/v1/admin/dlna/start");
-		return {
-			success: e.success === !0,
-			...typeof e.message == "string" ? { message: e.message } : {}
-		};
+		return this.normaliseAction(e);
 	}
 	async stop() {
 		let e = await this.client.post("/api/v1/admin/dlna/stop");
+		return this.normaliseAction(e);
+	}
+	normaliseAction(e) {
 		return {
 			success: e.success === !0,
+			...typeof e.enabled == "boolean" ? { enabled: e.enabled } : {},
+			...typeof e.reloadScheduled == "boolean" ? { reloadScheduled: e.reloadScheduled } : {},
 			...typeof e.message == "string" ? { message: e.message } : {}
 		};
 	}
@@ -34,4 +37,4 @@ var e = class {
 //#endregion
 export { e as t };
 
-//# sourceMappingURL=dlnaServer-B5Sg4MkS.js.map
+//# sourceMappingURL=dlnaServer-M5_5lD1Q.js.map
