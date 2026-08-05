@@ -280,6 +280,22 @@ export const useMediaStore = defineStore('media', () => {
      * true once the page is placed (or the query was superseded — nothing to do),
      * false only after every attempt failed. A superseded generation short-
      * circuits at every check so a stale page never splices into a newer list.
+     *
+     * S224 — an ABORT is a supersession, not a failure, and the generation guard
+     * cannot see it. A range job covering offset 0 dedupes onto the already
+     * in-flight TRACKED page-0 promise ({@link networkFetch} hands back the
+     * promise cached under the same key), so a filter change aborting
+     * `activeController` rejects the very promise this job is awaiting. But
+     * `generation` is bumped only by {@link applyResult} on a SUCCESSFUL replace
+     * load, so while the replacement query is still in flight `gen ===
+     * generation` still holds and every `gen !== generation` check below passes.
+     *
+     * Measured on the pre-fix code with a deduped page-0 job: the abandoned query
+     * was RE-ISSUED (3 requests where the user asked for 2) and its rows were
+     * spliced into `items[0]` of the query the user had already moved to; with
+     * the retries failing instead, it toasted "Some titles failed to load." for
+     * that same abandoned query. Hence the explicit {@link isAbort} check —
+     * mirroring what {@link fetchMedia} already did.
      */
     async function fetchPageWithRetry(
         apiBase: string,
@@ -297,7 +313,12 @@ export const useMediaStore = defineStore('media', () => {
                 if (!total.value) total.value = res.total;
                 rangeErrorNotified = false; // a good load re-arms the failure toast
                 return true;
-            } catch {
+            } catch (e) {
+                // S224: a deliberate cancellation — the request this job awaited
+                // was aborted because the user left the query. Nothing to retry,
+                // nothing to report. MUST precede the generation check, which is
+                // blind to an abort that lands before the replacement resolves.
+                if (isAbort(e)) return true;
                 if (gen !== generation) return true; // superseded during the failed attempt
                 if (attempt < ENSURE_RANGE_MAX_ATTEMPTS) {
                     await delay(ENSURE_RANGE_RETRY_DELAY_MS);
