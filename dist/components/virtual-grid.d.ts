@@ -232,6 +232,83 @@ export declare const BACKDROP_ROW_NARROW_POSTER_WIDTH = 120;
  */
 export declare const BACKDROP_ROW_HEIGHT: number;
 /**
+ * Width (px) of the `table` view mode's poster column (S70).
+ *
+ * Deliberately `LIST_ROW_POSTER_WIDTH` rather than a fourth number, and — unlike
+ * `BACKDROP_ROW_NARROW_POSTER_WIDTH`, which reuses it for room — reused here
+ * because 120px is the audited FLOOR for a renderer that composes a full-action
+ * `MediaCard`, and S70's row does. Read `LIST_ROW_POSTER_WIDTH`'s docblock: the
+ * wrapped action rows need ≈124px of overlay content box, which only a ≥180px-tall
+ * poster provides, and the overlay is `position: absolute; inset: 0` on
+ * `.media-card__poster` (which is `overflow: hidden`) so it cannot spill out of a
+ * shorter one.
+ *
+ * ⚠ THIS IS WHY THE TABLE ROW IS NOT SHORTER THAN THE LIST ROW, and the constraint
+ * is real rather than conservative. At a 64px poster the same arithmetic wraps the
+ * eight quick-actions into eight ~32px rows (≈312px) inside ~64px of content box:
+ * `justify-content: flex-end` keeps the row pinned to the bottom, so the viewer
+ * would see roughly the last two of eight actions and the rest would be clipped
+ * away. A genuinely SHORTER compact row therefore cannot compose a full-action
+ * card — it would need `MediaCard`'s ~90-line ⋯-menu dispatcher lifted out of
+ * `MediaCard`/`MediaDetail` into a shared composable so the row could own a
+ * compact actions cell. That refactor is out of S70's scope; until it happens the
+ * table view's density comes from its COLUMNS (aligned tracks under a real header,
+ * no overview paragraph), not from a shorter row.
+ *
+ * As with the other two: this is stylesheet arithmetic, not a rendered observation
+ * (jsdom has no layout and the visual suite is out of bounds in this program), so
+ * do not shrink it without redoing the sums in `LIST_ROW_POSTER_WIDTH`.
+ */
+export declare const TABLE_ROW_POSTER_WIDTH = 120;
+/**
+ * Height (px) of one `table` view mode row, EXCLUDING the row gap beneath it
+ * (S70). Derived from the FIXED poster width via the 2:3 ratio exactly like
+ * `LIST_ROW_HEIGHT`/`BACKDROP_ROW_HEIGHT` — never from the row width, which is one
+ * full-width column and would reserve a row several times too tall.
+ * `MediaTableRow.vue` writes this onto the DOM as an inline height read from this
+ * same constant, and `LibraryPage` feeds `computeFixedRowHeight(TABLE_ROW_HEIGHT)`
+ * to `MediaGrid`'s `rowHeight` prop, so the rendered row and the windowing
+ * arithmetic cannot drift.
+ */
+export declare const TABLE_ROW_HEIGHT: number;
+/** One column of the `table` view mode (S70). */
+export interface TableColumn {
+    /**
+     * The column's header text — and, for the poster column, its VISUALLY HIDDEN
+     * accessible name. Every `role="columnheader"` needs a name; an empty one is a
+     * bare `role="columnheader"` that announces nothing.
+     */
+    readonly label: string;
+    /** The column's CSS grid track. */
+    readonly track: string;
+}
+/**
+ * The `table` view's columns, in DOM order — the SINGLE source for both the header
+ * row (`LibraryPage.vue`, rendered OUTSIDE the grid) and the body rows
+ * (`MediaTableRow.vue`, rendered one per `#card` slot invocation).
+ *
+ * They have to share one definition because they are two SEPARATE grids: the
+ * `#card` slot yields one detached cell per item inside `MediaGrid`'s
+ * `display: grid` container, so the header physically cannot be a sibling row of
+ * the body rows and can only be kept in alignment by writing the identical
+ * `grid-template-columns` in both places. `MediaTableRow.test.ts` asserts the row
+ * renders exactly `TABLE_COLUMNS.length` cells, so adding a column here without
+ * adding its cell to the row (which would silently shear every row against the
+ * header) fails.
+ */
+export declare const TABLE_COLUMNS: readonly TableColumn[];
+/**
+ * `grid-template-columns` for BOTH the table header row and every table body row,
+ * DERIVED from {@link TABLE_COLUMNS} so the two can never be edited apart.
+ *
+ * Written as an inline style in both places, like the other renderers' geometry:
+ * `MediaGrid` writes an INLINE `grid-template-columns` on `.media-grid` itself, so
+ * a stylesheet rule for the row's own tracks would sit in the same specificity
+ * conversation as that inline style — and, for the header, the two would then be
+ * two independent declarations that drift.
+ */
+export declare const TABLE_ROW_TEMPLATE_COLUMNS: string;
+/**
  * Number of auto-fit columns for a container width — mirrors CSS
  * `repeat(auto-fill, minmax(cardSize, 1fr))`, which packs
  * `floor((width + gap) / (cardSize + gap))` tracks. Always ≥ 1.

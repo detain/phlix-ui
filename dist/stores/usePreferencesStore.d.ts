@@ -30,10 +30,12 @@
 export type ThemeName = string;
 export type Density = 'comfortable' | 'compact';
 export type MotionPref = 'auto' | 'on' | 'off';
-/** How a library/section renders its items (S67). 'grid' (poster grid), 'list'
- *  (S68 `MediaListRow`) and 'backdrop' (S69 `MediaBackdropRow`) all have real
- *  renderers, wired through `MediaGrid`'s `#card` slot; 'table' is S70's and until
- *  then selecting it still renders the grid via the unconditional `v-else`. */
+/** How a library/section renders its items (S67). ALL FOUR now have real
+ *  renderers, wired through `MediaGrid`'s `#card` slot: 'grid' (poster grid),
+ *  'list' (S68 `MediaListRow`), 'backdrop' (S69 `MediaBackdropRow`) and 'table'
+ *  (S70 `MediaTableRow`). This union is deliberately NOT sanitized on read, so a
+ *  stale/out-of-union persisted value still hydrates verbatim — `LibraryPage`'s
+ *  unconditional `v-else` renders it as the poster grid rather than dropping it. */
 export type ViewMode = 'grid' | 'list' | 'backdrop' | 'table';
 /** A saved Browse filter set — `query` is the `useMediaStore.toQuery()` shape. */
 export interface FilterPreset {

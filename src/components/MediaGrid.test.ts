@@ -714,3 +714,91 @@ describe('MediaGrid — UI-2.5 scroll perf', () => {
     expect(afterScrollCards[0].props('item').name).toBe(initialFirstTitle);
   });
 });
+
+/**
+ * S70 — the `gridRole` prop. It exists to solve OWNERSHIP, not labelling: a host
+ * that wraps this grid in `role="table"` needs the two intermediate boxes
+ * (`.media-grid-root`, `.media-grid-sizer`) flattened out of the accessibility tree,
+ * because a plain `<div>` maps to `generic` there rather than disappearing, and an
+ * ARIA `table` must directly own its `row`/`rowgroup` children.
+ */
+describe('MediaGrid — host-owned ARIA structure (gridRole, S70)', () => {
+  it('emits NO role attribute anywhere when the prop is unset', async () => {
+    // The default has to be byte-identical to pre-S70 or every other surface (the
+    // poster grid, list view, backdrop view, Explore/Search/Recommendations) gains
+    // roles it never asked for.
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(6) } });
+    await nextTick();
+    expect(w.find('.media-grid-root').attributes('role')).toBeUndefined();
+    expect(w.find('.media-grid-sizer').attributes('role')).toBeUndefined();
+    expect(w.find('.media-grid').attributes('role')).toBeUndefined();
+  });
+
+  it('flattens BOTH wrappers and marks the grid a rowgroup when set', async () => {
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(6), gridRole: 'rowgroup' } });
+    await nextTick();
+    expect(w.find('.media-grid').attributes('role')).toBe('rowgroup');
+    // Both, not just one — a single `generic` box left in the chain breaks the
+    // ownership just as completely as two.
+    expect(w.find('.media-grid-root').attributes('role')).toBe('presentation');
+    expect(w.find('.media-grid-sizer').attributes('role')).toBe('presentation');
+  });
+
+  it('leaves NO generic box between the rowgroup and the component root', async () => {
+    // Walking the chain (rather than asserting the three roles independently) is
+    // what makes this test fail if a new wrapper div is ever introduced between
+    // them — the exact defect the prop was added to fix.
+    mockLayout(1000, 0);
+    const w = mount(MediaGrid, { props: { items: makeItems(6), gridRole: 'rowgroup' } });
+    await nextTick();
+    const root = w.find('.media-grid-root').element;
+    const chain: string[] = [];
+    for (let el = w.find('.media-grid').element.parentElement; el && el !== root; el = el.parentElement) {
+      chain.push(el.getAttribute('role') ?? 'GENERIC');
+    }
+    expect(chain, `unflattened box inside MediaGrid: ${chain.join(' < ')}`).toEqual([
+      'presentation',
+    ]);
+    expect(root.getAttribute('role')).toBe('presentation');
+  });
+
+  it('does NOT put the rowgroup on the skeleton grid or the empty state', async () => {
+    // Neither holds rows, and a rowgroup with no rows is invalid — both keep their
+    // own `role="status"`, which is also why the host gates its table role on
+    // there being items.
+    mockLayout(1000, 0);
+    const loading = mount(MediaGrid, {
+      props: { items: [], loading: true, gridRole: 'rowgroup' },
+    });
+    await nextTick();
+    expect(loading.find('.media-grid--skeleton').attributes('role')).toBe('status');
+
+    const empty = mount(MediaGrid, { props: { items: [], gridRole: 'rowgroup' } });
+    await nextTick();
+    expect(empty.find('.media-grid-empty').attributes('role')).toBe('status');
+    expect(empty.find('.media-grid').exists()).toBe(false);
+  });
+
+  it('keeps virtualization untouched — the role is a11y-only, not layout', async () => {
+    // Same items, same measured width, with and without the prop: the rendered
+    // window must be identical, or the prop has quietly become a layout input.
+    mockLayout(1000, 0);
+    const plain = mount(MediaGrid, { props: { items: makeItems(200), cardSize: 180 } });
+    await nextTick();
+    const roled = mount(MediaGrid, {
+      props: { items: makeItems(200), cardSize: 180, gridRole: 'rowgroup' },
+    });
+    await nextTick();
+    expect(roled.findAllComponents(MediaCard)).toHaveLength(
+      plain.findAllComponents(MediaCard).length,
+    );
+    expect(roled.find('.media-grid-sizer').attributes('style')).toBe(
+      plain.find('.media-grid-sizer').attributes('style'),
+    );
+    expect(roled.find('.media-grid').attributes('style')).toBe(
+      plain.find('.media-grid').attributes('style'),
+    );
+  });
+});

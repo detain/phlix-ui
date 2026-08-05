@@ -30,6 +30,10 @@ import {
   REM_BASIS_PX,
   ROW_GAP,
   shouldLoadMore,
+  TABLE_COLUMNS,
+  TABLE_ROW_HEIGHT,
+  TABLE_ROW_POSTER_WIDTH,
+  TABLE_ROW_TEMPLATE_COLUMNS,
 } from './virtual-grid';
 
 const SRC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -445,6 +449,121 @@ describe('virtual-grid — backdrop hero strip geometry (S69)', () => {
     expect(r.endRow).toBe(10 + 4 + 2);
     expect(r.endIndex).toBe(16);
     expect(r.padTop).toBe(8 * 324);
+  });
+});
+
+/**
+ * S70 — the table/compact row is the THIRD fixed-height renderer, and the first
+ * one whose COLUMN SET is also a shared contract (the header row in
+ * `LibraryPage.vue` and every `MediaTableRow.vue` are two SEPARATE CSS grids, kept
+ * aligned only by `TABLE_ROW_TEMPLATE_COLUMNS`).
+ *
+ * ⚠ EVERY NUMBER BELOW IS ASSERTED AS A LITERAL, deliberately. The consumers
+ * (`MediaTableRow.test.ts`, `LibraryPage.test.ts`) all compare the rendered output
+ * against these same exported constants, which is right for THEM — it proves the
+ * DOM and the windowing math read one source — but it means none of them can
+ * detect the constant itself changing value: the expectation moves with the
+ * subject. Mutation-verified during S70: changing `TABLE_ROW_HEIGHT`'s value with
+ * this block absent turned exactly ONE assertion in the whole suite red. This is
+ * the block that pins the values.
+ */
+describe('virtual-grid — table/compact row geometry (S70)', () => {
+  it('derives TABLE_ROW_HEIGHT from the FIXED poster column width, at a pinned value', () => {
+    expect(TABLE_ROW_POSTER_WIDTH).toBe(120);
+    expect(TABLE_ROW_HEIGHT).toBe(TABLE_ROW_POSTER_WIDTH * POSTER_RATIO);
+    // The literal. Not `LIST_ROW_HEIGHT`, not `× POSTER_RATIO` — a value.
+    expect(TABLE_ROW_HEIGHT).toBe(180);
+  });
+
+  it('is INTENTIONALLY the same height as a list row (not an accident to "fix")', () => {
+    // 120px is the audited floor for a renderer that composes a full-action
+    // MediaCard — the wrapped action rows need ~124px of overlay content box, and
+    // `.media-card__poster` is `overflow: hidden`. See TABLE_ROW_POSTER_WIDTH.
+    // The table view's density comes from its COLUMNS, not from a shorter row.
+    expect(TABLE_ROW_POSTER_WIDTH).toBe(LIST_ROW_POSTER_WIDTH);
+    expect(TABLE_ROW_HEIGHT).toBe(LIST_ROW_HEIGHT);
+    // ...and it is still nowhere near the backdrop strip.
+    expect(TABLE_ROW_HEIGHT).toBeLessThan(BACKDROP_ROW_HEIGHT);
+  });
+
+  it('feeds MediaGrid a row height of exactly the row plus one row gap', () => {
+    expect(computeFixedRowHeight(TABLE_ROW_HEIGHT)).toBe(TABLE_ROW_HEIGHT + ROW_GAP);
+    expect(computeFixedRowHeight(TABLE_ROW_HEIGHT)).toBe(204);
+    // the cell inside the pinned row track is the row height again (no drift)
+    expect(fixedRowContentHeight(computeFixedRowHeight(TABLE_ROW_HEIGHT))).toBe(TABLE_ROW_HEIGHT);
+  });
+
+  it('must NOT be the poster formula applied to the full-width row', () => {
+    // A table row IS one full-width column, so `computeRowHeight()` would reserve
+    // ~2100px per item at a 1400px viewport — a 5000-title sizer ~10x too tall.
+    const posterDerived = computeRowHeight(computeCardWidth(1400, 1, COL_GAP));
+    expect(posterDerived).toBeGreaterThan(computeFixedRowHeight(TABLE_ROW_HEIGHT) * 10);
+  });
+
+  it('declares the column set as a LITERAL contract — labels and tracks both', () => {
+    // The header row and the body rows are two separate CSS grids; TABLE_COLUMNS is
+    // the only thing keeping them aligned, so both halves are pinned here rather
+    // than derived. A column added/removed/renamed/re-tracked fails this.
+    expect(TABLE_COLUMNS.map((c) => c.label)).toEqual([
+      'Poster',
+      'Title',
+      'Year',
+      'Rating',
+      'Runtime',
+      'Genres',
+    ]);
+    expect(TABLE_COLUMNS.map((c) => c.track)).toEqual([
+      '120px',
+      'minmax(0, 3fr)',
+      '80px',
+      '88px',
+      '88px',
+      'minmax(0, 2fr)',
+    ]);
+    expect(TABLE_COLUMNS).toHaveLength(6);
+  });
+
+  it('every column is NAMED — a bare columnheader announces nothing', () => {
+    for (const col of TABLE_COLUMNS) {
+      expect(col.label.trim().length, `column "${col.track}" has no label`).toBeGreaterThan(0);
+      expect(col.track.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it('the poster column track is exactly the poster width the row renders', () => {
+    // If these two ever disagree the composed MediaCard is scaled away from the
+    // 2:3 arithmetic TABLE_ROW_HEIGHT is derived from, and the row stops being the
+    // height MediaGrid windows on.
+    expect(TABLE_COLUMNS[0].track).toBe(`${TABLE_ROW_POSTER_WIDTH}px`);
+  });
+
+  it('TABLE_ROW_TEMPLATE_COLUMNS is the joined tracks, as a literal string', () => {
+    expect(TABLE_ROW_TEMPLATE_COLUMNS).toBe(TABLE_COLUMNS.map((c) => c.track).join(' '));
+    expect(TABLE_ROW_TEMPLATE_COLUMNS).toBe(
+      '120px minmax(0, 3fr) 80px 88px 88px minmax(0, 2fr)',
+    );
+  });
+
+  it('windows a one-column table correctly (row index == item index)', () => {
+    const rowHeight = computeFixedRowHeight(TABLE_ROW_HEIGHT); // 204
+    const r = computeWindow({
+      scrollTop: 30 * rowHeight,
+      viewportHeight: 800,
+      rowHeight,
+      columns: 1,
+      itemCount: 4000,
+      overscan: 2,
+    });
+    expect(r.rowCount).toBe(4000);
+    expect(r.totalHeight).toBe(4000 * 204); // 816000, NOT the poster-derived height
+    // firstVisible = 30 → startRow 28; visibleRows = ceil(800/204)+1 = 5
+    expect(r.startRow).toBe(28);
+    expect(r.startIndex).toBe(28); // one column → index == row
+    expect(r.endRow).toBe(30 + 5 + 2);
+    expect(r.endIndex).toBe(37);
+    expect(r.padTop).toBe(28 * 204);
+    // the point of virtualizing this view: 4000 titles, 9 rows in the DOM
+    expect(r.endIndex - r.startIndex).toBe(9);
   });
 });
 
