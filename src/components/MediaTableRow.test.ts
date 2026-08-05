@@ -88,6 +88,28 @@ describe('MediaTableRow — columns (S70)', () => {
     expect(w.find('.media-table-row__cell--runtime').text()).toBe('166m');
   });
 
+  /**
+   * S70 review, finding 2 — the certificate column shows the CERTIFICATE.
+   *
+   * `types/media-item.ts` warns twice, on both fields, never to conflate the
+   * list-level `rating` (the content/parental certificate) with the per-user 1-10
+   * `user_data.rating` score. Nothing in this suite discriminated them: every
+   * fixture had only the certificate, so a renderer that switched to the score
+   * would simply have shown "—". This item carries BOTH, so the two are separable,
+   * and the header its value sits under is asserted in the same test — the label
+   * and the field it names cannot drift apart.
+   */
+  it('the Cert column renders the parental certificate, never the per-user score', () => {
+    const w = mountRow(media({ rating: 'PG-13', user_data: { favorite: false, rating: 9 } }));
+    const cell = w.find('.media-table-row__cell--rating');
+    expect(cell.text()).toBe('PG-13');
+    expect(cell.text()).not.toContain('9');
+    // ...and the column header over it says so. Literal on both sides: deriving the
+    // label from TABLE_COLUMNS would self-adjust to a renamed column.
+    expect(TABLE_COLUMNS[3].label).toBe('Cert');
+    expect(TABLE_COLUMNS.map((c) => c.label)).not.toContain('Rating');
+  });
+
   it('caps the genre chips at three', () => {
     const chips = mountRow().findAll('.media-table-row__genre');
     expect(chips).toHaveLength(3);

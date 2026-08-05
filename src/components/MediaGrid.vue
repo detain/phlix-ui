@@ -579,6 +579,35 @@ watch(
   () => props.items.length,
   () => nextTick(scheduleMeasure),
 );
+
+/**
+ * A `gridRole` change means the HOST restructured around us — remeasure (S70 review).
+ *
+ * `sizerTop` caches a POSITION, but the ResizeObserver above only ever sees a SIZE.
+ * Everything else that moves the sizer also resizes it, so the observer has always
+ * been enough — except for exactly one transition, which S70 created: switching
+ * `LibraryPage` between `list` and `table`. Both modes pass `columns: 1` and the same
+ * `rowHeight` (`TABLE_ROW_HEIGHT === LIST_ROW_HEIGHT`, deliberately — see
+ * `virtual-grid.ts`), so `totalHeight` and therefore the sizer's own box are
+ * byte-identical; `items` is the same array and the sizer element does not remount.
+ * Nothing fires, yet the host's column-header row has just appeared ABOVE us and
+ * pushed the sizer down by its height. The cached `sizerTop` is then short by that
+ * much until the next window resize or page append: `throttledMeasure` overstates
+ * `scrollTop` (sub-visual — overscan absorbs it, and `padTop` stays consistent with
+ * `startIndex`, so there is no shear), and `scrollToIndex` lands an A-Z jump that far
+ * off, which is visible.
+ *
+ * Keyed on `gridRole` ALONE, and not on `columns`/`rowHeight` as well: those two
+ * always change the sizer's height with them, so the observer already covers them,
+ * and `gridRole` is the only prop by which a host announces that it has changed the
+ * composite structure it wraps us in. Cheap either way — `scheduleMeasure` is
+ * rAF-coalesced and props change on user action, not per frame — but keying it here
+ * says what the signal MEANS.
+ */
+watch(
+  () => props.gridRole,
+  () => nextTick(scheduleMeasure),
+);
 </script>
 
 <template>

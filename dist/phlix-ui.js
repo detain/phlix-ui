@@ -37,7 +37,7 @@ import { t as bt } from "./Tabs-lzVIjdc-.js";
 import { t as xt } from "./Menu-BPCGwEn4.js";
 import { t as St } from "./HelpText-CMd9gM8h.js";
 import { i as Ct, t as wt } from "./MediaCard-BvKc8NXt.js";
-import { t as Tt } from "./MediaGrid-96DOVpvh.js";
+import { t as Tt } from "./MediaGrid-BwMjS5qu.js";
 import { t as Et } from "./MediaRow-fE-563jH.js";
 import { n as Dt, t as Ot } from "./media-query-DKjhlX8r.js";
 import { n as kt, t as At } from "./metadata-sources-NdLEtTOg.js";
@@ -1203,7 +1203,7 @@ function da(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-B-3L_XBd.js")
+			component: () => import("./LibraryPage-BjQpdB4O.js")
 		},
 		{
 			path: `${t}/player/:id`,
@@ -1239,13 +1239,13 @@ function da(e) {
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-BYIn5Bpr.js")
+			component: () => import("./ExplorePage-ChDMy8PA.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-D86HafmO.js")
+			component: () => import("./RecommendationsPage-OgmauG3g.js")
 		},
 		{
 			path: `${t}/history`,

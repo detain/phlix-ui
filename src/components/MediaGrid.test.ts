@@ -781,6 +781,45 @@ describe('MediaGrid — host-owned ARIA structure (gridRole, S70)', () => {
     expect(empty.find('.media-grid').exists()).toBe(false);
   });
 
+  it('re-measures when gridRole changes — the header the host just added moved the sizer', async () => {
+    // S70 review finding 1. The list↔table transition changes NOTHING this component
+    // can observe on its own: `columns` (1) and `rowHeight` (204) are IDENTICAL in
+    // both modes (TABLE_ROW_HEIGHT === LIST_ROW_HEIGHT deliberately), so the sizer's
+    // own box size never changes and the ResizeObserver never fires; `items` is the
+    // same array, and `.media-grid-sizer` does not remount. The only thing that moved
+    // is OUTSIDE this component — the host's `v-if` column-header row appeared above
+    // the grid and pushed the sizer down. Without a re-measure the cached `sizerTop`
+    // stays stale by the header's height, and `scrollToIndex` (the A-Z rail) then
+    // lands every jump that far short.
+    const SCROLL_Y = 2000;
+    const HEADER_H = 25;
+    Object.defineProperty(window, 'scrollY', { value: SCROLL_Y, configurable: true });
+    mockLayout(1000, 0); // sizer's document top === SCROLL_Y
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(200), total: 200, columns: 1, rowHeight: 204 },
+    });
+    await nextTick();
+    await nextTick();
+
+    // Baseline: the cache is correct before the transition, so a failure below is
+    // the STALENESS and not a broken harness.
+    (w.vm as unknown as { scrollToIndex: (i: number) => void }).scrollToIndex(0);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({ top: SCROLL_Y, behavior: 'auto' });
+
+    // The host renders its header row and switches the grid into a rowgroup in the
+    // same tick. Same size, new position — note mockLayout's height is untouched.
+    mockLayout(1000, HEADER_H);
+    await w.setProps({ gridRole: 'rowgroup' });
+    await nextTick();
+    await nextTick();
+
+    (w.vm as unknown as { scrollToIndex: (i: number) => void }).scrollToIndex(0);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({
+      top: SCROLL_Y + HEADER_H,
+      behavior: 'auto',
+    });
+  });
+
   it('keeps virtualization untouched — the role is a11y-only, not layout', async () => {
     // Same items, same measured width, with and without the prop: the rendered
     // window must be identical, or the prop has quietly become a layout input.
