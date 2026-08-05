@@ -1,5 +1,16 @@
 ## Unreleased
 
+## 0.98.37 - 2026-08-05
+
+### Added
+- **The admin console now surfaces core-update status, in both the server and the hub (plan_updates.md — S76).** New `UpdateAvailableBanner.vue`, mounted once in `AdminLayout.vue`, plus a small `src/api/admin/updates.ts` parser for `GET /api/v1/admin/updates/status`. This completes the S74 (server) / S75 (hub) / S76 (UI) trio.
+
+  ⚠ **The step text said "consuming both status endpoints" from one mount, and that is not implementable — the banner does NOT fan out to two back ends.** The hub's only route to a paired server is the relay proxy, and `ServerProxyController` rejects every `/api/v1/admin/**` path with `403 proxy.scope_denied` *before* forwarding; the hub also stores no server version anywhere, and phlix-server exposes no hub-status endpoint. What S74 actually recorded as the intent is one **parser**, not one fetch. It works because `AdminLayout.vue` is mounted by `buildAdminRoutes()` and, by delegation, `buildHubAdminRoutes()` — so one component serves both consoles, each calling its own back end. Both DTOs emit the same seven camelCase keys (`currentVersion`, `latestVersion`, `updateAvailable`, `checkEnabled`, `lastCheckedAt`, `lastError`, `updateCommand`), verified byte-for-byte. No speculative `sources[]` prop was added: no consumer could supply a second source, so a multi-source predicate would have been production-unreachable code.
+
+  **An error is not "no update."** Three distinct states render — update banner, warning banner (`data-variant="warning"`), or nothing — because silently collapsing a failed check into "you're up to date" is how this feature would become quietly useless. A warning shows when the service reports `lastError` **or** the request itself fails. Deliberately suppressed: **404** (the back end predates S74/S75, and `@phlix/ui` is repinned independently of back ends, so a permanent red banner there would get the feature deleted), **401/403**, and `checkEnabled === false` — which suppresses only the *warning*, never a found update. 5xx, timeouts and network errors do warn.
+
+  Parser defaults are deliberately asymmetric: `updateAvailable === true` (strict — an unrecognised value must never imply an update) but `checkEnabled !== false` (defaults true).
+
 ## 0.98.36 - 2026-08-05
 
 ### Added
