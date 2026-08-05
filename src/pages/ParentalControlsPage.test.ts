@@ -783,52 +783,75 @@ describe('ParentalControlsPage — creating and editing a schedule', () => {
   });
 
   /**
-   * 🔴 KNOWN DEFECT, pinned as-is — reported under S160, NOT fixed here.
+   * ── S202: an edit is ONE request, and a failed edit destroys NOTHING ────────
    *
-   * There is no update endpoint, so `submitScheduleForm` implements "edit" as
-   * DELETE-then-CREATE (ParentalControlsPage.vue:199-210). The two calls are not
-   * atomic and there is no compensating re-create, so if the POST fails after the
-   * DELETE succeeded the restriction is GONE from the server while the only signal
-   * to the admin is an inline message in a modal they may simply close.
+   * These two tests replace a pair that pinned the opposite behaviour. Until
+   * S202 the page implemented "edit" as DELETE-then-CREATE on the claim that no
+   * update endpoint existed; the claim was false (`PUT
+   * /profiles/{profileId}/schedules/{scheduleId}` has always been served) and the
+   * consequence was that a create failing after the delete committed left the
+   * child with NO time restriction. The old tests named that data loss and pinned
+   * it as a known defect, which is exactly the shape a regression test must now
+   * take the other way round.
    *
-   * On an access-control surface that is a fail-OPEN: the profile silently ends up
-   * with NO time restriction. These two tests pin the ordering and then the data
-   * loss, so the behaviour is at least visible and a future fix has a red test.
+   * ⚠ Both tests drive a STUBBED api layer and assert on the CALLS made, never on
+   * a live backend. That is not a convenience: every parental-controls request
+   * used to 404 on a prefix mismatch (S208), so on those revisions the DELETE
+   * never reached the server and "the schedule survived" was true for a reason
+   * that has nothing to do with the ordering. Observing survival end-to-end
+   * cannot distinguish a safe edit from an unreachable one; observing that no
+   * DELETE was ISSUED can.
    */
-  it('edits by DELETE-then-CREATE, in that order', async () => {
-    const { client, post, del } = makeClient();
+  it('edits with a single PUT to that schedule, issuing no DELETE and no POST', async () => {
+    const { client, post, put, del, get } = makeClient();
     const w = await mountPage(client);
+    const before = get.mock.calls.filter((c) => c[0] === SCHEDULES_URL).length;
+
     await findBtn(w, 'Edit')!.trigger('click');
     await flushPromises();
-    await setInput(0, 'Weekday Evenings v2');
+    await setInput(0, '  Weekday Evenings v2  ');
     await submitForm();
 
-    expect(del).toHaveBeenCalledWith(`${SCHEDULES_URL}/11`);
-    expect(post).toHaveBeenCalledWith(
-      SCHEDULES_URL,
-      expect.objectContaining({ name: 'Weekday Evenings v2' }),
-    );
-    expect(del.mock.invocationCallOrder[0]!).toBeLessThan(post.mock.invocationCallOrder[0]!);
+    // snake_case, matching what AccessScheduleController::updateSchedule reads.
+    expect(put).toHaveBeenCalledWith(`${SCHEDULES_URL}/11`, {
+      name: 'Weekday Evenings v2',
+      start_time: '18:00:00',
+      end_time: '20:30:00',
+      days_of_week: ['mon', 'tue', 'wed', 'thu', 'fri'],
+      is_active: true,
+    });
+    expect(put).toHaveBeenCalledTimes(1);
+    // The whole point: the destructive verb is never reached on an edit …
+    expect(del).not.toHaveBeenCalled();
+    // … and neither is the create, so no duplicate row is left behind.
+    expect(post).not.toHaveBeenCalled();
     expect(useToastStore().toasts.some((t) => t.message === 'Schedule updated.')).toBe(true);
+    expect(anyModalOpen()).toBe(false);
+    expect(get.mock.calls.filter((c) => c[0] === SCHEDULES_URL).length).toBeGreaterThan(before);
   });
 
-  it('DESTROYS the schedule when the re-create fails after the delete (known defect)', async () => {
-    const { client, post, del } = makeClient();
-    post.mockRejectedValueOnce(new Error('recreate boom'));
+  it('AC: a FAILED edit leaves the original schedule intact — nothing is deleted', async () => {
+    const { client, post, put, del } = makeClient();
+    // BOTH write verbs reject, so the test cannot pass by quietly falling back to
+    // the old create path: whichever request the page chooses to make, it fails.
+    put.mockRejectedValue(new Error('update boom'));
+    post.mockRejectedValue(new Error('create boom'));
     const w = await mountPage(client);
     await findBtn(w, 'Edit')!.trigger('click');
     await flushPromises();
     await setInput(0, 'Weekday Evenings v2');
     await submitForm();
 
-    // The destructive half went through …
-    expect(del).toHaveBeenCalledWith(`${SCHEDULES_URL}/11`);
-    // … the restorative half did not …
-    expect(post).toHaveBeenCalledTimes(1);
-    expect(formError()).toBe('recreate boom');
-    // … and nothing compensates: no second POST, no re-delete, no reload.
-    expect(post).toHaveBeenCalledTimes(1);
-    expect(del).toHaveBeenCalledTimes(1);
+    // The restriction is untouched: no DELETE was ever issued, at any point.
+    expect(del).not.toHaveBeenCalled();
+    // The failure is reported, not swallowed, and the form stays open to retry.
+    expect(formError()).toBe('update boom');
+    expect(anyModalOpen()).toBe(true);
+    // And the row is still on screen, still carrying its ORIGINAL name and hours.
+    const rows = w.findAll('.parental-section__item');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]!.find('.parental-section__item-name').text()).toBe('Weekday Evenings');
+    expect(rows[0]!.find('.parental-section__item-meta').text()).toContain('18:00 – 20:30');
   });
 });
 

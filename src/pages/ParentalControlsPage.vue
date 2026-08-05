@@ -262,6 +262,29 @@ function validateScheduleForm(): string | null {
   return null;
 }
 
+/**
+ * Persist the schedule form — CREATE for a new schedule, a single in-place
+ * UPDATE for an existing one.
+ *
+ * ⚠ An edit must NEVER be a delete followed by a create (S202). It was exactly
+ * that until this change, justified by an inline "no individual update endpoint"
+ * that was simply untrue — `PUT .../schedules/{scheduleId}` has been served all
+ * along (see {@link AdminUsersApi.updateProfileSchedule} for the route and the
+ * handler). The two calls were not atomic and nothing compensated, so a create
+ * that failed after the delete committed — a network blip, a validation refusal,
+ * a 500 — left the profile with NO time restriction at all, while the only
+ * signal was an inline message in a modal the admin can close.
+ *
+ * That failure direction is what makes it a defect rather than a rough edge: on
+ * an access-control surface the safe direction is to leave the OLD restriction
+ * standing. A failed edit here now writes nothing and destroys nothing, because
+ * the single request either applies in full server-side or does not apply at all
+ * — there is no half-state for the client to unwind.
+ *
+ * The reason `editingSchedule` is read for the id rather than the selected row:
+ * it is the row the form was OPENED from, so it cannot drift if the list is
+ * re-sorted or the selection moves while the modal is up.
+ */
 async function submitScheduleForm(): Promise<void> {
   if (!selectedProfileId.value) return;
   const error = validateScheduleForm();
@@ -271,17 +294,25 @@ async function submitScheduleForm(): Promise<void> {
   }
   try {
     if (editingSchedule.value) {
-      // Delete and recreate (console client pattern - no individual update endpoint)
-      await api.deleteProfileSchedule(selectedProfileId.value, editingSchedule.value.id);
+      await api.updateProfileSchedule(
+        selectedProfileId.value,
+        editingSchedule.value.id,
+        scheduleForm.value.name.trim(),
+        scheduleForm.value.startTime + ':00',
+        scheduleForm.value.endTime + ':00',
+        scheduleForm.value.daysOfWeek,
+        scheduleForm.value.isActive,
+      );
+    } else {
+      await api.createProfileSchedule(
+        selectedProfileId.value,
+        scheduleForm.value.name.trim(),
+        scheduleForm.value.startTime + ':00',
+        scheduleForm.value.endTime + ':00',
+        scheduleForm.value.daysOfWeek,
+        scheduleForm.value.isActive,
+      );
     }
-    await api.createProfileSchedule(
-      selectedProfileId.value,
-      scheduleForm.value.name.trim(),
-      scheduleForm.value.startTime + ':00',
-      scheduleForm.value.endTime + ':00',
-      scheduleForm.value.daysOfWeek,
-      scheduleForm.value.isActive,
-    );
     toasts.success(editingSchedule.value ? 'Schedule updated.' : 'Schedule created.');
     showScheduleForm.value = false;
     await loadSchedules();

@@ -304,6 +304,114 @@ describe('AdminUsersApi — profiles', () => {
   });
 });
 
+/**
+ * S202 — the in-place schedule update.
+ *
+ * The method exists so the page never has to spell "edit" as DELETE-then-CREATE;
+ * these tests are about the WIRE CONTRACT, and the page test is about the calls
+ * the page makes. Both halves matter: a correctly-ordered edit that sends keys
+ * the server does not read is still a broken edit, and it fails as a bare 400
+ * with no field named (S234, live in the mobile and Roku clients).
+ */
+describe('AdminUsersApi — profile access schedules', () => {
+  const SCHEDULE_BODY = {
+    name: 'Bedtime',
+    start_time: '19:30:00',
+    end_time: '21:00:00',
+    days_of_week: ['mon', 'tue'],
+    is_active: true,
+  };
+
+  it('updateProfileSchedule() PUTs /profiles/{id}/schedules/{scheduleId}', async () => {
+    const { api, put } = makeClient();
+    put.mockResolvedValue({ schedule: { id: 11 }, message: 'Schedule updated successfully' });
+    const res = await api.updateProfileSchedule(
+      'a3f2c1d4-5e6b-4a7c-8d9e-0f1a2b3c4d5e',
+      11,
+      'Bedtime',
+      '19:30:00',
+      '21:00:00',
+      ['mon', 'tue'],
+      true,
+    );
+    expect(put).toHaveBeenCalledWith(
+      '/api/v1/admin/profiles/a3f2c1d4-5e6b-4a7c-8d9e-0f1a2b3c4d5e/schedules/11',
+      SCHEDULE_BODY,
+    );
+    expect(res).toEqual({ schedule: { id: 11 }, message: 'Schedule updated successfully' });
+  });
+
+  it('updateProfileSchedule() sends snake_case keys ONLY, never camelCase', async () => {
+    // Asserted as an exact key SET rather than with objectContaining: the handler
+    // ignores anything it does not recognise and every field is individually
+    // optional, so an extra camelCase alias would not fail loudly anywhere — it
+    // would just sit on the wire until someone copied it.
+    const { api, put } = makeClient();
+    put.mockResolvedValue({ schedule: [], message: 'ok' });
+    await api.updateProfileSchedule(7, 11, 'Bedtime', '19:30:00', '21:00:00', ['mon', 'tue'], true);
+    const body = put.mock.calls[0]![1] as Record<string, unknown>;
+    expect(Object.keys(body).sort()).toEqual([
+      'days_of_week',
+      'end_time',
+      'is_active',
+      'name',
+      'start_time',
+    ]);
+  });
+
+  it('updateProfileSchedule() carries is_active=false rather than dropping it', async () => {
+    const { api, put } = makeClient();
+    put.mockResolvedValue({ schedule: [], message: 'ok' });
+    await api.updateProfileSchedule(7, 11, 'Paused', '19:30:00', '21:00:00', ['mon'], false);
+    expect(put).toHaveBeenCalledWith(
+      '/api/v1/admin/profiles/7/schedules/11',
+      expect.objectContaining({ is_active: false }),
+    );
+  });
+
+  it('updateProfileSchedule() URL-encodes the profile id', async () => {
+    const { api, put } = makeClient();
+    put.mockResolvedValue({ schedule: [], message: 'ok' });
+    await api.updateProfileSchedule('a b/c', 11, 'Bedtime', '19:30:00', '21:00:00', ['mon'], true);
+    expect(put).toHaveBeenCalledWith(
+      '/api/v1/admin/profiles/a%20b%2Fc/schedules/11',
+      expect.any(Object),
+    );
+  });
+
+  it('updateProfileSchedule() propagates a failure instead of resolving', async () => {
+    const { api, put } = makeClient();
+    put.mockRejectedValue(new Error('Schedule not found'));
+    await expect(
+      api.updateProfileSchedule(7, 11, 'Bedtime', '19:30:00', '21:00:00', ['mon'], true),
+    ).rejects.toThrow('Schedule not found');
+  });
+
+  it('updateProfileSchedule() tolerates the empty-array schedule the handler can emit', async () => {
+    // `$updated?->toArray() ?? []` (AccessScheduleController.php:282) — PHP encodes
+    // an empty array as `[]`, so this shape is reachable and must not be narrowed
+    // away in the declaration.
+    const { api, put } = makeClient();
+    put.mockResolvedValue({ schedule: [], message: 'Schedule updated successfully' });
+    const res = await api.updateProfileSchedule(7, 11, 'B', '19:30:00', '21:00:00', ['mon'], true);
+    expect(res.schedule).toEqual([]);
+  });
+
+  it('createProfileSchedule() POSTs the same snake_case body to the collection', async () => {
+    const { api, post } = makeClient();
+    post.mockResolvedValue({ id: 11, message: 'Schedule created successfully' });
+    await api.createProfileSchedule(7, 'Bedtime', '19:30:00', '21:00:00', ['mon', 'tue'], true);
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/profiles/7/schedules', SCHEDULE_BODY);
+  });
+
+  it('deleteProfileSchedule() DELETEs the one schedule', async () => {
+    const { api, del } = makeClient();
+    del.mockResolvedValue({ message: 'Schedule deleted successfully' });
+    await api.deleteProfileSchedule(7, 11);
+    expect(del).toHaveBeenCalledWith('/api/v1/admin/profiles/7/schedules/11');
+  });
+});
+
 describe('rating tables', () => {
   it('RATING_LABELS covers the full 0-12 scale (movies + TV)', () => {
     expect(Object.keys(RATING_LABELS)).toHaveLength(13);
