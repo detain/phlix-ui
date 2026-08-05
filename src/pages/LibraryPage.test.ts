@@ -25,10 +25,14 @@ import ItemDataInspector from '../components/ItemDataInspector.vue';
 import MediaCard from '../components/MediaCard.vue';
 import MediaListRow from '../components/MediaListRow.vue';
 import MediaBackdropRow from '../components/MediaBackdropRow.vue';
+import MediaTableRow from '../components/MediaTableRow.vue';
 import {
   BACKDROP_ROW_HEIGHT,
   computeFixedRowHeight,
   LIST_ROW_HEIGHT,
+  TABLE_COLUMNS,
+  TABLE_ROW_HEIGHT,
+  TABLE_ROW_TEMPLATE_COLUMNS,
 } from '../components/virtual-grid';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
@@ -616,11 +620,39 @@ describe('LibraryPage — list view (S68)', () => {
   // ...and the branch that renders it must be the PAGE's own `v-else`, not Vue's
   // silent slot-fallback to MediaGrid's default card (see `slotRenderers`).
   it('the #card slot itself yields a renderer for EVERY mode, garbage included', async () => {
-    // One entry per IMPLEMENTED renderer; every other mode (including S70's
-    // not-yet-built 'table' and outright garbage) must reach the `v-else` card.
-    const RENDERERS: Record<string, unknown> = { list: MediaListRow, backdrop: MediaBackdropRow };
+    // One entry per IMPLEMENTED renderer; every other mode (outright garbage, and
+    // the empty string a cleared preference can leave behind) must reach the
+    // `v-else` card. The garbage arms below are load-bearing and must stay: they
+    // are the only thing that proves the final branch is an unconditional `v-else`
+    // rather than a fourth `v-else-if` (an all-false chain yields a bare Comment,
+    // which Vue's `renderSlot` treats as EMPTY and silently backfills with
+    // MediaGrid's own default card — so the DOM still looks right).
+    //
+    // ⚠ THREE of the garbage modes are SUPERSTRINGS of a real one — 'listicle',
+    // 'backdrop-hero', 'not-a-table'. They exist because the page's mode tests are
+    // strict `===` and must stay that way (S191/S193): loosening any of them to
+    // `.includes()`/`.startsWith()` is invisible to every other assertion in this
+    // suite, and was mutation-verified during S70 to turn the whole 4,800-test
+    // suite ZERO red before these three arms were added. Do not prune them for
+    // looking redundant with 'sideways-carousel' — that one shares no substring
+    // with any mode and therefore cannot detect the loosening.
+    const RENDERERS: Record<string, unknown> = {
+      list: MediaListRow,
+      backdrop: MediaBackdropRow,
+      table: MediaTableRow,
+    };
     const item = media({ id: 'lr1' });
-    for (const mode of ['list', 'grid', 'backdrop', 'table', 'sideways-carousel', '']) {
+    for (const mode of [
+      'list',
+      'grid',
+      'backdrop',
+      'table',
+      'sideways-carousel',
+      '',
+      'listicle',
+      'backdrop-hero',
+      'not-a-table',
+    ]) {
       const { w } = await mountWithMode(mode);
       const rendered = slotRenderers(w, item);
       expect(rendered, `#card slot rendered nothing for viewMode="${mode}"`).toHaveLength(1);
@@ -868,6 +900,282 @@ describe('LibraryPage — backdrop hero view (S69)', () => {
     expect(w.findComponent(MediaBackdropRow).exists()).toBe(false);
     expect(grid.props('rowHeight')).toBeUndefined();
     expect(grid.props('columns')).toBeUndefined();
+  });
+});
+
+/**
+ * S70 — the `table` view mode renders `MediaTableRow` through the SAME single
+ * MediaGrid mount, and additionally asserts an ARIA `table` structure that spans
+ * BOTH sides of the component boundary. The invariants:
+ *   1. still exactly one MediaGrid (no second grid / parallel pagination path),
+ *   2. the layout travels through the grid's `columns`/`row-height` props with the
+ *      TABLE row's own height — so virtualization stays intact (the AC's second
+ *      half: "renders correctly AND virtualized"),
+ *   3. the `v-else` grid branch is still UNCONDITIONAL (the shared slot-invocation
+ *      test in the S68 block covers 'table' + two garbage modes),
+ *   4. the branch wires every one of MediaCard's ten host events,
+ *   5. the a11y chain is UNBROKEN end to end — `role="table"` here owns a header
+ *      `rowgroup` and, through MediaGrid's `grid-role` prop flattening the two
+ *      intermediate boxes, the body `rowgroup` and its rows. Asserting the roles
+ *      one at a time would pass even if a link in the chain were missing, so the
+ *      chain test below walks it by DOM ancestry.
+ */
+describe('LibraryPage — table view (S70)', () => {
+  it('renders MediaTableRow (not the poster card, not a list row) through the ONE grid', async () => {
+    const { w } = await mountWithMode('table');
+    expect(w.findAllComponents({ name: 'MediaGrid' })).toHaveLength(1);
+    expect(w.findComponent(MediaTableRow).exists()).toBe(true);
+    expect(w.find('.media-table-row').exists()).toBe(true);
+    expect(w.findComponent(MediaListRow).exists()).toBe(false);
+    expect(w.findComponent(MediaBackdropRow).exists()).toBe(false);
+    // it composes a MediaCard for its poster column with the caption suppressed
+    expect(w.find('.media-card').exists()).toBe(true);
+    expect(w.find('.media-card__caption').exists()).toBe(false);
+    expect(w.find('.media-grid-root').attributes('data-view-mode')).toBe('table');
+  });
+
+  it('drives the table layout through the grid props, with the TABLE row height', async () => {
+    const { w } = await mountWithMode('table');
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    expect(grid.props('columns')).toBe(1);
+    expect(grid.props('rowHeight')).toBe(computeFixedRowHeight(TABLE_ROW_HEIGHT));
+    expect(grid.props('rowHeight')).toBe(TABLE_ROW_HEIGHT + 24);
+    // ...and the LITERAL. Both lines above derive their expectation from the
+    // constant under test and so cannot detect its VALUE changing; this can.
+    expect(grid.props('rowHeight')).toBe(204);
+    // NOT computeRowHeight()'s cardWidth * 2:3 + label, which for a full-width row
+    // reserves several times too much and desyncs padTop/totalHeight.
+    expect(grid.props('rowHeight')).not.toBe(computeFixedRowHeight(BACKDROP_ROW_HEIGHT));
+    // ⚠ Deliberately NOT asserted `!== the list row's height`: TABLE_ROW_HEIGHT and
+    // LIST_ROW_HEIGHT are EQUAL on purpose (both derive from the 120px poster width
+    // that is the audited floor for a composed full-action MediaCard overlay — see
+    // TABLE_ROW_POSTER_WIDTH). A `not.toBe(list)` here would be a false claim.
+    expect(TABLE_ROW_HEIGHT).toBe(LIST_ROW_HEIGHT);
+  });
+
+  it('virtualization stays intact: the grid pins the table row TRACK and one column', async () => {
+    const { w } = await mountWithMode('table');
+    const style = w.find('.media-grid').attributes('style') ?? '';
+    expect(style).toContain('grid-template-columns: repeat(1, minmax(0, 1fr))');
+    expect(style).toContain(`grid-auto-rows: ${TABLE_ROW_HEIGHT}px`);
+  });
+
+  it('wires ALL TEN host events onto the table row', async () => {
+    const { w } = await mountWithMode('table');
+    const [row] = slotRenderers(w, media({ id: 'lr1' }));
+    expect(row.type).toBe(MediaTableRow);
+    const bound = boundListeners(row);
+    for (const event of HOST_EVENTS) {
+      expect(bound, `table row is missing a \`${event}\` listener`).toContain(handlerKey(event));
+    }
+  });
+
+  it('hands the row its ABSOLUTE index, not its position in the rendered window', async () => {
+    // aria-rowindex is the only thing that survives virtualization; it is derived
+    // from the slot's `index`, so the page dropping that binding is the failure
+    // this catches (the row would then silently report every item as row 2).
+    const { w } = await mountWithMode('table');
+    const slot = w.findComponent({ name: 'MediaGrid' }).vm.$slots.card as (p: {
+      item: MediaItem;
+      index: number;
+    }) => VNode[];
+    const [row] = slotRenderers(w, media({ id: 'lr1' }));
+    expect(row.props?.index).toBe(0);
+    const flat = slot({ item: media({ id: 'lr1' }), index: 41 }).flatMap((n) =>
+      n.type === Fragment ? ((n.children ?? []) as VNode[]) : [n],
+    );
+    expect(flat.find((n) => n.type === MediaTableRow)?.props?.index).toBe(41);
+  });
+
+  it('emits exactly ONE heading per item, like grid, list and backdrop mode', async () => {
+    const HEADINGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+      .map((h) => `.media-grid ${h}`)
+      .join(', ');
+    for (const mode of ['table', 'backdrop', 'list', 'grid'] as const) {
+      const { w } = await mountWithMode(mode);
+      const headings = w.findAll(HEADINGS);
+      expect(headings, `viewMode="${mode}" must emit ONE heading per item`).toHaveLength(1);
+      expect(headings[0].text()).toBe('Dune');
+      w.unmount();
+    }
+  });
+
+  it('renders the column header row OUTSIDE the grid, on the SAME tracks as the rows', async () => {
+    const { w } = await mountWithMode('table');
+    const head = w.find('.library-table__head-row');
+    expect(head.exists()).toBe(true);
+    // Outside the virtualized container — inside it the header would be pushed by
+    // `translateY(padTop)` and would consume a row slot.
+    expect(w.find('.media-grid .library-table__head-row').exists()).toBe(false);
+    const headers = head.findAll('[role="columnheader"]');
+    expect(headers).toHaveLength(TABLE_COLUMNS.length);
+    expect(headers.map((h) => h.text())).toEqual(TABLE_COLUMNS.map((c) => c.label));
+    // Literal, so the shared-constant assertion above cannot self-adjust to a
+    // silently reshaped column set.
+    expect(headers.map((h) => h.text())).toEqual([
+      'Poster',
+      'Title',
+      'Year',
+      'Rating',
+      'Runtime',
+      'Genres',
+    ]);
+    // The one thing that keeps the two separate grids aligned.
+    expect(head.attributes('style')).toContain(TABLE_ROW_TEMPLATE_COLUMNS);
+    expect(w.find('.media-table-row').attributes('style')).toContain(TABLE_ROW_TEMPLATE_COLUMNS);
+  });
+
+  it('the ARIA table OWNS its rows: table → rowgroup → row, with no generic box between', async () => {
+    const { w } = await mountWithMode('table');
+    const table = w.find('[role="table"]');
+    expect(table.exists()).toBe(true);
+    expect(table.attributes('aria-rowcount')).toBe('2'); // 1 item + the header row
+
+    // Walk UP from a rendered row: every ancestor between it and the table must be
+    // a rowgroup or presentational, or `table` does not own the row. Asserting the
+    // three roles independently would pass with a `generic` div still in the chain,
+    // which is precisely the defect MediaGrid's `grid-role` prop exists to fix.
+    const rowEl = w.find('.media-table-row').element;
+    expect(rowEl.getAttribute('role')).toBe('row');
+    const chain: string[] = [];
+    for (let el = rowEl.parentElement; el && el !== table.element; el = el.parentElement) {
+      chain.push(el.getAttribute('role') ?? 'GENERIC');
+    }
+    expect(chain, `unowned box between the row and the table: ${chain.join(' < ')}`).toEqual([
+      'rowgroup', // .media-grid
+      'presentation', // .media-grid-sizer
+      'presentation', // .media-grid-root
+    ]);
+
+    // The header is the table's OTHER rowgroup, and is row 1.
+    const headGroup = w.find('.library-table__head');
+    expect(headGroup.attributes('role')).toBe('rowgroup');
+    expect(headGroup.element.parentElement).toBe(table.element);
+    expect(w.find('.library-table__head-row').attributes('aria-rowindex')).toBe('1');
+    // ...and the item row is row 2 — the header's index + 1, not its DOM position.
+    expect(w.find('.media-table-row').attributes('aria-rowindex')).toBe('2');
+  });
+
+  it('asserts NO table role in any other view mode', async () => {
+    for (const mode of ['grid', 'list', 'backdrop', 'sideways-carousel'] as const) {
+      const { w } = await mountWithMode(mode);
+      expect(w.find('[role="table"]').exists(), `viewMode="${mode}" claimed a table`).toBe(false);
+      expect(w.find('.library-table__head').exists()).toBe(false);
+      // MediaGrid's own boxes keep their original (absent) roles — the prop must
+      // emit no attribute at all when unset, or every other surface changes.
+      expect(w.find('.media-grid-root').attributes('role')).toBeUndefined();
+      expect(w.find('.media-grid').attributes('role')).toBeUndefined();
+      w.unmount();
+    }
+  });
+
+  /**
+   * S191/S193 shape, pinned at the LAYOUT seam rather than only the renderer seam.
+   *
+   * `tableMode` is consumed in four places — the `#card` `v-else-if`, `gridColumns`,
+   * `gridRowHeight` and `tableSemantics` — and the slot-renderer test above only
+   * covers the first. Loosening `=== 'table'` to `.includes('table')` at any of the
+   * others was mutation-verified to be invisible to the rest of this suite: a
+   * SUPERSTRING mode is the only input that separates the two comparisons.
+   */
+  it('a SUPERSTRING of "table" gets no table layout, no table semantics, no table row', async () => {
+    for (const mode of ['not-a-table', 'table-view', 'timetable']) {
+      const { w } = await mountWithMode(mode);
+      const grid = w.findComponent({ name: 'MediaGrid' });
+      expect(grid.props('columns'), `viewMode="${mode}" took the table column count`).toBeUndefined();
+      expect(grid.props('rowHeight'), `viewMode="${mode}" took the table row height`).toBeUndefined();
+      expect(grid.props('gridRole')).toBeUndefined();
+      expect(w.findComponent(MediaTableRow).exists(), `viewMode="${mode}" rendered a table row`).toBe(
+        false,
+      );
+      expect(w.find('[role="table"]').exists()).toBe(false);
+      expect(w.find('.library-table__head').exists()).toBe(false);
+      // ...and it still renders items, via the unconditional `v-else`.
+      expect(w.findComponent(MediaCard).exists()).toBe(true);
+      w.unmount();
+    }
+  });
+
+  it('does NOT claim a table (or draw headers) when there is nothing to put in it', async () => {
+    // ARIA `table` requires row/rowgroup children; with no items MediaGrid renders
+    // its `role="status"` empty state and there are no rows at all.
+    localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: 'table' }));
+    setActivePinia(createPinia());
+    stubFetch({ media: { items: [], total: 0 } });
+    const { w } = await mountAt('lib1');
+    await flushPromises();
+    expect(w.findComponent(MediaTableRow).exists()).toBe(false);
+    expect(w.find('[role="table"]').exists()).toBe(false);
+    expect(w.find('.library-table__head').exists()).toBe(false);
+    expect(w.find('.media-grid-root').attributes('role')).toBeUndefined();
+    // ...but the LAYOUT props stay applied, so skeletons are already row-sized and
+    // the first loaded page does not shift the page.
+    expect(w.findComponent({ name: 'MediaGrid' }).props('rowHeight')).toBe(
+      computeFixedRowHeight(TABLE_ROW_HEIGHT),
+    );
+    expect(w.findComponent({ name: 'MediaGrid' }).props('columns')).toBe(1);
+  });
+
+  it('a table row `play` reaches the page handler and navigates', async () => {
+    const { w, router } = await mountWithMode('table');
+    const push = vi.spyOn(router, 'push');
+    w.findComponent(MediaTableRow).vm.$emit('play', media({ id: 'lr1' }));
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'lr1' } });
+  });
+
+  it('a table row admin action (`explore-data`) opens the inspector', async () => {
+    localStorage.setItem('phlix.prefs', JSON.stringify({ viewMode: 'table' }));
+    setActivePinia(createPinia());
+    stubFetch({ media: { items: [media({ id: 'lr1' })], total: 1 } });
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    const r = makeRouter();
+    await r.push('/app/library/lib1');
+    await r.isReady();
+    const w = mount(LibraryPage, {
+      global: {
+        plugins: [r],
+        provide: { apiBase: '', phlixConfig: { app: 'server', apiBase: '' } },
+        stubs: { MetadataMatchModal: true, PosterPicker: true },
+      },
+    });
+    await flushPromises();
+
+    expect(w.findComponent(MediaTableRow).props('canMatch')).toBe(true);
+
+    const inspector = w.findComponent(ItemDataInspector);
+    expect(inspector.props('modelValue')).toBe(false);
+    w.findComponent(MediaTableRow).vm.$emit('explore-data', media({ id: 'lr1' }));
+    await flushPromises();
+    expect(inspector.props('modelValue')).toBe(true);
+    expect((inspector.props('item') as MediaItem).id).toBe('lr1');
+    // See the list-row twin above: unmount so the teleported pane does not leak.
+    w.unmount();
+  });
+
+  it('swaps renderer, row height AND table semantics when the mode changes at runtime', async () => {
+    const { w } = await mountWithMode('list');
+    const prefs = usePreferencesStore();
+    const grid = w.findComponent({ name: 'MediaGrid' });
+    expect(w.find('[role="table"]').exists()).toBe(false);
+
+    prefs.viewMode = 'table';
+    await nextTick();
+    expect(w.findComponent(MediaTableRow).exists()).toBe(true);
+    expect(w.findComponent(MediaListRow).exists()).toBe(false);
+    expect(grid.props('rowHeight')).toBe(computeFixedRowHeight(TABLE_ROW_HEIGHT));
+    expect(grid.props('columns')).toBe(1);
+    expect(grid.props('gridRole')).toBe('rowgroup');
+    expect(w.find('[role="table"]').exists()).toBe(true);
+
+    prefs.viewMode = 'grid';
+    await nextTick();
+    expect(w.findComponent(MediaTableRow).exists()).toBe(false);
+    expect(grid.props('rowHeight')).toBeUndefined();
+    expect(grid.props('columns')).toBeUndefined();
+    expect(grid.props('gridRole')).toBeUndefined();
+    expect(w.find('[role="table"]').exists()).toBe(false);
   });
 });
 

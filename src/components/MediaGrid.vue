@@ -88,6 +88,36 @@ const props = withDefaults(
      * out of the position `padTop` reserved for it.
      */
     rowHeight?: number;
+    /**
+     * ARIA role for the inner `.media-grid` container, for a host that owns a
+     * composite structure this grid is only PART of (S70's `table` view).
+     *
+     * The problem it solves is ownership, not labelling. ARIA's `table` must OWN
+     * its rows — directly, through a `rowgroup`, or via `aria-owns` — but this
+     * component's DOM chain is `.media-grid-root` > `.media-grid-sizer` >
+     * `.media-grid` > the slot cell, and a plain `<div>` maps to `generic` in the
+     * accessibility tree rather than disappearing from it. So a `role="table"`
+     * wrapper placed around this component by a host ends up with two generic
+     * boxes between itself and its `role="row"` cells, and the relationship is
+     * broken. Setting this prop marks BOTH intermediate boxes `role="presentation"`
+     * — which re-parents their children onto the host's wrapper — and puts this
+     * role on `.media-grid` itself, so the host's table owns a real rowgroup whose
+     * children are the rendered rows.
+     *
+     * `aria-owns` is the alternative and is deliberately not used: the cell set is
+     * virtualized and remounts on every scroll tick, so an id list would have to be
+     * rewritten continuously.
+     *
+     * Only the VIRTUALIZED grid takes it. The skeleton grid and the empty state
+     * keep their own `role="status"` (they are not rows, and a rowgroup with no
+     * rows is invalid), which is also why a host should only assert its table role
+     * while there are items — see `LibraryPage.vue`.
+     *
+     * Absent (the default) leaves every role in this component exactly as it was:
+     * no attribute is emitted at all, so the poster grid, the list view and the
+     * backdrop view are byte-identical to before.
+     */
+    gridRole?: 'rowgroup';
     /** Skeleton cards shown during the initial load. */
     skeletonCount?: number;
     /** Extra rows rendered above/below the visible band. */
@@ -423,6 +453,14 @@ const skeletonCellStyle = computed(() =>
   fixedCellHeight.value === null ? {} : { height: `${fixedCellHeight.value}px` },
 );
 
+/**
+ * `role="presentation"` for `.media-grid-root` and `.media-grid-sizer` while a host
+ * owns the composite structure, else `undefined` so NO role attribute is rendered
+ * at all (see the `gridRole` prop for why flattening these two is what makes the
+ * host's `role="table"` own the rowgroup).
+ */
+const wrapperRole = computed(() => (props.gridRole ? 'presentation' : undefined));
+
 // --- back to top ---
 const showBackToTop = computed(() => virtualized.value && scrollTop.value > viewportHeight.value * 1.5);
 function backToTop(): void {
@@ -544,7 +582,12 @@ watch(
 </script>
 
 <template>
-  <div class="media-grid-root">
+  <!-- `role="presentation"` ONLY when a host has claimed the composite structure
+       (see the `gridRole` prop). It flattens this box out of the accessibility tree
+       so the host's `role="table"` directly owns the rowgroup below. Neither this
+       element nor the sizer is focusable or carries an aria-* attribute, so the
+       presentational role is honoured rather than resolved back. -->
+  <div class="media-grid-root" :role="wrapperRole">
     <!-- initial load -->
     <div
       v-if="loading && items.length === 0"
@@ -583,8 +626,8 @@ watch(
 
     <!-- virtualized grid -->
     <template v-else>
-      <div ref="sizerEl" class="media-grid-sizer" :style="sizerStyle">
-        <div class="media-grid" :style="[gridStyle, innerStyle]">
+      <div ref="sizerEl" class="media-grid-sizer" :style="sizerStyle" :role="wrapperRole">
+        <div class="media-grid" :style="[gridStyle, innerStyle]" :role="gridRole">
           <template v-for="entry in visibleItems" :key="entry.item?.id ?? `skel-${entry.index}`">
             <slot v-if="entry.item" name="card" :item="entry.item" :index="entry.index">
               <MediaCard

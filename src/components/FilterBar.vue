@@ -173,11 +173,12 @@ function toggleOrder() {
 }
 
 // ---- view mode (S67) ----------------------------------------------------
-/** The alternate-view toggle. `grid` is the only renderer today — `list`,
- *  `backdrop` and `table` are the seam S68-S70 fill via `MediaGrid`'s `#card`
- *  slot, so selecting one currently still renders the poster grid. The mode is a
- *  persisted PREFERENCE (not a filter), so switching it never emits `change` —
- *  it must not refetch the library. */
+/** The alternate-view toggle. All four options render: `grid` is MediaGrid's own
+ *  poster card, and `list` (S68 `MediaListRow`), `backdrop` (S69
+ *  `MediaBackdropRow`) and `table` (S70 `MediaTableRow`) fill `MediaGrid`'s
+ *  `#card` slot from `LibraryPage`. The mode is a persisted PREFERENCE (not a
+ *  filter), so switching it never emits `change` — it must not refetch the
+ *  library. */
 const VIEW_MODES: { value: ViewMode; label: string; icon: IconName }[] = [
   { value: 'grid', label: 'Grid view', icon: 'grid' },
   { value: 'list', label: 'List view', icon: 'list' },

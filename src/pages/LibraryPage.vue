@@ -28,7 +28,15 @@ import MediaGrid from '../components/MediaGrid.vue';
 import MediaCard from '../components/MediaCard.vue';
 import MediaListRow from '../components/MediaListRow.vue';
 import MediaBackdropRow from '../components/MediaBackdropRow.vue';
-import { BACKDROP_ROW_HEIGHT, computeFixedRowHeight, LIST_ROW_HEIGHT } from '../components/virtual-grid';
+import MediaTableRow from '../components/MediaTableRow.vue';
+import {
+  BACKDROP_ROW_HEIGHT,
+  computeFixedRowHeight,
+  LIST_ROW_HEIGHT,
+  TABLE_COLUMNS,
+  TABLE_ROW_HEIGHT,
+  TABLE_ROW_TEMPLATE_COLUMNS,
+} from '../components/virtual-grid';
 import FilterBar from '../components/FilterBar.vue';
 import IndexRail from '../components/IndexRail.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -63,13 +71,36 @@ const prefs = usePreferencesStore();
 
 /**
  * True while the persisted view mode selects the S68 list renderer / the S69
- * backdrop hero-strip renderer. EVERY other value — including an out-of-union/
- * stale persisted one, which the preferences store deliberately does not sanitize
- * — falls through to the poster grid via the `v-else` in the `#card` slot. That
- * fallback is load-bearing, not decoration.
+ * backdrop hero-strip renderer / the S70 table renderer. EVERY other value —
+ * including an out-of-union/stale persisted one, which the preferences store
+ * deliberately does not sanitize — falls through to the poster grid via the
+ * `v-else` in the `#card` slot. That fallback is load-bearing, not decoration.
+ *
+ * Strict `===`, never `.includes()` (S191/S193): a substring test matches a MUTATED
+ * mode value too, so a test that flips `'table'` to `'table-MUTATED'` would still
+ * see the table renderer and report a false green.
  */
 const listMode = computed(() => prefs.viewMode === 'list');
 const backdropMode = computed(() => prefs.viewMode === 'backdrop');
+const tableMode = computed(() => prefs.viewMode === 'table');
+
+/**
+ * Whether to assert the ARIA `table` structure this render (S70).
+ *
+ * Gated on there being rows, not merely on the mode, because ARIA `table` requires
+ * `row`/`rowgroup` children: with nothing loaded `MediaGrid` renders its skeleton
+ * grid or its empty state, both `role="status"`, and a `role="table"` owning a
+ * status and no rows is invalid. It also stops a column header strip being drawn
+ * over an empty state. The LAYOUT props below are deliberately NOT gated this way —
+ * the skeletons must already be the table row's size or the first paint shifts.
+ */
+const tableSemantics = computed(() => tableMode.value && store.items.length > 0);
+
+/** `aria-rowcount` for the table: every item plus the header row (`-1` = unknown). */
+const tableRowCount = computed(() => (store.total > 0 ? store.total + 1 : -1));
+
+/** Shared by the header row here and every `MediaTableRow` — see `TABLE_COLUMNS`. */
+const tableHeaderStyle = { gridTemplateColumns: TABLE_ROW_TEMPLATE_COLUMNS };
 
 /**
  * Row geometry handed to the SINGLE MediaGrid mount. Both alternate renderers are
@@ -79,20 +110,27 @@ const backdropMode = computed(() => prefs.viewMode === 'backdrop');
  * height must NOT be `computeRowHeight()`'s, which would apply the poster's 2:3
  * ratio to the full row width and reserve a row several times too tall.
  *
- * S70 adds its compact/table height here the same way (a constant beside
+ * S70's table row is the third, added here the same way (`TABLE_ROW_HEIGHT` beside
  * `LIST_ROW_HEIGHT`/`BACKDROP_ROW_HEIGHT` in `virtual-grid.ts`, wrapped in
  * `computeFixedRowHeight`) plus one more arm in `gridRowHeight` below.
  */
 const FULL_WIDTH_COLUMNS = 1;
 const listModeRowHeight = computeFixedRowHeight(LIST_ROW_HEIGHT);
 const backdropModeRowHeight = computeFixedRowHeight(BACKDROP_ROW_HEIGHT);
+const tableModeRowHeight = computeFixedRowHeight(TABLE_ROW_HEIGHT);
 
 /** `undefined` in poster-grid mode, so the grid keeps its measured auto-fit layout. */
 const gridColumns = computed(() =>
-  listMode.value || backdropMode.value ? FULL_WIDTH_COLUMNS : undefined,
+  listMode.value || backdropMode.value || tableMode.value ? FULL_WIDTH_COLUMNS : undefined,
 );
 const gridRowHeight = computed(() =>
-  listMode.value ? listModeRowHeight : backdropMode.value ? backdropModeRowHeight : undefined,
+  listMode.value
+    ? listModeRowHeight
+    : backdropMode.value
+      ? backdropModeRowHeight
+      : tableMode.value
+        ? tableModeRowHeight
+        : undefined,
 );
 
 // A-Z jump rail (P6). Only applies to the default name-ascending sort; clicking
@@ -439,24 +477,37 @@ async function onRemove(item: MediaItem): Promise<void> {
         until someone prunes those listeners as "dead". Keep the `v-else`; the
         LibraryPage test that invokes the slot directly is what enforces it.
 
-        ⚠ S70 blocker to settle BEFORE writing the table renderer — the `#card` seam
-        CANNOT carry ARIA table semantics as it stands (S69 review). MediaGrid's DOM
-        chain is `.media-grid-root` > `.media-grid-sizer` > `.media-grid` > the slot
-        cell, so a `role="table"` wrapper placed HERE (around the header +
-        <MediaGrid>) ends up with THREE generic divs between itself and its
-        `role="row"` cells. ARIA `table` must OWN its rows — directly, via a
-        `rowgroup`, or via `aria-owns` — so the relationship is broken and the whole
-        thing degrades to a pile of unrelated divs for AT. What S70 needs is
-        `role="presentation"` on the two intermediate divs and `role="rowgroup"` on
-        `.media-grid`, which means a NEW MediaGrid prop (MediaGrid owns that markup;
-        this page cannot reach it, and `aria-owns` over a virtualized, remounting
-        cell set is not maintainable). That prop is S70's to add — it is deliberately
-        NOT implemented here — but it is part of S70's scope estimate, not a detail
-        to discover mid-step. Whatever shape it takes, the header row must be
-        rendered OUTSIDE the grid, and the compact row must reuse S68's
-        semantics/accessible-name pattern rather than inventing a third one (see also
-        the nested-`<article>` note in MediaBackdropRow's docblock: any renderer that
-        composes MediaCard should pass `role="presentation"` to it).
+        ✅ S70's table semantics, and the shape they had to take. The `#card` seam
+        cannot emit `<table>/<thead>/<tr>`: the slot yields ONE DETACHED CELL per
+        item inside MediaGrid's `display: grid` container, and only a virtualized
+        WINDOW of those cells exists at a time, so nothing can open a `<tbody>`
+        before the first row and close it after the last. The semantics are
+        therefore roles on divs — and MediaGrid's DOM chain
+        (`.media-grid-root` > `.media-grid-sizer` > `.media-grid` > the slot cell)
+        put two `generic` boxes between a `role="table"` wrapper here and its
+        `role="row"` cells, which breaks the ownership ARIA `table` requires. That
+        is what MediaGrid's new `grid-role` prop fixes: it marks those two boxes
+        `role="presentation"` (flattening them out of the a11y tree) and puts
+        `role="rowgroup"` on `.media-grid`, so the wrapper below owns a real
+        rowgroup of real rows. `aria-owns` was NOT used — the cell set remounts on
+        every scroll tick, so an id list would need rewriting continuously.
+        The header row is consequently rendered OUTSIDE MediaGrid (a virtualized,
+        `translateY`-offset container would scroll it away and consume a row slot),
+        which is exactly why its `grid-template-columns` and every row's come from
+        the ONE `TABLE_ROW_TEMPLATE_COLUMNS` constant: they are two separate CSS
+        grids and nothing else keeps their columns aligned.
+
+        ⚠ Known, bounded ARIA wart, recorded rather than papered over. MediaGrid's
+        `loadingMore` indicator (`role="status"`) and its back-to-top `<button>` live
+        inside `.media-grid-root`, so while either is on screen it re-parents onto
+        the `role="table"` below and a validator will flag a non-`row`/`rowgroup`
+        child. Both are transient; the steady state is exactly two rowgroups. The
+        PERMANENT case — no items, where MediaGrid renders a `role="status"`
+        skeleton/empty state and there are no rows at all — is avoided by gating the
+        wrapper's role on `tableSemantics` (see its docblock). Fixing the transient
+        case properly means MediaGrid rendering its own `role="table"` box around
+        just the sizer, with a header slot; that is a bigger change to a public
+        component than S70 needs.
 
         Note on what `MediaBackdropRow` actually paints: it has a wide-backdrop state
         and a poster-derived fallback, and BOTH are live traffic. This surface's
@@ -466,86 +517,129 @@ async function onRemove(item: MediaItem): Promise<void> {
         older server. Both states are pinned by `LibraryPage.test.ts` in both
         directions; don't "fix" the renderer by deleting a branch.
       -->
-      <MediaGrid
-        ref="gridRef"
-        :data-view-mode="prefs.viewMode"
-        :items="store.items"
-        :total="store.total"
-        :loading="store.loading && store.items.length === 0"
-        :loading-more="store.loading && store.items.length > 0"
-        :has-more="store.hasMore"
-        :can-match="auth.isAdmin"
-        :columns="gridColumns"
-        :row-height="gridRowHeight"
-        @need-range="onNeedRange"
-        @play="onPlay"
-        @watchlist="onWatchlist"
-        @info="onInfo"
-        @match="onMatch"
-        @mark-watched="onMarkWatched"
-        @refresh="onRefresh"
-        @edit-metadata="onMatch"
-        @explore-data="openInspector"
-        @choose-poster="onChoosePoster"
-        @remove="onRemove"
+      <div
+        class="library-table"
+        :role="tableSemantics ? 'table' : undefined"
+        :aria-label="tableSemantics ? `${libraryName} titles` : undefined"
+        :aria-rowcount="tableSemantics ? tableRowCount : undefined"
       >
-        <!-- EVERY branch wires the identical ten host events. The listeners on
-             MediaGrid above stay in place for its own default-card path (the grid
-             is also used without a `#card` slot elsewhere), but real user clicks
-             now travel through these. -->
-        <template #card="{ item }">
-          <MediaListRow
-            v-if="listMode"
-            :item="item"
-            :can-match="auth.isAdmin"
-            @play="onPlay"
-            @watchlist="onWatchlist"
-            @info="onInfo"
-            @match="onMatch"
-            @mark-watched="onMarkWatched"
-            @refresh="onRefresh"
-            @choose-poster="onChoosePoster"
-            @remove="onRemove"
-            @edit-metadata="onMatch"
-            @explore-data="openInspector"
-          />
-          <MediaBackdropRow
-            v-else-if="backdropMode"
-            :item="item"
-            :can-match="auth.isAdmin"
-            @play="onPlay"
-            @watchlist="onWatchlist"
-            @info="onInfo"
-            @match="onMatch"
-            @mark-watched="onMarkWatched"
-            @refresh="onRefresh"
-            @choose-poster="onChoosePoster"
-            @remove="onRemove"
-            @edit-metadata="onMatch"
-            @explore-data="openInspector"
-          />
-          <!-- UNCONDITIONAL fallback — see the note above; never make this a
-               `v-else-if`. `lazy=false` mirrors MediaGrid's own default card (S35:
-               JS windowing already keeps the DOM near-viewport, and native
-               lazy-load over transform-repositioned cards stalls). -->
-          <MediaCard
-            v-else
-            :item="item"
-            :can-match="auth.isAdmin"
-            :lazy="false"
-            @play="onPlay"
-            @watchlist="onWatchlist"
-            @info="onInfo"
-            @match="onMatch"
-            @mark-watched="onMarkWatched"
-            @refresh="onRefresh"
-            @choose-poster="onChoosePoster"
-            @remove="onRemove"
-            @edit-metadata="onMatch"
-            @explore-data="openInspector"
-          />
-        </template>
-      </MediaGrid>
+        <!-- Header row: OUTSIDE the grid (see the note above), aligned to the body
+             rows only by the shared TABLE_ROW_TEMPLATE_COLUMNS. The poster column's
+             header is visually hidden rather than empty — a nameless
+             `role="columnheader"` announces nothing. -->
+        <div v-if="tableSemantics" class="library-table__head" role="rowgroup">
+          <div class="library-table__head-row" role="row" aria-rowindex="1" :style="tableHeaderStyle">
+            <span
+              v-for="(col, i) in TABLE_COLUMNS"
+              :key="col.label"
+              class="library-table__head-cell"
+              :class="{ 'library-table__head-cell--hidden': i === 0 }"
+              role="columnheader"
+              >{{ col.label }}</span
+            >
+          </div>
+        </div>
+
+        <MediaGrid
+          ref="gridRef"
+          :data-view-mode="prefs.viewMode"
+          :grid-role="tableSemantics ? 'rowgroup' : undefined"
+          :items="store.items"
+          :total="store.total"
+          :loading="store.loading && store.items.length === 0"
+          :loading-more="store.loading && store.items.length > 0"
+          :has-more="store.hasMore"
+          :can-match="auth.isAdmin"
+          :columns="gridColumns"
+          :row-height="gridRowHeight"
+          @need-range="onNeedRange"
+          @play="onPlay"
+          @watchlist="onWatchlist"
+          @info="onInfo"
+          @match="onMatch"
+          @mark-watched="onMarkWatched"
+          @refresh="onRefresh"
+          @edit-metadata="onMatch"
+          @explore-data="openInspector"
+          @choose-poster="onChoosePoster"
+          @remove="onRemove"
+        >
+          <!-- EVERY branch wires the identical ten host events. The listeners on
+               MediaGrid above stay in place for its own default-card path (the grid
+               is also used without a `#card` slot elsewhere), but real user clicks
+               now travel through these. `index` is the item's ABSOLUTE index — the
+               table row needs it for `aria-rowindex`, since a virtualized rowgroup
+               holds only a window and AT would otherwise count "row 3 of 7". -->
+          <template #card="{ item, index }">
+            <MediaListRow
+              v-if="listMode"
+              :item="item"
+              :can-match="auth.isAdmin"
+              @play="onPlay"
+              @watchlist="onWatchlist"
+              @info="onInfo"
+              @match="onMatch"
+              @mark-watched="onMarkWatched"
+              @refresh="onRefresh"
+              @choose-poster="onChoosePoster"
+              @remove="onRemove"
+              @edit-metadata="onMatch"
+              @explore-data="openInspector"
+            />
+            <MediaBackdropRow
+              v-else-if="backdropMode"
+              :item="item"
+              :can-match="auth.isAdmin"
+              @play="onPlay"
+              @watchlist="onWatchlist"
+              @info="onInfo"
+              @match="onMatch"
+              @mark-watched="onMarkWatched"
+              @refresh="onRefresh"
+              @choose-poster="onChoosePoster"
+              @remove="onRemove"
+              @edit-metadata="onMatch"
+              @explore-data="openInspector"
+            />
+            <MediaTableRow
+              v-else-if="tableMode"
+              :item="item"
+              :index="index"
+              :can-match="auth.isAdmin"
+              @play="onPlay"
+              @watchlist="onWatchlist"
+              @info="onInfo"
+              @match="onMatch"
+              @mark-watched="onMarkWatched"
+              @refresh="onRefresh"
+              @choose-poster="onChoosePoster"
+              @remove="onRemove"
+              @edit-metadata="onMatch"
+              @explore-data="openInspector"
+            />
+            <!-- UNCONDITIONAL fallback — see the note above; never make this a
+                 `v-else-if`. `lazy=false` mirrors MediaGrid's own default card (S35:
+                 JS windowing already keeps the DOM near-viewport, and native
+                 lazy-load over transform-repositioned cards stalls). -->
+            <MediaCard
+              v-else
+              :item="item"
+              :can-match="auth.isAdmin"
+              :lazy="false"
+              @play="onPlay"
+              @watchlist="onWatchlist"
+              @info="onInfo"
+              @match="onMatch"
+              @mark-watched="onMarkWatched"
+              @refresh="onRefresh"
+              @choose-poster="onChoosePoster"
+              @remove="onRemove"
+              @edit-metadata="onMatch"
+              @explore-data="openInspector"
+            />
+          </template>
+        </MediaGrid>
+      </div>
 
       <IndexRail v-if="showRail" :buckets="buckets" @jump="onJump" />
     </section>
@@ -596,5 +690,39 @@ async function onRemove(item: MediaItem): Promise<void> {
 .library-count {
   font-size: var(--text-sm);
   color: var(--text-subtle);
+}
+
+/* --- S70 table view: the header row, rendered OUTSIDE MediaGrid --- */
+.library-table__head-row {
+  display: grid;
+  /* grid-template-columns comes from the inline style (TABLE_ROW_TEMPLATE_COLUMNS)
+     so it is literally the same string every MediaTableRow writes — the header and
+     the body are two separate grids and nothing else keeps them aligned. */
+  align-items: center;
+  /* Same column gap as `.media-table-row`, or the tracks line up and the CONTENT
+     inside them does not. */
+  column-gap: var(--space-5);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-strong);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide, 0.06em);
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.library-table__head-cell {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The poster column's header is NAMED but not shown: an empty `columnheader`
+   announces nothing, and a visible "Poster" label over a thumbnail is noise.
+   Clipped rather than `display:none`/`visibility:hidden`, both of which would also
+   remove it from the accessibility tree — and it must keep occupying its grid track
+   or every following column shifts against the body rows. */
+.library-table__head-cell--hidden {
+  clip-path: inset(50%);
+  color: transparent;
 }
 </style>
