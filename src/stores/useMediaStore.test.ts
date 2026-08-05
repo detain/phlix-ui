@@ -446,6 +446,94 @@ describe('useMediaStore — ensureRange (random-access paging / A-Z jump)', () =
     expect(errSpy).toHaveBeenCalledTimes(1);
   });
 
+  // ── S224 ────────────────────────────────────────────────────────────────
+  // An ABORTED range fetch is a deliberate cancellation, not a network failure.
+  //
+  // The shape (reproduced, not reasoned): a range job covering offset 0 dedupes
+  // onto the ALREADY IN-FLIGHT tracked page-0 promise (`networkFetch` returns the
+  // cached promise for the same cache key). A filter change then calls
+  // `activeController.abort()` on that very promise. `generation` is bumped only
+  // by `applyResult` on a SUCCESSFUL replace load, so while the replacement query
+  // is still in flight `gen === generation` still holds and the generation guards
+  // cannot see the supersession.
+  //
+  // Both tests below FAIL on the pre-S224 code: the first shows the abandoned
+  // query being re-issued and its rows spliced into the list the user moved to,
+  // the second shows the "Some titles failed to load." toast for a query the user
+  // has already left.
+
+  /** A fetch double whose first call hangs until its AbortSignal fires. */
+  function abortAwareFetch(after: (url: string) => Promise<Response>) {
+    let calls = 0;
+    return vi.fn((url: string, init?: RequestInit) => {
+      calls++;
+      if (calls <= 2) {
+        // call 1 = the tracked page-0 load; call 2 = the replacement query after
+        // the filter change. Both stay in flight, so `generation` never bumps —
+        // which is precisely the window the bug lives in.
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            const err = new Error('The operation was aborted.');
+            err.name = 'AbortError';
+            reject(err);
+          });
+        });
+      }
+      return after(url);
+    });
+  }
+
+  it('does not retry a range job whose deduped page-0 fetch was ABORTED by a filter change (S224)', async () => {
+    vi.useFakeTimers();
+    fetchMock = abortAwareFetch((url) => {
+      const off = Number(/[?&]offset=(\d+)/.exec(url)?.[1] ?? 0);
+      return Promise.resolve(jsonResponse({ items: makeItems(`STALE${off}`, 3), total: 30, limit: 3, offset: off }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const s = useMediaStore();
+    s.limit = 3;
+
+    const tracked = s.fetchMedia(''); // call 1 — page 0, in flight
+    const ranged = s.ensureRange('', 0, 3); // dedupes onto call 1 (no new request)
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    s.search = 'zzz'; // the user changes the filter…
+    const replacement = s.fetchMedia(''); // call 2 — aborts call 1
+
+    await vi.runAllTimersAsync();
+    await ranged;
+
+    // Exactly the two requests the user asked for. A third call would be the
+    // ABANDONED query being re-issued.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // …and nothing from the abandoned query reached the list.
+    expect(s.items[0]).toBeUndefined();
+
+    void tracked;
+    void replacement;
+  });
+
+  it('raises no failure toast when a range job is aborted rather than failing (S224)', async () => {
+    vi.useFakeTimers();
+    fetchMock = abortAwareFetch(() => Promise.reject(new Error('down')));
+    vi.stubGlobal('fetch', fetchMock);
+    const errSpy = vi.spyOn(useToastStore(), 'error');
+    const s = useMediaStore();
+    s.limit = 3;
+
+    const tracked = s.fetchMedia('');
+    const ranged = s.ensureRange('', 0, 3);
+    s.search = 'zzz';
+    const replacement = s.fetchMedia('');
+
+    await vi.runAllTimersAsync();
+    await ranged;
+
+    expect(errSpy).not.toHaveBeenCalled();
+    void tracked;
+    void replacement;
+  });
+
   it('shows the failure toast only once across repeated failing passes', async () => {
     vi.useFakeTimers();
     fetchMock = vi.fn((url: string) => {

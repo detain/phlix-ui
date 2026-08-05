@@ -234,8 +234,8 @@ var W = N("media", () => {
 			try {
 				let o = await X(e, n, r, !1);
 				return a !== q || (ie(i, o.items), t.value ||= o.total, J = !1, !0);
-			} catch {
-				if (a !== q) return !0;
+			} catch (e) {
+				if (U(e) || a !== q) return !0;
 				if (o < V) {
 					await re(H);
 					continue;
@@ -456,4 +456,4 @@ var W = N("media", () => {
 //#endregion
 export { L as n, W as t };
 
-//# sourceMappingURL=useMediaStore-B93cUF7K.js.map
+//# sourceMappingURL=useMediaStore-CI5AhE-J.js.map
