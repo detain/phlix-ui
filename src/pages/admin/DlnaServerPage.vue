@@ -11,11 +11,35 @@
  * details (friendly name, UDN, port, base URL) when running, and a Start/Stop
  * button with a loading state. Errors surface as toasts; every action awaits a
  * status refetch afterward.
+ *
+ * ## S214 — `enabled` is INTENT, not "is it configured"
+ *
+ * S28 redefined the status contract: `enabled` is the persisted
+ * `dlna.cds_enabled` setting (which ships **false**) and `running` is whether
+ * the worker that answered has the ContentDirectory routes registered. This page
+ * still read the pre-S28 meaning and rendered "DLNA server is not configured."
+ * whenever `!enabled` — skipping the entire block that holds the Start/Stop
+ * buttons. On a stock install that made DLNA **unstartable from its own page**;
+ * the only remaining route was the generic Settings screen.
+ *
+ * The affordance is therefore driven by `enabled` (the intent the server will
+ * accept), NOT by `running`:
+ *
+ *   enabled=false            -> Start Server   (`start` is accepted)
+ *   enabled=true             -> Stop Server    (`start` would 409 "already enabled")
+ *
+ * and `reloadPending` (server-computed) surfaces the window where the setting is
+ * written but no worker has reloaded yet. There is deliberately no
+ * "not configured" state: the S28 payload has no field that reports one.
  */
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
-import { AdminDlnaServerApi, type DlnaServerStatus } from '../../api/admin/dlnaServer';
+import {
+  AdminDlnaServerApi,
+  type DlnaServerActionResult,
+  type DlnaServerStatus,
+} from '../../api/admin/dlnaServer';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
 import Button from '../../components/ui/Button.vue';
@@ -46,6 +70,8 @@ const acting = ref(false);
 
 const isRunning = computed(() => status.value?.running ?? false);
 const isEnabled = computed(() => status.value?.enabled ?? false);
+/** Read straight off the payload — never recomputed from enabled/running here. */
+const reloadPending = computed(() => status.value?.reloadPending ?? false);
 
 async function loadStatus(): Promise<void> {
   loading.value = true;
@@ -60,6 +86,25 @@ async function loadStatus(): Promise<void> {
   }
 }
 
+/**
+ * Report a SUCCESSFUL start/stop using the server's own wording (S214).
+ *
+ * The page used to toast a hard-coded "DLNA server started." and throw
+ * `result.message` away. That message is the only place the server says
+ * *"restart the server to apply it (automatic reload unavailable)"* — so the
+ * operator was told the change had taken effect when nothing had happened yet.
+ * When the server reports `reloadScheduled: false` the toast is a WARNING, not a
+ * success, because the setting is persisted but inert until a restart.
+ */
+function announceApplied(result: DlnaServerActionResult, fallback: string): void {
+  const message = result.message || fallback;
+  if (result.reloadScheduled === false) {
+    toasts.warning(message);
+    return;
+  }
+  toasts.success(message);
+}
+
 async function handleStart(): Promise<void> {
   if (acting.value) return;
   acting.value = true;
@@ -69,7 +114,7 @@ async function handleStart(): Promise<void> {
       toasts.error(result.message || 'Failed to start DLNA server.');
       return;
     }
-    toasts.success('DLNA server started.');
+    announceApplied(result, 'DLNA server started.');
     await loadStatus();
   } catch (e) {
     toasts.error(errMessage(e, 'Failed to start DLNA server.'));
@@ -87,7 +132,7 @@ async function handleStop(): Promise<void> {
       toasts.error(result.message || 'Failed to stop DLNA server.');
       return;
     }
-    toasts.success('DLNA server stopped.');
+    announceApplied(result, 'DLNA server stopped.');
     await loadStatus();
   } catch (e) {
     toasts.error(errMessage(e, 'Failed to stop DLNA server.'));
@@ -129,19 +174,24 @@ onMounted(loadStatus);
         </template>
       </EmptyState>
 
-      <EmptyState
-        v-else-if="!isEnabled"
-        icon="monitor"
-        title="DLNA server is not configured."
-        :description="status?.message ?? undefined"
-      />
-
       <template v-else>
         <div class="admin-dlna__status">
           <Badge :tone="isRunning ? 'success' : 'neutral'" size="md" icon="monitor">
             {{ isRunning ? 'Running' : 'Stopped' }}
           </Badge>
+          <!-- S214: the server's own reloadPending verdict — the gap between the
+               persisted setting and the worker that answered this request. -->
+          <Badge v-if="reloadPending" tone="warning" size="md" icon="rewind">
+            {{ isEnabled ? 'Starting…' : 'Stopping…' }}
+          </Badge>
         </div>
+
+        <p v-if="reloadPending" class="admin-dlna__pending" role="status">
+          The change is saved; workers are reloading to apply it. This page reports the worker that
+          answered, so the badge may lag by a moment.
+        </p>
+
+        <p v-if="status?.message" class="admin-dlna__message">{{ status.message }}</p>
 
         <dl v-if="isRunning && status !== null" class="admin-dlna__details">
           <template v-if="status.friendlyName">
@@ -163,8 +213,12 @@ onMounted(loadStatus);
         </dl>
 
         <div class="admin-dlna__actions">
+          <!-- S214: gated on `isEnabled` (persisted INTENT), not `isRunning`.
+               `POST /start` 409s when the setting is already true, so keying the
+               Start button off `running` offered an action that could only fail
+               during the reload window. -->
           <Button
-            v-if="!isRunning"
+            v-if="!isEnabled"
             variant="solid"
             :loading="acting"
             leftIcon="play"
@@ -247,6 +301,12 @@ onMounted(loadStatus);
 .admin-dlna__actions {
   display: flex;
   gap: var(--space-3);
+}
+.admin-dlna__pending,
+.admin-dlna__message {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
 }
 .admin-dlna__note {
   margin-top: var(--space-4);

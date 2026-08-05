@@ -48,7 +48,7 @@ import { t as Wt } from "./services-C907MGdw.js";
 import { t as Gt } from "./integrations-DLAG9ISY.js";
 import { t as Kt } from "./backup-IdY_vzc2.js";
 import { t as qt } from "./cast-BvFcBEB6.js";
-import { t as Jt } from "./dlnaServer-B5Sg4MkS.js";
+import { t as Jt } from "./dlnaServer-M5_5lD1Q.js";
 import { t as Yt } from "./remoteAccess-DVKRpKQ8.js";
 import { t as Xt } from "./liveTv-Dbjt901v.js";
 import { t as Zt } from "./collections-CH3HLdcd.js";
@@ -926,7 +926,7 @@ var yi = Wn("server", () => {
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-QEF7JqBQ.js")
+	component: () => import("./DlnaServerPage-DoM8_EDF.js")
 }, ki = {
 	name: "admin-remote-access",
 	path: "remote-access",
