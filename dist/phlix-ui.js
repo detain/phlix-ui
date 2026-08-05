@@ -1208,7 +1208,7 @@ function da(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-ByiqGBac.js")
+			component: () => import("./PlayerPage-B_EcxnLE.js")
 		},
 		{
 			path: `${t}/login`,

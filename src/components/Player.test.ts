@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { setActivePinia, createPinia } from 'pinia';
+import { readBuiltCss, supportsBlockBodies } from '../test/builtCss';
 import Player from './Player.vue';
 import Scrubber from './player/Scrubber.vue';
 import MarkerTimeline from './player/MarkerTimeline.vue';
@@ -2789,11 +2790,15 @@ describe('Player — marker-search routes through apiBase (UI-0.6, U-P6/U-P11)',
   });
 });
 
-describe('Player — theater full-bleed sizing (S34)', () => {
+describe('Player — theater full-bleed sizing (S34, S232)', () => {
   // jsdom does not apply an SFC's compiled <style>, so pin the sizing CONTRACT off
   // the raw source: the DEFAULT `.player` keeps the 16:9 / 90vh cap; the
-  // `.player.is-theater` state releases both and grows to 100dvh (with a vh
-  // fallback), while `object-fit: contain` keeps the frame letterboxed.
+  // `.player.is-theater` state releases both and grows to 100dvh, while
+  // `object-fit: contain` keeps the frame letterboxed.
+  //
+  // S232: the no-`dvh` fallback is asserted against the BUILT stylesheet as well,
+  // because the source-only version of that assertion was green for a fallback
+  // the minifier had deleted from every shipped artifact. See src/test/builtCss.ts.
   const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './Player.vue'), 'utf8');
 
   it('keeps the 16:9 + 90vh cap as the default (non-theater) frame', () => {
@@ -2806,8 +2811,29 @@ describe('Player — theater full-bleed sizing (S34)', () => {
     const body = rule![1];
     expect(body).toMatch(/aspect-ratio:\s*auto;/); // 16:9 lock released
     expect(body).toMatch(/height:\s*100dvh;/); // fills the dynamic viewport
-    expect(body).toMatch(/height:\s*100vh;/); // …with a vh fallback
     expect(body).toMatch(/max-height:\s*100dvh;/); // 90vh cap lifted
+    // The fallback must NOT come back as a duplicate-property pair: lightningcss
+    // collapses those, so a `height: 100vh` line here would ship as nothing.
+    expect(body, 'the vh fallback belongs in @supports, not a duplicate pair').not.toMatch(/100vh/);
+  });
+
+  it('declares the no-`dvh` fallback in an @supports block the minifier cannot collapse (S232)', () => {
+    const block = src.match(/@supports not \(height: 100dvh\)\s*\{\s*\.player\.is-theater\s*\{([\s\S]*?)\}/);
+    expect(block, 'an @supports not (height: 100dvh) block wraps .player.is-theater').toBeTruthy();
+    expect(block![1]).toMatch(/height:\s*100vh;/);
+    expect(block![1]).toMatch(/max-height:\s*100vh;/);
+  });
+
+  it('SHIPS that fallback in the built dist/style.css and dist/ui.css (S232)', () => {
+    // The bug this replaces: `100vh` was absent from BOTH artifacts while three
+    // source-text assertions claimed it existed.
+    for (const sheet of ['style.css', 'ui.css'] as const) {
+      const css = readBuiltCss(sheet);
+      const bodies = supportsBlockBodies(css, 'not (height:100dvh)', '.player.is-theater[data-v-');
+      expect(bodies.length, `dist/${sheet} carries the theater dvh fallback`).toBe(1);
+      expect(bodies[0]).toContain('height:100vh');
+      expect(bodies[0]).toContain('max-height:100vh');
+    }
   });
 
   it('keeps `object-fit: contain` on the video (no crop/stretch in theater)', () => {

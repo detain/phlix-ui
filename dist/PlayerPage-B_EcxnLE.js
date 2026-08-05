@@ -3090,7 +3090,7 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-c8efba03"]]), ta = { class: "player-page__stage" }, na = {
+}), [["__scopeId", "data-v-4bb58984"]]), ta = { class: "player-page__stage" }, na = {
 	key: 0,
 	class: "player-page__skeleton",
 	role: "status",
@@ -3361,8 +3361,8 @@ var Jn = ["aria-label"], Yn = ["src"], Xn = { class: "upnext__body" }, Zn = { cl
 			}, 8, ["modelValue"])
 		], 2));
 	}
-}), [["__scopeId", "data-v-643b1568"]]);
+}), [["__scopeId", "data-v-5b71bae3"]]);
 //#endregion
 export { ia as default };
 
-//# sourceMappingURL=PlayerPage-ByiqGBac.js.map
+//# sourceMappingURL=PlayerPage-B_EcxnLE.js.map
