@@ -20,6 +20,7 @@ import SourcePriorityEditor from '../../components/SourcePriorityEditor.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import { SCAN_JOB_TYPES } from '../../api/admin/libraries';
 import type { ApiClient } from '../../api/client';
+import { readBuiltCss, scopedRuleBodies } from '../../test/builtCss';
 
 const lib = {
   id: 'lib-1',
@@ -863,6 +864,75 @@ describe('Admin LibrariesPage — operations overflow menu', () => {
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'Worker offline')).toBe(true);
     w.unmount();
+  });
+});
+
+describe('Admin LibrariesPage — the Actions cell must not wrap (S22)', () => {
+  /**
+   * S22's whole product claim is a GEOMETRY claim — "the Actions column no longer
+   * wraps to a second row" — and until this block it was guarded by NOTHING.
+   * Measured on master @ `19649e01`: reverting the CSS to its pre-S22 form
+   * (`flex-wrap: wrap`, no `min-width`) left the ENTIRE suite green —
+   * 4961 passed | 10 skipped, byte-identical to baseline. The relocation of
+   * Rescan/Delete into the overflow menu is pinned (see the block above); the
+   * anti-wrap CSS that is the actual fix was not.
+   *
+   * It cannot be pinned in jsdom: jsdom never applies an SFC's compiled `<style>`,
+   * so `getBoundingClientRect()` is all zeros and nothing wraps or fails to wrap
+   * there. So the contract is asserted against the BUILT stylesheet — the bytes
+   * consumers install — via `scopedRuleBodies()`, which walks the minified,
+   * scope-hashed, possibly at-rule-nested output rather than regexing `.vue` text.
+   *
+   * The numbers below come from a real chromium (playwright's bundled build)
+   * rendering the built `dist/style.css` over the real markup, table row squeezed
+   * by long content in the sibling columns, at 480/600/768/900/1024/1280/1440/1920:
+   *
+   *   pre-S22 CSS  → 4 rows, 148px tall, cell collapsed to 135px  (the reported bug)
+   *   shipped CSS  → 1 row,   34px tall, cell 417px, no overflow  (at EVERY width)
+   *
+   * Declaration isolation at 1280 (each removed alone) says which one earns its
+   * keep, and this is why the assertions below are weighted the way they are:
+   *
+   *   remove `flex-wrap: nowrap`  → 2 rows, 72px   ← THE load-bearing declaration
+   *   remove `min-width: 300px`   → 1 row,  34px   ← inert in this layout
+   *   remove `overflow-x: auto`   → 1 row,  34px   ← inert in this layout
+   *
+   * `min-width: 300px` and `overflow-x: auto` are still asserted, because they are
+   * the step's stated reservation + overflow fallback and a silent deletion should
+   * be a decision rather than an accident — but a future reader should know they
+   * are belt-and-braces, NOT the mechanism. Note in particular that the real cell
+   * content measures 401px, so the 300px reservation is BELOW it: if the table ever
+   * did squeeze this column, `min-width` alone would not save the row, and
+   * `overflow-x: auto` (scroll, don't wrap) is what would.
+   */
+  const css = readBuiltCss('style.css');
+  const cellBodies = scopedRuleBodies(css, '.admin-libraries__actions');
+  const colBodies = scopedRuleBodies(css, '.admin-libraries__actions-col');
+
+  it('ships both rules in the built stylesheet at all (non-vacuity guard)', () => {
+    // Without this, every assertion below would pass vacuously over an empty array
+    // if the class were renamed, the scope hash changed, or the rule dropped.
+    expect(cellBodies.length).toBeGreaterThan(0);
+    expect(colBodies.length).toBeGreaterThan(0);
+  });
+
+  it('declares flex-wrap: nowrap on the actions cell — the declaration that actually stops the wrap', () => {
+    expect(cellBodies.some((b) => /flex-wrap:\s*nowrap/.test(b))).toBe(true);
+  });
+
+  it('does NOT let any rule re-introduce flex-wrap: wrap on that cell', () => {
+    // `nowrap` does not contain the token `wrap` after the colon, so this is a
+    // genuine negative and not satisfied by the rule above.
+    for (const b of cellBodies) expect(/flex-wrap:\s*wrap\b/.test(b)).toBe(false);
+  });
+
+  it('keeps the horizontal-scroll fallback so a squeezed cell scrolls instead of wrapping', () => {
+    expect(cellBodies.some((b) => /overflow-x:\s*auto/.test(b))).toBe(true);
+  });
+
+  it('reserves a minimum width on both the column and the cell', () => {
+    expect(cellBodies.some((b) => /min-width:\s*300px/.test(b))).toBe(true);
+    expect(colBodies.some((b) => /min-width:\s*300px/.test(b))).toBe(true);
   });
 });
 
