@@ -11,6 +11,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readBuiltCss, scopedRuleBodies } from '../test/builtCss';
 import MediaRow from './MediaRow.vue';
 import MediaCard from './MediaCard.vue';
 import EmptyState from './ui/EmptyState.vue';
@@ -289,5 +290,99 @@ describe('MediaRow — rail spacing + containment CSS contract (S09)', () => {
     expect(rowBlock![1]).toMatch(
       /contain-intrinsic-size:\s*auto\s+var\(--media-row-intrinsic-h,\s*380px\);/,
     );
+  });
+});
+
+/**
+ * S221 — S21's ONE structural acceptance criterion, which until now was guarded
+ * by nothing.
+ *
+ * Measured on master @ `704de590`, with THIS file reverted to master's version so
+ * the guard below could not participate:
+ *
+ *   control (unmutated)                 Test Files 249 passed / Tests 4950 passed | 10 skipped
+ *   both arrows moved inside the <ul>   Test Files 249 passed / Tests 4950 passed | 10 skipped
+ *
+ * — byte-identical, plus `eslint` exit 0 and `vue-tsc --noEmit` exit 0, for
+ * precisely the structure the AC forbids. Every pre-existing arrow assertion
+ * goes through `wrapper.find('.media-row__arrow--prev')`, and `find()` matches at
+ * ANY depth, so the relocation is invisible to all of them.
+ *
+ * The structure is load-bearing, not cosmetic: the arrows are `position:
+ * absolute` and resolve against `.media-row__viewport`. Inside the rail they
+ * would resolve against a horizontally SCROLLING box and slide away with the
+ * content — the exact bug S21 exists to avoid.
+ */
+describe('MediaRow — arrows are siblings of the rail, never descendants (S221)', () => {
+  const many = [media({ id: 'a' }), media({ id: 'b' }), media({ id: 'c' })];
+  const mountRow = () => mount(MediaRow, { props: { title: 'X', items: many } });
+
+  it.each([['.media-row__arrow--prev'], ['.media-row__arrow--next']])(
+    '%s is not inside .media-row__rail, and IS a sibling of it',
+    (selector) => {
+      const w = mountRow();
+      const rail = w.find('.media-row__rail').element;
+      const arrow = w.find(selector).element;
+
+      // The AC's literal prohibition. `rail.querySelector` is the depth-aware
+      // form of the same question, so a nested-two-levels-deep relocation is
+      // caught too, not only a direct child.
+      expect(rail.contains(arrow)).toBe(false);
+      expect(rail.querySelector(selector)).toBeNull();
+
+      // The AC's literal requirement: SIBLING — same parent as the rail.
+      expect(arrow.parentElement).not.toBeNull();
+      expect(arrow.parentElement).toBe(rail.parentElement);
+    },
+  );
+
+  it('the rail holds nothing but item cells', () => {
+    const w = mountRow();
+    const rail = w.find('.media-row__rail').element;
+    expect([...rail.children].map((c) => c.className)).toEqual(
+      Array(many.length).fill('media-row__cell'),
+    );
+  });
+
+  it('the shared parent is the dedicated positioned wrapper', () => {
+    // Named explicitly because the CSS contract below is keyed on this class: a
+    // rename that skipped the stylesheet would leave the arrows resolving against
+    // the page instead of the rail.
+    const w = mountRow();
+    expect(w.find('.media-row__rail').element.parentElement?.className).toBe('media-row__viewport');
+  });
+});
+
+/**
+ * S221 (CSS half) — the arrows' wrapper must stay a positioned, UN-contained box,
+ * asserted against the BUILT stylesheet.
+ *
+ * A source-only regex cannot see the build. `dist/style.css` is what every
+ * consumer installs (`files: ["dist"]`, no `prepare` script), lightningcss is
+ * free to move/merge/drop declarations, and `dist:check` already fails any PR
+ * whose `src/` changed without a rebuild — so this reads the bytes that ship.
+ */
+describe('MediaRow — arrow wrapper CSS contract, built stylesheet (S221)', () => {
+  const css = readBuiltCss('style.css');
+  const viewport = scopedRuleBodies(css, '.media-row__viewport');
+
+  it('declares .media-row__viewport at all', () => {
+    // Guards the assertions below against going vacuously true: "no rule at all"
+    // would otherwise satisfy every "declares no containment" check below.
+    expect(viewport.length).toBeGreaterThan(0);
+  });
+
+  it('makes it a containing block for the absolutely positioned arrows', () => {
+    expect(viewport.join(';')).toMatch(/position:\s*relative/);
+  });
+
+  it('gives it NO containment of its own', () => {
+    // The whole point of the extra wrapper: `.media-row` above it paint-contains
+    // (measured — see the S222 note in MediaRow.vue), so if the wrapper contained
+    // as well, the arrows would be clipped to the rail's own box.
+    for (const body of viewport) {
+      expect(body).not.toMatch(/content-visibility:/);
+      expect(body).not.toMatch(/(^|[;{])\s*contain:/);
+    }
   });
 });
