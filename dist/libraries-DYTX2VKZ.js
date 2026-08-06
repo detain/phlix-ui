@@ -7,7 +7,16 @@ var e = [
 	"video",
 	"book",
 	"audiobook"
-], t = class {
+], t = [
+	"scan",
+	"rescan",
+	"metadata",
+	"metadata_refresh",
+	"prune",
+	"clear_metadata",
+	"clear_artwork",
+	"delete_all"
+], n = class {
 	client;
 	constructor(e) {
 		this.client = e;
@@ -63,6 +72,6 @@ var e = [
 	}
 };
 //#endregion
-export { e as n, t };
+export { e as n, t as r, n as t };
 
-//# sourceMappingURL=libraries-D3CNHYm9.js.map
+//# sourceMappingURL=libraries-DYTX2VKZ.js.map

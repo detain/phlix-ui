@@ -27,6 +27,8 @@ const sampleJob = {
   items_added: 0,
   items_updated: 0,
   items_removed: 0,
+  // 14th field, migration 095 (S129) — `decodeRow()` always emits it.
+  items_failed: 0,
   current_path: null,
   error: null,
   queued_at: '2026-05-27T00:00:00Z',
@@ -234,6 +236,15 @@ describe('AdminLibrariesApi', () => {
   it('scanStatus() returns null when there is no job', async () => {
     const { api } = makeApi({ get: () => ({ scan_status: null }) });
     await expect(api.scanStatus('lib-1')).resolves.toBeNull();
+  });
+
+  it('scanStatus() carries items_failed through untouched (S129)', async () => {
+    // The value S96 started writing to migration 095's column. The API is a
+    // pass-through, so the only way to lose it is for the shape to stop
+    // declaring it — which is precisely what happened for two months.
+    const { api } = makeApi({ get: () => ({ scan_status: { ...sampleJob, items_failed: 7 } }) });
+    const result = await api.scanStatus('lib-1');
+    expect(result!.items_failed).toBe(7);
   });
 
   it('scanHistory() unwraps { history } and omits limit when undefined', async () => {

@@ -25,6 +25,13 @@
  * `items_updated` (processed) + `current_path` onto the job row (scan, rescan,
  * and metadata-match all report this), so this page renders a live percentage
  * bar + count + current file. On `failed` it shows the server `error` string.
+ *
+ * Partial failure (S129): a job can finish `completed` and still have lost files.
+ * `items_failed` (migration 095) counts files the scan READ and could not index,
+ * and until S129 nothing in the estate rendered it — the number existed only in
+ * the DB, which is not observability. It is surfaced here as a warning line on
+ * the library row and as a column in the scan-history modal, independently of
+ * `status`, because `completed` + `items_failed > 0` is the case that matters.
  */
 import { ref, computed, onMounted, onBeforeUnmount, watch, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
@@ -35,10 +42,12 @@ import {
   type Library,
   type LibraryType,
   type ScanJob,
+  type ScanJobType,
   type CreateLibraryInput,
   type UpdateLibraryInput,
   type ImageTypeOption,
 } from '../../api/admin/libraries';
+import { pluralCount } from '../../utils/plural';
 import { AdminMetadataSourcesApi } from '../../api/admin/metadata-sources';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
@@ -117,6 +126,60 @@ function statusTone(job: ScanJob | null | undefined): 'neutral' | 'info' | 'succ
     default:
       return 'neutral';
   }
+}
+
+/**
+ * Human-readable label for each of the eight `library_scan_jobs.type` ENUM
+ * members (S129).
+ *
+ * The history table used to print `job.type` raw, so five of the eight rendered
+ * as bare snake_case (`metadata_refresh`, `clear_artwork`, …) — and the three the
+ * old TypeScript union knew about were the only ones anyone had looked at. The
+ * map is exhaustive by construction: `Record<ScanJobType, string>` makes adding a
+ * member to `SCAN_JOB_TYPES` without a label a compile error.
+ */
+const SCAN_TYPE_LABELS: Record<ScanJobType, string> = {
+  scan: 'Scan',
+  rescan: 'Rescan',
+  metadata: 'Metadata match',
+  metadata_refresh: 'Metadata refresh',
+  prune: 'Prune missing files',
+  clear_metadata: 'Clear metadata',
+  clear_artwork: 'Clear artwork',
+  delete_all: 'Delete all items',
+};
+
+/**
+ * Label a scan-job type. Falls back to the raw server value so a member added to
+ * the ENUM before this UI knows about it still renders SOMETHING rather than a
+ * blank cell — the failure mode S129 exists to remove.
+ */
+function scanTypeLabel(type: string): string {
+  return SCAN_TYPE_LABELS[type as ScanJobType] ?? type;
+}
+
+/**
+ * The operator-facing sentence for a job that lost files (migration 095's
+ * `items_failed`), or `''` when the job is clean.
+ *
+ * Deliberately a sentence, not a bare number: the acceptance criterion is that a
+ * scan which lost files SAYS SO. Routed through `pluralCount` — the one
+ * pluralisation mechanism (S134) — so `1` reads "1 file".
+ *
+ * The empty string doubles as the render guard, so the threshold is expressed
+ * ONCE. An earlier revision had `failedCount() > 0` here AND `> 0` again in the
+ * template; the duplicate made each copy individually unkillable — mutating
+ * either one alone left the suite green.
+ *
+ * `Number.isFinite` rejects the non-integer shapes a pre-095 row or a lossy proxy
+ * can produce (`null` is absorbed by `??`, but `NaN` and a numeric STRING both
+ * survive a bare `> 0` and would render "NaN files"/"7 files" off a value the
+ * server contract says is an `INT UNSIGNED`).
+ */
+function failedLabel(job: ScanJob | null | undefined): string {
+  const n = job?.items_failed ?? 0;
+  if (!Number.isFinite(n) || n <= 0) return '';
+  return `${pluralCount(n, 'file', 'files')} could not be indexed`;
 }
 
 /** Whether a running job has enough counts to show a determinate progress bar. */
@@ -895,6 +958,21 @@ onBeforeUnmount(() => {
                   {{ progressFile(statuses[lib.id]) }}
                 </span>
               </span>
+              <!--
+                S129 — sits OUTSIDE the v-if/v-else-if chain above on purpose. A
+                job that lost files usually reports `status: 'completed'`, which
+                takes neither the error branch nor the progress branch, so a
+                nested affordance would never render in the exact case it exists
+                for.
+              -->
+              <span
+                v-if="failedLabel(statuses[lib.id])"
+                class="admin-libraries__failed"
+                :data-testid="`failed-${lib.id}`"
+                role="status"
+              >
+                <Badge tone="warning">{{ failedLabel(statuses[lib.id]) }}</Badge>
+              </span>
             </span>
           </td>
           <td>
@@ -1101,6 +1179,7 @@ onBeforeUnmount(() => {
           <tr>
             <th scope="col">Type</th>
             <th scope="col">Status</th>
+            <th scope="col">Failed</th>
             <th scope="col">Queued</th>
             <th scope="col">Completed</th>
             <th scope="col">Error</th>
@@ -1108,8 +1187,12 @@ onBeforeUnmount(() => {
         </thead>
         <tbody>
           <tr v-for="job in history" :key="job.id">
-            <td>{{ job.type }}</td>
+            <td :data-testid="`history-type-${job.id}`">{{ scanTypeLabel(job.type) }}</td>
             <td><Badge :tone="statusTone(job)">{{ statusLabel(job) }}</Badge></td>
+            <td :data-testid="`history-failed-${job.id}`">
+              <Badge v-if="failedLabel(job)" tone="warning">{{ failedLabel(job) }}</Badge>
+              <template v-else>—</template>
+            </td>
             <td class="admin-libraries__date">{{ job.queued_at ?? '' }}</td>
             <td class="admin-libraries__date">{{ job.completed_at ?? '' }}</td>
             <td>{{ job.error ?? '' }}</td>
@@ -1234,6 +1317,15 @@ onBeforeUnmount(() => {
 .admin-libraries__error {
   font-size: var(--text-xs);
   color: var(--text-subtle);
+}
+/*
+ * S129 — the lost-files warning. `inline-flex` so it sits on the status row's
+ * baseline next to the state Badge; it never wraps to its own line and pushes
+ * the Actions column, which is why the row keeps its height.
+ */
+.admin-libraries__failed {
+  display: inline-flex;
+  align-items: center;
 }
 .admin-libraries__progress {
   display: inline-flex;

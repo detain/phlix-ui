@@ -18,6 +18,7 @@ import Switch from '../../components/ui/Switch.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import SourcePriorityEditor from '../../components/SourcePriorityEditor.vue';
 import { useToastStore } from '../../stores/useToastStore';
+import { SCAN_JOB_TYPES } from '../../api/admin/libraries';
 import type { ApiClient } from '../../api/client';
 
 const lib = {
@@ -38,6 +39,10 @@ function job(overrides: Record<string, unknown> = {}) {
     items_added: 0,
     items_updated: 0,
     items_removed: 0,
+    // Migration 095 / `ScanJobRepository::decodeRow()` always emits this as a
+    // concrete integer, so the fixture must too — a fixture that omits it would
+    // let the page's `?? 0` fallback stand in for a real server value (S129).
+    items_failed: 0,
     current_path: null,
     error: null,
     queued_at: '2026-05-27T00:00:00Z',
@@ -875,7 +880,9 @@ describe('Admin LibrariesPage — scan history modal', () => {
     await flushPromises();
     expect(get).toHaveBeenCalledWith('/api/v1/libraries/lib-1/scan-history', undefined);
     const panel = modalPanel();
-    expect(panel.textContent).toContain('rescan');
+    // S129 — the Type cell is now the human label, not the raw ENUM value.
+    expect(panel.querySelector('[data-testid="history-type-h1"]')!.textContent!.trim()).toBe('Rescan');
+    expect(panel.querySelector('[data-testid="history-type-h2"]')!.textContent!.trim()).toBe('Scan');
     expect(panel.textContent).toContain('boom');
     w.unmount();
   });
@@ -1353,6 +1360,211 @@ describe('Admin LibrariesPage — auto-collections toggle (S33)', () => {
       paths: ['/media/movies'],
       autoCollections: false,
     });
+    w.unmount();
+  });
+});
+
+/**
+ * S129 — `items_failed` and the full `library_scan_jobs.type` ENUM.
+ *
+ * S96 (migration 095) started charging files a scan could not index to
+ * `library_scan_jobs.items_failed`, and NOTHING in the estate rendered it: the
+ * number existed only in the DB. Separately, the `ScanJob.type` union carried 3
+ * of the ENUM's 8 members, so five job types rendered as raw snake_case.
+ *
+ * ⚠ The eight member names below are written as LITERALS on purpose. Deriving
+ * them from `SCAN_JOB_TYPES` (the array the production label map is keyed by)
+ * would make this suite self-adjusting: dropping a member from the array would
+ * shrink both the code AND the expectation, and the test could never fail.
+ */
+describe('Admin LibrariesPage — items_failed + the full scan-type ENUM (S129)', () => {
+  /** Every `library_scan_jobs.type` ENUM member → the label the UI must print. */
+  const TYPE_LABELS: [string, string][] = [
+    ['scan', 'Scan'],
+    ['rescan', 'Rescan'],
+    ['metadata', 'Metadata match'],
+    ['metadata_refresh', 'Metadata refresh'],
+    ['prune', 'Prune missing files'],
+    ['clear_metadata', 'Clear metadata'],
+    ['clear_artwork', 'Clear artwork'],
+    ['delete_all', 'Delete all items'],
+  ];
+
+  async function openHistory(w: VueWrapper): Promise<HTMLElement> {
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'History for Movies')!
+      .trigger('click');
+    await flushPromises();
+    return modalPanel();
+  }
+
+  // ── the type ENUM ───────────────────────────────────────────────────────────
+
+  it('enumerates exactly the 8 members migrations 027/030/081/084 define', () => {
+    // Guards the LIST itself, not the rendering: an unreviewed edit to
+    // SCAN_JOB_TYPES (adding a member the DB has not got, or dropping one it has)
+    // fails here against literals lifted from the migration files.
+    expect([...SCAN_JOB_TYPES]).toEqual([
+      'scan',
+      'rescan',
+      'metadata',
+      'metadata_refresh',
+      'prune',
+      'clear_metadata',
+      'clear_artwork',
+      'delete_all',
+    ]);
+  });
+
+  it.each(TYPE_LABELS)('renders the `%s` job type as "%s" in the history table', async (type, label) => {
+    const { client } = makeClient({
+      history: [job({ id: 'h-t', type, status: 'completed', completed_at: '2026-05-27T02:00:00Z' })],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const cell = (await openHistory(w)).querySelector('[data-testid="history-type-h-t"]')!;
+    expect(cell.textContent!.trim()).toBe(label);
+    // ...and the raw snake_case ENUM value is NOT what reaches the operator.
+    // (`scan`/`rescan` differ from their labels only by case, so compare exactly.)
+    expect(cell.textContent!.trim()).not.toBe(type);
+    w.unmount();
+  });
+
+  it('falls back to the raw value for a member this UI does not know yet', async () => {
+    // Migration 084 appended four members at once; the next one must not render a
+    // blank cell while the SPA catches up.
+    const { client } = makeClient({ history: [job({ id: 'h-t', type: 'reticulate_splines' })] });
+    const w = mountPage(client);
+    await flushPromises();
+    const cell = (await openHistory(w)).querySelector('[data-testid="history-type-h-t"]')!;
+    expect(cell.textContent!.trim()).toBe('reticulate_splines');
+    w.unmount();
+  });
+
+  // ── items_failed on the library row ────────────────────────────────────────
+
+  it('says a COMPLETED scan lost files (the case status alone cannot show)', async () => {
+    const { client } = makeClient({
+      scanStatus: job({ status: 'completed', items_found: 100, items_updated: 100, items_failed: 7 }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const status = w.find('[data-testid="status-lib-1"]');
+    // The badge still reads Completed — which is exactly why a bare status is not
+    // enough, and why the warning must render alongside it rather than instead.
+    expect(status.text()).toContain('Completed');
+    const failed = w.find('[data-testid="failed-lib-1"]');
+    expect(failed.exists()).toBe(true);
+    expect(failed.text()).toBe('7 files could not be indexed');
+    w.unmount();
+  });
+
+  it('renders the warning for a FAILED job too, alongside the server error', async () => {
+    // The error branch and the failed-count branch are siblings, not alternatives:
+    // nesting the count inside the v-else-if chain would hide it here.
+    const { client } = makeClient({
+      scanStatus: job({ status: 'failed', error: 'ffprobe missing', items_failed: 2 }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const status = w.find('[data-testid="status-lib-1"]');
+    expect(status.text()).toContain('ffprobe missing');
+    expect(w.find('[data-testid="failed-lib-1"]').text()).toBe('2 files could not be indexed');
+    w.unmount();
+  });
+
+  it('renders the warning for a RUNNING job too, alongside the progress bar', async () => {
+    const { client } = makeClient({
+      scanStatus: job({ status: 'running', items_found: 40, items_updated: 10, items_failed: 3 }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.find('[data-testid="progress-lib-1"]').exists()).toBe(true);
+    expect(w.find('[data-testid="failed-lib-1"]').text()).toBe('3 files could not be indexed');
+    w.unmount();
+  });
+
+  it('uses the singular form for exactly one lost file', async () => {
+    const { client } = makeClient({ scanStatus: job({ status: 'completed', items_failed: 1 }) });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.find('[data-testid="failed-lib-1"]').text()).toBe('1 file could not be indexed');
+    w.unmount();
+  });
+
+  it('shows NOTHING on a clean scan (the warning is not decorative)', async () => {
+    // Two-sided control. Without this, a warning hard-coded to always render
+    // would pass every assertion above.
+    const { client } = makeClient({
+      scanStatus: job({ status: 'completed', items_found: 100, items_updated: 100, items_failed: 0 }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.find('[data-testid="status-lib-1"]').text()).toContain('Completed');
+    expect(w.find('[data-testid="failed-lib-1"]').exists()).toBe(false);
+    w.unmount();
+  });
+
+  it('does not treat a missing/garbage items_failed as a failure', async () => {
+    // A pre-095 row, or a proxy that drops the column, must read as clean rather
+    // than rendering "NaN files could not be indexed".
+    //
+    // `'7'` is the case a bare `> 0` cannot reject: it is truthy AND greater than
+    // zero, and would render "7 files could not be indexed" off a value the
+    // server contract (INT UNSIGNED, `decodeRow()`'s `intColumn()`) says can never
+    // be a string. It is here so `Number.isFinite` has a killer of its own.
+    for (const bad of [undefined, null, 'seven', '7', Number.NaN, -1]) {
+      const { client } = makeClient({ scanStatus: job({ status: 'completed', items_failed: bad }) });
+      const w = mountPage(client);
+      await flushPromises();
+      expect(w.find('[data-testid="failed-lib-1"]').exists()).toBe(false);
+      w.unmount();
+    }
+  });
+
+  // ── items_failed in the history table ──────────────────────────────────────
+
+  it('shows the lost-file count per row in the scan-history table', async () => {
+    const { client } = makeClient({
+      history: [
+        job({ id: 'h1', type: 'rescan', status: 'completed', items_failed: 12 }),
+        job({ id: 'h2', type: 'scan', status: 'completed', items_failed: 0 }),
+      ],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const panel = await openHistory(w);
+    expect(panel.querySelector('[data-testid="history-failed-h1"]')!.textContent!.trim()).toBe(
+      '12 files could not be indexed',
+    );
+    // ...and the clean row renders the em-dash placeholder, not a stray count.
+    expect(panel.querySelector('[data-testid="history-failed-h2"]')!.textContent!.trim()).toBe('—');
+    w.unmount();
+  });
+
+  it('gives the history table a Failed column header', async () => {
+    const { client } = makeClient({ history: [job({ id: 'h1' })] });
+    const w = mountPage(client);
+    await flushPromises();
+    const heads = [...(await openHistory(w)).querySelectorAll('th')].map((th) => th.textContent!.trim());
+    expect(heads).toEqual(['Type', 'Status', 'Failed', 'Queued', 'Completed', 'Error']);
+    w.unmount();
+  });
+
+  // ── the out-of-scope guarantee ─────────────────────────────────────────────
+
+  it('leaves the progress formula untouched (items_updated / items_found)', async () => {
+    // S129's out-of-scope line. `items_failed` must not enter the denominator or
+    // the numerator: 25/100 with 7 failures is still 25%.
+    const { client } = makeClient({
+      scanStatus: job({ status: 'running', items_found: 100, items_updated: 25, items_failed: 7 }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const bar = w.find('[data-testid="progress-lib-1"] [role="progressbar"]');
+    expect(bar.attributes('aria-valuenow')).toBe('25');
+    expect(w.find('[data-testid="progress-lib-1"]').text()).toContain('25% · 25 / 100');
     w.unmount();
   });
 });

@@ -254,11 +254,12 @@ export type {
   CreateGroupInput,
   JoinGroupInput,
 } from './api/admin/syncPlay';
-export { AdminLibrariesApi, LIBRARY_TYPES } from './api/admin/libraries';
+export { AdminLibrariesApi, LIBRARY_TYPES, SCAN_JOB_TYPES } from './api/admin/libraries';
 export type {
   Library,
   LibraryType,
   ScanJob,
+  ScanJobType,
   CreateLibraryInput,
   UpdateLibraryInput,
   CreateLibraryResult,
