@@ -84,3 +84,63 @@ export function supportsBlockBodies(css: string, condition: string, needle: stri
     }
     return found;
 }
+
+/**
+ * S221/S222 — return the declaration bodies of every rule in `css` whose
+ * selector list contains EXACTLY `selector` plus a `<style scoped>` attribute
+ * (`.foo[data-v-1a2b3c4d]`), at any at-rule nesting depth.
+ *
+ * Why "exactly", and why this is not a substring search:
+ *
+ * - `.media-row` is a literal prefix of `.media-row__head`, so `includes()`
+ *   answers questions about the wrong box. The selector must terminate at the
+ *   scope attribute.
+ * - `.media-row__rail[data-v-x]::-webkit-scrollbar` is a DIFFERENT rule from
+ *   `.media-row__rail[data-v-x]`. Asking "does the rail declare containment"
+ *   must not be answered by a scrollbar pseudo-element's body.
+ * - lightningcss groups selectors (`.a[data-v-x],.b[data-v-x]{…}`) and nests
+ *   rules inside `@media`/`@supports`, so both the comma list and the at-rule
+ *   bodies have to be walked.
+ *
+ * Returns one entry per matching rule (a selector may legitimately be declared
+ * more than once — e.g. a base rule plus a `@media` override), so a caller
+ * asserting "this property appears NOWHERE on this selector" must check every
+ * body, not just the first.
+ */
+export function scopedRuleBodies(css: string, selector: string): string[] {
+    const scoped = new RegExp(`^${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\[data-v-[0-9a-f]+\\]$`);
+    const found: string[] = [];
+
+    const walk = (text: string): void => {
+        let i = 0;
+        let preludeStart = 0;
+        while (i < text.length) {
+            const ch = text[i];
+            if (ch === '{') {
+                const prelude = text.slice(preludeStart, i).trim();
+                let depth = 1;
+                let j = i + 1;
+                while (j < text.length && depth > 0) {
+                    if (text[j] === '{') depth++;
+                    else if (text[j] === '}') depth--;
+                    j++;
+                }
+                const body = text.slice(i + 1, j - 1);
+                if (prelude.startsWith('@')) {
+                    // Conditional group rule (@media/@supports/@layer): recurse.
+                    walk(body);
+                } else if (prelude.split(',').some((s) => scoped.test(s.trim()))) {
+                    found.push(body);
+                }
+                i = j;
+                preludeStart = i;
+                continue;
+            }
+            if (ch === '}' || ch === ';') preludeStart = i + 1;
+            i++;
+        }
+    };
+
+    walk(css);
+    return found;
+}
