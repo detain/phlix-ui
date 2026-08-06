@@ -386,3 +386,57 @@ describe('MediaRow — arrow wrapper CSS contract, built stylesheet (S221)', () 
     }
   });
 });
+
+/**
+ * S222 — WHICH element receives `content-visibility: auto`, asserted against the
+ * built stylesheet.
+ *
+ * S09's existing assertion (above) reads the SFC source. That is enough to catch
+ * the declaration being deleted from the `.media-row` block, but it is blind to
+ * the two failure modes that matter most here, both of which look identical from
+ * source: lightningcss dropping the declaration on the way to `dist/`, and the
+ * declaration being present but landing on the WRONG selector.
+ *
+ * Wrong-selector is not hypothetical. S21's acceptance criterion was written
+ * believing the containment sat on `.media-row__rail`; it has always sat on
+ * `.media-row`, the outer `<section>` (`git show 469a3dce^` predates S21). That
+ * single mistaken premise is the whole of S222.
+ *
+ * Placement is behaviourally load-bearing, measured in real headless Chromium
+ * against this same `dist/style.css` (bundled playwright build; `test:visual`
+ * never run) — a probe positioned 30px outside `.media-row`'s left edge is NOT
+ * painted with `content-visibility: auto` and IS painted without it. So the
+ * property decides whether the arrows' halo survives, and moving it to the rail
+ * would silently move that clip edge.
+ */
+describe('MediaRow — content-visibility placement, built stylesheet (S222)', () => {
+  const css = readBuiltCss('style.css');
+  const bodies = (sel: string) => scopedRuleBodies(css, sel).join(';');
+
+  it('lands on .media-row, the outer section', () => {
+    expect(bodies('.media-row')).toMatch(/content-visibility:\s*auto/);
+  });
+
+  it('is paired with the reserved intrinsic box on the same element', () => {
+    // `content-visibility: auto` without a reserved size is the CLS bug R6.2a
+    // was fixed to avoid, and a reserved size alone does nothing.
+    expect(bodies('.media-row')).toMatch(
+      /contain-intrinsic-size:\s*auto\s+var\(--media-row-intrinsic-h,\s*380px\)/,
+    );
+  });
+
+  it('lands on NEITHER the rail NOR the arrow wrapper', () => {
+    // The half of S21's AC that was never true. If a later change "fixes" the AC
+    // by moving the property down onto the rail, the arrows stop being outside
+    // the containment (they never were) AND the reserved-box pairing above is
+    // orphaned — so pin both boxes explicitly, not just the row.
+    expect(bodies('.media-row__rail')).not.toMatch(/content-visibility:/);
+    expect(bodies('.media-row__viewport')).not.toMatch(/content-visibility:/);
+  });
+
+  it('appears exactly once in the whole shipped stylesheet', () => {
+    // A copy landing on some other selector would satisfy every assertion above
+    // while quietly introducing a second clip box.
+    expect(css.match(/content-visibility:/g) ?? []).toHaveLength(1);
+  });
+});

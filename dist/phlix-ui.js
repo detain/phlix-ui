@@ -18,7 +18,7 @@ import { t as be } from "./NetworkHealthIndicator-D5S46Gyg.js";
 import { _ as xe, a as Se, c as Ce, d as we, f as Te, g as Ee, h as De, i as Oe, l as ke, m as Ae, n as je, o as Me, p as Ne, r as Pe, s as Fe, t as Ie, u as Le, v as Re, y as ze } from "./SecuritySettingsPage-DxN9hg8p.js";
 import { i as Be, n as Ve, r as He, t as Ue } from "./Kbd-qzi8z-Qw.js";
 import { a as We, i as Ge, n as Ke, o as qe, r as Je, t as Ye } from "./useLibrariesStore-B1E5wbLf.js";
-import { n as Xe, t as Ze } from "./HomeRow-DAIfv9hO.js";
+import { n as Xe, t as Ze } from "./HomeRow-C9MbnL2a.js";
 import { a as Qe, c as $e, i as et, l as tt, n as nt, o as rt, r as it, s as at, t as ot, u as st } from "./useConnectionStore-DvIGHfR-.js";
 import { i as ct, n as lt, r as ut, t as dt } from "./usePageTitle-BO3GGF3M.js";
 import { t as A } from "./Button-Cw8Wl4QR.js";
@@ -37,7 +37,7 @@ import { t as xt } from "./Menu-CcVQWgwT.js";
 import { t as St } from "./HelpText-B8uA160R.js";
 import { i as Ct, t as wt } from "./MediaCard-rf06-9ch.js";
 import { t as Tt } from "./MediaGrid-OM_2Ii_m.js";
-import { t as Et } from "./MediaRow-Xja9nza2.js";
+import { t as Et } from "./MediaRow-CljSAj29.js";
 import { n as Dt, t as Ot } from "./media-query-DKjhlX8r.js";
 import { n as kt, t as At } from "./metadata-sources-KPXiaoRg.js";
 import { n as jt, t as Mt } from "./logs-DadTfaTq.js";
@@ -1187,12 +1187,12 @@ function fa(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-CBtODgqg.js")
+			component: () => import("./BrowsePage-DPE9pocm.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-CNUX-P6Z.js")
+			component: () => import("./MediaDetailPage-CuONIstx.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -6565,7 +6565,7 @@ function Yh() {
 }
 //#endregion
 //#region src/index.ts
-var Xh = wn(() => import("./MediaDetail-CbhZqFtP.js").then((e) => e.n)), Zh = wn(() => import("./MetadataMatchModal-BQWaW_aA.js").then((e) => e.n)), Qh = wn(() => import("./FilterBar-fD_hxEq6.js").then((e) => e.n));
+var Xh = wn(() => import("./MediaDetail-9WUvA0EN.js").then((e) => e.n)), Zh = wn(() => import("./MetadataMatchModal-BQWaW_aA.js").then((e) => e.n)), Qh = wn(() => import("./FilterBar-fD_hxEq6.js").then((e) => e.n));
 //#endregion
 export { Mt as ALL_LOGS, Sl as AcceptInvitePage, Kt as AdminBackupApi, qt as AdminCastApi, Zt as AdminCollectionsApi, Nt as AdminDashboardApi, Jt as AdminDlnaServerApi, Qt as AdminHistoryApi, dn as AdminHubDashboardApi, Gt as AdminIntegrationsApi, nn as AdminLibrariesApi, Xt as AdminLiveTvApi, jt as AdminLogsApi, At as AdminMetadataSourcesApi, un as AdminPluginsApi, Yt as AdminRemoteAccessApi, Wt as AdminServicesApi, rn as AdminSettingsApi, $t as AdminSyncPlayApi, Bt as AdminUsersApi, Ut as AdminWebhooksApi, O as ApiClient, ie as ApiError, e as AppBackdrop, fr as AppLayout, Ip as AudiobookDetailPage, gm as AudiobookPlayerPage, op as AudiobooksPage, Oe as BUILT_IN_THEME_IDS, j as Badge, Mf as BookDetailPage, Gf as BookReaderPage, df as BooksPage, A as Button, ot as CONNECTION_API_BASE_KEY, nt as CONNECTION_CONFIRMED_ORIGIN_KEY, hi as CURRENT_SERVER_ID_KEY, gi as CURRENT_SERVER_NAME_KEY, mt as Chip, gt as Combobox, l as DEFAULT_CAPTION_STYLE, v as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, It as DEFAULT_THROTTLE_BPS, N as EmptyState, Ds as FederationPage, Xs as FederationSharesPage, Qh as FilterBar, ka as HelpPopover, St as HelpText, n as Icon, r as IconButton, _l as InviteLinksPage, Ue as Kbd, en as LIBRARY_TYPES, Va as LibraryScanPage, ee as LocalStorageTokenStore, fn as LoginForm, Se as MAX_EXTENDS_DEPTH, te as MUSIC_PAGE_SIZE, oc as ManageSharesPage, wt as MediaCard, Xh as MediaDetail, Tt as MediaGrid, Ze as MediaHomeRow, Et as MediaRow, xt as Menu, Zh as MetadataMatchModal, vt as Modal, ql as MusicAlbumPage, Pu as MusicArtistPage, fu as MusicArtistsPage, Xd as MusicPlayerPage, yd as MusicTracksPage, oo as MyServersPage, C as NetworkError, cn as PLUGIN_SECRET_MASK, g as PLURAL_CATEGORIES, yt as PageHint, Ca as PageTransition, si as PhlixApp, Qm as PhotoAlbumPage, Lm as PhotoAlbumsPage, Ih as PhotoSlideshowPage, xh as PhotoViewPage, Rt as RATING_LABELS, Ft as RATING_MAX, Pt as RATING_OPTIONS, de as RESUME_MAX_RATIO, le as RESUME_MIN_SECONDS, Kc as RequestsPage, Sa as Reveal, tn as SCAN_JOB_TYPES, an as SETTINGS_SECRET_MASK, Ge as SORT_TITLE_ARTICLES, Vt as SUBSCRIBABLE_EVENTS, El as SearchPage, Ie as SecuritySettingsPage, ht as Select, ms as ServerDetailPage, bc as SharedWithMePage, nr as Sheet, pn as SignupForm, M as Skeleton, ft as Slider, kt as SourcePriorityEditor, ye as Spinner, pt as Switch, Me as THEME_CACHE_KEY, Fe as THEME_TOKEN_ALLOWLIST, Lt as THROTTLE_BPS_LEVELS, zt as THROTTLE_BPS_OPTIONS, re as TMDB_UNCONFIGURED_CODE, bt as Tabs, me as ThumbRating, w as TimeoutError, xa as ToastHost, ve as Tooltip, Ht as WEBHOOK_EVENT_CATEGORIES, Ce as activeThemeStyle, ea as adminMenu, Kr as applyStoredThemeEarly, ke as applyThemeTokens, Uh as bestCandidate, Lh as bindMediaStoreToRouter, Zi as buildAdminRoutes, $i as buildHubAdminRoutes, Ot as buildMediaQuery, Dt as buildMediaUrl, Qi as buildServerAdminRoutes, Le as clearThemeTokens, Ki as commonAdminPages, We as compareByStrippedTitle, pa as createPhlixApp, y as createTranslator, Ur as deriveAccentVars, D as errMessage, Ke as fetchLibraries, Pe as fetchThemes, pi as focusable, di as focusableRegistry, dt as formatPageTitle, Ve as fuzzyScore, x as getDefaultApiHeaders, c as hasStoredPreferences, Ji as hubAdminPages, mi as installFocusable, it as isAllowedBase, we as isAllowedThemeToken, Te as isBuiltInThemeId, E as isOffline, et as isPlaintextPublic, f as isPluralTemplate, Qe as isPrivateHost, Ne as isSafeThemeTokenValue, ne as isTmdbUnconfigured, He as matchCommand, _ as mergeMessages, rt as normalizeBase, Ae as normalizeServerTheme, at as originOf, ln as pluginErrorCode, sn as pluginValidationErrors, m as plural, d as pluralCategory, u as pluralCount, p as pluralize, $e as probeServer, De as readCachedTheme, o as readStoredPreferences, Rh as rectCenter, Ee as resolveThemeBase, xe as resolveThemeTokens, Re as sanitizeThemeTokens, h as selectPluralTemplate, qi as serverAdminPages, lt as setAppName, S as setDefaultApiHeaders, ut as setPageTitle, Je as sortLibraries, qe as stripLeadingArticle, oe as useApiBase, se as useAuthStore, Jr as useCommandPaletteHotkey, Be as useCommandStore, tt as useConnectionStore, i as useFocusTrap, Ye as useLibrariesStore, k as useMediaApiBase, _t as useMediaStore, b as useMessages, Yh as useOnline, ct as usePageTitle, ce as usePlayerStore, $r as usePreconnect, a as usePreferencesStore, Ct as usePrefetch, ri as useResumeReporter, Xe as useResumeSync, bi as useServerStore, on as useSettingsPrefsStore, Jh as useSpatialNav, qr as useTheme, je as useThemesStore, fe as useToastStore, pe as useUserItemDataStore, st as withScheme, ze as writeCachedTheme };
 
