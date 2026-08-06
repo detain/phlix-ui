@@ -16,6 +16,7 @@ import Icon from '../components/Icon.vue';
 import { useFocusTrap } from '../components/ui/useFocusTrap';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useMessages } from '../composables/useMessages';
+import { useImageSrc } from '../composables/useImageSrc';
 import type { PhlixAppConfig } from './types';
 
 const auth = useAuthStore();
@@ -23,6 +24,9 @@ const router = useRouter();
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.routerBase ?? '/app');
 const { t } = useMessages();
+/** S241: avatar_url is a ROOT-RELATIVE `/api/v1/users/{id}/avatar`; resolve it
+ *  against the media base so it loads over the relay proxy on the hub. */
+const { imgSrc } = useImageSrc();
 
 const open = ref(false);
 const rootEl = ref<HTMLElement | null>(null);
@@ -93,7 +97,7 @@ onBeforeUnmount(() => {
       <span v-if="auth.isLoggedIn" class="usermenu__avatar">
         <img
           v-if="auth.user?.avatar_url && !avatarError"
-          :src="auth.user.avatar_url"
+          :src="imgSrc(auth.user.avatar_url)"
           :alt="displayName"
           class="usermenu__avatar-img"
           @error="avatarError = true"
@@ -116,7 +120,7 @@ onBeforeUnmount(() => {
           <span class="usermenu__avatar usermenu__avatar--lg">
             <img
               v-if="auth.user?.avatar_url && !avatarError"
-              :src="auth.user.avatar_url"
+              :src="imgSrc(auth.user.avatar_url)"
               :alt="displayName"
               class="usermenu__avatar-img"
               @error="avatarError = true"

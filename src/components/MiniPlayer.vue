@@ -27,6 +27,13 @@ import Icon from './Icon.vue';
 import { useMessages } from '../composables/useMessages';
 import { attachHls } from './player/hls-playback';
 import type { HlsHandle } from './player/hls-playback';
+import { useImageSrc } from '../composables/useImageSrc';
+
+/** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
+ *  so bound verbatim they resolve against the HUB origin instead of the selected server's
+ *  relay-proxy base. Resolve every image binding through this seam; absolute CDN URLs and
+ *  `blob:`/`data:` values pass through byte-for-byte. */
+const { imgSrc } = useImageSrc();
 
 const emit = defineEmits<{ (e: 'expand', id: string): void }>();
 
@@ -212,7 +219,7 @@ onBeforeUnmount(() => {
         ref="videoRef"
         class="mini__video"
         :src="player.hlsMasterUrl ? '' : player.streamUrl"
-        :poster="player.current?.poster_url ?? undefined"
+        :poster="imgSrc(player.current?.poster_url) ?? undefined"
         preload="metadata"
         playsinline
         @loadedmetadata="onLoadedMetadata"

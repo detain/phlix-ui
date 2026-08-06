@@ -15,6 +15,13 @@ import { ref, computed, onBeforeUnmount } from 'vue';
 import Button from './ui/Button.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useImageSrc } from '../composables/useImageSrc';
+
+/** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
+ *  so bound verbatim they resolve against the HUB origin instead of the selected server's
+ *  relay-proxy base. Resolve every image binding through this seam; absolute CDN URLs and
+ *  `blob:`/`data:` values pass through byte-for-byte. */
+const { imgSrc } = useImageSrc();
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
@@ -150,7 +157,7 @@ const isLoading = computed(() => uploadLoading.value || deleteLoading.value);
         <div class="pis__avatar">
           <img
             v-if="displayAvatarUrl"
-            :src="displayAvatarUrl"
+            :src="imgSrc(displayAvatarUrl)"
             alt="Your profile image"
             class="pis__avatar-img"
           />

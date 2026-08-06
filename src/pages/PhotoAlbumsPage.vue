@@ -18,6 +18,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { photoApi } from '../api/photos';
 import type { PhotoAlbum } from '../types/photo';
@@ -29,6 +30,9 @@ import Button from '../components/ui/Button.vue';
 import { pluralCount } from '../utils/plural';
 
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 const libraries = useLibrariesStore();
 const route = useRoute();
 const router = useRouter();
@@ -194,7 +198,7 @@ function selectLibrary(id: string): void {
                         <div class="album-cover">
                             <img
                                 v-if="album.cover_photo?.thumbnail_url"
-                                :src="album.cover_photo.thumbnail_url"
+                                :src="imgSrc(album.cover_photo.thumbnail_url)"
                                 :alt="albumTitle(album)"
                                 loading="lazy"
                             />

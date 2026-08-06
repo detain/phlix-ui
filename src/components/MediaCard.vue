@@ -38,6 +38,13 @@ import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import { api } from '../api/client';
 import { pluralCount } from '../utils/plural';
+import { useImageSrc } from '../composables/useImageSrc';
+
+/** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
+ *  so bound verbatim they resolve against the HUB origin instead of the selected server's
+ *  relay-proxy base. Resolve every image binding through this seam; absolute CDN URLs and
+ *  `blob:`/`data:` values pass through byte-for-byte. */
+const { imgSrc, imgSrcset } = useImageSrc();
 
 const props = withDefaults(
   defineProps<{
@@ -456,8 +463,8 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         ref="imgEl"
         class="media-card__img"
         :class="{ 'is-loaded': loaded }"
-        :src="item.poster_url"
-        :srcset="posterSources.srcset"
+        :src="imgSrc(item.poster_url)"
+        :srcset="imgSrcset(posterSources.srcset)"
         :sizes="posterSources.sizes"
         :alt="item.name"
         :loading="lazy ? 'lazy' : undefined"

@@ -16,6 +16,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { ApiClient } from '../api/client';
 import type { AudiobookDetail, AudiobookChapter } from '../types/audiobook';
 import Icon from '../components/Icon.vue';
@@ -27,6 +28,9 @@ const { t } = useMessages();
 const route = useRoute();
 const router = useRouter();
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 
 const currentId = computed(() => String(route.params.id ?? ''));
 
@@ -144,7 +148,7 @@ function getChapterDuration(chapter: AudiobookChapter): string {
                     <div class="audiobook-cover-large">
                         <img
                             v-if="audiobook.cover_url"
-                            :src="audiobook.cover_url"
+                            :src="imgSrc(audiobook.cover_url)"
                             :alt="audiobook.name"
                             class="audiobook-cover-large__img"
                         >

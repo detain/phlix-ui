@@ -13,6 +13,7 @@
 import { onMounted, computed, ref, type PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { ApiClient } from '../api/client';
 import type { ApiClient as ApiClientType } from '../api/client';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -38,6 +39,9 @@ const props = defineProps({
 
 const router = useRouter();
 const injectedClient = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 const toasts = useToastStore();
 const player = usePlayerStore();
 
@@ -212,7 +216,7 @@ onMounted(() => {
             >
               <img
                 v-if="historyItem.media.poster_url"
-                :src="historyItem.media.poster_url"
+                :src="imgSrc(historyItem.media.poster_url)"
                 :alt="historyItem.media.name"
                 loading="lazy"
                 decoding="async"

@@ -29,6 +29,13 @@ import PageHint from '../components/ui/PageHint.vue';
 import { hubPageHelp } from './hubHelpLinks';
 import Modal from '../components/ui/Modal.vue';
 import Input from '../components/ui/Input.vue';
+import { useImageSrc } from '../composables/useImageSrc';
+
+/** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
+ *  so bound verbatim they resolve against the HUB origin instead of the selected server's
+ *  relay-proxy base. Resolve every image binding through this seam; absolute CDN URLs and
+ *  `blob:`/`data:` values pass through byte-for-byte. */
+const { imgSrc } = useImageSrc();
 
 const props = defineProps<{
   /** Inject an API client for tests; defaults to the shared `api` singleton. */
@@ -200,7 +207,7 @@ onMounted(() => loadRequests(true));
         <div class="request-card__poster" aria-hidden="true">
           <img
             v-if="req.poster_url"
-            :src="req.poster_url"
+            :src="imgSrc(req.poster_url)"
             :alt="req.title"
             class="request-card__poster-img"
             loading="lazy"

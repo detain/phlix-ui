@@ -15,12 +15,16 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { ApiClient } from '../api/client';
 import type { AudiobookListItem } from '../types/audiobook';
 import Icon from '../components/Icon.vue';
 
 const router = useRouter();
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 
 // --- data ---
 const audiobooks = ref<AudiobookListItem[]>([]);
@@ -112,7 +116,7 @@ function formatDuration(ms: number | undefined): string {
                 <div class="audiobook-card__cover">
                     <img
                         v-if="audiobook.cover_url"
-                        :src="audiobook.cover_url"
+                        :src="imgSrc(audiobook.cover_url)"
                         :alt="audiobook.name"
                         class="audiobook-card__img"
                         loading="lazy"

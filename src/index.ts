@@ -369,6 +369,16 @@ export {
 } from './stores/useConnectionStore';
 export { useApiBase, useMediaApiBase } from './composables/useApiBase';
 
+// S241 — image URLs arrive inside JSON payloads as ROOT-RELATIVE server paths
+// (`/api/v1/artwork/{id}?size=…&exp=…&sig=…`). Bound verbatim into `:src` they
+// resolve against the DOCUMENT origin, which is right on the media server and
+// wrong on the hub, where the payload came over the relay proxy for the selected
+// server. Exposed so a host app resolves its own image bindings the same way the
+// components do. Absolute CDN URLs pass through byte-for-byte.
+export { useImageSrc } from './composables/useImageSrc';
+export type { ImageSrcResolvers } from './composables/useImageSrc';
+export { resolveImageSrc, resolveImageSrcset, isRewritableImagePath } from './utils/imageSrc';
+
 // Article-aware title sorting (mirror of the server's SortTitle): file "The Plot"
 // under P. Exposed so hosts can sort/group local lists the same way the server does.
 export {

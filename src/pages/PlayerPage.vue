@@ -31,6 +31,7 @@ import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient, ApiError } from '../api/client';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
@@ -96,6 +97,9 @@ interface PlaybackInfo {
 // the relay tunnel is P3 — out of scope here; this only re-points the page's API
 // fetches, matching the rest of the media surface.)
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 // The paired server's own public origin on the hub (else ''). The player streams
 // media bytes from here directly (native Range) since the proxy doesn't route the
 // byte-stream endpoint; transcode/HLS still go over `apiBase` (the proxy).
@@ -148,7 +152,7 @@ usePageTitle(() => item.value?.name);
  *  escaped, CR/LF stripped) like Scrubber.previewThumbCss so a poster URL containing
  *  `)`/`"` can't break out of the declaration (the R3.2-hardened CSS pattern). */
 const ambientStyle = computed(() => {
-  const url = item.value?.poster_url;
+  const url = imgSrc(item.value?.poster_url);
   if (!url) return undefined;
   const safe = url.replace(/[\\"]/g, '\\$&').replace(/[\r\n]/g, '');
   return { backgroundImage: `url("${safe}")` };

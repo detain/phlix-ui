@@ -20,6 +20,7 @@ import { useRoute, useRouter } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient } from '../api/client';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { loadSeriesSeasons } from '../composables/useSeriesSeasons';
 import { pickSeasonPlayable } from '../composables/useResolvePlayable';
 import { findSeasonByParam, type SeasonGroup } from '../components/series-grouping';
@@ -39,6 +40,9 @@ import { pluralize } from '../utils/plural';
 // On the hub this is the relay-proxy base for the selected server; on the media
 // server it is the app's own base.
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 const route = useRoute();
 const router = useRouter();
 const { t } = useMessages();
@@ -203,7 +207,7 @@ function onLove(next: number): void {
                         <img
                             v-if="seasonPoster"
                             class="season-page__img"
-                            :src="seasonPoster"
+                            :src="imgSrc(seasonPoster)"
                             :alt="`${series.name} ${season.label}`"
                             decoding="async"
                         />

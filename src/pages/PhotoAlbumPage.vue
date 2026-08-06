@@ -15,6 +15,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { photoApi } from '../api/photos';
 import type { PhotoAlbum } from '../types/photo';
 import { albumTitle } from '../types/photo';
@@ -30,6 +31,9 @@ const props = defineProps<{
 }>();
 
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 const route = useRoute();
 const router = useRouter();
 
@@ -160,7 +164,7 @@ watch([() => props.id, libraryId], () => {
                 <div class="photo-thumbnail">
                     <img
                         v-if="photo.thumbnail_url && !imageErrors.has(photo.id)"
-                        :src="photo.thumbnail_url"
+                        :src="imgSrc(photo.thumbnail_url)"
                         :alt="photo.name"
                         loading="lazy"
                         @error="handleImageError(photo.id)"

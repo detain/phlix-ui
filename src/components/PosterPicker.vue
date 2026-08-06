@@ -25,6 +25,13 @@ import { useAuthStore } from '../stores/useAuthStore';
 import Modal from './ui/Modal.vue';
 import Icon from './Icon.vue';
 import Spinner from './ui/Spinner.vue';
+import { useImageSrc } from '../composables/useImageSrc';
+
+/** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
+ *  so bound verbatim they resolve against the HUB origin instead of the selected server's
+ *  relay-proxy base. Resolve every image binding through this seam; absolute CDN URLs and
+ *  `blob:`/`data:` values pass through byte-for-byte. */
+const { imgSrc } = useImageSrc();
 
 const props = defineProps<{
   modelValue: boolean;
@@ -388,7 +395,7 @@ onBeforeUnmount(abortLoad);
               >
                 <img
                   v-if="c.poster_url"
-                  :src="c.poster_url"
+                  :src="imgSrc(c.poster_url)"
                   :alt="`${provider} poster`"
                   loading="lazy"
                   decoding="async"

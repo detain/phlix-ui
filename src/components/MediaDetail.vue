@@ -19,6 +19,7 @@ import type { MediaItem, MediaType } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
@@ -449,6 +450,9 @@ watch(logoUrl, () => {
 // through). Injected the same way SeriesDetail does; safe empty-string defaults
 // so the component still mounts in tests that don't provide the media bases.
 const mediaApiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc, imgSrcset } = useImageSrc();
 const mediaDirectBase = useMediaDirectBase();
 
 /** Fully-resolved theme audio URL, or null when the item has no theme. */
@@ -563,8 +567,8 @@ onBeforeUnmount(() => {
       <img
         class="media-detail__backdrop-img"
         :class="{ 'is-loaded': backdropLoaded }"
-        :src="backdropSrc"
-        :srcset="backdropSrcset || undefined"
+        :src="imgSrc(backdropSrc)"
+        :srcset="imgSrcset(backdropSrcset) || undefined"
         sizes="100vw"
         alt=""
         loading="lazy"
@@ -603,7 +607,7 @@ onBeforeUnmount(() => {
     <template v-if="item.poster_url">
       <div
         class="media-detail__ambient"
-        :style="{ backgroundImage: `url(${item.poster_url})` }"
+        :style="{ backgroundImage: `url(${imgSrc(item.poster_url)})` }"
         aria-hidden="true"
       />
       <div v-if="!backdropSrc" class="media-detail__ambient-scrim" aria-hidden="true" />
@@ -620,7 +624,7 @@ onBeforeUnmount(() => {
           ref="imgEl"
           class="media-detail__img"
           :class="{ 'is-loaded': loaded }"
-          :src="item.poster_url"
+          :src="imgSrc(item.poster_url)"
           :alt="item.name"
           decoding="async"
           fetchpriority="high"
@@ -636,7 +640,7 @@ onBeforeUnmount(() => {
         <img
           v-if="showLogo"
           class="media-detail__logo"
-          :src="logoUrl!"
+          :src="imgSrc(logoUrl)!"
           :alt="item.name"
           decoding="async"
           @error="onLogoError"
@@ -679,7 +683,7 @@ onBeforeUnmount(() => {
               <img
                 v-if="c.logoUrl"
                 class="media-detail__company-logo"
-                :src="c.logoUrl"
+                :src="imgSrc(c.logoUrl)"
                 :alt="c.name"
                 loading="lazy"
                 decoding="async"
@@ -808,7 +812,7 @@ onBeforeUnmount(() => {
                     <img
                       v-if="p.profileUrl"
                       class="media-detail__avatar-img"
-                      :src="p.profileUrl"
+                      :src="imgSrc(p.profileUrl)"
                       :alt="p.name"
                       loading="lazy"
                       decoding="async"
@@ -836,7 +840,7 @@ onBeforeUnmount(() => {
                     <img
                       v-if="p.profileUrl"
                       class="media-detail__avatar-img"
-                      :src="p.profileUrl"
+                      :src="imgSrc(p.profileUrl)"
                       :alt="p.name"
                       loading="lazy"
                       decoding="async"
