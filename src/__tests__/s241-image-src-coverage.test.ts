@@ -107,10 +107,28 @@ const CLASSIFIED_EXCEPTIONS: Record<string, string> = {
     'theme audio byte stream; the computed already joins mediaDirectBase || mediaApiBase',
 
   // Not an image, and not this step's subsystem.
-  'components/Player.vue::st.url':
-    'subtitle VTT <track>, not an image — same defect class, different subsystem (out of S241 scope)',
   'components/MediaDetail.vue::youtubeEmbedUrl':
     'literal https://www.youtube.com/embed/{key} iframe, always absolute',
+};
+
+/**
+ * Bindings whose value is base-resolved UPSTREAM of the template, keyed the same
+ * way, with the seam that does it.
+ *
+ * This is NOT a second exception list: an entry here asserts the value IS
+ * resolved, just not at the binding — so a `RESOLVED_UPSTREAM` entry carries the
+ * name of the test that proves the rendered attribute. An entry whose binding
+ * disappears is stale and fails alongside the exception list.
+ */
+const RESOLVED_UPSTREAM: Record<string, string> = {
+  // S242: the subtitle `<track>` merges THREE sources, one of which
+  // (`tc.subtitleTracks`) is already resolved by `useHlsTranscode`. Resolving at
+  // this binding would double-prefix that path, so `serverSubtitleTracks`
+  // normalises the other two instead and the template binds the result raw.
+  // Proven end-to-end (rendered `<track src>`, all three paths) by
+  // `src/__tests__/s242-relay-subtitle-track.test.ts`.
+  'components/Player.vue::st.url':
+    'subtitle VTT sidecar; resolved in the serverSubtitleTracks computed (utils/subtitleSrc.ts)',
 };
 
 describe('S241 — every image binding is base-aware', () => {
@@ -128,12 +146,21 @@ describe('S241 — every image binding is base-aware', () => {
     expect(vueFiles(SRC).length).toBeGreaterThan(50);
   });
 
-  it('every binding either uses the seam or is a classified exception', () => {
+  it('every binding either uses the seam, is resolved upstream, or is a classified exception', () => {
     const unhandled = bindings
       .filter((b) => !/\bimgSrc\s*\(|\bimgSrcset\s*\(/.test(b.expr))
       .filter((b) => !(`${b.file}::${b.expr}` in CLASSIFIED_EXCEPTIONS))
+      .filter((b) => !(`${b.file}::${b.expr}` in RESOLVED_UPSTREAM))
       .map((b) => `${b.file}:${b.attr}="${b.expr}"`);
     expect(unhandled).toEqual([]);
+  });
+
+  it('the two classification maps are disjoint', () => {
+    // A binding cannot be BOTH "deliberately not resolved" and "resolved
+    // upstream": overlapping keys would let a wrong classification hide behind
+    // the right one.
+    const both = Object.keys(RESOLVED_UPSTREAM).filter((k) => k in CLASSIFIED_EXCEPTIONS);
+    expect(both).toEqual([]);
   });
 
   it('the seam is wired at the sites the acceptance criteria name', () => {
@@ -152,6 +179,14 @@ describe('S241 — every image binding is base-aware', () => {
     const live = new Set(bindings.map((b) => `${b.file}::${b.expr}`));
     const stale = Object.keys(CLASSIFIED_EXCEPTIONS).filter((k) => !live.has(k));
     expect(stale).toEqual([]);
+  });
+
+  it('no resolved-upstream entry is stale', () => {
+    const live = new Set(bindings.map((b) => `${b.file}::${b.expr}`));
+    const stale = Object.keys(RESOLVED_UPSTREAM).filter((k) => !live.has(k));
+    expect(stale).toEqual([]);
+    // Non-vacuity: the map must not be empty, or "no stale entry" is free.
+    expect(Object.keys(RESOLVED_UPSTREAM).length).toBeGreaterThan(0);
   });
 
   it('CSS url() image layers go through the seam too', () => {
