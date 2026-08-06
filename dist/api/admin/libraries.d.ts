@@ -115,7 +115,30 @@ export interface Library {
     [k: string]: unknown;
 }
 /**
- * A scan-job row as returned by `ScanJobRepository::decodeRow()` (13 fields).
+ * Every member of the `library_scan_jobs.type` ENUM, in the column's own ordinal
+ * order (S129).
+ *
+ * 🔴 Enumerated from the MIGRATIONS, not from a hand-maintained TypeScript union.
+ * The union that used to live here carried only THREE of the eight members
+ * (`scan | rescan | metadata`), so five job types the server can legitimately
+ * return were type-errors on arrival and rendered without a label. The estate has
+ * a long history of exactly this drift (`media_items.type` is `photo`, not
+ * `image`), which is why the source of truth is named here explicitly:
+ *
+ *  - `027_library_scan_jobs.sql`                    → `scan`, `rescan`
+ *  - `030_library_scan_jobs_metadata_type.sql`      → `metadata`
+ *  - `081_..._metadata_refresh_type.sql`            → `metadata_refresh`
+ *  - `084_..._maintenance_types.sql`                → `prune`, `clear_metadata`,
+ *                                                     `clear_artwork`, `delete_all`
+ *
+ * MySQL stores an ENUM by index, so 084 APPENDS rather than re-orders; keep this
+ * array append-only for the same reason.
+ */
+export declare const SCAN_JOB_TYPES: readonly ["scan", "rescan", "metadata", "metadata_refresh", "prune", "clear_metadata", "clear_artwork", "delete_all"];
+/** One member of the `library_scan_jobs.type` ENUM. */
+export type ScanJobType = (typeof SCAN_JOB_TYPES)[number];
+/**
+ * A scan-job row as returned by `ScanJobRepository::decodeRow()` (14 fields).
  *
  * Live progress: while `status === 'running'`, `items_found` is the total work,
  * `items_updated` the amount processed, and `current_path` the item in flight
@@ -125,12 +148,21 @@ export interface Library {
 export interface ScanJob {
     id: string;
     library_id: string;
-    type: 'scan' | 'rescan' | 'metadata';
+    type: ScanJobType;
     status: 'queued' | 'running' | 'completed' | 'failed';
     items_found: number;
     items_added: number;
     items_updated: number;
     items_removed: number;
+    /**
+     * Files this job READ and could not index — errors only (migration 095, S96(f)).
+     *
+     * NOT a policy skip (hidden file, `scanner.ignore_patterns`, wrong extension,
+     * the unknown-artist rule) and not an unchanged file: those never reach the
+     * counter. `ScanJobRepository::decodeRow()` always emits a concrete integer, so
+     * the column reads `0` on every row written before 095.
+     */
+    items_failed: number;
     current_path: string | null;
     error: string | null;
     queued_at: string | null;
