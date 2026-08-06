@@ -17,6 +17,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { photoApi } from '../api/photos';
 import type { PhotoDetail, Photo } from '../types/photo';
 import { formatExifSummary } from '../types/photo';
@@ -31,6 +32,9 @@ const props = defineProps<{
 }>();
 
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 const route = useRoute();
 const router = useRouter();
 
@@ -193,7 +197,7 @@ watch(() => props.id, () => {
                     </Button>
                     <a
                         v-if="photo?.full_url"
-                        :href="photo.full_url"
+                        :href="imgSrc(photo.full_url)"
                         download
                         class="download-link"
                         target="_blank"
@@ -225,7 +229,7 @@ watch(() => props.id, () => {
                 <div class="image-wrapper" :style="{ transform: `scale(${zoomLevel})` }">
                     <img
                         v-if="photo.full_url && !imageError"
-                        :src="photo.full_url"
+                        :src="imgSrc(photo.full_url)"
                         :alt="photo.name"
                         @error="handleImageLoadError"
                         @click="toggleZoom"

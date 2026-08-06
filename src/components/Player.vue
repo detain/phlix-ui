@@ -79,6 +79,13 @@ import { useSyncPlayStore, SYNC_DRIFT_THRESHOLD_SECONDS } from '../stores/useSyn
 import SyncPlayOverlay from './syncplay/SyncPlayOverlay.vue';
 import SyncPlayModal from './syncplay/SyncPlayModal.vue';
 import SyncPlayControls from './syncplay/SyncPlayControls.vue';
+import { useImageSrc } from '../composables/useImageSrc';
+
+/** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
+ *  so bound verbatim they resolve against the HUB origin instead of the selected server's
+ *  relay-proxy base. Resolve every image binding through this seam; absolute CDN URLs and
+ *  `blob:`/`data:` values pass through byte-for-byte. */
+const { imgSrc } = useImageSrc();
 
 const props = defineProps<{
   media: MediaItem;
@@ -1480,7 +1487,7 @@ onBeforeUnmount(() => {
         ref="videoRef"
         class="player__video"
         :src="videoSrc"
-        :poster="media.poster_url ?? undefined"
+        :poster="imgSrc(media.poster_url) ?? undefined"
         preload="metadata"
         playsinline
         @play="onPlay"
@@ -1803,7 +1810,7 @@ onBeforeUnmount(() => {
               <div class="similar-modal__poster">
                 <img
                   v-if="item.poster_url"
-                  :src="item.poster_url"
+                  :src="imgSrc(item.poster_url)"
                   :alt="item.name"
                   loading="lazy"
                   decoding="async"

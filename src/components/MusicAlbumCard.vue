@@ -14,6 +14,7 @@
  */
 import { computed } from 'vue';
 import { useMessages } from '../composables/useMessages';
+import { useImageSrc } from '../composables/useImageSrc';
 import type { MusicAlbum } from '../types/music';
 import Icon from './Icon.vue';
 
@@ -26,6 +27,8 @@ defineEmits<{
 }>();
 
 const { t } = useMessages();
+/** S241: album art may be a root-relative server path; resolve against the media base. */
+const { imgSrc } = useImageSrc();
 
 const trackCountLabel = computed(() => {
   const count = props.album.totalTracks ?? 0;
@@ -44,7 +47,7 @@ function formatYear(year: number | null): string {
     <div class="album-card__cover-wrap">
       <img
         v-if="album.albumArtUrl"
-        :src="album.albumArtUrl"
+        :src="imgSrc(album.albumArtUrl)"
         :alt="album.title"
         class="album-card__cover"
         loading="lazy"

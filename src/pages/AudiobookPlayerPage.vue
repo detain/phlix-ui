@@ -16,6 +16,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { ApiClient } from '../api/client';
 import type { AudiobookDetail, AudiobookChapter, AudiobookProgress, SaveAudiobookProgressInput } from '../types/audiobook';
 import Icon from '../components/Icon.vue';
@@ -25,6 +26,9 @@ import { usePageTitle } from '../composables/usePageTitle';
 const route = useRoute();
 const router = useRouter();
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 const directBase = useMediaDirectBase();
 
 const currentId = computed(() => String(route.params.id ?? ''));
@@ -344,7 +348,7 @@ const progressPercent = computed(() => {
                     <div class="player-artwork">
                         <img
                             v-if="audiobook.cover_url"
-                            :src="audiobook.cover_url"
+                            :src="imgSrc(audiobook.cover_url)"
                             :alt="audiobook.name"
                             class="player-artwork__img"
                         >

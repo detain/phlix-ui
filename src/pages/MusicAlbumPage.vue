@@ -26,6 +26,7 @@ import { ref, computed, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { useMusicPlayer } from '../composables/useMusicPlayer';
 import { ApiClient } from '../api/client';
 import MusicTrackList from '../components/MusicTrackList.vue';
@@ -46,6 +47,9 @@ const props = defineProps<{
 const { t } = useMessages();
 const route = useRoute();
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 const directBase = useMediaDirectBase();
 
 /** Prop first, then `?artist=`; `''`/absent means "no disambiguation available". */
@@ -190,7 +194,7 @@ function playAll(): void {
                     </svg>
                     <img
                         v-else
-                        :src="album.albumArtUrl"
+                        :src="imgSrc(album.albumArtUrl)"
                         :alt="album.title"
                         class="album-header__art-img"
                     >

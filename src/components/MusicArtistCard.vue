@@ -14,6 +14,7 @@
  */
 import { computed } from 'vue';
 import { useMessages } from '../composables/useMessages';
+import { useImageSrc } from '../composables/useImageSrc';
 import type { MusicArtist } from '../types/music';
 import Icon from './Icon.vue';
 
@@ -26,6 +27,8 @@ defineEmits<{
 }>();
 
 const { t } = useMessages();
+/** S241: artist images may be a root-relative server path; resolve against the media base. */
+const { imgSrc } = useImageSrc();
 
 const albumCountLabel = computed(() => {
   const count = props.artist.albumCount ?? 0;
@@ -40,7 +43,7 @@ const albumCountLabel = computed(() => {
     <div class="artist-card__image-wrap">
       <img
         v-if="artist.imageUrl"
-        :src="artist.imageUrl"
+        :src="imgSrc(artist.imageUrl)"
         :alt="artist.name"
         class="artist-card__image"
         loading="lazy"

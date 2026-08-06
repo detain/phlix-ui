@@ -19,8 +19,11 @@ import type { MediaItem } from '../../types/media-item';
 import Icon from '../Icon.vue';
 import { ringDashoffset, UPNEXT_RING_CIRCUMFERENCE, UPNEXT_RING_RADIUS } from './playback';
 import { useMessages } from '../../composables/useMessages';
+import { useImageSrc } from '../../composables/useImageSrc';
 
 const { t } = useMessages();
+/** S241: the poster is a root-relative signed artwork path; resolve against the media base. */
+const { imgSrc } = useImageSrc();
 
 const props = withDefaults(
   defineProps<{
@@ -47,7 +50,7 @@ const dashOffset = computed(() => ringDashoffset(props.remaining, props.total));
 
 <template>
   <aside class="upnext" role="region" :aria-label="t('player.upNext')">
-    <img v-if="thumb" class="upnext__thumb" :src="thumb" alt="" loading="lazy" />
+    <img v-if="thumb" class="upnext__thumb" :src="imgSrc(thumb)" alt="" loading="lazy" />
     <div class="upnext__body">
       <p class="upnext__eyebrow">{{ t('player.upNext') }}</p>
       <h4 class="upnext__title">{{ media.name }}</h4>

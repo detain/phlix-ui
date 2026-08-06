@@ -27,6 +27,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
 import MusicPager from '../components/MusicPager.vue';
@@ -41,6 +42,9 @@ const props = defineProps<{
 const { t } = useMessages();
 const router = useRouter();
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 
 // --- data ---
 const artist = ref<MusicArtist | null>(null);
@@ -227,7 +231,7 @@ const trackCountLabel = computed(() =>
                     </svg>
                     <img
                         v-else
-                        :src="artist.imageUrl"
+                        :src="imgSrc(artist.imageUrl)"
                         :alt="artist.name"
                         class="artist-header__art-img"
                     >

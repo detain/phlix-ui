@@ -15,12 +15,16 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { ApiClient } from '../api/client';
 import type { BookListItem } from '../types/book';
 import Icon from '../components/Icon.vue';
 
 const router = useRouter();
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 
 // --- data ---
 const books = ref<BookListItem[]>([]);
@@ -98,7 +102,7 @@ function goToBook(book: BookListItem): void {
                 <div class="book-card__cover">
                     <img
                         v-if="book.cover_url"
-                        :src="book.cover_url"
+                        :src="imgSrc(book.cover_url)"
                         :alt="book.name"
                         class="book-card__img"
                         loading="lazy"

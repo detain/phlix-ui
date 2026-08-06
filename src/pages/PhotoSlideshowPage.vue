@@ -17,6 +17,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useImageSrc } from '../composables/useImageSrc';
 import { photoApi } from '../api/photos';
 import type { SlideshowItem } from '../types/photo';
 import Icon from '../components/Icon.vue';
@@ -25,6 +26,9 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 
 const apiBase = useMediaApiBase();
+/** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
+ *  them against the same (possibly relay-proxied) base the payload came from. */
+const { imgSrc } = useImageSrc();
 const route = useRoute();
 const router = useRouter();
 
@@ -222,7 +226,7 @@ watch([libraryId, albumId], () => {
                 <img
                     v-if="currentSlide?.url && !imageError"
                     :key="currentSlide.id"
-                    :src="currentSlide.url"
+                    :src="imgSrc(currentSlide.url)"
                     :alt="currentSlide.caption || `Slide ${currentIndex + 1}`"
                     class="slide-image"
                     @error="handleImageError"
@@ -294,7 +298,7 @@ watch([libraryId, albumId], () => {
                         @click.stop="currentIndex = idx"
                     >
                         <img
-                            :src="slide.thumbnail_url"
+                            :src="imgSrc(slide.thumbnail_url)"
                             :alt="`Thumbnail ${idx + 1}`"
                             loading="lazy"
                         />

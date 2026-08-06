@@ -124,6 +124,13 @@ import {
   BACKDROP_ROW_NARROW_POSTER_WIDTH,
   BACKDROP_ROW_POSTER_WIDTH,
 } from './virtual-grid';
+import { useImageSrc } from '../composables/useImageSrc';
+
+/** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
+ *  so bound verbatim they resolve against the HUB origin instead of the selected server's
+ *  relay-proxy base. Resolve every image binding through this seam; absolute CDN URLs and
+ *  `blob:`/`data:` values pass through byte-for-byte. */
+const { imgSrc, imgSrcset } = useImageSrc();
 
 const props = withDefaults(
   defineProps<{
@@ -211,7 +218,7 @@ const ambientSrc = computed<string | null>(() =>
  * this mirrors `MediaDetail`'s existing ambient layer.
  */
 const ambientStyle = computed(() =>
-  ambientSrc.value ? { backgroundImage: `url(${ambientSrc.value})` } : {},
+  ambientSrc.value ? { backgroundImage: `url(${imgSrc(ambientSrc.value)})` } : {},
 );
 
 /** Whether ANY wash layer is rendered (no empty layer when the item has neither). */
@@ -346,8 +353,8 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         ref="imgEl"
         class="media-backdrop-row__img"
         :class="{ 'is-loaded': backdropLoaded }"
-        :src="backdropSrc || undefined"
-        :srcset="backdropSrcset || undefined"
+        :src="imgSrc(backdropSrc) || undefined"
+        :srcset="imgSrcset(backdropSrcset) || undefined"
         :sizes="BACKDROP_SIZES"
         alt=""
         decoding="async"
