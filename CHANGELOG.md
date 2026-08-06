@@ -1,5 +1,36 @@
 ## Unreleased
 
+## 0.98.38 - 2026-08-06
+
+### Fixed
+
+- **A failed schedule edit no longer DESTROYS the child's time restriction (plan_updates.md — S202).** The edit path was a DELETE followed by a POST. When the POST failed — validation, a network blip, an expired token — the DELETE had already committed, so the restriction was simply gone and the UI reported an error as though nothing had changed. Replaced with a single idempotent `PUT /api/v1/admin/profiles/{profileId}/schedules/{scheduleId}` via the new `updateProfileSchedule()`. ⚠ Two tests pinned the destructive behaviour as intended and had to be deleted for the fix to land — their reds looked like a broken fix, not a corrected one.
+
+- **The theater-mode `100vh` fallback the minifier was deleting (plan_updates.md — S232).** The duplicate-property pair (`height: 100vh` immediately followed by `height: 100dvh`) is the standard fallback idiom, and lightningcss collapses it — so browsers without `dvh` got no height at all. Rewritten as `@supports not (height: 100dvh) { … height: 100vh }`, which lightningcss preserves. Asserted against the **built** `dist/style.css` via the new `src/test/builtCss.ts`, because a source-only test cannot see what the build does to a rule.
+
+- **An aborted range fetch is now treated as superseded, not as a network failure (plan_updates.md — S224).** Fast scrolling cancels in-flight page requests by design; the handler could not tell an `AbortError` from a real failure and surfaced a spurious error state.
+
+- **DLNA is startable from its own page again (plan_updates.md — S214).** S28 redefined what `enabled` means, and the DLNA page's start control was still reading the old sense, so the button was inert.
+
+- **A long poster tooltip stays inside the card instead of clipping (plan_updates.md — S190).** `placement` is a *vertical* knob — it moves the tip above or below its trigger and does nothing about a tip wider than its container, so S20's acceptance criteria offered a remedy that could not work. Measured in real Chromium at a 160px rail width: **3 of 7 tooltips clipped**, by 1.2px, 51.9px and 46.3px. Now capped, wrapped and shifted at show-time against the nearest genuinely-clipping ancestor; non-clipping hosts render byte-identically.
+
+  Two defects were found *by measurement* while building it, not by review. A reactive `:style` binding is **not flushed before the next statement**, so the re-measure read the unwrapped width and over-corrected — it still landed inside the card, which is exactly how it would have shipped unnoticed. And **jsdom does not expand the `overflow` shorthand into `overflow-x`**, which made `.media-card__poster` — the exact box this fix is about — invisible to every jsdom test. `Tooltip.vue` had no test file at all; it now has 18.
+
+### Added
+
+- **The Libraries admin UI surfaces `items_failed`, and renders all 8 scan-job types instead of 3 (plan_updates.md — S129).** The member list is read from the migrations (`027`, `030`, `081`, `084`), not from a TS union that could drift. The lost-file warning is a **sibling** of the error and progress branches, not a third arm: a job that loses files usually reports `status: 'completed'`, which takes neither existing branch.
+
+  ⚠ A duplicated threshold made this defect briefly mutation-proof — `> 0` was written once in `failedCount()` and once in the template `v-if`, so breaking either copy left the other still hiding the badge. Collapsed to one source of truth.
+
+### Internal
+
+- **S21's structural acceptance criterion is now guarded (plan_updates.md — S221).** Moving both rail arrows inside `<ul class="media-row__rail">` — exactly the structure the criterion forbids — previously left the full suite byte-identically green, because every pre-existing assertion used `find()`, which matches at any depth. The arrows are now asserted to be siblings of the rail and not descendants of it at any depth, with the CSS half checked against the built stylesheet.
+
+- **The `content-visibility` claim in `MediaRow.vue` is corrected and its placement pinned (plan_updates.md — S222).** Three comments in one file contradicted each other about what the containment does. Measured: paint containment **does** apply while the section is on screen, so "only applies while off-screen" was false — but the card hover lift is **not** clipped by it. A control with containment removed showed the lift still clipped, by the rail's own `overflow-x: auto`, which forces `overflow-y` to compute to `auto`. The containment is therefore **kept**; removing it would have cost the performance win and fixed nothing.
+
+- **`.gitignore` no longer silently disables its own negations.** `.claude/` excludes the *directory*, and git never descends into an excluded directory, so every `!.claude/…` re-inclusion beneath it was inert. Now `.claude/*`.
+
+
 ## 0.98.37 - 2026-08-05
 
 ### Added
