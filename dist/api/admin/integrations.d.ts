@@ -36,10 +36,34 @@ export interface ArrSyncTriggerResult {
 export interface ArrSyncEnableResult {
     message: string;
 }
-/** A registered auth provider as returned by `GET /api/v1/admin/auth-providers`. */
+/**
+ * A registered auth provider as returned by `GET /api/v1/admin/auth-providers`.
+ *
+ * `enabled` and `live` are the two *distinct* states the admin UI must tell
+ * apart, and neither is "has settings saved":
+ *
+ *   - `enabled` — the persisted `auth.<name>.enabled` flag (server-side:
+ *     `AuthProviderBootstrapper::isEnabled()`). An operator intent, nothing more.
+ *   - `live` — the provider is actually registered and will authenticate people
+ *     (server-side: `AuthProviderRegistry::hasProvider()`). This requires
+ *     enabled **and** configured, so it is the only honest source for the
+ *     "Enabled"/"Disabled" badge.
+ *
+ * Both are OPTIONAL because a server that predates S44-b omits them. An absent
+ * field must be read as *not* live — see `providerEnabled()` in
+ * `IntegrationsPage.vue`, which fails closed. Never substitute the `configured`
+ * flag from the per-provider settings payload: `configured` means only "settings
+ * have been saved", and both `saveSettings` handlers return it unconditionally,
+ * so keying the badge off it reports "Enabled" for a provider that will not
+ * authenticate anyone.
+ */
 export interface AuthProvider {
     name: string;
     supports_authentication: boolean;
+    /** Persisted enable flag. Absent on pre-S44-b servers → treat as false. */
+    enabled?: boolean;
+    /** Registered and serving logins right now. Absent → treat as false. */
+    live?: boolean;
 }
 /** Result of enabling a provider. */
 export interface EnableProviderResult {
