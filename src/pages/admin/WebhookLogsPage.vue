@@ -246,18 +246,28 @@ onMounted(async () => {
         <Skeleton variant="text" :lines="8" />
       </div>
 
+      <!--
+        ⚠ `EmptyState` declares `description`, NOT `message`, and its default slot
+        REPLACES the description (`<slot>{{ description }}</slot>`). Passing the
+        reason as `message` made it a stray HTML attribute on the root element, and
+        putting the Retry button in the DEFAULT slot would swallow the description
+        even after the rename — hence `#actions`, which is what the other 78 call
+        sites in this repo use. (S262)
+      -->
       <EmptyState
         v-else-if="error"
         title="Couldn't load webhook logs"
-        :message="error"
+        :description="error"
       >
-        <Button variant="solid" size="sm" @click="loadLogs">Retry</Button>
+        <template #actions>
+          <Button variant="solid" size="sm" @click="loadLogs">Retry</Button>
+        </template>
       </EmptyState>
 
       <EmptyState
         v-else-if="logs.length === 0"
         title="No webhook logs yet"
-        message="No delivery attempts match your current filters."
+        description="No delivery attempts match your current filters."
       />
 
       <template v-else>

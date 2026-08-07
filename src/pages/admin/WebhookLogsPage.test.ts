@@ -815,6 +815,136 @@ describe('WebhookLogsPage — list states', () => {
   });
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// S262 — the two EmptyState call sites passed `message`, a prop EmptyState does
+// not declare, so Vue's fallthrough put the text on the root element as a stray
+// HTML attribute (`<div class="phlix-empty" role="status" message="…">`) and the
+// body text NEVER rendered. Every assertion below reads rendered TEXT; the S182
+// block above only ever read `props('title')`, which is exactly why it stayed
+// green over the defect.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** The four strings these two states render. Kept in one place so the
+ *  substring-hazard test below genuinely covers what the others assert on. */
+const S262_STRINGS = {
+  errorTitle: "Couldn't load webhook logs",
+  errorReason: 'logs table locked',
+  emptyTitle: 'No webhook logs yet',
+  emptyBody: 'No delivery attempts match your current filters.',
+} as const;
+
+/**
+ * The attribute names on an element, minus Vue's scoped-CSS markers. `data-v-*`
+ * ids are rehashed by the SFC compiler on every source edit, so asserting on the
+ * literal set would be a self-invalidating check; the point here is only that no
+ * UNDECLARED PROP fell through onto the root.
+ */
+function attrNames(el: { attributes(): Record<string, string> }): string[] {
+  return Object.keys(el.attributes())
+    .filter((a) => !a.startsWith('data-v-'))
+    .sort();
+}
+
+describe('WebhookLogsPage — EmptyState body text (S262)', () => {
+  it('none of the four asserted strings is a substring of another', () => {
+    // The `"Enabled"` inside `"Disabled"` trap. If this ever reds, every
+    // assertion below must move to exact equality — they already are, and this
+    // test is what keeps a future relabelling from making `toContain` safe-looking.
+    const all = Object.values(S262_STRINGS);
+    expect(all).toHaveLength(4);
+    const hazards: string[] = [];
+    for (const a of all) {
+      for (const b of all) {
+        if (a !== b && (a.includes(b) || b.includes(a))) hazards.push(`${a} <-> ${b}`);
+      }
+    }
+    expect(hazards).toEqual([]);
+  });
+
+  it('EmptyState declares `description` and NOT `message`', () => {
+    // Pins the "do not add a `message` alias" decision: aliasing the misuse would
+    // make it permanent for future callers. Reds the moment `message` is declared.
+    const declared = Object.keys(
+      (EmptyState as unknown as { props: Record<string, unknown> }).props,
+    ).sort();
+    expect(declared).toEqual(['description', 'icon', 'title']);
+  });
+
+  it('the ERROR state renders the REASON, not just its title', async () => {
+    const { client } = makeRichClient({
+      listLogsError: new ApiError(S262_STRINGS.errorReason, 503),
+    });
+    const w = await mountRich(client);
+    const empty = w.findComponent(EmptyState);
+
+    expect(empty.find('.phlix-empty__title').text()).toBe(S262_STRINGS.errorTitle);
+    // The whole point of the step: the operator is told WHAT failed.
+    expect(empty.find('.phlix-empty__desc').text()).toBe(S262_STRINGS.errorReason);
+  });
+
+  it('the ERROR state leaves NO stray `message` attribute on the EmptyState root', async () => {
+    // Half-applying the fix (renaming one call site, or aliasing instead of
+    // renaming) leaves the fallthrough attribute behind; this catches that.
+    const { client } = makeRichClient({
+      listLogsError: new ApiError(S262_STRINGS.errorReason, 503),
+    });
+    const w = await mountRich(client);
+    const root = w.findComponent(EmptyState).find('.phlix-empty');
+    expect(root.attributes('message')).toBeUndefined();
+    expect(attrNames(root)).toEqual(['class', 'role']);
+  });
+
+  it('the ERROR state keeps its Retry button, in the ACTIONS slot beside the reason', async () => {
+    // Regression guard on the other half of the fix. `EmptyState` renders
+    // `<slot>{{ description }}</slot>`, so default-slot content REPLACES the
+    // description — a button left in the default slot would swallow the reason
+    // even with the prop correctly named.
+    const { client } = makeRichClient({
+      listLogsError: new ApiError(S262_STRINGS.errorReason, 503),
+    });
+    const w = await mountRich(client);
+    const empty = w.findComponent(EmptyState);
+
+    const actions = empty.find('.phlix-empty__actions');
+    expect(actions.exists()).toBe(true);
+    expect(actions.find('button').text()).toBe('Retry');
+    // …and the description paragraph holds the reason ALONE, no button inside it.
+    expect(empty.find('.phlix-empty__desc').findAll('button')).toHaveLength(0);
+  });
+
+  it('the FILTERED-EMPTY state renders its body, not a bare heading', async () => {
+    const { client } = makeRichClient({ logs: [], total: 0 });
+    const w = await mountRich(client);
+    const empty = w.findComponent(EmptyState);
+
+    expect(empty.find('.phlix-empty__title').text()).toBe(S262_STRINGS.emptyTitle);
+    expect(empty.find('.phlix-empty__desc').text()).toBe(S262_STRINGS.emptyBody);
+  });
+
+  it('the FILTERED-EMPTY state leaves NO stray `message` attribute either', async () => {
+    const { client } = makeRichClient({ logs: [], total: 0 });
+    const w = await mountRich(client);
+    const root = w.findComponent(EmptyState).find('.phlix-empty');
+    expect(root.attributes('message')).toBeUndefined();
+    expect(attrNames(root)).toEqual(['class', 'role']);
+  });
+
+  it('the two states render DIFFERENT body text — the control proving either can fail', async () => {
+    // Without this pairing, a single-state assertion could pass against a build
+    // where both states rendered the same string.
+    const errored = await mountRich(
+      makeRichClient({ listLogsError: new ApiError(S262_STRINGS.errorReason, 503) }).client,
+    );
+    const emptied = await mountRich(makeRichClient({ logs: [], total: 0 }).client);
+
+    const a = errored.findComponent(EmptyState).find('.phlix-empty__desc').text();
+    const b = emptied.findComponent(EmptyState).find('.phlix-empty__desc').text();
+    expect(a).toBe(S262_STRINGS.errorReason);
+    expect(b).toBe(S262_STRINGS.emptyBody);
+    expect(a).not.toBe(b);
+  });
+});
+
 describe('WebhookLogsPage — the `apiBase` injection seam', () => {
   // With no `client` prop the page builds TWO ApiClients (one per API wrapper)
   // from the injected `apiBase`, which may be a plain string OR a ComputedRef.
