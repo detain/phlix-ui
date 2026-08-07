@@ -112,24 +112,40 @@ const tooltipContent = computed(() => {
     `Relay: ${relay.connected ? (relay.active ? 'Connected' : 'Connecting…') : 'Disconnected'}`,
     `Relay Sessions: ${relay.activeSessions}`,
   ];
-  if (relay.lastDisconnectTime) {
+  if (relay.lastDisconnectTime !== null) {
     lines.push(`Last disconnect: ${formatRelativeTime(relay.lastDisconnectTime)}`);
+  }
+  // S257: the server has always emitted why the tunnel last failed; the mapper
+  // discarded it, so this tooltip could only say "Disconnected" and never why.
+  if (relay.lastConnectError !== null) {
+    lines.push(`Relay error: ${relay.lastConnectError}`);
+    if (relay.lastConnectErrorAt !== null) {
+      lines.push(`Relay error at: ${formatRelativeTime(relay.lastConnectErrorAt)}`);
+    }
   }
   lines.push('');
   lines.push(`Hub enrolled: ${hub.isEnrolled ? 'Yes' : 'No'}`);
-  if (hub.lastSuccessfulHeartbeat) {
+  if (hub.lastSuccessfulHeartbeat !== null) {
     lines.push(`Last heartbeat: ${formatRelativeTime(hub.lastSuccessfulHeartbeat)}`);
   }
   if (hub.consecutiveFailures > 0) {
     lines.push(`Heartbeat failures: ${hub.consecutiveFailures}`);
   }
   lines.push('');
+  // ⚠ S257: this `!== null` branch was UNREACHABLE. `NetworkHealth.latencyMs`
+  // is declared `number | null`, but the mapper's `asNumber(… ?? null)` fallback
+  // is `0`, so `latencyMs` was never null and the honest arm below was dead
+  // code that looked covered. The mapper now returns null, which is what makes
+  // this reachable — the branch was always correct, its input was not.
   if (network.latencyMs !== null) {
     lines.push(`Latency: ${network.latencyMs}ms (${network.status})`);
   } else if (network.error) {
     lines.push(`Network error: ${network.error}`);
   } else {
-    lines.push('Latency: unknown');
+    lines.push('Latency: not measured yet');
+  }
+  if (hub.lastLatencyMs !== null) {
+    lines.push(`Last hub latency: ${hub.lastLatencyMs}ms`);
   }
   lines.push(`Measured: ${formatRelativeTime(network.measuredAt)}`);
   return lines.join('\n');

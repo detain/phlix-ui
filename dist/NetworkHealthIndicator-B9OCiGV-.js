@@ -1,7 +1,7 @@
 import { n as e, t } from "./Icon-CkTBN_k5.js";
 import { l as n, p as r, t as i } from "./client-COHWZ2KC.js";
 import { t as a } from "./useAuthStore-Bxpn4wWU.js";
-import { t as o } from "./networkHealth-CtAbCNzZ.js";
+import { t as o } from "./networkHealth-D2-6IrJA.js";
 import { t as s } from "./Tooltip-Bi7vMBv_.js";
 import { t as c } from "./Spinner-C27IqGQo.js";
 import { computed as l, createBlock as u, createElementVNode as d, defineComponent as f, inject as p, normalizeClass as m, onMounted as h, onUnmounted as g, openBlock as _, ref as v, withCtx as y } from "vue";
@@ -33,7 +33,7 @@ var b = ["aria-label"], x = 3e4, S = 2, C = 12e4, w = /*#__PURE__*/ e(/* @__PURE
 		}), I = l(() => {
 			if (D.value === null) return O.value ? "Loading health status…" : "Unable to load health status";
 			let { relay: e, hub: t, network: n } = D.value, r = [`Relay: ${e.connected ? e.active ? "Connected" : "Connecting…" : "Disconnected"}`, `Relay Sessions: ${e.activeSessions}`];
-			return e.lastDisconnectTime && r.push(`Last disconnect: ${L(e.lastDisconnectTime)}`), r.push(""), r.push(`Hub enrolled: ${t.isEnrolled ? "Yes" : "No"}`), t.lastSuccessfulHeartbeat && r.push(`Last heartbeat: ${L(t.lastSuccessfulHeartbeat)}`), t.consecutiveFailures > 0 && r.push(`Heartbeat failures: ${t.consecutiveFailures}`), r.push(""), n.latencyMs === null ? n.error ? r.push(`Network error: ${n.error}`) : r.push("Latency: unknown") : r.push(`Latency: ${n.latencyMs}ms (${n.status})`), r.push(`Measured: ${L(n.measuredAt)}`), r.join("\n");
+			return e.lastDisconnectTime !== null && r.push(`Last disconnect: ${L(e.lastDisconnectTime)}`), e.lastConnectError !== null && (r.push(`Relay error: ${e.lastConnectError}`), e.lastConnectErrorAt !== null && r.push(`Relay error at: ${L(e.lastConnectErrorAt)}`)), r.push(""), r.push(`Hub enrolled: ${t.isEnrolled ? "Yes" : "No"}`), t.lastSuccessfulHeartbeat !== null && r.push(`Last heartbeat: ${L(t.lastSuccessfulHeartbeat)}`), t.consecutiveFailures > 0 && r.push(`Heartbeat failures: ${t.consecutiveFailures}`), r.push(""), n.latencyMs === null ? n.error ? r.push(`Network error: ${n.error}`) : r.push("Latency: not measured yet") : r.push(`Latency: ${n.latencyMs}ms (${n.status})`), t.lastLatencyMs !== null && r.push(`Last hub latency: ${t.lastLatencyMs}ms`), r.push(`Measured: ${L(n.measuredAt)}`), r.join("\n");
 		});
 		function L(e) {
 			let t = new Date(e).getTime();
@@ -91,8 +91,8 @@ var b = ["aria-label"], x = 3e4, S = 2, C = 12e4, w = /*#__PURE__*/ e(/* @__PURE
 			_: 1
 		}, 8, ["text"]));
 	}
-}), [["__scopeId", "data-v-4bccd9e9"]]);
+}), [["__scopeId", "data-v-10c24fca"]]);
 //#endregion
 export { w as t };
 
-//# sourceMappingURL=NetworkHealthIndicator-Cv25b8KU.js.map
+//# sourceMappingURL=NetworkHealthIndicator-B9OCiGV-.js.map

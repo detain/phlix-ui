@@ -467,6 +467,29 @@ const hubHealthFreshnessLabel = computed(() => (hubHealth.value?.stale === true 
 /** Freshness of the relay fork's own state file, as reported by `GET .../relay/status`. */
 const relayStatusFreshnessLabel = computed(() => (relayStatus.value?.stale === true ? 'Stale' : 'Live'));
 
+/**
+ * The Network Latency card's "Current" reading (S257).
+ *
+ * ⚠ `null` means NOTHING HAS BEEN MEASURED and must never render as a number.
+ * Until S257 the mapper's `asNumber(… ?? null)` fallback made this `0`, so a
+ * never-measured relay displayed `0ms` — the fastest reading the badge can
+ * show — and plotted the fastest possible bar on the history chart.
+ *
+ * "Not measured yet" and a numeric `"<n>ms"` are not substrings of one another;
+ * a named test pins that, so a future relabelling cannot make a `toContain`
+ * assertion silently safe-looking.
+ */
+const NOT_MEASURED_LABEL = 'Not measured yet';
+const networkLatencyLabel = computed(() => {
+  const ms = networkHealth.value?.latencyMs;
+  return ms != null ? `${ms}ms` : NOT_MEASURED_LABEL;
+});
+/** Same honest treatment for `hub.lastLatencyMs`, newly surfaced by S257. */
+const hubLastLatencyLabel = computed(() => {
+  const ms = hubHealth.value?.lastLatencyMs;
+  return ms != null ? `${ms}ms` : NOT_MEASURED_LABEL;
+});
+
 async function loadNetworkHealth(): Promise<void> {
   networkHealthLoading.value = true;
   networkHealthError.value = null;
@@ -928,6 +951,22 @@ onMounted(() => {
                   <dt>Last disconnect</dt>
                   <dd>{{ formatDate(relayHealth.lastDisconnectTime) }}</dd>
                 </template>
+                <!--
+                  S257: the server has always emitted `lastConnectError` /
+                  `lastConnectErrorAt` on `/health/relay`; the mapper dropped
+                  them, so this panel could not say WHY the relay was down
+                  while the Relay Tunnel section above could.
+                -->
+                <template v-if="relayHealth.lastConnectError !== null">
+                  <dt>Last error</dt>
+                  <dd class="admin-remote__health-connect-error">{{ relayHealth.lastConnectError }}</dd>
+                </template>
+                <template v-if="relayHealth.lastConnectErrorAt !== null">
+                  <dt>Last error at</dt>
+                  <dd class="admin-remote__health-connect-error-at">
+                    {{ formatDate(relayHealth.lastConnectErrorAt) }}
+                  </dd>
+                </template>
                 <dt>Active sessions</dt>
                 <dd>{{ relayHealth.activeSessions }}</dd>
               </dl>
@@ -959,6 +998,13 @@ onMounted(() => {
                   <dt>Last success</dt>
                   <dd>{{ formatDate(hubHealth.lastSuccessfulHeartbeat) }}</dd>
                 </template>
+                <!--
+                  S257: `hub.lastLatencyMs` was the third field the mapper
+                  discarded. `null` is a real state (nothing measured yet) and
+                  must NOT read as 0 ms — the fastest possible answer.
+                -->
+                <dt>Last latency</dt>
+                <dd class="admin-remote__hub-last-latency">{{ hubLastLatencyLabel }}</dd>
                 <template v-if="hubHealth.enrollmentExpiresAt">
                   <dt>Expires</dt>
                   <dd>{{ formatDate(hubHealth.enrollmentExpiresAt) }}</dd>
@@ -971,7 +1017,7 @@ onMounted(() => {
                 <dt>Current</dt>
                 <dd>
                   <Badge :tone="networkHealth?.status === 'healthy' ? 'success' : networkHealth?.status === 'degraded' ? 'warning' : 'error'">
-                    {{ networkHealth?.latencyMs != null ? `${networkHealth?.latencyMs}ms` : 'N/A' }}
+                    <span class="admin-remote__latency-current">{{ networkLatencyLabel }}</span>
                   </Badge>
                 </dd>
                 <dt>Status</dt>
