@@ -153,6 +153,23 @@ export const hubPageHelp: Record<string, HubPageHelp> = {
       'shows each link’s usage against its limit; Copy URL copies it to send, and ' +
       'Revoke disables it. A revoked or fully-used link stops working immediately.',
   },
+  'mcp-tokens': {
+    // No MCP documentation page exists anywhere in phlix-docs (grepped: zero
+    // hits for "mcp" across docs/), so this entry deliberately carries no link
+    // rather than pointing at a plausible-looking URL. Pinned by the "carry no
+    // links deliberately" test alongside the federation pages.
+    links: [],
+    details:
+      'MCP tokens are personal access tokens an MCP client — Claude Desktop, an agent ' +
+      'runner, an editor plugin — presents to this hub so it can act for you. A token ' +
+      'is bound to your account, never to a single server: which servers it can reach ' +
+      'is re-checked against what you own at the moment of every call, so a token can ' +
+      'never see a server you do not own. Scopes only narrow it further. The token ' +
+      'itself is shown exactly once, when you create it: the hub stores only a hash, ' +
+      'so it cannot be looked up or re-sent afterwards, and losing it means revoking ' +
+      'the token and creating a new one. Revoke takes effect immediately and does not ' +
+      'wait for the token to expire.',
+  },
   requests: {
     links: [
       doc('hub/requests', 'Media requests'),
