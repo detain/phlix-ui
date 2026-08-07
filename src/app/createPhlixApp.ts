@@ -35,7 +35,7 @@ import { useConnectionStore } from '../stores/useConnectionStore';
 import { setAppName, setPageTitle } from '../composables/usePageTitle';
 import { adminPageLabel } from './admin';
 import { createTranslator, type Translate, type MessageKey } from '../i18n/messages';
-import type { PhlixAppConfig } from './types';
+import type { MenuItem, PhlixAppConfig } from './types';
 
 /**
  * Route names reachable WITHOUT authentication. Everything else is gated by
@@ -108,6 +108,43 @@ export function connectGuard(
         return true;
     }
     return { name: 'connect', query: to.fullPath ? { redirect: to.fullPath } : {} };
+}
+
+/**
+ * Route name of the hub's MCP personal-access-token manager (S243). Exported so
+ * a consumer can `router.push({ name: MCP_TOKENS_ROUTE_NAME })` without
+ * duplicating the string.
+ */
+export const MCP_TOKENS_ROUTE_NAME = 'mcp-tokens';
+
+/** URL segment the MCP token manager mounts at, under the app's `routerBase`. */
+export const MCP_TOKENS_ROUTE_PATH = 'mcp-tokens';
+
+/**
+ * The nav entry for the MCP token manager (S243).
+ *
+ * Menus are entirely consumer-owned in this library — `PhlixAppConfig.menu` is
+ * supplied by each host's `main.ts` and there is no default — so phlix-ui cannot
+ * add a hub nav item on its own. This builder is the seam that keeps the LABEL,
+ * ICON and PATH here (one source of truth, exactly as `adminMenu()` does for the
+ * admin section) while the host contributes the single line that mounts it:
+ *
+ * ```ts
+ * menu: [ …, mcpTokensMenuItem() ],
+ * ```
+ *
+ * The ROUTE itself needs no host change — `buildRoutes` registers it for every
+ * `app: 'hub'` consumer.
+ *
+ * @param base Router base prefix the app mounts under (default `/app`).
+ */
+export function mcpTokensMenuItem(base = '/app'): MenuItem {
+    return {
+        id: MCP_TOKENS_ROUTE_NAME,
+        label: 'MCP Tokens',
+        icon: 'key',
+        to: `${base}/${MCP_TOKENS_ROUTE_PATH}`,
+    };
 }
 
 /** Route name of the generic per-library grid (`/app/library/:id`). */
@@ -377,6 +414,25 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             component: () => import('../pages/ParentalControlsPage.vue'),
         },
     ];
+
+    // S243 — the MCP personal-access-token manager. HUB-ONLY, and gated on
+    // `config.app` rather than registered unconditionally: `/api/v1/me/mcp-tokens`
+    // exists only on the hub (MCP is a hub surface — `phlix-hub`
+    // `Application.php:497-519`), so on the media server this route could only
+    // ever render a load error at a URL nothing links to. It is a per-USER page,
+    // NOT an admin one: the endpoints are `/me/…` and are gated on
+    // `$request->userId` alone, so putting it behind `meta.requiresAdmin` would
+    // stop an ordinary hub user managing their own credentials.
+    if (config.app === 'hub') {
+        routes.push({
+            path: `${base}/${MCP_TOKENS_ROUTE_PATH}`,
+            name: MCP_TOKENS_ROUTE_NAME,
+            // A literal, not an i18n key: `resolveRouteTitle` runs every
+            // `meta.title` through `t()` and an unknown key echoes back unchanged.
+            meta: { title: 'MCP Tokens' },
+            component: () => import('../pages/McpTokensPage.vue'),
+        });
+    }
 
     if (config.extraRoutes) {
         routes.push(...config.extraRoutes);

@@ -7,7 +7,7 @@
 import { type App as VueApp } from 'vue';
 import { type RouteRecordRaw, type RouteLocationNormalized, type RouteLocationRaw } from 'vue-router';
 import { type Translate } from '../i18n/messages';
-import type { PhlixAppConfig } from './types';
+import type { MenuItem, PhlixAppConfig } from './types';
 /**
  * Route names reachable WITHOUT authentication. Everything else is gated by
  * {@link authGuard} — an unauthenticated visit redirects to `login`. A consumer
@@ -47,6 +47,33 @@ export declare function authGuard(to: RouteLocationNormalized, isLoggedIn: boole
  * validate a token against — which a non-null return here lets it skip.
  */
 export declare function connectGuard(to: RouteLocationNormalized, requireConnection: boolean, hasBase: boolean): true | RouteLocationRaw | null;
+/**
+ * Route name of the hub's MCP personal-access-token manager (S243). Exported so
+ * a consumer can `router.push({ name: MCP_TOKENS_ROUTE_NAME })` without
+ * duplicating the string.
+ */
+export declare const MCP_TOKENS_ROUTE_NAME = "mcp-tokens";
+/** URL segment the MCP token manager mounts at, under the app's `routerBase`. */
+export declare const MCP_TOKENS_ROUTE_PATH = "mcp-tokens";
+/**
+ * The nav entry for the MCP token manager (S243).
+ *
+ * Menus are entirely consumer-owned in this library — `PhlixAppConfig.menu` is
+ * supplied by each host's `main.ts` and there is no default — so phlix-ui cannot
+ * add a hub nav item on its own. This builder is the seam that keeps the LABEL,
+ * ICON and PATH here (one source of truth, exactly as `adminMenu()` does for the
+ * admin section) while the host contributes the single line that mounts it:
+ *
+ * ```ts
+ * menu: [ …, mcpTokensMenuItem() ],
+ * ```
+ *
+ * The ROUTE itself needs no host change — `buildRoutes` registers it for every
+ * `app: 'hub'` consumer.
+ *
+ * @param base Router base prefix the app mounts under (default `/app`).
+ */
+export declare function mcpTokensMenuItem(base?: string): MenuItem;
 /**
  * S97 — a library whose `type` is `music` must NOT render the generic
  * per-library grid; it belongs on the dedicated music surface (`/app/music`).

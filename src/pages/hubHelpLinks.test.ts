@@ -44,6 +44,7 @@ const PAGES: Array<{ key: string; file: string }> = [
   { key: 'shared-with-me', file: 'SharedWithMePage.vue' },
   { key: 'invite-links', file: 'InviteLinksPage.vue' },
   { key: 'requests', file: 'RequestsPage.vue' },
+  { key: 'mcp-tokens', file: 'McpTokensPage.vue' },
 ];
 
 describe('hub help — coverage', () => {
@@ -93,6 +94,14 @@ describe('hub help — content shape', () => {
     // panel, which the shape test above enforces.
     expect(hubPageHelp.federation.links).toEqual([]);
     expect(hubPageHelp['federation-shares']!.links).toEqual([]);
+  });
+
+  it('mcp-tokens carries no links deliberately', () => {
+    // S243: phlix-docs has ZERO pages mentioning MCP (grepped across docs/), so
+    // there is nothing truthful to link. Asserted rather than left implicit so a
+    // future pass does not invent a plausible `hub/mcp-tokens.html` that 404s —
+    // the probe below only runs opt-in, so a fabricated URL would ship green.
+    expect(hubPageHelp['mcp-tokens']!.links).toEqual([]);
   });
 });
 

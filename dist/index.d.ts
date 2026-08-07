@@ -5,6 +5,7 @@
  * @license MIT
  */
 export { createPhlixApp } from './app/createPhlixApp';
+export { mcpTokensMenuItem, MCP_TOKENS_ROUTE_NAME, MCP_TOKENS_ROUTE_PATH } from './app/createPhlixApp';
 export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow } from './app/types';
 export { default as PhlixApp } from './app/PhlixApp.vue';
 export { default as AppLayout } from './app/AppLayout.vue';

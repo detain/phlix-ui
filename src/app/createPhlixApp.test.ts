@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
 import { createRouter, createWebHistory, type RouteLocationNormalized, type Router, type RouteRecordRaw } from 'vue-router';
-import { createPhlixApp, buildRoutes, authGuard, connectGuard, mediaApiBaseFor, mediaDirectBaseFor, musicLibraryRedirect, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
+import { createPhlixApp, buildRoutes, authGuard, connectGuard, mediaApiBaseFor, mediaDirectBaseFor, musicLibraryRedirect, mcpTokensMenuItem, MCP_TOKENS_ROUTE_NAME, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
 import { isRoute } from '../test/route-match';
 
 /**
@@ -188,6 +188,81 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     const routes = buildRoutes({ app: 'server', apiBase: '' });
     expect(routes.find((r) => r.name === 'browse')?.path).toBe('/app');
     expect(routes.find((r) => r.name === 'settings')?.path).toBe('/app/settings');
+  });
+
+  it('registers the MCP token manager for the hub — and NOT for the media server', () => {
+    // S243. The paired assertions are the point: a "the route exists" test alone
+    // would also pass if the route were registered unconditionally, which is the
+    // thing being ruled out (`/api/v1/me/mcp-tokens` is a hub-only endpoint).
+    const hub = buildRoutes({ app: 'hub', apiBase: '', routerBase: '/app' });
+    const server = buildRoutes({ app: 'server', apiBase: '', routerBase: '/app' });
+
+    const route = hub.find((r) => r.name === MCP_TOKENS_ROUTE_NAME);
+    expect(route, 'hub must mount the MCP token manager').toBeTruthy();
+    expect(route!.path).toBe('/app/mcp-tokens');
+    expect(typeof route!.component, 'must be a lazy () => import() chunk').toBe('function');
+    expect(route!.meta?.title).toBe('MCP Tokens');
+
+    expect(
+      server.some((r) => r.name === MCP_TOKENS_ROUTE_NAME),
+      'the media server has no /api/v1/me/mcp-tokens endpoint',
+    ).toBe(false);
+  });
+
+  it('the MCP token route is per-USER, not admin-gated', () => {
+    // The endpoints are `/me/…` and are gated on `$request->userId` alone, so a
+    // `requiresAdmin` here would lock ordinary hub users out of their own
+    // credentials. Asserted through the real guard, not by reading `meta`.
+    const route = buildRoutes({ app: 'hub', apiBase: '', routerBase: '/app' }).find(
+      (r) => r.name === MCP_TOKENS_ROUTE_NAME,
+    )!;
+    expect(route.meta?.requiresAdmin).toBeUndefined();
+    const to = { name: MCP_TOKENS_ROUTE_NAME, meta: route.meta ?? {}, fullPath: '/app/mcp-tokens' } as unknown as RouteLocationNormalized;
+    // A logged-in NON-admin is allowed through…
+    expect(authGuard(to, true, false, { name: 'browse' })).toBe(true);
+    // …while an unauthenticated visitor is still bounced to login (the control:
+    // without it, an `authGuard` that returned `true` for everything would pass
+    // the assertion above).
+    expect(authGuard(to, false, false, { name: 'browse' })).toEqual({
+      name: 'login',
+      query: { redirect: '/app/mcp-tokens' },
+    });
+  });
+
+  it('honours routerBase for the MCP token route', () => {
+    const routes = buildRoutes({ app: 'hub', apiBase: '', routerBase: '/console' });
+    expect(routes.find((r) => r.name === MCP_TOKENS_ROUTE_NAME)?.path).toBe('/console/mcp-tokens');
+  });
+
+  it('mcpTokensMenuItem points at the route the hub actually mounts', () => {
+    // The menu lives in each host's main.ts, so this is the only place that can
+    // catch the label/path pair drifting away from the registered route.
+    for (const base of ['/app', '/console']) {
+      const item = mcpTokensMenuItem(base);
+      const route = buildRoutes({ app: 'hub', apiBase: '', routerBase: base }).find(
+        (r) => r.name === MCP_TOKENS_ROUTE_NAME,
+      );
+      expect(item.to).toBe(route?.path);
+      expect(item.id).toBe(MCP_TOKENS_ROUTE_NAME);
+      expect(item.label).toBe('MCP Tokens');
+    }
+    // Default base matches the default `routerBase`.
+    expect(mcpTokensMenuItem().to).toBe('/app/mcp-tokens');
+  });
+
+  it('resolves /app/mcp-tokens through a real hub router', () => {
+    const r = createRouter({
+      history: createWebHistory(),
+      routes: buildRoutes({ app: 'hub', apiBase: '', routerBase: '/app' }),
+    });
+    expect(r.resolve('/app/mcp-tokens').name).toBe(MCP_TOKENS_ROUTE_NAME);
+    expect(r.resolve({ name: MCP_TOKENS_ROUTE_NAME }).href).toBe('/app/mcp-tokens');
+    // Control: on the media server the same URL falls through to the catch-all.
+    const s = createRouter({
+      history: createWebHistory(),
+      routes: buildRoutes({ app: 'server', apiBase: '', routerBase: '/app' }),
+    });
+    expect(s.resolve('/app/mcp-tokens').name).toBe('catchall');
   });
 
   it('no longer emits the self-referential trailing-slash redirect (recursion source)', () => {

@@ -8,6 +8,11 @@
 import { defineAsyncComponent } from 'vue';
 
 export { createPhlixApp } from './app/createPhlixApp';
+// S243 — the hub's MCP token manager. The PAGE is deliberately not re-exported
+// (it is a lazy route chunk `buildRoutes` mounts for every `app: 'hub'` consumer,
+// same reason as the other built-in pages); what a host needs is the nav entry,
+// because menus in this library are entirely consumer-supplied.
+export { mcpTokensMenuItem, MCP_TOKENS_ROUTE_NAME, MCP_TOKENS_ROUTE_PATH } from './app/createPhlixApp';
 export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow } from './app/types';
 
 export { default as PhlixApp } from './app/PhlixApp.vue';
