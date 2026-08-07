@@ -6,8 +6,13 @@
  * A grep-over-source test executes none of the component, which is precisely why
  * it stayed at zero on every axis while looking covered.
  *
- * ⚠ REACHABILITY: not re-exported from `src/index.ts` and not imported anywhere
- * under `src/`. Recorded as a finding in the S182 worklog; nothing deleted.
+ * REACHABILITY — RESOLVED BY S263 (2026-08-07). This block previously read "not
+ * re-exported from `src/index.ts` and not imported anywhere under `src/`". S263
+ * exported it: this component is the ONLY caller in `src/` of
+ * `useAuthStore().uploadAvatar()` / `.deleteAvatar()`, which are themselves the
+ * only callers of `ApiClient.uploadAvatar()` / `.deleteAvatar()`, so deleting it
+ * would have orphaned two layers beneath it. Pinned by "S263 — the newly exported
+ * components" in `src/index.test.ts`, which MOUNTS the barrel binding.
  *
  * ⚠ Both action buttons are `:disabled=` guarded and VTU `trigger()` no-ops on a
  * disabled element. Where a guard is the subject, the `disabled` ATTRIBUTE is

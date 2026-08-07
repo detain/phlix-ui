@@ -2,13 +2,14 @@
  * RatingBadge — behavioural cover for a component measured at `LF:11 LH:0`,
  * `FNF:5 FNH:0`, `BRF:8 BRH:0` on 2026-08-07 (S182 re-enumeration).
  *
- * ⚠ REACHABILITY, stated honestly: this component is NOT re-exported from
- * `src/index.ts` and NOTHING under `src/` imports it — the only other mention in
- * the repo is `CHANGELOG.md`. It is dead as shipped. Cover is still worth having
- * (a 0% file is indistinguishable from an unmeasured one, and the S182 brief is
- * explicitly about closing that gap), but the reachability finding is recorded in
- * the S182 worklog rather than papered over here. "Unreachable" is a hypothesis,
- * so nothing is deleted on the strength of it.
+ * REACHABILITY — RESOLVED BY S263 (2026-08-07). This block previously read "NOT
+ * re-exported from `src/index.ts` … dead as shipped". That is no longer true:
+ * S263 ran the reachability question to ground across all four @phlix/ui consumer
+ * repos and exported the component. It is now
+ * `export { default as RatingBadge } from './components/RatingBadge.vue'` in
+ * `src/index.ts`, pinned by "S263 — the newly exported components" in
+ * `src/index.test.ts` — which MOUNTS the barrel binding, so the export cannot be
+ * dropped without a red.
  *
  * ⚠ jsdom never applies an SFC's compiled `<style>`, so every assertion below is
  * over DOM structure, class lists and ARIA — never computed geometry or colour.
