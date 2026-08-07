@@ -231,10 +231,13 @@ describe('MediaTableRow — composed MediaCard poster column (S70)', () => {
     expect(w.find('[aria-label="More actions"]').exists()).toBe(true);
   });
 
-  it('opts out of native lazy-loading like MediaGrid does (S35)', () => {
+  // S223 INVERTED this assertion — see MediaCard.vue's `lazy` prop docblock. In
+  // table view the S35 opt-out measured 24 first-paint poster requests against 7
+  // with the native default, with no measured benefit.
+  it('keeps native lazy-loading (S223 — the S35 opt-out was measured to cost requests)', () => {
     const w = mountRow();
-    expect(w.findComponent(MediaCard).props('lazy')).toBe(false);
-    expect(w.find('.media-card__img').attributes('loading')).toBeUndefined();
+    expect(w.findComponent(MediaCard).props('lazy')).toBe(true);
+    expect(w.find('.media-card__img').attributes('loading')).toBe('lazy');
   });
 
   it('pins the poster `sizes` hint to the column’s real width, not the 200px default', () => {

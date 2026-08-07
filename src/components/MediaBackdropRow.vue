@@ -343,16 +343,20 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
       :data-wash="washKind"
       aria-hidden="true"
     >
-      <!-- No native `loading="lazy"` on this image: MediaGrid's JS virtualization
-           already keeps only near-viewport rows in the DOM, and layering native
-           lazy-load over cells repositioned by `transform` in the same reactive
-           flush is a known browser-timing stall (S35) — which is exactly why
-           MediaGrid passes `:lazy="false"` to its cards. -->
+      <!-- S223: native `loading="lazy"` RESTORED here. S69 omitted it citing S35's
+           "native lazy over transform-repositioned cells stalls" claim, which was
+           never observed in a browser (jsdom ignores `loading`). A real capture of
+           this very view measured first-paint image requests 48 → 30 → 12 as the
+           attribute was restored to the card and then to this backdrop, with the
+           in-viewport-unpainted frame count unchanged (23 / 28 / 26 of 134) and the
+           post-scroll request total identical at 48. See the `lazy` prop docblock in
+           MediaCard.vue. -->
       <img
         v-if="hasBackdrop"
         ref="imgEl"
         class="media-backdrop-row__img"
         :class="{ 'is-loaded': backdropLoaded }"
+        loading="lazy"
         :src="imgSrc(backdropSrc) || undefined"
         :srcset="imgSrcset(backdropSrcset) || undefined"
         :sizes="BACKDROP_SIZES"
@@ -375,7 +379,6 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
       <MediaCard
         :item="item"
         :can-match="canMatch"
-        :lazy="false"
         :poster-sizes="posterSizes"
         hide-caption
         role="presentation"

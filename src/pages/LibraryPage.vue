@@ -618,14 +618,15 @@ async function onRemove(item: MediaItem): Promise<void> {
               @explore-data="openInspector"
             />
             <!-- UNCONDITIONAL fallback — see the note above; never make this a
-                 `v-else-if`. `lazy=false` mirrors MediaGrid's own default card (S35:
-                 JS windowing already keeps the DOM near-viewport, and native
-                 lazy-load over transform-repositioned cards stalls). -->
+                 `v-else-if`. S223 removed the `:lazy="false"` this used to mirror from
+                 MediaGrid's default card: the S35 rationale it copied was never observed
+                 in a browser, and a real capture measured the opt-out costing first-paint
+                 requests with no benefit (MediaCard.vue's `lazy` prop docblock has the
+                 numbers). The native default is what ships. -->
             <MediaCard
               v-else
               :item="item"
               :can-match="auth.isAdmin"
-              :lazy="false"
               @play="onPlay"
               @watchlist="onWatchlist"
               @info="onInfo"

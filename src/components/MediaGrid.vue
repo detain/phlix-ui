@@ -659,10 +659,14 @@ watch(
         <div class="media-grid" :style="[gridStyle, innerStyle]" :role="gridRole">
           <template v-for="entry in visibleItems" :key="entry.item?.id ?? `skel-${entry.index}`">
             <slot v-if="entry.item" name="card" :item="entry.item" :index="entry.index">
+              <!-- S223: the S35 `:lazy="false"` opt-out is GONE. Its "native lazy over
+                   transform-repositioned cells stalls" rationale was never observed in a
+                   browser (jsdom ignores `loading`), and a real capture measured it costing
+                   requests with no benefit — see the `lazy` prop docblock in MediaCard.vue
+                   for the numbers. The native default is what ships. -->
               <MediaCard
                 :item="entry.item"
                 :can-match="canMatch"
-                :lazy="false"
                 @play="emit('play', entry.item)"
                 @watchlist="emit('watchlist', entry.item)"
                 @info="emit('info', entry.item)"

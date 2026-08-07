@@ -170,11 +170,14 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
            this row is ALREADY the named item boundary, so a second (unnamed)
            article inside it just makes AT announce two boundaries per item.
            Presentation is not inherited, so the card's link, badges and the whole
-           action overlay keep their own roles. -->
+           action overlay keep their own roles.
+
+           S223: no `:lazy="false"`. In table view the opt-out measurably cost 24
+           first-paint poster requests against 7 with the native default, for no
+           measured benefit — see the `lazy` prop docblock in MediaCard.vue. -->
       <MediaCard
         :item="item"
         :can-match="canMatch"
-        :lazy="false"
         :poster-sizes="posterSizes"
         hide-caption
         role="presentation"
