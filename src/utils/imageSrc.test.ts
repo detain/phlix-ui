@@ -28,10 +28,12 @@ describe('resolveImageSrc — root-relative artwork resolves against the relay b
   });
 
   it('leaves the signed query EXACTLY as it arrived (order, casing, encoding)', () => {
-    // phlix-server rebuilds `'/api/v1/artwork/'.$id.'?size='.$size` from
-    // `$wr->path()` + `$wr->get('size')` and verifies exp/sig against it. A URL
-    // round-trip that re-orders or re-encodes the query breaks the signature and
-    // the image silently 401s, so assert the tail is untouched.
+    // phlix-server signs the PATH only (`SignedUrl::canonicalResource()` strips
+    // from the first `?`), so `size` is not signed material. What must survive
+    // is the `sig` VALUE: a URL round-trip re-encodes it (`%2F`→`/`, `+`↔`%20`)
+    // and the signature then fails, so the image silently 401s. Assert the tail
+    // is untouched — the ordering assertions below stand as a cheap proof that
+    // no round-trip happened at all.
     const query = '?size=w500&exp=1785000000&sig=aB%2FcD%2B9%3D';
     const out = String(resolveImageSrc(RELAY, `/api/v1/artwork/x${query}`));
     expect(out.endsWith(`/api/v1/artwork/x${query}`)).toBe(true);
