@@ -8,17 +8,43 @@
 /**
  * S243 — guards for the MCP token API wrapper.
  *
- * Two of these are cross-repo pins rather than unit tests: they read
- * `phlix-hub`'s PHP source and assert this build agrees with it. The scope
- * vocabulary and the token prefix are the two places where a silent divergence
- * would produce a form that offers a value the server rejects, or a UI that
- * describes a credential shape that no longer exists.
+ * Two of these are cross-repo pins rather than unit tests: the scope vocabulary
+ * and the token prefix are the two places where a silent divergence would
+ * produce a form that offers a value the server rejects, or a UI that describes
+ * a credential shape that no longer exists.
+ *
+ * ## S249 — those two pins used to be unrunnable in CI
+ *
+ * As S243 shipped them they read `phlix-hub`'s PHP source off the filesystem,
+ * guarded by `it.runIf(existsSync(<sibling phlix-hub path>))`. phlix-ui's CI has
+ * no `phlix-hub` checkout, so the guard was always false: the assertions never
+ * executed and the file reported as **passing** — measured on `6efe3588` as
+ * `6 passed | 2 skipped` while a real 4-vs-3 scope drift sat in the tree. On a
+ * developer box the same guard did the opposite wrong thing and went **red**
+ * whenever a phlix-hub writer moved that tree, on branches touching zero MCP
+ * files.
+ *
+ * They now pin against **`@phlix/contracts`**, an ordinary `dependencies` entry
+ * resolved from `node_modules` on every machine including CI. There is no
+ * filesystem probe, no `runIf`, and no try/catch around the import — a missing
+ * or broken contracts package is a hard import error, not a skip. A phlix-hub
+ * working tree, dirty or absent, cannot influence this file's result at all.
+ *
+ * ⚠ Do NOT "simplify" `MCP_SCOPES` in `./mcp-tokens` into a re-export of the
+ * contracts constant. These assertions compare two independently authored
+ * lists; make one the other and they can never disagree.
+ *
+ * ⚠ The hub half of the loop is a separate gate in `phlix-hub` asserting
+ * `McpScopes::all()` equals this same contracts vocabulary. Until that ships,
+ * what is verified here is that **phlix-ui agrees with contracts** — not that
+ * contracts still agrees with the hub.
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {
+    MCP_SCOPES as CONTRACT_MCP_SCOPES,
+    MCP_TOKEN_PREFIX as CONTRACT_MCP_TOKEN_PREFIX,
+} from '@phlix/contracts';
 import {
     McpTokensApi,
     MCP_SCOPES,
@@ -29,10 +55,6 @@ import {
     type McpTokenSummary,
 } from './mcp-tokens';
 import type { ApiClient } from './client';
-
-const here = dirname(fileURLToPath(import.meta.url));
-/** `phlix-ui/src/api` → `phlix-ui` → the estate root → `phlix-hub`. */
-const HUB = join(here, '..', '..', '..', 'phlix-hub');
 
 function fakeClient() {
     const get = vi.fn(async () => ({ tokens: [], available_scopes: [...MCP_SCOPES] }));
@@ -70,35 +92,45 @@ describe('McpTokensApi — endpoint paths', () => {
     });
 });
 
-describe('scope vocabulary agrees with phlix-hub', () => {
-    const scopesFile = join(HUB, 'src', 'Mcp', 'McpScopes.php');
-
-    it.runIf(existsSync(scopesFile))('MCP_SCOPES equals McpScopes::all() in order', () => {
-        const php = readFileSync(scopesFile, 'utf8');
-        // `all()` returns the three `self::CONST` members; resolve each constant's
-        // literal so the assertion is on the WIRE VALUES, not on constant names.
-        const body = php.slice(php.indexOf('public static function all()'));
-        const names = [...body.slice(0, body.indexOf('}')).matchAll(/self::([A-Z_]+)/g)].map(
-            (m) => m[1],
-        );
-        expect(names.length, 'McpScopes::all() members').toBeGreaterThan(0);
-        const values = names.map((name) => {
-            const m = php.match(new RegExp(`const string ${name} = '([^']+)'`));
-            expect(m, `no literal found for McpScopes::${name}`).not.toBeNull();
-            return m![1];
-        });
-        expect(values).toEqual([...MCP_SCOPES]);
+describe('scope vocabulary agrees with @phlix/contracts', () => {
+    it('the contracts vocabulary is non-vacuous', () => {
+        // ANTI-VACUITY. Every assertion below is an equality against the
+        // contracts export, and `[] === []` / `undefined === undefined` passes
+        // trivially — a bad import path or a stale pin would turn the whole
+        // describe block green while checking nothing. So establish a FLOOR
+        // first: at least 4 scopes (the vocabulary as of hub S63) and a
+        // non-empty prefix. If contracts legitimately drops below four this
+        // test must be edited deliberately, which is the point.
+        expect(Array.isArray(CONTRACT_MCP_SCOPES)).toBe(true);
+        expect(CONTRACT_MCP_SCOPES.length).toBeGreaterThanOrEqual(4);
+        for (const scope of CONTRACT_MCP_SCOPES) {
+            expect(typeof scope).toBe('string');
+            expect(scope.length).toBeGreaterThan(0);
+        }
+        expect(typeof CONTRACT_MCP_TOKEN_PREFIX).toBe('string');
+        expect(CONTRACT_MCP_TOKEN_PREFIX.length).toBeGreaterThan(0);
     });
 
-    it.runIf(existsSync(join(HUB, 'src', 'Mcp', 'McpTokenService.php')))(
-        'MCP_TOKEN_PREFIX equals McpTokenService::TOKEN_PREFIX',
-        () => {
-            const php = readFileSync(join(HUB, 'src', 'Mcp', 'McpTokenService.php'), 'utf8');
-            const m = php.match(/const string TOKEN_PREFIX = '([^']+)'/);
-            expect(m).not.toBeNull();
-            expect(m![1]).toBe(MCP_TOKEN_PREFIX);
-        },
-    );
+    it('MCP_SCOPES equals the contracts vocabulary, in order', () => {
+        // EXACT whole-list comparison, never a substring or membership check:
+        // 'mcp:playback' is a prefix of 'mcp:playback:control', so an
+        // `includes`/`startsWith` check would pass a rename. Order is asserted
+        // too — it is part of the hub's stored representation, since
+        // `McpScopes::parse()` emits in `all()` order into `mcp_tokens.scopes`.
+        expect([...MCP_SCOPES]).toEqual([...CONTRACT_MCP_SCOPES]);
+    });
+
+    it('MCP_SCOPES equals the contracts vocabulary as a set, ignoring order', () => {
+        // A second, order-blind angle on the same pair. If a future change makes
+        // the ordered assertion above tolerant (e.g. someone sorts one side to
+        // "fix" a red), this still catches an added or dropped member.
+        expect([...MCP_SCOPES].slice().sort()).toEqual([...CONTRACT_MCP_SCOPES].slice().sort());
+        expect(new Set(MCP_SCOPES).size).toBe(MCP_SCOPES.length);
+    });
+
+    it('MCP_TOKEN_PREFIX equals the contracts token prefix', () => {
+        expect(MCP_TOKEN_PREFIX).toBe(CONTRACT_MCP_TOKEN_PREFIX);
+    });
 
     it('every known scope has display copy', () => {
         for (const scope of MCP_SCOPES) {

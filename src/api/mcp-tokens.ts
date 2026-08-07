@@ -37,19 +37,25 @@ import { ApiClient } from './client';
 
 /**
  * The scopes this build knows about, mirroring `McpScopes::all()`
- * (`phlix-hub/src/Mcp/McpScopes.php:66-73`) in its stable order.
+ * (`phlix-hub/src/Mcp/McpScopes.php`) in its stable order.
  *
  * ⚠ This is a **fallback only**. The create form offers whatever
  * `GET /api/v1/me/mcp-tokens` reports in `available_scopes` (which the hub
  * builds from `McpScopes::all()` itself), so a hub that gains or drops a scope
  * needs no UI release. The constant covers the single case where the list
- * response omits the field, and it is pinned against the PHP source by
- * `mcp-tokens.test.ts` so the two cannot drift silently.
+ * response omits the field.
+ *
+ * ⚠ It is deliberately an INDEPENDENT literal, not a re-export of
+ * `@phlix/contracts`' `MCP_SCOPES`. `mcp-tokens.test.ts` asserts the two are
+ * equal, and a check derived from its subject self-adjusts: re-exporting would
+ * make that assertion compare the contract to itself and it could never fail.
+ * When contracts gains a scope, edit this list by hand — the red is the point.
  */
 export const MCP_SCOPES = [
     'mcp:servers:read',
     'mcp:library:read',
     'mcp:playback:read',
+    'mcp:playback:control',
 ] as const;
 
 /** One of the scopes {@link MCP_SCOPES} enumerates. */
@@ -65,6 +71,7 @@ export const MCP_SCOPE_LABELS: Readonly<Record<string, string>> = {
     'mcp:servers:read': 'List my servers',
     'mcp:library:read': 'Read library and media metadata',
     'mcp:playback:read': 'Read playback information',
+    'mcp:playback:control': 'Control playback already in progress (write)',
 };
 
 /** Longer explanation per scope, shown under its label in the create form. */
@@ -72,6 +79,8 @@ export const MCP_SCOPE_DESCRIPTIONS: Readonly<Record<string, string>> = {
     'mcp:servers:read': 'Enumerate the media servers this account owns.',
     'mcp:library:read': 'Browse libraries and read media metadata over the relay.',
     'mcp:playback:read': 'Read stream decisions for an owned media item.',
+    'mcp:playback:control':
+        'Pause, resume, stop or seek a cast session already running on an owned server. The only scope here that can change anything — it cannot start playback, but it can stop somebody else’s.',
 };
 
 /** The label for a scope, falling back to the raw wire value when unknown. */

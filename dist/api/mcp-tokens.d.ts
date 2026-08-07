@@ -34,16 +34,21 @@ import { ApiClient } from './client';
  */
 /**
  * The scopes this build knows about, mirroring `McpScopes::all()`
- * (`phlix-hub/src/Mcp/McpScopes.php:66-73`) in its stable order.
+ * (`phlix-hub/src/Mcp/McpScopes.php`) in its stable order.
  *
  * ⚠ This is a **fallback only**. The create form offers whatever
  * `GET /api/v1/me/mcp-tokens` reports in `available_scopes` (which the hub
  * builds from `McpScopes::all()` itself), so a hub that gains or drops a scope
  * needs no UI release. The constant covers the single case where the list
- * response omits the field, and it is pinned against the PHP source by
- * `mcp-tokens.test.ts` so the two cannot drift silently.
+ * response omits the field.
+ *
+ * ⚠ It is deliberately an INDEPENDENT literal, not a re-export of
+ * `@phlix/contracts`' `MCP_SCOPES`. `mcp-tokens.test.ts` asserts the two are
+ * equal, and a check derived from its subject self-adjusts: re-exporting would
+ * make that assertion compare the contract to itself and it could never fail.
+ * When contracts gains a scope, edit this list by hand — the red is the point.
  */
-export declare const MCP_SCOPES: readonly ["mcp:servers:read", "mcp:library:read", "mcp:playback:read"];
+export declare const MCP_SCOPES: readonly ["mcp:servers:read", "mcp:library:read", "mcp:playback:read", "mcp:playback:control"];
 /** One of the scopes {@link MCP_SCOPES} enumerates. */
 export type McpScope = (typeof MCP_SCOPES)[number];
 /**

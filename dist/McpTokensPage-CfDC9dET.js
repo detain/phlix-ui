@@ -14,15 +14,18 @@ import { Fragment as u, computed as d, createBlock as f, createCommentVNode as p
 var ae = [
 	"mcp:servers:read",
 	"mcp:library:read",
-	"mcp:playback:read"
+	"mcp:playback:read",
+	"mcp:playback:control"
 ], T = {
 	"mcp:servers:read": "List my servers",
 	"mcp:library:read": "Read library and media metadata",
-	"mcp:playback:read": "Read playback information"
+	"mcp:playback:read": "Read playback information",
+	"mcp:playback:control": "Control playback already in progress (write)"
 }, E = {
 	"mcp:servers:read": "Enumerate the media servers this account owns.",
 	"mcp:library:read": "Browse libraries and read media metadata over the relay.",
-	"mcp:playback:read": "Read stream decisions for an owned media item."
+	"mcp:playback:read": "Read stream decisions for an owned media item.",
+	"mcp:playback:control": "Pause, resume, stop or seek a cast session already running on an owned server. The only scope here that can change anything — it cannot start playback, but it can stop somebody else’s."
 };
 function oe(e) {
 	return T[e] ?? e;
@@ -390,4 +393,4 @@ var se = "phlix-mcp-", ce = class {
 //#endregion
 export { P as default };
 
-//# sourceMappingURL=McpTokensPage-DU65wV9R.js.map
+//# sourceMappingURL=McpTokensPage-CfDC9dET.js.map
