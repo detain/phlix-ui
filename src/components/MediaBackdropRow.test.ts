@@ -394,11 +394,15 @@ describe('MediaBackdropRow — the backdrop wash (S69)', () => {
     expect(w.find('.media-backdrop-row__scrim').exists()).toBe(true);
   });
 
-  it('opts out of native lazy-loading, exactly as MediaGrid does for its cards (S35)', () => {
-    // MediaGrid's JS windowing already keeps only near-viewport rows in the DOM;
-    // native lazy-load over transform-repositioned cells is a known stall trigger.
-    expect(mountRow().find('.media-backdrop-row__img').attributes('loading')).toBeUndefined();
-    expect(mountRow().findComponent(MediaCard).props('lazy')).toBe(false);
+  // S223 INVERTED this assertion. The S35 claim it encoded ("native lazy over
+  // transform-repositioned cells is a known stall trigger") was never observed in
+  // a browser. A capture of THIS view measured first-paint image requests
+  // 48 → 30 → 12 as the attribute was restored to the card and then to the
+  // backdrop, with the in-viewport-unpainted frame count unchanged. See
+  // MediaCard.vue's `lazy` prop docblock.
+  it('keeps native lazy-loading on BOTH the backdrop and the card (S223)', () => {
+    expect(mountRow().find('.media-backdrop-row__img').attributes('loading')).toBe('lazy');
+    expect(mountRow().findComponent(MediaCard).props('lazy')).toBe(true);
   });
 
   it('cross-fades the backdrop in once it decodes', async () => {

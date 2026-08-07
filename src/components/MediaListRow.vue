@@ -105,10 +105,12 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
        tech (see the a11y note in the docblock for why not `role="listitem"`). -->
   <article class="media-list-row" :style="rowStyle" :aria-label="item.name">
     <div class="media-list-row__poster">
+      <!-- S223: no `:lazy="false"`. In list view the opt-out measurably cost 24
+           first-paint poster requests against 7 with the native default, for no
+           measured benefit — see the `lazy` prop docblock in MediaCard.vue. -->
       <MediaCard
         :item="item"
         :can-match="canMatch"
-        :lazy="false"
         hide-caption
         @play="emit('play', item)"
         @watchlist="emit('watchlist', item)"

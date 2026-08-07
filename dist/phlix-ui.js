@@ -19,7 +19,7 @@ import { t as we } from "./NetworkHealthIndicator-D5S46Gyg.js";
 import { _ as Te, a as Ee, c as De, d as Oe, f as ke, g as Ae, h as je, i as Me, l as Ne, m as Pe, n as Fe, o as Ie, p as Le, r as Re, s as ze, t as Be, u as Ve, v as He, y as Ue } from "./SecuritySettingsPage-DxN9hg8p.js";
 import { i as We, n as Ge, r as Ke, t as qe } from "./Kbd-qzi8z-Qw.js";
 import { a as Je, i as Ye, n as Xe, o as Ze, r as Qe, t as $e } from "./useLibrariesStore-B1E5wbLf.js";
-import { n as et, t as tt } from "./HomeRow-6g4Q6Fia.js";
+import { n as et, t as tt } from "./HomeRow-BXqz_HKp.js";
 import { a as nt, c as rt, i as it, l as at, n as ot, o as st, r as ct, s as lt, t as ut, u as dt } from "./useConnectionStore-DvIGHfR-.js";
 import { i as ft, n as pt, r as mt, t as ht } from "./usePageTitle-BO3GGF3M.js";
 import { t as A } from "./Button-Cw8Wl4QR.js";
@@ -36,9 +36,9 @@ import { t as Ct } from "./PageHint-3dL7qb5N.js";
 import { t as wt } from "./Tabs-CCN6j5WY.js";
 import { t as Tt } from "./Menu-CcVQWgwT.js";
 import { t as Et } from "./HelpText-B8uA160R.js";
-import { i as Dt, t as Ot } from "./MediaCard-CujQ8XYQ.js";
-import { t as kt } from "./MediaGrid-DMx5Pr-g.js";
-import { t as At } from "./MediaRow-DPGVfTxz.js";
+import { i as Dt, t as Ot } from "./MediaCard-H65JFCcC.js";
+import { t as kt } from "./MediaGrid-4qDkIH63.js";
+import { t as At } from "./MediaRow-DgtjeUxe.js";
 import { n as jt, t as Mt } from "./media-query-DKjhlX8r.js";
 import { n as Nt, t as Pt } from "./metadata-sources-KPXiaoRg.js";
 import { n as Ft, t as It } from "./logs-DadTfaTq.js";
@@ -1198,12 +1198,12 @@ function ya(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-zpyju_3u.js")
+			component: () => import("./BrowsePage-C2hP0HLv.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-Y4ndGF9o.js")
+			component: () => import("./MediaDetailPage-abbgvWuF.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
@@ -1213,7 +1213,7 @@ function ya(e) {
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-eszGUmVF.js")
+			component: () => import("./LibraryPage-BfkE23Qy.js")
 		},
 		{
 			path: `${t}/player/:id`,
@@ -1249,13 +1249,13 @@ function ya(e) {
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-DtLQtuR5.js")
+			component: () => import("./ExplorePage-DtNQCWbv.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-DVf3QLUc.js")
+			component: () => import("./RecommendationsPage-ehc25vN2.js")
 		},
 		{
 			path: `${t}/history`,
@@ -6545,7 +6545,7 @@ function eg() {
 }
 //#endregion
 //#region src/index.ts
-var tg = On(() => import("./MediaDetail-juvIteNQ.js").then((e) => e.n)), ng = On(() => import("./MetadataMatchModal-mF5oFRQu.js").then((e) => e.n)), rg = On(() => import("./FilterBar-fD_hxEq6.js").then((e) => e.n));
+var tg = On(() => import("./MediaDetail-C__nrEGS.js").then((e) => e.n)), ng = On(() => import("./MetadataMatchModal-mF5oFRQu.js").then((e) => e.n)), rg = On(() => import("./FilterBar-fD_hxEq6.js").then((e) => e.n));
 //#endregion
 export { It as ALL_LOGS, Dl as AcceptInvitePage, Xt as AdminBackupApi, Zt as AdminCastApi, tn as AdminCollectionsApi, Lt as AdminDashboardApi, Qt as AdminDlnaServerApi, nn as AdminHistoryApi, hn as AdminHubDashboardApi, Yt as AdminIntegrationsApi, sn as AdminLibrariesApi, en as AdminLiveTvApi, Ft as AdminLogsApi, Pt as AdminMetadataSourcesApi, mn as AdminPluginsApi, $t as AdminRemoteAccessApi, Jt as AdminServicesApi, cn as AdminSettingsApi, rn as AdminSyncPlayApi, Wt as AdminUsersApi, qt as AdminWebhooksApi, D as ApiClient, ae as ApiError, e as AppBackdrop, gr as AppLayout, Vp as AudiobookDetailPage, xm as AudiobookPlayerPage, dp as AudiobooksPage, Me as BUILT_IN_THEME_IDS, j as Badge, Lf as BookDetailPage, Xf as BookReaderPage, gf as BooksPage, A as Button, ut as CONNECTION_API_BASE_KEY, ot as CONNECTION_CONFIRMED_ORIGIN_KEY, yi as CURRENT_SERVER_ID_KEY, bi as CURRENT_SERVER_NAME_KEY, vt as Chip, bt as Combobox, l as DEFAULT_CAPTION_STYLE, v as DEFAULT_MESSAGES, s as DEFAULT_PREFERENCES, Bt as DEFAULT_THROTTLE_BPS, N as EmptyState, Ms as FederationPage, tc as FederationSharesPage, rg as FilterBar, Ia as HelpPopover, Et as HelpText, n as Icon, r as IconButton, Sl as InviteLinksPage, qe as Kbd, an as LIBRARY_TYPES, Ja as LibraryScanPage, te as LocalStorageTokenStore, gn as LoginForm, Ee as MAX_EXTENDS_DEPTH, ca as MCP_TOKENS_ROUTE_NAME, la as MCP_TOKENS_ROUTE_PATH, ne as MUSIC_PAGE_SIZE, dc as ManageSharesPage, Ot as MediaCard, tg as MediaDetail, kt as MediaGrid, tt as MediaHomeRow, At as MediaRow, Tt as Menu, ng as MetadataMatchModal, St as Modal, Ql as MusicAlbumPage, zu as MusicArtistPage, _u as MusicArtistsPage, tf as MusicPlayerPage, wd as MusicTracksPage, fo as MyServersPage, C as NetworkError, fn as PLUGIN_SECRET_MASK, g as PLURAL_CATEGORIES, Ct as PageHint, Aa as PageTransition, di as PhlixApp, rh as PhotoAlbumPage, Hm as PhotoAlbumsPage, Vh as PhotoSlideshowPage, Eh as PhotoViewPage, Ht as RATING_LABELS, zt as RATING_MAX, Rt as RATING_OPTIONS, he as RESUME_MAX_RATIO, pe as RESUME_MIN_SECONDS, Zc as RequestsPage, ka as Reveal, on as SCAN_JOB_TYPES, ln as SETTINGS_SECRET_MASK, Ye as SORT_TITLE_ARTICLES, Gt as SUBSCRIBABLE_EVENTS, jl as SearchPage, Be as SecuritySettingsPage, yt as Select, ys as ServerDetailPage, Tc as SharedWithMePage, or as Sheet, _n as SignupForm, M as Skeleton, gt as Slider, Nt as SourcePriorityEditor, Ce as Spinner, _t as Switch, Ie as THEME_CACHE_KEY, ze as THEME_TOKEN_ALLOWLIST, Vt as THROTTLE_BPS_LEVELS, Ut as THROTTLE_BPS_OPTIONS, ie as TMDB_UNCONFIGURED_CODE, wt as Tabs, ve as ThumbRating, ee as TimeoutError, Oa as ToastHost, Se as Tooltip, Kt as WEBHOOK_EVENT_CATEGORIES, De as activeThemeStyle, ia as adminMenu, Xr as applyStoredThemeEarly, Ne as applyThemeTokens, Jh as bestCandidate, Hh as bindMediaStoreToRouter, ta as buildAdminRoutes, ra as buildHubAdminRoutes, Mt as buildMediaQuery, jt as buildMediaUrl, na as buildServerAdminRoutes, Ve as clearThemeTokens, Xi as commonAdminPages, Je as compareByStrippedTitle, ba as createPhlixApp, y as createTranslator, qr as deriveAccentVars, E as errMessage, Xe as fetchLibraries, Re as fetchThemes, _i as focusable, hi as focusableRegistry, ht as formatPageTitle, Ge as fuzzyScore, x as getDefaultApiHeaders, c as hasStoredPreferences, Qi as hubAdminPages, vi as installFocusable, ct as isAllowedBase, Oe as isAllowedThemeToken, ke as isBuiltInThemeId, T as isOffline, it as isPlaintextPublic, f as isPluralTemplate, nt as isPrivateHost, ue as isRewritableImagePath, Le as isSafeThemeTokenValue, re as isTmdbUnconfigured, Ke as matchCommand, ua as mcpTokensMenuItem, _ as mergeMessages, st as normalizeBase, Pe as normalizeServerTheme, lt as originOf, pn as pluginErrorCode, dn as pluginValidationErrors, m as plural, d as pluralCategory, u as pluralCount, p as pluralize, rt as probeServer, je as readCachedTheme, o as readStoredPreferences, Uh as rectCenter, de as resolveImageSrc, le as resolveImageSrcset, Ae as resolveThemeBase, Te as resolveThemeTokens, He as sanitizeThemeTokens, h as selectPluralTemplate, Zi as serverAdminPages, pt as setAppName, S as setDefaultApiHeaders, mt as setPageTitle, Qe as sortLibraries, Ze as stripLeadingArticle, se as useApiBase, ce as useAuthStore, Qr as useCommandPaletteHotkey, We as useCommandStore, at as useConnectionStore, i as useFocusTrap, k as useImageSrc, $e as useLibrariesStore, O as useMediaApiBase, xt as useMediaStore, b as useMessages, eg as useOnline, ft as usePageTitle, fe as usePlayerStore, ri as usePreconnect, a as usePreferencesStore, Dt as usePrefetch, si as useResumeReporter, et as useResumeSync, wi as useServerStore, un as useSettingsPrefsStore, $h as useSpatialNav, Zr as useTheme, Fe as useThemesStore, ge as useToastStore, _e as useUserItemDataStore, dt as withScheme, Ue as writeCachedTheme };
 

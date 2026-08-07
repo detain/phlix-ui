@@ -163,10 +163,16 @@ describe('MediaListRow — composed MediaCard poster column (S68)', () => {
     expect(w.find('[aria-label="More actions"]').exists()).toBe(true);
   });
 
-  it('opts out of native lazy-loading like MediaGrid does (S35)', () => {
+  // S223 INVERTED this assertion. It used to pin S35's `:lazy="false"` opt-out;
+  // a real-browser capture measured that opt-out costing 24 first-paint poster
+  // requests in list view against 7 with the native default, for no measured
+  // benefit (see MediaCard.vue's `lazy` prop docblock). The row now keeps the
+  // native attribute — and jsdom cannot see the difference, which is exactly why
+  // the original claim survived unchallenged for so long.
+  it('keeps native lazy-loading (S223 — the S35 opt-out was measured to cost requests)', () => {
     const w = mountRow();
-    expect(w.findComponent(MediaCard).props('lazy')).toBe(false);
-    expect(w.find('.media-card__img').attributes('loading')).toBeUndefined();
+    expect(w.findComponent(MediaCard).props('lazy')).toBe(true);
+    expect(w.find('.media-card__img').attributes('loading')).toBe('lazy');
   });
 
   it('forwards canMatch so admins get the Match quick-action', async () => {

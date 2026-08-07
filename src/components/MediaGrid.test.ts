@@ -634,13 +634,22 @@ describe('MediaGrid — S35 lazy-load stall (repro-first)', () => {
     }
   });
 
-  it('grid-rendered posters do NOT use native loading="lazy" (redundant over JS windowing)', () => {
+  // S223 INVERTED this assertion, and this test's OWN setup is why. `mockLayout(0,0,0)`
+  // reproduces the non-virtualized fallback (`virtualized` is
+  // `containerWidth > 0 && effectiveRowHeight > 0`, so it is FALSE until the
+  // ResizeObserver fires) in which `visibleItems` returns EVERY loaded item. That
+  // path is live on the real first paint, and it is precisely where dropping the
+  // native attribute cost requests: a browser capture measured first-paint poster
+  // requests 24 → 7 in list/table view and 48 → 12 in backdrop view once the native
+  // default was restored, with no measured benefit anywhere. See MediaCard.vue's
+  // `lazy` prop docblock. jsdom cannot observe any of that — it ignores `loading`.
+  it('grid-rendered posters keep native loading="lazy" (S223)', () => {
     mockLayout(0, 0, 0); // non-virtualized fallback renders every card
     const w = mount(MediaGrid, { props: { items: makeItems(3) } });
     const imgs = w.findAll('.media-card__img');
     expect(imgs.length).toBeGreaterThan(0);
     for (const img of imgs) {
-      expect(img.attributes('loading')).toBeUndefined();
+      expect(img.attributes('loading')).toBe('lazy');
     }
   });
 });

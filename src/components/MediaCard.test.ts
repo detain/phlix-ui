@@ -95,10 +95,11 @@ describe('MediaCard — rendering', () => {
     expect(w.find('.media-card__poster').exists()).toBe(true);
   });
 
-  // S35: native lazy-load is a per-host opt-out. Default true (standalone/rail
-  // hosts keep it); MediaGrid passes false because its JS windowing already gates
-  // rendering and native lazy over transform-repositioned cards stalls the fill.
-  it('drops native loading="lazy" when the `lazy` prop is false (grid opt-out)', () => {
+  // S35 added this prop so MediaGrid could pass false. S223 measured that opt-out
+  // in a real browser and removed every host override — the prop survives as part
+  // of a published component's API, so both branches stay pinned, but NOTHING in
+  // this repo sets it false any more. See MediaCard.vue's `lazy` prop docblock.
+  it('drops native loading="lazy" when the `lazy` prop is false (API escape hatch)', () => {
     const w = mount(MediaCard, { props: { item: media(), lazy: false } });
     const img = w.find('.media-card__img');
     expect(img.exists()).toBe(true);

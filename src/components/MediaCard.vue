@@ -120,11 +120,41 @@ const props = withDefaults(
     hideCaption?: boolean;
     /**
      * Apply the native `loading="lazy"` attribute to the poster `<img>`.
-     * Default `true` — every standalone/rail host keeps native lazy-loading.
-     * `MediaGrid` passes `false` (S35): its JS virtualization already guarantees
-     * only near-viewport cards exist in the DOM, so native lazy-load is redundant
-     * there and layering it over cards repositioned via `transform` in the same
-     * reactive flush is a known browser-timing stall trigger.
+     * Default `true` — and as of S223 **no host in this repo overrides it**.
+     *
+     * S35 introduced this prop so `MediaGrid` could pass `false`, on the stated
+     * rationale that "native lazy-load over cards repositioned via `transform` in
+     * the same reactive flush is a known browser-timing stall trigger". S35's own
+     * acceptance criterion required a live-browser Network/Performance repro before
+     * that shipped; only a jsdom repro was ever run, and **jsdom ignores the
+     * `loading` attribute entirely**, so the claim was never observed.
+     *
+     * S223 ran the capture (headless chromium 1280x800 over the real `LibraryPage`,
+     * `src/dev/visual/library-lazy.ts`; 400-item catalogue, distinct poster URLs, a
+     * 250 ms-throttled image origin, a continuous 60 px/frame scroll to y=8000).
+     * The timeline blames the `loading` attribute for **nothing**, and the opt-out
+     * measurably COSTS requests. First-paint poster requests, `:lazy="false"` vs
+     * the native default, 4 runs each, zero variance:
+     *
+     *   list view      24 → 7    table view     24 → 7
+     *   backdrop view  48 → 12   grid view      25 → 25
+     *
+     * The cause is `MediaGrid.vue`'s own non-virtualized first render (`virtualized`
+     * is `containerWidth > 0 && effectiveRowHeight > 0`, so it is FALSE until the
+     * ResizeObserver fires, and `visibleItems` then returns EVERY loaded item). With
+     * the native attribute the browser skips the off-screen ones; without it every
+     * poster of the first page is fetched. Grid view ties only because 25 poster
+     * cells still fall inside Chrome's lazy-load distance threshold.
+     *
+     * Against that cost there was no measured benefit: over 134 sampled animation
+     * frames per run the count of in-viewport-but-unpainted posters was
+     * indistinguishable (grid 5 vs 4 frames, list 63±1 vs 63±1, table 62±1 vs 62±1,
+     * backdrop 23 vs 26; worst-case blank count identical in every view), and the
+     * post-scroll request total was identical (48/24/24/48) — native lazy DEFERS
+     * work, it never drops work that is needed.
+     *
+     * The prop is kept because it is part of a published component's API, but
+     * setting it `false` needs a fresh measurement, not this history.
      */
     lazy?: boolean;
   }>(),
