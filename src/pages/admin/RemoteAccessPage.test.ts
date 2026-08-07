@@ -1162,3 +1162,224 @@ describe('RemoteAccessPage — stale network reading (S251)', () => {
     w2.unmount();
   });
 });
+
+/**
+ * S257 — "never measured" is a NAMED state, visibly distinct from a number.
+ *
+ * 🚨 The defect: `NetworkHealth.latencyMs` is declared `number | null`, but the
+ * mapper's `asNumber(… ?? null)` fallback is `0`. An honest `latencyMs: null`
+ * from the server therefore arrived as `0`, and this page rendered it three
+ * ways, all wrong: the Current badge showed `0ms`, the section summary showed
+ * `offline (0ms)`, and `loadNetworkHealth()`'s `!== null` guard — being
+ * permanently true — pushed a 0 ms bar onto the history chart, i.e. THE FASTEST
+ * POINT ON THE GRAPH, at exactly the moment nothing had been measured.
+ *
+ * Every test below pairs the null case with a NUMERIC control in the same
+ * assertion set, because "renders something for null" is not evidence that null
+ * and a real reading are distinguishable.
+ *
+ * ⚠ Substring hazard checked before asserting (the `"Enabled"` inside
+ * `"Disabled"` trap this very file was bitten by): the first test pins that
+ * "Not measured yet" and a numeric `"<n>ms"` are not substrings of one another.
+ * Note `relayLatencyLabel` in the Relay Tunnel section renders the SAME words —
+ * every assertion here therefore targets a specific element, never `w.text()`.
+ */
+describe('RemoteAccessPage — never-measured latency (S257)', () => {
+  const NOT_MEASURED = 'Not measured yet';
+
+  async function openHealth(w: VueWrapper): Promise<void> {
+    await expandSection(w, 'Network Health');
+    await flushPromises();
+  }
+
+  it('the not-measured label and a numeric reading are not substrings of each other', () => {
+    for (const numeric of ['0ms', '87ms', '1234ms']) {
+      expect(NOT_MEASURED.includes(numeric)).toBe(false);
+      expect(numeric.includes(NOT_MEASURED)).toBe(false);
+    }
+  });
+
+  it('renders "Not measured yet" for latencyMs: null — with a NUMERIC control beside it', async () => {
+    const nulled = mountPage(
+      makeClient({
+        networkSeq: [{
+          latencyMs: null, status: 'offline', measuredAt: '2026-01-01T00:00:00Z',
+          error: 'No successful heartbeat recorded yet',
+        }],
+      }).client,
+    );
+    await flushPromises();
+    await openHealth(nulled);
+
+    const measured = mountPage(
+      makeClient({
+        networkSeq: [{ latencyMs: 87, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' }],
+      }).client,
+    );
+    await flushPromises();
+    await openHealth(measured);
+
+    // Exact rendered text, same element, two payloads. Restoring the mapper's
+    // `0` fallback turns the first into "0ms" and reds this.
+    expect(nulled.find('.admin-remote__latency-current').text()).toBe(NOT_MEASURED);
+    expect(measured.find('.admin-remote__latency-current').text()).toBe('87ms');
+
+    nulled.unmount();
+    measured.unmount();
+  });
+
+  it('renders a REAL 0 ms measurement as "0ms", not as the not-measured label', async () => {
+    // The inverse hazard, and the reason the label is chosen by `!= null` rather
+    // than by truthiness: a genuine sub-millisecond round-trip is data.
+    const w = mountPage(
+      makeClient({
+        networkSeq: [{ latencyMs: 0, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' }],
+      }).client,
+    );
+    await flushPromises();
+    await openHealth(w);
+
+    expect(w.find('.admin-remote__latency-current').text()).toBe('0ms');
+    w.unmount();
+  });
+
+  it('plots NO bar for a never-measured reading, and one for a real one (control)', async () => {
+    // The chart is where the defect was worst: a 0 ms bar reads as the best
+    // sample ever taken. `loadNetworkHealth()`'s `latencyMs !== null` guard was
+    // already written correctly — it was simply unreachable.
+    const nulled = mountPage(
+      makeClient({
+        networkSeq: [{ latencyMs: null, status: 'offline', measuredAt: '2026-01-01T00:00:00Z' }],
+      }).client,
+    );
+    await flushPromises();
+    await openHealth(nulled);
+    expect(nulled.findAll('.admin-remote__latency-bar-wrap')).toHaveLength(0);
+    expect(nulled.find('.admin-remote__latency-graph').exists()).toBe(false);
+
+    const measured = mountPage(
+      makeClient({
+        networkSeq: [{ latencyMs: 87, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' }],
+      }).client,
+    );
+    await flushPromises();
+    await openHealth(measured);
+    expect(measured.findAll('.admin-remote__latency-bar-wrap')).toHaveLength(1);
+    expect(measured.find('.admin-remote__latency-value').text()).toBe('87');
+
+    nulled.unmount();
+    measured.unmount();
+  });
+
+  it('summarises a never-measured reading WITHOUT a parenthesised number', async () => {
+    const nulled = mountPage(
+      makeClient({
+        networkSeq: [{ latencyMs: null, status: 'offline', measuredAt: '2026-01-01T00:00:00Z' }],
+      }).client,
+    );
+    await flushPromises();
+    await openHealth(nulled);
+    const nulledSummary = nulled
+      .findAll('.admin-remote__section-header')
+      .find((h) => h.text().includes('Network Health'))!
+      .find('.admin-remote__section-summary');
+    expect(nulledSummary.text()).toBe('offline');
+
+    const measured = mountPage(
+      makeClient({
+        networkSeq: [{ latencyMs: 87, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' }],
+      }).client,
+    );
+    await flushPromises();
+    await openHealth(measured);
+    const measuredSummary = measured
+      .findAll('.admin-remote__section-header')
+      .find((h) => h.text().includes('Network Health'))!
+      .find('.admin-remote__section-summary');
+    // The control: the parenthesised number IS rendered when there is one, so
+    // its absence above is a real difference and not a broken selector.
+    expect(measuredSummary.text()).toBe('healthy (87ms)');
+
+    nulled.unmount();
+    measured.unmount();
+  });
+});
+
+/**
+ * S257 — the three relay fields `/health/relay` has always emitted and the UI
+ * mapper silently discarded: `relay.lastConnectError`, `relay.lastConnectErrorAt`
+ * and `hub.lastLatencyMs`.
+ *
+ * Until now the Network Health panel could report the tunnel as Disconnected and
+ * had no way to say WHY, while the Relay Tunnel section a few hundred pixels
+ * above (fed by `/relay/status`) could. Each assertion has an OMITTED-payload
+ * control beside it: an assertion that passes whether or not the field is
+ * surfaced is worth nothing.
+ */
+describe('RemoteAccessPage — surfaced relay-error fields (S257)', () => {
+  async function openHealth(w: VueWrapper): Promise<void> {
+    await expandSection(w, 'Network Health');
+    await flushPromises();
+  }
+
+  const WITH_ERROR = {
+    relay: {
+      connected: false, active: false, reconnectAttempts: 4, activeSessions: 0,
+      lastConnectError: 'hub refused the tunnel handshake: 403',
+      lastConnectErrorAt: '2026-01-01T00:02:00Z',
+      stale: false,
+    },
+    hub: { isEnrolled: true, consecutiveFailures: 2, lastLatencyMs: 143, stale: false },
+  };
+
+  const WITHOUT_ERROR = {
+    relay: {
+      connected: true, active: true, reconnectAttempts: 0, activeSessions: 1,
+      lastConnectError: null, lastConnectErrorAt: null, stale: false,
+    },
+    hub: { isEnrolled: true, consecutiveFailures: 0, lastLatencyMs: null, stale: false },
+  };
+
+  it('renders the last connect error and its timestamp', async () => {
+    const w = mountPage(makeClient({ relayHealth: WITH_ERROR }).client);
+    await flushPromises();
+    await openHealth(w);
+
+    expect(w.find('.admin-remote__health-connect-error').text()).toBe(
+      'hub refused the tunnel handshake: 403',
+    );
+    expect(w.find('.admin-remote__health-connect-error-at').text()).toBe(
+      new Date('2026-01-01T00:02:00Z').toLocaleString(),
+    );
+    w.unmount();
+  });
+
+  it('renders NEITHER row when the server reports no connect error (non-vacuity control)', async () => {
+    // ⚠ Without this the test above would also pass against a template that
+    // rendered the rows unconditionally with empty content.
+    const w = mountPage(makeClient({ relayHealth: WITHOUT_ERROR }).client);
+    await flushPromises();
+    await openHealth(w);
+
+    expect(w.find('.admin-remote__health-connect-error').exists()).toBe(false);
+    expect(w.find('.admin-remote__health-connect-error-at').exists()).toBe(false);
+    w.unmount();
+  });
+
+  it('renders hub.lastLatencyMs as a number, and "Not measured yet" when it is null', async () => {
+    const withValue = mountPage(makeClient({ relayHealth: WITH_ERROR }).client);
+    await flushPromises();
+    await openHealth(withValue);
+    expect(withValue.find('.admin-remote__hub-last-latency').text()).toBe('143ms');
+
+    const withNull = mountPage(makeClient({ relayHealth: WITHOUT_ERROR }).client);
+    await flushPromises();
+    await openHealth(withNull);
+    // The same honesty as `network.latencyMs`: null is never 0 ms.
+    expect(withNull.find('.admin-remote__hub-last-latency').text()).toBe('Not measured yet');
+    expect(withNull.find('.admin-remote__hub-last-latency').text()).not.toBe('0ms');
+
+    withValue.unmount();
+    withNull.unmount();
+  });
+});

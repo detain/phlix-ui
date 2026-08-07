@@ -22,12 +22,27 @@ export interface RelayHealth {
         reconnectAttempts: number;
         lastDisconnectTime: string | null;
         activeSessions: number;
+        /**
+         * Why the tunnel last failed to connect, or null when it never has (S257).
+         * The server has always emitted this; the mapper used to drop it, which is
+         * why the Network Health panel could not say WHY the relay was down while
+         * the Relay Tunnel section (fed by `/relay/status`) could.
+         */
+        lastConnectError: string | null;
+        /** When `lastConnectError` was recorded, or null (S257). */
+        lastConnectErrorAt: string | null;
         /** True when the relay fork stopped refreshing `relay-tunnel.state.json`. */
         stale: boolean;
     };
     hub: {
         lastSuccessfulHeartbeat: string | null;
         consecutiveFailures: number;
+        /**
+         * The heartbeat fork's last recorded hub round-trip, or null when nothing
+         * has been measured yet (S257). Same wire value `/health/network` derives
+         * `latencyMs` from; previously discarded by this mapper.
+         */
+        lastLatencyMs: number | null;
         isEnrolled: boolean;
         enrollmentExpiresAt: string | null;
         /** True when the hub-heartbeat fork stopped refreshing `hub-heartbeat.state.json`. */
@@ -48,6 +63,18 @@ export type NetworkHealthStatus = 'healthy' | 'degraded' | 'offline';
  * `false` default in the mapper: absent means fresh.
  */
 export interface NetworkHealth {
+    /**
+     * The last persisted hub round-trip in milliseconds, or **null when nothing
+     * has been measured** — which the server genuinely emits (not enrolled, no
+     * successful heartbeat yet, or no latency sample; `HealthController.php:185,
+     * 194, 219`).
+     *
+     * ⚠ Until S257 the mapper ran this through `asNumber(… ?? null)`, whose
+     * fallback is `0`, so an honest `null` arrived as `0` — the FASTEST possible
+     * reading. The chart drew the relay's best-ever bar at exactly the moment
+     * nothing had been measured, and every `!== null` guard downstream was
+     * always true. The declared type was the truth; the mapper was the lie.
+     */
     latencyMs: number | null;
     status: NetworkHealthStatus;
     measuredAt: string;
