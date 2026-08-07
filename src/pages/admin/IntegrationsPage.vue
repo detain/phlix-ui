@@ -158,13 +158,28 @@ async function loadProviders(): Promise<void> {
   }
 }
 
-// Determine which providers are currently enabled. The server reports
-// `configured` per settings payload; fall back to the list `supports_authentication`.
+/**
+ * Is this provider actually live — i.e. will it authenticate anyone right now?
+ *
+ * Reads `live` from the provider list (`AuthProviderRegistry::hasProvider()`
+ * server-side), which is true only when the provider is both enabled AND
+ * configured.
+ *
+ * It deliberately does NOT read `oidcSettings.configured` / `ldapSettings.configured`.
+ * `configured` means only "settings have been saved", and the server returns it
+ * unconditionally from both save handlers — so keying this off it made saving a
+ * config flip the badge to "Enabled" without the enable endpoint ever being
+ * called, showing "Enabled" for a provider that authenticates nobody.
+ *
+ * Fails CLOSED: a provider missing from the list, or one whose `live` field is
+ * absent (a server predating S44-b) or non-boolean, reads as not live. A strict
+ * `=== true` is load-bearing here — `?? false` would let a truthy non-boolean
+ * through, and reverting to the `configured` reading is exactly the defect this
+ * replaces.
+ */
 function providerEnabled(name: ProviderName): boolean {
-  if (name === 'oidc') return oidcSettings.value?.configured ?? false;
-  if (name === 'ldap') return ldapSettings.value?.configured ?? false;
   const p = providers.value.find((pr) => pr.name === name);
-  return p?.supports_authentication ?? false;
+  return p?.live === true;
 }
 
 async function toggleProvider(name: ProviderName, currentEnabled: boolean): Promise<void> {
@@ -235,8 +250,10 @@ async function saveOidc(): Promise<void> {
     await api.saveOidcSettings(input);
     toasts.success('OIDC settings saved.');
     oidcModalOpen.value = false;
-    // Refetch the settings too — `providerEnabled()` reads `oidcSettings.configured`,
-    // so a first-time configure must refresh it (not just the provider list).
+    // Refetch the settings too — the modal's secret hint reads
+    // `oidcSettings.configured`, so a first-time configure must refresh it. The
+    // badge does NOT come from here: `providerEnabled()` reads `live` off the
+    // provider list, which `loadProviders()` below refreshes.
     oidcSettings.value = await api.getOidcSettings();
     await loadProviders();
   } catch (e) {
@@ -321,8 +338,10 @@ async function saveLdap(): Promise<void> {
     await api.saveLdapSettings(buildLdapInput());
     toasts.success('LDAP settings saved.');
     ldapModalOpen.value = false;
-    // Refetch the settings too — `providerEnabled()` reads `ldapSettings.configured`,
-    // so a first-time configure must refresh it (not just the provider list).
+    // Refetch the settings too — the modal's bind-password hint reads
+    // `ldapSettings.configured`, so a first-time configure must refresh it. The
+    // badge does NOT come from here: `providerEnabled()` reads `live` off the
+    // provider list, which `loadProviders()` below refreshes.
     ldapSettings.value = await api.getLdapSettings();
     await loadProviders();
   } catch (e) {
