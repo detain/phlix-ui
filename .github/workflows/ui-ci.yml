@@ -33,6 +33,20 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+
+      # S231: `src/test/theater-geometry.browser.test.ts` drives headless chromium
+      # from inside the vitest suite to MEASURE the theater layout (S34's third AC),
+      # which jsdom cannot observe — it applies no compiled SFC `<style>`, has no
+      # layout engine and no `dvh` unit. The browser therefore has to exist in THIS
+      # job, not just in the manual `visual` one.
+      #
+      # This step must NOT gain `continue-on-error` / `if:` / `|| true`: without the
+      # binary the geometry test fails hard, by design (it must never degrade into a
+      # skip, which CI reports as SUCCESS). `src/test/theater-geometry-gate.test.ts`
+      # asserts this wiring.
+      - name: Install chromium for the in-suite browser test
+        run: npx playwright install --with-deps chromium
+
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
