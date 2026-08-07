@@ -756,26 +756,40 @@ describe('WebhookLogsPage — list states', () => {
     expect(w.findAll('.admin-webhook-logs__row')).toHaveLength(1);
   });
 
-  it('DROPS a stale row set when a later load fails', async () => {
+  it('DROPS the stale row set from state when a later load fails', async () => {
+    // ⚠ This assertion is on component STATE, not on the DOM, and the reason is
+    // measured rather than stylistic. `logs.value = []` in loadLogs()'s catch is
+    // NOT observable through the template: `v-else-if="error"` wins over both the
+    // empty state and the table for as long as `error` is set, and `error` is only
+    // cleared at the top of the next loadLogs() — which immediately sets
+    // `loading = true` and then overwrites `logs` on success. A DOM-level version
+    // of this test SURVIVED the mutation that deletes the line (verified 2026-08-07,
+    // S182 mutation run W5) because the error state renders no rows either way.
+    // Reading the ref pins the line the template cannot reach.
     let fail = false;
     const get = vi.fn(async (url: string) => {
       if (url.startsWith('/api/v1/admin/webhooks/logs')) {
         if (fail) throw new ApiError('down', 503);
-        return { logs: [logRow()], total: 1, page: 1, per_page: 50 };
+        return { logs: [logRow()], total: 7, page: 1, per_page: 50 };
       }
       return { webhooks: [] };
     });
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
 
     const w = await mountRich(client);
-    expect(w.findAll('.admin-webhook-logs__row')).toHaveLength(1);
+    const vm = w.vm as unknown as { logs: WebhookDeliveryLog[]; total: number };
+    // Control: the array really is populated, so the assertion below can fail.
+    expect(vm.logs).toHaveLength(1);
 
     fail = true;
     await w.findAllComponents(Select)[1].vm.$emit('update:modelValue', 'failed');
     await flushPromises();
-    // `logs.value = []` in the catch: without it the old rows stay behind the
-    // error state's `v-else-if` and reappear on the next successful render.
-    expect(w.findAll('.admin-webhook-logs__row')).toHaveLength(0);
+
+    expect(vm.logs).toEqual([]);
+    // …and only `logs` is reset. `total` is deliberately left alone, so a mutation
+    // that "fixes" this by clearing everything in the catch reds here.
+    expect(vm.total).toBe(7);
+    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn't load webhook logs");
   });
 
   it('renders the table header columns in the documented order', async () => {

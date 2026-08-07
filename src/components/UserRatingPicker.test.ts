@@ -109,10 +109,15 @@ describe('UserRatingPicker — display fill', () => {
     expect(filledFlags(mountPicker({ modelValue: null }))).toEqual([false, false, false, false, false]);
   });
 
-  it('fills nothing at modelValue 0 without falling into the null branch', async () => {
-    // `displayRating.value === null` must not decay to `!displayRating.value`.
-    // Both render 0 filled, so the observable difference is that a truthiness
-    // guard would ALSO ignore a hover preview while modelValue is 0 — asserted next.
+  it('fills nothing at modelValue 0, and still previews a hover from there', async () => {
+    // ⚠ HONEST NOTE, measured 2026-08-07 (S182 mutation run U4). `filledStars`
+    // opens with `if (displayRating.value === null) return 0;` and that guard is an
+    // EQUIVALENT MUTANT: weakening it to `!displayRating.value`, or deleting it
+    // outright, leaves this whole file green — because `Math.round((null / 10) * size)`
+    // is already 0. No test can distinguish them, and claiming otherwise would be a
+    // tautological assertion dressed up as a guard check. What IS pinned is the
+    // RETURN VALUE: changing `return 0` to `return 99` reds "fills nothing when
+    // unrated". The hover assertion below is the real subject here.
     const w = mountPicker({ modelValue: 0 });
     expect(filledFlags(w)).toEqual([false, false, false, false, false]);
     await stars(w)[2].trigger('mouseenter');
