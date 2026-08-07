@@ -80,6 +80,7 @@ import SyncPlayOverlay from './syncplay/SyncPlayOverlay.vue';
 import SyncPlayModal from './syncplay/SyncPlayModal.vue';
 import SyncPlayControls from './syncplay/SyncPlayControls.vue';
 import { useImageSrc } from '../composables/useImageSrc';
+import { resolveSubtitleTracks } from '../utils/subtitleSrc';
 
 /** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
  *  so bound verbatim they resolve against the HUB origin instead of the selected server's
@@ -804,12 +805,35 @@ let lastSubtitleLang: string | null = player.subtitleLang;
 // ---- server subtitle sidecars (U4) ------------------------------------------
 /** WebVTT subtitle tracks rendered as native `<track>` elements into the
  *  `<video>` so the existing captions.ts enumeration + overlay pick them up
- *  automatically. On the TRANSCODE path these are the job's extracted sidecars
- *  (S4; urls already resolved against the API base by the composable). On the
- *  DIRECT-PLAY path they come from playback-info `subtitle_tracks[]`, whose
- *  `url`s are signed VTT endpoints usable without a Bearer header. */
+ *  automatically.
+ *
+ *  S242 — the three sources arrive in DIFFERENT states, verified individually
+ *  (a uniform rewrite would be wrong in both directions):
+ *
+ *   (a) TRANSCODE — `tc.subtitleTracks`: the job's extracted sidecars
+ *       (`/hls/{job}/sub-{n}.vtt`). ALREADY resolved: `useHlsTranscode`'s
+ *       `setSubtitleTracks()` maps every url through `resolveStreamUrl(apiBase,…)`
+ *       with the same `props.apiBase` used here. Re-prefixing would DOUBLE the
+ *       relay base (`/api/v1/servers/1/proxy/api/v1/servers/1/proxy/hls/…`), so
+ *       this branch is deliberately passed through untouched.
+ *   (b) DIRECT PLAY — `props.playbackSubtitleTracks` from playback-info
+ *       `subtitle_tracks[]`: signed root-relative paths
+ *       (`/api/v1/media/{id}/subtitles/{n}?exp&sig`) usable without a Bearer
+ *       header, and NOT resolved anywhere upstream — the defect S242 fixes.
+ *   (c) ON-DEMAND — `downloadedSubtitleTracks` (Wave 3 F3): the download
+ *       response is shaped by the SAME server helper as (b), so it is
+ *       root-relative and unresolved for the same reason.
+ *
+ *  (b) and (c) are prefixed here rather than at the `<track :src>` binding so
+ *  every entry that reaches `stableKey()` below is in the SAME spelling — the
+ *  de-dupe compares (b) against (c) and would miss a match if only one side were
+ *  based. See `utils/subtitleSrc.ts` for why the base is the relay
+ *  `props.apiBase` and NOT `mediaDirectBase`. */
 const serverSubtitleTracks = computed<SubtitleTrack[]>(() => {
-  const base = transcodeNeeded.value ? tc.subtitleTracks.value : (props.playbackSubtitleTracks ?? []);
+  const apiBase = props.apiBase ?? '';
+  const base = transcodeNeeded.value
+    ? tc.subtitleTracks.value
+    : resolveSubtitleTracks(apiBase, props.playbackSubtitleTracks ?? []);
   if (downloadedSubtitleTracks.value.length === 0) return base;
   // Merge on-demand-downloaded sidecars (Wave 3 F3), de-duped so a track that
   // later also arrives via a playback-info refresh isn't rendered twice. The key
@@ -817,9 +841,14 @@ const serverSubtitleTracks = computed<SubtitleTrack[]>(() => {
   // (new `exp`/`sig` params) on every playback-info call, so the full URL differs
   // for the same sidecar — but the path (`/hls/<job>/sub-<index>.vtt` or the
   // external endpoint) is stable.
+  // S242: resolve (c) against the SAME base as (b) BEFORE keying, so a sidecar
+  // that arrives both ways collapses to one entry on the hub exactly as it does
+  // on the media server. Prefixing adds no `?`, so the query-stripping key is
+  // unaffected and a re-mint (fresh `exp`/`sig`) still de-dupes.
   const stableKey = (s: SubtitleTrack): string => s.url.split('?')[0];
+  const downloaded = resolveSubtitleTracks(apiBase, downloadedSubtitleTracks.value);
   const seen = new Set(base.map(stableKey));
-  const extra = downloadedSubtitleTracks.value.filter((s) => !seen.has(stableKey(s)));
+  const extra = downloaded.filter((s) => !seen.has(stableKey(s)));
   return extra.length === 0 ? base : [...base, ...extra];
 });
 
@@ -1514,7 +1543,11 @@ onBeforeUnmount(() => {
              `applyTrackModes` (JS owns every track's `mode`). A native `default`
              binding here would set the track to `showing` and fight the JS mode
              management, leaving the default subtitle blank until a manual off/on
-             toggle. Do not re-add `:default`. -->
+             toggle. Do not re-add `:default`.
+             NOTE (S242): `st.url` is bound RAW on purpose — every entry in
+             `serverSubtitleTracks` is already resolved against the media API base
+             by that computed (see its docblock). Wrapping it in a resolver here
+             would double-prefix the transcode path's sidecars. -->
         <track
           v-for="st in serverSubtitleTracks"
           :key="st.url"

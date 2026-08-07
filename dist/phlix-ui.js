@@ -1209,7 +1209,7 @@ function ga(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-D-xq3hUv.js")
+			component: () => import("./PlayerPage-7_auFxqw.js")
 		},
 		{
 			path: `${t}/login`,

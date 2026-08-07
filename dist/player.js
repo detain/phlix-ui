@@ -7403,41 +7403,59 @@ var qu = R("phlix-syncplay", () => {
 			}, null, 8, ["name"]), s("span", Rd, E(O(d).syncStatus === "synced" ? O(c)("syncplay.synced") : O(d).syncStatus === "outOfSync" ? O(c)("syncplay.outOfSync") : O(c)("syncplay.reSyncing")), 1)], 2)
 		])) : a("", !0);
 	}
-}), [["__scopeId", "data-v-75a184c7"]]), Vd = { class: "player__stage" }, Hd = ["src", "poster"], Ud = [
+}), [["__scopeId", "data-v-75a184c7"]]);
+//#endregion
+//#region src/utils/subtitleSrc.ts
+function Vd(e, t) {
+	return String(vl(e, t));
+}
+function Hd(e, t) {
+	let n = !1, r = t.map((t) => {
+		let r = Vd(e, t.url);
+		return r === t.url ? t : (n = !0, {
+			...t,
+			url: r
+		});
+	});
+	return n ? r : t;
+}
+//#endregion
+//#region src/components/Player.vue?vue&type=script&setup=true&lang.ts
+var Ud = { class: "player__stage" }, Wd = ["src", "poster"], Gd = [
 	"src",
 	"srclang",
 	"label"
-], Wd = { class: "player__meta" }, Gd = ["aria-label"], Kd = { class: "player__meta-text" }, qd = { class: "player__eyebrow" }, Jd = { class: "player__title" }, Yd = { class: "player__sub numeric" }, Xd = {
+], Kd = { class: "player__meta" }, qd = ["aria-label"], Jd = { class: "player__meta-text" }, Yd = { class: "player__eyebrow" }, Xd = { class: "player__title" }, Zd = { class: "player__sub numeric" }, Qd = {
 	key: 0,
 	class: "player__dot",
 	"aria-hidden": "true"
-}, Zd = {
+}, $d = {
 	key: 0,
 	class: "player__center"
-}, Qd = ["aria-label"], $d = { class: "player__btnrow" }, ef = ["aria-label"], tf = ["aria-label"], nf = ["aria-label"], rf = { class: "player__time numeric" }, af = ["aria-label", "aria-pressed"], of = ["title"], sf = ["aria-label"], cf = ["aria-label"], lf = ["aria-label", "aria-pressed"], uf = ["aria-label", "aria-pressed"], df = ["aria-label"], ff = { class: "similar-modal" }, pf = {
+}, ef = ["aria-label"], tf = { class: "player__btnrow" }, nf = ["aria-label"], rf = ["aria-label"], af = ["aria-label"], of = { class: "player__time numeric" }, sf = ["aria-label", "aria-pressed"], cf = ["title"], lf = ["aria-label"], uf = ["aria-label"], df = ["aria-label", "aria-pressed"], ff = ["aria-label", "aria-pressed"], pf = ["aria-label"], mf = { class: "similar-modal" }, hf = {
 	key: 0,
 	class: "similar-modal__loading",
 	role: "status",
 	"aria-busy": "true"
-}, mf = {
+}, gf = {
 	key: 1,
 	class: "similar-modal__state",
 	role: "alert"
-}, hf = { class: "similar-modal__state-title" }, gf = {
+}, _f = { class: "similar-modal__state-title" }, vf = {
 	key: 2,
 	class: "similar-modal__state",
 	role: "status"
-}, _f = {
+}, yf = {
 	key: 3,
 	class: "similar-modal__results"
-}, vf = { class: "similar-modal__poster" }, yf = ["src", "alt"], bf = {
+}, bf = { class: "similar-modal__poster" }, xf = ["src", "alt"], Sf = {
 	key: 1,
 	class: "similar-modal__poster-fallback",
 	"aria-hidden": "true"
-}, xf = { class: "similar-modal__result-body" }, Sf = { class: "similar-modal__result-title" }, Cf = {
+}, Cf = { class: "similar-modal__result-body" }, wf = { class: "similar-modal__result-title" }, Tf = {
 	key: 0,
 	class: "similar-modal__result-meta numeric"
-}, wf = { key: 0 }, Tf = /*#__PURE__*/ Y(/* @__PURE__ */ d({
+}, Ef = { key: 0 }, Df = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Player",
 	props: {
 		media: {},
@@ -7630,10 +7648,10 @@ var qu = R("phlix-syncplay", () => {
 			}
 			return lt.value;
 		}), vt = S(!1), yt = m.subtitleLang, bt = r(() => {
-			let e = W.value ? G.subtitleTracks.value : d.playbackSubtitleTracks ?? [];
-			if (St.value.length === 0) return e;
-			let t = (e) => e.url.split("?")[0], n = new Set(e.map(t)), r = St.value.filter((e) => !n.has(t(e)));
-			return r.length === 0 ? e : [...e, ...r];
+			let e = d.apiBase ?? "", t = W.value ? G.subtitleTracks.value : Hd(e, d.playbackSubtitleTracks ?? []);
+			if (St.value.length === 0) return t;
+			let n = (e) => e.url.split("?")[0], r = Hd(e, St.value), i = new Set(t.map(n)), a = r.filter((e) => !i.has(n(e)));
+			return a.length === 0 ? t : [...t, ...a];
 		}), xt = S(!1), St = S([]), Ct = r(() => {
 			let e = [], t = (t) => {
 				if (!t) return;
@@ -7935,7 +7953,7 @@ var qu = R("phlix-syncplay", () => {
 			"playing",
 			"reduced-motion",
 			"intensity"
-		]), s("div", Vd, [
+		]), s("div", Ud, [
 			s("video", {
 				ref_key: "videoRef",
 				ref: F,
@@ -7965,7 +7983,7 @@ var qu = R("phlix-syncplay", () => {
 				src: e.url,
 				srclang: e.language || void 0,
 				label: e.label || void 0
-			}, null, 8, Ud))), 128))], 40, Hd),
+			}, null, 8, Gd))), 128))], 40, Wd),
 			r[20] ||= s("div", {
 				class: "player__scrim player__scrim--top",
 				"aria-hidden": "true"
@@ -7974,22 +7992,22 @@ var qu = R("phlix-syncplay", () => {
 				class: "player__scrim player__scrim--bottom",
 				"aria-hidden": "true"
 			}, null, -1),
-			s("div", Wd, [s("button", {
+			s("div", Kd, [s("button", {
 				type: "button",
 				class: "player__iconbtn player__back",
 				"aria-label": O(b)("player.back"),
 				onClick: r[0] ||= L((e) => p("back"), ["stop"])
-			}, [u(J, { name: "arrow-left" })], 8, Gd), s("div", Kd, [
-				s("p", qd, E(O(b)("player.nowPlaying")), 1),
-				s("h2", Jd, E(t.media.name), 1),
-				s("div", Yd, [(x(!0), o(e, null, C(It.value, (t, n) => (x(), o(e, { key: n }, [n > 0 && !t.cert ? (x(), o("span", Xd, "·")) : a("", !0), s("span", { class: g({ player__cert: t.cert }) }, E(t.text), 3)], 64))), 128))])
+			}, [u(J, { name: "arrow-left" })], 8, qd), s("div", Jd, [
+				s("p", Yd, E(O(b)("player.nowPlaying")), 1),
+				s("h2", Xd, E(t.media.name), 1),
+				s("div", Zd, [(x(!0), o(e, null, C(It.value, (t, n) => (x(), o(e, { key: n }, [n > 0 && !t.cert ? (x(), o("span", Qd, "·")) : a("", !0), s("span", { class: g({ player__cert: t.cert }) }, E(t.text), 3)], 64))), 128))])
 			])]),
-			xe.value ? a("", !0) : (x(), o("div", Zd, [s("button", {
+			xe.value ? a("", !0) : (x(), o("div", $d, [s("button", {
 				type: "button",
 				class: g(["player__bigplay", { "is-playing": O(m).playing }]),
 				"aria-label": O(m).playing ? O(b)("player.pause") : O(b)("player.play"),
 				onClick: L(Ht, ["stop"])
-			}, [u(J, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 10, Qd)])),
+			}, [u(J, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 10, ef)])),
 			u(ms, {
 				video: F.value,
 				language: O(m).subtitleLang,
@@ -8034,28 +8052,28 @@ var qu = R("phlix-syncplay", () => {
 					"duration",
 					"markers"
 				])) : a("", !0),
-				s("div", $d, [
+				s("div", tf, [
 					t.prevEpisode ? (x(), o("button", {
 						key: 0,
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.previousEpisode"),
 						onClick: Bt
-					}, [u(J, { name: "skip-back" })], 8, ef)) : a("", !0),
+					}, [u(J, { name: "skip-back" })], 8, nf)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: "player__iconbtn player__iconbtn--lg",
 						"aria-label": O(m).playing ? O(b)("player.pause") : O(b)("player.play"),
 						onClick: Ht
-					}, [u(J, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 8, tf),
+					}, [u(J, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 8, rf),
 					t.nextEpisode ? (x(), o("button", {
 						key: 1,
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.nextEpisode"),
 						onClick: Vt
-					}, [u(J, { name: "skip-forward" })], 8, nf)) : a("", !0),
-					s("span", rf, [
+					}, [u(J, { name: "skip-forward" })], 8, af)) : a("", !0),
+					s("span", of, [
 						l(E(O(na)(O(m).position)), 1),
 						r[16] ||= s("span", { class: "player__sep" }, " / ", -1),
 						l(E(O(na)(O(m).duration)), 1)
@@ -8067,7 +8085,7 @@ var qu = R("phlix-syncplay", () => {
 						"aria-label": D.value ? "Remove from favorites" : "Add to favorites",
 						"aria-pressed": D.value ? "true" : "false",
 						onClick: A
-					}, [u(J, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, af),
+					}, [u(J, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, sf),
 					u(ta, {
 						level: k.value,
 						onCycle: j
@@ -8097,7 +8115,7 @@ var qu = R("phlix-syncplay", () => {
 						key: 2,
 						class: "player__direct-badge",
 						title: O(b)("player.qualityDirectStream")
-					}, E(O(b)("player.directStream")), 9, of)),
+					}, E(O(b)("player.directStream")), 9, cf)),
 					u(Us, {
 						open: ut.value,
 						"onUpdate:open": r[2] ||= (e) => ut.value = e,
@@ -8129,14 +8147,14 @@ var qu = R("phlix-syncplay", () => {
 						"aria-label": O(w).isInRoom ? O(b)("syncplay.inRoom") : O(b)("syncplay.syncPlay"),
 						"aria-haspopup": "dialog",
 						onClick: r[5] ||= (e) => oe.value = !0
-					}, [u(J, { name: "user" })], 10, sf),
+					}, [u(J, { name: "user" })], 10, lf),
 					s("button", {
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.keyboardShortcuts"),
 						"aria-haspopup": "dialog",
 						onClick: r[6] ||= (e) => V.value = !0
-					}, [u(J, { name: "info" })], 8, cf),
+					}, [u(J, { name: "info" })], 8, uf),
 					ee.value ? (x(), o("button", {
 						key: 3,
 						type: "button",
@@ -8144,20 +8162,20 @@ var qu = R("phlix-syncplay", () => {
 						"aria-label": U.value ? O(b)("player.exitPip") : O(b)("player.pip"),
 						"aria-pressed": U.value,
 						onClick: fn
-					}, [u(J, { name: "pip" })], 10, lf)) : a("", !0),
+					}, [u(J, { name: "pip" })], 10, df)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: g(["player__iconbtn", { "is-on": H.value }]),
 						"aria-label": H.value ? O(b)("player.exitTheater") : O(b)("player.theater"),
 						"aria-pressed": H.value,
 						onClick: ln
-					}, [u(J, { name: "theater" })], 10, uf),
+					}, [u(J, { name: "theater" })], 10, ff),
 					s("button", {
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": z.value ? O(b)("player.exitFullscreen") : O(b)("player.fullscreen"),
 						onClick: un
-					}, [u(J, { name: z.value ? "fullscreen-exit" : "fullscreen" }, null, 8, ["name"])], 8, df)
+					}, [u(J, { name: z.value ? "fullscreen-exit" : "fullscreen" }, null, 8, ["name"])], 8, pf)
 				])
 			])),
 			xe.value ? a("", !0) : (x(), i(Ul, {
@@ -8204,26 +8222,26 @@ var qu = R("phlix-syncplay", () => {
 				size: "lg",
 				onClose: Ye
 			}, {
-				default: P(() => [s("div", ff, [Ve.value ? (x(), o("div", pf, [u(ac, { label: "Finding similar media" })])) : He.value ? (x(), o("div", mf, [u(J, {
+				default: P(() => [s("div", mf, [Ve.value ? (x(), o("div", hf, [u(ac, { label: "Finding similar media" })])) : He.value ? (x(), o("div", gf, [u(J, {
 					name: "error",
 					class: "similar-modal__state-icon"
-				}), s("p", hf, E(He.value), 1)])) : !Ve.value && Be.value.length === 0 ? (x(), o("div", gf, [
+				}), s("p", _f, E(He.value), 1)])) : !Ve.value && Be.value.length === 0 ? (x(), o("div", vf, [
 					u(J, {
 						name: "search",
 						class: "similar-modal__state-icon"
 					}),
 					r[18] ||= s("p", { class: "similar-modal__state-title" }, "No similar media found", -1),
 					r[19] ||= s("p", { class: "similar-modal__state-hint" }, "Try a different marker or position.", -1)
-				])) : (x(), o("ul", _f, [(x(!0), o(e, null, C(Be.value, (e) => (x(), o("li", {
+				])) : (x(), o("ul", yf, [(x(!0), o(e, null, C(Be.value, (e) => (x(), o("li", {
 					key: e.id,
 					class: "similar-modal__result"
-				}, [s("div", vf, [e.poster_url ? (x(), o("img", {
+				}, [s("div", bf, [e.poster_url ? (x(), o("img", {
 					key: 0,
 					src: O(c)(e.poster_url),
 					alt: e.name,
 					loading: "lazy",
 					decoding: "async"
-				}, null, 8, yf)) : (x(), o("div", bf, [u(J, { name: "film" })]))]), s("div", xf, [s("p", Sf, E(e.name), 1), e.year ? (x(), o("p", Cf, [l(E(e.year) + " ", 1), e.runtime ? (x(), o("span", wf, " · " + E(e.runtime) + "m", 1)) : a("", !0)])) : a("", !0)])]))), 128))]))])]),
+				}, null, 8, xf)) : (x(), o("div", Sf, [u(J, { name: "film" })]))]), s("div", Cf, [s("p", wf, E(e.name), 1), e.year ? (x(), o("p", Tf, [l(E(e.year) + " ", 1), e.runtime ? (x(), o("span", Ef, " · " + E(e.runtime) + "m", 1)) : a("", !0)])) : a("", !0)])]))), 128))]))])]),
 				_: 1
 			}, 8, ["modelValue", "title"]),
 			K.value ? (x(), i(Hl, {
@@ -8274,10 +8292,10 @@ var qu = R("phlix-syncplay", () => {
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-c59b9206"]]), Ef = ["aria-label"], Df = ["src", "poster"], Of = { class: "mini__body" }, kf = { class: "mini__title" }, Af = { class: "mini__controls" }, jf = ["aria-label"], Mf = ["aria-label", "aria-pressed"], Nf = ["aria-label"], Pf = ["aria-label"], Ff = {
+}), [["__scopeId", "data-v-9aee8ea6"]]), Of = ["aria-label"], kf = ["src", "poster"], Af = { class: "mini__body" }, jf = { class: "mini__title" }, Mf = { class: "mini__controls" }, Nf = ["aria-label"], Pf = ["aria-label", "aria-pressed"], Ff = ["aria-label"], If = ["aria-label"], Lf = {
 	class: "mini__progress",
 	"aria-hidden": "true"
-}, If = /*#__PURE__*/ Y(/* @__PURE__ */ d({
+}, Rf = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "MiniPlayer",
 	emits: ["expand"],
 	setup(e, { emit: t }) {
@@ -8365,14 +8383,14 @@ var qu = R("phlix-syncplay", () => {
 					onTimeupdate: R,
 					onEnded: z,
 					onClick: V
-				}, null, 40, Df),
-				s("div", Of, [s("p", kf, E(j.value), 1), s("div", Af, [
+				}, null, 40, kf),
+				s("div", Af, [s("p", jf, E(j.value), 1), s("div", Mf, [
 					s("button", {
 						type: "button",
 						class: "mini__btn",
 						"aria-label": O(d).playing ? O(p)("player.pause") : O(p)("player.play"),
 						onClick: B
-					}, [u(J, { name: O(d).playing ? "pause" : "play" }, null, 8, ["name"])], 8, jf),
+					}, [u(J, { name: O(d).playing ? "pause" : "play" }, null, 8, ["name"])], 8, Nf),
 					O(d).current ? (x(), o("button", {
 						key: 0,
 						type: "button",
@@ -8380,30 +8398,30 @@ var qu = R("phlix-syncplay", () => {
 						"aria-label": D.value ? "Remove from favorites" : "Add to favorites",
 						"aria-pressed": D.value ? "true" : "false",
 						onClick: k
-					}, [u(J, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, Mf)) : a("", !0),
+					}, [u(J, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, Pf)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: "mini__btn",
 						"aria-label": O(p)("player.expand"),
 						onClick: V
-					}, [u(J, { name: "expand" })], 8, Nf),
+					}, [u(J, { name: "expand" })], 8, Ff),
 					s("button", {
 						type: "button",
 						class: "mini__btn mini__btn--close",
 						"aria-label": O(p)("player.closePlayer"),
 						onClick: H
-					}, [u(J, { name: "x" })], 8, Pf)
+					}, [u(J, { name: "x" })], 8, If)
 				])]),
-				s("div", Ff, [s("div", {
+				s("div", Lf, [s("div", {
 					class: "mini__progress-fill",
 					style: _({ transform: `scaleX(${M.value})` })
 				}, null, 4)])
-			], 8, Ef)) : a("", !0)]),
+			], 8, Of)) : a("", !0)]),
 			_: 1
 		}));
 	}
 }), [["__scopeId", "data-v-ceaec05c"]]);
 //#endregion
-export { jc as AMBIENT_SAMPLE_H, Mc as AMBIENT_SAMPLE_INTERVAL_MS, Ac as AMBIENT_SAMPLE_W, io as ARROW_ICONS, ao as ARROW_LABELS, Bc as AmbientCanvas, ls as CAPTION_BACKGROUND_OPTIONS, cs as CAPTION_COLOR_OPTIONS, us as CAPTION_EDGE_OPTIONS, ss as CAPTION_SIZE_OPTIONS, os as CAPTION_SIZE_SCALE, ms as CaptionOverlay, Us as CaptionsMenu, Kc as DIRECT_PLAY_EXTENSIONS, If as MiniPlayer, ro as PLAYER_SHORTCUTS, Tf as Player, Uo as QualityMenu, re as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, Gc as ResumePrompt, xa as Scrubber, yo as ShortcutsHelp, Ul as SkipButton, Mo as SpeedMenu, kc as SubtitleSearch, qc as TRANSCODE_EXTENSIONS, Il as TranscodeNotice, Hl as TranscodePreparing, $c as UPNEXT_COUNTDOWN_SECONDS, tl as UPNEXT_RING_CIRCUMFERENCE, el as UPNEXT_RING_RADIUS, jl as UpNext, Co as VolumeControl, es as activeAudioIndex, Rc as ambientGradient, $o as applyAudioTrack, Qo as applyTrackModes, Aa as attachHls, Pc as averageRegion, ps as captionStyleVars, is as cleanCueText, fs as edgeShadow, Yc as extensionOf, na as formatTime, co as handleShortcut, Zo as hasActiveCaptions, zc as isBatterySaving, Ha as isFailedStatus, Zc as isFatalMediaError, Ea as isNativeHlsSupported, Va as isPlayable, so as isTypingTarget, Yo as listAudioTracks, Jo as listSubtitleTracks, Xc as needsTranscode, Fa as parseSubtitleTracks, za as parseTranscodeStart, Ba as parseTranscodeStatus, as as readActiveCueLines, Ua as resolveStreamUrl, Xo as resolveTextTrack, Ic as rgbString, Lc as rgbaString, nl as ringDashoffset, Fc as sampleAmbient, La as transcodeStartPath, Ra as transcodeStatusPath, Wa as useHlsTranscode, lo as useKeyboardShortcuts, ce as usePlayerStore };
+export { jc as AMBIENT_SAMPLE_H, Mc as AMBIENT_SAMPLE_INTERVAL_MS, Ac as AMBIENT_SAMPLE_W, io as ARROW_ICONS, ao as ARROW_LABELS, Bc as AmbientCanvas, ls as CAPTION_BACKGROUND_OPTIONS, cs as CAPTION_COLOR_OPTIONS, us as CAPTION_EDGE_OPTIONS, ss as CAPTION_SIZE_OPTIONS, os as CAPTION_SIZE_SCALE, ms as CaptionOverlay, Us as CaptionsMenu, Kc as DIRECT_PLAY_EXTENSIONS, Rf as MiniPlayer, ro as PLAYER_SHORTCUTS, Df as Player, Uo as QualityMenu, re as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, Gc as ResumePrompt, xa as Scrubber, yo as ShortcutsHelp, Ul as SkipButton, Mo as SpeedMenu, kc as SubtitleSearch, qc as TRANSCODE_EXTENSIONS, Il as TranscodeNotice, Hl as TranscodePreparing, $c as UPNEXT_COUNTDOWN_SECONDS, tl as UPNEXT_RING_CIRCUMFERENCE, el as UPNEXT_RING_RADIUS, jl as UpNext, Co as VolumeControl, es as activeAudioIndex, Rc as ambientGradient, $o as applyAudioTrack, Qo as applyTrackModes, Aa as attachHls, Pc as averageRegion, ps as captionStyleVars, is as cleanCueText, fs as edgeShadow, Yc as extensionOf, na as formatTime, co as handleShortcut, Zo as hasActiveCaptions, zc as isBatterySaving, Ha as isFailedStatus, Zc as isFatalMediaError, Ea as isNativeHlsSupported, Va as isPlayable, so as isTypingTarget, Yo as listAudioTracks, Jo as listSubtitleTracks, Xc as needsTranscode, Fa as parseSubtitleTracks, za as parseTranscodeStart, Ba as parseTranscodeStatus, as as readActiveCueLines, Ua as resolveStreamUrl, Xo as resolveTextTrack, Ic as rgbString, Lc as rgbaString, nl as ringDashoffset, Fc as sampleAmbient, La as transcodeStartPath, Ra as transcodeStatusPath, Wa as useHlsTranscode, lo as useKeyboardShortcuts, ce as usePlayerStore };
 
 //# sourceMappingURL=player.js.map
