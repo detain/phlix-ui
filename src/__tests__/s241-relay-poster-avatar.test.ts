@@ -26,8 +26,10 @@ import type { MediaItem } from '../types/media-item';
  *   `https://hub.example/api/v1/servers/srv-7/proxy/api/v1/artwork/m1?size=w500&exp=…&sig=…`
  * is the shape phlix-hub's `ServerProxyController` routes
  * (`/api/v1/servers/{id}/proxy/{path:.*}`) and forwards to phlix-server as
- * `/api/v1/artwork/m1?size=w500&exp=…&sig=…` — exactly the string
- * `HttpHandler::serveArtwork()` rebuilds and verifies `exp`/`sig` against.
+ * `/api/v1/artwork/m1?size=w500&exp=…&sig=…`. phlix-server verifies `exp`/`sig`
+ * against the query-less PATH (`SignedUrl::canonicalResource()` strips from the
+ * first `?`), so `size` is not signed — but the `sig` VALUE must still arrive
+ * un-re-encoded, which is why the query is carried through verbatim.
  */
 
 const HUB = 'https://hub.example';

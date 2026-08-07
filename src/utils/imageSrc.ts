@@ -30,15 +30,31 @@
  *
  * ## Why the join is a plain string concatenation
  *
- * The signed query string must survive **byte-for-byte**. phlix-server's
- * `HttpHandler::serveArtwork()` rebuilds the signed resource as
- * `'/api/v1/artwork/' . $itemId . '?size=' . $size` from `$wr->path()` +
- * `$wr->get('size')` and verifies `exp`/`sig` against exactly that string, and
- * the hub forwards `$request->queryString` verbatim. Re-parsing the URL (`new
- * URL(...)`, `URLSearchParams`) would re-order and re-encode the query and the
- * signature would silently fail — the image would 403/401 rather than error
- * visibly. So this module only ever **prepends** to the path; it never rewrites
- * a single byte of what follows.
+ * The signed query string must survive **byte-for-byte** — but for a NARROWER
+ * reason than "the whole query is signed", which is what this comment used to
+ * claim and which is false.
+ *
+ * What is actually signed is the **path only**. phlix-server's
+ * `Auth\SignedUrl::canonicalResource()` strips everything from the first `?`
+ * before hashing, deliberately, so that the minter and the verifier — which
+ * only ever sees the query-less `Request::$path` — compute the HMAC over the
+ * same string. Measured against the real signer: a token minted for
+ * `/api/v1/artwork/item-1?size=w342` verifies TRUE against `?size=original`,
+ * TRUE against the bare path, and FALSE against `item-2`. **The item is bound;
+ * the `size` variant is not, and never was** — one signed poster URL is valid
+ * for every size of that item, by design.
+ *
+ * So the byte-for-byte rule is not about `size` ordering or `size` encoding. It
+ * is about the **`sig` value itself**: a URL round-trip (`new URL(...)`,
+ * `URLSearchParams`) re-encodes it — `%2F`→`/`, `+`↔`%20`, case-folded escapes
+ * — and a mangled `sig` fails `hash_equals` just as hard as a wrong one. The
+ * failure is silent: the image 401s rather than erroring visibly. The hub
+ * forwards `$request->queryString` verbatim, so this module must too: it only
+ * ever **prepends** to the path and never rewrites a single byte of what
+ * follows.
+ *
+ * ⚠ Do NOT "simplify" the concatenation on the strength of the correction
+ * above. The conclusion is unchanged — only the reasoning behind it was wrong.
  *
  * ## What is deliberately NOT rewritten
  *
