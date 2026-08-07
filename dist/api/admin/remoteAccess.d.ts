@@ -78,6 +78,13 @@ export interface RelayStatus {
     enrolled?: boolean;
     /** ISO timestamp the relay fork last wrote state (staleness signal); null if it never ran. */
     updatedAt?: string | null;
+    /**
+     * True when `updatedAt` is older than the relay fork's declared refresh
+     * cadence (S40) — the fork is not running and `connected`/`active`/
+     * `activeSessions` above have already been forced DOWN server-side. Without
+     * this, a frozen state file reads as a healthy tunnel forever.
+     */
+    stale?: boolean;
     /** @deprecated back-compat only; the state file carries no endpoint. */
     endpoint?: string | null;
     /** @deprecated back-compat alias of `updatedAt`. */
@@ -118,6 +125,11 @@ export interface RelayPingResponse {
     latencyMs: number | null;
     /** ISO timestamp of the last successful heartbeat, or null. */
     lastHeartbeatAt?: string | null;
+    /**
+     * True when the hub-heartbeat fork stopped refreshing its snapshot (S40):
+     * `latencyMs` is then a historical fact, not a current one.
+     */
+    heartbeatStale?: boolean;
     /** Provenance of `latencyMs` — currently always `'persisted'`. */
     latencySource?: string;
 }

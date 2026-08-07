@@ -17,7 +17,8 @@ function i(r) {
 		active: e(r.active),
 		reconnectAttempts: t(r.reconnectAttempts),
 		lastDisconnectTime: n(r.lastDisconnectTime ?? null),
-		activeSessions: t(r.activeSessions)
+		activeSessions: t(r.activeSessions),
+		stale: e(r.stale)
 	};
 }
 function a(r) {
@@ -25,21 +26,24 @@ function a(r) {
 		lastSuccessfulHeartbeat: n(r.lastSuccessfulHeartbeat ?? null),
 		consecutiveFailures: t(r.consecutiveFailures),
 		isEnrolled: e(r.isEnrolled),
-		enrollmentExpiresAt: n(r.enrollmentExpiresAt ?? null)
+		enrollmentExpiresAt: n(r.enrollmentExpiresAt ?? null),
+		stale: e(r.stale)
 	};
 }
-function o(e) {
-	let r = n(e.status, "offline");
-	return r !== "healthy" && r !== "degraded" && r !== "offline" ? {
+function o(r) {
+	let i = n(r.status, "offline");
+	return i !== "healthy" && i !== "degraded" && i !== "offline" ? {
 		latencyMs: null,
 		status: "offline",
-		measuredAt: n(e.measuredAt, (/* @__PURE__ */ new Date()).toISOString()),
-		error: n(e.error, "Unknown status")
+		measuredAt: n(r.measuredAt, (/* @__PURE__ */ new Date()).toISOString()),
+		stale: e(r.stale),
+		error: n(r.error, "Unknown status")
 	} : {
-		latencyMs: t(e.latencyMs ?? null),
-		status: r,
-		measuredAt: n(e.measuredAt, (/* @__PURE__ */ new Date()).toISOString()),
-		error: n(e.error ?? null)
+		latencyMs: t(r.latencyMs ?? null),
+		status: i,
+		measuredAt: n(r.measuredAt, (/* @__PURE__ */ new Date()).toISOString()),
+		stale: e(r.stale),
+		error: n(r.error ?? null)
 	};
 }
 var s = class {
@@ -70,4 +74,4 @@ var s = class {
 //#endregion
 export { s as t };
 
-//# sourceMappingURL=networkHealth-B5_ZbJ4U.js.map
+//# sourceMappingURL=networkHealth-CtAbCNzZ.js.map

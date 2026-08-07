@@ -247,3 +247,72 @@ describe('AdminNetworkHealthApi — health snapshot', () => {
     await expect(api.getHealthSnapshot()).rejects.toThrow('Network error');
   });
 });
+
+/**
+ * S251 — the S40 staleness verdicts survive the mapper.
+ *
+ * `/health/network` emits `stale` ONLY in its stale branch, so absent must map
+ * to `false`, not `undefined`; `/health/relay` emits it unconditionally on both
+ * halves. Each assertion below has its opposite beside it, so a mapper that
+ * hardcoded either value would red.
+ */
+describe('AdminNetworkHealthApi — S40 staleness flags (S251)', () => {
+  function clientReturning(relay: unknown, network: unknown) {
+    const get = vi.fn().mockImplementation((url: string) => {
+      if (url === '/api/v1/health/relay') return Promise.resolve({ data: relay });
+      if (url === '/api/v1/health/network') return Promise.resolve({ data: network });
+      return Promise.resolve({ data: {} });
+    });
+    return new AdminNetworkHealthApi({ get } as unknown as ApiClient);
+  }
+
+  it('maps an ABSENT network `stale` to false and a present `true` to true', async () => {
+    const absent = await clientReturning({}, {
+      latencyMs: 45, status: 'healthy', measuredAt: '2026-07-01T12:00:00Z',
+    }).getNetworkHealth();
+    expect(absent.stale).toBe(false);
+
+    const present = await clientReturning({}, {
+      latencyMs: 45,
+      status: 'offline',
+      measuredAt: '2026-07-01T12:00:00Z',
+      stale: true,
+      error: 'Hub heartbeat state is stale — the phlix-hub-heartbeat worker is not running',
+    }).getNetworkHealth();
+    expect(present.stale).toBe(true);
+    expect(present.error).toBe(
+      'Hub heartbeat state is stale — the phlix-hub-heartbeat worker is not running',
+    );
+  });
+
+  it('maps `stale` on an UNKNOWN status body too', async () => {
+    const health = await clientReturning({}, {
+      latencyMs: 45, status: 'banana', measuredAt: '2026-07-01T12:00:00Z', stale: true,
+    }).getNetworkHealth();
+    expect(health.status).toBe('offline');
+    expect(health.stale).toBe(true);
+  });
+
+  it('maps the relay and hub `stale` flags independently', async () => {
+    const mixed = await clientReturning(
+      {
+        relay: { connected: false, active: false, activeSessions: 0, stale: true },
+        hub: { consecutiveFailures: 0, isEnrolled: true, stale: false },
+      },
+      {},
+    ).getRelayHealth();
+    expect(mixed.relay.stale).toBe(true);
+    expect(mixed.hub.stale).toBe(false);
+
+    // Swapped, so neither field can be reading the other's value.
+    const swapped = await clientReturning(
+      {
+        relay: { connected: true, active: true, activeSessions: 0, stale: false },
+        hub: { consecutiveFailures: 0, isEnrolled: true, stale: true },
+      },
+      {},
+    ).getRelayHealth();
+    expect(swapped.relay.stale).toBe(false);
+    expect(swapped.hub.stale).toBe(true);
+  });
+});

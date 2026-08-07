@@ -21,9 +21,19 @@ interface Over {
   relay?: unknown;
   portforward?: unknown;
   candidates?: unknown;
+  /**
+   * S251: successive `GET /api/v1/health/network` bodies. Each call shifts the
+   * next entry and the LAST one repeats forever, so a test can hand the page two
+   * polls carrying the same `measuredAt` (or two different ones) without
+   * touching the rest of the stub. Omitted → the pre-S251 single fixed body.
+   */
+  networkSeq?: unknown[];
+  /** S251: body for `GET /api/v1/health/relay`. */
+  relayHealth?: unknown;
 }
 
 function makeClient(over: Over = {}) {
+  const networkSeq = [...(over.networkSeq ?? [])];
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === '/api/v1/admin/remote/hub/status') return over.hub ?? { paired: false };
     if (endpoint === '/api/v1/admin/remote/subdomain/status') return over.subdomain ?? { claimed: false };
@@ -37,13 +47,18 @@ function makeClient(over: Over = {}) {
     // the whole section was unreachable from this suite.
     if (endpoint === '/api/v1/health/relay') {
       return {
-        data: {
+        data: over.relayHealth ?? {
           relay: { connected: true, active: true, enrolled: true, disabled: false },
           hub: { reachable: true, consecutiveFailures: 0 },
         },
       };
     }
     if (endpoint === '/api/v1/health/network') {
+      if (networkSeq.length > 0) {
+        // Shift while more remain; the last body is returned for every further poll.
+        const body = networkSeq.length > 1 ? networkSeq.shift() : networkSeq[0];
+        return { data: body };
+      }
       return { data: { latencyMs: 42, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' } };
     }
     throw new Error(`unexpected GET ${endpoint}`);
@@ -885,7 +900,16 @@ describe('RemoteAccessPage — latency-graph pluralisation (S134)', () => {
   });
 
   it('renders the PLURAL noun once a second measurement is recorded', async () => {
-    const { client } = makeClient();
+    // S251: this test used to reuse ONE fixed `measuredAt` for both polls and
+    // still expect two points — it pinned the duplicate-append defect. The
+    // second poll now carries a genuinely different `measuredAt`, which is what
+    // "a second measurement" means.
+    const { client } = makeClient({
+      networkSeq: [
+        { latencyMs: 42, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' },
+        { latencyMs: 43, status: 'healthy', measuredAt: '2026-01-01T00:01:00Z' },
+      ],
+    });
     const w = mountPage(client);
     await flushPromises();
     await openHealth(w);
@@ -900,5 +924,241 @@ describe('RemoteAccessPage — latency-graph pluralisation (S134)', () => {
       'Latency graph showing 2 measurements',
     );
     w.unmount();
+  });
+});
+
+
+/**
+ * S251 — the latency history is keyed on `measuredAt`, and a stale reading is
+ * rendered as such.
+ *
+ * `GET /api/v1/health/network` is a cheap read of the hub-heartbeat fork's
+ * PERSISTED snapshot: `measuredAt` is that fork's write time, on a 60 s cadence,
+ * while this panel refetches on every Refresh click. Before this step every poll
+ * appended, so ONE measurement drew a flat run of N identical bars and the
+ * heading counted them as N measurements — visually identical to N genuinely
+ * stable measurements, and to a dead fork.
+ *
+ * The dedupe assertion is USELESS on its own: a dedupe that rejected everything
+ * would also yield "one point". Each of the two tests below is therefore the
+ * other's control — same stub, same clicks, only `measuredAt` differs.
+ */
+describe('RemoteAccessPage — latency history dedupe on measuredAt (S251)', () => {
+  async function openHealth(w: VueWrapper): Promise<void> {
+    await expandSection(w, 'Network Health');
+    await flushPromises();
+  }
+
+  async function refresh(w: VueWrapper): Promise<void> {
+    const body = w.find('#remote-networkhealth-body');
+    await findBtnIn(w, body.element, 'Refresh')!.trigger('click');
+    await flushPromises();
+  }
+
+  it('records ONE point when two polls carry the SAME measuredAt', async () => {
+    const sample = { latencyMs: 42, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' };
+    const { client } = makeClient({ networkSeq: [sample, { ...sample }] });
+    const w = mountPage(client);
+    await flushPromises();
+    await openHealth(w);
+    await refresh(w);
+
+    expect(w.findAll('.admin-remote__latency-bar-wrap')).toHaveLength(1);
+    expect(w.find('.admin-remote__latency-graph-title').text()).toBe(
+      'Latency History (last 1 measurement)',
+    );
+    w.unmount();
+  });
+
+  it('records TWO points when the second poll carries a DIFFERENT measuredAt (control)', async () => {
+    // Identical to the test above in every respect EXCEPT `measuredAt`. Without
+    // this control, a dedupe that dropped every sample would pass that one.
+    const { client } = makeClient({
+      networkSeq: [
+        { latencyMs: 42, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' },
+        { latencyMs: 55, status: 'healthy', measuredAt: '2026-01-01T00:01:00Z' },
+      ],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await openHealth(w);
+    await refresh(w);
+
+    expect(w.findAll('.admin-remote__latency-bar-wrap')).toHaveLength(2);
+    expect(w.find('.admin-remote__latency-graph-title').text()).toBe(
+      'Latency History (last 2 measurements)',
+    );
+    // Both samples are the ones that were served, in order — proving the second
+    // point is the NEW measurement and not a re-append of the first.
+    expect(w.findAll('.admin-remote__latency-value').map((n) => n.text())).toEqual(['42', '55']);
+    w.unmount();
+  });
+
+  it('keeps deduping across FOUR polls of one 60 s heartbeat window', async () => {
+    // The realistic shape: the operator clicks Refresh repeatedly inside a single
+    // heartbeat cadence. One measurement must stay one bar however many polls
+    // land on it — and a shape-varying case beyond the two-poll minimum.
+    const sample = { latencyMs: 42, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' };
+    const { client } = makeClient({ networkSeq: [sample] });
+    const w = mountPage(client);
+    await flushPromises();
+    await openHealth(w);
+    await refresh(w);
+    await refresh(w);
+    await refresh(w);
+
+    expect(w.findAll('.admin-remote__latency-bar-wrap')).toHaveLength(1);
+    w.unmount();
+  });
+});
+
+/**
+ * S251 — a `stale: true` payload is VISIBLY distinct from a fresh one.
+ *
+ * The server (S40, phlix-server PR #647) emits `stale` on `/health/network` and
+ * on both halves of `/health/relay`, derived from a writer-declared
+ * `staleAfterSeconds`. Until this step none of it reached the UI, so a snapshot
+ * frozen by a dead fork rendered exactly like a live one.
+ *
+ * ⚠ Every status assertion here is `toBe` on the exact rendered word. The
+ * `"Enabled"`/`"Disabled"` substring trap S44-a hit lives in this same file;
+ * `"Live"` and `"Stale"` are deliberately not substrings of one another, and the
+ * first test below pins that property so a future rename cannot quietly
+ * reintroduce the hazard.
+ *
+ * ⚠ The stale bar's hatching is CSS, and jsdom applies no SFC `<style>`, so it
+ * is unobservable here by construction. Nothing below asserts on it: the
+ * load-bearing signals are the exact freshness word, the note text, and the
+ * bar's `title` attribute — all of which jsdom (and a screen reader) can see.
+ */
+describe('RemoteAccessPage — stale network reading (S251)', () => {
+  const STALE_REASON = 'Hub heartbeat state is stale — the phlix-hub-heartbeat worker is not running';
+
+  async function openHealth(w: VueWrapper): Promise<void> {
+    await expandSection(w, 'Network Health');
+    await flushPromises();
+  }
+
+  it('uses freshness words that are not substrings of each other', () => {
+    expect('Stale'.includes('Live')).toBe(false);
+    expect('Live'.includes('Stale')).toBe(false);
+  });
+
+  it('renders the exact word "Live" for a fresh reading (control)', async () => {
+    const { client } = makeClient({
+      networkSeq: [{ latencyMs: 42, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' }],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await openHealth(w);
+
+    expect(w.find('.admin-remote__freshness--network').text()).toBe('Live');
+    expect(w.find('.admin-remote__latency-stale-note').exists()).toBe(false);
+    expect(w.find('.admin-remote__stale-reason').exists()).toBe(false);
+    expect(w.find('.admin-remote__latency-bar-wrap').attributes('title')).toBe(
+      `42ms at ${new Date('2026-01-01T00:00:00Z').toLocaleString()}`,
+    );
+    w.unmount();
+  });
+
+  it('renders the exact word "Stale", the reason, and a stale note for a stale reading', async () => {
+    const { client } = makeClient({
+      networkSeq: [
+        {
+          latencyMs: 42,
+          status: 'offline',
+          measuredAt: '2026-01-01T00:00:00Z',
+          stale: true,
+          error: STALE_REASON,
+        },
+      ],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await openHealth(w);
+
+    expect(w.find('.admin-remote__freshness--network').text()).toBe('Stale');
+    expect(w.find('.admin-remote__latency-stale-note').text()).toBe(
+      'No new measurement — the newest reading is stale.',
+    );
+    expect(w.find('.admin-remote__stale-reason').text()).toBe(STALE_REASON);
+    // The bar itself carries the verdict, so hovering a frozen sample says so.
+    expect(w.find('.admin-remote__latency-bar-wrap').attributes('title')).toBe(
+      `42ms at ${new Date('2026-01-01T00:00:00Z').toLocaleString()} (stale)`,
+    );
+    w.unmount();
+  });
+
+  it('marks the section summary stale rather than reporting it as a current reading', async () => {
+    const fresh = makeClient({
+      networkSeq: [{ latencyMs: 42, status: 'healthy', measuredAt: '2026-01-01T00:00:00Z' }],
+    });
+    const wf = mountPage(fresh.client);
+    await flushPromises();
+    await openHealth(wf);
+    const freshSummary = wf
+      .findAll('.admin-remote__section-summary')
+      .map((n) => n.text())
+      .filter((t) => t.includes('42ms'));
+    expect(freshSummary).toEqual(['healthy (42ms)']);
+    wf.unmount();
+
+    const stale = makeClient({
+      networkSeq: [
+        { latencyMs: 42, status: 'offline', measuredAt: '2026-01-01T00:00:00Z', stale: true },
+      ],
+    });
+    const ws = mountPage(stale.client);
+    await flushPromises();
+    await openHealth(ws);
+    const staleSummary = ws
+      .findAll('.admin-remote__section-summary')
+      .map((n) => n.text())
+      .filter((t) => t.includes('42ms'));
+    expect(staleSummary).toEqual(['offline (42ms) — stale']);
+    ws.unmount();
+  });
+
+  it('renders the relay and hub STATE FILE freshness from /health/relay', async () => {
+    const staleRelay = makeClient({
+      relayHealth: {
+        relay: { connected: false, active: false, reconnectAttempts: 0, activeSessions: 0, stale: true },
+        hub: { consecutiveFailures: 0, isEnrolled: true, stale: true },
+      },
+    });
+    const w = mountPage(staleRelay.client);
+    await flushPromises();
+    await openHealth(w);
+    expect(w.find('.admin-remote__freshness--relay-health').text()).toBe('Stale');
+    expect(w.find('.admin-remote__freshness--hub-health').text()).toBe('Stale');
+    w.unmount();
+
+    // Control: the same two rows read "Live" when the server says nothing is stale.
+    const freshRelay = makeClient({
+      relayHealth: {
+        relay: { connected: true, active: true, reconnectAttempts: 0, activeSessions: 0, stale: false },
+        hub: { consecutiveFailures: 0, isEnrolled: true, stale: false },
+      },
+    });
+    const w2 = mountPage(freshRelay.client);
+    await flushPromises();
+    await openHealth(w2);
+    expect(w2.find('.admin-remote__freshness--relay-health').text()).toBe('Live');
+    expect(w2.find('.admin-remote__freshness--hub-health').text()).toBe('Live');
+    w2.unmount();
+  });
+
+  it('renders the relay-status state-file freshness in the Relay Tunnel section', async () => {
+    const w = mountPage(makeClient({ relay: { connected: true, active: true, stale: true } }).client);
+    await flushPromises();
+    await expandSection(w, 'Relay Tunnel');
+    expect(w.find('.admin-remote__freshness--relay-status').text()).toBe('Stale');
+    w.unmount();
+
+    const w2 = mountPage(makeClient({ relay: { connected: true, active: true, stale: false } }).client);
+    await flushPromises();
+    await expandSection(w2, 'Relay Tunnel');
+    expect(w2.find('.admin-remote__freshness--relay-status').text()).toBe('Live');
+    w2.unmount();
   });
 });
