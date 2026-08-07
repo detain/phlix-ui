@@ -78,10 +78,11 @@ describe('AdminLayout — server set', () => {
     'Duplicates',
     'Plugins',
     'Transcoding',
+    'Tasks',
     'Settings',
   ];
 
-  it('renders a labelled Admin nav landmark with all 20 page links, in order', async () => {
+  it('renders a labelled Admin nav landmark with all 21 page links, in order', async () => {
     const { wrapper } = await mountAdmin();
     const nav = wrapper.find('nav.admin__nav');
     expect(nav.exists()).toBe(true);
@@ -240,10 +241,10 @@ describe('AdminLayout — UpdateAvailableBanner is mounted ONCE (S76)', () => {
     const { wrapper } = await mountAdmin();
 
     expect(wrapper.find('.update-banner').exists()).toBe(false);
-    // The sidebar and page content are unaffected either way. The 20 is a
+    // The sidebar and page content are unaffected either way. The 21 is a
     // literal on purpose — deriving it from the page list the layout itself
     // reads would self-adjust and assert nothing.
-    expect(wrapper.findAll('.admin__link')).toHaveLength(20);
+    expect(wrapper.findAll('.admin__link')).toHaveLength(21);
     expect(wrapper.find('.admin__content .stub-page').exists()).toBe(true);
   });
 

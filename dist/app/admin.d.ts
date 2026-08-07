@@ -23,7 +23,7 @@ import type { IconName } from '../components/Icon.vue';
  * - {@link commonAdminPages} — portable to BOTH apps: Users, Logs, Settings.
  * - {@link serverAdminPages} — media-server-only: Dashboard, Webhooks, Services,
  *   Integrations, Backup, Cast Devices, DLNA, Remote Access, Live TV, Collections,
- *   History, SyncPlay, Libraries, Duplicates, Plugins.
+ *   History, SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Tasks.
  * - {@link hubAdminPages} — hub-only: Hub Dashboard, Audit Logs.
  *
  * `buildAdminRoutes(base)` with no `pages` argument yields the **server pages in

@@ -61,9 +61,10 @@ describe('admin help — route coverage', () => {
     // RequestsPage.vue and dropped `requests` entirely, and every downstream
     // assertion still passed. Pin the exact pairings that bug got wrong.
     const byKey = new Map(pages.map((p) => [p.key, p.file]));
-    expect(pages).toHaveLength(22);
+    expect(pages).toHaveLength(23);
     expect(byKey.get('dashboard')).toBe('DashboardPage.vue');
     expect(byKey.get('requests')).toBe('RequestsPage.vue');
+    expect(byKey.get('tasks')).toBe('TasksPage.vue');
     expect(byKey.get('hub-dashboard')).toBe('HubDashboardPage.vue');
     // `admin-audit-logs` renders ../pages/AuditLogsPage.vue, outside this
     // directory, so it must not appear at all.

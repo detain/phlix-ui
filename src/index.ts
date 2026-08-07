@@ -286,6 +286,20 @@ export type {
   PluginSettingsSchema,
   PluginSettingDescriptor,
 } from './api/admin/plugins';
+export { AdminMaintenanceApi, MAINTENANCE_ENDPOINTS, MAINTENANCE_TASK_NAMES } from './api/admin/maintenance';
+export type {
+  MaintenanceTask,
+  MaintenanceTaskName,
+  MaintenanceTaskMode,
+  MaintenanceJob,
+  MaintenanceJobStatus,
+  QueuedTaskResult,
+  SyncTaskResult,
+  ReapScanJobsData,
+  ReapTranscodeJobsData,
+  CleanupOrphanedStatsData,
+  DedupePathsInput,
+} from './api/admin/maintenance';
 export { AdminHubDashboardApi } from './api/admin/hubDashboard';
 export type { HubSummary, HubServersSummary, HubAuditEvent } from './api/admin/hubDashboard';
 // Admin page-group composability (H0): the page registries + per-app builders.

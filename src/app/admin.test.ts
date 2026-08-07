@@ -40,6 +40,7 @@ const SERVER_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['admin-duplicates', 'duplicates'],
   ['admin-plugins', 'plugins'],
   ['admin-transcoding', 'transcoding'],
+  ['admin-tasks', 'tasks'],
   ['admin-settings', 'settings'],
 ];
 
@@ -95,8 +96,8 @@ describe('buildAdminRoutes — nested AdminLayout shape (default = legacy server
     expect(namedChildren(buildAdminRoutes())[0].name).toBe('admin-dashboard');
   });
 
-  it('exposes exactly the 20 server pages (17 historical + Plugins (U6) + Duplicates (1.7) + Metrics (S3) + Transcoding (S7))', () => {
-    expect(namedChildren(buildAdminRoutes())).toHaveLength(20);
+  it('exposes exactly the 21 server pages (17 historical + Plugins (U6) + Duplicates (1.7) + Metrics (S3) + Transcoding (S7) + Tasks (S78))', () => {
+    expect(namedChildren(buildAdminRoutes())).toHaveLength(21);
   });
 
   it('buildServerAdminRoutes is the explicit synonym for the default', () => {
@@ -208,13 +209,14 @@ describe('page-group registries', () => {
     expect(commonAdminPages.map((p) => p.name)).toEqual(['admin-users', 'admin-logs', 'admin-settings']);
   });
 
-  it('serverAdminPages = the 17 media-server pages incl. Plugins + Duplicates + Metrics + Transcoding (Dashboard first, no common pages)', () => {
-    expect(serverAdminPages).toHaveLength(17);
+  it('serverAdminPages = the 18 media-server pages incl. Plugins + Duplicates + Metrics + Transcoding + Tasks (Dashboard first, no common pages)', () => {
+    expect(serverAdminPages).toHaveLength(18);
     expect(serverAdminPages[0].name).toBe('admin-dashboard');
     const names = serverAdminPages.map((p) => p.name);
     expect(names).toContain('admin-plugins');
     expect(names).toContain('admin-duplicates');
     expect(names).toContain('admin-metrics');
+    expect(names).toContain('admin-tasks');
     expect(names).not.toContain('admin-users');
     expect(names).not.toContain('admin-logs');
     expect(names).not.toContain('admin-settings');
@@ -281,6 +283,7 @@ describe('adminMenu', () => {
       'admin-duplicates': { label: 'Duplicates', to: '/app/admin/duplicates' },
       'admin-plugins': { label: 'Plugins', to: '/app/admin/plugins' },
       'admin-transcoding': { label: 'Transcoding', to: '/app/admin/transcoding' },
+      'admin-tasks': { label: 'Tasks', to: '/app/admin/tasks' },
       'admin-settings': { label: 'Settings', to: '/app/admin/settings' },
     };
     for (const [id, { label, to }] of Object.entries(expected)) {
@@ -291,9 +294,9 @@ describe('adminMenu', () => {
     }
   });
 
-  it('exposes exactly the 20 default admin pages as children (incl. Plugins (U6) + Duplicates (1.7) + Metrics (S3) + Transcoding (S7))', () => {
+  it('exposes exactly the 21 default admin pages as children (incl. Plugins (U6) + Duplicates (1.7) + Metrics (S3) + Transcoding (S7) + Tasks (S78))', () => {
     const [group] = adminMenu();
-    expect(group.children).toHaveLength(20);
+    expect(group.children).toHaveLength(21);
   });
 
   it('builds a menu from an arbitrary page set (the hub set)', () => {
