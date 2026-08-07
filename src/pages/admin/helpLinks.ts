@@ -251,6 +251,22 @@ export const adminPageHelp = {
       'you already had, including any API keys or account connections. Only install from sources ' +
       'you trust — a plugin runs with the same access as the server itself.',
   },
+  tasks: {
+    // Both URLs are already used by other entries in this file (`libraries` and
+    // `dashboard`), so they were verified live when those landed. There is no
+    // `admin/tasks` docs page yet — inventing one would break the "only link to
+    // pages that exist" rule this module opens with.
+    links: [doc('admin/library-management', 'Library Management'), doc('admin/stats', 'Stats')],
+    details:
+      'Sync tasks (the reapers, orphaned-stat cleanup) finish inside the request and report their ' +
+      'row counts on the page. Queued tasks (storage snapshot, duplicate-path merge) are handed to ' +
+      'the maintenance worker and show up under Recent jobs; firing one that is already queued or ' +
+      'running does not start a second copy, it just shows you the run already in flight. The ' +
+      'duplicate-path merge defaults to a dry run that reports what it would merge without ' +
+      'changing anything — Apply mode deletes rows and asks for confirmation first. The scan-job ' +
+      'reaper will not accept an age below six hours, because a large library scan can legitimately ' +
+      'run for hours without writing anything, and reaping it would kill a healthy scan.',
+  },
   transcoding: {
     links: [
       doc('advanced/hardware-transcoding', 'Hardware Transcoding'),

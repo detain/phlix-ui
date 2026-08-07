@@ -1,5 +1,13 @@
 ## Unreleased
 
+### Added
+
+- **Admin → Tasks: the maintenance page (plan_updates.md — S78).** New `src/pages/admin/TasksPage.vue` plus `src/api/admin/maintenance.ts`, wiring S77's `/api/v1/admin/maintenance/*` endpoints — duplicate-path merge, storage snapshot, orphaned-stat cleanup, both job reapers — alongside "create a backup now" and the update-status read. Registered as `admin-tasks` in `src/app/admin.ts`, so it appears in the server sidebar (20 → 21 pages) with no separate wiring.
+
+  **Only buttons whose endpoint exists.** The step listed eight sections; four named endpoints the server does not register, checked against `ApplicationRouterWirePathGuardTest::ROUTE_MANIFEST` (357 entries, an exact list of every composed route). There is no scan-all, no "recompute similarity", no newsletter send, and no endpoint that *forces* an update check — `GET …/updates/status` only reports the last background one. Those sections became either an honest link to the page that does own the capability (Libraries, Plugins, Settings-for-restart, Backup) or a plain sentence saying the capability is not there. A button that 404s is worse than an absent one.
+
+  **Two server behaviours a UI gets wrong by default are surfaced, not hidden.** A repeat POST of a queued task replies `200 {created:false}` with the run already in flight — rendered as "already running — showing the existing job", wording deliberately chosen so it is not a substring of the fresh-submission message, and asserted against it in one test. And `dedupe-paths` defaults to a dry run needing a strict boolean `true` to act: the armed mode is a radio pair echoed into the button label and a warning line, Apply routes through a confirmation, and the typed client normalises `apply` with `=== true` so a truthy non-boolean cannot arm it.
+
 ## 0.98.38 - 2026-08-06
 
 ### Fixed

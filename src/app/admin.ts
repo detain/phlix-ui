@@ -25,7 +25,7 @@ import type { IconName } from '../components/Icon.vue';
  * - {@link commonAdminPages} — portable to BOTH apps: Users, Logs, Settings.
  * - {@link serverAdminPages} — media-server-only: Dashboard, Webhooks, Services,
  *   Integrations, Backup, Cast Devices, DLNA, Remote Access, Live TV, Collections,
- *   History, SyncPlay, Libraries, Duplicates, Plugins.
+ *   History, SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Tasks.
  * - {@link hubAdminPages} — hub-only: Hub Dashboard, Audit Logs.
  *
  * `buildAdminRoutes(base)` with no `pages` argument yields the **server pages in
@@ -174,6 +174,13 @@ const pluginsPage: AdminPage = {
   icon: 'settings',
   component: () => import('../pages/admin/PluginsPage.vue'),
 };
+const tasksPage: AdminPage = {
+  name: 'admin-tasks',
+  path: 'tasks',
+  label: 'Tasks',
+  icon: 'refresh',
+  component: () => import('../pages/admin/TasksPage.vue'),
+};
 const transcodingPage: AdminPage = {
   name: 'admin-transcoding',
   path: 'transcoding',
@@ -244,6 +251,7 @@ const ALL_ADMIN_PAGES: AdminPage[] = [
   duplicatesPage,
   pluginsPage,
   transcodingPage,
+  tasksPage,
   settingsPage,
   hubDashboardPage,
   auditLogsPage,
@@ -285,6 +293,7 @@ export const serverAdminPages: AdminPage[] = [
   duplicatesPage,
   pluginsPage,
   transcodingPage,
+  tasksPage,
 ];
 
 /** Hub-only admin pages: a hub-scoped dashboard + the re-homed audit log. */
@@ -318,6 +327,7 @@ const defaultAdminPages: AdminPage[] = [
   duplicatesPage,
   pluginsPage,
   transcodingPage,
+  tasksPage,
   settingsPage,
 ];
 

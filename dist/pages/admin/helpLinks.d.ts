@@ -132,6 +132,10 @@ export declare const adminPageHelp: {
         links: HelpLink[];
         details: string;
     };
+    tasks: {
+        links: HelpLink[];
+        details: string;
+    };
     transcoding: {
         links: HelpLink[];
         details: string;
