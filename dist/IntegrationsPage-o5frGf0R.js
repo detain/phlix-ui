@@ -103,7 +103,7 @@ var pe = {
 			}
 		}
 		function V(e) {
-			return e === "oidc" ? R.value?.configured ?? !1 : e === "ldap" ? z.value?.configured ?? !1 : F.value.find((t) => t.name === e)?.supports_authentication ?? !1;
+			return F.value.find((t) => t.name === e)?.live === !0;
 		}
 		async function et(e, t) {
 			try {
@@ -564,8 +564,8 @@ var pe = {
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-77122869"]]);
+}), [["__scopeId", "data-v-eaf03e35"]]);
 //#endregion
 export { w as default };
 
-//# sourceMappingURL=IntegrationsPage-k-j7mehr.js.map
+//# sourceMappingURL=IntegrationsPage-o5frGf0R.js.map

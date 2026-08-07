@@ -53,8 +53,8 @@ function makeClient(over: Overrides = {}) {
     if (endpoint === '/api/v1/admin/sync/status') return over.status ?? syncEnabled;
     if (endpoint === '/api/v1/admin/auth-providers') {
       return { providers: over.providers ?? [
-        { name: 'oidc', supports_authentication: true },
-        { name: 'ldap', supports_authentication: true },
+        { name: 'oidc', supports_authentication: true, enabled: false, live: false },
+        { name: 'ldap', supports_authentication: true, enabled: false, live: false },
       ] };
     }
     if (endpoint === '/api/v1/admin/auth-providers/oidc/config') return over.oidc ?? oidcConfig;
@@ -82,6 +82,41 @@ function findBtnIn(w: VueWrapper, root: Element, text: string) {
 function modalPanel(): HTMLElement {
   const panels = document.querySelectorAll<HTMLElement>('.phlix-modal__panel');
   return panels[panels.length - 1];
+}
+
+/**
+ * Read the text the operator actually sees in one provider's status badge.
+ *
+ * Scoped to that provider's row on purpose. The Arr-sync section renders its own
+ * "Enabled"/"Disabled" badge and the sync Switch carries the same words as a
+ * label, so a page-wide `w.text()` search cannot tell any of them apart.
+ *
+ * Queried off `w.element` rather than `document` so a wrapper another test left
+ * attached to `document.body` cannot be read by mistake.
+ *
+ * Throws (rather than returning '') when the row or badge is missing, so a
+ * renamed class or a typo'd label fails loudly instead of making every
+ * `toBe('Disabled')` below pass vacuously.
+ *
+ * Callers must compare with `toBe`, never `toContain`/`.includes` — "Enabled" is
+ * a substring of "Disabled", so a substring check on this value passes on the
+ * exact state it claims to reject.
+ */
+function providerBadgeText(w: VueWrapper, label: string): string {
+  const root = w.element as HTMLElement;
+  const rows = Array.from(root.querySelectorAll<HTMLElement>('.admin-integrations__provider'));
+  const row = rows.find(
+    (r) => r.querySelector('.admin-integrations__provider-name')?.textContent?.trim() === label,
+  );
+  if (!row) {
+    const rendered = rows
+      .map((r) => r.querySelector('.admin-integrations__provider-name')?.textContent?.trim() ?? '?')
+      .join(', ');
+    throw new Error(`no provider row labelled "${label}" — rendered labels: [${rendered}]`);
+  }
+  const badge = row.querySelector('.phlix-badge');
+  if (!badge) throw new Error(`provider row "${label}" rendered no badge`);
+  return (badge.textContent ?? '').trim();
 }
 
 beforeEach(() => {
@@ -306,7 +341,8 @@ describe('IntegrationsPage — auth providers', () => {
   });
 
   it('enables a provider that is currently disabled', async () => {
-    // No OIDC settings loaded yet → providerEnabled('oidc') is false → toggling enables.
+    // Default fixture reports oidc live:false → providerEnabled('oidc') is false
+    // → toggling enables.
     const { client, post } = makeClient();
     const w = mountPage(client);
     await flushPromises();
@@ -318,15 +354,19 @@ describe('IntegrationsPage — auth providers', () => {
   });
 
   it('disables a provider that is currently enabled', async () => {
-    const { client, post } = makeClient();
+    // Liveness is reported by the provider list, not by the settings `configured`
+    // flag — so a live provider is set up here by the list payload. (Before S44-a
+    // this test had to open and close the Configure modal to load `configured`,
+    // which is precisely the wrong signal.)
+    const { client, post } = makeClient({
+      providers: [
+        { name: 'oidc', supports_authentication: true, enabled: true, live: true },
+        { name: 'ldap', supports_authentication: true, enabled: false, live: false },
+      ],
+    });
     const w = mountPage(client);
     await flushPromises();
-    // Configure OIDC first so its `configured` flag makes it enabled.
-    await findBtn(w, 'Configure')!.trigger('click');
-    await flushPromises();
-    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
-    await flushPromises();
-    // Now the OIDC switch reflects enabled (configured:true) → toggling disables.
+    // The OIDC switch reflects live:true → toggling disables.
     await w.findAllComponents(Switch)[1].vm.$emit('update:modelValue', false);
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/admin/auth-providers/oidc/disable');
@@ -343,6 +383,186 @@ describe('IntegrationsPage — auth providers', () => {
     const toasts = useToastStore();
     // errMessage surfaces the rejection's own message; assert the error toast fired.
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message.includes('toggle boom'))).toBe(true);
+    w.unmount();
+  });
+});
+
+/**
+ * S44-a — the provider status badge must report LIVENESS, not "settings saved".
+ *
+ * The defect: `providerEnabled()` read the settings payload's `configured` flag.
+ * `configured` means only "settings have been saved" and the server returns it
+ * unconditionally from its save handlers, so saving an OIDC/LDAP config flipped
+ * the badge to "Enabled" without the enable endpoint ever being called — the
+ * operator saw "Enabled" for a provider that would authenticate nobody.
+ *
+ * Every assertion below reads the RENDERED badge text via `providerBadgeText()`
+ * and compares it with `toBe`. Exact comparison is mandatory: "Enabled" is a
+ * substring of "Disabled", so `toContain('Enabled')` would pass on the very
+ * state these tests exist to reject.
+ *
+ * Note on technique: nothing here clicks a disabled control. VTU's `trigger()`
+ * returns early on `element.disabled`, so a click-based assertion about a
+ * disabled control asserts nothing. These tests read rendered text instead,
+ * which is observable regardless of any control's disabled state.
+ */
+describe('IntegrationsPage — provider liveness badge (S44-a)', () => {
+  function providerList(over: { oidcLive?: unknown; ldapLive?: unknown; omitLive?: boolean }) {
+    const mk = (name: string, live: unknown) =>
+      over.omitLive
+        ? { name, supports_authentication: true, enabled: true }
+        : { name, supports_authentication: true, enabled: true, live };
+    return [mk('oidc', over.oidcLive), mk('ldap', over.ldapLive)];
+  }
+
+  async function openOidcModal(w: VueWrapper): Promise<void> {
+    const btn = w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Configure OIDC')!;
+    await btn.trigger('click');
+    await flushPromises();
+  }
+
+  /**
+   * Drive the real "the operator saved the settings" path — open the Configure
+   * modal, type a secret, Save. This is what makes `configured` true in component
+   * state, i.e. it reproduces the exact precondition of the defect.
+   */
+  async function saveOidcFromModal(w: VueWrapper): Promise<void> {
+    await openOidcModal(w);
+    const panel = modalPanel();
+    const inputs = panel.querySelectorAll<HTMLInputElement>('.admin-integrations__input');
+    inputs[2].value = 'newsecret';
+    inputs[2].dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtnIn(w, panel, 'Save OIDC')!.trigger('click');
+    await flushPromises();
+  }
+
+  /**
+   * Non-vacuity guard: prove `configured` really is true in component state right
+   * now. The "Leave blank to keep the current secret." hint renders only when
+   * `oidcSettings.configured` is true. Without this, a "Disabled" assertion could
+   * pass merely because no settings were ever loaded — which would not exercise
+   * the defect at all, and would stay green on the broken code.
+   */
+  async function expectOidcSettingsAreSaved(w: VueWrapper): Promise<void> {
+    await openOidcModal(w);
+    expect(modalPanel().textContent).toContain('Leave blank to keep the current secret.');
+    await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
+    await flushPromises();
+  }
+
+  it('reads "Disabled" when the settings are saved but the provider is not live', async () => {
+    const { client, post } = makeClient({
+      oidc: { ...oidcConfig, configured: true },
+      providers: providerList({ oidcLive: false, ldapLive: false }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    await saveOidcFromModal(w);
+    // The settings really were saved server-side...
+    expect(post).toHaveBeenCalledWith(
+      '/api/v1/admin/auth-providers/oidc/config',
+      expect.objectContaining({ provider_url: 'https://idp.example.com' }),
+    );
+    // ...and `configured` really is true in component state.
+    await expectOidcSettingsAreSaved(w);
+
+    // The provider was never enabled, so it is not live: the operator must see
+    // "Disabled", not "Enabled".
+    expect(providerBadgeText(w, 'OIDC')).toBe('Disabled');
+    w.unmount();
+  });
+
+  it('reads "Enabled" when the settings are saved and the provider IS live', async () => {
+    // Control for the test above: identical flow, only `live` differs. Without
+    // this, a `providerEnabled()` that returned false unconditionally would
+    // satisfy the "Disabled" assertion.
+    const { client } = makeClient({
+      oidc: { ...oidcConfig, configured: true },
+      providers: providerList({ oidcLive: true, ldapLive: false }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    await saveOidcFromModal(w);
+    await expectOidcSettingsAreSaved(w);
+
+    expect(providerBadgeText(w, 'OIDC')).toBe('Enabled');
+    w.unmount();
+  });
+
+  it('reports the two providers independently in a single render', async () => {
+    // A constant-returning `providerEnabled()` cannot produce both words at once.
+    const { client } = makeClient({
+      providers: providerList({ oidcLive: true, ldapLive: false }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    expect(providerBadgeText(w, 'OIDC')).toBe('Enabled');
+    expect(providerBadgeText(w, 'LDAP')).toBe('Disabled');
+    w.unmount();
+  });
+
+  it('fails closed to "Disabled" when the payload omits the live field', async () => {
+    // A server predating S44-b sends only { name, supports_authentication }.
+    // An absent liveness field must read as NOT live, even though these
+    // providers report enabled:true and their settings are saved.
+    const { client } = makeClient({
+      oidc: { ...oidcConfig, configured: true },
+      providers: providerList({ omitLive: true }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    await saveOidcFromModal(w);
+    await expectOidcSettingsAreSaved(w);
+
+    expect(providerBadgeText(w, 'OIDC')).toBe('Disabled');
+    expect(providerBadgeText(w, 'LDAP')).toBe('Disabled');
+    w.unmount();
+  });
+
+  it('fails closed to "Disabled" when live is null or a truthy non-boolean', async () => {
+    // Pins the strict `=== true`: a `?? false` or a truthy check would let the
+    // string 'no' — or any malformed value — render as "Enabled".
+    const { client } = makeClient({
+      providers: providerList({ oidcLive: 'no', ldapLive: null }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    expect(providerBadgeText(w, 'OIDC')).toBe('Disabled');
+    expect(providerBadgeText(w, 'LDAP')).toBe('Disabled');
+    w.unmount();
+  });
+
+  it('fails closed to "Disabled" when the provider is absent from the list', async () => {
+    const { client } = makeClient({ providers: [] });
+    const w = mountPage(client);
+    await flushPromises();
+
+    expect(providerBadgeText(w, 'OIDC')).toBe('Disabled');
+    expect(providerBadgeText(w, 'LDAP')).toBe('Disabled');
+    w.unmount();
+  });
+
+  it('shows the live state on load, without opening a config modal', async () => {
+    // The second S44 defect: the badge used to depend on settings fetched only
+    // when the Configure modal opened, so a genuinely live provider read
+    // "Disabled" until the operator opened that modal. `loadProviders()` is in
+    // `onMounted`, so liveness is correct from first paint.
+    const { client } = makeClient({
+      providers: providerList({ oidcLive: true, ldapLive: true }),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+
+    expect(providerBadgeText(w, 'OIDC')).toBe('Enabled');
+    expect(providerBadgeText(w, 'LDAP')).toBe('Enabled');
     w.unmount();
   });
 });

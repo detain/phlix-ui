@@ -910,7 +910,7 @@ var wi = Yn("server", () => {
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-k-j7mehr.js")
+	component: () => import("./IntegrationsPage-o5frGf0R.js")
 }, ji = {
 	name: "admin-backup",
 	path: "backup",
