@@ -295,6 +295,50 @@ describe('McpTokensPage — scope selection comes from the server', () => {
         w.unmount();
     });
 
+    it('keeps a deliberate narrowing across a list refresh', async () => {
+        // The seed runs ONCE. Re-seeding on every refresh would silently restore
+        // scopes the user had just removed — the opposite of least privilege —
+        // and would do it invisibly, because the modal is closed at the time.
+        const { client } = makeClient();
+        const w = await openForm(client);
+        const boxes = [...document.body.querySelectorAll('.mcp-scope__box')] as HTMLInputElement[];
+        boxes[2].dispatchEvent(new Event('change', { bubbles: true })); // drop playback:read
+        await flushPromises();
+        rawClick(btn('Cancel')!);
+        await flushPromises();
+
+        // A revoke refetches the list — the moment a re-seed would fire.
+        rawClick(btn('Revoke')!);
+        await flushPromises();
+        rawClick(btn('Revoke token')!);
+        await flushPromises();
+
+        rawClick(btn('New Token')!);
+        await flushPromises();
+        const after = [...document.body.querySelectorAll('.mcp-scope__box')] as HTMLInputElement[];
+        expect(after.map((b) => b.checked)).toEqual([true, true, false]);
+        w.unmount();
+    });
+
+    it('mints once even when Create is clicked twice in the same tick', async () => {
+        // A double mint costs the user a token whose plaintext they never see:
+        // only the LAST reveal renders, so the first token is unrecoverable and
+        // un-obvious. `creating` is the guard; the button's loading state is chrome.
+        let release: (v: unknown) => void = () => {};
+        const { client } = makeClient();
+        const post = vi.fn(() => new Promise((r) => (release = r)));
+        const slow = { ...client, post } as unknown as ApiClient;
+        const w = await openForm(slow);
+        const create = document.body.querySelector('.mcp-tokens__create') as HTMLButtonElement;
+        rawClick(create);
+        rawClick(create);
+        await flushPromises();
+        expect(post.mock.calls).toHaveLength(1);
+        release({ id: 'x', token: PLAINTEXT, name: '', scopes: SCOPES, expires_at: 1 });
+        await flushPromises();
+        w.unmount();
+    });
+
     it('refuses to post with no scope selected — the guard, not the disabled attribute', async () => {
         const { client, post } = makeClient();
         const w = await openForm(client);
@@ -352,12 +396,26 @@ describe('McpTokensPage — the show-once reveal', () => {
         w.unmount();
     });
 
-    it('has no ✕ and cannot be dismissed by Escape or a backdrop click', async () => {
+    it('has no ✕, and Escape / backdrop cannot close it even once acknowledged', async () => {
+        // ⚠ The acknowledgement is ticked FIRST on purpose. With it unticked,
+        // `closeReveal`'s own guard refuses every close, so `:dismissible="false"`
+        // would be untestable — flipping it to `true` changed NOTHING and the
+        // test still passed (measured: mutation M1 survived the first draft of
+        // this test). Ticking the box empties the other guard's window, leaving
+        // `dismissible` as the only thing that can still block Esc/backdrop.
         const { w } = await mint();
+        const ack = document.body.querySelector(
+            '[data-testid="mcp-token-ack"]',
+        ) as HTMLInputElement;
+        ack.checked = true;
+        ack.dispatchEvent(new Event('change', { bubbles: true }));
+        await flushPromises();
+
         const backdrop = document.body.querySelector('.phlix-modal') as HTMLElement;
         const panel = document.body.querySelector('.phlix-modal__panel') as HTMLElement;
-        expect(panel.querySelector('.phlix-modal__close')).toBeNull();
+        expect(panel.querySelector('.phlix-modal__close'), 'the reveal must have no ✕').toBeNull();
 
+        // Capture-phase listener on document, so a bubbling keydown reaches it.
         panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         await flushPromises();
         expect(bodyText()).toContain(PLAINTEXT);
@@ -365,6 +423,12 @@ describe('McpTokensPage — the show-once reveal', () => {
         backdrop.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
         await flushPromises();
         expect(bodyText()).toContain(PLAINTEXT);
+
+        // Control: the dialog IS closable — so the two refusals above are the
+        // dismissal paths being blocked, not "nothing can ever close this".
+        rawClick(document.body.querySelector('.mcp-reveal__done') as HTMLButtonElement);
+        await flushPromises();
+        expect(bodyText()).not.toContain(PLAINTEXT);
         w.unmount();
     });
 
