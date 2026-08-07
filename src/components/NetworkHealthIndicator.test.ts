@@ -14,9 +14,17 @@ import { useAuthStore } from '../stores/useAuthStore';
 
 function snapshot(): HealthSnapshot {
   return {
-    relay: { connected: true, active: true, reconnectAttempts: 0, lastDisconnectTime: null, activeSessions: 0 },
-    hub: { lastSuccessfulHeartbeat: null, consecutiveFailures: 0, isEnrolled: true, enrollmentExpiresAt: null },
-    network: { latencyMs: 20, status: 'healthy', measuredAt: new Date().toISOString() },
+    // S251: `stale` is the S40 staleness verdict the server now emits on every
+    // one of these three; a fresh fixture declares it false explicitly.
+    relay: {
+      connected: true, active: true, reconnectAttempts: 0, lastDisconnectTime: null,
+      activeSessions: 0, stale: false,
+    },
+    hub: {
+      lastSuccessfulHeartbeat: null, consecutiveFailures: 0, isEnrolled: true,
+      enrollmentExpiresAt: null, stale: false,
+    },
+    network: { latencyMs: 20, status: 'healthy', measuredAt: new Date().toISOString(), stale: false },
   };
 }
 

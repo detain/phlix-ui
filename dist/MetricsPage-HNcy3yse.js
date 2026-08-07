@@ -1,7 +1,7 @@
 import { n as e } from "./Icon-CkTBN_k5.js";
 import { l as t, p as n, t as r } from "./client-COHWZ2KC.js";
 import { t as i } from "./useToastStore-BDoKlU6N.js";
-import { t as a } from "./NetworkHealthIndicator-D5S46Gyg.js";
+import { t as a } from "./NetworkHealthIndicator-Cv25b8KU.js";
 import { t as o } from "./Button-Cw8Wl4QR.js";
 import { t as s } from "./Badge-D1_MN41Y.js";
 import { t as c } from "./Select-C5dvTnnx.js";
@@ -1420,4 +1420,4 @@ var tt = {
 //#endregion
 export { Kt as default };
 
-//# sourceMappingURL=MetricsPage-8RYZUtDF.js.map
+//# sourceMappingURL=MetricsPage-HNcy3yse.js.map

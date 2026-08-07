@@ -437,12 +437,35 @@ async function disablePortForward(): Promise<void> {
 // ── Network health state (P3B-S7) ──────────────────────────────────────────
 const MAX_LATENCY_HISTORY = 10;
 
+/** One recorded latency sample. `at` is the heartbeat fork's write time, and is the sample's IDENTITY. */
+interface LatencySample {
+  ms: number;
+  at: string;
+  /** Whether the reading was already past its cadence when it was first recorded. */
+  stale: boolean;
+}
+
 const relayHealth = ref<RelayHealth['relay'] | null>(null);
 const hubHealth = ref<RelayHealth['hub'] | null>(null);
 const networkHealth = ref<NetworkHealth | null>(null);
-const latencyHistory = ref<{ ms: number; at: string }[]>([]);
+const latencyHistory = ref<LatencySample[]>([]);
 const networkHealthLoading = ref(false);
 const networkHealthError = ref<string | null>(null);
+
+/** True when the server says the current network reading is past its writer's cadence (S40/S251). */
+const networkReadingStale = computed(() => networkHealth.value?.stale === true);
+/**
+ * Exact freshness word for the Network Latency card. "Live" and "Stale" are
+ * deliberately NOT substrings of one another — the S44-a `"Enabled"` /
+ * `"Disabled"` trap in this very file made a substring assertion prove the
+ * opposite of what it claimed.
+ */
+const networkFreshnessLabel = computed(() => (networkReadingStale.value ? 'Stale' : 'Live'));
+/** Same word pair for the relay-tunnel and hub-heartbeat state files. */
+const relayHealthFreshnessLabel = computed(() => (relayHealth.value?.stale === true ? 'Stale' : 'Live'));
+const hubHealthFreshnessLabel = computed(() => (hubHealth.value?.stale === true ? 'Stale' : 'Live'));
+/** Freshness of the relay fork's own state file, as reported by `GET .../relay/status`. */
+const relayStatusFreshnessLabel = computed(() => (relayStatus.value?.stale === true ? 'Stale' : 'Live'));
 
 async function loadNetworkHealth(): Promise<void> {
   networkHealthLoading.value = true;
@@ -452,15 +475,33 @@ async function loadNetworkHealth(): Promise<void> {
     relayHealth.value = snapshot.relay;
     hubHealth.value = snapshot.hub;
     networkHealth.value = snapshot.network;
-    // Add current measurement to history
+    // Record the measurement — ONCE per `measuredAt` (S251).
+    //
+    // `/health/network` is a cheap read of the hub-heartbeat fork's persisted
+    // snapshot, and `measuredAt` is that fork's own write time. The fork writes
+    // on a 60 s cadence; this panel refetches whenever the operator clicks
+    // Refresh (or reopens the section), i.e. far faster. Appending on every poll
+    // therefore drew a flat run of IDENTICAL bars from ONE measurement, and the
+    // heading counted them as N — indistinguishable from N genuinely stable
+    // measurements. A repeated `measuredAt` is the SAME sample re-read, so the
+    // timestamp is the sample's identity and duplicates are dropped.
+    //
+    // Polling slower would hide the duplicate without making the display
+    // honest, and would still plot a dead fork's last sample as current — the
+    // exact failure the server-side staleness gate closed.
     if (snapshot.network.latencyMs !== null) {
-      latencyHistory.value.push({
-        ms: snapshot.network.latencyMs,
-        at: snapshot.network.measuredAt,
-      });
-      // Keep only last MAX_LATENCY_HISTORY entries
-      if (latencyHistory.value.length > MAX_LATENCY_HISTORY) {
-        latencyHistory.value = latencyHistory.value.slice(-MAX_LATENCY_HISTORY);
+      const measuredAt = snapshot.network.measuredAt;
+      const alreadyRecorded = latencyHistory.value.some((sample) => sample.at === measuredAt);
+      if (!alreadyRecorded) {
+        latencyHistory.value.push({
+          ms: snapshot.network.latencyMs,
+          at: measuredAt,
+          stale: snapshot.network.stale,
+        });
+        // Keep only last MAX_LATENCY_HISTORY entries
+        if (latencyHistory.value.length > MAX_LATENCY_HISTORY) {
+          latencyHistory.value = latencyHistory.value.slice(-MAX_LATENCY_HISTORY);
+        }
       }
     }
   } catch (e) {
@@ -484,10 +525,12 @@ const networkHealthSummary = computed(() => {
   if (relayHealth.value === null) return 'Not available';
   const latency = networkHealth.value?.latencyMs;
   const status = networkHealth.value?.status ?? 'offline';
+  // A stale reading must never be summarised as if it described the present.
+  const suffix = networkReadingStale.value ? ' — stale' : '';
   if (latency !== null && latency !== undefined) {
-    return `${status} (${latency}ms)`;
+    return `${status} (${latency}ms)${suffix}`;
   }
-  return status;
+  return `${status}${suffix}`;
 });
 
 onMounted(() => {
@@ -670,6 +713,14 @@ onMounted(() => {
                 {{ relayStatus.connected ? 'Connected' : 'Disconnected' }}
               </Badge>
             </dd>
+            <dt>State file</dt>
+            <dd>
+              <Badge :tone="relayStatus.stale ? 'warning' : 'success'">
+                <span class="admin-remote__freshness admin-remote__freshness--relay-status">{{
+                  relayStatusFreshnessLabel
+                }}</span>
+              </Badge>
+            </dd>
             <dt>Active</dt>
             <dd>{{ relayStatus.active ? 'Yes' : 'No' }}</dd>
             <dt>Enrolled</dt>
@@ -689,7 +740,9 @@ onMounted(() => {
               <dd>
                 {{ relayLatencyLabel }}
                 <span v-if="relayPing && relayPing.latencyMs != null" class="admin-remote__hint">
-                  (last recorded heartbeat)
+                  {{ relayPing.heartbeatStale === true
+                    ? '(stale — heartbeat worker not running)'
+                    : '(last recorded heartbeat)' }}
                 </span>
               </dd>
             </template>
@@ -861,6 +914,14 @@ onMounted(() => {
                     {{ relayHealth.connected ? (relayHealth.active ? 'Active' : 'Connecting') : 'Disconnected' }}
                   </Badge>
                 </dd>
+                <dt>State file</dt>
+                <dd>
+                  <Badge :tone="relayHealth.stale ? 'warning' : 'success'">
+                    <span class="admin-remote__freshness admin-remote__freshness--relay-health">{{
+                      relayHealthFreshnessLabel
+                    }}</span>
+                  </Badge>
+                </dd>
                 <dt>Reconnect attempts</dt>
                 <dd>{{ relayHealth.reconnectAttempts }}</dd>
                 <template v-if="relayHealth.lastDisconnectTime">
@@ -878,6 +939,14 @@ onMounted(() => {
                 <dd>
                   <Badge :tone="hubHealth.isEnrolled ? 'success' : 'neutral'">
                     {{ hubHealth.isEnrolled ? 'Yes' : 'No' }}
+                  </Badge>
+                </dd>
+                <dt>State file</dt>
+                <dd>
+                  <Badge :tone="hubHealth.stale ? 'warning' : 'success'">
+                    <span class="admin-remote__freshness admin-remote__freshness--hub-health">{{
+                      hubHealthFreshnessLabel
+                    }}</span>
                   </Badge>
                 </dd>
                 <dt>Consecutive failures</dt>
@@ -907,9 +976,21 @@ onMounted(() => {
                 </dd>
                 <dt>Status</dt>
                 <dd class="admin-remote__capitalize">{{ networkHealth?.status ?? 'unknown' }}</dd>
+                <dt>Reading</dt>
+                <dd>
+                  <Badge :tone="networkReadingStale ? 'warning' : 'success'">
+                    <span class="admin-remote__freshness admin-remote__freshness--network">{{
+                      networkFreshnessLabel
+                    }}</span>
+                  </Badge>
+                </dd>
                 <template v-if="networkHealth?.measuredAt">
                   <dt>Measured</dt>
                   <dd>{{ formatDate(networkHealth?.measuredAt) }}</dd>
+                </template>
+                <template v-if="networkReadingStale && networkHealth?.error">
+                  <dt>Why</dt>
+                  <dd class="admin-remote__stale-reason">{{ networkHealth?.error }}</dd>
                 </template>
               </dl>
             </div>
@@ -917,16 +998,22 @@ onMounted(() => {
           <!-- Latency graph -->
           <div v-if="latencyHistory.length > 0" class="admin-remote__latency-graph">
             <h3 class="admin-remote__latency-graph-title">Latency History (last {{ pluralCount(latencyHistory.length, 'measurement', 'measurements') }})</h3>
+            <p v-if="networkReadingStale" class="admin-remote__latency-stale-note" role="status">
+              No new measurement — the newest reading is stale.
+            </p>
             <div class="admin-remote__latency-bars" role="img" :aria-label="`Latency graph showing ${pluralCount(latencyHistory.length, 'measurement', 'measurements')}`">
               <div
                 v-for="(point, index) in latencyHistory"
                 :key="index"
                 class="admin-remote__latency-bar-wrap"
-                :title="`${point.ms}ms at ${formatDate(point.at)}`"
+                :title="`${point.ms}ms at ${formatDate(point.at)}${point.stale ? ' (stale)' : ''}`"
               >
                 <div
                   class="admin-remote__latency-bar"
-                  :class="`admin-remote__latency-bar--${point.ms < 100 ? 'good' : point.ms < 500 ? 'warn' : 'bad'}`"
+                  :class="[
+                    `admin-remote__latency-bar--${point.ms < 100 ? 'good' : point.ms < 500 ? 'warn' : 'bad'}`,
+                    { 'admin-remote__latency-bar--stale': point.stale },
+                  ]"
                   :style="{ height: `${Math.min(100, (point.ms / 600) * 100)}%` }"
                 />
                 <span class="admin-remote__latency-value">{{ point.ms }}</span>
@@ -1150,6 +1237,15 @@ onMounted(() => {
 .admin-remote__error-text {
   color: var(--warning);
 }
+.admin-remote__stale-reason {
+  color: var(--warning);
+  font-size: var(--text-xs);
+}
+.admin-remote__latency-stale-note {
+  margin: var(--space-1) 0 var(--space-2);
+  color: var(--warning);
+  font-size: var(--text-xs);
+}
 
 /* Pairing modal form */
 .admin-remote__form {
@@ -1272,6 +1368,20 @@ onMounted(() => {
 .admin-remote__latency-bar--good { background: var(--success); }
 .admin-remote__latency-bar--warn { background: var(--warning); }
 .admin-remote__latency-bar--bad  { background: var(--error); }
+/* A sample that was ALREADY past its cadence when first recorded — hatched so
+   it cannot be read as a live measurement. Purely decorative: the honest signal
+   is the "Stale" word in the card and the bar's `title`, both of which a test
+   (and a screen reader) can actually observe. */
+.admin-remote__latency-bar--stale {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgb(0 0 0 / 35%) 0,
+    rgb(0 0 0 / 35%) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  opacity: 0.7;
+}
 .admin-remote__latency-value {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);

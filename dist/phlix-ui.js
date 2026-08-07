@@ -15,7 +15,7 @@ import { n as _e, t as ve } from "./ThumbRating-DZt3qThy.js";
 import { i as ye, o as be, s as xe } from "./shortcuts-Ck2yBFUB.js";
 import { t as Se } from "./Tooltip-Bi7vMBv_.js";
 import { t as Ce } from "./Spinner-C27IqGQo.js";
-import { t as we } from "./NetworkHealthIndicator-D5S46Gyg.js";
+import { t as we } from "./NetworkHealthIndicator-Cv25b8KU.js";
 import { _ as Te, a as Ee, c as De, d as Oe, f as ke, g as Ae, h as je, i as Me, l as Ne, m as Pe, n as Fe, o as Ie, p as Le, r as Re, s as ze, t as Be, u as Ve, v as He, y as Ue } from "./SecuritySettingsPage-DxN9hg8p.js";
 import { i as We, n as Ge, r as Ke, t as qe } from "./Kbd-qzi8z-Qw.js";
 import { a as Je, i as Ye, n as Xe, o as Ze, r as Qe, t as $e } from "./useLibrariesStore-B1E5wbLf.js";
@@ -934,7 +934,7 @@ var wi = Yn("server", () => {
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-cdyXEvcp.js")
+	component: () => import("./RemoteAccessPage-CpFYq3I0.js")
 }, Fi = {
 	name: "admin-livetv",
 	path: "livetv",
@@ -1000,7 +1000,7 @@ var wi = Yn("server", () => {
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-8RYZUtDF.js")
+	component: () => import("./MetricsPage-HNcy3yse.js")
 }, Ki = {
 	name: "admin-audit-logs",
 	path: "audit-logs",

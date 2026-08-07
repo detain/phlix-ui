@@ -1,7 +1,7 @@
 import { n as e, t } from "./Icon-CkTBN_k5.js";
 import { l as n, p as r, t as i } from "./client-COHWZ2KC.js";
 import { t as a } from "./useAuthStore-Bxpn4wWU.js";
-import { t as o } from "./networkHealth-B5_ZbJ4U.js";
+import { t as o } from "./networkHealth-CtAbCNzZ.js";
 import { t as s } from "./Tooltip-Bi7vMBv_.js";
 import { t as c } from "./Spinner-C27IqGQo.js";
 import { computed as l, createBlock as u, createElementVNode as d, defineComponent as f, inject as p, normalizeClass as m, onMounted as h, onUnmounted as g, openBlock as _, ref as v, withCtx as y } from "vue";
@@ -95,4 +95,4 @@ var b = ["aria-label"], x = 3e4, S = 2, C = 12e4, w = /*#__PURE__*/ e(/* @__PURE
 //#endregion
 export { w as t };
 
-//# sourceMappingURL=NetworkHealthIndicator-D5S46Gyg.js.map
+//# sourceMappingURL=NetworkHealthIndicator-Cv25b8KU.js.map
