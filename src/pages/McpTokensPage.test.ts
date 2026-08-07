@@ -30,7 +30,14 @@ import McpTokensPage from './McpTokensPage.vue';
 import Button from '../components/ui/Button.vue';
 import { useToastStore } from '../stores/useToastStore';
 import type { ApiClient } from '../api/client';
+import { MCP_SCOPES } from '../api/mcp-tokens';
 
+/**
+ * What the MOCK HUB reports in `available_scopes` — deliberately a proper
+ * subset of this build's {@link MCP_SCOPES} (it omits `mcp:playback:control`).
+ * Keeping it narrower is what makes "the checkboxes come from the server, not
+ * from the constant" a real assertion rather than a coincidence.
+ */
 const SCOPES = ['mcp:servers:read', 'mcp:library:read', 'mcp:playback:read'];
 
 const activeToken = {
@@ -235,7 +242,15 @@ describe('McpTokensPage — scope selection comes from the server', () => {
         const get = vi.fn(async () => ({ tokens: [] }));
         const w = await openForm({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
         const boxes = [...document.body.querySelectorAll('.mcp-scope__box')] as HTMLInputElement[];
-        expect(boxes.map((b) => b.value)).toEqual(SCOPES);
+        // Against MCP_SCOPES, not the `SCOPES` server mock: the mock is
+        // deliberately NARROWER than the build's vocabulary (it omits
+        // mcp:playback:control), which is what makes the other tests in this
+        // block prove the boxes come from the server. This one is the opposite
+        // case — the server said nothing, so the build's own list must show.
+        expect(boxes.map((b) => b.value)).toEqual([...MCP_SCOPES]);
+        // Anti-vacuity: an empty fallback would render zero boxes and satisfy
+        // the equality above against an empty MCP_SCOPES.
+        expect(boxes.length).toBeGreaterThanOrEqual(4);
         w.unmount();
     });
 

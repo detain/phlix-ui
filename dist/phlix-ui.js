@@ -1286,7 +1286,7 @@ function ya(e) {
 		path: `${t}/${la}`,
 		name: ca,
 		meta: { title: "MCP Tokens" },
-		component: () => import("./McpTokensPage-DU65wV9R.js")
+		component: () => import("./McpTokensPage-CfDC9dET.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
