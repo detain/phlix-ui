@@ -2,10 +2,11 @@
  * UserRatingPicker — behavioural cover for a component measured at `LF:37 LH:0`,
  * `FNF:9 FNH:0`, `BRF:26 BRH:0` on 2026-08-07 (S182 re-enumeration).
  *
- * ⚠ REACHABILITY, stated honestly: like `RatingBadge.vue`, this component is NOT
- * re-exported from `src/index.ts` and nothing under `src/` imports it. It is dead
- * as shipped. Recorded as a finding in the S182 worklog; nothing is deleted on the
- * strength of a grep.
+ * REACHABILITY — RESOLVED BY S263 (2026-08-07). This block previously read "NOT
+ * re-exported from `src/index.ts` … dead as shipped". S263 settled the question
+ * across all four @phlix/ui consumer repos and exported it; the barrel export is
+ * pinned by "S263 — the newly exported components" in `src/index.test.ts`, which
+ * MOUNTS the binding taken from the barrel.
  *
  * ⚠ TWO guards protect the same action and they are NOT interchangeable:
  *   - the template's `:disabled="readonly || isSubmitting"`, and

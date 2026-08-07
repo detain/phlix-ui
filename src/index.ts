@@ -102,6 +102,23 @@ export * from './components/ui';
 
 export { default as MediaCard } from './components/MediaCard.vue';
 export { default as ThumbRating } from './components/ThumbRating.vue';
+// S263 — the 0-10 STAR rating pair, exported for the first time. `ThumbRating`
+// above is the like/dislike widget the built-in pages use; these two are the
+// separate star surface (`RatingBadge` displays, `UserRatingPicker` submits to
+// `POST /api/v1/media/{id}/ratings`). They shipped in P1-S7 but were never added
+// to this barrel and had no importer anywhere, so they were tree-shaken out of
+// every published bundle — `rating-badge` / `user-rating-picker` appeared ZERO
+// times in dist/phlix-ui.js, dist/ui.css and dist/style.css. No consumer could
+// reach them even by deep path, because `files: ["dist"]` ships no SFC source.
+// They are kept, not deleted: `phlix-docs/docs/libraries.md` documents
+// `<RatingBadge>` as a public @phlix/ui component, and four native clients have
+// each hand-rolled a clone (phlix-tizen-client/src/components/RatingBadge.vue +
+// UserRatingPicker.vue, phlix-mobile-client/src/components/*.tsx,
+// phlix-roku-client/components/RatingBadge.brs, phlix-console-client/src/Ui/*.php).
+// Exporting is purely ADDITIVE — nothing could have been importing them.
+// Pinned by `src/index.test.ts` → "S263 — the newly exported components".
+export { default as RatingBadge } from './components/RatingBadge.vue';
+export { default as UserRatingPicker } from './components/UserRatingPicker.vue';
 export { default as MediaGrid } from './components/MediaGrid.vue';
 export { default as MediaRow } from './components/MediaRow.vue';
 export { default as MediaHomeRow } from './components/HomeRow.vue';
@@ -320,6 +337,15 @@ export { buildMediaQuery, buildMediaUrl } from './api/media-query';
 // Player surface exports moved to @phlix/ui/player secondary entry
 export { default as LoginForm } from './components/LoginForm.vue';
 export { default as SignupForm } from './components/SignupForm.vue';
+// S263 — avatar management, exported for the first time. This is the ONLY caller
+// in src/ of `useAuthStore().uploadAvatar()` / `.deleteAvatar()`, which in turn
+// are the only callers of `ApiClient.uploadAvatar()` / `.deleteAvatar()`. The
+// component, the store methods and the client methods form one complete, fully
+// covered vertical slice with no UI entry point — deleting the component would
+// have orphaned the two layers beneath it, which is why this is unshipped work
+// rather than dead code. Nothing else in src/ renders an avatar editor.
+// Pinned by `src/index.test.ts` → "S263 — the newly exported components".
+export { default as ProfileImageSettings } from './components/ProfileImageSettings.vue';
 // NOTE (R6.1a): PlayerPage / LoginPage / SignupPage / SettingsPage are lazy route chunks
 // mounted by `createPhlixApp` (see the built-in-pages note near MediaDetail) — not
 // re-exported. The long-tail consumer pages below ARE still exported because the
