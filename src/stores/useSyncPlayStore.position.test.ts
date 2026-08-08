@@ -245,7 +245,21 @@ describe('S287 — the position report cadence', () => {
         expect(positionFrames()).toHaveLength(1);
 
         const beforeLeave = socket();
+        // CONTROL: a timer really is live at this point, so the 0 below is not a
+        // number this harness produces regardless.
+        expect(vi.getTimerCount()).toBe(1);
+
         await store.leaveRoom(BASE);
+
+        // ⚠ Asserted WITHOUT advancing the clock, and this is the whole point.
+        // `leaveRoom()` also closes the socket and nulls the session, so a timer
+        // left running would emit nothing anyway (the sender no-ops on a closed
+        // socket) and would clear itself on its first tick — an assertion made
+        // after `advanceTimersByTime` therefore passes with the stop removed.
+        // It survived exactly that mutation until this line was added. Leaving
+        // a room must not leave a live interval behind at all.
+        expect(vi.getTimerCount()).toBe(0);
+
         vi.advanceTimersByTime(60_000);
         // Read the SAME socket object the reports landed on: `leaveRoom()` also
         // closes the connection, so re-resolving it would be reading a corpse and
