@@ -48,6 +48,7 @@ import {
 import {
     McpTokensApi,
     MCP_SCOPES,
+    MCP_DEFAULT_SCOPES,
     MCP_SCOPE_LABELS,
     MCP_TOKEN_PREFIX,
     scopeLabel,
@@ -145,6 +146,51 @@ describe('scope vocabulary agrees with @phlix/contracts', () => {
         // must still be nameable (and therefore selectable), not render blank.
         expect(scopeLabel('mcp:future:write')).toBe('mcp:future:write');
         expect(scopeDescription('mcp:future:write')).toBe('');
+    });
+});
+
+describe('MCP_DEFAULT_SCOPES — the create form’s pre-ticked set (S261)', () => {
+    /** `string`, not a literal — see the note in `McpTokensPage.test.ts`. */
+    const WRITE_SCOPE: string = 'mcp:playback:control';
+
+    it('is a proper, ordered subset of the vocabulary and omits the write scope', () => {
+        // Subset, so the default can never pre-tick something the form does not
+        // even offer; PROPER, so "the default is everything" cannot pass.
+        expect(MCP_DEFAULT_SCOPES.length).toBeGreaterThan(0);
+        expect(MCP_DEFAULT_SCOPES.length).toBeLessThan(MCP_SCOPES.length);
+        for (const scope of MCP_DEFAULT_SCOPES) {
+            // Exact membership, never `includes()` on a joined string:
+            // 'mcp:playback' is a strict prefix of 'mcp:playback:control'.
+            expect(MCP_SCOPES.filter((s) => s === scope), `${scope} is not a known scope`).toEqual([
+                scope,
+            ]);
+            expect(scope).not.toBe(WRITE_SCOPE);
+        }
+        // The order matches the vocabulary's, which is the order the hub stores.
+        expect([...MCP_DEFAULT_SCOPES]).toEqual(
+            MCP_SCOPES.filter((s) => MCP_DEFAULT_SCOPES.some((d) => d === s)),
+        );
+    });
+
+    it('names exactly the hub’s McpScopes::readOnly() set', () => {
+        // Written as literals rather than derived from MCP_SCOPES: a check
+        // derived from its subject self-adjusts, and this one exists to red
+        // when somebody edits the default.
+        expect([...MCP_DEFAULT_SCOPES]).toEqual([
+            'mcp:servers:read',
+            'mcp:library:read',
+            'mcp:playback:read',
+        ]);
+    });
+
+    it('is exactly the vocabulary minus the write scope, today', () => {
+        // A second angle: the set difference is precisely one member, and it is
+        // the write scope. If a future contracts release adds a scope, this
+        // reds and forces a deliberate decision about its default — which is
+        // the whole reason the default is an allow-list.
+        expect(MCP_SCOPES.filter((s) => !MCP_DEFAULT_SCOPES.some((d) => d === s))).toEqual([
+            WRITE_SCOPE,
+        ]);
     });
 });
 
