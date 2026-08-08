@@ -176,11 +176,48 @@ describe('useSyncPlayStore — onRemoteStateUpdate', () => {
         expect(store.currentSession!.state).toBe('paused');
     });
 
-    it('play/pause leave the position ALONE', () => {
+    /**
+     * ⚠ S290 — this assertion used to read `toBe(42)`, i.e. "play/pause leave the
+     * position ALONE", and it was GREEN while pinning the defect. The `play` and
+     * `pause` frames the store actually receives in production are
+     * `handlePlaybackSync()`'s broadcast of the group's AUTHORITATIVE position
+     * (`api/syncplay.ts` → `onPlaybackSync` → `{type: is_playing ? 'play' :
+     * 'pause', position}`), so ignoring the field discarded the very number
+     * S287's 5 s report was sent to obtain. The drift consequence — the half a
+     * position assertion cannot see — is in `useSyncPlayStore.anchor.test.ts`.
+     */
+    it('play APPLIES the position the broadcast carried', () => {
         const store = useSyncPlayStore();
         store.currentSession = makeSession({ state: 'paused', playbackPosition: 42 });
         store.onRemoteStateUpdate(cmd({ type: 'play', position: 999 }));
+        expect(store.currentSession!.playbackPosition).toBe(999);
+        expect(store.currentSession!.state).toBe('playing');
+    });
+
+    it('pause APPLIES the position the broadcast carried', () => {
+        const store = useSyncPlayStore();
+        store.currentSession = makeSession({ state: 'playing', playbackPosition: 42 });
+        store.onRemoteStateUpdate(cmd({ type: 'pause', position: 999 }));
+        expect(store.currentSession!.playbackPosition).toBe(999);
+        expect(store.currentSession!.state).toBe('paused');
+    });
+
+    it('play/pause with NO position leave it alone rather than resetting to 0', () => {
+        const store = useSyncPlayStore();
+        store.currentSession = makeSession({ state: 'paused', playbackPosition: 42 });
+        store.onRemoteStateUpdate(cmd({ type: 'play' }));
         expect(store.currentSession!.playbackPosition).toBe(42);
+        store.onRemoteStateUpdate(cmd({ type: 'pause' }));
+        expect(store.currentSession!.playbackPosition).toBe(42);
+    });
+
+    it('a broadcast position of 0 is APPLIED — `!== undefined`, not truthiness', () => {
+        const store = useSyncPlayStore();
+        store.currentSession = makeSession({ state: 'paused', playbackPosition: 42 });
+        // A group sitting at the start of a title broadcasts position 0. An
+        // `if (command.position)` guard would silently keep 42 here.
+        store.onRemoteStateUpdate(cmd({ type: 'play', position: 0 }));
+        expect(store.currentSession!.playbackPosition).toBe(0);
     });
 
     it('seek applies the position', () => {

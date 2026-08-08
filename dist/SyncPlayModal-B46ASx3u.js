@@ -671,13 +671,19 @@ var ge = O("phlix-syncplay", () => {
 	function S(e) {
 		if (t.value) switch (e.type) {
 			case "play":
-				t.value = {
+				e.position !== void 0 && (o = Date.now(), t.value = {
+					...t.value,
+					playbackPosition: e.position
+				}), t.value = {
 					...t.value,
 					state: "playing"
 				};
 				break;
 			case "pause":
-				t.value = {
+				e.position !== void 0 && (o = Date.now(), t.value = {
+					...t.value,
+					playbackPosition: e.position
+				}), t.value = {
 					...t.value,
 					state: "paused"
 				};
@@ -906,4 +912,4 @@ var ge = O("phlix-syncplay", () => {
 //#endregion
 export { ge as n, Re as t };
 
-//# sourceMappingURL=SyncPlayModal-I4MN_tr4.js.map
+//# sourceMappingURL=SyncPlayModal-B46ASx3u.js.map
