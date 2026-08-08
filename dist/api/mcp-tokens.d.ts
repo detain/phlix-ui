@@ -52,6 +52,45 @@ export declare const MCP_SCOPES: readonly ["mcp:servers:read", "mcp:library:read
 /** One of the scopes {@link MCP_SCOPES} enumerates. */
 export type McpScope = (typeof MCP_SCOPES)[number];
 /**
+ * The scopes the create form arrives with **already ticked** (S261).
+ *
+ * ## Why this exists at all
+ *
+ * The form used to seed its selection with `[...availableScopes]` — every scope
+ * the hub advertised, pre-ticked — so a user had to actively *untick* to get
+ * least privilege. That was harmless only for as long as
+ * `mcp:playback:control`, the one scope here that can **change** anything, was
+ * absent from what the hub advertised. `phlix-hub` `b683579` now filters it out
+ * of `available_scopes` while the `playback_control` feature flag is off; the
+ * moment an operator flips that flag on, the old seed would have silently
+ * pre-ticked the write scope on every mint. Safety must not be claimed from a
+ * feature being switched off.
+ *
+ * ## Why it is an ENUMERATED ALLOW-LIST rather than a deny-list
+ *
+ * "Everything except `mcp:playback:control`" fails **open**: any future write
+ * scope a newer hub advertises (`mcp:library:sync`, `mcp:servers:manage`, …)
+ * would join the pre-ticked set the day it appeared, with nothing to notice.
+ * An allow-list fails **closed** — a scope this build has never heard of is
+ * still *offered* (the checkbox renders, because the vocabulary is the hub's,
+ * not ours) but is never *pre-ticked*. The user opts in deliberately or not at
+ * all.
+ *
+ * This is deliberately the same set, in the same order, as the hub's
+ * `McpScopes::readOnly()` — the list an API caller gets for omitting `scopes`
+ * entirely. Minting through the UI with the defaults and minting through the
+ * API saying nothing therefore produce the **same** token.
+ *
+ * ⚠ Membership is decided by **exact equality**. `mcp:playback` is a strict
+ * prefix of `mcp:playback:control`, so any `includes()` / `startsWith()` /
+ * substring test against a partial scope string is wrong in both directions.
+ *
+ * ⚠ This is a DEFAULT, not a ban. Every advertised scope — write scope
+ * included — remains tickable, and a ticked scope is posted. See
+ * `McpTokensPage.defaultScopeSelection()`.
+ */
+export declare const MCP_DEFAULT_SCOPES: readonly ["mcp:servers:read", "mcp:library:read", "mcp:playback:read"];
+/**
  * Human copy for each scope, so the create form explains what it is granting
  * rather than showing a bare `mcp:library:read`. Keyed by the wire value; an
  * unrecognised scope (a hub newer than this build) falls back to its raw
@@ -91,7 +130,16 @@ export interface McpTokenSummary {
 /** Envelope of `GET /api/v1/me/mcp-tokens`. */
 export interface McpTokenListResponse {
     tokens: McpTokenSummary[];
-    /** `McpScopes::all()` as the hub currently defines it. */
+    /**
+     * The scopes the hub is currently willing to advertise — a **subset** of
+     * `McpScopes::all()`, not all of it: since `phlix-hub` `b683579` the hub
+     * drops `mcp:playback:control` while the `playback_control` feature flag is
+     * off, because the tool that scope authorises is not even registered then.
+     *
+     * It is an **advertisement, not a validation set**. Mint still honours an
+     * explicit `mcp:playback:control` regardless of the flag, so that flipping
+     * the flag does not force every agent to re-mint.
+     */
     available_scopes: string[];
 }
 /** Body of `POST /api/v1/me/mcp-tokens`. Both members are optional on the wire. */
@@ -101,8 +149,12 @@ export interface MintMcpTokenInput {
     /**
      * Scopes to request. Unknown members are dropped by `McpScopes::fromArray()`;
      * a list with nothing known left is a **400** (`mcp_token.no_valid_scopes`),
-     * not a token that authenticates but authorises nothing. Omitting the key
-     * entirely grants every scope.
+     * not a token that authenticates but authorises nothing.
+     *
+     * ⚠ Omitting the key entirely grants the hub's **read-only** set
+     * (`McpScopes::readOnly()`) as of `phlix-hub` `b683579` — it used to grant
+     * every scope, write included. The SPA never relies on either behaviour:
+     * `McpTokensPage` always sends an explicit list.
      */
     scopes?: string[];
 }

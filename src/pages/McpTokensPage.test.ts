@@ -30,7 +30,7 @@ import McpTokensPage from './McpTokensPage.vue';
 import Button from '../components/ui/Button.vue';
 import { useToastStore } from '../stores/useToastStore';
 import type { ApiClient } from '../api/client';
-import { MCP_SCOPES } from '../api/mcp-tokens';
+import { MCP_SCOPES, MCP_DEFAULT_SCOPES } from '../api/mcp-tokens';
 
 /**
  * What the MOCK HUB reports in `available_scopes` — deliberately a proper
@@ -376,6 +376,241 @@ describe('McpTokensPage — scope selection comes from the server', () => {
         expect(post).not.toHaveBeenCalled();
         expect(toasts.toasts.some((t) => t.message === 'Select at least one scope.')).toBe(true);
         expect(bodyText()).toContain('Select at least one scope');
+        w.unmount();
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * S261 — which boxes the create form arrives TICKED.
+ *
+ * The whole block runs against a hub that advertises ALL FOUR scopes, i.e. a
+ * deployment with `playback_control` switched ON. That is the only
+ * configuration in which the defect is reachable: with the flag off the hub
+ * omits `mcp:playback:control` from `available_scopes` entirely, so the rest of
+ * this file (whose `SCOPES` mock is the three read scopes) is structurally
+ * blind to it. Reusing that mock here would have produced a green block that
+ * proved nothing.
+ *
+ * ⚠ Every assertion is on the RENDERED `<input>.checked`, never on the
+ * component's `selectedScopes`. Reading the source array would pass against a
+ * template that ignored it.
+ *
+ * ⚠ The fixture puts `mcp:playback:read` and `mcp:playback:control` in the same
+ * form with OPPOSITE expected states, which is what makes the exactness real
+ * rather than described. `mcp:playback` is a strict prefix of the write scope,
+ * so a `startsWith('mcp:playback')` deny-rule unticks both and an
+ * `includes('mcp:playback')` allow-rule ticks both — either way this block
+ * reds. Mutations M2/M3 are those two rules, spelled out.
+ */
+describe('McpTokensPage — the default scope selection is read-only (S261)', () => {
+    /**
+     * The one scope that can CHANGE anything. Named once, compared exactly.
+     *
+     * Annotated `string` on purpose: left as a literal, TS narrows the const
+     * tuples so hard that `MCP_DEFAULT_SCOPES.filter((s) => s === WRITE_SCOPE)`
+     * becomes a compile ERROR for having no overlap — i.e. the type system
+     * answers the question and the runtime check never gets to. The runtime
+     * check is the one that has to hold against a mutated constant.
+     */
+    const WRITE_SCOPE: string = 'mcp:playback:control';
+    /** A hub with `playback_control` ON advertises the full vocabulary. */
+    const FLAG_ON_SCOPES = [...MCP_SCOPES];
+    const READ_ONLY = ['mcp:servers:read', 'mcp:library:read', 'mcp:playback:read'];
+
+    function scopeBoxes(): HTMLInputElement[] {
+        return [...document.body.querySelectorAll('.mcp-scope__box')] as HTMLInputElement[];
+    }
+
+    /** value → rendered checked state, for every box actually in the document. */
+    function renderedTicks(): Record<string, boolean> {
+        return Object.fromEntries(scopeBoxes().map((b) => [b.value, b.checked]));
+    }
+
+    function boxFor(scope: string): HTMLInputElement {
+        const found = scopeBoxes().find((b) => b.value === scope);
+        expect(found, `no checkbox rendered for ${scope}`).toBeTruthy();
+        return found as HTMLInputElement;
+    }
+
+    async function openForm(client: ApiClient) {
+        const w = mountPage(client);
+        await flushPromises();
+        rawClick(btn('New Token')!);
+        await flushPromises();
+        return w;
+    }
+
+    it('the fixture is non-vacuous: the write scope really is in the vocabulary', () => {
+        // Without this, every "the write scope is not ticked" assertion below
+        // could be satisfied by the scope having been renamed out of existence.
+        expect(MCP_SCOPES.filter((s) => s === WRITE_SCOPE)).toEqual([WRITE_SCOPE]);
+        expect(MCP_DEFAULT_SCOPES.filter((s) => s === WRITE_SCOPE)).toEqual([]);
+        // And the default really is the hub's `McpScopes::readOnly()` set.
+        expect([...MCP_DEFAULT_SCOPES]).toEqual(READ_ONLY);
+    });
+
+    it('offers all four boxes but arrives with the WRITE scope unticked', async () => {
+        const { client } = makeClient({ scopeSequence: [FLAG_ON_SCOPES] });
+        const w = await openForm(client);
+
+        // Anti-vacuity first: the write scope's box EXISTS, so "not ticked"
+        // below is a rendered state and not a missing element.
+        expect(boxFor(WRITE_SCOPE)).toBeTruthy();
+        expect(scopeBoxes()).toHaveLength(4);
+
+        // The whole rendered picture in one exact compare — an assertion that
+        // names what IS ticked as well as what is not, so a fix that ticked
+        // nothing at all would red here too.
+        expect(renderedTicks()).toEqual({
+            'mcp:servers:read': true,
+            'mcp:library:read': true,
+            'mcp:playback:read': true,
+            'mcp:playback:control': false,
+        });
+
+        // Restated per member with exact equality, never a substring test:
+        // `mcp:playback` is a prefix of `mcp:playback:control`.
+        const ticked = scopeBoxes()
+            .filter((b) => b.checked)
+            .map((b) => b.value);
+        expect(ticked).toEqual(READ_ONLY);
+        for (const value of ticked) {
+            expect(value).not.toBe(WRITE_SCOPE);
+        }
+        w.unmount();
+    });
+
+    it('posts exactly the read-only set when the user changes nothing', async () => {
+        // The rendered ticks are only half the claim; this is what reaches the
+        // wire, which is what actually decides the token's capability.
+        const { client, post } = makeClient({ scopeSequence: [FLAG_ON_SCOPES] });
+        const w = await openForm(client);
+        rawClick(btn('Create token')!);
+        await flushPromises();
+
+        expect(post).toHaveBeenCalledTimes(1);
+        const body = post.mock.calls[0]?.[1] as { scopes: string[] };
+        expect(body.scopes).toEqual(READ_ONLY);
+        for (const scope of body.scopes) {
+            expect(scope).not.toBe(WRITE_SCOPE);
+        }
+        w.unmount();
+    });
+
+    it('SUCCEEDING CONTROL: ticking the write scope still mints it', async () => {
+        // Proving a default is not the same as proving a ban, and only this
+        // pair distinguishes them. Without it, a form that simply refused to
+        // offer `mcp:playback:control` would pass every test above — and would
+        // be a different, wrong decision: the hub honours an explicit request
+        // for that scope regardless of the feature flag, deliberately.
+        const { client, post } = makeClient({
+            scopeSequence: [FLAG_ON_SCOPES],
+            minted: { scopes: [...FLAG_ON_SCOPES] },
+        });
+        const w = await openForm(client);
+
+        const writeBox = boxFor(WRITE_SCOPE);
+        expect(writeBox.checked, 'precondition: it starts unticked').toBe(false);
+        writeBox.dispatchEvent(new Event('change', { bubbles: true }));
+        await flushPromises();
+
+        // The tick is visible to the user before it is sent.
+        expect(boxFor(WRITE_SCOPE).checked).toBe(true);
+        expect(renderedTicks()).toEqual({
+            'mcp:servers:read': true,
+            'mcp:library:read': true,
+            'mcp:playback:read': true,
+            'mcp:playback:control': true,
+        });
+
+        rawClick(btn('Create token')!);
+        await flushPromises();
+
+        expect(post).toHaveBeenCalledTimes(1);
+        const body = post.mock.calls[0]?.[1] as { scopes: string[] };
+        expect(body.scopes).toEqual([...FLAG_ON_SCOPES]);
+        expect(body.scopes.filter((s) => s === WRITE_SCOPE)).toEqual([WRITE_SCOPE]);
+        w.unmount();
+    });
+
+    it('does not pre-tick the write scope on the OFFLINE FALLBACK path either', async () => {
+        // The second route to a pre-ticked write scope, and it never touches
+        // the hub's filtering: when the list response omits `available_scopes`,
+        // the form falls back to this build's own `MCP_SCOPES` constant, which
+        // contains all four. Fixing only the hub would have left this open.
+        const get = vi.fn(async () => ({ tokens: [] }));
+        const w = await openForm({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+
+        // The fallback still OFFERS all four — deliberately. An older hub does
+        // honour the write scope, so withdrawing the checkbox would make it
+        // un-mintable rather than merely un-defaulted.
+        expect(scopeBoxes().map((b) => b.value)).toEqual([...MCP_SCOPES]);
+        expect(renderedTicks()[WRITE_SCOPE]).toBe(false);
+        expect(
+            scopeBoxes()
+                .filter((b) => b.checked)
+                .map((b) => b.value),
+        ).toEqual(READ_ONLY);
+        w.unmount();
+    });
+
+    it('offers a scope this build has never heard of, but does not pre-tick it', async () => {
+        // The allow-list fails CLOSED. A deny-list ("everything except the one
+        // write scope we know about") would pre-tick `mcp:library:sync` the day
+        // a newer hub advertised it, with nothing to notice.
+        const { client } = makeClient({
+            scopeSequence: [['mcp:servers:read', 'mcp:library:sync', WRITE_SCOPE]],
+        });
+        const w = await openForm(client);
+        expect(renderedTicks()).toEqual({
+            'mcp:servers:read': true,
+            'mcp:library:sync': false,
+            'mcp:playback:control': false,
+        });
+        w.unmount();
+    });
+
+    it('leaves nothing ticked when the hub offers only unknown scopes', async () => {
+        // The empty intersection is left EMPTY rather than falling back to
+        // "tick everything" — that fallback would pre-tick unknown capabilities
+        // in exactly the case where this build understands them least.
+        const { client, post } = makeClient({
+            scopeSequence: [['mcp:library:sync', 'mcp:servers:manage']],
+        });
+        const w = await openForm(client);
+        expect(scopeBoxes()).toHaveLength(2);
+        expect(scopeBoxes().some((b) => b.checked)).toBe(false);
+        expect(bodyText()).toContain('Select at least one scope');
+
+        const create = document.body.querySelector('.mcp-tokens__create') as HTMLButtonElement;
+        expect(create.disabled).toBe(true);
+        rawClick(create);
+        await flushPromises();
+        expect(post).not.toHaveBeenCalled();
+        w.unmount();
+    });
+
+    it('the read-only default is NOT re-seeded over a deliberate widening', async () => {
+        // The user opts into the write scope, then something refetches the
+        // list. A seed that ran again would silently revoke their choice — the
+        // same stickiness bug as the narrowing case, pointed the other way.
+        const { client } = makeClient({ scopeSequence: [FLAG_ON_SCOPES] });
+        const w = await openForm(client);
+        boxFor(WRITE_SCOPE).dispatchEvent(new Event('change', { bubbles: true }));
+        await flushPromises();
+        rawClick(btn('Cancel')!);
+        await flushPromises();
+
+        rawClick(btn('Revoke')!);
+        await flushPromises();
+        rawClick(btn('Revoke token')!);
+        await flushPromises();
+
+        rawClick(btn('New Token')!);
+        await flushPromises();
+        expect(boxFor(WRITE_SCOPE).checked).toBe(true);
         w.unmount();
     });
 });

@@ -38,19 +38,28 @@
  * ## Why the scope list is not hardcoded
  *
  * The checkboxes are built from `available_scopes` in the list response, which
- * the hub fills from `McpScopes::all()`. A value the server does not recognise
- * is dropped by `McpScopes::fromArray()`, and a request whose scopes all drop
- * is a 400 (`mcp_token.no_valid_scopes`) — so offering a guessed scope is a
- * broken form. {@link submittableScopes} additionally intersects the user's
- * selection with the server's list before the POST, and {@link createToken}
- * refuses to fire on an empty result rather than sending a request that can
- * only 400.
+ * the hub fills from a flag-filtered subset of `McpScopes::all()`. A value the
+ * server does not recognise is dropped by `McpScopes::fromArray()`, and a
+ * request whose scopes all drop is a 400 (`mcp_token.no_valid_scopes`) — so
+ * offering a guessed scope is a broken form. {@link submittableScopes}
+ * additionally intersects the user's selection with the server's list before
+ * the POST, and {@link createToken} refuses to fire on an empty result rather
+ * than sending a request that can only 400.
+ *
+ * ## Which boxes arrive TICKED is a separate question (S261)
+ *
+ * *Offered* and *pre-selected* are two different sets and are computed by two
+ * different rules. The offer is the hub's, whatever it says. The pre-selection
+ * is {@link defaultScopeSelection} — the offer narrowed to the enumerated
+ * read-only list, so the write scope `mcp:playback:control` is never ticked for
+ * a user who expressed no opinion. It stays fully mintable by ticking it.
  */
 import { computed, onMounted, ref } from 'vue';
 import { api, ApiClient } from '../api/client';
 import {
     McpTokensApi,
     MCP_SCOPES,
+    MCP_DEFAULT_SCOPES,
     MCP_TOKEN_PREFIX,
     scopeLabel,
     scopeDescription,
@@ -91,9 +100,9 @@ const showCreateModal = ref(false);
 const creating = ref(false);
 const formName = ref('');
 /**
- * The user's scope selection. Seeded from the hub's vocabulary on the FIRST
- * successful load and then STICKY across modal opens — a user who always wants
- * a read-only token should not re-uncheck the same boxes every time.
+ * The user's scope selection. Seeded from {@link defaultScopeSelection} on the
+ * FIRST successful load and then STICKY across modal opens — a user who always
+ * wants a read-only token should not re-uncheck the same boxes every time.
  *
  * ⚠ That stickiness is exactly why {@link submittableScopes} exists rather than
  * being redundant: the vocabulary is re-read on every refresh, so a hub that
@@ -165,6 +174,46 @@ function canRevoke(token: McpTokenSummary): boolean {
     return !token.revoked;
 }
 
+// ─── Default scope selection (S261) ──────────────────────────────────────────
+
+/**
+ * The boxes the create form arrives **ticked**: the hub's advertised
+ * vocabulary narrowed to {@link MCP_DEFAULT_SCOPES}, in the hub's own order.
+ *
+ * This replaces a seed of `[...availableScopes]`, which pre-ticked every scope
+ * the hub offered — so the *most privileged* thing on offer was what a user got
+ * for expressing no opinion, and least privilege required actively unticking.
+ * Today's hub omits `mcp:playback:control` from `available_scopes` while the
+ * `playback_control` flag is off, which masked the problem; the day an operator
+ * turns that flag on, the old seed would have started silently pre-ticking the
+ * write scope on every mint.
+ *
+ * ⚠ **Filtering, not substituting.** The result is a subset of what the hub
+ * advertised, so a scope the hub has withdrawn can never be re-introduced here,
+ * and {@link submittableScopes} stays a genuine second line rather than a
+ * tautology.
+ *
+ * ⚠ **Exact equality on every comparison.** `mcp:playback` is a strict prefix
+ * of `mcp:playback:control`; a `startsWith`/`includes` test would either drop
+ * `mcp:playback:read` or admit the write scope, depending on which way it was
+ * written.
+ *
+ * ⚠ **This is a default, not a ban.** Every advertised scope still renders a
+ * tickable checkbox, and {@link toggleScope} + {@link submittableScopes} will
+ * post `mcp:playback:control` the moment a user ticks it. Refusing to offer it
+ * would be a different (and wrong) decision: the hub honours an explicit
+ * request for it regardless of the flag, on purpose.
+ *
+ * An empty result — a hub advertising only scopes this build has never heard of
+ * — is deliberately left empty rather than falling back to "tick everything".
+ * The fallback would pre-tick unknown capabilities in precisely the case where
+ * the UI understands them least. The form then shows its own
+ * "Select at least one scope" warning, which is the honest outcome.
+ */
+function defaultScopeSelection(offered: readonly string[]): string[] {
+    return offered.filter((scope) => MCP_DEFAULT_SCOPES.some((d) => d === scope));
+}
+
 // ─── Load ────────────────────────────────────────────────────────────────────
 
 async function loadTokens(initial = false): Promise<void> {
@@ -178,12 +227,12 @@ async function loadTokens(initial = false): Promise<void> {
         if (Array.isArray(data.available_scopes) && data.available_scopes.length > 0) {
             availableScopes.value = data.available_scopes;
         }
-        // Seed the selection once: the default grant is every scope the hub
-        // offers, matching the API's own default when `scopes` is omitted.
-        // Later refreshes must NOT re-seed, or a deliberate narrowing would be
-        // silently undone under the user.
+        // Seed the selection once: the read-only default, matching the API's
+        // own default when `scopes` is omitted. Later refreshes must NOT
+        // re-seed, or a deliberate narrowing would be silently undone under the
+        // user.
         if (!scopesSeeded.value) {
-            selectedScopes.value = [...availableScopes.value];
+            selectedScopes.value = defaultScopeSelection(availableScopes.value);
             scopesSeeded.value = true;
         }
     } catch (e) {
