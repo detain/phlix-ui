@@ -344,7 +344,7 @@ describe('SyncPlayModal — create', () => {
 // ── join ──────────────────────────────────────────────────────────────────────
 
 describe('SyncPlayModal — join', () => {
-    it('joins by id, emitting `joined` only when a room is in the store', async () => {
+    it('joins by id and EMITS `joined` with the room the server returned', async () => {
         const w = await openModal();
         await tab('Join room').trigger('click');
         await idInput().setValue(`  ${GROUP_ID}  `);
@@ -359,9 +359,16 @@ describe('SyncPlayModal — join', () => {
         expect(server!.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
             `POST /api/v1/syncplay/groups/${GROUP_ID}/join`,
         ]);
-        // `joined` is gated on `syncPlay.currentRoom`, which a bare join never
-        // sets — so the modal closes without emitting. Pinned as written.
-        expect(w.emitted('joined')).toBeUndefined();
+        // S283: this used to assert `joined` was UNDEFINED. The emit was gated
+        // on `syncPlay.currentRoom`, which a bare join never set, so the event
+        // was unreachable on the join tab and the `?room=` join-link — the only
+        // paths it exists for. The payload carries the server's `group_name`,
+        // which the modal never had: nothing here could have fabricated it.
+        const joined = w.emitted('joined');
+        expect(joined).toHaveLength(1);
+        const room = (joined![0] as [{ id: string; name: string }])[0];
+        expect(room.id).toBe(GROUP_ID);
+        expect(room.name).toBe('Movie Night');
         expect(w.emitted('update:modelValue')?.at(-1)).toEqual([false]);
     });
 

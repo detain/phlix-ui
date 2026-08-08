@@ -90,6 +90,21 @@ export interface SyncPlayGroupsResponse {
   groups?: RawSyncPlayGroup[];
 }
 
+/**
+ * Both views of the group a join returned.
+ *
+ * The join response is `{ success, group }` and that `group` is the FULL
+ * `GroupState::getState()` payload, so it answers both "which room am I in"
+ * (`SyncPlayRoom` — the name, the member count, the host) and "what is playing"
+ * (`SyncPlaySession`). Returning only the session threw the room half away, and
+ * every caller then had a null `currentRoom` after a successful join: leaving,
+ * refreshing and the room-name header are all guarded on it.
+ */
+export interface JoinedGroup {
+  room: SyncPlayRoom;
+  session: SyncPlaySession;
+}
+
 /** Coerce an unknown to a finite number, else `fallback`. */
 function num(value: unknown, fallback = 0): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -244,12 +259,14 @@ export class SyncPlayApi {
    *
    * The server answers `{ success, group }` (the post-join group state), NOT a
    * `session` envelope — the group IS the session.
+   *
+   * Returns BOTH views of that one payload; see {@link JoinedGroup}.
    */
-  async joinRoom(groupId: string): Promise<SyncPlaySession> {
+  async joinRoom(groupId: string): Promise<JoinedGroup> {
     const res = await this.client.post<SyncPlayGroupResponse>(
       `/api/v1/syncplay/groups/${encodeURIComponent(groupId)}/join`,
     );
-    return groupToSession(res.group);
+    return { room: normalizeGroup(res.group), session: groupToSession(res.group) };
   }
 
   /**
@@ -361,10 +378,26 @@ const RECONNECT_BASE_DELAY_MS = 1000;
 /** @phlix/syncplay SyncPlayClient instance for protocol handling. */
 let syncPlayClient: SyncPlayClient | null = null;
 
-/** Current member ID for the SyncPlay session. */
+/**
+ * This browsing context's SyncPlay member id.
+ *
+ * ⚠ Deliberately NOT cleared by {@link closeSyncPlayConnection} — it is a TAB
+ * identity, not a session one. Nothing in the app ever supplies a member id
+ * (`useSyncPlayStore.joinRoom()` calls `openSyncPlayConnection(roomId, handler)`
+ * with two arguments), so this only ever holds the `member_<ms>_<rand>` value
+ * generated below, derived from no account and no session. Clearing it on close
+ * would mint a fresh id on every leave-and-rejoin and the server would count the
+ * returning user as a new member; keeping it is what makes a reconnect look like
+ * the same member coming back. Pinned by `syncplay.ws.test.ts` — "REUSES the
+ * remembered member id on a later call that omits one".
+ */
 let syncPlayMemberId: string | null = null;
 
-/** Current member name for the SyncPlay session. */
+/**
+ * This browsing context's SyncPlay display name. Same lifetime as
+ * {@link syncPlayMemberId}, and likewise never supplied by a caller today, so
+ * in practice it is always the `'Anonymous'` default.
+ */
 let syncPlayMemberName: string | null = null;
 
 /** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
@@ -425,7 +458,12 @@ function handleWsClose(): void {
     syncPlayReconnectAttempts++;
     console.log(`[SyncPlay] WebSocket closed, reconnecting in ${delay}ms (attempt ${syncPlayReconnectAttempts})`);
     setTimeout(() => {
-      if (syncPlayRoomId) openSyncPlayConnection(syncPlayRoomId);
+      // ⚠ S283: this MUST NOT re-enter `openSyncPlayConnection()`. That is the
+      // caller-initiated entry point and it clears the backoff budget, so
+      // routing the reconnect through it zeroed the counter this delay is
+      // computed from — the ladder measured a flat 1000 ms on every rung and
+      // the give-up branch below was unreachable.
+      if (syncPlayRoomId) connectSyncPlaySocket(syncPlayRoomId);
     }, delay);
   } else if (syncPlayReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
     console.warn('[SyncPlay] Max reconnect attempts reached, giving up');
@@ -439,12 +477,41 @@ function handleWsClose(): void {
  * Open a WebSocket connection to the SyncPlay server for the given room.
  * If a connection is already open for a different room, it is closed first.
  *
+ * This is the CALLER-INITIATED entry point — a user joining, re-joining or
+ * switching rooms — and it therefore starts a fresh reconnect budget. The
+ * automatic reconnect deliberately does not come through here; see
+ * {@link connectSyncPlaySocket}.
+ *
  * @param roomId - The SyncPlay room/group ID to connect to.
  * @param onMessage - Callback invoked for each server-to-client SyncPlay message.
  * @param memberId - The member ID for this client.
  * @param memberName - The member name for this client.
  */
 export function openSyncPlayConnection(
+  roomId: string,
+  onMessage?: SyncPlayMessageHandler,
+  memberId?: string,
+  memberName?: string,
+): void {
+  // A caller-initiated connect is a new intent, so it gets the full ladder
+  // again. This is one of THREE distinct events that were all previously
+  // collapsed onto a single reset: "a caller asked to connect" (here), "the
+  // connection actually came up" (`onopen`, below) and "a reconnect attempt is
+  // starting" — which must NOT reset, and did (S283).
+  syncPlayReconnectAttempts = 0;
+  connectSyncPlaySocket(roomId, onMessage, memberId, memberName);
+}
+
+/**
+ * Build the socket for `roomId` without touching the reconnect budget.
+ *
+ * Shared by {@link openSyncPlayConnection} and by the reconnect timer in
+ * `handleWsClose()`. Splitting the two is the whole of the S283 fix: the timer
+ * needs everything this function does and none of the budget reset its caller
+ * does, because `syncPlayReconnectAttempts` is the input to the very delay that
+ * scheduled it.
+ */
+function connectSyncPlaySocket(
   roomId: string,
   onMessage?: SyncPlayMessageHandler,
   memberId?: string,
@@ -458,7 +525,6 @@ export function openSyncPlayConnection(
     syncPlayWs.close();
     syncPlayWs = null;
     syncPlayRoomId = null;
-    syncPlayReconnectAttempts = 0;
     syncPlayClient = null;
   }
 
@@ -466,7 +532,6 @@ export function openSyncPlayConnection(
   if (syncPlayWs && syncPlayRoomId === roomId) return;
 
   syncPlayRoomId = roomId;
-  syncPlayReconnectAttempts = 0;
 
   // Generate member ID if not provided
   const mid = memberId ?? syncPlayMemberId ?? `member_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -520,6 +585,9 @@ export function openSyncPlayConnection(
 
   syncPlayWs.onopen = () => {
     console.log('[SyncPlay] WebSocket connected');
+    // The connection actually came up — THIS is the event that clears the
+    // backoff budget, so a server that recovers on rung three does not carry
+    // its three used rungs into the next outage.
     syncPlayReconnectAttempts = 0;
     // Re-join the group after reconnect
     if (syncPlayClient && syncPlayRoomId) {

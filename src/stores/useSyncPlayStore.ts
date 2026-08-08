@@ -83,7 +83,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       const api = getSyncPlayApi(apiBase);
       const room = await api.createRoom(input);
       currentRoom.value = room;
-      const session = await api.joinRoom(room.id);
+      const { session } = await api.joinRoom(room.id);
       currentSession.value = session;
       // Refresh members list
       members.value = session.activeUsers;
@@ -110,16 +110,25 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       // opened. The value was vestigial regardless: `members.value` is
       // overwritten UNCONDITIONALLY from `session.activeUsers` a few lines
       // below, so nothing downstream could ever observe it.
-      const session = await api.joinRoom(roomId);
+      const { room, session } = await api.joinRoom(roomId);
       currentSession.value = session;
       _lastDriftCaptureMs = Date.now(); // anchor for drift computation
-      // Update room with session info
-      if (currentRoom.value) {
-        currentRoom.value = {
-          ...currentRoom.value,
-          currentSession: session,
-        };
-      }
+      // S283: back-fill `currentRoom` when the caller had none. A join by bare
+      // id — the modal's join tab and the `?room=<id>` join-link — never set it,
+      // and `leaveRoom()`, `refreshMembers()`, `SyncPlayPage.refresh()` and the
+      // room-name header are ALL guarded on `currentRoom`, so a link-joined user
+      // could not leave the room they had just joined. The room is not invented:
+      // it is `normalizeGroup()` of the same `{ group }` the join returned.
+      // The server's view wins field by field — an existing object supplies only
+      // what the group state has no counterpart for (description, participants).
+      // The other spread order would be a trap: joining room B while a stale
+      // room A sat in the store would leave `currentRoom.id` pointing at A, and
+      // `leaveRoom()` would then leave the wrong room.
+      currentRoom.value = {
+        ...(currentRoom.value ?? {}),
+        ...room,
+        currentSession: session,
+      };
       // Refresh members from session
       members.value = session.activeUsers;
       // P8: Open the WebSocket connection for real-time sync once successfully joined.

@@ -284,11 +284,53 @@ describe('useSyncPlayStore.joinRoom — currentRoom back-fill', () => {
         expect(store.currentRoom!.name).toBe('Movie Night');
     });
 
-    it('leaves currentRoom null when there was none — join does not invent a room', async () => {
+    /**
+     * S283 — this used to assert `currentRoom` stayed NULL, on the reasoning
+     * that a join must not invent a room. The room is no longer invented: the
+     * join response is `{ success, group }` and `group` is the full group state,
+     * so the room is read from the server exactly as `getState()` would read it.
+     * Leaving it null was not caution, it was a dropped field, and
+     * `leaveRoom()` / `refreshMembers()` / `SyncPlayPage.refresh()` are all
+     * guarded on `currentRoom` — a user who joined by link could not leave.
+     */
+    it('BACK-FILLS currentRoom from the join response when there was none', async () => {
         const store = useSyncPlayStore();
         await store.joinRoom(BASE, GROUP_ID);
-        expect(store.currentRoom).toBeNull();
+
+        expect(store.currentRoom).not.toBeNull();
+        expect(store.currentRoom!.id).toBe(GROUP_ID);
+        // The name can only have come from the server's `group_name`; the caller
+        // passed nothing but an id.
+        expect(store.currentRoom!.name).toBe('Movie Night');
+        expect(store.currentRoom!.currentSession?.id).toBe(GROUP_ID);
         expect(store.currentSession!.id).toBe(GROUP_ID);
+    });
+
+    it('a STALE room in the store does not survive a join to a different id', async () => {
+        const store = useSyncPlayStore();
+        store.currentRoom = { ...room, id: 'sp_somewhere_else', name: 'Yesterday' };
+        await store.joinRoom(BASE, GROUP_ID);
+
+        // The join response wins field by field, so `leaveRoom()` cannot end up
+        // leaving the room the user was in BEFORE this one.
+        expect(store.currentRoom!.id).toBe(GROUP_ID);
+        expect(store.currentRoom!.name).toBe('Movie Night');
+    });
+
+    it('the back-filled room is enough for leaveRoom to actually run', async () => {
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+        server!.requests.length = 0;
+
+        await store.leaveRoom(BASE);
+        // The control for "leaveRoom with no room is a silent no-op" below: the
+        // request really is issued, so the no-op there is the guard and not a
+        // missing route.
+        expect(server!.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
+            `POST /api/v1/syncplay/groups/${GROUP_ID}/leave`,
+        ]);
+        expect(store.currentRoom).toBeNull();
+        expect(store.currentSession).toBeNull();
     });
 });
 
