@@ -281,6 +281,52 @@ describe('Player — transport ↔ store', () => {
     expect(store.buffered).toBe(50);
   });
 
+  /**
+   * S287 — `timeupdate` is the LOCAL half of position reporting.
+   *
+   * The SyncPlay store's `localPlaybackPosition` used to move only when a REMOTE
+   * session update arrived (the `currentSession` watcher). It is one of the two
+   * inputs to `driftAmount` and it is the number the periodic position report
+   * puts on the wire, so a position that stops advancing the moment playback
+   * settles makes both meaningless. The fix feeds it here, where it costs a ref
+   * write and no I/O; the WIRE cadence stays fixed at
+   * `POSITION_REPORT_INTERVAL_MS` in the store.
+   */
+  it('feeds the SyncPlay store its local position on timeupdate — while in a room', async () => {
+    const { video, state } = mountPlayer();
+    const syncPlay = useSyncPlayStore();
+    syncPlay.currentSession = { id: 'sp_1', state: 'playing' } as unknown as SyncPlaySession;
+    expect(syncPlay.isInRoom).toBe(true);
+
+    state.currentTime = 30;
+    state.duration = 100;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    expect(syncPlay.localPlaybackPosition).toBe(30);
+
+    // Tracks: a one-shot write or a constant would survive the check above.
+    state.currentTime = 47.5;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    expect(syncPlay.localPlaybackPosition).toBe(47.5);
+  });
+
+  it('CONTROL — does NOT feed the SyncPlay store while not in a room', async () => {
+    const { video, state } = mountPlayer();
+    const syncPlay = useSyncPlayStore();
+    expect(syncPlay.isInRoom).toBe(false);
+
+    state.currentTime = 30;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    // Beside the passing in-a-room case above, this 0 is not a vacuous one: the
+    // only difference between the two is the session.
+    expect(syncPlay.localPlaybackPosition).toBe(0);
+    // …and the ordinary player store still got the update, so `timeupdate` did
+    // fire and this is not "the event never reached the handler".
+    expect(usePlayerStore().position).toBe(30);
+  });
+
   it('pushes the store selections onto the element at loadedmetadata', async () => {
     const { video, state } = mountPlayer();
     const store = usePlayerStore();

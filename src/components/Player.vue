@@ -1134,6 +1134,16 @@ function onTimeUpdate(): void {
   const v = videoRef.value;
   if (v) {
     player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
+    // S287: keep the SyncPlay store's local position fresh. This is the CHEAP
+    // half of position reporting — a local ref write, no I/O. The WIRE cadence
+    // is fixed separately by the store's own timer
+    // (`POSITION_REPORT_INTERVAL_MS`), because the server BROADCASTS every
+    // report to the whole group, making a `timeupdate`-rate report quadratic in
+    // members. Without this feed `localPlaybackPosition` only moved when a
+    // REMOTE update arrived, so both `driftAmount` and the report itself would
+    // have carried a position that stopped advancing as soon as playback
+    // settled.
+    if (syncPlay.isInRoom) syncPlay.updateLocalPosition(v.currentTime);
   }
 }
 function onLoadedMetadata(): void {

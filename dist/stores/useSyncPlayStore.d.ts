@@ -11,6 +11,48 @@ import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackComma
 /** Drift threshold in seconds beyond which we mark out-of-sync and seek. */
 export declare const SYNC_DRIFT_THRESHOLD_SECONDS = 2;
 /**
+ * How often, in milliseconds, this client reports its playback position to the
+ * group over the SyncPlay WebSocket.
+ *
+ * ## Why 5 s, and why a fixed interval at all
+ *
+ * S287: `sendSyncPlayStateUpdate()` existed, worked, and had **no production
+ * caller** — this client never told the group where it was. The cadence was
+ * chosen against what phlix-server actually does with the frame, not invented:
+ *
+ * 1. **The report is a PULL, not a PUSH.** `reportPosition()` emits
+ *    `syncplay_playback_sync`. `SyncPlayManager::handlePlaybackSync()`
+ *    (phlix-server `src/Session/SyncPlay/SyncPlayManager.php:988`) **ignores the
+ *    position on the payload entirely** — it reads `$group->getPlaybackPosition()`
+ *    and broadcasts THAT. So a report can never move the group's position and
+ *    therefore cannot fight the drift correction the server already applies; it
+ *    asks the group to re-state where it is. Reporting faster buys only a faster
+ *    re-anchor, never a more accurate group position.
+ * 2. **The cost is quadratic in group size.** That handler answers with
+ *    `broadcastToGroup()`, not a direct reply, so one member's report costs N
+ *    outbound frames in an N-member group. At the browser's `timeupdate` rate
+ *    (~4 Hz) a five-person room would generate ~100 frames/s; at 5 s it is 1/s.
+ * 3. **5 s is well inside the tolerance that defines "out of sync".**
+ *    `SyncPlayManager::DEFAULT_POSITION_TOLERANCE` is 2000 ms and the UI's own
+ *    {@link SYNC_DRIFT_THRESHOLD_SECONDS} is the same 2 s. Between anchors the
+ *    UI does not guess: `driftAmount` extrapolates from `_lastDriftCaptureMs` at
+ *    the known playback rate, and the only error that accumulates over a 5 s
+ *    window is clock skew — orders of magnitude below 2 s. What the anchor
+ *    prevents is the extrapolation window growing without bound, which is
+ *    exactly what happened with no caller at all: `_lastDriftCaptureMs` was set
+ *    at join and then only on a remote seek, so after ten minutes of playback
+ *    `syncStatus` was extrapolating over ten minutes and meant nothing.
+ *
+ * Reporting is skipped while paused — `driftAmount` is defined as 0 while paused
+ * or waiting, and the group's position does not advance either, so a paused
+ * report is pure fan-out with no consumer.
+ *
+ * ⚠ This value is asserted by name AND by literal in
+ * `useSyncPlayStore.position.test.ts`; a test that only advanced timers by this
+ * constant would self-adjust to any change of it.
+ */
+export declare const POSITION_REPORT_INTERVAL_MS = 5000;
+/**
  * The signed-in account's display name, or `undefined` when there is no usable
  * one.
  *
@@ -173,6 +215,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     }[]>;
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
+    localPlaybackPosition: import("vue").Ref<number, number>;
     isInRoom: import("vue").ComputedRef<boolean>;
     isSynced: import("vue").ComputedRef<boolean>;
     onlineMembers: import("vue").ComputedRef<{
@@ -201,7 +244,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
     updateLocalPosition: (position: number) => void;
-}, "error" | "members" | "currentSession" | "currentRoom" | "isLoading">, Pick<{
+}, "error" | "members" | "currentSession" | "currentRoom" | "isLoading" | "localPlaybackPosition">, Pick<{
     currentRoom: import("vue").Ref<{
         id: string;
         name: string;
@@ -343,6 +386,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     }[]>;
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
+    localPlaybackPosition: import("vue").Ref<number, number>;
     isInRoom: import("vue").ComputedRef<boolean>;
     isSynced: import("vue").ComputedRef<boolean>;
     onlineMembers: import("vue").ComputedRef<{
@@ -513,6 +557,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     }[]>;
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
+    localPlaybackPosition: import("vue").Ref<number, number>;
     isInRoom: import("vue").ComputedRef<boolean>;
     isSynced: import("vue").ComputedRef<boolean>;
     onlineMembers: import("vue").ComputedRef<{

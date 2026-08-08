@@ -6,7 +6,7 @@ import { t as o } from "./useAuthStore-Bxpn4wWU.js";
 import { t as s } from "./Button-Cw8Wl4QR.js";
 import { t as c } from "./Switch-H74PI5Oy.js";
 import { t as l } from "./Modal-DiBcOPD_.js";
-import { Fragment as u, computed as d, createBlock as f, createCommentVNode as p, createElementBlock as m, createElementVNode as h, createTextVNode as g, createVNode as _, defineComponent as v, normalizeClass as y, openBlock as b, ref as x, renderList as S, toDisplayString as C, unref as w, vModelText as T, watch as ee, withCtx as E, withDirectives as D, withModifiers as te } from "vue";
+import { Fragment as u, computed as d, createBlock as f, createCommentVNode as p, createElementBlock as m, createElementVNode as h, createTextVNode as g, createVNode as _, defineComponent as v, normalizeClass as y, openBlock as b, ref as x, renderList as S, toDisplayString as C, unref as w, vModelText as T, watch as E, withCtx as D, withDirectives as ee, withModifiers as te } from "vue";
 import { defineStore as O } from "pinia";
 //#region node_modules/@phlix/syncplay/dist/phlix-syncplay.js
 var k = {
@@ -567,6 +567,9 @@ function de() {
 	J &&= (J.close(), null), Q &&= (Q.leaveGroup(), Q.onDisconnect(), null), Y = null, X = 0;
 }
 function fe(e) {
+	!Q || !J || J.readyState !== WebSocket.OPEN || Q.reportPosition(e.playbackPosition, e.playbackRate > 0);
+}
+function pe(e) {
 	if (!(!Q || !J || J.readyState !== WebSocket.OPEN)) switch (e.type) {
 		case "play":
 			Q.sendPlay(e.position ?? 0);
@@ -580,7 +583,8 @@ function fe(e) {
 		case "sync": e.position !== void 0 && Q.reportPosition(e.position, !0);
 	}
 }
-function pe() {
+var me = 5e3;
+function he() {
 	let e = o().user;
 	if (e) {
 		for (let t of [
@@ -590,51 +594,73 @@ function pe() {
 		]) if (typeof t == "string" && t.trim() !== "") return t.trim();
 	}
 }
-var me = O("phlix-syncplay", () => {
-	let e = x(null), t = x(null), n = x([]), r = x(null), i = x(!1), a = x(0), o = 0, s = d(() => t.value !== null), c = d(() => t.value ? t.value.state === "playing" || t.value.state === "paused" : !1), l = d(() => n.value.filter((e) => e.isOnline)), u = d(() => {
+var ge = O("phlix-syncplay", () => {
+	let e = x(null), t = x(null), n = x([]), r = x(null), i = x(!1), a = x(0), o = 0, s = null, c = d(() => t.value !== null), l = d(() => t.value ? t.value.state === "playing" || t.value.state === "paused" : !1), u = d(() => n.value.filter((e) => e.isOnline)), f = d(() => {
 		let e = t.value;
 		if (!e || e.state === "paused" || e.state === "waiting") return 0;
 		let n = (Date.now() - o) / 1e3, r = e.playbackPosition + n * e.playbackRate;
 		return a.value - r;
-	}), f = d(() => t.value ? t.value.state === "waiting" ? "re-syncing" : Math.abs(u.value) > 2 ? "outOfSync" : "synced" : "outOfSync");
-	async function p(a, o) {
+	}), p = d(() => t.value ? t.value.state === "waiting" ? "re-syncing" : Math.abs(f.value) > 2 ? "outOfSync" : "synced" : "outOfSync");
+	function m() {
+		let e = t.value;
+		if (!e) {
+			g();
+			return;
+		}
+		e.state === "playing" && fe({
+			sessionId: e.id,
+			playbackPosition: a.value,
+			playbackRate: e.playbackRate > 0 ? e.playbackRate : 1,
+			serverTime: e.serverTime,
+			timestamp: (/* @__PURE__ */ new Date()).toISOString()
+		});
+	}
+	function h() {
+		g(), s = setInterval(m, me);
+	}
+	function g() {
+		s !== null && (clearInterval(s), s = null);
+	}
+	function _(r, i, a) {
+		let { room: s, session: c } = i;
+		t.value = c, o = Date.now(), e.value = {
+			...e.value ?? {},
+			...s,
+			currentSession: c
+		}, n.value = c.activeUsers, le(r, (e) => {
+			S(e);
+		}, void 0, a), h();
+	}
+	async function v(t, n) {
 		i.value = !0, r.value = null;
 		try {
-			let r = q(a), i = pe(), s = await r.createRoom({
-				...o,
+			let r = q(t), i = he(), a = await r.createRoom({
+				...n,
 				memberName: i
 			});
-			e.value = s;
-			let { session: c } = await r.joinRoom(s.id, i);
-			t.value = c, n.value = c.activeUsers;
+			e.value = a, _(a.id, await r.joinRoom(a.id, i), i);
 		} catch (e) {
 			throw r.value = e instanceof Error ? e.message : "Failed to create room", e;
 		} finally {
 			i.value = !1;
 		}
 	}
-	async function m(a, s) {
+	async function y(e, t) {
 		i.value = !0, r.value = null;
 		try {
-			let r = q(a), i = pe(), { room: c, session: l } = await r.joinRoom(s, i);
-			t.value = l, o = Date.now(), e.value = {
-				...e.value ?? {},
-				...c,
-				currentSession: l
-			}, n.value = l.activeUsers, le(s, (e) => {
-				g(e);
-			}, void 0, i);
+			let n = q(e), r = he();
+			_(t, await n.joinRoom(t, r), r);
 		} catch (e) {
 			throw r.value = e instanceof Error ? e.message : "Failed to join room", e;
 		} finally {
 			i.value = !1;
 		}
 	}
-	async function h(a) {
+	async function b(a) {
 		if (e.value) {
 			i.value = !0, r.value = null;
 			try {
-				await q(a).leaveRoom(e.value.id), de(), e.value = null, t.value = null, n.value = [];
+				await q(a).leaveRoom(e.value.id), g(), de(), e.value = null, t.value = null, n.value = [];
 			} catch (e) {
 				throw r.value = e instanceof Error ? e.message : "Failed to leave room", e;
 			} finally {
@@ -642,7 +668,7 @@ var me = O("phlix-syncplay", () => {
 			}
 		}
 	}
-	function g(e) {
+	function S(e) {
 		if (t.value) switch (e.type) {
 			case "play":
 				t.value = {
@@ -671,8 +697,8 @@ var me = O("phlix-syncplay", () => {
 			});
 		}
 	}
-	function _(e, n, r) {
-		t.value && fe({
+	function C(e, n, r) {
+		t.value && pe({
 			type: n,
 			position: r?.position,
 			rate: r?.rate,
@@ -680,7 +706,7 @@ var me = O("phlix-syncplay", () => {
 			issuedAt: (/* @__PURE__ */ new Date()).toISOString()
 		});
 	}
-	async function v(e) {
+	async function w(e) {
 		if (t.value) try {
 			let n = await q(e).getState(t.value.id);
 			t.value = n, o = Date.now();
@@ -688,7 +714,7 @@ var me = O("phlix-syncplay", () => {
 			throw r.value = e instanceof Error ? e.message : "Failed to refresh state", e;
 		}
 	}
-	async function y(t) {
+	async function T(t) {
 		if (e.value) try {
 			let r = await q(t).getMembers(e.value.id);
 			n.value = r;
@@ -696,10 +722,10 @@ var me = O("phlix-syncplay", () => {
 			throw r.value = e instanceof Error ? e.message : "Failed to refresh members", e;
 		}
 	}
-	function b() {
+	function E() {
 		r.value = null;
 	}
-	function S(e) {
+	function D(e) {
 		a.value = e;
 	}
 	return {
@@ -708,48 +734,49 @@ var me = O("phlix-syncplay", () => {
 		members: n,
 		error: r,
 		isLoading: i,
-		isInRoom: s,
-		isSynced: c,
-		onlineMembers: l,
-		syncStatus: f,
-		driftAmount: u,
-		createAndJoinRoom: p,
-		joinRoom: m,
-		leaveRoom: h,
-		onRemoteStateUpdate: g,
-		sendCommand: _,
-		refreshState: v,
-		refreshMembers: y,
-		clearError: b,
-		updateLocalPosition: S
+		localPlaybackPosition: a,
+		isInRoom: c,
+		isSynced: l,
+		onlineMembers: u,
+		syncStatus: p,
+		driftAmount: f,
+		createAndJoinRoom: v,
+		joinRoom: y,
+		leaveRoom: b,
+		onRemoteStateUpdate: S,
+		sendCommand: C,
+		refreshState: w,
+		refreshMembers: T,
+		clearError: E,
+		updateLocalPosition: D
 	};
-}), he = {
+}), _e = {
 	class: "syncplay-modal__tabs",
 	role: "tablist"
-}, ge = ["aria-selected"], _e = ["aria-selected"], ve = {
+}, ve = ["aria-selected"], ye = ["aria-selected"], be = {
 	key: 0,
 	class: "syncplay-modal__fields"
-}, ye = { class: "syncplay-modal__field" }, be = {
+}, xe = { class: "syncplay-modal__field" }, Se = {
 	class: "syncplay-modal__label",
 	for: "room-name"
-}, xe = ["placeholder"], Se = { class: "syncplay-modal__field syncplay-modal__field--toggle" }, Ce = { class: "syncplay-modal__toggle-hint" }, we = {
+}, Ce = ["placeholder"], we = { class: "syncplay-modal__field syncplay-modal__field--toggle" }, Te = { class: "syncplay-modal__toggle-hint" }, Ee = {
 	key: 1,
 	class: "syncplay-modal__fields"
-}, Te = { class: "syncplay-modal__field" }, Ee = {
+}, De = { class: "syncplay-modal__field" }, Oe = {
 	class: "syncplay-modal__label",
 	for: "room-id"
-}, De = ["placeholder"], Oe = {
+}, ke = ["placeholder"], Ae = {
 	key: 2,
 	class: "syncplay-modal__error",
 	role: "alert"
-}, ke = {
+}, je = {
 	key: 3,
 	class: "syncplay-modal__rooms"
-}, Ae = { class: "syncplay-modal__rooms-title" }, je = { class: "syncplay-modal__rooms-list" }, Me = ["onClick"], Ne = { class: "syncplay-modal__room-name" }, Pe = { class: "syncplay-modal__room-count" }, Fe = {
+}, Me = { class: "syncplay-modal__rooms-title" }, Ne = { class: "syncplay-modal__rooms-list" }, Pe = ["onClick"], Fe = { class: "syncplay-modal__room-name" }, Ie = { class: "syncplay-modal__room-count" }, Le = {
 	key: 4,
 	class: "syncplay-modal__loading",
 	role: "status"
-}, Ie = /*#__PURE__*/ e(/* @__PURE__ */ v({
+}, Re = /*#__PURE__*/ e(/* @__PURE__ */ v({
 	__name: "SyncPlayModal",
 	props: {
 		modelValue: { type: Boolean },
@@ -758,8 +785,8 @@ var me = O("phlix-syncplay", () => {
 	},
 	emits: ["update:modelValue", "joined"],
 	setup(e, { emit: r }) {
-		let i = e, o = r, { t: v } = n(), O = me(), k = a(), A = d(() => i.apiBase ?? k.value), j = x("create"), M = x(""), N = x(""), P = x(!0), F = x(!1), I = x(null), L = x([]), R = x(!1), z = d(() => M.value.trim().length > 0), B = d(() => N.value.trim().length > 0), V = d(() => (j.value === "create" ? z.value : B.value) && !F.value);
-		ee(() => i.modelValue, async (e) => {
+		let i = e, o = r, { t: v } = n(), O = ge(), k = a(), A = d(() => i.apiBase ?? k.value), j = x("create"), M = x(""), N = x(""), P = x(!0), F = x(!1), I = x(null), L = x([]), R = x(!1), z = d(() => M.value.trim().length > 0), B = d(() => N.value.trim().length > 0), V = d(() => (j.value === "create" ? z.value : B.value) && !F.value);
+		E(() => i.modelValue, async (e) => {
 			e && (I.value = null, M.value = "", P.value = !0, i.prefilledRoomId ? (N.value = i.prefilledRoomId, j.value = "join") : (N.value = "", j.value = "create"), await H());
 		});
 		async function H() {
@@ -801,12 +828,12 @@ var me = O("phlix-syncplay", () => {
 			"onUpdate:modelValue": r[5] ||= (e) => o("update:modelValue", e),
 			onClose: K
 		}, {
-			footer: E(() => [_(s, {
+			footer: D(() => [_(s, {
 				variant: "ghost",
 				type: "button",
 				onClick: K
 			}, {
-				default: E(() => [g(C(w(v)("common.close")), 1)]),
+				default: D(() => [g(C(w(v)("common.close")), 1)]),
 				_: 1
 			}), _(s, {
 				variant: "solid",
@@ -815,47 +842,47 @@ var me = O("phlix-syncplay", () => {
 				disabled: !V.value,
 				onClick: U
 			}, {
-				default: E(() => [g(C(j.value === "create" ? w(v)("syncplay.createRoom") : w(v)("syncplay.joinRoom")), 1)]),
+				default: D(() => [g(C(j.value === "create" ? w(v)("syncplay.createRoom") : w(v)("syncplay.joinRoom")), 1)]),
 				_: 1
 			}, 8, ["loading", "disabled"])]),
-			default: E(() => [h("form", {
+			default: D(() => [h("form", {
 				class: "syncplay-modal",
 				onSubmit: te(U, ["prevent"])
 			}, [
-				h("div", he, [h("button", {
+				h("div", _e, [h("button", {
 					type: "button",
 					role: "tab",
 					class: y(["syncplay-modal__tab", { "is-active": j.value === "create" }]),
 					"aria-selected": j.value === "create",
 					onClick: r[0] ||= (e) => j.value = "create"
-				}, C(w(v)("syncplay.createRoom")), 11, ge), h("button", {
+				}, C(w(v)("syncplay.createRoom")), 11, ve), h("button", {
 					type: "button",
 					role: "tab",
 					class: y(["syncplay-modal__tab", { "is-active": j.value === "join" }]),
 					"aria-selected": j.value === "join",
 					onClick: r[1] ||= (e) => j.value = "join"
-				}, C(w(v)("syncplay.joinRoom")), 11, _e)]),
-				j.value === "create" ? (b(), m("div", ve, [h("div", ye, [h("label", be, C(w(v)("syncplay.roomName")), 1), D(h("input", {
+				}, C(w(v)("syncplay.joinRoom")), 11, ye)]),
+				j.value === "create" ? (b(), m("div", be, [h("div", xe, [h("label", Se, C(w(v)("syncplay.roomName")), 1), ee(h("input", {
 					id: "room-name",
 					"onUpdate:modelValue": r[2] ||= (e) => M.value = e,
 					type: "text",
 					class: "syncplay-modal__input",
 					placeholder: w(v)("syncplay.roomNamePlaceholder"),
 					autocomplete: "off"
-				}, null, 8, xe), [[T, M.value]])]), h("div", Se, [_(c, {
+				}, null, 8, Ce), [[T, M.value]])]), h("div", we, [_(c, {
 					modelValue: P.value,
 					"onUpdate:modelValue": r[3] ||= (e) => P.value = e,
 					label: w(v)("syncplay.publicRoom")
-				}, null, 8, ["modelValue", "label"]), h("span", Ce, C(P.value ? w(v)("syncplay.publicHint") : w(v)("syncplay.privateHint")), 1)])])) : (b(), m("div", we, [h("div", Te, [h("label", Ee, C(w(v)("syncplay.roomId")), 1), D(h("input", {
+				}, null, 8, ["modelValue", "label"]), h("span", Te, C(P.value ? w(v)("syncplay.publicHint") : w(v)("syncplay.privateHint")), 1)])])) : (b(), m("div", Ee, [h("div", De, [h("label", Oe, C(w(v)("syncplay.roomId")), 1), ee(h("input", {
 					id: "room-id",
 					"onUpdate:modelValue": r[4] ||= (e) => N.value = e,
 					type: "text",
 					class: "syncplay-modal__input",
 					placeholder: w(v)("syncplay.roomIdPlaceholder"),
 					autocomplete: "off"
-				}, null, 8, De), [[T, N.value]])])])),
-				I.value ? (b(), m("p", Oe, C(I.value), 1)) : p("", !0),
-				j.value === "join" && L.value.length > 0 ? (b(), m("div", ke, [h("h3", Ae, C(w(v)("syncplay.publicRooms")), 1), h("ul", je, [(b(!0), m(u, null, S(L.value, (e) => (b(), m("li", {
+				}, null, 8, ke), [[T, N.value]])])])),
+				I.value ? (b(), m("p", Ae, C(I.value), 1)) : p("", !0),
+				j.value === "join" && L.value.length > 0 ? (b(), m("div", je, [h("h3", Me, C(w(v)("syncplay.publicRooms")), 1), h("ul", Ne, [(b(!0), m(u, null, S(L.value, (e) => (b(), m("li", {
 					key: e.id,
 					class: "syncplay-modal__room"
 				}, [h("button", {
@@ -867,16 +894,16 @@ var me = O("phlix-syncplay", () => {
 						name: "user",
 						class: "syncplay-modal__room-icon"
 					}),
-					h("span", Ne, C(e.name), 1),
-					h("span", Pe, C(w(v)("syncplay.members", { count: e.memberCount })), 1)
-				], 8, Me)]))), 128))])])) : p("", !0),
-				R.value ? (b(), m("div", Fe, [_(t, { name: "spinner" }), h("span", null, C(w(v)("common.loading")), 1)])) : p("", !0)
+					h("span", Fe, C(e.name), 1),
+					h("span", Ie, C(w(v)("syncplay.members", { count: e.memberCount })), 1)
+				], 8, Pe)]))), 128))])])) : p("", !0),
+				R.value ? (b(), m("div", Le, [_(t, { name: "spinner" }), h("span", null, C(w(v)("common.loading")), 1)])) : p("", !0)
 			], 32)]),
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
 }), [["__scopeId", "data-v-c5ff0c28"]]);
 //#endregion
-export { me as n, Ie as t };
+export { ge as n, Re as t };
 
-//# sourceMappingURL=SyncPlayModal-C6_AP_rg.js.map
+//# sourceMappingURL=SyncPlayModal-I4MN_tr4.js.map

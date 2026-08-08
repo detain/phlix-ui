@@ -188,6 +188,90 @@ describe('useSyncPlayStore.createAndJoinRoom — against the registered routes o
     });
 });
 
+/**
+ * S287 — the host of a room got no realtime sync at all.
+ *
+ * ⚠ Read the assertions, not the titles. `createAndJoinRoom()` **already
+ * resolved** before this step: it created the group, joined it, and populated
+ * `members` — every REST-level assertion in the describe above passed against
+ * the broken code. What it never did was call `openSyncPlayConnection()`, so the
+ * one member guaranteed to be in the room received no remote play/pause, no
+ * `playback_sync` broadcasts and no reconnect ladder until they left and
+ * re-joined by bare id. "It resolved" is therefore worthless here; the only
+ * statement worth making is about the SOCKET.
+ *
+ * The two paths are asserted SIDE BY SIDE and both must be 1. `sockets` is
+ * populated by a `FakeWebSocket` constructor; a harness where that seam has come
+ * loose records nothing, and a create-only `toHaveLength(1)` would then read as a
+ * failure of the fix rather than of the harness — while a create-only
+ * `not.toHaveLength(0)` would read as a PASS for both. The rejecting cases below
+ * are the other half: they prove `sockets` can hold 0 on this same harness, so
+ * `toHaveLength(1)` is not something every run produces regardless.
+ */
+describe('S287 — BOTH join-performing paths open the realtime WebSocket', () => {
+    it('CONTROL — joinRoom (the path that always worked) opens it', async () => {
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+
+        expect(sockets).toHaveLength(1);
+        expect(sockets[0]!.url).toContain(`room=${GROUP_ID}`);
+        expect(sockets[0]!.url).toContain(':8097');
+    });
+
+    it('createAndJoinRoom opens it too — for the room it just created', async () => {
+        const store = useSyncPlayStore();
+        await store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true });
+
+        expect(sockets).toHaveLength(1);
+        // Not merely "a socket": the socket for the CREATED group. A connection
+        // dialled with an empty or `undefined` room id would satisfy a bare
+        // length check and sync the host to nothing.
+        expect(sockets[0]!.url).toContain(`room=${GROUP_ID}`);
+        expect(sockets[0]!.url).toContain(':8097');
+    });
+
+    it('…and the creator gets the drift anchor a joiner gets', async () => {
+        const store = useSyncPlayStore();
+        await store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true });
+
+        // `driftAmount` extrapolates from the moment of the last server anchor.
+        // The create path never set one, so it extrapolated from epoch 0 — over
+        // fifty years of "elapsed" playback, putting `syncStatus` permanently at
+        // `outOfSync` and making Player.vue seek on the first session change.
+        expect(store.currentSession!.state).toBe('playing');
+        // Sit exactly where the group says it is; with the anchor set, drift is
+        // then the elapsed test time (~0 s). Without it, `Date.now() - 0` makes
+        // the extrapolated "expected position" ~1.7e9 seconds and drift is 1.7e9.
+        store.updateLocalPosition(store.currentSession!.playbackPosition);
+        expect(Math.abs(store.driftAmount)).toBeLessThan(1);
+        expect(store.syncStatus).toBe('synced');
+    });
+
+    it('NEGATIVE CONTROL — a failed create opens no socket', async () => {
+        server = makeSyncPlayServer(BASE, { omit: ['POST /api/v1/syncplay/groups'] });
+        const store = useSyncPlayStore();
+
+        await expect(
+            store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true }),
+        ).rejects.toThrow();
+        expect(sockets).toHaveLength(0);
+    });
+
+    it('NEGATIVE CONTROL — a create whose JOIN is unserved opens no socket', async () => {
+        server = makeSyncPlayServer(BASE, { omit: ['POST /api/v1/syncplay/groups/{id}/join'] });
+        const store = useSyncPlayStore();
+
+        await expect(
+            store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true }),
+        ).rejects.toThrow();
+        // The create succeeded, so this is not "nothing happened" — the room is
+        // in the store and the socket still must not be open.
+        expect(server.requests.map((r) => r.status)).toEqual([200, 404]);
+        expect(store.currentRoom!.id).toBe(GROUP_ID);
+        expect(sockets).toHaveLength(0);
+    });
+});
+
 describe('useSyncPlayStore.refreshMembers / refreshState — against the registered routes only', () => {
     it('refreshMembers reads the group-state route and yields members', async () => {
         const store = useSyncPlayStore();
