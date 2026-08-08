@@ -277,6 +277,8 @@ export const DEFAULT_MESSAGES = {
     createRoom: 'Create room',
     joinRoom: 'Join room',
     leaveRoom: 'Leave room',
+    /** Confirmation shown when the modal's `joined` event is consumed (S285). */
+    joinedRoom: 'Joined {name}',
     members: '{count} member | {count} members',
     synced: 'Synced',
     outOfSync: 'Out of sync',

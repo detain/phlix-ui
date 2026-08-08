@@ -13,10 +13,12 @@
  * which auto-opens the modal in join mode with the room ID pre-filled.
  */
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useSyncPlayStore } from '../stores/useSyncPlayStore';
+import { useToastStore } from '../stores/useToastStore';
 import { useMediaApiBase } from '../composables/useApiBase';
+import type { SyncPlayRoom } from '../types/syncplay';
 import SyncPlayModal from '../components/syncplay/SyncPlayModal.vue';
 import Button from '../components/ui/Button.vue';
 import Icon from '../components/Icon.vue';
@@ -26,8 +28,10 @@ import type { SyncPlayRole } from '../types/syncplay';
 
 const { t } = useMessages();
 const syncPlay = useSyncPlayStore();
+const toasts = useToastStore();
 const mediaApiBase = useMediaApiBase();
 const route = useRoute();
+const router = useRouter();
 
 const showModal = ref(false);
 const prefilledRoomId = ref<string | undefined>(undefined);
@@ -95,6 +99,32 @@ onMounted(() => {
 async function handleLeaveRoom(): Promise<void> {
   if (syncPlay.currentRoom) {
     await syncPlay.leaveRoom(effectiveApiBase.value);
+  }
+}
+
+/**
+ * Consume `SyncPlayModal`'s `joined` event (S285).
+ *
+ * The event had no listener anywhere — not here and not in `Player.vue` — so
+ * S283's work to make it reachable and correct fed nothing. Two things have to
+ * happen once a join succeeds, and neither of them can be done by the modal:
+ *
+ * 1. **Retire the join-link.** `onMounted` opens this modal in join mode
+ *    whenever `?room=<id>` is in the URL. Left in place, that query param
+ *    re-opens the join dialog on every reload and every back-navigation for a
+ *    room the user is ALREADY in. Both the query param and the prop that
+ *    mirrors it are cleared, so the link is consumed exactly once.
+ * 2. **Name the room that was joined.** The room card renders below, but only
+ *    after the store has settled and only on this page; the confirmation names
+ *    the room from the event's own payload — which is the only reason the event
+ *    carries one.
+ */
+function onJoined(room: SyncPlayRoom): void {
+  toasts.success(t('syncplay.joinedRoom', { name: room.name }));
+  prefilledRoomId.value = undefined;
+  if (route.query.room !== undefined) {
+    const { room: _consumed, ...rest } = route.query;
+    void router.replace({ query: rest });
   }
 }
 </script>
@@ -189,7 +219,7 @@ async function handleLeaveRoom(): Promise<void> {
     </div>
 
     <!-- SyncPlay modal (prefilledRoomId from ?room= query param triggers join mode) -->
-    <SyncPlayModal v-model="showModal" :prefilled-room-id="prefilledRoomId" />
+    <SyncPlayModal v-model="showModal" :prefilled-room-id="prefilledRoomId" @joined="onJoined" />
   </div>
 </template>
 

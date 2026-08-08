@@ -22,6 +22,7 @@
  */
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount, inject } from 'vue';
 import type { MediaItem } from '../types/media-item';
+import type { SyncPlayRoom } from '../types/syncplay';
 import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
@@ -217,6 +218,22 @@ const toasts = useToastStore();
 
 /** Whether to show the SyncPlay create/join modal. */
 const showSyncPlayModal = ref(false);
+
+/**
+ * Consume `SyncPlayModal`'s `joined` event (S285).
+ *
+ * The modal is mounted inside the player chrome, so on a successful join it
+ * simply closes and the user is left watching the same frame — the SyncPlay
+ * button's `is-on` state and the transport controls appear, but nothing
+ * anywhere in the player names the room that was actually joined, which matters
+ * when the join came from a pasted `?room=` id the user cannot verify. The
+ * event's payload is the only place that name is available at this moment
+ * (`syncPlay.currentRoom` is set too, but the point of the event is that the
+ * modal has finished and the room in hand is the one it produced).
+ */
+function onSyncPlayJoined(room: SyncPlayRoom): void {
+  toasts.success(t('syncplay.joinedRoom', { name: room.name }));
+}
 
 /** Ambient glow brightens in theater mode (the "dim surroundings" cinema feel). */
 const ambientIntensity = computed(() => (theater.value ? 1.35 : 1));
@@ -1885,7 +1902,7 @@ onBeforeUnmount(() => {
       <SyncPlayOverlay v-if="syncPlay.isInRoom" />
 
       <!-- SyncPlay create/join modal -->
-      <SyncPlayModal v-model="showSyncPlayModal" />
+      <SyncPlayModal v-model="showSyncPlayModal" @joined="onSyncPlayJoined" />
 
       <ShortcutsHelp :open="showHelp" @close="showHelp = false" />
 

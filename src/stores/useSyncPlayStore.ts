@@ -12,9 +12,39 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
 import { getSyncPlayApi, openSyncPlayConnection, closeSyncPlayConnection, sendSyncPlayCommand } from '../api/syncplay';
+import { useAuthStore } from './useAuthStore';
 
 /** Drift threshold in seconds beyond which we mark out-of-sync and seek. */
 export const SYNC_DRIFT_THRESHOLD_SECONDS = 2;
+
+/**
+ * The signed-in account's display name, or `undefined` when there is no usable
+ * one.
+ *
+ * S285: this is the whole of "every SyncPlay member renders as Anonymous". The
+ * name a member appears under is decided by whoever joins — `memberName` on the
+ * REST join/create body (`SyncPlayController` defaults it to the literal
+ * `'Guest'`/`'Host'`) and `member_name` on the WebSocket `GROUP_JOIN` frame
+ * (@phlix/syncplay, defaulted to `'Anonymous'` by `api/syncplay.ts`). Nothing
+ * ever supplied either, so every member in every room was a placeholder.
+ *
+ * `undefined` rather than a made-up string when signed out: a caller that sends
+ * nothing gets the SERVER's default, which is the honest answer for an
+ * unauthenticated joiner. Emitting our own placeholder here would look like a
+ * real name on the wire.
+ *
+ * `/auth/me` is not guaranteed to carry a `name` — it is `AuthUser`'s optional
+ * field — so `username` and then `email` back it up, in decreasing order of how
+ * much the user would recognise it as themselves.
+ */
+export function resolveMemberName(): string | undefined {
+  const user = useAuthStore().user;
+  if (!user) return undefined;
+  for (const candidate of [user.name, user.username, user.email]) {
+    if (typeof candidate === 'string' && candidate.trim() !== '') return candidate.trim();
+  }
+  return undefined;
+}
 
 export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   // ---- state --------------------------------------------------------------
@@ -81,9 +111,13 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     error.value = null;
     try {
       const api = getSyncPlayApi(apiBase);
-      const room = await api.createRoom(input);
+      // S285: the creator is added to the group as a member by `createGroup()`
+      // itself, under `memberName` — so the name has to go on the CREATE body,
+      // not just the join that follows it.
+      const memberName = resolveMemberName();
+      const room = await api.createRoom({ ...input, memberName });
       currentRoom.value = room;
-      const { session } = await api.joinRoom(room.id);
+      const { session } = await api.joinRoom(room.id, memberName);
       currentSession.value = session;
       // Refresh members list
       members.value = session.activeUsers;
@@ -110,7 +144,13 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       // opened. The value was vestigial regardless: `members.value` is
       // overwritten UNCONDITIONALLY from `session.activeUsers` a few lines
       // below, so nothing downstream could ever observe it.
-      const { room, session } = await api.joinRoom(roomId);
+      // S285: join UNDER THE ACCOUNT'S NAME. The server records whatever
+      // `memberName` this body carries and echoes it straight back inside
+      // `group.members`, which is what `members.value` below is built from — so
+      // this one argument is the difference between the member list showing the
+      // real people in the room and showing a column of `Guest`.
+      const memberName = resolveMemberName();
+      const { room, session } = await api.joinRoom(roomId, memberName);
       currentSession.value = session;
       _lastDriftCaptureMs = Date.now(); // anchor for drift computation
       // S283: back-fill `currentRoom` when the caller had none. A join by bare
@@ -132,9 +172,21 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       // Refresh members from session
       members.value = session.activeUsers;
       // P8: Open the WebSocket connection for real-time sync once successfully joined.
-      openSyncPlayConnection(roomId, (msg) => {
-        onRemoteStateUpdate(msg as SyncPlayPlaybackCommand);
-      });
+      // S285: `memberName` is passed through to the `GROUP_JOIN` frame's
+      // `member_name`. The WS worker keeps its OWN member table (the REST
+      // controller and the socket worker are different processes), so a name
+      // supplied only on the REST body would still leave the realtime side —
+      // and the snapshot `getGroup()` reads back — calling this member
+      // "Anonymous". The member ID stays `undefined` on purpose: it is a tab
+      // identity minted by `api/syncplay.ts`, not an account one.
+      openSyncPlayConnection(
+        roomId,
+        (msg) => {
+          onRemoteStateUpdate(msg as SyncPlayPlaybackCommand);
+        },
+        undefined,
+        memberName,
+      );
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to join room';
       throw e;

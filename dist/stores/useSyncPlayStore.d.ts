@@ -10,6 +10,27 @@
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
 /** Drift threshold in seconds beyond which we mark out-of-sync and seek. */
 export declare const SYNC_DRIFT_THRESHOLD_SECONDS = 2;
+/**
+ * The signed-in account's display name, or `undefined` when there is no usable
+ * one.
+ *
+ * S285: this is the whole of "every SyncPlay member renders as Anonymous". The
+ * name a member appears under is decided by whoever joins — `memberName` on the
+ * REST join/create body (`SyncPlayController` defaults it to the literal
+ * `'Guest'`/`'Host'`) and `member_name` on the WebSocket `GROUP_JOIN` frame
+ * (@phlix/syncplay, defaulted to `'Anonymous'` by `api/syncplay.ts`). Nothing
+ * ever supplied either, so every member in every room was a placeholder.
+ *
+ * `undefined` rather than a made-up string when signed out: a caller that sends
+ * nothing gets the SERVER's default, which is the honest answer for an
+ * unauthenticated joiner. Emitting our own placeholder here would look like a
+ * real name on the wire.
+ *
+ * `/auth/me` is not guaranteed to carry a `name` — it is `AuthUser`'s optional
+ * field — so `username` and then `email` back it up, in decreasing order of how
+ * much the user would recognise it as themselves.
+ */
+export declare function resolveMemberName(): string | undefined;
 export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-syncplay", Pick<{
     currentRoom: import("vue").Ref<{
         id: string;

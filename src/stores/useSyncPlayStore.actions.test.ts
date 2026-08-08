@@ -408,7 +408,10 @@ describe('useSyncPlayStore — error paths', () => {
 
         await expect(store.refreshMembers(BASE)).rejects.toThrow();
         expect(store.error).not.toBeNull();
-        expect(store.members.map((m) => m.name)).toEqual(['Alice', 'Bob']);
+        // The list the failed refresh preserved is the one the JOIN produced —
+        // Alice and Bob plus this joiner, whom the server named 'Guest' because
+        // no account is signed in here (S285).
+        expect(store.members.map((m) => m.name)).toEqual(['Alice', 'Bob', 'Guest']);
     });
 
     it('refreshMembers with no room is a silent no-op', async () => {

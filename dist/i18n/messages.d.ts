@@ -239,6 +239,8 @@ export declare const DEFAULT_MESSAGES: {
         createRoom: string;
         joinRoom: string;
         leaveRoom: string;
+        /** Confirmation shown when the modal's `joined` event is consumed (S285). */
+        joinedRoom: string;
         members: string;
         synced: string;
         outOfSync: string;
