@@ -18,9 +18,11 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useSyncPlayStore } from './useSyncPlayStore';
+import { useSyncPlayStore, resolveMemberName } from './useSyncPlayStore';
+import { useAuthStore } from './useAuthStore';
 import { closeSyncPlayConnection } from '../api/syncplay';
 import { makeSyncPlayServer, type FakeSyncPlayServer } from '../api/test/syncplayServer';
+import type { AuthUser } from '../api/client';
 
 const BASE = 'https://media.example.com';
 const GROUP_ID = 'sp_abc123';
@@ -120,8 +122,12 @@ describe('useSyncPlayStore.joinRoom — against the registered routes only', () 
         const store = useSyncPlayStore();
         await store.joinRoom(BASE, GROUP_ID);
 
-        expect(store.members.map((m) => m.name)).toEqual(['Alice', 'Bob']);
-        expect(store.onlineMembers).toHaveLength(2);
+        // Alice and Bob were already in the room; the third entry is US. Nobody
+        // is signed in in this test, so no `memberName` goes on the body and the
+        // server's own `'Guest'` fallback names the joiner — which is exactly
+        // what every real user saw before S285 (see the signed-in case below).
+        expect(store.members.map((m) => m.name)).toEqual(['Alice', 'Bob', 'Guest']);
+        expect(store.onlineMembers).toHaveLength(3);
     });
 
     it('opens the WebSocket — which never happened while the join threw', async () => {
@@ -165,7 +171,11 @@ describe('useSyncPlayStore.createAndJoinRoom — against the registered routes o
 
         expect(store.currentRoom!.id).toBe(GROUP_ID);
         expect(store.currentSession!.id).toBe(GROUP_ID);
-        expect(store.members).toHaveLength(2);
+        // A group you just CREATED holds only you: `createGroup()` adds the
+        // creator and nobody else, and the join that immediately follows is the
+        // same member joining their own group. Alice and Bob belong to the
+        // pre-existing room the join-by-id tests use, not to this one.
+        expect(store.members).toHaveLength(1);
         // Two requests: POST /groups then POST /groups/{id}/join. If `createRoom`
         // returned a room with an undefined id, the join would have gone to
         // `/groups/undefined/join` — which the fake server still MATCHES (it is a
@@ -186,7 +196,10 @@ describe('useSyncPlayStore.refreshMembers / refreshState — against the registe
         store.members = [];
 
         await expect(store.refreshMembers(BASE)).resolves.toBeUndefined();
-        expect(store.members.map((m) => m.name)).toEqual(['Alice', 'Bob']);
+        // The join above put us in the group, so a later refresh reads us back
+        // out of it — a member who disappeared on the next refresh would be a
+        // fake nobody has to write.
+        expect(store.members.map((m) => m.name)).toEqual(['Alice', 'Bob', 'Guest']);
         expect(server!.requests.at(-1)).toMatchObject({
             method: 'GET',
             path: `/api/v1/syncplay/groups/${GROUP_ID}`,
@@ -220,5 +233,128 @@ describe('useSyncPlayStore.refreshMembers / refreshState — against the registe
         });
         expect(store.isInRoom).toBe(false);
         expect(store.members).toEqual([]);
+    });
+});
+
+// ── S285: the signed-in account's name reaches the room ───────────────────────
+
+/** Put a user in the auth store without going near `/auth/me`. */
+function signIn(user: Partial<AuthUser>): void {
+    useAuthStore().user = { id: 'u-1', ...user } as AuthUser;
+}
+
+/**
+ * The `member_name` field of the `GROUP_JOIN` frame the socket actually sent.
+ *
+ * @phlix/syncplay serializes flat — `{ type, group_id, member_id, member_name }` —
+ * so this reads the shipped wire shape, not a re-derivation of it.
+ */
+function joinFrameMemberName(): unknown {
+    const frames = sockets.flatMap((s) => s.sent.map((raw) => JSON.parse(raw) as Record<string, unknown>));
+    const join = frames.find((f) => f['type'] === 'syncplay_group_join');
+    expect(join, 'no GROUP_JOIN frame was sent').toBeDefined();
+    return join!['member_name'];
+}
+
+describe('useSyncPlayStore — the joining member carries the account name', () => {
+    it('sends the account name on the REST body AND gets it back as a member', async () => {
+        signIn({ name: 'Ada Lovelace', username: 'ada', email: 'ada@example.com' });
+        const store = useSyncPlayStore();
+
+        await store.joinRoom(BASE, GROUP_ID);
+
+        // 1. On the wire.
+        expect(server!.requests[0]!.body).toEqual({ memberName: 'Ada Lovelace' });
+        // 2. Back out of the server's response, into the store the UI renders.
+        //    'Ada Lovelace' is not in the fixture — it can only have arrived by
+        //    the round trip.
+        expect(store.members.map((m) => m.name)).toEqual(['Alice', 'Bob', 'Ada Lovelace']);
+        expect(store.members.some((m) => m.name === 'Guest')).toBe(false);
+    });
+
+    /**
+     * ⚠ These two are a PAIR and must stay one. `api/syncplay.ts` remembers the
+     * member name in a module-level singleton that `closeSyncPlayConnection()`
+     * deliberately does not clear (it is a tab identity), so a single test that
+     * asserts one name cannot tell "the account name was passed" from "some name
+     * was left over". Two different accounts, two different frames, same module.
+     */
+    it('sends the same name on the WebSocket GROUP_JOIN frame', async () => {
+        signIn({ name: 'Ada Lovelace' });
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+
+        // The socket only joins once `onopen` fires.
+        sockets[0]!.onopen?.();
+
+        // The WS worker keeps its OWN member table, so a name that travelled only
+        // on the REST body would still leave the realtime side calling this member
+        // 'Anonymous'.
+        expect(joinFrameMemberName()).toBe('Ada Lovelace');
+    });
+
+    it('…and it TRACKS the account rather than being a constant', async () => {
+        signIn({ name: 'Grace Hopper' });
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+        sockets[0]!.onopen?.();
+
+        expect(joinFrameMemberName()).toBe('Grace Hopper');
+    });
+
+    it('CONTROL — signed out, nothing is sent and the SERVER names the member', async () => {
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+
+        expect(server!.requests[0]!.body).toBeNull();
+        expect(store.members.map((m) => m.name)).toEqual(['Alice', 'Bob', 'Guest']);
+        // The WS frame is NOT asserted here: `syncPlayMemberName` survives across
+        // tests in this file, so a signed-out join can legitimately still carry
+        // the previous tab identity. The `'Anonymous'` fallback is proved against
+        // a freshly imported module in `api/syncplay.ws.test.ts`.
+    });
+
+    it('createAndJoinRoom names the creator on the create body too', async () => {
+        signIn({ name: 'Ada Lovelace' });
+        const store = useSyncPlayStore();
+
+        await store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true });
+
+        expect(server!.requests.map((r) => r.body)).toEqual([
+            { name: 'Movie Night', isPublic: true, memberName: 'Ada Lovelace' },
+            { memberName: 'Ada Lovelace' },
+        ]);
+        // The creator is the host of the group `createRoom` returned — proving the
+        // name reached the CREATE call, not only the join that followed it.
+        expect(store.members.some((m) => m.name === 'Ada Lovelace')).toBe(true);
+    });
+
+    describe('resolveMemberName — which field of the account is used', () => {
+        it('prefers name, then username, then email', () => {
+            signIn({ name: 'Ada Lovelace', username: 'ada', email: 'ada@example.com' });
+            expect(resolveMemberName()).toBe('Ada Lovelace');
+
+            useAuthStore().user = { id: 'u-1', username: 'ada', email: 'ada@example.com' } as AuthUser;
+            expect(resolveMemberName()).toBe('ada');
+
+            useAuthStore().user = { id: 'u-1', email: 'ada@example.com' } as AuthUser;
+            expect(resolveMemberName()).toBe('ada@example.com');
+        });
+
+        it('skips blank fields rather than sending whitespace as a display name', () => {
+            signIn({ name: '   ', username: '', email: 'ada@example.com' });
+            expect(resolveMemberName()).toBe('ada@example.com');
+        });
+
+        it('trims, so a padded name does not render padded', () => {
+            signIn({ name: '  Ada Lovelace  ' });
+            expect(resolveMemberName()).toBe('Ada Lovelace');
+        });
+
+        it('is undefined with no user, and with a user carrying nothing usable', () => {
+            expect(resolveMemberName()).toBeUndefined();
+            signIn({});
+            expect(resolveMemberName()).toBeUndefined();
+        });
     });
 });

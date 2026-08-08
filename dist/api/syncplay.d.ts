@@ -13,6 +13,19 @@ export interface CreateRoomInput {
     name: string;
     description?: string;
     isPublic: boolean;
+    /**
+     * Display name to register the creator under.
+     *
+     * S285: `SyncPlayController::createGroup()` reads `memberName` off the body and
+     * falls back to the literal `'Host'`; nothing ever sent it, so every creator was
+     * called "Host" in the member list. Omitted (or empty) keeps the server default.
+     *
+     * ⚠ `description` and `isPublic` have NO server counterpart — `createGroup()`
+     * reads only `name`, `password`, `memberId` and `memberName`. They are kept
+     * because they are part of the modal's form model, but they are discarded on
+     * arrival; `has_password` is the only public/private signal the server has.
+     */
+    memberName?: string;
 }
 /** Input for joining a SyncPlay group. */
 export interface JoinRoomInput {
@@ -131,8 +144,15 @@ export declare function groupToSession(raw: RawSyncPlayGroup | undefined): SyncP
  * `ApiClient` throws on any non-ok response, calling it made every join fail
  * before it started (S276). The member list comes from the group state.
  *
- * Playback state synchronization (sendStateUpdate, sendCommand) is handled
- * via WebSocket on port 8097 using @phlix/syncplay, not REST.
+ * ⚠ This class carries NO playback-transport methods, deliberately. It used to
+ * expose `sendStateUpdate()` and `sendCommand()` as `async` bodies that did
+ * nothing at all and resolved — a caller could not tell "sent" from "discarded",
+ * which is the worst shape a stub can take. There is no REST route to wire them
+ * to (the manifest above is the whole SyncPlay HTTP surface), and inventing one
+ * is exactly the S276 defect, so they were REMOVED rather than kept (S285).
+ * Playback transport is the WebSocket's job and is already implemented for real
+ * by the module-level {@link sendSyncPlayCommand} / {@link sendSyncPlayStateUpdate},
+ * which emit @phlix/syncplay frames on the `:8097` socket.
  */
 export declare class SyncPlayApi {
     private client;
@@ -140,6 +160,10 @@ export declare class SyncPlayApi {
     /**
      * Create a new SyncPlay group.
      * POST /api/v1/syncplay/groups
+     *
+     * `input` is forwarded verbatim; the server picks `name`, `password`,
+     * `memberId` and `memberName` out of it and ignores the rest (see
+     * {@link CreateRoomInput}).
      */
     createRoom(input: CreateRoomInput): Promise<SyncPlayRoom>;
     /**
@@ -150,8 +174,15 @@ export declare class SyncPlayApi {
      * `session` envelope — the group IS the session.
      *
      * Returns BOTH views of that one payload; see {@link JoinedGroup}.
+     *
+     * @param groupId    The group to join.
+     * @param memberName Display name to join under. `SyncPlayController::joinGroup()`
+     *   reads `memberName` from the body and falls back to the literal `'Guest'`, so
+     *   omitting it is what made every member render as an anonymous placeholder
+     *   (S285). The joined member appears under this name in the `group.members`
+     *   dictionary the same response carries back.
      */
-    joinRoom(groupId: string): Promise<JoinedGroup>;
+    joinRoom(groupId: string, memberName?: string): Promise<JoinedGroup>;
     /**
      * Leave the current SyncPlay group.
      * POST /api/v1/syncplay/groups/:id/leave
@@ -183,20 +214,6 @@ export declare class SyncPlayApi {
      * @deprecated Use listGroups() - the server does not distinguish public/private via endpoint
      */
     listPublicRooms(): Promise<SyncPlayRoom[]>;
-    /**
-     * Send a playback state update to the session.
-     *
-     * @deprecated State updates are sent via WebSocket using @phlix/syncplay SyncPlayClient.
-     * This method is a no-op placeholder to maintain API compatibility.
-     */
-    sendStateUpdate(sessionId: string, state: SyncPlayStateUpdate): Promise<void>;
-    /**
-     * Send a playback command (play/pause/seek/sync).
-     *
-     * @deprecated Commands are sent via WebSocket using @phlix/syncplay SyncPlayClient.
-     * This method is a no-op placeholder to maintain API compatibility.
-     */
-    sendCommand(sessionId: string, command: SyncPlayPlaybackCommand): Promise<void>;
 }
 export declare function getSyncPlayApi(apiBase: string): SyncPlayApi;
 /** Callback invoked when the server sends a SyncPlay message over the WebSocket. */

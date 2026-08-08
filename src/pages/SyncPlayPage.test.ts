@@ -28,6 +28,7 @@ import AdminSyncPlayPage from './admin/SyncPlayPage.vue';
 import Button from '../components/ui/Button.vue';
 import Icon from '../components/Icon.vue';
 import { useSyncPlayStore } from '../stores/useSyncPlayStore';
+import { useToastStore } from '../stores/useToastStore';
 import type { SyncPlaySession, SyncPlayUser } from '../types/syncplay';
 
 // `getSyncPlayApi` is what every store action reaches the network through, so the
@@ -99,7 +100,7 @@ function makeRouter(): Router {
 const ModalStub = {
   name: 'SyncPlayModal',
   props: ['modelValue', 'prefilledRoomId'],
-  emits: ['update:modelValue'],
+  emits: ['update:modelValue', 'joined'],
   template: '<div class="modal-stub" />',
 };
 
@@ -119,7 +120,7 @@ async function mountPage(
      */
     beforeMount?: (store: ReturnType<typeof useSyncPlayStore>) => void;
   } = {},
-): Promise<{ w: VueWrapper; store: ReturnType<typeof useSyncPlayStore> }> {
+): Promise<{ w: VueWrapper; store: ReturnType<typeof useSyncPlayStore>; router: Router }> {
   setActivePinia(createPinia());
   const store = useSyncPlayStore();
   // Seed store state BEFORE mount — `onMounted` reads `isInRoom`/`currentRoom`.
@@ -158,7 +159,7 @@ async function mountPage(
     },
   });
   await flushPromises();
-  return { w, store };
+  return { w, store, router };
 }
 
 function findBtn(w: VueWrapper, text: string) {
@@ -628,5 +629,86 @@ describe('SyncPlayPage — leaving a room', () => {
     await flushPromises();
     expect(leaveSpy).toHaveBeenCalledTimes(1);
     expect(leaveSpy).toHaveBeenCalledWith(API_BASE);
+  });
+});
+
+// ── S285: the modal's `joined` event is CONSUMED here ─────────────────────────
+//
+// `SyncPlayModal` has declared a `joined` emit since it was written, and no
+// mount site anywhere in the repo listened for it — this page and `Player.vue`
+// both mounted the modal with only `v-model`. S283 made the emit reachable and
+// correct on both the create and the join arm; it still fed nothing. These tests
+// assert what the page now DOES with it, not that the event fires (that is the
+// modal's own suite).
+
+describe('SyncPlayPage — consuming the modal\'s `joined` event (S285)', () => {
+  const joinedRoom = { id: 'room-xyz', name: 'Movie Night', isPublic: true, memberCount: 3 };
+
+  it('is wired at all — the mounted modal has a `joined` listener', async () => {
+    const { w } = await mountPage();
+    // Vue exposes a listener as an `onJoined` prop on the child vnode. Without
+    // `@joined` on the template this is undefined, which is precisely the state
+    // the page shipped in.
+    expect(modalStub(w).vm.$.vnode.props?.['onJoined']).toBeTypeOf('function');
+  });
+
+  it('announces the joined room BY NAME, from the event payload', async () => {
+    const { w } = await mountPage();
+    const toasts = useToastStore();
+    expect(toasts.toasts).toHaveLength(0);
+
+    modalStub(w).vm.$emit('joined', joinedRoom);
+    await flushPromises();
+
+    expect(toasts.toasts).toHaveLength(1);
+    expect(toasts.toasts[0]!.message).toBe('Joined Movie Night');
+    expect(toasts.toasts[0]!.tone).toBe('success');
+  });
+
+  it('CONTROL — a different room produces a different message', async () => {
+    // Guards the assertion above against a hard-coded string: the name must come
+    // from the payload, so a payload change must change the output.
+    const { w } = await mountPage();
+    modalStub(w).vm.$emit('joined', { ...joinedRoom, name: 'Book Club' });
+    await flushPromises();
+    expect(useToastStore().toasts[0]!.message).toBe('Joined Book Club');
+  });
+
+  it('retires the join-link: `?room=` is stripped and the prefill cleared', async () => {
+    // Without this, reloading the page (or navigating back to it) re-opens the
+    // join dialog for a room the user is already in — `onMounted` reads the same
+    // query param every time.
+    const { w, router } = await mountPage({ query: '?room=room-xyz' });
+    expect(modalStub(w).props('prefilledRoomId')).toBe('room-xyz');
+    expect(router.currentRoute.value.query['room']).toBe('room-xyz');
+
+    modalStub(w).vm.$emit('joined', joinedRoom);
+    await flushPromises();
+
+    expect(router.currentRoute.value.query['room']).toBeUndefined();
+    expect(modalStub(w).props('prefilledRoomId')).toBeUndefined();
+  });
+
+  it('keeps every OTHER query param while stripping `room`', async () => {
+    // `router.replace({ query: rest })` replaces the whole query object, so a
+    // spread that dropped the siblings would silently lose them.
+    const { w, router } = await mountPage({ query: '?room=room-xyz&t=42' });
+    modalStub(w).vm.$emit('joined', joinedRoom);
+    await flushPromises();
+
+    expect(router.currentRoute.value.query['room']).toBeUndefined();
+    expect(router.currentRoute.value.query['t']).toBe('42');
+  });
+
+  it('does not touch the URL when there was no `?room=` to consume', async () => {
+    const { w, router } = await mountPage({ query: '?t=42' });
+    const replaceSpy = vi.spyOn(router, 'replace');
+    modalStub(w).vm.$emit('joined', joinedRoom);
+    await flushPromises();
+
+    expect(replaceSpy).not.toHaveBeenCalled();
+    expect(router.currentRoute.value.query['t']).toBe('42');
+    // …but the join was still announced, so "did nothing" is not the outcome.
+    expect(useToastStore().toasts).toHaveLength(1);
   });
 });

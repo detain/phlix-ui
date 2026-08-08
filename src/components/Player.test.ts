@@ -29,6 +29,8 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useSyncPlayStore } from '../stores/useSyncPlayStore';
+import { useToastStore } from '../stores/useToastStore';
+import SyncPlayModal from './syncplay/SyncPlayModal.vue';
 import type { MediaItem } from '../types/media-item';
 import { isRoute } from '../test/route-match';
 import type { SyncPlaySession, SyncPlayPlaybackCommand } from '../types/syncplay';
@@ -569,6 +571,56 @@ describe('Player — SyncPlay drift correction (U-I1)', () => {
     expect(syncPlay.driftAmount).toBe(0); // paused → drift not computed
     expect(video.pause).toHaveBeenCalled(); // pause applied
     expect(state.currentTime).toBe(500); // no seek
+  });
+});
+
+// ── S285: the Player CONSUMES the modal's `joined` event ──────────────────────
+//
+// `<SyncPlayModal v-model="showSyncPlayModal" />` had no `@joined` listener, so
+// the event S283 made reachable died here. The modal is mounted for real (closed,
+// so its `loadPublicRooms()` watcher never fires) and the event is emitted off the
+// real child component — not off a stub that would prove only that stubs emit.
+describe('Player — consuming SyncPlayModal `joined` (S285)', () => {
+  const joinedRoom = { id: 'room-xyz', name: 'Movie Night', isPublic: true, memberCount: 3 };
+
+  function modal(w: ReturnType<typeof mountPlayer>['w']) {
+    return w.findComponent(SyncPlayModal);
+  }
+
+  it('mounts the modal WITH a `joined` listener', () => {
+    const { w } = mountPlayer();
+    expect(modal(w).exists()).toBe(true);
+    expect(modal(w).vm.$.vnode.props?.['onJoined']).toBeTypeOf('function');
+  });
+
+  it('announces the room by name when the modal reports a join', async () => {
+    const { w } = mountPlayer();
+    const toasts = useToastStore();
+    expect(toasts.toasts).toHaveLength(0);
+
+    modal(w).vm.$emit('joined', joinedRoom);
+    await nextTick();
+
+    expect(toasts.toasts).toHaveLength(1);
+    expect(toasts.toasts[0]!.message).toBe('Joined Movie Night');
+    expect(toasts.toasts[0]!.tone).toBe('success');
+  });
+
+  it('CONTROL — the name comes from the payload, not a constant', async () => {
+    const { w } = mountPlayer();
+    modal(w).vm.$emit('joined', { ...joinedRoom, name: 'Book Club' });
+    await nextTick();
+    expect(useToastStore().toasts[0]!.message).toBe('Joined Book Club');
+  });
+
+  it('says nothing until a join is actually reported', async () => {
+    // The negative half: opening/closing the modal must not announce anything,
+    // so the assertions above cannot be passing off some unrelated player toast.
+    const { w } = mountPlayer();
+    modal(w).vm.$emit('update:modelValue', true);
+    modal(w).vm.$emit('update:modelValue', false);
+    await nextTick();
+    expect(useToastStore().toasts).toHaveLength(0);
   });
 });
 

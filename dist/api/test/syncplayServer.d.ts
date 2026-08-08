@@ -43,7 +43,19 @@ export interface ObservedRequest {
     /** `path` with the group-id segment replaced by `{id}`, for tuple-exact compare. */
     template: string;
     status: number;
+    /** Parsed JSON request body, or `null` when the request carried none. */
+    body: Record<string, unknown> | null;
 }
+/**
+ * The member id the fake attributes an unattributed request to.
+ *
+ * The real controller derives it from the authenticated principal —
+ * `$memberId = $body['memberId'] ?: ($userId ?: 'user_' . random)` — and the
+ * client never sends one, so on a live server this is the JWT subject. The fake
+ * has no auth context, so it stands in one FIXED id; that keeps assertions
+ * deterministic without pretending the client chose it.
+ */
+export declare const REQUESTING_MEMBER_ID = "me";
 /**
  * The literal `GroupState::getState()` payload from phlix-server
  * `src/Session/SyncPlay/GroupState.php` — snake_case, `members` a DICTIONARY
