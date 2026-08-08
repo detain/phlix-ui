@@ -29,9 +29,13 @@ paths:
   way — only `npx vue-tsc --noEmit` catches it, so run both.
 - Pin normalizers **as written**, not as intended: `src/api/admin/servers.test.ts` asserts
   `asBool(false, true) === true`. If that is wrong, fix the helper and the test together.
-- Not everything is mockable: `SyncPlayApi` constructs its own `ApiClient` internally, so
-  `src/api/syncplay.test.ts` covers only construction / singleton / type surface and leaves the
-  WebSocket paths to the `useSyncPlayStore` integration tests.
+- `SyncPlayApi` constructs its own `ApiClient` internally, but that does **not** make it
+  untestable — stub `fetch` instead of the client. `src/api/test/syncplayServer.ts` is a fake
+  phlix-server that serves exactly the five registered SyncPlay routes and 404s everything else;
+  `syncplay.routes.test.ts`, `useSyncPlayStore.*.test.ts` and `SyncPlayModal.test.ts` all drive the
+  real `SyncPlayApi` through it, and produce error paths by UNREGISTERING a route rather than by a
+  rejecting stub. The WebSocket paths are covered directly in `syncplay.ws.test.ts` and
+  `syncplay.reconnect.test.ts` with only the socket faked.
 - Vitest allows 30 s per test and per hook (`testTimeout` / `hookTimeout` in `vite.config.ts`) —
   accumulated jsdom state in a full-suite run blows the 5 s default. Don't lower it to mask a slow
   suite.
