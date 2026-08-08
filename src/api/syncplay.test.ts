@@ -10,9 +10,8 @@ import { SyncPlayApi, getSyncPlayApi } from './syncplay';
 import type {
   CreateRoomInput,
   JoinRoomInput,
-  SyncPlayRoomResponse,
-  SyncPlaySessionResponse,
-  SyncPlayMembersResponse,
+  SyncPlayGroupResponse,
+  SyncPlayGroupsResponse,
 } from './syncplay';
 
 // Note: The SyncPlayApi class constructs its own ApiClient internally,
@@ -72,48 +71,42 @@ describe('SyncPlayApi — JoinRoomInput interface', () => {
   });
 });
 
+/**
+ * The envelopes describe the SERVER's wire shape (snake_case `{ group }` /
+ * `{ groups }`), NOT the UI's own types. The previous `SyncPlaySessionResponse`
+ * / `SyncPlayMembersResponse` described a `{ session }` and a `{ members }`
+ * envelope the server has never sent — a type that lied, next to a url
+ * (`/groups/{id}/members`) that was never served (S276).
+ *
+ * Route-level and mapping-level behaviour is proved in `syncplay.routes.test.ts`
+ * against a fake server that 404s any unregistered url.
+ */
 describe('SyncPlayApi — Response envelope interfaces', () => {
-  it('SyncPlayRoomResponse has a group property', () => {
-    const response: SyncPlayRoomResponse = {
+  it('SyncPlayGroupResponse carries the raw snake_case group state', () => {
+    const response: SyncPlayGroupResponse = {
       group: {
-        id: 'room-1',
-        name: 'Test',
-        isPublic: true,
-        memberCount: 0,
+        group_id: 'sp_abc123',
+        group_name: 'Movie Night',
+        member_count: 2,
+        members: {
+          m1: { id: 'm1', name: 'Alice', is_host: true, joined_at: 1_700_000_000 },
+        },
+        host_id: 'm1',
+        playback_position: 123,
+        playback_state: 'playing',
       },
     };
-    expect(response.group.id).toBe('room-1');
+    expect(response.group!.group_id).toBe('sp_abc123');
+    expect(response.group!.playback_state).toBe('playing');
   });
 
-  it('SyncPlaySessionResponse has a session property', () => {
-    const response: SyncPlaySessionResponse = {
-      session: {
-        id: 'sess-1',
-        roomId: 'room-1',
-        serverId: 'srv-1',
-        createdBy: 'user-1',
-        createdAt: '2026-01-01T00:00:00Z',
-        state: 'playing',
-        playbackPosition: 100,
-        playbackRate: 1,
-        serverTime: Date.now(),
-        lastSync: '2026-01-01T00:01:40Z',
-        activeUsers: [],
-        roles: {},
-        permissions: {},
-      },
-    };
-    expect(response.session.id).toBe('sess-1');
-    expect(response.session.state).toBe('playing');
-  });
-
-  it('SyncPlayMembersResponse has a members array', () => {
-    const response: SyncPlayMembersResponse = {
-      members: [
-        { id: 'user-1', name: 'Alice', profileId: 1, role: 'owner', isOnline: true, lastSeen: '2026-01-01T00:00:00Z' },
-        { id: 'user-2', name: 'Bob', profileId: 2, role: 'contributor', isOnline: false, lastSeen: '2026-01-01T00:00:00Z' },
+  it('SyncPlayGroupsResponse carries the reduced listing rows', () => {
+    const response: SyncPlayGroupsResponse = {
+      groups: [
+        { id: 'sp_abc123', name: 'Movie Night', member_count: 2, has_password: false, is_playing: true },
       ],
     };
-    expect(response.members).toHaveLength(2);
+    expect(response.groups).toHaveLength(1);
+    expect(response.groups![0]!.id).toBe('sp_abc123');
   });
 });
