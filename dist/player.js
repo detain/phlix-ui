@@ -7200,13 +7200,19 @@ var sd = R("phlix-syncplay", () => {
 	function x(e) {
 		if (t.value) switch (e.type) {
 			case "play":
-				t.value = {
+				e.position !== void 0 && (s = Date.now(), t.value = {
+					...t.value,
+					playbackPosition: e.position
+				}), t.value = {
 					...t.value,
 					state: "playing"
 				};
 				break;
 			case "pause":
-				t.value = {
+				e.position !== void 0 && (s = Date.now(), t.value = {
+					...t.value,
+					playbackPosition: e.position
+				}), t.value = {
 					...t.value,
 					state: "paused"
 				};

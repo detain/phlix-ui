@@ -345,6 +345,23 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   /**
    * Handle a remote state update from another user in the room.
    * Applies the playback command to synchronize playback.
+   *
+   * ⚠ S290 — every arm that carries a position must ALSO re-anchor. The
+   * `play`/`pause` arms used to set `state` and nothing else, which made the
+   * return leg of S287's position report lossy in a way no state assertion
+   * could see. `handlePlaybackSync()` (phlix-server
+   * `src/Session/SyncPlay/SyncPlayManager.php:1014`) answers each report with a
+   * group-wide `syncplay_playback_sync` broadcast carrying the group's
+   * AUTHORITATIVE `position`, and `api/syncplay.ts`'s `onPlaybackSync` maps that
+   * frame onto `{type: is_playing ? 'play' : 'pause', position}`. So the whole
+   * point of reporting — obtaining a fresh anchor every 5 s — arrived here and
+   * was dropped: `_lastDriftCaptureMs` kept its join-time value, `driftAmount`
+   * went on extrapolating over an ever-widening window, and `syncStatus` drifted
+   * to a permanent `outOfSync`.
+   *
+   * `position !== undefined` rather than truthiness, matching `seek`/`sync`: a
+   * broadcast of position 0 (a group at the start of a title) is a real
+   * position, and a command with no position must not seek anybody to zero.
    */
   function onRemoteStateUpdate(command: SyncPlayPlaybackCommand): void {
     if (!currentSession.value) return;
@@ -352,12 +369,26 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     // Update session state based on command
     switch (command.type) {
       case 'play':
+        if (command.position !== undefined) {
+          _lastDriftCaptureMs = Date.now();
+          currentSession.value = {
+            ...currentSession.value,
+            playbackPosition: command.position,
+          };
+        }
         currentSession.value = {
           ...currentSession.value,
           state: 'playing',
         };
         break;
       case 'pause':
+        if (command.position !== undefined) {
+          _lastDriftCaptureMs = Date.now();
+          currentSession.value = {
+            ...currentSession.value,
+            playbackPosition: command.position,
+          };
+        }
         currentSession.value = {
           ...currentSession.value,
           state: 'paused',

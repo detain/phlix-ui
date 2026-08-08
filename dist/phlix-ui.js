@@ -1229,7 +1229,7 @@ function Ca(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-BjOH3vhn.js")
+			component: () => import("./PlayerPage-BSyG-xrz.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1277,7 +1277,7 @@ function Ca(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-DXrPU4PD.js")
+			component: () => import("./SyncPlayPage-Cf1g01To.js")
 		},
 		{
 			path: `${t}/music`,
