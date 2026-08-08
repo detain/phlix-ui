@@ -103,10 +103,13 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     error.value = null;
     try {
       const api = getSyncPlayApi(apiBase);
-      // First fetch room info
-      const membersList = await api.getMembers(roomId);
-      members.value = membersList;
-      // Then join the room
+      // S276: there is NO pre-join member fetch. The old code awaited
+      // `api.getMembers(roomId)` here, which hit an unserved
+      // `/groups/{id}/members` — `ApiClient` throws on any non-ok response, so
+      // every join failed before `api.joinRoom()` ran and the WebSocket never
+      // opened. The value was vestigial regardless: `members.value` is
+      // overwritten UNCONDITIONALLY from `session.activeUsers` a few lines
+      // below, so nothing downstream could ever observe it.
       const session = await api.joinRoom(roomId);
       currentSession.value = session;
       _lastDriftCaptureMs = Date.now(); // anchor for drift computation
