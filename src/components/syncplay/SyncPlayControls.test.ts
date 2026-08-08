@@ -425,6 +425,24 @@ describe('SyncPlayControls — sync status indicator', () => {
         expect(w.find('.syncplay-controls__wait').exists()).toBe(false);
     });
 
+    /**
+     * S283 — the banner used to carry a `__wait-members` span listing who was
+     * still buffering. Nothing ever populated the ref behind it, so the span was
+     * unreachable markup; it was removed rather than filled because no
+     * per-member buffering signal exists on the wire. The control here is the
+     * FIRST assertion: the banner really is up, so the absence below is the
+     * span's absence and not the whole block's.
+     */
+    it('the raised banner carries the label and NOTHING that names members', async () => {
+        const { w, store } = mountControls({ session: makeSession({ state: 'paused' }) });
+        store.currentSession = makeSession({ state: 'waiting' });
+        await flushPromises();
+
+        const banner = w.get('.syncplay-controls__wait');
+        expect(banner.get('.syncplay-controls__wait-label').text()).toBe('Waiting for members…');
+        expect(banner.findAll('span')).toHaveLength(1);
+    });
+
     it('the wait latch SURVIVES a transition to outOfSync (only `synced` clears it)', async () => {
         const { w, store } = mountControls({ session: makeSession({ state: 'paused' }) });
 

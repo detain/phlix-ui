@@ -74,6 +74,20 @@ export interface SyncPlayGroupsResponse {
     groups?: RawSyncPlayGroup[];
 }
 /**
+ * Both views of the group a join returned.
+ *
+ * The join response is `{ success, group }` and that `group` is the FULL
+ * `GroupState::getState()` payload, so it answers both "which room am I in"
+ * (`SyncPlayRoom` — the name, the member count, the host) and "what is playing"
+ * (`SyncPlaySession`). Returning only the session threw the room half away, and
+ * every caller then had a null `currentRoom` after a successful join: leaving,
+ * refreshing and the room-name header are all guarded on it.
+ */
+export interface JoinedGroup {
+    room: SyncPlayRoom;
+    session: SyncPlaySession;
+}
+/**
  * Normalize the server's `members` — a dict keyed by member id from
  * `GroupState::getState()`, or `[]` from the raw-snapshot fallback — into the
  * UI's `SyncPlayUser[]`.
@@ -134,8 +148,10 @@ export declare class SyncPlayApi {
      *
      * The server answers `{ success, group }` (the post-join group state), NOT a
      * `session` envelope — the group IS the session.
+     *
+     * Returns BOTH views of that one payload; see {@link JoinedGroup}.
      */
-    joinRoom(groupId: string): Promise<SyncPlaySession>;
+    joinRoom(groupId: string): Promise<JoinedGroup>;
     /**
      * Leave the current SyncPlay group.
      * POST /api/v1/syncplay/groups/:id/leave
@@ -192,6 +208,11 @@ type SyncPlayMessageHandler = (msg: {
 /**
  * Open a WebSocket connection to the SyncPlay server for the given room.
  * If a connection is already open for a different room, it is closed first.
+ *
+ * This is the CALLER-INITIATED entry point — a user joining, re-joining or
+ * switching rooms — and it therefore starts a fresh reconnect budget. The
+ * automatic reconnect deliberately does not come through here; see
+ * {@link connectSyncPlaySocket}.
  *
  * @param roomId - The SyncPlay room/group ID to connect to.
  * @param onMessage - Callback invoked for each server-to-client SyncPlay message.

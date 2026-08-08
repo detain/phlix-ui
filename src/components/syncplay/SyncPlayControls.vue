@@ -51,8 +51,16 @@ const effectiveApiBase = computed(() => props.apiBase ?? mediaApiBase.value);
 // ---- buffer-wait state ---------------------------------------------------
 /** Whether any room member is currently buffering (tracked locally). */
 const waitingForMembers = ref(false);
-/** The list of members who are currently buffering. */
-const bufferingMembers = ref<string[]>([]);
+
+// ⚠ S283: there was a `bufferingMembers` ref here, rendered as a "who are we
+// waiting for" list. Nothing ever pushed a name into it — the only write in the
+// component set it back to `[]` — so `bufferingMembers.length > 0` was
+// permanently false and the whole `__wait-members` span was unreachable markup.
+// It was removed rather than populated because there is NO per-member buffering
+// signal to populate it FROM: `@phlix/syncplay` carries buffering only as a
+// group-wide `PlaybackState`, never per member, and this component's own
+// `syncStatus` is derived locally from drift. Naming the members would need a
+// server-side presence/buffer report that does not exist. See the worklog.
 
 // Check if we're waiting for buffer sync
 const isWaitingForBuffer = computed(() => {
@@ -138,7 +146,6 @@ watch(
       waitingForMembers.value = true;
     } else if (status === 'synced') {
       waitingForMembers.value = false;
-      bufferingMembers.value = [];
     }
   },
 );
@@ -156,10 +163,6 @@ watch(
       <Icon name="spinner" class="syncplay-controls__wait-icon" />
       <span class="syncplay-controls__wait-label">
         {{ t('syncplay.waitingForMembers') }}
-      </span>
-      <span v-if="bufferingMembers.length > 0" class="syncplay-controls__wait-members">
-        {{ bufferingMembers.slice(0, 3).join(', ') }}
-        <span v-if="bufferingMembers.length > 3">+{{ bufferingMembers.length - 3 }}</span>
       </span>
     </div>
 
@@ -246,14 +249,6 @@ watch(
 
 .syncplay-controls__wait-label {
   font-weight: var(--fw-medium);
-}
-
-.syncplay-controls__wait-members {
-  color: var(--text-subtle);
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Synced transport controls */

@@ -106,14 +106,18 @@ async function submit(): Promise<void> {
         name: roomName.value.trim(),
         isPublic: isPublic.value,
       });
-      if (syncPlay.currentRoom) {
-        emit('joined', syncPlay.currentRoom);
-      }
     } else {
       await syncPlay.joinRoom(effectiveApiBase.value, roomId.value.trim());
-      if (syncPlay.currentRoom) {
-        emit('joined', syncPlay.currentRoom);
-      }
+    }
+    // S283: this was `if (syncPlay.currentRoom) emit(...)` on BOTH arms. The
+    // create arm always had a room, but the join arm never did — `joinRoom()`
+    // left `currentRoom` null — so `joined` was silently unreachable on the one
+    // path the event exists for. `joinRoom()` now back-fills the room from the
+    // join response, and the guard is a narrowing assertion rather than a
+    // silent skip: a successful submit that produced no room is a bug, not a
+    // reason to say nothing.
+    if (syncPlay.currentRoom) {
+      emit('joined', syncPlay.currentRoom);
     }
     emit('update:modelValue', false);
   } catch (e) {

@@ -157,9 +157,9 @@ describe('SyncPlayApi — every url is a registered server route', () => {
 // ── the wire shape is the SERVER's, not the UI's ──────────────────────────────
 
 describe('SyncPlayApi — maps the real snake_case wire shape', () => {
-    it('joinRoom builds a session from `{ success, group }`', async () => {
+    it('joinRoom builds BOTH a room and a session from `{ success, group }`', async () => {
         const api = new SyncPlayApi(BASE);
-        const session = await api.joinRoom(GROUP_ID);
+        const { room, session } = await api.joinRoom(GROUP_ID);
 
         // The server sends NO `session` key at all. Reading `res.session` yielded
         // `undefined`, and `session.activeUsers` then threw in the store.
@@ -171,6 +171,15 @@ describe('SyncPlayApi — maps the real snake_case wire shape', () => {
         expect(session.playbackRate).toBe(1);
         expect(session.createdBy).toBe('m1');
         expect(session.activeUsers).toHaveLength(2);
+
+        // S283: the ROOM half of the same payload used to be discarded, which
+        // left every caller with a null `currentRoom` after a successful join.
+        // The name proves it came from the server's `group_name` rather than
+        // being reconstructed from the id the caller already had.
+        expect(room.id).toBe(GROUP_ID);
+        expect(room.name).toBe('Movie Night');
+        expect(room.memberCount).toBe(2);
+        expect(room.hostUserId).toBe('m1');
     });
 
     it('a paused group gets rate 0 so drift is not extrapolated', async () => {
