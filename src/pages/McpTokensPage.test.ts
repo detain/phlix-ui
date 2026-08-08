@@ -592,6 +592,35 @@ describe('McpTokensPage — the default scope selection is read-only (S261)', ()
         w.unmount();
     });
 
+    it('FILTERS the offer rather than substituting for it', async () => {
+        // The seed is `offered ∩ defaults`, not `defaults`. The difference is
+        // invisible until a scope the hub had WITHDRAWN comes back: a seed that
+        // ignored the offer would have banked all three read scopes at the
+        // first load, and they would surface already-ticked on the refresh that
+        // re-offered them — a silent widening the user never asked for.
+        const { client } = makeClient({
+            scopeSequence: [['mcp:servers:read'], READ_ONLY],
+        });
+        const w = mountPage(client);
+        await flushPromises();
+
+        // A revoke refetches the list, which is when the wider vocabulary lands.
+        rawClick(btn('Revoke')!);
+        await flushPromises();
+        rawClick(btn('Revoke token')!);
+        await flushPromises();
+
+        rawClick(btn('New Token')!);
+        await flushPromises();
+        expect(scopeBoxes().map((b) => b.value)).toEqual(READ_ONLY);
+        expect(renderedTicks()).toEqual({
+            'mcp:servers:read': true,
+            'mcp:library:read': false,
+            'mcp:playback:read': false,
+        });
+        w.unmount();
+    });
+
     it('the read-only default is NOT re-seeded over a deliberate widening', async () => {
         // The user opts into the write scope, then something refetches the
         // list. A seed that ran again would silently revoke their choice — the
