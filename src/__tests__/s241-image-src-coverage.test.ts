@@ -95,9 +95,9 @@ const CLASSIFIED_EXCEPTIONS: Record<string, string> = {
   'components/auth/AuthCard.vue::branding.logoSrc': 'host branding config, not a media-API image',
 
   // Media BYTES, not images. These already resolve through the player's own
-  // base logic (`mediaDirectBase` first — the relay proxy deliberately does not
-  // route the byte-stream endpoint), so routing them through the image seam
-  // would send a stream at the proxy that cannot serve it.
+  // base logic (`mediaDirectBase` first, relay base as the fallback — S247), so
+  // routing them through the image seam would apply the wrong base-resolution
+  // rule to a stream URL.
   'components/Player.vue::videoSrc': 'video byte stream (props.streamUrl), host-resolved',
   'components/MiniPlayer.vue::player.hlsMasterUrl ? \'\' : player.streamUrl':
     'video byte stream from the player store, host-resolved',

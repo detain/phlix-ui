@@ -3378,8 +3378,8 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 			}, 8, ["modelValue"])
 		], 2));
 	}
-}), [["__scopeId", "data-v-f833f9a4"]]);
+}), [["__scopeId", "data-v-7d3bf33d"]]);
 //#endregion
 export { oa as default };
 
-//# sourceMappingURL=PlayerPage-BSyG-xrz.js.map
+//# sourceMappingURL=PlayerPage-0laRgIal.js.map

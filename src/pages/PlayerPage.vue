@@ -93,16 +93,20 @@ interface PlaybackInfo {
 
 // On the hub this is the relay-proxy base for the selected server, so the
 // player's metadata/playback-info fetches hit that paired server inline; on the
-// media server it is the app's own base. (NOTE: streaming the media bytes over
-// the relay tunnel is P3 — out of scope here; this only re-points the page's API
-// fetches, matching the rest of the media surface.)
+// media server it is the app's own base. It is ALSO the byte-stream fallback:
+// `streamUrlFor()` uses `directBase || apiBase`, and since S247 the relay
+// genuinely serves `/media/{id}/stream` (anchored, Range/206 carried), so a
+// server with no reachable public origin direct-plays over the tunnel.
 const apiBase = useMediaApiBase();
 /** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
  *  them against the same (possibly relay-proxied) base the payload came from. */
 const { imgSrc } = useImageSrc();
-// The paired server's own public origin on the hub (else ''). The player streams
-// media bytes from here directly (native Range) since the proxy doesn't route the
-// byte-stream endpoint; transcode/HLS still go over `apiBase` (the proxy).
+// The paired server's own public origin on the hub (else ''). The player PREFERS
+// to stream media bytes from here directly (native Range) so neither the bytes
+// nor their egress cost traverse the hub; when the server advertised no reachable
+// URL this is '' and `streamUrlFor()` falls back to the relay, which since S247
+// routes the byte stream and carries Range/206. Transcode/HLS always go over
+// `apiBase` (the proxy).
 const directBase = useMediaDirectBase();
 const route = useRoute();
 const router = useRouter();
@@ -216,13 +220,32 @@ function isAbort(e: unknown): boolean {
  *
  *  On the hub the signed path is prefixed with the paired server's OWN public
  *  origin (`directBase`) so the `<video>` streams the bytes straight from the
- *  server with native Range — the relay proxy does not route `/media/:id/stream`
- *  (it carries only JSON/browse + small HLS segments). The signature authenticates
- *  the request cross-origin (no cookie needed). If the server reported no reachable
- *  origin, `directBase` is '' and we fall back to the media-api base; an unreachable
- *  origin surfaces as a `<video>` error that flips the player to an HLS transcode
- *  over the proxy (see Player.onVideoError). On the media server `directBase` is ''
- *  so this is unchanged (the page origin serves the bytes). */
+ *  server with native Range. The signature authenticates the request cross-origin
+ *  (no cookie needed). On the media server `directBase` is '' so this is unchanged
+ *  (the page origin serves the bytes).
+ *
+ *  ## The fallback is the relay, and since S247 it WORKS
+ *
+ *  If the server reported no reachable origin, `directBase` is '' and the `||`
+ *  falls through to `apiBase` — the relay-proxy base
+ *  (`{hub}/api/v1/servers/{id}/proxy`). That was always what this line did; the
+ *  docblock used to claim the opposite ("the relay proxy does not route
+ *  /media/:id/stream"), which was wrong about the hub and made the real
+ *  behaviour invisible. S247 made it correct AND deliberate: the hub admits
+ *  `/media/{id}/stream` as an anchored pattern, forwards `Range` verbatim,
+ *  returns the server's `206` + `Content-Range` untouched, and answers a HEAD
+ *  probe with the real `Content-Length` and no body — so a server with no
+ *  reachable public URL can direct-play, seek included.
+ *
+ *  ⚠ DIRECT-FIRST IS LOAD-BEARING. Relaying moves every byte onto the hub, so
+ *  the ordering of this `||` is a bandwidth decision, not a style choice: when a
+ *  reachable origin exists it must be used. Pinned by
+ *  `PlayerPage.test.ts` ("prefers the direct base…" / "falls back to the relay
+ *  base…"), so flipping the operands reddens a named test.
+ *
+ *  An unreachable-but-advertised origin still surfaces as a `<video>` error that
+ *  flips the player to an HLS transcode over the proxy (see
+ *  Player.onVideoError). */
 function streamUrlFor(m: MediaItem): string {
   const base = directBase.value || apiBase.value;
   if (m.stream_url) {

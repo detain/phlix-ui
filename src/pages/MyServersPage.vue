@@ -207,9 +207,11 @@ function manageServer(server: Server): void {
 function browseServer(server: Server): void {
   if (!server.relayActive) return;
   // Pass the server's own public origin (its first hostname candidate) so the
-  // player can stream media bytes DIRECTLY from the server with native Range — the
-  // relay proxy doesn't route `/media/:id/stream`. Empty when the server reported
-  // no reachable URL; playback then falls back to an HLS transcode over the proxy.
+  // player can stream media bytes DIRECTLY from the server with native Range,
+  // keeping the bytes (and their egress cost) off the hub. Empty when the server
+  // reported no reachable URL — S247: playback then direct-plays over the RELAY
+  // instead (the hub routes `/media/{id}/stream` and carries Range/206), with an
+  // HLS transcode over the proxy as the further fallback on a `<video>` error.
   serverStore.setCurrent(server.id, server.name, server.url);
   void router.push(browseHome);
 }
