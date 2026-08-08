@@ -49,9 +49,11 @@ function writeStored(key: string, value: string | null): void {
  * `currentServerUrl` is the paired server's own public origin (its first advertised
  * hostname candidate), persisted alongside the selection. The player uses it to
  * stream media bytes DIRECTLY from the server (`{url}/media/:id/stream?sig`) with
- * native Range, since the relay proxy does not route the byte-stream endpoint; it
- * is empty when the server reported no reachable URL (then playback falls back to
- * an HLS transcode over the proxy). See {@link mediaDirectBaseFor}.
+ * native Range, so that neither the bytes nor their bandwidth cost traverse the
+ * hub. It is empty when the server reported no reachable URL — and since S247
+ * that case is no longer dead: the byte stream falls back to the relay proxy,
+ * which routes it (anchored), carries `Range` and returns the `206` +
+ * `Content-Range` intact. See {@link mediaDirectBaseFor}.
  */
 export const useServerStore = defineStore('server', () => {
   const currentServerId = ref<string | null>(readStored(CURRENT_SERVER_ID_KEY));

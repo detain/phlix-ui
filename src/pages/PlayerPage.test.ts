@@ -277,6 +277,56 @@ describe('PlayerPage — load + stream resolution', () => {
     expect(resolve(media({ id: 'm2' }))).toBe('https://server.test/media/m2/stream');
   });
 
+  // ── S247: the relay is the byte-stream FALLBACK, and direct is preferred ──
+  //
+  // These two are a matched pair and must be read together. They differ in
+  // exactly ONE input — whether the selected server advertised a reachable
+  // public origin — and they assert opposite bases. Either one alone would be
+  // ambiguous: the fallback test alone cannot tell "the relay was chosen" from
+  // "nothing was chosen", and the preference test alone cannot tell "direct was
+  // preferred" from "direct is the only thing this code can produce".
+  it('S247: falls back to the RELAY base for the byte stream when the server has no reachable URL', async () => {
+    // The population S247 exists for: a hub user whose paired server advertises
+    // no public origin. `mediaDirectBaseFor()` returns '' for that server, so
+    // `directBase || apiBase` resolves to the relay-proxy base — which the hub
+    // now genuinely serves (anchored `/media/{id}/stream`, Range/206 carried).
+    // Before S247 this same URL was produced and then 403'd/404'd, so playback
+    // for this user was simply dead.
+    const signed = '/media/m1/stream?exp=9999999999&sig=abc123';
+    const fetchMock = okFetch(media({ id: 'm1', stream_url: signed }));
+    const { w } = await mountAt('m1', fetchMock, {
+      mediaApiBase: '/api/v1/servers/srv-1/proxy',
+      // No reachable origin — exactly what mediaDirectBaseFor() returns then.
+      mediaDirectBase: '',
+    });
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect(player.props('streamUrl')).toBe(`/api/v1/servers/srv-1/proxy${signed}`);
+    const resolve = player.props('streamUrlFor') as (m: MediaItem) => string;
+    expect(resolve(media({ id: 'm2' }))).toBe('/api/v1/servers/srv-1/proxy/media/m2/stream');
+  });
+
+  it('S247: prefers the DIRECT base whenever one exists, so the relay never pays the bandwidth needlessly', async () => {
+    // The control for the test above. Same relay base, same item, same signed
+    // path — the ONLY difference is that the server advertised an origin. Every
+    // byte must go straight to it, because relaying moves the whole file (and
+    // its egress cost) onto the hub. Flipping the `||` operands in
+    // `streamUrlFor()` reddens this test and only this pair.
+    const signed = '/media/m1/stream?exp=9999999999&sig=abc123';
+    const fetchMock = okFetch(media({ id: 'm1', stream_url: signed }));
+    const { w } = await mountAt('m1', fetchMock, {
+      mediaApiBase: '/api/v1/servers/srv-1/proxy',
+      mediaDirectBase: 'https://server.test',
+    });
+    await flushPromises();
+    const player = w.findComponent(Player);
+    expect(player.props('streamUrl')).toBe(`https://server.test${signed}`);
+    expect(player.props('streamUrl')).not.toContain('/proxy');
+    const resolve = player.props('streamUrlFor') as (m: MediaItem) => string;
+    expect(resolve(media({ id: 'm2' }))).toBe('https://server.test/media/m2/stream');
+    expect(resolve(media({ id: 'm2' }))).not.toContain('/proxy');
+  });
+
   it('returns an absolute http(s) stream_url unchanged even when a direct base is provided', async () => {
     const absolute = 'https://cdn.test/media/m1/stream?sig=abc';
     const fetchMock = okFetch(media({ id: 'm1', stream_url: absolute }));

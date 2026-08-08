@@ -55,10 +55,15 @@ export function useMediaApiBase(): ComputedRef<string> {
  * On the hub this is the currently selected server's own public origin (e.g.
  * `https://server.example`), provided by `createPhlixApp` as a computed over
  * `useServerStore`; the player prefixes a signed `/media/:id/stream` path with it
- * so a `<video src>` streams straight from the paired server (native Range) rather
- * than through the relay proxy, which does not route the byte-stream endpoint.
+ * so a `<video src>` streams straight from the paired server (native Range)
+ * rather than through the relay proxy.
+ *
  * Resolves to '' on the media server or when no server (or no reachable URL) is
- * selected — the caller then falls back to {@link useMediaApiBase}.
+ * selected — the caller then falls back to {@link useMediaApiBase}, i.e. the
+ * relay. That fallback WORKS (S247: the hub routes the byte stream, carries
+ * `Range`/206 and answers a HEAD probe); direct is preferred because relaying
+ * moves every byte, and its bandwidth cost, onto the hub. It is a preference,
+ * not a prohibition — see `mediaDirectBaseFor` in `createPhlixApp.ts`.
  */
 export function useMediaDirectBase(): ComputedRef<string> {
   const direct = inject<InjectedBase>('mediaDirectBase', undefined);

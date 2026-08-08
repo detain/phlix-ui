@@ -133,13 +133,35 @@ export declare function mediaApiBaseFor(app: 'server' | 'hub', apiBase: string, 
  * Resolve the base the player streams media BYTES from directly (bypassing the
  * relay proxy). On the hub this is the selected server's own public origin
  * (`https://server.example`), so a `<video src>` hits the paired server directly
- * with native Range support — the relay proxy intentionally does NOT route the
- * `/media/:id/stream` byte-stream endpoint (it carries only JSON/browse traffic
- * and small HLS segments). Returns '' on the media server (where the page origin
- * already serves the bytes) or when no server / no reachable URL is selected, in
- * which case the caller falls back to {@link mediaApiBaseFor}. The origin is
- * normalised (trailing slashes trimmed) so concatenating a root-relative signed
- * path yields a clean URL. Pure for unit testing.
+ * with native Range support. Returns '' on the media server (where the page
+ * origin already serves the bytes) or when no server / no reachable URL is
+ * selected, in which case the caller falls back to {@link mediaApiBaseFor} — the
+ * relay proxy. The origin is normalised (trailing slashes trimmed) so
+ * concatenating a root-relative signed path yields a clean URL. Pure for unit
+ * testing.
+ *
+ * ## Direct is a PREFERENCE, not a requirement (S247)
+ *
+ * ⚠ This docblock used to say the relay proxy "intentionally does NOT route the
+ * `/media/:id/stream` byte-stream endpoint" — while the very next lines fell
+ * back to exactly that. The comment and the code disagreed, and the code was
+ * right: `''` here means every caller's `directBase || apiBase` resolves to the
+ * relay base. The claim was also factually wrong about the hub, which has
+ * forwarded `/media/{id}/stream` since its first streaming release.
+ *
+ * S247 settled it deliberately: the byte stream IS relay-reachable, because a
+ * server with no reachable public URL is precisely the population a relay
+ * product exists to serve, and without it playback for that population is
+ * simply dead. The hub admits it as an anchored `#^/media/[^/]+/stream$#`
+ * (never a `/media` prefix), forwards `Range` verbatim and passes the `206` +
+ * `Content-Range` back untouched, and answers a `HEAD` probe with the server's
+ * real `Content-Length` and no body.
+ *
+ * Relay streaming is still the FALLBACK and must stay one: every byte then
+ * traverses the hub, so the hub pays the bandwidth and the egress, and the
+ * hub's per-user throttle and concurrent-stream cap apply. That is why the
+ * `||` order in every caller is direct-first, and why it is pinned by tests
+ * rather than left to convention.
  */
 export declare function mediaDirectBaseFor(app: 'server' | 'hub', currentServerUrl: string | null): string;
 declare global {

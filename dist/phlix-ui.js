@@ -1229,7 +1229,7 @@ function Ca(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-BSyG-xrz.js")
+			component: () => import("./PlayerPage-0laRgIal.js")
 		},
 		{
 			path: `${t}/login`,
@@ -2235,7 +2235,7 @@ var bo = {
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-000a9774"]]), Po = {
+}), [["__scopeId", "data-v-0064176c"]]), Po = {
 	class: "server-detail",
 	"aria-labelledby": "server-detail-heading"
 }, Fo = { class: "server-detail__back" }, Io = {

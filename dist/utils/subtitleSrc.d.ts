@@ -26,9 +26,11 @@ import type { SubtitleTrack } from '../components/player/transcode';
  *
  * ## Why the relay base, and NOT `mediaDirectBase`
  *
- * `mediaDirectBase` is what the `<video>` byte stream uses, because the relay
- * deliberately does not route `/media/{id}/stream`. A subtitle sidecar is the
- * opposite case, on three independent counts:
+ * `mediaDirectBase` is what the `<video>` byte stream PREFERS, so that the bytes
+ * (and their bandwidth cost) do not traverse the hub. Since S247 the relay does
+ * route `/media/{id}/stream` as well — as an anchored pattern, with `Range`/206
+ * carried through — so that preference is about egress, not reachability. A
+ * subtitle sidecar is the opposite case, on three independent counts:
  *
  *  1. **It is already in relay scope.** `/api/v1/media` is a GET prefix in the
  *     hub's `ServerProxyController::BROWSE_SCOPE_ALLOWLIST`, and the hub's own
@@ -42,10 +44,10 @@ import type { SubtitleTrack } from '../components/player/transcode';
  *     attribute, so a `mediaDirectBase`-prefixed sidecar (the paired server's own
  *     public origin) would be blocked by the browser before the server ever saw
  *     it. The relay base is same-origin with the hub document, so it is not.
- *  3. **It is not a byte stream.** A WebVTT sidecar is a few KB of text — exactly
- *     the "JSON/browse traffic and small HLS segments" the relay is documented to
- *     carry (`mediaDirectBaseFor()`, `createPhlixApp.ts`). The transcode path
- *     already sends `/hls/{job}/sub-{n}.vtt` over this very base.
+ *  3. **It is not a byte stream.** A WebVTT sidecar is a few KB of text, so the
+ *     egress argument for preferring `mediaDirectBase` does not apply to it at
+ *     all. The transcode path already sends `/hls/{job}/sub-{n}.vtt` over this
+ *     very base.
  *
  * ## The signed query, and the `stableKey()` de-dupe
  *
