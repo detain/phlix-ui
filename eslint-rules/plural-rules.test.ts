@@ -364,8 +364,8 @@ vue.run('plural-message-needs-count / template', pluralMessageNeedsCount as neve
 // CallExpression branch was measured to produce six false positives on this repo.
 // FORM_H_FP_CODES and PLANTED_FORM_H_CASES are the single source of truth: they
 // are spread into the RuleTester inventories ABOVE, and these assertions guard
-// their length — so deleting an FP case or a planted case from the inventories
-// (by deleting it from the shared array) fails loudly instead of silently
+// their exact lengths — an FP-case deletion fails via the length-6 assertion and
+// a planted-case deletion fails via the length-2 assertion, instead of silently
 // shrinking the test surface.
 // ───────────────────────────────────────────────────────────────────────────────
 
@@ -374,6 +374,6 @@ describe('S346 inventory guard', () => {
     expect(FORM_H_FP_CODES).toHaveLength(6);
   });
   it('still plants every form-(H) positive case', () => {
-    expect(PLANTED_FORM_H_CASES.length).toBeGreaterThanOrEqual(1);
+    expect(PLANTED_FORM_H_CASES).toHaveLength(2);
   });
 });
