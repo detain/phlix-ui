@@ -133,7 +133,7 @@ export interface Library {
  * order (S129).
  *
  * 🔴 Enumerated from the MIGRATIONS, not from a hand-maintained TypeScript union.
- * The union that used to live here carried only THREE of the eight members
+ * The union that used to live here carried only THREE of the nine members
  * (`scan | rescan | metadata`), so five job types the server can legitimately
  * return were type-errors on arrival and rendered without a label. The estate has
  * a long history of exactly this drift (`media_items.type` is `photo`, not
@@ -144,9 +144,14 @@ export interface Library {
  *  - `081_..._metadata_refresh_type.sql`            → `metadata_refresh`
  *  - `084_..._maintenance_types.sql`                → `prune`, `clear_metadata`,
  *                                                     `clear_artwork`, `delete_all`
+ *  - `101_..._media_assets_type.sql`                → `media_assets`
  *
- * MySQL stores an ENUM by index, so 084 APPENDS rather than re-orders; keep this
- * array append-only for the same reason.
+ * MySQL stores an ENUM by index, so each of these APPENDS rather than re-orders;
+ * keep this array append-only for the same reason. phlix-server mirrors this
+ * list in `ScanJobRepository::ALLOWED_TYPES` and pins it against the migrations
+ * in `tests/Unit/Common/Database/ScanJobsEnumMigrationTest` — when the DB grows
+ * a member, that server test goes red and names THIS array as the mirror to
+ * update (S341).
  */
 export const SCAN_JOB_TYPES = [
   'scan',
@@ -157,6 +162,7 @@ export const SCAN_JOB_TYPES = [
   'clear_metadata',
   'clear_artwork',
   'delete_all',
+  'media_assets',
 ] as const;
 
 /** One member of the `library_scan_jobs.type` ENUM. */
