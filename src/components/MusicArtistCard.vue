@@ -7,8 +7,8 @@
 /**
  * MusicArtistCard — card displaying an artist with their image, name, and album count.
  *
- * The album count goes through the i18n catalog (`music.albumsTotal[One]`) with
- * thousands separators. It used to inline `album{{ n !== 1 ? 's' : '' }}`, which is
+ * The album count goes through the i18n catalog (`music.albumsTotal`, a pipe-form
+ * plural) with thousands separators. It used to inline `album{{ n !== 1 ? 's' : '' }}`,
  * both untranslatable and unformatted — the same defect as the three other music
  * surfaces that carried it in a slightly different syntactic shape.
  */
@@ -32,9 +32,7 @@ const { imgSrc } = useImageSrc();
 
 const albumCountLabel = computed(() => {
   const count = props.artist.albumCount ?? 0;
-  return count === 1
-    ? t('music.albumsTotalOne')
-    : t('music.albumsTotal', { count: count.toLocaleString() });
+  return t('music.albumsTotal', { count: count.toLocaleString() });
 });
 </script>
 

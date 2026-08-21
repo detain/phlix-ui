@@ -7,8 +7,8 @@
 /**
  * MusicAlbumCard — card displaying an album with its cover, title, year, and track count.
  *
- * The track count goes through the i18n catalog (`music.tracksTotal[One]`) with
- * thousands separators. It used to inline `track{{ n !== 1 ? 's' : '' }}`, which is
+ * The track count goes through the i18n catalog (`music.tracksTotal`, a pipe-form
+ * plural) with thousands separators. It used to inline `track{{ n !== 1 ? 's' : '' }}`,
  * both untranslatable and unformatted — the same defect as the three other music
  * surfaces that carried it in a slightly different syntactic shape.
  */
@@ -32,9 +32,7 @@ const { imgSrc } = useImageSrc();
 
 const trackCountLabel = computed(() => {
   const count = props.album.totalTracks ?? 0;
-  return count === 1
-    ? t('music.tracksTotalOne')
-    : t('music.tracksTotal', { count: count.toLocaleString() });
+  return t('music.tracksTotal', { count: count.toLocaleString() });
 });
 
 function formatYear(year: number | null): string {

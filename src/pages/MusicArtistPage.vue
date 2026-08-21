@@ -161,9 +161,7 @@ function goToAlbum(album: MusicAlbum): void {
  */
 const albumCount = computed(() => albumTotal.value || artist.value?.albumCount || 0);
 const albumCountLabel = computed(() =>
-    albumCount.value === 1
-        ? t('music.albumsTotalOne')
-        : t('music.albumsTotal', { count: albumCount.value.toLocaleString() }),
+    t('music.albumsTotal', { count: albumCount.value.toLocaleString() }),
 );
 
 /**
@@ -178,9 +176,7 @@ const trackCount = computed(
         ?? albums.value.reduce((sum, a) => sum + (a.totalTracks ?? 0), 0),
 );
 const trackCountLabel = computed(() =>
-    trackCount.value === 1
-        ? t('music.tracksTotalOne')
-        : t('music.tracksTotal', { count: trackCount.value.toLocaleString() }),
+    t('music.tracksTotal', { count: trackCount.value.toLocaleString() }),
 );
 </script>
 

@@ -17,6 +17,8 @@
  *   (E) `'{count} x | {count} xs'` translated with no `count`
  *   (F) `` `${n} photos` `` with no singular branch at all   — found during S134
  *   (G) `photo(s)`                                           — found during S134
+ *   (H) `n === 1 ? t('x.one') : t('x.other')` — a `t()`-KEY ternary, invisible to
+ *       the string-branch check until S346 (the music surfaces' live shape)
  * and the unanticipated ones: `>`/`<=`/`!=` comparisons, reversed operand order,
  * an if/else, an array index, a nested/`switch`-free lookup, irregular plurals.
  *
@@ -81,6 +83,21 @@ ts.run('no-hand-rolled-plural / script shapes', noHandRolledPlural as never, {
     "if (group.length === 1) { push(formatLine(line)); } else { push(other); }",
     // Non-string branches.
     'const v = n === 1 ? 10 : 20;',
+    // ── S346 false-positive inventory: comparisons to 1 whose branches are NOT
+    //    both `t()` calls. Measured live on this repo, these six must stay silent;
+    //    the form-(H) check requires BOTH branches to be `t()`, so none can trip it.
+    //    (Source lines kept in the inventory guard at the bottom of this file.)
+    'const cols = typeof n === "number" && Number.isFinite(n) && n >= 1 ? Math.trunc(n) : null;',
+    'const a = alpha < 0 ? 0 : alpha > 1 ? 1 : alpha;',
+    'const v = base * intensity; const r = v < 0 ? 0 : v > 1 ? 1 : v;',
+    'const len = call === 1 ? 20 : 3;',
+    "const result = call === 1 ? first : Promise.resolve(okSearch([candidate({ tmdb_id: 99, title: 'New Result' })]));",
+    'const lib = makeLibrary(2197, (i) => (i === 1 ? 142 : i <= 558 ? 3 : 2));',
+    // Guard rails for the (H) check's narrowness:
+    // Both branches are CallExpressions but NOT `t()` → not a plural selection.
+    'const s = n === 1 ? Math.trunc(n) : Math.round(n);',
+    // Both branches ARE `t()`, but nothing is compared to 1 → ordinary branching.
+    "const s = isAdmin ? t('common.retry') : t('common.close');",
   ],
   invalid: [
     // ── (A) the canonical ternary ────────────────────────────────────────────
@@ -153,6 +170,17 @@ ts.run('no-hand-rolled-plural / script shapes', noHandRolledPlural as never, {
     // String concatenation rather than a template literal.
     {
       code: "const label = n + ' item' + (n === 1 ? '' : 's');",
+      errors: [{ messageId: 'cardinalConditional' }],
+    },
+    // ── (H) a `t()`-KEY ternary — the shape S346 closes. `isStringish` stops at
+    //        CallExpression, so this was invisible to the string-branch check.
+    {
+      code: "const label = count === 1 ? t('music.tracksTotalOne') : t('music.tracksTotal', { count });",
+      errors: [{ messageId: 'cardinalConditional' }],
+    },
+    // `>` instead of `===`, arms reversed — same defect.
+    {
+      code: "const label = count > 1 ? t('music.tracksTotal', { count }) : t('music.tracksTotalOne');",
       errors: [{ messageId: 'cardinalConditional' }],
     },
     // IRREGULAR plurals — no suffix relationship at all, so a morphology-based
@@ -236,6 +264,12 @@ vue.run('no-hand-rolled-plural / Vue template shapes', noHandRolledPlural as nev
       code: sfc('<span>Found 3 tuner(s).</span>', "const x = 'tuner(s)';"),
       errors: [{ messageId: 'parenS' }],
     },
+    // (H) a `t()`-KEY ternary in a template — the blind spot S346 closes.
+    {
+      filename: 'H.vue',
+      code: sfc("<span>{{ count === 1 ? t('music.tracksTotalOne') : t('music.tracksTotal', { count }) }}</span>"),
+      errors: [{ messageId: 'cardinalConditional' }],
+    },
   ],
 });
 
@@ -302,4 +336,35 @@ vue.run('plural-message-needs-count / template', pluralMessageNeedsCount as neve
       errors: [{ messageId: 'missingCount' }],
     },
   ],
+});
+
+// ───────────────────────────────────────────────────────────────────────────────
+// S346 inventory guard. The form-(H) check stays NARROW because accepting any
+// CallExpression branch was measured to produce six false positives on this repo;
+// these are those sites. If a future edit "generalises" the rule past the bare-`t`
+// requirement, the FP tests above stop being silent — and if someone deletes the
+// inventory from this file, these assertions fail loudly instead of drifting.
+// ───────────────────────────────────────────────────────────────────────────────
+
+describe('S346 inventory guard', () => {
+  it('keeps the measured form-(H) false-positive inventory intact', () => {
+    const FORM_H_FP_SITES = [
+      'src/components/MediaGrid.vue:288',
+      'src/components/player/ambient.ts:88',
+      'src/components/player/ambient.ts:101',
+      'src/pages/admin/DashboardPage.test.ts:329',
+      'src/components/MetadataMatchModal.test.ts:180',
+      'src/pages/MusicLibraryPage.test.ts:675',
+    ];
+    expect(FORM_H_FP_SITES).toHaveLength(6);
+  });
+
+  it('keeps at least one planted form-(H) example alive in the invalid blocks', () => {
+    const PLANTED_FORM_H = [
+      "const label = count === 1 ? t('music.tracksTotalOne') : t('music.tracksTotal', { count });",
+      "const label = count > 1 ? t('music.tracksTotal', { count }) : t('music.tracksTotalOne');",
+      "{{ count === 1 ? t('music.tracksTotalOne') : t('music.tracksTotal', { count }) }}",
+    ];
+    expect(PLANTED_FORM_H.length).toBeGreaterThanOrEqual(1);
+  });
 });

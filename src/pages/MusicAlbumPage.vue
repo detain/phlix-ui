@@ -110,9 +110,7 @@ void loadAlbum();
  */
 const trackCountLabel = computed(() => {
     const count = album.value?.totalTracks ?? 0;
-    return count === 1
-        ? t('music.tracksTotalOne')
-        : t('music.tracksTotal', { count: count.toLocaleString() });
+    return t('music.tracksTotal', { count: count.toLocaleString() });
 });
 
 // --- total duration ---

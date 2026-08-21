@@ -358,14 +358,12 @@ export const DEFAULT_MESSAGES = {
      */
     of: 'of',
     // Paging (S110) — the library is served one page at a time, so these carry the
-    // TRUE library size and the position within it. Singular/plural are separate
-    // keys because the resolver interpolates but does not pluralize.
-    artistsTotal: '{count} artists',
-    artistsTotalOne: '1 artist',
-    albumsTotal: '{count} albums',
-    albumsTotalOne: '1 album',
-    tracksTotal: '{count} tracks',
-    tracksTotalOne: '1 track',
+    // TRUE library size and the position within it. Pipe-form plural templates: the
+    // resolver selects the singular/plural form via Intl.PluralRules (S134), so the
+    // singular form lives in the same key — no `*One` sibling needed.
+    artistsTotal: '{count} artist | {count} artists',
+    albumsTotal: '{count} album | {count} albums',
+    tracksTotal: '{count} track | {count} tracks',
     /**
      * The count of a PAGE-LOCAL result, said out loud. `MusicTracksPage`'s search box
      * filters the 100 loaded rows, not the 29,245-row library, so while a query is
@@ -373,8 +371,7 @@ export const DEFAULT_MESSAGES = {
      * total and hides the fact that the library may hold hundreds more matches
      * (library-wide search is `/app/search`).
      */
-    tracksOnPage: '{count} tracks on this page',
-    tracksOnPageOne: '1 track on this page',
+    tracksOnPage: '{count} track on this page | {count} tracks on this page',
     showingRange: 'Showing {from}–{to} of {total}',
     pageOf: 'Page {page} of {pages}',
     firstPage: 'First page',
