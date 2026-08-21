@@ -268,7 +268,12 @@ Both rules are enforced at lint time by the local plugin in `eslint-rules/`:
   (whatever the operator or spelling, in `<script>` **and** in the Vue template),
   a quantity-driven conditional whose branches differ by a plural ending, an
   interpolated count followed by a hard-coded plural noun, and the `photo(s)`
-  dodge. Two sites in the repo compare to `1` without being plurals
+  dodge. It also flags a conditional that compares a quantity against `1` to
+  choose between two `t()` keys (e.g. `count === 1 ? t('x.one') : t('x.other')`),
+  which the string checks cannot see because `isStringish()` stops at
+  `CallExpression`. That check is deliberately narrow — both branches must be bare
+  `t()` calls — because accepting arbitrary call branches produced six measured
+  false positives. Two sites in the repo compare to `1` without being plurals
   (`ui/Skeleton.vue`, `BookDetailPage.vue`); both carry an `eslint-disable` with a
   reason, which is the intended way to record a non-plural cardinality test.
 - **`plural/plural-message-needs-count`** — reports a `t()` call on a pipe-form
