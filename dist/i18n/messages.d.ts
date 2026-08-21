@@ -319,11 +319,8 @@ export declare const DEFAULT_MESSAGES: {
          */
         of: string;
         artistsTotal: string;
-        artistsTotalOne: string;
         albumsTotal: string;
-        albumsTotalOne: string;
         tracksTotal: string;
-        tracksTotalOne: string;
         /**
          * The count of a PAGE-LOCAL result, said out loud. `MusicTracksPage`'s search box
          * filters the 100 loaded rows, not the 29,245-row library, so while a query is
@@ -332,7 +329,6 @@ export declare const DEFAULT_MESSAGES: {
          * (library-wide search is `/app/search`).
          */
         tracksOnPage: string;
-        tracksOnPageOne: string;
         showingRange: string;
         pageOf: string;
         firstPage: string;
