@@ -129,10 +129,10 @@ function statusTone(job: ScanJob | null | undefined): 'neutral' | 'info' | 'succ
 }
 
 /**
- * Human-readable label for each of the eight `library_scan_jobs.type` ENUM
+ * Human-readable label for each of the nine `library_scan_jobs.type` ENUM
  * members (S129).
  *
- * The history table used to print `job.type` raw, so five of the eight rendered
+ * The history table used to print `job.type` raw, so five of the nine rendered
  * as bare snake_case (`metadata_refresh`, `clear_artwork`, …) — and the three the
  * old TypeScript union knew about were the only ones anyone had looked at. The
  * map is exhaustive by construction: `Record<ScanJobType, string>` makes adding a
@@ -147,6 +147,7 @@ const SCAN_TYPE_LABELS: Record<ScanJobType, string> = {
   clear_metadata: 'Clear metadata',
   clear_artwork: 'Clear artwork',
   delete_all: 'Delete all items',
+  media_assets: 'Media assets',
 };
 
 /**

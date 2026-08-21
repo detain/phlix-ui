@@ -12,7 +12,7 @@ import { t as ie } from "./EmptyState-CwWtkhEJ.js";
 import { t as ae } from "./PageHint-3dL7qb5N.js";
 import { t as oe } from "./Menu-CcVQWgwT.js";
 import { n as se, t as ce } from "./metadata-sources-BJ3Q2NZ0.js";
-import { n as c, t as le } from "./libraries-DYTX2VKZ.js";
+import { n as c, t as le } from "./libraries-DMOynYoK.js";
 import { t as ue } from "./helpLinks-ya0IGJSe.js";
 import { Fragment as l, computed as u, createBlock as d, createCommentVNode as f, createElementBlock as p, createElementVNode as m, createStaticVNode as de, createTextVNode as h, createVNode as g, defineComponent as _, inject as fe, normalizeStyle as pe, onBeforeUnmount as me, onMounted as he, openBlock as v, ref as y, renderList as b, toDisplayString as x, unref as ge, vModelText as _e, watch as ve, withCtx as S, withDirectives as ye, withModifiers as be } from "vue";
 //#region src/pages/admin/LibrariesPage.vue?vue&type=script&setup=true&lang.ts
@@ -107,7 +107,8 @@ var xe = {
 			prune: "Prune missing files",
 			clear_metadata: "Clear metadata",
 			clear_artwork: "Clear artwork",
-			delete_all: "Delete all items"
+			delete_all: "Delete all items",
+			media_assets: "Media assets"
 		};
 		function ut(e) {
 			return lt[e] ?? e;
@@ -452,7 +453,7 @@ var xe = {
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			t[38] ||= de("<details class=\"admin-libraries__help\" open data-v-60865d22><summary class=\"admin-libraries__help-summary\" data-v-60865d22>What do these operations do?</summary><dl class=\"admin-libraries__help-list\" data-v-60865d22><dt data-v-60865d22>Scan</dt><dd data-v-60865d22> Imports new and changed files from disk, keeping every existing item along with its posters, watch progress and favorites. Does <em data-v-60865d22>not</em> contact TMDB/IMDB. Run it after you add, rename or remove media. </dd><dt data-v-60865d22>Match metadata</dt><dd data-v-60865d22> Fetches TMDB/IMDB details and artwork <em data-v-60865d22>only</em> for items that don’t have metadata yet — already-matched items are skipped. Run it after a Scan to fill in the new items. </dd><dt data-v-60865d22>Recheck all metadata</dt><dd data-v-60865d22> Forces a fresh metadata fetch for <em data-v-60865d22>every</em> item: updates existing entries and backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it after a metadata feature update or to refresh stale data. </dd><dt data-v-60865d22>Rescan</dt><dd data-v-60865d22> Re-scans from disk and prunes only the items whose files are truly gone. <strong data-v-60865d22>Non-destructive</strong> — surviving items keep their watch progress, favorites and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library that has drifted out of sync. </dd><dt data-v-60865d22>Prune removed</dt><dd data-v-60865d22> Removes only the items whose files no longer exist, without a full rescan. </dd><dt data-v-60865d22>Clear metadata</dt><dd data-v-60865d22> Resets items to filesystem basics (the items and your watch data are kept) so a later Match metadata can re-fetch cleanly. </dd><dt data-v-60865d22>Clear cached artwork</dt><dd data-v-60865d22> Deletes locally cached images to free disk space; they are re-downloaded on the next metadata match. </dd><dt class=\"admin-libraries__help-danger\" data-v-60865d22>Delete all items</dt><dd data-v-60865d22><strong data-v-60865d22>Destructive.</strong> Removes every item in the library <em data-v-60865d22>and</em> its watch progress, favorites and ratings. Only use this for a full reset. </dd></dl></details>", 1),
+			t[38] ||= de("<details class=\"admin-libraries__help\" open data-v-a5333e7f><summary class=\"admin-libraries__help-summary\" data-v-a5333e7f>What do these operations do?</summary><dl class=\"admin-libraries__help-list\" data-v-a5333e7f><dt data-v-a5333e7f>Scan</dt><dd data-v-a5333e7f> Imports new and changed files from disk, keeping every existing item along with its posters, watch progress and favorites. Does <em data-v-a5333e7f>not</em> contact TMDB/IMDB. Run it after you add, rename or remove media. </dd><dt data-v-a5333e7f>Match metadata</dt><dd data-v-a5333e7f> Fetches TMDB/IMDB details and artwork <em data-v-a5333e7f>only</em> for items that don’t have metadata yet — already-matched items are skipped. Run it after a Scan to fill in the new items. </dd><dt data-v-a5333e7f>Recheck all metadata</dt><dd data-v-a5333e7f> Forces a fresh metadata fetch for <em data-v-a5333e7f>every</em> item: updates existing entries and backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it after a metadata feature update or to refresh stale data. </dd><dt data-v-a5333e7f>Rescan</dt><dd data-v-a5333e7f> Re-scans from disk and prunes only the items whose files are truly gone. <strong data-v-a5333e7f>Non-destructive</strong> — surviving items keep their watch progress, favorites and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library that has drifted out of sync. </dd><dt data-v-a5333e7f>Prune removed</dt><dd data-v-a5333e7f> Removes only the items whose files no longer exist, without a full rescan. </dd><dt data-v-a5333e7f>Clear metadata</dt><dd data-v-a5333e7f> Resets items to filesystem basics (the items and your watch data are kept) so a later Match metadata can re-fetch cleanly. </dd><dt data-v-a5333e7f>Clear cached artwork</dt><dd data-v-a5333e7f> Deletes locally cached images to free disk space; they are re-downloaded on the next metadata match. </dd><dt class=\"admin-libraries__help-danger\" data-v-a5333e7f>Delete all items</dt><dd data-v-a5333e7f><strong data-v-a5333e7f>Destructive.</strong> Removes every item in the library <em data-v-a5333e7f>and</em> its watch progress, favorites and ratings. Only use this for a full reset. </dd></dl></details>", 1),
 			gt.value ? (v(), p("div", Ce, [g(re, {
 				variant: "text",
 				lines: 6
@@ -789,8 +790,8 @@ var xe = {
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-60865d22"]]);
+}), [["__scopeId", "data-v-a5333e7f"]]);
 //#endregion
 export { C as default };
 
-//# sourceMappingURL=LibrariesPage-BOYtAuad.js.map
+//# sourceMappingURL=LibrariesPage-C1iA_KIG.js.map

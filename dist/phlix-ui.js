@@ -55,7 +55,7 @@ import { t as en } from "./liveTv-Dbjt901v.js";
 import { t as tn } from "./collections-CH3HLdcd.js";
 import { t as nn } from "./history-Cz9DDbWX.js";
 import { t as rn } from "./syncPlay-DPzJkgkK.js";
-import { n as an, r as on, t as sn } from "./libraries-DYTX2VKZ.js";
+import { n as an, r as on, t as sn } from "./libraries-DMOynYoK.js";
 import { n as cn, r as ln, t as un } from "./useSettingsPrefs-CEFxTJFG.js";
 import { i as dn, n as fn, r as pn, t as mn } from "./plugins-Cl9v5JFf.js";
 import { n as hn, r as gn, t as _n } from "./maintenance-CETCLHzL.js";
@@ -965,13 +965,13 @@ var Di = Qn("server", () => {
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-BOYtAuad.js")
+	component: () => import("./LibrariesPage-C1iA_KIG.js")
 }, Ui = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-BK-tigp9.js")
+	component: () => import("./DuplicatesPage-BmyiWTkD.js")
 }, Wi = {
 	name: "admin-plugins",
 	path: "plugins",

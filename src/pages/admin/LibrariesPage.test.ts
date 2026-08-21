@@ -1440,9 +1440,9 @@ describe('Admin LibrariesPage — auto-collections toggle (S33)', () => {
  * S96 (migration 095) started charging files a scan could not index to
  * `library_scan_jobs.items_failed`, and NOTHING in the estate rendered it: the
  * number existed only in the DB. Separately, the `ScanJob.type` union carried 3
- * of the ENUM's 8 members, so five job types rendered as raw snake_case.
+ * of the ENUM's 9 members, so five job types rendered as raw snake_case.
  *
- * ⚠ The eight member names below are written as LITERALS on purpose. Deriving
+ * ⚠ The nine member names below are written as LITERALS on purpose. Deriving
  * them from `SCAN_JOB_TYPES` (the array the production label map is keyed by)
  * would make this suite self-adjusting: dropping a member from the array would
  * shrink both the code AND the expectation, and the test could never fail.
@@ -1458,6 +1458,7 @@ describe('Admin LibrariesPage — items_failed + the full scan-type ENUM (S129)'
     ['clear_metadata', 'Clear metadata'],
     ['clear_artwork', 'Clear artwork'],
     ['delete_all', 'Delete all items'],
+    ['media_assets', 'Media assets'],
   ];
 
   async function openHistory(w: VueWrapper): Promise<HTMLElement> {
@@ -1471,7 +1472,7 @@ describe('Admin LibrariesPage — items_failed + the full scan-type ENUM (S129)'
 
   // ── the type ENUM ───────────────────────────────────────────────────────────
 
-  it('enumerates exactly the 8 members migrations 027/030/081/084 define', () => {
+  it('enumerates exactly the 9 members migrations 027/030/081/084/101 define', () => {
     // Guards the LIST itself, not the rendering: an unreviewed edit to
     // SCAN_JOB_TYPES (adding a member the DB has not got, or dropping one it has)
     // fails here against literals lifted from the migration files.
@@ -1484,6 +1485,7 @@ describe('Admin LibrariesPage — items_failed + the full scan-type ENUM (S129)'
       'clear_metadata',
       'clear_artwork',
       'delete_all',
+      'media_assets',
     ]);
   });
 

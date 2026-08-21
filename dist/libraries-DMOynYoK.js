@@ -15,7 +15,8 @@ var e = [
 	"prune",
 	"clear_metadata",
 	"clear_artwork",
-	"delete_all"
+	"delete_all",
+	"media_assets"
 ], n = class {
 	client;
 	constructor(e) {
@@ -74,4 +75,4 @@ var e = [
 //#endregion
 export { e as n, t as r, n as t };
 
-//# sourceMappingURL=libraries-DYTX2VKZ.js.map
+//# sourceMappingURL=libraries-DMOynYoK.js.map
