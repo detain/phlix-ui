@@ -17,6 +17,20 @@
  * Vue `{{ }}` interpolation and an index expression `[a, b][n === 1 ? 0 : 1]` are
  * all the same node shape to this rule, and none of them had to be anticipated.
  *
+ * **Form (H): a conditional that selects between two `t()` KEYS** — the shape the
+ * music surfaces used until S346: `count === 1 ? t('music.XTotalOne') : t('music.XTotal', …)`.
+ * `isStringish` deliberately stops at `CallExpression`, so the primary check's
+ * "a string is nearby" test was false here even though the conditional compares a
+ * quantity to 1. A companion check fires only when a conditional compares
+ * something to 1 AND both branches are bare `t()` calls — the keys ARE the strings
+ * being selected, just routed through the translator. It is NARROW on purpose:
+ * accepting any `CallExpression` branch was measured to produce six false
+ * positives on this repo (alpha/value clamps in `player/ambient.ts`, a
+ * `Math.trunc` clamp in `MediaGrid.vue`, and numeric/call mocks in three test
+ * files), so the check requires the `t` identifier exactly, and both branches.
+ * It still cannot see the shape through a member callee (`i18n.t('x.one')`), an
+ * aliased translate, or a helper that wraps `t` — none of those were counted.
+ *
  * The three secondary checks (`morphological`, `parenS`, `hardcoded`) exist
  * because two shapes found during the migration are NOT conditionals at all and
  * so cannot be caught by the primary check at any level of generality:
@@ -59,6 +73,21 @@ function isStringish(node, depth = 0) {
     return isStringish(node.expression, depth + 1);
   }
   return false;
+}
+
+/**
+ * Is this the `t()` translate call? NARROW on purpose: only the bare `t`
+ * identifier, never a member callee (`i18n.t`) or an alias. Used by the form-(H)
+ * check, which must not accept arbitrary CallExpressions — doing so was measured
+ * to produce six false positives on this repo (clamps and call/mock shapes whose
+ * branches are calls that are not translations).
+ */
+function isTKeySelection(node) {
+  return (
+    node?.type === 'CallExpression' &&
+    node.callee?.type === 'Identifier' &&
+    node.callee.name === 't'
+  );
 }
 
 /** Walk every descendant node, ignoring parent back-links. */
@@ -258,6 +287,17 @@ export default {
 
     const checks = {
       ConditionalExpression(node) {
+        // Form (H): `count === 1 ? t('x.one') : t('x.other')` — both branches are
+        // `t()` calls, invisible to `isStringish` below. BOTH must be `t()`: a
+        // comparison to 1 selecting other calls is not (measurably) a plural.
+        if (
+          comparesToOne(node.test) &&
+          isTKeySelection(node.consequent) &&
+          isTKeySelection(node.alternate)
+        ) {
+          context.report({ node, messageId: 'cardinalConditional' });
+          return;
+        }
         const stringBranch =
           isStringish(node.consequent) ||
           isStringish(node.alternate) ||

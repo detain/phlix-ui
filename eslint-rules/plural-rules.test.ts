@@ -17,6 +17,8 @@
  *   (E) `'{count} x | {count} xs'` translated with no `count`
  *   (F) `` `${n} photos` `` with no singular branch at all   — found during S134
  *   (G) `photo(s)`                                           — found during S134
+ *   (H) `n === 1 ? t('x.one') : t('x.other')` — a `t()`-KEY ternary, invisible to
+ *       the string-branch check until S346 (the music surfaces' live shape)
  * and the unanticipated ones: `>`/`<=`/`!=` comparisons, reversed operand order,
  * an if/else, an array index, a nested/`switch`-free lookup, irregular plurals.
  *
@@ -56,6 +58,37 @@ const vue = new RuleTester({
 const sfc = (template: string, script = '') =>
   `<script setup lang="ts">${script}</script>\n<template>${template}</template>`;
 
+/**
+ * S346: the six measured false-positive shapes for the form-(H) check. These
+ * drive BOTH the RuleTester `valid` inventory AND the length guard below, so
+ * emptying the FP inventory fails loudly instead of silently shrinking the
+ * test surface. Each is a verbatim (single-line) copy of the live site.
+ */
+const FORM_H_FP_CODES = [
+  "const n = props.columns; return typeof n === 'number' && Number.isFinite(n) && n >= 1 ? Math.trunc(n) : null;",
+  'const a = alpha < 0 ? 0 : alpha > 1 ? 1 : alpha;',
+  'const v = base * intensity; const r = v < 0 ? 0 : v > 1 ? 1 : v;',
+  'const len = call === 1 ? 20 : 3;',
+  'return call === 1 ? first : Promise.resolve(okSearch([candidate({ tmdb_id: 99, title: "New Result" })]));',
+  'return makeLibrary(2197, (i) => (i === 1 ? 142 : i <= 558 ? 3 : 2));',
+];
+
+/**
+ * S346: the planted form-(H) positives, shared by the RuleTester `invalid`
+ * inventory AND the guard below. Deleting one shrinks both, so the rule test
+ * surface and the guard move together instead of drifting apart.
+ */
+const PLANTED_FORM_H_CASES = [
+  {
+    code: "const label = count === 1 ? t('music.tracksTotalOne') : t('music.tracksTotal', { count });",
+    errors: [{ messageId: 'cardinalConditional' }],
+  },
+  {
+    code: "const label = count > 1 ? t('music.tracksTotal', { count }) : t('music.tracksTotalOne');",
+    errors: [{ messageId: 'cardinalConditional' }],
+  },
+];
+
 // ───────────────────────────────────────────────────────────────────────────────
 // no-hand-rolled-plural — the shapes that must be RED
 // ───────────────────────────────────────────────────────────────────────────────
@@ -81,6 +114,17 @@ ts.run('no-hand-rolled-plural / script shapes', noHandRolledPlural as never, {
     "if (group.length === 1) { push(formatLine(line)); } else { push(other); }",
     // Non-string branches.
     'const v = n === 1 ? 10 : 20;',
+    // ── S346 false-positive inventory: comparisons to 1 whose branches are NOT
+    //    both `t()` calls. Measured live on this repo, these six must stay silent;
+    //    the form-(H) check requires BOTH branches to be `t()`, so none can trip it.
+    //    Driven from FORM_H_FP_CODES so this inventory and the guard below cannot
+    //    drift apart.
+    ...FORM_H_FP_CODES.map((code) => ({ code })),
+    // Guard rails for the (H) check's narrowness:
+    // Both branches are CallExpressions but NOT `t()` → not a plural selection.
+    'const s = n === 1 ? Math.trunc(n) : Math.round(n);',
+    // Both branches ARE `t()`, but nothing is compared to 1 → ordinary branching.
+    "const s = isAdmin ? t('common.retry') : t('common.close');",
   ],
   invalid: [
     // ── (A) the canonical ternary ────────────────────────────────────────────
@@ -155,6 +199,11 @@ ts.run('no-hand-rolled-plural / script shapes', noHandRolledPlural as never, {
       code: "const label = n + ' item' + (n === 1 ? '' : 's');",
       errors: [{ messageId: 'cardinalConditional' }],
     },
+    // ── (H) a `t()`-KEY ternary — the shape S346 closes. `isStringish` stops at
+    //        CallExpression, so this was invisible to the string-branch check.
+    //        Driven from PLANTED_FORM_H_CASES so this inventory and the guard
+    //        below cannot drift apart.
+    ...PLANTED_FORM_H_CASES,
     // IRREGULAR plurals — no suffix relationship at all, so a morphology-based
     // detector would miss these. The cardinality signal still catches them.
     {
@@ -236,6 +285,12 @@ vue.run('no-hand-rolled-plural / Vue template shapes', noHandRolledPlural as nev
       code: sfc('<span>Found 3 tuner(s).</span>', "const x = 'tuner(s)';"),
       errors: [{ messageId: 'parenS' }],
     },
+    // (H) a `t()`-KEY ternary in a template — the blind spot S346 closes.
+    {
+      filename: 'H.vue',
+      code: sfc("<span>{{ count === 1 ? t('music.tracksTotalOne') : t('music.tracksTotal', { count }) }}</span>"),
+      errors: [{ messageId: 'cardinalConditional' }],
+    },
   ],
 });
 
@@ -302,4 +357,23 @@ vue.run('plural-message-needs-count / template', pluralMessageNeedsCount as neve
       errors: [{ messageId: 'missingCount' }],
     },
   ],
+});
+
+// ───────────────────────────────────────────────────────────────────────────────
+// S346 inventory guard. The form-(H) check stays NARROW because accepting any
+// CallExpression branch was measured to produce six false positives on this repo.
+// FORM_H_FP_CODES and PLANTED_FORM_H_CASES are the single source of truth: they
+// are spread into the RuleTester inventories ABOVE, and these assertions guard
+// their exact lengths — an FP-case deletion fails via the length-6 assertion and
+// a planted-case deletion fails via the length-2 assertion, instead of silently
+// shrinking the test surface.
+// ───────────────────────────────────────────────────────────────────────────────
+
+describe('S346 inventory guard', () => {
+  it('still names every measured false-positive site for the form-(H) check', () => {
+    expect(FORM_H_FP_CODES).toHaveLength(6);
+  });
+  it('still plants every form-(H) positive case', () => {
+    expect(PLANTED_FORM_H_CASES).toHaveLength(2);
+  });
 });

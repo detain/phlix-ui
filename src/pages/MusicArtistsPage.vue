@@ -86,9 +86,7 @@ onMounted(() => {
 
 /** "2,197 artists" — the DB count, not the length of this page. */
 const totalLabel = computed(() =>
-    total.value === 1
-        ? t('music.artistsTotalOne')
-        : t('music.artistsTotal', { count: total.value.toLocaleString() }),
+    t('music.artistsTotal', { count: total.value.toLocaleString() }),
 );
 
 /**
@@ -99,9 +97,7 @@ const totalLabel = computed(() =>
  */
 function artistAlbumLabel(artist: MusicArtist): string {
     const count = artist.albumCount ?? 0;
-    return count === 1
-        ? t('music.albumsTotalOne')
-        : t('music.albumsTotal', { count: count.toLocaleString() });
+    return t('music.albumsTotal', { count: count.toLocaleString() });
 }
 
 async function goToOffset(next: number): Promise<void> {

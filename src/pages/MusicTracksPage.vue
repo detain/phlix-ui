@@ -113,13 +113,9 @@ const filteredTracks = computed(() => {
  */
 const countLabel = computed(() => {
   if (searchQuery.value.trim() !== '') {
-    return filteredTracks.value.length === 1
-      ? t('music.tracksOnPageOne')
-      : t('music.tracksOnPage', { count: filteredTracks.value.length.toLocaleString() });
+    return t('music.tracksOnPage', { count: filteredTracks.value.length.toLocaleString() });
   }
-  return total.value === 1
-    ? t('music.tracksTotalOne')
-    : t('music.tracksTotal', { count: total.value.toLocaleString() });
+  return t('music.tracksTotal', { count: total.value.toLocaleString() });
 });
 
 // --- playback ---

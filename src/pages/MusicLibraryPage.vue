@@ -244,16 +244,12 @@ const viewTitle = computed(() => {
 
 /** "2,197 artists" / "1 artist" — the DB count, not `artists.length`. */
 const artistTotalLabel = computed(() =>
-  artistTotal.value === 1
-    ? t('music.artistsTotalOne')
-    : t('music.artistsTotal', { count: artistTotal.value.toLocaleString() }),
+  t('music.artistsTotal', { count: artistTotal.value.toLocaleString() }),
 );
 
 /** "142 albums" for the selected artist — again the server's filtered `total`. */
 const albumTotalLabel = computed(() =>
-  albumTotal.value === 1
-    ? t('music.albumsTotalOne')
-    : t('music.albumsTotal', { count: albumTotal.value.toLocaleString() }),
+  t('music.albumsTotal', { count: albumTotal.value.toLocaleString() }),
 );
 
 /**
