@@ -63,6 +63,9 @@ var e = [
 	deleteAll(e) {
 		return this.client.post(`/api/v1/libraries/${encodeURIComponent(e)}/delete-all?confirm=true`, { confirm: !0 });
 	}
+	regenerateAssets(e) {
+		return this.client.post(`/api/v1/libraries/${encodeURIComponent(e)}/regenerate-assets`);
+	}
 	async scanStatus(e) {
 		let { scan_status: t } = await this.client.get(`/api/v1/libraries/${encodeURIComponent(e)}/scan-status`);
 		return t ?? null;
@@ -75,4 +78,4 @@ var e = [
 //#endregion
 export { e as n, t as r, n as t };
 
-//# sourceMappingURL=libraries-DMOynYoK.js.map
+//# sourceMappingURL=libraries-BESAWRyW.js.map

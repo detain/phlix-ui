@@ -12,7 +12,7 @@ import { t as ie } from "./EmptyState-CwWtkhEJ.js";
 import { t as ae } from "./PageHint-3dL7qb5N.js";
 import { t as oe } from "./Menu-CcVQWgwT.js";
 import { n as se, t as ce } from "./metadata-sources-BJ3Q2NZ0.js";
-import { n as c, t as le } from "./libraries-DMOynYoK.js";
+import { n as c, t as le } from "./libraries-BESAWRyW.js";
 import { t as ue } from "./helpLinks-ya0IGJSe.js";
 import { Fragment as l, computed as u, createBlock as d, createCommentVNode as f, createElementBlock as p, createElementVNode as m, createStaticVNode as de, createTextVNode as h, createVNode as g, defineComponent as _, inject as fe, normalizeStyle as pe, onBeforeUnmount as me, onMounted as he, openBlock as v, ref as y, renderList as b, toDisplayString as x, unref as ge, vModelText as _e, watch as ve, withCtx as S, withDirectives as ye, withModifiers as be } from "vue";
 //#region src/pages/admin/LibrariesPage.vue?vue&type=script&setup=true&lang.ts
@@ -310,6 +310,7 @@ var xe = {
 				case "clear-metadata": return w.clearMetadata(e.id);
 				case "clear-artwork": return w.clearArtwork(e.id);
 				case "delete-all": return w.deleteAll(e.id);
+				case "regenerate-assets": return w.regenerateAssets(e.id);
 			}
 		}
 		function Ut(e, t) {
@@ -320,6 +321,7 @@ var xe = {
 				case "clear-artwork": return `Artwork job queued (job ${t}).`;
 				case "prune":
 				case "delete-all": return `Cleanup queued (job ${t}).`;
+				case "regenerate-assets": return `Media-asset regeneration queued (job ${t}).`;
 				default: return `Scan queued (job ${t}).`;
 			}
 		}
@@ -382,6 +384,10 @@ var xe = {
 				{
 					label: "Prune removed",
 					onClick: () => void Y(e, "prune")
+				},
+				{
+					label: "Regenerate media assets",
+					onClick: () => void Y(e, "regenerate-assets")
 				},
 				{
 					label: "Clear metadata",
@@ -453,7 +459,7 @@ var xe = {
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			t[38] ||= de("<details class=\"admin-libraries__help\" open data-v-a5333e7f><summary class=\"admin-libraries__help-summary\" data-v-a5333e7f>What do these operations do?</summary><dl class=\"admin-libraries__help-list\" data-v-a5333e7f><dt data-v-a5333e7f>Scan</dt><dd data-v-a5333e7f> Imports new and changed files from disk, keeping every existing item along with its posters, watch progress and favorites. Does <em data-v-a5333e7f>not</em> contact TMDB/IMDB. Run it after you add, rename or remove media. </dd><dt data-v-a5333e7f>Match metadata</dt><dd data-v-a5333e7f> Fetches TMDB/IMDB details and artwork <em data-v-a5333e7f>only</em> for items that don’t have metadata yet — already-matched items are skipped. Run it after a Scan to fill in the new items. </dd><dt data-v-a5333e7f>Recheck all metadata</dt><dd data-v-a5333e7f> Forces a fresh metadata fetch for <em data-v-a5333e7f>every</em> item: updates existing entries and backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it after a metadata feature update or to refresh stale data. </dd><dt data-v-a5333e7f>Rescan</dt><dd data-v-a5333e7f> Re-scans from disk and prunes only the items whose files are truly gone. <strong data-v-a5333e7f>Non-destructive</strong> — surviving items keep their watch progress, favorites and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library that has drifted out of sync. </dd><dt data-v-a5333e7f>Prune removed</dt><dd data-v-a5333e7f> Removes only the items whose files no longer exist, without a full rescan. </dd><dt data-v-a5333e7f>Clear metadata</dt><dd data-v-a5333e7f> Resets items to filesystem basics (the items and your watch data are kept) so a later Match metadata can re-fetch cleanly. </dd><dt data-v-a5333e7f>Clear cached artwork</dt><dd data-v-a5333e7f> Deletes locally cached images to free disk space; they are re-downloaded on the next metadata match. </dd><dt class=\"admin-libraries__help-danger\" data-v-a5333e7f>Delete all items</dt><dd data-v-a5333e7f><strong data-v-a5333e7f>Destructive.</strong> Removes every item in the library <em data-v-a5333e7f>and</em> its watch progress, favorites and ratings. Only use this for a full reset. </dd></dl></details>", 1),
+			t[38] ||= de("<details class=\"admin-libraries__help\" open data-v-775c336f><summary class=\"admin-libraries__help-summary\" data-v-775c336f>What do these operations do?</summary><dl class=\"admin-libraries__help-list\" data-v-775c336f><dt data-v-775c336f>Scan</dt><dd data-v-775c336f> Imports new and changed files from disk, keeping every existing item along with its posters, watch progress and favorites. Does <em data-v-775c336f>not</em> contact TMDB/IMDB. Run it after you add, rename or remove media. </dd><dt data-v-775c336f>Match metadata</dt><dd data-v-775c336f> Fetches TMDB/IMDB details and artwork <em data-v-775c336f>only</em> for items that don’t have metadata yet — already-matched items are skipped. Run it after a Scan to fill in the new items. </dd><dt data-v-775c336f>Recheck all metadata</dt><dd data-v-775c336f> Forces a fresh metadata fetch for <em data-v-775c336f>every</em> item: updates existing entries and backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it after a metadata feature update or to refresh stale data. </dd><dt data-v-775c336f>Rescan</dt><dd data-v-775c336f> Re-scans from disk and prunes only the items whose files are truly gone. <strong data-v-775c336f>Non-destructive</strong> — surviving items keep their watch progress, favorites and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library that has drifted out of sync. </dd><dt data-v-775c336f>Prune removed</dt><dd data-v-775c336f> Removes only the items whose files no longer exist, without a full rescan. </dd><dt data-v-775c336f>Regenerate media assets</dt><dd data-v-775c336f> Re-creates the file-based media assets (chapter thumbnails, trickplay sprite, Roku BIF) for the library&#39;s existing items. <strong data-v-775c336f>Idempotent</strong> — firing it while a regeneration is already queued is a no-op success, not an error. </dd><dt data-v-775c336f>Clear metadata</dt><dd data-v-775c336f> Resets items to filesystem basics (the items and your watch data are kept) so a later Match metadata can re-fetch cleanly. </dd><dt data-v-775c336f>Clear cached artwork</dt><dd data-v-775c336f> Deletes locally cached images to free disk space; they are re-downloaded on the next metadata match. </dd><dt class=\"admin-libraries__help-danger\" data-v-775c336f>Delete all items</dt><dd data-v-775c336f><strong data-v-775c336f>Destructive.</strong> Removes every item in the library <em data-v-775c336f>and</em> its watch progress, favorites and ratings. Only use this for a full reset. </dd></dl></details>", 1),
 			gt.value ? (v(), p("div", Ce, [g(re, {
 				variant: "text",
 				lines: 6
@@ -790,8 +796,8 @@ var xe = {
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-a5333e7f"]]);
+}), [["__scopeId", "data-v-775c336f"]]);
 //#endregion
 export { C as default };
 
-//# sourceMappingURL=LibrariesPage-C1iA_KIG.js.map
+//# sourceMappingURL=LibrariesPage-CfKJT4yb.js.map

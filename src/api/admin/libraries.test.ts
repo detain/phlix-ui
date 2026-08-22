@@ -226,6 +226,36 @@ describe('AdminLibrariesApi', () => {
     });
   });
 
+  it('regenerateAssets() POSTs /regenerate-assets and parses the queued arm', async () => {
+    const { api, post } = makeApi({
+      post: () => ({ job_id: 'job-ra', status: 'queued', message: 'Media-asset regeneration queued.' }),
+    });
+    const result = await api.regenerateAssets('lib-1');
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/regenerate-assets');
+    expect(result).toEqual({
+      job_id: 'job-ra',
+      status: 'queued',
+      message: 'Media-asset regeneration queued.',
+    });
+  });
+
+  it('regenerateAssets() surfaces the already_queued arm as a success (idempotent)', async () => {
+    const { api, post } = makeApi({
+      post: () => ({
+        job_id: 'job-ra',
+        status: 'already_queued',
+        message: 'A media-asset regeneration job is already queued for this library.',
+      }),
+    });
+    const result = await api.regenerateAssets('lib-1');
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/regenerate-assets');
+    expect(result).toEqual({
+      job_id: 'job-ra',
+      status: 'already_queued',
+      message: 'A media-asset regeneration job is already queued for this library.',
+    });
+  });
+
   it('scanStatus() unwraps { scan_status } (job)', async () => {
     const { api, get } = makeApi({ get: () => ({ scan_status: sampleJob }) });
     const result = await api.scanStatus('lib-1');

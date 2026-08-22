@@ -270,7 +270,13 @@ export interface CreateLibraryResult {
 /** Result of {@link AdminLibrariesApi.scan}/{@link AdminLibrariesApi.rescan}. */
 export interface ScanQueuedResult {
   job_id: string;
-  status: string;
+  /**
+   * Job-state the server reports. The async-scan family replies `'queued'`;
+   * {@link AdminLibrariesApi.regenerateAssets} may also reply `'already_queued'`
+   * — a second request while the `media_assets` job is active, which is a
+   * SUCCESS, not an error (the endpoint is idempotent).
+   */
+  status: 'queued' | 'already_queued';
   message: string;
 }
 
@@ -396,6 +402,23 @@ export class AdminLibrariesApi {
     return this.client.post<ScanQueuedResult>(
       `/api/v1/libraries/${encodeURIComponent(id)}/delete-all?confirm=true`,
       { confirm: true },
+    );
+  }
+
+  /**
+   * `POST /api/v1/libraries/{id}/regenerate-assets` → `202 { job_id, status,
+   * message }` (S284). Re-primes the FILE-based media-asset queue (chapter
+   * thumbnails, trickplay sprite, Roku BIF) for a library's EXISTING rows — the
+   * queue's only other producer is the scanner, so an install scanned before the
+   * trickplay producer fix could never acquire those artefacts short of a full
+   * rescan. Admin-gated server-side; IDEMPOTENT: a second request while the
+   * `media_assets` job is active replies `status: "already_queued"` and names the
+   * running job — a SUCCESS, not an error. Same async job shape as scan, so it
+   * drives the same status-polling UI.
+   */
+  regenerateAssets(id: string): Promise<ScanQueuedResult> {
+    return this.client.post<ScanQueuedResult>(
+      `/api/v1/libraries/${encodeURIComponent(id)}/regenerate-assets`,
     );
   }
 
