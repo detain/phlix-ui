@@ -100,7 +100,7 @@ function rendersTag(tpl: string, name: string): boolean {
 }
 
 describe('S324 — every MediaCard host wires the admin ⋯-menu actions (host enumeration)', () => {
-  it('wires @edit-metadata + @explore-data and mounts both modals on EVERY host page', () => {
+  it('wires the admin ⋯-menu actions (edit-metadata / explore-data / refresh) and mounts both modals on EVERY host page', () => {
     const pagesDir = dirname(fileURLToPath(import.meta.url));
     const files = listVueFiles(pagesDir).sort();
     const hosts: string[] = [];
