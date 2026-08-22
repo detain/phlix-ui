@@ -14,76 +14,76 @@ import { n as f, t as p } from "./useItemInspector-Cn3FRzeh.js";
 import { t as m } from "./recommendations-DMDaEMq9.js";
 import { r as h } from "./useResolvePlayable-wCiMWuME.js";
 import { createBlock as g, createCommentVNode as _, createElementBlock as v, createElementVNode as y, createTextVNode as b, createVNode as x, defineComponent as S, isRef as C, onMounted as w, openBlock as T, ref as E, unref as D, withCtx as O } from "vue";
-import { useRouter as k } from "vue-router";
+import { useRouter as ee } from "vue-router";
 //#region src/pages/RecommendationsPage.vue?vue&type=script&setup=true&lang.ts
-var A = { class: "recommendations-page" }, j = /*#__PURE__*/ e(/* @__PURE__ */ S({
+var k = { class: "recommendations-page" }, A = /*#__PURE__*/ e(/* @__PURE__ */ S({
 	__name: "RecommendationsPage",
 	setup(e) {
-		let S = k(), j = n(), M = a(), N = r(), P = o(), F = i(), I = E([]), L = E(!1), R = E(!1), z = E(!1), B = E(null), V = E(null);
-		async function H() {
-			L.value = !0, V.value = null;
+		let S = ee(), A = n(), j = a(), M = r(), N = o(), P = i(), F = E([]), I = E(!1), L = E(!1), R = E(!1), z = E(null), B = E(null);
+		async function V() {
+			I.value = !0, B.value = null;
 			try {
-				let e = new t({ baseUrl: j.value });
-				I.value = await m(e, { limit: 20 }), B.value = I.value.length, z.value = !1;
+				let e = new t({ baseUrl: A.value });
+				F.value = await m(e, { limit: 20 }), z.value = F.value.length, R.value = !1;
 			} catch (e) {
-				V.value = e instanceof Error ? e.message : "Failed to load recommendations";
+				B.value = e instanceof Error ? e.message : "Failed to load recommendations";
 			} finally {
-				L.value = !1;
+				I.value = !1;
 			}
 		}
-		function U(e, t) {
+		function H(e, t) {
 			S?.push({
 				name: e,
 				params: { id: t }
 			}).catch(() => {});
 		}
-		function W(e) {
+		function U(e) {
 			return typeof e == "object" && !!e && e.name === "AbortError";
 		}
-		async function G(e) {
+		async function W(e) {
 			try {
-				let n = new t({ baseUrl: j.value }), r = await h(n, j.value, e, F.resumeMap);
+				let n = new t({ baseUrl: A.value }), r = await h(n, A.value, e, P.resumeMap);
 				if (!r) {
-					M.info("Nothing to play yet");
+					j.info("Nothing to play yet");
 					return;
 				}
-				U("player", r.id);
+				H("player", r.id);
 			} catch (e) {
-				if (W(e)) return;
-				M.info("Nothing to play yet");
+				if (U(e)) return;
+				j.info("Nothing to play yet");
 			}
 		}
+		function G(e) {
+			S?.hasRoute("media") ? H("media", e.id) : j.info(`Details for "${e.name}" are coming soon`);
+		}
 		function K(e) {
-			S?.hasRoute("media") ? U("media", e.id) : M.info(`Details for "${e.name}" are coming soon`);
+			N.isFavorite(e.id) ? j.success(`Added "${e.name}" to your favorites`) : j.info(`Removed "${e.name}" from your favorites`);
 		}
 		function q(e) {
-			P.isFavorite(e.id) ? M.success(`Added "${e.name}" to your favorites`) : M.info(`Removed "${e.name}" from your favorites`);
+			N.isWatched(e.id) ? j.success(`Marked "${e.name}" as watched`) : j.info(`Marked "${e.name}" as unwatched`);
 		}
-		function J(e) {
-			P.isWatched(e.id) ? M.success(`Marked "${e.name}" as watched`) : M.info(`Marked "${e.name}" as unwatched`);
-		}
-		let Y = E(null), X = E(!1), { inspectorItem: Z, inspectorOpen: Q, openInspector: $ } = p();
-		function ee(e) {
-			Y.value = e, X.value = !0;
+		let J = E(null), Y = E(!1), { inspectorItem: X, inspectorOpen: Z, openInspector: Q } = p();
+		function $(e) {
+			J.value = e, Y.value = !0;
 		}
 		function te(e) {
-			I.value = I.value.map((t) => t.id === e.id ? e : t), M.success(`Updated metadata for "${e.name}"`);
+			F.value = F.value.map((t) => t.id === e.id ? e : t), j.success(`Updated metadata for "${e.name}"`);
 		}
 		function ne() {
-			H();
+			V();
 		}
 		return w(() => {
-			H();
-		}), (e, t) => (T(), v("div", A, [
+			V();
+		}), (e, t) => (T(), v("div", k, [
 			t[3] ||= y("div", { class: "recommendations-header" }, [y("h1", { class: "recommendations-title" }, "Recommended for You"), y("p", { class: "recommendations-subtitle" }, "Because you watched…")], -1),
-			L.value && I.value.length === 0 ? (T(), g(s, {
+			I.value && F.value.length === 0 ? (T(), g(s, {
 				key: 0,
 				label: "Loading recommendations"
-			})) : V.value ? (T(), g(l, {
+			})) : B.value ? (T(), g(l, {
 				key: 1,
 				icon: "alert",
 				title: "Couldn't load recommendations",
-				description: V.value
+				description: B.value
 			}, {
 				actions: O(() => [x(c, {
 					variant: "solid",
@@ -95,25 +95,26 @@ var A = { class: "recommendations-page" }, j = /*#__PURE__*/ e(/* @__PURE__ */ S
 					_: 1
 				})]),
 				_: 1
-			}, 8, ["description"])) : !L.value && I.value.length === 0 ? (T(), g(l, {
+			}, 8, ["description"])) : !I.value && F.value.length === 0 ? (T(), g(l, {
 				key: 2,
 				icon: "star",
 				title: "No recommendations yet",
 				description: "Watch a few titles and we'll suggest others you'll love."
 			})) : (T(), g(u, {
 				key: 3,
-				items: I.value,
-				total: B.value,
-				loading: L.value,
-				"loading-more": R.value,
-				"has-more": z.value,
-				"can-match": D(N).isAdmin,
-				onPlay: G,
-				onWatchlist: q,
-				onInfo: K,
-				onMarkWatched: J,
-				onEditMetadata: ee,
-				onExploreData: D($)
+				items: F.value,
+				total: z.value,
+				loading: I.value,
+				"loading-more": L.value,
+				"has-more": R.value,
+				"can-match": D(M).isAdmin,
+				onPlay: W,
+				onWatchlist: K,
+				onInfo: G,
+				onMarkWatched: q,
+				onEditMetadata: $,
+				onRefresh: $,
+				onExploreData: D(Q)
 			}, null, 8, [
 				"items",
 				"total",
@@ -123,23 +124,23 @@ var A = { class: "recommendations-page" }, j = /*#__PURE__*/ e(/* @__PURE__ */ S
 				"can-match",
 				"onExploreData"
 			])),
-			D(N).isAdmin ? (T(), g(d, {
+			D(M).isAdmin ? (T(), g(d, {
 				key: 4,
-				modelValue: X.value,
-				"onUpdate:modelValue": t[0] ||= (e) => X.value = e,
-				item: Y.value,
+				modelValue: Y.value,
+				"onUpdate:modelValue": t[0] ||= (e) => Y.value = e,
+				item: J.value,
 				onApplied: te
 			}, null, 8, ["modelValue", "item"])) : _("", !0),
-			D(N).isAdmin ? (T(), g(f, {
+			D(M).isAdmin ? (T(), g(f, {
 				key: 5,
-				modelValue: D(Q),
-				"onUpdate:modelValue": t[1] ||= (e) => C(Q) ? Q.value = e : null,
-				item: D(Z)
+				modelValue: D(Z),
+				"onUpdate:modelValue": t[1] ||= (e) => C(Z) ? Z.value = e : null,
+				item: D(X)
 			}, null, 8, ["modelValue", "item"])) : _("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-8ed9a03c"]]);
+}), [["__scopeId", "data-v-5506e02a"]]);
 //#endregion
-export { j as default };
+export { A as default };
 
-//# sourceMappingURL=RecommendationsPage-DzdJxeEK.js.map
+//# sourceMappingURL=RecommendationsPage-MGKOlgO5.js.map

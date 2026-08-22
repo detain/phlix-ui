@@ -1259,13 +1259,13 @@ function Ca(e) {
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-CV4CffQl.js")
+			component: () => import("./ExplorePage-Cc5zFoFL.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-DzdJxeEK.js")
+			component: () => import("./RecommendationsPage-MGKOlgO5.js")
 		},
 		{
 			path: `${t}/history`,
