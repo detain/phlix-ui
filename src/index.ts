@@ -365,7 +365,15 @@ export { default as SharedWithMePage } from './pages/SharedWithMePage.vue';
 export { default as RequestsPage } from './pages/RequestsPage.vue';
 export { default as InviteLinksPage } from './pages/InviteLinksPage.vue';
 export { default as AcceptInvitePage } from './pages/AcceptInvitePage.vue';
-export { default as SearchPage } from './pages/SearchPage.vue';
+// S324: SearchPage is the ONE long-tail page that statically imports a deferred
+// surface (MetadataMatchModal — the ⋯-menu "Edit metadata" host action this step
+// wired). As a STATIC default re-export it pulled that ~56 KB chunk back into the
+// eager entry (GAP 1 in dist-player-split.test.ts). Exporting it as a lazy factory
+// keeps the same named export the server/hub consumers import for their /app/search
+// extraRoute, moves the page (and the modal) into dynamically-loaded chunks, and
+// EXTENDS the R6.1a built-in-pages precedent noted above — the first long-tail page
+// exported as a lazy factory instead of a static re-export.
+export const SearchPage = defineAsyncComponent(() => import('./pages/SearchPage.vue'));
 export { default as SecuritySettingsPage } from './pages/SecuritySettingsPage.vue';
 export { default as MusicAlbumPage } from './pages/MusicAlbumPage.vue';
 export { default as MusicArtistsPage } from './pages/MusicArtistsPage.vue';

@@ -199,6 +199,18 @@ describe('ExplorePage — Edit metadata / Explore item data (S15)', () => {
     expect((modal.props('item') as MediaItem).id).toBe('s1');
   });
 
+  it('@refresh from the grid (⋯-menu "Match metadata") → opens the MetadataMatchModal', async () => {
+    const w = await mountAdmin();
+    const modal = w.findComponent(MetadataMatchModal);
+    expect(modal.exists()).toBe(true);
+    expect(modal.props('modelValue')).toBe(false);
+
+    w.findComponent(MediaGrid).vm.$emit('refresh', { id: 's1', name: 'Similar Movie 1' } as MediaItem);
+    await flushPromises();
+    expect(modal.props('modelValue')).toBe(true);
+    expect((modal.props('item') as MediaItem).id).toBe('s1');
+  });
+
   it('@explore-data from the grid → opens the read-only ItemDataInspector', async () => {
     const w = await mountAdmin();
     const inspector = w.findComponent(ItemDataInspector);

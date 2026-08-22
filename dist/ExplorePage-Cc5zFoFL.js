@@ -13,13 +13,13 @@ import { t as ee } from "./MetadataMatchModal-JSpi0YZP.js";
 import { n as te, t as d } from "./useItemInspector-Cn3FRzeh.js";
 import { r as f } from "./useResolvePlayable-wCiMWuME.js";
 import { computed as p, createBlock as m, createCommentVNode as h, createElementBlock as g, createElementVNode as _, createTextVNode as v, createVNode as y, defineComponent as b, isRef as x, onMounted as S, openBlock as C, ref as w, unref as T, watch as ne, withCtx as E } from "vue";
-import { useRoute as D, useRouter as O } from "vue-router";
+import { useRoute as re, useRouter as D } from "vue-router";
 //#region src/pages/ExplorePage.vue?vue&type=script&setup=true&lang.ts
-var k = { class: "explore-page" }, A = /*#__PURE__*/ e(/* @__PURE__ */ b({
+var O = { class: "explore-page" }, k = /*#__PURE__*/ e(/* @__PURE__ */ b({
 	__name: "ExplorePage",
 	setup(e) {
-		let b = D(), A = O(), j = n(), M = a(), N = r(), P = o(), F = i(), I = p(() => typeof b.query.item == "string" ? b.query.item : null), L = w([]), R = w(!1), z = w(!1), B = w(!1), V = w(null), H = w(null);
-		function U(e) {
+		let b = re(), k = D(), A = n(), j = a(), M = r(), N = o(), P = i(), F = p(() => typeof b.query.item == "string" ? b.query.item : null), I = w([]), L = w(!1), R = w(!1), z = w(!1), B = w(null), V = w(null);
+		function H(e) {
 			return {
 				id: e.id,
 				name: e.title,
@@ -38,75 +38,75 @@ var k = { class: "explore-page" }, A = /*#__PURE__*/ e(/* @__PURE__ */ b({
 				poster_srcset: null
 			};
 		}
-		async function W() {
-			let e = I.value;
+		async function U() {
+			let e = F.value;
 			if (e) {
-				R.value = !0, H.value = null;
+				L.value = !0, V.value = null;
 				try {
-					let n = await new t({ baseUrl: j.value }).get(`/api/v1/media/${encodeURIComponent(e)}/similar`, { limit: "20" });
-					L.value = (n.items ?? []).map(U), V.value = L.value.length, B.value = !1;
+					let n = await new t({ baseUrl: A.value }).get(`/api/v1/media/${encodeURIComponent(e)}/similar`, { limit: "20" });
+					I.value = (n.items ?? []).map(H), B.value = I.value.length, z.value = !1;
 				} catch (e) {
-					H.value = e instanceof Error ? e.message : "Failed to load similar items";
+					V.value = e instanceof Error ? e.message : "Failed to load similar items";
 				} finally {
-					R.value = !1;
+					L.value = !1;
 				}
 			}
 		}
-		function G(e, t) {
-			A?.push({
+		function W(e, t) {
+			k?.push({
 				name: e,
 				params: { id: t }
 			}).catch(() => {});
 		}
-		function K(e) {
+		function G(e) {
 			return typeof e == "object" && !!e && e.name === "AbortError";
 		}
-		async function q(e) {
+		async function K(e) {
 			try {
-				let n = new t({ baseUrl: j.value }), r = await f(n, j.value, e, F.resumeMap);
+				let n = new t({ baseUrl: A.value }), r = await f(n, A.value, e, P.resumeMap);
 				if (!r) {
-					M.info("Nothing to play yet");
+					j.info("Nothing to play yet");
 					return;
 				}
-				G("player", r.id);
+				W("player", r.id);
 			} catch (e) {
-				if (K(e)) return;
-				M.info("Nothing to play yet");
+				if (G(e)) return;
+				j.info("Nothing to play yet");
 			}
 		}
+		function q(e) {
+			k?.hasRoute("media") ? W("media", e.id) : j.info(`Details for "${e.name}" are coming soon`);
+		}
 		function J(e) {
-			A?.hasRoute("media") ? G("media", e.id) : M.info(`Details for "${e.name}" are coming soon`);
+			N.isFavorite(e.id) ? j.success(`Added "${e.name}" to your favorites`) : j.info(`Removed "${e.name}" from your favorites`);
 		}
 		function Y(e) {
-			P.isFavorite(e.id) ? M.success(`Added "${e.name}" to your favorites`) : M.info(`Removed "${e.name}" from your favorites`);
+			N.isWatched(e.id) ? j.success(`Marked "${e.name}" as watched`) : j.info(`Marked "${e.name}" as unwatched`);
 		}
-		function X(e) {
-			P.isWatched(e.id) ? M.success(`Marked "${e.name}" as watched`) : M.info(`Marked "${e.name}" as unwatched`);
-		}
-		let Z = w(null), Q = w(!1), { inspectorItem: re, inspectorOpen: $, openInspector: ie } = d();
-		function ae(e) {
-			Z.value = e, Q.value = !0;
+		let X = w(null), Z = w(!1), { inspectorItem: ie, inspectorOpen: Q, openInspector: ae } = d();
+		function $(e) {
+			X.value = e, Z.value = !0;
 		}
 		function oe(e) {
-			L.value = L.value.map((t) => t.id === e.id ? e : t), M.success(`Updated metadata for "${e.name}"`);
+			I.value = I.value.map((t) => t.id === e.id ? e : t), j.success(`Updated metadata for "${e.name}"`);
 		}
 		function se() {
-			W();
+			U();
 		}
 		return S(() => {
-			I.value && W();
-		}), ne(I, (e) => {
-			e && W();
-		}), (e, t) => (C(), g("div", k, [
+			F.value && U();
+		}), ne(F, (e) => {
+			e && U();
+		}), (e, t) => (C(), g("div", O, [
 			t[3] ||= _("div", { class: "explore-header" }, [_("h1", { class: "explore-title" }, "Explore Similar")], -1),
-			R.value && L.value.length === 0 ? (C(), m(s, {
+			L.value && I.value.length === 0 ? (C(), m(s, {
 				key: 0,
 				label: "Loading similar items"
-			})) : H.value ? (C(), m(l, {
+			})) : V.value ? (C(), m(l, {
 				key: 1,
 				icon: "alert",
 				title: "Couldn't load similar items",
-				description: H.value
+				description: V.value
 			}, {
 				actions: E(() => [y(c, {
 					variant: "solid",
@@ -118,25 +118,26 @@ var k = { class: "explore-page" }, A = /*#__PURE__*/ e(/* @__PURE__ */ b({
 					_: 1
 				})]),
 				_: 1
-			}, 8, ["description"])) : !R.value && L.value.length === 0 && I.value ? (C(), m(l, {
+			}, 8, ["description"])) : !L.value && I.value.length === 0 && F.value ? (C(), m(l, {
 				key: 2,
 				icon: "film",
 				title: "No similar items found",
 				description: "We couldn't find any similar items for this title."
-			})) : I.value ? (C(), m(u, {
+			})) : F.value ? (C(), m(u, {
 				key: 4,
-				items: L.value,
-				total: V.value,
-				loading: R.value,
-				"loading-more": z.value,
-				"has-more": B.value,
-				"can-match": T(N).isAdmin,
-				onPlay: q,
-				onWatchlist: Y,
-				onInfo: J,
-				onMarkWatched: X,
-				onEditMetadata: ae,
-				onExploreData: T(ie)
+				items: I.value,
+				total: B.value,
+				loading: L.value,
+				"loading-more": R.value,
+				"has-more": z.value,
+				"can-match": T(M).isAdmin,
+				onPlay: K,
+				onWatchlist: J,
+				onInfo: q,
+				onMarkWatched: Y,
+				onEditMetadata: $,
+				onRefresh: $,
+				onExploreData: T(ae)
 			}, null, 8, [
 				"items",
 				"total",
@@ -151,23 +152,23 @@ var k = { class: "explore-page" }, A = /*#__PURE__*/ e(/* @__PURE__ */ b({
 				title: "Select an item to explore",
 				description: "Choose a title from your library to see similar recommendations."
 			})),
-			T(N).isAdmin ? (C(), m(ee, {
+			T(M).isAdmin ? (C(), m(ee, {
 				key: 5,
-				modelValue: Q.value,
-				"onUpdate:modelValue": t[0] ||= (e) => Q.value = e,
-				item: Z.value,
+				modelValue: Z.value,
+				"onUpdate:modelValue": t[0] ||= (e) => Z.value = e,
+				item: X.value,
 				onApplied: oe
 			}, null, 8, ["modelValue", "item"])) : h("", !0),
-			T(N).isAdmin ? (C(), m(te, {
+			T(M).isAdmin ? (C(), m(te, {
 				key: 6,
-				modelValue: T($),
-				"onUpdate:modelValue": t[1] ||= (e) => x($) ? $.value = e : null,
-				item: T(re)
+				modelValue: T(Q),
+				"onUpdate:modelValue": t[1] ||= (e) => x(Q) ? Q.value = e : null,
+				item: T(ie)
 			}, null, 8, ["modelValue", "item"])) : h("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-5404edb5"]]);
+}), [["__scopeId", "data-v-cf14fbae"]]);
 //#endregion
-export { A as default };
+export { k as default };
 
-//# sourceMappingURL=ExplorePage-CV4CffQl.js.map
+//# sourceMappingURL=ExplorePage-Cc5zFoFL.js.map

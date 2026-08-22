@@ -227,6 +227,7 @@ watch(selectedId, (id) => {
       @info="onInfo"
       @mark-watched="onMarkWatched"
       @edit-metadata="onMatch"
+      @refresh="onMatch"
       @explore-data="openInspector"
     />
 
