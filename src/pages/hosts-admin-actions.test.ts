@@ -24,6 +24,10 @@ import { pluralize } from '../utils/plural';
  *
  * S345 lesson 3: the examined set is PRINTED (the denominator) and asserted
  * non-empty, so a scan that matches nothing fails instead of passing vacuously.
+ *
+ * The scan is TEMPLATE-scoped (see {@link templateOf}): a host "wires" an action
+ * by writing the listener on a component tag and "mounts" a modal by writing its
+ * tag — an import alone satisfies neither, so both checks are template-tag checks.
  */
 
 /**
@@ -62,6 +66,37 @@ function listVueFiles(dir: string): string[] {
   return out;
 }
 
+/**
+ * The SFC's root `<template>` block with HTML comments stripped.
+ *
+ * The scan is deliberately TEMPLATE-scoped: a host "wires" an action only by
+ * writing the listener on a component tag in its template, and "mounts" a modal
+ * only by writing its tag there — an `import` alone satisfies neither. Scanning
+ * only the template also keeps script-side false positives out (a
+ * `PropType<HomeRow>` type annotation can never read as a host tag) and makes
+ * the mount checks meaningful (marker PRESENCE in the file cannot pass for a
+ * template MOUNT).
+ *
+ * The root block runs from the first BARE `<template>` to the LAST
+ * `</template>` — inner `<template #slot>` blocks sit inside the root, so a
+ * non-greedy first-`</template>` match would truncate at a slot's closing tag
+ * and miss every component rendered after it (measured: SearchPage's
+ * `#actions` slot made `<MediaGrid` invisible to the old regex).
+ */
+function templateOf(src: string): string {
+  const start = src.indexOf('<template>');
+  const end = src.lastIndexOf('</template>');
+  if (start === -1 || end === -1 || end <= start) return '';
+  return src
+    .slice(start + '<template>'.length, end)
+    .replace(/<!--[\s\S]*?-->/g, '');
+}
+
+/** True when `tpl` renders `<Name …/>` / `<Name …>` as a component tag. */
+function rendersTag(tpl: string, name: string): boolean {
+  return new RegExp(`<${name}(?:\\s|/?>)`).test(tpl);
+}
+
 describe('S324 — every MediaCard host wires the admin ⋯-menu actions (host enumeration)', () => {
   it('wires @edit-metadata + @explore-data and mounts both modals on EVERY host page', () => {
     const pagesDir = dirname(fileURLToPath(import.meta.url));
@@ -71,16 +106,17 @@ describe('S324 — every MediaCard host wires the admin ⋯-menu actions (host e
 
     for (const file of files) {
       const src = readFileSync(file, 'utf8');
-      const hosted = EMIT_COMPONENTS.filter((c) => new RegExp(`<${c}(\\s|>)`).test(src));
+      const tpl = templateOf(src);
+      const hosted = EMIT_COMPONENTS.filter((c) => rendersTag(tpl, c));
       if (hosted.length === 0) continue;
 
       const rel = file.slice(pagesDir.length + 1);
       const reason = EXEMPT[rel];
       const wired =
-        src.includes('@edit-metadata') &&
-        src.includes('@explore-data') &&
-        src.includes('MetadataMatchModal') &&
-        src.includes('ItemDataInspector');
+        /@edit-metadata/.test(tpl) &&
+        /@explore-data/.test(tpl) &&
+        rendersTag(tpl, 'MetadataMatchModal') &&
+        rendersTag(tpl, 'ItemDataInspector');
 
       if (reason !== undefined) {
         hosts.push(`${rel} — EXEMPT (${reason})`);
@@ -88,17 +124,20 @@ describe('S324 — every MediaCard host wires the admin ⋯-menu actions (host e
         hosts.push(`${rel} — WIRED (${hosted.join(', ')})`);
       } else {
         const missing = [
-          !src.includes('@edit-metadata') ? '@edit-metadata' : '',
-          !src.includes('@explore-data') ? '@explore-data' : '',
-          !src.includes('MetadataMatchModal') ? 'MetadataMatchModal' : '',
-          !src.includes('ItemDataInspector') ? 'ItemDataInspector' : '',
+          !/@edit-metadata/.test(tpl) ? '@edit-metadata' : '',
+          !/@explore-data/.test(tpl) ? '@explore-data' : '',
+          !rendersTag(tpl, 'MetadataMatchModal') ? '<MetadataMatchModal>' : '',
+          !rendersTag(tpl, 'ItemDataInspector') ? '<ItemDataInspector>' : '',
         ].filter(Boolean);
         unwired.push(`${rel} — missing ${missing.join(', ')} (renders: ${hosted.join(', ')})`);
       }
     }
 
     // Print the denominator (S345 lesson 3): the exact host set examined, so a
-    // scan that matches NOTHING cannot silently pass.
+    // scan that matches NOTHING cannot silently pass. Vitest's default reporter
+    // hides console output on a passing run, but the anti-vacuous
+    // `hosts.length > 0` assertion below is the guard that matters — and on the
+    // failing run (the case that needs a human) stdout is shown.
     console.log(
       `S324 host enumeration: ${hosts.length} ${pluralize(hosts.length, 'host page', 'host pages')} examined:\n  ${hosts.join('\n  ')}`,
     );

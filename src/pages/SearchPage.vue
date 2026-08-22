@@ -212,6 +212,7 @@ function onMatchApplied(updated: MediaItem): void {
             :total="items.length"
             :can-match="auth.isAdmin"
             @match="onMatch"
+            @refresh="onMatch"
             @edit-metadata="onMatch"
             @explore-data="openInspector"
         />

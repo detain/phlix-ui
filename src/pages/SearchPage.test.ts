@@ -228,6 +228,19 @@ describe('SearchPage — Edit metadata / Explore item data (S324)', () => {
     w.unmount();
   });
 
+  it('@refresh from the grid (⋯-menu "Match metadata") → opens the MetadataMatchModal', async () => {
+    const w = await mountAdmin();
+    const modal = w.findComponent(MetadataMatchModal);
+    expect(modal.exists()).toBe(true);
+    expect(modal.props('modelValue')).toBe(false);
+
+    w.findComponent(MediaGrid).vm.$emit('refresh', media({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(modal.props('modelValue')).toBe(true);
+    expect((modal.props('item') as MediaItem).id).toBe('m1');
+    w.unmount();
+  });
+
   it('@explore-data from the grid → opens the read-only ItemDataInspector', async () => {
     const w = await mountAdmin();
     const inspector = w.findComponent(ItemDataInspector);
