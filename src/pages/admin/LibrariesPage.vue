@@ -634,7 +634,8 @@ type LibraryOp =
   | 'prune'
   | 'clear-metadata'
   | 'clear-artwork'
-  | 'delete-all';
+  | 'delete-all'
+  | 'regenerate-assets';
 
 /** Dispatch one op to its typed API wrapper (all share the 202 job shape). */
 function callOp(lib: Library, op: LibraryOp) {
@@ -655,6 +656,8 @@ function callOp(lib: Library, op: LibraryOp) {
       return api.clearArtwork(lib.id);
     case 'delete-all':
       return api.deleteAll(lib.id);
+    case 'regenerate-assets':
+      return api.regenerateAssets(lib.id);
   }
 }
 
@@ -670,6 +673,8 @@ function opFallback(op: LibraryOp, jobId: string): string {
     case 'prune':
     case 'delete-all':
       return `Cleanup queued (job ${jobId}).`;
+    case 'regenerate-assets':
+      return `Media-asset regeneration queued (job ${jobId}).`;
     default:
       return `Scan queued (job ${jobId}).`;
   }
@@ -760,6 +765,7 @@ function moreMenuItems(lib: Library): MenuItem[] {
     { label: 'Rescan', onClick: () => void runOp(lib, 'rescan') },
     { label: 'Recheck all metadata', onClick: () => void runOp(lib, 'refresh-metadata') },
     { label: 'Prune removed', onClick: () => void runOp(lib, 'prune') },
+    { label: 'Regenerate media assets', onClick: () => void runOp(lib, 'regenerate-assets') },
     { label: 'Clear metadata', onClick: () => askConfirm(lib, 'clear-metadata') },
     { label: 'Clear cached artwork', onClick: () => askConfirm(lib, 'clear-artwork') },
     { label: 'Delete all items', danger: true, onClick: () => askConfirm(lib, 'delete-all') },
@@ -867,6 +873,13 @@ onBeforeUnmount(() => {
         <dt>Prune removed</dt>
         <dd>
           Removes only the items whose files no longer exist, without a full rescan.
+        </dd>
+
+        <dt>Regenerate media assets</dt>
+        <dd>
+          Re-creates the file-based media assets (chapter thumbnails, trickplay sprite, Roku BIF)
+          for the library's existing items. <strong>Idempotent</strong> — firing it while a
+          regeneration is already queued is a no-op success, not an error.
         </dd>
 
         <dt>Clear metadata</dt>
