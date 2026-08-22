@@ -15,9 +15,14 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import MediaGrid from '../components/MediaGrid.vue';
+import MetadataMatchModal from '../components/MetadataMatchModal.vue';
+import ItemDataInspector from '../components/ItemDataInspector.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Button from '../components/ui/Button.vue';
 import Spinner from '../components/ui/Spinner.vue';
+import { useItemInspector } from '../composables/useItemInspector';
+import { useToastStore } from '../stores/useToastStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import { ApiClient } from '../api/client';
 import type { MediaItem } from '../types/media-item';
 
@@ -25,6 +30,8 @@ const route = useRoute();
 const router = useRouter();
 const apiBase = useMediaApiBase();
 const userItemData = useUserItemDataStore();
+const toasts = useToastStore();
+const auth = useAuthStore();
 
 // --- search state -------------------------------------------------------
 const query = ref<string>('');
@@ -120,6 +127,24 @@ const showResults = computed(
 );
 const showPrompt = computed(() => !hasSearched.value && query.value.trim() === '');
 const showError = computed(() => hasSearched.value && error.value !== null);
+
+// S324 — admin ⋯-menu metadata actions (S15's "every MediaCard host" AC; this
+// host was the one S15's In-scope list omitted). "Edit metadata" opens the shared
+// MetadataMatchModal (the same surface "Match metadata" uses — there is no
+// separate editing API); "Explore item data" opens the read-only client-side
+// inspector. Both produce visible UI here just like the other MediaCard hosts.
+const matchTarget = ref<MediaItem | null>(null);
+const matchOpen = ref(false);
+const { inspectorItem, inspectorOpen, openInspector } = useItemInspector();
+
+function onMatch(item: MediaItem): void {
+  matchTarget.value = item;
+  matchOpen.value = true;
+}
+function onMatchApplied(updated: MediaItem): void {
+  items.value = items.value.map((i) => (i.id === updated.id ? updated : i));
+  toasts.success(`Updated metadata for "${updated.name}"`);
+}
 </script>
 
 <template>
@@ -185,7 +210,20 @@ const showError = computed(() => hasSearched.value && error.value !== null);
             v-else-if="showResults"
             :items="items"
             :total="items.length"
+            :can-match="auth.isAdmin"
+            @match="onMatch"
+            @edit-metadata="onMatch"
+            @explore-data="openInspector"
         />
+
+        <MetadataMatchModal
+            v-if="auth.isAdmin"
+            v-model="matchOpen"
+            :item="matchTarget"
+            @applied="onMatchApplied"
+        />
+
+        <ItemDataInspector v-if="auth.isAdmin" v-model="inspectorOpen" :item="inspectorItem" />
     </div>
 </template>
 
