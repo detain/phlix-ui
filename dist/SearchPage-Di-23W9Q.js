@@ -109,6 +109,7 @@ var k = { class: "search-page" }, A = { class: "search-header" }, j = {
 				total: R.value.length,
 				"can-match": T(I).isAdmin,
 				onMatch: $,
+				onRefresh: $,
 				onEditMetadata: $,
 				onExploreData: T(ae)
 			}, null, 8, [
@@ -132,8 +133,8 @@ var k = { class: "search-page" }, A = { class: "search-header" }, j = {
 			}, null, 8, ["modelValue", "item"])) : h("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-c367d3f7"]]);
+}), [["__scopeId", "data-v-ed559e68"]]);
 //#endregion
 export { M as default };
 
-//# sourceMappingURL=SearchPage-C3n24RAP.js.map
+//# sourceMappingURL=SearchPage-Di-23W9Q.js.map
