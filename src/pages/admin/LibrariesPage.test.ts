@@ -610,6 +610,28 @@ describe('Admin LibrariesPage — scan / rescan / metadata + polling', () => {
     w.unmount();
   });
 
+  it('regenerate media assets toasts the already_queued success when a job is active', async () => {
+    const { client, post } = makeClient();
+    post.mockResolvedValueOnce({
+      job_id: 'job-ra',
+      status: 'already_queued',
+      message: 'A media-asset regeneration job is already queued for this library.',
+    });
+    const w = mountPage(client, 100000);
+    await flushPromises();
+    const items = await openMoreMenu(w);
+    menuItem(items, 'Regenerate media assets').click();
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/regenerate-assets');
+    const toasts = useToastStore();
+    expect(
+      toasts.toasts.some(
+        (t) => t.message === 'A media-asset regeneration job is already queued for this library.',
+      ),
+    ).toBe(true);
+    w.unmount();
+  });
+
   it('match metadata → POSTs the /match-metadata endpoint', async () => {
     const { client, post } = makeClient();
     const w = mountPage(client, 100000);
