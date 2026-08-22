@@ -20,7 +20,9 @@ import { pluralize } from '../utils/plural';
  * ⋯-menu actions were dead on /app/search. This test re-derives the host
  * inventory at run time (NEVER a hand-written list — that is exactly the S15
  * mistake) and fails if ANY page hosting an emit-capable media component omits
- * the two admin-action listeners or the two modals.
+ * the admin-action listeners (`@edit-metadata`, `@explore-data`, and `@refresh`
+ * — the ⋯-menu "Match metadata" item's emit, also dead on unwired SearchPage
+ * until S324 wired it) or the two modals.
  *
  * S345 lesson 3: the examined set is PRINTED (the denominator) and asserted
  * non-empty, so a scan that matches nothing fails instead of passing vacuously.
@@ -112,9 +114,14 @@ describe('S324 — every MediaCard host wires the admin ⋯-menu actions (host e
 
       const rel = file.slice(pagesDir.length + 1);
       const reason = EXEMPT[rel];
+      // `@refresh` is the ⋯-menu "Match metadata" item's emit (MediaCard routes
+      // MENU_LABELS.matchMetadata to `refresh`, distinct from the quick-action
+      // button's `match`) — a host that wires the two named AC actions but not
+      // `@refresh` still ships a dead admin menu item (the S324 bug class).
       const wired =
         /@edit-metadata/.test(tpl) &&
         /@explore-data/.test(tpl) &&
+        /@refresh/.test(tpl) &&
         rendersTag(tpl, 'MetadataMatchModal') &&
         rendersTag(tpl, 'ItemDataInspector');
 
@@ -126,6 +133,7 @@ describe('S324 — every MediaCard host wires the admin ⋯-menu actions (host e
         const missing = [
           !/@edit-metadata/.test(tpl) ? '@edit-metadata' : '',
           !/@explore-data/.test(tpl) ? '@explore-data' : '',
+          !/@refresh/.test(tpl) ? '@refresh' : '',
           !rendersTag(tpl, 'MetadataMatchModal') ? '<MetadataMatchModal>' : '',
           !rendersTag(tpl, 'ItemDataInspector') ? '<ItemDataInspector>' : '',
         ].filter(Boolean);
