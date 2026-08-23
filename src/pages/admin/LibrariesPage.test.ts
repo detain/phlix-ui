@@ -1327,7 +1327,7 @@ describe('Admin LibrariesPage — auto-collections toggle (S33)', () => {
       .find((s) => panel.contains(s.element) && s.text().includes('TMDB box sets'));
   }
 
-  it('shows the toggle for movie libraries (checked by default) and hides it for other types', async () => {
+  it('shows the toggle for every type whose scan reaches the S33 gate and hides it for music', async () => {
     const { client } = makeClient({ libraries: [] });
     const w = mountPage(client);
     await flushPromises();
@@ -1339,10 +1339,67 @@ describe('Admin LibrariesPage — auto-collections toggle (S33)', () => {
     expect(sw).toBeDefined();
     expect(sw!.props('modelValue')).toBe(true);
     expect(sw!.text()).toContain('Automatically generate collections from TMDB box sets');
-    // Switching to `series` hides the movie-only toggle.
-    w.findAllComponents(Select).forEach((s) => s.vm.$emit('update:modelValue', 'series'));
+    // Every library type whose scan reaches the scanner's collection-sync gate
+    // exposes the toggle (S327): movie/series/video via the main scan path and
+    // photo/book/audiobook via their type-specific paths. Pre-fix the gate was
+    // `type === 'movie'`, so every one of these was invisible.
+    for (const reachableType of ['series', 'video', 'photo', 'book', 'audiobook']) {
+      w.findAllComponents(Select).forEach((s) => s.vm.$emit('update:modelValue', reachableType));
+      await flushPromises();
+      expect(
+        autoCollectionsSwitchInModal(w),
+        `the toggle must be visible when a ${reachableType} library is selected`,
+      ).toBeDefined();
+    }
+    // Music is routed to MusicLibraryScanner (no collection-sync block) — the
+    // toggle stays hidden for it.
+    w.findAllComponents(Select).forEach((s) => s.vm.$emit('update:modelValue', 'music'));
     await flushPromises();
     expect(autoCollectionsSwitchInModal(w)).toBeUndefined();
+    w.unmount();
+  });
+
+  it('shows the toggle when a video library is selected (S327)', async () => {
+    // Pre-fix the switch was gated `type === 'movie'`, so a `video` library —
+    // whose scan reaches the S33 gate through the server's main scan path — had
+    // no control at all. This test FAILS on the pre-fix shape.
+    const { client } = makeClient({ libraries: [] });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    w.findAllComponents(Select).forEach((s) => s.vm.$emit('update:modelValue', 'video'));
+    await flushPromises();
+    const sw = autoCollectionsSwitchInModal(w);
+    expect(sw).toBeDefined();
+    expect(sw!.props('modelValue')).toBe(true);
+    w.unmount();
+  });
+
+  it('edit of a video library sends autoCollections when the toggle is flipped (S327)', async () => {
+    // The persistence gate must follow the reach set, not `type === 'movie'`:
+    // flipping the toggle on a non-movie library whose scan reaches the gate
+    // must put autoCollections on the update body.
+    const videoLib = { ...lib, type: 'video' };
+    const { client, put } = makeClient({ libraries: [videoLib] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Edit Movies')!
+      .trigger('click');
+    await flushPromises();
+    const sw = autoCollectionsSwitchInModal(w)!;
+    expect(sw.props('modelValue')).toBe(true);
+    await sw.find('button[role="switch"]').trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).toHaveBeenCalledWith('/api/v1/libraries/lib-1', {
+      name: 'Movies',
+      paths: ['/media/movies'],
+      autoCollections: false,
+    });
     w.unmount();
   });
 
