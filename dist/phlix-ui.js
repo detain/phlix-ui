@@ -965,7 +965,7 @@ var Di = Qn("server", () => {
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-BGIFgvcO.js")
+	component: () => import("./LibrariesPage-VKNL3DGc.js")
 }, Ui = {
 	name: "admin-duplicates",
 	path: "duplicates",

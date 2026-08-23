@@ -1114,8 +1114,8 @@ onBeforeUnmount(() => {
             @update:model-value="setAutoCollections"
           />
           <span class="admin-libraries__hint-text">
-            When on, movies that belong to a TMDB box set (e.g. a trilogy) are grouped into a
-            collection during scanning. Turn it off to skip collection generation for this library.
+            When on, items that match a TMDB box set (e.g. a trilogy) are grouped into a collection
+            during scanning. Turn it off to skip collection generation for this library.
           </span>
         </div>
         <div class="admin-libraries__field">

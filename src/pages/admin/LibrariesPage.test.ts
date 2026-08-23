@@ -1319,7 +1319,7 @@ describe('Admin LibrariesPage — image-type checkboxes (U5)', () => {
 });
 
 describe('Admin LibrariesPage — auto-collections toggle (S33)', () => {
-  /** Find the auto-collections Switch inside the currently open modal (movie only). */
+  /** Find the auto-collections Switch inside the currently open modal (any type whose scan reaches the S33 gate). */
   function autoCollectionsSwitchInModal(w: VueWrapper) {
     const panel = modalPanel();
     return w
@@ -1398,6 +1398,35 @@ describe('Admin LibrariesPage — auto-collections toggle (S33)', () => {
     expect(put).toHaveBeenCalledWith('/api/v1/libraries/lib-1', {
       name: 'Movies',
       paths: ['/media/movies'],
+      autoCollections: false,
+    });
+    w.unmount();
+  });
+
+  it('create sends autoCollections when a photo library is selected and the toggle is flipped (S327)', async () => {
+    // The CREATE persistence gate must follow the reach set too: flipping the
+    // toggle on a photo library (whose scan reaches the gate via the
+    // type-specific path) must put autoCollections on the POST body.
+    const { client, post } = makeClient({ libraries: [] });
+    post.mockResolvedValueOnce({ library_id: 'lib-9', message: 'Library created.' });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add library')!.trigger('click');
+    await flushPromises();
+    const nameInput = document.querySelector<HTMLInputElement>('.admin-libraries__input')!;
+    nameInput.value = 'Photos'; nameInput.dispatchEvent(new Event('input'));
+    const ta = document.querySelector<HTMLTextAreaElement>('.admin-libraries__textarea')!;
+    ta.value = '/media/photos'; ta.dispatchEvent(new Event('input'));
+    w.findAllComponents(Select).forEach((s) => s.vm.$emit('update:modelValue', 'photo'));
+    await flushPromises();
+    await autoCollectionsSwitchInModal(w)!.find('button[role="switch"]').trigger('click');
+    await flushPromises();
+    await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
+    await flushPromises();
+    expect(post).toHaveBeenCalledWith('/api/v1/libraries', {
+      name: 'Photos',
+      type: 'photo',
+      paths: ['/media/photos'],
       autoCollections: false,
     });
     w.unmount();
