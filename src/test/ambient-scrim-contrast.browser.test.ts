@@ -213,8 +213,10 @@ interface SampledPoint {
  *
  * The colours are read BEFORE hiding, from the REAL computed style, and the
  * worst is taken across the element AND its text-bearing descendants: the meta
- * row mixes `--text-muted` items with a `--text-subtle` type chip, and the AC
- * binds every rendered text in the box, not just the container's own color.
+ * row's items and type chip all render `--text-muted` today, but the sampler
+ * must not assume a box's text is single-colored — a future chip with a dimmer
+ * color would otherwise sail past the threshold it actually fails. The AC binds
+ * every rendered text in the box, not just the container's own color.
  */
 async function sampleElement(page: Page, selector: string): Promise<{ texts: Rgb[]; points: SampledPoint[] }> {
   const texts = (
