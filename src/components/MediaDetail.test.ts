@@ -376,9 +376,22 @@ describe('MediaDetail — ambient scrim paint + hero text-shadow (S19 CSS)', () 
         `the ambient scrim mirrors the backdrop scrim's ${prop}`,
       ).toBe(backdrop);
     }
-    // Both scrims bottom out into the app surface rather than a fixed black, so the
-    // gradient is theme-following on Nocturne/Daylight/Midnight alike.
-    expect(sfcDecl('.media-detail__ambient-scrim', 'background')).toContain('var(--bg,');
+    // S326 (corrects the S19 comment this assertion used to carry): the scrims
+    // are theme-following because EVERY stop is theme-derived — the 0%/35% top
+    // stops mix the app surface (`color-mix(in srgb, var(--bg) …)`), not just
+    // the 100% bottom stop. On Daylight that makes the scrim LIGHTEN toward the
+    // page behind the DARK hero text instead of stacking fixed black over it
+    // (measured from rendered pixels in
+    // src/test/ambient-scrim-contrast.browser.test.ts).
+    const ambientBg = sfcDecl('.media-detail__ambient-scrim', 'background');
+    expect(ambientBg, 'the scrim declares a background').not.toBe('');
+    // Guard (S326): the scrim must NOT regress to the pre-fix fixed dark stops —
+    // `rgba(0,0,0,0.55)` at 0% and `rgba(0,0,0,0.35)` at 35% made the light
+    // (Daylight) theme WORSE for its dark hero text. The 0%/35% stops must be
+    // theme-derived mixes of the app surface.
+    expect(ambientBg).toContain('color-mix(in srgb, var(--bg');
+    expect(ambientBg).not.toContain('rgba(0, 0, 0, 0.55)');
+    expect(ambientBg).not.toContain('rgba(0, 0, 0, 0.35)');
   });
 
   it('sizes the ambient scrim to the ambient wash band, click-through, and paints it after the wash', () => {

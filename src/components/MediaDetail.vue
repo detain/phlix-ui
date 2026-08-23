@@ -926,9 +926,13 @@ onBeforeUnmount(() => {
 
 /* S19: mirror .media-detail__backdrop-scrim onto the poster-derived ambient so
    the hero text stays legible when a title has an ambient wash but NO backdrop
-   image. Same dark gradient bias (top→bottom + left→right) and 2px blur as the
-   backdrop scrim; a sibling layer, sized + bottom-masked to the ambient's 60vh
-   band. It must NOT be a child/pseudo of .media-detail__ambient — that element's
+   image. The darkening is theme-DERIVED: every stop is a mix of the app surface
+   (`--bg`) rather than a fixed black, so the scrim darkens the hero on the dark
+   themes (Nocturne/Midnight) and LIGHTENS it toward the page on Daylight —
+   matching the theme-following hero text (`--text` / `--text-muted`) instead of
+   fighting it. Top→bottom + left→right bias + 2px blur as the backdrop scrim; a
+   sibling layer, sized + bottom-masked to the ambient's 60vh band. It must NOT
+   be a child/pseudo of .media-detail__ambient — that element's
    opacity:0.18 + filter:blur(60px) would crush and blur the scrim to nothing. */
 .media-detail__ambient-scrim {
   position: absolute;
@@ -939,8 +943,8 @@ onBeforeUnmount(() => {
   -webkit-backdrop-filter: blur(2px) saturate(1.05);
   backdrop-filter: blur(2px) saturate(1.05);
   background:
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
-    linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 60%);
+    linear-gradient(to bottom, color-mix(in srgb, var(--bg, #000) 55%, transparent) 0%, color-mix(in srgb, var(--bg, #000) 35%, transparent) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
+    linear-gradient(to right, color-mix(in srgb, var(--bg, #000) 55%, transparent) 0%, transparent 60%);
   -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
   mask-image: linear-gradient(to bottom, #000, transparent);
 }
@@ -973,18 +977,22 @@ onBeforeUnmount(() => {
 .media-detail__backdrop-img.is-loaded {
   opacity: 1;
 }
-/* Scrim: a strong dark gradient + slight blur. Uses the app surface color so the
-   fade bottoms out into the real page background rather than a fixed black. The
-   left→right + top→bottom dark bias keeps the hero text (poster side + title)
-   readable regardless of the image's own brightness. */
+/* Scrim: a strong theme-derived gradient + slight blur. Every stop mixes the
+   app surface color (`--bg`) — the top→bottom + left→right bias DARKENS the
+   hero on the dark themes (Nocturne/Midnight, where `--bg` is near-black and
+   the hero text is light) and LIGHTENS toward the page on Daylight (where
+   `--bg` is near-white and the hero text is dark). The 100% stop bottoms out
+   into the real page background rather than a fixed black. This is what keeps
+   the hero text readable regardless of the image's own brightness and of the
+   theme's text color. */
 .media-detail__backdrop-scrim {
   position: absolute;
   inset: 0;
   -webkit-backdrop-filter: blur(2px) saturate(1.05);
   backdrop-filter: blur(2px) saturate(1.05);
   background:
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
-    linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 60%);
+    linear-gradient(to bottom, color-mix(in srgb, var(--bg, #000) 55%, transparent) 0%, color-mix(in srgb, var(--bg, #000) 35%, transparent) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
+    linear-gradient(to right, color-mix(in srgb, var(--bg, #000) 55%, transparent) 0%, transparent 60%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1057,9 +1065,11 @@ onBeforeUnmount(() => {
   color: var(--text);
   margin-bottom: var(--space-3);
   /* S19: subtle legibility shadow — belt-and-suspenders on top of the ambient
-     scrim so light hero text stays readable over a bright poster ambient. Soft
-     blur, no visible offset ridge → not embossed; a dark halo that is a no-op
-     behind the dark text of the light (Daylight) theme. */
+     scrim. On the dark themes (Nocturne/Midnight) the hero text is light and
+     this dark halo keeps it readable over a bright poster ambient even where
+     the scrim thins; on Daylight the text is dark and its legibility comes from
+     the theme-following scrim, so the halo is effectively a no-op there. Soft
+     blur, no visible offset ridge → not embossed. */
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
@@ -1103,7 +1113,11 @@ onBeforeUnmount(() => {
 }
 .media-detail__type {
   text-transform: capitalize;
-  color: var(--text-subtle);
+  /* S326: the type chip shares the row's --text-muted class. It used to be
+     --text-subtle, which passes its token lock on plain resting surfaces but
+     not over the hero scrim — measured 4.18:1 on Daylight (needs ≥4.5:1) in
+     src/test/ambient-scrim-contrast.browser.test.ts. */
+  color: var(--text-muted);
 }
 
 .media-detail__genres {
