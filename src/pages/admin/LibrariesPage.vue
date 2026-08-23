@@ -67,6 +67,25 @@ import type { SelectOptionInput } from '../../components/ui/listbox';
 /** Default polling period for live scan status (ms). */
 const DEFAULT_POLL_INTERVAL_MS = 2000;
 
+/**
+ * Library types whose scan reaches the scanner's per-item collection-sync gate
+ * (S33) — the auto-collections toggle must be exposed for every one of them.
+ *
+ * `movie` / `series` / `video` flow through the main MediaScanner::scan()
+ * path; `photo` / `book` / `audiobook` through their type-specific paths. All
+ * six now carry the stored `autoCollections` flag explicitly (server S327).
+ * `music` is deliberately ABSENT: it is routed to MusicLibraryScanner, which
+ * has no collection-sync block, so the toggle would be dead UI for it.
+ */
+const AUTO_COLLECTIONS_LIBRARY_TYPES: ReadonlySet<LibraryType> = new Set([
+  'movie',
+  'series',
+  'video',
+  'photo',
+  'book',
+  'audiobook',
+]);
+
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
   client?: ApiClient;
@@ -318,11 +337,13 @@ const name = ref('');
 const type = ref<LibraryType>(LIBRARY_TYPES[0]);
 const pathsText = ref('');
 const seriesPerDirectory = ref(false);
-// Per-library TMDB box-set auto-collection toggle (S33). Movie libraries only.
-// Defaults to enabled — matching the server's default-when-absent (an
-// un-migrated library keeps generating collections). `autoCollectionsDirty`
-// gates persistence so an untouched form NEVER sends the flag (leaving the
-// stored value / default intact), mirroring the image-type / priority editors.
+// Per-library TMDB box-set auto-collection toggle (S33). Exposed for every
+// library type whose scan reaches the scanner's collection-sync gate (see
+// AUTO_COLLECTIONS_LIBRARY_TYPES). Defaults to enabled — matching the server's
+// default-when-absent (an un-migrated library keeps generating collections).
+// `autoCollectionsDirty` gates persistence so an untouched form NEVER sends
+// the flag (leaving the stored value / default intact), mirroring the
+// image-type / priority editors.
 const autoCollections = ref(true);
 const autoCollectionsDirty = ref(false);
 const submitting = ref(false);
@@ -546,10 +567,14 @@ async function submitForm(): Promise<void> {
     // (the server drops it for other types); include it only then. On edit the
     // type is read-only, so an existing series library still persists the toggle.
     const isSeries = type.value === 'series';
-    // The auto-collections toggle is only meaningful for movie libraries (TMDB
-    // box sets are a movie concept — the scanner only syncs collections for movie
-    // items), mirroring how series_per_directory is gated to series libraries.
-    const isMovie = type.value === 'movie';
+    // The auto-collections toggle is meaningful for every library type whose
+    // scan reaches the scanner's collection-sync gate (S33): movie/series/video
+    // via the main scan path, and photo/book/audiobook via their type-specific
+    // paths — all of which now pass the stored flag through to
+    // MediaScanner::scan(). Music is routed to MusicLibraryScanner (no
+    // collection-sync block), so it stays gated out, mirroring how
+    // series_per_directory is gated to series libraries.
+    const autoCollectionsRelevant = AUTO_COLLECTIONS_LIBRARY_TYPES.has(type.value);
     if (existing) {
       // Edit: send only editable fields — NEVER `type`.
       const body: UpdateLibraryInput = { name: name.value, paths };
@@ -567,9 +592,10 @@ async function submitForm(): Promise<void> {
         body.image_types = { ...imageEnabled.value };
       }
       // Persist the auto-collections toggle only when the admin flipped it, and
-      // only for movie libraries. Sent as a bare bool; the server stores the
-      // canonical {enabled: bool} and merges it (preserving other options).
-      if (isMovie && autoCollectionsDirty.value) {
+      // only for library types whose scan reaches the S33 gate. Sent as a bare
+      // bool; the server stores the canonical {enabled: bool} and merges it
+      // (preserving other options).
+      if (autoCollectionsRelevant && autoCollectionsDirty.value) {
         body.autoCollections = autoCollections.value;
       }
       await api.update(existing.id, body);
@@ -585,7 +611,7 @@ async function submitForm(): Promise<void> {
       if (imageTypesDirty.value) {
         body.image_types = { ...imageEnabled.value };
       }
-      if (isMovie && autoCollectionsDirty.value) {
+      if (autoCollectionsRelevant && autoCollectionsDirty.value) {
         body.autoCollections = autoCollections.value;
       }
       const result = await api.create(body);
@@ -1081,15 +1107,15 @@ onBeforeUnmount(() => {
             Use each top-level folder name as the series title to improve metadata matching.
           </span>
         </div>
-        <div v-if="type === 'movie'" class="admin-libraries__field">
+        <div v-if="AUTO_COLLECTIONS_LIBRARY_TYPES.has(type)" class="admin-libraries__field">
           <Switch
             :model-value="autoCollections"
             label="Automatically generate collections from TMDB box sets"
             @update:model-value="setAutoCollections"
           />
           <span class="admin-libraries__hint-text">
-            When on, movies that belong to a TMDB box set (e.g. a trilogy) are grouped into a
-            collection during scanning. Turn it off to skip collection generation for this library.
+            When on, items that match a TMDB box set (e.g. a trilogy) are grouped into a collection
+            during scanning. Turn it off to skip collection generation for this library.
           </span>
         </div>
         <div class="admin-libraries__field">
