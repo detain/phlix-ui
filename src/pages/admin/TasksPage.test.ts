@@ -630,6 +630,24 @@ describe('Admin TasksPage — refresh + links to pages that own a capability', (
     expect(w.text()).toContain('There is no server endpoint that scans every library at once.');
     w.unmount();
   });
+
+  it('says plainly that no recompute-similarity endpoint exists rather than shipping a button that 404s', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain(
+      'There is no server endpoint that recomputes similarity across every item.',
+    );
+    w.unmount();
+  });
+
+  it('says plainly that no newsletter send-now endpoint exists rather than shipping a button that 404s', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain('There is no server endpoint that sends the newsletter immediately.');
+    w.unmount();
+  });
 });
 
 describe('Admin TasksPage — polling an in-flight job', () => {
