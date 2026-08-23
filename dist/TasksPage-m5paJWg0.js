@@ -355,6 +355,13 @@ var pe = { class: "admin-tasks" }, me = { class: "admin-tasks__head" }, he = {
 						t[17] ||= p(" page. ", -1)
 					])
 				]),
+				t[56] ||= f("section", {
+					class: "admin-tasks__section",
+					"aria-labelledby": "tasks-recommendations-heading"
+				}, [f("h2", {
+					id: "tasks-recommendations-heading",
+					class: "admin-tasks__subtitle"
+				}, "Recommendations"), f("p", { class: "admin-tasks__note" }, " There is no server endpoint that recomputes similarity across every item. Similarity is computed per item in the background as media is scanned, and recommendations are derived from those scores automatically. ")], -1),
 				f("section", De, [
 					t[27] ||= f("h2", {
 						id: "tasks-stats-heading",
@@ -534,6 +541,13 @@ var pe = { class: "admin-tasks" }, me = { class: "admin-tasks__head" }, he = {
 					}),
 					t[41] ||= p(" page, which already owns the per-plugin update list and the catalogue pin. ", -1)
 				])]),
+				t[57] ||= f("section", {
+					class: "admin-tasks__section",
+					"aria-labelledby": "tasks-newsletter-heading"
+				}, [f("h2", {
+					id: "tasks-newsletter-heading",
+					class: "admin-tasks__subtitle"
+				}, "Newsletter"), f("p", { class: "admin-tasks__note" }, " There is no server endpoint that sends the newsletter immediately. It is sent on the server's weekly schedule, configured in the server settings. ")], -1),
 				f("section", ot, [
 					t[49] ||= f("h2", {
 						id: "tasks-server-heading",
@@ -620,8 +634,8 @@ var pe = { class: "admin-tasks" }, me = { class: "admin-tasks__head" }, he = {
 			]);
 		};
 	}
-}), [["__scopeId", "data-v-737dd591"]]);
+}), [["__scopeId", "data-v-a62b4c82"]]);
 //#endregion
 export { D as default };
 
-//# sourceMappingURL=TasksPage-DcgZXHMO.js.map
+//# sourceMappingURL=TasksPage-m5paJWg0.js.map

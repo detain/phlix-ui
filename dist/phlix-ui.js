@@ -983,7 +983,7 @@ var Di = Qn("server", () => {
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-DcgZXHMO.js")
+	component: () => import("./TasksPage-m5paJWg0.js")
 }, Ki = {
 	name: "admin-transcoding",
 	path: "transcoding",

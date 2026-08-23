@@ -18,8 +18,28 @@
  * of every composed route. A button that 404s is worse than an absent one, so
  * those are either omitted or replaced by a link to the page that really owns
  * the capability (Libraries for per-library scans, Plugins for plugin updates,
- * Settings for the restart control). Every `Button` on this page below the
- * "Go to …" links posts to a route that is in that manifest.
+ * Settings for the restart control), and every absence is EXPLAINED in the
+ * section that names it. Every `Button` on this page below the "Go to …" links
+ * posts to a route that is in that manifest.
+ *
+ * ## The four absent sections, decided by name (S330)
+ *
+ * The AC audit (S330) closed each absent action explicitly rather than leaving
+ * it silently missing — the exact failure S78's mismatch existed to correct:
+ *
+ *  - **Library scan-all** — closed. There is no server endpoint that scans
+ *    every library at once; scans are per library on the Libraries page. The
+ *    honest note below stays.
+ *  - **Recommendations "recompute similarity"** — closed. Similarity is
+ *    computed per item in the background as media is scanned
+ *    (`SimilarityWorker`); a server-wide recompute is O(N²) per library and
+ *    unwanted, so there is a note, not a button.
+ *  - **Newsletter "send now"** — closed. The newsletter is sent on the
+ *    server's weekly schedule; a send-now is unwanted, so there is a note, not
+ *    a button.
+ *  - **Server "check for updates NOW"** — S273-owned. `AdminUpdatesController`
+ *    has no force-check endpoint; the button below refetches the last
+ *    background check's result and says so.
  *
  * ## Three response shapes, rendered three different ways
  *
@@ -496,6 +516,16 @@ onBeforeUnmount(stopPolling);
       </p>
     </section>
 
+    <!-- ── Recommendations ─────────────────────────────────────────────── -->
+    <section class="admin-tasks__section" aria-labelledby="tasks-recommendations-heading">
+      <h2 id="tasks-recommendations-heading" class="admin-tasks__subtitle">Recommendations</h2>
+      <p class="admin-tasks__note">
+        There is no server endpoint that recomputes similarity across every item. Similarity is
+        computed per item in the background as media is scanned, and recommendations are derived
+        from those scores automatically.
+      </p>
+    </section>
+
     <!-- ── Stats & health ───────────────────────────────────────────────── -->
     <section class="admin-tasks__section" aria-labelledby="tasks-stats-heading">
       <h2 id="tasks-stats-heading" class="admin-tasks__subtitle">Stats &amp; health</h2>
@@ -677,6 +707,15 @@ onBeforeUnmount(stopPolling);
         Checking for and applying plugin updates lives on the
         <RouterLink :to="{ name: 'admin-plugins' }">Plugins</RouterLink>
         page, which already owns the per-plugin update list and the catalogue pin.
+      </p>
+    </section>
+
+    <!-- ── Newsletter ───────────────────────────────────────────────────── -->
+    <section class="admin-tasks__section" aria-labelledby="tasks-newsletter-heading">
+      <h2 id="tasks-newsletter-heading" class="admin-tasks__subtitle">Newsletter</h2>
+      <p class="admin-tasks__note">
+        There is no server endpoint that sends the newsletter immediately. It is sent on the
+        server's weekly schedule, configured in the server settings.
       </p>
     </section>
 
