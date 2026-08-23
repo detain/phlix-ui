@@ -64,9 +64,10 @@ const ELEMENTS: ReadonlyArray<{ selector: string; label: string; minContrast: nu
 
 /**
  * Sample positions inside each element's box as fractions of its rendered width
- * and height. The 0.15 x-column is inside the scrim's left→right gradient zone
- * (the "left third where a second gradient stacks"); the 0.85 column is on the
- * right, past most of it. Every sample is printed — a zero-sample pass is a
+ * and height. The 0.15 x-column is inside the scrim's left→right gradient's
+ * active zone (the hero sits right of the poster column, so the leftmost
+ * samples still land where that second gradient stacks); the 0.85 column is on
+ * the right, past most of it. Every sample is printed — a zero-sample pass is a
  * false pass.
  */
 const X_FRACTIONS = [0.15, 0.5, 0.85] as const;
@@ -109,8 +110,12 @@ function parseRgb(text: string): Rgb {
   return [Number(m[1]), Number(m[2]), Number(m[3])];
 }
 
-/* -------------------- minimal PNG decoder (8-bit RGB(A)) -------------------- */
-/** Decode a Playwright screenshot PNG into raw pixel data (RGB or RGBA). */
+/* -------------------- minimal PNG decoder (8-bit RGB/RGBA) -------------------- */
+/**
+ * Decode a Playwright screenshot PNG into raw pixel data. Playwright's headless
+ * chromium emits non-interlaced 8-bit RGB or RGBA PNGs; anything else is a
+ * change worth failing on loudly rather than decoding wrongly (fail fast).
+ */
 function decodePng(buf: Buffer): { width: number; height: number; channels: number; data: Buffer } {
   const sig = buf.subarray(0, 8).toString('hex');
   if (sig !== '89504e470d0a1a0a') throw new Error('not a PNG');
@@ -128,8 +133,10 @@ function decodePng(buf: Buffer): { width: number; height: number; channels: numb
       height = data.readUInt32BE(4);
       const bitDepth = data[8];
       const colorType = data[9];
+      const interlace = data[12];
       if (bitDepth !== 8) throw new Error(`unsupported PNG bit depth ${bitDepth}`);
-      channels = colorType === 6 ? 4 : colorType === 2 ? 3 : colorType === 0 ? 1 : 0;
+      if (interlace !== 0) throw new Error(`unsupported interlaced PNG`);
+      channels = colorType === 6 ? 4 : colorType === 2 ? 3 : 0;
       if (channels === 0) throw new Error(`unsupported PNG color type ${colorType}`);
     } else if (type === 'IDAT') {
       idat.push(data);
@@ -141,10 +148,16 @@ function decodePng(buf: Buffer): { width: number; height: number; channels: numb
   if (!width || !height || channels === 0) throw new Error('incomplete PNG header');
   const raw = inflateSync(Buffer.concat(idat));
   const stride = width * channels;
+  // Exact-length guard: a truncated/over-long IDAT means the pixel math below
+  // would silently read wrong bytes. Fail loudly instead.
+  if (raw.length !== height * (1 + stride)) {
+    throw new Error(`PNG payload length ${raw.length}, expected ${height * (1 + stride)}`);
+  }
   const out = Buffer.alloc(height * stride);
   let src = 0;
   for (let y = 0; y < height; y++) {
     const filter = raw[src++];
+    if (filter > 4) throw new Error(`unsupported PNG filter ${filter}`);
     const row = out.subarray(y * stride, (y + 1) * stride);
     for (let x = 0; x < stride; x++) {
       const rawByte = raw[src + x];
@@ -173,8 +186,6 @@ function decodePng(buf: Buffer): { width: number; height: number; channels: numb
           val = (rawByte + pr) & 0xff;
           break;
         }
-        default:
-          throw new Error(`unsupported PNG filter ${filter}`);
       }
       row[x] = val;
     }
@@ -189,35 +200,65 @@ interface SampledPoint {
   y: number;
   /** The pixel the browser composited there (behind the hidden text). */
   background: Rgb;
-  /** WCAG contrast of the element's text color against that pixel. */
+  /** WCAG contrast of the box's WORST text color against that pixel. */
   ratio: number;
 }
 
 /**
  * Measure the composited background pixels behind one hero-text element and
- * compute their WCAG contrast against the element's own (theme-following) text
- * color. The text is temporarily hidden (transparent fill + no shadow) so the
- * sampled pixels are exactly the scrim/ambient/surface composite the text sits
- * on — the same "pixel behind the text" the acceptance criteria name. The
- * `color` is read BEFORE hiding, from the REAL computed style.
+ * compute their WCAG contrast against the text colors the box renders. The
+ * text is temporarily hidden (transparent fill + no shadow) so the sampled
+ * pixels are exactly the scrim/ambient/surface composite the text sits on —
+ * the same "pixel behind the text" the acceptance criteria name.
+ *
+ * The colours are read BEFORE hiding, from the REAL computed style, and the
+ * worst is taken across the element AND its text-bearing descendants: the meta
+ * row mixes `--text-muted` items with a `--text-subtle` type chip, and the AC
+ * binds every rendered text in the box, not just the container's own color.
  */
-async function sampleElement(page: Page, selector: string): Promise<{ text: Rgb; points: SampledPoint[] }> {
-  const text = parseRgb(
-    await page.evaluate((sel) => getComputedStyle(document.querySelector(sel) as Element).color, selector),
-  );
+async function sampleElement(page: Page, selector: string): Promise<{ texts: Rgb[]; points: SampledPoint[] }> {
+  const texts = (
+    await page.evaluate((sel) => {
+      const el = document.querySelector(sel) as HTMLElement | null;
+      if (!el) throw new Error(`element not found: ${sel}`);
+      const colors = new Set<string>([getComputedStyle(el).color]);
+      for (const child of el.querySelectorAll('*')) {
+        const hasText = Array.from(child.childNodes).some(
+          (n) => n.nodeType === Node.TEXT_NODE && n.textContent != null && n.textContent.trim() !== '',
+        );
+        if (hasText) colors.add(getComputedStyle(child).color);
+      }
+      return Array.from(colors);
+    }, selector)
+  ).map(parseRgb);
+  if (texts.length === 0) throw new Error(`${selector}: no text colour resolved`);
 
-  await page.evaluate((sel) => {
-    const el = document.querySelector(sel) as HTMLElement | null;
-    if (!el) throw new Error(`element not found: ${sel}`);
-    el.style.color = 'transparent';
-    el.style.textShadow = 'none';
-    el.style.webkitTextFillColor = 'transparent';
-  }, selector);
-  // Two frames: one for the style flush, one for the compositor to settle.
-  await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => r())));
-  await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => r())));
+  let png: Buffer;
+  try {
+    await page.evaluate((sel) => {
+      const el = document.querySelector(sel) as HTMLElement | null;
+      if (!el) throw new Error(`element not found: ${sel}`);
+      el.style.color = 'transparent';
+      el.style.textShadow = 'none';
+      el.style.webkitTextFillColor = 'transparent';
+    }, selector);
+    // Two frames: one for the style flush, one for the compositor to settle.
+    await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => r())));
+    await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => r())));
+    png = await page.locator(selector).first().screenshot({ type: 'png' });
+  } finally {
+    // Restore even if the screenshot/decode path throws, so the next theme's
+    // page (or a failure re-run) never sees hidden hero text.
+    await page.evaluate((sel) => {
+      const el = document.querySelector(sel) as HTMLElement | null;
+      if (el) {
+        el.style.color = '';
+        el.style.textShadow = '';
+        el.style.webkitTextFillColor = '';
+      }
+    }, selector);
+  }
 
-  const png = await page.locator(selector).first().screenshot({ type: 'png' });
   const { width, height, channels, data } = decodePng(png);
 
   const points: SampledPoint[] = [];
@@ -234,20 +275,12 @@ async function sampleElement(page: Page, selector: string): Promise<{ text: Rgb;
         throw new Error(`${selector}: pixel at x${fx},y${fy} is fully transparent — nothing painted behind it`);
       }
       const background: Rgb = [data[i], data[i + 1], data[i + 2]];
-      points.push({ x: fx, y: fy, background, ratio: contrast(text, background) });
+      const worst = Math.min(...texts.map((t) => contrast(t, background)));
+      points.push({ x: fx, y: fy, background, ratio: worst });
     }
   }
 
-  await page.evaluate((sel) => {
-    const el = document.querySelector(sel) as HTMLElement | null;
-    if (el) {
-      el.style.color = '';
-      el.style.textShadow = '';
-      el.style.webkitTextFillColor = '';
-    }
-  }, selector);
-
-  return { text, points };
+  return { texts, points };
 }
 
 beforeAll(async () => {
@@ -282,15 +315,16 @@ async function measureTheme(theme: Theme): Promise<void> {
   // (poster present, no backdrop) or the measurement is vacuous.
   await page.locator('.media-detail__ambient-scrim').first().waitFor({ state: 'visible' });
   await page.locator('.media-detail__title').first().waitFor({ state: 'visible' });
+  await page.locator('.media-detail__meta').first().waitFor({ state: 'visible' });
   await page.locator('.media-detail__overview').first().waitFor({ state: 'visible' });
 
   for (const { selector, label, minContrast } of ELEMENTS) {
-    const { text, points } = await sampleElement(page, selector);
+    const { texts, points } = await sampleElement(page, selector);
     const ratios = points.map((p) => p.ratio.toFixed(2)).join(', ');
     // S345 lesson 3: a "nothing matched" defence needs its own guard — print
     // the sample count AND every ratio so a zero-sample pass is impossible.
     console.log(
-      `[${theme}] ${label} text rgb(${text.join(',')}) — sample count ${points.length}; ratios: ${ratios} (min ${Math.min(...points.map((p) => p.ratio)).toFixed(2)})`,
+      `[${theme}] ${label} text rgb(${texts.map((t) => t.join(',')).join(' / ')}) — sample count ${points.length}; ratios: ${ratios} (min ${Math.min(...points.map((p) => p.ratio)).toFixed(2)})`,
     );
     expect(points.length, `${theme}/${label} must produce samples`).toBeGreaterThan(0);
 

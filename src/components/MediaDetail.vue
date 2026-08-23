@@ -1113,7 +1113,11 @@ onBeforeUnmount(() => {
 }
 .media-detail__type {
   text-transform: capitalize;
-  color: var(--text-subtle);
+  /* S326: the type chip shares the row's --text-muted class. It used to be
+     --text-subtle, which passes its token lock on plain resting surfaces but
+     not over the hero scrim — measured 4.18:1 on Daylight (needs ≥4.5:1) in
+     src/test/ambient-scrim-contrast.browser.test.ts. */
+  color: var(--text-muted);
 }
 
 .media-detail__genres {

@@ -13,7 +13,7 @@ import { t as u } from "./Skeleton-C3OpJbf1.js";
 import { t as te } from "./EmptyState-CwWtkhEJ.js";
 import { t as d } from "./MediaCard-H65JFCcC.js";
 import { n as ne } from "./media-query-DKjhlX8r.js";
-import { t as f } from "./MediaDetail-BOEvRFC2.js";
+import { t as f } from "./MediaDetail-4Hum131L.js";
 import { t as re } from "./MetadataMatchModal-JSpi0YZP.js";
 import { t as ie } from "./PosterPicker-jZOLJQqW.js";
 import { n as ae, t as oe } from "./useItemInspector-Cn3FRzeh.js";
@@ -435,4 +435,4 @@ var O = { class: "series-detail" }, k = {
 //#endregion
 export { M as default };
 
-//# sourceMappingURL=MediaDetailPage-B7JD73nC.js.map
+//# sourceMappingURL=MediaDetailPage-RyYjSKh7.js.map

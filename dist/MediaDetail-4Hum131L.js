@@ -654,8 +654,8 @@ var ve = { class: "media-detail" }, ye = {
 			}, 8, ["modelValue", "title"])) : d("", !0)
 		]));
 	}
-}), D = /* @__PURE__ */ e({ default: () => O }), O = /*#__PURE__*/ t(E, [["__scopeId", "data-v-c3c0ab24"]]);
+}), D = /* @__PURE__ */ e({ default: () => O }), O = /*#__PURE__*/ t(E, [["__scopeId", "data-v-d8352750"]]);
 //#endregion
 export { D as n, O as t };
 
-//# sourceMappingURL=MediaDetail-BOEvRFC2.js.map
+//# sourceMappingURL=MediaDetail-4Hum131L.js.map

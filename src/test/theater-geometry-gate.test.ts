@@ -119,3 +119,43 @@ describe('S231 theater-geometry gate — it runs in the BLOCKING job', () => {
         expect(vitestStep.slice(0, 120)).not.toContain('continue-on-error');
     });
 });
+
+describe('S326 ambient-scrim gate — the contrast measurement exists and runs', () => {
+    // S326's acceptance criteria are measured from RENDERED pixels (composited
+    // contrast behind the hero text), which jsdom cannot produce. The sole
+    // executable proof is `src/test/ambient-scrim-contrast.browser.test.ts`,
+    // which runs in the same BLOCKING `test` job as the S231 geometry gate (the
+    // chromium install step already covers it). Its value depends entirely on
+    // WHERE it runs — a `.skip`, a deletion, or a move to `e2e/` (excluded from
+    // the vitest run) would report SUCCESS while the contrast claim dies, the
+    // exact `skipped`-counts-as-SUCCESS failure this file exists to prevent.
+    const contrastTestPath = resolve(root, 'src/test/ambient-scrim-contrast.browser.test.ts');
+
+    it('keeps the browser contrast test in the vitest tree', () => {
+        expect(existsSync(contrastTestPath), 'src/test/ambient-scrim-contrast.browser.test.ts must exist').toBe(true);
+        expect(existsSync(resolve(root, 'e2e/ambient-scrim-contrast.browser.test.ts'))).toBe(false);
+    });
+
+    it('does not skip or todo any of its assertions', () => {
+        const code = stripComments(readFileSync(contrastTestPath, 'utf8'));
+        expect(code).not.toMatch(/\b(?:it|test|describe)\s*\.\s*(?:skip|todo|skipIf|runIf)\b/);
+        const liveTests = code.match(/\bit\s*\(/g) ?? [];
+        // Non-vacuity: the suite is loop-generated over THEMES (one literal
+        // `it(` per theme run), so require the live `it(` AND the generator
+        // loop over all three themes — a future edit that empties either makes
+        // the measurement vacuous.
+        expect(liveTests.length, 'the contrast browser test must still contain live it() blocks').toBeGreaterThanOrEqual(1);
+        expect(code, 'the contrast browser test must still loop over all three themes').toContain('for (const theme of THEMES)');
+        expect(code).toMatch(/THEMES\s*=\s*\[[^\]]*'nocturne'[^\]]*'daylight'[^\]]*'midnight'/);
+    });
+
+    it('measures PIXELS rather than only asserting source text', () => {
+        // The whole point of S326 is a numeric contrast ratio from the composited
+        // render. A future edit that reduces this file to jsdom-grade source-text
+        // assertions would reproduce the blindness, so require the pixel-capture
+        // and pixel-decode calls to still be there.
+        const code = stripComments(readFileSync(contrastTestPath, 'utf8'));
+        expect(code).toContain('screenshot(');
+        expect(code).toContain('decodePng(');
+    });
+});
