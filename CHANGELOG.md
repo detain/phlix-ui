@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.99.0 - 2026-08-24
+
 ### Fixed
 
 - **The S33 "Automatically generate collections from TMDB box sets" toggle was rendered only for `type === 'movie'` libraries, so `video` and `series` libraries — whose scans DO reach the S33 gate via the server's main scan path — had no control at all (S327).** `LibrariesPage.vue`'s visibility gate showed the toggle solely for `'movie'`; photo, book and audiobook libraries were equally invisible. The toggle is now exposed for every library type whose scan reaches the S33 gate — movie / series / video / photo / book / audiobook — via a single `AUTO_COLLECTIONS_LIBRARY_TYPES` set shared by the visibility gate and both persistence gates (create + edit), so a controllable type can never lose its persisted flag; music stays excluded (its scan path never reaches the gate). Cross-repo: the server half (phlix-server) now honors the stored flag on the photo/book/audiobook scan paths, which previously ignored it. Tests: the movie-only test now enumerates the full reach set, and new video-visibility, video-edit and photo-create persistence tests all fail on the pre-fix gate.
