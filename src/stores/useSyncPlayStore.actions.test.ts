@@ -515,7 +515,8 @@ describe('useSyncPlayStore.sendCommand', () => {
 
         const frames = socket().sent.map((raw) => JSON.parse(raw) as Record<string, unknown>);
         expect(frames.map((f) => f['type'])).toEqual(['syncplay_playback_play']);
-        expect(frames[0]!['position']).toBe(12);
+        // S293: the wire unit is MILLISECONDS (SPEC.md:91) — 12 s → 12_000 ms.
+        expect(frames[0]!['position']).toBe(12_000);
     });
 
     it('puts a seek frame on the wire with the target position', async () => {
@@ -524,7 +525,24 @@ describe('useSyncPlayStore.sendCommand', () => {
 
         const frames = socket().sent.map((raw) => JSON.parse(raw) as Record<string, unknown>);
         expect(frames.map((f) => f['type'])).toEqual(['syncplay_playback_seek']);
-        expect(frames[0]!['to_position']).toBe(900);
+        // S293: 900 s → 900_000 ms — a seconds leak would land at 900 (1000× off).
+        expect(frames[0]!['to_position']).toBe(900_000);
+    });
+
+    /**
+     * S293 — Boundary #2 unit assertion (command path → `sendSeek`).
+     *
+     * The fixture is 123.25 s: without the seconds→ms conversion at the send
+     * boundary the wire would carry 123.25 — off by exactly 1000× — and the
+     * value is never 0 and never reads the same in both units.
+     */
+    it('S293 — the seek frame carries MILLISECONDS in to_position, not seconds', async () => {
+        const store = await joinedAndInGroup();
+        store.sendCommand(BASE, 'seek', { position: 123.25 });
+
+        const frames = socket().sent.map((raw) => JSON.parse(raw) as Record<string, unknown>);
+        expect(frames.map((f) => f['type'])).toEqual(['syncplay_playback_seek']);
+        expect(frames[0]!['to_position']).toBe(123_250);
     });
 
     it('stamps the command with the session creator, not a placeholder', async () => {

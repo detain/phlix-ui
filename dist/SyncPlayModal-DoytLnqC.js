@@ -609,7 +609,7 @@ var ge = O("phlix-syncplay", () => {
 		}
 		e.state === "playing" && fe({
 			sessionId: e.id,
-			playbackPosition: a.value,
+			playbackPosition: a.value * 1e3,
 			playbackRate: e.playbackRate > 0 ? e.playbackRate : 1,
 			serverTime: e.serverTime,
 			timestamp: (/* @__PURE__ */ new Date()).toISOString()
@@ -706,7 +706,7 @@ var ge = O("phlix-syncplay", () => {
 	function C(e, n, r) {
 		t.value && pe({
 			type: n,
-			position: r?.position,
+			position: r?.position === void 0 ? void 0 : r.position * 1e3,
 			rate: r?.rate,
 			issuedBy: t.value.createdBy,
 			issuedAt: (/* @__PURE__ */ new Date()).toISOString()
@@ -912,4 +912,4 @@ var ge = O("phlix-syncplay", () => {
 //#endregion
 export { ge as n, Re as t };
 
-//# sourceMappingURL=SyncPlayModal-cM2Jiaw2.js.map
+//# sourceMappingURL=SyncPlayModal-DoytLnqC.js.map

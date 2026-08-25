@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Fixed
+
+- **SyncPlay positions are now converted to MILLISECONDS — the wire unit per `phlix-syncplay/SPEC.md:91` — at the phlix-ui send boundaries (S293).** The ui previously forwarded its internal SECONDS value untouched (`localPlaybackPosition` → `reportPosition`; `sendCommand()` → `sendPlay`/`sendPause`/`sendSeek`/`reportPosition`), while Roku — the only spec-compliant client — sends milliseconds, so in a mixed room a ui host's 300 s seek read as 0.3 s on Roku and a Roku host's 300000 ms read as 300000 s here. The seconds→ms conversion now happens at exactly the two send boundaries in `useSyncPlayStore.ts` (`reportLocalPosition()` and `sendCommand()`), each asserted with a 1000×-sensitive value and mutation-proved (removing the conversion reds a named test). The receive side is untouched — inbound wire values are consumed exactly as before, preserving the ui's internal seconds model end to end — and the server (stores the payload raw, unit-agnostic) and Roku (already compliant) are not touched.
+
 ## 0.99.0 - 2026-08-24
 
 ### Fixed

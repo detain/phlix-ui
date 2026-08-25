@@ -7134,7 +7134,7 @@ var sd = R("phlix-syncplay", () => {
 		}
 		e.state === "playing" && td({
 			sessionId: e.id,
-			playbackPosition: o.value,
+			playbackPosition: o.value * 1e3,
 			playbackRate: e.playbackRate > 0 ? e.playbackRate : 1,
 			serverTime: e.serverTime,
 			timestamp: (/* @__PURE__ */ new Date()).toISOString()
@@ -7231,7 +7231,7 @@ var sd = R("phlix-syncplay", () => {
 	function C(e, n, r) {
 		t.value && nd({
 			type: n,
-			position: r?.position,
+			position: r?.position === void 0 ? void 0 : r.position * 1e3,
 			rate: r?.rate,
 			issuedBy: t.value.createdBy,
 			issuedAt: (/* @__PURE__ */ new Date()).toISOString()
