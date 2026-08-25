@@ -8157,21 +8157,27 @@ var tf = { class: "player__stage" }, nf = ["src", "poster"], rf = [
 		let bn = null;
 		return N(() => w.pendingPlayMedia, async (e) => {
 			if (!e) return;
+			let t = null;
 			if (d.resolvePendingMedia) {
-				let t = await d.resolvePendingMedia({
-					mediaId: e.mediaId,
-					title: e.title
-				});
-				if (t) {
-					m.setCurrent(t, {
-						resetPosition: !0,
-						streamUrl: d.streamUrlFor?.(t) ?? ""
-					}), F.value?.play(), m.play(), w.consumePendingPlayMedia(), bn = null;
-					return;
+				try {
+					t = await d.resolvePendingMedia({
+						mediaId: e.mediaId,
+						title: e.title
+					});
+				} catch {
+					t = null;
 				}
+				if (w.pendingPlayMedia !== e) return;
 			}
-			let t = `${e.mediaId}@${e.issuedAt}`;
-			bn !== t && (bn = t, p("pending-media", e.mediaId, e.title));
+			if (t) {
+				m.setCurrent(t, {
+					resetPosition: !0,
+					streamUrl: d.streamUrlFor?.(t) ?? ""
+				}), F.value?.play(), m.play(), w.consumePendingPlayMedia(), bn = null;
+				return;
+			}
+			let n = `${e.mediaId}@${e.issuedAt}`;
+			bn !== n && (bn = n, p("pending-media", e.mediaId, e.title));
 		}), v(() => {
 			gn(), nt(), G.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", fn), yn?.(), Ft?.removeEventListener?.("addtrack", jt), Ft?.removeEventListener?.("removetrack", jt), sn !== null && (clearInterval(sn), sn = null), ve !== null && (clearTimeout(ve), ve = null);
 		}), (n, r) => (x(), o("div", {
@@ -8536,7 +8542,7 @@ var tf = { class: "player__stage" }, nf = ["src", "poster"], rf = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-e6c2425e"]]), Bf = ["aria-label"], Vf = ["src", "poster"], Hf = { class: "mini__body" }, Uf = { class: "mini__title" }, Wf = { class: "mini__controls" }, Gf = ["aria-label"], Kf = ["aria-label", "aria-pressed"], qf = ["aria-label"], Jf = ["aria-label"], Yf = {
+}), [["__scopeId", "data-v-82edb4b3"]]), Bf = ["aria-label"], Vf = ["src", "poster"], Hf = { class: "mini__body" }, Uf = { class: "mini__title" }, Wf = { class: "mini__controls" }, Gf = ["aria-label"], Kf = ["aria-label", "aria-pressed"], qf = ["aria-label"], Jf = ["aria-label"], Yf = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Xf = /*#__PURE__*/ Y(/* @__PURE__ */ d({

@@ -203,6 +203,36 @@ describe('openHubRelayConnection — the open-whenever lifecycle (S298)', () => 
     });
     expect(FakeWebSocket.instances).toHaveLength(1);
   });
+
+  it('closes the OLD socket when re-opening for a DIFFERENT server — no leak, no double-delivery', () => {
+    const first: PendingPlayMediaCommand[] = [];
+    const second: PendingPlayMediaCommand[] = [];
+    openHubRelayConnection({
+      serverId: SERVER_ID,
+      tokenProvider: () => 'tok-1',
+      onPendingCommand: (c) => first.push(c),
+    });
+    const old = socket();
+    openHubRelayConnection({
+      serverId: 'srv-other',
+      tokenProvider: () => 'tok-2',
+      onPendingCommand: (c) => second.push(c),
+    });
+    // The old socket was closed and a NEW one dialed the new server.
+    expect(old.closeCalls).toBe(1);
+    expect(FakeWebSocket.instances).toHaveLength(2);
+    expect(socket().url).toContain('/syncplay/srv-other');
+    // A frame on the NEW socket reaches ONLY the new config's handler.
+    socket().deliver({
+      type: 'pending_command',
+      command: 'play_media',
+      server_id: 'srv-other',
+      media_id: 'm-1',
+      title: 'Dune',
+    });
+    expect(second).toHaveLength(1);
+    expect(first).toHaveLength(0);
+  });
 });
 
 // ── frame consumption ─────────────────────────────────────────────────────────

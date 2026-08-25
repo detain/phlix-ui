@@ -3005,4 +3005,52 @@ describe('Player — hub-relay pending_command load path (S298)', () => {
     expect(w.emitted('pending-media')).toEqual([['media-pending-3', 'Alien']]);
     expect(usePlayerStore().current?.id).toBe('m1'); // untouched
   });
+
+  it('falls back to the event when the resolver REJECTS — no unhandled rejection', async () => {
+    const rejectSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { w } = mountPlayer({ resolvePendingMedia: vi.fn(async () => Promise.reject(new Error('boom'))) });
+    const syncPlay = useSyncPlayStore();
+
+    syncPlay.applyPendingPlayMedia(hubCommand('media-pending-4', 'Arrival'));
+    await flushPromises();
+    expect(w.emitted('pending-media')).toEqual([['media-pending-4', 'Arrival']]);
+    expect(usePlayerStore().current?.id).toBe('m1');
+    rejectSpy.mockRestore();
+  });
+
+  it('does NOT apply a STALE resolution when a newer command replaced the first', async () => {
+    // Each command's resolution is deferred and resolved by hand, so the order
+    // of arrival and the order of resolution are controlled independently.
+    const resolvers: Record<string, (item: MediaItem | null) => void> = {};
+    const resolver = vi.fn(
+      ({ mediaId }: { mediaId: string }) =>
+        new Promise<MediaItem | null>((resolve) => (resolvers[mediaId] = resolve)),
+    );
+    const { video } = mountPlayer({ resolvePendingMedia: resolver });
+    const syncPlay = useSyncPlayStore();
+    const player = usePlayerStore();
+
+    // Command A arrives and its watcher run STARTS the resolution…
+    syncPlay.applyPendingPlayMedia(hubCommand('media-pending-a', 'Old Title'));
+    await nextTick();
+    expect(resolvers['media-pending-a']).toBeTypeOf('function');
+    // …and B arrives while A's resolver is still in flight (separate ticks —
+    // this is the reachable race, not a same-tick batch).
+    syncPlay.applyPendingPlayMedia(hubCommand('media-pending-b', 'New Title'));
+    await nextTick();
+    expect(resolvers['media-pending-b']).toBeTypeOf('function');
+
+    // B's resolution lands FIRST: B loads, plays, and the slot is consumed.
+    resolvers['media-pending-b']!(media({ id: 'media-pending-b', name: 'New Title' }));
+    await flushPromises();
+    expect(player.current?.id).toBe('media-pending-b');
+    expect(video.play).toHaveBeenCalled();
+    expect(syncPlay.pendingPlayMedia).toBeNull();
+
+    // A's STALE resolution lands afterwards — it must be discarded, not applied.
+    resolvers['media-pending-a']!(media({ id: 'media-pending-a', name: 'Old Title' }));
+    await flushPromises();
+    expect(player.current?.id).toBe('media-pending-b');
+    expect(player.current?.name).toBe('New Title');
+  });
 });

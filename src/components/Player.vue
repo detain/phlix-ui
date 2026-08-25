@@ -1523,19 +1523,27 @@ watch(
   () => syncPlay.pendingPlayMedia,
   async (command) => {
     if (!command) return;
+    let item: MediaItem | null = null;
     if (props.resolvePendingMedia) {
-      const item = await props.resolvePendingMedia({ mediaId: command.mediaId, title: command.title });
-      if (item) {
-        player.setCurrent(item, {
-          resetPosition: true,
-          streamUrl: props.streamUrlFor?.(item) ?? '',
-        });
-        void videoRef.value?.play();
-        player.play();
-        syncPlay.consumePendingPlayMedia();
-        lastPendingCommandKey = null;
-        return;
+      try {
+        item = await props.resolvePendingMedia({ mediaId: command.mediaId, title: command.title });
+      } catch {
+        item = null; // resolution failure falls back to the event, like null
       }
+      // A newer command may have replaced this one while the resolver ran —
+      // applying a STALE resolution would load the wrong title.
+      if (syncPlay.pendingPlayMedia !== command) return;
+    }
+    if (item) {
+      player.setCurrent(item, {
+        resetPosition: true,
+        streamUrl: props.streamUrlFor?.(item) ?? '',
+      });
+      void videoRef.value?.play();
+      player.play();
+      syncPlay.consumePendingPlayMedia();
+      lastPendingCommandKey = null;
+      return;
     }
     const key = `${command.mediaId}@${command.issuedAt}`;
     if (lastPendingCommandKey !== key) {

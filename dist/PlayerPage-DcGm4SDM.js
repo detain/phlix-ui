@@ -2749,21 +2749,27 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 		let Xn = null;
 		return X(() => v.pendingPlayMedia, async (e) => {
 			if (!e) return;
+			let t = null;
 			if (o.resolvePendingMedia) {
-				let t = await o.resolvePendingMedia({
-					mediaId: e.mediaId,
-					title: e.title
-				});
-				if (t) {
-					l.setCurrent(t, {
-						resetPosition: !0,
-						streamUrl: o.streamUrlFor?.(t) ?? ""
-					}), T.value?.play(), l.play(), v.consumePendingPlayMedia(), Xn = null;
-					return;
+				try {
+					t = await o.resolvePendingMedia({
+						mediaId: e.mediaId,
+						title: e.title
+					});
+				} catch {
+					t = null;
 				}
+				if (v.pendingPlayMedia !== e) return;
 			}
-			let t = `${e.mediaId}@${e.issuedAt}`;
-			Xn !== t && (Xn = t, c("pending-media", e.mediaId, e.title));
+			if (t) {
+				l.setCurrent(t, {
+					resetPosition: !0,
+					streamUrl: o.streamUrlFor?.(t) ?? ""
+				}), T.value?.play(), l.play(), v.consumePendingPlayMedia(), Xn = null;
+				return;
+			}
+			let n = `${e.mediaId}@${e.issuedAt}`;
+			Xn !== n && (Xn = n, c("pending-media", e.mediaId, e.title));
 		}), Ee(() => {
 			Gn(), vt(), V.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", Bn), Jn?.(), rn?.removeEventListener?.("addtrack", Qt), rn?.removeEventListener?.("removetrack", Qt), Fn !== null && (clearInterval(Fn), Fn = null), J !== null && (clearTimeout(J), J = null);
 		}), (n, i) => (W(), I("div", {
@@ -3128,7 +3134,7 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-e6c2425e"]]), ra = { class: "player-page__stage" }, ia = {
+}), [["__scopeId", "data-v-82edb4b3"]]), ra = { class: "player-page__stage" }, ia = {
 	key: 0,
 	class: "player-page__skeleton",
 	role: "status",
@@ -3403,4 +3409,4 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 //#endregion
 export { oa as default };
 
-//# sourceMappingURL=PlayerPage-qIwf8qGW.js.map
+//# sourceMappingURL=PlayerPage-DcGm4SDM.js.map

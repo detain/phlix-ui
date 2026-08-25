@@ -904,7 +904,7 @@ function Ri(e) {
 	Fi?.onStatusChange?.(e);
 }
 function zi(e) {
-	Pi && Fi?.serverId === e.serverId || (Fi = e, Li !== null && (clearTimeout(Li), Li = null), Bi());
+	Pi && Fi?.serverId === e.serverId || (Pi &&= (Pi.onclose = null, Pi.close(), null), Fi = e, Li !== null && (clearTimeout(Li), Li = null), Bi());
 }
 function Bi() {
 	if (!Fi) return;
@@ -933,7 +933,9 @@ function Bi() {
 			return;
 		}
 		let n = ji(t);
-		n && Fi.onPendingCommand(n);
+		if (n) try {
+			Fi.onPendingCommand(n);
+		} catch {}
 	}, n.onclose = () => {
 		Pi = null, Vi();
 	}, n.onerror = () => {};
@@ -1310,7 +1312,7 @@ function za(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-qIwf8qGW.js")
+			component: () => import("./PlayerPage-DcGm4SDM.js")
 		},
 		{
 			path: `${t}/login`,

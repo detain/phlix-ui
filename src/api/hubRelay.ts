@@ -174,6 +174,15 @@ function setStatus(status: HubRelayStatus): void {
  */
 export function openHubRelayConnection(config: HubRelayConfig): void {
   if (hubWs && hubConfig?.serverId === config.serverId) return;
+  // A DIFFERENT server id means the app re-pointed at another server (native
+  // clients switch servers at runtime). The old socket is bound to the old
+  // server and its onmessage closure reads the module-level hubConfig — leaving
+  // it open would deliver the new config's frames to the old socket and leak it.
+  if (hubWs) {
+    hubWs.onclose = null;
+    hubWs.close();
+    hubWs = null;
+  }
   hubConfig = config;
   if (hubReconnectTimer !== null) {
     clearTimeout(hubReconnectTimer);
@@ -224,7 +233,13 @@ function connectHubRelaySocket(): void {
       return; // malformed frame — ignore
     }
     const command = parsePendingCommandFrame(raw);
-    if (command) hubConfig.onPendingCommand(command);
+    if (!command) return;
+    try {
+      hubConfig.onPendingCommand(command);
+    } catch {
+      // A throwing consumer must not kill the socket's message handler; the
+      // hub keeps the connection either way.
+    }
   };
 
   socket.onclose = () => {
