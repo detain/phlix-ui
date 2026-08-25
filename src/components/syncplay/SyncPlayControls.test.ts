@@ -269,6 +269,7 @@ describe('SyncPlayControls — synced transport', () => {
         await btn(w, 'Fast forward').trigger('click');
         await flushPromises();
 
+        // S293: 7200 s → 7_200_000 ms on the wire.
         expect(frames()[0]!['to_position']).toBe(7_200_000);
         expect(w.emitted('seek')).toEqual([[7200]]);
     });

@@ -443,8 +443,11 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       // seek position SyncPlayControls sends); the wire unit is MILLISECONDS
       // (phlix-syncplay SPEC.md:91). Convert at the send boundary — Boundary
       // #2 (command path → sendPlay/sendPause/sendSeek/reportPosition).
-      // `undefined` stays `undefined` so a play/pause without a position is
-      // not coerced to 0 on the wire.
+      // `undefined` stays `undefined` so a play/pause without a position never
+      // reaches `undefined * 1000` (NaN → null via JSON.stringify); the
+      // seconds→ms conversion applies to seek/sync positions, which always
+      // carry one. (play/pause still fall back to 0 via `command.position ?? 0`
+      // in api/syncplay.ts — unit-invariant, pre-existing.)
       position: options?.position !== undefined ? options.position * 1000 : undefined,
       rate: options?.rate,
       issuedBy: currentSession.value.createdBy,
