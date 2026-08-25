@@ -173,3 +173,15 @@ describe('isoFromUnixSeconds() — the server sends SECONDS', () => {
         expect(new Date(iso).getUTCFullYear()).toBeGreaterThan(2020);
     });
 });
+
+describe('groupToSession() — the current_media_id carry-through (S298)', () => {
+    it('carries a present current_media_id into the session', () => {
+        const s = groupToSession({ group_id: 'g1', current_media_id: 'media-9' } as unknown as RawSyncPlayGroup);
+        expect(s.currentMediaId).toBe('media-9');
+    });
+
+    it('maps an absent current_media_id to null — not undefined', () => {
+        const s = groupToSession({ group_id: 'g1' } as unknown as RawSyncPlayGroup);
+        expect(s.currentMediaId).toBeNull();
+    });
+});

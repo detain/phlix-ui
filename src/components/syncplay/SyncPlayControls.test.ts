@@ -84,6 +84,7 @@ function makeSession(over: Partial<SyncPlaySession> = {}): SyncPlaySession {
         createdBy: ME,
         createdAt: '2026-01-01T00:00:00Z',
         state: 'playing',
+        currentMediaId: null,
         playbackPosition: 100,
         playbackRate: 1,
         serverTime: 0,

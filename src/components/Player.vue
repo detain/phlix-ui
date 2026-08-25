@@ -108,6 +108,12 @@ const props = defineProps<{
    *  R3.9's PlayerPage supplies the real `/media/:id/stream` resolver; without it,
    *  advancing clears the store's stream URL rather than leaving a stale one. */
   streamUrlFor?: (media: MediaItem) => string | undefined;
+  /** Resolve a hub-relay `pending_command` media id to a playable item (S298).
+   *  "Alexa, play X" lands on the open hub socket with a bare media id; with
+   *  this resolver the player LOADS that title (setCurrent) and starts playing
+   *  it. Without it, the pending command is surfaced via the `pending-media`
+   *  event for the host to route. */
+  resolvePendingMedia?: (command: { mediaId: string; title: string }) => Promise<MediaItem | null> | MediaItem | null;
   /** API base for the on-demand transcode endpoints. When a file can't be
    *  direct-played the player POSTs `${apiBase}/api/v1/media/:id/transcode` and
    *  plays the resulting HLS stream via hls.js. Defaults to the page origin. */
@@ -151,6 +157,10 @@ const emit = defineEmits<{
   /** Prev/Next episode button pressed (U2, series content). Payload is the target
    *  episode; the host navigates to its player route. */
   (e: 'play-episode', media: MediaItem): void;
+  /** A hub-relay `pending_command` arrived but no `resolvePendingMedia` resolver
+   *  is wired (or it failed) — the host routes mediaId → its own player route.
+   *  The store slot is NOT auto-consumed here so the host can pick it up. */
+  (e: 'pending-media', mediaId: string, title: string): void;
 }>();
 
 const player = usePlayerStore();
@@ -1497,6 +1507,40 @@ watch(
     // Seek to server position when drift is too large (buffering hiccup recovery).
     if (Math.abs(syncPlay.driftAmount) > SYNC_DRIFT_THRESHOLD_SECONDS) {
       seekTo(session.playbackPosition);
+    }
+  },
+);
+
+// S298 — the load-a-new-title path. The hub relay's `pending_command`
+// ("Alexa, play X") carries ONLY a media id + title; nothing in the app can
+// play that until the player LOADS it. This watcher is that path: with
+// `resolvePendingMedia` wired, the id resolves to a MediaItem, setCurrent
+// loads it, play() starts it, and the store slot is consumed. Without a
+// resolver the command is surfaced via the `pending-media` event (guarded so
+// it emits once per command) and the store slot stays for the host.
+let lastPendingCommandKey: string | null = null;
+watch(
+  () => syncPlay.pendingPlayMedia,
+  async (command) => {
+    if (!command) return;
+    if (props.resolvePendingMedia) {
+      const item = await props.resolvePendingMedia({ mediaId: command.mediaId, title: command.title });
+      if (item) {
+        player.setCurrent(item, {
+          resetPosition: true,
+          streamUrl: props.streamUrlFor?.(item) ?? '',
+        });
+        void videoRef.value?.play();
+        player.play();
+        syncPlay.consumePendingPlayMedia();
+        lastPendingCommandKey = null;
+        return;
+      }
+    }
+    const key = `${command.mediaId}@${command.issuedAt}`;
+    if (lastPendingCommandKey !== key) {
+      lastPendingCommandKey = key;
+      emit('pending-media', command.mediaId, command.title);
     }
   },
 );

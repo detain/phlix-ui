@@ -176,6 +176,7 @@ function mountPlayer(
     playbackSubtitleTracks: Array<{ index: number; language: string; label: string; default: boolean; url: string }>;
     apiBase: string;
     markers: Array<{ id: string; type: 'intro' | 'outro' | 'credits' | 'ad'; startMs: number; endMs: number; label: string }>;
+    resolvePendingMedia: (command: { mediaId: string; title: string }) => Promise<MediaItem | null> | MediaItem | null;
   }> = {},
 ) {
   const w = mount(Player, {
@@ -553,6 +554,7 @@ describe('Player — SyncPlay drift correction (U-I1)', () => {
       createdBy: 'user-1',
       createdAt: '2026-07-12T00:00:00Z',
       state,
+      currentMediaId: null,
       playbackPosition: position,
       playbackRate: rate,
       serverTime: T0,
@@ -2936,5 +2938,71 @@ describe('Player — theater full-bleed sizing (S34, S232)', () => {
 
   it('keeps `object-fit: contain` on the video (no crop/stretch in theater)', () => {
     expect(src).toMatch(/\.player__video\s*\{[\s\S]*?object-fit:\s*contain;/);
+  });
+});
+
+// ── S298: the hub-relay pending_command load-a-new-title path ─────────────────
+
+describe('Player — hub-relay pending_command load path (S298)', () => {
+  function hubCommand(mediaId: string, title: string) {
+    return {
+      type: 'pending_command' as const,
+      command: 'play_media' as const,
+      serverId: 'srv-1',
+      mediaId,
+      title,
+      issuedAt: 1_700_000_000,
+      source: 'alexa',
+    };
+  }
+
+  it('loads and plays the resolved title when a resolver is wired', async () => {
+    const pendingItem = media({ id: 'media-pending-1', name: 'Inception' });
+    const resolver = vi.fn(async () => pendingItem);
+    const { video } = mountPlayer({ resolvePendingMedia: resolver });
+    const syncPlay = useSyncPlayStore();
+    const player = usePlayerStore();
+
+    syncPlay.applyPendingPlayMedia(hubCommand('media-pending-1', 'Inception'));
+    await flushPromises();
+
+    // The resolver was consulted with the carried id + title.
+    expect(resolver).toHaveBeenCalledWith({ mediaId: 'media-pending-1', title: 'Inception' });
+    // The player LOADED the new title — the load-a-new-title path, not
+    // transport-control on the already-loaded element.
+    expect(player.current?.id).toBe('media-pending-1');
+    expect(player.position).toBe(0); // resetPosition — a fresh start, not a seek
+    // … and started playback.
+    expect(video.play).toHaveBeenCalled();
+    expect(player.playing).toBe(true);
+    // The store slot is consumed so a later session update cannot re-trigger.
+    expect(syncPlay.pendingPlayMedia).toBeNull();
+  });
+
+  it('surfaces the command via the pending-media event (once) when NO resolver is wired', async () => {
+    const { w } = mountPlayer();
+    const syncPlay = useSyncPlayStore();
+
+    syncPlay.applyPendingPlayMedia(hubCommand('media-pending-2', 'Dune'));
+    await nextTick();
+    expect(w.emitted('pending-media')).toEqual([['media-pending-2', 'Dune']]);
+
+    // The slot is NOT auto-consumed — the host may still pick it up.
+    expect(syncPlay.pendingPlayMedia).not.toBeNull();
+
+    // A second delivery of the SAME command must not re-emit (guarded).
+    syncPlay.applyPendingPlayMedia(hubCommand('media-pending-2', 'Dune'));
+    await nextTick();
+    expect(w.emitted('pending-media')).toHaveLength(1);
+  });
+
+  it('falls back to the event when the resolver returns null', async () => {
+    const { w } = mountPlayer({ resolvePendingMedia: vi.fn(async () => null) });
+    const syncPlay = useSyncPlayStore();
+
+    syncPlay.applyPendingPlayMedia(hubCommand('media-pending-3', 'Alien'));
+    await flushPromises();
+    expect(w.emitted('pending-media')).toEqual([['media-pending-3', 'Alien']]);
+    expect(usePlayerStore().current?.id).toBe('m1'); // untouched
   });
 });

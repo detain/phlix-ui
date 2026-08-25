@@ -21,6 +21,7 @@ function makeSession(position = 100, rate = 1, state: SyncPlaySession['state'] =
     createdBy: 'user-1',
     createdAt: new Date().toISOString(),
     state,
+    currentMediaId: null,
     playbackPosition: position,
     playbackRate: rate,
     serverTime: Date.now(),

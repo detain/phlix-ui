@@ -24,7 +24,7 @@ import { n as A } from "./media-query-DKjhlX8r.js";
 import { n as re, o as ie, r as ae, t as oe } from "./episode-order-C2yqgMeX.js";
 import { n as se, r as ce, t as le } from "./useMediaItemCache-BKCJnCbr.js";
 import { a as ue, c as de, d as fe, f as j, i as pe, l as me, n as he, o as ge, r as _e, s as ve, t as ye, u as be } from "./captions-DoP7ce5A.js";
-import { n as xe, t as Se } from "./SyncPlayModal-DoytLnqC.js";
+import { n as xe, t as Se } from "./SyncPlayModal-Bj41CmFz.js";
 import { Fragment as M, Transition as Ce, computed as N, createBlock as P, createCommentVNode as F, createElementBlock as I, createElementVNode as L, createTextVNode as R, createVNode as z, defineComponent as B, inject as we, mergeModels as V, nextTick as Te, normalizeClass as H, normalizeStyle as U, onBeforeUnmount as Ee, onMounted as De, openBlock as W, ref as G, renderList as K, toDisplayString as q, toRef as J, unref as Y, useModel as Oe, watch as X, withCtx as Z, withModifiers as ke } from "vue";
 import { onBeforeRouteLeave as Ae, useRoute as je, useRouter as Me } from "vue-router";
 //#region src/components/player/format-time.ts
@@ -2277,6 +2277,7 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 		markers: {},
 		thumbnailAt: { type: Function },
 		streamUrlFor: { type: Function },
+		resolvePendingMedia: { type: Function },
 		apiBase: {},
 		prevEpisode: {},
 		nextEpisode: {},
@@ -2290,7 +2291,8 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 		"theater",
 		"pip",
 		"play-next",
-		"play-episode"
+		"play-episode",
+		"pending-media"
 	],
 	setup(e, { emit: n }) {
 		let { imgSrc: r } = f(), o = e, c = n, l = p(), u = i(), { t: d } = a(), v = xe(), y = h(), b = N(() => y.isFavorite(o.media.id)), x = N(() => y.likeLevel(o.media.id));
@@ -2725,7 +2727,7 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 			e ? (He.value = !1, Dt(), Kn()) : (Gn(), D.value = !0);
 		});
 		let Jn = null;
-		return De(() => {
+		De(() => {
 			l.setCurrent(o.media, {
 				resetPosition: !1,
 				streamUrl: o.streamUrl
@@ -2743,6 +2745,25 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 			y.hydrate(o.media);
 		}), X(() => v.currentSession, (e) => {
 			e && (e.state === "playing" ? (T.value?.play(), l.play()) : e.state === "paused" && (T.value?.pause(), l.pause()), v.updateLocalPosition(l.position), Math.abs(v.driftAmount) > 2 && dt(e.playbackPosition));
+		});
+		let Xn = null;
+		return X(() => v.pendingPlayMedia, async (e) => {
+			if (!e) return;
+			if (o.resolvePendingMedia) {
+				let t = await o.resolvePendingMedia({
+					mediaId: e.mediaId,
+					title: e.title
+				});
+				if (t) {
+					l.setCurrent(t, {
+						resetPosition: !0,
+						streamUrl: o.streamUrlFor?.(t) ?? ""
+					}), T.value?.play(), l.play(), v.consumePendingPlayMedia(), Xn = null;
+					return;
+				}
+			}
+			let t = `${e.mediaId}@${e.issuedAt}`;
+			Xn !== t && (Xn = t, c("pending-media", e.mediaId, e.title));
 		}), Ee(() => {
 			Gn(), vt(), V.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", Bn), Jn?.(), rn?.removeEventListener?.("addtrack", Qt), rn?.removeEventListener?.("removetrack", Qt), Fn !== null && (clearInterval(Fn), Fn = null), J !== null && (clearTimeout(J), J = null);
 		}), (n, i) => (W(), I("div", {
@@ -3107,7 +3128,7 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-54c2c7ab"]]), ra = { class: "player-page__stage" }, ia = {
+}), [["__scopeId", "data-v-e6c2425e"]]), ra = { class: "player-page__stage" }, ia = {
 	key: 0,
 	class: "player-page__skeleton",
 	role: "status",
@@ -3382,4 +3403,4 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 //#endregion
 export { oa as default };
 
-//# sourceMappingURL=PlayerPage-DJ8AdEK-.js.map
+//# sourceMappingURL=PlayerPage-qIwf8qGW.js.map

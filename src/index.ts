@@ -30,6 +30,18 @@ export {
 } from './api/client';
 export { LocalStorageTokenStore } from './api/tokenStore';
 export type { TokenStore, AuthUser } from './api/client';
+// S298 — the hub-relay pending-command consumer socket. The app opens it at
+// boot via `PhlixAppConfig.hubRelay`; these exports let a host manage the
+// socket lifecycle (close on logout, re-open after hub auth) and build frames.
+export {
+  openHubRelayConnection,
+  closeHubRelayConnection,
+  getHubRelaySocket,
+  parsePendingCommandFrame,
+  buildHubRelayUrl,
+  HUB_SYNC_PLAY_PORT,
+} from './api/hubRelay';
+export type { HubRelayConfig, PendingPlayMediaCommand, HubRelayStatus } from './api/hubRelay';
 export type {
   MatchType,
   MatchCandidate,

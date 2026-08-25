@@ -7,6 +7,7 @@
 
 import type { RouteRecordRaw } from 'vue-router';
 import type { Command } from '../stores/useCommandStore';
+import type { HubRelayConfig } from '../api/hubRelay';
 import type { ThemeName } from '../stores/usePreferencesStore';
 import type { IconName } from '../components/Icon.vue';
 import type { LibraryQueryParams } from '../types/library-query';
@@ -94,6 +95,12 @@ export interface PhlixAppConfig {
     /** App-injected ⌘K command-palette commands (R1.4). Registered alongside the
      *  built-ins by `createPhlixApp` (provided under the `phlixCommands` key). */
     commands?: Command[];
+    /** Hub-relay pending-command consumer config (S298). When present, the app
+     *  opens the hub's SyncPlay relay socket at boot ("open-whenever" — NOT
+     *  gated on a SyncPlay room join) so "Alexa, play X" can reach the player.
+     *  The host supplies the server id + a token provider (hub relay tokens
+     *  expire hourly; the provider is re-read on every reconnect). */
+    hubRelay?: HubRelayConfig;
     /** Initial theme for first-time visitors (no stored preference). Once the user
      *  picks a theme it always wins. Applied pre-mount to avoid a flash. */
     defaultTheme?: ThemeName;

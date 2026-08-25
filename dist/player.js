@@ -6874,6 +6874,7 @@ function Lu(e) {
 		createdBy: t.host_id ?? "",
 		createdAt: Mu(t.created_at),
 		state: r,
+		currentMediaId: t.current_media_id ?? null,
 		playbackPosition: ju(t.playback_position),
 		playbackRate: +(r === "playing"),
 		serverTime: ju(t.last_activity_at, Math.floor(Date.now() / 1e3)),
@@ -7120,83 +7121,92 @@ function od() {
 	}
 }
 var sd = R("phlix-syncplay", () => {
-	let e = S(null), t = S(null), n = S([]), i = S(null), a = S(!1), o = S(0), s = 0, c = null, l = r(() => t.value !== null), u = r(() => t.value ? t.value.state === "playing" || t.value.state === "paused" : !1), d = r(() => n.value.filter((e) => e.isOnline)), f = r(() => {
+	let e = S(null), t = S(null), n = S(null), i = S([]), a = S(null), o = S(!1), s = S(0), c = 0, l = null, u = r(() => t.value !== null), d = r(() => t.value ? t.value.state === "playing" || t.value.state === "paused" : !1), f = r(() => i.value.filter((e) => e.isOnline)), p = r(() => {
 		let e = t.value;
 		if (!e || e.state === "paused" || e.state === "waiting") return 0;
-		let n = (Date.now() - s) / 1e3, r = e.playbackPosition + n * e.playbackRate;
-		return o.value - r;
-	}), p = r(() => t.value ? t.value.state === "waiting" ? "re-syncing" : Math.abs(f.value) > 2 ? "outOfSync" : "synced" : "outOfSync");
-	function m() {
+		let n = (Date.now() - c) / 1e3, r = e.playbackPosition + n * e.playbackRate;
+		return s.value - r;
+	}), m = r(() => t.value ? t.value.state === "waiting" ? "re-syncing" : Math.abs(p.value) > 2 ? "outOfSync" : "synced" : "outOfSync");
+	function h() {
 		let e = t.value;
 		if (!e) {
-			g();
+			_();
 			return;
 		}
 		e.state === "playing" && td({
 			sessionId: e.id,
-			playbackPosition: o.value * 1e3,
+			playbackPosition: s.value * 1e3,
 			playbackRate: e.playbackRate > 0 ? e.playbackRate : 1,
 			serverTime: e.serverTime,
 			timestamp: (/* @__PURE__ */ new Date()).toISOString()
 		});
 	}
-	function h() {
-		g(), c = setInterval(m, ad);
-	}
 	function g() {
-		c !== null && (clearInterval(c), c = null);
+		_(), l = setInterval(h, ad);
 	}
-	function _(r, i, a) {
-		let { room: o, session: c } = i;
-		t.value = c, s = Date.now(), e.value = {
+	function _() {
+		l !== null && (clearInterval(l), l = null);
+	}
+	function v(e) {
+		n.value = e, t.value &&= {
+			...t.value,
+			currentMediaId: e.mediaId
+		};
+	}
+	function y() {
+		n.value = null;
+	}
+	function b(n, r, a) {
+		let { room: o, session: s } = r;
+		t.value = s, c = Date.now(), e.value = {
 			...e.value ?? {},
 			...o,
-			currentSession: c
-		}, n.value = c.activeUsers, Qu(r, (e) => {
-			x(e);
-		}, void 0, a), h();
+			currentSession: s
+		}, i.value = s.activeUsers, Qu(n, (e) => {
+			T(e);
+		}, void 0, a), g();
 	}
-	async function v(t, n) {
-		a.value = !0, i.value = null;
+	async function x(t, n) {
+		o.value = !0, a.value = null;
 		try {
 			let r = Bu(t), i = od(), a = await r.createRoom({
 				...n,
 				memberName: i
 			});
-			e.value = a, _(a.id, await r.joinRoom(a.id, i), i);
+			e.value = a, b(a.id, await r.joinRoom(a.id, i), i);
 		} catch (e) {
-			throw i.value = e instanceof Error ? e.message : "Failed to create room", e;
+			throw a.value = e instanceof Error ? e.message : "Failed to create room", e;
 		} finally {
-			a.value = !1;
+			o.value = !1;
 		}
 	}
-	async function y(e, t) {
-		a.value = !0, i.value = null;
+	async function C(e, t) {
+		o.value = !0, a.value = null;
 		try {
 			let n = Bu(e), r = od();
-			_(t, await n.joinRoom(t, r), r);
+			b(t, await n.joinRoom(t, r), r);
 		} catch (e) {
-			throw i.value = e instanceof Error ? e.message : "Failed to join room", e;
+			throw a.value = e instanceof Error ? e.message : "Failed to join room", e;
 		} finally {
-			a.value = !1;
+			o.value = !1;
 		}
 	}
-	async function b(r) {
+	async function w(n) {
 		if (e.value) {
-			a.value = !0, i.value = null;
+			o.value = !0, a.value = null;
 			try {
-				await Bu(r).leaveRoom(e.value.id), g(), ed(), e.value = null, t.value = null, n.value = [];
+				await Bu(n).leaveRoom(e.value.id), _(), ed(), e.value = null, t.value = null, i.value = [];
 			} catch (e) {
-				throw i.value = e instanceof Error ? e.message : "Failed to leave room", e;
+				throw a.value = e instanceof Error ? e.message : "Failed to leave room", e;
 			} finally {
-				a.value = !1;
+				o.value = !1;
 			}
 		}
 	}
-	function x(e) {
+	function T(e) {
 		if (t.value) switch (e.type) {
 			case "play":
-				e.position !== void 0 && (s = Date.now(), t.value = {
+				e.position !== void 0 && (c = Date.now(), t.value = {
 					...t.value,
 					playbackPosition: e.position
 				}), t.value = {
@@ -7205,7 +7215,7 @@ var sd = R("phlix-syncplay", () => {
 				};
 				break;
 			case "pause":
-				e.position !== void 0 && (s = Date.now(), t.value = {
+				e.position !== void 0 && (c = Date.now(), t.value = {
 					...t.value,
 					playbackPosition: e.position
 				}), t.value = {
@@ -7214,12 +7224,12 @@ var sd = R("phlix-syncplay", () => {
 				};
 				break;
 			case "seek":
-				e.position !== void 0 && (s = Date.now(), t.value = {
+				e.position !== void 0 && (c = Date.now(), t.value = {
 					...t.value,
 					playbackPosition: e.position
 				});
 				break;
-			case "sync": e.position !== void 0 && (s = Date.now(), t.value = {
+			case "sync": e.position !== void 0 && (c = Date.now(), t.value = {
 				...t.value,
 				playbackPosition: e.position
 			}), e.rate !== void 0 && (t.value = {
@@ -7228,7 +7238,7 @@ var sd = R("phlix-syncplay", () => {
 			});
 		}
 	}
-	function C(e, n, r) {
+	function E(e, n, r) {
 		t.value && nd({
 			type: n,
 			position: r?.position === void 0 ? void 0 : r.position * 1e3,
@@ -7237,49 +7247,52 @@ var sd = R("phlix-syncplay", () => {
 			issuedAt: (/* @__PURE__ */ new Date()).toISOString()
 		});
 	}
-	async function w(e) {
+	async function D(e) {
 		if (t.value) try {
 			let n = await Bu(e).getState(t.value.id);
-			t.value = n, s = Date.now();
+			t.value = n, c = Date.now();
 		} catch (e) {
-			throw i.value = e instanceof Error ? e.message : "Failed to refresh state", e;
+			throw a.value = e instanceof Error ? e.message : "Failed to refresh state", e;
 		}
 	}
-	async function T(t) {
+	async function O(t) {
 		if (e.value) try {
-			let r = await Bu(t).getMembers(e.value.id);
-			n.value = r;
+			let n = await Bu(t).getMembers(e.value.id);
+			i.value = n;
 		} catch (e) {
-			throw i.value = e instanceof Error ? e.message : "Failed to refresh members", e;
+			throw a.value = e instanceof Error ? e.message : "Failed to refresh members", e;
 		}
 	}
-	function E() {
-		i.value = null;
+	function k() {
+		a.value = null;
 	}
-	function D(e) {
-		o.value = e;
+	function A(e) {
+		s.value = e;
 	}
 	return {
 		currentRoom: e,
 		currentSession: t,
-		members: n,
-		error: i,
-		isLoading: a,
-		localPlaybackPosition: o,
-		isInRoom: l,
-		isSynced: u,
-		onlineMembers: d,
-		syncStatus: p,
-		driftAmount: f,
-		createAndJoinRoom: v,
-		joinRoom: y,
-		leaveRoom: b,
-		onRemoteStateUpdate: x,
-		sendCommand: C,
-		refreshState: w,
-		refreshMembers: T,
-		clearError: E,
-		updateLocalPosition: D
+		members: i,
+		error: a,
+		isLoading: o,
+		localPlaybackPosition: s,
+		pendingPlayMedia: n,
+		isInRoom: u,
+		isSynced: d,
+		onlineMembers: f,
+		syncStatus: m,
+		driftAmount: p,
+		createAndJoinRoom: x,
+		joinRoom: C,
+		leaveRoom: w,
+		onRemoteStateUpdate: T,
+		sendCommand: E,
+		refreshState: D,
+		refreshMembers: O,
+		clearError: k,
+		updateLocalPosition: A,
+		applyPendingPlayMedia: v,
+		consumePendingPlayMedia: y
 	};
 }), cd = {
 	key: 0,
@@ -7672,6 +7685,7 @@ var tf = { class: "player__stage" }, nf = ["src", "poster"], rf = [
 		markers: {},
 		thumbnailAt: { type: Function },
 		streamUrlFor: { type: Function },
+		resolvePendingMedia: { type: Function },
 		apiBase: {},
 		prevEpisode: {},
 		nextEpisode: {},
@@ -7685,7 +7699,8 @@ var tf = { class: "player__stage" }, nf = ["src", "poster"], rf = [
 		"theater",
 		"pip",
 		"play-next",
-		"play-episode"
+		"play-episode",
+		"pending-media"
 	],
 	setup(t, { emit: n }) {
 		let { imgSrc: c } = xl(), d = t, p = n, m = le(), _ = te(), { t: b } = X(), w = sd(), T = Me(), D = r(() => T.isFavorite(d.media.id)), k = r(() => T.likeLevel(d.media.id));
@@ -8120,7 +8135,7 @@ var tf = { class: "player__stage" }, nf = ["src", "poster"], rf = [
 			e ? (Ne.value = !1, ot(), _n()) : (gn(), R.value = !0);
 		});
 		let yn = null;
-		return y(() => {
+		y(() => {
 			m.setCurrent(d.media, {
 				resetPosition: !1,
 				streamUrl: d.streamUrl
@@ -8138,6 +8153,25 @@ var tf = { class: "player__stage" }, nf = ["src", "poster"], rf = [
 			T.hydrate(d.media);
 		}), N(() => w.currentSession, (e) => {
 			e && (e.state === "playing" ? (F.value?.play(), m.play()) : e.state === "paused" && (F.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && $e(e.playbackPosition));
+		});
+		let bn = null;
+		return N(() => w.pendingPlayMedia, async (e) => {
+			if (!e) return;
+			if (d.resolvePendingMedia) {
+				let t = await d.resolvePendingMedia({
+					mediaId: e.mediaId,
+					title: e.title
+				});
+				if (t) {
+					m.setCurrent(t, {
+						resetPosition: !0,
+						streamUrl: d.streamUrlFor?.(t) ?? ""
+					}), F.value?.play(), m.play(), w.consumePendingPlayMedia(), bn = null;
+					return;
+				}
+			}
+			let t = `${e.mediaId}@${e.issuedAt}`;
+			bn !== t && (bn = t, p("pending-media", e.mediaId, e.title));
 		}), v(() => {
 			gn(), nt(), G.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", fn), yn?.(), Ft?.removeEventListener?.("addtrack", jt), Ft?.removeEventListener?.("removetrack", jt), sn !== null && (clearInterval(sn), sn = null), ve !== null && (clearTimeout(ve), ve = null);
 		}), (n, r) => (x(), o("div", {
@@ -8502,7 +8536,7 @@ var tf = { class: "player__stage" }, nf = ["src", "poster"], rf = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-54c2c7ab"]]), Bf = ["aria-label"], Vf = ["src", "poster"], Hf = { class: "mini__body" }, Uf = { class: "mini__title" }, Wf = { class: "mini__controls" }, Gf = ["aria-label"], Kf = ["aria-label", "aria-pressed"], qf = ["aria-label"], Jf = ["aria-label"], Yf = {
+}), [["__scopeId", "data-v-e6c2425e"]]), Bf = ["aria-label"], Vf = ["src", "poster"], Hf = { class: "mini__body" }, Uf = { class: "mini__title" }, Wf = { class: "mini__controls" }, Gf = ["aria-label"], Kf = ["aria-label", "aria-pressed"], qf = ["aria-label"], Jf = ["aria-label"], Yf = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Xf = /*#__PURE__*/ Y(/* @__PURE__ */ d({

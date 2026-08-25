@@ -22,6 +22,15 @@ type __VLS_Props = {
      *  R3.9's PlayerPage supplies the real `/media/:id/stream` resolver; without it,
      *  advancing clears the store's stream URL rather than leaving a stale one. */
     streamUrlFor?: (media: MediaItem) => string | undefined;
+    /** Resolve a hub-relay `pending_command` media id to a playable item (S298).
+     *  "Alexa, play X" lands on the open hub socket with a bare media id; with
+     *  this resolver the player LOADS that title (setCurrent) and starts playing
+     *  it. Without it, the pending command is surfaced via the `pending-media`
+     *  event for the host to route. */
+    resolvePendingMedia?: (command: {
+        mediaId: string;
+        title: string;
+    }) => Promise<MediaItem | null> | MediaItem | null;
     /** API base for the on-demand transcode endpoints. When a file can't be
      *  direct-played the player POSTs `${apiBase}/api/v1/media/:id/transcode` and
      *  plays the resulting HLS stream via hls.js. Defaults to the page origin. */
@@ -56,6 +65,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     back: () => any;
     "play-next": (media: import("../types/media-item").MediaDetail) => any;
     "play-episode": (media: import("../types/media-item").MediaDetail) => any;
+    "pending-media": (mediaId: string, title: string) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onCaptions?: (() => any) | undefined;
     onPip?: (() => any) | undefined;
@@ -63,6 +73,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     onBack?: (() => any) | undefined;
     "onPlay-next"?: ((media: import("../types/media-item").MediaDetail) => any) | undefined;
     "onPlay-episode"?: ((media: import("../types/media-item").MediaDetail) => any) | undefined;
+    "onPending-media"?: ((mediaId: string, title: string) => any) | undefined;
 }>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;
