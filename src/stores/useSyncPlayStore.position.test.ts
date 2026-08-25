@@ -155,7 +155,9 @@ describe('S287 — the position report cadence', () => {
 
         vi.advanceTimersByTime(1);
         expect(positionFrames()).toHaveLength(1);
-        expect(positionFrames()[0]!.position).toBe(42);
+        // S293: the wire unit is MILLISECONDS (SPEC.md:91) — 42 s leaves the
+        // send boundary as 42_000 ms, never as 42.
+        expect(positionFrames()[0]!.position).toBe(42_000);
         expect(positionFrames()[0]!.is_playing).toBe(true);
     });
 
@@ -187,7 +189,27 @@ describe('S287 — the position report cadence', () => {
         store.updateLocalPosition(16.5);
         vi.advanceTimersByTime(5000);
 
-        expect(positionFrames().map((f) => f.position)).toEqual([11.5, 16.5]);
+        // S293: seconds in, milliseconds on the wire (SPEC.md:91).
+        expect(positionFrames().map((f) => f.position)).toEqual([11_500, 16_500]);
+    });
+
+    /**
+     * S293 — Boundary #1 unit assertion (periodic report → `reportPosition`).
+     *
+     * The fixture is 42.5 s: without the seconds→ms conversion at the send
+     * boundary the wire would carry 42.5 — off by exactly 1000× — and the
+     * value is never 0 and never reads the same in both units.
+     */
+    it('S293 — the report carries MILLISECONDS on the wire, not seconds', async () => {
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+        confirmGroup();
+
+        store.updateLocalPosition(42.5);
+        vi.advanceTimersByTime(5000);
+
+        expect(positionFrames()).toHaveLength(1);
+        expect(positionFrames()[0]!.position).toBe(42_500);
     });
 
     it('CONTROL — reports nothing while the session is PAUSED', async () => {
@@ -232,7 +254,8 @@ describe('S287 — the position report cadence', () => {
 
         vi.advanceTimersByTime(5000);
         expect(positionFrames()).toHaveLength(1);
-        expect(positionFrames()[0]!.position).toBe(3);
+        // S293: 3 s → 3_000 ms on the wire.
+        expect(positionFrames()[0]!.position).toBe(3_000);
     });
 
     it('stops on leaveRoom — a left room must not keep broadcasting', async () => {

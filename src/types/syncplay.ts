@@ -88,6 +88,9 @@ export interface SyncPlayMessage {
 
 export interface SyncPlayStateUpdate {
   sessionId: string;
+  /** Position in MILLISECONDS — the wire unit (phlix-syncplay SPEC.md:91).
+   *  S293: converted from ui-internal seconds by
+   *  `useSyncPlayStore.reportLocalPosition()` at the send boundary. */
   playbackPosition: number;
   playbackRate: number;
   serverTime: number;
@@ -96,6 +99,10 @@ export interface SyncPlayStateUpdate {
 
 export interface SyncPlayPlaybackCommand {
   type: 'play' | 'pause' | 'seek' | 'sync';
+  /** Position in MILLISECONDS — the wire unit (phlix-syncplay SPEC.md:91).
+   *  Outbound commands are converted from ui-internal seconds by
+   *  `useSyncPlayStore.sendCommand()` (S293); inbound commands carry the raw
+   *  wire value. */
   position?: number;
   rate?: number;
   issuedBy: string; // userId

@@ -171,7 +171,10 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     if (session.state !== 'playing') return;
     sendSyncPlayStateUpdate({
       sessionId: session.id,
-      playbackPosition: localPlaybackPosition.value,
+      // S293: `localPlaybackPosition` is SECONDS (the ui-internal unit); the
+      // wire unit is MILLISECONDS (phlix-syncplay SPEC.md:91). Convert at the
+      // send boundary — Boundary #1 (periodic report → `reportPosition`).
+      playbackPosition: localPlaybackPosition.value * 1000,
       // `sendSyncPlayStateUpdate()` derives the frame's `is_playing` from
       // `playbackRate > 0`. A session that reached `playing` through
       // `onRemoteStateUpdate()` has its state updated but NOT its rate, so
@@ -436,7 +439,13 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     if (!currentSession.value) return;
     const command: SyncPlayPlaybackCommand = {
       type,
-      position: options?.position,
+      // S293: `options.position` is SECONDS (the ui-internal unit — e.g. the
+      // seek position SyncPlayControls sends); the wire unit is MILLISECONDS
+      // (phlix-syncplay SPEC.md:91). Convert at the send boundary — Boundary
+      // #2 (command path → sendPlay/sendPause/sendSeek/reportPosition).
+      // `undefined` stays `undefined` so a play/pause without a position is
+      // not coerced to 0 on the wire.
+      position: options?.position !== undefined ? options.position * 1000 : undefined,
       rate: options?.rate,
       issuedBy: currentSession.value.createdBy,
       issuedAt: new Date().toISOString(),

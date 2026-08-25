@@ -236,7 +236,9 @@ describe('SyncPlayControls — synced transport', () => {
         await flushPromises();
 
         expect(frameTypes()).toEqual(['syncplay_playback_seek']);
-        expect(frames()[0]!['to_position']).toBe(90);
+        // S293: 90 s → 90_000 ms on the wire (SPEC.md:91). The local `seek`
+        // event below stays in the ui's internal seconds unit.
+        expect(frames()[0]!['to_position']).toBe(90_000);
         expect(w.emitted('seek')).toEqual([[90]]);
     });
 
@@ -246,6 +248,8 @@ describe('SyncPlayControls — synced transport', () => {
         await flushPromises();
 
         expect(frames()[0]!['to_position']).toBe(0);
+        // (0 is unit-invariant: 0 s = 0 ms, so it carries no unit signal — the
+        // 1000× assertions live in the nonzero seek tests.)
         expect(w.emitted('seek')).toEqual([[0]]);
     });
 
@@ -255,7 +259,8 @@ describe('SyncPlayControls — synced transport', () => {
         await flushPromises();
 
         expect(frameTypes()).toEqual(['syncplay_playback_seek']);
-        expect(frames()[0]!['to_position']).toBe(110);
+        // S293: 110 s → 110_000 ms on the wire.
+        expect(frames()[0]!['to_position']).toBe(110_000);
         expect(w.emitted('seek')).toEqual([[110]]);
     });
 
@@ -264,7 +269,7 @@ describe('SyncPlayControls — synced transport', () => {
         await btn(w, 'Fast forward').trigger('click');
         await flushPromises();
 
-        expect(frames()[0]!['to_position']).toBe(7200);
+        expect(frames()[0]!['to_position']).toBe(7_200_000);
         expect(w.emitted('seek')).toEqual([[7200]]);
     });
 
