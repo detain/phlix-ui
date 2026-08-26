@@ -12,6 +12,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
 import type { JoinedGroup } from '../api/syncplay';
+import type { PendingPlayMediaCommand } from '../api/hubRelay';
 import {
   getSyncPlayApi,
   openSyncPlayConnection,
@@ -100,6 +101,9 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   // ---- state --------------------------------------------------------------
   const currentRoom = ref<SyncPlayRoom | null>(null);
   const currentSession = ref<SyncPlaySession | null>(null);
+  /** A hub-relay `pending_command` / `play_media` frame awaiting the Player's
+   *  load-a-new-title path (S298). Cleared by {@link consumePendingPlayMedia}. */
+  const pendingPlayMedia = ref<PendingPlayMediaCommand | null>(null);
   const members = ref<SyncPlayUser[]>([]);
   const error = ref<string | null>(null);
   const isLoading = ref(false);
@@ -201,6 +205,40 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   }
 
   // ---- actions -----------------------------------------------------------
+  /**
+   * Adopt a hub-relay `pending_command` / `play_media` frame (S298).
+   *
+   * The hub's SyncPlay relay delivers "Alexa, play X" to the app's open
+   * `:8804` socket (see `src/api/hubRelay.ts`) REGARDLESS of SyncPlay room
+   * membership — the primary case has no room at all. This action is the
+   * store-side consumer:
+   *
+   * - `pendingPlayMedia` holds the command for the Player's load-a-new-title
+   *   path (the ONLY place that can start playback from a bare media id).
+   * - When a session exists, `currentMediaId` is written into it — the paired
+   *   caller for the `groupToSession()` carry-through: the field is produced
+   *   here (hub consumer) and consumed by Player.vue, so it is not dead wiring.
+   *
+   * The server-side `GroupState::setCurrentMedia()` zero-production-caller gap
+   * (S298 re-verification item 6) lives in phlix-server, outside this repo; the
+   * wire value maps faithfully (`?? null`) until a server lane wires it.
+   */
+  function applyPendingPlayMedia(command: PendingPlayMediaCommand): void {
+    pendingPlayMedia.value = command;
+    if (currentSession.value) {
+      currentSession.value = { ...currentSession.value, currentMediaId: command.mediaId };
+    }
+  }
+
+  /**
+   * Mark the pending play-media command as handled (Player called its resolver,
+   * or the app took over via the `pending-media` event). Clears the store slot
+   * so a later session update cannot re-trigger the load path.
+   */
+  function consumePendingPlayMedia(): void {
+    pendingPlayMedia.value = null;
+  }
+
   /**
    * Adopt the group a create-or-join just returned.
    *
@@ -515,6 +553,8 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     // the setter. It is also the other input to `driftAmount`, which was already
     // public.
     localPlaybackPosition,
+    // S298: the hub-relay pending_command awaiting the player's load path.
+    pendingPlayMedia,
     // computed
     isInRoom,
     isSynced,
@@ -531,5 +571,8 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     refreshMembers,
     clearError,
     updateLocalPosition,
+    // S298: hub-relay pending_command consumer pair.
+    applyPendingPlayMedia,
+    consumePendingPlayMedia,
   };
 });

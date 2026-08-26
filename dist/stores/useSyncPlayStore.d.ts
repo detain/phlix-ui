@@ -8,6 +8,7 @@
  * @license MIT
  */
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
+import type { PendingPlayMediaCommand } from '../api/hubRelay';
 /** Drift threshold in seconds beyond which we mark out-of-sync and seek. */
 export declare const SYNC_DRIFT_THRESHOLD_SECONDS = 2;
 /**
@@ -86,6 +87,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
+            currentMediaId: string | null;
             playbackPosition: number;
             playbackRate: number;
             serverTime: number;
@@ -126,6 +128,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
+            currentMediaId: string | null;
             playbackPosition: number;
             playbackRate: number;
             serverTime: number;
@@ -162,6 +165,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
+        currentMediaId: string | null;
         playbackPosition: number;
         playbackRate: number;
         serverTime: number;
@@ -183,6 +187,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
+        currentMediaId: string | null;
         playbackPosition: number;
         playbackRate: number;
         serverTime: number;
@@ -216,6 +221,23 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
     localPlaybackPosition: import("vue").Ref<number, number>;
+    pendingPlayMedia: import("vue").Ref<{
+        type: "pending_command";
+        command: "play_media";
+        serverId: string;
+        mediaId: string;
+        title: string;
+        issuedAt: number;
+        source: string;
+    } | null, PendingPlayMediaCommand | {
+        type: "pending_command";
+        command: "play_media";
+        serverId: string;
+        mediaId: string;
+        title: string;
+        issuedAt: number;
+        source: string;
+    } | null>;
     isInRoom: import("vue").ComputedRef<boolean>;
     isSynced: import("vue").ComputedRef<boolean>;
     onlineMembers: import("vue").ComputedRef<{
@@ -244,7 +266,9 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
     updateLocalPosition: (position: number) => void;
-}, "error" | "members" | "currentSession" | "currentRoom" | "isLoading" | "localPlaybackPosition">, Pick<{
+    applyPendingPlayMedia: (command: PendingPlayMediaCommand) => void;
+    consumePendingPlayMedia: () => void;
+}, "error" | "members" | "currentSession" | "currentRoom" | "isLoading" | "localPlaybackPosition" | "pendingPlayMedia">, Pick<{
     currentRoom: import("vue").Ref<{
         id: string;
         name: string;
@@ -257,6 +281,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
+            currentMediaId: string | null;
             playbackPosition: number;
             playbackRate: number;
             serverTime: number;
@@ -297,6 +322,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
+            currentMediaId: string | null;
             playbackPosition: number;
             playbackRate: number;
             serverTime: number;
@@ -333,6 +359,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
+        currentMediaId: string | null;
         playbackPosition: number;
         playbackRate: number;
         serverTime: number;
@@ -354,6 +381,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
+        currentMediaId: string | null;
         playbackPosition: number;
         playbackRate: number;
         serverTime: number;
@@ -387,6 +415,23 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
     localPlaybackPosition: import("vue").Ref<number, number>;
+    pendingPlayMedia: import("vue").Ref<{
+        type: "pending_command";
+        command: "play_media";
+        serverId: string;
+        mediaId: string;
+        title: string;
+        issuedAt: number;
+        source: string;
+    } | null, PendingPlayMediaCommand | {
+        type: "pending_command";
+        command: "play_media";
+        serverId: string;
+        mediaId: string;
+        title: string;
+        issuedAt: number;
+        source: string;
+    } | null>;
     isInRoom: import("vue").ComputedRef<boolean>;
     isSynced: import("vue").ComputedRef<boolean>;
     onlineMembers: import("vue").ComputedRef<{
@@ -415,6 +460,8 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
     updateLocalPosition: (position: number) => void;
+    applyPendingPlayMedia: (command: PendingPlayMediaCommand) => void;
+    consumePendingPlayMedia: () => void;
 }, "syncStatus" | "isInRoom" | "isSynced" | "onlineMembers" | "driftAmount">, Pick<{
     currentRoom: import("vue").Ref<{
         id: string;
@@ -428,6 +475,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
+            currentMediaId: string | null;
             playbackPosition: number;
             playbackRate: number;
             serverTime: number;
@@ -468,6 +516,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
+            currentMediaId: string | null;
             playbackPosition: number;
             playbackRate: number;
             serverTime: number;
@@ -504,6 +553,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
+        currentMediaId: string | null;
         playbackPosition: number;
         playbackRate: number;
         serverTime: number;
@@ -525,6 +575,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
+        currentMediaId: string | null;
         playbackPosition: number;
         playbackRate: number;
         serverTime: number;
@@ -558,6 +609,23 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
     localPlaybackPosition: import("vue").Ref<number, number>;
+    pendingPlayMedia: import("vue").Ref<{
+        type: "pending_command";
+        command: "play_media";
+        serverId: string;
+        mediaId: string;
+        title: string;
+        issuedAt: number;
+        source: string;
+    } | null, PendingPlayMediaCommand | {
+        type: "pending_command";
+        command: "play_media";
+        serverId: string;
+        mediaId: string;
+        title: string;
+        issuedAt: number;
+        source: string;
+    } | null>;
     isInRoom: import("vue").ComputedRef<boolean>;
     isSynced: import("vue").ComputedRef<boolean>;
     onlineMembers: import("vue").ComputedRef<{
@@ -586,4 +654,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
     updateLocalPosition: (position: number) => void;
-}, "joinRoom" | "leaveRoom" | "createAndJoinRoom" | "onRemoteStateUpdate" | "sendCommand" | "refreshState" | "refreshMembers" | "clearError" | "updateLocalPosition">>;
+    applyPendingPlayMedia: (command: PendingPlayMediaCommand) => void;
+    consumePendingPlayMedia: () => void;
+}, "joinRoom" | "leaveRoom" | "createAndJoinRoom" | "onRemoteStateUpdate" | "sendCommand" | "refreshState" | "refreshMembers" | "clearError" | "updateLocalPosition" | "applyPendingPlayMedia" | "consumePendingPlayMedia">>;

@@ -32,6 +32,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { useServerStore } from '../stores/useServerStore';
 import { useConnectionStore } from '../stores/useConnectionStore';
+import { openHubRelayConnection } from '../api/hubRelay';
 import { setAppName, setPageTitle } from '../composables/usePageTitle';
 import { adminPageLabel } from './admin';
 import { createTranslator, type Translate, type MessageKey } from '../i18n/messages';
@@ -544,6 +545,15 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     // its own durable store (e.g. the Electron client's `setServerUrl`).
     const connection = useConnectionStore(pinia);
     connection.configure(fullConfig.onConnectionChange ?? null);
+
+    // S298 — open the hub-relay pending-command socket at BOOT, not on a
+    // SyncPlay room join. The hub delivers `pending_command` ("Alexa, play X")
+    // to an authenticated (user, server) socket regardless of room membership;
+    // the primary case has NO room. The host supplies serverId + a token
+    // provider (re-read per reconnect — relay tokens expire hourly).
+    if (fullConfig.hubRelay) {
+      openHubRelayConnection(fullConfig.hubRelay);
+    }
 
     /** The app's own API base: the runtime connection if set, else the seeded config base. */
     const effectiveBase = (): string => connection.apiBase || fullConfig.apiBase;

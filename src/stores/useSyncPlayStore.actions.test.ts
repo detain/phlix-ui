@@ -72,6 +72,7 @@ function makeSession(over: Partial<SyncPlaySession> = {}): SyncPlaySession {
         createdBy: 'm1',
         createdAt: '2026-01-01T00:00:00Z',
         state: 'playing',
+        currentMediaId: null,
         playbackPosition: 100,
         playbackRate: 1,
         serverTime: 0,
@@ -550,5 +551,51 @@ describe('useSyncPlayStore.sendCommand', () => {
         expect(store.currentSession!.createdBy).toBe('m1');
         store.sendCommand(BASE, 'pause', { position: 1 });
         expect(socket().sent).toHaveLength(1);
+    });
+});
+
+// ── S298: the hub-relay pending_command consumer pair ─────────────────────────
+
+describe('useSyncPlayStore — hub-relay pending_command consumer (S298)', () => {
+    const cmd = {
+        type: 'pending_command' as const,
+        command: 'play_media' as const,
+        serverId: 'srv-1',
+        mediaId: 'media-9',
+        title: 'Inception',
+        issuedAt: 1_700_000_000,
+        source: 'alexa',
+    };
+
+    it('holds the delivered command for the Player load path', () => {
+        const store = useSyncPlayStore();
+        expect(store.pendingPlayMedia).toBeNull();
+        store.applyPendingPlayMedia(cmd);
+        expect(store.pendingPlayMedia).toEqual(cmd);
+    });
+
+    it('writes currentMediaId into a live session — the paired caller for the carry-through', () => {
+        const store = useSyncPlayStore();
+        store.currentSession = makeSession();
+        expect(store.currentSession!.currentMediaId).toBeNull();
+        store.applyPendingPlayMedia(cmd);
+        expect(store.currentSession!.currentMediaId).toBe('media-9');
+        expect(store.pendingPlayMedia).toEqual(cmd);
+    });
+
+    it('works with NO session — the primary "Alexa, play X" case has no room', () => {
+        const store = useSyncPlayStore();
+        expect(store.currentSession).toBeNull();
+        store.applyPendingPlayMedia(cmd);
+        expect(store.pendingPlayMedia).toEqual(cmd);
+        // No session → nothing to mutate; the Player consumes pendingPlayMedia.
+        expect(store.currentSession).toBeNull();
+    });
+
+    it('consumePendingPlayMedia clears the slot so a session update cannot re-trigger the load', () => {
+        const store = useSyncPlayStore();
+        store.applyPendingPlayMedia(cmd);
+        store.consumePendingPlayMedia();
+        expect(store.pendingPlayMedia).toBeNull();
     });
 });

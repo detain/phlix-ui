@@ -17,6 +17,12 @@ export interface SyncPlaySession {
     createdBy: string;
     createdAt: string;
     state: 'waiting' | 'playing' | 'paused' | 'ended';
+    /** Media item id the group is (or last was) playing — carried through from
+     *  the wire's `current_media_id` (S298). The server emits it in
+     *  `GroupState::getState()`; `null` when no media has been selected yet.
+     *  The hub-relay pending_command consumer (S298) writes it into the live
+     *  session, and Player.vue's load-a-new-title path consumes it. */
+    currentMediaId: string | null;
     playbackPosition: number;
     playbackRate: number;
     serverTime: number;

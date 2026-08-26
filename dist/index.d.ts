@@ -12,6 +12,8 @@ export { default as AppLayout } from './app/AppLayout.vue';
 export { ApiClient, isTmdbUnconfigured, TMDB_UNCONFIGURED_CODE, setDefaultApiHeaders, getDefaultApiHeaders, MUSIC_PAGE_SIZE, } from './api/client';
 export { LocalStorageTokenStore } from './api/tokenStore';
 export type { TokenStore, AuthUser } from './api/client';
+export { openHubRelayConnection, closeHubRelayConnection, getHubRelaySocket, parsePendingCommandFrame, buildHubRelayUrl, HUB_SYNC_PLAY_PORT, } from './api/hubRelay';
+export type { HubRelayConfig, PendingPlayMediaCommand, HubRelayStatus } from './api/hubRelay';
 export type { MatchType, MatchCandidate, MatchSearchResult, MatchSearchParams, MatchApplyInput, MatchApplyResult, FavoritesResult, MatchContext, SubtitleCandidate, SubtitleDownloadPayload, SubtitleDownloadResult, MusicPageParams, MusicArtistsResult, MusicAlbumsResult, MusicTracksResult, } from './api/client';
 export { ApiError, NetworkError, TimeoutError, errMessage, isOffline } from './api/errors';
 export type { MediaItem } from './types/media-item';

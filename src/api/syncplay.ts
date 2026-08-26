@@ -217,6 +217,7 @@ export function groupToSession(raw: RawSyncPlayGroup | undefined): SyncPlaySessi
     createdBy: g.host_id ?? '',
     createdAt: isoFromUnixSeconds(g.created_at),
     state,
+    currentMediaId: g.current_media_id ?? null,
     playbackPosition: num(g.playback_position),
     playbackRate: state === 'playing' ? 1 : 0,
     serverTime: num(g.last_activity_at, Math.floor(Date.now() / 1000)),
