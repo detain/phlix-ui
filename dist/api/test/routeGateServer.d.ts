@@ -31,6 +31,7 @@
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
+ * S280GATEKEEPERX7Q9
  */
 import { SERVER_ROUTE_MANIFEST, SERVER_ROUTE_MANIFEST_PROVENANCE } from './serverRouteManifest.generated';
 export { SERVER_ROUTE_MANIFEST, SERVER_ROUTE_MANIFEST_PROVENANCE };
