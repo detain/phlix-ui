@@ -81,17 +81,19 @@ describe('AdminLiveTvApi — tuners', () => {
     expect(get).toHaveBeenCalledWith('/api/v1/admin/livetv/tuners/a%2Fb%20c');
   });
 
-  it('scanTuners() POSTs the scan endpoint and unwraps { tuners }', async () => {
-    const { api, post } = makeClient();
-    post.mockResolvedValue({ tuners: [sampleTuner] });
+  it('scanTuners() GETs the scan endpoint and unwraps { tuners }', async () => {
+    const { api, get } = makeClient();
+    get.mockResolvedValue({ tuners: [sampleTuner] });
     const res = await api.scanTuners();
-    expect(post).toHaveBeenCalledWith('/api/v1/admin/livetv/tuners/scan');
+    // S280: the server registers `GET /tuners/scan` (Application.php); the old
+    // POST assertion was self-derived and pinned the 404ing call.
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/livetv/tuners/scan');
     expect(res).toEqual([sampleTuner]);
   });
 
   it('scanTuners() degrades to [] when tuners is not an array', async () => {
-    const { api, post } = makeClient();
-    post.mockResolvedValue({ success: true });
+    const { api, get } = makeClient();
+    get.mockResolvedValue({ success: true });
     expect(await api.scanTuners()).toEqual([]);
   });
 

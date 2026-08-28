@@ -447,8 +447,14 @@ export declare class ApiClient {
     }>;
     /**
      * Add a media item to an existing playlist
-     * (`POST /api/v1/playlists/{playlistId}/items`, body `{ media_id: string }`).
-     * Non-2xx throws the shared {@link ApiError}.
+     * (`POST /api/v1/collections/{id}/items/{mediaItemId}`).
+     *
+     * ⚠ S280: the server's playlist alias is `POST /api/v1/playlists`
+     * (`CollectionController::create` — a playlist IS a collection), and
+     * `createPlaylist` returns the collection id. Item-add is therefore the
+     * collection route; the old `POST /api/v1/playlists/{playlistId}/items` was
+     * never registered anywhere and 404ed against every real server (the S280
+     * route gate caught it).
      */
     addToPlaylist(playlistId: string, mediaId: string): Promise<{
         message: string;

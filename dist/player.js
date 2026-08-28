@@ -744,7 +744,7 @@ var ke = class {
 		return t && (n.media_id = t), this.post("/api/v1/playlists", n);
 	}
 	addToPlaylist(e, t) {
-		return this.post(`/api/v1/playlists/${encodeURIComponent(e)}/items`, { media_id: t });
+		return this.post(`/api/v1/collections/${encodeURIComponent(e)}/items/${encodeURIComponent(t)}`);
 	}
 	getDownloadUrl(e) {
 		return this.get(`/api/v1/media/${encodeURIComponent(e)}/download`);
