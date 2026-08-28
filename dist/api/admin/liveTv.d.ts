@@ -125,7 +125,7 @@ export declare class AdminLiveTvApi {
     listTuners(): Promise<Tuner[]>;
     /** `GET /api/v1/admin/livetv/tuners/{id}` → unwraps `{ tuner }`. */
     getTuner(id: string): Promise<Tuner>;
-    /** `POST /api/v1/admin/livetv/tuners/scan` → discover tuners, unwraps `{ tuners }`. */
+    /** `GET /api/v1/admin/livetv/tuners/scan` → discover tuners, unwraps `{ tuners }`. */
     scanTuners(): Promise<Tuner[]>;
     /** `PUT /api/v1/admin/livetv/tuners/{id}` → update name / enabled, unwraps `{ tuner }`. */
     updateTuner(id: string, data: TunerUpdate): Promise<Tuner>;

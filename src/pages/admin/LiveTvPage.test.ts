@@ -79,6 +79,7 @@ interface Overrides {
   failRecordings?: boolean;
   failRules?: boolean;
   failChannels?: boolean;
+  failScan?: boolean;
 }
 
 function makeClient(over: Overrides = {}) {
@@ -86,6 +87,12 @@ function makeClient(over: Overrides = {}) {
     if (endpoint === '/api/v1/admin/livetv/tuners') {
       if (over.failTuners) throw new Error('tuner boom');
       return { tuners: over.tuners ?? [tunerA, tunerB] };
+    }
+    // S280: the tuner scan rail is a GET on the server
+    // (`$r->get('/tuners/scan', …)`); the page now reads it through `get`.
+    if (endpoint === '/api/v1/admin/livetv/tuners/scan') {
+      if (over.failScan) throw new Error('scan exploded');
+      return { tuners: [tunerA] };
     }
     if (endpoint === '/api/v1/admin/livetv/channels') {
       if (over.failChannels) throw new Error('channel boom');
@@ -106,7 +113,6 @@ function makeClient(over: Overrides = {}) {
     throw new Error(`unexpected GET ${endpoint}`);
   });
   const post = vi.fn(async (endpoint: string) => {
-    if (endpoint === '/api/v1/admin/livetv/tuners/scan') return { tuners: [tunerA] };
     if (endpoint === '/api/v1/admin/livetv/guide/refresh') return { programs: 7 };
     if (endpoint === '/api/v1/admin/livetv/recordings') {
       return { recording: { ...recordingA, id: 'rec-new', program_title: 'Scheduled' } };
@@ -232,12 +238,13 @@ describe('LiveTvPage — Tuners', () => {
   });
 
   it('scans for tuners and replaces the list with a success toast', async () => {
-    const { client, post } = makeClient({ tuners: [] });
+    const { client, get } = makeClient({ tuners: [] });
     const w = mountPage(client);
     await flushPromises();
     await findBtn(w, 'Scan for Tuners')!.trigger('click');
     await flushPromises();
-    expect(post).toHaveBeenCalledWith('/api/v1/admin/livetv/tuners/scan');
+    // S280: the scan rail is a GET on the server; the page reads it via `get`.
+    expect(get).toHaveBeenCalledWith('/api/v1/admin/livetv/tuners/scan');
     expect(w.text()).toContain('Front Room');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'success')).toBe(true);
@@ -782,8 +789,7 @@ describe('LiveTvPage — recording status tone', () => {
 // ── Mutation failure (catch) branches ──────────────────────────────────────────
 describe('LiveTvPage — mutation failure toasts', () => {
   it('toasts when a tuner scan fails', async () => {
-    const { client, post } = makeClient({ tuners: [] });
-    (post as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('scan exploded'));
+    const { client } = makeClient({ tuners: [], failScan: true });
     const w = mountPage(client);
     await flushPromises();
     await findBtn(w, 'Scan for Tuners')!.trigger('click');

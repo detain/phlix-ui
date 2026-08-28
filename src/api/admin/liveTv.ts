@@ -150,9 +150,12 @@ export class AdminLiveTvApi {
     return tuner;
   }
 
-  /** `POST /api/v1/admin/livetv/tuners/scan` → discover tuners, unwraps `{ tuners }`. */
+  /** `GET /api/v1/admin/livetv/tuners/scan` → discover tuners, unwraps `{ tuners }`. */
   async scanTuners(): Promise<Tuner[]> {
-    const { tuners } = await this.client.post<{ tuners: Tuner[] }>(
+    // S280: the server registers this rail as a GET
+    // (`$r->get('/tuners/scan', …)` in Application.php); the client used to
+    // POST it, which 404ed against every real server. The route gate caught it.
+    const { tuners } = await this.client.get<{ tuners: Tuner[] }>(
       '/api/v1/admin/livetv/tuners/scan',
     );
     return Array.isArray(tuners) ? tuners : [];
