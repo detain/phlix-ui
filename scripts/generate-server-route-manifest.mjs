@@ -147,7 +147,15 @@ for (const { file, label } of MANIFEST_SOURCES) {
 
 // Deterministic output: verb-major, then path — same order every run.
 const tuples = [...union.values()].sort((a, b) =>
-    a[0] === b[0] ? (a[1] < b[1] ? -1 : 1) : a[0] < b[0] ? -1 : 1,
+    a[0] === b[0]
+        ? a[1] === b[1]
+            ? 0
+            : a[1] < b[1]
+              ? -1
+              : 1
+        : a[0] < b[0]
+          ? -1
+          : 1,
 );
 
 const serverSha = gitSha(serverPath);

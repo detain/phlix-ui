@@ -105,9 +105,11 @@ export function makeRouteGateServer(baseUrl = '', options: RouteGateServerOption
     const omit = new Set(options.omit ?? []);
     const registered = COMPILED.filter((r) => !omit.has(`${r.method} ${r.template}`));
 
-    const impl = (input: string, init?: RequestInit): Promise<Response> => {
+    const impl = (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
         const method = (init?.method ?? 'GET').toUpperCase();
-        const withoutBase = baseUrl !== '' && input.startsWith(baseUrl) ? input.slice(baseUrl.length) : input;
+        const inputUrl =
+            typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        const withoutBase = baseUrl !== '' && inputUrl.startsWith(baseUrl) ? inputUrl.slice(baseUrl.length) : inputUrl;
         const path = withoutBase.split('?')[0] ?? '';
 
         // First registration-order match, like the server's router: a static
@@ -170,8 +172,18 @@ export async function driveGated(
             const at = last ? `${last.method} ${last.path}` : 'unknown url';
             throw new Error(`route gate — ${label}: request to an unregistered url (${at}) → ${e.status}`);
         }
-        // Shape artifact of the `{}` bodies — recorded-request assertions below
-        // remain the ground truth for route pinning.
+        // A request WAS recorded, so the throw is a response-SHAPE artifact of
+        // the gate server's `{}` bodies — not a route defect; the recorded
+        // requests remain the ground truth. A drive that threw BEFORE any
+        // request is a genuine bug in the drive or in the URL building (the
+        // client never reached the network) and must surface, not vanish.
+        if (server.requests.length === before) {
+            throw new Error(
+                `route gate — ${label}: drive threw before issuing any request: ${
+                    e instanceof Error ? e.message : String(e)
+                }`,
+            );
+        }
     }
 }
 

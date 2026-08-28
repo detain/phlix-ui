@@ -22,12 +22,22 @@
  * `apiClient`, `http`, `auth.client`, `this.`), mints an `ApiClient`, or calls
  * global `fetch`.
  *
+ * SCOPE BOUNDARY (deliberate): `src/pages`, `src/components` and `src/utils`
+ * are NOT scanned. Pages and components are UI consumers that compose the api
+ * modules; the one page that mints request URLs directly (`LibraryScanPage.vue`,
+ * `/api/v1/libraries`, `/api/v1/libraries/{id}/scan-status`, `…/scan`,
+ * `…/rescan`) issues URLs that are ALSO driven by `admin/libraries.ts` in the
+ * gate, so its surface is covered transitively — the test below pins the page's
+ * URL set as registered as the tripwire. If a page ever mints a URL no api
+ * module issues, this boundary must be revisited.
+ *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
 
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { isRegisteredRoute } from './routeGateServer';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -150,5 +160,16 @@ describe('route gate — module enumeration', () => {
         // widen into skipping real modules.
         const testDir = path.join(REPO_ROOT, 'src', 'api', 'test');
         expect(statSync(testDir).isDirectory()).toBe(true);
+    });
+
+    it('LibraryScanPage mints no URL outside the admin/libraries drive (transitive coverage tripwire)', () => {
+        // The one page that builds request URLs directly. Every one of its
+        // URLs is also minted by AdminLibrariesApi (driven in the gate), so the
+        // page is covered transitively — this pins that the page stays inside
+        // the api layer's surface.
+        expect(isRegisteredRoute('GET', '/api/v1/libraries')).toBe(true);
+        expect(isRegisteredRoute('GET', '/api/v1/libraries/{id}/scan-status')).toBe(true);
+        expect(isRegisteredRoute('POST', '/api/v1/libraries/{id}/scan')).toBe(true);
+        expect(isRegisteredRoute('POST', '/api/v1/libraries/{id}/rescan')).toBe(true);
     });
 });
