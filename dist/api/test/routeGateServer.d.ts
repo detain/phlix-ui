@@ -4,9 +4,10 @@
  * outside it.
  *
  * This generalises the S276 harness (`./syncplayServer.ts`, five SyncPlay
- * routes) to the FULL server surface: the 389 `[method, pathTemplate]` tuples
- * of `SERVER_ROUTE_MANIFEST` (the union of the two phlix-server ROUTE_MANIFEST
- * constants, generated — never transcribed by hand).
+ * routes) to the FULL server surface: the 400 `[method, pathTemplate]` tuples
+ * of `SERVER_ROUTE_MANIFEST` — the canonical phlix-contracts export
+ * (`dist/server-route-manifest.json`, the union of the two phlix-server
+ * ROUTE_MANIFEST constants), VENDORED VERBATIM, never transcribed by hand.
  *
  * Why the server drives the response: the ordinary `makeFetch([...])` harness
  * replays canned responses **in call order** and therefore answers 200 to ANY
@@ -26,15 +27,46 @@
  *
  * ⚠ The manifest is read off the SERVER side only — never off the client under
  * test. A manifest derived from the client would self-adjust to whatever the
- * client happens to call and could never fail. See
- * `scripts/generate-server-route-manifest.mjs` for the derivation + provenance.
+ * client happens to call and could never fail. The derivation lives
+ * canonically in phlix-contracts (`scripts/generate-server-route-manifest.mjs`
+ * → `src/routeManifest.generated.ts` → `dist/server-route-manifest.json`);
+ * this repo consumes the EXPORT, not a second derivation of it.
+ *
+ * ⚠ VENDORED, not imported. `./server-route-manifest.json` is a byte-identical
+ * copy of phlix-contracts `dist/server-route-manifest.json` (md5 pinned by
+ * `routeGate.api.test.ts`). Vendoring is the sanctioned interim pattern: ui
+ * pins `@phlix/contracts#v0.4.4`, which PREDATES the export (contracts master
+ * `09161041` is deliberately untagged), and the contracts `exports` map blocks
+ * JSON subpath imports anyway. When the next contracts tag lands, switch this
+ * import to the tagged package and drop the vendored copy.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  * S280GATEKEEPERX7Q9
  */
-import { SERVER_ROUTE_MANIFEST, SERVER_ROUTE_MANIFEST_PROVENANCE } from './serverRouteManifest.generated';
-export { SERVER_ROUTE_MANIFEST, SERVER_ROUTE_MANIFEST_PROVENANCE };
+/** Provenance block of the canonical contracts export (shape pinned by the contracts generator). */
+export interface ServerRouteManifestProvenance {
+    serverSha: string;
+    generatedAt: string;
+    generator: string;
+    sources: ReadonlyArray<{
+        file: string;
+        count: number;
+    }>;
+    shared: number;
+    total: number;
+}
+/**
+ * The EXACT set of `[method, pathTemplate]` tuples phlix-server registers,
+ * tuple-exact — a request that matches by substring or prefix is a defect.
+ * The explicit annotations below are load-bearing: they keep the JSON's
+ * widened inference (string[][]) out of the emitted declarations and out of
+ * any consumer's type graph — this file and its manifest never enter the app
+ * bundle (reachable only from vitest; `npm run dist:check` proves it).
+ */
+export declare const SERVER_ROUTE_MANIFEST: ReadonlyArray<readonly [string, string]>;
+/** Provenance — the server commit + generator the vendored manifest was derived from. */
+export declare const SERVER_ROUTE_MANIFEST_PROVENANCE: ServerRouteManifestProvenance;
 /** One observed request. */
 export interface RouteGateObservedRequest {
     method: string;
