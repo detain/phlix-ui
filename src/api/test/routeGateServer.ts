@@ -64,8 +64,10 @@ export interface ServerRouteManifestProvenance {
  * tuple-exact — a request that matches by substring or prefix is a defect.
  * The explicit annotations below are load-bearing: they keep the JSON's
  * widened inference (string[][]) out of the emitted declarations and out of
- * any consumer's type graph — this file and its manifest never enter the app
- * bundle (reachable only from vitest; `npm run dist:check` proves it).
+ * any consumer's type graph. This file's only importers are
+ * `src/api/test/*.test.ts` (vitest), so its manifest can never enter the app
+ * bundle; the single dist artefact it can affect is this helper's own `.d.ts`,
+ * which `npm run dist:check` keeps honest against the source.
  */
 export const SERVER_ROUTE_MANIFEST: ReadonlyArray<readonly [string, string]> =
     vendoredManifest.routes as unknown as ReadonlyArray<readonly [string, string]>;
