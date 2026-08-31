@@ -3,8 +3,9 @@
  *
  * Every request-issuing method of every server-addressed `src/api` module is
  * driven through {@link makeRouteGateServer}, which answers a real 404 to any
- * url phlix-server does not register (389 routes — the union of both server
- * ROUTE_MANIFEST constants; see `serverRouteManifest.generated.ts`).
+ * url phlix-server does not register (400 routes — the canonical
+ * phlix-contracts export `dist/server-route-manifest.json`, vendored verbatim
+ * here as `server-route-manifest.json`; see {@link routeGateServer}).
  *
  * Per module the gate pins:
  * 1. ANTI-VACUITY — the drive really issued ≥N requests (a zero-request module
@@ -24,6 +25,10 @@
  * @license MIT
  */
 
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ApiClient } from '../client';
 import { MemoryTokenStore } from './memoryTokenStore';
@@ -36,7 +41,15 @@ import { fetchMostWatched } from '../mostWatched';
 import { fetchLibraries } from '../libraries';
 import { fetchLetterIndex } from '../letter-index';
 import { fetchIndexBuckets, cache as indexBucketsCache } from '../index-buckets';
-import { makeRouteGateServer, driveGated, expectGateClean, isRegisteredRoute, type RouteGateServer } from './routeGateServer';
+import {
+    SERVER_ROUTE_MANIFEST,
+    SERVER_ROUTE_MANIFEST_PROVENANCE,
+    makeRouteGateServer,
+    driveGated,
+    expectGateClean,
+    isRegisteredRoute,
+    type RouteGateServer,
+} from './routeGateServer';
 
 const BASE = 'https://media.example.com';
 
@@ -57,6 +70,35 @@ beforeEach(() => {
 
 afterEach(() => {
     vi.unstubAllGlobals();
+});
+
+// ── vendored contracts artifact — currency + integrity ────────────────────────
+
+describe('route gate — vendored contracts export (S280 re-adoption)', () => {
+    /**
+     * S280 ui re-adoption: this gate consumes the CANONICAL phlix-contracts
+     * export, vendored verbatim (interim pattern until the next contracts tag —
+     * see {@link routeGateServer} header). These pins fail if the vendored file
+     * is edited, re-derived locally, or replaced: the md5 is the byte-identity
+     * proof against `phlix-contracts/dist/server-route-manifest.json` at
+     * contracts `09161041`, and the sha pin is the server-currency proof.
+     */
+    const VENDORED_MANIFEST_MD5 = 'cca4660dda7876fba840f9d108ad7c18';
+    const VENDORED_MANIFEST_SERVER_SHA = '8f72faec6ef85c9df1382148d4f294a450d71bed';
+
+    it('is the canonical artifact byte-for-byte — md5 + provenance sha + size', () => {
+        // jsdom makes import.meta.url an http URL — resolve through the file
+        // scheme exactly like routeGate.enumeration.test.ts does.
+        const vendoredFile = path.join(
+            path.dirname(fileURLToPath(import.meta.url)),
+            'server-route-manifest.json',
+        );
+        const bytes = readFileSync(vendoredFile);
+        expect(createHash('md5').update(bytes).digest('hex')).toBe(VENDORED_MANIFEST_MD5);
+        expect(SERVER_ROUTE_MANIFEST).toHaveLength(400);
+        expect(SERVER_ROUTE_MANIFEST.length).toBe(SERVER_ROUTE_MANIFEST_PROVENANCE.total);
+        expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toBe(VENDORED_MANIFEST_SERVER_SHA);
+    });
 });
 
 // ── client.ts — the shared ApiClient ──────────────────────────────────────────
