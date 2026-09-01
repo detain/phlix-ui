@@ -35,8 +35,8 @@
  * ⚠ VENDORED, not imported. `./server-route-manifest.json` is a byte-identical
  * copy of phlix-contracts `dist/server-route-manifest.json` (md5 pinned by
  * `routeGate.api.test.ts`). Vendoring is the sanctioned interim pattern: ui
- * pins `@phlix/contracts#v0.4.4`, which PREDATES the export (contracts master
- * `09161041` is deliberately untagged), and the contracts `exports` map blocks
+ * pins `@phlix/contracts#v0.4.5`, which PREDATES this wave's provenance regen
+ * (the regen itself ships untagged, s280rest doctrine), and the contracts `exports` map blocks
  * JSON subpath imports anyway. When the next contracts tag lands, switch this
  * import to the tagged package and drop the vendored copy.
  *
