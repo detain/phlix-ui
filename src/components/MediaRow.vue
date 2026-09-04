@@ -372,19 +372,46 @@ watch(
 
    Rows 1 and 2 are the control: removing the section's containment changes
    nothing for the cards. Giving the rail room INSIDE its own scroll box is the
-   only lever. Doing that shifts every home rail's vertical rhythm, so it is left
-   deliberately unfixed here and tracked as its own step rather than smuggled in
-   under a docs correction. */
+   only lever.
+
+   S419 FIX — that lever, at the smallest honest value, with the rhythm cost
+   engineered back to zero. Bare padding-top shifts every home rail down, which
+   is why S222 left the defect open (and its "tracked as its own step" claim was
+   false at the time — no step existed; S222's audit filed it). The rail now
+   declares one token, `--media-row-lift-clearance: var(--space-4)` (16px):
+     - `padding-top` spends it INSIDE the scrollport, so the lifted card edge
+       lands inside the clip box and paints;
+     - the same rule's `margin-top: calc(… * -1)` gives the identical room back
+       OUTSIDE, so the cards' on-page position is pixel-unchanged: the gap from
+       the head's border-box to the cards reads 16 (head `margin-bottom`) - 16
+       (rail `margin-top`) + 16 (rail `padding-top`) = the original 16px, and
+       the two margins give that answer whether they collapse or merely add —
+       the compensation is collapse-robust.
+   Why 16px and not the probe's 24px: the measured overhang was 11.00px
+   (8px translate + scale growth); re-derived against the rule's own
+   `grid-auto-columns` max (180px → ≈270px poster, scale origin centred) the
+   ceiling is ≈11.9px, so 16px clears it with margin — AND 16px is the LARGEST
+   value whose negative-margin compensation cannot drag the rail's box up onto
+   `.media-row__head` (its margin-bottom is exactly var(--space-4) = 16px): any
+   taller and the transparent scroll-container box overlaps the head, stealing
+   pointer events from the head's action link. Under `prefers-reduced-motion`
+   MediaCard pins the lift to `transform: none`, and the clearance is
+   self-cancelling anyway, so this rule holds in every mode. The headroom and
+   the lift are coupled by contract: MediaRow.test.ts (S419) pins both against
+   the BUILT stylesheet — enlarging the transform without the clearance turns
+   it red. */
 .media-row__rail {
+  --media-row-lift-clearance: var(--space-4);
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(160px, 180px);
   gap: var(--space-5);
   overflow-x: auto;
+  padding-top: var(--media-row-lift-clearance);
   padding-bottom: var(--space-3);
   scroll-snap-type: x mandatory;
   list-style: none;
-  margin: 0;
+  margin: calc(var(--media-row-lift-clearance) * -1) 0 0;
 }
 .media-row__cell {
   scroll-snap-align: start;

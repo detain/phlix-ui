@@ -519,7 +519,7 @@ describe('MediaRow — hover-lift headroom in the rail scroll box, built stylesh
     );
     // And margin's other slots stay zero: no new side/bottom rhythm.
     expect(base).toMatch(
-      /margin:\s*calc\([^)]*\)\s+0\s+0/,
+      /margin:\s*calc\([^;]*\)\s+0\s+0(?=;)/,
     );
   });
 
