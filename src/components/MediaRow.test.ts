@@ -440,3 +440,131 @@ describe('MediaRow — content-visibility placement, built stylesheet (S222)', (
     expect(css.match(/content-visibility:/g) ?? []).toHaveLength(1);
   });
 });
+
+/**
+ * S419 — the hover-lift headroom contract, asserted against the BUILT stylesheet.
+ *
+ * THE DEFECT (S222's measured finding; the "tracked as its own step" comment was
+ * false — S419 is that step, finally allocated): `.media-row__rail` declares
+ * `overflow-x: auto`, which per CSS Overflow 3 forces `overflow-y` to COMPUTE to
+ * `auto`, making the rail a scroll container on both axes. A scroll container
+ * clips to its padding box (the scrollport), and the rail had zero `padding-top`,
+ * so the top of `.media-card:hover`'s lift was clipped away on every home rail.
+ *
+ * NUMBERS re-verified at tip `58b1e5e4` (MediaRow.vue/MediaCard.vue/dist-style.css
+ * byte-identical since the S222 audit pin `24b60e49`):
+ *  - Lift: `translateY(-8px) scale(1.025)` (pinned below — this test is the
+ *    coupling that keeps the headroom honest if the lift ever changes).
+ *  - S222's recorded headless-Chromium probe (no chromium on this venue; the
+ *    measurement is INHERITED, the rule bytes below are re-read from dist):
+ *    11.00px of overhang above the cell's top in every variant; `padding-top`
+ *    on the rail was the only lever that restored paint.
+ *  - Ceiling re-derived arithmetically from the shipped rules alone: 8px
+ *    translate + half of 2.5% scale growth on the card box; at the rail's own
+ *    `grid-auto-columns` max (180px → ≈270px poster) that is ≈11.9px. A 16px
+ *    clearance contains both numbers; 16px is ALSO the largest value whose
+ *    negative-margin compensation cannot pull the rail's box up onto the head
+ *    (head `margin-bottom: var(--space-4)` = 16px), which would steal pointer
+ *    events from the head's action link.
+ *
+ * THE MECHANISM pinned here (one rule, three declarations):
+ *    --media-row-lift-clearance: var(--space-4);
+ *    padding-top: var(--media-row-lift-clearance);          <- room INSIDE the scrollport
+ *    margin: calc(var(--media-row-lift-clearance) * -1) 0 0; <- same room given back OUTSIDE
+ * The cards stay pixel-exactly where they were (rhythm preserved — the reason
+ * S222 left the defect open); only the clip edge moves up into the dead space
+ * of the head's margin. Both levers key on the SAME custom property so they
+ * cannot drift apart.
+ *
+ * jsdom geometry is VACUOUS here (the S09 block above measured it: reverting
+ * real spacing rules left the whole suite green), so every assertion reads the
+ * SHIPPED `dist/style.css` rule bytes, not pixels and not SFC source text —
+ * the S232/S221 built-CSS method.
+ */
+describe('MediaRow — hover-lift headroom in the rail scroll box, built stylesheet (S419)', () => {
+  const css = readBuiltCss('style.css');
+  const railBodies = scopedRuleBodies(css, '.media-row__rail');
+  // The BASE rail rule, identified by a declaration the lever-mutations never
+  // touch — so removing one lever cannot make the other assertions vacuous.
+  const base = railBodies.find((b) => /grid-auto-flow:\s*column/.test(b)) ?? '';
+
+  it('declares the rail base rule in the shipped stylesheet at all', () => {
+    // Vacuity guard: every assertion below reads `base`, and an empty string
+    // would otherwise pass as "no wrong value present".
+    expect(base).not.toBe('');
+  });
+
+  it('keeps the rail a horizontal scroll container — the scrollport is the clipper', () => {
+    // The fix is premised on the rail being the clipper (CSS Overflow 3:
+    // overflow-y computes to auto here). If the rail ever stops scrolling,
+    // the headroom+compensation pair is dead weight and this comment is a lie.
+    expect(base).toMatch(/overflow-x:\s*auto/);
+  });
+
+  it('gives the scrollport top headroom via padding-top on the rail', () => {
+    // S222: paint returns only when the rail has room INSIDE its own scroll box.
+    expect(base).toMatch(/padding-top:\s*var\(--media-row-lift-clearance\)/);
+  });
+
+  it('sizes the clearance from the --media-row-lift-clearance token, bound to var(--space-4)', () => {
+    expect(base).toMatch(/--media-row-lift-clearance:\s*var\(--space-4\)/);
+  });
+
+  it('gives the same room back outside the rail, in the same rule (rhythm-neutral)', () => {
+    // Negative margin-top on the rail collapses (head 16 + rail -16 → 0) or
+    // adds (16 - 16 → 0) with the head's margin-bottom to the SAME zero net —
+    // the cards land pixel-exactly where they were before the fix either way.
+    expect(base).toMatch(
+      /margin:\s*calc\(\s*(?:var\(--media-row-lift-clearance\)\s*\*\s*-1|-1\s*\*\s*var\(--media-row-lift-clearance\))\s*\)/,
+    );
+    // And margin's other slots stay zero: no new side/bottom rhythm.
+    expect(base).toMatch(
+      /margin:\s*calc\([^)]*\)\s+0\s+0/,
+    );
+  });
+
+  it('resolves the clearance to at least the ≈11.9px lift ceiling', () => {
+    // Parse what the token ACTUALLY resolves to in the shipped sheet rather
+    // than trusting its name: extract the referenced token, find its declared
+    // value, convert rem→px (16px base, asserted below — the sheet sets no
+    // root font-size), and floor-check against the re-derived ceiling.
+    const ref = /--media-row-lift-clearance:\s*var\((--[\w-]+)\)/.exec(base);
+    expect(ref).not.toBeNull();
+    const declared = new RegExp(`${ref![1]}\\s*:\\s*([\\d.]+)rem`).exec(css);
+    expect(declared).not.toBeNull();
+    expect(parseFloat(declared![1]) * 16).toBeGreaterThanOrEqual(12);
+    // The rem→px conversion is only sound while nothing rebases the root font.
+    // Component-level `font-size:` declarations are irrelevant here; only the
+    // rem-defining selectors (html / :root / :host) could move the base.
+    for (const rebase of css.match(/(?:html|:root|:host)[^{}]*\{[^}]*\}/g) ?? []) {
+      expect(rebase).not.toMatch(/(^|[;{])\s*font-size\s*:/);
+    }
+  });
+
+  it('leaves the bottom gutter exactly as it was (two-sided control)', () => {
+    // The clip was only ever at the TOP edge; padding-bottom carries the
+    // existing bottom shadow/scrollbar room and must not be "tidied" along
+    // with the fix — and must not become the headroom lever (bottom overflow
+    // behaves differently: it is scrollable, not unreachable-clipped).
+    expect(base).toMatch(/padding-bottom:\s*var\(--space-3\)/);
+    expect(base).not.toMatch(/padding-bottom:\s*var\(--media-row-lift-clearance\)/);
+  });
+
+  it('leaves the head rhythm partner untouched (two-sided control)', () => {
+    // The compensation arithmetic above depends on this staying var(--space-4).
+    const head = scopedRuleBodies(css, '.media-row__head').join(';');
+    expect(head).toMatch(/margin-bottom:\s*var\(--space-4\)/);
+  });
+
+  it('pins the lift the headroom was sized for, unchanged', () => {
+    // Coupling guard: if the transform grows, the 12px floor silently fails —
+    // changing this string MUST be a conscious act paired with the clearance.
+    const lift = /([^{}]+)\{transform:translateY\(-8px\)\s?scale\(1\.025\)\}/.exec(css);
+    expect(lift).not.toBeNull();
+    const selector = lift![1];
+    expect(selector).toContain('media-card');
+    expect(selector).toContain(':hover');
+    expect(selector).toContain(':focus-within');
+    expect(css.match(/translateY\(-8px\)scale\(1\.025\)/g) ?? []).toHaveLength(1);
+  });
+});
