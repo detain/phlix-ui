@@ -154,10 +154,13 @@ function ownMemberId(): string {
  * (`src/Session/SyncPlay/SyncPlayManager.php:1014`).
  *
  * ⚠ `member_id` is the HOST's id, not the reporting member's — the server stamps
- * `$group->getHostId()`. That matters here: `SyncPlayClient.handlePlaybackSync()`
- * drops any frame whose `member_id` equals its own, so a fixture that stamped
- * this tab's own id would deliver nothing and every assertion below would be
- * measuring an untouched store.
+ * `$group->getHostId()`. Under lib v0.1.2 this also decided whether the frame
+ * was delivered at all: `handlePlaybackSync()` dropped any frame whose
+ * `member_id` equalled its own. S294 (lib v0.1.4) removed exactly that drop —
+ * a `playback_sync` echoed to the sender IS the host's only re-anchor source in
+ * a one-member room — so the stamp no longer gates delivery. The fixture keeps
+ * the host id because it mirrors the real emitter, and the own-id case is
+ * pinned honestly in its own test below.
  */
 function playbackSyncFrame(position: number, isPlaying = true): Record<string, unknown> {
     return {
@@ -361,24 +364,41 @@ describe('S290 — the return leg, end to end', () => {
         expect(store.currentSession!.playbackPosition).toBe(123);
     });
 
-    it("CONTROL — a frame stamped with THIS tab's own member id is dropped, so the fixture's id matters", async () => {
+    it("CONTROL — the frame's TYPE is the seam S294 left: own-stamped playback_sync LANDS, own-stamped play COMMAND still drops", async () => {
+        // S418 pin update (lib v0.1.2 → v0.1.4). This control was written against
+        // `handlePlaybackSync()`'s own-id early-return: flipping `member_id` to
+        // this tab's own id made the same frame deliver nothing, proving the
+        // subject test's anchor was caused by the frame. S294 deliberately
+        // REMOVED that drop for `playback_sync` — the echo back to the sender is
+        // the authoritative state report the host itself needs (one-member room)
+        // — so `member_id` is no longer the falsifiable field on a state report.
+        // The distinction S294 keeps lives in the frame TYPE, and the control
+        // moved to that axis: the same own id still cannot round-trip a COMMAND.
         const store = await joinedAndConfirmed();
         vi.advanceTimersByTime(600_000);
         store.updateLocalPosition(300);
+        expect(store.driftAmount).toBeCloseTo(-423, 6);
 
-        // `SyncPlayClient.handlePlaybackSync()` returns early when `member_id`
-        // is its own. This proves the delivery path in the subject test is real:
-        // change one field of the same frame and the anchor does not land.
         const ownId = ownMemberId();
         expect(ownId).not.toBe('m1');
 
+        // Half one (S294): own-stamped playback_sync is CONSUMED — position
+        // adopts 300 and the drift clock re-anchors, exactly like the host-stamped
+        // frame in the subject test.
         socket().deliver({ ...playbackSyncFrame(300, true), member_id: ownId });
-        // A fresh local position, so this is a RECOMPUTE and not Vue's cached
-        // value: `driftAmount` tracks only `currentSession` and
-        // `localPlaybackPosition`, and a dropped frame touches neither.
-        store.updateLocalPosition(300.5);
-        expect(store.driftAmount).toBeCloseTo(-422.5, 6);
-        expect(store.currentSession!.playbackPosition).toBe(123);
+        expect(store.currentSession!.playbackPosition).toBe(300);
+        expect(store.driftAmount).toBeCloseTo(0, 6);
+
+        // Half two (the drop that remains): an own-stamped PLAY COMMAND echo
+        // must not move the store — position stays at the value the sync frame
+        // just landed, not the command's 777.
+        socket().deliver({ type: 'syncplay_playback_play', member_id: ownId, position: 777 });
+        expect(store.currentSession!.playbackPosition).toBe(300);
+
+        // And the seam stays live in the other direction: a REMOTE play command
+        // does land, so the assertion above measured a drop, not a dead path.
+        socket().deliver({ type: 'syncplay_playback_play', member_id: 'someone-else', position: 777 });
+        expect(store.currentSession!.playbackPosition).toBe(777);
     });
 
     it('a paused broadcast re-anchors as well — the return leg is not play-only', async () => {

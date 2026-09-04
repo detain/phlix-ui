@@ -302,6 +302,21 @@ describe('handleWsMessage — real protocol decoding', () => {
         expect(messages).toEqual([]);
     });
 
+    it('consumes our own echoed playback_sync (S294) while still dropping our own command echo', () => {
+        // S294 (lib v0.1.4): `playback_sync` is a server-echoed STATE REPORT
+        // re-broadcast to EVERY member (SyncPlayManager::handlePlaybackSync
+        // excludes nobody) — the host's own frame coming back is its only
+        // re-anchor source in a one-member room, so the self-echo is consumed.
+        const { messages } = connect();
+        socket().deliver({ type: 'syncplay_playback_sync', member_id: 'me', position: 88, is_playing: true });
+        expect(messages).toEqual([{ type: 'play', position: 88, roomId: ROOM }]);
+        // The distinction stays: a self-echoed COMMAND is still dropped (the
+        // invariant pinned by the test above — repeated here so the two halves
+        // of the S294 decision live in one readable pair).
+        socket().deliver({ type: 'syncplay_playback_play', member_id: 'me', position: 99 });
+        expect(messages).toEqual([{ type: 'play', position: 88, roomId: ROOM }]);
+    });
+
     it('maps a playback_sync frame onto play/pause by `is_playing`', () => {
         const { messages } = connect();
         socket().deliver({ type: 'syncplay_playback_sync', member_id: 'peer', position: 12, is_playing: true });
