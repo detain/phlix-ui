@@ -154,7 +154,7 @@ var N = .1, P = .99, F = 1.01, I = class {
 			sampleCount: this.samples.length
 		};
 	}
-}, L = class {
+}, L = class e {
 	send;
 	now;
 	memberId;
@@ -286,7 +286,11 @@ var N = .1, P = .99, F = 1.01, I = class {
 			case k.GROUP_LIST:
 				this.handleGroupList(t);
 				break;
-			default: break;
+			case k.CHAT:
+			case k.PLAYBACK_QUEUE: break;
+			default:
+				this.options.onUnknownFrame?.(t);
+				break;
 		}
 	}
 	handleTimePong(e) {
@@ -299,28 +303,35 @@ var N = .1, P = .99, F = 1.01, I = class {
 			isStable: this.timeSync.isStable()
 		});
 	}
-	handleGroupState(e) {
-		let t = e, n = t.group;
-		if (typeof n != "object" || !n) return;
-		let r = Array.isArray(n.members) ? n.members.map((e) => ({
-			id: e.id,
-			name: e.name,
-			is_host: e.id === n.host_id,
+	static normalizeMembers(e, t) {
+		let n;
+		return n = Array.isArray(e) ? e : e && typeof e == "object" ? Object.entries(e).map(([e, t]) => ({
+			...t,
+			id: e
+		})) : [], n.map((e) => ({
+			id: typeof e.id == "string" ? e.id : "",
+			name: typeof e.name == "string" ? e.name : "",
+			is_host: e.id === t,
 			joined_at: typeof e.joined_at == "number" ? e.joined_at : 0
-		})) : [];
+		}));
+	}
+	handleGroupState(t) {
+		let n = t, r = n.group;
+		if (typeof r != "object" || !r) return;
+		let i = e.normalizeMembers(r.members, r.host_id ?? null);
 		this.group = {
-			group_id: n.group_id,
-			group_name: n.group_name,
-			members: r,
-			member_count: n.member_count,
-			host_id: n.host_id ?? null,
-			current_media_id: n.current_media_id ?? null,
-			current_media_duration: n.current_media_duration ?? null,
-			playback_position: n.playback_position ?? 0,
-			playback_state: n.playback_state ?? "stopped",
-			created_at: n.created_at,
-			last_activity_at: n.last_activity_at
-		}, this.options.onState?.(this.group, t.your_id);
+			group_id: r.group_id ?? "",
+			group_name: r.group_name ?? "",
+			members: i,
+			member_count: r.member_count,
+			host_id: r.host_id ?? null,
+			current_media_id: r.current_media_id ?? null,
+			current_media_duration: r.current_media_duration ?? null,
+			playback_position: r.playback_position ?? 0,
+			playback_state: r.playback_state ?? "stopped",
+			created_at: r.created_at,
+			last_activity_at: r.last_activity_at
+		}, this.options.onState?.(this.group, n.your_id);
 	}
 	handlePlayback(e, t) {
 		if ((typeof t.member_id == "string" ? t.member_id : void 0) === this.memberId) return;
@@ -370,9 +381,7 @@ var N = .1, P = .99, F = 1.01, I = class {
 		}), this.options.onHostTransfer?.(t.current_host_id, t.new_host_id));
 	}
 	handlePlaybackSync(e) {
-		let t = typeof e.member_id == "string" ? e.member_id : void 0;
-		if (t === this.memberId) return;
-		let n = typeof e.position == "number" ? e.position : 0, r = typeof e.is_playing == "boolean" && e.is_playing, i = typeof e.server_time == "number" ? e.server_time : this.getSynchronizedTime();
+		let t = typeof e.member_id == "string" ? e.member_id : void 0, n = typeof e.position == "number" ? e.position : 0, r = typeof e.is_playing == "boolean" && e.is_playing, i = typeof e.server_time == "number" ? e.server_time : this.getSynchronizedTime();
 		this.options.onPlaybackSync?.(t ?? "", n, r, i);
 	}
 	handleTimeSync(e) {
@@ -925,4 +934,4 @@ var ge = O("phlix-syncplay", () => {
 //#endregion
 export { ge as n, Re as t };
 
-//# sourceMappingURL=SyncPlayModal-Cwa6nF0M.js.map
+//# sourceMappingURL=SyncPlayModal-3zuWsgaS.js.map
