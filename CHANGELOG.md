@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Changed
+
+- **Route-manifest provenance re-pin — cs#20 currency leg of the combined re-tag wave (2026-09-05).** The vendored `src/api/test/server-route-manifest.json` is re-vendored verbatim from `@phlix/contracts` master `f2e284b3` (regen against server master `f35a5742` — the web-ui `@phlix/ui` v0.99.1 re-pin commit: zero PHP, zero route hunks; previous provenance `2250def2`/`3a253991`). All 400 tuples are byte-identical — only provenance moves — and both currency pins in `src/api/test/routeGate.api.test.ts` follow: vendored md5 `5bc7dd6d` → `05db9e75` and serverSha `3a253991` → `f35a5742`. No route change, no source change: the gate's covered-URL pins are untouched and the built `dist/` stays byte-identical. No new version tag ships with this wave — v0.99.1 is released and this currency lands untagged on master.
+
 ## 0.99.1 - 2026-09-05
 
 ### Changed
