@@ -83,8 +83,8 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
      * proof against `phlix-contracts/dist/server-route-manifest.json` at
      * contracts `09161041`, and the sha pin is the server-currency proof.
      */
-    const VENDORED_MANIFEST_MD5 = '9f69628da115378b3d11adc1fe5f55ea';
-    const VENDORED_MANIFEST_SERVER_SHA = 'e74cdc884358e3b8f1ab6e9dbdc357d5471dff48';
+    const VENDORED_MANIFEST_MD5 = '5bc7dd6d26b0f540eaa413ef66a1050d';
+    const VENDORED_MANIFEST_SERVER_SHA = '3a2539915767b5f156c5b676c753cf65e9208d3c';
 
     it('is the canonical artifact byte-for-byte — md5 + provenance sha + size', () => {
         // jsdom makes import.meta.url an http URL — resolve through the file
