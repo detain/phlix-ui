@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.99.1 - 2026-09-05
+
 ### Changed
 
 - **Route-manifest provenance re-pin — cs#19 currency cascade (2026-09-05).** The vendored `src/api/test/server-route-manifest.json` is re-vendored verbatim from `@phlix/contracts` master `2250def2` (regen against server master `3a253991`; previous provenance `e74cdc88` — S431 executable census, one commit, no route hunks). All 400 tuples are byte-identical — only provenance moves — and both currency pins in `src/api/test/routeGate.api.test.ts` follow: vendored md5 `9f69628d` → `5bc7dd6d` and serverSha `e74cdc88` → `3a253991`. No route change, no source change: the gate's covered-URL pins are untouched and the built `dist/` stays byte-identical. Un-tagged wave: the `@phlix/contracts#v0.4.5` install pin stays.
