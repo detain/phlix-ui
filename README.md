@@ -28,7 +28,7 @@ Vue app.
   reduced-motion, an i18n-readiness seam.
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
-> **Status:** `v0.98.34`. Pre-1.0, so minor releases may include breaking changes. See
+> **Status:** `v0.99.1`. Pre-1.0, so minor releases may include breaking changes. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
 
 ---
@@ -59,7 +59,7 @@ Vue app.
 // package.json
 {
   "dependencies": {
-    "@phlix/ui": "github:detain/phlix-ui#v0.98.34"
+    "@phlix/ui": "github:detain/phlix-ui#v0.99.1"
   }
 }
 ```
@@ -188,7 +188,7 @@ The "Nocturne" system ships three themes, applied via a `data-theme` attribute o
 | `density` | `'comfortable'` | or `'compact'` (smaller controls) |
 | `cardSize` | `180` | poster width in px (drives grid auto-fit) |
 | `gridDensity` | `'comfy'` | `'cozy' \| 'comfy' \| 'dense'` |
-| `viewMode` | `'grid'` | `ViewMode` — `'grid' \| 'list' \| 'backdrop'` today (`'table'` reserved); set by the `FilterBar` toggle, read by `LibraryPage` |
+| `viewMode` | `'grid'` | `ViewMode` — `'grid' \| 'list' \| 'backdrop' \| 'table'`; set by the `FilterBar` toggle, read by `LibraryPage` |
 | `reducedMotion` | `'auto'` | `'auto' \| 'on' \| 'off'` (auto honors the OS setting) |
 | `atmosphere` | `true` | film-grain/vignette + ambient player glow |
 | `autoplay` | `true` | up-next auto-advance |
@@ -368,8 +368,9 @@ Everything below is a named export from the package root (`import { Button } fro
 `MediaCard` · `MediaGrid` (virtualized) · `MediaRow` · `MediaHomeRow` · `MediaDetail` · `FilterBar`.
 `MediaGrid` also takes a `#card` slot plus `columns` / `rowHeight` props (they drive both the inline
 `grid-template-columns` and the windowing math), so a host can swap in a per-`viewMode` renderer —
-`src/components/MediaListRow.vue` for `'list'` and `src/components/MediaBackdropRow.vue` (a wide
-hero strip per item) for `'backdrop'`. Those renderers are internals of
+`src/components/MediaListRow.vue` for `'list'`, `src/components/MediaBackdropRow.vue` (a wide
+hero strip per item) for `'backdrop'` and `src/components/MediaTableRow.vue` (ARIA `role="row"`
+cells under a header row, via `MediaGrid`'s `gridRole` prop) for `'table'`. Those renderers are internals of
 `src/pages/LibraryPage.vue` and are deliberately **not** re-exported.
 
 ### Music surfaces
@@ -507,6 +508,7 @@ import '@phlix/ui/fonts.css'; // @font-face declarations (recommended)
 npm install
 npm run dev          # Vite dev server (open src/dev/gallery.html for the primitive Gallery)
 npm run build        # vue-tsc typecheck + vite lib build + d.ts emit + copy fonts
+npm run dist:check   # fail if the committed dist/ drifted from src/ (CI gate step)
 npm run test         # vitest (watch)
 npm run test:run     # vitest run (CI)
 npm run test:run -- --coverage  # same suite + coverage/lcov.info (what CI uploads)
@@ -520,7 +522,7 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
   theme switcher and density toggle. The source of truth for visual QA.
 - **Visual + a11y harnesses** (`src/dev/visual/*`) mount the real surfaces (Browse, Detail, Player,
   Auth, Settings, shell) with deterministic offline data for Playwright. These suites are **on-demand**
-  — they're not part of the blocking `typecheck`/`lint`/`build`/`vitest` gate that
+  — they're not part of the blocking `typecheck`/`lint`/`build`/`dist:check`/`vitest` gate that
   `.github/workflows/ui-ci.yml` runs on every push to `master` and every PR (its `visual` job stays
   `workflow_dispatch`-only until the `-linux` baselines are regenerated on the runner, because PNG
   baselines are environment-fragile).

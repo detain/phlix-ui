@@ -10,7 +10,7 @@ paths:
 
 # API client tests
 
-- Two harnesses — pick by what you are proving:
+- Three harnesses — pick by what you are proving:
   - **Wire level** (URL, method, envelope unwrapping): build a real `ApiClient` with
     `new ApiClient({ baseUrl, tokenStore: new MemoryTokenStore({ access: 'tok-1' }), fetchImpl })`,
     where `fetchImpl` comes from `makeFetch([...])` in `src/api/test/memoryTokenStore.ts`. Assert on
@@ -18,6 +18,10 @@ paths:
     `src/api/admin/transcoding.test.ts`.
   - **Seam level** (branch per endpoint): pass a `vi.fn()` fake in place of the `ApiClient` — see
     `src/api/admin/networkHealth.test.ts`.
+  - **Route level** (does the url exist server-side?): drive the client through
+    `makeRouteGateServer` from `src/api/test/routeGateServer.ts`, which 404s any url phlix-server
+    does not register — see `.claude/rules/route-gate.md`. `makeFetch` cannot prove this: it 200s
+    every url.
 - `makeFetch(scenarios)` replays `scenarios` **in call order**, one per `fetch`, then falls back to
   `{ status: 500, body: {} }` once exhausted — a client that makes N calls needs N entries. Pass
   `json: false` on a scenario to serve `text/plain` instead of `application/json`.
