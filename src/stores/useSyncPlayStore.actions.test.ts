@@ -290,7 +290,7 @@ describe('useSyncPlayStore — the WebSocket callback is wired to onRemoteStateU
         // Straight down the real chain: socket → handleWsMessage → SyncPlayClient
         // → onPlaybackCommand → the store's own callback. Nothing between the
         // frame and the assertion is a mock.
-        socket().deliver({ type: 'syncplay_playback_pause', member_id: 'someone-else', position: 7 });
+        socket().deliver({ type: 'syncplay_playback_pause', member_id: 'someone-else', position: 7_000 });
         expect(store.currentSession!.state).toBe('paused');
     });
 
@@ -298,11 +298,13 @@ describe('useSyncPlayStore — the WebSocket callback is wired to onRemoteStateU
         const store = useSyncPlayStore();
         await store.joinRoom(BASE, GROUP_ID);
 
+        // S441 — the frame speaks the wire unit (MILLISECONDS); the session
+        // position speaks seconds. The decode happens once, in `api/syncplay.ts`.
         socket().deliver({
             type: 'syncplay_playback_seek',
             member_id: 'someone-else',
             from_position: 1,
-            to_position: 456,
+            to_position: 456_000,
         });
         expect(store.currentSession!.playbackPosition).toBe(456);
     });

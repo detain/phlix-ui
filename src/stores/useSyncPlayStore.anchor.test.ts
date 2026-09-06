@@ -162,6 +162,7 @@ function ownMemberId(): string {
  * the host id because it mirrors the real emitter, and the own-id case is
  * pinned honestly in its own test below.
  */
+/** `position` is in the WIRE unit — MILLISECONDS (S441); the store reads seconds. */
 function playbackSyncFrame(position: number, isPlaying = true): Record<string, unknown> {
     return {
         type: 'syncplay_playback_sync',
@@ -300,6 +301,13 @@ describe('S290 CONTROL — the drift assertion can fail', () => {
 });
 
 // ── the return leg, end to end over the real socket ──────────────────────────
+//
+// S441 — every frame delivered below is written in the WIRE unit
+// (MILLISECONDS, SPEC.md:91); every store assertion below reads the
+// UI-internal unit (SECONDS). The join's REST leg (`syncplayServer.ts`,
+// `playback_position: 123`) lands as 0.123 s through the same boundary decode —
+// scale-sensitive in both directions: an undecoded frame lands 1000× high, a
+// double-decoded one 1000× low.
 
 describe('S290 — the return leg, end to end', () => {
     /**
@@ -311,27 +319,29 @@ describe('S290 — the return leg, end to end', () => {
      * unexpected happens, extrapolating from an old anchor gives the right
      * answer. Here the group stalled (host buffering, a pause, a seek back) and
      * is at 300 after 600 s of wall clock, while our extrapolation still claims
-     * 123 + 600 = 723.
+     * 0.123 + 600 = 600.123 (S441: the join's wire position 123 ms decodes to
+     * 0.123 s at the api boundary, so the drift starts at −300.123).
      */
-    it('an inbound playback_sync collapses a 423 s drift to zero', async () => {
+    it('an inbound playback_sync collapses a 300.123 s drift to zero', async () => {
         const store = await joinedAndConfirmed();
 
         // Guards: with `playbackRate` 0 the elapsed term vanishes and every drift
         // assertion below would be vacuously satisfiable.
         expect(store.currentSession!.playbackRate).toBe(1);
-        expect(store.currentSession!.playbackPosition).toBe(123);
+        // S441 — the fake server joins at wire-ms 123; the store reads seconds.
+        expect(store.currentSession!.playbackPosition).toBe(123 / 1000); // 0.123
         expect(store.currentSession!.state).toBe('playing');
 
         // Ten minutes. `joinRoom()` anchored at T0 and nothing since has moved it.
         vi.advanceTimersByTime(600_000);
         store.updateLocalPosition(300);
-        expect(store.driftAmount).toBeCloseTo(300 - (123 + 600), 6); // −423
+        expect(store.driftAmount).toBeCloseTo(300 - (0.123 + 600), 6); // −300.123
 
         // The frame S287's report elicits, straight down the real chain: socket →
         // handleWsMessage → SyncPlayClient.handlePlaybackSync → onPlaybackSync →
         // the store's own callback. Nothing between the bytes and the assertion
         // is a mock.
-        socket().deliver(playbackSyncFrame(300, true));
+        socket().deliver(playbackSyncFrame(300_000, true)); // wire ms → store 300 s
 
         // ⚠ Read IMMEDIATELY, with no clock advance. S287's M9 survived because
         // every assertion sat after an `advanceTimersByTime` that had already
@@ -348,20 +358,20 @@ describe('S290 — the return leg, end to end', () => {
         expect(store.driftAmount).toBeCloseTo(0, 6);
     });
 
-    it('CONTROL — with NO inbound frame the same store stays 423 s adrift', async () => {
+    it('CONTROL — with NO inbound frame the same store stays 300.123 s adrift', async () => {
         const store = await joinedAndConfirmed();
 
         vi.advanceTimersByTime(600_000);
         store.updateLocalPosition(300);
-        expect(store.driftAmount).toBeCloseTo(-423, 6);
+        expect(store.driftAmount).toBeCloseTo(-300.123, 6);
 
         // Identical to the subject test except that the frame is never delivered.
         // The `toBeCloseTo(0, 6)` above is therefore caused by the broadcast and
         // not by the passage of time, the timer ticks, or the join itself.
         vi.advanceTimersByTime(4000);
         store.updateLocalPosition(304);
-        expect(store.driftAmount).toBeCloseTo(-423, 6);
-        expect(store.currentSession!.playbackPosition).toBe(123);
+        expect(store.driftAmount).toBeCloseTo(-300.123, 6);
+        expect(store.currentSession!.playbackPosition).toBe(123 / 1000);
     });
 
     it("CONTROL — the frame's TYPE is the seam S294 left: own-stamped playback_sync LANDS, own-stamped play COMMAND still drops", async () => {
@@ -377,7 +387,7 @@ describe('S290 — the return leg, end to end', () => {
         const store = await joinedAndConfirmed();
         vi.advanceTimersByTime(600_000);
         store.updateLocalPosition(300);
-        expect(store.driftAmount).toBeCloseTo(-423, 6);
+        expect(store.driftAmount).toBeCloseTo(-300.123, 6);
 
         const ownId = ownMemberId();
         expect(ownId).not.toBe('m1');
@@ -385,19 +395,20 @@ describe('S290 — the return leg, end to end', () => {
         // Half one (S294): own-stamped playback_sync is CONSUMED — position
         // adopts 300 and the drift clock re-anchors, exactly like the host-stamped
         // frame in the subject test.
-        socket().deliver({ ...playbackSyncFrame(300, true), member_id: ownId });
+        socket().deliver({ ...playbackSyncFrame(300_000, true), member_id: ownId });
         expect(store.currentSession!.playbackPosition).toBe(300);
         expect(store.driftAmount).toBeCloseTo(0, 6);
 
         // Half two (the drop that remains): an own-stamped PLAY COMMAND echo
         // must not move the store — position stays at the value the sync frame
-        // just landed, not the command's 777.
-        socket().deliver({ type: 'syncplay_playback_play', member_id: ownId, position: 777 });
+        // just landed, not the command's 777_000 ms (= 777 s decoded).
+        socket().deliver({ type: 'syncplay_playback_play', member_id: ownId, position: 777_000 });
         expect(store.currentSession!.playbackPosition).toBe(300);
 
         // And the seam stays live in the other direction: a REMOTE play command
         // does land, so the assertion above measured a drop, not a dead path.
-        socket().deliver({ type: 'syncplay_playback_play', member_id: 'someone-else', position: 777 });
+        // S441: the wire carries ms — 777_000 ms must land as 777 SECONDS.
+        socket().deliver({ type: 'syncplay_playback_play', member_id: 'someone-else', position: 777_000 });
         expect(store.currentSession!.playbackPosition).toBe(777);
     });
 
@@ -406,10 +417,10 @@ describe('S290 — the return leg, end to end', () => {
 
         vi.advanceTimersByTime(600_000);
         store.updateLocalPosition(300);
-        expect(store.driftAmount).toBeCloseTo(-423, 6);
+        expect(store.driftAmount).toBeCloseTo(-300.123, 6);
 
         // `is_playing: false` maps to a `pause` command.
-        socket().deliver(playbackSyncFrame(300, false));
+        socket().deliver(playbackSyncFrame(300_000, false));
         expect(store.currentSession!.state).toBe('paused');
         expect(store.currentSession!.playbackPosition).toBe(300);
 

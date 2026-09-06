@@ -263,6 +263,12 @@ describe('openSyncPlayConnection — lifecycle', () => {
 });
 
 // ── inbound frames → the consumer's message handler ───────────────────────────
+//
+// S441 — these fixtures cross the protocol boundary: every frame is delivered in
+// the WIRE unit (MILLISECONDS, SPEC.md:91) and every assertion expects the
+// UI-internal unit (SECONDS) that reaches the store. The values are
+// 1000×-sensitive both ways: dropping the boundary decode leaves the raw ms
+// value in place (42 500 ≠ 42.5, red); doubling it yields 0.0425 (≠ 42.5, red).
 
 describe('handleWsMessage — real protocol decoding', () => {
     /** Open a connection with a recording handler and fire `onopen`. */
@@ -278,21 +284,21 @@ describe('handleWsMessage — real protocol decoding', () => {
         socket().deliver({
             type: 'syncplay_playback_play',
             member_id: 'someone-else',
-            position: 42,
+            position: 42_500, // wire ms
             server_time: 1_700_000_000_000,
         });
-        expect(messages).toEqual([{ type: 'play', position: 42, roomId: ROOM }]);
+        expect(messages).toEqual([{ type: 'play', position: 42.5, roomId: ROOM }]); // store seconds
     });
 
     it('surfaces a remote pause command', () => {
         const { messages } = connect();
-        socket().deliver({ type: 'syncplay_playback_pause', member_id: 'someone-else', position: 7 });
+        socket().deliver({ type: 'syncplay_playback_pause', member_id: 'someone-else', position: 7_000 });
         expect(messages).toEqual([{ type: 'pause', position: 7, roomId: ROOM }]);
     });
 
     it('surfaces a remote seek, reading `to_position`', () => {
         const { messages } = connect();
-        socket().deliver({ type: 'syncplay_playback_seek', member_id: 'someone-else', from_position: 1, to_position: 99 });
+        socket().deliver({ type: 'syncplay_playback_seek', member_id: 'someone-else', from_position: 1_000, to_position: 99_000 });
         expect(messages).toEqual([{ type: 'seek', position: 99, roomId: ROOM }]);
     });
 
@@ -308,19 +314,19 @@ describe('handleWsMessage — real protocol decoding', () => {
         // excludes nobody) — the host's own frame coming back is its only
         // re-anchor source in a one-member room, so the self-echo is consumed.
         const { messages } = connect();
-        socket().deliver({ type: 'syncplay_playback_sync', member_id: 'me', position: 88, is_playing: true });
+        socket().deliver({ type: 'syncplay_playback_sync', member_id: 'me', position: 88_000, is_playing: true });
         expect(messages).toEqual([{ type: 'play', position: 88, roomId: ROOM }]);
         // The distinction stays: a self-echoed COMMAND is still dropped (the
         // invariant pinned by the test above — repeated here so the two halves
         // of the S294 decision live in one readable pair).
-        socket().deliver({ type: 'syncplay_playback_play', member_id: 'me', position: 99 });
+        socket().deliver({ type: 'syncplay_playback_play', member_id: 'me', position: 99_000 });
         expect(messages).toEqual([{ type: 'play', position: 88, roomId: ROOM }]);
     });
 
     it('maps a playback_sync frame onto play/pause by `is_playing`', () => {
         const { messages } = connect();
-        socket().deliver({ type: 'syncplay_playback_sync', member_id: 'peer', position: 12, is_playing: true });
-        socket().deliver({ type: 'syncplay_playback_sync', member_id: 'peer', position: 34, is_playing: false });
+        socket().deliver({ type: 'syncplay_playback_sync', member_id: 'peer', position: 12_000, is_playing: true });
+        socket().deliver({ type: 'syncplay_playback_sync', member_id: 'peer', position: 34_000, is_playing: false });
         expect(messages).toEqual([
             { type: 'play', position: 12, roomId: ROOM },
             { type: 'pause', position: 34, roomId: ROOM },
@@ -365,8 +371,21 @@ describe('handleWsMessage — real protocol decoding', () => {
         // Re-opening for the same room without a handler must not clear the one
         // already registered — `if (onMessage) messageHandler = onMessage`.
         openSyncPlayConnection(ROOM);
-        socket().deliver({ type: 'syncplay_playback_play', member_id: 'peer', position: 3 });
+        socket().deliver({ type: 'syncplay_playback_play', member_id: 'peer', position: 3_000 });
         expect(messages).toEqual([{ type: 'play', position: 3, roomId: ROOM }]);
+    });
+
+    it('S441 — every inbound position decodes ms→s exactly once at this boundary (S441MSBOUNDARYX7J3)', () => {
+        // The relay/syncplay wire speaks milliseconds; the store speaks seconds.
+        // A frame missing the decode lands 1000× high; a double decode lands
+        // 1000× low — this pins both red with 1_000×-sensitive values.
+        const { messages } = connect();
+        socket().deliver({ type: 'syncplay_playback_sync', member_id: 'peer', position: 42_500, is_playing: true });
+        socket().deliver({ type: 'syncplay_playback_seek', member_id: 'peer', from_position: 42_500, to_position: 90_000 });
+        expect(messages).toEqual([
+            { type: 'play', position: 42.5, roomId: ROOM },
+            { type: 'seek', position: 90, roomId: ROOM },
+        ]);
     });
 });
 
