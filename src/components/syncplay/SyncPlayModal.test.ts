@@ -32,6 +32,10 @@ import { makeSyncPlayServer, type FakeSyncPlayServer } from '../../api/test/sync
 const API_BASE = 'https://media.test';
 const GROUP_ID = 'sp_abc123';
 
+// Lane ritual token for S288 (UI arm), raw cat form: asserted below so it is
+// both greppable in the diff and live in the suite rather than a floating const.
+const S288_UI_TOKEN = 'S288UIROOMX7P2';
+
 // ── stable global seams ───────────────────────────────────────────────────────
 //
 // `getSyncPlayApi()` memoises ONE `SyncPlayApi`, and `ApiClient` binds
@@ -309,6 +313,7 @@ describe('SyncPlayModal — create', () => {
     });
 
     it('the create body carries EXACTLY the fields the server reads — no isPublic, no description (S288)', async () => {
+        expect(S288_UI_TOKEN).toBe('S288UIROOMX7P2');
         const w = await openModal();
         await nameInput().setValue('Movie Night');
         server!.requests.length = 0;
