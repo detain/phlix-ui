@@ -23,6 +23,12 @@ const sfcSource = readFileSync(
 const up = (w: ReturnType<typeof mount>) => w.find('.thumb-rating__btn--up');
 const down = (w: ReturnType<typeof mount>) => w.find('.thumb-rating__btn--down');
 
+/** A click VTU's `trigger()` refuses to deliver to a disabled control (see S320 pins below). */
+async function rawClick(el: Element): Promise<void> {
+  el.dispatchEvent(new Event('click'));
+  await nextTick();
+}
+
 describe('ThumbRating — level 0 (not set)', () => {
   it('shows BOTH thumbs as wireframe (no filled/blue class, aria-pressed false)', () => {
     const w = mount(ThumbRating, { props: { level: 0 } });
@@ -118,18 +124,30 @@ describe('ThumbRating — down axis (dislike/strongly dislike)', () => {
 });
 
 describe('ThumbRating — disabled + clamping', () => {
-  it('does not emit when disabled (up)', async () => {
+  // S320 — these two pins used `trigger('click')`, which VTU short-circuits on a
+  // disabled BUTTON (post-mortem: `MusicPager.test.ts`), so they asserted nothing
+  // and `onUp`/`onDown`'s `props.disabled` guards were unpinned. Both now dispatch
+  // RAW; the enabled control test proves the raw route is not inert.
+
+  it('raw click on the ENABLED thumb still emits — the raw route is not inert', async () => {
+    const w = mount(ThumbRating, { props: { level: 0 } });
+    await rawClick(up(w).element);
+    expect(w.emitted('cycle')!.at(-1)).toEqual([1]);
+  });
+
+  it('does not emit when disabled (up) — pins onUp\'s guard, S320', async () => {
     const w = mount(ThumbRating, { props: { level: 0, disabled: true } });
-    await up(w).trigger('click');
+    await rawClick(up(w).element);
     expect(w.emitted('cycle')).toBeUndefined();
     expect(w.emitted('update:level')).toBeUndefined();
     expect(up(w).attributes('disabled')).toBeDefined();
   });
 
-  it('does not emit when disabled (down)', async () => {
+  it('does not emit when disabled (down) — pins onDown\'s guard, S320', async () => {
     const w = mount(ThumbRating, { props: { level: 0, disabled: true } });
-    await down(w).trigger('click');
+    await rawClick(down(w).element);
     expect(w.emitted('cycle')).toBeUndefined();
+    expect(w.emitted('update:level')).toBeUndefined();
     expect(down(w).attributes('disabled')).toBeDefined();
   });
 

@@ -64,6 +64,11 @@ export default defineConfig({
         // Increase timeout for full-suite runs where accumulated jsdom state can
         // slow individual tests. 5 s default is too short when 2 000+ component
         // instances with scroll/ResizeObserver/intersection observers are active.
+        // Name the cost: a 30 s budget also HIDES a genuine per-test slowdown of
+        // 5–30 s — a leaked subscription re-rendering abandoned instances, a poller
+        // spinning — because such a test still finishes green, just slowly. A
+        // regression in that band therefore surfaces only through timing triage,
+        // never as a failure from this suite.
         testTimeout: 30000,
         hookTimeout: 30000,
         // Keep the Playwright visual specs out of the Vitest run — `e2e/visual.spec.ts`
