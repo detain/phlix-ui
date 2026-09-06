@@ -47,7 +47,11 @@ export interface SyncPlayUser {
 export interface SyncPlayRoom {
   id: string;
   name: string;
-  description?: string;
+  /**
+   * Served truth, not user intent: `normalizeGroup()` derives this from the
+   * snapshot row's `has_password` — the only public/private signal the server
+   * keeps (S288 removed the create-time toggle that pretended otherwise).
+   */
   isPublic: boolean;
   currentSession?: SyncPlaySession;
   memberCount: number;

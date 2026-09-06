@@ -269,7 +269,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     // could not leave the room they had just joined. The room is not invented:
     // it is `normalizeGroup()` of the same `{ group }` the join returned.
     // The server's view wins field by field — an existing object supplies only
-    // what the group state has no counterpart for (description, participants).
+    // what the group state has no counterpart for (participants).
     // The other spread order would be a trap: joining room B while a stale
     // room A sat in the store would leave `currentRoom.id` pointing at A, and
     // `leaveRoom()` would then leave the wrong room.
@@ -302,10 +302,14 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
 
   /**
    * Create a new SyncPlay room and join it.
+   *
+   * S288: the input used to carry `description`/`isPublic` and spread them onto
+   * the POST body, where the server discarded them. The type is now exactly the
+   * create form's honest capacity: a name.
    */
   async function createAndJoinRoom(
     apiBase: string,
-    input: { name: string; description?: string; isPublic: boolean },
+    input: { name: string },
   ): Promise<void> {
     isLoading.value = true;
     error.value = null;

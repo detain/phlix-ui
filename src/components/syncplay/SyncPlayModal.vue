@@ -16,11 +16,21 @@
  * Emits:
  *   - 'update:modelValue': close the modal
  *   - 'joined': when user successfully joins/creates a room (room data)
+ *
+ * S288 — why there is no public/private switch:
+ *   The server has no `isPublic` (or `description`) concept anywhere. The only
+ *   public/private signal it stores and serves is `has_password` on the group
+ *   snapshot, and that is set exclusively by the WS worker — REST create is a
+ *   phantom write (see phlix-server S289 notes), so a persisted flag here could
+ *   not influence the listing even if we sent it. A toggle that changes nothing
+ *   is a lie in the UI; the honest end state is no toggle. Rooms created from
+ *   here are joinable by ID, which is what the old "public" hint described anyway.
+ *   If SP6 ever bridges REST mutations into the authoritative snapshot AND the
+ *   listing endpoint filters on the flag, the control can return for real.
  */
 import { ref, computed, watch } from 'vue';
 import Modal from '../ui/Modal.vue';
 import Button from '../ui/Button.vue';
-import Switch from '../ui/Switch.vue';
 import Icon from '../Icon.vue';
 import { useMessages } from '../../composables/useMessages';
 import { useSyncPlayStore } from '../../stores/useSyncPlayStore';
@@ -50,7 +60,6 @@ const effectiveApiBase = computed(() => props.apiBase ?? mediaApiBase.value);
 const mode = ref<'create' | 'join'>('create');
 const roomName = ref('');
 const roomId = ref('');
-const isPublic = ref(true);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 const publicRooms = ref<SyncPlayRoom[]>([]);
@@ -68,7 +77,6 @@ watch(
     if (open) {
       error.value = null;
       roomName.value = '';
-      isPublic.value = true;
       // If a prefilledRoomId is provided (e.g. from a join-link), use it
       if (props.prefilledRoomId) {
         roomId.value = props.prefilledRoomId;
@@ -104,7 +112,6 @@ async function submit(): Promise<void> {
     if (mode.value === 'create') {
       await syncPlay.createAndJoinRoom(effectiveApiBase.value, {
         name: roomName.value.trim(),
-        isPublic: isPublic.value,
       });
     } else {
       await syncPlay.joinRoom(effectiveApiBase.value, roomId.value.trim());
@@ -177,13 +184,6 @@ function close(): void {
             :placeholder="t('syncplay.roomNamePlaceholder')"
             autocomplete="off"
           />
-        </div>
-
-        <div class="syncplay-modal__field syncplay-modal__field--toggle">
-          <Switch v-model="isPublic" :label="t('syncplay.publicRoom')" />
-          <span class="syncplay-modal__toggle-hint">
-            {{ isPublic ? t('syncplay.publicHint') : t('syncplay.privateHint') }}
-          </span>
         </div>
       </div>
 
@@ -300,12 +300,6 @@ function close(): void {
   gap: var(--space-2);
 }
 
-.syncplay-modal__field--toggle {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .syncplay-modal__label {
   font-size: var(--text-xs);
   font-weight: var(--fw-semibold);
@@ -337,11 +331,6 @@ function close(): void {
   border-color: var(--accent-ring);
   box-shadow: 0 0 0 3px var(--accent-soft);
   background: color-mix(in srgb, var(--surface) 95%, transparent);
-}
-
-.syncplay-modal__toggle-hint {
-  font-size: var(--text-xs);
-  color: var(--text-subtle);
 }
 
 .syncplay-modal__error {

@@ -134,6 +134,16 @@ function stringField(body: Record<string, unknown> | null, key: string): string 
 /** The mutable half of the fake — one group, as `GroupState` holds it. */
 interface GroupStore {
     name: string;
+    /**
+     * S288: the real `SyncPlayController::createGroup()` reads `password` off the
+     * body and `has_password` is the ONLY public/private signal the server stores
+     * and serves. The fake keeps the same causal chain: a create that sends a
+     * password yields `has_password: true` on every subsequent read; one that
+     * does not, reads back public. (The client's `CreateRoomInput` deliberately
+     * offers no password field — the user modal cannot make a private room;
+     * only the admin SPA can.)
+     */
+    password?: string;
     hostId: string;
     members: Record<string, Record<string, unknown>>;
 }
@@ -155,11 +165,12 @@ interface GroupStore {
  * would appear in the join response and then vanish on the next refresh, which
  * is not a behaviour any server has.
  */
-function makeHandlers(group: GroupStore) {
+function makeHandlers(group: GroupStore, extraListingRows: readonly Record<string, unknown>[]) {
     const state = (overrides: Record<string, unknown> = {}): Record<string, unknown> =>
         groupStateFixture({
             group_name: group.name,
             host_id: group.hostId,
+            has_password: group.password !== undefined,
             members: { ...group.members },
             member_count: Object.keys(group.members).length,
             ...overrides,
@@ -171,7 +182,12 @@ function makeHandlers(group: GroupStore) {
         if (method === 'GET' && template === '/api/v1/syncplay/groups') {
             return {
                 groups: [
-                    listingRowFixture({ name: group.name, member_count: Object.keys(group.members).length }),
+                    listingRowFixture({
+                        name: group.name,
+                        has_password: group.password !== undefined,
+                        member_count: Object.keys(group.members).length,
+                    }),
+                    ...extraListingRows,
                 ],
             };
         }
@@ -180,6 +196,7 @@ function makeHandlers(group: GroupStore) {
             // is also the host (`SyncPlayManager::createGroup()` → `addMember()`
             // + `setHost()`). Alice and Bob are not in a room nobody made yet.
             group.name = stringField(reqBody, 'name') ?? '';
+            group.password = stringField(reqBody, 'password');
             group.hostId = memberId;
             group.members = {
                 [memberId]: {
@@ -236,22 +253,33 @@ export interface FakeSyncPlayServer {
  *   Every url the client emits is legal by construction once the bug is fixed, so
  *   proving an "it resolved" assertion is falsifiable needs a server that stops
  *   serving a route the client legitimately calls.
+ * @param options.extraListingRows S288: rows appended to the group listing,
+ *   modelling groups OTHER than the one this fake mutates — i.e. what the real
+ *   listing looks like: rows the WS worker published into the shared snapshot
+ *   table, some password-protected, some not. The public/private discrimination
+ *   the client must honour lives entirely in `has_password` on these rows.
  */
-export function makeSyncPlayServer(baseUrl = '', options: { omit?: string[] } = {}): FakeSyncPlayServer {
+export function makeSyncPlayServer(
+    baseUrl = '',
+    options: { omit?: string[]; extraListingRows?: readonly Record<string, unknown>[] } = {},
+): FakeSyncPlayServer {
     const requests: ObservedRequest[] = [];
     const omit = new Set(options.omit ?? []);
     const registered = COMPILED.filter((r) => !omit.has(`${r.method} ${r.template}`));
     // One live group per server instance, seeded with the two members the
     // fixtures have always described. Every server is built fresh per test, so
     // the mutations below never leak between them.
-    const bodyFor = makeHandlers({
-        name: 'Movie Night',
-        hostId: 'm1',
-        members: {
-            m1: { id: 'm1', name: 'Alice', is_host: true, joined_at: 1_700_000_000 },
-            m2: { id: 'm2', name: 'Bob', is_host: false, joined_at: 1_700_000_060 },
+    const bodyFor = makeHandlers(
+        {
+            name: 'Movie Night',
+            hostId: 'm1',
+            members: {
+                m1: { id: 'm1', name: 'Alice', is_host: true, joined_at: 1_700_000_000 },
+                m2: { id: 'm2', name: 'Bob', is_host: false, joined_at: 1_700_000_060 },
+            },
         },
-    });
+        options.extraListingRows ?? [],
+    );
 
     const impl = (input: string, init?: RequestInit): Promise<Response> => {
         const method = (init?.method ?? 'GET').toUpperCase();

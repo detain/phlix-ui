@@ -121,7 +121,7 @@ describe('SyncPlayApi — every url is a registered server route', () => {
     async function driveEveryMethod(api: SyncPlayApi): Promise<void> {
         await api.listGroups();
         await api.listPublicRooms();
-        await api.createRoom({ name: 'Movie Night', isPublic: true });
+        await api.createRoom({ name: 'Movie Night' });
         await api.getState(GROUP_ID);
         await api.getMembers(GROUP_ID);
         await api.joinRoom(GROUP_ID);
@@ -132,8 +132,9 @@ describe('SyncPlayApi — every url is a registered server route', () => {
         const api = new SyncPlayApi(BASE);
         await driveEveryMethod(api);
 
-        // Denominator, stated: 7 REST calls (listGroups, listPublicRooms→listGroups,
-        // createRoom, getState, getMembers, joinRoom, leaveRoom). A zero-length
+        // Denominator, stated: 7 REST calls (listGroups, listPublicRooms→listGroups
+        // + client-side filter, createRoom, getState, getMembers, joinRoom,
+        // leaveRoom). A zero-length
         // `requests` would otherwise make every assertion below vacuously true.
         expect(server.requests).toHaveLength(7);
 
@@ -295,7 +296,7 @@ describe('SyncPlayApi — maps the real snake_case wire shape', () => {
 
     it('createRoom carries the creator name — the group is created WITH its host', async () => {
         const api = new SyncPlayApi(BASE);
-        const room = await api.createRoom({ name: 'Movie Night', isPublic: true, memberName: 'Ada Lovelace' });
+        const room = await api.createRoom({ name: 'Movie Night', memberName: 'Ada Lovelace' });
 
         expect(server.requests[0]!.body).toMatchObject({ name: 'Movie Night', memberName: 'Ada Lovelace' });
         // A brand-new group holds exactly its creator, who is the host.
@@ -346,9 +347,56 @@ describe('SyncPlayApi — maps the real snake_case wire shape', () => {
         expect(groups[0]!.isPublic).toBe(true);
     });
 
+    // S288 — `listPublicRooms()` used to be `listGroups()` in disguise, so the
+    // modal's "Public rooms" list included password-protected rooms nobody there
+    // could join. It now filters on the one served signal that exists
+    // (`has_password`). Remove the filter and both tests below go red — the
+    // first on length, the second because the created room stops being public
+    // (which would mean the fake, not the filter, had rotted — the pair pins
+    // the whole UI-visible chain: stored password → served has_password →
+    // normalised isPublic → filtered listing).
+    it('listPublicRooms on a mixed listing contains EXACTLY the password-free room', async () => {
+        const mixed = makeSyncPlayServer(BASE, {
+            extraListingRows: [
+                {
+                    id: 'sp_locked9',
+                    name: 'Trivia Night',
+                    member_count: 7,
+                    has_password: true,
+                    current_media: null,
+                    is_playing: false,
+                },
+            ],
+        });
+        vi.stubGlobal('fetch', mixed.fetch);
+        const api = new SyncPlayApi(BASE);
+
+        const publicRooms = await api.listPublicRooms();
+        expect(publicRooms.map((room) => room.id)).toEqual([GROUP_ID]);
+        // listGroups still sees both — the filter belongs to the "public" view,
+        // not to the raw listing contract.
+        expect((await api.listGroups()).map((room) => room.id)).toEqual([GROUP_ID, 'sp_locked9']);
+    });
+
+    it('a group created WITH a password serves has_password and is filtered out of listPublicRooms', async () => {
+        // Exercises the fake's create→serve chain for the only privacy signal
+        // the real server keeps. `password` on this body is what the ADMIN SPA
+        // sends; the user modal's `CreateRoomInput` cannot express it (S288).
+        await server.fetch(`${BASE}/api/v1/syncplay/groups`, {
+            method: 'POST',
+            body: JSON.stringify({ name: 'Secret Screening', password: 'let-me-in' }),
+        });
+        const api = new SyncPlayApi(BASE);
+
+        const groups = await api.listGroups();
+        expect(groups[0]!.name).toBe('Secret Screening');
+        expect(groups[0]!.isPublic).toBe(false);
+        expect(await api.listPublicRooms()).toEqual([]);
+    });
+
     it('createRoom maps `{ success, group }` onto a room with a usable id', async () => {
         const api = new SyncPlayApi(BASE);
-        const room = await api.createRoom({ name: 'Movie Night', isPublic: true });
+        const room = await api.createRoom({ name: 'Movie Night' });
         // `room.id` feeds straight into `joinRoom(room.id)`; an undefined id would
         // request `/groups/undefined/join`.
         expect(room.id).toBe(GROUP_ID);

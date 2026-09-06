@@ -168,7 +168,7 @@ describe('useSyncPlayStore.createAndJoinRoom — against the registered routes o
     it('creates then joins with a real group id', async () => {
         const store = useSyncPlayStore();
         await expect(
-            store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true }),
+            store.createAndJoinRoom(BASE, { name: 'Movie Night' }),
         ).resolves.toBeUndefined();
 
         expect(store.currentRoom!.id).toBe(GROUP_ID);
@@ -222,7 +222,7 @@ describe('S287 — BOTH join-performing paths open the realtime WebSocket', () =
 
     it('createAndJoinRoom opens it too — for the room it just created', async () => {
         const store = useSyncPlayStore();
-        await store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true });
+        await store.createAndJoinRoom(BASE, { name: 'Movie Night' });
 
         expect(sockets).toHaveLength(1);
         // Not merely "a socket": the socket for the CREATED group. A connection
@@ -234,7 +234,7 @@ describe('S287 — BOTH join-performing paths open the realtime WebSocket', () =
 
     it('…and the creator gets the drift anchor a joiner gets', async () => {
         const store = useSyncPlayStore();
-        await store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true });
+        await store.createAndJoinRoom(BASE, { name: 'Movie Night' });
 
         // `driftAmount` extrapolates from the moment of the last server anchor.
         // The create path never set one, so it extrapolated from epoch 0 — over
@@ -254,7 +254,7 @@ describe('S287 — BOTH join-performing paths open the realtime WebSocket', () =
         const store = useSyncPlayStore();
 
         await expect(
-            store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true }),
+            store.createAndJoinRoom(BASE, { name: 'Movie Night' }),
         ).rejects.toThrow();
         expect(sockets).toHaveLength(0);
     });
@@ -264,7 +264,7 @@ describe('S287 — BOTH join-performing paths open the realtime WebSocket', () =
         const store = useSyncPlayStore();
 
         await expect(
-            store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true }),
+            store.createAndJoinRoom(BASE, { name: 'Movie Night' }),
         ).rejects.toThrow();
         // The create succeeded, so this is not "nothing happened" — the room is
         // in the store and the socket still must not be open.
@@ -405,10 +405,14 @@ describe('useSyncPlayStore — the joining member carries the account name', () 
         signIn({ name: 'Ada Lovelace' });
         const store = useSyncPlayStore();
 
-        await store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true });
+        await store.createAndJoinRoom(BASE, { name: 'Movie Night' });
 
+        // S288: this `toEqual` is exact-key — a re-introduced `isPublic`/
+        // `description` spread onto the create body reddens it. The server
+        // consumes `name`/`memberName` here and NOTHING else; the old body also
+        // carried the two fields it threw away.
         expect(server!.requests.map((r) => r.body)).toEqual([
-            { name: 'Movie Night', isPublic: true, memberName: 'Ada Lovelace' },
+            { name: 'Movie Night', memberName: 'Ada Lovelace' },
             { memberName: 'Ada Lovelace' },
         ]);
         // The creator is the host of the group `createRoom` returned — proving the

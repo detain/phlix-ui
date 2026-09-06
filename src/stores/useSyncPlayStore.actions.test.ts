@@ -381,7 +381,7 @@ describe('useSyncPlayStore — error paths', () => {
         server = makeSyncPlayServer(BASE, { omit: ['POST /api/v1/syncplay/groups'] });
         const store = useSyncPlayStore();
 
-        await expect(store.createAndJoinRoom(BASE, { name: 'x', isPublic: true })).rejects.toThrow();
+        await expect(store.createAndJoinRoom(BASE, { name: 'x' })).rejects.toThrow();
         expect(store.error).not.toBeNull();
         expect(store.isLoading).toBe(false);
         expect(store.currentRoom).toBeNull();
@@ -392,7 +392,7 @@ describe('useSyncPlayStore — error paths', () => {
         server = makeSyncPlayServer(BASE, { omit: ['POST /api/v1/syncplay/groups/{id}/join'] });
         const store = useSyncPlayStore();
 
-        await expect(store.createAndJoinRoom(BASE, { name: 'x', isPublic: true })).rejects.toThrow();
+        await expect(store.createAndJoinRoom(BASE, { name: 'x' })).rejects.toThrow();
         // The room WAS created server-side, so the store keeps it — a partial
         // failure, distinct from the create-failed case above.
         expect(store.currentRoom!.id).toBe(GROUP_ID);
