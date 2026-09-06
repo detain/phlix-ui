@@ -248,7 +248,7 @@ describe('S287 — the position report cadence', () => {
 
     it('the CREATOR reports too — the create path starts the timer, not just the join path', async () => {
         const store = useSyncPlayStore();
-        await store.createAndJoinRoom(BASE, { name: 'Movie Night', isPublic: true });
+        await store.createAndJoinRoom(BASE, { name: 'Movie Night' });
         confirmGroup();
         store.updateLocalPosition(3);
 

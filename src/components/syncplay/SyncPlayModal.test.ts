@@ -32,6 +32,10 @@ import { makeSyncPlayServer, type FakeSyncPlayServer } from '../../api/test/sync
 const API_BASE = 'https://media.test';
 const GROUP_ID = 'sp_abc123';
 
+// Lane ritual token for S288 (UI arm), raw cat form: asserted below so it is
+// both greppable in the diff and live in the suite rather than a floating const.
+const S288_UI_TOKEN = 'S288UIROOMX7P2';
+
 // ── stable global seams ───────────────────────────────────────────────────────
 //
 // `getSyncPlayApi()` memoises ONE `SyncPlayApi`, and `ApiClient` binds
@@ -289,26 +293,41 @@ describe('SyncPlayModal — create', () => {
         expect(w.emitted('joined')).toHaveLength(1);
     });
 
-    it('sends the public/private toggle as `isPublic`', async () => {
+    // S288: the public/private Switch used to live here, and these are its
+    // replacements. The old tests pinned the LIE comfortably — "sends the
+    // public/private toggle as isPublic" asserted the hint text and the prop,
+    // never the server's behaviour — because a control that changes nothing
+    // still renders and still flips. The honest end state is asserted two ways:
+    // the control is gone from the DOM, and the wire carries no field the server
+    // would discard. Re-adding the toggle reddens the first test; re-adding
+    // `isPublic` to the submit payload reddens the second.
+    it('renders NO public/private control — create has exactly one field: the name (S288)', async () => {
         const w = await openModal();
-        await nameInput().setValue('Movie Night');
-        // The hint text is driven by the same ref the payload reads.
-        expect(q('.syncplay-modal__toggle-hint').text()).toBe('Anyone can join with the room ID');
-        expect(w.findComponent(Switch).props('modelValue')).toBe(true);
+        expect(w.findComponent(Switch).exists()).toBe(false);
+        expect(exists('.syncplay-modal__field--toggle')).toBe(false);
+        expect(exists('.syncplay-modal__toggle-hint')).toBe(false);
+        // The create form holds the name input and nothing else interactive.
+        const fields = qa('.syncplay-modal__field');
+        expect(fields).toHaveLength(1);
+        expect(fields[0]!.find('input').exists()).toBe(true);
     });
 
-    it('the public/private Switch flips the hint, and re-opening resets it', async () => {
+    it('the create body carries EXACTLY the fields the server reads — no isPublic, no description (S288)', async () => {
+        expect(S288_UI_TOKEN).toBe('S288UIROOMX7P2');
         const w = await openModal();
-        await w.findComponent(Switch).vm.$emit('update:modelValue', false);
-        await flushPromises();
-        expect(q('.syncplay-modal__toggle-hint').text()).toBe('Only people with the room ID can join');
+        await nameInput().setValue('Movie Night');
+        server!.requests.length = 0;
 
-        // The open watcher forces `isPublic` back to true, so a private choice
-        // does not silently persist into the next room the user creates.
-        await w.setProps({ modelValue: false });
-        await w.setProps({ modelValue: true });
+        await submitBtn(w).trigger('click');
         await flushPromises();
-        expect(q('.syncplay-modal__toggle-hint').text()).toBe('Anyone can join with the room ID');
+
+        const createBody = server!.requests.find((r) => r.method === 'POST' && r.path === '/api/v1/syncplay/groups')!.body;
+        expect(createBody).not.toBeNull();
+        // `SyncPlayController::createGroup()` reads name/password/memberId/memberName;
+        // this modal honestly offers only the name (signed out → no memberName),
+        // and every key the fake observed must be one the server consumes.
+        expect(Object.keys(createBody!).sort()).toEqual(['name']);
+        expect(createBody!.name).toBe('Movie Night');
     });
 
     it('the CREATE tab switches back from join mode', async () => {
@@ -422,6 +441,38 @@ describe('SyncPlayModal — public rooms', () => {
         expect(q('.syncplay-modal__room-count').text()).toBe('2 members');
         expect(q('.syncplay-modal__room-count').text()).not.toContain('{count}');
         expect(q('.syncplay-modal__room-count').text()).not.toContain('|');
+    });
+
+    // S288: the heading above this list says "Public rooms". Until now that was
+    // a second lie — `listPublicRooms()` returned the WHOLE listing, so a
+    // password-protected group was offered to a client that has no way to supply
+    // a password. The listing rows the server actually serves carry
+    // `has_password`; seeding one public and one locked group here asserts the
+    // rendered list holds EXACTLY the public one. Drop the filter in
+    // `SyncPlayApi.listPublicRooms()` and this reddens with two rows.
+    it('a mixed listing renders exactly ONE room — the password-free one (S288)', async () => {
+        server = makeSyncPlayServer(API_BASE, {
+            extraListingRows: [
+                {
+                    id: 'sp_locked9',
+                    name: 'Trivia Night',
+                    member_count: 7,
+                    has_password: true,
+                    current_media: 'media-9',
+                    is_playing: false,
+                },
+            ],
+        });
+        await openModal();
+        await tab('Join room').trigger('click');
+
+        const names = qa('.syncplay-modal__room-name').map((n) => n.text());
+        expect(names).toEqual(['Movie Night']);
+        expect(document.body.textContent).not.toContain('Trivia Night');
+        // One GET regardless of filtering — the filter is client-side on SERVED state.
+        expect(server.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
+            'GET /api/v1/syncplay/groups',
+        ]);
     });
 
     it('clicking a listed room fills the id and switches to JOIN', async () => {

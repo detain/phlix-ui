@@ -43,22 +43,25 @@ describe('SyncPlayApi — getSyncPlayApi singleton', () => {
 });
 
 describe('SyncPlayApi — CreateRoomInput interface', () => {
-  it('accepts an object with name and isPublic', () => {
-    const input: CreateRoomInput = {
-      name: 'Test Room',
-      isPublic: true,
-    };
-    expect(input.name).toBe('Test Room');
-    expect(input.isPublic).toBe(true);
-  });
+  // S288: this suite used to "accept" `isPublic` and `description` — fields with
+  // NO server counterpart, whose only documented fate was being discarded on
+  // arrival. A type that admits lies and a UI that tells them are the same bug
+  // twice removed; the fields are gone, so the type now states exactly what the
+  // create endpoint consumes.
+  it('is exactly { name, memberName? } — no other key is assignable', () => {
+    const input: CreateRoomInput = { name: 'Test Room' };
+    expect(input).toEqual({ name: 'Test Room' });
 
-  it('accepts an object with optional description', () => {
-    const input: CreateRoomInput = {
-      name: 'Test Room',
-      description: 'A description',
-      isPublic: false,
-    };
-    expect(input.description).toBe('A description');
+    const withName: CreateRoomInput = { name: 'Test Room', memberName: 'Ada Lovelace' };
+    expect(withName.memberName).toBe('Ada Lovelace');
+
+    // @ts-expect-error isPublic has no server counterpart (S288).
+    const withPublic: CreateRoomInput = { name: 'x', isPublic: true };
+    // @ts-expect-error description has no server counterpart (S288).
+    const withDescription: CreateRoomInput = { name: 'x', description: 'A description' };
+    // @ts-expect-error password is the admin path's field, never the modal's.
+    const withPassword: CreateRoomInput = { name: 'x', password: 'hunter2' };
+    expect([withPublic, withDescription, withPassword].length).toBe(3);
   });
 });
 
