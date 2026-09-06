@@ -94,10 +94,12 @@ export interface SyncPlayStateUpdate {
 }
 export interface SyncPlayPlaybackCommand {
     type: 'play' | 'pause' | 'seek' | 'sync';
-    /** Position in MILLISECONDS — the wire unit (phlix-syncplay SPEC.md:91).
-     *  Outbound commands are converted from ui-internal seconds by
-     *  `useSyncPlayStore.sendCommand()` (S293); inbound commands carry the raw
-     *  wire value. */
+    /** Position in SECONDS — the UI-internal unit every consumer speaks
+     *  (`playbackPosition`, `driftAmount`, `video.currentTime`). The wire unit is
+     *  MILLISECONDS (phlix-syncplay SPEC.md:91): outbound commands are converted
+     *  by `useSyncPlayStore.sendCommand()` (S293); inbound commands are converted
+     *  once at the protocol boundary in `api/syncplay.ts` (S441), so no consumer
+     *  below this adapter ever does ms math. */
     position?: number;
     rate?: number;
     issuedBy: string;
