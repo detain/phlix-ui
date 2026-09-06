@@ -11,8 +11,6 @@ import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayStateUpdate, 
 /** Input for creating a new SyncPlay group. */
 export interface CreateRoomInput {
     name: string;
-    description?: string;
-    isPublic: boolean;
     /**
      * Display name to register the creator under.
      *
@@ -20,10 +18,13 @@ export interface CreateRoomInput {
      * falls back to the literal `'Host'`; nothing ever sent it, so every creator was
      * called "Host" in the member list. Omitted (or empty) keeps the server default.
      *
-     * ⚠ `description` and `isPublic` have NO server counterpart — `createGroup()`
-     * reads only `name`, `password`, `memberId` and `memberName`. They are kept
-     * because they are part of the modal's form model, but they are discarded on
-     * arrival; `has_password` is the only public/private signal the server has.
+     * S288: `description` and `isPublic` used to live here too. They had NO server
+     * counterpart — `createGroup()` reads only `name`, `password`, `memberId` and
+     * `memberName` — so every create silently discarded them. They are gone rather
+     * than documented: the type now states exactly what the wire accepts, which
+     * makes the old UI lie unrepresentable. `has_password` (set via `password`,
+     * which this modal does not offer) is the only public/private signal the
+     * server has.
      */
     memberName?: string;
 }
@@ -161,9 +162,10 @@ export declare class SyncPlayApi {
      * Create a new SyncPlay group.
      * POST /api/v1/syncplay/groups
      *
-     * `input` is forwarded verbatim; the server picks `name`, `password`,
-     * `memberId` and `memberName` out of it and ignores the rest (see
-     * {@link CreateRoomInput}).
+     * `input` is forwarded verbatim and now matches what the endpoint accepts:
+     * `SyncPlayController::createGroup()` reads `name`, `password`, `memberId` and
+     * `memberName` off the body, and {@link CreateRoomInput} offers only
+     * `name`/`memberName` (S288 removed the fields the server threw away).
      */
     createRoom(input: CreateRoomInput): Promise<SyncPlayRoom>;
     /**
@@ -209,9 +211,22 @@ export declare class SyncPlayApi {
      */
     listGroups(): Promise<SyncPlayRoom[]>;
     /**
-     * List public rooms available to join.
-     * GET /api/v1/syncplay/groups
-     * @deprecated Use listGroups() - the server does not distinguish public/private via endpoint
+     * List the rooms a user can actually join from the browser: those the server
+     * reports as password-free.
+     * GET /api/v1/syncplay/groups, filtered client-side.
+     *
+     * S288: this used to be `listGroups()` wearing a "public" label — the listing
+     * is served from the authoritative WS-worker snapshot where `has_password` is
+     * the one and only public/private signal, and every normalised room carries
+     * `isPublic: !has_password`. Filtering on it makes the method's name and the
+     * modal's "Public rooms" heading true: a password-protected room listed here
+     * could never be joined from this modal (there is no password prompt), so
+     * hiding it is honesty, not a filter the server owes us.
+     *
+     * Note for S289 readers: what is filtered here is SERVED state (snapshot rows),
+     * which is exactly the plane the old create-time `isPublic` toggle never
+     * touched — REST writes are phantom. Choosing not to send the flag is therefore
+     * consistent with choosing to read only the flag the server actually keeps.
      */
     listPublicRooms(): Promise<SyncPlayRoom[]>;
 }

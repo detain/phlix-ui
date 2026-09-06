@@ -88,7 +88,13 @@ export interface FakeSyncPlayServer {
  *   Every url the client emits is legal by construction once the bug is fixed, so
  *   proving an "it resolved" assertion is falsifiable needs a server that stops
  *   serving a route the client legitimately calls.
+ * @param options.extraListingRows S288: rows appended to the group listing,
+ *   modelling groups OTHER than the one this fake mutates — i.e. what the real
+ *   listing looks like: rows the WS worker published into the shared snapshot
+ *   table, some password-protected, some not. The public/private discrimination
+ *   the client must honour lives entirely in `has_password` on these rows.
  */
 export declare function makeSyncPlayServer(baseUrl?: string, options?: {
     omit?: string[];
+    extraListingRows?: readonly Record<string, unknown>[];
 }): FakeSyncPlayServer;

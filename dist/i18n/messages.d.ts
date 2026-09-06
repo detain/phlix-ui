@@ -247,7 +247,6 @@ export declare const DEFAULT_MESSAGES: {
         reSyncing: string;
         roomName: string;
         roomId: string;
-        publicRoom: string;
         privateRoom: string;
         create: string;
         join: string;
@@ -264,8 +263,6 @@ export declare const DEFAULT_MESSAGES: {
         title: string;
         roomNamePlaceholder: string;
         roomIdPlaceholder: string;
-        publicHint: string;
-        privateHint: string;
         publicRooms: string;
         waitingForMembers: string;
         rewind: string;

@@ -78,7 +78,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     currentRoom: import("vue").Ref<{
         id: string;
         name: string;
-        description?: string | undefined;
         isPublic: boolean;
         currentSession?: {
             id: string;
@@ -119,7 +118,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     } | null, SyncPlayRoom | {
         id: string;
         name: string;
-        description?: string | undefined;
         isPublic: boolean;
         currentSession?: {
             id: string;
@@ -252,8 +250,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     driftAmount: import("vue").ComputedRef<number>;
     createAndJoinRoom: (apiBase: string, input: {
         name: string;
-        description?: string;
-        isPublic: boolean;
     }) => Promise<void>;
     joinRoom: (apiBase: string, roomId: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
@@ -272,7 +268,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     currentRoom: import("vue").Ref<{
         id: string;
         name: string;
-        description?: string | undefined;
         isPublic: boolean;
         currentSession?: {
             id: string;
@@ -313,7 +308,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     } | null, SyncPlayRoom | {
         id: string;
         name: string;
-        description?: string | undefined;
         isPublic: boolean;
         currentSession?: {
             id: string;
@@ -446,8 +440,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     driftAmount: import("vue").ComputedRef<number>;
     createAndJoinRoom: (apiBase: string, input: {
         name: string;
-        description?: string;
-        isPublic: boolean;
     }) => Promise<void>;
     joinRoom: (apiBase: string, roomId: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
@@ -466,7 +458,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     currentRoom: import("vue").Ref<{
         id: string;
         name: string;
-        description?: string | undefined;
         isPublic: boolean;
         currentSession?: {
             id: string;
@@ -507,7 +498,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     } | null, SyncPlayRoom | {
         id: string;
         name: string;
-        description?: string | undefined;
         isPublic: boolean;
         currentSession?: {
             id: string;
@@ -640,8 +630,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     driftAmount: import("vue").ComputedRef<number>;
     createAndJoinRoom: (apiBase: string, input: {
         name: string;
-        description?: string;
-        isPublic: boolean;
     }) => Promise<void>;
     joinRoom: (apiBase: string, roomId: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
