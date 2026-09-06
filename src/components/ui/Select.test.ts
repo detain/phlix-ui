@@ -7,6 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import Select from './Select.vue';
 import Combobox from './Combobox.vue';
 import { normalizeOptions, nextEnabledIndex, edgeEnabledIndex } from './listbox';
@@ -17,6 +18,20 @@ const opts = [
   { value: 'rating', label: 'Rating', disabled: true },
   { value: 'runtime', label: 'Runtime' },
 ];
+
+/** A click VTU's `trigger()` refuses to deliver to a disabled control (S320 pins). */
+async function rawClick(el: Element): Promise<void> {
+  el.dispatchEvent(new Event('click'));
+  await nextTick();
+}
+
+/** Cancelable raw keydown; returned so callers can read `defaultPrevented`. */
+async function rawKeydown(el: Element, key: string): Promise<KeyboardEvent> {
+  const ev = new KeyboardEvent('keydown', { key, cancelable: true, bubbles: true });
+  el.dispatchEvent(ev);
+  await nextTick();
+  return ev;
+}
 
 describe('listbox helpers', () => {
   it('normalizes strings/numbers to options', () => {
@@ -138,10 +153,50 @@ describe('Select', () => {
     expect(w.emitted('update:modelValue')).toBeFalsy();
   });
 
-  it('does not open when disabled', async () => {
-    const w = mount(Select, { props: { modelValue: null, options: opts, disabled: true } });
-    await w.find('.phlix-select__trigger').trigger('click');
+  it('raw click on the ENABLED trigger opens — the raw route is not inert (S320)', async () => {
+    const w = mount(Select, { props: { modelValue: null, options: opts } });
+    await rawClick(w.find('.phlix-select__trigger').element);
+    // If this is ever `false`, the disabled pin below proves nothing.
+    expect(w.find('.phlix-select__trigger').attributes('aria-expanded')).toBe('true');
+    // The raw KEYDOWN route is live too (control for the onTriggerKeydown pin):
+    // enabled + open, Escape claims the key and closes.
+    const esc = await rawKeydown(w.find('.phlix-select__trigger').element, 'Escape');
+    expect(esc.defaultPrevented).toBe(true);
     expect(w.find('.phlix-select__trigger').attributes('aria-expanded')).toBe('false');
+  });
+
+  it('does not open when disabled — raw pin on openList()\'s guard (S320)', async () => {
+    // The old version used `trigger('click')`, which VTU short-circuits on a
+    // disabled BUTTON — a green no-op (post-mortem: `MusicPager.test.ts`).
+    // Deleting `if (props.disabled || open.value) return;` from Select.vue's
+    // openList() reddens this.
+    const w = mount(Select, { props: { modelValue: null, options: opts, disabled: true } });
+    await rawClick(w.find('.phlix-select__trigger').element);
+    expect(w.find('.phlix-select__trigger').attributes('aria-expanded')).toBe('false');
+  });
+
+  it('keydown on the disabled-open trigger moves, closes and claims nothing — pins onTriggerKeydown() (S320)', async () => {
+    // openList()'s guard already blocks every OPEN path while disabled, so the
+    // only way to reach onTriggerKeydown inside a live dropdown is a Select
+    // disabled AFTER opening. From there Escape/Tab/Arrow reach state directly —
+    // guarded solely by this handler's own `props.disabled` early-return, so
+    // deleting just that line reddens this (not the openList pin, and vice versa).
+    const w = mount(Select, { props: { modelValue: null, options: opts } });
+    const trigger = w.find('.phlix-select__trigger');
+    await rawClick(trigger.element); // open while ENABLED
+    expect(trigger.attributes('aria-expanded')).toBe('true');
+    await w.setProps({ disabled: true });
+    const before = trigger.attributes('aria-activedescendant');
+
+    // ArrowDown: `move(1)` must not run and the handler must not claim the key.
+    const down = await rawKeydown(trigger.element, 'ArrowDown');
+    expect(down.defaultPrevented).toBe(false);
+    expect(trigger.attributes('aria-activedescendant')).toBe(before);
+
+    // Escape: `closeList()` must not run.
+    const esc = await rawKeydown(trigger.element, 'Escape');
+    expect(esc.defaultPrevented).toBe(false);
+    expect(trigger.attributes('aria-expanded')).toBe('true');
   });
 
   it('Space opens; Home/End move to first/last enabled; pointermove sets active', async () => {

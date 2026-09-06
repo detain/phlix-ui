@@ -7,6 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -21,6 +22,12 @@ const tabs = [
   { value: 'b', label: 'Beta', disabled: true },
   { value: 'c', label: 'Gamma' },
 ];
+
+/** A click VTU's `trigger()` refuses to deliver to a disabled control (S320 pins). */
+async function rawClick(el: Element): Promise<void> {
+  el.dispatchEvent(new Event('click'));
+  await nextTick();
+}
 
 describe('Tabs', () => {
   it('renders a tablist with roving tabindex and the active panel', () => {
@@ -42,9 +49,18 @@ describe('Tabs', () => {
     expect(w.emitted('update:modelValue')!.at(-1)).toEqual(['c']);
   });
 
-  it('does not select a disabled tab', async () => {
+  it('raw click on an ENABLED tab emits — the raw route is not inert (S320)', async () => {
     const w = mount(Tabs, { props: { modelValue: 'a', tabs } });
-    await w.findAll('[role="tab"]')[1].trigger('click');
+    await rawClick(w.findAll('[role="tab"]')[2].element);
+    expect(w.emitted('update:modelValue')!.at(-1)).toEqual(['c']);
+  });
+
+  it('does not select a disabled tab — raw pin on select()\'s guard (S320)', async () => {
+    // The old version used `trigger('click')`, which VTU short-circuits on a
+    // disabled BUTTON — it pinned nothing (post-mortem: `MusicPager.test.ts`).
+    // Deleting `if (!t || t.disabled) return;` from Tabs.vue reddens this.
+    const w = mount(Tabs, { props: { modelValue: 'a', tabs } });
+    await rawClick(w.findAll('[role="tab"]')[1].element);
     expect(w.emitted('update:modelValue')).toBeFalsy();
   });
 
