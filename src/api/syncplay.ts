@@ -127,6 +127,21 @@ function num(value: unknown, fallback = 0): number {
   return fallback;
 }
 
+/**
+ * S441 — the protocol boundary's ONE scale decode: wire MILLISECONDS →
+ * UI-internal SECONDS.
+ *
+ * The syncplay wire carries every position in ms (SPEC.md:91; S293 moved both
+ * send boundaries to ×1000), while every UI consumer — `session.playbackPosition`,
+ * `driftAmount`, `video.currentTime` — is typed in seconds. Inbound frames
+ * landed raw, so a host's 300 000 ms re-anchor arrived as 300 000 SECONDS
+ * (finish-S293 audit32, sites 1-3). Decoding here, once, keeps every
+ * downstream site unit-honest with no math of its own.
+ */
+function wireMsToSeconds(positionMs: number): number {
+  return positionMs / 1000;
+}
+
 /** Unix SECONDS (the server's unit) → ISO 8601. */
 function isoFromUnixSeconds(seconds: unknown): string {
   const s = num(seconds, 0);
@@ -218,7 +233,7 @@ export function groupToSession(raw: RawSyncPlayGroup | undefined): SyncPlaySessi
     createdAt: isoFromUnixSeconds(g.created_at),
     state,
     currentMediaId: g.current_media_id ?? null,
-    playbackPosition: num(g.playback_position),
+    playbackPosition: wireMsToSeconds(num(g.playback_position)),
     playbackRate: state === 'playing' ? 1 : 0,
     serverTime: num(g.last_activity_at, Math.floor(Date.now() / 1000)),
     lastSync: isoFromUnixSeconds(g.last_activity_at),
@@ -565,10 +580,11 @@ function connectSyncPlaySocket(
     memberName: mname,
     onPlaybackCommand: (command) => {
       if (!messageHandler) return;
-      // Convert to the format expected by useSyncPlayStore
+      // Convert to the format expected by useSyncPlayStore — the wire's ms
+      // position becomes the store's seconds HERE, at the boundary (S441).
       messageHandler({
         type: command.type,
-        position: command.position,
+        position: wireMsToSeconds(command.position),
         roomId: syncPlayRoomId ?? undefined,
       });
     },
@@ -576,7 +592,7 @@ function connectSyncPlaySocket(
       if (!messageHandler) return;
       messageHandler({
         type: isPlaying ? 'play' : 'pause',
-        position,
+        position: wireMsToSeconds(position),
         roomId: syncPlayRoomId ?? undefined,
       });
       void memberId;

@@ -25,9 +25,18 @@ describe('num() — numeric coercion off the wire', () => {
         expect(normalizeGroup({ group_id: 'g1', member_count: '7' } as unknown as RawSyncPlayGroup).memberCount).toBe(7);
     });
 
-    it('accepts a numeric STRING for playback_position', () => {
-        const s = groupToSession({ group_id: 'g1', playback_position: '123.5' } as unknown as RawSyncPlayGroup);
-        expect(s.playbackPosition).toBe(123.5);
+    it('accepts a numeric STRING for playback_position — and decodes it ms→s (S441)', () => {
+        // `{"playback_position": "42500"}` is what an uncast MySQL column
+        // serialises to, in the WIRE unit (milliseconds, SPEC.md:91). The
+        // session field is UI-internal SECONDS: 42 500 ms must land as 42.5.
+        // Without the boundary decode the value is 42 500 (red); doubled it
+        // is 0.0425 (red).
+        const s = groupToSession({ group_id: 'g1', playback_position: '42500' } as unknown as RawSyncPlayGroup);
+        expect(s.playbackPosition).toBe(42.5);
+    });
+
+    it('decodes a numeric playback_position ms→s (S441)', () => {
+        expect(groupToSession({ group_id: 'g1', playback_position: 120_000 }).playbackPosition).toBe(120);
     });
 
     it('falls back for a BLANK string rather than coercing it to 0 by accident', () => {

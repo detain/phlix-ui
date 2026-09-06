@@ -229,7 +229,10 @@ describe('SyncPlayApi — maps the real snake_case wire shape', () => {
         expect(session.id).toBe(GROUP_ID);
         expect(session.roomId).toBe(GROUP_ID);
         expect(session.state).toBe('playing');
-        expect(session.playbackPosition).toBe(123);
+        // S441 — the fake server's join payload carries the WIRE unit
+        // (`playback_position: 123` ms, SPEC.md:91); the session field is
+        // UI-internal seconds. An undecoded leg reads 123 here and reds.
+        expect(session.playbackPosition).toBe(123 / 1000);
         expect(session.playbackRate).toBe(1);
         expect(session.createdBy).toBe('m1');
         // Alice, Bob — and the joiner the fake server just added, exactly as the

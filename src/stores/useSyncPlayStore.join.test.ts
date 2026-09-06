@@ -99,7 +99,9 @@ describe('useSyncPlayStore.joinRoom — against the registered routes only', () 
         expect(store.currentSession).not.toBeNull();
         expect(store.currentSession!.id).toBe(GROUP_ID);
         expect(store.currentSession!.state).toBe('playing');
-        expect(store.currentSession!.playbackPosition).toBe(123);
+        // S441 — wire ms (the fake server's join `playback_position: 123`)
+        // decodes to UI-internal seconds at the api boundary.
+        expect(store.currentSession!.playbackPosition).toBe(123 / 1000);
     });
 
     it('issues exactly one request — the join — and nothing else', async () => {
@@ -301,7 +303,8 @@ describe('useSyncPlayStore.refreshMembers / refreshState — against the registe
             path: `/api/v1/syncplay/groups/${GROUP_ID}`,
             status: 200,
         });
-        expect(store.currentSession!.playbackPosition).toBe(123);
+        // S441 — the refresh reads the same wire-ms field; seconds at the store.
+        expect(store.currentSession!.playbackPosition).toBe(123 / 1000);
     });
 
     it('leaveRoom posts the leave route and clears the session', async () => {

@@ -1312,7 +1312,7 @@ function za(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-BszK7JPD.js")
+			component: () => import("./PlayerPage-DLN4S00S.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1360,7 +1360,7 @@ function za(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-B5x5dkmk.js")
+			component: () => import("./SyncPlayPage-DlqP-rzr.js")
 		},
 		{
 			path: `${t}/music`,
