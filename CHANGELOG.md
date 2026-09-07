@@ -6,6 +6,8 @@
 
 ### Changed
 
+- **Route-manifest provenance re-pin — cs#24 currency cascade (2026-09-07).** Vendored `src/api/test/server-route-manifest.json` re-vendored verbatim from `@phlix/contracts` master `59fd9b02` (regen against server master `df6aa8e5`); all 400 tuples byte-identical — only provenance moves. Currency pins in `src/api/test/routeGate.api.test.ts`: md5 `e8b23b9b` → `b6acafdf`, serverSha `bab33ff2` → `df6aa8e5`; docblock contracts cites in `routeGate.api.test.ts`/`routeGate.harness.test.ts` move to `59fd9b02`. `dist/` untouched. Untagged wave: no version or install-pin moves.
+
 - **Route-manifest provenance re-pin — cs#23 currency cascade (2026-09-06).** The vendored `src/api/test/server-route-manifest.json` is re-vendored verbatim from `@phlix/contracts` master `bcd27df` (regen against server master `bab33ff2`; previous provenance `876d0ea`/`e4853f0f`). All 400 tuples byte-identical — only provenance moves — currency pins in `src/api/test/routeGate.api.test.ts` follow: md5 `791235d4` → `e8b23b9b`, serverSha `e4853f0f` → `bab33ff2`; docblock contracts cites in `routeGate.api.test.ts` and `routeGate.harness.test.ts` move to `bcd27df`. `dist/` untouched. Untagged wave: no version or install-pin moves.
 
 - **The `vite.config.ts` timeout-budget rationale now names its own cost (S319).** The comment said only WHY the 30 s budget exists (jsdom instance-load contention); it now also says WHAT it hides — a genuine 5–30 s per-test slowdown (a leaked subscription re-rendering abandoned instances, a poller spinning) still finishes green, so speed regressions in that band surface only through timing triage, never as a suite failure. Prose only; the guard test deliberately remains a presence-check — a check derived from its subject self-adjusts.
