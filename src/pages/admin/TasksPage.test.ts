@@ -43,7 +43,17 @@ const REAP_SCAN_PATH = '/api/v1/admin/maintenance/reap-scan-jobs';
 const REAP_TRANSCODE_PATH = '/api/v1/admin/maintenance/reap-transcode-jobs';
 const CLEANUP_PATH = '/api/v1/admin/maintenance/cleanup-orphaned-stats';
 const BACKUP_CREATE_PATH = '/api/v1/admin/backup/create';
-const UPDATE_STATUS_PATH = '/api/v1/admin/updates/status';
+const UPDATE_CHECK_PATH = '/api/v1/admin/updates/check';
+
+const DEFAULT_UPDATE_STATUS = {
+  currentVersion: '1.2.3',
+  latestVersion: '1.2.3',
+  updateAvailable: false,
+  checkEnabled: true,
+  lastCheckedAt: 1,
+  lastError: null,
+  updateCommand: 'git pull',
+};
 
 const catalogue = [
   { task: 'storage-snapshot', mode: 'queued', label: 'Storage snapshot', description: 'Recompute buckets.', destructive: false },
@@ -77,20 +87,6 @@ function makeClient(over: Over = {}) {
   const get = vi.fn(async (endpoint: string) => {
     if (endpoint === TASKS_PATH) return { success: true, data: over.tasks ?? catalogue };
     if (endpoint === JOBS_PATH) return { success: true, data: over.jobs ?? [] };
-    if (endpoint === UPDATE_STATUS_PATH) {
-      return {
-        success: true,
-        data: over.updateStatus ?? {
-          currentVersion: '1.2.3',
-          latestVersion: '1.2.3',
-          updateAvailable: false,
-          checkEnabled: true,
-          lastCheckedAt: 1,
-          lastError: null,
-          updateCommand: 'git pull',
-        },
-      };
-    }
     throw new Error(`unexpected GET ${endpoint}`);
   });
   const post = vi.fn(async (endpoint: string) => {
@@ -104,6 +100,10 @@ function makeClient(over: Over = {}) {
     }
     if (endpoint === DEDUPE_PATH) {
       return { success: true, created: true, data: { job: { ...queuedJob, task: 'dedupe-paths' } } };
+    }
+    if (endpoint === UPDATE_CHECK_PATH) {
+      // S273: the 202 body echoes the status persisted at response time.
+      return { success: true, message: 'Update check dispatched.', data: over.updateStatus ?? DEFAULT_UPDATE_STATUS };
     }
     return { success: true, data: { reaped: 0, older_than_seconds: 21600, requested_older_than_seconds: 21600, floor_applied: false, total: 0, deleted: {}, limit: 5000, truncated: false } };
   });
@@ -190,7 +190,7 @@ describe('Admin TasksPage — mount', () => {
       'Reap stale scan jobs',
       'Reap stale transcode jobs',
       'Create backup now',
-      'Check update status',
+      'Check for updates now',
     ]) {
       expect(findBtn(w, label), `${label} is missing`).toBeTruthy();
     }
@@ -552,16 +552,18 @@ describe('Admin TasksPage — backup now', () => {
   });
 });
 
-describe('Admin TasksPage — update status', () => {
-  it('GETs ONLY /api/v1/admin/updates/status and reports "up to date"', async () => {
-    const { client, get } = makeClient();
+describe('Admin TasksPage — check for updates (S273 trigger)', () => {
+  it('POSTs the TRIGGER only — no GET — and reports from the 202 status', async () => {
+    const { client, get, post } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     (get as unknown as ReturnType<typeof vi.fn>).mockClear();
-    await findBtn(w, 'Check update status')!.trigger('click');
+    (post as unknown as ReturnType<typeof vi.fn>).mockClear();
+    await findBtn(w, 'Check for updates now')!.trigger('click');
     await flushPromises();
-    expect(paths(get)).toEqual([UPDATE_STATUS_PATH]);
-    expect(feedback(w)).toEqual(['Up to date on 1.2.3.']);
+    expect(paths(post)).toEqual([UPDATE_CHECK_PATH]);
+    expect(paths(get)).toEqual([]);
+    expect(feedback(w)).toEqual(['Check dispatched. Up to date on 1.2.3.']);
     w.unmount();
   });
 
@@ -579,18 +581,18 @@ describe('Admin TasksPage — update status', () => {
     });
     const w = mountPage(client);
     await flushPromises();
-    await findBtn(w, 'Check update status')!.trigger('click');
+    await findBtn(w, 'Check for updates now')!.trigger('click');
     await flushPromises();
-    expect(feedback(w)).toEqual(['Update available: 1.3.0 (running 1.2.3).']);
+    expect(feedback(w)).toEqual(['Check dispatched. Update available: 1.3.0 (running 1.2.3).']);
     w.unmount();
   });
 
-  it('renders the failure REASON', async () => {
-    const { client, get } = makeClient();
+  it('renders the failure REASON of the TRIGGER call', async () => {
+    const { client, post } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    (get as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new ApiError('update check is disabled', 400));
-    await findBtn(w, 'Check update status')!.trigger('click');
+    (post as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new ApiError('update check is disabled', 400));
+    await findBtn(w, 'Check for updates now')!.trigger('click');
     await flushPromises();
     expect(feedback(w)).toEqual(['update check is disabled']);
     w.unmount();

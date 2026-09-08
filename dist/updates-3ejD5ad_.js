@@ -29,8 +29,11 @@ var i = class {
 	async getStatus(e) {
 		return r(await this.client.get("/api/v1/admin/updates/status", void 0, e));
 	}
+	async check(e) {
+		return r(await this.client.post("/api/v1/admin/updates/check", {}, e));
+	}
 };
 //#endregion
 export { i as t };
 
-//# sourceMappingURL=updates-C0lkhPWc.js.map
+//# sourceMappingURL=updates-3ejD5ad_.js.map

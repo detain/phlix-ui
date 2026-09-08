@@ -1,7 +1,7 @@
 import { n as e, t } from "./Icon-CkTBN_k5.js";
 import { l as n, p as r, t as i, u as a } from "./client-DA-5QZXw.js";
 import { t as o } from "./Button-Cw8Wl4QR.js";
-import { t as s } from "./updates-C0lkhPWc.js";
+import { t as s } from "./updates-3ejD5ad_.js";
 import { Fragment as c, computed as l, createBlock as u, createCommentVNode as d, createElementBlock as f, createElementVNode as p, createTextVNode as m, createVNode as h, defineComponent as g, inject as _, normalizeClass as v, onMounted as y, openBlock as b, ref as x, renderList as S, toDisplayString as C, unref as w, withCtx as T } from "vue";
 import { RouterLink as E, RouterView as D } from "vue-router";
 //#region src/components/admin/UpdateAvailableBanner.vue?vue&type=script&setup=true&lang.ts
@@ -137,4 +137,4 @@ var O = ["data-variant"], k = { class: "update-banner__body" }, A = {
 //#endregion
 export { H as default };
 
-//# sourceMappingURL=AdminLayout-B6ud_IXO.js.map
+//# sourceMappingURL=AdminLayout-M7h0moLU.js.map

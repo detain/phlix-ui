@@ -9,7 +9,7 @@ import { t as te } from "./EmptyState-CwWtkhEJ.js";
 import { t as ne } from "./PageHint-3dL7qb5N.js";
 import { t as re } from "./backup-IdY_vzc2.js";
 import { t as ie } from "./maintenance-CETCLHzL.js";
-import { t as ae } from "./updates-C0lkhPWc.js";
+import { t as ae } from "./updates-3ejD5ad_.js";
 import { t as c } from "./helpLinks-ya0IGJSe.js";
 import { Fragment as oe, computed as l, createBlock as se, createCommentVNode as u, createElementBlock as d, createElementVNode as f, createTextVNode as p, createVNode as m, defineComponent as h, inject as ce, normalizeClass as g, onBeforeUnmount as le, onMounted as ue, openBlock as _, reactive as v, ref as y, renderList as de, resolveComponent as fe, toDisplayString as b, unref as x, vModelRadio as S, withCtx as C, withDirectives as w } from "vue";
 //#region src/pages/admin/TasksPage.vue?vue&type=script&setup=true&lang.ts
@@ -252,10 +252,10 @@ var pe = { class: "admin-tasks" }, me = { class: "admin-tasks__head" }, he = {
 		async function Dt() {
 			M["update-status"] = !0;
 			try {
-				let e = await mt.getStatus();
-				Q.value = e, P("update-status", e.updateAvailable ? `Update available: ${e.latestVersion ?? "unknown"} (running ${e.currentVersion}).` : `Up to date on ${e.currentVersion}.`);
+				let e = await mt.check();
+				Q.value = e, P("update-status", e.updateAvailable ? `Check dispatched. Update available: ${e.latestVersion ?? "unknown"} (running ${e.currentVersion}).` : `Check dispatched. Up to date on ${e.currentVersion}.`);
 			} catch (e) {
-				F("update-status", e, "Failed to read the update status.");
+				F("update-status", e, "Failed to trigger the update check.");
 			} finally {
 				M["update-status"] = !1;
 			}
@@ -555,14 +555,14 @@ var pe = { class: "admin-tasks" }, me = { class: "admin-tasks__head" }, he = {
 					}, "Server", -1),
 					f("div", st, [
 						t[44] ||= f("div", { class: "admin-tasks__card-head" }, [f("h3", { class: "admin-tasks__card-title" }, "Update status")], -1),
-						t[45] ||= f("p", { class: "admin-tasks__desc" }, " The version check runs in the background on the server; there is no endpoint that forces one. This refetches the result of the last check. ", -1),
+						t[45] ||= f("p", { class: "admin-tasks__desc" }, " The version check also runs in the background on the server. This triggers one check now; the reply carries the status persisted at response time, so an async transport's own result lands on the next trigger or the background poll. ", -1),
 						f("div", ct, [m(a, {
 							variant: "solid",
 							size: "sm",
 							loading: M["update-status"],
 							onClick: Dt
 						}, {
-							default: C(() => [...t[43] ||= [p(" Check update status ", -1)]]),
+							default: C(() => [...t[43] ||= [p(" Check for updates now ", -1)]]),
 							_: 1
 						}, 8, ["loading"])]),
 						Q.value ? (_(), d("p", lt, " Running " + b(Q.value.currentVersion) + " · latest seen " + b(Q.value.latestVersion ?? "unknown"), 1)) : u("", !0),
@@ -634,8 +634,8 @@ var pe = { class: "admin-tasks" }, me = { class: "admin-tasks__head" }, he = {
 			]);
 		};
 	}
-}), [["__scopeId", "data-v-a62b4c82"]]);
+}), [["__scopeId", "data-v-b0101c02"]]);
 //#endregion
 export { D as default };
 
-//# sourceMappingURL=TasksPage-jKMjae1w.js.map
+//# sourceMappingURL=TasksPage-BngzTIK_.js.map
