@@ -641,11 +641,18 @@ describe('route gate — admin/transcoding.ts (AdminTranscodingApi)', () => {
 });
 
 describe('route gate — admin/updates.ts (AdminUpdatesApi)', () => {
-    it('issues exactly GET /api/v1/admin/updates/status', async () => {
+    it('issues exactly GET …/status + POST …/check (S273 trigger), both registered', async () => {
         const server = makeRouteGateServer(BASE);
         const api = new AdminUpdatesApi(makeClient(server));
         await driveGated(server, 'getStatus', () => api.getStatus());
-        expectGateClean(server, ['GET /api/v1/admin/updates/status'], 1);
+        await driveGated(server, 'check', () => api.check());
+        // The 401st tuple is the S273 route; if the vendored manifest were
+        // stale (400-era) the POST drive would 404 and name the url in the RED.
+        expectGateClean(
+            server,
+            ['GET /api/v1/admin/updates/status', 'POST /api/v1/admin/updates/check'],
+            2,
+        );
     });
 });
 

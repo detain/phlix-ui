@@ -1066,7 +1066,7 @@ var Wi = {
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-jKMjae1w.js")
+	component: () => import("./TasksPage-BngzTIK_.js")
 }, ca = {
 	name: "admin-transcoding",
 	path: "transcoding",
@@ -1201,7 +1201,7 @@ function xa(e = "/app", t = ya) {
 	}), [{
 		path: n,
 		meta: { requiresAdmin: !0 },
-		component: () => import("./AdminLayout-B6ud_IXO.js"),
+		component: () => import("./AdminLayout-M7h0moLU.js"),
 		props: {
 			base: e,
 			pages: t

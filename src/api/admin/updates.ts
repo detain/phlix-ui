@@ -40,6 +40,14 @@ export interface CoreUpdateStatus {
 /** The status path. Identical on phlix-server and phlix-hub — that is the point. */
 export const ADMIN_UPDATES_STATUS_ENDPOINT = '/api/v1/admin/updates/status';
 
+/**
+ * The TRIGGER path (S273). phlix-SERVER only — phlix-hub does not register this
+ * route; its update surface stays the read-only status card. That asymmetry is
+ * exactly why {@link AdminUpdatesApi.check} is documented server-only instead
+ * of joining `getStatus` as a "both services" path.
+ */
+export const ADMIN_UPDATES_CHECK_ENDPOINT = '/api/v1/admin/updates/check';
+
 type Raw = Record<string, unknown>;
 
 function isRecord(value: unknown): value is Raw {
@@ -102,8 +110,9 @@ export function parseCoreUpdateStatus(raw: unknown): CoreUpdateStatus {
 }
 
 /**
- * AdminUpdatesApi (S76) — typed wrapper over the core update-check status
- * endpoint, consumed by `UpdateAvailableBanner`.
+ * AdminUpdatesApi (S76, S273) — typed wrapper over the core update-check
+ * status endpoint and its trigger, consumed by `UpdateAvailableBanner` and
+ * the admin Tasks page.
  *
  * There is intentionally NO apply/upgrade method: neither backend exposes one
  * (both refuse to run git/composer/systemctl from an HTTP handler), and
@@ -120,6 +129,24 @@ export class AdminUpdatesApi {
    */
   async getStatus(signal?: AbortSignal): Promise<CoreUpdateStatus> {
     const raw = await this.client.get<unknown>(ADMIN_UPDATES_STATUS_ENDPOINT, undefined, signal);
+    return parseCoreUpdateStatus(raw);
+  }
+
+  /**
+   * `POST /api/v1/admin/updates/check` → 202 Accepted (S273).
+   *
+   * The server dispatches one marker fetch on its own event loop and answers
+   * WITHOUT waiting for the outbound request; the body is the status
+   * PERSISTED AT RESPONSE TIME, so under the real async transport the
+   * dispatched check's own result surfaces on a later `getStatus()` — the
+   * same non-blocking guarantee the periodic poll has.
+   *
+   * phlix-SERVER only (see {@link ADMIN_UPDATES_CHECK_ENDPOINT}); a hub-hosted
+   * console has no route to call and TasksPage is server-addressed anyway
+   * (its backup/maintenance siblings prove that).
+   */
+  async check(signal?: AbortSignal): Promise<CoreUpdateStatus> {
+    const raw = await this.client.post<unknown>(ADMIN_UPDATES_CHECK_ENDPOINT, {}, signal);
     return parseCoreUpdateStatus(raw);
   }
 }

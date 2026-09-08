@@ -8,6 +8,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   AdminUpdatesApi,
+  ADMIN_UPDATES_CHECK_ENDPOINT,
   ADMIN_UPDATES_STATUS_ENDPOINT,
   parseCoreUpdateStatus,
 } from './updates';
@@ -220,5 +221,59 @@ describe('AdminUpdatesApi', () => {
     const api = new AdminUpdatesApi({ get } as unknown as ApiClient);
 
     await expect(api.getStatus()).rejects.toThrow('boom');
+  });
+});
+
+describe('AdminUpdatesApi.check — S273 trigger', () => {
+  // The 202 body phlix-server's AdminUpdatesController::check() emits: the
+  // dispatch note beside the status PERSISTED AT RESPONSE TIME (same DTO the
+  // status endpoint serves, hence the same envelope fixture).
+  function acceptedEnvelope(): unknown {
+    return { ...(serverEnvelope() as object), message: 'Update check dispatched.' };
+  }
+
+  it('POSTs the trigger path with an empty body', async () => {
+    const post = vi.fn().mockResolvedValue(acceptedEnvelope());
+    const api = new AdminUpdatesApi({ post } as unknown as ApiClient);
+
+    await api.check();
+
+    expect(post).toHaveBeenCalledWith('/api/v1/admin/updates/check', {}, undefined);
+    // Pinned as a literal above AND against the exported constant, so renaming
+    // the constant cannot quietly move the endpoint (same discipline as status).
+    expect(ADMIN_UPDATES_CHECK_ENDPOINT).toBe('/api/v1/admin/updates/check');
+  });
+
+  it('forwards an abort signal', async () => {
+    const post = vi.fn().mockResolvedValue(acceptedEnvelope());
+    const api = new AdminUpdatesApi({ post } as unknown as ApiClient);
+    const controller = new AbortController();
+
+    await api.check(controller.signal);
+
+    expect(post).toHaveBeenCalledWith(
+      '/api/v1/admin/updates/check',
+      {},
+      controller.signal,
+    );
+  });
+
+  it('returns the parsed 202 status, not the raw envelope', async () => {
+    const post = vi.fn().mockResolvedValue(acceptedEnvelope());
+    const api = new AdminUpdatesApi({ post } as unknown as ApiClient);
+
+    const status = await api.check();
+
+    expect(status.currentVersion).toBe('1.2.2');
+    expect(status.latestVersion).toBe('1.3.0');
+    expect(status).not.toHaveProperty('success');
+    expect(status).not.toHaveProperty('message');
+  });
+
+  it('propagates a rejection rather than swallowing it', async () => {
+    const post = vi.fn().mockRejectedValue(new Error('dispatch boom'));
+    const api = new AdminUpdatesApi({ post } as unknown as ApiClient);
+
+    await expect(api.check()).rejects.toThrow('dispatch boom');
   });
 });

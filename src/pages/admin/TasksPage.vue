@@ -394,19 +394,24 @@ async function runBackupNow(): Promise<void> {
  */
 const updateStatus = ref<CoreUpdateStatus | null>(null);
 
-async function refreshUpdateStatus(): Promise<void> {
+/**
+ * S273: the button TRIGGERS a check (`POST /admin/updates/check`, 202) and
+ * renders the status the server persisted as of that response — replacing
+ * the old read-only refetch whose card had to admit nothing was checked.
+ */
+async function checkForUpdates(): Promise<void> {
   busy['update-status'] = true;
   try {
-    const status = await updatesApi.getStatus();
+    const status = await updatesApi.check();
     updateStatus.value = status;
     ok(
       'update-status',
       status.updateAvailable
-        ? `Update available: ${status.latestVersion ?? 'unknown'} (running ${status.currentVersion}).`
-        : `Up to date on ${status.currentVersion}.`,
+        ? `Check dispatched. Update available: ${status.latestVersion ?? 'unknown'} (running ${status.currentVersion}).`
+        : `Check dispatched. Up to date on ${status.currentVersion}.`,
     );
   } catch (e) {
-    fail('update-status', e, 'Failed to read the update status.');
+    fail('update-status', e, 'Failed to trigger the update check.');
   } finally {
     busy['update-status'] = false;
   }
@@ -727,12 +732,13 @@ onBeforeUnmount(stopPolling);
           <h3 class="admin-tasks__card-title">Update status</h3>
         </div>
         <p class="admin-tasks__desc">
-          The version check runs in the background on the server; there is no endpoint that forces
-          one. This refetches the result of the last check.
+          The version check also runs in the background on the server. This triggers one check now;
+          the reply carries the status persisted at response time, so an async transport's own
+          result lands on the next trigger or the background poll.
         </p>
         <div class="admin-tasks__actions">
-          <Button variant="solid" size="sm" :loading="busy['update-status']" @click="refreshUpdateStatus">
-            Check update status
+          <Button variant="solid" size="sm" :loading="busy['update-status']" @click="checkForUpdates">
+            Check for updates now
           </Button>
         </div>
         <p v-if="updateStatus" class="admin-tasks__desc">
