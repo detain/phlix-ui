@@ -88,7 +88,7 @@ describe('route gate server — control', () => {
     });
 
     it('pins the manifest provenance — server sha + generator, never hand-edited', () => {
-        // Canonical contracts export vendored at contracts 28000fa4 (full-literal
+        // Canonical contracts export vendored at contracts a1ca39d8 (full-literal
         // sha + md5 pins live in routeGate.api.test.ts's currency block).
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toMatch(/^[0-9a-f]{40}$/);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.generator).toBe(
