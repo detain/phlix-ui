@@ -8,6 +8,13 @@
 
 ### Changed
 
+- **Route-manifest provenance re-pin — cs#30 era-2 (2026-09-09), PURE.** Server moved mid-wave (`32183f5b` → `5986b61d`, S210 #749 — docker boot-gate bounds only,
+  route-zero re-proven: Router/Application/guard blobs and Routes/+FastPath/ trees byte-identical).
+  Vendored `server-route-manifest.json` re-vendored byte-identical from `@phlix/contracts` master
+  `57a8528a` (era-2 regen; full-file md5 `cb53d53f` → `045c0984`, blob identity `dd0cbaca` verified
+  against the contracts dist artifact; stripped route-content md5 `508a…` holds — 401 tuples).
+  Gate pins advance in the same commit; counts unchanged..
+
 - **Route-manifest provenance re-pin — cs#30 currency cascade (2026-09-09), PURE.** Vendored `src/api/test/server-route-manifest.json` re-vendored byte-identical from `@phlix/contracts` master `767146a8` (untagged regen against server master `32183f5b` — span `e15d9543`→`32183f5b` re-proven route-zero: S266 #747 + S171 #748, guard-test/`Router.php`/`Routes/`+`FastPath/` blobs/trees identical, `WebPortalRouter.php` comment-only (strip-whitespace md5 equal), deleted `public/index.php` carried zero route-wiring hits); 401 tuples unchanged, stripped route-content md5 `508a6415` old = new — only provenance moves. Currency pins in `routeGate.api.test.ts`: full-file md5 `27834ef4` → `cb53d53f`, serverSha `e15d9543` → `32183f5b`; docblock contracts cites in `routeGate.api.test.ts`/`routeGate.harness.test.ts` move to `767146a8`. `contractsPin.test.ts` UNTOUCHED — the `#v0.4.6` pin tracks tags, this wave is untagged. `dist/` byte-identical (build + `dist:check`, 0 drift entries).
 
 - **Route-manifest provenance re-pin — cs#29 currency cascade (2026-09-09), PURE.** Vendored `src/api/test/server-route-manifest.json` re-vendored byte-identical from `@phlix/contracts` master `8697c099` (untagged regen against server master `e15d9543` — span `a5cde27e`→`e15d9543` re-proven route-zero: S211 #745 + S114 #746, route-authority blobs/trees identical, zero route-wiring hunks in `Application.php`); 401 tuples unchanged, stripped route-content md5 `508a6415` old = new — only provenance moves. Currency pins in `routeGate.api.test.ts`: full-file md5 `0331a2d8` → `27834ef4`, serverSha `a5cde27e` → `e15d9543`; docblock contracts cites in `routeGate.api.test.ts`/`routeGate.harness.test.ts` move to `8697c099`. `contractsPin.test.ts` UNTOUCHED — the `#v0.4.6` pin tracks tags, this wave is untagged. `dist/` byte-identical (build + `dist:check`, 0 drift entries).
