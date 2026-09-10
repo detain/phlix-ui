@@ -11,6 +11,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import UserMenu from './UserMenu.vue';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useProfileStore } from '../stores/useProfileStore';
 
 const stub = { template: '<div />' };
 function makeRouter(): Router {
@@ -70,8 +71,8 @@ describe('UserMenu — signed in', () => {
     expect(panel.text()).toContain('Ada');
     expect(panel.text()).toContain('Settings');
     expect(panel.text()).toContain('Sign out');
-    // Settings is the second menu item (History is first now)
-    await panel.findAll('.usermenu__item')[1].trigger('click');
+    // Menu order (S82): History, Switch Profile, Manage Profiles, Settings, Sign out.
+    await panel.findAll('.usermenu__item')[3].trigger('click');
     expect(push).toHaveBeenCalledWith('/app/settings');
   });
 
@@ -119,5 +120,65 @@ describe('UserMenu — signed in', () => {
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     await flushPromises();
     expect(w.find('.usermenu__panel').exists()).toBe(false);
+  });
+});
+
+// S82 — the two new profile entries. They live in the signed-in panel alongside
+// History / Settings / Sign out: "Switch Profile" re-arms the Who's-watching
+// gate (and closes the menu), "Manage Profiles" routes to <base>/profiles.
+describe('UserMenu — profile entries (S82)', () => {
+  beforeEach(() => {
+    // The profile store lazily reads the list; answer with one honest row so
+    // openGate()'s user-initiated retry never hits the network.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        ({
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: async () => ({ profiles: [] }),
+          text: async () => '{"profiles":[]}',
+        }) as unknown as Response,
+      ),
+    );
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('offers Switch Profile and Manage Profiles in the signed-in panel', async () => {
+    const { w } = mountMenu(true);
+    await w.get('.usermenu__trigger').trigger('click');
+    const panel = w.get('.usermenu__panel');
+    expect(panel.find('[data-testid="usermenu-switch-profile"]').exists()).toBe(true);
+    expect(panel.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(true);
+    expect(panel.text()).toContain('Switch Profile');
+    expect(panel.text()).toContain('Manage Profiles');
+  });
+
+  it('Switch Profile re-opens the Who’s-watching gate and closes the menu', async () => {
+    const { w } = mountMenu(true);
+    const profiles = useProfileStore();
+    profiles.acknowledgeChoice();
+    expect(profiles.choiceMade).toBe(true);
+    await w.get('.usermenu__trigger').trigger('click');
+    await w.get('[data-testid="usermenu-switch-profile"]').trigger('click');
+    expect(profiles.choiceMade).toBe(false); // gate re-armed
+    expect(w.find('.usermenu__panel').exists()).toBe(false); // menu closed on pick
+  });
+
+  it('Manage Profiles routes to the profiles page under the router base', async () => {
+    const { w, push } = mountMenu(true);
+    await w.get('.usermenu__trigger').trigger('click');
+    await w.get('[data-testid="usermenu-manage-profiles"]').trigger('click');
+    expect(push).toHaveBeenCalledWith('/app/profiles');
+  });
+
+  it('does not render the profile entries when signed out', async () => {
+    const { w } = mountMenu(false);
+    await w.get('.usermenu__trigger').trigger('click');
+    expect(w.find('[data-testid="usermenu-switch-profile"]').exists()).toBe(false);
+    expect(w.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(false);
   });
 });

@@ -6,10 +6,11 @@
  */
 
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { ApiClient } from '../api/client';
 import { errMessage } from '../api/errors';
 import { useToastStore } from './useToastStore';
+import { useProfileStore } from './useProfileStore';
 import type { MediaDetail, MediaListItem } from '../types/media-item';
 
 /**
@@ -40,6 +41,20 @@ const DEFAULT_ENTRY: Readonly<UserItemData> = Object.freeze({
 export const useUserItemDataStore = defineStore('user-item-data', () => {
   /** Reactive cache of per-item user state, keyed by media item id. */
   const entries = ref<Map<string, UserItemData>>(new Map());
+
+  // S82 — the favorite/watched/like flags on an item are PER PROFILE (the server
+  // scopes them by the JWT profile claim, S79-S81). On any active-profile change
+  // (`useProfileStore.epoch` bumps only on real scope swaps — see the store) the
+  // whole map drops: every card re-reads after the next hydrate, which the
+  // favorites/history/browse fetches feed under the NEW profile's token. A cache
+  // keyed by item id alone cannot outlive the scope it was written in.
+  const profiles = useProfileStore();
+  watch(
+    () => profiles.epoch,
+    () => {
+      entries.value = new Map();
+    },
+  );
 
   /**
    * Lazily-constructed, long-lived ApiClient — reused across all calls (mirrors

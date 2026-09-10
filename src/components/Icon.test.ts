@@ -57,7 +57,7 @@ describe('Icon', () => {
   // — including the two the S110 pager added — and it "covered every registered
   // icon" only in its title.
   // Deriving means a new registration is covered the moment it lands.
-  // Deliberate tripwire: `icon-registry.ts`'s docblock quotes the registry size (79)
+  // Deliberate tripwire: `icon-registry.ts`'s docblock quotes the registry size (80 since S82; 79 at the audit)
   // to justify its own existence, and prose cannot be type-checked. Pinning the count
   // here means adding an icon fails ONE test whose message says to update that number
   // — which is how the "12 names"/"77-entry" errors that shipped in r1 get caught.
@@ -65,7 +65,7 @@ describe('Icon', () => {
     expect(
       ICON_NAMES.length,
       'registry size changed — update the count in icon-registry.ts\'s docblock too',
-    ).toBe(79);
+    ).toBe(80);
   });
 
   it('renders every registered icon without error', () => {

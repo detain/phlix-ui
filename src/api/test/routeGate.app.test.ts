@@ -32,6 +32,7 @@ import { useHlsTranscode } from '../../composables/useHlsTranscode';
 import { loadSeriesSeasons } from '../../composables/useSeriesSeasons';
 import { useMusicPlayer } from '../../composables/useMusicPlayer';
 import { useUserItemDataStore } from '../../stores/useUserItemDataStore';
+import { useProfileStore } from '../../stores/useProfileStore';
 import { useTrickplay } from '../../composables/useTrickplay';
 import { makeRouteGateServer, driveGated, expectGateClean, type RouteGateServer } from './routeGateServer';
 
@@ -191,6 +192,32 @@ describe('route gate — stores/useUserItemDataStore.ts', () => {
         await driveGated(server, 'toggleWatched (on)', () => store.toggleWatched('m1', BASE));
         await driveGated(server, 'toggleWatched (off)', () => store.toggleWatched('m1', BASE));
         await driveGated(server, 'setLike', () => store.setLike('m1', 2, BASE));
+        expectGateClean(server, EXPECTED, 5);
+    });
+});
+
+// S82 — the self-service profile store. Every URL it mints is one of the ten
+// AuthMiddleware profile routes the S81 backend registers; the store is built on
+// AdminUsersApi, so its list/switch/create/update/remove drives pin that the
+// client half addresses those routes and nothing else.
+describe('route gate — stores/useProfileStore.ts', () => {
+    const EXPECTED: ReadonlyArray<string> = [
+        'DELETE /api/v1/profiles/{profileId}',
+        'GET /api/v1/profiles',
+        'POST /api/v1/profiles',
+        'POST /api/v1/profiles/{profileId}/switch',
+        'PUT /api/v1/profiles/{profileId}',
+    ];
+
+    it('issues 5 distinct urls, every one a registered server route', async () => {
+        localStorage.setItem('access_token', 'AT'); // auth surface
+        const store = useProfileStore();
+        await driveGated(server, 'load', () => store.load(true));
+        await driveGated(server, 'createProfile', () => store.createProfile('Kids'));
+        await driveGated(server, 'rename', () => store.rename('p1', 'Kinder'));
+        await driveGated(server, 'removeProfile', () => store.removeProfile('p2'));
+        // switchTo needs a loaded list first so p1 != active; force a fresh read.
+        await driveGated(server, 'switchTo', () => store.switchTo('p1'));
         expectGateClean(server, EXPECTED, 5);
     });
 });

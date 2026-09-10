@@ -27,6 +27,7 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useProfileStore } from '../stores/useProfileStore';
 import { useResumeSync } from '../composables/useResumeSync';
 import MediaRow from '../components/MediaRow.vue';
 import HomeRow from '../components/HomeRow.vue';
@@ -62,6 +63,7 @@ const player = usePlayerStore();
 const toasts = useToastStore();
 const auth = useAuthStore();
 const userItemData = useUserItemDataStore();
+const profiles = useProfileStore();
 const router = useRouter();
 const { syncResume, continueWatchingItems } = useResumeSync();
 
@@ -344,6 +346,26 @@ onMounted(() => {
   void syncResume(); // U-N8: re-sync positions when entering BrowsePage
 });
 watch(apiBase, load);
+
+// S82 — profile switching re-scopes every PER-USER rail. Favorites, Next Up,
+// recommendations and continue-watching are all derived from the active profile's
+// token server-side (S79-S81); stale rails would otherwise show the previous
+// profile's list under the new name. `epoch` bumps only on a real id→different-id
+// swap (see useProfileStore), so the acknowledged same-profile no-op never
+// refetches. Most-Watched is deliberately NOT reloaded: it is a global leaderboard
+// with no user context (see loadMostWatched comment).
+watch(
+  () => profiles.epoch,
+  () => {
+    favoriteItems.value = [];
+    nextUpItems.value = [];
+    recommendedItems.value = [];
+    void loadFavorites();
+    void loadNextUp();
+    void loadRecommendations();
+    void syncResume();
+  },
+);
 
 
 // Map the store's failure to an actionable title/description. On the hub, a browse

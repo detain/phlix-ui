@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ref, computed, type ComputedRef } from 'vue';
+import { ref, computed, nextTick, type ComputedRef } from 'vue';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
@@ -62,6 +62,7 @@ import ItemDataInspector from '../components/ItemDataInspector.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useProfileStore } from '../stores/useProfileStore';
 import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 import type { PhlixAppConfig } from '../app/types';
@@ -1275,3 +1276,60 @@ function cssSelectors(sfc: string): string[] {
     .flatMap((block) => [...block.matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim()))
     .filter((s) => s.length > 0 && !s.startsWith('@'));
 }
+
+// S82 — profile switching re-scopes the per-user rails. Favorites, Next Up,
+// recommendations and continue-watching are all derived from the ACTIVE PROFILE's
+// token server-side; on a real scope swap (`useProfileStore.epoch` bumps only on
+// id→different-id) every one of them must clear and refetch, so the previous
+// profile's list never lingers under the new name. Most-Watched is a GLOBAL
+// aggregate and is deliberately left untouched.
+describe('BrowsePage — profile switch re-reads per-user rails (S82)', () => {
+  it('refetches the favorites rail when the active profile changes', async () => {
+    // A thunk lets the SAME stub serve two different favorites payloads: the
+    // first read belongs to profile p1, the second (post-switch) to profile p2.
+    let favCall = 0;
+    const fn = stubFetch({
+      favorites: () => {
+        favCall += 1;
+        return favCall === 1
+          ? [media({ id: 'f1', name: 'P1 Favorite' })]
+          : [media({ id: 'f9', name: 'P2 Favorite' })];
+      },
+    });
+    const w = mountPage();
+    await flushPromises();
+    const firstItems = favoritesRow(w)?.props('items') as MediaItem[] | undefined;
+    expect(firstItems?.map((i) => i.id)).toEqual(['f1']);
+
+    const profiles = useProfileStore();
+    // Seed the active id (boot adoption), then perform a REAL id→different-id
+    // swap — exactly what switchTo's server-confirmed write produces. The store's
+    // `epoch` bumps and BrowsePage's watcher re-runs loadFavorites().
+    profiles.activeProfileId = 'p1';
+    await nextTick();
+    profiles.activeProfileId = 'p2';
+    await flushPromises();
+
+    const favCalls = fn.mock.calls.filter(([u]) => isRoute(String(u), FAVORITES_PATH)).length;
+    expect(favCalls).toBeGreaterThanOrEqual(2); // initial + refetch under the new scope
+    const afterItems = favoritesRow(w)?.props('items') as MediaItem[] | undefined;
+    expect(afterItems?.map((i) => i.id)).toEqual(['f9']); // the OLD profile's list is gone
+  });
+
+  it('does NOT reload the global Most-Watched rail on a profile switch', async () => {
+    const fn = stubFetch({ mostWatched: [media({ id: 'mw1', name: 'Global Hit' })] });
+    const w = mountPage();
+    await flushPromises();
+    expect(mostWatchedRow(w)).toBeTruthy();
+    const before = fn.mock.calls.filter(([u]) => isRoute(String(u), MOST_WATCHED_PATH)).length;
+
+    const profiles = useProfileStore();
+    profiles.activeProfileId = 'p1';
+    await nextTick();
+    profiles.activeProfileId = 'p2';
+    await flushPromises();
+
+    const after = fn.mock.calls.filter(([u]) => isRoute(String(u), MOST_WATCHED_PATH)).length;
+    expect(after).toBe(before); // global leaderboard — not re-scoped
+  });
+});

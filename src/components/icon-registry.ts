@@ -25,7 +25,8 @@
  *
  * ⚠ Provenance note, because getting this wrong is a repeatable trap: an earlier
  * revision of this docblock said "12", and the S110 Fix r1 worklog said "77-entry
- * registry, 22 short". Both were wrong — **79 / 55 / 24** is the measured truth. The
+ * registry, 22 short". Both were wrong — **79 / 55 / 24** is the measured truth (the registry is **80** since S82
+ * registered `users` for the profile menu — the entry count, not this audit, moves). The
  * 77 was read off a MUTATION's failure output (`…(74)` while R6 had temporarily
  * removed the two `chevrons-*` entries), i.e. a number taken from a tree that was
  * deliberately broken at the time. Never source a fact from a mutated tree.
@@ -91,6 +92,7 @@ import IconHeart from '~icons/lucide/heart';
 import IconThumbsUp from '~icons/lucide/thumbs-up';
 import IconThumbsDown from '~icons/lucide/thumbs-down';
 import IconUser from '~icons/lucide/user';
+import IconUsers from '~icons/lucide/users';
 import IconLogOut from '~icons/lucide/log-out';
 import IconMenu from '~icons/lucide/menu';
 import IconMore from '~icons/lucide/more-horizontal';
@@ -182,6 +184,7 @@ export const icons = {
   'thumbs-up': IconThumbsUp,
   'thumbs-down': IconThumbsDown,
   user: IconUser,
+  users: IconUsers,
   'log-out': IconLogOut,
   menu: IconMenu,
   more: IconMore,

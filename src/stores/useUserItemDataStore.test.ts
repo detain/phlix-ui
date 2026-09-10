@@ -7,7 +7,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
+import { nextTick } from 'vue';
 import { useUserItemDataStore } from './useUserItemDataStore';
+import { useProfileStore } from './useProfileStore';
 import { useToastStore } from './useToastStore';
 import type { MediaDetail } from '../types/media-item';
 import { isRoute } from '../test/route-match';
@@ -382,6 +384,64 @@ describe('useUserItemDataStore', () => {
       const store = useUserItemDataStore();
       store.hydrate(detail('m1', { favorite: true, rating: null, like_level: 0 }));
       store.reset();
+      expect(store.entries.size).toBe(0);
+      expect(store.isFavorite('m1')).toBe(false);
+    });
+  });
+
+  // S82 — per-item favorite/watched flags are scoped to the ACTIVE PROFILE
+  // server-side, so a real profile swap must drop the whole cache. This proves
+  // the `useProfileStore.epoch` wiring end-to-end: a completed switch (which
+  // bumps `epoch` only on an id→different-id change) clears entries, and the
+  // same-profile no-op switch does NOT needlessly wipe it.
+  describe('profile-scope invalidation (S82)', () => {
+    beforeEach(() => {
+      localStorage.setItem('access_token', 'AT');
+      localStorage.setItem('refresh_token', 'RT');
+    });
+
+    function profilesFetch(activeId: string) {
+      return vi.fn(async (rawUrl: unknown, init?: { method?: string }) => {
+        const url = String(rawUrl);
+        const method = (init?.method ?? 'GET').toUpperCase();
+        if (method === 'POST' && isRoute(url, '/api/v1/profiles/p2/switch')) {
+          return jsonResponse({
+            access_token: 'AT2',
+            refresh_token: 'RT2',
+            profile_id: 'p2',
+            token_type: 'Bearer',
+            expires_in: 3600,
+            user: { id: 'u1', is_admin: false },
+          });
+        }
+        if (method === 'GET' && isRoute(url, '/api/v1/profiles')) {
+          return jsonResponse({
+            profiles: [
+              { id: 'p1', name: 'Alice', is_active: activeId === 'p1' },
+              { id: 'p2', name: 'Kids', is_active: activeId === 'p2' },
+            ],
+          });
+        }
+        throw new Error(`unstubbed: ${method} ${url}`);
+      });
+    }
+
+    it('a completed profile switch clears the item-data cache', async () => {
+      const profiles = useProfileStore();
+      const store = useUserItemDataStore();
+      vi.stubGlobal('fetch', profilesFetch('p1'));
+      await profiles.load();
+      store.hydrate(detail('m1', { favorite: true, rating: 8, like_level: 1 }));
+      expect(store.isFavorite('m1')).toBe(true);
+
+      // Pre-switch, the SAME-profile no-op must NOT clear (epoch unchanged).
+      expect(await profiles.switchTo('p1')).toBe(true);
+      expect(store.isFavorite('m1')).toBe(true);
+
+      // The real p1 → p2 swap bumps epoch → the watcher drops the map (the
+      // pre-flush watcher runs within the awaited switch's microtask turn).
+      expect(await profiles.switchTo('p2')).toBe(true);
+      await nextTick();
       expect(store.entries.size).toBe(0);
       expect(store.isFavorite('m1')).toBe(false);
     });

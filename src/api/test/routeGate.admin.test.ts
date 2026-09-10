@@ -663,6 +663,10 @@ describe('route gate — admin/users.ts (AdminUsersApi, server-addressed half)',
         'DELETE /api/v1/admin/profiles/{profileId}/schedules/{scheduleId}',
         'DELETE /api/v1/admin/profiles/{profileId}/tags/{tagId}',
         'DELETE /api/v1/admin/users/{id}',
+        // S82 — the SELF-SERVICE profile routes live in the same class now
+        // (AdminUsersApi serves both halves; the server registers them under the
+        // AuthMiddleware group, all five in the vendored manifest).
+        'DELETE /api/v1/profiles/{profileId}',
         'GET /api/v1/admin/profiles/{id}',
         'GET /api/v1/admin/profiles/{profileId}/schedules',
         'GET /api/v1/admin/profiles/{profileId}/stream-limits',
@@ -670,6 +674,7 @@ describe('route gate — admin/users.ts (AdminUsersApi, server-addressed half)',
         'GET /api/v1/admin/users',
         'GET /api/v1/admin/users/{id}',
         'GET /api/v1/admin/users/{userId}/profiles',
+        'GET /api/v1/profiles',
         'POST /api/v1/admin/profiles/{id}/pin',
         'POST /api/v1/admin/profiles/{profileId}/schedules',
         'POST /api/v1/admin/profiles/{profileId}/tags',
@@ -680,13 +685,16 @@ describe('route gate — admin/users.ts (AdminUsersApi, server-addressed half)',
         'POST /api/v1/admin/users/{id}/reset-password',
         'POST /api/v1/admin/users/{id}/set-admin',
         'POST /api/v1/admin/users/{userId}/profiles',
+        'POST /api/v1/profiles',
+        'POST /api/v1/profiles/{profileId}/switch',
         'PUT /api/v1/admin/profiles/{id}',
         'PUT /api/v1/admin/profiles/{profileId}/schedules/{scheduleId}',
         'PUT /api/v1/admin/profiles/{profileId}/stream-limits',
         'PUT /api/v1/admin/users/{id}',
+        'PUT /api/v1/profiles/{profileId}',
     ];
 
-    it('issues 26 distinct urls, every one a registered server route', async () => {
+    it('issues 31 distinct urls, every one a registered server route', async () => {
         const server = makeRouteGateServer(BASE);
         const api = new AdminUsersApi(makeClient(server));
         await driveGated(server, 'list', () => api.list({}));
@@ -715,7 +723,13 @@ describe('route gate — admin/users.ts (AdminUsersApi, server-addressed half)',
         await driveGated(server, 'deleteProfileTag', () => api.deleteProfileTag(7, 3));
         await driveGated(server, 'profileStreamLimits', () => api.profileStreamLimits(7));
         await driveGated(server, 'updateProfileStreamLimits', () => api.updateProfileStreamLimits(7, 2, 5000));
-        expectGateClean(server, EXPECTED, 26);
+        // S82 — self-service half (the same class the profile store drives).
+        await driveGated(server, 'listOwnProfiles', () => api.listOwnProfiles());
+        await driveGated(server, 'createOwnProfile', () => api.createOwnProfile({ name: 'Kids' }));
+        await driveGated(server, 'switchProfile', () => api.switchProfile('p-1'));
+        await driveGated(server, 'updateOwnProfile', () => api.updateOwnProfile('p-1', { name: 'Kids 2' }));
+        await driveGated(server, 'removeOwnProfile', () => api.removeOwnProfile('p-1'));
+        expectGateClean(server, EXPECTED, 31);
     });
 });
 

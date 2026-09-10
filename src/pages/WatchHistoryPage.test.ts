@@ -6,12 +6,14 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { nextTick } from 'vue';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import WatchHistoryPage from './WatchHistoryPage.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
+import { useProfileStore } from '../stores/useProfileStore';
 import type { PhlixAppConfig } from '../app/types';
 import type { MediaItem } from '../types/media-item';
 import type { ApiClient } from '../api/client';
@@ -253,5 +255,57 @@ describe('WatchHistoryPage — groups by date', () => {
     const dates = w.findAll('.history-group__date').map((el) => el.text());
     expect(dates).toContain('Today');
     expect(dates).toContain('Yesterday');
+  });
+});
+
+// S82 — watch history is scoped server-side to the ACTIVE PROFILE (the profile
+// claim in the JWT filters /me/history + /me/progress). A real profile swap
+// (epoch bump — id→different-id only, per useProfileStore) must drop the rows
+// and re-read under the new scope; the previous profile's history never lingers.
+describe('WatchHistoryPage — profile switch re-reads history (S82)', () => {
+  function histItem(id: string, name: string): HistoryItem {
+    return {
+      id,
+      media: media({ id, name }),
+      progress: 0.5,
+      updated_at: '2026-07-09T10:00:00Z',
+    };
+  }
+
+  it('refetches history when the active profile changes', async () => {
+    let read = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (!endpoint.startsWith('/api/v1/me/history')) throw new Error(`unexpected GET ${endpoint}`);
+      read += 1;
+      return { items: read === 1 ? [histItem('h1', 'P1 Row')] : [histItem('h9', 'P2 Row')] };
+    });
+    const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
+    const w = mountPage({ client });
+    await flushPromises();
+    expect(w.findAll('.history-item').map((n) => n.text().includes('P1 Row'))).toEqual([true]);
+
+    const profiles = useProfileStore();
+    profiles.activeProfileId = 'p1';
+    await nextTick();
+    profiles.activeProfileId = 'p2'; // a confirmed swap — epoch bumps
+    await flushPromises();
+
+    expect(get.mock.calls.filter(([e]) => String(e).startsWith('/api/v1/me/history'))).toHaveLength(2);
+    const rows = w.findAll('.history-item');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].text()).toContain('P2 Row'); // P1's row is gone
+  });
+
+  it('a same-profile re-activation does NOT refetch (no needless scope wipe)', async () => {
+    const { client, get } = makeClient({ historyItems: [histItem('h1', 'Only Row')] });
+    mountPage({ client });
+    await flushPromises();
+    const before = get.mock.calls.length;
+
+    const profiles = useProfileStore();
+    profiles.activeProfileId = 'p1';
+    await nextTick();
+    // No second, different id — epoch stays put, so no reload fires.
+    expect(get.mock.calls.length).toBe(before);
   });
 });
