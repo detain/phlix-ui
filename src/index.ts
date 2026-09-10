@@ -412,6 +412,11 @@ export { bindMediaStoreToRouter } from './composables/useMediaUrlSync';
 export { useUserItemDataStore } from './stores/useUserItemDataStore';
 export type { UserItemData } from './stores/useUserItemDataStore';
 
+// S82 — self-service profiles: the active-profile store every profile-scoped read
+// keys on, plus the API row/response types.
+export { useProfileStore, ACTIVE_PROFILE_KEY } from './stores/useProfileStore';
+export type { OwnProfile, ProfileSettings } from './api/admin/users';
+
 export { useLibrariesStore } from './stores/useLibrariesStore';
 export { fetchLibraries, sortLibraries } from './api/libraries';
 export type { LibrarySummary } from './api/libraries';

@@ -128,6 +128,7 @@ const PARTITIONED_API = [
 const GATED_APP = [
     'src/stores/useAuthStore.ts',
     'src/stores/useMediaStore.ts',
+    'src/stores/useProfileStore.ts',
     'src/stores/useUserItemDataStore.ts',
     'src/composables/useMusicPlayer.ts',
     'src/composables/useResumeReporter.ts',

@@ -31,6 +31,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     client: ApiClient;
     login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;
+    setTokens: (access: string, refresh: string) => void;
     fetchUser: () => Promise<void>;
     init: () => Promise<void>;
     logout: () => void;
@@ -61,6 +62,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     client: ApiClient;
     login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;
+    setTokens: (access: string, refresh: string) => void;
     fetchUser: () => Promise<void>;
     init: () => Promise<void>;
     logout: () => void;
@@ -91,9 +93,10 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     client: ApiClient;
     login: (identifier: string, password: string) => Promise<boolean>;
     signup: (email: string, username: string, password: string) => Promise<boolean>;
+    setTokens: (access: string, refresh: string) => void;
     fetchUser: () => Promise<void>;
     init: () => Promise<void>;
     logout: () => void;
     uploadAvatar: (file: File) => Promise<void>;
     deleteAvatar: () => Promise<void>;
-}, "login" | "signup" | "fetchUser" | "init" | "logout" | "uploadAvatar" | "deleteAvatar">>;
+}, "login" | "signup" | "setTokens" | "fetchUser" | "init" | "logout" | "uploadAvatar" | "deleteAvatar">>;

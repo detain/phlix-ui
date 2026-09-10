@@ -57,6 +57,7 @@ export declare const icons: {
     readonly 'thumbs-up': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'thumbs-down': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly user: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
+    readonly users: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly 'log-out': import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly menu: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;
     readonly more: import("vue").FunctionalComponent<import("vue").SVGAttributes, {}, any, {}>;

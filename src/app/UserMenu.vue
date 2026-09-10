@@ -15,11 +15,13 @@ import { useRouter } from 'vue-router';
 import Icon from '../components/Icon.vue';
 import { useFocusTrap } from '../components/ui/useFocusTrap';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useProfileStore } from '../stores/useProfileStore';
 import { useMessages } from '../composables/useMessages';
 import { useImageSrc } from '../composables/useImageSrc';
 import type { PhlixAppConfig } from './types';
 
 const auth = useAuthStore();
+const profiles = useProfileStore();
 const router = useRouter();
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.routerBase ?? '/app');
@@ -61,6 +63,12 @@ function signOut(): void {
   close();
   auth.logout();
   void router.push(`${homePath.value}/login`);
+}
+/** Re-arms the Who's-watching gate (S82). With one profile the gate's own
+ *  condition keeps it closed — nothing to switch to, nothing shown. */
+function switchProfile(): void {
+  close();
+  profiles.openGate();
 }
 
 useFocusTrap(panelEl, open, {
@@ -131,6 +139,17 @@ onBeforeUnmount(() => {
         </div>
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/history`)">
           <Icon name="film" /> {{ t('shell.watchHistory') }}
+        </button>
+        <!-- S82 profile entries. "Switch Profile" re-arms the Who's-watching gate
+             (its own >1-profile condition decides whether it actually shows);
+             "Manage Profiles" routes to the self-service management page. -->
+        <button type="button" class="usermenu__item" role="menuitem" data-testid="usermenu-switch-profile"
+          @click="switchProfile">
+          <Icon name="users" /> {{ t('shell.switchProfile') }}
+        </button>
+        <button type="button" class="usermenu__item" role="menuitem" data-testid="usermenu-manage-profiles"
+          @click="go(`${homePath}/profiles`)">
+          <Icon name="settings" /> {{ t('shell.manageProfiles') }}
         </button>
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/settings`)">
           <Icon name="settings" /> {{ t('shell.settings') }}

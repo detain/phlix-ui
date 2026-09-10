@@ -436,6 +436,15 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             meta: { title: 'parental.title' },
             component: () => import('../pages/ParentalControlsPage.vue'),
         },
+        {
+            // S82 — self-service "Manage Profiles" (UserMenu entry). Routed, not
+            // an overlay: it survives deep links and the back button, and reads
+            // the SAME useProfileStore the Who's-watching gate uses.
+            path: `${base}/profiles`,
+            name: 'profiles',
+            meta: { title: 'profiles.manageTitle' },
+            component: () => import('../pages/ProfilesPage.vue'),
+        },
     ];
 
     // S243 — the MCP personal-access-token manager. HUB-ONLY, and gated on

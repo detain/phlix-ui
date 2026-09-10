@@ -62,6 +62,10 @@
         </template>
 
         <RouterView />
+        <!-- S82 Who's-watching gate: full-screen takeover while the account has
+             >1 profile and no choice has been made this session. The shell stays
+             mounted underneath; the screen owns its loading/error states. -->
+        <WhoIsWatching v-if="profiles.gateOpen" />
         <CommandPalette v-if="paletteActivated" />
         <MiniPlayer v-if="auth.isLoggedIn" @expand="onExpandMini" />
     </AppLayout>
@@ -73,6 +77,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import AppLayout from './AppLayout.vue';
 import ThemeToggle from './ThemeToggle.vue';
 import UserMenu from './UserMenu.vue';
+import WhoIsWatching from './WhoIsWatching.vue';
 import Icon from '../components/Icon.vue';
 import IconButton from '../components/ui/IconButton.vue';
 import MiniPlayer from '../components/MiniPlayer.vue';
@@ -82,6 +87,7 @@ import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerUiStore } from '../stores/usePlayerUiStore';
+import { useProfileStore } from '../stores/useProfileStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
 import { useResumeSync } from '../composables/useResumeSync';
@@ -150,6 +156,18 @@ usePreconnect(
 );
 
 const auth = useAuthStore();
+
+// S82 Who's-watching: load the account's profiles once authenticated so the
+// gate can decide (the store's own logout watch clears the state). Mirrors the
+// resumeSync gating — `/api/v1/profiles` is a media-server surface; on the hub
+// it could only 404.
+const profiles = useProfileStore();
+const profilesEnabled = computed(() => config?.features?.profiles ?? (config?.app !== 'hub'));
+watch(
+    () => auth.isLoggedIn && profilesEnabled.value,
+    (ready) => { if (ready) void profiles.load(); },
+    { immediate: true },
+);
 
 // Cross-device resume: once authenticated, pull the user's server-side resume
 // positions and merge them into the local map (best-effort), so a title paused on

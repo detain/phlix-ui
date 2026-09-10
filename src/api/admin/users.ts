@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { normalizeBool, type ApiClient } from '../client';
+import { normalizeBool, type ApiClient, type AuthUser } from '../client';
 
 /**
  * A user's account status (S1 approval gate). `pending` accounts cannot log in
@@ -257,6 +257,79 @@ export const RATING_OPTIONS: ReadonlyArray<{ value: number; label: string }> =
     label,
   }));
 
+/**
+ * The joined `profile_settings` block a hydrated profile row carries WHEN the
+ * settings row exists (`UserProfileManager::hydrateProfile()` attaches it under
+ * that condition only, so the field is genuinely optional on the wire).
+ */
+export interface ProfileSettings {
+  /** The rating STRING vocabulary (`G`, `PG-13`, `TV-MA`, …) — NOT the 0–12 rank. */
+  content_rating: string;
+  pin_required_for_admin: boolean;
+  max_daily_watch_time: number;
+  allow_unrated: boolean;
+  allowed_genres?: string[];
+  blocked_genres?: string[];
+}
+
+/**
+ * A self-service profile row from `GET /api/v1/profiles` (S81's
+ * `ProfilesController::list`, served through the `AuthMiddleware` group — the
+ * CALLER'S own account, no admin role involved).
+ *
+ * Both surfaces (this and the admin {@link Profile}) are built by the SAME
+ * `UserProfileManager::hydrateProfile()`, and it always emits exactly these
+ * keys; `pin_hash` never leaves the model. Two fields matter for the S82 UI:
+ *
+ *  - `is_active` — the account's active profile, authoritative on every list
+ *    read (the server returns rows `ORDER BY p.is_active DESC, p.name ASC`).
+ *    Activation travels ONLY through {@link AdminUsersApi.switchOwnProfile}:
+ *    `PUT /api/v1/profiles/{id}` REFUSES an `is_active` field with
+ *    400 `profile.use_switch` (`ProfilesController::update`).
+ *  - `rating` / `settings` — present only when a `profile_settings` row exists,
+ *    so both are optional here (unlike {@link Profile}, whose admin payloads
+ *    pre-date this contract note; do not "unify" the two interfaces).
+ */
+export interface OwnProfile {
+  /** `user_profiles.id CHAR(36)` — a UUID (migration 002:6), never an integer. */
+  id: string;
+  /** `user_profiles.user_id CHAR(36)` — the owning user's UUID (migration 002:7). */
+  user_id: string;
+  name: string;
+  avatar_url: string | null;
+  /** The account's ONE active profile (switch-only; see the interface note). */
+  is_active: boolean;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+  /** Numeric 0–12 rank — attached only when a settings row exists. */
+  rating?: number;
+  /** Attached only when a `profile_settings` row exists. */
+  settings?: ProfileSettings;
+}
+
+/**
+ * The body {@link AdminUsersApi.switchOwnProfile} resolves with — the FULL
+ * re-minted auth response (`AuthManager::buildAuthResponse`), NOT a flat
+ * `{ message }`. Profile context lives in the JWT claim, so switching hands
+ * back a NEW `access_token`/`refresh_token` pair bound to the chosen profile;
+ * a client that ignores them keeps riding the OLD profile until expiry.
+ */
+export interface SwitchProfileResponse {
+  access_token: string;
+  refresh_token: string;
+  /**
+   * The switched-to profile id. `AuthManager::buildAuthResponse` types this
+   * `?string` — null is only reachable when the server could not resolve ANY
+   * profile (e.g. momentary DB loss), so treat it as "the id you switched to"
+   * and let the next `listOwnProfiles()` reconcile.
+   */
+  profile_id: string | null;
+  token_type: 'Bearer';
+  expires_in: number;
+  user: AuthUser;
+}
+
 /** Body accepted by {@link AdminUsersApi.createProfile}. */
 export interface CreateProfileInput {
   name: string;
@@ -268,6 +341,33 @@ export interface CreateProfileInput {
 export interface UpdateProfileInput {
   name?: string;
   rating?: number;
+}
+
+/**
+ * Body accepted by {@link AdminUsersApi.createOwnProfile} (self-service
+ * `POST /api/v1/profiles`). The name is required and validated 3-50 chars
+ * server-side; `content_rating` travels as the RATING STRING (`G`, `PG-13`, …),
+ * not the 0-12 rank — the 0-12 {@link RATING_LABELS} scale is the admin
+ * surface's shape.
+ */
+export interface CreateOwnProfileInput {
+  name: string;
+  content_rating?: string;
+  /** 4 or 6 digits; sent as-is, hashed server-side. */
+  pin?: string;
+  pin_required_for_admin?: boolean;
+}
+
+/**
+ * Body accepted by {@link AdminUsersApi.updateOwnProfile} (self-service
+ * `PUT /api/v1/profiles/{id}`). There is deliberately NO `is_active` key: the
+ * endpoint refuses it with 400 `profile.use_switch` — activation is
+ * {@link AdminUsersApi.switchProfile} only.
+ */
+export interface UpdateOwnProfileInput {
+  name?: string;
+  content_rating?: string;
+  pin_required_for_admin?: boolean;
 }
 
 // ── Parental control types ─────────────────────────────────────────────────────
@@ -578,6 +678,76 @@ export class AdminUsersApi {
   clearPin(id: string | number): Promise<{ message: string }> {
     return this.client.delete<{ message: string }>(
       `/api/v1/admin/profiles/${encodeURIComponent(id)}/pin`,
+    );
+  }
+
+  // ── Self-service profiles (S81 routes · S82 consumer) ──────────────────────
+  // NOT under `/api/v1/admin`: the `AuthMiddleware` group's
+  // `ProfilesController` ownership-checks every call against the CALLER
+  // (404 — never 403 — for "no such profile" and "not yours"). Registered in
+  // `phlix-server` `Application::loadSelfServiceProfileRoutes()`; both tuples
+  // below ship in the vendored route manifest.
+
+  /**
+   * `GET /api/v1/profiles` → unwraps `{ profiles }` — the authenticated
+   * caller's OWN profiles (hydrated rows, {@link OwnProfile}; active first).
+   * Defensively guards the list unwrap so a malformed payload degrades to `[]`
+   * rather than throwing, mirroring {@link listProfiles}.
+   */
+  async listOwnProfiles(): Promise<OwnProfile[]> {
+    const { profiles } = await this.client.get<{ profiles: OwnProfile[] }>('/api/v1/profiles');
+    return Array.isArray(profiles) ? profiles : [];
+  }
+
+  /**
+   * `POST /api/v1/profiles/{profileId}/switch` → {@link SwitchProfileResponse}
+   * (the re-minted token pair + `user`). This is the ONLY activation route —
+   * the server clears-then-sets `is_active` transactionally and re-mints the
+   * JWTs for the new profile. The caller MUST persist both tokens (and the
+   * returned `user`) exactly as {@link ApiClient} does at login; keeping the
+   * old access token would leave every profile-scoped read on the OLD profile.
+   */
+  switchProfile(profileId: string): Promise<SwitchProfileResponse> {
+    return this.client.post<SwitchProfileResponse>(
+      `/api/v1/profiles/${encodeURIComponent(profileId)}/switch`,
+    );
+  }
+
+  /**
+   * `POST /api/v1/profiles` → `201 { profile_id: string, message }`.
+   * `profile_id` is the NEW UUID as a plain string here — the self-service
+   * controller passes `UserProfileManager::create()`'s return through
+   * un-cast, unlike the admin create whose `(int)` cast zeroes it (see the
+   * note on {@link createProfile}). Max 5 profiles per account is enforced
+   * server-side (400 `Maximum profiles reached`).
+   */
+  createOwnProfile(
+    input: CreateOwnProfileInput,
+  ): Promise<{ profile_id: string; message: string }> {
+    return this.client.post<{ profile_id: string; message: string }>('/api/v1/profiles', input);
+  }
+
+  /**
+   * `PUT /api/v1/profiles/{profileId}` → `{ message }`. Renames / re-rates the
+   * CALLER'S OWN profile. Sending `is_active` is REFUSED (400
+   * `profile.use_switch`) — activation is {@link switchProfile} only.
+   */
+  updateOwnProfile(profileId: string, input: UpdateOwnProfileInput): Promise<{ message: string }> {
+    return this.client.put<{ message: string }>(
+      `/api/v1/profiles/${encodeURIComponent(profileId)}`,
+      input,
+    );
+  }
+
+  /**
+   * `DELETE /api/v1/profiles/{profileId}` → `{ message }`. Refuses the LAST
+   * profile with 409 `profile.last_profile`; deleting the ACTIVE (non-last)
+   * profile is allowed — the server heals the session on the next
+   * profile-scoped write.
+   */
+  removeOwnProfile(profileId: string): Promise<{ message: string }> {
+    return this.client.delete<{ message: string }>(
+      `/api/v1/profiles/${encodeURIComponent(profileId)}`,
     );
   }
 

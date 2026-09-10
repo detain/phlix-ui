@@ -608,3 +608,77 @@ describe('PhlixApp — image-origin preconnect (R6.2c)', () => {
     expect(originsFor('preconnect').length).toBe(before); // nothing cross-origin to warm
   });
 });
+
+// S82 AC-1 — the Who's-watching gate lives in the SHELL, not in any page, so it
+// appears the moment the post-login list read completes, over whatever route is
+// mounted. One-profile accounts must land directly in the app; signed-out and
+// hub sessions never hit the profiles endpoint at all (profiles are a phlix-server
+// surface; config.features.profiles overrides for consumers that opt in).
+describe('PhlixApp — Who’s-watching gate after login (S82)', () => {
+  const PROFILES_PATH = '/api/v1/profiles';
+
+  function profileRow(id: string, name: string, isActive: boolean) {
+    return { id, user_id: 'u1', name, avatar_url: null, is_active: isActive, is_admin: false };
+  }
+
+  function stubProfilesFetch(rows: Array<ReturnType<typeof profileRow>>) {
+    const fetchMock = vi.fn((u: unknown) => {
+      const url = String(u);
+      if (isRoute(url, PROFILES_PATH)) {
+        return Promise.resolve(jsonResponse({ profiles: rows }));
+      }
+      return Promise.resolve(jsonResponse({ items: [] }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  it('opens the gate over the mounted route for a multi-profile account', async () => {
+    localStorage.setItem('access_token', 'tok');
+    stubProfilesFetch([profileRow('p1', 'Alice', true), profileRow('p2', 'Kids', false)]);
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await flushPromises();
+
+    const dialog = wrapper.find('[role="dialog"]');
+    expect(dialog.exists()).toBe(true);
+    expect(dialog.text()).toContain("Who's watching?");
+    expect(dialog.find('[data-testid="whos-tile-p1"]').exists()).toBe(true);
+    expect(dialog.find('[data-testid="whos-tile-p2"]').exists()).toBe(true);
+    // The shell (bar + nav + main) stays mounted underneath — this is an overlay,
+    // not a route swap. (Assert the shell frame, not the RouterView slot: the
+    // catch-all stub component does not always paint in this harness.)
+    expect(wrapper.find('.shell__bar').exists()).toBe(true);
+    expect(wrapper.find('.shell__main').exists()).toBe(true);
+  });
+
+  it('single-profile accounts go straight into the app — no gate', async () => {
+    localStorage.setItem('access_token', 'tok');
+    const fetchMock = stubProfilesFetch([profileRow('p1', 'Solo', true)]);
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await flushPromises();
+
+    // The list read DID happen (the gate decision needs the >1 fact)…
+    expect(fetchMock.mock.calls.some(([u]) => isRoute(String(u), PROFILES_PATH))).toBe(true);
+    // …but with one profile the store never opens the gate, so nothing blocks the app.
+    expect(wrapper.findAll('[role="dialog"]')).toHaveLength(0);
+    expect(wrapper.find('.shell__main').exists()).toBe(true);
+  });
+
+  it('signed-out sessions never read the profiles endpoint', async () => {
+    const fetchMock = stubProfilesFetch([profileRow('p1', 'A', true), profileRow('p2', 'B', false)]);
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await flushPromises();
+    // Substring on purpose — a NEGATIVE assertion (see the note at the top).
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes(PROFILES_PATH))).toBe(false);
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+  });
+
+  it('the hub does not load profiles by default (account-level surface, no profile scope)', async () => {
+    localStorage.setItem('access_token', 'tok');
+    const fetchMock = stubProfilesFetch([profileRow('p1', 'A', true), profileRow('p2', 'B', false)]);
+    wrapper = await mountApp({ app: 'hub', apiBase: '', routerBase: '/app', home: '/app/servers' });
+    await flushPromises();
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes(PROFILES_PATH))).toBe(false);
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+  });
+});

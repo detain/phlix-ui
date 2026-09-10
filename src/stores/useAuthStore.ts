@@ -47,6 +47,14 @@ export const useAuthStore = defineStore('auth', () => {
     const isLoggedIn = computed(() => accessToken.value !== null);
     const isAdmin = computed(() => user.value?.is_admin === true);
 
+    /**
+     * Adopt a freshly-minted token pair (login, signup, or the S81 profile
+     * SWITCH response) into both the persistent store and the reactive mirror,
+     * so `isLoggedIn` and every request's `Authorization` header follow the new
+     * session. Exposed for `useProfileStore.switchTo` — a switch re-mints the
+     * pair (the profile claim lives in the JWT); storing the old one would keep
+     * the session on the previous profile until expiry.
+     */
     function setTokens(access: string, refresh: string): void {
         tokenStore.setAccessToken(access);
         tokenStore.setRefreshToken(refresh);
@@ -197,6 +205,7 @@ export const useAuthStore = defineStore('auth', () => {
         client,
         login,
         signup,
+        setTokens,
         fetchUser,
         init,
         logout,

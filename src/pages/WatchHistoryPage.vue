@@ -10,7 +10,7 @@
  * Fetches from GET /api/v1/me/history if available, otherwise falls back to
  * GET /api/v1/me/progress and shows items with progress > 0.
  */
-import { onMounted, computed, ref, type PropType } from 'vue';
+import { onMounted, computed, ref, watch, type PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
@@ -21,6 +21,7 @@ import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
 import Icon from '../components/Icon.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { useProfileStore } from '../stores/useProfileStore';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import type { MediaItem } from '../types/media-item';
@@ -44,6 +45,7 @@ const injectedClient = useMediaApiBase();
 const { imgSrc } = useImageSrc();
 const toasts = useToastStore();
 const player = usePlayerStore();
+const profiles = useProfileStore();
 
 /** Returns the provided client prop or creates a new ApiClient from the injected apiBase. */
 function getClient(): ApiClient {
@@ -168,6 +170,19 @@ function retry(): void {
 onMounted(() => {
   void load();
 });
+
+// S82 — watch history is scoped server-side to the ACTIVE PROFILE (S79-S81: the
+// profile claim in the JWT filters /me/history and /me/progress). On a real
+// profile swap (`epoch` bumps only on id→different-id, see useProfileStore) the
+// list drops and refetches under the new token — the old profile's rows must not
+// linger.
+watch(
+  () => profiles.epoch,
+  () => {
+    allItems.value = [];
+    void load();
+  },
+);
 </script>
 
 <template>

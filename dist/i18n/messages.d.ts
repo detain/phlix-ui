@@ -51,6 +51,24 @@ export declare const DEFAULT_MESSAGES: {
         accountNamed: string;
         signOut: string;
         signIn: string;
+        switchProfile: string;
+        manageProfiles: string;
+    };
+    profiles: {
+        whoIsWatching: string;
+        loading: string;
+        active: string;
+        manageTitle: string;
+        manageHint: string;
+        use: string;
+        add: string;
+        rename: string;
+        renameTooShort: string;
+        delete: string;
+        save: string;
+        cancel: string;
+        deleteBlocked: string;
+        empty: string;
     };
     palette: {
         title: string;
