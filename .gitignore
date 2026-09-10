@@ -4,6 +4,11 @@ coverage/
 .DS_Store
 *.log
 
+# S459 shard legs write Vitest blob reports to blob/ (the CI `coverage` job
+# downloads them as artefacts and merges; locally they must never reach git —
+# check-dist-clean fails on ANY untracked path).
+blob/
+
 # Playwright run outputs (the committed visual baselines under e2e/__screenshots__/
 # are intentionally NOT ignored).
 test-results/
