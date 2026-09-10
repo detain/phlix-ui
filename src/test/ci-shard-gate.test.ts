@@ -105,4 +105,13 @@ describe(`S459 ${S459_CI_SHARD_TOKEN} — ui-ci shard matrix wiring`, () => {
         // The upload lives in `coverage:` now — not silently in two shard legs.
         expect(testBlock).not.toContain('codacy');
     });
+
+    it('keeps the shard blob output directory out of git', () => {
+        // S459 review finding: `--outputFile.blob=blob/...` writes into an un-ignored
+        // directory, and check-dist-clean fails on ANY untracked path — a dev running
+        // the leg command verbatim would red their next local `npm run dist:check` on
+        // `?? blob/shard-N.json`. CI is unaffected (dist:check runs before vitest).
+        const gitignore = readFileSync(resolve(root, '.gitignore'), 'utf8');
+        expect(gitignore).toMatch(/^blob\/$/m);
+    });
 });
