@@ -16,11 +16,14 @@
  *
  * ## The Who's-watching gate
  *
- * `gateOpen` is the screen's only condition: loaded + MORE THAN ONE profile +
+ * `gateOpen` is the PASSIVE screen condition: loaded + MORE THAN ONE profile +
  * no choice made yet this session. One-profile accounts never see it (the
- * server already activated their sole profile); an account whose list fails to
- * load never sees it either — a gate nobody can pass is a lockout, so the
- * screen owns its error state and the gate stays closed.
+ * server already activated their sole profile); a failed list read never opens
+ * a gate nobody can pass — no passive lockout. The user can still ASK for the
+ * picker: `openGate()` sets `arming`, and PhlixApp additionally mounts the
+ * screen while `arming && !loaded`, so the loading/error panes with their
+ * Retry button are reachable — the read that failed passively at boot gets a
+ * surface to retry from, never a dead click.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
@@ -77,6 +80,7 @@ export declare const useProfileStore: import("pinia").StoreDefinition<"profile",
     activeProfileId: import("vue").Ref<string | null, string | null>;
     switchingId: import("vue").Ref<string | null, string | null>;
     choiceMade: import("vue").Ref<boolean, boolean>;
+    arming: import("vue").Ref<boolean, boolean>;
     epoch: import("vue").Ref<number, number>;
     hasMultipleProfiles: import("vue").ComputedRef<boolean>;
     activeProfile: import("vue").ComputedRef<{
@@ -109,7 +113,7 @@ export declare const useProfileStore: import("pinia").StoreDefinition<"profile",
     acknowledgeChoice: () => void;
     openGate: () => void;
     reset: () => void;
-}, "error" | "loading" | "profiles" | "loaded" | "activeProfileId" | "switchingId" | "choiceMade" | "epoch">, Pick<{
+}, "error" | "loading" | "profiles" | "loaded" | "activeProfileId" | "switchingId" | "choiceMade" | "arming" | "epoch">, Pick<{
     profiles: import("vue").Ref<{
         id: string;
         user_id: string;
@@ -153,6 +157,7 @@ export declare const useProfileStore: import("pinia").StoreDefinition<"profile",
     activeProfileId: import("vue").Ref<string | null, string | null>;
     switchingId: import("vue").Ref<string | null, string | null>;
     choiceMade: import("vue").Ref<boolean, boolean>;
+    arming: import("vue").Ref<boolean, boolean>;
     epoch: import("vue").Ref<number, number>;
     hasMultipleProfiles: import("vue").ComputedRef<boolean>;
     activeProfile: import("vue").ComputedRef<{
@@ -229,6 +234,7 @@ export declare const useProfileStore: import("pinia").StoreDefinition<"profile",
     activeProfileId: import("vue").Ref<string | null, string | null>;
     switchingId: import("vue").Ref<string | null, string | null>;
     choiceMade: import("vue").Ref<boolean, boolean>;
+    arming: import("vue").Ref<boolean, boolean>;
     epoch: import("vue").Ref<number, number>;
     hasMultipleProfiles: import("vue").ComputedRef<boolean>;
     activeProfile: import("vue").ComputedRef<{

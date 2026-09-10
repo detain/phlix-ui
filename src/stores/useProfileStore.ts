@@ -16,11 +16,14 @@
  *
  * ## The Who's-watching gate
  *
- * `gateOpen` is the screen's only condition: loaded + MORE THAN ONE profile +
+ * `gateOpen` is the PASSIVE screen condition: loaded + MORE THAN ONE profile +
  * no choice made yet this session. One-profile accounts never see it (the
- * server already activated their sole profile); an account whose list fails to
- * load never sees it either — a gate nobody can pass is a lockout, so the
- * screen owns its error state and the gate stays closed.
+ * server already activated their sole profile); a failed list read never opens
+ * a gate nobody can pass — no passive lockout. The user can still ASK for the
+ * picker: `openGate()` sets `arming`, and PhlixApp additionally mounts the
+ * screen while `arming && !loaded`, so the loading/error panes with their
+ * Retry button are reachable — the read that failed passively at boot gets a
+ * surface to retry from, never a dead click.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
@@ -76,6 +79,15 @@ export const useProfileStore = defineStore('profile', () => {
    * Session-scoped on purpose: a reload re-asks, matching the post-login intent.
    */
   const choiceMade = ref(false);
+  /**
+   * Did the user EXPLICITLY ask for the picker (UserMenu → "Switch Profile")?
+   * While `arming` and the list is still not `loaded`, PhlixApp mounts the
+   * screen anyway so its loading/error + Retry panes are reachable — without
+   * this, `gateOpen`'s `loaded` term would make a post-failure "Switch Profile"
+   * a dead click. Cleared the moment a choice exists (switch accepted,
+   * acknowledged) or by `reset()`; it never outlives the surface it armed.
+   */
+  const arming = ref(false);
 
   // Bump on every REAL profile-scope change (id → different id). null → id is
   // boot adoption of the server-active row, not a switch — caches written under
@@ -116,7 +128,9 @@ export const useProfileStore = defineStore('profile', () => {
 
   /**
    * Fetch the caller's profiles (`GET /api/v1/profiles`). Concurrent-safe: a
-   * second call while one is in flight awaits the same outcome via `loading`.
+   * second call while one is in flight returns immediately WITHOUT issuing a
+   * request — it does not await the in-flight outcome; the flight in progress
+   * writes the shared state, so nobody needs a second copy of it.
    * On success the row with `is_active` true becomes `activeProfileId` — the
    * server is the authority; the localStorage mirror only pre-fills the very
    * first paint.
@@ -167,6 +181,7 @@ export const useProfileStore = defineStore('profile', () => {
     }
     if (profileId === activeProfileId.value) {
       choiceMade.value = true;
+      arming.value = false;
       return true;
     }
     switchingId.value = profileId;
@@ -181,6 +196,7 @@ export const useProfileStore = defineStore('profile', () => {
       activeProfileId.value = result.profile_id ?? profileId;
       persistActiveProfileId(activeProfileId.value);
       choiceMade.value = true;
+      arming.value = false;
       // Keep the cached list's flags truthful so tiles re-render without refetch.
       profiles.value = profiles.value.map((p) => ({ ...p, is_active: p.id === activeProfileId.value }));
       return true;
@@ -198,19 +214,21 @@ export const useProfileStore = defineStore('profile', () => {
    */
   function acknowledgeChoice(): void {
     choiceMade.value = true;
+    arming.value = false;
   }
 
   /**
    * Re-open the Who's-watching gate on purpose (UserMenu → "Switch Profile").
-   * The gate's own condition (loaded + >1 profile) decides whether anything
-   * actually shows — with a single profile there is nothing to switch to, so
-   * this is correctly a no-op visual. When a boot-time list read FAILED (no
-   * `loaded`, gate never opened — by design, so nobody is locked out), this is
-   * also the user-initiated retry: fetching now lets an explicit request reach
-   * the picker a passive boot failure deliberately withheld.
+   * `gateOpen` alone still decides the visible case (loaded + >1 profile) — but
+   * `arming` additionally mounts the screen while a re-read is pending or has
+   * failed, so this click is never dead: after a failed boot load, "Switch
+   * Profile" IS the user-initiated retry, and its loading/error+Retry panes are
+   * reachable. With a single profile the list arrives and the surface closes
+   * itself — nothing to switch to, correctly a no-op visual.
    */
   function openGate(): void {
     choiceMade.value = false;
+    arming.value = true;
     if (!loaded.value && !loading.value) void retry();
   }
 
@@ -281,6 +299,7 @@ export const useProfileStore = defineStore('profile', () => {
     error.value = null;
     switchingId.value = null;
     choiceMade.value = false;
+    arming.value = false;
     activeProfileId.value = null;
     persistActiveProfileId(null);
   }
@@ -313,6 +332,7 @@ export const useProfileStore = defineStore('profile', () => {
     activeProfileId,
     switchingId,
     choiceMade,
+    arming,
     epoch,
     hasMultipleProfiles,
     activeProfile,

@@ -63,9 +63,13 @@
 
         <RouterView />
         <!-- S82 Who's-watching gate: full-screen takeover while the account has
-             >1 profile and no choice has been made this session. The shell stays
-             mounted underneath; the screen owns its loading/error states. -->
-        <WhoIsWatching v-if="profiles.gateOpen" />
+             >1 profile and no choice has been made this session (gateOpen), OR
+             while the user has explicitly armed the picker (UserMenu → "Switch
+             Profile") and the list is still not loaded — the arming term is what
+             makes the screen's loading/error+Retry panes reachable after a
+             failed boot read; without it that click would be dead. The shell
+             stays mounted underneath; the screen owns its states. -->
+        <WhoIsWatching v-if="profiles.gateOpen || (profiles.arming && !profiles.loaded)" />
         <CommandPalette v-if="paletteActivated" />
         <MiniPlayer v-if="auth.isLoggedIn" @expand="onExpandMini" />
     </AppLayout>

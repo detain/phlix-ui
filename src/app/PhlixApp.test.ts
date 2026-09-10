@@ -681,4 +681,60 @@ describe('PhlixApp — Who’s-watching gate after login (S82)', () => {
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes(PROFILES_PATH))).toBe(false);
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
   });
+
+  // S82 fix r1 (M1) — the screen's loading/error+Retry panes were unreachable for
+  // accounts whose PASSIVE boot read failed (gateOpen requires loaded), which made
+  // "Switch Profile" a dead click precisely on the accounts needing recovery. The
+  // `arming` flag now mounts the surface on explicit demand even while !loaded.
+  it('arms the recovery surface after a failed boot read — Switch Profile shows error + Retry', async () => {
+    localStorage.setItem('access_token', 'tok');
+    let profilesOnline = false;
+    const fetchMock = vi.fn((u: unknown, init?: { method?: string }) => {
+      const url = String(u);
+      if (isRoute(url, PROFILES_PATH) && (init?.method ?? 'GET') === 'GET') {
+        if (profilesOnline) {
+          return Promise.resolve(
+            jsonResponse({ profiles: [profileRow('p1', 'Alice', true), profileRow('p2', 'Kids', false)] }),
+          );
+        }
+        return Promise.resolve({
+          ok: false,
+          status: 500,
+          headers: { get: () => 'application/json' },
+          json: async () => ({ message: 'profiles offline' }),
+          text: async () => '{"message":"profiles offline"}',
+        } as unknown as Response);
+      }
+      return Promise.resolve(jsonResponse({ items: [] }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await flushPromises();
+
+    // A FAILED PASSIVE read must not lock anyone out: no gate, app as-is…
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+
+    // …but the user can explicitly ask for the picker.
+    await wrapper.get('.usermenu__trigger').trigger('click');
+    await wrapper.get('[data-testid="usermenu-switch-profile"]').trigger('click');
+    await flushPromises();
+
+    // M1 proof: the surface is mounted even though nothing ever loaded, and it
+    // carries the error with a Retry button — before the fix this click was dead.
+    const dialog = wrapper.get('[role="dialog"]');
+    const errorPane = dialog.get('[data-testid="whos-error"]');
+    expect(errorPane.text()).toContain('profiles offline');
+    expect(errorPane.find('button').text()).toContain('Retry');
+
+    // Retry is not decorative: with the endpoint back, the SAME surface becomes
+    // the picker (loaded + >1 profiles + no choice yet → gateOpen holds).
+    profilesOnline = true;
+    await errorPane.find('button').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="whos-error"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="whos-tile-p1"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="whos-tile-p2"]').exists()).toBe(true);
+  });
 });

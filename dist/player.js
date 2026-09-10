@@ -1177,16 +1177,16 @@ function Ue(e) {
 	typeof localStorage > "u" || (e === null ? localStorage.removeItem(Ve) : localStorage.setItem(Ve, e));
 }
 var We = R("profile", () => {
-	let e = Be(), t = Le(), n = S([]), i = S(!1), a = S(!1), o = S(null), s = S(He()), c = S(null), l = S(!1), u = S(0), d = null;
-	function f(e) {
-		return d ? d.setBaseUrl(e) : d = new Ae({ baseUrl: e }), new Fe(d);
+	let e = Be(), t = Le(), n = S([]), i = S(!1), a = S(!1), o = S(null), s = S(He()), c = S(null), l = S(!1), u = S(!1), d = S(0), f = null;
+	function p(e) {
+		return f ? f.setBaseUrl(e) : f = new Ae({ baseUrl: e }), new Fe(f);
 	}
-	let p = r(() => n.value.length > 1), m = r(() => n.value.find((e) => e.id === s.value) ?? null), h = r(() => a.value && n.value.length > 1 && !l.value), g = r(() => s.value ?? "account");
-	async function _(e = !1) {
+	let m = r(() => n.value.length > 1), h = r(() => n.value.find((e) => e.id === s.value) ?? null), g = r(() => a.value && n.value.length > 1 && !l.value), _ = r(() => s.value ?? "account");
+	async function v(e = !1) {
 		if (!i.value && !(a.value && !e)) {
 			i.value = !0, o.value = null;
 			try {
-				let e = await f(t.value).listOwnProfiles();
+				let e = await p(t.value).listOwnProfiles();
 				n.value = e, a.value = !0;
 				let r = e.find((e) => e.is_active)?.id ?? null;
 				r !== null && r !== s.value && (s.value = r, Ue(r));
@@ -1197,16 +1197,16 @@ var We = R("profile", () => {
 			}
 		}
 	}
-	function v() {
-		return a.value = !1, _();
+	function y() {
+		return a.value = !1, v();
 	}
-	async function y(r) {
+	async function b(r) {
 		if (r === "") return o.value = "Cannot switch to an unknown profile.", !1;
-		if (r === s.value) return l.value = !0, !0;
+		if (r === s.value) return l.value = !0, u.value = !1, !0;
 		c.value = r, o.value = null;
 		try {
-			let i = await f(t.value).switchProfile(r);
-			return e.setTokens(i.access_token, i.refresh_token), i.user && typeof i.user == "object" && (e.user = i.user), s.value = i.profile_id ?? r, Ue(s.value), l.value = !0, n.value = n.value.map((e) => ({
+			let i = await p(t.value).switchProfile(r);
+			return e.setTokens(i.access_token, i.refresh_token), i.user && typeof i.user == "object" && (e.user = i.user), s.value = i.profile_id ?? r, Ue(s.value), l.value = !0, u.value = !1, n.value = n.value.map((e) => ({
 				...e,
 				is_active: e.id === s.value
 			})), !0;
@@ -1216,43 +1216,43 @@ var We = R("profile", () => {
 			c.value = null;
 		}
 	}
-	function b() {
-		l.value = !0;
-	}
 	function x() {
-		l.value = !1, !a.value && !i.value && v();
+		l.value = !0, u.value = !1;
 	}
-	async function C(e) {
+	function C() {
+		l.value = !1, u.value = !0, !a.value && !i.value && y();
+	}
+	async function w(e) {
 		o.value = null;
 		try {
-			return await f(t.value).createOwnProfile({ name: e }), await _(!0), !0;
+			return await p(t.value).createOwnProfile({ name: e }), await v(!0), !0;
 		} catch (e) {
 			return o.value = pe(e, "Could not create the profile."), !1;
 		}
 	}
-	async function w(e, n) {
+	async function T(e, n) {
 		o.value = null;
 		try {
-			return await f(t.value).updateOwnProfile(e, { name: n }), await _(!0), !0;
+			return await p(t.value).updateOwnProfile(e, { name: n }), await v(!0), !0;
 		} catch (e) {
 			return o.value = pe(e, "Could not rename the profile."), !1;
 		}
 	}
-	async function T(e) {
+	async function E(e) {
 		o.value = null;
 		try {
-			return await f(t.value).removeOwnProfile(e), e === s.value && (s.value = null, Ue(null)), await _(!0), !0;
+			return await p(t.value).removeOwnProfile(e), e === s.value && (s.value = null, Ue(null)), await v(!0), !0;
 		} catch (e) {
 			return o.value = pe(e, "Could not delete the profile."), !1;
 		}
 	}
-	function E() {
-		n.value = [], i.value = !1, a.value = !1, o.value = null, c.value = null, l.value = !1, s.value = null, Ue(null);
+	function D() {
+		n.value = [], i.value = !1, a.value = !1, o.value = null, c.value = null, l.value = !1, u.value = !1, s.value = null, Ue(null);
 	}
 	return N(s, (e, t) => {
-		t !== null && e !== t && (u.value += 1);
+		t !== null && e !== t && (d.value += 1);
 	}), N(() => e.isLoggedIn, (e) => {
-		e || E();
+		e || D();
 	}), {
 		profiles: n,
 		loading: i,
@@ -1261,20 +1261,21 @@ var We = R("profile", () => {
 		activeProfileId: s,
 		switchingId: c,
 		choiceMade: l,
-		epoch: u,
-		hasMultipleProfiles: p,
-		activeProfile: m,
-		gateOpen: h,
-		scopeKey: g,
-		load: _,
-		retry: v,
-		switchTo: y,
-		createProfile: C,
-		rename: w,
-		removeProfile: T,
-		acknowledgeChoice: b,
-		openGate: x,
-		reset: E
+		arming: u,
+		epoch: d,
+		hasMultipleProfiles: m,
+		activeProfile: h,
+		gateOpen: g,
+		scopeKey: _,
+		load: v,
+		retry: y,
+		switchTo: b,
+		createProfile: w,
+		rename: T,
+		removeProfile: E,
+		acknowledgeChoice: x,
+		openGate: C,
+		reset: D
 	};
 }), Ge = Object.freeze({
 	favorite: !1,
