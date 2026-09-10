@@ -12,7 +12,21 @@
 # font-drift noise. To promote it: regenerate + commit the baselines, drop the `if:`
 # guard, then drop `continue-on-error`.
 #
-# In branch protection, mark `test` a required check — it is deterministic.
+# In branch protection, mark the matrix legs `test (shard 1/2)` / `test (shard 2/2)`
+# (and `static`) as required checks — they are deterministic. NOTE (S459): the previous
+# required check name `test` no longer exists once the job is a matrix; protection
+# rules must be re-pointed at the per-leg names.
+#
+# S459 (2026-09-10, prototype): the single 5.3-min `test` job was split three ways:
+#   * `static`   — typecheck + lint (never pinned by the gate tests) runs in parallel.
+#   * `test`     — a 2-shard vitest matrix. The guard tests (`src/test/dist-build-gate.test.ts`,
+#                  `src/test/theater-geometry-gate.test.ts`) parse THIS file as text and pin
+#                  `npm run build` → `npm run dist:check` and the chromium install
+#                  INSIDE the `test:` block, so those steps deliberately STAY here (on every
+#                  shard leg). Sharding is what shortens the vitest step (~3.4 min → ~1.8 min/leg).
+#   * `coverage` — merges the per-shard blob reports (which embed v8 coverage; verified on a
+#                  48-core box: merged `All files` % is identical to a single unsharded run) and
+#                  uploads the lcov to Codacy. Informational post-test tail; not a required check.
 name: ui-ci
 
 on:
@@ -23,9 +37,29 @@ on:
     branches: [master]
 
 jobs:
-  # Deterministic gate: typecheck + lint + build + the full vitest suite. Safe to mark required.
+  # S459: deterministic checks no gate test pins to the `test:` block. Parallel with `test`.
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+  # Deterministic gate: build + dist freshness + the full vitest suite, 2 shards in parallel.
   test:
     runs-on: ubuntu-latest
+    name: test (shard ${{ matrix.shard }}/2)
+    strategy:
+      # A red shard must not cancel the other: both legs' results are needed to tell
+      # "which half broke", and the coverage merge in `coverage` needs both blobs.
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,17 +78,18 @@ jobs:
       # binary the geometry test fails hard, by design (it must never degrade into a
       # skip, which CI reports as SUCCESS). `src/test/theater-geometry-gate.test.ts`
       # asserts this wiring.
+      #
+      # S459: the browser tests currently hash onto shard 2, but `--shard`'s file
+      # distribution is a Vitest implementation detail — re-splitting or changing the
+      # shard count could move them. The gate's no-`if:` rule is exactly what keeps
+      # that re-shuffling safe, so chromium is installed on EVERY leg.
       - name: Install chromium for the in-suite browser test
         run: npx playwright install --with-deps chromium
 
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run build
-
       # S176: the committed dist/ IS the published package. phlix-ui ships by
       # GitHub tag with `files: ["dist"]` and no `prepare` script, so npm never
-      # builds on install and consumers get whatever dist/ is committed. This
-      # step fails the PR if `npm run build` above changed anything — i.e. if a
+      # builds on install and consumers get whatever dist/ is committed. These
+      # two steps fail the PR if `npm run build` changes anything — i.e. if a
       # src/ change landed without a rebuilt dist/.
       #
       # Must stay directly after `npm run build` and must NOT gain
@@ -72,15 +107,54 @@ jobs:
       # style.css changed (b9f35f44 → f01bcb32). S13 recorded the same effect as
       # a +3 delta on an already-dirty tree; 16 is the clean-tree figure, which
       # is what CI sees. Rebuild and commit dist/.
+      - run: npm run build
       - name: Verify committed dist/ matches source
         run: npm run dist:check
 
-      # `--coverage` is what makes coverage/lcov.info exist at all — plain
-      # `test:run` writes no report despite vite.config.ts carrying a full
-      # `coverage` block, so the upload below would have nothing to send.
-      # It does not change which tests run (214 files / 3987 passed + 9
-      # skipped either way) and costs ~7s on a ~39s suite.
-      - run: npm run test:run -- --coverage
+      # S459: sharded vitest. `--coverage` is what makes coverage exist at all —
+      # plain `test:run` writes no report despite vite.config.ts carrying a full
+      # `coverage` block. Under `--shard` each leg only measures ITS file subset,
+      # so the per-leg report would be a half-truth; instead each leg records a
+      # BLOB report (Vitest 4 blobs embed the raw v8 coverage) and the `coverage`
+      # job merges both blobs and emits the real lcov. `--coverage` is kept on the
+      # legs because that is what populates the blob's coverage payload.
+      # ⚠ Must stay an unnamed step whose dash-line opens with run: immediately
+      # followed by the test:run command on ONE line (no `name:`, no `>-` fold):
+      # the S231 gate locates the vitest step by exactly that prefix, and a
+      # named/folded form silently turns its assertion vacuous.
+      - run: npm run test:run -- --coverage --shard=${{ matrix.shard }}/2 --reporter=default --reporter=blob --outputFile.blob=blob/shard-${{ matrix.shard }}.json
+
+      - name: Upload coverage blob
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-blob-${{ matrix.shard }}
+          path: blob/
+          retention-days: 7
+
+  # S459: merge the two shard blobs into one coverage report and ship it to Codacy.
+  # Runs vitest in merge mode only — it executes NO tests (see --mergeReports in
+  # `vitest --help`), so the wall cost is npm ci + one fast report pass.
+  coverage:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+
+      - name: Download shard blobs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-blob-*
+          path: blob/
+          merge-multiple: true
+
+      - name: Merge shard reports into coverage
+        run: npx vitest --merge-reports blob/ --coverage --reporter=dot
 
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
