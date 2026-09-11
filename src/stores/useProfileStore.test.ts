@@ -11,7 +11,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { nextTick, watch } from 'vue';
 import { useProfileStore, ACTIVE_PROFILE_KEY, activeProfileStorageKey } from './useProfileStore';
-import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT } from '../api/admin/users';
+import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT, type LastProfileConflictBody } from '../api/admin/users';
 import { useAuthStore } from './useAuthStore';
 import { isRoute } from '../test/route-match';
 
@@ -444,17 +444,43 @@ describe('useProfileStore', () => {
       expect(last.scope).toBe('p2'); // the listener's final re-read sees the SURVIVOR's scope
     });
 
+    it('S463 pin — deleting a NON-active row bumps epoch zero times', async () => {
+      // The other half of the rule: only a CHANGE of scope invalidates listeners.
+      // Deleting an inactive row keeps the live scope, so no epoch-scoped store
+      // may be forced to refetch.
+      login();
+      let rows = [row('p1', 'Alice', true), row('p2', 'Kids', false)];
+      stub([
+        { match: LIST, handle: () => jsonResponse({ profiles: rows }) },
+        {
+          match: REMOVE('p2'),
+          handle: () => {
+            rows = [row('p1', 'Alice', true)];
+            return jsonResponse({ message: 'ok' });
+          },
+        },
+      ]);
+      const store = useProfileStore();
+      await store.load();
+      expect(store.epoch).toBe(0);
+      expect(await store.removeProfile('p2')).toBe(true);
+      await nextTick();
+      expect(store.epoch).toBe(0); // scope never moved
+      expect(store.activeProfileId).toBe('p1'); // still the live scope
+    });
+
     it('the server’s 409 last-profile refusal surfaces verbatim and re-lists nothing', async () => {
       login();
       // S465 — faithful body shape taken from the real server contract:
       // machine code in `error`, human text in `message`. Surfacing the CODE
       // (not the sentence) also proves `extractError`'s key precedence.
+      // Typed as the shipped contract interface so a shape drift breaks the build.
+      const refusal: LastProfileConflictBody = { error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT };
       const calls = stub([
         { match: LIST, handle: () => jsonResponse({ profiles: [row('p1', 'Alice', true)] }) },
         {
           match: REMOVE('p1'),
-          handle: () =>
-            jsonResponse({ error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT }, false, 409),
+          handle: () => jsonResponse(refusal, false, 409),
         },
       ]);
       const store = useProfileStore();
