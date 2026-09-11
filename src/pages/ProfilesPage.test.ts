@@ -13,7 +13,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import ProfilesPage from './ProfilesPage.vue';
 import { isRoute } from '../test/route-match';
-import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT } from '../api/admin/users';
+import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT, type LastProfileConflictBody } from '../api/admin/users';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -210,12 +210,12 @@ describe('ProfilesPage (S82)', () => {
     // in `message` — and the page shows the CODE, proving extractError's
     // precedence (the sentence would render if only `message` existed).
     const { rows } = listable([row('p1', 'Alice', true), row('p2', 'Kids', false)]);
+    const refusal: LastProfileConflictBody = { error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT };
     stub([
       { match: LIST, handle: () => jsonResponse({ profiles: rows }) },
       {
         match: REMOVE('p2'),
-        handle: () =>
-          jsonResponse({ error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT }, false, 409),
+        handle: () => jsonResponse(refusal, false, 409),
       },
     ]);
     const w = mountPage();
