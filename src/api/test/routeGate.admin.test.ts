@@ -646,8 +646,8 @@ describe('route gate — admin/updates.ts (AdminUpdatesApi)', () => {
         const api = new AdminUpdatesApi(makeClient(server));
         await driveGated(server, 'getStatus', () => api.getStatus());
         await driveGated(server, 'check', () => api.check());
-        // The 401st tuple is the S273 route; if the vendored manifest were
-        // stale (400-era) the POST drive would 404 and name the url in the RED.
+        // The S273 admin POST is a late-registered tuple; if the vendored
+        // manifest were stale (a pre-S273 era) the POST drive would 404 and name the url in the RED.
         expectGateClean(
             server,
             ['GET /api/v1/admin/updates/status', 'POST /api/v1/admin/updates/check'],

@@ -4,7 +4,7 @@
  * outside it.
  *
  * This generalises the S276 harness (`./syncplayServer.ts`, five SyncPlay
- * routes) to the FULL server surface: the 401 `[method, pathTemplate]` tuples
+ * routes) to the FULL server surface: the 402 `[method, pathTemplate]` tuples
  * of `SERVER_ROUTE_MANIFEST` — the canonical phlix-contracts export
  * (`dist/server-route-manifest.json`, the union of the two phlix-server
  * ROUTE_MANIFEST constants), VENDORED VERBATIM, never transcribed by hand.
