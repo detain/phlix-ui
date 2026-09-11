@@ -83,23 +83,23 @@ describe('route gate server — control', () => {
         expect(server.requests[0]!.template).toBe('/api/v1/media');
     });
 
-    it('pins the manifest size — 401 tuples, no more', () => {
-        expect(SERVER_ROUTE_MANIFEST).toHaveLength(401);
+    it('pins the manifest size — 402 tuples, no more', () => {
+        expect(SERVER_ROUTE_MANIFEST).toHaveLength(402);
     });
 
     it('pins the manifest provenance — server sha + generator, never hand-edited', () => {
-        // Canonical contracts export vendored at contracts bef11256 (full-literal
+        // Canonical contracts export vendored at contracts fc8fb56f (full-literal
         // sha + md5 pins live in routeGate.api.test.ts's currency block).
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toMatch(/^[0-9a-f]{40}$/);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.generator).toBe(
             'scripts/generate-server-route-manifest.mjs',
         );
-        expect(SERVER_ROUTE_MANIFEST_PROVENANCE.total).toBe(401);
+        expect(SERVER_ROUTE_MANIFEST_PROVENANCE.total).toBe(402);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.shared).toBe(11);
-        // The union source split — 365 Application + 47 WebPortal, 11 shared.
+        // The union source split — 365 Application + 48 WebPortal, 11 shared.
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.sources).toEqual([
             { file: 'tests/Unit/Server/Core/ApplicationRouterWirePathGuardTest.php', count: 365 },
-            { file: 'tests/Unit/Server/WebPortal/WebPortalRouterWirePathGuardTest.php', count: 47 },
+            { file: 'tests/Unit/Server/WebPortal/WebPortalRouterWirePathGuardTest.php', count: 48 },
         ]);
     });
 
