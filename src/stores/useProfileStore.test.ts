@@ -9,7 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { nextTick } from 'vue';
+import { nextTick, watch } from 'vue';
 import { useProfileStore, ACTIVE_PROFILE_KEY } from './useProfileStore';
 import { useAuthStore } from './useAuthStore';
 import { isRoute } from '../test/route-match';
@@ -400,6 +400,41 @@ describe('useProfileStore', () => {
       expect(localStorage.getItem(ACTIVE_PROFILE_KEY)).toBe('p2');
       expect(store.profiles).toHaveLength(1);
       expect(store.gateOpen).toBe(false); // one profile left — no gate
+    });
+
+    it('S463 — deleting the ACTIVE row bumps epoch again when the re-list adopts the survivor', async () => {
+      // The regression this pins: before S463 the adoption (null → p2) never
+      // bumped epoch (the id watcher skips null → id by design), so an epoch
+      // listener's LAST re-read happened while the scope was still null/anonymous
+      // and nothing fired once the replacement scope existed.
+      login();
+      let rows = [row('p1', 'Alice', true), row('p2', 'Kids', false)];
+      stub([
+        { match: LIST, handle: () => jsonResponse({ profiles: rows }) },
+        {
+          match: REMOVE('p1'),
+          handle: () => {
+            rows = [row('p2', 'Kids', true)];
+            return jsonResponse({ message: 'ok' });
+          },
+        },
+      ]);
+      const store = useProfileStore();
+      await store.load();
+      expect(store.epoch).toBe(0);
+      const fires: { epoch: number; scope: string }[] = [];
+      watch(
+        () => store.epoch,
+        (e) => fires.push({ epoch: e, scope: store.scopeKey }),
+      );
+      expect(await store.removeProfile('p1')).toBe(true);
+      await nextTick();
+      // Interim invalidation (p1 → null) + healing adoption (null → p2) = two bumps.
+      expect(store.epoch).toBe(2);
+      expect(fires.length).toBeGreaterThan(0);
+      const last = fires[fires.length - 1]!;
+      expect(last.epoch).toBe(2);
+      expect(last.scope).toBe('p2'); // the listener's final re-read sees the SURVIVOR's scope
     });
 
     it('the server’s 409 last-profile refusal surfaces verbatim and re-lists nothing', async () => {

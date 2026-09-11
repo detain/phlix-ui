@@ -45,6 +45,16 @@ import { useAuthStore } from './useAuthStore';
  */
 export const ACTIVE_PROFILE_KEY = 'phlix.active_profile';
 
+/**
+ * S463 lane marker — code-resident literal for the merge ritual. The change it
+ * tags: when `removeProfile` deletes the ACTIVE row and the re-list ADOPTS a
+ * replacement, that adoption (null → surviving id) deliberately bumps `epoch`
+ * outside the id watcher — the watcher skips null → id transitions by design
+ * (boot adoption is not a switch), so without the explicit bump, epoch-scoped
+ * re-read listeners would never see the healed scope.
+ */
+export const S463EPOCHBUMPX9K4 = 'remove-adopt-epoch-bump';
+
 function readStoredActiveProfileId(): string | null {
   if (typeof localStorage === 'undefined') return null;
   const raw = localStorage.getItem(ACTIVE_PROFILE_KEY);
@@ -268,19 +278,29 @@ export const useProfileStore = defineStore('profile', () => {
    * `DELETE /api/v1/profiles/{id}` → re-lists on success. Refusing the LAST
    * profile is the SERVER's rule (409 `profile.last_profile`); the store just
    * surfaces it. Deleting the active-but-not-last row is allowed — the next
-   * load adopts whatever `is_active` row remains, healing the scope.
+   * load adopts whatever `is_active` row remains, healing the scope, and that
+   * adoption bumps `epoch` explicitly (S463) so scoped caches re-read from the
+   * survivor rather than staying pinned to the dropped row's scope.
    */
   async function removeProfile(profileId: string): Promise<boolean> {
     error.value = null;
     try {
       await api(apiBase.value).removeOwnProfile(profileId);
-      if (profileId === activeProfileId.value) {
+      const wasActive = profileId === activeProfileId.value;
+      if (wasActive) {
         // The deleted row can no longer be the scope; drop the mirror and let
         // the re-list adopt the surviving active profile (null until it does).
         activeProfileId.value = null;
         persistActiveProfileId(null);
       }
       await load(true);
+      if (wasActive && activeProfileId.value !== null) {
+        // S463 — the healing ADOPTION is a real scope change (the interim null
+        // above, if it fired at all, left listeners on an anonymous scope, and
+        // the id watcher never bumps null → id). Land the replacement explicitly
+        // so every epoch-scoped re-read runs against the surviving profile.
+        epoch.value += 1;
+      }
       return true;
     } catch (e) {
       error.value = errMessage(e, 'Could not delete the profile.');
@@ -309,6 +329,9 @@ export const useProfileStore = defineStore('profile', () => {
   // `epoch`. Profile-scoped consumers (`useUserItemDataStore`, the media grid
   // cache, the favorites/history screens) watch THIS number, never the id, so a
   // scope→scope swap always clears even when an id repeats after a delete.
+  // The one transition deliberately NOT bumped here is null → id (boot/first
+  // adoption); `removeProfile` compensates with an explicit bump when a delete
+  // heals into a replacement scope (S463), because THAT null → id is a change.
   watch(activeProfileId, (next, prev) => {
     if (prev !== null && next !== prev) epoch.value += 1;
   });
