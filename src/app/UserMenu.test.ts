@@ -26,6 +26,7 @@ function mountMenu(
   loggedIn = false,
   user: Record<string, unknown> = { id: '1', username: 'Ada' },
   attach = false,
+  config: Record<string, unknown> = { routerBase: '/app' },
 ) {
   if (loggedIn) localStorage.setItem('access_token', 'TOKEN');
   const router = makeRouter();
@@ -34,7 +35,7 @@ function mountMenu(
   const push = vi.spyOn(router, 'push');
   const w = mount(UserMenu, {
     ...(attach ? { attachTo: document.body } : {}),
-    global: { plugins: [router], provide: { phlixConfig: { routerBase: '/app' } } },
+    global: { plugins: [router], provide: { phlixConfig: config } },
   });
   wrappers.push(w);
   return { w, auth, router, push };
@@ -180,5 +181,80 @@ describe('UserMenu — profile entries (S82)', () => {
     await w.get('.usermenu__trigger').trigger('click');
     expect(w.find('[data-testid="usermenu-switch-profile"]').exists()).toBe(false);
     expect(w.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(false);
+  });
+});
+
+// S462 — the profile arms must respect the profiles feature flag, the same rule
+// PhlixApp uses to mount the Who's-watching gate. Hosts opt out via
+// `features: { profiles: false }` or by being the hub (`app: 'hub'`); with the
+// flag off the arms must not render at all (and nothing else in the menu moves).
+describe('UserMenu — profile arms respect the feature flag (S462)', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        ({
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: async () => ({ profiles: [] }),
+          text: async () => '{"profiles":[]}',
+        }) as unknown as Response,
+      ),
+    );
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('hides both arms when features.profiles is false', async () => {
+    const { w } = mountMenu(true, { id: '1', username: 'Ada' }, false, {
+      routerBase: '/app',
+      app: 'server',
+      features: { profiles: false },
+    });
+    await w.get('.usermenu__trigger').trigger('click');
+    const panel = w.get('.usermenu__panel');
+    expect(panel.find('[data-testid="usermenu-switch-profile"]').exists()).toBe(false);
+    expect(panel.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(false);
+    expect(panel.text()).not.toContain('Switch Profile');
+    expect(panel.text()).not.toContain('Manage Profiles');
+    // Collateral check: the rest of the menu is the plain signed-in list.
+    const items = panel.findAll('.usermenu__item');
+    expect(items).toHaveLength(3);
+    expect(items.map((i) => i.text())).toEqual(['Watch History', 'Settings', 'Sign out']);
+  });
+
+  it('hides both arms on the hub (app: hub, no explicit features flag)', async () => {
+    const { w } = mountMenu(true, { id: '1', username: 'Ada' }, false, {
+      routerBase: '/app',
+      app: 'hub',
+    });
+    await w.get('.usermenu__trigger').trigger('click');
+    expect(w.get('.usermenu__panel').find('[data-testid="usermenu-switch-profile"]').exists()).toBe(false);
+    expect(w.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(false);
+  });
+
+  it('shows both arms when the flag is explicitly on (enabled behavior unchanged)', async () => {
+    const { w } = mountMenu(true, { id: '1', username: 'Ada' }, false, {
+      routerBase: '/app',
+      app: 'server',
+      features: { profiles: true },
+    });
+    await w.get('.usermenu__trigger').trigger('click');
+    const panel = w.get('.usermenu__panel');
+    expect(panel.find('[data-testid="usermenu-switch-profile"]').exists()).toBe(true);
+    expect(panel.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(true);
+  });
+
+  it('defaults the flag on for a config without app/features (S82 behavior pinned)', async () => {
+    // The default mountMenu() config ({ routerBase: '/app' }) predates S462 and
+    // every S82 test above relies on the arms being present with it. This is the
+    // explicit pin: a host that declares nothing keeps the S82 menu exactly.
+    const { w } = mountMenu(true);
+    await w.get('.usermenu__trigger').trigger('click');
+    const panel = w.get('.usermenu__panel');
+    expect(panel.find('[data-testid="usermenu-switch-profile"]').exists()).toBe(true);
+    expect(panel.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(true);
   });
 });
