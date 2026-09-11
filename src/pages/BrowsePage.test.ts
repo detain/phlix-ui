@@ -1311,7 +1311,9 @@ describe('BrowsePage — profile switch re-reads per-user rails (S82)', () => {
     await flushPromises();
 
     const favCalls = fn.mock.calls.filter(([u]) => isRoute(String(u), FAVORITES_PATH)).length;
-    expect(favCalls).toBeGreaterThanOrEqual(2); // initial + refetch under the new scope
+    // S465 — exact, not "at least": one read for the mount scope, one for the
+    // epoch swap, nothing else. A third call would mean a spurious re-read.
+    expect(favCalls).toBe(2);
     const afterItems = favoritesRow(w)?.props('items') as MediaItem[] | undefined;
     expect(afterItems?.map((i) => i.id)).toEqual(['f9']); // the OLD profile's list is gone
   });

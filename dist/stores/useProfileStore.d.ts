@@ -34,8 +34,42 @@ import { type OwnProfile } from '../api/admin/users';
  * after reload marks the right tile, NOT the authority: every `load()` adopts
  * the server row whose `is_active` is true (that column is what the backend
  * actually enforces via the JWT claim).
+ *
+ * S464 — this constant is the per-account namespace PREFIX: the storage key in
+ * use is `phlix.active_profile.<account-id>` ({@link activeProfileStorageKey}).
+ * The old single global key leaked one account's hint onto every other account
+ * sharing the browser (wrong tile painted, wrong seed until `load()` corrected
+ * scope). Census at implementation time: this module, its test file and the
+ * `src/index.ts` re-export were the ONLY readers/writers in the estate — zero
+ * hits for the literal in phlix-server / phlix-hub sources (read-only check),
+ * so nothing outside phlix-ui is coupled to the key.
+ *
+ * COMPAT — DOCUMENTED RESET (not migration): a pre-existing un-namespaced
+ * `phlix.active_profile` value is DISCARDED (removed on store boot) and never
+ * fallback-read. Justification: the value is a non-authoritative paint hint —
+ * `load()` adopts the server-active row within a request of boot anyway — while
+ * a fallback-read would re-import the exact cross-account leak this key change
+ * fixes (whose account owns a bare, unlabelled id? reading it for account A can
+ * paint account B's tile). Users lose at most a one-frame stale tile highlight.
  */
 export declare const ACTIVE_PROFILE_KEY = "phlix.active_profile";
+/**
+ * S464 lane marker — code-resident literal for the merge ritual (namespacing
+ * of the active-profile storage key per account, with the legacy-key reset
+ * above).
+ */
+export declare const S464ACCTNSKEYX9K5 = "active-profile-account-namespace";
+/** The localStorage key carrying {@link accountId}'s active-profile hint. */
+export declare function activeProfileStorageKey(accountId: string): string;
+/**
+ * S463 lane marker — code-resident literal for the merge ritual. The change it
+ * tags: when `removeProfile` deletes the ACTIVE row and the re-list ADOPTS a
+ * replacement, that adoption (null → surviving id) deliberately bumps `epoch`
+ * outside the id watcher — the watcher skips null → id transitions by design
+ * (boot adoption is not a switch), so without the explicit bump, epoch-scoped
+ * re-read listeners would never see the healed scope.
+ */
+export declare const S463EPOCHBUMPX9K4 = "remove-adopt-epoch-bump";
 export declare const useProfileStore: import("pinia").StoreDefinition<"profile", Pick<{
     profiles: import("vue").Ref<{
         id: string;

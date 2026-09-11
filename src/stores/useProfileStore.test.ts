@@ -9,8 +9,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { nextTick } from 'vue';
-import { useProfileStore, ACTIVE_PROFILE_KEY } from './useProfileStore';
+import { nextTick, watch } from 'vue';
+import { useProfileStore, ACTIVE_PROFILE_KEY, activeProfileStorageKey } from './useProfileStore';
+import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT, type LastProfileConflictBody } from '../api/admin/users';
 import { useAuthStore } from './useAuthStore';
 import { isRoute } from '../test/route-match';
 
@@ -84,10 +85,16 @@ const RENAME = (id: string) => (u: string, m: string): boolean =>
 const REMOVE = (id: string) => (u: string, m: string): boolean =>
   m === 'DELETE' && isRoute(u, `/api/v1/profiles/${id}`);
 
-/** Fake a logged-in session carrying the merge token as its access token. */
-function login(): void {
+/**
+ * Fake a logged-in session carrying the merge token as its access token.
+ * S464: the active-profile mirror is namespaced by ACCOUNT, which the store
+ * reads from `auth.user.id` — a real boot restores that asynchronously via
+ * `init()`/`fetchUser()`, so the test hydrates it alongside the tokens.
+ */
+function login(accountId = 'u1'): void {
   localStorage.setItem('access_token', S82_MERGE_TOKEN);
   localStorage.setItem('refresh_token', 'rt-old');
+  useAuthStore().user = { id: accountId, email: 'a@b.c', is_admin: false } as never;
 }
 
 beforeEach(() => {
@@ -109,7 +116,7 @@ describe('useProfileStore', () => {
       expect(calls.filter((c) => LIST(c.url, c.method))).toHaveLength(1);
       expect(store.profiles.map((p) => p.id)).toEqual(['p2', 'p1']);
       expect(store.activeProfileId).toBe('p1');
-      expect(localStorage.getItem(ACTIVE_PROFILE_KEY)).toBe('p1');
+      expect(localStorage.getItem(activeProfileStorageKey('u1'))).toBe('p1');
       expect(store.loaded).toBe(true);
       expect(store.error).toBeNull();
     });
@@ -224,7 +231,7 @@ describe('useProfileStore', () => {
       expect(localStorage.getItem('refresh_token')).toBe('refresh-AT-KIDS');
       expect(auth.isLoggedIn).toBe(true);
       expect(store.activeProfileId).toBe('p2');
-      expect(localStorage.getItem(ACTIVE_PROFILE_KEY)).toBe('p2');
+      expect(localStorage.getItem(activeProfileStorageKey('u1'))).toBe('p2');
       expect(store.gateOpen).toBe(false); // choice made → gate closes itself
       // cached list flags stay truthful without a refetch
       expect(store.profiles.find((p) => p.id === 'p2')?.is_active).toBe(true);
@@ -397,21 +404,89 @@ describe('useProfileStore', () => {
       await store.load();
       expect(await store.removeProfile('p1')).toBe(true);
       expect(store.activeProfileId).toBe('p2');
-      expect(localStorage.getItem(ACTIVE_PROFILE_KEY)).toBe('p2');
+      expect(localStorage.getItem(activeProfileStorageKey('u1'))).toBe('p2');
       expect(store.profiles).toHaveLength(1);
       expect(store.gateOpen).toBe(false); // one profile left — no gate
     });
 
+    it('S463 — deleting the ACTIVE row bumps epoch again when the re-list adopts the survivor', async () => {
+      // The regression this pins: before S463 the adoption (null → p2) never
+      // bumped epoch (the id watcher skips null → id by design), so an epoch
+      // listener's LAST re-read happened while the scope was still null/anonymous
+      // and nothing fired once the replacement scope existed.
+      login();
+      let rows = [row('p1', 'Alice', true), row('p2', 'Kids', false)];
+      stub([
+        { match: LIST, handle: () => jsonResponse({ profiles: rows }) },
+        {
+          match: REMOVE('p1'),
+          handle: () => {
+            rows = [row('p2', 'Kids', true)];
+            return jsonResponse({ message: 'ok' });
+          },
+        },
+      ]);
+      const store = useProfileStore();
+      await store.load();
+      expect(store.epoch).toBe(0);
+      const fires: { epoch: number; scope: string }[] = [];
+      watch(
+        () => store.epoch,
+        (e) => fires.push({ epoch: e, scope: store.scopeKey }),
+      );
+      expect(await store.removeProfile('p1')).toBe(true);
+      await nextTick();
+      // Interim invalidation (p1 → null) + healing adoption (null → p2) = two bumps.
+      expect(store.epoch).toBe(2);
+      expect(fires.length).toBeGreaterThan(0);
+      const last = fires[fires.length - 1]!;
+      expect(last.epoch).toBe(2);
+      expect(last.scope).toBe('p2'); // the listener's final re-read sees the SURVIVOR's scope
+    });
+
+    it('S463 pin — deleting a NON-active row bumps epoch zero times', async () => {
+      // The other half of the rule: only a CHANGE of scope invalidates listeners.
+      // Deleting an inactive row keeps the live scope, so no epoch-scoped store
+      // may be forced to refetch.
+      login();
+      let rows = [row('p1', 'Alice', true), row('p2', 'Kids', false)];
+      stub([
+        { match: LIST, handle: () => jsonResponse({ profiles: rows }) },
+        {
+          match: REMOVE('p2'),
+          handle: () => {
+            rows = [row('p1', 'Alice', true)];
+            return jsonResponse({ message: 'ok' });
+          },
+        },
+      ]);
+      const store = useProfileStore();
+      await store.load();
+      expect(store.epoch).toBe(0);
+      expect(await store.removeProfile('p2')).toBe(true);
+      await nextTick();
+      expect(store.epoch).toBe(0); // scope never moved
+      expect(store.activeProfileId).toBe('p1'); // still the live scope
+    });
+
     it('the server’s 409 last-profile refusal surfaces verbatim and re-lists nothing', async () => {
       login();
+      // S465 — faithful body shape taken from the real server contract:
+      // machine code in `error`, human text in `message`. Surfacing the CODE
+      // (not the sentence) also proves `extractError`'s key precedence.
+      // Typed as the shipped contract interface so a shape drift breaks the build.
+      const refusal: LastProfileConflictBody = { error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT };
       const calls = stub([
         { match: LIST, handle: () => jsonResponse({ profiles: [row('p1', 'Alice', true)] }) },
-        { match: REMOVE('p1'), handle: () => jsonResponse({ message: 'profile.last_profile' }, false, 409) },
+        {
+          match: REMOVE('p1'),
+          handle: () => jsonResponse(refusal, false, 409),
+        },
       ]);
       const store = useProfileStore();
       await store.load();
       expect(await store.removeProfile('p1')).toBe(false);
-      expect(store.error).toBe('profile.last_profile');
+      expect(store.error).toBe(PROFILE_LAST_ERROR_CODE);
       expect(store.activeProfileId).toBe('p1'); // untouched
       expect(calls.filter((c) => c.method === 'GET')).toHaveLength(1); // no relist
     });
@@ -431,6 +506,73 @@ describe('useProfileStore', () => {
       expect(store.loaded).toBe(false);
       expect(store.activeProfileId).toBeNull();
       expect(store.gateOpen).toBe(false);
+      expect(localStorage.getItem(activeProfileStorageKey('u1'))).toBeNull();
+    });
+  });
+
+  // S464 — the active-profile hint was stored under ONE global key, so every
+  // account on a shared browser seeded from (and overwrote) the same value.
+  // The key is now `phlix.active_profile.<account-id>`; the legacy global key
+  // is discarded on boot (documented reset — never fallback-read, see the
+  // ACTIVE_PROFILE_KEY docblock).
+  describe('account namespacing (S464)', () => {
+    it('persists the hint under the account key and never the legacy global key', async () => {
+      login();
+      stub([{ match: LIST, handle: () => jsonResponse({ profiles: [row('p1', 'Alice', true)] }) }]);
+      const store = useProfileStore();
+      await store.load();
+      expect(localStorage.getItem(activeProfileStorageKey('u1'))).toBe('p1');
+      expect(localStorage.getItem(ACTIVE_PROFILE_KEY)).toBeNull();
+    });
+
+    it('discards a pre-existing legacy global key on boot and never reads it', () => {
+      localStorage.setItem(ACTIVE_PROFILE_KEY, 'ghost-profile'); // an old build's value
+      login();
+      const store = useProfileStore();
+      expect(localStorage.getItem(ACTIVE_PROFILE_KEY)).toBeNull(); // wiped, not migrated
+      expect(store.activeProfileId).toBeNull(); // …and NOT adopted as this account's hint
+    });
+
+    it('two accounts on one browser stay isolated through logout → re-login', async () => {
+      localStorage.setItem(activeProfileStorageKey('u1'), 'pA');
+      localStorage.setItem(activeProfileStorageKey('u2'), 'pB');
+      login('u1');
+      stub([{ match: LIST, handle: () => jsonResponse({ profiles: [row('pA', 'A', true)] }) }]);
+      const store = useProfileStore();
+      expect(store.activeProfileId).toBe('pA'); // seeded from u1's own key
+      useAuthStore().logout();
+      await nextTick();
+      // Logout hygiene clears exactly the account's own key…
+      expect(localStorage.getItem(activeProfileStorageKey('u1'))).toBeNull();
+      // …and the next account boots from ITS key, never the predecessor's value.
+      login('u2');
+      await nextTick();
+      expect(store.activeProfileId).toBe('pB');
+      // Logout's pA → null already fired the invalidation bump (epoch 1); the
+      // u2 seed (null → pB) is boot adoption and must add NOTHING further.
+      expect(store.epoch).toBe(1);
+      expect(localStorage.getItem(activeProfileStorageKey('u2'))).toBe('pB');
+    });
+
+    it('writes nothing while no account is known, then namespaces once it arrives', async () => {
+      // Boot race: token restored, `fetchUser()` still in flight when load() runs.
+      let rows = [row('p1', 'Alice', true), row('p2', 'Kids', false)];
+      localStorage.setItem('access_token', S82_MERGE_TOKEN);
+      stub([{ match: LIST, handle: () => jsonResponse({ profiles: rows }) }]);
+      const store = useProfileStore();
+      await store.load();
+      expect(store.activeProfileId).toBe('p1'); // server truth still adopted
+      expect(Object.keys(localStorage).filter((k) => k.startsWith(ACTIVE_PROFILE_KEY))).toEqual([]);
+      useAuthStore().user = { id: 'u1', email: 'a@b.c', is_admin: false } as never;
+      await nextTick();
+      // Arrival must not clobber the live scope…
+      expect(store.activeProfileId).toBe('p1');
+      expect(store.epoch).toBe(0);
+      // …and once the account is known, the next adoption writes ITS key only.
+      rows = [row('p1', 'Alice', false), row('p2', 'Kids', true)];
+      await store.load(true);
+      expect(store.activeProfileId).toBe('p2');
+      expect(localStorage.getItem(activeProfileStorageKey('u1'))).toBe('p2');
       expect(localStorage.getItem(ACTIVE_PROFILE_KEY)).toBeNull();
     });
   });

@@ -18,6 +18,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useProfileStore } from '../stores/useProfileStore';
 import { useMessages } from '../composables/useMessages';
 import { useImageSrc } from '../composables/useImageSrc';
+import { profilesFeatureEnabled } from './profilesFeature';
 import type { PhlixAppConfig } from './types';
 
 const auth = useAuthStore();
@@ -25,6 +26,9 @@ const profiles = useProfileStore();
 const router = useRouter();
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.routerBase ?? '/app');
+/** S462: same flag PhlixApp gates the Who's-watching mount on — when profiles
+ *  are off for this app, the switch/manage arms must not render at all. */
+const profilesEnabled = computed(() => profilesFeatureEnabled(config));
 const { t } = useMessages();
 /** S241: avatar_url is a ROOT-RELATIVE `/api/v1/users/{id}/avatar`; resolve it
  *  against the media base so it loads over the relay proxy on the hub. */
@@ -140,17 +144,21 @@ onBeforeUnmount(() => {
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/history`)">
           <Icon name="film" /> {{ t('shell.watchHistory') }}
         </button>
-        <!-- S82 profile entries. "Switch Profile" re-arms the Who's-watching gate
-             (its own >1-profile condition decides whether it actually shows);
-             "Manage Profiles" routes to the self-service management page. -->
-        <button type="button" class="usermenu__item" role="menuitem" data-testid="usermenu-switch-profile"
-          @click="switchProfile">
-          <Icon name="users" /> {{ t('shell.switchProfile') }}
-        </button>
-        <button type="button" class="usermenu__item" role="menuitem" data-testid="usermenu-manage-profiles"
-          @click="go(`${homePath}/profiles`)">
-          <Icon name="settings" /> {{ t('shell.manageProfiles') }}
-        </button>
+        <!-- S82 profile entries, S462-gated on the profiles feature flag. "Switch
+             Profile" re-arms the Who's-watching gate (its own >1-profile condition
+             decides whether it actually shows); "Manage Profiles" routes to the
+             self-service management page. With profiles off for this app the arms
+             must not render at all — no dead entry into a gate that can never open. -->
+        <template v-if="profilesEnabled">
+          <button type="button" class="usermenu__item" role="menuitem" data-testid="usermenu-switch-profile"
+            @click="switchProfile">
+            <Icon name="users" /> {{ t('shell.switchProfile') }}
+          </button>
+          <button type="button" class="usermenu__item" role="menuitem" data-testid="usermenu-manage-profiles"
+            @click="go(`${homePath}/profiles`)">
+            <Icon name="settings" /> {{ t('shell.manageProfiles') }}
+          </button>
+        </template>
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/settings`)">
           <Icon name="settings" /> {{ t('shell.settings') }}
         </button>

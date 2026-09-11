@@ -97,6 +97,7 @@ import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect'
 import { useResumeSync } from '../composables/useResumeSync';
 import { useResumeReporter } from '../composables/useResumeReporter';
 import { useMessages } from '../composables/useMessages';
+import { profilesFeatureEnabled } from './profilesFeature';
 import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 
 // Reflect the preferences store onto <html> (theme / accent / density / motion).
@@ -164,9 +165,10 @@ const auth = useAuthStore();
 // S82 Who's-watching: load the account's profiles once authenticated so the
 // gate can decide (the store's own logout watch clears the state). Mirrors the
 // resumeSync gating — `/api/v1/profiles` is a media-server surface; on the hub
-// it could only 404.
+// it could only 404. S462: the flag lives in one helper also consumed by
+// UserMenu, so the arms and this mount can never disagree.
 const profiles = useProfileStore();
-const profilesEnabled = computed(() => config?.features?.profiles ?? (config?.app !== 'hub'));
+const profilesEnabled = computed(() => profilesFeatureEnabled(config));
 watch(
     () => auth.isLoggedIn && profilesEnabled.value,
     (ready) => { if (ready) void profiles.load(); },

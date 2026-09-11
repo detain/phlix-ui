@@ -42,19 +42,68 @@ import { useAuthStore } from './useAuthStore';
  * after reload marks the right tile, NOT the authority: every `load()` adopts
  * the server row whose `is_active` is true (that column is what the backend
  * actually enforces via the JWT claim).
+ *
+ * S464 — this constant is the per-account namespace PREFIX: the storage key in
+ * use is `phlix.active_profile.<account-id>` ({@link activeProfileStorageKey}).
+ * The old single global key leaked one account's hint onto every other account
+ * sharing the browser (wrong tile painted, wrong seed until `load()` corrected
+ * scope). Census at implementation time: this module, its test file and the
+ * `src/index.ts` re-export were the ONLY readers/writers in the estate — zero
+ * hits for the literal in phlix-server / phlix-hub sources (read-only check),
+ * so nothing outside phlix-ui is coupled to the key.
+ *
+ * COMPAT — DOCUMENTED RESET (not migration): a pre-existing un-namespaced
+ * `phlix.active_profile` value is DISCARDED (removed on store boot) and never
+ * fallback-read. Justification: the value is a non-authoritative paint hint —
+ * `load()` adopts the server-active row within a request of boot anyway — while
+ * a fallback-read would re-import the exact cross-account leak this key change
+ * fixes (whose account owns a bare, unlabelled id? reading it for account A can
+ * paint account B's tile). Users lose at most a one-frame stale tile highlight.
  */
 export const ACTIVE_PROFILE_KEY = 'phlix.active_profile';
 
-function readStoredActiveProfileId(): string | null {
-  if (typeof localStorage === 'undefined') return null;
-  const raw = localStorage.getItem(ACTIVE_PROFILE_KEY);
+/**
+ * S464 lane marker — code-resident literal for the merge ritual (namespacing
+ * of the active-profile storage key per account, with the legacy-key reset
+ * above).
+ */
+export const S464ACCTNSKEYX9K5 = 'active-profile-account-namespace';
+
+/** The pre-S464 global key (no account suffix). Removed on boot, never read. */
+const LEGACY_ACTIVE_PROFILE_KEY = ACTIVE_PROFILE_KEY;
+
+/** The localStorage key carrying {@link accountId}'s active-profile hint. */
+export function activeProfileStorageKey(accountId: string): string {
+  return `${ACTIVE_PROFILE_KEY}.${accountId}`;
+}
+
+/**
+ * S463 lane marker — code-resident literal for the merge ritual. The change it
+ * tags: when `removeProfile` deletes the ACTIVE row and the re-list ADOPTS a
+ * replacement, that adoption (null → surviving id) deliberately bumps `epoch`
+ * outside the id watcher — the watcher skips null → id transitions by design
+ * (boot adoption is not a switch), so without the explicit bump, epoch-scoped
+ * re-read listeners would never see the healed scope.
+ */
+export const S463EPOCHBUMPX9K4 = 'remove-adopt-epoch-bump';
+
+function readStoredActiveProfileId(accountId: string | null): string | null {
+  if (typeof localStorage === 'undefined' || accountId === null) return null;
+  const raw = localStorage.getItem(activeProfileStorageKey(accountId));
   return typeof raw === 'string' && raw !== '' ? raw : null;
 }
 
-function persistActiveProfileId(id: string | null): void {
+function persistActiveProfileId(accountId: string | null, id: string | null): void {
+  if (typeof localStorage === 'undefined' || accountId === null) return;
+  const key = activeProfileStorageKey(accountId);
+  if (id === null) localStorage.removeItem(key);
+  else localStorage.setItem(key, id);
+}
+
+/** Drop the pre-S464 global key if an old build left one behind (documented reset). */
+function discardLegacyActiveProfileKey(): void {
   if (typeof localStorage === 'undefined') return;
-  if (id === null) localStorage.removeItem(ACTIVE_PROFILE_KEY);
-  else localStorage.setItem(ACTIVE_PROFILE_KEY, id);
+  localStorage.removeItem(LEGACY_ACTIVE_PROFILE_KEY);
 }
 
 export const useProfileStore = defineStore('profile', () => {
@@ -63,6 +112,18 @@ export const useProfileStore = defineStore('profile', () => {
   // backend — never the hub relay-proxy base), same resolution as useAuthStore.
   const apiBase = useApiBase();
 
+  // ---- S464 account plumbing for the namespaced storage mirror ---------------
+  // The account whose key we read/write. `auth.user` is hydrated asynchronously
+  // (`init()` → `fetchUser()`), so at boot this may be null until the account
+  // arrives; it survives a logout long enough for `reset()` to clear the right
+  // key, and the arrival watch re-seeds for the next account.
+  function currentAccountId(): string | null {
+    const id = auth.user?.id;
+    return typeof id === 'string' && id !== '' ? id : null;
+  }
+  let mirrorAccount = currentAccountId();
+  discardLegacyActiveProfileKey();
+
   /** Hydrated rows from `GET /api/v1/profiles` (server order: active first). */
   const profiles = ref<OwnProfile[]>([]);
   const loading = ref(false);
@@ -70,7 +131,7 @@ export const useProfileStore = defineStore('profile', () => {
   const loaded = ref(false);
   const error = ref<string | null>(null);
   /** The session's active profile id (server `is_active` once loaded). */
-  const activeProfileId = ref<string | null>(readStoredActiveProfileId());
+  const activeProfileId = ref<string | null>(readStoredActiveProfileId(mirrorAccount));
   /** Id of the profile whose switch request is in flight (per-tile busy flag). */
   const switchingId = ref<string | null>(null);
   /**
@@ -147,7 +208,7 @@ export const useProfileStore = defineStore('profile', () => {
       const serverActive = rows.find((p) => p.is_active)?.id ?? null;
       if (serverActive !== null && serverActive !== activeProfileId.value) {
         activeProfileId.value = serverActive;
-        persistActiveProfileId(serverActive);
+        persistActiveProfileId(mirrorAccount, serverActive);
       }
     } catch (e) {
       error.value = errMessage(e, 'Could not load your profiles.');
@@ -194,7 +255,7 @@ export const useProfileStore = defineStore('profile', () => {
       auth.setTokens(result.access_token, result.refresh_token);
       if (result.user && typeof result.user === 'object') auth.user = result.user;
       activeProfileId.value = result.profile_id ?? profileId;
-      persistActiveProfileId(activeProfileId.value);
+      persistActiveProfileId(mirrorAccount, activeProfileId.value);
       choiceMade.value = true;
       arming.value = false;
       // Keep the cached list's flags truthful so tiles re-render without refetch.
@@ -268,19 +329,29 @@ export const useProfileStore = defineStore('profile', () => {
    * `DELETE /api/v1/profiles/{id}` → re-lists on success. Refusing the LAST
    * profile is the SERVER's rule (409 `profile.last_profile`); the store just
    * surfaces it. Deleting the active-but-not-last row is allowed — the next
-   * load adopts whatever `is_active` row remains, healing the scope.
+   * load adopts whatever `is_active` row remains, healing the scope, and that
+   * adoption bumps `epoch` explicitly (S463) so scoped caches re-read from the
+   * survivor rather than staying pinned to the dropped row's scope.
    */
   async function removeProfile(profileId: string): Promise<boolean> {
     error.value = null;
     try {
       await api(apiBase.value).removeOwnProfile(profileId);
-      if (profileId === activeProfileId.value) {
+      const wasActive = profileId === activeProfileId.value;
+      if (wasActive) {
         // The deleted row can no longer be the scope; drop the mirror and let
         // the re-list adopt the surviving active profile (null until it does).
         activeProfileId.value = null;
-        persistActiveProfileId(null);
+        persistActiveProfileId(mirrorAccount, null);
       }
       await load(true);
+      if (wasActive && activeProfileId.value !== null) {
+        // S463 — the healing ADOPTION is a real scope change (the interim null
+        // above, if it fired at all, left listeners on an anonymous scope, and
+        // the id watcher never bumps null → id). Land the replacement explicitly
+        // so every epoch-scoped re-read runs against the surviving profile.
+        epoch.value += 1;
+      }
       return true;
     } catch (e) {
       error.value = errMessage(e, 'Could not delete the profile.');
@@ -301,7 +372,7 @@ export const useProfileStore = defineStore('profile', () => {
     choiceMade.value = false;
     arming.value = false;
     activeProfileId.value = null;
-    persistActiveProfileId(null);
+    persistActiveProfileId(mirrorAccount, null);
   }
 
   // The invalidation signal: any real change of active profile — a completed
@@ -309,6 +380,9 @@ export const useProfileStore = defineStore('profile', () => {
   // `epoch`. Profile-scoped consumers (`useUserItemDataStore`, the media grid
   // cache, the favorites/history screens) watch THIS number, never the id, so a
   // scope→scope swap always clears even when an id repeats after a delete.
+  // The one transition deliberately NOT bumped here is null → id (boot/first
+  // adoption); `removeProfile` compensates with an explicit bump when a delete
+  // heals into a replacement scope (S463), because THAT null → id is a change.
   watch(activeProfileId, (next, prev) => {
     if (prev !== null && next !== prev) epoch.value += 1;
   });
@@ -323,6 +397,19 @@ export const useProfileStore = defineStore('profile', () => {
       if (!loggedIn) reset();
     },
   );
+
+  // S464 — the account can arrive AFTER this store was constructed (boot with a
+  // stored token: `fetchUser()` resolves async) or REPLACE the previous one
+  // (re-login as another user on the same browser). Adopt the newcomer's own
+  // namespaced key, and only into a null mirror — never overwriting a live
+  // session scope, and null → id does not bump epoch (boot-adoption rule).
+  watch(currentAccountId, (account, prev) => {
+    if (account === null || account === prev) return;
+    mirrorAccount = account;
+    if (activeProfileId.value === null) {
+      activeProfileId.value = readStoredActiveProfileId(account);
+    }
+  });
 
   return {
     profiles,

@@ -189,6 +189,8 @@ export {
   DEFAULT_THROTTLE_BPS,
   THROTTLE_BPS_OPTIONS,
   THROTTLE_BPS_LEVELS,
+  PROFILE_LAST_ERROR_CODE,
+  PROFILE_LAST_ERROR_TEXT,
 } from './api/admin/users';
 export type {
   User,
@@ -199,6 +201,7 @@ export type {
   UpdateProfileInput,
   UserBandwidth,
   SetQuotaInput,
+  LastProfileConflictBody,
 } from './api/admin/users';
 export { AdminWebhooksApi, WEBHOOK_EVENT_CATEGORIES, SUBSCRIBABLE_EVENTS } from './api/admin/webhooks';
 export type { Webhook, CreateWebhookInput, UpdateWebhookInput, TestResult } from './api/admin/webhooks';
@@ -414,7 +417,7 @@ export type { UserItemData } from './stores/useUserItemDataStore';
 
 // S82 — self-service profiles: the active-profile store every profile-scoped read
 // keys on, plus the API row/response types.
-export { useProfileStore, ACTIVE_PROFILE_KEY } from './stores/useProfileStore';
+export { useProfileStore, ACTIVE_PROFILE_KEY, activeProfileStorageKey } from './stores/useProfileStore';
 export type { OwnProfile, ProfileSettings } from './api/admin/users';
 
 export { useLibrariesStore } from './stores/useLibrariesStore';

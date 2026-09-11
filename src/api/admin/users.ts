@@ -370,6 +370,30 @@ export interface UpdateOwnProfileInput {
   pin_required_for_admin?: boolean;
 }
 
+/**
+ * S465 — the last-profile refusal, as the REAL server emits it. The media
+ * server's `DELETE /api/v1/profiles/{id}` answers 409 with BOTH keys:
+ * `{ "error": "profile.last_profile", "message": "Cannot delete the last profile" }`
+ * — `error` is the machine code (`ApiClient.extractError` prefers it),
+ * `message` the human text. Earlier test stubs carried the code in `message`
+ * only, which the client happened to echo; stubs must be built from these
+ * constants so the shape under test matches production on the wire.
+ * (The sibling switch endpoint has NO 409 path — only 400/401/404.)
+ */
+export const PROFILE_LAST_ERROR_CODE = 'profile.last_profile';
+
+/** Human-readable text the server pairs with {@link PROFILE_LAST_ERROR_CODE}. */
+export const PROFILE_LAST_ERROR_TEXT = 'Cannot delete the last profile';
+
+/** Lane marker (S465 merge ritual) — code-resident literal, not a comment. */
+export const S465STUBFULL409X9K6 = 'faithful-last-profile-409';
+
+/** The exact 409 body shape for {@link AdminUsersApi.removeOwnProfile}. */
+export interface LastProfileConflictBody {
+  error: typeof PROFILE_LAST_ERROR_CODE;
+  message: typeof PROFILE_LAST_ERROR_TEXT;
+}
+
 // ── Parental control types ─────────────────────────────────────────────────────
 
 /**
@@ -741,9 +765,9 @@ export class AdminUsersApi {
 
   /**
    * `DELETE /api/v1/profiles/{profileId}` → `{ message }`. Refuses the LAST
-   * profile with 409 `profile.last_profile`; deleting the ACTIVE (non-last)
-   * profile is allowed — the server heals the session on the next
-   * profile-scoped write.
+   * profile with 409 {@link LastProfileConflictBody} (`error` + `message`,
+   * S465); deleting the ACTIVE (non-last) profile is allowed — the server
+   * heals the session on the next profile-scoped write.
    */
   removeOwnProfile(profileId: string): Promise<{ message: string }> {
     return this.client.delete<{ message: string }>(
