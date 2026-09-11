@@ -11,6 +11,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { nextTick, watch } from 'vue';
 import { useProfileStore, ACTIVE_PROFILE_KEY, activeProfileStorageKey } from './useProfileStore';
+import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT } from '../api/admin/users';
 import { useAuthStore } from './useAuthStore';
 import { isRoute } from '../test/route-match';
 
@@ -445,14 +446,21 @@ describe('useProfileStore', () => {
 
     it('the server’s 409 last-profile refusal surfaces verbatim and re-lists nothing', async () => {
       login();
+      // S465 — faithful body shape taken from the real server contract:
+      // machine code in `error`, human text in `message`. Surfacing the CODE
+      // (not the sentence) also proves `extractError`'s key precedence.
       const calls = stub([
         { match: LIST, handle: () => jsonResponse({ profiles: [row('p1', 'Alice', true)] }) },
-        { match: REMOVE('p1'), handle: () => jsonResponse({ message: 'profile.last_profile' }, false, 409) },
+        {
+          match: REMOVE('p1'),
+          handle: () =>
+            jsonResponse({ error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT }, false, 409),
+        },
       ]);
       const store = useProfileStore();
       await store.load();
       expect(await store.removeProfile('p1')).toBe(false);
-      expect(store.error).toBe('profile.last_profile');
+      expect(store.error).toBe(PROFILE_LAST_ERROR_CODE);
       expect(store.activeProfileId).toBe('p1'); // untouched
       expect(calls.filter((c) => c.method === 'GET')).toHaveLength(1); // no relist
     });

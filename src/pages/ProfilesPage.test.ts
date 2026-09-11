@@ -13,6 +13,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import ProfilesPage from './ProfilesPage.vue';
 import { isRoute } from '../test/route-match';
+import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT } from '../api/admin/users';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -205,16 +206,24 @@ describe('ProfilesPage (S82)', () => {
     // The client-side guard hides this for a 1-profile list; this drives the
     // STALE-LIST case — the client believes two rows exist, the server still
     // refuses. The refusal must surface verbatim, never silently swallowed.
+    // S465: the stub body is the real wire shape — code in `error`, human text
+    // in `message` — and the page shows the CODE, proving extractError's
+    // precedence (the sentence would render if only `message` existed).
     const { rows } = listable([row('p1', 'Alice', true), row('p2', 'Kids', false)]);
     stub([
       { match: LIST, handle: () => jsonResponse({ profiles: rows }) },
-      { match: REMOVE('p2'), handle: () => jsonResponse({ message: 'profile.last_profile' }, false, 409) },
+      {
+        match: REMOVE('p2'),
+        handle: () =>
+          jsonResponse({ error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT }, false, 409),
+      },
     ]);
     const w = mountPage();
     await flushPromises();
     await w.find('[data-testid="profile-delete-p2"]').trigger('click');
     await flushPromises();
-    expect(w.find('[data-testid="profiles-mutation-error"]').text()).toContain('profile.last_profile');
+    expect(w.find('[data-testid="profiles-mutation-error"]').text()).toContain(PROFILE_LAST_ERROR_CODE);
+    expect(w.find('[data-testid="profiles-mutation-error"]').text()).not.toContain(PROFILE_LAST_ERROR_TEXT);
     expect(w.find('[data-testid="profile-row-p2"]').exists()).toBe(true);
   });
 
