@@ -1276,18 +1276,18 @@ describe('ApiClient', () => {
             const album = await client(fetch).getAlbum('Greatest Hits', 'Queen');
 
             expect(calls[0]!.url).toBe(
-                'https://h/api/v1/music/albums/Greatest%20Hits?artist=Queen',
+                'https://h/api/v1/music/album?name=Greatest%20Hits&artist=Queen',
             );
             expect(album.artist).toBe('Queen');
             expect(album.tracks).toHaveLength(1);
         });
 
-        it('getAlbum omits the query when no artist is given', async () => {
+        it('getAlbum omits the artist query when no artist is given', async () => {
             const { fetch, calls } = makeFetch([{ status: 200, body: { album: { name: 'X' } } }]);
 
             await client(fetch).getAlbum('X');
 
-            expect(calls[0]!.url).toBe('https://h/api/v1/music/albums/X');
+            expect(calls[0]!.url).toBe('https://h/api/v1/music/album?name=X');
         });
 
         it('listTracks sends limit + offset and returns the whole-library total', async () => {

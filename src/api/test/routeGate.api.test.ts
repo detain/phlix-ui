@@ -81,10 +81,10 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
      * see {@link routeGateServer} header). These pins fail if the vendored file
      * is edited, re-derived locally, or replaced: the md5 is the byte-identity
      * proof against `phlix-contracts/dist/server-route-manifest.json` at
-     * contracts `a8e7f40b`, and the sha pin is the server-currency proof.
+     * contracts `42f866f`, and the sha pin is the server-currency proof.
      */
-    const VENDORED_MANIFEST_MD5 = '6d184ef45018691c7529616dbd281748';
-    const VENDORED_MANIFEST_SERVER_SHA = 'ae401e7f244366d8a1396397258acafe113240e6';
+    const VENDORED_MANIFEST_MD5 = '86aa1f61bc9d6b0f277c57585b3ee1fa';
+    const VENDORED_MANIFEST_SERVER_SHA = 'e96f586da884b45b06df10492fdc3f48919b47bb';
 
     it('is the canonical artifact byte-for-byte — md5 + provenance sha + size', () => {
         // jsdom makes import.meta.url an http URL — resolve through the file
@@ -95,7 +95,7 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
         );
         const bytes = readFileSync(vendoredFile);
         expect(createHash('md5').update(bytes).digest('hex')).toBe(VENDORED_MANIFEST_MD5);
-        expect(SERVER_ROUTE_MANIFEST).toHaveLength(402);
+        expect(SERVER_ROUTE_MANIFEST).toHaveLength(404);
         expect(SERVER_ROUTE_MANIFEST.length).toBe(SERVER_ROUTE_MANIFEST_PROVENANCE.total);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toBe(VENDORED_MANIFEST_SERVER_SHA);
     });
@@ -120,9 +120,9 @@ describe('route gate — client.ts (ApiClient)', () => {
         'GET /api/v1/media/most-watched',
         'GET /api/v1/media/search/by-marker',
         'GET /api/v1/music/albums',
-        'GET /api/v1/music/albums/{mbid}',
+        'GET /api/v1/music/album',
         'GET /api/v1/music/artists',
-        'GET /api/v1/music/artists/{mbid}',
+        'GET /api/v1/music/artist',
         'GET /api/v1/music/tracks',
         'GET /api/v1/music/tracks/{id}',
         'GET /api/v1/users/me/favorites',

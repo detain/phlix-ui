@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import MusicLibraryPage from './MusicLibraryPage.vue';
-import { isRoute } from '../test/route-match';
+import { isRoute, searchOf } from '../test/route-match';
 import MusicPager from '../components/MusicPager.vue';
 
 // ---------------------------------------------------------------------------
@@ -41,11 +41,12 @@ interface ServerAlbum {
 
 /**
  * The exact FLAT routes this page reads (`api/client.ts` `listArtists`/`listAlbums`
- * `:1143`/`:1192`), plus the per-album DETAIL route `getAlbum` builds (`:1216`).
+ * `:1143`/`:1192`), plus the per-album DETAIL route `getAlbum` builds — now the
+ * S240 query rail `GET /api/v1/music/album?name=` (`:1216`).
  *
  * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
  * the route — rather than substring. `u.includes('/api/v1/music/albums')` matched
- * `/api/v1/music/albums-MUTATED` AND the detail route `/api/v1/music/albums/{title}`,
+ * `/api/v1/music/albums-MUTATED` AND the detail route `/api/v1/music/album?name=…`,
  * so the detail request (`MusicLibraryPage.vue:329`) was answered with the LIST
  * envelope `{ albums: [...] }` instead of `{ album }` — a wrong-shape reply the
  * looseness hid. The detail route now has its own branch. `endsWith`, not `===`:
@@ -54,7 +55,13 @@ interface ServerAlbum {
 const ARTISTS_PATH = '/api/v1/music/artists';
 const ALBUMS_PATH = '/api/v1/music/albums';
 const TRACKS_PATH = '/api/v1/music/tracks';
-const albumDetailPath = (title: string): string => `${ALBUMS_PATH}/${encodeURIComponent(title)}`;
+const ALBUM_DETAIL_PATH = '/api/v1/music/album';
+/**
+ * The S240 album-detail rail: pathname is the fixed `/api/v1/music/album` and the
+ * title moved into the `?name=` query. Match both, exactly as `getAlbum` emits.
+ */
+const isAlbumDetail = (url: unknown, title: string): boolean =>
+  isRoute(url, ALBUM_DETAIL_PATH) && searchOf(url).get('name') === title;
 
 function artist(over: Partial<ServerArtist> = {}): ServerArtist {
   return { name: 'The Flaming Lips', album_count: 2, track_count: 0, albums: [], ...over };
@@ -142,10 +149,11 @@ function stubFetch(artistsList: ServerArtist[], albumsList: ServerAlbum[], track
     if (isRoute(u, ARTISTS_PATH)) {
       return Promise.resolve(jsonResponse({ artists: artistsList }));
     }
-    // The album DETAIL route (`getAlbum`, used when an album row carries no
-    // embedded tracks) — a DIFFERENT route from the list above, and one the old
-    // substring matcher silently answered with the list envelope.
-    const detail = albumsList.find((a) => isRoute(u, albumDetailPath(a.name)));
+    // The album DETAIL route (`getAlbum` on the `/api/v1/music/album?name=` rail,
+    // used when an album row carries no embedded tracks) — a DIFFERENT route from
+    // the list above, and one the old substring matcher silently answered with the
+    // list envelope.
+    const detail = albumsList.find((a) => isAlbumDetail(u, a.name));
     if (detail) return Promise.resolve(jsonResponse({ album: detail }));
     return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
   });
@@ -162,8 +170,9 @@ function stubFetch(artistsList: ServerArtist[], albumsList: ServerAlbum[], track
 //   - `/artists`             → ORDER BY name, sliced by ?limit/?offset, plus `total`
 //   - `/albums`              → ORDER BY artist, title — sliced the SAME way, and
 //                              filtered by ?artist= ONLY when that param is sent
-//   - `/albums/{title}`      → detail: the album's WHOLE track list, ?artist= to
-//                              disambiguate a title shared by several artists
+//   - `/albums/{title}`      → detail (S240: `GET /api/v1/music/album?name=`): the
+//                              album's WHOLE track list, ?artist= to disambiguate a
+//                              title shared by several artists
 // Because the album list is ordered globally by artist, its first page spans only
 // a handful of artists — which is what made a client-side filter return nothing for
 // everyone else. A page that filters client-side therefore FAILS these tests.
@@ -304,10 +313,9 @@ function stubMusicServer(library: FakeLibrary): FakeServer {
     const offset = Math.max(0, Number(parsed.searchParams.get('offset') ?? 0));
     const artistParam = (parsed.searchParams.get('artist') ?? '').trim();
 
-    // --- album DETAIL: /api/v1/music/albums/{title}
-    const albumDetail = /^\/api\/v1\/music\/albums\/(.+)$/.exec(path);
-    if (albumDetail) {
-      const title = decodeURIComponent(albumDetail[1]!);
+    // --- album DETAIL: /api/v1/music/album?name={title} (S240 query rail)
+    if (path === ALBUM_DETAIL_PATH) {
+      const title = parsed.searchParams.get('name') ?? '';
       const found = library.albums.find(
         (a) => a.name === title
           && (artistParam === '' || collationEquals(a.artist, artistParam)),
@@ -951,11 +959,11 @@ describe('MusicLibraryPage', () => {
 
       // The whole album is playable, not the first 100 tracks…
       expect(wrapper.findAll('.track-play')).toHaveLength(125);
-      // …and it came from the album DETAIL route, carrying the artist so a shared
-      // title cannot resolve to another artist's album.
-      const detail = server.urls().filter((u) => /\/api\/v1\/music\/albums\/.+/.test(u));
+      // …and it came from the album DETAIL route (S240 query rail), carrying the
+      // artist so a shared title cannot resolve to another artist's album.
+      const detail = server.urls().filter((u) => /\/api\/v1\/music\/album\?/.test(u));
       expect(detail).toHaveLength(1);
-      expect(detail[0]).toContain('artist=Artist+0001');
+      expect(detail[0]).toContain('artist=Artist%200001');
       // NOT the /tracks listing, which has no album filter.
       expect(server.urlsFor('/api/v1/music/tracks?')).toHaveLength(0);
       wrapper.unmount();
@@ -1265,7 +1273,7 @@ describe('MusicLibraryPage', () => {
       // PRECONDITION 2 — the detail request really was sent and really has not landed
       // (the whole 125-track list is not here yet).
       expect(
-        holdFetch.mock.calls.map((c) => String(c[0])).filter((u) => /\/music\/albums\/.+/.test(u)),
+        holdFetch.mock.calls.map((c) => String(c[0])).filter((u) => /\/music\/album\?/.test(u)),
         'the album DETAIL request must really have been issued',
       ).toHaveLength(1);
       expect(vm.tracks, 'and must really still be pending').toHaveLength(100);
@@ -1282,7 +1290,7 @@ describe('MusicLibraryPage', () => {
 
       // …and only now does the abandoned request resolve, with the real 125-track body.
       resolveDetail(await server.request(
-        `/api/v1/music/albums/${encodeURIComponent(lib.albums[0]!.name)}?artist=Artist+0001`,
+        `/api/v1/music/album?name=${encodeURIComponent(lib.albums[0]!.name)}&artist=Artist+0001`,
       ));
       await flushPromises();
 
@@ -1499,7 +1507,7 @@ describe('MusicLibraryPage', () => {
             artist: parsed.searchParams.get('artist'),
           }));
         }
-        if (parsed.pathname.startsWith('/api/v1/music/albums/')) {
+        if (parsed.pathname === ALBUM_DETAIL_PATH) {
           detailCalls.push(raw);
           return Promise.resolve(jsonResponse({
             album: {
@@ -1523,7 +1531,7 @@ describe('MusicLibraryPage', () => {
       // The list row was flagged truncated, so the detail route really was consulted…
       expect(detailCalls, 'the album DETAIL request really was issued').toHaveLength(1);
       // …carrying the only artist name left anywhere: the selected one.
-      expect(detailCalls[0]).toBe('/api/v1/music/albums/Untitled%20Album?artist=Sigur+Ros');
+      expect(detailCalls[0]).toBe('/api/v1/music/album?name=Untitled%20Album&artist=Sigur%20Ros');
       // …and a track-less detail body leaves the prefix alone instead of blanking it.
       expect(
         wrapper.findAll('.track-play'),
@@ -1602,7 +1610,7 @@ describe('MusicLibraryPage', () => {
       await flushPromises();
 
       // Confirm the fake really 404s an unknown album rather than 200-ing a null.
-      const probe = await server.request('/api/v1/music/albums/Nope?artist=Nobody');
+      const probe = await server.request('/api/v1/music/album?name=Nope&artist=Nobody');
       expect(probe.status).toBe(404);
 
       // Now rename the album out from under the page so its detail lookup 404s.

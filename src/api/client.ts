@@ -1154,14 +1154,15 @@ export class ApiClient {
     }
 
     /**
-     * Fetch one artist by name (`GET /api/v1/music/artists/{mbid}` — the server
-     * keys artists by name, so `mbid` here is the artist name). Returns a
-     * normalized {@link MusicArtist}. A non-2xx (404 unknown artist) throws the
-     * shared {@link ApiError}.
+     * Fetch one artist by name (`GET /api/v1/music/artist?name=` — the server
+     * keys artists by name, so `mbid` here is the artist name; S240 promoted this
+     * to a query-param rail alongside the legacy `/music/artists/{mbid}` path).
+     * Returns a normalized {@link MusicArtist}. A non-2xx (404 unknown artist)
+     * throws the shared {@link ApiError}.
      */
     async getArtist(mbid: string, signal?: AbortSignal): Promise<MusicArtist> {
         const res = await this.get<{ artist?: unknown }>(
-            `/api/v1/music/artists/${encodeURIComponent(mbid)}`,
+            `/api/v1/music/artist?name=${encodeURIComponent(mbid)}`,
             undefined,
             signal,
         );
@@ -1207,19 +1208,21 @@ export class ApiClient {
     }
 
     /**
-     * Fetch one album by name (`GET /api/v1/music/albums/{mbid}` — the server keys
-     * albums by name, so `mbid` here is the album name), with the whole track list
-     * embedded (the detail route exempts itself from the list route's per-album
-     * track cap). Pass `artist` to disambiguate: 2,622 of production's 5,091 album
-     * titles are shared by more than one artist, while ZERO titles repeat WITHIN an
-     * artist — so `?artist=` makes this lookup exact instead of "first by artist
-     * name, then lowest id". A non-2xx (404 unknown album) throws {@link ApiError}.
+     * Fetch one album by name (`GET /api/v1/music/album?name=` — the server keys
+     * albums by name, so `mbid` here is the album name; S240 promoted this to a
+     * query-param rail alongside the legacy `/music/albums/{mbid}` path), with the
+     * whole track list embedded (the detail route exempts itself from the list
+     * route's per-album track cap). Pass `artist` to disambiguate: 2,622 of
+     * production's 5,091 album titles are shared by more than one artist, while
+     * ZERO titles repeat WITHIN an artist — so `&artist=` makes this lookup exact
+     * instead of "first by artist name, then lowest id". A non-2xx (404 unknown
+     * album) throws {@link ApiError}.
      */
     async getAlbum(mbid: string, artist?: string, signal?: AbortSignal): Promise<MusicAlbum> {
-        const params = artist !== undefined && artist !== '' ? { artist } : undefined;
+        const disambiguate = artist !== undefined && artist !== '' ? `&artist=${encodeURIComponent(artist)}` : '';
         const res = await this.get<{ album?: unknown }>(
-            `/api/v1/music/albums/${encodeURIComponent(mbid)}`,
-            params,
+            `/api/v1/music/album?name=${encodeURIComponent(mbid)}${disambiguate}`,
+            undefined,
             signal,
         );
         return normalizeMusicAlbum(res.album);

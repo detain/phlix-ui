@@ -10,23 +10,24 @@ import { ref } from 'vue';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import MusicAlbumPage from './MusicAlbumPage.vue';
-import { isRoute } from '../test/route-match';
+import { isRoute, searchOf } from '../test/route-match';
 
 /**
- * The album detail route `ApiClient#getAlbum` builds (`api/client.ts:1216`), keyed
- * by the album TITLE (the server keys albums by name) and URL-encoded exactly as
+ * The album detail route `ApiClient#getAlbum` builds — S240's query-param rail
+ * `GET /api/v1/music/album?name=` (the server keys albums by name; the legacy
+ * `/music/albums/{mbid}` path is no longer issued) — URL-encoded exactly as
  * production encodes it.
  *
- * S193: matched with {@link isRoute} — the pathname (query stripped) must END WITH
- * this — rather than `u.includes('/api/v1/music/albums/')`, which cannot tell the
- * real route from a suffix-appended one and, being a bare prefix, would equally
- * have answered `/api/v1/music/albums/OK%20Computer/anything`. `endsWith`, not
- * `===`: the media base legitimately prefixes the path on the hub.
- *
- * Parameterised by title because this file deep-links to three different albums.
+ * S193 discipline preserved: match the pathname with {@link isRoute} (query
+ * stripped) so it ends with the rail `/api/v1/music/album` — NOT
+ * `u.includes('/api/v1/music/albums/')`, which cannot tell the real route from a
+ * suffix-appended one — AND require the `?name=` query to equal the title, so a
+ * page that drops or mis-encodes the name is visible. Parameterised by title
+ * because this file deep-links to three different albums.
  */
 const ALBUM_TITLE = 'OK Computer';
-const albumPath = (title: string): string => `/api/v1/music/albums/${encodeURIComponent(title)}`;
+const isAlbumDetail = (url: unknown, title: string): boolean =>
+  isRoute(url, '/api/v1/music/album') && searchOf(url).get('name') === title;
 
 // The shared player is mocked so the page is tested in isolation (no real
 // <audio>, no pinia preferences store). A hoisted holder lets each test swap in
@@ -92,7 +93,7 @@ function album(over: Partial<ServerAlbum> = {}): ServerAlbum {
 function stubFetch(opts: { album?: ServerAlbum; error?: boolean; title?: string } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
-    if (isRoute(u, albumPath(opts.title ?? ALBUM_TITLE))) {
+    if (isAlbumDetail(u, opts.title ?? ALBUM_TITLE)) {
       if (opts.error) return Promise.reject(new Error('album down'));
       return Promise.resolve(jsonResponse({ album: opts.album ?? album() }));
     }
@@ -131,7 +132,7 @@ function stubSharedTitleFetch(title = 'Greatest Hits') {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
     calls.push(u);
-    if (isRoute(u, albumPath(title))) {
+    if (isAlbumDetail(u, title)) {
       const parsed = new URL(u, 'http://server.test');
       const artist = (parsed.searchParams.get('artist') ?? '').trim();
       const matches = library.filter(
@@ -197,7 +198,7 @@ describe('MusicAlbumPage', () => {
     const fetchFn = stubFetch();
     const w = mountPage(makeRouter());
     await flushPromises();
-    expect(isRoute(fetchFn.mock.calls[0][0], albumPath(ALBUM_TITLE))).toBe(true);
+    expect(isAlbumDetail(fetchFn.mock.calls[0][0], ALBUM_TITLE)).toBe(true);
     expect(w.find('.album-header__title').text()).toBe('OK Computer');
     expect(w.find('.album-header__artist').text()).toBe('Radiohead');
     expect(w.findAll('.track-play')).toHaveLength(2);
@@ -260,7 +261,7 @@ describe('MusicAlbumPage', () => {
     const w = mountPage(router, 'Greatest Hits');
     await flushPromises();
 
-    expect(fetchFn.calls[0]).toBe('/api/v1/music/albums/Greatest%20Hits?artist=Queen');
+    expect(fetchFn.calls[0]).toBe('/api/v1/music/album?name=Greatest%20Hits&artist=Queen');
     // Queen's album, NOT ABBA's — which is the one the server returns unfiltered
     // because "ABBA" sorts first.
     expect(w.find('.album-header__artist').text()).toBe('Queen');
@@ -281,7 +282,7 @@ describe('MusicAlbumPage', () => {
     const w = mountPage(router, 'Greatest Hits');
     await flushPromises();
 
-    expect(fetchFn.calls[0]).toBe('/api/v1/music/albums/Greatest%20Hits?artist=ABBA');
+    expect(fetchFn.calls[0]).toBe('/api/v1/music/album?name=Greatest%20Hits&artist=ABBA');
     expect(w.find('.album-header__artist').text()).toBe('ABBA');
     expect(w.findAll('.track-play')[0]!.text()).toBe('Dancing Queen');
     w.unmount();
@@ -308,7 +309,7 @@ describe('MusicAlbumPage', () => {
     const w = mountPage(router, 'Greatest Hits');
     await flushPromises();
 
-    expect(fetchFn.calls[0]).toBe('/api/v1/music/albums/Greatest%20Hits?artist=Queen');
+    expect(fetchFn.calls[0]).toBe('/api/v1/music/album?name=Greatest%20Hits&artist=Queen');
     expect(w.find('.album-header__artist').text()).toBe('Queen');
     w.unmount();
   });
@@ -340,7 +341,7 @@ describe('MusicAlbumPage', () => {
 
     // Exact, like its three sibling MED-3 tests: `toContain` would also accept a
     // malformed `?artist=Queen&artist=ABBA`.
-    expect(fetchFn.calls[0]).toBe('/api/v1/music/albums/Greatest%20Hits?artist=Queen');
+    expect(fetchFn.calls[0]).toBe('/api/v1/music/album?name=Greatest%20Hits&artist=Queen');
     expect(w.find('.album-header__artist').text()).toBe('Queen');
     w.unmount();
   });
@@ -504,7 +505,7 @@ describe('MusicAlbumPage', () => {
     const fetchFn = stubSharedTitleFetch();
     const w = mountPage(makeRouter(), 'Greatest Hits');
     await flushPromises();
-    expect(fetchFn.calls[0]).toBe('/api/v1/music/albums/Greatest%20Hits');
+    expect(fetchFn.calls[0]).toBe('/api/v1/music/album?name=Greatest%20Hits');
     expect(w.find('.album-header__artist').text()).toBe('ABBA');
     w.unmount();
   });

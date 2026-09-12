@@ -773,7 +773,7 @@ var Ae = class {
 		};
 	}
 	async getArtist(e, t) {
-		return we((await this.get(`/api/v1/music/artists/${encodeURIComponent(e)}`, void 0, t)).artist);
+		return we((await this.get(`/api/v1/music/artist?name=${encodeURIComponent(e)}`, void 0, t)).artist);
 	}
 	async listAlbums(e = {}, t) {
 		let n = Oe(e);
@@ -786,8 +786,8 @@ var Ae = class {
 		};
 	}
 	async getAlbum(e, t, n) {
-		let r = t !== void 0 && t !== "" ? { artist: t } : void 0;
-		return Ee((await this.get(`/api/v1/music/albums/${encodeURIComponent(e)}`, r, n)).album);
+		let r = t !== void 0 && t !== "" ? `&artist=${encodeURIComponent(t)}` : "";
+		return Ee((await this.get(`/api/v1/music/album?name=${encodeURIComponent(e)}${r}`, void 0, n)).album);
 	}
 	async listTracks(e = {}, t) {
 		let n = Oe(e), r = await this.get("/api/v1/music/tracks", Object.keys(n).length ? n : void 0, t), i = Array.isArray(r.tracks) ? r.tracks : [];

@@ -13,7 +13,8 @@ import { isRoute } from '../test/route-match';
 
 /**
  * The two exact routes this page reads: the artist row
- * (`GET /api/v1/music/artists/{name}`, URL-encoded as production encodes it) and
+ * (`GET /api/v1/music/artist?name=…` — S240 query-param rail, `name` URL-encoded
+ * as production encodes it) and
  * the SERVER-filtered album page (`GET /api/v1/music/albums?artist=…`,
  * `api/client.ts:1192`).
  *
@@ -26,7 +27,7 @@ import { isRoute } from '../test/route-match';
  * Every test here mounts the default artist, so one constant covers the file.
  */
 const ARTIST_NAME = 'Radiohead';
-const ARTIST_PATH = `/api/v1/music/artists/${encodeURIComponent(ARTIST_NAME)}`;
+const ARTIST_PATH = '/api/v1/music/artist';
 const ALBUMS_PATH = '/api/v1/music/albums';
 import MusicPager from '../components/MusicPager.vue';
 
@@ -90,7 +91,7 @@ function stubFetch(opts: {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
     calls.push(u);
-    // Order matters: the more specific /artists/{name} check first.
+    // Order matters: the artist row (`/api/v1/music/artist`) is checked first.
     if (isRoute(u, ARTIST_PATH)) {
       if (opts.error) return Promise.reject(new Error('artist down'));
       return Promise.resolve(jsonResponse({
@@ -393,7 +394,7 @@ describe('MusicArtistPage', () => {
 
     // PRECONDITION, checked against the fake itself: the default artist row really does
     // omit `image_url`, so the placeholder is chosen for the reason this test names.
-    const probe = await bare('/api/v1/music/artists/Radiohead');
+    const probe = await bare(`${ARTIST_PATH}?name=${encodeURIComponent(ARTIST_NAME)}`);
     const body = (await probe.json()) as { artist: Record<string, unknown> };
     expect(
       Object.prototype.hasOwnProperty.call(body.artist, 'image_url'),
