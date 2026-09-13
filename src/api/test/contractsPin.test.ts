@@ -2,7 +2,7 @@
  * S447 — `@phlix/contracts` dependency-pin guard.
  *
  * The estate ruling retires the stale nested/`v0.4.5` copy: ui's own
- * `package.json` must pin the contracts tag `#v0.4.6` (a TAG pin, never a bare
+ * `package.json` must pin the contracts tag `#v0.4.7` (a TAG pin, never a bare
  * commit sha), and `package-lock.json` must resolve `@phlix/contracts` to the
  * commit that tag peels to — `97bcda06…` — with EXACTLY ONE such resolution in
  * the whole tree. A second (nested) copy, a sha-pinned dependency string, or a
@@ -23,9 +23,9 @@ const lockfile = JSON.parse(readFileSync(path.join(REPO_ROOT, 'package-lock.json
 const packageJson = JSON.parse(readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'));
 
 const CONTRACTS = '@phlix/contracts';
-// The commit the `v0.4.6` annotated tag peels to (verified against the contracts
+// The commit the `v0.4.7` annotated tag peels to (verified against the contracts
 // repo read-only at dispatch time — this is the integrity anchor, not a hand-edit).
-const V046_PEEL = '97bcda069efa2bba3591f1143a000aec8fefae15';
+const V046_PEEL = '625a5625fd19a3e887a50548b2cdaca1b0a2bd55';
 
 // A lockfile package location is `node_modules/<name>` or, for a nested copy,
 // `<…>/node_modules/<name>`; a scoped name spans two path segments, so match the
@@ -39,16 +39,16 @@ const contractResolutions = Object.entries<{ resolved?: string; version?: string
 );
 
 describe(`@phlix/contracts pin guard [${S447_GUARD_TOKEN}]`, () => {
-    it('declares the dependency as a v0.4.6 TAG pin (not a commit sha)', () => {
+    it('declares the dependency as a v0.4.7 TAG pin (not a commit sha)', () => {
         const declared = packageJson.dependencies[CONTRACTS] as string;
-        expect(declared).toMatch(/github:detain\/phlix-contracts#v0\.4\.6$/);
+        expect(declared).toMatch(/github:detain\/phlix-contracts#v0\.4\.7$/);
     });
 
     it('resolves @phlix/contracts exactly once — no stale nested copy', () => {
         expect(contractResolutions).toHaveLength(1);
     });
 
-    it('resolves the single copy to the v0.4.6 tag peel', () => {
+    it('resolves the single copy to the v0.4.7 tag peel', () => {
         const [, entry] = contractResolutions[0] ?? [];
         if (!entry?.resolved) {
             throw new Error('S447: @phlix/contracts lock entry has no resolved ref');
