@@ -81,10 +81,10 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
      * see {@link routeGateServer} header). These pins fail if the vendored file
      * is edited, re-derived locally, or replaced: the md5 is the byte-identity
      * proof against `phlix-contracts/dist/server-route-manifest.json` at
-     * contracts `8f8a8c7`, and the sha pin is the server-currency proof.
+     * contracts `c5ac10d`, and the sha pin is the server-currency proof.
      */
-    const VENDORED_MANIFEST_MD5 = '4f03cb2ea263425273665eb465b0b313';
-    const VENDORED_MANIFEST_SERVER_SHA = '2f1d2ee6a9c97addaea12cd3377b88dd9d8c6ad7';
+    const VENDORED_MANIFEST_MD5 = '1b9012f8f74d7df1abb6447edfa81566';
+    const VENDORED_MANIFEST_SERVER_SHA = '694752cd2050c8688f99aa6e12539226d19c2540';
 
     it('is the canonical artifact byte-for-byte — md5 + provenance sha + size', () => {
         // jsdom makes import.meta.url an http URL — resolve through the file
