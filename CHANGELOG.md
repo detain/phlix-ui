@@ -1,4 +1,5 @@
 ## Unreleased
+- Release @phlix/ui v0.99.4 — version bump + rebuilt committed artifacts
 
 ### Added
 
