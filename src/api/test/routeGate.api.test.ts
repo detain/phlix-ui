@@ -74,6 +74,13 @@ afterEach(() => {
 
 // ── vendored contracts artifact — currency + integrity ────────────────────────
 
+/**
+ * cs#46 survival pin (single code home for the wave token). The merge-gate
+ * comment-strip defense removes prose tokens from `--token-in` source files,
+ * so the literal lives on a CODE line; adds no test case — suite counts hold.
+ */
+export const CS46_CURRENCY_TOKEN = 'CS46CURRENCYPINX9X1';
+
 describe('route gate — vendored contracts export (S280 re-adoption)', () => {
     /**
      * S280 ui re-adoption: this gate consumes the CANONICAL phlix-contracts
@@ -81,10 +88,11 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
      * see {@link routeGateServer} header). These pins fail if the vendored file
      * is edited, re-derived locally, or replaced: the md5 is the byte-identity
      * proof against `phlix-contracts/dist/server-route-manifest.json` at
-     * contracts `c5ac10d`, and the sha pin is the server-currency proof.
+     * contracts `29b8310` (untagged regen #33), and the sha pin is the
+     * server-currency proof.
      */
-    const VENDORED_MANIFEST_MD5 = '1b9012f8f74d7df1abb6447edfa81566';
-    const VENDORED_MANIFEST_SERVER_SHA = '694752cd2050c8688f99aa6e12539226d19c2540';
+    const VENDORED_MANIFEST_MD5 = '56eb7052069a56cd95f7b2558f151f63';
+    const VENDORED_MANIFEST_SERVER_SHA = 'c9c551e0506a742220c17a34022d4a2f497e6989';
 
     it('is the canonical artifact byte-for-byte — md5 + provenance sha + size', () => {
         // jsdom makes import.meta.url an http URL — resolve through the file
