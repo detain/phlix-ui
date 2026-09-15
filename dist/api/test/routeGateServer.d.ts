@@ -35,7 +35,7 @@
  * ⚠ VENDORED, not imported. `./server-route-manifest.json` is a byte-identical
  * copy of phlix-contracts `dist/server-route-manifest.json` (md5 pinned by
  * `routeGate.api.test.ts`). Vendoring is the sanctioned interim pattern: ui
- * pins `@phlix/contracts#v0.4.5`, which PREDATES this wave's provenance regen
+ * pins `@phlix/contracts#v0.4.7`, which PREDATES this wave's provenance regen
  * (the regen itself ships untagged, s280rest doctrine), and the contracts `exports` map blocks
  * JSON subpath imports anyway. When the next contracts tag lands, switch this
  * import to the tagged package and drop the vendored copy.
@@ -44,6 +44,12 @@
  * @license MIT
  * S280GATEKEEPERX7Q9
  */
+/**
+ * S497 survival pin. The merge-gate comment-strip defense removes prose
+ * tokens from `--token-in` source files, so this wave token lives on a code
+ * line; the literal is the single source of truth for the survival check.
+ */
+export declare const S497_DOC_PIN_TOKEN = "S497DOCPINX9P7";
 /** Provenance block of the canonical contracts export (shape pinned by the contracts generator). */
 export interface ServerRouteManifestProvenance {
     serverSha: string;
