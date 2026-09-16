@@ -9,6 +9,13 @@
  * Smarty-rendered requests.tpl with a Vue page powered by Nocturne tokens +
  * `@phlix/ui` primitives.
  *
+ * S519 / AD-16: debounced (500 ms, drop-superseded) search +
+ * status filter over the loaded `HubRequest[]`, and one-promise-source load hygiene
+ * (sequence-guarded so a late create/delete reload cannot clobber a newer result).
+ * No server surface added (era law) and no request-list cache fabricated — AD-17's
+ * `caches.open` artwork layer does not exist in `@phlix/ui` and the bounded
+ * `useMediaItemCache` (perf-claim-5 JSON) is deliberately untouched.
+ *
  * Data flows (API contract — DO NOT MODIFY):
  *   - GET    /api/v1/me/requests        → { requests[], count }
  *   - POST   /api/v1/me/requests        → { request, message }  201
@@ -16,11 +23,12 @@
  *
  * `client` is an injectable test seam; it defaults to the shared `api` singleton.
  */
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
 import { errMessage } from '../api/errors';
 import type { HubRequest, CreateRequestInput } from '../types/request';
+import { debounce, REQUEST_SEARCH_DEBOUNCE_MS } from '../utils/debounce';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -59,25 +67,80 @@ const formSeason = ref<number | string>('');
 const formEpisode = ref<number | string>('');
 const submitting = ref(false);
 
+// ── S519 / AD-16: debounced search + status filter on the requests list ──────
+// The list is already fetched in full from `GET /api/v1/me/requests`, so filtering
+// is a pure client-side pass over the loaded rows — no new server surface (era law).
+// `searchInput` holds raw keystrokes; `searchQuery` holds the DEBOUNCED value the
+// filter actually reads. `debounce` owns one timer and supersedes any in-flight fire,
+// so a burst of typing recomputes the list once, after it settles — never per
+// character (the AD-16 "no boolean soup/flicker" contract).
+const searchInput = ref('');
+const searchQuery = ref('');
+type StatusFilter = 'all' | HubRequest['status'];
+const statusFilter = ref<StatusFilter>('all');
+
+const applySearch = debounce((raw: string): void => {
+  searchQuery.value = raw.trim().toLowerCase();
+}, REQUEST_SEARCH_DEBOUNCE_MS);
+
+watch(searchInput, (v) => applySearch(v));
+
+/** True when either filter would hide rows the user has loaded. */
+const filtersActive = computed(
+  () => searchQuery.value !== '' || statusFilter.value !== 'all',
+);
+
+/** Reset both filters (used by the no-matches empty state). */
+function clearFilters(): void {
+  applySearch.cancel(); // drop a keystroke that has not yet settled
+  searchInput.value = '';
+  searchQuery.value = '';
+  statusFilter.value = 'all';
+}
+
 const sortedRequests = computed(() =>
   [...requests.value].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   ),
 );
 
+/** The rendered list: `sortedRequests` narrowed by the debounced query + status. */
+const filteredRequests = computed(() => {
+  const q = searchQuery.value;
+  const status = statusFilter.value;
+  return sortedRequests.value.filter((req) => {
+    const matchesStatus = status === 'all' || req.status === status;
+    const matchesQuery = q === '' || req.title.toLowerCase().includes(q);
+    return matchesStatus && matchesQuery;
+  });
+});
+
+/** Monotonic load counter — the "one promise source" identity for {@link loadRequests}. */
+let loadSeq = 0;
+
 /** Load requests. `initial` shows the full-page skeleton on mount/retry; the
- * after-delete/create reload updates the list in place so it doesn't flash out. */
+ * after-delete/create reload updates the list in place so it doesn't flash out.
+ *
+ * AD-17 hygiene (no store, no cache): a create/delete reload can resolve AFTER a
+ * newer load started, which would clobber the fresher result and re-flash rows the
+ * user just acted on. Each call stamps a sequence number and a resolution is applied
+ * ONLY while it is still the latest — a superseded late arrival is discarded silently.
+ * Mirrors the repo's established `gen !== generation` discipline (useMediaStore,
+ * MusicLibraryPage). */
 async function loadRequests(initial = false): Promise<void> {
+  const seq = ++loadSeq;
   if (initial) loading.value = true;
   error.value = null;
   try {
     const data = await http.get<{ requests?: HubRequest[]; count?: number }>('/api/v1/me/requests');
+    if (seq !== loadSeq) return; // superseded by a newer load — discard the late arrival
     requests.value = data.requests ?? [];
   } catch (e) {
+    if (seq !== loadSeq) return; // a newer load owns the UI now — don't surface a stale error
     error.value = errMessage(e, 'Failed to load requests.');
     toasts.error(error.value);
   } finally {
-    if (initial) loading.value = false;
+    if (initial && seq === loadSeq) loading.value = false;
   }
 }
 
@@ -160,6 +223,9 @@ function formatDate(dateStr: string): string {
 }
 
 onMounted(() => loadRequests(true));
+// Drop any pending debounce fire when the page unmounts so a late keystroke cannot
+// write to a torn-down instance.
+onUnmounted(() => applySearch.cancel());
 </script>
 
 <template>
@@ -198,9 +264,45 @@ onMounted(() => loadRequests(true));
       description="Movies or series you request will appear here."
     />
 
-    <div v-else class="requests__list">
+    <!-- Populated: search/filter toolbar, then either the matched cards or a no-matches state. -->
+    <template v-else>
+      <div class="requests__toolbar">
+        <Input
+          v-model="searchInput"
+          class="requests__search"
+          label="Search requests"
+          type="search"
+          placeholder="Filter by title…"
+        />
+        <div class="requests__filter-group">
+          <label class="requests__filter-label" for="requests-status">Status</label>
+          <select id="requests-status" v-model="statusFilter" class="requests__filter">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="available">Available</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <p v-if="filtersActive" class="requests__count" role="status">
+          {{ filteredRequests.length }} of {{ requests.length }} shown
+        </p>
+      </div>
+
+      <EmptyState
+        v-if="filteredRequests.length === 0"
+        icon="search"
+        title="No matching requests"
+        description="Nothing matches your search or filter. Try clearing them."
+      >
+        <template #actions>
+          <Button variant="ghost" size="sm" @click="clearFilters">Clear filters</Button>
+        </template>
+      </EmptyState>
+
+      <div v-else class="requests__list">
       <article
-        v-for="req in sortedRequests"
+        v-for="req in filteredRequests"
         :key="req.id"
         class="request-card"
       >
@@ -254,7 +356,8 @@ onMounted(() => loadRequests(true));
           </Button>
         </div>
       </article>
-    </div>
+      </div>
+    </template>
 
     <!-- Create Request Modal -->
     <Modal v-model="showCreateModal" title="New Media Request" size="md" @close="resetForm">
@@ -372,6 +475,46 @@ onMounted(() => loadRequests(true));
   margin: 0;
 }
 .requests__skel { padding-block: var(--space-2); }
+
+/* ── Search / filter toolbar (S519 / AD-16) ────────── */
+.requests__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.requests__search { flex: 1 1 14rem; min-width: 0; }
+.requests__filter-group { display: flex; flex-direction: column; gap: var(--space-1); }
+.requests__filter-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text);
+}
+.requests__filter {
+  display: block;
+  height: var(--control-h);
+  padding-inline: var(--control-pad-x);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.requests__filter:focus-visible {
+  outline: none;
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.requests__count {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ── Request list ─────────────────────────────────── */
 .requests__list {
