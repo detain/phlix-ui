@@ -71,7 +71,12 @@ export interface UseResumeReporter {
    * in-band checkpoint even after `player.current` has been nulled, and it is forced
    * (bypasses the 15s throttle). A safe no-op when logged out or when no session was
    * ever created (playback never crossed the resume threshold). Best-effort: a failed
-   * final report never throws. The server's 30s min-playtime gate is unchanged.
+   * final report never throws. The server's 30s min-playtime gate is unchanged. Live
+   * streams need no separate close here: sessions are idempotent per device id (see
+   * `getOrCreateDeviceId`), so there is no per-stream session to tear down on unmount —
+   * flushing the final position IS the complete quit contract (S506: the finding's
+   * "close live-stream ids on unmount" is therefore n/a, recorded here as the note it
+   * required).
    */
   reportFinal: () => Promise<void>;
 }
@@ -184,7 +189,9 @@ export function useResumeReporter(): UseResumeReporter {
    * falls back to the last RETAINED checkpoint when the store has already been
    * cleared. Forced (ignores the throttle) and never creates a session just to
    * report the tail — a title that never crossed the 30s floor has no session and is
-   * left untouched. Best-effort: swallows failures exactly like `report()`.
+   * left untouched. Best-effort: swallows failures exactly like `report()`. Live streams
+   * are not a special close case on this path — the resume session is idempotent per
+   * device id, not per stream, so no per-stream session exists to close (S506 n/a note).
    */
   async function reportFinal(): Promise<void> {
     const media = player.current;
