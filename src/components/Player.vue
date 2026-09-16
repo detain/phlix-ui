@@ -87,6 +87,7 @@ import {
   type TimeMarker,
   type PlaybackAudioTrack,
 } from './player/playback';
+import { profileForDownlinkCap } from './player/transcode';
 import type { SubtitleTrack } from './player/transcode';
 import {
   listSubtitleTracks,
@@ -451,7 +452,14 @@ const showTranscodeNotice = computed(() => transcodeNeeded.value && tc.state.val
  *  `startPosition` is the playback position (seconds) to resume from. */
 function beginTranscode(startPosition = 0): void {
   const v = videoRef.value;
-  if (v) void tc.start(v, props.media.id, undefined, startPosition);
+  // W110 S514: seed the ladder from the device's reported downlink ceiling. The
+  // boundary read (navigator.connection, an optional API) is parsed here into a
+  // single number; the cap→profile mapping is the pure helper. When the API is
+  // absent or unbounded, profileForDownlinkCap returns undefined and we send NO
+  // `?profile=` hint — byte-identical to today's request.
+  const downlinkMax = (navigator as Navigator & { connection?: { downlinkMax?: number } }).connection?.downlinkMax;
+  const profile = profileForDownlinkCap(downlinkMax);
+  if (v) void tc.start(v, props.media.id, profile, startPosition);
 }
 
 /** A quality rung was picked in the menu — pin it (or hand back to ABR) on the

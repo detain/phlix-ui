@@ -89,6 +89,32 @@ export declare function parseVariants(value: unknown): Variant[] | null;
  * pin it client-side (e.g. `'tv-4k'`).
  */
 export declare function transcodeStartPath(mediaId: string, profile?: string): string;
+/** W110 S514 survival sentinel — must stay in this one file (see the plan step). */
+export declare const S514_DOWNLINK_CAP_TOKEN = "S514DOWNLINKX9P5";
+/**
+ * Conservative target bitrate (bits/sec) derived from `downlinkMax` (Mbps), or
+ * `undefined` when the reading must be ignored — API absent (`null`/`undefined`),
+ * a non-finite value (`downlinkMax` is `Infinity` on some wireless/radio links,
+ * where it means "unbounded", not "huge"), or a non-positive reading.
+ *
+ * Returning `undefined` (rather than a number) is what lets the caller send NO
+ * `?profile=` hint and stay byte-identical to today's request.
+ */
+export declare function downlinkBitrateCapBps(downlinkMaxMbps: number | null | undefined): number | undefined;
+/**
+ * The existing `?profile=` hint to pin a transcode to, given the device's reported
+ * `downlinkMax` (Mbps), or `undefined` to send NO hint (today's behavior).
+ *
+ * The cap only ever lowers the browser's default `web` rung:
+ *   - cap unknown / unbounded / at-or-above `web`   → `undefined` (no request change)
+ *   - cap fits `mobile-high` (4M) but not `web`      → `'mobile-high'`
+ *   - anything below that                            → `'mobile-low'` (floor rung)
+ *
+ * Pure over its one argument, so the derivation and the byte-identical-absent path
+ * are both unit-testable without a browser; the caller samples `navigator.connection`
+ * and feeds the number in.
+ */
+export declare function profileForDownlinkCap(downlinkMaxMbps: number | null | undefined): string | undefined;
 /** Path to poll a transcode job's readiness. */
 export declare function transcodeStatusPath(jobId: string): string;
 /** Normalizes a `POST .../transcode` response (snake- or camelCase) to {@link TranscodeStart}. */
