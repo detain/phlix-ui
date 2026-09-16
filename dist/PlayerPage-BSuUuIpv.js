@@ -3235,7 +3235,7 @@ var ki = { class: "player__stage" }, Ai = ["src", "poster"], ji = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-e4f31687"]]), ha = { class: "player-page__stage" }, ga = {
+}), [["__scopeId", "data-v-f5f0773b"]]), ha = { class: "player-page__stage" }, ga = {
 	key: 0,
 	class: "player-page__skeleton",
 	role: "status",
@@ -3510,4 +3510,4 @@ var ki = { class: "player__stage" }, Ai = ["src", "poster"], ji = [
 //#endregion
 export { va as default };
 
-//# sourceMappingURL=PlayerPage-C-qbt8p4.js.map
+//# sourceMappingURL=PlayerPage-BSuUuIpv.js.map
