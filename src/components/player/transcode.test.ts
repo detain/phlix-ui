@@ -15,6 +15,8 @@ import {
   isPlayable,
   isFailedStatus,
   resolveStreamUrl,
+  downlinkBitrateCapBps,
+  profileForDownlinkCap,
 } from './transcode';
 
 describe('transcode helpers', () => {
@@ -177,6 +179,53 @@ describe('transcode helpers', () => {
     });
     it('passes through an already-absolute url', () => {
       expect(resolveStreamUrl('http://h', 'https://cdn/x.m3u8')).toBe('https://cdn/x.m3u8');
+    });
+  });
+});
+
+describe('downlink-based profile cap (W110 S514 / AD-6)', () => {
+  describe('downlinkBitrateCapBps', () => {
+    it('is undefined for the absent / unbounded / non-positive readings (send no hint)', () => {
+      expect(downlinkBitrateCapBps(undefined)).toBeUndefined();
+      expect(downlinkBitrateCapBps(null)).toBeUndefined();
+      expect(downlinkBitrateCapBps(Number.POSITIVE_INFINITY)).toBeUndefined(); // "unbounded", not huge
+      expect(downlinkBitrateCapBps(Number.NaN)).toBeUndefined();
+      expect(downlinkBitrateCapBps(0)).toBeUndefined();
+      expect(downlinkBitrateCapBps(-2)).toBeUndefined();
+    });
+
+    it('applies the 0.7 conservatism factor to a finite reading', () => {
+      // 20 Mbps * 1e6 * 0.7 = 14,000,000 bps
+      expect(downlinkBitrateCapBps(20)).toBeCloseTo(14_000_000, 0);
+    });
+  });
+
+  describe('profileForDownlinkCap', () => {
+    it('sends NO profile (byte-identical) when the API is absent or the link is fast', () => {
+      expect(profileForDownlinkCap(undefined)).toBeUndefined();
+      expect(profileForDownlinkCap(Number.POSITIVE_INFINITY)).toBeUndefined();
+      // 20 Mbps → 14M cap, at/above the 10M web baseline → not a constraint.
+      expect(profileForDownlinkCap(20)).toBeUndefined();
+      // exactly web ceiling (10M) → not a constraint.
+      expect(profileForDownlinkCap(10 / 0.7)).toBeUndefined();
+    });
+
+    it('lowers to mobile-high when the cap fits 4M but not web', () => {
+      // 5 Mbps → 3.5M cap → highest rung ≤3.5M with a 4M ceiling fails; 1.5M fits → mobile-low.
+      // 8 Mbps → 5.6M cap → mobile-high (4M ≤ 5.6M) fits, web (10M) does not.
+      expect(profileForDownlinkCap(8)).toBe('mobile-high');
+    });
+
+    it('floors to mobile-low when below every rung except the lowest', () => {
+      // 2 Mbps → 1.4M cap → below mobile-high(4M) and mobile-low(1.5M) → floor mobile-low.
+      expect(profileForDownlinkCap(2)).toBe('mobile-low');
+      // 1 Mbps → 0.7M cap → still floors at the lowest existing rung.
+      expect(profileForDownlinkCap(1)).toBe('mobile-low');
+    });
+
+    it('never raises above the browser baseline (cap ≥ 10M ⇒ undefined, not tv-4k)', () => {
+      expect(profileForDownlinkCap(100)).toBeUndefined();
+      expect(profileForDownlinkCap(1000)).toBeUndefined();
     });
   });
 });

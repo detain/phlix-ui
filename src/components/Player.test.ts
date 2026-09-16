@@ -3348,3 +3348,43 @@ describe('Player — constrained playback-info retry on fatal/stall (W110 S513)'
     expect(tc().start).toHaveBeenCalledTimes(1); // not three
   });
 });
+
+// ---- downlink-based initial profile cap (W110 S514 / AD-6) --------------------
+describe('Player — downlinkMax seeds the transcode ?profile= hint (W110 S514)', () => {
+  afterEach(() => {
+    // Remove any navigator.connection override so siblings see the pristine jsdom navigator.
+    Reflect.deleteProperty(navigator, 'connection');
+  });
+
+  function stubDownlink(downlinkMax: number | undefined): void {
+    Object.defineProperty(navigator, 'connection', {
+      configurable: true,
+      value: downlinkMax === undefined ? undefined : { downlinkMax },
+    });
+  }
+
+  it('passes the capped profile as tc.start() argument 3 on a constrained downlink', async () => {
+    // 8 Mbps → 5.6M cap → fits mobile-high (4M) but not web (10M).
+    stubDownlink(8);
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' }); // mkv → transcode immediately
+    await flushPromises();
+    expect(tc().start).toHaveBeenCalled();
+    expect(tc().start.mock.calls[0][2]).toBe('mobile-high');
+  });
+
+  it('sends NO profile hint when the downlink API is absent (byte-identical today)', async () => {
+    stubDownlink(undefined);
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    await flushPromises();
+    expect(tc().start).toHaveBeenCalled();
+    expect(tc().start.mock.calls[0][2]).toBeUndefined();
+  });
+
+  it('sends NO profile hint on a fast/unbounded link (cap never raises above web)', async () => {
+    stubDownlink(Number.POSITIVE_INFINITY);
+    mountPlayer({ streamUrl: 'http://x/Dune.mkv' });
+    await flushPromises();
+    expect(tc().start).toHaveBeenCalled();
+    expect(tc().start.mock.calls[0][2]).toBeUndefined();
+  });
+});

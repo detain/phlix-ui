@@ -159,6 +159,87 @@ export function transcodeStartPath(mediaId: string, profile?: string): string {
   return profile ? `${base}?profile=${encodeURIComponent(profile)}` : base;
 }
 
+/** W110 S514 survival sentinel — must stay in this one file (see the plan step). */
+export const S514_DOWNLINK_CAP_TOKEN = 'S514DOWNLINKX9P5';
+
+/**
+ * Fraction of the reported `downlinkMax` we are willing to aim at.
+ *
+ * `NetworkInformation.downlinkMax` is the MAXIMUM bandwidth the interface can
+ * currently receive — an optimistic ceiling, not the throughput a stream will
+ * actually get. 0.7 leaves headroom for the rest of the page and the variability
+ * hls.js's ABR has to absorb on the first segments, so an over-generous initial
+ * rung does not immediately starve and thrash down. This is only the STARTING cap;
+ * ABR still adapts within it.
+ */
+const DOWNLINK_CONSERVATISM = 0.7;
+
+/**
+ * The `max_bitrate` ceiling (bits/sec) of each EXISTING web-or-below server
+ * quality profile, ascending. This mirrors — and does NOT define — the vocabulary
+ * in phlix-server `QualitySelector::loadDefaultProfiles()`; it lives here only so
+ * the client can speak the `?profile=` hint the server already accepts. It is
+ * deliberately capped at the `web` (1080p) rung: a browser downlink cap may lower
+ * the rung, never raise it above the `web` profile a browser already receives by
+ * default (the server maps an absent `X-Phlix-Device-Type` to `web`).
+ *
+ * ⚠ If the server's profile ladder changes, this table is a MIRROR to be kept
+ * honest, not a source of truth — the server remains the authority and is
+ * intentionally untouched by this step.
+ */
+const WEB_AND_BELOW_PROFILE_CEILINGS_BPS: readonly (readonly [string, number])[] = [
+  ['mobile-low', 1_500_000],
+  ['mobile-high', 4_000_000],
+  ['web', 10_000_000],
+];
+
+/** The rung a browser already gets with no explicit profile — the cap's own ceiling. */
+const BASELINE_WEB_PROFILE_CEILING_BPS = 10_000_000;
+
+/** The lowest rung we can fall back to — a cap below every rung still picks it. */
+const FLOOR_PROFILE = 'mobile-low';
+
+/**
+ * Conservative target bitrate (bits/sec) derived from `downlinkMax` (Mbps), or
+ * `undefined` when the reading must be ignored — API absent (`null`/`undefined`),
+ * a non-finite value (`downlinkMax` is `Infinity` on some wireless/radio links,
+ * where it means "unbounded", not "huge"), or a non-positive reading.
+ *
+ * Returning `undefined` (rather than a number) is what lets the caller send NO
+ * `?profile=` hint and stay byte-identical to today's request.
+ */
+export function downlinkBitrateCapBps(downlinkMaxMbps: number | null | undefined): number | undefined {
+  if (typeof downlinkMaxMbps !== 'number') return undefined;
+  if (!Number.isFinite(downlinkMaxMbps)) return undefined; // Infinity / NaN → unbounded, ignore
+  if (downlinkMaxMbps <= 0) return undefined; // no usable bandwidth signal
+  return downlinkMaxMbps * 1_000_000 * DOWNLINK_CONSERVATISM;
+}
+
+/**
+ * The existing `?profile=` hint to pin a transcode to, given the device's reported
+ * `downlinkMax` (Mbps), or `undefined` to send NO hint (today's behavior).
+ *
+ * The cap only ever lowers the browser's default `web` rung:
+ *   - cap unknown / unbounded / at-or-above `web`   → `undefined` (no request change)
+ *   - cap fits `mobile-high` (4M) but not `web`      → `'mobile-high'`
+ *   - anything below that                            → `'mobile-low'` (floor rung)
+ *
+ * Pure over its one argument, so the derivation and the byte-identical-absent path
+ * are both unit-testable without a browser; the caller samples `navigator.connection`
+ * and feeds the number in.
+ */
+export function profileForDownlinkCap(downlinkMaxMbps: number | null | undefined): string | undefined {
+  const cap = downlinkBitrateCapBps(downlinkMaxMbps);
+  if (cap === undefined) return undefined;
+  if (cap >= BASELINE_WEB_PROFILE_CEILING_BPS) return undefined; // not a real constraint
+  let chosen = FLOOR_PROFILE;
+  for (const [name, ceiling] of WEB_AND_BELOW_PROFILE_CEILINGS_BPS) {
+    if (ceiling <= cap) chosen = name; // ascending, so the last fit is the highest
+  }
+  return chosen;
+}
+
+
 /** Path to poll a transcode job's readiness. */
 export function transcodeStatusPath(jobId: string): string {
   return `/api/v1/transcode/${encodeURIComponent(jobId)}/status`;
