@@ -80,6 +80,9 @@ import {
   videoCodecFromStreams,
   isFatalMediaError,
   isNetworkMediaError,
+  playbackFallbackParams,
+  isPlaybackStalled,
+  PLAYBACK_FALLBACK_STALL_MS,
   UPNEXT_COUNTDOWN_SECONDS,
   type TimeMarker,
   type PlaybackAudioTrack,
@@ -670,6 +673,12 @@ function evaluateForCurrentMedia(): void {
   pendingHlsAudioIndex = null; // a queued audio switch belongs to the previous source
   qualitySeeded = false; // re-seed the default quality once the new ladder is known (R3.9)
   finishSignaled = false; // a fresh source can send its own end-of-playback finish (S30)
+  // W110 S513: the fallback leg is once-per-media and the stall watchdog belongs to
+  // the outgoing source — drop both so a new item can arm and fire its own.
+  cancelPlaybackFallbackWatch();
+  fallbackLegFired = false;
+  stallBaseTime = 0;
+  stallArmedAtMs = 0;
   stopUpNextCountdown();
   upNextActive.value = false;
   // Tear down any previous HLS session; start a fresh one if the new item needs it.
@@ -776,10 +785,79 @@ function onVideoError(): void {
   //     healthy session down.
   const unreachableDirect = isNetworkMediaError(v) && (v?.currentTime ?? 0) === 0;
   if (isFatalMediaError(v) || unreachableDirect) {
+    // W110 S513: the browser has proven it cannot play this direct source, so before
+    // handing over to the transcode rung, re-request playback-info carrying the S508
+    // constraint params (forceTranscode, and excludeHevc on a HEVC-origin source).
+    // The server honours them on this leg; the client attaches them here. Best-effort
+    // — the transcode that follows is the actual recovery, this only informs it.
+    firePlaybackFallbackLeg();
+    cancelPlaybackFallbackWatch(); // the fatal path escalates now; the stall timer is moot
     transcodeNeeded.value = true;
     beginTranscode(v?.currentTime ?? 0);
   }
 }
+
+// ---- playback fallback leg (W110 S513 / AD-2b+2c client side) -----------------
+/** One-shot guard: at most one constrained playback-info retry per media, whether
+ *  it is triggered by the fatal-error path or the stall watchdog. Reset with the
+ *  media in evaluateForCurrentMedia(). */
+let fallbackLegFired = false;
+let stallWatchTimer: ReturnType<typeof setTimeout> | null = null;
+let stallArmedAtMs = 0;
+let stallBaseTime = 0;
+
+/** Attach the S508 params to a playback-info retry (the caller-side consumer). The
+ *  response is not consumed here — the value of this step is that the request now
+ *  carries the constraints, which the server applies to the ladder it selects. */
+function firePlaybackFallbackLeg(): void {
+  if (fallbackLegFired) return;
+  fallbackLegFired = true;
+  const id = props.media?.id;
+  if (id === undefined || id === null || id === '') return;
+  void markerClient()
+    .get(
+      `/api/v1/media/${encodeURIComponent(id)}/playback-info`,
+      playbackFallbackParams({ videoCodec: sourceVideoCodec.value }),
+    )
+    .catch(() => {
+      /* best-effort: a failed retry must never block the transcode recovery below. */
+    });
+}
+
+/** Arm the single stall watchdog when playback (re)starts on a DIRECT source. A
+ *  one-shot timer, never a second one (`stallWatchTimer !== null` guard) and never
+ *  while already transcoding — so it does not duplicate or fight the 30s budget the
+ *  rest of the player already grants a stream. */
+function armPlaybackFallbackWatch(): void {
+  if (stallWatchTimer !== null || fallbackLegFired) return;
+  if (transcodeNeeded.value) return;
+  const v = videoRef.value;
+  if (!v) return;
+  stallArmedAtMs = Date.now();
+  stallBaseTime = v.currentTime;
+  stallWatchTimer = setTimeout(() => {
+    stallWatchTimer = null;
+    const cur = videoRef.value;
+    if (!cur || transcodeNeeded.value) return;
+    // The pure predicate re-checks the two facts that mattered at fire time: the
+    // budget is spent AND no frame advanced since arming. A source that began to
+    // render was already cancelled out of the timer in onTimeUpdate().
+    if (isPlaybackStalled(Date.now(), stallArmedAtMs, cur.currentTime, stallBaseTime)) {
+      firePlaybackFallbackLeg();
+      transcodeNeeded.value = true;
+      beginTranscode(cur.currentTime);
+    }
+  }, PLAYBACK_FALLBACK_STALL_MS);
+}
+
+/** Cancel + disarm the stall watchdog (playback advanced, media changed, unmount). */
+function cancelPlaybackFallbackWatch(): void {
+  if (stallWatchTimer !== null) {
+    clearTimeout(stallWatchTimer);
+    stallWatchTimer = null;
+  }
+}
+
 
 // ---- captions / tracks (R3.5) -----------------------------------------------
 const textTracks = ref<TextTrackInfo[]>([]);
@@ -1157,6 +1235,10 @@ function bufferedEnd(v: HTMLVideoElement): number {
 function onPlay(): void {
   player.play();
   player.setMediaPositionState();
+  // W110 S513: playback started (or resumed) on the DIRECT source — watch for a
+  // started-but-never-advancing stall. onTimeUpdate cancels this the moment real
+  // frames move, so a healthy start never fires the fallback leg.
+  armPlaybackFallbackWatch();
 }
 function onPause(): void {
   player.pause();
@@ -1165,6 +1247,10 @@ function onPause(): void {
 function onTimeUpdate(): void {
   const v = videoRef.value;
   if (v) {
+    // W110 S513: a `timeupdate` past the position we armed at means frames are
+    // rendering — playback is healthy, so disarm the stall watchdog. Cheap guard
+    // (one null check once cancelled); timeupdate is high-rate on purpose.
+    if (stallWatchTimer !== null && v.currentTime > stallBaseTime) cancelPlaybackFallbackWatch();
     player.updateProgress(v.currentTime, v.duration, bufferedEnd(v));
     // S287: keep the SyncPlay store's local position fresh. This is the CHEAP
     // half of position reporting — a local ref write, no I/O. The WIRE cadence
@@ -1649,6 +1735,7 @@ onBeforeUnmount(() => {
     clearTimeout(trickplayPrefetchTimer);
     trickplayPrefetchTimer = null;
   }
+  cancelPlaybackFallbackWatch(); // W110 S513: never let a stall timer fire after teardown
 });
 </script>
 

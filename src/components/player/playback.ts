@@ -91,6 +91,81 @@ export function isNetworkMediaError(video: HTMLVideoElement | null | undefined):
   return video?.error?.code === 2;
 }
 
+/** W110 S513 survival sentinel — must stay in this one file (see the plan step). */
+export const S513_PLAYBACK_FALLBACK_TOKEN = 'S513FALLBACKX9P5';
+
+/**
+ * Wall-clock budget before the player treats a started-but-not-advancing source as
+ * stalled and escalates to the transcode fallback leg.
+ *
+ * Chosen to MATCH the estate's existing 30-second playback budget rather than invent
+ * a new one — the HLS layer already gives a stream `maxTimeToFirstByteMs: 30_000`
+ * before it gives up, and resume is gated at `RESUME_MIN_SECONDS = 30`. A second,
+ * shorter watchdog would tear down a session the rest of the app still considers
+ * within budget; a longer one would make the give-up feel arbitrary. Same number,
+ * same meaning, one place.
+ */
+export const PLAYBACK_FALLBACK_STALL_MS = 30_000;
+
+/**
+ * True when a source codec (the raw ffprobe `codec_name`) belongs to the HEVC
+ * family. Classifies through the SAME {@link VIDEO_CODEC_FAMILY} table the
+ * direct-play guard uses — never a second, hand-maintained hevc/h265 spelling list.
+ */
+export function isHevcFamilyVideoCodec(codec: string | null | undefined): boolean {
+  const name = typeof codec === 'string' ? codec.trim().toLowerCase() : '';
+  if (name === '') return false; // unknown codec — nothing to exclude
+  return VIDEO_CODEC_FAMILY.get(name) === 'hevc';
+}
+
+/**
+ * Query params the player adds to the playback-info **retry** leg when it decides a
+ * direct source is unplayable and is about to fall back to a server transcode
+ * (W110 S513; the caller-side half of the server's S508 constraint inputs).
+ *
+ * - `forceTranscode=1` — always present on a fallback leg: the browser has already
+ *   proven it cannot play this source (fatal decode error or a stall past budget),
+ *   so ask for the transcode ladder, not a re-offer of the same direct file.
+ * - `excludeHevc=1` — added ONLY when the source's own video codec is HEVC-family.
+ *   The failing condition is "browser cannot decode HEVC", so a retry ladder that
+ *   still advertises HEVC levels would re-offer the very thing that broke; excluding
+ *   it is what makes the retry a different request rather than a re-request.
+ *
+ * Pure and total: the same codec string always yields the same params, and an
+ * unknown/empty codec yields `{ forceTranscode: '1' }` (never a spurious
+ * `excludeHevc`). The server treats an absent param as "no constraint", so a
+ * first-load (non-retry) request that carries neither is byte-identical to before
+ * this step — this function is called exclusively on the retry legs.
+ */
+export function playbackFallbackParams(opts: { videoCodec: string | null | undefined }): Record<string, string> {
+  const params: Record<string, string> = { forceTranscode: '1' };
+  if (isHevcFamilyVideoCodec(opts.videoCodec)) params.excludeHevc = '1';
+  return params;
+}
+
+/**
+ * Decide whether playback is stalled enough to fire the fallback leg.
+ *
+ * Both guards must hold, in this order (early exit):
+ *  1. A watchdog was actually armed (`armedMs > 0`).
+ *  2. The full {@link PLAYBACK_FALLBACK_STALL_MS} budget has elapsed since arming.
+ *  3. `currentTime` has not advanced past the position observed at arm time — the
+ *     honest "frames rendered" signal, since a source that renders never regresses.
+ *
+ * Pure over its four numbers so the timing rule is unit-testable without a clock or
+ * a `<video>`; the caller owns when to sample them.
+ */
+export function isPlaybackStalled(
+  nowMs: number,
+  armedMs: number,
+  currentTime: number,
+  lastTime: number,
+): boolean {
+  if (armedMs <= 0) return false;
+  if (nowMs - armedMs < PLAYBACK_FALLBACK_STALL_MS) return false;
+  return currentTime <= lastTime;
+}
+
 /**
  * An audio stream advertised by `GET /api/v1/media/:id/playback-info`
  * (`audio_tracks[]`). On direct play (non-Safari) the browser exposes NO

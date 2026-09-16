@@ -24,6 +24,10 @@ import {
   videoCodecFromStreams,
   videoCodecPolicy,
   containerMimeForExtension,
+  isHevcFamilyVideoCodec,
+  playbackFallbackParams,
+  isPlaybackStalled,
+  PLAYBACK_FALLBACK_STALL_MS,
 } from './playback';
 
 describe('playback — extensionOf', () => {
@@ -806,5 +810,58 @@ describe('playback — needsTranscodeWithCapabilities', () => {
     // Extension check passes (mp4 is direct-play) and no audio probe when tracks empty.
     expect(result).toBe(false);
     expect(mc.decodingInfo).not.toHaveBeenCalled();
+  });
+});
+
+describe('playback — isHevcFamilyVideoCodec (W110 S513)', () => {
+  it('classifies every HEVC spelling through the shared family table', () => {
+    for (const spell of ['hevc', 'HEVC', ' h265 ', 'hvc1', 'hev1', 'x265']) {
+      expect(isHevcFamilyVideoCodec(spell)).toBe(true);
+    }
+  });
+
+  it('is false for other families and the unknown/empty codec', () => {
+    for (const spell of ['h264', 'av1', 'vp9', 'theora', 'mpeg4', '', '   ', null, undefined]) {
+      expect(isHevcFamilyVideoCodec(spell)).toBe(false);
+    }
+  });
+});
+
+describe('playback — playbackFallbackParams (W110 S513)', () => {
+  it('always carries forceTranscode on a retry leg', () => {
+    expect(playbackFallbackParams({ videoCodec: 'h264' })).toEqual({ forceTranscode: '1' });
+  });
+
+  it('adds excludeHevc only when the source codec is HEVC-family', () => {
+    expect(playbackFallbackParams({ videoCodec: 'hevc' })).toEqual({
+      forceTranscode: '1',
+      excludeHevc: '1',
+    });
+  });
+
+  it('treats an unknown/empty codec as non-HEVC (no spurious excludeHevc)', () => {
+    expect(playbackFallbackParams({ videoCodec: '' })).toEqual({ forceTranscode: '1' });
+    expect(playbackFallbackParams({ videoCodec: null })).toEqual({ forceTranscode: '1' });
+  });
+});
+
+describe('playback — isPlaybackStalled (W110 S513)', () => {
+  const BASE = 1_000_000;
+
+  it('is false until the full 30s budget has elapsed', () => {
+    // Not yet armed.
+    expect(isPlaybackStalled(BASE, 0, 0, 0)).toBe(false);
+    // Armed, budget not spent — even though time has not advanced.
+    expect(isPlaybackStalled(BASE + PLAYBACK_FALLBACK_STALL_MS - 1, BASE, 0, 0)).toBe(false);
+  });
+
+  it('is true once the budget elapsed AND no frame advanced', () => {
+    expect(isPlaybackStalled(BASE + PLAYBACK_FALLBACK_STALL_MS, BASE, 0, 0)).toBe(true);
+    // Equal-to-base position still counts as "not advanced".
+    expect(isPlaybackStalled(BASE + PLAYBACK_FALLBACK_STALL_MS + 5, BASE, 0.0, 0.0)).toBe(true);
+  });
+
+  it('is false when playback advanced past the armed position', () => {
+    expect(isPlaybackStalled(BASE + PLAYBACK_FALLBACK_STALL_MS, BASE, 3.2, 0.0)).toBe(false);
   });
 });

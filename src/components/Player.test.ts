@@ -32,7 +32,7 @@ import { useSyncPlayStore } from '../stores/useSyncPlayStore';
 import { useToastStore } from '../stores/useToastStore';
 import SyncPlayModal from './syncplay/SyncPlayModal.vue';
 import type { MediaItem } from '../types/media-item';
-import { isRoute } from '../test/route-match';
+import { isRoute, hasQuery } from '../test/route-match';
 import type { SyncPlaySession, SyncPlayPlaybackCommand } from '../types/syncplay';
 import * as hlsTranscodeMod from '../composables/useHlsTranscode';
 
@@ -3209,5 +3209,142 @@ describe('Player — hub-relay pending_command load path (S298)', () => {
     await flushPromises();
     expect(player.current?.id).toBe('media-pending-b');
     expect(player.current?.name).toBe('New Title');
+  });
+});
+
+// ---- playback fallback leg (W110 S513 / AD-2b+2c client side) -----------------
+describe('Player — constrained playback-info retry on fatal/stall (W110 S513)', () => {
+  /** An mp4 item whose only video stream is `codec`. */
+  function mp4WithVideoCodec(codec: string): MediaItem {
+    return media({
+      path: '/lib/movie.mp4',
+      streams: [
+        { stream_index: '0', stream_type: 'video', codec, width: '1920', height: '1080' },
+        { stream_index: '1', stream_type: 'audio', codec: 'aac' },
+      ],
+    });
+  }
+
+  /** A fetch double that records every URL and always answers 200 with `{}`. */
+  function captureFetch() {
+    const calls: unknown[] = [];
+    const fetchMock = vi.fn((url: unknown) => {
+      calls.push(url);
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    return { calls, fetchMock };
+  }
+
+  const playbackInfoUrls = (calls: unknown[]) =>
+    calls.filter((u) => isRoute(u, '/api/v1/media/m1/playback-info'));
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it('a fatal HEVC-origin decode error retries playback-info with forceTranscode AND excludeHevc', async () => {
+    const { calls } = captureFetch();
+    const { video } = mountPlayer({ media: mp4WithVideoCodec('hevc'), streamUrl: 'http://x/movie.mp4' });
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 3 }) });
+    video.dispatchEvent(new Event('error'));
+    await flushPromises();
+    const legs = playbackInfoUrls(calls);
+    expect(legs).toHaveLength(1);
+    expect(hasQuery(legs[0], 'forceTranscode', '1')).toBe(true);
+    expect(hasQuery(legs[0], 'excludeHevc', '1')).toBe(true);
+    // The existing recovery is preserved alongside the new leg.
+    expect(tc().start).toHaveBeenCalled();
+  });
+
+  it('a fatal non-HEVC decode error retries with forceTranscode only (no excludeHevc)', async () => {
+    const { calls } = captureFetch();
+    const { video } = mountPlayer({ media: mp4WithVideoCodec('h264'), streamUrl: 'http://x/movie.mp4' });
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 4 }) });
+    video.dispatchEvent(new Event('error'));
+    await flushPromises();
+    const legs = playbackInfoUrls(calls);
+    expect(legs).toHaveLength(1);
+    expect(hasQuery(legs[0], 'forceTranscode', '1')).toBe(true);
+    expect(hasQuery(legs[0], 'excludeHevc')).toBe(false);
+  });
+
+  it('fires the constrained retry at most once per media (idempotent across two errors)', async () => {
+    const { calls } = captureFetch();
+    const { video } = mountPlayer({ media: mp4WithVideoCodec('hevc'), streamUrl: 'http://x/movie.mp4' });
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code: 3 }) });
+    video.dispatchEvent(new Event('error'));
+    await flushPromises();
+    // A second error after we are already transcoding early-returns in onVideoError,
+    // so no second leg is possible — this pins the once-per-media contract.
+    video.dispatchEvent(new Event('error'));
+    await flushPromises();
+    expect(playbackInfoUrls(calls)).toHaveLength(1);
+  });
+
+  it('a started-but-stalled source fires exactly one constrained retry once the 30s budget elapses', async () => {
+    vi.useFakeTimers();
+    const { calls } = captureFetch();
+    const { video, state } = mountPlayer({
+      media: mp4WithVideoCodec('h264'),
+      streamUrl: 'http://x/movie.mp4',
+      autoplay: false,
+    });
+    expect(playbackInfoUrls(calls)).toHaveLength(0); // not before play
+    // Playback starts but never advances (currentTime stays 0).
+    state.paused = false;
+    video.dispatchEvent(new Event('play'));
+    await flushPromises();
+    expect(playbackInfoUrls(calls)).toHaveLength(0); // armed, budget not yet spent
+    vi.advanceTimersByTime(30_000);
+    await flushPromises();
+    const legs = playbackInfoUrls(calls);
+    expect(legs).toHaveLength(1);
+    expect(hasQuery(legs[0], 'forceTranscode', '1')).toBe(true);
+    expect(tc().start).toHaveBeenCalledTimes(1); // stall escalates to transcode
+  });
+
+  it('advancing playback never escalates — a healthy start fires no fallback leg', async () => {
+    vi.useFakeTimers();
+    const { calls } = captureFetch();
+    const { video, state } = mountPlayer({
+      media: mp4WithVideoCodec('h264'),
+      streamUrl: 'http://x/movie.mp4',
+      autoplay: false,
+    });
+    state.paused = false;
+    video.dispatchEvent(new Event('play')); // arms the watchdog at currentTime 0
+    await flushPromises();
+    // Frames render: time advances past the armed position, so the source is healthy.
+    state.currentTime = 0.5;
+    video.dispatchEvent(new Event('timeupdate'));
+    await flushPromises();
+    vi.advanceTimersByTime(30_000);
+    await flushPromises();
+    expect(playbackInfoUrls(calls)).toHaveLength(0); // no spurious constrained retry
+    expect(tc().start).not.toHaveBeenCalled(); // no spurious transcode
+  });
+
+  it('repeated play events do NOT stack watchdogs — one stalled source fires one leg (AC2)', async () => {
+    vi.useFakeTimers();
+    const { calls } = captureFetch();
+    const { video, state } = mountPlayer({
+      media: mp4WithVideoCodec('h264'),
+      streamUrl: 'http://x/movie.mp4',
+      autoplay: false,
+    });
+    state.paused = false;
+    // A real player can fire `play` several times (seek, resume, gesture). The
+    // `stallWatchTimer !== null` guard must keep this to ONE armed watchdog, so the
+    // escalation runs exactly once rather than once per play event.
+    video.dispatchEvent(new Event('play'));
+    video.dispatchEvent(new Event('play'));
+    video.dispatchEvent(new Event('play'));
+    await flushPromises();
+    vi.advanceTimersByTime(30_000);
+    await flushPromises();
+    expect(playbackInfoUrls(calls)).toHaveLength(1); // not three
+    expect(tc().start).toHaveBeenCalledTimes(1); // not three
   });
 });
