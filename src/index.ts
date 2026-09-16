@@ -475,6 +475,13 @@ export {
 } from './utils/plural';
 export type { PluralCategory, PluralForms, PluralOptions } from './utils/plural';
 
+// Debounce (S519 / AD-16). ONE trailing-fire primitive so every debounced control
+// shares the "one timer source, discard superseded fires" discipline instead of
+// hand-rolling its own clearTimeout/setTimeout pair; the requests portal builds its
+// 400–600 ms search on it.
+export { debounce, REQUEST_SEARCH_DEBOUNCE_MS } from './utils/debounce';
+export type { Debounced } from './utils/debounce';
+
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 

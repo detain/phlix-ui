@@ -13,6 +13,7 @@ import Button from '../components/ui/Button.vue';
 import Badge from '../components/ui/Badge.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { api, type ApiClient } from '../api/client';
+import { REQUEST_SEARCH_DEBOUNCE_MS } from '../utils/debounce';
 
 /** A raw request row from GET /api/v1/me/requests (snake_case, ISO dates). */
 const movieReq = {
@@ -201,6 +202,140 @@ describe('RequestsPage — delete', () => {
     await findBtnByLabel(w, 'Delete request for Fight Club')!.trigger('click');
     await flushPromises();
     expect(useToastStore().toasts.some((t) => t.tone === 'error' && t.message === 'not yours')).toBe(true);
+    w.unmount();
+  });
+});
+
+/** A controllable promise so tests can pin the resolve ORDER of concurrent loads. */
+function deferred<T>() {
+  let resolve!: (v: T) => void;
+  const promise = new Promise<T>((r) => (resolve = r));
+  return { promise, resolve };
+}
+
+describe('S519 — requests-portal search + load hygiene (AD-16 / AD-17)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('renders the search/filter toolbar only when the list is populated', async () => {
+    const { client } = makeClient({ requests: [] });
+    const empty = mountPage(client);
+    await flushPromises();
+    expect(empty.find('input[type="search"]').exists()).toBe(false);
+    expect(empty.text()).toContain('No requests yet');
+    empty.unmount();
+
+    const { client: full } = makeClient({ requests: [movieReq, seriesReq] });
+    const w = mountPage(full);
+    await flushPromises();
+    expect(w.find('input[type="search"]').exists()).toBe(true);
+    w.unmount();
+  });
+
+  it('applies the search only AFTER the debounce window — not on keystroke (no flicker)', async () => {
+    const { client } = makeClient({ requests: [movieReq, seriesReq] });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain('Fight Club');
+    expect(w.text()).toContain('Breaking Bad');
+
+    await w.find('input[type="search"]').setValue('Fight');
+    // Within the window the query is not yet applied — both rows still shown.
+    vi.advanceTimersByTime(REQUEST_SEARCH_DEBOUNCE_MS - 1);
+    await flushPromises();
+    expect(w.text()).toContain('Breaking Bad');
+
+    // After the window the debounced filter lands.
+    vi.advanceTimersByTime(1);
+    await flushPromises();
+    expect(w.text()).toContain('Fight Club');
+    expect(w.text()).not.toContain('Breaking Bad');
+    w.unmount();
+  });
+
+  it('collapses a keystroke burst to the LAST query (drop superseded)', async () => {
+    const { client } = makeClient({ requests: [movieReq, seriesReq] });
+    const w = mountPage(client);
+    await flushPromises();
+    const input = w.find('input[type="search"]');
+    // A burst: each keystroke resets the timer; only the final value must ever apply.
+    await input.setValue('B');
+    await input.setValue('Br');
+    await input.setValue('Bre');
+    vi.advanceTimersByTime(REQUEST_SEARCH_DEBOUNCE_MS);
+    await flushPromises();
+    // 'Bre' matches "Breaking Bad"; the dropped intermediate 'B' never filtered to nothing.
+    expect(w.text()).toContain('Breaking Bad');
+    expect(w.text()).not.toContain('Fight Club');
+    w.unmount();
+  });
+
+  it('filters by status immediately (status is a select, not debounced)', async () => {
+    const { client } = makeClient({ requests: [movieReq /* pending */, seriesReq /* available */] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w.find('#requests-status').setValue('pending');
+    await flushPromises();
+    expect(w.text()).toContain('Fight Club');
+    expect(w.text()).not.toContain('Breaking Bad');
+    w.unmount();
+  });
+
+  it('shows a no-matches empty state and Clear filters restores the full list', async () => {
+    const { client } = makeClient({ requests: [movieReq, seriesReq] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w.find('input[type="search"]').setValue('zzzznope');
+    vi.advanceTimersByTime(REQUEST_SEARCH_DEBOUNCE_MS);
+    await flushPromises();
+    expect(w.text()).toContain('No matching requests');
+
+    await findBtnByText(w, 'Clear filters')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).toContain('Fight Club');
+    expect(w.text()).toContain('Breaking Bad');
+    w.unmount();
+  });
+
+  it('discards a superseded (late) reload so it cannot clobber the newer result (AD-17 hygiene)', async () => {
+    const dInitial = deferred<{ requests?: unknown[]; count?: number }>();
+    const dStale = deferred<{ requests?: unknown[]; count?: number }>();
+    const dFresh = deferred<{ requests?: unknown[]; count?: number }>();
+    let calls = 0;
+    const get = vi.fn(() => {
+      calls += 1;
+      if (calls === 1) return dInitial.promise;
+      if (calls === 2) return dStale.promise; // reload kicked off first (delete #1)
+      return dFresh.promise; // reload kicked off second (delete #2) — the winner
+    });
+    const client = { get, post: vi.fn(), delete: vi.fn(async () => ({})) } as unknown as ApiClient;
+
+    const w = mountPage(client);
+    dInitial.resolve({ requests: [movieReq, seriesReq], count: 2 });
+    await flushPromises();
+    expect(w.text()).toContain('Fight Club');
+    expect(w.text()).toContain('Breaking Bad');
+
+    // Two deletes fire two overlapping reloads; the second must win.
+    await findBtnByLabel(w, 'Delete request for Fight Club')!.trigger('click');
+    await flushPromises(); // issues reload #1 (dStale pending)
+    await findBtnByLabel(w, 'Delete request for Breaking Bad')!.trigger('click');
+    await flushPromises(); // issues reload #2 (dFresh pending)
+
+    // The NEWER load resolves first: list empties.
+    dFresh.resolve({ requests: [], count: 0 });
+    await flushPromises();
+    expect(w.text()).toContain('No requests yet');
+
+    // The LATE, superseded load resolves now — its [movieReq] must be discarded, not applied.
+    dStale.resolve({ requests: [movieReq], count: 1 });
+    await flushPromises();
+    expect(w.text()).toContain('No requests yet'); // still empty → stale arrival dropped
+    expect(w.text()).not.toContain('Fight Club');
     w.unmount();
   });
 });

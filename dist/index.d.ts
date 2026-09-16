@@ -209,6 +209,8 @@ export { resolveImageSrc, resolveImageSrcset, isRewritableImagePath } from './ut
 export { stripLeadingArticle, compareByStrippedTitle, SORT_TITLE_ARTICLES, } from './utils/sortTitle';
 export { plural, pluralize, pluralCount, pluralCategory, selectPluralTemplate, isPluralTemplate, PLURAL_CATEGORIES, } from './utils/plural';
 export type { PluralCategory, PluralForms, PluralOptions } from './utils/plural';
+export { debounce, REQUEST_SEARCH_DEBOUNCE_MS } from './utils/debounce';
+export type { Debounced } from './utils/debounce';
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 export { usePreferencesStore, readStoredPreferences, hasStoredPreferences, DEFAULT_PREFERENCES, DEFAULT_CAPTION_STYLE } from './stores/usePreferencesStore';
