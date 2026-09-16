@@ -10,6 +10,13 @@ import type { SubtitleTrack } from './player/transcode';
  * Player.vue change reached the shipped artifact. Nothing consumes it at runtime.
  */
 export declare const S505_CENTER_TRANSPORT_TOKEN = "S505TRANSPORT10X9P3";
+/**
+ * W110 S512 — code-resident survival sentinel for hide-when-hidden chrome focus
+ * containment (AD-11). Exported so it is a real (used) module binding — it trips
+ * neither `noUnusedLocals` (vue-tsc) nor `no-unused-vars` (eslint) — pinning that
+ * this Player.vue change reached the shipped artifact. Nothing consumes it at runtime.
+ */
+export declare const S512_CHROME_FOCUS_TOKEN = "S512CHROMEX9P6";
 declare const _default: typeof __VLS_export;
 export default _default;
 declare const __VLS_export: import("vue").DefineComponent<{

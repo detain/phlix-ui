@@ -8497,15 +8497,28 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 		function xn() {
 			z.value = !0, bn();
 		}
-		N(() => m.playing, (e) => {
+		let Sn = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]", Cn = "data-phlix-prev-tabindex", wn = "__phlix_no_tabindex__";
+		function Tn(e) {
+			let t = I.value;
+			if (t) for (let n of Array.from(t.querySelectorAll(".player__meta, .player__controls, .player__bigplay"))) {
+				let t = n.matches(Sn) ? [n] : Array.from(n.querySelectorAll(Sn));
+				for (let n of t) if (e) {
+					let e = n.getAttribute(Cn);
+					e === null || e === wn ? n.removeAttribute("tabindex") : n.setAttribute("tabindex", e), n.removeAttribute(Cn);
+				} else n.getAttribute("tabindex") !== "-1" && (n.setAttribute(Cn, n.getAttribute("tabindex") ?? wn), n.setAttribute("tabindex", "-1"));
+			}
+		}
+		N(z, (e) => {
+			typeof document > "u" || (Tn(e), !e && document.activeElement instanceof HTMLElement && I.value?.contains(document.activeElement) && document.activeElement.blur());
+		}, { flush: "post" }), N(() => m.playing, (e) => {
 			e ? (Ne.value = !1, st(), bn()) : (yn(), z.value = !0);
 		});
-		let Sn = null;
+		let En = null;
 		y(() => {
 			m.setCurrent(d.media, {
 				resetPosition: !1,
 				streamUrl: d.streamUrl
-			}), T.hydrate(d.media), typeof document < "u" && (document.addEventListener("fullscreenchange", hn), re.value = document.pictureInPictureEnabled === !0), Sn = m.bindMediaSession({
+			}), T.hydrate(d.media), typeof document < "u" && (document.addEventListener("fullscreenchange", hn), re.value = document.pictureInPictureEnabled === !0), En = m.bindMediaSession({
 				onPlay: () => void F.value?.play()?.catch(() => {}),
 				onPause: () => F.value?.pause(),
 				onSeek: (e) => tn(e)
@@ -8520,7 +8533,7 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 		}), N(() => w.currentSession, (e) => {
 			e && (e.state === "playing" ? (F.value?.play(), m.play()) : e.state === "paused" && (F.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && et(e.playbackPosition));
 		});
-		let Cn = null;
+		let Dn = null;
 		return N(() => w.pendingPlayMedia, async (e) => {
 			if (!e) return;
 			let t = null;
@@ -8539,13 +8552,13 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 				m.setCurrent(t, {
 					resetPosition: !0,
 					streamUrl: d.streamUrlFor?.(t) ?? ""
-				}), F.value?.play(), m.play(), w.consumePendingPlayMedia(), Cn = null;
+				}), F.value?.play(), m.play(), w.consumePendingPlayMedia(), Dn = null;
 				return;
 			}
 			let n = `${e.mediaId}@${e.issuedAt}`;
-			Cn !== n && (Cn = n, p("pending-media", e.mediaId, e.title));
+			Dn !== n && (Dn = n, p("pending-media", e.mediaId, e.title));
 		}), v(() => {
-			ge?.reportFinal?.(), yn(), rt(), W.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", hn), Sn?.(), It?.removeEventListener?.("addtrack", Mt), It?.removeEventListener?.("removetrack", Mt), un !== null && (clearInterval(un), un = null), be !== null && (clearTimeout(be), be = null);
+			ge?.reportFinal?.(), yn(), rt(), W.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", hn), En?.(), It?.removeEventListener?.("addtrack", Mt), It?.removeEventListener?.("removetrack", Mt), un !== null && (clearInterval(un), un = null), be !== null && (clearTimeout(be), be = null);
 		}), (n, r) => (x(), o("div", {
 			ref_key: "containerRef",
 			ref: I,
@@ -8928,7 +8941,7 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-847b0598"]]), Qf = ["aria-label"], $f = ["src", "poster"], ep = { class: "mini__body" }, tp = { class: "mini__title" }, np = { class: "mini__controls" }, rp = ["aria-label"], ip = ["aria-label", "aria-pressed"], ap = ["aria-label"], op = ["aria-label"], sp = {
+}), [["__scopeId", "data-v-e37159b5"]]), Qf = ["aria-label"], $f = ["src", "poster"], ep = { class: "mini__body" }, tp = { class: "mini__title" }, np = { class: "mini__controls" }, rp = ["aria-label"], ip = ["aria-label", "aria-pressed"], ap = ["aria-label"], op = ["aria-label"], sp = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, cp = /*#__PURE__*/ J(/* @__PURE__ */ d({

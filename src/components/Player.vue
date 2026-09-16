@@ -11,6 +11,14 @@
  * Player.vue change reached the shipped artifact. Nothing consumes it at runtime.
  */
 export const S505_CENTER_TRANSPORT_TOKEN = 'S505TRANSPORT10X9P3';
+
+/**
+ * W110 S512 — code-resident survival sentinel for hide-when-hidden chrome focus
+ * containment (AD-11). Exported so it is a real (used) module binding — it trips
+ * neither `noUnusedLocals` (vue-tsc) nor `no-unused-vars` (eslint) — pinning that
+ * this Player.vue change reached the shipped artifact. Nothing consumes it at runtime.
+ */
+export const S512_CHROME_FOCUS_TOKEN = 'S512CHROMEX9P6';
 </script>
 
 <script setup lang="ts">
@@ -1445,6 +1453,53 @@ function revealChrome(): void {
   showChrome.value = true;
   scheduleHide();
 }
+
+// ---- chrome focus containment (S512 / AD-11) ---------------------------------
+// When the OSD auto-hides, the faded chrome (`opacity:0; pointer-events:none`) is
+// still keyboard/D-pad focus-reachable, so a remote can strand focus on an invisible
+// control. Native `inert` needs Chrome 102 — above this app's floor — so the portable
+// mechanism is blur-on-hide + `tabindex=-1`: park focus out and take the surviving
+// chrome clusters (`.player__meta`, `.player__controls`, `.player__bigplay`) out of the
+// tab order while hidden, restoring their prior focusability the instant chrome shows.
+// This extends S505's focus-exclusion semantics (its center ±10s buttons are DOM-removed
+// via `v-if`) to the remaining chrome that must stay mounted. The skip targets that hide
+// with `v-if="showChrome"` never enter the DOM while hidden, so they need no handling here.
+const CHROME_FOCUS_CLUSTERS = '.player__meta, .player__controls, .player__bigplay';
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]';
+const PREV_TABINDEX = 'data-phlix-prev-tabindex';
+const NO_TABINDEX = '__phlix_no_tabindex__';
+
+function setChromeFocusable(focusable: boolean): void {
+  const root = containerRef.value;
+  if (!root) return;
+  for (const cluster of Array.from(root.querySelectorAll<HTMLElement>(CHROME_FOCUS_CLUSTERS))) {
+    const targets = cluster.matches(FOCUSABLE)
+      ? [cluster]
+      : Array.from(cluster.querySelectorAll<HTMLElement>(FOCUSABLE));
+    for (const el of targets) {
+      if (focusable) {
+        const prev = el.getAttribute(PREV_TABINDEX);
+        if (prev === null || prev === NO_TABINDEX) el.removeAttribute('tabindex');
+        else el.setAttribute('tabindex', prev);
+        el.removeAttribute(PREV_TABINDEX);
+      } else if (el.getAttribute('tabindex') !== '-1') {
+        el.setAttribute(PREV_TABINDEX, el.getAttribute('tabindex') ?? NO_TABINDEX);
+        el.setAttribute('tabindex', '-1');
+      }
+    }
+  }
+}
+
+// Hiding the chrome blurs whatever control held focus so the D-pad cannot stay parked
+// on an element the user can no longer see (focus "moves out on hide").
+watch(showChrome, (hidden) => {
+  if (typeof document === 'undefined') return;
+  setChromeFocusable(hidden);
+  if (!hidden && document.activeElement instanceof HTMLElement && containerRef.value?.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
+}, { flush: 'post' });
 
 watch(
   () => player.playing,
