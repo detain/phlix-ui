@@ -866,7 +866,6 @@ function cancelPlaybackFallbackWatch(): void {
   }
 }
 
-
 // ---- captions / tracks (R3.5) -----------------------------------------------
 const textTracks = ref<TextTrackInfo[]>([]);
 const audioTracks = ref<TextTrackInfo[]>([]);
@@ -1587,10 +1586,10 @@ function setChromeFocusable(focusable: boolean): void {
 
 // Hiding the chrome blurs whatever control held focus so the D-pad cannot stay parked
 // on an element the user can no longer see (focus "moves out on hide").
-watch(showChrome, (hidden) => {
+watch(showChrome, (visible) => {
   if (typeof document === 'undefined') return;
-  setChromeFocusable(hidden);
-  if (!hidden && document.activeElement instanceof HTMLElement && containerRef.value?.contains(document.activeElement)) {
+  setChromeFocusable(visible);
+  if (!visible && document.activeElement instanceof HTMLElement && containerRef.value?.contains(document.activeElement)) {
     document.activeElement.blur();
   }
 }, { flush: 'post' });

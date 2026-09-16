@@ -239,7 +239,6 @@ export function profileForDownlinkCap(downlinkMaxMbps: number | null | undefined
   return chosen;
 }
 
-
 /** Path to poll a transcode job's readiness. */
 export function transcodeStatusPath(jobId: string): string {
   return `/api/v1/transcode/${encodeURIComponent(jobId)}/status`;

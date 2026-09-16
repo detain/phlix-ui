@@ -8987,7 +8987,7 @@ var Sf = { class: "player__stage" }, Cf = ["src", "poster"], wf = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-e4f31687"]]), cp = ["aria-label"], lp = ["src", "poster"], up = { class: "mini__body" }, dp = { class: "mini__title" }, fp = { class: "mini__controls" }, pp = ["aria-label"], mp = ["aria-label", "aria-pressed"], hp = ["aria-label"], gp = ["aria-label"], _p = {
+}), [["__scopeId", "data-v-f5f0773b"]]), cp = ["aria-label"], lp = ["src", "poster"], up = { class: "mini__body" }, dp = { class: "mini__title" }, fp = { class: "mini__controls" }, pp = ["aria-label"], mp = ["aria-label", "aria-pressed"], hp = ["aria-label"], gp = ["aria-label"], _p = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, vp = /*#__PURE__*/ Y(/* @__PURE__ */ d({
