@@ -88,11 +88,11 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
      * see {@link routeGateServer} header). These pins fail if the vendored file
      * is edited, re-derived locally, or replaced: the md5 is the byte-identity
      * proof against `phlix-contracts/dist/server-route-manifest.json` at
-     * contracts `29b8310` (untagged regen #33), and the sha pin is the
+     * contracts `b34651d` (untagged regen #34), and the sha pin is the
      * server-currency proof.
      */
-    const VENDORED_MANIFEST_MD5 = '56eb7052069a56cd95f7b2558f151f63';
-    const VENDORED_MANIFEST_SERVER_SHA = 'c9c551e0506a742220c17a34022d4a2f497e6989';
+    const VENDORED_MANIFEST_MD5 = '06ce7ec95bc064cc0f13b94389af9a82';
+    const VENDORED_MANIFEST_SERVER_SHA = '730e55b7d3ad44a155f6b46374a9f6c463792840';
 
     it('is the canonical artifact byte-for-byte — md5 + provenance sha + size', () => {
         // jsdom makes import.meta.url an http URL — resolve through the file
@@ -103,7 +103,7 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
         );
         const bytes = readFileSync(vendoredFile);
         expect(createHash('md5').update(bytes).digest('hex')).toBe(VENDORED_MANIFEST_MD5);
-        expect(SERVER_ROUTE_MANIFEST).toHaveLength(404);
+        expect(SERVER_ROUTE_MANIFEST).toHaveLength(410);
         expect(SERVER_ROUTE_MANIFEST.length).toBe(SERVER_ROUTE_MANIFEST_PROVENANCE.total);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toBe(VENDORED_MANIFEST_SERVER_SHA);
     });
