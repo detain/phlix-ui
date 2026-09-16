@@ -3,6 +3,15 @@
  * @license MIT
 -->
 
+<script lang="ts">
+/**
+ * W109 S504 — code-resident survival sentinel for the ResizeObserver-driven
+ * subtitle lift. Exported so it is genuine shipped module surface (not a comment
+ * that a future build could strip), mirroring the estate's token convention.
+ */
+export const S504_SUBOFFSET_TOKEN = 'S504SUBOFFSETX9P2';
+</script>
+
 <script setup lang="ts">
 /**
  * CaptionOverlay (R3.5) — renders the active subtitle cues as a CUSTOM overlay
@@ -11,6 +20,16 @@
  * and we draw its `activeCues` here. Renders nothing when captions are off, no
  * track matches, or the cue is empty. Cue text is stripped of markup and rendered
  * as TEXT (never v-html). jsdom/SSR-safe — degrades to no cues.
+ *
+ * Lift while the chrome is up (S504): the control cluster (`controlsRoot`, passed
+ * from the Player) is measured with a ResizeObserver and the real height is bound
+ * to `--phlix-sub-offset`, so the captions translate up by exactly the bar they
+ * must clear — taller control rows (MarkerTimeline / quality) are now covered. This
+ * REPLACES the old fixed-pixel lift (which under-shot those rows). The offset is
+ * `0` while the chrome is hidden (`lifted` false), so the captions reset to their
+ * resting line. ResizeObserver only — never a MutationObserver — and it is guarded
+ * so jsdom/SSR (where it is undefined) simply degrades to a `0` offset. Custom
+ * render path only: native `::cue` never mounts this overlay.
  */
 import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import type { CaptionStyle } from '../../stores/usePreferencesStore';
@@ -25,11 +44,56 @@ const props = defineProps<{
   styleConfig: CaptionStyle;
   /** Raise the captions above the control bar while the chrome is visible. */
   lifted?: boolean;
+  /** The control cluster whose real height the captions must clear (S504). When
+   *  present its height is measured with a ResizeObserver and bound to
+   *  `--phlix-sub-offset`; null (standalone/test, or before the Player mounts its
+   *  ref) simply yields a `0` offset. */
+  controlsRoot?: HTMLElement | null;
 }>();
 
 const lines = ref<string[]>([]);
 
-const vars = computed(() => captionStyleVars(props.styleConfig));
+/** Measured height (px) of `controlsRoot` — the real bottom-bar the captions lift
+ *  above. Refreshed by the ResizeObserver and re-read whenever the element swaps. */
+const barHeight = ref(0);
+
+/** The lift actually applied to the overlay: the measured bar height while the
+ *  chrome is up, `0` once it hides — so the captions reset (S504 AC). */
+const subOffset = computed(() => (props.lifted ? barHeight.value : 0));
+
+const vars = computed(() => ({
+  ...captionStyleVars(props.styleConfig),
+  '--phlix-sub-offset': `${subOffset.value}px`,
+}));
+
+let ro: ResizeObserver | null = null;
+
+/** Re-read the control cluster's height. Guarded for environments without a real
+ *  layout box (jsdom reports `offsetHeight === 0`; the value is still settable in a
+ *  test, which is exactly how the measure→offset wiring is pinned). */
+function measureBar(): void {
+  const el = props.controlsRoot;
+  barHeight.value = el && typeof el.offsetHeight === 'number' ? el.offsetHeight : 0;
+}
+
+function disconnectBar(): void {
+  ro?.disconnect();
+  ro = null;
+}
+
+/** (Re)point a single ResizeObserver at the current control cluster. Re-runs when
+ *  `controlsRoot` swaps (the Player's ref resolves only after it mounts). */
+function observeBar(): void {
+  disconnectBar();
+  measureBar();
+  const el = props.controlsRoot;
+  if (!el || typeof ResizeObserver === 'undefined') return;
+  ro = new ResizeObserver(() => measureBar());
+  ro.observe(el);
+}
+
+watch(() => props.controlsRoot, observeBar, { immediate: true });
+onBeforeUnmount(disconnectBar);
 
 let boundTrack: TextTrack | null = null;
 let boundTrackEl: HTMLTrackElement | null = null;
@@ -148,11 +212,16 @@ defineExpose({ lines });
   max-width: min(90%, 56ch);
   text-align: center;
   pointer-events: none;
-  transition: bottom var(--dur-base) var(--ease-out);
+  transition: transform var(--dur-base) var(--ease-out);
 }
-/* lift clear of the control bar (scrubber + button row) when the chrome shows */
+/* Lift clear of the control bar while the chrome shows. The offset is the real,
+   ResizeObserver-measured height of the control cluster (bound to
+   `--phlix-sub-offset` by the component) — NOT a fixed constant — so taller rows
+   (MarkerTimeline / quality) are covered. `0px` keeps the captions seated until a
+   height is measured. The offset collapses to `0` when the chrome hides, so the
+    captions reset. (S504 — replaced the old fixed-pixel lift constant.) */
 .player__captions.is-lifted {
-  bottom: calc(var(--space-6) + 88px);
+  transform: translateX(-50%) translateY(calc(-1 * var(--phlix-sub-offset, 0px)));
 }
 .player__caption-line {
   display: inline-block;

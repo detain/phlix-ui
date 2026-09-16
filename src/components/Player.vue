@@ -208,6 +208,10 @@ const SPEED_LADDER = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
+/** Ref to the bottom control cluster (scrubber + marker timeline + button row).
+ *  Handed to CaptionOverlay so it can ResizeObserver-measure the real height the
+ *  captions must clear (S504) instead of a fixed lift. */
+const controlsRef = ref<HTMLElement | null>(null);
 const showChrome = ref(true);
 const fullscreen = ref(false);
 const scrubbing = ref(false);
@@ -1676,10 +1680,11 @@ onBeforeUnmount(() => {
         :language="player.subtitleLang"
         :style-config="prefs.captionStyle"
         :lifted="showChrome"
+        :controls-root="controlsRef"
       />
 
       <!-- controls (hidden when the file can't be direct-played) -->
-      <div v-if="!transcodeBlocking" class="player__controls" @click.stop>
+      <div ref="controlsRef" v-if="!transcodeBlocking" class="player__controls" @click.stop>
         <Scrubber
           :position="player.position"
           :duration="player.duration"
