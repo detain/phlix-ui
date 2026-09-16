@@ -411,18 +411,22 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
 
 describe('MiniPlayer — finish signal (S30)', () => {
   /** Activate the dock and provide the shared resume reporter via global.provide. */
-  function mountActiveWithReporter(finish = vi.fn().mockResolvedValue(undefined), over: Partial<MediaItem> = {}) {
+  function mountActiveWithReporter(
+    finish = vi.fn().mockResolvedValue(undefined),
+    over: Partial<MediaItem> = {},
+  ) {
     const store = usePlayerStore();
     store.setCurrent(media(over), { streamUrl: 'http://x/stream' });
     store.showMiniPlayer();
+    const reportFinal = vi.fn().mockResolvedValue(undefined);
     const w = mount(MiniPlayer, {
       attachTo: document.body,
-      global: { stubs: { transition: true }, provide: { resumeReporter: { report: vi.fn(), finish } } },
+      global: { stubs: { transition: true }, provide: { resumeReporter: { report: vi.fn(), finish, reportFinal } } },
     });
     mounted.push(w);
     const video = w.find('video').element as HTMLVideoElement;
     stubVideo(video);
-    return { w, store, video, finish };
+    return { w, store, video, finish, reportFinal };
   }
 
   it('calls the resume reporter finish() once when the dock video ends', async () => {
@@ -452,5 +456,28 @@ describe('MiniPlayer — finish signal (S30)', () => {
   it('does not crash on end when no resume reporter is provided', async () => {
     const { video } = mountActive(); // mountActive provides no resumeReporter
     expect(() => video.dispatchEvent(new Event('ended'))).not.toThrow();
+  });
+
+  // ---- reportFinal() flush on quit / teardown (W109 S506) ---------------------
+  it('flushes the final position on close, BEFORE the store is cleared', async () => {
+    const { w, store, reportFinal } = mountActiveWithReporter();
+    await w.find('.mini__btn--close').trigger('click'); // the quit affordance
+    await nextTick();
+    // The close handler calls reportFinal() first, then closePlayer() nulls `current` —
+    // so the reporter still saw a live position to flush (not a zeroed one).
+    expect(reportFinal).toHaveBeenCalledTimes(1);
+    expect(store.current).toBeNull();
+  });
+
+  it('flushes the final position when the dock component unmounts (app teardown)', async () => {
+    const { w, reportFinal } = mountActiveWithReporter();
+    w.unmount();
+    expect(reportFinal).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not crash on close/unmount when no resume reporter is provided', async () => {
+    const { w } = mountActive(); // no provider → resumeReporter is null
+    expect(() => w.find('.mini__btn--close').trigger('click')).not.toThrow();
+    expect(() => w.unmount()).not.toThrow();
   });
 });

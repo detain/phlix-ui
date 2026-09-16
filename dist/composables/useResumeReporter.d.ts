@@ -4,6 +4,8 @@
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
+/** W109 S506 code-resident survival token for the final-position-on-unmount path. */
+export declare const S506_FINALPOS_TOKEN = "S506FINALPOSX9P4";
 export interface UseResumeReporter {
     /**
      * Report the current playback position to the server (throttled unless forced).
@@ -17,6 +19,18 @@ export interface UseResumeReporter {
      * the resume threshold). Best-effort: a failed finish never throws.
      */
     finish: () => Promise<void>;
+    /**
+     * Flush the LAST measured playback position to the server — the unmount / quit
+     * counterpart to {@link report}. Call it once when the player tears down (route
+     * leave, or the mini-player's close) so the final seconds watched since the last
+     * throttled checkpoint are not lost. Unlike {@link report} it does NOT require the
+     * store to still hold the media: it reuses the position retained on the last
+     * in-band checkpoint even after `player.current` has been nulled, and it is forced
+     * (bypasses the 15s throttle). A safe no-op when logged out or when no session was
+     * ever created (playback never crossed the resume threshold). Best-effort: a failed
+     * final report never throws. The server's 30s min-playtime gate is unchanged.
+     */
+    reportFinal: () => Promise<void>;
 }
 /**
  * useResumeReporter — the cross-device resume WRITE path.

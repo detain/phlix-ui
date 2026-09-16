@@ -483,7 +483,7 @@ var Dr = ["aria-label", "aria-expanded"], Or = {
 			a.current && i("expand", a.current.id);
 		}
 		function ee() {
-			a.closePlayer();
+			l?.reportFinal?.(), a.closePlayer();
 		}
 		async function E() {
 			let e = s.value;
@@ -514,7 +514,7 @@ var Dr = ["aria-label", "aria-expanded"], Or = {
 			let n = e.type === "seekTo" ? e.value : a.position + e.value, r = t.duration && t.duration > 0 ? t.duration : a.duration, i = r > 0 ? Math.min(r, Math.max(0, n)) : Math.max(0, n);
 			t.currentTime = i, a.updateProgress(i, t.duration || void 0);
 		}), Bn(() => {
-			c.value?.destroy(), c.value = null, s.value?.pause?.();
+			l?.reportFinal?.(), c.value?.destroy(), c.value = null, s.value?.pause?.();
 		}), (e, t) => (K(), L(Mn, { name: "mini" }, {
 			default: Q(() => [h.value ? (K(), z("div", {
 				key: 0,
@@ -573,7 +573,7 @@ var Dr = ["aria-label", "aria-expanded"], Or = {
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-ceaec05c"]]);
+}), [["__scopeId", "data-v-6f45df8c"]]);
 //#endregion
 //#region src/composables/color.ts
 function di(e) {
@@ -729,8 +729,8 @@ function ji() {
 	}
 }
 function Mi() {
-	let e = we(), t = ce(), n = ji(), r = null, i = 0, a = !1;
-	async function o() {
+	let e = we(), t = ce(), n = ji(), r = null, i = 0, a = !1, o = null;
+	async function s() {
 		if (r) return r;
 		try {
 			let e = await t.client.post("/api/v1/sessions", { device_id: n });
@@ -740,14 +740,20 @@ function Mi() {
 		}
 		return r;
 	}
-	async function s(n = !1) {
+	async function c(n = !1) {
 		let r = e.current;
 		if (!t.isLoggedIn || !r || !(e.duration > 0) || e.position <= 30) return;
-		let s = Date.now();
-		if (!(a || !n && s - i < Ai)) {
-			a = !0, i = s;
+		o = {
+			mediaId: r.id,
+			position: e.position,
+			duration: e.duration,
+			playing: e.playing
+		};
+		let c = Date.now();
+		if (!(a || !n && c - i < Ai)) {
+			a = !0, i = c;
 			try {
-				let n = await o();
+				let n = await s();
 				if (!n) return;
 				await t.client.post(`/api/v1/sessions/${encodeURIComponent(n)}/progress`, {
 					media_item_id: r.id,
@@ -760,7 +766,7 @@ function Mi() {
 			}
 		}
 	}
-	async function c() {
+	async function l() {
 		let n = e.current;
 		if (!t.isLoggedIn || !r || !n) return;
 		let i = r, a = n.id;
@@ -771,9 +777,30 @@ function Mi() {
 			});
 		} catch {}
 	}
-	return Z(() => Math.floor(e.position), () => void s()), Z(() => e.playing, () => void s(!0)), {
-		report: s,
-		finish: c
+	async function u() {
+		let n = e.current;
+		t.isLoggedIn && n && e.duration > 0 && e.position > 30 && (o = {
+			mediaId: n.id,
+			position: e.position,
+			duration: e.duration,
+			playing: e.playing
+		});
+		let i = o;
+		if (!t.isLoggedIn || !r || !i) return;
+		let a = r;
+		try {
+			await t.client.post(`/api/v1/sessions/${encodeURIComponent(a)}/progress`, {
+				media_item_id: i.mediaId,
+				position_ticks: Math.floor(i.position * Ee),
+				duration_ticks: Math.floor(i.duration * Ee),
+				is_paused: !i.playing
+			});
+		} catch {}
+	}
+	return Z(() => Math.floor(e.position), () => void c()), Z(() => e.playing, () => void c(!0)), {
+		report: c,
+		finish: l,
+		reportFinal: u
 	};
 }
 //#endregion
@@ -1425,7 +1452,7 @@ function so(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CkquGjhv.js")
+			component: () => import("./PlayerPage-BuVViWXq.js")
 		},
 		{
 			path: `${t}/login`,

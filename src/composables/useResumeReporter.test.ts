@@ -199,4 +199,86 @@ describe('useResumeReporter', () => {
 
     await expect(reporter.finish()).resolves.toBeUndefined();
   });
+
+  // ---- reportFinal() (S506: final-position flush on unmount / quit) ----------
+  it('reportFinal() posts the last RETAINED position even after the store is cleared', async () => {
+    post.mockResolvedValueOnce({ session_id: 'sess-1' }); // POST /api/v1/sessions
+    const player = watching(120, 600);
+    const reporter = useResumeReporter();
+    await reporter.report(true); // creates session, retains {m1,120,600,playing}
+    post.mockClear();
+
+    // Simulate the quit path tearing the store down: `closePlayer()` nulls `current`
+    // (the exact ordering that would make a plain report() read a zeroed position).
+    player.closePlayer();
+    expect(player.current).toBeNull();
+
+    await reporter.reportFinal();
+
+    // The true final position (120) — NOT a zeroed/nulled read — reaches the server.
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledWith('/api/v1/sessions/sess-1/progress', {
+      media_item_id: 'm1',
+      position_ticks: 120 * 10_000_000,
+      duration_ticks: 600 * 10_000_000,
+      is_paused: false,
+    });
+    // Never spun up a second session just to flush the tail.
+    expect(post.mock.calls.filter((c) => c[0] === '/api/v1/sessions')).toHaveLength(0);
+  });
+
+  it('reportFinal() prefers the LIVE tail when the store is still intact', async () => {
+    post.mockResolvedValueOnce({ session_id: 'sess-1' });
+    const player = watching(120, 600);
+    const reporter = useResumeReporter();
+    await reporter.report(true); // retains 120
+    // Advance past the last checkpoint WITHOUT letting the throttled watch POST — this
+    // is the sub-throttle tail the flush is meant to close.
+    player.updateProgress(145.4, 600);
+    post.mockClear();
+
+    await reporter.reportFinal();
+
+    expect(post).toHaveBeenCalledWith(
+      '/api/v1/sessions/sess-1/progress',
+      expect.objectContaining({ position_ticks: Math.floor(145.4 * 10_000_000) }),
+    );
+  });
+
+  it('reportFinal() is a no-op when no session was ever created (never spawns one)', async () => {
+    watching(120, 600); // meaningful, in-band, but nothing reported → no session held
+    const reporter = useResumeReporter();
+
+    await reporter.reportFinal();
+
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('reportFinal() is a no-op when logged out even with an active session (isolates the auth guard)', async () => {
+    // Mirror the finish() auth-isolation control: establish a session FIRST so
+    // `sessionId` is set, then log out. The `!auth.isLoggedIn` guard must stop the
+    // flush — otherwise this passes even if the auth check were deleted (both
+    // sessionId and retained progress are set).
+    post.mockResolvedValueOnce({ session_id: 'sess-1' });
+    watching(120, 600);
+    const reporter = useResumeReporter();
+    await reporter.report(true);
+    post.mockClear();
+
+    state.loggedIn = false;
+    await reporter.reportFinal();
+
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('reportFinal() swallows request failures (never throws during teardown)', async () => {
+    post.mockResolvedValueOnce({ session_id: 'sess-1' });
+    watching(120, 600);
+    const reporter = useResumeReporter();
+    await reporter.report(true);
+    post.mockReset();
+    post.mockRejectedValue(new Error('offline'));
+
+    await expect(reporter.reportFinal()).resolves.toBeUndefined();
+  });
 });

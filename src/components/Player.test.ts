@@ -178,10 +178,12 @@ function mountPlayer(
     markers: Array<{ id: string; type: 'intro' | 'outro' | 'credits' | 'ad'; startMs: number; endMs: number; label: string }>;
     resolvePendingMedia: (command: { mediaId: string; title: string }) => Promise<MediaItem | null> | MediaItem | null;
   }> = {},
+  provide: Record<string, unknown> = {},
 ) {
   const w = mount(Player, {
     props: { media: media(), streamUrl: 'http://x/stream', ...props },
     attachTo: document.body,
+    global: { provide },
   });
   mounted.push(w);
   const video = w.find('video').element as HTMLVideoElement;
@@ -795,6 +797,24 @@ describe('Player — center transport ±10s (AD-14 / W109 S505)', () => {
     expect(w.classes()).toContain('is-chrome-hidden');
     // Hidden ≠ focusable: the buttons are gone, not merely faded.
     expect(skips(w)).toHaveLength(0);
+  });
+});
+
+describe('Player — final-position flush on teardown (W109 S506)', () => {
+  it('flushes the final playback position via the shared reporter on unmount', async () => {
+    const reportFinal = vi.fn().mockResolvedValue(undefined);
+    const { w } = mountPlayer({}, { resumeReporter: { report: vi.fn(), finish: vi.fn(), reportFinal } });
+    // Not called while mounted — only on teardown.
+    expect(reportFinal).not.toHaveBeenCalled();
+    w.unmount();
+    expect(reportFinal).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not crash on unmount when no resume reporter is provided', () => {
+    // Default mount passes no provider → `resumeReporter` is null; the optional-chained
+    // flush must be a silent no-op, never a teardown throw.
+    const { w } = mountPlayer();
+    expect(() => w.unmount()).not.toThrow();
   });
 });
 

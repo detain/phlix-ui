@@ -2793,7 +2793,7 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 			let n = `${e.mediaId}@${e.issuedAt}`;
 			Qn !== n && (Qn = n, c("pending-media", e.mediaId, e.title));
 		}), De(() => {
-			qn(), bt(), H.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", Hn), Zn?.(), an?.removeEventListener?.("addtrack", $t), an?.removeEventListener?.("removetrack", $t), Ln !== null && (clearInterval(Ln), Ln = null), J !== null && (clearTimeout(J), J = null);
+			Ce?.reportFinal?.(), qn(), bt(), H.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", Hn), Zn?.(), an?.removeEventListener?.("addtrack", $t), an?.removeEventListener?.("removetrack", $t), Ln !== null && (clearInterval(Ln), Ln = null), J !== null && (clearTimeout(J), J = null);
 		}), (n, i) => (U(), I("div", {
 			ref_key: "containerRef",
 			ref: E,
@@ -3176,7 +3176,7 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-bf6dc5f1"]]), aa = { class: "player-page__stage" }, oa = {
+}), [["__scopeId", "data-v-847b0598"]]), aa = { class: "player-page__stage" }, oa = {
 	key: 0,
 	class: "player-page__skeleton",
 	role: "status",
@@ -3451,4 +3451,4 @@ var yi = { class: "player__stage" }, bi = ["src", "poster"], xi = [
 //#endregion
 export { ca as default };
 
-//# sourceMappingURL=PlayerPage-CkquGjhv.js.map
+//# sourceMappingURL=PlayerPage-BuVViWXq.js.map
