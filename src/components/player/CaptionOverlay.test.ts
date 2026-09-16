@@ -107,9 +107,35 @@ function fireLoad(el: FakeTrackEl): void {
   (el.handlers.load ?? []).forEach((h) => h());
 }
 
-function mountOverlay(props: Partial<{ video: HTMLVideoElement | null; language: string | null; styleConfig: CaptionStyle; lifted: boolean }>) {
+/** A fake control cluster exposing only the `offsetHeight` the S504 lift measures.
+ *  `markRaw` keeps Vue from proxying it (identity is irrelevant, but it mirrors a
+ *  real element, which is never a reactive proxy). */
+function fakeControls(offsetHeight: number): HTMLElement {
+  return markRaw({ offsetHeight }) as unknown as HTMLElement;
+}
+
+/** A controllable ResizeObserver stub: records every registered callback so a test
+ *  can fire a resize by hand after mutating `offsetHeight`, exactly as a browser
+ *  would when the observed box changes size. */
+function stubResizeObserver(): { fire: () => void } {
+  const cbs: Array<() => void> = [];
+  class FakeRO {
+    constructor(cb: () => void) {
+      cbs.push(cb);
+    }
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+  vi.stubGlobal('ResizeObserver', FakeRO);
+  return { fire: () => cbs.forEach((cb) => cb()) };
+}
+
+function mountOverlay(
+  props: Partial<{ video: HTMLVideoElement | null; language: string | null; styleConfig: CaptionStyle; lifted: boolean; controlsRoot: HTMLElement | null }>,
+) {
   return mount(CaptionOverlay, {
-    props: { video: null, language: null, styleConfig: { ...DEFAULT_CAPTION_STYLE }, lifted: false, ...props },
+    props: { video: null, language: null, styleConfig: { ...DEFAULT_CAPTION_STYLE }, lifted: false, controlsRoot: null, ...props },
   });
 }
 
@@ -164,6 +190,85 @@ describe('CaptionOverlay', () => {
     expect(style).toContain('--cap-color: #ffd400');
     expect(style).toContain('--cap-bg: #000000');
     expect(box.classes()).toContain('is-lifted');
+  });
+
+  // ---- S504: ResizeObserver-measured subtitle lift ---------------------------
+  describe('measured lift (S504)', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('binds --phlix-sub-offset to the control cluster height while lifted', async () => {
+      stubResizeObserver();
+      const en = fakeTrack({ language: 'en', activeCues: [{ text: 'x' }] });
+      const w = mountOverlay({ video: videoWith([en]), language: 'en', lifted: true, controlsRoot: fakeControls(132) });
+      await nextTick();
+      const style = w.find('.player__captions').attributes('style') ?? '';
+      expect(style).toContain('--phlix-sub-offset: 132px');
+      expect(w.find('.player__captions').classes()).toContain('is-lifted');
+    });
+
+    it('re-measures when the ResizeObserver fires (taller control rows)', async () => {
+      const { fire } = stubResizeObserver();
+      const en = fakeTrack({ language: 'en', activeCues: [{ text: 'x' }] });
+      const controls = fakeControls(88);
+      const w = mountOverlay({ video: videoWith([en]), language: 'en', lifted: true, controlsRoot: controls });
+      await nextTick();
+      expect(w.find('.player__captions').attributes('style')).toContain('--phlix-sub-offset: 88px');
+      // A marker timeline / quality row appears → the bar grows and the RO re-reads.
+      (controls as unknown as { offsetHeight: number }).offsetHeight = 176;
+      fire();
+      await nextTick();
+      expect(w.find('.player__captions').attributes('style')).toContain('--phlix-sub-offset: 176px');
+    });
+
+    it('resets the offset to 0 when the chrome hides, even with a measured bar', async () => {
+      stubResizeObserver();
+      const en = fakeTrack({ language: 'en', activeCues: [{ text: 'x' }] });
+      const w = mountOverlay({ video: videoWith([en]), language: 'en', lifted: true, controlsRoot: fakeControls(132) });
+      await nextTick();
+      expect(w.find('.player__captions').attributes('style')).toContain('--phlix-sub-offset: 132px');
+      await w.setProps({ lifted: false });
+      await nextTick();
+      const box = w.find('.player__captions');
+      expect(box.classes()).not.toContain('is-lifted');
+      expect(box.attributes('style')).toContain('--phlix-sub-offset: 0px');
+    });
+
+    it('seats the captions without throwing when the control cluster has no layout box (jsdom/SSR)', async () => {
+      // A host with no measured height (an SSR/nonelement, or a jsdom node whose
+      // offsetHeight is not a number) must degrade to a `0` offset — and must never
+      // throw, whether or not ResizeObserver exists in the environment.
+      const en = fakeTrack({ language: 'en', activeCues: [{ text: 'x' }] });
+      const w = mountOverlay({ video: videoWith([en]), language: 'en', lifted: true, controlsRoot: markRaw({}) as unknown as HTMLElement });
+      await nextTick();
+      expect(w.find('.player__captions').attributes('style')).toContain('--phlix-sub-offset: 0px');
+    });
+
+    it('seats the captions when there is no control cluster at all', async () => {
+      const en = fakeTrack({ language: 'en', activeCues: [{ text: 'x' }] });
+      const w = mountOverlay({ video: videoWith([en]), language: 'en', lifted: true, controlsRoot: null });
+      await nextTick();
+      expect(w.find('.player__captions').attributes('style')).toContain('--phlix-sub-offset: 0px');
+    });
+
+    it('disconnects the observer on unmount (no leaked ResizeObserver)', async () => {
+      let disconnected = 0;
+      class FakeRO {
+        observe(): void {}
+        unobserve(): void {}
+        disconnect(): void {
+          disconnected++;
+        }
+      }
+      vi.stubGlobal('ResizeObserver', FakeRO);
+      const en = fakeTrack({ language: 'en', activeCues: [{ text: 'x' }] });
+      const w = mountOverlay({ video: videoWith([en]), language: 'en', lifted: true, controlsRoot: fakeControls(100) });
+      await nextTick();
+      expect(disconnected).toBe(0);
+      w.unmount();
+      expect(disconnected).toBe(1);
+    });
   });
 
   it('rebinds when the language switches and unbinds the old track', async () => {
