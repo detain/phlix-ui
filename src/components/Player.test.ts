@@ -800,6 +800,59 @@ describe('Player — center transport ±10s (AD-14 / W109 S505)', () => {
   });
 });
 
+describe('Player — hidden-chrome focus containment (AD-11 / W110 S512)', () => {
+  async function hideChrome(w: ReturnType<typeof mount>) {
+    // Play (reveals + schedules the idle hide), then let the idle timeout elapse so
+    // `showChrome` flips false through the real auto-hide path — not by hand.
+    w.find('video').element.dispatchEvent(new Event('play'));
+    await nextTick();
+    vi.advanceTimersByTime(1100);
+    await nextTick();
+    expect(w.classes()).toContain('is-chrome-hidden');
+  }
+
+  it('blurs a focused surviving control when the chrome auto-hides', async () => {
+    vi.useFakeTimers();
+    const { w } = mountPlayer({ idleTimeout: 1000 });
+    // `attachTo: document.body` — jsdom tracks real focus, so this is the genuine
+    // focus model a D-pad would drive (not a stub).
+    const back = w.find('.player__back').element as HTMLElement;
+    back.focus();
+    // focusing bubbles a `focusin` the container answers by revealing chrome —
+    // that is correct; hide again through the timer the reveal re-armed.
+    await hideChrome(w);
+    // Focus moved OUT of the now-invisible control (blur, not inert: inert is Chrome 102).
+    expect(document.activeElement).not.toBe(back);
+  });
+
+  it('removes the surviving chrome clusters from the tab order while hidden', async () => {
+    vi.useFakeTimers();
+    const { w } = mountPlayer({ idleTimeout: 1000 });
+    const back = w.find('.player__back');
+    const bigplay = w.find('.player__bigplay');
+    // Control — focusable (no tabindex) while the chrome is up.
+    expect(back.attributes('tabindex')).toBeUndefined();
+    expect(bigplay.attributes('tabindex')).toBeUndefined();
+    await hideChrome(w);
+    // Hidden ≠ focus-reachable: both faded clusters are pulled out of the tab order.
+    expect(w.find('.player__back').attributes('tabindex')).toBe('-1');
+    expect(w.find('.player__bigplay').attributes('tabindex')).toBe('-1');
+  });
+
+  it('restores tab order when the chrome shows again', async () => {
+    vi.useFakeTimers();
+    const { w } = mountPlayer({ idleTimeout: 1000 });
+    await hideChrome(w);
+    expect(w.find('.player__back').attributes('tabindex')).toBe('-1');
+    // Any reveal gesture brings the chrome back and re-focuses the same controls.
+    w.find('.player').trigger('pointermove');
+    await nextTick();
+    expect(w.classes()).not.toContain('is-chrome-hidden');
+    expect(w.find('.player__back').attributes('tabindex')).toBeUndefined();
+    expect(w.find('.player__bigplay').attributes('tabindex')).toBeUndefined();
+  });
+});
+
 describe('Player — final-position flush on teardown (W109 S506)', () => {
   it('flushes the final playback position via the shared reporter on unmount', async () => {
     const reportFinal = vi.fn().mockResolvedValue(undefined);
