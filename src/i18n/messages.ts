@@ -181,6 +181,9 @@ export const DEFAULT_MESSAGES = {
     skipLabelIntro: 'Intro',
     skipLabelCredits: 'End credits',
     skipLabelSkipCredits: 'Skip Credits',
+    // Center-cluster ±10s transport (AD-14)
+    seekBackward: 'Back 10 seconds',
+    seekForward: 'Forward 10 seconds',
     keyboardShortcuts: 'Keyboard shortcuts',
     sleepTimer: 'Sleep timer',
     pip: 'Picture-in-picture',

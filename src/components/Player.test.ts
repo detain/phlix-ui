@@ -714,6 +714,90 @@ describe('Player — chrome auto-hide', () => {
   });
 });
 
+describe('Player — center transport ±10s (AD-14 / W109 S505)', () => {
+  /** Seed the store to a known position/duration via a real `timeupdate`. */
+  async function seed(video: HTMLVideoElement, state: Record<string, number | boolean>, position: number, duration: number) {
+    state.duration = duration;
+    state.currentTime = position;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+  }
+  function skips(w: ReturnType<typeof mount>) {
+    return w.findAll('.player__center-skip');
+  }
+
+  it('renders a replay-10 and a forward-10 button flanking the center play/pause when the chrome is up', () => {
+    const { w } = mountPlayer();
+    const [back, fwd] = skips(w);
+    expect(skips(w)).toHaveLength(2);
+    expect(back!.attributes('aria-label')).toBe('Back 10 seconds');
+    expect(fwd!.attributes('aria-label')).toBe('Forward 10 seconds');
+    // the play/pause stays in the middle of the trio
+    expect(w.find('.player__bigplay').exists()).toBe(true);
+    // and the numeric badge carries the step
+    expect(back!.text()).toContain('10');
+    expect(fwd!.text()).toContain('10');
+  });
+
+  it('forward/backward skip move the playhead by exactly +10 / −10 seconds', async () => {
+    const { w, video, state } = mountPlayer();
+    await seed(video, state, 100, 300);
+    expect(usePlayerStore().position).toBe(100);
+    const [back, fwd] = skips(w);
+    await fwd!.trigger('click');
+    expect(state.currentTime).toBe(110); // +10 from the store position
+    // playback would now report 110 to the store; propagate it so the next skip
+    // is measured from the new position (each skip is relative to `player.position`).
+    await seed(video, state, 110, 300);
+    await back!.trigger('click');
+    expect(state.currentTime).toBe(100); // −10 back to the start
+  });
+
+  it('clamps the skip at both media boundaries (never negative, never past duration)', async () => {
+    const { w, video, state } = mountPlayer();
+    await seed(video, state, 5, 300);
+    const [back] = skips(w);
+    await back!.trigger('click');
+    expect(state.currentTime).toBe(0); // max(0, 5−10)
+    await seed(video, state, 295, 300);
+    const [, fwd] = skips(w);
+    await fwd!.trigger('click');
+    expect(state.currentTime).toBe(300); // min(300, 295+10)
+  });
+
+  it('drives the SAME relative-skip action as the keyboard L/J chord (a shared seekBy)', async () => {
+    // The center forward button and the `L` shortcut must be behaviourally identical
+    // — both are the one `seekBy(+10)` action, not a re-implementation.
+    const a = mountPlayer();
+    await seed(a.video, a.state, 100, 600);
+    await a.w.findAll('.player__center-skip')[1]!.trigger('click');
+    const viaButton = a.state.currentTime;
+
+    const b = mountPlayer();
+    await seed(b.video, b.state, 100, 600);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'l', bubbles: true, cancelable: true }));
+    await nextTick();
+    const viaKeyboard = b.state.currentTime;
+
+    expect(viaButton).toBe(110);
+    expect(viaKeyboard).toBe(viaButton);
+  });
+
+  it('drops both skip targets from the DOM once the chrome auto-hides, so a hidden cluster is not focus-reachable (AD-11)', async () => {
+    vi.useFakeTimers();
+    const { w } = mountPlayer({ idleTimeout: 1000 });
+    // Control — visible (and therefore focusable) while the chrome is up.
+    expect(skips(w)).toHaveLength(2);
+    w.find('video').element.dispatchEvent(new Event('play'));
+    await nextTick();
+    vi.advanceTimersByTime(1100);
+    await nextTick();
+    expect(w.classes()).toContain('is-chrome-hidden');
+    // Hidden ≠ focusable: the buttons are gone, not merely faded.
+    expect(skips(w)).toHaveLength(0);
+  });
+});
+
 describe('Player — keyboard shortcuts', () => {
   function key(k: string, target: EventTarget = document) {
     target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));

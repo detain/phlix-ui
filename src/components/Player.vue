@@ -3,6 +3,16 @@
  * @license MIT
 -->
 
+<script lang="ts">
+/**
+ * W109 S505 — code-resident survival sentinel for the center-cluster ±10s transport
+ * (AD-14). Exported so it is a real (used) module binding — it trips neither
+ * `noUnusedLocals` (vue-tsc) nor `no-unused-vars` (eslint) — pinning that this
+ * Player.vue change reached the shipped artifact. Nothing consumes it at runtime.
+ */
+export const S505_CENTER_TRANSPORT_TOKEN = 'S505TRANSPORT10X9P3';
+</script>
+
 <script setup lang="ts">
 /**
  * Player (R3.1 — shell + chrome) — the redo player surface.
@@ -1207,6 +1217,13 @@ function onSeek(seconds: number): void {
   const v = videoRef.value;
   if (v && player.duration > 0) v.currentTime = Math.min(player.duration, Math.max(0, seconds));
 }
+/** The center-cluster (and keyboard J/L) relative-skip step, in seconds (AD-14). */
+const CENTER_SKIP_SECONDS = 10;
+/** Relative seek by `delta` seconds from the current store position, clamped by `onSeek`.
+ *  Shared by the center ±10s skip buttons and the `seekBy` keyboard/remote shortcut. */
+function seekBy(delta: number): void {
+  onSeek(player.position + delta);
+}
 function onScrubStart(): void {
   scrubbing.value = true;
   revealChrome();
@@ -1294,7 +1311,7 @@ function fadeOutAndPause(): void {
 
 const shortcutActions: ShortcutActions = {
   playPause: togglePlay,
-  seekBy: (delta) => onSeek(player.position + delta),
+  seekBy,
   frameStep: (dir) => {
     if (!player.playing) onSeek(player.position + dir / 30);
   },
@@ -1661,8 +1678,26 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- center play/pause (hidden behind the transcode notice) -->
+      <!-- center transport (AD-14): replay-10 · play/pause · forward-10. The big
+           play/pause keeps its existing chrome-fade behaviour. The ±10s skip targets
+           render ONLY while the chrome is up (`v-if="showChrome"`) and read the player
+           store directly (no MutationObserver) — so when the OSD is hidden they are not
+           in the DOM at all and can never strand a D-pad focus stop (AD-11: hidden ≠
+           focusable). Each calls the SAME `seekBy` action the keyboard/remote J/L chord
+           already drives. These are distinct from the bottom-row skip-back/forward icons,
+           which are EPISODE navigation, not ±10s. -->
       <div v-if="!transcodeBlocking" class="player__center">
+        <button
+          v-if="showChrome"
+          type="button"
+          class="player__center-skip"
+          :aria-label="t('player.seekBackward')"
+          @click.stop="seekBy(-CENTER_SKIP_SECONDS)"
+        >
+          <Icon name="rewind" />
+          <span class="player__center-skip-count">{{ CENTER_SKIP_SECONDS }}</span>
+        </button>
+
         <button
           type="button"
           class="player__bigplay"
@@ -1671,6 +1706,17 @@ onBeforeUnmount(() => {
           @click.stop="togglePlay"
         >
           <Icon :name="player.playing ? 'pause' : 'play'" />
+        </button>
+
+        <button
+          v-if="showChrome"
+          type="button"
+          class="player__center-skip"
+          :aria-label="t('player.seekForward')"
+          @click.stop="seekBy(CENTER_SKIP_SECONDS)"
+        >
+          <Icon name="forward" />
+          <span class="player__center-skip-count">{{ CENTER_SKIP_SECONDS }}</span>
         </button>
       </div>
 
@@ -2127,8 +2173,10 @@ onBeforeUnmount(() => {
   position: absolute;
   z-index: 4;
   inset: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
   pointer-events: none;
 }
 .player__bigplay {
@@ -2159,6 +2207,42 @@ onBeforeUnmount(() => {
 /* while playing the center button fades unless the chrome is up */
 .player__bigplay.is-playing {
   opacity: 0.85;
+}
+/* center ±10s skip targets (AD-14) — a smaller sibling of the glass play button,
+   shown only while the chrome is up (see the `v-if="showChrome"` in the template) */
+.player__center-skip {
+  pointer-events: auto;
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--surface-glass-strong, rgba(20, 20, 20, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-3);
+  color: #fff;
+  transition: transform var(--dur-base) var(--ease-spring), opacity var(--dur-base) var(--ease-out);
+}
+.player__center-skip :deep(svg) {
+  width: 26px;
+  height: 26px;
+}
+.player__center-skip:hover {
+  transform: scale(1.06);
+}
+.player__center-skip:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-3), 0 0 0 3px var(--accent-ring);
+}
+.player__center-skip-count {
+  position: absolute;
+  bottom: 7px;
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 /* controls */
@@ -2269,7 +2353,8 @@ onBeforeUnmount(() => {
   .player__scrim,
   .player__meta,
   .player__controls,
-  .player__bigplay {
+  .player__bigplay,
+  .player__center-skip {
     transition: none;
   }
 }

@@ -162,6 +162,8 @@ export declare const DEFAULT_MESSAGES: {
         skipLabelIntro: string;
         skipLabelCredits: string;
         skipLabelSkipCredits: string;
+        seekBackward: string;
+        seekForward: string;
         keyboardShortcuts: string;
         sleepTimer: string;
         pip: string;
