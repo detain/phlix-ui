@@ -1574,6 +1574,11 @@ watch(
   },
 );
 onBeforeUnmount(() => {
+  // S506 — flush the final playback position on teardown (route-leave / quit) so the
+  // seconds watched since the last throttled checkpoint reach the server before the
+  // shared player store is cleared. Uses the LIVE position when still intact and the
+  // last RETAINED checkpoint otherwise; no-op when logged out / no session.
+  void resumeReporter?.reportFinal?.();
   clearIdle();
   stopUpNextCountdown();
   tc.cleanup();

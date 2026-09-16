@@ -8545,7 +8545,7 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 			let n = `${e.mediaId}@${e.issuedAt}`;
 			Cn !== n && (Cn = n, p("pending-media", e.mediaId, e.title));
 		}), v(() => {
-			yn(), rt(), W.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", hn), Sn?.(), It?.removeEventListener?.("addtrack", Mt), It?.removeEventListener?.("removetrack", Mt), un !== null && (clearInterval(un), un = null), be !== null && (clearTimeout(be), be = null);
+			ge?.reportFinal?.(), yn(), rt(), W.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", hn), Sn?.(), It?.removeEventListener?.("addtrack", Mt), It?.removeEventListener?.("removetrack", Mt), un !== null && (clearInterval(un), un = null), be !== null && (clearTimeout(be), be = null);
 		}), (n, r) => (x(), o("div", {
 			ref_key: "containerRef",
 			ref: I,
@@ -8928,7 +8928,7 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-bf6dc5f1"]]), Qf = ["aria-label"], $f = ["src", "poster"], ep = { class: "mini__body" }, tp = { class: "mini__title" }, np = { class: "mini__controls" }, rp = ["aria-label"], ip = ["aria-label", "aria-pressed"], ap = ["aria-label"], op = ["aria-label"], sp = {
+}), [["__scopeId", "data-v-847b0598"]]), Qf = ["aria-label"], $f = ["src", "poster"], ep = { class: "mini__body" }, tp = { class: "mini__title" }, np = { class: "mini__controls" }, rp = ["aria-label"], ip = ["aria-label", "aria-pressed"], ap = ["aria-label"], op = ["aria-label"], sp = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, cp = /*#__PURE__*/ J(/* @__PURE__ */ d({
@@ -8966,7 +8966,7 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 			d.current && l("expand", d.current.id);
 		}
 		function V() {
-			d.closePlayer();
+			b?.reportFinal?.(), d.closePlayer();
 		}
 		async function H() {
 			let e = m.value;
@@ -8997,7 +8997,7 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 			let n = e.type === "seekTo" ? e.value : d.position + e.value, r = t.duration && t.duration > 0 ? t.duration : d.duration, i = r > 0 ? Math.min(r, Math.max(0, n)) : Math.max(0, n);
 			t.currentTime = i, d.updateProgress(i, t.duration || void 0);
 		}), v(() => {
-			h.value?.destroy(), h.value = null, m.value?.pause?.();
+			b?.reportFinal?.(), h.value?.destroy(), h.value = null, m.value?.pause?.();
 		}), (e, t) => (x(), i(n, { name: "mini" }, {
 			default: P(() => [A.value ? (x(), o("div", {
 				key: 0,
@@ -9056,7 +9056,7 @@ var ff = { class: "player__stage" }, pf = ["src", "poster"], mf = [
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-ceaec05c"]]);
+}), [["__scopeId", "data-v-6f45df8c"]]);
 //#endregion
 export { Zc as AMBIENT_SAMPLE_H, Qc as AMBIENT_SAMPLE_INTERVAL_MS, Xc as AMBIENT_SAMPLE_W, To as ARROW_ICONS, Eo as ARROW_LABELS, ol as AmbientCanvas, ks as CAPTION_BACKGROUND_OPTIONS, Os as CAPTION_COLOR_OPTIONS, As as CAPTION_EDGE_OPTIONS, Ds as CAPTION_SIZE_OPTIONS, Es as CAPTION_SIZE_SCALE, Ps as CaptionOverlay, lc as CaptionsMenu, fl as DIRECT_PLAY_EXTENSIONS, cp as MiniPlayer, wo as PLAYER_SHORTCUTS, Zf as Player, ls as QualityMenu, ie as RESUME_MAX_RATIO, re as RESUME_MIN_SECONDS, dl as ResumePrompt, Va as Scrubber, zo as ShortcutsHelp, su as SkipButton, Qo as SpeedMenu, Yc as SubtitleSearch, pl as TRANSCODE_EXTENSIONS, eu as TranscodeNotice, ou as TranscodePreparing, yl as UPNEXT_COUNTDOWN_SECONDS, xl as UPNEXT_RING_CIRCUMFERENCE, bl as UPNEXT_RING_RADIUS, Yl as UpNext, Uo as VolumeControl, bs as activeAudioIndex, il as ambientGradient, ys as applyAudioTrack, vs as applyTrackModes, Xa as attachHls, el as averageRegion, Ns as captionStyleVars, ws as cleanCueText, Ms as edgeShadow, hl as extensionOf, Sa as formatTime, ko as handleShortcut, _s as hasActiveCaptions, al as isBatterySaving, co as isFailedStatus, _l as isFatalMediaError, Ka as isNativeHlsSupported, so as isPlayable, Oo as isTypingTarget, hs as listAudioTracks, ms as listSubtitleTracks, gl as needsTranscode, to as parseSubtitleTracks, ao as parseTranscodeStart, oo as parseTranscodeStatus, Ts as readActiveCueLines, lo as resolveStreamUrl, gs as resolveTextTrack, nl as rgbString, rl as rgbaString, Sl as ringDashoffset, tl as sampleAmbient, ro as transcodeStartPath, io as transcodeStatusPath, uo as useHlsTranscode, Ao as useKeyboardShortcuts, ue as usePlayerStore };
 

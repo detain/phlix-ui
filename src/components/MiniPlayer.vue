@@ -118,6 +118,11 @@ function expand(): void {
   if (player.current) emit('expand', player.current.id);
 }
 function close(): void {
+  // S506 — flush the final position BEFORE `closePlayer()` nulls `player.current`,
+  // so `reportFinal()` reads the live tail rather than falling back to the last
+  // retained checkpoint. The dock is mounted once in the shell (its `onBeforeUnmount`
+  // fires only at app teardown), so this close/quit handler is the path that must flush.
+  void resumeReporter?.reportFinal?.();
   player.closePlayer();
 }
 
@@ -206,6 +211,10 @@ watch(
 
 // pause our element if the dock is torn down while still playing
 onBeforeUnmount(() => {
+  // S506 — final flush on full-app teardown (the persistent dock only unmounts when
+  // the shell does; the user close/quit path flushes in `close()` above). Best-effort
+  // and idempotent-safe: the reporter no-ops when logged out or with no session.
+  void resumeReporter?.reportFinal?.();
   hlsHandle.value?.destroy();
   hlsHandle.value = null;
   videoRef.value?.pause?.();
