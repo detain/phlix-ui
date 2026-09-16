@@ -28,7 +28,12 @@ export interface UseResumeReporter {
      * in-band checkpoint even after `player.current` has been nulled, and it is forced
      * (bypasses the 15s throttle). A safe no-op when logged out or when no session was
      * ever created (playback never crossed the resume threshold). Best-effort: a failed
-     * final report never throws. The server's 30s min-playtime gate is unchanged.
+     * final report never throws. The server's 30s min-playtime gate is unchanged. Live
+     * streams need no separate close here: sessions are idempotent per device id (see
+     * `getOrCreateDeviceId`), so there is no per-stream session to tear down on unmount —
+     * flushing the final position IS the complete quit contract (S506: the finding's
+     * "close live-stream ids on unmount" is therefore n/a, recorded here as the note it
+     * required).
      */
     reportFinal: () => Promise<void>;
 }

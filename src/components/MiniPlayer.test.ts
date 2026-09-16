@@ -410,7 +410,12 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
 });
 
 describe('MiniPlayer — finish signal (S30)', () => {
-  /** Activate the dock and provide the shared resume reporter via global.provide. */
+  /**
+   * Activate the dock and provide the shared resume reporter via global.provide.
+   * `reportFinal` snapshots `store.current` at the INSTANT it is invoked (into
+   * `flushSawLive`) so a test can pin the ORDER of the dock's close: the flush must
+   * read a still-live item (before `closePlayer()` nulls it), not a cleared store.
+   */
   function mountActiveWithReporter(
     finish = vi.fn().mockResolvedValue(undefined),
     over: Partial<MediaItem> = {},
@@ -418,7 +423,14 @@ describe('MiniPlayer — finish signal (S30)', () => {
     const store = usePlayerStore();
     store.setCurrent(media(over), { streamUrl: 'http://x/stream' });
     store.showMiniPlayer();
-    const reportFinal = vi.fn().mockResolvedValue(undefined);
+    // Order-sensitive capture: push the live `current` at call time. The reporter's own
+    // retained fallback would post a valid payload whether or not the store is already
+    // cleared, so call-count / final-state asserts cannot detect a flush-vs-close swap —
+    // only what the store held at the exact moment `reportFinal` ran can.
+    const flushSawLive: Array<MediaItem | null> = [];
+    const reportFinal = vi.fn(async () => {
+      flushSawLive.push(store.current);
+    });
     const w = mount(MiniPlayer, {
       attachTo: document.body,
       global: { stubs: { transition: true }, provide: { resumeReporter: { report: vi.fn(), finish, reportFinal } } },
@@ -426,7 +438,7 @@ describe('MiniPlayer — finish signal (S30)', () => {
     mounted.push(w);
     const video = w.find('video').element as HTMLVideoElement;
     stubVideo(video);
-    return { w, store, video, finish, reportFinal };
+    return { w, store, video, finish, reportFinal, flushSawLive };
   }
 
   it('calls the resume reporter finish() once when the dock video ends', async () => {
@@ -459,13 +471,20 @@ describe('MiniPlayer — finish signal (S30)', () => {
   });
 
   // ---- reportFinal() flush on quit / teardown (W109 S506) ---------------------
-  it('flushes the final position on close, BEFORE the store is cleared', async () => {
-    const { w, store, reportFinal } = mountActiveWithReporter();
+  it('flushes on close reading a LIVE store — order-sensitive pin (S506)', async () => {
+    const { w, store, reportFinal, flushSawLive } = mountActiveWithReporter();
     await w.find('.mini__btn--close').trigger('click'); // the quit affordance
     await nextTick();
-    // The close handler calls reportFinal() first, then closePlayer() nulls `current` —
-    // so the reporter still saw a live position to flush (not a zeroed one).
+    // ORDER TRIPWIRE: MiniPlayer.close() calls reportFinal() THEN closePlayer(). At the
+    // instant the flush fired the store was still populated. If close() were reordered
+    // (closePlayer() first, then flush) `flushSawLive[0]` would be null and this reddens —
+    // the previous final-state-only assertions could not see the swap because the reporter
+    // falls back to a retained checkpoint when the store is already nulled.
     expect(reportFinal).toHaveBeenCalledTimes(1);
+    expect(flushSawLive).toHaveLength(1);
+    expect(flushSawLive[0]).not.toBeNull();
+    expect(flushSawLive[0]?.id).toBe('m1');
+    // ...and the close still completes its original contract afterwards.
     expect(store.current).toBeNull();
   });
 
