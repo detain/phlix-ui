@@ -1,0 +1,42 @@
+[Script Info]
+; TN-6 subtitle budget bench sample (W114 S533, dev-only fixture).
+; A deliberately heavy mix: large font tables, multilingual glyph runs,
+; karaoke sweeps and multi-line blocks. No renderer library required.
+Title: Phlix TN-6 subsBench sample
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Tiny16,DejaVu Sans,16,&H00FFFFFF,&H000000FF,&H00101010,&H80000000,0,0,0,0,100,100,0,0,1,1,0,2,20,20,10,1
+Style: Body24,DejaVu Sans,24,&H00FFFFFF,&H000000FF,&H00101010,&H80000000,0,0,0,0,100,100,0,0,1,2,0,2,20,20,10,1
+Style: Body32,DejaVu Sans,32,&H00FFFFFF,&H000000FF,&H00101010,&H80000000,0,0,0,0,100,100,0,0,1,2,0,2,20,20,10,1
+Style: Lead48,DejaVu Serif,48,&H00F0E6D8,&H000000FF,&H00202020,&H80000000,1,0,0,0,100,100,0,0,1,3,1,2,20,20,20,1
+Style: Display64,DejaVu Serif,64,&H0088CCFF,&H000000FF,&H00202020,&H80000000,1,0,0,0,100,100,0,0,1,3,1,2,20,20,24,1
+Style: Poster80,DejaVu Sans,80,&H00FFE288,&H000000FF,&H00303030,&H80000000,1,1,0,0,100,100,0,0,1,4,2,2,20,20,28,1
+Style: Giant96,DejaVu Sans,96,&H00FF6688,&H000000FF,&H00303030,&H80000000,1,0,0,0,100,100,0,0,1,4,2,8,5,10,10,10,1
+Style: Karaoke36,DejaVu Sans,36,&H00FFFFFF,&H0000FF00,&H00101010,&H80000000,0,0,0,0,100,100,0,0,1,2,0,2,20,20,60,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.50,0:00:03.50,Body32,,0,0,0,,The quick brown fox jumps over the lazy dog
+Dialogue: 0,0:00:01.00,0:00:03.00,Tiny16,,0,0,0,,{\\an8}baseline micro-caption at 16px for legibility checks
+Dialogue: 0,0:00:04.00,0:00:07.50,Lead48,,0,0,0,,日本語の字幕レンダリング、フォントと kerning の測定
+Dialogue: 0,0:00:08.00,0:00:11.50,Body32,,0,0,0,,Кириллица: широкая полоса проверки глифов
+Dialogue: 0,0:00:12.00,0:00:15.50,Body32,,0,0,0,,{\an1}التحقق من اتجاه النص من اليمين إلى اليسار
+Dialogue: 0,0:00:16.00,0:00:19.50,Body32,,0,0,0,,देवनागरी युग्माक्षर: क्ष त्र ज्ञ श्र घ्र
+Dialogue: 0,0:00:20.00,0:00:23.50,Display64,,0,0,0,,大字号中文测试 · 渲染预算测量
+Dialogue: 0,0:00:24.00,0:00:27.50,Poster80,,0,0,0,,한국어 본문 크기 80px 문장 검사
+Dialogue: 0,0:00:28.00,0:00:31.00,Giant96,,0,0,0,,96px
+Dialogue: 0,0:00:28.50,0:00:31.50,Body24,,0,0,0,,{\an6}side-note riding the giant frame
+Dialogue: 0,0:00:32.00,0:00:36.00,Body32,,0,0,0,,First line\Nsecond stacked line\Nthird for good measure
+Dialogue: 0,0:00:36.50,0:00:40.00,Body32,,0,0,0,,Non-breaking\hspaces\hand\hbreaks\hstress\hlayout
+Dialogue: 0,0:00:40.50,0:00:44.00,Karaoke36,,0,0,0,,{\k35}Co{\k35}dy{\k45}Ka{\k45}ra{\k45}o{\k60}ke{\k40} {\k35}sweep{\k35} {\k60}a{\k60}cross{\k80}four
+Dialogue: 0,0:00:44.50,0:00:48.00,Karaoke36,,0,0,0,,{\k40}Second{\k40}pass{\k60}with{\k60}longer{\k80}syllables{\fscx120\fscy120} plus{\fscx100\fscy100} transform
+Dialogue: 0,0:00:48.50,0:00:52.00,Lead48,,0,0,0,,{\fad(300,300)}fades stress the compositor too
+Dialogue: 0,0:00:52.50,0:00:56.00,Display64,,0,0,0,,{\pos(640,360)\rBody24}inline re-style mid-event
+Dialogue: 1,0:00:53.00,0:00:55.50,Tiny16,,0,0,0,,{\an5}layered karaoke above\N{\karaoke0\fscx101}nested braces
+Dialogue: 0,0:00:56.50,0:00:59.50,Body32,,0,0,0,,Final calm line before the loop restarts

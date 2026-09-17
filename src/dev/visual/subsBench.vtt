@@ -1,0 +1,61 @@
+WEBVTT
+
+NOTE TN-6 subs bench WebVTT mirror (W114 S533, dev-only) — same cue windows as
+NOTE subsBench.ass with override styling dropped, because the UA baseline can
+NOTE only ever render this much. That asymmetry IS the TN-6 trade being measured.
+
+00:00.500 --> 00:03.500
+The quick brown fox jumps over the lazy dog
+
+00:01.000 --> 00:03.000
+baseline micro-caption at 16px for legibility checks
+
+00:04.000 --> 00:07.500
+日本語の字幕レンダリング、フォントと kerning の測定
+
+00:08.000 --> 00:11.500
+Кириллица: широкая полоса проверки глифов
+
+00:12.000 --> 00:15.500
+التحقق من اتجاه النص من اليمين إلى اليسار
+
+00:16.000 --> 00:19.500
+देवनागरी युग्माक्षर: क्ष त्र ज्ञ श्र घ्र
+
+00:20.000 --> 00:23.500
+大字号中文测试 · 渲染预算测量
+
+00:24.000 --> 00:27.500
+한국어 본문 크기 80px 문장 검사
+
+00:28.000 --> 00:31.000
+96px
+
+00:28.500 --> 00:31.500
+side-note riding the giant frame
+
+00:32.000 --> 00:36.000
+First line
+second stacked line
+third for good measure
+
+00:36.500 --> 00:40.000
+Non-breaking spaces and breaks stress layout
+
+00:40.500 --> 00:44.000
+CodyKaraoke sweep across four
+
+00:44.500 --> 00:48.000
+Second pass with longer syllables plus transform
+
+00:48.500 --> 00:52.000
+fades stress the compositor too
+
+00:52.500 --> 00:56.000
+inline re-style mid-event
+
+00:53.000 --> 00:55.500
+layered karaoke above nested braces
+
+00:56.500 --> 00:59.500
+Final calm line before the loop restarts
