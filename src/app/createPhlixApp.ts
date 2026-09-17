@@ -34,7 +34,7 @@ import { useServerStore } from '../stores/useServerStore';
 import { useConnectionStore } from '../stores/useConnectionStore';
 import { openHubRelayConnection } from '../api/hubRelay';
 import { setAppName, setPageTitle } from '../composables/usePageTitle';
-import { adminPageLabel } from './admin';
+import { adminLabelFor } from './admin-registry';
 import { createTranslator, type Translate, type MessageKey } from '../i18n/messages';
 import type { MenuItem, PhlixAppConfig } from './types';
 
@@ -215,7 +215,12 @@ export function musicLibraryRedirect(
  *    `shell.browse`) resolves to its (possibly overridden) translation; an
  *    unknown key / plain literal echoes back unchanged, so a literal title also
  *    works.
- * 2. An `admin-*` route name → `Admin · <label>` from the canonical page labels.
+ * 2. An `admin-*` route name → `Admin · <label>` from the admin-label seam
+ *    (`./admin-registry`). S528: the shell resolves labels through this seam —
+ *    never a static `./admin` import — so consumers that don't build admin
+ *    routes don't pull the admin page graph into their bundle. Before
+ *    `buildAdminRoutes()` has run the seam is unset and admin names fall through
+ *    like unknown routes (no mounted section can be titled anyway).
  * 3. Otherwise `null` — the page either sets its own title from async data
  *    (media/library/player) or simply shows the bare app name (catchall).
  */
@@ -225,7 +230,7 @@ export function resolveRouteTitle(to: RouteLocationNormalized, t: Translate): st
         return t(metaTitle as MessageKey);
     }
     const name = typeof to.name === 'string' ? to.name : '';
-    const label = adminPageLabel(name);
+    const label = adminLabelFor(name);
     if (label) {
         return `Admin · ${label}`;
     }

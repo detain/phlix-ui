@@ -114,7 +114,12 @@ export declare function musicLibraryRedirect(to: RouteLocationNormalized, librar
  *    `shell.browse`) resolves to its (possibly overridden) translation; an
  *    unknown key / plain literal echoes back unchanged, so a literal title also
  *    works.
- * 2. An `admin-*` route name → `Admin · <label>` from the canonical page labels.
+ * 2. An `admin-*` route name → `Admin · <label>` from the admin-label seam
+ *    (`./admin-registry`). S528: the shell resolves labels through this seam —
+ *    never a static `./admin` import — so consumers that don't build admin
+ *    routes don't pull the admin page graph into their bundle. Before
+ *    `buildAdminRoutes()` has run the seam is unset and admin names fall through
+ *    like unknown routes (no mounted section can be titled anyway).
  * 3. Otherwise `null` — the page either sets its own title from async data
  *    (media/library/player) or simply shows the bare app name (catchall).
  */

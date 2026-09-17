@@ -48,12 +48,12 @@ export declare const MediaDetail: import("vue").DefineComponent<{
     back: () => any;
     resume: (item: import("./types/media-item").MediaDetail) => any;
     watchlist: (item: import("./types/media-item").MediaDetail) => any;
-    actor: (name: string) => any;
     remove: (item: import("./types/media-item").MediaDetail) => any;
     "mark-watched": (item: import("./types/media-item").MediaDetail) => any;
     "choose-poster": (item: import("./types/media-item").MediaDetail) => any;
     "edit-metadata": (item: import("./types/media-item").MediaDetail) => any;
     "explore-data": (item: import("./types/media-item").MediaDetail) => any;
+    actor: (name: string) => any;
     genre: (name: string) => any;
     company: (name: string) => any;
 }, string, import("vue").PublicProps, Readonly<{
@@ -71,12 +71,12 @@ export declare const MediaDetail: import("vue").DefineComponent<{
     onBack?: (() => any) | undefined;
     onResume?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
     onWatchlist?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
-    onActor?: ((name: string) => any) | undefined;
     onRemove?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
     "onMark-watched"?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
     "onChoose-poster"?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
     "onEdit-metadata"?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
     "onExplore-data"?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
+    onActor?: ((name: string) => any) | undefined;
     onGenre?: ((name: string) => any) | undefined;
     onCompany?: ((name: string) => any) | undefined;
 }>, {

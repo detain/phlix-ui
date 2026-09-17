@@ -33,6 +33,11 @@ import type { IconName } from '../components/Icon.vue';
  * `buildHubAdminRoutes` mounts the hub set (Hub Dashboard, Users, Logs, Settings,
  * Audit Logs). Each child keeps a stable `admin-*` route name and resolves to
  * `<base>/admin/<segment>`.
+ *
+ * Building routes here also **self-registers** the label seam
+ * (`./admin-registry` ← {@link adminPageLabel}), which is how the shell titles
+ * `admin-*` routes without a static import of this module (S528). Consumers that
+ * never call a builder never pull the admin page graph into their bundle.
  */
 export interface AdminPage {
     /** Route name (and menu-item id), e.g. `admin-users`. Stable across releases. */
@@ -49,7 +54,9 @@ export interface AdminPage {
 /**
  * Resolve the sidebar label for an `admin-*` route name (e.g. `admin-users` →
  * `Users`), or `null` when the name is not a known admin page. Lets the page-
- * title hook reuse the canonical labels rather than re-deriving them.
+ * title hook reuse the canonical labels rather than re-deriving them. The shell
+ * reaches this only through the `./admin-registry` seam, installed by
+ * {@link buildAdminRoutes} — never via a static import (S528).
  */
 export declare function adminPageLabel(name: string | null | undefined): string | null;
 /** Admin pages portable to BOTH apps (they hit endpoints both backends serve). */
