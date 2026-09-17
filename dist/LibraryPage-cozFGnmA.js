@@ -14,7 +14,7 @@ import { t as d } from "./useMediaStore-BmlA3LkK.js";
 import { t as te } from "./EmptyState-BwwPJtFd.js";
 import { t as ne } from "./MediaCard-Dri80nGa.js";
 import { i as re, n as ie, r as f, t as ae } from "./MediaGrid-CGE5R7Ed.js";
-import { t as oe } from "./FilterBar-DTdPVFsz.js";
+import { t as oe } from "./FilterBar-B7d01KdW.js";
 import { t as se } from "./MetadataMatchModal-DfsMWuUm.js";
 import { t as ce } from "./PosterPicker-D4DzSCF6.js";
 import { n as le, t as ue } from "./useItemInspector-SuLWks4t.js";
@@ -754,4 +754,4 @@ var Ze = { class: "library-page" }, Qe = {
 //#endregion
 export { at as default };
 
-//# sourceMappingURL=LibraryPage-D0ERIoLv.js.map
+//# sourceMappingURL=LibraryPage-cozFGnmA.js.map

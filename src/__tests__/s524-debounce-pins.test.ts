@@ -23,6 +23,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import SearchPage from '../pages/SearchPage.vue';
 import FilterBar from '../components/FilterBar.vue';
@@ -276,4 +279,29 @@ describe('S524 pins — FilterBar debounce timing (captured at tip)', () => {
     expect(store.search).toBe('');
     expect(w.emitted('change')).toHaveLength(2);
   });
+});
+
+// ---------------------------------------------------------------------------
+// S524 migration locks — these assert the POST-migration state (shared
+// primitive owns every timer at both sites). They join the tip-era captures
+// above only in the migration commit, where both halves are green together.
+// ---------------------------------------------------------------------------
+
+describe('S524 locks — both sites route through src/utils/debounce.ts', () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const sources = {
+    'SearchPage.vue': readFileSync(join(here, '../pages/SearchPage.vue'), 'utf8'),
+    'FilterBar.vue': readFileSync(join(here, '../components/FilterBar.vue'), 'utf8'),
+  } as const;
+
+  for (const [name, src] of Object.entries(sources)) {
+    it(`${name} keeps zero hand-rolled setTimeout/clearTimeout sources`, () => {
+      expect(src).not.toMatch(/\bsetTimeout\(/);
+      expect(src).not.toMatch(/\bclearTimeout\(/);
+    });
+
+    it(`${name} imports the shared debounce primitive`, () => {
+      expect(src).toMatch(/from '\.\.\/utils\/debounce'/);
+    });
+  }
 });
