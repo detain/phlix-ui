@@ -454,7 +454,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     updateLocalPosition: (position: number) => void;
     applyPendingPlayMedia: (command: PendingPlayMediaCommand) => void;
     consumePendingPlayMedia: () => void;
-}, "syncStatus" | "isInRoom" | "isSynced" | "onlineMembers" | "driftAmount">, Pick<{
+}, "isInRoom" | "isSynced" | "onlineMembers" | "syncStatus" | "driftAmount">, Pick<{
     currentRoom: import("vue").Ref<{
         id: string;
         name: string;

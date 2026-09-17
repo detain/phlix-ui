@@ -8,6 +8,7 @@
 import type { RouteRecordRaw } from 'vue-router';
 import type { MenuItem } from './types';
 import type { IconName } from '../components/Icon.vue';
+import { setAdminLabelResolver } from './admin-registry';
 
 /**
  * Admin routes + menu seam (RA — admin port; H0 — composable page groups).
@@ -35,6 +36,11 @@ import type { IconName } from '../components/Icon.vue';
  * `buildHubAdminRoutes` mounts the hub set (Hub Dashboard, Users, Logs, Settings,
  * Audit Logs). Each child keeps a stable `admin-*` route name and resolves to
  * `<base>/admin/<segment>`.
+ *
+ * Building routes here also **self-registers** the label seam
+ * (`./admin-registry` ← {@link adminPageLabel}), which is how the shell titles
+ * `admin-*` routes without a static import of this module (S528). Consumers that
+ * never call a builder never pull the admin page graph into their bundle.
  */
 export interface AdminPage {
   /** Route name (and menu-item id), e.g. `admin-users`. Stable across releases. */
@@ -258,17 +264,27 @@ const ALL_ADMIN_PAGES: AdminPage[] = [
   requestsPage,
 ];
 
-const ADMIN_LABELS: Readonly<Record<string, string>> = Object.fromEntries(
-  ALL_ADMIN_PAGES.map((page) => [page.name, page.label]),
-);
+/**
+ * Route name → label lookup, built on first use (S528): a module-scope
+ * `Object.fromEntries(…)` call is conservatively side-effectful for bundlers,
+ * pinning this whole barrel (and every page chunk its descriptors reference)
+ * into graphs that merely reach `adminPageLabel`. A lazily memoised map inside
+ * the function keeps this module's top level pure literals, so a consumer that
+ * drops admin also drops it.
+ */
+let adminLabels: Record<string, string> | null = null;
 
 /**
  * Resolve the sidebar label for an `admin-*` route name (e.g. `admin-users` →
  * `Users`), or `null` when the name is not a known admin page. Lets the page-
- * title hook reuse the canonical labels rather than re-deriving them.
+ * title hook reuse the canonical labels rather than re-deriving them. The shell
+ * reaches this only through the `./admin-registry` seam, installed by
+ * {@link buildAdminRoutes} — never via a static import (S528).
  */
 export function adminPageLabel(name: string | null | undefined): string | null {
-  return name ? ADMIN_LABELS[name] ?? null : null;
+  if (!name) return null;
+  adminLabels ??= Object.fromEntries(ALL_ADMIN_PAGES.map((page) => [page.name, page.label]));
+  return adminLabels[name] ?? null;
 }
 
 /** Admin pages portable to BOTH apps (they hit endpoints both backends serve). */
@@ -343,6 +359,10 @@ const hubAdminSet: AdminPage[] = [hubDashboardPage, metricsPage, ...commonAdminP
  *   to the first page in this list (the dashboard for both shipped apps).
  */
 export function buildAdminRoutes(base = '/app', pages: AdminPage[] = defaultAdminPages): RouteRecordRaw[] {
+  // S528 self-registration: an admin section now exists in this app, so wire the
+  // shell's title seam to these canonical labels. Idempotent; every builder
+  // variant (server/hub/delegating) passes through here.
+  setAdminLabelResolver(adminPageLabel);
   const root = `${base}/admin`;
   const children: RouteRecordRaw[] = pages.map((page) => ({
     path: page.path,

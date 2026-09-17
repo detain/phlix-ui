@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRouter, createMemoryHistory, type RouteLocationNormalized } from 'vue-router';
 import { buildRoutes, resolveRouteTitle } from './createPhlixApp';
+import { buildAdminRoutes } from './admin';
 import { createTranslator } from '../i18n/messages';
 import { setAppName, setPageTitle } from '../composables/usePageTitle';
 
@@ -43,6 +44,9 @@ describe('resolveRouteTitle (U1)', () => {
   });
 
   it('derives "Admin · <label>" from the admin route name when there is no meta.title', () => {
+    // S528: labels resolve through the admin-registry seam, installed by the real
+    // mount path — building the admin routes is what enables admin titles.
+    buildAdminRoutes();
     expect(resolveRouteTitle(route('admin-users'), t)).toBe('Admin · Users');
     expect(resolveRouteTitle(route('admin-settings'), t)).toBe('Admin · Settings');
     expect(resolveRouteTitle(route('admin-audit-logs'), t)).toBe('Admin · Audit Logs');
