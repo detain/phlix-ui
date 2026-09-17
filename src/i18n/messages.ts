@@ -165,6 +165,13 @@ export const DEFAULT_MESSAGES = {
     originConfirm: 'You are connecting to {origin} for the first time. Your sign-in token will be sent there. Continue?',
     confirmContinue: 'Yes, connect',
     confirmCancel: 'Cancel',
+    // Host-injected LAN scan (S532): the button + candidate list stay hidden
+    // entirely unless the shell supplies `PhlixAppConfig.connectScan`.
+    scan: 'Scan your network',
+    scanning: 'Scanning…',
+    scanFailed: "Couldn't scan your network right now. Enter the address manually.",
+    scanEmpty: 'No Phlix servers found on your network.',
+    scanListLabel: 'Servers found on your network',
   },
   player: {
     // Transport + chrome (Player.vue)
