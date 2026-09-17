@@ -28,6 +28,7 @@ import Select from './ui/Select.vue';
 import Badge from './ui/Badge.vue';
 import IconButton from './ui/IconButton.vue';
 import { pluralize } from '../utils/plural';
+import { debounce, type Debounced } from '../utils/debounce';
 
 const props = withDefaults(
   defineProps<{
@@ -62,7 +63,15 @@ const sortOptions = computed<{ value: SortField; label: string }[]>(() => [
 
 // ---- search (debounced) -------------------------------------------------
 const searchText = ref(store.search);
-let searchTimer: ReturnType<typeof setTimeout> | undefined;
+// S524: the shared trailing-fire primitive (src/utils/debounce.ts) owns the
+// timer the old `let searchTimer` + clearTimeout/setTimeout pair owned. The
+// wrapper is REBUILT on every input so the delay keeps being read from
+// `props.searchDebounce` AT INPUT TIME — exactly like the pair it replaces,
+// where a prop change (the component is public; consumers may retune) applied
+// to the very next keystroke rather than being frozen at setup. Cancelling the
+// previous wrapper reproduces the one-timer supersede: an older pending fire
+// can never race a newer one.
+let debouncedSearch: Debounced<[]> | undefined;
 watch(
   () => store.search,
   (v) => {
@@ -72,11 +81,12 @@ watch(
   },
 );
 function onSearchInput() {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
+  debouncedSearch?.cancel();
+  debouncedSearch = debounce(() => {
     store.setSearch(searchText.value.trim());
     emit('change');
   }, props.searchDebounce);
+  debouncedSearch();
 }
 function clearSearch() {
   searchText.value = '';
@@ -326,7 +336,7 @@ onMounted(() => {
   }
 });
 onBeforeUnmount(() => {
-  clearTimeout(searchTimer);
+  debouncedSearch?.cancel();
   if (typeof window !== 'undefined') window.removeEventListener('scroll', onScroll);
 });
 </script>

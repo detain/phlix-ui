@@ -24,6 +24,7 @@ import { useItemInspector } from '../composables/useItemInspector';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { ApiClient } from '../api/client';
+import { debounce } from '../utils/debounce';
 import type { MediaItem } from '../types/media-item';
 
 const route = useRoute();
@@ -40,21 +41,22 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const hasSearched = ref(false);
 
-// Debounce timer so we don't hammer the API on every keystroke
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-function scheduleSearch(): void {
-    if (debounceTimer !== null) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        // Update the URL with the new query without full navigation
-        if (query.value.trim() === '') {
-            router.replace({ query: {} });
-        } else {
-            router.replace({ query: { q: query.value.trim() } });
-        }
-        void doSearch();
-    }, 300);
-}
+// Debounce so we don't hammer the API on every keystroke. S524: the shared
+// trailing-fire primitive (src/utils/debounce.ts) replaces the hand-rolled
+// clearTimeout/setTimeout pair — same 300 ms window (passed explicitly; the
+// module default is not used here), same one-timer supersede shared across
+// @input and @submit. The old pair had NO unmount cancel and the S524
+// zero-drift law keeps that status quo deliberately (pin: the pending fire
+// survives unmount) — adding cancel() would change behavior, not migrate it.
+const scheduleSearch = debounce(() => {
+    // Update the URL with the new query without full navigation
+    if (query.value.trim() === '') {
+        router.replace({ query: {} });
+    } else {
+        router.replace({ query: { q: query.value.trim() } });
+    }
+    void doSearch();
+}, 300);
 
 async function doSearch(): Promise<void> {
     const q = query.value.trim();
