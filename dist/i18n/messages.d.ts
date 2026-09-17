@@ -149,6 +149,11 @@ export declare const DEFAULT_MESSAGES: {
         originConfirm: string;
         confirmContinue: string;
         confirmCancel: string;
+        scan: string;
+        scanning: string;
+        scanFailed: string;
+        scanEmpty: string;
+        scanListLabel: string;
     };
     player: {
         play: string;

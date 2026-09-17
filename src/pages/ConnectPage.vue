@@ -20,8 +20,17 @@
  *
  * Reuses the cinematic auth chrome (AppBackdrop + AuthCard + AuthField + Button)
  * so it reads as part of the same "box office" entry flow as Login/Signup.
+ *
+ * S532 adds the D-pad-friendly discovery seam: when the native host injects a
+ * `connectScan` callback on `PhlixAppConfig`, a "Scan" button and the bounded
+ * candidate list it yields render beneath the address field, and picking a row
+ * prefills the field and commits through the SAME `commitWithGuards` gauntlet
+ * manual entry rides (plaintext warning + one-time new-origin confirm stay in
+ * force; the row is only pre-probed by the host, so the page never re-runs
+ * `probeServer` for it). Without an injected scanner the affordance is hidden
+ * outright — no dead button, no ui-side subnet guessing, no second engine.
  */
-import { computed, inject, ref, watch } from 'vue';
+import { computed, inject, nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppBackdrop from '../components/AppBackdrop.vue';
 import AuthCard from '../components/auth/AuthCard.vue';
@@ -37,7 +46,7 @@ import {
   probeServer,
 } from '../stores/useConnectionStore';
 import { useMessages } from '../composables/useMessages';
-import type { PhlixAppConfig } from '../app/types';
+import type { ConnectCandidate, PhlixAppConfig } from '../app/types';
 
 const prefs = usePreferencesStore();
 const connection = useConnectionStore();
@@ -171,6 +180,59 @@ function cancelOrigin(): void {
   pendingOrigin.value = null;
   pendingUrl.value = null;
 }
+
+// ── S532 — host-injected LAN scan ───────────────────────────────────────────
+// The scanner itself is the HOST's engine (never imported here); the page only
+// renders whatever candidates it yields. No injected callback ⇒ `scanner` is
+// null and the whole affordance stays out of the DOM (zero dead UI).
+const scanner = computed(() => config?.connectScan ?? null);
+const scanning = ref(false);
+// A scan RESOLVED with a list at least once — distinguishes "never scanned"
+// from "scanned, found nothing" for the note copy.
+const scanDone = ref(false);
+const scanFailed = ref(false);
+const candidates = ref<ConnectCandidate[]>([]);
+
+/** Ask the host to scan. Fails soft and LOUD: a rejection becomes a visible
+ *  inline note — never half-rendered rows and never a silent no-op. */
+async function handleScan(): Promise<void> {
+  const scan = scanner.value;
+  if (!scan) return;
+  scanning.value = true;
+  scanFailed.value = false;
+  candidates.value = [];
+  try {
+    candidates.value = await scan();
+    scanDone.value = true;
+  } catch {
+    scanFailed.value = true;
+  } finally {
+    scanning.value = false;
+  }
+}
+
+/** Pick a candidate row: render-as-given prefill, then the SAME guarded commit
+ *  manual entry uses — the plaintext warning and one-time origin confirm remain
+ *  in force. `probeServer` is deliberately NOT re-run: the host already probed
+ *  what it handed us (probe construction lives only in the store regardless). */
+async function chooseCandidate(candidate: ConnectCandidate): Promise<void> {
+  address.value = candidate.url;
+  // Flush the address watcher BEFORE committing: it clears pending/ unreachable
+  // state keyed to the OLD value, so committing synchronously first would have
+  // its freshly-set confirm wiped.
+  await nextTick();
+  fieldError.value = null;
+  const url = withScheme(candidate.url);
+  if (!url) {
+    // '' = empty or a non-http(s) scheme — the same boundary reject manual
+    // entry gets; a malformed candidate can never reach commitWithGuards.
+    fieldError.value = candidate.url.trim()
+      ? t('connect.invalidAddress')
+      : t('connect.addressRequired');
+    return;
+  }
+  commitWithGuards(url);
+}
 </script>
 
 <template>
@@ -197,6 +259,52 @@ function cancelOrigin(): void {
           />
 
           <p class="connect__hint">{{ t('connect.hint') }}</p>
+
+          <!-- Host-injected LAN scan (S532): renders ONLY when the shell wired
+               `connectScan` into PhlixAppConfig; candidates are the host's,
+               shown as yielded. Rows are native buttons — focusable + Enter
+               activates, so a D-pad reaches them with no extra wiring. -->
+          <div v-if="scanner" class="connect__scan">
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              block
+              left-icon="search"
+              :loading="scanning"
+              @click="handleScan"
+            >
+              {{ scanning ? t('connect.scanning') : t('connect.scan') }}
+            </Button>
+            <p v-if="scanFailed" class="connect__scan-note" role="status">
+              {{ t('connect.scanFailed') }}
+            </p>
+            <p
+              v-else-if="scanDone && candidates.length === 0"
+              class="connect__scan-note"
+              role="status"
+            >
+              {{ t('connect.scanEmpty') }}
+            </p>
+            <ul
+              v-else-if="scanDone"
+              class="connect__scan-list"
+              :aria-label="t('connect.scanListLabel')"
+            >
+              <li v-for="(candidate, index) in candidates" :key="`${candidate.url}:${index}`">
+                <button
+                  type="button"
+                  class="connect__scan-row"
+                  @click="chooseCandidate(candidate)"
+                >
+                  <span class="connect__scan-url">{{ candidate.url }}</span>
+                  <span v-if="candidate.label" class="connect__scan-label">
+                    {{ candidate.label }}
+                  </span>
+                </button>
+              </li>
+            </ul>
+          </div>
 
           <p
             v-if="plaintextWarned && !pendingOrigin"
@@ -293,6 +401,48 @@ function cancelOrigin(): void {
   flex-shrink: 0;
   font-size: 1.05em;
   color: var(--accent-text);
+}
+.connect__scan {
+  display: grid;
+  gap: var(--space-3);
+}
+.connect__scan-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.connect__scan-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+.connect__scan-row {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-2, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  color: var(--text);
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
+}
+.connect__scan-row:hover {
+  border-color: var(--accent-text);
+}
+.connect__scan-url {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.connect__scan-label {
+  flex-shrink: 0;
+  color: var(--text-muted);
 }
 .connect__warning {
   display: flex;

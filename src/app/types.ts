@@ -69,6 +69,19 @@ export interface HomeRow {
     query?: Partial<LibraryQueryParams>;
 }
 
+/** One server the HOST found while scanning, handed to the Connect screen through
+ *  {@link PhlixAppConfig.connectScan}. The ui renders candidates exactly as given —
+ *  discovery (subnet math, probing, list bounding) is the host's job (e.g. the
+ *  phlix-tizen-client LAN scanner); this package ships NO engine of its own. */
+export interface ConnectCandidate {
+    /** Base address to connect to, shown verbatim. Committing it still rides the
+     *  page's existing guards (`withScheme` reject + plaintext/new-origin confirms),
+     *  so a hostile or stale candidate can never silently become the API base. */
+    url: string;
+    /** Optional human label (device name, model…) rendered beside the URL. */
+    label?: string;
+}
+
 export interface PhlixAppConfig {
     app: 'server' | 'hub';
     apiBase: string;
@@ -134,6 +147,13 @@ export interface PhlixAppConfig {
      *  durable store (e.g. the Electron client writes it back via `setServerUrl`
      *  so `resolveAppConfig` re-seeds it on the next launch). */
     onConnectionChange?: (url: string | null) => void;
+    /** Host-injected LAN server scan, consumed by the Connect screen's "Scan"
+     *  affordance (S532). Resolves with the bounded candidates to render, or
+     *  rejects when the scan itself failed — the page then shows an honest inline
+     *  note instead of dead rows. OMITTED ⇒ the whole affordance is hidden (a
+     *  web-hosted app has nothing to scan; native shells wire this to their own
+     *  discovery engine without this package ever importing one). */
+    connectScan?: () => Promise<ConnectCandidate[]>;
     /** Per-app hls.js config overrides for the transcode player, e.g. a constrained
      *  TV tuning `maxBufferLength` / `backBufferLength` down to cap RAM. Merged OVER
      *  phlix-ui's defaults (`enableWorker` / `lowLatencyMode`); the auth `xhrSetup`
