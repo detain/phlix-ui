@@ -6,6 +6,8 @@
  */
 
 import { onBeforeUnmount, watch, nextTick, type Ref } from 'vue';
+import { sharedLayerFocusStack } from '../../composables/layerFocusStack';
+import { focusableRegistry } from '../../directives/focusable';
 
 const FOCUSABLE = [
   'a[href]',
@@ -33,6 +35,37 @@ function unlockBodyScroll() {
   if (scrollLocks === 0) document.body.style.overflow = savedOverflow;
 }
 
+/* AD-9 layer focus memory (S534): every active trap holds ONE slot on this
+   shared LIFO stack — the element that held focus when that layer opened.
+   Closing an inner layer restores its own opener while outer layers' slots
+   survive untouched; `clear` resets everything (orphan-recovery teardown). */
+const layerStack = sharedLayerFocusStack;
+
+/** How many focus layers are currently open (0 = base screen). */
+export function layerFocusDepth(): number {
+  return layerStack.depth();
+}
+
+/** Orphan-recovery teardown: forget all remembered openers at once. */
+export function clearLayerFocus(): void {
+  layerStack.clear();
+}
+
+/**
+ * Where focus parks when the LAST layer closes and its remembered opener is
+ * gone from the DOM — a defined spatial anchor, never a silent leak to
+ * `document.body`. Resolution order: explicit `[data-focus-anchor]` (hosts
+ * mark their top bar with it), else the first live focusable in the spatial
+ * registry. Both sources are TV-opt-in, so a desktop app that registers
+ * neither gets exactly the pre-S534 behavior (no-op park).
+ */
+function resolveParkTarget(): HTMLElement | null {
+  const anchor = document.querySelector<HTMLElement>('[data-focus-anchor]');
+  if (anchor && document.contains(anchor)) return anchor;
+  const first = focusableRegistry.values().next().value as HTMLElement | undefined;
+  return first && document.contains(first) ? first : null;
+}
+
 /**
  * Focus-trap + scroll-lock + Escape for overlay surfaces (Modal/Sheet, R0.4d).
  *
@@ -41,8 +74,10 @@ function unlockBodyScroll() {
  * Tab/Shift+Tab inside it, and calls `onEscape` on Esc. `onEscape` returns truthy
  * when it handled the key — only then is the default prevented, so a non-handling
  * (e.g. non-dismissible) overlay doesn't swallow Esc from outer handlers. On
- * deactivate (or unmount) it restores scroll + focus (only if the opener is still
- * in the DOM). The keydown listener is capture-phase on document.
+ * deactivate (or unmount) it restores scroll + focus — the opener if it is
+ * still in the DOM, or a defined spatial anchor when the LAST layer closes
+ * over an orphaned opener (AD-9 layer focus memory, never a silent body leak).
+ * The keydown listener is capture-phase on document.
  */
 export function useFocusTrap(
   container: Ref<HTMLElement | null>,
@@ -52,6 +87,22 @@ export function useFocusTrap(
   const lockScroll = opts.lockScroll ?? true;
   let prevFocus: HTMLElement | null = null;
   let locked = false;
+  let layerPushed = false;
+
+  function removeMyLayer() {
+    if (!layerPushed) return;
+    layerPushed = false;
+    // LIFO fast path: mine is on top. Non-LIFO (outer layer closing under a
+    // still-open inner one): pop & stash until my slot is found, then re-push
+    // the inner slots untouched — the stack's four ops stay the whole vocabulary.
+    const held: unknown[] = [];
+    while (layerStack.depth() > 0) {
+      const top = layerStack.pop();
+      if (top === prevFocus) break;
+      held.push(top);
+    }
+    for (let i = held.length - 1; i >= 0; i--) layerStack.push(held[i]);
+  }
 
   function focusables(): HTMLElement[] {
     const root = container.value;
@@ -90,7 +141,11 @@ export function useFocusTrap(
   }
 
   function activate() {
-    prevFocus = document.activeElement as HTMLElement | null;
+    if (!layerPushed) {
+      prevFocus = document.activeElement as HTMLElement | null;
+      layerStack.push(prevFocus);
+      layerPushed = true;
+    }
     container.value?.setAttribute('data-focus-trap', '');
     if (lockScroll) {
       lockBodyScroll();
@@ -114,7 +169,9 @@ export function useFocusTrap(
       unlockBodyScroll();
       locked = false;
     }
+    removeMyLayer();
     if (prevFocus && document.contains(prevFocus)) prevFocus.focus?.();
+    else if (prevFocus && layerStack.depth() === 0) resolveParkTarget()?.focus?.();
     prevFocus = null;
   }
 
@@ -126,5 +183,8 @@ export function useFocusTrap(
       unlockBodyScroll();
       locked = false;
     }
+    // Stack hygiene: an active trap that unmounts must release its layer slot
+    // without stealing focus (pre-existing posture — restore stays close-only).
+    removeMyLayer();
   });
 }

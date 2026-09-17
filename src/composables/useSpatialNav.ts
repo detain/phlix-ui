@@ -7,6 +7,7 @@
 
 import { onMounted, onBeforeUnmount, toValue, type MaybeRefOrGetter } from 'vue';
 import { bestCandidate, type Candidate, type Dir, type Rect } from './spatial-nav';
+import { sharedLayerFocusStack } from './layerFocusStack';
 import { focusableRegistry } from '../directives/focusable';
 import { isTypingTarget } from '../components/player/shortcuts';
 
@@ -26,6 +27,10 @@ export interface SpatialNavHandle {
   move(dir: Dir): boolean;
   /** Focus the first registry element (by `data-focus-order` then DOM order). */
   focusFirst(): void;
+  /** AD-9 focus-layer memory: how many overlay/modal layers are open (0 = base). */
+  layerDepth(): number;
+  /** AD-9 orphan-recovery teardown: forget every remembered layer opener at once. */
+  clearLayerFocus(): void;
   registry: ReadonlySet<HTMLElement>;
 }
 
@@ -163,6 +168,11 @@ export function useSpatialNav(opts: SpatialNavOptions = {}): SpatialNavHandle {
     orderedRegistry()[0]?.focus();
   }
 
+  // Additive AD-9 seam (S534): pure pass-through to the shared layer memory —
+  // no key handling, no focus movement, desktop posture untouched.
+  const layerDepth = (): number => sharedLayerFocusStack.depth();
+  const clearLayerFocus = (): void => sharedLayerFocusStack.clear();
+
   onMounted(() => {
     if (typeof document !== 'undefined') document.addEventListener('keydown', onKeydown);
   });
@@ -170,5 +180,5 @@ export function useSpatialNav(opts: SpatialNavOptions = {}): SpatialNavHandle {
     if (typeof document !== 'undefined') document.removeEventListener('keydown', onKeydown);
   });
 
-  return { focus, move, focusFirst, registry: focusableRegistry };
+  return { focus, move, focusFirst, layerDepth, clearLayerFocus, registry: focusableRegistry };
 }

@@ -21,6 +21,10 @@ export interface SpatialNavHandle {
     move(dir: Dir): boolean;
     /** Focus the first registry element (by `data-focus-order` then DOM order). */
     focusFirst(): void;
+    /** AD-9 focus-layer memory: how many overlay/modal layers are open (0 = base). */
+    layerDepth(): number;
+    /** AD-9 orphan-recovery teardown: forget every remembered layer opener at once. */
+    clearLayerFocus(): void;
     registry: ReadonlySet<HTMLElement>;
 }
 /**

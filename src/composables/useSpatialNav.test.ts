@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { defineComponent, h, ref } from 'vue';
 import { useSpatialNav } from './useSpatialNav';
+import { sharedLayerFocusStack } from './layerFocusStack';
 import { focusable, focusableRegistry } from '../directives/focusable';
 
 function stubRect(el: HTMLElement, x: number, y: number, w = 50, h = 50) {
@@ -160,6 +161,18 @@ describe('useSpatialNav', () => {
     handle.focus(null); // no-op
     expect(document.activeElement).toBe(get('D'));
     expect(handle.registry).toBe(focusableRegistry);
+    w.unmount();
+  });
+
+  it('S534 layer seam: layerDepth()/clearLayerFocus() pass through the shared focus stack', () => {
+    const { handle, w } = makeHost({ enabled: false });
+    const base = handle.layerDepth();
+    sharedLayerFocusStack.push({}); // opaque slots — the stack never touches them
+    sharedLayerFocusStack.push({});
+    expect(handle.layerDepth()).toBe(base + 2);
+    handle.clearLayerFocus();
+    expect(handle.layerDepth()).toBe(0);
+    sharedLayerFocusStack.clear();
     w.unmount();
   });
 });
