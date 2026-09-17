@@ -109,6 +109,13 @@ const CLASSIFIED_EXCEPTIONS: Record<string, string> = {
   // Not an image, and not this step's subsystem.
   'components/MediaDetail.vue::youtubeEmbedUrl':
     'literal https://www.youtube.com/embed/{key} iframe, always absolute',
+
+  // Dev-only bench harness (src/dev/**, never bundled): the fixture video is a
+  // checked-in byte stream resolved relative to the module, and the caption
+  // track is a blob: URL minted from the local VTT fixture — neither is ever a
+  // media-server payload, so the relay seam does not apply.
+  'dev/visual/SubsBenchHarness.vue::sampleSrc': 'dev-harness local sample.mp4 byte stream',
+  'dev/visual/SubsBenchHarness.vue::vttBlobUrl': 'dev-harness blob: URL of the local VTT fixture',
 };
 
 /**
