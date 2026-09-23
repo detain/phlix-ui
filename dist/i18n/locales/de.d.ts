@@ -6,16 +6,16 @@
  * segment counts are pinned against `DEFAULT_MESSAGES` by `locales.test.ts`.
  *
  * Language decisions (flagged for review):
- * - Informal „du" register throughout (standard for German consumer media UIs;
+ * - Informal „du“ register throughout (standard for German consumer media UIs;
  *   matches the friendly English voice).
  * - Brand/product terms kept verbatim: Phlix, SyncPlay, theme names Nocturne /
  *   Daylight / Midnight, the badge SDH, ⌘K, HDR, ID, Token, URL, hub; example
  *   addresses (you@example.com, 192.168.1.50); units (Kbps, fps, p).
- * - German quotation marks „ … " around {title}/{query} insertions.
+ * - German quotation marks „ … “ around {title}/{query} insertions.
  * - Established German UI loanwords kept: Stream, Tag, Crossfade, Timer,
- *   Playlist-style „Mediathek" for library, „Kinomodus" for theater mode.
- * - „Captions and subtitles": German does not distinguish them; rendered as
- *   „Untertitel und Closed Captions" (Closed Captions is the accepted German
+ *   Playlist-style „Mediathek“ for library, „Kinomodus“ for theater mode.
+ * - „Captions and subtitles“: German does not distinguish them; rendered as
+ *   „Untertitel und Closed Captions“ (Closed Captions is the accepted German
  *   term for burn-in accessibility captions).
  * - Nouns that are identical in singular and plural (Künstler, Titel, Streams)
  *   still carry both pipe segments — CLDR German has two categories and the
