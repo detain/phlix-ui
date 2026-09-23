@@ -247,4 +247,6 @@ export { useMessages } from './composables/useMessages';
 export type { UseMessages } from './composables/useMessages';
 export { DEFAULT_MESSAGES, createTranslator, mergeMessages } from './i18n/messages';
 export type { PhlixMessages, PhlixMessagesConfig, MessageGroup, MessageKey, TranslateParams, Translate, } from './i18n/messages';
+export { ES_MESSAGES, FR_MESSAGES, DE_MESSAGES, IT_MESSAGES, PT_BR_MESSAGES, JA_MESSAGES, LOCALE_MESSAGES, } from './i18n/locales';
+export type { PhlixLocaleCode } from './i18n/locales';
 export * from './tokens';

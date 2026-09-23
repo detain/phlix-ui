@@ -281,6 +281,58 @@ Both rules are enforced at lint time by the local plugin in `eslint-rules/`:
   `src/i18n/messages.ts` at lint time, so adding a plural message automatically
   extends the check.
 
+### Locale bundles (`src/i18n/locales/`)
+
+The package ships **complete** translations of the whole English catalog for six
+locales: `es`, `fr`, `de`, `it`, `pt_BR`, `ja`. Each is a `satisfies PhlixMessages`
+object (same 16 groups, same key set), so the compiler rejects any missing or extra
+key against `DEFAULT_MESSAGES`. They ride the existing config-time seam unchanged —
+a bundle is just a full `PhlixMessages` passed as `PhlixAppConfig.messages`:
+
+```ts
+import { createPhlixApp, JA_MESSAGES, LOCALE_MESSAGES } from '@phlix/ui';
+
+createPhlixApp({ /* … */ messages: JA_MESSAGES });           // one locale
+createPhlixApp({ /* … */ messages: LOCALE_MESSAGES[locale] }); // dynamic
+```
+
+| Export | Purpose |
+| --- | --- |
+| `ES_MESSAGES` / `FR_MESSAGES` / `DE_MESSAGES` / `IT_MESSAGES` / `PT_BR_MESSAGES` / `JA_MESSAGES` | Full per-locale catalogs. |
+| `LOCALE_MESSAGES` | `Record<PhlixLocaleCode, PhlixMessages>` tag→bundle registry. |
+| `PhlixLocaleCode` | `'es' \| 'fr' \| 'de' \| 'it' \| 'pt_BR' \| 'ja'`. |
+
+**Plural-segment rules.** The catalog authors plurals in the pipe form; the
+resolver (`Intl.PluralRules`, see `src/utils/plural.ts`) maps pipe segments onto
+the target locale's *own* CLDR cardinal categories. So a translation must carry
+exactly one segment per category the language uses:
+
+| Locale | CLDR cardinal categories | Segments for an English `{one} \| {other}` value |
+| --- | --- | --- |
+| `es` / `de` / `it` / `pt_BR` | one, other | **2** — `{one} \| {other}` |
+| `fr` | one (covers 0 and 1), other | **2** |
+| `ja` | other only (no pluralization) | **1** — collapse, e.g. `{count} 個`; Japanese uses no `|` |
+
+Every `{placeholder}` (`{count}`, `{name}`, …) is preserved verbatim — braces and
+names intact, positioned naturally. `src/i18n/locales.test.ts` asserts key-set
+identity, placeholder parity, segment counts, and English-leak absence for each
+bundle. The one allowed deviation is `player.subtitleDownloads`, where English
+hardcodes a plural (`'{count} downloads'`, no singular branch); the inflected
+locales supply the honest two-slot form and `ja` one segment.
+
+**Adding a 7th locale.**
+
+1. Create `src/i18n/locales/xx.ts` mirroring `messages.ts`' group/key order,
+   typed `satisfies PhlixMessages` (the compiler lists every key you still owe).
+2. Author plurals with the segment count from the table above for the language's
+   CLDR cardinal categories; keep every `{placeholder}` verbatim.
+3. Register it in `src/i18n/locales/index.ts` (`LOCALE_MESSAGES` + the
+   `PhlixLocaleCode` union + a named re-export) and in `src/index.ts`.
+4. Add one row to `LOCALES` in `src/i18n/locales.test.ts`; if the language is
+   Latin-script, add its diacriticals class to `LATIN_SPECS`, and set any
+   brand/cognate values that legitimately equal English in `UNTRANSLATED_OK`.
+5. `npm run lint && npm run typecheck && npx vitest run src/i18n`.
+
 ### Performance Patterns
 
 **Page Visibility API for Polling:**
