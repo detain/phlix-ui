@@ -1170,7 +1170,7 @@ function ja(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CiFzH-P8.js")
+			component: () => import("./PlayerPage-CItlKP_k.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1218,7 +1218,7 @@ function ja(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-D1tD5ilo.js")
+			component: () => import("./SyncPlayPage-BTAJp1zP.js")
 		},
 		{
 			path: `${t}/music`,
