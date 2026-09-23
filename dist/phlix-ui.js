@@ -62,8 +62,8 @@ import { n as _n, r as vn, t as yn } from "./useSettingsPrefs-CEFxTJFG.js";
 import { i as bn, n as xn, r as Sn, t as Cn } from "./plugins-BOqWwLQp.js";
 import { n as wn, r as Tn, t as En } from "./maintenance-CETCLHzL.js";
 import { t as Dn } from "./hubDashboard-BhOaaDD-.js";
-import { a as On, i as kn, n as An, o as jn, r as Mn, t as Nn } from "./errors-DYDTeHIA.js";
-import { t as Pn } from "./LoginForm-C_mRIUg2.js";
+import { a as On, i as kn, n as An, o as jn, r as Mn, t as Nn } from "./errors-D1ikoBpg.js";
+import { t as Pn } from "./LoginForm-VL458gSy.js";
 import { t as Fn } from "./SignupForm-BVWxMkh0.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as In, t as Ln } from "./debounce-BkSsZiXZ.js";
@@ -1150,7 +1150,7 @@ function La(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-hKCGhY2K.js")
+			component: () => import("./BrowsePage-BcFQuBPP.js")
 		},
 		{
 			path: `${t}/media/:id`,
@@ -1171,13 +1171,13 @@ function La(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-C93oVqpM.js")
+			component: () => import("./PlayerPage-OUG-xuoh.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-B7QxlLLq.js")
+			component: () => import("./LoginPage-D0ZsPSOR.js")
 		},
 		{
 			path: `${t}/signup`,

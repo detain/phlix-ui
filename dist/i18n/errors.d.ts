@@ -12,7 +12,7 @@
  * every `src/i18n/locales/*.ts` bundle is `satisfies PhlixMessages` with exact
  * key-identity against the 412-key UI-chrome catalog, and downstream clients
  * (tizen, windows) PIN bundle↔installed equality at the release tag. Folding
- * ~147 registry-adjacent error strings into the main catalog would force churn
+ * ~202 registry-adjacent error strings into the main catalog would force churn
  * in every equality pin on each registry edit. The error catalog is instead a
  * SEPARATE layer keyed by the contracts wire strings, complete for all seven
  * locales, and validated against `ERROR_CODES` by `errors.test.ts` — adding a
