@@ -128,7 +128,7 @@ describe('LoginForm', () => {
     const toastErr = vi.spyOn(toasts, 'error');
     vi.spyOn(auth, 'login').mockImplementation(async () => {
       auth.error = 'Invalid credentials';
-      auth.errorCode = 'unauthorized'; // real quickconnect code in the v0.5.0 registry
+      auth.errorCode = 'unauthorized'; // real quickconnect code in the v0.5.1 registry
       return false;
     });
     await setIdentifier(w, 'a@b.c');

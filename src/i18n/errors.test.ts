@@ -16,14 +16,14 @@
  *      rides the server `error` text through the accessor's fallback chain).
  *   4. No English leakage: a translated value equal to its English string is a
  *      defect. The allow-list is EMPTY by design for this catalog — every one
- *      of the 147×6 translations carries target-language words — and both
+ *      of the 202×6 translations carries target-language words — and both
  *      directions are pinned (a value drifting back to English fails; so does
  *      a stale allow entry that no longer equals English).
  *   5. ja rendering sanity: every value contains CJK codepoints (empty allow-list).
  *   6. Latin sanity: aggregate diacritical counts at the same bars as the
- *      412-key locale-bundle suite (measured margins here: es 97, fr 85, de 68,
- *      it 61, pt_BR 137 — the bars are held, not relaxed, despite the smaller
- *      147-key catalog).
+ *      412-key locale-bundle suite (measured margins here: es 135, fr 128, de
+ *      94, it 95, pt_BR 189 — the bars are held, not relaxed, across the
+ *      202-key catalog).
  *   7. Accessor degradation matrix: known/unknown/empty/non-string codes ×
  *      locale present/absent/invalid × fallback present/blank — resolve order
  *      locale → en → fallback → generic, never throwing.
@@ -80,10 +80,10 @@ const LATIN_SPECS: Record<Exclude<PhlixErrorLocale, 'en' | 'ja'>, { diacritics: 
 };
 
 describe('error catalog registry parity', () => {
-  it('contracts registry is the pinned v0.5.0 set of 147 codes', () => {
+  it('contracts registry is the pinned v0.5.1 set of 202 codes', () => {
     // Guards against a silent re-pin changing the vocabulary without a catalog update.
-    expect(ERROR_CODES.length).toBe(147);
-    expect(new Set(ERROR_CODES).size).toBe(147);
+    expect(ERROR_CODES.length).toBe(202);
+    expect(new Set(ERROR_CODES).size).toBe(202);
   });
 
   for (const locale of LOCALES) {

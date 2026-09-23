@@ -12,7 +12,7 @@
  * every `src/i18n/locales/*.ts` bundle is `satisfies PhlixMessages` with exact
  * key-identity against the 412-key UI-chrome catalog, and downstream clients
  * (tizen, windows) PIN bundle↔installed equality at the release tag. Folding
- * ~147 registry-adjacent error strings into the main catalog would force churn
+ * ~202 registry-adjacent error strings into the main catalog would force churn
  * in every equality pin on each registry edit. The error catalog is instead a
  * SEPARATE layer keyed by the contracts wire strings, complete for all seven
  * locales, and validated against `ERROR_CODES` by `errors.test.ts` — adding a
@@ -54,11 +54,24 @@ const EN: PhlixErrorCatalog = {
   'auth.account_pending': 'Your account is still awaiting approval.',
   'auth.account_disabled': 'This account has been disabled.',
   'auth.password_change_required': 'You must change your password before continuing.',
+  'auth.unauthenticated': 'Sign in before claiming this server.',
+  'auth.enrollment_expired':
+    'This server’s enrollment token has expired. Enroll it with the hub again.',
+  'auth.server_mismatch': 'The enrollment token does not match this server.',
+  'auth.missing_credentials': 'Enter your credentials to link this account.',
+  'auth.invalid_credentials': 'The credentials you entered are not correct.',
 
   // ── hub — server↔hub account-linking failures ──
   'hub.not_enrolled': 'This server is not enrolled with the hub yet.',
   'hub.token_required': 'A hub access token is required for this action.',
   'hub.jwt_invalid': 'The hub token is invalid or has expired.',
+  'hub.protocol_unsupported': 'The request did not use the protocol the hub supports.',
+  'hub.internal_error': 'The hub hit an unexpected error. Try again in a moment.',
+
+  // ── claim — hub claim-code exchange failures (ride error TEXT until W2) ──
+  'claim.code_not_found': 'That claim code was not found. Check it and try again.',
+  'claim.code_expired': 'That claim code has expired. Generate a new one and try again.',
+  'claim.code_already_claimed': 'That claim code has already been used.',
 
   // ── server — hub-side lookup / relay / tunnel failures ──
   // The three codes below also surface on Browse as an EmptyState; their
@@ -72,11 +85,16 @@ const EN: PhlixErrorCatalog = {
     'This server is offline, so its libraries can’t be loaded. It will be browsable again once it reconnects to the hub.',
   'server.no_tunnel':
     "This server is online but its secure relay tunnel isn't connected yet, so its libraries can't be loaded over the hub. It should reconnect automatically — try again in a moment.",
+  'server.key_invalid':
+    'The server’s signing key failed validation during the claim. Try claiming again.',
 
   // ── proxy / quota / stream / gateway — hub throttle & routing gates ──
   'proxy.scope_denied': 'Your access token does not have the scope for this request.',
   'quota.exceeded': 'You have reached your bandwidth quota limit.',
   'stream.limit': 'You have reached the maximum number of simultaneous streams.',
+  'stream.limit_exceeded':
+    'You have reached this server’s limit on simultaneous streams. Stop one and try again.',
+  'access.scheduled': 'This profile is only available during its scheduled hours. Try again later.',
   'gateway.timeout': 'The hub gateway timed out waiting for your server. Try again.',
 
   // ── relay — endpoint-shape refusals ──
@@ -100,6 +118,25 @@ const EN: PhlixErrorCatalog = {
   // ── alexa — voice adapter failures ──
   'alexa.streaming_unsupported': 'Streaming is not supported through the Alexa adapter.',
   'alexa.malformed_envelope': 'The Alexa request envelope was malformed.',
+  'alexa.verification_error': 'The Alexa request could not be verified. Try again.',
+  'alexa.missing_cert_chain_url': 'The Alexa request did not include its certificate chain URL.',
+  'alexa.missing_signature_header': 'The Alexa request did not include a signature header.',
+  'alexa.empty_body': 'The Alexa request arrived with an empty body.',
+  'alexa.cert_url_rejected':
+    'The certificate URL on the Alexa request was outside Amazon’s allowed domains.',
+  'alexa.cert_fetch_failed':
+    'The server could not fetch the certificate chain for the Alexa request.',
+  'alexa.cert_chain_malformed': 'The certificate chain sent with the Alexa request was malformed.',
+  'alexa.signature_invalid': 'The signature on the Alexa request did not pass verification.',
+  'alexa.cert_expired': 'The certificate that signed the Alexa request has expired.',
+  'alexa.cert_san_mismatch':
+    'The certificate on the Alexa request was not issued for an Alexa domain.',
+  'alexa.cert_chain_untrusted':
+    'The Alexa request’s certificate chain does not anchor on Amazon’s root certificate.',
+  'alexa.timestamp_malformed': 'The timestamp header on the Alexa request was unparseable.',
+  'alexa.timestamp_missing': 'The Alexa request did not include a timestamp header.',
+  'alexa.timestamp_stale':
+    'The timestamp on the Alexa request was too old. Check the server clock.',
 
   // ── tls / csrf / user ──
   'tls.acme_not_implemented': 'Automatic TLS certificate issuance is not available yet.',
@@ -146,6 +183,8 @@ const EN: PhlixErrorCatalog = {
   'profile.last_profile': 'This is your last profile, so it cannot be deleted.',
   'profile.no_pin': 'This profile has no PIN configured to verify.',
   'profile.pin_mismatch': 'That PIN is not correct.',
+  // profile.not_found rides the machine denial_type sub-field today.
+  'profile.not_found': 'That profile no longer exists. Pick another one.',
 
   // ── dlna / casting ──
   'dlna.forbidden': 'This device is not allowed to use DLNA on this server.',
@@ -229,6 +268,44 @@ const EN: PhlixErrorCatalog = {
   // ── updates — core-update admin surface (bare snake code) ──
   update_check_dispatch_failed: 'The update check could not be started. Try again.',
 
+  // ── identity — linked-account gates (server; ride error TEXT until W2) ──
+  'identity.missing_id': 'No linked identity was selected for this action.',
+  'identity.not_found': 'That linked identity could not be found.',
+  'identity.last_sign_in_method':
+    'This is the only sign-in method left on your account, so it cannot be unlinked.',
+  'identity.already_linked': 'That provider account is already linked to a different account here.',
+  'identity.invalid': 'The provider did not return a usable account identity.',
+  'identity.link_unavailable': 'Account linking is temporarily unavailable on this server.',
+  'identity.invalid_link_state': 'The linking request expired before it finished. Start again.',
+
+  // ── provider — auth-provider config gates (server; ride error TEXT until W2) ──
+  'provider.not_configured': 'No sign-in provider is configured on this server yet.',
+  'provider.unknown': 'That sign-in provider is not available on this server.',
+  'provider.not_found': 'That sign-in provider could not be found.',
+  'provider.invalid_type': 'That provider cannot be used for this kind of sign-in.',
+  'provider.missing_client_id': 'The provider client ID is required.',
+  'provider.missing_url': 'The provider URL is required.',
+  'provider.invalid_url': 'The provider URL is not valid.',
+
+  // ── oauth — browser sign-in callback failures (server; ride error TEXT until W2) ──
+  'oauth.missing_code':
+    'The sign-in provider returned no authorization code. Try signing in again.',
+  'oauth.missing_state': 'The sign-in provider returned no state token. Try signing in again.',
+  'oauth.invalid_state':
+    'The sign-in attempt no longer matches this browser, or it expired. Try again.',
+  'oauth.missing_redirect_uri': 'A redirect address is required to continue this sign-in.',
+  'oauth.invalid_redirect_uri': 'That redirect address is not on the server’s allowed list.',
+  'oauth.callback_url_not_configured': 'This server has no sign-in callback URL configured yet.',
+
+  // ── ldap — LDAP admin/test failures (server; ride error TEXT / passthrough until W2) ──
+  'ldap.missing_host': 'The LDAP server host is required.',
+  'ldap.missing_base_dn': 'The LDAP base DN is required.',
+  'ldap.invalid_port': 'The LDAP port number is not valid.',
+  'ldap.connection_failed': 'The server could not connect to the LDAP directory.',
+  'ldap.bind_failed': 'The LDAP credentials could not sign in to the directory.',
+  'ldap.error': 'The LDAP directory returned an error.',
+  'ldap.runtime_error': 'The LDAP connection test failed unexpectedly.',
+
   // ── syncplay — dotted twins (reserved; servers switch over in W2) ──
   'syncplay.create_failed': 'The watch group could not be created.',
   'syncplay.join_failed': 'The watch group could not be joined.',
@@ -264,10 +341,22 @@ const ES: PhlixErrorCatalog = {
   'auth.account_pending': 'Tu cuenta aún está pendiente de aprobación.',
   'auth.account_disabled': 'Esta cuenta ha sido desactivada.',
   'auth.password_change_required': 'Debes cambiar tu contraseña antes de continuar.',
+  'auth.unauthenticated': 'Inicia sesión antes de canjear este servidor.',
+  'auth.enrollment_expired':
+    'El token de registro de este servidor ha caducado. Vuelve a registrarlo en el hub.',
+  'auth.server_mismatch': 'El token de registro no corresponde a este servidor.',
+  'auth.missing_credentials': 'Introduce tus credenciales para vincular esta cuenta.',
+  'auth.invalid_credentials': 'Las credenciales introducidas no son correctas.',
   // ── hub ──
   'hub.not_enrolled': 'Este servidor aún no está registrado en el hub.',
   'hub.token_required': 'Se requiere un token de acceso al hub para esta acción.',
   'hub.jwt_invalid': 'El token del hub no es válido o ha caducado.',
+  'hub.protocol_unsupported': 'La solicitud no usó el protocolo compatible con el hub.',
+  'hub.internal_error': 'El hub encontró un error inesperado. Inténtalo de nuevo en unos momentos.',
+  // ── claim ──
+  'claim.code_not_found': 'No se encontró ese código de canje. Revísalo e inténtalo otra vez.',
+  'claim.code_expired': 'Ese código de canje ha caducado. Genera uno nuevo e inténtalo otra vez.',
+  'claim.code_already_claimed': 'Ese código de canje ya se ha utilizado.',
   // ── server ──
   'server.not_found': 'No se pudo encontrar ese servidor.',
   'server.not_owned': 'Este servidor no pertenece a tu cuenta.',
@@ -277,10 +366,16 @@ const ES: PhlixErrorCatalog = {
     'Este servidor está sin conexión, así que no se pueden cargar sus bibliotecas. Volverá a poder navegarse cuando se reconecte al hub.',
   'server.no_tunnel':
     'Este servidor está en línea, pero su túnel seguro de relay todavía no está conectado, así que sus bibliotecas no se pueden cargar a través del hub. Debería reconectarse automáticamente; vuelve a intentarlo en un momento.',
+  'server.key_invalid':
+    'La clave de firma del servidor no superó la verificación durante el canje. Vuelve a intentarlo.',
   // ── proxy / quota / stream / gateway ──
   'proxy.scope_denied': 'Tu token de acceso no tiene el ámbito necesario para esta petición.',
   'quota.exceeded': 'Has alcanzado el límite de tu cuota de ancho de banda.',
   'stream.limit': 'Has alcanzado el número máximo de transmisiones simultáneas.',
+  'stream.limit_exceeded':
+    'Has alcanzado el límite de reproducciones simultáneas de este servidor. Detén una e inténtalo de nuevo.',
+  'access.scheduled':
+    'Este perfil solo está disponible dentro de su horario programado. Inténtalo más tarde.',
   'gateway.timeout': 'El gateway del hub agotó el tiempo de espera al esperar a tu servidor. Inténtalo de nuevo.',
   // ── relay ──
   'relay.client_ws_endpoint':
@@ -300,6 +395,28 @@ const ES: PhlixErrorCatalog = {
   // ── alexa ──
   'alexa.streaming_unsupported': 'El streaming no es compatible con el adaptador de Alexa.',
   'alexa.malformed_envelope': 'El sobre de la petición de Alexa tenía un formato incorrecto.',
+  'alexa.verification_error': 'No se pudo verificar la solicitud de Alexa. Inténtalo de nuevo.',
+  'alexa.missing_cert_chain_url':
+    'La solicitud de Alexa no incluía la URL de su cadena de certificados.',
+  'alexa.missing_signature_header': 'La solicitud de Alexa no incluía una cabecera de firma.',
+  'alexa.empty_body': 'La solicitud de Alexa llegó con el cuerpo vacío.',
+  'alexa.cert_url_rejected':
+    'La URL del certificado de la solicitud de Alexa estaba fuera de los dominios permitidos de Amazon.',
+  'alexa.cert_fetch_failed':
+    'El servidor no pudo descargar la cadena de certificados de la solicitud de Alexa.',
+  'alexa.cert_chain_malformed':
+    'La cadena de certificados enviada con la solicitud de Alexa tenía un formato incorrecto.',
+  'alexa.signature_invalid': 'La firma de la solicitud de Alexa no se pudo validar.',
+  'alexa.cert_expired': 'El certificado usado para firmar la solicitud de Alexa ha caducado.',
+  'alexa.cert_san_mismatch':
+    'El certificado de la solicitud de Alexa no se emitió para un dominio de Alexa.',
+  'alexa.cert_chain_untrusted':
+    'La cadena de certificados de la solicitud de Alexa no se respalda en la raíz de Amazon.',
+  'alexa.timestamp_malformed':
+    'La cabecera de marca de tiempo de la solicitud de Alexa no se pudo interpretar.',
+  'alexa.timestamp_missing': 'La solicitud de Alexa no incluía una cabecera de marca de tiempo.',
+  'alexa.timestamp_stale':
+    'La marca de tiempo de la solicitud de Alexa era demasiado antigua. Comprueba el reloj del servidor.',
   // ── tls / csrf / user ──
   'tls.acme_not_implemented': 'La emisión automática de certificados TLS aún no está disponible.',
   'csrf.invalid_origin': 'El origen de la petición no superó la comprobación CSRF.',
@@ -339,6 +456,7 @@ const ES: PhlixErrorCatalog = {
   'profile.last_profile': 'Este es tu último perfil, por lo que no se puede eliminar.',
   'profile.no_pin': 'Este perfil no tiene ningún PIN configurado que verificar.',
   'profile.pin_mismatch': 'Ese PIN no es correcto.',
+  'profile.not_found': 'Ese perfil ya no existe. Elige otro.',
   // ── dlna / casting ──
   'dlna.forbidden': 'Este dispositivo no tiene permiso para usar DLNA en este servidor.',
   'casting.disabled': 'La transmisión a dispositivos está desactivada en este servidor.',
@@ -412,6 +530,47 @@ const ES: PhlixErrorCatalog = {
   invalid_throttle: 'El valor de limitación no es válido.',
   // ── updates ──
   update_check_dispatch_failed: 'No se pudo iniciar la comprobación de actualizaciones. Inténtalo de nuevo.',
+  // ── identity ──
+  'identity.missing_id': 'No se seleccionó ninguna identidad vinculada para esta acción.',
+  'identity.not_found': 'No se pudo encontrar esa identidad vinculada.',
+  'identity.last_sign_in_method':
+    'Esta es la única forma de iniciar sesión que le queda a tu cuenta, así que no se puede desvincular.',
+  'identity.already_linked': 'Esa cuenta del proveedor ya está vinculada a otra cuenta de aquí.',
+  'identity.invalid': 'El proveedor no devolvió una identidad de cuenta utilizable.',
+  'identity.link_unavailable':
+    'La vinculación de cuentas no está disponible temporalmente en este servidor.',
+  'identity.invalid_link_state':
+    'La solicitud de vinculación caducó antes de terminar. Comienza de nuevo.',
+  // ── provider ──
+  'provider.not_configured':
+    'Aún no hay ningún proveedor de inicio de sesión configurado en este servidor.',
+  'provider.unknown': 'Ese proveedor de inicio de sesión no está disponible en este servidor.',
+  'provider.not_found': 'No se pudo encontrar ese proveedor de inicio de sesión.',
+  'provider.invalid_type': 'Ese proveedor no se puede usar con este tipo de inicio de sesión.',
+  'provider.missing_client_id': 'Se requiere el ID de cliente del proveedor.',
+  'provider.missing_url': 'Se requiere la URL del proveedor.',
+  'provider.invalid_url': 'La URL del proveedor no es válida.',
+  // ── oauth ──
+  'oauth.missing_code':
+    'El proveedor de inicio de sesión no devolvió ningún código de autorización. Inténtalo de nuevo.',
+  'oauth.missing_state':
+    'El proveedor de inicio de sesión no devolvió ningún token de estado. Inténtalo de nuevo.',
+  'oauth.invalid_state':
+    'El intento de inicio de sesión ya no corresponde a este navegador o ha caducado. Inténtalo de nuevo.',
+  'oauth.missing_redirect_uri':
+    'Se requiere una dirección de redirección para continuar este inicio de sesión.',
+  'oauth.invalid_redirect_uri':
+    'Esa dirección de redirección no está en la lista permitida del servidor.',
+  'oauth.callback_url_not_configured':
+    'Este servidor aún no tiene una URL de devolución de llamada configurada.',
+  // ── ldap ──
+  'ldap.missing_host': 'Se requiere el host del servidor LDAP.',
+  'ldap.missing_base_dn': 'Se requiere el DN base de LDAP.',
+  'ldap.invalid_port': 'El número de puerto de LDAP no es válido.',
+  'ldap.connection_failed': 'El servidor no pudo conectarse al directorio LDAP.',
+  'ldap.bind_failed': 'Las credenciales de LDAP no pudieron iniciar sesión en el directorio.',
+  'ldap.error': 'El directorio LDAP devolvió un error.',
+  'ldap.runtime_error': 'La prueba de conexión LDAP falló de forma inesperada.',
   // ── syncplay ──
   'syncplay.create_failed': 'No se pudo crear el grupo de visionado.',
   'syncplay.join_failed': 'No se pudo unir al grupo de visionado.',
@@ -445,9 +604,20 @@ const FR: PhlixErrorCatalog = {
   'auth.account_pending': 'Votre compte est encore en attente d’approbation.',
   'auth.account_disabled': 'Ce compte a été désactivé.',
   'auth.password_change_required': 'Vous devez modifier votre mot de passe avant de continuer.',
+  'auth.unauthenticated': 'Connectez-vous avant de réclamer ce serveur.',
+  'auth.enrollment_expired':
+    'Le jeton d’enregistrement de ce serveur a expiré. Enregistrez-le de nouveau auprès du hub.',
+  'auth.server_mismatch': 'Le jeton d’enregistrement ne correspond pas à ce serveur.',
+  'auth.missing_credentials': 'Saisissez vos identifiants pour lier ce compte.',
+  'auth.invalid_credentials': 'Les identifiants saisis ne sont pas corrects.',
   'hub.not_enrolled': 'Ce serveur n’est pas encore enregistré auprès du hub.',
   'hub.token_required': 'Un jeton d’accès au hub est requis pour cette action.',
   'hub.jwt_invalid': 'Le jeton du hub n’est pas valide ou a expiré.',
+  'hub.protocol_unsupported': 'La requête n’a pas utilisé le protocole pris en charge par le hub.',
+  'hub.internal_error': 'Le hub a rencontré une erreur inattendue. Réessayez dans un instant.',
+  'claim.code_not_found': 'Ce code de réclamation est introuvable. Vérifiez-le et réessayez.',
+  'claim.code_expired': 'Ce code de réclamation a expiré. Générez-en un nouveau et réessayez.',
+  'claim.code_already_claimed': 'Ce code de réclamation a déjà été utilisé.',
   'server.not_found': 'Impossible de trouver ce serveur.',
   'server.not_owned': 'Ce serveur n’appartient pas à votre compte.',
   'server.relay_unavailable':
@@ -456,9 +626,15 @@ const FR: PhlixErrorCatalog = {
     'Ce serveur est hors ligne, ses bibliothèques ne peuvent donc pas être chargées. La navigation redeviendra possible dès sa reconnexion au hub.',
   'server.no_tunnel':
     'Ce serveur est en ligne, mais son tunnel relais sécurisé n’est pas encore connecté ; ses bibliothèques ne peuvent donc pas être chargées via le hub. Il devrait se reconnecter automatiquement — réessayez dans un instant.',
+  'server.key_invalid':
+    'La clé de signature du serveur n’a pas passé la vérification lors de la réclamation. Réessayez.',
   'proxy.scope_denied': 'Votre jeton d’accès ne possède pas le périmètre requis pour cette requête.',
   'quota.exceeded': 'Vous avez atteint la limite de votre quota de bande passante.',
   'stream.limit': 'Vous avez atteint le nombre maximal de lectures simultanées.',
+  'stream.limit_exceeded':
+    'Vous avez atteint la limite de lectures simultanées de ce serveur. Arrêtez-en une et réessayez.',
+  'access.scheduled':
+    'Ce profil n’est disponible que pendant ses heures programmées. Réessayez plus tard.',
   'gateway.timeout': 'La passerelle du hub a cessé d’attendre votre serveur. Réessayez.',
   'relay.client_ws_endpoint':
     'Ce point de montage est un WebSocket client — il ne peut pas être ouvert par une requête simple.',
@@ -474,6 +650,27 @@ const FR: PhlixErrorCatalog = {
   'mcp_token.not_found': 'Ce jeton d’accès MCP n’existe plus.',
   'alexa.streaming_unsupported': 'Le flux n’est pas pris en charge par l’adaptateur Alexa.',
   'alexa.malformed_envelope': 'L’enveloppe de la requête Alexa était mal formée.',
+  'alexa.verification_error': 'La requête Alexa n’a pas pu être vérifiée. Réessayez.',
+  'alexa.missing_cert_chain_url':
+    'La requête Alexa ne comportait pas d’URL de chaîne de certificats.',
+  'alexa.missing_signature_header': 'La requête Alexa ne comportait pas d’en-tête de signature.',
+  'alexa.empty_body': 'La requête Alexa est arrivée avec un corps vide.',
+  'alexa.cert_url_rejected':
+    'L’URL du certificat de la requête Alexa sortait des domaines autorisés d’Amazon.',
+  'alexa.cert_fetch_failed':
+    'Le serveur n’a pas pu récupérer la chaîne de certificats de la requête Alexa.',
+  'alexa.cert_chain_malformed':
+    'La chaîne de certificats envoyée avec la requête Alexa était mal formée.',
+  'alexa.signature_invalid': 'La signature de la requête Alexa n’a pas été validée.',
+  'alexa.cert_expired': 'Le certificat ayant signé la requête Alexa a expiré.',
+  'alexa.cert_san_mismatch':
+    'Le certificat de la requête Alexa n’a pas été émis pour un domaine Alexa.',
+  'alexa.cert_chain_untrusted':
+    'La chaîne de certificats de la requête Alexa ne s’ancre pas sur la racine d’Amazon.',
+  'alexa.timestamp_malformed': 'L’en-tête d’horodatage de la requête Alexa était illisible.',
+  'alexa.timestamp_missing': 'La requête Alexa ne comportait pas d’en-tête d’horodatage.',
+  'alexa.timestamp_stale':
+    'L’horodatage de la requête Alexa était trop ancien. Vérifiez l’horloge du serveur.',
   'tls.acme_not_implemented': 'La délivrance automatique de certificats TLS n’est pas encore disponible.',
   'csrf.invalid_origin': 'L’origine de la requête a échoué au contrôle CSRF.',
   'user.not_found': 'Impossible de trouver l’utilisateur de cette session.',
@@ -507,6 +704,7 @@ const FR: PhlixErrorCatalog = {
   'profile.last_profile': 'C’est votre dernier profil, il ne peut donc pas être supprimé.',
   'profile.no_pin': 'Aucun PIN n’est configuré sur ce profil pour le vérifier.',
   'profile.pin_mismatch': 'Ce PIN n’est pas correct.',
+  'profile.not_found': 'Ce profil n’existe plus. Choisissez-en un autre.',
   'dlna.forbidden': 'Cet appareil n’est pas autorisé à utiliser DLNA sur ce serveur.',
   'casting.disabled': 'La diffusion est désactivée sur ce serveur.',
   unauthorized: 'Vous n’êtes pas autorisé à gérer le couplage sur ce serveur.',
@@ -571,6 +769,43 @@ const FR: PhlixErrorCatalog = {
   invalid_quota: 'La valeur du quota n’est pas valide.',
   invalid_throttle: 'La valeur de limitation n’est pas valide.',
   update_check_dispatch_failed: 'La vérification des mises à jour n’a pas pu être lancée. Réessayez.',
+  'identity.missing_id': 'Aucune identité liée n’a été sélectionnée pour cette action.',
+  'identity.not_found': 'Cette identité liée est introuvable.',
+  'identity.last_sign_in_method':
+    'C’est le seul moyen de connexion restant pour votre compte ; il ne peut donc pas être dissocié.',
+  'identity.already_linked': 'Ce compte fournisseur est déjà lié à un autre compte d’ici.',
+  'identity.invalid': 'Le fournisseur n’a pas renvoyé d’identité de compte exploitable.',
+  'identity.link_unavailable':
+    'La liaison de comptes est temporairement indisponible sur ce serveur.',
+  'identity.invalid_link_state':
+    'La demande de liaison a expiré avant d’aboutir. Reprenez depuis le début.',
+  'provider.not_configured':
+    'Aucun fournisseur de connexion n’est encore configuré sur ce serveur.',
+  'provider.unknown': 'Ce fournisseur de connexion n’est pas disponible sur ce serveur.',
+  'provider.not_found': 'Ce fournisseur de connexion est introuvable.',
+  'provider.invalid_type': 'Ce fournisseur ne peut pas servir à ce type de connexion.',
+  'provider.missing_client_id': 'L’identifiant client du fournisseur est requis.',
+  'provider.missing_url': 'L’URL du fournisseur est requise.',
+  'provider.invalid_url': 'L’URL du fournisseur n’est pas valide.',
+  'oauth.missing_code':
+    'Le fournisseur de connexion n’a renvoyé aucun code d’autorisation. Reconnectez-vous.',
+  'oauth.missing_state':
+    'Le fournisseur de connexion n’a renvoyé aucun jeton d’état. Reconnectez-vous.',
+  'oauth.invalid_state':
+    'La tentative de connexion ne correspond plus à ce navigateur ou a expiré. Réessayez.',
+  'oauth.missing_redirect_uri':
+    'Une adresse de redirection est requise pour poursuivre cette connexion.',
+  'oauth.invalid_redirect_uri':
+    'Cette adresse de redirection ne figure pas dans la liste autorisée du serveur.',
+  'oauth.callback_url_not_configured':
+    'Ce serveur n’a encore aucune URL de rappel de connexion configurée.',
+  'ldap.missing_host': 'L’hôte du serveur LDAP est requis.',
+  'ldap.missing_base_dn': 'Le DN de base LDAP est requis.',
+  'ldap.invalid_port': 'Le numéro de port LDAP n’est pas valide.',
+  'ldap.connection_failed': 'Le serveur n’a pas pu se connecter à l’annuaire LDAP.',
+  'ldap.bind_failed': 'Les identifiants LDAP n’ont pas pu ouvrir de session sur l’annuaire.',
+  'ldap.error': 'L’annuaire LDAP a renvoyé une erreur.',
+  'ldap.runtime_error': 'Le test de connexion LDAP a échoué de façon inattendue.',
   'syncplay.create_failed': 'Impossible de créer le groupe de visionnage.',
   'syncplay.join_failed': 'Impossible de rejoindre le groupe de visionnage.',
   'syncplay.leave_failed': 'Impossible de quitter le groupe de visionnage.',
@@ -602,9 +837,23 @@ const DE: PhlixErrorCatalog = {
   'auth.account_pending': 'Ihr Konto wartet noch auf Genehmigung.',
   'auth.account_disabled': 'Dieses Konto wurde deaktiviert.',
   'auth.password_change_required': 'Sie müssen Ihr Passwort ändern, bevor Sie fortfahren.',
+  'auth.unauthenticated': 'Bitte melden Sie sich an, bevor Sie diesen Server registrieren.',
+  'auth.enrollment_expired':
+    'Das Registrierungs-Token dieses Servers ist abgelaufen. Registrieren Sie ihn erneut am Hub.',
+  'auth.server_mismatch': 'Das Registrierungs-Token passt nicht zu diesem Server.',
+  'auth.missing_credentials': 'Geben Sie Ihre Zugangsdaten ein, um dieses Konto zu verknüpfen.',
+  'auth.invalid_credentials': 'Die eingegebenen Zugangsdaten sind nicht korrekt.',
   'hub.not_enrolled': 'Dieser Server ist beim Hub noch nicht registriert.',
   'hub.token_required': 'Für diese Aktion ist ein Hub-Zugriffstoken erforderlich.',
   'hub.jwt_invalid': 'Das Hub-Token ist ungültig oder abgelaufen.',
+  'hub.protocol_unsupported': 'Die Anfrage hat das vom Hub unterstützte Protokoll nicht verwendet.',
+  'hub.internal_error':
+    'Der Hub hat einen unerwarteten Fehler entdeckt. Versuchen Sie es gleich erneut.',
+  'claim.code_not_found':
+    'Dieser Registrierungscode wurde nicht gefunden. Prüfen Sie ihn und versuchen Sie es erneut.',
+  'claim.code_expired':
+    'Dieser Registrierungscode ist abgelaufen. Erzeugen Sie einen neuen und versuchen Sie es erneut.',
+  'claim.code_already_claimed': 'Dieser Registrierungscode wurde bereits verwendet.',
   'server.not_found': 'Dieser Server wurde nicht gefunden.',
   'server.not_owned': 'Dieser Server gehört nicht zu Ihrem Konto.',
   'server.relay_unavailable':
@@ -613,9 +862,15 @@ const DE: PhlixErrorCatalog = {
     'Dieser Server ist offline, seine Bibliotheken können daher nicht geladen werden. Nach der Wiederverbindung mit dem Hub ist er wieder durchstöberbar.',
   'server.no_tunnel':
     'Dieser Server ist online, aber sein sicherer Relay-Tunnel ist noch nicht verbunden; seine Bibliotheken können daher nicht über den Hub geladen werden. Die Verbindung sollte automatisch wiederhergestellt werden — versuchen Sie es gleich erneut.',
+  'server.key_invalid':
+    'Der Signaturschlüssel des Servers hat die Prüfung beim Registrieren nicht bestanden. Versuchen Sie es erneut.',
   'proxy.scope_denied': 'Ihr Zugriffstoken hat nicht die erforderliche Berechtigung für diese Anfrage.',
   'quota.exceeded': 'Sie haben das Limit Ihres Bandbreitenkontingents erreicht.',
   'stream.limit': 'Sie haben die höchste zulässige Anzahl gleichzeitiger Wiedergaben erreicht.',
+  'stream.limit_exceeded':
+    'Sie haben das Limit gleichzeitiger Streams auf diesem Server erreicht. Beenden Sie einen und versuchen Sie es erneut.',
+  'access.scheduled':
+    'Dieses Profil ist nur innerhalb seines geplanten Zeitfensters verfügbar. Versuchen Sie es später erneut.',
   'gateway.timeout': 'Das Hub-Gateway hat beim Warten auf Ihren Server eine Zeitüberschreitung erreicht. Versuchen Sie es erneut.',
   'relay.client_ws_endpoint':
     'Dieser Endpunkt ist ein Client-WebSocket-Mount — er lässt sich nicht mit einer einfachen Anfrage öffnen.',
@@ -631,6 +886,27 @@ const DE: PhlixErrorCatalog = {
   'mcp_token.not_found': 'Dieses MCP-Zugriffstoken gibt es nicht mehr.',
   'alexa.streaming_unsupported': 'Streaming wird über den Alexa-Adapter nicht unterstützt.',
   'alexa.malformed_envelope': 'Der Anfrageumschlag von Alexa war fehlerhaft aufgebaut.',
+  'alexa.verification_error':
+    'Die Alexa-Anfrage konnte nicht überprüft werden. Versuchen Sie es erneut.',
+  'alexa.missing_cert_chain_url': 'Der Alexa-Anfrage fehlte die URL der Zertifikatskette.',
+  'alexa.missing_signature_header': 'Der Alexa-Anfrage fehlte der Signatur-Header.',
+  'alexa.empty_body': 'Die Alexa-Anfrage kam mit einem leeren Inhalt.',
+  'alexa.cert_url_rejected':
+    'Die Zertifikats-URL der Alexa-Anfrage lag außerhalb der erlaubten Amazon-Domains.',
+  'alexa.cert_fetch_failed':
+    'Der Server konnte die Zertifikatskette der Alexa-Anfrage nicht abrufen.',
+  'alexa.cert_chain_malformed':
+    'Die mit der Alexa-Anfrage gesendete Zertifikatskette war fehlerhaft aufgebaut.',
+  'alexa.signature_invalid': 'Die Signatur der Alexa-Anfrage wurde nicht anerkannt.',
+  'alexa.cert_expired': 'Das Zertifikat der Alexa-Anfrage ist abgelaufen.',
+  'alexa.cert_san_mismatch':
+    'Das Zertifikat der Alexa-Anfrage wurde nicht für eine Alexa-Domain ausgestellt.',
+  'alexa.cert_chain_untrusted':
+    'Die Zertifikatskette der Alexa-Anfrage stützt sich nicht auf das Amazon-Stammzertifikat.',
+  'alexa.timestamp_malformed': 'Der Zeitstempel-Header der Alexa-Anfrage war nicht lesbar.',
+  'alexa.timestamp_missing': 'Der Alexa-Anfrage fehlte der Zeitstempel-Header.',
+  'alexa.timestamp_stale':
+    'Der Zeitstempel der Alexa-Anfrage war zu alt. Prüfen Sie die Serveruhr.',
   'tls.acme_not_implemented': 'Die automatische TLS-Zertifikatsausstellung ist noch nicht verfügbar.',
   'csrf.invalid_origin': 'Die Anfrageherkunft hat die CSRF-Prüfung nicht bestanden.',
   'user.not_found': 'Der Benutzer dieser Sitzung wurde nicht gefunden.',
@@ -664,6 +940,7 @@ const DE: PhlixErrorCatalog = {
   'profile.last_profile': 'Dies ist Ihr letztes Profil, es kann daher nicht gelöscht werden.',
   'profile.no_pin': 'Für dieses Profil ist keine PIN eingerichtet, die geprüft werden könnte.',
   'profile.pin_mismatch': 'Diese PIN ist nicht korrekt.',
+  'profile.not_found': 'Dieses Profil existiert nicht mehr. Wählen Sie ein anderes aus.',
   'dlna.forbidden': 'Dieses Gerät darf DLNA auf diesem Server nicht verwenden.',
   'casting.disabled': 'Casting ist auf diesem Server deaktiviert.',
   unauthorized: 'Sie sind nicht berechtigt, die Kopplung auf diesem Server zu verwalten.',
@@ -728,6 +1005,43 @@ const DE: PhlixErrorCatalog = {
   invalid_quota: 'Der Kontingentwert ist ungültig.',
   invalid_throttle: 'Der Drosselungswert ist ungültig.',
   update_check_dispatch_failed: 'Die Update-Prüfung konnte nicht gestartet werden. Versuchen Sie es erneut.',
+  'identity.missing_id': 'Für diese Aktion wurde keine verknüpfte Identität ausgewählt.',
+  'identity.not_found': 'Diese verknüpfte Identität wurde nicht gefunden.',
+  'identity.last_sign_in_method':
+    'Dies ist die einzige verbleibende Anmeldemethode Ihres Kontos; deshalb kann sie nicht getrennt werden.',
+  'identity.already_linked':
+    'Dieses Anbieterkonto ist bereits mit einem anderen Konto hier verknüpft.',
+  'identity.invalid': 'Der Anbieter hat keine nutzbare Konto-Identität zurückgegeben.',
+  'identity.link_unavailable':
+    'Die Kontoverknüpfung ist auf diesem Server vorübergehend nicht verfügbar.',
+  'identity.invalid_link_state':
+    'Die Verknüpfungsanfrage ist vor dem Abschluss abgelaufen. Beginnen Sie erneut.',
+  'provider.not_configured': 'Auf diesem Server ist noch kein Anmelde-Anbieter eingerichtet.',
+  'provider.unknown': 'Dieser Anmelde-Anbieter ist auf diesem Server nicht verfügbar.',
+  'provider.not_found': 'Dieser Anmelde-Anbieter wurde nicht gefunden.',
+  'provider.invalid_type':
+    'Dieser Anbieter kann für diese Art der Anmeldung nicht verwendet werden.',
+  'provider.missing_client_id': 'Die Client-ID des Anbieters ist erforderlich.',
+  'provider.missing_url': 'Die URL des Anbieters ist erforderlich.',
+  'provider.invalid_url': 'Die URL des Anbieters ist nicht gültig.',
+  'oauth.missing_code':
+    'Der Anmelde-Anbieter hat keinen Autorisierungscode zurückgegeben. Melden Sie sich erneut an.',
+  'oauth.missing_state':
+    'Der Anmelde-Anbieter hat keinen State-Token zurückgegeben. Melden Sie sich erneut an.',
+  'oauth.invalid_state':
+    'Der Anmeldeversuch passt nicht mehr zu diesem Browser oder ist abgelaufen. Versuchen Sie es erneut.',
+  'oauth.missing_redirect_uri': 'Für diese Anmeldung ist eine Umleitungsadresse erforderlich.',
+  'oauth.invalid_redirect_uri':
+    'Diese Umleitungsadresse steht nicht auf der Erlaubnisliste des Servers.',
+  'oauth.callback_url_not_configured':
+    'Dieser Server hat noch keine Rückruf-URL für Anmeldungen eingerichtet.',
+  'ldap.missing_host': 'Der Host des LDAP-Servers ist erforderlich.',
+  'ldap.missing_base_dn': 'Der Basis-DN von LDAP ist erforderlich.',
+  'ldap.invalid_port': 'Die LDAP-Portnummer ist nicht gültig.',
+  'ldap.connection_failed': 'Der Server konnte sich nicht mit dem LDAP-Verzeichnis verbinden.',
+  'ldap.bind_failed': 'Die LDAP-Zugangsdaten konnten sich nicht am Verzeichnis anmelden.',
+  'ldap.error': 'Das LDAP-Verzeichnis hat einen Fehler zurückgegeben.',
+  'ldap.runtime_error': 'Der LDAP-Verbindungstest ist unerwartet fehlgeschlagen.',
   'syncplay.create_failed': 'Die Wiedergabegruppe konnte nicht erstellt werden.',
   'syncplay.join_failed': 'Der Wiedergabegruppe konnte nicht beigetreten werden.',
   'syncplay.leave_failed': 'Die Wiedergabegruppe konnte nicht verlassen werden.',
@@ -758,9 +1072,20 @@ const IT: PhlixErrorCatalog = {
   'auth.account_pending': 'Il tuo account è ancora in attesa di approvazione.',
   'auth.account_disabled': 'Questo account è stato disattivato.',
   'auth.password_change_required': 'Devi cambiare la password prima di continuare.',
+  'auth.unauthenticated': 'Accedi prima di attivare questo server.',
+  'auth.enrollment_expired':
+    'Il token di registrazione di questo server è scaduto. Registralo di nuovo presso l’hub.',
+  'auth.server_mismatch': 'Il token di registrazione non corrisponde a questo server.',
+  'auth.missing_credentials': 'Inserisci le tue credenziali per collegare questo account.',
+  'auth.invalid_credentials': 'Le credenziali inserite non sono corrette.',
   'hub.not_enrolled': 'Questo server non è ancora registrato presso l’hub.',
   'hub.token_required': 'Per questa azione è richiesto un token di accesso all’hub.',
   'hub.jwt_invalid': 'Il token dell’hub non è valido o è scaduto.',
+  'hub.protocol_unsupported': 'La richiesta non ha usato il protocollo supportato dall’hub.',
+  'hub.internal_error': 'L’hub ha riscontrato un errore inatteso. Riprova tra poco.',
+  'claim.code_not_found': 'Il codice di attivazione non è stato trovato. Controllalo e riprova.',
+  'claim.code_expired': 'Il codice di attivazione è scaduto. Generane uno nuovo e riprova.',
+  'claim.code_already_claimed': 'Il codice di attivazione è già stato usato.',
   'server.not_found': 'Impossibile trovare questo server.',
   'server.not_owned': 'Questo server non appartiene al tuo account.',
   'server.relay_unavailable':
@@ -769,9 +1094,15 @@ const IT: PhlixErrorCatalog = {
     'Questo server è offline, quindi le sue librerie non possono essere caricate. Sarà di nuovo navigabile quando si riconnetterà all’hub.',
   'server.no_tunnel':
     'Questo server è online ma il suo tunnel relay sicuro non è ancora connesso, quindi le sue librerie non possono essere caricate tramite l’hub. Dovrebbe riconnettersi da solo: riprova tra un momento.',
+  'server.key_invalid':
+    'La chiave di firma del server non ha superato la verifica durante l’attivazione. Riprova.',
   'proxy.scope_denied': 'Il tuo token di accesso non ha l’ambito necessario per questa richiesta.',
   'quota.exceeded': 'Hai raggiunto il limite della tua quota di banda.',
   'stream.limit': 'Hai raggiunto il numero massimo di streaming simultanei.',
+  'stream.limit_exceeded':
+    'Hai raggiunto il limite di riproduzioni simultanee su questo server. Fermane una e riprova.',
+  'access.scheduled':
+    'Questo profilo è disponibile solo nella fascia oraria programmata. Riprova più tardi.',
   'gateway.timeout': 'Il gateway dell’hub ha superato il tempo di attesa per il tuo server. Riprova.',
   'relay.client_ws_endpoint':
     'Questo endpoint è un mount WebSocket client: non può essere aperto con una richiesta semplice.',
@@ -787,6 +1118,28 @@ const IT: PhlixErrorCatalog = {
   'mcp_token.not_found': 'Questo token di accesso MCP non esiste più.',
   'alexa.streaming_unsupported': 'Lo streaming non è supportato tramite l’adattatore Alexa.',
   'alexa.malformed_envelope': 'La busta della richiesta Alexa non era ben formata.',
+  'alexa.verification_error': 'La richiesta Alexa non è stata verificata. Riprova.',
+  'alexa.missing_cert_chain_url':
+    'La richiesta Alexa non includeva l’URL della catena dei certificati.',
+  'alexa.missing_signature_header': 'La richiesta Alexa non includeva l’header della firma.',
+  'alexa.empty_body': 'La richiesta Alexa è arrivata con un corpo vuoto.',
+  'alexa.cert_url_rejected':
+    'L’URL del certificato della richiesta Alexa era fuori dai domini consentiti di Amazon.',
+  'alexa.cert_fetch_failed':
+    'Il server non è riuscito a scaricare la catena dei certificati della richiesta Alexa.',
+  'alexa.cert_chain_malformed':
+    'La catena dei certificati inviata con la richiesta Alexa non era valida.',
+  'alexa.signature_invalid': 'La firma della richiesta Alexa non è risultata valida.',
+  'alexa.cert_expired': 'Il certificato usato per firmare la richiesta Alexa è scaduto.',
+  'alexa.cert_san_mismatch':
+    'Il certificato della richiesta Alexa non è stato rilasciato per un dominio Alexa.',
+  'alexa.cert_chain_untrusted':
+    'La catena dei certificati della richiesta Alexa non fa capo al certificato radice di Amazon.',
+  'alexa.timestamp_malformed':
+    'L’header della data-ora della richiesta Alexa non era interpretabile.',
+  'alexa.timestamp_missing': 'La richiesta Alexa non includeva l’header della data-ora.',
+  'alexa.timestamp_stale':
+    'La data-ora della richiesta Alexa era troppo vecchia. Verifica l’orologio del server.',
   'tls.acme_not_implemented': 'Il rilascio automatico dei certificati TLS non è ancora disponibile.',
   'csrf.invalid_origin': 'L’origine della richiesta non ha superato il controllo CSRF.',
   'user.not_found': 'Impossibile trovare l’utente di questa sessione.',
@@ -820,6 +1173,7 @@ const IT: PhlixErrorCatalog = {
   'profile.last_profile': 'Questo è il tuo ultimo profilo, non può essere eliminato.',
   'profile.no_pin': 'Questo profilo non ha un PIN configurato da verificare.',
   'profile.pin_mismatch': 'Questo PIN non è corretto.',
+  'profile.not_found': 'Il profilo non esiste più. Scegline un altro.',
   'dlna.forbidden': 'Questo dispositivo non può usare DLNA su questo server.',
   'casting.disabled': 'Il casting è disattivato su questo server.',
   unauthorized: 'Non sei autorizzato a gestire l’abbinamento su questo server.',
@@ -884,6 +1238,42 @@ const IT: PhlixErrorCatalog = {
   invalid_quota: 'Il valore della quota non è valido.',
   invalid_throttle: 'Il valore di limitazione non è valido.',
   update_check_dispatch_failed: 'Impossibile avviare il controllo degli aggiornamenti. Riprova.',
+  'identity.missing_id': 'Nessuna identità collegata è stata selezionata per questa azione.',
+  'identity.not_found': 'L’identità collegata non è stata trovata.',
+  'identity.last_sign_in_method':
+    'È l’unico modo di accedere rimasto per il tuo account, quindi non può essere scollegato.',
+  'identity.already_linked': 'Questo account del fornitore è già collegato a un altro account qui.',
+  'identity.invalid': 'Il fornitore non ha restituito un’identità di account utilizzabile.',
+  'identity.link_unavailable':
+    'Il collegamento degli account non è temporaneamente disponibile su questo server.',
+  'identity.invalid_link_state':
+    'La richiesta di collegamento è scaduta prima di concludersi. Ricomincia.',
+  'provider.not_configured': 'Nessun fornitore di accesso è ancora configurato su questo server.',
+  'provider.unknown': 'Il fornitore di accesso non è disponibile su questo server.',
+  'provider.not_found': 'Il fornitore di accesso non è stato trovato.',
+  'provider.invalid_type': 'Questo fornitore non può essere usato per questa modalità di accesso.',
+  'provider.missing_client_id': 'L’ID client del fornitore è obbligatorio.',
+  'provider.missing_url': 'L’URL del fornitore è obbligatorio.',
+  'provider.invalid_url': 'L’URL del fornitore non è valida.',
+  'oauth.missing_code':
+    'Il fornitore di accesso non ha restituito alcun codice di autorizzazione. Riprova ad accedere.',
+  'oauth.missing_state':
+    'Il fornitore di accesso non ha restituito alcun token di stato. Riprova ad accedere.',
+  'oauth.invalid_state':
+    'Il tentativo di accesso non corrisponde più a questo browser o è scaduto. Riprova.',
+  'oauth.missing_redirect_uri':
+    'Per proseguire questo accesso è richiesto un indirizzo di reindirizzamento.',
+  'oauth.invalid_redirect_uri':
+    'Quell’indirizzo di reindirizzamento non è tra quelli consentiti dal server.',
+  'oauth.callback_url_not_configured':
+    'Questo server non ha ancora un URL di richiamata configurato.',
+  'ldap.missing_host': 'L’host del server LDAP è obbligatorio.',
+  'ldap.missing_base_dn': 'Il DN base LDAP è obbligatorio.',
+  'ldap.invalid_port': 'Il numero di porta LDAP non è valido.',
+  'ldap.connection_failed': 'Il server non è riuscito a connettersi alla directory LDAP.',
+  'ldap.bind_failed': 'Le credenziali LDAP non hanno potuto accedere alla directory.',
+  'ldap.error': 'La directory LDAP ha restituito un errore.',
+  'ldap.runtime_error': 'Il test di connessione LDAP è fallito in modo inatteso.',
   'syncplay.create_failed': 'Impossibile creare il gruppo di visione.',
   'syncplay.join_failed': 'Impossibile unirsi al gruppo di visione.',
   'syncplay.leave_failed': 'Impossibile uscire dal gruppo di visione.',
@@ -914,9 +1304,20 @@ const PT_BR: PhlixErrorCatalog = {
   'auth.account_pending': 'Sua conta ainda está aguardando aprovação.',
   'auth.account_disabled': 'Esta conta foi desativada.',
   'auth.password_change_required': 'Você precisa trocar sua senha antes de continuar.',
+  'auth.unauthenticated': 'Entre na sua conta antes de resgatar este servidor.',
+  'auth.enrollment_expired':
+    'O token de inscrição deste servidor expirou. Inscreva-o novamente no hub.',
+  'auth.server_mismatch': 'O token de inscrição não corresponde a este servidor.',
+  'auth.missing_credentials': 'Informe suas credenciais para vincular esta conta.',
+  'auth.invalid_credentials': 'As credenciais informadas não estão corretas.',
   'hub.not_enrolled': 'Este servidor ainda não está inscrito no hub.',
   'hub.token_required': 'Um token de acesso ao hub é necessário para esta ação.',
   'hub.jwt_invalid': 'O token do hub é inválido ou expirou.',
+  'hub.protocol_unsupported': 'A solicitação não usou o protocolo compatível com o hub.',
+  'hub.internal_error': 'O hub encontrou um erro inesperado. Tente novamente em instantes.',
+  'claim.code_not_found': 'Esse código de resgate não foi encontrado. Verifique e tente de novo.',
+  'claim.code_expired': 'Esse código de resgate expirou. Gere um novo e tente de novo.',
+  'claim.code_already_claimed': 'Esse código de resgate já foi usado.',
   'server.not_found': 'Não foi possível encontrar esse servidor.',
   'server.not_owned': 'Este servidor não pertence à sua conta.',
   'server.relay_unavailable':
@@ -925,9 +1326,15 @@ const PT_BR: PhlixErrorCatalog = {
     'Este servidor está offline, então as bibliotecas dele não podem ser carregadas. Ele voltará a ser navegável quando se reconectar ao hub.',
   'server.no_tunnel':
     'Este servidor está online, mas o túnel seguro de relay dele ainda não está conectado, então as bibliotecas não podem ser carregadas pelo hub. A reconexão deve acontecer sozinha — tente novamente em instantes.',
+  'server.key_invalid':
+    'A chave de assinatura do servidor não passou na validação durante o resgate. Tente de novo.',
   'proxy.scope_denied': 'Seu token de acesso não tem o escopo necessário para esta requisição.',
   'quota.exceeded': 'Você atingiu o limite da sua cota de banda.',
   'stream.limit': 'Você atingiu o número máximo de transmissões simultâneas.',
+  'stream.limit_exceeded':
+    'Você atingiu o limite de transmissões simultâneas deste servidor. Pare uma e tente de novo.',
+  'access.scheduled':
+    'Este perfil só está disponível dentro do horário programado. Tente mais tarde.',
   'gateway.timeout': 'O gateway do hub expirou ao esperar pelo seu servidor. Tente de novo.',
   'relay.client_ws_endpoint':
     'Este endpoint é uma montagem WebSocket de cliente — não pode ser aberto com uma requisição comum.',
@@ -943,6 +1350,28 @@ const PT_BR: PhlixErrorCatalog = {
   'mcp_token.not_found': 'Esse token de acesso MCP não existe mais.',
   'alexa.streaming_unsupported': 'Streaming não é compatível com o adaptador da Alexa.',
   'alexa.malformed_envelope': 'O envelope da requisição da Alexa estava malformado.',
+  'alexa.verification_error': 'A solicitação da Alexa não pôde ser verificada. Tente de novo.',
+  'alexa.missing_cert_chain_url':
+    'A solicitação da Alexa não incluía a URL da cadeia de certificados.',
+  'alexa.missing_signature_header': 'A solicitação da Alexa não incluía o cabeçalho de assinatura.',
+  'alexa.empty_body': 'A solicitação da Alexa chegou com o corpo vazio.',
+  'alexa.cert_url_rejected':
+    'A URL do certificado da solicitação da Alexa estava fora dos domínios permitidos da Amazon.',
+  'alexa.cert_fetch_failed':
+    'O servidor não conseguiu baixar a cadeia de certificados da solicitação da Alexa.',
+  'alexa.cert_chain_malformed':
+    'A cadeia de certificados enviada com a solicitação da Alexa estava malformada.',
+  'alexa.signature_invalid': 'A assinatura da solicitação da Alexa não foi confirmada.',
+  'alexa.cert_expired': 'O certificado usado para assinar a solicitação da Alexa expirou.',
+  'alexa.cert_san_mismatch':
+    'O certificado da solicitação da Alexa não foi emitido para um domínio da Alexa.',
+  'alexa.cert_chain_untrusted':
+    'A cadeia de certificados da solicitação da Alexa não se ancorou no certificado raiz da Amazon.',
+  'alexa.timestamp_malformed':
+    'O cabeçalho de data e hora da solicitação da Alexa não pôde ser lido.',
+  'alexa.timestamp_missing': 'A solicitação da Alexa não incluía o cabeçalho de data e hora.',
+  'alexa.timestamp_stale':
+    'A data e hora da solicitação da Alexa era antiga demais. Verifique o relógio do servidor.',
   'tls.acme_not_implemented': 'A emissão automática de certificados TLS ainda não está disponível.',
   'csrf.invalid_origin': 'A origem da requisição não passou na verificação CSRF.',
   'user.not_found': 'Não foi possível encontrar o usuário desta sessão.',
@@ -976,6 +1405,7 @@ const PT_BR: PhlixErrorCatalog = {
   'profile.last_profile': 'Este é o seu último perfil, por isso não pode ser excluído.',
   'profile.no_pin': 'Este perfil não tem um PIN configurado para verificar.',
   'profile.pin_mismatch': 'Esse PIN não está correto.',
+  'profile.not_found': 'Esse perfil não existe mais. Escolha outro.',
   'dlna.forbidden': 'Este dispositivo não tem permissão para usar DLNA neste servidor.',
   'casting.disabled': 'A transmissão para aparelhos está desativada neste servidor.',
   unauthorized: 'Você não está autorizado a gerenciar o pareamento neste servidor.',
@@ -1040,6 +1470,42 @@ const PT_BR: PhlixErrorCatalog = {
   invalid_quota: 'O valor da cota não é válido.',
   invalid_throttle: 'O valor de limitação não é válido.',
   update_check_dispatch_failed: 'A checagem de atualizações não pôde ser iniciada. Tente de novo.',
+  'identity.missing_id': 'Nenhuma identidade vinculada foi selecionada para esta ação.',
+  'identity.not_found': 'Essa identidade vinculada não foi encontrada.',
+  'identity.last_sign_in_method':
+    'Esta é a única forma de entrar que resta na sua conta, por isso não pode ser desvinculada.',
+  'identity.already_linked': 'Essa conta do provedor já está vinculada a outra conta aqui.',
+  'identity.invalid': 'O provedor não devolveu uma identidade de conta utilizável.',
+  'identity.link_unavailable':
+    'A vinculação de contas está temporariamente indisponível neste servidor.',
+  'identity.invalid_link_state':
+    'A solicitação de vinculação expirou antes de terminar. Comece de novo.',
+  'provider.not_configured': 'Ainda não há nenhum provedor de entrada configurado neste servidor.',
+  'provider.unknown': 'Esse provedor de entrada não está disponível neste servidor.',
+  'provider.not_found': 'Esse provedor de entrada não foi encontrado.',
+  'provider.invalid_type': 'Esse provedor não pode ser usado para este tipo de entrada.',
+  'provider.missing_client_id': 'O ID de cliente do provedor é obrigatório.',
+  'provider.missing_url': 'A URL do provedor é obrigatória.',
+  'provider.invalid_url': 'A URL do provedor não é válida.',
+  'oauth.missing_code':
+    'O provedor de entrada não devolveu nenhum código de autorização. Entre de novo.',
+  'oauth.missing_state':
+    'O provedor de entrada não devolveu nenhum token de estado. Entre de novo.',
+  'oauth.invalid_state':
+    'A tentativa de entrada não corresponde mais a este navegador ou expirou. Tente de novo.',
+  'oauth.missing_redirect_uri':
+    'Um endereço de redirecionamento é necessário para continuar esta entrada.',
+  'oauth.invalid_redirect_uri':
+    'Esse endereço de redirecionamento não está na lista permitida do servidor.',
+  'oauth.callback_url_not_configured':
+    'Este servidor ainda não tem uma URL de retorno configurada.',
+  'ldap.missing_host': 'O host do servidor LDAP é obrigatório.',
+  'ldap.missing_base_dn': 'O DN base do LDAP é obrigatório.',
+  'ldap.invalid_port': 'O número da porta do LDAP não é válido.',
+  'ldap.connection_failed': 'O servidor não conseguiu se conectar ao diretório LDAP.',
+  'ldap.bind_failed': 'As credenciais do LDAP não conseguiram entrar no diretório.',
+  'ldap.error': 'O diretório LDAP devolveu um erro.',
+  'ldap.runtime_error': 'O teste de conexão LDAP falhou de forma inesperada.',
   'syncplay.create_failed': 'O grupo de exibição não pôde ser criado.',
   'syncplay.join_failed': 'Não foi possível entrar no grupo de exibição.',
   'syncplay.leave_failed': 'Não foi possível sair do grupo de exibição.',
@@ -1070,9 +1536,19 @@ const JA: PhlixErrorCatalog = {
   'auth.account_pending': 'アカウントは現在、承認待ちです。',
   'auth.account_disabled': 'このアカウントは無効化されています。',
   'auth.password_change_required': '続行する前にパスワードを変更する必要があります。',
+  'auth.unauthenticated': 'このサーバーを引き換える前にサインインしてください。',
+  'auth.enrollment_expired': 'このサーバーの登録トークンは有効期限が切れています。ハブで再登録してください。',
+  'auth.server_mismatch': '登録トークンがこのサーバーと一致しません。',
+  'auth.missing_credentials': 'このアカウントをリンクするには認証情報を入力してください。',
+  'auth.invalid_credentials': '入力された認証情報は正しくありません。',
   'hub.not_enrolled': 'このサーバーはまだハブに登録されていません。',
   'hub.token_required': 'この操作にはハブのアクセストークンが必要です。',
   'hub.jwt_invalid': 'ハブのトークンが無効か、有効期限が切れています。',
+  'hub.protocol_unsupported': 'このリクエストはハブの対応プロトコルで送信されていません。',
+  'hub.internal_error': 'ハブで予期しないエラーが発生しました。しばらくしてから再度お試しください。',
+  'claim.code_not_found': 'その引き換えコードは見つかりませんでした。確認して再度お試しください。',
+  'claim.code_expired': 'その引き換えコードは有効期限が切れています。新しいコードを発行して再度お試しください。',
+  'claim.code_already_claimed': 'その引き換えコードはすでに使用されています。',
   'server.not_found': 'そのサーバーは見つかりませんでした。',
   'server.not_owned': 'このサーバーはあなたのアカウントに属していません。',
   'server.relay_unavailable':
@@ -1081,9 +1557,12 @@ const JA: PhlixErrorCatalog = {
     'このサーバーはオフラインのため、ライブラリを読み込めません。ハブへの再接続が完了すれば、再び閲覧できるようになります。',
   'server.no_tunnel':
     'このサーバーはオンラインですが、安全なリレー トンネルがまだ接続されていないため、ライブラリをハブ経由で読み込めません。自動的に再接続されるはずです — しばらくしてからもう一度お試しください。',
+  'server.key_invalid': '引き換え中にサーバーの署名鍵の検証に失敗しました。もう一度お試しください。',
   'proxy.scope_denied': 'このリクエストに必要な権限スコープがアクセストークンに含まれていません。',
   'quota.exceeded': '帯域割当量の上限に達しました。',
   'stream.limit': '同時ストリーミングの上限数に達しました。',
+  'stream.limit_exceeded': 'このサーバーの同時ストリームの上限に達しました。いずれかを停止して再度お試しください。',
+  'access.scheduled': 'このプロフィールは設定された時間帯のみ利用できます。時間帯を改めてお試しください。',
   'gateway.timeout': 'ハブのゲートウェイがサーバーを待っている間にタイムアウトしました。もう一度お試しください。',
   'relay.client_ws_endpoint':
     'このエンドポイントはクライアントのWebSocketマウントであり、通常のリクエストでは開けません。',
@@ -1099,6 +1578,20 @@ const JA: PhlixErrorCatalog = {
   'mcp_token.not_found': 'そのMCPアクセストークンは存在しません。',
   'alexa.streaming_unsupported': 'Alexaアダプター経由ではストリーミングはサポートされていません。',
   'alexa.malformed_envelope': 'Alexaリクエストのエンベロープ形式が正しくありません。',
+  'alexa.verification_error': 'Alexaリクエストを検証できませんでした。もう一度お試しください。',
+  'alexa.missing_cert_chain_url': 'Alexaリクエストに証明書チェーンのURLが含まれていません。',
+  'alexa.missing_signature_header': 'Alexaリクエストに署名ヘッダーが含まれていません。',
+  'alexa.empty_body': 'Alexaリクエストの本文が空でした。',
+  'alexa.cert_url_rejected': 'Alexaリクエストの証明書URLがAmazonの許可されたドメイン外でした。',
+  'alexa.cert_fetch_failed': 'サーバーはAlexaリクエストの証明書チェーンを取得できませんでした。',
+  'alexa.cert_chain_malformed': 'Alexaリクエストで送られた証明書チェーンが不正な形式でした。',
+  'alexa.signature_invalid': 'Alexaリクエストの署名の検証に失敗しました。',
+  'alexa.cert_expired': 'Alexaリクエストの署名に使用された証明書の有効期限が切れています。',
+  'alexa.cert_san_mismatch': 'Alexaリクエストの証明書はAlexaドメイン向けに発行されたものではありません。',
+  'alexa.cert_chain_untrusted': 'Alexaリクエストの証明書チェーンはAmazonのルート証明書によって信頼されていません。',
+  'alexa.timestamp_malformed': 'Alexaリクエストのタイムスタンプヘッダーを解析できませんでした。',
+  'alexa.timestamp_missing': 'Alexaリクエストにタイムスタンプヘッダーが含まれていません。',
+  'alexa.timestamp_stale': 'Alexaリクエストのタイムスタンプが古すぎます。サーバーの時計を確認してください。',
   'tls.acme_not_implemented': 'TLS証明書の自動発行はまだ利用できません。',
   'csrf.invalid_origin': 'リクエストの送信元がCSRFチェックを通過しませんでした。',
   'user.not_found': 'このセッションのユーザーが見つかりませんでした。',
@@ -1131,6 +1624,7 @@ const JA: PhlixErrorCatalog = {
   'profile.last_profile': 'これが最後のプロフィールのため、削除できません。',
   'profile.no_pin': 'このプロフィールには確認用のPINが設定されていません。',
   'profile.pin_mismatch': 'そのPINは正しくありません。',
+  'profile.not_found': 'そのプロフィールはもう存在しません。ほかのプロフィールを選んでください。',
   'dlna.forbidden': 'このデバイスはこのサーバーでDLNAを利用する権限がありません。',
   'casting.disabled': 'このサーバーではキャスティングが無効になっています。',
   unauthorized: 'このサーバーでペアリングを管理する権限がありません。',
@@ -1195,6 +1689,33 @@ const JA: PhlixErrorCatalog = {
   invalid_quota: '割当量の値が正しくありません。',
   invalid_throttle: 'スロットリングの値が正しくありません。',
   update_check_dispatch_failed: '更新チェックを開始できませんでした。もう一度お試しください。',
+  'identity.missing_id': 'この操作にはリンクされたIDが選択されていません。',
+  'identity.not_found': 'そのリンクされたIDは見つかりませんでした。',
+  'identity.last_sign_in_method': 'これはアカウントで唯一残されたサインイン方法のため、リンクを解除できません。',
+  'identity.already_linked': 'そのプロバイダーのアカウントはすでにここの別のアカウントにリンクされています。',
+  'identity.invalid': 'プロバイダーから有効なアカウントIDが返されませんでした。',
+  'identity.link_unavailable': 'このサーバーではアカウントのリンクを一時的に利用できません。',
+  'identity.invalid_link_state': 'リンク要求が完了前に期限切れになりました。始めからやり直してください。',
+  'provider.not_configured': 'このサーバーにはまだサインインプロバイダーが設定されていません。',
+  'provider.unknown': 'そのサインインプロバイダーはこのサーバーでは利用できません。',
+  'provider.not_found': 'そのサインインプロバイダーは見つかりませんでした。',
+  'provider.invalid_type': 'そのプロバイダーはこの種類のサインインには使用できません。',
+  'provider.missing_client_id': 'プロバイダーのクライアントIDは必須です。',
+  'provider.missing_url': 'プロバイダーのURLは必須です。',
+  'provider.invalid_url': 'プロバイダーのURLが正しくありません。',
+  'oauth.missing_code': 'サインインプロバイダーから認可コードが返されませんでした。もう一度サインインしてください。',
+  'oauth.missing_state': 'サインインプロバイダーからステートトークンが返されませんでした。もう一度サインインしてください。',
+  'oauth.invalid_state': 'サインイン試行はこのブラウザーと一致しないか、期限切れです。もう一度お試しください。',
+  'oauth.missing_redirect_uri': 'このサインインを続行するにはリダイレクト先アドレスが必要です。',
+  'oauth.invalid_redirect_uri': 'そのリダイレクト先アドレスはサーバーの許可リストに含まれていません。',
+  'oauth.callback_url_not_configured': 'このサーバーにはサインインのコールバックURLがまだ設定されていません。',
+  'ldap.missing_host': 'LDAPサーバーのホストは必須です。',
+  'ldap.missing_base_dn': 'LDAPのベースDNは必須です。',
+  'ldap.invalid_port': 'LDAPのポート番号が正しくありません。',
+  'ldap.connection_failed': 'サーバーはLDAPディレクトリーに接続できませんでした。',
+  'ldap.bind_failed': 'LDAPの認証情報でディレクトリーにサインインできませんでした。',
+  'ldap.error': 'LDAPディレクトリーからエラーが返されました。',
+  'ldap.runtime_error': 'LDAP接続テストが予期しない原因で失敗しました。',
   'syncplay.create_failed': '視聴グループを作成できませんでした。',
   'syncplay.join_failed': '視聴グループに参加できませんでした。',
   'syncplay.leave_failed': '視聴グループから退出できませんでした。',
