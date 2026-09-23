@@ -26,6 +26,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     } | null>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    errorCode: import("vue").Ref<string | null, string | null>;
     isLoggedIn: ComputedRef<boolean>;
     isAdmin: ComputedRef<boolean>;
     client: ApiClient;
@@ -37,7 +38,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     logout: () => void;
     uploadAvatar: (file: File) => Promise<void>;
     deleteAvatar: () => Promise<void>;
-}, "user" | "error" | "loading" | "client">, Pick<{
+}, "user" | "error" | "loading" | "errorCode" | "client">, Pick<{
     user: import("vue").Ref<{
         [x: string]: unknown;
         id: string;
@@ -57,6 +58,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     } | null>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    errorCode: import("vue").Ref<string | null, string | null>;
     isLoggedIn: ComputedRef<boolean>;
     isAdmin: ComputedRef<boolean>;
     client: ApiClient;
@@ -88,6 +90,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     } | null>;
     loading: import("vue").Ref<boolean, boolean>;
     error: import("vue").Ref<string | null, string | null>;
+    errorCode: import("vue").Ref<string | null, string | null>;
     isLoggedIn: ComputedRef<boolean>;
     isAdmin: ComputedRef<boolean>;
     client: ApiClient;

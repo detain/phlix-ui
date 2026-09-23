@@ -333,6 +333,51 @@ locales supply the honest two-slot form and `ja` one segment.
    brand/cognate values that legitimately equal English in `UNTRANSLATED_OK`.
 5. `npm run lint && npm run typecheck && npx vitest run src/i18n`.
 
+### Error catalog (`src/i18n/errors.ts`) — deliberately NOT in `DEFAULT_MESSAGES`
+
+The wire carries stable error codes (the registry lives in `@phlix/contracts`
+— `ERROR_CODES`, 147 codes / 31 domains at the `v0.5.0` pin); clients localize
+code→message and the server's English `error` text is debug fallback only. This
+file is that localization layer: one flat `Record<ErrorCode, string>` per locale
+(`en` + the six bundle locales), plus `ERROR_TITLES` (the three Browse EmptyState
+codes that render as a headline + body) and `GENERIC_ERROR_MESSAGE` (the
+nothing-matched label).
+
+It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
+for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
+412-key identity and downstream clients (tizen, windows) pin bundle↔installed
+equality at tag `v0.99.5` — ~150 registry strings would churn every equality pin
+for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
+DERIVED from contracts (`Record<ErrorCode, string>` makes adding/removing a
+registered code a compile error), so it versions with the contracts pin, not
+with the message catalog.
+
+```ts
+import { errorCodeMessage, errorCodeTitle } from '@phlix/ui';
+
+// registry code → locale sentence → en → caller fallback → generic. Never throws:
+// unknown/empty/non-string codes degrade, they do not crash.
+errorCodeMessage('auth.required');                          // en catalog hit
+errorCodeMessage('unauthorized', 'es', serverText);         // es hit; serverText ignored
+errorCodeMessage('some.future.code', 'fr', serverText);     // unregistered → serverText
+errorCodeMessage(null, 'ja');                               // → GENERIC_ERROR_MESSAGE.ja
+```
+
+The active locale arrives config-time, like `messages`: `PhlixAppConfig.locale?:
+PhlixErrorLocale`. Wired consumers today: `LoginForm` (banner + toast resolve
+`errorCode` through the catalog with the server text as last-resort fallback),
+`browseErrors.libraryLoadErrorInfo` (code→title+catalog description), and
+`PlayerPage` via `playbackBlockingMessage` (reads `body.code ?? legacy
+error-text match` so it works before AND after the server W2 wave starts
+emitting real codes — the legacy pseudo-code strings stay until W2 lands).
+
+`src/i18n/errors.test.ts` mirrors the locale-bundle law suite: registry parity
+vs `ERROR_CODES` per locale, no `{token}`/no `|` (error sentences are static
+advice), zero English leakage with an EMPTY bidirectional allow-list, ja CJK
+everywhere, the same aggregate diacriticals floors, and the full accessor
+degradation matrix (known/unknown/blank/non-string codes × locale/invalid-locale
+× fallback/blank-fallback).
+
 ### Performance Patterns
 
 **Page Visibility API for Polling:**

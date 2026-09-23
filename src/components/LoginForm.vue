@@ -21,6 +21,7 @@ import Icon from './Icon.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
+import { errorCodeMessage } from '../i18n/errors';
 import { safeRedirect } from '../utils/safeRedirect';
 import type { PhlixAppConfig } from '../app/types';
 
@@ -35,6 +36,18 @@ const { t } = useMessages();
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.home ?? config?.routerBase ?? '/app');
 const signupPath = computed(() => `${config?.routerBase ?? '/app'}/signup`);
+
+// Error-code doctrine (W4): the wire's stable `code` localizes through the
+// contracts catalog for the configured locale; the server's English text is the
+// LAST-resort fallback (kept for unknown codes / code-less failures), and the
+// localized `auth.signInFailed` string covers the "nothing at all" case.
+const errorMessage = computed(() =>
+  errorCodeMessage(
+    auth.errorCode,
+    config?.locale,
+    auth.error ?? t('auth.signInFailed'),
+  ),
+);
 
 // The identifier may be a username OR an email — the store sends it under both
 // keys and the back ends resolve either, so there's no email-format gate here.
@@ -64,7 +77,7 @@ async function handleSubmit(): Promise<void> {
       void router.push(homePath.value);
     }
   } else {
-    toasts.error(auth.error ?? t('auth.signInFailed'));
+    toasts.error(errorMessage.value);
   }
 }
 </script>
@@ -73,7 +86,7 @@ async function handleSubmit(): Promise<void> {
   <AuthCard :eyebrow="t('auth.loginEyebrow')" :title="t('auth.loginTitle')" :subtitle="t('auth.loginSubtitle')">
     <p v-if="auth.error" class="login__banner" role="alert">
       <Icon name="alert" class="login__banner-icon" />
-      <span>{{ auth.error }}</span>
+      <span>{{ errorMessage }}</span>
     </p>
 
     <form class="login__form" novalidate @submit.prevent="handleSubmit">

@@ -8,6 +8,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed, watch, inject, type ComputedRef } from 'vue';
 import { ApiClient, type AuthUser } from '../api/client';
+import { ApiError } from '../api/errors';
 import { LocalStorageTokenStore } from '../api/tokenStore';
 import { useApiBase } from '../composables/useApiBase';
 
@@ -15,6 +16,21 @@ import { useApiBase } from '../composables/useApiBase';
 type InjectedLoginPath = string | ComputedRef<string> | undefined;
 function resolveLoginPath(injected: InjectedLoginPath): string {
     return typeof injected === 'string' ? injected : injected?.value ?? '/login';
+}
+
+/**
+ * Parse the stable machine error code off a failed request, when the back end
+ * carried one (`{ error, code }` envelope — same read as `useLibrariesStore`).
+ * Returns `null` for network errors, non-ApiError throws, and bodies without a
+ * usable `code`, so callers can distinguish "no code on the wire" from any
+ * registered value. Error-code doctrine: components localize this code via the
+ * `@phlix/contracts` registry catalog, never the server's English text.
+ */
+function parseErrorCode(e: unknown): string | null {
+    if (!(e instanceof ApiError) || !e.body || typeof e.body !== 'object' || !('code' in e.body)) {
+        return null;
+    }
+    return String((e.body as { code?: unknown }).code ?? '') || null;
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -34,6 +50,10 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref<AuthUser | null>(null);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    // Stable machine code from the `{ error, code }` envelope of the last failed
+    // request (null when the wire carried none). Components localize THIS, not
+    // `error` — the server text is a debug fallback (error-code doctrine, W4).
+    const errorCode = ref<string | null>(null);
     // Reactive mirror of the persisted token — localStorage reads aren't reactive,
     // so a plain computed over getAccessToken() would go stale after login/logout.
     const accessToken = ref<string | null>(tokenStore.getAccessToken());
@@ -72,6 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
     async function login(identifier: string, password: string): Promise<boolean> {
         loading.value = true;
         error.value = null;
+        errorCode.value = null;
         try {
             const body: Record<string, string> = { username: identifier, password };
             if (identifier.includes('@')) {
@@ -90,6 +111,7 @@ export const useAuthStore = defineStore('auth', () => {
             return isLoggedIn.value;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Login failed';
+            errorCode.value = parseErrorCode(e);
             return false;
         } finally {
             loading.value = false;
@@ -99,6 +121,7 @@ export const useAuthStore = defineStore('auth', () => {
     async function signup(email: string, username: string, password: string): Promise<boolean> {
         loading.value = true;
         error.value = null;
+        errorCode.value = null;
         try {
             const data = await client.post<{
                 access_token: string;
@@ -111,6 +134,7 @@ export const useAuthStore = defineStore('auth', () => {
             return isLoggedIn.value;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Registration failed';
+            errorCode.value = parseErrorCode(e);
             return false;
         } finally {
             loading.value = false;
@@ -119,9 +143,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function fetchUser(): Promise<void> {
         if (!isLoggedIn.value) return;
+        // Only a real attempt resets the code — the logged-out guard above keeps
+        // a failure code the form is currently displaying from being wiped.
+        errorCode.value = null;
         try {
             user.value = await client.getCurrentUser();
-        } catch {
+        } catch (e) {
+            errorCode.value = parseErrorCode(e);
             user.value = null;
             tokenStore.clear();
             accessToken.value = null;
@@ -167,6 +195,7 @@ export const useAuthStore = defineStore('auth', () => {
     async function uploadAvatar(file: File): Promise<void> {
         loading.value = true;
         error.value = null;
+        errorCode.value = null;
         try {
             const result = await client.uploadAvatar(file);
             if (user.value) {
@@ -174,6 +203,7 @@ export const useAuthStore = defineStore('auth', () => {
             }
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Avatar upload failed';
+            errorCode.value = parseErrorCode(e);
             throw e;
         } finally {
             loading.value = false;
@@ -183,6 +213,7 @@ export const useAuthStore = defineStore('auth', () => {
     async function deleteAvatar(): Promise<void> {
         loading.value = true;
         error.value = null;
+        errorCode.value = null;
         try {
             await client.deleteAvatar();
             if (user.value) {
@@ -190,6 +221,7 @@ export const useAuthStore = defineStore('auth', () => {
             }
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Avatar deletion failed';
+            errorCode.value = parseErrorCode(e);
             throw e;
         } finally {
             loading.value = false;
@@ -200,6 +232,7 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         loading,
         error,
+        errorCode,
         isLoggedIn,
         isAdmin,
         client,

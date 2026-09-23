@@ -9,34 +9,31 @@
  *     its secure relay tunnel isn't connected yet, so its libraries can't be
  *     loaded over the hub (it should reconnect automatically).
  *   - `server.offline` — the server is offline.
- * Any other/unknown code (or a direct-server failure with no code) falls back to
- * the generic "Couldn't load your libraries" title with the store's own message
- * as the description.
+ * Those three codes localize through the contracts error catalog
+ * (`src/i18n/errors.ts` — title via `errorCodeTitle`, body via
+ * `errorCodeMessage`), so every locale the package ships reads the card in its
+ * own language instead of the English this file used to hardcode. The English
+ * catalog strings are kept byte-identical to the former literals.
+ * Any other/unknown code (or a direct-server failure with no code) keeps the
+ * pre-existing behavior: the generic "Couldn't load your libraries" title with
+ * the store's own message as the description.
  *
  * Pure + side-effect free so it is trivially unit-testable without mounting the
  * heavy BrowsePage SFC.
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
+import { errorCodeMessage, errorCodeTitle } from '../i18n/errors';
+import type { PhlixErrorLocale } from '../i18n/errors';
+
 export function libraryLoadErrorInfo(
   code: string | null,
   fallbackDescription: string,
+  locale?: PhlixErrorLocale | null,
 ): { title: string; description: string } {
-  switch (code) {
-    case 'server.relay_unavailable':
-    case 'server.no_tunnel':
-      return {
-        title: 'Server relay not connected',
-        description:
-          "This server is online but its secure relay tunnel isn't connected yet, so its libraries can't be loaded over the hub. It should reconnect automatically — try again in a moment.",
-      };
-    case 'server.offline':
-      return {
-        title: 'Server offline',
-        description:
-          'This server is offline, so its libraries can’t be loaded. It will be browsable again once it reconnects to the hub.',
-      };
-    default:
-      return { title: "Couldn't load your libraries", description: fallbackDescription };
+  const title = errorCodeTitle(code, locale);
+  if (title !== null) {
+    return { title, description: errorCodeMessage(code, locale) };
   }
+  return { title: "Couldn't load your libraries", description: fallbackDescription };
 }

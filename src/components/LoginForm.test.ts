@@ -12,6 +12,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import LoginForm from './LoginForm.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { ERROR_MESSAGES } from '../i18n/errors';
 import type { PhlixAppConfig } from '../app/types';
 
 const stub = { template: '<div />' };
@@ -51,6 +52,7 @@ beforeEach(() => {
 afterEach(() => {
   while (wrappers.length) wrappers.pop()?.unmount();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('LoginForm', () => {
@@ -116,6 +118,73 @@ describe('LoginForm', () => {
     const banner = w.get('[role="alert"]');
     expect(banner.text()).toContain('Invalid email or password.');
     expect(toastErr).toHaveBeenCalledWith('Invalid email or password.');
+  });
+
+  // W4 error-code doctrine: a registered wire code localizes through the
+  // contracts catalog for the configured locale; the server's English text is
+  // only ever the fallback for code-less failures (previous test).
+  it('renders the LOCALIZED catalog message, not the server text, for a registered error code (es)', async () => {
+    const { w, auth, toasts } = mountForm({ config: { locale: 'es' } });
+    const toastErr = vi.spyOn(toasts, 'error');
+    vi.spyOn(auth, 'login').mockImplementation(async () => {
+      auth.error = 'Invalid credentials';
+      auth.errorCode = 'unauthorized'; // real quickconnect code in the v0.5.0 registry
+      return false;
+    });
+    await setIdentifier(w, 'a@b.c');
+    await setPassword(w, 'wrong');
+    await submit(w);
+    await flushPromises();
+    const localized = ERROR_MESSAGES.es.unauthorized;
+    expect(w.get('[role="alert"]').text()).toContain(localized);
+    expect(w.get('[role="alert"]').text()).not.toContain('Invalid credentials');
+    expect(toastErr).toHaveBeenCalledWith(localized);
+  });
+
+  // W4 review fix: the two tests above seed `auth.errorCode` directly, which is
+  // precisely what masked the login-path wiring bug. This variant flows a REAL
+  // rejected login (fetch-level 401 `{error, code}` envelope) through the actual
+  // store → ApiError → parseErrorCode → catalog path. The stub must be installed
+  // BEFORE mountForm — ApiClient binds globalThis.fetch at construction.
+  it('localizes an end-to-end rejected login (real store path) into Spanish', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          Promise.resolve(
+            new Response(JSON.stringify({ error: 'Invalid credentials', code: 'unauthorized' }), {
+              status: 401,
+              headers: { 'content-type': 'application/json' },
+            }),
+          ),
+      ),
+    );
+    const { w, auth, toasts } = mountForm({ config: { locale: 'es' } });
+    const toastErr = vi.spyOn(toasts, 'error');
+    await setIdentifier(w, 'a@b.c');
+    await setPassword(w, 'wrong');
+    await submit(w);
+    await flushPromises();
+    const localized = ERROR_MESSAGES.es.unauthorized;
+    expect(auth.errorCode).toBe('unauthorized'); // set by the store's catch, not the test
+    expect(w.get('[role="alert"]').text()).toContain(localized);
+    expect(w.get('[role="alert"]').text()).not.toContain('Invalid credentials');
+    expect(toastErr).toHaveBeenCalledWith(localized);
+  });
+
+  it('resolves the error code against the English catalog when no locale is configured', async () => {
+    const { w, auth } = mountForm();
+    vi.spyOn(auth, 'login').mockImplementation(async () => {
+      auth.error = 'Invalid credentials';
+      auth.errorCode = 'unauthorized';
+      return false;
+    });
+    await setIdentifier(w, 'a@b.c');
+    await setPassword(w, 'wrong');
+    await submit(w);
+    await flushPromises();
+    expect(w.get('[role="alert"]').text()).toContain(ERROR_MESSAGES.en.unauthorized);
+    expect(w.get('[role="alert"]').text()).not.toContain('Invalid credentials');
   });
 
   it('falls back to a generic toast when login fails without a store error', async () => {
