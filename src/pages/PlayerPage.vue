@@ -26,7 +26,7 @@
  * Resume restoration + the mkv/hevc transcode notice live INSIDE <Player> (R3.8);
  * this page just feeds it real data. Deep-links work and re-fetch when the id changes.
  */
-import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue';
+import { ref, computed, inject, onMounted, watch, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient, ApiError } from '../api/client';
@@ -36,6 +36,8 @@ import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { usePlayerUiStore } from '../stores/usePlayerUiStore';
+import { playbackBlockingMessage } from './playerErrors';
+import type { PhlixAppConfig } from '../app/types';
 import Player from '../components/Player.vue';
 import type { Chapter } from '../components/player/Scrubber.vue';
 import { parsePlaybackAudioTracks, type PlaybackAudioTrack, type TimeMarker } from '../components/player/playback';
@@ -110,6 +112,8 @@ const { imgSrc } = useImageSrc();
 const directBase = useMediaDirectBase();
 const route = useRoute();
 const router = useRouter();
+// W4: the configured error-catalog locale (config-time, like `messages`).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const player = usePlayerStore();
 // Per-user favorite/love state (Feature 16). The by-id fetch below resolves the
 // MediaDetail — the AUTHORITATIVE source of `user_data` — so the page seeds the
@@ -478,14 +482,13 @@ async function load(): Promise<void> {
     // page, so neither this run's error state nor its SWR fallback may be applied.
     if (isStale(run) || isAbort(e)) return;
     if (e instanceof ApiError && (e.status === 403 || e.status === 429)) {
-      const body = e.body as { error?: string } | null;
-      const errorCode = body?.error;
-      if (errorCode === 'AccessSchedule' || errorCode === 'StreamLimitExceeded') {
+      // W4 (error-code doctrine): prefer the machine `code` the W2 server wave
+      // adds and localize it through the contracts catalog; until then the
+      // legacy `error` pseudo-code texts still match (see ./playerErrors.ts).
+      const blockingMessage = playbackBlockingMessage(e.body, config?.locale);
+      if (blockingMessage !== null) {
         // A hard access block must NOT be masked by a stale cache — surface it.
-        blockingError.value =
-          errorCode === 'AccessSchedule'
-            ? 'Playback blocked by access schedule. Try again during allowed hours.'
-            : 'Stream limit reached. Stop another stream to continue watching.';
+        blockingError.value = blockingMessage;
         blockingErrorVisible.value = true;
         loading.value = false;
         return;

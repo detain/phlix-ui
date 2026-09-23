@@ -38,7 +38,7 @@ export declare const useLibrariesStore: import("pinia").StoreDefinition<"librari
     errorCode: import("vue").Ref<string | null, string | null>;
     load: (apiBase: string, force?: boolean) => Promise<void>;
     byId: (id: string) => LibrarySummary | undefined;
-}, "error" | "loading" | "items" | "loaded" | "errorCode">, Pick<{
+}, "error" | "loading" | "items" | "errorCode" | "loaded">, Pick<{
     items: import("vue").Ref<{
         [x: string]: unknown;
         id: string;

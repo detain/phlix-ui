@@ -584,4 +584,20 @@ export {
 } from './i18n/locales';
 export type { PhlixLocaleCode } from './i18n/locales';
 
+// Error-code catalog (UI W4, error-code doctrine): wire codes from the
+// `@phlix/contracts` registry localize client-side through these complete
+// per-locale maps — deliberately SEPARATE from DEFAULT_MESSAGES so registry
+// churn never breaks the `satisfies PhlixMessages` bundle pins downstream.
+// `errorCodeMessage(code, locale?, fallback?)` resolves locale catalog → en →
+// caller fallback (server debug text) → generic label; it never throws.
+export {
+  ERROR_MESSAGES,
+  ERROR_TITLES,
+  GENERIC_ERROR_MESSAGE,
+  errorCodeMessage,
+  errorCodeTitle,
+  isRegisteredErrorCode,
+} from './i18n/errors';
+export type { PhlixErrorLocale, PhlixErrorCatalog } from './i18n/errors';
+
 export * from './tokens';

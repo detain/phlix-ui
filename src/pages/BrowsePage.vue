@@ -373,7 +373,7 @@ watch(
 // libraryLoadErrorInfo); otherwise this falls back to the generic error with the
 // store's own message.
 const errorInfo = computed(() =>
-  libraryLoadErrorInfo(libraries.errorCode ?? null, libraries.error ?? ''),
+  libraryLoadErrorInfo(libraries.errorCode ?? null, libraries.error ?? '', config?.locale),
 );
 
 const showEmpty = computed(

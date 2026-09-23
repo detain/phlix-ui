@@ -13,6 +13,7 @@ import type { IconName } from '../components/Icon.vue';
 import type { LibraryQueryParams } from '../types/library-query';
 import type { LibrarySummary } from '../api/libraries';
 import type { PhlixMessagesConfig } from '../i18n/messages';
+import type { PhlixErrorLocale } from '../i18n/errors';
 
 export interface MenuItem {
     id: string;
@@ -131,6 +132,12 @@ export interface PhlixAppConfig {
      *  fall back to the English defaults. Omit entirely for the default English UI.
      *  Resolve strings in components via `useMessages().t('group.key')`. */
     messages?: PhlixMessagesConfig;
+    /** Active UI locale for the ERROR-CODE catalog (`src/i18n/errors.ts`). Wire
+     *  error codes are localized client-side via the contracts registry; this tag
+     *  selects which of the seven complete error catalogs renders. Omit (or pass
+     *  an unknown tag) ⇒ English. Config-time like `messages` — there is no
+     *  runtime locale switch in this package. */
+    locale?: PhlixErrorLocale;
     /** Extra headers sent on every API request — e.g. native-device identity
      *  (`X-Phlix-Device-ID` / `X-Phlix-Device-Name` / `X-Phlix-Device-Type` /
      *  `X-Phlix-Session-ID`). Registered once at boot via `setDefaultApiHeaders`,
