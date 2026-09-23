@@ -1,0 +1,476 @@
+/**
+ * French locale bundle (fr) — full translation of the English message catalog.
+ *
+ * Consumed through the existing config-time seam: pass this bundle (or any
+ * deep-partial slice of it) as `PhlixAppConfig.messages`. Key set and plural
+ * segment counts are pinned against `DEFAULT_MESSAGES` by `locales.test.ts`.
+ *
+ * Language decisions (flagged for review):
+ * - Neutral international French, "vous" register (UI convention for FR software).
+ * - Typographic apostrophe ’ (l’image, générique de l’écran); regular space
+ *   before two-part punctuation (: ; ! ?) and inside « » — NBSP deliberately
+ *   avoided: `no-irregular-whitespace` bans it in source and the visual result is
+ *   identical for UI purposes.
+ * - Brand/product terms kept verbatim: Phlix, SyncPlay and the theme names
+ *   Nocturne / Daylight / Midnight; the badge SDH; ⌘K; HDR, ID, hub; example
+ *   addresses (you@example.com); units (Kbps, i/s rendering of fps, p).
+ * - "Picture-in-picture" → "Image dans l'image" (Apple fr convention).
+ * - "Captions and subtitles" → "Sous-titres et légendes": FR does not natively
+ *   distinguish burned captions from subtitles; "légendes" is the accepted gloss.
+ * - "Crossfade" → "Fondu enchaîné"; "Gapless" → "Lecture sans intervalle".
+ * - Germanic loan "stream" kept ("stream", "flux" for bandwidth contexts).
+ * - Plurals: two segments (one | other) per CLDR for every pipe-form key; FR
+ *   `one` covers 0 and 1 — pipe form keeps both slots, count 0 picks `other`…
+ *   NOTE: Intl (CLDR 42+) maps fr-0 to `one`; with two segments the slot mapping
+ *   puts segment 1 on `one` and segment 2 on `other`, which is the correct
+ *   behaviour for both readings.
+ *
+ * @copyright 2026 Joe Huss <detain@interserver.net>
+ * @license MIT
+ */
+export declare const FR_MESSAGES: {
+    common: {
+        retry: string;
+        close: string;
+        dismiss: string;
+        loading: string;
+        notifications: string;
+        noMatches: string;
+        searchPlaceholder: string;
+        selectPlaceholder: string;
+    };
+    shell: {
+        skipToContent: string;
+        primaryNav: string;
+        openMenu: string;
+        menu: string;
+        openCommandPalette: string;
+        browse: string;
+        explore: string;
+        recommendations: string;
+        watchHistory: string;
+        settings: string;
+        themeToggleLabel: string;
+        account: string;
+        accountNamed: string;
+        signOut: string;
+        signIn: string;
+        switchProfile: string;
+        manageProfiles: string;
+    };
+    profiles: {
+        whoIsWatching: string;
+        loading: string;
+        active: string;
+        manageTitle: string;
+        manageHint: string;
+        use: string;
+        add: string;
+        rename: string;
+        renameTooShort: string;
+        delete: string;
+        save: string;
+        cancel: string;
+        deleteBlocked: string;
+        empty: string;
+    };
+    palette: {
+        title: string;
+        placeholder: string;
+        commands: string;
+        recent: string;
+        noResults: string;
+        searchLibrary: string;
+        goToBrowse: string;
+        goToSettings: string;
+        themeNocturne: string;
+        themeDaylight: string;
+        themeMidnight: string;
+        toggleDensity: string;
+        toggleReducedMotion: string;
+        toggleAtmosphere: string;
+        resetPreferences: string;
+        groupNavigation: string;
+        groupTheme: string;
+        groupPreferences: string;
+    };
+    auth: {
+        loginEyebrow: string;
+        loginTitle: string;
+        loginSubtitle: string;
+        signupEyebrow: string;
+        signupTitle: string;
+        signupSubtitle: string;
+        email: string;
+        emailPlaceholder: string;
+        password: string;
+        passwordPlaceholder: string;
+        passwordSignupPlaceholder: string;
+        username: string;
+        usernamePlaceholder: string;
+        usernameOrEmail: string;
+        usernameOrEmailPlaceholder: string;
+        confirmPassword: string;
+        confirmPasswordPlaceholder: string;
+        showPassword: string;
+        hidePassword: string;
+        signIn: string;
+        signingIn: string;
+        createAccount: string;
+        creatingAccount: string;
+        orContinueWith: string;
+        loginFooterPrompt: string;
+        signupLink: string;
+        signupFooterPrompt: string;
+        signInLink: string;
+        emailRequired: string;
+        emailInvalid: string;
+        passwordRequired: string;
+        identifierRequired: string;
+        usernameRequired: string;
+        usernameMinLength: string;
+        passwordChoose: string;
+        passwordMinLength: string;
+        passwordMismatch: string;
+        signInFailed: string;
+        signupFailed: string;
+    };
+    connect: {
+        eyebrow: string;
+        title: string;
+        subtitle: string;
+        addressLabel: string;
+        addressPlaceholder: string;
+        hint: string;
+        connect: string;
+        connecting: string;
+        addressRequired: string;
+        invalidAddress: string;
+        unreachable: string;
+        connectAnyway: string;
+        plaintextWarning: string;
+        plaintextConfirm: string;
+        originConfirm: string;
+        confirmContinue: string;
+        confirmCancel: string;
+        scan: string;
+        scanning: string;
+        scanFailed: string;
+        scanEmpty: string;
+        scanListLabel: string;
+    };
+    player: {
+        play: string;
+        pause: string;
+        back: string;
+        nowPlaying: string;
+        previousEpisode: string;
+        nextEpisode: string;
+        skipIntro: string;
+        skipOutro: string;
+        skipLabelIntro: string;
+        skipLabelCredits: string;
+        skipLabelSkipCredits: string;
+        seekBackward: string;
+        seekForward: string;
+        keyboardShortcuts: string;
+        sleepTimer: string;
+        pip: string;
+        exitPip: string;
+        theater: string;
+        exitTheater: string;
+        fullscreen: string;
+        exitFullscreen: string;
+        miniPlayer: string;
+        expand: string;
+        closePlayer: string;
+        seek: string;
+        shuffle: string;
+        repeat: string;
+        selectTrack: string;
+        queue: string;
+        queueEmpty: string;
+        removeFromQueue: string;
+        mute: string;
+        unmute: string;
+        volume: string;
+        playbackSpeed: string;
+        quality: string;
+        qualityAuto: string;
+        qualityAutoActive: string;
+        qualityOriginal: string;
+        directStream: string;
+        qualityDirectStream: string;
+        captionsOn: string;
+        captionsOff: string;
+        captionsAndSubtitles: string;
+        subtitles: string;
+        subtitleTrack: string;
+        off: string;
+        audio: string;
+        audioTrack: string;
+        captionStyle: string;
+        size: string;
+        captionSize: string;
+        color: string;
+        captionColor: string;
+        background: string;
+        captionBackground: string;
+        edge: string;
+        captionEdge: string;
+        addSubtitles: string;
+        subtitleSearchTitle: string;
+        subtitleSearchLanguages: string;
+        subtitleSearchAction: string;
+        subtitleSearching: string;
+        subtitleSearchEmpty: string;
+        subtitleSearchEmptyHint: string;
+        subtitleSearchPrompt: string;
+        subtitleSearchError: string;
+        subtitleAdd: string;
+        subtitleAdding: string;
+        subtitleAdded: string;
+        subtitleAddedGeneric: string;
+        subtitleAddError: string;
+        subtitleAddNotFound: string;
+        subtitleQuota: string;
+        subtitleQuotaRemaining: string;
+        subtitleQuotaReset: string;
+        subtitleHearingImpaired: string;
+        subtitleHearingImpairedFull: string;
+        subtitleRating: string;
+        subtitleDownloads: string;
+        subtitleFps: string;
+        subtitleAddLabel: string;
+        chapters: string;
+        chapterList: string;
+        noChapters: string;
+        keyboard: string;
+        resumePlayback: string;
+        resumeFrom: string;
+        resume: string;
+        startOver: string;
+        upNext: string;
+        startsIn: string;
+        playNow: string;
+        cancel: string;
+        transcodePreparingHeading: string;
+        transcodePreparingTitled: string;
+        transcodePreparingUntitled: string;
+        transcodeHeading: string;
+        transcodeBodyTitled: string;
+        transcodeBodyUntitled: string;
+        goBack: string;
+    };
+    syncplay: {
+        syncPlay: string;
+        inRoom: string;
+        createRoom: string;
+        joinRoom: string;
+        leaveRoom: string;
+        joinedRoom: string;
+        members: string;
+        synced: string;
+        outOfSync: string;
+        reSyncing: string;
+        roomName: string;
+        roomId: string;
+        privateRoom: string;
+        create: string;
+        join: string;
+        cancel: string;
+        loading: string;
+        noRooms: string;
+        errorCreate: string;
+        errorJoin: string;
+        errorLeave: string;
+        yourRole: string;
+        roleOwner: string;
+        roleModerator: string;
+        roleMember: string;
+        title: string;
+        roomNamePlaceholder: string;
+        roomIdPlaceholder: string;
+        publicRooms: string;
+        waitingForMembers: string;
+        rewind: string;
+        fastForward: string;
+        playAll: string;
+        pauseAll: string;
+    };
+    music: {
+        title: string;
+        nav: string;
+        artists: string;
+        albums: string;
+        tracks: string;
+        play: string;
+        pause: string;
+        previous: string;
+        next: string;
+        seek: string;
+        noArtists: string;
+        noAlbums: string;
+        noTracks: string;
+        albumCount: string;
+        trackCount: string;
+        year: string;
+        duration: string;
+        nowPlaying: string;
+        loading: string;
+        streamError: string;
+        crossfade: string;
+        crossfadeDuration: string;
+        crossfadeSeconds: string;
+        gapless: string;
+        audioQuality: string;
+        qualityLow: string;
+        qualityMedium: string;
+        qualityHigh: string;
+        qualityLossless: string;
+        allTracks: string;
+        searchTracks: string;
+        playAll: string;
+        matching: string;
+        noTracksMatch: string;
+        selectTrack: string;
+        artist: string;
+        album: string;
+        of: string;
+        artistsTotal: string;
+        albumsTotal: string;
+        tracksTotal: string;
+        tracksOnPage: string;
+        showingRange: string;
+        pageOf: string;
+        firstPage: string;
+        prevPage: string;
+        nextPage: string;
+        lastPage: string;
+        jumpToPage: string;
+        pageLoadFailed: string;
+        pagination: string;
+        paginationOf: string;
+        shuffle: string;
+        queue: string;
+        queueEmpty: string;
+        removeFromQueue: string;
+        albumNotFound: string;
+        artistNotFound: string;
+        artistsNotFound: string;
+        artistsDescription: string;
+    };
+    settings: {
+        theme: string;
+        accent: string;
+        accentColor: string;
+        display: string;
+        atmosphere: string;
+        playback: string;
+        subtitles: string;
+        density: string;
+        gridDensity: string;
+        cardSize: string;
+        motion: string;
+        filmGrainGlow: string;
+        autoplayNext: string;
+        defaultVolume: string;
+        defaultQuality: string;
+        crossfade: string;
+        crossfadeDuration: string;
+        gaplessEnabled: string;
+        preferredAudioQuality: string;
+        defaultLanguage: string;
+        defaultSubtitleLanguage: string;
+        captionSize: string;
+        captionColor: string;
+        captionBackground: string;
+        captionEdge: string;
+        resetAll: string;
+        resetConfirm: string;
+        resetDone: string;
+        preferences: string;
+        title: string;
+        sectionsLabel: string;
+        tabAppearance: string;
+        tabPlayback: string;
+        tabSecurity: string;
+        tabServer: string;
+        unsaved: string;
+        saveGroup: string;
+        groupSaved: string;
+        groupSaveError: string;
+        loadFailed: string;
+        loadErrorTitle: string;
+    };
+    explore: {
+        title: string;
+    };
+    recommendations: {
+        title: string;
+    };
+    history: {
+        title: string;
+    };
+    season: {
+        play: string;
+        watchlist: string;
+        inFavorites: string;
+        addFavorite: string;
+        removeFavorite: string;
+        markWatched: string;
+        watched: string;
+        markWatchedAria: string;
+        markUnwatchedAria: string;
+        noEpisodes: string;
+    };
+    parental: {
+        title: string;
+        schedules: string;
+        tags: string;
+        streamLimits: string;
+        createSchedule: string;
+        editSchedule: string;
+        scheduleName: string;
+        scheduleNamePlaceholder: string;
+        startTime: string;
+        endTime: string;
+        days: string;
+        active: string;
+        inactive: string;
+        addTag: string;
+        tagName: string;
+        tagNamePlaceholder: string;
+        tagType: string;
+        tagBlocked: string;
+        tagAllowed: string;
+        updateLimits: string;
+        maxConcurrentStreams: string;
+        maxBandwidth: string;
+        maxBandwidthPlaceholder: string;
+        noProfileSelected: string;
+        noProfileSelectedHint: string;
+        noSchedules: string;
+        noSchedulesHint: string;
+        noTags: string;
+        noTagsHint: string;
+        scheduleUpdated: string;
+        scheduleCreated: string;
+        scheduleDeleted: string;
+        tagAdded: string;
+        tagRemoved: string;
+        streamLimitsUpdated: string;
+        deleteScheduleConfirm: string;
+        removeTagConfirm: string;
+        loadErrorSchedules: string;
+        loadErrorTags: string;
+        loadErrorStreamLimits: string;
+        retry: string;
+    };
+    admin: {
+        'transcoding.title': string;
+        'transcoding.preferredAccelerator': string;
+        'transcoding.hdrOutput': string;
+        'transcoding.toneMapMode': string;
+    };
+};

@@ -566,4 +566,22 @@ export type {
   Translate,
 } from './i18n/messages';
 
+// Locale bundles (i18n build-out): COMPLETE translations of DEFAULT_MESSAGES for
+// es/fr/de/it/pt_BR/ja, each typed `satisfies PhlixMessages` (missing/extra keys
+// are compile errors) and validated by `src/i18n/locales.test.ts` (key-set
+// identity, placeholder parity, CLDR plural-segment law). Pass one whole as
+// `PhlixAppConfig.messages` — the config-time seam is unchanged:
+//   createPhlixApp({ ..., messages: JA_MESSAGES })
+// `LOCALE_MESSAGES` is the tag→bundle registry for dynamic selection.
+export {
+  ES_MESSAGES,
+  FR_MESSAGES,
+  DE_MESSAGES,
+  IT_MESSAGES,
+  PT_BR_MESSAGES,
+  JA_MESSAGES,
+  LOCALE_MESSAGES,
+} from './i18n/locales';
+export type { PhlixLocaleCode } from './i18n/locales';
+
 export * from './tokens';
