@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useAuthStore } from './useAuthStore';
+import { ApiError } from '../api/errors';
 import { isRoute } from '../test/route-match';
 
 /**
@@ -162,6 +163,89 @@ describe('useAuthStore', () => {
     await s.fetchUser();
     expect(s.user).toBeNull();
     expect(s.isLoggedIn).toBe(false); // tokens cleared
+  });
+});
+
+// W4 review fix (HIGH): login/signup/fetchUser must carry the `errorCode` ref
+// through the SAME clear-attempt-start / parse-on-catch idiom the avatar actions
+// use, so the wire's stable code reaches the catalog (LoginForm's code-first
+// lookup) and no stale code survives into a later attempt. These go through real
+// rejected-ApiError paths (fetch-level envelopes / client rejections), never a
+// direct `auth.errorCode = ...` assignment — that is exactly what masked the bug.
+describe('useAuthStore errorCode wiring (login / signup / fetchUser)', () => {
+  it('login rejection with a coded envelope sets errorCode from the ApiError body', async () => {
+    routes['/api/v1/auth/login'] = () =>
+      jsonResponse({ error: 'Invalid credentials', code: 'unauthorized' }, 401);
+    const s = useAuthStore();
+    expect(await s.login('a@b.c', 'wrong')).toBe(false);
+    expect(s.errorCode).toBe('unauthorized');
+    expect(s.error).toBe('Invalid credentials');
+  });
+
+  it('login rejection without a code leaves errorCode null (no code on the wire)', async () => {
+    routes['/api/v1/auth/login'] = () => jsonResponse({ message: 'bad creds' }, 401);
+    const s = useAuthStore();
+    expect(await s.login('a@b.c', 'wrong')).toBe(false);
+    expect(s.errorCode).toBeNull();
+  });
+
+  it('signup rejection with a coded envelope sets errorCode from the ApiError body', async () => {
+    routes['/api/v1/auth/register'] = () =>
+      jsonResponse({ error: 'Email taken', code: 'invalid_payload' }, 409);
+    const s = useAuthStore();
+    expect(await s.signup('n@b.c', 'nick', 'pw')).toBe(false);
+    expect(s.errorCode).toBe('invalid_payload');
+  });
+
+  it('fetchUser rejection with a coded envelope sets errorCode and clears the session', async () => {
+    localStorage.setItem('access_token', 'STALE');
+    routes['/api/v1/auth/me'] = () =>
+      jsonResponse({ error: 'Session expired', code: 'unauthorized' }, 401);
+    routes['/api/v1/auth/refresh'] = () => jsonResponse({ message: 'nope' }, 401);
+    const s = useAuthStore();
+    await s.fetchUser();
+    expect(s.isLoggedIn).toBe(false);
+    expect(s.errorCode).toBe('unauthorized');
+  });
+
+  it('a login attempt replaces a prior avatar-failure code — and a code-less failure clears it', async () => {
+    // Pinned contract: errorCode ALWAYS reflects the LAST attempt's wire —
+    // never a previous failure's code, null when the last failure carried none.
+    routes['/api/v1/auth/login'] = () => jsonResponse({ access_token: 'AT', refresh_token: 'RT' });
+    routes['/api/v1/auth/me'] = () => jsonResponse({ user: { id: 1, email: 'a@b.c', is_admin: false } });
+    const s = useAuthStore();
+    await s.login('a@b.c', 'pw');
+
+    const uploadMock = vi
+      .spyOn(s.client, 'uploadAvatar')
+      .mockRejectedValue(
+        new ApiError('Payload too large', 413, { error: 'Payload too large', code: 'invalid_payload' }),
+      );
+    await expect(s.uploadAvatar(new File(['x'], 'a.png'))).rejects.toThrow('Payload too large');
+    expect(s.errorCode).toBe('invalid_payload');
+    uploadMock.mockRestore();
+
+    routes['/api/v1/auth/login'] = () =>
+      jsonResponse({ error: 'Invalid credentials', code: 'unauthorized' }, 401);
+    expect(await s.login('a@b.c', 'wrong')).toBe(false);
+    expect(s.errorCode).toBe('unauthorized'); // replaced, not inherited
+
+    routes['/api/v1/auth/login'] = () => jsonResponse({ message: 'transient' }, 401);
+    expect(await s.login('a@b.c', 'wrong')).toBe(false);
+    expect(s.errorCode).toBeNull(); // cleared, stale code cannot render
+  });
+
+  it('a successful login clears a previously-set errorCode', async () => {
+    routes['/api/v1/auth/login'] = () =>
+      jsonResponse({ error: 'Invalid credentials', code: 'unauthorized' }, 401);
+    const s = useAuthStore();
+    expect(await s.login('a@b.c', 'wrong')).toBe(false);
+    expect(s.errorCode).toBe('unauthorized');
+
+    routes['/api/v1/auth/login'] = () => jsonResponse({ access_token: 'AT', refresh_token: 'RT' });
+    routes['/api/v1/auth/me'] = () => jsonResponse({ user: { id: 1, email: 'a@b.c', is_admin: false } });
+    expect(await s.login('a@b.c', 'pw')).toBe(true);
+    expect(s.errorCode).toBeNull();
   });
 });
 

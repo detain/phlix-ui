@@ -52,6 +52,7 @@ beforeEach(() => {
 afterEach(() => {
   while (wrappers.length) wrappers.pop()?.unmount();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('LoginForm', () => {
@@ -135,6 +136,37 @@ describe('LoginForm', () => {
     await submit(w);
     await flushPromises();
     const localized = ERROR_MESSAGES.es.unauthorized;
+    expect(w.get('[role="alert"]').text()).toContain(localized);
+    expect(w.get('[role="alert"]').text()).not.toContain('Invalid credentials');
+    expect(toastErr).toHaveBeenCalledWith(localized);
+  });
+
+  // W4 review fix: the two tests above seed `auth.errorCode` directly, which is
+  // precisely what masked the login-path wiring bug. This variant flows a REAL
+  // rejected login (fetch-level 401 `{error, code}` envelope) through the actual
+  // store → ApiError → parseErrorCode → catalog path. The stub must be installed
+  // BEFORE mountForm — ApiClient binds globalThis.fetch at construction.
+  it('localizes an end-to-end rejected login (real store path) into Spanish', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          Promise.resolve(
+            new Response(JSON.stringify({ error: 'Invalid credentials', code: 'unauthorized' }), {
+              status: 401,
+              headers: { 'content-type': 'application/json' },
+            }),
+          ),
+      ),
+    );
+    const { w, auth, toasts } = mountForm({ config: { locale: 'es' } });
+    const toastErr = vi.spyOn(toasts, 'error');
+    await setIdentifier(w, 'a@b.c');
+    await setPassword(w, 'wrong');
+    await submit(w);
+    await flushPromises();
+    const localized = ERROR_MESSAGES.es.unauthorized;
+    expect(auth.errorCode).toBe('unauthorized'); // set by the store's catch, not the test
     expect(w.get('[role="alert"]').text()).toContain(localized);
     expect(w.get('[role="alert"]').text()).not.toContain('Invalid credentials');
     expect(toastErr).toHaveBeenCalledWith(localized);

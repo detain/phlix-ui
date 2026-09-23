@@ -92,6 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
     async function login(identifier: string, password: string): Promise<boolean> {
         loading.value = true;
         error.value = null;
+        errorCode.value = null;
         try {
             const body: Record<string, string> = { username: identifier, password };
             if (identifier.includes('@')) {
@@ -110,6 +111,7 @@ export const useAuthStore = defineStore('auth', () => {
             return isLoggedIn.value;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Login failed';
+            errorCode.value = parseErrorCode(e);
             return false;
         } finally {
             loading.value = false;
@@ -119,6 +121,7 @@ export const useAuthStore = defineStore('auth', () => {
     async function signup(email: string, username: string, password: string): Promise<boolean> {
         loading.value = true;
         error.value = null;
+        errorCode.value = null;
         try {
             const data = await client.post<{
                 access_token: string;
@@ -131,6 +134,7 @@ export const useAuthStore = defineStore('auth', () => {
             return isLoggedIn.value;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Registration failed';
+            errorCode.value = parseErrorCode(e);
             return false;
         } finally {
             loading.value = false;
@@ -139,9 +143,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function fetchUser(): Promise<void> {
         if (!isLoggedIn.value) return;
+        // Only a real attempt resets the code — the logged-out guard above keeps
+        // a failure code the form is currently displaying from being wiped.
+        errorCode.value = null;
         try {
             user.value = await client.getCurrentUser();
-        } catch {
+        } catch (e) {
+            errorCode.value = parseErrorCode(e);
             user.value = null;
             tokenStore.clear();
             accessToken.value = null;
