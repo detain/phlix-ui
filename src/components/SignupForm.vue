@@ -21,6 +21,7 @@ import Icon from './Icon.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
+import { errorCodeMessage } from '../i18n/errors';
 import { safeRedirect } from '../utils/safeRedirect';
 import type { PhlixAppConfig } from '../app/types';
 
@@ -35,6 +36,19 @@ const { t } = useMessages();
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const homePath = computed(() => config?.home ?? config?.routerBase ?? '/app');
 const loginPath = computed(() => `${config?.routerBase ?? '/app'}/login`);
+
+// Error-code doctrine (W4, mirroring LoginForm): the wire's stable `code`
+// localizes through the contracts catalog for the configured locale — signup-
+// reachable codes like `auth.signups_disabled` render localized copy, while an
+// unregistered or absent code degrades to the server's English text (last
+// resort) and finally to the localized `auth.signupFailed` string.
+const errorMessage = computed(() =>
+  errorCodeMessage(
+    auth.errorCode,
+    config?.locale,
+    auth.error ?? t('auth.signupFailed'),
+  ),
+);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -84,7 +98,7 @@ async function handleSubmit(): Promise<void> {
       void router.push(homePath.value);
     }
   } else {
-    toasts.error(auth.error ?? t('auth.signupFailed'));
+    toasts.error(errorMessage.value);
   }
 }
 </script>
@@ -93,7 +107,7 @@ async function handleSubmit(): Promise<void> {
   <AuthCard :eyebrow="t('auth.signupEyebrow')" :title="t('auth.signupTitle')" :subtitle="t('auth.signupSubtitle')">
     <p v-if="auth.error" class="signup__banner" role="alert">
       <Icon name="alert" class="signup__banner-icon" />
-      <span>{{ auth.error }}</span>
+      <span>{{ errorMessage }}</span>
     </p>
 
     <form class="signup__form" novalidate @submit.prevent="handleSubmit">

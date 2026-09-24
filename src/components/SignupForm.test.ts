@@ -12,6 +12,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import SignupForm from './SignupForm.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { ERROR_MESSAGES } from '../i18n/errors';
 import type { PhlixAppConfig } from '../app/types';
 
 const stub = { template: '<div />' };
@@ -59,6 +60,7 @@ beforeEach(() => {
 afterEach(() => {
   while (wrappers.length) wrappers.pop()?.unmount();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('SignupForm', () => {
@@ -157,6 +159,78 @@ describe('SignupForm', () => {
     await flushPromises();
     expect(w.get('[role="alert"]').text()).toContain('Email already taken.');
     expect(toastErr).toHaveBeenCalledWith('Email already taken.');
+  });
+
+  // W4 error-code doctrine (mirroring LoginForm.test.ts): a registered wire code
+  // localizes through the contracts catalog for the configured locale; the
+  // server's English text is only ever the fallback for code-less failures
+  // (previous test).
+  it('renders the LOCALIZED catalog message, not the server text, for a registered error code (es)', async () => {
+    const { w, auth, toasts } = mountForm({ config: { locale: 'es' } });
+    const toastErr = vi.spyOn(toasts, 'error');
+    vi.spyOn(auth, 'signup').mockImplementation(async () => {
+      auth.error = 'Registration refused by server';
+      auth.errorCode = 'auth.signups_disabled'; // real server register rejection (403)
+      return false;
+    });
+    await fillValid(w);
+    await submit(w);
+    await flushPromises();
+    const localized = ERROR_MESSAGES.es['auth.signups_disabled'];
+    expect(w.get('[role="alert"]').text()).toContain(localized);
+    expect(w.get('[role="alert"]').text()).not.toContain('Registration refused by server');
+    expect(toastErr).toHaveBeenCalledWith(localized);
+  });
+
+  // End-to-end: a REAL rejected signup (fetch-level 403 `{error, code}` envelope)
+  // flows through the actual store → ApiError → parseErrorCode → catalog path —
+  // direct `auth.errorCode = ...` seeding alone would not prove the wiring.
+  // The stub must be installed BEFORE mountForm — ApiClient binds globalThis.fetch
+  // at construction. Stale-code clearing across attempts is pinned store-side in
+  // useAuthStore.test.ts and is deliberately not duplicated here.
+  it('localizes an end-to-end rejected signup (real store path) into Spanish', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          Promise.resolve(
+            new Response(
+              JSON.stringify({
+                error: 'Registration refused by server',
+                code: 'auth.signups_disabled',
+              }),
+              {
+                status: 403,
+                headers: { 'content-type': 'application/json' },
+              },
+            ),
+          ),
+      ),
+    );
+    const { w, auth, toasts } = mountForm({ config: { locale: 'es' } });
+    const toastErr = vi.spyOn(toasts, 'error');
+    await fillValid(w);
+    await submit(w);
+    await flushPromises();
+    const localized = ERROR_MESSAGES.es['auth.signups_disabled'];
+    expect(auth.errorCode).toBe('auth.signups_disabled'); // set by the store's catch, not the test
+    expect(w.get('[role="alert"]').text()).toContain(localized);
+    expect(w.get('[role="alert"]').text()).not.toContain('Registration refused by server');
+    expect(toastErr).toHaveBeenCalledWith(localized);
+  });
+
+  it('resolves the error code against the English catalog when no locale is configured', async () => {
+    const { w, auth } = mountForm();
+    vi.spyOn(auth, 'signup').mockImplementation(async () => {
+      auth.error = 'Registration refused by server';
+      auth.errorCode = 'auth.signups_disabled';
+      return false;
+    });
+    await fillValid(w);
+    await submit(w);
+    await flushPromises();
+    expect(w.get('[role="alert"]').text()).toContain(ERROR_MESSAGES.en['auth.signups_disabled']);
+    expect(w.get('[role="alert"]').text()).not.toContain('Registration refused by server');
   });
 
   it('falls back to a generic toast when registration fails without a store error', async () => {
