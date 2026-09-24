@@ -1,7 +1,8 @@
 /**
  * Player blocking-error decoding (W4). The server puts pseudo-codes in the
- * `error` TEXT field today; W2 adds a real `code`. Both eras must resolve, and
- * unknown shapes must degrade to `null` so the caller's SWR path is untouched.
+ * `error` TEXT field; server W2 added a real `code` channel alongside them.
+ * Both eras must resolve, and unknown shapes must degrade to `null` so the
+ * caller's SWR path is untouched.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
@@ -12,9 +13,17 @@ import { playbackBlockingMessage } from './playerErrors';
 import { ERROR_MESSAGES } from '../i18n/errors';
 
 describe('playbackBlockingMessage', () => {
-  it('matches the legacy AccessSchedule pseudo-code in the error TEXT (pre-W2 era)', () => {
-    expect(playbackBlockingMessage({ error: 'AccessSchedule' })).toBe(
+  it('matches the legacy AccessScheduled pseudo-code in the error TEXT (pre-W2 era)', () => {
+    // Phlix-server has always emitted exactly 'AccessScheduled' (with the d) in
+    // the error text — AccessScheduleMiddleware pre- and post-W2 alike.
+    expect(playbackBlockingMessage({ error: 'AccessScheduled' })).toBe(
       'Playback blocked by access schedule. Try again during allowed hours.',
+    );
+  });
+
+  it('resolves the post-W2 access.scheduled code through the catalog even with the legacy text present', () => {
+    expect(playbackBlockingMessage({ code: 'access.scheduled', error: 'AccessScheduled' })).toBe(
+      ERROR_MESSAGES.en['access.scheduled'],
     );
   });
 

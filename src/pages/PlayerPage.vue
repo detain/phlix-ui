@@ -141,7 +141,7 @@ const playbackSubtitleTracks = ref<SubtitleTrack[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const theater = ref(false);
-/** P5-S5: AccessSchedule (403) or StreamLimitExceeded (429) — shown in a modal, not the error state. */
+/** P5-S5: AccessScheduled (403) or StreamLimitExceeded (429) — shown in a modal, not the error state. */
 const blockingError = ref<string | null>(null);
 const blockingErrorVisible = ref(false);
 /** Prev/Next episode in the whole-series order (U2) — null for movies or at the
@@ -683,7 +683,7 @@ function onBlockingErrorOk(): void {
       />
     </div>
 
-    <!-- P5-S5: AccessSchedule / StreamLimitExceeded blocking-error modal -->
+    <!-- P5-S5: AccessScheduled / StreamLimitExceeded blocking-error modal -->
     <Modal v-model="blockingErrorVisible" title="Cannot Play" size="sm" :dismissible="false" hide-close>
       <p class="player-page__blocking-error">{{ blockingError }}</p>
       <template #footer>
