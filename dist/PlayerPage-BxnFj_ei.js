@@ -38,7 +38,7 @@ function Ie(e, t) {
 	let n = Fe(e, "code");
 	if (n !== null && re(n)) return j(n, t);
 	let r = Fe(e, "error");
-	return r === "AccessSchedule" ? "Playback blocked by access schedule. Try again during allowed hours." : r === "StreamLimitExceeded" ? "Stream limit reached. Stop another stream to continue watching." : null;
+	return r === "AccessScheduled" ? "Playback blocked by access schedule. Try again during allowed hours." : r === "StreamLimitExceeded" ? "Stream limit reached. Stop another stream to continue watching." : null;
 }
 //#endregion
 //#region src/components/player/format-time.ts
@@ -3519,8 +3519,8 @@ var Ni = { class: "player__stage" }, Pi = ["src", "poster"], Fi = [
 			}, 8, ["modelValue"])
 		], 2));
 	}
-}), [["__scopeId", "data-v-a39eeb42"]]);
+}), [["__scopeId", "data-v-dc0d3b16"]]);
 //#endregion
 export { Sa as default };
 
-//# sourceMappingURL=PlayerPage-OUG-xuoh.js.map
+//# sourceMappingURL=PlayerPage-BxnFj_ei.js.map

@@ -1171,7 +1171,7 @@ function La(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-OUG-xuoh.js")
+			component: () => import("./PlayerPage-BxnFj_ei.js")
 		},
 		{
 			path: `${t}/login`,
