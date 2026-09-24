@@ -64,7 +64,7 @@ import { n as wn, r as Tn, t as En } from "./maintenance-CETCLHzL.js";
 import { t as Dn } from "./hubDashboard-BhOaaDD-.js";
 import { a as On, i as kn, n as An, o as jn, r as Mn, t as Nn } from "./errors-D1ikoBpg.js";
 import { t as Pn } from "./LoginForm-VL458gSy.js";
-import { t as Fn } from "./SignupForm-BVWxMkh0.js";
+import { t as Fn } from "./SignupForm-CgVvFk9A.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as In, t as Ln } from "./debounce-BkSsZiXZ.js";
 import { t as Rn } from "./Input-D6hY0oF5.js";
@@ -1183,7 +1183,7 @@ function La(e) {
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-CJvm29gC.js")
+			component: () => import("./SignupPage-B0BBPIzb.js")
 		},
 		{
 			path: `${t}/connect`,

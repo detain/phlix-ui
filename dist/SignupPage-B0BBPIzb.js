@@ -1,7 +1,7 @@
 import { r as e } from "./AuthField-DrOuBGzc.js";
 import { t } from "./_plugin-vue_export-helper-B3ysoDQm.js";
 import { a as n } from "./usePreferencesStore-CFPikE8Z.js";
-import { t as r } from "./SignupForm-BVWxMkh0.js";
+import { t as r } from "./SignupForm-CgVvFk9A.js";
 import { createCommentVNode as i, createElementBlock as a, createElementVNode as o, createSlots as s, createVNode as c, defineComponent as l, openBlock as u, renderSlot as d, unref as f, withCtx as p } from "vue";
 //#region src/pages/SignupPage.vue?vue&type=script&setup=true&lang.ts
 var m = { class: "auth-page" }, h = {
@@ -30,4 +30,4 @@ var m = { class: "auth-page" }, h = {
 //#endregion
 export { _ as default };
 
-//# sourceMappingURL=SignupPage-CJvm29gC.js.map
+//# sourceMappingURL=SignupPage-B0BBPIzb.js.map
