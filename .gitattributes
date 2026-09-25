@@ -1,0 +1,34 @@
+# ---------------------------------------------------------------------------
+# EOL policy: LF in the index, LF on disk, on every platform.
+#
+# Why this file exists (the byte-artifact integrity story):
+# This repo commits a prebuilt `dist/` and ships it by GitHub TAG tarball —
+# server/hub/windows/tizen consume exactly those bytes, and `scripts/
+# check-dist-clean.mjs` (S176) md5-audits the whole tracked dist tree after a
+# clean build. `src/api/test/server-route-manifest.json` is vendored verbatim
+# from phlix-contracts and byte-identity-pinned by md5 in `src/api/test/
+# routeGate.api.test.ts`. Git-for-Windows defaults to core.autocrlf=true, so a
+# windows-latest checkout would silently rewrite every LF text blob (dist
+# bundles, declarations, the vendored manifest) to CRLF on disk before those
+# hashes are taken — the exact poisoning class fixed on the windows client by
+# PR #46 / commit 0c6163d. The committed blobs are all LF; checkout conversion
+# is the only threat.
+#
+# .gitattributes settings take precedence over core.autocrlf, so pinning the
+# policy here makes the shipped and vendored bytes identical on disk in every
+# clone, dev machine, and CI shard — and keeps every md5/SHA pin strict
+# (byte-exact) instead of forcing it to tolerate CRLF.
+# ---------------------------------------------------------------------------
+
+# Treat files as text by content: normalize to LF on commit, check out as LF.
+# Covers src/**, dist/** (committed build output), docs/**, *.md, JSON,
+# lockfiles, YAML, scripts — the whole estate-standard text surface.
+* text=auto eol=lf
+
+# Binary assets: never EOL-normalized on add or checkout (a converted font or
+# poster is a corrupted one; `binary` also keeps them out of
+# `git add --renormalize`'s path). Extensions from this repo's actual tracked
+# inventory (src/assets fonts/images, mockup renders, demo media).
+*.png binary
+*.woff2 binary
+*.mp4 binary
