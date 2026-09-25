@@ -1,3 +1,41 @@
+## 0.99.7 - 2026-09-25
+
+### Changed — version-field alignment ONLY (`0.99.4` → `0.99.7`) — shipped content untouched
+
+- **This release kills a documented version skew at the source.** The `v0.99.5`
+  and `v0.99.6` tags shipped ahead of the `package.json` `version` field, which
+  still read `0.99.4` in both tagged trees — so tag-pinned consumers
+  (`phlix-server`/`phlix-hub` on the `…/archive/refs/tags/vX.tar.gz` form,
+  `phlix-tizen-client`/`phlix-windows-client` on the `github:detain/phlix-ui#vX`
+  form) installed metadata that disagreed with the tag they pinned. This release
+  aligns the field to the published tag line: **`version` `0.99.4` → `0.99.7`
+  (lock self-refs `0.99.4` → `0.99.7` with it), and nothing else is semantic** —
+  no component, composable, store, i18n catalog or type contract changed.
+  Precedent: `@phlix/contracts` v0.5.2 (contracts #83), the same alignment move.
+- **Catalog/content unchanged since `v0.99.6` (`98a5bf38`).** The only commits
+  merged on master since that tag are #426 (`.gitattributes` LF shield for
+  byte-pinned artifact integrity — repo hygiene, not shipped content) and #427
+  (re-pin `@phlix/contracts` `#v0.5.1` → `#v0.5.2`, itself a docblock-only
+  contracts release: the dependency `version` field was the thing that got
+  aligned there, and its `dist/error-codes.json` is byte-identical across that
+  tag). Both are prose/pin/test-title-only: `git diff 98a5bf38..master` touches
+  10 files with zero `src/i18n/` catalog delta (`errors.ts` and `messages.ts`
+  byte-identical), and the single committed-`dist/` change is a one-line docblock
+  comment in `dist/api/test/routeGateServer.d.ts`. The error catalog holds at
+  **202 codes × 7 locales**; the message bundles hold at their v0.99.6 keys.
+- **Artifact byte-identity pin.** The committed bundles embed **no** version
+  string — a whole-tree census of `0.99.4` hits only `package.json`, the two
+  `package-lock.json` self-refs, and honest historical CHANGELOG prose (kept
+  as-is). A full CI-faithful `npm run build` (node 24, npm 11.19.0, in-root
+  `node_modules`) on this release PR re-derived `dist/` **byte-identically**: all
+  863 committed `dist/` files md5-stable pre/post, `dist:check` drift 0, suite
+  baseline exact. Downstream estate pins of the ui bundles (server/hub web-ui
+  parity receipts, tizen `package/` zero-content receipt) stay valid across this
+  tag.
+- **Cascade arming (next pin-batch, not this release).** Tagging `v0.99.7` makes
+  the hub S181 ui-pin grader report the four `@phlix/ui` pinners (server, hub,
+  tizen, windows) STALE-1; their re-pins ride a separate lane.
+
 ## Unreleased
 - Release @phlix/ui v0.99.4 — version bump + rebuilt committed artifacts
 
