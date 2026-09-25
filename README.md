@@ -336,7 +336,7 @@ locales supply the honest two-slot form and `ja` one segment.
 ### Error catalog (`src/i18n/errors.ts`) — deliberately NOT in `DEFAULT_MESSAGES`
 
 The wire carries stable error codes (the registry lives in `@phlix/contracts`
-— `ERROR_CODES`, 202 codes / 37 domains at the `v0.5.1` pin); clients localize
+— `ERROR_CODES`, 202 codes / 37 domains at the `v0.5.2` pin); clients localize
 code→message and the server's English `error` text is debug fallback only. This
 file is that localization layer: one flat `Record<ErrorCode, string>` per locale
 (`en` + the six bundle locales), plus `ERROR_TITLES` (the three Browse EmptyState

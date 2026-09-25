@@ -2,7 +2,7 @@
  * S447 — `@phlix/contracts` dependency-pin guard.
  *
  * The estate ruling retires the stale nested/`v0.4.5` copy: ui's own
- * `package.json` must pin the contracts tag `#v0.5.1` (a TAG pin, never a bare
+ * `package.json` must pin the contracts tag `#v0.5.2` (a TAG pin, never a bare
  * commit sha), and `package-lock.json` must resolve `@phlix/contracts` to the
  * commit that tag peels to — pinned below as `PINNED_CONTRACTS_PEEL`, the single
  * source of that literal — with EXACTLY ONE such resolution in the whole tree.
@@ -24,14 +24,20 @@ const lockfile = JSON.parse(readFileSync(path.join(REPO_ROOT, 'package-lock.json
 const packageJson = JSON.parse(readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'));
 
 const CONTRACTS = '@phlix/contracts';
-// The commit the `v0.5.1` annotated tag peels to (verified against the contracts
+// The commit the `v0.5.2` annotated tag peels to (verified against the contracts
 // repo read-only at dispatch time — this is the integrity anchor, not a hand-edit).
-// SKEW NOTE: the v0.5.1 tag tree's package.json `version` FIELD still reads
-// `0.4.7` (deliberate estate precedent, mirroring ui's own v0.99.5 tag; the tag
-// NAME is the release identity). `npm ci` therefore records `"version": "0.4.7"`
-// on the lock entry — this guard anchors the TAG pin and the tag PEEL sha in
-// `resolved`, never the version field, so the skew cannot desync this test.
-const PINNED_CONTRACTS_PEEL = 'e3c14f07e8927224978a921e1f79406629ceb6c5';
+// SKEW LINEAGE NOTE (skew ENDED at v0.5.2): the estate release-identity precedent
+// kept contracts' package.json `version` FIELD frozen at `0.4.7` through both the
+// v0.5.0 and v0.5.1 tag trees (the tag NAME is the release identity; ui mirrored
+// this with its own v0.99.5 tag), so `npm ci` recorded `"version": "0.4.7"` on the
+// lock entry under those pins and the #421-era guard deliberately anchored only the
+// TAG pin and the tag PEEL sha in `resolved`, never the version field. The v0.5.2
+// release finally advanced the field to `0.5.2` — field/tag alignment — so the lock
+// entry now honestly reads `0.5.2` and the version-equality assertion below holds.
+// It is safe ONLY in this aligned era: if a future contracts tag re-skews its field,
+// relax that assertion again — the tag-pin and peel anchors above never depend on it.
+const PINNED_CONTRACTS_PEEL = '7afb6a9171c33c18a2303716516572a4dfc405d9';
+const PINNED_CONTRACTS_VERSION = '0.5.2';
 
 // S491 survival token — the peel-cite/identifier honesty pass on this guard; used at RUNTIME below.
 const S491_PEEL_TOKEN = 'S491UIPEELFIXX9R6';
@@ -48,20 +54,31 @@ const contractResolutions = Object.entries<{ resolved?: string; version?: string
 );
 
 describe(`@phlix/contracts pin guard [${S447_GUARD_TOKEN}] [${S491_PEEL_TOKEN}]`, () => {
-    it('declares the dependency as a v0.5.1 TAG pin (not a commit sha)', () => {
+    it('declares the dependency as a v0.5.2 TAG pin (not a commit sha)', () => {
         const declared = packageJson.dependencies[CONTRACTS] as string;
-        expect(declared).toMatch(/github:detain\/phlix-contracts#v0\.5\.1$/);
+        expect(declared).toMatch(/github:detain\/phlix-contracts#v0\.5\.2$/);
     });
 
     it('resolves @phlix/contracts exactly once — no stale nested copy', () => {
         expect(contractResolutions).toHaveLength(1);
     });
 
-    it('resolves the single copy to the v0.5.1 tag peel', () => {
+    it('resolves the single copy to the v0.5.2 tag peel', () => {
         const [, entry] = contractResolutions[0] ?? [];
         if (!entry?.resolved) {
             throw new Error('S447: @phlix/contracts lock entry has no resolved ref');
         }
         expect(entry.resolved.endsWith(`#${PINNED_CONTRACTS_PEEL}`)).toBe(true);
+    });
+
+    it('records the honest 0.5.2 version field on the lock entry (aligned since v0.5.2)', () => {
+        const [, entry] = contractResolutions[0] ?? [];
+        if (!entry?.version) {
+            throw new Error('S447: @phlix/contracts lock entry has no version field');
+        }
+        // Equality-era assertion: the v0.5.2 tag tree's package.json version FIELD
+        // reads `0.5.2`, matching the tag — no longer the 0.4.7 skew. See the
+        // SKEW LINEAGE NOTE above before weakening this.
+        expect(entry.version).toBe(PINNED_CONTRACTS_VERSION);
     });
 });
