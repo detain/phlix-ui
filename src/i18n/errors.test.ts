@@ -80,7 +80,7 @@ const LATIN_SPECS: Record<Exclude<PhlixErrorLocale, 'en' | 'ja'>, { diacritics: 
 };
 
 describe('error catalog registry parity', () => {
-  it('contracts registry is the pinned v0.5.1 set of 202 codes', () => {
+  it('contracts registry is the pinned v0.5.2 set of 202 codes', () => {
     // Guards against a silent re-pin changing the vocabulary without a catalog update.
     expect(ERROR_CODES.length).toBe(202);
     expect(new Set(ERROR_CODES).size).toBe(202);
