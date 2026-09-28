@@ -57,7 +57,13 @@ function readResumeMap(): Record<string, number> {
   if (typeof localStorage === 'undefined') return {};
   try {
     const raw = localStorage.getItem(RESUME_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+    // Mirror `readTouchedMap`: a corrupt blob like "null" parses fine but is not
+    // an object — returning it would flip `resumeMap.value` to null and every
+    // later write would throw. Known design gap (not fixed here): the map is
+    // keyed by media id only, so resume positions bleed across profiles on a
+    // shared browser.
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, number>) : {};
   } catch {
     return {};
   }

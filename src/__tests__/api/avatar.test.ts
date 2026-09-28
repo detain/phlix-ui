@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { ApiClient } from '../../api/client';
+import { ApiClient, ApiError } from '../../api/client';
 import { MemoryTokenStore, makeFetch } from '../../api/test/memoryTokenStore';
 
 describe('avatar upload/delete (step 12.6)', () => {
@@ -45,7 +45,7 @@ describe('avatar upload/delete (step 12.6)', () => {
             expect(headers['Authorization']).toBe('Bearer tok-123');
         });
 
-        it('throws Error on non-2xx response', async () => {
+        it('throws ApiError on non-2xx response (audit #12: shared shape, server message)', async () => {
             const tokens = new MemoryTokenStore({ access: 'tok-123' });
             const { fetch } = makeFetch([{ status: 500, body: { error: 'Server error' } }]);
             const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
@@ -53,7 +53,9 @@ describe('avatar upload/delete (step 12.6)', () => {
             const formData = new FormData();
             formData.append('avatar', new File(['hello'], 'test.png', { type: 'image/png' }));
 
-            await expect(client.postFormData('/api/v1/users/me/avatar', formData)).rejects.toThrow('HTTP 500');
+            const err = await client.postFormData('/api/v1/users/me/avatar', formData).catch((e) => e);
+            expect(err).toBeInstanceOf(ApiError);
+            expect(err).toMatchObject({ status: 500, message: 'Server error' });
         });
     });
 
@@ -100,13 +102,15 @@ describe('avatar upload/delete (step 12.6)', () => {
             expect(headers['Authorization']).toBe('Bearer tok-abc');
         });
 
-        it('throws Error when server returns non-2xx', async () => {
+        it('throws ApiError with the server message when server returns non-2xx (audit #12)', async () => {
             const tokens = new MemoryTokenStore({ access: 'tok-123' });
             const { fetch } = makeFetch([{ status: 422, body: { error: 'Invalid image format' } }]);
             const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
 
             const file = new File(['hello'], 'bad.exe', { type: 'application/octet-stream' });
-            await expect(client.uploadAvatar(file)).rejects.toThrow('HTTP 422');
+            const err = await client.uploadAvatar(file).catch((e) => e);
+            expect(err).toBeInstanceOf(ApiError);
+            expect(err).toMatchObject({ status: 422, message: 'Invalid image format' });
         });
     });
 
@@ -135,12 +139,14 @@ describe('avatar upload/delete (step 12.6)', () => {
             expect(headers['Authorization']).toBe('Bearer tok-abc');
         });
 
-        it('throws Error when server returns non-2xx', async () => {
+        it('throws ApiError when server returns non-2xx (audit #12: 401 now parseable by the store)', async () => {
             const tokens = new MemoryTokenStore({ access: 'tok-123' });
-            const { fetch } = makeFetch([{ status: 401, body: { error: 'Unauthorized' } }]);
+            const { fetch } = makeFetch([{ status: 401, body: { error: 'Unauthorized', code: 'auth.unauthenticated' } }]);
             const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
 
-            await expect(client.deleteAvatar()).rejects.toThrow('HTTP 401');
+            const err = await client.deleteAvatar().catch((e) => e);
+            expect(err).toBeInstanceOf(ApiError);
+            expect(err).toMatchObject({ status: 401 });
         });
 
         it('does NOT send Content-Type: application/json', async () => {

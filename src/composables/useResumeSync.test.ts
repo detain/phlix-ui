@@ -135,3 +135,49 @@ describe('useResumeSync', () => {
     expect(consumer.continueWatchingItems.value.map((i) => i.id)).toEqual(['shared']);
   });
 });
+
+describe('audit #5 — listener refcount + in-flight dedupe', () => {
+  it('keeps the visibility listener until the LAST scoped consumer unmounts', async () => {
+    const { defineComponent } = await import('vue');
+    const { mount } = await import('@vue/test-utils');
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const visibilityRemovals = () =>
+      removeSpy.mock.calls.filter((c) => c[0] === 'visibilitychange').length;
+
+    const Comp = defineComponent({
+      setup() {
+        useResumeSync();
+        return () => null;
+      },
+    });
+    const a = mount(Comp);
+    const b = mount(Comp);
+
+    const before = visibilityRemovals();
+    a.unmount(); // one of two scoped consumers leaves — listener must survive
+    expect(visibilityRemovals()).toBe(before);
+
+    b.unmount(); // last one out — now detach
+    expect(visibilityRemovals()).toBe(before + 1);
+    removeSpy.mockRestore();
+  });
+
+  it('concurrent syncResume calls share ONE request; later calls re-fetch', async () => {
+    let resolveGet!: (value: unknown) => void;
+    get.mockImplementationOnce(() => new Promise((res) => { resolveGet = res; }));
+
+    const { syncResume } = useResumeSync();
+    const p1 = syncResume();
+    const p2 = syncResume();
+    expect(p1).toBe(p2); // the SAME promise, not two requests
+    expect(get).toHaveBeenCalledTimes(1);
+
+    resolveGet({ items: [] });
+    await Promise.all([p1, p2]);
+
+    // The memo is cleared after settle — the next intent hits the network again.
+    get.mockResolvedValue({ items: [] });
+    await syncResume();
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+});

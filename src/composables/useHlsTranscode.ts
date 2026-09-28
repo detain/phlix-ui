@@ -225,6 +225,11 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   let unsubscribeAudioTrackSwitched: (() => void) | null = null;
   let cancelled = false;
   let abortController: AbortController | null = null;
+  // Per-run generation token: a new start() resets `cancelled`, so the flag
+  // alone cannot tell an OLD run's post-`await` guards that it has been
+  // superseded — the old run would sail past `if (cancelled)` and clobber the
+  // global handle/state of the newer one. Every guard checks BOTH.
+  let runSeq = 0;
 
   function makeClient(): TranscodeHttpClient {
     return opts.client ?? new ApiClient({ baseUrl: opts.apiBase(), tokenStore: tokenStore ?? undefined, timeoutMs: 60000 });
@@ -233,6 +238,8 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   async function start(video: HTMLVideoElement, mediaId: string, profile?: string, startPosition?: number): Promise<void> {
     cleanup();
     cancelled = false;
+    const run = ++runSeq;
+    const isStale = (): boolean => cancelled || run !== runSeq;
     abortController = new AbortController();
     state.value = 'preparing';
     progress.value = 0;
@@ -242,7 +249,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     try {
       const client = makeClient();
       const startRes = parseTranscodeStart(await client.post(transcodeStartPath(mediaId, profile), undefined, abortController.signal));
-      if (cancelled) return;
+      if (isStale()) return;
       if (!startRes.jobId || !startRes.masterUrl) {
         throw new Error('transcode start returned no job');
       }
@@ -259,7 +266,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       let ready = startRes.status === 'completed';
       for (let attempt = 0; !ready && attempt < maxAttempts; attempt++) {
         const status = parseTranscodeStatus(await client.get(transcodeStatusPath(startRes.jobId), undefined, abortController.signal));
-        if (cancelled) return;
+        if (isStale()) return;
         progress.value = status.progress;
         // Late-arriving tracks (extraction completes after the playlist is ready)
         // update the exposed list reactively → the Player adds the <track>s.
@@ -275,29 +282,35 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
           break;
         }
         await sleep(pollIntervalMs);
-        if (cancelled) return;
+        if (isStale()) return;
       }
 
       if (!ready) {
         throw new Error('transcode timed out');
       }
 
-      handle = await attach(video, masterUrl.value, {
+      const attached = await attach(video, masterUrl.value, {
         getToken,
         hlsConfig: opts.hlsConfig,
         startPosition,
         onReady: () => syncLevelState(),
         onError: () => {
-          if (!cancelled) {
+          if (!isStale()) {
             state.value = 'error';
           }
         },
       });
-      if (cancelled) {
-        handle.destroy();
-        handle = null;
+      if (isStale()) {
+        // Superseded while attaching: tear down THIS handle locally — the
+        // global `handle` belongs to the newer run and must not be touched.
+        try {
+          attached.destroy();
+        } catch {
+          /* already torn down */
+        }
         return;
       }
+      handle = attached;
       unsubscribeLevelSwitched = handle.onLevelSwitched((index) => syncLevelState(index));
       unsubscribeAudioTrackSwitched = handle.onAudioTrackSwitched((index) => syncAudioTrackState(index));
       // Seed from the handle now: covers the native/degraded shape (empty levels,
@@ -314,7 +327,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       }
       state.value = 'ready';
     } catch {
-      if (!cancelled) {
+      if (!isStale()) {
         state.value = 'error';
       }
     }
@@ -397,6 +410,13 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     subtitleTracks.value = [];
     resetLevelState();
     resetAudioTrackState();
+    // The transcode session is over — drop the persisted master URL too, or the
+    // mini-player keeps aiming at a dead stream (start() persists it post-attach).
+    try {
+      usePlayerStore().hlsMasterUrl = '';
+    } catch {
+      /* store not available (e.g. test environment without Pinia) — ignore */
+    }
   }
 
   return {

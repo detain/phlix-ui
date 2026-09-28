@@ -900,6 +900,25 @@ export class ApiClient {
     }
 
     /**
+     * Parse a non-ok response into the shared {@link ApiError} — the same
+     * contract every other method on this class promises its callers (and what
+     * `useAuthStore.parseErrorCode` reads via `body.code`). Used by the
+     * hand-rolled multipart/DELETE paths that bypass {@link request}.
+     */
+    private async toApiError(response: Response): Promise<ApiError> {
+        const contentType = response.headers.get('content-type') ?? '';
+        let payload: unknown = null;
+        try {
+            payload = contentType.includes('application/json')
+                ? await response.json()
+                : await response.text();
+        } catch {
+            /* unreadable body — the status alone still identifies the failure */
+        }
+        return new ApiError(this.extractError(payload), response.status, payload);
+    }
+
+    /**
      * POST multipart/form-data to an endpoint. Used for file uploads like avatar
      * images. The Content-Type header is deliberately omitted so the browser
      * sets `Content-Type: multipart/form-data; boundary=...` with the correct
@@ -921,7 +940,7 @@ export class ApiClient {
             credentials: 'same-origin',
             body,
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw await this.toApiError(response);
         return response.json();
     }
 
@@ -953,7 +972,7 @@ export class ApiClient {
             headers,
             credentials: 'same-origin',
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw await this.toApiError(response);
     }
 
     isLoggedIn(): boolean {
@@ -961,8 +980,16 @@ export class ApiClient {
     }
 
     async getCurrentUser(): Promise<AuthUser> {
-        const { user } = await this.get<{ user: Record<string, unknown> }>('/api/v1/auth/me');
-        return { ...(user as AuthUser), is_admin: normalizeBool(user['is_admin']) };
+        const raw = await this.get<{ user?: unknown }>('/api/v1/auth/me');
+        const user = raw?.user;
+        // Fail loud on a non-conforming 200 (a hub-relay proxy can answer `{}` —
+        // previously this threw an opaque `TypeError: Cannot read 'is_admin' of
+        // undefined`; ApiError keeps the store's parseErrorCode/logout path intact).
+        if (!user || typeof user !== 'object') {
+            throw new ApiError('Malformed /auth/me response: missing user object', 200, raw);
+        }
+        const fields = user as Record<string, unknown>;
+        return { ...(user as AuthUser), is_admin: normalizeBool(fields['is_admin']) };
     }
 
     /**

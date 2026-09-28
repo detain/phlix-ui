@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { watch } from 'vue';
+import { getCurrentScope, onScopeDispose, watch } from 'vue';
 import { usePlayerStore, TICKS_PER_SECOND, RESUME_MIN_SECONDS } from '../stores/usePlayerStore';
 import { useAuthStore } from '../stores/useAuthStore';
 
@@ -222,14 +222,34 @@ export function useResumeReporter(): UseResumeReporter {
   // checkpoint on each play/pause transition so a pause is captured even between
   // throttle windows. Each reportable tick also refreshes the retained `lastProgress`
   // (S506) that `reportFinal()` flushes on unmount, independent of whether it POSTs.
-  watch(
+  const stopPosition = watch(
     () => Math.floor(player.position),
     () => void report(),
   );
-  watch(
+  const stopPlaying = watch(
     () => player.playing,
     () => void report(true),
   );
+  // A session belongs to an authenticated user — dropping the handle on logout
+  // keeps a later report from aiming at the previous account's session (and the
+  // id is never re-sent cross-account; ensureSession re-mints after re-login).
+  const stopLogout = watch(
+    () => auth.isLoggedIn,
+    (loggedIn) => {
+      if (!loggedIn) sessionId = null;
+    },
+  );
+  // These `watch()` handles are only auto-stopped when registered inside a
+  // reactive scope. Stop them explicitly so a scoped caller (component setup)
+  // does not leak watchers onto the shared player store after unmount; an
+  // unscoped caller keeps the previous module-lifetime behavior unchanged.
+  if (getCurrentScope()) {
+    onScopeDispose(() => {
+      stopPosition();
+      stopPlaying();
+      stopLogout();
+    });
+  }
 
   return { report, finish, reportFinal };
 }

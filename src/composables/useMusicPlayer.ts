@@ -209,12 +209,33 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
 
   // ---- Transitions -----------------------------------------------------------
   /**
+   * Play-intent generation token. Every intent (play/advance/fade) bumps it;
+   * pause/stop/load bump it too so a SUPERSEDED intent's still-pending
+   * `el.play()` cannot land `playing = true` after a later pause flipped the
+   * UI to paused (audit finding 10b).
+   */
+  let playGeneration = 0;
+
+  /**
+   * Start `el` and reflect "playing" ONLY when the play actually began AND this
+   * run is still the newest intent. A swallowed rejection (autoplay-blocked)
+   * must leave the UI showing paused — the old code set `playing = true`
+   * unconditionally right after `catch(() => {})`, contradicting its own comment
+   * (audit finding 10a).
+   */
+  async function startPlayback(el: HTMLAudioElement, gen: number): Promise<void> {
+    const started = await el.play().then(() => true, () => false);
+    if (started && gen === playGeneration) playing.value = true;
+  }
+
+  /**
    * Hard-switch to `queue[index]` on the active element (immediate cut). Used
    * for explicit track selection, previous(), and gapless/no-crossfade advance.
    */
   async function playAt(index: number): Promise<void> {
     const track = queue.value[index];
     if (!track) return;
+    const gen = ++playGeneration;
     clearCrossfade();
     const el = activeEl();
     loading.value = true;
@@ -226,8 +247,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     currentIndex.value = index;
     position.value = 0;
     duration.value = 0;
-    await el.play().catch(() => { /* autoplay-blocked — UI shows paused */ });
-    playing.value = true;
+    await startPlayback(el, gen); // autoplay-blocked → UI stays paused
     loading.value = false;
     void preloadNext();
   }
@@ -255,6 +275,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
   async function gaplessAdvance(index: number): Promise<void> {
     const track = queue.value[index];
     if (!track) return;
+    const gen = ++playGeneration;
     clearCrossfade();
     loading.value = true;
     const src = await resolveSrc(track);
@@ -278,8 +299,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     currentIndex.value = index;
     position.value = 0;
     duration.value = isFinite(incoming.duration) && incoming.duration > 0 ? incoming.duration : 0;
-    await incoming.play().catch(() => { /* autoplay-blocked — UI shows paused */ });
-    playing.value = true;
+    await startPlayback(incoming, gen); // autoplay-blocked → UI stays paused
     loading.value = false;
     void preloadNext();
   }
@@ -303,6 +323,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     // the guard and start a crossfade, overwriting `crossfadeTimer` and orphaning
     // the prior interval. Guarding here means only ONE crossfade runs at a time.
     if (crossfading.value) return;
+    const gen = ++playGeneration;
     // Defensively clear any lingering interval before starting a new one.
     if (crossfadeTimer !== null) {
       clearInterval(crossfadeTimer);
@@ -324,7 +345,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     error.value = src === '' ? 'stream-unavailable' : null;
 
     fadeIn.volume = 0;
-    await fadeIn.play().catch(() => {});
+    await startPlayback(fadeIn, gen); // autoplay-blocked → UI stays paused
     loading.value = false;
 
     // Advance logical state immediately (the fade-in element is now "current").
@@ -335,7 +356,8 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
     currentIndex.value = index;
     position.value = 0;
     duration.value = isFinite(fadeIn.duration) && fadeIn.duration > 0 ? fadeIn.duration : 0;
-    playing.value = true;
+    // `playing` reflects the actual start of the fade-in element (set by
+    // `startPlayback` above on success) — not an unconditional flip.
 
     const dur = prefs.crossfadeDuration;
     const stepMs = Math.max(10, (dur * 1000) / CROSSFADE_STEPS);
@@ -382,6 +404,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
 
   /** Load a track list as the playback queue. Resets playback state. */
   function loadTracks(tracks: MusicTrack[]): void {
+    playGeneration++; // retire any in-flight play intent
     clearCrossfade();
     queue.value = [...tracks];
     currentTrack.value = null;
@@ -402,16 +425,16 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
       const idx = queue.value.findIndex((t) => t.id === track.id);
       if (idx === -1) return;
       if (currentTrack.value?.id === track.id) {
-        await activeEl().play().catch(() => {});
-        playing.value = true;
+        const gen = ++playGeneration;
+        await startPlayback(activeEl(), gen);
         return;
       }
       await playAt(idx);
       return;
     }
     if (currentTrack.value) {
-      await activeEl().play().catch(() => {});
-      playing.value = true;
+      const gen = ++playGeneration;
+      await startPlayback(activeEl(), gen);
       return;
     }
     if (queue.value.length > 0) await playAt(0);
@@ -419,6 +442,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
 
   /** Pause the active element. */
   function pause(): void {
+    playGeneration++; // a pending play() resolution must not resurrect "playing"
     activeEl().pause();
     playing.value = false;
   }
@@ -432,6 +456,7 @@ export function useMusicPlayer(opts: MusicPlayerOptions) {
   /** Stop playback and reset position/queue pointer. */
   function stop(): void {
     clearCrossfade();
+    playGeneration++; // retire any in-flight play intent
     getA().pause();
     getB().pause();
     getA().src = '';

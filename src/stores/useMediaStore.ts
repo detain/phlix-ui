@@ -378,16 +378,23 @@ export const useMediaStore = defineStore('media', () => {
 
         loading.value = true;
         error.value = null;
+        // Appends are UNTRACKED (networkFetch `track=false` leaves activeKey
+        // alone), so `key === activeKey` can never be true for one — track the
+        // active query at start instead and drop the result if a new query took
+        // over while this append was in flight, or its rows would splice onto
+        // the fresh result of the superseding query.
+        const activeAtStart = activeKey;
+        const superseded = () => (append ? activeAtStart !== activeKey : key !== activeKey);
         try {
             const res = await networkFetch(apiBase, params, key, !append);
             // drop a superseded result even if its request resolved late un-aborted
-            if (!append && key !== activeKey) return;
+            if (superseded()) return;
             applyResult(res, append);
         } catch (e) {
             if (isAbort(e)) return; // superseded — newer request owns the state
-            if (append || key === activeKey) error.value = errMessage(e, 'Failed to load media');
+            if (!superseded()) error.value = errMessage(e, 'Failed to load media');
         } finally {
-            if (append || key === activeKey) loading.value = false;
+            if (!superseded()) loading.value = false;
         }
     }
 

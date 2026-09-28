@@ -159,16 +159,25 @@ export function useTrickplay(opts: UseTrickplayOptions): TrickplayController {
             if (data.value !== null) return;
         }
 
+        // Merge provided signal with any component-level signal BEFORE touching
+        // state: an already-aborted caller (component unmounted mid-queue) must
+        // not strand `loading` on a fetch that can never settle into the UI.
+        const composedSignal = signal ?? opts.signal;
+        if (composedSignal?.aborted) return;
+
         loading.value = true;
         error.value = null;
         try {
-            // Merge provided signal with any component-level signal.
-            const composedSignal = signal ?? opts.signal;
             const client = clientForBase();
             const result = await client.getTrickplay(mediaId, composedSignal);
             cache.set(mediaId, result);
             data.value = result;
         } catch (e) {
+            if (e instanceof Error && e.name === 'AbortError') {
+                // Cancellation is not absence — never negative-cache an abort, or
+                // a re-fetch after remount would silently return null forever.
+                return;
+            }
             // Cache negative results so we don't repeatedly hammer a missing resource.
             cache.set(mediaId, null);
             error.value = e instanceof Error ? e.message : 'Failed to load trickplay data';

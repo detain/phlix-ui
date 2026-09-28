@@ -338,3 +338,60 @@ describe('useMusicPlayer', () => {
     expect(created.length).toBe(2);
   });
 });
+
+// ── audit #10: `playing` must mirror ACTUAL play() success, never assume it ──
+
+describe('audit #10 — play() rejection / supersession', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    created = [];
+    function AudioMock(this: unknown) {
+      const el = new FakeAudioElement();
+      created.push(el);
+      return el;
+    }
+    vi.stubGlobal('Audio', AudioMock as unknown as typeof Audio);
+  });
+
+  it('a rejected play() leaves playing=false (autoplay-blocked UI stays paused)', async () => {
+    const player = makePlayer();
+    player.loadTracks([mkTrack('a', '/media/a/stream?sig=1')]);
+    await player.play(player.queue.value[0]);
+    await flushPromises();
+    expect(player.playing.value).toBe(true);
+
+    player.pause();
+    created[0].play = vi.fn(async () => {
+      throw new Error('NotAllowedError: autoplay blocked');
+    });
+
+    await player.play(player.queue.value[0]); // resume path, now blocked
+    expect(player.playing.value).toBe(false);
+  });
+
+  it('a play intent superseded by pause() cannot resurrect playing when it late resolves', async () => {
+    const player = makePlayer();
+    player.loadTracks([mkTrack('a', '/media/a/stream?sig=1')]);
+    await player.play(player.queue.value[0]);
+    await flushPromises();
+    player.pause();
+
+    let resolveSlow!: () => void;
+    created[0].play = vi.fn(
+      () =>
+        new Promise<void>((res) => {
+          resolveSlow = res;
+        }),
+    );
+
+    const pending = player.play(); // resume intent now in flight…
+    player.pause(); // …superseded before it resolves (bumps the generation)
+    resolveSlow();
+    await pending;
+
+    // Pre-fix the trailing unconditional `playing.value = true` flipped the UI
+    // back to playing although the user had just paused.
+    expect(player.playing.value).toBe(false);
+    expect(created[0].paused).toBe(true);
+  });
+});

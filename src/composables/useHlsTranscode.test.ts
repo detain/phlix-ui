@@ -678,3 +678,54 @@ describe('useHlsTranscode', () => {
     });
   });
 });
+
+// ── audit #6 regressions ──────────────────────────────────────────────────────
+// (The run token + reset()'s store clear below; flushRun lets the fully-mocked
+// promise chain drain without fake timers.)
+async function flushRun(): Promise<void> {
+  for (let i = 0; i < 8; i++) await new Promise((r) => setTimeout(r, 0));
+}
+
+describe('audit #6 — superseded runs and reset()', () => {
+  it('an OLD start() awaiting attach cannot clobber the NEWER run when it resolves', async () => {
+    const h = harness();
+    let resolveFirst!: (handle: HlsHandle) => void;
+    const firstAttach = new Promise<HlsHandle>((res) => {
+      resolveFirst = res;
+    });
+    const staleDestroy = vi.fn();
+    h.attach.mockImplementationOnce(() => firstAttach);
+
+    const p1 = h.controller.start(fakeVideo(), 'media-1');
+    await flushRun();
+    expect(h.attach).toHaveBeenCalledTimes(1); // run 1 is parked awaiting attach
+
+    // Run 2 supersedes while run 1 is still in flight (the old shared
+    // `cancelled` flag was reset by start(), so run 1 sailed past its guards).
+    const p2 = h.controller.start(fakeVideo(), 'media-1');
+    await flushRun();
+    expect(h.controller.state.value).toBe('ready'); // run 2 completed
+
+    resolveFirst({ destroy: staleDestroy } as unknown as HlsHandle);
+    await p1;
+    await p2;
+
+    // The late handle is torn down LOCALLY and never becomes the global one;
+    // the newer run's state survives.
+    expect(staleDestroy).toHaveBeenCalledTimes(1);
+    expect(h.controller.state.value).toBe('ready');
+  });
+
+  it('reset() clears the persisted hlsMasterUrl the store still aims the mini-player at', async () => {
+    const { setActivePinia, createPinia } = await import('pinia');
+    const { usePlayerStore } = await import('../stores/usePlayerStore');
+    setActivePinia(createPinia());
+    const h = harness();
+    await h.controller.start(fakeVideo(), 'media-1');
+    const store = usePlayerStore();
+    expect(store.hlsMasterUrl).toBe('http://h:8096/hls/job-1/master.m3u8');
+
+    h.controller.reset();
+    expect(store.hlsMasterUrl).toBe('');
+  });
+});

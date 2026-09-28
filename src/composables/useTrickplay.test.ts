@@ -274,3 +274,40 @@ describe('useTrickplay', () => {
         });
     });
 });
+
+// ─── audit #11: an already-aborted fetch must not leave loading=true forever ──
+
+describe('useTrickplay — abort handling (audit #11)', () => {
+    it('short-circuits when the caller signal is already aborted', async () => {
+        const { fetch, loading, data } = useTrickplay({ apiBase: () => API_BASE });
+        const getTrickplayMock = vi
+            .spyOn(ApiClient.prototype, 'getTrickplay')
+            .mockResolvedValue(fakeTrickplayData());
+
+        const ac = new AbortController();
+        ac.abort();
+        await fetch('media-aborted', ac.signal);
+
+        expect(getTrickplayMock).not.toHaveBeenCalled();
+        expect(loading.value).toBe(false);
+        expect(data.value).toBeNull();
+        getTrickplayMock.mockRestore();
+    });
+
+    it('does NOT negative-cache an aborted request — a later fetch still loads', async () => {
+        const { fetch, data } = useTrickplay({ apiBase: () => API_BASE });
+        const abortErr = Object.assign(new Error('aborted'), { name: 'AbortError' });
+        const spy = vi
+            .spyOn(ApiClient.prototype, 'getTrickplay')
+            .mockRejectedValue(abortErr);
+
+        await fetch('media-race'); // loses a hover race → AbortError
+        expect(data.value).toBeNull();
+
+        spy.mockResolvedValue(fakeTrickplayData());
+        await fetch('media-race'); // same id again — must hit the network, not a cached null
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(data.value).toEqual(fakeTrickplayData());
+        spy.mockRestore();
+    });
+});

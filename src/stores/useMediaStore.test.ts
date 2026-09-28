@@ -723,3 +723,56 @@ describe('useMediaStore — LRU cache eviction', () => {
     expect(store.cache.has(lastKey)).toBe(true);
   });
 });
+
+describe('useMediaStore — a superseded append is dropped (audit #4)', () => {
+  it('does not splice an in-flight append rows onto the newer query', async () => {
+    const s = useMediaStore();
+    s.limit = 3;
+    await s.fetchMedia(''); // page 0 of query #1 → a-0..a-2
+    expect(s.items.map((i) => i.id)).toEqual(['a-0', 'a-1', 'a-2']);
+
+    // Route by URL so the assertions never depend on which call wins the race:
+    // the append (offset=3) stays in flight; the page-0 refetch resolves now.
+    let resolveAppend!: (r: Response) => void;
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('offset=3')) {
+        return new Promise<Response>((res) => {
+          resolveAppend = res;
+        });
+      }
+      return Promise.resolve(
+        jsonResponse({ items: makeItems('c', 3), total: 6, limit: 3, offset: 0 }),
+      );
+    });
+
+    const appendP = s.loadMore('');
+    s.setSearch('q2');
+    await s.fetchMedia(''); // query #2 takes over while the append is open
+    expect(s.items.map((i) => i.id)).toEqual(['c-0', 'c-1', 'c-2']);
+
+    // The old query's page-1 body lands LATE. Pre-fix, appends were untracked
+    // and `key === activeKey` can never hold for one, so these stale rows were
+    // spliced onto q2's result.
+    resolveAppend(jsonResponse({ items: makeItems('b', 3), total: 6, limit: 3, offset: 3 }));
+    await appendP;
+
+    expect(s.items.map((i) => i.id)).toEqual(['c-0', 'c-1', 'c-2']); // no b-* rows
+    expect(s.loading).toBe(false);
+    expect(s.error).toBeNull();
+  });
+
+  it('still applies an append when its query is NOT superseded (positive control)', async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ items: makeItems('p1', 3), total: 6, limit: 3, offset: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ items: makeItems('p2', 3), total: 6, limit: 3, offset: 3 }));
+    const s = useMediaStore();
+    s.limit = 3;
+    await s.fetchMedia('');
+    await s.loadMore('');
+    expect(s.items).toHaveLength(6);
+    expect(s.items.map((i) => i.id)).toEqual([
+      'p1-0', 'p1-1', 'p1-2', 'p2-0', 'p2-1', 'p2-2',
+    ]);
+    expect(s.loading).toBe(false);
+  });
+});

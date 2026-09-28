@@ -211,7 +211,12 @@ export async function driveGated(
     try {
         await fn();
     } catch (e) {
-        if (e instanceof ApiError) {
+        // Only a 4xx/5xx ApiError is the gate's route signal (the server 404s
+        // exactly the unregistered urls). A client-side guard may also throw
+        // ApiError on a RECORDED 2xx whose body failed parsing at the boundary
+        // — e.g. getCurrentUser's malformed-200 guard — which is the same
+        // response-SHAPE artifact class as the `{}`-body TypeErrors below.
+        if (e instanceof ApiError && e.status >= 400) {
             const observed = server.requests.slice(before);
             const last = observed.length > 0 ? observed[observed.length - 1]! : null;
             const at = last ? `${last.method} ${last.path}` : 'unknown url';

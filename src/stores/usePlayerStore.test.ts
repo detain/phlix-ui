@@ -554,3 +554,22 @@ describe('usePlayerStore — bounded resume map (LRU + quota retry)', () => {
     spy.mockRestore();
   });
 });
+
+describe('audit #14 — corrupt resume blob cannot poison the store', () => {
+  it('survives a stored "null" payload and still writes/resumes', () => {
+    // JSON.parse("null") is null — the old readResumeMap returned it verbatim,
+    // so resumeMap.value became null and the next saveResume threw
+    // "Cannot set properties of null". Mirror readTouchedMap's object guard.
+    localStorage.setItem('phlix.resume', 'null');
+    const p = usePlayerStore();
+    expect(() => p.saveResume('z', 60, 120)).not.toThrow();
+    expect(p.resumePositionFor('z')).toBe(60);
+  });
+
+  it('survives a stored scalar payload ("42") the same way', () => {
+    localStorage.setItem('phlix.resume', '42');
+    const p = usePlayerStore();
+    expect(() => p.saveResume('y', 60, 120)).not.toThrow();
+    expect(p.resumePositionFor('y')).toBe(60);
+  });
+});

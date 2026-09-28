@@ -1336,3 +1336,54 @@ describe('ApiClient', () => {
         });
     });
 });
+
+describe('ApiClient avatar + me error shapes', () => {
+    function makeClient(fetchImpl: typeof fetch): ApiClient {
+        return new ApiClient({
+            baseUrl: 'https://h',
+            tokenStore: new MemoryTokenStore({ access: 't' }),
+            fetchImpl,
+        });
+    }
+
+    // Regression [audit #12]: uploadAvatar/deleteAvatar used to throw a raw
+    // Error("HTTP n"), so useAuthStore.parseErrorCode saw null and a 401 there
+    // never triggered the refresh/logout path. Both must now throw ApiError
+    // carrying the parsed status + body.
+    it('uploadAvatar throws ApiError (not raw Error) with status and body', async () => {
+        const { fetch } = makeFetch([{ status: 400, body: { code: 'avatar.too_large', message: 'nope' } }]);
+        const client = makeClient(fetch);
+        const err = await client.uploadAvatar(new File(['x'], 'a.png')).catch((e) => e);
+        expect(err).toBeInstanceOf(ApiError);
+        expect(err).toMatchObject({ status: 400, message: 'nope' });
+        expect((err.body as Record<string, unknown>).code).toBe('avatar.too_large');
+    });
+
+    it('deleteAvatar throws ApiError (not raw Error) with status and body', async () => {
+        const { fetch } = makeFetch([{ status: 401, body: { code: 'auth.unauthenticated', message: 'expired' } }]);
+        const client = makeClient(fetch);
+        const err = await client.deleteAvatar().catch((e) => e);
+        expect(err).toBeInstanceOf(ApiError);
+        expect(err).toMatchObject({ status: 401 });
+        expect((err.body as Record<string, unknown>).code).toBe('auth.unauthenticated');
+    });
+
+    // Regression [audit #16]: a hub-relay proxy can answer 200 `{}` with no
+    // `user`; the old spread threw `TypeError: Cannot read 'is_admin' of
+    // undefined`. getCurrentUser must fail loud with a typed ApiError instead.
+    it('getCurrentUser throws ApiError on a 200 missing the user object', async () => {
+        const { fetch } = makeFetch([{ status: 200, body: {} }]);
+        const client = makeClient(fetch);
+        const err = await client.getCurrentUser().catch((e) => e);
+        expect(err).toBeInstanceOf(ApiError);
+        expect(err).not.toBeInstanceOf(TypeError);
+        expect(err.message).toMatch(/missing user/);
+    });
+
+    it('getCurrentUser still normalizes is_admin on a well-formed reply', async () => {
+        const { fetch } = makeFetch([{ status: 200, body: { user: { id: 1, username: 'u', is_admin: 1 } } }]);
+        const client = makeClient(fetch);
+        const user = await client.getCurrentUser();
+        expect(user).toMatchObject({ username: 'u', is_admin: true });
+    });
+});

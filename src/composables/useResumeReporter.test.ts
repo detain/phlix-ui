@@ -6,11 +6,18 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { nextTick } from 'vue';
+import { nextTick, effectScope } from 'vue';
 import { flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 
-const { post, state } = vi.hoisted(() => ({ post: vi.fn(), state: { loggedIn: true } }));
+// `state` must be a REAL reactive object: the composable's logout watcher is
+// `watch(() => auth.isLoggedIn, …)`, and a plain-object getter tracks NO
+// dependency — the watcher would never re-fire against the mock (it works
+// against the real Pinia store). Reactive here keeps the mock honest.
+const { post, state } = await vi.hoisted(async () => {
+  const { reactive } = await import('vue');
+  return { post: vi.fn(), state: reactive({ loggedIn: true }) };
+});
 vi.mock('../stores/useAuthStore', () => ({
   useAuthStore: () => ({
     get isLoggedIn() {
@@ -280,5 +287,49 @@ describe('useResumeReporter', () => {
     post.mockRejectedValue(new Error('offline'));
 
     await expect(reporter.reportFinal()).resolves.toBeUndefined();
+  });
+});
+
+describe('audit #8 — watcher lifetime + session hygiene', () => {
+  it('stops its watchers when the calling effect scope is disposed', async () => {
+    post.mockResolvedValueOnce({ session_id: 'sess-1' });
+    const player = watching(120, 600);
+
+    const scope = effectScope();
+    scope.run(() => useResumeReporter());
+    scope.stop();
+
+    // A live position change after dispose must NOT post — before the fix the
+    // watchers were registered outside any scope and never stopped, so they
+    // kept reporting for the whole app lifetime per call site.
+    player.updateProgress(135, 600);
+    await nextTick();
+    await flushPromises();
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('drops the held session id on logout so a re-login creates a FRESH session', async () => {
+    post.mockResolvedValueOnce({ session_id: 'sess-1' });
+    watching(120, 600);
+    const r = useResumeReporter();
+    await r.report(true);
+    expect(post).toHaveBeenCalledWith('/api/v1/sessions/sess-1/progress', expect.anything());
+
+    state.loggedIn = false;
+    await nextTick(); // the isLoggedIn watcher must have nulled sessionId
+    state.loggedIn = true;
+
+    post.mockResolvedValueOnce({ session_id: 'sess-2' });
+    await r.report(true);
+
+    // Pre-fix the stale sess-1 (from the previous account context) was reused.
+    expect(post).toHaveBeenCalledWith('/api/v1/sessions', expect.anything());
+    expect(post).toHaveBeenCalledWith(
+      '/api/v1/sessions/sess-2/progress',
+      expect.objectContaining({ position_ticks: 120 * 10_000_000 }),
+    );
+    expect(
+      post.mock.calls.filter((c) => String(c[0]).startsWith('/api/v1/sessions/sess-1/progress')),
+    ).toHaveLength(1); // only the original pre-logout report ever touched sess-1
   });
 });

@@ -44,10 +44,14 @@ export interface UseResumeSync {
 // the Continue Watching rail never showed cross-device items. U-N4.)
 const syncedItems = shallowRef<readonly MediaItem[]>([]);
 
-// The document `visibilitychange` listener is attached once for the app lifetime
-// (idempotent via this flag). Its teardown is registered against the first
-// component that calls the composable (see attachVisibilityListener).
+// The document `visibilitychange` listener is refcounted against the component
+// callers that mounted it: it survives until the LAST scoped consumer unmounts.
+// (Previously a single boolean tore it down on the FIRST unmount while other
+// consumers stayed mounted — visibility re-sync silently died; and the flag then
+// stayed consistent with "removed", but any unscoped re-attach raced the same
+// trap. S: audit finding 5.)
 let listenerAttached = false;
+let scopedConsumers = 0;
 
 function handleVisibilityChange(): void {
   if (document.visibilityState === 'visible') {
@@ -59,20 +63,67 @@ function handleVisibilityChange(): void {
 }
 
 function attachVisibilityListener(): void {
+  // Only callers inside a component setup join the refcount and register
+  // teardown; the deferred visibility callback (and tests) call unscoped and
+  // must NOT register an onUnmounted they never trigger.
+  if (getCurrentInstance()) {
+    scopedConsumers += 1;
+    onUnmounted(() => {
+      scopedConsumers = Math.max(0, scopedConsumers - 1);
+      if (scopedConsumers === 0 && listenerAttached) {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        listenerAttached = false;
+      }
+    });
+  }
   if (listenerAttached) return;
   listenerAttached = true;
   document.addEventListener('visibilitychange', handleVisibilityChange);
-  // Register teardown ONLY when there is an active component instance. The first
-  // caller is always a component setup (PhlixApp/BrowsePage) — never the
-  // listener callback itself, which can't fire before the listener exists — so
-  // guarding on getCurrentInstance() avoids the "onUnmounted outside setup"
-  // Vue warning the old module-top registration produced.
-  if (getCurrentInstance()) {
-    onUnmounted(() => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      listenerAttached = false;
-    });
+}
+
+/**
+ * Shared in-flight memo (same shape as `ApiClient.refreshToken`): concurrent
+ * callers — login + tab refocus + a component mount in the same tick — await ONE
+ * request instead of stampeding the endpoint. Cleared in `finally` so the next
+ * intent after a settle fetches fresh.
+ */
+let syncInFlight: Promise<void> | null = null;
+
+async function runSyncResume(): Promise<void> {
+  const player = usePlayerStore();
+  const auth = useAuthStore();
+  if (!auth.isLoggedIn) return;
+
+  try {
+    const data = await auth.client.get<{ items?: ContinueWatchingItem[] }>(
+      '/api/v1/users/me/continue-watching',
+    );
+    const positions: Record<string, number> = {};
+    const validItems: MediaItem[] = [];
+    for (const item of data.items ?? []) {
+      const ticks = item.position_ticks;
+      if (typeof item.id === 'string' && typeof ticks === 'number' && ticks > 0) {
+        positions[item.id] = Math.floor(ticks / TICKS_PER_SECOND);
+        // Retain the full item payload so BrowsePage can render the rail
+        // without requiring the item to be present in any loaded rail.
+        validItems.push(item as MediaItem);
+      }
+    }
+    player.mergeServerResume(positions);
+    // Wholesale reassignment (NOT in-place mutation) of the shared ref so its
+    // consumers reactively update — this is the fix for U-N4.
+    syncedItems.value = validItems;
+  } catch {
+    // Best-effort enhancement over the local map — never block or surface errors.
   }
+}
+
+function syncResumeShared(): Promise<void> {
+  if (syncInFlight) return syncInFlight;
+  syncInFlight = runSyncResume().finally(() => {
+    syncInFlight = null;
+  });
+  return syncInFlight;
 }
 
 /**
@@ -91,40 +142,10 @@ function attachVisibilityListener(): void {
  * the web player to participate in the session model and is a separate follow-up.
  */
 export function useResumeSync(): UseResumeSync {
-  const player = usePlayerStore();
-  const auth = useAuthStore();
-
   attachVisibilityListener();
 
-  async function syncResume(): Promise<void> {
-    if (!auth.isLoggedIn) return;
-
-    try {
-      const data = await auth.client.get<{ items?: ContinueWatchingItem[] }>(
-        '/api/v1/users/me/continue-watching',
-      );
-      const positions: Record<string, number> = {};
-      const validItems: MediaItem[] = [];
-      for (const item of data.items ?? []) {
-        const ticks = item.position_ticks;
-        if (typeof item.id === 'string' && typeof ticks === 'number' && ticks > 0) {
-          positions[item.id] = Math.floor(ticks / TICKS_PER_SECOND);
-          // Retain the full item payload so BrowsePage can render the rail
-          // without requiring the item to be present in any loaded rail.
-          validItems.push(item as MediaItem);
-        }
-      }
-      player.mergeServerResume(positions);
-      // Wholesale reassignment (NOT in-place mutation) of the shared ref so its
-      // consumers reactively update — this is the fix for U-N4.
-      syncedItems.value = validItems;
-    } catch {
-      // Best-effort enhancement over the local map — never block or surface errors.
-    }
-  }
-
   return {
-    syncResume,
+    syncResume: syncResumeShared,
     continueWatchingItems: syncedItems,
   };
 }
