@@ -17,6 +17,7 @@
       "require": "./dist/player.umd.cjs",
       "types": "./dist/player.d.ts"
     },
+    "./player.css": "./dist/player.css",
     "./style.css": "./dist/style.css",
     "./fonts.css": "./dist/fonts/fonts.css",
     "./dist/*": "./dist/*"
@@ -54,12 +55,15 @@
     "eslint-plugin-vue": "^10.5.0",
     "globals": "^16.5.0",
     "jsdom": "^29.1.1",
+    "pinia": "^3.0.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.46.0",
     "unplugin-icons": "^23.0.1",
     "vite": "^8.0.16",
     "vitest": "^4.1.8",
+    "vue": "^3.5.0",
     "vue-eslint-parser": "^10.2.0",
+    "vue-router": "^5.0.0",
     "vue-tsc": "^3.3.3"
   },
   "peerDependencies": {
@@ -86,9 +90,6 @@
     "@phlix/syncplay": "github:detain/phlix-syncplay#v0.1.5",
     "apexcharts": "^5.15.2",
     "hls.js": "^1.6.16",
-    "pinia": "^3.0.0",
-    "vue": "^3.5.0",
-    "vue-router": "^5.0.0",
     "vue3-apexcharts": "^1.11.1"
   }
 }

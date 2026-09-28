@@ -1,6 +1,10 @@
 /**
  * Admin layout styles — extracted from AdminLayout.vue.
- * Loaded separately so login/browse pages don't pay for admin chrome CSS.
+ * NOTE: this file is a SOURCE-side organisation aid only. The library build
+ * runs with `cssCodeSplit: false` (see vite.config.ts), so ALL of this CSS is
+ * folded into the single published `dist/style.css` that every consumer loads
+ * — there is no runtime separate-loading benefit; login/browse pages DO ship
+ * these bytes. Keeping it in its own file groups admin chrome for editing.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

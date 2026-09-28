@@ -223,7 +223,18 @@ async function submitUserForm(): Promise<void> {
       if (password.value) input.password = password.value;
       await api.update(existing.id, input);
       if (existing.is_admin !== isAdmin.value) {
-        await api.setAdmin(existing.id, isAdmin.value);
+        // update + setAdmin are two calls, not one transaction. If only the
+        // flag call fails the profile IS already saved — say exactly that and
+        // reload the list so it shows the persisted truth instead of letting
+        // the generic catch imply nothing was written.
+        try {
+          await api.setAdmin(existing.id, isAdmin.value);
+        } catch (adminFlagError) {
+          toasts.error(errMessage(adminFlagError, 'Profile saved, but the admin flag change failed.'));
+          closeUserForm();
+          await loadUsers();
+          return;
+        }
       }
       toasts.success('User updated.');
     } else {

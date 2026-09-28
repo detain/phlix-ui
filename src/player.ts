@@ -6,6 +6,18 @@
  * main `@phlix/ui` bundle. Consumers who need the Player surface import from
  * this entry instead.
  *
+ * ⚠ DUPPLICATION REALITY (audit finding 8, 2026-09): this entry does NOT
+ * import from `@phlix/ui` — every shared module (ApiClient, usePlayerStore,
+ * …) reached through this graph is INLINED again into dist/player.js, so the
+ * package ships two independent copies of that code. Importing both entries
+ * in one app yields two module identities (the `'@phlix/ui'` external in
+ * vite.player.config.ts is aspirational, never matched). Zero estate
+ * consumers of `@phlix/ui/player` exist today; before the first one lands,
+ * rewrite shared-module imports to route via `'@phlix/ui'` or retire this
+ * entry. Styles: the player graph's CSS is published as
+ * `@phlix/ui/player.css` — a strict subset of `@phlix/ui/style.css`; load one,
+ * not both.
+ *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
