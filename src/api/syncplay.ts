@@ -391,9 +391,14 @@ export class SyncPlayApi {
 /** Singleton instance for app-wide use. */
 let syncPlayApiInstance: SyncPlayApi | null = null;
 
+/** The base the current singleton was built for — a later, different base
+ *  (server switch without a reload) must re-create it, not be ignored. */
+let syncPlayApiBase: string | null = null;
+
 export function getSyncPlayApi(apiBase: string): SyncPlayApi {
-  if (!syncPlayApiInstance) {
+  if (!syncPlayApiInstance || syncPlayApiBase !== apiBase) {
     syncPlayApiInstance = new SyncPlayApi(apiBase);
+    syncPlayApiBase = apiBase;
   }
   return syncPlayApiInstance;
 }
@@ -468,6 +473,18 @@ function getWsToken(): string | null {
 /**
  * Build the WebSocket URL for SyncPlay.
  * Connects to port 8097 on the current host with the JWT token as a query param.
+ *
+ * TODO(security, estate policy WEBSOCKET_URL_QUERY_REFUSED): carrying the bearer
+ * JWT in the query string deviates from the contracts policy — the hub relay
+ * (:8804, see `hubRelay.ts`) correctly uses the `Sec-WebSocket-Protocol`
+ * `bearer.<jwt>` subprotocol instead. This client cannot switch yet because the
+ * SERVER is the blocker: phlix-server `src/Server/WebSocket/WebSocketServer.php`
+ * `onWebSocketConnect()` authenticates ONLY `$request->get('token')` (query) and
+ * `SyncPlayAuthMiddleware` never reads `Sec-WebSocket-Protocol`. Switching the
+ * carrier before the :8097 endpoint adopts the bearer subprotocol would break
+ * the wire. Server-side dependency: mirror the relay's subprotocol acceptance on
+ * :8097, then flip this to `new WebSocket(url, ['bearer.<jwt>'])` (strip token
+ * from the URL; honor the echoed subprotocol check as `hubRelay.ts` does).
  */
 function buildWsUrl(roomId: string): string {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
@@ -492,8 +509,16 @@ function handleWsMessage(event: MessageEvent): void {
 
 /**
  * Handle WebSocket close event with exponential backoff reconnect.
+ *
+ * Guarded by socket identity (`hubRelay.ts` house pattern): a close delivered by
+ * a socket we have already replaced — the room-switch path in
+ * {@link connectSyncPlaySocket} — must not null the NEW `syncPlayWs`, fire
+ * `onDisconnect()` for it, or arm a duplicate reconnect ladder. The event arg is
+ * optional so synthetic no-arg closes (tests, manual teardown) keep working: with
+ * no event there is nothing to identity-check.
  */
-function handleWsClose(): void {
+function handleWsClose(event?: { target?: unknown }): void {
+  if (event && event.target !== syncPlayWs) return;
   syncPlayWs = null;
   if (syncPlayClient) {
     syncPlayClient.onDisconnect();
@@ -565,9 +590,17 @@ function connectSyncPlaySocket(
   // Register or update the message handler.
   if (onMessage) messageHandler = onMessage;
 
-  // Close any existing connection that was for a different room.
+  // Close any existing connection that was for a different room. Detach its
+  // handlers BEFORE closing: the close event of the OLD socket would otherwise
+  // land in the shared `handleWsClose`, null the socket we are about to build,
+  // fire onDisconnect for it and arm a duplicate reconnect ladder.
   if (syncPlayWs && syncPlayRoomId !== roomId) {
-    syncPlayWs.close();
+    const stale = syncPlayWs;
+    stale.onopen = null;
+    stale.onmessage = null;
+    stale.onclose = null;
+    stale.onerror = null;
+    stale.close();
     syncPlayWs = null;
     syncPlayRoomId = null;
     syncPlayClient = null;
@@ -655,7 +688,14 @@ function connectSyncPlaySocket(
  */
 export function closeSyncPlayConnection(): void {
   if (syncPlayWs) {
-    syncPlayWs.close();
+    // Detach first — an intentional close must not schedule a reconnect when the
+    // close event arrives (or after this module's state is already reset).
+    const closing = syncPlayWs;
+    closing.onopen = null;
+    closing.onmessage = null;
+    closing.onclose = null;
+    closing.onerror = null;
+    closing.close();
     syncPlayWs = null;
   }
   if (syncPlayClient) {

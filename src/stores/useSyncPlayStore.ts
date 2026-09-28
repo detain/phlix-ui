@@ -421,9 +421,18 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
             playbackPosition: command.position,
           };
         }
+        // The inbound adapter (`api/syncplay.ts` `onPlaybackSync`) only ever
+        // synthesises 'play'/'pause' from a PlaybackState frame — a 'sync' arm
+        // never arrives — so the rate MUST be pinned here too. Without it a
+        // member that joined while paused kept `playbackRate: 0` after the
+        // group's play broadcast: `driftAmount` then extrapolated the expected
+        // position at 0× (frozen anchor) and `syncStatus` flapped false
+        // `outOfSync`. `command.rate ?? 1`: a play broadcast without a rate
+        // means normal speed; the wire's default.
         currentSession.value = {
           ...currentSession.value,
           state: 'playing',
+          playbackRate: command.rate ?? 1,
         };
         break;
       case 'pause':

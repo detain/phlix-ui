@@ -449,3 +449,56 @@ describe('useSyncPlayStore — the joining member carries the account name', () 
         });
     });
 });
+
+describe('audit #2 — a remote play pins the playback rate back to 1', () => {
+    it('joined-while-paused: the play reducer restores playbackRate (drift must not freeze at 0×)', () => {
+        const store = useSyncPlayStore();
+        // Sit at the exact state the old code stranded a joiner in: paused, rate 0.
+        store.currentSession = {
+            ...store.currentSession!,
+            state: 'paused',
+            playbackPosition: 10,
+            playbackRate: 0,
+        } as typeof store.currentSession;
+
+        store.onRemoteStateUpdate({ type: 'play', position: 42, issuedBy: 'peer', issuedAt: '2026-01-01T00:00:00Z' });
+
+        // Without the fix: state flips to playing but the rate stays 0, so
+        // driftAmount extrapolates the expected position at 0× (frozen anchor)
+        // and syncStatus flaps false `outOfSync`.
+        expect(store.currentSession!.state).toBe('playing');
+        expect(store.currentSession!.playbackRate).toBe(1);
+
+        // An explicit rate on the command still wins.
+        store.onRemoteStateUpdate({ type: 'play', position: 43, rate: 2, issuedBy: 'peer', issuedAt: '2026-01-01T00:00:00Z' });
+        expect(store.currentSession!.playbackRate).toBe(2);
+    });
+
+    it('through the REAL inbound adapter: a peer PlaybackState(is_playing) frame restores the rate', async () => {
+        // The adapter (api/syncplay.ts onPlaybackSync) only synthesizes
+        // play/pause — a 'sync' arm with a rate never arrives on this path,
+        // which is why the reducer itself must own the default.
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+        store.currentSession = {
+            ...store.currentSession!,
+            state: 'paused',
+            playbackRate: 0,
+        } as typeof store.currentSession;
+
+        const sock = sockets.at(-1)!;
+        sock.onopen?.();
+        sock.onmessage?.({
+            data: JSON.stringify({
+                type: 'syncplay_playback_sync',
+                member_id: 'peer-1',
+                position: 60_000, // ms on the wire
+                is_playing: true,
+            }),
+        } as MessageEvent);
+
+        expect(store.currentSession!.state).toBe('playing');
+        expect(store.currentSession!.playbackRate).toBe(1);
+        expect(store.currentSession!.playbackPosition).toBe(60); // converted to seconds
+    });
+});

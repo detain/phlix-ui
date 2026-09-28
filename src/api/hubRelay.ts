@@ -173,14 +173,32 @@ function setStatus(status: HubRelayStatus): void {
  * auth is available.
  */
 export function openHubRelayConnection(config: HubRelayConfig): void {
-  if (hubWs && hubConfig?.serverId === config.serverId) return;
+  if (hubWs && hubConfig?.serverId === config.serverId) {
+    if (hubConfig?.hubBaseUrl === config.hubBaseUrl) {
+      // Same live socket serving the same (server, hub) — but the CALLER's
+      // handles may be fresh closures (new tokenProvider / onPendingCommand
+      // after a re-init). The message handler reads the module-level `hubConfig`
+      // per frame, so adopting it here swaps them without a reconnect; the old
+      // early-return kept the previous config's closures alive indefinitely.
+      hubConfig = config;
+      return;
+    }
+    // hubBaseUrl changed → the open socket is bound to the old relay URL;
+    // fall through to the teardown + rebuild below.
+  }
   // A DIFFERENT server id means the app re-pointed at another server (native
   // clients switch servers at runtime). The old socket is bound to the old
   // server and its onmessage closure reads the module-level hubConfig — leaving
   // it open would deliver the new config's frames to the old socket and leak it.
   if (hubWs) {
-    hubWs.onclose = null;
-    hubWs.close();
+    // Detach BEFORE closing: the old socket's close event would otherwise null
+    // the NEW `hubWs` and arm a duplicate reconnect ladder (same trap as
+    // `connectSyncPlaySocket`'s room-switch path).
+    const stale = hubWs;
+    stale.onclose = null;
+    stale.onmessage = null;
+    stale.onerror = null;
+    stale.close();
     hubWs = null;
   }
   hubConfig = config;
@@ -243,6 +261,11 @@ function connectHubRelaySocket(): void {
   };
 
   socket.onclose = () => {
+    // Closure-identity guard (house pattern, cf. `handleWsClose` in syncplay.ts):
+    // a close delivered by a socket we already replaced must not clobber the
+    // current one or double-arm the ladder. Tests fire this handler with no event
+    // arg, so identity comes from the captured `socket`, not `event.target`.
+    if (hubWs !== socket) return;
     hubWs = null;
     scheduleHubReconnect();
   };

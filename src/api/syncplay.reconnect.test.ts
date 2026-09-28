@@ -255,3 +255,37 @@ describe('openSyncPlayConnection — a caller-initiated connect resets the budge
         expect(closeAndMeasure()).toBe(1000);
     });
 });
+
+describe('room switch — a stale socket close is inert (audit #3)', () => {
+    it('detach-before-close plus the target guard leave the new socket and ladder untouched', () => {
+        openSyncPlayConnection(ROOM);
+        const old = socket();
+        // Capture the shared close handler BEFORE the switch detaches it, to
+        // simulate the old socket's close event still landing afterwards.
+        const lateClose = old.onclose as unknown as (e: { target: unknown }) => void;
+        expect(typeof old.onclose).toBe('function');
+
+        openSyncPlayConnection('sp_second');
+        // The switch must have detached the old handlers BEFORE closing it…
+        expect(old.onclose).toBeNull();
+        expect(old.onmessage).toBeNull();
+        expect(old.closeCalls).toBe(1);
+
+        // …and even a close still queued from the old socket must be dropped by
+        // the `event.target !== syncPlayWs` guard: no nulling of the live
+        // socket, no onDisconnect, no SECOND reconnect ladder.
+        const before = FakeWebSocket.instances.length; // 2
+        lateClose({ target: old });
+        vi.advanceTimersByTime(40_000);
+        expect(FakeWebSocket.instances.length).toBe(before);
+
+        // The live socket still behaves: its OWN close arms rung one as usual.
+        socket().onclose?.();
+        expect(closeAndMeasure()).toBe(1000);
+    });
+
+    it('a no-arg close (synthetic teardown) still reconnects — the guard only fires with an event', () => {
+        openSyncPlayConnection(ROOM);
+        expect(closeAndMeasure()).toBe(1000);
+    });
+});

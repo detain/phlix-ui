@@ -395,3 +395,78 @@ describe('parsePendingCommandFrame — the parse boundary', () => {
     expect(parsePendingCommandFrame(frame)).toBeNull();
   });
 });
+// ── regression: socket identity + fresh-config adoption (audit #9) ───────────
+
+describe('hub relay — a stale socket close is inert (audit #9)', () => {
+  it('detach-before-close plus the closure guard protect the live socket', () => {
+    vi.useFakeTimers();
+    openHubRelayConnection({
+      serverId: SERVER_ID,
+      tokenProvider: () => 'tok-1',
+      onPendingCommand: () => {},
+    });
+    const old = socket();
+    // Capture the close handler BEFORE the different-server reopen detaches it.
+    const lateClose = old.onclose;
+    expect(typeof lateClose).toBe('function');
+
+    openHubRelayConnection({
+      serverId: 'srv-two',
+      tokenProvider: () => 'tok-2',
+      onPendingCommand: () => {},
+    });
+    expect(old.onclose).toBeNull(); // detached before close()…
+    expect(old.onmessage).toBeNull();
+    expect(old.closeCalls).toBe(1); // …and the stale socket was closed
+
+    // A still-queued close from the old socket must be dropped by the identity
+    // guard (hubWs !== socket): the NEW socket stays live and no duplicate
+    // ladder is armed.
+    const live = getHubRelaySocket();
+    (lateClose as () => void)();
+    vi.advanceTimersByTime(60_000);
+    expect(FakeWebSocket.instances).toHaveLength(2); // initial + one reopen only
+    expect(getHubRelaySocket()).toBe(live);
+  });
+});
+
+describe('hub relay — same-server reopen adopts fresh config closures (audit #9)', () => {
+  it('swaps handlers/tokenProvider on the existing socket without reconnecting', () => {
+    const first: PendingPlayMediaCommand[] = [];
+    const second: PendingPlayMediaCommand[] = [];
+    openHubRelayConnection({
+      serverId: SERVER_ID,
+      tokenProvider: () => 'tok-1',
+      onPendingCommand: (c) => first.push(c),
+    });
+    const s = socket();
+
+    openHubRelayConnection({
+      serverId: SERVER_ID,
+      tokenProvider: () => 'tok-2',
+      onPendingCommand: (c) => second.push(c),
+    });
+    expect(FakeWebSocket.instances).toHaveLength(1); // still a no-op reopen…
+
+    // …but the frame now reaches the NEW handler (old early-return kept the
+    // original closures alive forever). Wire frame = snake_case, exactly as the
+    // hub's PendingCommandDispatcher emits.
+    s.deliver({
+      type: 'pending_command',
+      command: 'play_media',
+      server_id: SERVER_ID,
+      media_id: 'media-9',
+      title: 'Inception',
+      issued_at: 1_700_000_000,
+      source: 'alexa',
+    });
+    expect(second).toHaveLength(1);
+    expect(first).toHaveLength(0);
+
+    // And a later reconnect re-reads the NEW token provider.
+    vi.useFakeTimers();
+    s.onclose?.();
+    vi.advanceTimersByTime(1000);
+    expect(socket().protocols).toEqual(['bearer', 'tok-2']);
+  });
+});

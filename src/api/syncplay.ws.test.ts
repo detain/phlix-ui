@@ -29,6 +29,7 @@ import {
     closeSyncPlayConnection,
     sendSyncPlayStateUpdate,
     sendSyncPlayCommand,
+    getSyncPlayApi,
 } from './syncplay';
 import { ACCESS_TOKEN_KEY } from './tokenStore';
 import type { SyncPlayStateUpdate } from '../types/syncplay';
@@ -601,5 +602,57 @@ describe('sendSyncPlayCommand', () => {
         s.readyState = FakeWebSocket.CLOSING;
         sendSyncPlayCommand({ type: 'play', position: 1, ...base });
         expect(s.sent).toEqual([]);
+    });
+});
+
+// ── regressions: socket identity + api-base singleton ─────────────────────────
+
+describe('room switch — the old socket cannot clobber the new one (audit #3)', () => {
+    it('detaches the old handlers before close and ignores a late close aimed at it', () => {
+        vi.useFakeTimers();
+        const handler = vi.fn();
+        openSyncPlayConnection(ROOM, handler, 'me', 'Me');
+        const old = socket();
+        old.onopen?.();
+        // Capture the shared close handler BEFORE the switch detaches it — this
+        // simulates the old socket's close event still landing afterwards.
+        const lateClose = old.onclose as (e: unknown) => void;
+        expect(typeof lateClose).toBe('function');
+
+        openSyncPlayConnection('sp_other999', handler, 'me', 'Me');
+        const fresh = socket();
+        expect(fresh).not.toBe(old);
+        // The switch closed the stale socket AND detached it first, so the
+        // browser-fired close has nowhere to land on the old socket itself…
+        expect(old.closeCalls).toBe(1);
+        expect(old.onclose).toBeNull();
+        expect(old.onmessage).toBeNull();
+
+        // …and even a close delivered through the captured reference must be
+        // dropped by the `event.target !== syncPlayWs` guard: it must NOT null
+        // the new socket, fire onDisconnect for it, or arm a second ladder.
+        lateClose({ target: old });
+        vi.advanceTimersByTime(60_000);
+        expect(FakeWebSocket.instances).toHaveLength(2); // zero reconnect sockets
+
+        // The new socket is still THE connection: inbound frames flow to the handler.
+        fresh.onopen?.();
+        fresh.deliver({
+            type: 'syncplay_playback_sync',
+            member_id: 'peer',
+            position: 12_000,
+            is_playing: true,
+        });
+        expect(handler).toHaveBeenCalledWith(expect.objectContaining({ type: 'play' }));
+    });
+});
+
+describe('getSyncPlayApi — base changes rebuild the singleton (audit #13)', () => {
+    it('reuses the instance for the same base and re-creates it for a new one', () => {
+        const one = getSyncPlayApi('https://server-one');
+        expect(getSyncPlayApi('https://server-one')).toBe(one); // stable for same base
+        const two = getSyncPlayApi('https://server-two');
+        expect(two).not.toBe(one); // later base is honored, not silently ignored
+        expect(getSyncPlayApi('https://server-two')).toBe(two);
     });
 });
