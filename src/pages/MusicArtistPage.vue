@@ -242,7 +242,7 @@ const trackCountLabel = computed(() =>
             </header>
 
             <!-- Albums section -->
-            <section class="artist-albums" aria-label="Albums">
+            <section class="artist-albums" :aria-label="t('music.albums')">
                 <h2 class="artist-albums__title">{{ t('music.albums') }}</h2>
                 <!-- One page failed: banner, not a replacement — the albums the user
                      was looking at are still below, and the pager still works. -->

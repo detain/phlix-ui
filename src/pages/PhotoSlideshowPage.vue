@@ -12,7 +12,9 @@
  * Gets `?album={id}` and `?library_id=` params from URL.
  *
  * Data: `GET /api/v1/photo/slideshow?library_id=&album_id=&interval=` via photoApi.getSlideshow.
- * Note: `url` (stream_url) is a signed URL that can expire — handle by re-fetching.
+ * Note: `url` (stream_url) is a signed URL that can expire — an image error
+ * triggers ONE silent position-keeping re-fetch (latch in `handleImageError`),
+ * then the placeholder.
  */
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -24,6 +26,8 @@ import Icon from '../components/Icon.vue';
 import Button from '../components/ui/Button.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
+import { isTypingTarget } from '../components/player/shortcuts';
+import { layerFocusDepth } from '../components/ui/useFocusTrap';
 
 const apiBase = useMediaApiBase();
 /** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
@@ -62,6 +66,14 @@ const currentIndex = ref(0);
 const isPlaying = ref(true);
 const interval = ref(requestedInterval.value);
 let timer: ReturnType<typeof setInterval> | null = null;
+/**
+ * Signed stream URLs expire mid-show. `urlRefetchAttempted` latches ONE silent
+ * re-fetch per error episode (a genuinely broken URL must not turn every slide
+ * into a refetch storm); the in-flight flag keeps a burst of error events from
+ * firing parallel fetches. Both re-arm on a full reload and on user navigation.
+ */
+let urlRefetchAttempted = false;
+let urlRefetchInFlight = false;
 
 const currentSlide = computed<SlideshowItem | null>(() => {
     return slides.value[currentIndex.value] ?? null;
@@ -76,10 +88,22 @@ const progress = computed(() => {
 });
 
 async function loadSlideshow(): Promise<void> {
-    if (!libraryId.value) return;
+    if (!libraryId.value) {
+        // No library in the route: the PREVIOUS album's slides are stale and must
+        // not keep auto-advancing (or hold their expiring URLs) behind the
+        // empty-state screen. Tear the show down before returning.
+        stopTimer();
+        slides.value = [];
+        currentIndex.value = 0;
+        imageError.value = false;
+        error.value = null;
+        urlRefetchAttempted = false;
+        return;
+    }
     loading.value = true;
     error.value = null;
     imageError.value = false;
+    urlRefetchAttempted = false;
     try {
         const response = await photoApi.getSlideshow(apiBase.value, libraryId.value, {
             albumId: albumId.value ?? undefined,
@@ -97,6 +121,35 @@ async function loadSlideshow(): Promise<void> {
         slides.value = [];
     } finally {
         loading.value = false;
+    }
+}
+
+/**
+ * Refresh the signed slide URLs in place (M8): keep the viewer's position by
+ * re-joining on the current slide's id, falling back to the closest index when
+ * the refreshed set changed shape. Any failure degrades to the placeholder
+ * path — this call never loops (the latch in `handleImageError` owns that).
+ */
+async function refetchSlideshow(): Promise<void> {
+    if (!libraryId.value) return;
+    urlRefetchInFlight = true;
+    try {
+        const anchorId = currentSlide.value?.id ?? null;
+        const keptIndex = currentIndex.value;
+        const response = await photoApi.getSlideshow(apiBase.value, libraryId.value, {
+            albumId: albumId.value ?? undefined,
+            interval: requestedInterval.value,
+        });
+        slides.value = response.slideshow;
+        interval.value = response.interval;
+        const idx = anchorId === null ? -1 : slides.value.findIndex((s) => s.id === anchorId);
+        currentIndex.value = idx >= 0 ? idx : Math.min(keptIndex, Math.max(0, slides.value.length - 1));
+        imageError.value = false;
+        startTimer();
+    } catch {
+        imageError.value = true;
+    } finally {
+        urlRefetchInFlight = false;
     }
 }
 
@@ -127,6 +180,7 @@ function goPrev(): void {
     if (hasPrev.value) {
         currentIndex.value--;
         imageError.value = false;
+        urlRefetchAttempted = false;
     }
 }
 
@@ -134,7 +188,16 @@ function goNext(): void {
     if (hasNext.value) {
         currentIndex.value++;
         imageError.value = false;
+        urlRefetchAttempted = false;
     }
+}
+
+/** Jump to a thumbnail-selected slide (user navigation re-arms the refetch latch). */
+function goToSlide(index: number): void {
+    if (index < 0 || index >= slides.value.length) return;
+    currentIndex.value = index;
+    imageError.value = false;
+    urlRefetchAttempted = false;
 }
 
 function togglePlay(): void {
@@ -156,11 +219,27 @@ function exit(): void {
 }
 
 function handleImageError(): void {
+    // A failed image is usually an expired signed URL, not a dead photo: refresh
+    // the show ONCE (silently, position-keeping) before falling back to the
+    // placeholder. The latch only re-arms on a full reload or user navigation.
+    if (!urlRefetchAttempted && !urlRefetchInFlight && libraryId.value) {
+        urlRefetchAttempted = true;
+        void refetchSlideshow();
+        return;
+    }
     imageError.value = true;
 }
 
-// Keyboard shortcuts
+// Keyboard shortcuts — guarded on the house pattern from
+// components/player/shortcuts.ts (useKeyboardShortcuts): modifier chords belong
+// to the browser/OS, keys typed into a field belong to that field, and keys
+// pressed while ANY focus layer is open (Command Palette, a Modal…) belong to
+// the layer on top. Without these, ' '/Esc leaked through the palette and Esc
+// closed the overlay AND exited the slideshow in one keystroke.
 function handleKeydown(e: KeyboardEvent): void {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (isTypingTarget(e.target)) return;
+    if (layerFocusDepth() > 0) return;
     switch (e.key) {
         case 'ArrowLeft':
             goPrev();
@@ -288,21 +367,25 @@ watch([libraryId, albumId], () => {
                     </Button>
                 </div>
 
-                <!-- Thumbnail strip -->
-                <div class="thumbnail-strip">
-                    <div
+                <!-- Thumbnail strip — real buttons: every slide is reachable by
+                     Tab and activatable by Enter/Space, each named for SRs. -->
+                <div class="thumbnail-strip" role="group" aria-label="Slides">
+                    <button
                         v-for="(slide, idx) in slides"
                         :key="slide.id"
+                        type="button"
                         class="thumbnail"
                         :class="{ active: idx === currentIndex }"
-                        @click.stop="currentIndex = idx"
+                        :aria-label="slide.caption ? `Photo ${idx + 1}: ${slide.caption}` : `Photo ${idx + 1}`"
+                        :aria-current="idx === currentIndex ? 'true' : undefined"
+                        @click.stop="goToSlide(idx)"
                     >
                         <img
                             :src="imgSrc(slide.thumbnail_url)"
-                            :alt="`Thumbnail ${idx + 1}`"
+                            :alt="''"
                             loading="lazy"
                         />
-                    </div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -476,6 +559,17 @@ watch([libraryId, albumId], () => {
     opacity: 0.5;
     transition: opacity var(--transition-fast);
     border: 2px solid transparent;
+    /* Element is a <button> now (keyboard-reachable) — strip the UA chrome so it
+       renders exactly like the old div. */
+    display: block;
+    padding: 0;
+    background: none;
+}
+
+.thumbnail:focus-visible {
+    outline: none;
+    opacity: 1;
+    box-shadow: 0 0 0 3px var(--accent-ring, rgba(229, 9, 20, 0.5));
 }
 
 .thumbnail:hover {

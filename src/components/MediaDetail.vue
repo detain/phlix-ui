@@ -14,7 +14,7 @@
  * wires navigation. Degrades gracefully when metadata is sparse (missing poster,
  * overview, cast, runtime…). Keyboard-operable, reduced-motion safe, no emoji.
  */
-import { computed, ref, onMounted, onBeforeUnmount, watch, inject } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, watch, inject, nextTick } from 'vue';
 import type { MediaItem, MediaType } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { mediaTypeIcon } from '../utils/mediaTypeIcon';
@@ -34,6 +34,11 @@ import MediaRow from './MediaRow.vue';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import { api } from '../api/client';
 import { pluralCount } from '../utils/plural';
+import { useMessages } from '../composables/useMessages';
+
+/** Message seam (L3): the hero action/aria labels adopt the catalog so overrides
+ *  reach them; unadopted copy in this component stays inline English. */
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -495,7 +500,7 @@ const themeStopped = ref(false);
 
 const themeIcon = computed(() => (themeMuted.value ? 'mute' : 'volume'));
 const themeToggleLabel = computed(() =>
-  themeMuted.value ? 'Unmute theme music' : 'Mute theme music',
+  themeMuted.value ? t('player.themeUnmute') : t('player.themeMute'),
 );
 
 /** Apply the current muted/volume state to the element. */
@@ -545,11 +550,21 @@ onMounted(() => {
 
 // Re-arm when navigating between items (the page container swaps `item` in place
 // rather than remounting): stop the old theme, reset, and start the new one.
+// The RESTART must wait for `nextTick` (M1): watchers run pre-flush, i.e. before
+// Vue patches the element's `:src`. Playing synchronously here would `play()` on
+// the element whose src `stopThemeAudio()` just cleared — a rejection swallowed
+// by the autoplay catch, leaving the new theme silent forever. After the tick the
+// element carries the NEW url; the guard drops the restart if the url changed
+// (or cleared) again in the meantime.
 watch(themeAudioUrl, (next, prev) => {
   if (next === prev) return;
   stopThemeAudio();
   themeStopped.value = false;
-  if (next) startThemeAudio();
+  if (next) {
+    void nextTick(() => {
+      if (themeAudioUrl.value) startThemeAudio();
+    });
+  }
 });
 
 onBeforeUnmount(() => {
@@ -717,22 +732,22 @@ onBeforeUnmount(() => {
             class="media-detail__favorite"
             :class="{ 'is-active': isFavorited }"
             :left-icon="isFavorited ? 'bookmark' : 'bookmark-plus'"
-            :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+            :aria-label="isFavorited ? t('itemActions.removeFavorite') : t('itemActions.addFavorite')"
             :aria-pressed="isFavorited ? 'true' : 'false'"
             @click="onFavorite"
           >
-            {{ isFavorited ? 'In favorites' : 'Watchlist' }}
+            {{ isFavorited ? t('itemActions.inFavorites') : t('itemActions.watchlist') }}
           </Button>
           <Button
             variant="ghost"
             class="media-detail__watched"
             :class="{ 'is-active': isWatched }"
             :left-icon="isWatched ? 'eye' : 'eye-off'"
-            :aria-label="isWatched ? 'Mark as unwatched' : 'Mark as watched'"
+            :aria-label="isWatched ? t('itemActions.markUnwatchedAria') : t('itemActions.markWatchedAria')"
             :aria-pressed="isWatched ? 'true' : 'false'"
             @click="onWatched"
           >
-            {{ isWatched ? 'Watched' : 'Mark watched' }}
+            {{ isWatched ? t('itemActions.watched') : t('itemActions.markWatched') }}
           </Button>
           <!-- [ Rating ] — thumbs up/down (−2..2 like_level). Only `@cycle` is
                bound (NOT `@update:level`) so each thumb click triggers exactly ONE
@@ -755,7 +770,7 @@ onBeforeUnmount(() => {
               variant="ghost"
               class="media-detail__theme-btn"
               name="x"
-              label="Stop theme music"
+              :label="t('player.themeStop')"
               @click="onStopTheme"
             />
           </div>

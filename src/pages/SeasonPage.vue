@@ -178,7 +178,13 @@ function onLove(next: number): void {
 
 <template>
     <div class="season-page">
-        <div v-if="loading" class="season-page__loading" role="status" aria-busy="true" aria-label="Loading season">
+        <div
+            v-if="loading"
+            class="season-page__loading"
+            role="status"
+            aria-busy="true"
+            :aria-label="t('season.loadingAria')"
+        >
             <Skeleton variant="text" width="40%" height="1.6rem" />
             <Skeleton variant="text" :lines="3" />
         </div>
@@ -186,12 +192,12 @@ function onLove(next: number): void {
         <EmptyState
             v-else-if="error"
             icon="alert"
-            title="Couldn't load this season"
+            :title="t('season.loadError')"
             :description="error"
         >
             <template #actions>
-                <Button variant="solid" @click="load">Retry</Button>
-                <Button variant="ghost" @click="onBackToSeries">Back to series</Button>
+                <Button variant="solid" @click="load">{{ t('common.retry') }}</Button>
+                <Button variant="ghost" @click="onBackToSeries">{{ t('season.backToSeries') }}</Button>
             </template>
         </EmptyState>
 
@@ -263,7 +269,7 @@ function onLove(next: number): void {
                 </div>
             </header>
 
-            <section class="season-page__episodes" aria-label="Episodes">
+            <section class="season-page__episodes" :aria-label="t('season.episodes')">
                 <SeriesSeasons
                     v-if="season.episodes.length"
                     :seasons="seasonGroups"
@@ -284,11 +290,11 @@ function onLove(next: number): void {
         <EmptyState
             v-else-if="series"
             icon="tv"
-            title="Season not found"
-            :description="`${series.name} has no such season.`"
+            :title="t('season.notFound')"
+            :description="t('season.notFoundDescription', { series: series.name })"
         >
             <template #actions>
-                <Button variant="solid" @click="onBackToSeries">Back to series</Button>
+                <Button variant="solid" @click="onBackToSeries">{{ t('season.backToSeries') }}</Button>
             </template>
         </EmptyState>
     </div>

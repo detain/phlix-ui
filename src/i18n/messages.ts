@@ -37,6 +37,7 @@ export const DEFAULT_MESSAGES = {
     noMatches: 'No matches',
     searchPlaceholder: 'Search…',
     selectPlaceholder: 'Select…',
+    breadcrumb: 'Breadcrumb',
   },
   shell: {
     skipToContent: 'Skip to content',
@@ -299,6 +300,39 @@ export const DEFAULT_MESSAGES = {
     transcodeBodyUntitled:
       'We couldn’t start playback for this title right now. Please try again later.',
     goBack: 'Go back',
+    // Theme-song controls (MediaDetail hero) + transport chrome aria names (L3)
+    themeMute: 'Mute theme music',
+    themeUnmute: 'Unmute theme music',
+    themeStop: 'Stop theme music',
+    skipControls: 'Skip controls',
+  },
+  /**
+   * Per-item user-data actions shared by every surface that offers favorite /
+   * watchlist / watched affordances (MediaDetail hero, MiniPlayer, ...). The
+   * `season` group keeps its own copies for season-row context; these are the
+   * canonical generic strings (audit L3).
+   */
+  itemActions: {
+    addFavorite: 'Add to favorites',
+    removeFavorite: 'Remove from favorites',
+    inFavorites: 'In favorites',
+    watchlist: 'Watchlist',
+    markWatched: 'Mark watched',
+    watched: 'Watched',
+    markWatchedAria: 'Mark as watched',
+    markUnwatchedAria: 'Mark as unwatched',
+  },
+  /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
+  reader: {
+    decreaseFont: 'Decrease font size',
+    increaseFont: 'Increase font size',
+    lightMode: 'Light mode',
+    sepiaMode: 'Sepia mode',
+    darkMode: 'Dark mode',
+  },
+  /** Hub-only MCP personal-access-token manager page title. */
+  mcpTokens: {
+    title: 'MCP Tokens',
   },
   syncplay: {
     syncPlay: 'SyncPlay',
@@ -336,6 +370,8 @@ export const DEFAULT_MESSAGES = {
     fastForward: 'Fast forward',
     playAll: 'Play for everyone',
     pauseAll: 'Pause for everyone',
+    /** Accessible name of the create/join radiogroup in SyncPlayModal (L1). */
+    modeSelect: 'Create or join a room',
   },
   music: {
     title: 'Music Library',
@@ -429,6 +465,9 @@ export const DEFAULT_MESSAGES = {
     artistNotFound: 'Artist not found',
     artistsNotFound: 'No artists found',
     artistsDescription: 'Browse all artists in your library',
+    trackListing: 'Track listing',
+    searchTracksAria: 'Search tracks',
+    musicTracksAria: 'Music tracks',
   },
   settings: {
     // Appearance section titles + radiogroup labels
@@ -509,6 +548,13 @@ export const DEFAULT_MESSAGES = {
     markWatchedAria: 'Mark as watched',
     markUnwatchedAria: 'Mark as unwatched',
     noEpisodes: 'No episodes to play yet',
+    // Empty/error-state copy (L3)
+    loadingAria: 'Loading season',
+    loadError: "Couldn't load this season",
+    backToSeries: 'Back to series',
+    episodes: 'Episodes',
+    notFound: 'Season not found',
+    notFoundDescription: '{series} has no such season.',
   },
   parental: {
     title: 'Parental Controls',

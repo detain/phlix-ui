@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { flushPromises } from '@vue/test-utils';
 import { createRouter, createWebHistory, type RouteLocationNormalized, type Router, type RouteRecordRaw } from 'vue-router';
 import { createPhlixApp, buildRoutes, authGuard, connectGuard, mediaApiBaseFor, mediaDirectBaseFor, musicLibraryRedirect, mcpTokensMenuItem, MCP_TOKENS_ROUTE_NAME, PUBLIC_ROUTE_NAMES } from './createPhlixApp';
+import { DEFAULT_MESSAGES } from '../i18n/messages';
 import { isRoute } from '../test/route-match';
 
 /**
@@ -201,7 +202,10 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     expect(route, 'hub must mount the MCP token manager').toBeTruthy();
     expect(route!.path).toBe('/app/mcp-tokens');
     expect(typeof route!.component, 'must be a lazy () => import() chunk').toBe('function');
-    expect(route!.meta?.title).toBe('MCP Tokens');
+    // L4: the title travels as an i18n key (resolveRouteTitle translates it);
+    // pin BOTH the key and what the catalog resolves it to.
+    expect(route!.meta?.title).toBe('mcpTokens.title');
+    expect(DEFAULT_MESSAGES.mcpTokens.title).toBe('MCP Tokens');
 
     expect(
       server.some((r) => r.name === MCP_TOKENS_ROUTE_NAME),

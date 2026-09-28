@@ -99,7 +99,7 @@ function onSkip(marker: SkipMarker): void {
 </script>
 
 <template>
-  <div v-if="visibleMarkers.length > 0" class="skip-controls" aria-label="Skip controls">
+  <div v-if="visibleMarkers.length > 0" class="skip-controls" :aria-label="t('player.skipControls')">
     <button
       v-for="marker in visibleMarkers"
       :key="marker.id"

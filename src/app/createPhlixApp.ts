@@ -464,9 +464,9 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
         routes.push({
             path: `${base}/${MCP_TOKENS_ROUTE_PATH}`,
             name: MCP_TOKENS_ROUTE_NAME,
-            // A literal, not an i18n key: `resolveRouteTitle` runs every
-            // `meta.title` through `t()` and an unknown key echoes back unchanged.
-            meta: { title: 'MCP Tokens' },
+            // Title travels as an i18n key: `resolveRouteTitle` runs every
+            // `meta.title` through `t()`, so overrides can rename the page.
+            meta: { title: 'mcpTokens.title' },
             component: () => import('../pages/McpTokensPage.vue'),
         });
     }
@@ -533,6 +533,15 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     const router: Router = createRouter({
         history: createWebHistory(),
         routes: buildRoutes(fullConfig),
+        // Without this, a deep-scrolled Browse opening a detail page inherits the
+        // PREVIOUS page's scroll offset and lands mid-page. Every top-level route
+        // change starts at the top; a browser back/forward restore wins when the
+        // platform provides a saved position. (No TV-mode counter-rationale exists
+        // in the codebase: TV navigation is spatial-focus based, not scroll-offset
+        // based, so restoring offsets is irrelevant there.)
+        scrollBehavior(_to, _from, saved) {
+            return saved ?? { top: 0 };
+        },
     });
 
     // Gate every non-public route on auth: an unauthenticated visit redirects to

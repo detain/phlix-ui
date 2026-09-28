@@ -247,9 +247,16 @@ watch(
 );
 
 /** Drop script-y URL schemes from config-supplied external menu links. Allows
- *  http(s)/mailto/tel/relative/hash; blocks javascript:/data:/vbscript:. */
+ *  http(s)/mailto/tel/relative/hash; blocks javascript:/data:/vbscript:.
+ *  The scheme probe strips ALL control/whitespace characters first (L6): browsers
+ *  ignore embedded control chars like \x01 or newlines when parsing a URL, so a
+ *  raw anchored regex would happily ship `java\x09script:` past the blocklist. */
 function safeHref(href: string): string | undefined {
-    return /^\s*(javascript|data|vbscript):/i.test(href) ? undefined : href;
+    // The control chars ARE the point (L6): browsers ignore them inside URL
+    // schemes, so the sanitizer must strip them before the scheme test.
+    // eslint-disable-next-line no-control-regex
+    const probe = href.replace(/[\x00-\x20]/g, '');
+    return /^(javascript|data|vbscript):/i.test(probe) ? undefined : href;
 }
 </script>
 

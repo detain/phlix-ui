@@ -79,10 +79,19 @@ function onPointermove(e: PointerEvent) {
   if (!dragging.value) return;
   setValue(valueFromClientX(e.clientX));
 }
+// Ends a drag from EITHER source: pointerup (normal release) or pointercancel
+// (the browser took the gesture over — e.g. a touch-scroll/zoom takeover). Without
+// the cancel path `dragging` stays true forever after a takeover, so the value
+// keeps chasing a dead pointer. Mirrors player/Scrubber.vue's endDrag. The capture
+// is already implicitly released on cancel, hence the defensive try/catch.
 function onPointerup(e: PointerEvent) {
   if (!dragging.value) return;
   dragging.value = false;
-  (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+  try {
+    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+  } catch {
+    /* capture already gone (pointercancel path) */
+  }
   emit('change', props.modelValue);
 }
 
@@ -126,6 +135,7 @@ function onKeydown(e: KeyboardEvent) {
       @pointerdown="onPointerdown"
       @pointermove="onPointermove"
       @pointerup="onPointerup"
+      @pointercancel="onPointerup"
     >
       <div class="phlix-slider__fill" :style="{ width: percent + '%' }"></div>
       <div class="phlix-slider__thumb" :style="{ left: percent + '%' }"></div>

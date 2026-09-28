@@ -58,6 +58,31 @@ const effectiveApiBase = computed(() => props.apiBase ?? mediaApiBase.value);
 
 // ---- form state ---------------------------------------------------------
 const mode = ref<'create' | 'join'>('create');
+
+// L1: the create/join switcher was a half-implemented tablist (no tabpanels,
+// no roving tabindex, no arrow keys). What it actually is: a two-option choice
+// that swaps the fields below — a radiogroup. Arrow keys move BOTH selection
+// and focus, exactly like the native radio semantics ARIA promises; the
+// unselected option leaves the tab order (roving tabindex).
+const createOptionEl = ref<HTMLElement | null>(null);
+const joinOptionEl = ref<HTMLElement | null>(null);
+
+function onModeKeydown(e: KeyboardEvent): void {
+  switch (e.key) {
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      e.preventDefault();
+      mode.value = 'create';
+      createOptionEl.value?.focus();
+      break;
+    case 'ArrowRight':
+    case 'ArrowDown':
+      e.preventDefault();
+      mode.value = 'join';
+      joinOptionEl.value?.focus();
+      break;
+  }
+}
 const roomName = ref('');
 const roomId = ref('');
 const isLoading = ref(false);
@@ -148,24 +173,33 @@ function close(): void {
 <template>
   <Modal :model-value="modelValue" :title="t('syncplay.title')" size="md" @update:model-value="emit('update:modelValue', $event)" @close="close">
     <form class="syncplay-modal" @submit.prevent="submit">
-      <!-- Mode tabs -->
-      <div class="syncplay-modal__tabs" role="tablist">
+      <!-- Mode choice (radiogroup — see L1 note in script) -->
+      <div
+        class="syncplay-modal__tabs"
+        role="radiogroup"
+        :aria-label="t('syncplay.modeSelect')"
+        @keydown="onModeKeydown"
+      >
         <button
+          ref="createOptionEl"
           type="button"
-          role="tab"
+          role="radio"
           class="syncplay-modal__tab"
           :class="{ 'is-active': mode === 'create' }"
-          :aria-selected="mode === 'create'"
+          :aria-checked="mode === 'create'"
+          :tabindex="mode === 'create' ? 0 : -1"
           @click="mode = 'create'"
         >
           {{ t('syncplay.createRoom') }}
         </button>
         <button
+          ref="joinOptionEl"
           type="button"
-          role="tab"
+          role="radio"
           class="syncplay-modal__tab"
           :class="{ 'is-active': mode === 'join' }"
-          :aria-selected="mode === 'join'"
+          :aria-checked="mode === 'join'"
+          :tabindex="mode === 'join' ? 0 : -1"
           @click="mode = 'join'"
         >
           {{ t('syncplay.joinRoom') }}

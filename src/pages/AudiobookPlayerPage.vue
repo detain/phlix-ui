@@ -115,6 +115,11 @@ onBeforeUnmount(() => {
     if (saveProgressTimeout) {
         clearTimeout(saveProgressTimeout);
     }
+    // Stop narration BEFORE anything else: a detached <audio> keeps playing in
+    // most browsers, so without this the page unmounts with a ghost narrator
+    // still reading (and the element + its stream leaking). Mirrors MiniPlayer's
+    // teardown.
+    audioRef.value?.pause();
     // Save progress on unmount
     if (audiobook.value && currentTime.value > 0) {
         void saveProgress(true);

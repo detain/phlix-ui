@@ -178,7 +178,7 @@ function onSeek(event: Event): void {
             type="text"
             class="search-box__input"
             :placeholder="t('music.searchTracks')"
-            aria-label="Search tracks"
+            :aria-label="t('music.searchTracksAria')"
           >
         </div>
         <button
@@ -235,7 +235,7 @@ function onSeek(event: Event): void {
       </div>
 
       <!-- Track table -->
-      <div v-else class="track-table" role="table" aria-label="Music tracks">
+      <div v-else class="track-table" role="table" :aria-label="t('music.musicTracksAria')">
         <div class="track-table__header" role="row">
           <span class="col-num" role="columnheader">#</span>
           <span class="col-title" role="columnheader">{{ t('music.title') }}</span>

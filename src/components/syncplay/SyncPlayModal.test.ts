@@ -104,7 +104,7 @@ const qa = (sel: string): Array<DOMWrapper<Element>> =>
 const exists = (sel: string): boolean => document.body.querySelector(sel) !== null;
 
 const tab = (name: 'Create room' | 'Join room') =>
-    qa('button[role="tab"]').find((b) => b.text().trim() === name)!;
+    qa('button[role="radio"]').find((b) => b.text().trim() === name)!;
 
 /** The footer action button (`Create room` / `Join room`), not the tab. */
 const submitBtn = (w: VueWrapper) => w.findAllComponents(Button).at(1)!;
@@ -160,15 +160,15 @@ describe('SyncPlayModal — opening', () => {
 
     it('defaults to CREATE mode with an empty name', async () => {
         await openModal();
-        expect(tab('Create room').attributes('aria-selected')).toBe('true');
-        expect(tab('Join room').attributes('aria-selected')).toBe('false');
+        expect(tab('Create room').attributes("aria-checked")).toBe('true');
+        expect(tab('Join room').attributes("aria-checked")).toBe('false');
         expect(inputValue('#room-name')).toBe('');
         expect(exists('#room-id')).toBe(false);
     });
 
     it('a prefilledRoomId opens straight into JOIN mode with the id filled', async () => {
         await openModal({ prefilledRoomId: GROUP_ID });
-        expect(tab('Join room').attributes('aria-selected')).toBe('true');
+        expect(tab('Join room').attributes("aria-checked")).toBe('true');
         expect(inputValue('#room-id')).toBe(GROUP_ID);
         expect(exists('#room-name')).toBe(false);
     });
@@ -183,7 +183,7 @@ describe('SyncPlayModal — opening', () => {
         await w.setProps({ modelValue: true });
         await flushPromises();
 
-        expect(tab('Create room').attributes('aria-selected')).toBe('true');
+        expect(tab('Create room').attributes("aria-checked")).toBe('true');
         expect(inputValue('#room-name')).toBe('');
         // Two loads: one per open. A watcher that only fired once would show 1.
         expect(server!.requests).toHaveLength(2);
@@ -332,10 +332,10 @@ describe('SyncPlayModal — create', () => {
 
     it('the CREATE tab switches back from join mode', async () => {
         const w = await openModal({ prefilledRoomId: GROUP_ID });
-        expect(tab('Join room').attributes('aria-selected')).toBe('true');
+        expect(tab('Join room').attributes("aria-checked")).toBe('true');
 
         await tab('Create room').trigger('click');
-        expect(tab('Create room').attributes('aria-selected')).toBe('true');
+        expect(tab('Create room').attributes("aria-checked")).toBe('true');
         expect(exists('#room-name')).toBe(true);
         expect(exists('#room-id')).toBe(false);
         // Gating follows the mode: the prefilled id no longer enables submit.

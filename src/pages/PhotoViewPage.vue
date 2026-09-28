@@ -25,6 +25,8 @@ import Icon from '../components/Icon.vue';
 import Button from '../components/ui/Button.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
+import { isTypingTarget } from '../components/player/shortcuts';
+import { layerFocusDepth } from '../components/ui/useFocusTrap';
 
 const props = defineProps<{
     /** Photo id */
@@ -77,25 +79,36 @@ const exifLines = computed<string[]>(() => {
     return formatExifSummary(photo.value.exif);
 });
 
+// Monotonic token for stale-response suppression (M2): an arrow-key flurry
+// fires overlapping loads, and responses may settle out of order — a late
+// reply for a photo the viewer already left must never paint over the newest
+// one, nor may its `finally` clear the newer call's loading flag.
+let loadSeq = 0;
+
 async function loadPhoto(): Promise<void> {
     if (!props.id) return;
+    const seq = ++loadSeq;
     loading.value = true;
     error.value = null;
     imageError.value = false;
     try {
-        photo.value = await photoApi.getPhoto(apiBase.value, props.id);
+        const detail = await photoApi.getPhoto(apiBase.value, props.id);
+        if (seq !== loadSeq) return; // superseded mid-flight by a newer navigation
+        photo.value = detail;
         // Load album photos for navigation if we have an album id
         if (albumId.value && libraryId.value) {
             const album = await photoApi.getAlbum(apiBase.value, albumId.value, libraryId.value);
+            if (seq !== loadSeq) return;
             albumPhotos.value = album.photos;
         } else {
             albumPhotos.value = [];
         }
     } catch (e) {
+        if (seq !== loadSeq) return;
         error.value = e instanceof Error ? e.message : 'Failed to load photo';
         photo.value = null;
     } finally {
-        loading.value = false;
+        if (seq === loadSeq) loading.value = false;
     }
 }
 
@@ -150,8 +163,14 @@ function handleImageLoadError(): void {
     imageError.value = true;
 }
 
-// Keyboard navigation
+// Keyboard navigation — house guard (see PhotoSlideshowPage / player shortcuts):
+// modifier chords, typing targets and open focus layers (Command Palette…) keep
+// their keys; unguarded, 'z' zoomed the photo while the user typed into the
+// palette and Space/Esc leaked through the overlay.
 function handleKeydown(e: KeyboardEvent): void {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (isTypingTarget(e.target)) return;
+    if (layerFocusDepth() > 0) return;
     if (e.key === 'ArrowLeft' && hasPrev.value) {
         navigatePrev();
     } else if (e.key === 'ArrowRight' && hasNext.value) {

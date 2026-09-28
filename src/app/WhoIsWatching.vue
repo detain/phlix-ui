@@ -23,16 +23,44 @@
  * (or an explicit "stay on the active profile" — the current session's row is
  * marked active so choosing it is the honest no-op the store documents).
  */
-import { computed, onMounted } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useProfileStore } from '../stores/useProfileStore';
 import { useMessages } from '../composables/useMessages';
 import { useImageSrc } from '../composables/useImageSrc';
+import { useFocusTrap } from '../components/ui/useFocusTrap';
 
 const profiles = useProfileStore();
 const { t } = useMessages();
 // S241 seam: `avatar_url` arrives as a ROOT-RELATIVE server path and must be
 // resolved against the media base (the hub renders it through the relay proxy).
 const { imgSrc } = useImageSrc();
+
+// M5: this is `role="dialog" aria-modal="true"`, so it MUST behave like one —
+// without a trap the shell beneath stays Tab-reachable while the gate claims
+// modality. The trap lives exactly as long as the component (the gate unmounts
+// it on choice), locks scroll (full-bleed overlay), and deliberately has NO
+// onEscape: the picker is only closable by choosing a profile, so Esc must not
+// pretend otherwise.
+const rootEl = ref<HTMLElement | null>(null);
+const trapped = ref(true);
+useFocusTrap(rootEl, trapped);
+
+// The trap's open-focus lands on the first tile it can find; once the grid
+// renders, honour the picker's semantics instead — the ACTIVE profile's tile is
+// the honest default (choosing it is the documented no-op), first tile otherwise.
+watch(
+  () => profiles.loaded,
+  (loaded) => {
+    if (!loaded) return;
+    void nextTick(() => {
+      const tiles = rootEl.value?.querySelectorAll<HTMLElement>('.whos__tile:not([disabled])');
+      if (!tiles?.length) return;
+      const activeTile = rootEl.value?.querySelector<HTMLElement>('.whos__tile--active:not([disabled])');
+      (activeTile ?? tiles[0]).focus();
+    });
+  },
+  { immediate: true },
+);
 
 onMounted(() => {
   // The store dedupes (loaded flag + in-flight guard), so a late-mounted screen
@@ -59,7 +87,14 @@ async function choose(id: string): Promise<void> {
 </script>
 
 <template>
-  <div class="whos" role="dialog" aria-modal="true" :aria-label="t('profiles.whoIsWatching')">
+  <div
+    ref="rootEl"
+    class="whos"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    :aria-label="t('profiles.whoIsWatching')"
+  >
     <div class="whos__inner">
       <h1 class="whos__title">{{ t('profiles.whoIsWatching') }}</h1>
 
@@ -124,6 +159,9 @@ async function choose(id: string): Promise<void> {
   from { opacity: 0; transform: scale(0.985); }
   to { opacity: 1; transform: none; }
 }
+/* The dialog container is a focus PARK (trap fallback), never an actionable
+   target — its tiles carry their own focus rings, so no ring on the surface. */
+.whos:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) {
   .whos { animation: none; }
 }

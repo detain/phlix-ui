@@ -29,6 +29,17 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>();
 
 const id = useId();
 
+// L5: without `label` the control announces itself only as the generic "Toggle"
+// fallback below — the visible text disappears but the accessible name must not.
+// Loud in dev (house ToastHost guard), silent in prod; the fallback stays so an
+// existing consumer never renders an UNNAMED switch.
+if (!props.label && import.meta.env?.DEV) {
+  console.warn(
+    '[phlix/ui] <Switch> rendered without a `label` — screen readers will only hear ' +
+      'the generic "Toggle" fallback. Pass `label` (or an explicit accessible name).',
+  );
+}
+
 function toggle() {
   if (props.disabled) return;
   emit('update:modelValue', !props.modelValue);

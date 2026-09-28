@@ -130,10 +130,11 @@ function close(): void {
 async function setupHls(): Promise<void> {
   const v = videoRef.value;
   if (!v || !player.hlsMasterUrl) return;
+  const masterUrl = player.hlsMasterUrl;
   // Destroy any previous handle before creating a new one.
   hlsHandle.value?.destroy();
   hlsHandle.value = null;
-  hlsHandle.value = await attachHls(v, player.hlsMasterUrl, {
+  const handle = await attachHls(v, masterUrl, {
     startPosition: player.position,
     onReady: () => {
       const video = videoRef.value;
@@ -144,6 +145,15 @@ async function setupHls(): Promise<void> {
       if (player.playing) void video.play()?.catch(() => {});
     },
   });
+  // `attachHls` awaits (manifest load). If the dock hid — or the stream changed —
+  // during that window, the hide-branch already destroyed `hlsHandle` while it
+  // was still null, so installing now would strand a LIVE segment-fetcher with
+  // no owner. Re-check after the await and discard the stale handle instead.
+  if (!visible.value || player.hlsMasterUrl !== masterUrl) {
+    handle.destroy();
+    return;
+  }
+  hlsHandle.value = handle;
 }
 
 /** Watch visible to attach HLS when the dock becomes active with a transcoded session. */
@@ -250,7 +260,7 @@ onBeforeUnmount(() => {
             type="button"
             class="mini__btn mini__btn--favorite"
             :class="{ 'is-on': isFavorited }"
-            :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+            :aria-label="isFavorited ? t('itemActions.removeFavorite') : t('itemActions.addFavorite')"
             :aria-pressed="isFavorited ? 'true' : 'false'"
             @click="toggleFavorite"
           >

@@ -83,6 +83,46 @@ useFocusTrap(panelEl, open, {
   },
 });
 
+// L2: `role="menu"` promises Menu-pattern keyboard semantics (same contract
+// ui/Menu.vue implements): ArrowDown/Up walk the items with wrap-around,
+// Home/End jump to the edges. Items are real <button>s, so Enter/Space activate
+// natively once focused; Tab/Esc stay the trap's business.
+function menuItems(): HTMLElement[] {
+  return Array.from(
+    panelEl.value?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? [],
+  );
+}
+
+function focusItemAt(items: HTMLElement[], index: number): void {
+  const wrapped = (index + items.length) % items.length;
+  items[wrapped]?.focus();
+}
+
+function onPanelKeydown(e: KeyboardEvent): void {
+  const items = menuItems();
+  if (items.length === 0) return;
+  const current = items.indexOf(document.activeElement as HTMLElement);
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault();
+      focusItemAt(items, current + 1);
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      // Focus outside the item set (panel itself): walk to the LAST item.
+      focusItemAt(items, current === -1 ? -1 : current - 1);
+      break;
+    case 'Home':
+      e.preventDefault();
+      items[0]?.focus();
+      break;
+    case 'End':
+      e.preventDefault();
+      items[items.length - 1]?.focus();
+      break;
+  }
+}
+
 function onDocPointer(e: PointerEvent): void {
   if (rootEl.value && !rootEl.value.contains(e.target as Node)) close();
 }
@@ -126,6 +166,7 @@ onBeforeUnmount(() => {
       role="menu"
       :aria-label="t('shell.account')"
       tabindex="-1"
+      @keydown="onPanelKeydown"
     >
       <template v-if="auth.isLoggedIn">
         <div class="usermenu__head">

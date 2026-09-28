@@ -401,7 +401,7 @@ function goBack(): void {
         >
           <Icon name="arrow-left" class="music-page__back-icon" />
         </button>
-        <nav v-if="view !== 'artists'" class="music-page__crumb-nav" aria-label="Breadcrumb">
+        <nav v-if="view !== 'artists'" class="music-page__crumb-nav" :aria-label="t('common.breadcrumb')">
           <button type="button" class="music-page__crumb" @click="goToArtists">
             {{ t('music.artists') }}
           </button>

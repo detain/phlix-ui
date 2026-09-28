@@ -198,7 +198,7 @@ const currentChapter = computed(() => {
                 <button
                     type="button"
                     class="reader-btn"
-                    title="Decrease font size"
+                    :title="t('reader.decreaseFont')"
                     @click="decreaseFontSize"
                 >
                     A-
@@ -206,7 +206,7 @@ const currentChapter = computed(() => {
                 <button
                     type="button"
                     class="reader-btn"
-                    title="Increase font size"
+                    :title="t('reader.increaseFont')"
                     @click="increaseFontSize"
                 >
                     A+
@@ -215,7 +215,7 @@ const currentChapter = computed(() => {
                     type="button"
                     class="reader-btn reader-btn--theme"
                     :class="{ 'reader-btn--active': theme === 'light' }"
-                    title="Light mode"
+                    :title="t('reader.lightMode')"
                     @click="setTheme('light')"
                 >
                     ☀
@@ -224,7 +224,7 @@ const currentChapter = computed(() => {
                     type="button"
                     class="reader-btn reader-btn--theme"
                     :class="{ 'reader-btn--active': theme === 'sepia' }"
-                    title="Sepia mode"
+                    :title="t('reader.sepiaMode')"
                     @click="setTheme('sepia')"
                 >
                     📜
@@ -233,7 +233,7 @@ const currentChapter = computed(() => {
                     type="button"
                     class="reader-btn reader-btn--theme"
                     :class="{ 'reader-btn--active': theme === 'dark' }"
-                    title="Dark mode"
+                    :title="t('reader.darkMode')"
                     @click="setTheme('dark')"
                 >
                     🌙

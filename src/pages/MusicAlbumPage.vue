@@ -219,7 +219,7 @@ function playAll(): void {
             </header>
 
             <!-- Track listing -->
-            <section class="album-tracks" aria-label="Track listing">
+            <section class="album-tracks" :aria-label="t('music.trackListing')">
                 <MusicTrackList
                     :tracks="tracks"
                     :playing-track-id="playingTrackId"

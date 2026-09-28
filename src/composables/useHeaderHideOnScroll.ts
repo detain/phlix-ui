@@ -63,24 +63,32 @@ export function useHeaderHideOnScroll(): UseHeaderHideOnScroll {
     }
   }
 
+  // M6: hoisted so onScopeDispose can detach it — the anonymous version leaked
+  // a document-wide media-query listener for every consumer on every unmount.
+  let motionQuery: MediaQueryList | null = null;
+  function onMotionChange(e: MediaQueryListEvent): void {
+    prefersReducedMotion.value = e.matches;
+    if (prefersReducedMotion.value) {
+      // Reset state when motion preference is enabled
+      isHidden.value = false;
+      scrollDirection.value = 'none';
+    }
+  }
+
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     // Check for reduced motion preference
     if (typeof window.matchMedia === 'function') {
-      prefersReducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      prefersReducedMotion.value = motionQuery.matches;
       // Listen for changes in case user toggles the setting
-      window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
-        prefersReducedMotion.value = e.matches;
-        if (prefersReducedMotion.value) {
-          // Reset state when motion preference is enabled
-          isHidden.value = false;
-          scrollDirection.value = 'none';
-        }
-      });
+      motionQuery.addEventListener('change', onMotionChange);
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScopeDispose(() => {
       window.removeEventListener('scroll', onScroll);
+      motionQuery?.removeEventListener('change', onMotionChange);
+      motionQuery = null;
     });
 
     // Initialize state on mount
