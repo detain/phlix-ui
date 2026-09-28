@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import PhotoSlideshowPage from './PhotoSlideshowPage.vue';
 import { isRoute } from '../test/route-match';
@@ -181,5 +182,86 @@ describe('PhotoSlideshowPage', () => {
     await flushPromises();
     expect(w.text()).toContain('slideshow down');
     w.unmount();
+  });
+});
+
+describe('PhotoSlideshowPage — Space vs focused control (R-1)', () => {
+  /**
+   * The page listens on WINDOW, so the key events must actually bubble there:
+   * mount with `attachTo: document.body` (the default detached root would stop
+   * propagation at the fragment and every dispatch would silently no-op).
+   */
+  async function mountConnected(): Promise<VueWrapper> {
+    const router = makeRouter();
+    await router.push({ path: '/app/photo/slideshow', query: { library_id: 'lib1', album: 'alb1', interval: '5' } });
+    await router.isReady();
+    return mount(PhotoSlideshowPage, {
+      attachTo: document.body,
+      global: {
+        plugins: [router],
+        provide: { apiBase: '' },
+        stubs: { Icon: { props: ['name'], template: '<span class="icon" :data-icon="name" />' } },
+      },
+    });
+  }
+
+  function spaceKey(): KeyboardEvent {
+    return new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+  }
+
+  /** The center transport button's glyph — 'pause' while playing, 'play' once paused. */
+  function transportIcon(w: VueWrapper): string | undefined {
+    return w.findAll('.main-controls button')[1].find('.icon').attributes('data-icon');
+  }
+
+  it('Space on a <button> thumbnail is left to the control: no preventDefault, no play-toggle', async () => {
+    stubFetch();
+    const w = await mountConnected();
+    await flushPromises();
+    const thumb = w.findAll('.thumbnail')[0].element;
+    expect(transportIcon(w)).toBe('pause'); // playing at the start
+
+    const ev = spaceKey();
+    thumb.dispatchEvent(ev);
+    await nextTick();
+
+    // The global handler must bail BEFORE preventDefault — cancelling the
+    // slideshow's Space killed the button's native keyup activation (R-1).
+    expect(ev.defaultPrevented).toBe(false);
+    expect(transportIcon(w)).toBe('pause'); // global toggle did not fire
+    w.unmount();
+  });
+
+  it('Space on bare focus (the body) still preventDefaults and toggles play', async () => {
+    stubFetch();
+    const w = await mountConnected();
+    await flushPromises();
+    expect(transportIcon(w)).toBe('pause');
+
+    const ev = spaceKey();
+    document.body.dispatchEvent(ev);
+    await nextTick();
+
+    expect(ev.defaultPrevented).toBe(true);
+    expect(transportIcon(w)).toBe('play'); // toggled to paused
+    w.unmount();
+  });
+
+  it('typing suppression is not regressed by the button guard', async () => {
+    stubFetch();
+    const w = await mountConnected();
+    await flushPromises();
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    try {
+      const ev = spaceKey();
+      input.dispatchEvent(ev);
+      await nextTick();
+      expect(ev.defaultPrevented).toBe(false);
+      expect(transportIcon(w)).toBe('pause'); // typing Space belongs to the field
+    } finally {
+      input.remove();
+      w.unmount();
+    }
   });
 });

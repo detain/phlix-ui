@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, type VueWrapper } from '@vue/test-utils';
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import MiniPlayer from './MiniPlayer.vue';
@@ -406,6 +406,72 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
     w.unmount();
     await nextTick();
     expect(destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('hide→show with two attaches in flight leaves exactly one live handle (setup generation guard)', async () => {
+    // Held-promise attachHls: every call parks its resolver so the test controls
+    // the settle ORDER of the overlapping runs (the concurrent window R-2 flags).
+    type Handle = ReturnType<typeof mockHlsHandle>;
+    const handles: Handle[] = [];
+    const resolvers: Array<(h: Handle) => void> = [];
+    const attachHls = vi.fn(
+      () =>
+        new Promise<Handle>((resolve) => {
+          const h = mockHlsHandle(vi.fn());
+          handles.push(h);
+          resolvers.push(resolve);
+        }),
+    );
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { w, store } = mountTranscoded(attachHls);
+    await nextTick();
+    expect(attachHls).toHaveBeenCalledTimes(1); // mount-time setup #1 is in flight
+
+    // Hide (destroys nothing — #1 has not installed yet) then re-show: setup #2
+    // spawns and overtakes #1 in the generation counter.
+    store.hideMiniPlayer();
+    await nextTick();
+    store.showMiniPlayer();
+    await nextTick();
+    expect(attachHls).toHaveBeenCalledTimes(2);
+
+    // Both manifests resolve. Pre-fix, #1 passed the (visible, same-URL) re-check
+    // and installed, then #2 overwrote `hlsHandle` — orphaning #1 alive forever.
+    resolvers.forEach((resolve, i) => resolve(handles[i]));
+    await flushPromises();
+
+    expect(handles[0].destroy).toHaveBeenCalledTimes(1); // superseded run self-destroyed
+    expect(handles[1].destroy).not.toHaveBeenCalled(); // newest run owns the live handle
+
+    // …and #2 is genuinely the handle the dock holds: hiding now tears IT down.
+    store.hideMiniPlayer();
+    await nextTick();
+    expect(handles[1].destroy).toHaveBeenCalledTimes(1);
+    w.unmount();
+  });
+
+  it('an attach still in flight at unmount destroys its own handle instead of installing', async () => {
+    type Handle = ReturnType<typeof mockHlsHandle>;
+    let resolveAttach!: (h: Handle) => void;
+    const handle = mockHlsHandle(vi.fn());
+    const attachHls = vi.fn(
+      () =>
+        new Promise<Handle>((resolve) => {
+          resolveAttach = resolve;
+        }),
+    );
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { w } = mountTranscoded(attachHls);
+    await nextTick();
+    expect(attachHls).toHaveBeenCalledTimes(1);
+
+    // Teardown fires while the manifest load is pending; the store keeps `visible`
+    // true, so the old re-check would happily install onto the dead dock.
+    w.unmount();
+    resolveAttach(handle);
+    await flushPromises();
+
+    expect(handle.destroy).toHaveBeenCalledTimes(1); // stale run discarded its own handle
   });
 });
 

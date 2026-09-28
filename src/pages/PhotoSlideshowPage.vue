@@ -230,12 +230,28 @@ function handleImageError(): void {
     imageError.value = true;
 }
 
+/**
+ * Fourth-guard mirror of shortcuts.ts's `isButtonTarget` (handleShortcut, Space
+ * case): Space/Enter already activate a focused button or link, so a global
+ * handler must not also claim the key. Kept local (with the same shape and
+ * name) so this page stays the only slideshow file touched.
+ */
+function isButtonTarget(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    if (!el || !el.tagName) return false;
+    const tag = el.tagName.toLowerCase();
+    return tag === 'button' || tag === 'a' || el.getAttribute?.('role') === 'button';
+}
+
 // Keyboard shortcuts — guarded on the house pattern from
 // components/player/shortcuts.ts (useKeyboardShortcuts): modifier chords belong
-// to the browser/OS, keys typed into a field belong to that field, and keys
+// to the browser/OS, keys typed into a field belong to that field, keys
 // pressed while ANY focus layer is open (Command Palette, a Modal…) belong to
-// the layer on top. Without these, ' '/Esc leaked through the palette and Esc
-// closed the overlay AND exited the slideshow in one keystroke.
+// the layer on top, and Space on a button/link belongs to THAT control.
+// Without these, ' '/Esc leaked through the palette and Esc closed the
+// overlay AND exited the slideshow in one keystroke; without the button
+// guard, preventDefault on Space also killed the thumbnail strip's native
+// keyup activation of its <button> thumbnails.
 function handleKeydown(e: KeyboardEvent): void {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (isTypingTarget(e.target)) return;
@@ -248,6 +264,9 @@ function handleKeydown(e: KeyboardEvent): void {
             goNext();
             break;
         case ' ':
+            // The global play/pause is for bare focus only — a focused control
+            // (thumbnail, transport button) keeps its native Space activation.
+            if (isButtonTarget(e.target)) return;
             e.preventDefault();
             togglePlay();
             break;

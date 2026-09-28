@@ -126,10 +126,23 @@ function close(): void {
   player.closePlayer();
 }
 
+/**
+ * Monotonic setup-generation token (mirrors PhotoViewPage's `loadSeq`): a
+ * hide→show while an attach is in flight overlaps two setupHls runs, and only
+ * the NEWEST run may own `hlsHandle`. Without the token the first run passed
+ * the post-await re-check (visible again, same URL) and installed, then the
+ * second run overwrote `hlsHandle` and the first segment-fetcher was orphaned
+ * alive. Every superseded run destroys its own handle after the await and
+ * returns without assigning; teardown bumps the token too, so an in-flight-at-
+ * unmount install self-destroys instead of stranding a fetcher on a dead dock.
+ */
+let setupSeq = 0;
+
 /** Set up HLS playback via hls.js when hlsMasterUrl is persisted from a transcoded session. */
 async function setupHls(): Promise<void> {
   const v = videoRef.value;
   if (!v || !player.hlsMasterUrl) return;
+  const seq = ++setupSeq;
   const masterUrl = player.hlsMasterUrl;
   // Destroy any previous handle before creating a new one.
   hlsHandle.value?.destroy();
@@ -145,18 +158,26 @@ async function setupHls(): Promise<void> {
       if (player.playing) void video.play()?.catch(() => {});
     },
   });
-  // `attachHls` awaits (manifest load). If the dock hid — or the stream changed —
-  // during that window, the hide-branch already destroyed `hlsHandle` while it
-  // was still null, so installing now would strand a LIVE segment-fetcher with
-  // no owner. Re-check after the await and discard the stale handle instead.
-  if (!visible.value || player.hlsMasterUrl !== masterUrl) {
+  // `attachHls` awaits (manifest load). During that window this run can go stale
+  // three ways: a newer setupHls superseded it (`seq !== setupSeq`), the dock
+  // unmounted (teardown bumps the token), or it hid / the stream changed — the
+  // hide-branch destroyed `hlsHandle` while it was still null, so installing
+  // now would strand a LIVE segment-fetcher with no owner. A stale run discards
+  // its own handle instead of assigning.
+  if (seq !== setupSeq || !visible.value || player.hlsMasterUrl !== masterUrl) {
     handle.destroy();
     return;
   }
   hlsHandle.value = handle;
 }
 
-/** Watch visible to attach HLS when the dock becomes active with a transcoded session. */
+/** Watch visible to attach HLS when the dock becomes active with a transcoded session.
+ *  flush:'post' — the dock's <video> lives inside `v-if="visible"`: the default
+ *  pre-flush would run this callback BEFORE the re-show render remounts the element,
+ *  so `setupHls` would read a null `videoRef` and silently drop the attach (the
+ *  hide→show overlap the generation guard above owns could then never even spawn
+ *  the second run). After the render the element is there, and the generation
+ *  token keeps the newest run the sole owner of `hlsHandle`. */
 watch(
   () => visible.value,
   async (v) => {
@@ -170,6 +191,7 @@ watch(
     if (!player.hlsMasterUrl || !!player.streamUrl) return;
     await setupHls();
   },
+  { flush: 'post' },
 );
 
 // Also try to attach HLS on mount in case visible was already true (e.g. store state restored).
@@ -225,6 +247,7 @@ onBeforeUnmount(() => {
   // the shell does; the user close/quit path flushes in `close()` above). Best-effort
   // and idempotent-safe: the reporter no-ops when logged out or with no session.
   void resumeReporter?.reportFinal?.();
+  setupSeq++; // supersede any in-flight setupHls — its post-await guard self-destroys the handle
   hlsHandle.value?.destroy();
   hlsHandle.value = null;
   videoRef.value?.pause?.();
