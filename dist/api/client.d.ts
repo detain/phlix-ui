@@ -381,6 +381,13 @@ export declare class ApiClient {
      */
     setPoster(id: string, posterUrl: string): Promise<MediaItem>;
     /**
+     * Parse a non-ok response into the shared {@link ApiError} — the same
+     * contract every other method on this class promises its callers (and what
+     * `useAuthStore.parseErrorCode` reads via `body.code`). Used by the
+     * hand-rolled multipart/DELETE paths that bypass {@link request}.
+     */
+    private toApiError;
+    /**
      * POST multipart/form-data to an endpoint. Used for file uploads like avatar
      * images. The Content-Type header is deliberately omitted so the browser
      * sets `Content-Type: multipart/form-data; boundary=...` with the correct

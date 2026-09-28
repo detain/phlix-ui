@@ -85,7 +85,8 @@ describe('src/index.ts — the lazy component exports', () => {
  * `RatingBadge`, `UserRatingPicker` and `ProfileImageSettings` sat in `src/` with
  * no barrel export and no importer, and were therefore tree-shaken out of every
  * published artefact — `rating-badge` / `user-rating-picker` / `profile-image-settings`
- * each occurred ZERO times in `dist/phlix-ui.js`, `dist/ui.css` and `dist/style.css`,
+ * each occurred ZERO times in `dist/phlix-ui.js`, `dist/player.css`
+ * (then named `ui.css`) and `dist/style.css`,
  * while exported siblings (`phlix-icon`, `thumb-rating`) occurred once. So the
  * failure mode being pinned is "the export line goes away again and the component
  * silently leaves the bundle", which `expect(X).toBeDefined()` would catch but a

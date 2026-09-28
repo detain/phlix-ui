@@ -42,10 +42,11 @@ const distDir = resolve(__dirname, '../../dist');
  *
  * - `style.css` — the whole library (`@phlix/ui/style.css`), what phlix-server's
  *   and phlix-hub's `web-ui` load.
- * - `ui.css` — emitted by the separate `vite.player.config.ts` player build, so
- *   it carries `Player.vue`'s CSS but not `PlayerPage.vue`'s.
+ * - `player.css` — emitted by the separate `vite.player.config.ts` player build
+ *   (cssFileName pinned 2026-09; formerly `ui.css`), so it carries `Player.vue`'s
+ *   CSS but not `PlayerPage.vue`'s.
  */
-export type BuiltStylesheet = 'style.css' | 'ui.css';
+export type BuiltStylesheet = 'style.css' | 'player.css';
 
 export function readBuiltCss(name: BuiltStylesheet): string {
     return readFileSync(resolve(distDir, name), 'utf8');

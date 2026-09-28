@@ -3081,10 +3081,10 @@ describe('Player — theater full-bleed sizing (S34, S232)', () => {
     expect(block![1]).toMatch(/max-height:\s*100vh;/);
   });
 
-  it('SHIPS that fallback in the built dist/style.css and dist/ui.css (S232)', () => {
+  it('SHIPS that fallback in the built dist/style.css and dist/player.css (S232)', () => {
     // The bug this replaces: `100vh` was absent from BOTH artifacts while three
     // source-text assertions claimed it existed.
-    for (const sheet of ['style.css', 'ui.css'] as const) {
+    for (const sheet of ['style.css', 'player.css'] as const) {
       const css = readBuiltCss(sheet);
       const bodies = supportsBlockBodies(css, 'not (height:100dvh)', '.player.is-theater[data-v-');
       expect(bodies.length, `dist/${sheet} carries the theater dvh fallback`).toBe(1);

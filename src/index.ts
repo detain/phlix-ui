@@ -120,7 +120,7 @@ export { default as ThumbRating } from './components/ThumbRating.vue';
 // `POST /api/v1/media/{id}/ratings`). They shipped in P1-S7 but were never added
 // to this barrel and had no importer anywhere, so they were tree-shaken out of
 // every published bundle — `rating-badge` / `user-rating-picker` appeared ZERO
-// times in dist/phlix-ui.js, dist/ui.css and dist/style.css. No consumer could
+// times in dist/phlix-ui.js, dist/player.css (then `ui.css`) and dist/style.css. No consumer could
 // reach them even by deep path, because `files: ["dist"]` ships no SFC source.
 // They are kept, not deleted: `phlix-docs/docs/libraries.md` documents
 // `<RatingBadge>` as a public @phlix/ui component, and four native clients have

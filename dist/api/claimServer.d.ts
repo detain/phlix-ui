@@ -16,9 +16,25 @@
  * whose `kind` lets the caller show a precise, friendly message.
  */
 export type ClaimErrorKind = 'empty' | 'not_found' | 'expired' | 'already_claimed' | 'unauthorized' | 'invalid' | 'network';
+/**
+ * Hub claim failures parsed at this boundary.
+ *
+ * `code` carries the server's stable machine code when the wire supplied one
+ * (the `{ error|message, code }` envelope). Error-code doctrine: components
+ * localize THAT via `errorCodeMessage` from `src/i18n/errors.ts` — the catalog
+ * already registers `claim.code_not_found` / `claim.code_expired` /
+ * `claim.code_already_claimed` and `auth.unauthenticated` for exactly these
+ * failures. `kind`/`message` remain as the status-guessed English fallback for
+ * consumers (and servers) that predate the code, so nothing that reads today's
+ * shape breaks; `code` is what makes localization possible at all.
+ */
 export declare class ClaimError extends Error {
     readonly kind: ClaimErrorKind;
-    constructor(kind: ClaimErrorKind, message: string);
+    /** Server machine code (e.g. `claim.code_expired`), null when absent. */
+    readonly code: string | null;
+    constructor(kind: ClaimErrorKind, message: string, 
+    /** Server machine code (e.g. `claim.code_expired`), null when absent. */
+    code?: string | null);
 }
 export interface ClaimServerResult {
     serverId: string;

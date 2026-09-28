@@ -34,6 +34,7 @@ export declare const PT_BR_MESSAGES: {
         noMatches: string;
         searchPlaceholder: string;
         selectPlaceholder: string;
+        breadcrumb: string;
     };
     shell: {
         skipToContent: string;
@@ -257,6 +258,30 @@ export declare const PT_BR_MESSAGES: {
         transcodeBodyTitled: string;
         transcodeBodyUntitled: string;
         goBack: string;
+        themeMute: string;
+        themeUnmute: string;
+        themeStop: string;
+        skipControls: string;
+    };
+    itemActions: {
+        addFavorite: string;
+        removeFavorite: string;
+        inFavorites: string;
+        watchlist: string;
+        markWatched: string;
+        watched: string;
+        markWatchedAria: string;
+        markUnwatchedAria: string;
+    };
+    reader: {
+        decreaseFont: string;
+        increaseFont: string;
+        lightMode: string;
+        sepiaMode: string;
+        darkMode: string;
+    };
+    mcpTokens: {
+        title: string;
     };
     syncplay: {
         syncPlay: string;
@@ -293,6 +318,7 @@ export declare const PT_BR_MESSAGES: {
         fastForward: string;
         playAll: string;
         pauseAll: string;
+        modeSelect: string;
     };
     music: {
         title: string;
@@ -355,6 +381,9 @@ export declare const PT_BR_MESSAGES: {
         artistNotFound: string;
         artistsNotFound: string;
         artistsDescription: string;
+        trackListing: string;
+        searchTracksAria: string;
+        musicTracksAria: string;
     };
     settings: {
         theme: string;
@@ -419,6 +448,12 @@ export declare const PT_BR_MESSAGES: {
         markWatchedAria: string;
         markUnwatchedAria: string;
         noEpisodes: string;
+        loadingAria: string;
+        loadError: string;
+        backToSeries: string;
+        episodes: string;
+        notFound: string;
+        notFoundDescription: string;
     };
     parental: {
         title: string;

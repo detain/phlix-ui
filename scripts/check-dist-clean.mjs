@@ -27,7 +27,7 @@
  * Do not expect "I only added a docblock" to be a no-op. Measured during S13:
  * adding a docblock to a function in `CaptionOverlay.vue` rehashed that file's
  * `data-v-` scope id and changed **three additional** artefacts (`player.js`,
- * `player.umd.cjs`, `ui.css`), taking 55 dirty entries to 58. Any edit inside a
+ * `player.umd.cjs`, `ui.css` — today `player.css`), taking 55 dirty entries to 58. Any edit inside a
  * `<style scoped>` SFC — comments included — is a **bundle-affecting change**.
  * If this gate reds after a comment-only SFC edit, that is CORRECT: rebuild and
  * commit `dist/`.

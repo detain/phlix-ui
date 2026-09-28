@@ -71,9 +71,10 @@ describe('UI-3.3 shipped CSS bundle (dist/style.css)', () => {
 
   it('emits NO orphaned per-page CSS chunks (cssCodeSplit must stay off)', () => {
     // The only CSS files in dist/ should be the aggregate `style.css`, the
-    // separate player-entry `ui.css`, and the copied `fonts/fonts.css`.
+    // separate player-entry `player.css` (cssFileName pinned in
+    // vite.player.config.ts), and the copied `fonts/fonts.css`.
     const stray = readdirSync(distDir).filter(
-      (f) => f.endsWith('.css') && f !== 'style.css' && f !== 'ui.css',
+      (f) => f.endsWith('.css') && f !== 'style.css' && f !== 'player.css',
     );
     expect(stray, `unexpected split CSS chunks: ${stray.join(', ')}`).toEqual([]);
   });
