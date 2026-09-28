@@ -156,4 +156,33 @@ describe('fetchIndexBuckets', () => {
     await fetchIndexBuckets('http://x', { field: 'name', libraryId: 'lib-1' });
     expect(fetchMock2).toHaveBeenCalledTimes(1);
   });
+
+  // Regression [audit #1]: multi-value filters must serialize as REPEATED query
+  // params. The old Record-based builder overwrote `query['genres[]']` on each
+  // iteration, silently collapsing ['Action','Comedy'] to only 'Comedy' — the
+  // exact footgun media-query.ts:30-32 warns about. Buckets must match the
+  // grid's intersection query, so every value survives.
+  it('serializes every genre/rating/actor/studio value as a repeated param', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ field: 'genre', buckets: [], total: 0 }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchIndexBuckets('http://x', {
+      field: 'genre',
+      genres: ['Action', 'Comedy', 'Drama'],
+      ratings: [5, 8.5],
+      actors: ['Ada', 'Grace'],
+      studios: ['Warner', 'Universal'],
+    });
+
+    const url = new URL(fetchMock.mock.calls[0][0] as string);
+    expect(url.searchParams.getAll('genres[]')).toEqual(['Action', 'Comedy', 'Drama']);
+    expect(url.searchParams.getAll('ratings[]')).toEqual(['5', '8.5']);
+    expect(url.searchParams.getAll('actors[]')).toEqual(['Ada', 'Grace']);
+    // Studios map to the wire's companies[] facet (media-query.ts convention).
+    expect(url.searchParams.getAll('companies[]')).toEqual(['Warner', 'Universal']);
+    // Single-valued params still present.
+    expect(url.searchParams.get('field')).toBe('genre');
+  });
 });

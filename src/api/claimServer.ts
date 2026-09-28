@@ -28,15 +28,60 @@ export type ClaimErrorKind =
   | 'invalid'
   | 'network';
 
+/**
+ * Hub claim failures parsed at this boundary.
+ *
+ * `code` carries the server's stable machine code when the wire supplied one
+ * (the `{ error|message, code }` envelope). Error-code doctrine: components
+ * localize THAT via `errorCodeMessage` from `src/i18n/errors.ts` — the catalog
+ * already registers `claim.code_not_found` / `claim.code_expired` /
+ * `claim.code_already_claimed` and `auth.unauthenticated` for exactly these
+ * failures. `kind`/`message` remain as the status-guessed English fallback for
+ * consumers (and servers) that predate the code, so nothing that reads today's
+ * shape breaks; `code` is what makes localization possible at all.
+ */
 export class ClaimError extends Error {
   constructor(
     public readonly kind: ClaimErrorKind,
     message: string,
+    /** Server machine code (e.g. `claim.code_expired`), null when absent. */
+    public readonly code: string | null = null,
   ) {
     super(message);
     this.name = 'ClaimError';
   }
 }
+
+/** Wire machine code → the UI's `kind`, preferred over the status guess. */
+const KIND_BY_SERVER_CODE: Record<string, ClaimErrorKind> = {
+  'claim.code_not_found': 'not_found',
+  'claim.code_expired': 'expired',
+  'claim.code_already_claimed': 'already_claimed',
+  'auth.unauthenticated': 'unauthorized',
+};
+
+/** Status → `kind` fallback for servers that answer with a bare status. */
+const KIND_BY_HTTP_STATUS: Record<number, ClaimErrorKind> = {
+  401: 'unauthorized',
+  404: 'not_found',
+  409: 'already_claimed',
+  410: 'expired',
+};
+
+/**
+ * Legacy per-kind English copy (the pre-code UI strings). Kept byte-identical
+ * so un-localized consumers see exactly what they saw before the `code` field
+ * existed; localizing consumers use `errorCodeMessage(error.code, …)` instead.
+ */
+const LEGACY_KIND_MESSAGE: Record<ClaimErrorKind, string> = {
+  empty: 'Enter the claim code shown on your server.',
+  network: 'Network error — check your connection and try again.',
+  unauthorized: 'Your session expired — please sign in again.',
+  not_found: 'That claim code was not found. Double-check it and try again.',
+  expired: 'That claim code has expired. Generate a new one on your server.',
+  already_claimed: 'That server has already been claimed.',
+  invalid: 'Could not add the server. Check the claim code and try again.',
+};
 
 export interface ClaimServerResult {
   serverId: string;
@@ -81,18 +126,32 @@ export async function claimServer(
     return { serverId: typeof data.server_id === 'string' ? data.server_id : '' };
   }
 
-  const body = (await res.json().catch(() => ({}))) as { message?: unknown };
-  const message = typeof body.message === 'string' ? body.message : '';
-  switch (res.status) {
-    case 401:
-      throw new ClaimError('unauthorized', 'Your session expired — please sign in again.');
-    case 404:
-      throw new ClaimError('not_found', 'That claim code was not found. Double-check it and try again.');
-    case 410:
-      throw new ClaimError('expired', 'That claim code has expired. Generate a new one on your server.');
-    case 409:
-      throw new ClaimError('already_claimed', 'That server has already been claimed.');
-    default:
-      throw new ClaimError('invalid', message || 'Could not add the server. Check the claim code and try again.');
-  }
+  const body = (await res.json().catch(() => ({}))) as {
+    message?: unknown;
+    error?: unknown;
+    code?: unknown;
+  };
+  const serverMessage =
+    typeof body.message === 'string'
+      ? body.message
+      : typeof body.error === 'string'
+        ? body.error
+        : '';
+  // Parse the machine code at the boundary. When the server named the failure,
+  // `kind` comes from THAT — the status mapping below only stands in for
+  // servers that answer with a bare status. The code rides along either way so
+  // the consumer can localize via `errorCodeMessage` regardless of how `kind`
+  // was chosen (the status and code mappings agree on every hub reply).
+  const serverCode = typeof body.code === 'string' && body.code !== '' ? body.code : null;
+  const kind: ClaimErrorKind =
+    (serverCode !== null ? KIND_BY_SERVER_CODE[serverCode] : undefined) ??
+    KIND_BY_HTTP_STATUS[res.status] ??
+    'invalid';
+  // Known kinds keep their curated English copy byte-identical to the pre-code
+  // behavior (un-localized consumers see no change); only genuinely unmapped
+  // failures fall back to the server's own text. Localizing consumers read
+  // `error.code` through `errorCodeMessage` and never see either string.
+  const legacy = LEGACY_KIND_MESSAGE[kind];
+  const friendly = kind === 'invalid' ? serverMessage || legacy : legacy;
+  throw new ClaimError(kind, friendly, serverCode);
 }

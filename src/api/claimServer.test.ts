@@ -64,4 +64,41 @@ describe('claimServer', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('boom')));
     await expect(claimServer('', 'code')).rejects.toMatchObject({ kind: 'network' });
   });
+
+  // Regression [audit #15]: the server's machine code must ride along on the
+  // ClaimError so consumers can localize via errorCodeMessage — previously the
+  // status-guess alone survived and the raw code was discarded, pinning every
+  // message to hardcoded English.
+  it('carries the server machine code and prefers its mapping over the status guess', async () => {
+    // A hub that answers 400 (generic status) but names the real failure as
+    // expired — the CODE wins, and it is exposed on `error.code`.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(res(400, { code: 'claim.code_expired', message: 'raw server text' })),
+    );
+    const err = await claimServer('', 'code').catch((e) => e);
+    expect(err).toBeInstanceOf(ClaimError);
+    expect(err.kind).toBe('expired');
+    expect(err.code).toBe('claim.code_expired');
+    // Known kinds keep the curated legacy copy byte-identical.
+    expect(err.message).toBe('That claim code has expired. Generate a new one on your server.');
+  });
+
+  it('exposes an unmapped server code while falling back to the server message', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(res(400, { code: 'weird.code', message: 'Server says hi' })),
+    );
+    const err = await claimServer('', 'code').catch((e) => e);
+    expect(err.kind).toBe('invalid');
+    expect(err.code).toBe('weird.code');
+    expect(err.message).toBe('Server says hi');
+  });
+
+  it('leaves code null when the server sends no machine code (legacy reply)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(res(404, { message: 'gone' })));
+    const err = await claimServer('', 'code').catch((e) => e);
+    expect(err.kind).toBe('not_found');
+    expect(err.code).toBeNull();
+  });
 });

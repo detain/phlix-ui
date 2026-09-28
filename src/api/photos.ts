@@ -49,7 +49,7 @@ class PhotoApi {
      * Gets a specific album with its photos. The album `id` is md5 of the date.
      */
     async getAlbum(apiBase: string, albumId: string, libraryId: string): Promise<PhotoAlbum> {
-        const res = await this.client(apiBase).get<{ album: PhotoAlbum }>(`/api/v1/photo/albums/${albumId}`, {
+        const res = await this.client(apiBase).get<{ album: PhotoAlbum }>(`/api/v1/photo/albums/${encodeURIComponent(albumId)}`, {
             library_id: libraryId,
         });
         return res.album;
@@ -79,7 +79,7 @@ class PhotoApi {
      * Gets a single photo with full EXIF metadata.
      */
     async getPhoto(apiBase: string, id: string): Promise<PhotoDetail> {
-        const res = await this.client(apiBase).get<{ photo: PhotoDetail }>(`/api/v1/photo/photos/${id}`);
+        const res = await this.client(apiBase).get<{ photo: PhotoDetail }>(`/api/v1/photo/photos/${encodeURIComponent(id)}`);
         return res.photo;
     }
 

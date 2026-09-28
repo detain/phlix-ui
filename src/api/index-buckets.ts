@@ -89,21 +89,27 @@ async function apiFetch(
 ): Promise<{ field: string; buckets: IndexBucket[]; total: number }> {
   const client = new ApiClient({ baseUrl: apiBase });
 
-  const query: Record<string, string> = {};
-  query['field'] = params.field;
-  if (params.order) query['order'] = params.order;
-  if (params.libraryId) query['libraryId'] = params.libraryId;
-  if (params.query) query['search'] = params.query;
-  if (params.topLevel) query['topLevel'] = '1';
-  if (params.yearMin !== undefined) query['yearFrom'] = String(params.yearMin);
-  if (params.yearMax !== undefined) query['yearTo'] = String(params.yearMax);
-  if (params.match) query['match'] = params.match;
-  params.genres?.forEach((g) => query['genres[]'] = g);
-  params.ratings?.forEach((r) => query['ratings[]'] = String(r));
-  params.actors?.forEach((a) => query['actors[]'] = a);
-  params.studios?.forEach((s) => query['companies[]'] = s);
+  // Multi-value filters are appended with `sp.append`, NOT written into a
+  // `Record<string, string>`: `forEach((g) => query['genres[]'] = g)` collapses
+  // a list to its LAST value — the exact trap `media-query.ts` warns about
+  // ("a bare repeated genres= collapses to the last value (a string) and the
+  // server drops it"). The jump rail must be bucketed over the SAME
+  // intersection query the grid shows, so serialize like `buildMediaQuery`.
+  const sp = new URLSearchParams();
+  sp.set('field', params.field);
+  if (params.order) sp.set('order', params.order);
+  if (params.libraryId) sp.set('libraryId', params.libraryId);
+  if (params.query) sp.set('search', params.query);
+  if (params.topLevel) sp.set('topLevel', '1');
+  if (params.yearMin !== undefined) sp.set('yearFrom', String(params.yearMin));
+  if (params.yearMax !== undefined) sp.set('yearTo', String(params.yearMax));
+  if (params.match) sp.set('match', params.match);
+  params.genres?.forEach((g) => sp.append('genres[]', g));
+  params.ratings?.forEach((r) => sp.append('ratings[]', String(r)));
+  params.actors?.forEach((a) => sp.append('actors[]', a));
+  params.studios?.forEach((s) => sp.append('companies[]', s));
 
-  const data = await client.get<MediaIndexResponse>('/api/v1/media/index', query, signal);
+  const data = await client.get<MediaIndexResponse>(`/api/v1/media/index?${sp.toString()}`, undefined, signal);
   return {
     field: data.field ?? params.field,
     buckets: Array.isArray(data.buckets) ? data.buckets : [],
