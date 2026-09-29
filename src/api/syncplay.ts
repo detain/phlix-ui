@@ -471,30 +471,56 @@ function getWsToken(): string | null {
 }
 
 /**
- * Build the WebSocket URL for SyncPlay.
- * Connects to port 8097 on the current host with the JWT token as a query param.
+ * Build the WebSocket URL for SyncPlay — CREDENTIAL-FREE by construction.
+ * Connects to port 8097 on the current host; the JWT does NOT ride this URL
+ * (estate policy `WEBSOCKET_URL_QUERY_REFUSED`). The credential travels in the
+ * two-entry bearer subprotocol built by {@link buildWsProtocols}, the carrier
+ * law phlix-server `424c14d0` shipped for `:8097` as a transitional
+ * dual-carrier (`SyncPlayAuthMiddleware::resolveHandshakeToken()` is the SSOT;
+ * server-side doc: phlix-server `docs/dev/WEBSOCKET_AUTH_CARRIERS.md`).
+ * A client that offers `bearer` and passes the gate gets exactly
+ * `Sec-WebSocket-Protocol: bearer` back on the 101 — the marker only, never the
+ * token. That echo is what makes the flip safe in a browser: a socket offered
+ * subprotocols and answered with none fails outright (measured 1006), which is
+ * why this client waited on the server rather than flipping earlier.
  *
- * TODO(security, estate policy WEBSOCKET_URL_QUERY_REFUSED): carrying the bearer
- * JWT in the query string deviates from the contracts policy — the hub relay
- * (:8804, see `hubRelay.ts`) correctly sends the token via the
- * `Sec-WebSocket-Protocol` header using the TWO-ENTRY form
- * `new WebSocket(url, ['bearer', token])` (`hubRelay.ts:233`) — a scheme entry
- * plus a separate token entry, which the browser serializes as
- * `Sec-WebSocket-Protocol: bearer, <jwt>`. It is NOT the single dotted
- * `['bearer.<jwt>']` shape. This client cannot switch yet because the SERVER is
- * the blocker: phlix-server `src/Server/WebSocket/WebSocketServer.php`
- * `onWebSocketConnect()` authenticates ONLY `$request->get('token')` (query) and
- * `SyncPlayAuthMiddleware` never reads `Sec-WebSocket-Protocol`. Switching the
- * carrier before the :8097 endpoint adopts the bearer subprotocol would break
- * the wire. Server-side dependency: mirror the relay's two-entry subprotocol
- * acceptance on :8097, then flip this to
- * `new WebSocket(url, ['bearer', token])` (strip the token from the URL).
+ * The TODO that lived here is retired: the server-side dependency it named is
+ * met at 424c14d0 (hub `:8804` ships the identical law — S237 extraction,
+ * S355 echo).
+ *
+ * `room` stays in the URL as a NON-credential query param: the server never
+ * reads it (the `:8097` worker ignores the request path and query apart from
+ * the transitional `token`, and the room is carried on the wire by the
+ * `syncplay_group_join` frame — see `syncPlayClient.joinGroup` in
+ * {@link connectSyncPlaySocket}'s `onopen`). It is kept for byte-compatibility
+ * of the dial shape the surrounding tests and access-log forensics already
+ * know.
  */
 function buildWsUrl(roomId: string): string {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  const token = getWsToken() ?? '';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${hostname}:8097?token=${encodeURIComponent(token)}&room=${encodeURIComponent(roomId)}`;
+  return `${protocol}//${hostname}:8097?room=${encodeURIComponent(roomId)}`;
+}
+
+/**
+ * The `protocols` argument for the `:8097` handshake — the bearer carrier.
+ *
+ * TWO-ENTRY form `['bearer', <jwt>]` (scheme marker + separate credential
+ * entry), which the browser serializes as `Sec-WebSocket-Protocol: bearer,
+ * <jwt>`. It is NOT the single dotted `['bearer.<jwt>']` shape. Mirrors the
+ * shipped hub-relay carrier (`hubRelay.ts:233`) exactly — one estate law, one
+ * wire vocabulary (phlix-server 424c14d0 `SyncPlayAuthMiddleware::
+ * BEARER_SUBPROTOCOL` / phlix-hub S237 `SyncPlayRelayWorker`).
+ *
+ * With no stored token the credential entry is the empty string; the WHATWG
+ * constructor drops empty protocol entries on the wire, so the offer becomes a
+ * bare `bearer` marker and the server reads `carrier present / credential
+ * absent` — rejected under the auth-required law, allowed anonymously under the
+ * dev (no-secret) law. Identical meaning to the empty `?token=` value the
+ * legacy query carrier used to carry.
+ */
+function buildWsProtocols(): [string, string] {
+  return ['bearer', getWsToken() ?? ''];
 }
 
 /**
@@ -664,7 +690,7 @@ function connectSyncPlaySocket(
 
   const url = buildWsUrl(roomId);
   console.log(`[SyncPlay] Opening WebSocket to ${url}`);
-  syncPlayWs = new WebSocket(url);
+  syncPlayWs = new WebSocket(url, buildWsProtocols());
 
   syncPlayWs.onopen = () => {
     console.log('[SyncPlay] WebSocket connected');

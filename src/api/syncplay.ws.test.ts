@@ -60,7 +60,7 @@ class FakeWebSocket {
     readonly sent: string[] = [];
     closeCalls = 0;
 
-    constructor(readonly url: string) {
+    constructor(readonly url: string, readonly protocols?: string | string[]) {
         FakeWebSocket.instances.push(this);
     }
 
@@ -116,27 +116,50 @@ afterEach(() => {
     localStorage.clear();
 });
 
-// ── url construction ──────────────────────────────────────────────────────────
+// ── url + carrier construction ────────────────────────────────────────────────
+//
+// Carrier law (estate policy WEBSOCKET_URL_QUERY_REFUSED, implemented by
+// phlix-server 424c14d0 on :8097): the JWT rides the TWO-ENTRY bearer
+// subprotocol `['bearer', <jwt>]` — never the query string. Same vocabulary as
+// the hub relay (`hubRelay.ts:233`, tests pinned in `hubRelay.test.ts`). The
+// server answers an offer with `Sec-WebSocket-Protocol: bearer` (marker only),
+// which is what lets a browser socket offer subprotocols without failing 1006.
 
-describe('openSyncPlayConnection — the WebSocket url', () => {
-    it('dials :8097 with the room and the stored access token', () => {
+describe('openSyncPlayConnection — the WebSocket url and bearer carrier', () => {
+    it('dials :8097 with the room, token-free url, bearer-carried token', () => {
         localStorage.setItem(ACCESS_TOKEN_KEY, 'tok+1/2');
         openSyncPlayConnection(ROOM);
 
         const url = new URL(socket().url);
         expect(url.port).toBe('8097');
         expect(url.hostname).toBe(window.location.hostname);
-        // Both values are percent-encoded, so a token with `+` and `/` survives
-        // intact rather than becoming a space and a path separator.
-        expect(url.searchParams.get('token')).toBe('tok+1/2');
+        // Credential-free URL: no `token` param anywhere (server log-hygiene
+        // rationale — query carriers leak into access/proxy logs).
+        expect(socket().url).not.toContain('token');
+        expect(url.searchParams.get('token')).toBeNull();
+        // `room` stays: NON-credential query param, kept for byte-compatible
+        // dial shape; the room itself is negotiated by the GROUP_JOIN frame.
         expect(url.searchParams.get('room')).toBe(ROOM);
+        // The JWT rides the subprotocol instead — raw, unencoded (it never
+        // crosses url-encoding again; percent-encoding was a query-carrier need).
+        expect(socket().protocols).toEqual(['bearer', 'tok+1/2']);
     });
 
-    it('sends an EMPTY token when none is stored — not the literal "null"', () => {
+    it('carrier shape is TWO-ENTRY ["bearer", jwt] — never the dotted single entry', () => {
+        localStorage.setItem(ACCESS_TOKEN_KEY, 'jwt.abc.def');
         openSyncPlayConnection(ROOM);
-        const url = new URL(socket().url);
-        expect(url.searchParams.get('token')).toBe('');
-        expect(socket().url).not.toContain('token=null');
+        expect(socket().protocols).toEqual(['bearer', 'jwt.abc.def']);
+        expect(socket().protocols).toHaveLength(2);
+        expect((socket().protocols as string[])[0]).toBe('bearer');
+    });
+
+    it('offers an EMPTY bearer credential when none is stored — not the literal "null"', () => {
+        openSyncPlayConnection(ROOM);
+        expect(socket().url).not.toContain('token=');
+        // Empty credential entry: the browser drops it at serialization (WHATWG),
+        // the server reads marker-without-credential — legacy `?token=` semantics.
+        expect(socket().protocols).toEqual(['bearer', '']);
+        expect((socket().protocols as string[])[1]).not.toBe('null');
     });
 
     it('encodes a room id containing url-significant characters', () => {
@@ -151,7 +174,7 @@ describe('openSyncPlayConnection — the WebSocket url', () => {
         expect(socket().url.startsWith('ws://')).toBe(true);
     });
 
-    it('falls back to an empty token when the token store throws', () => {
+    it('falls back to an empty bearer credential when the token store throws', () => {
         // `getWsToken()` wraps the read in try/catch precisely because a
         // Storage access can throw (Safari private mode, disabled cookies).
         const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
@@ -159,7 +182,8 @@ describe('openSyncPlayConnection — the WebSocket url', () => {
         });
         openSyncPlayConnection(ROOM);
         expect(getItem).toHaveBeenCalled();
-        expect(new URL(socket().url).searchParams.get('token')).toBe('');
+        expect(socket().url).not.toContain('token');
+        expect(socket().protocols).toEqual(['bearer', '']);
     });
 });
 
