@@ -476,15 +476,19 @@ function getWsToken(): string | null {
  *
  * TODO(security, estate policy WEBSOCKET_URL_QUERY_REFUSED): carrying the bearer
  * JWT in the query string deviates from the contracts policy — the hub relay
- * (:8804, see `hubRelay.ts`) correctly uses the `Sec-WebSocket-Protocol`
- * `bearer.<jwt>` subprotocol instead. This client cannot switch yet because the
- * SERVER is the blocker: phlix-server `src/Server/WebSocket/WebSocketServer.php`
+ * (:8804, see `hubRelay.ts`) correctly sends the token via the
+ * `Sec-WebSocket-Protocol` header using the TWO-ENTRY form
+ * `new WebSocket(url, ['bearer', token])` (`hubRelay.ts:233`) — a scheme entry
+ * plus a separate token entry, which the browser serializes as
+ * `Sec-WebSocket-Protocol: bearer, <jwt>`. It is NOT the single dotted
+ * `['bearer.<jwt>']` shape. This client cannot switch yet because the SERVER is
+ * the blocker: phlix-server `src/Server/WebSocket/WebSocketServer.php`
  * `onWebSocketConnect()` authenticates ONLY `$request->get('token')` (query) and
  * `SyncPlayAuthMiddleware` never reads `Sec-WebSocket-Protocol`. Switching the
  * carrier before the :8097 endpoint adopts the bearer subprotocol would break
- * the wire. Server-side dependency: mirror the relay's subprotocol acceptance on
- * :8097, then flip this to `new WebSocket(url, ['bearer.<jwt>'])` (strip token
- * from the URL; honor the echoed subprotocol check as `hubRelay.ts` does).
+ * the wire. Server-side dependency: mirror the relay's two-entry subprotocol
+ * acceptance on :8097, then flip this to
+ * `new WebSocket(url, ['bearer', token])` (strip the token from the URL).
  */
 function buildWsUrl(roomId: string): string {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';

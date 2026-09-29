@@ -14,6 +14,9 @@ import Select from '../components/ui/Select.vue';
 import { useToastStore } from '../stores/useToastStore';
 import type { ApiClient } from '../api/client';
 
+/** Opaque 64-hex shape the hub mints since 779fc7f — returned EXACTLY ONCE at creation. */
+const NEW_TOKEN = 'd41d8cd98f00b204e9800998ecf8427ed41d8cd98f00b204e9800998ecf8427e';
+
 const link = {
   id: 'l1',
   owner_user_id: 'u1',
@@ -42,7 +45,8 @@ function makeClient(over: Overrides = {}) {
     if (endpoint.startsWith('/api/v1/me/libraries')) return { libraries: over.libraries ?? [{ id: 'lib-1', name: 'Movies' }] };
     throw new Error(`unexpected GET ${endpoint}`);
   });
-  const post = vi.fn(async () => ({ url: 'https://hub/invite/new', expires_at: 4070908800, id: 'l2' }));
+  // POST shape since phlix-hub 779fc7f: {url, token, expires_at, id}.
+  const post = vi.fn(async () => ({ url: 'https://hub/invite/new', token: NEW_TOKEN, expires_at: 4070908800, id: 'l2' }));
   const del = vi.fn(async () => ({}));
   const client = { get, post, delete: del } as unknown as ApiClient;
   return { client, get, post, del };
@@ -214,6 +218,63 @@ describe('InviteLinksPage — create modal', () => {
     w.unmount();
   });
 
+  // phlix-hub 779fc7f (hash-storage law): the create payload is the ONLY place
+  // the plaintext ever appears, so the modal must NOT dismiss itself — it swaps
+  // to a one-time result view showing URL + token with copy affordances.
+  it('keeps the modal open in a one-time result view after create (url + token + warning)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await flushPromises();
+    w.findAllComponents(Select)[0].vm.$emit('update:modelValue', 'srv-1');
+    await flushPromises();
+    await findBtnByText(w, 'Create Invite')!.trigger('click');
+    await flushPromises();
+
+    // Form replaced by the result reveal.
+    expect(findBtnByText(w, 'Create Invite')).toBeUndefined();
+    expect(document.querySelector('.invite-result')).not.toBeNull();
+    expect(document.querySelector('[data-testid="created-url"]')?.textContent).toBe('https://hub/invite/new');
+    expect(document.querySelector('[data-testid="created-token"]')?.textContent).toBe(NEW_TOKEN);
+    expect(document.querySelector('.invite-result__warning')?.textContent).toContain('shown only once');
+
+    // Done closes it; reopening shows a FRESH form, never the old secret.
+    await findBtnByText(w, 'Done')!.trigger('click');
+    await flushPromises();
+    expect(document.querySelector('.modal')).toBeNull();
+    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await flushPromises();
+    expect(document.querySelector('.invite-result')).toBeNull();
+    expect(findBtnByText(w, 'Create Invite')).toBeDefined();
+    w.unmount();
+  });
+
+  it('result-view Copy buttons write the URL and the raw token to the clipboard', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await flushPromises();
+    w.findAllComponents(Select)[0].vm.$emit('update:modelValue', 'srv-1');
+    await flushPromises();
+    await findBtnByText(w, 'Create Invite')!.trigger('click');
+    await flushPromises();
+
+    writeText.mockClear(); // drop the auto-copy from createLink()
+    const copyBtns = w.findAllComponents(Button).filter((b) => b.text().trim() === 'Copy');
+    expect(copyBtns).toHaveLength(2);
+    await copyBtns[0]!.trigger('click');
+    await copyBtns[1]!.trigger('click');
+    await flushPromises();
+    expect(writeText).toHaveBeenNthCalledWith(1, 'https://hub/invite/new');
+    expect(writeText).toHaveBeenNthCalledWith(2, NEW_TOKEN);
+    expect(
+      useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Invite token copied to clipboard!'),
+    ).toBe(true);
+    w.unmount();
+  });
+
   it('Create with no server selected toasts a validation error and does not POST', async () => {
     const { client, post } = makeClient();
     const w = mountPage(client);
@@ -241,6 +302,20 @@ describe('InviteLinksPage — copy + revoke', () => {
     await flushPromises();
     expect(writeText).toHaveBeenCalledWith('https://hub/invite/tok-1');
     expect(useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Link copied to clipboard!')).toBe(true);
+    w.unmount();
+  });
+
+  // Wire truth (phlix-hub 779fc7f): the list endpoint returns url:null — the
+  // plaintext token is unrecoverable from its stored sha256. No copy button,
+  // but the row stays revocable.
+  it('hides Copy URL on listed rows whose url is null and shows the one-time note', async () => {
+    const { client } = makeClient({ links: [{ ...link, url: null }] });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(findBtnByText(w, 'Copy URL')).toBeUndefined();
+    expect(w.text()).toContain('URL shown only at creation');
+    expect(findBtnByText(w, 'Revoke')).toBeDefined();
+    expect(writeText).not.toHaveBeenCalled();
     w.unmount();
   });
 

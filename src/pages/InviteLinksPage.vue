@@ -8,8 +8,8 @@
  * InviteLinksPage (R5.2d) — hub's invite-links page.
  *
  * API surface:
- *   GET    /api/v1/me/invite-links  → { invite_links }
- *   POST   /api/v1/me/invite-links  → { url, expires_at, id }
+ *   GET    /api/v1/me/invite-links  → { invite_links }  (entries carry url:null)
+ *   POST   /api/v1/me/invite-links  → { url, token, expires_at, id }
  *   DELETE /api/v1/me/invite-links/{id} → 204 No Content
  *
  * Supporting dropdowns:
@@ -18,10 +18,25 @@
  *
  * Note: server_name and library_name are NOT in the invite-links response —
  * they must be looked up via the servers/libraries arrays.
+ *
+ * One-time-secret shape (phlix-hub 779fc7f, hash-storage law): the invite secret
+ * is an opaque 64-hex token the hub stores only as sha256(token). The create
+ * response is the ONLY place {url, token} ever appear in plaintext, so the modal
+ * keeps the form visible after success and shows the result prominently with a
+ * copy affordance and a "shown once" warning; listed rows have url:null and get
+ * no copy button.
  */
 import { ref, computed, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
-import { InviteLinksApi, ServersApi, LibrariesApi, type InviteLink, type Server, type Library } from '../api/invite-links';
+import {
+  InviteLinksApi,
+  ServersApi,
+  LibrariesApi,
+  type CreateInviteLinkResponse,
+  type InviteLink,
+  type Server,
+  type Library,
+} from '../api/invite-links';
 import { useToastStore } from '../stores/useToastStore';
 import { errMessage } from '../api/errors';
 import Badge from '../components/ui/Badge.vue';
@@ -67,6 +82,14 @@ const error = ref<string | null>(null);
 
 const showCreateModal = ref(false);
 const creating = ref(false);
+
+/**
+ * The freshly-created link while the modal shows its one-time result view.
+ * Non-null swaps the form for the URL/token reveal; the hub will never expose
+ * this payload again once the modal closes.
+ */
+const createdLink = ref<CreateInviteLinkResponse | null>(null);
+const copyingResult = ref<'url' | 'token' | null>(null);
 
 const formServerId = ref<string | null>(null);
 const formLibraryId = ref<string | null>(null);
@@ -175,14 +198,16 @@ async function createLink(): Promise<void> {
       max_uses: formMaxUses.value,
       expires_in: formExpiresIn.value,
     });
-    // Auto-copy the URL to clipboard
+    // The create payload is shown once and never again — keep the modal open in
+    // its result view (URL + token + warning) instead of dismissing it.
+    createdLink.value = result;
+    // Auto-copy the URL as a safety net in case the user closes without copying.
     try {
       await navigator.clipboard.writeText(result.url);
       toasts.success('Invite link created and copied to clipboard!');
     } catch {
       toasts.success('Invite link created!');
     }
-    closeCreateModal();
     await loadLinks();
   } catch (e) {
     toasts.error(errMessage(e, 'Failed to create invite link.'));
@@ -201,7 +226,14 @@ async function revokeLink(id: string): Promise<void> {
   }
 }
 
+/**
+ * Copy a listed link's URL. Since phlix-hub 779fc7f the list endpoint returns
+ * `url: null` (the token is only ever plaintext at creation), so this guards on
+ * it — the template also hides the button, but the function must not write
+ * "null" to the clipboard if ever invoked with a null-url link.
+ */
 async function copyLinkUrl(link: InviteLink): Promise<void> {
+  if (link.url === null) return;
   copyingId.value = link.id;
   try {
     await navigator.clipboard.writeText(link.url);
@@ -210,6 +242,35 @@ async function copyLinkUrl(link: InviteLink): Promise<void> {
     toasts.error('Failed to copy link.');
   } finally {
     copyingId.value = null;
+  }
+}
+
+/** Copy the freshly-created link's full URL from the one-time result view. */
+async function copyCreatedUrl(): Promise<void> {
+  if (!createdLink.value) return;
+  copyingResult.value = 'url';
+  try {
+    await navigator.clipboard.writeText(createdLink.value.url);
+    toasts.success('Invite URL copied to clipboard!');
+  } catch {
+    toasts.error('Failed to copy URL.');
+  } finally {
+    copyingResult.value = null;
+  }
+}
+
+/** Copy the freshly-created link's opaque token from the one-time result view. */
+async function copyCreatedToken(): Promise<void> {
+  const token = createdLink.value?.token;
+  if (!token) return;
+  copyingResult.value = 'token';
+  try {
+    await navigator.clipboard.writeText(token);
+    toasts.success('Invite token copied to clipboard!');
+  } catch {
+    toasts.error('Failed to copy token.');
+  } finally {
+    copyingResult.value = null;
   }
 }
 
@@ -227,6 +288,8 @@ function closeCreateModal(): void {
 }
 
 function resetForm(): void {
+  createdLink.value = null;
+  copyingResult.value = null;
   formServerId.value = null;
   formLibraryId.value = null;
   formPermission.value = 'read';
@@ -349,7 +412,10 @@ onMounted(() => loadLinks(true));
           </div>
         </div>
         <div class="invite-link-card__actions">
+          <!-- url is null on listed links (phlix-hub 779fc7f): the token hash is
+               one-way, so there is nothing to copy after creation. -->
           <Button
+            v-if="link.url"
             variant="ghost"
             size="sm"
             :loading="copyingId === link.id"
@@ -357,6 +423,7 @@ onMounted(() => loadLinks(true));
           >
             Copy URL
           </Button>
+          <span v-else class="invite-link-card__secret-note">URL shown only at creation</span>
           <Button
             variant="ghost"
             size="sm"
@@ -382,7 +449,47 @@ onMounted(() => loadLinks(true));
           </header>
 
           <div class="modal__body">
-            <div class="form-grid">
+            <!-- One-time result view: the hub stores only sha256(token), so this
+                 is the LAST chance to capture the URL/token for this link. -->
+            <div v-if="createdLink" class="invite-result">
+              <p class="invite-result__warning" role="alert">
+                <strong>This is shown only once.</strong> The hub keeps just a one-way hash of
+                the secret — once you close this dialog the URL can never be recovered.
+                Copy it now and store it somewhere safe.
+              </p>
+
+              <div class="form-field form-field--full">
+                <span class="form-label" id="created-url-label">Invite URL</span>
+                <div class="invite-result__row">
+                  <code class="invite-result__value" data-testid="created-url">{{ createdLink.url }}</code>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    :loading="copyingResult === 'url'"
+                    @click="copyCreatedUrl"
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </div>
+
+              <div v-if="createdLink.token" class="form-field form-field--full">
+                <span class="form-label" id="created-token-label">Secret token</span>
+                <div class="invite-result__row">
+                  <code class="invite-result__value invite-result__value--token" data-testid="created-token">{{ createdLink.token }}</code>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    :loading="copyingResult === 'token'"
+                    @click="copyCreatedToken"
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="form-grid">
               <!-- Server select (required) -->
               <div class="form-field">
                 <label class="form-label" for="server-select">Server <span class="form-required">*</span></label>
@@ -442,16 +549,21 @@ onMounted(() => loadLinks(true));
           </div>
 
           <footer class="modal__footer">
-            <Button variant="ghost" size="md" @click="closeCreateModal">Cancel</Button>
-            <Button
-              variant="solid"
-              size="md"
-              :loading="creating"
-              :disabled="!formServerId"
-              @click="createLink"
-            >
-              Create Invite
-            </Button>
+            <template v-if="createdLink">
+              <Button variant="solid" size="md" @click="closeCreateModal">Done</Button>
+            </template>
+            <template v-else>
+              <Button variant="ghost" size="md" @click="closeCreateModal">Cancel</Button>
+              <Button
+                variant="solid"
+                size="md"
+                :loading="creating"
+                :disabled="!formServerId"
+                @click="createLink"
+              >
+                Create Invite
+              </Button>
+            </template>
           </footer>
         </div>
       </div>
@@ -564,8 +676,15 @@ onMounted(() => loadLinks(true));
 
 .invite-link-card__actions {
   display: flex;
+  align-items: center;
   gap: var(--space-2);
   flex-shrink: 0;
+}
+
+.invite-link-card__secret-note {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  font-style: italic;
 }
 
 /* Modal */
@@ -640,6 +759,48 @@ onMounted(() => loadLinks(true));
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   border-top: 1px solid var(--border);
+}
+
+/* One-time create result view */
+.invite-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.invite-result__warning {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent-ring);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.invite-result__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.invite-result__value {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-sm);
+  word-break: break-all;
+  user-select: all;
+}
+
+.invite-result__value--token {
+  font-size: var(--text-xs);
 }
 
 /* Form grid */
