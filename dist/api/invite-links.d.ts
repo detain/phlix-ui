@@ -23,7 +23,13 @@ export interface InviteLink {
     expires_at: number | null;
     /** Unix timestamp (seconds). */
     created_at: number;
-    url: string;
+    /**
+     * Full invite URL `{hubBaseUrl}/invite/{token}` — **null for listed links**.
+     * Since phlix-hub 779fc7f the hub stores only `sha256(token)`, so the plaintext
+     * is unrecoverable after creation and the list endpoint returns `url: null`
+     * (the secret is shown exactly once, in the create response).
+     */
+    url: string | null;
 }
 /** Input for creating an invite link. */
 export interface CreateInviteLinkInput {
@@ -36,9 +42,20 @@ export interface CreateInviteLinkInput {
     /** Seconds until expiry. 0/null = never. 604800=7d, 2592000=30d, 7776000=90d, 31536000=1y */
     expires_in?: number;
 }
-/** Response from POST /api/v1/me/invite-links. */
+/**
+ * Response from POST /api/v1/me/invite-links.
+ *
+ * Superset of the pre-779fc7f shape (`{url, expires_at, id}`): the create call is
+ * the ONLY place the plaintext secret ever appears on the wire.
+ */
 export interface CreateInviteLinkResponse {
     url: string;
+    /**
+     * Opaque 64-hex bearer token — the invite secret carried by `GET /invite/{token}`.
+     * Returned EXACTLY ONCE, here; listed links never expose it again (the hub
+     * stores only its sha256).
+     */
+    token: string;
     expires_at: number;
     id: string;
 }

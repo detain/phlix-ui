@@ -9161,32 +9161,33 @@ var kf = { class: "player__stage" }, Af = ["src", "poster"], jf = [
 		function V() {
 			b?.reportFinal?.(), d.closePlayer();
 		}
-		async function H() {
+		let H = 0;
+		async function te() {
 			let e = m.value;
 			if (!e || !d.hlsMasterUrl) return;
-			let t = d.hlsMasterUrl;
+			let t = ++H, n = d.hlsMasterUrl;
 			h.value?.destroy(), h.value = null;
-			let n = await Za(e, t, {
+			let r = await Za(e, n, {
 				startPosition: d.position,
 				onReady: () => {
 					let e = m.value;
 					e && (e.volume = d.volume, e.muted = d.muted, e.playbackRate = d.rate, d.playing && e.play()?.catch(() => {}));
 				}
 			});
-			if (!A.value || d.hlsMasterUrl !== t) {
-				n.destroy();
+			if (t !== H || !A.value || d.hlsMasterUrl !== n) {
+				r.destroy();
 				return;
 			}
-			h.value = n;
+			h.value = r;
 		}
 		return N(() => A.value, async (e) => {
 			if (!e) {
 				h.value?.destroy(), h.value = null;
 				return;
 			}
-			!d.hlsMasterUrl || d.streamUrl || await H();
-		}), y(async () => {
-			A.value && d.hlsMasterUrl && !d.streamUrl && await H();
+			!d.hlsMasterUrl || d.streamUrl || await te();
+		}, { flush: "post" }), y(async () => {
+			A.value && d.hlsMasterUrl && !d.streamUrl && await te();
 		}), N(() => d.current?.id, () => {
 			C = !1;
 		}), N(() => d.playing, (e) => {
@@ -9198,7 +9199,7 @@ var kf = { class: "player__stage" }, Af = ["src", "poster"], jf = [
 			let n = e.type === "seekTo" ? e.value : d.position + e.value, r = t.duration && t.duration > 0 ? t.duration : d.duration, i = r > 0 ? Math.min(r, Math.max(0, n)) : Math.max(0, n);
 			t.currentTime = i, d.updateProgress(i, t.duration || void 0);
 		}), v(() => {
-			b?.reportFinal?.(), h.value?.destroy(), h.value = null, m.value?.pause?.();
+			b?.reportFinal?.(), H++, h.value?.destroy(), h.value = null, m.value?.pause?.();
 		}), (e, t) => (x(), i(n, { name: "mini" }, {
 			default: P(() => [A.value ? (x(), o("div", {
 				key: 0,
@@ -9257,7 +9258,7 @@ var kf = { class: "player__stage" }, Af = ["src", "poster"], jf = [
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-e5af0942"]]);
+}), [["__scopeId", "data-v-6721ee35"]]);
 //#endregion
 export { ll as AMBIENT_SAMPLE_H, ul as AMBIENT_SAMPLE_INTERVAL_MS, cl as AMBIENT_SAMPLE_W, Lo as ARROW_ICONS, Ro as ARROW_LABELS, vl as AmbientCanvas, Vs as CAPTION_BACKGROUND_OPTIONS, Bs as CAPTION_COLOR_OPTIONS, Hs as CAPTION_EDGE_OPTIONS, zs as CAPTION_SIZE_OPTIONS, Rs as CAPTION_SIZE_SCALE, Ks as CaptionOverlay, xc as CaptionsMenu, wl as DIRECT_PLAY_EXTENSIONS, Tp as MiniPlayer, Io as PLAYER_SHORTCUTS, mp as Player, xs as QualityMenu, ie as RESUME_MAX_RATIO, re as RESUME_MIN_SECONDS, Cl as ResumePrompt, Ha as Scrubber, Zo as ShortcutsHelp, Cu as SkipButton, us as SpeedMenu, sl as SubtitleSearch, Tl as TRANSCODE_EXTENSIONS, gu as TranscodeNotice, Su as TranscodePreparing, Fl as UPNEXT_COUNTDOWN_SECONDS, Ll as UPNEXT_RING_CIRCUMFERENCE, Il as UPNEXT_RING_RADIUS, du as UpNext, ts as VolumeControl, Ms as activeAudioIndex, gl as ambientGradient, js as applyAudioTrack, As as applyTrackModes, Za as attachHls, fl as averageRegion, Gs as captionStyleVars, Is as cleanCueText, Ws as edgeShadow, Dl as extensionOf, Ca as formatTime, Vo as handleShortcut, ks as hasActiveCaptions, _l as isBatterySaving, go as isFailedStatus, kl as isFatalMediaError, qa as isNativeHlsSupported, ho as isPlayable, Bo as isTypingTarget, Ds as listAudioTracks, Es as listSubtitleTracks, Ol as needsTranscode, no as parseSubtitleTracks, po as parseTranscodeStart, mo as parseTranscodeStatus, Ls as readActiveCueLines, _o as resolveStreamUrl, Os as resolveTextTrack, ml as rgbString, hl as rgbaString, Rl as ringDashoffset, pl as sampleAmbient, io as transcodeStartPath, fo as transcodeStatusPath, vo as useHlsTranscode, Ho as useKeyboardShortcuts, ue as usePlayerStore };
 
