@@ -474,7 +474,9 @@ function getWsToken(): string | null {
  * Build the WebSocket URL for SyncPlay — CREDENTIAL-FREE by construction.
  * Connects to port 8097 on the current host; the JWT does NOT ride this URL
  * (estate policy `WEBSOCKET_URL_QUERY_REFUSED`). The credential travels in the
- * two-entry bearer subprotocol built by {@link buildWsProtocols}, the carrier
+ * two-entry bearer subprotocol built by {@link buildWsProtocols} — or, signed
+ * out, no subprotocol is offered at all (that function returns `undefined`;
+ * the WHATWG constructor throws on an empty protocol entry) — the carrier
  * law phlix-server `424c14d0` shipped for `:8097` as a transitional
  * dual-carrier (`SyncPlayAuthMiddleware::resolveHandshakeToken()` is the SSOT;
  * server-side doc: phlix-server `docs/dev/WEBSOCKET_AUTH_CARRIERS.md`).
@@ -512,15 +514,25 @@ function buildWsUrl(roomId: string): string {
  * wire vocabulary (phlix-server 424c14d0 `SyncPlayAuthMiddleware::
  * BEARER_SUBPROTOCOL` / phlix-hub S237 `SyncPlayRelayWorker`).
  *
- * With no stored token the credential entry is the empty string; the WHATWG
- * constructor drops empty protocol entries on the wire, so the offer becomes a
- * bare `bearer` marker and the server reads `carrier present / credential
- * absent` — rejected under the auth-required law, allowed anonymously under the
- * dev (no-secret) law. Identical meaning to the empty `?token=` value the
- * legacy query carrier used to carry.
+ * With no stored token this returns `undefined` — NO protocols argument at
+ * all — never a `['bearer', '']` shape. The earlier formulation rested on a
+ * false reading of the platform: the WHATWG constructor does NOT drop empty
+ * protocol entries, it THROWS `SyntaxError` when any entry is the empty
+ * string, a duplicate, or outside the RFC 6455 `token` production (spec §3.1
+ * step 9, verified against Chrome 153 and undici). An unguarded throw from
+ * inside the ladder's `setTimeout` killed reconnection outright — no socket
+ * object ever exists, so no `onclose` fires to arm the next rung — and broke
+ * the signed-out join mid-adoption.
+ *
+ * The no-argument dial offers no subprotocol header at all; the server reads
+ * `carrier absent` — rejected pre-101 under the secret-configured law, allowed
+ * anonymously under the dev (no-secret) law. Identical server consequence to
+ * the legacy empty `?token=` value, and identical to what the dropped-empty-
+ * entry myth believed the `['bearer','']` offer achieved.
  */
-function buildWsProtocols(): [string, string] {
-  return ['bearer', getWsToken() ?? ''];
+function buildWsProtocols(): string[] | undefined {
+  const token = getWsToken();
+  return token ? ['bearer', token] : undefined;
 }
 
 /**
@@ -690,9 +702,31 @@ function connectSyncPlaySocket(
 
   const url = buildWsUrl(roomId);
   console.log(`[SyncPlay] Opening WebSocket to ${url}`);
-  syncPlayWs = new WebSocket(url, buildWsProtocols());
+  // The second argument may be `undefined` (signed out): WebIDL optional-
+  // argument semantics make an explicitly-passed `undefined` identical to
+  // OMITTING the argument — no `Sec-WebSocket-Protocol` header is offered and
+  // the constructor cannot throw on the offer. A token whose value falls
+  // outside the RFC 6455 `token` production (corrupt storage can hand us
+  // anything) still throws `SyntaxError` synchronously here, before any socket
+  // exists — so, exactly like `hubRelay.ts:229-237`, the construction is
+  // guarded and the failure routed into the reconnect ladder. Without the
+  // guard the throw escapes into the ladder's `setTimeout` callback (or into
+  // the caller's join), killing the chain with no `onclose` ever armed.
+  let socket: WebSocket;
+  try {
+    socket = new WebSocket(url, buildWsProtocols());
+  } catch (error) {
+    console.error('[SyncPlay] WebSocket constructor refused the handshake', error);
+    // Reuse the close path wholesale: it tears down the fresh client, then —
+    // room still set, budget intact — arms the next rung. Calling with no
+    // event skips the socket-identity guard, which is correct: no socket was
+    // ever born to compare against.
+    handleWsClose();
+    return;
+  }
+  syncPlayWs = socket;
 
-  syncPlayWs.onopen = () => {
+  socket.onopen = () => {
     console.log('[SyncPlay] WebSocket connected');
     // The connection actually came up — THIS is the event that clears the
     // backoff budget, so a server that recovers on rung three does not carry
@@ -704,11 +738,11 @@ function connectSyncPlaySocket(
     }
   };
 
-  syncPlayWs.onmessage = handleWsMessage;
+  socket.onmessage = handleWsMessage;
 
-  syncPlayWs.onclose = handleWsClose;
+  socket.onclose = handleWsClose;
 
-  syncPlayWs.onerror = (err) => {
+  socket.onerror = (err) => {
     console.error('[SyncPlay] WebSocket error', err);
   };
 }

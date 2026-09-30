@@ -39,6 +39,34 @@ const ROOM = 'sp_abc123';
 // ── the fake socket ───────────────────────────────────────────────────────────
 
 /**
+ * RFC 6455 §1.9 `token` production — the alphabet WHATWG requires of every
+ * `protocols` entry. The constructor (§3.1 step 9, verified against Chrome 153
+ * and undici) throws `SyntaxError` when any entry is the empty string, a
+ * duplicate, or contains a character outside this set (separators like `/`,
+ * `=` and whitespace). The fake enforces the same law, so an illegal carrier
+ * offer cannot dial silently here the way it explodes in a real browser.
+ */
+const WS_PROTOCOL_TOKEN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
+/** Throw the DOMException-shaped `SyntaxError` the platform throws. */
+function assertLegalProtocolOffer(protocols: string | string[] | undefined): void {
+    if (protocols === undefined) return; // WebIDL: omitted argument, no offer.
+    const values = typeof protocols === 'string' ? [protocols] : protocols;
+    for (const value of values) {
+        if (!WS_PROTOCOL_TOKEN.test(value)) {
+            throw new DOMException(
+                `FakeWebSocket: protocol entry ${JSON.stringify(value)} is not an RFC 6455 token ` +
+                `(empty string or character outside tchar) — the platform throws SyntaxError here.`,
+                'SyntaxError',
+            );
+        }
+    }
+    if (new Set(values).size !== values.length) {
+        throw new DOMException('FakeWebSocket: duplicated protocol entry.', 'SyntaxError');
+    }
+}
+
+/**
  * A WebSocket that connects to nothing but records everything, and lets a test
  * fire `onopen` / `onmessage` / `onclose` / `onerror` deliberately. jsdom's own
  * WebSocket would attempt a real TCP connection to `:8097`.
@@ -61,6 +89,12 @@ class FakeWebSocket {
     closeCalls = 0;
 
     constructor(readonly url: string, readonly protocols?: string | string[]) {
+        // Validate BEFORE recording: a refused construction leaves no instance
+        // for `socket()` to find. That is the class-level shield — a regression
+        // to the throwing `['bearer','']` offer turns every dial pin red (with
+        // the module's try/catch in place the throw is otherwise swallowed into
+        // the ladder and the test would silently see zero sockets).
+        assertLegalProtocolOffer(protocols);
         FakeWebSocket.instances.push(this);
     }
 
@@ -87,7 +121,13 @@ class FakeWebSocket {
 /** The most recently constructed socket. */
 function socket(): FakeWebSocket {
     const s = FakeWebSocket.instances.at(-1);
-    if (!s) throw new Error('no socket was constructed');
+    if (!s) {
+        throw new Error(
+            'no socket was constructed — either the dial never opened one, or the ' +
+            'protocols offer was illegal and FakeWebSocket\'s WHATWG shield refused ' +
+            'it (the module then routes the failure to its reconnect ladder)',
+        );
+    }
     return s;
 }
 
@@ -116,18 +156,107 @@ afterEach(() => {
     localStorage.clear();
 });
 
-// ── url + carrier construction ────────────────────────────────────────────────
+// ── carrier law (shared prose for the two describes below) ───────────────────
 //
-// Carrier law (estate policy WEBSOCKET_URL_QUERY_REFUSED, implemented by
-// phlix-server 424c14d0 on :8097): the JWT rides the TWO-ENTRY bearer
-// subprotocol `['bearer', <jwt>]` — never the query string. Same vocabulary as
-// the hub relay (`hubRelay.ts:233`, tests pinned in `hubRelay.test.ts`). The
-// server answers an offer with `Sec-WebSocket-Protocol: bearer` (marker only),
-// which is what lets a browser socket offer subprotocols without failing 1006.
+// Estate policy WEBSOCKET_URL_QUERY_REFUSED, implemented by phlix-server
+// 424c14d0 on :8097: the JWT rides the TWO-ENTRY bearer subprotocol
+// `['bearer', <jwt>]` — never the query string. Same vocabulary as the hub
+// relay (`hubRelay.ts:233`, tests pinned in `hubRelay.test.ts`). The server
+// answers an offer with `Sec-WebSocket-Protocol: bearer` (marker only), which
+// is what lets a browser socket offer subprotocols without failing 1006.
+// Signed out there is NO offer at all — `undefined`, not `['bearer','']`,
+// because the WHATWG constructor throws SyntaxError on an empty entry (§3.1
+// step 9). Server consequence either way matches the legacy empty `?token=`:
+// no offer → no echo → secret-configured rejects pre-101, dev anonymous dials
+// through.
+
+describe('WebSocket constructor refusal — routed into the reconnect ladder', () => {
+    // Rework guard: pre-fix, the signed-out `['bearer','']` offer threw out of
+    // the unguarded constructor — breaking the join for every signed-out user
+    // and, when re-dialled from the ladder's setTimeout, killing the whole
+    // reconnect chain with no onclose ever armed. Two halves pin that shut.
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    it('the signed-out dial is CONSTRUCTABLE — zero throw, single socket, no ladder churn', () => {
+        localStorage.clear();
+        expect(() => openSyncPlayConnection(ROOM)).not.toThrow();
+        expect(FakeWebSocket.instances).toHaveLength(1);
+        expect(socket().protocols).toBeUndefined();
+        expect(errorSpy).not.toHaveBeenCalled();
+        // The dial behaves like any other: onclose still arms the ladder.
+        socket().onclose?.();
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('reconnecting in 1000ms'));
+    });
+
+    it('a corrupt token outside the RFC 6455 token production: ctor throws, catch arms the ladder', () => {
+        // Space and `/` are RFC 2616 separators — a real browser rejects this
+        // offer synchronously, before any socket exists. The module must absorb
+        // that and reconnect anyway, never let the throw escape the join call.
+        localStorage.setItem(ACCESS_TOKEN_KEY, 'bad token/with separators');
+        expect(() => openSyncPlayConnection(ROOM)).not.toThrow();
+        expect(FakeWebSocket.instances).toHaveLength(0); // the shield refused the offer…
+        expect(errorSpy).toHaveBeenCalledWith(
+            '[SyncPlay] WebSocket constructor refused the handshake',
+            expect.anything(),
+        );
+        // …and the refusal entered the same close-driven path: first rung armed.
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('reconnecting in 1000ms'));
+
+        vi.advanceTimersByTime(1000);
+        // The retry re-reads the same corrupt token and is refused again — the
+        // SECOND escape from inside the timer callback (the pre-fix crash
+        // vector) is caught too, arming the next rung instead of dying silent.
+        expect(FakeWebSocket.instances).toHaveLength(0);
+        expect(errorSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('refusal ladder gives up at the cap without leaking a throw', () => {
+        localStorage.setItem(ACCESS_TOKEN_KEY, 'corrupt token');
+        openSyncPlayConnection(ROOM);
+        // 1 caller dial + MAX_RECONNECT_ATTEMPTS (5) ladder rungs all refuse;
+        // the 6th entry into handleWsClose hits the cap and takes the give-up
+        // branch (state cleared) instead of scheduling another rung.
+        vi.advanceTimersByTime(60_000);
+        expect(errorSpy).toHaveBeenCalledTimes(6);
+        // Budget/room reset by the give-up branch: a further timer advance
+        // must not produce more dials.
+        const before = errorSpy.mock.calls.length;
+        vi.advanceTimersByTime(120_000);
+        expect(errorSpy).toHaveBeenCalledTimes(before);
+    });
+
+    it('duplicate protocol entries are illegal too (shield self-test, WHATWG §3.1 step 9)', () => {
+        // Browsers throw a DOMException whose NAME is "SyntaxError" (it is not
+        // an instanceof the SyntaxError class — the discriminator is `.name`),
+        // so the shield matches that shape and the assertions check that shape.
+        const nameOfThrow = (fn: () => unknown): string => {
+            try {
+                fn();
+                return 'no-throw';
+            } catch (e) {
+                return (e as { name?: string })?.name ?? 'anonymous-throw';
+            }
+        };
+        expect(nameOfThrow(() => new FakeWebSocket('ws://x', ['bearer', 'bearer']))).toBe('SyntaxError'); // duplicate
+        expect(nameOfThrow(() => new FakeWebSocket('ws://x', ['bearer', '']))).toBe('SyntaxError'); // empty entry
+        expect(nameOfThrow(() => new FakeWebSocket('ws://x', ['bearer', 'a b']))).toBe('SyntaxError'); // space (separator)
+        expect(nameOfThrow(() => new FakeWebSocket('ws://x', ['bearer', 'a/b']))).toBe('SyntaxError'); // slash (separator)
+        expect(nameOfThrow(() => new FakeWebSocket('ws://x', undefined))).toBe('no-throw'); // omitted ≡ absent offer
+        expect(nameOfThrow(() => new FakeWebSocket('ws://x', ['bearer', 'jwt.abc-1_2']))).toBe('no-throw'); // real JWT shape
+    });
+});
 
 describe('openSyncPlayConnection — the WebSocket url and bearer carrier', () => {
     it('dials :8097 with the room, token-free url, bearer-carried token', () => {
-        localStorage.setItem(ACCESS_TOKEN_KEY, 'tok+1/2');
+        // Fixture is a REAL-JWT-shaped token: base64url segments (`-`, `_`) and
+        // dots — every character inside the RFC 6455 token production the
+        // subprotocol requires. An earlier fixture used `/` and `+`, which no
+        // JWT ever contains and which the WHATWG constructor throws on; the
+        // shield at the top of this file now enforces that law for real.
+        const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1MSJ9.sig-4_2xQr';
+        localStorage.setItem(ACCESS_TOKEN_KEY, jwt);
         openSyncPlayConnection(ROOM);
 
         const url = new URL(socket().url);
@@ -142,7 +271,7 @@ describe('openSyncPlayConnection — the WebSocket url and bearer carrier', () =
         expect(url.searchParams.get('room')).toBe(ROOM);
         // The JWT rides the subprotocol instead — raw, unencoded (it never
         // crosses url-encoding again; percent-encoding was a query-carrier need).
-        expect(socket().protocols).toEqual(['bearer', 'tok+1/2']);
+        expect(socket().protocols).toEqual(['bearer', jwt]);
     });
 
     it('carrier shape is TWO-ENTRY ["bearer", jwt] — never the dotted single entry', () => {
@@ -153,13 +282,20 @@ describe('openSyncPlayConnection — the WebSocket url and bearer carrier', () =
         expect((socket().protocols as string[])[0]).toBe('bearer');
     });
 
-    it('offers an EMPTY bearer credential when none is stored — not the literal "null"', () => {
+    it('offers NO protocols argument at all when no credential is stored — never the throwing ["bearer",""]', () => {
         openSyncPlayConnection(ROOM);
         expect(socket().url).not.toContain('token=');
-        // Empty credential entry: the browser drops it at serialization (WHATWG),
-        // the server reads marker-without-credential — legacy `?token=` semantics.
-        expect(socket().protocols).toEqual(['bearer', '']);
-        expect((socket().protocols as string[])[1]).not.toBe('null');
+        // The signed-out dial must be CONSTRUCTABLE. WHATWG §3.1 step 9 throws
+        // SyntaxError on an empty protocol entry — the old `['bearer','']`
+        // offer never reached the wire in any browser. FakeWebSocket enforces
+        // that, so simply reaching `socket()` proves the offer was legal; the
+        // recorded value proves it was absent (WebIDL: `undefined` second arg
+        // is identical to omitting the argument).
+        expect(socket().protocols).toBeUndefined();
+        // Kept pins: the absent credential never materialises as the literal
+        // string "null", nor as the retired empty-entry shape.
+        expect(socket().protocols).not.toEqual(['bearer', 'null']);
+        expect(socket().protocols).not.toEqual(['bearer', '']);
     });
 
     it('encodes a room id containing url-significant characters', () => {
@@ -174,7 +310,7 @@ describe('openSyncPlayConnection — the WebSocket url and bearer carrier', () =
         expect(socket().url.startsWith('ws://')).toBe(true);
     });
 
-    it('falls back to an empty bearer credential when the token store throws', () => {
+    it('dials with NO protocols argument when the token store throws', () => {
         // `getWsToken()` wraps the read in try/catch precisely because a
         // Storage access can throw (Safari private mode, disabled cookies).
         const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
@@ -183,7 +319,8 @@ describe('openSyncPlayConnection — the WebSocket url and bearer carrier', () =
         openSyncPlayConnection(ROOM);
         expect(getItem).toHaveBeenCalled();
         expect(socket().url).not.toContain('token');
-        expect(socket().protocols).toEqual(['bearer', '']);
+        // A failed read is the signed-out case: dial anonymous, offer nothing.
+        expect(socket().protocols).toBeUndefined();
     });
 });
 
