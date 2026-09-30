@@ -1,3 +1,76 @@
+## 0.99.8 - 2026-09-30
+
+### Release — 15 commits since `v0.99.7`: bearer-subprotocol WS carrier, one-time invite-token DTO, `player.css` surface, paths-guard hardening
+
+- **The SyncPlay `:8097` handshake flipped to the bearer-subprotocol carrier
+  (`be9a5fc5`, `c0b6af04`, distilled in `324b4122`).** Estate policy
+  `WEBSOCKET_URL_QUERY_REFUSED` (server law `phlix-server 424c14d0`, SSOT
+  `SyncPlayAuthMiddleware::resolveHandshakeToken()`): the JWT now rides the
+  two-entry subprotocol `['bearer', <jwt>]` — the exact carrier
+  `hubRelay.ts:233` already presents to hub `:8804` — and `buildWsUrl()`
+  emits a credential-free URL (`room=` stays as a non-credential param).
+  The signed-out dial passes **no** protocols at all (`undefined`, not
+  `['bearer','']` — the WHATWG constructor throws `SyntaxError` on an empty
+  entry; adversarially verified on Chrome 153 + undici), the constructor is
+  wrapped in the `hubRelay`-house try/catch posture so a corrupt-token throw
+  routes through `handleWsClose()` into the budgeted reconnect ladder, and
+  `FakeWebSocket` gained real WHATWG token-production validation so any
+  regression to an illegal offer goes red in every dial pin. This retires
+  the last `?token=` WS-URL producers in the estate tree.
+- **Invite links became one-time secrets, mirroring hub `779fc7f`
+  (`fe126795`, dist `ac39d08c`).** `InviteLink.url` is typed `string|null`
+  (listed rows carry `url:null` — the plaintext exists only in the create
+  response), `CreateInviteLinkResponse` gains `token`, the row-level
+  Copy-URL button hides on redacted rows, and the create modal swaps to a
+  shown-once result view with copy affordances and a one-time warning
+  instead of auto-dismissing.
+- **The player CSS surface was corrected (`1bb6e0b8`, dist `6230ea09`).**
+  `vite.player.config.ts` pins `cssFileName: 'player'` — the old
+  package-default `dist/ui.css` (65 KB, unreachable via `exports`, 454
+  selectors all duplicated from `style.css`) ships instead as
+  `@phlix/ui/player.css` for player-surface-only consumers; `./player.css`
+  joined the exports map. Same wave: `tsconfig.build.json` excludes
+  `src/api/test/**` so test-harness `.d.ts` files stop leaking into `dist/`,
+  `vite.player.config.ts` is now type-checked, and vue/pinia/vue-router
+  moved to devDeps (they remain declared peers — dual-Vue-instance hazard
+  under strict installers).
+- **L-4 paths-redaction hardening (`5c9cf4ed`, dist `25173764`, pins
+  `7dcc13fa`).** Server `b3aece4e` strips the absolute-filesystem `paths`
+  key from library payloads for non-admin callers; `Library.paths` is now
+  `paths?: string[]` on the wire type and every payload read in `src/` is
+  guarded (`LibraryScanPage.vue` v-if/template, `LibrariesPage.vue`
+  openEdit + Paths cell — admin-visible text byte-unchanged). The guards
+  are mutation-pinned on a redacted-row fixture (all four reverts go red;
+  the scan-page `?.join` line is a documented equivalent mutant behind its
+  `v-if`).
+- **Audit-fix waves landed across presentation, build and core logic
+  (`4c4fe969`, `1c075ae9`, `4767cc38`, `dac0135c`, `738be915`).** Highlights:
+  overlay-aware keydown guards (Command Palette no longer loses z/Space/Esc
+  to photo pages), bucket multi-value serialization fixed (`genres[]`
+  collapsed to the last value via `Record` assignment — now
+  `URLSearchParams.append`), photo path ids `encodeURIComponent`-ed, claim
+  errors carry the server machine code for localization, stale-response
+  supersession tokens in media-store appends / transcode attach / photo
+  paging, `useResumeSync` listener refcounting, syncplay `play` pins
+  `playbackRate` (a joined-while-paused member extrapolated drift at 0×),
+  hubRelay/socket closure-identity guards, `safeHref` control-char strip
+  closing the `java\x09script:` blocklist bypass, six locale bundles widened
+  with the adopted `connect`/chrome keys, and mini-player HLS generation
+  guarding.
+- **Artifacts.** `dist/` is regenerated and dist-current at this tag
+  (`25173764` covered `5c9cf4ed`/`7dcc13fa` render guards; `324b4122`
+  covered the bearer flip; `6230ea09`/`ac39d08c` covered the CSS rename and
+  invite DTO) and verified fresh by ui-ci at tip; the committed bundles
+  embed no version string, so this version-field bump changes no artifact
+  byte. Suite baseline at tag: **6 192 passed | 10 skipped** (303 files);
+  error catalog holds at 202 codes × 7 locales.
+- **Cascade arming.** Tagging `v0.99.8` makes the hub S181 ui-pin grader
+  report the four `@phlix/ui` pinners (server, hub, tizen, windows)
+  STALE-1; their re-pins ride a separate lane. This tag carries the bearer
+  + invite-DTO + `player.css` + paths-guard chunks into the vendored
+  windows/tizen bundles — the last `?token=` WS-URL producers estate-wide
+  retire with that cascade.
+
 ## 0.99.7 - 2026-09-25
 
 ### Changed — version-field alignment ONLY (`0.99.4` → `0.99.7`) — shipped content untouched
