@@ -1713,7 +1713,7 @@ var Va = ["aria-label"], Ha = ["role"], Ua = { class: "phlix-toast__content" }, 
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-CQVpwM8Y.js")
+	component: () => import("./LibrariesPage-DbXVWpUs.js")
 }, wo = {
 	name: "admin-duplicates",
 	path: "duplicates",
@@ -2136,7 +2136,7 @@ var Go = { class: "pis" }, Ko = { class: "pis__group" }, qo = { class: "pis__ava
 				class: "library-scan__actions-col"
 			}, "Actions")
 		])], -1), B("tbody", null, [(K(!0), z(F, null, J(r.value, (e) => (K(), z("tr", { key: e.id }, [
-			B("td", null, [B("div", ss, Y(e.name), 1), e.paths.length ? (K(), z("div", cs, Y(e.paths.join(", ")), 1)) : R("", !0)]),
+			B("td", null, [B("div", ss, Y(e.name), 1), e.paths?.length ? (K(), z("div", cs, Y(e.paths?.join(", ")), 1)) : R("", !0)]),
 			B("td", null, Y(e.type), 1),
 			B("td", ls, Y(e.item_count === void 0 ? "—" : e.item_count), 1),
 			B("td", us, Y(d(e.last_scan_at)), 1),
@@ -2176,7 +2176,7 @@ var Go = { class: "pis" }, Ko = { class: "pis__group" }, qo = { class: "pis__ava
 			])])])
 		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-f8574c77"]]), hs = class extends Error {
+}), [["__scopeId", "data-v-c4999265"]]), hs = class extends Error {
 	kind;
 	code;
 	constructor(e, t, n = null) {

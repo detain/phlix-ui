@@ -91,7 +91,13 @@ export interface Library {
     id: string;
     name: string;
     type: string;
-    paths: string[];
+    /**
+     * Absolute filesystem roots. Server L-4 (phlix-server b3aece4e) strips this key
+     * from library payloads for NON-admin callers (`/api/v1/libraries`). The admin
+     * endpoints stay admin-gated so rows here carry `paths` in practice, but the
+     * type mirrors wire reality — the key is OPTIONAL and every read must use `?.`.
+     */
+    paths?: string[];
     options?: Record<string, unknown>;
     created_at?: string;
     display_order?: number;

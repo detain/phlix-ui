@@ -257,7 +257,7 @@ var xe = {
 		function zt(e) {
 			P.value = e, F.value = e.name;
 			let t = c.find((t) => t === e.type);
-			I.value = t ?? c[0], L.value = e.paths.join("\n"), R.value = Pt(e.options?.series_per_directory), Mt(e), Et(e), Ft(e), N.value = !0;
+			I.value = t ?? c[0], L.value = e.paths?.join("\n") ?? "", R.value = Pt(e.options?.series_per_directory), Mt(e), Et(e), Ft(e), N.value = !0;
 		}
 		function Bt() {
 			N.value = !1, P.value = null;
@@ -466,7 +466,7 @@ var xe = {
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			t[38] ||= de("<details class=\"admin-libraries__help\" open data-v-80a28f7c><summary class=\"admin-libraries__help-summary\" data-v-80a28f7c>What do these operations do?</summary><dl class=\"admin-libraries__help-list\" data-v-80a28f7c><dt data-v-80a28f7c>Scan</dt><dd data-v-80a28f7c> Imports new and changed files from disk, keeping every existing item along with its posters, watch progress and favorites. Does <em data-v-80a28f7c>not</em> contact TMDB/IMDB. Run it after you add, rename or remove media. </dd><dt data-v-80a28f7c>Match metadata</dt><dd data-v-80a28f7c> Fetches TMDB/IMDB details and artwork <em data-v-80a28f7c>only</em> for items that don’t have metadata yet — already-matched items are skipped. Run it after a Scan to fill in the new items. </dd><dt data-v-80a28f7c>Recheck all metadata</dt><dd data-v-80a28f7c> Forces a fresh metadata fetch for <em data-v-80a28f7c>every</em> item: updates existing entries and backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it after a metadata feature update or to refresh stale data. </dd><dt data-v-80a28f7c>Rescan</dt><dd data-v-80a28f7c> Re-scans from disk and prunes only the items whose files are truly gone. <strong data-v-80a28f7c>Non-destructive</strong> — surviving items keep their watch progress, favorites and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library that has drifted out of sync. </dd><dt data-v-80a28f7c>Prune removed</dt><dd data-v-80a28f7c> Removes only the items whose files no longer exist, without a full rescan. </dd><dt data-v-80a28f7c>Regenerate media assets</dt><dd data-v-80a28f7c> Re-creates the file-based media assets (chapter thumbnails, trickplay sprite, Roku BIF) for the library&#39;s existing items. <strong data-v-80a28f7c>Idempotent</strong> — firing it while a regeneration is already queued is a no-op success, not an error. </dd><dt data-v-80a28f7c>Clear metadata</dt><dd data-v-80a28f7c> Resets items to filesystem basics (the items and your watch data are kept) so a later Match metadata can re-fetch cleanly. </dd><dt data-v-80a28f7c>Clear cached artwork</dt><dd data-v-80a28f7c> Deletes locally cached images to free disk space; they are re-downloaded on the next metadata match. </dd><dt class=\"admin-libraries__help-danger\" data-v-80a28f7c>Delete all items</dt><dd data-v-80a28f7c><strong data-v-80a28f7c>Destructive.</strong> Removes every item in the library <em data-v-80a28f7c>and</em> its watch progress, favorites and ratings. Only use this for a full reset. </dd></dl></details>", 1),
+			t[38] ||= de("<details class=\"admin-libraries__help\" open data-v-e22ddbc2><summary class=\"admin-libraries__help-summary\" data-v-e22ddbc2>What do these operations do?</summary><dl class=\"admin-libraries__help-list\" data-v-e22ddbc2><dt data-v-e22ddbc2>Scan</dt><dd data-v-e22ddbc2> Imports new and changed files from disk, keeping every existing item along with its posters, watch progress and favorites. Does <em data-v-e22ddbc2>not</em> contact TMDB/IMDB. Run it after you add, rename or remove media. </dd><dt data-v-e22ddbc2>Match metadata</dt><dd data-v-e22ddbc2> Fetches TMDB/IMDB details and artwork <em data-v-e22ddbc2>only</em> for items that don’t have metadata yet — already-matched items are skipped. Run it after a Scan to fill in the new items. </dd><dt data-v-e22ddbc2>Recheck all metadata</dt><dd data-v-e22ddbc2> Forces a fresh metadata fetch for <em data-v-e22ddbc2>every</em> item: updates existing entries and backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it after a metadata feature update or to refresh stale data. </dd><dt data-v-e22ddbc2>Rescan</dt><dd data-v-e22ddbc2> Re-scans from disk and prunes only the items whose files are truly gone. <strong data-v-e22ddbc2>Non-destructive</strong> — surviving items keep their watch progress, favorites and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library that has drifted out of sync. </dd><dt data-v-e22ddbc2>Prune removed</dt><dd data-v-e22ddbc2> Removes only the items whose files no longer exist, without a full rescan. </dd><dt data-v-e22ddbc2>Regenerate media assets</dt><dd data-v-e22ddbc2> Re-creates the file-based media assets (chapter thumbnails, trickplay sprite, Roku BIF) for the library&#39;s existing items. <strong data-v-e22ddbc2>Idempotent</strong> — firing it while a regeneration is already queued is a no-op success, not an error. </dd><dt data-v-e22ddbc2>Clear metadata</dt><dd data-v-e22ddbc2> Resets items to filesystem basics (the items and your watch data are kept) so a later Match metadata can re-fetch cleanly. </dd><dt data-v-e22ddbc2>Clear cached artwork</dt><dd data-v-e22ddbc2> Deletes locally cached images to free disk space; they are re-downloaded on the next metadata match. </dd><dt class=\"admin-libraries__help-danger\" data-v-e22ddbc2>Delete all items</dt><dd data-v-e22ddbc2><strong data-v-e22ddbc2>Destructive.</strong> Removes every item in the library <em data-v-e22ddbc2>and</em> its watch progress, favorites and ratings. Only use this for a full reset. </dd></dl></details>", 1),
 			D.value ? (v(), p("div", Ce, [g(re, {
 				variant: "text",
 				lines: 6
@@ -514,7 +514,7 @@ var xe = {
 			])], -1), m("tbody", null, [(v(!0), p(l, null, ge(gt.value, (e) => (v(), p("tr", { key: e.id }, [
 				m("td", null, b(e.name), 1),
 				m("td", null, b(e.type), 1),
-				m("td", null, b(e.paths.length) + " paths", 1),
+				m("td", null, b(e.paths?.length ?? 0) + " paths", 1),
 				m("td", null, [m("span", {
 					class: "admin-libraries__status",
 					"data-testid": `status-${e.id}`
@@ -803,8 +803,8 @@ var xe = {
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-80a28f7c"]]);
+}), [["__scopeId", "data-v-e22ddbc2"]]);
 //#endregion
 export { tt as default };
 
-//# sourceMappingURL=LibrariesPage-CQVpwM8Y.js.map
+//# sourceMappingURL=LibrariesPage-DbXVWpUs.js.map
