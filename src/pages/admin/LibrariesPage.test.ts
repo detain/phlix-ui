@@ -1761,3 +1761,54 @@ describe('Admin LibrariesPage — items_failed + the full scan-type ENUM (S129)'
     w.unmount();
   });
 });
+
+describe('Admin LibrariesPage — L-4 redacted rows (`paths` key absent)', () => {
+  // Server L-4 (phlix-server b3aece4e) strips `paths` from /api/v1/libraries for
+  // non-admin callers, and a stale-cache admin render can surface the same shape.
+  // Every read of the field must degrade, never crash:
+  //   • table cell `lib.paths?.length ?? 0`      → renders "0 paths"
+  //   • openEdit  `lib.paths?.join('\n') ?? ''`  → opens with an EMPTY textarea
+  // Mutation testing showed reverting either guard kept the suite green (every
+  // fixture above carries a paths array) — these pins close that gap.
+  const redacted = {
+    id: 'lib-redacted',
+    name: 'Private',
+    type: 'movie',
+    options: {},
+  };
+
+  it('renders a row without the paths key as "0 paths" instead of crashing the table', async () => {
+    const { client } = makeClient({ libraries: [redacted] });
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.text()).toContain('Private');
+    expect(w.text()).toContain('0 paths');
+    w.unmount();
+  });
+
+  it('opens the edit form on a redacted row with an empty paths textarea', async () => {
+    const { client, put } = makeClient({ libraries: [redacted] });
+    const w = mountPage(client);
+    await flushPromises();
+    await w
+      .findAllComponents(Button)
+      .find((b) => b.attributes('aria-label') === 'Edit Private')!
+      .trigger('click');
+    await flushPromises();
+    // If openEdit threw on the missing `paths` (`?.` reverted), formOpen never
+    // flips true and there is no modal panel to query.
+    const panel = modalPanel();
+    expect(panel).toBeTruthy();
+    const ta = panel.querySelector<HTMLTextAreaElement>('.admin-libraries__textarea')!;
+    expect(ta.value).toBe('');
+    // The empty box must fall through to the "select at least one path" gate —
+    // this also kills dropping the `?? ''` fallback: with pathsText left
+    // undefined, parsePaths() throws before the toast and no PUT can fire.
+    await findBtnIn(w, panel, 'Save')!.trigger('click');
+    await flushPromises();
+    expect(put).not.toHaveBeenCalled();
+    const toasts = useToastStore();
+    expect(toasts.toasts.some((t) => t.message === 'Select at least one path.')).toBe(true);
+    w.unmount();
+  });
+});
