@@ -6,10 +6,10 @@ import { n as a } from "./useApiBase-CV_r-Kk4.js";
 import { t as o } from "./useAuthStore-DyTb-bkm.js";
 import { t as s } from "./Button-BL3fV7FU.js";
 import { t as c } from "./Modal-DFo-9bYG.js";
-import { Fragment as l, computed as u, createBlock as ee, createCommentVNode as d, createElementBlock as f, createElementVNode as p, createTextVNode as m, createVNode as h, defineComponent as g, normalizeClass as _, openBlock as v, ref as y, renderList as b, toDisplayString as x, unref as S, vModelText as C, watch as w, withCtx as T, withDirectives as E, withModifiers as D } from "vue";
-import { defineStore as O } from "pinia";
+import { Fragment as ee, computed as l, createBlock as te, createCommentVNode as u, createElementBlock as d, createElementVNode as f, createTextVNode as p, createVNode as m, defineComponent as h, normalizeClass as g, openBlock as _, ref as v, renderList as y, toDisplayString as b, unref as x, vModelText as S, watch as C, withCtx as w, withDirectives as T, withModifiers as ne } from "vue";
+import { defineStore as E } from "pinia";
 //#region node_modules/@phlix/syncplay/dist/phlix-syncplay.js
-var k = {
+var D = {
 	GROUP_CREATE: "syncplay_group_create",
 	GROUP_JOIN: "syncplay_group_join",
 	GROUP_LEAVE: "syncplay_group_leave",
@@ -30,8 +30,8 @@ var k = {
 	ERROR: "syncplay_error",
 	INFO: "syncplay_info"
 };
-k.GROUP_CREATE, k.GROUP_JOIN, k.GROUP_LEAVE, k.GROUP_STATE, k.GROUP_LIST, k.PLAYBACK_PLAY, k.PLAYBACK_PAUSE, k.PLAYBACK_SEEK, k.PLAYBACK_QUEUE, k.PLAYBACK_SYNC, k.CHAT, k.TYPING, k.HOST_TRANSFER, k.HOST_ELECT, k.TIME_PING, k.TIME_PONG, k.TIME_SYNC, k.ERROR, k.INFO;
-function A(e, t, n) {
+D.GROUP_CREATE, D.GROUP_JOIN, D.GROUP_LEAVE, D.GROUP_STATE, D.GROUP_LIST, D.PLAYBACK_PLAY, D.PLAYBACK_PAUSE, D.PLAYBACK_SEEK, D.PLAYBACK_QUEUE, D.PLAYBACK_SYNC, D.CHAT, D.TYPING, D.HOST_TRANSFER, D.HOST_ELECT, D.TIME_PING, D.TIME_PONG, D.TIME_SYNC, D.ERROR, D.INFO;
+function O(e, t, n) {
 	return {
 		...t,
 		type: e,
@@ -39,7 +39,7 @@ function A(e, t, n) {
 		timestamp: n()
 	};
 }
-function j(e) {
+function k(e) {
 	let t = e;
 	if (typeof e == "string") try {
 		t = JSON.parse(e);
@@ -60,10 +60,10 @@ function j(e) {
 	}
 	return n;
 }
-function M(e) {
+function A(e) {
 	return JSON.stringify(e);
 }
-var N = .1, te = .99, P = 1.01, F = class {
+var j = .1, re = .99, M = 1.01, N = class {
 	samples = [];
 	driftRate = 1;
 	now;
@@ -128,7 +128,7 @@ var N = .1, te = .99, P = 1.01, F = class {
 		let t = e[0], n = e[e.length - 1], r = n.timestamp - t.timestamp;
 		if (r <= 0) return;
 		let i = (n.offset - t.offset) / r;
-		this.driftRate = 1 + N * i / 1e3, this.driftRate = Math.min(P, Math.max(te, this.driftRate));
+		this.driftRate = 1 + j * i / 1e3, this.driftRate = Math.min(M, Math.max(re, this.driftRate));
 	}
 	getDriftRate() {
 		return this.driftRate;
@@ -154,7 +154,7 @@ var N = .1, te = .99, P = 1.01, F = class {
 			sampleCount: this.samples.length
 		};
 	}
-}, I = class e {
+}, P = class e {
 	send;
 	now;
 	memberId;
@@ -164,7 +164,7 @@ var N = .1, te = .99, P = 1.01, F = class {
 	group = null;
 	lastPingSendTime = null;
 	constructor(e) {
-		this.options = e, this.send = e.send, this.now = e.now, this.memberId = e.memberId, this.memberName = e.memberName ?? "User", this.timeSync = new F(e.now);
+		this.options = e, this.send = e.send, this.now = e.now, this.memberId = e.memberId, this.memberName = e.memberName ?? "User", this.timeSync = new N(e.now);
 	}
 	getTimeSync() {
 		return this.timeSync;
@@ -187,7 +187,7 @@ var N = .1, te = .99, P = 1.01, F = class {
 			member_id: this.memberId,
 			member_name: this.memberName
 		};
-		t !== void 0 && (n.password_hash = t), this.dispatch(k.GROUP_CREATE, n);
+		t !== void 0 && (n.password_hash = t), this.dispatch(D.GROUP_CREATE, n);
 	}
 	joinGroup(e, t) {
 		let n = {
@@ -195,16 +195,16 @@ var N = .1, te = .99, P = 1.01, F = class {
 			member_id: this.memberId,
 			member_name: this.memberName
 		};
-		t !== void 0 && (n.password_hash = t), this.dispatch(k.GROUP_JOIN, n);
+		t !== void 0 && (n.password_hash = t), this.dispatch(D.GROUP_JOIN, n);
 	}
 	leaveGroup() {
-		this.group !== null && (this.dispatch(k.GROUP_LEAVE, {
+		this.group !== null && (this.dispatch(D.GROUP_LEAVE, {
 			group_id: this.group.group_id,
 			member_id: this.memberId
 		}), this.group = null);
 	}
 	sendPlay(e) {
-		this.group !== null && this.dispatch(k.PLAYBACK_PLAY, {
+		this.group !== null && this.dispatch(D.PLAYBACK_PLAY, {
 			group_id: this.group.group_id,
 			member_id: this.memberId,
 			position: e,
@@ -212,7 +212,7 @@ var N = .1, te = .99, P = 1.01, F = class {
 		});
 	}
 	sendPause(e) {
-		this.group !== null && this.dispatch(k.PLAYBACK_PAUSE, {
+		this.group !== null && this.dispatch(D.PLAYBACK_PAUSE, {
 			group_id: this.group.group_id,
 			member_id: this.memberId,
 			position: e,
@@ -220,7 +220,7 @@ var N = .1, te = .99, P = 1.01, F = class {
 		});
 	}
 	sendSeek(e, t) {
-		this.group !== null && this.dispatch(k.PLAYBACK_SEEK, {
+		this.group !== null && this.dispatch(D.PLAYBACK_SEEK, {
 			group_id: this.group.group_id,
 			member_id: this.memberId,
 			from_position: e,
@@ -229,7 +229,7 @@ var N = .1, te = .99, P = 1.01, F = class {
 		});
 	}
 	reportPosition(e, t) {
-		this.group !== null && this.dispatch(k.PLAYBACK_SYNC, {
+		this.group !== null && this.dispatch(D.PLAYBACK_SYNC, {
 			group_id: this.group.group_id,
 			member_id: this.memberId,
 			position: e,
@@ -239,55 +239,55 @@ var N = .1, te = .99, P = 1.01, F = class {
 	}
 	pingTime() {
 		let e = this.now();
-		this.lastPingSendTime = e, this.dispatch(k.TIME_PING, { client_time: e });
+		this.lastPingSendTime = e, this.dispatch(D.TIME_PING, { client_time: e });
 	}
 	onDisconnect() {
 		this.timeSync.reset(), this.group = null, this.lastPingSendTime = null, this.options.onDisconnect?.();
 	}
 	handleIncoming(e) {
-		let t = j(e);
+		let t = k(e);
 		if (t !== null) switch (t.type) {
-			case k.TIME_PONG:
+			case D.TIME_PONG:
 				this.handleTimePong(t);
 				break;
-			case k.GROUP_STATE:
+			case D.GROUP_STATE:
 				this.handleGroupState(t);
 				break;
-			case k.PLAYBACK_PLAY:
+			case D.PLAYBACK_PLAY:
 				this.handlePlayback("play", t);
 				break;
-			case k.PLAYBACK_PAUSE:
+			case D.PLAYBACK_PAUSE:
 				this.handlePlayback("pause", t);
 				break;
-			case k.PLAYBACK_SEEK:
+			case D.PLAYBACK_SEEK:
 				this.handleSeek(t);
 				break;
-			case k.HOST_ELECT:
+			case D.HOST_ELECT:
 				this.handleHostElect(t);
 				break;
-			case k.INFO:
+			case D.INFO:
 				this.handleInfo(t);
 				break;
-			case k.ERROR:
+			case D.ERROR:
 				this.handleError(t);
 				break;
-			case k.TYPING:
+			case D.TYPING:
 				this.handleTyping(t);
 				break;
-			case k.HOST_TRANSFER:
+			case D.HOST_TRANSFER:
 				this.handleHostTransfer(t);
 				break;
-			case k.PLAYBACK_SYNC:
+			case D.PLAYBACK_SYNC:
 				this.handlePlaybackSync(t);
 				break;
-			case k.TIME_SYNC:
+			case D.TIME_SYNC:
 				this.handleTimeSync(t);
 				break;
-			case k.GROUP_LIST:
+			case D.GROUP_LIST:
 				this.handleGroupList(t);
 				break;
-			case k.CHAT:
-			case k.PLAYBACK_QUEUE: break;
+			case D.CHAT:
+			case D.PLAYBACK_QUEUE: break;
 			default:
 				this.options.onUnknownFrame?.(t);
 				break;
@@ -399,25 +399,25 @@ var N = .1, te = .99, P = 1.01, F = class {
 		this.options.onGroupList?.(n);
 	}
 	dispatch(e, t) {
-		this.send(A(e, t, this.now));
+		this.send(O(e, t, this.now));
 	}
 };
 //#endregion
 //#region src/api/syncplay.ts
-function L(e, t = 0) {
+function F(e, t = 0) {
 	return typeof e == "number" && Number.isFinite(e) ? e : typeof e == "string" && e.trim() !== "" && Number.isFinite(Number(e)) ? Number(e) : t;
 }
-function R(e) {
+function I(e) {
 	return e / 1e3;
 }
-function z(e) {
-	let t = L(e, 0);
+function L(e) {
+	let t = F(e, 0);
 	return (/* @__PURE__ */ new Date((t > 0 ? t : Date.now() / 1e3) * 1e3)).toISOString();
 }
-function B(e) {
+function R(e) {
 	return e.group_id ?? e.id ?? "";
 }
-function V(e) {
+function z(e) {
 	let t = e?.members;
 	return t ? (Array.isArray(t) ? t : Object.entries(t).map(([e, t]) => ({
 		id: e,
@@ -428,48 +428,48 @@ function V(e) {
 		profileId: 0,
 		role: e.is_host === !0 ? "owner" : "contributor",
 		isOnline: !0,
-		lastSeen: z(e.joined_at)
+		lastSeen: L(e.joined_at)
 	})) : [];
 }
-function H(e) {
+function B(e) {
 	switch (e.playback_state) {
 		case "playing": return "playing";
 		case "paused": return "paused";
 		default: return e.is_playing === !0 ? "playing" : "waiting";
 	}
 }
-function U(e) {
-	let t = e ?? {}, n = B(t);
+function V(e) {
+	let t = e ?? {}, n = R(t);
 	return {
 		id: n,
 		name: t.group_name ?? t.name ?? "",
 		isPublic: t.has_password !== !0,
-		memberCount: L(t.member_count, V(t).length),
+		memberCount: F(t.member_count, z(t).length),
 		roomId: n,
 		hostUserId: t.host_id ?? void 0,
-		createdAt: z(t.created_at)
+		createdAt: L(t.created_at)
 	};
 }
-function W(e) {
-	let t = e ?? {}, n = B(t), r = H(t);
+function H(e) {
+	let t = e ?? {}, n = R(t), r = B(t);
 	return {
 		id: n,
 		roomId: n,
 		serverId: "",
 		createdBy: t.host_id ?? "",
-		createdAt: z(t.created_at),
+		createdAt: L(t.created_at),
 		state: r,
 		currentMediaId: t.current_media_id ?? null,
-		playbackPosition: R(L(t.playback_position)),
+		playbackPosition: I(F(t.playback_position)),
 		playbackRate: +(r === "playing"),
-		serverTime: L(t.last_activity_at, Math.floor(Date.now() / 1e3)),
-		lastSync: z(t.last_activity_at),
-		activeUsers: V(t),
-		roles: Object.fromEntries(V(t).map((e) => [e.id, e.role])),
+		serverTime: F(t.last_activity_at, Math.floor(Date.now() / 1e3)),
+		lastSync: L(t.last_activity_at),
+		activeUsers: z(t),
+		roles: Object.fromEntries(z(t).map((e) => [e.id, e.role])),
 		permissions: {}
 	};
 }
-var G = class {
+var U = class {
 	client;
 	constructor(e) {
 		this.client = new i({
@@ -478,91 +478,95 @@ var G = class {
 		});
 	}
 	async createRoom(e) {
-		return U((await this.client.post("/api/v1/syncplay/groups", e)).group);
+		return V((await this.client.post("/api/v1/syncplay/groups", e)).group);
 	}
 	async joinRoom(e, t) {
 		let n = t !== void 0 && t !== "" ? { memberName: t } : void 0, r = await this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/join`, n);
 		return {
-			room: U(r.group),
-			session: W(r.group)
+			room: V(r.group),
+			session: H(r.group)
 		};
 	}
 	async leaveRoom(e) {
 		await this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/leave`);
 	}
 	async getState(e) {
-		return W((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
+		return H((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
 	}
 	async getMembers(e) {
-		return V((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
+		return z((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
 	}
 	async listGroups() {
 		let e = await this.client.get("/api/v1/syncplay/groups");
-		return Array.isArray(e.groups) ? e.groups.map(U) : [];
+		return Array.isArray(e.groups) ? e.groups.map(V) : [];
 	}
 	async listPublicRooms() {
 		return (await this.listGroups()).filter((e) => e.isPublic);
 	}
-}, K = null, q = null;
-function J(e) {
-	return (!K || q !== e) && (K = new G(e), q = e), K;
+}, W = null, G = null;
+function K(e) {
+	return (!W || G !== e) && (W = new U(e), G = e), W;
 }
-var Y = null, X = null, Z = 0, ne = 5, re = 1e3, Q = null, ie = null, ae = null, $ = null;
-function oe() {
+var q = null, J = null, Y = 0, X = 5, ie = 1e3, Z = null, ae = null, oe = null, Q = null;
+function se() {
 	try {
 		return typeof window > "u" ? null : new r().getAccessToken();
 	} catch {
 		return null;
 	}
 }
-function se(e) {
-	let t = typeof window < "u" ? window.location.hostname : "localhost", n = oe() ?? "";
-	return `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${t}:8097?token=${encodeURIComponent(n)}&room=${encodeURIComponent(e)}`;
-}
 function ce(e) {
-	if (Q) try {
+	let t = typeof window < "u" ? window.location.hostname : "localhost";
+	return `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${t}:8097?room=${encodeURIComponent(e)}`;
+}
+function le() {
+	let e = se();
+	return e ? ["bearer", e] : void 0;
+}
+function ue(e) {
+	if (Z) try {
 		let t = JSON.parse(e.data);
-		Q.handleIncoming(t);
+		Z.handleIncoming(t);
 	} catch {}
 }
-function le(e) {
-	if (!(e && e.target !== Y)) if (Y = null, Q && Q.onDisconnect(), X && Z < ne) {
-		let e = re * 2 ** Z;
-		Z++, console.log(`[SyncPlay] WebSocket closed, reconnecting in ${e}ms (attempt ${Z})`), setTimeout(() => {
-			X && de(X);
+function $(e) {
+	if (!(e && e.target !== q)) if (q = null, Z && Z.onDisconnect(), J && Y < X) {
+		let e = ie * 2 ** Y;
+		Y++, console.log(`[SyncPlay] WebSocket closed, reconnecting in ${e}ms (attempt ${Y})`), setTimeout(() => {
+			J && fe(J);
 		}, e);
-	} else Z >= ne && (console.warn("[SyncPlay] Max reconnect attempts reached, giving up"), X = null, Z = 0, Q = null);
-}
-function ue(e, t, n, r) {
-	Z = 0, de(e, t, n, r);
+	} else Y >= X && (console.warn("[SyncPlay] Max reconnect attempts reached, giving up"), J = null, Y = 0, Z = null);
 }
 function de(e, t, n, r) {
-	if (t && ($ = t), Y && X !== e) {
-		let e = Y;
-		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), Y = null, X = null, Q = null;
+	Y = 0, fe(e, t, n, r);
+}
+function fe(e, t, n, r) {
+	if (t && (Q = t), q && J !== e) {
+		let e = q;
+		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), q = null, J = null, Z = null;
 	}
-	if (Y && X === e) return;
-	X = e;
-	let i = n ?? ie ?? `member_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, a = r ?? ae ?? "Anonymous";
-	ie = i, ae = a, Q = new I({
+	if (q && J === e) return;
+	J = e;
+	let i = n ?? ae ?? `member_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, a = r ?? oe ?? "Anonymous";
+	ae = i, oe = a, Z = new P({
 		send: (e) => {
-			Y && Y.readyState === WebSocket.OPEN && Y.send(M(e));
+			q && q.readyState === WebSocket.OPEN && q.send(A(e));
 		},
 		now: () => Date.now(),
 		memberId: i,
 		memberName: a,
 		onPlaybackCommand: (e) => {
-			$ && $({
+			Q && Q({
 				type: e.type,
-				position: R(e.position),
-				roomId: X ?? void 0
+				position: I(e.position),
+				roomId: J ?? void 0
 			});
 		},
 		onPlaybackSync: (e, t, n, r) => {
-			$ && $({
+			Q && Q({
 				type: n ? "play" : "pause",
-				position: R(t),
-				roomId: X ?? void 0
+				position: I(t),
+				roomId: J ?? void 0
 			});
 		},
 		onDisconnect: () => {},
@@ -573,39 +577,47 @@ function de(e, t, n, r) {
 			console.log(`[SyncPlay] Info: ${e}`);
 		}
 	});
-	let o = se(e);
-	console.log(`[SyncPlay] Opening WebSocket to ${o}`), Y = new WebSocket(o), Y.onopen = () => {
-		console.log("[SyncPlay] WebSocket connected"), Z = 0, Q && X && Q.joinGroup(X);
-	}, Y.onmessage = ce, Y.onclose = le, Y.onerror = (e) => {
+	let o = ce(e);
+	console.log(`[SyncPlay] Opening WebSocket to ${o}`);
+	let s;
+	try {
+		s = new WebSocket(o, le());
+	} catch (e) {
+		console.error("[SyncPlay] WebSocket constructor refused the handshake", e), $();
+		return;
+	}
+	q = s, s.onopen = () => {
+		console.log("[SyncPlay] WebSocket connected"), Y = 0, Z && J && Z.joinGroup(J);
+	}, s.onmessage = ue, s.onclose = $, s.onerror = (e) => {
 		console.error("[SyncPlay] WebSocket error", e);
 	};
 }
-function fe() {
-	if (Y) {
-		let e = Y;
-		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), Y = null;
+function pe() {
+	if (q) {
+		let e = q;
+		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), q = null;
 	}
-	Q &&= (Q.leaveGroup(), Q.onDisconnect(), null), X = null, Z = 0;
-}
-function pe(e) {
-	!Q || !Y || Y.readyState !== WebSocket.OPEN || Q.reportPosition(e.playbackPosition, e.playbackRate > 0);
+	Z &&= (Z.leaveGroup(), Z.onDisconnect(), null), J = null, Y = 0;
 }
 function me(e) {
-	if (!(!Q || !Y || Y.readyState !== WebSocket.OPEN)) switch (e.type) {
+	!Z || !q || q.readyState !== WebSocket.OPEN || Z.reportPosition(e.playbackPosition, e.playbackRate > 0);
+}
+function he(e) {
+	if (!(!Z || !q || q.readyState !== WebSocket.OPEN)) switch (e.type) {
 		case "play":
-			Q.sendPlay(e.position ?? 0);
+			Z.sendPlay(e.position ?? 0);
 			break;
 		case "pause":
-			Q.sendPause(e.position ?? 0);
+			Z.sendPause(e.position ?? 0);
 			break;
 		case "seek":
-			e.position !== void 0 && Q.sendSeek(0, e.position);
+			e.position !== void 0 && Z.sendSeek(0, e.position);
 			break;
-		case "sync": e.position !== void 0 && Q.reportPosition(e.position, !0);
+		case "sync": e.position !== void 0 && Z.reportPosition(e.position, !0);
 	}
 }
-var he = 5e3;
-function ge() {
+var ge = 5e3;
+function _e() {
 	let e = o().user;
 	if (e) {
 		for (let t of [
@@ -615,20 +627,20 @@ function ge() {
 		]) if (typeof t == "string" && t.trim() !== "") return t.trim();
 	}
 }
-var _e = O("phlix-syncplay", () => {
-	let e = y(null), t = y(null), n = y(null), r = y([]), i = y(null), a = y(!1), o = y(0), s = 0, c = null, l = u(() => t.value !== null), ee = u(() => t.value ? t.value.state === "playing" || t.value.state === "paused" : !1), d = u(() => r.value.filter((e) => e.isOnline)), f = u(() => {
+var ve = E("phlix-syncplay", () => {
+	let e = v(null), t = v(null), n = v(null), r = v([]), i = v(null), a = v(!1), o = v(0), s = 0, c = null, ee = l(() => t.value !== null), te = l(() => t.value ? t.value.state === "playing" || t.value.state === "paused" : !1), u = l(() => r.value.filter((e) => e.isOnline)), d = l(() => {
 		let e = t.value;
 		if (!e || e.state === "paused" || e.state === "waiting") return 0;
 		let n = (Date.now() - s) / 1e3, r = e.playbackPosition + n * e.playbackRate;
 		return o.value - r;
-	}), p = u(() => t.value ? t.value.state === "waiting" ? "re-syncing" : Math.abs(f.value) > 2 ? "outOfSync" : "synced" : "outOfSync");
-	function m() {
+	}), f = l(() => t.value ? t.value.state === "waiting" ? "re-syncing" : Math.abs(d.value) > 2 ? "outOfSync" : "synced" : "outOfSync");
+	function p() {
 		let e = t.value;
 		if (!e) {
-			g();
+			h();
 			return;
 		}
-		e.state === "playing" && pe({
+		e.state === "playing" && me({
 			sessionId: e.id,
 			playbackPosition: o.value * 1e3,
 			playbackRate: e.playbackRate > 0 ? e.playbackRate : 1,
@@ -636,61 +648,61 @@ var _e = O("phlix-syncplay", () => {
 			timestamp: (/* @__PURE__ */ new Date()).toISOString()
 		});
 	}
-	function h() {
-		g(), c = setInterval(m, he);
+	function m() {
+		h(), c = setInterval(p, ge);
 	}
-	function g() {
+	function h() {
 		c !== null && (clearInterval(c), c = null);
 	}
-	function _(e) {
+	function g(e) {
 		n.value = e, t.value &&= {
 			...t.value,
 			currentMediaId: e.mediaId
 		};
 	}
-	function v() {
+	function _() {
 		n.value = null;
 	}
-	function b(n, i, a) {
+	function y(n, i, a) {
 		let { room: o, session: c } = i;
 		t.value = c, s = Date.now(), e.value = {
 			...e.value ?? {},
 			...o,
 			currentSession: c
-		}, r.value = c.activeUsers, ue(n, (e) => {
-			w(e);
-		}, void 0, a), h();
+		}, r.value = c.activeUsers, de(n, (e) => {
+			C(e);
+		}, void 0, a), m();
 	}
-	async function x(t, n) {
+	async function b(t, n) {
 		a.value = !0, i.value = null;
 		try {
-			let r = J(t), i = ge(), a = await r.createRoom({
+			let r = K(t), i = _e(), a = await r.createRoom({
 				...n,
 				memberName: i
 			});
-			e.value = a, b(a.id, await r.joinRoom(a.id, i), i);
+			e.value = a, y(a.id, await r.joinRoom(a.id, i), i);
 		} catch (e) {
 			throw i.value = e instanceof Error ? e.message : "Failed to create room", e;
 		} finally {
 			a.value = !1;
 		}
 	}
-	async function S(e, t) {
+	async function x(e, t) {
 		a.value = !0, i.value = null;
 		try {
-			let n = J(e), r = ge();
-			b(t, await n.joinRoom(t, r), r);
+			let n = K(e), r = _e();
+			y(t, await n.joinRoom(t, r), r);
 		} catch (e) {
 			throw i.value = e instanceof Error ? e.message : "Failed to join room", e;
 		} finally {
 			a.value = !1;
 		}
 	}
-	async function C(n) {
+	async function S(n) {
 		if (e.value) {
 			a.value = !0, i.value = null;
 			try {
-				await J(n).leaveRoom(e.value.id), g(), fe(), e.value = null, t.value = null, r.value = [];
+				await K(n).leaveRoom(e.value.id), h(), pe(), e.value = null, t.value = null, r.value = [];
 			} catch (e) {
 				throw i.value = e instanceof Error ? e.message : "Failed to leave room", e;
 			} finally {
@@ -698,7 +710,7 @@ var _e = O("phlix-syncplay", () => {
 			}
 		}
 	}
-	function w(e) {
+	function C(e) {
 		if (t.value) switch (e.type) {
 			case "play":
 				e.position !== void 0 && (s = Date.now(), t.value = {
@@ -734,8 +746,8 @@ var _e = O("phlix-syncplay", () => {
 			});
 		}
 	}
-	function T(e, n, r) {
-		t.value && me({
+	function w(e, n, r) {
+		t.value && he({
 			type: n,
 			position: r?.position === void 0 ? void 0 : r.position * 1e3,
 			rate: r?.rate,
@@ -743,26 +755,26 @@ var _e = O("phlix-syncplay", () => {
 			issuedAt: (/* @__PURE__ */ new Date()).toISOString()
 		});
 	}
-	async function E(e) {
+	async function T(e) {
 		if (t.value) try {
-			let n = await J(e).getState(t.value.id);
+			let n = await K(e).getState(t.value.id);
 			t.value = n, s = Date.now();
 		} catch (e) {
 			throw i.value = e instanceof Error ? e.message : "Failed to refresh state", e;
 		}
 	}
-	async function D(t) {
+	async function ne(t) {
 		if (e.value) try {
-			let n = await J(t).getMembers(e.value.id);
+			let n = await K(t).getMembers(e.value.id);
 			r.value = n;
 		} catch (e) {
 			throw i.value = e instanceof Error ? e.message : "Failed to refresh members", e;
 		}
 	}
-	function O() {
+	function E() {
 		i.value = null;
 	}
-	function k(e) {
+	function D(e) {
 		o.value = e;
 	}
 	return {
@@ -773,47 +785,47 @@ var _e = O("phlix-syncplay", () => {
 		isLoading: a,
 		localPlaybackPosition: o,
 		pendingPlayMedia: n,
-		isInRoom: l,
-		isSynced: ee,
-		onlineMembers: d,
-		syncStatus: p,
-		driftAmount: f,
-		createAndJoinRoom: x,
-		joinRoom: S,
-		leaveRoom: C,
-		onRemoteStateUpdate: w,
-		sendCommand: T,
-		refreshState: E,
-		refreshMembers: D,
-		clearError: O,
-		updateLocalPosition: k,
-		applyPendingPlayMedia: _,
-		consumePendingPlayMedia: v
+		isInRoom: ee,
+		isSynced: te,
+		onlineMembers: u,
+		syncStatus: f,
+		driftAmount: d,
+		createAndJoinRoom: b,
+		joinRoom: x,
+		leaveRoom: S,
+		onRemoteStateUpdate: C,
+		sendCommand: w,
+		refreshState: T,
+		refreshMembers: ne,
+		clearError: E,
+		updateLocalPosition: D,
+		applyPendingPlayMedia: g,
+		consumePendingPlayMedia: _
 	};
-}), ve = ["aria-label"], ye = ["aria-checked", "tabindex"], be = ["aria-checked", "tabindex"], xe = {
+}), ye = ["aria-label"], be = ["aria-checked", "tabindex"], xe = ["aria-checked", "tabindex"], Se = {
 	key: 0,
 	class: "syncplay-modal__fields"
-}, Se = { class: "syncplay-modal__field" }, Ce = {
+}, Ce = { class: "syncplay-modal__field" }, we = {
 	class: "syncplay-modal__label",
 	for: "room-name"
-}, we = ["placeholder"], Te = {
+}, Te = ["placeholder"], Ee = {
 	key: 1,
 	class: "syncplay-modal__fields"
-}, Ee = { class: "syncplay-modal__field" }, De = {
+}, De = { class: "syncplay-modal__field" }, Oe = {
 	class: "syncplay-modal__label",
 	for: "room-id"
-}, Oe = ["placeholder"], ke = {
+}, ke = ["placeholder"], Ae = {
 	key: 2,
 	class: "syncplay-modal__error",
 	role: "alert"
-}, Ae = {
+}, je = {
 	key: 3,
 	class: "syncplay-modal__rooms"
-}, je = { class: "syncplay-modal__rooms-title" }, Me = { class: "syncplay-modal__rooms-list" }, Ne = ["onClick"], Pe = { class: "syncplay-modal__room-name" }, Fe = { class: "syncplay-modal__room-count" }, Ie = {
+}, Me = { class: "syncplay-modal__rooms-title" }, Ne = { class: "syncplay-modal__rooms-list" }, Pe = ["onClick"], Fe = { class: "syncplay-modal__room-name" }, Ie = { class: "syncplay-modal__room-count" }, Le = {
 	key: 4,
 	class: "syncplay-modal__loading",
 	role: "status"
-}, Le = /*#__PURE__*/ e(/* @__PURE__ */ g({
+}, Re = /*#__PURE__*/ e(/* @__PURE__ */ h({
 	__name: "SyncPlayModal",
 	props: {
 		modelValue: { type: Boolean },
@@ -822,140 +834,140 @@ var _e = O("phlix-syncplay", () => {
 	},
 	emits: ["update:modelValue", "joined"],
 	setup(e, { emit: r }) {
-		let i = e, o = r, { t: g } = n(), O = _e(), k = a(), A = u(() => i.apiBase ?? k.value), j = y("create"), M = y(null), N = y(null);
-		function te(e) {
+		let i = e, o = r, { t: h } = n(), E = ve(), D = a(), O = l(() => i.apiBase ?? D.value), k = v("create"), A = v(null), j = v(null);
+		function re(e) {
 			switch (e.key) {
 				case "ArrowLeft":
 				case "ArrowUp":
-					e.preventDefault(), j.value = "create", M.value?.focus();
+					e.preventDefault(), k.value = "create", A.value?.focus();
 					break;
 				case "ArrowRight":
-				case "ArrowDown": e.preventDefault(), j.value = "join", N.value?.focus();
+				case "ArrowDown": e.preventDefault(), k.value = "join", j.value?.focus();
 			}
 		}
-		let P = y(""), F = y(""), I = y(!1), L = y(null), R = y([]), z = y(!1), B = u(() => P.value.trim().length > 0), V = u(() => F.value.trim().length > 0), H = u(() => (j.value === "create" ? B.value : V.value) && !I.value);
-		w(() => i.modelValue, async (e) => {
-			e && (L.value = null, P.value = "", i.prefilledRoomId ? (F.value = i.prefilledRoomId, j.value = "join") : (F.value = "", j.value = "create"), await U());
+		let M = v(""), N = v(""), P = v(!1), F = v(null), I = v([]), L = v(!1), R = l(() => M.value.trim().length > 0), z = l(() => N.value.trim().length > 0), B = l(() => (k.value === "create" ? R.value : z.value) && !P.value);
+		C(() => i.modelValue, async (e) => {
+			e && (F.value = null, M.value = "", i.prefilledRoomId ? (N.value = i.prefilledRoomId, k.value = "join") : (N.value = "", k.value = "create"), await V());
 		});
-		async function U() {
-			z.value = !0;
+		async function V() {
+			L.value = !0;
 			try {
-				let e = new G(A.value);
-				R.value = await e.listPublicRooms();
+				let e = new U(O.value);
+				I.value = await e.listPublicRooms();
 			} catch {
-				R.value = [];
+				I.value = [];
 			} finally {
-				z.value = !1;
+				L.value = !1;
 			}
 		}
-		async function W() {
-			if (H.value) {
-				I.value = !0, L.value = null;
+		async function H() {
+			if (B.value) {
+				P.value = !0, F.value = null;
 				try {
-					j.value === "create" ? await O.createAndJoinRoom(A.value, { name: P.value.trim() }) : await O.joinRoom(A.value, F.value.trim()), O.currentRoom && o("joined", O.currentRoom), o("update:modelValue", !1);
+					k.value === "create" ? await E.createAndJoinRoom(O.value, { name: M.value.trim() }) : await E.joinRoom(O.value, N.value.trim()), E.currentRoom && o("joined", E.currentRoom), o("update:modelValue", !1);
 				} catch (e) {
-					L.value = e instanceof Error ? e.message : "Operation failed";
+					F.value = e instanceof Error ? e.message : "Operation failed";
 				} finally {
-					I.value = !1;
+					P.value = !1;
 				}
 			}
 		}
-		function K(e) {
-			j.value = "join", F.value = e.id, P.value = e.name;
+		function W(e) {
+			k.value = "join", N.value = e.id, M.value = e.name;
 		}
-		function q() {
+		function G() {
 			o("update:modelValue", !1);
 		}
-		return (n, r) => (v(), ee(c, {
+		return (n, r) => (_(), te(c, {
 			"model-value": e.modelValue,
-			title: S(g)("syncplay.title"),
+			title: x(h)("syncplay.title"),
 			size: "md",
 			"onUpdate:modelValue": r[4] ||= (e) => o("update:modelValue", e),
-			onClose: q
+			onClose: G
 		}, {
-			footer: T(() => [h(s, {
+			footer: w(() => [m(s, {
 				variant: "ghost",
 				type: "button",
-				onClick: q
+				onClick: G
 			}, {
-				default: T(() => [m(x(S(g)("common.close")), 1)]),
+				default: w(() => [p(b(x(h)("common.close")), 1)]),
 				_: 1
-			}), h(s, {
+			}), m(s, {
 				variant: "solid",
 				type: "button",
-				loading: I.value,
-				disabled: !H.value,
-				onClick: W
+				loading: P.value,
+				disabled: !B.value,
+				onClick: H
 			}, {
-				default: T(() => [m(x(j.value === "create" ? S(g)("syncplay.createRoom") : S(g)("syncplay.joinRoom")), 1)]),
+				default: w(() => [p(b(k.value === "create" ? x(h)("syncplay.createRoom") : x(h)("syncplay.joinRoom")), 1)]),
 				_: 1
 			}, 8, ["loading", "disabled"])]),
-			default: T(() => [p("form", {
+			default: w(() => [f("form", {
 				class: "syncplay-modal",
-				onSubmit: D(W, ["prevent"])
+				onSubmit: ne(H, ["prevent"])
 			}, [
-				p("div", {
+				f("div", {
 					class: "syncplay-modal__tabs",
 					role: "radiogroup",
-					"aria-label": S(g)("syncplay.modeSelect"),
-					onKeydown: te
-				}, [p("button", {
+					"aria-label": x(h)("syncplay.modeSelect"),
+					onKeydown: re
+				}, [f("button", {
 					ref_key: "createOptionEl",
-					ref: M,
+					ref: A,
 					type: "button",
 					role: "radio",
-					class: _(["syncplay-modal__tab", { "is-active": j.value === "create" }]),
-					"aria-checked": j.value === "create",
-					tabindex: j.value === "create" ? 0 : -1,
-					onClick: r[0] ||= (e) => j.value = "create"
-				}, x(S(g)("syncplay.createRoom")), 11, ye), p("button", {
+					class: g(["syncplay-modal__tab", { "is-active": k.value === "create" }]),
+					"aria-checked": k.value === "create",
+					tabindex: k.value === "create" ? 0 : -1,
+					onClick: r[0] ||= (e) => k.value = "create"
+				}, b(x(h)("syncplay.createRoom")), 11, be), f("button", {
 					ref_key: "joinOptionEl",
-					ref: N,
+					ref: j,
 					type: "button",
 					role: "radio",
-					class: _(["syncplay-modal__tab", { "is-active": j.value === "join" }]),
-					"aria-checked": j.value === "join",
-					tabindex: j.value === "join" ? 0 : -1,
-					onClick: r[1] ||= (e) => j.value = "join"
-				}, x(S(g)("syncplay.joinRoom")), 11, be)], 40, ve),
-				j.value === "create" ? (v(), f("div", xe, [p("div", Se, [p("label", Ce, x(S(g)("syncplay.roomName")), 1), E(p("input", {
+					class: g(["syncplay-modal__tab", { "is-active": k.value === "join" }]),
+					"aria-checked": k.value === "join",
+					tabindex: k.value === "join" ? 0 : -1,
+					onClick: r[1] ||= (e) => k.value = "join"
+				}, b(x(h)("syncplay.joinRoom")), 11, xe)], 40, ye),
+				k.value === "create" ? (_(), d("div", Se, [f("div", Ce, [f("label", we, b(x(h)("syncplay.roomName")), 1), T(f("input", {
 					id: "room-name",
-					"onUpdate:modelValue": r[2] ||= (e) => P.value = e,
+					"onUpdate:modelValue": r[2] ||= (e) => M.value = e,
 					type: "text",
 					class: "syncplay-modal__input",
-					placeholder: S(g)("syncplay.roomNamePlaceholder"),
+					placeholder: x(h)("syncplay.roomNamePlaceholder"),
 					autocomplete: "off"
-				}, null, 8, we), [[C, P.value]])])])) : (v(), f("div", Te, [p("div", Ee, [p("label", De, x(S(g)("syncplay.roomId")), 1), E(p("input", {
+				}, null, 8, Te), [[S, M.value]])])])) : (_(), d("div", Ee, [f("div", De, [f("label", Oe, b(x(h)("syncplay.roomId")), 1), T(f("input", {
 					id: "room-id",
-					"onUpdate:modelValue": r[3] ||= (e) => F.value = e,
+					"onUpdate:modelValue": r[3] ||= (e) => N.value = e,
 					type: "text",
 					class: "syncplay-modal__input",
-					placeholder: S(g)("syncplay.roomIdPlaceholder"),
+					placeholder: x(h)("syncplay.roomIdPlaceholder"),
 					autocomplete: "off"
-				}, null, 8, Oe), [[C, F.value]])])])),
-				L.value ? (v(), f("p", ke, x(L.value), 1)) : d("", !0),
-				j.value === "join" && R.value.length > 0 ? (v(), f("div", Ae, [p("h3", je, x(S(g)("syncplay.publicRooms")), 1), p("ul", Me, [(v(!0), f(l, null, b(R.value, (e) => (v(), f("li", {
+				}, null, 8, ke), [[S, N.value]])])])),
+				F.value ? (_(), d("p", Ae, b(F.value), 1)) : u("", !0),
+				k.value === "join" && I.value.length > 0 ? (_(), d("div", je, [f("h3", Me, b(x(h)("syncplay.publicRooms")), 1), f("ul", Ne, [(_(!0), d(ee, null, y(I.value, (e) => (_(), d("li", {
 					key: e.id,
 					class: "syncplay-modal__room"
-				}, [p("button", {
+				}, [f("button", {
 					type: "button",
 					class: "syncplay-modal__room-btn",
-					onClick: (t) => K(e)
+					onClick: (t) => W(e)
 				}, [
-					h(t, {
+					m(t, {
 						name: "user",
 						class: "syncplay-modal__room-icon"
 					}),
-					p("span", Pe, x(e.name), 1),
-					p("span", Fe, x(S(g)("syncplay.members", { count: e.memberCount })), 1)
-				], 8, Ne)]))), 128))])])) : d("", !0),
-				z.value ? (v(), f("div", Ie, [h(t, { name: "spinner" }), p("span", null, x(S(g)("common.loading")), 1)])) : d("", !0)
+					f("span", Fe, b(e.name), 1),
+					f("span", Ie, b(x(h)("syncplay.members", { count: e.memberCount })), 1)
+				], 8, Pe)]))), 128))])])) : u("", !0),
+				L.value ? (_(), d("div", Le, [m(t, { name: "spinner" }), f("span", null, b(x(h)("common.loading")), 1)])) : u("", !0)
 			], 32)]),
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
 }), [["__scopeId", "data-v-fc76bfb0"]]);
 //#endregion
-export { _e as n, Le as t };
+export { ve as n, Re as t };
 
-//# sourceMappingURL=SyncPlayModal-CNkS_rPi.js.map
+//# sourceMappingURL=SyncPlayModal-YOg9iEIv.js.map
