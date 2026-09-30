@@ -35,7 +35,12 @@ interface Library {
   id: string;
   name: string;
   type: string;
-  paths: string[];
+  /**
+   * Absolute filesystem roots — server topology. Server L-4 (phlix-server
+   * b3aece4e) STRIPS this key from `/api/v1/libraries` for non-admin callers,
+   * so it is OPTIONAL on the wire: every read must use `?.`.
+   */
+  paths?: string[];
   item_count?: number;
   last_scan_at?: string;
   created_at: string;
@@ -208,8 +213,8 @@ onMounted(loadLibraries);
           <tr v-for="library in libraries" :key="library.id">
             <td>
               <div class="library-scan__name">{{ library.name }}</div>
-              <div v-if="library.paths.length" class="library-scan__paths">
-                {{ library.paths.join(', ') }}
+              <div v-if="library.paths?.length" class="library-scan__paths">
+                {{ library.paths?.join(', ') }}
               </div>
             </td>
             <td>{{ library.type }}</td>

@@ -122,6 +122,23 @@ describe('LibraryScanPage — list + states', () => {
     w.unmount();
   });
 
+  it('renders a REDACTED non-admin payload (library WITHOUT the `paths` key) without throwing', async () => {
+    // Server L-4 (phlix-server b3aece4e): `/api/v1/libraries` strips `paths` for
+    // non-admin callers. The page must degrade — not crash the row render — when
+    // the key is ABSENT (distinct from the `paths: []` case above: an undefined
+    // property access inside `v-if` is a render TypeError, not a falsy branch).
+    const redacted = { id: 'lib-9', name: 'Redacted Movies', type: 'movie', created_at: '2026-05-01T00:00:00Z' };
+    const { client } = makeClient({ libraries: [redacted] });
+    const w = mountPage(client);
+    await flushPromises();
+    // The row rendered (mount did not throw, table present) …
+    expect(w.find('.library-scan__table').exists()).toBe(true);
+    expect(w.text()).toContain('Redacted Movies');
+    // … and the paths sub-line is simply absent.
+    expect(w.find('.library-scan__paths').exists()).toBe(false);
+    w.unmount();
+  });
+
   it('treats a response with no `libraries` key as empty', async () => {
     const get = vi.fn(async () => ({}));
     const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);

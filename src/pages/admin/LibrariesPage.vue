@@ -535,7 +535,10 @@ function openEdit(lib: Library): void {
   // `type` is shown read-only on edit (not updatable); keep a valid value.
   const known = LIBRARY_TYPES.find((t) => t === lib.type);
   type.value = known ?? LIBRARY_TYPES[0];
-  pathsText.value = lib.paths.join('\n');
+  // L-4: `paths` is optional on the wire (stripped for non-admins). This page is
+  // admin-only so the field is present in practice; the fallback keeps a redacted
+  // row from crashing the edit form (empty box → "select at least one path" gate).
+  pathsText.value = lib.paths?.join('\n') ?? '';
   // Populate the series-per-directory toggle from the stored option (the value
   // may be bool / 1 / "1" / "true" depending on how the server serialized it).
   seriesPerDirectory.value = coerceBool(lib.options?.series_per_directory);
@@ -963,7 +966,7 @@ onBeforeUnmount(() => {
         <tr v-for="lib in libraries" :key="lib.id">
           <td>{{ lib.name }}</td>
           <td>{{ lib.type }}</td>
-          <td>{{ lib.paths.length }} paths</td>
+          <td>{{ lib.paths?.length ?? 0 }} paths</td>
           <td>
             <span class="admin-libraries__status" :data-testid="`status-${lib.id}`">
               <Badge :tone="statusTone(statuses[lib.id])">{{ statusLabel(statuses[lib.id]) }}</Badge>
