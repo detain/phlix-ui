@@ -62,9 +62,9 @@ import { n as vn, r as yn, t as bn } from "./useSettingsPrefs-CEFxTJFG.js";
 import { i as xn, n as Sn, r as Cn, t as wn } from "./plugins-UYxUeAoR.js";
 import { n as Tn, r as En, t as Dn } from "./maintenance-CETCLHzL.js";
 import { t as On } from "./hubDashboard-BhOaaDD-.js";
-import { a as kn, i as An, n as jn, o as Mn, r as Nn, t as Pn } from "./errors-D1ikoBpg.js";
-import { t as Fn } from "./LoginForm-CEGXxWGF.js";
-import { t as In } from "./SignupForm-C70DWZwz.js";
+import { a as kn, i as An, n as jn, o as Mn, r as Nn, t as Pn } from "./errors-UL1s00pu.js";
+import { t as Fn } from "./LoginForm-CSnVBvYJ.js";
+import { t as In } from "./SignupForm-iBRdeR2Y.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as Ln, t as Rn } from "./debounce-BkSsZiXZ.js";
 import { t as zn } from "./Input-D6hY0oF5.js";
@@ -1207,7 +1207,7 @@ function za(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-D7b2oecI.js")
+			component: () => import("./BrowsePage-DMi9luDj.js")
 		},
 		{
 			path: `${t}/media/:id`,
@@ -1228,19 +1228,19 @@ function za(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-D8KGxrzX.js")
+			component: () => import("./PlayerPage-B-hmQjUX.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-BXFH-7kS.js")
+			component: () => import("./LoginPage-DmYYsH_Z.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-C5TA_QLx.js")
+			component: () => import("./SignupPage-QGNgrD6v.js")
 		},
 		{
 			path: `${t}/connect`,
