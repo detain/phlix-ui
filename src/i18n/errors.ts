@@ -12,7 +12,7 @@
  * every `src/i18n/locales/*.ts` bundle is `satisfies PhlixMessages` with exact
  * key-identity against the 412-key UI-chrome catalog, and downstream clients
  * (tizen, windows) PIN bundle↔installed equality at the release tag. Folding
- * ~202 registry-adjacent error strings into the main catalog would force churn
+ * ~204 registry-adjacent error strings into the main catalog would force churn
  * in every equality pin on each registry edit. The error catalog is instead a
  * SEPARATE layer keyed by the contracts wire strings, complete for all seven
  * locales, and validated against `ERROR_CODES` by `errors.test.ts` — adding a
@@ -230,6 +230,7 @@ const EN: PhlixErrorCatalog = {
   missing_delegation_id: 'A delegation ID is required.',
   missing_library_id: 'A library ID is required.',
   missing_library_name: 'A library name is required.',
+  leaf_hub_id_already_bound: 'That server ID is already linked to a different peer.',
 
   // ── share — library-share CRUD (bare snake codes) ──
   share_not_found: 'That library share could not be found.',
@@ -314,6 +315,7 @@ const EN: PhlixErrorCatalog = {
   'syncplay.group_not_found': 'That watch group no longer exists.',
   'syncplay.invalid_password': 'The group password is not correct.',
   'syncplay.group_full': 'That watch group is full.',
+  'syncplay.queue_limit_exceeded': 'The watch queue has reached its maximum size.',
 
   // ── legacy — SCREAMING_SNAKE SyncPlay WS codes live traffic still speaks ──
   UNKNOWN_MESSAGE: 'The sync session did not understand that message.',
@@ -498,6 +500,7 @@ const ES: PhlixErrorCatalog = {
   missing_delegation_id: 'Se requiere un ID de delegación.',
   missing_library_id: 'Se requiere un ID de biblioteca.',
   missing_library_name: 'Se requiere un nombre de biblioteca.',
+  leaf_hub_id_already_bound: 'Ese ID de servidor ya está vinculado a otro par.',
   // ── share ──
   share_not_found: 'No se pudo encontrar ese recurso compartido de biblioteca.',
   missing_share_id: 'Se requiere un ID de recurso compartido.',
@@ -579,6 +582,7 @@ const ES: PhlixErrorCatalog = {
   'syncplay.group_not_found': 'Ese grupo de visionado ya no existe.',
   'syncplay.invalid_password': 'La contraseña del grupo no es correcta.',
   'syncplay.group_full': 'Ese grupo de visionado está lleno.',
+  'syncplay.queue_limit_exceeded': 'La cola de visionado ha alcanzado su tamaño máximo.',
   // ── legacy ──
   UNKNOWN_MESSAGE: 'La sesión de sincronización no entendió ese mensaje.',
   HANDLER_ERROR: 'La sesión de sincronización encontró un error interno al procesar tu petición.',
@@ -742,6 +746,7 @@ const FR: PhlixErrorCatalog = {
   missing_delegation_id: 'Un identifiant de délégation est requis.',
   missing_library_id: 'Un identifiant de bibliothèque est requis.',
   missing_library_name: 'Un nom de bibliothèque est requis.',
+  leaf_hub_id_already_bound: 'Cet identifiant de serveur est déjà associé à un autre pair.',
   share_not_found: 'Impossible de trouver ce partage de bibliothèque.',
   missing_share_id: 'Un identifiant de partage est requis.',
   missing_collaborator_email: 'Une adresse e-mail de collaborateur est requise.',
@@ -813,6 +818,7 @@ const FR: PhlixErrorCatalog = {
   'syncplay.group_not_found': 'Ce groupe de visionnage n’existe plus.',
   'syncplay.invalid_password': 'Le mot de passe du groupe n’est pas correct.',
   'syncplay.group_full': 'Ce groupe de visionnage est complet.',
+  'syncplay.queue_limit_exceeded': 'La file d’attente de visionnage a atteint sa taille maximale.',
   UNKNOWN_MESSAGE: 'La session de synchronisation n’a pas compris ce message.',
   HANDLER_ERROR: 'La session de synchronisation a rencontré une erreur interne en traitant votre requête.',
   NOT_AUTHENTICATED: 'Connectez-vous à la session de synchronisation avant de continuer.',
@@ -978,6 +984,7 @@ const DE: PhlixErrorCatalog = {
   missing_delegation_id: 'Eine Delegations-ID ist erforderlich.',
   missing_library_id: 'Eine Bibliotheks-ID ist erforderlich.',
   missing_library_name: 'Ein Bibliotheksname ist erforderlich.',
+  leaf_hub_id_already_bound: 'Diese Server-ID ist bereits mit einem anderen Peer verknüpft.',
   share_not_found: 'Diese Bibliotheksfreigabe wurde nicht gefunden.',
   missing_share_id: 'Eine Freigabe-ID ist erforderlich.',
   missing_collaborator_email: 'Eine E-Mail-Adresse für die Mitarbeit ist erforderlich.',
@@ -1049,6 +1056,7 @@ const DE: PhlixErrorCatalog = {
   'syncplay.group_not_found': 'Diese Wiedergabegruppe gibt es nicht mehr.',
   'syncplay.invalid_password': 'Das Gruppenpasswort ist nicht korrekt.',
   'syncplay.group_full': 'Diese Wiedergabegruppe ist voll.',
+  'syncplay.queue_limit_exceeded': 'Die Wiedergabewarteschlange hat ihre maximale Größe erreicht.',
   UNKNOWN_MESSAGE: 'Die Synchronisationssitzung hat diese Nachricht nicht verstanden.',
   HANDLER_ERROR: 'In der Synchronisationssitzung ist beim Verarbeiten Ihrer Anfrage ein interner Fehler aufgetreten.',
   NOT_AUTHENTICATED: 'Melden Sie sich bei der Synchronisationssitzung an, bevor Sie fortfahren.',
@@ -1211,6 +1219,7 @@ const IT: PhlixErrorCatalog = {
   missing_delegation_id: 'È richiesto un ID delega.',
   missing_library_id: 'È richiesto un ID libreria.',
   missing_library_name: 'È richiesto un nome libreria.',
+  leaf_hub_id_already_bound: 'Questo ID server è già associato a un altro peer.',
   share_not_found: 'Impossibile trovare questa condivisione della libreria.',
   missing_share_id: 'È richiesto un ID condivisione.',
   missing_collaborator_email: 'È richiesta un’email del collaboratore.',
@@ -1281,6 +1290,7 @@ const IT: PhlixErrorCatalog = {
   'syncplay.group_not_found': 'Questo gruppo di visione non esiste più.',
   'syncplay.invalid_password': 'La password del gruppo non è corretta.',
   'syncplay.group_full': 'Questo gruppo di visione è pieno.',
+  'syncplay.queue_limit_exceeded': 'La coda di visione ha raggiunto la dimensione massima.',
   UNKNOWN_MESSAGE: 'La sessione di sincronizzazione non ha capito quel messaggio.',
   HANDLER_ERROR: 'La sessione di sincronizzazione ha riscontrato un errore interno nel gestire la tua richiesta.',
   NOT_AUTHENTICATED: 'Accedi alla sessione di sincronizzazione prima di continuare.',
@@ -1443,6 +1453,7 @@ const PT_BR: PhlixErrorCatalog = {
   missing_delegation_id: 'Um ID de delegação é obrigatório.',
   missing_library_id: 'Um ID de biblioteca é obrigatório.',
   missing_library_name: 'Um nome de biblioteca é obrigatório.',
+  leaf_hub_id_already_bound: 'Esse ID de servidor já está vinculado a outro par.',
   share_not_found: 'Não foi possível encontrar esse compartilhamento de biblioteca.',
   missing_share_id: 'Um ID de compartilhamento é obrigatório.',
   missing_collaborator_email: 'Um e-mail do colaborador é obrigatório.',
@@ -1513,6 +1524,7 @@ const PT_BR: PhlixErrorCatalog = {
   'syncplay.group_not_found': 'Esse grupo de exibição não existe mais.',
   'syncplay.invalid_password': 'A senha do grupo não está correta.',
   'syncplay.group_full': 'Esse grupo de exibição está cheio.',
+  'syncplay.queue_limit_exceeded': 'A fila de exibição atingiu o tamanho máximo.',
   UNKNOWN_MESSAGE: 'A sessão de sincronização não entendeu aquela mensagem.',
   HANDLER_ERROR: 'A sessão de sincronização encontrou um erro interno ao processar sua requisição.',
   NOT_AUTHENTICATED: 'Entre na sessão de sincronização antes de continuar.',
@@ -1662,6 +1674,7 @@ const JA: PhlixErrorCatalog = {
   missing_delegation_id: '委任IDは必須です。',
   missing_library_id: 'ライブラリIDは必須です。',
   missing_library_name: 'ライブラリ名は必須です。',
+  leaf_hub_id_already_bound: 'そのサーバーIDはすでに別のピアに紐付けられています。',
   share_not_found: 'そのライブラリの共有は見つかりませんでした。',
   missing_share_id: '共有IDは必須です。',
   missing_collaborator_email: '共同編集者のメールアドレスは必須です。',
@@ -1723,6 +1736,7 @@ const JA: PhlixErrorCatalog = {
   'syncplay.group_not_found': 'その視聴グループは存在しません。',
   'syncplay.invalid_password': 'グループのパスワードが正しくありません。',
   'syncplay.group_full': 'その視聴グループは満員です。',
+  'syncplay.queue_limit_exceeded': '視聴キューが最大数に達しました。',
   UNKNOWN_MESSAGE: '同期セッションはそのメッセージを解釈できませんでした。',
   HANDLER_ERROR: '同期セッションはリクエストの処理中に内部エラーが発生しました。',
   NOT_AUTHENTICATED: '続行する前に同期セッションにサインインしてください。',

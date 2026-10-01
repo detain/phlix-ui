@@ -3,7 +3,7 @@
  *
  * Every request-issuing method of every server-addressed `src/api` module is
  * driven through {@link makeRouteGateServer}, which answers a real 404 to any
- * url phlix-server does not register (402 routes — the canonical
+ * url phlix-server does not register (412 routes — the canonical
  * phlix-contracts export `dist/server-route-manifest.json`, vendored verbatim
  * here as `server-route-manifest.json`; see {@link routeGateServer}).
  *
@@ -84,15 +84,17 @@ export const CS46_CURRENCY_TOKEN = 'CS46CURRENCYPINX9X1';
 describe('route gate — vendored contracts export (S280 re-adoption)', () => {
     /**
      * S280 ui re-adoption: this gate consumes the CANONICAL phlix-contracts
-     * export, vendored verbatim (interim pattern until the next contracts tag —
-     * see {@link routeGateServer} header). These pins fail if the vendored file
-     * is edited, re-derived locally, or replaced: the md5 is the byte-identity
-     * proof against `phlix-contracts/dist/server-route-manifest.json` at
-     * contracts `b34651d` (untagged regen #34), and the sha pin is the
-     * server-currency proof.
+     * export, vendored verbatim (interim pattern until the contracts `exports`
+     * map ships the JSON subpath — see {@link routeGateServer} header). These
+     * pins fail if the vendored file is edited, re-derived locally, or replaced:
+     * the md5 is the byte-identity proof against
+     * `phlix-contracts/dist/server-route-manifest.json` at the `v0.5.3` tag
+     * (regen #35 — 412 tuples, CONTENT re-derivation at phlix-server
+     * `758f9149…` closing the cs#47 hold: the M-6 book-progress pair), and the
+     * sha pin is the server-currency proof.
      */
-    const VENDORED_MANIFEST_MD5 = '06ce7ec95bc064cc0f13b94389af9a82';
-    const VENDORED_MANIFEST_SERVER_SHA = '730e55b7d3ad44a155f6b46374a9f6c463792840';
+    const VENDORED_MANIFEST_MD5 = '915796837d38a77733c169996d97640c';
+    const VENDORED_MANIFEST_SERVER_SHA = '758f91496c068551b310f1078093335f79c20e04';
 
     it('is the canonical artifact byte-for-byte — md5 + provenance sha + size', () => {
         // jsdom makes import.meta.url an http URL — resolve through the file
@@ -103,7 +105,7 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
         );
         const bytes = readFileSync(vendoredFile);
         expect(createHash('md5').update(bytes).digest('hex')).toBe(VENDORED_MANIFEST_MD5);
-        expect(SERVER_ROUTE_MANIFEST).toHaveLength(410);
+        expect(SERVER_ROUTE_MANIFEST).toHaveLength(412);
         expect(SERVER_ROUTE_MANIFEST.length).toBe(SERVER_ROUTE_MANIFEST_PROVENANCE.total);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toBe(VENDORED_MANIFEST_SERVER_SHA);
     });
