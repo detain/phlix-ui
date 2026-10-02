@@ -36,9 +36,13 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
     id: 'm1',
     name: 'Dune: Part Two',
-    // Server wire truth: every media_items row carries library_id
-    // (SELECT * hydration). The 'Add to playlist' flow sends it as the
-    // required create-body field, so the fixture must model it.
+    // Server wire truth (verified 2026-10-02, server c42e166a): the LIST
+    // shape emits `library_id` — MediaItemShaper::shape() whitelist carries
+    // it at src/Media/Library/MediaItemShaper.php:251 (SELECT * hydration
+    // plus the c42e166a whitelist addition; before that commit the list path
+    // dropped it and this fixture claimed a field the grid never received).
+    // The 'Add to playlist' flow sends it as the required create-body field,
+    // so the fixture must model it.
     library_id: 'lib-1',
     type: 'movie',
     poster_url: 'https://img/dune.jpg',

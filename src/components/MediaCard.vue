@@ -253,8 +253,9 @@ function onMenuSelect(menuItem: { label: string }): void {
       // Server contract (CollectionController::create): creating a playlist
       // REQUIRES the item's owning `library_id` and never adds the item —
       // landing the item is a second leg via addToPlaylist. `library_id`
-      // ships on every wire item (types/media-item.ts MediaDetail.library_id,
-      // server SELECT * hydration); a card item without one cannot seed a
+      // ships on every wire item — list AND detail shapes since server
+      // c42e166a (MediaItemShaper::shape() whitelist, types/media-item.ts
+      // MediaDetail.library_id); a card item without one cannot seed a
       // playlist, so fail loud here instead of firing a request the server
       // is guaranteed to 400.
       const libraryId = props.item.library_id;
