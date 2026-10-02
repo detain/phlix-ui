@@ -1038,14 +1038,42 @@ export class ApiClient {
     }
 
     /**
-     * Create a new playlist, optionally adding a media item to it
-     * (`POST /api/v1/playlists`, body `{ name: string, media_id?: string }`).
-     * Returns the created playlist object. Non-2xx throws the shared {@link ApiError}.
+     * Create a new playlist (`POST /api/v1/playlists`, body
+     * `{ name: string, library_id: string }`). Returns the created playlist
+     * (`{ id, name }`) UNWRAPPED from the server's `{ collection: {...} }` 201
+     * envelope. Non-2xx throws the shared {@link ApiError}; a malformed 2xx
+     * throws an {@link ApiError} carrying status 200 — the same fail-loud
+     * boundary {@link getCurrentUser} uses for a relay-answered `{}`.
+     *
+     * ⚠ 2026-10-02 contract fix: the server's create handler
+     * (`CollectionController::create`) REQUIRES a non-empty `library_id` (it
+     * 400s `library_id is required` without one) and NEVER reads `media_id` —
+     * the old `{ name, media_id? }` body therefore 400ed for every role, and
+     * even a fixed create adds no item: landing the media item is a SECOND leg
+     * through {@link addToPlaylist} with the id returned here.
      */
-    createPlaylist(name: string, mediaId?: string): Promise<{ id: string; name: string }> {
-        const body: { name: string; media_id?: string } = { name };
-        if (mediaId) body.media_id = mediaId;
-        return this.post<{ id: string; name: string }>('/api/v1/playlists', body);
+    async createPlaylist(name: string, libraryId: string): Promise<{ id: string; name: string }> {
+        const raw = await this.post<{ collection?: unknown }>('/api/v1/playlists', {
+            name,
+            library_id: libraryId,
+        });
+        const collection = raw?.collection;
+        if (!collection || typeof collection !== 'object') {
+            throw new ApiError(
+                'Malformed /api/v1/playlists response: missing collection object',
+                200,
+                raw,
+            );
+        }
+        const fields = collection as Record<string, unknown>;
+        if (typeof fields['id'] !== 'string' || fields['id'] === '') {
+            throw new ApiError(
+                'Malformed /api/v1/playlists response: collection has no usable id',
+                200,
+                raw,
+            );
+        }
+        return { id: fields['id'], name: typeof fields['name'] === 'string' ? fields['name'] : name };
     }
 
     /**

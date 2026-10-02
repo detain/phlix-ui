@@ -196,7 +196,7 @@ describe('route gate — client.ts (ApiClient)', () => {
         );
 
         // Playlists.
-        await driveGated(server, 'createPlaylist', () => client.createPlaylist('Watchlist'));
+        await driveGated(server, 'createPlaylist', () => client.createPlaylist('Watchlist', 'lib-1'));
         await driveGated(server, 'addToPlaylist', () => client.addToPlaylist('pl-1', 'abc'));
 
         // Avatar (multipart + direct-fetch delete).

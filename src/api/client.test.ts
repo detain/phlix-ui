@@ -1387,3 +1387,82 @@ describe('ApiClient avatar + me error shapes', () => {
         expect(user).toMatchObject({ username: 'u', is_admin: true });
     });
 });
+
+// 2026-10-02 contract fix: the server's playlist-create handler
+// (CollectionController::create) requires `library_id` and never reads
+// `media_id`; the old {name, media_id?} body 400ed for every role. These pins
+// hold the wire shape to {name, library_id} (deep-equal — a re-added
+// media_id fails), unwrap the {collection} 201 envelope, and fail loud on a
+// malformed 200 the way getCurrentUser does.
+describe('ApiClient playlist create (server-contract shape)', () => {
+    function makeClient(fetchImpl: typeof fetch): ApiClient {
+        return new ApiClient({
+            baseUrl: 'https://h',
+            tokenStore: new MemoryTokenStore({ access: 't' }),
+            fetchImpl,
+        });
+    }
+
+    it('createPlaylist POSTs /api/v1/playlists with EXACTLY {name, library_id}', async () => {
+        const { fetch, calls } = makeFetch([
+            { status: 201, body: { collection: { id: 'c-9', name: 'Faves', library_id: 'lib-1' } } },
+        ]);
+        const client = makeClient(fetch);
+        await client.createPlaylist('Faves', 'lib-1');
+        expect(calls).toHaveLength(1);
+        expect(calls[0]!.url).toBe('https://h/api/v1/playlists');
+        // Deep-equal pin: no media_id (or any other key) may ride in the body.
+        expect(JSON.parse(String(calls[0]!.init!.body))).toEqual({ name: 'Faves', library_id: 'lib-1' });
+    });
+
+    it('createPlaylist unwraps the {collection} envelope to {id, name}', async () => {
+        const { fetch } = makeFetch([
+            {
+                status: 201,
+                body: {
+                    collection: {
+                        id: 'c-9',
+                        name: 'Faves',
+                        library_id: 'lib-1',
+                        is_smart: false,
+                        created_at: '2026-10-02T00:00:00Z',
+                    },
+                },
+            },
+        ]);
+        const client = makeClient(fetch);
+        const created = await client.createPlaylist('Faves', 'lib-1');
+        expect(created).toEqual({ id: 'c-9', name: 'Faves' });
+    });
+
+    it('createPlaylist falls back to the requested name when the reply omits it', async () => {
+        const { fetch } = makeFetch([{ status: 201, body: { collection: { id: 'c-9' } } }]);
+        const client = makeClient(fetch);
+        const created = await client.createPlaylist('Faves', 'lib-1');
+        expect(created).toEqual({ id: 'c-9', name: 'Faves' });
+    });
+
+    it('createPlaylist throws ApiError on a 200 missing the collection object', async () => {
+        const { fetch } = makeFetch([{ status: 200, body: {} }]);
+        const client = makeClient(fetch);
+        const err = await client.createPlaylist('Faves', 'lib-1').catch((e) => e);
+        expect(err).toBeInstanceOf(ApiError);
+        expect(err).not.toBeInstanceOf(TypeError);
+        expect(err.message).toMatch(/missing collection/);
+    });
+
+    it('createPlaylist throws ApiError when the collection carries no usable id', async () => {
+        const { fetch } = makeFetch([{ status: 201, body: { collection: { name: 'Faves' } } }]);
+        const client = makeClient(fetch);
+        const err = await client.createPlaylist('Faves', 'lib-1').catch((e) => e);
+        expect(err).toBeInstanceOf(ApiError);
+        expect(err.message).toMatch(/no usable id/);
+    });
+
+    it('addToPlaylist POSTs the collection-items route with both ids', async () => {
+        const { fetch, calls } = makeFetch([{ status: 200, body: { message: 'Item added to collection' } }]);
+        const client = makeClient(fetch);
+        await client.addToPlaylist('c-9', 'm-1');
+        expect(calls[0]!.url).toBe('https://h/api/v1/collections/c-9/items/m-1');
+    });
+});

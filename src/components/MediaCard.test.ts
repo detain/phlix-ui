@@ -36,6 +36,10 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
     id: 'm1',
     name: 'Dune: Part Two',
+    // Server wire truth: every media_items row carries library_id
+    // (SELECT * hydration). The 'Add to playlist' flow sends it as the
+    // required create-body field, so the fixture must model it.
+    library_id: 'lib-1',
     type: 'movie',
     poster_url: 'https://img/dune.jpg',
     genres: ['Sci-Fi', 'Adventure', 'Drama', 'Action'],
@@ -948,17 +952,85 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     await flushPromises();
   }
 
-  it('Add to playlist → api.createPlaylist(name, itemId) + success toast', async () => {
+  // 2026-10-02 contract fix pins: the create leg sends the item's OWN
+  // library_id (server CollectionController::create 400s without it and never
+  // read media_id), and landing the item is a second leg through
+  // addToPlaylist(created.id, itemId). RED-on-old: the pre-fix flow called
+  // createPlaylist(name, itemId) with no library and never chained the add.
+  it('Add to playlist → createPlaylist(name, item.library_id) then addToPlaylist(created.id, itemId) + success toast', async () => {
     const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'Faves' });
+    const add = vi.spyOn(api, 'addToPlaylist').mockResolvedValue({ message: 'Item added to collection' });
     const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
     const success = vi.spyOn(useToastStore(), 'success');
+    const error = vi.spyOn(useToastStore(), 'error');
 
     await selectMenuItem(w, MENU_LABELS.addToPlaylist);
 
     expect(create).toHaveBeenCalledTimes(1);
-    expect(create).toHaveBeenCalledWith('Faves', 'm1');
-    expect(success).toHaveBeenCalledWith('Playlist created');
+    expect(create).toHaveBeenCalledWith('Faves', 'lib-1');
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(add).toHaveBeenCalledWith('pl1', 'm1');
+    expect(success).toHaveBeenCalledWith('Added to playlist');
+    expect(error).not.toHaveBeenCalled();
+    promptSpy.mockRestore();
+    w.unmount();
+  });
+
+  it('Add to playlist → a failed create leg surfaces honestly and never calls addToPlaylist', async () => {
+    const create = vi.spyOn(api, 'createPlaylist').mockRejectedValue(new Error('playlist.create failed'));
+    const add = vi.spyOn(api, 'addToPlaylist').mockResolvedValue({ message: 'ok' });
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+    const error = vi.spyOn(useToastStore(), 'error');
+
+    await selectMenuItem(w, MENU_LABELS.addToPlaylist);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(add).not.toHaveBeenCalled();
+    expect(success).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith('Failed to create playlist', {
+      message: 'playlist.create failed',
+    });
+    promptSpy.mockRestore();
+    w.unmount();
+  });
+
+  it('Add to playlist → a failed item-add leg still reports the playlist was created', async () => {
+    const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'Faves' });
+    const add = vi.spyOn(api, 'addToPlaylist').mockRejectedValue(new Error('collection.items failed'));
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+    const error = vi.spyOn(useToastStore(), 'error');
+
+    await selectMenuItem(w, MENU_LABELS.addToPlaylist);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(add).toHaveBeenCalledWith('pl1', 'm1');
+    expect(success).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith('Playlist created, but adding the item failed', {
+      message: 'collection.items failed',
+    });
+    promptSpy.mockRestore();
+    w.unmount();
+  });
+
+  it('Add to playlist → an item without a usable library_id fails loud and fires no request', async () => {
+    const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'x' });
+    const add = vi.spyOn(api, 'addToPlaylist').mockResolvedValue({ message: 'ok' });
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
+    const w = mount(MediaCard, { props: { item: media({ library_id: null }) }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+    const error = vi.spyOn(useToastStore(), 'error');
+
+    await selectMenuItem(w, MENU_LABELS.addToPlaylist);
+
+    expect(create).not.toHaveBeenCalled();
+    expect(add).not.toHaveBeenCalled();
+    expect(success).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith('Cannot add to playlist', expect.objectContaining({ message: expect.any(String) }));
     promptSpy.mockRestore();
     w.unmount();
   });
