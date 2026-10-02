@@ -748,9 +748,18 @@ var ke = class {
 	async getTrickplay(e, t) {
 		return this.get(`/api/v1/media/${encodeURIComponent(e)}/trickplay`, void 0, t);
 	}
-	createPlaylist(e, t) {
-		let n = { name: e };
-		return t && (n.media_id = t), this.post("/api/v1/playlists", n);
+	async createPlaylist(e, t) {
+		let n = await this.post("/api/v1/playlists", {
+			name: e,
+			library_id: t
+		}), r = n?.collection;
+		if (!r || typeof r != "object") throw new de("Malformed /api/v1/playlists response: missing collection object", 200, n);
+		let i = r;
+		if (typeof i.id != "string" || i.id === "") throw new de("Malformed /api/v1/playlists response: collection has no usable id", 200, n);
+		return {
+			id: i.id,
+			name: typeof i.name == "string" ? i.name : e
+		};
 	}
 	addToPlaylist(e, t) {
 		return this.post(`/api/v1/collections/${encodeURIComponent(e)}/items/${encodeURIComponent(t)}`);
