@@ -209,7 +209,14 @@ export interface MediaDetail extends MediaListItem {
     }>;
     /** Primary studio name; fallback when production_companies absent. Detail shape only. */
     studio?: string | null;
-    /** Owning library id. Detail shape only. */
+    /**
+     * Owning library id. Emitted on BOTH shapes since server c42e166a
+     * (2026-10-02): `MediaItemShaper::shape()` carries it on every LIST row
+     * (`MediaListItem` in TS terms — src/Media/Library/MediaItemShaper.php:251
+     * at that tip), and `shapeDetail()` has always merged it. Declared here
+     * rather than on `MediaListItem` so no interface member set churns; the
+     * 'Add to playlist' flow resolves it straight off grid rows.
+     */
     library_id?: string | null;
     /**
      * Full-resolution (`/original`) backdrop for the full-bleed page background.
@@ -312,6 +319,12 @@ export type MediaItem = MediaDetail;
  * populated, indicating it is a true detail response (not just a list row or
  * synthetic item). Use this to narrow `MediaItem` → `MediaDetail` at call sites
  * that may receive either shape.
+ *
+ * ⚠ Prose drift noted 2026-10-02: since server c42e166a the LIST shape carries
+ * `library_id` too, so that arm no longer strictly discriminates against live
+ * grid rows (hand-built rails still ship it null-but-present). The arm is kept
+ * for wire-compat with pre-c42e166a servers; the predicate is dead as shipped
+ * (see media-item.test.ts header) so no call site depends on the distinction.
  */
 /**
  * One poster candidate returned by {@link ApiClient.listPosters}
