@@ -1,3 +1,55 @@
+## 0.99.9 - 2026-10-03
+
+### Release — 6 commits since `v0.99.8`: 'Add to playlist' honors the server create contract, contracts `v0.5.3` catalog, `library_id` wire-truth pass
+
+- **The member-facing 'Add to playlist' flow was broken against the server
+  create contract for every role — this release fixes it (`09bf8248`, dist
+  `7792546c`).** `createPlaylist` POSTed `{name, media_id?}` to
+  `/api/v1/playlists`, but the server's create handler
+  (`CollectionController::create`) REQUIRES a non-empty `library_id`
+  (400 `library_id is required` without it) and never reads `media_id` —
+  so the flow 400ed unconditionally, and even a fixed create left the item
+  un-added (the endpoint adds no item). `createPlaylist(name, libraryId)`
+  now sends EXACTLY `{name, library_id}` (deep-equal pinned), the declared
+  `{id,name}` return is finally true — parsed from the server's
+  `{collection:{...}}` 201 envelope with fail-loud `ApiError`s (status 200,
+  `getCurrentUser` precedent) for a missing collection object or an id-less
+  collection — and a successful create chains `addToPlaylist` (existing
+  client method, first real callers: `POST /api/v1/collections/{id}/items/{mediaItemId}`)
+  so 'add to a NEW playlist' lands the item. Items without a usable
+  `library_id` fail loud with an honest toast instead of firing a
+  guaranteed-400 request. Per-leg error UX: create fail → 'Failed to create
+  playlist'; add fail → 'Playlist created, but adding the item failed'.
+  Six client pins + four component pins (happy chain, first-leg fail never
+  adds, second-leg fail surfaces honestly, missing `library_id` = no
+  request) — all RED against the pre-fix src.
+- **`@phlix/contracts` re-pinned `#v0.5.2` → `#v0.5.3` (`af8f4631`, dist
+  `db114905`).** Error catalog 202 → 204 codes: the `leaf_hub_id_already_bound`
+  + `syncplay.queue_limit_exceeded` twins (both RESERVED at pin time) answered
+  in all 7 locales of the total `Record<ErrorCode,string>`; the route-manifest
+  harness vendored byte-for-byte from the tag (412 tuples @ srv `758f9149`,
+  md5 `91579683`, cs#47 hold closed).
+- **`library_id` wire-truth pass (`398a0061`, dist `06b1253b`).** The
+  playlist-fix review caught the grid `createPlaylist` path INERT on server
+  ground: `MediaItemShaper::shape()` dropped `library_id` from the LIST
+  whitelist, so the MediaCard fixture's 'every row carries library_id' claim
+  was fabricated provenance. Server `c42e166a` has since added `library_id`
+  to `shape()` — this pass re-anchors the fixture/type-doc/call-site prose to
+  the verified coordinate (`MediaDetail.library_id` now documented on both
+  shapes; `isMediaDetail` noted as dead-as-shipped against live grid rows).
+  No payload or runtime change.
+- **Artifacts.** `dist/` is regenerated and dist-current at this tag
+  (`db114905`/`7792546c`/`06b1253b` cover `af8f4631`/`09bf8248`/`398a0061`
+  respectively) and verified fresh by ui-ci at tip; the committed bundles
+  embed no version string, so this version-field bump changes no artifact
+  byte. Suite baseline at tag: **6 201 passed | 10 skipped** (303 files);
+  error catalog holds at 204 codes × 7 locales.
+- **Cascade arming.** Tagging `v0.99.9` makes the hub S181 ui-pin grader
+  report the four `@phlix/ui` pinners (server, hub, tizen, windows)
+  STALE-1; their re-pins ride this release cascade. This tag carries the
+  playlist create-contract fix into the server/hub `/app` SPA bundles and
+  the vendored windows/tizen bundles.
+
 ## 0.99.8 - 2026-09-30
 
 ### Release — 15 commits since `v0.99.7`: bearer-subprotocol WS carrier, one-time invite-token DTO, `player.css` surface, paths-guard hardening
