@@ -39,10 +39,10 @@ on:
 jobs:
   # S459: deterministic checks no gate test pins to the `test:` block. Parallel with `test`.
   static:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: npm
@@ -52,7 +52,7 @@ jobs:
 
   # Deterministic gate: build + dist freshness + the full vitest suite, 2 shards in parallel.
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     name: test (shard ${{ matrix.shard }}/2)
     strategy:
       # A red shard must not cancel the other: both legs' results are needed to tell
@@ -61,8 +61,8 @@ jobs:
       matrix:
         shard: [1, 2]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: npm
@@ -125,7 +125,7 @@ jobs:
       - run: npm run test:run -- --coverage --shard=${{ matrix.shard }}/2 --reporter=default --reporter=blob --outputFile.blob=blob/shard-${{ matrix.shard }}.json
 
       - name: Upload coverage blob
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: coverage-blob-${{ matrix.shard }}
@@ -136,18 +136,18 @@ jobs:
   # Runs vitest in merge mode only — it executes NO tests (see --mergeReports in
   # `vitest --help`), so the wall cost is npm ci + one fast report pass.
   coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: npm
       - run: npm ci
 
       - name: Download shard blobs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: coverage-blob-*
           path: blob/
@@ -168,7 +168,7 @@ jobs:
   # Visual regression. Reuses the version-pinned Chromium (v1223) that @playwright/test
   # bundles, so it matches the committed baselines when they are regenerated on-runner.
   visual:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # MANUAL ONLY. The `-linux` baselines have not been regenerated on the runner yet, so
     # on push/PR this job would report font-rasterization drift rather than real regressions.
     # Removing this guard without first committing on-runner baselines will flood every PR.
@@ -178,15 +178,15 @@ jobs:
     # Flip this off once the visual job is a stable required check.
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:visual
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
