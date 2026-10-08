@@ -73,7 +73,10 @@ describe(`S459 ${S459_CI_SHARD_TOKEN} — ui-ci shard matrix wiring`, () => {
     it('records a mergeable blob report on every shard leg', () => {
         expect(testBlock).toContain('--reporter=blob');
         expect(testBlock).toContain('--outputFile.blob=blob/shard-${{ matrix.shard }}.json');
-        expect(testBlock).toContain('actions/upload-artifact@v4');
+        // v4 -> v7: the ubuntu-26.04 CI pin pass retired Node-20-generation action
+        // pins (actions/runner-images#14747 era). The pin's JOB is unchanged: every
+        // shard leg must still upload a blob-report artifact named coverage-blob-*.
+        expect(testBlock).toContain('actions/upload-artifact@v7');
         expect(testBlock).toContain('name: coverage-blob-${{ matrix.shard }}');
     });
 
