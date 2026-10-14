@@ -36,8 +36,10 @@ import PageHint from '../../components/ui/PageHint.vue';
 import { adminPageHelp } from './helpLinks';
 import Button from '../../components/ui/Button.vue';
 import Modal from '../../components/ui/Modal.vue';
+import Select from '../../components/ui/Select.vue';
 import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
+import { useLibrariesStore } from '../../stores/useLibrariesStore';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -52,6 +54,14 @@ const api = new AdminCollectionsApi(
   props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
 );
 const toasts = useToastStore();
+
+// R13-07: library_id is chosen from the viewer's real libraries (useLibrariesStore
+// → GET /api/v1/libraries), NOT typed free-form. Options are the sorted library
+// summaries; the create form no longer prefills an arbitrary library.
+const libraries = useLibrariesStore();
+const libraryOptions = computed(() =>
+  libraries.items.map((l) => ({ value: l.id, label: l.name })),
+);
 
 // ── Collection list state ────────────────────────────────────────────────────
 const collections = ref<Collection[]>([]);
@@ -85,7 +95,11 @@ const formTitle = computed(() =>
 function openAddCollection(): void {
   editingCollection.value = null;
   collectionName.value = '';
-  collectionLibraryId.value = collections.value[0]?.library_id ?? '';
+  // R13-07: NO prefill — the admin must pick the owning library explicitly
+  // (the old `collections[0]?.library_id` default silently filed new
+  // collections under an unrelated library).
+  collectionLibraryId.value = '';
+  void libraries.load(apiBase.value);
   formOpen.value = true;
 }
 
@@ -344,7 +358,13 @@ onMounted(loadCollections);
         </label>
         <label v-if="!editingCollection" class="admin-collections__field">
           <span class="admin-collections__label">Library</span>
-          <input v-model="collectionLibraryId" type="text" class="admin-collections__input" autocomplete="off" required />
+          <Select
+            :model-value="collectionLibraryId"
+            :options="libraryOptions"
+            label="Library"
+            placeholder="Choose a library"
+            @update:model-value="(v) => (collectionLibraryId = String(v))"
+          />
         </label>
       </form>
       <template #footer>

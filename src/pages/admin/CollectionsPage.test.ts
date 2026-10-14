@@ -10,6 +10,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import CollectionsPage from './CollectionsPage.vue';
 import Button from '../../components/ui/Button.vue';
+import Select from '../../components/ui/Select.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
@@ -73,12 +74,48 @@ function modalPanel(): HTMLElement {
   return panels[panels.length - 1];
 }
 
+/** Choose a library in the open create-form's Library Select (R13-07). */
+async function pickLibrary(w: VueWrapper, value: string): Promise<void> {
+  const select = w
+    .findAllComponents(Select)
+    .find((s) => s.props('label') === 'Library');
+  if (!select) throw new Error('Library Select not rendered');
+  select.vm.$emit('update:modelValue', value);
+  await flushPromises();
+}
+
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
+  // R13-07: useLibrariesStore fetches through its OWN ApiClient (built inside
+  // fetchLibraries, capturing globalThis.fetch at construction) — the page's
+  // injected client bag never sees that call. Stub the transport so the
+  // Library Select options are deterministic.
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const body = url.includes('/api/v1/libraries')
+        ? {
+            libraries: [
+              { id: 'lib-1', name: 'Movies', type: 'movie' },
+              { id: 'lib-9', name: 'Documentaries', type: 'movie' },
+            ],
+          }
+        : {};
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: () => 'application/json' },
+        json: async () => body,
+        text: async () => JSON.stringify(body),
+      } as unknown as Response;
+    }),
+  );
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('Admin CollectionsPage — list', () => {
@@ -157,8 +194,10 @@ describe('Admin CollectionsPage — create / edit / delete', () => {
     await flushPromises();
     const inputs = document.querySelectorAll<HTMLInputElement>('.phlix-modal__panel .admin-collections__input');
     inputs[0].value = 'Thrillers'; inputs[0].dispatchEvent(new Event('input'));
-    // library prefilled from collections[0]; override it.
-    inputs[1].value = 'lib-9'; inputs[1].dispatchEvent(new Event('input'));
+    // R13-07: the library is CHOSEN from the populated Select (loaded via
+    // useLibrariesStore), no longer typed into a text field prefilled from
+    // collections[0].
+    await pickLibrary(w, 'lib-9');
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
     await flushPromises();
@@ -207,11 +246,33 @@ describe('Admin CollectionsPage — create / edit / delete', () => {
     await flushPromises();
     const inputs = document.querySelectorAll<HTMLInputElement>('.phlix-modal__panel .admin-collections__input');
     inputs[0].value = 'Thrillers'; inputs[0].dispatchEvent(new Event('input'));
+    await pickLibrary(w, 'lib-1');
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Create')!.trigger('click');
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'create boom')).toBe(true);
+    w.unmount();
+  });
+
+  it('R13-07: the create form offers a library Select fed by the libraries store and starts unselected', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'New collection')!.trigger('click');
+    await flushPromises();
+    const select = w.findAllComponents(Select).find((s) => s.props('label') === 'Library');
+    expect(select).toBeTruthy();
+    // Options come from GET /api/v1/libraries (the stubbed transport, sorted
+    // by name in the store), NOT a prefill of collections[0].library_id — the
+    // field opens empty.
+    expect(select!.props('options')).toEqual([
+      { value: 'lib-9', label: 'Documentaries' },
+      { value: 'lib-1', label: 'Movies' },
+    ]);
+    expect(select!.props('modelValue')).toBe('');
+    // The old free-text library input is gone.
+    expect(document.querySelectorAll('.phlix-modal__panel input.admin-collections__input')).toHaveLength(1);
     w.unmount();
   });
 
