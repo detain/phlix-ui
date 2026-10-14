@@ -1001,7 +1001,7 @@ onMounted(() => {
       <p>Remove tuner <strong>{{ deletingTuner?.name }}</strong>? This cannot be undone.</p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="deletingTuner = null">Cancel</Button>
-        <Button variant="solid" size="sm" @click="confirmDeleteTuner">Remove</Button>
+        <Button variant="danger" size="sm" @click="confirmDeleteTuner">Remove</Button>
       </template>
     </Modal>
 
@@ -1016,7 +1016,7 @@ onMounted(() => {
       </p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="deletingRecording = null">Cancel</Button>
-        <Button variant="solid" size="sm" @click="confirmDeleteRecording">Delete</Button>
+        <Button variant="danger" size="sm" @click="confirmDeleteRecording">Delete</Button>
       </template>
     </Modal>
 
@@ -1029,7 +1029,7 @@ onMounted(() => {
       <p>Delete series rule <strong>{{ deletingRule?.title_pattern }}</strong>?</p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="deletingRule = null">Cancel</Button>
-        <Button variant="solid" size="sm" @click="confirmDeleteRule">Delete</Button>
+        <Button variant="danger" size="sm" @click="confirmDeleteRule">Delete</Button>
       </template>
     </Modal>
   </section>

@@ -651,9 +651,9 @@ async function confirmDelete(): Promise<void> {
  * Every async library operation the admin can trigger. All map to a
  * `POST /api/v1/libraries/{id}/<op>` that replies `202 { job_id, status,
  * message }` and streams progress onto the same scan-job row, so they ALL feed
- * the shared status/polling UI. The destructive ones
- * (`clear-metadata`/`clear-artwork`/`delete-all`) are gated behind a confirm
- * dialog before they reach {@link runOp}.
+ * the shared status/polling UI. The consequential ones
+ * (`prune`/`clear-metadata`/`clear-artwork`/`delete-all`) are gated behind a
+ * confirm dialog before they reach {@link runOp} (R13-14).
  */
 type LibraryOp =
   | 'scan'
@@ -730,13 +730,22 @@ async function runOp(lib: Library, op: LibraryOp): Promise<void> {
 
 // ── Destructive-op confirm dialog ───────────────────────────────────────────────
 /** The ops that must be confirmed before they fire. */
-type ConfirmableOp = 'clear-metadata' | 'clear-artwork' | 'delete-all';
+type ConfirmableOp = 'prune' | 'clear-metadata' | 'clear-artwork' | 'delete-all';
 
 /** Static copy for each confirmable op's dialog. `{name}` is replaced with the library name. */
 const CONFIRM_COPY: Record<
   ConfirmableOp,
   { title: string; confirmLabel: string; danger: boolean; message: string }
 > = {
+  // R13-14: pruning deletes every item whose file is gone — watch progress and
+  // metadata included — and was one un-confirmable click away.
+  prune: {
+    title: 'Prune removed files',
+    confirmLabel: 'Prune removed',
+    danger: false,
+    message:
+      'Remove every item in “{name}” whose file no longer exists on disk? Their watch progress and metadata go with them. Items that are merely unreadable right now (unmounted drive, permissions) are removed too — re-add the files and rescan to bring them back.',
+  },
   'clear-metadata': {
     title: 'Clear metadata',
     confirmLabel: 'Clear metadata',
@@ -793,7 +802,7 @@ function moreMenuItems(lib: Library): MenuItem[] {
   return [
     { label: 'Rescan', onClick: () => void runOp(lib, 'rescan') },
     { label: 'Recheck all metadata', onClick: () => void runOp(lib, 'refresh-metadata') },
-    { label: 'Prune removed', onClick: () => void runOp(lib, 'prune') },
+    { label: 'Prune removed', onClick: () => askConfirm(lib, 'prune') },
     { label: 'Regenerate media assets', onClick: () => void runOp(lib, 'regenerate-assets') },
     { label: 'Clear metadata', onClick: () => askConfirm(lib, 'clear-metadata') },
     { label: 'Clear cached artwork', onClick: () => askConfirm(lib, 'clear-artwork') },
@@ -1189,7 +1198,7 @@ onBeforeUnmount(() => {
       </p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="deleting = null">Cancel</Button>
-        <Button variant="solid" size="sm" @click="confirmDelete">Delete</Button>
+        <Button variant="danger" size="sm" @click="confirmDelete">Delete</Button>
       </template>
     </Modal>
 

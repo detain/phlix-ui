@@ -417,7 +417,7 @@ onMounted(loadWebhooks);
       </p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="deleting = null">Cancel</Button>
-        <Button variant="solid" size="sm" @click="confirmDelete">Delete</Button>
+        <Button variant="danger" size="sm" @click="confirmDelete">Delete</Button>
       </template>
     </Modal>
 

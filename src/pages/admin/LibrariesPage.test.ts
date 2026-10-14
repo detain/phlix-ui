@@ -816,12 +816,19 @@ describe('Admin LibrariesPage — operations overflow menu', () => {
     w.unmount();
   });
 
-  it('Prune removed → POSTs /prune immediately (no confirm)', async () => {
+  // R13-14 flipped the prune law: it used to POST immediately (this file pinned
+  // that as "no confirm"). Pruning now opens the confirm gate naming the library.
+  it('Prune removed → shows a confirm gate naming the library, then POSTs /prune', async () => {
     const { client, post } = makeClient();
     const w = mountPage(client, 100000);
     await flushPromises();
     const items = await openMoreMenu(w);
     menuItem(items, 'Prune removed').click();
+    await flushPromises();
+    expect(post).not.toHaveBeenCalled();
+    expect(modalPanel().textContent).toContain('Prune removed files');
+    expect(modalPanel().textContent).toContain('“Movies”');
+    await findBtnIn(w, modalPanel(), 'Prune removed')!.trigger('click');
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/libraries/lib-1/prune');
     w.unmount();
@@ -894,7 +901,7 @@ describe('Admin LibrariesPage — operations overflow menu', () => {
     const w = mountPage(client, 100000);
     await flushPromises();
     const items = await openMoreMenu(w);
-    menuItem(items, 'Prune removed').click();
+    menuItem(items, 'Rescan').click();
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'Worker offline')).toBe(true);

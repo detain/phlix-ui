@@ -448,7 +448,7 @@ onMounted(() => {
       <p>This will overwrite your current data. <strong>Continue?</strong></p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeRestore">Cancel</Button>
-        <Button variant="solid" size="sm" :loading="restoreConfirming" @click="confirmRestore">
+        <Button variant="danger" size="sm" :loading="restoreConfirming" @click="confirmRestore">
           Restore
         </Button>
       </template>
@@ -467,7 +467,7 @@ onMounted(() => {
       </p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeDelete">Cancel</Button>
-        <Button variant="solid" size="sm" :loading="deleteConfirming" @click="confirmDelete">
+        <Button variant="danger" size="sm" :loading="deleteConfirming" @click="confirmDelete">
           Delete
         </Button>
       </template>

@@ -991,7 +991,7 @@ onMounted(loadUsers);
       </p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="deletingUser = null">Cancel</Button>
-        <Button variant="solid" size="sm" @click="confirmDeleteUser">Delete</Button>
+        <Button variant="danger" size="sm" @click="confirmDeleteUser">Delete</Button>
       </template>
     </Modal>
 
@@ -1176,7 +1176,7 @@ onMounted(loadUsers);
           </p>
           <div class="admin-users__subform-actions">
             <Button variant="ghost" size="sm" @click="deletingProfile = null">Cancel</Button>
-            <Button variant="solid" size="sm" @click="confirmDeleteProfile">Delete</Button>
+            <Button variant="danger" size="sm" @click="confirmDeleteProfile">Delete</Button>
           </div>
         </div>
 

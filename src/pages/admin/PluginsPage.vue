@@ -1350,7 +1350,7 @@ onMounted(() => {
       </p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="uninstalling = null">Cancel</Button>
-        <Button variant="solid" size="sm" @click="confirmUninstall">Uninstall</Button>
+        <Button variant="danger" size="sm" @click="confirmUninstall">Uninstall</Button>
       </template>
     </Modal>
 
