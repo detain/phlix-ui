@@ -63,7 +63,9 @@ const BUILT_IN_THEMES: ThemeChoice[] = [
 ];
 
 // Pull the catalogue in so plugin themes show up here even in a host app whose
-// root does not call `useTheme()`. Idempotent, and a no-op without an apiBase.
+// root does not call `useTheme()`. Idempotent. An EMPTY apiBase is the normal
+// hosted case (server/hub inject '' for same-origin relative URLs) and DOES
+// fetch; only an explicit `null` base no-ops inside the store.
 onMounted(() => void themesStore.load(apiBase.value));
 
 /**

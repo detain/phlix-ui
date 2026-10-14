@@ -57,10 +57,26 @@ describe('useThemesStore.load', () => {
     expect(store.items.map((t) => t.id)).toEqual(['midnight', 'sample-dusk']);
   });
 
-  it('makes NO request at all without an apiBase (host app / unit test)', async () => {
+  it('treats an EMPTY apiBase as same-origin — the relative fetch MUST happen', async () => {
+    // The server and hub inject `apiBase: ''` deliberately to mean "same-origin,
+    // use relative URLs". Conflating '' with "absent" was the hosted-SPA bug:
+    // plugin themes never appeared. `useLibrariesStore` has always fetched on '';
+    // this store now matches that estate law.
     const f = stubThemes();
     const store = useThemesStore();
     await store.load('');
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(String(f.mock.calls[0][0])).toBe('/api/v1/themes');
+    expect(store.loaded).toBe(true);
+    expect(store.items.map((t) => t.id)).toEqual(['midnight', 'sample-dusk']);
+  });
+
+  it('makes NO request at all on a NULL base (explicit "no API configured")', async () => {
+    // The genuine absent-API signal is `null`, not '' — a host app or unit test
+    // that must make zero network calls passes null and gets a complete no-op.
+    const f = stubThemes();
+    const store = useThemesStore();
+    await store.load(null);
     expect(f).not.toHaveBeenCalled();
     expect(store.loaded).toBe(false);
     expect(store.items).toEqual([]);

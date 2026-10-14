@@ -35,11 +35,21 @@ export const useThemesStore = defineStore('themes', () => {
 
   /**
    * Fetch the catalogue. No-ops once loaded (pass `force` after enabling or
-   * disabling a theme plugin) and no-ops entirely without an `apiBase`, so a
-   * host app or unit test that never provides one makes no network call.
+   * disabling a theme plugin).
+   *
+   * The base encodes its state in the TYPE, not in a sentinel string:
+   *  - `''` is a VALID base. The server and hub inject `apiBase: ''`
+   *    deliberately to mean "same-origin, use relative URLs" (see
+   *    phlix-server `SharedUiController`), and `ApiClient` resolves `''` +
+   *    path exactly right. Conflating `''` with "absent" here was the hosted-
+   *    SPA bug: plugin themes never appeared on server/hub mounts. This store
+   *    was the estate's only one to do it — `useLibrariesStore` has always
+   *    fetched on `''`.
+   *  - `null` is the explicit "no API configured at all" signal — a host app
+   *    or unit test that must make zero network calls. Only that no-ops.
    */
-  async function load(apiBase: string, force = false): Promise<void> {
-    if (apiBase === '') return;
+  async function load(apiBase: string | null, force = false): Promise<void> {
+    if (apiBase === null) return;
     if (loaded.value && !force) return;
     if (inflight) return inflight;
 

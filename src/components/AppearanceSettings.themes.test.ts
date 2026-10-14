@@ -16,9 +16,11 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
  * S86 — the theme PICKER surfaces plugin themes alongside the three built-ins.
  *
  * `AppearanceSettings.test.ts` keeps asserting the built-in-only picker has
- * exactly three entries (no apiBase is provided there, so no catalogue is
- * fetched). That file is the regression net for "built-ins unaffected"; this
- * one adds the plugin leg.
+ * exactly three entries (it provides no apiBase and never stubs a resolving
+ * catalogue response, so the store degrades to its non-event failure path —
+ * see src/test/setup.ts's global `fetch = vi.fn()` returning undefined). That
+ * file is the regression net for "built-ins unaffected"; this one adds the
+ * plugin leg.
  */
 
 const DUSK = {
@@ -149,11 +151,16 @@ describe('AC: the sample plugin\'s theme is SELECTABLE in the picker', () => {
     expect(w.findAll('.aps__theme')).toHaveLength(3);
   });
 
-  it('shows only the built-ins with no apiBase, making NO request', async () => {
-    const f = vi.fn();
+  it('fetches SAME-ORIGIN on an empty apiBase and shows the plugin themes', async () => {
+    // '' is the deliberate same-origin base the server and hub inject
+    // (SharedUiController) — not "no API". The hosted picker MUST fetch
+    // /api/v1/themes relatively; the old `apiBase === ''` short-circuit is
+    // exactly what kept plugin themes invisible on every hosted mount.
+    const f = vi.fn().mockResolvedValue(jsonResponse({ themes: [MIDNIGHT, DUSK, CONTRAST] }));
     vi.stubGlobal('fetch', f);
     const w = await mountPicker('');
-    expect(w.findAll('.aps__theme')).toHaveLength(3);
-    expect(f).not.toHaveBeenCalled();
+    expect(f).toHaveBeenCalled();
+    expect(String(f.mock.calls[0][0])).toBe('/api/v1/themes');
+    expect(w.findAll('.aps__theme')).toHaveLength(5);
   });
 });

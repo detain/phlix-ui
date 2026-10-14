@@ -126,13 +126,19 @@ describe('AC: existing built-in themes are UNAFFECTED', () => {
     expect(el().getAttribute('data-theme')).toBe('nocturne');
   });
 
-  it('does not fetch the catalogue when there is no apiBase (standalone mount)', async () => {
+  it('fetches the catalogue when the apiBase is EMPTY (same-origin mount)', async () => {
+    // The server and hub inject `apiBase: ''` deliberately to mean "same-origin,
+    // use relative URLs" (see phlix-server SharedUiController). useApiBase never
+    // resolves to null, so a signed-in mount on '' MUST fire the relative
+    // /api/v1/themes request — gating it on a non-empty base was the bug that
+    // silently disabled plugin themes on every hosted mount.
     const f = stubCatalogue();
     signIn();
     mountHost('');
     await nextTick();
     await new Promise((r) => setTimeout(r, 0));
-    expect(f).not.toHaveBeenCalled();
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(String(f.mock.calls[0][0])).toBe('/api/v1/themes');
   });
 
   it('leaves the built-ins working when the catalogue fetch FAILS', async () => {
