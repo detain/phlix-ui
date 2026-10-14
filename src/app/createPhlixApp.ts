@@ -450,6 +450,21 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             meta: { title: 'profiles.manageTitle' },
             component: () => import('../pages/ProfilesPage.vue'),
         },
+        {
+            // R13-01 — member-facing playlists (server collections; visibility =
+            // own rows + legacy NULL-owner rows). Titles are set by the pages
+            // (the list is a constant label, the detail name is async), so no
+            // static `meta.title` here. Nav left untouched by lane directive —
+            // reachable via the picker and direct URL.
+            path: `${base}/playlists`,
+            name: 'playlists',
+            component: () => import('../pages/PlaylistsPage.vue'),
+        },
+        {
+            path: `${base}/playlists/:id`,
+            name: 'playlist',
+            component: () => import('../pages/PlaylistDetailPage.vue'),
+        },
     ];
 
     // S243 — the MCP personal-access-token manager. HUB-ONLY, and gated on

@@ -956,98 +956,45 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     await flushPromises();
   }
 
-  // 2026-10-02 contract fix pins: the create leg sends the item's OWN
-  // library_id (server CollectionController::create 400s without it and never
-  // read media_id), and landing the item is a second leg through
-  // addToPlaylist(created.id, itemId). RED-on-old: the pre-fix flow called
-  // createPlaylist(name, itemId) with no library and never chained the add.
-  it('Add to playlist → createPlaylist(name, item.library_id) then addToPlaylist(created.id, itemId) + success toast', async () => {
-    const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'Faves' });
-    const add = vi.spyOn(api, 'addToPlaylist').mockResolvedValue({ message: 'Item added to collection' });
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
+  // R13-01 law re-pin (was: five window.prompt-flow pins): the ⋯ action must NOT
+  // fire any playlist request or prompt by itself — it OPENS the pick-existing-
+  // or-create picker. The two-leg create contract (createPlaylist(name,
+  // item.library_id) → addToPlaylist(created.id, itemId)), the failed-leg
+  // semantics, the no-library_id fail-loud and the leg-2 undo moved WITH the
+  // behavior into PlaylistPickerModal.test.ts, which pins them at their new home.
+  it('Add to playlist → opens the PlaylistPickerModal and fires no request itself', async () => {
+    const playlists = vi.spyOn(api, 'getPlaylists').mockResolvedValue([]);
+    const create = vi.spyOn(api, 'createPlaylist');
+    const add = vi.spyOn(api, 'addToPlaylist');
+    const promptSpy = vi.spyOn(window, 'prompt');
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
-    const success = vi.spyOn(useToastStore(), 'success');
-    const error = vi.spyOn(useToastStore(), 'error');
 
     await selectMenuItem(w, MENU_LABELS.addToPlaylist);
 
-    expect(create).toHaveBeenCalledTimes(1);
-    expect(create).toHaveBeenCalledWith('Faves', 'lib-1');
-    expect(add).toHaveBeenCalledTimes(1);
-    expect(add).toHaveBeenCalledWith('pl1', 'm1');
-    expect(success).toHaveBeenCalledWith('Added to playlist');
-    expect(error).not.toHaveBeenCalled();
-    promptSpy.mockRestore();
-    w.unmount();
-  });
-
-  it('Add to playlist → a failed create leg surfaces honestly and never calls addToPlaylist', async () => {
-    const create = vi.spyOn(api, 'createPlaylist').mockRejectedValue(new Error('playlist.create failed'));
-    const add = vi.spyOn(api, 'addToPlaylist').mockResolvedValue({ message: 'ok' });
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
-    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
-    const success = vi.spyOn(useToastStore(), 'success');
-    const error = vi.spyOn(useToastStore(), 'error');
-
-    await selectMenuItem(w, MENU_LABELS.addToPlaylist);
-
-    expect(create).toHaveBeenCalledTimes(1);
+    expect(promptSpy).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
     expect(add).not.toHaveBeenCalled();
-    expect(success).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith('Failed to create playlist', {
-      message: 'playlist.create failed',
-    });
+    // The picker mounted (teleported dialog present) and pulled the list once.
+    expect(playlists).toHaveBeenCalledTimes(1);
+    expect(document.body.textContent).toContain('Add to playlist');
     promptSpy.mockRestore();
     w.unmount();
   });
 
-  it('Add to playlist → a failed item-add leg still reports the playlist was created', async () => {
-    const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'Faves' });
-    const add = vi.spyOn(api, 'addToPlaylist').mockRejectedValue(new Error('collection.items failed'));
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
-    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
-    const success = vi.spyOn(useToastStore(), 'success');
-    const error = vi.spyOn(useToastStore(), 'error');
-
-    await selectMenuItem(w, MENU_LABELS.addToPlaylist);
-
-    expect(create).toHaveBeenCalledTimes(1);
-    expect(add).toHaveBeenCalledWith('pl1', 'm1');
-    expect(success).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith('Playlist created, but adding the item failed', {
-      message: 'collection.items failed',
-    });
-    promptSpy.mockRestore();
-    w.unmount();
-  });
-
-  it('Add to playlist → an item without a usable library_id fails loud and fires no request', async () => {
-    const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'x' });
-    const add = vi.spyOn(api, 'addToPlaylist').mockResolvedValue({ message: 'ok' });
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Faves');
+  it('Add to playlist → an item without a library_id still opens the picker (existing playlists remain addable)', async () => {
+    const playlists = vi.spyOn(api, 'getPlaylists').mockResolvedValue([]);
+    const create = vi.spyOn(api, 'createPlaylist');
     const w = mount(MediaCard, { props: { item: media({ library_id: null }) }, attachTo: document.body });
-    const success = vi.spyOn(useToastStore(), 'success');
-    const error = vi.spyOn(useToastStore(), 'error');
 
     await selectMenuItem(w, MENU_LABELS.addToPlaylist);
 
+    // Pre-fix this failed loud at the menu level (prompt-create was the ONLY
+    // path). Now the picker opens; only its NEW tab is blocked (pinned in
+    // PlaylistPickerModal.test.ts) because adds to EXISTING playlists need no
+    // library_id server-side.
     expect(create).not.toHaveBeenCalled();
-    expect(add).not.toHaveBeenCalled();
-    expect(success).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith('Cannot add to playlist', expect.objectContaining({ message: expect.any(String) }));
-    promptSpy.mockRestore();
-    w.unmount();
-  });
-
-  it('Add to playlist → does NOTHING when the name prompt is cancelled', async () => {
-    const create = vi.spyOn(api, 'createPlaylist').mockResolvedValue({ id: 'pl1', name: 'x' });
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue(null);
-    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
-
-    await selectMenuItem(w, MENU_LABELS.addToPlaylist);
-
-    expect(create).not.toHaveBeenCalled();
-    promptSpy.mockRestore();
+    expect(playlists).toHaveBeenCalledTimes(1);
+    expect(document.body.textContent).toContain('Add to playlist');
     w.unmount();
   });
 

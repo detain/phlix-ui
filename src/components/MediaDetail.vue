@@ -32,6 +32,7 @@ import Modal from './ui/Modal.vue';
 import Chip from './ui/Chip.vue';
 import MediaRow from './MediaRow.vue';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
+import PlaylistPickerModal from './PlaylistPickerModal.vue';
 import { api } from '../api/client';
 import { pluralCount } from '../utils/plural';
 import { useMessages } from '../composables/useMessages';
@@ -172,6 +173,8 @@ const providerLinks = computed<Array<{ key: string; label: string; url: string }
 });
 
 const menuOpen = ref(false);
+/** R13-01 — "Add to playlist" picker (pick existing or create new). */
+const playlistPickerOpen = ref(false);
 
 const isSeriesOrSeason = computed(() => props.item.type === 'series' || props.item.type === 'season');
 
@@ -193,39 +196,10 @@ function onMenuSelect(menuItem: { label: string }): void {
       onWatched();
       break;
     case L.addToPlaylist: {
-      const name = window.prompt('Enter playlist name:');
-      if (!name?.trim()) break;
-      const trimmed = name.trim();
-      // Server contract (CollectionController::create): creating a playlist
-      // REQUIRES the item's owning `library_id` and never adds the item —
-      // landing the item is a second leg via addToPlaylist. `library_id`
-      // ships on every wire item — list AND detail shapes since server
-      // c42e166a (MediaItemShaper::shape() whitelist, types/media-item.ts
-      // MediaDetail.library_id); an item without one cannot seed a
-      // playlist, so fail loud here instead of firing a request the server
-      // is guaranteed to 400.
-      const libraryId = props.item.library_id;
-      if (typeof libraryId !== 'string' || libraryId.trim() === '') {
-        toasts.error('Cannot add to playlist', {
-          message: 'This item has no owning library id, so a new playlist cannot be created for it.',
-        });
-        break;
-      }
-      toasts.info('Creating playlist\u2026');
-      api.createPlaylist(trimmed, libraryId).then(
-        (created) =>
-          api.addToPlaylist(created.id, props.item.id).then(
-            () => toasts.success('Added to playlist'),
-            (err) =>
-              toasts.error('Playlist created, but adding the item failed', {
-                message: err instanceof Error ? err.message : String(err),
-              }),
-          ),
-        (err) =>
-          toasts.error('Failed to create playlist', {
-            message: err instanceof Error ? err.message : String(err),
-          }),
-      );
+      // R13-01: pick-existing-or-create modal replaces window.prompt-create-new.
+      // The library_id fail-loud law + two-leg create/add contract (and the
+      // R13-10 leg-2 undo) now live in PlaylistPickerModal.
+      playlistPickerOpen.value = true;
       break;
     }
     case L.download:
@@ -934,6 +908,15 @@ onBeforeUnmount(() => {
         />
       </div>
     </Modal>
+
+    <!-- R13-01 — pick-existing-or-create "Add to playlist" dialog. -->
+    <PlaylistPickerModal
+      v-if="playlistPickerOpen"
+      :model-value="true"
+      :item="item"
+      :client="api"
+      @update:model-value="playlistPickerOpen = false"
+    />
   </article>
 </template>
 
