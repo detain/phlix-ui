@@ -138,6 +138,16 @@ export interface PhlixAppConfig {
      *  an unknown tag) ⇒ English. Config-time like `messages` — there is no
      *  runtime locale switch in this package. */
     locale?: PhlixErrorLocale;
+    /** R12-02 — operator-pinned WebSocket endpoint for the SPA's sockets
+     *  (`ws(s)://host[:port]`, NO path/query/userinfo; hub env `HUB_WS_URL`).
+     *  Consumed by `src/api/socketHint.ts`: a valid value overrides the legacy
+     *  same-origin port derivations (`:8097` SyncPlay direct, `:8804` hub
+     *  relay). `null`/absent/invalid ⇒ legacy behavior ships unchanged. */
+    wsUrl?: string | null;
+    /** R12-02 — path companion to {@link wsUrl}: a single absolute path
+     *  (e.g. `/syncplay`; hub env `HUB_WS_PATH`). Only refines a present
+     *  `wsUrl`; the hub relay defaults its `/syncplay` prefix when omitted. */
+    wsPath?: string | null;
     /** Extra headers sent on every API request — e.g. native-device identity
      *  (`X-Phlix-Device-ID` / `X-Phlix-Device-Name` / `X-Phlix-Device-Type` /
      *  `X-Phlix-Session-ID`). Registered once at boot via `setDefaultApiHeaders`,

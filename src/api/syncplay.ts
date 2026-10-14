@@ -10,6 +10,7 @@
 
 import { ApiClient } from './client';
 import { LocalStorageTokenStore } from './tokenStore';
+import { readSocketHint } from './socketHint';
 import type {
   SyncPlayRoom,
   SyncPlaySession,
@@ -404,6 +405,31 @@ export function getSyncPlayApi(apiBase: string): SyncPlayApi {
 }
 
 // ── P8: SyncPlay WebSocket connection using @phlix/syncplay ───────────────────
+
+/**
+ * R12-07 — the socket's lifecycle voice. This module ships inside a library
+ * consumed by hosts (server SPA, hub SPA, Tizen widget, Electron shell) whose
+ * consoles are not ours to spam, so every lifecycle line routes through an
+ * INJECTABLE logger — same options/callback pattern as `onMessage` above.
+ * The default is silent: a host that wants the play-by-play calls
+ * {@link setSyncPlayLogger} (its own console included, via
+ * `setSyncPlayLogger(console)`).
+ */
+export interface SyncPlayLogger {
+  log(...args: unknown[]): void;
+  warn(...args: unknown[]): void;
+  error(...args: unknown[]): void;
+}
+
+const NOOP_LOGGER: SyncPlayLogger = { log: () => {}, warn: () => {}, error: () => {} };
+
+let syncPlayLogger: SyncPlayLogger = NOOP_LOGGER;
+
+/** Install (or, with `null`/`undefined`, remove) the lifecycle logger. */
+export function setSyncPlayLogger(logger: SyncPlayLogger | null | undefined): void {
+  syncPlayLogger = logger ?? NOOP_LOGGER;
+}
+
 /** Active WebSocket connection for SyncPlay real-time sync. */
 let syncPlayWs: WebSocket | null = null;
 
@@ -497,8 +523,28 @@ function getWsToken(): string | null {
  * {@link connectSyncPlaySocket}'s `onopen`). It is kept for byte-compatibility
  * of the dial shape the surrounding tests and access-log forensics already
  * know.
+ *
+ * R12-02 — operator seam: a valid `__PHLIX__.wsUrl` (+ optional `wsPath`)
+ * overrides the host:port wholesale; absent/null/invalid ⇒ the legacy
+ * same-origin `:8097` derivation ships unchanged (see `./socketHint.ts` for
+ * the grammar and the per-shell contract). The hint is per PAGE: on a hub
+ * shell it describes the hub RELAY socket — hub operators setting
+ * `HUB_WS_URL` while serving watch-parties from the page host's own `:8097`
+ * should account for both dials consuming the hint (logged as a coordination
+ * item in the lane report).
+ *
+ * HTTPS without a seam: the derivation below escalates `https:` pages to
+ * `wss://host:8097`. Against a plaintext-only listener the browser reports
+ * the refused handshake as close-code 1006 and the ladder retries — the
+ * failure surfaces through `onStatusChange`/`onDisconnect` and, when a host
+ * installs one, {@link setSyncPlayLogger}; this module never writes the host
+ * console by default (R12-07).
  */
 function buildWsUrl(roomId: string): string {
+  const hint = readSocketHint();
+  if (hint.wsUrl !== null) {
+    return `${hint.wsUrl}${hint.wsPath ?? ''}?room=${encodeURIComponent(roomId)}`;
+  }
   const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${hostname}:8097?room=${encodeURIComponent(roomId)}`;
@@ -568,7 +614,7 @@ function handleWsClose(event?: { target?: unknown }): void {
   if (syncPlayRoomId && syncPlayReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     const delay = RECONNECT_BASE_DELAY_MS * Math.pow(2, syncPlayReconnectAttempts);
     syncPlayReconnectAttempts++;
-    console.log(`[SyncPlay] WebSocket closed, reconnecting in ${delay}ms (attempt ${syncPlayReconnectAttempts})`);
+    syncPlayLogger.log(`[SyncPlay] WebSocket closed, reconnecting in ${delay}ms (attempt ${syncPlayReconnectAttempts})`);
     setTimeout(() => {
       // ⚠ S283: this MUST NOT re-enter `openSyncPlayConnection()`. That is the
       // caller-initiated entry point and it clears the backoff budget, so
@@ -578,7 +624,7 @@ function handleWsClose(event?: { target?: unknown }): void {
       if (syncPlayRoomId) connectSyncPlaySocket(syncPlayRoomId);
     }, delay);
   } else if (syncPlayReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    console.warn('[SyncPlay] Max reconnect attempts reached, giving up');
+    syncPlayLogger.warn('[SyncPlay] Max reconnect attempts reached, giving up');
     syncPlayRoomId = null;
     syncPlayReconnectAttempts = 0;
     syncPlayClient = null;
@@ -693,15 +739,15 @@ function connectSyncPlaySocket(
       /* handled by handleWsClose */
     },
     onError: (code, message) => {
-      console.error(`[SyncPlay] Error: ${code} - ${message}`);
+      syncPlayLogger.error(`[SyncPlay] Error: ${code} - ${message}`);
     },
     onInfo: (message) => {
-      console.log(`[SyncPlay] Info: ${message}`);
+      syncPlayLogger.log(`[SyncPlay] Info: ${message}`);
     },
   });
 
   const url = buildWsUrl(roomId);
-  console.log(`[SyncPlay] Opening WebSocket to ${url}`);
+  syncPlayLogger.log(`[SyncPlay] Opening WebSocket to ${url}`);
   // The second argument may be `undefined` (signed out): WebIDL optional-
   // argument semantics make an explicitly-passed `undefined` identical to
   // OMITTING the argument — no `Sec-WebSocket-Protocol` header is offered and
@@ -716,7 +762,7 @@ function connectSyncPlaySocket(
   try {
     socket = new WebSocket(url, buildWsProtocols());
   } catch (error) {
-    console.error('[SyncPlay] WebSocket constructor refused the handshake', error);
+    syncPlayLogger.error('[SyncPlay] WebSocket constructor refused the handshake', error);
     // Reuse the close path wholesale: it tears down the fresh client, then —
     // room still set, budget intact — arms the next rung. Calling with no
     // event skips the socket-identity guard, which is correct: no socket was
@@ -727,7 +773,7 @@ function connectSyncPlaySocket(
   syncPlayWs = socket;
 
   socket.onopen = () => {
-    console.log('[SyncPlay] WebSocket connected');
+    syncPlayLogger.log('[SyncPlay] WebSocket connected');
     // The connection actually came up — THIS is the event that clears the
     // backoff budget, so a server that recovers on rung three does not carry
     // its three used rungs into the next outage.
@@ -743,7 +789,7 @@ function connectSyncPlaySocket(
   socket.onclose = handleWsClose;
 
   socket.onerror = (err) => {
-    console.error('[SyncPlay] WebSocket error', err);
+    syncPlayLogger.error('[SyncPlay] WebSocket error', err);
   };
 }
 

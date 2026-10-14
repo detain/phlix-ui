@@ -13,7 +13,10 @@
  * REAL handshake:
  *
  * - **URL** — `ws(s)://<hub-host>:8804/syncplay/<server_id>` (the path the
- *   relay's `onWebSocketConnect()` parses the server id from).
+ *   relay's `onWebSocketConnect()` parses the server id from). An operator-
+ *   injected `__PHLIX__.wsUrl`(+`wsPath`) seam overrides the host:port and path
+ *   wholesale — see {@link readSocketHint} (R12-02); null ⇒ this legacy
+ *   same-host derivation ships unchanged.
  * - **Token carrier** — the `Sec-WebSocket-Protocol: bearer, <token>`
  *   subprotocol. The relay accepts `Authorization: Bearer` OR the bearer
  *   subprotocol (S237); a browser WebSocket cannot set request headers, so the
@@ -39,6 +42,8 @@
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
+
+import { readSocketHint } from './socketHint';
 
 /** The hub relay's SyncPlay WebSocket port (SyncPlayRelayWorker::DEFAULT_PORT). */
 export const HUB_SYNC_PLAY_PORT = 8804;
@@ -141,8 +146,18 @@ function defaultHubHost(): string {
  *
  * The scheme follows `hubBaseUrl` (`https:` → `wss:`); the port is the relay's
  * own 8804, never the origin's. Exported for tests.
+ *
+ * R12-02 precedence: an explicit `__PHLIX__.wsUrl` hint overrides the whole
+ * host:port (and `__PHLIX__.wsPath` overrides the `/syncplay` prefix); the hint
+ * is re-read per call so a page-level config set after module import still
+ * lands. Absent/null/invalid ⇒ the legacy derivation above, byte-identical.
  */
 export function buildHubRelayUrl(hubBaseUrl: string | undefined, serverId: string): string {
+  const hint = readSocketHint();
+  if (hint.wsUrl !== null) {
+    const path = hint.wsPath ?? '/syncplay';
+    return `${hint.wsUrl}${path}/${encodeURIComponent(serverId)}`;
+  }
   const host = hubBaseUrl ? new URL(hubBaseUrl).hostname : defaultHubHost();
   const scheme = hubBaseUrl && new URL(hubBaseUrl).protocol === 'https:' ? 'wss:' : 'ws:';
   return `${scheme}//${host}:${HUB_SYNC_PLAY_PORT}/syncplay/${encodeURIComponent(serverId)}`;

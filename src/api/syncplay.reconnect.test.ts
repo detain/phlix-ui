@@ -27,7 +27,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { openSyncPlayConnection, closeSyncPlayConnection } from './syncplay';
+import { openSyncPlayConnection, closeSyncPlayConnection, setSyncPlayLogger } from './syncplay';
 
 const ROOM = 'sp_backoff';
 
@@ -71,20 +71,23 @@ function socket(): FakeWebSocket {
     return s;
 }
 
-let warnSpy: ReturnType<typeof vi.spyOn>;
+const makeRecorder = () => vi.fn((..._args: unknown[]) => {});
+let warnSpy: ReturnType<typeof makeRecorder>;
 
 beforeEach(() => {
     FakeWebSocket.instances = [];
     globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
     localStorage.clear();
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // R12-07: record the module's lifecycle voice through its injectable logger
+    // instead of spying on the host console (which it no longer writes to).
+    warnSpy = makeRecorder();
+    setSyncPlayLogger({ log: () => {}, warn: warnSpy, error: () => {} });
     vi.useFakeTimers();
 });
 
 afterEach(() => {
     closeSyncPlayConnection();
+    setSyncPlayLogger(null);
     vi.useRealTimers();
     vi.restoreAllMocks();
     localStorage.clear();

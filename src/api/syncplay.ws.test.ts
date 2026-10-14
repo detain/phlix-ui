@@ -30,6 +30,7 @@ import {
     sendSyncPlayStateUpdate,
     sendSyncPlayCommand,
     getSyncPlayApi,
+    setSyncPlayLogger,
 } from './syncplay';
 import { ACCESS_TOKEN_KEY } from './tokenStore';
 import type { SyncPlayStateUpdate } from '../types/syncplay';
@@ -136,21 +137,29 @@ function sentTypes(s: FakeWebSocket): string[] {
     return s.sent.map((raw) => (JSON.parse(raw) as { type: string }).type);
 }
 
-let logSpy: ReturnType<typeof vi.spyOn>;
-let errorSpy: ReturnType<typeof vi.spyOn>;
+/** A logger-shaped recorder (R12-07): `vi.fn` with the SyncPlayLogger arm type. */
+const makeRecorder = () => vi.fn((..._args: unknown[]) => {});
+type Recorder = ReturnType<typeof makeRecorder>;
+let logSpy: Recorder;
+let warnSpy: Recorder;
+let errorSpy: Recorder;
 
 beforeEach(() => {
     FakeWebSocket.instances = [];
     globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
     localStorage.clear();
-    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // R12-07: lifecycle lines now flow through the injectable logger (default
+    // silent) — record them here instead of spying on the host console.
+    logSpy = makeRecorder();
+    warnSpy = makeRecorder();
+    errorSpy = makeRecorder();
+    setSyncPlayLogger({ log: logSpy, warn: warnSpy, error: errorSpy });
 });
 
 afterEach(() => {
     // Reset the module-level singletons so the next test starts disconnected.
     closeSyncPlayConnection();
+    setSyncPlayLogger(null);
     vi.useRealTimers();
     vi.restoreAllMocks();
     localStorage.clear();
