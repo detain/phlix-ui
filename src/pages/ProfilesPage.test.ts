@@ -14,6 +14,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import ProfilesPage from './ProfilesPage.vue';
 import { isRoute } from '../test/route-match';
 import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT, type LastProfileConflictBody } from '../api/admin/users';
+import { ERROR_MESSAGES } from '../i18n/errors';
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -216,9 +217,12 @@ describe('ProfilesPage (S82)', () => {
     // The client-side guard hides this for a 1-profile list; this drives the
     // STALE-LIST case — the client believes two rows exist, the server still
     // refuses. The refusal must surface verbatim, never silently swallowed.
-    // S465: the stub body is the real wire shape — code in `error`, human text
-    // in `message` — and the page shows the CODE, proving extractError's
-    // precedence (the sentence would render if only `message` existed).
+    // S465 pinned the OLD extractError precedence (code in `error` beat human
+    // `message`). R12-06 reversed that law: a code-shaped `error` slot is never
+    // display text. `profile.last_profile` IS registered in the contracts
+    // catalog, so the W4 doctrine applies — the LOCALIZED catalog sentence
+    // renders (same precedence LoginForm/SignupForm pin), and the raw token
+    // never surfaces. The stub body remains the real wire shape.
     const { rows } = listable([row('p1', 'Alice', true), row('p2', 'Kids', false)]);
     const refusal: LastProfileConflictBody = { error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT };
     const calls = stub([
@@ -238,7 +242,10 @@ describe('ProfilesPage (S82)', () => {
     expect(document.body.textContent).toContain('Delete “Kids”');
     affirmConfirmDialog();
     await flushPromises();
-    expect(w.find('[data-testid="profiles-mutation-error"]').text()).toContain(PROFILE_LAST_ERROR_CODE);
+    expect(w.find('[data-testid="profiles-mutation-error"]').text()).toContain(
+      ERROR_MESSAGES.en[PROFILE_LAST_ERROR_CODE],
+    );
+    expect(w.find('[data-testid="profiles-mutation-error"]').text()).not.toContain(PROFILE_LAST_ERROR_CODE);
     expect(w.find('[data-testid="profiles-mutation-error"]').text()).not.toContain(PROFILE_LAST_ERROR_TEXT);
     expect(w.find('[data-testid="profile-row-p2"]').exists()).toBe(true);
   });

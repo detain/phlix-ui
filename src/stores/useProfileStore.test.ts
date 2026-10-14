@@ -12,6 +12,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { nextTick, watch } from 'vue';
 import { useProfileStore, ACTIVE_PROFILE_KEY, activeProfileStorageKey } from './useProfileStore';
 import { PROFILE_LAST_ERROR_CODE, PROFILE_LAST_ERROR_TEXT, type LastProfileConflictBody } from '../api/admin/users';
+import { ERROR_MESSAGES } from '../i18n/errors';
 import { useAuthStore } from './useAuthStore';
 import { isRoute } from '../test/route-match';
 
@@ -469,11 +470,13 @@ describe('useProfileStore', () => {
       expect(store.activeProfileId).toBe('p1'); // still the live scope
     });
 
-    it('the server’s 409 last-profile refusal surfaces verbatim and re-lists nothing', async () => {
+    it('the server’s 409 last-profile refusal surfaces localized and re-lists nothing', async () => {
       login();
       // S465 — faithful body shape taken from the real server contract:
-      // machine code in `error`, human text in `message`. Surfacing the CODE
-      // (not the sentence) also proves `extractError`'s key precedence.
+      // machine code in `error`, human text in `message`. R12-06 reversed the
+      // display precedence: the code-shaped `error` slot is never display text.
+      // `profile.last_profile` is a registered contracts code, so per the W4
+      // doctrine the LOCALIZED catalog sentence surfaces (never the raw token).
       // Typed as the shipped contract interface so a shape drift breaks the build.
       const refusal: LastProfileConflictBody = { error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT };
       const calls = stub([
@@ -486,7 +489,8 @@ describe('useProfileStore', () => {
       const store = useProfileStore();
       await store.load();
       expect(await store.removeProfile('p1')).toBe(false);
-      expect(store.error).toBe(PROFILE_LAST_ERROR_CODE);
+      expect(store.error).toBe(ERROR_MESSAGES.en[PROFILE_LAST_ERROR_CODE]);
+      expect(store.error).not.toContain(PROFILE_LAST_ERROR_CODE);
       expect(store.activeProfileId).toBe('p1'); // untouched
       expect(calls.filter((c) => c.method === 'GET')).toHaveLength(1); // no relist
     });
