@@ -136,6 +136,24 @@ function modalPanel(): HTMLElement {
   return panels[panels.length - 1];
 }
 
+/** R13-09: texts of the per-field inline validation errors currently rendered. */
+function fieldErrorTexts(root: ParentNode = document): string[] {
+  return Array.from(root.querySelectorAll('.admin-users__field-error')).map(
+    (e) => e.textContent ?? '',
+  );
+}
+
+/**
+ * Fire a form's submit event directly. jsdom 29 enforces native constraint
+ * validation on submit-button clicks — this bypasses it to exercise the JS
+ * gate itself (the SAME submitUserForm/submitRelay path Enter/Save use).
+ */
+function submitViaEvent(formId: string): void {
+  const form = document.getElementById(formId) as HTMLFormElement | null;
+  if (!form) throw new Error(`missing form #${formId}`);
+  form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+}
+
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
@@ -253,7 +271,11 @@ describe('Admin UsersPage — create / edit / delete', () => {
     await findBtn(w, 'Create')!.trigger('click');
     await flushPromises();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message.includes('at least 8'))).toBe(true);
+    // R13-09: the detail renders inline under the field; the toast is the
+    // generic summary. (Old law: the detail was toast-only.)
+    expect(fieldErrorTexts().some((t) => t.includes('at least 8'))).toBe(true);
+    expect(inputs[2].getAttribute('aria-invalid')).toBe('true');
+    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -267,7 +289,30 @@ describe('Admin UsersPage — create / edit / delete', () => {
     await findBtn(w, 'Create')!.trigger('click');
     await flushPromises();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message.includes('required'))).toBe(true);
+    // R13-09: per-field inline errors replace the old combined toast.
+    const errors = fieldErrorTexts();
+    expect(errors).toContain('Username is required.');
+    expect(errors).toContain('Email is required.');
+    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
+    expect(post).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('rejects a malformed email inline', async () => {
+    const { client, post } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add user')!.trigger('click');
+    await flushPromises();
+    const inputs = document.querySelectorAll<HTMLInputElement>('.admin-users__input');
+    inputs[0].value = 'dave'; inputs[0].dispatchEvent(new Event('input'));
+    inputs[1].value = 'not-an-email'; inputs[1].dispatchEvent(new Event('input'));
+    inputs[2].value = 'longenough1'; inputs[2].dispatchEvent(new Event('input'));
+    await flushPromises();
+    await findBtn(w, 'Create')!.trigger('click');
+    await flushPromises();
+    expect(fieldErrorTexts()).toContain('Enter a valid email address.');
+    expect(inputs[1].getAttribute('aria-invalid')).toBe('true');
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -667,7 +712,10 @@ describe('Admin UsersPage — profiles modal', () => {
     await findBtnIn(w, subform, 'Set PIN')!.trigger('click');
     await flushPromises();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message.includes('4 or 6 digits'))).toBe(true);
+    // R13-09: inline error under the PIN field + generic summary toast.
+    expect(fieldErrorTexts(subform)).toContain('PIN must be 4 or 6 digits.');
+    expect(pinInput.getAttribute('aria-invalid')).toBe('true');
+    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -895,7 +943,9 @@ describe('Admin UsersPage — profile mutation error & branch paths', () => {
     await findBtnIn(w, subform, 'Create')!.trigger('click');
     await flushPromises();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message.includes('Profile name is required'))).toBe(true);
+    // R13-09: inline error under the Name field + generic summary toast.
+    expect(fieldErrorTexts(subform)).toContain('Profile name is required.');
+    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -1366,11 +1416,15 @@ describe('Admin UsersPage — relay limits (hub-only)', () => {
     down.value = '2000000'; // 2,000,000 GiB > 1 PiB
     down.dispatchEvent(new Event('input'));
     await flushPromises();
-    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    submitViaEvent('admin-relay-form');
     await flushPromises();
     expect(put).not.toHaveBeenCalled();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message.includes('Byte caps'))).toBe(true);
+    // R13-09: per-field inline error (the GiB→PiB overflow the input's own
+    // constraints cannot express) + generic summary toast.
+    expect(fieldErrorTexts().some((t) => t.includes('Non-negative GiB'))).toBe(true);
+    expect(down.getAttribute('aria-invalid')).toBe('true');
+    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
     w.unmount();
   });
 
@@ -1383,11 +1437,16 @@ describe('Admin UsersPage — relay limits (hub-only)', () => {
     streams.value = '5000'; // > 1000
     streams.dispatchEvent(new Event('input'));
     await flushPromises();
-    await findBtnIn(w, modalPanel(), 'Save')!.trigger('click');
+    // Direct submit-event dispatch: jsdom's native max=1000 constraint would
+    // otherwise block the footer's submit-button click before the JS gate runs.
+    submitViaEvent('admin-relay-form');
     await flushPromises();
     expect(put).not.toHaveBeenCalled();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message.includes('concurrent streams'))).toBe(true);
+    // R13-09: inline per-field error + summary toast (old law: toast-only).
+    expect(fieldErrorTexts().some((t) => t.includes('whole number 0–1000'))).toBe(true);
+    expect(streams.getAttribute('aria-invalid')).toBe('true');
+    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
     w.unmount();
   });
 

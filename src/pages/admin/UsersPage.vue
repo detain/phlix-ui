@@ -167,6 +167,11 @@ async function confirmRejectUser(): Promise<void> {
 }
 
 // ── Add / edit user form ─────────────────────────────────────────────────────
+// Validation is JS-owned with per-field inline errors (R13-09): the inputs
+// carry no native `required`/type=email constraints, so Enter (implicit form
+// submit) and the footer Save button (type=submit associated via the form
+// attribute) run the EXACT SAME path through submitUserForm. Server errors
+// stay toasts; only client-side validation renders inline.
 const userFormOpen = ref(false);
 const editingUser = ref<User | null>(null);
 const username = ref('');
@@ -174,6 +179,47 @@ const email = ref('');
 const password = ref('');
 const isAdmin = ref(false);
 const userSubmitting = ref(false);
+const usernameError = ref<string | null>(null);
+const emailError = ref<string | null>(null);
+const passwordError = ref<string | null>(null);
+
+/** Loose email-shape check mirroring what type=email's native constraint accepted
+ *  (something@something); strict deliverability is the server's problem. */
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+$/;
+
+function clearUserErrors(): void {
+  usernameError.value = null;
+  emailError.value = null;
+  passwordError.value = null;
+}
+
+/** Populate per-field errors for the user form; true when the form is valid. */
+function validateUserForm(): boolean {
+  clearUserErrors();
+  const existing = editingUser.value;
+  let ok = true;
+  if (!username.value.trim()) {
+    usernameError.value = 'Username is required.';
+    ok = false;
+  }
+  if (!email.value.trim()) {
+    emailError.value = 'Email is required.';
+    ok = false;
+  } else if (!EMAIL_SHAPE.test(email.value.trim())) {
+    emailError.value = 'Enter a valid email address.';
+    ok = false;
+  }
+  if (!existing) {
+    if (!password.value) {
+      passwordError.value = 'Password is required for new users.';
+      ok = false;
+    } else if (password.value.length < 8) {
+      passwordError.value = 'Password must be at least 8 characters.';
+      ok = false;
+    }
+  }
+  return ok;
+}
 
 const userFormTitle = computed(() =>
   editingUser.value ? `Edit user — ${editingUser.value.username}` : 'Add user',
@@ -185,6 +231,7 @@ function openAddUser(): void {
   email.value = '';
   password.value = '';
   isAdmin.value = false;
+  clearUserErrors();
   userFormOpen.value = true;
 }
 
@@ -194,28 +241,22 @@ function openEditUser(user: User): void {
   email.value = user.email;
   password.value = '';
   isAdmin.value = user.is_admin;
+  clearUserErrors();
   userFormOpen.value = true;
 }
 
 function closeUserForm(): void {
   userFormOpen.value = false;
   editingUser.value = null;
+  clearUserErrors();
 }
 
 async function submitUserForm(): Promise<void> {
-  if (!username.value.trim() || !email.value.trim()) {
-    toasts.error('Username and email are required.');
+  if (!validateUserForm()) {
+    toasts.error('Please fix the highlighted values before saving.');
     return;
   }
   const existing = editingUser.value;
-  if (!existing && !password.value) {
-    toasts.error('Password is required for new users.');
-    return;
-  }
-  if (!existing && password.value.length < 8) {
-    toasts.error('Password must be at least 8 characters.');
-    return;
-  }
   userSubmitting.value = true;
   try {
     if (existing) {
@@ -366,11 +407,13 @@ const editingProfile = ref<Profile | null>(null);
 const profileName = ref('');
 const profileRating = ref(0);
 const profileSubmitting = ref(false);
+const profileNameError = ref<string | null>(null);
 
 function openAddProfile(): void {
   editingProfile.value = null;
   profileName.value = '';
   profileRating.value = 0;
+  profileNameError.value = null;
   profileFormOpen.value = true;
 }
 
@@ -378,6 +421,7 @@ function openEditProfile(profile: Profile): void {
   editingProfile.value = profile;
   profileName.value = profile.name;
   profileRating.value = profile.rating;
+  profileNameError.value = null;
   profileFormOpen.value = true;
 }
 
@@ -386,13 +430,17 @@ function closeProfileForm(): void {
   editingProfile.value = null;
   profileName.value = '';
   profileRating.value = 0;
+  profileNameError.value = null;
 }
 
 async function submitProfileForm(): Promise<void> {
   const owner = profilesUser.value;
   if (!owner) return;
+  profileNameError.value = null;
   if (!profileName.value.trim()) {
-    toasts.error('Profile name is required.');
+    // R13-09: inline per-field error, same Enter/click path.
+    profileNameError.value = 'Profile name is required.';
+    toasts.error('Please fix the highlighted values before saving.');
     return;
   }
   profileSubmitting.value = true;
@@ -441,23 +489,29 @@ async function confirmDeleteProfile(): Promise<void> {
 const settingPin = ref<Profile | null>(null);
 const pinValue = ref('');
 const pinSubmitting = ref(false);
+const pinError = ref<string | null>(null);
 
 function openSetPin(profile: Profile): void {
   settingPin.value = profile;
   pinValue.value = '';
+  pinError.value = null;
 }
 
 function closePinForm(): void {
   settingPin.value = null;
   pinValue.value = '';
+  pinError.value = null;
 }
 
 async function submitSetPin(): Promise<void> {
   const owner = profilesUser.value;
   const target = settingPin.value;
   if (!owner || !target) return;
+  pinError.value = null;
   if (!/^\d{4}$/.test(pinValue.value) && !/^\d{6}$/.test(pinValue.value)) {
-    toasts.error('PIN must be 4 or 6 digits.');
+    // R13-09: inline per-field error, same Enter/click path.
+    pinError.value = 'PIN must be 4 or 6 digits.';
+    toasts.error('Please fix the highlighted values before saving.');
     return;
   }
   pinSubmitting.value = true;
@@ -509,6 +563,10 @@ const throttleBps = ref<number>(DEFAULT_THROTTLE_BPS);
 const quotaInGiB = ref<string | number>('0');
 const quotaOutGiB = ref<string | number>('0');
 const maxStreams = ref<string | number>('0');
+// R13-09: per-field inline validation errors for the quota inputs.
+const quotaInError = ref<string | null>(null);
+const quotaOutError = ref<string | null>(null);
+const streamsError = ref<string | null>(null);
 // The exact input STRINGS seeded when the modal opened (see `openRelayModal`),
 // formatted with the SAME functions the bindings use. Change detection compares
 // the current input string against these seeds rather than re-parsing GiB→bytes:
@@ -565,6 +623,9 @@ function formatBytes(bytes: number): string {
 async function openRelayModal(user: User): Promise<void> {
   relayUser.value = user;
   relayBandwidth.value = null;
+  quotaInError.value = null;
+  quotaOutError.value = null;
+  streamsError.value = null;
   relayLoading.value = true;
   try {
     const bw = await api.getBandwidth(user.id);
@@ -601,12 +662,14 @@ async function submitRelay(): Promise<void> {
   const bytesIn = parseGiBToBytes(quotaInGiB.value);
   const bytesOut = parseGiBToBytes(quotaOutGiB.value);
   const streams = parseStreams(maxStreams.value);
-  if (bytesIn === null || bytesOut === null) {
-    toasts.error('Byte caps must be a non-negative number of GiB (≤ 1 PiB); 0 = unlimited.');
-    return;
-  }
-  if (streams === null) {
-    toasts.error('Max concurrent streams must be a whole number 0–1000; 0 = unlimited.');
+  // R13-09: inline per-field errors (each named field gets its own message)
+  // plus a single summary toast; Enter and Save run this identical path.
+  quotaInError.value = bytesIn === null ? 'Non-negative GiB, ≤ 1 PiB (0 = unlimited).' : null;
+  quotaOutError.value = bytesOut === null ? 'Non-negative GiB, ≤ 1 PiB (0 = unlimited).' : null;
+  streamsError.value =
+    streams === null ? 'A whole number 0–1000 (0 = unlimited).' : null;
+  if (bytesIn === null || bytesOut === null || streams === null) {
+    toasts.error('Please fix the highlighted values before saving.');
     return;
   }
 
@@ -864,14 +927,29 @@ onMounted(loadUsers);
 
     <!-- Add / edit user modal -->
     <Modal v-model="userFormOpen" :title="userFormTitle" @close="closeUserForm">
-      <form class="admin-users__form" @submit.prevent="submitUserForm">
+      <form id="admin-user-form" class="admin-users__form" @submit.prevent="submitUserForm">
         <label class="admin-users__field">
           <span class="admin-users__label">Username</span>
-          <input v-model="username" type="text" class="admin-users__input" autocomplete="off" required />
+          <input
+            v-model="username"
+            type="text"
+            class="admin-users__input"
+            autocomplete="off"
+            :aria-invalid="usernameError ? 'true' : undefined"
+          />
+          <span v-if="usernameError" class="admin-users__field-error" role="alert">{{ usernameError }}</span>
         </label>
         <label class="admin-users__field">
           <span class="admin-users__label">Email</span>
-          <input v-model="email" type="email" class="admin-users__input" autocomplete="off" required />
+          <input
+            v-model="email"
+            type="text"
+            inputmode="email"
+            class="admin-users__input"
+            autocomplete="off"
+            :aria-invalid="emailError ? 'true' : undefined"
+          />
+          <span v-if="emailError" class="admin-users__field-error" role="alert">{{ emailError }}</span>
         </label>
         <label class="admin-users__field">
           <span class="admin-users__label">
@@ -887,14 +965,15 @@ onMounted(loadUsers);
             data-bwignore
             data-form-type="other"
             :placeholder="editingUser ? '(unchanged)' : undefined"
-            :required="!editingUser"
+            :aria-invalid="passwordError ? 'true' : undefined"
           />
+          <span v-if="passwordError" class="admin-users__field-error" role="alert">{{ passwordError }}</span>
         </label>
         <Switch v-model="isAdmin" label="Admin" />
       </form>
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeUserForm">Cancel</Button>
-        <Button variant="solid" size="sm" :loading="userSubmitting" @click="submitUserForm">
+        <Button type="submit" form="admin-user-form" variant="solid" size="sm" :loading="userSubmitting">
           {{ editingUser ? 'Save' : 'Create' }}
         </Button>
       </template>
@@ -1063,7 +1142,14 @@ onMounted(loadUsers);
           <form class="admin-users__form" @submit.prevent="submitProfileForm">
             <label class="admin-users__field">
               <span class="admin-users__label">Name</span>
-              <input v-model="profileName" type="text" class="admin-users__input" autocomplete="off" required />
+              <input
+                v-model="profileName"
+                type="text"
+                class="admin-users__input"
+                autocomplete="off"
+                :aria-invalid="profileNameError ? 'true' : undefined"
+              />
+              <span v-if="profileNameError" class="admin-users__field-error" role="alert">{{ profileNameError }}</span>
             </label>
             <label class="admin-users__field">
               <span class="admin-users__label">Rating</span>
@@ -1076,7 +1162,7 @@ onMounted(loadUsers);
             </label>
             <div class="admin-users__subform-actions">
               <Button variant="ghost" size="sm" @click="closeProfileForm">Cancel</Button>
-              <Button variant="solid" size="sm" :loading="profileSubmitting" @click="submitProfileForm">
+              <Button type="submit" variant="solid" size="sm" :loading="profileSubmitting">
                 {{ editingProfile ? 'Save' : 'Create' }}
               </Button>
             </div>
@@ -1111,12 +1197,13 @@ onMounted(loadUsers);
                 data-bwignore
                 data-form-type="other"
                 placeholder="1234 or 123456"
-                required
+                :aria-invalid="pinError ? 'true' : undefined"
               />
+              <span v-if="pinError" class="admin-users__field-error" role="alert">{{ pinError }}</span>
             </label>
             <div class="admin-users__subform-actions">
               <Button variant="ghost" size="sm" @click="closePinForm">Cancel</Button>
-              <Button variant="solid" size="sm" :loading="pinSubmitting" @click="submitSetPin">Set PIN</Button>
+              <Button type="submit" variant="solid" size="sm" :loading="pinSubmitting">Set PIN</Button>
             </div>
           </form>
         </div>
@@ -1126,7 +1213,7 @@ onMounted(loadUsers);
     <!-- Relay limits modal (hub-only): per-user bandwidth throttle + monthly quota -->
     <Modal v-model="relayModalOpen" :title="relayTitle">
       <div v-if="relayLoading" class="admin-users__skel"><Skeleton variant="text" :lines="4" /></div>
-      <div v-else-if="relayBandwidth" class="admin-users__relay">
+      <form v-else-if="relayBandwidth" id="admin-relay-form" class="admin-users__relay" @submit.prevent="submitRelay">
         <!-- Bandwidth throttle -->
         <div class="admin-users__relay-section">
           <h3 class="admin-users__subform-title">Bandwidth throttle</h3>
@@ -1163,7 +1250,9 @@ onMounted(loadUsers);
               step="0.1"
               class="admin-users__input"
               inputmode="decimal"
+              :aria-invalid="quotaInError ? 'true' : undefined"
             />
+            <span v-if="quotaInError" class="admin-users__field-error" role="alert">{{ quotaInError }}</span>
           </label>
           <label class="admin-users__field">
             <span class="admin-users__label">Upload cap (GiB, 0 = unlimited)</span>
@@ -1174,7 +1263,9 @@ onMounted(loadUsers);
               step="0.1"
               class="admin-users__input"
               inputmode="decimal"
+              :aria-invalid="quotaOutError ? 'true' : undefined"
             />
+            <span v-if="quotaOutError" class="admin-users__field-error" role="alert">{{ quotaOutError }}</span>
           </label>
           <label class="admin-users__field">
             <span class="admin-users__label">Max concurrent streams (0 = unlimited)</span>
@@ -1186,18 +1277,21 @@ onMounted(loadUsers);
               step="1"
               class="admin-users__input"
               inputmode="numeric"
+              :aria-invalid="streamsError ? 'true' : undefined"
             />
+            <span v-if="streamsError" class="admin-users__field-error" role="alert">{{ streamsError }}</span>
           </label>
         </div>
-      </div>
+      </form>
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeRelayModal">Cancel</Button>
         <Button
+          type="submit"
+          form="admin-relay-form"
           variant="solid"
           size="sm"
           :loading="relaySubmitting"
           :disabled="!relayBandwidth"
-          @click="submitRelay"
         >
           Save
         </Button>
@@ -1320,6 +1414,13 @@ onMounted(loadUsers);
 }
 .admin-users__input::placeholder {
   color: var(--text-subtle);
+}
+.admin-users__input[aria-invalid="true"] {
+  border-color: var(--error);
+}
+.admin-users__field-error {
+  font-size: var(--text-xs);
+  color: var(--error);
 }
 .admin-users__password-row {
   display: flex;
