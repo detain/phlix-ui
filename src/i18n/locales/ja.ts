@@ -46,6 +46,12 @@ export const JA_MESSAGES = {
     cancel: 'キャンセル',
     confirm: '確定',
   },
+  /** R13-08: the honest terminal for the router catch-all. */
+  notFound: {
+    title: 'ページが見つかりません',
+    description: 'お探しのページは存在しないか、移動されました。',
+    goHome: 'ホームへ戻る',
+  },
   shell: {
     skipToContent: '本文へスキップ',
     primaryNav: 'メイン',

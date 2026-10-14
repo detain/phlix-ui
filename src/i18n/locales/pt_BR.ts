@@ -45,6 +45,12 @@ export const PT_BR_MESSAGES = {
     cancel: 'Cancelar',
     confirm: 'Confirmar',
   },
+  /** R13-08: the honest terminal for the router catch-all. */
+  notFound: {
+    title: 'Página não encontrada',
+    description: 'A página que você procura não existe ou foi movida.',
+    goHome: 'Ir para o início',
+  },
   shell: {
     skipToContent: 'Pular para o conteúdo',
     primaryNav: 'Principal',

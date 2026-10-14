@@ -16,7 +16,7 @@ import {
     type RouteLocationRaw,
 } from 'vue-router';
 import PhlixApp from './PhlixApp.vue';
-import Placeholder from './placeholder/Placeholder.vue';
+import NotFoundPage from './placeholder/NotFoundPage.vue';
 // The 6 built-in route pages are lazy `() => import()` chunks (R6.1a), NOT static
 // imports — so each splits out of the main bundle and loads on demand. PlayerPage in
 // particular pulls the entire Player surface, so deferring it is the biggest win. They
@@ -222,7 +222,8 @@ export function musicLibraryRedirect(
  *    `buildAdminRoutes()` has run the seam is unset and admin names fall through
  *    like unknown routes (no mounted section can be titled anyway).
  * 3. Otherwise `null` — the page either sets its own title from async data
- *    (media/library/player) or simply shows the bare app name (catchall).
+ *    (media/library/player) or keeps the app-name-only default (catchall, whose
+ *    NotFoundPage body carries its own heading but no document title).
  */
 export function resolveRouteTitle(to: RouteLocationNormalized, t: Translate): string | null {
     const metaTitle = to.meta?.title;
@@ -493,8 +494,9 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
     routes.push({
         path: `${base}/:pathMatch(.*)*`,
         name: 'catchall',
-        component: Placeholder,
-        props: { appName: config.app },
+        // R13-08: honest 404 terminal (was the "Shared UI loading…" placeholder,
+        // which implied a still-booting app when the route simply does not exist).
+        component: NotFoundPage,
     });
 
     return routes;

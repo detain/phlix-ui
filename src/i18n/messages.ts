@@ -45,6 +45,12 @@ export const DEFAULT_MESSAGES = {
     cancel: 'Cancel',
     confirm: 'Confirm',
   },
+  /** R13-08: the honest terminal for the router catch-all. */
+  notFound: {
+    title: 'Page not found',
+    description: 'The page you are looking for does not exist or has moved.',
+    goHome: 'Go home',
+  },
   shell: {
     skipToContent: 'Skip to content',
     primaryNav: 'Primary',

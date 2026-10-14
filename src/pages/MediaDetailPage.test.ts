@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
-import { createRouter, createMemoryHistory, type Router } from 'vue-router';
+import { createRouter, createMemoryHistory, createWebHistory, type Router } from 'vue-router';
 import MediaDetailPage from './MediaDetailPage.vue';
 import MediaDetail from '../components/MediaDetail.vue';
 import SeriesDetail from '../components/SeriesDetail.vue';
@@ -93,6 +93,27 @@ async function mountAt(id: string, fetchMock: ReturnType<typeof vi.fn>) {
   vi.stubGlobal('fetch', fetchMock);
   const router = makeRouter();
   router.push(`/app/media/${id}`);
+  await router.isReady();
+  const w = mount(MediaDetailPage, { global: { plugins: [router] } });
+  return { w, router };
+}
+
+/**
+ * R13-08: two-entry stack over WEB history — only web history records
+ * `state.back` (vue-router's memory history leaves `state` empty), and web
+ * history is what every real host runs, so this pins the production branch.
+ */
+async function mountViaWebHistory(fetchMock: ReturnType<typeof vi.fn>) {
+  vi.stubGlobal('fetch', fetchMock);
+  const router = createRouter({
+    history: createWebHistory(),
+    routes: [
+      { path: '/app', name: 'browse', component: stub },
+      { path: '/app/media/:id', name: 'media', component: MediaDetailPage },
+    ],
+  });
+  await router.push('/app');
+  await router.push('/app/media/m1');
   await router.isReady();
   const w = mount(MediaDetailPage, { global: { plugins: [router] } });
   return { w, router };
@@ -338,16 +359,35 @@ describe('MediaDetailPage — actions & navigation', () => {
     expect(toasts.toasts.some((t) => /added/i.test(t.message))).toBe(false);
   });
 
-  it('goes back via router.back from the detail back affordance', async () => {
+  it('goes back via router.back when there IS in-app history', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(byId(media({ id: 'm1' })))
       .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    // Browse first, then the detail: a real previous in-app entry exists.
+    const { w, router } = await mountViaWebHistory(fetchMock);
+    await flushPromises();
+    const back = vi.spyOn(router, 'back');
+    const replace = vi.spyOn(router, 'replace');
+    w.findComponent(MediaDetail).vm.$emit('back');
+    expect(back).toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('R13-08: cold deep-link (no in-app history) falls back to the browse home', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(byId(media({ id: 'm1' })))
+      .mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+    // mountAt pushes ONE entry — history.state.back is null, exactly the
+    // typed/pasted-URL case the old unconditional router.back() stranded.
     const { w, router } = await mountAt('m1', fetchMock);
     await flushPromises();
     const back = vi.spyOn(router, 'back');
+    const replace = vi.spyOn(router, 'replace');
     w.findComponent(MediaDetail).vm.$emit('back');
-    expect(back).toHaveBeenCalled();
+    expect(back).not.toHaveBeenCalled();
+    expect(replace).toHaveBeenCalledWith({ name: 'browse' });
   });
 
   it('treats a failed similar fetch as non-fatal (empty rail, title still shows)', async () => {

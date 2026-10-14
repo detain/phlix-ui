@@ -285,8 +285,27 @@ function onWatchlist(m: MediaItem): void {
 function onInfo(m: MediaItem): void {
   go('media', m.id); // navigate to that title's detail (re-fetches via the id watch)
 }
+/**
+ * R13-08: safe back-navigation. A bare `router.back()` on a cold deep-link
+ * (typed/pasted URL, app restart landing straight on a title) has no in-app
+ * history entry to return to — the user either sticks on the page or falls out
+ * of the SPA entirely. vue-router tracks the previous entry in its history
+ * `state.back` (web history reads window.state; memory history keeps its own
+ * record, so tests exercise the same branch), so when one exists we honor it,
+ * otherwise we land on the browse home.
+ */
+function backOrHome(): void {
+  if (!router) return;
+  const hasInAppHistory = Boolean(router.options.history.state?.back);
+  if (hasInAppHistory) {
+    router.back();
+    return;
+  }
+  if (router.hasRoute('browse')) void router.replace({ name: 'browse' });
+  else void router.replace('/');
+}
 function onBack(): void {
-  router?.back();
+  backOrHome();
 }
 /** A cast member was clicked — open that title's library, filtered to the actor,
  *  so "all the matching media with that actor" shows. Needs the item's owning
@@ -391,7 +410,7 @@ async function confirmRemove(): Promise<void> {
     if (stale()) return;
     item.value = null;
     toasts.success(`Removed "${m.name}"`);
-    router?.back();
+    backOrHome(); // R13-08: deleting from a cold deep-link needs a home, not a dead back
   } catch (e) {
     if (stale() || isAbort(e)) return;
     toasts.error(`Failed to remove "${m.name}": ${e instanceof Error ? e.message : 'Unknown error'}`);

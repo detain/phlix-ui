@@ -49,6 +49,12 @@ export const FR_MESSAGES = {
     cancel: 'Annuler',
     confirm: 'Confirmer',
   },
+  /** R13-08: the honest terminal for the router catch-all. */
+  notFound: {
+    title: 'Page introuvable',
+    description: 'La page que vous recherchez n’existe pas ou a été déplacée.',
+    goHome: 'Retour à l’accueil',
+  },
   shell: {
     skipToContent: 'Aller au contenu',
     primaryNav: 'Principale',
