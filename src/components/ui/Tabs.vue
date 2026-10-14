@@ -31,6 +31,12 @@ export interface TabItem {
    * because that helper keys off `disabled` only.
    */
   muted?: boolean;
+  /**
+   * Small count pill rendered after the label (R13-02 — Settings uses it for
+   * per-tab unsaved-change counts). Purely additive: it never affects
+   * interactivity, and screen readers read it as part of the tab name.
+   */
+  badge?: number;
 }
 
 const props = withDefaults(
@@ -93,6 +99,7 @@ function onKeydown(e: KeyboardEvent) {
       >
         <Icon v-if="t.icon" :name="t.icon" class="phlix-tabs__icon" />
         {{ t.label }}
+        <span v-if="t.badge" class="phlix-tabs__badge">{{ t.badge }}</span>
       </button>
     </div>
     <div
@@ -138,6 +145,20 @@ function onKeydown(e: KeyboardEvent) {
 .phlix-tabs__tab:disabled { opacity: 0.45; cursor: not-allowed; }
 .phlix-tabs__tab:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-ring); border-radius: var(--radius-sm); }
 .phlix-tabs__icon { font-size: 1.1em; }
+/* Unsaved-count pill (R13-02). Accent-filled so it reads as "action owed
+   here" against the muted tab text, without changing the tab's weight. */
+.phlix-tabs__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25em;
+  padding: 0 0.35em;
+  border-radius: 999px;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4;
+  color: var(--accent-contrast, #fff);
+  background: var(--accent-text);
+}
 .phlix-tabs__panel { padding-top: var(--space-5); }
 .phlix-tabs__panel:focus-visible { outline: none; }
 @media (prefers-reduced-motion: reduce) {

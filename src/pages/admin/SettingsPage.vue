@@ -23,10 +23,14 @@
  * rendering every key in `types` under a single "Other" tab with derived labels,
  * and shows a notice explaining that help/tiers are unavailable.
  *
- * Per-key dirty state, type coercion, per-field validation errors, and partial
- * PUT are preserved from the original implementation.
+ * Per-key dirty state, type coercion, per-field validation errors (client-side
+ * for numeric fields, server-side otherwise), and partial PUT are preserved from
+ * the original implementation. Pending edits survive tab switches visibly
+ * (per-tab dirty badges + an at-Save key list), and leaving with unsaved
+ * changes is guarded on both in-app navigation and tab close/reload (R13-02).
  */
-import { ref, computed, reactive, onMounted, inject, type ComputedRef } from 'vue';
+import { ref, computed, reactive, onMounted, onBeforeUnmount, inject, type ComputedRef } from 'vue';
+import { onBeforeRouteLeave, matchedRouteKey } from 'vue-router';
 import { ApiClient, ApiError } from '../../api/client';
 import { errMessage } from '../../api/errors';
 import { LocalStorageTokenStore } from '../../api/tokenStore';
@@ -48,7 +52,7 @@ import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import HelpText from '../../components/ui/HelpText.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
-import { pluralize } from '../../utils/plural';
+import { pluralCount, pluralize } from '../../utils/plural';
 
 const props = withDefaults(
   defineProps<{
@@ -167,6 +171,9 @@ const tabs = computed<TabItem[]>(() => {
       // Purely-visual dim (S24): an all-advanced group has no editable field
       // while Advanced mode is off, so mute its tab. It stays fully clickable.
       muted: !settingsPrefsStore.advancedMode && isAllAdvancedGroup(g),
+      // Unsaved-edit count (R13-02): a tab holding dirty fields shows a badge
+      // so changes made on one tab stay visible after switching away.
+      badge: dirtyCountByGroup.value[g] || undefined,
     }));
 });
 
@@ -219,6 +226,32 @@ const jsonErrors = reactive<Record<string, string>>({});
 const hasAnyChanges = computed(
   () => Object.values(dirty).some(Boolean) || Object.values(secretRemoval).some(Boolean),
 );
+
+/**
+ * Keys a save would actually PUT right now: dirty keys plus armed secret
+ * removals, minus fields disabled by Advanced mode (the save loop skips those,
+ * so counting them would advertise changes that cannot land).
+ */
+const pendingKeys = computed<string[]>(() => {
+  const keys = Object.keys(dirty).filter(k => dirty[k] && !isDisabled(k));
+  for (const key of Object.keys(secretRemoval)) {
+    if (secretRemoval[key] && !isDisabled(key) && !keys.includes(key)) keys.push(key);
+  }
+  return keys;
+});
+
+/** Labels of {@link pendingKeys}, for the at-Save summary (R13-02). */
+const pendingLabels = computed(() => pendingKeys.value.map(getLabel));
+
+/** Dirty-entry count per meta group, driving the tab badges (R13-02). */
+const dirtyCountByGroup = computed<Record<string, number>>(() => {
+  const counts: Record<string, number> = {};
+  for (const key of pendingKeys.value) {
+    const group = effectiveMeta.value[key]?.group ?? FALLBACK_GROUP;
+    counts[group] = (counts[group] ?? 0) + 1;
+  }
+  return counts;
+});
 
 /** Keys belonging to the current tab, in schema declaration order. */
 const tabKeys = computed<string[]>(() =>
@@ -642,6 +675,47 @@ async function restartServer(): Promise<void> {
   }
 }
 
+/**
+ * Client-side validation for dirty numeric fields (R13-11).
+ *
+ * Catches what the inputs cannot express or the old coercion silently mangled:
+ * an empty box, `parseInt('12abc') → 12` style truncation, and values outside
+ * the schema's `minimum`/`maximum` (the native min/max only guard the spinner —
+ * typing bypasses them). Errors land in the per-field `fieldErrors` lane, the
+ * same one the server's 400 body uses, so the inline `role=alert` renders them.
+ */
+function validateNumericFields(): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const [key, isDirtyKey] of Object.entries(dirty)) {
+    if (!isDirtyKey || isDisabled(key)) continue;
+    const type = types.value[key];
+    if (type !== 'int' && type !== 'float') continue;
+    const raw = (formValues[key] ?? '').trim();
+    if (raw === '') {
+      errors[key] = `${getLabel(key)} requires a number.`;
+      continue;
+    }
+    const num = Number(raw);
+    if (!Number.isFinite(num)) {
+      errors[key] = `${getLabel(key)} must be a number.`;
+      continue;
+    }
+    if (type === 'int' && !Number.isInteger(num)) {
+      errors[key] = `${getLabel(key)} must be a whole number.`;
+      continue;
+    }
+    const { min, max } = constraintFor(key);
+    if (min !== undefined && num < min) {
+      errors[key] = `${getLabel(key)} must be at least ${min}.`;
+      continue;
+    }
+    if (max !== undefined && num > max) {
+      errors[key] = `${getLabel(key)} must be at most ${max}.`;
+    }
+  }
+  return errors;
+}
+
 async function handleSubmit(): Promise<void> {
   if (submitting.value) return;
 
@@ -649,6 +723,14 @@ async function handleSubmit(): Promise<void> {
   if (blockingJsonKeys.value.length > 0) {
     const names = blockingJsonKeys.value.map(getLabel).join(', ');
     toasts.error(`Fix the invalid JSON in ${names} before saving.`);
+    return;
+  }
+
+  // Save-gate: never PUT a numeric field the browser could already reject.
+  const numericErrors = validateNumericFields();
+  if (Object.keys(numericErrors).length > 0) {
+    fieldErrors.value = numericErrors;
+    toasts.error('Please fix the highlighted values before saving.');
     return;
   }
 
@@ -664,10 +746,10 @@ async function handleSubmit(): Promise<void> {
       const value = formValues[key] ?? '';
       if (type === 'bool') {
         toSave[key] = value === 'true' || value === '1';
-      } else if (type === 'int') {
-        toSave[key] = parseInt(value, 10);
-      } else if (type === 'float') {
-        toSave[key] = parseFloat(value);
+      } else if (type === 'int' || type === 'float') {
+        // Validation above guarantees a finite number (integer for `int`);
+        // Number() — unlike parseInt/parseFloat — never truncates junk tails.
+        toSave[key] = Number(value);
       } else if (type === 'json') {
         toSave[key] = JSON.parse(value);
       } else {
@@ -720,6 +802,35 @@ async function handleSubmit(): Promise<void> {
     submitting.value = false;
   }
 }
+
+// ── Dirty-state guards (R13-02) ──────────────────────────────────────────────
+/**
+ * In-app navigation guard: while anything is pending, leaving the page asks
+ * first. Registration is gated on an active route record so a router-less
+ * mount (unit tests) stays quiet — vue-router logs a dev diagnostic otherwise;
+ * in the app this page is always a route component, so the guard is live.
+ */
+if (inject(matchedRouteKey, null)?.value) {
+  onBeforeRouteLeave(() =>
+    hasAnyChanges.value
+      ? window.confirm('You have unsaved settings changes. Leave without saving them?')
+      : true,
+  );
+}
+
+/**
+ * Tab-close/refresh guard: browsers ignore custom text here — the handshake is
+ * `preventDefault()` on a cancelable `beforeunload`, which surfaces the
+ * browser's own discard warning. The listener stays attached and no-ops while
+ * clean, so toggling dirtiness needs no add/remove dance.
+ */
+function onWindowBeforeUnload(event: BeforeUnloadEvent): void {
+  if (!hasAnyChanges.value) return;
+  event.preventDefault();
+  event.returnValue = '';
+}
+onMounted(() => window.addEventListener('beforeunload', onWindowBeforeUnload));
+onBeforeUnmount(() => window.removeEventListener('beforeunload', onWindowBeforeUnload));
 
 onMounted(() => {
   loadRestartPending();
@@ -845,6 +956,7 @@ onMounted(() => {
                 :max="constraintFor(key).max"
                 :step="fieldType(key) === 'float' ? 'any' : undefined"
                 :placeholder="constraintFor(key).min !== undefined ? `min: ${constraintFor(key).min}` : undefined"
+                :aria-invalid="fieldErrors[key] ? 'true' : undefined"
                 :disabled="isDisabled(key)"
                 @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
               />
@@ -973,6 +1085,7 @@ onMounted(() => {
                         : `Enter ${getLabel(key)}`
                   "
                   :value="formValues[key]"
+                  :aria-invalid="fieldErrors[key] ? 'true' : undefined"
                   :disabled="isDisabled(key) || isRemovingSecret(key)"
                   @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
                 />
@@ -1025,6 +1138,7 @@ onMounted(() => {
                 type="text"
                 autocomplete="off"
                 :value="formValues[key]"
+                :aria-invalid="fieldErrors[key] ? 'true' : undefined"
                 :disabled="isDisabled(key)"
                 @input="(e) => setFieldValue(key, (e.target as HTMLInputElement).value)"
               />
@@ -1046,13 +1160,25 @@ onMounted(() => {
           </div>
 
           <div class="admin-settings__actions">
+            <!--
+              R13-02: name what is about to be sent. Edits are collected per-tab
+              into one PUT, so the list spans every tab, not just the visible one.
+            -->
+            <p v-if="pendingKeys.length > 0" class="admin-settings__pending" role="status">
+              {{ pluralCount(pendingKeys.length, 'change pending', 'changes pending') }}:
+              {{ pendingLabels.join(', ') }}
+            </p>
+            <!--
+              R13-11: a real submit button inside the form — Enter in any field and
+              clicking Save now run the exact same native submission path
+              (`@submit.prevent="handleSubmit"`); no parallel @click handler.
+            -->
             <Button
-              type="button"
+              type="submit"
               variant="solid"
               size="sm"
               :disabled="!hasAnyChanges"
               :loading="submitting"
-              @click="handleSubmit"
             >
               Save settings
             </Button>
@@ -1208,9 +1334,19 @@ onMounted(() => {
 }
 .admin-settings__actions {
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border-subtle);
+}
+/* At-Save pending list (R13-02): muted, wraps, names every key the PUT carries. */
+.admin-settings__pending {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  line-height: var(--leading-normal, 1.5);
+  max-width: 40rem;
 }
 
 /* Advanced toggle — never shrinks; wraps to its own line (via the header-row's

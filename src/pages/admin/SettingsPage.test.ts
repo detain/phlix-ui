@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { createRouter, createMemoryHistory } from 'vue-router';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -1338,7 +1339,11 @@ describe('Admin SettingsPage — save error paths', () => {
     const w = mountPage(client);
     await flushPromises();
     await selectTab(w, 'Newsletter');
-    await w.find<HTMLInputElement>('#field-newsletter\\.send_hour').setValue('99');
+    // R13-11 note: out-of-range values like '99' are now caught CLIENT-side
+    // before any PUT (pinned in the numeric-validation block), so this test
+    // sends an in-range value the browser cannot second-guess — what stays on
+    // trial here is the server-400 `errors` display path itself.
+    await w.find<HTMLInputElement>('#field-newsletter\\.send_hour').setValue('5');
     await saveBtn(w).trigger('click');
     await flushPromises();
     expect(w.find('[role="alert"]').text()).toContain('Must be between 0 and 23');
@@ -1875,5 +1880,228 @@ describe('SettingsPage — admin padding + tab wrap layout (S23)', () => {
 
   it('the Advanced toggle never shrinks (flex-shrink: 0)', () => {
     expect(rule('.settings-advanced-toggle')).toContain('flex-shrink: 0');
+  });
+});
+
+describe('Admin SettingsPage — R13-11 numeric save-gate', () => {
+  /**
+   * Dirty the Newsletter hour field, then fire the form's submit listener
+   * DIRECTLY. A click on the submit button would first run the browser's own
+   * constraint validation (out-of-range values never reach any JS handler),
+   * which would make these pins test the platform instead of this page's
+   * backstop gate. The valid-value + Enter pins below DO use the real
+   * click/submit-button path.
+   */
+  async function trySaveHour(w: VueWrapper, put: ReturnType<typeof vi.fn>, value: string) {
+    await selectTab(w, 'Newsletter');
+    await w.find<HTMLInputElement>('#field-newsletter\\.send_hour').setValue(value);
+    await w.find('form').element.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await flushPromises();
+    return put;
+  }
+
+  it('blocks the PUT on an emptied numeric field', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await trySaveHour(w, put, '');
+    expect(put).not.toHaveBeenCalled();
+    expect(w.find('.admin-settings__error').text()).toContain('requires a number');
+    expect(w.find('[role="alert"]').exists()).toBe(true);
+    w.unmount();
+  });
+
+  it('blocks values above the schema maximum (min/max typed-past the spinner)', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await trySaveHour(w, put, '99');
+    expect(put).not.toHaveBeenCalled();
+    expect(w.find('.admin-settings__error').text()).toContain('at most 23');
+    w.unmount();
+  });
+
+  it('blocks values below the schema minimum', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await trySaveHour(w, put, '-1');
+    expect(put).not.toHaveBeenCalled();
+    expect(w.find('.admin-settings__error').text()).toContain('at least 0');
+    w.unmount();
+  });
+
+  it('blocks fractional input on an int key', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await trySaveHour(w, put, '6.5');
+    expect(put).not.toHaveBeenCalled();
+    expect(w.find('.admin-settings__error').text()).toContain('whole number');
+    w.unmount();
+  });
+
+  it('a valid value PUTs as a real Number, not a string', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await trySaveHour(w, put, '5');
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
+      settings: { 'newsletter.send_hour': 5 },
+    });
+    w.unmount();
+  });
+
+  it('a dirty float outside its bound is also gated', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Markers');
+    await w
+      .find<HTMLInputElement>('#field-marker_detection\\.similarity_threshold')
+      .setValue('1.5');
+    await w.find('form').element.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await flushPromises();
+    expect(put).not.toHaveBeenCalled();
+    expect(w.find('.admin-settings__error').text()).toContain('at most 1');
+    w.unmount();
+  });
+
+  it('Enter (form submit) and the Save click run the exact same path', async () => {
+    const { client, put } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Newsletter');
+    await w.find<HTMLInputElement>('#field-newsletter\\.send_hour').setValue('5');
+    // The footer button is a real submit button — the ONLY handler is the
+    // form's @submit. Firing submit (what Enter does natively) saves identically.
+    const save = saveBtn(w);
+    expect(save.attributes('type')).toBe('submit');
+    await w.find('form').trigger('submit');
+    await flushPromises();
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
+      settings: { 'newsletter.send_hour': 5 },
+    });
+    w.unmount();
+  });
+});
+
+describe('Admin SettingsPage — R13-02 dirty visibility + leave guards', () => {
+  it('badges the owning tab with its pending count, surviving tab switches', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.find('.phlix-tabs__badge').exists()).toBe(false);
+    await selectTab(w, 'Newsletter');
+    await w.find<HTMLInputElement>('#field-newsletter\\.send_hour').setValue('5');
+    // Two edits on one tab → count 2 (hour + language would be another tab; use
+    // two fields of the same tab for the count pin).
+    await selectTab(w, 'Subtitles');
+    await w.find<HTMLInputElement>('#field-subtitles\\.default_language').setValue('spa');
+    const badgeFor = (label: string) =>
+      w
+        .findAll('[role="tab"]')
+        .find((t) => t.text().startsWith(label))!
+        .find('.phlix-tabs__badge');
+    expect(badgeFor('Newsletter').exists(), 'dirty tab keeps its badge when left').toBe(true);
+    expect(badgeFor('Newsletter').text()).toBe('1');
+    expect(badgeFor('Subtitles').text()).toBe('1');
+    // Undoing an edit clears its tab's badge.
+    await w.find<HTMLInputElement>('#field-subtitles\\.default_language').setValue('eng');
+    await flushPromises();
+    expect(badgeFor('Subtitles').exists()).toBe(false);
+    expect(badgeFor('Newsletter').exists()).toBe(true);
+    w.unmount();
+  });
+
+  it('surfaces the pending key list at Save', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.find('.admin-settings__pending').exists()).toBe(false);
+    await selectTab(w, 'Newsletter');
+    await w.find<HTMLInputElement>('#field-newsletter\\.send_hour').setValue('5');
+    const line = w.find('.admin-settings__pending');
+    expect(line.attributes('role')).toBe('status');
+    expect(line.text()).toContain('1 change pending');
+    expect(line.text()).toContain('Newsletter send hour');
+    w.unmount();
+  });
+
+  it('arms removal intent into the pending count without double-listing a dirty key', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Metadata');
+    // Arm a secret removal: blank field, but a real pending PUT of ''.
+    const removeBtn = w
+      .findAllComponents(Button)
+      .find((b) => b.text().trim() === 'Remove' && b.attributes('aria-label')?.includes('TMDb'));
+    expect(removeBtn, 'Remove control for tmdb.api_key').toBeTruthy();
+    await removeBtn!.trigger('click');
+    await flushPromises();
+    const line = w.find('.admin-settings__pending');
+    expect(line.text()).toContain('1 change pending');
+    expect(line.text()).toContain('TMDb API key');
+    w.unmount();
+  });
+
+  it('beforeunload is prevented only while changes are pending', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    const fire = () => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    expect(fire(), 'clean page must not nag').toBe(false);
+    await selectTab(w, 'Newsletter');
+    await w.find<HTMLInputElement>('#field-newsletter\\.send_hour').setValue('5');
+    expect(fire(), 'dirty page blocks tab close').toBe(true);
+    // Unmount removes the listener: no leak into later tests.
+    w.unmount();
+    expect(fire()).toBe(false);
+  });
+
+  it('asks before navigating away with pending edits, and honours the answer', async () => {
+    const { client } = makeClient();
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/settings', component: SettingsPage },
+        { path: '/other', component: { template: '<div>other</div>' } },
+      ],
+    });
+    await router.push('/settings');
+    await router.isReady();
+    const Harness = { template: '<router-view :client="client" restart-poll-interval-ms="1" restart-poll-timeout-ms="60" />', setup: () => ({ client }) };
+    const w = mount(Harness, { global: { plugins: [router] } });
+    await flushPromises();
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    // Clean page: no prompt at all.
+    await router.push('/other');
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(router.currentRoute.value.path).toBe('/other');
+
+    await router.push('/settings');
+    await flushPromises();
+    await selectTab(w, 'Newsletter');
+    await w.find<HTMLInputElement>('#field-newsletter\\.send_hour').setValue('5');
+    // Dirty + declined: navigation aborts, stays on the form.
+    await expect(router.push('/other')).resolves.toBeTruthy();
+    await flushPromises();
+    expect(confirmSpy).toHaveBeenCalledWith(
+      'You have unsaved settings changes. Leave without saving them?',
+    );
+    expect(router.currentRoute.value.path).toBe('/settings');
+    // Dirty + accepted: leaves.
+    confirmSpy.mockReturnValue(true);
+    await router.push('/other');
+    expect(router.currentRoute.value.path).toBe('/other');
+    confirmSpy.mockRestore();
+    w.unmount();
   });
 });

@@ -30,6 +30,24 @@ async function rawClick(el: Element): Promise<void> {
 }
 
 describe('Tabs', () => {
+  it('renders a count badge pill when a tab carries one (R13-02 support)', () => {
+    const w = mount(Tabs, {
+      props: {
+        modelValue: 'a',
+        tabs: [
+          { value: 'a', label: 'Alpha', badge: 2 },
+          { value: 'b', label: 'Beta' },
+        ],
+      },
+      slots: { a: 'Panel A' },
+    });
+    const tabEls = w.findAll('[role="tab"]');
+    expect(tabEls[0].find('.phlix-tabs__badge').text()).toBe('2');
+    // The badge rides the accessible name; the tab stays a plain tab.
+    expect(tabEls[0].text()).toContain('Alpha 2');
+    expect(tabEls[1].find('.phlix-tabs__badge').exists()).toBe(false);
+  });
+
   it('renders a tablist with roving tabindex and the active panel', () => {
     const w = mount(Tabs, { props: { modelValue: 'a', tabs }, slots: { a: 'Panel A', c: 'Panel C' } });
     expect(w.find('[role="tablist"]').exists()).toBe(true);
