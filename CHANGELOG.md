@@ -1,3 +1,44 @@
+## 0.99.10 - 2026-10-14
+
+### Release — 4 commits since `v0.99.9`: plugin themes go live in the hosted Appearance picker
+
+- **The hosted SPA never fetched `/api/v1/themes` — plugin themes could not
+  appear in the Appearance picker on any server/hub mount until now
+  (`c81480b9`, dist `37d8d554`).** Server and hub inject `apiBase: ''`
+  deliberately to mean "same-origin, use relative URLs"
+  (`phlix-server SharedUiController`), and the shared `ApiClient` already
+  resolves `'' + path` correctly — which is why `useLibrariesStore` and
+  friends work hosted. `useThemesStore` was the estate's only store
+  conflating `''` with "API absent": its `load()` early-returned on `''`
+  and `useTheme`'s `watchEffect` carried the same `apiBase.value === ''`
+  arm, so the themes request never fired and plugin (token-map, S84-S86)
+  themes never surfaced. New law, pinned in three bug-encoding tests:
+  `''` is a VALID base — the relative `/api/v1/themes` fetch MUST be
+  attempted (each test asserts the exact URL the fetch receives); the
+  genuine "no API configured" signal is an explicit `null` —
+  `load(apiBase: string | null)` no-ops ONLY on `null`, and `useApiBase`
+  never resolves to `null`, so real mounts always fetch when signed in;
+  the `!auth.isLoggedIn` arm stays (endpoint is auth-gated; 401 already
+  degrades non-fatally through the store's recorded-failure path).
+- **CI housekeeping (no artifact bytes).** `ubuntu-26.04` runner pin ahead
+  of the `ubuntu-latest` rollover (`5c6dfd28`) and the S459 shard-gate
+  `upload-artifact` v4→v7 pin rotation (`3ad14f43`).
+- **Artifacts.** `dist/` is regenerated and dist-current at this tag
+  (`37d8d554` covers `c81480b9`; the themes store/composable ship inside the
+  lazily-loaded Settings/Security page chunks, so the fix rehashes those
+  chunk names, the main `phlix-ui.{js,umd.cjs}` bundles, `style.css`, and
+  the two declaration files carrying the widened
+  `load(apiBase: string | null, ...)` consumer type contract) and verified
+  fresh by ui-ci at tip; the committed bundles embed no version string, so
+  this version-field bump changes no artifact byte. Suite baseline at tag:
+  **6 202 passed | 10 skipped** (303 files) — `+1` exact vs `v0.99.9`: the
+  store suite gained one case (`''` fetch + `null` no-op replace one
+  no-request case); the flipped `useTheme` and picker cases stay 1:1.
+- **Cascade arming.** Tagging `v0.99.10` makes the hub S181 ui-pin grader
+  report the four `@phlix/ui` pinners (server, hub, tizen, windows)
+  STALE-1. This release carries the themes same-origin fix into the
+  server/hub `/app` SPA bundles via the re-vendor that rides this cascade.
+
 ## 0.99.9 - 2026-10-03
 
 ### Release — 6 commits since `v0.99.8`: 'Add to playlist' honors the server create contract, contracts `v0.5.3` catalog, `library_id` wire-truth pass
