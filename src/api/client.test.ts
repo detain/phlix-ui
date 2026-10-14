@@ -15,6 +15,7 @@ import {
     MUSIC_PAGE_SIZE,
 } from './client';
 import { NetworkError, TimeoutError } from './errors';
+import { ERROR_MESSAGES } from '../i18n/errors';
 import { MemoryTokenStore, makeFetch } from './test/memoryTokenStore';
 import { isRoute } from '../test/route-match';
 
@@ -386,6 +387,72 @@ describe('ApiClient', () => {
             const client = new ApiClient({ baseUrl: '', tokenStore: new MemoryTokenStore(), fetchImpl: fetch });
 
             await expect(client.get('/x')).rejects.toMatchObject({ message: 'Request failed', status: 502 });
+        });
+
+        // R12-06 — error-envelope split-brain: machine tokens in the `error`
+        // slot (phlix-server AccountLinkController law) must never render raw
+        // when a human string or catalog entry is available.
+        describe('R12-06 machine tokens vs human text in the `error` slot', () => {
+            const clientFor = (body: unknown, status = 500) =>
+                new ApiClient({
+                    baseUrl: '',
+                    tokenStore: new MemoryTokenStore(),
+                    fetchImpl: makeFetch([{ status, body }]).fetch,
+                });
+
+            it('code-shaped `error` + human `message` ⇒ message wins over the raw token', async () => {
+                const c = clientFor({ error: 'missing_identity_id', message: 'Link another sign-in method first.' });
+                await expect(c.get('/x')).rejects.toMatchObject({
+                    message: 'Link another sign-in method first.',
+                });
+            });
+
+            it('registered code in the `error` slot ⇒ localized through the catalog', async () => {
+                const c = clientFor({ error: 'auth.required' }, 401);
+                await expect(c.get('/x')).rejects.toMatchObject({
+                    message: ERROR_MESSAGES.en['auth.required'],
+                });
+            });
+
+            it('unregistered snake_case token with no message ⇒ raw token (honest last resort)', async () => {
+                const c = clientFor({ error: 'last_sign_in_method' });
+                await expect(c.get('/x')).rejects.toMatchObject({ message: 'last_sign_in_method' });
+            });
+
+            it('the `code` slot localizes ahead of an unregistered `error` token', async () => {
+                const c = clientFor({ error: 'over_limit', code: 'quota.exceeded' }, 429);
+                await expect(c.get('/x')).rejects.toMatchObject({
+                    message: ERROR_MESSAGES.en['quota.exceeded'],
+                });
+            });
+
+            it('code-only envelope (no error/message) still localizes', async () => {
+                const c = clientFor({ code: 'server.not_found' }, 404);
+                await expect(c.get('/x')).rejects.toMatchObject({
+                    message: ERROR_MESSAGES.en['server.not_found'],
+                });
+            });
+
+            it('two human slots ⇒ `message` wins over `error`', async () => {
+                const c = clientFor({ error: 'Bad request', message: 'The collection name is required.' });
+                await expect(c.get('/x')).rejects.toMatchObject({
+                    message: 'The collection name is required.',
+                });
+            });
+
+            it('human `error` text is untouched by the token detector (spaces / camelCase / prose)', async () => {
+                for (const text of ['Forbidden', 'TMDB not configured', 'NoSuchThing', 'Not found']) {
+                    const c = clientFor({ error: text });
+                    await expect(c.get('/x')).rejects.toMatchObject({ message: text });
+                }
+            });
+
+            it('SCREAMING_SNAKE tokens localize via `code`, else fall to message, else raw', async () => {
+                const withMsg = clientFor({ error: 'LAST_SIGN_IN_METHOD', message: 'Pick a method.' });
+                await expect(withMsg.get('/x')).rejects.toMatchObject({ message: 'Pick a method.' });
+                const rawOnly = clientFor({ error: 'STUFF_HAPPENED' });
+                await expect(rawOnly.get('/x')).rejects.toMatchObject({ message: 'STUFF_HAPPENED' });
+            });
         });
     });
 

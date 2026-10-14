@@ -6,6 +6,7 @@
  */
 
 import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
+import { isRegisteredErrorCode, ERROR_MESSAGES } from '../i18n/errors';
 import { LocalStorageTokenStore, type TokenStore } from './tokenStore';
 import type { MediaItem, PosterCandidatesResponse } from '../types/media-item';
 import type { MusicArtist, MusicAlbum, MusicTrack } from '../types/music';
@@ -545,6 +546,37 @@ function normalizeSubtitleCandidate(raw: unknown): SubtitleCandidate {
     };
 }
 
+/**
+ * R12-06 — is this envelope string a MACHINE token rather than display text?
+ *
+ * The estate's error envelopes disagree about WHERE the human string rides:
+ * the contracts-law shape is `{error: <human text>, code: <wire code>}`, but
+ * phlix-server's AccountLinkController emits `error: 'missing_identity_id'`
+ * style snake_case tokens in the human slot (and SCREAMING_SNAKE appears in
+ * legacy lanes), while dotted forms (`auth.required`) are the registry
+ * vocabulary. All three shapes share one property no human sentence has: they
+ * are bare identifiers — letters/digits/underscores only (plus dots for
+ * registry codes) with at least one separator. Spaces, punctuation and
+ * camelCase prose therefore never match.
+ */
+const MACHINE_TOKEN_PATTERN =
+    /^(?:[a-z][a-z0-9_]*_[a-z0-9_]*|[A-Z][A-Z0-9_]*_[A-Z0-9_]*|[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)$/;
+
+function isMachineToken(value: string): boolean {
+    return MACHINE_TOKEN_PATTERN.test(value);
+}
+
+/** English-catalog hit for a registered wire code; `null` for anything else.
+ *  Callers that know the UI locale re-localize from `ApiError.body.code` —
+ *  this layer is locale-agnostic by construction (no config access here). */
+function localizeWireCode(code: string | null): string | null {
+    if (code !== null && isRegisteredErrorCode(code)) {
+        const english = ERROR_MESSAGES.en[code];
+        if (typeof english === 'string' && english !== '') return english;
+    }
+    return null;
+}
+
 export class ApiClient {
     private baseUrl: string;
     private readonly tokens: TokenStore;
@@ -710,12 +742,35 @@ export class ApiClient {
     private extractError(payload: unknown): string {
         if (payload && typeof payload === 'object') {
             const obj = payload as Record<string, unknown>;
-            if (typeof obj['error'] === 'string') {
-                return obj['error'];
+            const error = typeof obj['error'] === 'string' && obj['error'] !== '' ? obj['error'] : null;
+            const message =
+                typeof obj['message'] === 'string' && obj['message'] !== '' ? obj['message'] : null;
+            const code = typeof obj['code'] === 'string' ? obj['code'] : null;
+
+            if (error !== null && isMachineToken(error)) {
+                // R12-06 split-brain: some controllers (phlix-server
+                // AccountLinkController is the named offender — 'missing_identity_id',
+                // 'last_sign_in_method') park a MACHINE token in the `error` slot.
+                // It is never display-friendly: localize through the errors.ts
+                // catalog first (the `code` slot wins, then the token itself),
+                // then the human `message`, and only as a last resort the raw
+                // token — an honest token beats a silent 'Request failed'.
+                const localized =
+                    localizeWireCode(code) ?? localizeWireCode(error);
+                if (localized !== null) return localized;
+                return message ?? error;
             }
-            if (typeof obj['message'] === 'string') {
-                return obj['message'];
-            }
+
+            // Both human slots present ⇒ `message` wins: the estate envelope law
+            // treats `error` as the debug-flavored half. Single-slot cases keep
+            // whichever string the server sent.
+            if (message !== null) return message;
+            if (error !== null) return error;
+
+            // Token-less envelope carrying only a registered `code` still gets
+            // localized before degrading to the generic label.
+            const codeOnly = localizeWireCode(code);
+            if (codeOnly !== null) return codeOnly;
         }
         return 'Request failed';
     }
