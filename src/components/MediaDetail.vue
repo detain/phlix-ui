@@ -54,8 +54,13 @@ const props = withDefaults(
     showBack?: boolean;
     /** Admin opt-in (U5): render a "Match metadata" action that emits `match`. */
     canMatch?: boolean;
+    /** R13-12 — whether actor/genre/company chips navigate. The host sets this
+     *  FALSE when it cannot honor the click (no owning `library_id` on the item
+     *  or no `library` route registered), so the chips stop LOOKING clickable
+     *  while doing nothing — a dead affordance is worse than a plain label. */
+    chipsClickable?: boolean;
   }>(),
-  { resumeSeconds: null, similar: () => [], similarLoading: false, showBack: true, canMatch: false },
+  { resumeSeconds: null, similar: () => [], similarLoading: false, showBack: true, canMatch: false, chipsClickable: true },
 );
 
 const emit = defineEmits<{
@@ -672,7 +677,8 @@ onBeforeUnmount(() => {
             :key="g"
             size="sm"
             class="media-detail__genre"
-            :aria-label="`Show ${g} titles`"
+            :disabled="!chipsClickable"
+            :aria-label="chipsClickable ? `Show ${g} titles` : undefined"
             @click="emit('genre', g)"
           >
             {{ g }}
@@ -687,7 +693,8 @@ onBeforeUnmount(() => {
               :key="c.name"
               size="sm"
               class="media-detail__company"
-              :aria-label="`Show ${c.name} titles`"
+              :disabled="!chipsClickable"
+              :aria-label="chipsClickable ? `Show ${c.name} titles` : undefined"
               @click="emit('company', c.name)"
             >
               <img
@@ -815,8 +822,9 @@ onBeforeUnmount(() => {
                 <button
                   type="button"
                   class="media-detail__person"
-                  :aria-label="`Show titles with ${p.name}`"
-                  @click="emit('actor', p.name)"
+                  :disabled="!chipsClickable"
+                  :aria-label="chipsClickable ? `Show titles with ${p.name}` : undefined"
+                  @click="chipsClickable && emit('actor', p.name)"
                 >
                   <span class="media-detail__avatar">
                     <img
@@ -843,8 +851,9 @@ onBeforeUnmount(() => {
                 <button
                   type="button"
                   class="media-detail__person"
-                  :aria-label="`Show titles with ${p.name}`"
-                  @click="emit('actor', p.name)"
+                  :disabled="!chipsClickable"
+                  :aria-label="chipsClickable ? `Show titles with ${p.name}` : undefined"
+                  @click="chipsClickable && emit('actor', p.name)"
                 >
                   <span class="media-detail__avatar">
                     <img
@@ -1319,6 +1328,15 @@ onBeforeUnmount(() => {
 .media-detail__person:hover .media-detail__avatar {
   transform: translateY(-6px) scale(1.02);
   box-shadow: var(--shadow-4);
+}
+/* R13-12: a non-clickable chip (no owning library / no route) must not wear
+ * the click costume — no lift, no pointer, honest plain-label presentation. */
+.media-detail__person:disabled {
+  cursor: default;
+}
+.media-detail__person:disabled:hover .media-detail__avatar {
+  transform: none;
+  box-shadow: none;
 }
 .media-detail__person:hover .media-detail__person-name {
   color: var(--text);

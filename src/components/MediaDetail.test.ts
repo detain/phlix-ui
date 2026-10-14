@@ -245,6 +245,34 @@ describe('MediaDetail — rendering', () => {
     expect(genreChip.find('button').attributes('aria-label')).toBe('Show Sci-Fi titles');
   });
 
+  // R13-12 — when the host cannot honor chip navigation (no owning library /
+  // no library route), the chips must stop LOOKING clickable: disabled controls,
+  // no navigation aria-label, and no events.
+  it('chipsClickable=false disables genre/company chips and person buttons without hiding the data', async () => {
+    const w = mount(MediaDetail, {
+      props: {
+        item: media({ production_companies: [{ name: 'Legendary', logo_url: null, origin_country: 'US' }] }),
+        chipsClickable: false,
+      },
+    });
+    const genreChip = w.findAll('.media-detail__genre')[0];
+    expect(genreChip.find('button').attributes('disabled')).toBeDefined();
+    expect(genreChip.find('button').attributes('aria-label')).toBeUndefined();
+    const company = w.findAll('.media-detail__company')[0];
+    expect(company.find('button').attributes('disabled')).toBeDefined();
+    for (const person of w.findAll('.media-detail__person')) {
+      expect((person.element as HTMLButtonElement).disabled).toBe(true);
+      expect(person.attributes('aria-label')).toBeUndefined();
+    }
+    // Data still renders (labels are present, just not clickable).
+    expect(w.findAll('.media-detail__person-name').length).toBeGreaterThan(0);
+    // Clicks (forced, since disabled buttons swallow native clicks) emit nothing.
+    await genreChip.find('button').trigger('click', { force: true });
+    await w.findAll('.media-detail__person')[0].trigger('click', { force: true });
+    expect(w.emitted('genre')).toBeUndefined();
+    expect(w.emitted('actor')).toBeUndefined();
+  });
+
   it('emits `actor` with the person name when a crew member is clicked', async () => {
     const w = mount(MediaDetail, { props: { item: media() } });
     const names = w.findAll('.media-detail__person-name').map((n) => n.text());

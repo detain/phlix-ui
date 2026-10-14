@@ -316,6 +316,15 @@ function onActor(name: string): void {
     void router.push({ name: 'library', params: { id: libId }, query: { actors: name } });
   }
 }
+
+/** R13-12 — the SAME condition every chip handler guards on, lifted to a
+ *  computed so the chips stop rendering as clickable when the navigation would
+ *  be a silent no-op (native TV/embedded shells can lack the library route, and
+ *  relay-shaped items can lack `library_id`). */
+const chipsClickable = computed(
+  () => item.value?.library_id != null && router?.hasRoute('library') === true,
+);
+
 /** A genre chip was clicked — open the owning library filtered to that genre. */
 function onGenre(genre: string): void {
   const libId = item.value?.library_id;
@@ -472,6 +481,7 @@ async function confirmRemove(): Promise<void> {
       <MediaDetail
         v-else
         :item="item"
+        :chips-clickable="chipsClickable"
         :resume-seconds="resumeSeconds"
         :similar="similar"
         :similar-loading="similarLoading"
