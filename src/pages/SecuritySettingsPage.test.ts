@@ -199,7 +199,7 @@ describe('SecuritySettingsPage', () => {
 
   it('runs the full WebAuthn register round-trip: options → create → verify', async () => {
     const fetchFn = stubFetch({ credentials: [] });
-    const createMock = vi.fn(async () => fakeCredential());
+    const createMock = vi.fn(async (_options: CredentialCreationOptions) => fakeCredential());
     Object.defineProperty(globalThis.navigator, 'credentials', {
       value: { create: createMock },
       configurable: true,
@@ -218,6 +218,158 @@ describe('SecuritySettingsPage', () => {
     expect(createMock).toHaveBeenCalledTimes(1);
     expect(urls.some((u) => isRoute(u, REGISTER_VERIFY_PATH))).toBe(true);
     expect(successSpy).toHaveBeenCalledWith('Passkey registered successfully');
+    w.unmount();
+  });
+
+  // R13-03 pins -------------------------------------------------------------
+
+  it('sends the server-resolved real identity as user.name/displayName', async () => {
+    const fn = vi.fn((url: unknown, init?: RequestInit) => {
+      const u = typeof url === 'string' ? url : '';
+      const method = (init?.method ?? 'GET').toUpperCase();
+      if (isRoute(u, CREDENTIALS_PATH)) {
+        return Promise.resolve(jsonResponse({ credentials: [] }));
+      }
+      if (isRoute(u, REGISTER_OPTIONS_PATH)) {
+        return Promise.resolve(jsonResponse({
+          challenge: btoa('challenge-bytes'),
+          user: {
+            id: btoa('user-id'),
+            name: 'alice@example.com',
+            displayName: 'Alice Example',
+          },
+          excludeCredentials: [],
+        }));
+      }
+      if (isRoute(u, REGISTER_VERIFY_PATH) && method === 'POST') {
+        return Promise.resolve(jsonResponse({ credential_id: 'newcred' }));
+      }
+      return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
+    });
+    vi.stubGlobal('fetch', fn);
+    const createMock = vi.fn(async (_options: CredentialCreationOptions) => fakeCredential());
+    Object.defineProperty(globalThis.navigator, 'credentials', {
+      value: { create: createMock },
+      configurable: true,
+    });
+    const w = mountPage();
+    await flushPromises();
+
+    await w.find('.security-settings-page__card-footer button').trigger('click');
+    await flushPromises();
+
+    const call = createMock.mock.calls[0][0] as CredentialCreationOptions;
+    const user = (call.publicKey as PublicKeyCredentialCreationOptions).user;
+    expect(user.name).toBe('alice@example.com');
+    expect(user.displayName).toBe('Alice Example');
+    w.unmount();
+  });
+
+  it('omits authenticatorAttachment by default and honours an explicit choice', async () => {
+    stubFetch({ credentials: [] });
+    const createMock = vi.fn(async (_options: CredentialCreationOptions) => fakeCredential());
+    Object.defineProperty(globalThis.navigator, 'credentials', {
+      value: { create: createMock },
+      configurable: true,
+    });
+    const w = mountPage();
+    await flushPromises();
+
+    // Default: "Let device decide" — NO authenticatorAttachment constraint.
+    await w.find('.security-settings-page__card-footer button').trigger('click');
+    await flushPromises();
+    let options = createMock.mock.calls[0][0] as CredentialCreationOptions;
+    let selection = (options.publicKey as PublicKeyCredentialCreationOptions).authenticatorSelection;
+    expect(selection).toBeDefined();
+    expect(selection && 'authenticatorAttachment' in selection).toBe(false);
+
+    // Explicit: "Device passkey" → platform.
+    const radios = w.findAll('input[name="passkey-attachment"]');
+    expect(radios).toHaveLength(3);
+    await radios[1].setValue('platform');
+    await w.find('.security-settings-page__card-footer button').trigger('click');
+    await flushPromises();
+    options = createMock.mock.calls[1][0] as CredentialCreationOptions;
+    selection = (options.publicKey as PublicKeyCredentialCreationOptions).authenticatorSelection;
+    expect(selection?.authenticatorAttachment).toBe('platform');
+    w.unmount();
+  });
+
+  it('shows a neutral status line when registration is cancelled (NotAllowedError)', async () => {
+    stubFetch({ credentials: [] });
+    const cancelled = new Error('The operation was aborted by the user.');
+    cancelled.name = 'NotAllowedError';
+    Object.defineProperty(globalThis.navigator, 'credentials', {
+      value: { create: async () => { throw cancelled; } },
+      configurable: true,
+    });
+    const w = mountPage();
+    await flushPromises();
+    const toasts = useToastStore();
+    const errorSpy = vi.spyOn(toasts, 'error');
+
+    await w.find('.security-settings-page__card-footer button').trigger('click');
+    await flushPromises();
+
+    expect(w.find('.security-settings-page__status').text())
+      .toBe('Registration was cancelled or timed out — try again.');
+    expect(errorSpy).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('renders a stored nickname in the list and falls back to kind "Passkey" for null device_type', async () => {
+    localStorage.setItem(
+      'phlix.passkey-meta',
+      JSON.stringify({ abcdefghijklmnopqrstuvwxyz012345: { nickname: 'Work laptop' } }),
+    );
+    stubFetch({ credentials: [credential({ device_type: null as unknown as Credential['device_type'] })] });
+    const w = mountPage();
+    await flushPromises();
+
+    const item = w.find('.credential-item');
+    expect(item.text()).toContain('Work laptop');
+    // Server stores device_type NULL today; without local kind metadata the
+    // honest label is 'Passkey', never 'Security key'.
+    expect(item.text()).toContain('Passkey');
+    expect(item.text()).not.toContain('Security key');
+    w.unmount();
+  });
+
+  it('stores the chosen nickname against the credential id echoed by verify', async () => {
+    const fn = vi.fn((url: unknown, init?: RequestInit) => {
+      const u = typeof url === 'string' ? url : '';
+      const method = (init?.method ?? 'GET').toUpperCase();
+      if (isRoute(u, CREDENTIALS_PATH)) {
+        return Promise.resolve(jsonResponse({ credentials: [] }));
+      }
+      if (isRoute(u, REGISTER_OPTIONS_PATH)) {
+        return Promise.resolve(jsonResponse({
+          challenge: btoa('challenge-bytes'),
+          user: { id: btoa('user-id') },
+          excludeCredentials: [],
+        }));
+      }
+      if (isRoute(u, REGISTER_VERIFY_PATH) && method === 'POST') {
+        return Promise.resolve(jsonResponse({ credential_id: 'echoed-cred-id' }));
+      }
+      return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
+    });
+    vi.stubGlobal('fetch', fn);
+    Object.defineProperty(globalThis.navigator, 'credentials', {
+      value: { create: async () => fakeCredential() },
+      configurable: true,
+    });
+    const w = mountPage();
+    await flushPromises();
+
+    await w.find('.register-form__input').setValue('Phone passkey');
+    await w.find('.security-settings-page__card-footer button').trigger('click');
+    await flushPromises();
+
+    const raw = localStorage.getItem('phlix.passkey-meta');
+    expect(raw).toBeTruthy();
+    const meta = JSON.parse(raw!) as Record<string, { nickname?: string }>;
+    expect(meta['echoed-cred-id']?.nickname).toBe('Phone passkey');
     w.unmount();
   });
 });

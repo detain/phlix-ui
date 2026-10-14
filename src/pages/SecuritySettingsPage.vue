@@ -19,16 +19,35 @@ import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
 import Icon, { type IconName } from '../components/Icon.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { useAuthStore } from '../stores/useAuthStore';
 
 interface Credential {
     credential_id: string;
     registered_at: number;
-    device_type: 'platform' | 'cross-platform';
+    /** The server persists this as NULL today (WebAuthnManager hardcodes
+     *  deviceType: null on registration) — the union keeps the honest shape
+     *  for whichever day it starts populating it. */
+    device_type: 'platform' | 'cross-platform' | null;
     counter?: number;
+}
+
+/** Registration-time choices the server does not store for us. */
+type AttachmentChoice = 'auto' | 'platform' | 'cross-platform';
+
+const attachmentOptions: Array<{ value: AttachmentChoice; label: string }> = [
+    { value: 'auto', label: 'Let device decide' },
+    { value: 'platform', label: 'Device passkey' },
+    { value: 'cross-platform', label: 'Security key' },
+];
+
+interface PasskeyMeta {
+    nickname?: string;
+    attachment?: Exclude<AttachmentChoice, 'auto'>;
 }
 
 const injectedClient = useMediaApiBase();
 const toasts = useToastStore();
+const auth = useAuthStore();
 
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: injectedClient.value });
@@ -39,6 +58,70 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const registering = ref(false);
 const deletingId = ref<string | null>(null);
+const nickname = ref('');
+const attachment = ref<AttachmentChoice>('auto');
+const statusLine = ref<string | null>(null);
+
+/**
+ * Nicknames and the chosen authenticator kind live in this browser's
+ * localStorage (keyed per account) because the server's credential record
+ * has no label column and stores device_type as NULL. They are a LOCAL
+ * convenience for recognizing your own passkeys in this list — not part of
+ * the credential itself.
+ */
+const metaMap = ref<Record<string, PasskeyMeta>>({});
+
+function metaStorageKey(): string {
+    const uid = auth.user?.id;
+    return uid ? `phlix.passkey-meta.${uid}` : 'phlix.passkey-meta';
+}
+
+function loadMeta(): void {
+    try {
+        const raw = localStorage.getItem(metaStorageKey());
+        const parsed: unknown = raw ? JSON.parse(raw) : {};
+        metaMap.value = parsed && typeof parsed === 'object' ? parsed as Record<string, PasskeyMeta> : {};
+    } catch {
+        metaMap.value = {};
+    }
+}
+
+function storeMeta(credentialId: string, meta: PasskeyMeta): void {
+    metaMap.value = { ...metaMap.value, [credentialId]: meta };
+    try {
+        localStorage.setItem(metaStorageKey(), JSON.stringify(metaMap.value));
+    } catch {
+        /* storage unavailable (private mode) — labels simply stay default */
+    }
+}
+
+function forgetMeta(credentialId: string): void {
+    if (!(credentialId in metaMap.value)) return;
+    const next = { ...metaMap.value };
+    delete next[credentialId];
+    metaMap.value = next;
+    try {
+        localStorage.setItem(metaStorageKey(), JSON.stringify(next));
+    } catch {
+        /* ignore */
+    }
+}
+
+function metaFor(credentialId: string): PasskeyMeta | undefined {
+    return metaMap.value[credentialId];
+}
+
+function titleFor(cred: Credential): string {
+    const nick = metaFor(cred.credential_id)?.nickname;
+    if (nick) return nick;
+    return `${cred.credential_id.substring(0, 20)}…`;
+}
+
+function attachmentKind(cred: Credential): 'platform' | 'cross-platform' | null {
+    if (cred.device_type === 'platform' || cred.device_type === 'cross-platform') return cred.device_type;
+    const stored = metaFor(cred.credential_id)?.attachment;
+    return stored === 'platform' || stored === 'cross-platform' ? stored : null;
+}
 
 function formatDate(timestamp: number): string {
     return new Date(timestamp * 1000).toLocaleDateString(undefined, {
@@ -48,12 +131,14 @@ function formatDate(timestamp: number): string {
     });
 }
 
-function deviceIcon(deviceType: string): IconName {
-    return deviceType === 'platform' ? 'monitor' : 'key';
+function deviceIcon(kind: 'platform' | 'cross-platform' | null): IconName {
+    return kind === 'platform' ? 'monitor' : 'key';
 }
 
-function deviceLabel(deviceType: string): string {
-    return deviceType === 'platform' ? 'Platform authenticator' : 'Security key';
+function deviceLabel(kind: 'platform' | 'cross-platform' | null): string {
+    if (kind === 'platform') return 'Platform authenticator';
+    if (kind === 'cross-platform') return 'Security key';
+    return 'Passkey';
 }
 
 async function loadCredentials(): Promise<void> {
@@ -79,6 +164,7 @@ async function handleDelete(credentialId: string): Promise<void> {
     try {
         const client = getClient();
         await client.delete(`/api/v1/me/webauthn/credentials/${encodeURIComponent(credentialId)}`);
+        forgetMeta(credentialId);
         toasts.success('Passkey deleted successfully');
         await loadCredentials();
     } catch (e) {
@@ -90,15 +176,23 @@ async function handleDelete(credentialId: string): Promise<void> {
 
 async function handleRegister(): Promise<void> {
     registering.value = true;
+    statusLine.value = null;
     try {
         const client = getClient();
 
-        // Step 1: Get registration options
+        // Step 1: Get registration options. The server resolves the REAL
+        // account identity into options.user.name/displayName (falling back
+        // to the signed-in user in the auth store if a deployment omits it).
         const options = await client.post<{
             challenge: string;
-            user: { id: string };
+            user: { id: string; name?: string; displayName?: string };
             excludeCredentials?: Array<{ id: string }>;
         }>('/api/v1/auth/webauthn/register/options', {});
+
+        const identityName =
+            options.user.name ?? auth.user?.username ?? auth.user?.email ?? 'phlix user';
+        const identityDisplay =
+            options.user.displayName ?? auth.user?.name ?? auth.user?.username ?? identityName;
 
         // Step 2: Decode base64 challenge and user.id to Uint8Array
         const publicKeyOptions: PublicKeyCredentialCreationOptions = {
@@ -112,8 +206,8 @@ async function handleRegister(): Promise<void> {
             ] as PublicKeyCredentialParameters[],
             user: {
                 id: Uint8Array.from(atob(options.user.id), c => c.charCodeAt(0)),
-                name: 'phlix user',
-                displayName: 'PHLIX User',
+                name: identityName,
+                displayName: identityDisplay,
             },
             excludeCredentials: options.excludeCredentials?.map(cred => ({
                 id: Uint8Array.from(atob(cred.id), c => c.charCodeAt(0)),
@@ -121,8 +215,13 @@ async function handleRegister(): Promise<void> {
             })),
             timeout: 60000,
             attestation: 'none',
+            // 'auto' deliberately OMITS authenticatorAttachment so the user's
+            // platform can offer device passkeys AND security keys — the old
+            // hard-coded 'cross-platform' made phone/laptop passkeys unenrollable.
             authenticatorSelection: {
-                authenticatorAttachment: 'cross-platform',
+                ...(attachment.value === 'auto'
+                    ? {}
+                    : { authenticatorAttachment: attachment.value }),
                 residentKey: 'preferred',
                 userVerification: 'preferred',
             },
@@ -149,16 +248,35 @@ async function handleRegister(): Promise<void> {
             transports: attestationResponse.getTransports ? attestationResponse.getTransports() : [],
         };
 
-        // Step 5: Verify registration with server
-        await client.post('/api/v1/auth/webauthn/register/verify', {
-            credential: credentialData,
-            challenge: options.challenge,
-        });
+        // Step 5: Verify registration with server (returns the stored credential id)
+        const verified = await client.post<{ credential_id?: string }>(
+            '/api/v1/auth/webauthn/register/verify',
+            {
+                credential: credentialData,
+                challenge: options.challenge,
+            },
+        );
 
+        // Persist the local label against the credential id the server echoed.
+        const trimmedNickname = nickname.value.trim();
+        if (verified.credential_id && (trimmedNickname || attachment.value !== 'auto')) {
+            storeMeta(verified.credential_id, {
+                ...(trimmedNickname ? { nickname: trimmedNickname } : {}),
+                ...(attachment.value === 'auto' ? {} : { attachment: attachment.value }),
+            });
+        }
+        nickname.value = '';
+
+        statusLine.value = 'Passkey registered successfully';
         toasts.success('Passkey registered successfully');
         await loadCredentials();
     } catch (e) {
-        if (e instanceof Error && e.name !== 'NotAllowedError') {
+        if (e instanceof Error && e.name === 'NotAllowedError') {
+            // User dismissed the prompt, or it timed out. Neutral, actionable
+            // status — the previous code swallowed this in total silence.
+            statusLine.value = 'Registration was cancelled or timed out — try again.';
+        } else if (e instanceof Error) {
+            statusLine.value = null;
             toasts.error(e.message);
         }
     } finally {
@@ -171,6 +289,7 @@ function retry(): void {
 }
 
 onMounted(() => {
+    loadMeta();
     void loadCredentials();
 });
 </script>
@@ -220,14 +339,14 @@ onMounted(() => {
                         class="credential-item"
                     >
                         <div class="credential-item__icon">
-                            <Icon :name="deviceIcon(cred.device_type)" />
+                            <Icon :name="deviceIcon(attachmentKind(cred))" />
                         </div>
                         <div class="credential-item__info">
                             <span class="credential-item__id">
-                                {{ cred.credential_id.substring(0, 20) }}...
+                                {{ titleFor(cred) }}
                             </span>
                             <span class="credential-item__meta">
-                                {{ deviceLabel(cred.device_type) }} ·
+                                {{ deviceLabel(attachmentKind(cred)) }} ·
                                 Registered {{ formatDate(cred.registered_at) }}
                             </span>
                         </div>
@@ -250,6 +369,44 @@ onMounted(() => {
             </div>
 
             <footer class="security-settings-page__card-footer">
+                <div class="register-form">
+                    <label class="register-form__field">
+                        <span class="register-form__label">Nickname (optional)</span>
+                        <input
+                            v-model="nickname"
+                            type="text"
+                            class="register-form__input"
+                            placeholder="e.g. Work laptop"
+                            maxlength="60"
+                            autocomplete="off"
+                        >
+                    </label>
+                    <fieldset class="register-form__choice">
+                        <legend class="register-form__label">Authenticator type</legend>
+                        <div class="register-form__segments">
+                            <label
+                                v-for="opt in attachmentOptions"
+                                :key="opt.value"
+                                class="register-form__segment"
+                            >
+                                <input
+                                    v-model="attachment"
+                                    type="radio"
+                                    name="passkey-attachment"
+                                    :value="opt.value"
+                                >
+                                <span>{{ opt.label }}</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+                <p
+                    v-if="statusLine"
+                    class="security-settings-page__status"
+                    role="status"
+                >
+                    {{ statusLine }}
+                </p>
                 <Button
                     variant="solid"
                     :disabled="registering"
@@ -352,6 +509,93 @@ onMounted(() => {
     padding: var(--space-4);
     border-top: 1px solid var(--border-subtle);
     background: var(--surface-2);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+}
+
+.register-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: flex-end;
+    width: 100%;
+}
+
+.register-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 200px;
+    flex: 1;
+}
+
+.register-form__label {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.register-form__input {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text);
+    font-size: var(--text-sm);
+}
+
+.register-form__input:focus-visible {
+    outline: 2px solid var(--accent, var(--primary));
+    outline-offset: 1px;
+}
+
+.register-form__choice {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.register-form__segments {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.register-form__segment {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    background: var(--surface-1);
+}
+
+.register-form__segment + .register-form__segment {
+    border-left: 1px solid var(--border);
+}
+
+.register-form__segment:has(input:checked) {
+    background: var(--surface-3);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.register-form__segment input {
+    accent-color: var(--primary);
+}
+
+.security-settings-page__status {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
 }
 
 .credentials-list {
