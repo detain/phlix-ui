@@ -33,6 +33,7 @@ import Button from '../components/ui/Button.vue';
 import Modal from '../components/ui/Modal.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import PageHint from '../components/ui/PageHint.vue';
 import { hubPageHelp } from './hubHelpLinks';
 
@@ -217,11 +218,20 @@ function browseServer(server: Server): void {
 }
 
 /**
- * Remove a server from the user's list after confirmation.
- * Calls DELETE /api/v1/me/servers/{id} and removes the row from UI on success.
+ * Arm the shared ConfirmDialog (R13-05); the actual
+ * DELETE /api/v1/me/servers/{id} + row removal runs in `confirmRemove`.
  */
-async function removeServer(server: Server): Promise<void> {
-  if (!confirm(`Remove "${server.name}"? This cannot be undone.`)) return;
+function removeServer(server: Server): void {
+  removeTarget.value = server;
+}
+
+/** R13-05: the server pending removal — non-null arms the shared ConfirmDialog. */
+const removeTarget = ref<Server | null>(null);
+
+async function confirmRemove(): Promise<void> {
+  const server = removeTarget.value;
+  removeTarget.value = null;
+  if (!server) return;
   removing.value = server.id;
   try {
     await api.delete(`/api/v1/me/servers/${server.id}`);
@@ -380,6 +390,18 @@ onMounted(loadServers);
         </Button>
       </template>
     </Modal>
+
+    <!-- R13-05: shared in-app confirm replacing window.confirm -->
+    <ConfirmDialog
+      :open="removeTarget !== null"
+      :message="removeTarget
+        ? `Remove “${removeTarget.name}”? This cannot be undone.`
+        : ''"
+      confirm-label="Remove"
+      danger
+      @update:open="(v: boolean) => { if (!v) removeTarget = null; }"
+      @confirm="confirmRemove"
+    />
   </section>
 </template>
 

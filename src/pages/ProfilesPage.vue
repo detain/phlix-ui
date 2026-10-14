@@ -20,6 +20,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useProfileStore } from '../stores/useProfileStore';
 import { useMessages } from '../composables/useMessages';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import type { OwnProfile } from '../api/admin/users';
 
 const profiles = useProfileStore();
@@ -64,8 +65,17 @@ async function saveRename(): Promise<void> {
 
 // ── delete ────────────────────────────────────────────────────────────────────
 const deletingId = ref<string | null>(null);
-async function remove(p: OwnProfile): Promise<void> {
-  if (deletingId.value !== null) return;
+/** R13-04: profile pending deletion — non-null arms the shared ConfirmDialog. */
+const removeTarget = ref<OwnProfile | null>(null);
+
+function remove(p: OwnProfile): void {
+  removeTarget.value = p;
+}
+
+async function confirmRemove(): Promise<void> {
+  const p = removeTarget.value;
+  removeTarget.value = null;
+  if (!p || deletingId.value !== null) return;
   deletingId.value = p.id;
   try {
     await profiles.removeProfile(p.id);
@@ -177,6 +187,16 @@ async function use(p: OwnProfile): Promise<void> {
         {{ profiles.error }}
       </p>
     </template>
+
+    <!-- R13-04: deleting a profile was one blind click away — now it asks. -->
+    <ConfirmDialog
+      :open="removeTarget !== null"
+      :message="removeTarget ? t('profiles.deleteConfirm', { name: removeTarget.name }) : ''"
+      :confirm-label="t('profiles.delete')"
+      danger
+      @update:open="(v: boolean) => { if (!v) removeTarget = null; }"
+      @confirm="confirmRemove"
+    />
   </section>
 </template>
 

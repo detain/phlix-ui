@@ -17,6 +17,7 @@ import { ApiClient } from '../api/client';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import Icon, { type IconName } from '../components/Icon.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -155,10 +156,17 @@ async function loadCredentials(): Promise<void> {
     }
 }
 
-async function handleDelete(credentialId: string): Promise<void> {
-    if (!confirm('Are you sure you want to delete this passkey? This action cannot be undone.')) {
-        return;
-    }
+/** R13-05: credential id pending deletion — non-null arms the shared ConfirmDialog. */
+const pendingDeleteId = ref<string | null>(null);
+
+function handleDelete(credentialId: string): void {
+    pendingDeleteId.value = credentialId;
+}
+
+async function confirmDelete(): Promise<void> {
+    const credentialId = pendingDeleteId.value;
+    pendingDeleteId.value = null;
+    if (!credentialId) return;
 
     deletingId.value = credentialId;
     try {
@@ -442,6 +450,16 @@ onMounted(() => {
                 <li>Platform authenticators (like Touch ID or Windows Hello) require the specific device.</li>
             </ul>
         </section>
+
+        <!-- R13-05: shared in-app confirm replacing window.confirm -->
+        <ConfirmDialog
+          :open="pendingDeleteId !== null"
+          message="Deleting this passkey is permanent and cannot be undone — devices using it will fall back to your other sign-in methods."
+          confirm-label="Delete passkey"
+          danger
+          @update:open="(v: boolean) => { if (!v) pendingDeleteId = null; }"
+          @confirm="confirmDelete"
+        />
     </div>
 </template>
 

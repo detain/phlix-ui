@@ -28,6 +28,7 @@ import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import PageHint from '../components/ui/PageHint.vue';
 import { hubPageHelp } from './hubHelpLinks';
 
@@ -117,7 +118,23 @@ async function connectPeer(): Promise<void> {
 
 /** Remove (delete) a peer. The hub's DELETE removes the peer entirely; works for
  *  any status, not just connected. */
-async function removePeer(peerId: string): Promise<void> {
+const removeTarget = ref<FederationPeer | null>(null);
+
+/** R13-06: arm the shared ConfirmDialog for this peer. */
+function removePeer(peer: FederationPeer): void {
+  removeTarget.value = peer;
+}
+
+/**
+ * Remove (delete) a peer after confirmation. The hub's DELETE removes the peer
+ * entirely — the dialog copy names the cost: the link and its shares end now,
+ * and rebuilding the relationship means pairing again from scratch.
+ */
+async function confirmRemovePeer(): Promise<void> {
+  const peer = removeTarget.value;
+  removeTarget.value = null;
+  if (!peer) return;
+  const peerId = peer.id;
   try {
     await http.delete(`/api/v1/me/federation/peers/${peerId}`);
     toasts.success('Peer removed.');
@@ -239,7 +256,7 @@ onMounted(() => loadPeers(true));
                     variant="ghost"
                     size="sm"
                     :aria-label="`Remove ${peer.name}`"
-                    @click="removePeer(peer.id)"
+                    @click="removePeer(peer)"
                   >
                     Remove
                   </Button>
@@ -289,6 +306,18 @@ onMounted(() => loadPeers(true));
         </form>
       </section>
     </div>
+
+    <!-- R13-06: peer removal asks first and says what re-adding costs. -->
+    <ConfirmDialog
+      :open="removeTarget !== null"
+      :message="removeTarget
+        ? `Remove “${removeTarget.name}” from your peers? The connection and every library shared with it end immediately — re-adding later requires pairing again from scratch (their URL and public key). This cannot be undone.`
+        : ''"
+      confirm-label="Remove peer"
+      danger
+      @update:open="(v: boolean) => { if (!v) removeTarget = null; }"
+      @confirm="confirmRemovePeer"
+    />
   </section>
 </template>
 

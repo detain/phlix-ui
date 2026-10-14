@@ -39,6 +39,12 @@ export const DEFAULT_MESSAGES = {
     selectPlaceholder: 'Select…',
     breadcrumb: 'Breadcrumb',
   },
+  /** Generic chrome for the shared ConfirmDialog (R13-05). */
+  confirm: {
+    title: 'Are you sure?',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+  },
   shell: {
     skipToContent: 'Skip to content',
     primaryNav: 'Primary',
@@ -70,6 +76,7 @@ export const DEFAULT_MESSAGES = {
     rename: 'Rename',
     renameTooShort: 'Profile names need at least 3 characters.',
     delete: 'Delete',
+    deleteConfirm: 'Delete “{name}”? This profile cannot be recovered.',
     save: 'Save',
     cancel: 'Cancel',
     deleteBlocked: 'The last profile on an account cannot be deleted.',

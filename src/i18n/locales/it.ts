@@ -39,6 +39,12 @@ export const IT_MESSAGES = {
     selectPlaceholder: 'Seleziona…',
     breadcrumb: 'Percorso di navigazione',
   },
+  /** Generic chrome for the shared ConfirmDialog (R13-05). */
+  confirm: {
+    title: 'Confermi?',
+    cancel: 'Annulla',
+    confirm: 'Conferma',
+  },
   shell: {
     skipToContent: 'Vai al contenuto',
     primaryNav: 'Principale',
@@ -69,6 +75,7 @@ export const IT_MESSAGES = {
     rename: 'Rinomina',
     renameTooShort: 'I nomi dei profili richiedono almeno 3 caratteri.',
     delete: 'Elimina',
+    deleteConfirm: 'Eliminare “{name}”? Questo profilo non potrà essere recuperato.',
     save: 'Salva',
     cancel: 'Annulla',
     deleteBlocked: 'L’ultimo profilo di un account non può essere eliminato.',

@@ -39,6 +39,12 @@ export const DE_MESSAGES = {
     selectPlaceholder: 'Auswählen…',
     breadcrumb: 'Brotkrumenavigation',
   },
+  /** Generic chrome for the shared ConfirmDialog (R13-05). */
+  confirm: {
+    title: 'Sind Sie sicher?',
+    cancel: 'Abbrechen',
+    confirm: 'Bestätigen',
+  },
   shell: {
     skipToContent: 'Zum Inhalt springen',
     primaryNav: 'Hauptnavigation',
@@ -69,6 +75,7 @@ export const DE_MESSAGES = {
     rename: 'Umbenennen',
     renameTooShort: 'Profilnamen brauchen mindestens 3 Zeichen.',
     delete: 'Löschen',
+    deleteConfirm: '„{name}“ löschen? Dieses Profil kann nicht wiederhergestellt werden.',
     save: 'Speichern',
     cancel: 'Abbrechen',
     deleteBlocked: 'Das letzte Profil eines Kontos kann nicht gelöscht werden.',

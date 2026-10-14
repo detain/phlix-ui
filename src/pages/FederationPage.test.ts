@@ -48,6 +48,16 @@ function mountPage(client: ApiClient): VueWrapper {
 function findBtn(w: VueWrapper, label: string) {
   return w.findAllComponents(Button).find((b) => b.attributes('aria-label') === label);
 }
+
+/**
+ * R13-05/06: row actions now arm the shared ConfirmDialog (teleported Modal) —
+ * click its affirmative in document.body to let the action run.
+ */
+function affirmConfirmDialog(): void {
+  const btn = document.body.querySelector<HTMLButtonElement>('[data-testid="confirm-dialog-affirmative"]');
+  if (!btn) throw new Error('ConfirmDialog affirmative not found');
+  btn.click();
+}
 function findBtnByText(w: VueWrapper, text: string) {
   return w.findAllComponents(Button).find((b) => b.text().trim() === text);
 }
@@ -222,7 +232,11 @@ describe('FederationPage — status + remove', () => {
     const w = mountPage(client);
     await flushPromises();
     const before = get.mock.calls.length;
+    // R13-06: the click only arms the dialog; deletion waits for affirmation.
     await findBtn(w, 'Remove Friend Server')!.trigger('click');
+    await flushPromises();
+    expect(del).not.toHaveBeenCalled();
+    affirmConfirmDialog();
     await flushPromises();
     expect(del).toHaveBeenCalledWith('/api/v1/me/federation/peers/p1');
     expect(get.mock.calls.length).toBeGreaterThan(before);
@@ -237,7 +251,28 @@ describe('FederationPage — status + remove', () => {
     await flushPromises();
     await findBtn(w, 'Remove Friend Server')!.trigger('click');
     await flushPromises();
+    affirmConfirmDialog();
+    await flushPromises();
     expect(useToastStore().toasts.some((t) => t.message === 'Failed to remove peer.')).toBe(true);
+    w.unmount();
+  });
+
+  it('the remove dialog names the peer and the re-pairing cost (R13-06)', async () => {
+    const { client, del } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Remove Friend Server')!.trigger('click');
+    await flushPromises();
+    const message = document.body.querySelector('.phlix-confirm__message');
+    expect(message?.textContent).toContain('Friend Server');
+    expect(message?.textContent).toContain('pairing again');
+    expect(message?.textContent).toContain('This cannot be undone.');
+    // Dismissing must not delete.
+    const cancel = Array.from(document.body.querySelectorAll<HTMLButtonElement>('.phlix-modal__footer button'))
+      .find((b) => b.dataset.testid !== 'confirm-dialog-affirmative');
+    cancel!.click();
+    await flushPromises();
+    expect(del).not.toHaveBeenCalled();
     w.unmount();
   });
 });

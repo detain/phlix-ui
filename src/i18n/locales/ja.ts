@@ -40,6 +40,12 @@ export const JA_MESSAGES = {
     selectPlaceholder: '選択…',
     breadcrumb: 'パンくずリスト',
   },
+  /** Generic chrome for the shared ConfirmDialog (R13-05). */
+  confirm: {
+    title: '本当によろしいですか？',
+    cancel: 'キャンセル',
+    confirm: '確定',
+  },
   shell: {
     skipToContent: '本文へスキップ',
     primaryNav: 'メイン',
@@ -70,6 +76,7 @@ export const JA_MESSAGES = {
     rename: '名前を変更',
     renameTooShort: 'プロフィール名は3文字以上で入力してください。',
     delete: '削除',
+    deleteConfirm: '「{name}」を削除しますか？このプロフィールは復元できません。',
     save: '保存',
     cancel: 'キャンセル',
     deleteBlocked: 'アカウントで最後のプロフィールは削除できません。',

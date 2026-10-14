@@ -43,6 +43,12 @@ export const FR_MESSAGES = {
     selectPlaceholder: 'Sélectionner…',
     breadcrumb: 'Fil d’Ariane',
   },
+  /** Generic chrome for the shared ConfirmDialog (R13-05). */
+  confirm: {
+    title: 'Confirmer ?',
+    cancel: 'Annuler',
+    confirm: 'Confirmer',
+  },
   shell: {
     skipToContent: 'Aller au contenu',
     primaryNav: 'Principale',
@@ -73,6 +79,7 @@ export const FR_MESSAGES = {
     rename: 'Renommer',
     renameTooShort: 'Les noms de profil doivent comporter au moins 3 caractères.',
     delete: 'Supprimer',
+    deleteConfirm: 'Supprimer « {name} » ? Ce profil est irrécupérable.',
     save: 'Enregistrer',
     cancel: 'Annuler',
     deleteBlocked: 'Le dernier profil d’un compte ne peut pas être supprimé.',

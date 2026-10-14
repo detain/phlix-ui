@@ -113,6 +113,27 @@ function mountPage(): VueWrapper {
   });
 }
 
+/**
+ * The shared ConfirmDialog (R13-05) renders inside a `<Modal>`, which teleports
+ * to `document.body` — so its footer buttons are invisible to the page wrapper
+ * and must be reached through the DOM directly.
+ */
+function dialogButton(affirmative: boolean): HTMLButtonElement {
+  const buttons = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>('.phlix-modal__footer button'),
+  );
+  const btn = affirmative
+    ? buttons.find((b) => b.dataset.testid === 'confirm-dialog-affirmative')
+    : buttons.find((b) => b.dataset.testid !== 'confirm-dialog-affirmative');
+  if (!btn) throw new Error(`ConfirmDialog ${affirmative ? 'affirmative' : 'cancel'} button not found`);
+  return btn;
+}
+
+async function clickDialogButton(affirmative: boolean): Promise<void> {
+  dialogButton(affirmative).click();
+  await flushPromises();
+}
+
 beforeEach(() => {
   setActivePinia(createPinia());
   localStorage.clear();
@@ -165,16 +186,23 @@ describe('SecuritySettingsPage', () => {
     w.unmount();
   });
 
-  it('deletes a passkey after confirm and toasts success', async () => {
+  it('deletes a passkey after confirming in the shared dialog and toasts success', async () => {
     const fetchFn = stubFetch({ credentials: [credential({ credential_id: 'toDelete-abcdefghijklmnop' })] });
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const w = mountPage();
     await flushPromises();
     const toasts = useToastStore();
     const successSpy = vi.spyOn(toasts, 'success');
 
+    // R13-05: the delete button ARMS the ConfirmDialog; nothing is sent until
+    // the user affirms it.
     await w.find('.credential-item__delete').trigger('click');
     await flushPromises();
+    expect(
+      fetchFn.mock.calls.some((c) => (c[1] as RequestInit | undefined)?.method === 'DELETE'),
+    ).toBe(false);
+    expect(dialogButton(true).closest('.phlix-modal')).toBeTruthy();
+    expect(document.body.textContent).toContain('Deleting this passkey is permanent');
+    await clickDialogButton(true);
 
     const deleteCall = fetchFn.mock.calls.find(
       (c) => (c[1] as RequestInit | undefined)?.method === 'DELETE',
@@ -187,12 +215,12 @@ describe('SecuritySettingsPage', () => {
 
   it('does NOT delete when the confirm dialog is dismissed', async () => {
     const fetchFn = stubFetch({ credentials: [credential()] });
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     const w = mountPage();
     await flushPromises();
 
     await w.find('.credential-item__delete').trigger('click');
     await flushPromises();
+    await clickDialogButton(false);
     expect(fetchFn.mock.calls.some((c) => (c[1] as RequestInit | undefined)?.method === 'DELETE')).toBe(false);
     w.unmount();
   });

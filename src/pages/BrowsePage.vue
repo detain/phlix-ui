@@ -36,6 +36,7 @@ import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import PosterPicker from '../components/PosterPicker.vue';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import ItemDataInspector from '../components/ItemDataInspector.vue';
 import { useItemInspector } from '../composables/useItemInspector';
 import { ApiClient } from '../api/client';
@@ -475,8 +476,15 @@ function onChoosePoster(item: MediaItem): void {
 }
 
 let removeController: AbortController | null = null;
-async function onRemove(item: MediaItem): Promise<void> {
-  if (!window.confirm(`Remove "${item.name}" from the library? This cannot be undone.`)) return;
+/** R13-05: the item pending removal — non-null arms the shared ConfirmDialog. */
+const removeTarget = ref<MediaItem | null>(null);
+function onRemove(item: MediaItem): void {
+  removeTarget.value = item;
+}
+async function confirmRemove(): Promise<void> {
+  const item = removeTarget.value;
+  removeTarget.value = null;
+  if (!item) return;
   removeController?.abort();
   const myController = typeof AbortController !== 'undefined' ? new AbortController() : null;
   removeController = myController;
@@ -701,6 +709,18 @@ function onSeeAll(row: HomeRowConfig): void {
       @applied="onPosterApplied"
     />
 
+
+    <!-- R13-05: shared in-app confirm replacing window.confirm -->
+    <ConfirmDialog
+      :open="removeTarget !== null"
+      :message="removeTarget
+        ? `Remove “${removeTarget.name}” from the library? This cannot be undone.`
+        : ''"
+      confirm-label="Remove"
+      danger
+      @update:open="(v: boolean) => { if (!v) removeTarget = null; }"
+      @confirm="confirmRemove"
+    />
     <ItemDataInspector v-if="auth.isAdmin" v-model="inspectorOpen" :item="inspectorItem" />
   </div>
 </template>

@@ -41,6 +41,12 @@ export const ES_MESSAGES = {
     selectPlaceholder: 'Seleccionar…',
     breadcrumb: 'Miga de pan',
   },
+  /** Generic chrome for the shared ConfirmDialog (R13-05). */
+  confirm: {
+    title: '¿Estás seguro?',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
+  },
   shell: {
     skipToContent: 'Saltar al contenido',
     primaryNav: 'Principal',
@@ -71,6 +77,7 @@ export const ES_MESSAGES = {
     rename: 'Renombrar',
     renameTooShort: 'Los nombres de perfil necesitan al menos 3 caracteres.',
     delete: 'Eliminar',
+    deleteConfirm: '¿Eliminar a “{name}”? Este perfil no se podrá recuperar.',
     save: 'Guardar',
     cancel: 'Cancelar',
     deleteBlocked: 'El último perfil de una cuenta no se puede eliminar.',

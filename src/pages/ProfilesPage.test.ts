@@ -78,6 +78,16 @@ function mountPage() {
   return mount(ProfilesPage, { global: { plugins: [createPinia()] } });
 }
 
+/**
+ * R13-04/05: destructive rows now arm the shared ConfirmDialog, which renders
+ * inside a teleported `<Modal>` — reach its affirmative through document.body.
+ */
+function affirmConfirmDialog(): void {
+  const btn = document.body.querySelector<HTMLButtonElement>('[data-testid="confirm-dialog-affirmative"]');
+  if (!btn) throw new Error('ConfirmDialog affirmative not found');
+  btn.click();
+}
+
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
@@ -211,7 +221,7 @@ describe('ProfilesPage (S82)', () => {
     // precedence (the sentence would render if only `message` existed).
     const { rows } = listable([row('p1', 'Alice', true), row('p2', 'Kids', false)]);
     const refusal: LastProfileConflictBody = { error: PROFILE_LAST_ERROR_CODE, message: PROFILE_LAST_ERROR_TEXT };
-    stub([
+    const calls = stub([
       { match: LIST, handle: () => jsonResponse({ profiles: rows }) },
       {
         match: REMOVE('p2'),
@@ -220,7 +230,13 @@ describe('ProfilesPage (S82)', () => {
     ]);
     const w = mountPage();
     await flushPromises();
+    // R13-04: delete now arms the shared ConfirmDialog — nothing hits the wire
+    // until the user affirms (previously the row deleted on a bare click).
     await w.find('[data-testid="profile-delete-p2"]').trigger('click');
+    await flushPromises();
+    expect(calls.some((c) => REMOVE('p2')(c.url, c.method))).toBe(false);
+    expect(document.body.textContent).toContain('Delete “Kids”');
+    affirmConfirmDialog();
     await flushPromises();
     expect(w.find('[data-testid="profiles-mutation-error"]').text()).toContain(PROFILE_LAST_ERROR_CODE);
     expect(w.find('[data-testid="profiles-mutation-error"]').text()).not.toContain(PROFILE_LAST_ERROR_TEXT);
@@ -242,6 +258,9 @@ describe('ProfilesPage (S82)', () => {
     const w = mountPage();
     await flushPromises();
     await w.find('[data-testid="profile-delete-p2"]').trigger('click');
+    await flushPromises();
+    // R13-04: the click only arms the dialog; affirm to delete.
+    affirmConfirmDialog();
     await flushPromises();
     expect(w.find('[data-testid="profile-row-p2"]').exists()).toBe(false);
   });
