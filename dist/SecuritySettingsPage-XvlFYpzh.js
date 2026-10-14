@@ -130,7 +130,7 @@ async function Q(e, t) {
 var $ = w("themes", () => {
 	let e = b([]), t = b(!1), n = b(!1), i = b(null), a = null;
 	async function o(o, s = !1) {
-		if (o !== "" && !(n.value && !s)) return a || (t.value = !0, i.value = null, a = (async () => {
+		if (o !== null && !(n.value && !s)) return a || (t.value = !0, i.value = null, a = (async () => {
 			try {
 				e.value = await Q(o), n.value = !0;
 			} catch (e) {
@@ -335,4 +335,4 @@ var $ = w("themes", () => {
 //#endregion
 export { W as _, H as a, K as c, k as d, E as f, G as g, X as h, T as i, q as l, V as m, $ as n, Y as o, I as p, Q as r, D as s, ue as t, J as u, L as v, Z as y };
 
-//# sourceMappingURL=SecuritySettingsPage-DChxJYxx.js.map
+//# sourceMappingURL=SecuritySettingsPage-XvlFYpzh.js.map

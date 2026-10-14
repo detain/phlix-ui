@@ -48,7 +48,7 @@ export declare const useThemesStore: import("pinia").StoreDefinition<"themes", P
         source: string | null;
         builtIn: boolean;
     }[]>;
-    load: (apiBase: string, force?: boolean) => Promise<void>;
+    load: (apiBase: string | null, force?: boolean) => Promise<void>;
     byId: (id: string) => ServerTheme | undefined;
     styleFor: (id: string) => ActiveThemeStyle | null;
 }, "error" | "loading" | "items" | "loaded">, Pick<{
@@ -81,7 +81,7 @@ export declare const useThemesStore: import("pinia").StoreDefinition<"themes", P
         source: string | null;
         builtIn: boolean;
     }[]>;
-    load: (apiBase: string, force?: boolean) => Promise<void>;
+    load: (apiBase: string | null, force?: boolean) => Promise<void>;
     byId: (id: string) => ServerTheme | undefined;
     styleFor: (id: string) => ActiveThemeStyle | null;
 }, "pluginThemes">, Pick<{
@@ -114,7 +114,7 @@ export declare const useThemesStore: import("pinia").StoreDefinition<"themes", P
         source: string | null;
         builtIn: boolean;
     }[]>;
-    load: (apiBase: string, force?: boolean) => Promise<void>;
+    load: (apiBase: string | null, force?: boolean) => Promise<void>;
     byId: (id: string) => ServerTheme | undefined;
     styleFor: (id: string) => ActiveThemeStyle | null;
 }, "load" | "byId" | "styleFor">>;

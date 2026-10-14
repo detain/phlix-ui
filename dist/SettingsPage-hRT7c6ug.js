@@ -4,7 +4,7 @@ import { a as n } from "./usePreferencesStore-CFPikE8Z.js";
 import { t as r } from "./useMessages-DwZkJguD.js";
 import { t as i } from "./useApiBase-CV_r-Kk4.js";
 import { t as ee } from "./useToastStore-BDoKlU6N.js";
-import { _ as te, g as ne, n as re, t as a } from "./SecuritySettingsPage-DChxJYxx.js";
+import { _ as te, g as ne, n as re, t as a } from "./SecuritySettingsPage-XvlFYpzh.js";
 import { t as ie } from "./Button-BL3fV7FU.js";
 import { t as o } from "./Slider-8uhKUpm-.js";
 import { t as s } from "./Switch-Csq93T2q.js";
@@ -452,7 +452,7 @@ var de = {
 			])
 		]));
 	}
-}), [["__scopeId", "data-v-33e2e3c2"]]), B = { class: "settings-page" }, V = { class: "settings-page__head" }, H = { class: "settings-page__eyebrow" }, U = { class: "settings-page__title" }, W = /*#__PURE__*/ e(/* @__PURE__ */ v({
+}), [["__scopeId", "data-v-a75158cf"]]), B = { class: "settings-page" }, V = { class: "settings-page__head" }, H = { class: "settings-page__eyebrow" }, U = { class: "settings-page__title" }, W = /*#__PURE__*/ e(/* @__PURE__ */ v({
 	__name: "SettingsPage",
 	setup(e) {
 		let { t } = r(), n = [
@@ -488,4 +488,4 @@ var de = {
 //#endregion
 export { W as default };
 
-//# sourceMappingURL=SettingsPage-B5sasJHO.js.map
+//# sourceMappingURL=SettingsPage-hRT7c6ug.js.map

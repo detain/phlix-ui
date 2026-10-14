@@ -38,9 +38,15 @@ export declare function applyStoredThemeEarly(defaultTheme?: ThemeName, defaultT
  * updates the live DOM instantly.
  *
  * S86 adds the server/plugin theme leg:
- *  - kicks off ONE authenticated fetch of the catalogue, but only once there is
- *    an `apiBase` AND a session — a signed-out or standalone mount makes no
- *    request at all;
+ *  - kicks off ONE authenticated fetch of the catalogue once a session exists.
+ *    The fetch fires for any resolved `apiBase` INCLUDING the empty string —
+ *    the server and hub inject `apiBase: ''` to mean "same-origin, use relative
+ *    URLs" (see phlix-server `SharedUiController`), so gating on a non-empty
+ *    base silently disabled plugin themes on every hosted mount. The store-level
+ *    `load()` treats only an explicit `null` base as "no API configured";
+ *    `useApiBase` never resolves to `null` (its inject default is `''`), so a
+ *    real mount always fetches when signed in, and only the `!auth.isLoggedIn`
+ *    arm suppresses the request;
  *  - re-applies whenever the chosen theme or the catalogue changes;
  *  - keeps the `localStorage` boot cache in step with what is on screen, so the
  *    next load repaints it with no flash.

@@ -19,7 +19,7 @@ import { i as Ie, o as Le, s as Re } from "./shortcuts-Ck2yBFUB.js";
 import { t as ze } from "./Tooltip-DDaQsdSp.js";
 import { t as Be } from "./Spinner-DrQ8YjMj.js";
 import { t as Ve } from "./NetworkHealthIndicator-DpZekH3S.js";
-import { _ as He, a as Ue, c as We, d as Ge, f as Ke, g as qe, h as Je, i as Ye, l as Xe, m as Ze, n as Qe, o as $e, p as et, r as tt, s as nt, t as rt, u as it, v as at, y as ot } from "./SecuritySettingsPage-DChxJYxx.js";
+import { _ as He, a as Ue, c as We, d as Ge, f as Ke, g as qe, h as Je, i as Ye, l as Xe, m as Ze, n as Qe, o as $e, p as et, r as tt, s as nt, t as rt, u as it, v as at, y as ot } from "./SecuritySettingsPage-XvlFYpzh.js";
 import { i as st, n as ct, r as lt, t as ut } from "./Kbd-Bmk72RCb.js";
 import { a as dt, i as ft, n as pt, o as mt, r as ht, t as gt } from "./useLibrariesStore-C5DOhRxP.js";
 import { n as _t, t as vt } from "./HomeRow-1bqUwWPO.js";
@@ -701,7 +701,7 @@ function Fi(e, t) {
 function Ii() {
 	let e = u(), t = Qe(), n = pe(), r = fe();
 	return pr(() => {
-		r.value === "" || !n.isLoggedIn || t.load(r.value);
+		n.isLoggedIn && t.load(r.value);
 	}), pr(() => {
 		let n = t.styleFor(e.theme);
 		Pi({
@@ -1252,7 +1252,7 @@ function za(e) {
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-B5sasJHO.js")
+			component: () => import("./SettingsPage-hRT7c6ug.js")
 		},
 		{
 			path: `${t}/explore`,
