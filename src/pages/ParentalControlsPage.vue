@@ -579,7 +579,7 @@ function askDeleteTag(tag: ProfileTag): void {
       <EmptyState
         icon="user"
         title="No profile selected"
-        description="Open this page with ?profile=<id> query parameter to manage that profile's parental controls."
+        description="Parental controls apply to one profile at a time. No profile was selected, so there is nothing to show yet — go back and pick a profile first."
       />
     </div>
 
@@ -851,7 +851,7 @@ function askDeleteTag(tag: ProfileTag): void {
       </p>
       <div class="parental-form__actions">
         <Button variant="ghost" @click="pendingDeleteSchedule = null">Cancel</Button>
-        <Button variant="solid" tone="error" @click="pendingDeleteSchedule && confirmDeleteSchedule(pendingDeleteSchedule)">
+        <Button variant="danger" @click="pendingDeleteSchedule && confirmDeleteSchedule(pendingDeleteSchedule)">
           Delete
         </Button>
       </div>
@@ -864,7 +864,7 @@ function askDeleteTag(tag: ProfileTag): void {
       </p>
       <div class="parental-form__actions">
         <Button variant="ghost" @click="pendingDeleteTag = null">Cancel</Button>
-        <Button variant="solid" tone="error" @click="pendingDeleteTag && confirmDeleteTag(pendingDeleteTag)">
+        <Button variant="danger" @click="pendingDeleteTag && confirmDeleteTag(pendingDeleteTag)">
           Remove
         </Button>
       </div>
