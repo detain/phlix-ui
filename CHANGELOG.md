@@ -1,3 +1,53 @@
+## Unreleased — review-fix lane 2026-10-14 (UI-1/UI-2): socket seam, error-envelope
+### precedence, confirm/consistency UX sweep, copy truth
+
+- **R12-02 — the `__PHLIX__.wsUrl` / `wsPath` socket seam is consumed (`7c0bfd79`).**
+  Hub (`phlix-hub 6175184`) can now inject an explicit WS authority (env
+  `HUB_WS_URL`, no path) and path (`HUB_WS_PATH`) into `window.__PHLIX__`;
+  `buildHubRelayUrl` and syncplay's `buildWsUrl` prefer a valid hint over the
+  hardcoded `:8804` / `:501`-era `:8097` derivations, falling back byte-identically
+  when absent/null/malformed (new `src/api/socketHint.ts` grammar; SSR-safe).
+  https pages with no seam still escalate to `wss:` — that failure now surfaces as
+  documented status callbacks, not silence (see R12-07).
+- **R12-06 — error-envelope split-brain closed (`38c4fb8f`, re-pin `aa3c6d69`).**
+  `extractError` no longer lets a machine token in the `error` slot
+  (`missing_identity_id`, `profile.last_profile`, …) outrank human text: with both
+  slots present `message` wins; a code-shaped token first tries the contracts
+  catalog (W4 localization doctrine), then `message`, and only then surfaces raw.
+  The S465 "show the code verbatim" pins in ProfilesPage/useProfileStore flipped to
+  the new law (zero runtime consumers branch on the surfaced string).
+- **R12-07 — the embedded syncplay client no longer writes to the host's console
+  (`7c0bfd79`).** All eight lifecycle logs route through an injectable
+  `setSyncPlayLogger()` (default no-op).
+- **Member playlists go live (`86fdb906`).** `/app/playlists` list + detail
+  (rename, remove item, delete-with-confirm), nav entry, and a shared
+  `PlaylistPickerModal` — the MediaCard add-to-playlist flow is now
+  pick-existing-or-create with an undo path for the create→add leg-2 failure
+  (R13-01/R13-10).
+- **Confirm/danger/one-voice UX sweep.** Shared `ConfirmDialog` replaces every
+  remaining `window.confirm` on user pages; profile/peer deletes and the
+  one-click LibrariesPage "Prune removed" gained naming confirms; eleven
+  destructive confirm buttons across nine admin pages moved to the `danger`
+  variant (R13-04/05/06/13/14, `abc1de32`, `074ace39`). Login/signup show their
+  failure once — the duplicate error toast is gone (R13-15, `94a2007b`).
+  Admin SettingsPage guards dirty edits (route-leave + beforeunload) and rejects
+  empty/NaN numerics before the wire (R13-02/11, `11231c1a`); UsersPage unifies
+  Enter/Save through one validated submit (R13-09, `c8916e8c`); the catch-all
+  route stops lying about "Shared UI loading…" (R13-08, `d83589bb`); dead media
+  chips stop faking clickability (R13-12, `a12a3213`); the CollectionsPage
+  create form picks a library from the store instead of a prefilled raw id
+  (R13-07, `f3d26add`); passkey registration dropped its `cross-platform`
+  lock-in, explains cancellations, uses the real user identity, and nicknames
+  credentials (R13-03, `37f942b8`).
+- **Copy truth, mirrored per locale law (`5473a42c`).**
+  `player.subtitleQuotaRemaining` no longer claims "limit reached" while
+  reporting remaining downloads (now a plural status line); the parental-controls
+  empty-state hint reads like help, not a URL spec. Both re-worded across en +
+  de/es/fr/it/ja/pt_BR with key parity and the CLDR plural-segment law.
+- **Suite.** 6,263 passed / 10 skipped (308 files) at this section; vue-tsc and
+  eslint clean. `dist/` intentionally NOT rebuilt in this lane — the release/tag
+  cascade owns artifact regeneration.
+
 ## 0.99.10 - 2026-10-14
 
 ### Release — 4 commits since `v0.99.9`: plugin themes go live in the hosted Appearance picker
