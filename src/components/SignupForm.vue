@@ -10,7 +10,8 @@
  * Same cinematic AuthCard + AuthField surface as LoginForm, with client-side
  * validation (email format, username ≥ 3, password ≥ 8, password match). The
  * auth flow is unchanged: `useAuthStore.signup` -> on success emit `success` +
- * route to the app home; failures surface a top banner + an error toast.
+ * route to the app home; failures surface a SINGLE top banner (R13-15 —
+ * the duplicate error toast is gone).
  */
 import { computed, inject, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -19,7 +20,6 @@ import AuthField from './auth/AuthField.vue';
 import Button from './ui/Button.vue';
 import Icon from './Icon.vue';
 import { useAuthStore } from '../stores/useAuthStore';
-import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
 import { errorCodeMessage } from '../i18n/errors';
 import { safeRedirect } from '../utils/safeRedirect';
@@ -28,7 +28,6 @@ import type { PhlixAppConfig } from '../app/types';
 const emit = defineEmits<{ success: [] }>();
 
 const auth = useAuthStore();
-const toasts = useToastStore();
 const router = useRouter();
 const route = useRoute();
 const { t } = useMessages();
@@ -62,6 +61,11 @@ const usernameError = ref<string | null>(null);
 const passwordError = ref<string | null>(null);
 const confirmError = ref<string | null>(null);
 
+// R13-15: the inline banner is the ONLY failure surface. It gates on a
+// local flag (not `auth.error`) so a code-less failure that leaves the store
+// silent still renders the generic localized message from `errorMessage`.
+const submitFailed = ref(false);
+
 function validate(): boolean {
   emailError.value = !email.value.trim()
     ? t('auth.emailRequired')
@@ -85,6 +89,7 @@ function validate(): boolean {
 
 async function handleSubmit(): Promise<void> {
   if (!validate()) return;
+  submitFailed.value = false;
   const ok = await auth.signup(email.value.trim(), username.value.trim(), password.value);
   if (ok) {
     emit('success');
@@ -98,14 +103,14 @@ async function handleSubmit(): Promise<void> {
       void router.push(homePath.value);
     }
   } else {
-    toasts.error(errorMessage.value);
+    submitFailed.value = true;
   }
 }
 </script>
 
 <template>
   <AuthCard :eyebrow="t('auth.signupEyebrow')" :title="t('auth.signupTitle')" :subtitle="t('auth.signupSubtitle')">
-    <p v-if="auth.error" class="signup__banner" role="alert">
+    <p v-if="submitFailed" class="signup__banner" role="alert">
       <Icon name="alert" class="signup__banner-icon" />
       <span>{{ errorMessage }}</span>
     </p>

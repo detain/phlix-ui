@@ -147,7 +147,9 @@ describe('SignupForm', () => {
     expect(push).toHaveBeenCalledWith('/app');
   });
 
-  it('shows an error banner + fires a toast when registration fails', async () => {
+  // R13-15: the inline banner is the SOLE failure surface — the duplicate
+  // error toast was removed (users saw the same string twice).
+  it('shows the error banner ONLY — no toast — when registration fails', async () => {
     const { w, auth, toasts } = mountForm();
     const toastErr = vi.spyOn(toasts, 'error');
     vi.spyOn(auth, 'signup').mockImplementation(async () => {
@@ -158,7 +160,7 @@ describe('SignupForm', () => {
     await submit(w);
     await flushPromises();
     expect(w.get('[role="alert"]').text()).toContain('Email already taken.');
-    expect(toastErr).toHaveBeenCalledWith('Email already taken.');
+    expect(toastErr).not.toHaveBeenCalledWith('Email already taken.');
   });
 
   // W4 error-code doctrine (mirroring LoginForm.test.ts): a registered wire code
@@ -179,7 +181,7 @@ describe('SignupForm', () => {
     const localized = ERROR_MESSAGES.es['auth.signups_disabled'];
     expect(w.get('[role="alert"]').text()).toContain(localized);
     expect(w.get('[role="alert"]').text()).not.toContain('Registration refused by server');
-    expect(toastErr).toHaveBeenCalledWith(localized);
+    expect(toastErr).not.toHaveBeenCalledWith(localized);
   });
 
   // End-to-end: a REAL rejected signup (fetch-level 403 `{error, code}` envelope)
@@ -216,7 +218,7 @@ describe('SignupForm', () => {
     expect(auth.errorCode).toBe('auth.signups_disabled'); // set by the store's catch, not the test
     expect(w.get('[role="alert"]').text()).toContain(localized);
     expect(w.get('[role="alert"]').text()).not.toContain('Registration refused by server');
-    expect(toastErr).toHaveBeenCalledWith(localized);
+    expect(toastErr).not.toHaveBeenCalledWith(localized);
   });
 
   it('resolves the error code against the English catalog when no locale is configured', async () => {
@@ -233,14 +235,17 @@ describe('SignupForm', () => {
     expect(w.get('[role="alert"]').text()).not.toContain('Registration refused by server');
   });
 
-  it('falls back to a generic toast when registration fails without a store error', async () => {
+  it('falls back to a generic banner when registration fails without a store error', async () => {
     const { w, auth, toasts } = mountForm();
     const toastErr = vi.spyOn(toasts, 'error');
     vi.spyOn(auth, 'signup').mockResolvedValue(false);
     await fillValid(w);
     await submit(w);
     await flushPromises();
-    expect(toastErr).toHaveBeenCalledWith('Registration failed.');
+    // The store stayed silent; the banner still renders the generic localized
+    // message, and nothing reaches the toast queue.
+    expect(w.get('[role="alert"]').text()).toContain('Registration failed.');
+    expect(toastErr).not.toHaveBeenCalled();
   });
 
   it('disables the submit button + shows the busy label while auth.loading', async () => {

@@ -104,7 +104,9 @@ describe('LoginForm', () => {
     expect(push).toHaveBeenCalledWith('/app/servers');
   });
 
-  it('shows an error banner + fires a toast when login fails', async () => {
+  // R13-15: the inline banner is the SOLE failure surface — the duplicate
+  // error toast was removed (users saw the same string twice).
+  it('shows the error banner ONLY — no toast — when login fails', async () => {
     const { w, auth, toasts } = mountForm();
     const toastErr = vi.spyOn(toasts, 'error');
     vi.spyOn(auth, 'login').mockImplementation(async () => {
@@ -117,7 +119,7 @@ describe('LoginForm', () => {
     await flushPromises();
     const banner = w.get('[role="alert"]');
     expect(banner.text()).toContain('Invalid email or password.');
-    expect(toastErr).toHaveBeenCalledWith('Invalid email or password.');
+    expect(toastErr).not.toHaveBeenCalledWith('Invalid email or password.');
   });
 
   // W4 error-code doctrine: a registered wire code localizes through the
@@ -138,7 +140,7 @@ describe('LoginForm', () => {
     const localized = ERROR_MESSAGES.es.unauthorized;
     expect(w.get('[role="alert"]').text()).toContain(localized);
     expect(w.get('[role="alert"]').text()).not.toContain('Invalid credentials');
-    expect(toastErr).toHaveBeenCalledWith(localized);
+    expect(toastErr).not.toHaveBeenCalledWith(localized);
   });
 
   // W4 review fix: the two tests above seed `auth.errorCode` directly, which is
@@ -169,7 +171,7 @@ describe('LoginForm', () => {
     expect(auth.errorCode).toBe('unauthorized'); // set by the store's catch, not the test
     expect(w.get('[role="alert"]').text()).toContain(localized);
     expect(w.get('[role="alert"]').text()).not.toContain('Invalid credentials');
-    expect(toastErr).toHaveBeenCalledWith(localized);
+    expect(toastErr).not.toHaveBeenCalledWith(localized);
   });
 
   it('resolves the error code against the English catalog when no locale is configured', async () => {
@@ -187,7 +189,7 @@ describe('LoginForm', () => {
     expect(w.get('[role="alert"]').text()).not.toContain('Invalid credentials');
   });
 
-  it('falls back to a generic toast when login fails without a store error', async () => {
+  it('falls back to a generic banner when login fails without a store error', async () => {
     const { w, auth, toasts } = mountForm();
     const toastErr = vi.spyOn(toasts, 'error');
     vi.spyOn(auth, 'login').mockResolvedValue(false); // resolves false, leaves auth.error null
@@ -195,7 +197,10 @@ describe('LoginForm', () => {
     await setPassword(w, 'pw');
     await submit(w);
     await flushPromises();
-    expect(toastErr).toHaveBeenCalledWith('Sign in failed.');
+    // The store stayed silent; the banner still renders the generic localized
+    // message, and nothing reaches the toast queue.
+    expect(w.get('[role="alert"]').text()).toContain('Sign in failed.');
+    expect(toastErr).not.toHaveBeenCalled();
   });
 
   it('does not render the oauth divider/region unless a #oauth slot is provided', () => {

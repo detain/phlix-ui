@@ -8,9 +8,11 @@
  * LoginForm (R4.1) — the redesigned sign-in card.
  *
  * Cinematic glass ticket-stub (AuthCard) with token-driven, accessible fields
- * (AuthField), inline validation, a top error banner AND an error toast on
- * failure, and a config-driven `#oauth` slot. The auth flow is unchanged:
- * `useAuthStore.login` -> on success emit `success` + route to the app home.
+ * (AuthField), inline validation, and a SINGLE top error banner on
+ * failure (R13-15: the old design showed the same message twice — banner +
+ * toast — so the toast is gone), and a config-driven `#oauth` slot. The auth
+ * flow is unchanged: `useAuthStore.login` -> on success emit `success` + route
+ * to the app home.
  */
 import { computed, inject, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -19,7 +21,6 @@ import AuthField from './auth/AuthField.vue';
 import Button from './ui/Button.vue';
 import Icon from './Icon.vue';
 import { useAuthStore } from '../stores/useAuthStore';
-import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
 import { errorCodeMessage } from '../i18n/errors';
 import { safeRedirect } from '../utils/safeRedirect';
@@ -28,7 +29,6 @@ import type { PhlixAppConfig } from '../app/types';
 const emit = defineEmits<{ success: [] }>();
 
 const auth = useAuthStore();
-const toasts = useToastStore();
 const router = useRouter();
 const route = useRoute();
 const { t } = useMessages();
@@ -56,6 +56,11 @@ const password = ref('');
 const identifierError = ref<string | null>(null);
 const passwordError = ref<string | null>(null);
 
+// R13-15: the inline banner is the ONLY failure surface. It gates on a
+// local flag (not `auth.error`) so a code-less failure that leaves the store
+// silent still renders the generic localized message from `errorMessage`.
+const submitFailed = ref(false);
+
 function validate(): boolean {
   identifierError.value = !identifier.value.trim() ? t('auth.identifierRequired') : null;
   passwordError.value = !password.value ? t('auth.passwordRequired') : null;
@@ -64,6 +69,7 @@ function validate(): boolean {
 
 async function handleSubmit(): Promise<void> {
   if (!validate()) return;
+  submitFailed.value = false;
   const ok = await auth.login(identifier.value.trim(), password.value);
   if (ok) {
     emit('success');
@@ -77,14 +83,14 @@ async function handleSubmit(): Promise<void> {
       void router.push(homePath.value);
     }
   } else {
-    toasts.error(errorMessage.value);
+    submitFailed.value = true;
   }
 }
 </script>
 
 <template>
   <AuthCard :eyebrow="t('auth.loginEyebrow')" :title="t('auth.loginTitle')" :subtitle="t('auth.loginSubtitle')">
-    <p v-if="auth.error" class="login__banner" role="alert">
+    <p v-if="submitFailed" class="login__banner" role="alert">
       <Icon name="alert" class="login__banner-icon" />
       <span>{{ errorMessage }}</span>
     </p>
