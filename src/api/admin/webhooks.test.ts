@@ -33,19 +33,20 @@ const sampleWebhook = {
 };
 
 describe('AdminWebhooksApi — event catalog', () => {
-  it('exposes 7 subscribable events (excludes webhook.test)', () => {
-    expect(SUBSCRIBABLE_EVENTS).toHaveLength(7);
+  it('exposes 10 subscribable events (excludes webhook.test)', () => {
+    expect(SUBSCRIBABLE_EVENTS).toHaveLength(10);
     expect(SUBSCRIBABLE_EVENTS).not.toContain('webhook.test');
   });
 
-  it('groups events into 5 categories', () => {
-    expect(WEBHOOK_EVENT_CATEGORIES).toHaveLength(5);
+  it('groups events into 6 categories', () => {
+    expect(WEBHOOK_EVENT_CATEGORIES).toHaveLength(6);
     expect(WEBHOOK_EVENT_CATEGORIES.map((c) => c.label)).toEqual([
       'Playback',
       'Library',
       'Downloads',
       'Recordings',
       'System',
+      'User',
     ]);
   });
 });

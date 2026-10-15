@@ -51,7 +51,13 @@ export interface TestResult {
 }
 
 /**
- * Event catalog — grouped by category for the checkbox UI.
+ * Event catalog — grouped by category for the checkbox UI. Mirrors the
+ * server-side single source of truth `Phlix\Webhooks\WebhookEventCatalog`
+ * (R5-03): the first five groups carry the wire-truth events from
+ * `phlix-shared/schemas/webhook-events.json`; the User group lists the
+ * user-dot events the server already emits but the shared schema does not
+ * yet name — widening that schema file is the phlix-shared cascade's job,
+ * and this picker stays ahead of it deliberately.
  * `webhook.test` is NOT user-subscribable (internal only, from the test button).
  */
 export const WEBHOOK_EVENT_CATEGORIES: ReadonlyArray<{
@@ -83,6 +89,14 @@ export const WEBHOOK_EVENT_CATEGORIES: ReadonlyArray<{
   {
     label: 'System',
     events: [{ id: 'alert', label: 'Alert' }],
+  },
+  {
+    label: 'User',
+    events: [
+      { id: 'user.login', label: 'User signed in' },
+      { id: 'user.logout', label: 'User signed out' },
+      { id: 'user.created', label: 'User created' },
+    ],
   },
 ]);
 

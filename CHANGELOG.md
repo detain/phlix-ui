@@ -1,3 +1,17 @@
+## Unreleased — SRV-SEC webhook vocabulary lane 2026-10-15 (R5-03)
+
+- **Webhook event picker gained the User group (`src/api/admin/webhooks.ts`).**
+  The server now emits through one canonical vocabulary pinned by
+  `Phlix\Webhooks\WebhookEventCatalog` (`phlix-server 88f557a8`): the emitter's
+  old media-dot names became the wire-truth playback-dot / library-dot names,
+  and the three live user-dot events (`user.login`, `user.logout`,
+  `user.created`) — emitted by the server but not yet named by
+  `phlix-shared/schemas/webhook-events.json` — are surfaced here so operators
+  can actually subscribe to them. Catalog pins moved 7 → 10 subscribable
+  events and 5 → 6 groups (`webhooks.test` still excluded). The dist bundle is
+  deliberately NOT rebuilt in this lane: the vendored server/hub SPA picks the
+  group up at the next tag/cascade.
+
 ## Unreleased — review-fix lane 2026-10-14 (UI-1/UI-2): socket seam, error-envelope
 ### precedence, confirm/consistency UX sweep, copy truth
 
