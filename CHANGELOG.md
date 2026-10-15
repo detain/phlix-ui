@@ -1,6 +1,6 @@
 ## 0.99.11 - 2026-10-15
 
-### Release — 19 commits since `v0.99.10`: the review-fix program — socket seam, error-envelope precedence, member playlists, one-voice UX, webhook User group, copy truth
+### Release — 22 commits since `v0.99.10` (excl. the release-bump commit): the review-fix program — socket seam, error-envelope precedence, member playlists (+ manageability gating), one-voice UX, webhook User group, copy truth
 
 - **The `__PHLIX__.wsUrl` / `wsPath` socket seam is consumed (`7c0bfd79`).** Hub
   (`phlix-hub 6175184`) can inject an explicit WS authority (env `HUB_WS_URL`)
@@ -24,6 +24,26 @@
   `PlaylistPickerModal` — the MediaCard add-to-playlist flow is now
   pick-existing-or-create with an undo path for the create→add leg-2 failure
   (R13-01/R13-10).
+- **Playlist MANAGEABILITY gating + picker footer nav (`92090d0a`, review
+  findings #1/#2).** The server's Option-A law says visibility ≠ modifiability:
+  members see own rows plus legacy `created_by IS NULL` heritage rows, but
+  writes (update/delete/item add+remove) are owner-or-admin only — NULL rows
+  are admin-manage-only and foreign/unowned writes 404. The SPA had ignored
+  `created_by`: Delete/Remove rendered on heritage rows and the picker offered
+  them as add targets (guaranteed dead-end clicks). New pure
+  `src/utils/playlistPermissions.ts` (`canManagePlaylist`) is the single rule;
+  the detail page hides both affordances behind it (with an honest read-only
+  note and gated empty-state copy), and the picker renders unmanageable rows
+  as DISABLED “(shared — read-only)” options — visible, never selectable,
+  never pre-selected, refused locally with zero requests. The picker footer
+  gains the “Manage playlists →” RouterLink (rendered only when the route is
+  registered), making `/playlists` reachable from the surface that created the
+  need; the `createPhlixApp` route comment now names the real entry points.
+  Admin `SettingsPage` leave-guard keeps `window.confirm` by documented
+  decision (finding #3): the shared ConfirmDialog is event-driven, and
+  grafting it into `onBeforeRouteLeave` would need a pending-resolver state
+  machine for a dialog seen once; the synchronous native primitive matches
+  the guard's shape and the existing spy pin.
 - **Confirm/danger/one-voice UX sweep.** Shared `ConfirmDialog` replaces every
   remaining `window.confirm` on user pages; profile/peer deletes and the
   one-click LibrariesPage "Prune removed" gained naming confirms; eleven
@@ -59,17 +79,20 @@
 - **README status/pin tag corrected (`bdfaf2fc`, docs only).** Install pins
   moved `v0.99.1` → `v0.99.10` and the SWR-cache run-on was split (R6-20).
 - **Artifacts.** `dist/` is regenerated and dist-current at this tag
-  (`1baec2e3` covers `86fdb906..bdfaf2fc`; the new lazily-loaded route chunks —
-  playlists, ConfirmDialog, NotFound, socketHint — plus the re-hashed
-  i18n/error catalogs churned the content-hash graph: 797 drift entries,
-  394 new / 375 deleted / 28 modified). Two clean-tree builds were
-  byte-identical (aggregate dist md5 `3672c3f9ea0d44e6fee9ea4f66f3ccb4`) and
-  `dist:check` reports zero drift at this commit; the committed bundles embed
-  no version string, so this version-field bump changes no artifact byte.
-  Suite baseline at tag: **6 263 passed | 10 skipped** (308 files) —
-  `+61` exact vs `v0.99.10`: socketHint, playlist pages + picker,
+  (re-cut lane: `20fcf52b` covers the manageability fix `92090d0a` on top of
+  the earlier `1baec2e3` (`86fdb906..bdfaf2fc`) build — playlist/SFC chunks
+  rehashed: 68 entries moved, 42 renames / 11 new / 10 deleted / 5 modified).
+  Two clean-tree builds were byte-identical (aggregate dist md5
+  `d91f116ddf6ddca4f3790cbd3cf8767d`) and `dist:check` reports zero drift at
+  this commit (880 tracked files, 9 published entry points); the committed
+  bundles embed no version string, so the version-field bump changes no
+  artifact byte.
+  Suite baseline at tag: **6 277 passed | 10 skipped** (309 files) —
+  `+75` exact vs `v0.99.10`: socketHint, playlist pages + picker,
   ConfirmDialog, 404 page, the webhook catalog 18-in-suite pins, the
-  extractError precedence re-pin, and the copy re-pins.
+  extractError precedence re-pin, the copy re-pins, and the manageability
+  law (+14: `playlistPermissions` truth table ×6, detail-page gating ×4,
+  picker gating + footer-nav ×4).
 - **Cascade arming.** Tagging `v0.99.11` makes the hub S181 ui-pin grader
   report the four `@phlix/ui` pinners (server, hub, tizen, windows) STALE-1.
   This release carries the socket seam, playlist pages and webhook User group
