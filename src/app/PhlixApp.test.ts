@@ -684,9 +684,9 @@ describe('PhlixApp — Who’s-watching gate after login (S82)', () => {
 
   // S82 fix r1 (M1) — the screen's loading/error+Retry panes were unreachable for
   // accounts whose PASSIVE boot read failed (gateOpen requires loaded), which made
-  // "Switch Profile" a dead click precisely on the accounts needing recovery. The
+  // "Switch profile" a dead click precisely on the accounts needing recovery. The
   // `arming` flag now mounts the surface on explicit demand even while !loaded.
-  it('arms the recovery surface after a failed boot read — Switch Profile shows error + Retry', async () => {
+  it('arms the recovery surface after a failed boot read — Switch profile shows error + Retry', async () => {
     localStorage.setItem('access_token', 'tok');
     let profilesOnline = false;
     const fetchMock = vi.fn((u: unknown, init?: { method?: string }) => {

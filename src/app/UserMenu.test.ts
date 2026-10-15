@@ -72,7 +72,7 @@ describe('UserMenu — signed in', () => {
     expect(panel.text()).toContain('Ada');
     expect(panel.text()).toContain('Settings');
     expect(panel.text()).toContain('Sign out');
-    // Menu order (S82): History, Switch Profile, Manage Profiles, Settings, Sign out.
+    // Menu order (S82): History, Switch profile, Manage profiles, Settings, Sign out.
     await panel.findAll('.usermenu__item')[3].trigger('click');
     expect(push).toHaveBeenCalledWith('/app/settings');
   });
@@ -125,8 +125,8 @@ describe('UserMenu — signed in', () => {
 });
 
 // S82 — the two new profile entries. They live in the signed-in panel alongside
-// History / Settings / Sign out: "Switch Profile" re-arms the Who's-watching
-// gate (and closes the menu), "Manage Profiles" routes to <base>/profiles.
+// History / Settings / Sign out: "Switch profile" re-arms the Who's-watching
+// gate (and closes the menu), "Manage profiles" routes to <base>/profiles.
 describe('UserMenu — profile entries (S82)', () => {
   beforeEach(() => {
     // The profile store lazily reads the list; answer with one honest row so
@@ -148,17 +148,17 @@ describe('UserMenu — profile entries (S82)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('offers Switch Profile and Manage Profiles in the signed-in panel', async () => {
+  it('offers Switch profile and Manage profiles in the signed-in panel', async () => {
     const { w } = mountMenu(true);
     await w.get('.usermenu__trigger').trigger('click');
     const panel = w.get('.usermenu__panel');
     expect(panel.find('[data-testid="usermenu-switch-profile"]').exists()).toBe(true);
     expect(panel.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(true);
-    expect(panel.text()).toContain('Switch Profile');
-    expect(panel.text()).toContain('Manage Profiles');
+    expect(panel.text()).toContain('Switch profile');
+    expect(panel.text()).toContain('Manage profiles');
   });
 
-  it('Switch Profile re-opens the Who’s-watching gate and closes the menu', async () => {
+  it('Switch profile re-opens the Who’s-watching gate and closes the menu', async () => {
     const { w } = mountMenu(true);
     const profiles = useProfileStore();
     profiles.acknowledgeChoice();
@@ -169,7 +169,7 @@ describe('UserMenu — profile entries (S82)', () => {
     expect(w.find('.usermenu__panel').exists()).toBe(false); // menu closed on pick
   });
 
-  it('Manage Profiles routes to the profiles page under the router base', async () => {
+  it('Manage profiles routes to the profiles page under the router base', async () => {
     const { w, push } = mountMenu(true);
     await w.get('.usermenu__trigger').trigger('click');
     await w.get('[data-testid="usermenu-manage-profiles"]').trigger('click');
@@ -217,8 +217,8 @@ describe('UserMenu — profile arms respect the feature flag (S462)', () => {
     const panel = w.get('.usermenu__panel');
     expect(panel.find('[data-testid="usermenu-switch-profile"]').exists()).toBe(false);
     expect(panel.find('[data-testid="usermenu-manage-profiles"]').exists()).toBe(false);
-    expect(panel.text()).not.toContain('Switch Profile');
-    expect(panel.text()).not.toContain('Manage Profiles');
+    expect(panel.text()).not.toContain('Switch profile');
+    expect(panel.text()).not.toContain('Manage profiles');
     // Collateral check: the rest of the menu is the plain signed-in list.
     const items = panel.findAll('.usermenu__item');
     expect(items).toHaveLength(3);

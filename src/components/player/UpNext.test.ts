@@ -41,7 +41,7 @@ describe('UpNext', () => {
 
   it('shows the countdown text + ring while counting, with a depleting dashoffset', () => {
     const w = mount(UpNext, { props: { media: media(), remaining: 4, total: 8, counting: true } });
-    expect(w.find('.upnext__cd').text()).toBe('Starts in 4s');
+    expect(w.find('.upnext__cd').text()).toBe('Starts in 4 seconds');
     const ring = w.find('svg.upnext__ring');
     expect(ring.exists()).toBe(true);
     const arc = ring.findAll('circle')[1];
@@ -51,7 +51,7 @@ describe('UpNext', () => {
 
   it('never shows a negative "Starts in" value', () => {
     const w = mount(UpNext, { props: { media: media(), remaining: -2, total: 8, counting: true } });
-    expect(w.find('.upnext__cd').text()).toBe('Starts in 0s');
+    expect(w.find('.upnext__cd').text()).toBe('Starts in 0 seconds');
   });
 
   it('is static (no ring, no countdown text) when not counting (autoplay off)', () => {

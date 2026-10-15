@@ -1899,11 +1899,11 @@ describe('Player — resume / up-next / transcode (R3.8)', () => {
     await nextTick();
     expect(w.find('.upnext').exists()).toBe(true);
     expect(w.find('.upnext__title').text()).toBe('Arrival');
-    expect(w.find('.upnext__cd').text()).toBe('Starts in 8s');
+    expect(w.find('.upnext__cd').text()).toBe('Starts in 8 seconds');
 
     vi.advanceTimersByTime(1000);
     await nextTick();
-    expect(w.find('.upnext__cd').text()).toBe('Starts in 7s');
+    expect(w.find('.upnext__cd').text()).toBe('Starts in 7 seconds');
 
     vi.advanceTimersByTime(7000); // reaches 0 → playNext()
     await nextTick();

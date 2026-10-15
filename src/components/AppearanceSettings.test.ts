@@ -166,7 +166,7 @@ describe('AppearanceSettings — appearance panel', () => {
     expect(btn.text()).toContain('Click again');
     // R6.5a — the armed state is mirrored into the polite live region so a screen
     // reader announces it (a button's own accessible-name change isn't reliably re-read).
-    expect(status().text()).toBe('Click again to confirm reset');
+    expect(status().text()).toBe('Click again to confirm the reset');
     expect(prefs.density).toBe('compact'); // not reset yet
     await btn.trigger('click'); // confirm
     expect(prefs.density).toBe('comfortable'); // back to default

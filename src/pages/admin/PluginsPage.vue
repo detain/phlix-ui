@@ -1365,7 +1365,7 @@ onMounted(() => {
       <div v-else class="admin-plugins__config-body" aria-live="polite">
         <!--
           OAuth redirect/callback URL. Scrobbler-style plugins cannot be
-          authorised until this exact string is pasted into the provider's own
+          authorized until this exact string is pasted into the provider's own
           app configuration, and this is the only place it is surfaced — so it
           renders above the form whether or not the plugin has settings.
         -->

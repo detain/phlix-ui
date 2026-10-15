@@ -1971,7 +1971,7 @@ onBeforeUnmount(() => {
             :active-height="tc.activeLevelHeight.value"
             @select="onSelectQuality"
           />
-          <!-- Direct Stream badge — shown in place of QualityMenu when playing a
+          <!-- Direct stream badge — shown in place of QualityMenu when playing a
                direct (non-transcoded) file so the user knows quality is fixed. -->
           <span v-if="!transcodeNeeded" class="player__direct-badge" :title="t('player.qualityDirectStream')">
             {{ t('player.directStream') }}
@@ -2453,7 +2453,7 @@ onBeforeUnmount(() => {
 .player__back {
   margin-top: 2px;
 }
-/* Direct Stream badge — replaces QualityMenu on direct-play sources */
+/* Direct stream badge — replaces QualityMenu on direct-play sources */
 .player__direct-badge {
   display: inline-flex;
   align-items: center;

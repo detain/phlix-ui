@@ -324,7 +324,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       // S287: the SAME tail as a join by bare id, socket included.
       adoptJoinedGroup(room.id, await api.joinRoom(room.id, memberName), memberName);
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to create room';
+      error.value = e instanceof Error ? e.message : 'Failed to create the room';
       throw e;
     } finally {
       isLoading.value = false;
@@ -354,7 +354,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       const memberName = resolveMemberName();
       adoptJoinedGroup(roomId, await api.joinRoom(roomId, memberName), memberName);
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to join room';
+      error.value = e instanceof Error ? e.message : 'Failed to join the room';
       throw e;
     } finally {
       isLoading.value = false;
@@ -380,7 +380,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       currentSession.value = null;
       members.value = [];
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to leave room';
+      error.value = e instanceof Error ? e.message : 'Failed to leave the room';
       throw e;
     } finally {
       isLoading.value = false;

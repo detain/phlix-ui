@@ -1,3 +1,52 @@
+## Unreleased — UI copy-polish lane 2026-10-15 (R15 case/article/spelling sweep)
+
+- **Sentence case + articles on user-facing labels (`src/i18n/messages.ts`).**
+  R15-13 `player.skipLabelSkipCredits` 'Skip Credits' → 'Skip credits' (sibling
+  `skipLabelCredits` set the case); R15-14 `shell.switchProfile` /
+  `shell.manageProfiles` / `profiles.manageTitle` → 'Switch profile' /
+  'Manage profiles'; R15-16 `player.qualityDirectStream` → 'Direct stream — …'
+  (sibling prose is sentence case); R15-19 `settings.resetConfirm` → 'Click
+  again to confirm the reset'. All changes are casing/article-level, so the six
+  locale bundles ride untouched and the exact-key / placeholder / English-leak
+  parity gates in `locales.test.ts` hold (verified: suite green with zero bundle
+  edits).
+- **R15-15 duration-spelling unified at the prose site.** `player.startsIn`
+  'Starts in {seconds}s' → 'Starts in {seconds} seconds' (Up-next card body
+  text); `music.crossfadeSeconds` keeps the compact '{seconds}s' form — it
+  adorns a slider value, the badge-exception in the item. Component pins
+  re-pinned in `Player.test.ts` / `UpNext.test.ts`.
+- **R15-18 syncplay fallback errors are full sentences.**
+  `syncplay.errorCreate/errorJoin/errorLeave` gain the article ('Failed to
+  create the room' …). The noun stays `room` — the room-vs-watch-group split
+  with `errors.ts` stays parked pending the owner ruling (R15-04; nothing in
+  this lane moved either side). The store's hardcoded non-Error fallbacks in
+  `useSyncPlayStore.ts` mirror the catalog copy and moved with it;
+  `useSyncPlayStore.actions.test.ts` re-pinned.
+- **R15-20 artists keys documented, not deduped.** `music.noArtists` (grid
+  empty-state) and `music.artistsNotFound` (`MusicArtistsPage` first-load
+  failure line) share today's English text by coincidence of wording, not of
+  meaning — docblock comments now record the distinction on both keys.
+- **R15-31/R15-32 error-catalog copy.** `invalid_payload` says 'request data'
+  instead of 'payload' across ALL seven catalogs (en/es/fr/de/it/pt_BR/ja —
+  each in its own language's term for request data); `profile.use_switch` EN
+  drops the dangling 'instead' (the six translations carry it non-danglingly
+  and stay).
+- **R15-30 UK spellings on the UI side.** `McpTokensPage.vue` scope warning
+  'authorise' → 'authorize', `admin/PluginsPage.vue` template comment +
+  `admin/helpLinks.ts` services help-text 'authoris*' → 'authoriz*' (no test
+  pinned any of these; the mirrored prose in `PluginsPage.test.ts` and the
+  `Player.vue` direct-stream badge comments followed). API-layer docblocks in
+  `src/api/mcp-tokens.ts` / `src/api/admin/services.ts` keep their wording —
+  developer prose, not shipped copy.
+- **Verification items (no code change).** R13-15 double-error fix confirmed
+  landed (`94a2007b`: `submitFailed`-gated banner in LoginForm/SignupForm,
+  toast removed). R12-06 `extractError` confirmed landed (`38c4fb8f`:
+  message-preferred, machine-token rejection).
+- **Dist deliberately NOT rebuilt** — the endgame cascade owns artifact regen.
+  Gates: `vue-tsc --noEmit` 0, eslint 0 on all touched files,
+  `vitest run src/i18n` + the eight affected component/store suites green
+  (13 files / 582 tests).
+
 ## Unreleased — SRV-SEC webhook vocabulary lane 2026-10-15 (R5-03)
 
 - **Webhook event picker gained the User group (`src/api/admin/webhooks.ts`).**

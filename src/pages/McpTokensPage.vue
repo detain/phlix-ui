@@ -467,7 +467,7 @@ onMounted(() => loadTokens(true));
             </span>
           </label>
           <p v-if="!canSubmit" class="mcp-scopes__warn">
-            Select at least one scope — a token with none would authenticate but authorise
+            Select at least one scope — a token with none would authenticate but authorize
             nothing, so the hub refuses it.
           </p>
         </fieldset>

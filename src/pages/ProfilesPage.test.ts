@@ -1,5 +1,5 @@
 /**
- * S82 — Manage Profiles screen tests: three-state rendering off the real list
+ * S82 — Manage profiles screen tests: three-state rendering off the real list
  * endpoint, inline rename (PUT), guarded delete (server 409 surfaced), create
  * (POST → re-list), and the "use" switch path. No local-only writes anywhere:
  * every assertion checks the request AND the server-shaped row that follows.

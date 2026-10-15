@@ -67,15 +67,15 @@ export const DEFAULT_MESSAGES = {
     accountNamed: 'Account: {name}',
     signOut: 'Sign out',
     signIn: 'Sign in',
-    switchProfile: 'Switch Profile',
-    manageProfiles: 'Manage Profiles',
+    switchProfile: 'Switch profile',
+    manageProfiles: 'Manage profiles',
   },
   // S82 — the Who's-watching gate + the self-service profiles surface.
   profiles: {
     whoIsWatching: "Who's watching?",
     loading: 'Loading profiles…',
     active: 'Active',
-    manageTitle: 'Manage Profiles',
+    manageTitle: 'Manage profiles',
     manageHint: 'Pick a profile to switch to it, or rename and delete the ones you have.',
     use: 'Switch to',
     add: 'Add profile',
@@ -201,7 +201,7 @@ export const DEFAULT_MESSAGES = {
     skipOutro: 'Skip outro',
     skipLabelIntro: 'Intro',
     skipLabelCredits: 'End credits',
-    skipLabelSkipCredits: 'Skip Credits',
+    skipLabelSkipCredits: 'Skip credits',
     // Center-cluster ±10s transport (AD-14)
     seekBackward: 'Back 10 seconds',
     seekForward: 'Forward 10 seconds',
@@ -236,7 +236,7 @@ export const DEFAULT_MESSAGES = {
     qualityAutoActive: 'Auto ({label})',
     qualityOriginal: 'Original ({height}p)',
     directStream: 'Direct',
-    qualityDirectStream: 'Direct Stream — quality is determined by the source file',
+    qualityDirectStream: 'Direct stream — quality is determined by the source file',
     // Captions menu
     captionsOn: 'Captions (on)',
     captionsOff: 'Captions (off)',
@@ -294,7 +294,7 @@ export const DEFAULT_MESSAGES = {
     startOver: 'Start over',
     // Up-next card
     upNext: 'Up next',
-    startsIn: 'Starts in {seconds}s',
+    startsIn: 'Starts in {seconds} seconds',
     playNow: 'Play now',
     cancel: 'Cancel',
     // Transcode "preparing" overlay (server is transcoding to HLS on demand)
@@ -367,9 +367,9 @@ export const DEFAULT_MESSAGES = {
     cancel: 'Cancel',
     loading: 'Loading…',
     noRooms: 'No public rooms available',
-    errorCreate: 'Failed to create room',
-    errorJoin: 'Failed to join room',
-    errorLeave: 'Failed to leave room',
+    errorCreate: 'Failed to create the room',
+    errorJoin: 'Failed to join the room',
+    errorLeave: 'Failed to leave the room',
     yourRole: 'You are {role}',
     roleOwner: 'Owner',
     roleModerator: 'Moderator',
@@ -397,6 +397,12 @@ export const DEFAULT_MESSAGES = {
     previous: 'Previous track',
     next: 'Next track',
     seek: 'Seek',
+    // R15-20: `noArtists` and `music.artistsNotFound` share today's English text
+    // but are NOT duplicates — different roles, different futures. `noArtists` is
+    // the grid EMPTY state (the request succeeded, the library holds none);
+    // `artistsNotFound` is `MusicArtistsPage`'s FIRST-load FAILURE line rendered
+    // inside the listing area (see that page's docblock). They are kept apart so
+    // a re-word of one role never rewrites the other.
     noArtists: 'No artists found',
     noAlbums: 'No albums found',
     noTracks: 'No tracks found',
@@ -476,6 +482,8 @@ export const DEFAULT_MESSAGES = {
     // Artist/album pages
     albumNotFound: 'Album not found',
     artistNotFound: 'Artist not found',
+    // R15-20: first-load-FAILURE line for the artists route — deliberately its
+    // own key, not the `noArtists` empty-state string (see the note at `music.noArtists`).
     artistsNotFound: 'No artists found',
     artistsDescription: 'Browse all artists in your library',
     trackListing: 'Track listing',
@@ -515,7 +523,7 @@ export const DEFAULT_MESSAGES = {
     captionEdge: 'Caption edge',
     // Reset control
     resetAll: 'Reset all preferences',
-    resetConfirm: 'Click again to confirm reset',
+    resetConfirm: 'Click again to confirm the reset',
     resetDone: 'Preferences reset to defaults.',
     // SettingsPage chrome (page heading + tab strip)
     preferences: 'Preferences',

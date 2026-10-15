@@ -1475,7 +1475,7 @@ describe('Admin PluginsPage — configure: field help links', () => {
  * OAuth redirect URL.
  *
  * `serializeDetail()` has emitted `redirect_url` all along. A scrobbler plugin
- * (Trakt, Last.fm) cannot be authorised until that exact string is pasted into
+ * (Trakt, Last.fm) cannot be authorized until that exact string is pasted into
  * the provider's own application settings, and this modal is the only surface
  * that reveals it — so losing it would leave admins with no way to discover it.
  */

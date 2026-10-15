@@ -121,7 +121,7 @@ export const adminPageHelp = {
     links: [doc('integrations/trakt', 'Trakt.tv'), doc('integrations/lastfm', 'Last.fm Scrobbling')],
     details:
       'Connect stays greyed out until that service’s API credentials are saved under Settings, ' +
-      'because the sign-in flow cannot start without them. Connecting authorises Phlix to send ' +
+      'because the sign-in flow cannot start without them. Connecting authorizes Phlix to send ' +
       'your watch or listen history to a third party; disconnecting stops future scrobbles but ' +
       'does not retract anything already sent.',
   },
