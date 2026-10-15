@@ -28,7 +28,7 @@ Vue app.
   reduced-motion, an i18n-readiness seam.
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
-> **Status:** `v0.99.1`. Pre-1.0, so minor releases may include breaking changes. See
+> **Status:** `v0.99.10`. Pre-1.0, so minor releases may include breaking changes. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
 
 ---
@@ -59,7 +59,7 @@ Vue app.
 // package.json
 {
   "dependencies": {
-    "@phlix/ui": "github:detain/phlix-ui#v0.99.1"
+    "@phlix/ui": "github:detain/phlix-ui#v0.99.10"
   }
 }
 ```
@@ -439,7 +439,7 @@ The two patterns are complementary: timestamp throttling limits how often the me
 
 **Stale-While-Revalidate Item Cache:**
 
-The media-detail and player pages share a module-level singleton item cache (`useMediaItemCache`, 60 s TTL) so navigating `browse → detail → player → back` reuses the already-fetched item and renders instantly, refreshing in the background when the entry is stale (and serving the stale copy if the refresh fails). Keep such a cache in its **own module** — a `const` declared at the top of `<script setup>` is recompiled into `setup()` and recreated on every mount, so it would cache nothing across navigations.
+The media-detail and player pages share a module-level singleton item cache (`useMediaItemCache`, 60 s TTL). Navigating `browse → detail → player → back` reuses the fetched item and renders instantly; a stale entry refreshes in the background, and a failed refresh still serves the stale copy. Keep such a cache in its **own module** — a `const` declared at the top of `<script setup>` is recompiled into `setup()` and recreated on every mount, so it would cache nothing across navigations.
 
 **Debounced Preference Persistence:**
 
