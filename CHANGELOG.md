@@ -1,89 +1,26 @@
-## Unreleased — UI copy-polish lane 2026-10-15 (R15 case/article/spelling sweep)
+## 0.99.11 - 2026-10-15
 
-- **Sentence case + articles on user-facing labels (`src/i18n/messages.ts`).**
-  R15-13 `player.skipLabelSkipCredits` 'Skip Credits' → 'Skip credits' (sibling
-  `skipLabelCredits` set the case); R15-14 `shell.switchProfile` /
-  `shell.manageProfiles` / `profiles.manageTitle` → 'Switch profile' /
-  'Manage profiles'; R15-16 `player.qualityDirectStream` → 'Direct stream — …'
-  (sibling prose is sentence case); R15-19 `settings.resetConfirm` → 'Click
-  again to confirm the reset'. All changes are casing/article-level, so the six
-  locale bundles ride untouched and the exact-key / placeholder / English-leak
-  parity gates in `locales.test.ts` hold (verified: suite green with zero bundle
-  edits).
-- **R15-15 duration-spelling unified at the prose site.** `player.startsIn`
-  'Starts in {seconds}s' → 'Starts in {seconds} seconds' (Up-next card body
-  text); `music.crossfadeSeconds` keeps the compact '{seconds}s' form — it
-  adorns a slider value, the badge-exception in the item. Component pins
-  re-pinned in `Player.test.ts` / `UpNext.test.ts`.
-- **R15-18 syncplay fallback errors are full sentences.**
-  `syncplay.errorCreate/errorJoin/errorLeave` gain the article ('Failed to
-  create the room' …). The noun stays `room` — the room-vs-watch-group split
-  with `errors.ts` stays parked pending the owner ruling (R15-04; nothing in
-  this lane moved either side). The store's hardcoded non-Error fallbacks in
-  `useSyncPlayStore.ts` mirror the catalog copy and moved with it;
-  `useSyncPlayStore.actions.test.ts` re-pinned.
-- **R15-20 artists keys documented, not deduped.** `music.noArtists` (grid
-  empty-state) and `music.artistsNotFound` (`MusicArtistsPage` first-load
-  failure line) share today's English text by coincidence of wording, not of
-  meaning — docblock comments now record the distinction on both keys.
-- **R15-31/R15-32 error-catalog copy.** `invalid_payload` says 'request data'
-  instead of 'payload' across ALL seven catalogs (en/es/fr/de/it/pt_BR/ja —
-  each in its own language's term for request data); `profile.use_switch` EN
-  drops the dangling 'instead' (the six translations carry it non-danglingly
-  and stay).
-- **R15-30 UK spellings on the UI side.** `McpTokensPage.vue` scope warning
-  'authorise' → 'authorize', `admin/PluginsPage.vue` template comment +
-  `admin/helpLinks.ts` services help-text 'authoris*' → 'authoriz*' (no test
-  pinned any of these; the mirrored prose in `PluginsPage.test.ts` and the
-  `Player.vue` direct-stream badge comments followed). API-layer docblocks in
-  `src/api/mcp-tokens.ts` / `src/api/admin/services.ts` keep their wording —
-  developer prose, not shipped copy.
-- **Verification items (no code change).** R13-15 double-error fix confirmed
-  landed (`94a2007b`: `submitFailed`-gated banner in LoginForm/SignupForm,
-  toast removed). R12-06 `extractError` confirmed landed (`38c4fb8f`:
-  message-preferred, machine-token rejection).
-- **Dist deliberately NOT rebuilt** — the endgame cascade owns artifact regen.
-  Gates: `vue-tsc --noEmit` 0, eslint 0 on all touched files,
-  `vitest run src/i18n` + the eight affected component/store suites green
-  (13 files / 582 tests).
+### Release — 19 commits since `v0.99.10`: the review-fix program — socket seam, error-envelope precedence, member playlists, one-voice UX, webhook User group, copy truth
 
-## Unreleased — SRV-SEC webhook vocabulary lane 2026-10-15 (R5-03)
-
-- **Webhook event picker gained the User group (`src/api/admin/webhooks.ts`).**
-  The server now emits through one canonical vocabulary pinned by
-  `Phlix\Webhooks\WebhookEventCatalog` (`phlix-server 88f557a8`): the emitter's
-  old media-dot names became the wire-truth playback-dot / library-dot names,
-  and the three live user-dot events (`user.login`, `user.logout`,
-  `user.created`) — emitted by the server but not yet named by
-  `phlix-shared/schemas/webhook-events.json` — are surfaced here so operators
-  can actually subscribe to them. Catalog pins moved 7 → 10 subscribable
-  events and 5 → 6 groups (`webhooks.test` still excluded). The dist bundle is
-  deliberately NOT rebuilt in this lane: the vendored server/hub SPA picks the
-  group up at the next tag/cascade.
-
-## Unreleased — review-fix lane 2026-10-14 (UI-1/UI-2): socket seam, error-envelope
-### precedence, confirm/consistency UX sweep, copy truth
-
-- **R12-02 — the `__PHLIX__.wsUrl` / `wsPath` socket seam is consumed (`7c0bfd79`).**
-  Hub (`phlix-hub 6175184`) can now inject an explicit WS authority (env
-  `HUB_WS_URL`, no path) and path (`HUB_WS_PATH`) into `window.__PHLIX__`;
-  `buildHubRelayUrl` and syncplay's `buildWsUrl` prefer a valid hint over the
-  hardcoded `:8804` / `:501`-era `:8097` derivations, falling back byte-identically
-  when absent/null/malformed (new `src/api/socketHint.ts` grammar; SSR-safe).
-  https pages with no seam still escalate to `wss:` — that failure now surfaces as
-  documented status callbacks, not silence (see R12-07).
-- **R12-06 — error-envelope split-brain closed (`38c4fb8f`, re-pin `aa3c6d69`).**
+- **The `__PHLIX__.wsUrl` / `wsPath` socket seam is consumed (`7c0bfd79`).** Hub
+  (`phlix-hub 6175184`) can inject an explicit WS authority (env `HUB_WS_URL`)
+  and path (env `HUB_WS_PATH`) into `window.__PHLIX__`; `buildHubRelayUrl` and
+  syncplay's `buildWsUrl` now prefer a valid hint over the hardcoded `:8804` /
+  `:8097` derivations, falling back byte-identically when absent, null or
+  malformed (new `src/api/socketHint.ts` grammar, SSR-safe). https pages with
+  no seam still escalate to `wss:`. The embedded syncplay client no longer
+  writes to the host's console — all eight lifecycle logs route through an
+  injectable `setSyncPlayLogger()` (default no-op, R12-07).
+- **Error-envelope split-brain closed (`38c4fb8f`, re-pin `aa3c6d69`).**
   `extractError` no longer lets a machine token in the `error` slot
-  (`missing_identity_id`, `profile.last_profile`, …) outrank human text: with both
-  slots present `message` wins; a code-shaped token first tries the contracts
-  catalog (W4 localization doctrine), then `message`, and only then surfaces raw.
-  The S465 "show the code verbatim" pins in ProfilesPage/useProfileStore flipped to
-  the new law (zero runtime consumers branch on the surfaced string).
-- **R12-07 — the embedded syncplay client no longer writes to the host's console
-  (`7c0bfd79`).** All eight lifecycle logs route through an injectable
-  `setSyncPlayLogger()` (default no-op).
+  (`missing_identity_id`, `profile.last_profile`, …) outrank human text: with
+  both slots present `message` wins; a code-shaped token first tries the
+  contracts catalog (W4 localization doctrine), then `message`, and only then
+  surfaces raw. The S465 "show the code verbatim" pins in
+  ProfilesPage/useProfileStore flipped to the new law (zero runtime consumers
+  branch on the surfaced string).
 - **Member playlists go live (`86fdb906`).** `/app/playlists` list + detail
-  (rename, remove item, delete-with-confirm), nav entry, and a shared
+  (rename, remove item, delete-with-confirm), a nav entry, and a shared
   `PlaylistPickerModal` — the MediaCard add-to-playlist flow is now
   pick-existing-or-create with an undo path for the create→add leg-2 failure
   (R13-01/R13-10).
@@ -91,25 +28,53 @@
   remaining `window.confirm` on user pages; profile/peer deletes and the
   one-click LibrariesPage "Prune removed" gained naming confirms; eleven
   destructive confirm buttons across nine admin pages moved to the `danger`
-  variant (R13-04/05/06/13/14, `abc1de32`, `074ace39`). Login/signup show their
-  failure once — the duplicate error toast is gone (R13-15, `94a2007b`).
-  Admin SettingsPage guards dirty edits (route-leave + beforeunload) and rejects
-  empty/NaN numerics before the wire (R13-02/11, `11231c1a`); UsersPage unifies
-  Enter/Save through one validated submit (R13-09, `c8916e8c`); the catch-all
-  route stops lying about "Shared UI loading…" (R13-08, `d83589bb`); dead media
-  chips stop faking clickability (R13-12, `a12a3213`); the CollectionsPage
-  create form picks a library from the store instead of a prefilled raw id
-  (R13-07, `f3d26add`); passkey registration dropped its `cross-platform`
-  lock-in, explains cancellations, uses the real user identity, and nicknames
-  credentials (R13-03, `37f942b8`).
-- **Copy truth, mirrored per locale law (`5473a42c`).**
+  variant (R13-04/05/06/13/14, `abc1de32`, `074ace39`). Login/signup show
+  their failure once — the duplicate error toast is gone (R13-15, `94a2007b`).
+  Admin SettingsPage guards dirty edits (route-leave + beforeunload) and
+  rejects empty/NaN numerics before the wire (R13-02/11, `11231c1a`);
+  UsersPage unifies Enter/Save through one validated submit (R13-09,
+  `c8916e8c`); the catch-all route renders an honest 404 with deep-link-safe
+  back navigation (R13-08, `d83589bb`); dead media chips stop faking
+  clickability (R13-12, `a12a3213`); the CollectionsPage create form picks a
+  library from the store instead of a prefilled raw id (R13-07, `f3d26add`);
+  passkey registration dropped its `cross-platform` lock-in, explains
+  cancellations, uses the real user identity, and nicknames credentials
+  (R13-03, `37f942b8`).
+- **Webhook event picker gained the User group (`09095f55`).** The server
+  emits through one canonical vocabulary pinned by
+  `Phlix\Webhooks\WebhookEventCatalog` (`phlix-server 88f557a8`); the three
+  live user-dot events (`user.login`, `user.logout`, `user.created`) are
+  surfaced so operators can subscribe — catalog pins moved 7 → 10 subscribable
+  events and 5 → 6 groups (`webhook.test` stays excluded).
+- **Copy truth and polish, mirrored per locale law (`5473a42c`, `f81dd587`).**
   `player.subtitleQuotaRemaining` no longer claims "limit reached" while
-  reporting remaining downloads (now a plural status line); the parental-controls
-  empty-state hint reads like help, not a URL spec. Both re-worded across en +
-  de/es/fr/it/ja/pt_BR with key parity and the CLDR plural-segment law.
-- **Suite.** 6,263 passed / 10 skipped (308 files) at this section; vue-tsc and
-  eslint clean. `dist/` intentionally NOT rebuilt in this lane — the release/tag
-  cascade owns artifact regeneration.
+  reporting remaining downloads; the parental-controls hint reads like help,
+  not a URL spec — both across en + de/es/fr/it/ja/pt_BR with the CLDR
+  plural-segment law. R15 sentence-case/article/US-spelling sweep
+  (`Skip credits`, `Direct stream — …`, 'authorize'), `player.startsIn`
+  spells out seconds (the `music.crossfadeSeconds` slider badge keeps the
+  compact form by design), syncplay fallback errors gained articles, and
+  `invalid_payload` says 'request data' instead of 'payload' across all
+  seven catalogs.
+- **README status/pin tag corrected (`bdfaf2fc`, docs only).** Install pins
+  moved `v0.99.1` → `v0.99.10` and the SWR-cache run-on was split (R6-20).
+- **Artifacts.** `dist/` is regenerated and dist-current at this tag
+  (`1baec2e3` covers `86fdb906..bdfaf2fc`; the new lazily-loaded route chunks —
+  playlists, ConfirmDialog, NotFound, socketHint — plus the re-hashed
+  i18n/error catalogs churned the content-hash graph: 797 drift entries,
+  394 new / 375 deleted / 28 modified). Two clean-tree builds were
+  byte-identical (aggregate dist md5 `3672c3f9ea0d44e6fee9ea4f66f3ccb4`) and
+  `dist:check` reports zero drift at this commit; the committed bundles embed
+  no version string, so this version-field bump changes no artifact byte.
+  Suite baseline at tag: **6 263 passed | 10 skipped** (308 files) —
+  `+61` exact vs `v0.99.10`: socketHint, playlist pages + picker,
+  ConfirmDialog, 404 page, the webhook catalog 18-in-suite pins, the
+  extractError precedence re-pin, and the copy re-pins.
+- **Cascade arming.** Tagging `v0.99.11` makes the hub S181 ui-pin grader
+  report the four `@phlix/ui` pinners (server, hub, tizen, windows) STALE-1.
+  This release carries the socket seam, playlist pages and webhook User group
+  into the server/hub `/app` SPA bundles via the re-vendor that rides this
+  cascade.
 
 ## 0.99.10 - 2026-10-14
 
