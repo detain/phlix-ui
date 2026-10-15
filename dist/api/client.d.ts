@@ -178,6 +178,42 @@ export interface FavoritesResult {
     limit: number;
     offset: number;
 }
+/**
+ * One playlist as the server's `Collection::toArray()` ships it
+ * (R13-01 member playlist surface). Boundary-parsed: unknown/malformed rows
+ * are dropped rather than thrown (a fossil row without `id`/`name` cannot be
+ * rendered or acted on anyway).
+ */
+export interface PlaylistSummary {
+    id: string;
+    name: string;
+    /** Owning library; `null` only on rows older than the column's NOT-NULL-ness
+     *  was relaxed — treated as "cannot seed a create", never as a filter. */
+    library_id: string | null;
+    smart_playlist_id: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+    /** Option A ownership (server migration 112): owning user id, or `null`
+     *  for pre-migration rows — which stay visible to every member. */
+    created_by: string | null;
+}
+/**
+ * A playlist membership row straight off `GET /api/v1/collections/{id}`:
+ * RAW hydrated DB columns (id/name/type are what the server's
+ * `ItemRepository::findByIds` guarantees), NOT response-shaped `MediaItem`s —
+ * see the {@link ApiClient.getPlaylist} truth note.
+ */
+export interface PlaylistMediaRow {
+    id: string;
+    name: string;
+    type: string;
+}
+/** `{ collection, items, total }` envelope of one playlist's detail. */
+export interface PlaylistDetail {
+    collection: PlaylistSummary;
+    items: PlaylistMediaRow[];
+    total: number;
+}
 /** The server error `code` returned (422) when no TMDB API key is configured. */
 export declare const TMDB_UNCONFIGURED_CODE = "metadata.tmdb_unconfigured";
 /**
@@ -475,6 +511,45 @@ export declare class ApiClient {
      */
     addToPlaylist(playlistId: string, mediaId: string): Promise<{
         message: string;
+    }>;
+    /**
+     * R13-01 — the member-facing playlist surface (a playlist IS a collection;
+     * server `CollectionController`, routes grouped under `[AuthMiddleware]`
+     * since the Option-A ownership model). Visibility: `GET /api/v1/collections`
+     * returns rows the actor owns plus legacy `created_by = NULL` rows; the
+     * write handlers enforce `created_by === actor` (or admin) with a
+     * byte-identical 404 on a miss.
+     */
+    getPlaylists(signal?: AbortSignal): Promise<PlaylistSummary[]>;
+    /**
+     * One playlist with its member rows
+     * (`GET /api/v1/collections/{id}` → `{ collection, items, total }`).
+     *
+     * ⚠ Truth note: `items` are RAW hydrated DB rows (`SELECT *` + decoded
+     * `metadata`), NOT response-shaped wire items — they carry no `poster_url`
+     * or signed artwork (shaping happens only in `MediaItemShaper`). Consumers
+     * that need poster/playback fields must resolve each id through
+     * `GET /api/v1/media/{id}` (see `useMediaItemCache`), which is what
+     * `PlaylistDetailPage` does.
+     */
+    getPlaylist(id: string, signal?: AbortSignal): Promise<PlaylistDetail>;
+    /**
+     * Remove one media item from a playlist the actor manages
+     * (`DELETE /api/v1/collections/{id}/items/{mediaItemId}`).
+     * Non-2xx throws the shared {@link ApiError}.
+     */
+    removeFromPlaylist(playlistId: string, mediaId: string): Promise<{
+        message: string;
+    }>;
+    /**
+     * Delete an entire playlist the actor manages
+     * (`DELETE /api/v1/collections/{id}`). R13-10: this is also the UNDO leg of
+     * the two-leg create-and-add flow — when leg 2 (`addToPlaylist`) fails the
+     * freshly created empty playlist is a stray artifact the picker offers to
+     * clean up through this call. Non-2xx throws the shared {@link ApiError}.
+     */
+    deletePlaylist(id: string): Promise<{
+        message?: string;
     }>;
     /**
      * Get a download URL for a media item (`GET /api/v1/media/{id}/download`).

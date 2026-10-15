@@ -13,7 +13,10 @@
  * REAL handshake:
  *
  * - **URL** — `ws(s)://<hub-host>:8804/syncplay/<server_id>` (the path the
- *   relay's `onWebSocketConnect()` parses the server id from).
+ *   relay's `onWebSocketConnect()` parses the server id from). An operator-
+ *   injected `__PHLIX__.wsUrl`(+`wsPath`) seam overrides the host:port and path
+ *   wholesale — see {@link readSocketHint} (R12-02); null ⇒ this legacy
+ *   same-host derivation ships unchanged.
  * - **Token carrier** — the `Sec-WebSocket-Protocol: bearer, <token>`
  *   subprotocol. The relay accepts `Authorization: Bearer` OR the bearer
  *   subprotocol (S237); a browser WebSocket cannot set request headers, so the
@@ -102,6 +105,11 @@ export declare function parsePendingCommandFrame(raw: unknown): PendingPlayMedia
  *
  * The scheme follows `hubBaseUrl` (`https:` → `wss:`); the port is the relay's
  * own 8804, never the origin's. Exported for tests.
+ *
+ * R12-02 precedence: an explicit `__PHLIX__.wsUrl` hint overrides the whole
+ * host:port (and `__PHLIX__.wsPath` overrides the `/syncplay` prefix); the hint
+ * is re-read per call so a page-level config set after module import still
+ * lands. Absent/null/invalid ⇒ the legacy derivation above, byte-identical.
  */
 export declare function buildHubRelayUrl(hubBaseUrl: string | undefined, serverId: string): string;
 /**

@@ -11,6 +11,11 @@ type __VLS_Props = {
     showBack?: boolean;
     /** Admin opt-in (U5): render a "Match metadata" action that emits `match`. */
     canMatch?: boolean;
+    /** R13-12 — whether actor/genre/company chips navigate. The host sets this
+     *  FALSE when it cannot honor the click (no owning `library_id` on the item
+     *  or no `library` route registered), so the chips stop LOOKING clickable
+     *  while doing nothing — a dead affordance is worse than a plain label. */
+    chipsClickable?: boolean;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: import("../types/media-item").MediaDetail) => any;
@@ -50,6 +55,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     similar: MediaItem[];
     similarLoading: boolean;
     showBack: boolean;
+    chipsClickable: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;

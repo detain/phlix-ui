@@ -231,6 +231,22 @@ export declare class SyncPlayApi {
     listPublicRooms(): Promise<SyncPlayRoom[]>;
 }
 export declare function getSyncPlayApi(apiBase: string): SyncPlayApi;
+/**
+ * R12-07 — the socket's lifecycle voice. This module ships inside a library
+ * consumed by hosts (server SPA, hub SPA, Tizen widget, Electron shell) whose
+ * consoles are not ours to spam, so every lifecycle line routes through an
+ * INJECTABLE logger — same options/callback pattern as `onMessage` above.
+ * The default is silent: a host that wants the play-by-play calls
+ * {@link setSyncPlayLogger} (its own console included, via
+ * `setSyncPlayLogger(console)`).
+ */
+export interface SyncPlayLogger {
+    log(...args: unknown[]): void;
+    warn(...args: unknown[]): void;
+    error(...args: unknown[]): void;
+}
+/** Install (or, with `null`/`undefined`, remove) the lifecycle logger. */
+export declare function setSyncPlayLogger(logger: SyncPlayLogger | null | undefined): void;
 /** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
 type SyncPlayMessageHandler = (msg: {
     type: string;

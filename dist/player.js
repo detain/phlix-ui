@@ -344,7 +344,7 @@ var ue = R("phlix-player", () => {
 			]) n(e, null);
 		};
 	}
-	function ge() {
+	function W() {
 		l.value = e.defaultVolume, f.value = e.defaultQuality, p.value = e.defaultSubtitleLang;
 	}
 	return {
@@ -392,7 +392,7 @@ var ue = R("phlix-player", () => {
 		setMediaSessionMetadata: pe,
 		setMediaPositionState: me,
 		bindMediaSession: he,
-		seedFromPreferences: ge
+		seedFromPreferences: W
 	};
 }), de = class extends Error {
 	status;
@@ -416,26 +416,1779 @@ function me() {
 	return typeof navigator < "u" && navigator.onLine === !1;
 }
 //#endregion
-//#region src/api/tokenStore.ts
-var he = "access_token", ge = "refresh_token", _e = "user", ve = class {
+//#region node_modules/@phlix/contracts/dist/phlix-contracts.js
+var he = {
+	SERVERS_READ: "mcp:servers:read",
+	LIBRARY_READ: "mcp:library:read",
+	PLAYBACK_READ: "mcp:playback:read",
+	PLAYBACK_CONTROL: "mcp:playback:control"
+};
+he.SERVERS_READ, he.LIBRARY_READ, he.PLAYBACK_READ, he.PLAYBACK_CONTROL;
+var W = {
+	auth: {
+		REQUIRED: "auth.required",
+		NOT_ADMIN: "auth.not_admin",
+		INVALID_TOKEN: "auth.invalid_token",
+		USER_NOT_FOUND: "auth.user_not_found",
+		SIGNUPS_DISABLED: "auth.signups_disabled",
+		ACCOUNT_PENDING: "auth.account_pending",
+		ACCOUNT_DISABLED: "auth.account_disabled",
+		PASSWORD_CHANGE_REQUIRED: "auth.password_change_required",
+		UNAUTHENTICATED: "auth.unauthenticated",
+		ENROLLMENT_EXPIRED: "auth.enrollment_expired",
+		SERVER_MISMATCH: "auth.server_mismatch",
+		MISSING_CREDENTIALS: "auth.missing_credentials",
+		INVALID_CREDENTIALS: "auth.invalid_credentials"
+	},
+	hub: {
+		NOT_ENROLLED: "hub.not_enrolled",
+		TOKEN_REQUIRED: "hub.token_required",
+		JWT_INVALID: "hub.jwt_invalid",
+		PROTOCOL_UNSUPPORTED: "hub.protocol_unsupported",
+		INTERNAL_ERROR: "hub.internal_error"
+	},
+	claim: {
+		CODE_NOT_FOUND: "claim.code_not_found",
+		CODE_EXPIRED: "claim.code_expired",
+		CODE_ALREADY_CLAIMED: "claim.code_already_claimed"
+	},
+	server: {
+		NOT_FOUND: "server.not_found",
+		NOT_OWNED: "server.not_owned",
+		RELAY_UNAVAILABLE: "server.relay_unavailable",
+		OFFLINE: "server.offline",
+		NO_TUNNEL: "server.no_tunnel",
+		KEY_INVALID: "server.key_invalid"
+	},
+	proxy: { SCOPE_DENIED: "proxy.scope_denied" },
+	quota: { EXCEEDED: "quota.exceeded" },
+	stream: {
+		LIMIT: "stream.limit",
+		LIMIT_EXCEEDED: "stream.limit_exceeded"
+	},
+	access: { SCHEDULED: "access.scheduled" },
+	gateway: { TIMEOUT: "gateway.timeout" },
+	relay: {
+		CLIENT_WS_ENDPOINT: "relay.client_ws_endpoint",
+		WS_HTTP_ENDPOINT: "relay.ws_http_endpoint",
+		ENCODE_ERROR: "relay.encode_error"
+	},
+	mcp: {
+		UNKNOWN_TOOL: "mcp.unknown_tool",
+		SCOPE_DENIED: "mcp.scope_denied",
+		STREAMING_UNSUPPORTED: "mcp.streaming_unsupported",
+		SSE_NOT_ACCEPTABLE: "mcp.sse_not_acceptable",
+		UNSUPPORTED_PROTOCOL_VERSION: "mcp.unsupported_protocol_version"
+	},
+	mcp_token: {
+		NO_VALID_SCOPES: "mcp_token.no_valid_scopes",
+		NOT_FOUND: "mcp_token.not_found"
+	},
+	alexa: {
+		STREAMING_UNSUPPORTED: "alexa.streaming_unsupported",
+		MALFORMED_ENVELOPE: "alexa.malformed_envelope",
+		VERIFICATION_ERROR: "alexa.verification_error",
+		MISSING_CERT_CHAIN_URL: "alexa.missing_cert_chain_url",
+		MISSING_SIGNATURE_HEADER: "alexa.missing_signature_header",
+		EMPTY_BODY: "alexa.empty_body",
+		CERT_URL_REJECTED: "alexa.cert_url_rejected",
+		CERT_FETCH_FAILED: "alexa.cert_fetch_failed",
+		CERT_CHAIN_MALFORMED: "alexa.cert_chain_malformed",
+		SIGNATURE_INVALID: "alexa.signature_invalid",
+		CERT_EXPIRED: "alexa.cert_expired",
+		CERT_SAN_MISMATCH: "alexa.cert_san_mismatch",
+		CERT_CHAIN_UNTRUSTED: "alexa.cert_chain_untrusted",
+		TIMESTAMP_MALFORMED: "alexa.timestamp_malformed",
+		TIMESTAMP_MISSING: "alexa.timestamp_missing",
+		TIMESTAMP_STALE: "alexa.timestamp_stale"
+	},
+	tls: { ACME_NOT_IMPLEMENTED: "tls.acme_not_implemented" },
+	csrf: { INVALID_ORIGIN: "csrf.invalid_origin" },
+	user: { NOT_FOUND: "user.not_found" },
+	plugin: {
+		NAME_REQUIRED: "plugin.name.required",
+		NOT_FOUND: "plugin.not_found",
+		URL_REQUIRED: "plugin.url.required",
+		URL_INVALID_SCHEME: "plugin.url.invalid_scheme",
+		URL_BLOCKED: "plugin.url.blocked",
+		INSTALL_FAILED: "plugin.install.failed",
+		ENABLE_FAILED: "plugin.enable.failed",
+		SETTINGS_INVALID: "plugin.settings.invalid",
+		SETTINGS_VALIDATION_FAILED: "plugin.settings.validation_failed",
+		TEST_NOT_SUPPORTED: "plugin.test_not_supported",
+		UPDATE_FAILED: "plugin.update.failed",
+		UPDATE_NO_SOURCE: "plugin.update.no_source",
+		CATALOG_URL_REQUIRED: "plugin.catalog.url.required",
+		CATALOG_URL_DUPLICATE: "plugin.catalog.url.duplicate",
+		CATALOG_URL_INVALID: "plugin.catalog.url.invalid",
+		AUTO_UPDATE_INVALID: "plugin.auto_update.invalid",
+		CATALOG_CHANNEL_INVALID: "plugin.catalog.channel.invalid"
+	},
+	library: { DELETE_ALL_CONFIRM_REQUIRED: "library.delete_all.confirm_required" },
+	metadata: {
+		TMDB_UNCONFIGURED: "metadata.tmdb_unconfigured",
+		TMDB_UNREACHABLE: "metadata.tmdb_unreachable",
+		NO_QUERY: "metadata.no_query",
+		BAD_TMDB_ID: "metadata.bad_tmdb_id",
+		NO_MATCH: "metadata.no_match"
+	},
+	poster: {
+		MISSING_URL: "poster.missing_url",
+		POSTER_NOT_CANDIDATE: "poster.poster_not_candidate"
+	},
+	profile: {
+		USE_SWITCH: "profile.use_switch",
+		LAST_PROFILE: "profile.last_profile",
+		NO_PIN: "profile.no_pin",
+		PIN_MISMATCH: "profile.pin_mismatch",
+		NOT_FOUND: "profile.not_found"
+	},
+	dlna: { FORBIDDEN: "dlna.forbidden" },
+	casting: { DISABLED: "casting.disabled" },
+	quickconnect: {
+		UNAUTHORIZED: "unauthorized",
+		INVALID_SECRET: "invalid_secret",
+		PAIRING_NOT_PENDING: "pairing_not_pending",
+		CONSENT_REQUIRED: "consent_required",
+		PAIRING_NOT_FOUND: "pairing_not_found",
+		STORAGE_UNAVAILABLE: "storage_unavailable"
+	},
+	common: {
+		RATE_LIMITED: "rate_limited",
+		PROVIDER_UNAVAILABLE: "provider_unavailable",
+		INVALID_REQUEST: "invalid_request",
+		INVALID_BODY: "invalid_body",
+		INVALID_PAYLOAD: "invalid_payload",
+		UNKNOWN_ERROR: "unknown_error",
+		VALIDATION_FAILED: "validation_failed",
+		ADMIN_REQUIRED: "admin_required",
+		MASTER_ONLY: "master_only",
+		INVALID_URL: "invalid_url",
+		INVALID_ROLE: "invalid_role",
+		INVALID_PERMISSION: "invalid_permission",
+		MISSING_URL: "missing_url",
+		MISSING_NAME: "missing_name",
+		MISSING_PUBLIC_KEY: "missing_public_key",
+		MISSING_USER_ID: "missing_user_id",
+		MISSING_SERVER_ID: "missing_server_id",
+		NOT_SERVER_OWNER: "not_server_owner"
+	},
+	federation: {
+		PEER_URL_EXISTS: "peer_url_exists",
+		PEER_KEY_EXISTS: "peer_key_exists",
+		PEER_NOT_FOUND: "peer_not_found",
+		OFFER_NOT_FOUND: "offer_not_found",
+		OFFER_ALREADY_RESPONDED: "offer_already_responded",
+		DELEGATION_NOT_FOUND: "delegation_not_found",
+		MISSING_PEER_ID: "missing_peer_id",
+		MISSING_OFFER_ID: "missing_offer_id",
+		MISSING_DELEGATION_ID: "missing_delegation_id",
+		MISSING_LIBRARY_ID: "missing_library_id",
+		MISSING_LIBRARY_NAME: "missing_library_name",
+		LEAF_HUB_ID_ALREADY_BOUND: "leaf_hub_id_already_bound"
+	},
+	share: {
+		NOT_FOUND: "share_not_found",
+		MISSING_SHARE_ID: "missing_share_id",
+		MISSING_COLLABORATOR_EMAIL: "missing_collaborator_email",
+		EXISTS: "share_exists",
+		NOT_OWNER: "not_share_owner",
+		MISSING_PERMISSION: "missing_permission"
+	},
+	invite: {
+		MISSING_LINK_ID: "missing_link_id",
+		LINK_NOT_FOUND: "invite_link_not_found",
+		NOT_LINK_OWNER: "not_link_owner",
+		MISSING_TOKEN: "missing_token",
+		INVALID: "invalid_invite",
+		EXPIRED_OR_EXHAUSTED: "invite_expired_or_exhausted"
+	},
+	request: {
+		INVALID_TYPE: "invalid_type",
+		INVALID_TMDB_ID: "invalid_tmdb_id",
+		MISSING_TITLE: "missing_title",
+		MISSING_REQUEST_ID: "missing_request_id",
+		NOT_FOUND: "request_not_found",
+		NOT_OWNER: "not_request_owner",
+		APPROVE_FAILED: "approve_failed",
+		DENY_FAILED: "deny_failed"
+	},
+	admin: {
+		USER_NOT_FOUND: "user_not_found",
+		CANNOT_DELETE_SELF: "cannot_delete_self",
+		LAST_ADMIN: "last_admin",
+		CANNOT_DEMOTE_SELF: "cannot_demote_self",
+		INVALID_QUOTA: "invalid_quota",
+		INVALID_THROTTLE: "invalid_throttle"
+	},
+	updates: { CHECK_DISPATCH_FAILED: "update_check_dispatch_failed" },
+	identity: {
+		MISSING_ID: "identity.missing_id",
+		NOT_FOUND: "identity.not_found",
+		LAST_SIGN_IN_METHOD: "identity.last_sign_in_method",
+		ALREADY_LINKED: "identity.already_linked",
+		INVALID: "identity.invalid",
+		LINK_UNAVAILABLE: "identity.link_unavailable",
+		INVALID_LINK_STATE: "identity.invalid_link_state"
+	},
+	provider: {
+		NOT_CONFIGURED: "provider.not_configured",
+		UNKNOWN: "provider.unknown",
+		NOT_FOUND: "provider.not_found",
+		INVALID_TYPE: "provider.invalid_type",
+		MISSING_CLIENT_ID: "provider.missing_client_id",
+		MISSING_URL: "provider.missing_url",
+		INVALID_URL: "provider.invalid_url"
+	},
+	oauth: {
+		MISSING_CODE: "oauth.missing_code",
+		MISSING_STATE: "oauth.missing_state",
+		INVALID_STATE: "oauth.invalid_state",
+		MISSING_REDIRECT_URI: "oauth.missing_redirect_uri",
+		INVALID_REDIRECT_URI: "oauth.invalid_redirect_uri",
+		CALLBACK_URL_NOT_CONFIGURED: "oauth.callback_url_not_configured"
+	},
+	ldap: {
+		MISSING_HOST: "ldap.missing_host",
+		MISSING_BASE_DN: "ldap.missing_base_dn",
+		INVALID_PORT: "ldap.invalid_port",
+		CONNECTION_FAILED: "ldap.connection_failed",
+		BIND_FAILED: "ldap.bind_failed",
+		ERROR: "ldap.error",
+		RUNTIME_ERROR: "ldap.runtime_error"
+	},
+	syncplay: {
+		CREATE_FAILED: "syncplay.create_failed",
+		JOIN_FAILED: "syncplay.join_failed",
+		LEAVE_FAILED: "syncplay.leave_failed",
+		GROUP_LIMIT_REACHED: "syncplay.group_limit_reached",
+		GROUP_NOT_FOUND: "syncplay.group_not_found",
+		INVALID_PASSWORD: "syncplay.invalid_password",
+		GROUP_FULL: "syncplay.group_full",
+		QUEUE_LIMIT_EXCEEDED: "syncplay.queue_limit_exceeded"
+	},
+	legacy: {
+		UNKNOWN_MESSAGE: "UNKNOWN_MESSAGE",
+		HANDLER_ERROR: "HANDLER_ERROR",
+		NOT_AUTHENTICATED: "NOT_AUTHENTICATED",
+		NOT_IN_GROUP: "NOT_IN_GROUP",
+		NOT_HOST: "NOT_HOST",
+		INVALID_NEW_HOST: "INVALID_NEW_HOST",
+		MEMBER_NOT_FOUND: "MEMBER_NOT_FOUND",
+		SAME_HOST: "SAME_HOST",
+		CREATE_FAILED: "CREATE_FAILED",
+		JOIN_FAILED: "JOIN_FAILED",
+		LEAVE_FAILED: "LEAVE_FAILED",
+		PROTOCOL_VERSION_MISMATCH: "PROTOCOL_VERSION_MISMATCH"
+	}
+}, ge = /* @__PURE__ */ "auth.hub.claim.server.proxy.quota.stream.access.gateway.relay.mcp.mcp_token.alexa.tls.csrf.user.plugin.library.metadata.poster.profile.dlna.casting.quickconnect.common.federation.share.invite.request.admin.updates.identity.provider.oauth.ldap.syncplay.legacy".split("."), _e = Object.values(W.auth), G = Object.values(W.hub), ve = Object.values(W.claim), ye = Object.values(W.server), be = Object.values(W.proxy), xe = Object.values(W.quota), Se = Object.values(W.stream), Ce = Object.values(W.access), we = Object.values(W.gateway), Te = Object.values(W.relay), Ee = Object.values(W.mcp), De = Object.values(W.mcp_token), Oe = Object.values(W.alexa), ke = Object.values(W.tls), Ae = Object.values(W.csrf), je = Object.values(W.user), Me = Object.values(W.plugin), Ne = Object.values(W.library), Pe = Object.values(W.metadata), Fe = Object.values(W.poster), Ie = Object.values(W.profile), Le = Object.values(W.dlna), Re = Object.values(W.casting), ze = Object.values(W.quickconnect), Be = Object.values(W.common), Ve = Object.values(W.federation), He = Object.values(W.share), Ue = Object.values(W.invite), We = Object.values(W.request), Ge = Object.values(W.admin), Ke = Object.values(W.updates), qe = Object.values(W.identity), Je = Object.values(W.provider), Ye = Object.values(W.oauth), Xe = Object.values(W.ldap), Ze = Object.values(W.syncplay), Qe = Object.values(W.legacy), $e = {
+	auth: _e,
+	hub: G,
+	claim: ve,
+	server: ye,
+	proxy: be,
+	quota: xe,
+	stream: Se,
+	access: Ce,
+	gateway: we,
+	relay: Te,
+	mcp: Ee,
+	mcp_token: De,
+	alexa: Oe,
+	tls: ke,
+	csrf: Ae,
+	user: je,
+	plugin: Me,
+	library: Ne,
+	metadata: Pe,
+	poster: Fe,
+	profile: Ie,
+	dlna: Le,
+	casting: Re,
+	quickconnect: ze,
+	common: Be,
+	federation: Ve,
+	share: He,
+	invite: Ue,
+	request: We,
+	admin: Ge,
+	updates: Ke,
+	identity: qe,
+	provider: Je,
+	oauth: Ye,
+	ldap: Xe,
+	syncplay: Ze,
+	legacy: Qe
+}, et = ge.flatMap((e) => $e[e]);
+[...Qe, ...Ze];
+//#endregion
+//#region src/i18n/errors.ts
+var tt = {
+	"auth.required": "Please sign in to continue.",
+	"auth.not_admin": "This action requires an administrator account.",
+	"auth.invalid_token": "Your sign-in token is invalid or has expired.",
+	"auth.user_not_found": "That account no longer exists.",
+	"auth.signups_disabled": "New account sign-ups are disabled on this server.",
+	"auth.account_pending": "Your account is still awaiting approval.",
+	"auth.account_disabled": "This account has been disabled.",
+	"auth.password_change_required": "You must change your password before continuing.",
+	"auth.unauthenticated": "Sign in before claiming this server.",
+	"auth.enrollment_expired": "This server’s enrollment token has expired. Enroll it with the hub again.",
+	"auth.server_mismatch": "The enrollment token does not match this server.",
+	"auth.missing_credentials": "Enter your credentials to link this account.",
+	"auth.invalid_credentials": "The credentials you entered are not correct.",
+	"hub.not_enrolled": "This server is not enrolled with the hub yet.",
+	"hub.token_required": "A hub access token is required for this action.",
+	"hub.jwt_invalid": "The hub token is invalid or has expired.",
+	"hub.protocol_unsupported": "The request did not use the protocol the hub supports.",
+	"hub.internal_error": "The hub hit an unexpected error. Try again in a moment.",
+	"claim.code_not_found": "That claim code was not found. Check it and try again.",
+	"claim.code_expired": "That claim code has expired. Generate a new one and try again.",
+	"claim.code_already_claimed": "That claim code has already been used.",
+	"server.not_found": "That server could not be found.",
+	"server.not_owned": "This server does not belong to your account.",
+	"server.relay_unavailable": "This server is online but its secure relay tunnel isn't connected yet, so its libraries can't be loaded over the hub. It should reconnect automatically — try again in a moment.",
+	"server.offline": "This server is offline, so its libraries can’t be loaded. It will be browsable again once it reconnects to the hub.",
+	"server.no_tunnel": "This server is online but its secure relay tunnel isn't connected yet, so its libraries can't be loaded over the hub. It should reconnect automatically — try again in a moment.",
+	"server.key_invalid": "The server’s signing key failed validation during the claim. Try claiming again.",
+	"proxy.scope_denied": "Your access token does not have the scope for this request.",
+	"quota.exceeded": "You have reached your bandwidth quota limit.",
+	"stream.limit": "You have reached the maximum number of simultaneous streams.",
+	"stream.limit_exceeded": "You have reached this server’s limit on simultaneous streams. Stop one and try again.",
+	"access.scheduled": "This profile is only available during its scheduled hours. Try again later.",
+	"gateway.timeout": "The hub gateway timed out waiting for your server. Try again.",
+	"relay.client_ws_endpoint": "This endpoint is a client WebSocket mount — it cannot be opened with a plain request.",
+	"relay.ws_http_endpoint": "This endpoint is a relay WebSocket mount — it cannot be opened with a plain request.",
+	"relay.encode_error": "The relay failed to encode the message. Try again.",
+	"mcp.unknown_tool": "That MCP tool does not exist.",
+	"mcp.scope_denied": "Your MCP token does not allow this tool.",
+	"mcp.streaming_unsupported": "Streaming responses are not supported on this MCP surface.",
+	"mcp.sse_not_acceptable": "This MCP request must accept a Server-Sent Events response.",
+	"mcp.unsupported_protocol_version": "This MCP protocol version is not supported.",
+	"mcp_token.no_valid_scopes": "None of the requested token scopes are valid.",
+	"mcp_token.not_found": "That MCP access token no longer exists.",
+	"alexa.streaming_unsupported": "Streaming is not supported through the Alexa adapter.",
+	"alexa.malformed_envelope": "The Alexa request envelope was malformed.",
+	"alexa.verification_error": "The Alexa request could not be verified. Try again.",
+	"alexa.missing_cert_chain_url": "The Alexa request did not include its certificate chain URL.",
+	"alexa.missing_signature_header": "The Alexa request did not include a signature header.",
+	"alexa.empty_body": "The Alexa request arrived with an empty body.",
+	"alexa.cert_url_rejected": "The certificate URL on the Alexa request was outside Amazon’s allowed domains.",
+	"alexa.cert_fetch_failed": "The server could not fetch the certificate chain for the Alexa request.",
+	"alexa.cert_chain_malformed": "The certificate chain sent with the Alexa request was malformed.",
+	"alexa.signature_invalid": "The signature on the Alexa request did not pass verification.",
+	"alexa.cert_expired": "The certificate that signed the Alexa request has expired.",
+	"alexa.cert_san_mismatch": "The certificate on the Alexa request was not issued for an Alexa domain.",
+	"alexa.cert_chain_untrusted": "The Alexa request’s certificate chain does not anchor on Amazon’s root certificate.",
+	"alexa.timestamp_malformed": "The timestamp header on the Alexa request was unparseable.",
+	"alexa.timestamp_missing": "The Alexa request did not include a timestamp header.",
+	"alexa.timestamp_stale": "The timestamp on the Alexa request was too old. Check the server clock.",
+	"tls.acme_not_implemented": "Automatic TLS certificate issuance is not available yet.",
+	"csrf.invalid_origin": "The request origin failed the CSRF check.",
+	"user.not_found": "The user for this session could not be found.",
+	"plugin.name.required": "A plugin name is required.",
+	"plugin.not_found": "That plugin could not be found.",
+	"plugin.url.required": "A plugin URL is required.",
+	"plugin.url.invalid_scheme": "The plugin URL must use http or https.",
+	"plugin.url.blocked": "This plugin URL is blocked by server policy.",
+	"plugin.install.failed": "Installing the plugin failed.",
+	"plugin.enable.failed": "Enabling the plugin failed.",
+	"plugin.settings.invalid": "The plugin settings are invalid.",
+	"plugin.settings.validation_failed": "The plugin settings failed validation.",
+	"plugin.test_not_supported": "This plugin does not support self-tests.",
+	"plugin.update.failed": "Updating the plugin failed.",
+	"plugin.update.no_source": "This plugin has no update source configured.",
+	"plugin.catalog.url.required": "A catalog URL is required.",
+	"plugin.catalog.url.duplicate": "That plugin catalog URL is already added.",
+	"plugin.catalog.url.invalid": "The plugin catalog URL is invalid.",
+	"plugin.auto_update.invalid": "The auto-update setting is invalid.",
+	"plugin.catalog.channel.invalid": "The catalog update channel is invalid.",
+	"library.delete_all.confirm_required": "Deleting every library at once requires explicit confirmation.",
+	"metadata.tmdb_unconfigured": "TMDB lookups are not configured on this server.",
+	"metadata.tmdb_unreachable": "The metadata provider could not be reached. Try again later.",
+	"metadata.no_query": "Enter a title to search the metadata provider.",
+	"metadata.bad_tmdb_id": "That TMDB identifier is not valid.",
+	"metadata.no_match": "No metadata match was found for this title.",
+	"poster.missing_url": "A poster image URL is required.",
+	"poster.poster_not_candidate": "That image is not an available poster candidate for this title.",
+	"profile.use_switch": "To change the active profile, switch to it.",
+	"profile.last_profile": "This is your last profile, so it cannot be deleted.",
+	"profile.no_pin": "This profile has no PIN configured to verify.",
+	"profile.pin_mismatch": "That PIN is not correct.",
+	"profile.not_found": "That profile no longer exists. Pick another one.",
+	"dlna.forbidden": "This device is not allowed to use DLNA on this server.",
+	"casting.disabled": "Casting is disabled on this server.",
+	unauthorized: "You are not authorized to manage pairing on this server.",
+	invalid_secret: "The pairing secret is not valid. Start pairing again.",
+	pairing_not_pending: "There is no pairing request waiting for approval.",
+	consent_required: "This device must accept the consent prompt before pairing can continue.",
+	pairing_not_found: "That pairing request no longer exists.",
+	storage_unavailable: "Pairing storage is unavailable right now. Try again later.",
+	rate_limited: "Too many requests — wait a moment and try again.",
+	provider_unavailable: "The authentication provider is unavailable. Try again later.",
+	invalid_request: "The request was not valid.",
+	invalid_body: "The request body was missing or malformed.",
+	invalid_payload: "The request data was missing or malformed.",
+	unknown_error: "An unexpected error occurred.",
+	validation_failed: "Some fields did not pass validation.",
+	admin_required: "Administrator privileges are required for this action.",
+	master_only: "Only the master account can perform this action.",
+	invalid_url: "The URL provided is not valid.",
+	invalid_role: "The role provided is not valid.",
+	invalid_permission: "The permission provided is not valid.",
+	missing_url: "A URL is required.",
+	missing_name: "A name is required.",
+	missing_public_key: "A public key is required.",
+	missing_user_id: "A user ID is required.",
+	missing_server_id: "A server ID is required.",
+	not_server_owner: "Only the owner of this server can manage it.",
+	peer_url_exists: "A peer with that URL is already added.",
+	peer_key_exists: "A peer with that public key is already added.",
+	peer_not_found: "That federated peer could not be found.",
+	offer_not_found: "That peer offer could not be found.",
+	offer_already_responded: "This offer has already been answered.",
+	delegation_not_found: "That access delegation could not be found.",
+	missing_peer_id: "A peer ID is required.",
+	missing_offer_id: "An offer ID is required.",
+	missing_delegation_id: "A delegation ID is required.",
+	missing_library_id: "A library ID is required.",
+	missing_library_name: "A library name is required.",
+	leaf_hub_id_already_bound: "That server ID is already linked to a different peer.",
+	share_not_found: "That library share could not be found.",
+	missing_share_id: "A share ID is required.",
+	missing_collaborator_email: "A collaborator email address is required.",
+	share_exists: "This library is already shared with that collaborator.",
+	not_share_owner: "Only the share owner can manage this share.",
+	missing_permission: "A permission level is required.",
+	missing_link_id: "An invite link ID is required.",
+	invite_link_not_found: "That invite link could not be found.",
+	not_link_owner: "Only the owner can manage this invite link.",
+	missing_token: "An invite token is required.",
+	invalid_invite: "This invite is not valid.",
+	invite_expired_or_exhausted: "This invite has expired or has been fully used.",
+	invalid_type: "The request type is not valid.",
+	invalid_tmdb_id: "The TMDB identifier for this request is not valid.",
+	missing_title: "A title is required.",
+	missing_request_id: "A request ID is required.",
+	request_not_found: "That media request could not be found.",
+	not_request_owner: "Only the requester can manage this request.",
+	approve_failed: "The request could not be approved.",
+	deny_failed: "The request could not be denied.",
+	user_not_found: "That user could not be found.",
+	cannot_delete_self: "You cannot delete your own account from here.",
+	last_admin: "This is the last administrator account, so it cannot be changed this way.",
+	cannot_demote_self: "You cannot remove your own administrator role.",
+	invalid_quota: "The quota value is not valid.",
+	invalid_throttle: "The throttle value is not valid.",
+	update_check_dispatch_failed: "The update check could not be started. Try again.",
+	"identity.missing_id": "No linked identity was selected for this action.",
+	"identity.not_found": "That linked identity could not be found.",
+	"identity.last_sign_in_method": "This is the only sign-in method left on your account, so it cannot be unlinked.",
+	"identity.already_linked": "That provider account is already linked to a different account here.",
+	"identity.invalid": "The provider did not return a usable account identity.",
+	"identity.link_unavailable": "Account linking is temporarily unavailable on this server.",
+	"identity.invalid_link_state": "The linking request expired before it finished. Start again.",
+	"provider.not_configured": "No sign-in provider is configured on this server yet.",
+	"provider.unknown": "That sign-in provider is not available on this server.",
+	"provider.not_found": "That sign-in provider could not be found.",
+	"provider.invalid_type": "That provider cannot be used for this kind of sign-in.",
+	"provider.missing_client_id": "The provider client ID is required.",
+	"provider.missing_url": "The provider URL is required.",
+	"provider.invalid_url": "The provider URL is not valid.",
+	"oauth.missing_code": "The sign-in provider returned no authorization code. Try signing in again.",
+	"oauth.missing_state": "The sign-in provider returned no state token. Try signing in again.",
+	"oauth.invalid_state": "The sign-in attempt no longer matches this browser, or it expired. Try again.",
+	"oauth.missing_redirect_uri": "A redirect address is required to continue this sign-in.",
+	"oauth.invalid_redirect_uri": "That redirect address is not on the server’s allowed list.",
+	"oauth.callback_url_not_configured": "This server has no sign-in callback URL configured yet.",
+	"ldap.missing_host": "The LDAP server host is required.",
+	"ldap.missing_base_dn": "The LDAP base DN is required.",
+	"ldap.invalid_port": "The LDAP port number is not valid.",
+	"ldap.connection_failed": "The server could not connect to the LDAP directory.",
+	"ldap.bind_failed": "The LDAP credentials could not sign in to the directory.",
+	"ldap.error": "The LDAP directory returned an error.",
+	"ldap.runtime_error": "The LDAP connection test failed unexpectedly.",
+	"syncplay.create_failed": "The watch group could not be created.",
+	"syncplay.join_failed": "The watch group could not be joined.",
+	"syncplay.leave_failed": "You could not leave the watch group.",
+	"syncplay.group_limit_reached": "The maximum number of watch groups has been reached.",
+	"syncplay.group_not_found": "That watch group no longer exists.",
+	"syncplay.invalid_password": "The group password is not correct.",
+	"syncplay.group_full": "That watch group is full.",
+	"syncplay.queue_limit_exceeded": "The watch queue has reached its maximum size.",
+	UNKNOWN_MESSAGE: "The sync session did not understand that message.",
+	HANDLER_ERROR: "The sync session hit an internal error handling your request.",
+	NOT_AUTHENTICATED: "Sign in to the sync session before continuing.",
+	NOT_IN_GROUP: "You are not in a watch group right now.",
+	NOT_HOST: "Only the group host can do that.",
+	INVALID_NEW_HOST: "That member cannot take over as host.",
+	MEMBER_NOT_FOUND: "That group member could not be found.",
+	SAME_HOST: "That member is already the host.",
+	CREATE_FAILED: "The watch group could not be created.",
+	JOIN_FAILED: "The watch group could not be joined.",
+	LEAVE_FAILED: "You could not leave the watch group.",
+	PROTOCOL_VERSION_MISMATCH: "This client’s sync protocol does not match the server’s."
+}, nt = {
+	"auth.required": "Inicia sesión para continuar.",
+	"auth.not_admin": "Esta acción requiere una cuenta de administrador.",
+	"auth.invalid_token": "Tu token de inicio de sesión no es válido o ha caducado.",
+	"auth.user_not_found": "Esa cuenta ya no existe.",
+	"auth.signups_disabled": "El registro de nuevas cuentas está desactivado en este servidor.",
+	"auth.account_pending": "Tu cuenta aún está pendiente de aprobación.",
+	"auth.account_disabled": "Esta cuenta ha sido desactivada.",
+	"auth.password_change_required": "Debes cambiar tu contraseña antes de continuar.",
+	"auth.unauthenticated": "Inicia sesión antes de canjear este servidor.",
+	"auth.enrollment_expired": "El token de registro de este servidor ha caducado. Vuelve a registrarlo en el hub.",
+	"auth.server_mismatch": "El token de registro no corresponde a este servidor.",
+	"auth.missing_credentials": "Introduce tus credenciales para vincular esta cuenta.",
+	"auth.invalid_credentials": "Las credenciales introducidas no son correctas.",
+	"hub.not_enrolled": "Este servidor aún no está registrado en el hub.",
+	"hub.token_required": "Se requiere un token de acceso al hub para esta acción.",
+	"hub.jwt_invalid": "El token del hub no es válido o ha caducado.",
+	"hub.protocol_unsupported": "La solicitud no usó el protocolo compatible con el hub.",
+	"hub.internal_error": "El hub encontró un error inesperado. Inténtalo de nuevo en unos momentos.",
+	"claim.code_not_found": "No se encontró ese código de canje. Revísalo e inténtalo otra vez.",
+	"claim.code_expired": "Ese código de canje ha caducado. Genera uno nuevo e inténtalo otra vez.",
+	"claim.code_already_claimed": "Ese código de canje ya se ha utilizado.",
+	"server.not_found": "No se pudo encontrar ese servidor.",
+	"server.not_owned": "Este servidor no pertenece a tu cuenta.",
+	"server.relay_unavailable": "Este servidor está en línea, pero su túnel seguro de relay todavía no está conectado, así que sus bibliotecas no se pueden cargar a través del hub. Debería reconectarse automáticamente; vuelve a intentarlo en un momento.",
+	"server.offline": "Este servidor está sin conexión, así que no se pueden cargar sus bibliotecas. Volverá a poder navegarse cuando se reconecte al hub.",
+	"server.no_tunnel": "Este servidor está en línea, pero su túnel seguro de relay todavía no está conectado, así que sus bibliotecas no se pueden cargar a través del hub. Debería reconectarse automáticamente; vuelve a intentarlo en un momento.",
+	"server.key_invalid": "La clave de firma del servidor no superó la verificación durante el canje. Vuelve a intentarlo.",
+	"proxy.scope_denied": "Tu token de acceso no tiene el ámbito necesario para esta petición.",
+	"quota.exceeded": "Has alcanzado el límite de tu cuota de ancho de banda.",
+	"stream.limit": "Has alcanzado el número máximo de transmisiones simultáneas.",
+	"stream.limit_exceeded": "Has alcanzado el límite de reproducciones simultáneas de este servidor. Detén una e inténtalo de nuevo.",
+	"access.scheduled": "Este perfil solo está disponible dentro de su horario programado. Inténtalo más tarde.",
+	"gateway.timeout": "El gateway del hub agotó el tiempo de espera al esperar a tu servidor. Inténtalo de nuevo.",
+	"relay.client_ws_endpoint": "Este endpoint es un montaje WebSocket de cliente: no se puede abrir con una petición normal.",
+	"relay.ws_http_endpoint": "Este endpoint es un montaje WebSocket del relay: no se puede abrir con una petición normal.",
+	"relay.encode_error": "El relay no pudo codificar el mensaje. Inténtalo de nuevo.",
+	"mcp.unknown_tool": "Esa herramienta MCP no existe.",
+	"mcp.scope_denied": "Tu token MCP no permite usar esta herramienta.",
+	"mcp.streaming_unsupported": "Las respuestas en streaming no son compatibles con esta superficie MCP.",
+	"mcp.sse_not_acceptable": "Esta petición MCP debe aceptar una respuesta Server-Sent Events.",
+	"mcp.unsupported_protocol_version": "Esta versión del protocolo MCP no es compatible.",
+	"mcp_token.no_valid_scopes": "Ninguno de los ámbitos de token solicitados es válido.",
+	"mcp_token.not_found": "Ese token de acceso MCP ya no existe.",
+	"alexa.streaming_unsupported": "El streaming no es compatible con el adaptador de Alexa.",
+	"alexa.malformed_envelope": "El sobre de la petición de Alexa tenía un formato incorrecto.",
+	"alexa.verification_error": "No se pudo verificar la solicitud de Alexa. Inténtalo de nuevo.",
+	"alexa.missing_cert_chain_url": "La solicitud de Alexa no incluía la URL de su cadena de certificados.",
+	"alexa.missing_signature_header": "La solicitud de Alexa no incluía una cabecera de firma.",
+	"alexa.empty_body": "La solicitud de Alexa llegó con el cuerpo vacío.",
+	"alexa.cert_url_rejected": "La URL del certificado de la solicitud de Alexa estaba fuera de los dominios permitidos de Amazon.",
+	"alexa.cert_fetch_failed": "El servidor no pudo descargar la cadena de certificados de la solicitud de Alexa.",
+	"alexa.cert_chain_malformed": "La cadena de certificados enviada con la solicitud de Alexa tenía un formato incorrecto.",
+	"alexa.signature_invalid": "La firma de la solicitud de Alexa no se pudo validar.",
+	"alexa.cert_expired": "El certificado usado para firmar la solicitud de Alexa ha caducado.",
+	"alexa.cert_san_mismatch": "El certificado de la solicitud de Alexa no se emitió para un dominio de Alexa.",
+	"alexa.cert_chain_untrusted": "La cadena de certificados de la solicitud de Alexa no se respalda en la raíz de Amazon.",
+	"alexa.timestamp_malformed": "La cabecera de marca de tiempo de la solicitud de Alexa no se pudo interpretar.",
+	"alexa.timestamp_missing": "La solicitud de Alexa no incluía una cabecera de marca de tiempo.",
+	"alexa.timestamp_stale": "La marca de tiempo de la solicitud de Alexa era demasiado antigua. Comprueba el reloj del servidor.",
+	"tls.acme_not_implemented": "La emisión automática de certificados TLS aún no está disponible.",
+	"csrf.invalid_origin": "El origen de la petición no superó la comprobación CSRF.",
+	"user.not_found": "No se pudo encontrar el usuario de esta sesión.",
+	"plugin.name.required": "Se requiere un nombre de complemento.",
+	"plugin.not_found": "No se pudo encontrar ese complemento.",
+	"plugin.url.required": "Se requiere la URL del complemento.",
+	"plugin.url.invalid_scheme": "La URL del complemento debe usar http o https.",
+	"plugin.url.blocked": "La política del servidor bloquea esta URL de complemento.",
+	"plugin.install.failed": "La instalación del complemento falló.",
+	"plugin.enable.failed": "No se pudo activar el complemento.",
+	"plugin.settings.invalid": "La configuración del complemento no es válida.",
+	"plugin.settings.validation_failed": "La configuración del complemento no superó la validación.",
+	"plugin.test_not_supported": "Este complemento no admite pruebas automáticas.",
+	"plugin.update.failed": "La actualización del complemento falló.",
+	"plugin.update.no_source": "Este complemento no tiene fuente de actualización configurada.",
+	"plugin.catalog.url.required": "Se requiere una URL de catálogo.",
+	"plugin.catalog.url.duplicate": "Esa URL de catálogo de complementos ya está agregada.",
+	"plugin.catalog.url.invalid": "La URL del catálogo de complementos no es válida.",
+	"plugin.auto_update.invalid": "El ajuste de actualización automática no es válido.",
+	"plugin.catalog.channel.invalid": "El canal de actualización del catálogo no es válido.",
+	"library.delete_all.confirm_required": "Eliminar todas las bibliotecas a la vez requiere una confirmación explícita.",
+	"metadata.tmdb_unconfigured": "Las búsquedas en TMDB no están configuradas en este servidor.",
+	"metadata.tmdb_unreachable": "No se pudo contactar con el proveedor de metadatos. Inténtalo de nuevo más tarde.",
+	"metadata.no_query": "Introduce un título para buscar en el proveedor de metadatos.",
+	"metadata.bad_tmdb_id": "Ese identificador de TMDB no es válido.",
+	"metadata.no_match": "No se encontró ninguna coincidencia de metadatos para este título.",
+	"poster.missing_url": "Se requiere la URL de la imagen del póster.",
+	"poster.poster_not_candidate": "Esa imagen no es una candidata de póster disponible para este título.",
+	"profile.use_switch": "Para cambiar el perfil activo, usa la opción de cambiar de perfil.",
+	"profile.last_profile": "Este es tu último perfil, por lo que no se puede eliminar.",
+	"profile.no_pin": "Este perfil no tiene ningún PIN configurado que verificar.",
+	"profile.pin_mismatch": "Ese PIN no es correcto.",
+	"profile.not_found": "Ese perfil ya no existe. Elige otro.",
+	"dlna.forbidden": "Este dispositivo no tiene permiso para usar DLNA en este servidor.",
+	"casting.disabled": "La transmisión a dispositivos está desactivada en este servidor.",
+	unauthorized: "No tienes autorización para gestionar el emparejamiento en este servidor.",
+	invalid_secret: "El secreto de emparejamiento no es válido. Comienza el emparejamiento de nuevo.",
+	pairing_not_pending: "No hay ninguna solicitud de emparejamiento esperando aprobación.",
+	consent_required: "Este dispositivo debe aceptar el aviso de consentimiento para que el emparejamiento continúe.",
+	pairing_not_found: "Esa solicitud de emparejamiento ya no existe.",
+	storage_unavailable: "El almacenamiento de emparejamiento no está disponible ahora. Inténtalo de nuevo más tarde.",
+	rate_limited: "Demasiadas peticiones; espera un momento e inténtalo de nuevo.",
+	provider_unavailable: "El proveedor de autenticación no está disponible. Inténtalo de nuevo más tarde.",
+	invalid_request: "La petición no era válida.",
+	invalid_body: "Faltaba el cuerpo de la petición o tenía un formato incorrecto.",
+	invalid_payload: "Faltaban los datos de la solicitud o tenían un formato incorrecto.",
+	unknown_error: "Se produjo un error inesperado.",
+	validation_failed: "Algunos campos no superaron la validación.",
+	admin_required: "Esta acción requiere privilegios de administrador.",
+	master_only: "Solo la cuenta maestra puede realizar esta acción.",
+	invalid_url: "La URL proporcionada no es válida.",
+	invalid_role: "El rol proporcionado no es válido.",
+	invalid_permission: "El permiso proporcionado no es válido.",
+	missing_url: "Se requiere una URL.",
+	missing_name: "Se requiere un nombre.",
+	missing_public_key: "Se requiere una clave pública.",
+	missing_user_id: "Se requiere un ID de usuario.",
+	missing_server_id: "Se requiere un ID de servidor.",
+	not_server_owner: "Solo el propietario de este servidor puede gestionarlo.",
+	peer_url_exists: "Ya hay un par agregado con esa URL.",
+	peer_key_exists: "Ya hay un par agregado con esa clave pública.",
+	peer_not_found: "No se pudo encontrar ese par federado.",
+	offer_not_found: "No se pudo encontrar esa oferta de par.",
+	offer_already_responded: "Esta oferta ya fue respondida.",
+	delegation_not_found: "No se pudo encontrar esa delegación de acceso.",
+	missing_peer_id: "Se requiere un ID de par.",
+	missing_offer_id: "Se requiere un ID de oferta.",
+	missing_delegation_id: "Se requiere un ID de delegación.",
+	missing_library_id: "Se requiere un ID de biblioteca.",
+	missing_library_name: "Se requiere un nombre de biblioteca.",
+	leaf_hub_id_already_bound: "Ese ID de servidor ya está vinculado a otro par.",
+	share_not_found: "No se pudo encontrar ese recurso compartido de biblioteca.",
+	missing_share_id: "Se requiere un ID de recurso compartido.",
+	missing_collaborator_email: "Se requiere el correo electrónico del colaborador.",
+	share_exists: "Esta biblioteca ya está compartida con ese colaborador.",
+	not_share_owner: "Solo el propietario puede gestionar este recurso compartido.",
+	missing_permission: "Se requiere un nivel de permiso.",
+	missing_link_id: "Se requiere un ID de enlace de invitación.",
+	invite_link_not_found: "No se pudo encontrar ese enlace de invitación.",
+	not_link_owner: "Solo el propietario puede gestionar este enlace de invitación.",
+	missing_token: "Se requiere un token de invitación.",
+	invalid_invite: "Esta invitación no es válida.",
+	invite_expired_or_exhausted: "Esta invitación ha caducado o se ha agotado.",
+	invalid_type: "El tipo de solicitud no es válido.",
+	invalid_tmdb_id: "El identificador de TMDB de esta solicitud no es válido.",
+	missing_title: "Se requiere un título.",
+	missing_request_id: "Se requiere un ID de solicitud.",
+	request_not_found: "No se pudo encontrar esa solicitud de contenido.",
+	not_request_owner: "Solo quien hizo la solicitud puede gestionarla.",
+	approve_failed: "No se pudo aprobar la solicitud.",
+	deny_failed: "No se pudo rechazar la solicitud.",
+	user_not_found: "No se pudo encontrar ese usuario.",
+	cannot_delete_self: "No puedes eliminar tu propia cuenta desde aquí.",
+	last_admin: "Esta es la última cuenta de administrador, por lo que no se puede cambiar de esta forma.",
+	cannot_demote_self: "No puedes quitarte a ti mismo el rol de administrador.",
+	invalid_quota: "El valor de la cuota no es válido.",
+	invalid_throttle: "El valor de limitación no es válido.",
+	update_check_dispatch_failed: "No se pudo iniciar la comprobación de actualizaciones. Inténtalo de nuevo.",
+	"identity.missing_id": "No se seleccionó ninguna identidad vinculada para esta acción.",
+	"identity.not_found": "No se pudo encontrar esa identidad vinculada.",
+	"identity.last_sign_in_method": "Esta es la única forma de iniciar sesión que le queda a tu cuenta, así que no se puede desvincular.",
+	"identity.already_linked": "Esa cuenta del proveedor ya está vinculada a otra cuenta de aquí.",
+	"identity.invalid": "El proveedor no devolvió una identidad de cuenta utilizable.",
+	"identity.link_unavailable": "La vinculación de cuentas no está disponible temporalmente en este servidor.",
+	"identity.invalid_link_state": "La solicitud de vinculación caducó antes de terminar. Comienza de nuevo.",
+	"provider.not_configured": "Aún no hay ningún proveedor de inicio de sesión configurado en este servidor.",
+	"provider.unknown": "Ese proveedor de inicio de sesión no está disponible en este servidor.",
+	"provider.not_found": "No se pudo encontrar ese proveedor de inicio de sesión.",
+	"provider.invalid_type": "Ese proveedor no se puede usar con este tipo de inicio de sesión.",
+	"provider.missing_client_id": "Se requiere el ID de cliente del proveedor.",
+	"provider.missing_url": "Se requiere la URL del proveedor.",
+	"provider.invalid_url": "La URL del proveedor no es válida.",
+	"oauth.missing_code": "El proveedor de inicio de sesión no devolvió ningún código de autorización. Inténtalo de nuevo.",
+	"oauth.missing_state": "El proveedor de inicio de sesión no devolvió ningún token de estado. Inténtalo de nuevo.",
+	"oauth.invalid_state": "El intento de inicio de sesión ya no corresponde a este navegador o ha caducado. Inténtalo de nuevo.",
+	"oauth.missing_redirect_uri": "Se requiere una dirección de redirección para continuar este inicio de sesión.",
+	"oauth.invalid_redirect_uri": "Esa dirección de redirección no está en la lista permitida del servidor.",
+	"oauth.callback_url_not_configured": "Este servidor aún no tiene una URL de devolución de llamada configurada.",
+	"ldap.missing_host": "Se requiere el host del servidor LDAP.",
+	"ldap.missing_base_dn": "Se requiere el DN base de LDAP.",
+	"ldap.invalid_port": "El número de puerto de LDAP no es válido.",
+	"ldap.connection_failed": "El servidor no pudo conectarse al directorio LDAP.",
+	"ldap.bind_failed": "Las credenciales de LDAP no pudieron iniciar sesión en el directorio.",
+	"ldap.error": "El directorio LDAP devolvió un error.",
+	"ldap.runtime_error": "La prueba de conexión LDAP falló de forma inesperada.",
+	"syncplay.create_failed": "No se pudo crear el grupo de visionado.",
+	"syncplay.join_failed": "No se pudo unir al grupo de visionado.",
+	"syncplay.leave_failed": "No se pudo salir del grupo de visionado.",
+	"syncplay.group_limit_reached": "Se ha alcanzado el número máximo de grupos de visionado.",
+	"syncplay.group_not_found": "Ese grupo de visionado ya no existe.",
+	"syncplay.invalid_password": "La contraseña del grupo no es correcta.",
+	"syncplay.group_full": "Ese grupo de visionado está lleno.",
+	"syncplay.queue_limit_exceeded": "La cola de visionado ha alcanzado su tamaño máximo.",
+	UNKNOWN_MESSAGE: "La sesión de sincronización no entendió ese mensaje.",
+	HANDLER_ERROR: "La sesión de sincronización encontró un error interno al procesar tu petición.",
+	NOT_AUTHENTICATED: "Inicia sesión en la sesión de sincronización antes de continuar.",
+	NOT_IN_GROUP: "Ahora mismo no estás en ningún grupo de visionado.",
+	NOT_HOST: "Solo el anfitrión del grupo puede hacer eso.",
+	INVALID_NEW_HOST: "Ese miembro no puede asumir el rol de anfitrión.",
+	MEMBER_NOT_FOUND: "No se pudo encontrar a ese miembro del grupo.",
+	SAME_HOST: "Ese miembro ya es el anfitrión.",
+	CREATE_FAILED: "No se pudo crear el grupo de visionado.",
+	JOIN_FAILED: "No se pudo unir al grupo de visionado.",
+	LEAVE_FAILED: "No se pudo salir del grupo de visionado.",
+	PROTOCOL_VERSION_MISMATCH: "El protocolo de sincronización de este cliente no coincide con el del servidor."
+}, rt = {
+	"auth.required": "Connectez-vous pour continuer.",
+	"auth.not_admin": "Cette action nécessite un compte administrateur.",
+	"auth.invalid_token": "Votre jeton de connexion n’est pas valide ou a expiré.",
+	"auth.user_not_found": "Ce compte n’existe plus.",
+	"auth.signups_disabled": "Les créations de compte sont désactivées sur ce serveur.",
+	"auth.account_pending": "Votre compte est encore en attente d’approbation.",
+	"auth.account_disabled": "Ce compte a été désactivé.",
+	"auth.password_change_required": "Vous devez modifier votre mot de passe avant de continuer.",
+	"auth.unauthenticated": "Connectez-vous avant de réclamer ce serveur.",
+	"auth.enrollment_expired": "Le jeton d’enregistrement de ce serveur a expiré. Enregistrez-le de nouveau auprès du hub.",
+	"auth.server_mismatch": "Le jeton d’enregistrement ne correspond pas à ce serveur.",
+	"auth.missing_credentials": "Saisissez vos identifiants pour lier ce compte.",
+	"auth.invalid_credentials": "Les identifiants saisis ne sont pas corrects.",
+	"hub.not_enrolled": "Ce serveur n’est pas encore enregistré auprès du hub.",
+	"hub.token_required": "Un jeton d’accès au hub est requis pour cette action.",
+	"hub.jwt_invalid": "Le jeton du hub n’est pas valide ou a expiré.",
+	"hub.protocol_unsupported": "La requête n’a pas utilisé le protocole pris en charge par le hub.",
+	"hub.internal_error": "Le hub a rencontré une erreur inattendue. Réessayez dans un instant.",
+	"claim.code_not_found": "Ce code de réclamation est introuvable. Vérifiez-le et réessayez.",
+	"claim.code_expired": "Ce code de réclamation a expiré. Générez-en un nouveau et réessayez.",
+	"claim.code_already_claimed": "Ce code de réclamation a déjà été utilisé.",
+	"server.not_found": "Impossible de trouver ce serveur.",
+	"server.not_owned": "Ce serveur n’appartient pas à votre compte.",
+	"server.relay_unavailable": "Ce serveur est en ligne, mais son tunnel relais sécurisé n’est pas encore connecté ; ses bibliothèques ne peuvent donc pas être chargées via le hub. Il devrait se reconnecter automatiquement — réessayez dans un instant.",
+	"server.offline": "Ce serveur est hors ligne, ses bibliothèques ne peuvent donc pas être chargées. La navigation redeviendra possible dès sa reconnexion au hub.",
+	"server.no_tunnel": "Ce serveur est en ligne, mais son tunnel relais sécurisé n’est pas encore connecté ; ses bibliothèques ne peuvent donc pas être chargées via le hub. Il devrait se reconnecter automatiquement — réessayez dans un instant.",
+	"server.key_invalid": "La clé de signature du serveur n’a pas passé la vérification lors de la réclamation. Réessayez.",
+	"proxy.scope_denied": "Votre jeton d’accès ne possède pas le périmètre requis pour cette requête.",
+	"quota.exceeded": "Vous avez atteint la limite de votre quota de bande passante.",
+	"stream.limit": "Vous avez atteint le nombre maximal de lectures simultanées.",
+	"stream.limit_exceeded": "Vous avez atteint la limite de lectures simultanées de ce serveur. Arrêtez-en une et réessayez.",
+	"access.scheduled": "Ce profil n’est disponible que pendant ses heures programmées. Réessayez plus tard.",
+	"gateway.timeout": "La passerelle du hub a cessé d’attendre votre serveur. Réessayez.",
+	"relay.client_ws_endpoint": "Ce point de montage est un WebSocket client — il ne peut pas être ouvert par une requête simple.",
+	"relay.ws_http_endpoint": "Ce point de montage est un WebSocket du relais — il ne peut pas être ouvert par une requête simple.",
+	"relay.encode_error": "Le relais n’a pas pu encoder le message. Réessayez.",
+	"mcp.unknown_tool": "Cet outil MCP n’existe pas.",
+	"mcp.scope_denied": "Votre jeton MCP n’autorise pas cet outil.",
+	"mcp.streaming_unsupported": "Les réponses en flux ne sont pas prises en charge par cette interface MCP.",
+	"mcp.sse_not_acceptable": "Cette requête MCP doit accepter une réponse Server-Sent Events.",
+	"mcp.unsupported_protocol_version": "Cette version du protocole MCP n’est pas prise en charge.",
+	"mcp_token.no_valid_scopes": "Aucun des périmètres de jeton demandés n’est valide.",
+	"mcp_token.not_found": "Ce jeton d’accès MCP n’existe plus.",
+	"alexa.streaming_unsupported": "Le flux n’est pas pris en charge par l’adaptateur Alexa.",
+	"alexa.malformed_envelope": "L’enveloppe de la requête Alexa était mal formée.",
+	"alexa.verification_error": "La requête Alexa n’a pas pu être vérifiée. Réessayez.",
+	"alexa.missing_cert_chain_url": "La requête Alexa ne comportait pas d’URL de chaîne de certificats.",
+	"alexa.missing_signature_header": "La requête Alexa ne comportait pas d’en-tête de signature.",
+	"alexa.empty_body": "La requête Alexa est arrivée avec un corps vide.",
+	"alexa.cert_url_rejected": "L’URL du certificat de la requête Alexa sortait des domaines autorisés d’Amazon.",
+	"alexa.cert_fetch_failed": "Le serveur n’a pas pu récupérer la chaîne de certificats de la requête Alexa.",
+	"alexa.cert_chain_malformed": "La chaîne de certificats envoyée avec la requête Alexa était mal formée.",
+	"alexa.signature_invalid": "La signature de la requête Alexa n’a pas été validée.",
+	"alexa.cert_expired": "Le certificat ayant signé la requête Alexa a expiré.",
+	"alexa.cert_san_mismatch": "Le certificat de la requête Alexa n’a pas été émis pour un domaine Alexa.",
+	"alexa.cert_chain_untrusted": "La chaîne de certificats de la requête Alexa ne s’ancre pas sur la racine d’Amazon.",
+	"alexa.timestamp_malformed": "L’en-tête d’horodatage de la requête Alexa était illisible.",
+	"alexa.timestamp_missing": "La requête Alexa ne comportait pas d’en-tête d’horodatage.",
+	"alexa.timestamp_stale": "L’horodatage de la requête Alexa était trop ancien. Vérifiez l’horloge du serveur.",
+	"tls.acme_not_implemented": "La délivrance automatique de certificats TLS n’est pas encore disponible.",
+	"csrf.invalid_origin": "L’origine de la requête a échoué au contrôle CSRF.",
+	"user.not_found": "Impossible de trouver l’utilisateur de cette session.",
+	"plugin.name.required": "Le nom du plugin est requis.",
+	"plugin.not_found": "Impossible de trouver ce plugin.",
+	"plugin.url.required": "L’URL du plugin est requise.",
+	"plugin.url.invalid_scheme": "L’URL du plugin doit utiliser http ou https.",
+	"plugin.url.blocked": "Cette URL de plugin est bloquée par la politique du serveur.",
+	"plugin.install.failed": "L’installation du plugin a échoué.",
+	"plugin.enable.failed": "L’activation du plugin a échoué.",
+	"plugin.settings.invalid": "Les paramètres du plugin ne sont pas valides.",
+	"plugin.settings.validation_failed": "Les paramètres du plugin ont échoué à la validation.",
+	"plugin.test_not_supported": "Ce plugin ne prend pas en charge les tests automatiques.",
+	"plugin.update.failed": "La mise à jour du plugin a échoué.",
+	"plugin.update.no_source": "Ce plugin n’a aucune source de mise à jour configurée.",
+	"plugin.catalog.url.required": "L’URL du catalogue est requise.",
+	"plugin.catalog.url.duplicate": "Cette URL de catalogue de plugins est déjà ajoutée.",
+	"plugin.catalog.url.invalid": "L’URL du catalogue de plugins n’est pas valide.",
+	"plugin.auto_update.invalid": "Le réglage de mise à jour automatique n’est pas valide.",
+	"plugin.catalog.channel.invalid": "Le canal de mise à jour du catalogue n’est pas valide.",
+	"library.delete_all.confirm_required": "Supprimer toutes les bibliothèques à la fois exige une confirmation explicite.",
+	"metadata.tmdb_unconfigured": "Les recherches TMDB ne sont pas configurées sur ce serveur.",
+	"metadata.tmdb_unreachable": "Le fournisseur de métadonnées est injoignable. Réessayez plus tard.",
+	"metadata.no_query": "Saisissez un titre pour interroger le fournisseur de métadonnées.",
+	"metadata.bad_tmdb_id": "Cet identifiant TMDB n’est pas valide.",
+	"metadata.no_match": "Aucune correspondance de métadonnées trouvée pour ce titre.",
+	"poster.missing_url": "L’URL de l’image de l’affiche est requise.",
+	"poster.poster_not_candidate": "Cette image n’est pas une affiche candidate disponible pour ce titre.",
+	"profile.use_switch": "Pour changer de profil actif, utilisez plutôt la bascule de profil.",
+	"profile.last_profile": "C’est votre dernier profil, il ne peut donc pas être supprimé.",
+	"profile.no_pin": "Aucun PIN n’est configuré sur ce profil pour le vérifier.",
+	"profile.pin_mismatch": "Ce PIN n’est pas correct.",
+	"profile.not_found": "Ce profil n’existe plus. Choisissez-en un autre.",
+	"dlna.forbidden": "Cet appareil n’est pas autorisé à utiliser DLNA sur ce serveur.",
+	"casting.disabled": "La diffusion est désactivée sur ce serveur.",
+	unauthorized: "Vous n’êtes pas autorisé à gérer le couplage sur ce serveur.",
+	invalid_secret: "Le secret de couplage n’est pas valide. Relancez le couplage.",
+	pairing_not_pending: "Aucune demande de couplage n’attend d’approbation.",
+	consent_required: "Cet appareil doit accepter la demande de consentement pour poursuivre le couplage.",
+	pairing_not_found: "Cette demande de couplage n’existe plus.",
+	storage_unavailable: "Le stockage de couplage est indisponible pour le moment. Réessayez plus tard.",
+	rate_limited: "Trop de requêtes — attendez un instant et réessayez.",
+	provider_unavailable: "Le fournisseur d’authentification est indisponible. Réessayez plus tard.",
+	invalid_request: "La requête n’était pas valide.",
+	invalid_body: "Le corps de la requête était absent ou mal formé.",
+	invalid_payload: "Les données de la requête étaient absentes ou mal formées.",
+	unknown_error: "Une erreur inattendue s’est produite.",
+	validation_failed: "Certains champs ont échoué à la validation.",
+	admin_required: "Les privilèges d’administrateur sont requis pour cette action.",
+	master_only: "Seul le compte principal peut effectuer cette action.",
+	invalid_url: "L’URL fournie n’est pas valide.",
+	invalid_role: "Le rôle fourni n’est pas valide.",
+	invalid_permission: "La permission fournie n’est pas valide.",
+	missing_url: "Une URL est requise.",
+	missing_name: "Un nom est requis.",
+	missing_public_key: "Une clé publique est requise.",
+	missing_user_id: "Un identifiant d’utilisateur est requis.",
+	missing_server_id: "Un identifiant de serveur est requis.",
+	not_server_owner: "Seul le propriétaire de ce serveur peut le gérer.",
+	peer_url_exists: "Un pair avec cette URL est déjà ajouté.",
+	peer_key_exists: "Un pair avec cette clé publique est déjà ajouté.",
+	peer_not_found: "Impossible de trouver ce pair fédéré.",
+	offer_not_found: "Impossible de trouver cette offre de pair.",
+	offer_already_responded: "Cette offre a déjà reçu une réponse.",
+	delegation_not_found: "Impossible de trouver cette délégation d’accès.",
+	missing_peer_id: "Un identifiant de pair est requis.",
+	missing_offer_id: "Un identifiant d’offre est requis.",
+	missing_delegation_id: "Un identifiant de délégation est requis.",
+	missing_library_id: "Un identifiant de bibliothèque est requis.",
+	missing_library_name: "Un nom de bibliothèque est requis.",
+	leaf_hub_id_already_bound: "Cet identifiant de serveur est déjà associé à un autre pair.",
+	share_not_found: "Impossible de trouver ce partage de bibliothèque.",
+	missing_share_id: "Un identifiant de partage est requis.",
+	missing_collaborator_email: "Une adresse e-mail de collaborateur est requise.",
+	share_exists: "Cette bibliothèque est déjà partagée avec ce collaborateur.",
+	not_share_owner: "Seul le propriétaire du partage peut le gérer.",
+	missing_permission: "Un niveau de permission est requis.",
+	missing_link_id: "Un identifiant de lien d’invitation est requis.",
+	invite_link_not_found: "Impossible de trouver ce lien d’invitation.",
+	not_link_owner: "Seul le propriétaire peut gérer ce lien d’invitation.",
+	missing_token: "Un jeton d’invitation est requis.",
+	invalid_invite: "Cette invitation n’est pas valide.",
+	invite_expired_or_exhausted: "Cette invitation a expiré ou a été entièrement utilisée.",
+	invalid_type: "Le type de demande n’est pas valide.",
+	invalid_tmdb_id: "L’identifiant TMDB de cette demande n’est pas valide.",
+	missing_title: "Un titre est requis.",
+	missing_request_id: "Un identifiant de demande est requis.",
+	request_not_found: "Impossible de trouver cette demande de média.",
+	not_request_owner: "Seul l’auteur de la demande peut la gérer.",
+	approve_failed: "La demande n’a pas pu être approuvée.",
+	deny_failed: "La demande n’a pas pu être refusée.",
+	user_not_found: "Impossible de trouver cet utilisateur.",
+	cannot_delete_self: "Vous ne pouvez pas supprimer votre propre compte depuis ici.",
+	last_admin: "C’est le dernier compte administrateur, il ne peut donc pas être modifié ainsi.",
+	cannot_demote_self: "Vous ne pouvez pas retirer votre propre rôle d’administrateur.",
+	invalid_quota: "La valeur du quota n’est pas valide.",
+	invalid_throttle: "La valeur de limitation n’est pas valide.",
+	update_check_dispatch_failed: "La vérification des mises à jour n’a pas pu être lancée. Réessayez.",
+	"identity.missing_id": "Aucune identité liée n’a été sélectionnée pour cette action.",
+	"identity.not_found": "Cette identité liée est introuvable.",
+	"identity.last_sign_in_method": "C’est le seul moyen de connexion restant pour votre compte ; il ne peut donc pas être dissocié.",
+	"identity.already_linked": "Ce compte fournisseur est déjà lié à un autre compte d’ici.",
+	"identity.invalid": "Le fournisseur n’a pas renvoyé d’identité de compte exploitable.",
+	"identity.link_unavailable": "La liaison de comptes est temporairement indisponible sur ce serveur.",
+	"identity.invalid_link_state": "La demande de liaison a expiré avant d’aboutir. Reprenez depuis le début.",
+	"provider.not_configured": "Aucun fournisseur de connexion n’est encore configuré sur ce serveur.",
+	"provider.unknown": "Ce fournisseur de connexion n’est pas disponible sur ce serveur.",
+	"provider.not_found": "Ce fournisseur de connexion est introuvable.",
+	"provider.invalid_type": "Ce fournisseur ne peut pas servir à ce type de connexion.",
+	"provider.missing_client_id": "L’identifiant client du fournisseur est requis.",
+	"provider.missing_url": "L’URL du fournisseur est requise.",
+	"provider.invalid_url": "L’URL du fournisseur n’est pas valide.",
+	"oauth.missing_code": "Le fournisseur de connexion n’a renvoyé aucun code d’autorisation. Reconnectez-vous.",
+	"oauth.missing_state": "Le fournisseur de connexion n’a renvoyé aucun jeton d’état. Reconnectez-vous.",
+	"oauth.invalid_state": "La tentative de connexion ne correspond plus à ce navigateur ou a expiré. Réessayez.",
+	"oauth.missing_redirect_uri": "Une adresse de redirection est requise pour poursuivre cette connexion.",
+	"oauth.invalid_redirect_uri": "Cette adresse de redirection ne figure pas dans la liste autorisée du serveur.",
+	"oauth.callback_url_not_configured": "Ce serveur n’a encore aucune URL de rappel de connexion configurée.",
+	"ldap.missing_host": "L’hôte du serveur LDAP est requis.",
+	"ldap.missing_base_dn": "Le DN de base LDAP est requis.",
+	"ldap.invalid_port": "Le numéro de port LDAP n’est pas valide.",
+	"ldap.connection_failed": "Le serveur n’a pas pu se connecter à l’annuaire LDAP.",
+	"ldap.bind_failed": "Les identifiants LDAP n’ont pas pu ouvrir de session sur l’annuaire.",
+	"ldap.error": "L’annuaire LDAP a renvoyé une erreur.",
+	"ldap.runtime_error": "Le test de connexion LDAP a échoué de façon inattendue.",
+	"syncplay.create_failed": "Impossible de créer le groupe de visionnage.",
+	"syncplay.join_failed": "Impossible de rejoindre le groupe de visionnage.",
+	"syncplay.leave_failed": "Impossible de quitter le groupe de visionnage.",
+	"syncplay.group_limit_reached": "Le nombre maximal de groupes de visionnage a été atteint.",
+	"syncplay.group_not_found": "Ce groupe de visionnage n’existe plus.",
+	"syncplay.invalid_password": "Le mot de passe du groupe n’est pas correct.",
+	"syncplay.group_full": "Ce groupe de visionnage est complet.",
+	"syncplay.queue_limit_exceeded": "La file d’attente de visionnage a atteint sa taille maximale.",
+	UNKNOWN_MESSAGE: "La session de synchronisation n’a pas compris ce message.",
+	HANDLER_ERROR: "La session de synchronisation a rencontré une erreur interne en traitant votre requête.",
+	NOT_AUTHENTICATED: "Connectez-vous à la session de synchronisation avant de continuer.",
+	NOT_IN_GROUP: "Vous ne faites pas partie d’un groupe de visionnage actuellement.",
+	NOT_HOST: "Seul l’hôte du groupe peut faire cela.",
+	INVALID_NEW_HOST: "Ce membre ne peut pas reprendre le rôle d’hôte.",
+	MEMBER_NOT_FOUND: "Impossible de trouver ce membre du groupe.",
+	SAME_HOST: "Ce membre est déjà l’hôte.",
+	CREATE_FAILED: "Impossible de créer le groupe de visionnage.",
+	JOIN_FAILED: "Impossible de rejoindre le groupe de visionnage.",
+	LEAVE_FAILED: "Impossible de quitter le groupe de visionnage.",
+	PROTOCOL_VERSION_MISMATCH: "Le protocole de synchronisation de ce client ne correspond pas à celui du serveur."
+}, it = {
+	"auth.required": "Bitte melden Sie sich an, um fortzufahren.",
+	"auth.not_admin": "Diese Aktion erfordert ein Administratorkonto.",
+	"auth.invalid_token": "Ihr Anmelde-Token ist ungültig oder abgelaufen.",
+	"auth.user_not_found": "Dieses Konto gibt es nicht mehr.",
+	"auth.signups_disabled": "Neue Konten sind auf diesem Server deaktiviert.",
+	"auth.account_pending": "Ihr Konto wartet noch auf Genehmigung.",
+	"auth.account_disabled": "Dieses Konto wurde deaktiviert.",
+	"auth.password_change_required": "Sie müssen Ihr Passwort ändern, bevor Sie fortfahren.",
+	"auth.unauthenticated": "Bitte melden Sie sich an, bevor Sie diesen Server registrieren.",
+	"auth.enrollment_expired": "Das Registrierungs-Token dieses Servers ist abgelaufen. Registrieren Sie ihn erneut am Hub.",
+	"auth.server_mismatch": "Das Registrierungs-Token passt nicht zu diesem Server.",
+	"auth.missing_credentials": "Geben Sie Ihre Zugangsdaten ein, um dieses Konto zu verknüpfen.",
+	"auth.invalid_credentials": "Die eingegebenen Zugangsdaten sind nicht korrekt.",
+	"hub.not_enrolled": "Dieser Server ist beim Hub noch nicht registriert.",
+	"hub.token_required": "Für diese Aktion ist ein Hub-Zugriffstoken erforderlich.",
+	"hub.jwt_invalid": "Das Hub-Token ist ungültig oder abgelaufen.",
+	"hub.protocol_unsupported": "Die Anfrage hat das vom Hub unterstützte Protokoll nicht verwendet.",
+	"hub.internal_error": "Der Hub hat einen unerwarteten Fehler entdeckt. Versuchen Sie es gleich erneut.",
+	"claim.code_not_found": "Dieser Registrierungscode wurde nicht gefunden. Prüfen Sie ihn und versuchen Sie es erneut.",
+	"claim.code_expired": "Dieser Registrierungscode ist abgelaufen. Erzeugen Sie einen neuen und versuchen Sie es erneut.",
+	"claim.code_already_claimed": "Dieser Registrierungscode wurde bereits verwendet.",
+	"server.not_found": "Dieser Server wurde nicht gefunden.",
+	"server.not_owned": "Dieser Server gehört nicht zu Ihrem Konto.",
+	"server.relay_unavailable": "Dieser Server ist online, aber sein sicherer Relay-Tunnel ist noch nicht verbunden; seine Bibliotheken können daher nicht über den Hub geladen werden. Die Verbindung sollte automatisch wiederhergestellt werden — versuchen Sie es gleich erneut.",
+	"server.offline": "Dieser Server ist offline, seine Bibliotheken können daher nicht geladen werden. Nach der Wiederverbindung mit dem Hub ist er wieder durchstöberbar.",
+	"server.no_tunnel": "Dieser Server ist online, aber sein sicherer Relay-Tunnel ist noch nicht verbunden; seine Bibliotheken können daher nicht über den Hub geladen werden. Die Verbindung sollte automatisch wiederhergestellt werden — versuchen Sie es gleich erneut.",
+	"server.key_invalid": "Der Signaturschlüssel des Servers hat die Prüfung beim Registrieren nicht bestanden. Versuchen Sie es erneut.",
+	"proxy.scope_denied": "Ihr Zugriffstoken hat nicht die erforderliche Berechtigung für diese Anfrage.",
+	"quota.exceeded": "Sie haben das Limit Ihres Bandbreitenkontingents erreicht.",
+	"stream.limit": "Sie haben die höchste zulässige Anzahl gleichzeitiger Wiedergaben erreicht.",
+	"stream.limit_exceeded": "Sie haben das Limit gleichzeitiger Streams auf diesem Server erreicht. Beenden Sie einen und versuchen Sie es erneut.",
+	"access.scheduled": "Dieses Profil ist nur innerhalb seines geplanten Zeitfensters verfügbar. Versuchen Sie es später erneut.",
+	"gateway.timeout": "Das Hub-Gateway hat beim Warten auf Ihren Server eine Zeitüberschreitung erreicht. Versuchen Sie es erneut.",
+	"relay.client_ws_endpoint": "Dieser Endpunkt ist ein Client-WebSocket-Mount — er lässt sich nicht mit einer einfachen Anfrage öffnen.",
+	"relay.ws_http_endpoint": "Dieser Endpunkt ist ein Relay-WebSocket-Mount — er lässt sich nicht mit einer einfachen Anfrage öffnen.",
+	"relay.encode_error": "Das Relay konnte die Nachricht nicht kodieren. Versuchen Sie es erneut.",
+	"mcp.unknown_tool": "Dieses MCP-Werkzeug existiert nicht.",
+	"mcp.scope_denied": "Ihr MCP-Token erlaubt dieses Werkzeug nicht.",
+	"mcp.streaming_unsupported": "Streaming-Antworten werden von dieser MCP-Oberfläche nicht unterstützt.",
+	"mcp.sse_not_acceptable": "Diese MCP-Anfrage muss eine Server-Sent-Events-Antwort akzeptieren.",
+	"mcp.unsupported_protocol_version": "Diese Version des MCP-Protokolls wird nicht unterstützt.",
+	"mcp_token.no_valid_scopes": "Keiner der angeforderten Token-Berechtigungen ist gültig.",
+	"mcp_token.not_found": "Dieses MCP-Zugriffstoken gibt es nicht mehr.",
+	"alexa.streaming_unsupported": "Streaming wird über den Alexa-Adapter nicht unterstützt.",
+	"alexa.malformed_envelope": "Der Anfrageumschlag von Alexa war fehlerhaft aufgebaut.",
+	"alexa.verification_error": "Die Alexa-Anfrage konnte nicht überprüft werden. Versuchen Sie es erneut.",
+	"alexa.missing_cert_chain_url": "Der Alexa-Anfrage fehlte die URL der Zertifikatskette.",
+	"alexa.missing_signature_header": "Der Alexa-Anfrage fehlte der Signatur-Header.",
+	"alexa.empty_body": "Die Alexa-Anfrage kam mit einem leeren Inhalt.",
+	"alexa.cert_url_rejected": "Die Zertifikats-URL der Alexa-Anfrage lag außerhalb der erlaubten Amazon-Domains.",
+	"alexa.cert_fetch_failed": "Der Server konnte die Zertifikatskette der Alexa-Anfrage nicht abrufen.",
+	"alexa.cert_chain_malformed": "Die mit der Alexa-Anfrage gesendete Zertifikatskette war fehlerhaft aufgebaut.",
+	"alexa.signature_invalid": "Die Signatur der Alexa-Anfrage wurde nicht anerkannt.",
+	"alexa.cert_expired": "Das Zertifikat der Alexa-Anfrage ist abgelaufen.",
+	"alexa.cert_san_mismatch": "Das Zertifikat der Alexa-Anfrage wurde nicht für eine Alexa-Domain ausgestellt.",
+	"alexa.cert_chain_untrusted": "Die Zertifikatskette der Alexa-Anfrage stützt sich nicht auf das Amazon-Stammzertifikat.",
+	"alexa.timestamp_malformed": "Der Zeitstempel-Header der Alexa-Anfrage war nicht lesbar.",
+	"alexa.timestamp_missing": "Der Alexa-Anfrage fehlte der Zeitstempel-Header.",
+	"alexa.timestamp_stale": "Der Zeitstempel der Alexa-Anfrage war zu alt. Prüfen Sie die Serveruhr.",
+	"tls.acme_not_implemented": "Die automatische TLS-Zertifikatsausstellung ist noch nicht verfügbar.",
+	"csrf.invalid_origin": "Die Anfrageherkunft hat die CSRF-Prüfung nicht bestanden.",
+	"user.not_found": "Der Benutzer dieser Sitzung wurde nicht gefunden.",
+	"plugin.name.required": "Ein Plugin-Name ist erforderlich.",
+	"plugin.not_found": "Dieses Plugin wurde nicht gefunden.",
+	"plugin.url.required": "Eine Plugin-URL ist erforderlich.",
+	"plugin.url.invalid_scheme": "Die Plugin-URL muss http oder https verwenden.",
+	"plugin.url.blocked": "Diese Plugin-URL wird durch die Server-Richtlinie blockiert.",
+	"plugin.install.failed": "Die Installation des Plugins ist fehlgeschlagen.",
+	"plugin.enable.failed": "Das Aktivieren des Plugins ist fehlgeschlagen.",
+	"plugin.settings.invalid": "Die Plugin-Einstellungen sind ungültig.",
+	"plugin.settings.validation_failed": "Die Plugin-Einstellungen haben die Prüfung nicht bestanden.",
+	"plugin.test_not_supported": "Dieses Plugin unterstützt keine Selbsttests.",
+	"plugin.update.failed": "Das Aktualisieren des Plugins ist fehlgeschlagen.",
+	"plugin.update.no_source": "Für dieses Plugin ist keine Update-Quelle eingerichtet.",
+	"plugin.catalog.url.required": "Eine Katalog-URL ist erforderlich.",
+	"plugin.catalog.url.duplicate": "Diese Plugin-Katalog-URL wurde bereits hinzugefügt.",
+	"plugin.catalog.url.invalid": "Die Plugin-Katalog-URL ist ungültig.",
+	"plugin.auto_update.invalid": "Die Einstellung für automatische Updates ist ungültig.",
+	"plugin.catalog.channel.invalid": "Der Update-Kanal des Katalogs ist ungültig.",
+	"library.delete_all.confirm_required": "Das gleichzeitige Löschen aller Bibliotheken erfordert eine ausdrückliche Bestätigung.",
+	"metadata.tmdb_unconfigured": "TMDB-Suchen sind auf diesem Server nicht eingerichtet.",
+	"metadata.tmdb_unreachable": "Der Metadaten-Anbieter ist nicht erreichbar. Versuchen Sie es später erneut.",
+	"metadata.no_query": "Geben Sie einen Titel ein, um den Metadaten-Anbieter zu durchsuchen.",
+	"metadata.bad_tmdb_id": "Diese TMDB-Kennung ist nicht gültig.",
+	"metadata.no_match": "Für diesen Titel wurden keine Metadaten gefunden.",
+	"poster.missing_url": "Eine Poster-Bild-URL ist erforderlich.",
+	"poster.poster_not_candidate": "Dieses Bild ist kein verfügbares Poster-Kandidat für diesen Titel.",
+	"profile.use_switch": "Um das aktive Profil zu wechseln, nutzen Sie stattdessen die Profilumschaltung.",
+	"profile.last_profile": "Dies ist Ihr letztes Profil, es kann daher nicht gelöscht werden.",
+	"profile.no_pin": "Für dieses Profil ist keine PIN eingerichtet, die geprüft werden könnte.",
+	"profile.pin_mismatch": "Diese PIN ist nicht korrekt.",
+	"profile.not_found": "Dieses Profil existiert nicht mehr. Wählen Sie ein anderes aus.",
+	"dlna.forbidden": "Dieses Gerät darf DLNA auf diesem Server nicht verwenden.",
+	"casting.disabled": "Casting ist auf diesem Server deaktiviert.",
+	unauthorized: "Sie sind nicht berechtigt, die Kopplung auf diesem Server zu verwalten.",
+	invalid_secret: "Das Kopplungsgeheimnis ist ungültig. Starten Sie die Kopplung erneut.",
+	pairing_not_pending: "Es wartet keine Kopplungsanfrage auf ihre Genehmigung.",
+	consent_required: "Dieses Gerät muss die Zustimmung annehmen, damit die Kopplung fortfahren kann.",
+	pairing_not_found: "Diese Kopplungsanfrage gibt es nicht mehr.",
+	storage_unavailable: "Der Kopplungsspeicher ist zurzeit nicht verfügbar. Versuchen Sie es später erneut.",
+	rate_limited: "Zu viele Anfragen — warten Sie einen Moment und versuchen Sie es erneut.",
+	provider_unavailable: "Der Authentifizierungsanbieter ist nicht verfügbar. Versuchen Sie es später erneut.",
+	invalid_request: "Die Anfrage war nicht gültig.",
+	invalid_body: "Der Anfragekörper fehlte oder war fehlerhaft aufgebaut.",
+	invalid_payload: "Die Anfragedaten fehlten oder waren fehlerhaft aufgebaut.",
+	unknown_error: "Ein unerwarteter Fehler ist aufgetreten.",
+	validation_failed: "Einige Felder haben die Prüfung nicht bestanden.",
+	admin_required: "Für diese Aktion sind Administratorrechte erforderlich.",
+	master_only: "Nur das Master-Konto kann diese Aktion ausführen.",
+	invalid_url: "Die angegebene URL ist ungültig.",
+	invalid_role: "Die angegebene Rolle ist ungültig.",
+	invalid_permission: "Die angegebene Berechtigung ist ungültig.",
+	missing_url: "Eine URL ist erforderlich.",
+	missing_name: "Ein Name ist erforderlich.",
+	missing_public_key: "Ein öffentlicher Schlüssel ist erforderlich.",
+	missing_user_id: "Eine Benutzer-ID ist erforderlich.",
+	missing_server_id: "Eine Server-ID ist erforderlich.",
+	not_server_owner: "Nur der Eigentümer dieses Servers kann ihn verwalten.",
+	peer_url_exists: "Ein Peer mit dieser URL wurde bereits hinzugefügt.",
+	peer_key_exists: "Ein Peer mit diesem öffentlichen Schlüssel wurde bereits hinzugefügt.",
+	peer_not_found: "Dieser föderierte Peer wurde nicht gefunden.",
+	offer_not_found: "Dieses Peer-Angebot wurde nicht gefunden.",
+	offer_already_responded: "Auf dieses Angebot wurde bereits geantwortet.",
+	delegation_not_found: "Diese Zugriffsdelegation wurde nicht gefunden.",
+	missing_peer_id: "Eine Peer-ID ist erforderlich.",
+	missing_offer_id: "Eine Angebots-ID ist erforderlich.",
+	missing_delegation_id: "Eine Delegations-ID ist erforderlich.",
+	missing_library_id: "Eine Bibliotheks-ID ist erforderlich.",
+	missing_library_name: "Ein Bibliotheksname ist erforderlich.",
+	leaf_hub_id_already_bound: "Diese Server-ID ist bereits mit einem anderen Peer verknüpft.",
+	share_not_found: "Diese Bibliotheksfreigabe wurde nicht gefunden.",
+	missing_share_id: "Eine Freigabe-ID ist erforderlich.",
+	missing_collaborator_email: "Eine E-Mail-Adresse für die Mitarbeit ist erforderlich.",
+	share_exists: "Diese Bibliothek ist bereits mit dieser Person geteilt.",
+	not_share_owner: "Nur der Eigentümer der Freigabe kann sie verwalten.",
+	missing_permission: "Eine Berechtigungsstufe ist erforderlich.",
+	missing_link_id: "Eine Einladungslink-ID ist erforderlich.",
+	invite_link_not_found: "Dieser Einladungslink wurde nicht gefunden.",
+	not_link_owner: "Nur der Eigentümer kann diesen Einladungslink verwalten.",
+	missing_token: "Ein Einladungs-Token ist erforderlich.",
+	invalid_invite: "Diese Einladung ist ungültig.",
+	invite_expired_or_exhausted: "Diese Einladung ist abgelaufen oder wurde vollständig genutzt.",
+	invalid_type: "Der Typ der Anfrage ist ungültig.",
+	invalid_tmdb_id: "Die TMDB-Kennung dieser Anfrage ist ungültig.",
+	missing_title: "Ein Titel ist erforderlich.",
+	missing_request_id: "Eine Anfrage-ID ist erforderlich.",
+	request_not_found: "Diese Medienanfrage wurde nicht gefunden.",
+	not_request_owner: "Nur der Anfragesteller kann sie verwalten.",
+	approve_failed: "Die Anfrage konnte nicht genehmigt werden.",
+	deny_failed: "Die Anfrage konnte nicht abgelehnt werden.",
+	user_not_found: "Dieser Benutzer wurde nicht gefunden.",
+	cannot_delete_self: "Sie können Ihr eigenes Konto hier nicht löschen.",
+	last_admin: "Dies ist das letzte Administratorkonto, es kann auf diesem Weg nicht geändert werden.",
+	cannot_demote_self: "Sie können sich die Administratorrolle nicht selbst entziehen.",
+	invalid_quota: "Der Kontingentwert ist ungültig.",
+	invalid_throttle: "Der Drosselungswert ist ungültig.",
+	update_check_dispatch_failed: "Die Update-Prüfung konnte nicht gestartet werden. Versuchen Sie es erneut.",
+	"identity.missing_id": "Für diese Aktion wurde keine verknüpfte Identität ausgewählt.",
+	"identity.not_found": "Diese verknüpfte Identität wurde nicht gefunden.",
+	"identity.last_sign_in_method": "Dies ist die einzige verbleibende Anmeldemethode Ihres Kontos; deshalb kann sie nicht getrennt werden.",
+	"identity.already_linked": "Dieses Anbieterkonto ist bereits mit einem anderen Konto hier verknüpft.",
+	"identity.invalid": "Der Anbieter hat keine nutzbare Konto-Identität zurückgegeben.",
+	"identity.link_unavailable": "Die Kontoverknüpfung ist auf diesem Server vorübergehend nicht verfügbar.",
+	"identity.invalid_link_state": "Die Verknüpfungsanfrage ist vor dem Abschluss abgelaufen. Beginnen Sie erneut.",
+	"provider.not_configured": "Auf diesem Server ist noch kein Anmelde-Anbieter eingerichtet.",
+	"provider.unknown": "Dieser Anmelde-Anbieter ist auf diesem Server nicht verfügbar.",
+	"provider.not_found": "Dieser Anmelde-Anbieter wurde nicht gefunden.",
+	"provider.invalid_type": "Dieser Anbieter kann für diese Art der Anmeldung nicht verwendet werden.",
+	"provider.missing_client_id": "Die Client-ID des Anbieters ist erforderlich.",
+	"provider.missing_url": "Die URL des Anbieters ist erforderlich.",
+	"provider.invalid_url": "Die URL des Anbieters ist nicht gültig.",
+	"oauth.missing_code": "Der Anmelde-Anbieter hat keinen Autorisierungscode zurückgegeben. Melden Sie sich erneut an.",
+	"oauth.missing_state": "Der Anmelde-Anbieter hat keinen State-Token zurückgegeben. Melden Sie sich erneut an.",
+	"oauth.invalid_state": "Der Anmeldeversuch passt nicht mehr zu diesem Browser oder ist abgelaufen. Versuchen Sie es erneut.",
+	"oauth.missing_redirect_uri": "Für diese Anmeldung ist eine Umleitungsadresse erforderlich.",
+	"oauth.invalid_redirect_uri": "Diese Umleitungsadresse steht nicht auf der Erlaubnisliste des Servers.",
+	"oauth.callback_url_not_configured": "Dieser Server hat noch keine Rückruf-URL für Anmeldungen eingerichtet.",
+	"ldap.missing_host": "Der Host des LDAP-Servers ist erforderlich.",
+	"ldap.missing_base_dn": "Der Basis-DN von LDAP ist erforderlich.",
+	"ldap.invalid_port": "Die LDAP-Portnummer ist nicht gültig.",
+	"ldap.connection_failed": "Der Server konnte sich nicht mit dem LDAP-Verzeichnis verbinden.",
+	"ldap.bind_failed": "Die LDAP-Zugangsdaten konnten sich nicht am Verzeichnis anmelden.",
+	"ldap.error": "Das LDAP-Verzeichnis hat einen Fehler zurückgegeben.",
+	"ldap.runtime_error": "Der LDAP-Verbindungstest ist unerwartet fehlgeschlagen.",
+	"syncplay.create_failed": "Die Wiedergabegruppe konnte nicht erstellt werden.",
+	"syncplay.join_failed": "Der Wiedergabegruppe konnte nicht beigetreten werden.",
+	"syncplay.leave_failed": "Die Wiedergabegruppe konnte nicht verlassen werden.",
+	"syncplay.group_limit_reached": "Die höchste Anzahl von Wiedergabegruppen ist erreicht.",
+	"syncplay.group_not_found": "Diese Wiedergabegruppe gibt es nicht mehr.",
+	"syncplay.invalid_password": "Das Gruppenpasswort ist nicht korrekt.",
+	"syncplay.group_full": "Diese Wiedergabegruppe ist voll.",
+	"syncplay.queue_limit_exceeded": "Die Wiedergabewarteschlange hat ihre maximale Größe erreicht.",
+	UNKNOWN_MESSAGE: "Die Synchronisationssitzung hat diese Nachricht nicht verstanden.",
+	HANDLER_ERROR: "In der Synchronisationssitzung ist beim Verarbeiten Ihrer Anfrage ein interner Fehler aufgetreten.",
+	NOT_AUTHENTICATED: "Melden Sie sich bei der Synchronisationssitzung an, bevor Sie fortfahren.",
+	NOT_IN_GROUP: "Sie sind zurzeit in keiner Wiedergabegruppe.",
+	NOT_HOST: "Nur der Host der Gruppe kann das tun.",
+	INVALID_NEW_HOST: "Dieses Mitglied kann die Host-Rolle nicht übernehmen.",
+	MEMBER_NOT_FOUND: "Dieses Gruppenmitglied wurde nicht gefunden.",
+	SAME_HOST: "Dieses Mitglied ist bereits der Host.",
+	CREATE_FAILED: "Die Wiedergabegruppe konnte nicht erstellt werden.",
+	JOIN_FAILED: "Der Wiedergabegruppe konnte nicht beigetreten werden.",
+	LEAVE_FAILED: "Die Wiedergabegruppe konnte nicht verlassen werden.",
+	PROTOCOL_VERSION_MISMATCH: "Das Synchronisationsprotokoll dieses Clients stimmt nicht mit dem des Servers überein."
+}, at = {
+	"auth.required": "Accedi per continuare.",
+	"auth.not_admin": "Questa azione richiede un account amministratore.",
+	"auth.invalid_token": "Il tuo token di accesso non è valido o è scaduto.",
+	"auth.user_not_found": "Questo account non esiste più.",
+	"auth.signups_disabled": "Le nuove registrazioni sono disattivate su questo server.",
+	"auth.account_pending": "Il tuo account è ancora in attesa di approvazione.",
+	"auth.account_disabled": "Questo account è stato disattivato.",
+	"auth.password_change_required": "Devi cambiare la password prima di continuare.",
+	"auth.unauthenticated": "Accedi prima di attivare questo server.",
+	"auth.enrollment_expired": "Il token di registrazione di questo server è scaduto. Registralo di nuovo presso l’hub.",
+	"auth.server_mismatch": "Il token di registrazione non corrisponde a questo server.",
+	"auth.missing_credentials": "Inserisci le tue credenziali per collegare questo account.",
+	"auth.invalid_credentials": "Le credenziali inserite non sono corrette.",
+	"hub.not_enrolled": "Questo server non è ancora registrato presso l’hub.",
+	"hub.token_required": "Per questa azione è richiesto un token di accesso all’hub.",
+	"hub.jwt_invalid": "Il token dell’hub non è valido o è scaduto.",
+	"hub.protocol_unsupported": "La richiesta non ha usato il protocollo supportato dall’hub.",
+	"hub.internal_error": "L’hub ha riscontrato un errore inatteso. Riprova tra poco.",
+	"claim.code_not_found": "Il codice di attivazione non è stato trovato. Controllalo e riprova.",
+	"claim.code_expired": "Il codice di attivazione è scaduto. Generane uno nuovo e riprova.",
+	"claim.code_already_claimed": "Il codice di attivazione è già stato usato.",
+	"server.not_found": "Impossibile trovare questo server.",
+	"server.not_owned": "Questo server non appartiene al tuo account.",
+	"server.relay_unavailable": "Questo server è online ma il suo tunnel relay sicuro non è ancora connesso, quindi le sue librerie non possono essere caricate tramite l’hub. Dovrebbe riconnettersi da solo: riprova tra un momento.",
+	"server.offline": "Questo server è offline, quindi le sue librerie non possono essere caricate. Sarà di nuovo navigabile quando si riconnetterà all’hub.",
+	"server.no_tunnel": "Questo server è online ma il suo tunnel relay sicuro non è ancora connesso, quindi le sue librerie non possono essere caricate tramite l’hub. Dovrebbe riconnettersi da solo: riprova tra un momento.",
+	"server.key_invalid": "La chiave di firma del server non ha superato la verifica durante l’attivazione. Riprova.",
+	"proxy.scope_denied": "Il tuo token di accesso non ha l’ambito necessario per questa richiesta.",
+	"quota.exceeded": "Hai raggiunto il limite della tua quota di banda.",
+	"stream.limit": "Hai raggiunto il numero massimo di streaming simultanei.",
+	"stream.limit_exceeded": "Hai raggiunto il limite di riproduzioni simultanee su questo server. Fermane una e riprova.",
+	"access.scheduled": "Questo profilo è disponibile solo nella fascia oraria programmata. Riprova più tardi.",
+	"gateway.timeout": "Il gateway dell’hub ha superato il tempo di attesa per il tuo server. Riprova.",
+	"relay.client_ws_endpoint": "Questo endpoint è un mount WebSocket client: non può essere aperto con una richiesta semplice.",
+	"relay.ws_http_endpoint": "Questo endpoint è un mount WebSocket del relay: non può essere aperto con una richiesta semplice.",
+	"relay.encode_error": "Il relay non è riuscito a codificare il messaggio. Riprova.",
+	"mcp.unknown_tool": "Questo strumento MCP non esiste.",
+	"mcp.scope_denied": "Il tuo token MCP non consente questo strumento.",
+	"mcp.streaming_unsupported": "Le risposte in streaming non sono supportate da questa interfaccia MCP.",
+	"mcp.sse_not_acceptable": "Questa richiesta MCP deve accettare una risposta Server-Sent Events.",
+	"mcp.unsupported_protocol_version": "Questa versione del protocollo MCP non è supportata.",
+	"mcp_token.no_valid_scopes": "Nessuno degli ambiti richiesti per il token è valido.",
+	"mcp_token.not_found": "Questo token di accesso MCP non esiste più.",
+	"alexa.streaming_unsupported": "Lo streaming non è supportato tramite l’adattatore Alexa.",
+	"alexa.malformed_envelope": "La busta della richiesta Alexa non era ben formata.",
+	"alexa.verification_error": "La richiesta Alexa non è stata verificata. Riprova.",
+	"alexa.missing_cert_chain_url": "La richiesta Alexa non includeva l’URL della catena dei certificati.",
+	"alexa.missing_signature_header": "La richiesta Alexa non includeva l’header della firma.",
+	"alexa.empty_body": "La richiesta Alexa è arrivata con un corpo vuoto.",
+	"alexa.cert_url_rejected": "L’URL del certificato della richiesta Alexa era fuori dai domini consentiti di Amazon.",
+	"alexa.cert_fetch_failed": "Il server non è riuscito a scaricare la catena dei certificati della richiesta Alexa.",
+	"alexa.cert_chain_malformed": "La catena dei certificati inviata con la richiesta Alexa non era valida.",
+	"alexa.signature_invalid": "La firma della richiesta Alexa non è risultata valida.",
+	"alexa.cert_expired": "Il certificato usato per firmare la richiesta Alexa è scaduto.",
+	"alexa.cert_san_mismatch": "Il certificato della richiesta Alexa non è stato rilasciato per un dominio Alexa.",
+	"alexa.cert_chain_untrusted": "La catena dei certificati della richiesta Alexa non fa capo al certificato radice di Amazon.",
+	"alexa.timestamp_malformed": "L’header della data-ora della richiesta Alexa non era interpretabile.",
+	"alexa.timestamp_missing": "La richiesta Alexa non includeva l’header della data-ora.",
+	"alexa.timestamp_stale": "La data-ora della richiesta Alexa era troppo vecchia. Verifica l’orologio del server.",
+	"tls.acme_not_implemented": "Il rilascio automatico dei certificati TLS non è ancora disponibile.",
+	"csrf.invalid_origin": "L’origine della richiesta non ha superato il controllo CSRF.",
+	"user.not_found": "Impossibile trovare l’utente di questa sessione.",
+	"plugin.name.required": "È richiesto il nome del plugin.",
+	"plugin.not_found": "Impossibile trovare questo plugin.",
+	"plugin.url.required": "È richiesto l’URL del plugin.",
+	"plugin.url.invalid_scheme": "L’URL del plugin deve usare http o https.",
+	"plugin.url.blocked": "Questo URL del plugin è bloccato dai criteri del server.",
+	"plugin.install.failed": "Installazione del plugin fallita.",
+	"plugin.enable.failed": "Attivazione del plugin fallita.",
+	"plugin.settings.invalid": "Le impostazioni del plugin non sono valide.",
+	"plugin.settings.validation_failed": "Le impostazioni del plugin non hanno superato la verifica.",
+	"plugin.test_not_supported": "Questo plugin non supporta i test automatici.",
+	"plugin.update.failed": "Aggiornamento del plugin fallito.",
+	"plugin.update.no_source": "Questo plugin non ha una sorgente di aggiornamento configurata.",
+	"plugin.catalog.url.required": "È richiesto l’URL del catalogo.",
+	"plugin.catalog.url.duplicate": "Questo URL del catalogo dei plugin è già stato aggiunto.",
+	"plugin.catalog.url.invalid": "L’URL del catalogo dei plugin non è valido.",
+	"plugin.auto_update.invalid": "L’impostazione dell’aggiornamento automatico non è valida.",
+	"plugin.catalog.channel.invalid": "Il canale di aggiornamento del catalogo non è valido.",
+	"library.delete_all.confirm_required": "Eliminare tutte le librerie insieme richiede una conferma esplicita.",
+	"metadata.tmdb_unconfigured": "Le ricerche TMDB non sono configurate su questo server.",
+	"metadata.tmdb_unreachable": "Il fornitore di metadati non è raggiungibile. Riprova più tardi.",
+	"metadata.no_query": "Inserisci un titolo per cercare presso il fornitore di metadati.",
+	"metadata.bad_tmdb_id": "Questo identificatore TMDB non è valido.",
+	"metadata.no_match": "Nessuna corrispondenza di metadati trovata per questo titolo.",
+	"poster.missing_url": "È richiesto l’URL dell’immagine del poster.",
+	"poster.poster_not_candidate": "Questa immagine non è un candidato poster disponibile per questo titolo.",
+	"profile.use_switch": "Per cambiare il profilo attivo, usa la funzione di cambio profilo.",
+	"profile.last_profile": "Questo è il tuo ultimo profilo, non può essere eliminato.",
+	"profile.no_pin": "Questo profilo non ha un PIN configurato da verificare.",
+	"profile.pin_mismatch": "Questo PIN non è corretto.",
+	"profile.not_found": "Il profilo non esiste più. Scegline un altro.",
+	"dlna.forbidden": "Questo dispositivo non può usare DLNA su questo server.",
+	"casting.disabled": "Il casting è disattivato su questo server.",
+	unauthorized: "Non sei autorizzato a gestire l’abbinamento su questo server.",
+	invalid_secret: "Il segreto di abbinamento non è valido. Avvia di nuovo l’abbinamento.",
+	pairing_not_pending: "Non c’è alcuna richiesta di abbinamento in attesa di approvazione.",
+	consent_required: "Questo dispositivo deve accettare la richiesta di consenso per continuare l’abbinamento.",
+	pairing_not_found: "Questa richiesta di abbinamento non esiste più.",
+	storage_unavailable: "L’archiviazione degli abbinamenti non è disponibile al momento. Riprova più tardi.",
+	rate_limited: "Troppe richieste: attendi un momento e riprova.",
+	provider_unavailable: "Il fornitore di autenticazione non è disponibile. Riprova più tardi.",
+	invalid_request: "La richiesta non era valida.",
+	invalid_body: "Il corpo della richiesta era assente o malformato.",
+	invalid_payload: "I dati della richiesta erano assenti o malformati.",
+	unknown_error: "Si è verificato un errore imprevisto.",
+	validation_failed: "Alcuni campi non hanno superato la verifica.",
+	admin_required: "Questa azione richiede privilegi da amministratore.",
+	master_only: "Solo l’account principale può eseguire questa azione.",
+	invalid_url: "L’URL fornito non è valido.",
+	invalid_role: "Il ruolo fornito non è valido.",
+	invalid_permission: "L’autorizzazione fornita non è valida.",
+	missing_url: "È richiesto un URL.",
+	missing_name: "È richiesto un nome.",
+	missing_public_key: "È richiesta una chiave pubblica.",
+	missing_user_id: "È richiesto un ID utente.",
+	missing_server_id: "È richiesto un ID server.",
+	not_server_owner: "Solo il proprietario di questo server può gestirlo.",
+	peer_url_exists: "Un peer con questo URL è già stato aggiunto.",
+	peer_key_exists: "Un peer con questa chiave pubblica è già stato aggiunto.",
+	peer_not_found: "Impossibile trovare questo peer federato.",
+	offer_not_found: "Impossibile trovare questa offerta del peer.",
+	offer_already_responded: "Questa offerta ha già ricevuto una risposta.",
+	delegation_not_found: "Impossibile trovare questa delega di accesso.",
+	missing_peer_id: "È richiesto un ID peer.",
+	missing_offer_id: "È richiesto un ID offerta.",
+	missing_delegation_id: "È richiesto un ID delega.",
+	missing_library_id: "È richiesto un ID libreria.",
+	missing_library_name: "È richiesto un nome libreria.",
+	leaf_hub_id_already_bound: "Questo ID server è già associato a un altro peer.",
+	share_not_found: "Impossibile trovare questa condivisione della libreria.",
+	missing_share_id: "È richiesto un ID condivisione.",
+	missing_collaborator_email: "È richiesta un’email del collaboratore.",
+	share_exists: "Questa libreria è già condivisa con questo collaboratore.",
+	not_share_owner: "Solo il proprietario può gestire questa condivisione.",
+	missing_permission: "È richiesto un livello di autorizzazione.",
+	missing_link_id: "È richiesto un ID del link di invito.",
+	invite_link_not_found: "Impossibile trovare questo link di invito.",
+	not_link_owner: "Solo il proprietario può gestire questo link di invito.",
+	missing_token: "È richiesto un token di invito.",
+	invalid_invite: "Questo invito non è valido.",
+	invite_expired_or_exhausted: "Questo invito è scaduto o è stato usato del tutto.",
+	invalid_type: "Il tipo di richiesta non è valido.",
+	invalid_tmdb_id: "L’identificatore TMDB di questa richiesta non è valido.",
+	missing_title: "È richiesto un titolo.",
+	missing_request_id: "È richiesto un ID richiesta.",
+	request_not_found: "Impossibile trovare questa richiesta di contenuti.",
+	not_request_owner: "Solo chi ha inviato la richiesta può gestirla.",
+	approve_failed: "Impossibile approvare la richiesta.",
+	deny_failed: "Impossibile rifiutare la richiesta.",
+	user_not_found: "Impossibile trovare questo utente.",
+	cannot_delete_self: "Non puoi eliminare il tuo stesso account da qui.",
+	last_admin: "Questo è l’ultimo account amministratore, non può essere modificato in questo modo.",
+	cannot_demote_self: "Non puoi togliere a te stesso il ruolo di amministratore.",
+	invalid_quota: "Il valore della quota non è valido.",
+	invalid_throttle: "Il valore di limitazione non è valido.",
+	update_check_dispatch_failed: "Impossibile avviare il controllo degli aggiornamenti. Riprova.",
+	"identity.missing_id": "Nessuna identità collegata è stata selezionata per questa azione.",
+	"identity.not_found": "L’identità collegata non è stata trovata.",
+	"identity.last_sign_in_method": "È l’unico modo di accedere rimasto per il tuo account, quindi non può essere scollegato.",
+	"identity.already_linked": "Questo account del fornitore è già collegato a un altro account qui.",
+	"identity.invalid": "Il fornitore non ha restituito un’identità di account utilizzabile.",
+	"identity.link_unavailable": "Il collegamento degli account non è temporaneamente disponibile su questo server.",
+	"identity.invalid_link_state": "La richiesta di collegamento è scaduta prima di concludersi. Ricomincia.",
+	"provider.not_configured": "Nessun fornitore di accesso è ancora configurato su questo server.",
+	"provider.unknown": "Il fornitore di accesso non è disponibile su questo server.",
+	"provider.not_found": "Il fornitore di accesso non è stato trovato.",
+	"provider.invalid_type": "Questo fornitore non può essere usato per questa modalità di accesso.",
+	"provider.missing_client_id": "L’ID client del fornitore è obbligatorio.",
+	"provider.missing_url": "L’URL del fornitore è obbligatorio.",
+	"provider.invalid_url": "L’URL del fornitore non è valida.",
+	"oauth.missing_code": "Il fornitore di accesso non ha restituito alcun codice di autorizzazione. Riprova ad accedere.",
+	"oauth.missing_state": "Il fornitore di accesso non ha restituito alcun token di stato. Riprova ad accedere.",
+	"oauth.invalid_state": "Il tentativo di accesso non corrisponde più a questo browser o è scaduto. Riprova.",
+	"oauth.missing_redirect_uri": "Per proseguire questo accesso è richiesto un indirizzo di reindirizzamento.",
+	"oauth.invalid_redirect_uri": "Quell’indirizzo di reindirizzamento non è tra quelli consentiti dal server.",
+	"oauth.callback_url_not_configured": "Questo server non ha ancora un URL di richiamata configurato.",
+	"ldap.missing_host": "L’host del server LDAP è obbligatorio.",
+	"ldap.missing_base_dn": "Il DN base LDAP è obbligatorio.",
+	"ldap.invalid_port": "Il numero di porta LDAP non è valido.",
+	"ldap.connection_failed": "Il server non è riuscito a connettersi alla directory LDAP.",
+	"ldap.bind_failed": "Le credenziali LDAP non hanno potuto accedere alla directory.",
+	"ldap.error": "La directory LDAP ha restituito un errore.",
+	"ldap.runtime_error": "Il test di connessione LDAP è fallito in modo inatteso.",
+	"syncplay.create_failed": "Impossibile creare il gruppo di visione.",
+	"syncplay.join_failed": "Impossibile unirsi al gruppo di visione.",
+	"syncplay.leave_failed": "Impossibile uscire dal gruppo di visione.",
+	"syncplay.group_limit_reached": "È stato raggiunto il numero massimo di gruppi di visione.",
+	"syncplay.group_not_found": "Questo gruppo di visione non esiste più.",
+	"syncplay.invalid_password": "La password del gruppo non è corretta.",
+	"syncplay.group_full": "Questo gruppo di visione è pieno.",
+	"syncplay.queue_limit_exceeded": "La coda di visione ha raggiunto la dimensione massima.",
+	UNKNOWN_MESSAGE: "La sessione di sincronizzazione non ha capito quel messaggio.",
+	HANDLER_ERROR: "La sessione di sincronizzazione ha riscontrato un errore interno nel gestire la tua richiesta.",
+	NOT_AUTHENTICATED: "Accedi alla sessione di sincronizzazione prima di continuare.",
+	NOT_IN_GROUP: "In questo momento non sei in nessun gruppo di visione.",
+	NOT_HOST: "Solo l’ospite del gruppo può farlo.",
+	INVALID_NEW_HOST: "Questo membro non può diventare il nuovo ospite.",
+	MEMBER_NOT_FOUND: "Impossibile trovare questo membro del gruppo.",
+	SAME_HOST: "Questo membro è già l’ospite.",
+	CREATE_FAILED: "Impossibile creare il gruppo di visione.",
+	JOIN_FAILED: "Impossibile unirsi al gruppo di visione.",
+	LEAVE_FAILED: "Impossibile uscire dal gruppo di visione.",
+	PROTOCOL_VERSION_MISMATCH: "Il protocollo di sincronizzazione di questo client non corrisponde a quello del server."
+}, ot = {
+	"auth.required": "Entre na sua conta para continuar.",
+	"auth.not_admin": "Esta ação requer uma conta de administrador.",
+	"auth.invalid_token": "Seu token de entrada é inválido ou expirou.",
+	"auth.user_not_found": "Essa conta não existe mais.",
+	"auth.signups_disabled": "Novos cadastros estão desativados neste servidor.",
+	"auth.account_pending": "Sua conta ainda está aguardando aprovação.",
+	"auth.account_disabled": "Esta conta foi desativada.",
+	"auth.password_change_required": "Você precisa trocar sua senha antes de continuar.",
+	"auth.unauthenticated": "Entre na sua conta antes de resgatar este servidor.",
+	"auth.enrollment_expired": "O token de inscrição deste servidor expirou. Inscreva-o novamente no hub.",
+	"auth.server_mismatch": "O token de inscrição não corresponde a este servidor.",
+	"auth.missing_credentials": "Informe suas credenciais para vincular esta conta.",
+	"auth.invalid_credentials": "As credenciais informadas não estão corretas.",
+	"hub.not_enrolled": "Este servidor ainda não está inscrito no hub.",
+	"hub.token_required": "Um token de acesso ao hub é necessário para esta ação.",
+	"hub.jwt_invalid": "O token do hub é inválido ou expirou.",
+	"hub.protocol_unsupported": "A solicitação não usou o protocolo compatível com o hub.",
+	"hub.internal_error": "O hub encontrou um erro inesperado. Tente novamente em instantes.",
+	"claim.code_not_found": "Esse código de resgate não foi encontrado. Verifique e tente de novo.",
+	"claim.code_expired": "Esse código de resgate expirou. Gere um novo e tente de novo.",
+	"claim.code_already_claimed": "Esse código de resgate já foi usado.",
+	"server.not_found": "Não foi possível encontrar esse servidor.",
+	"server.not_owned": "Este servidor não pertence à sua conta.",
+	"server.relay_unavailable": "Este servidor está online, mas o túnel seguro de relay dele ainda não está conectado, então as bibliotecas não podem ser carregadas pelo hub. A reconexão deve acontecer sozinha — tente novamente em instantes.",
+	"server.offline": "Este servidor está offline, então as bibliotecas dele não podem ser carregadas. Ele voltará a ser navegável quando se reconectar ao hub.",
+	"server.no_tunnel": "Este servidor está online, mas o túnel seguro de relay dele ainda não está conectado, então as bibliotecas não podem ser carregadas pelo hub. A reconexão deve acontecer sozinha — tente novamente em instantes.",
+	"server.key_invalid": "A chave de assinatura do servidor não passou na validação durante o resgate. Tente de novo.",
+	"proxy.scope_denied": "Seu token de acesso não tem o escopo necessário para esta requisição.",
+	"quota.exceeded": "Você atingiu o limite da sua cota de banda.",
+	"stream.limit": "Você atingiu o número máximo de transmissões simultâneas.",
+	"stream.limit_exceeded": "Você atingiu o limite de transmissões simultâneas deste servidor. Pare uma e tente de novo.",
+	"access.scheduled": "Este perfil só está disponível dentro do horário programado. Tente mais tarde.",
+	"gateway.timeout": "O gateway do hub expirou ao esperar pelo seu servidor. Tente de novo.",
+	"relay.client_ws_endpoint": "Este endpoint é uma montagem WebSocket de cliente — não pode ser aberto com uma requisição comum.",
+	"relay.ws_http_endpoint": "Este endpoint é uma montagem WebSocket do relay — não pode ser aberto com uma requisição comum.",
+	"relay.encode_error": "O relay não conseguiu codificar a mensagem. Tente novamente.",
+	"mcp.unknown_tool": "Essa ferramenta MCP não existe.",
+	"mcp.scope_denied": "Seu token MCP não permite esta ferramenta.",
+	"mcp.streaming_unsupported": "Respostas em streaming não são compatíveis com esta superfície MCP.",
+	"mcp.sse_not_acceptable": "Esta requisição MCP precisa aceitar uma resposta Server-Sent Events.",
+	"mcp.unsupported_protocol_version": "Esta versão do protocolo MCP não é compatível.",
+	"mcp_token.no_valid_scopes": "Nenhum dos escopos de token solicitados é válido.",
+	"mcp_token.not_found": "Esse token de acesso MCP não existe mais.",
+	"alexa.streaming_unsupported": "Streaming não é compatível com o adaptador da Alexa.",
+	"alexa.malformed_envelope": "O envelope da requisição da Alexa estava malformado.",
+	"alexa.verification_error": "A solicitação da Alexa não pôde ser verificada. Tente de novo.",
+	"alexa.missing_cert_chain_url": "A solicitação da Alexa não incluía a URL da cadeia de certificados.",
+	"alexa.missing_signature_header": "A solicitação da Alexa não incluía o cabeçalho de assinatura.",
+	"alexa.empty_body": "A solicitação da Alexa chegou com o corpo vazio.",
+	"alexa.cert_url_rejected": "A URL do certificado da solicitação da Alexa estava fora dos domínios permitidos da Amazon.",
+	"alexa.cert_fetch_failed": "O servidor não conseguiu baixar a cadeia de certificados da solicitação da Alexa.",
+	"alexa.cert_chain_malformed": "A cadeia de certificados enviada com a solicitação da Alexa estava malformada.",
+	"alexa.signature_invalid": "A assinatura da solicitação da Alexa não foi confirmada.",
+	"alexa.cert_expired": "O certificado usado para assinar a solicitação da Alexa expirou.",
+	"alexa.cert_san_mismatch": "O certificado da solicitação da Alexa não foi emitido para um domínio da Alexa.",
+	"alexa.cert_chain_untrusted": "A cadeia de certificados da solicitação da Alexa não se ancorou no certificado raiz da Amazon.",
+	"alexa.timestamp_malformed": "O cabeçalho de data e hora da solicitação da Alexa não pôde ser lido.",
+	"alexa.timestamp_missing": "A solicitação da Alexa não incluía o cabeçalho de data e hora.",
+	"alexa.timestamp_stale": "A data e hora da solicitação da Alexa era antiga demais. Verifique o relógio do servidor.",
+	"tls.acme_not_implemented": "A emissão automática de certificados TLS ainda não está disponível.",
+	"csrf.invalid_origin": "A origem da requisição não passou na verificação CSRF.",
+	"user.not_found": "Não foi possível encontrar o usuário desta sessão.",
+	"plugin.name.required": "Um nome de plugin é obrigatório.",
+	"plugin.not_found": "Não foi possível encontrar esse plugin.",
+	"plugin.url.required": "Uma URL de plugin é obrigatória.",
+	"plugin.url.invalid_scheme": "A URL do plugin deve usar http ou https.",
+	"plugin.url.blocked": "Esta URL de plugin está bloqueada pela política do servidor.",
+	"plugin.install.failed": "A instalação do plugin falhou.",
+	"plugin.enable.failed": "A ativação do plugin falhou.",
+	"plugin.settings.invalid": "As configurações do plugin são inválidas.",
+	"plugin.settings.validation_failed": "As configurações do plugin não passaram na validação.",
+	"plugin.test_not_supported": "Este plugin não suporta autotestes.",
+	"plugin.update.failed": "A atualização do plugin falhou.",
+	"plugin.update.no_source": "Este plugin não tem fonte de atualização configurada.",
+	"plugin.catalog.url.required": "Uma URL de catálogo é obrigatória.",
+	"plugin.catalog.url.duplicate": "Essa URL de catálogo de plugins já foi adicionada.",
+	"plugin.catalog.url.invalid": "A URL do catálogo de plugins é inválida.",
+	"plugin.auto_update.invalid": "A configuração de atualização automática é inválida.",
+	"plugin.catalog.channel.invalid": "O canal de atualização do catálogo é inválido.",
+	"library.delete_all.confirm_required": "Excluir todas as bibliotecas de uma vez exige uma confirmação explícita.",
+	"metadata.tmdb_unconfigured": "As buscas no TMDB não estão configuradas neste servidor.",
+	"metadata.tmdb_unreachable": "O provedor de metadados não pôde ser alcançado. Tente novamente mais tarde.",
+	"metadata.no_query": "Digite um título para buscar no provedor de metadados.",
+	"metadata.bad_tmdb_id": "Esse identificador do TMDB não é válido.",
+	"metadata.no_match": "Nenhuma correspondência de metadados foi encontrada para este título.",
+	"poster.missing_url": "Uma URL da imagem do pôster é obrigatória.",
+	"poster.poster_not_candidate": "Essa imagem não é uma candidata de pôster disponível para este título.",
+	"profile.use_switch": "Para mudar o perfil ativo, use a opção de troca de perfil.",
+	"profile.last_profile": "Este é o seu último perfil, por isso não pode ser excluído.",
+	"profile.no_pin": "Este perfil não tem um PIN configurado para verificar.",
+	"profile.pin_mismatch": "Esse PIN não está correto.",
+	"profile.not_found": "Esse perfil não existe mais. Escolha outro.",
+	"dlna.forbidden": "Este dispositivo não tem permissão para usar DLNA neste servidor.",
+	"casting.disabled": "A transmissão para aparelhos está desativada neste servidor.",
+	unauthorized: "Você não está autorizado a gerenciar o pareamento neste servidor.",
+	invalid_secret: "O segredo de pareamento não é válido. Comece o pareamento de novo.",
+	pairing_not_pending: "Não há nenhuma solicitação de pareamento aguardando aprovação.",
+	consent_required: "Este dispositivo precisa aceitar o aviso de consentimento para o pareamento continuar.",
+	pairing_not_found: "Essa solicitação de pareamento não existe mais.",
+	storage_unavailable: "O armazenamento de pareamento está indisponível agora. Tente novamente mais tarde.",
+	rate_limited: "Requisições demais — aguarde um instante e tente de novo.",
+	provider_unavailable: "O provedor de autenticação está indisponível. Tente novamente mais tarde.",
+	invalid_request: "A requisição não era válida.",
+	invalid_body: "O corpo da requisição estava ausente ou malformado.",
+	invalid_payload: "Os dados da solicitação estavam ausentes ou malformados.",
+	unknown_error: "Ocorreu um erro inesperado.",
+	validation_failed: "Alguns campos não passaram na validação.",
+	admin_required: "Esta ação requer privilégios de administrador.",
+	master_only: "Somente a conta principal pode executar esta ação.",
+	invalid_url: "A URL informada não é válida.",
+	invalid_role: "O cargo informado não é válido.",
+	invalid_permission: "A permissão informada não é válida.",
+	missing_url: "Uma URL é obrigatória.",
+	missing_name: "Um nome é obrigatório.",
+	missing_public_key: "Uma chave pública é obrigatória.",
+	missing_user_id: "Um ID de usuário é obrigatório.",
+	missing_server_id: "Um ID de servidor é obrigatório.",
+	not_server_owner: "Somente o dono deste servidor pode gerenciá-lo.",
+	peer_url_exists: "Um par com essa URL já foi adicionado.",
+	peer_key_exists: "Um par com essa chave pública já foi adicionado.",
+	peer_not_found: "Não foi possível encontrar esse par federado.",
+	offer_not_found: "Não foi possível encontrar essa oferta de par.",
+	offer_already_responded: "Esta oferta já recebeu resposta.",
+	delegation_not_found: "Não foi possível encontrar essa delegação de acesso.",
+	missing_peer_id: "Um ID de par é obrigatório.",
+	missing_offer_id: "Um ID de oferta é obrigatório.",
+	missing_delegation_id: "Um ID de delegação é obrigatório.",
+	missing_library_id: "Um ID de biblioteca é obrigatório.",
+	missing_library_name: "Um nome de biblioteca é obrigatório.",
+	leaf_hub_id_already_bound: "Esse ID de servidor já está vinculado a outro par.",
+	share_not_found: "Não foi possível encontrar esse compartilhamento de biblioteca.",
+	missing_share_id: "Um ID de compartilhamento é obrigatório.",
+	missing_collaborator_email: "Um e-mail do colaborador é obrigatório.",
+	share_exists: "Esta biblioteca já é compartilhada com esse colaborador.",
+	not_share_owner: "Somente o dono do compartilhamento pode geri-lo.",
+	missing_permission: "Um nível de permissão é obrigatório.",
+	missing_link_id: "Um ID de link de convite é obrigatório.",
+	invite_link_not_found: "Não foi possível encontrar esse link de convite.",
+	not_link_owner: "Somente o dono pode gerenciar este link de convite.",
+	missing_token: "Um token de convite é obrigatório.",
+	invalid_invite: "Este convite não é válido.",
+	invite_expired_or_exhausted: "Este convite expirou ou foi totalmente utilizado.",
+	invalid_type: "O tipo de solicitação não é válido.",
+	invalid_tmdb_id: "O identificador do TMDB desta solicitação não é válido.",
+	missing_title: "Um título é obrigatório.",
+	missing_request_id: "Um ID de solicitação é obrigatório.",
+	request_not_found: "Não foi possível encontrar essa solicitação de mídia.",
+	not_request_owner: "Somente quem fez a solicitação pode gerenciá-la.",
+	approve_failed: "A solicitação não pôde ser aprovada.",
+	deny_failed: "A solicitação não pôde ser recusada.",
+	user_not_found: "Não foi possível encontrar esse usuário.",
+	cannot_delete_self: "Você não pode excluir a própria conta por aqui.",
+	last_admin: "Esta é a última conta de administrador, então não pode ser alterada assim.",
+	cannot_demote_self: "Você não pode remover o próprio cargo de administrador.",
+	invalid_quota: "O valor da cota não é válido.",
+	invalid_throttle: "O valor de limitação não é válido.",
+	update_check_dispatch_failed: "A checagem de atualizações não pôde ser iniciada. Tente de novo.",
+	"identity.missing_id": "Nenhuma identidade vinculada foi selecionada para esta ação.",
+	"identity.not_found": "Essa identidade vinculada não foi encontrada.",
+	"identity.last_sign_in_method": "Esta é a única forma de entrar que resta na sua conta, por isso não pode ser desvinculada.",
+	"identity.already_linked": "Essa conta do provedor já está vinculada a outra conta aqui.",
+	"identity.invalid": "O provedor não devolveu uma identidade de conta utilizável.",
+	"identity.link_unavailable": "A vinculação de contas está temporariamente indisponível neste servidor.",
+	"identity.invalid_link_state": "A solicitação de vinculação expirou antes de terminar. Comece de novo.",
+	"provider.not_configured": "Ainda não há nenhum provedor de entrada configurado neste servidor.",
+	"provider.unknown": "Esse provedor de entrada não está disponível neste servidor.",
+	"provider.not_found": "Esse provedor de entrada não foi encontrado.",
+	"provider.invalid_type": "Esse provedor não pode ser usado para este tipo de entrada.",
+	"provider.missing_client_id": "O ID de cliente do provedor é obrigatório.",
+	"provider.missing_url": "A URL do provedor é obrigatória.",
+	"provider.invalid_url": "A URL do provedor não é válida.",
+	"oauth.missing_code": "O provedor de entrada não devolveu nenhum código de autorização. Entre de novo.",
+	"oauth.missing_state": "O provedor de entrada não devolveu nenhum token de estado. Entre de novo.",
+	"oauth.invalid_state": "A tentativa de entrada não corresponde mais a este navegador ou expirou. Tente de novo.",
+	"oauth.missing_redirect_uri": "Um endereço de redirecionamento é necessário para continuar esta entrada.",
+	"oauth.invalid_redirect_uri": "Esse endereço de redirecionamento não está na lista permitida do servidor.",
+	"oauth.callback_url_not_configured": "Este servidor ainda não tem uma URL de retorno configurada.",
+	"ldap.missing_host": "O host do servidor LDAP é obrigatório.",
+	"ldap.missing_base_dn": "O DN base do LDAP é obrigatório.",
+	"ldap.invalid_port": "O número da porta do LDAP não é válido.",
+	"ldap.connection_failed": "O servidor não conseguiu se conectar ao diretório LDAP.",
+	"ldap.bind_failed": "As credenciais do LDAP não conseguiram entrar no diretório.",
+	"ldap.error": "O diretório LDAP devolveu um erro.",
+	"ldap.runtime_error": "O teste de conexão LDAP falhou de forma inesperada.",
+	"syncplay.create_failed": "O grupo de exibição não pôde ser criado.",
+	"syncplay.join_failed": "Não foi possível entrar no grupo de exibição.",
+	"syncplay.leave_failed": "Não foi possível sair do grupo de exibição.",
+	"syncplay.group_limit_reached": "O número máximo de grupos de exibição foi atingido.",
+	"syncplay.group_not_found": "Esse grupo de exibição não existe mais.",
+	"syncplay.invalid_password": "A senha do grupo não está correta.",
+	"syncplay.group_full": "Esse grupo de exibição está cheio.",
+	"syncplay.queue_limit_exceeded": "A fila de exibição atingiu o tamanho máximo.",
+	UNKNOWN_MESSAGE: "A sessão de sincronização não entendeu aquela mensagem.",
+	HANDLER_ERROR: "A sessão de sincronização encontrou um erro interno ao processar sua requisição.",
+	NOT_AUTHENTICATED: "Entre na sessão de sincronização antes de continuar.",
+	NOT_IN_GROUP: "No momento você não está em nenhum grupo de exibição.",
+	NOT_HOST: "Somente o anfitrião do grupo pode fazer isso.",
+	INVALID_NEW_HOST: "Esse membro não pode assumir o papel de anfitrião.",
+	MEMBER_NOT_FOUND: "Não foi possível encontrar esse membro do grupo.",
+	SAME_HOST: "Esse membro já é o anfitrião.",
+	CREATE_FAILED: "O grupo de exibição não pôde ser criado.",
+	JOIN_FAILED: "Não foi possível entrar no grupo de exibição.",
+	LEAVE_FAILED: "Não foi possível sair do grupo de exibição.",
+	PROTOCOL_VERSION_MISMATCH: "O protocolo de sincronização deste cliente não corresponde ao do servidor."
+}, st = {
+	"auth.required": "続行するにはサインインしてください。",
+	"auth.not_admin": "この操作には管理者アカウントが必要です。",
+	"auth.invalid_token": "サインイントークンが無効か、有効期限が切れています。",
+	"auth.user_not_found": "そのアカウントは存在しません。",
+	"auth.signups_disabled": "このサーバーでは新規アカウントの登録が無効になっています。",
+	"auth.account_pending": "アカウントは現在、承認待ちです。",
+	"auth.account_disabled": "このアカウントは無効化されています。",
+	"auth.password_change_required": "続行する前にパスワードを変更する必要があります。",
+	"auth.unauthenticated": "このサーバーを引き換える前にサインインしてください。",
+	"auth.enrollment_expired": "このサーバーの登録トークンは有効期限が切れています。ハブで再登録してください。",
+	"auth.server_mismatch": "登録トークンがこのサーバーと一致しません。",
+	"auth.missing_credentials": "このアカウントをリンクするには認証情報を入力してください。",
+	"auth.invalid_credentials": "入力された認証情報は正しくありません。",
+	"hub.not_enrolled": "このサーバーはまだハブに登録されていません。",
+	"hub.token_required": "この操作にはハブのアクセストークンが必要です。",
+	"hub.jwt_invalid": "ハブのトークンが無効か、有効期限が切れています。",
+	"hub.protocol_unsupported": "このリクエストはハブの対応プロトコルで送信されていません。",
+	"hub.internal_error": "ハブで予期しないエラーが発生しました。しばらくしてから再度お試しください。",
+	"claim.code_not_found": "その引き換えコードは見つかりませんでした。確認して再度お試しください。",
+	"claim.code_expired": "その引き換えコードは有効期限が切れています。新しいコードを発行して再度お試しください。",
+	"claim.code_already_claimed": "その引き換えコードはすでに使用されています。",
+	"server.not_found": "そのサーバーは見つかりませんでした。",
+	"server.not_owned": "このサーバーはあなたのアカウントに属していません。",
+	"server.relay_unavailable": "このサーバーはオンラインですが、安全なリレー トンネルがまだ接続されていないため、ライブラリをハブ経由で読み込めません。自動的に再接続されるはずです — しばらくしてからもう一度お試しください。",
+	"server.offline": "このサーバーはオフラインのため、ライブラリを読み込めません。ハブへの再接続が完了すれば、再び閲覧できるようになります。",
+	"server.no_tunnel": "このサーバーはオンラインですが、安全なリレー トンネルがまだ接続されていないため、ライブラリをハブ経由で読み込めません。自動的に再接続されるはずです — しばらくしてからもう一度お試しください。",
+	"server.key_invalid": "引き換え中にサーバーの署名鍵の検証に失敗しました。もう一度お試しください。",
+	"proxy.scope_denied": "このリクエストに必要な権限スコープがアクセストークンに含まれていません。",
+	"quota.exceeded": "帯域割当量の上限に達しました。",
+	"stream.limit": "同時ストリーミングの上限数に達しました。",
+	"stream.limit_exceeded": "このサーバーの同時ストリームの上限に達しました。いずれかを停止して再度お試しください。",
+	"access.scheduled": "このプロフィールは設定された時間帯のみ利用できます。時間帯を改めてお試しください。",
+	"gateway.timeout": "ハブのゲートウェイがサーバーを待っている間にタイムアウトしました。もう一度お試しください。",
+	"relay.client_ws_endpoint": "このエンドポイントはクライアントのWebSocketマウントであり、通常のリクエストでは開けません。",
+	"relay.ws_http_endpoint": "このエンドポイントはリレーのWebSocketマウントであり、通常のリクエストでは開けません。",
+	"relay.encode_error": "リレーはメッセージを符号化できませんでした。もう一度お試しください。",
+	"mcp.unknown_tool": "そのMCPツールは存在しません。",
+	"mcp.scope_denied": "MCPトークンはこのツールの実行を許可していません。",
+	"mcp.streaming_unsupported": "このMCPインターフェースではストリーミング応答はサポートされていません。",
+	"mcp.sse_not_acceptable": "このMCPリクエストはServer-Sent Events応答を受け付ける必要があります。",
+	"mcp.unsupported_protocol_version": "このMCPプロトコルバージョンはサポートされていません。",
+	"mcp_token.no_valid_scopes": "要求されたトークンスコープの中に有効なものはありません。",
+	"mcp_token.not_found": "そのMCPアクセストークンは存在しません。",
+	"alexa.streaming_unsupported": "Alexaアダプター経由ではストリーミングはサポートされていません。",
+	"alexa.malformed_envelope": "Alexaリクエストのエンベロープ形式が正しくありません。",
+	"alexa.verification_error": "Alexaリクエストを検証できませんでした。もう一度お試しください。",
+	"alexa.missing_cert_chain_url": "Alexaリクエストに証明書チェーンのURLが含まれていません。",
+	"alexa.missing_signature_header": "Alexaリクエストに署名ヘッダーが含まれていません。",
+	"alexa.empty_body": "Alexaリクエストの本文が空でした。",
+	"alexa.cert_url_rejected": "Alexaリクエストの証明書URLがAmazonの許可されたドメイン外でした。",
+	"alexa.cert_fetch_failed": "サーバーはAlexaリクエストの証明書チェーンを取得できませんでした。",
+	"alexa.cert_chain_malformed": "Alexaリクエストで送られた証明書チェーンが不正な形式でした。",
+	"alexa.signature_invalid": "Alexaリクエストの署名の検証に失敗しました。",
+	"alexa.cert_expired": "Alexaリクエストの署名に使用された証明書の有効期限が切れています。",
+	"alexa.cert_san_mismatch": "Alexaリクエストの証明書はAlexaドメイン向けに発行されたものではありません。",
+	"alexa.cert_chain_untrusted": "Alexaリクエストの証明書チェーンはAmazonのルート証明書によって信頼されていません。",
+	"alexa.timestamp_malformed": "Alexaリクエストのタイムスタンプヘッダーを解析できませんでした。",
+	"alexa.timestamp_missing": "Alexaリクエストにタイムスタンプヘッダーが含まれていません。",
+	"alexa.timestamp_stale": "Alexaリクエストのタイムスタンプが古すぎます。サーバーの時計を確認してください。",
+	"tls.acme_not_implemented": "TLS証明書の自動発行はまだ利用できません。",
+	"csrf.invalid_origin": "リクエストの送信元がCSRFチェックを通過しませんでした。",
+	"user.not_found": "このセッションのユーザーが見つかりませんでした。",
+	"plugin.name.required": "プラグイン名は必須です。",
+	"plugin.not_found": "そのプラグインは見つかりませんでした。",
+	"plugin.url.required": "プラグインのURLは必須です。",
+	"plugin.url.invalid_scheme": "プラグインのURLはhttpまたはhttpsである必要があります。",
+	"plugin.url.blocked": "このプラグインURLはサーバーのポリシーでブロックされています。",
+	"plugin.install.failed": "プラグインのインストールに失敗しました。",
+	"plugin.enable.failed": "プラグインの有効化に失敗しました。",
+	"plugin.settings.invalid": "プラグインの設定内容が正しくありません。",
+	"plugin.settings.validation_failed": "プラグインの設定が検証を通過しませんでした。",
+	"plugin.test_not_supported": "このプラグインは自己テストに対応していません。",
+	"plugin.update.failed": "プラグインの更新に失敗しました。",
+	"plugin.update.no_source": "このプラグインには更新元が設定されていません。",
+	"plugin.catalog.url.required": "カタログのURLは必須です。",
+	"plugin.catalog.url.duplicate": "そのプラグインカタログURLはすでに追加されています。",
+	"plugin.catalog.url.invalid": "プラグインカタログのURLが正しくありません。",
+	"plugin.auto_update.invalid": "自動更新の設定内容が正しくありません。",
+	"plugin.catalog.channel.invalid": "カタログの更新チャンネルが正しくありません。",
+	"library.delete_all.confirm_required": "すべてのライブラリを一括削除するには明示的な確認が必要です。",
+	"metadata.tmdb_unconfigured": "このサーバーではTMDB検索が設定されていません。",
+	"metadata.tmdb_unreachable": "メタデータプロバイダーに接続できませんでした。時間をおいてからもう一度お試しください。",
+	"metadata.no_query": "メタデータプロバイダーで検索するタイトルを入力してください。",
+	"metadata.bad_tmdb_id": "そのTMDB識別子は有効ではありません。",
+	"metadata.no_match": "このタイトルに一致するメタデータは見つかりませんでした。",
+	"poster.missing_url": "ポスター画像のURLは必須です。",
+	"poster.poster_not_candidate": "その画像はこのタイトルの利用可能なポスター候補ではありません。",
+	"profile.use_switch": "有効なプロフィールを変更するには、プロフィールの切り替えを使ってください。",
+	"profile.last_profile": "これが最後のプロフィールのため、削除できません。",
+	"profile.no_pin": "このプロフィールには確認用のPINが設定されていません。",
+	"profile.pin_mismatch": "そのPINは正しくありません。",
+	"profile.not_found": "そのプロフィールはもう存在しません。ほかのプロフィールを選んでください。",
+	"dlna.forbidden": "このデバイスはこのサーバーでDLNAを利用する権限がありません。",
+	"casting.disabled": "このサーバーではキャスティングが無効になっています。",
+	unauthorized: "このサーバーでペアリングを管理する権限がありません。",
+	invalid_secret: "ペアリングシークレットが正しくありません。ペアリングをやり直してください。",
+	pairing_not_pending: "承認待ちのペアリング要求はありません。",
+	consent_required: "ペアリングを続けるには、このデバイスで同意プロンプトを承認する必要があります。",
+	pairing_not_found: "そのペアリング要求は存在しません。",
+	storage_unavailable: "ただいまペアリングの保存領域を利用できません。時間をおいてからもう一度お試しください。",
+	rate_limited: "リクエストが多すぎます — しばらく待ってからもう一度お試しください。",
+	provider_unavailable: "認証プロバイダーを利用できません。時間をおいてからもう一度お試しください。",
+	invalid_request: "リクエストが正しくありません。",
+	invalid_body: "リクエストボディがないか、形式が正しくありません。",
+	invalid_payload: "リクエストデータがないか、形式が正しくありません。",
+	unknown_error: "予期しないエラーが発生しました。",
+	validation_failed: "いくつかの項目が検証を通過しませんでした。",
+	admin_required: "この操作には管理者権限が必要です。",
+	master_only: "この操作はマスターアカウントのみが実行できます。",
+	invalid_url: "指定されたURLが正しくありません。",
+	invalid_role: "指定されたロールが正しくありません。",
+	invalid_permission: "指定された権限が正しくありません。",
+	missing_url: "URLは必須です。",
+	missing_name: "名前は必須です。",
+	missing_public_key: "公開鍵は必須です。",
+	missing_user_id: "ユーザーIDは必須です。",
+	missing_server_id: "サーバーIDは必須です。",
+	not_server_owner: "このサーバーを管理できるのは所有者だけです。",
+	peer_url_exists: "そのURLのピアはすでに追加されています。",
+	peer_key_exists: "その公開鍵のピアはすでに追加されています。",
+	peer_not_found: "その連合ピアは見つかりませんでした。",
+	offer_not_found: "そのピアのオファーは見つかりませんでした。",
+	offer_already_responded: "このオファーにはすでに回答済みです。",
+	delegation_not_found: "そのアクセス委任は見つかりませんでした。",
+	missing_peer_id: "ピアIDは必須です。",
+	missing_offer_id: "オファーIDは必須です。",
+	missing_delegation_id: "委任IDは必須です。",
+	missing_library_id: "ライブラリIDは必須です。",
+	missing_library_name: "ライブラリ名は必須です。",
+	leaf_hub_id_already_bound: "そのサーバーIDはすでに別のピアに紐付けられています。",
+	share_not_found: "そのライブラリの共有は見つかりませんでした。",
+	missing_share_id: "共有IDは必須です。",
+	missing_collaborator_email: "共同編集者のメールアドレスは必須です。",
+	share_exists: "このライブラリはその共同編集者とすでに共有されています。",
+	not_share_owner: "この共有を管理できるのは所有者だけです。",
+	missing_permission: "権限レベルは必須です。",
+	missing_link_id: "招待リンクIDは必須です。",
+	invite_link_not_found: "その招待リンクは見つかりませんでした。",
+	not_link_owner: "この招待リンクを管理できるのは所有者だけです。",
+	missing_token: "招待トークンは必須です。",
+	invalid_invite: "この招待は有効ではありません。",
+	invite_expired_or_exhausted: "この招待は期限が切れたか、使い切られました。",
+	invalid_type: "リクエストの種類が正しくありません。",
+	invalid_tmdb_id: "このリクエストのTMDB識別子が正しくありません。",
+	missing_title: "タイトルは必須です。",
+	missing_request_id: "リクエストIDは必須です。",
+	request_not_found: "そのメディアリクエストは見つかりませんでした。",
+	not_request_owner: "このリクエストを管理できるのは依頼者だけです。",
+	approve_failed: "リクエストを承認できませんでした。",
+	deny_failed: "リクエストを拒否できませんでした。",
+	user_not_found: "そのユーザーは見つかりませんでした。",
+	cannot_delete_self: "自分自身のアカウントをここから削除することはできません。",
+	last_admin: "これは最後の管理者アカウントのため、この方法では変更できません。",
+	cannot_demote_self: "自分自身の管理者ロールを取り消すことはできません。",
+	invalid_quota: "割当量の値が正しくありません。",
+	invalid_throttle: "スロットリングの値が正しくありません。",
+	update_check_dispatch_failed: "更新チェックを開始できませんでした。もう一度お試しください。",
+	"identity.missing_id": "この操作にはリンクされたIDが選択されていません。",
+	"identity.not_found": "そのリンクされたIDは見つかりませんでした。",
+	"identity.last_sign_in_method": "これはアカウントで唯一残されたサインイン方法のため、リンクを解除できません。",
+	"identity.already_linked": "そのプロバイダーのアカウントはすでにここの別のアカウントにリンクされています。",
+	"identity.invalid": "プロバイダーから有効なアカウントIDが返されませんでした。",
+	"identity.link_unavailable": "このサーバーではアカウントのリンクを一時的に利用できません。",
+	"identity.invalid_link_state": "リンク要求が完了前に期限切れになりました。始めからやり直してください。",
+	"provider.not_configured": "このサーバーにはまだサインインプロバイダーが設定されていません。",
+	"provider.unknown": "そのサインインプロバイダーはこのサーバーでは利用できません。",
+	"provider.not_found": "そのサインインプロバイダーは見つかりませんでした。",
+	"provider.invalid_type": "そのプロバイダーはこの種類のサインインには使用できません。",
+	"provider.missing_client_id": "プロバイダーのクライアントIDは必須です。",
+	"provider.missing_url": "プロバイダーのURLは必須です。",
+	"provider.invalid_url": "プロバイダーのURLが正しくありません。",
+	"oauth.missing_code": "サインインプロバイダーから認可コードが返されませんでした。もう一度サインインしてください。",
+	"oauth.missing_state": "サインインプロバイダーからステートトークンが返されませんでした。もう一度サインインしてください。",
+	"oauth.invalid_state": "サインイン試行はこのブラウザーと一致しないか、期限切れです。もう一度お試しください。",
+	"oauth.missing_redirect_uri": "このサインインを続行するにはリダイレクト先アドレスが必要です。",
+	"oauth.invalid_redirect_uri": "そのリダイレクト先アドレスはサーバーの許可リストに含まれていません。",
+	"oauth.callback_url_not_configured": "このサーバーにはサインインのコールバックURLがまだ設定されていません。",
+	"ldap.missing_host": "LDAPサーバーのホストは必須です。",
+	"ldap.missing_base_dn": "LDAPのベースDNは必須です。",
+	"ldap.invalid_port": "LDAPのポート番号が正しくありません。",
+	"ldap.connection_failed": "サーバーはLDAPディレクトリーに接続できませんでした。",
+	"ldap.bind_failed": "LDAPの認証情報でディレクトリーにサインインできませんでした。",
+	"ldap.error": "LDAPディレクトリーからエラーが返されました。",
+	"ldap.runtime_error": "LDAP接続テストが予期しない原因で失敗しました。",
+	"syncplay.create_failed": "視聴グループを作成できませんでした。",
+	"syncplay.join_failed": "視聴グループに参加できませんでした。",
+	"syncplay.leave_failed": "視聴グループから退出できませんでした。",
+	"syncplay.group_limit_reached": "視聴グループの最大数に達しました。",
+	"syncplay.group_not_found": "その視聴グループは存在しません。",
+	"syncplay.invalid_password": "グループのパスワードが正しくありません。",
+	"syncplay.group_full": "その視聴グループは満員です。",
+	"syncplay.queue_limit_exceeded": "視聴キューが最大数に達しました。",
+	UNKNOWN_MESSAGE: "同期セッションはそのメッセージを解釈できませんでした。",
+	HANDLER_ERROR: "同期セッションはリクエストの処理中に内部エラーが発生しました。",
+	NOT_AUTHENTICATED: "続行する前に同期セッションにサインインしてください。",
+	NOT_IN_GROUP: "現在、あなたはどの視聴グループにも所属していません。",
+	NOT_HOST: "その操作はグループのホストだけが行えます。",
+	INVALID_NEW_HOST: "そのメンバーはホストを引き継げません。",
+	MEMBER_NOT_FOUND: "そのグループメンバーは見つかりませんでした。",
+	SAME_HOST: "そのメンバーはすでにホストです。",
+	CREATE_FAILED: "視聴グループを作成できませんでした。",
+	JOIN_FAILED: "視聴グループに参加できませんでした。",
+	LEAVE_FAILED: "視聴グループから退出できませんでした。",
+	PROTOCOL_VERSION_MISMATCH: "このクライアントの同期プロトコルはサーバーのものと一致しません。"
+}, ct = new Set(et);
+function lt(e) {
+	return typeof e == "string" && ct.has(e);
+}
+var ut = {
+	en: tt,
+	es: nt,
+	fr: rt,
+	de: it,
+	it: at,
+	pt_BR: ot,
+	ja: st
+}, dt = "access_token", ft = "refresh_token", pt = "user", mt = class {
 	storage;
 	constructor(e = window.localStorage) {
 		this.storage = e;
 	}
 	getAccessToken() {
-		return this.storage.getItem(he);
+		return this.storage.getItem(dt);
 	}
 	setAccessToken(e) {
-		this.storage.setItem(he, e);
+		this.storage.setItem(dt, e);
 	}
 	getRefreshToken() {
-		return this.storage.getItem(ge);
+		return this.storage.getItem(ft);
 	}
 	setRefreshToken(e) {
-		this.storage.setItem(ge, e);
+		this.storage.setItem(ft, e);
 	}
 	getUser() {
-		let e = this.storage.getItem(_e);
+		let e = this.storage.getItem(pt);
 		if (e === null) return null;
 		try {
 			return JSON.parse(e);
@@ -444,15 +2197,15 @@ var he = "access_token", ge = "refresh_token", _e = "user", ve = class {
 		}
 	}
 	setUser(e) {
-		this.storage.setItem(_e, JSON.stringify(e));
+		this.storage.setItem(pt, JSON.stringify(e));
 	}
 	clear() {
-		this.storage.removeItem(he), this.storage.removeItem(ge), this.storage.removeItem(_e);
+		this.storage.removeItem(dt), this.storage.removeItem(ft), this.storage.removeItem(pt);
 	}
 };
 //#endregion
 //#region src/api/client.ts
-function W() {
+function ht() {
 	return typeof window > "u" ? {
 		getAccessToken: () => null,
 		setAccessToken: () => {},
@@ -461,68 +2214,90 @@ function W() {
 		getUser: () => null,
 		setUser: () => {},
 		clear: () => {}
-	} : new ve();
+	} : new mt();
 }
-var ye = 15e3, be = {};
-function xe(e) {
+var gt = 15e3, _t = {};
+function vt(e) {
 	let t = {};
 	for (let [n, r] of Object.entries(e)) r && (t[n] = r);
 	return t;
 }
-function Se(e) {
+function yt(e) {
 	return e === !0 || e === 1 || e === "1" || e === "true";
 }
-function G(e) {
+function K(e) {
 	return typeof e == "string" ? e : typeof e == "number" && !Number.isNaN(e) ? String(e) : null;
 }
-function K(e) {
+function q(e) {
 	return typeof e == "number" && !Number.isNaN(e) ? e : typeof e == "string" && e.trim() !== "" && !Number.isNaN(Number(e)) ? Number(e) : null;
 }
-function Ce(e) {
-	let t = e && typeof e == "object" ? e : {}, n = G(t.name) ?? "Unknown Artist", r = K(t.album_count), i = K(t.track_count);
+function bt(e) {
+	let t = e && typeof e == "object" ? e : {}, n = K(t.name) ?? "Unknown Artist", r = q(t.album_count), i = q(t.track_count);
 	return {
 		id: n,
 		name: n,
-		imageUrl: G(t.image_url),
+		imageUrl: K(t.image_url),
 		albumCount: r ?? void 0,
 		trackCount: i ?? void 0
 	};
 }
-function we(e) {
-	let t = e && typeof e == "object" ? e : {}, n = t.metadata && typeof t.metadata == "object" ? t.metadata : {}, r = G(n.title) ?? G(t.name) ?? G(t.title) ?? "Unknown Track";
+function xt(e) {
+	let t = e && typeof e == "object" ? e : {}, n = t.metadata && typeof t.metadata == "object" ? t.metadata : {}, r = K(n.title) ?? K(t.name) ?? K(t.title) ?? "Unknown Track";
 	return {
-		id: G(t.id) ?? "",
+		id: K(t.id) ?? "",
 		title: r,
-		durationSecs: K(n.duration_secs) ?? K(t.duration_secs) ?? 0,
-		trackNumber: K(n.track_number) ?? K(t.track_number),
-		streamUrl: G(t.stream_url)
+		durationSecs: q(n.duration_secs) ?? q(t.duration_secs) ?? 0,
+		trackNumber: q(n.track_number) ?? q(t.track_number),
+		streamUrl: K(t.stream_url)
 	};
 }
-function Te(e) {
-	let t = e && typeof e == "object" ? e : {}, n = G(t.name) ?? G(t.title) ?? "Unknown Album", r = Array.isArray(t.tracks) ? t.tracks : [], i = K(t.track_count) ?? r.length;
+function St(e) {
+	let t = e && typeof e == "object" ? e : {}, n = K(t.name) ?? K(t.title) ?? "Unknown Album", r = Array.isArray(t.tracks) ? t.tracks : [], i = q(t.track_count) ?? r.length;
 	return {
 		id: n,
 		title: n,
-		artist: G(t.artist),
-		albumArtUrl: G(t.album_art_url),
-		year: K(t.year),
+		artist: K(t.artist),
+		albumArtUrl: K(t.album_art_url),
+		year: q(t.year),
 		totalTracks: i,
-		tracks: r.map(we),
-		tracksTruncated: Se(t.tracks_truncated)
+		tracks: r.map(xt),
+		tracksTruncated: yt(t.tracks_truncated)
 	};
 }
-function Ee(e, t, n) {
+function Ct(e, t, n) {
 	return {
-		total: K(e.total) ?? t,
-		limit: K(e.limit) ?? n.limit ?? 100,
-		offset: K(e.offset) ?? n.offset ?? 0
+		total: q(e.total) ?? t,
+		limit: q(e.limit) ?? n.limit ?? 100,
+		offset: q(e.offset) ?? n.offset ?? 0
 	};
 }
-function De(e) {
+function wt(e) {
 	let t = {};
 	return e.limit !== void 0 && (t.limit = String(e.limit)), e.offset !== void 0 && (t.offset = String(e.offset)), t;
 }
-function Oe(e) {
+function Tt(e) {
+	if (typeof e != "object" || !e) return [];
+	let t = e;
+	return typeof t.id != "string" || t.id === "" ? [] : [{
+		id: t.id,
+		name: typeof t.name == "string" ? t.name : t.id,
+		library_id: typeof t.library_id == "string" && t.library_id !== "" ? t.library_id : null,
+		smart_playlist_id: typeof t.smart_playlist_id == "string" ? t.smart_playlist_id : null,
+		created_at: typeof t.created_at == "string" ? t.created_at : null,
+		updated_at: typeof t.updated_at == "string" ? t.updated_at : null,
+		created_by: typeof t.created_by == "string" ? t.created_by : null
+	}];
+}
+function Et(e) {
+	if (typeof e != "object" || !e) return [];
+	let t = e;
+	return typeof t.id != "string" || t.id === "" ? [] : [{
+		id: t.id,
+		name: typeof t.name == "string" ? t.name : t.id,
+		type: typeof t.type == "string" ? t.type : "movie"
+	}];
+}
+function Dt(e) {
 	let t = e && typeof e == "object" ? e : {}, n = (e) => typeof e == "string" ? e : "", r = (e) => typeof e == "number" && Number.isFinite(e) ? e : typeof e == "string" && e.trim() !== "" && Number.isFinite(Number(e)) ? Number(e) : 0, i = t.fps, a = typeof i == "number" && Number.isFinite(i) ? i : typeof i == "string" && i.trim() !== "" && Number.isFinite(Number(i)) ? Number(i) : null;
 	return {
 		provider: n(t.provider),
@@ -533,11 +2308,22 @@ function Oe(e) {
 		matchedBy: n(t.matchedBy ?? t.matched_by),
 		rating: r(t.rating),
 		downloadCount: r(t.downloadCount ?? t.download_count),
-		hearingImpaired: Se(t.hearingImpaired ?? t.hearing_impaired),
+		hearingImpaired: yt(t.hearingImpaired ?? t.hearing_impaired),
 		fps: a
 	};
 }
-var ke = class {
+var Ot = /^(?:[a-z][a-z0-9_]*_[a-z0-9_]*|[A-Z][A-Z0-9_]*_[A-Z0-9_]*|[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)$/;
+function kt(e) {
+	return Ot.test(e);
+}
+function At(e) {
+	if (e !== null && lt(e)) {
+		let t = ut.en[e];
+		if (typeof t == "string" && t !== "") return t;
+	}
+	return null;
+}
+var jt = class {
 	baseUrl;
 	tokens;
 	doFetch;
@@ -546,7 +2332,7 @@ var ke = class {
 	loginPath;
 	refreshPromise = null;
 	constructor(e = {}) {
-		this.baseUrl = e.baseUrl ?? (typeof window < "u" ? window.location.origin : ""), this.tokens = e.tokenStore ?? W(), this.doFetch = e.fetchImpl ?? globalThis.fetch.bind(globalThis), this.timeoutMs = e.timeoutMs ?? ye, this.instanceHeaders = xe(e.headers ?? {}), this.loginPath = e.loginPath ?? "/login";
+		this.baseUrl = e.baseUrl ?? (typeof window < "u" ? window.location.origin : ""), this.tokens = e.tokenStore ?? ht(), this.doFetch = e.fetchImpl ?? globalThis.fetch.bind(globalThis), this.timeoutMs = e.timeoutMs ?? gt, this.instanceHeaders = vt(e.headers ?? {}), this.loginPath = e.loginPath ?? "/login";
 	}
 	setBaseUrl(e) {
 		this.baseUrl = e;
@@ -554,7 +2340,7 @@ var ke = class {
 	async request(e, t, n = null, r) {
 		let i = (t) => {
 			let r = {
-				...be,
+				..._t,
 				...this.instanceHeaders,
 				"Content-Type": "application/json"
 			}, i = this.tokens.getAccessToken();
@@ -587,9 +2373,15 @@ var ke = class {
 	}
 	extractError(e) {
 		if (e && typeof e == "object") {
-			let t = e;
-			if (typeof t.error == "string") return t.error;
-			if (typeof t.message == "string") return t.message;
+			let t = e, n = typeof t.error == "string" && t.error !== "" ? t.error : null, r = typeof t.message == "string" && t.message !== "" ? t.message : null, i = typeof t.code == "string" ? t.code : null;
+			if (n !== null && kt(n)) {
+				let e = At(i) ?? At(n);
+				return e === null ? r ?? n : e;
+			}
+			if (r !== null) return r;
+			if (n !== null) return n;
+			let a = At(i);
+			if (a !== null) return a;
 		}
 		return "Request failed";
 	}
@@ -694,7 +2486,7 @@ var ke = class {
 	}
 	async postFormData(e, t) {
 		let n = {
-			...be,
+			..._t,
 			...this.instanceHeaders
 		}, r = this.tokens.getAccessToken();
 		r && (n.Authorization = `Bearer ${r}`);
@@ -713,7 +2505,7 @@ var ke = class {
 	}
 	async deleteAvatar() {
 		let e = {
-			...be,
+			..._t,
 			...this.instanceHeaders
 		}, t = this.tokens.getAccessToken();
 		t && (e.Authorization = `Bearer ${t}`);
@@ -733,7 +2525,7 @@ var ke = class {
 		let n = t;
 		return {
 			...t,
-			is_admin: Se(n.is_admin)
+			is_admin: yt(n.is_admin)
 		};
 	}
 	async searchByMarker(e, t, n = 30, r = 20, i) {
@@ -764,6 +2556,27 @@ var ke = class {
 	addToPlaylist(e, t) {
 		return this.post(`/api/v1/collections/${encodeURIComponent(e)}/items/${encodeURIComponent(t)}`);
 	}
+	getPlaylists(e) {
+		return this.get("/api/v1/collections", void 0, e).then((e) => (Array.isArray(e?.collections) ? e.collections : []).flatMap(Tt));
+	}
+	getPlaylist(e, t) {
+		return this.get(`/api/v1/collections/${encodeURIComponent(e)}`, void 0, t).then((e) => {
+			let t = Tt(e?.collection)[0];
+			if (!t) throw new de("Malformed /api/v1/collections/{id} response: missing collection object", 200, e);
+			let n = Array.isArray(e?.items) ? e.items.flatMap(Et) : [];
+			return {
+				collection: t,
+				items: n,
+				total: typeof e?.total == "number" ? e.total : n.length
+			};
+		});
+	}
+	removeFromPlaylist(e, t) {
+		return this.delete(`/api/v1/collections/${encodeURIComponent(e)}/items/${encodeURIComponent(t)}`);
+	}
+	deletePlaylist(e) {
+		return this.delete(`/api/v1/collections/${encodeURIComponent(e)}`);
+	}
 	getDownloadUrl(e) {
 		return this.get(`/api/v1/media/${encodeURIComponent(e)}/download`);
 	}
@@ -778,53 +2591,53 @@ var ke = class {
 	}
 	async searchSubtitles(e, t, n) {
 		let r = t.filter((e) => e && e.trim() !== "").join(","), i = r === "" ? void 0 : { lang: r }, a = await this.get(`/api/v1/media/${encodeURIComponent(e)}/subtitles/search`, i, n);
-		return Array.isArray(a.candidates) ? a.candidates.map(Oe) : [];
+		return Array.isArray(a.candidates) ? a.candidates.map(Dt) : [];
 	}
 	downloadSubtitle(e, t) {
 		return this.post(`/api/v1/media/${encodeURIComponent(e)}/subtitles/download`, t);
 	}
 	async listArtists(e = {}, t) {
-		let n = De(e), r = await this.get("/api/v1/music/artists", Object.keys(n).length ? n : void 0, t), i = Array.isArray(r.artists) ? r.artists : [];
+		let n = wt(e), r = await this.get("/api/v1/music/artists", Object.keys(n).length ? n : void 0, t), i = Array.isArray(r.artists) ? r.artists : [];
 		return {
-			artists: i.map(Ce),
-			...Ee(r, i.length, e)
+			artists: i.map(bt),
+			...Ct(r, i.length, e)
 		};
 	}
 	async getArtist(e, t) {
-		return Ce((await this.get(`/api/v1/music/artist?name=${encodeURIComponent(e)}`, void 0, t)).artist);
+		return bt((await this.get(`/api/v1/music/artist?name=${encodeURIComponent(e)}`, void 0, t)).artist);
 	}
 	async listAlbums(e = {}, t) {
-		let n = De(e);
+		let n = wt(e);
 		e.artist !== void 0 && e.artist !== "" && (n.artist = e.artist);
 		let r = await this.get("/api/v1/music/albums", Object.keys(n).length ? n : void 0, t), i = Array.isArray(r.albums) ? r.albums : [];
 		return {
-			albums: i.map(Te),
-			...Ee(r, i.length, e),
-			artist: G(r.artist)
+			albums: i.map(St),
+			...Ct(r, i.length, e),
+			artist: K(r.artist)
 		};
 	}
 	async getAlbum(e, t, n) {
 		let r = t !== void 0 && t !== "" ? `&artist=${encodeURIComponent(t)}` : "";
-		return Te((await this.get(`/api/v1/music/album?name=${encodeURIComponent(e)}${r}`, void 0, n)).album);
+		return St((await this.get(`/api/v1/music/album?name=${encodeURIComponent(e)}${r}`, void 0, n)).album);
 	}
 	async listTracks(e = {}, t) {
-		let n = De(e), r = await this.get("/api/v1/music/tracks", Object.keys(n).length ? n : void 0, t), i = Array.isArray(r.tracks) ? r.tracks : [];
+		let n = wt(e), r = await this.get("/api/v1/music/tracks", Object.keys(n).length ? n : void 0, t), i = Array.isArray(r.tracks) ? r.tracks : [];
 		return {
-			tracks: i.map(we),
-			...Ee(r, i.length, e)
+			tracks: i.map(xt),
+			...Ct(r, i.length, e)
 		};
 	}
 	async getTrack(e, t) {
-		return we((await this.get(`/api/v1/music/tracks/${encodeURIComponent(e)}`, void 0, t)).track);
+		return xt((await this.get(`/api/v1/music/tracks/${encodeURIComponent(e)}`, void 0, t)).track);
 	}
 	logout(e = !0) {
 		this.tokens.clear(), e && typeof window < "u" && (window.location.href = this.loginPath);
 	}
 };
-new ke();
+new jt();
 //#endregion
 //#region src/stores/useToastStore.ts
-var Ae = R("phlix-toast", () => {
+var Mt = R("phlix-toast", () => {
 	let e = S([]), t = /* @__PURE__ */ new Map(), n = 0;
 	function r(n) {
 		let r = t.get(n);
@@ -872,10 +2685,10 @@ var Ae = R("phlix-toast", () => {
 });
 //#endregion
 //#region src/api/admin/users.ts
-function je(e) {
+function Nt(e) {
 	return {
 		...e,
-		is_admin: Se(e.is_admin)
+		is_admin: yt(e.is_admin)
 	};
 }
 [
@@ -908,18 +2721,18 @@ function je(e) {
 		label: "50 Mbps"
 	}
 ].map((e) => e.value);
-function Me(e) {
+function Pt(e) {
 	return typeof e == "number" && Number.isFinite(e) ? e : typeof e == "string" && e.trim() !== "" && Number.isFinite(Number(e)) ? Number(e) : 0;
 }
-function Ne(e) {
+function Ft(e) {
 	return {
 		user_id: typeof e.user_id == "string" ? e.user_id : String(e.user_id ?? ""),
-		bytes_in: Me(e.bytes_in),
-		bytes_out: Me(e.bytes_out),
-		quota_bytes_in: Me(e.quota_bytes_in),
-		quota_bytes_out: Me(e.quota_bytes_out),
-		max_concurrent_streams: Me(e.max_concurrent_streams),
-		throttle_bps: Me(e.throttle_bps)
+		bytes_in: Pt(e.bytes_in),
+		bytes_out: Pt(e.bytes_out),
+		quota_bytes_in: Pt(e.quota_bytes_in),
+		quota_bytes_out: Pt(e.quota_bytes_out),
+		max_concurrent_streams: Pt(e.max_concurrent_streams),
+		throttle_bps: Pt(e.throttle_bps)
 	};
 }
 Object.entries({
@@ -940,14 +2753,14 @@ Object.entries({
 	value: Number(e),
 	label: t
 }));
-var Pe = class {
+var It = class {
 	client;
 	constructor(e) {
 		this.client = e;
 	}
 	async list(e) {
 		let t = e?.status ? `?status=${encodeURIComponent(e.status)}` : "", { users: n } = await this.client.get(`/api/v1/admin/users${t}`);
-		return Array.isArray(n) ? n.map(je) : [];
+		return Array.isArray(n) ? n.map(Nt) : [];
 	}
 	approve(e) {
 		return this.client.post(`/api/v1/admin/users/${encodeURIComponent(e)}/approve`);
@@ -960,7 +2773,7 @@ var Pe = class {
 	}
 	async get(e) {
 		let { user: t } = await this.client.get(`/api/v1/admin/users/${encodeURIComponent(e)}`);
-		return je(t);
+		return Nt(t);
 	}
 	create(e) {
 		return this.client.post("/api/v1/admin/users", e);
@@ -978,13 +2791,13 @@ var Pe = class {
 		return this.client.post(`/api/v1/admin/users/${encodeURIComponent(e)}/reset-password`);
 	}
 	async getBandwidth(e) {
-		return Ne(await this.client.get(`/api/v1/admin/users/${encodeURIComponent(e)}/bandwidth`) ?? {});
+		return Ft(await this.client.get(`/api/v1/admin/users/${encodeURIComponent(e)}/bandwidth`) ?? {});
 	}
 	async setThrottle(e, t) {
-		return Ne(await this.client.put(`/api/v1/admin/users/${encodeURIComponent(e)}/throttle`, { throttle_bps: t }) ?? {});
+		return Ft(await this.client.put(`/api/v1/admin/users/${encodeURIComponent(e)}/throttle`, { throttle_bps: t }) ?? {});
 	}
 	async setQuota(e, t) {
-		return Ne(await this.client.put(`/api/v1/admin/users/${encodeURIComponent(e)}/quota`, t) ?? {});
+		return Ft(await this.client.put(`/api/v1/admin/users/${encodeURIComponent(e)}/quota`, t) ?? {});
 	}
 	async listProfiles(e) {
 		let { profiles: t } = await this.client.get(`/api/v1/admin/users/${encodeURIComponent(e)}/profiles`);
@@ -1075,27 +2888,27 @@ var Pe = class {
 };
 //#endregion
 //#region src/composables/useApiBase.ts
-function Fe(e) {
+function Lt(e) {
 	return typeof e == "string" ? e : e?.value ?? "";
 }
-function Ie() {
+function Rt() {
 	let e = f("apiBase", "");
-	return r(() => Fe(e));
+	return r(() => Lt(e));
 }
-function Le() {
+function zt() {
 	let e = f("mediaApiBase", void 0), t = f("apiBase", "");
-	return r(() => Fe(e) || Fe(t));
+	return r(() => Lt(e) || Lt(t));
 }
 //#endregion
 //#region src/stores/useAuthStore.ts
-function Re(e) {
+function Bt(e) {
 	return typeof e == "string" ? e : e?.value ?? "/login";
 }
-function ze(e) {
+function Vt(e) {
 	return !(e instanceof de) || !e.body || typeof e.body != "object" || !("code" in e.body) ? null : String(e.body.code ?? "") || null;
 }
-var Be = R("auth", () => {
-	let e = new ve(), t = Ie(), n = f("loginPath", "/login"), i = r(() => Re(n)), a = new ke({
+var Ht = R("auth", () => {
+	let e = new mt(), t = Rt(), n = f("loginPath", "/login"), i = r(() => Bt(n)), a = new jt({
 		tokenStore: e,
 		baseUrl: t.value,
 		loginPath: i.value
@@ -1116,7 +2929,7 @@ var Be = R("auth", () => {
 			let r = await a.post("/api/v1/auth/login", n);
 			return g(r.access_token, r.refresh_token), await y(), m.value;
 		} catch (e) {
-			return c.value = e instanceof Error ? e.message : "Login failed", l.value = ze(e), !1;
+			return c.value = e instanceof Error ? e.message : "Login failed", l.value = Vt(e), !1;
 		} finally {
 			s.value = !1;
 		}
@@ -1131,7 +2944,7 @@ var Be = R("auth", () => {
 			});
 			return g(r.access_token, r.refresh_token), await y(), m.value;
 		} catch (e) {
-			return c.value = e instanceof Error ? e.message : "Registration failed", l.value = ze(e), !1;
+			return c.value = e instanceof Error ? e.message : "Registration failed", l.value = Vt(e), !1;
 		} finally {
 			s.value = !1;
 		}
@@ -1142,7 +2955,7 @@ var Be = R("auth", () => {
 			try {
 				o.value = await a.getCurrentUser();
 			} catch (t) {
-				l.value = ze(t), o.value = null, e.clear(), u.value = null;
+				l.value = Vt(t), o.value = null, e.clear(), u.value = null;
 			}
 		}
 	}
@@ -1160,7 +2973,7 @@ var Be = R("auth", () => {
 			let t = await a.uploadAvatar(e);
 			o.value && (o.value.avatar_url = t.avatar_url);
 		} catch (e) {
-			throw c.value = e instanceof Error ? e.message : "Avatar upload failed", l.value = ze(e), e;
+			throw c.value = e instanceof Error ? e.message : "Avatar upload failed", l.value = Vt(e), e;
 		} finally {
 			s.value = !1;
 		}
@@ -1170,7 +2983,7 @@ var Be = R("auth", () => {
 		try {
 			await a.deleteAvatar(), o.value && (o.value.avatar_url = null);
 		} catch (e) {
-			throw c.value = e instanceof Error ? e.message : "Avatar deletion failed", l.value = ze(e), e;
+			throw c.value = e instanceof Error ? e.message : "Avatar deletion failed", l.value = Vt(e), e;
 		} finally {
 			s.value = !1;
 		}
@@ -1192,34 +3005,34 @@ var Be = R("auth", () => {
 		uploadAvatar: C,
 		deleteAvatar: w
 	};
-}), Ve = "phlix.active_profile", He = Ve;
-function Ue(e) {
-	return `${Ve}.${e}`;
+}), Ut = "phlix.active_profile", Wt = Ut;
+function Gt(e) {
+	return `${Ut}.${e}`;
 }
-function We(e) {
+function Kt(e) {
 	if (typeof localStorage > "u" || e === null) return null;
-	let t = localStorage.getItem(Ue(e));
+	let t = localStorage.getItem(Gt(e));
 	return typeof t == "string" && t !== "" ? t : null;
 }
-function Ge(e, t) {
+function qt(e, t) {
 	if (typeof localStorage > "u" || e === null) return;
-	let n = Ue(e);
+	let n = Gt(e);
 	t === null ? localStorage.removeItem(n) : localStorage.setItem(n, t);
 }
-function Ke() {
-	typeof localStorage > "u" || localStorage.removeItem(He);
+function Jt() {
+	typeof localStorage > "u" || localStorage.removeItem(Wt);
 }
-var qe = R("profile", () => {
-	let e = Be(), t = Ie();
+var Yt = R("profile", () => {
+	let e = Ht(), t = Rt();
 	function n() {
 		let t = e.user?.id;
 		return typeof t == "string" && t !== "" ? t : null;
 	}
 	let i = n();
-	Ke();
-	let a = S([]), o = S(!1), s = S(!1), c = S(null), l = S(We(i)), u = S(null), d = S(!1), f = S(!1), p = S(0), m = null;
+	Jt();
+	let a = S([]), o = S(!1), s = S(!1), c = S(null), l = S(Kt(i)), u = S(null), d = S(!1), f = S(!1), p = S(0), m = null;
 	function h(e) {
-		return m ? m.setBaseUrl(e) : m = new ke({ baseUrl: e }), new Pe(m);
+		return m ? m.setBaseUrl(e) : m = new jt({ baseUrl: e }), new It(m);
 	}
 	let g = r(() => a.value.length > 1), _ = r(() => a.value.find((e) => e.id === l.value) ?? null), v = r(() => s.value && a.value.length > 1 && !d.value), y = r(() => l.value ?? "account");
 	async function b(e = !1) {
@@ -1229,7 +3042,7 @@ var qe = R("profile", () => {
 				let e = await h(t.value).listOwnProfiles();
 				a.value = e, s.value = !0;
 				let n = e.find((e) => e.is_active)?.id ?? null;
-				n !== null && n !== l.value && (l.value = n, Ge(i, n));
+				n !== null && n !== l.value && (l.value = n, qt(i, n));
 			} catch (e) {
 				c.value = pe(e, "Could not load your profiles.");
 			} finally {
@@ -1246,7 +3059,7 @@ var qe = R("profile", () => {
 		u.value = n, c.value = null;
 		try {
 			let r = await h(t.value).switchProfile(n);
-			return e.setTokens(r.access_token, r.refresh_token), r.user && typeof r.user == "object" && (e.user = r.user), l.value = r.profile_id ?? n, Ge(i, l.value), d.value = !0, f.value = !1, a.value = a.value.map((e) => ({
+			return e.setTokens(r.access_token, r.refresh_token), r.user && typeof r.user == "object" && (e.user = r.user), l.value = r.profile_id ?? n, qt(i, l.value), d.value = !0, f.value = !1, a.value = a.value.map((e) => ({
 				...e,
 				is_active: e.id === l.value
 			})), !0;
@@ -1283,20 +3096,20 @@ var qe = R("profile", () => {
 		try {
 			await h(t.value).removeOwnProfile(e);
 			let n = e === l.value;
-			return n && (l.value = null, Ge(i, null)), await b(!0), n && l.value !== null && (p.value += 1), !0;
+			return n && (l.value = null, qt(i, null)), await b(!0), n && l.value !== null && (p.value += 1), !0;
 		} catch (e) {
 			return c.value = pe(e, "Could not delete the profile."), !1;
 		}
 	}
 	function k() {
-		a.value = [], o.value = !1, s.value = !1, c.value = null, u.value = null, d.value = !1, f.value = !1, l.value = null, Ge(i, null);
+		a.value = [], o.value = !1, s.value = !1, c.value = null, u.value = null, d.value = !1, f.value = !1, l.value = null, qt(i, null);
 	}
 	return N(l, (e, t) => {
 		t !== null && e !== t && (p.value += 1);
 	}), N(() => e.isLoggedIn, (e) => {
 		e || k();
 	}), N(n, (e, t) => {
-		e !== null && e !== t && (i = e, l.value === null && (l.value = We(e)));
+		e !== null && e !== t && (i = e, l.value === null && (l.value = Kt(e)));
 	}), {
 		profiles: a,
 		loading: o,
@@ -1321,19 +3134,19 @@ var qe = R("profile", () => {
 		openGate: T,
 		reset: k
 	};
-}), Je = Object.freeze({
+}), Xt = Object.freeze({
 	favorite: !1,
 	rating: null,
 	like_level: 0,
 	watched: !1
-}), Ye = R("user-item-data", () => {
-	let e = S(/* @__PURE__ */ new Map()), t = qe();
+}), Zt = R("user-item-data", () => {
+	let e = S(/* @__PURE__ */ new Map()), t = Yt();
 	N(() => t.epoch, () => {
 		e.value = /* @__PURE__ */ new Map();
 	});
 	let n = null;
 	function r(e) {
-		return n ? n.setBaseUrl(e) : n = new ke({ baseUrl: e }), n;
+		return n ? n.setBaseUrl(e) : n = new jt({ baseUrl: e }), n;
 	}
 	function i(t) {
 		return e.value.get(t)?.favorite ?? !1;
@@ -1345,7 +3158,7 @@ var qe = R("profile", () => {
 		return e.value.get(t)?.watched ?? !1;
 	}
 	function s(t) {
-		return e.value.get(t) ?? { ...Je };
+		return e.value.get(t) ?? { ...Xt };
 	}
 	function c(t) {
 		if (!t || typeof t.id != "string") return;
@@ -1358,7 +3171,7 @@ var qe = R("profile", () => {
 		});
 	}
 	function l(t, n) {
-		let r = e.value.get(t) ?? { ...Je };
+		let r = e.value.get(t) ?? { ...Xt };
 		e.value.set(t, {
 			...r,
 			...n
@@ -1373,7 +3186,7 @@ var qe = R("profile", () => {
 		} catch (t) {
 			l(e, { favorite: n });
 			let r = a ? "add to" : "remove from";
-			Ae().error(`Failed to ${r} favorites: ${pe(t)}`);
+			Mt().error(`Failed to ${r} favorites: ${pe(t)}`);
 		}
 	}
 	async function d(e, t) {
@@ -1385,7 +3198,7 @@ var qe = R("profile", () => {
 		} catch (t) {
 			l(e, { watched: n });
 			let r = i ? "watched" : "unwatched";
-			Ae().error(`Failed to mark ${r}: ${pe(t)}`);
+			Mt().error(`Failed to mark ${r}: ${pe(t)}`);
 		}
 	}
 	async function f(e, t, n) {
@@ -1396,7 +3209,7 @@ var qe = R("profile", () => {
 		try {
 			await r(n).setLikeLevel(e, i);
 		} catch (t) {
-			l(e, { like_level: o }), Ae().error(`Failed to set rating: ${pe(t)}`);
+			l(e, { like_level: o }), Mt().error(`Failed to set rating: ${pe(t)}`);
 		}
 	}
 	function p() {
@@ -1414,13 +3227,13 @@ var qe = R("profile", () => {
 		setLike: f,
 		reset: p
 	};
-}), Xe = {
+}), Qt = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ze(e, t) {
-	return x(), o("svg", Xe, [...t[0] ||= [s("path", {
+function $t(e, t) {
+	return x(), o("svg", Qt, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1429,16 +3242,16 @@ function Ze(e, t) {
 		d: "M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"
 	}, null, -1)]]);
 }
-var Qe = p({
+var en = p({
 	name: "lucide-play",
-	render: Ze
-}), $e = {
+	render: $t
+}), tn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function et(e, t) {
-	return x(), o("svg", $e, [...t[0] ||= [s("g", {
+function nn(e, t) {
+	return x(), o("svg", tn, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1458,16 +3271,16 @@ function et(e, t) {
 		rx: "1"
 	})], -1)]]);
 }
-var tt = p({
+var rn = p({
 	name: "lucide-pause",
-	render: et
-}), nt = {
+	render: nn
+}), an = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function rt(e, t) {
-	return x(), o("svg", nt, [...t[0] ||= [s("path", {
+function on(e, t) {
+	return x(), o("svg", an, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1476,16 +3289,16 @@ function rt(e, t) {
 		d: "M17.971 4.285A2 2 0 0 1 21 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432zM3 20V4"
 	}, null, -1)]]);
 }
-var it = p({
+var sn = p({
 	name: "lucide-skip-back",
-	render: rt
-}), at = {
+	render: on
+}), cn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ot(e, t) {
-	return x(), o("svg", at, [...t[0] ||= [s("path", {
+function ln(e, t) {
+	return x(), o("svg", cn, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1494,16 +3307,16 @@ function ot(e, t) {
 		d: "M21 4v16M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z"
 	}, null, -1)]]);
 }
-var st = p({
+var un = p({
 	name: "lucide-skip-forward",
-	render: ot
-}), ct = {
+	render: ln
+}), dn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function lt(e, t) {
-	return x(), o("svg", ct, [...t[0] ||= [s("g", {
+function fn(e, t) {
+	return x(), o("svg", dn, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1511,16 +3324,16 @@ function lt(e, t) {
 		"stroke-width": "2"
 	}, [s("path", { d: "M3 12a9 9 0 1 0 9-9a9.75 9.75 0 0 0-6.74 2.74L3 8" }), s("path", { d: "M3 3v5h5" })], -1)]]);
 }
-var ut = p({
+var pn = p({
 	name: "lucide-rotate-ccw",
-	render: lt
-}), dt = {
+	render: fn
+}), mn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ft(e, t) {
-	return x(), o("svg", dt, [...t[0] ||= [s("g", {
+function hn(e, t) {
+	return x(), o("svg", mn, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1528,16 +3341,16 @@ function ft(e, t) {
 		"stroke-width": "2"
 	}, [s("path", { d: "M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" }), s("path", { d: "M21 3v5h-5" })], -1)]]);
 }
-var pt = p({
+var gn = p({
 	name: "lucide-rotate-cw",
-	render: ft
-}), mt = {
+	render: hn
+}), _n = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ht(e, t) {
-	return x(), o("svg", mt, [...t[0] ||= [s("path", {
+function vn(e, t) {
+	return x(), o("svg", _n, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1546,16 +3359,16 @@ function ht(e, t) {
 		d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6m3.364 3.364a9 9 0 0 0 0-12.728"
 	}, null, -1)]]);
 }
-var gt = p({
+var yn = p({
 	name: "lucide-volume-2",
-	render: ht
-}), _t = {
+	render: vn
+}), bn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function vt(e, t) {
-	return x(), o("svg", _t, [...t[0] ||= [s("path", {
+function xn(e, t) {
+	return x(), o("svg", bn, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1564,16 +3377,16 @@ function vt(e, t) {
 		d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6"
 	}, null, -1)]]);
 }
-var yt = p({
+var Sn = p({
 	name: "lucide-volume-1",
-	render: vt
-}), bt = {
+	render: xn
+}), Cn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function xt(e, t) {
-	return x(), o("svg", bt, [...t[0] ||= [s("path", {
+function wn(e, t) {
+	return x(), o("svg", Cn, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1582,16 +3395,16 @@ function xt(e, t) {
 		d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM22 9l-6 6m0-6l6 6"
 	}, null, -1)]]);
 }
-var St = p({
+var Tn = p({
 	name: "lucide-volume-x",
-	render: xt
-}), Ct = {
+	render: wn
+}), En = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function wt(e, t) {
-	return x(), o("svg", Ct, [...t[0] ||= [s("g", {
+function Dn(e, t) {
+	return x(), o("svg", En, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1599,16 +3412,16 @@ function wt(e, t) {
 		"stroke-width": "2"
 	}, [s("path", { d: "m18 14l4 4l-4 4m0-20l4 4l-4 4" }), s("path", { d: "M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22M2 6h1.972a4 4 0 0 1 3.6 2.2M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" })], -1)]]);
 }
-var Tt = p({
+var On = p({
 	name: "lucide-shuffle",
-	render: wt
-}), Et = {
+	render: Dn
+}), kn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Dt(e, t) {
-	return x(), o("svg", Et, [...t[0] ||= [s("g", {
+function An(e, t) {
+	return x(), o("svg", kn, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1620,16 +3433,16 @@ function Dt(e, t) {
 		s("path", { d: "M21 13v1a4 4 0 0 1-4 4H3" })
 	], -1)]]);
 }
-var Ot = p({
+var jn = p({
 	name: "lucide-repeat",
-	render: Dt
-}), kt = {
+	render: An
+}), Mn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function At(e, t) {
-	return x(), o("svg", kt, [...t[0] ||= [s("g", {
+function Nn(e, t) {
+	return x(), o("svg", Mn, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1641,16 +3454,16 @@ function At(e, t) {
 		s("path", { d: "M21 13v1a4 4 0 0 1-4 4H3m8-8h1v4" })
 	], -1)]]);
 }
-var jt = p({
+var Pn = p({
 	name: "lucide-repeat-1",
-	render: At
-}), Mt = {
+	render: Nn
+}), Fn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Nt(e, t) {
-	return x(), o("svg", Mt, [...t[0] ||= [s("g", {
+function In(e, t) {
+	return x(), o("svg", Fn, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1662,16 +3475,16 @@ function Nt(e, t) {
 		r: "3"
 	})], -1)]]);
 }
-var Pt = p({
+var Ln = p({
 	name: "lucide-list-music",
-	render: Nt
-}), Ft = {
+	render: In
+}), Rn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function It(e, t) {
-	return x(), o("svg", Ft, [...t[0] ||= [s("g", {
+function zn(e, t) {
+	return x(), o("svg", Rn, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1686,16 +3499,16 @@ function It(e, t) {
 		ry: "2"
 	}), s("path", { d: "M7 15h4m4 0h2M7 11h2m4 0h4" })], -1)]]);
 }
-var Lt = p({
+var Bn = p({
 	name: "lucide-captions",
-	render: It
-}), Rt = {
+	render: zn
+}), Vn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function zt(e, t) {
-	return x(), o("svg", Rt, [...t[0] ||= [s("path", {
+function Hn(e, t) {
+	return x(), o("svg", Vn, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1704,16 +3517,16 @@ function zt(e, t) {
 		d: "M10.5 5H19a2 2 0 0 1 2 2v8.5M17 11h-.5m2.5 8H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2M2 2l20 20M7 11h4m-4 4h2.5"
 	}, null, -1)]]);
 }
-var Bt = p({
+var Un = p({
 	name: "lucide-captions-off",
-	render: zt
-}), Vt = {
+	render: Hn
+}), Wn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ht(e, t) {
-	return x(), o("svg", Vt, [...t[0] ||= [s("g", {
+function Gn(e, t) {
+	return x(), o("svg", Wn, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1727,16 +3540,16 @@ function Ht(e, t) {
 		rx: "2"
 	})], -1)]]);
 }
-var Ut = p({
+var Kn = p({
 	name: "lucide-picture-in-picture-2",
-	render: Ht
-}), Wt = {
+	render: Gn
+}), qn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Gt(e, t) {
-	return x(), o("svg", Wt, [...t[0] ||= [s("rect", {
+function Jn(e, t) {
+	return x(), o("svg", qn, [...t[0] ||= [s("rect", {
 		width: "20",
 		height: "12",
 		x: "2",
@@ -1749,16 +3562,16 @@ function Gt(e, t) {
 		rx: "2"
 	}, null, -1)]]);
 }
-var Kt = p({
+var Yn = p({
 	name: "lucide-rectangle-horizontal",
-	render: Gt
-}), qt = {
+	render: Jn
+}), Xn = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Jt(e, t) {
-	return x(), o("svg", qt, [...t[0] ||= [s("path", {
+function Zn(e, t) {
+	return x(), o("svg", Xn, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1767,16 +3580,16 @@ function Jt(e, t) {
 		d: "M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"
 	}, null, -1)]]);
 }
-var Yt = p({
+var Qn = p({
 	name: "lucide-maximize",
-	render: Jt
-}), Xt = {
+	render: Zn
+}), $n = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Zt(e, t) {
-	return x(), o("svg", Xt, [...t[0] ||= [s("path", {
+function er(e, t) {
+	return x(), o("svg", $n, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1785,16 +3598,16 @@ function Zt(e, t) {
 		d: "M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3m8 0v-3a2 2 0 0 1 2-2h3"
 	}, null, -1)]]);
 }
-var Qt = p({
+var tr = p({
 	name: "lucide-minimize",
-	render: Zt
-}), $t = {
+	render: er
+}), nr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function en(e, t) {
-	return x(), o("svg", $t, [...t[0] ||= [s("path", {
+function rr(e, t) {
+	return x(), o("svg", nr, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1803,16 +3616,16 @@ function en(e, t) {
 		d: "M15 3h6v6m0-6l-7 7M3 21l7-7m-1 7H3v-6"
 	}, null, -1)]]);
 }
-var tn = p({
+var ir = p({
 	name: "lucide-maximize-2",
-	render: en
-}), nn = {
+	render: rr
+}), ar = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function rn(e, t) {
-	return x(), o("svg", nn, [...t[0] ||= [s("path", {
+function or(e, t) {
+	return x(), o("svg", ar, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1821,16 +3634,16 @@ function rn(e, t) {
 		d: "M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6M2 12a9 9 0 0 1 8 8m-8-4a5 5 0 0 1 4 4m-4 0h.01"
 	}, null, -1)]]);
 }
-var an = p({
+var sr = p({
 	name: "lucide-cast",
-	render: rn
-}), on = {
+	render: or
+}), cr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function sn(e, t) {
-	return x(), o("svg", on, [...t[0] ||= [s("g", {
+function lr(e, t) {
+	return x(), o("svg", cr, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1842,16 +3655,16 @@ function sn(e, t) {
 		r: "3"
 	})], -1)]]);
 }
-var cn = p({
+var ur = p({
 	name: "lucide-settings",
-	render: sn
-}), ln = {
+	render: lr
+}), dr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function un(e, t) {
-	return x(), o("svg", ln, [...t[0] ||= [s("path", {
+function fr(e, t) {
+	return x(), o("svg", dr, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1860,16 +3673,16 @@ function un(e, t) {
 		d: "m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"
 	}, null, -1)]]);
 }
-var dn = p({
+var pr = p({
 	name: "lucide-gauge",
-	render: un
-}), fn = {
+	render: fr
+}), mr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function pn(e, t) {
-	return x(), o("svg", fn, [...t[0] ||= [s("g", {
+function hr(e, t) {
+	return x(), o("svg", mr, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1883,16 +3696,16 @@ function pn(e, t) {
 		rx: "2"
 	}), s("path", { d: "M7 3v18M3 7.5h4M3 12h18M3 16.5h4M17 3v18m0-13.5h4m-4 9h4" })], -1)]]);
 }
-var mn = p({
+var gr = p({
 	name: "lucide-film",
-	render: pn
-}), hn = {
+	render: hr
+}), _r = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function gn(e, t) {
-	return x(), o("svg", hn, [...t[0] ||= [s("g", {
+function vr(e, t) {
+	return x(), o("svg", _r, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1915,16 +3728,16 @@ function gn(e, t) {
 		s("path", { d: "m21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" })
 	], -1)]]);
 }
-var _n = p({
+var yr = p({
 	name: "lucide-image",
-	render: gn
-}), vn = {
+	render: vr
+}), br = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function yn(e, t) {
-	return x(), o("svg", vn, [...t[0] ||= [s("g", {
+function xr(e, t) {
+	return x(), o("svg", br, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1944,16 +3757,16 @@ function yn(e, t) {
 		})
 	], -1)]]);
 }
-var bn = p({
+var Sr = p({
 	name: "lucide-music",
-	render: yn
-}), xn = {
+	render: xr
+}), Cr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Sn(e, t) {
-	return x(), o("svg", xn, [...t[0] ||= [s("g", {
+function wr(e, t) {
+	return x(), o("svg", Cr, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1967,16 +3780,16 @@ function Sn(e, t) {
 		rx: "2"
 	})], -1)]]);
 }
-var Cn = p({
+var Tr = p({
 	name: "lucide-tv",
-	render: Sn
-}), wn = {
+	render: wr
+}), Er = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Tn(e, t) {
-	return x(), o("svg", wn, [...t[0] ||= [s("path", {
+function Dr(e, t) {
+	return x(), o("svg", Er, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -1985,16 +3798,16 @@ function Tn(e, t) {
 		d: "M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"
 	}, null, -1)]]);
 }
-var En = p({
+var Or = p({
 	name: "lucide-book",
-	render: Tn
-}), Dn = {
+	render: Dr
+}), kr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function On(e, t) {
-	return x(), o("svg", Dn, [...t[0] ||= [s("path", {
+function Ar(e, t) {
+	return x(), o("svg", kr, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2003,27 +3816,27 @@ function On(e, t) {
 		d: "M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"
 	}, null, -1)]]);
 }
-var kn = p({
+var jr = p({
 	name: "lucide-headphones",
-	render: On
-}), An = {
+	render: Ar
+}), Mr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function jn(e, t) {
-	return x(), o("svg", An, [...t[0] ||= [c("<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"M6 12c0-1.7.7-3.2 1.8-4.2\"></path><circle cx=\"12\" cy=\"12\" r=\"2\"></circle><path d=\"M18 12c0 1.7-.7 3.2-1.8 4.2\"></path></g>", 1)]]);
+function Nr(e, t) {
+	return x(), o("svg", Mr, [...t[0] ||= [c("<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"M6 12c0-1.7.7-3.2 1.8-4.2\"></path><circle cx=\"12\" cy=\"12\" r=\"2\"></circle><path d=\"M18 12c0 1.7-.7 3.2-1.8 4.2\"></path></g>", 1)]]);
 }
-var Mn = p({
+var Pr = p({
 	name: "lucide-disc-3",
-	render: jn
-}), Nn = {
+	render: Nr
+}), Fr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Pn(e, t) {
-	return x(), o("svg", Nn, [...t[0] ||= [s("g", {
+function Ir(e, t) {
+	return x(), o("svg", Fr, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2039,16 +3852,16 @@ function Pn(e, t) {
 		})
 	], -1)]]);
 }
-var Fn = p({
+var Lr = p({
 	name: "lucide-mic-2",
-	render: Pn
-}), In = {
+	render: Ir
+}), Rr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ln(e, t) {
-	return x(), o("svg", In, [...t[0] ||= [s("g", {
+function zr(e, t) {
+	return x(), o("svg", Rr, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2062,16 +3875,16 @@ function Ln(e, t) {
 		rx: "2"
 	})], -1)]]);
 }
-var Rn = p({
+var Br = p({
 	name: "lucide-video",
-	render: Ln
-}), zn = {
+	render: zr
+}), Vr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Bn(e, t) {
-	return x(), o("svg", zn, [...t[0] ||= [s("g", {
+function Hr(e, t) {
+	return x(), o("svg", Vr, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2083,16 +3896,16 @@ function Bn(e, t) {
 		r: "8"
 	})], -1)]]);
 }
-var Vn = p({
+var Ur = p({
 	name: "lucide-search",
-	render: Bn
-}), Hn = {
+	render: Hr
+}), Wr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Un(e, t) {
-	return x(), o("svg", Hn, [...t[0] ||= [s("path", {
+function Gr(e, t) {
+	return x(), o("svg", Wr, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2101,16 +3914,16 @@ function Un(e, t) {
 		d: "M10 5H3m9 14H3M14 3v4m2 10v4m5-9h-9m9 7h-5m5-14h-7m-6 5v4m0-2H3"
 	}, null, -1)]]);
 }
-var Wn = p({
+var Kr = p({
 	name: "lucide-sliders-horizontal",
-	render: Un
-}), Gn = {
+	render: Gr
+}), qr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Kn(e, t) {
-	return x(), o("svg", Gn, [...t[0] ||= [s("g", {
+function Jr(e, t) {
+	return x(), o("svg", qr, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2128,16 +3941,16 @@ function Kn(e, t) {
 		s("path", { d: "M3 9h18" })
 	], -1)]]);
 }
-var qn = p({
+var Yr = p({
 	name: "lucide-calendar",
-	render: Kn
-}), Jn = {
+	render: Jr
+}), Xr = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Yn(e, t) {
-	return x(), o("svg", Jn, [...t[0] ||= [s("path", {
+function Zr(e, t) {
+	return x(), o("svg", Xr, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2146,16 +3959,16 @@ function Yn(e, t) {
 		d: "m21 16l-4 4l-4-4m4 4V4M3 8l4-4l4 4M7 4v16"
 	}, null, -1)]]);
 }
-var Xn = p({
+var Qr = p({
 	name: "lucide-arrow-up-down",
-	render: Yn
-}), Zn = {
+	render: Zr
+}), $r = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Qn(e, t) {
-	return x(), o("svg", Zn, [...t[0] ||= [s("path", {
+function ei(e, t) {
+	return x(), o("svg", $r, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2164,16 +3977,16 @@ function Qn(e, t) {
 		d: "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"
 	}, null, -1)]]);
 }
-var $n = p({
+var ti = p({
 	name: "lucide-star",
-	render: Qn
-}), er = {
+	render: ei
+}), ni = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function tr(e, t) {
-	return x(), o("svg", er, [...t[0] ||= [s("path", {
+function ri(e, t) {
+	return x(), o("svg", ni, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2182,27 +3995,27 @@ function tr(e, t) {
 		d: "M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"
 	}, null, -1)]]);
 }
-var nr = p({
+var ii = p({
 	name: "lucide-list",
-	render: tr
-}), rr = {
+	render: ri
+}), ai = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ir(e, t) {
-	return x(), o("svg", rr, [...t[0] ||= [c("<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"></rect></g>", 1)]]);
+function oi(e, t) {
+	return x(), o("svg", ai, [...t[0] ||= [c("<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"></rect></g>", 1)]]);
 }
-var ar = p({
+var si = p({
 	name: "lucide-layout-grid",
-	render: ir
-}), or = {
+	render: oi
+}), ci = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function sr(e, t) {
-	return x(), o("svg", or, [...t[0] ||= [s("g", {
+function li(e, t) {
+	return x(), o("svg", ci, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2220,16 +4033,16 @@ function sr(e, t) {
 		s("path", { d: "M22 3v18" })
 	], -1)]]);
 }
-var cr = p({
+var ui = p({
 	name: "lucide-gallery-horizontal",
-	render: sr
-}), lr = {
+	render: li
+}), di = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ur(e, t) {
-	return x(), o("svg", lr, [...t[0] ||= [s("g", {
+function fi(e, t) {
+	return x(), o("svg", di, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2247,16 +4060,16 @@ function ur(e, t) {
 		s("path", { d: "M3 9h18M3 15h18" })
 	], -1)]]);
 }
-var dr = p({
+var pi = p({
 	name: "lucide-table",
-	render: ur
-}), fr = {
+	render: fi
+}), mi = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function pr(e, t) {
-	return x(), o("svg", fr, [...t[0] ||= [s("path", {
+function hi(e, t) {
+	return x(), o("svg", mi, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2265,16 +4078,16 @@ function pr(e, t) {
 		d: "M5 12h14m-7-7v14"
 	}, null, -1)]]);
 }
-var mr = p({
+var gi = p({
 	name: "lucide-plus",
-	render: pr
-}), hr = {
+	render: hi
+}), _i = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function gr(e, t) {
-	return x(), o("svg", hr, [...t[0] ||= [s("g", {
+function vi(e, t) {
+	return x(), o("svg", _i, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2286,16 +4099,16 @@ function gr(e, t) {
 		r: "10"
 	}), s("path", { d: "M12 16v-4m0-4h.01" })], -1)]]);
 }
-var _r = p({
+var yi = p({
 	name: "lucide-info",
-	render: gr
-}), vr = {
+	render: vi
+}), bi = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function yr(e, t) {
-	return x(), o("svg", vr, [...t[0] ||= [s("path", {
+function xi(e, t) {
+	return x(), o("svg", bi, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2304,16 +4117,16 @@ function yr(e, t) {
 		d: "M18 6L6 18M6 6l12 12"
 	}, null, -1)]]);
 }
-var br = p({
+var Si = p({
 	name: "lucide-x",
-	render: yr
-}), xr = {
+	render: xi
+}), Ci = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Sr(e, t) {
-	return x(), o("svg", xr, [...t[0] ||= [s("path", {
+function wi(e, t) {
+	return x(), o("svg", Ci, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2322,16 +4135,16 @@ function Sr(e, t) {
 		d: "M20 6L9 17l-5-5"
 	}, null, -1)]]);
 }
-var Cr = p({
+var Ti = p({
 	name: "lucide-check",
-	render: Sr
-}), wr = {
+	render: wi
+}), Ei = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Tr(e, t) {
-	return x(), o("svg", wr, [...t[0] ||= [s("g", {
+function Di(e, t) {
+	return x(), o("svg", Ei, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2346,16 +4159,16 @@ function Tr(e, t) {
 		ry: "2"
 	}), s("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" })], -1)]]);
 }
-var Er = p({
+var Oi = p({
 	name: "lucide-lock",
-	render: Tr
-}), Dr = {
+	render: Di
+}), ki = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Or(e, t) {
-	return x(), o("svg", Dr, [...t[0] ||= [s("path", {
+function Ai(e, t) {
+	return x(), o("svg", ki, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2364,16 +4177,16 @@ function Or(e, t) {
 		d: "M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
 	}, null, -1)]]);
 }
-var kr = p({
+var ji = p({
 	name: "lucide-bookmark",
-	render: Or
-}), Ar = {
+	render: Ai
+}), Mi = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function jr(e, t) {
-	return x(), o("svg", Ar, [...t[0] ||= [s("path", {
+function Ni(e, t) {
+	return x(), o("svg", Mi, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2382,16 +4195,16 @@ function jr(e, t) {
 		d: "M12 7v6m3-3H9m8-7a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
 	}, null, -1)]]);
 }
-var Mr = p({
+var Pi = p({
 	name: "lucide-bookmark-plus",
-	render: jr
-}), Nr = {
+	render: Ni
+}), Fi = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Pr(e, t) {
-	return x(), o("svg", Nr, [...t[0] ||= [s("path", {
+function Ii(e, t) {
+	return x(), o("svg", Fi, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2400,16 +4213,16 @@ function Pr(e, t) {
 		d: "M2 9.5a5.5 5.5 0 0 1 9.591-3.676a.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"
 	}, null, -1)]]);
 }
-var Fr = p({
+var Li = p({
 	name: "lucide-heart",
-	render: Pr
-}), Ir = {
+	render: Ii
+}), Ri = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Lr(e, t) {
-	return x(), o("svg", Ir, [...t[0] ||= [s("path", {
+function zi(e, t) {
+	return x(), o("svg", Ri, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2418,16 +4231,16 @@ function Lr(e, t) {
 		d: "M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88M7 10v12"
 	}, null, -1)]]);
 }
-var Rr = p({
+var Bi = p({
 	name: "lucide-thumbs-up",
-	render: Lr
-}), zr = {
+	render: zi
+}), Vi = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Br(e, t) {
-	return x(), o("svg", zr, [...t[0] ||= [s("path", {
+function Hi(e, t) {
+	return x(), o("svg", Vi, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2436,16 +4249,16 @@ function Br(e, t) {
 		d: "M9 18.12L10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88M17 14V2"
 	}, null, -1)]]);
 }
-var Vr = p({
+var Ui = p({
 	name: "lucide-thumbs-down",
-	render: Br
-}), Hr = {
+	render: Hi
+}), Wi = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ur(e, t) {
-	return x(), o("svg", Hr, [...t[0] ||= [s("g", {
+function Gi(e, t) {
+	return x(), o("svg", Wi, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2457,16 +4270,16 @@ function Ur(e, t) {
 		r: "4"
 	})], -1)]]);
 }
-var Wr = p({
+var Ki = p({
 	name: "lucide-user",
-	render: Ur
-}), Gr = {
+	render: Gi
+}), qi = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Kr(e, t) {
-	return x(), o("svg", Gr, [...t[0] ||= [s("g", {
+function Ji(e, t) {
+	return x(), o("svg", qi, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2478,16 +4291,16 @@ function Kr(e, t) {
 		r: "4"
 	})], -1)]]);
 }
-var qr = p({
+var Yi = p({
 	name: "lucide-users",
-	render: Kr
-}), Jr = {
+	render: Ji
+}), Xi = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Yr(e, t) {
-	return x(), o("svg", Jr, [...t[0] ||= [s("path", {
+function Zi(e, t) {
+	return x(), o("svg", Xi, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2496,16 +4309,16 @@ function Yr(e, t) {
 		d: "m16 17l5-5l-5-5m5 5H9m0 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
 	}, null, -1)]]);
 }
-var Xr = p({
+var Qi = p({
 	name: "lucide-log-out",
-	render: Yr
-}), Zr = {
+	render: Zi
+}), $i = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Qr(e, t) {
-	return x(), o("svg", Zr, [...t[0] ||= [s("path", {
+function ea(e, t) {
+	return x(), o("svg", $i, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2514,16 +4327,16 @@ function Qr(e, t) {
 		d: "M4 5h16M4 12h16M4 19h16"
 	}, null, -1)]]);
 }
-var $r = p({
+var ta = p({
 	name: "lucide-menu",
-	render: Qr
-}), ei = {
+	render: ea
+}), na = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ti(e, t) {
-	return x(), o("svg", ei, [...t[0] ||= [s("g", {
+function ra(e, t) {
+	return x(), o("svg", na, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2547,16 +4360,16 @@ function ti(e, t) {
 		})
 	], -1)]]);
 }
-var ni = p({
+var ia = p({
 	name: "lucide-more-horizontal",
-	render: ti
-}), ri = {
+	render: ra
+}), aa = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ii(e, t) {
-	return x(), o("svg", ri, [...t[0] ||= [s("g", {
+function oa(e, t) {
+	return x(), o("svg", aa, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2568,16 +4381,16 @@ function ii(e, t) {
 		r: "3"
 	})], -1)]]);
 }
-var ai = p({
+var sa = p({
 	name: "lucide-eye",
-	render: ii
-}), oi = {
+	render: oa
+}), ca = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function si(e, t) {
-	return x(), o("svg", oi, [...t[0] ||= [s("g", {
+function la(e, t) {
+	return x(), o("svg", ca, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2585,16 +4398,16 @@ function si(e, t) {
 		"stroke-width": "2"
 	}, [s("path", { d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575a1 1 0 0 1 0 .696a10.8 10.8 0 0 1-1.444 2.49m-6.41-.679a3 3 0 0 1-4.242-4.242" }), s("path", { d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 4.446-5.143M2 2l20 20" })], -1)]]);
 }
-var ci = p({
+var ua = p({
 	name: "lucide-eye-off",
-	render: si
-}), li = {
+	render: la
+}), da = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ui(e, t) {
-	return x(), o("svg", li, [...t[0] ||= [s("g", {
+function fa(e, t) {
+	return x(), o("svg", da, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2606,16 +4419,16 @@ function ui(e, t) {
 		r: "5.5"
 	})], -1)]]);
 }
-var di = p({
+var pa = p({
 	name: "lucide-key",
-	render: ui
-}), fi = {
+	render: fa
+}), ma = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function pi(e, t) {
-	return x(), o("svg", fi, [...t[0] ||= [s("path", {
+function ha(e, t) {
+	return x(), o("svg", ma, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2624,16 +4437,16 @@ function pi(e, t) {
 		d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
 	}, null, -1)]]);
 }
-var mi = p({
+var ga = p({
 	name: "lucide-trash",
-	render: pi
-}), hi = {
+	render: ha
+}), _a = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function gi(e, t) {
-	return x(), o("svg", hi, [...t[0] ||= [s("path", {
+function va(e, t) {
+	return x(), o("svg", _a, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2642,16 +4455,16 @@ function gi(e, t) {
 		d: "m12 19l-7-7l7-7m7 7H5"
 	}, null, -1)]]);
 }
-var _i = p({
+var ya = p({
 	name: "lucide-arrow-left",
-	render: gi
-}), vi = {
+	render: va
+}), ba = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function yi(e, t) {
-	return x(), o("svg", vi, [...t[0] ||= [s("path", {
+function xa(e, t) {
+	return x(), o("svg", ba, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2660,16 +4473,16 @@ function yi(e, t) {
 		d: "M5 12h14m-7-7l7 7l-7 7"
 	}, null, -1)]]);
 }
-var bi = p({
+var Sa = p({
 	name: "lucide-arrow-right",
-	render: yi
-}), xi = {
+	render: xa
+}), Ca = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Si(e, t) {
-	return x(), o("svg", xi, [...t[0] ||= [s("path", {
+function wa(e, t) {
+	return x(), o("svg", Ca, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2678,16 +4491,16 @@ function Si(e, t) {
 		d: "m5 12l7-7l7 7m-7 7V5"
 	}, null, -1)]]);
 }
-var Ci = p({
+var Ta = p({
 	name: "lucide-arrow-up",
-	render: Si
-}), wi = {
+	render: wa
+}), Ea = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ti(e, t) {
-	return x(), o("svg", wi, [...t[0] ||= [s("path", {
+function Da(e, t) {
+	return x(), o("svg", Ea, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2696,16 +4509,16 @@ function Ti(e, t) {
 		d: "M12 5v14m7-7l-7 7l-7-7"
 	}, null, -1)]]);
 }
-var Ei = p({
+var Oa = p({
 	name: "lucide-arrow-down",
-	render: Ti
-}), Di = {
+	render: Da
+}), ka = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Oi(e, t) {
-	return x(), o("svg", Di, [...t[0] ||= [s("path", {
+function Aa(e, t) {
+	return x(), o("svg", ka, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2714,16 +4527,16 @@ function Oi(e, t) {
 		d: "m6 9l6 6l6-6"
 	}, null, -1)]]);
 }
-var ki = p({
+var ja = p({
 	name: "lucide-chevron-down",
-	render: Oi
-}), Ai = {
+	render: Aa
+}), Ma = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ji(e, t) {
-	return x(), o("svg", Ai, [...t[0] ||= [s("path", {
+function Na(e, t) {
+	return x(), o("svg", Ma, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2732,16 +4545,16 @@ function ji(e, t) {
 		d: "m18 15l-6-6l-6 6"
 	}, null, -1)]]);
 }
-var Mi = p({
+var Pa = p({
 	name: "lucide-chevron-up",
-	render: ji
-}), Ni = {
+	render: Na
+}), Fa = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Pi(e, t) {
-	return x(), o("svg", Ni, [...t[0] ||= [s("path", {
+function Ia(e, t) {
+	return x(), o("svg", Fa, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2750,16 +4563,16 @@ function Pi(e, t) {
 		d: "m15 18l-6-6l6-6"
 	}, null, -1)]]);
 }
-var Fi = p({
+var La = p({
 	name: "lucide-chevron-left",
-	render: Pi
-}), Ii = {
+	render: Ia
+}), Ra = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Li(e, t) {
-	return x(), o("svg", Ii, [...t[0] ||= [s("path", {
+function za(e, t) {
+	return x(), o("svg", Ra, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2768,16 +4581,16 @@ function Li(e, t) {
 		d: "m9 18l6-6l-6-6"
 	}, null, -1)]]);
 }
-var Ri = p({
+var Ba = p({
 	name: "lucide-chevron-right",
-	render: Li
-}), zi = {
+	render: za
+}), Va = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Bi(e, t) {
-	return x(), o("svg", zi, [...t[0] ||= [s("path", {
+function Ha(e, t) {
+	return x(), o("svg", Va, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2786,16 +4599,16 @@ function Bi(e, t) {
 		d: "m11 17l-5-5l5-5m7 10l-5-5l5-5"
 	}, null, -1)]]);
 }
-var Vi = p({
+var Ua = p({
 	name: "lucide-chevrons-left",
-	render: Bi
-}), Hi = {
+	render: Ha
+}), Wa = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ui(e, t) {
-	return x(), o("svg", Hi, [...t[0] ||= [s("path", {
+function Ga(e, t) {
+	return x(), o("svg", Wa, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2804,16 +4617,16 @@ function Ui(e, t) {
 		d: "m6 17l5-5l-5-5m7 10l5-5l-5-5"
 	}, null, -1)]]);
 }
-var Wi = p({
+var Ka = p({
 	name: "lucide-chevrons-right",
-	render: Ui
-}), Gi = {
+	render: Ga
+}), qa = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Ki(e, t) {
-	return x(), o("svg", Gi, [...t[0] ||= [s("path", {
+function Ja(e, t) {
+	return x(), o("svg", qa, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2822,16 +4635,16 @@ function Ki(e, t) {
 		d: "M21 12a9 9 0 1 1-6.219-8.56"
 	}, null, -1)]]);
 }
-var qi = p({
+var Ya = p({
 	name: "lucide-loader-circle",
-	render: Ki
-}), Ji = {
+	render: Ja
+}), Xa = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Yi(e, t) {
-	return x(), o("svg", Ji, [...t[0] ||= [s("g", {
+function Za(e, t) {
+	return x(), o("svg", Xa, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2843,16 +4656,16 @@ function Yi(e, t) {
 		r: "10"
 	}), s("path", { d: "M12 8v4m0 4h.01" })], -1)]]);
 }
-var Xi = p({
+var Qa = p({
 	name: "lucide-circle-alert",
-	render: Yi
-}), Zi = {
+	render: Za
+}), $a = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function Qi(e, t) {
-	return x(), o("svg", Zi, [...t[0] ||= [s("g", {
+function eo(e, t) {
+	return x(), o("svg", $a, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2864,16 +4677,16 @@ function Qi(e, t) {
 		r: "10"
 	}), s("path", { d: "m9 12l2 2l4-4" })], -1)]]);
 }
-var $i = p({
+var to = p({
 	name: "lucide-circle-check",
-	render: Qi
-}), ea = {
+	render: eo
+}), no = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ta(e, t) {
-	return x(), o("svg", ea, [...t[0] ||= [s("g", {
+function ro(e, t) {
+	return x(), o("svg", no, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2885,16 +4698,16 @@ function ta(e, t) {
 		r: "10"
 	}), s("path", { d: "m15 9l-6 6m0-6l6 6" })], -1)]]);
 }
-var na = p({
+var io = p({
 	name: "lucide-circle-x",
-	render: ta
-}), ra = {
+	render: ro
+}), ao = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ia(e, t) {
-	return x(), o("svg", ra, [...t[0] ||= [s("g", {
+function oo(e, t) {
+	return x(), o("svg", ao, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2906,16 +4719,16 @@ function ia(e, t) {
 		r: "4"
 	}), s("path", { d: "M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" })], -1)]]);
 }
-var aa = p({
+var so = p({
 	name: "lucide-sun",
-	render: ia
-}), oa = {
+	render: oo
+}), co = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function sa(e, t) {
-	return x(), o("svg", oa, [...t[0] ||= [s("path", {
+function lo(e, t) {
+	return x(), o("svg", co, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2924,16 +4737,16 @@ function sa(e, t) {
 		d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
 	}, null, -1)]]);
 }
-var ca = p({
+var uo = p({
 	name: "lucide-moon",
-	render: sa
-}), la = {
+	render: lo
+}), fo = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function ua(e, t) {
-	return x(), o("svg", la, [...t[0] ||= [s("g", {
+function po(e, t) {
+	return x(), o("svg", fo, [...t[0] ||= [s("g", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2947,16 +4760,16 @@ function ua(e, t) {
 		rx: "2"
 	}), s("path", { d: "M8 21h8m-4-4v4" })], -1)]]);
 }
-var da = p({
+var mo = p({
 	name: "lucide-monitor",
-	render: ua
-}), fa = {
+	render: po
+}), ho = {
 	viewBox: "0 0 24 24",
 	width: "1em",
 	height: "1em"
 };
-function pa(e, t) {
-	return x(), o("svg", fa, [...t[0] ||= [s("path", {
+function go(e, t) {
+	return x(), o("svg", ho, [...t[0] ||= [s("path", {
 		fill: "none",
 		stroke: "currentColor",
 		"stroke-linecap": "round",
@@ -2967,95 +4780,95 @@ function pa(e, t) {
 }
 //#endregion
 //#region src/components/icon-registry.ts
-var ma = {
-	play: Qe,
-	pause: tt,
-	"skip-back": it,
-	"skip-forward": st,
-	rewind: ut,
-	forward: pt,
-	volume: gt,
-	"volume-low": yt,
-	mute: St,
-	shuffle: Tt,
-	repeat: Ot,
-	"repeat-1": jt,
-	"list-music": Pt,
-	captions: Lt,
-	"captions-off": Bt,
-	pip: Ut,
-	theater: Kt,
-	fullscreen: Yt,
-	"fullscreen-exit": Qt,
-	expand: tn,
-	cast: an,
-	settings: cn,
-	speed: dn,
-	film: mn,
-	image: _n,
-	music: bn,
-	tv: Cn,
-	book: En,
-	headphones: kn,
-	disc: Mn,
-	mic: Fn,
-	video: Rn,
-	search: Vn,
-	filter: Wn,
-	calendar: qn,
-	sort: Xn,
-	star: $n,
-	list: nr,
-	grid: ar,
-	backdrop: cr,
-	table: dr,
-	plus: mr,
-	info: _r,
-	x: br,
-	check: Cr,
-	lock: Er,
-	bookmark: kr,
-	"bookmark-plus": Mr,
-	heart: Fr,
-	"thumbs-up": Rr,
-	"thumbs-down": Vr,
-	user: Wr,
-	users: qr,
-	"log-out": Xr,
-	menu: $r,
-	more: ni,
-	eye: ai,
-	"eye-off": ci,
-	refresh: pt,
-	key: di,
-	trash: mi,
-	"arrow-left": _i,
-	"arrow-right": bi,
-	"arrow-up": Ci,
-	"arrow-down": Ei,
-	"chevron-down": ki,
-	"chevron-up": Mi,
-	"chevron-left": Fi,
-	"chevron-right": Ri,
-	"chevrons-left": Vi,
-	"chevrons-right": Wi,
-	spinner: qi,
-	alert: Xi,
-	"alert-circle": Xi,
-	success: $i,
-	error: na,
-	sun: aa,
-	moon: ca,
-	monitor: da,
+var _o = {
+	play: en,
+	pause: rn,
+	"skip-back": sn,
+	"skip-forward": un,
+	rewind: pn,
+	forward: gn,
+	volume: yn,
+	"volume-low": Sn,
+	mute: Tn,
+	shuffle: On,
+	repeat: jn,
+	"repeat-1": Pn,
+	"list-music": Ln,
+	captions: Bn,
+	"captions-off": Un,
+	pip: Kn,
+	theater: Yn,
+	fullscreen: Qn,
+	"fullscreen-exit": tr,
+	expand: ir,
+	cast: sr,
+	settings: ur,
+	speed: pr,
+	film: gr,
+	image: yr,
+	music: Sr,
+	tv: Tr,
+	book: Or,
+	headphones: jr,
+	disc: Pr,
+	mic: Lr,
+	video: Br,
+	search: Ur,
+	filter: Kr,
+	calendar: Yr,
+	sort: Qr,
+	star: ti,
+	list: ii,
+	grid: si,
+	backdrop: ui,
+	table: pi,
+	plus: gi,
+	info: yi,
+	x: Si,
+	check: Ti,
+	lock: Oi,
+	bookmark: ji,
+	"bookmark-plus": Pi,
+	heart: Li,
+	"thumbs-up": Bi,
+	"thumbs-down": Ui,
+	user: Ki,
+	users: Yi,
+	"log-out": Qi,
+	menu: ta,
+	more: ia,
+	eye: sa,
+	"eye-off": ua,
+	refresh: gn,
+	key: pa,
+	trash: ga,
+	"arrow-left": ya,
+	"arrow-right": Sa,
+	"arrow-up": Ta,
+	"arrow-down": Oa,
+	"chevron-down": ja,
+	"chevron-up": Pa,
+	"chevron-left": La,
+	"chevron-right": Ba,
+	"chevrons-left": Ua,
+	"chevrons-right": Ka,
+	spinner: Ya,
+	alert: Qa,
+	"alert-circle": Qa,
+	success: to,
+	error: io,
+	sun: so,
+	moon: uo,
+	monitor: mo,
 	"external-link": p({
 		name: "lucide-external-link",
-		render: pa
+		render: go
 	})
 };
-Object.keys(ma);
+Object.keys(_o);
 //#endregion
 //#region src/components/Icon.vue
-var q = /* @__PURE__ */ d({
+var J = /* @__PURE__ */ d({
 	__name: "Icon",
 	props: {
 		name: {},
@@ -3064,7 +4877,7 @@ var q = /* @__PURE__ */ d({
 		strokeWidth: { default: void 0 }
 	},
 	setup(e) {
-		let t = e, n = r(() => ma[t.name]), a = r(() => t.size === void 0 ? void 0 : typeof t.size == "number" ? `${t.size}px` : t.size);
+		let t = e, n = r(() => _o[t.name]), a = r(() => t.size === void 0 ? void 0 : typeof t.size == "number" ? `${t.size}px` : t.size);
 		return (t, r) => (x(), i(T(n.value), {
 			class: "phlix-icon",
 			style: _(a.value ? { fontSize: a.value } : void 0),
@@ -3081,7 +4894,7 @@ var q = /* @__PURE__ */ d({
 			"aria-hidden"
 		]));
 	}
-}), ha = ["id"], ga = 8, _a = /*@__PURE__*/ d({
+}), vo = ["id"], yo = 8, bo = /*@__PURE__*/ d({
 	__name: "Tooltip",
 	props: {
 		text: {},
@@ -3117,7 +4930,7 @@ var q = /* @__PURE__ */ d({
 			let i = r.getBoundingClientRect();
 			if (i.width <= 0) return;
 			n.style.maxWidth = `${Math.max(0, i.width - 16)}px`, n.style.whiteSpace = "normal";
-			let a = n.getBoundingClientRect(), o = a.right - (i.right - ga), l = i.left + ga - a.left, u = 0;
+			let a = n.getBoundingClientRect(), o = a.right - (i.right - yo), l = i.left + yo - a.left, u = 0;
 			o > 0 ? u = -o : l > 0 && (u = l), u !== 0 && n.style.setProperty("--phlix-tooltip-shift", `${u}px`);
 		}
 		function y() {
@@ -3145,15 +4958,15 @@ var q = /* @__PURE__ */ d({
 				ref: c,
 				role: "tooltip",
 				class: g(["phlix-tooltip", `phlix-tooltip--${e.placement}`])
-			}, [w(t.$slots, "content", {}, () => [l(E(e.text), 1)], !0)], 10, ha)) : a("", !0)]),
+			}, [w(t.$slots, "content", {}, () => [l(E(e.text), 1)], !0)], 10, vo)) : a("", !0)]),
 			_: 3
 		})], 544));
 	}
-}), J = (e, t) => {
+}), Y = (e, t) => {
 	let n = e.__vccOpts || e;
 	for (let [e, r] of t) n[e] = r;
 	return n;
-}, va = /*#__PURE__*/ J(_a, [["__scopeId", "data-v-83b83959"]]), ya = ["data-level"], ba = ["disabled", "aria-pressed"], xa = ["disabled", "aria-pressed"], Sa = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, xo = /*#__PURE__*/ Y(bo, [["__scopeId", "data-v-83b83959"]]), So = ["data-level"], Co = ["disabled", "aria-pressed"], wo = ["disabled", "aria-pressed"], To = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "ThumbRating",
 	props: {
 		level: { default: 0 },
@@ -3187,7 +5000,7 @@ var q = /* @__PURE__ */ d({
 		return (t, n) => (x(), o("div", {
 			class: "thumb-rating",
 			"data-level": l.value
-		}, [d.value ? (x(), i(va, {
+		}, [d.value ? (x(), i(xo, {
 			key: 0,
 			text: "Like"
 		}, {
@@ -3201,12 +5014,12 @@ var q = /* @__PURE__ */ d({
 				"aria-label": "Like",
 				"aria-pressed": p.value ? "true" : "false",
 				onClick: b
-			}, [u(q, {
+			}, [u(J, {
 				name: "thumbs-up",
 				class: "thumb-rating__icon"
-			})], 10, ba)]),
+			})], 10, Co)]),
 			_: 1
-		})) : a("", !0), f.value ? (x(), i(va, {
+		})) : a("", !0), f.value ? (x(), i(xo, {
 			key: 1,
 			text: "Dislike"
 		}, {
@@ -3220,60 +5033,60 @@ var q = /* @__PURE__ */ d({
 				"aria-label": "Dislike",
 				"aria-pressed": h.value ? "true" : "false",
 				onClick: S
-			}, [u(q, {
+			}, [u(J, {
 				name: "thumbs-down",
 				class: "thumb-rating__icon"
-			})], 10, xa)]),
+			})], 10, wo)]),
 			_: 1
-		})) : a("", !0)], 8, ya));
+		})) : a("", !0)], 8, So));
 	}
 }), [["__scopeId", "data-v-18d82ecf"]]);
 //#endregion
 //#region src/components/player/format-time.ts
-function Ca(e) {
+function Eo(e) {
 	if (!isFinite(e) || e < 0) return "0:00";
 	let t = Math.floor(e), n = Math.floor(t / 3600), r = Math.floor(t % 3600 / 60), i = t % 60, a = n > 0 ? String(r).padStart(2, "0") : String(r);
 	return `${n > 0 ? `${n}:` : ""}${a}:${String(i).padStart(2, "0")}`;
 }
 //#endregion
 //#region src/utils/plural.ts
-var wa = [
+var Do = [
 	"zero",
 	"one",
 	"two",
 	"few",
 	"many",
 	"other"
-], Ta = /* @__PURE__ */ new Map(), Ea = "\0";
-function Da(e) {
-	let t = e?.locale, n = e?.type ?? "cardinal", r = `${t ?? ""}${Ea}${n}`, i = Ta.get(r);
-	return i || (i = new Intl.PluralRules(t, { type: n }), Ta.set(r, i)), i;
+], Oo = /* @__PURE__ */ new Map(), ko = "\0";
+function Ao(e) {
+	let t = e?.locale, n = e?.type ?? "cardinal", r = `${t ?? ""}${ko}${n}`, i = Oo.get(r);
+	return i || (i = new Intl.PluralRules(t, { type: n }), Oo.set(r, i)), i;
 }
-function Oa(e, t) {
-	return Number.isFinite(e) ? Da(t).select(e) : "other";
+function jo(e, t) {
+	return Number.isFinite(e) ? Ao(t).select(e) : "other";
 }
-function ka(e, t, n) {
-	let r = t[Oa(e, n)];
+function Mo(e, t, n) {
+	let r = t[jo(e, n)];
 	return r === void 0 ? t.other : r;
 }
-function Aa(e, t, n) {
+function No(e, t, n) {
 	if (!e.includes("|")) return e;
 	let r = e.split("|").map((e) => e.trim());
 	if (r.length === 1) return r[0];
-	let i = Da(n), a = new Set(i.resolvedOptions().pluralCategories), o = wa.filter((e) => a.has(e)), s = {};
+	let i = Ao(n), a = new Set(i.resolvedOptions().pluralCategories), o = Do.filter((e) => a.has(e)), s = {};
 	return o.forEach((e, t) => {
 		s[e] = r[Math.min(t, r.length - 1)];
-	}), ka(t, {
+	}), Mo(t, {
 		...s,
 		other: s.other ?? r[r.length - 1]
 	}, n);
 }
-function ja(e) {
+function Po(e) {
 	return e.includes("|");
 }
 //#endregion
 //#region src/i18n/messages.ts
-var Ma = {
+var Fo = {
 	common: {
 		retry: "Retry",
 		close: "Close",
@@ -3284,6 +5097,16 @@ var Ma = {
 		searchPlaceholder: "Search…",
 		selectPlaceholder: "Select…",
 		breadcrumb: "Breadcrumb"
+	},
+	confirm: {
+		title: "Are you sure?",
+		cancel: "Cancel",
+		confirm: "Confirm"
+	},
+	notFound: {
+		title: "Page not found",
+		description: "The page you are looking for does not exist or has moved.",
+		goHome: "Go home"
 	},
 	shell: {
 		skipToContent: "Skip to content",
@@ -3301,20 +5124,21 @@ var Ma = {
 		accountNamed: "Account: {name}",
 		signOut: "Sign out",
 		signIn: "Sign in",
-		switchProfile: "Switch Profile",
-		manageProfiles: "Manage Profiles"
+		switchProfile: "Switch profile",
+		manageProfiles: "Manage profiles"
 	},
 	profiles: {
 		whoIsWatching: "Who's watching?",
 		loading: "Loading profiles…",
 		active: "Active",
-		manageTitle: "Manage Profiles",
+		manageTitle: "Manage profiles",
 		manageHint: "Pick a profile to switch to it, or rename and delete the ones you have.",
 		use: "Switch to",
 		add: "Add profile",
 		rename: "Rename",
 		renameTooShort: "Profile names need at least 3 characters.",
 		delete: "Delete",
+		deleteConfirm: "Delete “{name}”? This profile cannot be recovered.",
 		save: "Save",
 		cancel: "Cancel",
 		deleteBlocked: "The last profile on an account cannot be deleted.",
@@ -3416,7 +5240,7 @@ var Ma = {
 		skipOutro: "Skip outro",
 		skipLabelIntro: "Intro",
 		skipLabelCredits: "End credits",
-		skipLabelSkipCredits: "Skip Credits",
+		skipLabelSkipCredits: "Skip credits",
 		seekBackward: "Back 10 seconds",
 		seekForward: "Forward 10 seconds",
 		keyboardShortcuts: "Keyboard shortcuts",
@@ -3446,7 +5270,7 @@ var Ma = {
 		qualityAutoActive: "Auto ({label})",
 		qualityOriginal: "Original ({height}p)",
 		directStream: "Direct",
-		qualityDirectStream: "Direct Stream — quality is determined by the source file",
+		qualityDirectStream: "Direct stream — quality is determined by the source file",
 		captionsOn: "Captions (on)",
 		captionsOff: "Captions (off)",
 		captionsAndSubtitles: "Captions and subtitles",
@@ -3480,7 +5304,7 @@ var Ma = {
 		subtitleAddError: "Couldn’t add that subtitle. Please try again.",
 		subtitleAddNotFound: "That subtitle is no longer available.",
 		subtitleQuota: "Subtitle download limit reached.",
-		subtitleQuotaRemaining: "Subtitle download limit reached — {count} remaining.",
+		subtitleQuotaRemaining: "Your subtitle quota has {count} download left this period | Your subtitle quota has {count} downloads left this period.",
 		subtitleQuotaReset: "Subtitle download limit reached. Resets at {time}.",
 		subtitleHearingImpaired: "SDH",
 		subtitleHearingImpairedFull: "Hearing impaired",
@@ -3497,7 +5321,7 @@ var Ma = {
 		resume: "Resume",
 		startOver: "Start over",
 		upNext: "Up next",
-		startsIn: "Starts in {seconds}s",
+		startsIn: "Starts in {seconds} seconds",
 		playNow: "Play now",
 		cancel: "Cancel",
 		transcodePreparingHeading: "Preparing your stream…",
@@ -3549,9 +5373,9 @@ var Ma = {
 		cancel: "Cancel",
 		loading: "Loading…",
 		noRooms: "No public rooms available",
-		errorCreate: "Failed to create room",
-		errorJoin: "Failed to join room",
-		errorLeave: "Failed to leave room",
+		errorCreate: "Failed to create the room",
+		errorJoin: "Failed to join the room",
+		errorLeave: "Failed to leave the room",
 		yourRole: "You are {role}",
 		roleOwner: "Owner",
 		roleModerator: "Moderator",
@@ -3659,7 +5483,7 @@ var Ma = {
 		captionBackground: "Caption background",
 		captionEdge: "Caption edge",
 		resetAll: "Reset all preferences",
-		resetConfirm: "Click again to confirm reset",
+		resetConfirm: "Click again to confirm the reset",
 		resetDone: "Preferences reset to defaults.",
 		preferences: "Preferences",
 		title: "Settings",
@@ -3721,7 +5545,7 @@ var Ma = {
 		maxBandwidth: "Max total bandwidth (Kbps)",
 		maxBandwidthPlaceholder: "Leave empty for no limit",
 		noProfileSelected: "No profile selected",
-		noProfileSelectedHint: "Open this page with ?profile=<id> query parameter to manage that profile's parental controls.",
+		noProfileSelectedHint: "Parental controls apply to one profile at a time. No profile was selected, so there is nothing to show yet — go back and pick a profile first.",
 		noSchedules: "No access schedules",
 		noSchedulesHint: "Create schedules to limit when this profile can access content.",
 		noTags: "No tags",
@@ -3745,11 +5569,11 @@ var Ma = {
 		"transcoding.hdrOutput": "HDR Output",
 		"transcoding.toneMapMode": "Tone Map Mode"
 	}
-}, Na = /\{(\w+)\}/g;
-function Pa(e) {
+}, Io = /\{(\w+)\}/g;
+function Lo(e) {
 	let t = {};
-	for (let n of Object.keys(Ma)) {
-		let r = Ma[n], i = e?.[n];
+	for (let n of Object.keys(Fo)) {
+		let r = Fo[n], i = e?.[n];
 		t[n] = i && typeof i == "object" ? {
 			...r,
 			...i
@@ -3757,41 +5581,41 @@ function Pa(e) {
 	}
 	return t;
 }
-function Fa(e, t) {
-	return t ? e.replace(Na, (e, n) => {
+function Ro(e, t) {
+	return t ? e.replace(Io, (e, n) => {
 		let r = t[n];
 		return r == null ? e : String(r);
 	}) : e;
 }
-function Ia(e) {
-	let t = Pa(e);
+function zo(e) {
+	let t = Lo(e);
 	return (e, n) => {
 		let r = e.indexOf("."), i = r === -1 ? "" : e.slice(0, r), a = r === -1 ? "" : e.slice(r + 1), o = t[i], s = o ? o[a] : void 0;
-		return typeof s == "string" ? Fa(La(s, n), n) : e;
+		return typeof s == "string" ? Ro(Bo(s, n), n) : e;
 	};
 }
-function La(e, t) {
-	if (!ja(e)) return e;
+function Bo(e, t) {
+	if (!Po(e)) return e;
 	let n = t?.count, r = typeof n == "number" ? n : Number(n);
 	if (!Number.isFinite(r)) {
 		let t = e.split("|");
 		return t[t.length - 1].trim();
 	}
-	return Aa(e, r);
+	return No(e, r);
 }
 //#endregion
 //#region src/composables/useMessages.ts
-function Y() {
-	return { t: Ia(f("phlixConfig", null)?.messages) };
+function X() {
+	return { t: zo(f("phlixConfig", null)?.messages) };
 }
 //#endregion
 //#region src/components/player/Scrubber.vue?vue&type=script&setup=true&lang.ts
-var Ra = [
+var Vo = [
 	"aria-valuemax",
 	"aria-valuenow",
 	"aria-valuetext",
 	"aria-label"
-], za = { class: "scrubber__track" }, Ba = ["title"], Va = { class: "scrubber__time numeric" }, Ha = /*#__PURE__*/ J(/* @__PURE__ */ d({
+], Ho = { class: "scrubber__track" }, Uo = ["title"], Wo = { class: "scrubber__time numeric" }, Go = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Scrubber",
 	props: {
 		position: {},
@@ -3807,7 +5631,7 @@ var Ra = [
 		"scrub-end"
 	],
 	setup(t, { expose: n, emit: i }) {
-		let { t: c } = Y(), l = t, u = i, d = S(null), f = S(!1), p = S(!1), m = S(0), h = S(0), v = (e) => Math.min(1, Math.max(0, e)), y = r(() => f.value ? m.value : l.duration > 0 ? v(l.position / l.duration) : 0), b = r(() => l.duration > 0 ? v(l.buffered / l.duration) : 0), w = r(() => (f.value || p.value) && l.duration > 0), T = r(() => f.value ? m.value : h.value), D = r(() => T.value * l.duration), k = r(() => w.value ? l.thumbnailAt?.(D.value) ?? null : null), A = r(() => k.value ? `url("${k.value.replace(/[\\"]/g, "\\$&").replace(/[\r\n]/g, "")}")` : "none"), j = r(() => `${Math.min(96, Math.max(4, T.value * 100))}%`), M = r(() => l.duration > 0 ? l.chapters.filter((e) => e.start > 0 && e.start < l.duration).map((e) => ({
+		let { t: c } = X(), l = t, u = i, d = S(null), f = S(!1), p = S(!1), m = S(0), h = S(0), v = (e) => Math.min(1, Math.max(0, e)), y = r(() => f.value ? m.value : l.duration > 0 ? v(l.position / l.duration) : 0), b = r(() => l.duration > 0 ? v(l.buffered / l.duration) : 0), w = r(() => (f.value || p.value) && l.duration > 0), T = r(() => f.value ? m.value : h.value), D = r(() => T.value * l.duration), k = r(() => w.value ? l.thumbnailAt?.(D.value) ?? null : null), A = r(() => k.value ? `url("${k.value.replace(/[\\"]/g, "\\$&").replace(/[\r\n]/g, "")}")` : "none"), j = r(() => `${Math.min(96, Math.max(4, T.value * 100))}%`), M = r(() => l.duration > 0 ? l.chapters.filter((e) => e.start > 0 && e.start < l.duration).map((e) => ({
 			...e,
 			ratio: e.start / l.duration
 		})) : []);
@@ -3879,7 +5703,7 @@ var Ra = [
 			"aria-valuemin": 0,
 			"aria-valuemax": Math.round(t.duration),
 			"aria-valuenow": Math.round(t.position),
-			"aria-valuetext": O(Ca)(t.position),
+			"aria-valuetext": O(Eo)(t.position),
 			"aria-label": O(c)("player.seek"),
 			onPointerdown: P,
 			onPointermove: F,
@@ -3888,7 +5712,7 @@ var Ra = [
 			onPointerenter: L,
 			onPointerleave: R,
 			onKeydown: z
-		}, [s("div", za, [
+		}, [s("div", Ho, [
 			s("div", {
 				class: "scrubber__buffered",
 				style: _({ transform: `scaleX(${b.value})` })
@@ -3902,7 +5726,7 @@ var Ra = [
 				class: "scrubber__tick",
 				style: _({ left: `${e.ratio * 100}%` }),
 				title: e.title
-			}, null, 12, Ba))), 128)),
+			}, null, 12, Uo))), 128)),
 			s("div", {
 				class: g(["scrubber__head", { "is-dragging": f.value }]),
 				style: _({ left: `${y.value * 100}%` })
@@ -3916,37 +5740,37 @@ var Ra = [
 			key: 0,
 			class: "scrubber__thumb",
 			style: _({ backgroundImage: A.value })
-		}, null, 4)) : a("", !0), s("span", Va, E(O(Ca)(D.value)), 1)], 4)) : a("", !0)], 40, Ra));
+		}, null, 4)) : a("", !0), s("span", Wo, E(O(Eo)(D.value)), 1)], 4)) : a("", !0)], 40, Vo));
 	}
-}), [["__scopeId", "data-v-3d610715"]]), Ua = "phlix-bandwidth-estimate";
-function Wa(e) {
+}), [["__scopeId", "data-v-3d610715"]]), Ko = "phlix-bandwidth-estimate";
+function qo(e) {
 	return Math.min(1e8, Math.max(1e5, e));
 }
-function Ga() {
+function Jo() {
 	try {
-		let e = localStorage.getItem(Ua);
+		let e = localStorage.getItem(Ko);
 		if (!e) return 0;
 		let t = Number(e);
-		return Number.isFinite(t) ? Wa(t) : 0;
+		return Number.isFinite(t) ? qo(t) : 0;
 	} catch {
 		return 0;
 	}
 }
-function Ka(e) {
+function Yo(e) {
 	try {
-		localStorage.setItem(Ua, String(e));
+		localStorage.setItem(Ko, String(e));
 	} catch {}
 }
-function qa(e) {
+function Xo(e) {
 	let t = e.canPlayType("application/vnd.apple.mpegurl");
 	return t === "probably" || t === "maybe";
 }
-var Ja = null, Ya = null;
-function Xa() {
-	Ja && Ka(Ja.bandwidthEstimate);
+var Zo = null, Qo = null;
+function $o() {
+	Zo && Yo(Zo.bandwidthEstimate);
 }
-async function Za(e, t, n = {}) {
-	if (typeof MediaSource > "u" && qa(e)) {
+async function es(e, t, n = {}) {
+	if (typeof MediaSource > "u" && Xo(e)) {
 		let r = () => n.onReady?.(), i = () => n.onError?.("native hls error");
 		return e.addEventListener("loadedmetadata", r), e.addEventListener("error", i), e.src = t, n.startPosition && (e.currentTime = n.startPosition), {
 			destroy() {
@@ -3970,7 +5794,7 @@ async function Za(e, t, n = {}) {
 	}
 	let { default: r } = await import("./hls-B-wbkQ7j.js");
 	if (r.isSupported()) {
-		let i = Ga(), a = new r({
+		let i = Jo(), a = new r({
 			enableWorker: !0,
 			lowLatencyMode: !1,
 			startPosition: n.startPosition ?? 0,
@@ -4000,9 +5824,9 @@ async function Za(e, t, n = {}) {
 		});
 		return a.on(r.Events.MANIFEST_PARSED, () => n.onReady?.()), a.on(r.Events.ERROR, (e, t) => {
 			t?.fatal && (n.onError?.(t.details ?? "fatal hls error"), a.destroy());
-		}), Ja = a, Ya !== null && clearInterval(Ya), Ya = setInterval(Xa, 3e4), a.loadSource(t), a.attachMedia(e), {
+		}), Zo = a, Qo !== null && clearInterval(Qo), Qo = setInterval($o, 3e4), a.loadSource(t), a.attachMedia(e), {
 			destroy() {
-				Ka(a.bandwidthEstimate), Ya !== null && (clearInterval(Ya), Ya = null), Ja = null;
+				Yo(a.bandwidthEstimate), Qo !== null && (clearInterval(Qo), Qo = null), Zo = null;
 				try {
 					a.destroy();
 				} catch {}
@@ -4063,38 +5887,38 @@ async function Za(e, t, n = {}) {
 }
 //#endregion
 //#region src/components/player/transcode.ts
-var Qa = /* @__PURE__ */ new Set([
+var ts = /* @__PURE__ */ new Set([
 	"failed",
 	"cancelled",
 	"not_found",
 	"error"
 ]);
-function $a(e, t = "") {
+function ns(e, t = "") {
 	return typeof e == "string" ? e : t;
 }
-function eo(e) {
+function rs(e) {
 	return e === !0 || e === "true" || e === 1;
 }
-function to(e) {
+function is(e) {
 	return typeof e == "number" && Number.isFinite(e) ? e : typeof e == "string" && e.trim() !== "" && Number.isFinite(Number(e)) ? Number(e) : 0;
 }
-function no(e) {
+function as(e) {
 	if (!Array.isArray(e)) return [];
 	let t = [];
 	for (let n of e) {
 		if (typeof n != "object" || !n) continue;
-		let e = n, r = $a(e.url ?? e.src);
+		let e = n, r = ns(e.url ?? e.src);
 		r !== "" && t.push({
-			index: to(e.index),
-			language: $a(e.language ?? e.lang ?? e.srclang),
-			label: $a(e.label),
-			default: eo(e.default ?? e.isDefault),
+			index: is(e.index),
+			language: ns(e.language ?? e.lang ?? e.srclang),
+			label: ns(e.label),
+			default: rs(e.default ?? e.isDefault),
 			url: r
 		});
 	}
 	return t;
 }
-function ro(e) {
+function os(e) {
 	if (e == null) return null;
 	if (!Array.isArray(e) && typeof e == "object") {
 		let t = e;
@@ -4104,74 +5928,74 @@ function ro(e) {
 	let t = [];
 	for (let n of e) {
 		if (typeof n != "object" || !n) continue;
-		let e = n, r = to(e.height);
+		let e = n, r = is(e.height);
 		r <= 0 || t.push({
-			id: $a(e.id),
-			label: $a(e.label),
+			id: ns(e.id),
+			label: ns(e.label),
 			height: r,
-			width: to(e.width),
-			bitrate: to(e.bitrate)
+			width: is(e.width),
+			bitrate: is(e.bitrate)
 		});
 	}
 	return t.length > 0 ? t : null;
 }
-function io(e, t) {
+function ss(e, t) {
 	let n = `/api/v1/media/${encodeURIComponent(e)}/transcode`;
 	return t ? `${n}?profile=${encodeURIComponent(t)}` : n;
 }
-var ao = .7, oo = [
+var cs = .7, ls = [
 	["mobile-low", 15e5],
 	["mobile-high", 4e6],
 	["web", 1e7]
-], so = 1e7, co = "mobile-low";
-function lo(e) {
-	if (typeof e == "number" && Number.isFinite(e) && !(e <= 0)) return e * 1e6 * ao;
+], us = 1e7, ds = "mobile-low";
+function fs(e) {
+	if (typeof e == "number" && Number.isFinite(e) && !(e <= 0)) return e * 1e6 * cs;
 }
-function uo(e) {
-	let t = lo(e);
-	if (t === void 0 || t >= so) return;
-	let n = co;
-	for (let [e, r] of oo) r <= t && (n = e);
+function ps(e) {
+	let t = fs(e);
+	if (t === void 0 || t >= us) return;
+	let n = ds;
+	for (let [e, r] of ls) r <= t && (n = e);
 	return n;
 }
-function fo(e) {
+function ms(e) {
 	return `/api/v1/transcode/${encodeURIComponent(e)}/status`;
 }
-function po(e) {
+function hs(e) {
 	let t = e ?? {};
 	return {
-		jobId: $a(t.job_id ?? t.jobId),
-		masterUrl: $a(t.master_url ?? t.masterUrl ?? t.hls_url ?? t.hlsUrl),
-		status: $a(t.status, "running"),
-		reused: eo(t.reused),
-		subtitles: no(t.subtitles ?? t.subtitle_tracks ?? t.subtitleTracks),
-		variants: ro(t.variants ?? t.variants_list ?? t.Variants)
+		jobId: ns(t.job_id ?? t.jobId),
+		masterUrl: ns(t.master_url ?? t.masterUrl ?? t.hls_url ?? t.hlsUrl),
+		status: ns(t.status, "running"),
+		reused: rs(t.reused),
+		subtitles: as(t.subtitles ?? t.subtitle_tracks ?? t.subtitleTracks),
+		variants: os(t.variants ?? t.variants_list ?? t.Variants)
 	};
 }
-function mo(e) {
+function gs(e) {
 	let t = e ?? {};
 	return {
-		jobId: $a(t.job_id ?? t.jobId),
-		status: $a(t.status, "running"),
-		playlistReady: eo(t.playlist_ready ?? t.playlistReady),
-		progress: to(t.progress),
-		masterUrl: $a(t.master_url ?? t.masterUrl),
-		subtitles: no(t.subtitles ?? t.subtitle_tracks ?? t.subtitleTracks),
-		variants: ro(t.variants ?? t.variants_list ?? t.Variants)
+		jobId: ns(t.job_id ?? t.jobId),
+		status: ns(t.status, "running"),
+		playlistReady: rs(t.playlist_ready ?? t.playlistReady),
+		progress: is(t.progress),
+		masterUrl: ns(t.master_url ?? t.masterUrl),
+		subtitles: as(t.subtitles ?? t.subtitle_tracks ?? t.subtitleTracks),
+		variants: os(t.variants ?? t.variants_list ?? t.Variants)
 	};
 }
-function ho(e) {
+function _s(e) {
 	return e.playlistReady || e.status === "completed";
 }
-function go(e) {
-	return Qa.has(e);
+function vs(e) {
+	return ts.has(e);
 }
-function _o(e, t) {
+function ys(e, t) {
 	return /^https?:\/\//i.test(t) ? t : `${e.replace(/\/+$/, "")}${t.startsWith("/") ? t : `/${t}`}`;
 }
 //#endregion
 //#region src/composables/useHlsTranscode.ts
-function vo(e) {
+function bs(e) {
 	let t = S("idle"), n = S(0), r = S([]), i = S([]), a = S(-1), o = S(!0), s = S(null), c = S(null), l = S([]), u = S(-1), d = S(null), f = S(null);
 	function p(e) {
 		if (!D) return;
@@ -4196,12 +6020,12 @@ function vo(e) {
 		let n = e.apiBase();
 		r.value = t.map((e) => ({
 			...e,
-			url: _o(n, e.url)
+			url: ys(n, e.url)
 		}));
 	}
-	let y = e.attach ?? Za, b = e.pollIntervalMs ?? 1e3, x = e.maxWaitMs ?? 12e4, C = e.sleep ?? ((e) => new Promise((t) => setTimeout(t, e))), w = Math.max(1, Math.ceil(x / Math.max(1, b))), T = yo(), E = e.getToken ?? (() => bo(T)), D = null, O = null, k = null, A = !1, j = null, M = 0;
+	let y = e.attach ?? es, b = e.pollIntervalMs ?? 1e3, x = e.maxWaitMs ?? 12e4, C = e.sleep ?? ((e) => new Promise((t) => setTimeout(t, e))), w = Math.max(1, Math.ceil(x / Math.max(1, b))), T = xs(), E = e.getToken ?? (() => Ss(T)), D = null, O = null, k = null, A = !1, j = null, M = 0;
 	function N() {
-		return e.client ?? new ke({
+		return e.client ?? new jt({
 			baseUrl: e.apiBase(),
 			tokenStore: T ?? void 0,
 			timeoutMs: 6e4
@@ -4212,16 +6036,16 @@ function vo(e) {
 		let c = ++M, l = () => A || c !== M;
 		j = new AbortController(), t.value = "preparing", n.value = 0, r.value = [], m();
 		try {
-			let r = N(), c = po(await r.post(io(a, o), void 0, j.signal));
+			let r = N(), c = hs(await r.post(ss(a, o), void 0, j.signal));
 			if (l()) return;
 			if (!c.jobId || !c.masterUrl) throw Error("transcode start returned no job");
-			v(c.subtitles), _(c.variants), d.value = c.jobId, f.value = _o(e.apiBase(), c.masterUrl);
+			v(c.subtitles), _(c.variants), d.value = c.jobId, f.value = ys(e.apiBase(), c.masterUrl);
 			let u = c.status === "completed";
 			for (let e = 0; !u && e < w; e++) {
-				let e = mo(await r.get(fo(c.jobId), void 0, j.signal));
+				let e = gs(await r.get(ms(c.jobId), void 0, j.signal));
 				if (l()) return;
-				if (n.value = e.progress, v(e.subtitles), _(e.variants), go(e.status)) throw Error(`transcode ${e.status}`);
-				if (ho(e)) {
+				if (n.value = e.progress, v(e.subtitles), _(e.variants), vs(e.status)) throw Error(`transcode ${e.status}`);
+				if (_s(e)) {
 					u = !0;
 					break;
 				}
@@ -4316,14 +6140,14 @@ function vo(e) {
 		reset: B
 	};
 }
-function yo() {
+function xs() {
 	try {
-		return new ve();
+		return new mt();
 	} catch {
 		return null;
 	}
 }
-function bo(e) {
+function Ss(e) {
 	try {
 		return e?.getAccessToken() ?? null;
 	} catch {
@@ -4332,11 +6156,11 @@ function bo(e) {
 }
 //#endregion
 //#region src/composables/useTrickplay.ts
-var xo = 10;
-function So(e) {
+var Cs = 10;
+function ws(e) {
 	let t = S(null), n = S(!1), r = S(null), i = /* @__PURE__ */ new Map();
 	function a() {
-		return new ke({ baseUrl: e.apiBase() });
+		return new jt({ baseUrl: e.apiBase() });
 	}
 	function o(e, t) {
 		if (!t || t.length === 0) return null;
@@ -4365,7 +6189,7 @@ function So(e) {
 		if (!n || !n.sprite_url || !n.timeline || n.timeline.length === 0) return null;
 		let r = o(e, n.timeline);
 		if (r === null) return null;
-		let i = r.frame, a = i % xo, s = Math.floor(i / xo), c = a / 9 * 100, l = s / 5 * 100;
+		let i = r.frame, a = i % Cs, s = Math.floor(i / Cs), c = a / 9 * 100, l = s / 5 * 100;
 		return `url("${n.sprite_url}") ${c}% ${l}% / cover no-repeat`;
 	}
 	async function c(o, s) {
@@ -4398,14 +6222,14 @@ function So(e) {
 }
 //#endregion
 //#region src/components/ui/IconButton.vue?vue&type=script&setup=true&lang.ts
-var Co = [
+var Ts = [
 	"type",
 	"disabled",
 	"aria-label",
 	"title",
 	"aria-pressed",
 	"aria-busy"
-], wo = /*#__PURE__*/ J(/* @__PURE__ */ d({
+], Es = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "IconButton",
 	props: {
 		name: {},
@@ -4440,15 +6264,15 @@ var Co = [
 			title: e.label,
 			"aria-pressed": e.pressed === void 0 ? void 0 : e.pressed,
 			"aria-busy": e.loading || void 0
-		}, [u(q, {
+		}, [u(J, {
 			name: e.loading ? "spinner" : e.name,
 			class: g({ "phlix-iconbtn__spin": e.loading })
-		}, null, 8, ["name", "class"])], 10, Co));
+		}, null, 8, ["name", "class"])], 10, Ts));
 	}
 }), [["__scopeId", "data-v-48bb9819"]]);
 //#endregion
 //#region src/composables/layerFocusStack.ts
-function To() {
+function Ds() {
 	let e = [];
 	return {
 		push: (t) => {
@@ -4461,43 +6285,43 @@ function To() {
 		}
 	};
 }
-var Eo = To(), Do = /* @__PURE__ */ new Set(), Oo = [
+var Os = Ds(), ks = /* @__PURE__ */ new Set(), As = [
 	"a[href]",
 	"button:not([disabled])",
 	"input:not([disabled])",
 	"select:not([disabled])",
 	"textarea:not([disabled])",
 	"[tabindex]:not([tabindex=\"-1\"])"
-].join(","), ko = 0, Ao = "";
-function jo() {
-	ko === 0 && (Ao = document.body.style.overflow, document.body.style.overflow = "hidden"), ko++;
+].join(","), js = 0, Ms = "";
+function Ns() {
+	js === 0 && (Ms = document.body.style.overflow, document.body.style.overflow = "hidden"), js++;
 }
-function Mo() {
-	ko !== 0 && (ko--, ko === 0 && (document.body.style.overflow = Ao));
+function Ps() {
+	js !== 0 && (js--, js === 0 && (document.body.style.overflow = Ms));
 }
-var No = Eo;
-function Po() {
+var Fs = Os;
+function Is() {
 	let e = document.querySelector("[data-focus-anchor]");
 	if (e && document.contains(e)) return e;
-	let t = Do.values().next().value;
+	let t = ks.values().next().value;
 	return t && document.contains(t) ? t : null;
 }
-function Fo(e, t, n = {}) {
+function Ls(e, t, n = {}) {
 	let r = n.lockScroll ?? !0, i = null, a = !1, o = !1;
 	function s() {
 		if (!o) return;
 		o = !1;
 		let e = [];
-		for (; No.depth() > 0;) {
-			let t = No.pop();
+		for (; Fs.depth() > 0;) {
+			let t = Fs.pop();
 			if (t === i) break;
 			e.push(t);
 		}
-		for (let t = e.length - 1; t >= 0; t--) No.push(e[t]);
+		for (let t = e.length - 1; t >= 0; t--) Fs.push(e[t]);
 	}
 	function c() {
 		let t = e.value;
-		return t ? Array.from(t.querySelectorAll(Oo)).filter((e) => !e.hasAttribute("hidden") && e.getAttribute("aria-hidden") !== "true") : [];
+		return t ? Array.from(t.querySelectorAll(As)).filter((e) => !e.hasAttribute("hidden") && e.getAttribute("aria-hidden") !== "true") : [];
 	}
 	function l(r) {
 		if (!t.value || !e.value) return;
@@ -4515,20 +6339,20 @@ function Fo(e, t, n = {}) {
 		e.value.contains(s) ? r.shiftKey && s === a ? (r.preventDefault(), o.focus()) : !r.shiftKey && s === o && (r.preventDefault(), a.focus()) : (r.preventDefault(), a.focus());
 	}
 	function u() {
-		o ||= (i = document.activeElement, No.push(i), !0), e.value?.setAttribute("data-focus-trap", ""), r && (jo(), a = !0), document.addEventListener("keydown", l, !0), h(() => {
+		o ||= (i = document.activeElement, Fs.push(i), !0), e.value?.setAttribute("data-focus-trap", ""), r && (Ns(), a = !0), document.addEventListener("keydown", l, !0), h(() => {
 			e.value?.setAttribute("data-focus-trap", ""), (c()[0] ?? e.value)?.focus();
 		});
 	}
 	function d() {
-		e.value?.removeAttribute("data-focus-trap"), document.removeEventListener("keydown", l, !0), a &&= (Mo(), !1), s(), i && document.contains(i) ? i.focus?.() : i && No.depth() === 0 && Po()?.focus?.(), i = null;
+		e.value?.removeAttribute("data-focus-trap"), document.removeEventListener("keydown", l, !0), a &&= (Ps(), !1), s(), i && document.contains(i) ? i.focus?.() : i && Fs.depth() === 0 && Is()?.focus?.(), i = null;
 	}
 	N(t, (e) => e ? u() : d(), { immediate: !0 }), v(() => {
-		e.value?.removeAttribute("data-focus-trap"), document.removeEventListener("keydown", l, !0), a &&= (Mo(), !1), s();
+		e.value?.removeAttribute("data-focus-trap"), document.removeEventListener("keydown", l, !0), a &&= (Ps(), !1), s();
 	});
 }
 //#endregion
 //#region src/components/player/shortcuts.ts
-var Io = [
+var Rs = [
 	{
 		id: "playpause",
 		keys: ["Space", "K"],
@@ -4618,24 +6442,24 @@ var Io = [
 		keys: ["?"],
 		label: "This help"
 	}
-], Lo = {
+], zs = {
 	ArrowLeft: "arrow-left",
 	ArrowRight: "arrow-right",
 	ArrowUp: "arrow-up",
 	ArrowDown: "arrow-down"
-}, Ro = {
+}, Bs = {
 	ArrowLeft: "Left arrow",
 	ArrowRight: "Right arrow",
 	ArrowUp: "Up arrow",
 	ArrowDown: "Down arrow"
 };
-function zo(e) {
+function Vs(e) {
 	let t = e;
 	if (!t || !t.tagName) return !1;
 	let n = t.tagName.toLowerCase();
 	return n === "button" || n === "a" || t.getAttribute?.("role") === "button";
 }
-function Bo(e) {
+function Hs(e) {
 	let t = e;
 	if (!t || !t.tagName) return !1;
 	let n = t.tagName.toLowerCase();
@@ -4643,9 +6467,9 @@ function Bo(e) {
 	let r = t.getAttribute?.("role");
 	return r === "textbox" || r === "searchbox";
 }
-function Vo(e, t) {
+function Us(e, t) {
 	switch (e.key) {
-		case " ": return !zo(e.target) && (t.playPause(), !0);
+		case " ": return !Vs(e.target) && (t.playPause(), !0);
 		case "k":
 		case "K": return t.playPause(), !0;
 		case "ArrowLeft": return t.seekBy(-5), !0;
@@ -4682,9 +6506,9 @@ function Vo(e, t) {
 		default: return e.key >= "0" && e.key <= "9" && (t.seekToPercent(Number(e.key) / 10), !0);
 	}
 }
-function Ho(e, t = {}) {
+function Ws(e, t = {}) {
 	function n(n) {
-		t.enabled && !t.enabled() || n.ctrlKey || n.metaKey || n.altKey || Bo(n.target) || Vo(n, e) && n.preventDefault();
+		t.enabled && !t.enabled() || n.ctrlKey || n.metaKey || n.altKey || Hs(n.target) || Us(n, e) && n.preventDefault();
 	}
 	y(() => {
 		typeof document < "u" && document.addEventListener("keydown", n);
@@ -4694,23 +6518,23 @@ function Ho(e, t = {}) {
 }
 //#endregion
 //#region src/components/player/ShortcutsHelp.vue?vue&type=script&setup=true&lang.ts
-var Uo = ["aria-label"], Wo = { class: "shortcuts__head" }, Go = { class: "shortcuts__title" }, Ko = { class: "shortcuts__grid" }, qo = { class: "shortcuts__keys" }, Jo = {
+var Gs = ["aria-label"], Ks = { class: "shortcuts__head" }, qs = { class: "shortcuts__title" }, Js = { class: "shortcuts__grid" }, Ys = { class: "shortcuts__keys" }, Xs = {
 	key: 0,
 	class: "shortcuts__sep",
 	"aria-hidden": "true"
-}, Yo = {
+}, Zs = {
 	key: 1,
 	class: "shortcuts__key"
-}, Xo = { class: "shortcuts__label" }, Zo = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, Qs = { class: "shortcuts__label" }, $s = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "ShortcutsHelp",
 	props: {
 		open: { type: Boolean },
-		shortcuts: { default: () => Io }
+		shortcuts: { default: () => Rs }
 	},
 	emits: ["close"],
 	setup(t, { emit: n }) {
-		let r = t, c = n, { t: d } = Y(), f = S(null);
-		return Fo(f, D(r, "open"), {
+		let r = t, c = n, { t: d } = X(), f = S(null);
+		return Ls(f, D(r, "open"), {
 			lockScroll: !1,
 			onEscape: () => (c("close"), !0)
 		}), (n, r) => t.open ? (x(), o("div", {
@@ -4725,21 +6549,21 @@ var Uo = ["aria-label"], Wo = { class: "shortcuts__head" }, Go = { class: "short
 			"aria-modal": "true",
 			"aria-label": O(d)("player.keyboardShortcuts"),
 			tabindex: "-1"
-		}, [s("div", Wo, [s("h3", Go, E(O(d)("player.keyboard")), 1), u(wo, {
+		}, [s("div", Ks, [s("h3", qs, E(O(d)("player.keyboard")), 1), u(Es, {
 			name: "x",
 			label: O(d)("common.close"),
 			size: "sm",
 			onClick: r[0] ||= (e) => c("close")
-		}, null, 8, ["label"])]), s("ul", Ko, [(x(!0), o(e, null, C(t.shortcuts, (t) => (x(), o("li", {
+		}, null, 8, ["label"])]), s("ul", Js, [(x(!0), o(e, null, C(t.shortcuts, (t) => (x(), o("li", {
 			key: t.id,
 			class: "shortcuts__row"
-		}, [s("span", qo, [(x(!0), o(e, null, C(t.keys, (t, n) => (x(), o(e, { key: n }, [t === "–" ? (x(), o("span", Jo, "–")) : (x(), o("kbd", Yo, [O(Lo)[t] ? (x(), i(q, {
+		}, [s("span", Ys, [(x(!0), o(e, null, C(t.keys, (t, n) => (x(), o(e, { key: n }, [t === "–" ? (x(), o("span", Xs, "–")) : (x(), o("kbd", Zs, [O(zs)[t] ? (x(), i(J, {
 			key: 0,
-			name: O(Lo)[t],
-			label: O(Ro)[t] ?? t
-		}, null, 8, ["name", "label"])) : (x(), o(e, { key: 1 }, [l(E(t), 1)], 64))]))], 64))), 128))]), s("span", Xo, E(t.label), 1)]))), 128))])], 8, Uo)])) : a("", !0);
+			name: O(zs)[t],
+			label: O(Bs)[t] ?? t
+		}, null, 8, ["name", "label"])) : (x(), o(e, { key: 1 }, [l(E(t), 1)], 64))]))], 64))), 128))]), s("span", Qs, E(t.label), 1)]))), 128))])], 8, Gs)])) : a("", !0);
 	}
-}), [["__scopeId", "data-v-e41dfaaa"]]), Qo = [
+}), [["__scopeId", "data-v-e41dfaaa"]]), ec = [
 	"tabindex",
 	"aria-label",
 	"aria-valuemin",
@@ -4747,7 +6571,7 @@ var Uo = ["aria-label"], Wo = { class: "shortcuts__head" }, Go = { class: "short
 	"aria-valuenow",
 	"aria-valuetext",
 	"aria-disabled"
-], $o = /*#__PURE__*/ J(/* @__PURE__ */ d({
+], tc = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Slider",
 	props: {
 		modelValue: {},
@@ -4850,24 +6674,24 @@ var Uo = ["aria-label"], Wo = { class: "shortcuts__head" }, Go = { class: "short
 		}, null, 4), s("div", {
 			class: "phlix-slider__thumb",
 			style: _({ left: l.value + "%" })
-		}, null, 4)], 544)], 42, Qo));
+		}, null, 4)], 544)], 42, ec));
 	}
-}), [["__scopeId", "data-v-57426415"]]), es = { class: "volume" }, ts = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-57426415"]]), nc = { class: "volume" }, rc = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "VolumeControl",
 	setup(e) {
-		let t = ue(), n = ne(), { t: i } = Y(), a = r(() => t.muted ? 0 : t.volume), s = r(() => t.muted || t.volume <= 0 ? "mute" : t.volume < .5 ? "volume-low" : "volume");
+		let t = ue(), n = ne(), { t: i } = X(), a = r(() => t.muted ? 0 : t.volume), s = r(() => t.muted || t.volume <= 0 ? "mute" : t.volume < .5 ? "volume-low" : "volume");
 		function c(e) {
 			t.setVolume(e), e <= 0 && !t.muted && t.toggleMute();
 		}
 		return N(() => t.volume, (e) => {
 			n.defaultVolume = e;
-		}), (e, n) => (x(), o("div", es, [u(wo, {
+		}), (e, n) => (x(), o("div", nc, [u(Es, {
 			name: s.value,
 			label: O(t).muted ? O(i)("player.unmute") : O(i)("player.mute"),
 			size: "sm",
 			class: "volume__btn",
 			onClick: n[0] ||= (e) => O(t).toggleMute()
-		}, null, 8, ["name", "label"]), u($o, {
+		}, null, 8, ["name", "label"]), u(tc, {
 			class: "volume__slider",
 			"model-value": a.value,
 			min: 0,
@@ -4885,37 +6709,37 @@ var Uo = ["aria-label"], Wo = { class: "shortcuts__head" }, Go = { class: "short
 }), [["__scopeId", "data-v-e76a3b82"]]);
 //#endregion
 //#region src/components/ui/listbox.ts
-function ns(e) {
+function ic(e) {
 	return e.map((e) => typeof e == "object" ? e : {
 		value: e,
 		label: String(e)
 	});
 }
-function rs(e, t, n) {
+function ac(e, t, n) {
 	let r = e.length;
 	if (r === 0) return -1;
 	let i = t;
 	for (let t = 0; t < r; t++) if (i = (i + n + r) % r, !e[i]?.disabled) return i;
 	return t;
 }
-function is(e, t) {
-	return t === "first" ? rs(e, -1, 1) : rs(e, 0, -1);
+function oc(e, t) {
+	return t === "first" ? ac(e, -1, 1) : ac(e, 0, -1);
 }
 //#endregion
 //#region src/components/ui/Select.vue?vue&type=script&setup=true&lang.ts
-var as = [
+var sc = [
 	"aria-expanded",
 	"aria-controls",
 	"aria-activedescendant",
 	"aria-label",
 	"disabled"
-], os = ["id", "aria-label"], ss = [
+], cc = ["id", "aria-label"], lc = [
 	"id",
 	"aria-selected",
 	"aria-disabled",
 	"onClick",
 	"onPointermove"
-], cs = { class: "phlix-select__check" }, ls = /*#__PURE__*/ J(/* @__PURE__ */ d({
+], uc = { class: "phlix-select__check" }, dc = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Select",
 	props: /*@__PURE__*/ m({
 		modelValue: {},
@@ -4936,7 +6760,7 @@ var as = [
 	}),
 	emits: /*@__PURE__*/ m(["update:modelValue", "change"], ["update:open"]),
 	setup(t, { expose: n, emit: c }) {
-		let d = t, { t: f } = Y(), p = c, m = r(() => ns(d.options)), _ = k(), y = S(!1), b = S(-1), w = S(null), T = S(null);
+		let d = t, { t: f } = X(), p = c, m = r(() => ic(d.options)), _ = k(), y = S(!1), b = S(-1), w = S(null), T = S(null);
 		function D() {
 			y.value ? H() : V();
 		}
@@ -4953,7 +6777,7 @@ var as = [
 			B.value = n < 284 && r > n;
 		}
 		function V() {
-			d.disabled || y.value || (ee(), y.value = !0, b.value = L.value >= 0 ? L.value : is(m.value, "first"), h(re));
+			d.disabled || y.value || (ee(), y.value = !0, b.value = L.value >= 0 ? L.value : oc(m.value, "first"), h(re));
 		}
 		function H() {
 			y.value = !1;
@@ -4963,7 +6787,7 @@ var as = [
 			!t || t.disabled || (t.value !== d.modelValue && (p("update:modelValue", t.value), p("change", t.value)), H(), w.value?.querySelector(".phlix-select__trigger")?.focus());
 		}
 		function ne(e) {
-			b.value = rs(m.value, b.value, e), h(re);
+			b.value = ac(m.value, b.value, e), h(re);
 		}
 		function re() {
 			(T.value?.querySelector(".is-active"))?.scrollIntoView?.({ block: "nearest" });
@@ -4977,10 +6801,10 @@ var as = [
 					e.preventDefault(), y.value ? ne(-1) : V();
 					break;
 				case "Home":
-					y.value && (e.preventDefault(), b.value = is(m.value, "first"), h(re));
+					y.value && (e.preventDefault(), b.value = oc(m.value, "first"), h(re));
 					break;
 				case "End":
-					y.value && (e.preventDefault(), b.value = is(m.value, "last"), h(re));
+					y.value && (e.preventDefault(), b.value = oc(m.value, "last"), h(re));
 					break;
 				case "Enter":
 				case " ":
@@ -5027,10 +6851,10 @@ var as = [
 			disabled: t.disabled,
 			onClick: r[0] ||= (e) => y.value ? H() : V(),
 			onKeydown: ie
-		}, [s("span", { class: g(["phlix-select__value", { "is-placeholder": L.value < 0 }]) }, E(L.value >= 0 ? R.value : t.placeholder ?? O(f)("common.selectPlaceholder")), 3), u(q, {
+		}, [s("span", { class: g(["phlix-select__value", { "is-placeholder": L.value < 0 }]) }, E(L.value >= 0 ? R.value : t.placeholder ?? O(f)("common.selectPlaceholder")), 3), u(J, {
 			name: "chevron-down",
 			class: "phlix-select__caret"
-		})], 40, as), F(s("ul", {
+		})], 40, sc), F(s("ul", {
 			id: `${O(_)}-list`,
 			ref_key: "listEl",
 			ref: T,
@@ -5049,12 +6873,12 @@ var as = [
 			"aria-disabled": e.disabled || void 0,
 			onClick: (e) => te(n),
 			onPointermove: (t) => !e.disabled && (b.value = n)
-		}, [s("span", cs, [e.value === t.modelValue ? (x(), i(q, {
+		}, [s("span", uc, [e.value === t.modelValue ? (x(), i(J, {
 			key: 0,
 			name: "check"
-		})) : a("", !0)]), l(" " + E(e.label), 1)], 42, ss))), 128))], 10, os), [[M, y.value]])], 2));
+		})) : a("", !0)]), l(" " + E(e.label), 1)], 42, lc))), 128))], 10, cc), [[M, y.value]])], 2));
 	}
-}), [["__scopeId", "data-v-be7bae5f"]]), us = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-be7bae5f"]]), fc = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "SpeedMenu",
 	setup(e) {
 		let t = [
@@ -5066,14 +6890,14 @@ var as = [
 			1.5,
 			1.75,
 			2
-		], n = ue(), { t: a } = Y(), o = r(() => t.map((e) => ({
+		], n = ue(), { t: a } = X(), o = r(() => t.map((e) => ({
 			value: e,
 			label: `${e}×`
 		})));
 		function s(e) {
 			n.setRate(Number(e));
 		}
-		return (e, t) => (x(), i(ls, {
+		return (e, t) => (x(), i(dc, {
 			class: "speed-menu",
 			tone: "glass",
 			"model-value": O(n).rate,
@@ -5086,31 +6910,31 @@ var as = [
 			"label"
 		]));
 	}
-}), [["__scopeId", "data-v-4530b308"]]), ds = "auto", fs = "original";
-function ps(e) {
+}), [["__scopeId", "data-v-4530b308"]]), pc = "auto", mc = "original";
+function hc(e) {
 	return e >= 2160 ? "2160p" : e >= 1440 ? "1440p" : e >= 1080 ? "1080p" : e >= 720 ? "720p" : e >= 480 ? "480p" : e >= 360 ? "360p" : "240p";
 }
-function ms(e) {
-	return e >= 2160 ? "4K" : ps(e);
+function gc(e) {
+	return e >= 2160 ? "4K" : hc(e);
 }
-function hs(e) {
+function _c(e) {
 	let t = /* @__PURE__ */ new Set(), n = [];
 	for (let r of [...e].sort((e, t) => t.height - e.height)) {
-		let e = ps(r.height);
+		let e = hc(r.height);
 		t.has(e) || (t.add(e), n.push({
 			value: e,
-			label: ms(r.height)
+			label: gc(r.height)
 		}));
 	}
 	return n;
 }
-function gs(e, t) {
+function vc(e, t) {
 	if (t === "auto") return -1;
 	let n = -1, r = -1;
-	for (let i of e) ps(i.height) === t && i.bitrate > r && (n = i.index, r = i.bitrate);
+	for (let i of e) hc(i.height) === t && i.bitrate > r && (n = i.index, r = i.bitrate);
 	return n;
 }
-function _s(e, t) {
+function yc(e, t) {
 	if (!t || !(t.height > 0)) return -1;
 	let n = -1, r = Infinity;
 	for (let i of e) {
@@ -5126,23 +6950,23 @@ function _s(e, t) {
 	}
 	return i;
 }
-function vs(e) {
+function bc(e) {
 	let t = -1, n = -1, r = -1;
 	for (let i of e) (i.height > n || i.height === n && i.bitrate > r) && (t = i.index, n = i.height, r = i.bitrate);
 	return t;
 }
-function ys(e, t) {
+function xc(e, t) {
 	let n = t?.find((e) => e.id === "original" && e.height > 0) ?? null;
-	return !!n && _s(e, n) >= 0;
+	return !!n && yc(e, n) >= 0;
 }
-function bs(e, t) {
-	if (t < 0) return ds;
+function Sc(e, t) {
+	if (t < 0) return pc;
 	let n = e.find((e) => e.index === t);
-	return n ? ps(n.height) : ds;
+	return n ? hc(n.height) : pc;
 }
 //#endregion
 //#region src/components/player/QualityMenu.vue
-var xs = /*#__PURE__*/ J(/* @__PURE__ */ d({
+var Cc = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "QualityMenu",
 	props: /*@__PURE__*/ m({
 		levels: { default: () => [] },
@@ -5166,39 +6990,39 @@ var xs = /*#__PURE__*/ J(/* @__PURE__ */ d({
 		function l() {
 			c.value?.toggleMenu();
 		}
-		let u = n, d = ue(), f = ne(), { t: p } = Y(), m = r(() => hs(o.levels)), h = r(() => {
+		let u = n, d = ue(), f = ne(), { t: p } = X(), m = r(() => _c(o.levels)), h = r(() => {
 			let e = /* @__PURE__ */ new Set(), t = [];
 			if (!o.variants) return [];
 			let n = m.value.length >= 2;
 			for (let r of [...o.variants].sort((e, t) => t.height - e.height)) {
-				let i = ps(r.height);
-				e.has(i) || n && gs(o.levels, i) < 0 || (e.add(i), t.push({
+				let i = hc(r.height);
+				e.has(i) || n && vc(o.levels, i) < 0 || (e.add(i), t.push({
 					value: i,
-					label: ms(r.height)
+					label: gc(r.height)
 				}));
 			}
 			return t;
-		}), g = r(() => m.value.length >= 2 ? m.value : h.value), _ = r(() => o.variants?.find((e) => e.id === "original" && e.height > 0) ?? null), v = r(() => _s(o.levels, _.value)), y = r(() => _.value && v.value >= 0 ? {
-			value: fs,
+		}), g = r(() => m.value.length >= 2 ? m.value : h.value), _ = r(() => o.variants?.find((e) => e.id === "original" && e.height > 0) ?? null), v = r(() => yc(o.levels, _.value)), y = r(() => _.value && v.value >= 0 ? {
+			value: mc,
 			label: p("player.qualityOriginal", { height: _.value.height })
-		} : null), b = r(() => g.value.length >= 2), C = r(() => o.activeHeight == null ? p("player.qualityAuto") : p("player.qualityAutoActive", { label: ms(o.activeHeight) })), w = r(() => [
+		} : null), b = r(() => g.value.length >= 2), C = r(() => o.activeHeight == null ? p("player.qualityAuto") : p("player.qualityAutoActive", { label: gc(o.activeHeight) })), w = r(() => [
 			{
-				value: ds,
+				value: pc,
 				label: C.value
 			},
 			...y.value ? [y.value] : [],
 			...g.value
-		]), T = r(() => o.autoEnabled ? ds : y.value && o.currentLevel === v.value && (d.quality === "original" || f.defaultQuality === "original") ? fs : bs(o.levels, o.currentLevel));
+		]), T = r(() => o.autoEnabled ? pc : y.value && o.currentLevel === v.value && (d.quality === "original" || f.defaultQuality === "original") ? mc : Sc(o.levels, o.currentLevel));
 		function E(e) {
 			let t = String(e);
 			if (t === "auto") {
 				d.setQuality(t), f.defaultQuality = t, u("select", "auto");
 				return;
 			}
-			let n = t === "original" ? v.value : gs(o.levels, t);
+			let n = t === "original" ? v.value : vc(o.levels, t);
 			d.setQuality(t), f.defaultQuality = t, n >= 0 ? u("select", n) : u("select", t);
 		}
-		return t({ toggleMenu: l }), (e, t) => b.value || s.value ? (x(), i(ls, {
+		return t({ toggleMenu: l }), (e, t) => b.value || s.value ? (x(), i(dc, {
 			key: 0,
 			ref_key: "selectRef",
 			ref: c,
@@ -5220,7 +7044,7 @@ var xs = /*#__PURE__*/ J(/* @__PURE__ */ d({
 }), [["__scopeId", "data-v-58498bdd"]]);
 //#endregion
 //#region src/components/player/captions.ts
-function Ss(e) {
+function wc(e) {
 	if (!e) return [];
 	let t = typeof e.length == "number" ? e.length : 0, n = [];
 	for (let r = 0; r < t; r++) {
@@ -5229,13 +7053,13 @@ function Ss(e) {
 	}
 	return n;
 }
-function Cs(e) {
+function Tc(e) {
 	return e.kind === "subtitles" || e.kind === "captions";
 }
-function ws(e, t) {
+function Ec(e, t) {
 	return e.language || e.label || `track-${t}`;
 }
-function Ts(e) {
+function Dc(e) {
 	if (!e) return "";
 	try {
 		let t = Intl.DisplayNames;
@@ -5243,49 +7067,49 @@ function Ts(e) {
 	} catch {}
 	return e;
 }
-function Es(e) {
-	return e ? Ss(e.textTracks).filter(Cs).map((e, t) => ({
+function Oc(e) {
+	return e ? wc(e.textTracks).filter(Tc).map((e, t) => ({
 		index: t,
-		language: ws(e, t),
-		label: e.label || Ts(e.language) || `Track ${t + 1}`,
+		language: Ec(e, t),
+		label: e.label || Dc(e.language) || `Track ${t + 1}`,
 		kind: e.kind
 	})) : [];
 }
-function Ds(e) {
+function kc(e) {
 	let t = e?.audioTracks;
-	return Ss(t).map((e, t) => ({
+	return wc(t).map((e, t) => ({
 		index: t,
 		language: e.language || e.id || `audio-${t}`,
-		label: e.label || Ts(e.language) || `Audio ${t + 1}`,
+		label: e.label || Dc(e.language) || `Audio ${t + 1}`,
 		kind: "audio"
 	}));
 }
-function Os(e, t) {
-	return !e || t == null ? null : Ss(e.textTracks).filter(Cs).find((e, n) => ws(e, n) === t) ?? null;
+function Ac(e, t) {
+	return !e || t == null ? null : wc(e.textTracks).filter(Tc).find((e, n) => Ec(e, n) === t) ?? null;
 }
-function ks(e, t) {
-	return Os(e, t) != null;
+function jc(e, t) {
+	return Ac(e, t) != null;
 }
-function As(e, t) {
-	e && Ss(e.textTracks).filter(Cs).forEach((e, n) => {
+function Mc(e, t) {
+	e && wc(e.textTracks).filter(Tc).forEach((e, n) => {
 		try {
-			e.mode = ws(e, n) === t ? "hidden" : "disabled";
+			e.mode = Ec(e, n) === t ? "hidden" : "disabled";
 		} catch {}
 	});
 }
-function js(e, t) {
+function Nc(e, t) {
 	let n = e?.audioTracks;
-	Ss(n).forEach((e, n) => {
+	wc(n).forEach((e, n) => {
 		try {
 			e.enabled = n === t;
 		} catch {}
 	});
 }
-function Ms(e) {
+function Pc(e) {
 	let t = e?.audioTracks;
-	return Ss(t).findIndex((e) => e.enabled);
+	return wc(t).findIndex((e) => e.enabled);
 }
-var Ns = {
+var Fc = {
 	amp: "&",
 	lt: "<",
 	gt: ">",
@@ -5295,38 +7119,38 @@ var Ns = {
 	lrm: "‎",
 	rlm: "‏"
 };
-function Ps(e) {
+function Ic(e) {
 	try {
 		return e > 0 && e <= 1114111 ? String.fromCodePoint(e) : "";
 	} catch {
 		return "";
 	}
 }
-function Fs(e) {
+function Lc(e) {
 	return e.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (e, t) => {
 		if (t[0] === "#") {
 			let n = t[1]?.toLowerCase() === "x" ? parseInt(t.slice(2), 16) : parseInt(t.slice(1), 10);
-			return Number.isFinite(n) && Ps(n) || e;
+			return Number.isFinite(n) && Ic(n) || e;
 		}
 		let n = t.toLowerCase();
-		return Object.prototype.hasOwnProperty.call(Ns, n) ? Ns[n] : e;
+		return Object.prototype.hasOwnProperty.call(Fc, n) ? Fc[n] : e;
 	});
 }
-function Is(e) {
-	return e ? e.replace(/<[^>]*>/g, "").split(/\r?\n/).map((e) => Fs(e).trim()).filter((e) => e.length > 0) : [];
+function Rc(e) {
+	return e ? e.replace(/<[^>]*>/g, "").split(/\r?\n/).map((e) => Lc(e).trim()).filter((e) => e.length > 0) : [];
 }
-function Ls(e) {
+function zc(e) {
 	if (!e) return [];
-	let t = Ss(e.activeCues), n = [];
-	for (let e of t) n.push(...Is(e.text));
+	let t = wc(e.activeCues), n = [];
+	for (let e of t) n.push(...Rc(e.text));
 	return n;
 }
-var Rs = {
+var Bc = {
 	sm: .75,
 	md: 1,
 	lg: 1.35,
 	xl: 1.75
-}, zs = [
+}, Vc = [
 	{
 		value: "sm",
 		label: "Small"
@@ -5343,7 +7167,7 @@ var Rs = {
 		value: "xl",
 		label: "Extra large"
 	}
-], Bs = [
+], Hc = [
 	{
 		value: "#ffffff",
 		label: "White"
@@ -5360,7 +7184,7 @@ var Rs = {
 		value: "#7cff7c",
 		label: "Green"
 	}
-], Vs = [
+], Uc = [
 	{
 		value: "none",
 		label: "Off"
@@ -5373,7 +7197,7 @@ var Rs = {
 		value: "solid",
 		label: "Solid"
 	}
-], Hs = [
+], Wc = [
 	{
 		value: "none",
 		label: "None"
@@ -5391,14 +7215,14 @@ var Rs = {
 		label: "Raised"
 	}
 ];
-function Us(e) {
+function Gc(e) {
 	switch (e) {
 		case "semi": return "rgba(0, 0, 0, 0.6)";
 		case "solid": return "#000000";
 		default: return "transparent";
 	}
 }
-function Ws(e) {
+function Kc(e) {
 	switch (e) {
 		case "drop-shadow": return "0 2px 6px rgba(0, 0, 0, 0.85)";
 		case "outline": return "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px rgba(0, 0, 0, 0.9)";
@@ -5406,18 +7230,18 @@ function Ws(e) {
 		default: return "none";
 	}
 }
-function Gs(e) {
+function qc(e) {
 	return {
-		"--cap-scale": String(Rs[e.size] ?? 1),
+		"--cap-scale": String(Bc[e.size] ?? 1),
 		"--cap-color": e.textColor,
-		"--cap-bg": Us(e.background),
+		"--cap-bg": Gc(e.background),
 		"--cap-pad": e.background === "none" ? "0" : "0.12em 0.42em",
-		"--cap-shadow": Ws(e.edge)
+		"--cap-shadow": Kc(e.edge)
 	};
 }
 //#endregion
 //#region src/components/player/CaptionOverlay.vue
-var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
+var Jc = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "CaptionOverlay",
 	props: {
 		video: {},
@@ -5428,7 +7252,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 	},
 	setup(t, { expose: n }) {
 		let i = t, s = S([]), c = S(0), l = r(() => i.lifted ? c.value : 0), u = r(() => ({
-			...Gs(i.styleConfig),
+			...qc(i.styleConfig),
 			"--phlix-sub-offset": `${l.value}px`
 		})), d = null;
 		function f() {
@@ -5446,7 +7270,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 		N(() => i.controlsRoot, m, { immediate: !0 }), v(p);
 		let h = null, y = null, b = null;
 		function w() {
-			s.value = Ls(h);
+			s.value = zc(h);
 		}
 		function T() {
 			b != null && (clearTimeout(b), b = null);
@@ -5454,8 +7278,8 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 		function D() {
 			T(), b = setTimeout(() => {
 				if (b = null, !h) return;
-				As(i.video, i.language);
-				let e = Ls(h);
+				Mc(i.video, i.language);
+				let e = zc(h);
 				e.length && (s.value = e);
 			}, 0);
 		}
@@ -5472,10 +7296,10 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			return null;
 		}
 		function A() {
-			O(), As(i.video, i.language);
-			let e = Os(i.video, i.language);
+			O(), Mc(i.video, i.language);
+			let e = Ac(i.video, i.language);
 			if (e) {
-				if (h = e, e.addEventListener("cuechange", w), s.value = Ls(e), !s.value.length) {
+				if (h = e, e.addEventListener("cuechange", w), s.value = zc(e), !s.value.length) {
 					let t = k(i.video, e);
 					t && t.readyState !== 2 && (y = t, t.addEventListener("load", w));
 				}
@@ -5491,15 +7315,15 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			class: "player__caption-line"
 		}, E(e), 1))), 128))], 6)) : a("", !0);
 	}
-}), [["__scopeId", "data-v-2e78d015"]]), qs = ["aria-label", "aria-expanded"], Js = ["aria-label"], Ys = { class: "capmenu__head" }, Xs = { class: "capmenu__title" }, Zs = ["aria-label"], Qs = ["aria-checked", "tabindex"], $s = { class: "capmenu__check" }, ec = { class: "capmenu__optlabel" }, tc = [
+}), [["__scopeId", "data-v-2e78d015"]]), Yc = ["aria-label", "aria-expanded"], Xc = ["aria-label"], Zc = { class: "capmenu__head" }, Qc = { class: "capmenu__title" }, $c = ["aria-label"], el = ["aria-checked", "tabindex"], tl = { class: "capmenu__check" }, nl = { class: "capmenu__optlabel" }, rl = [
 	"aria-checked",
 	"tabindex",
 	"onClick"
-], nc = { class: "capmenu__check" }, rc = { class: "capmenu__optlabel" }, ic = { class: "capmenu__check" }, ac = { class: "capmenu__optlabel" }, oc = { class: "capmenu__title capmenu__title--sub" }, sc = ["aria-label"], cc = [
+], il = { class: "capmenu__check" }, al = { class: "capmenu__optlabel" }, ol = { class: "capmenu__check" }, sl = { class: "capmenu__optlabel" }, cl = { class: "capmenu__title capmenu__title--sub" }, ll = ["aria-label"], ul = [
 	"aria-checked",
 	"tabindex",
 	"onClick"
-], lc = { class: "capmenu__check" }, uc = { class: "capmenu__optlabel" }, dc = { class: "capmenu__title capmenu__title--sub" }, fc = { class: "capmenu__style" }, pc = { class: "capmenu__field" }, mc = { class: "capmenu__fieldlabel" }, hc = { class: "capmenu__field" }, gc = { class: "capmenu__fieldlabel" }, _c = { class: "capmenu__field" }, vc = { class: "capmenu__fieldlabel" }, yc = { class: "capmenu__field" }, bc = { class: "capmenu__fieldlabel" }, xc = /*#__PURE__*/ J(/* @__PURE__ */ d({
+], dl = { class: "capmenu__check" }, fl = { class: "capmenu__optlabel" }, pl = { class: "capmenu__title capmenu__title--sub" }, ml = { class: "capmenu__style" }, hl = { class: "capmenu__field" }, gl = { class: "capmenu__fieldlabel" }, _l = { class: "capmenu__field" }, vl = { class: "capmenu__fieldlabel" }, yl = { class: "capmenu__field" }, bl = { class: "capmenu__fieldlabel" }, xl = { class: "capmenu__field" }, Sl = { class: "capmenu__fieldlabel" }, Cl = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "CaptionsMenu",
 	props: {
 		tracks: { default: () => [] },
@@ -5516,7 +7340,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 		"add-subtitles"
 	],
 	setup(t, { emit: n }) {
-		let c = t, l = n, d = ue(), f = ne(), { t: p } = Y(), m = S(null), h = S(null), _ = r(() => d.subtitleLang), y = r(() => c.tracks.some((e) => e.language === _.value)), b = r(() => y.value ? "captions" : "captions-off"), w = r(() => y.value ? c.tracks.findIndex((e) => e.language === _.value) + 1 : 0), T = r(() => c.activeAudio >= 0 ? c.activeAudio : 0);
+		let c = t, l = n, d = ue(), f = ne(), { t: p } = X(), m = S(null), h = S(null), _ = r(() => d.subtitleLang), y = r(() => c.tracks.some((e) => e.language === _.value)), b = r(() => y.value ? "captions" : "captions-off"), w = r(() => y.value ? c.tracks.findIndex((e) => e.language === _.value) + 1 : 0), T = r(() => c.activeAudio >= 0 ? c.activeAudio : 0);
 		function k(e) {
 			l("update:open", e);
 		}
@@ -5586,7 +7410,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 				edge: e
 			};
 		}
-		Fo(h, D(c, "open"), {
+		Ls(h, D(c, "open"), {
 			lockScroll: !1,
 			onEscape: () => (A(), !0)
 		});
@@ -5608,7 +7432,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			"aria-haspopup": "dialog",
 			"aria-expanded": t.open,
 			onClick: r[0] ||= (e) => k(!t.open)
-		}, [u(q, { name: b.value }, null, 8, ["name"])], 10, qs), t.open ? (x(), o("div", {
+		}, [u(J, { name: b.value }, null, 8, ["name"])], 10, Yc), t.open ? (x(), o("div", {
 			key: 0,
 			ref_key: "panelEl",
 			ref: h,
@@ -5618,7 +7442,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			"aria-label": O(p)("player.captionsAndSubtitles"),
 			tabindex: "-1"
 		}, [
-			s("div", Ys, [s("h3", Xs, E(O(p)("player.subtitles")), 1), u(wo, {
+			s("div", Zc, [s("h3", Qc, E(O(p)("player.subtitles")), 1), u(Es, {
 				name: "x",
 				label: O(p)("common.close"),
 				size: "sm",
@@ -5636,10 +7460,10 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 				"aria-checked": !y.value,
 				tabindex: w.value === 0 ? 0 : -1,
 				onClick: r[1] ||= (e) => j(null)
-			}, [s("span", $s, [y.value ? a("", !0) : (x(), i(q, {
+			}, [s("span", tl, [y.value ? a("", !0) : (x(), i(J, {
 				key: 0,
 				name: "check"
-			}))]), s("span", ec, E(O(p)("player.off")), 1)], 8, Qs), (x(!0), o(e, null, C(t.tracks, (e, t) => (x(), o("button", {
+			}))]), s("span", nl, E(O(p)("player.off")), 1)], 8, el), (x(!0), o(e, null, C(t.tracks, (e, t) => (x(), o("button", {
 				key: e.language,
 				type: "button",
 				class: "capmenu__opt",
@@ -5647,16 +7471,16 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 				"aria-checked": _.value === e.language,
 				tabindex: w.value === t + 1 ? 0 : -1,
 				onClick: (t) => j(e.language)
-			}, [s("span", nc, [_.value === e.language ? (x(), i(q, {
+			}, [s("span", il, [_.value === e.language ? (x(), i(J, {
 				key: 0,
 				name: "check"
-			})) : a("", !0)]), s("span", rc, E(e.label), 1)], 8, tc))), 128))], 40, Zs),
+			})) : a("", !0)]), s("span", al, E(e.label), 1)], 8, rl))), 128))], 40, $c),
 			s("button", {
 				type: "button",
 				class: "capmenu__add",
 				onClick: P
-			}, [s("span", ic, [u(q, { name: "plus" })]), s("span", ac, E(O(p)("player.addSubtitles")), 1)]),
-			t.audioTracks.length > 1 ? (x(), o(e, { key: 0 }, [s("h3", oc, E(O(p)("player.audio")), 1), s("div", {
+			}, [s("span", ol, [u(J, { name: "plus" })]), s("span", sl, E(O(p)("player.addSubtitles")), 1)]),
+			t.audioTracks.length > 1 ? (x(), o(e, { key: 0 }, [s("h3", cl, E(O(p)("player.audio")), 1), s("div", {
 				class: "capmenu__group",
 				role: "radiogroup",
 				"aria-label": O(p)("player.audioTrack"),
@@ -5669,15 +7493,15 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 				"aria-checked": t.activeAudio === e.index,
 				tabindex: T.value === e.index ? 0 : -1,
 				onClick: (t) => M(e.index)
-			}, [s("span", lc, [t.activeAudio === e.index ? (x(), i(q, {
+			}, [s("span", dl, [t.activeAudio === e.index ? (x(), i(J, {
 				key: 0,
 				name: "check"
-			})) : a("", !0)]), s("span", uc, E(e.label), 1)], 8, cc))), 128))], 40, sc)], 64)) : a("", !0),
-			s("h3", dc, E(O(p)("player.captionStyle")), 1),
-			s("div", fc, [
-				s("div", pc, [s("span", mc, E(O(p)("player.size")), 1), u(ls, {
+			})) : a("", !0)]), s("span", fl, E(e.label), 1)], 8, ul))), 128))], 40, ll)], 64)) : a("", !0),
+			s("h3", pl, E(O(p)("player.captionStyle")), 1),
+			s("div", ml, [
+				s("div", hl, [s("span", gl, E(O(p)("player.size")), 1), u(dc, {
 					"model-value": O(f).captionStyle.size,
-					options: O(zs),
+					options: O(Vc),
 					label: O(p)("player.captionSize"),
 					"onUpdate:modelValue": R
 				}, null, 8, [
@@ -5685,9 +7509,9 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 					"options",
 					"label"
 				])]),
-				s("div", hc, [s("span", gc, E(O(p)("player.color")), 1), u(ls, {
+				s("div", _l, [s("span", vl, E(O(p)("player.color")), 1), u(dc, {
 					"model-value": O(f).captionStyle.textColor,
-					options: O(Bs),
+					options: O(Hc),
 					label: O(p)("player.captionColor"),
 					"onUpdate:modelValue": z
 				}, null, 8, [
@@ -5695,9 +7519,9 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 					"options",
 					"label"
 				])]),
-				s("div", _c, [s("span", vc, E(O(p)("player.background")), 1), u(ls, {
+				s("div", yl, [s("span", bl, E(O(p)("player.background")), 1), u(dc, {
 					"model-value": O(f).captionStyle.background,
-					options: O(Vs),
+					options: O(Uc),
 					label: O(p)("player.captionBackground"),
 					"onUpdate:modelValue": B
 				}, null, 8, [
@@ -5705,9 +7529,9 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 					"options",
 					"label"
 				])]),
-				s("div", yc, [s("span", bc, E(O(p)("player.edge")), 1), u(ls, {
+				s("div", xl, [s("span", Sl, E(O(p)("player.edge")), 1), u(dc, {
 					"model-value": O(f).captionStyle.edge,
-					options: O(Hs),
+					options: O(Wc),
 					label: O(p)("player.captionEdge"),
 					"onUpdate:modelValue": ee
 				}, null, 8, [
@@ -5716,15 +7540,15 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 					"label"
 				])])
 			])
-		], 8, Js)) : a("", !0)], 512));
+		], 8, Xc)) : a("", !0)], 512));
 	}
-}), [["__scopeId", "data-v-f1a6d5fb"]]), Sc = ["aria-labelledby"], Cc = {
+}), [["__scopeId", "data-v-f1a6d5fb"]]), wl = ["aria-labelledby"], Tl = {
 	key: 0,
 	class: "phlix-modal__header"
-}, wc = ["id"], Tc = { class: "phlix-modal__body" }, Ec = {
+}, El = ["id"], Dl = { class: "phlix-modal__body" }, Ol = {
 	key: 1,
 	class: "phlix-modal__footer"
-}, Dc = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, kl = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Modal",
 	props: {
 		modelValue: { type: Boolean },
@@ -5741,7 +7565,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 	},
 	emits: ["update:modelValue", "close"],
 	setup(e, { emit: r }) {
-		let { t: c } = Y(), l = e, d = r, f = S(l.modelValue);
+		let { t: c } = X(), l = e, d = r, f = S(l.modelValue);
 		N(() => l.modelValue, (e) => f.value = e);
 		let p = S(null), m = k();
 		function h() {
@@ -5750,7 +7574,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 		function _() {
 			l.dismissible && h();
 		}
-		return Fo(p, f, { onEscape: () => l.dismissible ? (h(), !0) : !1 }), (r, l) => (x(), i(t, { to: "body" }, [u(n, { name: "phlix-modal" }, {
+		return Ls(p, f, { onEscape: () => l.dismissible ? (h(), !0) : !1 }), (r, l) => (x(), i(t, { to: "body" }, [u(n, { name: "phlix-modal" }, {
 			default: P(() => [e.modelValue ? (x(), o("div", {
 				key: 0,
 				class: "phlix-modal",
@@ -5764,11 +7588,11 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 				"aria-labelledby": e.title ? O(m) : void 0,
 				tabindex: "-1"
 			}, [
-				e.title || !e.hideClose ? (x(), o("header", Cc, [e.title ? (x(), o("h2", {
+				e.title || !e.hideClose ? (x(), o("header", Tl, [e.title ? (x(), o("h2", {
 					key: 0,
 					id: O(m),
 					class: "phlix-modal__title"
-				}, E(e.title), 9, wc)) : a("", !0), e.hideClose ? a("", !0) : (x(), i(wo, {
+				}, E(e.title), 9, El)) : a("", !0), e.hideClose ? a("", !0) : (x(), i(Es, {
 					key: 1,
 					name: "x",
 					label: O(c)("common.close"),
@@ -5776,20 +7600,20 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 					class: "phlix-modal__close",
 					onClick: h
 				}, null, 8, ["label"]))])) : a("", !0),
-				s("div", Tc, [w(r.$slots, "default", {}, void 0, !0)]),
-				r.$slots.footer ? (x(), o("footer", Ec, [w(r.$slots, "footer", {}, void 0, !0)])) : a("", !0)
-			], 10, Sc)], 32)) : a("", !0)]),
+				s("div", Dl, [w(r.$slots, "default", {}, void 0, !0)]),
+				r.$slots.footer ? (x(), o("footer", Ol, [w(r.$slots, "footer", {}, void 0, !0)])) : a("", !0)
+			], 10, wl)], 32)) : a("", !0)]),
 			_: 3
 		})]));
 	}
-}), [["__scopeId", "data-v-12c692c9"]]), Oc = [
+}), [["__scopeId", "data-v-12c692c9"]]), Al = [
 	"type",
 	"disabled",
 	"aria-busy"
-], kc = {
+], jl = {
 	key: 0,
 	class: "phlix-btn__spinner"
-}, Ac = { class: "phlix-btn__label" }, jc = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, Ml = { class: "phlix-btn__label" }, Nl = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Button",
 	props: {
 		variant: { default: "solid" },
@@ -5825,25 +7649,25 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			disabled: n.value,
 			"aria-busy": e.loading || void 0
 		}, [
-			e.loading ? (x(), o("span", kc, [u(q, { name: "spinner" })])) : a("", !0),
-			e.leftIcon && !e.loading ? (x(), i(q, {
+			e.loading ? (x(), o("span", jl, [u(J, { name: "spinner" })])) : a("", !0),
+			e.leftIcon && !e.loading ? (x(), i(J, {
 				key: 1,
 				name: e.leftIcon,
 				class: "phlix-btn__icon"
 			}, null, 8, ["name"])) : a("", !0),
-			s("span", Ac, [w(t.$slots, "default", {}, void 0, !0)]),
-			e.rightIcon ? (x(), i(q, {
+			s("span", Ml, [w(t.$slots, "default", {}, void 0, !0)]),
+			e.rightIcon ? (x(), i(J, {
 				key: 2,
 				name: e.rightIcon,
 				class: "phlix-btn__icon"
 			}, null, 8, ["name"])) : a("", !0)
-		], 10, Oc));
+		], 10, Al));
 	}
-}), [["__scopeId", "data-v-38abf89d"]]), Mc = [
+}), [["__scopeId", "data-v-38abf89d"]]), Pl = [
 	"disabled",
 	"aria-label",
 	"aria-pressed"
-], Nc = { class: "phlix-chip__label" }, Pc = ["disabled", "aria-label"], Fc = /*#__PURE__*/ J(/* @__PURE__ */ d({
+], Fl = { class: "phlix-chip__label" }, Il = ["disabled", "aria-label"], Ll = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Chip",
 	props: {
 		selected: {
@@ -5883,38 +7707,38 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			"aria-label": e.ariaLabel,
 			"aria-pressed": e.selected === void 0 ? void 0 : e.selected,
 			onClick: c
-		}, [e.icon ? (x(), i(q, {
+		}, [e.icon ? (x(), i(J, {
 			key: 0,
 			name: e.icon,
 			class: "phlix-chip__icon"
-		}, null, 8, ["name"])) : a("", !0), s("span", Nc, [w(t.$slots, "default", {}, void 0, !0)])], 8, Mc), e.removable ? (x(), o("button", {
+		}, null, 8, ["name"])) : a("", !0), s("span", Fl, [w(t.$slots, "default", {}, void 0, !0)])], 8, Pl), e.removable ? (x(), o("button", {
 			key: 0,
 			type: "button",
 			class: "phlix-chip__remove",
 			disabled: e.disabled,
 			"aria-label": e.removeLabel,
 			onClick: n[0] ||= (e) => r("remove")
-		}, [u(q, { name: "x" })], 8, Pc)) : a("", !0)], 2));
+		}, [u(J, { name: "x" })], 8, Il)) : a("", !0)], 2));
 	}
-}), [["__scopeId", "data-v-551f7599"]]), Ic = ["aria-label"], Lc = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-551f7599"]]), Rl = ["aria-label"], zl = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Spinner",
 	props: {
 		size: {},
 		label: {}
 	},
 	setup(e) {
-		let t = e, { t: n } = Y(), i = r(() => t.size === void 0 ? void 0 : typeof t.size == "number" ? `${t.size}px` : t.size);
+		let t = e, { t: n } = X(), i = r(() => t.size === void 0 ? void 0 : typeof t.size == "number" ? `${t.size}px` : t.size);
 		return (t, r) => (x(), o("span", {
 			class: "phlix-spinner",
 			role: "status",
 			"aria-label": e.label ?? O(n)("common.loading"),
 			style: _(i.value ? { fontSize: i.value } : void 0)
-		}, [u(q, {
+		}, [u(J, {
 			name: "spinner",
 			class: "phlix-spinner__icon"
-		})], 12, Ic));
+		})], 12, Rl));
 	}
-}), [["__scopeId", "data-v-736b299d"]]), Rc = ["role", "aria-label"], zc = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-736b299d"]]), Bl = ["role", "aria-label"], Vl = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Badge",
 	props: {
 		tone: { default: "neutral" },
@@ -5935,22 +7759,22 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			]]),
 			role: e.label ? "img" : void 0,
 			"aria-label": e.label
-		}, [e.icon ? (x(), i(q, {
+		}, [e.icon ? (x(), i(J, {
 			key: 0,
 			name: e.icon,
 			class: "phlix-badge__icon"
-		}, null, 8, ["name"])) : a("", !0), w(t.$slots, "default", {}, void 0, !0)], 10, Rc));
+		}, null, 8, ["name"])) : a("", !0), w(t.$slots, "default", {}, void 0, !0)], 10, Bl));
 	}
-}), [["__scopeId", "data-v-269446f3"]]), Bc = {
+}), [["__scopeId", "data-v-269446f3"]]), Hl = {
 	class: "phlix-empty",
 	role: "status"
-}, Vc = { class: "phlix-empty__icon" }, Hc = { class: "phlix-empty__title" }, Uc = {
+}, Ul = { class: "phlix-empty__icon" }, Wl = { class: "phlix-empty__title" }, Gl = {
 	key: 0,
 	class: "phlix-empty__desc"
-}, Wc = {
+}, Kl = {
 	key: 1,
 	class: "phlix-empty__actions"
-}, Gc = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, ql = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "EmptyState",
 	props: {
 		icon: { default: "film" },
@@ -5958,30 +7782,30 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 		description: {}
 	},
 	setup(e) {
-		return (t, n) => (x(), o("div", Bc, [
-			s("span", Vc, [u(q, { name: e.icon }, null, 8, ["name"])]),
-			s("h3", Hc, E(e.title), 1),
-			e.description || t.$slots.default ? (x(), o("p", Uc, [w(t.$slots, "default", {}, () => [l(E(e.description), 1)], !0)])) : a("", !0),
-			t.$slots.actions ? (x(), o("div", Wc, [w(t.$slots, "actions", {}, void 0, !0)])) : a("", !0)
+		return (t, n) => (x(), o("div", Hl, [
+			s("span", Ul, [u(J, { name: e.icon }, null, 8, ["name"])]),
+			s("h3", Wl, E(e.title), 1),
+			e.description || t.$slots.default ? (x(), o("p", Gl, [w(t.$slots, "default", {}, () => [l(E(e.description), 1)], !0)])) : a("", !0),
+			t.$slots.actions ? (x(), o("div", Kl, [w(t.$slots, "actions", {}, void 0, !0)])) : a("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-1790dcf5"]]), Kc = { class: "subsearch" }, qc = { class: "subsearch__langs" }, Jc = { class: "subsearch__legend" }, Yc = { class: "subsearch__chips" }, Xc = { class: "subsearch__actions" }, Zc = {
+}), [["__scopeId", "data-v-1790dcf5"]]), Jl = { class: "subsearch" }, Yl = { class: "subsearch__langs" }, Xl = { class: "subsearch__legend" }, Zl = { class: "subsearch__chips" }, Ql = { class: "subsearch__actions" }, $l = {
 	key: 0,
 	class: "subsearch__status",
 	role: "status"
-}, Qc = {
+}, eu = {
 	key: 2,
 	class: "subsearch__prompt"
-}, $c = {
+}, tu = {
 	key: 3,
 	class: "subsearch__list"
-}, el = { class: "subsearch__meta" }, tl = { class: "subsearch__release" }, nl = { class: "subsearch__signals" }, rl = { class: "subsearch__provider" }, il = ["aria-label"], al = {
+}, nu = { class: "subsearch__meta" }, ru = { class: "subsearch__release" }, iu = { class: "subsearch__signals" }, au = { class: "subsearch__provider" }, ou = ["aria-label"], su = {
 	key: 2,
 	class: "subsearch__stat"
-}, ol = {
+}, cu = {
 	key: 3,
 	class: "subsearch__stat"
-}, sl = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, lu = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "SubtitleSearch",
 	props: {
 		open: {
@@ -5995,7 +7819,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 	},
 	emits: ["update:open", "added"],
 	setup(t, { emit: n }) {
-		let c = t, d = n, { t: f } = Y(), p = Ae(), m = [
+		let c = t, d = n, { t: f } = X(), p = Mt(), m = [
 			"en",
 			"es",
 			"fr",
@@ -6043,7 +7867,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 		}
 		let j = r(() => [...T.value].sort((e, t) => t.rating - e.rating || t.downloadCount - e.downloadCount)), M = r(() => _.value.size > 0 && !b.value);
 		function F() {
-			return c.client ?? new ke({ baseUrl: c.apiBase ?? "" });
+			return c.client ?? new jt({ baseUrl: c.apiBase ?? "" });
 		}
 		async function I() {
 			if (M.value) {
@@ -6089,7 +7913,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			let n = new Set(D.value);
 			n.add(t), D.value = n;
 			try {
-				let n = no([(await F().downloadSubtitle(c.mediaId, {
+				let n = as([(await F().downloadSubtitle(c.mediaId, {
 					provider: e.provider,
 					downloadId: e.downloadId,
 					language: e.language,
@@ -6109,21 +7933,21 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 		}
 		return N(() => c.open, (e) => {
 			e && (v(), T.value = [], w.value = !1, b.value = !1, D.value = /* @__PURE__ */ new Set(), k.value = /* @__PURE__ */ new Set());
-		}, { immediate: !0 }), (n, r) => (x(), i(Dc, {
+		}, { immediate: !0 }), (n, r) => (x(), i(kl, {
 			"model-value": t.open,
 			title: O(f)("player.subtitleSearchTitle"),
 			size: "md",
 			"onUpdate:modelValue": r[0] ||= (e) => d("update:open", e)
 		}, {
-			footer: P(() => [u(jc, {
+			footer: P(() => [u(Nl, {
 				variant: "ghost",
 				onClick: L
 			}, {
 				default: P(() => [l(E(O(f)("common.close")), 1)]),
 				_: 1
 			})]),
-			default: P(() => [s("div", Kc, [
-				s("fieldset", qc, [s("legend", Jc, E(O(f)("player.subtitleSearchLanguages")), 1), s("div", Yc, [(x(!0), o(e, null, C(g.value, (e) => (x(), i(Fc, {
+			default: P(() => [s("div", Jl, [
+				s("fieldset", Yl, [s("legend", Xl, E(O(f)("player.subtitleSearchLanguages")), 1), s("div", Zl, [(x(!0), o(e, null, C(g.value, (e) => (x(), i(Ll, {
 					key: e,
 					selected: _.value.has(e),
 					size: "md",
@@ -6137,7 +7961,7 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 					"aria-label",
 					"onUpdate:selected"
 				]))), 128))])]),
-				s("div", Xc, [u(jc, {
+				s("div", Ql, [u(Nl, {
 					variant: "solid",
 					"left-icon": "search",
 					loading: b.value,
@@ -6147,23 +7971,23 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 					default: P(() => [l(E(O(f)("player.subtitleSearchAction")), 1)]),
 					_: 1
 				}, 8, ["loading", "disabled"])]),
-				b.value ? (x(), o("div", Zc, [u(Lc, { label: O(f)("player.subtitleSearching") }, null, 8, ["label"]), s("span", null, E(O(f)("player.subtitleSearching")), 1)])) : w.value && j.value.length === 0 ? (x(), i(Gc, {
+				b.value ? (x(), o("div", $l, [u(zl, { label: O(f)("player.subtitleSearching") }, null, 8, ["label"]), s("span", null, E(O(f)("player.subtitleSearching")), 1)])) : w.value && j.value.length === 0 ? (x(), i(ql, {
 					key: 1,
 					icon: "captions",
 					title: O(f)("player.subtitleSearchEmpty"),
 					description: O(f)("player.subtitleSearchEmptyHint")
-				}, null, 8, ["title", "description"])) : w.value ? (x(), o("ul", $c, [(x(!0), o(e, null, C(j.value, (e) => (x(), o("li", {
+				}, null, 8, ["title", "description"])) : w.value ? (x(), o("ul", tu, [(x(!0), o(e, null, C(j.value, (e) => (x(), o("li", {
 					key: A(e),
 					class: "subsearch__item"
-				}, [s("div", el, [s("p", tl, E(e.releaseName || e.provider), 1), s("div", nl, [
-					u(zc, {
+				}, [s("div", nu, [s("p", ru, E(e.releaseName || e.provider), 1), s("div", iu, [
+					u(Vl, {
 						tone: "neutral",
 						size: "sm"
 					}, {
 						default: P(() => [l(E(h(e.language)), 1)]),
 						_: 2
 					}, 1024),
-					e.hearingImpaired ? (x(), i(zc, {
+					e.hearingImpaired ? (x(), i(Vl, {
 						key: 0,
 						tone: "info",
 						size: "sm",
@@ -6172,15 +7996,15 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 						default: P(() => [l(E(O(f)("player.subtitleHearingImpaired")), 1)]),
 						_: 1
 					}, 8, ["label"])) : a("", !0),
-					s("span", rl, E(e.provider), 1),
+					s("span", au, E(e.provider), 1),
 					e.rating > 0 ? (x(), o("span", {
 						key: 1,
 						class: "subsearch__stat",
 						"aria-label": O(f)("player.subtitleRating", { rating: e.rating })
-					}, [u(q, { name: "star" }), l(" " + E(e.rating), 1)], 8, il)) : a("", !0),
-					e.downloadCount > 0 ? (x(), o("span", al, E(O(f)("player.subtitleDownloads", { count: e.downloadCount })), 1)) : a("", !0),
-					e.fps ? (x(), o("span", ol, E(O(f)("player.subtitleFps", { fps: e.fps })), 1)) : a("", !0)
-				])]), u(jc, {
+					}, [u(J, { name: "star" }), l(" " + E(e.rating), 1)], 8, ou)) : a("", !0),
+					e.downloadCount > 0 ? (x(), o("span", su, E(O(f)("player.subtitleDownloads", { count: e.downloadCount })), 1)) : a("", !0),
+					e.fps ? (x(), o("span", cu, E(O(f)("player.subtitleFps", { fps: e.fps })), 1)) : a("", !0)
+				])]), u(Nl, {
 					variant: "outline",
 					size: "sm",
 					"left-icon": k.value.has(A(e)) ? "check" : "plus",
@@ -6200,13 +8024,13 @@ var Ks = /*#__PURE__*/ J(/* @__PURE__ */ d({
 					"disabled",
 					"aria-label",
 					"onClick"
-				])]))), 128))])) : (x(), o("p", Qc, E(O(f)("player.subtitleSearchPrompt")), 1))
+				])]))), 128))])) : (x(), o("p", eu, E(O(f)("player.subtitleSearchPrompt")), 1))
 			])]),
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-70abcee8"]]), cl = 32, ll = 18, ul = 250, dl = (e) => e < 0 ? 0 : e > 255 ? 255 : Math.round(e);
-function fl(e, t, n, r, i, a, o) {
+}), [["__scopeId", "data-v-70abcee8"]]), uu = 32, du = 18, fu = 250, pu = (e) => e < 0 ? 0 : e > 255 ? 255 : Math.round(e);
+function mu(e, t, n, r, i, a, o) {
 	let s = Math.max(0, Math.min(t, Math.floor(r))), c = Math.max(0, Math.min(n, Math.floor(i))), l = Math.max(s, Math.min(t, Math.ceil(a))), u = Math.max(c, Math.min(n, Math.ceil(o))), d = 0, f = 0, p = 0, m = 0;
 	for (let n = c; n < u; n++) for (let r = s; r < l; r++) {
 		let i = (n * t + r) * 4;
@@ -6217,42 +8041,42 @@ function fl(e, t, n, r, i, a, o) {
 		g: 0,
 		b: 0
 	} : {
-		r: dl(d / m),
-		g: dl(f / m),
-		b: dl(p / m)
+		r: pu(d / m),
+		g: pu(f / m),
+		b: pu(p / m)
 	};
 }
-function pl(e, t, n) {
+function hu(e, t, n) {
 	let r = Math.max(1, Math.round(t * .25));
 	return {
-		left: fl(e, t, n, 0, 0, r, n),
-		right: fl(e, t, n, t - r, 0, t, n),
-		center: fl(e, t, n, 0, 0, t, n)
+		left: mu(e, t, n, 0, 0, r, n),
+		right: mu(e, t, n, t - r, 0, t, n),
+		center: mu(e, t, n, 0, 0, t, n)
 	};
 }
-function ml({ r: e, g: t, b: n }) {
+function gu({ r: e, g: t, b: n }) {
 	return `rgb(${e}, ${t}, ${n})`;
 }
-function hl({ r: e, g: t, b: n }, r) {
+function _u({ r: e, g: t, b: n }, r) {
 	return `rgba(${e}, ${t}, ${n}, ${r < 0 ? 0 : r > 1 ? 1 : r})`;
 }
-function gl(e, t = 1) {
+function vu(e, t = 1) {
 	let n = (e) => {
 		let n = e * t;
 		return n < 0 ? 0 : n > 1 ? 1 : n;
 	};
 	return [
-		`radial-gradient(40% 60% at 12% 30%, ${hl(e.left, n(.55))}, transparent 70%)`,
-		`radial-gradient(45% 55% at 88% 70%, ${hl(e.right, n(.5))}, transparent 70%)`,
-		`radial-gradient(50% 50% at 50% 50%, ${hl(e.center, n(.3))}, transparent 75%)`
+		`radial-gradient(40% 60% at 12% 30%, ${_u(e.left, n(.55))}, transparent 70%)`,
+		`radial-gradient(45% 55% at 88% 70%, ${_u(e.right, n(.5))}, transparent 70%)`,
+		`radial-gradient(50% 50% at 50% 50%, ${_u(e.center, n(.3))}, transparent 75%)`
 	].join(", ");
 }
-function _l(e) {
+function yu(e) {
 	return !!e && !e.charging && e.level <= .2;
 }
 //#endregion
 //#region src/components/player/AmbientCanvas.vue
-var vl = /*#__PURE__*/ J(/* @__PURE__ */ d({
+var bu = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "AmbientCanvas",
 	props: {
 		video: { default: null },
@@ -6273,7 +8097,7 @@ var vl = /*#__PURE__*/ J(/* @__PURE__ */ d({
 	setup(e, { expose: t }) {
 		let n = e, i = S(!1), a = null;
 		function s() {
-			i.value = _l(a);
+			i.value = yu(a);
 		}
 		let c = r(() => n.enabled && !n.reducedMotion && !i.value), l = r(() => Math.min(1, .85 * Math.max(0, n.intensity))), u = S(null), d = null, f = null, p = !1, m = !1;
 		function h() {
@@ -6294,7 +8118,7 @@ var vl = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			if (t) try {
 				t.drawImage(e, 0, 0, 32, 18);
 				let { data: n } = t.getImageData(0, 0, 32, 18);
-				u.value = gl(pl(n, 32, 18));
+				u.value = vu(hu(n, 32, 18));
 			} catch {
 				m = !0, u.value = null;
 			}
@@ -6348,38 +8172,38 @@ var vl = /*#__PURE__*/ J(/* @__PURE__ */ d({
 			"aria-hidden": "true"
 		}, null, 6));
 	}
-}), [["__scopeId", "data-v-88c68588"]]), yl = ["aria-label"], bl = { class: "resume__label" }, xl = { class: "resume__time numeric" }, Sl = { class: "resume__actions" }, Cl = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-88c68588"]]), xu = ["aria-label"], Su = { class: "resume__label" }, Cu = { class: "resume__time numeric" }, wu = { class: "resume__actions" }, Tu = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "ResumePrompt",
 	props: { seconds: {} },
 	emits: ["resume", "restart"],
 	setup(e, { emit: t }) {
-		let n = t, { t: i } = Y(), a = r(() => i("player.resumeFrom").split("{time}"));
+		let n = t, { t: i } = X(), a = r(() => i("player.resumeFrom").split("{time}"));
 		return (t, r) => (x(), o("div", {
 			class: "resume",
 			role: "region",
 			"aria-label": O(i)("player.resumePlayback")
-		}, [s("p", bl, [
+		}, [s("p", Su, [
 			l(E(a.value[0]), 1),
-			s("span", xl, E(O(Ca)(e.seconds)), 1),
+			s("span", Cu, E(O(Eo)(e.seconds)), 1),
 			l(E(a.value[1]), 1)
-		]), s("div", Sl, [s("button", {
+		]), s("div", wu, [s("button", {
 			type: "button",
 			class: "resume__btn resume__btn--amber",
 			onClick: r[0] ||= (e) => n("resume")
-		}, [u(q, { name: "play" }), s("span", null, E(O(i)("player.resume")), 1)]), s("button", {
+		}, [u(J, { name: "play" }), s("span", null, E(O(i)("player.resume")), 1)]), s("button", {
 			type: "button",
 			class: "resume__btn resume__btn--ghost",
 			onClick: r[1] ||= (e) => n("restart")
-		}, [u(q, { name: "rewind" }), s("span", null, E(O(i)("player.startOver")), 1)])])], 8, yl));
+		}, [u(J, { name: "rewind" }), s("span", null, E(O(i)("player.startOver")), 1)])])], 8, xu));
 	}
-}), [["__scopeId", "data-v-271c5209"]]), wl = [
+}), [["__scopeId", "data-v-271c5209"]]), Eu = [
 	"mp4",
 	"m4v",
 	"webm",
 	"ogg",
 	"ogv",
 	"mov"
-], Tl = [
+], Du = [
 	"mkv",
 	"avi",
 	"wmv",
@@ -6393,39 +8217,39 @@ var vl = /*#__PURE__*/ J(/* @__PURE__ */ d({
 	"divx",
 	"3gp",
 	"rmvb"
-], El = new Set(Tl);
-function Dl(e) {
+], Ou = new Set(Du);
+function ku(e) {
 	if (!e) return "";
 	let t = e.split(/[?#]/)[0], n = t.slice(t.lastIndexOf("/") + 1), r = n.lastIndexOf(".");
 	return r <= 0 || r === n.length - 1 ? "" : n.slice(r + 1).toLowerCase();
 }
-function Ol(...e) {
-	return e.some((e) => El.has(Dl(e)));
+function Au(...e) {
+	return e.some((e) => Ou.has(ku(e)));
 }
-function kl(e) {
+function ju(e) {
 	let t = e?.error?.code;
 	return t === 3 || t === 4;
 }
-function Al(e) {
+function Mu(e) {
 	return e?.error?.code === 2;
 }
-var jl = 3e4;
-function Ml(e) {
+var Nu = 3e4;
+function Pu(e) {
 	let t = typeof e == "string" ? e.trim().toLowerCase() : "";
-	return t !== "" && Bl.get(t) === "hevc";
+	return t !== "" && Hu.get(t) === "hevc";
 }
-function Nl(e) {
+function Fu(e) {
 	let t = { forceTranscode: "1" };
-	return Ml(e.videoCodec) && (t.excludeHevc = "1"), t;
+	return Pu(e.videoCodec) && (t.excludeHevc = "1"), t;
 }
-function Pl(e, t, n, r) {
+function Iu(e, t, n, r) {
 	return t <= 0 || e - t < 3e4 ? !1 : n <= r;
 }
-var Fl = 8, Il = 15, Ll = 2 * Math.PI * 15;
-function Rl(e, t, n = Ll) {
+var Lu = 8, Ru = 15, zu = 2 * Math.PI * 15;
+function Bu(e, t, n = zu) {
 	return t > 0 ? n * (1 - Math.max(0, Math.min(1, e / t))) : n;
 }
-var zl = /* @__PURE__ */ new Map([
+var Vu = /* @__PURE__ */ new Map([
 	["aac", "mp4a.40.2"],
 	["aac-latm", "mp4a.40.2"],
 	["ac3", "ac-3"],
@@ -6438,7 +8262,7 @@ var zl = /* @__PURE__ */ new Map([
 	["vorbis", "vorbis"],
 	["flac", "flac"],
 	["truehd", "mlp"]
-]), Bl = /* @__PURE__ */ new Map([
+]), Hu = /* @__PURE__ */ new Map([
 	["h264", "h264"],
 	["avc", "h264"],
 	["avc1", "h264"],
@@ -6455,7 +8279,7 @@ var zl = /* @__PURE__ */ new Map([
 	["vp8", "vp8"],
 	["vp08", "vp8"],
 	["theora", "theora"]
-]), Vl = /* @__PURE__ */ new Set(["h264"]), Hl = /* @__PURE__ */ new Map([
+]), Uu = /* @__PURE__ */ new Set(["h264"]), Wu = /* @__PURE__ */ new Map([
 	["hevc", [
 		"hvc1.1.6.L93.B0",
 		"hvc1.1.4.L120.90",
@@ -6467,13 +8291,13 @@ var zl = /* @__PURE__ */ new Map([
 	["vp8", ["vp8"]],
 	["theora", ["theora"]]
 ]);
-function Ul(e) {
+function Gu(e) {
 	let t = typeof e == "string" ? e.trim().toLowerCase() : "";
 	if (t === "") return "direct";
-	let n = Bl.get(t);
-	return n === void 0 ? "transcode" : Vl.has(n) ? "direct" : "probe";
+	let n = Hu.get(t);
+	return n === void 0 ? "transcode" : Uu.has(n) ? "direct" : "probe";
 }
-function Wl(e) {
+function Ku(e) {
 	if (!Array.isArray(e)) return "";
 	for (let t of e) {
 		if (typeof t != "object" || !t) continue;
@@ -6484,7 +8308,7 @@ function Wl(e) {
 	}
 	return "";
 }
-var Gl = /* @__PURE__ */ new Map([
+var qu = /* @__PURE__ */ new Map([
 	["mp4", "video/mp4"],
 	["m4v", "video/mp4"],
 	["mov", "video/quicktime"],
@@ -6492,17 +8316,17 @@ var Gl = /* @__PURE__ */ new Map([
 	["ogg", "video/ogg"],
 	["ogv", "video/ogg"]
 ]);
-function Kl(e) {
+function Ju(e) {
 	let t = typeof e == "string" ? e.trim().toLowerCase() : "";
-	return Gl.get(t) ?? "video/mp4";
+	return qu.get(t) ?? "video/mp4";
 }
-function ql(e, t = "video/mp4") {
-	let n = zl.get(e.toLowerCase());
+function Yu(e, t = "video/mp4") {
+	let n = Vu.get(e.toLowerCase());
 	return n ? `${t}; codecs="${n}"` : null;
 }
-async function Jl(e, t = "video/mp4") {
+async function Xu(e, t = "video/mp4") {
 	if (!e) return !0;
-	let n = ql(e, t);
+	let n = Yu(e, t);
 	if (!n) return !1;
 	if (typeof navigator < "u" && typeof navigator.mediaCapabilities?.decodingInfo == "function") try {
 		return (await navigator.mediaCapabilities.decodingInfo({
@@ -6528,8 +8352,8 @@ async function Jl(e, t = "video/mp4") {
 	}
 	return !1;
 }
-async function Yl(e, t = "video/mp4") {
-	let n = typeof e == "string" ? e.trim().toLowerCase() : "", r = Bl.get(n), i = r === void 0 ? void 0 : Hl.get(r);
+async function Zu(e, t = "video/mp4") {
+	let n = typeof e == "string" ? e.trim().toLowerCase() : "", r = Hu.get(n), i = r === void 0 ? void 0 : Wu.get(r);
 	if (!i || i.length === 0 || typeof navigator > "u") return !1;
 	let a = navigator.mediaCapabilities;
 	if (a && typeof a.decodingInfo == "function") try {
@@ -6553,63 +8377,63 @@ async function Yl(e, t = "video/mp4") {
 	}
 	return !1;
 }
-async function Xl(e, t, n = "") {
-	if (Ol(...e)) return !0;
-	let r = e.map((e) => Dl(e)).find((e) => wl.includes(e)) ?? "";
-	if (!wl.includes(r)) return !1;
-	let i = Kl(r), a = Ul(n);
-	if (a === "transcode" || a === "probe" && !await Yl(n, i)) return !0;
+async function Qu(e, t, n = "") {
+	if (Au(...e)) return !0;
+	let r = e.map((e) => ku(e)).find((e) => Eu.includes(e)) ?? "";
+	if (!Eu.includes(r)) return !1;
+	let i = Ju(r), a = Gu(n);
+	if (a === "transcode" || a === "probe" && !await Zu(n, i)) return !0;
 	if (t.length > 0) {
 		let e = t.find((e) => e.default) ?? t[0];
-		if (e?.codec && !await Jl(e.codec, i)) return !0;
+		if (e?.codec && !await Xu(e.codec, i)) return !0;
 	}
 	return !1;
 }
 //#endregion
 //#region src/utils/imageSrc.ts
-function Zl(e) {
+function $u(e) {
 	return e.length > 1 && e[0] === "/" && e[1] !== "/" && e[1] !== "\\";
 }
-function Ql(e, t) {
-	if (typeof t != "string" || t === "" || !Zl(t)) return t;
+function ed(e, t) {
+	if (typeof t != "string" || t === "" || !$u(t)) return t;
 	let n = e.replace(/\/+$/, "");
 	return n === "" ? t : n + t;
 }
-function $l(e, t) {
+function td(e, t) {
 	if (typeof t != "string" || t.trim() === "") return t;
 	let n = [];
 	for (let r of t.split(",")) {
 		let t = r.trim();
 		if (t === "") continue;
 		let i = t.search(/\s/), a = i === -1 ? t : t.slice(0, i), o = i === -1 ? "" : t.slice(i);
-		n.push(String(Ql(e, a)) + o);
+		n.push(String(ed(e, a)) + o);
 	}
 	return n.length > 0 ? n.join(", ") : t;
 }
 //#endregion
 //#region src/composables/useImageSrc.ts
-function eu() {
-	let e = Le();
+function nd() {
+	let e = zt();
 	return {
-		imgSrc: (t) => Ql(e.value, t),
-		imgSrcset: (t) => $l(e.value, t)
+		imgSrc: (t) => ed(e.value, t),
+		imgSrcset: (t) => td(e.value, t)
 	};
 }
 //#endregion
 //#region src/components/player/UpNext.vue?vue&type=script&setup=true&lang.ts
-var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { class: "upnext__eyebrow" }, au = { class: "upnext__title" }, ou = {
+var rd = ["aria-label"], id = ["src"], ad = { class: "upnext__body" }, od = { class: "upnext__eyebrow" }, sd = { class: "upnext__title" }, cd = {
 	key: 0,
 	class: "upnext__cd numeric"
-}, su = { class: "upnext__actions" }, cu = {
+}, ld = { class: "upnext__actions" }, ud = {
 	key: 1,
 	class: "upnext__ring",
 	viewBox: "0 0 36 36",
 	"aria-hidden": "true"
-}, lu = ["r"], uu = [
+}, dd = ["r"], fd = [
 	"r",
 	"stroke-dasharray",
 	"stroke-dashoffset"
-], du = /*#__PURE__*/ J(/* @__PURE__ */ d({
+], pd = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "UpNext",
 	props: {
 		media: {},
@@ -6623,7 +8447,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 	},
 	emits: ["play-now", "cancel"],
 	setup(e, { emit: t }) {
-		let { t: n } = Y(), { imgSrc: i } = eu(), c = e, l = t, d = r(() => c.posterUrl ?? c.media.poster_url ?? null), f = r(() => Rl(c.remaining, c.total));
+		let { t: n } = X(), { imgSrc: i } = nd(), c = e, l = t, d = r(() => c.posterUrl ?? c.media.poster_url ?? null), f = r(() => Bu(c.remaining, c.total));
 		return (t, r) => (x(), o("aside", {
 			class: "upnext",
 			role: "region",
@@ -6635,29 +8459,29 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 				src: O(i)(d.value),
 				alt: "",
 				loading: "lazy"
-			}, null, 8, nu)) : a("", !0),
-			s("div", ru, [
-				s("p", iu, E(O(n)("player.upNext")), 1),
-				s("h4", au, E(e.media.name), 1),
-				e.counting ? (x(), o("p", ou, E(O(n)("player.startsIn", { seconds: Math.max(0, e.remaining) })), 1)) : a("", !0),
-				s("div", su, [s("button", {
+			}, null, 8, id)) : a("", !0),
+			s("div", ad, [
+				s("p", od, E(O(n)("player.upNext")), 1),
+				s("h4", sd, E(e.media.name), 1),
+				e.counting ? (x(), o("p", cd, E(O(n)("player.startsIn", { seconds: Math.max(0, e.remaining) })), 1)) : a("", !0),
+				s("div", ld, [s("button", {
 					type: "button",
 					class: "upnext__btn upnext__btn--amber",
 					onClick: r[0] ||= (e) => l("play-now")
-				}, [u(q, { name: "play" }), s("span", null, E(O(n)("player.playNow")), 1)]), s("button", {
+				}, [u(J, { name: "play" }), s("span", null, E(O(n)("player.playNow")), 1)]), s("button", {
 					type: "button",
 					class: "upnext__btn upnext__btn--ghost",
 					onClick: r[1] ||= (e) => l("cancel")
 				}, E(O(n)("player.cancel")), 1)])
 			]),
-			e.counting ? (x(), o("svg", cu, [s("circle", {
+			e.counting ? (x(), o("svg", ud, [s("circle", {
 				cx: "18",
 				cy: "18",
 				r: O(15),
 				fill: "none",
 				stroke: "rgba(255, 255, 255, 0.2)",
 				"stroke-width": "3"
-			}, null, 8, lu), s("circle", {
+			}, null, 8, dd), s("circle", {
 				cx: "18",
 				cy: "18",
 				r: O(15),
@@ -6665,40 +8489,40 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 				stroke: "var(--accent)",
 				"stroke-width": "3",
 				"stroke-linecap": "round",
-				"stroke-dasharray": O(Ll),
+				"stroke-dasharray": O(zu),
 				"stroke-dashoffset": f.value,
 				transform: "rotate(-90 18 18)"
-			}, null, 8, uu)])) : a("", !0)
-		], 8, tu));
+			}, null, 8, fd)])) : a("", !0)
+		], 8, rd));
 	}
-}), [["__scopeId", "data-v-9115aa2b"]]), fu = {
+}), [["__scopeId", "data-v-9115aa2b"]]), md = {
 	class: "transcode",
 	role: "alert"
-}, pu = { class: "transcode__card" }, mu = { class: "transcode__heading" }, hu = { class: "transcode__body" }, gu = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, hd = { class: "transcode__card" }, gd = { class: "transcode__heading" }, _d = { class: "transcode__body" }, vd = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "TranscodeNotice",
 	props: { title: {} },
 	emits: ["back"],
 	setup(e, { emit: t }) {
-		let n = t, { t: r } = Y();
-		return (t, i) => (x(), o("div", fu, [s("div", pu, [
-			u(q, {
+		let n = t, { t: r } = X();
+		return (t, i) => (x(), o("div", md, [s("div", hd, [
+			u(J, {
 				name: "alert",
 				class: "transcode__icon"
 			}),
-			s("h3", mu, E(O(r)("player.transcodeHeading")), 1),
-			s("p", hu, E(e.title ? O(r)("player.transcodeBodyTitled", { title: e.title }) : O(r)("player.transcodeBodyUntitled")), 1),
+			s("h3", gd, E(O(r)("player.transcodeHeading")), 1),
+			s("p", _d, E(e.title ? O(r)("player.transcodeBodyTitled", { title: e.title }) : O(r)("player.transcodeBodyUntitled")), 1),
 			s("button", {
 				type: "button",
 				class: "transcode__back",
 				onClick: i[0] ||= (e) => n("back")
-			}, [u(q, { name: "arrow-left" }), s("span", null, E(O(r)("player.goBack")), 1)])
+			}, [u(J, { name: "arrow-left" }), s("span", null, E(O(r)("player.goBack")), 1)])
 		])]));
 	}
-}), [["__scopeId", "data-v-8a5efb50"]]), _u = {
+}), [["__scopeId", "data-v-8a5efb50"]]), yd = {
 	class: "prep",
 	role: "status",
 	"aria-live": "polite"
-}, vu = { class: "prep__card" }, yu = { class: "prep__heading" }, bu = { class: "prep__body" }, xu = ["aria-valuenow"], Su = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, bd = { class: "prep__card" }, xd = { class: "prep__heading" }, Sd = { class: "prep__body" }, Cd = ["aria-valuenow"], wd = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "TranscodePreparing",
 	props: {
 		title: {},
@@ -6706,14 +8530,14 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 	},
 	emits: ["back"],
 	setup(e) {
-		let t = e, { t: n } = Y(), r = () => Math.max(0, Math.min(100, Math.round(t.progress ?? 0)));
-		return (t, i) => (x(), o("div", _u, [s("div", vu, [
-			u(q, {
+		let t = e, { t: n } = X(), r = () => Math.max(0, Math.min(100, Math.round(t.progress ?? 0)));
+		return (t, i) => (x(), o("div", yd, [s("div", bd, [
+			u(J, {
 				name: "spinner",
 				class: "prep__spinner"
 			}),
-			s("h3", yu, E(O(n)("player.transcodePreparingHeading")), 1),
-			s("p", bu, E(e.title ? O(n)("player.transcodePreparingTitled", { title: e.title }) : O(n)("player.transcodePreparingUntitled")), 1),
+			s("h3", xd, E(O(n)("player.transcodePreparingHeading")), 1),
+			s("p", Sd, E(e.title ? O(n)("player.transcodePreparingTitled", { title: e.title }) : O(n)("player.transcodePreparingUntitled")), 1),
 			s("div", {
 				class: "prep__bar",
 				role: "progressbar",
@@ -6723,15 +8547,15 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			}, [s("div", {
 				class: "prep__bar-fill",
 				style: _({ width: r() + "%" })
-			}, null, 4)], 8, xu),
+			}, null, 4)], 8, Cd),
 			s("button", {
 				type: "button",
 				class: "prep__back",
 				onClick: i[0] ||= (e) => t.$emit("back")
-			}, [u(q, { name: "arrow-left" }), s("span", null, E(O(n)("player.goBack")), 1)])
+			}, [u(J, { name: "arrow-left" }), s("span", null, E(O(n)("player.goBack")), 1)])
 		])]));
 	}
-}), [["__scopeId", "data-v-e3ea0ebf"]]), Cu = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-e3ea0ebf"]]), Td = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "SkipButton",
 	props: {
 		position: {},
@@ -6740,7 +8564,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 	},
 	emits: ["skip"],
 	setup(e, { emit: t }) {
-		let c = e, l = t, { t: d } = Y();
+		let c = e, l = t, { t: d } = X();
 		function f(e, t) {
 			return !!t && t.end > t.start && e >= t.start && e < t.end;
 		}
@@ -6760,11 +8584,11 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 				type: "button",
 				class: "skip",
 				onClick: L(m, ["stop"])
-			}, [s("span", null, E(p.value.label), 1), u(q, { name: "skip-forward" })])) : a("", !0)]),
+			}, [s("span", null, E(p.value.label), 1), u(J, { name: "skip-forward" })])) : a("", !0)]),
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-d3fc1b53"]]), wu = ["aria-label"], Tu = ["aria-label", "onClick"], Eu = { class: "skip-controls__label" }, Du = 5, Ou = 30, ku = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-d3fc1b53"]]), Ed = ["aria-label"], Dd = ["aria-label", "onClick"], Od = { class: "skip-controls__label" }, kd = 5, Ad = 30, jd = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "SkipControls",
 	props: {
 		position: {},
@@ -6772,7 +8596,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 	},
 	emits: ["skip"],
 	setup(t, { emit: n }) {
-		let i = t, c = n, { t: l } = Y();
+		let i = t, c = n, { t: l } = X();
 		function d(e) {
 			return e / 1e3;
 		}
@@ -6781,7 +8605,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 		}
 		function p(e, t) {
 			if (f(e, t)) return !1;
-			let n = d(e.startMs), r = n - Du, i = n + Ou;
+			let n = d(e.startMs), r = n - kd, i = n + Ad;
 			return t >= r && t < i;
 		}
 		let m = [
@@ -6811,15 +8635,15 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			class: "skip-controls__btn",
 			"aria-label": `Skip ${h(e.type)}`,
 			onClick: L((t) => _(e), ["stop"])
-		}, [s("span", Eu, E(h(e.type)), 1), u(q, { name: "skip-forward" })], 8, Tu))), 128))], 8, wu)) : a("", !0);
+		}, [s("span", Od, E(h(e.type)), 1), u(J, { name: "skip-forward" })], 8, Dd))), 128))], 8, Ed)) : a("", !0);
 	}
-}), [["__scopeId", "data-v-acac8ee3"]]), Au = ["aria-label", "aria-expanded"], ju = ["aria-label"], Mu = { class: "chapterlist__head" }, Nu = { class: "chapterlist__title" }, Pu = ["aria-label"], Fu = ["onClick"], Iu = { class: "chapterlist__index" }, Lu = { class: "chapterlist__name" }, Ru = { class: "chapterlist__meta" }, zu = { class: "chapterlist__time" }, Bu = {
+}), [["__scopeId", "data-v-acac8ee3"]]), Md = ["aria-label", "aria-expanded"], Nd = ["aria-label"], Pd = { class: "chapterlist__head" }, Fd = { class: "chapterlist__title" }, Id = ["aria-label"], Ld = ["onClick"], Rd = { class: "chapterlist__index" }, zd = { class: "chapterlist__name" }, Bd = { class: "chapterlist__meta" }, Vd = { class: "chapterlist__time" }, Hd = {
 	key: 0,
 	class: "chapterlist__duration"
-}, Vu = {
+}, Ud = {
 	key: 1,
 	class: "chapterlist__empty"
-}, Hu = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, Wd = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "ChapterList",
 	props: {
 		chapters: { default: () => [] },
@@ -6830,7 +8654,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 	},
 	emits: ["update:open", "seek"],
 	setup(t, { emit: n }) {
-		let i = t, c = n, { t: l } = Y();
+		let i = t, c = n, { t: l } = X();
 		function d() {
 			c("update:open", !1);
 		}
@@ -6838,8 +8662,8 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			c("update:open", !i.open);
 		}
 		let p = r(() => i.chapters.map((e, t) => {
-			let n = t + 1, r = e.title?.trim() || `Chapter ${n}`, i = Ca(e.start), a;
-			return e.end != null && e.end > e.start && (a = Ca(e.end - e.start)), {
+			let n = t + 1, r = e.title?.trim() || `Chapter ${n}`, i = Eo(e.start), a;
+			return e.end != null && e.end > e.start && (a = Eo(e.end - e.start)), {
 				chapter: e,
 				label: r,
 				startLabel: i,
@@ -6847,7 +8671,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 				index: n
 			};
 		})), m = S(null), h = S(null);
-		Fo(h, D(i, "open"), {
+		Ls(h, D(i, "open"), {
 			lockScroll: !1,
 			onEscape: () => (d(), !0)
 		});
@@ -6873,7 +8697,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			"aria-haspopup": "dialog",
 			"aria-expanded": t.open,
 			onClick: f
-		}, [u(q, { name: "list" })], 10, Au), t.open ? (x(), o("div", {
+		}, [u(J, { name: "list" })], 10, Md), t.open ? (x(), o("div", {
 			key: 0,
 			ref_key: "panelEl",
 			ref: h,
@@ -6882,7 +8706,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			"aria-modal": "true",
 			"aria-label": O(l)("player.chapterList"),
 			tabindex: "-1"
-		}, [s("div", Mu, [s("h3", Nu, E(O(l)("player.chapters")), 1), u(wo, {
+		}, [s("div", Pd, [s("h3", Fd, E(O(l)("player.chapters")), 1), u(Es, {
 			name: "x",
 			label: O(l)("common.close"),
 			size: "sm",
@@ -6902,20 +8726,20 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			class: "chapterlist__row",
 			onClick: (t) => y(e.chapter)
 		}, [
-			s("span", Iu, E(e.index), 1),
-			s("span", Lu, E(e.label), 1),
-			s("span", Ru, [s("span", zu, E(e.startLabel), 1), e.durationLabel ? (x(), o("span", Bu, "· " + E(e.durationLabel), 1)) : a("", !0)])
-		], 8, Fu)]))), 128))], 8, Pu)) : (x(), o("p", Vu, E(O(l)("player.noChapters")), 1))], 8, ju)) : a("", !0)], 512));
+			s("span", Rd, E(e.index), 1),
+			s("span", zd, E(e.label), 1),
+			s("span", Bd, [s("span", Vd, E(e.startLabel), 1), e.durationLabel ? (x(), o("span", Hd, "· " + E(e.durationLabel), 1)) : a("", !0)])
+		], 8, Ld)]))), 128))], 8, Id)) : (x(), o("p", Ud, E(O(l)("player.noChapters")), 1))], 8, Nd)) : a("", !0)], 512));
 	}
-}), [["__scopeId", "data-v-177e91a7"]]), Uu = {
+}), [["__scopeId", "data-v-177e91a7"]]), Gd = {
 	key: 0,
 	class: "marker-timeline__ad-badge",
 	"aria-live": "polite"
-}, Wu = { class: "marker-timeline__ticks" }, Gu = [
+}, Kd = { class: "marker-timeline__ticks" }, qd = [
 	"title",
 	"aria-label",
 	"onClick"
-], Ku = { class: "marker-timeline__tooltip" }, qu = { class: "marker-timeline__tooltip-label" }, Ju = { class: "marker-timeline__tooltip-time numeric" }, Yu = ["onClick"], Xu = /*#__PURE__*/ J(/* @__PURE__ */ d({
+], Jd = { class: "marker-timeline__tooltip" }, Yd = { class: "marker-timeline__tooltip-label" }, Xd = { class: "marker-timeline__tooltip-time numeric" }, Zd = ["onClick"], Qd = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "MarkerTimeline",
 	props: {
 		position: {},
@@ -6958,7 +8782,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			key: 0,
 			class: g(["marker-timeline", { "is-ad-active": h.value }]),
 			"aria-label": "Marker timeline"
-		}, [h.value ? (x(), o("div", Uu, [n[0] ||= s("svg", {
+		}, [h.value ? (x(), o("div", Gd, [n[0] ||= s("svg", {
 			width: "12",
 			height: "12",
 			viewBox: "0 0 24 24",
@@ -6966,7 +8790,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			stroke: "currentColor",
 			"stroke-width": "2.5",
 			"aria-hidden": "true"
-		}, [s("polygon", { points: "5,3 19,12 5,21" })], -1), l(" " + E(v.value), 1)])) : a("", !0), s("div", Wu, [(x(!0), o(e, null, C(p.value, (e) => (x(), o("button", {
+		}, [s("polygon", { points: "5,3 19,12 5,21" })], -1), l(" " + E(v.value), 1)])) : a("", !0), s("div", Kd, [(x(!0), o(e, null, C(p.value, (e) => (x(), o("button", {
 			key: e.id,
 			type: "button",
 			class: g(["marker-timeline__tick", { "is-ad": e.isAd }]),
@@ -6974,27 +8798,27 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 				left: `${e.ratio * 100}%`,
 				"--tick-color": e.color
 			}),
-			title: `${e.label} — ${O(Ca)(e.startSec)}`,
-			"aria-label": `${e.label} at ${O(Ca)(e.startSec)}`,
+			title: `${e.label} — ${O(Eo)(e.startSec)}`,
+			"aria-label": `${e.label} at ${O(Eo)(e.startSec)}`,
 			onClick: L((t) => y(e), ["stop"])
-		}, [s("span", Ku, [
-			s("span", qu, E(e.label), 1),
-			s("span", Ju, E(O(Ca)(e.startSec)), 1),
+		}, [s("span", Jd, [
+			s("span", Yd, E(e.label), 1),
+			s("span", Xd, E(O(Eo)(e.startSec)), 1),
 			s("button", {
 				type: "button",
 				class: "marker-timeline__similar-btn",
 				onClick: L((t) => b(e), ["stop"])
-			}, " Find similar ", 8, Yu)
-		])], 14, Gu))), 128))])], 2)) : a("", !0);
+			}, " Find similar ", 8, Zd)
+		])], 14, qd))), 128))])], 2)) : a("", !0);
 	}
-}), [["__scopeId", "data-v-52c56b64"]]), Zu = ["aria-label", "aria-expanded"], Qu = {
+}), [["__scopeId", "data-v-52c56b64"]]), $d = ["aria-label", "aria-expanded"], ef = {
 	key: 0,
 	class: "sleep-timer__remaining numeric"
-}, $u = ["aria-label"], ed = ["aria-selected", "onClick"], td = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, tf = ["aria-label"], nf = ["aria-selected", "onClick"], rf = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "SleepTimer",
 	props: { onExpire: { type: Function } },
 	setup(t, { expose: i }) {
-		let c = t, { t: l } = Y(), d = [
+		let c = t, { t: l } = X(), d = [
 			{
 				label: "Off",
 				value: 0
@@ -7055,7 +8879,7 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 			"aria-expanded": T.value,
 			"aria-haspopup": "listbox",
 			onClick: D
-		}, [u(q, { name: "moon" }), m.value ? (x(), o("span", Qu, E(w(p.value)), 1)) : a("", !0)], 10, Zu), u(n, { name: "dropdown" }, {
+		}, [u(J, { name: "moon" }), m.value ? (x(), o("span", ef, E(w(p.value)), 1)) : a("", !0)], 10, $d), u(n, { name: "dropdown" }, {
 			default: P(() => [T.value ? (x(), o("ul", {
 				key: 0,
 				class: "sleep-timer__menu",
@@ -7067,11 +8891,30 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 				role: "option",
 				"aria-selected": f.value === e.value,
 				onClick: (t) => k(e.value)
-			}, E(e.label), 11, ed)), 64))], 8, $u)) : a("", !0)]),
+			}, E(e.label), 11, nf)), 64))], 8, tf)) : a("", !0)]),
 			_: 1
 		})], 2));
 	}
-}), [["__scopeId", "data-v-a0b86647"]]), X = {
+}), [["__scopeId", "data-v-a0b86647"]]), af = {
+	wsUrl: null,
+	wsPath: null
+}, of = /^wss?:\/\/[^/?#@]+$/i, sf = /^\/[^?#]*$/;
+function cf(e) {
+	if (typeof e != "object" || !e) return af;
+	let t = e;
+	if (typeof t.wsUrl != "string" || !of.test(t.wsUrl)) return af;
+	let n = typeof t.wsPath == "string" && sf.test(t.wsPath) ? t.wsPath.replace(/\/+$/, "") : null;
+	return {
+		wsUrl: t.wsUrl,
+		wsPath: n
+	};
+}
+function lf() {
+	return typeof window > "u" ? af : cf(window.__PHLIX__);
+}
+//#endregion
+//#region node_modules/@phlix/syncplay/dist/phlix-syncplay.js
+var Z = {
 	GROUP_CREATE: "syncplay_group_create",
 	GROUP_JOIN: "syncplay_group_join",
 	GROUP_LEAVE: "syncplay_group_leave",
@@ -7092,8 +8935,8 @@ var tu = ["aria-label"], nu = ["src"], ru = { class: "upnext__body" }, iu = { cl
 	ERROR: "syncplay_error",
 	INFO: "syncplay_info"
 };
-X.GROUP_CREATE, X.GROUP_JOIN, X.GROUP_LEAVE, X.GROUP_STATE, X.GROUP_LIST, X.PLAYBACK_PLAY, X.PLAYBACK_PAUSE, X.PLAYBACK_SEEK, X.PLAYBACK_QUEUE, X.PLAYBACK_SYNC, X.CHAT, X.TYPING, X.HOST_TRANSFER, X.HOST_ELECT, X.TIME_PING, X.TIME_PONG, X.TIME_SYNC, X.ERROR, X.INFO;
-function nd(e, t, n) {
+Z.GROUP_CREATE, Z.GROUP_JOIN, Z.GROUP_LEAVE, Z.GROUP_STATE, Z.GROUP_LIST, Z.PLAYBACK_PLAY, Z.PLAYBACK_PAUSE, Z.PLAYBACK_SEEK, Z.PLAYBACK_QUEUE, Z.PLAYBACK_SYNC, Z.CHAT, Z.TYPING, Z.HOST_TRANSFER, Z.HOST_ELECT, Z.TIME_PING, Z.TIME_PONG, Z.TIME_SYNC, Z.ERROR, Z.INFO;
+function uf(e, t, n) {
 	return {
 		...t,
 		type: e,
@@ -7101,7 +8944,7 @@ function nd(e, t, n) {
 		timestamp: n()
 	};
 }
-function rd(e) {
+function df(e) {
 	let t = e;
 	if (typeof e == "string") try {
 		t = JSON.parse(e);
@@ -7122,10 +8965,10 @@ function rd(e) {
 	}
 	return n;
 }
-function id(e) {
+function ff(e) {
 	return JSON.stringify(e);
 }
-var ad = .1, od = .99, sd = 1.01, cd = class {
+var pf = .1, mf = .99, hf = 1.01, gf = class {
 	samples = [];
 	driftRate = 1;
 	now;
@@ -7190,7 +9033,7 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 		let t = e[0], n = e[e.length - 1], r = n.timestamp - t.timestamp;
 		if (r <= 0) return;
 		let i = (n.offset - t.offset) / r;
-		this.driftRate = 1 + ad * i / 1e3, this.driftRate = Math.min(sd, Math.max(od, this.driftRate));
+		this.driftRate = 1 + pf * i / 1e3, this.driftRate = Math.min(hf, Math.max(mf, this.driftRate));
 	}
 	getDriftRate() {
 		return this.driftRate;
@@ -7216,7 +9059,7 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 			sampleCount: this.samples.length
 		};
 	}
-}, ld = class e {
+}, _f = class e {
 	send;
 	now;
 	memberId;
@@ -7226,7 +9069,7 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 	group = null;
 	lastPingSendTime = null;
 	constructor(e) {
-		this.options = e, this.send = e.send, this.now = e.now, this.memberId = e.memberId, this.memberName = e.memberName ?? "User", this.timeSync = new cd(e.now);
+		this.options = e, this.send = e.send, this.now = e.now, this.memberId = e.memberId, this.memberName = e.memberName ?? "User", this.timeSync = new gf(e.now);
 	}
 	getTimeSync() {
 		return this.timeSync;
@@ -7249,7 +9092,7 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 			member_id: this.memberId,
 			member_name: this.memberName
 		};
-		t !== void 0 && (n.password_hash = t), this.dispatch(X.GROUP_CREATE, n);
+		t !== void 0 && (n.password_hash = t), this.dispatch(Z.GROUP_CREATE, n);
 	}
 	joinGroup(e, t) {
 		let n = {
@@ -7257,16 +9100,16 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 			member_id: this.memberId,
 			member_name: this.memberName
 		};
-		t !== void 0 && (n.password_hash = t), this.dispatch(X.GROUP_JOIN, n);
+		t !== void 0 && (n.password_hash = t), this.dispatch(Z.GROUP_JOIN, n);
 	}
 	leaveGroup() {
-		this.group !== null && (this.dispatch(X.GROUP_LEAVE, {
+		this.group !== null && (this.dispatch(Z.GROUP_LEAVE, {
 			group_id: this.group.group_id,
 			member_id: this.memberId
 		}), this.group = null);
 	}
 	sendPlay(e) {
-		this.group !== null && this.dispatch(X.PLAYBACK_PLAY, {
+		this.group !== null && this.dispatch(Z.PLAYBACK_PLAY, {
 			group_id: this.group.group_id,
 			member_id: this.memberId,
 			position: e,
@@ -7274,7 +9117,7 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 		});
 	}
 	sendPause(e) {
-		this.group !== null && this.dispatch(X.PLAYBACK_PAUSE, {
+		this.group !== null && this.dispatch(Z.PLAYBACK_PAUSE, {
 			group_id: this.group.group_id,
 			member_id: this.memberId,
 			position: e,
@@ -7282,7 +9125,7 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 		});
 	}
 	sendSeek(e, t) {
-		this.group !== null && this.dispatch(X.PLAYBACK_SEEK, {
+		this.group !== null && this.dispatch(Z.PLAYBACK_SEEK, {
 			group_id: this.group.group_id,
 			member_id: this.memberId,
 			from_position: e,
@@ -7291,7 +9134,7 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 		});
 	}
 	reportPosition(e, t) {
-		this.group !== null && this.dispatch(X.PLAYBACK_SYNC, {
+		this.group !== null && this.dispatch(Z.PLAYBACK_SYNC, {
 			group_id: this.group.group_id,
 			member_id: this.memberId,
 			position: e,
@@ -7301,55 +9144,55 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 	}
 	pingTime() {
 		let e = this.now();
-		this.lastPingSendTime = e, this.dispatch(X.TIME_PING, { client_time: e });
+		this.lastPingSendTime = e, this.dispatch(Z.TIME_PING, { client_time: e });
 	}
 	onDisconnect() {
 		this.timeSync.reset(), this.group = null, this.lastPingSendTime = null, this.options.onDisconnect?.();
 	}
 	handleIncoming(e) {
-		let t = rd(e);
+		let t = df(e);
 		if (t !== null) switch (t.type) {
-			case X.TIME_PONG:
+			case Z.TIME_PONG:
 				this.handleTimePong(t);
 				break;
-			case X.GROUP_STATE:
+			case Z.GROUP_STATE:
 				this.handleGroupState(t);
 				break;
-			case X.PLAYBACK_PLAY:
+			case Z.PLAYBACK_PLAY:
 				this.handlePlayback("play", t);
 				break;
-			case X.PLAYBACK_PAUSE:
+			case Z.PLAYBACK_PAUSE:
 				this.handlePlayback("pause", t);
 				break;
-			case X.PLAYBACK_SEEK:
+			case Z.PLAYBACK_SEEK:
 				this.handleSeek(t);
 				break;
-			case X.HOST_ELECT:
+			case Z.HOST_ELECT:
 				this.handleHostElect(t);
 				break;
-			case X.INFO:
+			case Z.INFO:
 				this.handleInfo(t);
 				break;
-			case X.ERROR:
+			case Z.ERROR:
 				this.handleError(t);
 				break;
-			case X.TYPING:
+			case Z.TYPING:
 				this.handleTyping(t);
 				break;
-			case X.HOST_TRANSFER:
+			case Z.HOST_TRANSFER:
 				this.handleHostTransfer(t);
 				break;
-			case X.PLAYBACK_SYNC:
+			case Z.PLAYBACK_SYNC:
 				this.handlePlaybackSync(t);
 				break;
-			case X.TIME_SYNC:
+			case Z.TIME_SYNC:
 				this.handleTimeSync(t);
 				break;
-			case X.GROUP_LIST:
+			case Z.GROUP_LIST:
 				this.handleGroupList(t);
 				break;
-			case X.CHAT:
-			case X.PLAYBACK_QUEUE: break;
+			case Z.CHAT:
+			case Z.PLAYBACK_QUEUE: break;
 			default:
 				this.options.onUnknownFrame?.(t);
 				break;
@@ -7461,25 +9304,25 @@ var ad = .1, od = .99, sd = 1.01, cd = class {
 		this.options.onGroupList?.(n);
 	}
 	dispatch(e, t) {
-		this.send(nd(e, t, this.now));
+		this.send(uf(e, t, this.now));
 	}
 };
 //#endregion
 //#region src/api/syncplay.ts
-function ud(e, t = 0) {
+function vf(e, t = 0) {
 	return typeof e == "number" && Number.isFinite(e) ? e : typeof e == "string" && e.trim() !== "" && Number.isFinite(Number(e)) ? Number(e) : t;
 }
-function dd(e) {
+function yf(e) {
 	return e / 1e3;
 }
-function fd(e) {
-	let t = ud(e, 0);
+function bf(e) {
+	let t = vf(e, 0);
 	return (/* @__PURE__ */ new Date((t > 0 ? t : Date.now() / 1e3) * 1e3)).toISOString();
 }
-function pd(e) {
+function xf(e) {
 	return e.group_id ?? e.id ?? "";
 }
-function md(e) {
+function Sf(e) {
 	let t = e?.members;
 	return t ? (Array.isArray(t) ? t : Object.entries(t).map(([e, t]) => ({
 		id: e,
@@ -7490,182 +9333,188 @@ function md(e) {
 		profileId: 0,
 		role: e.is_host === !0 ? "owner" : "contributor",
 		isOnline: !0,
-		lastSeen: fd(e.joined_at)
+		lastSeen: bf(e.joined_at)
 	})) : [];
 }
-function hd(e) {
+function Cf(e) {
 	switch (e.playback_state) {
 		case "playing": return "playing";
 		case "paused": return "paused";
 		default: return e.is_playing === !0 ? "playing" : "waiting";
 	}
 }
-function gd(e) {
-	let t = e ?? {}, n = pd(t);
+function wf(e) {
+	let t = e ?? {}, n = xf(t);
 	return {
 		id: n,
 		name: t.group_name ?? t.name ?? "",
 		isPublic: t.has_password !== !0,
-		memberCount: ud(t.member_count, md(t).length),
+		memberCount: vf(t.member_count, Sf(t).length),
 		roomId: n,
 		hostUserId: t.host_id ?? void 0,
-		createdAt: fd(t.created_at)
+		createdAt: bf(t.created_at)
 	};
 }
-function _d(e) {
-	let t = e ?? {}, n = pd(t), r = hd(t);
+function Tf(e) {
+	let t = e ?? {}, n = xf(t), r = Cf(t);
 	return {
 		id: n,
 		roomId: n,
 		serverId: "",
 		createdBy: t.host_id ?? "",
-		createdAt: fd(t.created_at),
+		createdAt: bf(t.created_at),
 		state: r,
 		currentMediaId: t.current_media_id ?? null,
-		playbackPosition: dd(ud(t.playback_position)),
+		playbackPosition: yf(vf(t.playback_position)),
 		playbackRate: +(r === "playing"),
-		serverTime: ud(t.last_activity_at, Math.floor(Date.now() / 1e3)),
-		lastSync: fd(t.last_activity_at),
-		activeUsers: md(t),
-		roles: Object.fromEntries(md(t).map((e) => [e.id, e.role])),
+		serverTime: vf(t.last_activity_at, Math.floor(Date.now() / 1e3)),
+		lastSync: bf(t.last_activity_at),
+		activeUsers: Sf(t),
+		roles: Object.fromEntries(Sf(t).map((e) => [e.id, e.role])),
 		permissions: {}
 	};
 }
-var vd = class {
+var Ef = class {
 	client;
 	constructor(e) {
-		this.client = new ke({
+		this.client = new jt({
 			baseUrl: e,
-			tokenStore: typeof window < "u" ? new ve() : void 0
+			tokenStore: typeof window < "u" ? new mt() : void 0
 		});
 	}
 	async createRoom(e) {
-		return gd((await this.client.post("/api/v1/syncplay/groups", e)).group);
+		return wf((await this.client.post("/api/v1/syncplay/groups", e)).group);
 	}
 	async joinRoom(e, t) {
 		let n = t !== void 0 && t !== "" ? { memberName: t } : void 0, r = await this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/join`, n);
 		return {
-			room: gd(r.group),
-			session: _d(r.group)
+			room: wf(r.group),
+			session: Tf(r.group)
 		};
 	}
 	async leaveRoom(e) {
 		await this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/leave`);
 	}
 	async getState(e) {
-		return _d((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
+		return Tf((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
 	}
 	async getMembers(e) {
-		return md((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
+		return Sf((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
 	}
 	async listGroups() {
 		let e = await this.client.get("/api/v1/syncplay/groups");
-		return Array.isArray(e.groups) ? e.groups.map(gd) : [];
+		return Array.isArray(e.groups) ? e.groups.map(wf) : [];
 	}
 	async listPublicRooms() {
 		return (await this.listGroups()).filter((e) => e.isPublic);
 	}
-}, yd = null, bd = null;
-function xd(e) {
-	return (!yd || bd !== e) && (yd = new vd(e), bd = e), yd;
+}, Df = null, Of = null;
+function kf(e) {
+	return (!Df || Of !== e) && (Df = new Ef(e), Of = e), Df;
 }
-var Z = null, Q = null, Sd = 0, Cd = 5, wd = 1e3, $ = null, Td = null, Ed = null, Dd = null;
-function Od() {
+var Af = {
+	log: () => {},
+	warn: () => {},
+	error: () => {}
+}, Q = null, jf = null, Mf = 0, Nf = 5, Pf = 1e3, $ = null, Ff = null, If = null, Lf = null;
+function Rf() {
 	try {
-		return typeof window > "u" ? null : new ve().getAccessToken();
+		return typeof window > "u" ? null : new mt().getAccessToken();
 	} catch {
 		return null;
 	}
 }
-function kd(e) {
-	let t = typeof window < "u" ? window.location.hostname : "localhost";
-	return `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${t}:8097?room=${encodeURIComponent(e)}`;
+function zf(e) {
+	let t = lf();
+	if (t.wsUrl !== null) return `${t.wsUrl}${t.wsPath ?? ""}?room=${encodeURIComponent(e)}`;
+	let n = typeof window < "u" ? window.location.hostname : "localhost";
+	return `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${n}:8097?room=${encodeURIComponent(e)}`;
 }
-function Ad() {
-	let e = Od();
+function Bf() {
+	let e = Rf();
 	return e ? ["bearer", e] : void 0;
 }
-function jd(e) {
+function Vf(e) {
 	if ($) try {
 		let t = JSON.parse(e.data);
 		$.handleIncoming(t);
 	} catch {}
 }
-function Md(e) {
-	if (!(e && e.target !== Z)) if (Z = null, $ && $.onDisconnect(), Q && Sd < Cd) {
-		let e = wd * 2 ** Sd;
-		Sd++, console.log(`[SyncPlay] WebSocket closed, reconnecting in ${e}ms (attempt ${Sd})`), setTimeout(() => {
-			Q && Pd(Q);
+function Hf(e) {
+	if (!(e && e.target !== Q)) if (Q = null, $ && $.onDisconnect(), jf && Mf < Nf) {
+		let e = Pf * 2 ** Mf;
+		Mf++, Af.log(`[SyncPlay] WebSocket closed, reconnecting in ${e}ms (attempt ${Mf})`), setTimeout(() => {
+			jf && Wf(jf);
 		}, e);
-	} else Sd >= Cd && (console.warn("[SyncPlay] Max reconnect attempts reached, giving up"), Q = null, Sd = 0, $ = null);
+	} else Mf >= Nf && (Af.warn("[SyncPlay] Max reconnect attempts reached, giving up"), jf = null, Mf = 0, $ = null);
 }
-function Nd(e, t, n, r) {
-	Sd = 0, Pd(e, t, n, r);
+function Uf(e, t, n, r) {
+	Mf = 0, Wf(e, t, n, r);
 }
-function Pd(e, t, n, r) {
-	if (t && (Dd = t), Z && Q !== e) {
-		let e = Z;
-		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), Z = null, Q = null, $ = null;
+function Wf(e, t, n, r) {
+	if (t && (Lf = t), Q && jf !== e) {
+		let e = Q;
+		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), Q = null, jf = null, $ = null;
 	}
-	if (Z && Q === e) return;
-	Q = e;
-	let i = n ?? Td ?? `member_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, a = r ?? Ed ?? "Anonymous";
-	Td = i, Ed = a, $ = new ld({
+	if (Q && jf === e) return;
+	jf = e;
+	let i = n ?? Ff ?? `member_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, a = r ?? If ?? "Anonymous";
+	Ff = i, If = a, $ = new _f({
 		send: (e) => {
-			Z && Z.readyState === WebSocket.OPEN && Z.send(id(e));
+			Q && Q.readyState === WebSocket.OPEN && Q.send(ff(e));
 		},
 		now: () => Date.now(),
 		memberId: i,
 		memberName: a,
 		onPlaybackCommand: (e) => {
-			Dd && Dd({
+			Lf && Lf({
 				type: e.type,
-				position: dd(e.position),
-				roomId: Q ?? void 0
+				position: yf(e.position),
+				roomId: jf ?? void 0
 			});
 		},
 		onPlaybackSync: (e, t, n, r) => {
-			Dd && Dd({
+			Lf && Lf({
 				type: n ? "play" : "pause",
-				position: dd(t),
-				roomId: Q ?? void 0
+				position: yf(t),
+				roomId: jf ?? void 0
 			});
 		},
 		onDisconnect: () => {},
 		onError: (e, t) => {
-			console.error(`[SyncPlay] Error: ${e} - ${t}`);
+			Af.error(`[SyncPlay] Error: ${e} - ${t}`);
 		},
 		onInfo: (e) => {
-			console.log(`[SyncPlay] Info: ${e}`);
+			Af.log(`[SyncPlay] Info: ${e}`);
 		}
 	});
-	let o = kd(e);
-	console.log(`[SyncPlay] Opening WebSocket to ${o}`);
+	let o = zf(e);
+	Af.log(`[SyncPlay] Opening WebSocket to ${o}`);
 	let s;
 	try {
-		s = new WebSocket(o, Ad());
+		s = new WebSocket(o, Bf());
 	} catch (e) {
-		console.error("[SyncPlay] WebSocket constructor refused the handshake", e), Md();
+		Af.error("[SyncPlay] WebSocket constructor refused the handshake", e), Hf();
 		return;
 	}
-	Z = s, s.onopen = () => {
-		console.log("[SyncPlay] WebSocket connected"), Sd = 0, $ && Q && $.joinGroup(Q);
-	}, s.onmessage = jd, s.onclose = Md, s.onerror = (e) => {
-		console.error("[SyncPlay] WebSocket error", e);
+	Q = s, s.onopen = () => {
+		Af.log("[SyncPlay] WebSocket connected"), Mf = 0, $ && jf && $.joinGroup(jf);
+	}, s.onmessage = Vf, s.onclose = Hf, s.onerror = (e) => {
+		Af.error("[SyncPlay] WebSocket error", e);
 	};
 }
-function Fd() {
-	if (Z) {
-		let e = Z;
-		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), Z = null;
+function Gf() {
+	if (Q) {
+		let e = Q;
+		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), Q = null;
 	}
-	$ &&= ($.leaveGroup(), $.onDisconnect(), null), Q = null, Sd = 0;
+	$ &&= ($.leaveGroup(), $.onDisconnect(), null), jf = null, Mf = 0;
 }
-function Id(e) {
-	!$ || !Z || Z.readyState !== WebSocket.OPEN || $.reportPosition(e.playbackPosition, e.playbackRate > 0);
+function Kf(e) {
+	!$ || !Q || Q.readyState !== WebSocket.OPEN || $.reportPosition(e.playbackPosition, e.playbackRate > 0);
 }
-function Ld(e) {
-	if (!(!$ || !Z || Z.readyState !== WebSocket.OPEN)) switch (e.type) {
+function qf(e) {
+	if (!(!$ || !Q || Q.readyState !== WebSocket.OPEN)) switch (e.type) {
 		case "play":
 			$.sendPlay(e.position ?? 0);
 			break;
@@ -7678,9 +9527,9 @@ function Ld(e) {
 		case "sync": e.position !== void 0 && $.reportPosition(e.position, !0);
 	}
 }
-var Rd = 5e3;
-function zd() {
-	let e = Be().user;
+var Jf = 5e3;
+function Yf() {
+	let e = Ht().user;
 	if (e) {
 		for (let t of [
 			e.name,
@@ -7689,7 +9538,7 @@ function zd() {
 		]) if (typeof t == "string" && t.trim() !== "") return t.trim();
 	}
 }
-var Bd = R("phlix-syncplay", () => {
+var Xf = R("phlix-syncplay", () => {
 	let e = S(null), t = S(null), n = S(null), i = S([]), a = S(null), o = S(!1), s = S(0), c = 0, l = null, u = r(() => t.value !== null), d = r(() => t.value ? t.value.state === "playing" || t.value.state === "paused" : !1), f = r(() => i.value.filter((e) => e.isOnline)), p = r(() => {
 		let e = t.value;
 		if (!e || e.state === "paused" || e.state === "waiting") return 0;
@@ -7702,7 +9551,7 @@ var Bd = R("phlix-syncplay", () => {
 			_();
 			return;
 		}
-		e.state === "playing" && Id({
+		e.state === "playing" && Kf({
 			sessionId: e.id,
 			playbackPosition: s.value * 1e3,
 			playbackRate: e.playbackRate > 0 ? e.playbackRate : 1,
@@ -7711,7 +9560,7 @@ var Bd = R("phlix-syncplay", () => {
 		});
 	}
 	function g() {
-		_(), l = setInterval(h, Rd);
+		_(), l = setInterval(h, Jf);
 	}
 	function _() {
 		l !== null && (clearInterval(l), l = null);
@@ -7731,20 +9580,20 @@ var Bd = R("phlix-syncplay", () => {
 			...e.value ?? {},
 			...o,
 			currentSession: s
-		}, i.value = s.activeUsers, Nd(n, (e) => {
+		}, i.value = s.activeUsers, Uf(n, (e) => {
 			T(e);
 		}, void 0, a), g();
 	}
 	async function x(t, n) {
 		o.value = !0, a.value = null;
 		try {
-			let r = xd(t), i = zd(), a = await r.createRoom({
+			let r = kf(t), i = Yf(), a = await r.createRoom({
 				...n,
 				memberName: i
 			});
 			e.value = a, b(a.id, await r.joinRoom(a.id, i), i);
 		} catch (e) {
-			throw a.value = e instanceof Error ? e.message : "Failed to create room", e;
+			throw a.value = e instanceof Error ? e.message : "Failed to create the room", e;
 		} finally {
 			o.value = !1;
 		}
@@ -7752,10 +9601,10 @@ var Bd = R("phlix-syncplay", () => {
 	async function C(e, t) {
 		o.value = !0, a.value = null;
 		try {
-			let n = xd(e), r = zd();
+			let n = kf(e), r = Yf();
 			b(t, await n.joinRoom(t, r), r);
 		} catch (e) {
-			throw a.value = e instanceof Error ? e.message : "Failed to join room", e;
+			throw a.value = e instanceof Error ? e.message : "Failed to join the room", e;
 		} finally {
 			o.value = !1;
 		}
@@ -7764,9 +9613,9 @@ var Bd = R("phlix-syncplay", () => {
 		if (e.value) {
 			o.value = !0, a.value = null;
 			try {
-				await xd(n).leaveRoom(e.value.id), _(), Fd(), e.value = null, t.value = null, i.value = [];
+				await kf(n).leaveRoom(e.value.id), _(), Gf(), e.value = null, t.value = null, i.value = [];
 			} catch (e) {
-				throw a.value = e instanceof Error ? e.message : "Failed to leave room", e;
+				throw a.value = e instanceof Error ? e.message : "Failed to leave the room", e;
 			} finally {
 				o.value = !1;
 			}
@@ -7809,7 +9658,7 @@ var Bd = R("phlix-syncplay", () => {
 		}
 	}
 	function E(e, n, r) {
-		t.value && Ld({
+		t.value && qf({
 			type: n,
 			position: r?.position === void 0 ? void 0 : r.position * 1e3,
 			rate: r?.rate,
@@ -7819,7 +9668,7 @@ var Bd = R("phlix-syncplay", () => {
 	}
 	async function D(e) {
 		if (t.value) try {
-			let n = await xd(e).getState(t.value.id);
+			let n = await kf(e).getState(t.value.id);
 			t.value = n, c = Date.now();
 		} catch (e) {
 			throw a.value = e instanceof Error ? e.message : "Failed to refresh state", e;
@@ -7827,7 +9676,7 @@ var Bd = R("phlix-syncplay", () => {
 	}
 	async function O(t) {
 		if (e.value) try {
-			let n = await xd(t).getMembers(e.value.id);
+			let n = await kf(t).getMembers(e.value.id);
 			i.value = n;
 		} catch (e) {
 			throw a.value = e instanceof Error ? e.message : "Failed to refresh members", e;
@@ -7864,17 +9713,17 @@ var Bd = R("phlix-syncplay", () => {
 		applyPendingPlayMedia: v,
 		consumePendingPlayMedia: y
 	};
-}), Vd = {
+}), Zf = {
 	key: 0,
 	class: "syncplay-overlay"
-}, Hd = { class: "syncplay-overlay__badge" }, Ud = { class: "syncplay-overlay__label" }, Wd = { class: "syncplay-overlay__status-label" }, Gd = { class: "syncplay-overlay__members" }, Kd = { class: "syncplay-overlay__member-count" }, qd = { class: "syncplay-overlay__member-list" }, Jd = { class: "syncplay-overlay__member-name" }, Yd = {
+}, Qf = { class: "syncplay-overlay__badge" }, $f = { class: "syncplay-overlay__label" }, ep = { class: "syncplay-overlay__status-label" }, tp = { class: "syncplay-overlay__members" }, np = { class: "syncplay-overlay__member-count" }, rp = { class: "syncplay-overlay__member-list" }, ip = { class: "syncplay-overlay__member-name" }, ap = {
 	key: 0,
 	class: "syncplay-overlay__member syncplay-overlay__member--more"
-}, Xd = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, op = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "SyncPlayOverlay",
 	props: { apiBase: {} },
 	setup(t) {
-		let n = t, { t: i } = Y(), c = Bd(), d = Le(), f = r(() => n.apiBase ?? d.value), p = r(() => c.currentRoom?.name ?? "SyncPlay"), m = r(() => c.onlineMembers.length), h = r(() => c.syncStatus), _ = r(() => {
+		let n = t, { t: i } = X(), c = Xf(), d = zt(), f = r(() => n.apiBase ?? d.value), p = r(() => c.currentRoom?.name ?? "SyncPlay"), m = r(() => c.onlineMembers.length), h = r(() => c.syncStatus), _ = r(() => {
 			switch (h.value) {
 				case "synced": return i("syncplay.synced");
 				case "outOfSync": return i("syncplay.outOfSync");
@@ -7892,20 +9741,20 @@ var Bd = R("phlix-syncplay", () => {
 		async function y() {
 			await c.leaveRoom(f.value);
 		}
-		return (t, n) => O(c).isInRoom ? (x(), o("div", Vd, [
-			s("div", Hd, [u(q, {
+		return (t, n) => O(c).isInRoom ? (x(), o("div", Zf, [
+			s("div", Qf, [u(J, {
 				name: "user",
 				class: "syncplay-overlay__icon"
-			}), s("span", Ud, "SyncPlay: " + E(p.value), 1)]),
-			s("div", { class: g(["syncplay-overlay__status", `syncplay-overlay__status--${h.value}`]) }, [u(q, {
+			}), s("span", $f, "SyncPlay: " + E(p.value), 1)]),
+			s("div", { class: g(["syncplay-overlay__status", `syncplay-overlay__status--${h.value}`]) }, [u(J, {
 				name: v.value,
 				class: "syncplay-overlay__status-icon"
-			}, null, 8, ["name"]), s("span", Wd, E(_.value), 1)], 2),
-			s("div", Gd, [s("span", Kd, [u(q, { name: "user" }), l(" " + E(O(i)("syncplay.members", { count: m.value })), 1)]), s("ul", qd, [(x(!0), o(e, null, C(O(c).onlineMembers.slice(0, 5), (e) => (x(), o("li", {
+			}, null, 8, ["name"]), s("span", ep, E(_.value), 1)], 2),
+			s("div", tp, [s("span", np, [u(J, { name: "user" }), l(" " + E(O(i)("syncplay.members", { count: m.value })), 1)]), s("ul", rp, [(x(!0), o(e, null, C(O(c).onlineMembers.slice(0, 5), (e) => (x(), o("li", {
 				key: e.id,
 				class: "syncplay-overlay__member"
-			}, [n[0] ||= s("span", { class: "syncplay-overlay__member-dot" }, null, -1), s("span", Jd, E(e.name), 1)]))), 128)), O(c).onlineMembers.length > 5 ? (x(), o("li", Yd, " +" + E(O(c).onlineMembers.length - 5) + " more ", 1)) : a("", !0)])]),
-			u(jc, {
+			}, [n[0] ||= s("span", { class: "syncplay-overlay__member-dot" }, null, -1), s("span", ip, E(e.name), 1)]))), 128)), O(c).onlineMembers.length > 5 ? (x(), o("li", ap, " +" + E(O(c).onlineMembers.length - 5) + " more ", 1)) : a("", !0)])]),
+			u(Nl, {
 				variant: "ghost",
 				size: "sm",
 				onClick: y
@@ -7915,30 +9764,30 @@ var Bd = R("phlix-syncplay", () => {
 			})
 		])) : a("", !0);
 	}
-}), [["__scopeId", "data-v-3f63f0ac"]]), Zd = ["aria-label"], Qd = ["aria-checked", "tabindex"], $d = ["aria-checked", "tabindex"], ef = {
+}), [["__scopeId", "data-v-3f63f0ac"]]), sp = ["aria-label"], cp = ["aria-checked", "tabindex"], lp = ["aria-checked", "tabindex"], up = {
 	key: 0,
 	class: "syncplay-modal__fields"
-}, tf = { class: "syncplay-modal__field" }, nf = {
+}, dp = { class: "syncplay-modal__field" }, fp = {
 	class: "syncplay-modal__label",
 	for: "room-name"
-}, rf = ["placeholder"], af = {
+}, pp = ["placeholder"], mp = {
 	key: 1,
 	class: "syncplay-modal__fields"
-}, of = { class: "syncplay-modal__field" }, sf = {
+}, hp = { class: "syncplay-modal__field" }, gp = {
 	class: "syncplay-modal__label",
 	for: "room-id"
-}, cf = ["placeholder"], lf = {
+}, _p = ["placeholder"], vp = {
 	key: 2,
 	class: "syncplay-modal__error",
 	role: "alert"
-}, uf = {
+}, yp = {
 	key: 3,
 	class: "syncplay-modal__rooms"
-}, df = { class: "syncplay-modal__rooms-title" }, ff = { class: "syncplay-modal__rooms-list" }, pf = ["onClick"], mf = { class: "syncplay-modal__room-name" }, hf = { class: "syncplay-modal__room-count" }, gf = {
+}, bp = { class: "syncplay-modal__rooms-title" }, xp = { class: "syncplay-modal__rooms-list" }, Sp = ["onClick"], Cp = { class: "syncplay-modal__room-name" }, wp = { class: "syncplay-modal__room-count" }, Tp = {
 	key: 4,
 	class: "syncplay-modal__loading",
 	role: "status"
-}, _f = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, Ep = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "SyncPlayModal",
 	props: {
 		modelValue: { type: Boolean },
@@ -7947,7 +9796,7 @@ var Bd = R("phlix-syncplay", () => {
 	},
 	emits: ["update:modelValue", "joined"],
 	setup(t, { emit: n }) {
-		let c = t, d = n, { t: f } = Y(), p = Bd(), m = Le(), h = r(() => c.apiBase ?? m.value), _ = S("create"), v = S(null), y = S(null);
+		let c = t, d = n, { t: f } = X(), p = Xf(), m = zt(), h = r(() => c.apiBase ?? m.value), _ = S("create"), v = S(null), y = S(null);
 		function b(e) {
 			switch (e.key) {
 				case "ArrowLeft":
@@ -7965,7 +9814,7 @@ var Bd = R("phlix-syncplay", () => {
 		async function B() {
 			M.value = !0;
 			try {
-				let e = new vd(h.value);
+				let e = new Ef(h.value);
 				A.value = await e.listPublicRooms();
 			} catch {
 				A.value = [];
@@ -7991,21 +9840,21 @@ var Bd = R("phlix-syncplay", () => {
 		function H() {
 			d("update:modelValue", !1);
 		}
-		return (n, r) => (x(), i(Dc, {
+		return (n, r) => (x(), i(kl, {
 			"model-value": t.modelValue,
 			title: O(f)("syncplay.title"),
 			size: "md",
 			"onUpdate:modelValue": r[4] ||= (e) => d("update:modelValue", e),
 			onClose: H
 		}, {
-			footer: P(() => [u(jc, {
+			footer: P(() => [u(Nl, {
 				variant: "ghost",
 				type: "button",
 				onClick: H
 			}, {
 				default: P(() => [l(E(O(f)("common.close")), 1)]),
 				_: 1
-			}), u(jc, {
+			}), u(Nl, {
 				variant: "solid",
 				type: "button",
 				loading: D.value,
@@ -8033,7 +9882,7 @@ var Bd = R("phlix-syncplay", () => {
 					"aria-checked": _.value === "create",
 					tabindex: _.value === "create" ? 0 : -1,
 					onClick: r[0] ||= (e) => _.value = "create"
-				}, E(O(f)("syncplay.createRoom")), 11, Qd), s("button", {
+				}, E(O(f)("syncplay.createRoom")), 11, cp), s("button", {
 					ref_key: "joinOptionEl",
 					ref: y,
 					type: "button",
@@ -8042,24 +9891,24 @@ var Bd = R("phlix-syncplay", () => {
 					"aria-checked": _.value === "join",
 					tabindex: _.value === "join" ? 0 : -1,
 					onClick: r[1] ||= (e) => _.value = "join"
-				}, E(O(f)("syncplay.joinRoom")), 11, $d)], 40, Zd),
-				_.value === "create" ? (x(), o("div", ef, [s("div", tf, [s("label", nf, E(O(f)("syncplay.roomName")), 1), F(s("input", {
+				}, E(O(f)("syncplay.joinRoom")), 11, lp)], 40, sp),
+				_.value === "create" ? (x(), o("div", up, [s("div", dp, [s("label", fp, E(O(f)("syncplay.roomName")), 1), F(s("input", {
 					id: "room-name",
 					"onUpdate:modelValue": r[2] ||= (e) => w.value = e,
 					type: "text",
 					class: "syncplay-modal__input",
 					placeholder: O(f)("syncplay.roomNamePlaceholder"),
 					autocomplete: "off"
-				}, null, 8, rf), [[j, w.value]])])])) : (x(), o("div", af, [s("div", of, [s("label", sf, E(O(f)("syncplay.roomId")), 1), F(s("input", {
+				}, null, 8, pp), [[j, w.value]])])])) : (x(), o("div", mp, [s("div", hp, [s("label", gp, E(O(f)("syncplay.roomId")), 1), F(s("input", {
 					id: "room-id",
 					"onUpdate:modelValue": r[3] ||= (e) => T.value = e,
 					type: "text",
 					class: "syncplay-modal__input",
 					placeholder: O(f)("syncplay.roomIdPlaceholder"),
 					autocomplete: "off"
-				}, null, 8, cf), [[j, T.value]])])])),
-				k.value ? (x(), o("p", lf, E(k.value), 1)) : a("", !0),
-				_.value === "join" && A.value.length > 0 ? (x(), o("div", uf, [s("h3", df, E(O(f)("syncplay.publicRooms")), 1), s("ul", ff, [(x(!0), o(e, null, C(A.value, (e) => (x(), o("li", {
+				}, null, 8, _p), [[j, T.value]])])])),
+				k.value ? (x(), o("p", vp, E(k.value), 1)) : a("", !0),
+				_.value === "join" && A.value.length > 0 ? (x(), o("div", yp, [s("h3", bp, E(O(f)("syncplay.publicRooms")), 1), s("ul", xp, [(x(!0), o(e, null, C(A.value, (e) => (x(), o("li", {
 					key: e.id,
 					class: "syncplay-modal__room"
 				}, [s("button", {
@@ -8067,22 +9916,22 @@ var Bd = R("phlix-syncplay", () => {
 					class: "syncplay-modal__room-btn",
 					onClick: (t) => V(e)
 				}, [
-					u(q, {
+					u(J, {
 						name: "user",
 						class: "syncplay-modal__room-icon"
 					}),
-					s("span", mf, E(e.name), 1),
-					s("span", hf, E(O(f)("syncplay.members", { count: e.memberCount })), 1)
-				], 8, pf)]))), 128))])])) : a("", !0),
-				M.value ? (x(), o("div", gf, [u(q, { name: "spinner" }), s("span", null, E(O(f)("common.loading")), 1)])) : a("", !0)
+					s("span", Cp, E(e.name), 1),
+					s("span", wp, E(O(f)("syncplay.members", { count: e.memberCount })), 1)
+				], 8, Sp)]))), 128))])])) : a("", !0),
+				M.value ? (x(), o("div", Tp, [u(J, { name: "spinner" }), s("span", null, E(O(f)("common.loading")), 1)])) : a("", !0)
 			], 32)]),
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-fc76bfb0"]]), vf = {
+}), [["__scopeId", "data-v-fc76bfb0"]]), Dp = {
 	key: 0,
 	class: "syncplay-controls"
-}, yf = ["aria-label"], bf = { class: "syncplay-controls__wait-label" }, xf = { class: "syncplay-controls__transport" }, Sf = ["aria-label"], Cf = ["aria-label"], wf = ["aria-label"], Tf = { class: "syncplay-controls__status-label" }, Ef = 10, Df = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, Op = ["aria-label"], kp = { class: "syncplay-controls__wait-label" }, Ap = { class: "syncplay-controls__transport" }, jp = ["aria-label"], Mp = ["aria-label"], Np = ["aria-label"], Pp = { class: "syncplay-controls__status-label" }, Fp = 10, Ip = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "SyncPlayControls",
 	props: {
 		position: {},
@@ -8097,7 +9946,7 @@ var Bd = R("phlix-syncplay", () => {
 		"pause"
 	],
 	setup(e, { emit: t }) {
-		let n = e, i = t, { t: c } = Y(), l = Bd(), d = Le(), f = r(() => n.apiBase ?? d.value), p = S(!1), m = r(() => p.value || l.syncStatus === "re-syncing");
+		let n = e, i = t, { t: c } = X(), l = Xf(), d = zt(), f = r(() => n.apiBase ?? d.value), p = S(!1), m = r(() => p.value || l.syncStatus === "re-syncing");
 		async function h() {
 			if (l.isInRoom) try {
 				await l.sendCommand(f.value, "play"), i("play");
@@ -8123,58 +9972,58 @@ var Bd = R("phlix-syncplay", () => {
 			}
 		}
 		async function b() {
-			await y(Math.max(0, n.position - Ef));
+			await y(Math.max(0, n.position - Fp));
 		}
 		async function C() {
-			await y(Math.min(n.duration, n.position + Ef));
+			await y(Math.min(n.duration, n.position + Fp));
 		}
 		return N(() => l.syncStatus, (e) => {
 			e === "re-syncing" ? p.value = !0 : e === "synced" && (p.value = !1);
-		}), (t, n) => O(l).isInRoom ? (x(), o("div", vf, [
+		}), (t, n) => O(l).isInRoom ? (x(), o("div", Dp, [
 			m.value ? (x(), o("div", {
 				key: 0,
 				class: "syncplay-controls__wait",
 				role: "status",
 				"aria-label": O(c)("syncplay.waitingForMembers")
-			}, [u(q, {
+			}, [u(J, {
 				name: "spinner",
 				class: "syncplay-controls__wait-icon"
-			}), s("span", bf, E(O(c)("syncplay.waitingForMembers")), 1)], 8, yf)) : a("", !0),
-			s("div", xf, [
+			}), s("span", kp, E(O(c)("syncplay.waitingForMembers")), 1)], 8, Op)) : a("", !0),
+			s("div", Ap, [
 				s("button", {
 					type: "button",
 					class: "syncplay-controls__btn",
 					"aria-label": O(c)("syncplay.rewind"),
 					onClick: b
-				}, [u(q, { name: "rewind" })], 8, Sf),
+				}, [u(J, { name: "rewind" })], 8, jp),
 				s("button", {
 					type: "button",
 					class: "syncplay-controls__btn syncplay-controls__btn--primary",
 					"aria-label": e.isPlaying ? O(c)("syncplay.pauseAll") : O(c)("syncplay.playAll"),
 					onClick: v
-				}, [u(q, { name: e.isPlaying ? "pause" : "play" }, null, 8, ["name"])], 8, Cf),
+				}, [u(J, { name: e.isPlaying ? "pause" : "play" }, null, 8, ["name"])], 8, Mp),
 				s("button", {
 					type: "button",
 					class: "syncplay-controls__btn",
 					"aria-label": O(c)("syncplay.fastForward"),
 					onClick: C
-				}, [u(q, { name: "forward" })], 8, wf)
+				}, [u(J, { name: "forward" })], 8, Np)
 			]),
-			s("div", { class: g(["syncplay-controls__status", `syncplay-controls__status--${O(l).syncStatus}`]) }, [u(q, {
+			s("div", { class: g(["syncplay-controls__status", `syncplay-controls__status--${O(l).syncStatus}`]) }, [u(J, {
 				name: O(l).syncStatus === "synced" ? "check" : O(l).syncStatus === "outOfSync" ? "alert" : "spinner",
 				class: "syncplay-controls__status-icon"
-			}, null, 8, ["name"]), s("span", Tf, E(O(l).syncStatus === "synced" ? O(c)("syncplay.synced") : O(l).syncStatus === "outOfSync" ? O(c)("syncplay.outOfSync") : O(c)("syncplay.reSyncing")), 1)], 2)
+			}, null, 8, ["name"]), s("span", Pp, E(O(l).syncStatus === "synced" ? O(c)("syncplay.synced") : O(l).syncStatus === "outOfSync" ? O(c)("syncplay.outOfSync") : O(c)("syncplay.reSyncing")), 1)], 2)
 		])) : a("", !0);
 	}
 }), [["__scopeId", "data-v-3df5b737"]]);
 //#endregion
 //#region src/utils/subtitleSrc.ts
-function Of(e, t) {
-	return String(Ql(e, t));
+function Lp(e, t) {
+	return String(ed(e, t));
 }
-function kf(e, t) {
+function Rp(e, t) {
 	let n = !1, r = t.map((t) => {
-		let r = Of(e, t.url);
+		let r = Lp(e, t.url);
 		return r === t.url ? t : (n = !0, {
 			...t,
 			url: r
@@ -8184,41 +10033,41 @@ function kf(e, t) {
 }
 //#endregion
 //#region src/components/Player.vue?vue&type=script&setup=true&lang.ts
-var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
+var zp = { class: "player__stage" }, Bp = ["src", "poster"], Vp = [
 	"src",
 	"srclang",
 	"label"
-], Nf = { class: "player__meta" }, Pf = ["aria-label"], Ff = { class: "player__meta-text" }, If = { class: "player__eyebrow" }, Lf = { class: "player__title" }, Rf = { class: "player__sub numeric" }, zf = {
+], Hp = { class: "player__meta" }, Up = ["aria-label"], Wp = { class: "player__meta-text" }, Gp = { class: "player__eyebrow" }, Kp = { class: "player__title" }, qp = { class: "player__sub numeric" }, Jp = {
 	key: 0,
 	class: "player__dot",
 	"aria-hidden": "true"
-}, Bf = {
+}, Yp = {
 	key: 0,
 	class: "player__center"
-}, Vf = ["aria-label"], Hf = ["aria-label"], Uf = ["aria-label"], Wf = { class: "player__btnrow" }, Gf = ["aria-label"], Kf = ["aria-label"], qf = ["aria-label"], Jf = { class: "player__time numeric" }, Yf = ["aria-label", "aria-pressed"], Xf = ["title"], Zf = ["aria-label"], Qf = ["aria-label"], $f = ["aria-label", "aria-pressed"], ep = ["aria-label", "aria-pressed"], tp = ["aria-label"], np = { class: "similar-modal" }, rp = {
+}, Xp = ["aria-label"], Zp = ["aria-label"], Qp = ["aria-label"], $p = { class: "player__btnrow" }, em = ["aria-label"], tm = ["aria-label"], nm = ["aria-label"], rm = { class: "player__time numeric" }, im = ["aria-label", "aria-pressed"], am = ["title"], om = ["aria-label"], sm = ["aria-label"], cm = ["aria-label", "aria-pressed"], lm = ["aria-label", "aria-pressed"], um = ["aria-label"], dm = { class: "similar-modal" }, fm = {
 	key: 0,
 	class: "similar-modal__loading",
 	role: "status",
 	"aria-busy": "true"
-}, ip = {
+}, pm = {
 	key: 1,
 	class: "similar-modal__state",
 	role: "alert"
-}, ap = { class: "similar-modal__state-title" }, op = {
+}, mm = { class: "similar-modal__state-title" }, hm = {
 	key: 2,
 	class: "similar-modal__state",
 	role: "status"
-}, sp = {
+}, gm = {
 	key: 3,
 	class: "similar-modal__results"
-}, cp = { class: "similar-modal__poster" }, lp = ["src", "alt"], up = {
+}, _m = { class: "similar-modal__poster" }, vm = ["src", "alt"], ym = {
 	key: 1,
 	class: "similar-modal__poster-fallback",
 	"aria-hidden": "true"
-}, dp = { class: "similar-modal__result-body" }, fp = { class: "similar-modal__result-title" }, pp = {
+}, bm = { class: "similar-modal__result-body" }, xm = { class: "similar-modal__result-title" }, Sm = {
 	key: 0,
 	class: "similar-modal__result-meta numeric"
-}, mp = { key: 0 }, hp = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, Cm = { key: 0 }, wm = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "Player",
 	props: {
 		media: {},
@@ -8248,12 +10097,12 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 		"pending-media"
 	],
 	setup(t, { emit: n }) {
-		let { imgSrc: c } = eu(), d = t, p = n, m = ue(), _ = ne(), { t: b } = Y(), w = Bd(), T = Ye(), D = r(() => T.isFavorite(d.media.id)), k = r(() => T.likeLevel(d.media.id));
+		let { imgSrc: c } = nd(), d = t, p = n, m = ue(), _ = ne(), { t: b } = X(), w = Xf(), T = Zt(), D = r(() => T.isFavorite(d.media.id)), k = r(() => T.likeLevel(d.media.id));
 		function A() {
-			T.toggleFavorite(d.media.id, ve());
+			T.toggleFavorite(d.media.id, _e());
 		}
 		function j(e) {
-			T.setLike(d.media.id, e, ve());
+			T.setLike(d.media.id, e, _e());
 		}
 		let M = [
 			.25,
@@ -8264,183 +10113,183 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 			1.5,
 			1.75,
 			2
-		], F = S(null), I = S(null), R = S(null), z = S(!0), B = S(!1), ee = S(!1), V = S(!1), H = S(!1), te = S(!1), re = S(!1), ie = S(null), ae = S(null), oe = S(!1), se = Ae(), ce = S(!1);
+		], F = S(null), I = S(null), R = S(null), z = S(!0), B = S(!1), ee = S(!1), V = S(!1), H = S(!1), te = S(!1), re = S(!1), ie = S(null), ae = S(null), oe = S(!1), se = Mt(), ce = S(!1);
 		function le(e) {
 			se.success(b("syncplay.joinedRoom", { name: e.name }));
 		}
-		let de = r(() => H.value ? 1.35 : 1), U = S(Ol(d.streamUrl, d.media.path)), fe = r(() => Wl(d.media.streams)), pe = 0;
+		let de = r(() => H.value ? 1.35 : 1), U = S(Au(d.streamUrl, d.media.path)), fe = r(() => Ku(d.media.streams)), pe = 0;
 		async function me() {
 			let e = ++pe;
 			if (U.value) return;
-			let t = await Xl([d.streamUrl, d.media.path], d.playbackAudioTracks ?? [], fe.value);
-			e === pe && (!t || U.value || (U.value = !0, Te(F.value?.currentTime ?? 0)));
+			let t = await Qu([d.streamUrl, d.media.path], d.playbackAudioTracks ?? [], fe.value);
+			e === pe && (!t || U.value || (U.value = !0, Ee(F.value?.currentTime ?? 0)));
 		}
 		N([() => d.playbackAudioTracks, fe], () => {
 			me();
 		}, { immediate: !0 });
-		let he = f("phlixConfig", null), ge = f("resumeReporter", null), _e = !1;
-		function ve() {
+		let he = f("phlixConfig", null), W = f("resumeReporter", null), ge = !1;
+		function _e() {
 			return he?.apiBase ?? "";
 		}
-		let W = vo({
+		let G = bs({
 			apiBase: () => d.apiBase ?? "",
 			hlsConfig: he?.playerHlsConfig
-		}), ye = So({ apiBase: () => d.apiBase ?? "" }), be = null;
-		function xe(e) {
-			be !== null && clearTimeout(be), be = setTimeout(() => {
-				be = null, ye.fetch(e);
+		}), ve = ws({ apiBase: () => d.apiBase ?? "" }), ye = null;
+		function be(e) {
+			ye !== null && clearTimeout(ye), ye = setTimeout(() => {
+				ye = null, ve.fetch(e);
 			}, 0);
 		}
-		let Se = r(() => d.thumbnailAt ?? ye.thumbnailAt), G = r(() => U.value ? void 0 : d.streamUrl), K = r(() => U.value && W.state.value !== "ready"), Ce = r(() => U.value && (W.state.value === "preparing" || W.state.value === "idle")), we = r(() => U.value && W.state.value === "error");
-		function Te(e = 0) {
-			let t = F.value, n = navigator.connection?.downlinkMax, r = uo(n);
-			t && W.start(t, d.media.id, r, e);
+		let xe = r(() => d.thumbnailAt ?? ve.thumbnailAt), Se = r(() => U.value ? void 0 : d.streamUrl), Ce = r(() => U.value && G.state.value !== "ready"), we = r(() => U.value && (G.state.value === "preparing" || G.state.value === "idle")), Te = r(() => U.value && G.state.value === "error");
+		function Ee(e = 0) {
+			let t = F.value, n = navigator.connection?.downlinkMax, r = ps(n);
+			t && G.start(t, d.media.id, r, e);
 		}
-		function Ee(e) {
+		function De(e) {
 			if (m.quality === "original" && e !== "auto") {
-				W.loadVariantPlaylist(fs);
+				G.loadVariantPlaylist(mc);
 				return;
 			}
 			if (typeof e == "string" && e !== "auto") {
-				W.loadVariantPlaylist(e);
+				G.loadVariantPlaylist(e);
 				return;
 			}
-			W.setLevel(e);
+			G.setLevel(e);
 		}
-		let De = !1;
-		function Oe() {
-			_.defaultQuality = ds;
+		let Oe = !1;
+		function ke() {
+			_.defaultQuality = pc;
 		}
-		function je() {
-			let e = W.levels.value;
+		function Ae() {
+			let e = G.levels.value;
 			if (e.length === 0) return !1;
 			let t = _.defaultQuality;
 			if (!t || t === "auto") return !0;
 			if (t === "original") {
-				let t = W.variants.value;
+				let t = G.variants.value;
 				if (!t || t.length === 0) return !1;
-				if (ys(e, t)) W.loadVariantPlaylist(fs);
+				if (xc(e, t)) G.loadVariantPlaylist(mc);
 				else {
-					let t = vs(e);
-					t >= 0 && W.setNextLevel(t), Oe();
+					let t = bc(e);
+					t >= 0 && G.setNextLevel(t), ke();
 				}
 				return !0;
 			}
-			let n = gs(e, t);
-			return n >= 0 ? W.setNextLevel(n) : Oe(), !0;
+			let n = vc(e, t);
+			return n >= 0 ? G.setNextLevel(n) : ke(), !0;
 		}
-		N(() => W.levels.value, (e) => {
-			De || e.length === 0 || je() && (De = !0);
-		}), N(() => W.variants.value, (e) => {
-			De || !e?.length || h(() => {
-				De || je() && (De = !0);
+		N(() => G.levels.value, (e) => {
+			Oe || e.length === 0 || Ae() && (Oe = !0);
+		}), N(() => G.variants.value, (e) => {
+			Oe || !e?.length || h(() => {
+				Oe || Ae() && (Oe = !0);
 			});
 		}, { deep: !0 });
-		let Me = S(m.resumePositionFor(d.media.id) ?? 0), Ne = S(!U.value && Me.value > 0), Pe = null, Fe = S(!1), Ie = S(8), Le, Re = S(null), ze = S(0), Be = S(!1), Ve = S([]), He = S(!1), Ue = S(null);
-		function We(e, t) {
-			Re.value = e, ze.value = t, Ve.value = [], Ue.value = null, Be.value = !0, Xe(e, t);
+		let je = S(m.resumePositionFor(d.media.id) ?? 0), Me = S(!U.value && je.value > 0), Ne = null, Pe = S(!1), Fe = S(8), Ie, Le = S(null), Re = S(0), ze = S(!1), Be = S([]), Ve = S(!1), He = S(null);
+		function Ue(e, t) {
+			Le.value = e, Re.value = t, Be.value = [], He.value = null, ze.value = !0, Je(e, t);
 		}
-		let Ge = null, Ke = null, qe = null;
-		function Je() {
+		let We = null, Ge = null, Ke = null;
+		function qe() {
 			let e = d.apiBase ?? "";
-			return (Ke === null || qe !== e) && (Ke = new ke({ baseUrl: e }), qe = e), Ke;
+			return (Ge === null || Ke !== e) && (Ge = new jt({ baseUrl: e }), Ke = e), Ge;
 		}
-		async function Xe(e, t) {
-			Ge?.abort(), Ge = new AbortController(), He.value = !0, Ue.value = null;
+		async function Je(e, t) {
+			We?.abort(), We = new AbortController(), Ve.value = !0, He.value = null;
 			try {
-				let n = await Je().searchByMarker(e, t, 30, 20, Ge.signal);
-				Ve.value = Array.isArray(n.items) ? n.items : [];
+				let n = await qe().searchByMarker(e, t, 30, 20, We.signal);
+				Be.value = Array.isArray(n.items) ? n.items : [];
 			} catch (e) {
 				if (e instanceof Error && e.name === "AbortError") return;
-				Ue.value = "Failed to load similar media. Please try again.", Ve.value = [];
+				He.value = "Failed to load similar media. Please try again.", Be.value = [];
 			} finally {
-				He.value = !1;
+				Ve.value = !1;
 			}
 		}
+		function Ye() {
+			We?.abort(), ze.value = !1, Be.value = [], He.value = null, Le.value = null;
+		}
+		let Xe = r(() => m.upNext);
 		function Ze() {
-			Ge?.abort(), Be.value = !1, Ve.value = [], Ue.value = null, Re.value = null;
+			U.value = Au(d.streamUrl, d.media.path), me(), je.value = m.resumePositionFor(d.media.id) ?? 0, Me.value = !U.value && je.value > 0, Ne = null, Wt = !1, At = !1, Dt.value = [], Et.value = !1, Nt = !1, q.value = -1, zt = null, Oe = !1, ge = !1, pt(), st = !1, ut = 0, lt = 0, tt(), Pe.value = !1, G.reset(), F.value && (F.value.currentTime = 0), U.value && Ee(), be(d.media.id);
 		}
-		let Qe = r(() => m.upNext);
-		function $e() {
-			U.value = Ol(d.streamUrl, d.media.path), me(), Me.value = m.resumePositionFor(d.media.id) ?? 0, Ne.value = !U.value && Me.value > 0, Pe = null, Kt = !1, Pt = !1, jt.value = [], At.value = !1, Ft = !1, Ct.value = -1, Vt = null, De = !1, _e = !1, ht(), lt = !1, ft = 0, dt = 0, rt(), Fe.value = !1, W.reset(), F.value && (F.value.currentTime = 0), U.value && Te(), xe(d.media.id);
-		}
-		function et(e) {
+		function Qe(e) {
 			let t = F.value;
-			t && (t.duration && t.duration > 0 ? t.currentTime = Math.min(t.duration, Math.max(0, e)) : Pe = Math.max(0, e));
+			t && (t.duration && t.duration > 0 ? t.currentTime = Math.min(t.duration, Math.max(0, e)) : Ne = Math.max(0, e));
+		}
+		function $e() {
+			Qe(je.value), Me.value = !1, F.value?.play()?.catch(() => {});
+		}
+		function et() {
+			Ne = null, Qe(0), m.clearResume(d.media.id), Me.value = !1, F.value?.play()?.catch(() => {});
 		}
 		function tt() {
-			et(Me.value), Ne.value = !1, F.value?.play()?.catch(() => {});
+			Ie &&= (clearInterval(Ie), void 0);
 		}
 		function nt() {
-			Pe = null, et(0), m.clearResume(d.media.id), Ne.value = !1, F.value?.play()?.catch(() => {});
-		}
-		function rt() {
-			Le &&= (clearInterval(Le), void 0);
-		}
-		function it() {
-			Ie.value = 8, rt(), Le = setInterval(() => {
-				--Ie.value, Ie.value <= 0 && (rt(), ot());
+			Fe.value = 8, tt(), Ie = setInterval(() => {
+				--Fe.value, Fe.value <= 0 && (tt(), it());
 			}, 1e3);
 		}
-		function at() {
-			_e || (_e = !0, ge?.finish()), En(), z.value = !0, m.upNext && (Fe.value = !0, _.autoplay && it());
+		function rt() {
+			ge || (ge = !0, W?.finish()), Tn(), z.value = !0, m.upNext && (Pe.value = !0, _.autoplay && nt());
 		}
-		function ot() {
-			rt(), Fe.value = !1;
+		function it() {
+			tt(), Pe.value = !1;
 			let e = m.next(d.streamUrlFor);
 			e && p("play-next", e);
 		}
-		function st() {
-			rt(), Fe.value = !1;
+		function at() {
+			tt(), Pe.value = !1;
 		}
-		function ct() {
+		function ot() {
 			if (U.value) return;
-			let e = F.value, t = Al(e) && (e?.currentTime ?? 0) === 0;
-			(kl(e) || t) && (pt(), ht(), U.value = !0, Te(e?.currentTime ?? 0));
+			let e = F.value, t = Mu(e) && (e?.currentTime ?? 0) === 0;
+			(ju(e) || t) && (dt(), pt(), U.value = !0, Ee(e?.currentTime ?? 0));
 		}
-		let lt = !1, ut = null, dt = 0, ft = 0;
-		function pt() {
-			if (lt) return;
-			lt = !0;
+		let st = !1, ct = null, lt = 0, ut = 0;
+		function dt() {
+			if (st) return;
+			st = !0;
 			let e = d.media?.id;
-			e != null && e !== "" && Je().get(`/api/v1/media/${encodeURIComponent(e)}/playback-info`, Nl({ videoCodec: fe.value })).catch(() => {});
+			e != null && e !== "" && qe().get(`/api/v1/media/${encodeURIComponent(e)}/playback-info`, Fu({ videoCodec: fe.value })).catch(() => {});
 		}
-		function mt() {
-			if (ut !== null || lt || U.value) return;
+		function ft() {
+			if (ct !== null || st || U.value) return;
 			let e = F.value;
-			e && (dt = Date.now(), ft = e.currentTime, ut = setTimeout(() => {
-				ut = null;
+			e && (lt = Date.now(), ut = e.currentTime, ct = setTimeout(() => {
+				ct = null;
 				let e = F.value;
-				!e || U.value || Pl(Date.now(), dt, e.currentTime, ft) && (pt(), U.value = !0, Te(e.currentTime));
-			}, jl));
+				!e || U.value || Iu(Date.now(), lt, e.currentTime, ut) && (dt(), U.value = !0, Ee(e.currentTime));
+			}, Nu));
 		}
-		function ht() {
-			ut !== null && (clearTimeout(ut), ut = null);
+		function pt() {
+			ct !== null && (clearTimeout(ct), ct = null);
 		}
-		let gt = S([]), _t = S([]), vt = S(-1), yt = S(!1), bt = r(() => W.state.value === "ready" && W.audioTracks.value.length > 0), xt = r(() => W.audioTracks.value.map((e) => ({
+		let mt = S([]), ht = S([]), gt = S(-1), _t = S(!1), vt = r(() => G.state.value === "ready" && G.audioTracks.value.length > 0), yt = r(() => G.audioTracks.value.map((e) => ({
 			index: e.index,
 			language: e.lang || `audio-${e.index}`,
 			label: e.name || `Audio ${e.index + 1}`,
 			kind: "audio"
-		}))), St = r(() => (d.playbackAudioTracks ?? []).map((e) => ({
+		}))), K = r(() => (d.playbackAudioTracks ?? []).map((e) => ({
 			index: e.index,
 			language: e.language || `audio-${e.index}`,
 			label: e.label,
 			kind: "audio"
-		}))), Ct = S(-1), wt = r(() => !bt.value && !U.value && _t.value.length === 0 && St.value.length > 1), Tt = r(() => bt.value ? xt.value : wt.value ? St.value : _t.value), Et = r(() => {
-			if (bt.value) return W.currentAudioTrack.value;
-			if (wt.value) {
-				if (Ct.value >= 0) return Ct.value;
+		}))), q = S(-1), bt = r(() => !vt.value && !U.value && ht.value.length === 0 && K.value.length > 1), xt = r(() => vt.value ? yt.value : bt.value ? K.value : ht.value), St = r(() => {
+			if (vt.value) return G.currentAudioTrack.value;
+			if (bt.value) {
+				if (q.value >= 0) return q.value;
 				let e = (d.playbackAudioTracks ?? []).find((e) => e.default);
 				return e ? e.index : d.playbackAudioTracks?.[0]?.index ?? 0;
 			}
-			return vt.value;
-		}), Dt = S(!1), Ot = m.subtitleLang, kt = r(() => {
-			let e = d.apiBase ?? "", t = U.value ? W.subtitleTracks.value : kf(e, d.playbackSubtitleTracks ?? []);
-			if (jt.value.length === 0) return t;
-			let n = (e) => e.url.split("?")[0], r = kf(e, jt.value), i = new Set(t.map(n)), a = r.filter((e) => !i.has(n(e)));
+			return gt.value;
+		}), Ct = S(!1), wt = m.subtitleLang, Tt = r(() => {
+			let e = d.apiBase ?? "", t = U.value ? G.subtitleTracks.value : Rp(e, d.playbackSubtitleTracks ?? []);
+			if (Dt.value.length === 0) return t;
+			let n = (e) => e.url.split("?")[0], r = Rp(e, Dt.value), i = new Set(t.map(n)), a = r.filter((e) => !i.has(n(e)));
 			return a.length === 0 ? t : [...t, ...a];
-		}), At = S(!1), jt = S([]), Mt = r(() => {
+		}), Et = S(!1), Dt = S([]), Ot = r(() => {
 			let e = [], t = (t) => {
 				if (!t) return;
 				let n = t.split("-")[0].toLowerCase();
@@ -8448,61 +10297,61 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 			};
 			return t(_.defaultSubtitleLang), t(_.defaultAudioLang), typeof navigator < "u" && t(navigator.language), t("en"), e;
 		});
-		function Nt(e) {
-			jt.value.some((t) => t.url === e.url) || (jt.value = [...jt.value, e]);
+		function kt(e) {
+			Dt.value.some((t) => t.url === e.url) || (Dt.value = [...Dt.value, e]);
 		}
-		let Pt = !1, Ft = !1;
-		function It() {
-			if (Pt) return;
+		let At = !1, Nt = !1;
+		function Pt() {
+			if (At) return;
 			if (_.subtitlePreferenceSet) {
-				Pt = !0;
+				At = !0;
 				return;
 			}
-			let e = kt.value.find((e) => e.default);
+			let e = Tt.value.find((e) => e.default);
 			if (!e) return;
-			let t = gt.value.find((t) => t.language === (e.language || e.label));
-			t && (m.setSubtitle(t.language), Ot = t.language, Pt = !0);
+			let t = mt.value.find((t) => t.language === (e.language || e.label));
+			t && (m.setSubtitle(t.language), wt = t.language, At = !0);
 		}
-		function Lt() {
-			if (Ft) return;
+		function Ft() {
+			if (Nt) return;
 			let e = _.defaultAudioLang;
 			if (!e) return;
-			let t = Tt.value;
+			let t = xt.value;
 			if (!t.length) return;
 			let n = t.findIndex((t) => t.language?.toLowerCase() === e.toLowerCase());
 			if (n < 0) return;
-			let r = Et.value;
-			r >= 0 && r < t.length || (Ht(n), Ft = !0);
+			let r = St.value;
+			r >= 0 && r < t.length || (Bt(n), Nt = !0);
 		}
-		let Rt = r(() => gt.value.some((e) => e.language === m.subtitleLang));
-		function zt() {
+		let It = r(() => mt.value.some((e) => e.language === m.subtitleLang));
+		function Lt() {
 			let e = F.value;
-			gt.value = Es(e), _t.value = Ds(e), vt.value = Ms(e), It(), Lt();
+			mt.value = Oc(e), ht.value = kc(e), gt.value = Pc(e), Pt(), Ft();
 		}
-		function Bt() {
-			if (Rt.value) Ot = m.subtitleLang, m.setSubtitle(null);
+		function Rt() {
+			if (It.value) wt = m.subtitleLang, m.setSubtitle(null);
 			else {
-				let e = Ot && gt.value.some((e) => e.language === Ot) ? Ot : gt.value[0]?.language ?? null;
+				let e = wt && mt.value.some((e) => e.language === wt) ? wt : mt.value[0]?.language ?? null;
 				m.setSubtitle(e);
 			}
 			p("captions");
 		}
-		let Vt = null;
-		function Ht(e) {
-			if (bt.value) W.setAudioTrack(e);
-			else if (wt.value) {
-				if (e === Et.value) return;
-				Ct.value = e, Vt = e, U.value = !0, Te(F.value?.currentTime ?? 0);
-			} else js(F.value, e), vt.value = e;
+		let zt = null;
+		function Bt(e) {
+			if (vt.value) G.setAudioTrack(e);
+			else if (bt.value) {
+				if (e === St.value) return;
+				q.value = e, zt = e, U.value = !0, Ee(F.value?.currentTime ?? 0);
+			} else Nc(F.value, e), gt.value = e;
 		}
-		N(bt, (e) => {
-			if (!e || Vt === null) return;
-			let t = Vt;
-			Vt = null, t >= 0 && t < W.audioTracks.value.length && W.setAudioTrack(t);
-		}), N(kt, () => {
-			h(() => zt());
+		N(vt, (e) => {
+			if (!e || zt === null) return;
+			let t = zt;
+			zt = null, t >= 0 && t < G.audioTracks.value.length && G.setAudioTrack(t);
+		}), N(Tt, () => {
+			h(() => Lt());
 		}, { deep: !0 });
-		let Ut = null, Wt, Gt = r(() => {
+		let Vt = null, Ht, Ut = r(() => {
 			let e = [];
 			d.media.year && e.push({ text: String(d.media.year) }), d.media.rating && e.push({
 				text: d.media.rating,
@@ -8510,101 +10359,101 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 			}), d.media.runtime && e.push({ text: `${d.media.runtime}m` });
 			let t = d.media.genres?.[0];
 			return t && e.push({ text: t }), e;
-		}), Kt = !1;
-		function qt() {
-			if (!d.autoplay || Kt || Ne.value || K.value) return;
+		}), Wt = !1;
+		function Gt() {
+			if (!d.autoplay || Wt || Me.value || Ce.value) return;
 			let e = F.value;
 			if (!e || !e.paused) return;
-			Kt = !0;
+			Wt = !0;
 			let t = e.play();
 			t && typeof t.then == "function" && t.catch((t) => {
 				t instanceof DOMException && t.name === "NotAllowedError" && (e.muted = !0, m.muted = !0, e.play()?.catch(() => {}));
 			});
 		}
-		function Jt() {
-			qt();
+		function Kt() {
+			Gt();
 		}
-		function Yt() {
+		function qt() {
 			d.prevEpisode && p("play-episode", d.prevEpisode);
 		}
-		function Xt() {
+		function Jt() {
 			d.nextEpisode && p("play-episode", d.nextEpisode);
 		}
-		function Zt() {
+		function Yt() {
 			let e = F.value;
 			e && (e.paused ? e.play()?.catch(() => {}) : e.pause());
 		}
-		function Qt(e) {
+		function Xt(e) {
 			try {
 				return e.buffered.length ? e.buffered.end(e.buffered.length - 1) : 0;
 			} catch {
 				return 0;
 			}
 		}
+		function Qt() {
+			m.play(), m.setMediaPositionState(), ft();
+		}
 		function $t() {
-			m.play(), m.setMediaPositionState(), mt();
+			m.pause(), m.setMediaPositionState();
 		}
 		function en() {
-			m.pause(), m.setMediaPositionState();
+			let e = F.value;
+			e && (ct !== null && e.currentTime > ut && pt(), m.updateProgress(e.currentTime, e.duration, Xt(e)), w.isInRoom && w.updateLocalPosition(e.currentTime));
 		}
 		function tn() {
 			let e = F.value;
-			e && (ut !== null && e.currentTime > ft && ht(), m.updateProgress(e.currentTime, e.duration, Qt(e)), w.isInRoom && w.updateLocalPosition(e.currentTime));
+			e && (e.volume = m.volume, e.muted = m.muted, e.playbackRate = m.rate, Ne !== null && (e.currentTime = e.duration ? Math.min(e.duration, Ne) : Ne, Ne = null), m.updateProgress(e.currentTime, e.duration, Xt(e)), m.setMediaPositionState(), Lt());
 		}
 		function nn() {
 			let e = F.value;
-			e && (e.volume = m.volume, e.muted = m.muted, e.playbackRate = m.rate, Pe !== null && (e.currentTime = e.duration ? Math.min(e.duration, Pe) : Pe, Pe = null), m.updateProgress(e.currentTime, e.duration, Qt(e)), m.setMediaPositionState(), zt());
+			e && m.updateProgress(e.currentTime, e.duration, Xt(e));
 		}
 		function rn() {
 			let e = F.value;
-			e && m.updateProgress(e.currentTime, e.duration, Qt(e));
+			e && (Math.abs(e.volume - m.volume) > .001 && m.setVolume(e.volume), e.muted !== m.muted && m.toggleMute());
 		}
 		function an() {
 			let e = F.value;
-			e && (Math.abs(e.volume - m.volume) > .001 && m.setVolume(e.volume), e.muted !== m.muted && m.toggleMute());
+			e && e.playbackRate !== m.rate && m.setRate(e.playbackRate), m.setMediaPositionState();
 		}
 		function on() {
-			let e = F.value;
-			e && e.playbackRate !== m.rate && m.setRate(e.playbackRate), m.setMediaPositionState();
+			m.setMediaPositionState();
 		}
 		function sn() {
 			m.setMediaPositionState();
 		}
-		function cn() {
-			m.setMediaPositionState();
-		}
-		function ln(e) {
+		function cn(e) {
 			let t = F.value;
 			t && m.duration > 0 && (t.currentTime = Math.min(m.duration, Math.max(0, e)));
 		}
-		function un(e) {
-			ln(m.position + e);
+		function ln(e) {
+			cn(m.position + e);
+		}
+		function un() {
+			ee.value = !0, Dn();
 		}
 		function dn() {
-			ee.value = !0, On();
+			ee.value = !1, Dn();
 		}
-		function fn() {
-			ee.value = !1, On();
-		}
-		function pn(e) {
+		function fn(e) {
 			let t = M.reduce((e, t, n) => Math.abs(t - m.rate) < Math.abs(M[e] - m.rate) ? n : e, 0), n = M[Math.min(M.length - 1, Math.max(0, t + e))];
 			m.setRate(n);
 		}
-		function mn() {
+		function pn() {
 			if (!d.markers) return;
 			let e = m.position, t = d.markers.filter((t) => t.type === "intro" && t.startMs / 1e3 > e && t.startMs / 1e3 - e <= 60).sort((e, t) => e.startMs - t.startMs)[0];
-			t && ln(t.startMs / 1e3);
+			t && cn(t.startMs / 1e3);
 		}
-		function hn() {
+		function mn() {
 			if (!d.markers) return;
 			let e = m.position, t = d.markers.filter((t) => (t.type === "outro" || t.type === "credits") && t.startMs / 1e3 > e && t.startMs / 1e3 - e <= 60).sort((e, t) => e.startMs - t.startMs)[0];
-			t && ln(t.startMs / 1e3);
+			t && cn(t.startMs / 1e3);
 		}
-		function gn() {
+		function hn() {
 			ie.value?.toggleOpen();
 		}
-		let _n = null;
-		function vn() {
+		let gn = null;
+		function _n() {
 			let e = F.value;
 			if (!e) {
 				m.pause();
@@ -8614,29 +10463,29 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 				e.pause(), m.pause();
 				return;
 			}
-			_n !== null && (clearInterval(_n), _n = null);
+			gn !== null && (clearInterval(gn), gn = null);
 			let t = .05;
-			_n = setInterval(() => {
-				e.volume > t ? e.volume = Math.max(0, e.volume - t) : (clearInterval(_n), _n = null, e.volume = 0, e.pause(), m.pause());
+			gn = setInterval(() => {
+				e.volume > t ? e.volume = Math.max(0, e.volume - t) : (clearInterval(gn), gn = null, e.volume = 0, e.pause(), m.pause());
 			}, 50);
 		}
-		Ho({
-			playPause: Zt,
-			seekBy: un,
+		Ws({
+			playPause: Yt,
+			seekBy: ln,
 			frameStep: (e) => {
-				m.playing || ln(m.position + e / 30);
+				m.playing || cn(m.position + e / 30);
 			},
 			volumeBy: (e) => m.setVolume(m.volume + e),
-			toggleMute: yn,
-			toggleFullscreen: xn,
-			toggleCaptions: Bt,
-			toggleTheater: bn,
-			togglePip: Cn,
-			skipIntro: mn,
-			skipOutro: hn,
-			sleepTimer: gn,
-			seekToPercent: (e) => ln(e * m.duration),
-			speedStep: pn,
+			toggleMute: vn,
+			toggleFullscreen: bn,
+			toggleCaptions: Rt,
+			toggleTheater: yn,
+			togglePip: Sn,
+			skipIntro: pn,
+			skipOutro: mn,
+			sleepTimer: hn,
+			seekToPercent: (e) => cn(e * m.duration),
+			speedStep: fn,
 			toggleHelp: () => {
 				V.value = !V.value;
 			},
@@ -8647,11 +10496,11 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 					duration: 3e3
 				});
 			}
-		}, { enabled: () => !V.value && !yt.value && !Dt.value });
-		function yn() {
+		}, { enabled: () => !V.value && !_t.value && !Ct.value });
+		function vn() {
 			m.toggleMute();
 		}
-		function bn() {
+		function yn() {
 			H.value = !H.value, p("theater", H.value);
 		}
 		N(() => m.muted, (e) => {
@@ -8664,77 +10513,77 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 			let t = F.value;
 			t && t.playbackRate !== e && (t.playbackRate = e);
 		}), N(() => m.lastCommand, (e) => {
-			e && (e.type === "seekTo" ? et(e.value) : e.type === "seekBy" && et(m.position + e.value));
+			e && (e.type === "seekTo" ? Qe(e.value) : e.type === "seekBy" && Qe(m.position + e.value));
 		});
-		function xn() {
+		function bn() {
 			if (typeof document > "u") return;
 			let e = I.value;
 			e && (document.fullscreenElement ? document.exitFullscreen?.().catch(() => {}) : e.requestFullscreen?.().catch(() => {}));
 		}
-		function Sn() {
+		function xn() {
 			B.value = typeof document < "u" && !!document.fullscreenElement;
 		}
-		async function Cn() {
+		async function Sn() {
 			let e = F.value;
 			if (typeof document < "u" && e) try {
 				document.pictureInPictureElement ? await document.exitPictureInPicture() : typeof e.requestPictureInPicture == "function" && await e.requestPictureInPicture();
 			} catch {}
 			p("pip");
 		}
-		function wn() {
+		function Cn() {
 			te.value = !0;
 		}
-		function Tn() {
+		function wn() {
 			te.value = !1;
 		}
-		function En() {
-			Wt &&= (clearTimeout(Wt), void 0);
+		function Tn() {
+			Ht &&= (clearTimeout(Ht), void 0);
 		}
-		function Dn() {
-			En(), !(!m.playing || ee.value) && (Wt = setTimeout(() => {
+		function En() {
+			Tn(), !(!m.playing || ee.value) && (Ht = setTimeout(() => {
 				m.playing && !ee.value && (z.value = !1);
 			}, d.idleTimeout ?? 3e3));
 		}
-		function On() {
-			z.value = !0, Dn();
+		function Dn() {
+			z.value = !0, En();
 		}
-		let kn = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]", An = "data-phlix-prev-tabindex", jn = "__phlix_no_tabindex__";
-		function Mn(e) {
+		let On = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]", kn = "data-phlix-prev-tabindex", An = "__phlix_no_tabindex__";
+		function jn(e) {
 			let t = I.value;
 			if (t) for (let n of Array.from(t.querySelectorAll(".player__meta, .player__controls, .player__bigplay"))) {
-				let t = n.matches(kn) ? [n] : Array.from(n.querySelectorAll(kn));
+				let t = n.matches(On) ? [n] : Array.from(n.querySelectorAll(On));
 				for (let n of t) if (e) {
-					let e = n.getAttribute(An);
-					e === null || e === jn ? n.removeAttribute("tabindex") : n.setAttribute("tabindex", e), n.removeAttribute(An);
-				} else n.getAttribute("tabindex") !== "-1" && (n.setAttribute(An, n.getAttribute("tabindex") ?? jn), n.setAttribute("tabindex", "-1"));
+					let e = n.getAttribute(kn);
+					e === null || e === An ? n.removeAttribute("tabindex") : n.setAttribute("tabindex", e), n.removeAttribute(kn);
+				} else n.getAttribute("tabindex") !== "-1" && (n.setAttribute(kn, n.getAttribute("tabindex") ?? An), n.setAttribute("tabindex", "-1"));
 			}
 		}
 		N(z, (e) => {
-			typeof document > "u" || (Mn(e), !e && document.activeElement instanceof HTMLElement && I.value?.contains(document.activeElement) && document.activeElement.blur());
+			typeof document > "u" || (jn(e), !e && document.activeElement instanceof HTMLElement && I.value?.contains(document.activeElement) && document.activeElement.blur());
 		}, { flush: "post" }), N(() => m.playing, (e) => {
-			e ? (Ne.value = !1, st(), Dn()) : (En(), z.value = !0);
+			e ? (Me.value = !1, at(), En()) : (Tn(), z.value = !0);
 		});
-		let Nn = null;
+		let Mn = null;
 		y(() => {
 			m.setCurrent(d.media, {
 				resetPosition: !1,
 				streamUrl: d.streamUrl
-			}), T.hydrate(d.media), typeof document < "u" && (document.addEventListener("fullscreenchange", Sn), re.value = document.pictureInPictureEnabled === !0), Nn = m.bindMediaSession({
+			}), T.hydrate(d.media), typeof document < "u" && (document.addEventListener("fullscreenchange", xn), re.value = document.pictureInPictureEnabled === !0), Mn = m.bindMediaSession({
 				onPlay: () => void F.value?.play()?.catch(() => {}),
 				onPause: () => F.value?.pause(),
-				onSeek: (e) => ln(e)
-			}), Ut = F.value?.textTracks ?? null, Ut?.addEventListener?.("addtrack", zt), Ut?.addEventListener?.("removetrack", zt), zt(), U.value && Te(), xe(d.media.id);
+				onSeek: (e) => cn(e)
+			}), Vt = F.value?.textTracks ?? null, Vt?.addEventListener?.("addtrack", Lt), Vt?.addEventListener?.("removetrack", Lt), Lt(), U.value && Ee(), be(d.media.id);
 		}), N(() => d.media, (e) => {
 			m.setCurrent(e, {
 				resetPosition: !1,
 				streamUrl: d.streamUrl
-			}), $e();
+			}), Ze();
 		}), N(() => d.media?.id, () => {
 			T.hydrate(d.media);
 		}), N(() => w.currentSession, (e) => {
-			e && (e.state === "playing" ? (F.value?.play(), m.play()) : e.state === "paused" && (F.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && et(e.playbackPosition));
+			e && (e.state === "playing" ? (F.value?.play(), m.play()) : e.state === "paused" && (F.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && Qe(e.playbackPosition));
 		});
-		let Pn = null;
+		let Nn = null;
 		return N(() => w.pendingPlayMedia, async (e) => {
 			if (!e) return;
 			let t = null;
@@ -8753,13 +10602,13 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 				m.setCurrent(t, {
 					resetPosition: !0,
 					streamUrl: d.streamUrlFor?.(t) ?? ""
-				}), F.value?.play(), m.play(), w.consumePendingPlayMedia(), Pn = null;
+				}), F.value?.play(), m.play(), w.consumePendingPlayMedia(), Nn = null;
 				return;
 			}
 			let n = `${e.mediaId}@${e.issuedAt}`;
-			Pn !== n && (Pn = n, p("pending-media", e.mediaId, e.title));
+			Nn !== n && (Nn = n, p("pending-media", e.mediaId, e.title));
 		}), v(() => {
-			ge?.reportFinal?.(), En(), rt(), W.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", Sn), Nn?.(), Ut?.removeEventListener?.("addtrack", zt), Ut?.removeEventListener?.("removetrack", zt), _n !== null && (clearInterval(_n), _n = null), be !== null && (clearTimeout(be), be = null), ht();
+			W?.reportFinal?.(), Tn(), tt(), G.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", xn), Mn?.(), Vt?.removeEventListener?.("addtrack", Lt), Vt?.removeEventListener?.("removetrack", Lt), gn !== null && (clearInterval(gn), gn = null), ye !== null && (clearTimeout(ye), ye = null), pt();
 		}), (n, r) => (x(), o("div", {
 			ref_key: "containerRef",
 			ref: I,
@@ -8767,10 +10616,10 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 				"is-chrome-hidden": !z.value,
 				"is-theater": H.value
 			}]),
-			onPointermove: On,
-			onPointerdown: On,
-			onFocusin: On
-		}, [u(vl, {
+			onPointermove: Dn,
+			onPointerdown: Dn,
+			onFocusin: Dn
+		}, [u(bu, {
 			video: F.value,
 			enabled: O(_).atmosphere,
 			playing: O(m).playing,
@@ -8782,37 +10631,37 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 			"playing",
 			"reduced-motion",
 			"intensity"
-		]), s("div", Af, [
+		]), s("div", zp, [
 			s("video", {
 				ref_key: "videoRef",
 				ref: F,
 				class: "player__video",
-				src: G.value,
+				src: Se.value,
 				poster: O(c)(t.media.poster_url) ?? void 0,
 				preload: "metadata",
 				playsinline: "",
-				onPlay: $t,
-				onPause: en,
-				onTimeupdate: tn,
-				onLoadedmetadata: nn,
-				onCanplay: Jt,
-				onProgress: rn,
-				onVolumechange: an,
-				onRatechange: on,
-				onSeeked: sn,
-				onDurationchange: cn,
-				onEnded: at,
-				onError: ct,
-				onEnterpictureinpicture: wn,
-				onLeavepictureinpicture: Tn,
-				onClick: Zt
-			}, [(x(!0), o(e, null, C(kt.value, (e) => (x(), o("track", {
+				onPlay: Qt,
+				onPause: $t,
+				onTimeupdate: en,
+				onLoadedmetadata: tn,
+				onCanplay: Kt,
+				onProgress: nn,
+				onVolumechange: rn,
+				onRatechange: an,
+				onSeeked: on,
+				onDurationchange: sn,
+				onEnded: rt,
+				onError: ot,
+				onEnterpictureinpicture: Cn,
+				onLeavepictureinpicture: wn,
+				onClick: Yt
+			}, [(x(!0), o(e, null, C(Tt.value, (e) => (x(), o("track", {
 				key: e.url,
 				kind: "subtitles",
 				src: e.url,
 				srclang: e.language || void 0,
 				label: e.label || void 0
-			}, null, 8, Mf))), 128))], 40, jf),
+			}, null, 8, Vp))), 128))], 40, Bp),
 			r[22] ||= s("div", {
 				class: "player__scrim player__scrim--top",
 				"aria-hidden": "true"
@@ -8821,39 +10670,39 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 				class: "player__scrim player__scrim--bottom",
 				"aria-hidden": "true"
 			}, null, -1),
-			s("div", Nf, [s("button", {
+			s("div", Hp, [s("button", {
 				type: "button",
 				class: "player__iconbtn player__back",
 				"aria-label": O(b)("player.back"),
 				onClick: r[0] ||= L((e) => p("back"), ["stop"])
-			}, [u(q, { name: "arrow-left" })], 8, Pf), s("div", Ff, [
-				s("p", If, E(O(b)("player.nowPlaying")), 1),
-				s("h2", Lf, E(t.media.name), 1),
-				s("div", Rf, [(x(!0), o(e, null, C(Gt.value, (t, n) => (x(), o(e, { key: n }, [n > 0 && !t.cert ? (x(), o("span", zf, "·")) : a("", !0), s("span", { class: g({ player__cert: t.cert }) }, E(t.text), 3)], 64))), 128))])
+			}, [u(J, { name: "arrow-left" })], 8, Up), s("div", Wp, [
+				s("p", Gp, E(O(b)("player.nowPlaying")), 1),
+				s("h2", Kp, E(t.media.name), 1),
+				s("div", qp, [(x(!0), o(e, null, C(Ut.value, (t, n) => (x(), o(e, { key: n }, [n > 0 && !t.cert ? (x(), o("span", Jp, "·")) : a("", !0), s("span", { class: g({ player__cert: t.cert }) }, E(t.text), 3)], 64))), 128))])
 			])]),
-			K.value ? a("", !0) : (x(), o("div", Bf, [
+			Ce.value ? a("", !0) : (x(), o("div", Yp, [
 				z.value ? (x(), o("button", {
 					key: 0,
 					type: "button",
 					class: "player__center-skip",
 					"aria-label": O(b)("player.seekBackward"),
-					onClick: r[1] ||= L((e) => un(-10), ["stop"])
-				}, [u(q, { name: "rewind" }), s("span", { class: "player__center-skip-count" }, E(10))], 8, Vf)) : a("", !0),
+					onClick: r[1] ||= L((e) => ln(-10), ["stop"])
+				}, [u(J, { name: "rewind" }), s("span", { class: "player__center-skip-count" }, E(10))], 8, Xp)) : a("", !0),
 				s("button", {
 					type: "button",
 					class: g(["player__bigplay", { "is-playing": O(m).playing }]),
 					"aria-label": O(m).playing ? O(b)("player.pause") : O(b)("player.play"),
-					onClick: L(Zt, ["stop"])
-				}, [u(q, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 10, Hf),
+					onClick: L(Yt, ["stop"])
+				}, [u(J, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 10, Zp),
 				z.value ? (x(), o("button", {
 					key: 1,
 					type: "button",
 					class: "player__center-skip",
 					"aria-label": O(b)("player.seekForward"),
-					onClick: r[2] ||= L((e) => un(10), ["stop"])
-				}, [u(q, { name: "forward" }), s("span", { class: "player__center-skip-count" }, E(10))], 8, Uf)) : a("", !0)
+					onClick: r[2] ||= L((e) => ln(10), ["stop"])
+				}, [u(J, { name: "forward" }), s("span", { class: "player__center-skip-count" }, E(10))], 8, Qp)) : a("", !0)
 			])),
-			u(Ks, {
+			u(Jc, {
 				video: F.value,
 				language: O(m).subtitleLang,
 				"style-config": O(_).captionStyle,
@@ -8866,22 +10715,22 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 				"lifted",
 				"controls-root"
 			]),
-			K.value ? a("", !0) : (x(), o("div", {
+			Ce.value ? a("", !0) : (x(), o("div", {
 				key: 1,
 				ref_key: "controlsRef",
 				ref: R,
 				class: "player__controls",
 				onClick: r[9] ||= L(() => {}, ["stop"])
 			}, [
-				u(Ha, {
+				u(Go, {
 					position: O(m).position,
 					duration: O(m).duration,
 					buffered: O(m).buffered,
 					chapters: t.chapters,
-					"thumbnail-at": Se.value,
-					onSeek: ln,
-					onScrubStart: dn,
-					onScrubEnd: fn
+					"thumbnail-at": xe.value,
+					onSeek: cn,
+					onScrubStart: un,
+					onScrubEnd: dn
 				}, null, 8, [
 					"position",
 					"duration",
@@ -8889,43 +10738,43 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 					"chapters",
 					"thumbnail-at"
 				]),
-				O(_).showMarkerTimeline && t.markers && t.markers.length > 0 ? (x(), i(Xu, {
+				O(_).showMarkerTimeline && t.markers && t.markers.length > 0 ? (x(), i(Qd, {
 					key: 0,
 					position: O(m).position,
 					duration: O(m).duration,
 					markers: t.markers,
-					onSeek: ln,
-					onSimilar: We
+					onSeek: cn,
+					onSimilar: Ue
 				}, null, 8, [
 					"position",
 					"duration",
 					"markers"
 				])) : a("", !0),
-				s("div", Wf, [
+				s("div", $p, [
 					t.prevEpisode ? (x(), o("button", {
 						key: 0,
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.previousEpisode"),
-						onClick: Yt
-					}, [u(q, { name: "skip-back" })], 8, Gf)) : a("", !0),
+						onClick: qt
+					}, [u(J, { name: "skip-back" })], 8, em)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: "player__iconbtn player__iconbtn--lg",
 						"aria-label": O(m).playing ? O(b)("player.pause") : O(b)("player.play"),
-						onClick: Zt
-					}, [u(q, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 8, Kf),
+						onClick: Yt
+					}, [u(J, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 8, tm),
 					t.nextEpisode ? (x(), o("button", {
 						key: 1,
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.nextEpisode"),
-						onClick: Xt
-					}, [u(q, { name: "skip-forward" })], 8, qf)) : a("", !0),
-					s("span", Jf, [
-						l(E(O(Ca)(O(m).position)), 1),
+						onClick: Jt
+					}, [u(J, { name: "skip-forward" })], 8, nm)) : a("", !0),
+					s("span", rm, [
+						l(E(O(Eo)(O(m).position)), 1),
 						r[18] ||= s("span", { class: "player__sep" }, " / ", -1),
-						l(E(O(Ca)(O(m).duration)), 1)
+						l(E(O(Eo)(O(m).duration)), 1)
 					]),
 					r[19] ||= s("span", { class: "player__grow" }, null, -1),
 					s("button", {
@@ -8934,24 +10783,24 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 						"aria-label": D.value ? "Remove from favorites" : "Add to favorites",
 						"aria-pressed": D.value ? "true" : "false",
 						onClick: A
-					}, [u(q, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, Yf),
-					u(Sa, {
+					}, [u(J, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, im),
+					u(To, {
 						level: k.value,
 						onCycle: j
 					}, null, 8, ["level"]),
-					u(ts),
-					u(us),
-					u(xs, {
+					u(rc),
+					u(fc),
+					u(Cc, {
 						ref_key: "qualityMenuRef",
 						ref: ae,
 						open: oe.value,
 						"onUpdate:open": r[3] ||= (e) => oe.value = e,
-						levels: O(W).levels.value,
-						variants: O(W).variants.value,
-						"current-level": O(W).currentLevel.value,
-						"auto-enabled": O(W).autoEnabled.value,
-						"active-height": O(W).activeLevelHeight.value,
-						onSelect: Ee
+						levels: O(G).levels.value,
+						variants: O(G).variants.value,
+						"current-level": O(G).currentLevel.value,
+						"auto-enabled": O(G).autoEnabled.value,
+						"active-height": O(G).activeLevelHeight.value,
+						onSelect: De
 					}, null, 8, [
 						"open",
 						"levels",
@@ -8964,31 +10813,31 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 						key: 2,
 						class: "player__direct-badge",
 						title: O(b)("player.qualityDirectStream")
-					}, E(O(b)("player.directStream")), 9, Xf)),
-					u(xc, {
-						open: yt.value,
-						"onUpdate:open": r[4] ||= (e) => yt.value = e,
-						tracks: gt.value,
-						"audio-tracks": Tt.value,
-						"active-audio": Et.value,
-						onSelectAudio: Ht,
-						onAddSubtitles: r[5] ||= (e) => At.value = !0
+					}, E(O(b)("player.directStream")), 9, am)),
+					u(Cl, {
+						open: _t.value,
+						"onUpdate:open": r[4] ||= (e) => _t.value = e,
+						tracks: mt.value,
+						"audio-tracks": xt.value,
+						"active-audio": St.value,
+						onSelectAudio: Bt,
+						onAddSubtitles: r[5] ||= (e) => Et.value = !0
 					}, null, 8, [
 						"open",
 						"tracks",
 						"audio-tracks",
 						"active-audio"
 					]),
-					u(Hu, {
-						open: Dt.value,
-						"onUpdate:open": r[6] ||= (e) => Dt.value = e,
+					u(Wd, {
+						open: Ct.value,
+						"onUpdate:open": r[6] ||= (e) => Ct.value = e,
 						chapters: t.chapters ?? [],
-						onSeek: ln
+						onSeek: cn
 					}, null, 8, ["open", "chapters"]),
-					u(td, {
+					u(rf, {
 						ref_key: "sleepTimerRef",
 						ref: ie,
-						"on-expire": vn
+						"on-expire": _n
 					}, null, 512),
 					s("button", {
 						type: "button",
@@ -8996,120 +10845,120 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 						"aria-label": O(w).isInRoom ? O(b)("syncplay.inRoom") : O(b)("syncplay.syncPlay"),
 						"aria-haspopup": "dialog",
 						onClick: r[7] ||= (e) => ce.value = !0
-					}, [u(q, { name: "user" })], 10, Zf),
+					}, [u(J, { name: "user" })], 10, om),
 					s("button", {
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.keyboardShortcuts"),
 						"aria-haspopup": "dialog",
 						onClick: r[8] ||= (e) => V.value = !0
-					}, [u(q, { name: "info" })], 8, Qf),
+					}, [u(J, { name: "info" })], 8, sm),
 					re.value ? (x(), o("button", {
 						key: 3,
 						type: "button",
 						class: g(["player__iconbtn", { "is-on": te.value }]),
 						"aria-label": te.value ? O(b)("player.exitPip") : O(b)("player.pip"),
 						"aria-pressed": te.value,
-						onClick: Cn
-					}, [u(q, { name: "pip" })], 10, $f)) : a("", !0),
+						onClick: Sn
+					}, [u(J, { name: "pip" })], 10, cm)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: g(["player__iconbtn", { "is-on": H.value }]),
 						"aria-label": H.value ? O(b)("player.exitTheater") : O(b)("player.theater"),
 						"aria-pressed": H.value,
-						onClick: bn
-					}, [u(q, { name: "theater" })], 10, ep),
+						onClick: yn
+					}, [u(J, { name: "theater" })], 10, lm),
 					s("button", {
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": B.value ? O(b)("player.exitFullscreen") : O(b)("player.fullscreen"),
-						onClick: xn
-					}, [u(q, { name: B.value ? "fullscreen-exit" : "fullscreen" }, null, 8, ["name"])], 8, tp)
+						onClick: bn
+					}, [u(J, { name: B.value ? "fullscreen-exit" : "fullscreen" }, null, 8, ["name"])], 8, um)
 				])
 			], 512)),
-			K.value ? a("", !0) : (x(), i(Cu, {
+			Ce.value ? a("", !0) : (x(), i(Td, {
 				key: 2,
 				position: O(m).position,
 				"intro-marker": t.introMarker,
 				"outro-marker": t.outroMarker,
-				onSkip: ln
+				onSkip: cn
 			}, null, 8, [
 				"position",
 				"intro-marker",
 				"outro-marker"
 			])),
-			K.value ? a("", !0) : (x(), i(ku, {
+			Ce.value ? a("", !0) : (x(), i(jd, {
 				key: 3,
 				position: O(m).position,
 				markers: t.markers,
-				onSkip: ln
+				onSkip: cn
 			}, null, 8, ["position", "markers"])),
-			Ne.value && !K.value ? (x(), i(Cl, {
+			Me.value && !Ce.value ? (x(), i(Tu, {
 				key: 4,
-				seconds: Me.value,
-				onResume: tt,
-				onRestart: nt
+				seconds: je.value,
+				onResume: $e,
+				onRestart: et
 			}, null, 8, ["seconds"])) : a("", !0),
-			Fe.value && Qe.value && !K.value ? (x(), i(du, {
+			Pe.value && Xe.value && !Ce.value ? (x(), i(pd, {
 				key: 5,
-				media: Qe.value,
-				remaining: Ie.value,
+				media: Xe.value,
+				remaining: Fe.value,
 				total: O(8),
 				counting: O(_).autoplay,
-				onPlayNow: ot,
-				onCancel: st
+				onPlayNow: it,
+				onCancel: at
 			}, null, 8, [
 				"media",
 				"remaining",
 				"total",
 				"counting"
 			])) : a("", !0),
-			u(Dc, {
-				modelValue: Be.value,
-				"onUpdate:modelValue": r[10] ||= (e) => Be.value = e,
-				title: `Similar ${Re.value ?? "marker"}s`,
+			u(kl, {
+				modelValue: ze.value,
+				"onUpdate:modelValue": r[10] ||= (e) => ze.value = e,
+				title: `Similar ${Le.value ?? "marker"}s`,
 				size: "lg",
-				onClose: Ze
+				onClose: Ye
 			}, {
-				default: P(() => [s("div", np, [He.value ? (x(), o("div", rp, [u(Lc, { label: "Finding similar media" })])) : Ue.value ? (x(), o("div", ip, [u(q, {
+				default: P(() => [s("div", dm, [Ve.value ? (x(), o("div", fm, [u(zl, { label: "Finding similar media" })])) : He.value ? (x(), o("div", pm, [u(J, {
 					name: "error",
 					class: "similar-modal__state-icon"
-				}), s("p", ap, E(Ue.value), 1)])) : !He.value && Ve.value.length === 0 ? (x(), o("div", op, [
-					u(q, {
+				}), s("p", mm, E(He.value), 1)])) : !Ve.value && Be.value.length === 0 ? (x(), o("div", hm, [
+					u(J, {
 						name: "search",
 						class: "similar-modal__state-icon"
 					}),
 					r[20] ||= s("p", { class: "similar-modal__state-title" }, "No similar media found", -1),
 					r[21] ||= s("p", { class: "similar-modal__state-hint" }, "Try a different marker or position.", -1)
-				])) : (x(), o("ul", sp, [(x(!0), o(e, null, C(Ve.value, (e) => (x(), o("li", {
+				])) : (x(), o("ul", gm, [(x(!0), o(e, null, C(Be.value, (e) => (x(), o("li", {
 					key: e.id,
 					class: "similar-modal__result"
-				}, [s("div", cp, [e.poster_url ? (x(), o("img", {
+				}, [s("div", _m, [e.poster_url ? (x(), o("img", {
 					key: 0,
 					src: O(c)(e.poster_url),
 					alt: e.name,
 					loading: "lazy",
 					decoding: "async"
-				}, null, 8, lp)) : (x(), o("div", up, [u(q, { name: "film" })]))]), s("div", dp, [s("p", fp, E(e.name), 1), e.year ? (x(), o("p", pp, [l(E(e.year) + " ", 1), e.runtime ? (x(), o("span", mp, " · " + E(e.runtime) + "m", 1)) : a("", !0)])) : a("", !0)])]))), 128))]))])]),
+				}, null, 8, vm)) : (x(), o("div", ym, [u(J, { name: "film" })]))]), s("div", bm, [s("p", xm, E(e.name), 1), e.year ? (x(), o("p", Sm, [l(E(e.year) + " ", 1), e.runtime ? (x(), o("span", Cm, " · " + E(e.runtime) + "m", 1)) : a("", !0)])) : a("", !0)])]))), 128))]))])]),
 				_: 1
 			}, 8, ["modelValue", "title"]),
-			Ce.value ? (x(), i(Su, {
+			we.value ? (x(), i(wd, {
 				key: 6,
 				title: t.media.name,
-				progress: O(W).progress.value,
+				progress: O(G).progress.value,
 				onBack: r[11] ||= (e) => p("back")
 			}, null, 8, ["title", "progress"])) : a("", !0),
-			we.value ? (x(), i(gu, {
+			Te.value ? (x(), i(vd, {
 				key: 7,
 				title: t.media.name,
 				onBack: r[12] ||= (e) => p("back")
 			}, null, 8, ["title"])) : a("", !0),
-			O(w).isInRoom ? (x(), i(Df, {
+			O(w).isInRoom ? (x(), i(Ip, {
 				key: 8,
 				position: O(m).position,
 				duration: O(m).duration,
 				"is-playing": O(m).playing,
-				onSeek: ln,
+				onSeek: cn,
 				onPlay: r[13] ||= (e) => void F.value?.play(),
 				onPause: r[14] ||= (e) => void F.value?.pause()
 			}, null, 8, [
@@ -9117,23 +10966,23 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 				"duration",
 				"is-playing"
 			])) : a("", !0),
-			O(w).isInRoom ? (x(), i(Xd, { key: 9 })) : a("", !0),
-			u(_f, {
+			O(w).isInRoom ? (x(), i(op, { key: 9 })) : a("", !0),
+			u(Ep, {
 				modelValue: ce.value,
 				"onUpdate:modelValue": r[15] ||= (e) => ce.value = e,
 				onJoined: le
 			}, null, 8, ["modelValue"]),
-			u(Zo, {
+			u($s, {
 				open: V.value,
 				onClose: r[16] ||= (e) => V.value = !1
 			}, null, 8, ["open"]),
-			u(sl, {
-				open: At.value,
-				"onUpdate:open": r[17] ||= (e) => At.value = e,
+			u(lu, {
+				open: Et.value,
+				"onUpdate:open": r[17] ||= (e) => Et.value = e,
 				"media-id": t.media.id,
 				"api-base": t.apiBase ?? "",
-				"preferred-langs": Mt.value,
-				onAdded: Nt
+				"preferred-langs": Ot.value,
+				onAdded: kt
 			}, null, 8, [
 				"open",
 				"media-id",
@@ -9142,14 +10991,14 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-f5f0773b"]]), gp = ["aria-label"], _p = ["src", "poster"], vp = { class: "mini__body" }, yp = { class: "mini__title" }, bp = { class: "mini__controls" }, xp = ["aria-label"], Sp = ["aria-label", "aria-pressed"], Cp = ["aria-label"], wp = ["aria-label"], Tp = {
+}), [["__scopeId", "data-v-5b943e9d"]]), Tm = ["aria-label"], Em = ["src", "poster"], Dm = { class: "mini__body" }, Om = { class: "mini__title" }, km = { class: "mini__controls" }, Am = ["aria-label"], jm = ["aria-label", "aria-pressed"], Mm = ["aria-label"], Nm = ["aria-label"], Pm = {
 	class: "mini__progress",
 	"aria-hidden": "true"
-}, Ep = /*#__PURE__*/ J(/* @__PURE__ */ d({
+}, Fm = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 	__name: "MiniPlayer",
 	emits: ["expand"],
 	setup(e, { emit: t }) {
-		let { imgSrc: c } = eu(), l = t, d = ue(), { t: p } = Y(), m = S(null), h = S(null), b = f("resumeReporter", null), C = !1, w = Ye(), T = f("phlixConfig", null), D = r(() => d.current ? w.isFavorite(d.current.id) : !1);
+		let { imgSrc: c } = nd(), l = t, d = ue(), { t: p } = X(), m = S(null), h = S(null), b = f("resumeReporter", null), C = !1, w = Zt(), T = f("phlixConfig", null), D = r(() => d.current ? w.isFavorite(d.current.id) : !1);
 		function k() {
 			let e = d.current?.id;
 			e && w.toggleFavorite(e, T?.apiBase ?? "");
@@ -9188,7 +11037,7 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 			if (!e || !d.hlsMasterUrl) return;
 			let t = ++H, n = d.hlsMasterUrl;
 			h.value?.destroy(), h.value = null;
-			let r = await Za(e, n, {
+			let r = await es(e, n, {
 				startPosition: d.position,
 				onReady: () => {
 					let e = m.value;
@@ -9242,14 +11091,14 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 					onTimeupdate: R,
 					onEnded: z,
 					onClick: ee
-				}, null, 40, _p),
-				s("div", vp, [s("p", yp, E(j.value), 1), s("div", bp, [
+				}, null, 40, Em),
+				s("div", Dm, [s("p", Om, E(j.value), 1), s("div", km, [
 					s("button", {
 						type: "button",
 						class: "mini__btn",
 						"aria-label": O(d).playing ? O(p)("player.pause") : O(p)("player.play"),
 						onClick: B
-					}, [u(q, { name: O(d).playing ? "pause" : "play" }, null, 8, ["name"])], 8, xp),
+					}, [u(J, { name: O(d).playing ? "pause" : "play" }, null, 8, ["name"])], 8, Am),
 					O(d).current ? (x(), o("button", {
 						key: 0,
 						type: "button",
@@ -9257,30 +11106,30 @@ var Af = { class: "player__stage" }, jf = ["src", "poster"], Mf = [
 						"aria-label": D.value ? O(p)("itemActions.removeFavorite") : O(p)("itemActions.addFavorite"),
 						"aria-pressed": D.value ? "true" : "false",
 						onClick: k
-					}, [u(q, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, Sp)) : a("", !0),
+					}, [u(J, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, jm)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: "mini__btn",
 						"aria-label": O(p)("player.expand"),
 						onClick: ee
-					}, [u(q, { name: "expand" })], 8, Cp),
+					}, [u(J, { name: "expand" })], 8, Mm),
 					s("button", {
 						type: "button",
 						class: "mini__btn mini__btn--close",
 						"aria-label": O(p)("player.closePlayer"),
 						onClick: V
-					}, [u(q, { name: "x" })], 8, wp)
+					}, [u(J, { name: "x" })], 8, Nm)
 				])]),
-				s("div", Tp, [s("div", {
+				s("div", Pm, [s("div", {
 					class: "mini__progress-fill",
 					style: _({ transform: `scaleX(${M.value})` })
 				}, null, 4)])
-			], 8, gp)) : a("", !0)]),
+			], 8, Tm)) : a("", !0)]),
 			_: 1
 		}));
 	}
 }), [["__scopeId", "data-v-6721ee35"]]);
 //#endregion
-export { ll as AMBIENT_SAMPLE_H, ul as AMBIENT_SAMPLE_INTERVAL_MS, cl as AMBIENT_SAMPLE_W, Lo as ARROW_ICONS, Ro as ARROW_LABELS, vl as AmbientCanvas, Vs as CAPTION_BACKGROUND_OPTIONS, Bs as CAPTION_COLOR_OPTIONS, Hs as CAPTION_EDGE_OPTIONS, zs as CAPTION_SIZE_OPTIONS, Rs as CAPTION_SIZE_SCALE, Ks as CaptionOverlay, xc as CaptionsMenu, wl as DIRECT_PLAY_EXTENSIONS, Ep as MiniPlayer, Io as PLAYER_SHORTCUTS, hp as Player, xs as QualityMenu, ie as RESUME_MAX_RATIO, re as RESUME_MIN_SECONDS, Cl as ResumePrompt, Ha as Scrubber, Zo as ShortcutsHelp, Cu as SkipButton, us as SpeedMenu, sl as SubtitleSearch, Tl as TRANSCODE_EXTENSIONS, gu as TranscodeNotice, Su as TranscodePreparing, Fl as UPNEXT_COUNTDOWN_SECONDS, Ll as UPNEXT_RING_CIRCUMFERENCE, Il as UPNEXT_RING_RADIUS, du as UpNext, ts as VolumeControl, Ms as activeAudioIndex, gl as ambientGradient, js as applyAudioTrack, As as applyTrackModes, Za as attachHls, fl as averageRegion, Gs as captionStyleVars, Is as cleanCueText, Ws as edgeShadow, Dl as extensionOf, Ca as formatTime, Vo as handleShortcut, ks as hasActiveCaptions, _l as isBatterySaving, go as isFailedStatus, kl as isFatalMediaError, qa as isNativeHlsSupported, ho as isPlayable, Bo as isTypingTarget, Ds as listAudioTracks, Es as listSubtitleTracks, Ol as needsTranscode, no as parseSubtitleTracks, po as parseTranscodeStart, mo as parseTranscodeStatus, Ls as readActiveCueLines, _o as resolveStreamUrl, Os as resolveTextTrack, ml as rgbString, hl as rgbaString, Rl as ringDashoffset, pl as sampleAmbient, io as transcodeStartPath, fo as transcodeStatusPath, vo as useHlsTranscode, Ho as useKeyboardShortcuts, ue as usePlayerStore };
+export { du as AMBIENT_SAMPLE_H, fu as AMBIENT_SAMPLE_INTERVAL_MS, uu as AMBIENT_SAMPLE_W, zs as ARROW_ICONS, Bs as ARROW_LABELS, bu as AmbientCanvas, Uc as CAPTION_BACKGROUND_OPTIONS, Hc as CAPTION_COLOR_OPTIONS, Wc as CAPTION_EDGE_OPTIONS, Vc as CAPTION_SIZE_OPTIONS, Bc as CAPTION_SIZE_SCALE, Jc as CaptionOverlay, Cl as CaptionsMenu, Eu as DIRECT_PLAY_EXTENSIONS, Fm as MiniPlayer, Rs as PLAYER_SHORTCUTS, wm as Player, Cc as QualityMenu, ie as RESUME_MAX_RATIO, re as RESUME_MIN_SECONDS, Tu as ResumePrompt, Go as Scrubber, $s as ShortcutsHelp, Td as SkipButton, fc as SpeedMenu, lu as SubtitleSearch, Du as TRANSCODE_EXTENSIONS, vd as TranscodeNotice, wd as TranscodePreparing, Lu as UPNEXT_COUNTDOWN_SECONDS, zu as UPNEXT_RING_CIRCUMFERENCE, Ru as UPNEXT_RING_RADIUS, pd as UpNext, rc as VolumeControl, Pc as activeAudioIndex, vu as ambientGradient, Nc as applyAudioTrack, Mc as applyTrackModes, es as attachHls, mu as averageRegion, qc as captionStyleVars, Rc as cleanCueText, Kc as edgeShadow, ku as extensionOf, Eo as formatTime, Us as handleShortcut, jc as hasActiveCaptions, yu as isBatterySaving, vs as isFailedStatus, ju as isFatalMediaError, Xo as isNativeHlsSupported, _s as isPlayable, Hs as isTypingTarget, kc as listAudioTracks, Oc as listSubtitleTracks, Au as needsTranscode, as as parseSubtitleTracks, hs as parseTranscodeStart, gs as parseTranscodeStatus, zc as readActiveCueLines, ys as resolveStreamUrl, Ac as resolveTextTrack, gu as rgbString, _u as rgbaString, Bu as ringDashoffset, hu as sampleAmbient, ss as transcodeStartPath, ms as transcodeStatusPath, bs as useHlsTranscode, Ws as useKeyboardShortcuts, ue as usePlayerStore };
 
 //# sourceMappingURL=player.js.map

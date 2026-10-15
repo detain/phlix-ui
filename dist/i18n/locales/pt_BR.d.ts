@@ -36,6 +36,18 @@ export declare const PT_BR_MESSAGES: {
         selectPlaceholder: string;
         breadcrumb: string;
     };
+    /** Generic chrome for the shared ConfirmDialog (R13-05). */
+    confirm: {
+        title: string;
+        cancel: string;
+        confirm: string;
+    };
+    /** R13-08: the honest terminal for the router catch-all. */
+    notFound: {
+        title: string;
+        description: string;
+        goHome: string;
+    };
     shell: {
         skipToContent: string;
         primaryNav: string;
@@ -66,6 +78,7 @@ export declare const PT_BR_MESSAGES: {
         rename: string;
         renameTooShort: string;
         delete: string;
+        deleteConfirm: string;
         save: string;
         cancel: string;
         deleteBlocked: string;

@@ -40,6 +40,7 @@ export declare const MediaDetail: import("vue").DefineComponent<{
     similarLoading?: boolean;
     showBack?: boolean;
     canMatch?: boolean;
+    chipsClickable?: boolean;
 }, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: import("./types/media-item").MediaDetail) => any;
     play: (item: import("./types/media-item").MediaDetail) => any;
@@ -63,6 +64,7 @@ export declare const MediaDetail: import("vue").DefineComponent<{
     similarLoading?: boolean;
     showBack?: boolean;
     canMatch?: boolean;
+    chipsClickable?: boolean;
 }> & Readonly<{
     onMatch?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
     onPlay?: ((item: import("./types/media-item").MediaDetail) => any) | undefined;
@@ -85,6 +87,7 @@ export declare const MediaDetail: import("vue").DefineComponent<{
     similar: import("./index.ts").MediaItem[];
     similarLoading: boolean;
     showBack: boolean;
+    chipsClickable: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export declare const MetadataMatchModal: import("vue").DefineComponent<{
     modelValue: boolean;

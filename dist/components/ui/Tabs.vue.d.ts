@@ -12,6 +12,12 @@ export interface TabItem {
      * because that helper keys off `disabled` only.
      */
     muted?: boolean;
+    /**
+     * Small count pill rendered after the label (R13-02 — Settings uses it for
+     * per-tab unsaved-change counts). Purely additive: it never affects
+     * interactivity, and screen readers read it as part of the tab name.
+     */
+    badge?: number;
 }
 type __VLS_Props = {
     modelValue: string;

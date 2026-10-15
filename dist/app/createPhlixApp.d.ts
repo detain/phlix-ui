@@ -121,7 +121,8 @@ export declare function musicLibraryRedirect(to: RouteLocationNormalized, librar
  *    `buildAdminRoutes()` has run the seam is unset and admin names fall through
  *    like unknown routes (no mounted section can be titled anyway).
  * 3. Otherwise `null` — the page either sets its own title from async data
- *    (media/library/player) or simply shows the bare app name (catchall).
+ *    (media/library/player) or keeps the app-name-only default (catchall, whose
+ *    NotFoundPage body carries its own heading but no document title).
  */
 export declare function resolveRouteTitle(to: RouteLocationNormalized, t: Translate): string | null;
 /**

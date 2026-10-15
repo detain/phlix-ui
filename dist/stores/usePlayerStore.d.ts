@@ -412,7 +412,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "volume" | "playing" | "duration" | "position" | "miniPlayer" | "queue" | "quality" | "current" | "streamUrl" | "buffered" | "muted" | "rate" | "subtitleLang" | "hlsMasterUrl" | "resumeMap" | "lastCommand">, Pick<{
+}, "volume" | "playing" | "duration" | "miniPlayer" | "queue" | "quality" | "position" | "current" | "streamUrl" | "buffered" | "muted" | "rate" | "subtitleLang" | "hlsMasterUrl" | "resumeMap" | "lastCommand">, Pick<{
     current: import("vue").Ref<{
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
