@@ -20,11 +20,17 @@
  *  - R13-10: when leg 2 fails after a successful create, the fresh EMPTY
  *    playlist is a stray artifact — the error toast carries an UNDO action that
  *    deletes it (`DELETE /api/v1/collections/{id}`).
+ *  - Manageability gating (server Option-A law): the list may contain legacy
+ *    NULL-owner rows; those are readable but admin-manage-only, so they render
+ *    as DISABLED options (adding would 404). See utils/playlistPermissions.
+ *  - Footer carries the only nav door to /playlists ("Manage playlists →"),
+ *    making the route reachable from the picker surface.
  *
  * Copy stays inline English, matching the precedent of every string this
  * component replaces (MENU_LABELS + the playlist toasts were never cataloged).
  */
 import { computed, ref, watch } from 'vue';
+import { RouterLink, useRouter } from 'vue-router';
 import Modal from './ui/Modal.vue';
 import Button from './ui/Button.vue';
 import Combobox from './ui/Combobox.vue';
@@ -33,7 +39,9 @@ import EmptyState from './ui/EmptyState.vue';
 import { ApiClient, type ApiClient as ApiClientType, type PlaylistSummary } from '../api/client';
 import { errMessage } from '../api/errors';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { canManagePlaylist } from '../utils/playlistPermissions';
 
 /** The minimum an item must carry to be addable (structurally satisfied by
  *  both the list shape MediaCard holds and the detail shape MediaDetail holds). */
@@ -56,6 +64,21 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>();
 
 const apiBase = useMediaApiBase();
 const toasts = useToastStore();
+const auth = useAuthStore();
+const router = useRouter();
+
+/** Option-A manageability for a listed row (server mirrors this in
+ *  CollectionController): a member may add to their OWN playlists only;
+ *  legacy NULL-owner rows are readable but admin-manage-only, so they render
+ *  disabled here; an admin manages everything the list returns. */
+function isManageable(playlist: PlaylistSummary): boolean {
+  return canManagePlaylist(playlist.created_by, auth.user?.id ?? null, auth.isAdmin);
+}
+
+/** Router-less mounts (unit tests) leave `useRouter()` undefined — same
+ *  optional-guard pattern the playlist pages use for `hasRoute`. The link is
+ *  only ever rendered with a live router, so RouterLink resolution is safe. */
+const manageLinkVisible = computed(() => router?.hasRoute('playlists') === true);
 
 function getClient(): ApiClient {
   if (props.client) return props.client as ApiClient;
@@ -78,7 +101,13 @@ const canCreate = computed(
 );
 
 const options = computed(() =>
-  playlists.value.map((p) => ({ value: p.id, label: p.name })),
+  playlists.value.map((p) => ({
+    value: p.id,
+    // Unmanageable rows stay VISIBLE (they are readable heritage playlists)
+    // but are disabled — adding to one is a guaranteed server 404.
+    label: isManageable(p) ? p.name : `${p.name} (shared — read-only)`,
+    disabled: !isManageable(p),
+  })),
 );
 
 const confirmEnabled = computed(() => {
@@ -106,8 +135,9 @@ async function loadPlaylists(): Promise<void> {
   loadError.value = null;
   try {
     playlists.value = await getClient().getPlaylists();
-    // First entry pre-selected so Enter/Add works immediately on a small list.
-    selectedId.value = playlists.value[0]?.id ?? null;
+    // First MANAGEABLE entry pre-selected so Enter/Add works immediately on a
+    // small list; disabled (shared read-only) rows are never pre-committed.
+    selectedId.value = playlists.value.find((p) => isManageable(p))?.id ?? null;
   } catch (e) {
     loadError.value = errMessage(e, 'Failed to load playlists.');
   } finally {
@@ -140,9 +170,13 @@ async function addToExisting(
 ): Promise<void> {
   if (!playlistId) return;
   const target = playlists.value.find((p) => p.id === playlistId);
+  // Fail-closed door (belt to the combobox's suspenders): an unmanageable id
+  // can never be committed through the UI, and firing it would only earn a
+  // server 404 — refuse locally without a request.
+  if (!target || !isManageable(target)) return;
   try {
     await getClient().addToPlaylist(playlistId, item.id);
-    toasts.success(target ? `Added to playlist “${target.name}”` : 'Added to playlist');
+    toasts.success(`Added to playlist “${target.name}”`);
     close();
   } catch (e) {
     toasts.error('Failed to add to playlist', { message: errMessage(e) });
@@ -258,6 +292,18 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
 
     </div>
     <template #footer>
+      <!-- R13-01 nav duty: the /playlists routes exist; this footer link (and
+           the router-push it wires when the app registers the route) is the
+           picker's door to them. Missing router (unit mounts) ⇒ link absent. -->
+      <RouterLink
+        v-if="manageLinkVisible"
+        class="playlist-picker__manage"
+        :to="{ name: 'playlists' }"
+        data-testid="picker-manage-playlists"
+        @click="close()"
+      >
+        Manage playlists →
+      </RouterLink>
       <Button variant="ghost" size="sm" @click="close">Cancel</Button>
       <Button variant="solid" size="sm" :disabled="!confirmEnabled" :loading="busy" @click="onConfirm">
         Add
@@ -326,5 +372,15 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
   color: var(--danger, #dc2626);
   font-size: var(--text-sm, 0.875rem);
   margin: 0;
+}
+.playlist-picker__manage {
+  align-self: center;
+  color: var(--accent, #f5c518);
+  font-size: var(--text-sm, 0.875rem);
+  margin-right: auto;
+  text-decoration: none;
+}
+.playlist-picker__manage:hover {
+  text-decoration: underline;
 }
 </style>

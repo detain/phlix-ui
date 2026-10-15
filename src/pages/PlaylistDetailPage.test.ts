@@ -5,7 +5,10 @@
  * page paints {id,name,type} tiles immediately and ENRICHES each through
  * GET /api/v1/media/{id} (bounded); a failed enrichment keeps the raw tile so
  * the remove affordance stays reachable. Also pins remove-item and the
- * delete-playlist confirm (R13-10 cleanup path on the member surface).
+ * delete-playlist confirm (R13-10 cleanup path on the member surface), and the
+ * Option-A MANAGEABILITY law: visibility ≠ modifiability — foreign-owned and
+ * legacy NULL-owner rows render read-only for members (the write endpoints
+ * 404 for them server-side), while admins manage every row.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
@@ -16,6 +19,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
 import PlaylistDetailPage from './PlaylistDetailPage.vue';
 import type { ApiClient } from '../api/client';
+import { useAuthStore } from '../stores/useAuthStore';
 import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
 
@@ -56,10 +60,18 @@ const detail = {
   total: 2,
 };
 
-function fakeClient(opts: { detailError?: Error; detailFetchFails?: boolean } = {}) {
+function fakeClient(
+  opts: { detailError?: Error; detailFetchFails?: boolean; createdBy?: string | null } = {},
+) {
+  const collection =
+    'createdBy' in opts
+      ? { ...detail.collection, created_by: opts.createdBy }
+      : detail.collection;
   return {
     getPlaylist: vi.fn().mockImplementation(() =>
-      opts.detailError ? Promise.reject(opts.detailError) : Promise.resolve(detail),
+      opts.detailError
+        ? Promise.reject(opts.detailError)
+        : Promise.resolve({ ...detail, collection }),
     ),
     get: vi.fn().mockImplementation((url: string) => {
       if (opts.detailFetchFails) return Promise.reject(new Error('media down'));
@@ -102,11 +114,21 @@ async function mountPage(client: ApiClient, router: Router): Promise<VueWrapper>
   });
 }
 
+/** Seed the auth session BEFORE mount — the page reads `auth.user?.id` and
+ *  `auth.isAdmin` through useAuthStore (pinia must already be active). */
+function signIn(user: { id: string; is_admin?: boolean }): void {
+  useAuthStore().user = user;
+}
+
 describe('PlaylistDetailPage', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     document.body.innerHTML = '';
     clearMediaItemCache();
+    // Default session is the fixture's OWNER (created_by 'u1'): the delete and
+    // remove affordances pin the manageable path. The manageability law tests
+    // below re-sign-in per case.
+    signIn({ id: 'u1' });
   });
 
   it('paints raw rows instantly, then enriches each through GET /api/v1/media/:id', async () => {
@@ -177,5 +199,62 @@ describe('PlaylistDetailPage', () => {
     await flushPromises();
     expect(w.text()).toContain('Couldn’t load this playlist');
     expect(w.text()).toContain('playlist vanished');
+  });
+
+  // ── Option-A manageability law (visibility ≠ modifiability) ────────────────
+  // Server CollectionController gates update/delete/item-add/item-remove on
+  // {created_by = actor} ∪ admin; NULL-owner rows are admin-manage-only. These
+  // mount real pages and assert the AFFORDANCES track that law — an ungated
+  // Delete/Remove on a row the server would 404 is a guaranteed dead-end click.
+
+  it('NULL-owner (legacy shared) row: member sees no delete, no per-item remove', async () => {
+    signIn({ id: 'u1' });
+    const client = fakeClient({ createdBy: null });
+    const w = await mountPage(client, makeRouter());
+    await flushPromises();
+
+    expect(w.text()).toContain('Faves'); // readable — the row still renders
+    expect(w.findAll('.playlist-detail__remove').length).toBe(0);
+    const deletePlaylistBtn = w.findAll('button').find((b) => b.text() === 'Delete playlist');
+    expect(deletePlaylistBtn).toBeUndefined();
+    expect(w.text()).toContain('Shared playlist');
+  });
+
+  it('foreign-owned row: member sees no delete and no per-item remove', async () => {
+    signIn({ id: 'someone-else' });
+    const client = fakeClient({ createdBy: 'u1' });
+    const w = await mountPage(client, makeRouter());
+    await flushPromises();
+
+    expect(w.text()).toContain('Faves');
+    expect(w.findAll('.playlist-detail__remove').length).toBe(0);
+    const deletePlaylistBtn = w.findAll('button').find((b) => b.text() === 'Delete playlist');
+    expect(deletePlaylistBtn).toBeUndefined();
+  });
+
+  it('foreign-owned row: ADMIN sees delete + per-item remove and can use them', async () => {
+    signIn({ id: 'admin-1', is_admin: true });
+    const client = fakeClient({ createdBy: 'u1' });
+    const w = await mountPage(client, makeRouter());
+    await flushPromises();
+
+    expect(w.findAll('.playlist-detail__remove').length).toBe(2);
+    await w.findAll('.playlist-detail__remove')[0].trigger('click');
+    await flushPromises();
+    expect(client.removeFromPlaylist).toHaveBeenCalledWith('pl1', 'm1');
+
+    const deletePlaylistBtn = w.findAll('button').find((b) => b.text() === 'Delete playlist');
+    expect(deletePlaylistBtn).toBeDefined();
+  });
+
+  it('own row: owner sees delete + per-item remove (regression pin)', async () => {
+    signIn({ id: 'u1' });
+    const client = fakeClient({ createdBy: 'u1' });
+    const w = await mountPage(client, makeRouter());
+    await flushPromises();
+
+    expect(w.findAll('.playlist-detail__remove').length).toBe(2);
+    const deletePlaylistBtn = w.findAll('button').find((b) => b.text() === 'Delete playlist');
+    expect(deletePlaylistBtn).toBeDefined();
   });
 });

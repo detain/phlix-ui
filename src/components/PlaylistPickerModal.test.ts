@@ -15,7 +15,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
+import { createRouter, createMemoryHistory } from 'vue-router';
 import PlaylistPickerModal from './PlaylistPickerModal.vue';
+import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import type { ApiClient, PlaylistSummary } from '../api/client';
 
@@ -68,6 +70,10 @@ describe('PlaylistPickerModal', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     document.body.innerHTML = '';
+    // Default session owns both fixture playlists (created_by 'u1') → the
+    // baseline add/create flows stay available. Manageability-law tests below
+    // re-sign-in as a member who does NOT own them.
+    useAuthStore().user = { id: 'u1' };
   });
 
   it('opens on the Existing tab, loads playlists, and pre-selects the first', async () => {
@@ -214,6 +220,114 @@ describe('PlaylistPickerModal', () => {
       (b) => b.textContent?.trim() === 'Add',
     );
     expect((addBtn as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  // ── Option-A manageability law (visibility ≠ modifiability) ────────────────
+  // The server lists own + legacy NULL-owner rows to every member but 404s
+  // writes on rows the actor cannot manage. The picker therefore shows those
+  // rows DISABLED (never pre-selected, never addable) — see utils/
+  // playlistPermissions for the single source of the rule.
+
+  /** Combobox options as rendered (the list stays in the DOM while closed). */
+  function renderedOptions(): Array<{ text: string; disabled: boolean }> {
+    return Array.from(
+      document.querySelectorAll<HTMLElement>('.phlix-combobox__option'),
+    ).map((li) => ({
+      text: li.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+      disabled: li.getAttribute('aria-disabled') === 'true',
+    }));
+  }
+
+  it('member sees foreign-owned rows as disabled “read-only” options, none pre-selected', async () => {
+    useAuthStore().user = { id: 'someone-else' };
+    const client = fakeClient();
+    mountPicker(client);
+    await flushPromises();
+
+    const opts = renderedOptions();
+    expect(opts.length).toBe(2);
+    expect(opts.every((o) => o.disabled)).toBe(true);
+    expect(opts[0].text).toContain('Faves');
+    expect(opts[0].text).toContain('(shared — read-only)');
+    // Nothing manageable ⇒ Add stays disabled and clicks fire zero requests.
+    const addBtn = Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Add',
+    );
+    expect((addBtn as HTMLButtonElement).disabled).toBe(true);
+    (addBtn as HTMLButtonElement).click();
+    await flushPromises();
+    expect(client.addToPlaylist).not.toHaveBeenCalled();
+  });
+
+  it('member: NULL-owner row disabled, own row pre-selected and addable (mixed list)', async () => {
+    const client = fakeClient();
+    client.getPlaylists.mockResolvedValue([
+      { ...PLAYLISTS[0], id: 'legacy', name: 'Heritage', created_by: null },
+      PLAYLISTS[1],
+    ] as PlaylistSummary[]);
+    mountPicker(client);
+    await flushPromises();
+
+    const opts = renderedOptions();
+    expect(opts[0].disabled).toBe(true); // heritage NULL row visible but inert
+    expect(opts[1].disabled).toBe(false); // own row
+    // Pre-selection skipped the disabled row and landed on the own one.
+    const addBtn = Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Add',
+    );
+    expect((addBtn as HTMLButtonElement).disabled).toBe(false);
+    (addBtn as HTMLButtonElement).click();
+    await flushPromises();
+    expect(client.addToPlaylist).toHaveBeenCalledWith('pl2', 'm1');
+  });
+
+  it('admin: NULL-owner row is manageable — selectable and addable', async () => {
+    useAuthStore().user = { id: 'admin-1', is_admin: true };
+    const client = fakeClient();
+    client.getPlaylists.mockResolvedValue([
+      { ...PLAYLISTS[0], created_by: null },
+    ] as PlaylistSummary[]);
+    mountPicker(client);
+    await flushPromises();
+
+    const opts = renderedOptions();
+    expect(opts[0].disabled).toBe(false);
+    const addBtn = Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Add',
+    );
+    expect((addBtn as HTMLButtonElement).disabled).toBe(false);
+    (addBtn as HTMLButtonElement).click();
+    await flushPromises();
+    expect(client.addToPlaylist).toHaveBeenCalledWith('pl1', 'm1');
+  });
+
+  it('footer “Manage playlists →” appears only with the route registered', async () => {
+    const client = fakeClient();
+    mountPicker(client);
+    await flushPromises();
+    // Router-less mount (this helper) ⇒ no dead link.
+    expect(document.querySelector('[data-testid="picker-manage-playlists"]')).toBeNull();
+
+    // Router-mounted picker with the playlists route ⇒ live RouterLink.
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/app/playlists', name: 'playlists', component: { template: '<div />' } },
+      ],
+    });
+    await router.push('/app/playlists');
+    await router.isReady();
+    mount(PlaylistPickerModal, {
+      props: { modelValue: true, item: target() as never, client: client as unknown as ApiClient },
+      attachTo: document.body,
+      global: { plugins: [router] },
+    });
+    await flushPromises();
+
+    const link = document.querySelector<HTMLAnchorElement>('[data-testid="picker-manage-playlists"]');
+    expect(link).not.toBeNull();
+    expect(link?.textContent?.trim()).toBe('Manage playlists →');
+    expect(link?.getAttribute('href')).toBe('/app/playlists');
   });
 
 });

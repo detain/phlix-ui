@@ -455,8 +455,9 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
             // R13-01 — member-facing playlists (server collections; visibility =
             // own rows + legacy NULL-owner rows). Titles are set by the pages
             // (the list is a constant label, the detail name is async), so no
-            // static `meta.title` here. Nav left untouched by lane directive —
-            // reachable via the picker and direct URL.
+            // static `meta.title` here. Shell nav stays untouched by lane
+            // directive — the picker footer's "Manage playlists →" RouterLink
+            // (PlaylistPickerModal) and the direct URL are the entry points.
             path: `${base}/playlists`,
             name: 'playlists',
             component: () => import('../pages/PlaylistsPage.vue'),

@@ -812,6 +812,11 @@ async function handleSubmit(): Promise<void> {
  */
 if (inject(matchedRouteKey, null)?.value) {
   onBeforeRouteLeave(() =>
+    // Stays window.confirm on purpose (review #3): the shared ConfirmDialog is
+    // event-driven, not promise-based — wiring it in a route-leave guard needs a
+    // pending-resolver state machine (leak on re-nav/unmount, weaker jsdom
+    // determinism) for a dialog seen once. Native confirm returns the leave
+    // decision synchronously, which is exactly what this guard consumes.
     hasAnyChanges.value
       ? window.confirm('You have unsaved settings changes. Leave without saving them?')
       : true,

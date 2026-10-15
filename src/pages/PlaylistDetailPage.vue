@@ -30,8 +30,10 @@ import {
   isMediaItemCacheFresh,
 } from '../composables/useMediaItemCache';
 import { usePageTitle } from '../composables/usePageTitle';
+import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { pluralCount } from '../utils/plural';
+import { canManagePlaylist } from '../utils/playlistPermissions';
 import MediaCard from '../components/MediaCard.vue';
 import Button from '../components/ui/Button.vue';
 import Modal from '../components/ui/Modal.vue';
@@ -55,6 +57,19 @@ const route = useRoute();
 const router = useRouter();
 const apiBase = useMediaApiBase();
 const toasts = useToastStore();
+const auth = useAuthStore();
+
+/**
+ * Server Option-A law (utils/playlistPermissions): visibility ≠ manageability.
+ * Legacy NULL-owner and (admin-visible) foreign rows open read-only — the
+ * DELETE/update endpoints 404 for anyone but the owner or an admin, so the
+ * delete and item-remove affordances must not be offered at all.
+ */
+const canManage = computed(() =>
+  collection.value
+    ? canManagePlaylist(collection.value.created_by, auth.user?.id ?? null, auth.isAdmin)
+    : false,
+);
 
 const playlistId = computed(() => String(route.params.id ?? ''));
 
@@ -137,7 +152,7 @@ function replaceItem(id: string, item: MediaItem): void {
 
 async function removeItem(item: MediaItem): Promise<void> {
   const playlist = collection.value;
-  if (!playlist || removingIds.value.has(item.id)) return;
+  if (!playlist || !canManage.value || removingIds.value.has(item.id)) return;
   removingIds.value = new Set(removingIds.value).add(item.id);
   try {
     await getClient().removeFromPlaylist(playlist.id, item.id);
@@ -154,7 +169,7 @@ async function removeItem(item: MediaItem): Promise<void> {
 
 async function confirmDeletePlaylist(): Promise<void> {
   const playlist = collection.value;
-  if (!playlist || deleting.value) return;
+  if (!playlist || !canManage.value || deleting.value) return;
   deleting.value = true;
   try {
     await getClient().deletePlaylist(playlist.id);
@@ -196,7 +211,8 @@ onMounted(() => void load());
           </p>
         </div>
         <div class="playlist-detail__actions">
-          <Button variant="ghost" size="sm" @click="deleteOpen = true">Delete playlist</Button>
+          <Button v-if="canManage" variant="ghost" size="sm" @click="deleteOpen = true">Delete playlist</Button>
+          <p v-else class="playlist-detail__readonly">Shared playlist — only its owner (or an admin) can change it.</p>
         </div>
       </header>
 
@@ -204,13 +220,18 @@ onMounted(() => void load());
         v-if="items.length === 0"
         icon="list"
         title="This playlist is empty"
-        description="Add titles from any card’s ⋯ menu — “Add to playlist”."
+        :description="
+          canManage
+            ? 'Add titles from any card’s ⋯ menu — “Add to playlist”.'
+            : 'Titles can only be added by the playlist’s owner.'
+        "
       />
 
       <ul v-else class="playlist-detail__grid">
         <li v-for="item in items" :key="item.id" class="playlist-detail__cell">
           <MediaCard :item="item" />
           <button
+            v-if="canManage"
             type="button"
             class="playlist-detail__remove"
             :aria-label="`Remove ${item.name} from playlist`"
@@ -224,8 +245,10 @@ onMounted(() => void load());
       </ul>
     </template>
 
-    <!-- Delete-playlist confirm (UsersPage inline-modal precedent). -->
+    <!-- Delete-playlist confirm (UsersPage inline-modal precedent). Owner/admin
+         only — same manageability gate as the button that arms it. -->
     <Modal
+      v-if="canManage"
       :model-value="deleteOpen"
       title="Delete playlist"
       size="sm"
@@ -267,6 +290,12 @@ onMounted(() => void load());
   color: var(--text-muted, #a1a1aa);
   font-size: var(--text-sm, 0.875rem);
   margin: var(--space-1, 0.25rem) 0 0;
+}
+.playlist-detail__readonly {
+  color: var(--text-muted, #a1a1aa);
+  font-size: var(--text-xs, 0.75rem);
+  margin: 0;
+  text-align: right;
 }
 .playlist-detail__grid {
   display: grid;
