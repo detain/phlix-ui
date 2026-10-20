@@ -60,7 +60,7 @@
     "typescript-eslint": "^8.46.0",
     "unplugin-icons": "^23.0.1",
     "vite": "^8.0.16",
-    "vitest": "^4.1.8",
+    "vitest": "^4.1.11",
     "vue": "^3.5.0",
     "vue-eslint-parser": "^10.2.0",
     "vue-router": "^5.0.0",
@@ -91,5 +91,13 @@
     "apexcharts": "^5.15.2",
     "hls.js": "^1.6.16",
     "vue3-apexcharts": "^1.11.1"
+  },
+  "overrides": {
+    "@vitest/mocker": "^4.1.11",
+    "@vue/server-renderer": "^3.5.42",
+    "js-yaml": "^4.3.2",
+    "postcss-selector-parser": "^7.1.6",
+    "source-map-js": "^1.2.2",
+    "undici": "^7.29.1"
   }
 }
