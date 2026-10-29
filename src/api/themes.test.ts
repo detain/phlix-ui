@@ -31,7 +31,7 @@ import { activeThemeStyle, resolveThemeBase, resolveThemeTokens } from '../compo
 const here = dirname(fileURLToPath(import.meta.url));
 const GOLDEN_PATH = join(here, '../test/fixtures/themes-with-sample-plugin.golden.json');
 const goldenText = readFileSync(GOLDEN_PATH, 'utf8');
-const GOLDEN_MD5 = '84656d05d42b6d11a92ac88e2b2a8791';
+const GOLDEN_MD5 = 'f8a33eac15f111797cc9f01da27d447d';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return {
@@ -142,10 +142,10 @@ describe('end-to-end: the shipped sample plugin renders through the SPA pipeline
 
     expect(style).not.toBeNull();
     expect(style!.base).toBe('midnight');
-    // Exactly the plugin's own 37 tokens — NOT midnight's 53. The base is
+    // Exactly the plugin's own 28 tokens — NOT midnight's 53. The base is
     // applied through `data-theme`, so the stylesheet (not the server's
     // transcription of it) supplies everything the plugin left alone.
-    expect(Object.keys(style!.tokens)).toHaveLength(37);
+    expect(Object.keys(style!.tokens)).toHaveLength(28);
     expect(style!.tokens['--bg']).toBe('#05060a');
     // The status colours the sample deliberately does NOT set must be absent,
     // so they fall through the cascade to the midnight block.
@@ -172,7 +172,7 @@ describe('end-to-end: the shipped sample plugin renders through the SPA pipeline
 
     expect(style!.tokens['--bg']).toBe('#05060a'); // inherited from sample-dusk
     expect(style!.tokens['--text']).toBe('#ffffff'); // the variant's own override wins
-    expect(Object.keys(style!.tokens)).toHaveLength(37); // 37 base + 8 overrides, 8 overlapping
+    expect(Object.keys(style!.tokens)).toHaveLength(28); // 28 base + 8 overrides, all 8 overlapping
   });
 
   it('leaves every BUILT-IN with nothing to apply', async () => {

@@ -1,3 +1,18 @@
+## Unreleased — theme-sample cohort lane 2026-10-29 (M-THEME-SAMPLE M02): the cross-repo themes golden re-pinned against the byte-identical vendored sample payload
+
+- **What moved.** phlix-server re-vendored
+  `examples/plugins/phlix-plugin-sample-theme/` byte-identically to the
+  published `detain/phlix-plugin-sample-theme` — the vendored copy had rotted
+  into a 37-token payload still setting the 9 dead `--color-*` aliases. The
+  `GET /api/v1/themes` wire golden regenerated (dusk 28 tokens, HC 8,
+  built-ins 53 unchanged) and the md5 re-pinned here (`src/api/themes.test.ts`
+  `GOLDEN_MD5` → `f8a33eac15f111797cc9f01da27d447d`) in lockstep with the
+  server twin; `src/test/fixtures/themes-with-sample-plugin.golden.json`
+  re-vendored byte-for-byte from the server. Consumption assertions moved
+  37→28 with the merged plugin→plugin→built-in chain count (28, all 8 HC keys
+  overlapping) — the SPA's flattening law itself is untouched: the wire still
+  never flattens and the LIST response still supplies every chain link.
+
 ## Unreleased — review-fix lane 2026-10-29 (M-UI-15): the German error catalog stops lying about a server fact — signups-disabled is about the ACT of registration, not account state
 
 - **The mistranslation.** `auth.signups_disabled` shipped as
