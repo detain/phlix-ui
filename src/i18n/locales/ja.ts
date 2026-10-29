@@ -341,6 +341,8 @@ export const JA_MESSAGES = {
     playAll: '全員で再生を開始',
     pauseAll: '全員を一時停止',
     modeSelect: 'ルームを作成または参加',
+    commandFailed: 'この操作がグループに届きませんでした。接続を確認して再試行してください。',
+    commandRejected: '視聴グループがその操作を拒否しました。',
   },
   music: {
     title: 'ミュージックライブラリ',

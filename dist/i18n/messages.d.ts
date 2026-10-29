@@ -342,6 +342,10 @@ export declare const DEFAULT_MESSAGES: {
         pauseAll: string;
         /** Accessible name of the create/join radiogroup in SyncPlayModal (L1). */
         modeSelect: string;
+        /** M-UI-12: toast when a synced transport command cannot reach the wire. */
+        commandFailed: string;
+        /** M-UI-12: generic toast for an unregistered `syncplay_error` code; registered codes localize through `src/i18n/errors.ts`. */
+        commandRejected: string;
     };
     music: {
         title: string;

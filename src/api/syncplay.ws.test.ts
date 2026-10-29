@@ -31,6 +31,7 @@ import {
     sendSyncPlayCommand,
     getSyncPlayApi,
     setSyncPlayLogger,
+    setSyncPlayWireErrorListener,
 } from './syncplay';
 import { ACCESS_TOKEN_KEY } from './tokenStore';
 import type { SyncPlayStateUpdate } from '../types/syncplay';
@@ -160,6 +161,10 @@ afterEach(() => {
     // Reset the module-level singletons so the next test starts disconnected.
     closeSyncPlayConnection();
     setSyncPlayLogger(null);
+    // M-UI-12: the wire-error listener is the same class of module-level
+    // singleton (file header) — a leaked listener would toast from a dead
+    // scope in the next test.
+    setSyncPlayWireErrorListener(null);
     vi.useRealTimers();
     vi.restoreAllMocks();
     localStorage.clear();
@@ -706,72 +711,136 @@ describe('sendSyncPlayCommand', () => {
 
     const base = { issuedBy: 'm1', issuedAt: '2026-01-01T00:00:00Z' } as const;
 
+    /**
+     * M-UI-12: every pin here now asserts the DELIVERY ANSWER as well as the
+     * frame. The function used to be a silent `void`; the store's honesty
+     * (throw-not-dance) is built directly on this return value, so "a frame
+     * went out" and "nothing went out" must be indistinguishable ONLY in the
+     * old code, never in this one.
+     */
+
     it('play → syncplay_playback_play at the given position', () => {
         const s = connected();
-        sendSyncPlayCommand({ type: 'play', position: 10, ...base });
+        expect(sendSyncPlayCommand({ type: 'play', position: 10, ...base })).toBe(true);
         expect(sentTypes(s)).toEqual(['syncplay_playback_play']);
         expect((JSON.parse(s.sent[0]!) as { position: number }).position).toBe(10);
     });
 
     it('play with no position defaults to 0', () => {
         const s = connected();
-        sendSyncPlayCommand({ type: 'play', ...base });
+        expect(sendSyncPlayCommand({ type: 'play', ...base })).toBe(true);
         expect((JSON.parse(s.sent[0]!) as { position: number }).position).toBe(0);
     });
 
     it('pause → syncplay_playback_pause at the given position', () => {
         const s = connected();
-        sendSyncPlayCommand({ type: 'pause', position: 20, ...base });
+        expect(sendSyncPlayCommand({ type: 'pause', position: 20, ...base })).toBe(true);
         expect(sentTypes(s)).toEqual(['syncplay_playback_pause']);
         expect((JSON.parse(s.sent[0]!) as { position: number }).position).toBe(20);
     });
 
     it('pause with no position defaults to 0', () => {
         const s = connected();
-        sendSyncPlayCommand({ type: 'pause', ...base });
+        expect(sendSyncPlayCommand({ type: 'pause', ...base })).toBe(true);
         expect((JSON.parse(s.sent[0]!) as { position: number }).position).toBe(0);
     });
 
     it('seek → syncplay_playback_seek with from=0 and the target', () => {
         const s = connected();
-        sendSyncPlayCommand({ type: 'seek', position: 300, ...base });
+        expect(sendSyncPlayCommand({ type: 'seek', position: 300, ...base })).toBe(true);
         expect(sentTypes(s)).toEqual(['syncplay_playback_seek']);
         const frame = JSON.parse(s.sent[0]!) as { from_position: number; to_position: number };
         expect(frame.from_position).toBe(0);
         expect(frame.to_position).toBe(300);
     });
 
-    it('seek with NO position sends nothing at all', () => {
+    it('seek with NO position sends nothing at all — and REPORTS non-delivery', () => {
         const s = connected();
-        sendSyncPlayCommand({ type: 'seek', ...base });
+        expect(sendSyncPlayCommand({ type: 'seek', ...base })).toBe(false);
         expect(s.sent).toEqual([]);
     });
 
     it('sync → a playback_sync position report marked playing', () => {
         const s = connected();
-        sendSyncPlayCommand({ type: 'sync', position: 77, ...base });
+        expect(sendSyncPlayCommand({ type: 'sync', position: 77, ...base })).toBe(true);
         expect(sentTypes(s)).toEqual(['syncplay_playback_sync']);
         const frame = JSON.parse(s.sent[0]!) as { position: number; is_playing: boolean };
         expect(frame.position).toBe(77);
         expect(frame.is_playing).toBe(true);
     });
 
-    it('sync with NO position sends nothing at all', () => {
+    it('sync with NO position sends nothing at all — and REPORTS non-delivery', () => {
         const s = connected();
-        sendSyncPlayCommand({ type: 'sync', ...base });
+        expect(sendSyncPlayCommand({ type: 'sync', ...base })).toBe(false);
         expect(s.sent).toEqual([]);
     });
 
-    it('is a no-op when nothing is connected', () => {
-        expect(() => sendSyncPlayCommand({ type: 'play', position: 1, ...base })).not.toThrow();
+    it('is a no-op when nothing is connected — and REPORTS non-delivery', () => {
+        expect(sendSyncPlayCommand({ type: 'play', position: 1, ...base })).toBe(false);
         expect(FakeWebSocket.instances).toHaveLength(0);
     });
 
-    it('is a no-op while the socket is not OPEN', () => {
+    it('is a no-op while the socket is not OPEN — and REPORTS non-delivery', () => {
         const s = connected();
         s.readyState = FakeWebSocket.CLOSING;
-        sendSyncPlayCommand({ type: 'play', position: 1, ...base });
+        expect(sendSyncPlayCommand({ type: 'play', position: 1, ...base })).toBe(false);
         expect(s.sent).toEqual([]);
+    });
+});
+
+// ── M-UI-12: the syncplay_error voice ─────────────────────────────────────────
+
+describe('setSyncPlayWireErrorListener', () => {
+    /** Frames decode through the REAL client; read `error_code`/`code` per SPEC.md:313. */
+    function deliverError(frame: Record<string, unknown>): void {
+        socket().deliver({ type: 'syncplay_error', ...frame });
+    }
+
+    it('a server error frame reaches the installed listener verbatim', () => {
+        const listener = vi.fn();
+        setSyncPlayWireErrorListener(listener);
+        connectedInGroup();
+        deliverError({ error_code: 'NOT_HOST', message: 'Only the host can control playback' });
+
+        expect(listener).toHaveBeenCalledWith('NOT_HOST', 'Only the host can control playback');
+    });
+
+    it('the legacy `code` spelling reaches the listener when `error_code` is absent', () => {
+        const listener = vi.fn();
+        setSyncPlayWireErrorListener(listener);
+        connectedInGroup();
+        deliverError({ code: 'NOT_IN_GROUP', message: 'You are not in a group' });
+
+        expect(listener).toHaveBeenCalledWith('NOT_IN_GROUP', 'You are not in a group');
+    });
+
+    it('a code-less frame still calls the listener with the client\'s UNKNOWN sentinel', () => {
+        const listener = vi.fn();
+        setSyncPlayWireErrorListener(listener);
+        connectedInGroup();
+        deliverError({ message: 'HANDLER_ERROR text' });
+
+        expect(listener).toHaveBeenCalledTimes(1);
+        expect(listener.mock.calls[0]![0]).toBe('UNKNOWN');
+    });
+
+    it('removing the listener (null) restores the log-only posture without throwing', () => {
+        setSyncPlayWireErrorListener(vi.fn());
+        setSyncPlayWireErrorListener(null);
+        connectedInGroup();
+        expect(() => deliverError({ error_code: 'NOT_HOST', message: 'x' })).not.toThrow();
+    });
+
+    it('the frame still reaches the injectable lifecycle logger (R12-07 posture kept)', () => {
+        setSyncPlayWireErrorListener(vi.fn());
+        const logger = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
+        setSyncPlayLogger(logger);
+        connectedInGroup();
+        deliverError({ error_code: 'NOT_HOST', message: 'Only the host can control playback' });
+
+        expect(logger.error).toHaveBeenCalledWith(
+            '[SyncPlay] Error: NOT_HOST - Only the host can control playback',
+        );
     });
 });
 

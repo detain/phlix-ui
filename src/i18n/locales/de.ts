@@ -340,6 +340,8 @@ export const DE_MESSAGES = {
     playAll: 'Für alle abspielen',
     pauseAll: 'Für alle pausieren',
     modeSelect: 'Raum erstellen oder beitreten',
+    commandFailed: 'Diese Steuerung hat die Gruppe nicht erreicht. Verbindung prüfen und erneut versuchen.',
+    commandRejected: 'Die Wiedergabegruppe hat diese Aktion abgelehnt.',
   },
   music: {
     title: 'Musikbibliothek',

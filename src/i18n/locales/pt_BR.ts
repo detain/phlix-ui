@@ -340,6 +340,8 @@ export const PT_BR_MESSAGES = {
     playAll: 'Reproduzir para todos',
     pauseAll: 'Pausar para todos',
     modeSelect: 'Criar ou entrar em uma sala',
+    commandFailed: 'O controle não chegou ao grupo. Verifique sua conexão e tente novamente.',
+    commandRejected: 'O grupo de visualização recusou essa ação.',
   },
   music: {
     title: 'Biblioteca de música',

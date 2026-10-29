@@ -385,6 +385,10 @@ export const DEFAULT_MESSAGES = {
     pauseAll: 'Pause for everyone',
     /** Accessible name of the create/join radiogroup in SyncPlayModal (L1). */
     modeSelect: 'Create or join a room',
+    /** M-UI-12: toast when a synced transport command cannot reach the wire. */
+    commandFailed: 'That control did not reach the group. Check your connection and try again.',
+    /** M-UI-12: generic toast for an unregistered `syncplay_error` code; registered codes localize through `src/i18n/errors.ts`. */
+    commandRejected: 'The watch group refused that action.',
   },
   music: {
     title: 'Music Library',

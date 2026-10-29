@@ -340,6 +340,8 @@ export const IT_MESSAGES = {
     playAll: 'Riproduci per tutti',
     pauseAll: 'Metti in pausa per tutti',
     modeSelect: 'Crea o unisciti a una stanza',
+    commandFailed: 'Il comando non ha raggiunto il gruppo. Controlla la connessione e riprova.',
+    commandRejected: 'Il gruppo di visione ha rifiutato questa azione.',
   },
   music: {
     title: 'Libreria musicale',

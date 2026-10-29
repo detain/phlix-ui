@@ -344,6 +344,8 @@ export const FR_MESSAGES = {
     playAll: 'Lire pour tout le monde',
     pauseAll: 'Mettre en pause pour tout le monde',
     modeSelect: 'Créer ou rejoindre un salon',
+    commandFailed: 'Cette commande n’a pas atteint le groupe. Vérifiez votre connexion et réessayez.',
+    commandRejected: 'Le groupe de visionnage a refusé cette action.',
   },
   music: {
     title: 'Bibliothèque musicale',

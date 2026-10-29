@@ -74,6 +74,26 @@ export declare const POSITION_REPORT_INTERVAL_MS = 5000;
  * much the user would recognise it as themselves.
  */
 export declare function resolveMemberName(): string | undefined;
+/**
+ * M-UI-12 — the store's `sendCommand()` refuses to pretend.
+ *
+ * Thrown when a live session asked for a broadcast and the WebSocket layer
+ * reported the frame NOT delivered (`sendSyncPlayCommand()` → `false`: mid-
+ * reconnect, room-switch race, dead socket, or a positionless seek/sync).
+ * Before this, every one of those drops returned like a success and the caller
+ * went on to mutate its local transport as if the group had obeyed — the
+ * finding's false "synced" state. A catch that can never trip is not error
+ * handling; this class is what makes the component's arms reachable in the
+ * REAL failure shape, not only the synthetic throw-at-`socket.send()` one.
+ *
+ * Carries the command `type` so a caller (or a future telemetry seam) can say
+ * WHICH control was dropped; the human-facing text is the caller's i18n job,
+ * never a string baked in here.
+ */
+export declare class SyncPlayCommandNotDeliveredError extends Error {
+    readonly commandType: SyncPlayPlaybackCommand['type'];
+    constructor(commandType: SyncPlayPlaybackCommand['type']);
+}
 export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-syncplay", Pick<{
     currentRoom: import("vue").Ref<{
         id: string;

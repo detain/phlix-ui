@@ -430,6 +430,32 @@ export function setSyncPlayLogger(logger: SyncPlayLogger | null | undefined): vo
   syncPlayLogger = logger ?? NOOP_LOGGER;
 }
 
+/**
+ * M-UI-12 — the socket's REJECTION voice.
+ *
+ * The server answers a refused command (or any wire-level failure) with a
+ * `syncplay_error` frame — SPEC.md:306: `error_code` first, `code` second,
+ * plus English debug `message`. The vendored `@phlix/syncplay` client already
+ * parses that frame and hands it to its `onError(code, message)` option; until
+ * M-UI-12 the only thing this module did with it was write the lifecycle
+ * logger (silent by default, R12-07) — so a command the GROUP REFUSED was as
+ * invisible as one that never left the device.
+ *
+ * Same injectable-slot shape as {@link setSyncPlayLogger} on purpose: the
+ * module has no business knowing what a toast is. The consumer that owns a
+ * user surface (`SyncPlayControls.vue`) installs a listener for as long as it
+ * lives and removes it on teardown; with no listener installed the behavior
+ * is exactly the old one (log-only), so no host regresses.
+ */
+export type SyncPlayWireErrorListener = (code: string, message: string) => void;
+
+let syncPlayWireErrorListener: SyncPlayWireErrorListener | null = null;
+
+/** Install (or, with `null`, remove) the `syncplay_error` consumer. */
+export function setSyncPlayWireErrorListener(listener: SyncPlayWireErrorListener | null): void {
+  syncPlayWireErrorListener = listener;
+}
+
 /** Active WebSocket connection for SyncPlay real-time sync. */
 let syncPlayWs: WebSocket | null = null;
 
@@ -740,6 +766,9 @@ function connectSyncPlaySocket(
     },
     onError: (code, message) => {
       syncPlayLogger.error(`[SyncPlay] Error: ${code} - ${message}`);
+      // M-UI-12: the server's refusal must reach the user surface, not just
+      // the (host-silent by default) lifecycle log.
+      syncPlayWireErrorListener?.(code, message);
     },
     onInfo: (message) => {
       syncPlayLogger.log(`[SyncPlay] Info: ${message}`);
@@ -831,31 +860,46 @@ export function sendSyncPlayStateUpdate(state: SyncPlayStateUpdate): void {
 /**
  * Send a playback command (play/pause/seek/sync) over the SyncPlay WebSocket
  * using @phlix/syncplay protocol.
- * No-op if the WebSocket is not connected.
+ *
+ * M-UI-12 — this function used to be a silent `void`: every not-ready guard
+ * just `return`ed and the caller could not tell a delivered command from a
+ * dropped one. It now REPORTS delivery honestly:
+ *
+ * - `false` — no frame reached the wire (no client, no socket, socket not
+ *   OPEN, or a seek/sync with no position to put in the frame). The exact
+ *   conditions the old guards covered, unchanged behavior, now observable.
+ * - `true` — the protocol client handed a serialized frame to an OPEN socket.
+ *   A `WebSocket.send()` that THROWS (the `InvalidStateError` race) still
+ *   propagates to the caller — an exception in flight outranks a return
+ *   value. `true` is "on the wire", NOT "the group accepted it": acceptance
+ *   is answered asynchronously by the server's own broadcasts or a
+ *   `syncplay_error` frame, surfaced via {@link setSyncPlayWireErrorListener}.
  *
  * @param command - The playback command to broadcast to other room members.
  */
-export function sendSyncPlayCommand(command: SyncPlayPlaybackCommand): void {
-  if (!syncPlayClient || !syncPlayWs || syncPlayWs.readyState !== WebSocket.OPEN) return;
+export function sendSyncPlayCommand(command: SyncPlayPlaybackCommand): boolean {
+  if (!syncPlayClient || !syncPlayWs || syncPlayWs.readyState !== WebSocket.OPEN) return false;
 
   switch (command.type) {
     case 'play':
       syncPlayClient.sendPlay(command.position ?? 0);
-      break;
+      return true;
     case 'pause':
       syncPlayClient.sendPause(command.position ?? 0);
-      break;
+      return true;
     case 'seek':
       if (command.position !== undefined) {
         const fromPos = 0; // We don't track from position, use 0
         syncPlayClient.sendSeek(fromPos, command.position);
+        return true;
       }
-      break;
+      return false;
     case 'sync':
       // Full sync - send current position
       if (command.position !== undefined) {
         syncPlayClient.reportPosition(command.position, true);
+        return true;
       }
-      break;
+      return false;
   }
 }

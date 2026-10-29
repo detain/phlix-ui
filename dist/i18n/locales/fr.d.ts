@@ -336,6 +336,8 @@ export declare const FR_MESSAGES: {
         playAll: string;
         pauseAll: string;
         modeSelect: string;
+        commandFailed: string;
+        commandRejected: string;
     };
     music: {
         title: string;

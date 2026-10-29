@@ -1,3 +1,54 @@
+## Unreleased — review-fix lane 2026-10-29 (M-UI-12): SyncPlay host-command failures surface via toast with honest state
+
+- **The silent-drop cure (`api/syncplay.ts`, `useSyncPlayStore.ts`, `SyncPlayControls.vue`).**
+  A synced play/pause/seek click used to be fire-and-hope: `sendSyncPlayCommand()`
+  was a `void` no-op whenever the socket was not OPEN (mid-reconnect, room-switch
+  race, dead link), so `sendCommand()` returned exactly like a success, the three
+  `catch` arms in `SyncPlayControls.vue` were unreachable for the REAL failure
+  shape (only the synthetic `socket.send()`-throw could trip them), and the
+  component emitted its optimistic local `play`/`pause`/`seek` anyway — the
+  finding's false "synced" state: the local transport dances, the group never
+  hears. Now `sendSyncPlayCommand()` returns an honest delivery `boolean`
+  (guards false; a positionless seek/sync false; an OPEN-socket frame true; a
+  socket throw still propagates), and the store turns non-delivery into a
+  recorded `error` channel entry plus a typed `SyncPlayCommandNotDeliveredError`
+  (carries the command `type`, no baked user-facing text). The component's catch
+  arms — now genuinely reachable on both failure shapes — surface the failure
+  through the estate `ToastHost` (`toasts.error`) and only `emit` after actual
+  delivery, so optimistic local state never outruns the wire.
+- **Server refusals reach the user too.** `syncplay_error` frames — the server's
+  async "no" for a command that DID leave the device (`SyncPlayManager.php:1071`
+  `NOT_HOST` et al., legacy SCREAMING codes per SPEC.md:306) — previously died
+  in the R12-07 host-silent lifecycle logger. A new module-slot seam
+  (`setSyncPlayWireErrorListener`, same injectable shape as `setSyncPlayLogger`;
+  no listener = old log-only posture, no host regresses) routes them to
+  `SyncPlayControls.vue`, which localizes through the EXISTING `src/i18n/errors.ts`
+  W4 catalog (registered code → 7-locale text, unknown code → the localized
+  generic) — the server's English debug text is never echoed, and the listener
+  is scope-disposed with the component (`onScopeDispose`).
+- **i18n law held.** Two new chrome keys (`syncplay.commandFailed`,
+  `syncplay.commandRejected`) added to `DEFAULT_MESSAGES` and mirrored into all
+  six locale bundles (de/es/fr/it/ja/pt_BR = 7 locales, catalog parity test
+  green); zero new error-catalog codes — `NOT_HOST`/`NOT_IN_GROUP`/
+  `NOT_AUTHENTICATED` were already registered and 7-locale complete, reused
+  per doctrine.
+- **Red→green measured.** 13 targeted tests red on the parent law (console-only
+  pins + the silent-drop legs) before the cure. The suites gain +17 tests
+  (+9 `SyncPlayControls.test.ts`: transport-throw→toast pins, the socket-down
+  no-emit/no-throw-honesty legs, the wire-error surfacing legs incl.
+  server-text-never-leaks and listener scope; +3 store legs incl. the typed
+  throw and the pinned silent no-session arm; +5 `syncplay.ws.test.ts`
+  listener-seam legs) and every `sendSyncPlayCommand` ws pin now asserts the
+  delivery answer. Full serial suite: **312 files / 6374 passed / 10 skipped,
+  exit 0** (parent era 6357 + these 17; clears the 6291-era floor by +83).
+  `vue-tsc` 0 errors; `eslint` 0 across all changed files (the new
+  `phlix-href/no-raw-wire-href` rule included). `dist/` rebuilt and committed —
+  the SFC comment/docblock churn rehashed `data-v-` scope ids (507 dist
+  entries: 244 new / 244 deleted / 19 modified, 9 of them declaration files:
+  the boolean return, the new seam, the error class and the two i18n keys are
+  the consumer type contract moving); determinism proven by ×2 aggregate md5
+  `7b6d744db62bfcf2ff7a875d676a1548` over two clean builds.
+
 ## Unreleased — review-fix lane 2026-10-29 (M-UI-11 r2): the sink census gets its mechanical guard, safeHref becomes public API
 
 - **The M-UI-11 census law is now machine-enforced (`eslint-rules/no-raw-wire-href.cjs`).** The

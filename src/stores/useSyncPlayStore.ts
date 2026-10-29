@@ -97,6 +97,29 @@ export function resolveMemberName(): string | undefined {
   return undefined;
 }
 
+/**
+ * M-UI-12 — the store's `sendCommand()` refuses to pretend.
+ *
+ * Thrown when a live session asked for a broadcast and the WebSocket layer
+ * reported the frame NOT delivered (`sendSyncPlayCommand()` → `false`: mid-
+ * reconnect, room-switch race, dead socket, or a positionless seek/sync).
+ * Before this, every one of those drops returned like a success and the caller
+ * went on to mutate its local transport as if the group had obeyed — the
+ * finding's false "synced" state. A catch that can never trip is not error
+ * handling; this class is what makes the component's arms reachable in the
+ * REAL failure shape, not only the synthetic throw-at-`socket.send()` one.
+ *
+ * Carries the command `type` so a caller (or a future telemetry seam) can say
+ * WHICH control was dropped; the human-facing text is the caller's i18n job,
+ * never a string baked in here.
+ */
+export class SyncPlayCommandNotDeliveredError extends Error {
+  constructor(readonly commandType: SyncPlayPlaybackCommand['type']) {
+    super(`SyncPlay '${commandType}' command was not delivered to the group`);
+    this.name = 'SyncPlayCommandNotDeliveredError';
+  }
+}
+
 export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   // ---- state --------------------------------------------------------------
   const currentRoom = ref<SyncPlayRoom | null>(null);
@@ -481,6 +504,19 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
 
   /**
    * Send a local playback command to all room members via WebSocket.
+   *
+   * M-UI-12: the command's delivery is no longer a matter of hope.
+   * `sendSyncPlayCommand()` reports whether the frame actually reached an OPEN
+   * socket; when it did not, this function records the failure on the store's
+   * honest `error` channel (the same one join/create/leave use) and throws
+   * {@link SyncPlayCommandNotDeliveredError} so the caller cannot proceed with
+   * optimistic local state. The early `return` below stays silent on purpose:
+   * "no session" is the room having vanished, not a command that failed — the
+   * components' own `isInRoom` guards make it the non-user-facing arm, pinned
+   * by `useSyncPlayStore.actions.test.ts`.
+   *
+   * A socket that THROWS at write time (`InvalidStateError` race) lets that
+   * exception propagate unchanged — the caller's catch is the same door.
    */
   function sendCommand(
     _apiBase: string,
@@ -505,7 +541,10 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       issuedAt: new Date().toISOString(),
     };
     // P8: Send via WebSocket using @phlix/syncplay protocol — not REST.
-    sendSyncPlayCommand(command);
+    if (!sendSyncPlayCommand(command)) {
+      error.value = 'SyncPlay command was not delivered to the group';
+      throw new SyncPlayCommandNotDeliveredError(type);
+    }
   }
 
   /**

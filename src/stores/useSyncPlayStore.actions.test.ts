@@ -17,7 +17,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useSyncPlayStore } from './useSyncPlayStore';
+import { useSyncPlayStore, SyncPlayCommandNotDeliveredError } from './useSyncPlayStore';
 import { closeSyncPlayConnection } from '../api/syncplay';
 import { makeSyncPlayServer, type FakeSyncPlayServer } from '../api/test/syncplayServer';
 import type { SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
@@ -508,8 +508,13 @@ describe('useSyncPlayStore.sendCommand', () => {
 
     it('sends nothing when there is no session', () => {
         const store = useSyncPlayStore();
-        store.sendCommand(BASE, 'play');
+        // M-UI-12 law: the no-session arm is the "room vanished" early exit —
+        // NOT a failed user command. It stays a silent return: no throw, no
+        // error record, no toast surface. The throw belongs to the delivery
+        // failure below, where a user was IN a room and nothing reached them.
+        expect(() => store.sendCommand(BASE, 'play')).not.toThrow();
         expect(FakeWebSocket.instances).toHaveLength(0);
+        expect(store.error).toBeNull();
     });
 
     it('puts a play frame on the wire', async () => {
@@ -553,6 +558,43 @@ describe('useSyncPlayStore.sendCommand', () => {
         expect(store.currentSession!.createdBy).toBe('m1');
         store.sendCommand(BASE, 'pause', { position: 1 });
         expect(socket().sent).toHaveLength(1);
+    });
+
+    /**
+     * M-UI-12 — THE silent-drop cure at the store boundary. A live session
+     * whose socket is not OPEN (the window every reconnect ladder is climbed
+     * through) used to return from `sendCommand()` exactly like a delivered
+     * command: no throw, no record, the caller emitting optimistic transport
+     * events to a group that heard nothing. `sendSyncPlayCommand()` now
+     * reports delivery, and the store turns a non-delivery into a typed throw
+     * plus a record on its honest `error` channel.
+     */
+    it('throws SyncPlayCommandNotDeliveredError when the socket is not OPEN', async () => {
+        const store = await joinedAndInGroup();
+        socket().close(); // readyState 3 — the guard tripwire in api/syncplay.ts
+        socket().sent.length = 0;
+
+        expect(() => store.sendCommand(BASE, 'play')).toThrow(SyncPlayCommandNotDeliveredError);
+        expect(socket().sent).toHaveLength(0);
+        expect(store.error).toBe('SyncPlay command was not delivered to the group');
+    });
+
+    it('the throw carries the command type, not a placeholder string', async () => {
+        const store = await joinedAndInGroup();
+        socket().close();
+        try {
+            store.sendCommand(BASE, 'seek', { position: 42 });
+            expect.unreachable('sendCommand must throw when the wire is down');
+        } catch (e) {
+            expect(e).toBeInstanceOf(SyncPlayCommandNotDeliveredError);
+            expect((e as SyncPlayCommandNotDeliveredError).commandType).toBe('seek');
+        }
+    });
+
+    it('a delivered command leaves the error channel untouched', async () => {
+        const store = await joinedAndInGroup();
+        store.sendCommand(BASE, 'play', { position: 5 });
+        expect(store.error).toBeNull();
     });
 });
 

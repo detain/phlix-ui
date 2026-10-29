@@ -14,12 +14,19 @@
  *   - Synced play/pause toggle (broadcasts to all room members)
  *   - Synced seek controls
  *   - Buffer-wait indicator when any member is buffering
+ *   - M-UI-12: honest failure surfacing — a broadcast that cannot reach the
+ *     wire, or is refused by the group, toasts; the local transport only ever
+ *     moves for a command that was actually delivered.
  */
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, inject, onScopeDispose } from 'vue';
 import Icon from '../Icon.vue';
 import { useSyncPlayStore } from '../../stores/useSyncPlayStore';
+import { useToastStore } from '../../stores/useToastStore';
 import { useMessages } from '../../composables/useMessages';
 import { useMediaApiBase } from '../../composables/useApiBase';
+import { setSyncPlayWireErrorListener } from '../../api/syncplay';
+import { errorCodeMessage } from '../../i18n/errors';
+import type { PhlixAppConfig } from '../../app/types';
 
 const props = defineProps<{
   /** Current playback position in seconds (from parent player). */
@@ -45,8 +52,30 @@ const emit = defineEmits<{
 
 const { t } = useMessages();
 const syncPlay = useSyncPlayStore();
+const toasts = useToastStore();
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const mediaApiBase = useMediaApiBase();
 const effectiveApiBase = computed(() => props.apiBase ?? mediaApiBase.value);
+
+// ---- server refusals on the wire (M-UI-12) -----------------------------------
+/**
+ * The socket may deliver a `syncplay_error` frame for a command this client
+ * DID put on the wire — phlix-server `SyncPlayManager` refuses play/pause/
+ * seek from a non-host with the legacy `NOT_HOST` code (the same voice answers
+ * auth/group desyncs). Until M-UI-12 that frame died in the lifecycle logger.
+ *
+ * Localization rides the EXISTING error-code catalog (`src/i18n/errors.ts`,
+ * W4 doctrine: registered code → 7-locale text, unknown code → localized
+ * generic) — the server's English `message` is never echoed, so nothing from
+ * the wire renders raw. The listener occupies the module slot for exactly as
+ * long as this component's scope lives; on teardown the slot empties and the
+ * frame degrades to the old log-only behavior rather than toasting from
+ * beyond the grave.
+ */
+setSyncPlayWireErrorListener((code) => {
+  toasts.error(errorCodeMessage(code, config?.locale, t('syncplay.commandRejected')));
+});
+onScopeDispose(() => setSyncPlayWireErrorListener(null));
 
 // ---- buffer-wait state ---------------------------------------------------
 /** Whether any room member is currently buffering (tracked locally). */
@@ -70,27 +99,34 @@ const isWaitingForBuffer = computed(() => {
 // ---- synced transport -----------------------------------------------------
 /**
  * Send a synced play command to all room members.
+ *
+ * M-UI-12: `sendCommand` THROWS when the frame cannot reach the wire (and a
+ * socket throw propagates through it), so the `emit` below — the local
+ * player's cue to start playing "for everyone" — only ever runs for a command
+ * that was actually broadcast. When it fails, the user gets a toast, not a
+ * console line, and the local transport honestly stays put.
  */
 async function syncedPlay(): Promise<void> {
   if (!syncPlay.isInRoom) return;
   try {
     await syncPlay.sendCommand(effectiveApiBase.value, 'play');
     emit('play');
-  } catch (e) {
-    console.error('[SyncPlay] Failed to send play command:', e);
+  } catch {
+    toasts.error(t('syncplay.commandFailed'));
   }
 }
 
 /**
- * Send a synced pause command to all room members.
+ * Send a synced pause command to all room members. Same M-UI-12 contract as
+ * {@link syncedPlay}: no delivery, no local `emit`, no silent lie.
  */
 async function syncedPause(): Promise<void> {
   if (!syncPlay.isInRoom) return;
   try {
     await syncPlay.sendCommand(effectiveApiBase.value, 'pause');
     emit('pause');
-  } catch (e) {
-    console.error('[SyncPlay] Failed to send pause command:', e);
+  } catch {
+    toasts.error(t('syncplay.commandFailed'));
   }
 }
 
@@ -106,15 +142,17 @@ async function syncedTogglePlay(): Promise<void> {
 }
 
 /**
- * Send a synced seek command to all room members.
+ * Send a synced seek command to all room members. Same M-UI-12 contract:
+ * the group hears the seek, or the user is told it did not land — the local
+ * transport is never moved on a dropped broadcast.
  */
 async function syncedSeek(position: number): Promise<void> {
   if (!syncPlay.isInRoom) return;
   try {
     await syncPlay.sendCommand(effectiveApiBase.value, 'seek', { position });
     emit('seek', position);
-  } catch (e) {
-    console.error('[SyncPlay] Failed to send seek command:', e);
+  } catch {
+    toasts.error(t('syncplay.commandFailed'));
   }
 }
 

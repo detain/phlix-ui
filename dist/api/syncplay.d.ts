@@ -247,6 +247,26 @@ export interface SyncPlayLogger {
 }
 /** Install (or, with `null`/`undefined`, remove) the lifecycle logger. */
 export declare function setSyncPlayLogger(logger: SyncPlayLogger | null | undefined): void;
+/**
+ * M-UI-12 — the socket's REJECTION voice.
+ *
+ * The server answers a refused command (or any wire-level failure) with a
+ * `syncplay_error` frame — SPEC.md:306: `error_code` first, `code` second,
+ * plus English debug `message`. The vendored `@phlix/syncplay` client already
+ * parses that frame and hands it to its `onError(code, message)` option; until
+ * M-UI-12 the only thing this module did with it was write the lifecycle
+ * logger (silent by default, R12-07) — so a command the GROUP REFUSED was as
+ * invisible as one that never left the device.
+ *
+ * Same injectable-slot shape as {@link setSyncPlayLogger} on purpose: the
+ * module has no business knowing what a toast is. The consumer that owns a
+ * user surface (`SyncPlayControls.vue`) installs a listener for as long as it
+ * lives and removes it on teardown; with no listener installed the behavior
+ * is exactly the old one (log-only), so no host regresses.
+ */
+export type SyncPlayWireErrorListener = (code: string, message: string) => void;
+/** Install (or, with `null`, remove) the `syncplay_error` consumer. */
+export declare function setSyncPlayWireErrorListener(listener: SyncPlayWireErrorListener | null): void;
 /** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
 type SyncPlayMessageHandler = (msg: {
     type: string;
@@ -282,9 +302,22 @@ export declare function sendSyncPlayStateUpdate(state: SyncPlayStateUpdate): voi
 /**
  * Send a playback command (play/pause/seek/sync) over the SyncPlay WebSocket
  * using @phlix/syncplay protocol.
- * No-op if the WebSocket is not connected.
+ *
+ * M-UI-12 — this function used to be a silent `void`: every not-ready guard
+ * just `return`ed and the caller could not tell a delivered command from a
+ * dropped one. It now REPORTS delivery honestly:
+ *
+ * - `false` — no frame reached the wire (no client, no socket, socket not
+ *   OPEN, or a seek/sync with no position to put in the frame). The exact
+ *   conditions the old guards covered, unchanged behavior, now observable.
+ * - `true` — the protocol client handed a serialized frame to an OPEN socket.
+ *   A `WebSocket.send()` that THROWS (the `InvalidStateError` race) still
+ *   propagates to the caller — an exception in flight outranks a return
+ *   value. `true` is "on the wire", NOT "the group accepted it": acceptance
+ *   is answered asynchronously by the server's own broadcasts or a
+ *   `syncplay_error` frame, surfaced via {@link setSyncPlayWireErrorListener}.
  *
  * @param command - The playback command to broadcast to other room members.
  */
-export declare function sendSyncPlayCommand(command: SyncPlayPlaybackCommand): void;
+export declare function sendSyncPlayCommand(command: SyncPlayPlaybackCommand): boolean;
 export {};

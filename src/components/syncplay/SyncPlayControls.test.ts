@@ -19,6 +19,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import SyncPlayControls from './SyncPlayControls.vue';
 import { useSyncPlayStore } from '../../stores/useSyncPlayStore';
+import { useToastStore } from '../../stores/useToastStore';
 import { openSyncPlayConnection, closeSyncPlayConnection } from '../../api/syncplay';
 import type { SyncPlaySession } from '../../types/syncplay';
 
@@ -150,10 +151,25 @@ function mountControls(opts: MountOpts = {}): {
         },
         global: { provide: { apiBase: API_BASE } },
     });
+    mountedWrappers.push(w);
     return { w, store };
 }
 
 const btn = (w: VueWrapper, label: string) => w.get(`button[aria-label="${label}"]`);
+
+/**
+ * M-UI-12: every mounted wrapper is torn down between tests. The wire-error
+ * listener the component registers is a MODULE-level slot (last writer wins),
+ * so a wrapper left mounted would keep answering `syncplay_error` frames in
+ * later tests and the assertion below of "no listener → no toast" could not be
+ * trusted.
+ */
+const mountedWrappers: VueWrapper[] = [];
+
+/** The toast state as the user would see it (ToastHost renders this array). */
+function visibleToasts() {
+  return useToastStore().toasts;
+}
 
 beforeEach(() => {
     FakeWebSocket.instances = [];
@@ -165,6 +181,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    while (mountedWrappers.length > 0) mountedWrappers.pop()!.unmount();
     closeSyncPlayConnection();
     vi.restoreAllMocks();
 });
@@ -178,6 +195,8 @@ describe('SyncPlayControls — control', () => {
         await flushPromises();
         // If this were empty, every "no frame" assertion below would be vacuous.
         expect(frameTypes()).toEqual(['syncplay_playback_play']);
+        // M-UI-12: the happy path stays silent — no failure toast on success.
+        expect(visibleToasts()).toHaveLength(0);
     });
 });
 
@@ -309,16 +328,20 @@ describe('SyncPlayControls — guards', () => {
     });
 });
 
-// ── transport failure ─────────────────────────────────────────────────────────
+// ── transport failure surfaces to the USER, not the console ───────────────────
 
-describe('SyncPlayControls — a transport throw is contained', () => {
+describe('SyncPlayControls — a transport throw surfaces honestly (M-UI-12)', () => {
     /**
-     * Make the write itself fail. This is the condition the three `catch` arms
-     * exist for: `WebSocket.send()` is specified to throw `InvalidStateError`
-     * when the socket is not ready, and the readyState check one frame earlier
-     * cannot rule that out. The failure is injected at the SOCKET, not by
-     * mocking the store — so the whole component→store→api→client chain runs for
-     * real and only the far end refuses.
+     * Make the write itself fail. This is one of the two failure shapes the
+     * three `catch` arms exist for: `WebSocket.send()` is specified to throw
+     * `InvalidStateError` when the socket is not ready, and the readyState
+     * check one frame earlier cannot rule that out. The failure is injected at
+     * the SOCKET, not by mocking the store — so the whole component→store→api
+     * →client chain runs for real and only the far end refuses.
+     *
+     * Before M-UI-12 the arm was reached by this synthetic throw ALONE, the
+     * user saw nothing but a console line, and the UI went on claiming the
+     * transport state the click had implied. Now the arm is a toast.
      */
     function breakTheWire(): void {
         socket().send = () => {
@@ -326,34 +349,40 @@ describe('SyncPlayControls — a transport throw is contained', () => {
         };
     }
 
-    it('a failed play does not emit `play`', async () => {
+    it('a failed play does not emit `play` and toasts the failure', async () => {
         const { w } = mountControls({ isPlaying: false });
         breakTheWire();
         await btn(w, 'Play for everyone').trigger('click');
         await flushPromises();
 
         expect(w.emitted('play')).toBeUndefined();
-        expect(console.error).toHaveBeenCalledWith('[SyncPlay] Failed to send play command:', expect.anything());
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.tone).toBe('error');
+        expect(visibleToasts()[0]!.message).toBe(
+            'That control did not reach the group. Check your connection and try again.',
+        );
     });
 
-    it('a failed pause does not emit `pause`', async () => {
+    it('a failed pause does not emit `pause` and toasts the failure', async () => {
         const { w } = mountControls({ isPlaying: true });
         breakTheWire();
         await btn(w, 'Pause for everyone').trigger('click');
         await flushPromises();
 
         expect(w.emitted('pause')).toBeUndefined();
-        expect(console.error).toHaveBeenCalledWith('[SyncPlay] Failed to send pause command:', expect.anything());
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.tone).toBe('error');
     });
 
-    it('a failed seek does not emit `seek`', async () => {
+    it('a failed seek does not emit `seek` and toasts the failure', async () => {
         const { w } = mountControls({ position: 100 });
         breakTheWire();
         await btn(w, 'Rewind').trigger('click');
         await flushPromises();
 
         expect(w.emitted('seek')).toBeUndefined();
-        expect(console.error).toHaveBeenCalledWith('[SyncPlay] Failed to send seek command:', expect.anything());
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.tone).toBe('error');
     });
 
     it('the component survives the throw and stays interactive', async () => {
@@ -370,6 +399,141 @@ describe('SyncPlayControls — a transport throw is contained', () => {
         await flushPromises();
         expect(frameTypes()).toEqual(['syncplay_playback_play']);
         expect(w.emitted('play')).toHaveLength(1);
+        // The recovery click leaves only the one earlier failure toast behind.
+        expect(visibleToasts()).toHaveLength(1);
+    });
+});
+
+// ── the REAL transport failure: the socket is not OPEN ────────────────────────
+
+describe('SyncPlayControls — a command that cannot reach the wire fails loudly (M-UI-12)', () => {
+    /**
+     * THE headline M-UI-12 leg. This is the production failure shape the
+     * console.error arm NEVER caught: `sendSyncPlayCommand()` used to no-op
+     * when `readyState !== OPEN` (mid-reconnect, room-switch race, dead
+     * socket), so `sendCommand()` returned normally, the catch stayed
+     * unreachable, `emit('play')` fired anyway and the local transport danced
+     * while the group never heard a thing — the false "synced" state.
+     *
+     * Mounted WITHOUT the socket handshake on purpose: the session is live in
+     * the store, the wire is not, which is exactly the outage window a
+     * reconnect ladder climbs through.
+     */
+    it('play: no wire, no local emit, one honest toast', async () => {
+        const { w } = mountControls({ isPlaying: false, connect: false });
+        await btn(w, 'Play for everyone').trigger('click');
+        await flushPromises();
+
+        expect(FakeWebSocket.instances).toHaveLength(0); // nothing was dialed
+        expect(w.emitted('play')).toBeUndefined();
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.tone).toBe('error');
+        expect(visibleToasts()[0]!.message).toBe(
+            'That control did not reach the group. Check your connection and try again.',
+        );
+    });
+
+    it('pause: no wire, no local emit, one honest toast', async () => {
+        const { w } = mountControls({ isPlaying: true, connect: false });
+        await btn(w, 'Pause for everyone').trigger('click');
+        await flushPromises();
+
+        expect(w.emitted('pause')).toBeUndefined();
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.tone).toBe('error');
+    });
+
+    it('seek: no wire, no local emit, one honest toast', async () => {
+        const { w } = mountControls({ position: 100, connect: false });
+        await btn(w, 'Rewind').trigger('click');
+        await flushPromises();
+
+        expect(w.emitted('seek')).toBeUndefined();
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.tone).toBe('error');
+    });
+
+    it('the store records the undelivered command on its honest error channel', async () => {
+        const { w, store } = mountControls({ isPlaying: false, connect: false });
+        expect(store.error).toBeNull();
+        await btn(w, 'Play for everyone').trigger('click');
+        await flushPromises();
+
+        expect(store.error).toBe('SyncPlay command was not delivered to the group');
+    });
+});
+
+// ── server-refused commands: the async leg of the same finding ────────────────
+
+describe('SyncPlayControls — a syncplay_error frame from the server is surfaced (M-UI-12)', () => {
+    /**
+     * The second delivery truth the finding names: a frame CAN reach the wire
+     * and still be refused — phlix-server `SyncPlayManager` answers
+     * play/pause/seek from a non-host with `sendError(:1071/:1123/:1169)` —
+     * legacy SCREAMING codes, `NOT_HOST` et al. The vendored `@phlix/syncplay`
+     * client hands each one to `onError(code, message)`; before M-UI-12 that
+     * callback only wrote the (injectable, host-silent) lifecycle logger and
+     * the refusal died there.
+     *
+     * Localization goes through the EXISTING error-code catalog
+     * (`src/i18n/errors.ts`, W4 doctrine): registered code → 7-locale catalog
+     * text; unknown code → the localized generic. The server's English text is
+     * never echoed (sanitized surface, per the contracts access order).
+     */
+    it('NOT_HOST renders the catalog message, not the server text', async () => {
+        mountControls();
+        socket().deliver({
+            type: 'syncplay_error',
+            error_code: 'NOT_HOST',
+            message: 'Only the host can control playback',
+        });
+        await flushPromises();
+
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.tone).toBe('error');
+        expect(visibleToasts()[0]!.message).toBe('Only the group host can do that.');
+        // The raw server debug string must not leak onto the user surface.
+        expect(visibleToasts()[0]!.message).not.toContain('Only the host can control playback');
+    });
+
+    it('NOT_IN_GROUP renders its catalog message', async () => {
+        mountControls();
+        socket().deliver({ type: 'syncplay_error', code: 'NOT_IN_GROUP', message: 'You are not in a group' });
+        await flushPromises();
+
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.message).toBe('You are not in a watch group right now.');
+    });
+
+    it('an unregistered code falls back to the localized generic, never to server text', async () => {
+        mountControls();
+        socket().deliver({ type: 'syncplay_error', error_code: 'FUTURE_CODE', message: 'English debug detail' });
+        await flushPromises();
+
+        expect(visibleToasts()).toHaveLength(1);
+        expect(visibleToasts()[0]!.message).toBe('The watch group refused that action.');
+    });
+
+    it('the listener is scoped to the component: after unmount a frame toasts nothing', async () => {
+        const { w } = mountControls();
+        w.unmount();
+        socket().deliver({ type: 'syncplay_error', error_code: 'NOT_HOST', message: 'x' });
+        await flushPromises();
+
+        // This is the R12-07 posture restored: with no consumer installed the
+        // frame degrades to the injectable logger, which the library keeps
+        // silent by default — it does NOT toast from beyond the grave.
+        expect(visibleToasts()).toHaveLength(0);
+    });
+
+    it('a frame while NOT mounted toasts nothing and does not throw', async () => {
+        // Connection up, no component: the module-level listener slot is empty.
+        useSyncPlayStore().currentSession = makeSession();
+        bringUpConnection();
+        expect(() =>
+            socket().deliver({ type: 'syncplay_error', error_code: 'NOT_HOST', message: 'x' }),
+        ).not.toThrow();
+        expect(visibleToasts()).toHaveLength(0);
     });
 });
 

@@ -342,6 +342,8 @@ export const ES_MESSAGES = {
     playAll: 'Reproducir para todos',
     pauseAll: 'Pausar para todos',
     modeSelect: 'Crear o unirse a una sala',
+    commandFailed: 'El control no llegó al grupo. Comprueba tu conexión e inténtalo de nuevo.',
+    commandRejected: 'El grupo de visionado ha rechazado esa acción.',
   },
   music: {
     title: 'Biblioteca de música',

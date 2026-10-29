@@ -334,6 +334,8 @@ export declare const ES_MESSAGES: {
         playAll: string;
         pauseAll: string;
         modeSelect: string;
+        commandFailed: string;
+        commandRejected: string;
     };
     music: {
         title: string;
