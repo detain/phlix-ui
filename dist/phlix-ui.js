@@ -1,10 +1,10 @@
-import { r as e } from "./AuthField-D69nDXtI.js";
+import { r as e } from "./AuthField-dm5Eto1B.js";
 import { n as t, t as n } from "./Icon-CIwTuFLd.js";
 import { t as r } from "./IconButton-y6A8Bq4D.js";
 import { a as i, i as a, n as o, o as s, r as c, t as l } from "./useFocusTrap-rrmOWOBy.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-CFPikE8Z.js";
 import { a as h, i as g, n as _, o as v, r as y, s as b, t as x } from "./plural-DMM7pLFA.js";
-import { i as S, n as C, r as w, t as T } from "./useMessages-D3tJ-unA.js";
+import { i as S, n as C, r as w, t as T } from "./useMessages-B3GZbd0w.js";
 import { _ as ee, a as E, b as te, c as ne, d as re, f as ie, g as ae, h as oe, i as se, l as ce, m as le, n as ue, o as de, p as fe, r as pe, t as me, u as he, v as ge, y as D } from "./client-CRZ_SWB1.js";
 import { n as O, r as _e, t as ve } from "./useApiBase-CV_r-Kk4.js";
 import { t as ye } from "./useAuthStore-BbS6J1QF.js";
@@ -16,12 +16,12 @@ import { t as ze } from "./useToastStore-BDoKlU6N.js";
 import { n as Be, t as Ve } from "./ThumbRating-cLiSk8V_.js";
 import { i as He, o as Ue, s as We } from "./shortcuts-Ck2yBFUB.js";
 import { t as Ge } from "./Tooltip-D_txjC1i.js";
-import { t as Ke } from "./Spinner-0jozIVj_.js";
-import { t as qe } from "./NetworkHealthIndicator-mQcfnd3X.js";
-import { _ as Je, a as Ye, c as Xe, d as Ze, f as Qe, g as $e, h as et, i as tt, l as nt, m as rt, n as it, o as at, p as ot, r as st, s as ct, t as lt, u as ut, v as dt, y as ft } from "./SecuritySettingsPage-DgbmPG0E.js";
+import { t as Ke } from "./Spinner-CmMrwioT.js";
+import { t as qe } from "./NetworkHealthIndicator-Bj38IHnR.js";
+import { _ as Je, a as Ye, c as Xe, d as Ze, f as Qe, g as $e, h as et, i as tt, l as nt, m as rt, n as it, o as at, p as ot, r as st, s as ct, t as lt, u as ut, v as dt, y as ft } from "./SecuritySettingsPage-BTjRuGJT.js";
 import { i as pt, n as mt, r as ht, t as gt } from "./Kbd-DdcgRPIx.js";
 import { a as _t, i as vt, n as yt, o as bt, r as xt, t as St } from "./useLibrariesStore-snrGn-sr.js";
-import { n as Ct, t as wt } from "./HomeRow-bV-KxayQ.js";
+import { n as Ct, t as wt } from "./HomeRow-HkWUxsRG.js";
 import { t as Tt } from "./safeHref-C9H0Sqte.js";
 import { t as A } from "./EmptyState-BAyOxAcK.js";
 import { t as j } from "./Button-BuG0GvCa.js";
@@ -32,20 +32,20 @@ import { t as M } from "./Badge-A88fI41k.js";
 import { t as Vt } from "./Slider-DqFxiMp4.js";
 import { t as Ht } from "./Switch-ibkXiiN-.js";
 import { t as Ut } from "./Chip-CYhlmz6l.js";
-import { t as Wt } from "./Select-Bpa7MkRi.js";
-import { t as Gt } from "./Combobox-CF5X1Tj5.js";
-import { t as Kt } from "./Modal-DctA70AT.js";
-import { t as qt } from "./ConfirmDialog-TmOXcB3h.js";
+import { t as Wt } from "./Select-wfXWbVkY.js";
+import { t as Gt } from "./Combobox-DK7_N09R.js";
+import { t as Kt } from "./Modal-Bd-QVi4Y.js";
+import { t as qt } from "./ConfirmDialog-CNQA7xjO.js";
 import { t as N } from "./Skeleton-rHw-IJtl.js";
 import { t as Jt } from "./PageHint-BGYg6qRJ.js";
 import { t as Yt } from "./Tabs-7t3yuCWn.js";
 import { t as Xt } from "./Menu-Dm56tG4N.js";
 import { t as Zt } from "./HelpText-aA3EQtU4.js";
-import { o as Qt, t as $t } from "./MediaCard-Dcx6wey-.js";
-import { t as en } from "./MediaGrid-BUG7auU7.js";
-import { t as tn } from "./MediaRow-CWzlaqEt.js";
+import { o as Qt, t as $t } from "./MediaCard-PbvMsLQM.js";
+import { t as en } from "./MediaGrid-Ckd62R_w.js";
+import { t as tn } from "./MediaRow-lKFqYBYn.js";
 import { n as nn, t as rn } from "./media-query-DKjhlX8r.js";
-import { n as an, t as on } from "./metadata-sources-DYATS0YM.js";
+import { n as an, t as on } from "./metadata-sources-Dxn2S9je.js";
 import { n as sn, t as cn } from "./logs-DadTfaTq.js";
 import { t as ln } from "./dashboard-BTCOCTHQ.js";
 import { n as un, r as dn, t as fn } from "./webhooks-aMh0Jywf.js";
@@ -64,12 +64,12 @@ import { n as En, r as Dn, t as On } from "./useSettingsPrefs-CEFxTJFG.js";
 import { i as kn, n as An, r as jn, t as Mn } from "./plugins-D0j_V4E1.js";
 import { n as Nn, r as Pn, t as Fn } from "./maintenance-CETCLHzL.js";
 import { t as In } from "./hubDashboard-BhOaaDD-.js";
-import { t as Ln } from "./LoginForm-DBUqHkNO.js";
-import { t as Rn } from "./SignupForm-nva74GMg.js";
+import { t as Ln } from "./LoginForm-7YgPaOqW.js";
+import { t as Rn } from "./SignupForm-DH-p2rie.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as zn, t as Bn } from "./debounce-BkSsZiXZ.js";
 import { t as Vn } from "./Input-DOj6fN8q.js";
-import { i as Hn, n as Un, r as Wn, t as Gn } from "./MusicAlbumCard-BOTCohwa.js";
+import { i as Hn, n as Un, r as Wn, t as Gn } from "./MusicAlbumCard-Df8ecMvH.js";
 import { t as Kn } from "./useMediaStore-BkX4dmKj.js";
 import { Fragment as F, Teleport as qn, Transition as Jn, TransitionGroup as Yn, computed as I, createApp as Xn, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as Zn, createTextVNode as V, createVNode as H, defineAsyncComponent as Qn, defineComponent as U, getCurrentScope as $n, inject as er, nextTick as tr, normalizeClass as W, normalizeStyle as nr, onBeforeUnmount as rr, onMounted as G, onScopeDispose as ir, onUnmounted as ar, openBlock as K, provide as or, readonly as sr, ref as q, renderList as J, renderSlot as cr, resolveComponent as lr, resolveDynamicComponent as ur, toDisplayString as Y, toValue as dr, unref as X, useId as fr, vModelSelect as pr, vModelText as mr, vShow as hr, watch as Z, watchEffect as gr, withCtx as Q, withDirectives as _r, withModifiers as vr } from "vue";
 import { createPinia as yr, defineStore as br } from "pinia";
@@ -918,7 +918,7 @@ var ia = ["src", "alt"], aa = { class: "brand-wordmark" }, oa = {
 		qi();
 		let t = pt(), i = $(), a = Tr(), { t: o } = T(), s = Ue(), c = I(() => a.meta?.fullBleed === !0 && s.theaterActive);
 		Ji();
-		let l = Qn(() => import("./CommandPalette-BF2MMdK5.js")), u = q(!1);
+		let l = Qn(() => import("./CommandPalette-BXd05l7R.js")), u = q(!1);
 		Z(() => t.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1279,111 +1279,111 @@ function Ya(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-QUZgCGDk.js")
+			component: () => import("./BrowsePage-Cpx-_EwD.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-CEXnK2if.js")
+			component: () => import("./MediaDetailPage-DB4Gfhwj.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-VAN_5Bof.js")
+			component: () => import("./SeasonPage-5LDW8ve8.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-BtNQVbhZ.js")
+			component: () => import("./LibraryPage-B7Xvhli0.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CegeBBsf.js")
+			component: () => import("./PlayerPage-V-Ya823h.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-DKegLxaH.js")
+			component: () => import("./LoginPage-DixMfuJt.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-BSJCt0RO.js")
+			component: () => import("./SignupPage-CP71MhpH.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-D3BEPklV.js")
+			component: () => import("./ConnectPage-CAxiZmYq.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-BxkFOta_.js")
+			component: () => import("./SettingsPage-C4gM3NL7.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-CTxQjp-b.js")
+			component: () => import("./ExplorePage-BDkbnj1L.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-1er5ZdUE.js")
+			component: () => import("./RecommendationsPage-CAZwVcKv.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-DEBkUtNO.js")
+			component: () => import("./WatchHistoryPage-B3o8PUW7.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-DOAr7NOk.js")
+			component: () => import("./SyncPlayPage-GhHV4G4T.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-BJD8u7Fj.js")
+			component: () => import("./MusicLibraryPage-zDMGPQdA.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-DRULBSg_.js")
+			component: () => import("./ParentalControlsPage-DRBN5DEe.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-VqintfK3.js")
+			component: () => import("./ProfilesPage-gzDSRfQe.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-BgoXneyg.js")
+			component: () => import("./PlaylistsPage-tIO_YiiG.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-YjOlu3RZ.js")
+			component: () => import("./PlaylistDetailPage-aidKqOke.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${za}`,
 		name: Ra,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-C7E2L93Z.js")
+		component: () => import("./McpTokensPage-CWNYWnGE.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1658,25 +1658,25 @@ var Za = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-BHvVvbeR.js")
+	component: () => import("./DashboardPage-VmNKK2dI.js")
 }, fo = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-XsYcXyTE.js")
+	component: () => import("./UsersPage-DKbjUAY2.js")
 }, po = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-ee595RND.js")
+	component: () => import("./LogsPage-C4isjfSq.js")
 }, mo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-BpS5CuFC.js")
+	component: () => import("./WebhooksPage-Cqr26kI3.js")
 }, ho = {
 	name: "admin-services",
 	path: "services",
@@ -1688,13 +1688,13 @@ var Za = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-DaNECFz-.js")
+	component: () => import("./IntegrationsPage-4qNiypEj.js")
 }, _o = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-BJlubq0J.js")
+	component: () => import("./BackupPage-D7-klF_i.js")
 }, vo = {
 	name: "admin-cast",
 	path: "cast-devices",
@@ -1712,19 +1712,19 @@ var Za = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-PIQF5epT.js")
+	component: () => import("./RemoteAccessPage-DAVPbNvu.js")
 }, xo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-CAl-7_kZ.js")
+	component: () => import("./LiveTvPage-Sj1sLcNb.js")
 }, So = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-DJDsUc-a.js")
+	component: () => import("./CollectionsPage-TtcBAHnw.js")
 }, Co = {
 	name: "admin-history",
 	path: "history",
@@ -1736,43 +1736,43 @@ var Za = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-edWX_AcJ.js")
+	component: () => import("./SyncPlayPage-39Mepyn2.js")
 }, To = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-tcWluRus.js")
+	component: () => import("./LibrariesPage-FfRGzHVl.js")
 }, Eo = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-hM5IKDFj.js")
+	component: () => import("./DuplicatesPage-DJB7Vryz.js")
 }, Do = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-C8TLpJut.js")
+	component: () => import("./PluginsPage-2OT2cx1w.js")
 }, Oo = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-lUuis1T3.js")
+	component: () => import("./TasksPage-CJrbAzE7.js")
 }, ko = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-BnqFOa5S.js")
+	component: () => import("./TranscodingSettingsPage-OSuHZEDj.js")
 }, Ao = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-uon5ABuk.js")
+	component: () => import("./SettingsPage-Bdz_Y-er.js")
 }, jo = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -1784,7 +1784,7 @@ var Za = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-BHg3gwjR.js")
+	component: () => import("./MetricsPage-0trT26EI.js")
 }, No = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -7705,7 +7705,12 @@ var L_ = {
 		"transcoding.title": "Transcodificación",
 		"transcoding.preferredAccelerator": "Acelerador preferido",
 		"transcoding.hdrOutput": "Salida HDR",
-		"transcoding.toneMapMode": "Modo de mapeo de tono"
+		"transcoding.toneMapMode": "Modo de mapeo de tono",
+		settingsRejected: "El servidor rechazó estos ajustes; no se guardó nada.",
+		settingsRejectAllMethods: "Al menos un método de inicio de sesión debe permanecer activado. Deja uno activado y guarda de nuevo.",
+		settingsRejectAdminLockout: "Este cambio dejaría a un administrador activo sin ninguna forma de iniciar sesión. Habilita primero otro método de inicio de sesión para esa cuenta y vuelve a guardar.",
+		settingsForbidden: "Ya no tienes permiso para cambiar los ajustes del servidor. Inicia sesión de nuevo como administrador e inténtalo otra vez.",
+		settingsConflict: "El servidor no pudo aplicar estos ajustes en su estado actual. Recarga los ajustes e inténtalo de nuevo."
 	}
 }, R_ = {
 	common: {
@@ -8190,7 +8195,12 @@ var L_ = {
 		"transcoding.title": "Transcodage",
 		"transcoding.preferredAccelerator": "Accélérateur préféré",
 		"transcoding.hdrOutput": "Sortie HDR",
-		"transcoding.toneMapMode": "Mode de mappage tonal"
+		"transcoding.toneMapMode": "Mode de mappage tonal",
+		settingsRejected: "Le serveur a rejeté ces paramètres — rien n’a été enregistré.",
+		settingsRejectAllMethods: "Au moins un mode de connexion doit rester activé. Laissez-en au moins un activé et enregistrez à nouveau.",
+		settingsRejectAdminLockout: "Cette modification laisserait un administrateur actif sans aucun moyen utilisable de se connecter. Activez d’abord un autre mode de connexion pour lui, puis enregistrez à nouveau.",
+		settingsForbidden: "Vous n’avez plus l’autorisation de modifier les paramètres du serveur. Reconnectez-vous en tant qu’administrateur et réessayez.",
+		settingsConflict: "Le serveur n’a pas pu appliquer ces paramètres dans l’état actuel. Rechargez les paramètres et réessayez."
 	}
 }, z_ = {
 	common: {
@@ -8675,7 +8685,12 @@ var L_ = {
 		"transcoding.title": "Transkodierung",
 		"transcoding.preferredAccelerator": "Bevorzugter Beschleuniger",
 		"transcoding.hdrOutput": "HDR-Ausgabe",
-		"transcoding.toneMapMode": "Ton-Mapping-Modus"
+		"transcoding.toneMapMode": "Ton-Mapping-Modus",
+		settingsRejected: "Der Server hat diese Einstellungen abgelehnt – nichts wurde gespeichert.",
+		settingsRejectAllMethods: "Mindestens eine Anmelde-Methode muss aktiv bleiben. Lassen Sie mindestens eine aktiviert und speichern Sie erneut.",
+		settingsRejectAdminLockout: "Diese Änderung würde einen aktiven Administrator ohne nutzbare Anmelde-Methode aussperren. Aktivieren Sie zuerst für ihn eine weitere Anmelde-Methode und speichern Sie erneut.",
+		settingsForbidden: "Sie haben keine Berechtigung mehr, Server-Einstellungen zu ändern. Melden Sie sich erneut als Administrator an und versuchen Sie es erneut.",
+		settingsConflict: "Der Server konnte diese Einstellungen im aktuellen Zustand nicht anwenden. Laden Sie die Einstellungen neu und versuchen Sie es erneut."
 	}
 }, B_ = {
 	common: {
@@ -9160,7 +9175,12 @@ var L_ = {
 		"transcoding.title": "Transcodifica",
 		"transcoding.preferredAccelerator": "Acceleratore preferito",
 		"transcoding.hdrOutput": "Output HDR",
-		"transcoding.toneMapMode": "Modalità mappatura toni"
+		"transcoding.toneMapMode": "Modalità mappatura toni",
+		settingsRejected: "Il server ha rifiutato queste impostazioni: nulla è stato salvato.",
+		settingsRejectAllMethods: "Almeno un metodo di accesso deve rimanere abilitato. Lasciane almeno uno attivo e salva di nuovo.",
+		settingsRejectAdminLockout: "Questa modifica lascerebbe un amministratore attivo senza alcun modo di accedere. Abilita prima un altro metodo di accesso per quell’account, poi salva di nuovo.",
+		settingsForbidden: "Non hai più l’autorizzazione per modificare le impostazioni del server. Accedi di nuovo come amministratore e riprova.",
+		settingsConflict: "Il server non ha potuto applicare queste impostazioni nello stato attuale. Ricarica le impostazioni e riprova."
 	}
 }, V_ = {
 	common: {
@@ -9645,7 +9665,12 @@ var L_ = {
 		"transcoding.title": "Transcodificação",
 		"transcoding.preferredAccelerator": "Acelerador preferido",
 		"transcoding.hdrOutput": "Saída HDR",
-		"transcoding.toneMapMode": "Modo de mapeamento de tons"
+		"transcoding.toneMapMode": "Modo de mapeamento de tons",
+		settingsRejected: "O servidor rejeitou estas configurações — nada foi salvo.",
+		settingsRejectAllMethods: "Pelo menos um método de login deve permanecer ativado. Deixe pelo menos um ativado e salve novamente.",
+		settingsRejectAdminLockout: "Esta alteração deixaria um administrador ativo sem nenhuma forma de fazer login. Ative primeiro outro método de login para essa conta e salve novamente.",
+		settingsForbidden: "Você não tem mais permissão para alterar as configurações do servidor. Entre novamente como administrador e tente de novo.",
+		settingsConflict: "O servidor não pôde aplicar essas configurações no estado atual. Recarregue as configurações e tente novamente."
 	}
 }, H_ = {
 	common: {
@@ -10130,7 +10155,12 @@ var L_ = {
 		"transcoding.title": "トランスコード",
 		"transcoding.preferredAccelerator": "優先アクセラレータ",
 		"transcoding.hdrOutput": "HDR出力",
-		"transcoding.toneMapMode": "トーンマップモード"
+		"transcoding.toneMapMode": "トーンマップモード",
+		settingsRejected: "サーバーがこの設定を拒否しました。何も保存されていません。",
+		settingsRejectAllMethods: "少なくとも 1 つのサインイン方法を有効のままにする必要があります。少なくとも 1 つを有効にしたまま、もう一度保存してください。",
+		settingsRejectAdminLockout: "この変更では、有効な管理者が利用可能なサインイン方法をすべて失い、ロックアウトされます。まずその管理者用に別のサインイン方法を有効にしてから、もう一度保存してください。",
+		settingsForbidden: "サーバー設定を変更する権限がありません。管理者として再度サインインしてから、もう一度お試しください。",
+		settingsConflict: "現在の状態ではサーバーが設定を適用できませんでした。設定を再読み込みしてもう一度お試しください。"
 	}
 }, U_ = {
 	es: L_,
@@ -10139,7 +10169,7 @@ var L_ = {
 	it: B_,
 	pt_BR: V_,
 	ja: H_
-}, W_ = Qn(() => import("./MediaDetail-0V6-uKSq.js").then((e) => e.n)), G_ = Qn(() => import("./MetadataMatchModal-fBty-MSL.js").then((e) => e.n)), K_ = Qn(() => import("./FilterBar-Cjuj5K1L.js").then((e) => e.n)), q_ = Qn(() => import("./SearchPage-xzj7FS2W.js"));
+}, W_ = Qn(() => import("./MediaDetail-BcdQpnB3.js").then((e) => e.n)), G_ = Qn(() => import("./MetadataMatchModal-nCUBOxlh.js").then((e) => e.n)), K_ = Qn(() => import("./FilterBar-DM9Yqq2u.js").then((e) => e.n)), q_ = Qn(() => import("./SearchPage-D6tT7tNW.js"));
 //#endregion
 export { je as ACTIVE_PROFILE_KEY, cn as ALL_LOGS, cd as AcceptInvitePage, hn as AdminBackupApi, gn as AdminCastApi, bn as AdminCollectionsApi, ln as AdminDashboardApi, _n as AdminDlnaServerApi, xn as AdminHistoryApi, In as AdminHubDashboardApi, mn as AdminIntegrationsApi, Tn as AdminLibrariesApi, yn as AdminLiveTvApi, sn as AdminLogsApi, Fn as AdminMaintenanceApi, on as AdminMetadataSourcesApi, Mn as AdminPluginsApi, vn as AdminRemoteAccessApi, pn as AdminServicesApi, En as AdminSettingsApi, Sn as AdminSyncPlayApi, Oe as AdminUsersApi, fn as AdminWebhooksApi, me as ApiClient, ae as ApiError, e as AppBackdrop, Vr as AppLayout, Ch as AudiobookDetailPage, rg as AudiobookPlayerPage, qm as AudiobooksPage, tt as BUILT_IN_THEME_IDS, M as Badge, mm as BookDetailPage, Mm as BookReaderPage, qp as BooksPage, j as Button, Pt as CONNECTION_API_BASE_KEY, At as CONNECTION_CONFIRMED_ORIGIN_KEY, ua as CURRENT_SERVER_ID_KEY, da as CURRENT_SERVER_NAME_KEY, Ut as Chip, Gt as Combobox, qt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, C as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, we as DEFAULT_THROTTLE_BPS, z_ as DE_MESSAGES, he as ERROR_MESSAGES, re as ERROR_TITLES, L_ as ES_MESSAGES, A as EmptyState, R_ as FR_MESSAGES, nl as FederationPage, Tl as FederationSharesPage, K_ as FilterBar, ie as GENERIC_ERROR_MESSAGE, ga as HUB_SYNC_PLAY_PORT, io as HelpPopover, Zt as HelpText, B_ as IT_MESSAGES, n as Icon, r as IconButton, rd as InviteLinksPage, H_ as JA_MESSAGES, gt as Kbd, Cn as LIBRARY_TYPES, U_ as LOCALE_MESSAGES, gs as LibraryScanPage, ce as LocalStorageTokenStore, Ln as LoginForm, Nn as MAINTENANCE_ENDPOINTS, Pn as MAINTENANCE_TASK_NAMES, Ye as MAX_EXTENDS_DEPTH, Ra as MCP_TOKENS_ROUTE_NAME, za as MCP_TOKENS_ROUTE_PATH, ue as MUSIC_PAGE_SIZE, Fl as ManageSharesPage, $t as MediaCard, W_ as MediaDetail, en as MediaGrid, wt as MediaHomeRow, tn as MediaRow, Xt as Menu, G_ as MetadataMatchModal, Kt as Modal, kd as MusicAlbumPage, _f as MusicArtistPage, Jd as MusicArtistsPage, Np as MusicPlayerPage, np as MusicTracksPage, Is as MyServersPage, ee as NetworkError, An as PLUGIN_SECRET_MASK, x as PLURAL_CATEGORIES, Ee as PROFILE_LAST_ERROR_CODE, Se as PROFILE_LAST_ERROR_TEXT, V_ as PT_BR_MESSAGES, Jt as PageHint, Qa as PageTransition, sa as PhlixApp, zg as PhotoAlbumPage, wg as PhotoAlbumsPage, C_ as PhotoSlideshowPage, c_ as PhotoViewPage, is as ProfileImageSettings, be as RATING_LABELS, Te as RATING_MAX, De as RATING_OPTIONS, Bn as REQUEST_SEARCH_DEBOUNCE_MS, Re as RESUME_MAX_RATIO, Ie as RESUME_MIN_SECONDS, so as RatingBadge, wu as RequestsPage, Za as Reveal, wn as SCAN_JOB_TYPES, Dn as SETTINGS_SECRET_MASK, vt as SORT_TITLE_ARTICLES, un as SUBSCRIBABLE_EVENTS, q_ as SearchPage, lt as SecuritySettingsPage, Wt as Select, Uc as ServerDetailPage, Yl as SharedWithMePage, jr as Sheet, Rn as SignupForm, N as Skeleton, Vt as Slider, an as SourcePriorityEditor, Ke as Spinner, Ht as Switch, at as THEME_CACHE_KEY, ct as THEME_TOKEN_ALLOWLIST, xe as THROTTLE_BPS_LEVELS, Ce as THROTTLE_BPS_OPTIONS, pe as TMDB_UNCONFIGURED_CODE, Yt as Tabs, Ve as ThumbRating, ge as TimeoutError, Fi as ToastHost, Ge as Tooltip, lo as UserRatingPicker, dn as WEBHOOK_EVENT_CATEGORIES, ke as activeProfileStorageKey, Xe as activeThemeStyle, Ko as adminMenu, Ki as applyStoredThemeEarly, nt as applyThemeTokens, A_ as bestCandidate, w_ as bindMediaStoreToRouter, Uo as buildAdminRoutes, Go as buildHubAdminRoutes, xa as buildHubRelayUrl, rn as buildMediaQuery, nn as buildMediaUrl, Wo as buildServerAdminRoutes, ut as clearThemeTokens, Aa as closeHubRelayConnection, Ro as commonAdminPages, _t as compareByStrippedTitle, Xa as createPhlixApp, w as createTranslator, zn as debounce, Ui as deriveAccentVars, D as errMessage, fe as errorCodeMessage, le as errorCodeTitle, yt as fetchLibraries, st as fetchThemes, c as focusable, a as focusableRegistry, Bt as formatPageTitle, mt as fuzzyScore, E as getDefaultApiHeaders, ja as getHubRelaySocket, p as hasStoredPreferences, Bo as hubAdminPages, i as installFocusable, Mt as isAllowedBase, Ze as isAllowedThemeToken, Qe as isBuiltInThemeId, te as isOffline, Ot as isPlaintextPublic, _ as isPluralTemplate, Et as isPrivateHost, oe as isRegisteredErrorCode, Ne as isRewritableImagePath, ot as isSafeThemeTokenValue, de as isTmdbUnconfigured, ht as matchCommand, Ba as mcpTokensMenuItem, S as mergeMessages, jt as normalizeBase, rt as normalizeServerTheme, Da as openHubRelayConnection, Nt as originOf, ya as parsePendingCommandFrame, jn as pluginErrorCode, kn as pluginValidationErrors, y as plural, g as pluralCategory, h as pluralCount, v as pluralize, Dt as probeServer, et as readCachedTheme, d as readStoredPreferences, T_ as rectCenter, Pe as resolveImageSrc, Me as resolveImageSrcset, $e as resolveThemeBase, Je as resolveThemeTokens, Tt as safeHref, dt as sanitizeThemeTokens, b as selectPluralTemplate, zo as serverAdminPages, Rt as setAppName, ne as setDefaultApiHeaders, zt as setPageTitle, xt as sortLibraries, bt as stripLeadingArticle, ve as useApiBase, ye as useAuthStore, Ji as useCommandPaletteHotkey, pt as useCommandStore, kt as useConnectionStore, o as useFocusTrap, k as useImageSrc, St as useLibrariesStore, O as useMediaApiBase, Kn as useMediaStore, T as useMessages, I_ as useOnline, Lt as usePageTitle, Fe as usePlayerStore, $i as usePreconnect, u as usePreferencesStore, Qt as usePrefetch, Ae as useProfileStore, ra as useResumeReporter, Ct as useResumeSync, ha as useServerStore, On as useSettingsPrefsStore, F_ as useSpatialNav, qi as useTheme, it as useThemesStore, ze as useToastStore, Be as useUserItemDataStore, Ft as withScheme, ft as writeCachedTheme };
 

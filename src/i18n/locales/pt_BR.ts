@@ -526,5 +526,14 @@ export const PT_BR_MESSAGES = {
     'transcoding.preferredAccelerator': 'Acelerador preferido',
     'transcoding.hdrOutput': 'Saída HDR',
     'transcoding.toneMapMode': 'Modo de mapeamento de tons',
+    settingsRejected: 'O servidor rejeitou estas configurações — nada foi salvo.',
+    settingsRejectAllMethods:
+      'Pelo menos um método de login deve permanecer ativado. Deixe pelo menos um ativado e salve novamente.',
+    settingsRejectAdminLockout:
+      'Esta alteração deixaria um administrador ativo sem nenhuma forma de fazer login. Ative primeiro outro método de login para essa conta e salve novamente.',
+    settingsForbidden:
+      'Você não tem mais permissão para alterar as configurações do servidor. Entre novamente como administrador e tente de novo.',
+    settingsConflict:
+      'O servidor não pôde aplicar essas configurações no estado atual. Recarregue as configurações e tente novamente.',
   },
 } satisfies PhlixMessages;

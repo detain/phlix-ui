@@ -1,3 +1,43 @@
+## Unreleased — review-fix lane 2026-10-29 (M-UI-13): auth-lockout 422 rejections visible with actionable copy + honest form state
+
+- **The invisible-save cure (`src/pages/admin/SettingsPage.vue`).** A settings PUT
+  rejected by phlix-server's auth lock-out guards (`AuthMethodPolicy`: R1
+  `all_methods_disabled`, R2/R2-bis `admin_lockout`) answers 422 with a machine
+  `reason` and English wire-debug text (`auth.method_lockout: at least one sign-in
+  method must stay enabled`). The page toasted that raw sentence — unlocalized,
+  often machine text — and nothing inline, so turning the last sign-in method off
+  "appeared to do nothing" until the value snapped back on reload: the worst
+  failure-UX class.
+- **Reason → copy mapping.** A new `describeSaveRejection()` maps the known 422
+  reasons to actionable catalog copy (`admin.settingsRejectAllMethods`,
+  `admin.settingsRejectAdminLockout`), echoes it inline on every touched field
+  (keyed off the envelope's `errors` map — the page keeps its no-per-setting-key
+  rule: only the wire's `reason` vocabulary is keyed, the server stays the
+  authority), and the machine sentence never leaks into the primary toast string.
+  Unknown-reason 422s and 400s without an `errors` map fall back to the localized
+  generic `admin.settingsRejected` with the server detail appended only after
+  `wireDetailForDisplay()` sanitizes it — C0/C1 control and format characters
+  stripped, whitespace collapsed, 200-char cap — and 403/409 get dedicated copy
+  (`admin.settingsForbidden`, `admin.settingsConflict`). Genuine failures (5xx,
+  transport, non-`ApiError`) keep the old raw-message diagnostic branch. Toast
+  text lands in `ToastHost`'s interpolated `{{ t.message }}` slot, so hostile
+  markup from the wire renders as literal text — DOM-pinned per the mob13
+  responder law (`querySelector('img')` stays null).
+- **Honest form state.** The save path already applied server truth only after the
+  PUT resolved (no optimistic pre-mutation); new pins prove the corollary — after
+  a rejection the draft stays dirty, Save stays armed, and no success toast ever
+  fires: nothing that failed can look saved.
+- **i18n law held.** Five new `admin.*` keys in `DEFAULT_MESSAGES` mirrored into
+  all six locale bundles with real translations (de/es/fr/it/ja/pt_BR = 7 locales;
+  catalog parity, placeholder and no-English-leakage tests green).
+- **Red→green measured.** 8 new `SettingsPage.test.ts` legs + 1 flipped law (the
+  400-without-errors raw toast → localized generic + sanitized detail) went red
+  against the parent page code (9 failed | 109 passed) before the cure and green
+  after; the file moved 110→118 tests. Full serial vitest 6374→6382 passed
+  (+8 exact), 10 skipped unchanged, 312 files. vue-tsc and eslint clean (the
+  sanitizer uses `\p{Cc}\p{Cf}` property escapes to satisfy `no-control-regex`).
+  dist rebuilt; deterministic across two rebuilds.
+
 ## Unreleased — review-fix lane 2026-10-29 (M-UI-12): SyncPlay host-command failures surface via toast with honest state
 
 - **The silent-drop cure (`api/syncplay.ts`, `useSyncPlayStore.ts`, `SyncPlayControls.vue`).**

@@ -530,5 +530,14 @@ export const FR_MESSAGES = {
     'transcoding.preferredAccelerator': 'Accélérateur préféré',
     'transcoding.hdrOutput': 'Sortie HDR',
     'transcoding.toneMapMode': 'Mode de mappage tonal',
+    settingsRejected: 'Le serveur a rejeté ces paramètres — rien n’a été enregistré.',
+    settingsRejectAllMethods:
+      'Au moins un mode de connexion doit rester activé. Laissez-en au moins un activé et enregistrez à nouveau.',
+    settingsRejectAdminLockout:
+      'Cette modification laisserait un administrateur actif sans aucun moyen utilisable de se connecter. Activez d’abord un autre mode de connexion pour lui, puis enregistrez à nouveau.',
+    settingsForbidden:
+      'Vous n’avez plus l’autorisation de modifier les paramètres du serveur. Reconnectez-vous en tant qu’administrateur et réessayez.',
+    settingsConflict:
+      'Le serveur n’a pas pu appliquer ces paramètres dans l’état actuel. Rechargez les paramètres et réessayez.',
   },
 } satisfies PhlixMessages;

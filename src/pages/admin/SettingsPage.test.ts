@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import SettingsPage from './SettingsPage.vue';
+import ToastHost from '../../components/ui/ToastHost.vue';
 import Button from '../../components/ui/Button.vue';
 import Switch from '../../components/ui/Switch.vue';
 import Select from '../../components/ui/Select.vue';
@@ -85,6 +86,16 @@ const META: Record<string, SettingMeta> = {
       disabled: 'New registrations are blocked entirely.',
     },
     default: 'open',
+  }),
+  'auth.password.enabled': meta({
+    label: 'Enable password sign-in',
+    group: 'auth',
+    default: true,
+  }),
+  'auth.webauthn.enabled': meta({
+    label: 'Enable passkey (WebAuthn) sign-in',
+    group: 'auth',
+    default: true,
   }),
   'hwaccel.enabled': meta({
     label: 'Enable hardware acceleration',
@@ -216,6 +227,8 @@ const MASK = '***';
 /** The server's internal type vocabulary: schema array/object both map to `json`. */
 const TYPES: Record<string, string> = {
   'auth.signup_mode': 'string',
+  'auth.password.enabled': 'bool',
+  'auth.webauthn.enabled': 'bool',
   'hwaccel.enabled': 'bool',
   'ffmpeg.transcode_timeout': 'int',
   'transcoding.preferred_accelerator': 'string',
@@ -237,6 +250,8 @@ const TYPES: Record<string, string> = {
 
 const SETTINGS: Record<string, unknown> = {
   'auth.signup_mode': 'approval',
+  'auth.password.enabled': true,
+  'auth.webauthn.enabled': true,
   'hwaccel.enabled': true,
   'ffmpeg.transcode_timeout': 7200,
   'transcoding.preferred_accelerator': '',
@@ -1352,8 +1367,11 @@ describe('Admin SettingsPage — save error paths', () => {
     w.unmount();
   });
 
-  it('toasts the message on a 400 without an errors map', async () => {
-    const putImpl = vi.fn().mockRejectedValue(new ApiError('Bad request', 400, {}));
+  it('toasts a localized generic rejection with sanitized detail on a 400 without an errors map', async () => {
+    // M-UI-13 flipped this law: the raw wire sentence used to be the only
+    // feedback (unlocalized, often machine text). Now the catalog line leads
+    // and the server's human slot rides along, sanitized, in parentheses.
+    const putImpl = vi.fn().mockRejectedValue(new ApiError('Bad request', 400, { message: 'Bad request' }));
     const { client } = makeClient({ putImpl });
     const w = mountPage(client);
     await flushPromises();
@@ -1363,7 +1381,10 @@ describe('Admin SettingsPage — save error paths', () => {
     await saveBtn(w).trigger('click');
     await flushPromises();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message === 'Bad request')).toBe(true);
+    expect(
+      toasts.toasts.some((t) => t.message === 'The server rejected these settings — nothing was saved. (Bad request)'),
+    ).toBe(true);
+    expect(toasts.toasts.some((t) => t.message === 'Bad request')).toBe(false);
     w.unmount();
   });
 
@@ -1394,6 +1415,164 @@ describe('Admin SettingsPage — save error paths', () => {
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'Failed to save settings.')).toBe(true);
+    w.unmount();
+  });
+});
+
+describe('Admin SettingsPage — auth lock-out rejection surfacing (M-UI-13)', () => {
+  // Envelope truth mirrors phlix-server's auth lock-out guards (R1: every
+  // sign-in method switched off; R2: an admin left without a usable method)
+  // and the generic 422/400 rejection shape. The server's `message`/`errors`
+  // strings are English wire-debug text ("auth.method_lockout: …"), never UI
+  // copy — the page must replace them with localized actionable messages.
+  const ALL_METHODS =
+    'At least one sign-in method must stay enabled. Keep at least one turned on and save again.';
+  const ADMIN_LOCKOUT =
+    'This change would leave an active administrator with no usable way to sign in. Enable another sign-in method for them first, then save again.';
+  const GENERIC = 'The server rejected these settings — nothing was saved.';
+
+  function dirtyAuthSwitches(w: VueWrapper): Promise<void> {
+    return (async () => {
+      await selectTab(w, 'Auth');
+      await fieldSwitch(w, 'Enable password sign-in').vm.$emit('update:modelValue', false);
+      await flushPromises();
+    })();
+  }
+
+  async function rejectAuthSave(
+    rejection: ApiError,
+    secondSwitchLabel?: string,
+  ): Promise<VueWrapper> {
+    const { client } = makeClient({ putImpl: vi.fn().mockRejectedValue(rejection) });
+    const w = mountPage(client);
+    await flushPromises();
+    await dirtyAuthSwitches(w);
+    if (secondSwitchLabel) {
+      await fieldSwitch(w, secondSwitchLabel).vm.$emit('update:modelValue', false);
+      await flushPromises();
+    }
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    return w;
+  }
+
+  it('R1 all_methods_disabled: actionable localized toast — machine sentence never shown', async () => {
+    const machine = 'auth.method_lockout: at least one sign-in method must stay enabled';
+    const w = await rejectAuthSave(
+      new ApiError(machine, 422, {
+        success: false,
+        error: 'Validation failed',
+        reason: 'all_methods_disabled',
+        message: machine,
+        errors: { 'auth.password.enabled': machine },
+      }),
+    );
+    const toasts = useToastStore();
+    const errorToast = toasts.toasts.find((t) => t.tone === 'error');
+    expect(errorToast?.message).toBe(ALL_METHODS);
+    // The raw wire debug token must not leak into the primary string.
+    expect(errorToast?.message).not.toContain('auth.method_lockout');
+    // No success signal: a rejected save is never shown as saved.
+    expect(toasts.toasts.some((t) => t.message === 'Settings saved.')).toBe(false);
+    // Honest dirty state: the draft survives the rejection and Save stays
+    // armed — the form was NOT rolled forward to the failed value as "truth".
+    expect(saveBtn(w).attributes('disabled')).toBeUndefined();
+    expect(fieldSwitch(w, 'Enable password sign-in').props('modelValue')).toBe(false);
+    // The touched field carries the actionable copy inline (role=alert row).
+    expect(
+      w.findAll('.admin-settings__error').some((el) => el.text() === ALL_METHODS),
+    ).toBe(true);
+    w.unmount();
+  });
+
+  it('R2 admin_lockout: its own distinct copy, echoed on every touched field', async () => {
+    const machine = 'auth.method_lockout: 1 active administrator would lose all sign-in methods';
+    const w = await rejectAuthSave(
+      new ApiError(machine, 422, {
+        success: false,
+        error: 'Validation failed',
+        reason: 'admin_lockout',
+        message: machine,
+        errors: {
+          'auth.password.enabled': machine,
+          'auth.webauthn.enabled': machine,
+        },
+      }),
+      'Enable passkey (WebAuthn) sign-in',
+    );
+    const toasts = useToastStore();
+    expect(toasts.toasts.find((t) => t.tone === 'error')?.message).toBe(ADMIN_LOCKOUT);
+    const inline = w.findAll('.admin-settings__error').map((el) => el.text());
+    expect(inline.filter((text) => text === ADMIN_LOCKOUT).length).toBe(2);
+    w.unmount();
+  });
+
+  it('unknown 422 reason: generic localized line with the server detail appended', async () => {
+    const w = await rejectAuthSave(
+      new ApiError('A brand-new guard fired', 422, {
+        success: false,
+        reason: 'quantum_policy',
+        message: 'A brand-new guard fired',
+      }),
+    );
+    expect(useToastStore().toasts.find((t) => t.tone === 'error')?.message).toBe(
+      `${GENERIC} (A brand-new guard fired)`,
+    );
+    w.unmount();
+  });
+
+  it('rejection without any server detail: generic line alone, no empty parentheses', async () => {
+    const w = await rejectAuthSave(new ApiError('Unprocessable Entity', 422, {}));
+    expect(useToastStore().toasts.find((t) => t.tone === 'error')?.message).toBe(GENERIC);
+    w.unmount();
+  });
+
+  it('hostile server text: control characters stripped and markup rendered as text', async () => {
+    const hostile = '<img src=x onerror=alert(1)>\u001b[2J escape please';
+    const w = await rejectAuthSave(
+      new ApiError(hostile, 422, { success: false, reason: 'quantum_policy', message: hostile }),
+    );
+    // Store-level: ESC no longer present, markup survives as literal text.
+    const toastMessage = useToastStore().toasts.find((t) => t.tone === 'error')!.message;
+    expect(toastMessage).toBe(`${GENERIC} (<img src=x onerror=alert(1)> [2J escape please)`);
+    expect(toastMessage).not.toContain('\u001b');
+    // DOM-level (mob13 responder law): the toast host must not materialize
+    // markup from untrusted wire text — inert interpolation, not raw HTML.
+    const host = mount(ToastHost, { attachTo: document.body });
+    const el = document.body.querySelector('.phlix-toast__message')!;
+    expect(el).not.toBeNull();
+    expect(el.querySelector('img')).toBeNull();
+    expect(el.textContent).toContain('<img src=x onerror=alert(1)>');
+    expect(el.innerHTML).toContain('&lt;img');
+    expect(el.textContent).not.toContain('\u001b');
+    host.unmount();
+    w.unmount();
+  });
+
+  it('403 on the settings save: permission copy, not the raw wire word', async () => {
+    const w = await rejectAuthSave(new ApiError('Forbidden', 403, { message: 'Admin access required' }));
+    expect(useToastStore().toasts.find((t) => t.tone === 'error')?.message).toBe(
+      'You no longer have permission to change server settings. Sign in again as an administrator and try again.',
+    );
+    w.unmount();
+  });
+
+  it('409 on the settings save: reload-and-retry copy', async () => {
+    const w = await rejectAuthSave(new ApiError('Conflict', 409, { message: 'State has moved' }));
+    expect(useToastStore().toasts.find((t) => t.tone === 'error')?.message).toBe(
+      'The server could not apply those settings in its current state. Reload the settings and try again.',
+    );
+    w.unmount();
+  });
+
+  it('detail longer than the cap is truncated, not dumped', async () => {
+    const longMessage = `${'e'.repeat(500)}TAIL`;
+    const w = await rejectAuthSave(new ApiError(longMessage, 422, { message: longMessage }));
+    const toastMessage = useToastStore().toasts.find((t) => t.tone === 'error')!.message;
+    expect(toastMessage.startsWith(`${GENERIC} (e`)).toBe(true);
+    expect(toastMessage.endsWith('…)')).toBe(true);
+    expect(toastMessage).not.toContain('TAIL');
+    expect(toastMessage.length).toBeLessThan(GENERIC.length + 210);
     w.unmount();
   });
 });

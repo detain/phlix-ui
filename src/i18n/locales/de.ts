@@ -526,5 +526,14 @@ export const DE_MESSAGES = {
     'transcoding.preferredAccelerator': 'Bevorzugter Beschleuniger',
     'transcoding.hdrOutput': 'HDR-Ausgabe',
     'transcoding.toneMapMode': 'Ton-Mapping-Modus',
+    settingsRejected: 'Der Server hat diese Einstellungen abgelehnt – nichts wurde gespeichert.',
+    settingsRejectAllMethods:
+      'Mindestens eine Anmelde-Methode muss aktiv bleiben. Lassen Sie mindestens eine aktiviert und speichern Sie erneut.',
+    settingsRejectAdminLockout:
+      'Diese Änderung würde einen aktiven Administrator ohne nutzbare Anmelde-Methode aussperren. Aktivieren Sie zuerst für ihn eine weitere Anmelde-Methode und speichern Sie erneut.',
+    settingsForbidden:
+      'Sie haben keine Berechtigung mehr, Server-Einstellungen zu ändern. Melden Sie sich erneut als Administrator an und versuchen Sie es erneut.',
+    settingsConflict:
+      'Der Server konnte diese Einstellungen im aktuellen Zustand nicht anwenden. Laden Sie die Einstellungen neu und versuchen Sie es erneut.',
   },
 } satisfies PhlixMessages;

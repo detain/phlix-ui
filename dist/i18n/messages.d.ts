@@ -554,6 +554,11 @@ export declare const DEFAULT_MESSAGES: {
         'transcoding.preferredAccelerator': string;
         'transcoding.hdrOutput': string;
         'transcoding.toneMapMode': string;
+        settingsRejected: string;
+        settingsRejectAllMethods: string;
+        settingsRejectAdminLockout: string;
+        settingsForbidden: string;
+        settingsConflict: string;
     };
 };
 /** The full English catalog type (derived from the defaults — single source of truth). */

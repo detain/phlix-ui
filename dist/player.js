@@ -5592,7 +5592,12 @@ var Ro = {
 		"transcoding.title": "Transcoding",
 		"transcoding.preferredAccelerator": "Preferred Accelerator",
 		"transcoding.hdrOutput": "HDR Output",
-		"transcoding.toneMapMode": "Tone Map Mode"
+		"transcoding.toneMapMode": "Tone Map Mode",
+		settingsRejected: "The server rejected these settings — nothing was saved.",
+		settingsRejectAllMethods: "At least one sign-in method must stay enabled. Keep at least one turned on and save again.",
+		settingsRejectAdminLockout: "This change would leave an active administrator with no usable way to sign in. Enable another sign-in method for them first, then save again.",
+		settingsForbidden: "You no longer have permission to change server settings. Sign in again as an administrator and try again.",
+		settingsConflict: "The server could not apply those settings in its current state. Reload the settings and try again."
 	}
 }, zo = /\{(\w+)\}/g;
 function Bo(e) {

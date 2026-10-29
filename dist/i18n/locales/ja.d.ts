@@ -519,5 +519,10 @@ export declare const JA_MESSAGES: {
         'transcoding.preferredAccelerator': string;
         'transcoding.hdrOutput': string;
         'transcoding.toneMapMode': string;
+        settingsRejected: string;
+        settingsRejectAllMethods: string;
+        settingsRejectAdminLockout: string;
+        settingsForbidden: string;
+        settingsConflict: string;
     };
 };

@@ -527,5 +527,14 @@ export const JA_MESSAGES = {
     'transcoding.preferredAccelerator': '優先アクセラレータ',
     'transcoding.hdrOutput': 'HDR出力',
     'transcoding.toneMapMode': 'トーンマップモード',
+    settingsRejected: 'サーバーがこの設定を拒否しました。何も保存されていません。',
+    settingsRejectAllMethods:
+      '少なくとも 1 つのサインイン方法を有効のままにする必要があります。少なくとも 1 つを有効にしたまま、もう一度保存してください。',
+    settingsRejectAdminLockout:
+      'この変更では、有効な管理者が利用可能なサインイン方法をすべて失い、ロックアウトされます。まずその管理者用に別のサインイン方法を有効にしてから、もう一度保存してください。',
+    settingsForbidden:
+      'サーバー設定を変更する権限がありません。管理者として再度サインインしてから、もう一度お試しください。',
+    settingsConflict:
+      '現在の状態ではサーバーが設定を適用できませんでした。設定を再読み込みしてもう一度お試しください。',
   },
 } satisfies PhlixMessages;

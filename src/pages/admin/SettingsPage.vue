@@ -28,6 +28,16 @@
  * the original implementation. Pending edits survive tab switches visibly
  * (per-tab dirty badges + an at-Save key list), and leaving with unsaved
  * changes is guarded on both in-app navigation and tab close/reload (R13-02).
+ *
+ * Save rejections are surfaced, never swallowed (M-UI-13). The server answers a
+ * rejected PUT with a machine envelope — most importantly the auth lock-out
+ * guards (422 `reason: all_methods_disabled | admin_lockout`) whose English
+ * sentences are wire-debug text, not UI copy. Known reasons map to localized,
+ * actionable catalog messages (also echoed inline on the touched fields);
+ * 400/403/409/422 fall back to a generic localized rejection message with the
+ * server's detail appended only after control-character stripping and
+ * truncation. Nothing is applied to the form unless the PUT resolves, so a
+ * rejected save always leaves the draft honestly dirty — never "saved".
  */
 import { ref, computed, reactive, onMounted, onBeforeUnmount, inject, type ComputedRef } from 'vue';
 import { onBeforeRouteLeave, matchedRouteKey } from 'vue-router';
@@ -53,6 +63,8 @@ import EmptyState from '../../components/ui/EmptyState.vue';
 import HelpText from '../../components/ui/HelpText.vue';
 import type { SelectOptionInput } from '../../components/ui/listbox';
 import { pluralCount, pluralize } from '../../utils/plural';
+import { useMessages } from '../../composables/useMessages';
+import type { MessageKey } from '../../i18n/messages';
 
 const props = withDefaults(
   defineProps<{
@@ -75,6 +87,7 @@ const apiClient =
 const api = new AdminSettingsApi(apiClient);
 const toasts = useToastStore();
 const settingsPrefsStore = useSettingsPrefsStore();
+const { t } = useMessages();
 
 /** Group assigned to every key when the server sent no `meta` at all. */
 const FALLBACK_GROUP = 'other';
@@ -716,6 +729,88 @@ function validateNumericFields(): Record<string, string> {
   return errors;
 }
 
+// ── Save-rejection surfacing (M-UI-13) ─────────────────────────────────────────────
+/**
+ * The server's auth lock-out guard `reason` literals (phlix-server
+ * AuthMethodPolicy: all methods off / admin left without a usable sign-in
+ * method) → actionable catalog copy. This keys on the wire's rejection
+ * vocabulary, never on a setting key, so it does not breach the page's
+ * schema-driven, no-per-key rule. Unknown reasons fall through to the
+ * generic sanitized message.
+ */
+const REJECT_REASON_MESSAGES: Record<string, MessageKey> = {
+  all_methods_disabled: 'admin.settingsRejectAllMethods',
+  admin_lockout: 'admin.settingsRejectAdminLockout',
+};
+
+/** HTTP statuses that mark a deliberate server rejection (not a failure). */
+const REJECTION_STATUSES = new Set([400, 403, 409, 422]);
+
+/** Maximum length of server-supplied detail after sanitizing. */
+const WIRE_DETAIL_MAX_CHARS = 200;
+
+/**
+ * Turn a server-provided human slot into display-safe text: control/format
+ * characters become spaces (a terminal escape is noise in the DOM), whitespace
+ * collapses, and the result is truncated. HTML never needs escaping here —
+ * toasts and field errors render through Vue interpolation, which is inert —
+ * but control characters and pathological length must not survive. Returns
+ * null when nothing legible remains.
+ */
+function wireDetailForDisplay(raw: string): string | null {
+  const printable = raw
+    .replace(/[\p{Cc}\p{Cf}]/gu, ' ') // C0/C1 controls + format chars (ZW*, BOM, soft hyphen)
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (printable === '') return null;
+  if (printable.length <= WIRE_DETAIL_MAX_CHARS) return printable;
+  return `${printable.slice(0, WIRE_DETAIL_MAX_CHARS)}…`;
+}
+
+/**
+ * Build the user-facing account of a rejected PUT: a localized toast message
+ * (known machine `reason` → actionable catalog copy; anything else → a generic
+ * rejection line with the server's detail appended, sanitized) plus optional
+ * inline per-field errors for lock-out rejections. The raw envelope `message`
+ * is never primary — it only rides along behind our copy, sanitized, for
+ * operators who need the wire's exact complaint.
+ */
+function describeSaveRejection(
+  status: number,
+  body: unknown,
+): { message: string; inlineErrors: Record<string, string> | null } {
+  const envelope = (body ?? {}) as { errors?: unknown; message?: unknown; reason?: unknown };
+  const reason = typeof envelope.reason === 'string' ? envelope.reason : '';
+  const copyKey: MessageKey | undefined = REJECT_REASON_MESSAGES[reason];
+  if (status === 422 && copyKey) {
+    const message = t(copyKey);
+    const inlineErrors: Record<string, string> = {};
+    if (envelope.errors && typeof envelope.errors === 'object') {
+      for (const key of Object.keys(envelope.errors as Record<string, unknown>)) {
+        inlineErrors[key] = message;
+      }
+    }
+    return {
+      message,
+      inlineErrors: Object.keys(inlineErrors).length > 0 ? inlineErrors : null,
+    };
+  }
+  if (status === 403) {
+    return { message: t('admin.settingsForbidden'), inlineErrors: null };
+  }
+  if (status === 409) {
+    return { message: t('admin.settingsConflict'), inlineErrors: null };
+  }
+  const detail =
+    typeof envelope.message === 'string' ? wireDetailForDisplay(envelope.message) : null;
+  return {
+    message: detail
+      ? `${t('admin.settingsRejected')} (${detail})`
+      : t('admin.settingsRejected'),
+    inlineErrors: null,
+  };
+}
+
 async function handleSubmit(): Promise<void> {
   if (submitting.value) return;
 
@@ -793,9 +888,17 @@ async function handleSubmit(): Promise<void> {
         fieldErrors.value = body.errors;
         toasts.error('Please fix the validation errors.');
       } else {
-        toasts.error(e.message);
+        // A 400 without a per-field map is still a rejection the operator
+        // deserves a localized account of, not the raw wire sentence (M-UI-13).
+        toasts.error(describeSaveRejection(e.status, e.body).message);
       }
+    } else if (e instanceof ApiError && REJECTION_STATUSES.has(e.status)) {
+      const rejection = describeSaveRejection(e.status, e.body);
+      if (rejection.inlineErrors) fieldErrors.value = rejection.inlineErrors;
+      toasts.error(rejection.message);
     } else {
+      // Genuine failures (5xx, transport) keep their raw message — there is no
+      // machine reason to translate and the server text is the only diagnosis.
       toasts.error(e instanceof ApiError ? e.message : 'Failed to save settings.');
     }
   } finally {
