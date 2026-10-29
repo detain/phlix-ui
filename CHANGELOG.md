@@ -1,3 +1,47 @@
+## Unreleased — review-fix lane 2026-10-29 (M-UI-15): the German error catalog stops lying about a server fact — signups-disabled is about the ACT of registration, not account state
+
+- **The mistranslation.** `auth.signups_disabled` shipped as
+  `'Neue Konten sind auf diesem Server deaktiviert.'` — "new accounts ARE
+  DISABLED on this server", a statement about the state of accounts. The
+  server fact (`phlix-server/src/Auth/AuthManager.php:879-883`: `register()`
+  throws `SignupDisabledException` BEFORE any user row exists) is that the
+  ACT of registration is closed — no account is created, and no account,
+  new or otherwise, is disabled. The other six locales all named the act
+  (es *registro*, fr *créations de compte*, it *registrazioni*, pt_BR
+  *cadastros*, ja *登録*); DE was the lone inversion. Cure:
+  `'Die Registrierung neuer Konten ist auf diesem Server deaktiviert.'`
+- **New law: server-fact semantic pins.** Structural parity (key identity,
+  no English echo, diacritical bars) cannot see a fluent-but-false sentence,
+  so `errors.test.ts` gains `SERVER_FACT_SEMANTICS` — a table of per-code,
+  per-locale STRUCTURED claims (`mustName` subject noun/verb + `mustNotClaim`
+  false reading), HostRoleTerms-style vacuity-proofing. Seeded from the
+  full 204-code EN↔DE sweep of this review (the signups inversion was the
+  ONLY hit) plus the blocked-vs-slow (`server.relay_unavailable`/`server.no_tunnel`
+  de must say *online*, never *offline*), retry-vs-fatal (`rate_limited` de
+  keeps *erneut*), and who-is-blocked (`syncplay.group_full` de is a capacity
+  fact, not a policy) families. 11 rows; the de-signups row was RED on the
+  parent catalog and green on this cure — measurement-from-red recorded.
+- **Sweep verdicts.** All 204 DE entries now table-audited against EN +
+  server behavior (pairs dump reviewable): one inversion (cured here). Two
+  DE nations of style, NOT mistranslation, logged for the minors queue
+  (no behavior change): `mcp_token.no_valid_scopes` uses "Keiner der …
+  Token-Berechtigungen" (feminine plural would be "Keine der"), and
+  `share_exists` generalizes "that collaborator" to "diese Person".
+  es/fr/it/ja entries for the cured code verified faithful — no other
+  locale touched.
+- **Bundle.** `errors.ts` ships in the library chunks, so the entry/shared
+  chunks rehash: dist delta is 264 renamed chunk+map pairs (cascade from the
+  rehashed shared `client`/`useAuthStore` chunks' import specifiers) + 6
+  modified fixed-name files (`phlix-ui.js/.umd.cjs`, `player.js/.umd.cjs` +
+  player maps); old DE string present in 8 HEAD-committed dist files, gone
+  from every new one. Determinism ×2: aggregate md5
+  `8dedcd2bdea8daaeaba33fb226d48259` identical across consecutive builds.
+  `dist:check` green after this commit (it fails-dirty pre-commit by design).
+- **Gates (measured).** vitest full serial (`--no-file-parallelism`): parent
+  313 files 6421 tests (6411 pass / 10 skip, +1 red = the new pin on the
+  unfixed catalog — captured) → tip 6432 tests (6422 pass / 10 skip / 0 fail,
+  +11 exact = the new law). `vue-tsc --noEmit` 0, `eslint .` 0.
+
 ## Unreleased — review-fix lane 2026-10-29 (M-UI-14): password-locked SyncPlay rooms become reachable from the web surface — create can lock, join can unlock
 
 - **The structural unreachability ends.** A locked SyncPlay room was, from this

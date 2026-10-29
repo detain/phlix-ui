@@ -839,7 +839,7 @@ const DE: PhlixErrorCatalog = {
   'auth.not_admin': 'Diese Aktion erfordert ein Administratorkonto.',
   'auth.invalid_token': 'Ihr Anmelde-Token ist ungültig oder abgelaufen.',
   'auth.user_not_found': 'Dieses Konto gibt es nicht mehr.',
-  'auth.signups_disabled': 'Neue Konten sind auf diesem Server deaktiviert.',
+  'auth.signups_disabled': 'Die Registrierung neuer Konten ist auf diesem Server deaktiviert.',
   'auth.account_pending': 'Ihr Konto wartet noch auf Genehmigung.',
   'auth.account_disabled': 'Dieses Konto wurde deaktiviert.',
   'auth.password_change_required': 'Sie müssen Ihr Passwort ändern, bevor Sie fortfahren.',

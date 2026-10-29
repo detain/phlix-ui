@@ -28,6 +28,9 @@
  *      locale present/absent/invalid × fallback present/blank — resolve order
  *      locale → en → fallback → generic, never throwing.
  *   8. Title/generic registries are complete and code-consistent.
+ *   9. Server-fact semantics: every catalog sentence must tell the TRUTH about
+ *      the server behavior behind its wire code — tabled structured subject
+ *      claims (`SERVER_FACT_SEMANTICS`) that structural parity cannot see.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
@@ -151,6 +154,127 @@ describe('error catalog value laws', () => {
         if (spec.diacritics.test(value)) count++;
       }
       expect(count).toBeGreaterThanOrEqual(spec.minValues);
+    });
+  }
+});
+
+/**
+ * Server-fact semantic pins (review ui__writer M15).
+ *
+ * Every sentence in this catalog is a statement about SERVER behavior. A
+ * fluent-but-false translation passes every structural law above (key parity,
+ * no English echo, diacritical bars) while lying to the user — the DE entry
+ * for `auth.signups_disabled` rendered "Neue Konten sind … deaktiviert"
+ * ("new accounts are disabled", a claim about account STATE) where the server
+ * actually closes the ACT of registration and never creates the account
+ * (`phlix-server/src/Auth/AuthManager.php:879-883` throws
+ * `SignupDisabledException` pre-create → 403 `auth.signups_disabled`).
+ *
+ * Vacuity-proof by construction, mirroring the estate's HostRoleTerms design:
+ * each row asserts STRUCTURED per-code, per-locale claims — `mustName` is the
+ * subject noun/verb the sentence cannot be truthful without, `mustNotClaim` is
+ * the false reading the server never performs. Rows are seeded from the full
+ * 204-code EN↔DE sweep of review M15 (the signups inversion was the only hit)
+ * plus the blocked-vs-slow / retry-vs-fatal / who-is-blocked families; extend
+ * the table on every future mistranslation cure.
+ */
+const SERVER_FACT_SEMANTICS: ReadonlyArray<{
+  code: ErrorCode;
+  locale: PhlixErrorLocale;
+  mustName: RegExp;
+  mustNotClaim?: RegExp;
+  serverFact: string;
+}> = [
+  // The signup gate closes the ACT of registration in every locale — none may
+  // speak about the state of accounts.
+  {
+    code: 'auth.signups_disabled',
+    locale: 'en',
+    mustName: /sign-?ups?/i,
+    serverFact: 'register() refuses to create the user row (server AuthManager.php:879-883).',
+  },
+  {
+    code: 'auth.signups_disabled',
+    locale: 'es',
+    mustName: /registro/i,
+    serverFact: 'register() refuses to create the user row (server AuthManager.php:879-883).',
+  },
+  {
+    code: 'auth.signups_disabled',
+    locale: 'fr',
+    mustName: /création/i,
+    serverFact: 'register() refuses to create the user row (server AuthManager.php:879-883).',
+  },
+  {
+    code: 'auth.signups_disabled',
+    locale: 'de',
+    mustName: /Registrierung/i,
+    mustNotClaim: /\bKonten sind\b/i,
+    serverFact: 'register() refuses to create the user row (server AuthManager.php:879-883); no account — new or otherwise — is disabled by this code.',
+  },
+  {
+    code: 'auth.signups_disabled',
+    locale: 'it',
+    mustName: /registrazion/i,
+    serverFact: 'register() refuses to create the user row (server AuthManager.php:879-883).',
+  },
+  {
+    code: 'auth.signups_disabled',
+    locale: 'pt_BR',
+    mustName: /cadastro/i,
+    serverFact: 'register() refuses to create the user row (server AuthManager.php:879-883).',
+  },
+  {
+    code: 'auth.signups_disabled',
+    locale: 'ja',
+    mustName: /登録/,
+    serverFact: 'register() refuses to create the user row (server AuthManager.php:879-883).',
+  },
+  // Blocked-vs-slow family: the SERVER is online; only the relay tunnel is
+  // missing. A locale must not downgrade the user's read to "server offline"
+  // (that is the separate `server.offline` code's fact).
+  {
+    code: 'server.relay_unavailable',
+    locale: 'de',
+    mustName: /online/i,
+    mustNotClaim: /offline/i,
+    serverFact: 'hub reports the server online with an unconnected tunnel; auto-reconnect is expected (server RelayConsumer / hub relay state).',
+  },
+  {
+    code: 'server.no_tunnel',
+    locale: 'de',
+    mustName: /online/i,
+    mustNotClaim: /offline/i,
+    serverFact: 'same online-server-missing-tunnel fact as relay_unavailable (shared EN sentence).',
+  },
+  // Retry-vs-fatal family: a rate limit clears; the advice must stay retryable.
+  {
+    code: 'rate_limited',
+    locale: 'de',
+    mustName: /erneut/i,
+    mustNotClaim: /endgültig|dauerhaft|permanent/i,
+    serverFact: 'server rate limiter unblocks after its window (retry succeeds); nothing is revoked.',
+  },
+  // Who-is-blocked family: a full watch group is a capacity fact of the
+  // GROUP, not a server policy and not the user being disabled.
+  {
+    code: 'syncplay.group_full',
+    locale: 'de',
+    mustName: /voll/i,
+    mustNotClaim: /deaktiviert|Richtlinie|verboten/i,
+    serverFact: 'SyncPlay membership cap reached on that group (syncplay server-side capacity check).',
+  },
+];
+
+describe('error catalog server-fact semantics', () => {
+  for (const pin of SERVER_FACT_SEMANTICS) {
+    it(`${pin.locale}/${pin.code} names the true server subject${pin.mustNotClaim ? ' and not the false reading' : ''}`, () => {
+      const value = (ERROR_MESSAGES[pin.locale] as unknown as Flat)[pin.code];
+      expect(typeof value, `${pin.locale}/${pin.code} missing`).toBe('string');
+      expect(value, `${pin.locale}/${pin.code} must name ${String(pin.mustName)} — ${pin.serverFact}`).toMatch(pin.mustName);
+      if (pin.mustNotClaim) {
+        expect(value, `${pin.locale}/${pin.code} must not claim ${String(pin.mustNotClaim)} — ${pin.serverFact}`).not.toMatch(pin.mustNotClaim);
+      }
     });
   }
 });
