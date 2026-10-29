@@ -17,6 +17,7 @@ import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerUiStore } from '../stores/usePlayerUiStore';
+import { useToastStore } from '../stores/useToastStore';
 import { isRoute } from '../test/route-match';
 import type { PhlixAppConfig } from './types';
 
@@ -736,5 +737,28 @@ describe('PhlixApp — Who’s-watching gate after login (S82)', () => {
     expect(wrapper.find('[data-testid="whos-error"]').exists()).toBe(false);
     expect(wrapper.find('[data-testid="whos-tile-p1"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="whos-tile-p2"]').exists()).toBe(true);
+  });
+});
+
+describe('PhlixApp — toast host (review ui__webux C1)', () => {
+  it('mounts ToastHost so store toasts reach the DOM on production surfaces', async () => {
+    // Every useToastStore() caller in the library (copy proofs, success
+    // confirmations, failure reasons, the R13-10 playlist-undo action) writes
+    // to a store only <ToastHost> renders. Before C1 the host was mounted in
+    // the dev Gallery alone — this asserts the SHELL owns it and the store→DOM
+    // wiring actually lands (the host Teleports to <body>, outside the shell,
+    // hence document.body queries rather than wrapper.html()).
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    // The region exists even with an empty store — the runtime contract the
+    // store API previously lacked.
+    expect(document.body.querySelector('.phlix-toasts')).not.toBeNull();
+    // And a pushed toast renders through it, tone class and message included.
+    useToastStore().success('Invite link created and copied to clipboard!');
+    await nextTick();
+    const toast = document.body.querySelector('.phlix-toast--success');
+    expect(toast).not.toBeNull();
+    expect(toast?.querySelector('.phlix-toast__message')?.textContent).toBe(
+      'Invite link created and copied to clipboard!',
+    );
   });
 });

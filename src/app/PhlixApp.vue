@@ -72,6 +72,14 @@
         <WhoIsWatching v-if="profiles.gateOpen || (profiles.arming && !profiles.loaded)" />
         <CommandPalette v-if="paletteActivated" />
         <MiniPlayer v-if="auth.isLoggedIn" @expand="onExpandMini" />
+        <!-- Review ui__webux C1: the toast host is the shell's runtime contract
+             for every useToastStore() caller in the library (copy proofs, success
+             confirmations, failure reasons, the R13-10 playlist-undo action).
+             It lived only in the dev Gallery, so all production toasts rendered
+             nowhere. The host Teleports to <body> at z 1200 — above the palette
+             (1100), modals/sheets (1000) and the watcher gate (80) — so it is
+             immune to both the flush layout and the overlay ladder. -->
+        <ToastHost />
     </AppLayout>
 </template>
 
@@ -86,6 +94,7 @@ import Icon from '../components/Icon.vue';
 import IconButton from '../components/ui/IconButton.vue';
 import MiniPlayer from '../components/MiniPlayer.vue';
 import NetworkHealthIndicator from '../components/NetworkHealthIndicator.vue';
+import ToastHost from '../components/ui/ToastHost.vue';
 import { useTheme } from '../composables/useTheme';
 import { useCommandStore } from '../stores/useCommandStore';
 import { useAuthStore } from '../stores/useAuthStore';

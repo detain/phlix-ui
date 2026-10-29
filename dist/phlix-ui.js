@@ -619,10 +619,62 @@ var Ur = ["aria-label", "aria-expanded"], Wr = {
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-6721ee35"]]);
+}), [["__scopeId", "data-v-6721ee35"]]), Di = ["aria-label"], Oi = ["role"], ki = { class: "phlix-toast__content" }, Ai = {
+	key: 0,
+	class: "phlix-toast__title"
+}, ji = { class: "phlix-toast__message" }, Mi = ["onClick"], Ni = 0, Pi = /*#__PURE__*/ t(/* @__PURE__ */ U({
+	__name: "ToastHost",
+	props: { position: { default: "bottom" } },
+	setup(e) {
+		let { t } = T(), i = ze(), a = {
+			neutral: "info",
+			success: "success",
+			warning: "alert",
+			error: "error",
+			info: "info"
+		}, o = (e) => e.icon ?? a[e.tone];
+		return G(() => {
+			Ni++;
+		}), nr(() => {
+			Ni--;
+		}), (a, s) => (K(), L(Kn, { to: "body" }, [B("div", {
+			class: W(["phlix-toasts", `phlix-toasts--${e.position}`]),
+			role: "region",
+			"aria-label": X(t)("common.notifications")
+		}, [H(Jn, { name: "phlix-toast" }, {
+			default: Q(() => [(K(!0), z(F, null, J(X(i).toasts, (e) => (K(), z("div", {
+				key: e.id,
+				class: W(["phlix-toast", `phlix-toast--${e.tone}`]),
+				role: e.tone === "error" ? "alert" : "status"
+			}, [
+				H(n, {
+					name: o(e),
+					class: "phlix-toast__icon"
+				}, null, 8, ["name"]),
+				B("div", ki, [e.title ? (K(), z("p", Ai, Y(e.title), 1)) : R("", !0), B("p", ji, Y(e.message), 1)]),
+				e.action ? (K(), z("button", {
+					key: 0,
+					type: "button",
+					class: "phlix-toast__action",
+					onClick: (t) => {
+						e.action.onClick(), X(i).dismiss(e.id);
+					}
+				}, Y(e.action.label), 9, Mi)) : R("", !0),
+				H(r, {
+					name: "x",
+					label: X(t)("common.dismiss"),
+					size: "sm",
+					class: "phlix-toast__close",
+					onClick: (t) => X(i).dismiss(e.id)
+				}, null, 8, ["label", "onClick"])
+			], 10, Oi))), 128))]),
+			_: 1
+		})], 10, Di)]));
+	}
+}), [["__scopeId", "data-v-0127c07a"]]);
 //#endregion
 //#region src/composables/color.ts
-function Di(e) {
+function Fi(e) {
 	let t = e.trim().replace(/^#/, "");
 	return t.length === 3 && (t = t.split("").map((e) => e + e).join("")), /^[0-9a-fA-F]{6}$/.test(t) ? {
 		r: parseInt(t.slice(0, 2), 16),
@@ -630,27 +682,27 @@ function Di(e) {
 		b: parseInt(t.slice(4, 6), 16)
 	} : null;
 }
-var Oi = (e) => Math.max(0, Math.min(255, Math.round(e))), ki = ({ r: e, g: t, b: n }) => "#" + [
+var Ii = (e) => Math.max(0, Math.min(255, Math.round(e))), Li = ({ r: e, g: t, b: n }) => "#" + [
 	e,
 	t,
 	n
-].map((e) => Oi(e).toString(16).padStart(2, "0")).join("");
-function Ai(e, t) {
+].map((e) => Ii(e).toString(16).padStart(2, "0")).join("");
+function Ri(e, t) {
 	return {
 		r: e.r + (255 - e.r) * t,
 		g: e.g + (255 - e.g) * t,
 		b: e.b + (255 - e.b) * t
 	};
 }
-function ji(e, t) {
+function zi(e, t) {
 	return {
 		r: e.r * (1 - t),
 		g: e.g * (1 - t),
 		b: e.b * (1 - t)
 	};
 }
-var Mi = ({ r: e, g: t, b: n }, r) => `rgba(${Oi(e)}, ${Oi(t)}, ${Oi(n)}, ${r})`;
-function Ni({ r: e, g: t, b: n }) {
+var Bi = ({ r: e, g: t, b: n }, r) => `rgba(${Ii(e)}, ${Ii(t)}, ${Ii(n)}, ${r})`;
+function Vi({ r: e, g: t, b: n }) {
 	let r = [
 		e,
 		t,
@@ -661,22 +713,22 @@ function Ni({ r: e, g: t, b: n }) {
 	});
 	return .2126 * r[0] + .7152 * r[1] + .0722 * r[2];
 }
-function Pi(e) {
-	let t = Di(e);
+function Hi(e) {
+	let t = Fi(e);
 	if (!t) return null;
-	let n = Ni(t) > .45 ? "#1a1205" : "#fff8ec";
+	let n = Vi(t) > .45 ? "#1a1205" : "#fff8ec";
 	return {
-		"--accent": ki(t),
-		"--accent-hover": ki(Ai(t, .12)),
-		"--accent-active": ki(ji(t, .12)),
-		"--accent-soft": Mi(t, .14),
-		"--accent-ring": Mi(t, .55),
+		"--accent": Li(t),
+		"--accent-hover": Li(Ri(t, .12)),
+		"--accent-active": Li(zi(t, .12)),
+		"--accent-soft": Bi(t, .14),
+		"--accent-ring": Bi(t, .55),
 		"--accent-contrast": n
 	};
 }
 //#endregion
 //#region src/composables/useTheme.ts
-var Fi = [
+var Ui = [
 	"--accent",
 	"--accent-hover",
 	"--accent-active",
@@ -684,28 +736,28 @@ var Fi = [
 	"--accent-ring",
 	"--accent-contrast"
 ];
-function Ii(e, t, n) {
+function Wi(e, t, n) {
 	if (typeof document > "u") return;
 	let r = document.documentElement;
 	ut(r);
-	for (let e of Fi) r.style.removeProperty(e);
+	for (let e of Ui) r.style.removeProperty(e);
 	r.setAttribute("data-theme", n === null ? e.theme : n.base), r.setAttribute("data-density", e.density), t ? r.setAttribute("data-reduced-motion", "true") : r.removeAttribute("data-reduced-motion"), e.tv ? r.setAttribute("data-tv", "true") : r.removeAttribute("data-tv"), n !== null && nt(r, n.tokens);
-	let i = e.accent ? Pi(e.accent) : null;
+	let i = e.accent ? Hi(e.accent) : null;
 	if (i) for (let [e, t] of Object.entries(i)) r.style.setProperty(e, t);
 }
-function Li(e, t) {
+function Gi(e, t) {
 	let n = d(), r = !p();
 	e && r && (n.theme = e), t !== void 0 && r && (n.tv = t);
 	let i = n.reducedMotion === "on" || n.reducedMotion !== "off" && typeof window < "u" && typeof window.matchMedia == "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches, a = et();
-	Ii(n, i, a !== null && a.id === n.theme ? a : null);
+	Wi(n, i, a !== null && a.id === n.theme ? a : null);
 }
-function Ri() {
+function Ki() {
 	let e = u(), t = it(), n = ye(), r = ve();
 	return hr(() => {
 		n.isLoggedIn && t.load(r.value);
 	}), hr(() => {
 		let n = t.styleFor(e.theme);
-		Ii({
+		Wi({
 			theme: e.theme,
 			density: e.density,
 			accent: e.accent,
@@ -715,7 +767,7 @@ function Ri() {
 }
 //#endregion
 //#region src/composables/useCommandPaletteHotkey.ts
-function zi() {
+function qi() {
 	let e = pt(), t = (t) => {
 		(t.metaKey || t.ctrlKey) && !t.altKey && (t.key === "k" || t.key === "K") && (t.preventDefault(), e.togglePalette());
 	};
@@ -723,7 +775,7 @@ function zi() {
 }
 //#endregion
 //#region src/composables/usePreconnect.ts
-function Bi(e, t) {
+function Ji(e, t) {
 	let n = (e ?? "").trim();
 	if (!n) return null;
 	let r;
@@ -734,28 +786,28 @@ function Bi(e, t) {
 	}
 	return r.protocol === "http:" || r.protocol === "https:" ? r.origin : null;
 }
-function Vi(e) {
-	let t = Bi(e.documentOrigin) ?? void 0, n = (e.imageOrigin ?? "").trim() || (e.apiBase ?? "").trim();
+function Yi(e) {
+	let t = Ji(e.documentOrigin) ?? void 0, n = (e.imageOrigin ?? "").trim() || (e.apiBase ?? "").trim();
 	if (!n) return null;
-	let r = Bi(n, t);
+	let r = Ji(n, t);
 	return !r || t && r === t ? null : r;
 }
-function Hi(e, t) {
+function Xi(e, t) {
 	let n = document.head.querySelectorAll(`link[rel~="${e}"]`);
-	for (let e of Array.from(n)) if (Bi(e.href) === t) return !0;
+	for (let e of Array.from(n)) if (Ji(e.href) === t) return !0;
 	return !1;
 }
-function Ui(e, t, n, r) {
-	if (Hi(e, t)) return;
+function Zi(e, t, n, r) {
+	if (Xi(e, t)) return;
 	let i = document.createElement("link");
 	i.rel = e, i.href = t, n && (i.crossOrigin = "anonymous"), document.head.appendChild(i), r.push(i);
 }
-function Wi(e, t = {}) {
+function Qi(e, t = {}) {
 	if (typeof document > "u" || typeof window > "u") return;
-	let n = Bi(window.location?.origin), r = Array.isArray(e) ? e : e == null ? [] : [e], i = [], a = /* @__PURE__ */ new Set();
+	let n = Ji(window.location?.origin), r = Array.isArray(e) ? e : e == null ? [] : [e], i = [], a = /* @__PURE__ */ new Set();
 	for (let e of r) {
-		let r = Bi(e);
-		r && (n && r === n || a.has(r) || (a.add(r), Ui("preconnect", r, t.crossOrigin === !0, i), Ui("dns-prefetch", r, !1, i)));
+		let r = Ji(e);
+		r && (n && r === n || a.has(r) || (a.add(r), Zi("preconnect", r, t.crossOrigin === !0, i), Zi("dns-prefetch", r, !1, i)));
 	}
 	i.length && rr(() => {
 		for (let e of i) e.remove();
@@ -764,18 +816,18 @@ function Wi(e, t = {}) {
 }
 //#endregion
 //#region src/composables/useResumeReporter.ts
-var Gi = "phlix.deviceId", Ki = 15e3;
-function qi() {
+var $i = "phlix.deviceId", ea = 15e3;
+function ta() {
 	if (typeof localStorage > "u") return "web";
 	try {
-		let e = localStorage.getItem(Gi);
-		return e || (e = typeof crypto < "u" && typeof crypto.randomUUID == "function" ? crypto.randomUUID() : `web-${Date.now()}-${Math.random().toString(36).slice(2)}`, localStorage.setItem(Gi, e)), e;
+		let e = localStorage.getItem($i);
+		return e || (e = typeof crypto < "u" && typeof crypto.randomUUID == "function" ? crypto.randomUUID() : `web-${Date.now()}-${Math.random().toString(36).slice(2)}`, localStorage.setItem($i, e)), e;
 	} catch {
 		return "web";
 	}
 }
-function Ji() {
-	let e = Fe(), t = ye(), n = qi(), r = null, i = 0, a = !1, o = null;
+function na() {
+	let e = Fe(), t = ye(), n = ta(), r = null, i = 0, a = !1, o = null;
 	async function s() {
 		if (r) return r;
 		try {
@@ -796,7 +848,7 @@ function Ji() {
 			playing: e.playing
 		};
 		let c = Date.now();
-		if (!(a || !n && c - i < Ki)) {
+		if (!(a || !n && c - i < ea)) {
 			a = !0, i = c;
 			try {
 				let n = await s();
@@ -856,15 +908,15 @@ function Ji() {
 }
 //#endregion
 //#region src/app/PhlixApp.vue?vue&type=script&setup=true&lang.ts
-var Yi = ["src", "alt"], Xi = { class: "brand-wordmark" }, Zi = {
+var ra = ["src", "alt"], ia = { class: "brand-wordmark" }, aa = {
 	key: 1,
 	class: "brand-tagline"
-}, Qi = /*#__PURE__*/ t(/* @__PURE__ */ U({
+}, oa = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	__name: "PhlixApp",
 	setup(e) {
-		Ri();
+		Ki();
 		let t = pt(), i = $(), a = wr(), { t: o } = T(), s = Ue(), c = I(() => a.meta?.fullBleed === !0 && s.theaterActive);
-		zi();
+		qi();
 		let l = Zn(() => import("./CommandPalette-DHK24-jz.js")), u = q(!1);
 		Z(() => t.open, (e) => {
 			e && (u.value = !0);
@@ -873,7 +925,7 @@ var Yi = ["src", "alt"], Xi = { class: "brand-wordmark" }, Zi = {
 			i.push(`${C.value}/player/${e}`);
 		}
 		let f = $n("phlixConfig", null);
-		Wi(Vi({
+		Qi(Yi({
 			imageOrigin: f?.imageOrigin ?? null,
 			apiBase: f?.apiBase ?? null,
 			documentOrigin: typeof window < "u" ? window.location.origin : null
@@ -885,7 +937,7 @@ var Yi = ["src", "alt"], Xi = { class: "brand-wordmark" }, Zi = {
 		let g = f?.features?.resumeSync ?? f?.app !== "hub", { syncResume: _ } = Ct();
 		Z(() => p.isLoggedIn, (e) => {
 			e && g && _();
-		}, { immediate: !0 }), ar("resumeReporter", Ji());
+		}, { immediate: !0 }), ar("resumeReporter", na());
 		let v = I(() => f?.branding ?? {}), y = I(() => v.value.wordmark ?? "Phlix"), b = St();
 		function x(e) {
 			if (!b.loaded) return !1;
@@ -911,9 +963,9 @@ var Yi = ["src", "alt"], Xi = { class: "brand-wordmark" }, Zi = {
 						src: v.value.logoSrc,
 						alt: v.value.logoAlt ?? y.value,
 						class: "brand-logo"
-					}, null, 8, Yi)) : R("", !0),
-					B("span", Xi, [V(Y(y.value), 1), i[1] ||= B("span", { class: "brand-dot" }, ".", -1)]),
-					v.value.tagline ? (K(), z("span", Zi, Y(v.value.tagline), 1)) : R("", !0)
+					}, null, 8, ra)) : R("", !0),
+					B("span", ia, [V(Y(y.value), 1), i[1] ||= B("span", { class: "brand-dot" }, ".", -1)]),
+					v.value.tagline ? (K(), z("span", aa, Y(v.value.tagline), 1)) : R("", !0)
 				]),
 				_: 1
 			}, 8, ["to"])]),
@@ -1007,19 +1059,20 @@ var Yi = ["src", "alt"], Xi = { class: "brand-wordmark" }, Zi = {
 				X(p).isLoggedIn ? (K(), L(Ei, {
 					key: 2,
 					onExpand: d
-				})) : R("", !0)
+				})) : R("", !0),
+				H(Pi)
 			]),
 			_: 1
 		}, 8, ["class"]));
 	}
-}), [["__scopeId", "data-v-0fe28968"]]), $i = { class: "phlix-not-found" }, ea = /*#__PURE__*/ t(/* @__PURE__ */ U({
+}), [["__scopeId", "data-v-e1ae943a"]]), sa = { class: "phlix-not-found" }, ca = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	__name: "NotFoundPage",
 	setup(e) {
 		let { t } = T(), n = $();
 		function r() {
 			n.hasRoute("browse") ? n.replace({ name: "browse" }) : n.replace("/");
 		}
-		return (e, n) => (K(), z("div", $i, [H(A, {
+		return (e, n) => (K(), z("div", sa, [H(A, {
 			icon: "search",
 			title: X(t)("notFound.title"),
 			description: X(t)("notFound.description")
@@ -1035,8 +1088,8 @@ var Yi = ["src", "alt"], Xi = { class: "brand-wordmark" }, Zi = {
 			_: 1
 		}, 8, ["title", "description"])]));
 	}
-}), [["__scopeId", "data-v-c6233715"]]), ta = "phlix.currentServerId", na = "phlix.currentServerName", ra = "phlix.currentServerUrl";
-function ia(e) {
+}), [["__scopeId", "data-v-c6233715"]]), la = "phlix.currentServerId", ua = "phlix.currentServerName", da = "phlix.currentServerUrl";
+function fa(e) {
 	if (typeof window > "u") return null;
 	try {
 		return window.localStorage.getItem(e);
@@ -1044,18 +1097,18 @@ function ia(e) {
 		return null;
 	}
 }
-function aa(e, t) {
+function pa(e, t) {
 	if (!(typeof window > "u")) try {
 		t === null ? window.localStorage.removeItem(e) : window.localStorage.setItem(e, t);
 	} catch {}
 }
-var oa = yr("server", () => {
-	let e = q(ia(ta)), t = q(ia(na)), n = q(ia(ra)), r = I(() => e.value !== null);
+var ma = yr("server", () => {
+	let e = q(fa(la)), t = q(fa(ua)), n = q(fa(da)), r = I(() => e.value !== null);
 	function i(r, i, a) {
-		e.value = r, t.value = i ?? null, n.value = a && a !== "" ? a : null, aa(ta, r), aa(na, i ?? null), aa(ra, n.value);
+		e.value = r, t.value = i ?? null, n.value = a && a !== "" ? a : null, pa(la, r), pa(ua, i ?? null), pa(da, n.value);
 	}
 	function a() {
-		e.value = null, t.value = null, n.value = null, aa(ta, null), aa(na, null), aa(ra, null);
+		e.value = null, t.value = null, n.value = null, pa(la, null), pa(ua, null), pa(da, null);
 	}
 	return {
 		currentServerId: e,
@@ -1065,8 +1118,8 @@ var oa = yr("server", () => {
 		setCurrent: i,
 		clear: a
 	};
-}), sa = 8804, ca = 5, la = 1e3;
-function ua(e) {
+}), ha = 8804, ga = 5, _a = 1e3;
+function va(e) {
 	if (typeof e != "object" || !e) return null;
 	let t = e;
 	if (t.type !== "pending_command" || t.command !== "play_media" || typeof t.server_id != "string" || t.server_id === "" || typeof t.media_id != "string" || t.media_id === "" || typeof t.title != "string" || t.title === "") return null;
@@ -1081,139 +1134,139 @@ function ua(e) {
 		source: typeof t.source == "string" ? t.source : "unknown"
 	};
 }
-function da() {
+function ya() {
 	return typeof window < "u" && typeof window.location?.hostname == "string" ? window.location.hostname : "localhost";
 }
-function fa(e, t) {
+function ba(e, t) {
 	let n = Ft();
 	if (n.wsUrl !== null) {
 		let e = n.wsPath ?? "/syncplay";
 		return `${n.wsUrl}${e}/${encodeURIComponent(t)}`;
 	}
-	let r = e ? new URL(e).hostname : da();
-	return `${e && new URL(e).protocol === "https:" ? "wss:" : "ws:"}//${r}:${sa}/syncplay/${encodeURIComponent(t)}`;
+	let r = e ? new URL(e).hostname : ya();
+	return `${e && new URL(e).protocol === "https:" ? "wss:" : "ws:"}//${r}:${ha}/syncplay/${encodeURIComponent(t)}`;
 }
-var pa = null, ma = null, ha = 0, ga = null;
-function _a(e) {
-	ma?.onStatusChange?.(e);
+var xa = null, Sa = null, Ca = 0, wa = null;
+function Ta(e) {
+	Sa?.onStatusChange?.(e);
 }
-function va(e) {
-	if (pa && ma?.serverId === e.serverId && ma?.hubBaseUrl === e.hubBaseUrl) {
-		ma = e;
+function Ea(e) {
+	if (xa && Sa?.serverId === e.serverId && Sa?.hubBaseUrl === e.hubBaseUrl) {
+		Sa = e;
 		return;
 	}
-	if (pa) {
-		let e = pa;
-		e.onclose = null, e.onmessage = null, e.onerror = null, e.close(), pa = null;
+	if (xa) {
+		let e = xa;
+		e.onclose = null, e.onmessage = null, e.onerror = null, e.close(), xa = null;
 	}
-	ma = e, ga !== null && (clearTimeout(ga), ga = null), ya();
+	Sa = e, wa !== null && (clearTimeout(wa), wa = null), Da();
 }
-function ya() {
-	if (!ma) return;
-	let e = ma.tokenProvider();
+function Da() {
+	if (!Sa) return;
+	let e = Sa.tokenProvider();
 	if (!e) {
-		_a("closed");
+		Ta("closed");
 		return;
 	}
-	let t = fa(ma.hubBaseUrl, ma.serverId);
-	_a(ha > 0 ? "reconnecting" : "connecting");
+	let t = ba(Sa.hubBaseUrl, Sa.serverId);
+	Ta(Ca > 0 ? "reconnecting" : "connecting");
 	let n;
 	try {
 		n = new WebSocket(t, ["bearer", e]);
 	} catch {
-		ba();
+		Oa();
 		return;
 	}
-	pa = n, n.onopen = () => {
-		ha = 0, _a("open");
+	xa = n, n.onopen = () => {
+		Ca = 0, Ta("open");
 	}, n.onmessage = (e) => {
-		if (!ma) return;
+		if (!Sa) return;
 		let t;
 		try {
 			t = JSON.parse(e.data);
 		} catch {
 			return;
 		}
-		let n = ua(t);
+		let n = va(t);
 		if (n) try {
-			ma.onPendingCommand(n);
+			Sa.onPendingCommand(n);
 		} catch {}
 	}, n.onclose = () => {
-		pa === n && (pa = null, ba());
+		xa === n && (xa = null, Oa());
 	}, n.onerror = () => {};
 }
-function ba() {
-	if (!ma || pa !== null) return;
-	if (ha >= ca) {
-		_a("closed"), ha = 0;
+function Oa() {
+	if (!Sa || xa !== null) return;
+	if (Ca >= ga) {
+		Ta("closed"), Ca = 0;
 		return;
 	}
-	let e = la * 2 ** ha;
-	ha++, _a("reconnecting"), ga = setTimeout(() => {
-		ga = null, ya();
+	let e = _a * 2 ** Ca;
+	Ca++, Ta("reconnecting"), wa = setTimeout(() => {
+		wa = null, Da();
 	}, e);
 }
-function xa() {
-	ga !== null && (clearTimeout(ga), ga = null), pa &&= (pa.onclose = null, pa.close(), null), ha = 0, ma = null, _a("closed");
+function ka() {
+	wa !== null && (clearTimeout(wa), wa = null), xa &&= (xa.onclose = null, xa.close(), null), Ca = 0, Sa = null, Ta("closed");
 }
-function Sa() {
-	return pa;
+function Aa() {
+	return xa;
 }
 //#endregion
 //#region src/app/admin-registry.ts
-var Ca = null;
-function wa(e) {
-	Ca = e;
+var ja = null;
+function Ma(e) {
+	ja = e;
 }
-function Ta(e) {
-	return e ? Ca?.(e) ?? null : null;
+function Na(e) {
+	return e ? ja?.(e) ?? null : null;
 }
 //#endregion
 //#region src/app/createPhlixApp.ts
-var Ea = [
+var Pa = [
 	"login",
 	"signup",
 	"connect"
 ];
-function Da(e, t, n = !1, r = { name: "browse" }) {
+function Fa(e, t, n = !1, r = { name: "browse" }) {
 	let i = typeof e.name == "string" ? e.name : "";
-	return Ea.includes(i) || e.meta?.public === !0 ? !0 : t ? e.meta?.requiresAdmin === !0 && !n ? r : !0 : {
+	return Pa.includes(i) || e.meta?.public === !0 ? !0 : t ? e.meta?.requiresAdmin === !0 && !n ? r : !0 : {
 		name: "login",
 		query: e.fullPath ? { redirect: e.fullPath } : {}
 	};
 }
-function Oa(e, t, n) {
+function Ia(e, t, n) {
 	return !t || n ? null : e.name === "connect" || {
 		name: "connect",
 		query: e.fullPath ? { redirect: e.fullPath } : {}
 	};
 }
-var ka = "mcp-tokens", Aa = "mcp-tokens";
-function ja(e = "/app") {
+var La = "mcp-tokens", Ra = "mcp-tokens";
+function za(e = "/app") {
 	return {
-		id: ka,
+		id: La,
 		label: "MCP Tokens",
 		icon: "key",
-		to: `${e}/${Aa}`
+		to: `${e}/${Ra}`
 	};
 }
-var Ma = "library", Na = "music", Pa = "music";
-function Fa(e, t, n = !0) {
-	return e.name === Na || e.name !== Ma || !n || t !== Pa ? null : { name: Na };
+var Ba = "library", Va = "music", Ha = "music";
+function Ua(e, t, n = !0) {
+	return e.name === Va || e.name !== Ba || !n || t !== Ha ? null : { name: Va };
 }
-function Ia(e, t) {
+function Wa(e, t) {
 	let n = e.meta?.title;
 	if (typeof n == "string" && n) return t(n);
-	let r = Ta(typeof e.name == "string" ? e.name : "");
+	let r = Na(typeof e.name == "string" ? e.name : "");
 	return r ? `Admin · ${r}` : null;
 }
-function La(e, t, n) {
+function Ga(e, t, n) {
 	return e === "hub" && n ? `${t}/api/v1/servers/${n}/proxy` : t;
 }
-function Ra(e, t) {
+function Ka(e, t) {
 	return e !== "hub" || t === null || t === "" ? "" : t.replace(/\/+$/, "");
 }
-function za() {
+function qa() {
 	return typeof window < "u" && window.__PHLIX__ ? window.__PHLIX__ : {
 		app: "server",
 		apiBase: "",
@@ -1224,7 +1277,7 @@ function za() {
 		deviceHeaders: {}
 	};
 }
-function Ba(e) {
+function Ja(e) {
 	let t = e.routerBase || "/app", n = [
 		{
 			path: t,
@@ -1331,22 +1384,22 @@ function Ba(e) {
 		}
 	];
 	return e.app === "hub" && n.push({
-		path: `${t}/${Aa}`,
-		name: ka,
+		path: `${t}/${Ra}`,
+		name: La,
 		meta: { title: "mcpTokens.title" },
 		component: () => import("./McpTokensPage-CsUtGxS4.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
-		component: ea
+		component: ca
 	}), n;
 }
-function Va(e) {
+function Ya(e) {
 	let t = {
-		...za(),
+		...qa(),
 		...e
 	};
-	ne(t.deviceHeaders ?? {}), Li(t.defaultTheme, t.defaultTv), Lt(t.branding?.wordmark);
+	ne(t.deviceHeaders ?? {}), Gi(t.defaultTheme, t.defaultTv), Lt(t.branding?.wordmark);
 	let n = w(t.messages), r = vr();
 	if (!p()) {
 		let e = u(r);
@@ -1354,15 +1407,15 @@ function Va(e) {
 	}
 	let a = Sr({
 		history: Cr(),
-		routes: Ba(t),
+		routes: Ja(t),
 		scrollBehavior(e, t, n) {
 			return n ?? { top: 0 };
 		}
 	}), o = t.home ? { path: t.home } : { name: "browse" }, s = Ot(r);
-	s.configure(t.onConnectionChange ?? null), t.hubRelay && va(t.hubRelay);
-	let c = () => s.apiBase || t.apiBase, l = oa(r), d = I(() => La(t.app, c(), l.currentServerId)), f = I(() => Ra(t.app, l.currentServerUrl));
+	s.configure(t.onConnectionChange ?? null), t.hubRelay && Ea(t.hubRelay);
+	let c = () => s.apiBase || t.apiBase, l = ma(r), d = I(() => Ga(t.app, c(), l.currentServerId)), f = I(() => Ka(t.app, l.currentServerUrl));
 	async function m(e) {
-		if (e.name !== Ma) return !0;
+		if (e.name !== Ba) return !0;
 		let t = e.params.id, n = Array.isArray(t) ? t[0] : t;
 		if (!n) return !0;
 		let i = St(r);
@@ -1371,74 +1424,22 @@ function Va(e) {
 		} catch {
 			return !0;
 		}
-		return Fa(e, i.byId(n)?.type, a.hasRoute(Na)) ?? !0;
+		return Ua(e, i.byId(n)?.type, a.hasRoute(Va)) ?? !0;
 	}
 	a.beforeEach(async (e) => {
-		let n = Oa(e, t.requireConnection === !0, c() !== "");
+		let n = Ia(e, t.requireConnection === !0, c() !== "");
 		if (n !== null) return n;
 		let i = ye(r), a;
-		return e.meta?.requiresAdmin === !0 ? (await i.init(), a = Da(e, i.isLoggedIn, i.isAdmin, o)) : i.isLoggedIn === !0 ? (i.init(), a = Da(e, !0, !1, o)) : (await i.init(), a = Da(e, i.isLoggedIn, i.isAdmin, o)), a === !0 ? m(e) : a;
+		return e.meta?.requiresAdmin === !0 ? (await i.init(), a = Fa(e, i.isLoggedIn, i.isAdmin, o)) : i.isLoggedIn === !0 ? (i.init(), a = Fa(e, !0, !1, o)) : (await i.init(), a = Fa(e, i.isLoggedIn, i.isAdmin, o)), a === !0 ? m(e) : a;
 	}), a.afterEach((e) => {
-		Rt(Ia(e, n));
+		Rt(Wa(e, n));
 	});
-	let h = Yn(Qi);
+	let h = Yn(oa);
 	return h.provide("apiBase", I(() => c())), h.provide("mediaApiBase", d), h.provide("mediaDirectBase", f), h.provide("loginPath", I(() => `${t.routerBase ?? "/app"}/login`)), h.provide("phlixCommands", t.commands ?? []), h.provide("phlixConfig", t), h.use(r), h.provide("auth", ye(r)), h.use(a), i(h), h;
 }
 //#endregion
-//#region src/components/ui/ToastHost.vue?vue&type=script&setup=true&lang.ts
-var Ha = ["aria-label"], Ua = ["role"], Wa = { class: "phlix-toast__content" }, Ga = {
-	key: 0,
-	class: "phlix-toast__title"
-}, Ka = { class: "phlix-toast__message" }, qa = ["onClick"], Ja = 0, Ya = /*#__PURE__*/ t(/* @__PURE__ */ U({
-	__name: "ToastHost",
-	props: { position: { default: "bottom" } },
-	setup(e) {
-		let { t } = T(), i = ze(), a = {
-			neutral: "info",
-			success: "success",
-			warning: "alert",
-			error: "error",
-			info: "info"
-		}, o = (e) => e.icon ?? a[e.tone];
-		return G(() => {
-			Ja++;
-		}), nr(() => {
-			Ja--;
-		}), (a, s) => (K(), L(Kn, { to: "body" }, [B("div", {
-			class: W(["phlix-toasts", `phlix-toasts--${e.position}`]),
-			role: "region",
-			"aria-label": X(t)("common.notifications")
-		}, [H(Jn, { name: "phlix-toast" }, {
-			default: Q(() => [(K(!0), z(F, null, J(X(i).toasts, (e) => (K(), z("div", {
-				key: e.id,
-				class: W(["phlix-toast", `phlix-toast--${e.tone}`]),
-				role: e.tone === "error" ? "alert" : "status"
-			}, [
-				H(n, {
-					name: o(e),
-					class: "phlix-toast__icon"
-				}, null, 8, ["name"]),
-				B("div", Wa, [e.title ? (K(), z("p", Ga, Y(e.title), 1)) : R("", !0), B("p", Ka, Y(e.message), 1)]),
-				e.action ? (K(), z("button", {
-					key: 0,
-					type: "button",
-					class: "phlix-toast__action",
-					onClick: (t) => {
-						e.action.onClick(), X(i).dismiss(e.id);
-					}
-				}, Y(e.action.label), 9, qa)) : R("", !0),
-				H(r, {
-					name: "x",
-					label: X(t)("common.dismiss"),
-					size: "sm",
-					class: "phlix-toast__close",
-					onClick: (t) => X(i).dismiss(e.id)
-				}, null, 8, ["label", "onClick"])
-			], 10, Ua))), 128))]),
-			_: 1
-		})], 10, Ha)]));
-	}
-}), [["__scopeId", "data-v-0127c07a"]]), Xa = /*#__PURE__*/ t(/* @__PURE__ */ U({
+//#region src/components/ui/Reveal.vue
+var Xa = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	__name: "Reveal",
 	props: {
 		tag: { default: "div" },
@@ -1887,7 +1888,7 @@ var Lo = [
 	No
 ];
 function Ho(e = "/app", t = Bo) {
-	wa(Io);
+	Ma(Io);
 	let n = `${e}/admin`, r = t.map((e) => ({
 		path: e.path,
 		name: e.name,
@@ -2289,7 +2290,7 @@ var Ss = {
 	__name: "MyServersPage",
 	props: { client: {} },
 	setup(e) {
-		let t = e.client ?? se, n = ze(), r = ye(), i = oa(), a = $(), o = $n("phlixConfig", void 0)?.routerBase || "/app", s = q([]), c = q(!0), l = q(null), u = q(null), d = q(!1), f = q(""), p = q(!1), m = q(null);
+		let t = e.client ?? se, n = ze(), r = ye(), i = ma(), a = $(), o = $n("phlixConfig", void 0)?.routerBase || "/app", s = q([]), c = q(!0), l = q(null), u = q(null), d = q(!1), f = q(""), p = q(!1), m = q(null);
 		function h() {
 			f.value = "", m.value = null, d.value = !0;
 		}
@@ -10127,6 +10128,6 @@ var I_ = {
 	ja: V_
 }, U_ = Zn(() => import("./MediaDetail-CkYzrBVf.js").then((e) => e.n)), W_ = Zn(() => import("./MetadataMatchModal-CaI46Eyw.js").then((e) => e.n)), G_ = Zn(() => import("./FilterBar-yumBVprR.js").then((e) => e.n)), K_ = Zn(() => import("./SearchPage-BOVRkygl.js"));
 //#endregion
-export { je as ACTIVE_PROFILE_KEY, sn as ALL_LOGS, sd as AcceptInvitePage, mn as AdminBackupApi, hn as AdminCastApi, yn as AdminCollectionsApi, cn as AdminDashboardApi, gn as AdminDlnaServerApi, bn as AdminHistoryApi, Fn as AdminHubDashboardApi, pn as AdminIntegrationsApi, wn as AdminLibrariesApi, vn as AdminLiveTvApi, on as AdminLogsApi, Pn as AdminMaintenanceApi, an as AdminMetadataSourcesApi, jn as AdminPluginsApi, _n as AdminRemoteAccessApi, fn as AdminServicesApi, Tn as AdminSettingsApi, xn as AdminSyncPlayApi, Oe as AdminUsersApi, dn as AdminWebhooksApi, me as ApiClient, ae as ApiError, e as AppBackdrop, Br as AppLayout, Sh as AudiobookDetailPage, ng as AudiobookPlayerPage, Km as AudiobooksPage, tt as BUILT_IN_THEME_IDS, M as Badge, pm as BookDetailPage, jm as BookReaderPage, Kp as BooksPage, j as Button, Nt as CONNECTION_API_BASE_KEY, kt as CONNECTION_CONFIRMED_ORIGIN_KEY, ta as CURRENT_SERVER_ID_KEY, na as CURRENT_SERVER_NAME_KEY, Ht as Chip, Wt as Combobox, Kt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, C as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, we as DEFAULT_THROTTLE_BPS, R_ as DE_MESSAGES, he as ERROR_MESSAGES, re as ERROR_TITLES, I_ as ES_MESSAGES, A as EmptyState, L_ as FR_MESSAGES, tl as FederationPage, wl as FederationSharesPage, G_ as FilterBar, ie as GENERIC_ERROR_MESSAGE, sa as HUB_SYNC_PLAY_PORT, ro as HelpPopover, Xt as HelpText, z_ as IT_MESSAGES, n as Icon, r as IconButton, nd as InviteLinksPage, V_ as JA_MESSAGES, gt as Kbd, Sn as LIBRARY_TYPES, H_ as LOCALE_MESSAGES, hs as LibraryScanPage, ce as LocalStorageTokenStore, In as LoginForm, Mn as MAINTENANCE_ENDPOINTS, Nn as MAINTENANCE_TASK_NAMES, Ye as MAX_EXTENDS_DEPTH, ka as MCP_TOKENS_ROUTE_NAME, Aa as MCP_TOKENS_ROUTE_PATH, ue as MUSIC_PAGE_SIZE, Pl as ManageSharesPage, Qt as MediaCard, U_ as MediaDetail, $t as MediaGrid, wt as MediaHomeRow, en as MediaRow, Yt as Menu, W_ as MetadataMatchModal, Gt as Modal, Od as MusicAlbumPage, gf as MusicArtistPage, qd as MusicArtistsPage, Mp as MusicPlayerPage, tp as MusicTracksPage, Fs as MyServersPage, ee as NetworkError, kn as PLUGIN_SECRET_MASK, x as PLURAL_CATEGORIES, Ee as PROFILE_LAST_ERROR_CODE, Se as PROFILE_LAST_ERROR_TEXT, B_ as PT_BR_MESSAGES, qt as PageHint, Za as PageTransition, Qi as PhlixApp, Rg as PhotoAlbumPage, Cg as PhotoAlbumsPage, S_ as PhotoSlideshowPage, s_ as PhotoViewPage, rs as ProfileImageSettings, be as RATING_LABELS, Te as RATING_MAX, De as RATING_OPTIONS, zn as REQUEST_SEARCH_DEBOUNCE_MS, Re as RESUME_MAX_RATIO, Ie as RESUME_MIN_SECONDS, oo as RatingBadge, Cu as RequestsPage, Xa as Reveal, Cn as SCAN_JOB_TYPES, En as SETTINGS_SECRET_MASK, vt as SORT_TITLE_ARTICLES, ln as SUBSCRIBABLE_EVENTS, K_ as SearchPage, lt as SecuritySettingsPage, Ut as Select, Hc as ServerDetailPage, Jl as SharedWithMePage, Ar as Sheet, Ln as SignupForm, N as Skeleton, Bt as Slider, rn as SourcePriorityEditor, Ke as Spinner, Vt as Switch, at as THEME_CACHE_KEY, ct as THEME_TOKEN_ALLOWLIST, xe as THROTTLE_BPS_LEVELS, Ce as THROTTLE_BPS_OPTIONS, pe as TMDB_UNCONFIGURED_CODE, Jt as Tabs, Ve as ThumbRating, ge as TimeoutError, Ya as ToastHost, Ge as Tooltip, co as UserRatingPicker, un as WEBHOOK_EVENT_CATEGORIES, ke as activeProfileStorageKey, Xe as activeThemeStyle, Go as adminMenu, Li as applyStoredThemeEarly, nt as applyThemeTokens, k_ as bestCandidate, C_ as bindMediaStoreToRouter, Ho as buildAdminRoutes, Wo as buildHubAdminRoutes, fa as buildHubRelayUrl, nn as buildMediaQuery, tn as buildMediaUrl, Uo as buildServerAdminRoutes, ut as clearThemeTokens, xa as closeHubRelayConnection, Lo as commonAdminPages, _t as compareByStrippedTitle, Va as createPhlixApp, w as createTranslator, Rn as debounce, Pi as deriveAccentVars, D as errMessage, fe as errorCodeMessage, le as errorCodeTitle, yt as fetchLibraries, st as fetchThemes, c as focusable, a as focusableRegistry, zt as formatPageTitle, mt as fuzzyScore, E as getDefaultApiHeaders, Sa as getHubRelaySocket, p as hasStoredPreferences, zo as hubAdminPages, i as installFocusable, jt as isAllowedBase, Ze as isAllowedThemeToken, Qe as isBuiltInThemeId, te as isOffline, Dt as isPlaintextPublic, _ as isPluralTemplate, Tt as isPrivateHost, oe as isRegisteredErrorCode, Ne as isRewritableImagePath, ot as isSafeThemeTokenValue, de as isTmdbUnconfigured, ht as matchCommand, ja as mcpTokensMenuItem, S as mergeMessages, At as normalizeBase, rt as normalizeServerTheme, va as openHubRelayConnection, Mt as originOf, ua as parsePendingCommandFrame, An as pluginErrorCode, On as pluginValidationErrors, y as plural, g as pluralCategory, h as pluralCount, v as pluralize, Et as probeServer, et as readCachedTheme, d as readStoredPreferences, w_ as rectCenter, Pe as resolveImageSrc, Me as resolveImageSrcset, $e as resolveThemeBase, Je as resolveThemeTokens, dt as sanitizeThemeTokens, b as selectPluralTemplate, Ro as serverAdminPages, Lt as setAppName, ne as setDefaultApiHeaders, Rt as setPageTitle, xt as sortLibraries, bt as stripLeadingArticle, ve as useApiBase, ye as useAuthStore, zi as useCommandPaletteHotkey, pt as useCommandStore, Ot as useConnectionStore, o as useFocusTrap, k as useImageSrc, St as useLibrariesStore, O as useMediaApiBase, Gn as useMediaStore, T as useMessages, F_ as useOnline, It as usePageTitle, Fe as usePlayerStore, Wi as usePreconnect, u as usePreferencesStore, Zt as usePrefetch, Ae as useProfileStore, Ji as useResumeReporter, Ct as useResumeSync, oa as useServerStore, Dn as useSettingsPrefsStore, P_ as useSpatialNav, Ri as useTheme, it as useThemesStore, ze as useToastStore, Be as useUserItemDataStore, Pt as withScheme, ft as writeCachedTheme };
+export { je as ACTIVE_PROFILE_KEY, sn as ALL_LOGS, sd as AcceptInvitePage, mn as AdminBackupApi, hn as AdminCastApi, yn as AdminCollectionsApi, cn as AdminDashboardApi, gn as AdminDlnaServerApi, bn as AdminHistoryApi, Fn as AdminHubDashboardApi, pn as AdminIntegrationsApi, wn as AdminLibrariesApi, vn as AdminLiveTvApi, on as AdminLogsApi, Pn as AdminMaintenanceApi, an as AdminMetadataSourcesApi, jn as AdminPluginsApi, _n as AdminRemoteAccessApi, fn as AdminServicesApi, Tn as AdminSettingsApi, xn as AdminSyncPlayApi, Oe as AdminUsersApi, dn as AdminWebhooksApi, me as ApiClient, ae as ApiError, e as AppBackdrop, Br as AppLayout, Sh as AudiobookDetailPage, ng as AudiobookPlayerPage, Km as AudiobooksPage, tt as BUILT_IN_THEME_IDS, M as Badge, pm as BookDetailPage, jm as BookReaderPage, Kp as BooksPage, j as Button, Nt as CONNECTION_API_BASE_KEY, kt as CONNECTION_CONFIRMED_ORIGIN_KEY, la as CURRENT_SERVER_ID_KEY, ua as CURRENT_SERVER_NAME_KEY, Ht as Chip, Wt as Combobox, Kt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, C as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, we as DEFAULT_THROTTLE_BPS, R_ as DE_MESSAGES, he as ERROR_MESSAGES, re as ERROR_TITLES, I_ as ES_MESSAGES, A as EmptyState, L_ as FR_MESSAGES, tl as FederationPage, wl as FederationSharesPage, G_ as FilterBar, ie as GENERIC_ERROR_MESSAGE, ha as HUB_SYNC_PLAY_PORT, ro as HelpPopover, Xt as HelpText, z_ as IT_MESSAGES, n as Icon, r as IconButton, nd as InviteLinksPage, V_ as JA_MESSAGES, gt as Kbd, Sn as LIBRARY_TYPES, H_ as LOCALE_MESSAGES, hs as LibraryScanPage, ce as LocalStorageTokenStore, In as LoginForm, Mn as MAINTENANCE_ENDPOINTS, Nn as MAINTENANCE_TASK_NAMES, Ye as MAX_EXTENDS_DEPTH, La as MCP_TOKENS_ROUTE_NAME, Ra as MCP_TOKENS_ROUTE_PATH, ue as MUSIC_PAGE_SIZE, Pl as ManageSharesPage, Qt as MediaCard, U_ as MediaDetail, $t as MediaGrid, wt as MediaHomeRow, en as MediaRow, Yt as Menu, W_ as MetadataMatchModal, Gt as Modal, Od as MusicAlbumPage, gf as MusicArtistPage, qd as MusicArtistsPage, Mp as MusicPlayerPage, tp as MusicTracksPage, Fs as MyServersPage, ee as NetworkError, kn as PLUGIN_SECRET_MASK, x as PLURAL_CATEGORIES, Ee as PROFILE_LAST_ERROR_CODE, Se as PROFILE_LAST_ERROR_TEXT, B_ as PT_BR_MESSAGES, qt as PageHint, Za as PageTransition, oa as PhlixApp, Rg as PhotoAlbumPage, Cg as PhotoAlbumsPage, S_ as PhotoSlideshowPage, s_ as PhotoViewPage, rs as ProfileImageSettings, be as RATING_LABELS, Te as RATING_MAX, De as RATING_OPTIONS, zn as REQUEST_SEARCH_DEBOUNCE_MS, Re as RESUME_MAX_RATIO, Ie as RESUME_MIN_SECONDS, oo as RatingBadge, Cu as RequestsPage, Xa as Reveal, Cn as SCAN_JOB_TYPES, En as SETTINGS_SECRET_MASK, vt as SORT_TITLE_ARTICLES, ln as SUBSCRIBABLE_EVENTS, K_ as SearchPage, lt as SecuritySettingsPage, Ut as Select, Hc as ServerDetailPage, Jl as SharedWithMePage, Ar as Sheet, Ln as SignupForm, N as Skeleton, Bt as Slider, rn as SourcePriorityEditor, Ke as Spinner, Vt as Switch, at as THEME_CACHE_KEY, ct as THEME_TOKEN_ALLOWLIST, xe as THROTTLE_BPS_LEVELS, Ce as THROTTLE_BPS_OPTIONS, pe as TMDB_UNCONFIGURED_CODE, Jt as Tabs, Ve as ThumbRating, ge as TimeoutError, Pi as ToastHost, Ge as Tooltip, co as UserRatingPicker, un as WEBHOOK_EVENT_CATEGORIES, ke as activeProfileStorageKey, Xe as activeThemeStyle, Go as adminMenu, Gi as applyStoredThemeEarly, nt as applyThemeTokens, k_ as bestCandidate, C_ as bindMediaStoreToRouter, Ho as buildAdminRoutes, Wo as buildHubAdminRoutes, ba as buildHubRelayUrl, nn as buildMediaQuery, tn as buildMediaUrl, Uo as buildServerAdminRoutes, ut as clearThemeTokens, ka as closeHubRelayConnection, Lo as commonAdminPages, _t as compareByStrippedTitle, Ya as createPhlixApp, w as createTranslator, Rn as debounce, Hi as deriveAccentVars, D as errMessage, fe as errorCodeMessage, le as errorCodeTitle, yt as fetchLibraries, st as fetchThemes, c as focusable, a as focusableRegistry, zt as formatPageTitle, mt as fuzzyScore, E as getDefaultApiHeaders, Aa as getHubRelaySocket, p as hasStoredPreferences, zo as hubAdminPages, i as installFocusable, jt as isAllowedBase, Ze as isAllowedThemeToken, Qe as isBuiltInThemeId, te as isOffline, Dt as isPlaintextPublic, _ as isPluralTemplate, Tt as isPrivateHost, oe as isRegisteredErrorCode, Ne as isRewritableImagePath, ot as isSafeThemeTokenValue, de as isTmdbUnconfigured, ht as matchCommand, za as mcpTokensMenuItem, S as mergeMessages, At as normalizeBase, rt as normalizeServerTheme, Ea as openHubRelayConnection, Mt as originOf, va as parsePendingCommandFrame, An as pluginErrorCode, On as pluginValidationErrors, y as plural, g as pluralCategory, h as pluralCount, v as pluralize, Et as probeServer, et as readCachedTheme, d as readStoredPreferences, w_ as rectCenter, Pe as resolveImageSrc, Me as resolveImageSrcset, $e as resolveThemeBase, Je as resolveThemeTokens, dt as sanitizeThemeTokens, b as selectPluralTemplate, Ro as serverAdminPages, Lt as setAppName, ne as setDefaultApiHeaders, Rt as setPageTitle, xt as sortLibraries, bt as stripLeadingArticle, ve as useApiBase, ye as useAuthStore, qi as useCommandPaletteHotkey, pt as useCommandStore, Ot as useConnectionStore, o as useFocusTrap, k as useImageSrc, St as useLibrariesStore, O as useMediaApiBase, Gn as useMediaStore, T as useMessages, F_ as useOnline, It as usePageTitle, Fe as usePlayerStore, Qi as usePreconnect, u as usePreferencesStore, Zt as usePrefetch, Ae as useProfileStore, na as useResumeReporter, Ct as useResumeSync, ma as useServerStore, Dn as useSettingsPrefsStore, P_ as useSpatialNav, Ki as useTheme, it as useThemesStore, ze as useToastStore, Be as useUserItemDataStore, Pt as withScheme, ft as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map
