@@ -48,7 +48,7 @@
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.1",
     "@vitejs/plugin-vue": "^6.0.7",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.12",
     "@vue/test-utils": "^2.4.10",
     "@vue/tsconfig": "^0.9.1",
     "eslint": "^9.39.0",
