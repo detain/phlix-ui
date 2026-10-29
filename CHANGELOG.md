@@ -1,3 +1,45 @@
+## Unreleased — review-fix lane 2026-10-29 (M-UI-11 r2): the sink census gets its mechanical guard, safeHref becomes public API
+
+- **The M-UI-11 census law is now machine-enforced (`eslint-rules/no-raw-wire-href.cjs`).** The
+  parent fix (2d53754e) wired every dynamic `:href`/`window.open` in `src/**` through
+  `safeHref(...)` or an `EXPLICITLY TRUSTED` census comment, and its utility header claimed the
+  law was "mechanically checkable" — the r1 review proved it was only greppable by a human:
+  planting `:href="p.repo"` (raw plugin-catalog wire data) in PluginsPage left `npx eslint` at
+  exit 0. This ships the missing guard: an ESLint rule reporting any dynamic `:href` binding
+  or `window.open()` destination whose expression cannot be PROVEN to flow through
+  `safeHref(...)` — arm-strict (a `cond ? safeHref(a) : raw` declarator stays red), identifier-
+  resolving through the declaration map (a raw-rooted alias chain stays red, a
+  sanitizer-rooted chain is a greppable proof), with the two sanctioned exemptions being the
+  law's own words: a marker attached to the defining declaration/call statement, or a
+  template HTML comment immediately preceding the bound element (whitespace-tight gap, so a
+  stale marker cannot bless the next binding). Registered over `src/**` in `eslint.config.js`
+  as plugin `phlix-href`; teeth pinned by `eslint-rules/no-raw-wire-href.test.ts` (31 RuleTester
+  pins: the reviewer's exact probe, marker-deletion and HTML-comment-deletion look-alikes, the
+  raw-arm smuggle, the raw-rooted alias, the aliased-import name law — plus an S346-pattern
+  inventory guard so the trusted/hostile inventories can only move together with their
+  length-pins). Mechanism note: ESLint core never traverses vue-eslint-parser's template
+  AST, so the rule runs one deterministic `Program:exit` walk of script + `templateBody`.
+  Red→green proven against the reviewer's probe before commit: planted raw binding reports
+  at the exact site; restoring it greens the file; the committed census passes untouched
+  (all 17 live sites exempt through their original class — zero new markers were needed,
+  which is itself the census' completeness proof).
+- **`safeHref` is finally public API (`src/index.ts`), making the parent commit body's claim
+  true of the shipped artifact.** The r1 review found the barrel export had been dropped
+  undisclosed: consumers (tizen/windows/server/hub surfaces) could not reuse the sanitizer.
+  One-line barrel addition beside the other shared utils (imageSrc/sortTitle/plural/debounce
+  precedent), `dist/phlix-ui.js` + `dist/index.d.ts` rebuilt committed per the dist law —
+  the root-bundle export is the importable shape; the `./dist/*` wildcard's `dist/utils/`
+  path was and stays a declarations-only side effect of the build, moot for consumers.
+  Header truth pass while open: the "Allows http(s)/mailto/tel/…" prose becomes the
+  blocklist it is (blob:/file:/about: survive by design), and the `location.href =`
+  config-surface redirects (useAuthStore/api/client loginPath, api/admin/services constant
+  OAuth paths) are named as the separate class outside the `:href`/`window.open` law.
+- **Cascade stays deferred by design.** Consumer pins (`@phlix/ui#v0.99.11`-era) pick the
+  export up at the next tag window (v0.99.12 wave); today's security posture is unchanged —
+  the export widens reuse, the rule hardens the in-package law. Suite floor moves +1 file /
+  +31 tests; `vue-tsc`, `eslint` (with the new rule over all of `src/**`), `dist:check`
+  hold at zero.
+
 ## 0.99.11 - 2026-10-15
 
 ### Release — 22 commits since `v0.99.10` (excl. the release-bump commit): the review-fix program — socket seam, error-envelope precedence, member playlists (+ manageability gating), one-voice UX, webhook User group, copy truth

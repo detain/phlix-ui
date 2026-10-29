@@ -482,6 +482,15 @@ export type { PluralCategory, PluralForms, PluralOptions } from './utils/plural'
 export { debounce, REQUEST_SEARCH_DEBOUNCE_MS } from './utils/debounce';
 export type { Debounced } from './utils/debounce';
 
+// M-UI-11 sink-census guard. THE blocklist sanitizer for wire-supplied link
+// destinations; every in-package `:href`/`window.open` sink binds through it
+// (mechanically enforced by eslint-rules/no-raw-wire-href.cjs over src/**).
+// Exposed so a host app resolves its OWN anchors the same way the components
+// do — tizen/windows/server/hub surfaces that render remote URLs (plugin
+// catalogs, helpLinks, peer-advertised server URLs) reuse this guard rather
+// than re-deriving a weaker blocklist per client.
+export { safeHref } from './utils/safeHref';
+
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 

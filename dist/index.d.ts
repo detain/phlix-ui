@@ -214,6 +214,7 @@ export { plural, pluralize, pluralCount, pluralCategory, selectPluralTemplate, i
 export type { PluralCategory, PluralForms, PluralOptions } from './utils/plural';
 export { debounce, REQUEST_SEARCH_DEBOUNCE_MS } from './utils/debounce';
 export type { Debounced } from './utils/debounce';
+export { safeHref } from './utils/safeHref';
 export { useToastStore } from './stores/useToastStore';
 export type { Toast, ToastInput, ToastTone, ToastAction } from './stores/useToastStore';
 export { usePreferencesStore, readStoredPreferences, hasStoredPreferences, DEFAULT_PREFERENCES, DEFAULT_CAPTION_STYLE } from './stores/usePreferencesStore';

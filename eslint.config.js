@@ -3,6 +3,7 @@ import tseslint from 'typescript-eslint';
 import vue from 'eslint-plugin-vue';
 import globals from 'globals';
 import phlixPlural from './eslint-rules/index.js';
+import noRawWireHref from './eslint-rules/no-raw-wire-href.cjs';
 
 // Flat config for phlix-ui (Vue 3 + TS). Pragmatic baseline: catch real bugs
 // (js + ts recommended, vue essential) without enforcing stylistic churn across
@@ -75,6 +76,18 @@ export default tseslint.config(
     rules: {
       'plural/no-hand-rolled-plural': 'error',
       'plural/plural-message-needs-count': 'error',
+    },
+  },
+  {
+    // M-UI-11 sink census law, mechanically enforced: every dynamic `:href`
+    // and `window.open()` in src/** either binds through safeHref(...) or
+    // carries an EXPLICITLY TRUSTED census comment at its definition site.
+    // Same scoping rationale as the plural block above (the law's surface is
+    // src/; scripts/** and the dev harness are outside it).
+    files: ['src/**/*.{ts,vue}'],
+    plugins: { 'phlix-href': { rules: { 'no-raw-wire-href': noRawWireHref } } },
+    rules: {
+      'phlix-href/no-raw-wire-href': 'error',
     },
   },
   {
