@@ -1,3 +1,15 @@
+## Unreleased — theme-sample cohort lane 2026-10-29 (M-THEME-SAMPLE M04): the faintest ink reaches AA and the high-contrast variant stops inheriting it
+
+- **Second golden rotation, same week.** Upstream raised `--text-faint`
+  `#465061`→`#6e7d94` (2.39:1 placeholder ink → ≥4.5:1 on every ground the
+  host renders it on) and added it to the high-contrast variant
+  (`#93a1b8`, HC 8→9 tokens). Golden re-vendored byte-for-byte from the
+  server, `GOLDEN_MD5` → `5fd7fad51225d66345e564c6d25e63b4`, variant-own
+  count pin 8→9, merged chain still 28 (all 9 overrides overlap dusk keys —
+  the flattening law is untouched). Two md5 rotations in one wave is the pin
+  doing its job, not noise: every payload change must cross both repos'
+  thresholds together.
+
 ## Unreleased — theme-sample cohort lane 2026-10-29 (M-THEME-SAMPLE M02): the cross-repo themes golden re-pinned against the byte-identical vendored sample payload
 
 - **What moved.** phlix-server re-vendored

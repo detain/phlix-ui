@@ -31,7 +31,7 @@ import { activeThemeStyle, resolveThemeBase, resolveThemeTokens } from '../compo
 const here = dirname(fileURLToPath(import.meta.url));
 const GOLDEN_PATH = join(here, '../test/fixtures/themes-with-sample-plugin.golden.json');
 const goldenText = readFileSync(GOLDEN_PATH, 'utf8');
-const GOLDEN_MD5 = 'f8a33eac15f111797cc9f01da27d447d';
+const GOLDEN_MD5 = '5fd7fad51225d66345e564c6d25e63b4';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return {
@@ -162,17 +162,17 @@ describe('end-to-end: the shipped sample plugin renders through the SPA pipeline
     const style = activeThemeStyle('sample-dusk-high-contrast', themes);
 
     expect(style!.base).toBe('midnight'); // two hops away
-    // The variant declares only 8 ink/border tokens and no background. That it
+    // The variant declares only 9 ink/border tokens and no background. That it
     // has one at all is proof the chain was flattened client-side — this is the
     // exact case `GET /api/v1/themes/{id}` could not answer on its own.
     const variantOwn = (JSON.parse(goldenText) as { themes: { id: string; tokens: Record<string, string> }[] })
       .themes.find((t) => t.id === 'sample-dusk-high-contrast')!.tokens;
-    expect(Object.keys(variantOwn)).toHaveLength(8);
+    expect(Object.keys(variantOwn)).toHaveLength(9);
     expect(variantOwn['--bg']).toBeUndefined();
 
     expect(style!.tokens['--bg']).toBe('#05060a'); // inherited from sample-dusk
     expect(style!.tokens['--text']).toBe('#ffffff'); // the variant's own override wins
-    expect(Object.keys(style!.tokens)).toHaveLength(28); // 28 base + 8 overrides, all 8 overlapping
+    expect(Object.keys(style!.tokens)).toHaveLength(28); // 28 base + 9 overrides, all 9 overlapping
   });
 
   it('leaves every BUILT-IN with nothing to apply', async () => {
