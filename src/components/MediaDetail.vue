@@ -35,6 +35,7 @@ import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import PlaylistPickerModal from './PlaylistPickerModal.vue';
 import { api } from '../api/client';
 import { pluralCount } from '../utils/plural';
+import { safeHref } from '../utils/safeHref';
 import { useMessages } from '../composables/useMessages';
 
 /** Message seam (L3): the hero action/aria labels adopt the catalog so overrides
@@ -151,6 +152,15 @@ const TMDB_KIND: Partial<Record<MediaType, 'movie' | 'tv'>> = {
   episode: 'tv',
 };
 
+/**
+ * External provider links (TMDB/IMDb/…). M-UI-11 [review ui__seceng] sink
+ * census: the builders are constant `https://` templates with the wire id
+ * `encodeURIComponent`-neutralised, so `external_ids` can never place a scheme
+ * in position 0 — structurally safe TODAY. The template still binds through
+ * `safeHref` as the second law: any future builder edit that starts taking a
+ * wire-supplied base URL meets the sanitizer already in place (same guard the
+ * HelpText/PageHint/PluginsPage anchors carry), never a silent regression.
+ */
 const providerLinks = computed<Array<{ key: string; label: string; url: string }>>(() => {
   const ids = props.item.external_ids;
   if (!ids) return [];
@@ -212,7 +222,15 @@ function onMenuSelect(menuItem: { label: string }): void {
       api
         .getDownloadUrl(props.item.id)
         .then(({ url }) => {
-          window.open(url, '_blank', 'noopener');
+          // M-UI-11 [review ui__seceng]: the download URL is server-supplied
+          // wire data; a compromised/MITM'd response must not open a script-y
+          // destination. Fail loud instead of lying with 'Download started'.
+          const safe = safeHref(url);
+          if (!safe) {
+            toasts.error('Download blocked — unsafe link');
+            return;
+          }
+          window.open(safe, '_blank', 'noopener');
           toasts.success('Download started');
         })
         .catch((err) => {
@@ -422,14 +440,16 @@ const trailerOpen = ref(false);
 
 /**
  * Play the trailer. Prefer the in-app YouTube embed modal (safe, validated key);
- * otherwise open the raw `trailer_url` in a new tab with `noopener,noreferrer`.
+ * otherwise open `trailer_url` — passed through `safeHref` (M-UI-11: it is
+ * provider/plugin-supplied wire data) — in a new tab with
+ * `noopener,noreferrer`. An unsafe scheme simply does not open.
  */
 function onPlayTrailer(): void {
   if (youtubeEmbedUrl.value) {
     trailerOpen.value = true;
     return;
   }
-  const url = props.item.trailer_url;
+  const url = props.item.trailer_url ? safeHref(props.item.trailer_url) : undefined;
   if (url && typeof window !== 'undefined') {
     window.open(url, '_blank', 'noopener,noreferrer');
   }
@@ -803,7 +823,7 @@ onBeforeUnmount(() => {
               v-for="link in providerLinks"
               :key="link.key"
               class="media-detail__link"
-              :href="link.url"
+              :href="safeHref(link.url)"
               target="_blank"
               rel="noopener noreferrer"
               :aria-label="`Open on ${link.label} (opens in a new tab)`"

@@ -413,3 +413,21 @@ describe('MyServersPage — add server', () => {
     w.unmount();
   });
 });
+
+// M-UI-11 [review ui__seceng MIN-1 class] — server.url is peer-advertised at
+// pairing time; a poisoned candidate must never reach window.open.
+describe('MyServersPage — hostile server url (M-UI-11)', () => {
+  it('Manage with a javascript: url opens no tab', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const { client } = makeClient({
+      servers: [{ serverId: 'srv-e', serverName: 'Evil', status: 'online', hostnameCandidates: ['javascript:alert(document.cookie)'] }],
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const manage = findBtn(w, 'Manage Evil');
+    expect(manage).toBeTruthy();
+    await manage!.trigger('click');
+    expect(openSpy).not.toHaveBeenCalled();
+    w.unmount();
+  });
+});

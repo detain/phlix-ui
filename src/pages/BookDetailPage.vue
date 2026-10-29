@@ -17,6 +17,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
+import { safeHref } from '../utils/safeHref';
 import { ApiClient } from '../api/client';
 import type { BookDetail } from '../types/book';
 import Icon from '../components/Icon.vue';
@@ -80,8 +81,10 @@ function goToReader(): void {
 }
 
 function downloadBook(): void {
-    if (book.value?.download_url) {
-        window.open(book.value.download_url, '_blank');
+    // M-UI-11 [review ui__seceng MIN-1 class]: download_url is server wire data.
+    const safe = book.value?.download_url ? safeHref(book.value.download_url) : undefined;
+    if (safe) {
+        window.open(safe, '_blank');
     }
 }
 

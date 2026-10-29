@@ -1445,3 +1445,35 @@ describe('MediaCard — tooltip reveal, 300ms delay and row width math (S20 AC)'
     expect(cardDecl('.media-card__iconbtn', 'width')).toBe('32px');
   });
 });
+
+// M-UI-11 [review ui__seceng MIN-1 class] — the download URL is server wire
+// data; window.open must never receive a script-y destination, and the
+// success toast must not lie about a download that never started.
+describe('MediaCard — hostile download url (M-UI-11)', () => {
+  it('Download with a javascript: url opens no tab and errors instead of the success toast', async () => {
+    vi.spyOn(api, 'getDownloadUrl').mockResolvedValue({ url: 'javascript:alert(document.cookie)' });
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+    const error = vi.spyOn(useToastStore(), 'error');
+
+    // Inline ⋯-menu selection (the file's selectMenuItem helper is scoped to
+    // the main describe; reveal() is module-level and must run first — the
+    // card lazily mounts via IntersectionObserver).
+    await reveal(w);
+    await w.find('[aria-label="More actions"]').trigger('click');
+    await nextTick();
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const target = items.find((el) => el.textContent?.trim() === MENU_LABELS.download);
+    expect(target, `present: ${items.map((i) => i.textContent?.trim()).join(', ')}`).toBeTruthy();
+    target!.click();
+    await flushPromises();
+
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(success).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith('Download blocked — unsafe link');
+    openSpy.mockRestore();
+    w.unmount();
+    document.body.innerHTML = '';
+  });
+});

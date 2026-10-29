@@ -1867,3 +1867,67 @@ describe('Admin PluginsPage — catalog channel (S27)', () => {
     w.unmount();
   });
 });
+
+// M-UI-11 [review ui__seceng MAJ-1] — catalog wire strings are THIRD-PARTY
+// data (remote catalog JSON / added sources). A poisoned entry must never
+// land raw in an anchor href: a click would run `javascript:` in the admin's
+// own origin session. safeHref (shared with PhlixApp's config-menu law) strips
+// the attribute entirely for script-y schemes.
+describe('Admin PluginsPage — hostile catalog URLs are inert (M-UI-11)', () => {
+  const HOSTILE_REPO = 'javascript:alert(document.cookie)';
+  // Control-char obfuscation (L6): browsers ignore \x09 inside the scheme, so
+  // the sanitizer must defeat `java\x09script:` too — the pin is not decorative.
+  const OBFUSCATED_SOURCE = 'java\tscript:alert(1)';
+
+  it('renders no href on a catalog repo link whose repo is a javascript: URL', async () => {
+    const catalog = {
+      default_source: DEFAULT_SOURCE,
+      sources: [DEFAULT_SOURCE],
+      catalogs: [
+        {
+          source: DEFAULT_SOURCE,
+          name: 'Poisoned',
+          plugins: [
+            {
+              name: 'evil',
+              title: 'Evil',
+              type: 'metadata-provider',
+              summary: '',
+              description: '',
+              repo: HOSTILE_REPO,
+              author: 'nobody',
+              tags: [],
+              installed: false,
+              enabled: false,
+            },
+          ],
+        },
+      ],
+      errors: [],
+    };
+    const { client } = makeClient({ plugins: [], catalog });
+    const w = mountPage(client);
+    await flushPromises();
+    const link = w.find('.admin-plugins__repo-link');
+    expect(link.exists()).toBe(true); // the card still renders…
+    expect(link.attributes('href')).toBeUndefined(); // …but the scheme never lands
+    w.unmount();
+  });
+
+  it('renders no href on a catalog-source chip fed an obfuscated java-tab-script URL', async () => {
+    const catalog = {
+      default_source: DEFAULT_SOURCE,
+      sources: [DEFAULT_SOURCE, OBFUSCATED_SOURCE],
+      catalogs: [],
+      errors: [],
+    };
+    const { client } = makeClient({ plugins: [], catalog });
+    const w = mountPage(client);
+    await flushPromises();
+    const chips = w.findAll('.admin-plugins__source-link');
+    expect(chips.length).toBe(2);
+    expect(chips[0].attributes('href')).toBe(DEFAULT_SOURCE); // benign passes through
+    expect(chips[1].attributes('href')).toBeUndefined(); // hostile stripped
+    w.unmount();
+  });
+});

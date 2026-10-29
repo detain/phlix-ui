@@ -47,3 +47,27 @@ describe('PageHint', () => {
     expect(root.classes()).not.toContain('phlix-page-hint--info');
   });
 });
+
+// M-UI-11 [review ui__seceng MAJ-1] — PageHint links reach this component from
+// page-help data; a script-y url must render inert (no href), like HelpText.
+describe('PageHint — hostile link sanitization (M-UI-11)', () => {
+  it('keeps benign links and strips the href of javascript:/data: links', () => {
+    const w = mount(PageHint, {
+      props: {
+        links: [
+          { text: 'Docs', url: 'https://docs.phlix.example/x' },
+          { text: 'Evil', url: 'javascript:alert(1)' },
+          { text: 'Data', url: 'data:text/html,<script>' },
+          { text: 'Obf', url: 'java\tscript:alert(1)' },
+        ],
+      },
+      slots: { default: 'Body' },
+    });
+    const links = w.findAll('.phlix-page-hint__link');
+    expect(links).toHaveLength(4);
+    expect(links[0].attributes('href')).toBe('https://docs.phlix.example/x');
+    expect(links[1].attributes('href')).toBeUndefined();
+    expect(links[2].attributes('href')).toBeUndefined();
+    expect(links[3].attributes('href')).toBeUndefined();
+  });
+});

@@ -122,7 +122,10 @@ const emit = defineEmits<{
 // MediaCard, so the title link behaves identically to the poster link.
 const router = inject(routerKey, null);
 
-/** Detail page for this item — the same target the card's stretched link uses. */
+/** Detail page for this item — the same target the card's stretched link uses.
+ *  M-UI-11 [review ui__seceng] sink census — EXPLICITLY TRUSTED, no safeHref:
+ *  the literal `/app/media/` relative prefix pins the scheme, so wire item.id
+ *  can never introduce `javascript:`/`data:` into the anchor. */
 const href = computed(() => `/app/media/${props.item.id}`);
 
 /**

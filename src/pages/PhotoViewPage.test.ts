@@ -227,3 +227,25 @@ describe('PhotoViewPage', () => {
     w.unmount();
   });
 });
+
+// M-UI-11 [review ui__seceng MAJ-1] — photo.full_url is server metadata wire
+// data; the Download anchor must never carry a script-y scheme.
+describe('PhotoViewPage — hostile full_url (M-UI-11)', () => {
+  it('renders the download anchor inert when full_url is a javascript: URL', async () => {
+    stubFetch({ photo: photoDetail({ full_url: 'javascript:alert(document.cookie)' }) });
+    const w = await mountPage(makeRouter());
+    await flushPromises();
+    const link = w.find('a.download-link');
+    expect(link.exists()).toBe(true);
+    expect(link.attributes('href')).toBeUndefined();
+    w.unmount();
+  });
+
+  it('renders the download anchor inert for control-char-obfuscated schemes (L6)', async () => {
+    stubFetch({ photo: photoDetail({ full_url: 'java\tscript:alert(1)' }) });
+    const w = await mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('a.download-link').attributes('href')).toBeUndefined();
+    w.unmount();
+  });
+});

@@ -28,6 +28,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useServerStore } from '../stores/useServerStore';
 import { errMessage } from '../api/errors';
 import { unixToIso } from '../api/normalize';
+import { safeHref } from '../utils/safeHref';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Modal from '../components/ui/Modal.vue';
@@ -193,7 +194,10 @@ function relayPending(server: Server): boolean {
  */
 function manageServer(server: Server): void {
   if (!server.url) return;
-  window.open(server.url, '_blank', 'noopener,noreferrer');
+  // M-UI-11 [review ui__seceng MIN-1 class]: server.url is peer-advertised data.
+  const safe = safeHref(server.url);
+  if (!safe) return;
+  window.open(safe, '_blank', 'noopener,noreferrer');
 }
 
 /**

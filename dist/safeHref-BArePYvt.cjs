@@ -1,0 +1,2 @@
+function e(e){let t=e.replace(/[\x00-\x20]/g,``);return/^(javascript|data|vbscript):/i.test(t)?void 0:e}Object.defineProperty(exports,"t",{enumerable:!0,get:function(){return e}});
+//# sourceMappingURL=safeHref-BArePYvt.cjs.map

@@ -19,6 +19,7 @@ import { ref, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { errMessage } from '../api/errors';
 import { unixToIso } from '../api/normalize';
+import { safeHref } from '../utils/safeHref';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -145,7 +146,10 @@ function isExpired(unixSeconds: number | null): boolean {
 function openServer(share: HubIncomingShare): void {
     const url = share.access_urls?.[0];
     if (!url) return;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // M-UI-11 [review ui__seceng MIN-1 class]: access_urls is peer-advertised data.
+    const safe = safeHref(url);
+    if (!safe) return;
+    window.open(safe, '_blank', 'noopener,noreferrer');
 }
 
 onMounted(() => loadShares(true));

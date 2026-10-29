@@ -18,6 +18,7 @@
  * decorative (`aria-hidden`, inherited from `<Icon>` with no `label`).
  */
 import Icon from '../Icon.vue';
+import { safeHref } from '../../utils/safeHref';
 
 withDefaults(
   defineProps<{
@@ -44,7 +45,7 @@ withDefaults(
         <a
           v-for="link in links"
           :key="link.url"
-          :href="link.url"
+          :href="safeHref(link.url)"
           target="_blank"
           rel="noopener noreferrer"
           class="phlix-page-hint__link"

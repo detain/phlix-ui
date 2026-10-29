@@ -1305,3 +1305,57 @@ describe('MediaDetail — title logo overlay', () => {
     expect(w.find('.media-detail__title').text()).toBe('Dune: Part Two');
   });
 });
+
+// M-UI-11 [review ui__seceng MAJ-1/MIN-1 class] — trailer_url and the resolved
+// download url are wire data; neither may reach window.open with a script-y
+// scheme.
+describe('MediaDetail — hostile wire urls (M-UI-11)', () => {
+  it('a javascript: trailer_url opens no tab (and builds no embed)', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const w = mount(MediaDetail, {
+      props: { item: media({ trailer_url: 'javascript:alert(document.cookie)', trailer_site: null, trailer_key: null }) },
+    });
+    await w.find('.media-detail__trailer-btn').trigger('click');
+    expect(openSpy).not.toHaveBeenCalled();
+    openSpy.mockRestore();
+  });
+
+  it('a Download url of javascript: opens no tab and errors instead of the success toast', async () => {
+    const dl = vi.spyOn(api, 'getDownloadUrl').mockResolvedValue({ url: 'java\tscript:alert(1)' });
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const w = mount(MediaDetail, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+    const error = vi.spyOn(useToastStore(), 'error');
+
+    // Inline ⋯-menu selection (this file has no shared selectMenuItem helper).
+    await w.find('[aria-label="More actions"]').trigger('click');
+    await nextTick();
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const target = items.find((el) => el.textContent?.trim() === MENU_LABELS.download);
+    expect(target, `present: ${items.map((i) => i.textContent?.trim()).join(', ')}`).toBeTruthy();
+    target!.click();
+    await flushPromises();
+
+    expect(dl).toHaveBeenCalledTimes(1);
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(success).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith('Download blocked — unsafe link');
+    openSpy.mockRestore();
+    w.unmount();
+    document.body.innerHTML = '';
+  });
+
+  // Census pin for the providerLinks anchor: the builders are constant
+  // `https://` templates with the wire id percent-encoded, so a hostile
+  // external id can never reach the href in scheme position — and the sink
+  // is additionally bound through safeHref (second law).
+  it('a hostile external_id stays percent-encoded inside the https template', async () => {
+    const w = mount(MediaDetail, {
+      props: { item: media({ external_ids: { imdb: 'javascript:alert(1)' } }) },
+    });
+    const link = w.find('.media-detail__link');
+    expect(link.exists()).toBe(true);
+    expect(link.attributes('href')).toBe('https://www.imdb.com/title/javascript%3Aalert(1)/');
+    w.unmount();
+  });
+});

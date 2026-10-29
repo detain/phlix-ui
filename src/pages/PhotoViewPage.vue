@@ -27,6 +27,7 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import { isTypingTarget } from '../components/player/shortcuts';
 import { layerFocusDepth } from '../components/ui/useFocusTrap';
+import { safeHref } from '../utils/safeHref';
 
 const props = defineProps<{
     /** Photo id */
@@ -216,7 +217,7 @@ watch(() => props.id, () => {
                     </Button>
                     <a
                         v-if="photo?.full_url"
-                        :href="imgSrc(photo.full_url)"
+                        :href="safeHref(imgSrc(photo.full_url))"
                         download
                         class="download-link"
                         target="_blank"

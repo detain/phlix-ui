@@ -14,6 +14,7 @@
  * with an external-link icon and proper security attributes.
  */
 import Icon from '../Icon.vue';
+import { safeHref } from '../../utils/safeHref';
 
 export interface HelpLink {
   text: string;
@@ -37,7 +38,7 @@ withDefaults(
     <ul v-if="links && links.length" class="phlix-help-text__links">
       <li v-for="link in links" :key="link.url">
         <a
-          :href="link.url"
+          :href="safeHref(link.url)"
           target="_blank"
           rel="noopener noreferrer"
           class="phlix-help-text__link"

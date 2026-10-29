@@ -69,6 +69,7 @@ import Skeleton from '../../components/ui/Skeleton.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import HelpText from '../../components/ui/HelpText.vue';
 import { pluralCount } from '../../utils/plural';
+import { safeHref } from '../../utils/safeHref';
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -1040,7 +1041,7 @@ onMounted(() => {
     <div class="admin-plugins__sources" aria-label="Catalog sources">
       <span class="admin-plugins__sources-label">Catalogs</span>
       <Badge v-for="src in catalog.sources" :key="src" tone="neutral">
-        <a class="admin-plugins__source-link" :href="src" target="_blank" rel="noopener noreferrer">
+        <a class="admin-plugins__source-link" :href="safeHref(src)" target="_blank" rel="noopener noreferrer">
           {{ sourceLabel(src) }}
         </a>
         <button
@@ -1211,7 +1212,7 @@ onMounted(() => {
                 Install
               </Button>
               <span class="admin-plugins__card-spacer" />
-              <a class="admin-plugins__repo-link" :href="p.repo" target="_blank" rel="noopener noreferrer">Repo ↗</a>
+              <a class="admin-plugins__repo-link" :href="safeHref(p.repo)" target="_blank" rel="noopener noreferrer">Repo ↗</a>
             </template>
           </div>
         </li>

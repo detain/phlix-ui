@@ -162,3 +162,29 @@ describe('BookDetailPage — actions', () => {
     w.unmount();
   });
 });
+
+// M-UI-11 [review ui__seceng MIN-1 class] — download_url is server wire data;
+// window.open must never receive a script-y destination.
+describe('BookDetailPage — hostile download_url (M-UI-11)', () => {
+  it('does not open a tab when download_url is a javascript: URL', async () => {
+    stubFetch({ book: bookDetail({ download_url: 'javascript:alert(document.cookie)' }) });
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    await findBtnByText(w, 'Download')!.trigger('click');
+    await flushPromises();
+    expect(openSpy).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('still opens benign download_url values', async () => {
+    stubFetch({ book: bookDetail({ download_url: 'https://dl/x.epub' }) });
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    await findBtnByText(w, 'Download')!.trigger('click');
+    await flushPromises();
+    expect(openSpy).toHaveBeenCalledWith('https://dl/x.epub', '_blank');
+    w.unmount();
+  });
+});

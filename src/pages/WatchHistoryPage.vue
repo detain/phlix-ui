@@ -224,6 +224,9 @@ watch(
             :key="historyItem.id"
             class="history-item"
           >
+            <!-- M-UI-11 [review ui__seceng] sink census: the literal relative
+                 `/app/media/` prefix pins the scheme, so the wire media.id can
+                 never introduce javascript:/data: — explicitly trusted. -->
             <a
               :href="`/app/media/${historyItem.media.id}`"
               class="history-item__poster"

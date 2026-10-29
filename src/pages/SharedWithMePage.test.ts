@@ -267,3 +267,17 @@ describe('SharedWithMePage — Open Server links to a real destination', () => {
     w.unmount();
   });
 });
+
+// M-UI-11 [review ui__seceng MIN-1 class] — access_urls is federation-peer
+// advertised data; a poisoned candidate must never reach window.open.
+describe('SharedWithMePage — hostile access_urls (M-UI-11)', () => {
+  it('Open Server with a javascript: access_urls[0] opens no tab', async () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const { client } = makeClient([{ ...activeShare, access_urls: ['javascript:alert(1)'] }]);
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'Open Server')!.trigger('click');
+    expect(open).not.toHaveBeenCalled();
+    w.unmount();
+  });
+});

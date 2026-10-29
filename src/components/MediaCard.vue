@@ -39,6 +39,7 @@ import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import PlaylistPickerModal from './PlaylistPickerModal.vue';
 import { api } from '../api/client';
 import { pluralCount } from '../utils/plural';
+import { safeHref } from '../utils/safeHref';
 import { useImageSrc } from '../composables/useImageSrc';
 
 /** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
@@ -262,7 +263,15 @@ function onMenuSelect(menuItem: { label: string }): void {
       api
         .getDownloadUrl(props.item.id)
         .then(({ url }) => {
-          window.open(url, '_blank', 'noopener');
+          // M-UI-11 [review ui__seceng]: the download URL is server-supplied
+          // wire data; a compromised/MITM'd response must not open a script-y
+          // destination. Fail loud instead of lying with 'Download started'.
+          const safe = safeHref(url);
+          if (!safe) {
+            toasts.error('Download blocked — unsafe link');
+            return;
+          }
+          window.open(safe, '_blank', 'noopener');
           toasts.success('Download started');
         })
         .catch((err) => {
@@ -365,6 +374,10 @@ function onWatched(): void {
 // type, including movies and episodes — so browsing never starts playback by
 // surprise. Direct playback is the overlay "Play" button's job (it emits
 // `play`). An explicit `to` prop still wins (e.g. a rail that wants the player).
+// M-UI-11 [review ui__seceng] sink census — EXPLICITLY TRUSTED, no safeHref:
+// the default carries a literal `/app/media/` relative prefix, so the wire
+// item.id can never introduce a URL scheme; `to` is the integrator's own
+// route-path API surface (same trust class as MenuItem.to), not remote data.
 const href = computed(() => props.to ?? `/app/media/${props.item.id}`);
 
 // Warm the destination route's lazy chunk on hover/focus (R6.1c) so navigating
