@@ -13,6 +13,7 @@ import { ref, computed } from 'vue';
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
 import type { JoinedGroup } from '../api/syncplay';
 import type { PendingPlayMediaCommand } from '../api/hubRelay';
+import { hashGroupPassword } from '../utils/syncplaySha256';
 import {
   getSyncPlayApi,
   openSyncPlayConnection,
@@ -280,8 +281,20 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
    * @param joined     Both views of the post-join group state.
    * @param memberName Display name to appear under (S285); `undefined` when
    *   signed out, which lets the server's own default win.
+   * @param passwordHash M-UI-14: SPEC §4 `password_hash` digest when the join
+   *   used a gate credential (so the WS `GROUP_JOIN` and every reconnect rung
+   *   carry it); `undefined` for unlocked rooms. Custody: the digest lives
+   *   ONLY as this call argument and the WS module's session-scoped variable —
+   *   never the store, never localStorage, never a URL, never a log. The
+   *   plaintext password never reaches this function at all: the callers
+   *   digest it before the socket exists.
    */
-  function adoptJoinedGroup(roomId: string, joined: JoinedGroup, memberName: string | undefined): void {
+  function adoptJoinedGroup(
+    roomId: string,
+    joined: JoinedGroup,
+    memberName: string | undefined,
+    passwordHash?: string,
+  ): void {
     const { room, session } = joined;
     currentSession.value = session;
     _lastDriftCaptureMs = Date.now(); // anchor for drift computation
@@ -318,6 +331,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       },
       undefined,
       memberName,
+      passwordHash,
     );
     // S287: start telling the group where we are. See POSITION_REPORT_INTERVAL_MS.
     startPositionReporting();
@@ -328,11 +342,16 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
    *
    * S288: the input used to carry `description`/`isPublic` and spread them onto
    * the POST body, where the server discarded them. The type is now exactly the
-   * create form's honest capacity: a name.
+   * create form's honest capacity — and since M-UI-14 that capacity includes
+   * `password`, the ONE old field the server always had a counterpart for:
+   * `SyncPlayController::createGroup()` hashes it and the group's
+   * `has_password` flips true, making the room lockable from the web for the
+   * first time. A whitespace-only password is treated as "no gate" and the
+   * field is omitted (the wire has no "empty gate" concept to offer).
    */
   async function createAndJoinRoom(
     apiBase: string,
-    input: { name: string },
+    input: { name: string; password?: string },
   ): Promise<void> {
     isLoading.value = true;
     error.value = null;
@@ -342,10 +361,32 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       // itself, under `memberName` — so the name has to go on the CREATE body,
       // not just the join that follows it.
       const memberName = resolveMemberName();
-      const room = await api.createRoom({ ...input, memberName });
+      const gate = input.password !== undefined && input.password.trim() !== '' ? input.password : undefined;
+      // M-UI-14 custody: the plaintext exists in this local for the two REST
+      // legs (the rails accept the plaintext arm ONLY — no `password_hash`
+      // parse there), then exactly one digest of it is derived for the socket.
+      // Nothing is written to state, storage, or logs; on failure the values
+      // die with the frame, and the modal's form ref keeps the user's typed
+      // text for an honest retry (S286-era dirty-state law).
+      const passwordHash = gate === undefined ? undefined : hashGroupPassword(gate);
+      // Built field-by-field, not spread: a whitespace-only `input.password`
+      // means "no gate" and must not leak onto the body as a set-empty gate.
+      const room = await api.createRoom({
+        name: input.name,
+        ...(gate === undefined ? {} : { password: gate }),
+        memberName,
+      });
       currentRoom.value = room;
-      // S287: the SAME tail as a join by bare id, socket included.
-      adoptJoinedGroup(room.id, await api.joinRoom(room.id, memberName), memberName);
+      // S287: the SAME tail as a join by bare id, socket included. The creator
+      // is already a member server-side, but the REST join leg is what returns
+      // the post-join state — and on a locked group it is also the leg that
+      // needs the `password`, gate or no gate.
+      adoptJoinedGroup(
+        room.id,
+        await api.joinRoom(room.id, memberName, gate),
+        memberName,
+        passwordHash,
+      );
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to create the room';
       throw e;
@@ -356,8 +397,14 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
 
   /**
    * Join an existing SyncPlay room by ID.
+   *
+   * M-UI-14: `password` makes password-locked rooms joinable from the web.
+   * An already-a-member re-join bypasses the server's gate, so omitting it
+   * stays correct for returning members; a first join of a locked group
+   * without it fails REST 400 `Invalid password`, which the modal surfaces
+   * as an inline prompt via {@link isSyncPlayInvalidPassword}.
    */
-  async function joinRoom(apiBase: string, roomId: string): Promise<void> {
+  async function joinRoom(apiBase: string, roomId: string, password?: string): Promise<void> {
     isLoading.value = true;
     error.value = null;
     try {
@@ -375,7 +422,17 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       // this one argument is the difference between the member list showing the
       // real people in the room and showing a column of `Guest`.
       const memberName = resolveMemberName();
-      adoptJoinedGroup(roomId, await api.joinRoom(roomId, memberName), memberName);
+      // M-UI-14: raw credential, sent exactly as typed — trimming could break
+      // a legitimate password that contains spaces; an empty field is simply
+      // "no credential offered" (the modal gates a locked pick client-side).
+      const gate = password !== undefined && password !== '' ? password : undefined;
+      const passwordHash = gate === undefined ? undefined : hashGroupPassword(gate);
+      adoptJoinedGroup(
+        roomId,
+        await api.joinRoom(roomId, memberName, gate),
+        memberName,
+        passwordHash,
+      );
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to join the room';
       throw e;

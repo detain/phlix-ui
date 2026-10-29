@@ -342,6 +342,11 @@ export const PT_BR_MESSAGES = {
     modeSelect: 'Criar ou entrar em uma sala',
     commandFailed: 'O controle não chegou ao grupo. Verifique sua conexão e tente novamente.',
     commandRejected: 'O grupo de visualização recusou essa ação.',
+    roomPassword: 'Senha',
+    passwordOptional: 'Deixe em branco para uma sala sem senha.',
+    lockedRoomHint: 'Esta sala é protegida por senha — digite a senha para entrar.',
+    lockedRoom: 'Protegida por senha',
+    availableRooms: 'Salas',
   },
   music: {
     title: 'Biblioteca de música',

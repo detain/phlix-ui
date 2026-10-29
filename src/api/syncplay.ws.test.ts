@@ -34,6 +34,7 @@ import {
     setSyncPlayWireErrorListener,
 } from './syncplay';
 import { ACCESS_TOKEN_KEY } from './tokenStore';
+import { sha256Hex } from '../utils/syncplaySha256';
 import type { SyncPlayStateUpdate } from '../types/syncplay';
 
 const ROOM = 'sp_abc123';
@@ -374,6 +375,69 @@ describe('openSyncPlayConnection — lifecycle', () => {
         const frame = JSON.parse(socket().sent[0]!) as { member_id: string; member_name?: string };
         expect(frame.member_id).toBe('member-7');
         expect(frame.member_name).toBe('Alice');
+    });
+
+    // ── M-UI-14: the group gate credential on the wire ───────────────────────
+    //
+    // SPEC §4 makes `password_hash` the `GROUP_JOIN` arm for locked groups.
+    // These pins are the WS half of the modal cure: what the caller hands
+    // `openSyncPlayConnection` must ride the frame, survive the ladder, and
+    // die at the door — while an unlocked join must not grow the key at all
+    // (the server's gate parser reads `""` as a set-but-wrong gate).
+    describe('password_hash on GROUP_JOIN (M-UI-14)', () => {
+        const DIGEST = sha256Hex('hunter2');
+
+        it('carries the supplied digest on the join frame', () => {
+            openSyncPlayConnection(ROOM, undefined, undefined, undefined, DIGEST);
+            socket().onopen?.();
+            const frame = JSON.parse(socket().sent[0]!) as { type: string; password_hash?: string };
+            expect(frame.type).toBe('syncplay_group_join');
+            expect(frame.password_hash).toBe(DIGEST);
+            // The plaintext never exists in this layer — the digest is all it was
+            // ever given, so there is nothing here that COULD leak it:
+            expect(socket().sent.some((raw) => raw.includes('hunter2'))).toBe(false);
+        });
+
+        it('omits the key entirely when no credential is supplied', () => {
+            openSyncPlayConnection(ROOM);
+            socket().onopen?.();
+            const frame = JSON.parse(socket().sent[0]!) as Record<string, unknown>;
+            expect('password_hash' in frame).toBe(false);
+        });
+
+        it('the reconnect rung re-uses the stored digest — the caller is not there to retype it', () => {
+            vi.useFakeTimers();
+            openSyncPlayConnection(ROOM, undefined, undefined, undefined, DIGEST);
+            socket().onopen?.();
+            socket().onclose?.();
+            vi.advanceTimersByTime(1000); // rung one
+
+            socket().onopen?.(); // the ladder's fresh socket still needs to come up
+            const rejoin = JSON.parse(socket().sent[0]!) as { type: string; password_hash?: string };
+            expect(rejoin.type).toBe('syncplay_group_join');
+            expect(rejoin.password_hash).toBe(DIGEST);
+        });
+
+        it('closeSyncPlayConnection CLEARS the credential — a later uncredentialed dial carries none', () => {
+            openSyncPlayConnection(ROOM, undefined, undefined, undefined, DIGEST);
+            socket().onopen?.();
+            closeSyncPlayConnection();
+
+            openSyncPlayConnection(ROOM);
+            socket().onopen?.();
+            const frame = JSON.parse(socket().sent[0]!) as Record<string, unknown>;
+            expect('password_hash' in frame).toBe(false);
+        });
+
+        it('a room switch cannot smuggle the previous room digest forward', () => {
+            openSyncPlayConnection(ROOM, undefined, undefined, undefined, DIGEST);
+            socket().onopen?.();
+            openSyncPlayConnection('sp_other'); // new intent, no credential
+            socket().onopen?.();
+            const frame = JSON.parse(socket().sent[0]!) as { group_id: string; [k: string]: unknown };
+            expect(frame.group_id).toBe('sp_other');
+            expect('password_hash' in frame).toBe(false);
+        });
     });
 
     it('generates a member id when none is supplied', async () => {

@@ -48,20 +48,25 @@ describe('SyncPlayApi — CreateRoomInput interface', () => {
   // arrival. A type that admits lies and a UI that tells them are the same bug
   // twice removed; the fields are gone, so the type now states exactly what the
   // create endpoint consumes.
-  it('is exactly { name, memberName? } — no other key is assignable', () => {
+  // M-UI-14: `password` USED to be rejected here ("the admin path's field,
+  // never the modal's") — but `createGroup()` always read it; the rejection
+  // pinned the UI's inability, not the server's contract. It is now a first
+  // class field, and the two true-orphans stay rejected.
+  it('is exactly { name, password?, memberName? } — no other key is assignable', () => {
     const input: CreateRoomInput = { name: 'Test Room' };
     expect(input).toEqual({ name: 'Test Room' });
 
     const withName: CreateRoomInput = { name: 'Test Room', memberName: 'Ada Lovelace' };
     expect(withName.memberName).toBe('Ada Lovelace');
 
+    const withPassword: CreateRoomInput = { name: 'x', password: 'hunter2' };
+    expect(withPassword.password).toBe('hunter2');
+
     // @ts-expect-error isPublic has no server counterpart (S288).
     const withPublic: CreateRoomInput = { name: 'x', isPublic: true };
     // @ts-expect-error description has no server counterpart (S288).
     const withDescription: CreateRoomInput = { name: 'x', description: 'A description' };
-    // @ts-expect-error password is the admin path's field, never the modal's.
-    const withPassword: CreateRoomInput = { name: 'x', password: 'hunter2' };
-    expect([withPublic, withDescription, withPassword].length).toBe(3);
+    expect([withPublic, withDescription].length).toBe(2);
   });
 });
 
@@ -71,6 +76,12 @@ describe('SyncPlayApi — JoinRoomInput interface', () => {
       groupId: 'room-123',
     };
     expect(input.groupId).toBe('room-123');
+  });
+
+  // M-UI-14: the join gate field, matching the REST rail's plaintext arm.
+  it('accepts the M-UI-14 password arm', () => {
+    const input: JoinRoomInput = { groupId: 'room-123', password: 'hunter2' };
+    expect(input.password).toBe('hunter2');
   });
 });
 

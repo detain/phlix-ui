@@ -270,8 +270,9 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     driftAmount: import("vue").ComputedRef<number>;
     createAndJoinRoom: (apiBase: string, input: {
         name: string;
+        password?: string;
     }) => Promise<void>;
-    joinRoom: (apiBase: string, roomId: string) => Promise<void>;
+    joinRoom: (apiBase: string, roomId: string, password?: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
     onRemoteStateUpdate: (command: SyncPlayPlaybackCommand) => void;
     sendCommand: (_apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
@@ -460,8 +461,9 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     driftAmount: import("vue").ComputedRef<number>;
     createAndJoinRoom: (apiBase: string, input: {
         name: string;
+        password?: string;
     }) => Promise<void>;
-    joinRoom: (apiBase: string, roomId: string) => Promise<void>;
+    joinRoom: (apiBase: string, roomId: string, password?: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
     onRemoteStateUpdate: (command: SyncPlayPlaybackCommand) => void;
     sendCommand: (_apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
@@ -650,8 +652,9 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     driftAmount: import("vue").ComputedRef<number>;
     createAndJoinRoom: (apiBase: string, input: {
         name: string;
+        password?: string;
     }) => Promise<void>;
-    joinRoom: (apiBase: string, roomId: string) => Promise<void>;
+    joinRoom: (apiBase: string, roomId: string, password?: string) => Promise<void>;
     leaveRoom: (apiBase: string) => Promise<void>;
     onRemoteStateUpdate: (command: SyncPlayPlaybackCommand) => void;
     sendCommand: (_apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {

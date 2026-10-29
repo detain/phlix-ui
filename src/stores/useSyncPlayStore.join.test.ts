@@ -164,6 +164,56 @@ describe('useSyncPlayStore.joinRoom — against the registered routes only', () 
     });
 });
 
+// ── M-UI-14: the store's half of the password gate ──────────────────────────
+describe('useSyncPlayStore — password gate (M-UI-14)', () => {
+    it('a first join of a locked group without the credential REJECTS with the 400 visible', async () => {
+        server = makeSyncPlayServer(BASE, { groupPassword: 'hunter2' });
+        const store = useSyncPlayStore();
+
+        await expect(store.joinRoom(BASE, GROUP_ID)).rejects.toThrow();
+        expect(store.isInRoom).toBe(false);
+        const join = server.requests.find((r) => r.path.endsWith('/join'))!;
+        expect(join.status).toBe(400);
+        expect(sockets).toHaveLength(0); // refusal never opens the realtime side
+    });
+
+    it('the credential rides the join body and a re-join then bypasses the gate', async () => {
+        server = makeSyncPlayServer(BASE, { groupPassword: 'hunter2' });
+        const store = useSyncPlayStore();
+
+        await store.joinRoom(BASE, GROUP_ID, 'hunter2');
+        const first = server.requests.find((r) => r.path.endsWith('/join'))!;
+        expect(first.status).toBe(200);
+        expect(first.body).toMatchObject({ password: 'hunter2' });
+
+        // Membership is presence: the SAME member re-joining needs no
+        // credential — `SyncPlayManager` skips the gate for existing members,
+        // and the fake models that law, so an uncredentialed re-join that
+        // still 400s would mean we re-implemented the door wrong client-side.
+        closeSyncPlayConnection();
+        server.requests.length = 0;
+        await store.joinRoom(BASE, GROUP_ID);
+        const again = server.requests.find((r) => r.path.endsWith('/join'))!;
+        expect(again.status).toBe(200);
+        expect(again.body ?? {}).not.toHaveProperty('password');
+    });
+
+    it('createAndJoinRoom with a gate locks the group server-side (has_password flips)', async () => {
+        const store = useSyncPlayStore();
+        await store.createAndJoinRoom(BASE, { name: 'Locked Night', password: 'hunter2' });
+
+        const create = server!.requests.find((r) => r.path === '/api/v1/syncplay/groups')!;
+        expect(create.body).toMatchObject({ password: 'hunter2' });
+        // The listing row for OUR group now reads locked — the SAME served
+        // signal every other client's picker keys the lock icon off.
+        server!.requests.length = 0;
+        await store.leaveRoom(BASE);
+        const api = (await import('../api/syncplay')).getSyncPlayApi(BASE);
+        const rows = await api.listGroups();
+        expect(rows.find((r) => r.id === GROUP_ID)!.isPublic).toBe(false);
+    });
+});
+
 describe('useSyncPlayStore.createAndJoinRoom — against the registered routes only', () => {
     it('creates then joins with a real group id', async () => {
         const store = useSyncPlayStore();

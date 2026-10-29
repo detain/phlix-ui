@@ -167,6 +167,10 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'auth.email',
     'auth.emailPlaceholder',
     'auth.password',
+    // M-UI-14: 'Password' is the Italian UI loanword (same precedent as
+    // `auth.password` above); 'Parola chiave' would be the outlier no Italian
+    // media app uses.
+    'syncplay.roomPassword',
     'music.album',
     'music.crossfade',
     'player.audio',

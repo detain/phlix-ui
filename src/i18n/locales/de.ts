@@ -342,6 +342,11 @@ export const DE_MESSAGES = {
     modeSelect: 'Raum erstellen oder beitreten',
     commandFailed: 'Diese Steuerung hat die Gruppe nicht erreicht. Verbindung prüfen und erneut versuchen.',
     commandRejected: 'Die Wiedergabegruppe hat diese Aktion abgelehnt.',
+    roomPassword: 'Passwort',
+    passwordOptional: 'Leer lassen für einen Raum ohne Passwort.',
+    lockedRoomHint: 'Dieser Raum ist passwortgeschützt — gib das Passwort ein, um beizutreten.',
+    lockedRoom: 'Passwortgeschützt',
+    availableRooms: 'Räume',
   },
   music: {
     title: 'Musikbibliothek',

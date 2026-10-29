@@ -335,6 +335,11 @@ export declare const JA_MESSAGES: {
         modeSelect: string;
         commandFailed: string;
         commandRejected: string;
+        roomPassword: string;
+        passwordOptional: string;
+        lockedRoomHint: string;
+        lockedRoom: string;
+        availableRooms: string;
     };
     music: {
         title: string;

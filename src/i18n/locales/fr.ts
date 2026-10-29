@@ -346,6 +346,11 @@ export const FR_MESSAGES = {
     modeSelect: 'Créer ou rejoindre un salon',
     commandFailed: 'Cette commande n’a pas atteint le groupe. Vérifiez votre connexion et réessayez.',
     commandRejected: 'Le groupe de visionnage a refusé cette action.',
+    roomPassword: 'Mot de passe',
+    passwordOptional: 'Laissez vide pour un salon sans mot de passe.',
+    lockedRoomHint: 'Ce salon est protégé par mot de passe — saisissez le mot de passe pour le rejoindre.',
+    lockedRoom: 'Protégé par mot de passe',
+    availableRooms: 'Salons',
   },
   music: {
     title: 'Bibliothèque musicale',

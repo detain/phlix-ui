@@ -343,6 +343,11 @@ export const JA_MESSAGES = {
     modeSelect: 'ルームを作成または参加',
     commandFailed: 'この操作がグループに届きませんでした。接続を確認して再試行してください。',
     commandRejected: '視聴グループがその操作を拒否しました。',
+    roomPassword: 'パスワード',
+    passwordOptional: '空のままにするとパスワードなしのルームになります。',
+    lockedRoomHint: 'このルームはパスワードで保護されています。参加するにはパスワードを入力してください。',
+    lockedRoom: 'パスワード保護',
+    availableRooms: 'ルーム',
   },
   music: {
     title: 'ミュージックライブラリ',

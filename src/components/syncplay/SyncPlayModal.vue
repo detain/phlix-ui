@@ -17,24 +17,37 @@
  *   - 'update:modelValue': close the modal
  *   - 'joined': when user successfully joins/creates a room (room data)
  *
- * S288 — why there is no public/private switch:
+ * S288 — why there is no public/private SWITCH (M-UI-14 keeps that true):
  *   The server has no `isPublic` (or `description`) concept anywhere. The only
  *   public/private signal it stores and serves is `has_password` on the group
- *   snapshot, and that is set exclusively by the WS worker — REST create is a
- *   phantom write (see phlix-server S289 notes), so a persisted flag here could
- *   not influence the listing even if we sent it. A toggle that changes nothing
- *   is a lie in the UI; the honest end state is no toggle. Rooms created from
- *   here are joinable by ID, which is what the old "public" hint described anyway.
- *   If SP6 ever bridges REST mutations into the authoritative snapshot AND the
- *   listing endpoint filters on the flag, the control can return for real.
+ *   snapshot. A toggle that changes nothing is a lie in the UI; the honest
+ *   control is the PASSWORD FIELD below — set it and `has_password` is true,
+ *   leave it empty and the room is open. "Public/private" is derived, never
+ *   declared.
+ *
+ * M-UI-14 — password-locked rooms are first-class here:
+ *   Create mode offers the gate (REST `password`, which the server hashes);
+ *   join mode carries the credential on both rails — plaintext `password` on
+ *   the REST join (that rail parses no digest) and the SHA-256
+ *   `password_hash` on the `GROUP_JOIN` WS frame, where it also survives the
+ *   reconnect ladder. A locked room picked from the listing requires the
+ *   field up front; a refusal (REST 400 "Invalid password") surfaces through
+ *   the registered `syncplay.invalid_password` catalog copy — never the
+ *   server's raw string — and re-prompts inline. Custody: the plaintext
+ *   lives only in this form ref until the store digests it; nothing password-
+ *   related is persisted, logged, or placed in a URL. WS refusals for the
+ *   same code already ride the M-UI-12 toast machinery (`SyncPlayControls`'
+ *   wire-error listener); this modal owns the REST side.
  */
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, inject, nextTick } from 'vue';
 import Modal from '../ui/Modal.vue';
 import Button from '../ui/Button.vue';
 import Icon from '../Icon.vue';
 import { useMessages } from '../../composables/useMessages';
 import { useSyncPlayStore } from '../../stores/useSyncPlayStore';
-import { SyncPlayApi } from '../../api/syncplay';
+import { SyncPlayApi, isSyncPlayInvalidPassword } from '../../api/syncplay';
+import type { PhlixAppConfig } from '../../app/types';
+import { errorCodeMessage } from '../../i18n/errors';
 import type { SyncPlayRoom } from '../../types/syncplay';
 import { useMediaApiBase } from '../../composables/useApiBase';
 
@@ -85,14 +98,34 @@ function onModeKeydown(e: KeyboardEvent): void {
 }
 const roomName = ref('');
 const roomId = ref('');
+// M-UI-14: the gate credential. Plaintext, held ONLY in this form ref while
+// the user types (and across a refused attempt for an honest retry — the
+// dirty-state law of S286-era forms); the store digests it before the socket
+// exists, and neither form is ever written to the store, storage, or a log.
+const roomPassword = ref('');
+const passwordRevealed = ref(false);
+/** True when the target room is known to be locked (picked from the listing)
+ *  or was refused for a missing/wrong credential — then the field is required. */
+const requiresPassword = ref(false);
+const passwordInputEl = ref<HTMLInputElement | null>(null);
+/** Same seam `SyncPlayControls` uses (M-UI-12): hosts inject `phlixConfig`
+ *  app-wide; `locale` selects the catalog row of the refusal copy. */
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
-const publicRooms = ref<SyncPlayRoom[]>([]);
+// M-UI-14: the join listing shows EVERY visible room — locked ones carry a
+// lock icon and pre-require the field. The old `publicRooms` filter hid the
+// locked rooms this modal can now enter.
+const rooms = ref<SyncPlayRoom[]>([]);
 const isLoadingRooms = ref(false);
 
 // ---- computed -----------------------------------------------------------
 const canCreate = computed(() => roomName.value.trim().length > 0);
-const canJoin = computed(() => roomId.value.trim().length > 0);
+const canJoin = computed(
+  () =>
+    roomId.value.trim().length > 0 &&
+    (!requiresPassword.value || roomPassword.value !== ''),
+);
 const canSubmit = computed(() => (mode.value === 'create' ? canCreate.value : canJoin.value) && !isLoading.value);
 
 // ---- watchers -----------------------------------------------------------
@@ -102,6 +135,11 @@ watch(
     if (open) {
       error.value = null;
       roomName.value = '';
+      // M-UI-14: every open is a fresh form — the credential and the "locked"
+      // escalation never bleed into the next attempt.
+      roomPassword.value = '';
+      passwordRevealed.value = false;
+      requiresPassword.value = false;
       // If a prefilledRoomId is provided (e.g. from a join-link), use it
       if (props.prefilledRoomId) {
         roomId.value = props.prefilledRoomId;
@@ -110,20 +148,24 @@ watch(
         roomId.value = '';
         mode.value = 'create';
       }
-      // Load public rooms when modal opens
-      await loadPublicRooms();
+      // Load joinable rooms when modal opens
+      await loadRooms();
     }
   },
 );
 
 // ---- methods ------------------------------------------------------------
-async function loadPublicRooms(): Promise<void> {
+async function loadRooms(): Promise<void> {
   isLoadingRooms.value = true;
   try {
     const api = new SyncPlayApi(effectiveApiBase.value);
-    publicRooms.value = await api.listPublicRooms();
+    // M-UI-14: unfiltered listing; the server's members-or-admin scoping is
+    // what decides VISIBILITY, `has_password` only decides whether the field
+    // is required. (Outsiders never see other people's rooms anyway — a
+    // locked room reached by raw id/join-link still prompts via the 400.)
+    rooms.value = await api.listGroups();
   } catch {
-    publicRooms.value = [];
+    rooms.value = [];
   } finally {
     isLoadingRooms.value = false;
   }
@@ -137,9 +179,10 @@ async function submit(): Promise<void> {
     if (mode.value === 'create') {
       await syncPlay.createAndJoinRoom(effectiveApiBase.value, {
         name: roomName.value.trim(),
+        password: roomPassword.value,
       });
     } else {
-      await syncPlay.joinRoom(effectiveApiBase.value, roomId.value.trim());
+      await syncPlay.joinRoom(effectiveApiBase.value, roomId.value.trim(), roomPassword.value);
     }
     // S283: this was `if (syncPlay.currentRoom) emit(...)` on BOTH arms. The
     // create arm always had a room, but the join arm never did — `joinRoom()`
@@ -153,16 +196,29 @@ async function submit(): Promise<void> {
     }
     emit('update:modelValue', false);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Operation failed';
+    // M-UI-14: the locked-room refusal is not a dead end, it is a prompt.
+    // The localized copy comes from the registered catalog code (same 7
+    // locales the M-UI-12 toasts speak), never the server's wire string —
+    // the WS-ingest sanitize law applied to the REST rail.
+    if (mode.value === 'join' && isSyncPlayInvalidPassword(e)) {
+      requiresPassword.value = true;
+      error.value = errorCodeMessage('syncplay.invalid_password', config?.locale, null);
+      void nextTick(() => passwordInputEl.value?.focus());
+    } else {
+      error.value = e instanceof Error ? e.message : 'Operation failed';
+    }
   } finally {
     isLoading.value = false;
   }
 }
 
-function selectPublicRoom(room: SyncPlayRoom): void {
+function selectRoom(room: SyncPlayRoom): void {
   mode.value = 'join';
   roomId.value = room.id;
   roomName.value = room.name;
+  // A locked pick is KNOWN-locked: require the credential up front instead of
+  // making the user pay for a refused round trip first.
+  if (!room.isPublic) requiresPassword.value = true;
 }
 
 function close(): void {
@@ -219,6 +275,32 @@ function close(): void {
             autocomplete="off"
           />
         </div>
+        <!-- M-UI-14: the gate. Optional here — empty means "no password",
+             which is the only public/private decision the server knows. -->
+        <div class="syncplay-modal__field">
+          <label class="syncplay-modal__label" for="room-password">{{ t('syncplay.roomPassword') }}</label>
+          <div class="syncplay-modal__pw-wrap">
+            <input
+              id="room-password"
+              v-model="roomPassword"
+              :type="passwordRevealed ? 'text' : 'password'"
+              class="syncplay-modal__input"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="room-password-optional"
+            />
+            <button
+              type="button"
+              class="syncplay-modal__pw-toggle"
+              :aria-label="passwordRevealed ? t('auth.hidePassword') : t('auth.showPassword')"
+              :aria-pressed="passwordRevealed"
+              @click="passwordRevealed = !passwordRevealed"
+            >
+              <Icon :name="passwordRevealed ? 'eye-off' : 'eye'" />
+            </button>
+          </div>
+          <p id="room-password-optional" class="syncplay-modal__hint">{{ t('syncplay.passwordOptional') }}</p>
+        </div>
       </div>
 
       <!-- Join mode fields -->
@@ -234,23 +316,57 @@ function close(): void {
             autocomplete="off"
           />
         </div>
+        <!-- M-UI-14: always offered (a room's lock state is unknown until the
+             server or the listing says so); required once it IS known. -->
+        <div class="syncplay-modal__field">
+          <label class="syncplay-modal__label" for="room-password">{{ t('syncplay.roomPassword') }}</label>
+          <div class="syncplay-modal__pw-wrap">
+            <input
+              id="room-password"
+              ref="passwordInputEl"
+              v-model="roomPassword"
+              :type="passwordRevealed ? 'text' : 'password'"
+              class="syncplay-modal__input"
+              :required="requiresPassword"
+              autocomplete="off"
+              spellcheck="false"
+              :aria-describedby="requiresPassword ? 'room-password-hint' : undefined"
+            />
+            <button
+              type="button"
+              class="syncplay-modal__pw-toggle"
+              :aria-label="passwordRevealed ? t('auth.hidePassword') : t('auth.showPassword')"
+              :aria-pressed="passwordRevealed"
+              @click="passwordRevealed = !passwordRevealed"
+            >
+              <Icon :name="passwordRevealed ? 'eye-off' : 'eye'" />
+            </button>
+          </div>
+          <p v-if="requiresPassword" id="room-password-hint" class="syncplay-modal__hint">{{ t('syncplay.lockedRoomHint') }}</p>
+        </div>
       </div>
 
       <!-- Error message -->
       <p v-if="error" class="syncplay-modal__error" role="alert">{{ error }}</p>
 
-      <!-- Public rooms list -->
-      <div v-if="mode === 'join' && publicRooms.length > 0" class="syncplay-modal__rooms">
-        <h3 class="syncplay-modal__rooms-title">{{ t('syncplay.publicRooms') }}</h3>
+      <!-- Rooms list (M-UI-14: locked rooms are listed with a lock, not hidden) -->
+      <div v-if="mode === 'join' && rooms.length > 0" class="syncplay-modal__rooms">
+        <h3 class="syncplay-modal__rooms-title">{{ t('syncplay.availableRooms') }}</h3>
         <ul class="syncplay-modal__rooms-list">
-          <li v-for="room in publicRooms" :key="room.id" class="syncplay-modal__room">
+          <li v-for="room in rooms" :key="room.id" class="syncplay-modal__room">
             <button
               type="button"
               class="syncplay-modal__room-btn"
-              @click="selectPublicRoom(room)"
+              @click="selectRoom(room)"
             >
               <Icon name="user" class="syncplay-modal__room-icon" />
               <span class="syncplay-modal__room-name">{{ room.name }}</span>
+              <Icon
+                v-if="!room.isPublic"
+                name="lock"
+                :label="t('syncplay.lockedRoom')"
+                class="syncplay-modal__room-lock"
+              />
               <!-- `t('syncplay.members')` was called with NO count, so `{count}`
                    was never substituted and this read "5 {count} member |
                    {count} members". The message renders the number itself. -->
@@ -262,7 +378,7 @@ function close(): void {
         </ul>
       </div>
 
-      <!-- Loading indicator for public rooms -->
+      <!-- Loading indicator for rooms -->
       <div v-if="isLoadingRooms" class="syncplay-modal__loading" role="status">
         <Icon name="spinner" />
         <span>{{ t('common.loading') }}</span>
@@ -367,6 +483,49 @@ function close(): void {
   background: color-mix(in srgb, var(--surface) 95%, transparent);
 }
 
+/* M-UI-14: password field chrome — same idiom as AuthField's reveal toggle. */
+.syncplay-modal__pw-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.syncplay-modal__pw-wrap .syncplay-modal__input {
+  padding-right: 52px;
+}
+
+.syncplay-modal__pw-toggle {
+  position: absolute;
+  right: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-subtle);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+.syncplay-modal__pw-toggle:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.syncplay-modal__pw-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.syncplay-modal__hint {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+}
+
 .syncplay-modal__error {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
@@ -417,6 +576,11 @@ function close(): void {
 }
 
 .syncplay-modal__room-icon {
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+
+.syncplay-modal__room-lock {
   color: var(--text-subtle);
   flex-shrink: 0;
 }

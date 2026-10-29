@@ -346,6 +346,16 @@ export declare const DEFAULT_MESSAGES: {
         commandFailed: string;
         /** M-UI-12: generic toast for an unregistered `syncplay_error` code; registered codes localize through `src/i18n/errors.ts`. */
         commandRejected: string;
+        /** M-UI-14: label of the group-gate field in both modal modes. */
+        roomPassword: string;
+        /** M-UI-14: create-mode helper — the gate is optional there, and presence is the ONLY public/private signal the server has. */
+        passwordOptional: string;
+        /** M-UI-14: shown under the join-mode field once the target is known to be locked (picked from the listing, or a refused attempt). */
+        lockedRoomHint: string;
+        /** M-UI-14: accessible label of the lock icon on a listing row. */
+        lockedRoom: string;
+        /** M-UI-14: heading of the join listing — since M-UI-14 it carries locked rooms too, so the old "Public rooms" name would lie. */
+        availableRooms: string;
     };
     music: {
         title: string;

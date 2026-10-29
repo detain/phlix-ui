@@ -344,6 +344,11 @@ export const ES_MESSAGES = {
     modeSelect: 'Crear o unirse a una sala',
     commandFailed: 'El control no llegó al grupo. Comprueba tu conexión e inténtalo de nuevo.',
     commandRejected: 'El grupo de visionado ha rechazado esa acción.',
+    roomPassword: 'Contraseña',
+    passwordOptional: 'Déjalo vacío para una sala sin contraseña.',
+    lockedRoomHint: 'Esta sala está protegida con contraseña: introduce la contraseña para unirte.',
+    lockedRoom: 'Protegida con contraseña',
+    availableRooms: 'Salas',
   },
   music: {
     title: 'Biblioteca de música',

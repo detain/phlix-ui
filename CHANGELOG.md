@@ -1,3 +1,57 @@
+## Unreleased — review-fix lane 2026-10-29 (M-UI-14): password-locked SyncPlay rooms become reachable from the web surface — create can lock, join can unlock
+
+- **The structural unreachability ends.** A locked SyncPlay room was, from this
+  library, permanently unjoinable and un-creatable: `SyncPlayModal` create mode
+  sent only `name`, join mode only the room id, and the room listing FILTERED
+  locked rooms out of sight entirely. The server has always supported the gate
+  (`SyncPlayManager::groupPasswordGate()` — SPEC `password_hash` digest with a
+  legacy plaintext `password` arm; mobile sends it), and `@phlix/syncplay`
+  v0.1.5 `createGroup`/`joinGroup` accept the digest today — so this was a
+  pure UI cure, no lib rider owed.
+- **Create mode: the gate is back where it was real.** An optional Password
+  field (show/hide reveal toggle per the AuthField idiom) rides the REST
+  create body verbatim; whitespace-only means "no gate" and omits the key —
+  the wire has no set-empty-gate concept. S288's removal of `isPublic`/
+  `description` stays (no server counterpart ever); `password` always had one,
+  which is exactly what the S288-era docblocks and the type-pinning test
+  wrongly folded into "the modal can never lock a room".
+- **Join mode: both rails, faithful.** The REST join gets the plaintext
+  credential (that rail parses no digest); the `GROUP_JOIN` WebSocket frame
+  gets the unsalted SHA-256 hex `password_hash` (SPEC §4), computed by a new
+  dependency-free `src/utils/syncplaySha256.ts` — a port of the mobile
+  primitive, pinned by the same NIST/Node known-answer vectors — because the
+  frame is built synchronously in `socket.onopen`, `crypto.subtle` is
+  Promise-only and absent in plain-http LAN deployments and jsdom alike. The
+  digest rides every reconnect rung (a blip no longer demotes you to a
+  locked-out stranger) and is cleared by an explicit close. Custody: the
+  plaintext lives only in the form ref and the two REST bodies — never the
+  store, never localStorage, never a URL, never a log; the WS module only
+  ever sees the digest.
+- **Listing truth.** The join picker now lists EVERY visible room and flags
+  locked ones with a `lock` icon (accessible name "Password-protected"),
+  requiring the credential up front for a locked pick; heading
+  "Public rooms" → "Rooms" because the old name would now lie. A refused join
+  (REST 400) re-prompts inline: the copy comes from the registered
+  `syncplay.invalid_password` catalog (all 7 locales — the M-UI-12 machinery),
+  the server's raw sentence never renders, and the typed value survives for
+  the retry (dirty-state law). WS-side refusals already rode the M-UI-12
+  toast listener; the fake server's join arm now models the gate AND the
+  server's already-a-member bypass.
+- **Red→green measured.** New `syncplaySha256.test.ts` (13 legs incl. the
+  node:crypto oracle cross-check), +5 `syncplay.ws.test.ts` credential frames
+  (carry/omit/reconnect-survival/close-clears/room-switch-quarantine),
+  +7 `SyncPlayModal.test.ts` legs (create locks, wrong-password prompt
+  localization + no server-string echo, right-password join with the digest on
+  the frame and no plaintext anywhere, whitespace gate, locked-pick gating,
+  reopen clears, mixed-listing flip), +3 store legs, +1 type pin
+  (`JoinRoomInput.password` assignable; the old pin that REJECTED it flipped
+  to the new law). Three S288 tests flipped to the M-UI-14 law — they encoded
+  the unreachability as the contract. Full serial vitest 6382→6411 passed
+  (+29 exact), 10 skipped unchanged, files 312→313. vue-tsc 0 errors, eslint
+  0 (incl. the it-bundle loanword allow-list carried honestly). dist rebuilt;
+  deterministic across two rebuilds (js+css aggregate md5
+  59e5e2a0c4ad939ecec01059da94d92d).
+
 ## Unreleased — review-fix lane 2026-10-29 (M-UI-13): auth-lockout 422 rejections visible with actionable copy + honest form state
 
 - **The invisible-save cure (`src/pages/admin/SettingsPage.vue`).** A settings PUT

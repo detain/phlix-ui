@@ -9,6 +9,7 @@
  */
 
 import { ApiClient } from './client';
+import { ApiError } from './errors';
 import { LocalStorageTokenStore } from './tokenStore';
 import { readSocketHint } from './socketHint';
 import type {
@@ -24,6 +25,17 @@ import { SyncPlayClient, serializeMessage } from '@phlix/syncplay';
 export interface CreateRoomInput {
   name: string;
   /**
+   * M-UI-14: the group gate. `SyncPlayController::createGroup()` reads
+   * `password` off the body and the server stores its SHA-256 hex digest, so
+   * a room created here can now BE locked — the claim that motivated its
+   * removal in S288 ("no server counterpart") was true of `description`/
+   * `isPublic` only; `password` has always had one. The REST rail accepts
+   * the PLAINTEXT arm only (there is no `password_hash` parse on this route),
+   * and the value rides TLS-or-lan body like the account password on login —
+   * never logged, never stored (see the custody law in the store).
+   */
+  password?: string;
+  /**
    * Display name to register the creator under.
    *
    * S285: `SyncPlayController::createGroup()` reads `memberName` off the body and
@@ -33,10 +45,9 @@ export interface CreateRoomInput {
    * S288: `description` and `isPublic` used to live here too. They had NO server
    * counterpart — `createGroup()` reads only `name`, `password`, `memberId` and
    * `memberName` — so every create silently discarded them. They are gone rather
-   * than documented: the type now states exactly what the wire accepts, which
-   * makes the old UI lie unrepresentable. `has_password` (set via `password`,
-   * which this modal does not offer) is the only public/private signal the
-   * server has.
+   * than documented: the type now states exactly what the wire accepts.
+   * `has_password` (set via `password`, offered by the modal since M-UI-14) is
+   * the only public/private signal the server has.
    */
   memberName?: string;
 }
@@ -44,6 +55,13 @@ export interface CreateRoomInput {
 /** Input for joining a SyncPlay group. */
 export interface JoinRoomInput {
   groupId: string;
+  /**
+   * M-UI-14: plaintext gate credential for a password-protected group. The
+   * REST join rail accepts the `password` arm only (no `password_hash`
+   * parse), and a wrong/missing one on a locked group answers 400
+   * `{"error":"Invalid password"}` — see {@link isSyncPlayInvalidPassword}.
+   */
+  password?: string;
 }
 
 /**
@@ -288,8 +306,9 @@ export class SyncPlayApi {
    *
    * `input` is forwarded verbatim and now matches what the endpoint accepts:
    * `SyncPlayController::createGroup()` reads `name`, `password`, `memberId` and
-   * `memberName` off the body, and {@link CreateRoomInput} offers only
-   * `name`/`memberName` (S288 removed the fields the server threw away).
+   * `memberName` off the body, and {@link CreateRoomInput} offers
+   * `name`/`password`/`memberName` (S288 removed the fields the server threw
+   * away; M-UI-14 offers the `password` the server always read).
    */
   async createRoom(input: CreateRoomInput): Promise<SyncPlayRoom> {
     const res = await this.client.post<SyncPlayGroupResponse>('/api/v1/syncplay/groups', input);
@@ -311,12 +330,18 @@ export class SyncPlayApi {
    *   omitting it is what made every member render as an anonymous placeholder
    *   (S285). The joined member appears under this name in the `group.members`
    *   dictionary the same response carries back.
+   * @param password   M-UI-14: plaintext gate credential. A group with
+   *   `has_password` refuses the join (400 `{"error":"Invalid password"}`)
+   *   unless the body carries the matching `password`; the server hashes it
+   *   and compares digests. An already-a-member re-join bypasses the gate.
    */
-  async joinRoom(groupId: string, memberName?: string): Promise<JoinedGroup> {
-    const body = memberName !== undefined && memberName !== '' ? { memberName } : undefined;
+  async joinRoom(groupId: string, memberName?: string, password?: string): Promise<JoinedGroup> {
+    const body: { memberName?: string; password?: string } = {};
+    if (memberName !== undefined && memberName !== '') body.memberName = memberName;
+    if (password !== undefined && password !== '') body.password = password;
     const res = await this.client.post<SyncPlayGroupResponse>(
       `/api/v1/syncplay/groups/${encodeURIComponent(groupId)}/join`,
-      body,
+      Object.keys(body).length > 0 ? body : undefined,
     );
     return { room: normalizeGroup(res.group), session: groupToSession(res.group) };
   }
@@ -366,27 +391,46 @@ export class SyncPlayApi {
   }
 
   /**
-   * List the rooms a user can actually join from the browser: those the server
+   * List the rooms a user can join WITHOUT A CREDENTIAL: those the server
    * reports as password-free.
    * GET /api/v1/syncplay/groups, filtered client-side.
    *
-   * S288: this used to be `listGroups()` wearing a "public" label — the listing
-   * is served from the authoritative WS-worker snapshot where `has_password` is
-   * the one and only public/private signal, and every normalised room carries
-   * `isPublic: !has_password`. Filtering on it makes the method's name and the
-   * modal's "Public rooms" heading true: a password-protected room listed here
-   * could never be joined from this modal (there is no password prompt), so
-   * hiding it is honesty, not a filter the server owes us.
-   *
-   * Note for S289 readers: what is filtered here is SERVED state (snapshot rows),
-   * which is exactly the plane the old create-time `isPublic` toggle never
-   * touched — REST writes are phantom. Choosing not to send the flag is therefore
-   * consistent with choosing to read only the flag the server actually keeps.
+   * S288 introduced this filter when the modal had no password prompt — at
+   * the time a password-protected room listed here really could never be
+   * joined from there, so hiding it was honesty, not a filter the server
+   * owes us. M-UI-14 gave the modal a prompt, so the MODAL now lists the
+   * unfiltered {@link listGroups} and marks locked rows instead. This method
+   * stays exported: it remains the truthful answer to "rooms I can enter
+   * right now", and its `isPublic: !has_password` basis is the authoritative
+   * snapshot signal (`SyncPlaySnapshotService::listGroups()`), unchanged.
    */
   async listPublicRooms(): Promise<SyncPlayRoom[]> {
     const rooms = await this.listGroups();
     return rooms.filter((room) => room.isPublic);
   }
+}
+
+/**
+ * Does this thrown error mean "the REST join was refused because the group
+ * is password-locked and the credential was absent or wrong"?
+ *
+ * M-UI-14's classification seam, shaped exactly like the estate precedent
+ * `isTmdbUnconfigured` (client.ts): the caller never re-parses wire JSON and
+ * never renders a server string — the REST join rail answers gate refusals
+ * with 400 `{"error":"Invalid password"}` (`SyncPlayController::joinGroup()`
+ * passing `SyncPlayManager`'s message; NO `code` field on the REST rail, so
+ * classification is status + the fixed refusal string, and the localized
+ * copy comes from `src/i18n/errors.ts`'s registered
+ * `syncplay.invalid_password`, never from the body).
+ */
+export function isSyncPlayInvalidPassword(e: unknown): boolean {
+  if (!(e instanceof ApiError) || e.status !== 400) return false;
+  const body: unknown = e.body;
+  return (
+    body !== null &&
+    typeof body === 'object' &&
+    (body as { error?: unknown }).error === 'Invalid password'
+  );
 }
 
 /** Singleton instance for app-wide use. */
@@ -501,6 +545,24 @@ let syncPlayMemberId: string | null = null;
  * the genuinely signed-out case.
  */
 let syncPlayMemberName: string | null = null;
+
+/**
+ * This browsing context's SyncPlay group-gate credential (M-UI-14): the
+ * SPEC §4 `password_hash` — UNSALTED SHA-256 lowercase hex of the room
+ * password, never the plaintext, which exists only inside the modal's form
+ * ref for the milliseconds before the store digests it.
+ *
+ * Lifetime is SESSION-scoped, the opposite of {@link syncPlayMemberId}'s TAB
+ * scope: it authenticates an intent to be in ONE room, so
+ * `openSyncPlayConnection` overwrites it per caller intent (an omitted
+ * argument means "this join carries no credential" — `null`, not "keep the
+ * last room's"), {@link closeSyncPlayConnection} clears it, and the reconnect
+ * ladder alone (which never re-enters the public entry point — S283) reuses
+ * the stored digest so a blip does not demote the member to a locked-out
+ * stranger who must retype. It is never persisted: not localStorage, not the
+ * store, not a log line, not a URL.
+ */
+let syncPlayPasswordHash: string | null = null;
 
 /** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
 type SyncPlayMessageHandler = (msg: { type: string; position?: number; roomId?: string }) => void;
@@ -670,12 +732,17 @@ function handleWsClose(event?: { target?: unknown }): void {
  * @param onMessage - Callback invoked for each server-to-client SyncPlay message.
  * @param memberId - The member ID for this client.
  * @param memberName - The member name for this client.
+ * @param passwordHash - M-UI-14: SPEC §4 `password_hash` digest for a locked
+ *   group, or `undefined` for an unlocked one. An explicit `undefined` here
+ *   RESETS the stored credential (new intent wins); the reconnect ladder
+ *   reuses whatever it holds without coming through this door.
  */
 export function openSyncPlayConnection(
   roomId: string,
   onMessage?: SyncPlayMessageHandler,
   memberId?: string,
   memberName?: string,
+  passwordHash?: string,
 ): void {
   // A caller-initiated connect is a new intent, so it gets the full ladder
   // again. This is one of THREE distinct events that were all previously
@@ -683,6 +750,10 @@ export function openSyncPlayConnection(
   // connection actually came up" (`onopen`, below) and "a reconnect attempt is
   // starting" — which must NOT reset, and did (S283).
   syncPlayReconnectAttempts = 0;
+  // M-UI-14: same "new intent" law for the gate credential — this assignment,
+  // not a parameter, is what every `joinGroup` below reads, so a room switch
+  // can never carry the previous room's digest forward.
+  syncPlayPasswordHash = passwordHash ?? null;
   connectSyncPlaySocket(roomId, onMessage, memberId, memberName);
 }
 
@@ -809,7 +880,14 @@ function connectSyncPlaySocket(
     syncPlayReconnectAttempts = 0;
     // Re-join the group after reconnect
     if (syncPlayClient && syncPlayRoomId) {
-      syncPlayClient.joinGroup(syncPlayRoomId);
+      // M-UI-14: a locked group refuses an uncredentialed join, so the digest
+      // the caller supplied at connect time rides every `GROUP_JOIN` — the
+      // first one and every reconnect rung's. `null` (unlocked or explicitly
+      // credential-less) keeps the payload free of the field entirely:
+      // `SyncPlayClient.joinGroup` omits `password_hash` when the argument is
+      // `undefined`, and the server's gate parser must never see an empty
+      // string it would read as a set-but-wrong gate.
+      syncPlayClient.joinGroup(syncPlayRoomId, syncPlayPasswordHash ?? undefined);
     }
   };
 
@@ -844,6 +922,10 @@ export function closeSyncPlayConnection(): void {
   }
   syncPlayRoomId = null;
   syncPlayReconnectAttempts = 0;
+  // M-UI-14: an explicit close ends the credential's session scope — it is
+  // room-intent state, not tab identity (contrast {@link syncPlayMemberId},
+  // which deliberately survives this exact line).
+  syncPlayPasswordHash = null;
 }
 
 /**

@@ -342,6 +342,11 @@ export const IT_MESSAGES = {
     modeSelect: 'Crea o unisciti a una stanza',
     commandFailed: 'Il comando non ha raggiunto il gruppo. Controlla la connessione e riprova.',
     commandRejected: 'Il gruppo di visione ha rifiutato questa azione.',
+    roomPassword: 'Password',
+    passwordOptional: 'Lascia vuoto per una sala senza password.',
+    lockedRoomHint: 'Questa sala è protetta da password — inserisci la password per unirti.',
+    lockedRoom: 'Protetta da password',
+    availableRooms: 'Sale',
   },
   music: {
     title: 'Libreria musicale',

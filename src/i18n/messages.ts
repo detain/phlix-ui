@@ -389,6 +389,16 @@ export const DEFAULT_MESSAGES = {
     commandFailed: 'That control did not reach the group. Check your connection and try again.',
     /** M-UI-12: generic toast for an unregistered `syncplay_error` code; registered codes localize through `src/i18n/errors.ts`. */
     commandRejected: 'The watch group refused that action.',
+    /** M-UI-14: label of the group-gate field in both modal modes. */
+    roomPassword: 'Password',
+    /** M-UI-14: create-mode helper — the gate is optional there, and presence is the ONLY public/private signal the server has. */
+    passwordOptional: 'Leave empty for a password-free room.',
+    /** M-UI-14: shown under the join-mode field once the target is known to be locked (picked from the listing, or a refused attempt). */
+    lockedRoomHint: 'This room is password-protected — enter the password to join.',
+    /** M-UI-14: accessible label of the lock icon on a listing row. */
+    lockedRoom: 'Password-protected',
+    /** M-UI-14: heading of the join listing — since M-UI-14 it carries locked rooms too, so the old "Public rooms" name would lie. */
+    availableRooms: 'Rooms',
   },
   music: {
     title: 'Music Library',

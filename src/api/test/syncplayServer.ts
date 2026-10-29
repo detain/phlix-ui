@@ -44,6 +44,14 @@ export const SERVER_ROUTES: ReadonlyArray<readonly [string, string]> = [
 ] as const;
 
 /**
+ * Handler→transport channel for non-2xx answers (M-UI-14). A `bodyFor` arm
+ * that must fail a request returns `{ [FORCE_STATUS]: { status, body } }` and
+ * the fetch shim unwraps it before answering — previously every matched route
+ * could only ever 200, so a password refusal was unrepresentable.
+ */
+const FORCE_STATUS = Symbol.for('phlix.test.syncplayServer.forceStatus');
+
+/**
  * `{id}` matches one path SEGMENT and nothing else — the server's placeholder
  * pattern is `[^/]+`, so `/groups/{id}` can NOT absorb `/groups/x/members`.
  * Getting this wrong in the harness would silently re-pin the bug.
@@ -139,9 +147,10 @@ interface GroupStore {
      * body and `has_password` is the ONLY public/private signal the server stores
      * and serves. The fake keeps the same causal chain: a create that sends a
      * password yields `has_password: true` on every subsequent read; one that
-     * does not, reads back public. (The client's `CreateRoomInput` deliberately
-     * offers no password field — the user modal cannot make a private room;
-     * only the admin SPA can.)
+     * does not, reads back public. M-UI-14 note: `CreateRoomInput` DID offer
+     * no password field for the modal's whole pre-M-UI-14 life — the modal can
+     * now both make a private room and join one, and the join arm below gates
+     * exactly like `SyncPlayController::joinGroup()` on the plaintext arm.
      */
     password?: string;
     hostId: string;
@@ -215,6 +224,19 @@ function makeHandlers(group: GroupStore, extraListingRows: readonly Record<strin
             return { group: state() };
         }
         if (method === 'POST' && template === '/api/v1/syncplay/groups/{id}/join') {
+            // M-UI-14: the REST join rail's password gate, faithful to
+            // `SyncPlayController::joinGroup()` + `SyncPlayManager`: a group
+            // created with `password` refuses joiners whose body lacks the
+            // matching plaintext (this rail parses NO `password_hash`), with
+            // 400 {"error":"Invalid password"} — while an ALREADY-a-member
+            // re-join bypasses the gate entirely.
+            if (group.password !== undefined && group.members[memberId] === undefined) {
+                if (stringField(reqBody, 'password') !== group.password) {
+                    return {
+                        [FORCE_STATUS]: { status: 400, body: { error: 'Invalid password' } },
+                    };
+                }
+            }
             group.members[memberId] = {
                 id: memberId,
                 name: stringField(reqBody, 'memberName') ?? 'Guest',
@@ -258,10 +280,19 @@ export interface FakeSyncPlayServer {
  *   listing looks like: rows the WS worker published into the shared snapshot
  *   table, some password-protected, some not. The public/private discrimination
  *   the client must honour lives entirely in `has_password` on these rows.
+ * @param options.groupPassword M-UI-14: seeds the mutated group AS IF its
+ *   create had carried this plaintext password — the live state a joiner meets
+ *   at a locked door (join arm gates, `has_password` reads true everywhere).
+ *   The requesting client (`REQUESTING_MEMBER_ID`) is NOT a member of the seed,
+ *   so it faces the gate, exactly like a first-time joiner on the real server.
  */
 export function makeSyncPlayServer(
     baseUrl = '',
-    options: { omit?: string[]; extraListingRows?: readonly Record<string, unknown>[] } = {},
+    options: {
+        omit?: string[];
+        extraListingRows?: readonly Record<string, unknown>[];
+        groupPassword?: string;
+    } = {},
 ): FakeSyncPlayServer {
     const requests: ObservedRequest[] = [];
     const omit = new Set(options.omit ?? []);
@@ -272,6 +303,9 @@ export function makeSyncPlayServer(
     const bodyFor = makeHandlers(
         {
             name: 'Movie Night',
+            ...(options.groupPassword === undefined
+                ? {}
+                : { password: options.groupPassword }),
             hostId: 'm1',
             members: {
                 m1: { id: 'm1', name: 'Alice', is_host: true, joined_at: 1_700_000_000 },
@@ -297,8 +331,23 @@ export function makeSyncPlayServer(
         }
 
         const match = registered.find((r) => r.method === method && r.pattern.test(path));
-        const status = match ? 200 : 404;
-        const body: unknown = match ? bodyFor(match.method, match.template, reqBody) : { error: 'Not found' };
+        let status = match ? 200 : 404;
+        let body: unknown = match ? bodyFor(match.method, match.template, reqBody) : { error: 'Not found' };
+        // A handler forces a non-2xx answer by returning the wrapper below —
+        // the M-UI-14 join-gate (400 `{"error":"Invalid password"}`) is the
+        // first user; without it the fake could only ever 200 or 404.
+        if (
+            body !== null &&
+            typeof body === 'object' &&
+            FORCE_STATUS in (body as Record<PropertyKey, unknown>)
+        ) {
+            const forced = (body as Record<PropertyKey, unknown>)[FORCE_STATUS] as {
+                status: number;
+                body: unknown;
+            };
+            status = forced.status;
+            body = forced.body;
+        }
 
         requests.push({ method, path, template: templatize(path), status, body: reqBody });
 
